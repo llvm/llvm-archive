@@ -156,7 +156,7 @@ ClassFile::ClassFile(std::istream& is)
         throw ClassFileSemanticError(
             "Representation of this class is not of type ConstantClass");
     superClass_ = dynamic_cast<ConstantClass*>(cPool_[readU2(is)]);
-    if (!superClass_)
+    if (!superClass_ && thisClass_->getName()->str() != "java/lang/Object")
         throw ClassFileSemanticError(
             "Representation of super class is not of type ConstantClass");
     readClasses(interfaces_, cPool_, is);
@@ -177,8 +177,11 @@ std::ostream& ClassFile::dump(std::ostream& os) const
 {
     os << "Minor version: " << getMinorVersion() << '\n'
        << "Major version: " << getMajorVersion() << "\n\n"
-       << "class " << *getThisClass() << " (" << *getSuperClass() << ")\n"
-       << "Flags:";
+       << "class " << *getThisClass();
+    if (getSuperClass())
+        os  << " (" << *getSuperClass() << ")\n";
+
+    os << "Flags:";
     if (isPublic()) os << " public";
     if (isFinal()) os << " final";
     if (isSuper()) os << " super";

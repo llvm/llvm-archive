@@ -1231,7 +1231,7 @@ namespace llvm { namespace Java { namespace {
         }
       }
 
-      return new GetElementPtrInst(ptr, indices, fieldName, currentBB_);
+      return new GetElementPtrInst(ptr, indices, fieldName + '*', currentBB_);
     }
 
     std::string getMangledString(const std::string& str) {
@@ -1938,8 +1938,10 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_getfield(unsigned index) {
+      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      const std::string& name = fieldRef->getNameAndType()->getName()->str();
       Value* p = pop(ObjectBaseRefTy);
-      Value* v = new LoadInst(getField(index, p), TMP, currentBB_);
+      Value* v = new LoadInst(getField(index, p), name, currentBB_);
       push(v);
     }
 

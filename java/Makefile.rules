@@ -14,7 +14,7 @@ all:: .class-stamp
 	touch .class-stamp
 endif
 
-CLASS2LLVM := $(LEVEL)/tools/Debug/class2llvm$(EXEEXT)
+CLASS2LLVM := $(PROJTOOLCURRENT)/class2llvm$(EXEEXT)
 LDIS  := $(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT)
 LAS   := $(LLVMTOOLCURRENT)/llvm-as$(EXEEXT)
 LLINK := $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)

@@ -544,25 +544,32 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 }
 
 //===----------------------------------------------------------------------===//
+// Member implementation
+Member::Member(const ClassFile* parent, std::istream& is)
+  : parent_(parent),
+    accessFlags_(readU2(is)),
+    nameIdx_(readU2(is)),
+    descriptorIdx_(readU2(is))
+{
+  readAttributes(attributes_, parent_, is);
+}
+
+Member::~Member()
+{
+  for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
+}
+
+//===----------------------------------------------------------------------===//
 // Field implementation
 Field::Field(const ClassFile* parent, std::istream& is)
-  : parent_(parent)
+  : Member(parent, is)
 {
-  accessFlags_ = readU2(is);
-  name_ = parent_->getConstantUtf8(readU2(is));
-  if (!name_)
-    throw ClassFileSemanticError(
-      "Representation of field name is not of type ConstantUtf8");
-  descriptor_ = parent_->getConstantUtf8(readU2(is));
-  if (!descriptor_)
-    throw ClassFileSemanticError(
-      "Representation of field descriptor is not of type ConstantUtf8");
-  readAttributes(attributes_, parent_, is);
+
 }
 
 Field::~Field()
 {
-  for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
+
 }
 
 std::ostream& Field::dump(std::ostream& os) const
@@ -594,23 +601,14 @@ ConstantValueAttribute* Field::getConstantValueAttribute() const
 //===----------------------------------------------------------------------===//
 // Method implementation
 Method::Method(const ClassFile* parent, std::istream& is)
-  : parent_(parent)
+  : Member(parent, is)
 {
-  accessFlags_ = readU2(is);
-  name_ = parent_->getConstantUtf8(readU2(is));
-  if (!name_)
-    throw ClassFileSemanticError(
-      "Representation of method name is not of type ConstantUtf8");
-  descriptor_ = parent_->getConstantUtf8(readU2(is));
-  if (!descriptor_)
-    throw ClassFileSemanticError(
-      "Representation of method descriptor is not of type ConstantUtf8");
-  readAttributes(attributes_, parent_, is);
+
 }
 
 Method::~Method()
 {
-  for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
+
 }
 
 std::ostream& Method::dump(std::ostream& os) const

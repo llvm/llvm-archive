@@ -283,14 +283,34 @@ namespace llvm { namespace Java {
     std::ostream& dump(std::ostream& os) const;
   };
 
-  class Field {
-  private:
+  class Member {
+  protected:
     const ClassFile* parent_;
     uint16_t accessFlags_;
-    ConstantUtf8* name_;
-    ConstantUtf8* descriptor_;
+    uint16_t nameIdx_;
+    uint16_t descriptorIdx_;
     Attributes attributes_;
 
+    Member(const ClassFile* parent, std::istream& is);
+    ~Member();
+
+public:
+    bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
+    bool isPrivate() const { return accessFlags_ & ACC_PRIVATE; }
+    bool isProtected() const { return accessFlags_ & ACC_PROTECTED; }
+    bool isStatic() const { return accessFlags_ & ACC_STATIC; }
+    bool isFinal() const { return accessFlags_ & ACC_FINAL; }
+
+    const ClassFile* getParent() const { return parent_; }
+    ConstantUtf8* getName() const { return parent_->getConstantUtf8(nameIdx_); }
+    ConstantUtf8* getDescriptor() const {
+      return parent_->getConstantUtf8(descriptorIdx_);
+    }
+    const Attributes& getAttributes() const { return attributes_; }
+  };
+
+  class Field : public Member {
+  private:
     Field(const ClassFile* parent, std::istream& is);
 
   public:
@@ -300,18 +320,9 @@ namespace llvm { namespace Java {
 
     ~Field();
 
-    bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
-    bool isPrivate() const { return accessFlags_ & ACC_PRIVATE; }
-    bool isProtected() const { return accessFlags_ & ACC_PROTECTED; }
-    bool isStatic() const { return accessFlags_ & ACC_STATIC; }
-    bool isFinal() const { return accessFlags_ & ACC_FINAL; }
     bool isVolatile() const { return accessFlags_ & ACC_VOLATILE; }
     bool isTransient() const { return accessFlags_ & ACC_TRANSIENT; }
 
-    const ClassFile* getParent() const { return parent_; }
-    ConstantUtf8* getName() const { return name_; }
-    ConstantUtf8* getDescriptor() const { return descriptor_; }
-    const Attributes& getAttributes() const { return attributes_; }
     ConstantValueAttribute* getConstantValueAttribute() const;
 
     std::ostream& dump(std::ostream& os) const;
@@ -321,13 +332,7 @@ namespace llvm { namespace Java {
     return f.dump(os);
   }
 
-  class Method {
-    const ClassFile* parent_;
-    uint16_t accessFlags_;
-    ConstantUtf8* name_;
-    ConstantUtf8* descriptor_;
-    Attributes attributes_;
-
+  class Method : public Member {
     Method(const ClassFile* parent, std::istream& is);
 
   public:
@@ -337,20 +342,11 @@ namespace llvm { namespace Java {
 
     ~Method();
 
-    bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
-    bool isPrivate() const { return accessFlags_ & ACC_PRIVATE; }
-    bool isProtected() const { return accessFlags_ & ACC_PROTECTED; }
-    bool isStatic() const { return accessFlags_ & ACC_STATIC; }
-    bool isFinal() const { return accessFlags_ & ACC_FINAL; }
     bool isSynchronized() const { return accessFlags_ & ACC_SYNCHRONIZED; }
     bool isNative() const { return accessFlags_ & ACC_NATIVE; }
     bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
     bool isStrict() const { return accessFlags_ & ACC_STRICT; }
 
-    const ClassFile* getParent() const { return parent_; }
-    ConstantUtf8* getName() const { return name_; }
-    ConstantUtf8* getDescriptor() const { return descriptor_; }
-    const Attributes& getAttributes() const { return attributes_; }
     CodeAttribute* getCodeAttribute() const;
     ExceptionsAttribute* getExceptionsAttribute() const;
 
@@ -433,9 +429,7 @@ namespace llvm { namespace Java {
     Attributes attributes_;
 
   public:
-    CodeAttribute(ConstantUtf8* name,
-                  const ClassFile* cf,
-                  std::istream& is);
+    CodeAttribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is);
     ~CodeAttribute();
     uint16_t getMaxStack() const { return maxStack_; }
     uint16_t getMaxLocals() const { return maxLocals_; }

@@ -21,5 +21,7 @@ wxImage *CFGGraphDrawer::drawFunctionGraph (Function *fn) {
 }
 
 std::string CFGGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Control-flow graph of " + item->getTitle ();
+  std::string title ("Control-flow graph");
+  if (item) title += " of " + item->getTitle ();
+  return title;
 }

@@ -16,6 +16,8 @@ wxImage *CallGraphDrawer::drawModuleGraph (Module *module) {
 }
 
 std::string CallGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Call graph of " + item->getTitle ();
+  std::string title ("Call graph");
+  if (item) title += " of " + item->getTitle ();
+  return title;
 }
 

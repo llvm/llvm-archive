@@ -48,7 +48,10 @@ std::string BUGraphDrawer::getFilename(Module *M) {
 }
 
 std::string BUGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Bottom-up data structure " + item->dsGraphName ();
+  if (item)
+    return "Bottom-up data structure " + item->dsGraphName ();
+  else
+    return "Bottom-up data structure graph";
 }
 
 //===----------------------------------------------------------------------===//
@@ -71,7 +74,10 @@ std::string TDGraphDrawer::getFilename(Module *M) {
 }
 
 std::string TDGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Top-down data structure " + item->dsGraphName ();
+  if (item)
+    return "Top-down data structure " + item->dsGraphName ();
+  else
+    return "Top-down data structure graph";
 }
 
 //===----------------------------------------------------------------------===//
@@ -94,5 +100,8 @@ std::string LocalGraphDrawer::getFilename(Module *M) {
 }
 
 std::string LocalGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Local data structure " + item->dsGraphName ();
+  if (item)
+    return "Local data structure " + item->dsGraphName ();
+  else 
+    return "Local data structure graph";
 }

@@ -136,6 +136,18 @@ namespace llvm { namespace Java { namespace {
     }
 
   private:
+    void push(Value* value) {
+      assert(currentOpStack_ && "Current operand stack not set!");
+      assert(currentBB_ && "Current basic block not set!");
+      currentOpStack_->push(value, currentBB_);
+    }
+
+    Value* pop() {
+      assert(currentOpStack_ && "Current operand stack not set!");
+      assert(currentBB_ && "Current basic block not set!");
+      return currentOpStack_->pop(currentBB_);
+    }
+
     /// Schedule a method for compilation. Returns true if this is the
     /// first time this function was scheduled.
     bool scheduleFunction(Function* function) {
@@ -1492,31 +1504,30 @@ namespace llvm { namespace Java { namespace {
 
     void do_aconst_null() {
       ClassFile* root = ClassFile::get("java/lang/Object");
-      currentOpStack_->push(llvm::Constant::getNullValue(
-                              PointerType::get(getClassInfo(root).type)),
-                            currentBB_);
+      push(llvm::Constant::getNullValue(
+               PointerType::get(getClassInfo(root).type)));
     }
 
     void do_iconst(int value) {
-      currentOpStack_->push(ConstantSInt::get(Type::IntTy, value), currentBB_);
+      push(ConstantSInt::get(Type::IntTy, value));
     }
 
     void do_lconst(long long value) {
-      currentOpStack_->push(ConstantSInt::get(Type::LongTy, value), currentBB_);
+      push(ConstantSInt::get(Type::LongTy, value));
     }
 
     void do_fconst(float value) {
-      currentOpStack_->push(ConstantFP::get(Type::FloatTy, value), currentBB_);
+      push(ConstantFP::get(Type::FloatTy, value));
     }
 
     void do_dconst(double value) {
-      currentOpStack_->push(ConstantFP::get(Type::DoubleTy, value), currentBB_);
+      push(ConstantFP::get(Type::DoubleTy, value));
     }
 
     void do_ldc(unsigned index) {
       Constant* c = cf_->getConstant(index);
       assert(getConstant(c) && "Java constant not handled!");
-      currentOpStack_->push(getConstant(c), currentBB_);
+      push(getConstant(c));
     }
 
     void do_ldc2(unsigned index) {
@@ -1531,7 +1542,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_load_common(unsigned index) {
       Value* val = currentLocals_->load(index, currentBB_);
-      currentOpStack_->push(val, currentBB_);
+      push(val);
     }
 
     void do_iaload() { do_aload_common(); }
@@ -1544,8 +1555,8 @@ namespace llvm { namespace Java { namespace {
     void do_saload() { do_aload_common(); }
 
     void do_aload_common() {
-      Value* index = currentOpStack_->pop(currentBB_);
-      Value* arrayRef = currentOpStack_->pop(currentBB_);
+      Value* index = pop();
+      Value* arrayRef = pop();
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1555,7 +1566,7 @@ namespace llvm { namespace Java { namespace {
       Value* elementPtr =
         new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
       Value* result = new LoadInst(elementPtr, TMP, currentBB_);
-      currentOpStack_->push(result, currentBB_);
+      push(result);
     }
 
     void do_istore(unsigned index) { do_store_common(index); }
@@ -1565,7 +1576,7 @@ namespace llvm { namespace Java { namespace {
     void do_astore(unsigned index) { do_store_common(index); }
 
     void do_store_common(unsigned index) {
-      Value* val = currentOpStack_->pop(currentBB_);
+      Value* val = pop();
       currentLocals_->store(index, val, currentBB_);
     }
 
@@ -1583,11 +1594,11 @@ namespace llvm { namespace Java { namespace {
     void do_sastore() { do_astore_common(Type::ShortTy); }
 
     void do_astore_common(Type* castTo = NULL) {
-      Value* value = currentOpStack_->pop(currentBB_);
+      Value* value = pop();
       if (castTo)
         value = new CastInst(value, castTo, TMP, currentBB_);
-      Value* index = currentOpStack_->pop(currentBB_);
-      Value* arrayRef = currentOpStack_->pop(currentBB_);
+      Value* index = pop();
+      Value* arrayRef = pop();
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1600,122 +1611,122 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_pop() {
-      currentOpStack_->pop(currentBB_);
+      pop();
     }
 
     void do_pop2() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
       if (isOneSlotValue(v1))
-        currentOpStack_->pop(currentBB_);
+        pop();
     }
 
     void do_dup() {
-      Value* val = currentOpStack_->pop(currentBB_);
-      currentOpStack_->push(val, currentBB_);
-      currentOpStack_->push(val, currentBB_);
+      Value* val = pop();
+      push(val);
+      push(val);
     }
 
     void do_dup_x1() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      currentOpStack_->push(v1, currentBB_);
-      currentOpStack_->push(v2, currentBB_);
-      currentOpStack_->push(v1, currentBB_);
+      Value* v1 = pop();
+      Value* v2 = pop();
+      push(v1);
+      push(v2);
+      push(v1);
     }
 
     void do_dup_x2() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
-      Value* v2 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
+      Value* v2 = pop();
       if (isOneSlotValue(v2)) {
-        Value* v3 = currentOpStack_->pop(currentBB_);
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v3, currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        Value* v3 = pop();
+        push(v1);
+        push(v3);
+        push(v2);
+        push(v1);
       }
       else {
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        push(v1);
+        push(v2);
+        push(v1);
       }
     }
 
     void do_dup2() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
       if (isOneSlotValue(v1)) {
-        Value* v2 = currentOpStack_->pop(currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        Value* v2 = pop();
+        push(v2);
+        push(v1);
+        push(v2);
+        push(v1);
       }
       else {
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        push(v1);
+        push(v1);
       }
     }
 
     void do_dup2_x1() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
-      Value* v2 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
+      Value* v2 = pop();
       if (isOneSlotValue(v1)) {
-        Value* v3 = currentOpStack_->pop(currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v3, currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        Value* v3 = pop();
+        push(v2);
+        push(v1);
+        push(v3);
+        push(v2);
+        push(v1);
       }
       else {
-        currentOpStack_->push(v1, currentBB_);
-        currentOpStack_->push(v2, currentBB_);
-        currentOpStack_->push(v1, currentBB_);
+        push(v1);
+        push(v2);
+        push(v1);
       }
     }
 
     void do_dup2_x2() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
-      Value* v2 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
+      Value* v2 = pop();
       if (isOneSlotValue(v1)) {
-        Value* v3 = currentOpStack_->pop(currentBB_);
+        Value* v3 = pop();
         if (isOneSlotValue(v3)) {
-          Value* v4 = currentOpStack_->pop(currentBB_);
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
-          currentOpStack_->push(v4, currentBB_);
-          currentOpStack_->push(v3, currentBB_);
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
+          Value* v4 = pop();
+          push(v2);
+          push(v1);
+          push(v4);
+          push(v3);
+          push(v2);
+          push(v1);
         }
         else {
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
-          currentOpStack_->push(v3, currentBB_);
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
+          push(v2);
+          push(v1);
+          push(v3);
+          push(v2);
+          push(v1);
         }
       }
       else {
         if (isOneSlotValue(v2)) {
-          Value* v3 = currentOpStack_->pop(currentBB_);
-          currentOpStack_->push(v1, currentBB_);
-          currentOpStack_->push(v3, currentBB_);
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
+          Value* v3 = pop();
+          push(v1);
+          push(v3);
+          push(v2);
+          push(v1);
         }
         else {
-          currentOpStack_->push(v1, currentBB_);
-          currentOpStack_->push(v2, currentBB_);
-          currentOpStack_->push(v1, currentBB_);
+          push(v1);
+          push(v2);
+          push(v1);
         }
       }
     }
 
     void do_swap() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      currentOpStack_->push(v1, currentBB_);
-      currentOpStack_->push(v2, currentBB_);
+      Value* v1 = pop();
+      Value* v2 = pop();
+      push(v1);
+      push(v2);
     }
 
     void do_iadd() { do_binary_op_common(Instruction::Add); }
@@ -1749,9 +1760,9 @@ namespace llvm { namespace Java { namespace {
     void do_dneg() { do_neg_common(); }
 
     void do_neg_common() {
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
       Value* r = BinaryOperator::createNeg(v1, TMP, currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_ishl() { do_shift_common(Instruction::Shl); }
@@ -1765,25 +1776,25 @@ namespace llvm { namespace Java { namespace {
     void do_shift_unsigned_common() {
       // Cast value to be shifted into its unsigned version.
       do_swap();
-      Value* v = currentOpStack_->pop(currentBB_);
+      Value* v = pop();
       v = new CastInst(v, v->getType()->getUnsignedVersion(), TMP, currentBB_);
-      currentOpStack_->push(v, currentBB_);
+      push(v);
       do_swap();
 
       do_shift_common(Instruction::Shr);
 
-      v = currentOpStack_->pop(currentBB_);
+      v = pop();
       // Cast shifted value back to its original signed version.
       v = new CastInst(v, v->getType()->getSignedVersion(), TMP, currentBB_);
-      currentOpStack_->push(v, currentBB_);
+      push(v);
     }
 
     void do_shift_common(Instruction::OtherOps op) {
-      Value* a = currentOpStack_->pop(currentBB_);
-      Value* v = currentOpStack_->pop(currentBB_);
+      Value* a = pop();
+      Value* v = pop();
       a = new CastInst(a, Type::UByteTy, TMP, currentBB_);
       Value* r = new ShiftInst(op, v, a, TMP, currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_iand() { do_binary_op_common(Instruction::And); }
@@ -1794,10 +1805,10 @@ namespace llvm { namespace Java { namespace {
     void do_lxor() { do_binary_op_common(Instruction::Xor); }
 
     void do_binary_op_common(Instruction::BinaryOps op) {
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v2 = pop();
+      Value* v1 = pop();
       Value* r = BinaryOperator::create(op, v1, v2, TMP, currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_iinc(unsigned index, int amount) {
@@ -1824,21 +1835,21 @@ namespace llvm { namespace Java { namespace {
     void do_i2s() { do_truncate_common(Type::ShortTy); }
 
     void do_cast_common(Type* type) {
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
       v1 = new CastInst(v1, type, TMP, currentBB_);
-      currentOpStack_->push(v1, currentBB_);
+      push(v1);
     }
 
     void do_truncate_common(Type* type) {
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v1 = pop();
       v1 = new CastInst(v1, type, TMP, currentBB_);
       v1 = new CastInst(v1, Type::IntTy, TMP, currentBB_);
-      currentOpStack_->push(v1, currentBB_);
+      push(v1);
     }
 
     void do_lcmp() {
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v2 = pop();
+      Value* v1 = pop();
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
@@ -1846,7 +1857,7 @@ namespace llvm { namespace Java { namespace {
       c = BinaryOperator::createSetLT(v1, v2, TMP, currentBB_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
                          currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_fcmpl() { do_cmp_common(-1); }
@@ -1855,8 +1866,8 @@ namespace llvm { namespace Java { namespace {
     void do_dcmpg() { do_cmp_common(1); }
 
     void do_cmp_common(int valueIfUnordered) {
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v2 = pop();
+      Value* v1 = pop();
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
@@ -1870,7 +1881,7 @@ namespace llvm { namespace Java { namespace {
                        v1, v2, TMP, currentBB_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, valueIfUnordered),
                          r, TMP, currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_ifeq(unsigned t, unsigned f) {
@@ -1931,8 +1942,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_if_common(Instruction::BinaryOps cc, unsigned t, unsigned f) {
-      Value* v2 = currentOpStack_->pop(currentBB_);
-      Value* v1 = currentOpStack_->pop(currentBB_);
+      Value* v2 = pop();
+      Value* v1 = pop();
       if (v1->getType() != v2->getType())
         v1 = new CastInst(v1, v2->getType(), TMP, currentBB_);
       Value* c = new SetCondInst(cc, v1, v2, TMP, currentBB_);
@@ -1952,7 +1963,7 @@ namespace llvm { namespace Java { namespace {
     void do_areturn() { do_return_common(); }
 
     void do_return_common() {
-      Value* r = currentOpStack_->pop(currentBB_);
+      Value* r = pop();
       const Type* retTy = currentBB_->getParent()->getReturnType();
       new ReturnInst(new CastInst(r, retTy, TMP, currentBB_), currentBB_);
     }
@@ -1972,7 +1983,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
-      Value* v = currentOpStack_->pop(currentBB_);
+      Value* v = pop();
       SwitchInst* in =
         new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), currentBB_);
       for (unsigned i = 0, e = sw.size(); i != e; ++i)
@@ -1982,11 +1993,11 @@ namespace llvm { namespace Java { namespace {
 
     void do_getstatic(unsigned index) {
       Value* v = new LoadInst(getStaticField(index), TMP, currentBB_);
-      currentOpStack_->push(v, currentBB_);
+      push(v);
     }
 
     void do_putstatic(unsigned index) {
-      Value* v = currentOpStack_->pop(currentBB_);
+      Value* v = pop();
       Value* ptr = getStaticField(index);
       const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
       if (v->getType() != fieldTy)
@@ -1995,14 +2006,14 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_getfield(unsigned index) {
-      Value* p = currentOpStack_->pop(currentBB_);
+      Value* p = pop();
       Value* v = new LoadInst(getField(index, p), TMP, currentBB_);
-      currentOpStack_->push(v, currentBB_);
+      push(v);
     }
 
     void do_putfield(unsigned index) {
-      Value* v = currentOpStack_->pop(currentBB_);
-      Value* p = currentOpStack_->pop(currentBB_);
+      Value* v = pop();
+      Value* p = pop();
       Value* fp = getField(index, p);
       const Type* ft = cast<PointerType>(fp->getType())->getElementType();
       v = new CastInst(v, ft, TMP, currentBB_);
@@ -2018,7 +2029,7 @@ namespace llvm { namespace Java { namespace {
         new CallInst(fun, params, "", currentBB_);
       else {
         Value* r = new CallInst(fun, params, TMP, currentBB_);
-        currentOpStack_->push(r, currentBB_);
+        push(r);
       }
     }
 
@@ -2026,7 +2037,7 @@ namespace llvm { namespace Java { namespace {
       unsigned numParams = funTy->getNumParams();
       std::vector<Value*> params(numParams);
       while (numParams--) {
-        Value* p = currentOpStack_->pop(currentBB_);
+        Value* p = pop();
         params[numParams] =
           p->getType() == funTy->getParamType(numParams) ?
           p :
@@ -2254,7 +2265,7 @@ namespace llvm { namespace Java { namespace {
         PointerType::get(ClassInfo::ObjectBaseTy),
         PointerType::get(VTableInfo::VTableBaseTy), NULL);
       new CallInst(f, objBase, vtable, "", currentBB_);
-      currentOpStack_->push(objRef, currentBB_);
+      push(objRef);
     }
 
     Value* getArrayLengthPtr(Value* arrayRef) const {
@@ -2276,7 +2287,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_newarray(JType type) {
-      Value* count = currentOpStack_->pop(currentBB_);
+      Value* count = pop();
       count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
 
       const ClassInfo& ci = getPrimitiveArrayInfo(type);
@@ -2286,7 +2297,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_anewarray(unsigned index) {
-      Value* count = currentOpStack_->pop(currentBB_);
+      Value* count = pop();
       count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
 
       ConstantClass* classRef = cf_->getConstantClass(index);
@@ -2335,22 +2346,22 @@ namespace llvm { namespace Java { namespace {
         PointerType::get(ClassInfo::ObjectBaseTy),
         PointerType::get(VTableInfo::VTableBaseTy), NULL);
       new CallInst(f, objBase, vtable, "", currentBB_);
-      currentOpStack_->push(objRef, currentBB_);
+      push(objRef);
     }
 
     void do_arraylength() {
-      Value* arrayRef = currentOpStack_->pop(currentBB_);
+      Value* arrayRef = pop();
       const ClassInfo& ci = getObjectArrayInfo();
       arrayRef =
         new CastInst(arrayRef, PointerType::get(ci.type), TMP, currentBB_);
       Value* lengthPtr = getArrayLengthPtr(arrayRef);
       Value* length = new LoadInst(lengthPtr, TMP, currentBB_);
       length = new CastInst(length, Type::IntTy, TMP, currentBB_);
-      currentOpStack_->push(length, currentBB_);
+      push(length);
     }
 
     void do_athrow() {
-      Value* objRef = currentOpStack_->pop(currentBB_);
+      Value* objRef = pop();
       objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
                             TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
@@ -2367,7 +2378,7 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = NULL;
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
-      Value* objRef = currentOpStack_->pop(currentBB_);
+      Value* objRef = pop();
       Value* objBase =
         new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
                      TMP, currentBB_);
@@ -2385,7 +2396,7 @@ namespace llvm { namespace Java { namespace {
       // FIXME: if b is false we must throw a ClassCast exception
       Value* objCast =
         new CastInst(objRef, PointerType::get(ci->type), TMP, currentBB_);
-      currentOpStack_->push(objCast, currentBB_);
+      push(objCast);
     }
 
     void do_instanceof(unsigned index) {
@@ -2395,7 +2406,7 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = NULL;
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
-      Value* objRef = currentOpStack_->pop(currentBB_);
+      Value* objRef = pop();
       Value* objBase =
         new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
                      TMP, currentBB_);
@@ -2406,7 +2417,7 @@ namespace llvm { namespace Java { namespace {
                                    PointerType::get(VTableInfo::VTableBaseTy),
                                    TMP, currentBB_);
       Value* r = new CallInst(f, objBase, vtable, TMP, currentBB_);
-      currentOpStack_->push(r, currentBB_);
+      push(r);
     }
 
     void do_monitorenter() {

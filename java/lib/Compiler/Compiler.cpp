@@ -51,12 +51,20 @@ namespace llvm { namespace Java { namespace {
   typedef std::stack<Value*, std::vector<Value*> > OperandStack;
   typedef std::vector<Value*> Locals;
 
+  inline bool isTwoSlotType(const Type* t) {
+    return t == Type::LongTy | t == Type::DoubleTy;
+  }
+
   inline bool isTwoSlotValue(const Value* v) {
-    return v->getType() == Type::LongTy | v->getType() == Type::DoubleTy;
+    return isTwoSlotType(v->getType());
+  }
+
+  inline bool isOneSlotType(const Type* t) {
+    return !isTwoSlotType(t);
   }
 
   inline bool isOneSlotValue(const Value* v) {
-    return !isTwoSlotValue(v);
+    return isOneSlotType(v->getType());
   }
 
   class Bytecode2BasicBlockMapper
@@ -770,17 +778,23 @@ namespace llvm { namespace Java { namespace {
       mapper.compute();
 
       prologue_ = new BasicBlock("prologue");
+      unsigned index = 0;
+      for (Function::aiterator
+             a = function->abegin(), ae = function->aend(); a != ae; ++a) {
+        // create a new local
+        locals_[index] = new AllocaInst(
+          a->getType(), NULL, "arg" + utostr(index), prologue_);
+        // initialize the local with the contents of this argument
+        new StoreInst(a, locals_[index], prologue_);
+        index += isTwoSlotType(a->getType()) ? 2 : 1;
+      }
 
       parse(codeAttr->getCode(), codeAttr->getCodeSize());
 
-      // if the prologue is not empty, make it the entry block
-      // of the function with entry as its only successor
-      if (prologue_->empty())
-        delete prologue_;
-      else {
-        function->getBasicBlockList().push_front(prologue_);
-        new BranchInst(prologue_->getNext(), prologue_);
-      }
+      // makethe prologue the entry block of the function with a
+      // fallthrough branch to the original entry block
+      function->getBasicBlockList().push_front(prologue_);
+      new BranchInst(prologue_->getNext(), prologue_);
 
       // now insert fall through branches to all basic blocks that
       // don't have a terminator
@@ -874,7 +888,7 @@ namespace llvm { namespace Java { namespace {
       // compile all other methods called by this method recursively
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
-        compileMethodOnly(f->getName());
+//        compileMethodOnly(f->getName());
       }
 
       return function;

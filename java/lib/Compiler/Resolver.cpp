@@ -40,12 +40,10 @@ Resolver::Resolver(Module* module)
   //
   // struct type_info {
   //   int depth;
-  //   struct class_record** superClasses;
+  //   struct class_record** superclasses;
   //   int interfaceIndex;
-  //   union {
-  //     int interfaceFlag;
-  //     struct class_record** interfaces;
-  //   };
+  //   struct class_record** interfaces;
+  //   struct class_record* component;
   //   int elementSize;
   // };
 

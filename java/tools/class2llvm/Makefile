@@ -11,6 +11,6 @@ LEVEL := ../..
 TOOLNAME := class2llvm
 
 USEDLIBS := classfile compiler
-LLVMLIBS := support vmcore bcwriter LLVMsystem
+LLVMLIBS := LLVMSupport LLVMCore LLVMBCWriter LLVMSystem
 
 include $(LEVEL)/Makefile.common

@@ -82,9 +82,10 @@ struct llvm_java_class_record {
 struct llvm_java_class_record* llvm_java_find_class_record(const char* name);
 struct llvm_java_class_record* llvm_java_get_class_record(jobject obj);
 void llvm_java_set_class_record(jobject obj, struct llvm_java_class_record* cr);
-jboolean
-llvm_java_is_instance_of(jobject obj, struct llvm_java_class_record* cr);
-jboolean
-llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
-                             struct llvm_java_class_record* from);
-jint llvm_java_throw(jobject obj);
+jboolean llvm_java_is_instance_of(jobject obj,
+                                  struct llvm_java_class_record* cr);
+struct llvm_java_class_record* llvm_java_get_superclass_record(
+  struct llvm_java_class_record* cr);
+jboolean llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
+                                      struct llvm_java_class_record* from);
+jint llvm_java_throw(jthrowable obj);

@@ -26,6 +26,15 @@ void llvm_java_set_class_record(jobject obj,
   obj->classRecord = cr;
 }
 
+struct llvm_java_class_record*
+llvm_java_get_superclass_record(struct llvm_java_class_record* cr) {
+  /* If this is an interface or java/lang/Object return NULL. */
+  if (llvm_java_is_interface_class(cr) || cr->typeinfo.depth == 0)
+    return NULL;
+
+  return cr->typeinfo.superclasses[0];
+}
+
 jboolean llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
                                       struct llvm_java_class_record* from) {
   /* trivial case: class records are the same */
@@ -70,7 +79,7 @@ jboolean llvm_java_is_instance_of(jobject obj,
   return llvm_java_is_assignable_from(obj->classRecord, cr);
 }
 
-jint llvm_java_throw(jobject obj) {
+jint llvm_java_throw(jthrowable obj) {
   abort();
 }
 

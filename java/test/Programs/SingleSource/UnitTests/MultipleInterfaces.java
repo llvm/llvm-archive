@@ -2,7 +2,7 @@ public class MultipleInterfaces
 {
     interface I1
     {
-        public int i1();
+        public boolean i1();
     }
 
     interface I2
@@ -12,14 +12,14 @@ public class MultipleInterfaces
 
     interface I3 extends I1, I2
     {
-        public int i3();
+        public float i3();
     }
 
     private static class C1 implements I3
     {
-        public int i1() { return 1; }
+        public boolean i1() { return true; }
         public int i2() { return 2; }
-        public int i3() { return 3; }
+        public float i3() { return 3.0F; }
     }
 
     public static void main(String[] args) {

@@ -1321,6 +1321,306 @@ namespace llvm { namespace Java { namespace {
       new BranchInst(mapper_->getBBAt(t), mapper_->getBBAt(f), c, current_);
     }
 
+    void do_goto(unsigned target) {
+      new BranchInst(mapper_->getBBAt(target), current_);
+    }
+
+    void do_jsr(unsigned target) {
+      assert(0 && "not implemented");
+    }
+
+    void do_ret(unsigned index) {
+      assert(0 && "not implemented");
+    }
+
+    void do_switch(unsigned defTarget, const SwitchCases& sw) {
+      Value* v = opStack_.top(); opStack_.pop();
+      SwitchInst* in = new SwitchInst(v, mapper_->getBBAt(defTarget), current_);
+      for (unsigned i = 0, e = sw.size(); i != e; ++i)
+        in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
+                    mapper_->getBBAt(sw[i].second));
+    }
+
+    void do_ireturn() { do_return_common(); }
+    void do_lreturn() { do_return_common(); }
+    void do_freturn() { do_return_common(); }
+    void do_dreturn() { do_return_common(); }
+    void do_areturn() { do_return_common(); }
+
+    void do_return_common() {
+      Value* v1 = opStack_.top(); opStack_.pop();
+      new ReturnInst(v1, current_);
+    }
+
+    void do_return() {
+      new ReturnInst(NULL, current_);
+    }
+
+    void do_getstatic(unsigned index) {
+      Value* v = new LoadInst(getStaticField(index), TMP, current_);
+      opStack_.push(v);
+    }
+
+    void do_putstatic(unsigned index) {
+      Value* v = opStack_.top(); opStack_.pop();
+      Value* ptr = getStaticField(index);
+      const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
+      if (v->getType() != fieldTy)
+        v = new CastInst(v, fieldTy, TMP, current_);
+      new StoreInst(v, ptr, current_);
+    }
+
+    void do_getfield(unsigned index) {
+      Value* p = opStack_.top(); opStack_.pop();
+      Value* v = new LoadInst(getField(index, p), TMP, current_);
+      opStack_.push(v);
+    }
+
+    void do_putfield(unsigned index) {
+      Value* v = opStack_.top(); opStack_.pop();
+      Value* p = opStack_.top(); opStack_.pop();
+      new StoreInst(v, getField(index, p), current_);
+    }
+
+    void makeCall(Value* fun, const std::vector<Value*> params) {
+      const PointerType* funPtrTy = cast<PointerType>(fun->getType());
+      const FunctionType* funTy =
+        cast<FunctionType>(funPtrTy->getElementType());
+
+      if (funTy->getReturnType() == Type::VoidTy)
+        new CallInst(fun, params, "", current_);
+      else {
+        Value* r = new CallInst(fun, params, TMP, current_);
+        opStack_.push(r);
+      }
+    }
+
+    std::vector<Value*> getParams(FunctionType* funTy) {
+      unsigned numParams = funTy->getNumParams();
+      std::vector<Value*> params(numParams);
+      while (numParams--) {
+        Value* p = opStack_.top(); opStack_.pop();
+        params[numParams] =
+          p->getType() == funTy->getParamType(numParams) ?
+          p :
+          new CastInst(p, funTy->getParamType(numParams), TMP, current_);
+      }
+
+      return params;
+    }
+
+    void do_invokevirtual(unsigned index) {
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
+
+      ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
+
+      const std::string& className = cf->getThisClass()->getName()->str();
+      const std::string& methodDescr =
+        nameAndType->getName()->str() +
+        nameAndType->getDescriptor()->str();
+
+      FunctionType* funTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+
+      std::vector<Value*> params(getParams(funTy));
+
+      Value* objRef = params.front();
+      objRef = new CastInst(objRef, PointerType::get(ci.type),
+                            "this", current_);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
+        objBase->getType(), NULL);
+      Value* vtable = new CallInst(f, objBase, TMP, current_);
+      vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
+                            TMP, current_);
+      vtable = new LoadInst(vtable, className + "<vtable>", current_);
+      std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
+      assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
+             "could not find slot for virtual function!");
+      unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
+      indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
+      Value* vfunPtr =
+        new GetElementPtrInst(vtable, indices, TMP, current_);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, current_);
+
+      makeCall(vfun, params);
+    }
+
+    void do_invokespecial(unsigned index) {
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
+
+      const std::string& className = methodRef->getClass()->getName()->str();
+      const std::string& methodName = nameAndType->getName()->str();
+      const std::string& methodDescr =
+        methodName + nameAndType->getDescriptor()->str();
+      std::string funcName = className + '/' + methodDescr;
+      const ClassInfo& ci = getClassInfo(ClassFile::get(className));
+
+      // constructor calls are statically bound
+      if (methodName == "<init>") {
+        FunctionType* funcTy =
+          cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+        Function* function = module_.getOrInsertFunction(funcName, funcTy);
+        toCompileFunctions_.insert(function);
+        makeCall(function, getParams(funcTy));
+      }
+      // otherwise we call the superclass' implementation of the method
+      else {
+        assert(0 && "not implemented");
+      }
+    }
+
+    void do_invokestatic(unsigned index) {
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
+
+      std::string funcName =
+        methodRef->getClass()->getName()->str() + '/' +
+        nameAndType->getName()->str() +
+        nameAndType->getDescriptor()->str();
+
+      FunctionType* funcTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor()));
+      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      toCompileFunctions_.insert(function);
+      makeCall(function, getParams(funcTy));
+    }
+
+    void do_invokeinterface(unsigned index) {
+      ConstantInterfaceMethodRef* methodRef =
+        cf_->getConstantInterfaceMethodRef(index);
+      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
+
+      ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
+
+      const std::string& className = cf->getThisClass()->getName()->str();
+      const std::string& methodDescr =
+        nameAndType->getName()->str() +
+        nameAndType->getDescriptor()->str();
+
+      FunctionType* funTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+
+      std::vector<Value*> params(getParams(funTy));
+
+      Value* objRef = params.front();
+      objRef = new CastInst(objRef, PointerType::get(ci.type),
+                            "this", current_);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
+        objBase->getType(), NULL);
+      Value* vtable = new CallInst(f, objBase, TMP, current_);
+      // get the interfaces array of vtables
+      std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 3));
+      Value* interfaceVTables =
+        new GetElementPtrInst(vtable, indices, TMP, current_);
+      interfaceVTables = new LoadInst(interfaceVTables, TMP, current_);
+      // get the actual interface vtable
+      indices.clear();
+      indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
+      Value* interfaceVTable =
+        new GetElementPtrInst(interfaceVTables, indices, TMP, current_);
+      interfaceVTable =
+        new LoadInst(interfaceVTable, className + "<vtable>", current_);
+      interfaceVTable =
+        new CastInst(interfaceVTable, vi.vtable->getType(), TMP, current_);
+      // get the function pointer
+      indices.resize(1);
+      assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
+             "could not find slot for virtual function!");
+      unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
+      indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
+      Value* vfunPtr =
+        new GetElementPtrInst(interfaceVTable, indices, TMP, current_);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, current_);
+
+      makeCall(vfun, params);
+    }
+
+    void do_new(unsigned index) {
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
+
+      Value* objRef = new MallocInst(ci.type,
+                                     ConstantUInt::get(Type::UIntTy, 0),
+                                     TMP, current_);
+      Value* vtable = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
+                            TMP, current_);
+      vtable = new StoreInst(vi.vtable, vtable, current_);
+      opStack_.push(objRef);
+    }
+
+    void do_newarray(JType type) {
+      assert(0 && "not implemented");
+    }
+
+    void do_anewarray(unsigned index) {
+      assert(0 && "not implemented");
+    }
+
+    void do_arraylength() {
+      assert(0 && "not implemented");
+    }
+
+    void do_athrow() {
+      Value* objRef = opStack_.top(); opStack_.pop();
+      objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                            TMP, current_);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_THROW, Type::IntTy, objRef->getType(), NULL);
+      new CallInst(f, objRef, TMP, current_);
+    }
+
+    void do_checkcast(unsigned index) {
+      do_dup();
+      do_instanceof(index);
+      Value* r = opStack_.top(); opStack_.pop();
+      Value* b = new SetCondInst(Instruction::SetEQ,
+                                 r, ConstantSInt::get(Type::IntTy, 1),
+                                 TMP, current_);
+      // FIXME: if b is false we must throw a ClassCast exception
+    }
+
+    void do_instanceof(unsigned index) {
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const VTableInfo& vi = getVTableInfo(cf);
+
+      Value* objRef = opStack_.top(); opStack_.pop();
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
+        objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
+      Value* vtable = new CastInst(vi.vtable,
+                                   PointerType::get(VTableInfo::VTableTy),
+                                   TMP, current_);
+      Value* r = new CallInst(f, objBase, vtable, TMP, current_);
+      opStack_.push(r);
+    }
+
+    void do_monitorenter() {
+      assert(0 && "not implemented");
+    }
+
+    void do_monitorexit() {
+      assert(0 && "not implemented");
+    }
+
+    void do_multianewarray(unsigned index, unsigned dims) {
+      assert(0 && "not implemented");
+    }
   };
 
   unsigned Compiler::ClassInfo::InterfaceCount = 0;

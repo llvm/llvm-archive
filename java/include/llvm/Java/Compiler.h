@@ -26,8 +26,14 @@ namespace llvm { namespace Java {
 
     private:
         void compileMethodInit(Function& function,
+                               const ClassFile& cf,
                                const CodeAttribute& codeAttr);
-        void compileMethod(Module& module, const Method& method);
+
+        Value* getOrCreateLocal(unsigned index, const Type* type);
+
+        void compileMethod(Module& module,
+                           const ClassFile& cf,
+                           const Method& method);
 
     private:
         typedef std::stack<Value*, std::vector<Value*> > OperandStack;

@@ -40,6 +40,7 @@ namespace {
 } // namespace
 
 void Compiler::compileMethodInit(Function& function,
+                                 const ClassFile& cf,
                                  const CodeAttribute& codeAttr)
 {
     while (!opStack_.empty())
@@ -169,7 +170,24 @@ void Compiler::compileMethodInit(Function& function,
     }
 }
 
-void Compiler::compileMethod(Module& module, const Java::Method& method) {
+Value* Compiler::getOrCreateLocal(unsigned index, const Type* type)
+{
+    if (!locals_[index]) {
+        BasicBlock* entry = bc2bbMap_[0];
+        Instruction* alloc = new AllocaInst(type);
+        locals_[index] = alloc;
+        Instruction* store =
+            new StoreInst(llvm::Constant::getNullValue(type), locals_[index]);
+        entry->getInstList().push_front(store);
+        entry->getInstList().push_front(alloc);
+    }
+
+    return locals_[index];
+}
+
+void Compiler::compileMethod(Module& module,
+                             const ClassFile& cf,
+                             const Java::Method& method) {
     using namespace llvm::Java::Opcode;
 
     DEBUG(std::cerr << "compiling method: " << method.getName()->str() << '\n');
@@ -180,7 +198,12 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
     const Java::CodeAttribute* codeAttr =
         Java::getCodeAttribute(method.getAttributes());
 
-    compileMethodInit(*function, *codeAttr);
+    compileMethodInit(*function, cf, *codeAttr);
+
+    // FIXME: this should really be a non-void type when the object
+    // model is finalized
+    const Type* ObjectTy = Type::VoidTy;
+    const Type* ObjectRefTy = PointerType::get(ObjectTy);
 
     const uint8_t* code = codeAttr->getCode();
     for (unsigned i = 0; i < codeAttr->getCodeSize(); ++i) {
@@ -189,9 +212,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         i += wide;
         switch (code[i]) {
         case ACONST_NULL:
-            // FIXME: should push a null pointer of type Object*
-            opStack_.push(
-                ConstantPointerNull::get(PointerType::get(Type::VoidTy)));
+            opStack_.push(llvm::Constant::getNullValue(ObjectRefTy));
             break;
         case ICONST_M1:
         case ICONST_0:
@@ -244,7 +265,8 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case ALOAD: {
             // FIXME: use opcodes to perform type checking
             unsigned index = readUByte(code, i);
-            Instruction* in = new LoadInst(locals_[index]);
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -253,7 +275,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case ILOAD_1:
         case ILOAD_2:
         case ILOAD_3: {
-            Instruction* in = new LoadInst(locals_[code[i]-ILOAD_0]);
+            unsigned index = code[i] - ILOAD_0;
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -262,7 +286,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case LLOAD_1:
         case LLOAD_2:
         case LLOAD_3: {
-            Instruction* in = new LoadInst(locals_[code[i]-LLOAD_0]);
+            unsigned index = code[i] - LLOAD_0;
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -271,7 +297,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case FLOAD_1:
         case FLOAD_2:
         case FLOAD_3: {
-            Instruction* in = new LoadInst(locals_[code[i]-FLOAD_0]);
+            unsigned index = code[i] - FLOAD_0;
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -280,7 +308,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case DLOAD_1:
         case DLOAD_2:
         case DLOAD_3: {
-            Instruction* in = new LoadInst(locals_[code[i]-DLOAD_0]);
+            unsigned index = code[i] - DLOAD_0;
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -289,7 +319,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case ALOAD_1:
         case ALOAD_2:
         case ALOAD_3: {
-            Instruction* in = new LoadInst(locals_[code[i]-ALOAD_0]);
+            unsigned index = code[i] - ALOAD_0;
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
             opStack_.push(in);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
@@ -731,7 +763,12 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case GETFIELD:
         case PUTFIELD:
         case INVOKEVIRTUAL:
-        case INVOKESPECIAL:
+            assert(0 && "not implemented");
+        case INVOKESPECIAL: {
+            unsigned index = readUShort(code, i);
+            DEBUG(std::cerr << "ignoring INVOKESPECIAL\n");
+            break;
+        }
         case INVOKESTATIC:
         case INVOKEINTERFACE:
         case XXXUNUSEDXXX:
@@ -754,8 +791,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
                 Instruction::SetNE,
             };
             Value* v1 = opStack_.top(); opStack_.pop();
-            // FIXME: should compare to a null pointer of type Object*
-            Value* v2 =ConstantPointerNull::get(PointerType::get(Type::VoidTy));
+            Value* v2 = llvm::Constant::getNullValue(ObjectRefTy);
             Instruction* in = new SetCondInst(java2llvm[i-IFNULL], v1, v2);
             bc2bbMap_[bcStart]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
@@ -787,7 +823,7 @@ Module* Compiler::compile(const ClassFile& cf)
     const Java::Methods& methods = cf.getMethods();
     for (Java::Methods::const_iterator
              i = methods.begin(), e = methods.end(); i != e; ++i)
-        compileMethod(*module, **i);
+        compileMethod(*module, cf, **i);
 
     return module;
 }

@@ -627,11 +627,17 @@ namespace llvm { namespace Java { namespace {
       for (VTableInfo::Method2IndexMap::const_iterator
              i = interfaceVI.m2iMap.begin(), e = interfaceVI.m2iMap.end();
            i != e; ++i) {
-        assert(classVI.m2iMap.find(i->first) != classVI.m2iMap.end() &&
-               "Interface method not found in class definition!");
-        unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
-        init[i->second] = cast<ConstantStruct>(
-          classVI.vtable->getInitializer())->getOperand(classMethodIdx);
+        if (!cf->isAbstract()) {
+          assert(classVI.m2iMap.find(i->first) != classVI.m2iMap.end() &&
+                 "Interface method not found in class definition!");
+          unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
+          init[i->second] = cast<ConstantStruct>(
+            classVI.vtable->getInitializer())->getOperand(classMethodIdx);
+        }
+        else
+          init[i->second] =
+            llvm::Constant::getNullValue(
+              PointerType::get(VTableInfo::VTableTy));
       }
 
       llvm::Constant* vtable = ConstantStruct::get(init);

@@ -160,7 +160,6 @@ void VMClass::computeLayout()
   Type* resolvedType = StructType::get(layout);
   cast<OpaqueType>(layoutType_)->refineAbstractTypeTo(resolvedType);
   layoutType_ = holder.get();
-  type_ = PointerType::get(layoutType_);
 }
 
 void VMClass::computeClassRecord()

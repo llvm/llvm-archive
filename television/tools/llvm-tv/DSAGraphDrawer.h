@@ -25,6 +25,7 @@ class DSGraphDrawer : public GraphDrawer {
 protected:
   llvm::Function *F;
   llvm::Module *M;
+  DSGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
   virtual llvm::Pass *getFunctionPass(llvm::Function *F) = 0;
   virtual llvm::Pass *getModulePass() = 0;
   virtual std::string getFilename(llvm::Function *F) = 0;
@@ -32,7 +33,6 @@ protected:
 public:
   wxImage *drawFunctionGraph(llvm::Function *F);
   wxImage *drawModuleGraph(llvm::Module *M);
-  DSGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
 };
 
 //===----------------------------------------------------------------------===//

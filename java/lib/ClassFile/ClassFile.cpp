@@ -439,6 +439,16 @@ std::ostream& Method::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Attribute implementation
+const std::string Attribute::CONSTANT_VALUE = "ConstantValue";
+const std::string Attribute::CODE = "Code";
+const std::string Attribute::EXCEPTIONS = "Exceptions";
+const std::string Attribute::INNER_CLASSES = "InnerClasses";
+const std::string Attribute::SYNTHETIC = "Synthetic";
+const std::string Attribute::SOURCE_FILE = "SourceFile";
+const std::string Attribute::LINE_NUMBER_TABLE = "LineNumberTable";
+const std::string Attribute::LOCAL_VARIABLE_TABLE = "LocalVariableTable";
+const std::string Attribute::DEPRECATED = "Deprecated";
+
 Attribute* Attribute::readAttribute(const ConstantPool& cp, std::istream& is)
 {
     ConstantUtf8* name = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
@@ -446,9 +456,9 @@ Attribute* Attribute::readAttribute(const ConstantPool& cp, std::istream& is)
         throw ClassFileSemanticError(
             "Representation of attribute name is not of type ConstantUtf8");
 
-    if (strcmp(*name, "ConstantValue") == 0)
+    if (CONSTANT_VALUE == name->str())
         return new AttributeConstantValue(name, cp, is);
-    else if (strcmp(*name, "Code") == 0)
+    else if (CODE == name->str())
         return new AttributeCode(name, cp, is);
     else {
         uint32_t length = readU4(is);

@@ -236,8 +236,7 @@ namespace llvm { namespace Java {
         std::string utf8_;
     public:
         ConstantUtf8(const ConstantPool& cp, std::istream& is);
-        operator const char* const() const { return utf8_.c_str(); }
-        operator const std::string&() const { return utf8_; }
+        const std::string& str() const { return utf8_; }
 
         std::ostream& dump(std::ostream& os) const;
     };
@@ -330,6 +329,16 @@ namespace llvm { namespace Java {
         ConstantUtf8* getName() const { return name_; }
 
         virtual std::ostream& dump(std::ostream& os) const;
+
+        static const std::string CONSTANT_VALUE;
+        static const std::string CODE;
+        static const std::string EXCEPTIONS;
+        static const std::string INNER_CLASSES;
+        static const std::string SYNTHETIC;
+        static const std::string SOURCE_FILE;
+        static const std::string LINE_NUMBER_TABLE;
+        static const std::string LOCAL_VARIABLE_TABLE;
+        static const std::string DEPRECATED;
     };
 
     inline std::ostream& operator<<(std::ostream& os, const Attribute& a) {

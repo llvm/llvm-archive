@@ -467,7 +467,16 @@ namespace llvm { namespace Java { namespace {
 
 
         void do_iinc(unsigned bcI, unsigned index, int amount) {
-            assert(0 && "not implemented");
+            Instruction* in =
+                new LoadInst(getOrCreateLocal(index, Type::IntTy), TMP);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            in = BinaryOperator::create(Instruction::Add,
+                                        in,
+                                        ConstantSInt::get(Type::IntTy, amount),
+                                        TMP);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            in = new StoreInst(in, getOrCreateLocal(index, Type::IntTy));
+            bc2bbMap_[bcI]->getInstList().push_back(in);
         }
 
         void do_convert(unsigned bcI, JType to) {

@@ -500,9 +500,11 @@ namespace llvm { namespace Java {
         case GOTO:
           THIS->do_goto(curBC + readSShort(code, i));
           break;
-        case JSR:
-          THIS->do_jsr(curBC + readSShort(code, i));
+        case JSR: {
+          unsigned t = curBC + readSShort(code, i);
+          THIS->do_jsr(t, i + 1);
           break;
+        }
         case RET:
           THIS->do_ret(readUByte(code, i));
           break;
@@ -630,9 +632,11 @@ namespace llvm { namespace Java {
         case GOTO_W:
           THIS->do_goto(curBC + readSInt(code, i));
           break;
-        case JSR_W:
-          THIS->do_jsr(curBC + readSInt(code, i));
+        case JSR_W: {
+          unsigned t = curBC + readSInt(code, i);
+          THIS->do_jsr(t, i + 1);
           break;
+        }
         case BREAKPOINT:
         case IMPDEP1:
         case IMPDEP2:
@@ -878,7 +882,7 @@ namespace llvm { namespace Java {
     /// @brief called on GOTO and GOTO_W
     void do_goto(unsigned target) { }
     /// @brief called on JSR and JSR_W
-    void do_jsr(unsigned target) { }
+    void do_jsr(unsigned target, unsigned retAddress) { }
     /// @brief called on RET
     void do_ret(unsigned index) { }
     /// @brief called on TABLESWITCH and LOOKUPSWITCH

@@ -1938,14 +1938,13 @@ namespace llvm { namespace Java { namespace {
       new ReturnInst(NULL, currentBB_);
     }
 
-    void do_jsr(unsigned target) {
-      // assert(0 && "not implemented");
-      std::cerr << "WARNING: jsr is not implemented and ignored!\n";
+    void do_jsr(unsigned target, unsigned retAddress) {
+      // FIXME: this is currently a noop.
+      push(llvm::Constant::getNullValue(Type::IntTy));
     }
 
     void do_ret(unsigned index) {
-      // assert(0 && "not implemented");
-      std::cerr << "WARNING: ret is not implemented and ignored!\n";
+      // FIXME: this is currently a noop.
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
@@ -2357,12 +2356,12 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_monitorenter() {
-      // FIXME: This is currently a noop
+      // FIXME: This is currently a noop.
       pop(ObjectBaseRefTy);
     }
 
     void do_monitorexit() {
-      // FIXME: This is currently a noop
+      // FIXME: This is currently a noop.
       pop(ObjectBaseRefTy);
     }
 

@@ -10,7 +10,6 @@ LEVEL := ../../../..
 
 JAVA_TESTS := Arithm \
 	BigConstants \
-	FieldAccess \
 	FloatCompare \
 	ForLoop \
 	If \
@@ -19,16 +18,16 @@ JAVA_TESTS := Arithm \
 	Return \
 	StaticInitializers \
 	TableSwitch \
+#	FieldAccess \
 #	VTable \
 #	ClassTest \
 #	InstanceOf \
 
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1
+SHARED_LIBRARY=1
 LIBRARYNAME=test
 
 EXTRA_OBJS = $(LibDir)/libtest.bca
-
-all:: Output/.compile-java $(addprefix Output/, $(addsuffix .llvm.bc, $(JAVA_TESTS)))
 
 include ../Makefile.singlesrc

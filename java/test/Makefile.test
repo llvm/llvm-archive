@@ -38,12 +38,38 @@ Output/.compile-java: $(addsuffix .java,$(JAVA_TESTS))
 	$(Verb)mkdir -p Output
 	$(Verb)$(JAVAC) -d Output $?
 	$(Verb)touch $@
+
+all:: Output/.compile-java
 endif
+
+PREFIXED_JAVA_TESTS := $(addprefix Output/, $(JAVA_TESTS))
+
+# Compiled bytecode for tests
+BYTECODE := $(addsuffix .llvm.bc, $(PREFIXED_JAVA_TESTS))
+
+# Output produced by tests
+NATIVE_OUTPUT := $(addsuffix .out-nat, $(PREFIXED_JAVA_TESTS))
+JIT_OUTPUT := $(addsuffix .out-jit, $(PREFIXED_JAVA_TESTS))
+
+# Diffs of output produced by native and llvm-java runs
+DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
+
+# Keep the output and diffs
+.PRECIOUS: %.out-nat %.out-jit %.diff
+
+all:: $(BYTECODE)
+all:: $(DIFFS)
 
 # rule to run a .class file with the jvm
 %.out-nat: %.class
-	$(Verb)$(JAVA) -cp Output $(subst /,.,$(subst Output/,,$*)) > $*.out-nat || rm -f $*.out-nat
+	$(Echo) Running $(notdir $*) with the host JVM
+	$(Verb)LD_LIBRARY_PATH=$(LibDir) $(JAVA) -cp Output $(notdir $*) > $*.out-nat || rm -f $*.out-nat
 
 # rule to run a .class file with the llvm jit
 %.out-jit: %.llvm.bc
+	$(Echo) Running $(notdir $*) with the llvm JIT
 	$(Verb)$(LLI) $< > $*.out-jit
+
+# rule to diff test output
+%.diff: %.out-nat %.out-jit
+	$(Verb)diff $*.out-nat $*.out-jit > $@ || echo "FAIL: $*"

@@ -1611,11 +1611,11 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_monitorenter() {
-      assert(0 && "not implemented");
+      // assert(0 && "not implemented");
     }
 
     void do_monitorexit() {
-      assert(0 && "not implemented");
+      // assert(0 && "not implemented");
     }
 
     void do_multianewarray(unsigned index, unsigned dims) {

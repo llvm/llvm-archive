@@ -18,6 +18,7 @@
 #include "Class.h"
 #include "Resolver.h"
 #include <llvm/DerivedTypes.h>
+#include <llvm/Constants.h>
 #include <llvm/Java/ClassFile.h>
 
 #define LLVM_JAVA_OBJECT_BASE "struct.llvm_java_object_base"
@@ -32,7 +33,8 @@ Class::Class(Resolver& resolver, const std::string& className)
     componentClass_(NULL),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
-    interfaceIndex_(INVALID_INTERFACE_INDEX)
+    interfaceIndex_(INVALID_INTERFACE_INDEX),
+    resolvedConstantPool_(classFile_->getNumConstants())
 {
 
 }
@@ -126,4 +128,47 @@ void Class::link()
   resolveType();
 
   assert(!isa<OpaqueType>(getStructType()) &&"Class not initialized properly!");
+}
+
+llvm::Constant* Class::getConstant(unsigned index) const
+{
+  assert(classFile_ && "No constant pool!");
+  assert((dynamic_cast<ConstantString*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantInteger*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantFloat*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantLong*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantDouble*>(classFile_->getConstant(index))) &&
+         "Not an index to a constant!");
+
+  // If we haven't resolved this constant already, do so now.
+  if (!resolvedConstantPool_[index]) {
+    Constant* jc = classFile_->getConstant(index);
+    if (ConstantString* s = dynamic_cast<ConstantString*>(jc)) {
+      const Class& stringClass = resolver_->getClass("java/lang/String");
+      const Type* stringType = stringClass.getStructType();
+      resolvedConstantPool_[index] =
+        new GlobalVariable(stringType,
+                           false,
+                           GlobalVariable::LinkOnceLinkage,
+                           llvm::Constant::getNullValue(stringType),
+                           s->getValue()->str() + ".java/lang/String",
+                           &resolver_->getModule());
+    }
+    else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(jc))
+      resolvedConstantPool_[index] =
+        ConstantSInt::get(Type::IntTy, i->getValue());
+    else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(jc))
+      resolvedConstantPool_[index] =
+        ConstantFP::get(Type::FloatTy, f->getValue());
+    else if (ConstantLong* l = dynamic_cast<ConstantLong*>(jc))
+      resolvedConstantPool_[index] =
+        ConstantSInt::get(Type::LongTy, l->getValue());
+    else if (ConstantDouble* d = dynamic_cast<ConstantDouble*>(jc))
+      resolvedConstantPool_[index] =
+        ConstantFP::get(Type::DoubleTy, d->getValue());
+    else
+      assert(0 && "Not a constant!");
+  }
+
+  return static_cast<llvm::Constant*>(resolvedConstantPool_[index]);
 }

@@ -15,6 +15,7 @@
 #ifndef LLVM_JAVA_CLASS_H
 #define LLVM_JAVA_CLASS_H
 
+#include <llvm/Constant.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
 #include <map>
@@ -39,6 +40,7 @@ namespace llvm { namespace Java {
     Field2IndexMap f2iMap_;
     typedef std::vector<const Type*> ElementTypes;
     ElementTypes elementTypes_;
+    mutable std::vector<void*> resolvedConstantPool_;
 
     void addField(const std::string& name, const Type* type);
     void resolveType();
@@ -73,6 +75,8 @@ namespace llvm { namespace Java {
     bool isPrimitive() const { return !structType_; }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }
     int getFieldIndex(const std::string& name) const;
+
+    llvm::Constant* getConstant(unsigned index) const;
   };
 
 } } // namespace llvm::Java

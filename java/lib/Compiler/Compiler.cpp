@@ -156,8 +156,9 @@ namespace llvm { namespace Java { namespace {
     }
 
     template <typename InsertionPointTy>
-    GlobalVariable* createNewString(const std::string& str,
-                                    InsertionPointTy* ip) {
+    void initializeString(Value* globalString,
+                          const std::string& str,
+                          InsertionPointTy* ip) {
       // Create a new byte[] object and initialize it with the
       // contents of this string constant.
       Value* count = ConstantUInt::get(Type::UIntTy, str.size());
@@ -194,14 +195,6 @@ namespace llvm { namespace Java { namespace {
       const Class& ci = resolver_->getClass("java/lang/String");
       const VTableInfo& vi = getVTableInfo(ci.getClassFile());
 
-      // Create a zeroinitialized static java/lang/String object.
-      GlobalVariable* globalString =
-        new GlobalVariable(ci.getStructType(),
-                           false,
-                           GlobalVariable::LinkOnceLinkage,
-                           llvm::Constant::getNullValue(ci.getStructType()),
-                           str + ".java/lang/String",
-                           &module_);
       // Install the vtable pointer.
       Value* objBase =
         new CastInst(globalString, resolver_->getObjectBaseRefType(), TMP, ip);
@@ -219,45 +212,6 @@ namespace llvm { namespace Java { namespace {
       params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseRefType(), TMP, ip));
       params.push_back(ConstantSInt::get(Type::IntTy, 0));
       new CallInst(function, params, "", ip);
-
-      return globalString;
-    }
-
-    GlobalVariable* getConstantString(ConstantString* s) {
-      const std::string& str = s->getValue()->str();
-      StringMap::iterator it = stringMap_.find(str);
-      if (it == stringMap_.end()) {
-        // Get the static initializer function and get its one and
-        // only basic block to add code to.
-        Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                                     Type::VoidTy, 0);
-        Instruction* I = hook->front().getTerminator();
-        assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
-
-        GlobalVariable* stringGlobal = createNewString(str, I);
-
-        // Insert this new string into the map.
-        it = stringMap_.insert(it, std::make_pair(str, stringGlobal));
-      }
-
-      return it->second;
-    }
-
-    /// Given a llvm::Java::Constant returns an llvm::Constant.
-    llvm::Constant* getConstant(Constant* c) {
-      if (ConstantString* s = dynamic_cast<ConstantString*>(c))
-        return getConstantString(s);
-      else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
-        return ConstantSInt::get(Type::IntTy, i->getValue());
-      else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
-        return ConstantFP::get(Type::FloatTy, f->getValue());
-      else if (ConstantLong* l = dynamic_cast<ConstantLong*>(c))
-        return ConstantSInt::get(Type::LongTy, l->getValue());
-      else if (ConstantDouble* d = dynamic_cast<ConstantDouble*>(c))
-        return ConstantFP::get(Type::DoubleTy, d->getValue());
-      else
-        assert(0 && "Unknown llvm::Java::Constant!");
-      return 0; // not reached
     }
 
     /// Returns the type of the Java string descriptor for JNI.
@@ -1325,6 +1279,10 @@ namespace llvm { namespace Java { namespace {
           emitStaticInitializers(
             ClassFile::get(classfile->getSuperClass()->getName()->str()));
 
+        const std::string& className =
+          classfile->getThisClass()->getName()->str();
+        const Class& clazz = resolver_->getClass(className);
+
         // Create the global variables of this class.
         const Fields& fields = classfile->getFields();
         for (unsigned i = 0, e = fields.size(); i != e; ++i) {
@@ -1338,9 +1296,8 @@ namespace llvm { namespace Java { namespace {
             bool isConstant = false;
             llvm::Constant* init = llvm::Constant::getNullValue(globalTy);
             if (field->getConstantValueAttribute()) {
-              Constant* constant =
-                field->getConstantValueAttribute()->getValue();
-              init = ConstantExpr::getCast(getConstant(constant), globalTy);
+              unsigned i = field->getConstantValueAttribute()->getValueIndex();
+              init = ConstantExpr::getCast(clazz.getConstant(i), globalTy);
               isConstant = field->isFinal();
             }
 
@@ -1357,24 +1314,28 @@ namespace llvm { namespace Java { namespace {
           }
         }
 
+        Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+                                                     Type::VoidTy, 0);
+        Instruction* I = hook->front().getTerminator();
+        assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
+
+        // Create constant strings for this class.
+        for (unsigned i = 0, e = classfile->getNumConstants(); i != e; ++i)
+          if (ConstantString* s = dynamic_cast<ConstantString*>(classfile->getConstant(i)))
+            initializeString(clazz.getConstant(i), s->getValue()->str(), I);
+
         // Call its class initialization method if it exists.
         if (const Method* method = classfile->getMethod("<clinit>()V")) {
-          std::string name = classfile->getThisClass()->getName()->str();
-          name += '/';
-          name += method->getName()->str();
-          name += method->getDescriptor()->str();
-
-          Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                                       Type::VoidTy, 0);
-          Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
+          const std::string& functionName = className + '/' +
+            method->getName()->str() + method->getDescriptor()->str();
+          Function* init =
+            module_.getOrInsertFunction(functionName, Type::VoidTy, 0);
 
           // Insert a call to it right before the terminator of the only
           // basic block in llvm_java_static_init.
           bool inserted =  scheduleFunction(init);
           assert(inserted && "Class initialization method already called!");
-          assert(hook->front().getTerminator() &&
-                 LLVM_JAVA_STATIC_INIT " should have a terminator!");
-          new CallInst(init, "", hook->front().getTerminator());
+          new CallInst(init, "", I);
         }
       }
     }
@@ -1475,9 +1436,9 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_ldc(unsigned index) {
-      Constant* c = class_->getClassFile()->getConstant(index);
-      assert(getConstant(c) && "Java constant not handled!");
-      push(getConstant(c));
+      llvm::Constant* c = class_->getConstant(index);
+      assert(c && "Java constant not handled!");
+      push(c);
     }
 
     void do_ldc2(unsigned index) {

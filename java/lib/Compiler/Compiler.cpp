@@ -844,9 +844,11 @@ namespace llvm { namespace Java { namespace {
             FunctionType* funcType =
                 cast<FunctionType>(getType(nameAndType->getDescriptor()));
             std::vector<Value*> params(funcType->getNumParams(), NULL);
-            for (unsigned i = funcType->getNumParams(); i > 0; ) {
+            for (unsigned i = 0, e = funcType->getNumParams(); i != e; ++i) {
                 Value* p = opStack_.top(); opStack_.pop();
-                params[--i] = p;
+                const Type* paramTy = funcType->getParamType(i);
+                params[i] = p->getType() == paramTy ? p :
+                    new CastInst(p, paramTy, TMP, getBBAt(bcI));
             }
 
             Function* function =

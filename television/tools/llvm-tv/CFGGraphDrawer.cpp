@@ -9,9 +9,11 @@ using namespace llvm;
 // CFGGraphDrawer implementation
 
 wxImage *CFGGraphDrawer::drawGraphImage () {
-  ExistingModuleProvider MP (fn->getParent ());
-  FunctionPassManager PM (&MP);
+  ModuleProvider *MP = new ExistingModuleProvider (fn->getParent ());
+  FunctionPassManager PM (MP);
   PM.add (createCFGOnlyPrinterPass ());
   PM.run (*fn);
+  MP->releaseModule (); // Don't delete it when you go away, says I
+  delete MP;
   return buildwxImageFromDotFile ("cfg." + fn->getName() + ".dot");
 }

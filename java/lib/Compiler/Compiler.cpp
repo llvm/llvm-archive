@@ -1324,8 +1324,8 @@ namespace llvm { namespace Java { namespace {
         params.push_back(JNIEnvPtr_);
         if (method->isStatic())
           params.push_back(llvm::Constant::getNullValue(ObjectBaseRefTy));
-        for (Function::aiterator A = function->abegin(), E = function->aend();
-             A != E; ++A) {
+        for (Function::arg_iterator A = function->arg_begin(),
+               E = function->arg_end(); A != E; ++A) {
           params.push_back(
             new CastInst(A, jniFuncTy->getParamType(params.size()), TMP, bb));
         }
@@ -1377,8 +1377,8 @@ namespace llvm { namespace Java { namespace {
       locals_ = Locals(codeAttr->getMaxLocals());
 
       unsigned index = 0;
-      for (Function::aiterator
-             a = function->abegin(), ae = function->aend(); a != ae; ++a) {
+      for (Function::arg_iterator a = function->arg_begin(),
+             ae = function->arg_end(); a != ae; ++a) {
         locals_.store(index, a, &function->getEntryBlock());
         index += isTwoSlotType(a->getType()) ? 2 : 1;
       }

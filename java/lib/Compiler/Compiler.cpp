@@ -1948,7 +1948,15 @@ namespace llvm { namespace Java { namespace {
       // FIXME: this is currently a noop.
     }
 
-    void do_switch(unsigned defTarget, const SwitchCases& sw) {
+    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) {
+      do_switch_common(defTarget, sw);
+    }
+
+    void do_lookupswitch(unsigned defTarget, const SwitchCases& sw) {
+      do_switch_common(defTarget, sw);
+    }
+
+    void do_switch_common(unsigned defTarget, const SwitchCases& sw) {
       Value* v = pop(Type::IntTy);
       SwitchInst* in =
         new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), sw.size(), 

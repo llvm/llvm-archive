@@ -518,7 +518,7 @@ namespace llvm { namespace Java {
           while (low <= high)
             switchCases_.push_back(
               std::make_pair(low++, curBC + readSInt(code, i)));
-          THIS->do_switch(curBC + def, switchCases_);
+          THIS->do_tableswitch(curBC + def, switchCases_);
           break;
         }
         case LOOKUPSWITCH: {
@@ -532,7 +532,7 @@ namespace llvm { namespace Java {
             switchCases_.push_back(
               std::make_pair(value, curBC + readSInt(code, i)));
           }
-          THIS->do_switch(curBC + def, switchCases_);
+          THIS->do_lookupswitch(curBC + def, switchCases_);
           break;
         }
         case IRETURN:
@@ -885,8 +885,10 @@ namespace llvm { namespace Java {
     void do_jsr(unsigned target, unsigned retAddress) { }
     /// @brief called on RET
     void do_ret(unsigned index) { }
-    /// @brief called on TABLESWITCH and LOOKUPSWITCH
-    void do_switch(unsigned defTarget, const SwitchCases& sw) { }
+    /// @brief called on TABLESWITCH
+    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) { }
+    /// @brief called on LOOKUPSWITCH
+    void do_lookupswitch(unsigned defTarget, const SwitchCases& sw) { }
     /// @brief called on IRETURN
     void do_ireturn() { }
     /// @brief called on LRETURN

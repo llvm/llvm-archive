@@ -498,8 +498,10 @@ namespace {
     void do_jsr(unsigned target, unsigned retAddress) { abort(); }
     /// @brief called on RET
     void do_ret(unsigned index) { abort(); }
-    /// @brief called on TABLESWITCH and LOOKUPSWITCH
-    void do_switch(unsigned defTarget, const SwitchCases& sw) { abort(); }
+    /// @brief called on TABLESWITCH
+    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) { abort(); }
+    /// @brief called on LOOKUPSWITCH
+    void do_lookupswitch(unsigned defTarget, const SwitchCases& sw) { abort(); }
     /// @brief called on IRETURN
     void do_ireturn() { Out << "ireturn"; }
     /// @brief called on LRETURN

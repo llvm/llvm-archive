@@ -161,12 +161,20 @@ namespace llvm { namespace Java {
       getOrCreateBasicBlockAt(t);
     }
 
-    void do_switch(unsigned defTarget, const SwitchCases& sw) {
+    void do_switch_common(unsigned defTarget, const SwitchCases& sw) {
       for (unsigned i = 0, e = sw.size(); i != e; ++i) {
         unsigned target = sw[i].second;
         getOrCreateBasicBlockAt(target);
       }
       getOrCreateBasicBlockAt(defTarget);
+    }
+
+    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) {
+      do_switch_common(defTarget, sw);
+    }
+
+    void do_lookupswitch(unsigned defTarget, const SwitchCases& sw) {
+      do_switch_common(defTarget, sw);
     }
 
     void do_goto(unsigned target) {

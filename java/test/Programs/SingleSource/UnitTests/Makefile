@@ -20,11 +20,14 @@ JAVA_TESTS := Abstract \
 	InterfaceCall \
 	LongCompare \
 	LookupSwitch \
+	Numbers \
 	StaticInitializers \
 	TableSwitch \
 	Test \
 	VirtualCall \
 	VTable \
+#	List \
+#	MultipleInterfaces \
 #	MultiArray \
 
 

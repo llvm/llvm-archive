@@ -61,7 +61,7 @@ namespace llvm { namespace Java { namespace {
     Module& module_;
     std::auto_ptr<Resolver> resolver_;
     GlobalVariable* JNIEnvPtr_;
-    const ClassFile* cf_;
+    const Class* class_;
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
     typedef std::map<BasicBlock*, unsigned> OpStackDepthMap;
@@ -1030,7 +1030,8 @@ namespace llvm { namespace Java { namespace {
     /// Emits the necessary code to get a pointer to a static field of
     /// an object.
     GlobalVariable* getStaticField(unsigned index) {
-      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      ConstantFieldRef* fieldRef =
+        class_->getClassFile()->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
       const std::string& className = fieldRef->getClass()->getName()->str();
@@ -1080,7 +1081,8 @@ namespace llvm { namespace Java { namespace {
     /// Emits the necessary code to get a field from the passed
     /// pointer to an object.
     Value* getField(unsigned index, Value* ptr) {
-      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      ConstantFieldRef* fieldRef =
+        class_->getClassFile()->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
       return getField(
         &resolver_->getClass(fieldRef->getClass()->getName()->str()),
@@ -1135,7 +1137,9 @@ namespace llvm { namespace Java { namespace {
     /// callers or methods of objects it creates).
     Function* compileMethodOnly(const std::string& classMethodDesc) {
       Method* method = getMethod(classMethodDesc);
-      cf_ = method->getParent();
+      const std::string& className =
+        method->getParent()->getThisClass()->getName()->str();
+      class_ = &resolver_->getClass(className);
 
       Function* function = getFunction(method);
       if (!function->empty()) {
@@ -1151,9 +1155,9 @@ namespace llvm { namespace Java { namespace {
 
         std::string funcName =
           "Java_" +
-          getMangledString(cf_->getThisClass()->getName()->str()) + '_' +
+          getMangledString(className) + '_' +
           getMangledString(method->getName()->str());
-        if (cf_->isNativeMethodOverloaded(*method)) {
+        if (class_->getClassFile()->isNativeMethodOverloaded(*method)) {
           // We need to add two underscores and a mangled argument signature
           funcName += "__";
           const std::string descr = method->getDescriptor()->str();
@@ -1474,7 +1478,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_ldc(unsigned index) {
-      Constant* c = cf_->getConstant(index);
+      Constant* c = class_->getClassFile()->getConstant(index);
       assert(getConstant(c) && "Java constant not handled!");
       push(getConstant(c));
     }
@@ -1848,7 +1852,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_getfield(unsigned index) {
-      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      ConstantFieldRef* fieldRef =
+        class_->getClassFile()->getConstantFieldRef(index);
       const std::string& name = fieldRef->getNameAndType()->getName()->str();
       Value* p = pop(resolver_->getObjectBaseRefType());
       Value* v = new LoadInst(getField(index, p), name, currentBB_);
@@ -1856,7 +1861,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_putfield(unsigned index) {
-      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      ConstantFieldRef* fieldRef =
+        class_->getClassFile()->getConstantFieldRef(index);
       const Type* type =
         resolver_->getType(fieldRef->getNameAndType()->getDescriptor()->str());
       Value* v = pop(type);
@@ -1931,7 +1937,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokevirtual(unsigned index) {
-      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantMethodRef* methodRef =
+        class_->getClassFile()->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       const std::string& className = methodRef->getClass()->getName()->str();
@@ -1969,7 +1976,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokespecial(unsigned index) {
-      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantMethodRef* methodRef =
+        class_->getClassFile()->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       const std::string& className = methodRef->getClass()->getName()->str();
@@ -1987,7 +1995,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokestatic(unsigned index) {
-      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantMethodRef* methodRef =
+        class_->getClassFile()->getConstantMethodRef(index);
       emitStaticInitializers(
         ClassFile::get(methodRef->getClass()->getName()->str()));
       Method* method = getMethod(methodRef);
@@ -2010,7 +2019,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_invokeinterface(unsigned index) {
       ConstantInterfaceMethodRef* methodRef =
-        cf_->getConstantInterfaceMethodRef(index);
+        class_->getClassFile()->getConstantInterfaceMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       const std::string& className = methodRef->getClass()->getName()->str();
@@ -2087,7 +2096,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_new(unsigned index) {
-      ConstantClass* classRef = cf_->getConstantClass(index);
+      ConstantClass* classRef =
+        class_->getClassFile()->getConstantClass(index);
       const Class& ci = resolver_->getClass(classRef->getName()->str());
       emitStaticInitializers(ci.getClassFile());
       const VTableInfo& vi = getVTableInfo(ci.getClassFile());
@@ -2201,7 +2211,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_checkcast(unsigned index) {
-      ConstantClass* classRef = cf_->getConstantClass(index);
+      ConstantClass* classRef =
+        class_->getClassFile()->getConstantClass(index);
 
       const Class* ci = &resolver_->getClass(classRef->getName()->str());
       const VTableInfo* vi = getVTableInfoGeneric(classRef->getName()->str());
@@ -2220,7 +2231,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_instanceof(unsigned index) {
-      ConstantClass* classRef = cf_->getConstantClass(index);
+      ConstantClass* classRef =
+        class_->getClassFile()->getConstantClass(index);
 
       const Class* ci = &resolver_->getClass(classRef->getName()->str());
       const VTableInfo* vi = getVTableInfoGeneric(classRef->getName()->str());

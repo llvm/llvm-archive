@@ -6,8 +6,7 @@ public class Maps1
 
     public static void main(String[] args) {
         HashMap map = new HashMap();
-        fillMapWithRandomInts(map);
-        printIntMap(map);
-    }
+        Maps.fillMapWithRandomInts(map);
+        Maps.printIntMap(map);
     }
 }

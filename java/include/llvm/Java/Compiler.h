@@ -27,7 +27,7 @@ namespace llvm { namespace Java {
         Compiler();
         ~Compiler();
 
-        Module* compile(const ClassFile& cf);
+        void compile(Module& m, const ClassFile& cf);
 
     private:
         // do not implement

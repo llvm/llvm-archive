@@ -712,17 +712,13 @@ Compiler::~Compiler()
     delete compilerImpl_;
 }
 
-Module* Compiler::compile(const ClassFile& cf)
+void Compiler::compile(Module& m, const ClassFile& cf)
 {
     DEBUG(std::cerr << "compiling class: "
           << cf.getThisClass()->getName()->str() << '\n');
 
-    Module* module = new Module(cf.getThisClass()->getName()->str());
-
     const Java::Methods& methods = cf.getMethods();
     for (Java::Methods::const_iterator
              i = methods.begin(), e = methods.end(); i != e; ++i)
-        compilerImpl_->compileMethod(*module, cf, **i);
-
-    return module;
+        compilerImpl_->compileMethod(m, cf, **i);
 }

@@ -37,15 +37,17 @@ int main(int argc, char* argv[])
 
     try {
         std::ifstream in(InputFilename.c_str());
+        
         std::auto_ptr<Java::ClassFile> cf(Java::ClassFile::readClassFile(in));
 
         Java::Compiler compiler;
 
-        Module* module = compiler.compile(*cf);
+        Module module(InputFilename);
+        compiler.compile(module, *cf);
 
         PassManager passes;
         passes.add(new PrintModulePass(&std::cout));
-        passes.run(*module);
+        passes.run(module);
     }
     catch (std::exception& e) {
         std::cerr << e.what() << '\n';

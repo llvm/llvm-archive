@@ -34,7 +34,7 @@ namespace llvm { namespace Java {
     Resolver* resolver_;
     const ClassFile* classFile_;
     const VMClass* componentClass_;
-    Type* structType_;
+    Type* layoutType_;
     const Type* type_;
     unsigned interfaceIndex_;
     typedef std::map<std::string, int> Field2IndexMap;
@@ -70,7 +70,7 @@ namespace llvm { namespace Java {
 
   public:
     const std::string& getName() const { return name_; }
-    const Type* getLayoutType() const { return structType_; }
+    const Type* getLayoutType() const { return layoutType_; }
     const Type* getType() const { return type_; }
     const ClassFile* getClassFile() const { return classFile_; }
     unsigned getNumSuperClasses() const { return superClasses_.size(); }
@@ -81,8 +81,8 @@ namespace llvm { namespace Java {
     unsigned getNumInterfaces() const { return interfaces_.size(); }
     const VMClass* getInterface(unsigned i) const { return interfaces_[i]; }
     const VMClass* getComponentClass() const { return componentClass_; }
-    bool isArray() const { return componentClass_; }
-    bool isPrimitive() const { return !structType_; }
+    bool isArray() const { return getComponentClass(); }
+    bool isPrimitive() const { return getType() == getLayoutType(); }
     bool isInterface() const { return classFile_ && !getSuperClass(); }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }
     int getFieldIndex(const std::string& name) const;

@@ -31,8 +31,8 @@ VMClass::VMClass(Resolver* resolver, const std::string& className)
     resolver_(resolver),
     classFile_(ClassFile::get(className)),
     componentClass_(NULL),
-    structType_(OpaqueType::get()),
-    type_(PointerType::get(structType_)),
+    layoutType_(OpaqueType::get()),
+    type_(PointerType::get(layoutType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX),
     resolvedConstantPool_(classFile_->getNumConstants())
 {
@@ -44,8 +44,8 @@ VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
     resolver_(resolver),
     classFile_(NULL),
     componentClass_(componentClass),
-    structType_(OpaqueType::get()),
-    type_(PointerType::get(structType_)),
+    layoutType_(OpaqueType::get()),
+    type_(PointerType::get(layoutType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX)
 {
 
@@ -63,7 +63,7 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
     resolver_(resolver),
     classFile_(NULL),
     componentClass_(NULL),
-    structType_(NULL),
+    layoutType_(const_cast<Type*>(type)),
     type_(type),
     interfaceIndex_(INVALID_INTERFACE_INDEX)
 {
@@ -82,11 +82,11 @@ int VMClass::getFieldIndex(const std::string& name) const {
 }
 
 void VMClass::resolveType() {
-  PATypeHolder holder = structType_;
+  PATypeHolder holder = layoutType_;
   Type* resolvedType = StructType::get(elementTypes_);
-  cast<OpaqueType>(structType_)->refineAbstractTypeTo(resolvedType);
-  structType_ = holder.get();
-  type_ = PointerType::get(structType_);
+  cast<OpaqueType>(layoutType_)->refineAbstractTypeTo(resolvedType);
+  layoutType_ = holder.get();
+  type_ = PointerType::get(layoutType_);
 }
 
 void VMClass::link()

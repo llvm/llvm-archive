@@ -16,9 +16,9 @@
 
 #include <stdint.h>
 
-namespace llvm { namespace Java {
+namespace llvm { namespace Java { namespace Opcode {
 
-    enum Opcode {
+    enum {
         NOP = 0x00,
         ACONST_NULL = 0x01,
         ICONST_M1 = 0x02,
@@ -226,4 +226,4 @@ namespace llvm { namespace Java {
         IMPDEP2 = 0xFF,
     };
 
-} } // namespace llvm::Java
+} } } // namespace llvm::Java::BC

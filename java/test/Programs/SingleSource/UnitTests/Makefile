@@ -10,18 +10,18 @@ LEVEL := ../../../..
 
 JAVA_TESTS := Arithm \
 	BigConstants \
+	FieldAccess \
+	FloatCompare \
 	ForLoop \
 	If \
+	LongCompare \
 	LookupSwitch \
 	Return \
 	StaticInitializers \
 	TableSwitch \
+#	VTable \
 #	ClassTest \
-#	FieldAccess \
-#	FloatCompare \
-#	LongCompare \
 #	InstanceOf \
-#	VTable
 
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1

@@ -89,18 +89,27 @@ void TVTreeCtrl::updateTextDisplayed() {
 
   // Display the assembly language for the selected LLVM object in the
   // right-hand pane.
-  std::ostringstream Out;
 #if defined(NOHTML)
-  item->print(Out);
-  textDisplay->Clear();
-  textDisplay->AppendText(Out.str().c_str());
+  textDisplay->displayItem (item);
 #else
-  item->printHTML(Out);
-  htmlDisplay->Hide();
-  htmlDisplay->SetPage(wxString(""));
-  htmlDisplay->AppendToPage(wxString(Out.str().c_str()));
-  htmlDisplay->Show();
+  htmlDisplay->displayItem (item);
 #endif
+}
+
+void TVTextCtrl::displayItem (TVTreeItemData *item) {
+  std::ostringstream Out;
+  item->print (Out);
+  Clear ();
+  AppendText (Out.str ().c_str ());
+}
+
+void TVHtmlWindow::displayItem (TVTreeItemData *item) {
+  std::ostringstream Out;
+  item->printHTML (Out);
+  Hide ();
+  SetPage (wxString (""));
+  AppendToPage (wxString (Out.str ().c_str ()));
+  Show ();
 }
 
 /// OnSelChanged - Trigger the text display to be updated with the new

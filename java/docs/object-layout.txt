@@ -1,59 +1,70 @@
-Object layout for Java objects and array objects
-------------------------------------------------
+Object layout for Java objects
+------------------------------
 
-1) objects
+Each Java object will have the following basic layout:
 
-    Need extensible header for the use of:
+struct llvm_java_object_base {
+  llvm_java_object_header header;
+  llvm_java_object_vtable* vtable;
+}
 
-    a) VM: locking, hashing, dynamic type checking, virtual function
-           invocation.
-
-    b) GC: garbage collection (can be the reference count for a
-           reference counting garbage collector)
-
-    obj_t : { <header_t>, <field_t1>, <field_t2>, ..., <field_tN> }
-
-    +--------+ <-- pointer to object
-    | header |
-    +--------+
-    | field1 |
-    +--------+
-    | field2 |
-    +--------+
-    | ...... |
-    +--------+
-    | fieldN |
-    +--------+
-
-2) arrays
-
-    +--------+ <-- pointer to array object
-    |  len   |
-    +--------+
-    | header |
-    +--------+
-    | obj_t* |
-    +--------+
-    | ...... |
-    +--------+
-    | ...... |
-    +--------+
-
-    array_object_t : { uint, <header_t>, [ 0 x <obj_t>* ] }
+Additional fields go to the end of the struct.
 
 
-Type information for java objects
----------------------------------
 
-VM_Class object for each class. This object needs at least the
-following fields:
+The 'llvm_java_object_header' is not defined yet.
 
-a) pointer to VM_Class object of its super class
-b) list of interfaces implemented
-c) list of field descriptors
-d) list of methods (static, constructor, virtual, finalizer)
-e) list of attributes (constant value, code, exceptions, inner
-classes, synthetic, source file, line number table, local variable
-table, deprecated)
+struct llvm_java_object_header {
+  // gc info, hash info, locking
+}
 
-We would most likely need a method dispatch table as well (vtable).
+
+
+The vtable holds a nested struct of a 'llvm_java_object_typeinfo'
+object. All methods are added after the nested struct and calls to
+them are made by fetching the correct function pointer from the vtable
+at runtime.
+
+struct llvm_java_object_vtable {
+  java_object_typeinfo typeinfo;
+}
+
+
+
+For each class we keep track of its depth and an array of vtables to
+all its superclasses. The depth of a class is the number of
+superclasses it has. So java.lang.Object has depth 0, class A (extends
+java.lang.Object) has depth 1 and so on. We also keep an array of
+pointers to interface vtables. Each interface (vtable) gets a unique
+number and it is indexed to this array. This mostly empty array is
+filled up to the last interface implemented (the interface with the
+largest index in this array). Since interfaces cannot implement other
+interfaces (they can only extend) the lastIface and interfaces are
+used to differentiate between class typeinfo's and interface
+typeinfo's. More specifically if interfaces == -1 then this typeinfo
+is for an interface and the lastIface field is the unique number of
+this interface in the objects interfaces array.
+
+struct llvm_java_object_typeinfo {
+  uint depth;
+  llvm_java_object_vtable* vtables;
+  uint lastIface;
+  llvm_java_object_vtable* interfaces;
+}
+
+The structure of llvm_java_object_typeinfo allows constant time
+dynamic type checks:
+
+bool isInstanceOf(llvm_java_object_base* obj, llvm_java_object_vtable* clazz) {
+  llvm_java_object_vtable* objClazz = obj->vtable;
+  if (objClazz == clazz)
+    return true;
+  // we are checking against a class' typeinfo
+  if (clazz->interfaces != -1)
+    return objClazz->depth > clazz->depth &&
+           objClazz->vtables[clazz->depth] == clazz;
+  // otherwise we are checking against an interface's typeinfo
+  else
+    return objClazz->lastIface >= clazz->lastIface &&
+           objClazz->interfaces[class->lastIface];
+}

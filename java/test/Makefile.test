@@ -25,9 +25,11 @@ clean::
 	-$(Verb)$(MV) -f $*.stubbed.llvm.bc $*.llvm.bc
 
 # rule to link raw bytecode with runtime
-%.raw.llvm %.raw.llvm.bc: %.raw.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
-	$(Echo) Linking $< with the Java runtime
+%.raw.llvm %.raw.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
+	$(Echo) Linking $< with the Java runtime \(no optimizations\)
 	-$(Verb)$(GCCLD) -disable-opt -o=$*.raw.llvm $< -L $(CFERuntimeLibDir) -L $(LibDir) $(EXTRA_OBJS)
+	-$(Verb)$(LOPT) -load $(LibDir)/LLVMJavaTransforms -addstubs -f -o=$*.stubbed.raw.llvm.bc $*.raw.llvm.bc
+	-$(Verb)$(MV) -f $*.stubbed.raw.llvm.bc $*.raw.llvm.bc
 
 # add function trace code
 %.tracef.llvm %.tracef.llvm.bc: %.llvm %.llvm.bc $(LOPT)

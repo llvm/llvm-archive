@@ -411,9 +411,11 @@ namespace llvm { namespace Java { namespace {
       // Add member functions to the vtable.
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
         Method* method = methods[i];
-        // The contructor is the only non-static method that is not
-        // dynamically dispatched so we skip it.
-        if (!method->isStatic() && method->getName()->str()[0] != '<') {
+        // Static methods, private instance methods and the contructor
+        // are statically bound so we don't add them to the vtable.
+        if (!method->isStatic() &&
+            !method->isPrivate() &&
+            method->getName()->str()[0] != '<') {
           std::string methodDescr =
             method->getName()->str() +
             method->getDescriptor()->str();
@@ -838,9 +840,11 @@ namespace llvm { namespace Java { namespace {
 
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
         Method* method = methods[i];
-        // The contructor is the only non-static method that is not
-        // dynamically dispatched so we skip it.
-        if (!method->isStatic() && method->getName()->str()[0] != '<') {
+        // Static methods, private instance methods and the contructor
+        // are statically bound so we don't add them to the vtable.
+        if (!method->isStatic() &&
+            !method->isPrivate() &&
+            method->getName()->str()[0] != '<') {
           const std::string& methodDescr =
             method->getName()->str() + method->getDescriptor()->str();
 

@@ -222,12 +222,7 @@ void TVFrame::CallGraphView(wxCommandEvent &event) {
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new call graph view window.
-  Module *M = item->getModule ();
-  if (!M)
-    wxMessageBox ("The selected item doesn't have a call graph to view.",
-                  "Error", wxOK | wxICON_ERROR, this);
-  else
-    myApp->OpenCallGraphView (M);
+  myApp->OpenCallGraphView (item);
 }
 
 void TVFrame::CFGView(wxCommandEvent &event) {
@@ -236,15 +231,7 @@ void TVFrame::CFGView(wxCommandEvent &event) {
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new CFG view window.
-  Function *F = item->getFunction ();
-  if (!F)
-    wxMessageBox("The selected item doesn't have a CFG to view.", "Error",
-                 wxOK | wxICON_ERROR, this);
-  else if (F->isExternal())
-    wxMessageBox("External functions have no CFG to view.", "Error",
-                 wxOK | wxICON_ERROR, this);
-  else
-    myApp->OpenCFGView (F);
+  myApp->OpenCFGView (item);
 }
 
 // FIXME: These 3 functions are asking for a refactoring...
@@ -253,23 +240,8 @@ void TVFrame::BUDSView(wxCommandEvent &event) {
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
-  // Open up a new BUDS view window. First, try to see if it's a Function.
-  Function *F = item->getFunction ();
-  if (F) {
-    if (F->isExternal())
-      wxMessageBox("External functions have no Datastructures to view.",
-                   "Error", wxOK | wxICON_ERROR, this);
-    else
-      myApp->OpenBUDSView(F);
-  } else {
-    // Maybe it's a Module?
-    Module *M = item->getModule();
-    if (M)
-      myApp->OpenBUDSView(M);
-    else
-      wxMessageBox("The selected item is invalid.", "Error",
-                   wxOK | wxICON_ERROR, this);
-  } 
+  // Open up a new BUDS view window.
+  myApp->OpenBUDSView(item);
 }
 
 void TVFrame::TDDSView(wxCommandEvent &event) {
@@ -277,23 +249,8 @@ void TVFrame::TDDSView(wxCommandEvent &event) {
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
-  // Open up a new TDDS view window. First, try to see if it's a Function.
-  Function *F = item->getFunction ();
-  if (F) {
-    if (F->isExternal())
-      wxMessageBox("External functions have no Datastructures to view.",
-                   "Error", wxOK | wxICON_ERROR, this);
-    else
-      myApp->OpenTDDSView(F);
-  } else {
-    // Maybe it's a Module?
-    Module *M = item->getModule();
-    if (M)
-      myApp->OpenTDDSView(M);
-    else
-      wxMessageBox("The selected item is invalid.", "Error",
-                   wxOK | wxICON_ERROR, this);
-  } 
+  // Open up a new TDDS view window.
+  myApp->OpenTDDSView(item);
 }
 
 void TVFrame::LocalDSView(wxCommandEvent &event) {
@@ -301,23 +258,8 @@ void TVFrame::LocalDSView(wxCommandEvent &event) {
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
-  // Open up a new Local DS view window. First, try to see if it's a Function.
-  Function *F = item->getFunction ();
-  if (F) {
-    if (F->isExternal())
-      wxMessageBox("External functions have no Datastructures to view.",
-                   "Error", wxOK | wxICON_ERROR, this);
-    else
-      myApp->OpenLocalDSView(F);
-  } else {
-    // Maybe it's a Module?
-    Module *M = item->getModule();
-    if (M)
-      myApp->OpenLocalDSView(M);
-    else
-      wxMessageBox("The selected item is invalid.", "Error",
-                   wxOK | wxICON_ERROR, this);
-  } 
+  // Open up a new Local DS view window.
+  myApp->OpenLocalDSView(item);
 }
 
 void TVFrame::CodeView(wxCommandEvent &event) {

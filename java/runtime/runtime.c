@@ -1,5 +1,5 @@
-
 #include <stdlib.h>
+#include <string.h>
 #include <llvm/Java/jni.h>
 
 struct llvm_java_object_base;

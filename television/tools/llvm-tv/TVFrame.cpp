@@ -12,6 +12,7 @@
 #include "llvm/Assembly/Writer.h"
 #include <dirent.h>
 #include <cassert>
+#include <sstream>
 
 /// refreshView - Make sure the display is up-to-date with respect to
 /// the list.

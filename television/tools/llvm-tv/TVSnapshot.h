@@ -19,9 +19,9 @@ class TVSnapshot {
   void readBytecodeFile ();
  public:
   std::string itemName;
-  TVSnapshot () : itemName ("") { }
-  TVSnapshot (const std::string &_name) : itemName (_name) { }
-  TVSnapshot (const char *_name) : itemName (_name) { }
+  TVSnapshot () : M (0), itemName ("") { }
+  TVSnapshot (const std::string &_name) : M (0), itemName (_name) { }
+  TVSnapshot (const char *_name) : M (0), itemName (_name) { }
   const char *label () { return itemName.c_str (); }
   Module *getModule () {
     if (!M)

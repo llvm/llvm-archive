@@ -74,302 +74,16 @@ jint llvm_java_throw(jobject obj) {
   abort();
 }
 
-/* The implementation of JNI functions */
+extern struct llvm_java_class_record* llvm_java_class_records;
 
-extern const struct llvm_java_class_record* llvm_java_class_records;
-
-static jclass llvm_java_find_class(JNIEnv* env, const char* name) {
-  const struct llvm_java_class_record** clazz = &llvm_java_class_records;
-  while (*clazz)
-    if (strcmp((*clazz)->typeinfo.name, name) == 0)
-      return (jclass) clazz;
+struct llvm_java_class_record*
+llvm_java_find_class(JNIEnv* env, const char* name) {
+  struct llvm_java_class_record** cr = &llvm_java_class_records;
+  while (*cr)
+    if (strcmp((*cr)->typeinfo.name, name) == 0)
+      return *cr;
 
   return NULL;
-}
-
-static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
-  return ((struct llvm_java_booleanarray*) array)->length;
-}
-
-#define HANDLE_NATIVE_TYPE(TYPE) \
-  static j##TYPE* llvm_java_get_##TYPE##_array_elements( \
-    JNIEnv* env, \
-    jarray array, \
-    jboolean* isCopy) { \
-    if (isCopy) \
-      *isCopy = JNI_FALSE; \
-    return ((struct llvm_java_##TYPE##array*) array)->data; \
-  }
-#include "types.def"
-
-#define HANDLE_NATIVE_TYPE(TYPE) \
-  static void llvm_java_release_##TYPE##_array_elements( \
-    JNIEnv* env, \
-    jarray array, \
-    j##TYPE* elements, \
-    jint mode) { \
-    switch (mode) { \
-    case 0: \
-    case JNI_COMMIT: \
-    case JNI_ABORT: \
-      return; \
-    default: \
-      abort(); \
-    } \
-  }
-#include "types.def"
-
-/* The JNI interface definition */
-static const struct JNINativeInterface llvm_java_JNINativeInterface = {
-  NULL, /* 0 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  &llvm_java_find_class,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 10 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 20 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 30 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 40 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 50 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 60 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 70 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 80 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 90 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 100 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 110 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 120 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 130 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 140 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 150 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 160 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 170 */
-  &llvm_java_get_array_length,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 180 */
-  NULL,
-  NULL,
-  &llvm_java_get_boolean_array_elements,
-  &llvm_java_get_byte_array_elements,
-  &llvm_java_get_char_array_elements,
-  &llvm_java_get_short_array_elements,
-  &llvm_java_get_int_array_elements,
-  &llvm_java_get_long_array_elements,
-  &llvm_java_get_float_array_elements,
-  &llvm_java_get_double_array_elements,
-  &llvm_java_release_boolean_array_elements,
-  &llvm_java_release_byte_array_elements,
-  &llvm_java_release_char_array_elements,
-  &llvm_java_release_short_array_elements,
-  &llvm_java_release_int_array_elements,
-  &llvm_java_release_long_array_elements,
-  &llvm_java_release_float_array_elements,
-  &llvm_java_release_double_array_elements,
-  NULL,
-  NULL, /* 200 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 210 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 220 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 230 */
-  NULL,
-};
-
-const JNIEnv llvm_java_JNIEnv = &llvm_java_JNINativeInterface;
-
-typedef void (*ClassInitializerFunction)(void);
-
-extern const ClassInitializerFunction llvm_java_class_initializers;
-
-extern void llvm_java_main(int, char**);
-
-int main(int argc, char** argv) {
-  const ClassInitializerFunction* classInit = &llvm_java_class_initializers;
-  while (*classInit)
-    (*classInit++)();
-
-  llvm_java_main(argc, argv);
-  return 0;
 }
 
 void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
@@ -397,4 +111,19 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
 void Java_gnu_classpath_VMSystemProperties_preInit(JNIEnv *env, jobject clazz,
                                                    jobject properties) {
 
+}
+
+typedef void (*ClassInitializerFunction)(void);
+
+extern const ClassInitializerFunction llvm_java_class_initializers;
+
+extern void llvm_java_main(int, char**);
+
+int main(int argc, char** argv) {
+  const ClassInitializerFunction* classInit = &llvm_java_class_initializers;
+  while (*classInit)
+    (*classInit++)();
+
+  llvm_java_main(argc, argv);
+  return 0;
 }

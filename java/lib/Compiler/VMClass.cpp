@@ -121,16 +121,21 @@ const VMMethod* VMClass::lookupMethod(const std::string& name) const
 
 void VMClass::computeLayout()
 {
+  // If this is an interface, then its layout and type are the same as
+  // java/lang/Object.
+  if (isInterface()) {
+    const VMClass* object = resolver_->getClass("java/lang/Object");
+    layoutType_ = const_cast<Type*>(object->getLayoutType());
+    type_ = object->getType();
+    return;
+  }
+
   std::vector<const Type*> layout;
   if (isArray()) {
     layout.reserve(3);
     layout.push_back(resolver_->getClass("java/lang/Object")->getLayoutType());
     layout.push_back(Type::UIntTy);
     layout.push_back(ArrayType::get(componentClass_->getType(), 0));
-  }
-  else if (isInterface()) {
-    layout.reserve(1);
-    layout.push_back(resolver_->getClass("java/lang/Object")->getLayoutType());
   }
   else {
     if (const VMClass* superClass = getSuperClass())
@@ -200,12 +205,9 @@ void VMClass::link()
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
         interfaces_.push_back(superClass->getInterface(i));
 
-      // Although we can safely assume that all interfaces inherit
-      // from java/lang/Object, java/lang/Class.getSuperclass()
-      // returns null on interface types. So we only set the
-      // superClass_ field when the class is not an interface type,
-      // but we model the LLVM type of the interface to be as if it
-      // inherits java/lang/Object.
+      // In a classfile an interface is as if it inherits
+      // java/lang/Object, but java/lang/Class/getSuperClass() should
+      // return null on any interface class. Thus we do the same here.
       if (classFile_->isInterface())
         interfaceIndex_ = resolver_->getNextInterfaceIndex();
       else {

@@ -1,16 +1,10 @@
 #include <stdlib.h>
+#include <llvm/Java/jni.h>
 
 struct llvm_java_object_base;
 struct llvm_java_object_header;
 struct llvm_java_object_vtable;
 struct llvm_java_object_typeinfo;
-
-/* Define VM internal types */
-typedef struct llvm_java_object_base* jobject;
-typedef unsigned jfieldID;
-typedef unsigned jmethodID;
-#define _JNI_VM_INTERNAL_TYPES_DEFINED
-#include <jni.h>
 
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
@@ -77,7 +71,7 @@ jint llvm_java_Throw(jobject obj) {
 
 
 /* The JNI interface definition */
-const struct JNINativeInterface llvm_java_JNIEnv = {
+static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL,
@@ -311,6 +305,8 @@ const struct JNINativeInterface llvm_java_JNIEnv = {
   NULL,
   NULL,
 };
+
+const JNIEnv llvm_java_JNIEnv = &llvm_java_JNINativeInterface;
 
 extern void llvm_java_static_init(void);
 extern void llvm_java_main(int, char**);

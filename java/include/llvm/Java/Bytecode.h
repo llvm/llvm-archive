@@ -234,7 +234,7 @@ namespace llvm { namespace Java {
     } // namespace Opcode
 
     inline int readSByte(const uint8_t* code, unsigned& i) {
-        return code[++i];
+        return ((int8_t*)code)[++i];
     }
 
     inline unsigned readUByte(const uint8_t* code, unsigned& i) {

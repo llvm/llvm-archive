@@ -9,6 +9,17 @@ typedef unsigned jfieldID;
 typedef unsigned jmethodID;
 #define _JNI_VM_INTERNAL_TYPES_DEFINED
 
+/* Define some types*/
+/* FIXME: this should really be picked up from jni_md.h */
+typedef unsigned char jboolean;
+typedef signed char jbyte;
+typedef unsigned short jchar;
+typedef short jshort;
+typedef int jint;
+typedef long long jlong;
+typedef float jfloat;
+typedef double jdouble;
+
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
 };
@@ -37,8 +48,8 @@ llvm_java_GetObjectClass(jobject obj) {
   return obj->vtable;
 }
 
-int llvm_java_IsInstanceOf(jobject obj,
-                           struct llvm_java_object_vtable* clazz) {
+jint llvm_java_IsInstanceOf(jobject obj,
+                            struct llvm_java_object_vtable* clazz) {
   struct llvm_java_object_vtable* objClazz = obj->vtable;
   if (objClazz == clazz)
     return 1;
@@ -51,6 +62,7 @@ int llvm_java_IsInstanceOf(jobject obj,
     return objClazz->typeinfo.lastIface >= clazz->typeinfo.lastIface &&
            objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];
 }
+
 
 extern void llvm_java_static_init(void);
 extern void llvm_java_main(int, char**);

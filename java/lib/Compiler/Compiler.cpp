@@ -52,6 +52,13 @@ namespace llvm { namespace Java { namespace {
 
   const std::string TMP("tmp");
 
+  llvm::Constant* ONE = ConstantSInt::get(Type::IntTy, 1);
+  llvm::Constant* ZERO = ConstantSInt::get(Type::IntTy, 0);
+  llvm::Constant* MINUS_ONE = ConstantSInt::get(Type::IntTy, -1);
+
+  llvm::Constant* INT_SHIFT_MASK = ConstantUInt::get(Type::UByteTy, 0x1f);
+  llvm::Constant* LONG_SHIFT_MASK = ConstantUInt::get(Type::UByteTy, 0x3f);
+
   inline bool isTwoSlotValue(const Value* v) {
     return isTwoSlotType(v->getType());
   }
@@ -1778,17 +1785,21 @@ namespace llvm { namespace Java { namespace {
     void do_lushr() { do_shift_unsigned_common(Type::LongTy); }
 
     void do_shift_unsigned_common(const Type* type) {
+      llvm::Constant* mask =
+        type == Type::IntTy ? INT_SHIFT_MASK : LONG_SHIFT_MASK;
       // Cast value to be shifted into its unsigned version.
       Value* a = pop(Type::UByteTy);
+      a = BinaryOperator::create(Instruction::And, a, mask, TMP, currentBB_);
       Value* v = pop(type->getUnsignedVersion());
       Value* r = new ShiftInst(Instruction::Shr, v, a, TMP, currentBB_);
-      // Cast shifted value back to its original signed version.
-      r = new CastInst(r, type->getSignedVersion(), TMP, currentBB_);
       push(r);
     }
 
     void do_shift_common(Instruction::OtherOps op, const Type* type) {
+      llvm::Constant* mask =
+        type == Type::IntTy ? INT_SHIFT_MASK : LONG_SHIFT_MASK;
       Value* a = pop(Type::UByteTy);
+      a = BinaryOperator::create(Instruction::And, a, mask, TMP, currentBB_);
       Value* v = pop(type);
       Value* r = new ShiftInst(op, v, a, TMP, currentBB_);
       push(r);
@@ -1840,36 +1851,29 @@ namespace llvm { namespace Java { namespace {
       Value* v2 = pop(Type::LongTy);
       Value* v1 = pop(Type::LongTy);
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
-      Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
-                                ConstantSInt::get(Type::IntTy, 0), TMP,
-                                currentBB_);
+      Value* r = new SelectInst(c, ONE, ZERO, TMP, currentBB_);
       c = BinaryOperator::createSetLT(v1, v2, TMP, currentBB_);
-      r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
-                         currentBB_);
+      r = new SelectInst(c, MINUS_ONE, r, TMP, currentBB_);
       push(r);
     }
 
-    void do_fcmpl() { do_cmp_common(Type::FloatTy, -1); }
-    void do_dcmpl() { do_cmp_common(Type::DoubleTy, -1); }
-    void do_fcmpg() { do_cmp_common(Type::FloatTy, 1); }
-    void do_dcmpg() { do_cmp_common(Type::DoubleTy, 1); }
+    void do_fcmpl() { do_cmp_common(Type::FloatTy, false); }
+    void do_dcmpl() { do_cmp_common(Type::DoubleTy, false); }
+    void do_fcmpg() { do_cmp_common(Type::FloatTy, true); }
+    void do_dcmpg() { do_cmp_common(Type::DoubleTy, true); }
 
-    void do_cmp_common(const Type* type, int valueIfUnordered) {
+    void do_cmp_common(const Type* type, bool pushOne) {
       Value* v2 = pop(type);
       Value* v1 = pop(type);
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
-      Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
-                                ConstantSInt::get(Type::IntTy, 0), TMP,
-                                currentBB_);
+      Value* r = new SelectInst(c, ONE, ZERO, TMP, currentBB_);
       c = BinaryOperator::createSetLT(v1, v2, TMP, currentBB_);
-      r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
-                         currentBB_);
+      r = new SelectInst(c, MINUS_ONE, r, TMP, currentBB_);
       c = new CallInst(module_.getOrInsertFunction
                        ("llvm.isunordered",
                         Type::BoolTy, v1->getType(), v2->getType(), 0),
                        v1, v2, TMP, currentBB_);
-      r = new SelectInst(c, ConstantSInt::get(Type::IntTy, valueIfUnordered),
-                         r, TMP, currentBB_);
+      r = new SelectInst(c, pushOne ? ONE : MINUS_ONE, r, TMP, currentBB_);
       push(r);
     }
 

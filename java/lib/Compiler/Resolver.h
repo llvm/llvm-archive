@@ -39,14 +39,21 @@ namespace llvm { namespace Java {
                               unsigned& i,
                               bool memberMethod = false) const;
 
-    std::string canonicalizeClassName(const std::string& className) {
+    std::pair<ClassMap::iterator, bool> insertClass(const Class& clazz) {
+      return classMap_.insert(std::make_pair(clazz.getName(), clazz));
+    }
+    ClassMap::iterator insertClass(ClassMap::iterator i, const Class& clazz) {
+      return classMap_.insert(i, std::make_pair(clazz.getName(), clazz));
+    }
+
+  public:
+    static std::string canonicalizeClassName(const std::string& className) {
       if (className[0] == '[')
         return className;
       else
         return 'L' + className + ';';
     }
 
-  public:
     Resolver(Module* module);
 
     const Type* getObjectBaseType() const { return objectBaseType_; }
@@ -71,7 +78,10 @@ namespace llvm { namespace Java {
       return getClassForDesc(field.getDescriptor()->str());
     }
     const Class* getClass(JType type);
-    const Class* getArrayClass(JType type);
+
+    const Class* getArrayClass(const Class* clazz) {
+      return getClassForDesc('[' + clazz->getName());
+    }
 
     unsigned getNextInterfaceIndex() { return nextInterfaceIndex_++; }
     Module* getModule() { return module_; }

@@ -27,7 +27,8 @@ using namespace llvm;
 using namespace llvm::Java;
 
 Class::Class(Resolver* resolver, const std::string& className)
-  : resolver_(resolver),
+  : name_(Resolver::canonicalizeClassName(className)),
+    resolver_(resolver),
     classFile_(ClassFile::get(className)),
     superClass_(NULL),
     componentClass_(NULL),
@@ -40,7 +41,8 @@ Class::Class(Resolver* resolver, const std::string& className)
 }
 
 Class::Class(Resolver* resolver, const Class* componentClass)
-  : resolver_(resolver),
+  : name_('[' + componentClass->getName()),
+    resolver_(resolver),
     classFile_(NULL),
     superClass_(NULL),
     componentClass_(componentClass),
@@ -52,7 +54,15 @@ Class::Class(Resolver* resolver, const Class* componentClass)
 }
 
 Class::Class(Resolver* resolver, const Type* type)
-  : resolver_(resolver),
+  : name_(type == Type::SByteTy  ? "B" :
+          type == Type::UShortTy ? "C" :
+          type == Type::DoubleTy ? "D" :
+          type == Type::FloatTy  ? "F" :
+          type == Type::IntTy    ? "I" :
+          type == Type::LongTy   ? "J" :
+          type == Type::ShortTy  ? "S" :
+          type == Type::BoolTy   ? "Z" : "V"),
+    resolver_(resolver),
     classFile_(NULL),
     superClass_(NULL),
     componentClass_(NULL),

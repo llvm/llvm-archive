@@ -19,6 +19,7 @@
 #include <llvm/Module.h>
 #include <llvm/Type.h>
 #include <map>
+#include <string>
 #include <vector>
 
 namespace llvm { namespace Java {
@@ -29,6 +30,7 @@ namespace llvm { namespace Java {
   class Class {
     static const unsigned INVALID_INTERFACE_INDEX = 0xFFFFFFFF;
 
+    const std::string name_;
     Resolver* resolver_;
     const ClassFile* classFile_;
     const Class* superClass_;
@@ -66,6 +68,7 @@ namespace llvm { namespace Java {
     void initialize();
 
   public:
+    const std::string& getName() const { return name_; }
     const Type* getStructType() const { return structType_; }
     const Type* getType() const { return type_; }
     const ClassFile* getClassFile() const { return classFile_; }

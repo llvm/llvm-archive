@@ -2106,22 +2106,21 @@ namespace llvm { namespace Java { namespace {
     void do_newarray(JType type) {
       Value* count = pop(Type::UIntTy);
 
-      const Class* clazz = resolver_->getArrayClass(type);
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
+      const Class* clazz = resolver_->getClass(type);
+      const Class* arrayClass = resolver_->getArrayClass(clazz);
+      const VTableInfo* vi = getVTableInfoGeneric(arrayClass);
 
-      push(allocateArray(clazz, vi, count, currentBB_));
+      push(allocateArray(arrayClass, vi, count, currentBB_));
     }
 
     void do_anewarray(unsigned index) {
       Value* count = pop(Type::UIntTy);
 
-      // FIXME: Need to handle different element types. This now
-      // assumes that all arrays of reference type are arrays of
-      // java/lang/Object's.
-      const Class* clazz = resolver_->getClass("[Ljava/lang/Object;");
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
+      const Class* clazz = class_->getClass(index);
+      const Class* arrayClass = resolver_->getArrayClass(clazz);
+      const VTableInfo* vi = getVTableInfoGeneric(arrayClass);
 
-      push(allocateArray(clazz, vi, count, currentBB_));
+      push(allocateArray(arrayClass, vi, count, currentBB_));
     }
 
     void do_arraylength() {

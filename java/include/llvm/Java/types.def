@@ -17,6 +17,21 @@
 // Provide definitions of macros so that users of this file do not have to
 // define everything to use it...
 
+#ifdef HANDLE_NATIVE_TYPE
+HANDLE_NATIVE_TYPE(boolean)
+HANDLE_NATIVE_TYPE(byte)
+HANDLE_NATIVE_TYPE(char)
+HANDLE_NATIVE_TYPE(short)
+HANDLE_NATIVE_TYPE(int)
+HANDLE_NATIVE_TYPE(long)
+HANDLE_NATIVE_TYPE(float)
+HANDLE_NATIVE_TYPE(double)
+
+#undef HANDLE_NATIVE_TYPE
+#endif
+
+#ifdef HANDLE_TYPE
+HANDLE_TYPE(object)
 HANDLE_TYPE(boolean)
 HANDLE_TYPE(byte)
 HANDLE_TYPE(char)
@@ -27,3 +42,4 @@ HANDLE_TYPE(float)
 HANDLE_TYPE(double)
 
 #undef HANDLE_TYPE
+#endif

@@ -34,9 +34,11 @@ GUI toolkit.
 How to compile:
 
 % cd lib/wxwindows
-% ./configure --enable-debug
+% ./configure --enable-debug --prefix=`pwd`
 % cd ../../
 % ./configure --with-llvmsrc=[path] --with-llvmobj=[path]
+  (If you're building in llvm/projects/llvm-tv, then you don't need
+   to specify these --with options)
 % gmake
 
 How to make snapshots:

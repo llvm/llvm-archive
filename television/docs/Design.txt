@@ -1,0 +1,43 @@
+Design of LLVM-TV
+-----------------
+
+TVApplication implements the wxApp interface and is the launcher of LLVM-TV.
+
+TVFrame sets up the main view of LLVM-TV: the split view with the list of
+snapshots on the left (TVListCtl), and a tabbed view on the right (TVNotebook).
+
+TVTreeItem is the abstract superclass for all nodes that appear in the tree of
+LLVM-TV.  The root of the tree is the Singleton TVTreeRootItem which has no
+displayable data.  The other subclasses of TVTreeItem are TVTreeFunctionItem and
+TVTreeModuleItem which contain Function and Module objects, respectively,
+corresponding to LLVM classes of the same name.
+
+TVTreeItem uses HTMLPrinter to display a Function or a Module as a
+syntax-highlighted view.  It also chooses a Strategy HTMLMarkup class to
+decide on whether to use a CSS-marked-up version or a regular HTML-based
+syntax-highlighting.
+
+HTMLPrinter is a Visitor which uses the InstVisitor C++ template, which in turn
+is an Iterator over the BasicBlocks of a Function, and all Instructions in a
+BasicBlock.  HTMLMarkup is a Strategy object, implementing either a simple HTML
+markup or one using CSS.  It is passed into HTMLPrinter which uses it to emit
+syntax-highlighting for keywords, types, basic block names, etc.
+
+GraphDrawer is an abstract class specifying the interface for graph-drawing
+visualizers.
+
+DSAGraphDrawer is an abstract class using the Template Method for
+DSA graph visualizers: it implements drawFunctionGraph() and drawModuleGraph()
+in terms of pure virtual C++ functions that return the pass to draw a graph,
+which is different for each of BUGraphDrawer, TDGraphDrawer, and
+LocalGraphDrawer, as well as the filename to which they output the results of
+their analysis.  The algorithm for running the pass on a Function or Module is
+shared among the 3 subclasses of DSAGraphDrawer.
+
+TVNotebook is responsible for implementing the tabbed interface.
+
+ItemDisplayer is the abstract superclass for objects that can be displayed in
+tabs. TVCodeViewer enables the view of use-def chains to live in a tab
+interface.
+
+

@@ -7,13 +7,6 @@
 #
 ##===----------------------------------------------------------------------===##
 
-ifdef BUILD_JAVA_SOURCE
-all:: .class-stamp
-.class-stamp: $(shell find . -name '*.java')
-	$(JAVAC) $?
-	touch .class-stamp
-endif
-
 CLASS2LLVM := $(PROJTOOLCURRENT)/class2llvm$(EXEEXT)
 
 # rule to make assembly from bytecode

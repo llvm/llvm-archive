@@ -9,6 +9,13 @@
 
 include $(LEVEL)/Makefile.common
 
+ifdef BUILD_JAVA_SOURCE
+all:: .class-stamp
+.class-stamp: $(shell find . -name '*.java')
+	$(JAVAC) $?
+	touch .class-stamp
+endif
+
 .PHONY: clean
 
 clean::

@@ -25,7 +25,6 @@ namespace llvm {
 ///  
 class TVTreeItemData : public wxTreeItemData {
 public:
-  void ShowInfo(wxTreeCtrl *tree);
   const wxChar *GetDesc() const { return m_desc.c_str(); }
   virtual void print(std::ostream&) { }
   virtual wxImage *graphOn(GraphDrawer *grapher) { return 0; }

@@ -72,4 +72,4 @@ all:: $(DIFFS)
 
 # rule to diff test output
 %.diff: %.out-nat %.out-jit
-	$(Verb)diff $*.out-nat $*.out-jit > $@ || echo "FAIL: $*"
+	$(Verb)diff $*.out-nat $*.out-jit > $@ || echo "FAIL: $(notdir $*)"

@@ -618,12 +618,12 @@ namespace llvm { namespace Java {
           break;
         }
         case IFNULL: {
-          unsigned t = curBC + readUShort(code, i);
+          unsigned t = curBC + readSShort(code, i);
           THIS->do_ifnull(t, i + 1);
           break;
         }
         case IFNONNULL: {
-          unsigned t = curBC + readUShort(code, i);
+          unsigned t = curBC + readSShort(code, i);
           THIS->do_ifnonnull(t, i + 1);
           break;
         }

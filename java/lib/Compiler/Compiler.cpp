@@ -272,11 +272,8 @@ namespace llvm { namespace Java { namespace {
             bool done;
             do {
                 done = true;
-                for (FunctionSet::iterator
-                         i = toCompileFunctions_.begin(),
-                         e = toCompileFunctions_.end();
-                     i != e; ++i) {
-                    Function* f = *i;
+                for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
+                    Function* f = toCompileFunctions_[i];
                     if (f->isExternal()) {
                         done = false;
                         compileMethod(module, f->getName());

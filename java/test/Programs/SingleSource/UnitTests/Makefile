@@ -17,6 +17,7 @@ JAVA_TESTS := AbstractCall \
 	FloatCompare \
 	ForLoop \
 	If \
+	InnerClass \
 	InstanceOf \
 	InterfaceCall \
 	Lists \

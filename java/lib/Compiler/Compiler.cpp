@@ -1213,9 +1213,6 @@ namespace llvm { namespace Java { namespace {
         }
 
         Function* jniFunction = module_.getOrInsertFunction(funcName, funcTy);
-        jniFunction->setLinkage(method->isPrivate() ?
-                                Function::InternalLinkage :
-                                Function::ExternalLinkage);
 
         BasicBlock* bb = new BasicBlock("entry", function);
         std::vector<Value*> params;
@@ -1232,9 +1229,23 @@ namespace llvm { namespace Java { namespace {
 
         return function;
       }
-      else if (method->isAbstract()) {
-        DEBUG(std::cerr << "Ignoring abstract method: ";
-              std::cerr << classMethodDesc << '\n');
+
+      assert (!method->isAbstract() && "Trying to compile an abstract method!");
+
+      // HACK: skip compiling java/lang/Class*, java/lang/reflect/*,
+      // java/lang/io/*, java/nio/*, java/security/*, java/text/* methods
+      if (classMethodDesc.find("java/lang/Object") != 0 &&
+          classMethodDesc.find("java/lang/StringBuffer") != 0 &&
+          (classMethodDesc.find("java/lang/Class") == 0 ||
+           classMethodDesc.find("java/lang/") == 0 ||
+           classMethodDesc.find("java/util/") == 0 ||
+           classMethodDesc.find("java/net/") == 0 ||
+           classMethodDesc.find("java/io/") == 0 ||
+           classMethodDesc.find("java/nio/") == 0 ||
+           classMethodDesc.find("java/text/") == 0 ||
+           classMethodDesc.find("java/security/") == 0)) {
+        DEBUG(std::cerr << "Skipping compilation of method: "
+              << classMethodDesc << '\n');
         return function;
       }
 
@@ -1335,10 +1346,10 @@ namespace llvm { namespace Java { namespace {
           Field* field = fields[i];
           if (field->isStatic()) {
             Type* globalTy = getType(field->getDescriptor());
-            llvm::Constant* init = NULL;
-            if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
-              init =
-                ConstantExpr::getCast(getConstant(cv->getValue()), globalTy);
+            ConstantValueAttribute* cv = field->getConstantValueAttribute();
+            llvm::Constant* init = cv ?
+              ConstantExpr::getCast(getConstant(cv->getValue()), globalTy) :
+              llvm::Constant::getNullValue(globalTy);
 
             std::string globalName =
               classfile->getThisClass()->getName()->str() + '/' +
@@ -1346,17 +1357,13 @@ namespace llvm { namespace Java { namespace {
             DEBUG(std::cerr << "Adding global: " << globalName << '\n');
             new GlobalVariable(globalTy,
                                field->isFinal(),
-                               (field->isPrivate() & bool(init) ?
-                                GlobalVariable::InternalLinkage :
-                                GlobalVariable::ExternalLinkage),
+                               GlobalVariable::ExternalLinkage,
                                init,
                                globalName,
                                &module_);
           }
         }
 
-// FIXME: This pulls in too many methods for now so we disable it.
-#if 0
         // Call its class initialization method if it exists.
         if (const Method* method = classfile->getMethod("<clinit>()V")) {
           std::string name = classfile->getThisClass()->getName()->str();
@@ -1376,7 +1383,6 @@ namespace llvm { namespace Java { namespace {
                  LLVM_JAVA_STATIC_INIT " should have a terminator!");
           new CallInst(init, "", hook->front().getTerminator());
         }
-#endif
       }
     }
 
@@ -1393,9 +1399,7 @@ namespace llvm { namespace Java { namespace {
         method->getName()->str() + method->getDescriptor()->str();
 
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
-      function->setLinkage(method->isPrivate() ?
-                           Function::InternalLinkage :
-                           Function::ExternalLinkage);
+
       return function;
     }
 
@@ -2391,5 +2395,17 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
                "",
                bb);
   new ReturnInst(NULL, bb);
+
+  // HACK: for all <clinit> functions that are not compiled, add a
+  // dummy return.
+  for (Module::iterator F = m->begin(), E = m->end(); F != E; ++F)
+    if (F->getName().find("<clinit>") != std::string::npos) {
+      BasicBlock* entry = new BasicBlock("entry", F);
+      if (F->getReturnType() == Type::VoidTy)
+        new ReturnInst(NULL, entry);
+      else
+        new ReturnInst(UndefValue::get(F->getReturnType()));
+    }
+
   return m;
 }

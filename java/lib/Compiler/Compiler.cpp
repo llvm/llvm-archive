@@ -1189,7 +1189,7 @@ namespace llvm { namespace Java { namespace {
         }
       }
 
-      return new GetElementPtrInst(ptr, indices, TMP, currentBB_);
+      return new GetElementPtrInst(ptr, indices, fieldName, currentBB_);
     }
 
     /// Compiles the passed method only (it does not compile any

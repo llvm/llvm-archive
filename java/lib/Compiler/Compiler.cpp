@@ -1740,7 +1740,7 @@ namespace llvm { namespace Java { namespace {
     void do_iinc(unsigned index, int amount) {
       Value* v = currentLocals_->load(index, currentBB_);
       Value* a = ConstantSInt::get(Type::IntTy, amount);
-      BinaryOperator::createAdd(v, a, TMP, currentBB_);
+      v = BinaryOperator::createAdd(v, a, TMP, currentBB_);
       currentLocals_->store(index, v, currentBB_);
     }
 

@@ -157,6 +157,44 @@ namespace llvm { namespace Java { namespace {
             return static_cast<Instruction::BinaryOps>(-1);
         }
 
+        const Type* getType(const ConstantUtf8* descr) {
+            unsigned i = 0;
+            return getTypeHelper(descr->str(), i);
+        }
+
+        const Type* getTypeHelper(const std::string& descr, unsigned& i) {
+            assert(i < descr.size());
+            switch (descr[i++]) {
+            case 'B': return Type::SByteTy;
+            case 'C': return Type::UShortTy;
+            case 'D': return Type::DoubleTy;
+            case 'F': return Type::FloatTy;
+            case 'I': return Type::IntTy;
+            case 'J': return Type::LongTy;
+            case 'S': return Type::ShortTy;
+            case 'Z': return Type::BoolTy;
+            case 'V': return Type::VoidTy;
+            case 'L': {
+                unsigned e = descr.find(';', i);
+                std::string className = descr.substr(i, e - i);
+                i = e + 1;
+                // FIXME: this should really be a pointer to an object
+                // of type className
+                return PointerType::get(Type::SByteTy);
+            }
+            case '[': return ArrayType::get(getTypeHelper(descr, i), 0);
+            case '(': {
+                std::vector<const Type*> params;
+                while (descr[i] != ')')
+                    params.push_back(getTypeHelper(descr, i));
+                return FunctionType::get(getTypeHelper(descr, ++i),
+                                         params, false);
+            }
+            // FIXME: Throw something
+            default:  return NULL;
+            }
+        }
+
         Value* getOrCreateLocal(unsigned index, const Type* type) {
             if (!locals_[index]) {
                 locals_[index] = new AllocaInst(type, NULL,
@@ -183,10 +221,14 @@ namespace llvm { namespace Java { namespace {
             name += method.getName()->str();
             name += method.getDescriptor()->str();
 
-            // FIXME: use proper function type
-            // FIXME: emit with internal linkage if function is private
             Function* function =
-                module.getOrInsertFunction(name, Type::VoidTy, 0);
+                new Function(
+                    cast<FunctionType>(getType(method.getDescriptor())),
+                    (method.isPrivate() ?
+                     Function::InternalLinkage :
+                     Function::ExternalLinkage),
+                    name,
+                    &module);
 
             const Java::CodeAttribute* codeAttr =
                 Java::getCodeAttribute(method.getAttributes());

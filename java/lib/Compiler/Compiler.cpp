@@ -130,7 +130,7 @@ namespace llvm { namespace Java { namespace {
                 // model is finalized
             case REFERENCE: return PointerType::get(Type::SByteTy);
             case BOOLEAN: return Type::BoolTy;
-            case CHAR: return Type::UByteTy;
+            case CHAR: return Type::UShortTy;
             case FLOAT: return Type::FloatTy;
             case DOUBLE: return Type::DoubleTy;
             case BYTE: return Type::SByteTy;

@@ -1039,7 +1039,7 @@ namespace llvm { namespace Java { namespace {
         class_->getClassFile()->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
       return getField(
-        &resolver_->getClass(fieldRef->getClass()->getName()->str()),
+        class_->getClass(fieldRef->getClassIndex()),
         nameAndType->getName()->str(),
         ptr);
     }
@@ -1853,7 +1853,7 @@ namespace llvm { namespace Java { namespace {
       return params;
     }
 
-     const VTableInfo* getVTableInfoGeneric(const Class* clazz) {
+    const VTableInfo* getVTableInfoGeneric(const Class* clazz) {
       assert(!clazz->isPrimitive() &&
              "Cannot get VTableInfo for primitive class!");
       if (clazz->isArray()) {
@@ -1874,7 +1874,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* clazz = &resolver_->getClass(className);
+      const Class* clazz = class_->getClass(methodRef->getClassIndex());
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
@@ -1916,7 +1916,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& methodDescr =
         methodName + nameAndType->getDescriptor()->str();
       std::string funcName = className + '/' + methodDescr;
-      const Class& ci = resolver_->getClass(className);
+      const Class* clazz = class_->getClass(methodRef->getClassIndex());
 
       const FunctionType* funcTy = cast<FunctionType>(
         resolver_->getType(nameAndType->getDescriptor()->str(), true));
@@ -1928,8 +1928,8 @@ namespace llvm { namespace Java { namespace {
     void do_invokestatic(unsigned index) {
       ConstantMethodRef* methodRef =
         class_->getClassFile()->getConstantMethodRef(index);
-      emitStaticInitializers(
-        ClassFile::get(methodRef->getClass()->getName()->str()));
+      const Class* clazz = class_->getClass(methodRef->getClassIndex());
+      emitStaticInitializers(clazz->getClassFile());
       Method* method = getMethod(methodRef);
       Function* function = getFunction(method);
       // Intercept java/lang/System/loadLibrary() calls and add
@@ -1955,7 +1955,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* clazz = &resolver_->getClass(className);
+      const Class* clazz = class_->getClass(methodRef->getClassIndex());
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
@@ -2028,13 +2028,11 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_new(unsigned index) {
-      ConstantClass* classRef =
-        class_->getClassFile()->getConstantClass(index);
-      const Class& ci = resolver_->getClass(classRef->getName()->str());
-      emitStaticInitializers(ci.getClassFile());
-      const VTableInfo& vi = getVTableInfo(ci.getClassFile());
+      const Class* clazz = class_->getClass(index);
+      emitStaticInitializers(clazz->getClassFile());
+      const VTableInfo& vi = getVTableInfo(clazz->getClassFile());
 
-      push(allocateObject(ci, vi, currentBB_));
+      push(allocateObject(*clazz, vi, currentBB_));
     }
 
     template <typename InsertionPointTy>
@@ -2118,14 +2116,13 @@ namespace llvm { namespace Java { namespace {
     void do_anewarray(unsigned index) {
       Value* count = pop(Type::UIntTy);
 
-      // FIXME: Need to do handle different element types. This now
-      // assumes that all arrays of references are arrays of
+      // FIXME: Need to handle different element types. This now
+      // assumes that all arrays of reference type are arrays of
       // java/lang/Object's.
-      const Class& clazz = resolver_->getClass("[Ljava/lang/Object;");
-      const VTableInfo& vi =
-        getObjectArrayVTableInfo(clazz.getComponentClass()->getClassFile());
+      const Class* clazz = &resolver_->getClass("[Ljava/lang/Object;");
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      push(allocateArray(clazz, vi, count, currentBB_));
+      push(allocateArray(*clazz, *vi, count, currentBB_));
     }
 
     void do_arraylength() {
@@ -2143,10 +2140,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_checkcast(unsigned index) {
-      ConstantClass* classRef =
-        class_->getClassFile()->getConstantClass(index);
-
-      const Class* clazz = &resolver_->getClass(classRef->getName()->str());
+      const Class* clazz = class_->getClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());
@@ -2163,10 +2157,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_instanceof(unsigned index) {
-      ConstantClass* classRef =
-        class_->getClassFile()->getConstantClass(index);
-
-      const Class* clazz = &resolver_->getClass(classRef->getName()->str());
+      const Class* clazz = class_->getClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());

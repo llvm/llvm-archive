@@ -172,3 +172,19 @@ llvm::Constant* Class::getConstant(unsigned index) const
 
   return static_cast<llvm::Constant*>(resolvedConstantPool_[index]);
 }
+
+const Class* Class::getClass(unsigned index) const
+{
+  assert(classFile_ && "No constant pool!");
+  assert(dynamic_cast<ConstantClass*>(classFile_->getConstant(index)) &&
+         "Not an index to a class reference!");
+
+  // If we haven't resolved this constant already, do so now.
+  if (!resolvedConstantPool_[index]) {
+    ConstantClass* jc = classFile_->getConstantClass(index);
+    resolvedConstantPool_[index] =
+      const_cast<Class*>(&resolver_->getClass(jc->getName()->str()));
+  }
+
+  return static_cast<const Class*>(resolvedConstantPool_[index]);
+}

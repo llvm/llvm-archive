@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
     try {
         Java::ClassFile* cf = Java::ClassFile::readClassFile(std::cin);
         cf->dump(std::cout);
+        delete cf;
     }
     catch (std::exception& e) {
         std::cerr << e.what() << '\n';

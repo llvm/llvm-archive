@@ -1,6 +1,7 @@
 #include "TVTreeItem.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
+#include "llvm/DerivedTypes.h"
 #include "wx/treectrl.h"
 #include <cstdlib>
 using namespace llvm;
@@ -124,14 +125,27 @@ static inline std::string stylizeTypesAndKeywords(std::string &str) {
 
 void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   // print out function return type, name, and arguments
+  if (F->isExternal ())
+    os << "declare ";
   htmlType(os, F->getReturnType());
   os << " " << F->getName() << "(";
   for (Function::aiterator arg = F->abegin(), ae = F->aend(); arg != ae; ++arg){
     htmlType(os, arg->getType());
-    os << " " << arg->getName() << ", ";
+    os << " " << arg->getName();
+    Function::aiterator next = arg;
+    ++next;
+    if (next != F->aend()) 
+      os << ", ";
   }
 
-  os << ") {<br>";
+  if (F->getFunctionType()->isVarArg()) {
+    if (F->getFunctionType()->getNumParams()) os << ", ";
+    os << "...";  // Output varargs portion of signature!
+  }
+
+  os << ")";
+  if (!F->isExternal ())
+    os << " {<br>";
 
   for (Function::iterator BB = F->begin(), BBe = F->end(); BB != BBe; ++BB) {
     htmlBB(os, BB);
@@ -161,7 +175,8 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
       os << stylizeTypesAndKeywords(InstrVal);
     }
   }
-  os << "}<br>";
+  if (!F->isExternal ())
+    os << "}<br>";
 }
 
 void TVTreeItemData::printModule(Module *M, std::ostream &os) {

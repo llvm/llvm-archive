@@ -11,6 +11,7 @@ class AbstractCallConcrete extends AbstractCallAbstract {
 public class AbstractCall
 {
     public static void main(String[] args) {
-        Test.print_int_ln(new AbstractCallConcrete().concreteMethod());
+        AbstractCallAbstract a = new AbstractCallConcrete();
+        Test.print_int_ln(a.concreteMethod());
     }
 }

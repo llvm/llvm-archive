@@ -72,7 +72,7 @@ LLC_OUTPUT := $(addsuffix .out-llc, $(PREFIXED_JAVA_TESTS))
 
 # Diffs of output produced by native and llvm-java runs
 JIT_DIFFS := $(addsuffix .diff-jit, $(PREFIXED_JAVA_TESTS))
-JIT_DIFFS := $(addsuffix .diff-llc, $(PREFIXED_JAVA_TESTS))
+LLC_DIFFS := $(addsuffix .diff-llc, $(PREFIXED_JAVA_TESTS))
 
 # Keep the output and diffs
 .PRECIOUS: %.out-nat %.out-jit %.out-llc %.diff-jit %.diff-llc

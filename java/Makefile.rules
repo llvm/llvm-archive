@@ -7,10 +7,6 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LDIS := $(LLVMToolDir)/llvm-dis$(EXEEXT)
-LLI := $(LLVMToolDir)/lli$(EXEEXT)
-LOPT := $(LLVMToolDir)/opt$(EXEEXT)
-
 CLASS2LLVM := $(ToolDir)/class2llvm$(EXEEXT)
 CLASSDUMP  := $(ToolDir)/classdump$(EXEEXT)
 

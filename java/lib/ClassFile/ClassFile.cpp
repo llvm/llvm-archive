@@ -660,20 +660,27 @@ std::ostream& CodeAttribute::dump(std::ostream& os) const
 
 CodeAttribute::Exception::Exception(const ConstantPool& cp,
                                     std::istream& is)
+    : catchType_(NULL)
 {
     startPc_ = readU2(is);
     endPc_ = readU2(is);
     handlerPc_ = readU2(is);
-    catchType_ = dynamic_cast<ConstantClass*>(cp[readU2(is)]);
-    if (!catchType_)
-        throw ClassFileSemanticError(
-            "Representation of catch type is not of type ConstantClass");
+    uint16_t idx = readU2(is);
+    if (idx) {
+        catchType_ = dynamic_cast<ConstantClass*>(cp[idx]);
+        if (!catchType_)
+            throw ClassFileSemanticError
+                ("Representation of catch type is not of type ConstantClass");
+    }
 }
 
 std::ostream& CodeAttribute::Exception::dump(std::ostream& os) const
 {
-    return os << *getCatchType() << '\n'
-              << "Start PC: " << startPc_ << '\n'
+    if (getCatchType())
+        os << *getCatchType() << '\n';
+    else
+        os << "catch-all\n";
+    return os << "Start PC: " << startPc_ << '\n'
               << "End PC: " << endPc_ << '\n'
               << "Handler PC: " << handlerPc_;
 }

@@ -25,8 +25,6 @@ namespace llvm {
 ///  
 class TVTreeItemData : public wxTreeItemData {
 public:
-  TVTreeItemData(const wxString& desc) : m_desc(desc) { }
-  
   void ShowInfo(wxTreeCtrl *tree);
   const wxChar *GetDesc() const { return m_desc.c_str(); }
   virtual void print(std::ostream&) { }
@@ -37,7 +35,9 @@ public:
   virtual void printHTML(std::ostream &os) { }
   virtual std::string getTitle () { return "an untitled object"; }
   virtual std::string dsGraphName () { return "graph of " + getTitle (); }
+
 protected:
+  TVTreeItemData(const wxString& desc) : m_desc(desc) { }
   void printFunctionHeader(llvm::Function *F);
   void printFunction(llvm::Function *F);
   void printModule(llvm::Module *M);
@@ -45,6 +45,14 @@ protected:
   wxString m_desc;
 };
 
+/// TVTreeRootItem - Tree Item representing root of the hierarchy (Singleton)
+///
+class TVTreeRootItem : public TVTreeItemData {
+public:
+  static TVTreeRootItem* instance();
+protected:
+  TVTreeRootItem(const wxString& desc) : TVTreeItemData(desc) {}
+};
 
 /// TVTreeModuleItem - Tree Item containing a Module
 ///  
@@ -90,6 +98,5 @@ public:
   llvm::Module *getModule();
   llvm::Function *getFunction() { return myFunc; }
 };
-
 
 #endif

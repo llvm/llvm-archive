@@ -23,6 +23,7 @@
 #include <llvm/Value.h>
 #include <llvm/Type.h>
 #include <Support/Debug.h>
+#include <Support/SetVector.h>
 #include <Support/StringExtras.h>
 #include <iostream>
 #include <stack>
@@ -122,6 +123,8 @@ namespace llvm { namespace Java { namespace {
         Locals locals_;
         BC2BBMap bc2bbMap_;
         BasicBlock* prologue_;
+        typedef SetVector<Function*> FunctionSet;
+        FunctionSet toCompileFunctions_;
 
     private:
         BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
@@ -211,11 +214,11 @@ namespace llvm { namespace Java { namespace {
             return locals_[index];
         }
 
-    public:
-        void compileMethod(Module& module,
-                           const ClassFile& cf,
-                           const Method& method) {
-            DEBUG(std::cerr << "compiling method: "
+        void compileMethodOnly(Module& module,
+                               const ClassFile& cf,
+                               const Method& method) {
+
+            DEBUG(std::cerr << "Compiling method: "
                   << method.getName()->str() << '\n');
 
             module_ = &module;
@@ -259,6 +262,42 @@ namespace llvm { namespace Java { namespace {
                 function->getBasicBlockList().push_front(prologue_);
                 new BranchInst(prologue_->getNext(), prologue_);
             }
+        }
+
+    public:
+        void compileMethod(Module& module,
+                           const ClassFile& cf,
+                           const Method& method) {
+            compileMethodOnly(module, cf, method);
+            bool done;
+            do {
+                done = true;
+                for (FunctionSet::iterator
+                         i = toCompileFunctions_.begin(),
+                         e = toCompileFunctions_.end();
+                     i != e; ++i) {
+                    Function* f = *i;
+                    if (f->isExternal()) {
+                        done = false;
+                        compileMethod(module, f->getName());
+                    }
+                }
+            } while (!done);
+        }
+
+        void compileMethod(Module& module, const std::string& classMethodDesc) {
+            unsigned slash = classMethodDesc.find('/');
+            std::string className = classMethodDesc.substr(0, slash);
+            std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
+
+            const ClassFile* classfile = ClassFile::getClassFile(className);
+            const Method* method = classfile->getMethod(methodNameAndDescr);
+            if (!method)
+                throw InvocationTargetException(
+                    "Method " + methodNameAndDescr +
+                    " not found in class " + className);
+
+            compileMethod(module, *classfile, *method);
         }
 
         void do_aconst_null(unsigned bcI) {
@@ -646,7 +685,7 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_invokespecial(unsigned bcI, unsigned index) {
-            DEBUG(std::cerr << "ignoring INVOKESPECIAL\n");
+            assert(0 && "not implemented");
         }
 
         void do_invokestatic(unsigned bcI, unsigned index) {
@@ -715,11 +754,8 @@ Compiler::~Compiler()
 
 void Compiler::compile(Module& m, const ClassFile& cf)
 {
-    DEBUG(std::cerr << "compiling class: "
-          << cf.getThisClass()->getName()->str() << '\n');
+    const std::string className = cf.getThisClass()->getName()->str();
+    DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
-    const Java::Methods& methods = cf.getMethods();
-    for (Java::Methods::const_iterator
-             i = methods.begin(), e = methods.end(); i != e; ++i)
-        compilerImpl_->compileMethod(m, cf, **i);
+    compilerImpl_->compileMethod(m, className + "/main([Ljava/lang/String;)I");
 }

@@ -297,6 +297,53 @@ llvm::Constant* VMClass::buildClassName() const
       resolver_->getModule()));
 }
 
+llvm::Constant* VMClass::buildFieldDescriptors() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(memberFields_.size()+1);
+
+  for (unsigned i = 0, e = memberFields_.size(); i != e; ++i) {
+    const VMField* field = memberFields_[i];
+    init.push_back(field->buildFieldDescriptor());
+  }
+  // Null terminate.
+  init.push_back(llvm::Constant::getNullValue(PointerType::get(Type::SByteTy)));
+
+  const ArrayType* arrayType =
+    ArrayType::get(init.back()->getType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<fielddescriptors>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildFieldOffsets() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(memberFields_.size());
+
+  for (unsigned i = 0, e = memberFields_.size(); i != e; ++i) {
+    const VMField* field = memberFields_[i];
+    init.push_back(field->buildFieldOffset());
+  }
+
+  const ArrayType* arrayType = ArrayType::get(Type::UIntTy, init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<fieldoffsets>",
+      resolver_->getModule()));
+}
+
 llvm::Constant* VMClass::buildClassTypeInfo() const
 {
   std::vector<llvm::Constant*> init;
@@ -323,6 +370,9 @@ llvm::Constant* VMClass::buildClassTypeInfo() const
     init.push_back(ConstantSInt::get(Type::IntTy, -1));
   else // A class.
     init.push_back(ConstantSInt::get(Type::IntTy, 0));
+
+  init.push_back(buildFieldDescriptors());
+  init.push_back(buildFieldOffsets());
 
   return ConstantStruct::get(init);
 }

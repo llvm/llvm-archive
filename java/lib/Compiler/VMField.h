@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+  class Constant;
   class GlobalVariable;
 
 }
@@ -47,6 +48,9 @@ namespace llvm { namespace Java {
 
   public:
     const std::string& getName() const { return field_->getName()->str(); }
+    const std::string& getDescriptor() const {
+      return field_->getDescriptor()->str();
+    }
     bool isStatic() const { return field_->isStatic(); }
 
     const VMClass* getParent() const { return parent_; }
@@ -59,6 +63,9 @@ namespace llvm { namespace Java {
       assert(isStatic() && "Field should be static!");
       return data_.global;
     }
+
+    llvm::Constant* buildFieldDescriptor() const;
+    llvm::Constant* buildFieldOffset() const;
   };
 
 } } // namespace llvm::Java

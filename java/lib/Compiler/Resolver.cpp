@@ -47,6 +47,8 @@ Resolver::Resolver(Module* module)
   //   struct class_record** interfaces;
   //   struct class_record* component;
   //   int elementSize;
+  //   char** fieldDescriptors;
+  //   unsigned* fieldOffsets;
   // };
 
   // Compute the type_info type.
@@ -58,6 +60,8 @@ Resolver::Resolver(Module* module)
   elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
   elements.push_back(PointerType::get(classRecordType_));
   elements.push_back(Type::IntTy);
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+  elements.push_back(PointerType::get(Type::UIntTy));
   typeInfoType_ = StructType::get(elements);
 
   module_->addTypeName("struct.llvm_java_typeinfo", getTypeInfoType());

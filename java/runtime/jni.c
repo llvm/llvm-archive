@@ -25,6 +25,44 @@ static jboolean is_instance_of(JNIEnv* env, jobject obj, jclass c) {
   return llvm_java_is_instance_of(obj, GET_CLASS_RECORD(c));
 }
 
+static jfieldID get_fieldid(JNIEnv *env,
+                            jclass clazz,
+                            const char *name,
+                            const char *sig) {
+  int nameLength;
+  int i;
+  const char* fieldDescriptor;
+  struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz);
+
+  /* lookup the name+sig in the fieldDescriptors array and retrieve
+   * the offset of the field */
+  nameLength = strlen(name);
+  for (i = 0; (fieldDescriptor = cr->typeinfo.fieldDescriptors[i]); ++i)
+    if (strncmp(name, fieldDescriptor, nameLength) == 0 &&
+        strcmp(sig, fieldDescriptor+nameLength) == 0)
+      return cr->typeinfo.fieldOffsets[i];
+
+  return 0;
+}
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE get_##TYPE##_field(JNIEnv* env, \
+                                    jobject obj, \
+                                    jfieldID fid) { \
+    return *(j##TYPE*) (((char*)obj) + fid); \
+  }
+#include "types.def"
+
+#define HANDLE_TYPE(TYPE) \
+  static void set_##TYPE##_field(JNIEnv* env, \
+                                 jobject obj, \
+                                 jfieldID fid, \
+                                 j##TYPE value) { \
+    *(j##TYPE*) (((char*)obj) + fid) = value; \
+  }
+#include "types.def"
+
+
 static jint get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;
 }
@@ -153,25 +191,25 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 100 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 110 */
-  NULL,
-  NULL,
+  &get_fieldid,
+  &get_object_field,
+  &get_boolean_field,
+  &get_byte_field,
+  &get_char_field,
+  &get_short_field,
+  &get_int_field,
+  &get_long_field,
+  &get_float_field,
+  &get_double_field,
+  &set_object_field,
+  &set_boolean_field,
+  &set_byte_field,
+  &set_char_field,
+  &set_short_field,
+  &set_int_field,
+  &set_long_field,
+  &set_float_field,
+  &set_double_field,
   NULL,
   NULL,
   NULL,

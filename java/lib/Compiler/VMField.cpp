@@ -16,6 +16,7 @@
 #include "Resolver.h"
 #include "VMClass.h"
 #include <llvm/Constants.h>
+#include <llvm/DerivedTypes.h>
 
 using namespace llvm;
 using namespace llvm::Java;
@@ -55,4 +56,35 @@ VMField::VMField(const VMClass* parent, const Field* field, int index)
 {
   assert(!isStatic() && "This should be a member field!");
   data_.index = index;
+}
+
+llvm::Constant* VMField::buildFieldDescriptor() const
+{
+  llvm::Constant* fd = ConstantArray::get(getName() + getDescriptor());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      fd->getType(),
+      true,
+      GlobalVariable::ExternalLinkage,
+      fd,
+      getName() + getDescriptor(),
+      parent_->getResolver()->getModule()));
+}
+
+llvm::Constant* VMField::buildFieldOffset() const
+{
+  assert(!isStatic() && "This should be a member field!");
+
+  assert(!isa<OpaqueType>(getParent()->getType()) &&
+         "Should not be called before its owning class layout is computed!");
+  llvm::Constant* nullRef =
+    llvm::Constant::getNullValue(getParent()->getType());
+  std::vector<llvm::Constant*> indices;
+  indices.reserve(2);
+  indices.push_back(ConstantInt::get(Type::UIntTy, 0));
+  indices.push_back(ConstantInt::get(Type::UIntTy, getMemberIndex()));
+
+  return ConstantExpr::getCast(
+    ConstantExpr::getGetElementPtr(nullRef, indices), Type::UIntTy);
 }

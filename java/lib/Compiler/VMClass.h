@@ -60,6 +60,8 @@ namespace llvm { namespace Java {
     llvm::Constant* buildSuperClassRecords() const;
     llvm::Constant* buildInterfaceClassRecord(const VMClass* interface) const;
     llvm::Constant* buildInterfaceClassRecords() const;
+    llvm::Constant* buildFieldDescriptors() const;
+    llvm::Constant* buildFieldOffsets() const;
     llvm::Constant* buildClassTypeInfo() const;
 
     const VMField* lookupField(const std::string& name) const;

@@ -4,7 +4,7 @@ struct llvm_java_object_vtable;
 struct llvm_java_object_typeinfo;
 
 struct llvm_java_object_header {
-  // gc info, hash info, locking
+  /* gc info, hash info, locking */
 };
 
 struct llvm_java_object_base {
@@ -36,11 +36,11 @@ int llvm_java_IsInstanceOf(struct llvm_java_object_base* obj,
   struct llvm_java_object_vtable* objClazz = obj->vtable;
   if (objClazz == clazz)
     return 1;
-  // we are checking against a class' typeinfo
+  /* we are checking against a class' typeinfo */
   if (clazz->typeinfo.interfaceFlag != (unsigned)-1)
     return objClazz->typeinfo.depth > clazz->typeinfo.depth &&
            objClazz->typeinfo.vtables[objClazz->typeinfo.depth - clazz->typeinfo.depth - 1] == clazz;
-  // otherwise we are checking against an interface's typeinfo
+  /* otherwise we are checking against an interface's typeinfo */
   else
     return objClazz->typeinfo.lastIface >= clazz->typeinfo.lastIface &&
            objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];

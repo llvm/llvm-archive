@@ -20,6 +20,11 @@ typedef long long jlong;
 typedef float jfloat;
 typedef double jdouble;
 
+/* Used for jboolean type  */
+/* FIXME: this should really be picked up from jni.h */
+#define JNI_TRUE  1
+#define JNI_FALSE 0
+
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
 };
@@ -50,9 +55,15 @@ llvm_java_GetObjectClass(jobject obj) {
 
 jint llvm_java_IsInstanceOf(jobject obj,
                             struct llvm_java_object_vtable* clazz) {
+  /* trivial case 1: a null object can be cast to any type */
+  if (!obj)
+    return JNI_TRUE;
+
   struct llvm_java_object_vtable* objClazz = obj->vtable;
+  /* trivial case 2: this object is of class clazz */
   if (objClazz == clazz)
-    return 1;
+    return JNI_TRUE;
+
   /* we are checking against a class' typeinfo */
   if (clazz->typeinfo.interfaceFlag != (unsigned)-1)
     return objClazz->typeinfo.depth > clazz->typeinfo.depth &&

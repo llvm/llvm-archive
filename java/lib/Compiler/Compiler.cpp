@@ -987,50 +987,53 @@ namespace llvm { namespace Java { namespace {
 
     /// Emits static initializers for this class if not done already.
     void emitStaticInitializers(const ClassFile* classfile) {
-      const Method* method = classfile->getMethod("<clinit>()V");
-      if (!method)
-	return;
+      typedef SetVector<const ClassFile*> ClassFileSet;
+      static ClassFileSet toInitClasses;
 
-      std::string name = classfile->getThisClass()->getName()->str();
-      name += '/';
-      name += method->getName()->str();
-      name += method->getDescriptor()->str();
+      if (toInitClasses.insert(classfile)) {
+        // Create the global variables of this class.
+        const Fields& fields = classfile->getFields();
+        for (unsigned i = 0, e = fields.size(); i != e; ++i) {
+          Field* field = fields[i];
+          if (field->isStatic()) {
+            llvm::Constant* init = NULL;
+            if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
+              init = getConstant(cv->getValue());
 
-      Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-						   Type::VoidTy, 0);
-      Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
+            std::string globalName =
+              classfile->getThisClass()->getName()->str() + '/' +
+              field->getName()->str();
+            DEBUG(std::cerr << "Adding global: " << globalName << '\n');
+            new GlobalVariable(getType(field->getDescriptor()),
+                               field->isFinal(),
+                               (field->isPrivate() & bool(init) ?
+                                GlobalVariable::InternalLinkage :
+                                GlobalVariable::ExternalLinkage),
+                               init,
+                               globalName,
+                               &module_);
+          }
+        }
 
-      // If this is the first time we scheduled this function
-      // for compilation insert a call to it right before the
-      // terminator of the only basic block in
-      // llvm_java_static_init/
-      if (toCompileFunctions_.insert(init)) {
-	assert(hook->front().getTerminator() &&
-	       LLVM_JAVA_STATIC_INIT " should have a terminator!");
-	new CallInst(init, "", hook->front().getTerminator());
-	// We also create the global variables of this class.
-	const Fields& fields = classfile->getFields();
-	for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-	  Field* field = fields[i];
-	  if (field->isStatic()) {
-	    llvm::Constant* init = NULL;
-	    if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
-	      init = getConstant(cv->getValue());
+        // Call its class initialization method if it exists.
+        if (const Method* method = classfile->getMethod("<clinit>()V")) {
+          std::string name = classfile->getThisClass()->getName()->str();
+          name += '/';
+          name += method->getName()->str();
+          name += method->getDescriptor()->str();
 
-	    std::string globalName =
-	      classfile->getThisClass()->getName()->str() + '/' +
-	      field->getName()->str();
-	    DEBUG(std::cerr << "Adding global: " << globalName << '\n');
-	    new GlobalVariable(getType(field->getDescriptor()),
-			       field->isFinal(),
-			       (field->isPrivate() & bool(init) ?
-				GlobalVariable::InternalLinkage :
-				GlobalVariable::ExternalLinkage),
-			       init,
-			       globalName,
-			       &module_);
-	  }
-	}
+          Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+                                                       Type::VoidTy, 0);
+          Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
+
+          // Insert a call to it right before the terminator of the only
+          // basic block in llvm_java_static_init.
+          bool inserted =  toCompileFunctions_.insert(init);
+          assert(inserted && "Class initialization method already called!");
+          assert(hook->front().getTerminator() &&
+                 LLVM_JAVA_STATIC_INIT " should have a terminator!");
+          new CallInst(init, "", hook->front().getTerminator());
+        }
       }
     }
 

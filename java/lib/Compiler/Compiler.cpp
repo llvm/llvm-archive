@@ -271,11 +271,9 @@ namespace llvm { namespace Java { namespace {
             return locals_[index];
         }
 
-        Function* compileMethodOnly(Module& module,
-                               const std::string& classMethodDesc) {
+        Function* compileMethodOnly(const std::string& classMethodDesc) {
             DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 
-            module_ = &module;
             Method* method;
             tie(cf_, method) = findClassAndMethod(classMethodDesc);
 
@@ -284,7 +282,7 @@ namespace llvm { namespace Java { namespace {
             name += method->getName()->str();
             name += method->getDescriptor()->str();
 
-            Function* function = module.getOrInsertFunction
+            Function* function = module_->getOrInsertFunction
                 (name, cast<FunctionType>(getType(method->getDescriptor())));
             function->setLinkage(method->isPrivate() ?
                                  Function::InternalLinkage :
@@ -337,13 +335,14 @@ namespace llvm { namespace Java { namespace {
     public:
         Function* compileMethod(Module& module,
                                 const std::string& classMethodDesc) {
+            module_ = &module;
             c2tMap_.insert(std::make_pair("java/lang/Object",
                                           OpaqueType::get()));
             module.addTypeName("java/lang/Object", c2tMap_["java/lang/Object"]);
-            Function* function = compileMethodOnly(module, classMethodDesc);
+            Function* function = compileMethodOnly(classMethodDesc);
             for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
                 Function* f = toCompileFunctions_[i];
-                compileMethodOnly(module, f->getName());
+                compileMethodOnly(f->getName());
             }
 
             return function;

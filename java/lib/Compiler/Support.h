@@ -23,10 +23,14 @@ namespace llvm {  namespace Java {
     if (isa<PointerType>(type))
       return ObjectBaseRefTy;
     else if (type == Type::BoolTy ||
+             type == Type::UByteTy ||
              type == Type::SByteTy ||
              type == Type::UShortTy ||
-             type == Type::ShortTy)
+             type == Type::ShortTy ||
+             type == Type::UIntTy)
       return Type::IntTy;
+    else if (type == Type::ULongTy)
+      return Type::LongTy;
     else
       return type;
   }

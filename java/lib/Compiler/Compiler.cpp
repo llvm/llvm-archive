@@ -70,11 +70,11 @@ namespace llvm { namespace Java { namespace {
     ClassFile* cf_;
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
-    typedef std::map<BasicBlock*, OperandStack> OpStackMap;
-    OpStackMap opStackMap_;
+    typedef std::map<BasicBlock*, unsigned> OpStackDepthMap;
+    OpStackDepthMap opStackDepthMap_;
     BasicBlock* currentBB_;
-    Locals* currentLocals_;
-    OperandStack* currentOpStack_;
+    Locals locals_;
+    OperandStack opStack_;
 
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
@@ -119,7 +119,7 @@ namespace llvm { namespace Java { namespace {
 
   public:
     Compiler(Module& m)
-      : module_(m) {
+      : module_(m), locals_(0), opStack_(0) {
       Type* JNIEnvTy = OpaqueType::get();
       module_.addTypeName("JNIEnv", JNIEnvTy);
       JNIEnvPtr_ = new GlobalVariable(JNIEnvTy,
@@ -132,15 +132,11 @@ namespace llvm { namespace Java { namespace {
 
   private:
     void push(Value* value) {
-      assert(currentOpStack_ && "Current operand stack not set!");
-      assert(currentBB_ && "Current basic block not set!");
-      currentOpStack_->push(value, currentBB_);
+      opStack_.push(value, currentBB_);
     }
 
-    Value* pop() {
-      assert(currentOpStack_ && "Current operand stack not set!");
-      assert(currentBB_ && "Current basic block not set!");
-      return currentOpStack_->pop(currentBB_);
+    Value* pop(const Type* type) {
+      return opStack_.pop(type, currentBB_);
     }
 
     /// Schedule a method for compilation. Returns true if this is the
@@ -491,7 +487,7 @@ namespace llvm { namespace Java { namespace {
       return arrayInfo;
     }
 
-    const ClassInfo& getPrimitiveArrayInfo(Type* type) {
+    const ClassInfo& getArrayInfo(const Type* type) {
       if (Type::BoolTy == type) return getPrimitiveArrayInfo(BOOLEAN);
       else if (Type::UShortTy == type) return getPrimitiveArrayInfo(CHAR);
       else if (Type::FloatTy == type) return getPrimitiveArrayInfo(FLOAT);
@@ -500,6 +496,7 @@ namespace llvm { namespace Java { namespace {
       else if (Type::ShortTy == type) return getPrimitiveArrayInfo(SHORT);
       else if (Type::IntTy == type) return getPrimitiveArrayInfo(INT);
       else if (Type::LongTy == type) return getPrimitiveArrayInfo(LONG);
+      else if (ObjectBaseRefTy == type) return getObjectArrayInfo();
       else abort();
     }
 
@@ -1279,16 +1276,16 @@ namespace llvm { namespace Java { namespace {
 
       Java::CodeAttribute* codeAttr = method->getCodeAttribute();
 
-      opStackMap_.clear();
+      opStackDepthMap_.clear();
       bbBuilder_.reset(new BasicBlockBuilder(function, codeAttr));
 
       // Put arguments into locals.
-      Locals locals(codeAttr->getMaxLocals());
+      locals_ = Locals(codeAttr->getMaxLocals());
 
       unsigned index = 0;
       for (Function::aiterator
              a = function->abegin(), ae = function->aend(); a != ae; ++a) {
-        locals.store(index, a, &function->getEntryBlock());
+        locals_.store(index, a, &function->getEntryBlock());
         index += isTwoSlotType(a->getType()) ? 2 : 1;
       }
       // For the entry block the operand stack is empty and the locals
@@ -1297,10 +1294,8 @@ namespace llvm { namespace Java { namespace {
       // NOTE: We create an operand stack one size too big because we
       // push extra values on the stack to simplify code generation
       // (see implementation of ifne).
-      currentLocals_ = &locals;
-      opStackMap_.insert(
-        std::make_pair(&function->getEntryBlock(),
-                       OperandStack(codeAttr->getMaxStack()+1)));
+      opStack_ = OperandStack(codeAttr->getMaxStack()+2);
+      opStackDepthMap_.insert(std::make_pair(&function->getEntryBlock(), 0));
 
       // Insert the entry block to the work list.
       bbWorkList_.push_back(&function->getEntryBlock());
@@ -1310,11 +1305,12 @@ namespace llvm { namespace Java { namespace {
         currentBB_ = bbWorkList_.front();
         bbWorkList_.pop_front();
 
-        OpStackMap::iterator opStack = opStackMap_.find(currentBB_);
-        assert(opStack != opStackMap_.end() &&
-               "Unknown operand stack for basic block in work list!");
+        OpStackDepthMap::iterator opStackDepth =
+          opStackDepthMap_.find(currentBB_);
+        assert(opStackDepth != opStackDepthMap_.end() &&
+               "Unknown operand stack depth for basic block in work list!");
 
-        currentOpStack_ = &opStack->second;
+        opStack_.setDepth(opStackDepth->second);
 
         unsigned start, end;
         tie(start, end) = bbBuilder_->getBytecodeIndices(currentBB_);
@@ -1337,10 +1333,12 @@ namespace llvm { namespace Java { namespace {
                SI = succ_begin(currentBB_), SE = succ_end(currentBB_);
              SI != SE; ++SI) {
           BasicBlock* Succ = *SI;
-          OpStackMap::iterator succOpStack = opStackMap_.lower_bound(Succ);
-          if (succOpStack == opStackMap_.end() || succOpStack->first != Succ) {
-            opStackMap_.insert(succOpStack,
-                              std::make_pair(Succ, *currentOpStack_));
+          OpStackDepthMap::iterator succOpStackDepth =
+            opStackDepthMap_.lower_bound(Succ);
+          if (succOpStackDepth == opStackDepthMap_.end() ||
+              succOpStackDepth->first != Succ) {
+            opStackDepthMap_.insert(succOpStackDepth,
+                                    std::make_pair(Succ, opStack_.getDepth()));
             bbWorkList_.push_back(Succ);
           }
         }
@@ -1526,7 +1524,7 @@ namespace llvm { namespace Java { namespace {
     void do_aload(unsigned index) { do_load_common(index, ObjectBaseRefTy); }
 
     void do_load_common(unsigned index, Type* type) {
-      Value* val = currentLocals_->load(index, type, currentBB_);
+      Value* val = locals_.load(index, type, currentBB_);
       push(val);
     }
 
@@ -1540,8 +1538,9 @@ namespace llvm { namespace Java { namespace {
     void do_saload() { do_aload_common(getPrimitiveArrayInfo(SHORT).type); }
 
     void do_aload_common(Type* arrayTy) {
-      Value* index = pop();
-      Value* arrayRef =	new CastInst(pop(), PointerType::get(arrayTy),
+      Value* index = pop(Type::IntTy);
+      Value* arrayRef =	new CastInst(pop(ObjectBaseRefTy),
+                                     PointerType::get(arrayTy),
 				     "cast-to-array", currentBB_);
 
       std::vector<Value*> indices;
@@ -1555,30 +1554,32 @@ namespace llvm { namespace Java { namespace {
       push(result);
     }
 
-    void do_istore(unsigned index) { do_store_common(index); }
-    void do_lstore(unsigned index) { do_store_common(index); }
-    void do_fstore(unsigned index) { do_store_common(index); }
-    void do_dstore(unsigned index) { do_store_common(index); }
-    void do_astore(unsigned index) { do_store_common(index); }
+    void do_istore(unsigned index) { do_store_common(index, Type::IntTy); }
+    void do_lstore(unsigned index) { do_store_common(index, Type::LongTy); }
+    void do_fstore(unsigned index) { do_store_common(index, Type::FloatTy); }
+    void do_dstore(unsigned index) { do_store_common(index, Type::DoubleTy); }
+    void do_astore(unsigned index) { do_store_common(index, ObjectBaseRefTy); }
 
-    void do_store_common(unsigned index) {
-      Value* val = pop();
-      currentLocals_->store(index, val, currentBB_);
+    void do_store_common(unsigned index, const Type* type) {
+      Value* val = pop(type);
+      locals_.store(index, val, currentBB_);
     }
 
-    void do_iastore() { do_astore_common(getPrimitiveArrayInfo(INT).type); }
-    void do_lastore() { do_astore_common(getPrimitiveArrayInfo(LONG).type); }
-    void do_fastore() { do_astore_common(getPrimitiveArrayInfo(FLOAT).type); }
-    void do_dastore() { do_astore_common(getPrimitiveArrayInfo(DOUBLE).type); }
-    void do_aastore() { do_astore_common(getObjectArrayInfo().type); }
-    void do_bastore() { do_astore_common(getPrimitiveArrayInfo(BYTE).type); }
-    void do_castore() { do_astore_common(getPrimitiveArrayInfo(CHAR).type); }
-    void do_sastore() { do_astore_common(getPrimitiveArrayInfo(SHORT).type); }
+    void do_iastore() { do_astore_common(Type::IntTy); }
+    void do_lastore() { do_astore_common(Type::LongTy); }
+    void do_fastore() { do_astore_common(Type::FloatTy); }
+    void do_dastore() { do_astore_common(Type::DoubleTy); }
+    void do_aastore() { do_astore_common(ObjectBaseRefTy); }
+    void do_bastore() { do_astore_common(Type::SByteTy); }
+    void do_castore() { do_astore_common(Type::UShortTy); }
+    void do_sastore() { do_astore_common(Type::ShortTy); }
 
-    void do_astore_common(Type* arrayTy) {
-      Value* value = pop();
-      Value* index = pop();
-      Value* arrayRef = new CastInst(pop(), PointerType::get(arrayTy),
+    void do_astore_common(const Type* elementTy) {
+      Value* value = pop(elementTy);
+      Value* index = pop(Type::IntTy);
+      const Type* arrayRefTy = PointerType::get(getArrayInfo(elementTy).type);
+      Value* arrayRef = new CastInst(pop(ObjectBaseRefTy),
+                                     arrayRefTy,
 				     "cast-to-array", currentBB_);
 
       std::vector<Value*> indices;
@@ -1589,252 +1590,151 @@ namespace llvm { namespace Java { namespace {
       Value* elementPtr =
         new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
 
-      const Type* elementTy =
-	cast<PointerType>(elementPtr->getType())->getElementType();
-      value = new CastInst(value, elementTy, TMP, currentBB_);
       new StoreInst(value, elementPtr, currentBB_);
     }
 
     void do_pop() {
-      pop();
+      opStack_.do_pop(currentBB_);
     }
 
     void do_pop2() {
-      Value* v1 = pop();
-      if (isOneSlotValue(v1))
-        pop();
+      opStack_.do_pop2(currentBB_);
     }
 
     void do_dup() {
-      Value* val = pop();
-      push(val);
-      push(val);
+      opStack_.do_dup(currentBB_);
     }
 
     void do_dup_x1() {
-      Value* v1 = pop();
-      Value* v2 = pop();
-      push(v1);
-      push(v2);
-      push(v1);
+      opStack_.do_dup_x1(currentBB_);
     }
 
     void do_dup_x2() {
-      Value* v1 = pop();
-      Value* v2 = pop();
-      if (isOneSlotValue(v2)) {
-        Value* v3 = pop();
-        push(v1);
-        push(v3);
-        push(v2);
-        push(v1);
-      }
-      else {
-        push(v1);
-        push(v2);
-        push(v1);
-      }
+      opStack_.do_dup_x2(currentBB_);
     }
 
     void do_dup2() {
-      Value* v1 = pop();
-      if (isOneSlotValue(v1)) {
-        Value* v2 = pop();
-        push(v2);
-        push(v1);
-        push(v2);
-        push(v1);
-      }
-      else {
-        push(v1);
-        push(v1);
-      }
+      opStack_.do_dup2(currentBB_);
     }
 
     void do_dup2_x1() {
-      Value* v1 = pop();
-      Value* v2 = pop();
-      if (isOneSlotValue(v1)) {
-        Value* v3 = pop();
-        push(v2);
-        push(v1);
-        push(v3);
-        push(v2);
-        push(v1);
-      }
-      else {
-        push(v1);
-        push(v2);
-        push(v1);
-      }
+      opStack_.do_dup2_x1(currentBB_);
     }
 
     void do_dup2_x2() {
-      Value* v1 = pop();
-      Value* v2 = pop();
-      if (isOneSlotValue(v1)) {
-        Value* v3 = pop();
-        if (isOneSlotValue(v3)) {
-          Value* v4 = pop();
-          push(v2);
-          push(v1);
-          push(v4);
-          push(v3);
-          push(v2);
-          push(v1);
-        }
-        else {
-          push(v2);
-          push(v1);
-          push(v3);
-          push(v2);
-          push(v1);
-        }
-      }
-      else {
-        if (isOneSlotValue(v2)) {
-          Value* v3 = pop();
-          push(v1);
-          push(v3);
-          push(v2);
-          push(v1);
-        }
-        else {
-          push(v1);
-          push(v2);
-          push(v1);
-        }
-      }
+      opStack_.do_dup2_x2(currentBB_);
     }
 
     void do_swap() {
-      Value* v1 = pop();
-      Value* v2 = pop();
-      push(v1);
-      push(v2);
+      opStack_.do_swap(currentBB_);
     }
 
-    void do_iadd() { do_binary_op_common(Instruction::Add); }
-    void do_ladd() { do_binary_op_common(Instruction::Add); }
-    void do_fadd() { do_binary_op_common(Instruction::Add); }
-    void do_dadd() { do_binary_op_common(Instruction::Add); }
+    void do_iadd() { do_binary_op_common(Instruction::Add, Type::IntTy); }
+    void do_ladd() { do_binary_op_common(Instruction::Add, Type::LongTy); }
+    void do_fadd() { do_binary_op_common(Instruction::Add, Type::FloatTy); }
+    void do_dadd() { do_binary_op_common(Instruction::Add, Type::DoubleTy); }
 
-    void do_isub() { do_binary_op_common(Instruction::Sub); }
-    void do_lsub() { do_binary_op_common(Instruction::Sub); }
-    void do_fsub() { do_binary_op_common(Instruction::Sub); }
-    void do_dsub() { do_binary_op_common(Instruction::Sub); }
+    void do_isub() { do_binary_op_common(Instruction::Sub, Type::IntTy); }
+    void do_lsub() { do_binary_op_common(Instruction::Sub, Type::LongTy); }
+    void do_fsub() { do_binary_op_common(Instruction::Sub, Type::FloatTy); }
+    void do_dsub() { do_binary_op_common(Instruction::Sub, Type::DoubleTy); }
 
-    void do_imul() { do_binary_op_common(Instruction::Mul); }
-    void do_lmul() { do_binary_op_common(Instruction::Mul); }
-    void do_fmul() { do_binary_op_common(Instruction::Mul); }
-    void do_dmul() { do_binary_op_common(Instruction::Mul); }
+    void do_imul() { do_binary_op_common(Instruction::Mul, Type::IntTy); }
+    void do_lmul() { do_binary_op_common(Instruction::Mul, Type::LongTy); }
+    void do_fmul() { do_binary_op_common(Instruction::Mul, Type::FloatTy); }
+    void do_dmul() { do_binary_op_common(Instruction::Mul, Type::DoubleTy); }
 
-    void do_idiv() { do_binary_op_common(Instruction::Div); }
-    void do_ldiv() { do_binary_op_common(Instruction::Div); }
-    void do_fdiv() { do_binary_op_common(Instruction::Div); }
-    void do_ddiv() { do_binary_op_common(Instruction::Div); }
+    void do_idiv() { do_binary_op_common(Instruction::Div, Type::IntTy); }
+    void do_ldiv() { do_binary_op_common(Instruction::Div, Type::LongTy); }
+    void do_fdiv() { do_binary_op_common(Instruction::Div, Type::FloatTy); }
+    void do_ddiv() { do_binary_op_common(Instruction::Div, Type::DoubleTy); }
 
-    void do_irem() { do_binary_op_common(Instruction::Rem); }
-    void do_lrem() { do_binary_op_common(Instruction::Rem); }
-    void do_frem() { do_binary_op_common(Instruction::Rem); }
-    void do_drem() { do_binary_op_common(Instruction::Rem); }
+    void do_irem() { do_binary_op_common(Instruction::Rem, Type::IntTy); }
+    void do_lrem() { do_binary_op_common(Instruction::Rem, Type::LongTy); }
+    void do_frem() { do_binary_op_common(Instruction::Rem, Type::FloatTy); }
+    void do_drem() { do_binary_op_common(Instruction::Rem, Type::DoubleTy); }
 
-    void do_ineg() { do_neg_common(); }
-    void do_lneg() { do_neg_common(); }
-    void do_fneg() { do_neg_common(); }
-    void do_dneg() { do_neg_common(); }
+    void do_ineg() { do_neg_common(Type::IntTy); }
+    void do_lneg() { do_neg_common(Type::LongTy); }
+    void do_fneg() { do_neg_common(Type::FloatTy); }
+    void do_dneg() { do_neg_common(Type::DoubleTy); }
 
-    void do_neg_common() {
-      Value* v1 = pop();
+    void do_neg_common(const Type* type) {
+      Value* v1 = pop(type);
       Value* r = BinaryOperator::createNeg(v1, TMP, currentBB_);
       push(r);
     }
 
-    void do_ishl() { do_shift_common(Instruction::Shl); }
-    void do_lshl() { do_shift_common(Instruction::Shl); }
-    void do_ishr() { do_shift_common(Instruction::Shr); }
-    void do_lshr() { do_shift_common(Instruction::Shr); }
+    void do_ishl() { do_shift_common(Instruction::Shl, Type::IntTy); }
+    void do_lshl() { do_shift_common(Instruction::Shl, Type::LongTy); }
+    void do_ishr() { do_shift_common(Instruction::Shr, Type::IntTy); }
+    void do_lshr() { do_shift_common(Instruction::Shr, Type::LongTy); }
 
-    void do_iushr() { do_shift_unsigned_common(); }
-    void do_lushr() { do_shift_unsigned_common(); }
+    void do_iushr() { do_shift_unsigned_common(Type::IntTy); }
+    void do_lushr() { do_shift_unsigned_common(Type::LongTy); }
 
-    void do_shift_unsigned_common() {
+    void do_shift_unsigned_common(const Type* type) {
       // Cast value to be shifted into its unsigned version.
-      do_swap();
-      Value* v = pop();
-      v = new CastInst(v, v->getType()->getUnsignedVersion(), TMP, currentBB_);
-      push(v);
-      do_swap();
-
-      do_shift_common(Instruction::Shr);
-
-      v = pop();
+      Value* a = pop(Type::UByteTy);
+      Value* v = pop(type->getUnsignedVersion());
+      Value* r = new ShiftInst(Instruction::Shr, v, a, TMP, currentBB_);
       // Cast shifted value back to its original signed version.
-      v = new CastInst(v, v->getType()->getSignedVersion(), TMP, currentBB_);
-      push(v);
+      r = new CastInst(r, type->getSignedVersion(), TMP, currentBB_);
+      push(r);
     }
 
-    void do_shift_common(Instruction::OtherOps op) {
-      Value* a = pop();
-      Value* v = pop();
-      a = new CastInst(a, Type::UByteTy, TMP, currentBB_);
+    void do_shift_common(Instruction::OtherOps op, const Type* type) {
+      Value* a = pop(Type::UByteTy);
+      Value* v = pop(type);
       Value* r = new ShiftInst(op, v, a, TMP, currentBB_);
       push(r);
     }
 
-    void do_iand() { do_binary_op_common(Instruction::And); }
-    void do_land() { do_binary_op_common(Instruction::And); }
-    void do_ior() { do_binary_op_common(Instruction::Or); }
-    void do_lor() { do_binary_op_common(Instruction::Or); }
-    void do_ixor() { do_binary_op_common(Instruction::Xor); }
-    void do_lxor() { do_binary_op_common(Instruction::Xor); }
+    void do_iand() { do_binary_op_common(Instruction::And, Type::IntTy); }
+    void do_land() { do_binary_op_common(Instruction::And, Type::LongTy); }
+    void do_ior() { do_binary_op_common(Instruction::Or, Type::IntTy); }
+    void do_lor() { do_binary_op_common(Instruction::Or, Type::LongTy); }
+    void do_ixor() { do_binary_op_common(Instruction::Xor, Type::IntTy); }
+    void do_lxor() { do_binary_op_common(Instruction::Xor, Type::LongTy); }
 
-    void do_binary_op_common(Instruction::BinaryOps op) {
-      Value* v2 = pop();
-      Value* v1 = pop();
+    void do_binary_op_common(Instruction::BinaryOps op, const Type* type) {
+      Value* v2 = pop(type);
+      Value* v1 = pop(type);
       Value* r = BinaryOperator::create(op, v1, v2, TMP, currentBB_);
       push(r);
     }
 
     void do_iinc(unsigned index, int amount) {
-      Value* v = currentLocals_->load(index, Type::IntTy, currentBB_);
+      Value* v = locals_.load(index, Type::IntTy, currentBB_);
       Value* a = ConstantSInt::get(Type::IntTy, amount);
       v = BinaryOperator::createAdd(v, a, TMP, currentBB_);
-      currentLocals_->store(index, v, currentBB_);
+      locals_.store(index, v, currentBB_);
     }
 
-    void do_i2l() { do_cast_common(Type::LongTy); }
-    void do_i2f() { do_cast_common(Type::FloatTy); }
-    void do_i2d() { do_cast_common(Type::DoubleTy); }
-    void do_l2i() { do_cast_common(Type::IntTy); }
-    void do_l2f() { do_cast_common(Type::FloatTy); }
-    void do_l2d() { do_cast_common(Type::DoubleTy); }
-    void do_f2i() { do_cast_common(Type::IntTy); }
-    void do_f2l() { do_cast_common(Type::LongTy); }
-    void do_f2d() { do_cast_common(Type::DoubleTy); }
-    void do_d2i() { do_cast_common(Type::IntTy); }
-    void do_d2l() { do_cast_common(Type::LongTy); }
-    void do_d2f() { do_cast_common(Type::FloatTy); }
-    void do_i2b() { do_truncate_common(Type::SByteTy); }
-    void do_i2c() { do_truncate_common(Type::UShortTy); }
-    void do_i2s() { do_truncate_common(Type::ShortTy); }
+    void do_i2l() { do_cast_common(Type::IntTy, Type::LongTy); }
+    void do_i2f() { do_cast_common(Type::IntTy, Type::FloatTy); }
+    void do_i2d() { do_cast_common(Type::IntTy, Type::DoubleTy); }
+    void do_l2i() { do_cast_common(Type::LongTy, Type::IntTy); }
+    void do_l2f() { do_cast_common(Type::LongTy, Type::FloatTy); }
+    void do_l2d() { do_cast_common(Type::LongTy, Type::DoubleTy); }
+    void do_f2i() { do_cast_common(Type::FloatTy, Type::IntTy); }
+    void do_f2l() { do_cast_common(Type::FloatTy, Type::LongTy); }
+    void do_f2d() { do_cast_common(Type::FloatTy, Type::DoubleTy); }
+    void do_d2i() { do_cast_common(Type::DoubleTy, Type::IntTy); }
+    void do_d2l() { do_cast_common(Type::DoubleTy, Type::LongTy); }
+    void do_d2f() { do_cast_common(Type::DoubleTy, Type::FloatTy); }
+    void do_i2b() { do_cast_common(Type::IntTy, Type::SByteTy); }
+    void do_i2c() { do_cast_common(Type::IntTy, Type::UShortTy); }
+    void do_i2s() { do_cast_common(Type::IntTy, Type::ShortTy); }
 
-    void do_cast_common(Type* type) {
-      Value* v1 = pop();
-      v1 = new CastInst(v1, type, TMP, currentBB_);
-      push(v1);
-    }
-
-    void do_truncate_common(Type* type) {
-      Value* v1 = pop();
-      v1 = new CastInst(v1, type, TMP, currentBB_);
-      v1 = new CastInst(v1, Type::IntTy, TMP, currentBB_);
-      push(v1);
+    void do_cast_common(const Type* from, const Type* to) {
+      Value* v1 = pop(from);
+      push(new CastInst(v1, to, TMP, currentBB_));
     }
 
     void do_lcmp() {
-      Value* v2 = pop();
-      Value* v1 = pop();
+      Value* v2 = pop(Type::LongTy);
+      Value* v1 = pop(Type::LongTy);
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
@@ -1845,14 +1745,14 @@ namespace llvm { namespace Java { namespace {
       push(r);
     }
 
-    void do_fcmpl() { do_cmp_common(-1); }
-    void do_dcmpl() { do_cmp_common(-1); }
-    void do_fcmpg() { do_cmp_common(1); }
-    void do_dcmpg() { do_cmp_common(1); }
+    void do_fcmpl() { do_cmp_common(Type::FloatTy, -1); }
+    void do_dcmpl() { do_cmp_common(Type::DoubleTy, -1); }
+    void do_fcmpg() { do_cmp_common(Type::FloatTy, 1); }
+    void do_dcmpg() { do_cmp_common(Type::DoubleTy, 1); }
 
-    void do_cmp_common(int valueIfUnordered) {
-      Value* v2 = pop();
-      Value* v1 = pop();
+    void do_cmp_common(const Type* type, int valueIfUnordered) {
+      Value* v2 = pop(type);
+      Value* v1 = pop(type);
       Value* c = BinaryOperator::createSetGT(v1, v2, TMP, currentBB_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
@@ -1871,64 +1771,65 @@ namespace llvm { namespace Java { namespace {
 
     void do_ifeq(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetEQ, t, f);
+      do_if_common(Instruction::SetEQ, Type::IntTy, t, f);
     }
     void do_ifne(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetNE, t, f);
+      do_if_common(Instruction::SetNE, Type::IntTy, t, f);
     }
     void do_iflt(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetLT, t, f);
+      do_if_common(Instruction::SetLT, Type::IntTy, t, f);
     }
     void do_ifge(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetGE, t, f);
+      do_if_common(Instruction::SetGE, Type::IntTy, t, f);
     }
     void do_ifgt(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetGT, t, f);
+      do_if_common(Instruction::SetGT, Type::IntTy, t, f);
     }
     void do_ifle(unsigned t, unsigned f) {
       do_iconst(0);
-      do_if_common(Instruction::SetLE, t, f);
+      do_if_common(Instruction::SetLE, Type::IntTy, t, f);
     }
     void do_if_icmpeq(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetEQ, t, f);
+      do_if_common(Instruction::SetEQ, Type::IntTy, t, f);
     }
     void do_if_icmpne(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetNE, t, f);
+      do_if_common(Instruction::SetNE, Type::IntTy, t, f);
     }
     void do_if_icmplt(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetLT, t, f);
+      do_if_common(Instruction::SetLT, Type::IntTy, t, f);
     }
     void do_if_icmpge(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetGE, t, f);
+      do_if_common(Instruction::SetGE, Type::IntTy, t, f);
     }
     void do_if_icmpgt(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetGT, t, f);
+      do_if_common(Instruction::SetGT, Type::IntTy, t, f);
     }
     void do_if_icmple(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetLE, t, f);
+      do_if_common(Instruction::SetLE, Type::IntTy, t, f);
     }
     void do_if_acmpeq(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetEQ, t, f);
+      do_if_common(Instruction::SetEQ, ObjectBaseRefTy, t, f);
     }
     void do_if_acmpne(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetNE, t, f);
+      do_if_common(Instruction::SetNE, ObjectBaseRefTy, t, f);
     }
     void do_ifnull(unsigned t, unsigned f) {
       do_aconst_null();
-      do_if_common(Instruction::SetEQ, t, f);
+      do_if_common(Instruction::SetEQ, ObjectBaseRefTy, t, f);
     }
     void do_ifnonnull(unsigned t, unsigned f) {
       do_aconst_null();
-      do_if_common(Instruction::SetEQ, t, f);
+      do_if_common(Instruction::SetEQ, ObjectBaseRefTy, t, f);
     }
 
-    void do_if_common(Instruction::BinaryOps cc, unsigned t, unsigned f) {
-      Value* v2 = pop();
-      Value* v1 = pop();
+    void do_if_common(Instruction::BinaryOps cc, const Type* type,
+                      unsigned t, unsigned f) {
+      Value* v2 = pop(type);
+      Value* v1 = pop(type);
       if (v1->getType() != v2->getType())
         v1 = new CastInst(v1, v2->getType(), TMP, currentBB_);
       Value* c = new SetCondInst(cc, v1, v2, TMP, currentBB_);
@@ -1941,14 +1842,14 @@ namespace llvm { namespace Java { namespace {
       new BranchInst(bbBuilder_->getBasicBlock(target), currentBB_);
     }
 
-    void do_ireturn() { do_return_common(); }
-    void do_lreturn() { do_return_common(); }
-    void do_freturn() { do_return_common(); }
-    void do_dreturn() { do_return_common(); }
-    void do_areturn() { do_return_common(); }
+    void do_ireturn() { do_return_common(Type::IntTy); }
+    void do_lreturn() { do_return_common(Type::LongTy); }
+    void do_freturn() { do_return_common(Type::FloatTy); }
+    void do_dreturn() { do_return_common(Type::DoubleTy); }
+    void do_areturn() { do_return_common(ObjectBaseRefTy); }
 
-    void do_return_common() {
-      Value* r = pop();
+    void do_return_common(const Type* type) {
+      Value* r = pop(type);
       const Type* retTy = currentBB_->getParent()->getReturnType();
       new ReturnInst(new CastInst(r, retTy, TMP, currentBB_), currentBB_);
     }
@@ -1968,7 +1869,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
-      Value* v = pop();
+      Value* v = pop(Type::IntTy);
       SwitchInst* in =
         new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), currentBB_);
       for (unsigned i = 0, e = sw.size(); i != e; ++i)
@@ -1982,23 +1883,23 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_putstatic(unsigned index) {
-      Value* v = pop();
       Value* ptr = getStaticField(index);
       const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
-      if (v->getType() != fieldTy)
-        v = new CastInst(v, fieldTy, TMP, currentBB_);
+      Value* v = pop(fieldTy);
       new StoreInst(v, ptr, currentBB_);
     }
 
     void do_getfield(unsigned index) {
-      Value* p = pop();
+      Value* p = pop(ObjectBaseRefTy);
       Value* v = new LoadInst(getField(index, p), TMP, currentBB_);
       push(v);
     }
 
     void do_putfield(unsigned index) {
-      Value* v = pop();
-      Value* p = pop();
+      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
+      const Type* type = getType(fieldRef->getNameAndType()->getDescriptor());
+      Value* v = pop(type);
+      Value* p = pop(ObjectBaseRefTy);
       Value* fp = getField(index, p);
       const Type* ft = cast<PointerType>(fp->getType())->getElementType();
       v = new CastInst(v, ft, TMP, currentBB_);
@@ -2036,13 +1937,8 @@ namespace llvm { namespace Java { namespace {
     std::vector<Value*> getParams(const FunctionType* funTy) {
       unsigned numParams = funTy->getNumParams();
       std::vector<Value*> params(numParams);
-      while (numParams--) {
-        Value* p = pop();
-        params[numParams] =
-          p->getType() == funTy->getParamType(numParams) ?
-          p :
-          new CastInst(p, funTy->getParamType(numParams), TMP, currentBB_);
-      }
+      while (numParams--)
+        params[numParams] = pop(funTy->getParamType(numParams));
 
       return params;
     }
@@ -2060,35 +1956,35 @@ namespace llvm { namespace Java { namespace {
         else switch (className[1]) {
         case 'B':
           vi = &getPrimitiveArrayVTableInfo(Type::SByteTy);
-          ci = &getPrimitiveArrayInfo(Type::SByteTy);
+          ci = &getArrayInfo(Type::SByteTy);
           break;
         case 'C':
           vi = &getPrimitiveArrayVTableInfo(Type::UShortTy);
-          ci = &getPrimitiveArrayInfo(Type::UShortTy);
+          ci = &getArrayInfo(Type::UShortTy);
           break;
         case 'D':
           vi = &getPrimitiveArrayVTableInfo(Type::DoubleTy);
-          ci = &getPrimitiveArrayInfo(Type::DoubleTy);
+          ci = &getArrayInfo(Type::DoubleTy);
           break;
         case 'F':
           vi = &getPrimitiveArrayVTableInfo(Type::FloatTy);
-          ci = &getPrimitiveArrayInfo(Type::FloatTy);
+          ci = &getArrayInfo(Type::FloatTy);
           break;
         case 'I':
           vi = &getPrimitiveArrayVTableInfo(Type::IntTy);
-          ci = &getPrimitiveArrayInfo(Type::IntTy);
+          ci = &getArrayInfo(Type::IntTy);
           break;
         case 'J':
           vi = &getPrimitiveArrayVTableInfo(Type::LongTy);
-          ci = &getPrimitiveArrayInfo(Type::LongTy);
+          ci = &getArrayInfo(Type::LongTy);
           break;
         case 'S':
           vi = &getPrimitiveArrayVTableInfo(Type::ShortTy);
-          ci = &getPrimitiveArrayInfo(Type::ShortTy);
+          ci = &getArrayInfo(Type::ShortTy);
           break;
         case 'Z':
           vi = &getPrimitiveArrayVTableInfo(Type::BoolTy);
-          ci = &getPrimitiveArrayInfo(Type::BoolTy);
+          ci = &getArrayInfo(Type::BoolTy);
           break;
         }
       }
@@ -2283,7 +2179,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_newarray(JType type) {
-      Value* count = pop();
+      Value* count = pop(Type::IntTy);
       count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
 
       const ClassInfo& ci = getPrimitiveArrayInfo(type);
@@ -2293,7 +2189,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_anewarray(unsigned index) {
-      Value* count = pop();
+      Value* count = pop(Type::IntTy);
       count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
 
       ConstantClass* classRef = cf_->getConstantClass(index);
@@ -2345,7 +2241,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_arraylength() {
-      Value* arrayRef = pop();
+      Value* arrayRef = pop(ObjectBaseRefTy);
       const ClassInfo& ci = getObjectArrayInfo();
       arrayRef =
         new CastInst(arrayRef, PointerType::get(ci.type), TMP, currentBB_);
@@ -2356,7 +2252,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_athrow() {
-      Value* objRef = pop();
+      Value* objRef = pop(ObjectBaseRefTy);
       objRef = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_THROW, Type::IntTy,
@@ -2372,7 +2268,7 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = NULL;
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
-      Value* objRef = pop();
+      Value* objRef = pop(ObjectBaseRefTy);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
@@ -2399,7 +2295,7 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = NULL;
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
-      Value* objRef = pop();
+      Value* objRef = pop(ObjectBaseRefTy);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(

@@ -22,10 +22,10 @@
 #include <llvm/Instructions.h>
 #include <llvm/Value.h>
 #include <llvm/Type.h>
-#include <Support/Debug.h>
-#include <Support/SetVector.h>
-#include <Support/STLExtras.h>
-#include <Support/StringExtras.h>
+#include <llvm/ADT/STLExtras.h>
+#include <llvm/ADT/SetVector.h>
+#include <llvm/ADT/StringExtras.h>
+#include <llvm/Support/Debug.h>
 #include <iostream>
 #include <stack>
 #include <vector>

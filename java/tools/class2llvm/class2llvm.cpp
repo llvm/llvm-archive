@@ -17,8 +17,8 @@
 #include <llvm/PassManager.h>
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Bytecode/WriteBytecodePass.h>
+#include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
-#include <Support/CommandLine.h>
 
 #include <cstddef>
 #include <iostream>

@@ -15,10 +15,10 @@
 #define DEBUG_TYPE "classfile"
 
 #include <llvm/Java/ClassFile.h>
-#include <Support/CommandLine.h>
-#include <Support/Debug.h>
-#include <Support/FileUtilities.h>
-#include <Support/STLExtras.h>
+#include <llvm/ADT/STLExtras.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Debug.h>
+#include <llvm/Support/FileUtilities.h>
 
 #include <cassert>
 #include <fstream>

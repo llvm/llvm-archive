@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../../../..
 
-JAVA_TESTS := Abstract \
+JAVA_TESTS := AbstractCall \
 	Arithm \
 	Array \
 	BigConstants \
@@ -27,6 +27,7 @@ JAVA_TESTS := Abstract \
 	Test \
 	VirtualCall \
 	VTable \
+#	Lists1 \
 #	Strings \
 #	MultipleInterfaces \
 #	MultiArray \

@@ -11,6 +11,7 @@
 #include "llvm-tv/Config.h"
 #include <wx/image.h>
 #include <cerrno>
+#include <iostream>
 #include <fstream>
 #include <functional>
 #include <signal.h>

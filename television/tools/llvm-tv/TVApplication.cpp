@@ -4,13 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CallGraphDrawer.h"
-#include "CFGGraphDrawer.h"
 #include "CodeViewer.h"
-#include "DSAGraphDrawer.h"
-#include "PictureFrame.h"
 #include "TVApplication.h"
-#include "TVTreeItem.h"
 #include "TVFrame.h"
 #include "llvm-tv/Config.h"
 #include <wx/image.h>
@@ -114,56 +109,9 @@ void TVApplication::Quit () {
   myFrame->Destroy ();
 }
 
-void TVApplication::OpenCallGraphView (TVTreeItemData *item) {
-  std::string title = "Call graph of " + item->getTitle ();
-  PictureFrame *wind = new PictureFrame (this, title.c_str ());
-  allMyWindows.push_back (wind);
-  ItemDisplayer *drawer = new CallGraphDrawer (wind);
-  allMyDisplayers.push_back (drawer);
-  drawer->displayItem (item);
-}
-
-void TVApplication::OpenCFGView (TVTreeItemData *item) {
-  std::string title = "Control-flow graph of " + item->getTitle ();
-  PictureFrame *wind = new PictureFrame (this, title.c_str ());
-  allMyWindows.push_back (wind);
-  ItemDisplayer *drawer = new CFGGraphDrawer (wind);
-  allMyDisplayers.push_back (drawer);
-  drawer->displayItem (item);
-}
-
-void TVApplication::OpenBUDSView (TVTreeItemData *item) {
-  std::string title = "BU DataStructure " + item->dsGraphName ();
-  PictureFrame *wind = new PictureFrame (this, title.c_str ()); 
-  allMyWindows.push_back (wind);
-  ItemDisplayer *drawer = new BUGraphDrawer (wind);
-  allMyDisplayers.push_back (drawer);
-  drawer->displayItem (item);
-}
-
-void TVApplication::OpenTDDSView (TVTreeItemData *item) {
-  std::string title = "TD DataStructure " + item->dsGraphName ();
-  PictureFrame *wind = new PictureFrame (this, title.c_str()); 
-  allMyWindows.push_back (wind);
-  ItemDisplayer *drawer = new TDGraphDrawer (wind);
-  allMyDisplayers.push_back (drawer);
-  drawer->displayItem (item);
-}
-
-void TVApplication::OpenLocalDSView (TVTreeItemData *item) {
-  std::string title = "Local DataStructure " + item->dsGraphName ();
-  PictureFrame *wind = new PictureFrame (this, title.c_str());
-  allMyWindows.push_back (wind);
-  ItemDisplayer *drawer = new LocalGraphDrawer (wind);
-  allMyDisplayers.push_back (drawer);
-  drawer->displayItem (item);
-}
-
-
 void TVApplication::OpenCodeView (Function *F) {
   allMyWindows.push_back(new CodeViewFrame(this, F));
 }
-
 
 bool TVApplication::OnInit () {
   // Save my PID into the file where the snapshot-making pass knows to

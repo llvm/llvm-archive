@@ -38,11 +38,7 @@ public:
   bool OnInit ();
   void GoodbyeFrom (wxWindow *dyingWindow);
   void ReceivedSignal ();
-  void OpenCallGraphView (TVTreeItemData *M);
-  void OpenCFGView (TVTreeItemData *F);
-  void OpenBUDSView (TVTreeItemData *M);
-  void OpenTDDSView (TVTreeItemData *F);
-  void OpenLocalDSView (TVTreeItemData *F);
+  template <class Grapher> void OpenGraphView(TVTreeItemData *item);
   void OpenCodeView (llvm::Function *F);
   void Quit ();
 };

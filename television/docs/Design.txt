@@ -2,32 +2,43 @@ Design of LLVM-TV
 -----------------
 
 TVApplication implements the wxApp interface and is the launcher of LLVM-TV.
+It is responsible for keeping track of all the windows, and the list of
+available snapshots. It is also responsible for handling Unix signals sent to
+the LLVM-TV process; this is the mechanism the LLVM optimizer uses for
+communicating with LLVM-TV.
 
-TVFrame sets up the main view of LLVM-TV: the split view with the list of
-snapshots on the left (TVListCtl), and a tabbed view on the right (TVNotebook).
+TVFrame is responsible for the main LLVM-TV user interface - it sets up the
+vertically-split main window having a tree of snapshots on the left
+(TVTreeCtrl), and a tabbed view containing visualizers on the right
+(TVNotebook). TVFrame is also responsible for the menu bar, and it is the first
+object that deals with commands issued as a result of the user choosing menu
+items.
 
-TVTreeItem is the abstract superclass for all nodes that appear in the tree of
-LLVM-TV.  The root of the tree is the Singleton TVTreeRootItem which has no
-displayable data.  The other subclasses of TVTreeItem are TVTreeFunctionItem and
-TVTreeModuleItem which contain Function and Module objects, respectively,
-corresponding to LLVM classes of the same name.
+TVTreeItemData is the basic unit of visualization in LLVM-TV. It is also the
+abstract superclass for all nodes that appear in the tree view on the left-hand
+side of LLVM-TV's main window.  The root of the tree is the Singleton
+TVTreeRootItem, which is hidden (the user cannot select it) and has no
+displayable data.  The TVTreeRootItem contains TVTreeModuleItems, which point to
+snapshots of LLVM Modules; the TVTreeModuleItems in turn contain
+TVTreeFunctionItems, which point to snapshots of LLVM Functions within the
+parent Modules.
 
-TVTreeItem uses HTMLPrinter to display a Function or a Module as a
-syntax-highlighted view.  It also chooses a Strategy HTMLMarkup class to
-decide on whether to use a CSS-marked-up version or a regular HTML-based
-syntax-highlighting.
+The TVHtmlWindow class is an ItemDisplayer that displays syntax-highlighted LLVM
+assembly code for TVTreeItems (either Functions or Modules) in HTML format.
 
-HTMLPrinter is a Visitor which uses the InstVisitor C++ template, which in turn
-is an Iterator over the BasicBlocks of a Function, and all Instructions in a
-BasicBlock.  HTMLMarkup is a Strategy object, implementing either a simple HTML
-markup or one using CSS.  It is passed into HTMLPrinter which uses it to emit
-syntax-highlighting for keywords, types, basic block names, etc.
+A TVTreeItem uses an HTMLPrinter to display a Function or a Module in a
+syntax-highlighted view.  It also chooses a HTMLMarkup strategy class to decide
+whether to use Cascading Style Sheets (CSS) or old-style "font" tags for syntax
+highlighting of elements such as keywords, types, and basic-block names.
+HTMLPrinter is a Visitor, implemented using the standard LLVM InstVisitor C++
+template.
 
-TVNotebook is responsible for implementing the tabbed interface.
+TVNotebook is responsible for implementing the tabbed interface which you see on
+the right-hand side of the main window (the TVFrame).
 
 ItemDisplayer is the abstract superclass for objects that can be displayed in
 tabs.  TVCodeViewer enables the view of use-def chains to live in a tab
-interface.   because their parent class DSAGraphDrawer 
+interface.
 
 GraphDrawer is an abstract class specifying the interface for graph-drawing
 visualizers.  It inherits the ItemDisplayer interface.

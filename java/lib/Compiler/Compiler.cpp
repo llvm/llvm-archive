@@ -1355,26 +1355,32 @@ namespace llvm { namespace Java { namespace {
       assert (!method->isAbstract() && "Trying to compile an abstract method!");
 
       // HACK: skip most of the class libraries.
-      if (classMethodDesc.find("java/") == 0 &&
-          classMethodDesc.find("java/lang/Object") != 0 &&
-          (classMethodDesc.find("java/lang/Throwable") != 0 ||
-           classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
-          classMethodDesc.find("java/lang/Exception") != 0 &&
-          classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
-          classMethodDesc.find("java/lang/IllegalStateException") != 0 &&
-          classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
-          classMethodDesc.find("java/lang/RuntimeException") != 0 &&
-          classMethodDesc.find("java/lang/Math") != 0 &&
-          classMethodDesc.find("java/lang/Number") != 0 &&
-          classMethodDesc.find("java/lang/Byte") != 0 &&
-          classMethodDesc.find("java/lang/Float") != 0 &&
-          classMethodDesc.find("java/lang/Integer") != 0 &&
-          classMethodDesc.find("java/lang/Long") != 0 &&
-          classMethodDesc.find("java/lang/Short") != 0 &&
-          classMethodDesc.find("java/lang/StringBuffer") != 0 &&
-          classMethodDesc.find("java/lang/System") != 0 &&
-          classMethodDesc.find("java/lang/VMSystem") != 0 &&
-          classMethodDesc.find("java/util/") != 0) {
+      if ((classMethodDesc.find("java/") == 0 &&
+           classMethodDesc.find("java/lang/Object") != 0 &&
+           (classMethodDesc.find("java/lang/Throwable") != 0 ||
+            classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
+           classMethodDesc.find("java/lang/Exception") != 0 &&
+           classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
+           classMethodDesc.find("java/lang/IllegalStateException") != 0 &&
+           classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
+           classMethodDesc.find("java/lang/RuntimeException") != 0 &&
+           classMethodDesc.find("java/lang/Math") != 0 &&
+           classMethodDesc.find("java/lang/Number") != 0 &&
+           classMethodDesc.find("java/lang/Byte") != 0 &&
+           classMethodDesc.find("java/lang/Float") != 0 &&
+           classMethodDesc.find("java/lang/Integer") != 0 &&
+           classMethodDesc.find("java/lang/Long") != 0 &&
+           classMethodDesc.find("java/lang/Short") != 0 &&
+           (classMethodDesc.find("java/lang/String") != 0 ||
+            classMethodDesc.find("java/lang/String/<cl") == 0) &&
+           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
+           classMethodDesc.find("java/lang/System") != 0 &&
+           classMethodDesc.find("java/lang/VMSystem") != 0 &&
+           (classMethodDesc.find("java/util/") != 0 ||
+            classMethodDesc.find("java/util/Locale/<cl") == 0 ||
+            classMethodDesc.find("java/util/ResourceBundle/<cl") == 0 ||
+            classMethodDesc.find("java/util/Calendar/<cl") == 0)) ||
+          (classMethodDesc.find("gnu/") == 0)) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');
         return function;
@@ -2345,14 +2351,14 @@ namespace llvm { namespace Java { namespace {
     void do_anewarray(unsigned index) {
       Value* count = pop(Type::UIntTy);
 
-      ConstantClass* classRef = cf_->getConstantClass(index);
-      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const ClassInfo& ci = getObjectArrayInfo();
-      const ClassInfo& ei = getClassInfo(cf);
-      const VTableInfo& vi = getObjectArrayVTableInfo(cf);
+      // FIXME: Need to do handle different element types. This now
+      // assumes that all arrays of references are arrays of
+      // java/lang/Object's.
+      const VTableInfo& vi =
+        getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
 
-      const Type* elementTy = PointerType::get(ei.getType());
-      push(allocateArray(ci, elementTy, vi, count, currentBB_));
+      push(allocateArray(ci, ObjectBaseRefTy, vi, count, currentBB_));
     }
 
     void do_arraylength() {

@@ -24,7 +24,9 @@
 #include "Support/SystemUtils.h"
 #include <csignal>
 #include <cstdlib>
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <cstring>
 #include <dirent.h>
 #include <fstream>

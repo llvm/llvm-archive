@@ -18,6 +18,7 @@
 #include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Java/Compiler.h>
 
 using namespace llvm::Java;
 
@@ -29,6 +30,13 @@ Locals::Locals(unsigned maxLocals)
 
 void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 {
+  const Type* valueTy = value->getType();
+  // All pointer types are cast to a pointer to
+  // llvm_java_lang_object_base.
+  if (isa<PointerType>(valueTy))
+    value = new CastInst(value, java_lang_Object_RefType,
+                         "to-object-base", insertAtEnd);
+
   if (!TheLocals[i] ||
       TheLocals[i]->getType()->getElementType() != value->getType()) {
     // Insert the alloca at the beginning of the entry block.

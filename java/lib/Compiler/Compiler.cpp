@@ -48,6 +48,9 @@
 using namespace llvm;
 using namespace llvm::Java;
 
+Type* llvm::Java::java_lang_Object_Type;
+Type* llvm::Java::java_lang_Object_RefType;
+
 namespace llvm { namespace Java { namespace {
 
   const std::string TMP("tmp");
@@ -328,6 +331,9 @@ namespace llvm { namespace Java { namespace {
       DEBUG(std::cerr << "Adding java/lang/Object = "
             << *ci.type << " to type map\n");
       module_.addTypeName("java/lang/Object", ci.type);
+
+      java_lang_Object_Type = ci.type;
+      java_lang_Object_RefType = PointerType::get(ci.type);
 
       assert(ci.type && "ClassInfo not initialized properly!");
       emitStaticInitializers(cf);
@@ -1545,18 +1551,19 @@ namespace llvm { namespace Java { namespace {
       push(val);
     }
 
-    void do_iaload() { do_aload_common(); }
-    void do_laload() { do_aload_common(); }
-    void do_faload() { do_aload_common(); }
-    void do_daload() { do_aload_common(); }
-    void do_aaload() { do_aload_common(); }
-    void do_baload() { do_aload_common(); }
-    void do_caload() { do_aload_common(); }
-    void do_saload() { do_aload_common(); }
+    void do_iaload() { do_aload_common(getPrimitiveArrayInfo(INT).type); }
+    void do_laload() { do_aload_common(getPrimitiveArrayInfo(LONG).type); }
+    void do_faload() { do_aload_common(getPrimitiveArrayInfo(FLOAT).type); }
+    void do_daload() { do_aload_common(getPrimitiveArrayInfo(DOUBLE).type); }
+    void do_aaload() { do_aload_common(getObjectArrayInfo().type); }
+    void do_baload() { do_aload_common(getPrimitiveArrayInfo(BYTE).type); }
+    void do_caload() { do_aload_common(getPrimitiveArrayInfo(CHAR).type); }
+    void do_saload() { do_aload_common(getPrimitiveArrayInfo(SHORT).type); }
 
-    void do_aload_common() {
+    void do_aload_common(Type* arrayTy) {
       Value* index = pop();
-      Value* arrayRef = pop();
+      Value* arrayRef =	new CastInst(pop(), PointerType::get(arrayTy),
+				     "cast-to-array", currentBB_);
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1580,25 +1587,20 @@ namespace llvm { namespace Java { namespace {
       currentLocals_->store(index, val, currentBB_);
     }
 
-    void do_iastore() { do_astore_common(); }
-    void do_lastore() { do_astore_common(); }
-    void do_fastore() { do_astore_common(); }
-    void do_dastore() { do_astore_common(); }
-    void do_aastore() {
-      do_astore_common(
-        PointerType::get(
-          getClassInfo(ClassFile::get("java/lang/Object")).type));
-    }
-    void do_bastore() { do_astore_common(Type::SByteTy); }
-    void do_castore() { do_astore_common(Type::UShortTy); }
-    void do_sastore() { do_astore_common(Type::ShortTy); }
+    void do_iastore() { do_astore_common(getPrimitiveArrayInfo(INT).type); }
+    void do_lastore() { do_astore_common(getPrimitiveArrayInfo(LONG).type); }
+    void do_fastore() { do_astore_common(getPrimitiveArrayInfo(FLOAT).type); }
+    void do_dastore() { do_astore_common(getPrimitiveArrayInfo(DOUBLE).type); }
+    void do_aastore() { do_astore_common(getObjectArrayInfo().type); }
+    void do_bastore() { do_astore_common(getPrimitiveArrayInfo(BYTE).type); }
+    void do_castore() { do_astore_common(getPrimitiveArrayInfo(CHAR).type); }
+    void do_sastore() { do_astore_common(getPrimitiveArrayInfo(SHORT).type); }
 
-    void do_astore_common(Type* castTo = NULL) {
+    void do_astore_common(Type* arrayTy) {
       Value* value = pop();
-      if (castTo)
-        value = new CastInst(value, castTo, TMP, currentBB_);
       Value* index = pop();
-      Value* arrayRef = pop();
+      Value* arrayRef = new CastInst(pop(), PointerType::get(arrayTy),
+				     "cast-to-array", currentBB_);
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1607,6 +1609,10 @@ namespace llvm { namespace Java { namespace {
       indices.push_back(index);
       Value* elementPtr =
         new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+
+      const Type* elementTy =
+	cast<PointerType>(elementPtr->getType())->getElementType();
+      value = new CastInst(value, elementTy, TMP, currentBB_);
       new StoreInst(value, elementPtr, currentBB_);
     }
 

@@ -18,6 +18,7 @@
 #include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Java/Compiler.h>
 
 using namespace llvm::Java;
 
@@ -26,12 +27,17 @@ void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
   assert(currentDepth < TheStack.size() && "Pushing to a full stack!");
 
   const Type* valueTy = value->getType();
+  // All pointer types are cast to a pointer to
+  // llvm_java_lang_object_base.
+  if (isa<PointerType>(valueTy))
+    value = new CastInst(value, java_lang_Object_RefType,
+                         "to-object-base", insertAtEnd);
   // Values of jboolean, jbyte, jchar and jshort are extended to a
   // jint when pushed on the operand stack.
-  if (valueTy == Type::BoolTy ||
-      valueTy == Type::SByteTy ||
-      valueTy == Type::UShortTy ||
-      valueTy == Type::ShortTy)
+  else if (valueTy == Type::BoolTy ||
+	   valueTy == Type::SByteTy ||
+	   valueTy == Type::UShortTy ||
+	   valueTy == Type::ShortTy)
     value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
 
   // If we don't have an alloca already for this slot create one

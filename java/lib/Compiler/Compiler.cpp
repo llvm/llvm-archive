@@ -1435,7 +1435,7 @@ namespace llvm { namespace Java { namespace {
               field->getName()->str();
             DEBUG(std::cerr << "Adding global: " << globalName << '\n');
             new GlobalVariable(globalTy,
-                               field->isFinal(),
+                               false,
                                GlobalVariable::ExternalLinkage,
                                init,
                                globalName,

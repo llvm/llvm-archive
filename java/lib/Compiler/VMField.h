@@ -29,7 +29,7 @@ namespace llvm { namespace Java {
 
   class VMField {
     const VMClass* parent_;
-    const VMClass* clazz_;
+    const VMClass* class_;
     const Field* field_;
     union {
       int index;
@@ -48,7 +48,7 @@ namespace llvm { namespace Java {
             const Field* field,
             int index)
       : parent_(parent),
-        clazz_(clazz),
+        class_(clazz),
         field_(field) {
       assert(!isStatic() && "This should be a member field!");
       data_.index = index;
@@ -60,7 +60,7 @@ namespace llvm { namespace Java {
     bool isStatic() const { return field_->isStatic(); }
 
     const VMClass* getParent() const { return parent_; }
-    const VMClass* getClass() const { return clazz_; }
+    const VMClass* getClass() const { return class_; }
     int getMemberIndex() const {
       assert(!isStatic() && "Field should not be static!");
       return data_.index;

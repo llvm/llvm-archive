@@ -23,7 +23,7 @@ VMField::VMField(const VMClass* parent,
                  const VMClass* clazz,
                  const Field* field)
   : parent_(parent),
-    clazz_(clazz),
+    class_(clazz),
     field_(field)
 {
   assert(isStatic() && "This should be a static field!");

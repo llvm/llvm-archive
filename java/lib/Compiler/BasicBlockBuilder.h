@@ -46,6 +46,10 @@ namespace llvm { namespace Java {
 
       BasicBlock* bb = getOrCreateBasicBlockAt(0);
 
+      const CodeAttribute::Exceptions& exceptions = c->getExceptions();
+      for (unsigned i = 0, e = exceptions.size(); i != e; ++i)
+        getOrCreateBasicBlockAt(exceptions[i]->getHandlerPc());
+
       parse(c->getCode(), 0, c->getCodeSize());
 
       for (BC2BBMap::const_iterator i = bc2bbMap_.begin(), e = bc2bbMap_.end();

@@ -25,12 +25,12 @@ void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
 			       NULL,
 			       "opStack" + utostr(TheStack.size()),
 			       insertAtEnd));
-  new StoreInst(value, TheStack.top(), false, insertAtEnd);
+  new StoreInst(value, TheStack.top(), insertAtEnd);
 }
 
 llvm::Value* OperandStack::pop(BasicBlock* insertAtEnd)
 {
   Value* val = TheStack.top();
   TheStack.pop();
-  return new LoadInst(val, "pop", false, insertAtEnd);
+  return new LoadInst(val, "pop", insertAtEnd);
 }

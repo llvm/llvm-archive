@@ -1200,13 +1200,20 @@ namespace llvm { namespace Java { namespace {
     void do_d2i() { do_cast_common(Type::IntTy); }
     void do_d2l() { do_cast_common(Type::LongTy); }
     void do_d2f() { do_cast_common(Type::FloatTy); }
-    void do_i2b() { do_cast_common(Type::SByteTy); }
-    void do_i2c() { do_cast_common(Type::UShortTy); }
-    void do_i2s() { do_cast_common(Type::ShortTy); }
+    void do_i2b() { do_truncate_common(Type::SByteTy); }
+    void do_i2c() { do_truncate_common(Type::UShortTy); }
+    void do_i2s() { do_truncate_common(Type::ShortTy); }
 
     void do_cast_common(Type* type) {
       Value* v1 = currentOpStack_->pop(currentBB_);
       v1 = new CastInst(v1, type, TMP, currentBB_);
+      currentOpStack_->push(v1, currentBB_);
+    }
+
+    void do_truncate_common(Type* type) {
+      Value* v1 = currentOpStack_->pop(currentBB_);
+      v1 = new CastInst(v1, type, TMP, currentBB_);
+      v1 = new CastInst(v1, Type::IntTy, TMP, currentBB_);
       currentOpStack_->push(v1, currentBB_);
     }
 

@@ -1303,6 +1303,7 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/Long") != 0 &&
           classMethodDesc.find("java/lang/Short") != 0 &&
           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
+          classMethodDesc.find("java/util/ConcurrentModificationException") != 0 &&
           classMethodDesc.find("java/util/IndexOutOfBoundsException") != 0 &&
           classMethodDesc.find("java/util/NoSuchElementException") != 0 &&
           classMethodDesc.find("java/util/AbstractCollection") != 0 &&

@@ -23,6 +23,8 @@ namespace llvm { namespace Java {
 
   extern Type* ObjectBaseTy;
   extern Type* ObjectBaseRefTy;
+  extern Type* VTableBaseTy;
+  extern Type* VTableBaseRefTy;
 
 } } // namespace llvm::Java
 

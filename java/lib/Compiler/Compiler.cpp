@@ -41,16 +41,13 @@
 
 #define LLVM_JAVA_STATIC_INIT "llvm_java_static_init"
 
-#define LLVM_JAVA_ISINSTANCEOF  "llvm_java_IsInstanceOf"
-#define LLVM_JAVA_GETOBJECTCLASS "llvm_java_GetObjectClass"
-#define LLVM_JAVA_SETOBJECTCLASS "llvm_java_SetObjectClass"
-#define LLVM_JAVA_THROW "llvm_java_Throw"
-
 using namespace llvm;
 using namespace llvm::Java;
 
 Type* llvm::Java::ObjectBaseTy = OpaqueType::get();
 Type* llvm::Java::ObjectBaseRefTy = PointerType::get(ObjectBaseTy);
+Type* llvm::Java::VTableBaseTy = OpaqueType::get();
+Type* llvm::Java::VTableBaseRefTy = PointerType::get(ObjectBaseTy);
 
 namespace llvm { namespace Java { namespace {
 
@@ -75,6 +72,7 @@ namespace llvm { namespace Java { namespace {
     BasicBlock* currentBB_;
     Locals locals_;
     OperandStack opStack_;
+    Function *getObjectClass_, *setObjectClass_, *throw_, *isInstanceOf_;
 
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
@@ -111,7 +109,6 @@ namespace llvm { namespace Java { namespace {
       typedef Method2IndexMap::const_iterator const_iterator;
       Method2IndexMap m2iMap;
 
-      static Type* VTableBaseTy;
       static StructType* VTableTy;
       static StructType* TypeInfoTy;
     };
@@ -130,6 +127,20 @@ namespace llvm { namespace Java { namespace {
                                       NULL,
                                       "llvm_java_JNIEnv",
                                       &module_);
+      module_.addTypeName("llvm_java_object_base", ObjectBaseTy);
+      module_.addTypeName("llvm_java_object_vtable", VTableBaseTy);
+      getObjectClass_ = module_.getOrInsertFunction(
+        "llvm_java_GetObjectClass", VTableBaseRefTy,
+        ObjectBaseRefTy, NULL);
+      setObjectClass_ = module_.getOrInsertFunction(
+        "llvm_java_SetObjectClass", Type::VoidTy,
+        ObjectBaseRefTy, VTableBaseRefTy, NULL);
+      throw_ = module_.getOrInsertFunction(
+        "llvm_java_Throw", Type::IntTy,
+        ObjectBaseRefTy, NULL);
+      isInstanceOf_ = module_.getOrInsertFunction(
+        "llvm_java_IsInstanceOf", Type::IntTy,
+        ObjectBaseRefTy, VTableBaseRefTy, NULL);
     }
 
   private:
@@ -407,8 +418,6 @@ namespace llvm { namespace Java { namespace {
       PATypeHolder holder = VTtype;
       cast<OpaqueType>(VTtype)->refineAbstractTypeTo(StructType::get(elements));
 
-      VTableInfo::VTableBaseTy = OpaqueType::get();
-      module_.addTypeName(LLVM_JAVA_OBJECT_VTABLE, VTableInfo::VTableBaseTy);
       VTableInfo::VTableTy = cast<StructType>(holder.get());
       module_.addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
 
@@ -1303,6 +1312,7 @@ namespace llvm { namespace Java { namespace {
            classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
           classMethodDesc.find("java/lang/Exception") != 0 &&
           classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
+          classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
           classMethodDesc.find("java/lang/RuntimeException") != 0 &&
           classMethodDesc.find("java/lang/Number") != 0 &&
           classMethodDesc.find("java/lang/Byte") != 0 &&
@@ -2045,10 +2055,7 @@ namespace llvm { namespace Java { namespace {
                             "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableBaseTy),
-        objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, currentBB_);
+      Value* vtable = new CallInst(getObjectClass_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, vi->vtable->getType(),
                             className + "<vtable>", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
@@ -2128,10 +2135,7 @@ namespace llvm { namespace Java { namespace {
                             "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableBaseTy),
-        objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, currentBB_);
+      Value* vtable = new CallInst(getObjectClass_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
                             TMP, currentBB_);
       // get the interfaces array of vtables
@@ -2173,13 +2177,9 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = new MallocInst(ci.type, NULL, TMP, currentBB_);
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
-                                   PointerType::get(VTableInfo::VTableBaseTy),
+                                   VTableBaseRefTy,
                                    TMP, currentBB_);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
-        ObjectBaseRefTy,
-        PointerType::get(VTableInfo::VTableBaseTy), NULL);
-      new CallInst(f, objBase, vtable, "", currentBB_);
+      new CallInst(setObjectClass_, objBase, vtable, "", currentBB_);
       push(objRef);
     }
 
@@ -2251,13 +2251,9 @@ namespace llvm { namespace Java { namespace {
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy,
                                     TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
-                                   PointerType::get(VTableInfo::VTableBaseTy),
+                                   VTableBaseRefTy,
                                    TMP, currentBB_);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
-        ObjectBaseRefTy,
-        PointerType::get(VTableInfo::VTableBaseTy), NULL);
-      new CallInst(f, objBase, vtable, "", currentBB_);
+      new CallInst(setObjectClass_, objBase, vtable, "", currentBB_);
       push(objRef);
     }
 
@@ -2271,10 +2267,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_athrow() {
       Value* objRef = pop(ObjectBaseRefTy);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_THROW, Type::IntTy,
-        ObjectBaseRefTy, NULL);
-      new CallInst(f, objRef, TMP, currentBB_);
+      new CallInst(throw_, objRef, TMP, currentBB_);
       new UnreachableInst(currentBB_);
     }
 
@@ -2286,13 +2279,10 @@ namespace llvm { namespace Java { namespace {
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
       Value* objRef = pop(ObjectBaseRefTy);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
-        ObjectBaseRefTy, PointerType::get(VTableInfo::VTableBaseTy), NULL);
       Value* vtable = new CastInst(vi->vtable,
-                                   PointerType::get(VTableInfo::VTableBaseTy),
+                                   VTableBaseRefTy,
                                    TMP, currentBB_);
-      Value* r = new CallInst(f, objRef, vtable, TMP, currentBB_);
+      Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
 
       Value* b = new SetCondInst(Instruction::SetEQ,
                                  r, ConstantSInt::get(Type::IntTy, 1),
@@ -2309,13 +2299,9 @@ namespace llvm { namespace Java { namespace {
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
       Value* objRef = pop(ObjectBaseRefTy);
-      Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
-        ObjectBaseRefTy, PointerType::get(VTableInfo::VTableBaseTy), NULL);
-      Value* vtable = new CastInst(vi->vtable,
-                                   PointerType::get(VTableInfo::VTableBaseTy),
+      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy,
                                    TMP, currentBB_);
-      Value* r = new CallInst(f, objRef, vtable, TMP, currentBB_);
+      Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
       push(r);
     }
 
@@ -2333,7 +2319,6 @@ namespace llvm { namespace Java { namespace {
   };
 
   unsigned Compiler::ClassInfo::InterfaceCount = 0;
-  Type* Compiler::VTableInfo::VTableBaseTy;
   StructType* Compiler::VTableInfo::VTableTy;
   StructType* Compiler::VTableInfo::TypeInfoTy;
 

@@ -13,6 +13,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
 #include "Support/FileUtils.h"
+#include "Support/Snapshots.h"
 #include <string>
 #include <vector>
 using namespace llvm;
@@ -24,8 +25,8 @@ namespace {
 /// ReadSnapshots - load all bytecode files in a directory that haven't yet been
 /// slurped in earlier.
 ///
-void llvm:ReadSnapshots(std::vector<std::string> &oldModules,
-                        std::vector<Module*> NewModules) {
+void llvm::ReadSnapshots(std::vector<std::string> &oldModules,
+                         std::vector<Module*> NewModules) {
   std::string Filename (bytecodePath);
   std::vector<std::string> FileListing;
   GetFilesInDir(bytecodePath, FileListing);

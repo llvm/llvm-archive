@@ -19,7 +19,7 @@
 #include <cassert>
 #include <sstream>
 
-/// TreeCtrl constructor that creates the root and adds it to the tree
+/// TreeCtrl constructor - creates the root and adds it to the tree
 ///
 TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
                        const wxPoint& pos, const wxSize& size,
@@ -58,11 +58,18 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
   AddSnapshotsToTree(list);
 }
 
-/// OnSelChanged - Trigger the text display to be updated with the new
-/// item selected
+/// GetSelectedItemData - Return the currently-selected visualizable
+/// object (TVTreeItemData object).
+///
+TVTreeItemData *TVTreeCtrl::GetSelectedItemData () {
+  return dynamic_cast<TVTreeItemData *> (GetItemData (GetSelection ()));
+}
+
+/// OnSelChanged - Inform the parent frame that the selection has changed,
+/// and pass the newly selected item to it.
+///
 void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
-  myFrame->updateDisplayedItem
-    (dynamic_cast<TVTreeItemData *> (GetItemData (GetSelection ())));
+  myFrame->updateDisplayedItem (GetSelectedItemData ());
 }
 
 ///==---------------------------------------------------------------------==///
@@ -239,6 +246,8 @@ void TVFrame::OnOpen (wxCommandEvent &event) {
   wxFileDialog d (this, "Choose a bytecode file to display");
   int result = d.ShowModal ();
   if (result == wxID_CANCEL) return;
+  // FIXME: the rest of this method can be moved into the "snapshots
+  // list" object
   std::string command = std::string("cp ") + std::string(d.GetPath ().c_str ()) + " " + snapshotsPath;
   system (command.c_str ());
   refreshSnapshotList ();
@@ -262,54 +271,33 @@ void TVApplication::OpenGraphView (TVTreeItemData *item) {
 }
 
 void TVFrame::CallGraphView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
-
-  // Open up a new call graph view window.
-  myApp->OpenGraphView<CallGraphDrawer> (item);
+  // Get the selected LLVM object and open up a new call graph view window.
+  myApp->OpenGraphView<CallGraphDrawer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 void TVFrame::CFGView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
-
-  // Open up a new CFG view window.
-  myApp->OpenGraphView<CFGGraphDrawer> (item);
+  // Get the selected LLVM object and open up a new CFG view window.
+  myApp->OpenGraphView<CFGGraphDrawer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 void TVFrame::BUDSView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
-
-  // Open up a new BUDS view window.
-  myApp->OpenGraphView<BUGraphDrawer> (item);
+  // Get the selected LLVM object and open up a new BUDS view window.
+  myApp->OpenGraphView<BUGraphDrawer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 void TVFrame::TDDSView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
-
-  // Open up a new TDDS view window.
-  myApp->OpenGraphView<TDGraphDrawer> (item);
+  // Get the selected LLVM object and open up a new TDDS view window.
+  myApp->OpenGraphView<TDGraphDrawer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 void TVFrame::LocalDSView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
-
-  // Open up a new Local DS view window.
-  myApp->OpenGraphView<LocalGraphDrawer> (item);
+  // Get the selected LLVM object and open up a new Local DS view window.
+  myApp->OpenGraphView<LocalGraphDrawer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 void TVFrame::CodeView(wxCommandEvent &event) {
   // Get the selected LLVM object.
-  TVTreeItemData *item =
-    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+  TVTreeItemData *item = myTreeCtrl->GetSelectedItemData ();
 
   // Open up a new CFG view window.
   Function *F = item->getFunction ();

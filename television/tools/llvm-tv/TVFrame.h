@@ -34,6 +34,7 @@ public:
   void AddSnapshotsToTree(std::vector<TVSnapshot>&);
   void updateSnapshotList(std::vector<TVSnapshot>&);
   void OnSelChanged(wxTreeEvent &event);
+  TVTreeItemData *GetSelectedItemData ();
 
   DECLARE_EVENT_TABLE();
 };

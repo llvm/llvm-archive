@@ -44,15 +44,18 @@ static void FatalErrorBox (const char *errfmt, ...) {
 
 void TVFrame::refreshSnapshotList () {
   // re-load the list of snapshots
-  const char *directoryName = mySnapshotDirectoryName.c_str ();
+  const char *directoryName = mySnapshotDirName.c_str ();
   mySnapshotList.clear ();
   DIR *d = opendir (directoryName);
   if (!d)
     FatalErrorBox ("trying to open directory %s: %s", directoryName,
                    strerror (errno)); 
   while (struct dirent *de = readdir (d))
-    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
-      mySnapshotList.push_back (de->d_name);
+    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3)) {
+      std::string FullFilePath = mySnapshotDirName + "/" + 
+        std::string(de->d_name);
+      mySnapshotList.push_back (FullFilePath.c_str());
+    }
   closedir (d);
 
   if (myTreeCtrl != 0)
@@ -61,7 +64,7 @@ void TVFrame::refreshSnapshotList () {
 
 void TVFrame::initializeSnapshotListAndView (std::string dirName) {
   // Initialize the snapshot list
-  mySnapshotDirectoryName = dirName;
+  mySnapshotDirName = dirName;
   refreshSnapshotList ();
 
   // Initialize the snapshot list view

@@ -12,11 +12,9 @@
 #include "wx/splitter.h"
 #include "wx/treectrl.h"
 #include "wx/textctrl.h"
-
-
+#include "TVSnapshot.h"
 #include <string>
 #include <vector>
-#include "TVSnapshot.h"
 
 
 /// TVListCtrl - A specialization of wxListCtrl that displays a list of TV
@@ -131,7 +129,7 @@ enum {
 class TVFrame : public wxFrame {
   TVTreeCtrl *myTreeCtrl;
   std::vector<TVSnapshot> mySnapshotList;
-  std::string mySnapshotDirectoryName;
+  std::string mySnapshotDirName;
   
   wxSplitterWindow *splitterWindow;
   wxTextCtrl *displayText;

@@ -46,18 +46,20 @@ TVTreeCtrl::~TVTreeCtrl() {
 void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
   
   wxTreeItemId rootId = GetRootItem();
-  for(std::vector<TVSnapshot>::iterator I = list.begin(), E = list.end(); I != E; ++I) {
+  for (std::vector<TVSnapshot>::iterator I = list.begin(), E = list.end();
+       I != E; ++I) {
     
-    //Get the Module associated with this snapshot
+    // Get the Module associated with this snapshot
     Module *M = I->getModule();
     
-    wxTreeItemId id = AppendItem(rootId, I->label(), -1, -1, new TVTreeModuleItem(I->label(), M));
-    
-    
+    wxTreeItemId id = AppendItem(rootId, I->label(), -1, -1,
+                                 new TVTreeModuleItem(I->label(), M));
 
-    //Loop over functions in the module and add them to the tree
-    for(Module::iterator I = M->begin(), E=M->end(); I != E; ++I) {
-      wxTreeItemId childID = AppendItem(id, ((Function*)I)->getName().c_str(), -1, -1, new TVTreeFunctionItem(((Function*)I)->getName().c_str(), I));
+    // Loop over functions in the module and add them to the tree
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      wxTreeItemId childID =
+        AppendItem(id, ((Function*)I)->getName().c_str(), -1, -1,
+                   new TVTreeFunctionItem(((Function*)I)->getName().c_str(),I));
     }
     
   }   
@@ -148,8 +150,8 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
   //       --> <clears out list of items, re-adds items, OR
   //       -->  adds only changed items, or whatever makes sense,
   //       -->  kind of like TVFrame::refreshView()>
-  wxMessageBox ("the list is supposed to refresh now...");
-  //refreshSnapshotList ();
+  //wxMessageBox ("the list is supposed to refresh now...");
+  refreshSnapshotList ();
 }
 
 void TVFrame::Resize() {

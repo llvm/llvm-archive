@@ -186,6 +186,7 @@ namespace llvm { namespace Java { namespace {
             name += method.getDescriptor()->str();
 
             // FIXME: use proper function type
+            // FIXME: emit with internal linkage if function is private
             Function* function =
                 module.getOrInsertFunction(name, Type::VoidTy, 0);
 

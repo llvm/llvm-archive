@@ -58,7 +58,10 @@ class TVTreeCtrl : public wxTreeCtrl {
 
 public:
   TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
-                         const wxPoint& pos, const wxSize& size, long style);
+                         const wxPoint& pos = wxDefaultPosition,
+                         const wxSize& size = wxDefaultSize,
+                         long style = wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE
+                                    | wxSUNKEN_BORDER);
   
   virtual ~TVTreeCtrl() { }
   void AddSnapshotsToTree(std::vector<TVSnapshot>&);

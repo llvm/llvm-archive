@@ -120,21 +120,6 @@ void VMClass::link()
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
         interfaces_.push_back(superClass->getInterface(i));
 
-      // For each of the interfaces we implement, load it and add that
-      // interface and all the interfaces it inherits from.
-      for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
-        const VMClass* interface =
-          getClassForClass(classFile_->getInterfaceIndex(i));
-        interfaces_.push_back(interface);
-        for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
-          interfaces_.push_back(interface->getInterface(j));
-      }
-
-      // Sort the interfaces array and remove duplicates.
-      std::sort(interfaces_.begin(), interfaces_.end());
-      interfaces_.erase(std::unique(interfaces_.begin(), interfaces_.end()),
-                        interfaces_.end());
-
       // We first add the struct of the super class.
       addField("super", superClass->getLayoutType());
 
@@ -156,7 +141,22 @@ void VMClass::link()
       }
     }
 
-    // Then we add the rest of the fields.
+    // For each of the interfaces we implement, load it and add that
+    // interface and all the interfaces it inherits from.
+    for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
+      const VMClass* interface =
+        getClassForClass(classFile_->getInterfaceIndex(i));
+      interfaces_.push_back(interface);
+      for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
+        interfaces_.push_back(interface->getInterface(j));
+    }
+
+    // Sort the interfaces array and remove duplicates.
+    std::sort(interfaces_.begin(), interfaces_.end());
+    interfaces_.erase(std::unique(interfaces_.begin(), interfaces_.end()),
+                      interfaces_.end());
+
+    // Now add the rest of the fields.
     const Fields& fields = classFile_->getFields();
     for (unsigned i = 0, e = fields.size(); i != e; ++i) {
       Field* field = fields[i];

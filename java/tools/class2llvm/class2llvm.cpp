@@ -20,26 +20,12 @@
 #include <Support/CommandLine.h>
 
 #include <cstddef>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 using namespace llvm;
 
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
-
-namespace {
-
-    std::auto_ptr<std::istream> getInputStream(const std::string& fn) {
-        std::auto_ptr<std::istream> in;
-        if (fn == "-") in.reset(new std::istream(std::cin.rdbuf()));
-        else in.reset(new std::ifstream(fn.c_str()));
-
-        return in;
-    }
-
-}
+InputFilename(cl::Positional, cl::desc("<input bytecode>"));
 
 int main(int argc, char* argv[])
 {
@@ -48,9 +34,7 @@ int main(int argc, char* argv[])
                                 "classfile to llvm utility");
 
     try {
-        std::auto_ptr<std::istream> in(getInputStream(InputFilename));
-        
-        std::auto_ptr<Java::ClassFile> cf(Java::ClassFile::readClassFile(*in));
+        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputFilename));
 
         Java::Compiler compiler;
 

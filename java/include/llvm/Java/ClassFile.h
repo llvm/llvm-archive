@@ -61,8 +61,12 @@ namespace llvm { namespace Java {
     const CodeAttribute* getCodeAttribute(const Attributes& attrs);
 
     class ClassFile {
+        static const ClassFile* readClassFile(std::istream& is);
+        static std::vector<std::string> getClassPath();
+        static std::string getFileForClass(const std::string& classname);
+
     public:
-        static ClassFile* readClassFile(std::istream& is);
+        static const ClassFile* getClassFile(const std::string& classname);
 
         ~ClassFile();
 

@@ -12,13 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "classfile"
+
 #include <llvm/Java/ClassFile.h>
+#include <Support/Debug.h>
+#include <Support/FileUtilities.h>
 #include <Support/STLExtras.h>
 
 #include <cassert>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <map>
 
 using namespace llvm::Java;
 
@@ -135,7 +141,7 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 // ClassFile implementation
-ClassFile* ClassFile::readClassFile(std::istream& is)
+const ClassFile* ClassFile::readClassFile(std::istream& is)
 {
     if (readU1(is) != 0xCA) throw ClassFileParseError("bad magic");
     if (readU1(is) != 0xFE) throw ClassFileParseError("bad magic");
@@ -143,6 +149,58 @@ ClassFile* ClassFile::readClassFile(std::istream& is)
     if (readU1(is) != 0xBE) throw ClassFileParseError("bad magic");
 
     return new ClassFile(is);
+}
+
+std::vector<std::string> ClassFile::getClassPath()
+{
+    std::string classpath = getenv("CLASSPATH");
+    DEBUG(std::cerr << "CLASSPATH=" << classpath << '\n');
+
+    std::vector<std::string> result;
+    unsigned b = 0, e = 0;
+    do {
+        e = classpath.find(':', b);
+        result.push_back(classpath.substr(b, e));
+        b = e + 1;
+    } while (e != std::string::npos);
+
+    return result;
+}
+
+std::string ClassFile::getFileForClass(const std::string& classname)
+{
+    static const std::vector<std::string> classpath = getClassPath();
+    DEBUG(std::cerr << "Looking up class: " << classname << '\n');
+
+    std::string clazz = classname;
+    // replace '.' with '/'
+    for (unsigned i = 0, e = clazz.size(); i != e; ++i)
+        if (clazz[i] == '.')
+            clazz[i] = '/';
+    clazz += ".class";
+
+    for (unsigned i = 0, e = classpath.size(); i != e; ++i) {
+        std::string filename = classpath[i] + '/' + clazz;
+        DEBUG(std::cerr << "Trying file: " << filename << '\n');
+        if (FileOpenable(filename))
+            return filename;
+    }
+
+    throw ClassFileSemanticError("Class " + classname + " not found");
+}
+
+const ClassFile* ClassFile::getClassFile(const std::string& classname)
+{
+    typedef std::map<std::string, const ClassFile*> Name2ClassMap;
+    static Name2ClassMap n2cMap_;
+
+    Name2ClassMap::iterator it = n2cMap_.upper_bound(classname);
+    if (it == n2cMap_.end() || it->first != classname) {
+        std::ifstream in(getFileForClass(classname).c_str());
+        it = n2cMap_.insert(it, std::make_pair(classname, readClassFile(in)));
+    }
+
+    return it->second;
 }
 
 ClassFile::ClassFile(std::istream& is)

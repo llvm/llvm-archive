@@ -88,21 +88,29 @@ namespace llvm { namespace Java { namespace {
       unsigned interfaceIdx_;
       typedef std::map<std::string, int> Field2IndexMap;
       Field2IndexMap f2iMap_;
+      typedef std::vector<const Type*> ElementTypes;
+      ElementTypes elementTypes;
 
     public:
       static unsigned InterfaceCount;
 
     public:
-      ClassInfo() : type_(NULL), interfaceIdx_(0) { }
-      void setType(Type* type) { type_ = type; }
+      ClassInfo() : type_(OpaqueType::get()), interfaceIdx_(0) { }
       Type* getType() { return type_; }
       const Type* getType() const { return type_; }
-      void addField(const std::string& name, int slot) {
-        f2iMap_.insert(std::make_pair(name, slot));
+      void addField(const std::string& name, const Type* type) {
+        f2iMap_.insert(std::make_pair(name, elementTypes.size()));
+        elementTypes.push_back(type);
       }
       int getFieldIndex(const std::string& name) const {
         Field2IndexMap::const_iterator it = f2iMap_.find(name);
         return it == f2iMap_.end() ? -1 : it->second;
+      }
+      void resolveType() {
+        PATypeHolder holder = type_;
+        Type* resolvedType = StructType::get(elementTypes);
+        cast<OpaqueType>(type_)->refineAbstractTypeTo(resolvedType);
+        type_ = holder.get();
       }
       unsigned getInterfaceIndex() const { return interfaceIdx_; }
       void setInterfaceIndex(unsigned index) { interfaceIdx_ = index; }
@@ -312,37 +320,28 @@ namespace llvm { namespace Java { namespace {
 
       module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ObjectBaseTy);
 
-      assert(!ci.getType() &&
+      assert(isa<OpaqueType>(ci.getType()) &&
              "java/lang/Object ClassInfo should not be initialized!");
-
-      ci.setType(OpaqueType::get());
-
-      std::vector<const Type*> elements;
 
       // Because this is java/lang/Object, we add the opaque
       // llvm_java_object_base type first.
-      ci.addField(LLVM_JAVA_OBJECT_BASE, elements.size());
-      elements.push_back(ObjectBaseTy);
+      ci.addField(LLVM_JAVA_OBJECT_BASE, ObjectBaseTy);
 
       const Fields& fields = cf->getFields();
       for (unsigned i = 0, e = fields.size(); i != e; ++i) {
         Field* field = fields[i];
-        if (!field->isStatic()) {
-          ci.addField(field->getName()->str(), elements.size());
-          elements.push_back(getType(field->getDescriptor()));
-        }
+        if (!field->isStatic())
+          ci.addField(field->getName()->str(), getType(field->getDescriptor()));
       }
 
-      PATypeHolder holder = ci.getType();
-      cast<OpaqueType>(ci.getType())->
-        refineAbstractTypeTo(StructType::get(elements));
-      ci.setType(holder.get());
+      ci.resolveType();
 
       DEBUG(std::cerr << "Adding java/lang/Object = "
             << *ci.getType() << " to type map\n");
       module_.addTypeName("java/lang/Object", ci.getType());
 
-      assert(ci.getType() && "ClassInfo not initialized properly!");
+      assert(!isa<OpaqueType>(ci.getType()) &&
+             "ClassInfo not initialized properly!");
       emitStaticInitializers(cf);
       DEBUG(std::cerr << "Built ClassInfo for: java/lang/Object\n");
       return true;
@@ -455,35 +454,30 @@ namespace llvm { namespace Java { namespace {
       DEBUG(std::cerr << "Building ClassInfo for: " << className << '\n');
       ClassInfo& ci = c2ciMap_[cf];
 
-      assert(!ci.getType() && "got already initialized ClassInfo!");
+      assert(isa<OpaqueType>(ci.getType()) &&
+             "got already initialized ClassInfo!");
 
       // Get the interface id.
       if (cf->isInterface())
         ci.setInterfaceIndex(ClassInfo::InterfaceCount++);
 
-      ci.setType(OpaqueType::get());
-
-      std::vector<const Type*> elements;
       ConstantClass* super = cf->getSuperClass();
       assert(super && "Class does not have superclass!");
       const ClassInfo& superCI =
         getClassInfo(ClassFile::get(super->getName()->str()));
-      elements.push_back(superCI.getType());
+      ci.addField("super", superCI.getType());
 
       const Fields& fields = cf->getFields();
       for (unsigned i = 0, e = fields.size(); i != e; ++i) {
         Field* field = fields[i];
-        if (!field->isStatic()) {
-          ci.addField(field->getName()->str(), elements.size());
-          elements.push_back(getType(field->getDescriptor()));
-        }
+        if (!field->isStatic())
+          ci.addField(field->getName()->str(), getType(field->getDescriptor()));
       }
-      PATypeHolder holder = ci.getType();
-      cast<OpaqueType>(ci.getType())->
-        refineAbstractTypeTo(StructType::get(elements));
-      ci.setType(holder.get());
 
-      assert(ci.getType() && "ClassInfo not initialized properly!");
+      ci.resolveType();
+
+      assert(!isa<OpaqueType>(ci.getType()) &&
+             "ClassInfo not initialized properly!");
       DEBUG(std::cerr << "Adding " << className << " = "
             << *ci.getType() << " to type map\n");
       module_.addTypeName(className, ci.getType());
@@ -497,15 +491,11 @@ namespace llvm { namespace Java { namespace {
     ClassInfo buildArrayClassInfo(Type* elementTy) {
       ClassInfo arrayInfo;
 
-      std::vector<const Type*> elements;
-      elements.reserve(3);
-      elements.push_back(ObjectBaseTy);
-      elements.push_back(Type::UIntTy);
-      arrayInfo.addField("<length>", elements.size());
-      elements.push_back(ArrayType::get(elementTy, 0));
-      arrayInfo.addField("<data>", elements.size());
+      arrayInfo.addField("super", ObjectBaseTy);
+      arrayInfo.addField("<length>", Type::UIntTy);
+      arrayInfo.addField("<data>", ArrayType::get(elementTy, 0));
 
-      arrayInfo.setType(StructType::get(elements));
+      arrayInfo.resolveType();
 
       return arrayInfo;
     }

@@ -49,18 +49,17 @@ namespace llvm { namespace Java { namespace {
         return !isTwoSlotValue(v);
     }
 
-    llvm::Constant* getConstant(const Constant* c) {
-        if (dynamic_cast<const ConstantString*>(c))
+    llvm::Constant* getConstant(Constant* c) {
+        if (dynamic_cast<ConstantString*>(c))
             assert(0 && "not implemented");
-        else if (const ConstantInteger* i =
-                 dynamic_cast<const ConstantInteger*>(c))
+        else if (ConstantInteger* i =
+                 dynamic_cast<ConstantInteger*>(c))
             return ConstantSInt::get(Type::IntTy, i->getValue());
-        else if (const ConstantFloat* f = dynamic_cast<const ConstantFloat*>(c))
+        else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
             return ConstantFP::get(Type::FloatTy, f->getValue());
-        else if (const ConstantLong* l = dynamic_cast<const ConstantLong*>(c))
+        else if (ConstantLong* l = dynamic_cast<ConstantLong*>(c))
             return ConstantSInt::get(Type::LongTy, l->getValue());
-        else if (const ConstantDouble* d =
-                 dynamic_cast<const ConstantDouble*>(c))
+        else if (ConstantDouble* d = dynamic_cast<ConstantDouble*>(c))
             return ConstantFP::get(Type::DoubleTy, d->getValue());
         else
             return NULL; // FIXME: throw something
@@ -71,7 +70,7 @@ namespace llvm { namespace Java { namespace {
     public:
         Bytecode2BasicBlockMapper(Function& f,
                                   BC2BBMap& m,
-                                  const CodeAttribute& c)
+                                  CodeAttribute& c)
             : function_(f), bc2bbMap_(m), codeAttr_(c) { }
 
         void compute() {
@@ -136,21 +135,21 @@ namespace llvm { namespace Java { namespace {
         public BytecodeParser<CompilerImpl> {
     private:
         Module* module_;
-        const ClassFile* cf_;
+        ClassFile* cf_;
         OperandStack opStack_;
         Locals locals_;
         BC2BBMap bc2bbMap_;
         BasicBlock* prologue_;
         typedef SetVector<Function*> FunctionSet;
         FunctionSet toCompileFunctions_;
-        typedef std::map<std::string, const Type*> Class2TypeMap;
+        typedef std::map<std::string, Type*> Class2TypeMap;
         Class2TypeMap c2tMap_;
 
     private:
         BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
 
     private:
-        const Type* getType(JType type) {
+        Type* getType(JType type) {
             switch (type) {
             case REFERENCE:
                 return PointerType::get(getTypeForClass("java/lang/Object"));
@@ -181,12 +180,12 @@ namespace llvm { namespace Java { namespace {
             return static_cast<Instruction::BinaryOps>(-1);
         }
 
-        const Type* getType(const ConstantUtf8* descr) {
+        Type* getType(ConstantUtf8* descr) {
             unsigned i = 0;
             return getTypeHelper(descr->str(), i);
         }
 
-        const Type* getTypeHelper(const std::string& descr, unsigned& i) {
+        Type* getTypeHelper(const std::string& descr, unsigned& i) {
             assert(i < descr.size());
             switch (descr[i++]) {
             case 'B': return Type::SByteTy;
@@ -221,22 +220,22 @@ namespace llvm { namespace Java { namespace {
             }
         }
 
-        const Type* getTypeForClass(const std::string& className) {
+        Type* getTypeForClass(const std::string& className) {
             Class2TypeMap::iterator it = c2tMap_.lower_bound(className);
             if (it == c2tMap_.end() || it->first != className) {
-                const ClassFile* cf = ClassFile::getClassFile(className);
+                ClassFile* cf = ClassFile::getClassFile(className);
                 OpaqueType* newType = OpaqueType::get();
                 it = c2tMap_.insert(it, std::make_pair(className, newType));
                 std::vector<const Type*> elements;
-                if (const ConstantClass* super = cf->getSuperClass())
+                if (ConstantClass* super = cf->getSuperClass())
                     elements.push_back
                         (getTypeForClass(super->getName()->str()));
                 const Fields& fields = cf->getFields();
                 for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-                    const Field* field = fields[i];
+                    Field* field = fields[i];
                     if (field->isStatic()) {
                         llvm::Constant* init = NULL;
-                        if (const ConstantValueAttribute* cv =
+                        if (ConstantValueAttribute* cv =
                             field->getConstantValueAttribute())
                             init = getConstant(cv->getValue());
 
@@ -262,7 +261,7 @@ namespace llvm { namespace Java { namespace {
             return it->second;
         }
 
-        Value* getOrCreateLocal(unsigned index, const Type* type) {
+        Value* getOrCreateLocal(unsigned index, Type* type) {
             if (!locals_[index] ||
                 cast<PointerType>(locals_[index]->getType())->getElementType() != type) {
                 locals_[index] = new AllocaInst
@@ -277,7 +276,7 @@ namespace llvm { namespace Java { namespace {
             DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 
             module_ = &module;
-            const Method* method;
+            Method* method;
             tie(cf_, method) = findClassAndMethod(classMethodDesc);
 
             std::string name = cf_->getThisClass()->getName()->str();
@@ -291,7 +290,7 @@ namespace llvm { namespace Java { namespace {
                                  Function::InternalLinkage :
                                  Function::ExternalLinkage);
 
-            const Java::CodeAttribute* codeAttr = method->getCodeAttribute();
+            Java::CodeAttribute* codeAttr = method->getCodeAttribute();
 
             while (!opStack_.empty())
                 opStack_.pop();
@@ -318,14 +317,14 @@ namespace llvm { namespace Java { namespace {
             return function;
         }
 
-        std::pair<const ClassFile*, const Method*>
+        std::pair<ClassFile*, Method*>
         findClassAndMethod(const std::string& classMethodDesc) {
             unsigned slash = classMethodDesc.find('/');
             std::string className = classMethodDesc.substr(0, slash);
             std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 
-            const ClassFile* classfile = ClassFile::getClassFile(className);
-            const Method* method = classfile->getMethod(methodNameAndDescr);
+            ClassFile* classfile = ClassFile::getClassFile(className);
+            Method* method = classfile->getMethod(methodNameAndDescr);
             if (!method)
                 throw InvocationTargetException(
                     "Method " + methodNameAndDescr +
@@ -371,7 +370,7 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_ldc(unsigned bcI, unsigned index) {
-            const Constant* c = cf_->getConstantPool()[index];
+            Constant* c = cf_->getConstantPool()[index];
             assert(getConstant(c) && "Java constant not handled!");
             opStack_.push(getConstant(c));
         }
@@ -721,17 +720,16 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_invokestatic(unsigned bcI, unsigned index) {
-            const ConstantMethodRef* methodRef =
+            ConstantMethodRef* methodRef =
                 (ConstantMethodRef*)(cf_->getConstantPool()[index]);
-            const ConstantNameAndType* nameAndType =
-                methodRef->getNameAndType();
+            ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
             std::string funcName =
                 methodRef->getClass()->getName()->str() + '/' +
                 nameAndType->getName()->str() +
                 nameAndType->getDescriptor()->str();
 
-            const FunctionType* funcType =
+            FunctionType* funcType =
                 cast<FunctionType>(getType(nameAndType->getDescriptor()));
             std::vector<Value*> params(funcType->getNumParams(), NULL);
             for (unsigned i = funcType->getNumParams(); i > 0; ) {

@@ -176,9 +176,14 @@ namespace llvm { namespace Java { namespace {
             DEBUG(std::cerr << "compiling method: "
                   << method.getName()->str() << '\n');
 
+            std::string name = cf.getThisClass()->getName()->str();
+            name += '/';
+            name += method.getName()->str();
+            name += method.getDescriptor()->str();
+
+            // FIXME: use proper function type
             Function* function =
-                module.getOrInsertFunction(method.getName()->str(),
-                                           Type::VoidTy, 0);
+                module.getOrInsertFunction(name, Type::VoidTy, 0);
 
             const Java::CodeAttribute* codeAttr =
                 Java::getCodeAttribute(method.getAttributes());

@@ -20,7 +20,7 @@ clean::
 .PRECIOUS: Output/.dir Output/%.bc Output/%.ll Output/%.llvm.bc Output/%.llvm Output/%.class
 
 #rule to link in runtime to raw bytecode
-%.linked.bc: %.raw.bc $(BUILD_SRC_ROOT)/runtime/runtime.bc
+%.linked.bc: %.raw.bc $(LEVEL)/runtime/runtime.bc
 	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $^ -o $@
 
 # rule to make assembly from bytecode

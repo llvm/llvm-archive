@@ -11,7 +11,6 @@ LEVEL := ../..
 TOOLNAME := class2llvm
 
 USEDLIBS := LLVMJavaClassfile LLVMJavaCompiler
-LLVMLIBS := LLVMScalarOpts.a LLVMTarget.a LLVMTransformUtils.a LLVMAnalysis.a \
-            LLVMBCWriter LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+LLVMLIBS := LLVMBCWriter LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

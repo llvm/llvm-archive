@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Java/ClassFile.h>
+#include <Support/STLExtras.h>
 
 #include <cassert>
 #include <functional>
@@ -126,7 +127,10 @@ namespace {
         os << '\n' << name << "s:\n";
         for (typename Container::const_iterator
                  i = c.begin(), e = c.end(); i != e; ++i)
-            (*i)->dump(os << name << ' ') << '\n';
+            if (*i)
+                (*i)->dump(os << name << ' ') << '\n';
+            else
+                os << name << " NULL\n";
         return os;
     }
 
@@ -162,6 +166,14 @@ ClassFile::ClassFile(std::istream& is)
     readFields(fields_, cPool_, is);
     readMethods(methods_, cPool_, is);
     readAttributes(attributes_, cPool_, is);
+}
+
+ClassFile::~ClassFile()
+{
+    for_each(cPool_.begin(), cPool_.end(), deleter<Constant>);
+    for_each(fields_.begin(), fields_.end(), deleter<Field>);
+    for_each(methods_.begin(), methods_.end(), deleter<Method>);
+    for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
 }
 
 std::ostream& ClassFile::dump(std::ostream& os) const
@@ -351,8 +363,11 @@ ConstantUtf8::ConstantUtf8(const ClassFile::ConstantPool& cp,
 {
     uint16_t length = readU2(is);
     char buf[length];
-    is.read(buf, length);
-    utf8_ = std::string(buf, length);
+    std::streamsize s = is.rdbuf()->sgetn(buf, length);
+    if (s != length)
+        throw ClassFileParseError(
+            "Could not read string constant from input stream");
+    utf8_.assign(buf, length);
 }
 
 std::ostream& ConstantUtf8::dump(std::ostream& os) const
@@ -373,6 +388,11 @@ Field::Field(const ClassFile::ConstantPool& cp, std::istream& is)
         throw ClassFileSemanticError(
             "Representation of field descriptor is not of type ConstantUtf8");
     readAttributes(attributes_, cp, is);
+}
+
+Field::~Field()
+{
+    for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
 }
 
 std::ostream& Field::dump(std::ostream& os) const
@@ -408,6 +428,11 @@ Method::Method(const ClassFile::ConstantPool& cp, std::istream& is)
     readAttributes(attributes_, cp, is);
 }
 
+Method::~Method()
+{
+    for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
+}
+
 std::ostream& Method::dump(std::ostream& os) const
 {
     os << *getName() << ' ' << *getDescriptor() << '\n'
@@ -428,24 +453,122 @@ std::ostream& Method::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Attribute implementation
-Attribute::Attribute(const ClassFile::ConstantPool& cp, std::istream& is)
-{
-    name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
-    if (!name_)
-        throw ClassFileSemanticError(
-            "Representation of attribute name is not of type ConstantUtf8");
-    uint32_t length = readU4(is);
-    is.ignore(length);
-}
-
 Attribute* Attribute::readAttribute(const ClassFile::ConstantPool& cp,
                                     std::istream& is)
 {
-    return new Attribute(cp, is);
+    ConstantUtf8* name = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+    if (!name)
+        throw ClassFileSemanticError(
+            "Representation of attribute name is not of type ConstantUtf8");
+
+    if (strcmp(*name, "ConstantValue") == 0)
+        return new AttributeConstantValue(name, cp, is);
+    else if (strcmp(*name, "Code") == 0)
+        return new AttributeCode(name, cp, is);
+    else {
+        uint32_t length = readU4(is);
+        is.ignore(length);
+        return new Attribute(name, cp, is);
+    }
+}
+
+Attribute::Attribute(ConstantUtf8* name,
+                     const ClassFile::ConstantPool& cp,
+                     std::istream& is)
+    : name_(name)
+{
+
+}
+
+Attribute::~Attribute()
+{
+
 }
 
 std::ostream& Attribute::dump(std::ostream& os) const
 {
-    os << *getName() << '\n';
+    return os << *getName();
+}
+
+//===----------------------------------------------------------------------===//
+// AttributeConstantValue implementation
+AttributeConstantValue::AttributeConstantValue(
+    ConstantUtf8* name,
+    const ClassFile::ConstantPool& cp,
+    std::istream& is)
+    : Attribute(name, cp, is)
+{
+    uint32_t length = readU4(is);
+    if (length != 2)
+        throw ClassFileSemanticError(
+            "Length of AttributeConstantValue is not 2");
+    value_ = cp[readU2(is)];
+}
+
+std::ostream& AttributeConstantValue::dump(std::ostream& os) const
+{
+    return Attribute::dump(os) << ": " << *value_;
+}
+
+//===----------------------------------------------------------------------===//
+// Attribute code
+AttributeCode::AttributeCode(ConstantUtf8* name,
+                             const ClassFile::ConstantPool& cp,
+                             std::istream& is)
+    : Attribute(name, cp, is)
+{
+    uint32_t length = readU4(is);
+    maxStack_ = readU2(is);
+    maxLocals_ = readU2(is);
+    codeSize_ = readU4(is);
+    code_ = new char[codeSize_];
+    std::streamsize s = is.rdbuf()->sgetn(code_, codeSize_);
+    if (s != (std::streamsize) codeSize_)
+        throw ClassFileParseError(
+            "Could not read code from input stream");
+    uint16_t exceptCount = readU2(is);
+    exceptions_.reserve(exceptCount);
+    while (exceptCount--)
+        exceptions_.push_back(new Exception(cp, is));
+    readAttributes(attributes_, cp, is);
+}
+
+AttributeCode::~AttributeCode()
+{
+    delete[] code_;
+    for_each(exceptions_.begin(), exceptions_.end(), deleter<Exception>);
+    for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
+}
+
+std::ostream& AttributeCode::dump(std::ostream& os) const
+{
+    Attribute::dump(os)
+        << '\n'
+        << "Max stack: " << maxStack_ << '\n'
+        << "Max locals: " << maxLocals_ << '\n'
+        << "Code size: " << codeSize_ << '\n';
+    dumpCollection(exceptions_, "Exception", os);
+    dumpCollection(attributes_, "Attribute", os);
+
     return os;
+}
+
+AttributeCode::Exception::Exception(const ClassFile::ConstantPool& cp,
+                                    std::istream& is)
+{
+    startPc_ = readU2(is);
+    endPc_ = readU2(is);
+    handlerPc_ = readU2(is);
+    catchType_ = dynamic_cast<ConstantClass*>(cp[readU2(is)]);
+    if (!catchType_)
+        throw ClassFileSemanticError(
+            "Representation of catch type is not of type ConstantClass");
+}
+
+std::ostream& AttributeCode::Exception::dump(std::ostream& os) const
+{
+    return os << *getCatchType() << '\n'
+              << "Start PC: " << startPc_ << '\n'
+              << "End PC: " << endPc_ << '\n'
+              << "Handler PC: " << handlerPc_;
 }

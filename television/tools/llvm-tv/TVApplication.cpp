@@ -12,9 +12,18 @@
 #include <fstream>
 #include <iostream>
 #include <sys/types.h>
+#include <signal.h>
+#include <string>
 #include <unistd.h>
 
 ///==---------------------------------------------------------------------==///
+
+static TVFrame *frame;
+
+void sigHandler(int sigNum) {
+  printf("llvm-tv: caught update signal!\n");
+  frame->refreshSnapshotList();
+}
 
 /// FatalErrorBox - pop up an error message (given in printf () form) and quit.
 ///
@@ -42,8 +51,12 @@ void TVFrame::refreshSnapshotList () {
     FatalErrorBox ("trying to open directory %s: %s", directoryName,
                    strerror (errno)); 
   while (struct dirent *de = readdir (d))
-    mySnapshotList.push_back (de->d_name);
+    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
+      mySnapshotList.push_back (de->d_name);
   closedir (d);
+
+  if (myListCtrl)
+    myListCtrl->refreshView ();
 }
 
 void TVFrame::initializeSnapshotListAndView (std::string dirName) {
@@ -92,7 +105,7 @@ bool TVApplication::OnInit () {
   saveMyPID (llvmtvPID);
 
   // Build top-level window.
-  TVFrame *frame = new TVFrame ("Snapshot List");
+  frame = new TVFrame ("Snapshot List");
   SetTopWindow (frame);
 
   // Build top-level window's menu bar.
@@ -100,7 +113,9 @@ bool TVApplication::OnInit () {
 
   // Read the snapshot list out of the given directory,
   // and load the snapshot list view into the frame.
-  frame->initializeSnapshotListAndView ("/users/brg");
+  frame->initializeSnapshotListAndView (snapshotsPath);
+
+  signal(SIGUSR1, sigHandler);
 
   return true;
 }

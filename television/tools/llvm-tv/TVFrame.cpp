@@ -66,8 +66,6 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
   //       -->  kind of like TVFrame::refreshView()>
   wxMessageBox ("the list is supposed to refresh now...");
   refreshSnapshotList ();
-  if (myListCtrl)
-    myListCtrl->refreshView ();
 }
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)

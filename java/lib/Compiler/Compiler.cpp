@@ -242,6 +242,7 @@ namespace llvm { namespace Java { namespace {
 
       DEBUG(std::cerr << "Building ClassInfo for: " << className << '\n');
       ClassFile* cf = ClassFile::getClassFile(className);
+      emitStaticInitializers(cf);
       ClassInfo& ci = c2ciMap_[className];
       assert(!ci.type && ci.f2iMap.empty() &&
              "got already initialized ClassInfo!");

@@ -39,10 +39,12 @@ public:
   DECLARE_EVENT_TABLE();
 };
 
-class TVApplication;
-
 ///==---------------------------------------------------------------------==///
 
+/// TVNotebook - The class which is responsible for the "tab view"
+/// containing visualizers, which appears on the right-hand side
+/// of the main LLVM-TV window.
+///
 class TVNotebook : public wxNotebook {
   std::vector<ItemDisplayer *> displayers;
   TVTreeItemData *selectedItem;
@@ -57,9 +59,12 @@ public:
   DECLARE_EVENT_TABLE ()
 };
 
-/// TVFrame - The main application window for the demo, which displays
-/// the tree view, status bar, and menu bar.
+///==---------------------------------------------------------------------==///
+
+/// TVFrame - The main application window for LLVM-TV, which is responsible
+/// for displaying the tree view, tab view, status bar, and menu bar.
 ///
+class TVApplication;
 class TVFrame : public wxFrame {
   TVApplication *myApp;
 
@@ -73,7 +78,6 @@ class TVFrame : public wxFrame {
   void Resize();
  public:
   TVFrame (TVApplication *app, const char *title);
-  static ItemDisplayer *createDisplayWidget (wxWindow *parent, const wxString &init, unsigned nohtml);
   void OnExit (wxCommandEvent &event);
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);

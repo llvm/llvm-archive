@@ -269,19 +269,13 @@ namespace llvm { namespace Java { namespace {
                            const ClassFile& cf,
                            const Method& method) {
             compileMethodOnly(module, cf, method);
-            bool done;
-            do {
-                done = true;
-                for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
-                    Function* f = toCompileFunctions_[i];
-                    if (f->isExternal()) {
-                        done = false;
-                        compileMethod(module, f->getName());
-                    }
-                }
-            } while (!done);
-        }
 
+            for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
+                Function* f = toCompileFunctions_[i];
+                compileMethod(module, f->getName());
+            }
+        }
+=
         void compileMethod(Module& module, const std::string& classMethodDesc) {
             unsigned slash = classMethodDesc.find('/');
             std::string className = classMethodDesc.substr(0, slash);

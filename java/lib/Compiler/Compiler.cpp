@@ -68,6 +68,8 @@ namespace llvm { namespace Java { namespace {
                 else
                     bc2bbMap_[i] = bb;
             }
+
+            assert(function_.getEntryBlock().getName() == "entry");
         }
 
         void do_if(unsigned bcI, JSetCC cc, JType type,
@@ -113,6 +115,12 @@ namespace llvm { namespace Java { namespace {
     struct CompilerImpl :
         public BytecodeParser<CompilerImpl> {
     private:
+        OperandStack opStack_;
+        Locals locals_;
+        BC2BBMap bc2bbMap_;
+        BasicBlock* prologue_;
+
+    private:
         const Type* getType(JType type) {
             switch (type) {
                 // FIXME: this should really be a non-void type when the object
@@ -156,18 +164,19 @@ namespace llvm { namespace Java { namespace {
 
             Bytecode2BasicBlockMapper mapper(function, bc2bbMap_, codeAttr);
             mapper.compute();
+
+            prologue_ = new BasicBlock("prologue");
         }
 
         Value* getOrCreateLocal(unsigned index, const Type* type) {
             if (!locals_[index]) {
-                BasicBlock* entry = bc2bbMap_[0];
                 Instruction* alloc =
                     new AllocaInst(type, NULL, "local" + utostr(index));
                 locals_[index] = alloc;
                 Instruction* store = new StoreInst(
                     llvm::Constant::getNullValue(type), alloc);
-                entry->getInstList().push_front(store);
-                entry->getInstList().push_front(alloc);
+                prologue_->getInstList().push_back(alloc);
+                prologue_->getInstList().push_back(store);
             }
 
             return locals_[index];
@@ -197,7 +206,14 @@ namespace llvm { namespace Java { namespace {
 
             parse(codeAttr->getCode(), codeAttr->getCodeSize());
 
-            assert(function->getEntryBlock().getName() == "entry");
+            // if the prologue is not empty, make it the entry block
+            // of the function with entry as its only successor
+            if (prologue_->empty())
+                delete prologue_;
+            else {
+                function->getBasicBlockList().push_front(prologue_);
+                new BranchInst(prologue_->getNext(), prologue_);
+            }
         }
 
         void do_aconst_null(unsigned bcI) {
@@ -602,11 +618,6 @@ namespace llvm { namespace Java { namespace {
                                unsigned dims) {
             assert(0 && "not implemented");
         }
-
-    private:
-        OperandStack opStack_;
-        Locals locals_;
-        BC2BBMap bc2bbMap_;
     };
 
 } } } // namespace llvm::Java::

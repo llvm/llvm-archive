@@ -363,8 +363,8 @@ namespace llvm { namespace Java { namespace {
     Value* getOrCreateLocal(unsigned index, Type* type) {
       if (!locals_[index] ||
           cast<PointerType>(locals_[index]->getType())->getElementType() != type) {
-        locals_[index] = new AllocaInst
-          (type, NULL, "local" + utostr(index), prologue_);
+        locals_[index] =
+          new AllocaInst(type, NULL, "local" + utostr(index), prologue_);
       }
 
       return locals_[index];

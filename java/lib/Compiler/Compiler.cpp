@@ -234,6 +234,7 @@ namespace llvm { namespace Java { namespace {
                 it->second = holder.get();
                 DEBUG(std::cerr << "Adding " << className << " = "
                       << *it->second << " to type map\n");
+                module_->addTypeName(className, it->second);
             }
             return it->second;
         }
@@ -311,12 +312,10 @@ namespace llvm { namespace Java { namespace {
         }
 
     public:
-        CompilerImpl() {
+        void compileMethod(Module& module, const std::string& classMethodDesc) {
             c2tMap_.insert(std::make_pair("java/lang/Object",
                                           OpaqueType::get()));
-        }
-
-        void compileMethod(Module& module, const std::string& classMethodDesc) {
+            module.addTypeName("java/lang/Object", c2tMap_["java/lang/Object"]);
             compileMethodOnly(module, classMethodDesc);
             for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
                 Function* f = toCompileFunctions_[i];

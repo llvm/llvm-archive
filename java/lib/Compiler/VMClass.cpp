@@ -100,7 +100,7 @@ void VMClass::computeLayout() {
         // FIXME: Initialize static VMFields as well.
       }
       else {
-        const VMClass* fc = getClassForDescriptor(field->getDescriptorIndex());
+        const VMClass* fc = getClass(field->getDescriptorIndex());
         FieldMap::iterator i =
           fieldMap_.insert(std::make_pair(
                              field->getName()->str(),
@@ -136,8 +136,7 @@ void VMClass::link()
     // This is any class but java/lang/Object.
     if (classFile_->getSuperClass()) {
       // Our direct super class.
-      const VMClass* superClass =
-        getClassForClass(classFile_->getSuperClassIndex());
+      const VMClass* superClass = getClass(classFile_->getSuperClassIndex());
 
       // Add the interfaces of our direct superclass.
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
@@ -164,8 +163,7 @@ void VMClass::link()
     // For each of the interfaces we implement, load it and add that
     // interface and all the interfaces it inherits from.
     for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
-      const VMClass* interface =
-        getClassForClass(classFile_->getInterfaceIndex(i));
+      const VMClass* interface = getClass(classFile_->getInterfaceIndex(i));
       interfaces_.push_back(interface);
       for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
         interfaces_.push_back(interface->getInterface(j));
@@ -225,33 +223,24 @@ llvm::Constant* VMClass::getConstant(unsigned index) const
   return static_cast<llvm::Constant*>(resolvedConstantPool_[index]);
 }
 
-const VMClass* VMClass::getClassForClass(unsigned index) const
+const VMClass* VMClass::getClass(unsigned index) const
 {
   assert(classFile_ && "No constant pool!");
-  assert(dynamic_cast<ConstantClass*>(classFile_->getConstant(index)) &&
-         "Not an index to a class reference!");
+  assert((dynamic_cast<ConstantClass*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantUtf8*>(classFile_->getConstant(index))) &&
+         "Not an index to a class or descriptor reference!");
 
   // If we haven't resolved this constant already, do so now.
   if (!resolvedConstantPool_[index]) {
-    ConstantClass* jc = classFile_->getConstantClass(index);
-    resolvedConstantPool_[index] =
-      const_cast<VMClass*>(resolver_->getClass(jc->getName()->str()));
-  }
-
-  return static_cast<const VMClass*>(resolvedConstantPool_[index]);
-}
-
-const VMClass* VMClass::getClassForDescriptor(unsigned index) const
-{
-  assert(classFile_ && "No constant pool!");
-  assert(dynamic_cast<ConstantUtf8*>(classFile_->getConstant(index)) &&
-         "Not an index to a descriptor reference!");
-
-  // If we haven't resolved this constant already, do so now.
-  if (!resolvedConstantPool_[index]) {
-    ConstantUtf8* jc = classFile_->getConstantUtf8(index);
-    resolvedConstantPool_[index] =
-      const_cast<VMClass*>(resolver_->getClassForDesc(jc->str()));
+    Constant* jc = classFile_->getConstant(index);
+    if (ConstantClass* c = dynamic_cast<ConstantClass*>(jc))
+      resolvedConstantPool_[index] =
+        const_cast<VMClass*>(resolver_->getClass(c->getName()->str()));
+    else if (ConstantUtf8* d = dynamic_cast<ConstantUtf8*>(jc))
+      resolvedConstantPool_[index] =
+        const_cast<VMClass*>(resolver_->getClassForDesc(d->str()));
+    else
+      assert(0 && "Not a class!");
   }
 
   return static_cast<const VMClass*>(resolvedConstantPool_[index]);

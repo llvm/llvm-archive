@@ -7,5 +7,6 @@ public class Lists4
         llist.add(null);
         Test.println(llist.getFirst() == null);
         Test.println(llist.contains(null));
+        Test.println(llist.get(0) == null);
     }
 }

@@ -9,7 +9,7 @@
 #include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
 #include "wx/wx.h"
-#include "wx/html/htmlwin.h"
+#include "TVHtmlWindow.h"
 #include "TVTextCtrl.h"
 #include <sstream>
 
@@ -79,7 +79,7 @@ void TVTreeCtrl::updateTextDisplayed() {
   TVTextCtrl *textDisplay = (TVTextCtrl*)
     ((wxSplitterWindow*) GetParent())->GetWindow2();
 #else
-  wxHtmlWindow *htmlDisplay = (wxHtmlWindow*)
+  TVHtmlWindow *htmlDisplay = (TVHtmlWindow*)
     ((wxSplitterWindow*) GetParent())->GetWindow2();
 #endif
 
@@ -114,6 +114,25 @@ static const wxString Explanation
    "to display its code in the right-hand pane. Then, you\n"
    "can choose from the View menu to see graphical code views.\n"); 
 
+/// createDisplayWidget - Factory Method which returns a new display widget
+/// of the appropriate class, with the given parent & initial contents
+///
+wxWindow *TVFrame::createDisplayWidget (wxWindow *parent, const wxString &init){
+  unsigned nohtml;
+#if defined(NOHTML)
+  nohtml = 1;
+#else
+  nohtml = 0;
+#endif
+  if (nohtml) {
+    // We'll use a static text control to display LLVM assembly 
+    return new TVTextCtrl(parent, LLVM_TV_TEXT_CTRL, init);
+  } else {
+    // We'll use a HTML viewer to display syntax-highlighted LLVM assembly 
+    return new TVHtmlWindow(parent, LLVM_TV_HTML_WINDOW, init);
+  }
+}
+
 /// TVFrame constructor - used to set up typical appearance of visualizer's
 /// top-level window.
 ///
@@ -131,22 +150,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
              mySnapshotList);
 
-  unsigned nohtml;
-#if defined(NOHTML)
-  nohtml = 1;
-#else
-  nohtml = 0;
-#endif
-  if (nohtml) {
-    // Create static text to display module
-    displayWidget = new TVTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
-                                 Explanation);
-  } else {
-    // Create static text to display module
-    wxHtmlWindow *h = new wxHtmlWindow(splitterWindow, LLVM_TV_HTML_WINDOW);
-    h->AppendToPage(Explanation);
-    displayWidget = h;
-  }
+  displayWidget = createDisplayWidget (splitterWindow, Explanation);
 
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayWidget, 100);

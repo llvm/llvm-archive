@@ -199,18 +199,6 @@ void TVFrame::OnAbout (wxCommandEvent &event) {
 /// OnRefresh - respond to a request to refresh the list
 ///
 void TVFrame::OnRefresh (wxCommandEvent &event) {
-  // FIXME: Having the list model and the window squashed together into
-  // TVFrame sucks. The way it should probably really work is:
-  // TVSnapshotList tlm;  // the list model
-  // TVListCtrl tlv;      // the list view
-  // signal handler catches signal
-  // --> calls tlm->changed() 
-  //   --> <re-reads directory, refreshes list of snapshots,
-  //   -->  kind of like refreshSnapshotList()>
-  //   --> calls tlv->redraw()
-  //       --> <clears out list of items, re-adds items, OR
-  //       -->  adds only changed items, or whatever makes sense,
-  //       -->  kind of like TVFrame::refreshView()>
   refreshSnapshotList ();
 }
 
@@ -273,7 +261,6 @@ void TVFrame::BUDSView(wxCommandEvent &event) {
                    wxOK | wxICON_ERROR, this);
   } 
 }
-
 
 void TVFrame::CodeView(wxCommandEvent &event) {
   // Get the selected LLVM object.

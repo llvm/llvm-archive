@@ -287,7 +287,9 @@ namespace llvm { namespace Java { namespace {
         std::vector<Value*> params;
         params.push_back(JNIEnvPtr_);
         if (method->isStatic())
-          params.push_back(llvm::Constant::getNullValue(resolver_->getObjectBaseType()));
+          params.push_back(
+            new CastInst(method->getParent()->getClassRecord(),
+                         resolver_->getObjectBaseType(), TMP, bb));
         for (Function::arg_iterator A = function->arg_begin(),
                E = function->arg_end(); A != E; ++A) {
           params.push_back(

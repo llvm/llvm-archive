@@ -107,6 +107,8 @@ namespace llvm { namespace Java { namespace {
       GlobalVariable* vtable;
       std::vector<llvm::Constant*> superVtables;
       typedef std::map<std::string, unsigned> Method2IndexMap;
+      typedef Method2IndexMap::iterator iterator;
+      typedef Method2IndexMap::const_iterator const_iterator;
       Method2IndexMap m2iMap;
 
       static Type* VTableBaseTy;
@@ -746,18 +748,46 @@ namespace llvm { namespace Java { namespace {
       std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
                 std::back_inserter(vi.superVtables));
 
-      // Copy all the constants from the super class' vtable.
-      assert(superVI.vtable && "No vtable found for super class!");
-      ConstantStruct* superInit =
-        cast<ConstantStruct>(superVI.vtable->getInitializer());
-      std::vector<llvm::Constant*> init(superInit->getNumOperands());
+      std::vector<llvm::Constant*> init(1);
       // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
-      // Fill in the function pointers as they are in the super
-      // class. Overriden methods will be replaced later.
-      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
-        init[i] = superInit->getOperand(i);
-      vi.m2iMap = superVI.m2iMap;
+
+      // If this is an interface, add all methods from each interface
+      // this inherits from.
+      if (cf->isInterface()) {
+        const Classes& ifaces = cf->getInterfaces();
+        for (unsigned i = 0, e = ifaces.size(); i != e; ++i) {
+          ClassFile* ifaceCF = ClassFile::get(ifaces[i]->getName()->str());
+          const VTableInfo& ifaceVI = getVTableInfo(ifaceCF);
+          ConstantStruct* ifaceInit =
+            cast<ConstantStruct>(ifaceVI.vtable->getInitializer());
+          for (VTableInfo::const_iterator MI = ifaceVI.m2iMap.begin(),
+                 ME = ifaceVI.m2iMap.end(); MI != ME; ++MI) {
+            const std::string& methodDescr = MI->first;
+            unsigned slot = MI->second;
+
+            unsigned& index = vi.m2iMap[methodDescr];
+            if (!index) {
+              index = init.size();
+              init.resize(index + 1);
+            }
+            init[index] = ifaceInit->getOperand(slot);
+          }
+        }
+      }
+      // Otherwise this is a class, so add all methods from its super
+      // class.
+      else {
+        assert(superVI.vtable && "No vtable found for super class!");
+        ConstantStruct* superInit =
+          cast<ConstantStruct>(superVI.vtable->getInitializer());
+        // Fill in the function pointers as they are in the super
+        // class. Overriden methods will be replaced later.
+        init.resize(superInit->getNumOperands());
+        for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
+          init[i] = superInit->getOperand(i);
+        vi.m2iMap = superVI.m2iMap;
+      }
 
       // Add member functions to the vtable.
       const Methods& methods = cf->getMethods();

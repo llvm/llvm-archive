@@ -4,14 +4,32 @@
 
 /* The implementation of JNI functions */
 
+/* Class operations */
+
 static jclass find_class(JNIEnv* env, const char* name) {
   return GET_CLASS(llvm_java_find_class_record(name));
+}
+
+static jclass get_superclass(JNIEnv* env, jclass clazz) {
+  return GET_CLASS(llvm_java_get_superclass_record(GET_CLASS_RECORD(clazz)));
 }
 
 static jboolean is_assignable_from(JNIEnv* env, jclass c1, jclass c2) {
   return llvm_java_is_assignable_from(GET_CLASS_RECORD(c1),
                                       GET_CLASS_RECORD(c2));
 }
+
+/* Exceptions */
+
+static jint throw(JNIEnv* env, jthrowable obj) {
+  return llvm_java_throw(obj);
+}
+
+/* Global and local references */
+
+/* Weak global references */
+
+/* Object operations */
 
 static jboolean is_same_object(JNIEnv* env, jobject o1, jobject o2) {
   return o1 == o2;
@@ -24,6 +42,8 @@ static jclass get_object_class(JNIEnv* env, jobject obj) {
 static jboolean is_instance_of(JNIEnv* env, jobject obj, jclass c) {
   return llvm_java_is_instance_of(obj, GET_CLASS_RECORD(c));
 }
+
+/* Accessing fields of objects */
 
 static jfieldID get_fieldid(JNIEnv *env,
                             jclass clazz,
@@ -44,6 +64,27 @@ static jfieldID get_fieldid(JNIEnv *env,
 
   return 0;
 }
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE get_##TYPE##_field(JNIEnv* env, \
+                                    jobject obj, \
+                                    jfieldID fid) { \
+    return *(j##TYPE*) (((char*)obj) + fid); \
+  }
+#include "types.def"
+
+#define HANDLE_TYPE(TYPE) \
+  static void set_##TYPE##_field(JNIEnv* env, \
+                                 jobject obj, \
+                                 jfieldID fid, \
+                                 j##TYPE value) { \
+    *(j##TYPE*) (((char*)obj) + fid) = value; \
+  }
+#include "types.def"
+
+/* Calling instance methods */
+
+/* Accessing static fields */
 
 static jfieldID get_static_fieldid(JNIEnv *env,
                                    jclass clazz,
@@ -84,23 +125,11 @@ static jfieldID get_static_fieldid(JNIEnv *env,
   }
 #include "types.def"
 
-#define HANDLE_TYPE(TYPE) \
-  static j##TYPE get_##TYPE##_field(JNIEnv* env, \
-                                    jobject obj, \
-                                    jfieldID fid) { \
-    return *(j##TYPE*) (((char*)obj) + fid); \
-  }
-#include "types.def"
+/* Calling static methods */
 
-#define HANDLE_TYPE(TYPE) \
-  static void set_##TYPE##_field(JNIEnv* env, \
-                                 jobject obj, \
-                                 jfieldID fid, \
-                                 j##TYPE value) { \
-    *(j##TYPE*) (((char*)obj) + fid) = value; \
-  }
-#include "types.def"
+/* String operations */
 
+/* Array operations */
 
 static jint get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;
@@ -134,6 +163,16 @@ static jint get_array_length(JNIEnv* env, jarray array) {
   }
 #include "types.def"
 
+/* Register native methods */
+
+/* Monitor operations */
+
+/* NIO support */
+
+/* Reflection support */
+
+/* Java VM interface */
+
 /* The JNI interface definition */
 static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL, /* 0 */
@@ -146,10 +185,10 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL,
-  NULL, /* 10 */
+  &get_superclass,
   &is_assignable_from,
   NULL,
-  NULL,
+  &throw,
   NULL,
   NULL,
   NULL,

@@ -243,9 +243,8 @@ namespace llvm { namespace Java { namespace {
       return it->second;
     }
 
-    /// Given a llvm::Java::Constant returns a Value
-    /// (java/lang/Strings are not llvm::Constants).
-    Value* getConstant(Constant* c) {
+    /// Given a llvm::Java::Constant returns an llvm::Constant.
+    llvm::Constant* getConstant(Constant* c) {
       if (ConstantString* s = dynamic_cast<ConstantString*>(c))
         return getConstantString(s);
       else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))

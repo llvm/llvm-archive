@@ -120,15 +120,6 @@ void VMClass::computeLayout()
   if (isPrimitive())
     return;
 
-  // If this is an interface, then its layout and type are the same as
-  // java/lang/Object.
-  if (isInterface()) {
-    const VMClass* object = resolver_->getClass("java/lang/Object");
-    layoutType_ = const_cast<Type*>(object->getLayoutType());
-    type_ = object->getType();
-    return;
-  }
-
   std::vector<const Type*> layout;
   if (isArray()) {
     layout.reserve(3);
@@ -385,17 +376,11 @@ void VMClass::link()
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
         interfaces_.push_back(superClass->getInterface(i));
 
-      // In a classfile an interface is as if it inherits
-      // java/lang/Object, but java/lang/Class/getSuperClass() should
-      // return null on any interface class. So we only add
-      // superclasses to if this is not an interface.
-      if (!classFile_->isInterface()) {
-        // The first class is the direct super class of this class.
-        superClasses_.reserve(superClass->getNumSuperClasses() + 1);
-        superClasses_.push_back(superClass);
-        for (unsigned i = 0, e = superClass->getNumSuperClasses(); i != e; ++i)
-          superClasses_.push_back(superClass->getSuperClass(i));
-      }
+      // The first class is the direct super class of this class.
+      superClasses_.reserve(superClass->getNumSuperClasses() + 1);
+      superClasses_.push_back(superClass);
+      for (unsigned i = 0, e = superClass->getNumSuperClasses(); i != e; ++i)
+        superClasses_.push_back(superClass->getSuperClass(i));
     }
 
     // For each of the interfaces we implement, load it and add that

@@ -22,6 +22,7 @@ JAVA_TESTS := AbstractCall \
 	InterfaceCall \
 	Lists \
 	Lists1 \
+	Lists2 \
 	LongCompare \
 	LookupSwitch \
 	Numbers \

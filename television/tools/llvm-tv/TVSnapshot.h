@@ -21,7 +21,7 @@ class TVSnapshot {
   std::string myLabel;
 
   void readBytecodeFile ();
-  void fixLabel () { myLabel = basename (myLabel.c_str ());}
+  void fixLabel () { myLabel = basename ((char*)myLabel.c_str ()) ; }
  public:
   //TVSnapshot () : M (0), filename (), myLabel (filename) { }
   TVSnapshot (const std::string &_name) : M (0), filename (_name), myLabel (filename) { fixLabel(); }

@@ -970,19 +970,17 @@ namespace llvm { namespace Java { namespace {
     }
 
     /// Emits static initializers for this class if not done already.
-    void emitStaticInitializers(const ClassFile* classfile) {
-      typedef SetVector<const ClassFile*> ClassFileSet;
-      static ClassFileSet toInitClasses;
+    void emitStaticInitializers(const VMClass* clazz) {
+      static SetVector<const VMClass*> toInitClasses;
 
-      if (toInitClasses.insert(classfile)) {
+      const ClassFile* classfile = clazz->getClassFile();
+      if (!classfile)
+        return;
+      
+      if (toInitClasses.insert(clazz)) {
         // If this class has a super class, initialize that first.
-        if (classfile->getSuperClass())
-          emitStaticInitializers(
-            ClassFile::get(classfile->getSuperClass()->getName()->str()));
-
-        const std::string& className =
-          classfile->getThisClass()->getName()->str();
-        const VMClass* clazz = resolver_->getClass(className);
+        if (const VMClass* superClass = clazz->getSuperClass())
+          emitStaticInitializers(superClass);
 
         Function* hook = module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
                                                       Type::VoidTy, 0);
@@ -996,7 +994,8 @@ namespace llvm { namespace Java { namespace {
 
         // Call its class initialization method if it exists.
         if (const Method* method = classfile->getMethod("<clinit>()V")) {
-          const std::string& functionName = className + '/' +
+          const std::string& functionName =
+            classfile->getThisClass()->getName()->str() + '/' +
             method->getName()->str() + method->getDescriptor()->str();
           Function* init =
             module_->getOrInsertFunction(functionName, Type::VoidTy, 0);
@@ -1044,7 +1043,7 @@ namespace llvm { namespace Java { namespace {
 
       while (true) {
         const ClassFile* classfile = ClassFile::get(className);
-        emitStaticInitializers(classfile);
+        emitStaticInitializers(resolver_->getClass(className));
 
         Method* method = classfile->getMethod(methodNameAndDescr);
         if (method)
@@ -1469,7 +1468,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_getstatic(unsigned index) {
       const VMField* field = class_->getField(index);
-      emitStaticInitializers(field->getParent()->getClassFile());
+      emitStaticInitializers(field->getParent());
 
       Value* v = new LoadInst(field->getGlobal(), TMP, currentBB_);
       push(v);
@@ -1477,7 +1476,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_putstatic(unsigned index) {
       const VMField* field = class_->getField(index);
-      emitStaticInitializers(field->getParent()->getClassFile());
+      emitStaticInitializers(field->getParent());
 
       Value* v = pop(field->getClass()->getType());
       new StoreInst(v, field->getGlobal(), currentBB_);
@@ -1581,7 +1580,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_invokestatic(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
-      emitStaticInitializers(method->getParent()->getClassFile());
+      emitStaticInitializers(method->getParent());
       Function* function = method->getFunction();
       // Intercept java/lang/System/loadLibrary() calls and add
       // library deps to the module
@@ -1669,7 +1668,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_new(unsigned index) {
       const VMClass* clazz = class_->getClass(index);
-      emitStaticInitializers(clazz->getClassFile());
+      emitStaticInitializers(clazz);
       const VTableInfo& vi = getVTableInfo(clazz);
 
       push(allocateObject(*clazz, vi, currentBB_));

@@ -2091,9 +2091,8 @@ namespace llvm { namespace Java { namespace {
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
       Value* vtable = new CallInst(f, objBase, TMP, currentBB_);
-      vtable = new CastInst(vtable, PointerType::get(vi->vtable->getType()),
-                            TMP, currentBB_);
-      vtable = new LoadInst(vtable, className + "<vtable>", currentBB_);
+      vtable = new CastInst(vtable, vi->vtable->getType(),
+                            className + "<vtable>", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
              "could not find slot for virtual function!");

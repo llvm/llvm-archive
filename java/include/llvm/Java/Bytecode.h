@@ -14,9 +14,6 @@
 #ifndef LLVM_JAVA_BYTECODE_H
 #define LLVM_JAVA_BYTECODE_H
 
-#include <iosfwd>
-#include <vector>
-
 #include <stdint.h>
 
 namespace llvm { namespace Java {
@@ -249,15 +246,18 @@ namespace llvm { namespace Java {
   }
 
   inline int readSShort(const uint8_t* code, unsigned& i) {
-    return (readSByte(code, i) << 8) | readUByte(code, i);
+    int val = readSByte(code, i) << 8;
+    return val | readUByte(code, i);
   }
 
   inline unsigned readUShort(const uint8_t* code, unsigned& i) {
-    return (readUByte(code, i) << 8) | readUByte(code, i);
+    unsigned val = readUByte(code, i) << 8;
+    return val | readUByte(code, i);
   }
 
   inline int readSInt(const uint8_t* code, unsigned& i) {
-    return (readUShort(code, i) << 16) | readUShort(code, i);
+    int val = readUShort(code, i) << 16;
+    return val | readUShort(code, i);
   }
 
   inline unsigned readUInt(const uint8_t* code, unsigned& i) {
@@ -265,6 +265,7 @@ namespace llvm { namespace Java {
   }
 
   inline void skipPadBytes(unsigned& i) {
+    ++i;
     unsigned lastTwoBits = i & 0x3;
     i += (4 - lastTwoBits) & 0x3;
     --i;

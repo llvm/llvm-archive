@@ -25,10 +25,50 @@ Resolver::Resolver(Module* module)
   : module_(module),
     nextInterfaceIndex_(0),
     objectBaseLayoutType_(OpaqueType::get()),
-    objectBaseType_(PointerType::get(objectBaseLayoutType_))
+    objectBaseType_(PointerType::get(objectBaseLayoutType_)),
+    classRecordType_(OpaqueType::get()),
+    classRecordPtrType_(PointerType::get(classRecordType_))
 {
   module_->addTypeName("struct.llvm_java_object_base",
                        getObjectBaseLayoutType());
+
+  // Compute the class record type. A class record looks like:
+  //
+  // struct class_record {
+  //   struct type_info;
+  // };
+  //
+  // struct type_info {
+  //   int depth;
+  //   struct class_record** superClasses;
+  //   int interfaceIndex;
+  //   union {
+  //     int interfaceFlag;
+  //     struct class_record** interfaces;
+  //   };
+  //   int elementSize;
+  // };
+
+  // Compute the type_info type.
+  std::vector<const Type*> elements;
+  elements.push_back(Type::IntTy);
+  elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
+  elements.push_back(Type::IntTy);
+  elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
+  elements.push_back(Type::IntTy);
+  typeInfoType_ = StructType::get(elements);
+
+  module_->addTypeName("struct.llvm_java_object_typeinfo", getTypeInfoType());
+
+  // Compute the class_record type.
+  PATypeHolder holder = classRecordType_;
+  cast<OpaqueType>(const_cast<Type*>(classRecordType_))->refineAbstractTypeTo(
+    StructType::get(std::vector<const Type*>(1, getTypeInfoType())));
+  classRecordType_ = holder.get();
+
+  module_->addTypeName("struct.llvm_java_object_vtable", getClassRecordType());
+
+  classRecordPtrType_ = PointerType::get(classRecordType_);
 }
 
 const Type* Resolver::getType(const std::string& descriptor,

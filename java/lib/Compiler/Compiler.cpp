@@ -33,18 +33,10 @@
 #include <list>
 #include <vector>
 
-#define LLVM_JAVA_OBJECT_BASE "struct.llvm_java_object_base"
-#define LLVM_JAVA_OBJECT_HEADER "struct.llvm_java_object_header"
-#define LLVM_JAVA_OBJECT_TYPEINFO "struct.llvm_java_object_typeinfo"
-#define LLVM_JAVA_OBJECT_VTABLE "struct.llvm_java_object_vtable"
-
 #define LLVM_JAVA_STATIC_INIT "llvm_java_static_init"
 
 using namespace llvm;
 using namespace llvm::Java;
-
-Type* llvm::Java::VTableBaseTy = OpaqueType::get();
-Type* llvm::Java::VTableBaseRefTy = PointerType::get(VTableBaseTy);
 
 namespace llvm { namespace Java { namespace {
 
@@ -89,9 +81,6 @@ namespace llvm { namespace Java { namespace {
       typedef Method2IndexMap::iterator iterator;
       typedef Method2IndexMap::const_iterator const_iterator;
       Method2IndexMap m2iMap;
-
-      static StructType* VTableTy;
-      static StructType* TypeInfoTy;
     };
     typedef std::map<const VMClass*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
@@ -110,19 +99,19 @@ namespace llvm { namespace Java { namespace {
                                       NULL,
                                       "llvm_java_JNIEnv",
                                       module_);
-      module_->addTypeName("llvm_java_object_vtable", VTableBaseTy);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
       getVtable_ = module_->getOrInsertFunction(
-        "llvm_java_get_vtable", VTableBaseRefTy,
+        "llvm_java_get_vtable", vtablePtrType,
         resolver_->getObjectBaseType(), NULL);
       setVtable_ = module_->getOrInsertFunction(
         "llvm_java_set_vtable", Type::VoidTy,
-        resolver_->getObjectBaseType(), VTableBaseRefTy, NULL);
+        resolver_->getObjectBaseType(), vtablePtrType, NULL);
       throw_ = module_->getOrInsertFunction(
         "llvm_java_throw", Type::IntTy,
         resolver_->getObjectBaseType(), NULL);
       isInstanceOf_ = module_->getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
-        resolver_->getObjectBaseType(), VTableBaseRefTy, NULL);
+        resolver_->getObjectBaseType(), vtablePtrType, NULL);
       memcpy_ = module_->getOrInsertFunction(
         "llvm.memcpy", Type::VoidTy,
         PointerType::get(Type::SByteTy),
@@ -197,7 +186,8 @@ namespace llvm { namespace Java { namespace {
       // Install the vtable pointer.
       Value* objBase =
         new CastInst(globalString, resolver_->getObjectBaseType(), TMP, ip);
-      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
+      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
@@ -271,38 +261,31 @@ namespace llvm { namespace Java { namespace {
 
       Type* VTtype = OpaqueType::get();
 
-      std::vector<const Type*> elements;
       std::vector<llvm::Constant*> init;
 
-      // This is java/lang/Object so we must add a
-      // llvm_java_object_typeinfo struct first.
+      // This is java/lang/Object so we must add a typeinfo struct
+      // first.
 
+      const Type* vtablePtrPtrType =
+        PointerType::get(resolver_->getClassRecordPtrType());
       // depth
-      elements.push_back(Type::IntTy);
-      init.push_back(llvm::ConstantSInt::get(elements[0], 0));
+      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
       // superclasses vtable pointers
-      elements.push_back(PointerType::get(PointerType::get(VTtype)));
-      init.push_back(llvm::Constant::getNullValue(elements[1]));
+      init.push_back(llvm::Constant::getNullValue(vtablePtrPtrType));
       // last interface index
-      elements.push_back(Type::IntTy);
-      init.push_back(llvm::ConstantSInt::get(elements[2], -1));
+      init.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
       // interfaces vtable pointers
-      elements.push_back(PointerType::get(PointerType::get(VTtype)));
-      init.push_back(llvm::Constant::getNullValue(elements[3]));
+      init.push_back(llvm::Constant::getNullValue(vtablePtrPtrType));
       // the element size (0 for classes)
-      elements.push_back(Type::IntTy);
-      init.push_back(llvm::ConstantSInt::get(elements[4], 0));
+      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
 
-      // This is a static variable.
-      VTableInfo::TypeInfoTy = StructType::get(elements);
-      module_->addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
-      llvm::Constant* typeInfoInit =
-        ConstantStruct::get(VTableInfo::TypeInfoTy, init);
+      llvm::Constant* typeInfoInit = ConstantStruct::get(init);
+      assert(typeInfoInit->getType() == resolver_->getTypeInfoType() &&
+             "TypeInfo types mismatch!");
 
       // Now that we have both the type and initializer for the
-      // llvm_java_object_typeinfo struct we can start adding the
-      // function pointers.
-      elements.clear();
+      // typeinfo struct we can start adding the function pointers.
+      std::vector<const Type*> elements;
       init.clear();
 
       /// First add the typeinfo struct itself.
@@ -345,10 +328,10 @@ namespace llvm { namespace Java { namespace {
       PATypeHolder holder = VTtype;
       cast<OpaqueType>(VTtype)->refineAbstractTypeTo(StructType::get(elements));
 
-      VTableInfo::VTableTy = cast<StructType>(holder.get());
-      module_->addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
+      VTtype = holder.get();
+      module_->addTypeName("java/lang/Object<vtable>", VTtype);
 
-      vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
+      vi.vtable = new GlobalVariable(VTtype,
                                      true, GlobalVariable::ExternalLinkage,
                                      ConstantStruct::get(init),
                                      "java/lang/Object<vtable>",
@@ -365,12 +348,10 @@ namespace llvm { namespace Java { namespace {
       std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
       for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
         superVtables[i] = ConstantExpr::getCast(
-          vi.superVtables[i],
-          PointerType::get(VTableInfo::VTableTy));
+          vi.superVtables[i], resolver_->getClassRecordPtrType());
 
       llvm::Constant* init = ConstantArray::get(
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy),
-                       superVtables.size()),
+        ArrayType::get(resolver_->getClassRecordPtrType(), superVtables.size()),
         superVtables);
 
       GlobalVariable* vtablesArray = new GlobalVariable(
@@ -400,7 +381,7 @@ namespace llvm { namespace Java { namespace {
       // of methods for this interface (the first slot is the typeinfo
       // struct.
       std::vector<llvm::Constant*> init(interfaceVI.m2iMap.size()+1, NULL);
-      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
+      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
 
       // For each method in this interface find the implementing
       // method in the class' VTable and add it to the appropriate
@@ -417,8 +398,7 @@ namespace llvm { namespace Java { namespace {
         }
         else
           init[i->second] =
-            llvm::Constant::getNullValue(
-              PointerType::get(VTableInfo::VTableTy));
+            llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
       }
 
       llvm::Constant* vtable = ConstantStruct::get(init);
@@ -434,14 +414,14 @@ namespace llvm { namespace Java { namespace {
         globalName,
         module_);
 
-      return ConstantExpr::getCast(gv, PointerType::get(VTableInfo::VTableTy));
+      return ConstantExpr::getCast(gv, resolver_->getClassRecordPtrType());
     }
 
     void insertVtablesForInterface(std::vector<llvm::Constant*>& vtables,
                                    const VMClass* clazz,
                                    const VMClass* interface) {
       static llvm::Constant* nullVTable =
-        llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
+        llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
 
       assert(interface->isInterface() && "Classfile must be an interface!");
       unsigned index = interface->getInterfaceIndex();
@@ -465,7 +445,7 @@ namespace llvm { namespace Java { namespace {
           clazz->getInterfaceIndex(),
           ConstantExpr::getCast(
             ConstantIntegral::getAllOnesValue(Type::LongTy),
-            PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+            PointerType::get(resolver_->getClassRecordPtrType())));
 
       // Otherwise we must fill in the interfaces vtables array. For
       // each implemented interface we insert a pointer to the
@@ -474,7 +454,7 @@ namespace llvm { namespace Java { namespace {
       // interfaces.
       std::vector<llvm::Constant*> vtables;
       llvm::Constant* nullVTable =
-        llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
+        llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
 
       for (unsigned i = 0, e = clazz->getNumInterfaces(); i != e; ++i)
         insertVtablesForInterface(vtables, clazz, clazz->getInterface(i));
@@ -482,7 +462,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName = clazz->getName() + "<interfacesvtables>";
 
       llvm::Constant* init = ConstantArray::get(
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy), vtables.size()),
+        ArrayType::get(resolver_->getClassRecordPtrType(), vtables.size()),
         vtables);
       module_->addTypeName(globalName, init->getType());
 
@@ -525,7 +505,7 @@ namespace llvm { namespace Java { namespace {
       // the element size (0 for classes)
       typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
 
-      return ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
+      return ConstantStruct::get(typeInfoInit);
     }
 
     /// Returns the VTableInfo associated with this classfile.
@@ -546,7 +526,7 @@ namespace llvm { namespace Java { namespace {
 
       std::vector<llvm::Constant*> init(1);
       // Use a null typeinfo struct for now.
-      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
+      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
 
       // If this is an interface, add all methods from each interface
       // this inherits from.
@@ -662,14 +642,16 @@ namespace llvm { namespace Java { namespace {
 
       // Add java/lang/Object as its superclass.
       vi.superVtables.reserve(1);
-      vi.superVtables.push_back(superVI.vtable);
+      vi.superVtables.push_back(
+        ConstantExpr::getCast(
+          superVI.vtable, resolver_->getClassRecordPtrType()));
 
       // Copy the constants from java/lang/Object vtable.
       ConstantStruct* superInit =
         cast<ConstantStruct>(superVI.vtable->getInitializer());
       std::vector<llvm::Constant*> init(superInit->getNumOperands());
       // Use a null typeinfo struct for now.
-      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
+      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
 
       // Fill in the function pointers as they are in
       // java/lang/Object. There are no overriden methods.
@@ -699,7 +681,7 @@ namespace llvm { namespace Java { namespace {
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 1));
       // Build the super classes' vtable array.
       ArrayType* vtablesArrayTy =
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy),
+        ArrayType::get(resolver_->getClassRecordPtrType(),
                        vi.superVtables.size());
 
       GlobalVariable* vtablesArray = new GlobalVariable(
@@ -714,13 +696,13 @@ namespace llvm { namespace Java { namespace {
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 0));
       typeInfoInit.push_back(
         llvm::Constant::getNullValue(
-          PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+          PointerType::get(resolver_->getClassRecordPtrType())));
       // the element size
       typeInfoInit.push_back(
         ConstantExpr::getCast(
           ConstantExpr::getSizeOf(elementTy), Type::IntTy));
 
-      init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
+      init[0] = ConstantStruct::get(typeInfoInit);
       vi.vtable->setInitializer(ConstantStruct::get(init));
 
       return vi;
@@ -1630,7 +1612,7 @@ namespace llvm { namespace Java { namespace {
       Value* objBase =
         new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
-      vtable = new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
+      vtable = new CastInst(vtable, resolver_->getClassRecordPtrType(),
                             TMP, currentBB_);
       // get the interfaces array of vtables
       std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
@@ -1678,7 +1660,8 @@ namespace llvm { namespace Java { namespace {
 
       // Install the vtable pointer.
       Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
-      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
+      Value* vtable = new CastInst(vi.vtable, vtablePtrType, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       return objRef;
@@ -1755,7 +1738,8 @@ namespace llvm { namespace Java { namespace {
 
       // Install the vtable pointer.
       Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
-      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
+      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       return objRef;
@@ -1800,9 +1784,8 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseType());
-      Value* vtable = new CastInst(vi->vtable,
-                                   VTableBaseRefTy,
-                                   TMP, currentBB_);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
+      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, currentBB_);
       Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
 
       Value* b = new SetCondInst(Instruction::SetEQ,
@@ -1817,8 +1800,8 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseType());
-      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy,
-                                   TMP, currentBB_);
+      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
+      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, currentBB_);
       Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
       push(r);
     }
@@ -1837,9 +1820,6 @@ namespace llvm { namespace Java { namespace {
       assert(0 && "not implemented");
     }
   };
-
-  StructType* Compiler::VTableInfo::VTableTy;
-  StructType* Compiler::VTableInfo::TypeInfoTy;
 
 } } } // namespace llvm::Java::
 

@@ -31,6 +31,9 @@ namespace llvm { namespace Java {
     unsigned nextInterfaceIndex_;
     const Type* objectBaseLayoutType_;
     const Type* objectBaseType_;
+    const Type* typeInfoType_;
+    const Type* classRecordType_;
+    const Type* classRecordPtrType_;
 
     const VMClass* getClassForDesc(const std::string& descriptor);
 
@@ -56,6 +59,9 @@ namespace llvm { namespace Java {
 
     const Type* getObjectBaseLayoutType() const {return objectBaseLayoutType_; }
     const Type* getObjectBaseType() const { return objectBaseType_; }
+    const Type* getTypeInfoType() const { return typeInfoType_; }
+    const Type* getClassRecordType() const { return classRecordType_; }
+    const Type* getClassRecordPtrType() const { return classRecordPtrType_; }
 
     const Type* getType(const std::string& descriptor,
                         bool memberMethod = false) const;

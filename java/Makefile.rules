@@ -12,4 +12,4 @@ CLASSDUMP  := $(PROJTOOLCURRENT)/classdump$(EXEEXT)
 
 # rule to make bytecode from assembly
 %.bc: %.ll
-	$(LAS) < $< > $@
+	$(LLVMAS) < $< > $@

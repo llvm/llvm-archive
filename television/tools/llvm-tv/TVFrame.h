@@ -44,8 +44,6 @@ class TVListCtrl : public wxListCtrl {
 /// TVTreeCtrl - A specialization of wxTreeCtrl that displays a list of LLVM
 /// Modules and Functions from a snapshot
 ///
-
-///==---------------------------------------------------------------------==///
 class TVTreeCtrl : public wxTreeCtrl {
   
   enum {
@@ -81,10 +79,13 @@ enum {
   LLVM_TV_SPLITTER_WINDOW,
   LLVM_TV_CALLGRAPHVIEW,
   LLVM_TV_CFGVIEW,
-  LLVM_TV_CODEVIEW
+  LLVM_TV_CODEVIEW,
+  LLVM_TV_CODEVIEW_LIST
 };
 
 class TVApplication;
+
+///==---------------------------------------------------------------------==///
 
 /// TVFrame - The main application window for the demo, which displays
 /// the list view, status bar, and menu bar.

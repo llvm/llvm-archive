@@ -39,6 +39,7 @@
 
 #define LLVM_JAVA_ISINSTANCEOF  "llvm_java_IsInstanceOf"
 #define LLVM_JAVA_GETOBJECTCLASS "llvm_java_GetObjectClass"
+#define LLVM_JAVA_SETOBJECTCLASS "llvm_java_SetObjectClass"
 #define LLVM_JAVA_THROW "llvm_java_Throw"
 
 using namespace llvm;
@@ -1556,13 +1557,13 @@ namespace llvm { namespace Java { namespace {
                                      ConstantUInt::get(Type::UIntTy, 0),
                                      TMP, current_);
       Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* vtable = new CastInst(vi.vtable,
+                                   PointerType::get(VTableInfo::VTableTy),
+                                   TMP, current_);
       Function* f = module_.getOrInsertFunction(
-        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
-        objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, current_);
-      vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
-                            TMP, current_);
-      vtable = new StoreInst(vi.vtable, vtable, current_);
+        LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
+        objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
+      new CallInst(f, objBase, vtable, TMP, current_);
       opStack_.push(objRef);
     }
 

@@ -55,6 +55,11 @@ llvm_java_GetObjectClass(jobject obj) {
   return obj->vtable;
 }
 
+void llvm_java_SetObjectClass(jobject obj,
+                              struct llvm_java_object_vtable* clazz) {
+  obj->vtable = clazz;
+}
+
 jint llvm_java_IsInstanceOf(jobject obj,
                             struct llvm_java_object_vtable* clazz) {
   /* trivial case 1: a null object can be cast to any type */

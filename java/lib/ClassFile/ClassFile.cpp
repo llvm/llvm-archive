@@ -393,6 +393,7 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 Field::Field(const ConstantPool& cp, std::istream& is)
 {
     accessFlags_ = readU2(is);
+    name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
     if (!name_)
         throw ClassFileSemanticError(
             "Representation of field name is not of type ConstantUtf8");

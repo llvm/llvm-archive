@@ -1186,7 +1186,7 @@ namespace llvm { namespace Java { namespace {
 
         const std::string& methodName = method->getName()->str();
         for (unsigned i = 0, e = methodName.size(); i != e; ++i) {
-          if (funcName[i] == '_')
+          if (methodName[i] == '_')
             funcName += "_1";
           else
             funcName += methodName[i];

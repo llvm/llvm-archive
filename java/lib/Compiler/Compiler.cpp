@@ -2418,7 +2418,7 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
       if (F->getReturnType() == Type::VoidTy)
         new ReturnInst(NULL, entry);
       else
-        new ReturnInst(UndefValue::get(F->getReturnType()));
+        new ReturnInst(UndefValue::get(F->getReturnType()), entry);
     }
 
   return m;

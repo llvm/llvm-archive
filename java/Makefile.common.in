@@ -38,7 +38,6 @@ include $(LLVM_SRC_ROOT)/Makefile.rules
 #
 # Additional utilities
 #
-JIKES=@JIKES@
 JAVAC=@JAVAC@
 JAVA=@JAVA@
 
@@ -46,4 +45,3 @@ JAVA=@JAVA@
 # Include local build rules.
 #
 include $(BUILD_SRC_ROOT)/Makefile.rules
-

@@ -1202,28 +1202,48 @@ namespace llvm { namespace Java { namespace {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
-      std::string className = fieldRef->getClass()->getName()->str();
+      const std::string& className = fieldRef->getClass()->getName()->str();
+      GlobalVariable* global =
+        getStaticField(ClassFile::get(className),
+                       nameAndType->getName()->str(),
+                       getType(nameAndType->getDescriptor()));
 
-      while (true) {
-        // Get ClassInfo for class owning the field - this will force
-        // the globals to be initialized.
-        const ClassFile* cf = ClassFile::get(className);
-        getClassInfo(cf);
+      assert(global && "Cannot find global for static field!");
 
-        std::string globalName =
-          className + '/' + nameAndType->getName()->str();
+      return global;
+    }
 
-        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-        GlobalVariable* global = module_.getGlobalVariable
-          (globalName, getType(nameAndType->getDescriptor()));
-        if (global)
+    /// Finds a static field in the specified class, any of its
+    /// super clases, or any of the interfaces it implements.
+    GlobalVariable* getStaticField(const ClassFile* cf,
+                                   const std::string& name,
+                                   const Type* type) {
+      // Emit the static initializers for this class, making sure that
+      // the globals are inserted into the module.
+      emitStaticInitializers(cf);
+      const std::string& className = cf->getThisClass()->getName()->str();
+      const std::string& globalName = className + '/' + name;
+
+      DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
+      GlobalVariable* global = module_.getGlobalVariable(globalName, type);
+      if (global)
+        return global;
+
+      const Classes& ifaces = cf->getInterfaces();
+      for (unsigned i = 0, e = ifaces.size(); i != e; ++i) {
+        const ClassFile* ifaceCF = ClassFile::get(ifaces[i]->getName()->str());
+        if (global = getStaticField(ifaceCF, name, type))
           return global;
-
-        assert(cf->getSuperClass() && "Cannot find global for static field!");
-        className = cf->getSuperClass()->getName()->str();
       }
 
-      return NULL; // never reached
+      // If we have no super class it means the lookup terminates
+      // unsuccesfully.
+      if (!cf->getSuperClass())
+        return NULL;
+
+      const ClassFile* superCF =
+        ClassFile::get(cf->getSuperClass()->getName()->str());
+      return getStaticField(superCF, name, type);
     }
 
     /// Emits the necessary code to get a field from the passed

@@ -2133,13 +2133,30 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_checkcast(unsigned index) {
-      do_dup();
-      do_instanceof(index);
-      Value* r = currentOpStack_->pop(currentBB_);
+      ConstantClass* classRef = cf_->getConstantClass(index);
+
+      const ClassInfo* ci = NULL;
+      const VTableInfo* vi = NULL;
+      tie(ci, vi) = getInfo(classRef->getName()->str());
+
+      Value* objRef = currentOpStack_->pop(currentBB_);
+      Value* objBase =
+        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
+        objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
+      Value* vtable = new CastInst(vi->vtable,
+                                   PointerType::get(VTableInfo::VTableTy),
+                                   TMP, currentBB_);
+      Value* r = new CallInst(f, objBase, vtable, TMP, currentBB_);
+
       Value* b = new SetCondInst(Instruction::SetEQ,
-				 r, ConstantSInt::get(Type::IntTy, 1),
-				 TMP, currentBB_);
+                                 r, ConstantSInt::get(Type::IntTy, 1),
+                                 TMP, currentBB_);
       // FIXME: if b is false we must throw a ClassCast exception
+      Value* objCast =
+        new CastInst(objRef, PointerType::get(ci->type), TMP, currentBB_);
+      currentOpStack_->push(objCast, currentBB_);
     }
 
     void do_instanceof(unsigned index) {

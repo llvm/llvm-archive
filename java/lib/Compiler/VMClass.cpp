@@ -30,7 +30,6 @@ Class::Class(Resolver* resolver, const std::string& className)
   : name_(Resolver::canonicalizeClassName(className)),
     resolver_(resolver),
     classFile_(ClassFile::get(className)),
-    superClass_(NULL),
     componentClass_(NULL),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
@@ -44,7 +43,6 @@ Class::Class(Resolver* resolver, const Class* componentClass)
   : name_('[' + componentClass->getName()),
     resolver_(resolver),
     classFile_(NULL),
-    superClass_(NULL),
     componentClass_(componentClass),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
@@ -64,7 +62,6 @@ Class::Class(Resolver* resolver, const Type* type)
           type == Type::BoolTy   ? "Z" : "V"),
     resolver_(resolver),
     classFile_(NULL),
-    superClass_(NULL),
     componentClass_(NULL),
     structType_(NULL),
     type_(type),
@@ -97,21 +94,48 @@ void Class::link()
   assert(!isPrimitive() && "Should not link primitive classes!");
 
   if (isArray()) {
-    superClass_ = resolver_->getClass("java/lang/Object");
-    addField("super", superClass_->getStructType());
+    superClasses_.reserve(1);
+    superClasses_.push_back(resolver_->getClass("java/lang/Object"));
+    addField("super", superClasses_[0]->getStructType());
     addField("<length>", Type::UIntTy);
     addField("<data>", ArrayType::get(componentClass_->getType(), 0));
+
+    interfaces_.reserve(2);
+    interfaces_.push_back(resolver_->getClass("java/lang/Cloneable"));
+    interfaces_.push_back(resolver_->getClass("java/io/Serializable"));
   }
   else {
+    // This is java/lang/Object.
+    if (!classFile_->getSuperClass())
+      addField("base", resolver_->getObjectBaseType());
     // This is any class but java/lang/Object.
-    if (classFile_->getSuperClass()) {
+    else {
+      // Our direct super class.
       const Class* superClass =
         resolver_->getClass(classFile_->getSuperClass()->getName()->str());
+
+      // Add the interfaces of our direct superclass.
+      for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
+        interfaces_.push_back(superClass->getInterface(i));
+
+      // For each of the interfaces we implement, load it and add that
+      // interface and all the interfaces it inherits from.
+      for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
+        const Class* interface = getClass(classFile_->getInterfaceIndex(i));
+        interfaces_.push_back(interface);
+        for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
+          interfaces_.push_back(interface->getInterface(j));
+      }
+
+      // Sort the interfaces array and remove duplicates.
+      std::sort(interfaces_.begin(), interfaces_.end());
+      interfaces_.erase(std::unique(interfaces_.begin(), interfaces_.end()),
+                        interfaces_.end());
 
       // We first add the struct of the super class.
       addField("super", superClass->getStructType());
 
-      // Although we can safely assume that all interfaces inherits
+      // Although we can safely assume that all interfaces inherit
       // from java/lang/Object, java/lang/Class.getSuperclass()
       // returns null on interface types. So we only set the
       // superClass_ field when the class is not an interface type,
@@ -119,12 +143,15 @@ void Class::link()
       // inherits java/lang/Object.
       if (classFile_->isInterface())
         interfaceIndex_ = resolver_->getNextInterfaceIndex();
-      else
-        superClass_ = superClass;
+      else {
+        // Build the super classes array. The first class is the
+        // direct super class of this class.
+        superClasses_.reserve(superClass->getNumSuperClasses() + 1);
+        superClasses_.push_back(superClass);
+        for (unsigned i = 0, e = superClass->getNumSuperClasses(); i != e; ++i)
+          superClasses_.push_back(superClass->getSuperClass(i));
+      }
     }
-    // This is java/lang/Object.
-    else
-      addField("base", resolver_->getObjectBaseType());
 
     // Then we add the rest of the fields.
     const Fields& fields = classFile_->getFields();

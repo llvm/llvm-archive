@@ -46,12 +46,3 @@ void GraphDrawer::displayItem (TVTreeItemData *item) {
   }
   myPictureCanvas->SetImage (graphImage);
 }
-
-/// getDisplayTitle - What should it be called when a subclass displays a
-/// graph of the given item? If you want the graph to have a descriptive 
-/// title, like "Spiffy graph of foo()", override this method.
-///
-std::string GraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "Graph of " + item->getTitle ();
-}
-

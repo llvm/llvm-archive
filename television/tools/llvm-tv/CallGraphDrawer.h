@@ -15,7 +15,7 @@ class CallGraphDrawer : public GraphDrawer {
 public:
   wxImage *drawModuleGraph (llvm::Module *M);
   CallGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
+  std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 #endif // CALLGRAPHDRAWER_H

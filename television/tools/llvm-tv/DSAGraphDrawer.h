@@ -33,7 +33,6 @@ public:
   wxImage *drawFunctionGraph(llvm::Function *F);
   wxImage *drawModuleGraph(llvm::Module *M);
   DSGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 //===----------------------------------------------------------------------===//
@@ -47,7 +46,7 @@ class BUGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Module *M);
 public:
   BUGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
+  std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 //===----------------------------------------------------------------------===//
@@ -61,7 +60,7 @@ class TDGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Module *M);
 public:
   TDGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
+  std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 //===----------------------------------------------------------------------===//
@@ -75,7 +74,7 @@ class LocalGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Module *M);
 public:
   LocalGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
+  std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 #endif // DSAGRAPHDRAWER_H

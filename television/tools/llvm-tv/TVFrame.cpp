@@ -100,10 +100,10 @@ ItemDisplayer *TVFrame::createDisplayWidget (wxWindow *parent,
                                              unsigned nohtml) {
   if (nohtml) {
     // We'll use a static text control to display LLVM assembly 
-    return new TVTextCtrl(parent, LLVM_TV_TEXT_CTRL, init);
+    return new TVTextCtrl(parent, init);
   } else {
     // We'll use a HTML viewer to display syntax-highlighted LLVM assembly 
-    return new TVHtmlWindow(parent, LLVM_TV_HTML_WINDOW, init);
+    return new TVHtmlWindow(parent, init);
   }
 }
 
@@ -116,12 +116,7 @@ void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
   // pane.
   assert (newlySelectedItem
           && "newlySelectedItem was null in updateDisplayedItem()");
-
-  // FIXME: Talk about slow - what we SHOULD be doing is only redisplaying
-  // the VISIBLE pane, and redisplaying other panes only when the user selects
-  // them!
-  displayWidget->displayItem (newlySelectedItem);
-  displayWidget2->displayItem (newlySelectedItem);
+  notebook->SetSelectedItem (newlySelectedItem);
 }
 
 void TVFrame::refreshSnapshotList () {
@@ -150,6 +145,39 @@ void TVFrame::initializeSnapshotListAndView (std::string dirName) {
   SetStatusText ("Snapshot list has been loaded.");
 }
 
+//==------------------------------------------------------------------------==//
+
+void TVNotebook::displaySelectedItemOnPage (int page) {
+  if (selectedItem)
+    displayers[page]->displayItem (selectedItem);
+}
+
+void TVNotebook::SetSelectedItem (TVTreeItemData *newSelectedItem) {
+  selectedItem = newSelectedItem;
+  displaySelectedItemOnPage (GetSelection ());
+}
+
+bool TVNotebook::AddItemDisplayer (ItemDisplayer *displayer) {
+  int pageIndex = GetPageCount ();
+  displayers.resize (1 + pageIndex);
+  displayers[pageIndex] = displayer;
+  // BIG FAT FIXME!! - have to decide what the display title should be,
+  // for a widget that has nothing to display!!! for now it's ok to pass a
+  // null pointer because html view & text view ignore the item passed in
+  return AddPage (displayer->getWindow (),
+                  displayer->getDisplayTitle (0).c_str (), true);
+}
+
+void TVNotebook::OnSelChanged (wxNotebookEvent &event) {
+  displaySelectedItemOnPage (event.GetSelection ());
+}
+
+BEGIN_EVENT_TABLE (TVNotebook, wxNotebook)
+  EVT_NOTEBOOK_PAGE_CHANGED(LLVM_TV_NOTEBOOK, TVNotebook::OnSelChanged)
+END_EVENT_TABLE ()
+
+//==------------------------------------------------------------------------==//
+
 /// TVFrame constructor - used to set up typical appearance of visualizer's
 /// top-level window.
 ///
@@ -168,11 +196,11 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   Resize();
 
   // Create right-hand pane's display widget and stick it in a notebook control.
-  notebook = new wxNotebook(splitterWindow, LLVM_TV_NOTEBOOK);
-  displayWidget = createDisplayWidget (notebook, Explanation, 0);
-  displayWidget2 = createDisplayWidget (notebook, Explanation, 1);
-  notebook->AddPage (displayWidget->getWindow (), "HTML view", true);
-  notebook->AddPage (displayWidget2->getWindow (), "Text view", true);
+  notebook = new TVNotebook (splitterWindow);
+  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 0));
+  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
+  // Add another text display, just because we can
+  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
 
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, notebook, 200);
@@ -224,10 +252,10 @@ void TVFrame::Resize() {
 // be instantiated by all its callers.
 template<class Grapher>
 void TVApplication::OpenGraphView (TVTreeItemData *item) {
-  std::string title = Grapher::getDisplayTitle (item);
-  PictureFrame *wind = new PictureFrame (this, title.c_str ());
+  PictureFrame *wind = new PictureFrame (this);
   allMyWindows.push_back (wind);
   ItemDisplayer *drawer = new Grapher (wind);
+  wind->SetTitle (drawer->getDisplayTitle (item).c_str ());
   allMyDisplayers.push_back (drawer);
   drawer->displayItem (item);
 }

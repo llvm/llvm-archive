@@ -28,10 +28,6 @@ wxImage *DSGraphDrawer::drawFunctionGraph(Function *F) {
   return buildwxImageFromDotFile(getFilename(F));
 }
 
-std::string DSGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
-  return "DS " + item->dsGraphName ();
-}
-
 //===----------------------------------------------------------------------===//
 
 // BUGraphDrawer implementation

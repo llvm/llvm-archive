@@ -21,7 +21,7 @@ class CFGGraphDrawer : public GraphDrawer {
  public:
   wxImage *drawFunctionGraph (llvm::Function *fn);
   CFGGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
-  static std::string getDisplayTitle (TVTreeItemData *item);
+  std::string getDisplayTitle (TVTreeItemData *item);
 };
 
 #endif // CFGGRAPHDRAWER_H

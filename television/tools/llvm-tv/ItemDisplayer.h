@@ -12,6 +12,8 @@ class ItemDisplayer {
   /// whatever "window" they are displaying the item into.
   ///
   virtual wxWindow *getWindow () = 0;
+
+  virtual std::string getDisplayTitle (TVTreeItemData *item) = 0;
 };
 
 #endif // ITEMDISPLAYER_H

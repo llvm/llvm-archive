@@ -568,15 +568,22 @@ namespace llvm { namespace Java { namespace {
     /// the array.
     std::pair<unsigned,llvm::Constant*>
     buildSuperClassesVTables(ClassFile* cf, const VTableInfo& vi) const {
-      ArrayType* vtablesArrayTy =
+      std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
+      for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
+        superVtables[i] = ConstantExpr::getCast(
+          vi.superVtables[i],
+          PointerType::get(VTableInfo::VTableTy));
+
+      llvm::Constant* init = ConstantArray::get(
         ArrayType::get(PointerType::get(VTableInfo::VTableTy),
-                       vi.superVtables.size());
+                       superVtables.size()),
+        superVtables);
 
       GlobalVariable* vtablesArray = new GlobalVariable(
-        vtablesArrayTy,
+        init->getType(),
         true,
         GlobalVariable::ExternalLinkage,
-        ConstantArray::get(vtablesArrayTy, vi.superVtables),
+        init,
         cf->getThisClass()->getName()->str() + "<superclassesvtables>",
         &module_);
 
@@ -610,8 +617,8 @@ namespace llvm { namespace Java { namespace {
         assert(classVI.m2iMap.find(i->first) != classVI.m2iMap.end() &&
                "Interface method not found in class definition!");
         unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
-        init[i->second] =
-          cast<ConstantStruct>(classVI.vtable->getInitializer())->getElementAt(classMethodIdx);
+        init[i->second] = cast<ConstantStruct>(
+          classVI.vtable->getInitializer())->getElementAt(classMethodIdx);
       }
 
       llvm::Constant* vtable = ConstantStruct::get(init);

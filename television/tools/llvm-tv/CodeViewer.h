@@ -17,6 +17,7 @@
 class TVApplication;
 
 namespace llvm {
+  class Module;
   class Function;
   class Value;
 }
@@ -46,6 +47,7 @@ class TVCodeListCtrl : public wxListCtrl {
 
  public:
   void SetFunction (llvm::Function *F);
+  TVCodeListCtrl(wxWindow *_parent);
   TVCodeListCtrl(wxWindow *_parent, llvm::Function *F);
   void OnItemSelected(wxListEvent &event);
   void OnItemDeselected(wxListEvent &event);
@@ -58,8 +60,13 @@ class TVCodeListCtrl : public wxListCtrl {
 class TVCodeViewer : public ItemDisplayer {
   TVCodeListCtrl *myListCtrl;
 public:
-  TVCodeViewer (wxWindow *_parent);
+  TVCodeViewer (wxWindow *_parent) {
+    myListCtrl = new TVCodeListCtrl (_parent);
+  }
+  virtual ~TVCodeViewer () { delete myListCtrl; }
   void displayItem (TVTreeItemData *data);
+  void viewFunctionCode (llvm::Function *F);
+  void viewModuleCode (llvm::Module *M);
   std::string getDisplayTitle (TVTreeItemData *data) { return "Code view"; }
   wxWindow *getWindow () { return myListCtrl; }
 };

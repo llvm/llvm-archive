@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <libgen.h>
 #include "llvm/Module.h"
 using namespace llvm;
 
@@ -17,13 +18,15 @@ using namespace llvm;
 class TVSnapshot {
   Module *M;
   std::string filename;
+  std::string myLabel;
 
   void readBytecodeFile ();
+  void fixLabel () { myLabel = basename (myLabel.c_str ());}
  public:
-  TVSnapshot () : M (0), filename ("") { }
-  TVSnapshot (const std::string &_name) : M (0), filename (_name) { }
-  TVSnapshot (const char *_name) : M (0), filename (_name) { }
-  const char *label () const { return basename (filename.c_str ()); }
+  //TVSnapshot () : M (0), filename (), myLabel (filename) { }
+  TVSnapshot (const std::string &_name) : M (0), filename (_name), myLabel (filename) { fixLabel(); }
+  TVSnapshot (const char *_name) : M (0), filename (_name), myLabel (filename) { fixLabel(); }
+  const char *label () const { return myLabel.c_str (); } 
   unsigned getTimestamp () const { return (unsigned) strtol (label(), 0, 0); }
   bool operator < (const TVSnapshot &s) const {
     return getTimestamp () < s.getTimestamp ();

@@ -10,6 +10,7 @@
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm-tv/Config.h"
 #include <dirent.h>
 #include <cassert>
 #include <sstream>
@@ -67,6 +68,8 @@ void TVTextCtrl::displayItem (TVTreeItemData *item) {
   item->print (Out);
   myTextCtrl->SetValue ("");
   myTextCtrl->AppendText (Out.str ().c_str ());
+  myTextCtrl->ShowPosition (0);
+  myTextCtrl->SetInsertionPoint (0);
 }
 
 void TVHtmlWindow::displayItem (TVTreeItemData *item) {
@@ -199,6 +202,15 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
   refreshSnapshotList ();
 }
 
+void TVFrame::OnOpen (wxCommandEvent &event) {
+  wxFileDialog d (this, "Choose a bytecode file to display");
+  int result = d.ShowModal ();
+  if (result == wxID_CANCEL) return;
+  std::string command = std::string("cp ") + std::string(d.GetPath ().c_str ()) + " " + snapshotsPath;
+  system (command.c_str ());
+  refreshSnapshotList ();
+}
+
 void TVFrame::Resize() {
   wxSize size = GetClientSize();
   myTreeCtrl->SetSize(0, 0, size.x, 2*size.y/3);
@@ -326,10 +338,13 @@ void TVFrame::CodeView(wxCommandEvent &event) {
 }
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)
-  EVT_MENU (wxID_EXIT, TVFrame::OnExit)
-  EVT_MENU (wxID_ABOUT, TVFrame::OnAbout)
-  EVT_MENU (wxID_HELP_CONTENTS, TVFrame::OnHelp)
+  EVT_MENU (wxID_OPEN, TVFrame::OnOpen)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
+  EVT_MENU (wxID_EXIT, TVFrame::OnExit)
+
+  EVT_MENU (wxID_HELP_CONTENTS, TVFrame::OnHelp)
+  EVT_MENU (wxID_ABOUT, TVFrame::OnAbout)
+
   EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
   EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)
   EVT_MENU (LLVM_TV_BUDS_VIEW, TVFrame::BUDSView)

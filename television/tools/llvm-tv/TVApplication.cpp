@@ -7,7 +7,7 @@
 #include "CodeViewer.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
-#include "Support/FileUtils.h"
+#include "llvm-tv/Support/FileUtils.h"
 #include "llvm-tv/Config.h"
 #include <wx/image.h>
 #include <cerrno>

@@ -5,7 +5,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Value.h"
-#include "Support/StringExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include <wx/listctrl.h>
 #include <map>
 #include <sstream>

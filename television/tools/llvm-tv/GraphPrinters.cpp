@@ -20,7 +20,7 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
-#include "Support/GraphWriter.h"
+#include "llvm/Support/GraphWriter.h"
 #include <fstream>
 using namespace llvm;
 

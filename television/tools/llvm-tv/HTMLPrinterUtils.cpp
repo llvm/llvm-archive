@@ -5,18 +5,14 @@
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Instruction.h"
-#include "llvm/iMemory.h"
-#include "llvm/iTerminators.h"
-#include "llvm/iPHINode.h"
-#include "llvm/iOther.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Analysis/SlotCalculator.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
-#include "Support/StringExtras.h"
-#include "Support/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 

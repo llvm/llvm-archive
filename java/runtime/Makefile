@@ -11,3 +11,7 @@ LEVEL := ..
 include $(LEVEL)/Makefile.common
 
 all:: runtime.bc
+
+clean::
+	rm -f *.bc
+

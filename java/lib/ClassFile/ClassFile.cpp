@@ -286,6 +286,17 @@ Method* ClassFile::getMethod(const std::string& nameAndDescr) const
   return it == n2mMap_.end() ? NULL : it->second;
 }
 
+bool ClassFile::isNativeMethodOverloaded(const Method& method) const
+{
+  unsigned count = 0;
+  for (Methods::const_iterator i = methods_.begin(), e = methods_.end();
+       i != e; ++i)
+    if ((*i)->isNative() && (*i)->getName() == method.getName())
+      ++count;
+
+  return count > 1;
+}
+
 ClassFile::~ClassFile()
 {
   for_each(cPool_.begin(), cPool_.end(), deleter<Constant>);

@@ -105,6 +105,7 @@ namespace llvm { namespace Java {
     const Attributes& getAttributes() const { return attributes_; }
 
     Method* getMethod(const std::string& nameAndDescr) const;
+    bool isNativeMethodOverloaded(const Method& method) const;
 
     std::ostream& dump(std::ostream& os) const;
 

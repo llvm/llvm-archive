@@ -400,7 +400,8 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = "java/lang/Object/" + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), ci.type));
+            getType(method->getDescriptor(),
+                    PointerType::get(ClassInfo::ObjectBaseTy)));
 
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           scheduleFunction(vfun);
@@ -771,7 +772,8 @@ namespace llvm { namespace Java { namespace {
           std::string funcName = className + '/' + methodDescr;
 
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), getClassInfo(cf).type));
+            getType(method->getDescriptor(),
+                    PointerType::get(ClassInfo::ObjectBaseTy)));
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           if (!method->isAbstract())
             scheduleFunction(vfun);
@@ -1220,7 +1222,8 @@ namespace llvm { namespace Java { namespace {
                              PointerType::get(ClassInfo::ObjectBaseTy)));
         for (Function::aiterator A = function->abegin(), E = function->aend();
              A != E; ++A) {
-          params.push_back(&*A);
+          params.push_back(
+            new CastInst(A, funcTy->getParamType(params.size()), TMP, bb));
         }
         new ReturnInst(new CallInst(jniFunction, params, "", bb), bb);
 
@@ -1381,7 +1384,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy = cast<FunctionType>(
         getType(method->getDescriptor(),
-                method->isStatic() ? NULL : getClassInfo(clazz).type));
+                method->isStatic() ? NULL : PointerType::get(ClassInfo::ObjectBaseTy)));
       std::string funcName =
         clazz->getThisClass()->getName()->str() + '/' +
         method->getName()->str() + method->getDescriptor()->str();
@@ -2066,7 +2069,8 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getDescriptor()->str();
 
       FunctionType* funTy =
-        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci->type));
+        cast<FunctionType>(getType(nameAndType->getDescriptor(),
+                                   PointerType::get(ClassInfo::ObjectBaseTy)));
 
       std::vector<Value*> params(getParams(funTy));
 
@@ -2090,7 +2094,8 @@ namespace llvm { namespace Java { namespace {
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
         new GetElementPtrInst(vtable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, currentBB_);
+      Value* vfun = new LoadInst(vfunPtr, className + '/' + methodDescr,
+                                 currentBB_);
 
       makeCall(vfun, params);
     }
@@ -2107,7 +2112,8 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
       FunctionType* funcTy =
-        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+        cast<FunctionType>(getType(nameAndType->getDescriptor(),
+                                   PointerType::get(ClassInfo::ObjectBaseTy)));
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
       scheduleFunction(function);
       makeCall(function, getParams(funcTy));
@@ -2136,7 +2142,8 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getDescriptor()->str();
 
       FunctionType* funTy =
-        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci->type));
+        cast<FunctionType>(getType(nameAndType->getDescriptor(),
+                                   PointerType::get(ClassInfo::ObjectBaseTy)));
 
       std::vector<Value*> params(getParams(funTy));
 
@@ -2173,7 +2180,8 @@ namespace llvm { namespace Java { namespace {
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
         new GetElementPtrInst(interfaceVTable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, currentBB_);
+      Value* vfun = new LoadInst(vfunPtr, className + '/' + methodDescr,
+                                 currentBB_);
 
       makeCall(vfun, params);
     }

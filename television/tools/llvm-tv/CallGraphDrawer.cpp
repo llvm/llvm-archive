@@ -7,7 +7,7 @@ using namespace llvm;
 
 // CallGraphDrawer implementation
 
-wxImage *CallGraphDrawer::drawGraphImage () {
+wxImage *CallGraphDrawer::drawModuleGraph (Module *module) {
   PassManager PM;
   PM.add (createCallGraphPrinterPass ());
   PM.run (*module);

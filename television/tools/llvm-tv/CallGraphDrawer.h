@@ -4,15 +4,18 @@
 #include "GraphDrawer.h"
 #include "TVSnapshot.h"
 
+namespace llvm {
+  class Module;
+};
+
 //===----------------------------------------------------------------------===//
 
 // CallGraphDrawer interface
 
 class CallGraphDrawer : public GraphDrawer {
-  Module *module;
-  wxImage *drawGraphImage ();
- public:
-  CallGraphDrawer (Module *_mod) : GraphDrawer (), module (_mod) { }
+public:
+  wxImage *drawModuleGraph (llvm::Module *M);
+  CallGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
 };
 
 #endif // CALLGRAPHDRAWER_H

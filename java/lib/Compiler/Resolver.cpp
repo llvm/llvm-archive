@@ -27,16 +27,6 @@ Resolver::Resolver(Module* module)
     objectBaseType_(OpaqueType::get()),
     objectBaseRefType_(PointerType::get(objectBaseType_))
 {
-  insertClass(VMClass(this, Type::SByteTy));
-  insertClass(VMClass(this, Type::UShortTy));
-  insertClass(VMClass(this, Type::DoubleTy));
-  insertClass(VMClass(this, Type::FloatTy));
-  insertClass(VMClass(this, Type::IntTy));
-  insertClass(VMClass(this, Type::LongTy));
-  insertClass(VMClass(this, Type::ShortTy));
-  insertClass(VMClass(this, Type::BoolTy));
-  insertClass(VMClass(this, Type::VoidTy));
-
   module_->addTypeName("struct.llvm_java_object_base", objectBaseType_);
 }
 
@@ -95,16 +85,32 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
     DEBUG(std::cerr << "Loading class: " << descriptor << '\n');
     switch (descriptor[0]) {
     case 'B':
+      it = insertClass(it, VMClass(this, Type::SByteTy));
+      break;
     case 'C':
+      it = insertClass(it, VMClass(this, Type::UShortTy));
+      break;
     case 'D':
+      it = insertClass(it, VMClass(this, Type::DoubleTy));
+      break;
     case 'F':
+      it = insertClass(it, VMClass(this, Type::FloatTy));
+      break;
     case 'I':
+      it = insertClass(it, VMClass(this, Type::IntTy));
+      break;
     case 'J':
+      it = insertClass(it, VMClass(this, Type::LongTy));
+      break;
     case 'S':
+      it = insertClass(it, VMClass(this, Type::ShortTy));
+      break;
     case 'Z':
+      it = insertClass(it, VMClass(this, Type::BoolTy));
+      break;
     case 'V':
-      assert(0 && "Primitive classes should already be in the map!");
-      abort();
+      it = insertClass(it, VMClass(this, Type::VoidTy));
+      break;
     case 'L': {
       unsigned pos = descriptor.find(';', 1);
       const std::string& className = descriptor.substr(1, pos - 1);
@@ -121,7 +127,8 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
       abort();
     }
     it->second.link();
-    module_->addTypeName(descriptor, it->second.getStructType());
+    if (!it->second.isPrimitive())
+      module_->addTypeName(descriptor, it->second.getStructType());
     DEBUG(std::cerr << "Loaded class: " << descriptor << '\n');
   }
 

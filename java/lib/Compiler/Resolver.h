@@ -39,9 +39,6 @@ namespace llvm { namespace Java {
                               unsigned& i,
                               bool memberMethod = false) const;
 
-    std::pair<ClassMap::iterator, bool> insertClass(const VMClass& clazz) {
-      return classMap_.insert(std::make_pair(clazz.getName(), clazz));
-    }
     ClassMap::iterator insertClass(ClassMap::iterator i, const VMClass& clazz) {
       return classMap_.insert(i, std::make_pair(clazz.getName(), clazz));
     }

@@ -91,7 +91,9 @@ void VMClass::resolveType() {
 
 void VMClass::link()
 {
-  assert(!isPrimitive() && "Should not link primitive classes!");
+  // Primitive classes require no linking.
+  if (isPrimitive())
+    return;
 
   if (isArray()) {
     superClasses_.reserve(1);

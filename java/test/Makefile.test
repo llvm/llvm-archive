@@ -9,13 +9,6 @@
 
 include $(LEVEL)/Makefile.common
 
-ifdef BUILD_JAVA_SOURCE
-all:: .class-stamp
-.class-stamp: $(shell find . -name '*.java')
-	$(JAVAC) $?
-	touch .class-stamp
-endif
-
 .PHONY: clean
 
 clean::
@@ -24,10 +17,10 @@ clean::
 
 # we don't want these files to be deleted by make, even if they are
 # intermediate results
-.PRECIOUS: Output/.dir Output/%.bc Output/%.ll Output/%.llvm.bc Output/%.llvm
+.PRECIOUS: Output/.dir Output/%.bc Output/%.ll Output/%.llvm.bc Output/%.llvm Output/%.class
 
 #rule to link in runtime to raw bytecode
-Output/%.linked.bc: Output/%.raw.bc $(BUILD_SRC_ROOT)/runtime/runtime.bc
+%.linked.bc: %.raw.bc $(BUILD_SRC_ROOT)/runtime/runtime.bc
 	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $^ -o $@
 
 # rule to make assembly from bytecode
@@ -37,3 +30,7 @@ Output/%.linked.bc: Output/%.raw.bc $(BUILD_SRC_ROOT)/runtime/runtime.bc
 # rule to make bytecode from assembly
 %.bc: %.ll
 	$(LAS) < $< > $@
+
+# rule to compile java source
+%.class: %.java
+	$(JAVAC) $<

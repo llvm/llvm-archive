@@ -1,4 +1,4 @@
-##===- test/Programs/SingleSource/UnitTests/Makefile -------*- Makefile -*-===##
+##===- test/Regression/ClassFile/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL := ../../../..
+LEVEL := ../../..
 
 JAVAFILES := $(wildcard *.java)
 
-all:: $(foreach ext,linked.dis-ll,$(JAVAFILES:%.java=Output/%.$(ext)))
-
-include ../Makefile.singlesrc
+include $(LEVEL)/test/Makefile.test

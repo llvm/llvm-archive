@@ -9,5 +9,6 @@
 LEVEL := .
 
 DIRS := lib tools runtime
+EXTRA_DIST := Makefile.test
 
 include $(LEVEL)/Makefile.common

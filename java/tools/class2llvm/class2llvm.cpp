@@ -15,7 +15,7 @@
 #include <llvm/Java/ClassFile.h>
 #include <llvm/Java/Compiler.h>
 #include <llvm/PassManager.h>
-#include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Bytecode/WriteBytecodePass.h>
 #include <llvm/System/Signals.h>
 #include <Support/CommandLine.h>
 
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
         compiler.compile(module, InputClass);
 
         PassManager passes;
-        passes.add(new PrintModulePass(&std::cout));
+        passes.add(new WriteBytecodePass(&std::cout));
         passes.run(module);
     }
     catch (std::exception& e) {

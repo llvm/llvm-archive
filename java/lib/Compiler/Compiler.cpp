@@ -815,9 +815,10 @@ namespace llvm { namespace Java { namespace {
 
           const FunctionType* funcTy = cast<FunctionType>(
             getType(method->getDescriptor(), ObjectBaseTy));
-          llvm::Constant* vfun =
-            llvm::Constant::getNullValue(PointerType::get(funcTy));
-          if (!cf->isInterface() && !method->isAbstract()) {
+          llvm::Constant* vfun = NULL;
+          if (cf->isInterface() || method->isAbstract())
+            vfun = llvm::Constant::getNullValue(PointerType::get(funcTy));
+          else {
             vfun = module_.getOrInsertFunction(funcName, funcTy);
             scheduleFunction(cast<Function>(vfun));
           }

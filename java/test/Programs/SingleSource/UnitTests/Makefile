@@ -26,6 +26,7 @@ JAVA_TESTS := Abstract \
 	Test \
 	VirtualCall \
 	VTable \
+#	Strings \
 #	List \
 #	MultipleInterfaces \
 #	MultiArray \

@@ -15,39 +15,42 @@
 #include "Support/FileUtils.h"
 #include <dirent.h>
 
-namespace llvm {
-  /// Returns the number of entries in the directory named PATH.
-  ///
-  /// FIXME: If we want to be portable, we can use opendir/readdir/closedir()
-  /// and stat(), instead of scandir() and alphasort(). Also, this function
-  /// will probably not skip directories (better verify this!)
-  ///
-  unsigned GetNumFilesInDir(const std::string &path) {
-    struct dirent **namelist;
-    int n = scandir(path.c_str(), &namelist, 0, alphasort);
-    if (n < 0)
-      perror("scandir");
-    else {
-      while(n--)
-        free(namelist[n]);
-      free(namelist);
-    }
-    return n;
+/// Returns the number of entries in the directory named PATH.
+///
+/// FIXME: If we want to be portable, we can use opendir/readdir/closedir()
+/// and stat(), instead of scandir() and alphasort(). Also, this function
+/// will probably not skip directories (better verify this!)
+///
+unsigned llvm::GetNumFilesInDir(const std::string &path) {
+  struct dirent **namelist;
+  int n = scandir(path.c_str(), &namelist, 0, alphasort);
+  int num = n;
+  if (n < 0)
+    perror("scandir");
+  else {
+    while(n--)
+      free(namelist[n]);
+    free(namelist);
   }
+  return num;
+}
 
-  /// GetFilesInDir - returns a listing of files in directory
-  ///
-  void GetFilesInDir(const std::string &path, std::vector<std::string> &list) {
-    struct dirent **namelist;
-    int n = scandir(path.c_str(), &namelist, 0, alphasort);
-    if (n < 0)
-      perror("scandir");
-    else {
-      while(n--) {
-        list.push_back(std::string(namelist[n]->d_name));
-        free(namelist[n]);
-      }
-      free(namelist);
+
+/// GetFilesInDir - returns a listing of files in directory
+///
+void llvm::GetFilesInDir(const std::string &path,
+                         std::vector<std::string> &list)
+{
+  struct dirent **namelist;
+  int n = scandir(path.c_str(), &namelist, 0, alphasort);
+  if (n < 0)
+    perror("scandir");
+  else {
+    while(n--) {
+      list.push_back(std::string(namelist[n]->d_name));
+      free(namelist[n]);
     }
+    free(namelist);
   }
 }
+

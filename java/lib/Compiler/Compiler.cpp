@@ -2053,7 +2053,8 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci->type),
                             "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
+        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                     TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
@@ -2122,7 +2123,8 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci->type),
                             "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
+        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                     TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);

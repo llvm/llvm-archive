@@ -84,6 +84,12 @@ namespace llvm { namespace Java { namespace {
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
 
+    /// This class containts the LLVM type that a class maps to and
+    /// the max interface index of the interfaces this class
+    /// implements or the interface index of this interface if this
+    /// represents an interface. It also contains a map from fields to
+    /// struct indices for this class (used to index into the class
+    /// object).
     struct ClassInfo {
       ClassInfo() : type(NULL), interfaceIdx(0) { }
       Type* type;
@@ -97,6 +103,10 @@ namespace llvm { namespace Java { namespace {
     typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
 
+    /// This class contains the vtable of a class, a vector with the
+    /// vtables of its super classes (with the class higher in the
+    /// hierarchy first). It also contains a map from methods to
+    /// struct indices for this class (used to index into the vtable).
     struct VTableInfo {
       VTableInfo() : vtable(NULL) { }
       GlobalVariable* vtable;
@@ -116,6 +126,7 @@ namespace llvm { namespace Java { namespace {
     }
 
   private:
+    /// Given a llvm::Java::Constant returns a llvm::Constant.
     llvm::Constant* getConstant(Constant* c) {
       if (dynamic_cast<ConstantString*>(c))
 	// FIXME: should return a String object represeting this ConstantString
@@ -134,6 +145,7 @@ namespace llvm { namespace Java { namespace {
 	assert(0 && "Unknown llvm::Java::Constant!");
     }
 
+    /// Given a JType returns the appropriate llvm::Type.
     Type* getType(JType type) {
       switch (type) {
       case BOOLEAN: return Type::BoolTy;
@@ -194,6 +206,8 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
+    /// Initializes the class info map; in other words it adds the
+    /// class info of java.lang.Object.
     void initializeClassInfoMap() {
       DEBUG(std::cerr << "Building ClassInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
@@ -233,6 +247,8 @@ namespace llvm { namespace Java { namespace {
       DEBUG(std::cerr << "Built ClassInfo for: java/lang/Object\n");
     }
 
+    /// Initializes the VTableInfo map; in other words it adds the
+    /// VTableInfo for java.lang.Object.
     void initializeVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
@@ -325,11 +341,7 @@ namespace llvm { namespace Java { namespace {
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object\n");
     }
 
-    void initializeTypeMaps() {
-      initializeClassInfoMap();
-      initializeVTableInfoMap();
-    }
-
+    /// Returns the ClassInfo object associated with this classfile.
     const ClassInfo& getClassInfo(ClassFile* cf) {
       Class2ClassInfoMap::iterator it = c2ciMap_.lower_bound(cf);
       if (it != c2ciMap_.end() && it->first == cf)
@@ -377,6 +389,9 @@ namespace llvm { namespace Java { namespace {
       return ci;
     }
 
+    /// Builds the super classes' vtable array for this classfile and
+    /// its corresponding VTable. The most generic class goes first in
+    /// the array.
     std::pair<unsigned,llvm::Constant*>
     buildSuperClassesVTables(ClassFile* cf, const VTableInfo& vi) const {
       ArrayType* vtablesArrayTy =
@@ -398,6 +413,8 @@ namespace llvm { namespace Java { namespace {
 	  std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
     }
 
+    /// Builds an interface Vtable for the specified <class,interface>
+    /// pair.
     llvm::Constant* buildInterfaceVTable(ClassFile* cf, ClassFile* interface) {
 
       const VTableInfo& classVI = getVTableInfo(cf);
@@ -439,6 +456,9 @@ namespace llvm { namespace Java { namespace {
 	&module_);
     }
 
+    /// Builds the interfaces vtable array for this classfile and its
+    /// corresponding VTableInfo. If this classfile is an interface we
+    /// return a pointer to 0xFFFFFFFF.
     std::pair<int, llvm::Constant*>
     buildInterfacesVTables(ClassFile* cf, const VTableInfo& vi) {
       // if this is an interface then we are not implementing any
@@ -489,6 +509,8 @@ namespace llvm { namespace Java { namespace {
 	  std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
     }
 
+    /// Given the classfile and its corresponding VTableInfo,
+    /// construct the typeinfo constant for it.
     llvm::Constant* buildClassTypeInfo(ClassFile* cf, const VTableInfo& vi) {
       std::vector<llvm::Constant*> typeInfoInit;
 
@@ -514,6 +536,7 @@ namespace llvm { namespace Java { namespace {
       return ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
     }
 
+    /// Returns the VTableInfo associated with this classfile.
     const VTableInfo& getVTableInfo(ClassFile* cf) {
       Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(cf);
       if (it != c2viMap_.end() && it->first == cf)
@@ -604,6 +627,8 @@ namespace llvm { namespace Java { namespace {
       return vi;
     }
 
+    /// Emits the necessary code to get a pointer to a static field of
+    /// an object.
     GlobalVariable* getStaticField(unsigned index) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
@@ -624,6 +649,8 @@ namespace llvm { namespace Java { namespace {
       return global;
     }
 
+    /// Emits the necessary code to get a field from the passed
+    /// pointer to an object.
     Value* getField(unsigned index, Value* ptr) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
@@ -631,6 +658,8 @@ namespace llvm { namespace Java { namespace {
       return getField(cf, nameAndType->getName()->str(), ptr);
     }
 
+    /// Emits the necessary code to get a field from the passed
+    /// pointer to an object.
     Value* getField(ClassFile* cf, const std::string& fieldName, Value* ptr) {
       // Cast ptr to correct type
       ptr = new CastInst(ptr, PointerType::get(getClassInfo(cf).type),
@@ -655,6 +684,8 @@ namespace llvm { namespace Java { namespace {
       return new GetElementPtrInst(ptr, indices, TMP, currentBB_);
     }
 
+    /// Compiles the passed method only (it does not compile any
+    /// callers or methods of objects it creates).
     Function* compileMethodOnly(const std::string& classMethodDesc) {
       Method* method = getMethod(classMethodDesc);
       cf_ = method->getParent();
@@ -748,6 +779,7 @@ namespace llvm { namespace Java { namespace {
       return function;
     }
 
+    /// Emits static initializers for this class if not done already.
     void emitStaticInitializers(const ClassFile* classfile) {
       const Method* method = classfile->getMethod("<clinit>()V");
       if (!method)
@@ -837,8 +869,9 @@ namespace llvm { namespace Java { namespace {
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
 
-      // initialize type maps and globals (vtables)
-      initializeTypeMaps();
+      // initialize type maps and vtable globals
+      initializeClassInfoMap();
+      initializeVTableInfoMap();
 
       // create the method requested
       Function* function = getFunction(getMethod(classMethodDesc));

@@ -64,10 +64,6 @@ void TVFrame::initializeSnapshotListAndView (std::string dirName) {
   // Initialize the snapshot list
   mySnapshotDirName = dirName;
   refreshSnapshotList ();
-
-  // Initialize the snapshot list view
-  if (myTreeCtrl == 0)
-    CreateTree(wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER, mySnapshotList);
   SetStatusText ("Snapshot list has been loaded.");
 }
 

@@ -70,6 +70,7 @@ namespace llvm { namespace Java { namespace {
 
   class Compiler : public BytecodeParser<Compiler> {
     Module& module_;
+    GlobalVariable* JNIEnvPtr_;
     ClassFile* cf_;
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
@@ -123,6 +124,14 @@ namespace llvm { namespace Java { namespace {
   public:
     Compiler(Module& m)
       : module_(m) {
+      Type* JNIEnvTy = OpaqueType::get();
+      module_.addTypeName("JNIEnv", JNIEnvTy);
+      JNIEnvPtr_ = new GlobalVariable(JNIEnvTy,
+                                      true,
+                                      GlobalVariable::ExternalLinkage,
+                                      NULL,
+                                      "llvm_java_JNIEnv",
+                                      &module_);
     }
 
   private:
@@ -207,6 +216,64 @@ namespace llvm { namespace Java { namespace {
         std::vector<const Type*> params;
         if (self)
           params.push_back(PointerType::get(self));
+        while (descr[i] != ')')
+          params.push_back(getTypeHelper(descr, i, NULL));
+        return FunctionType::get(getTypeHelper(descr, ++i, NULL),params, false);
+      }
+        // FIXME: Throw something
+      default:  return NULL;
+      }
+    }
+
+    /// Returns the type of the Java string descriptor for JNI. If the
+    /// Type* self is not NULL then that type is used as the first
+    /// type in function types
+    Type* getJNIType(ConstantUtf8* descr, Type* self = NULL) {
+      unsigned i = 0;
+      return getJNITypeHelper(descr->str(), i, self);
+    }
+
+    Type* getJNITypeHelper(const std::string& descr, unsigned& i, Type* self) {
+      assert(i < descr.size());
+      switch (descr[i++]) {
+      case 'B': return Type::SByteTy;
+      case 'C': return Type::UShortTy;
+      case 'D': return Type::DoubleTy;
+      case 'F': return Type::FloatTy;
+      case 'I': return Type::IntTy;
+      case 'J': return Type::LongTy;
+      case 'S': return Type::ShortTy;
+      case 'Z': return Type::BoolTy;
+      case 'V': return Type::VoidTy;
+      case 'L': {
+        unsigned e = descr.find(';', i);
+        std::string className = descr.substr(i, e - i);
+        i = e + 1;
+        return PointerType::get(Type::VoidTy);
+      }
+      case '[':
+        if (descr[i] == '[') {
+          do { ++i; } while (descr[i] == '[');
+          getTypeHelper(descr, i, NULL);
+          return PointerType::get(Type::VoidTy);
+        }
+        else if (descr[i] == 'L') {
+          getTypeHelper(descr, i, NULL);
+          return PointerType::get(Type::VoidTy);
+        }
+        else {
+           return PointerType::get(
+             getPrimitiveArrayInfo(getTypeHelper(descr, i, NULL)).type);
+        }
+        break;
+      case '(': {
+        std::vector<const Type*> params;
+        // JNIEnv*
+        params.push_back(JNIEnvPtr_->getType());
+
+        assert(self && "first argument after JNIEnv* must be that of a "
+               "class or an object pointer");
+        params.push_back(PointerType::get(self));
         while (descr[i] != ')')
           params.push_back(getTypeHelper(descr, i, NULL));
         return FunctionType::get(getTypeHelper(descr, ++i, NULL),params, false);
@@ -1100,8 +1167,45 @@ namespace llvm { namespace Java { namespace {
       assert(function->empty() && "Compiling an already compiled method!");
 
       if (method->isNative()) {
-        DEBUG(std::cerr << "Ignoring native method: ";
-              std::cerr << classMethodDesc << '\n');
+        DEBUG(std::cerr << "Adding stub for natively implemented method: "
+              << classMethodDesc << '\n');
+        FunctionType* funcTy = cast<FunctionType>(
+          getJNIType(method->getDescriptor(), Type::VoidTy));
+
+        std::string funcName = "Java_";
+        const std::string& className = cf_->getThisClass()->getName()->str();
+        for (unsigned i = 0, e = className.size(); i != e; ++i) {
+          if (className[i] == '/')
+            funcName += '_';
+          else
+            funcName += className[i];
+        }
+        funcName += '_';
+
+        const std::string& methodName = method->getName()->str();
+        funcName += methodName;
+
+        Function* jniFunction = module_.getOrInsertFunction(funcName, funcTy);
+        jniFunction->setLinkage(method->isPrivate() ?
+                                Function::InternalLinkage :
+                                Function::ExternalLinkage);
+
+        BasicBlock* bb = new BasicBlock("entry", function);
+        std::vector<Value*> params;
+        params.push_back(JNIEnvPtr_);
+        if (method->isStatic())
+          params.push_back(llvm::Constant::getNullValue(
+                             PointerType::get(Type::VoidTy)));
+        for (Function::aiterator A = function->abegin(), E = function->aend();
+             A != E; ++A) {
+          params.push_back(&*A);
+        }
+        Value* r = new CallInst(jniFunction, params, "", bb);
+        if (r->getType() == Type::VoidTy)
+          new ReturnInst(NULL, bb);
+        else
+          new ReturnInst(r, bb);
+
         return function;
       }
       else if (method->isAbstract()) {

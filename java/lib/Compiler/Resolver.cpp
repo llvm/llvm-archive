@@ -128,7 +128,7 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
       abort();
     }
     it->second.link();
-    if (!it->second.isPrimitive())
+    if (!it->second.isPrimitive() && !it->second.isInterface())
       module_->addTypeName(descriptor, it->second.getLayoutType());
     DEBUG(std::cerr << "Loaded class: " << descriptor << '\n');
   }

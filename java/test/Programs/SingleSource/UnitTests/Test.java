@@ -8,6 +8,14 @@ public class Test
     public short s = 456;
     public byte b = 78;
 
+    public static boolean Z = true;
+    public static int I = 321;
+    public static long L = 1234567890987654321L;
+    public static float F = 46.753F;
+    public static double D = -75346.46;
+    public static short S = 654;
+    public static byte B = 87;
+
     static {
         System.loadLibrary("test");
     }
@@ -28,6 +36,7 @@ public class Test
     private static native void println(byte[] a);
 
     public native void printFields();
+    public static native void printStaticFields();
 
     public static void main(String[] args) {
         println(true);
@@ -43,6 +52,7 @@ public class Test
         println(new byte[] { 'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' });
         println("Hello world");
 
+        printStaticFields();
         new Test().printFields();
     }
 }

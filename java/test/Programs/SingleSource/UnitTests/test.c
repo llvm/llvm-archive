@@ -90,3 +90,51 @@ void Java_Test_printFields(JNIEnv *env, jobject obj)
   b = (*env)->GetByteField(env, obj, id);
   Java_Test_println__I(env, objClass, b);
 }
+
+void Java_Test_printStaticFields(JNIEnv *env, jclass clazz)
+{
+  jclass classTest;
+  jfieldID id;
+  jboolean z;
+  jint i;
+  jlong l;
+  jfloat f;
+  jdouble d;
+  jshort s;
+  jbyte b;
+
+  classTest = (*env)->FindClass(env, "Test");
+  if (!classTest)
+    printf("ERROR: Class Test not found!\n");
+
+  if (!(*env)->IsAssignableFrom(env, clazz, classTest))
+    printf("ERROR: IsAssignableFrom\n");
+
+  id = (*env)->GetStaticFieldID(env, clazz, "Z", "Z");
+  z = (*env)->GetStaticBooleanField(env, clazz, id);
+  Java_Test_println__Z(env, clazz, z);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "I", "I");
+  i = (*env)->GetStaticIntField(env, clazz, id);
+  Java_Test_println__I(env, clazz, i);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "L", "J");
+  l = (*env)->GetStaticLongField(env, clazz, id);
+  Java_Test_println__J(env, clazz, l);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "F", "F");
+  f = (*env)->GetStaticFloatField(env, clazz, id);
+  Java_Test_println__F(env, clazz, f);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "D", "D");
+  d = (*env)->GetStaticDoubleField(env, clazz, id);
+  Java_Test_println__D(env, clazz, d);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "S", "S");
+  s = (*env)->GetStaticShortField(env, clazz, id);
+  Java_Test_println__I(env, clazz, s);
+
+  id = (*env)->GetStaticFieldID(env, clazz, "B", "B");
+  b = (*env)->GetStaticByteField(env, clazz, id);
+  Java_Test_println__I(env, clazz, b);
+}

@@ -1456,18 +1456,11 @@ namespace llvm { namespace Java { namespace {
       std::string funcName = className + '/' + methodDescr;
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
-      // Constructor calls are statically bound.
-      if (methodName == "<init>") {
-	FunctionType* funcTy =
-	  cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
-	Function* function = module_.getOrInsertFunction(funcName, funcTy);
-	toCompileFunctions_.insert(function);
-	makeCall(function, getParams(funcTy));
-      }
-      // Otherwise we call the superclass' implementation of the method.
-      else {
-	assert(0 && "not implemented");
-      }
+      FunctionType* funcTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      toCompileFunctions_.insert(function);
+      makeCall(function, getParams(funcTy));
     }
 
     void do_invokestatic(unsigned index) {

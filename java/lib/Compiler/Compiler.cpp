@@ -607,15 +607,11 @@ namespace llvm { namespace Java { namespace {
       for (VTableInfo::Method2IndexMap::const_iterator
              i = interfaceVI.m2iMap.begin(), e = interfaceVI.m2iMap.end();
            i != e; ++i) {
-        std::vector<llvm::Constant*> indices;
-        indices.reserve(2);
-        indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
         assert(classVI.m2iMap.find(i->first) != classVI.m2iMap.end() &&
                "Interface method not found in class definition!");
         unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
-        indices.push_back(ConstantUInt::get(Type::UIntTy, classMethodIdx));
         init[i->second] =
-          ConstantExpr::getGetElementPtr(classVI.vtable, indices);
+          cast<ConstantStruct>(classVI.vtable->getInitializer())->getElementAt(classMethodIdx);
       }
 
       llvm::Constant* vtable = ConstantStruct::get(init);
@@ -624,13 +620,15 @@ namespace llvm { namespace Java { namespace {
         interface->getThisClass()->getName()->str() + "<vtable>";
       module_.addTypeName(globalName, vtable->getType());
 
-      return new GlobalVariable(
+      GlobalVariable* gv = new GlobalVariable(
         vtable->getType(),
         true,
         GlobalVariable::ExternalLinkage,
         vtable,
         globalName,
         &module_);
+
+      return gv;
     }
 
     /// Builds the interfaces vtable array for this classfile and its
@@ -772,9 +770,13 @@ namespace llvm { namespace Java { namespace {
 
           const FunctionType* funcTy = cast<FunctionType>(
             getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
-          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
-          if (!method->isAbstract())
-            scheduleFunction(vfun);
+          llvm::Constant* vfun =
+            llvm::Constant::getNullValue(PointerType::get(funcTy));
+          if (!cf->isInterface()) {
+            vfun = module_.getOrInsertFunction(funcName, funcTy);
+            if (!method->isAbstract())
+              scheduleFunction(cast<Function>(vfun));
+          }
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
@@ -2418,6 +2420,9 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
       else
         new ReturnInst(UndefValue::get(F->getReturnType()), entry);
     }
+
+//   for (Module::giterator G = m->gbegin(), E = m->gend(); G != E; ++G)
+//     std::cerr << *G << "\n\n";
 
   return m;
 }

@@ -109,10 +109,6 @@ void TVApplication::Quit () {
   myFrame->Destroy ();
 }
 
-void TVApplication::OpenCodeView (Function *F) {
-  allMyWindows.push_back(new CodeViewFrame(this, F));
-}
-
 bool TVApplication::OnInit () {
   // Save my PID into the file where the snapshot-making pass knows to
   // look for it.

@@ -39,7 +39,6 @@ public:
   void GoodbyeFrom (wxWindow *dyingWindow);
   void ReceivedSignal ();
   template <class Grapher> void OpenGraphView(TVTreeItemData *item);
-  void OpenCodeView (llvm::Function *F);
   void Quit ();
 };
 

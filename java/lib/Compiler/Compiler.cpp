@@ -976,7 +976,20 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_new(unsigned bcI, unsigned index) {
-      assert(0 && "not implemented");
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      const std::string& className = classRef->getName()->str();
+      ClassFile* cf = ClassFile::getClassFile(className);
+      const ClassInfo& ci = getClassInfo(className);
+      const VTableInfo& vi = getVTableInfo(className);
+
+      Value* objRef = new MallocInst(ci.type,
+                                     ConstantUInt::get(Type::UIntTy, 0),
+                                     TMP, getBBAt(bcI));
+      Value* vtable = getField(bcI, className, "<llvm_java_base>", objRef);
+      vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
+                            TMP, getBBAt(bcI));
+      vtable = new StoreInst(vi.vtable, vtable, getBBAt(bcI));
+      opStack_.push(objRef);
     }
 
     void do_newarray(unsigned bcI, JType type) {

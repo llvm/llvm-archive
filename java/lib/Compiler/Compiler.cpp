@@ -23,7 +23,6 @@
 #include <llvm/Java/ClassFile.h>
 #include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
-#include <llvm/Instructions.h>
 #include <llvm/Value.h>
 #include <llvm/Type.h>
 #include <llvm/ADT/STLExtras.h>
@@ -1366,20 +1365,23 @@ namespace llvm { namespace Java { namespace {
       unsigned index = 0;
       for (Function::aiterator
              a = function->abegin(), ae = function->aend(); a != ae; ++a) {
-        locals_.store(index, a, &function->getEntryBlock());
+        locals_.store(index, a, function->getEntryBlock().getTerminator());
         index += isTwoSlotType(a->getType()) ? 2 : 1;
       }
-      // For the entry block the operand stack is empty and the locals
-      // contain the arguments to the function.
+
+      BasicBlock* bb0 = bbBuilder_->getBasicBlock(0);
+
+      // For bb0 the operand stack is empty and the locals contain the
+      // arguments to the function.
       //
       // NOTE: We create an operand stack one size too big because we
       // push extra values on the stack to simplify code generation
       // (see implementation of ifne).
       opStack_ = OperandStack(codeAttr->getMaxStack()+2);
-      opStackDepthMap_.insert(std::make_pair(&function->getEntryBlock(), 0));
+      opStackDepthMap_.insert(std::make_pair(bb0, 0));
 
-      // Insert the entry block to the work list.
-      bbWorkList_.push_back(&function->getEntryBlock());
+      // Insert bb0 in the work list.
+      bbWorkList_.push_back(bb0);
 
       // Process the work list until we compile the whole function.
       while (!bbWorkList_.empty()) {
@@ -1406,10 +1408,10 @@ namespace llvm { namespace Java { namespace {
           new BranchInst(bbBuilder_->getBasicBlock(end), currentBB_);
 
         // For each successor of this basic block we can compute its
-        // entry operand stack and locals, do so, and add it to the
-        // work list. If a successor already has an entry operand
-        // stack and locals we assume the computation was correct and
-        // do not add it to the work list.
+        // entry operand stack depth. We do so, and add it to the work
+        // list. If a successor already has an entry operand stack and
+        // locals we assume the computation was correct and do not add
+        // it to the work list.
         for (succ_iterator
                SI = succ_begin(currentBB_), SE = succ_end(currentBB_);
              SI != SE; ++SI) {

@@ -23,6 +23,7 @@ namespace llvm {
 
   class AllocaInst;
   class BasicBlock;
+  class Instruction;
   class Type;
   class Value;
 
@@ -41,6 +42,11 @@ namespace llvm { namespace Java {
     /// variable and appends any instructions to implement this to \c
     /// insertAtEnd BasicBlock
     void store(unsigned i, Value* value, BasicBlock* insertAtEnd);
+
+    /// @brief - Stores the value \c value on the \c i'th local
+    /// variable and prepends any instructions to implement this before \c
+    /// insertBefore Instruction
+    void store(unsigned i, Value* value, Instruction* insertBefore);
 
     /// @brief - Loads the value of the \c i'th local variable of type
     /// \c type and appends any instructions to implement this to \c

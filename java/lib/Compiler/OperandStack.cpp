@@ -20,7 +20,6 @@
 #include <llvm/Instructions.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Java/Compiler.h>
-#include <iostream>
 
 using namespace llvm;
 using namespace llvm::Java;
@@ -48,12 +47,10 @@ llvm::AllocaInst* OperandStack::getOrCreateSlot(SlotMap& slotMap,
 
   if (it == slotMap.end()) {
     // Insert the alloca at the beginning of the entry block.
-    BasicBlock* entry = &bb->getParent()->getEntryBlock();
-    AllocaInst* alloca;
-    if (entry->empty())
-      alloca = new AllocaInst(type, NULL, "opStack", entry);
-    else
-      alloca = new AllocaInst(type, NULL, "opStack", &entry->front());
+    BasicBlock& entry = bb->getParent()->getEntryBlock();
+    assert(entry.getTerminator() && "Entry block must have a terminator!");
+    AllocaInst* alloca =
+      new AllocaInst(type, NULL, "opStack", entry.getTerminator());
     it = slotMap.insert(it, std::make_pair(type, alloca));
   }
 

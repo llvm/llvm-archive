@@ -17,6 +17,7 @@
 #include <llvm/Java/ClassFile.h>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Instructions.h>
 #include <map>
 
 namespace llvm { namespace Java {
@@ -44,14 +45,25 @@ namespace llvm { namespace Java {
     BasicBlockBuilder(Function* f, CodeAttribute* c)
       : function_(f) {
 
+      // Create the entry block.
+      BasicBlock* entry = new BasicBlock("entry", function_);
+
+      // Create the block for bytecode 0 (bb0).
       BasicBlock* bb = getOrCreateBasicBlockAt(0);
 
+      // Add an unconditional branch from the entry block to bb0.
+      new BranchInst(bb, entry);
+
+      // Create basic blocks for exception handlers.
       const CodeAttribute::Exceptions& exceptions = c->getExceptions();
       for (unsigned i = 0, e = exceptions.size(); i != e; ++i)
         getOrCreateBasicBlockAt(exceptions[i]->getHandlerPc());
 
+      // Parse the bytecode and create basic blocks for all targets of
+      // control flow instructions.
       parse(c->getCode(), 0, c->getCodeSize());
 
+      // Build the bytecode->basic block map.
       for (BC2BBMap::const_iterator i = bc2bbMap_.begin(), e = bc2bbMap_.end();
            i != e; ++i) {
         unsigned end = next(i) != e ? next(i)->first : c->getCodeSize();
@@ -59,8 +71,8 @@ namespace llvm { namespace Java {
           std::make_pair(i->second, std::make_pair(i->first, end)));
       }
 
-      assert(function_->getEntryBlock().getName() == "bc0");
-      assert(bb2bcMap_.find(&function_->getEntryBlock()) != bb2bcMap_.end());
+      assert(function_->getEntryBlock().getName() == "entry");
+      assert(bb2bcMap_.find(&function_->getEntryBlock()) == bb2bcMap_.end());
     }
 
     BasicBlock* getBasicBlock(unsigned bcI) const {

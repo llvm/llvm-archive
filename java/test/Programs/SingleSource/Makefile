@@ -10,4 +10,4 @@ LEVEL := ../../..
 
 PARALLEL_DIRS := UnitTests
 
-include Makefile.singlesrc
+include $(LEVEL)/Makefile.common

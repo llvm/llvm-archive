@@ -13,6 +13,7 @@ class PictureCanvas : public wxScrolledWindow {
   wxImage *myImage;
   wxBitmap *myBitmap;
 
+  void imageChanged ();
  public:
   PictureCanvas ()
     : wxScrolledWindow (0), myImage (0), myBitmap (0) {
@@ -21,7 +22,7 @@ class PictureCanvas : public wxScrolledWindow {
     : wxScrolledWindow (parent), myImage (image), myBitmap (0) {
     imageChanged ();
   }
-  void imageChanged ();
+  void SetImage (wxImage *img) { myImage = img; imageChanged (); }
   void OnDraw (wxDC &aDC);
 };
 

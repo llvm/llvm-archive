@@ -27,7 +27,7 @@ PREFIXED_CLASS_FILES := $(addsuffix .class/, $(PREFIXED_JAVA_TESTS))
 $(PREFIXED_CLASS_FILES): $(addsuffix .java,$(JAVA_TESTS))
 	$(Echo) Compiling $?
 	$(Verb)mkdir -p Output
-	$(Verb)$(JAVAC) -d Output $?
+	$(Verb)$(JAVAC) -cp Output -d Output $?
 	$(Verb)touch $@
 
 # Compiled bytecode for tests

@@ -420,13 +420,14 @@ namespace llvm { namespace Java { namespace {
       return ci;
     }
 
-    llvm::Constant* getClassTypeInfo(const std::string& className,
+    llvm::Constant* getClassTypeInfo(ClassFile* cf,
                                      const VTableInfo& vi,
                                      const VTableInfo& superVI) const {
       // llvm_java_object_typeinfo has four fields: depth, a pointer
       // to the superclasses vtable pointers, a count for interfaces
       // and a pointer to the interfaces vtable pointers
-  
+      const std::string& className = cf->getThisClass()->getName()->str();
+
       std::vector<llvm::Constant*> typeInfoInit;
       // the depth
       unsigned depth = vi.superVtables.size();
@@ -493,7 +494,7 @@ namespace llvm { namespace Java { namespace {
         init.push_back(superInit->getOperand(i));
       vi.m2iMap = superVI.m2iMap;
       // install the new typeinfo block for this class
-      init[0] = getClassTypeInfo(className, vi, superVI);
+      init[0] = getClassTypeInfo(cf, vi, superVI);
 
       // add member functions to the vtable
       const Methods& methods = cf->getMethods();

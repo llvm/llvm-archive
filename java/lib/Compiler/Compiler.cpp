@@ -1289,6 +1289,15 @@ namespace llvm { namespace Java { namespace {
         }
       }
 
+      // FIXME: remove empty basic blocks (we have empty basic blocks
+      // because of our lack of exception support).
+      for (Function::iterator bb = function->begin(), be = function->end();
+           bb != be; )
+        if (bb->empty())
+          bb = function->getBasicBlockList().erase(bb);
+        else
+          ++bb;
+
       DEBUG(std::cerr << "Finished compilation of method: "
             << classMethodDesc << '\n');
       // DEBUG(function->dump());

@@ -2,6 +2,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Assembly/CachedWriter.h"
 #include "llvm/Assembly/Writer.h"
 #include <wx/treectrl.h>
 #include <cstdlib>
@@ -20,23 +21,23 @@ static inline void htmlBB(std::ostream &os, const BasicBlock *BB) {
      << ":</b></tt></font><br>";
 }
 
-static inline void htmlType(std::ostream &os, const Type* type,
-                            const Module *M) {
-  os << "<font color=\"green\"><b>";
-  WriteTypeSymbolic (os, type, M);
-  os << "</b></font>";
+static inline void htmlType(CachedWriter &cw, const Type* type) {
+  cw << "<font color=\"green\"><b>" << type << "</b></font>";
 }
 
-static inline std::string wrapType(const std::string &word) {
-  return ("<font color=\"green\"><b>" + word + "</b></font>");
+static inline std::ostream&
+wrapType(std::ostream &os, const std::string &word) {
+  return os <<"<font color=\"green\"><b>" << word << "</b></font>";
 }
 
-static inline std::string wrapKeyword(const std::string &word) {
-  return ("<font color=\"navy\"><b>" + word + "</b></font>");
+static inline std::ostream&
+wrapKeyword(std::ostream &os, const std::string &word) {
+  return os << "<font color=\"navy\"><b>" << word << "</b></font>";
 }
 
-static inline std::string wrapConstant(const std::string &c) {
-  return ("<font color=\"#770077\">" + c + "</font>");
+static inline std::ostream&
+wrapConstant(std::ostream &os, const std::string &c) {
+  return os << "<font color=\"#770077\">" << c << "</font>";
 }
 
 // LLVM types
@@ -66,74 +67,67 @@ static const char* keywords[] = {
 };
 
 
-static inline std::string stylizeTypesAndKeywords(std::string &str) {
-  if (str == "") return "";
+// Just use ostream to output instead of assembling into one string
+std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
+  if (str == "") return os;
 
-  // Tokenize
-  std::vector<std::string> tokens;
+  // Tokenize and process
   unsigned prev = 0;
+  bool done = false;
   for (unsigned i = 0, e = str.size(); i != e; ++i) {
     if (str[i] == ' ') {
-      tokens.push_back(str.substr(prev, i-prev));
+      std::string token = str.substr(prev, i-prev);
       prev = i+1;
+      done = false;
+        
+      // Wrap keywords
+      for (unsigned k = 0, ke = sizeof(keywords)/sizeof(char*); k != ke; ++k)
+        if (token == keywords[k]) {
+          wrapKeyword(os, token);
+          done = true;
+          break;
+        }
+
+      if (done) { os << ' '; continue; }
+
+      // Wrap types
+      for (unsigned t = 0, te = sizeof(types)/sizeof(char*); t != te; ++t) {
+        std::string type(types[t]);
+        if (token.substr(0, type.size()) == type) {
+          wrapType(os, token);
+          done = true;
+          break;
+        }
+      }
+
+      if (done) { os << ' '; continue; }
+
+      // Wrap constants
+      if (strtol(token.c_str(), 0, 0))
+        wrapConstant(os, token);
+      else
+        os << token;
+
+      os << " ";
     }
   }
   // tack on the last segment
-  tokens.push_back(str.substr(prev, str.size()-prev));
-
-#if 0
-  std::cerr << "\n";
-  for (unsigned i=0, e = tokens.size(); i!=e; ++i)
-    std::cerr << "[" << tokens[i] << "], ";
-  std::cerr << "\n";
-#endif
-
-  for (unsigned i = 0, e = tokens.size(); i != e; ++i) {
-    // "Wrap" keywords
-    for (unsigned k = 0, ke = sizeof(keywords)/sizeof(char*); k != ke; ++k)
-      if (tokens[i] == keywords[k]) {
-        tokens[i] = wrapKeyword(tokens[i]);
-        break;
-      }
-
-    // "Wrap" types
-    for (unsigned t = 0, te = sizeof(types)/sizeof(char*); t != te; ++t) {
-      std::string type(types[t]);
-      if (tokens[i].substr(0, type.size()) == type) {
-        tokens[i] = wrapType(tokens[i]);
-        break;
-      }
-    }
-
-    // "Wrap" constants
-    if (strtol(tokens[i].c_str(), 0, 0))
-      tokens[i] = wrapConstant(tokens[i]);
-
-  }
-
-#if 0
-  std::cerr << "\n";
-  for (unsigned i=0, e = tokens.size(); i!=e; ++i)
-    std::cerr << "[" << tokens[i] << "], ";
-  std::cerr << "\n";
-#endif
-
-  // Assemble back into one
-  std::string styled = "";
-  for (unsigned i = 0, e = tokens.size(); i != e; ++i)
-    styled += tokens[i] + " ";
-  return styled;
+  return os << str.substr(prev, str.size()-prev);
 }
 
-void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
+void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
+  std::ostream &os = cw.getStream();
+
   // print out function return type, name, and arguments
   os << "<tt>";
   if (F->isExternal ())
-    os << wrapKeyword("declare ");
-  htmlType(os, F->getReturnType(), F->getParent ());
+    wrapKeyword(os, "declare ");
+
+  htmlType(cw, F->getReturnType());
+
   os << " " << F->getName() << "(";
   for (Function::aiterator arg = F->abegin(), ae = F->aend(); arg != ae; ++arg){
-    htmlType(os, arg->getType(), F->getParent ());
+    htmlType(cw, arg->getType());
     os << " " << arg->getName();
     Function::aiterator next = arg;
     ++next;
@@ -155,8 +149,10 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
     htmlBB(os, BB);
     for (BasicBlock::iterator I = BB->begin(), Ie = BB->end(); I != Ie; ++I) {
       std::ostringstream oss;
-      I->print(oss);
+      cw.setStream(oss);
+      cw << *I;
       std::string InstrVal = oss.str();
+      cw.setStream(os);
 
       // Prettify the instruction for HTML view
       for (unsigned i = 0; i != InstrVal.length(); ++i)
@@ -176,7 +172,9 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
           --i;
         }
 
-      os << "<tt>" << stylizeTypesAndKeywords(InstrVal) << "</tt>";
+      os << "<tt>";
+      stylizeTypesAndKeywords(os, InstrVal);
+      os << "</tt>";
     }
   }
 
@@ -185,11 +183,10 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   os << "<br>";
 }
 
-void TVTreeItemData::printGlobal(GlobalValue *GV, std::ostream &os) {
-  GV->print(os);
-}
+void TVTreeItemData::printModule(Module *M, CachedWriter &cw) {
+  std::ostream &os = cw.getStream();
+  htmlHeader(os);
 
-void TVTreeItemData::printModule(Module *M, std::ostream &os) {
   // Display target size (bits), endianness types
   std::ostringstream oss;
   oss << "target endian = "
@@ -199,38 +196,50 @@ void TVTreeItemData::printModule(Module *M, std::ostream &os) {
 
   // Display globals
   for (Module::giterator G = M->gbegin(), Ge = M->gend(); G != Ge; ++G) {
-    printGlobal(G, oss);
+    G->print(oss);
     oss << "<br>";
   }
   std::string str = oss.str();
-  os << stylizeTypesAndKeywords(str) << "<br>";
+  stylizeTypesAndKeywords(os, str);
+  os << "<br>";
 
   // Display functions
   for (Module::iterator F = M->begin(), Fe = M->end(); F != Fe; ++F) {
-    printFunction(F, os);
+    printFunction(F, cw);
     os << "<br>";
   }
+
+  htmlFooter(os);
 }
 
 void TVTreeModuleItem::print(std::ostream &os) {
-#if !defined(NOHTML)
-  htmlHeader(os);
-#endif
-  myModule->print(os); 
-#if !defined(NOHTML)
-  htmlFooter(os);
-#endif
+  myModule->print(os);
 }
 
-void TVTreeFunctionItem::print(std::ostream &os) { 
-#if !defined(NOHTML)
-  htmlHeader(os);
-#endif
-  myFunc->print(os);
-#if !defined(NOHTML)
-  htmlFooter(os);
-#endif
+void TVTreeModuleItem::printHTML(std::ostream &os) {
+  if (myModule) {
+    CachedWriter cw(myModule, os);
+    cw << CachedWriter::SymTypeOn;
+    printModule(myModule, cw);
+  }
 }
+
+
+void TVTreeFunctionItem::print(std::ostream &os) { 
+  myFunc->print(os);
+}
+
+void TVTreeFunctionItem::printHTML(std::ostream &os) {
+  if (myFunc) {
+    CachedWriter cw(myFunc->getParent(), os);
+    cw << CachedWriter::SymTypeOn;
+    std::ostream &os = cw.getStream();
+    htmlHeader(os);
+    printFunction(myFunc, cw); 
+    htmlFooter(os);
+  }
+}
+
 
 Module* TVTreeFunctionItem::getModule() {
   return myFunc ? myFunc->getParent() : 0; 

@@ -13,6 +13,7 @@
 #include <sstream>
 
 namespace llvm {
+  class CachedWriter;
   class Function;
   class GlobalValue;
   class Module;
@@ -31,9 +32,8 @@ public:
   virtual llvm::Function *getFunction() { return 0; }
   virtual void printHTML(std::ostream &os) {}
 protected:
-  void printFunction(llvm::Function *F, std::ostream &os);
-  void printGlobal(llvm::GlobalValue *GV, std::ostream &os);
-  void printModule(llvm::Module *M, std::ostream &os);
+  void printFunction(llvm::Function *F, llvm::CachedWriter &cw);
+  void printModule(llvm::Module *M, llvm::CachedWriter &cw);
 private:
   wxString m_desc;
 };
@@ -42,33 +42,33 @@ private:
 /// TVTreeModuleItem - Tree Item containing a Module
 ///  
 class TVTreeModuleItem : public TVTreeItemData {
+private:
+  llvm::Module *myModule;
 public:
   TVTreeModuleItem(const wxString& desc, llvm::Module *mod) 
     : TVTreeItemData(desc), myModule(mod) {}
   
   void print(std::ostream &out);
-  void printHTML(std::ostream &os) { if (myModule) printModule(myModule, os); }
+  void printHTML(std::ostream &os);
 
   llvm::Module *getModule() { return myModule; }
-private:
-  llvm::Module *myModule;
 };
 
 
 /// TVTreeFunctionItem - Tree Item containing a Function
 ///  
 class TVTreeFunctionItem : public TVTreeItemData {
+private:
+  llvm::Function *myFunc;
 public:
   TVTreeFunctionItem(const wxString& desc, llvm::Function *func)
     : TVTreeItemData(desc),  myFunc(func) {}
   
   void print(std::ostream &out);
-  void printHTML(std::ostream &os) { if (myFunc) printFunction(myFunc, os); }
+  void printHTML(std::ostream &os);
 
   llvm::Module *getModule();
   llvm::Function *getFunction() { return myFunc; }
-private:
-  llvm::Function *myFunc;
 };
 
 

@@ -1593,14 +1593,16 @@ namespace llvm { namespace Java { namespace {
             // dynamic initializer. Because LLVM does not currently
             // support these semantics, we consider constants only
             // final fields with static initializers.
-            bool isConstant = field->isStatic();
-            llvm::Constant* init;
-            if (field->getConstantValueAttribute() &&
-                dyn_cast<llvm::Constant>(getConstant(field->getConstantValueAttribute()->getValue())))
-              init = ConstantExpr::getCast(dyn_cast<llvm::Constant>(getConstant(field->getConstantValueAttribute()->getValue())), globalTy);
-            else {
-              init = llvm::Constant::getNullValue(globalTy);
-              isConstant = false;
+            bool isConstant = false;
+            llvm::Constant* init = llvm::Constant::getNullValue(globalTy);
+            if (field->getConstantValueAttribute()) {
+              Constant* constant =
+                field->getConstantValueAttribute()->getValue();
+              if (!dynamic_cast<ConstantString*>(constant)) {
+                init = ConstantExpr::getCast(
+                  dyn_cast<llvm::Constant>(getConstant(constant)), globalTy);
+                isConstant = field->isFinal();
+              }
             }
 
             std::string globalName =

@@ -2231,9 +2231,7 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(cf);
       const VTableInfo& vi = getVTableInfo(cf);
 
-      Value* objRef = new MallocInst(ci.type,
-                                     ConstantUInt::get(Type::UIntTy, 0),
-                                     TMP, currentBB_);
+      Value* objRef = new MallocInst(ci.type, NULL, TMP, currentBB_);
       Value* objBase = new CastInst(objRef,
                                     PointerType::get(ClassInfo::ObjectBaseTy),
                                     TMP, currentBB_);

@@ -741,22 +741,10 @@ namespace llvm { namespace Java { namespace {
     }
 
     Function* compileMethodOnly(const std::string& classMethodDesc) {
-      Method* method;
-      tie(cf_, method) = findClassAndMethod(classMethodDesc);
-      const ClassInfo& ci = getClassInfo(cf_);
+      Method* method = getMethod(classMethodDesc);
+      cf_ = method->getParent();
 
-      std::string name = cf_->getThisClass()->getName()->str();
-      name += '/';
-      name += method->getName()->str();
-      name += method->getDescriptor()->str();
-
-      FunctionType* funcTy = cast<FunctionType>(
-        getType(method->getDescriptor(), method->isStatic() ? NULL : ci.type));
-
-      Function* function = module_.getOrInsertFunction(name, funcTy);
-      function->setLinkage(method->isPrivate() ?
-                           Function::InternalLinkage :
-                           Function::ExternalLinkage);
+      Function* function = getFunction(method);
 
       if (method->isNative()) {
         DEBUG(std::cerr << "Ignoring native method: ";
@@ -854,8 +842,24 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    std::pair<ClassFile*, Method*>
-    findClassAndMethod(const std::string& classMethodDesc) {
+    Function* getFunction(Method* method) {
+      ClassFile* clazz = method->getParent();
+
+      FunctionType* funcTy = cast<FunctionType>(
+        getType(method->getDescriptor(),
+                method->isStatic() ? NULL : getClassInfo(clazz).type));
+      std::string funcName =
+        clazz->getThisClass()->getName()->str() + '/' +
+        method->getName()->str() + method->getDescriptor()->str();
+
+      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      function->setLinkage(method->isPrivate() ?
+                           Function::InternalLinkage :
+                           Function::ExternalLinkage);
+      return function;
+    }
+
+    Method* getMethod(const std::string& classMethodDesc) {
       unsigned slash = classMethodDesc.rfind('/', classMethodDesc.find('('));
       std::string className = classMethodDesc.substr(0, slash);
       std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
@@ -868,7 +872,7 @@ namespace llvm { namespace Java { namespace {
         throw InvocationTargetException("Method " + methodNameAndDescr +
                                         " not found in class " + className);
 
-      return std::make_pair(classfile, method);
+      return method;
     }
 
   public:
@@ -882,9 +886,10 @@ namespace llvm { namespace Java { namespace {
       // initialize type maps and globals (vtables)
       initializeTypeMaps();
 
-      // compile the method requested
-      Function* function = compileMethodOnly(classMethodDesc);
-      // compile all other methods called by this method recursively
+      // create the method requested
+      Function* function = getFunction(getMethod(classMethodDesc));
+      toCompileFunctions_.insert(function);
+      // compile the transitive closure of methods called by this method
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
         compileMethodOnly(f->getName());

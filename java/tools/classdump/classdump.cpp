@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file a sample class reader driver. It is used to drive class
+// This is a sample class reader driver. It is used to drive class
 // reader tests.
 //
 //===----------------------------------------------------------------------===//

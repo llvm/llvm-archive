@@ -9,6 +9,7 @@
 LEVEL := ../../../..
 
 JAVA_TESTS := Arithm \
+	Array \
 	BigConstants \
 	FieldAccess \
 	FloatCompare \

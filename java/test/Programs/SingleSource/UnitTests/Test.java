@@ -1,5 +1,13 @@
 public class Test
 {
+    public boolean z = false;
+    public int i = 123;
+    public long l = 1234567890123456789L;
+    public float f = 753.46F;
+    public double d = -46.75346;
+    public short s = 456;
+    public byte b = 78;
+
     static {
         System.loadLibrary("test");
     }
@@ -19,6 +27,8 @@ public class Test
     }
     private static native void println(byte[] a);
 
+    public native void printFields();
+
     public static void main(String[] args) {
         println(true);
         println(false);
@@ -32,5 +42,7 @@ public class Test
         println(-753.46);
         println(new byte[] { 'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' });
         println("Hello world");
+
+        new Test().printFields();
     }
 }

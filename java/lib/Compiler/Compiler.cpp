@@ -72,7 +72,8 @@ namespace llvm { namespace Java { namespace {
     BasicBlock* currentBB_;
     Locals locals_;
     OperandStack opStack_;
-    Function *getObjectClass_, *setObjectClass_, *throw_, *isInstanceOf_;
+    Function *getObjectClass_, *setObjectClass_, *throw_, *isInstanceOf_,
+      *memset_;
 
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
@@ -162,6 +163,10 @@ namespace llvm { namespace Java { namespace {
       isInstanceOf_ = module_.getOrInsertFunction(
         "llvm_java_IsInstanceOf", Type::IntTy,
         ObjectBaseRefTy, VTableBaseRefTy, NULL);
+      memset_ = module_.getOrInsertFunction(
+        "llvm.memset", Type::VoidTy,
+        PointerType::get(Type::SByteTy),
+        Type::UByteTy, Type::ULongTy, Type::UIntTy, NULL);
     }
 
   private:
@@ -2178,6 +2183,15 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo& vi = getVTableInfo(cf);
 
       Value* objRef = new MallocInst(ci.getType(), NULL, TMP, currentBB_);
+      std::vector<Value*> params;
+      params.reserve(4);
+      params.push_back(new CastInst(objRef, PointerType::get(Type::SByteTy),
+                                    TMP, currentBB_)); // dest
+      params.push_back(ConstantUInt::get(Type::UByteTy, 0)); // value
+      params.push_back(ConstantExpr::getSizeOf(ci.getType())); // size
+      params.push_back(ConstantUInt::get(Type::UIntTy, 0)); // alignment
+      new CallInst(memset_, params, "", currentBB_);
+
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
                                    VTableBaseRefTy,

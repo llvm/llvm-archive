@@ -774,6 +774,11 @@ namespace llvm { namespace Java { namespace {
               std::cerr << classMethodDesc << '\n');
         return function;
       }
+      else if (method->isAbstract()) {
+        DEBUG(std::cerr << "Ignoring abstract method: ";
+              std::cerr << classMethodDesc << '\n');
+        return function;
+      }
 
       DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 

@@ -91,7 +91,6 @@ namespace llvm { namespace Java { namespace {
       typedef std::vector<const Type*> ElementTypes;
       ElementTypes elementTypes;
 
-    public:
       static unsigned InterfaceCount;
 
     public:
@@ -113,7 +112,7 @@ namespace llvm { namespace Java { namespace {
         type_ = holder.get();
       }
       unsigned getInterfaceIndex() const { return interfaceIdx_; }
-      void setInterfaceIndex(unsigned index) { interfaceIdx_ = index; }
+      void setNextInterfaceIndex() { interfaceIdx_ = InterfaceCount++; }
     };
     typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
@@ -459,7 +458,7 @@ namespace llvm { namespace Java { namespace {
 
       // Get the interface id.
       if (cf->isInterface())
-        ci.setInterfaceIndex(ClassInfo::InterfaceCount++);
+        ci.setNextInterfaceIndex();
 
       ConstantClass* super = cf->getSuperClass();
       assert(super && "Class does not have superclass!");

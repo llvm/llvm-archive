@@ -92,6 +92,7 @@ namespace llvm { namespace Java { namespace {
     /// object).
     struct ClassInfo {
       ClassInfo() : type(NULL), interfaceIdx(0) { }
+
       Type* type;
       unsigned interfaceIdx;
       typedef std::map<std::string, unsigned> Field2IndexMap;
@@ -119,6 +120,7 @@ namespace llvm { namespace Java { namespace {
     };
     typedef std::map<ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
+    Class2VTableInfoMap ac2viMap_;
 
   public:
     Compiler(Module& m)
@@ -389,6 +391,71 @@ namespace llvm { namespace Java { namespace {
       return ci;
     }
 
+    /// Creates a ClassInfo object for an array of the specified
+    /// element type.
+    ClassInfo buildArrayClassInfo(Type* elementTy) {
+      ClassInfo arrayInfo;
+
+      std::vector<const Type*> elements;
+      elements.reserve(3);
+      elements.push_back(getClassInfo(ClassFile::get("java/lang/Object")).type);
+      elements.push_back(Type::UIntTy);
+      arrayInfo.f2iMap.insert(std::make_pair("<length>", elements.size()));
+      elements.push_back(ArrayType::get(elementTy, 0));
+      arrayInfo.f2iMap.insert(std::make_pair("<data>", elements.size()));
+
+      arrayInfo.type = StructType::get(elements);
+
+      return arrayInfo;
+    }
+
+    /// Returns the ClassInfo object associated with an array of the
+    /// specified element type.
+    const ClassInfo& getPrimitiveArrayInfo(JType type) {
+      switch (type) {
+      case BOOLEAN: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::BoolTy);
+	return arrayInfo;
+      }
+      case CHAR: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::UShortTy);
+	return arrayInfo;
+      }
+      case FLOAT: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::FloatTy);
+	return arrayInfo;
+      }
+      case DOUBLE: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::DoubleTy);
+	return arrayInfo;
+      }
+      case BYTE: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::SByteTy);
+	return arrayInfo;
+      }
+      case SHORT: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::ShortTy);
+	return arrayInfo;
+      }
+      case INT: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::IntTy);
+	return arrayInfo;
+      }
+      case LONG: {
+	static ClassInfo arrayInfo = buildArrayClassInfo(Type::LongTy);
+	return arrayInfo;
+      }
+      }
+    }
+
+    /// Returns the ClassInfo object associated with an array of the
+    /// specified element type.
+    const ClassInfo& getObjectArrayInfo() {
+      static ClassInfo arrayInfo = buildArrayClassInfo(
+	getClassInfo(ClassFile::get("java/lang/Object")).type);
+      return arrayInfo;
+    }
+
     /// Builds the super classes' vtable array for this classfile and
     /// its corresponding VTable. The most generic class goes first in
     /// the array.
@@ -563,8 +630,8 @@ namespace llvm { namespace Java { namespace {
 	getVTableInfo(ClassFile::get(super->getName()->str()));
 
       // Copy the super vtables array.
-      vi.superVtables.push_back(superVI.vtable);
       vi.superVtables.reserve(superVI.superVtables.size() + 1);
+      vi.superVtables.push_back(superVI.vtable);
       std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
 		std::back_inserter(vi.superVtables));
 
@@ -594,10 +661,10 @@ namespace llvm { namespace Java { namespace {
 
 	  std::string funcName = className + '/' + methodDescr;
 
-          const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), getClassInfo(cf).type));
-          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
-          toCompileFunctions_.insert(vfun);
+	  const FunctionType* funcTy = cast<FunctionType>(
+	    getType(method->getDescriptor(), getClassInfo(cf).type));
+	  Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
+	  toCompileFunctions_.insert(vfun);
 
 	  unsigned& index = vi.m2iMap[methodDescr];
 	  if (!index) {
@@ -633,6 +700,138 @@ namespace llvm { namespace Java { namespace {
       DEBUG(std::cerr << "Built VTableInfo for: " << className << '\n');
       return vi;
     }
+
+    VTableInfo buildArrayVTableInfo(Type* elementTy) {
+      assert(elementTy->isPrimitiveType() &&
+	     "This should not be called for arrays of non-primitive types");
+
+      VTableInfo vi;
+      const VTableInfo& superVI =
+	getVTableInfo(ClassFile::get("java/lang/Object"));
+
+      // Add java/lang/Object as its superclass.
+      vi.superVtables.reserve(1);
+      vi.superVtables.push_back(superVI.vtable);
+
+      // Copy the constants from java/lang/Object vtable.
+      ConstantStruct* superInit =
+	cast<ConstantStruct>(superVI.vtable->getInitializer());
+      std::vector<llvm::Constant*> init(superInit->getNumOperands());
+      // Use a null typeinfo struct for now.
+      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
+      // Fill in the function pointers as they are in the super
+      // class. overriden methods will be replaced later.
+      for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
+	init[i] = superInit->getOperand(i);
+      vi.m2iMap = superVI.m2iMap;
+
+#ifndef NDEBUG
+      for (unsigned i = 0, e = init.size(); i != e; ++i)
+	assert(init[i] && "No elements in the initializer should be NULL!");
+#endif
+
+      const std::string& globalName =
+	elementTy->getDescription() + "<vtable>";
+
+      llvm::Constant* vtable = ConstantStruct::get(init);
+      module_.addTypeName(globalName, vtable->getType());
+      vi.vtable = new GlobalVariable(vtable->getType(),
+				     true,
+				     GlobalVariable::ExternalLinkage,
+				     vtable,
+				     globalName,
+				     &module_);
+
+      // Construct the typeinfo now.
+      std::vector<llvm::Constant*> typeInfoInit;
+      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 1));
+      // Build the super classes' vtable array.
+      ArrayType* vtablesArrayTy =
+	ArrayType::get(PointerType::get(VTableInfo::VTableTy),
+		       vi.superVtables.size());
+
+      GlobalVariable* vtablesArray = new GlobalVariable(
+	vtablesArrayTy,
+	true,
+	GlobalVariable::ExternalLinkage,
+	ConstantArray::get(vtablesArrayTy, vi.superVtables),
+	elementTy->getDescription() + "<superclassesvtables>",
+	&module_);
+
+      typeInfoInit.push_back(
+	ConstantExpr::getGetElementPtr(
+	  vtablesArray,
+	  std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 0));
+      typeInfoInit.push_back(
+	llvm::Constant::getNullValue(
+	  PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+
+      init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
+      vi.vtable->setInitializer(ConstantStruct::get(init));
+
+      return vi;
+    }
+
+    // Returns the VTableInfo object for an array of the specified
+    // element type.
+    const VTableInfo& getPrimitiveArrayVTableInfo(JType type) {
+      switch (type) {
+      case BOOLEAN: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::BoolTy);
+	return arrayInfo;
+      }
+      case CHAR: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::UShortTy);
+	return arrayInfo;
+      }
+      case FLOAT: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::FloatTy);
+	return arrayInfo;
+      }
+      case DOUBLE: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::DoubleTy);
+	return arrayInfo;
+      }
+      case BYTE: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::SByteTy);
+	return arrayInfo;
+      }
+      case SHORT: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::ShortTy);
+	return arrayInfo;
+      }
+      case INT: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::IntTy);
+	return arrayInfo;
+      }
+      case LONG: {
+	static VTableInfo arrayInfo = buildArrayVTableInfo(Type::LongTy);
+	return arrayInfo;
+      }
+      }
+    }
+
+//     const VTableInfo& getArrayVTableInfo(ClassFile* cf) {
+//       Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
+//       if (it != ac2viMap_.end() && it->first == cf)
+//	return it->second;
+
+//       const std::string& className = cf->getThisClass()->getName()->str();
+//       DEBUG(std::cerr << "Building VTableInfo for: " << className << "[]\n");
+//       VTableInfo& vi = ac2viMap_[cf];
+
+//       assert(!vi.vtable && vi.m2iMap.empty() &&
+//	     "got already initialized VTableInfo!");
+
+
+//       ConstantClass* super = cf->getSuperClass();
+//       if (!super) {
+//       }
+//       else {
+
+//       }
+//     }
 
     /// Emits the necessary code to get a pointer to a static field of
     /// an object.
@@ -780,7 +979,7 @@ namespace llvm { namespace Java { namespace {
       }
 
       DEBUG(std::cerr << "Finished compilation of method: "
-            << classMethodDesc << '\n');
+	    << classMethodDesc << '\n');
       DEBUG(function->dump());
 
       return function;
@@ -953,7 +1152,17 @@ namespace llvm { namespace Java { namespace {
     void do_saload() { do_aload_common(); }
 
     void do_aload_common() {
-      assert(0 && "not implemented");
+      Value* index = currentOpStack_->pop(currentBB_);
+      Value* arrayRef = currentOpStack_->pop(currentBB_);
+
+      std::vector<Value*> indices;
+      indices.reserve(2);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 2));
+      indices.push_back(index);
+      Value* elementPtr =
+	new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+      Value* result = new LoadInst(elementPtr, TMP, currentBB_);
+      currentOpStack_->push(result, currentBB_);
     }
 
     void do_istore(unsigned index) { do_store_common(index); }
@@ -977,7 +1186,22 @@ namespace llvm { namespace Java { namespace {
     void do_sastore() { do_astore_common(); }
 
     void do_astore_common() {
-      assert(0 && "not implemented");
+      Value* value = currentOpStack_->pop(currentBB_);
+      Value* index = currentOpStack_->pop(currentBB_);
+      Value* arrayRef = currentOpStack_->pop(currentBB_);
+
+      std::vector<Value*> indices;
+      indices.reserve(2);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 2));
+      indices.push_back(index);
+      Value* elementPtr =
+	new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+      // We need this case because ints on the stack can be stored to
+      // arrays of bool, byte, short or char.
+      value = new CastInst(
+	value, cast<PointerType>(elementPtr->getType())->getElementType(),
+	TMP, currentBB_);
+      new StoreInst(value, elementPtr, currentBB_);
     }
 
     void do_pop() {
@@ -1184,6 +1408,8 @@ namespace llvm { namespace Java { namespace {
     void do_iinc(unsigned index, int amount) {
       Value* v = currentLocals_->load(index, currentBB_);
       Value* a = ConstantSInt::get(Type::IntTy, amount);
+      std::cerr << "v: " << *v << '\n';
+      std::cerr << "a: " << *a << '\n';
       BinaryOperator::createAdd(v, a, TMP, currentBB_);
       currentLocals_->store(index, v, currentBB_);
     }
@@ -1381,6 +1607,9 @@ namespace llvm { namespace Java { namespace {
     void do_putfield(unsigned index) {
       Value* v = currentOpStack_->pop(currentBB_);
       Value* p = currentOpStack_->pop(currentBB_);
+      Value* fp = getField(index, p);
+      const Type* ft = cast<PointerType>(fp->getType())->getElementType();
+      v = new CastInst(v, ft, TMP, currentBB_);
       new StoreInst(v, getField(index, p), currentBB_);
     }
 
@@ -1464,7 +1693,7 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
       FunctionType* funcTy =
-        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+	cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
       toCompileFunctions_.insert(function);
       makeCall(function, getParams(funcTy));
@@ -1561,8 +1790,56 @@ namespace llvm { namespace Java { namespace {
       currentOpStack_->push(objRef, currentBB_);
     }
 
+    Value* getArrayLengthPtr(Value* arrayRef) const {
+      std::vector<Value*> indices;
+      indices.reserve(2);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 1));
+
+      return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+    }
+
+    Value* getArrayObjectBasePtr(Value* arrayRef) const {
+      std::vector<Value*> indices;
+      indices.reserve(2);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+
+      return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+    }
+
     void do_newarray(JType type) {
-      assert(0 && "not implemented");
+      Value* count = currentOpStack_->pop(currentBB_);
+      count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
+
+      const ClassInfo& ci = getPrimitiveArrayInfo(type);
+      const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
+
+      // The size of the array part of the struct.
+      Value* size = BinaryOperator::create(
+	Instruction::Mul, count, ConstantExpr::getSizeOf(getType(type)),
+	TMP, currentBB_);
+      // Plus the size of the rest of the struct.
+      size = BinaryOperator::create(
+	Instruction::Add, size, ConstantExpr::getSizeOf(ci.type),
+	TMP, currentBB_);
+      // Allocate memory for the object.
+      Value* objRef = new MallocInst(Type::SByteTy, size, TMP, currentBB_);
+      objRef = new CastInst(objRef, PointerType::get(ci.type), TMP, currentBB_);
+
+      // Store the size.
+      Value* lengthPtr = getArrayLengthPtr(objRef);
+      new StoreInst(count, lengthPtr, currentBB_);
+      // Install the vtable pointer.
+      Value* objBase = getArrayObjectBasePtr(objRef);
+      Value* vtable = new CastInst(vi.vtable,
+				   PointerType::get(VTableInfo::VTableTy),
+				   TMP, currentBB_);
+      Function* f = module_.getOrInsertFunction(
+	LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
+	objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
+      new CallInst(f, objBase, vtable, "", currentBB_);
+      currentOpStack_->push(objRef, currentBB_);
     }
 
     void do_anewarray(unsigned index) {
@@ -1570,7 +1847,14 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_arraylength() {
-      assert(0 && "not implemented");
+      Value* arrayRef = currentOpStack_->pop(currentBB_);
+      const ClassInfo& ci = getObjectArrayInfo();
+      arrayRef =
+	new CastInst(arrayRef, PointerType::get(ci.type), TMP, currentBB_);
+      Value* lengthPtr = getArrayLengthPtr(arrayRef);
+      Value* length = new LoadInst(lengthPtr, TMP, currentBB_);
+      length = new CastInst(length, Type::IntTy, TMP, currentBB_);
+      currentOpStack_->push(length, currentBB_);
     }
 
     void do_athrow() {

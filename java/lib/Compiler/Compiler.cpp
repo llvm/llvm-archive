@@ -1309,17 +1309,7 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/Long") != 0 &&
           classMethodDesc.find("java/lang/Short") != 0 &&
           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
-          classMethodDesc.find("java/util/ConcurrentModificationException") != 0 &&
-          classMethodDesc.find("java/util/IndexOutOfBoundsException") != 0 &&
-          classMethodDesc.find("java/util/NoSuchElementException") != 0 &&
-          classMethodDesc.find("java/util/AbstractCollection") != 0 &&
-          classMethodDesc.find("java/util/AbstractList") != 0 &&
-          classMethodDesc.find("java/util/AbstractSet") != 0 &&
-          classMethodDesc.find("java/util/AbstractMap") != 0 &&
-          classMethodDesc.find("java/util/AbstractSequentialList") != 0 &&
-          classMethodDesc.find("java/util/LinkedList") != 0 &&
-          classMethodDesc.find("java/util/TreeMap") != 0 &&
-          classMethodDesc.find("java/util/TreeSet") != 0) {
+          classMethodDesc.find("java/util/") != 0) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');
         return function;

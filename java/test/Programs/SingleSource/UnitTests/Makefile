@@ -8,7 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../../../..
 
-JAVA_TESTS := Arithm \
+JAVA_TESTS := Abstract \
+	Arithm \
 	Array \
 	BigConstants \
 	FieldAccess \

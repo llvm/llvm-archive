@@ -1969,7 +1969,7 @@ namespace llvm { namespace Java { namespace {
     void do_switch_common(unsigned defTarget, const SwitchCases& sw) {
       Value* v = pop(Type::IntTy);
       SwitchInst* in =
-        new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), sw.size(), 
+        new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), sw.size(),
                        currentBB_);
       for (unsigned i = 0, e = sw.size(); i != e; ++i)
         in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
@@ -2221,25 +2221,24 @@ namespace llvm { namespace Java { namespace {
       makeCall(vfun, params);
     }
 
+    template<typename InsertionPointTy>
     Value* allocateObject(const ClassInfo& ci,
                           const VTableInfo& vi,
-                          BasicBlock* bb) {
+                          InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
 
-      Value* objRef = new MallocInst(ci.getType(), NULL, TMP, bb);
+      Value* objRef = new MallocInst(ci.getType(), NULL, TMP, ip);
       params[0] =
-        new CastInst(objRef, PointerType::get(Type::SByteTy), TMP, bb); // dest
+        new CastInst(objRef, PointerType::get(Type::SByteTy), TMP, ip); // dest
       params[1] = ConstantUInt::get(Type::UByteTy, 0); // value
       params[2] = ConstantExpr::getSizeOf(ci.getType()); // size
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
-      new CallInst(memset_, params, "", bb);
+      new CallInst(memset_, params, "", ip);
 
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Value* vtable = new CastInst(vi.vtable,
-                                   VTableBaseRefTy,
-                                   TMP, currentBB_);
-      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, ip);
+      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      new CallInst(setVtable_, objBase, vtable, "", ip);
 
       return objRef;
     }
@@ -2271,11 +2270,12 @@ namespace llvm { namespace Java { namespace {
       return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
     }
 
+    template<typename InsertionPointTy>
     Value* allocateArray(const ClassInfo& ci,
                          const Type* elementTy,
                          const VTableInfo& vi,
                          Value* count,
-                         BasicBlock* bb) {
+                         InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
 
       // The size of the element.
@@ -2284,33 +2284,33 @@ namespace llvm { namespace Java { namespace {
 
       // The size of the array part of the struct.
       Value* size = BinaryOperator::create(
-        Instruction::Mul, count, elementSize, TMP, bb);
+        Instruction::Mul, count, elementSize, TMP, ip);
       // The size of the rest of the array object.
-      llvm::Constant* arrayObjectSize = 
+      llvm::Constant* arrayObjectSize =
         ConstantExpr::getCast(ConstantExpr::getSizeOf(ci.getType()),
                               Type::UIntTy);
 
       // Add the array part plus the object part together.
       size = BinaryOperator::create(
-        Instruction::Add, size, arrayObjectSize, TMP, bb);
+        Instruction::Add, size, arrayObjectSize, TMP, ip);
       // Allocate memory for the object.
-      Value* objRef = new MallocInst(Type::SByteTy, size, TMP, bb);
+      Value* objRef = new MallocInst(Type::SByteTy, size, TMP, ip);
       params[0] = objRef; // dest
       params[1] = ConstantUInt::get(Type::UByteTy, 0); // value
-      params[2] = new CastInst(size, Type::ULongTy, TMP, bb); // size
+      params[2] = new CastInst(size, Type::ULongTy, TMP, ip); // size
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
-      new CallInst(memset_, params, "", bb);
+      new CallInst(memset_, params, "", ip);
 
       // Store the size.
       Value* lengthPtr = getArrayLengthPtr(objRef);
-      new StoreInst(count, lengthPtr, bb);
+      new StoreInst(count, lengthPtr, ip);
 
-      new CastInst(objRef, PointerType::get(ci.getType()), TMP, bb);
+      new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
 
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, bb);
-      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, bb);
-      return new CallInst(setVtable_, objBase, vtable, "", bb);      
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, ip);
+      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      return new CallInst(setVtable_, objBase, vtable, "", ip);
     }
 
     void do_newarray(JType type) {

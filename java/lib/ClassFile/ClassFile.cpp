@@ -457,7 +457,7 @@ ConstantString::ConstantString(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantString::dump(std::ostream& os) const
 {
-  return os << "string " << *getValue();
+  return os << "String " << *getValue();
 }
 
 ConstantInteger::ConstantInteger(const ConstantPool& cp, std::istream& is)
@@ -469,7 +469,7 @@ ConstantInteger::ConstantInteger(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantInteger::dump(std::ostream& os) const
 {
-  return os << value_;
+  return os << "int " << value_;
 }
 
 ConstantFloat::ConstantFloat(const ConstantPool& cp, std::istream& is)
@@ -481,7 +481,7 @@ ConstantFloat::ConstantFloat(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantFloat::dump(std::ostream& os) const
 {
-  return os << value_;
+  return os << "float " << value_;
 }
 
 ConstantLong::ConstantLong(const ConstantPool& cp, std::istream& is)
@@ -493,7 +493,7 @@ ConstantLong::ConstantLong(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantLong::dump(std::ostream& os) const
 {
-  return os << value_;
+  return os << "long " << value_;
 }
 
 ConstantDouble::ConstantDouble(const ConstantPool& cp, std::istream& is)
@@ -505,7 +505,7 @@ ConstantDouble::ConstantDouble(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantDouble::dump(std::ostream& os) const
 {
-  return os << value_;
+  return os << "double " << value_;
 }
 
 ConstantNameAndType::ConstantNameAndType(const ConstantPool& cp,

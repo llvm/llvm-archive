@@ -196,12 +196,10 @@ namespace llvm { namespace Java { namespace {
         }
 
         Value* getOrCreateLocal(unsigned index, const Type* type) {
-            if (!locals_[index]) {
-                locals_[index] = new AllocaInst(type, NULL,
-                                                "local" + utostr(index),
-                                                prologue_);
-                new StoreInst(llvm::Constant::getNullValue(type),
-                              locals_[index], prologue_);
+            if (!locals_[index] ||
+                cast<PointerType>(locals_[index]->getType())->getElementType() != type) {
+                locals_[index] = new AllocaInst
+                    (type, NULL, "local" + utostr(index), prologue_);
             }
 
             return locals_[index];

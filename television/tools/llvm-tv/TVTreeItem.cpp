@@ -17,6 +17,33 @@ static inline void htmlFooter(std::ostream &os) {
   os << "</tt></body></html>";
 }
 
+static inline void htmlCleanAndEscape(std::string &str) {
+  // Remove comments
+  for (unsigned i = 0; i != str.size(); ++i)
+    if (str[i] == ';') {                           // Delete comments!
+      unsigned Idx = str.find('\n', i+1);          // Find end of line
+      str.erase(str.begin()+i, str.begin()+Idx);
+      --i;
+    }
+
+  // Replace as follows:
+  // <  :  &lt;
+  // >  :  &gt;
+  for (unsigned i = 0; i != str.size(); ++i) {
+    if (str[i] == '<') {
+      str[i] = '&';
+      std::string lt = "lt;";
+      str.insert(str.begin()+i+1, lt.begin(), lt.end());
+      i += lt.size();
+    } else if (str[i] == '>') {
+      str[i] = '&';
+      std::string gt = "gt;";
+      str.insert(str.begin()+i+1, gt.begin(), gt.end());
+      i += gt.size();
+    }
+  }
+}
+
 static inline void htmlBB(std::ostream &os, const BasicBlock *BB) {
   os << "<font color=\"#cc0000\"><tt><b>" << BB->getName() 
      << ":</b></tt></font><br>";
@@ -71,6 +98,7 @@ static const char* keywords[] = {
 // Just use ostream to output instead of assembling into one string
 std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
   if (str == "") return os;
+  htmlCleanAndEscape(str);
 
   // Prettify the instruction for HTML view
   for (unsigned i = 0; i != str.size(); ++i)
@@ -84,10 +112,6 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
       std::string nbsp = "nbsp; &nbsp; ";
       str.insert(str.begin()+i+1, nbsp.begin(), nbsp.end());
       i += nbsp.size();
-    } else if (str[i] == ';') {                    // Delete comments!
-      unsigned Idx = str.find('\n', i+1);          // Find end of line
-      str.erase(str.begin()+i, str.begin()+Idx);
-      --i;
     }
 
   os << "<tt>";
@@ -198,12 +222,15 @@ void TVTreeItemData::printModule(Module *M) {
   oss << "target endian = "
       << (M->getEndianness() ? "little" : "big") << " \n ";
   oss << "target pointersize = "
-      << (M->getPointerSize() ? "32" : "64") << "\n<br>";
+      << (M->getPointerSize() ? "32" : "64") << "\n\n";
 
   // Display globals
-  for (Module::giterator G = M->gbegin(), Ge = M->gend(); G != Ge; ++G) {
-    G->print(oss);
-  }
+  cw.setStream(oss);
+  for (Module::giterator G = M->gbegin(), Ge = M->gend(); G != Ge; ++G)
+    cw << G;
+  
+  cw.setStream(os);
+
   std::string str = oss.str();
   stylizeTypesAndKeywords(os, str);
   os << "<br>";

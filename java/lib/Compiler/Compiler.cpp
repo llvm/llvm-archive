@@ -350,10 +350,12 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case POP:
             opStack_.pop();
             break;
-        case POP2:
-            opStack_.pop();
-            opStack_.pop();
+        case POP2: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            if (isOneSlotValue(v1))
+                opStack_.pop();
             break;
+        }
         case DUP:
             opStack_.push(opStack_.top());
             break;

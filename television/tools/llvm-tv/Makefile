@@ -6,8 +6,10 @@ LLVMLIBS = analysis.a bcreader bcwriter datastructure ipa.a support.a \
 # note: delete when FileUtils is assimilated into libsupport
 USEDLIBS = snapshot
 
-CPPFLAGS = $(shell $(LEVEL)/lib/wxwindows/wx-config --cflags)
-TOOLLINKOPTSB = $(shell $(LEVEL)/lib/wxwindows/wx-config --libs)
+CPPFLAGS = $(shell wx-config --cflags)
+TOOLLINKOPTSB = $(shell wx-config --libs)
+WXDIR = $(shell wx-config --prefix)
+WXLIB = $(WXDIR)/lib
 
 ifdef NOHTML
 CPPFLAGS += -DNOHTML
@@ -19,12 +21,11 @@ all :: $(DESTTOOLCURRENT)/llvm-tv.exe \
        $(DESTTOOLCURRENT)/opt-snap
 
 $(DESTTOOLCURRENT)/llvm-tv.exe: Makefile
-	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd):\$$LD_LIBRARY_PATH \
-		llvm-tv  > $@
+	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH llvm-tv > $@
 	chmod u+x $@
 
 $(DESTTOOLCURRENT)/opt-snap: Makefile
-	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd):\$$LD_LIBRARY_PATH \
+	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH \
 		OPTPASSES=\"$$\*\" opt -load=$(DESTLIBCURRENT)/libsnapshot.so $$\* > $@
 	chmod u+x $@
 
@@ -34,7 +35,7 @@ clean :: clean-mac-app
 endif
 
 mac-app:
-	@./MakeMacOSBundle llvm-tv "$(LEVEL)/lib/wxwindows" "$(DESTTOOLCURRENT)/llvm-tv"
+	@./MakeMacOSBundle llvm-tv "$(WXDIR)" "$(DESTTOOLCURRENT)/llvm-tv"
 
 clean-mac-app:
 	rm -rf llvm-tv.app

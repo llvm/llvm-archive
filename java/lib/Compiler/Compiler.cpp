@@ -24,6 +24,7 @@
 #include <llvm/Type.h>
 #include <Support/Debug.h>
 #include <Support/SetVector.h>
+#include <Support/STLExtras.h>
 #include <Support/StringExtras.h>
 #include <iostream>
 #include <stack>
@@ -215,31 +216,29 @@ namespace llvm { namespace Java { namespace {
         }
 
         void compileMethodOnly(Module& module,
-                               const ClassFile& cf,
-                               const Method& method) {
-
-            DEBUG(std::cerr << "Compiling method: "
-                  << method.getName()->str() << '\n');
+                               const std::string& classMethodDesc) {
+            DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 
             module_ = &module;
-            cf_ = &cf;
+            const Method* method;
+            tie(cf_, method) = findClassAndMethod(classMethodDesc);
 
             std::string name = cf_->getThisClass()->getName()->str();
             name += '/';
-            name += method.getName()->str();
-            name += method.getDescriptor()->str();
+            name += method->getName()->str();
+            name += method->getDescriptor()->str();
 
             Function* function =
                 new Function(
-                    cast<FunctionType>(getType(method.getDescriptor())),
-                    (method.isPrivate() ?
+                    cast<FunctionType>(getType(method->getDescriptor())),
+                    (method->isPrivate() ?
                      Function::InternalLinkage :
                      Function::ExternalLinkage),
                     name,
                     &module);
 
             const Java::CodeAttribute* codeAttr =
-                Java::getCodeAttribute(method.getAttributes());
+                Java::getCodeAttribute(method->getAttributes());
 
             while (!opStack_.empty())
                 opStack_.pop();
@@ -264,19 +263,8 @@ namespace llvm { namespace Java { namespace {
             }
         }
 
-    public:
-        void compileMethod(Module& module,
-                           const ClassFile& cf,
-                           const Method& method) {
-            compileMethodOnly(module, cf, method);
-
-            for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
-                Function* f = toCompileFunctions_[i];
-                compileMethod(module, f->getName());
-            }
-        }
-
-        void compileMethod(Module& module, const std::string& classMethodDesc) {
+        std::pair<const ClassFile*, const Method*>
+        findClassAndMethod(const std::string& classMethodDesc) {
             unsigned slash = classMethodDesc.find('/');
             std::string className = classMethodDesc.substr(0, slash);
             std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
@@ -288,7 +276,17 @@ namespace llvm { namespace Java { namespace {
                     "Method " + methodNameAndDescr +
                     " not found in class " + className);
 
-            compileMethod(module, *classfile, *method);
+
+            return std::make_pair(classfile, method);
+        }
+
+    public:
+        void compileMethod(Module& module, const std::string& classMethodDesc) {
+            compileMethodOnly(module, classMethodDesc);
+            for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
+                Function* f = toCompileFunctions_[i];
+                compileMethodOnly(module, f->getName());
+            }
         }
 
         void do_aconst_null(unsigned bcI) {

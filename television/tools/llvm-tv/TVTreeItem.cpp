@@ -59,7 +59,7 @@ static const char* keywords[] = {
   // Memory
   "malloc", "alloca", "free", "load", "store", "getelementptr",
   // Language constants/keywords
-  "begin", "end", "true", "false",
+  "begin", "end", "true", "false", "zeroinitializer",
   "declare", "global", "constant", "const",
   "internal", "uninitialized", "external", "implementation",
   "linkonce", "weak", "appending",
@@ -71,6 +71,26 @@ static const char* keywords[] = {
 // Just use ostream to output instead of assembling into one string
 std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
   if (str == "") return os;
+
+  // Prettify the instruction for HTML view
+  for (unsigned i = 0; i != str.size(); ++i)
+    if (str[i] == '\n') {                          // \n => <br>
+      str[i] = '<';
+      std::string br = "br>";
+      str.insert(str.begin()+i+1, br.begin(), br.end());
+      i += br.size();
+    } else if (str[i] == '\t') {                   // \t => &nbsp;
+      str[i] = '&';
+      std::string nbsp = "nbsp; &nbsp; ";
+      str.insert(str.begin()+i+1, nbsp.begin(), nbsp.end());
+      i += nbsp.size();
+    } else if (str[i] == ';') {                    // Delete comments!
+      unsigned Idx = str.find('\n', i+1);          // Find end of line
+      str.erase(str.begin()+i, str.begin()+Idx);
+      --i;
+    }
+
+  os << "<tt>";
 
   // Tokenize and process
   unsigned prev = 0;
@@ -113,7 +133,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
     }
   }
   // tack on the last segment
-  return os << str.substr(prev, str.size()-prev);
+  return os << str.substr(prev, str.size()-prev) << "</tt>";
 }
 
 void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
@@ -153,28 +173,7 @@ void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
       cw.setStream(oss);
       cw << &*I;
       std::string InstrVal = oss.str();
-
-      // Prettify the instruction for HTML view
-      for (unsigned i = 0; i != InstrVal.size(); ++i)
-        if (InstrVal[i] == '\n') {                          // \n => <br>
-          InstrVal[i] = '<';
-          std::string br = "br>";
-          InstrVal.insert(InstrVal.begin()+i+1, br.begin(), br.end());
-          i += br.size();
-        } else if (InstrVal[i] == '\t') {                   // \t => &nbsp;
-          InstrVal[i] = '&';
-          std::string nbsp = "nbsp; &nbsp; ";
-          InstrVal.insert(InstrVal.begin()+i+1, nbsp.begin(), nbsp.end());
-          i += nbsp.size();
-        } else if (InstrVal[i] == ';') {                    // Delete comments!
-          unsigned Idx = InstrVal.find('\n', i+1);          // Find end of line
-          InstrVal.erase(InstrVal.begin()+i, InstrVal.begin()+Idx);
-          --i;
-        }
-
-      os << "<tt>";
       stylizeTypesAndKeywords(os, InstrVal);
-      os << "</tt>";
     }
   }
   cw.setStream(os);
@@ -191,14 +190,13 @@ void TVTreeItemData::printModule(Module *M, CachedWriter &cw) {
   // Display target size (bits), endianness types
   std::ostringstream oss;
   oss << "target endian = "
-      << (M->getEndianness() ? "little" : "big") << " <br>\n ";
+      << (M->getEndianness() ? "little" : "big") << " \n ";
   oss << "target pointersize = "
-      << (M->getPointerSize() ? "32" : "64") << "\n<br><br>";
+      << (M->getPointerSize() ? "32" : "64") << "\n<br>";
 
   // Display globals
   for (Module::giterator G = M->gbegin(), Ge = M->gend(); G != Ge; ++G) {
     G->print(oss);
-    oss << "<br>";
   }
   std::string str = oss.str();
   stylizeTypesAndKeywords(os, str);

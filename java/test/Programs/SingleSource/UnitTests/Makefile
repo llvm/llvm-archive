@@ -19,6 +19,7 @@ JAVA_TESTS := Arithm \
 	InterfaceCall \
 	LongCompare \
 	LookupSwitch \
+	MultiArray \
 	StaticInitializers \
 	TableSwitch \
 	VirtualCall \

@@ -16,11 +16,12 @@ static inline void htmlFooter(std::ostream &os) {
 }
 
 static inline void htmlBB(std::ostream &os, const BasicBlock *BB) {
-  os << "<font color=\"#cc0000\"><b>" << BB->getName() << ":</b></font><br>";
+  os << "<font color=\"#cc0000\"><tt><b>" << BB->getName() 
+     << ":</b></tt></font><br>";
 }
 
 static inline void htmlType(std::ostream &os, const Type* type,
-			    const Module *M) {
+                            const Module *M) {
   os << "<font color=\"green\"><b>";
   WriteTypeSymbolic (os, type, M);
   os << "</b></font>";
@@ -127,6 +128,7 @@ static inline std::string stylizeTypesAndKeywords(std::string &str) {
 
 void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   // print out function return type, name, and arguments
+  os << "<tt>";
   if (F->isExternal ())
     os << "declare ";
   htmlType(os, F->getReturnType(), F->getParent ());
@@ -148,6 +150,7 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   os << ")";
   if (!F->isExternal ())
     os << " {<br>";
+  os << "</tt>";
 
   for (Function::iterator BB = F->begin(), BBe = F->end(); BB != BBe; ++BB) {
     htmlBB(os, BB);
@@ -174,11 +177,12 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
           --i;
         }
 
-      os << stylizeTypesAndKeywords(InstrVal);
+      os << "<tt>" << stylizeTypesAndKeywords(InstrVal) << "</tt>";
     }
   }
+
   if (!F->isExternal ())
-    os << "}<br>";
+    os << "<tt>}</tt><br>";
 }
 
 void TVTreeItemData::printModule(Module *M, std::ostream &os) {

@@ -1185,7 +1185,12 @@ namespace llvm { namespace Java { namespace {
         funcName += '_';
 
         const std::string& methodName = method->getName()->str();
-        funcName += methodName;
+        for (unsigned i = 0, e = methodName.size(); i != e; ++i) {
+          if (funcName[i] == '_')
+            funcName += "_1";
+          else
+            funcName += methodName[i];
+        }
 
         Function* jniFunction = module_.getOrInsertFunction(funcName, funcTy);
         jniFunction->setLinkage(method->isPrivate() ?

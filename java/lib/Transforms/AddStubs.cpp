@@ -1,10 +1,10 @@
 //===- AddStubs.cpp - Add Stubs Pass --------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a stub adder pass. Because class2llvm is not able to
@@ -13,12 +13,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
-#include "llvm/Function.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/Instructions.h"
-#include "llvm/Constants.h"
+#define DEBUG_TYPE "addstubs"
+
+#include <llvm/Pass.h>
+#include <llvm/Function.h>
+#include <llvm/Module.h>
+#include <llvm/Type.h>
+#include <llvm/Instructions.h>
+#include <llvm/Constants.h>
+#include <llvm/Support/Debug.h>
 
 using namespace llvm;
 
@@ -27,6 +30,7 @@ namespace {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
         if (F->empty() && F->getName().find("java") != std::string::npos) {
+          DEBUG(std::cerr << "Stubbing out: " << F->getName() << '\n');
           BasicBlock* entry = new BasicBlock("entry", F);
           if (F->getReturnType() == Type::VoidTy)
             new ReturnInst(NULL, entry);

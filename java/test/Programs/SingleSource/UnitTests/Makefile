@@ -21,6 +21,7 @@ JAVA_TESTS := AbstractCall \
 	InstanceOf \
 	InterfaceCall \
 	Lists \
+	Lists1 \
 	LongCompare \
 	LookupSwitch \
 	Numbers \
@@ -39,7 +40,6 @@ JAVA_TESTS := AbstractCall \
 	sieve \
 	random \
 	takfp \
-#	Lists1 \
 #	Strings \
 #	MultipleInterfaces \
 #	MultiArray \

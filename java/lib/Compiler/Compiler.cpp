@@ -121,6 +121,9 @@ namespace llvm { namespace Java { namespace {
         BasicBlock* prologue_;
 
     private:
+        BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
+
+    private:
         const Type* getType(JType type) {
             switch (type) {
                 // FIXME: this should really be a non-void type when the object
@@ -170,13 +173,11 @@ namespace llvm { namespace Java { namespace {
 
         Value* getOrCreateLocal(unsigned index, const Type* type) {
             if (!locals_[index]) {
-                Instruction* alloc =
-                    new AllocaInst(type, NULL, "local" + utostr(index));
-                locals_[index] = alloc;
-                Instruction* store = new StoreInst(
-                    llvm::Constant::getNullValue(type), alloc);
-                prologue_->getInstList().push_back(alloc);
-                prologue_->getInstList().push_back(store);
+                locals_[index] = new AllocaInst(type, NULL,
+                                                "local" + utostr(index),
+                                                prologue_);
+                new StoreInst(llvm::Constant::getNullValue(type),
+                              locals_[index], prologue_);
             }
 
             return locals_[index];
@@ -242,10 +243,8 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_load(unsigned bcI, JType type, unsigned index) {
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, getType(type)), TMP);
-            opStack_.push(in);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(new LoadInst(getOrCreateLocal(index, getType(type)),
+                                       TMP, getBBAt(bcI)));
         }
 
         void do_aload(unsigned bcI, JType type) {
@@ -254,10 +253,9 @@ namespace llvm { namespace Java { namespace {
 
         void do_store(unsigned bcI, JType type, unsigned index) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new StoreInst(v1, getOrCreateLocal(index, getType(type)));
-            opStack_.push(in);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(
+                new StoreInst(v1, getOrCreateLocal(index, getType(type)),
+                              getBBAt(bcI)));
         }
 
 
@@ -418,31 +416,28 @@ namespace llvm { namespace Java { namespace {
             // cast value to be shifted into its unsigned version
             do_swap(bcI);
             Value* value = opStack_.top(); opStack_.pop();
-            Instruction* in = new CastInst
-                (value, value->getType()->getUnsignedVersion(), TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            value = new CastInst(value,
+                                 value->getType()->getUnsignedVersion(),
+                                 TMP, getBBAt(bcI));
+            opStack_.push(value);
             do_swap(bcI);
 
             do_shift_common(bcI, Instruction::Shr);
 
             // cast shifted value back to its original signed version
             value = opStack_.top(); opStack_.pop();
-            in = new CastInst
-                (value, value->getType()->getSignedVersion(), TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            value = new CastInst(value,
+                                 value->getType()->getSignedVersion(),
+                                 TMP, getBBAt(bcI));
+            opStack_.push(value);
         }
 
         void do_shift_common(unsigned bcI, Instruction::OtherOps op) {
             Value* amount = opStack_.top(); opStack_.pop();
             Value* value = opStack_.top(); opStack_.pop();
-            Instruction* in = new CastInst(amount, Type::UByteTy, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            amount = in;
-            in = new ShiftInst(op, value, amount, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            amount = new CastInst(amount, Type::UByteTy, TMP, getBBAt(bcI));
+            Value* result = new ShiftInst(op, value, amount, TMP, getBBAt(bcI));
+            opStack_.push(result);
         }
 
         void do_and(unsigned bcI) {
@@ -460,30 +455,25 @@ namespace llvm { namespace Java { namespace {
         void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
             Value* v2 = opStack_.top(); opStack_.pop();
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(op, v1, v2, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            Value* r = BinaryOperator::create(op, v1, v2, TMP, getBBAt(bcI));
+            opStack_.push(r);
         }
 
 
         void do_iinc(unsigned bcI, unsigned index, int amount) {
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, Type::IntTy), TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            in = BinaryOperator::create(Instruction::Add,
-                                        in,
-                                        ConstantSInt::get(Type::IntTy, amount),
-                                        TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            in = new StoreInst(in, getOrCreateLocal(index, Type::IntTy));
-            bc2bbMap_[bcI]->getInstList().push_back(in);
+            Value* v = new LoadInst(getOrCreateLocal(index, Type::IntTy),
+                                    TMP, getBBAt(bcI));
+            BinaryOperator::create(Instruction::Add, v,
+                                   ConstantSInt::get(Type::IntTy, amount),
+                                   TMP, getBBAt(bcI));
+            new StoreInst(v, getOrCreateLocal(index, Type::IntTy),
+                          getBBAt(bcI));
         }
 
         void do_convert(unsigned bcI, JType to) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new CastInst(v1, getType(to), TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            Value* r = new CastInst(v1, getType(to), TMP, getBBAt(bcI));
+            opStack_.push(r);
         }
 
         void do_cmp(unsigned bcI) {
@@ -502,28 +492,20 @@ namespace llvm { namespace Java { namespace {
                    unsigned t, unsigned f) {
             Value* v2 = llvm::Constant::getNullValue(getType(type));
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[t],
-                           bc2bbMap_[f],
-                           in,
-                           bc2bbMap_[bcI]);
+            Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, getBBAt(bcI));
+            new BranchInst(getBBAt(t), getBBAt(f), c, getBBAt(bcI));
         }
 
         void do_ifcmp(unsigned bcI, JSetCC cc,
                       unsigned t, unsigned f) {
             Value* v2 = opStack_.top(); opStack_.pop();
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[t],
-                           bc2bbMap_[f],
-                           in,
-                           bc2bbMap_[bcI]);
+            Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, getBBAt(bcI));
+            new BranchInst(getBBAt(t), getBBAt(f), c, getBBAt(bcI));
         }
 
         void do_goto(unsigned bcI, unsigned target) {
-            new BranchInst(bc2bbMap_[target], bc2bbMap_[bcI]);
+            new BranchInst(getBBAt(target), getBBAt(bcI));
         }
 
         void do_jsr(unsigned bcI, unsigned target) {
@@ -539,19 +521,19 @@ namespace llvm { namespace Java { namespace {
                        const SwitchCases& sw) {
             Value* v1 = opStack_.top(); opStack_.pop();
             SwitchInst* in =
-                new SwitchInst(v1, bc2bbMap_[defTarget], bc2bbMap_[bcI]);
+                new SwitchInst(v1, getBBAt(defTarget), getBBAt(bcI));
             for (unsigned i = 0; i < sw.size(); ++i)
                 in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
-                            bc2bbMap_[sw[i].second]);
+                            getBBAt(sw[i].second));
         }
 
         void do_return(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            new ReturnInst(v1, bc2bbMap_[bcI]);
+            new ReturnInst(v1, getBBAt(bcI));
         }
 
         void do_return_void(unsigned bcI) {
-            new ReturnInst(NULL, bc2bbMap_[bcI]);
+            new ReturnInst(NULL, getBBAt(bcI));
         }
 
         void do_getstatic(unsigned bcI, unsigned index) {

@@ -75,13 +75,16 @@ void TVCodeListCtrl::SetFunction (Function *F) {
       ValueToItem[I] = TCI;
     }
   }
+
+  // Since the function changed, we had better make sure that the list control
+  // matches what's in the code list.
+  refreshView ();
 }
 
 TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent, llvm::Function *F)
   : wxListCtrl(_parent, LLVM_TV_CODEVIEW_LIST, wxDefaultPosition, wxDefaultSize,
                wxLC_LIST) {
   SetFunction (F);
-  refreshView();
 }
 
 void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {

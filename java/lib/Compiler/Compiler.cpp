@@ -2221,22 +2221,27 @@ namespace llvm { namespace Java { namespace {
       makeCall(vfun, params);
     }
 
+    Value* allocateObject(const ClassInfo& ci, BasicBlock* bb) {
+      static std::vector<Value*> params(4);
+
+      Value* objRef = new MallocInst(ci.getType(), NULL, TMP, bb);
+      params[0] =
+        new CastInst(objRef, PointerType::get(Type::SByteTy), TMP, bb); // dest
+      params[1] = ConstantUInt::get(Type::UByteTy, 0); // value
+      params[2] = ConstantExpr::getSizeOf(ci.getType()); // size
+      params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
+      new CallInst(memset_, params, "", bb);
+
+      return objRef;
+    }
+
     void do_new(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
       const ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const ClassInfo& ci = getClassInfo(cf);
       const VTableInfo& vi = getVTableInfo(cf);
 
-      Value* objRef = new MallocInst(ci.getType(), NULL, TMP, currentBB_);
-      std::vector<Value*> params;
-      params.reserve(4);
-      params.push_back(new CastInst(objRef, PointerType::get(Type::SByteTy),
-                                    TMP, currentBB_)); // dest
-      params.push_back(ConstantUInt::get(Type::UByteTy, 0)); // value
-      params.push_back(ConstantExpr::getSizeOf(ci.getType())); // size
-      params.push_back(ConstantUInt::get(Type::UIntTy, 0)); // alignment
-      new CallInst(memset_, params, "", currentBB_);
-
+      Value* objRef = allocateObject(ci, currentBB_);
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
                                    VTableBaseRefTy,
@@ -2284,38 +2289,48 @@ namespace llvm { namespace Java { namespace {
       do_newarray_common(ci, PointerType::get(ei.getType()), vi, count);
     }
 
-    void do_newarray_common(const ClassInfo& ci,
-                            Type* elementTy,
-                            const VTableInfo& vi,
-                            Value* count) {
+    Value* allocateArray(const ClassInfo& ci,
+                         Type* elementTy,
+                         Value* count,
+                         BasicBlock* bb) {
+      static std::vector<Value*> params(4);
+
       // The size of the element.
       llvm::Constant* elementSize =
         ConstantExpr::getCast(ConstantExpr::getSizeOf(elementTy), Type::UIntTy);
 
       // The size of the array part of the struct.
       Value* size = BinaryOperator::create(
-        Instruction::Mul, count, elementSize, TMP, currentBB_);
+        Instruction::Mul, count, elementSize, TMP, bb);
       // The size of the rest of the array object.
       llvm::Constant* arrayObjectSize = 
-        ConstantExpr::getCast(ConstantExpr::getSizeOf(ci.getType()), Type::UIntTy);
+        ConstantExpr::getCast(ConstantExpr::getSizeOf(ci.getType()),
+                              Type::UIntTy);
 
       // Add the array part plus the object part together.
       size = BinaryOperator::create(
-        Instruction::Add, size, arrayObjectSize, TMP, currentBB_);
+        Instruction::Add, size, arrayObjectSize, TMP, bb);
       // Allocate memory for the object.
-      Value* objRef = new MallocInst(Type::SByteTy, size, TMP, currentBB_);
-      std::vector<Value*> params;
-      params.reserve(4);
-      params.push_back(objRef); // dest
-      params.push_back(ConstantUInt::get(Type::UByteTy, 0)); // value
-      params.push_back(new CastInst(size, Type::ULongTy, TMP, currentBB_)); // size
-      params.push_back(ConstantUInt::get(Type::UIntTy, 0)); // alignment
-      new CallInst(memset_, params, "", currentBB_);
-      objRef = new CastInst(objRef, PointerType::get(ci.getType()), TMP, currentBB_);
+      Value* objRef = new MallocInst(Type::SByteTy, size, TMP, bb);
+      params[0] = objRef; // dest
+      params[1] = ConstantUInt::get(Type::UByteTy, 0); // value
+      params[2] = new CastInst(size, Type::ULongTy, TMP, bb); // size
+      params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
+      new CallInst(memset_, params, "", bb);
 
       // Store the size.
       Value* lengthPtr = getArrayLengthPtr(objRef);
-      new StoreInst(count, lengthPtr, currentBB_);
+      new StoreInst(count, lengthPtr, bb);
+
+      return new CastInst(objRef, PointerType::get(ci.getType()), TMP, bb);
+    }
+
+    void do_newarray_common(const ClassInfo& ci,
+                            Type* elementTy,
+                            const VTableInfo& vi,
+                            Value* count) {
+      Value* objRef = allocateArray(ci, elementTy, count, currentBB_);
+
       // Install the vtable pointer.
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy,
                                     TMP, currentBB_);

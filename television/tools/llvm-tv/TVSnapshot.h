@@ -23,7 +23,7 @@ class TVSnapshot {
   TVSnapshot () : M (0), filename ("") { }
   TVSnapshot (const std::string &_name) : M (0), filename (_name) { }
   TVSnapshot (const char *_name) : M (0), filename (_name) { }
-  const char *label () { return filename.c_str (); }
+  const char *label () { return basename (filename.c_str ()); }
   Module *getModule () {
     if (!M)
       readBytecodeFile ();

@@ -275,7 +275,7 @@ namespace llvm { namespace Java { namespace {
                 compileMethod(module, f->getName());
             }
         }
-=
+
         void compileMethod(Module& module, const std::string& classMethodDesc) {
             unsigned slash = classMethodDesc.find('/');
             std::string className = classMethodDesc.substr(0, slash);

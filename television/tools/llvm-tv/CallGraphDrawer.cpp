@@ -1,3 +1,4 @@
+#include "wx/image.h"
 #include "CallGraphDrawer.h"
 #include "GraphPrinters.h"
 #include "llvm/PassManager.h"

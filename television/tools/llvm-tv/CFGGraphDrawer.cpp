@@ -1,3 +1,4 @@
+#include "wx/image.h"
 #include "CFGGraphDrawer.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/CFGPrinter.h"

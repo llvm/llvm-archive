@@ -59,14 +59,6 @@ namespace llvm { namespace Java { namespace {
   llvm::Constant* INT_SHIFT_MASK = ConstantUInt::get(Type::UByteTy, 0x1f);
   llvm::Constant* LONG_SHIFT_MASK = ConstantUInt::get(Type::UByteTy, 0x3f);
 
-  inline bool isTwoSlotValue(const Value* v) {
-    return isTwoSlotType(v->getType());
-  }
-
-  inline bool isOneSlotValue(const Value* v) {
-    return isOneSlotType(v->getType());
-  }
-
   class Compiler : public BytecodeParser<Compiler> {
     Module& module_;
     GlobalVariable* JNIEnvPtr_;

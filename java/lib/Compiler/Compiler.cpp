@@ -390,28 +390,40 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_shl(unsigned bcI) {
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new ShiftInst(Instruction::Shl, v1, v2, TMP);
-            bc2bbMap_[bcI]->getInstList().push_back(in);
-            opStack_.push(in);
+            do_shift_common(bcI, Instruction::Shl);
         }
 
         void do_shr(unsigned bcI) {
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new ShiftInst(Instruction::Shr, v1, v2, TMP);
+            do_shift_common(bcI, Instruction::Shr);
+        }
+
+        void do_ushr(unsigned bcI) {
+            // cast value to be shifted into its unsigned version
+            do_swap(bcI);
+            Value* value = opStack_.top(); opStack_.pop();
+            Instruction* in = new CastInst
+                (value, value->getType()->getUnsignedVersion(), TMP);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
+            do_swap(bcI);
+
+            do_shift_common(bcI, Instruction::Shr);
+
+            // cast shifted value back to its original signed version
+            value = opStack_.top(); opStack_.pop();
+            in = new CastInst
+                (value, value->getType()->getSignedVersion(), TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
 
-        void do_ushr(unsigned bcI) {
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new CastInst(v1, v1->getType()->getUnsignedVersion(), TMP);
+        void do_shift_common(unsigned bcI, Instruction::OtherOps op) {
+            Value* amount = opStack_.top(); opStack_.pop();
+            Value* value = opStack_.top(); opStack_.pop();
+            Instruction* in = new CastInst(amount, Type::UByteTy, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
-            in = new ShiftInst(Instruction::Shr, in, v2, TMP);
+            amount = in;
+            in = new ShiftInst(op, value, amount, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }

@@ -87,78 +87,78 @@ namespace llvm { namespace Java {
     }
 
     void do_ifeq(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_ifne(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_iflt(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_ifge(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_ifgt(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_ifle(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmpeq(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmpne(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmplt(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmpgt(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmpge(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_icmple(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_acmpeq(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_if_acmpne(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_jsr(unsigned t, unsigned r) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(r);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
@@ -174,13 +174,13 @@ namespace llvm { namespace Java {
     }
 
     void do_ifnull(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
 
     void do_ifnonnull(unsigned t, unsigned f) {
-      getOrCreateBasicBlockAt(t);
       getOrCreateBasicBlockAt(f);
+      getOrCreateBasicBlockAt(t);
     }
   };
 

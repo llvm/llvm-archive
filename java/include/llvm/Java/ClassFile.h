@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_JAVA_CLASSFILE_H
+#define LLVM_JAVA_CLASSFILE_H
+
 #include <iosfwd>
 #include <stdexcept>
 #include <vector>
@@ -443,3 +446,5 @@ namespace llvm { namespace Java {
     };
 
 } } // namespace llvm::Java
+
+#endif//LLVM_JAVA_CLASSFILE_H

@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_JAVA_BYTECODE_H
+#define LLVM_JAVA_BYTECODE_H
+
 #include <iosfwd>
 #include <vector>
 
@@ -277,3 +280,5 @@ namespace llvm { namespace Java {
     }
 
 } } // namespace llvm::Java
+
+#endif//LLVM_JAVA_BYTECODE_H

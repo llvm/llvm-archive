@@ -36,15 +36,25 @@ template.
 TVNotebook is responsible for implementing the tabbed interface which you see on
 the right-hand side of the main window (the TVFrame).
 
-ItemDisplayer is the abstract superclass for objects that can be displayed in
-tabs.  TVCodeViewer enables the view of use-def chains to live in a tab
-interface.
+ItemDisplayer is the abstract superclass for objects that know how to visualize
+LLVM Functions and/or Modules. ItemDisplayers can be displayed in tabs in the
+TVNotebook view, or in their own windows.
 
-GraphDrawer is an abstract class specifying the interface for graph-drawing
-visualizers.  It inherits the ItemDisplayer interface.
+TVCodeViewer is the ItemDisplayer which implements the "interactive code view"
+which highlights use-def chains. Each TVCodeViewer contains a TVCodeListCtrl,
+which is responsible for the actual drawing of the list view, and which is where
+most of the interesting stuff happens -- TVCodeViewer is essentially an Adapter
+around TVCodeListCtrl to allow it to display itself either in a tab view or a
+window.
+
+GraphDrawer is an abstract superclass for all graph-drawing visualizers.  It
+inherits the ItemDisplayer interface, so all GraphDrawers are also
+ItemDisplayers. GraphDrawer simplifies the ItemDisplayer interface using the
+Template Method pattern.  Concrete GraphDrawers only need to be able to provide
+an image object given a TVTreeItem.
 
 CallGraphDrawer and CFGGraphDrawer are GraphDrawers for displaying the call
-graph (for a Module) and the CFG (for a Function), respectively.
+graph (for a Module) and the control-flow graph (for a Function), respectively.
 
 DSAGraphDrawer is an abstract class using the Template Method for
 DSA graph visualizers: it implements drawFunctionGraph() and drawModuleGraph()

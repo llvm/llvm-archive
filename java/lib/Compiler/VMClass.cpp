@@ -163,7 +163,9 @@ void VMClass::computeLayout()
       Field* field = fields[i];
       const std::string& name = field->getName()->str();
       if (field->isStatic()) {
-        fieldMap_.insert(std::make_pair(name, VMField(this, field)));
+        FieldMap::iterator i = fieldMap_.insert(
+          std::make_pair(name, VMField(this, field))).first;
+        staticFields_.push_back(&i->second);
       }
       else {
         unsigned index = memberFields_.size() + 1;
@@ -344,6 +346,54 @@ llvm::Constant* VMClass::buildFieldOffsets() const
       resolver_->getModule()));
 }
 
+llvm::Constant* VMClass::buildStaticFieldDescriptors() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(staticFields_.size()+1);
+
+  for (unsigned i = 0, e = staticFields_.size(); i != e; ++i) {
+    const VMField* field = staticFields_[i];
+    init.push_back(field->buildFieldDescriptor());
+  }
+  // Null terminate.
+  init.push_back(llvm::Constant::getNullValue(PointerType::get(Type::SByteTy)));
+
+  const ArrayType* arrayType =
+    ArrayType::get(init.back()->getType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<staticfielddescriptors>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildStaticFieldPointers() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(staticFields_.size());
+
+  const Type* pointerType = PointerType::get(Type::SByteTy);
+  for (unsigned i = 0, e = staticFields_.size(); i != e; ++i) {
+    const VMField* field = staticFields_[i];
+    init.push_back(ConstantExpr::getCast(field->getGlobal(), pointerType));
+  }
+
+  const ArrayType* arrayType = ArrayType::get(pointerType, init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<staticfieldpointers>",
+      resolver_->getModule()));
+}
+
 llvm::Constant* VMClass::buildClassTypeInfo() const
 {
   std::vector<llvm::Constant*> init;
@@ -373,6 +423,8 @@ llvm::Constant* VMClass::buildClassTypeInfo() const
 
   init.push_back(buildFieldDescriptors());
   init.push_back(buildFieldOffsets());
+  init.push_back(buildStaticFieldDescriptors());
+  init.push_back(buildStaticFieldPointers());
 
   return ConstantStruct::get(init);
 }

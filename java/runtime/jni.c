@@ -45,6 +45,45 @@ static jfieldID get_fieldid(JNIEnv *env,
   return 0;
 }
 
+static jfieldID get_static_fieldid(JNIEnv *env,
+                                   jclass clazz,
+                                   const char *name,
+                                   const char *sig) {
+  int nameLength;
+  int i;
+  const char* fieldDescriptor;
+  struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz);
+
+  /* lookup the name+sig in the staticFieldDescriptors array and
+   * retrieve the index of the field */
+  nameLength = strlen(name);
+  for (i = 0; (fieldDescriptor = cr->typeinfo.staticFieldDescriptors[i]); ++i)
+    if (strncmp(name, fieldDescriptor, nameLength) == 0 &&
+        strcmp(sig, fieldDescriptor+nameLength) == 0)
+      return i;
+
+  return 0;
+}
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE get_static_##TYPE##_field(JNIEnv* env, \
+                                           jclass clazz, \
+                                           jfieldID fid) { \
+    struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz); \
+    return *(j##TYPE*) cr->typeinfo.staticFields[fid]; \
+  }
+#include "types.def"
+
+#define HANDLE_TYPE(TYPE) \
+  static void set_static_##TYPE##_field(JNIEnv* env, \
+                                        jclass clazz, \
+                                        jfieldID fid, \
+                                        j##TYPE value) { \
+    struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz); \
+    *(j##TYPE*) cr->typeinfo.staticFields[fid] = value; \
+  }
+#include "types.def"
+
 #define HANDLE_TYPE(TYPE) \
   static j##TYPE get_##TYPE##_field(JNIEnv* env, \
                                     jobject obj, \
@@ -241,25 +280,25 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 150 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 160 */
-  NULL,
-  NULL,
+  &get_static_fieldid,
+  &get_static_object_field,
+  &get_static_boolean_field,
+  &get_static_byte_field,
+  &get_static_char_field,
+  &get_static_short_field,
+  &get_static_int_field,
+  &get_static_long_field,
+  &get_static_float_field,
+  &get_static_double_field,
+  &set_static_object_field,
+  &set_static_boolean_field,
+  &set_static_byte_field,
+  &set_static_char_field,
+  &set_static_short_field,
+  &set_static_int_field,
+  &set_static_long_field,
+  &set_static_float_field,
+  &set_static_double_field,
   NULL,
   NULL,
   NULL,

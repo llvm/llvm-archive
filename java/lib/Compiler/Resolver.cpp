@@ -49,6 +49,8 @@ Resolver::Resolver(Module* module)
   //   int elementSize;
   //   char** fieldDescriptors;
   //   unsigned* fieldOffsets;
+  //   char** staticFieldDescriptors;
+  //   void** staticFields;
   // };
 
   // Compute the type_info type.
@@ -62,6 +64,8 @@ Resolver::Resolver(Module* module)
   elements.push_back(Type::IntTy);
   elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   elements.push_back(PointerType::get(Type::UIntTy));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   typeInfoType_ = StructType::get(elements);
 
   module_->addTypeName("struct.llvm_java_typeinfo", getTypeInfoType());

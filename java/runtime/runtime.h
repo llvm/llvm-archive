@@ -48,14 +48,23 @@ struct llvm_java_typeinfo {
    * for interfaces and -2 for primitive classes. */
   jint elementSize;
 
-  /* A null terminated array of strings describing the fields of this
-   * class. A field description is the concatenation of its name with
-   * its descriptor. */
+  /* A null terminated array of strings describing the member fields
+   * of this class. A field description is the concatenation of its
+   * name with its descriptor. */
   const char** fieldDescriptors;
 
   /* An array of offsets to fields. This is indexed the same way as
    * the field descriptor array. */
   jfieldID* fieldOffsets;
+
+  /* A null terminated array of strings describing the static fields
+   * of this class. A field description is the concatenation of its
+   * name with its descriptor. */
+  const char** staticFieldDescriptors;
+
+  /* An array of pointers to static fields. This is the indexed the
+   * same way as the static field descriptor array. */
+  void** staticFields;
 };
 
 struct llvm_java_class_record {

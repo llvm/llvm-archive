@@ -48,6 +48,7 @@ namespace llvm { namespace Java {
     std::vector<const VMClass*> superClasses_;
     std::vector<const VMClass*> interfaces_;
     std::vector<const VMField*> memberFields_;
+    std::vector<const VMField*> staticFields_;
     std::vector<const VMMethod*> dynamicallyBoundMethods_;
     GlobalVariable* classRecord_;
 
@@ -62,6 +63,8 @@ namespace llvm { namespace Java {
     llvm::Constant* buildInterfaceClassRecords() const;
     llvm::Constant* buildFieldDescriptors() const;
     llvm::Constant* buildFieldOffsets() const;
+    llvm::Constant* buildStaticFieldDescriptors() const;
+    llvm::Constant* buildStaticFieldPointers() const;
     llvm::Constant* buildClassTypeInfo() const;
 
     const VMField* lookupField(const std::string& name) const;

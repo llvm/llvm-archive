@@ -126,6 +126,8 @@ namespace llvm { namespace Java { namespace {
         BasicBlock* prologue_;
         typedef SetVector<Function*> FunctionSet;
         FunctionSet toCompileFunctions_;
+        typedef std::map<std::string, const Type*> Class2TypeMap;
+        Class2TypeMap c2tMap_;
 
     private:
         BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
@@ -133,9 +135,8 @@ namespace llvm { namespace Java { namespace {
     private:
         const Type* getType(JType type) {
             switch (type) {
-            // FIXME: this should really be a pointer to an Object
-            // type when the object model is finalized
-            case REFERENCE: return PointerType::get(Type::SByteTy);
+            case REFERENCE:
+                return PointerType::get(getTypeForClass("java/lang/Object"));
             case BOOLEAN: return Type::BoolTy;
             case CHAR: return Type::UShortTy;
             case FLOAT: return Type::FloatTy;
@@ -184,9 +185,7 @@ namespace llvm { namespace Java { namespace {
                 unsigned e = descr.find(';', i);
                 std::string className = descr.substr(i, e - i);
                 i = e + 1;
-                // FIXME: this should really be a pointer to an object
-                // of type className
-                return PointerType::get(Type::SByteTy);
+                return PointerType::get(getTypeForClass(className));
             }
             case '[':
                 // FIXME: this should really be a new class
@@ -203,6 +202,40 @@ namespace llvm { namespace Java { namespace {
             // FIXME: Throw something
             default:  return NULL;
             }
+        }
+
+        const Type* getTypeForClass(const std::string& className) {
+            Class2TypeMap::iterator it = c2tMap_.lower_bound(className);
+            if (it == c2tMap_.end() || it->first != className) {
+                const ClassFile* cf = ClassFile::getClassFile(className);
+                OpaqueType* newType = OpaqueType::get();
+                it = c2tMap_.insert(it, std::make_pair(className, newType));
+                std::vector<const Type*> elements;
+                if (const ConstantClass* super = cf->getSuperClass())
+                    elements.push_back
+                        (getTypeForClass(super->getName()->str()));
+                const Fields& fields = cf->getFields();
+                for (unsigned i = 0, e = fields.size(); i != e; ++i) {
+                    const Field* field = fields[i];
+                    if (field->isStatic())
+                        new GlobalVariable(getType(field->getDescriptor()),
+                                           field->isFinal(),
+                                           (field->isPrivate() ?
+                                            GlobalVariable::InternalLinkage :
+                                            GlobalVariable::ExternalLinkage),
+                                           NULL,
+                                           className + '/' + field->getName()->str(),
+                                           module_);
+                    else
+                        elements.push_back(getType(field->getDescriptor()));
+                }
+                PATypeHolder holder = newType;
+                newType->refineAbstractTypeTo(StructType::get(elements));
+                it->second = holder.get();
+                DEBUG(std::cerr << "Adding " << className << " = "
+                      << *it->second << " to type map\n");
+            }
+            return it->second;
         }
 
         Value* getOrCreateLocal(unsigned index, const Type* type) {
@@ -228,14 +261,11 @@ namespace llvm { namespace Java { namespace {
             name += method->getName()->str();
             name += method->getDescriptor()->str();
 
-            Function* function =
-                new Function(
-                    cast<FunctionType>(getType(method->getDescriptor())),
-                    (method->isPrivate() ?
-                     Function::InternalLinkage :
-                     Function::ExternalLinkage),
-                    name,
-                    &module);
+            Function* function = module.getOrInsertFunction
+                (name, cast<FunctionType>(getType(method->getDescriptor())));
+            function->setLinkage(method->isPrivate() ?
+                                 Function::InternalLinkage :
+                                 Function::ExternalLinkage);
 
             const Java::CodeAttribute* codeAttr =
                 Java::getCodeAttribute(method->getAttributes());
@@ -281,6 +311,11 @@ namespace llvm { namespace Java { namespace {
         }
 
     public:
+        CompilerImpl() {
+            c2tMap_.insert(std::make_pair("java/lang/Object",
+                                          OpaqueType::get()));
+        }
+
         void compileMethod(Module& module, const std::string& classMethodDesc) {
             compileMethodOnly(module, classMethodDesc);
             for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
@@ -290,8 +325,7 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_aconst_null(unsigned bcI) {
-            opStack_.push(llvm::Constant::getNullValue(
-                              PointerType::get(getType(REFERENCE))));
+            opStack_.push(llvm::Constant::getNullValue(getType(REFERENCE)));
         }
 
         void do_iconst(unsigned bcI, int value) {
@@ -678,7 +712,29 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_invokestatic(unsigned bcI, unsigned index) {
-            assert(0 && "not implemented");
+            const ConstantMethodRef* methodRef =
+                (ConstantMethodRef*)(cf_->getConstantPool()[index]);
+            const ConstantNameAndType* nameAndType =
+                methodRef->getNameAndType();
+
+            std::string funcName =
+                methodRef->getClass()->getName()->str() + '/' +
+                nameAndType->getName()->str() +
+                nameAndType->getDescriptor()->str();
+
+            const FunctionType* funcType =
+                cast<FunctionType>(getType(nameAndType->getDescriptor()));
+            std::vector<Value*> params(funcType->getNumParams(), NULL);
+            for (unsigned i = funcType->getNumParams(); i > 0; ) {
+                Value* p = opStack_.top(); opStack_.pop();
+                params[--i] = p;
+            }
+
+            Function* function =
+                module_->getOrInsertFunction(funcName, funcType);
+            toCompileFunctions_.insert(function);
+            Value* r = new CallInst(function, params, TMP, getBBAt(bcI));
+            opStack_.push(r);
         }
 
         void do_invokeinterface(unsigned bcI, unsigned index) {

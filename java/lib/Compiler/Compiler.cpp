@@ -233,22 +233,7 @@ namespace llvm { namespace Java { namespace {
                 const Fields& fields = cf->getFields();
                 for (unsigned i = 0, e = fields.size(); i != e; ++i) {
                     Field* field = fields[i];
-                    if (field->isStatic()) {
-                        llvm::Constant* init = NULL;
-                        if (ConstantValueAttribute* cv =
-                            field->getConstantValueAttribute())
-                            init = getConstant(cv->getValue());
-
-                        new GlobalVariable(getType(field->getDescriptor()),
-                                           field->isFinal(),
-                                           (field->isPrivate() & bool(init) ?
-                                            GlobalVariable::InternalLinkage :
-                                            GlobalVariable::ExternalLinkage),
-                                           init,
-                                           className + '/' + field->getName()->str(),
-                                           module_);
-                    }
-                    else
+                    if (!field->isStatic())
                         elements.push_back(getType(field->getDescriptor()));
                 }
                 PATypeHolder holder = newType;
@@ -269,6 +254,21 @@ namespace llvm { namespace Java { namespace {
             }
 
             return locals_[index];
+        }
+
+        GlobalVariable* getStaticField(unsigned index) {
+            ConstantFieldRef* fieldRef =
+                (ConstantFieldRef*)(cf_->getConstantPool()[index]);
+            ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
+
+            std::string globalName =
+                fieldRef->getClass()->getName()->str() + '/' +
+                nameAndType->getName()->str();
+
+            GlobalVariable* global = module_->getGlobalVariable
+                (globalName, getType(nameAndType->getDescriptor()));
+
+            return global;
         }
 
         Function* compileMethodOnly(const std::string& classMethodDesc) {
@@ -315,6 +315,53 @@ namespace llvm { namespace Java { namespace {
             return function;
         }
 
+        void emitStaticInitializers(const ClassFile* classfile) {
+            const Method* method = classfile->getMethod("<clinit>()V");
+            if (!method)
+                return;
+
+            std::string name = classfile->getThisClass()->getName()->str();
+            name += '/';
+            name += method->getName()->str();
+            name += method->getDescriptor()->str();
+
+            Function* hook =
+                module_->getOrInsertFunction("llvm_java_static_init",
+                                             Type::VoidTy, 0);
+            Function* init =
+                module_->getOrInsertFunction(name, Type::VoidTy, 0);
+
+            // if this is the first time we scheduled this function
+            // for compilation insert a call to it right before the
+            // terminator of the only basic block in
+            // llvm_java_static_init
+            if (toCompileFunctions_.insert(init)) {
+                assert(hook->front().getTerminator() &&
+                       "llvm_java_static_init should have a terminator!");
+                new CallInst(init, "", hook->front().getTerminator());
+                // we also create the global variables of this class
+                const Fields& fields = classfile->getFields();
+                for (unsigned i = 0, e = fields.size(); i != e; ++i) {
+                    Field* field = fields[i];
+                    if (field->isStatic()) {
+                        llvm::Constant* init = NULL;
+                        if (ConstantValueAttribute* cv =
+                            field->getConstantValueAttribute())
+                            init = getConstant(cv->getValue());
+
+                        new GlobalVariable(getType(field->getDescriptor()),
+                                           field->isFinal(),
+                                           (field->isPrivate() & bool(init) ?
+                                            GlobalVariable::InternalLinkage :
+                                            GlobalVariable::ExternalLinkage),
+                                           init,
+                                           classfile->getThisClass()->getName()->str() + '/' + field->getName()->str(),
+                                           module_);
+                    }
+                }
+            }
+        }
+
         std::pair<ClassFile*, Method*>
         findClassAndMethod(const std::string& classMethodDesc) {
             unsigned slash = classMethodDesc.find('/');
@@ -322,7 +369,9 @@ namespace llvm { namespace Java { namespace {
             std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 
             ClassFile* classfile = ClassFile::getClassFile(className);
+            emitStaticInitializers(classfile);
             Method* method = classfile->getMethod(methodNameAndDescr);
+
             if (!method)
                 throw InvocationTargetException(
                     "Method " + methodNameAndDescr +
@@ -336,10 +385,22 @@ namespace llvm { namespace Java { namespace {
         Function* compileMethod(Module& module,
                                 const std::string& classMethodDesc) {
             module_ = &module;
+            // initialize the static initializer function
+            Function* staticInit =
+                module_->getOrInsertFunction("llvm_java_static_init",
+                                             Type::VoidTy, 0);
+            BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
+            new ReturnInst(NULL, staticInitBB);
+
+            // insert an opaque type for java.lang.Object. This is
+            // defined in runtime.ll
             c2tMap_.insert(std::make_pair("java/lang/Object",
                                           OpaqueType::get()));
             module.addTypeName("java/lang/Object", c2tMap_["java/lang/Object"]);
+
+            // compile the method requested
             Function* function = compileMethodOnly(classMethodDesc);
+            // compile all other methods called by this method recursively
             for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
                 Function* f = toCompileFunctions_[i];
                 compileMethodOnly(f->getName());
@@ -695,11 +756,13 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_getstatic(unsigned bcI, unsigned index) {
-            assert(0 && "not implemented");
+            Value* v = new LoadInst(getStaticField(index), TMP, getBBAt(bcI));
+            opStack_.push(v);
         }
 
         void do_putstatic(unsigned bcI, unsigned index) {
-            assert(0 && "not implemented");
+            Value* v = opStack_.top(); opStack_.pop();
+            new StoreInst(v, getStaticField(index), getBBAt(bcI));            
         }
 
         void do_getfield(unsigned bcI, unsigned index) {

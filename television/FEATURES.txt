@@ -1,0 +1,38 @@
+LLVM-TV FEATURES
+
+1. Current
+==========
+
+* Ability to view text or HTML version of a Module or Function
+* Call graph display for a Module
+* CFG display for a function
+* Use/def chains for instructions
+  - not polished: separate from syntax-highlighted view, multi-column
+* BU, TD, or Local DSGraphs display for global vars
+* ...
+
+2. Under development/debugging
+==============================
+
+* Tabbed view of various views
+* Scintilla / syntax-highlighting editing control
+* Cycling through snapshots (prev, next) while keeping same function in view
+* BU, TD, Local datastructure display for functions (currently crashes)
+* ...
+
+3. Future
+=========
+
+
+a. Coming soon (things we can accomplish this term)
+--------------
+* Use more patterns
+* ...
+
+
+b. Long-term ideas
+------------------
+* Rewrite LLVM-TV in XUL
+  + As portable as Mozilla
+  + HTML/CSS for code (can use links and mouseover!)
+  + SVG for graphs

@@ -18,8 +18,8 @@ public class Maps
     }
 
     public static void main(String[] args) {
-        TreeMap tmap = new TreeMap();
-        fillMapWithRandomInts(tmap);
-        printIntMap(tmap);
+        TreeMap map = new TreeMap();
+        fillMapWithRandomInts(map);
+        printIntMap(map);
     }
 }

@@ -130,9 +130,9 @@ namespace llvm { namespace Java { namespace {
     }
   };
 
-  class CompilerImpl :
-    public BytecodeParser<CompilerImpl> {
-    Module* module_;
+  class Compiler :
+    public BytecodeParser<Compiler> {
+    Module& module_;
     ClassFile* cf_;
     OperandStack opStack_;
     Locals locals_;
@@ -168,6 +168,11 @@ namespace llvm { namespace Java { namespace {
     };
     typedef std::map<ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
+
+  public:
+    Compiler(Module& m)
+      : module_(m) {
+    }
 
   private:
     llvm::Constant* getConstant(Constant* c) {
@@ -278,7 +283,7 @@ namespace llvm { namespace Java { namespace {
       // because this is java/lang/Object, we add the opaque
       // llvm_java_object_base type first
       ClassInfo::ObjectBaseTy = OpaqueType::get();
-      module_->addTypeName(LLVM_JAVA_OBJECT_BASE, ClassInfo::ObjectBaseTy);
+      module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ClassInfo::ObjectBaseTy);
       ci.f2iMap.insert(std::make_pair(LLVM_JAVA_OBJECT_BASE, elements.size()));
       elements.push_back(ClassInfo::ObjectBaseTy);
 
@@ -296,7 +301,7 @@ namespace llvm { namespace Java { namespace {
       ci.type = holder.get();
       DEBUG(std::cerr << "Adding java/lang/Object = "
             << *ci.type << " to type map\n");
-      module_->addTypeName("java/lang/Object", ci.type);
+      module_.addTypeName("java/lang/Object", ci.type);
 
       assert(ci.type && "ClassInfo not initialized properly!");
       emitStaticInitializers(cf);
@@ -334,7 +339,7 @@ namespace llvm { namespace Java { namespace {
 
       // this is a static variable
       VTableInfo::TypeInfoTy = StructType::get(elements);
-      module_->addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
+      module_.addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
       llvm::Constant* typeInfoInit =
         ConstantStruct::get(VTableInfo::TypeInfoTy, init);
 
@@ -367,7 +372,7 @@ namespace llvm { namespace Java { namespace {
           const FunctionType* funcTy = cast<FunctionType>(
             getType(method->getDescriptor(), ci.type));
 
-          Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
+          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           toCompileFunctions_.insert(vfun);
 
           unsigned& index = vi.m2iMap[methodDescr];
@@ -385,13 +390,13 @@ namespace llvm { namespace Java { namespace {
       cast<OpaqueType>(VTtype)->refineAbstractTypeTo(StructType::get(elements));
 
       VTableInfo::VTableTy = cast<StructType>(holder.get());
-      module_->addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
+      module_.addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
 
       vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
                                      true, GlobalVariable::ExternalLinkage,
                                      ConstantStruct::get(init),
                                      "java/lang/Object<vtable>",
-                                     module_);
+                                     &module_);
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object\n");
     }
 
@@ -441,7 +446,7 @@ namespace llvm { namespace Java { namespace {
       assert(ci.type && "ClassInfo not initialized properly!");
       DEBUG(std::cerr << "Adding " << className << " = "
             << *ci.type << " to type map\n");
-      module_->addTypeName(className, ci.type);
+      module_.addTypeName(className, ci.type);
       emitStaticInitializers(cf);
       DEBUG(std::cerr << "Built ClassInfo for: " << className << '\n');
       return ci;
@@ -459,7 +464,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
         cf->getThisClass()->getName()->str() + "<superclassesvtables>",
-        module_);
+        &module_);
 
       return std::make_pair(
         vi.superVtables.size(),
@@ -498,7 +503,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName =
         cf->getThisClass()->getName()->str() + '+' +
         interface->getThisClass()->getName()->str() + "<vtable>";
-      module_->addTypeName(globalName, vtable->getType());
+      module_.addTypeName(globalName, vtable->getType());
 
       return new GlobalVariable(
         vtable->getType(),
@@ -506,7 +511,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         vtable,
         globalName,
-        module_);
+        &module_);
     }
 
     std::pair<int, llvm::Constant*>
@@ -542,7 +547,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& globalName =
         cf->getThisClass()->getName()->str() + "<interfacesvtables>";
-      module_->addTypeName(globalName, interfacesArrayTy);
+      module_.addTypeName(globalName, interfacesArrayTy);
 
       GlobalVariable* interfacesArray = new GlobalVariable(
         interfacesArrayTy,
@@ -550,7 +555,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(interfacesArrayTy, vtables),
         globalName,
-        module_);
+        &module_);
 
       return std::make_pair(
         int(vtables.size())-1,
@@ -636,7 +641,7 @@ namespace llvm { namespace Java { namespace {
           // if this is not an interface we will need to build up the
           const FunctionType* funcTy = cast<FunctionType>(
             getType(method->getDescriptor(), getClassInfo(cf).type));
-          Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
+          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           toCompileFunctions_.insert(vfun);
 
           unsigned& index = vi.m2iMap[methodDescr];
@@ -656,13 +661,13 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName = className + "<vtable>";
 
       llvm::Constant* vtable = ConstantStruct::get(init);
-      module_->addTypeName(globalName, vtable->getType());
+      module_.addTypeName(globalName, vtable->getType());
       vi.vtable = new GlobalVariable(vtable->getType(),
                                      true,
                                      GlobalVariable::ExternalLinkage,
                                      vtable,
                                      globalName,
-                                     module_);
+                                     &module_);
 
       // Now the vtable is complete, install the new typeinfo block
       // for this class: we install it last because we need the vtable
@@ -697,7 +702,7 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getName()->str();
 
       DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-      GlobalVariable* global = module_->getGlobalVariable
+      GlobalVariable* global = module_.getGlobalVariable
         (globalName, getType(nameAndType->getDescriptor()));
       assert(global && "Got NULL global variable!");
 
@@ -748,7 +753,7 @@ namespace llvm { namespace Java { namespace {
       FunctionType* funcTy = cast<FunctionType>(
         getType(method->getDescriptor(), method->isStatic() ? NULL : ci.type));
 
-      Function* function = module_->getOrInsertFunction(name, funcTy);
+      Function* function = module_.getOrInsertFunction(name, funcTy);
       function->setLinkage(method->isPrivate() ?
                            Function::InternalLinkage :
                            Function::ExternalLinkage);
@@ -811,9 +816,9 @@ namespace llvm { namespace Java { namespace {
       name += method->getName()->str();
       name += method->getDescriptor()->str();
 
-      Function* hook = module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+      Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
                                                     Type::VoidTy, 0);
-      Function* init = module_->getOrInsertFunction(name, Type::VoidTy, 0);
+      Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
 
       // if this is the first time we scheduled this function
       // for compilation insert a call to it right before the
@@ -843,7 +848,7 @@ namespace llvm { namespace Java { namespace {
                                 GlobalVariable::ExternalLinkage),
                                init,
                                globalName,
-                               module_);
+                               &module_);
           }
         }
       }
@@ -867,13 +872,10 @@ namespace llvm { namespace Java { namespace {
     }
 
   public:
-    Function* compileMethod(Module& module,
-                            const std::string& classMethodDesc) {
-      module_ = &module;
-
+    Function* compileMethod(const std::string& classMethodDesc) {
       // initialize the static initializer function
       Function* staticInit =
-        module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+        module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
                                      Type::VoidTy, 0);
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
@@ -1185,7 +1187,7 @@ namespace llvm { namespace Java { namespace {
       c = BinaryOperator::createSetLT(v1, v2, TMP, current_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
                          current_);
-      c = new CallInst(module_->getOrInsertFunction
+      c = new CallInst(module_.getOrInsertFunction
                        ("llvm.isunordered",
                         Type::BoolTy, v1->getType(), v2->getType(), 0),
                        v1, v2, TMP, current_);
@@ -1314,7 +1316,7 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci.type),
                             "this", current_);
       Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
-      Function* f = module_->getOrInsertFunction(
+      Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
       Value* vtable = new CallInst(f, objBase, TMP, current_);
@@ -1348,7 +1350,7 @@ namespace llvm { namespace Java { namespace {
       if (methodName == "<init>") {
         FunctionType* funcTy =
           cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
-        Function* function = module_->getOrInsertFunction(funcName, funcTy);
+        Function* function = module_.getOrInsertFunction(funcName, funcTy);
         toCompileFunctions_.insert(function);
         makeCall(function, getParams(funcTy));
       }
@@ -1369,7 +1371,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor()));
-      Function* function = module_->getOrInsertFunction(funcName, funcTy);
+      Function* function = module_.getOrInsertFunction(funcName, funcTy);
       toCompileFunctions_.insert(function);
       makeCall(function, getParams(funcTy));
     }
@@ -1397,7 +1399,7 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci.type),
                             "this", current_);
       Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
-      Function* f = module_->getOrInsertFunction(
+      Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
       Value* vtable = new CallInst(f, objBase, TMP, current_);
@@ -1461,7 +1463,7 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = opStack_.top(); opStack_.pop();
       objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
                             TMP, current_);
-      Function* f = module_->getOrInsertFunction(
+      Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_THROW, Type::IntTy, objRef->getType(), NULL);
       new CallInst(f, objRef, TMP, current_);
     }
@@ -1483,7 +1485,7 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = opStack_.top(); opStack_.pop();
       Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
-      Function* f = module_->getOrInsertFunction(
+      Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
       Value* vtable = new CastInst(vi.vtable,
@@ -1506,32 +1508,21 @@ namespace llvm { namespace Java { namespace {
     }
   };
 
-  unsigned CompilerImpl::ClassInfo::InterfaceCount = 0;
-  Type* CompilerImpl::ClassInfo::ObjectBaseTy;
-  StructType* CompilerImpl::VTableInfo::VTableTy;
-  StructType* CompilerImpl::VTableInfo::TypeInfoTy;
+  unsigned Compiler::ClassInfo::InterfaceCount = 0;
+  Type* Compiler::ClassInfo::ObjectBaseTy;
+  StructType* Compiler::VTableInfo::VTableTy;
+  StructType* Compiler::VTableInfo::TypeInfoTy;
 
 } } } // namespace llvm::Java::
 
-Compiler::Compiler()
-  : compilerImpl_(new CompilerImpl())
-{
-
-}
-
-Compiler::~Compiler()
-{
-  delete compilerImpl_;
-}
-
-std::auto_ptr<Module> Compiler::compile(const std::string& className)
+std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
 {
   DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
   std::auto_ptr<Module> m(new Module(className));
 
-  Function* main =
-    compilerImpl_->compileMethod(*m, className + "/main([Ljava/lang/String;)V");
+  Compiler c(*m);
+  Function* main = c.compileMethod(className + "/main([Ljava/lang/String;)V");
   Function* javaMain = m->getOrInsertFunction
     ("llvm_java_main", Type::VoidTy,
      Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);

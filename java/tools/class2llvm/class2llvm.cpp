@@ -35,9 +35,7 @@ int main(int argc, char* argv[])
                               "classfile to llvm utility");
 
   try {
-    Java::Compiler compiler;
-
-    std::auto_ptr<Module> module = compiler.compile(InputClass);
+    std::auto_ptr<Module> module = Java::compile(InputClass);
 
     PassManager passes;
     passes.add(createVerifierPass());

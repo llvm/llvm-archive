@@ -137,7 +137,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
       for (unsigned t = 0, te = sizeof(types)/sizeof(char*); t != te; ++t) {
         std::string type(types[t]);
         if (token.substr(0, type.size()) == type && 
-            !isalpha(token[type.size()])) {
+            !isalnum(token[type.size()])) {
           wrapType(os, type);
           os << token.substr(type.size(), token.size());
           done = true;

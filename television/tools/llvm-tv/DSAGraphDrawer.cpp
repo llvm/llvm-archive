@@ -10,24 +10,21 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 // DSGraphDrawer implementation
-wxImage *DSGraphDrawer::drawGraphImage() {
-  if (M) {
-    PassManager PM;
-    PM.add(new TargetData("llvm-tv", M));
-    PM.add(getModulePass());
-    PM.run(*M);
-    return buildwxImageFromDotFile(getFilename(M));
-  } else if (F) {
-    Module *M = F->getParent();
-    PassManager PM;
-    PM.add(new TargetData("llvm-tv", M));
-    PM.add(getFunctionPass(F));
-    PM.run(*M);
-    return buildwxImageFromDotFile(getFilename(F));
-  } else {
-    std::cerr << "BUDS: both Function and Module are null!\n";
-    return 0;
-  }
+wxImage *DSGraphDrawer::drawModuleGraph(Module *M) {
+  PassManager PM;
+  PM.add(new TargetData("llvm-tv", M));
+  PM.add(getModulePass());
+  PM.run(*M);
+  return buildwxImageFromDotFile(getFilename(M));
+}
+
+wxImage *DSGraphDrawer::drawFunctionGraph(Function *F) {
+  Module *M = F->getParent();
+  PassManager PM;
+  PM.add(new TargetData("llvm-tv", M));
+  PM.add(getFunctionPass(F));
+  PM.run(*M);
+  return buildwxImageFromDotFile(getFilename(F));
 }
 
 //===----------------------------------------------------------------------===//

@@ -31,8 +31,9 @@ protected:
   virtual std::string getFilename(llvm::Function *F) = 0;
   virtual std::string getFilename(llvm::Module *M) = 0;
 public:
-  DSGraphDrawer(llvm::Function *_F) : GraphDrawer(), F(_F), M(0) {}
-  DSGraphDrawer(llvm::Module *_M) : GraphDrawer(), F(0), M(_M) {}
+  wxImage *drawFunctionGraph(llvm::Function *F);
+  wxImage *drawModuleGraph(llvm::Module *M);
+  DSGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
 };
 
 //===----------------------------------------------------------------------===//
@@ -45,8 +46,7 @@ class BUGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);
 public:
-  BUGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
-  BUGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
+  BUGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
 };
 
 //===----------------------------------------------------------------------===//
@@ -59,8 +59,7 @@ class TDGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);
 public:
-  TDGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
-  TDGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
+  TDGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
 };
 
 //===----------------------------------------------------------------------===//
@@ -73,8 +72,7 @@ class LocalGraphDrawer : public DSGraphDrawer {
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);
 public:
-  LocalGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
-  LocalGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
+  LocalGraphDrawer (wxWindow *parent) : DSGraphDrawer (parent) { }
 };
 
 #endif // DSAGRAPHDRAWER_H

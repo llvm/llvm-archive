@@ -38,6 +38,9 @@ How to compile:
    to specify these --with options)
 % cd lib/wxwindows
 % ./configure --enable-debug --prefix=`pwd`
+  (Make absolutely sure that wxwindows's configure picks up the same
+   C++ compiler that you're using for llvm. Otherwise, you may get
+   weird link errors when trying to link the llvm-tv tool.)
 % cd ../../
 % gmake
 

@@ -39,6 +39,7 @@ Resolver::Resolver(Module* module)
   // };
   //
   // struct type_info {
+  //   char** name;
   //   int depth;
   //   struct class_record** superclasses;
   //   int interfaceIndex;
@@ -49,6 +50,7 @@ Resolver::Resolver(Module* module)
 
   // Compute the type_info type.
   std::vector<const Type*> elements;
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   elements.push_back(Type::IntTy);
   elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
   elements.push_back(Type::IntTy);

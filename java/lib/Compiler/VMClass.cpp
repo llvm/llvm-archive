@@ -273,11 +273,26 @@ llvm::Constant* VMClass::buildInterfaceClassRecords() const
       resolver_->getModule()));
 }
 
+llvm::Constant* VMClass::buildClassName() const
+{
+  llvm::Constant* name = ConstantArray::get(getName());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      name->getType(),
+      true,
+      GlobalVariable::ExternalLinkage,
+      name,
+      getName() + "<classname>",
+      resolver_->getModule()));
+}
+
 llvm::Constant* VMClass::buildClassTypeInfo() const
 {
   std::vector<llvm::Constant*> init;
   init.reserve(5);
 
+  init.push_back(buildClassName());
   init.push_back(ConstantSInt::get(Type::IntTy, getNumSuperClasses()));
   init.push_back(buildSuperClassRecords());
   init.push_back(ConstantSInt::get(Type::IntTy, getInterfaceIndex()));

@@ -1044,7 +1044,7 @@ namespace llvm { namespace Java { namespace {
                                  TMP, currentBB_);
       // get the interfaces array of class records
       std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
-      indices.push_back(ConstantUInt::get(Type::UIntTy, 3));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 4));
       Value* interfaceClassRecords =
         new GetElementPtrInst(classRecord, indices, TMP, currentBB_);
       interfaceClassRecords =

@@ -18,6 +18,9 @@ struct llvm_java_object_base {
 };
 
 struct llvm_java_object_typeinfo {
+  /* The name of this class */
+  const char** name;
+
   /* The number of super classes to java.lang.Object. */
   jint depth;
 

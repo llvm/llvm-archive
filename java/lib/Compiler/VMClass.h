@@ -55,6 +55,7 @@ namespace llvm { namespace Java {
     void computeLayout();
     void computeClassRecord();
 
+    llvm::Constant* buildClassName() const;
     llvm::Constant* buildSuperClassRecords() const;
     llvm::Constant* buildInterfaceClassRecord(const VMClass* interface) const;
     llvm::Constant* buildInterfaceClassRecords() const;

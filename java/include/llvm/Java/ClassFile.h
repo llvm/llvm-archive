@@ -26,7 +26,9 @@ namespace llvm { namespace Java {
 
     // Forward declarations
     class Attribute;
+    class ConstantValueAttribute;
     class CodeAttribute;
+    class ExceptionsAttribute;
     class Constant;
     class ConstantClass;
     class ConstantNameAndType;
@@ -290,6 +292,7 @@ namespace llvm { namespace Java {
         ConstantUtf8* getName() const { return name_; }
         ConstantUtf8* getDescriptor() const { return descriptor_; }
         const Attributes& getAttributes() const { return attributes_; }
+        const ConstantValueAttribute* getConstantValueAttribute() const;
 
         std::ostream& dump(std::ostream& os) const;
     };
@@ -326,6 +329,8 @@ namespace llvm { namespace Java {
         ConstantUtf8* getName() const { return name_; }
         ConstantUtf8* getDescriptor() const { return descriptor_; }
         const Attributes& getAttributes() const { return attributes_; }
+        const CodeAttribute* getCodeAttribute() const;
+        const ExceptionsAttribute* getExceptionsAttribute() const;
 
         std::ostream& dump(std::ostream& os) const;
     };

@@ -137,6 +137,14 @@ namespace {
         return os;
     }
 
+    const Attribute* getAttribute(const Attributes& attributes,
+                                  const std::string& name) {
+        for (unsigned i = 0, e = attributes.size(); i != e; ++i)
+            if (attributes[i]->getName()->str() == name)
+                return attributes[i];
+
+        return NULL;
+    }
 }
 
 //===----------------------------------------------------------------------===//
@@ -509,6 +517,15 @@ std::ostream& Field::dump(std::ostream& os) const
     return os;
 }
 
+const ConstantValueAttribute* Field::getConstantValueAttribute() const
+{
+    if (!isStatic())
+        return NULL;
+
+    return (ConstantValueAttribute*) getAttribute(attributes_,
+                                                  Attribute::CONSTANT_VALUE);
+}
+
 //===----------------------------------------------------------------------===//
 // Method implementation
 Method::Method(const ConstantPool& cp, std::istream& is)
@@ -546,6 +563,17 @@ std::ostream& Method::dump(std::ostream& os) const
     dumpCollection(attributes_, "Attribute", os);
 
     return os;
+}
+
+const CodeAttribute* Method::getCodeAttribute() const
+{
+    return (CodeAttribute*) getAttribute(attributes_, Attribute::CODE);
+}
+
+const ExceptionsAttribute* Method::getExceptionsAttribute() const
+{
+    return (ExceptionsAttribute*) getAttribute(attributes_,
+                                               Attribute::EXCEPTIONS);
 }
 
 //===----------------------------------------------------------------------===//

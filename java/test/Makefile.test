@@ -101,6 +101,20 @@ LLC_DIFFS := $(addsuffix .diff-llc, $(PREFIXED_JAVA_TESTS))
 	&& echo "PASS(llc): $(notdir $*)" \
 	|| echo "FAIL(llc): $(notdir $*)"
 
+# rules to invoke bugpoint
+GCCLD_PASS_ARGS := $(shell $(GCCLD) /dev/null -debug-pass=Arguments 2>&1 | \
+			grep 'Pass Arguments' | \
+			sed 's/Pass Arguments: //')
+
+%.bugpoint.lli: %.llvm.bc %.out-nat
+	$(LBUGPOINT) $< -run-lli -output=$*.out-nat
+
+%.bugpoint.llc: %.llvm.bc %.out-nat
+	$(LBUGPOINT) $< -run-llc -output=$*.out-nat
+
+%.bugpoint.gccld: %.raw.llvm.bc %.out-nat
+	$(LBUGPOINT) $< $(GCCLD_PASS_ARGS)
+
 all-local:: $(JIT_DIFFS) $(LLC_DIFFS)
 
 endif

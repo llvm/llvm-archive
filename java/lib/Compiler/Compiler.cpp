@@ -520,6 +520,16 @@ namespace llvm { namespace Java { namespace {
 
     std::pair<int, llvm::Constant*>
     buildInterfacesVTables(ClassFile* cf, const VTableInfo& vi) {
+      // if this is an interface then we are not implementing any
+      // interfaces so the lastInterface field is our index and the
+      // pointer to the array of interface vtables is an all-ones
+      // value
+      if (cf->isInterface())
+        return std::make_pair(
+          getClassInfo(cf).interfaceIdx,
+          ConstantExpr::getCast(
+            ConstantIntegral::getAllOnesValue(Type::LongTy),
+            PointerType::get(PointerType::get(VTableInfo::VTableTy))));
 
       std::vector<llvm::Constant*> vtables;
       const Classes& interfaces = cf->getInterfaces();

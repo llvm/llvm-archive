@@ -22,12 +22,8 @@ clean::
 # -simplifycfg -mem2reg -instcombine 
 
 # rule to link bytecode with runtime
-%.llvm: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
-	$(Echo) Optimizing $<
-	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) -ljrt $(EXTRA_OBJS)
-# rule to link bytecode with runtime
-%.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
-	$(Echo) Optimizing $<
+%.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
+	$(Echo) Linking $< with the Java runtime
 	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) -ljrt $(EXTRA_OBJS)
 
 # rule to make assembly from bytecode

@@ -4,13 +4,13 @@ public class Collections4
 {
     public static void main(String[] args) {
         Collection c1 = new ArrayList();
-        Collections.fillCollectionWithRandomInts(c1);
+        Collections.addRandomIntsToCollection(c1);
         Collection c2 = new TreeSet(c1);
         Collection c3 = new LinkedList();
-        Collections.fillCollectionWithRandomInts(c3);
+        Collections.addRandomIntsToCollection(c3);
         Test.println(c1.containsAll(c2));
         Test.println(c1.containsAll(c3));
-        Collections.fillCollectionWithRandomInts(c1);
+        Collections.addRandomIntsToCollection(c1);
         Test.println(c1.containsAll(c2));
         Test.println(c1.containsAll(c3));
         Collections.printIntCollection(c1);

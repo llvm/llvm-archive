@@ -21,6 +21,18 @@
 
 namespace llvm { namespace Java {
 
+  enum JType {
+    REFERENCE = 0, // this is not defined in the java spec
+    BOOLEAN = 4,
+    CHAR = 5,
+    FLOAT = 6,
+    DOUBLE = 7,
+    BYTE = 8,
+    SHORT = 9,
+    INT = 10,
+    LONG = 11,
+  };
+
   namespace Opcode {
 
     enum {

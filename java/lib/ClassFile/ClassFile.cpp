@@ -272,6 +272,14 @@ ConstantMethodRef* ClassFile::getConstantMethodRef(unsigned index) const
   return static_cast<ConstantMethodRef*>(getConstant(index));
 }
 
+ConstantInterfaceMethodRef*
+ClassFile::getConstantInterfaceMethodRef(unsigned index) const
+{
+  assert(dynamic_cast<ConstantInterfaceMethodRef*>(getConstant(index)) &&
+         "Constant is not a ConstantInterfaceMethodRef!");
+  return static_cast<ConstantInterfaceMethodRef*>(getConstant(index));
+}
+
 Method* ClassFile::getMethod(const std::string& nameAndDescr) const
 {
   Name2MethodMap::const_iterator it = n2mMap_.find(nameAndDescr);

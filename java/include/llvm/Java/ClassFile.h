@@ -32,6 +32,7 @@ namespace llvm { namespace Java {
   class Constant;
   class ConstantClass;
   class ConstantFieldRef;
+  class ConstantInterfaceMethodRef;
   class ConstantMethodRef;
   class ConstantNameAndType;
   class ConstantUtf8;
@@ -83,6 +84,8 @@ namespace llvm { namespace Java {
     ConstantClass* getConstantClass(unsigned index) const;
     ConstantFieldRef* getConstantFieldRef(unsigned index) const;
     ConstantMethodRef* getConstantMethodRef(unsigned index) const;
+    ConstantInterfaceMethodRef*
+    getConstantInterfaceMethodRef(unsigned index) const;
 
     bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
     bool isFinal() const { return accessFlags_ & ACC_FINAL; }

@@ -151,7 +151,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
 /// OnHelp - display the help dialog
 ///
 void TVFrame::OnHelp (wxCommandEvent &event) {
-  wxMessageBox (Explanation);
+  wxMessageBox (Explanation, "Help with LLVM-TV");
 }
 
 /// OnExit - respond to a request to exit the program.
@@ -166,7 +166,7 @@ void TVFrame::OnAbout (wxCommandEvent &event) {
   wxMessageBox("LLVM Visualization Tool\n\n"
                "By Misha Brukman, Tanya Brethour, and Brian Gaeke\n"
                "Copyright (C) 2004 University of Illinois at Urbana-Champaign\n"
-               "http://llvm.cs.uiuc.edu");
+               "http://llvm.cs.uiuc.edu", "About LLVM-TV");
 }
 
 /// OnRefresh - respond to a request to refresh the list

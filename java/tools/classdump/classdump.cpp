@@ -17,10 +17,14 @@
 #include <Support/CommandLine.h>
 
 #include <cstddef>
+#include <fstream>
 #include <iostream>
 #include <memory>
 
 using namespace llvm;
+
+static cl::opt<std::string>
+InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
 int main(int argc, char* argv[])
 {
@@ -29,8 +33,8 @@ int main(int argc, char* argv[])
                                 "class dump utility");
 
     try {
-        std::auto_ptr<Java::ClassFile> cf(
-            Java::ClassFile::readClassFile(std::cin));
+        std::ifstream in(InputFilename.c_str());
+        std::auto_ptr<Java::ClassFile> cf(Java::ClassFile::readClassFile(in));
 
         cf->dump(std::cout);
     }

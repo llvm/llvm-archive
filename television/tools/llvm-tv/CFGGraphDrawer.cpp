@@ -1,9 +1,7 @@
-#include "wx/image.h"
 #include "CFGGraphDrawer.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/PassManager.h"
-#include <unistd.h>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

@@ -15,11 +15,9 @@
 #include <cerrno>
 #include <dirent.h>
 #include <fstream>
-#include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
-#include <string>
 #include <unistd.h>
 #include <functional>
 

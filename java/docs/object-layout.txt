@@ -91,13 +91,15 @@ The typeinfo struct inside this class' vtable will be filled in the
 same way as if this was a proper class. This will allow isInstanceOf
 to work transparently for primitive java arrays.
 
-For reference type arrays we use the same struct with a different
-typeinfo:
+For reference type arrays we use the same struct for all types. The
+only difference is the vtable (actually the vtables are identical but
+they have different typeinfo structs to reflect the hierarchy of the
+contained elements):
 
 struct javaObjectArray {
   struct java_lang_Object;
   unsigned length;
-  java_lang_Object[0];
+  java_lang_Object array[0];
 };
 
 The typeinfo struct will reflect a hierarchy of array types as if B[]

@@ -5,6 +5,9 @@
 
 // PictureCanvas implementation
 
+BEGIN_EVENT_TABLE (PictureCanvas, wxScrolledWindow)
+END_EVENT_TABLE ()
+
 void PictureCanvas::OnDraw (wxDC &aDC) {
   if (!myBitmap) return;
   aDC.DrawBitmap (*myBitmap, 0, 0, false);

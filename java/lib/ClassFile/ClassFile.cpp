@@ -216,7 +216,8 @@ ClassFile* ClassFile::getClassFile(const std::string& classname)
   typedef std::map<std::string, ClassFile*> Name2ClassMap;
   static Name2ClassMap n2cMap_;
 
-  Name2ClassMap::iterator it = n2cMap_.upper_bound(classname);
+  Name2ClassMap::iterator it = n2cMap_.lower_bound(classname);
+
   if (it == n2cMap_.end() || it->first != classname) {
     std::ifstream in(getFileForClass(classname).c_str());
     it = n2cMap_.insert(it, std::make_pair(classname, readClassFile(in)));

@@ -17,11 +17,15 @@
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm-tv/Config.h"
+#include "Support/CommandLine.h"
+#include "Support/Debug.h"
 #include "Support/FileUtils.h"
 #include "Support/StringExtras.h"
 #include "Support/SystemUtils.h"
 #include <csignal>
 #include <cstdlib>
+#define _GNU_SOURCE
+#include <cstring>
 #include <dirent.h>
 #include <fstream>
 #include <string>
@@ -31,30 +35,42 @@
 using namespace llvm;
 
 namespace {
-  
   struct Snapshot : public Pass {
-
+    /// getAnalysisUsage - this pass does not require or invalidate any analysis
+    ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) {
       AU.setPreservesAll();
     }
-
+    
+    /// run - save the Module in a pre-defined location with our naming strategy
     bool run(Module &M);
 
   private:
     bool sendSignalToLLVMTV();
-
+    std::string findOption(unsigned Idx);
   };
 
+  // Keep our place in the list of passes that opt was run with to give the
+  // snapshots appropriate names.
+  static unsigned int PassPosition = 1;
+  /// The name of the command-line option to invoke the snapshot pass
+  const std::string SnapshotCmd = "snapshot";
   RegisterOpt<Snapshot> X("snapshot", "Snapshot a module, signal llvm-tv");
 }
 
+
+/// run - save snapshot to a pre-defined directory with a consecutive number in
+/// the name (for alphabetization) and the name of the pass that ran just before
+/// this one. Signal llvm-tv that fresh bytecode file has arrived for
+/// consumption.
 bool Snapshot::run(Module &M) {
   // Assumption: directory only has numbered .bc files, from 0 -> n-1, next one
   // we add will be n.bc . Subtract 2 for "." and ".."
   unsigned numFiles = GetNumFilesInDir(snapshotsPath) - 2;
 
   std::string Filename(snapshotsPath);
-  Filename = Filename + "/" + utostr(numFiles) + ".bc";
+  Filename = Filename + "/" + utostr(numFiles) + "-" +
+    findOption(PassPosition++) + ".bc";
 
   std::ofstream os(Filename.c_str());
   WriteBytecodeToFile(&M, os);
@@ -65,14 +81,13 @@ bool Snapshot::run(Module &M) {
 
   // Since we were not successful in sending a signal to an already-running
   // instance of llvm-tv, start a new instance and send a signal to it.
-  std::string llvmtvExe = FindExecutable("llvm-tv.exe", ""); 
+  std::string llvmtvExe = FindExecutable("llvm-tv", ""); 
   if (llvmtvExe != "" && isExecutableFile(llvmtvExe)) {
     int pid = fork();
     // Child process morphs into llvm-tv
     if (!pid) {
       char *argv[1]; argv[0] = 0; 
-      char *envp[1]; envp[0] = 0;
-      if (execve(llvmtvExe.c_str(), argv, envp) == -1) {
+      if (execve(llvmtvExe.c_str(), argv, environ) == -1) {
         perror("execve");
         return false;
       }
@@ -82,7 +97,9 @@ bool Snapshot::run(Module &M) {
     // and then sends it a signal
     sleep(3);
     sendSignalToLLVMTV();
-  }
+  } else
+    std::cerr << "Cannot find llvm-tv in the path!\n";
+
   return false;
 }
 
@@ -97,12 +114,39 @@ bool Snapshot::sendSignalToLLVMTV() {
   else
     return true;
 
+  is.close();
   if (pid > 0)
-    if (kill(pid, SIGUSR1) == -1)
-      return true;
-    else
-      return false;
+    return (kill(pid, SIGUSR1) == -1);
 
   return true;
 }
 
+/// findOption - read the environment variable OPTPASSES which should contain
+/// the arguments passed to opt and select all those that start with a
+/// dash. Return the last one before the Idx-th invocation of `-snapshot'
+std::string Snapshot::findOption(unsigned Idx) {
+  unsigned currIdx = 0;
+  char *OptCmdline = getenv("OPTPASSES");
+  if (!OptCmdline) return "noenv";
+  std::vector<std::string> InputArgv;
+  InputArgv.push_back("filler");
+  while (*OptCmdline) {
+    if (*OptCmdline == '-') {
+      size_t len = strcspn(OptCmdline, " ");
+      // Do not add in the '-' or the space after the switch
+      char *arg = strndup(OptCmdline+1, len-1);
+      InputArgv.push_back(std::string(arg));
+      free(arg);
+    }
+    OptCmdline += strcspn(OptCmdline, " ") + 1;
+  }
+
+  std::vector<std::string>::iterator stringPos = InputArgv.begin();
+  while (currIdx < Idx && stringPos != InputArgv.end()) {
+    stringPos = std::find(stringPos+1, InputArgv.end(), SnapshotCmd);
+    ++currIdx;
+  }
+
+  return (stringPos == InputArgv.end()) ? "notfound"
+    : (stringPos == InputArgv.begin()) ? "clean" : *--stringPos;
+}

@@ -71,8 +71,8 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
 }
 
 int VMClass::getFieldIndex(const std::string& name) const {
-  Field2IndexMap::const_iterator it = f2iMap_.find(name);
-  return it == f2iMap_.end() ? -1 : it->second;
+  FieldMap::const_iterator it = fieldMap_.find(name);
+  return it == fieldMap_.end() ? -1 : it->second.getMemberIndex();
 }
 
 void VMClass::computeLayout() {
@@ -96,12 +96,17 @@ void VMClass::computeLayout() {
     const Fields& fields = classFile_->getFields();
     for (unsigned i = 0, e = fields.size(); i != e; ++i) {
       Field* field = fields[i];
-      if (!field->isStatic()) {
-        memberFields_.push_back(NULL);
-        f2iMap_.insert(std::make_pair(field->getName()->str(),
-                                      memberFields_.size()));
-        layout.push_back(
-          getClassForDescriptor(field->getDescriptorIndex())->getType());
+      if (field->isStatic()) {
+        // FIXME: Initialize static VMFields as well.
+      }
+      else {
+        const VMClass* fc = getClassForDescriptor(field->getDescriptorIndex());
+        FieldMap::iterator i =
+          fieldMap_.insert(std::make_pair(
+                             field->getName()->str(),
+                             VMField(fc, field, memberFields_.size()+1))).first;
+        memberFields_.push_back(&i->second);
+        layout.push_back(fc->getType());
       }
     }
   }

@@ -38,8 +38,8 @@ namespace llvm { namespace Java {
     Type* layoutType_;
     const Type* type_;
     unsigned interfaceIndex_;
-    typedef std::map<std::string, int> Field2IndexMap;
-    Field2IndexMap f2iMap_;
+    typedef std::map<std::string, VMField> FieldMap;
+    FieldMap fieldMap_;
     mutable std::vector<void*> resolvedConstantPool_;
     std::vector<const VMClass*> superClasses_;
     std::vector<const VMClass*> interfaces_;

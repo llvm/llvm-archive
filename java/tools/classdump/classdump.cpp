@@ -26,19 +26,19 @@ InputClass(cl::Positional, cl::desc("<input class>"));
 
 int main(int argc, char* argv[])
 {
-    PrintStackTraceOnErrorSignal();
-    cl::ParseCommandLineOptions(argc, argv,
-                                "class dump utility");
+  PrintStackTraceOnErrorSignal();
+  cl::ParseCommandLineOptions(argc, argv,
+                              "class dump utility");
 
-    try {
-        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
+  try {
+    const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
 
-        cf->dump(std::cout);
-    }
-    catch (std::exception& e) {
-        std::cerr << e.what() << '\n';
-        return EXIT_FAILURE;
-    }
+    cf->dump(std::cout);
+  }
+  catch (std::exception& e) {
+    std::cerr << e.what() << '\n';
+    return EXIT_FAILURE;
+  }
 
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }

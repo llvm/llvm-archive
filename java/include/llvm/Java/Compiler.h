@@ -18,25 +18,25 @@
 
 namespace llvm { namespace Java {
 
-    namespace {
-        class CompilerImpl;
-    }
+  namespace {
+    class CompilerImpl;
+  }
 
-    class Compiler {
-    public:
-        Compiler();
-        ~Compiler();
+  class Compiler {
+  public:
+    Compiler();
+    ~Compiler();
 
-        void compile(Module& m, const std::string& className);
+    void compile(Module& m, const std::string& className);
 
-    private:
-        // do not implement
-        Compiler(const Compiler&);
-        const Compiler& operator=(const Compiler&);
+  private:
+    // do not implement
+    Compiler(const Compiler&);
+    const Compiler& operator=(const Compiler&);
 
-    private:
-        CompilerImpl* compilerImpl_;
-    };
+  private:
+    CompilerImpl* compilerImpl_;
+  };
 
 } } // namespace llvm::Java
 

@@ -1,3 +1,9 @@
+//===-- TVTreeItem.h - Nodes for the tree view -------------------*- C++ -*-==//
+//
+// The gui for llvm-tv.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef TVTREEITEM_H
 #define TVTREEITEM_H
 

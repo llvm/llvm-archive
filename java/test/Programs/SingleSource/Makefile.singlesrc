@@ -1,4 +1,4 @@
-##===- test/Makefile ---------------------------------------*- Makefile -*-===##
+##==-- test/Programs/SingleSource/Makefile.singlesrc -----*- makefile -*--====##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL := ..
 
-PARALLEL_DIRS := Programs Regression
+# rule to build raw bytecode from a classfile
+Output/%.raw.bc: %.class Output/.dir $(CLASS2LLVM)
+	$(CLASS2LLVM) $* | $(LOPT) -mem2reg > $@
 
-include $(LEVEL)/Makefile.common
+include $(LEVEL)/test/Makefile.test

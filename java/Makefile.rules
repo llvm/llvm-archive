@@ -8,11 +8,4 @@
 ##===----------------------------------------------------------------------===##
 
 CLASS2LLVM := $(PROJTOOLCURRENT)/class2llvm$(EXEEXT)
-
-# rule to make assembly from bytecode
-%.dis-ll: %.bc
-	$(LDIS) < $< > $@
-
-# rule to make bytecode from assembly
-%.bc: %.ll
-	$(LAS) < $< > $@
+CLASSDUMP  := $(PROJTOOLCURRENT)/classdump$(EXEEXT)

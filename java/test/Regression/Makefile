@@ -1,4 +1,4 @@
-##===- test/Makefile ---------------------------------------*- Makefile -*-===##
+##===- test/Regression/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL := ..
+LEVEL := ../..
 
-PARALLEL_DIRS := Programs Regression
+PARALLEL_DIRS := ClassFile
 
-include $(LEVEL)/Makefile.common
+include $(LEVEL)/test/Makefile.test

@@ -9,7 +9,6 @@
 
 LDIS := $(LLVMToolDir)/llvm-dis$(EXEEXT)
 LLI := $(LLVMToolDir)/lli$(EXEEXT)
-LLINK := $(LLVMToolDir)/llvm-link$(EXEEXT)
 LOPT := $(LLVMToolDir)/opt$(EXEEXT)
 
 CLASS2LLVM := $(ToolDir)/class2llvm$(EXEEXT)

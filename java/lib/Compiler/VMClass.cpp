@@ -25,11 +25,23 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Class::Class(Resolver& resolver)
+Class::Class(Resolver& resolver, const std::string& className)
+  : resolver_(&resolver),
+    classFile_(ClassFile::get(className)),
+    superClass_(NULL),
+    componentClass_(NULL),
+    structType_(OpaqueType::get()),
+    type_(PointerType::get(structType_)),
+    interfaceIndex_(INVALID_INTERFACE_INDEX)
+{
+
+}
+
+Class::Class(Resolver& resolver, const Class& componentClass)
   : resolver_(&resolver),
     classFile_(NULL),
     superClass_(NULL),
-    componentClass_(NULL),
+    componentClass_(&componentClass),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX)
@@ -42,7 +54,7 @@ Class::Class(Resolver& resolver, const Type* type)
     classFile_(NULL),
     superClass_(NULL),
     componentClass_(NULL),
-    structType_(0),
+    structType_(NULL),
     type_(type),
     interfaceIndex_(INVALID_INTERFACE_INDEX)
 {
@@ -68,52 +80,50 @@ void Class::resolveType() {
   type_ = PointerType::get(structType_);
 }
 
-void Class::loadClass(const std::string& className)
+void Class::link()
 {
-  classFile_ = ClassFile::get(className);
+  assert(!isPrimitive() && "Should not link primitive classes!");
 
-  // This is any class but java/lang/Object.
-  if (classFile_->getSuperClass()) {
-    const Class& superClass =
-      resolver_->getClass(classFile_->getSuperClass()->getName()->str());
-
-    // We first add the struct of the super class.
-    addField("super", superClass.getStructType());
-
-    // Although we can safely assume that all interfaces inherits from
-    // java/lang/Object, java/lang/Class.getSuperclass() returns null
-    // on interface types. So we only set the superClass_ field when
-    // the class is not an interface type, but we model the LLVM type
-    // of the interface to be as if it inherits java/lang/Object.
-    if (classFile_->isInterface())
-      interfaceIndex_ = resolver_->getNextInterfaceIndex();
-    else
-      superClass_ = &superClass;
+  if (isArray()) {
+    superClass_ = &resolver_->getClass("java/lang/Object");
+    addField("super", superClass_->getStructType());
+    addField("<length>", Type::UIntTy);
+    addField("<data>", ArrayType::get(componentClass_->getType(), 0));
   }
-  // This is java/lang/Object.
-  else
-    addField("base", resolver_->getObjectBaseType());
+  else {
+    // This is any class but java/lang/Object.
+    if (classFile_->getSuperClass()) {
+      const Class& superClass =
+        resolver_->getClass(classFile_->getSuperClass()->getName()->str());
 
-  // Then we add the rest of the fields.
-  const Fields& fields = classFile_->getFields();
-  for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-    Field& field = *fields[i];
-    if (!field.isStatic())
-      addField(field.getName()->str(), resolver_->getClass(field).getType());
+      // We first add the struct of the super class.
+      addField("super", superClass.getStructType());
+
+      // Although we can safely assume that all interfaces inherits
+      // from java/lang/Object, java/lang/Class.getSuperclass()
+      // returns null on interface types. So we only set the
+      // superClass_ field when the class is not an interface type,
+      // but we model the LLVM type of the interface to be as if it
+      // inherits java/lang/Object.
+      if (classFile_->isInterface())
+        interfaceIndex_ = resolver_->getNextInterfaceIndex();
+      else
+        superClass_ = &superClass;
+    }
+    // This is java/lang/Object.
+    else
+      addField("base", resolver_->getObjectBaseType());
+
+    // Then we add the rest of the fields.
+    const Fields& fields = classFile_->getFields();
+    for (unsigned i = 0, e = fields.size(); i != e; ++i) {
+      Field& field = *fields[i];
+      if (!field.isStatic())
+        addField(field.getName()->str(), resolver_->getClass(field).getType());
+    }
   }
 
   resolveType();
 
   assert(!isa<OpaqueType>(getStructType()) &&"Class not initialized properly!");
-}
-
-void Class::loadArrayClass(const Class& componentClass)
-{
-  superClass_ = &resolver_->getClass("java/lang/Object");
-  componentClass_ = &componentClass;
-  addField("super", superClass_->getStructType());
-  addField("<length>", Type::UIntTy);
-  addField("<data>", ArrayType::get(componentClass_->getType(), 0));
-
-  resolveType();
 }

@@ -1359,8 +1359,7 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
           classMethodDesc.find("java/lang/System") != 0 &&
           classMethodDesc.find("java/lang/VMSystem") != 0 &&
-          classMethodDesc.find("java/util/") != 0 &&
-          classMethodDesc.find("java/io/") != 0) {
+          classMethodDesc.find("java/util/") != 0) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');
         return function;

@@ -175,6 +175,8 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   notebook->AddItemDisplayer (new TVTextCtrl (notebook, Explanation));
   notebook->AddItemDisplayer (new TVHtmlWindow (notebook, Explanation));
   notebook->AddItemDisplayer (new TDGraphDrawer (notebook));
+  notebook->AddItemDisplayer (new BUGraphDrawer (notebook));
+  notebook->AddItemDisplayer (new LocalGraphDrawer (notebook));
   notebook->AddItemDisplayer (new TVCodeViewer (notebook));
 
   // Split window vertically

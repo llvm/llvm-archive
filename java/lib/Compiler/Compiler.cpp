@@ -19,6 +19,7 @@
 #include <llvm/Instructions.h>
 #include <llvm/Value.h>
 #include <llvm/Type.h>
+#include <Support/StringExtras.h>
 
 using namespace llvm;
 using namespace llvm::Java;
@@ -60,27 +61,151 @@ namespace {
         return readIntSigned(code, i);
     }
 
+    inline void skipPadBytes(const uint8_t* code, unsigned& i) {
+        while (((unsigned)&code[++i]) & 0XFF);
+    }
+
 } // namespace
 
-void Compiler::initForCode(const CodeAttribute& codeAttr)
+void Compiler::compileMethodInit(Function& function,
+                                 const CodeAttribute& codeAttr)
 {
     while (!opStack_.empty())
         opStack_.pop();
 
     locals_.clear();
     locals_.assign(codeAttr.getMaxLocals(), NULL);
+
+    bc2bbMap_.clear();
+    bc2bbMap_.assign(codeAttr.getCodeSize(), NULL);
+    bc2bbMap_[0] = new BasicBlock("entry", &function);
+
+    const uint8_t* code = codeAttr.getCode();
+    for (unsigned i = 0; i < codeAttr.getCodeSize(); ++i) {
+        using namespace llvm::Java::Opcode;
+
+        unsigned bcStart = i;
+        bool wide = code[i] == WIDE;
+        i += wide;
+        switch (code[i]) {
+        case BIPUSH:
+        case LDC:
+        case NEWARRAY:
+            ++i;
+            break;
+        case ILOAD:
+        case LLOAD:
+        case FLOAD:
+        case DLOAD:
+        case ALOAD:
+        case ISTORE:
+        case LSTORE:
+        case FSTORE:
+        case DSTORE:
+        case ASTORE:
+        case RET:
+            i += 1 + wide;
+            break;
+        case SIPUSH:
+        case LDC_W:
+        case LDC2_W:
+        case GOTO:
+        case JSR:
+        case GETSTATIC:
+        case PUTSTATIC:
+        case GETFIELD:
+        case PUTFIELD:
+        case INVOKEVIRTUAL:
+        case INVOKESPECIAL:
+        case INVOKESTATIC:
+        case INVOKEINTERFACE:
+        case NEW:
+        case ANEWARRAY:
+        case ARRAYLENGTH:
+        case ATHROW:
+        case CHECKCAST:
+        case INSTANCEOF:
+            i += 2;
+            break;
+        case IFEQ:
+        case IFNE:
+        case IFLT:
+        case IFGE:
+        case IFGT:
+        case IFLE:
+        case IF_ICMPEQ:
+        case IF_ICMPNE:
+        case IF_ICMPLT:
+        case IF_ICMPGE:
+        case IF_ICMPGT:
+        case IF_ICMPLE:
+        case IF_ICMPACMPEQ:
+        case IF_ICMPACMPNE:
+        case IFNULL:
+        case IFNONNULL: {
+            unsigned index = readShortUnsigned(code, i);
+            bc2bbMap_[bcStart] = new BasicBlock(
+                std::string("bb@bc") + utostr(bcStart), &function);
+            break;
+        }
+        case TABLESWITCH: {
+            skipPadBytes(code, i);
+            readIntSigned(code, i);
+            int low = readIntSigned(code, i);
+            int high = readIntSigned(code, i);
+            unsigned offsetCount = high - low + 1;
+            while (offsetCount--) {
+                unsigned bcIndex = bcStart + readIntSigned(code, i);
+                bc2bbMap_[bcIndex] = new BasicBlock(
+                    std::string("bb@bc") + utostr(bcIndex), &function);
+            }
+            break;
+        }
+        case LOOKUPSWITCH: {
+            skipPadBytes(code, i);
+            unsigned pairCount = readIntUnsigned(code, i);
+            while (pairCount--) {
+                readIntSigned(code, i);
+                unsigned bcIndex = bcStart + readIntSigned(code, i);
+                bc2bbMap_[bcIndex] = new BasicBlock(
+                    std::string("bb@bc") + utostr(bcIndex), &function);
+            }
+            break;
+        }
+        case XXXUNUSEDXXX:
+            throw "FIXME: create new exception class";
+        case MULTIANEWARRAY:
+            i += 3;
+            break;
+        case GOTO_W:
+        case JSR_W:
+            i+= 4;
+            break;
+        default:
+            break;
+        }
+    }
+
+    unsigned i = 0;
+    BasicBlock* bb = bc2bbMap_[i];
+    while (++i < codeAttr.getCodeSize()) {
+        if (bc2bbMap_[i])
+            bc2bbMap_[i] = bb;
+        else
+            bb = bc2bbMap_[i];
+    }
 }
 
 void Compiler::compileMethod(Module& module, const Java::Method& method) {
     using namespace llvm::Java::Opcode;
 
+    Function* function =
+        module.getOrInsertFunction(method.getName()->str(), Type::VoidTy);
+
     const Java::CodeAttribute* codeAttr =
         Java::getCodeAttribute(method.getAttributes());
 
-    initForCode(*codeAttr);
-
-    Function* function =
-        module.getOrInsertFunction(method.getName()->str(), Type::VoidTy);
+    compileMethodInit(*function, *codeAttr);
 
     const uint8_t* code = codeAttr->getCode();
     for (unsigned i = 0; i < codeAttr->getCodeSize(); ++i) {

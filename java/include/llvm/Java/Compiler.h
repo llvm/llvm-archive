@@ -25,15 +25,18 @@ namespace llvm { namespace Java {
         Module* compile(const ClassFile& cf);
 
     private:
+        void compileMethodInit(Function& function,
+                               const CodeAttribute& codeAttr);
         void compileMethod(Module& module, const Method& method);
-        void initForCode(const CodeAttribute& codeAttr);
 
     private:
         typedef std::stack<Value*, std::vector<Value*> > OperandStack;
         typedef std::vector<Value*> Locals;
+        typedef std::vector<BasicBlock*> BC2BBMap;
 
         OperandStack opStack_;
         Locals locals_;
+        BC2BBMap bc2bbMap_;
     };
 
 } } // namespace llvm::Java

@@ -26,6 +26,9 @@
 using namespace llvm;
 
 namespace {
+
+  static Constant* ALL_ONES = ConstantUInt::getAllOnesValue(Type::ULongTy);
+
   struct AddStubs : public ModulePass {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
@@ -35,7 +38,9 @@ namespace {
           if (F->getReturnType() == Type::VoidTy)
             new ReturnInst(NULL, entry);
           else
-            new ReturnInst(UndefValue::get(F->getReturnType()), entry);
+            new ReturnInst(
+              new CastInst(ALL_ONES, F->getReturnType(), "dummy-value", entry),
+              entry);
         }
       return true;
     }

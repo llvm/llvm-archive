@@ -35,6 +35,7 @@ namespace llvm { namespace Java {
   class ConstantClass;
   class ConstantFieldRef;
   class ConstantInterfaceMethodRef;
+  class ConstantMemberRef;
   class ConstantMethodRef;
   class ConstantNameAndType;
   class ConstantUtf8;
@@ -84,6 +85,7 @@ namespace llvm { namespace Java {
 
     Constant* getConstant(unsigned index) const { return cPool_[index]; }
     ConstantClass* getConstantClass(unsigned index) const;
+    ConstantMemberRef* getConstantMemberRef(unsigned index) const;
     ConstantFieldRef* getConstantFieldRef(unsigned index) const;
     ConstantMethodRef* getConstantMethodRef(unsigned index) const;
     ConstantInterfaceMethodRef*

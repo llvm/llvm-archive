@@ -265,6 +265,13 @@ ConstantClass* ClassFile::getConstantClass(unsigned index) const
   return static_cast<ConstantClass*>(getConstant(index));
 }
 
+ConstantMemberRef* ClassFile::getConstantMemberRef(unsigned index) const
+{
+  assert(dynamic_cast<ConstantMemberRef*>(getConstant(index)) &&
+         "Constant is not a ConstantMemberRef!");
+  return static_cast<ConstantMemberRef*>(getConstant(index));
+}
+
 ConstantFieldRef* ClassFile::getConstantFieldRef(unsigned index) const
 {
   assert(dynamic_cast<ConstantFieldRef*>(getConstant(index)) &&

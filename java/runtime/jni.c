@@ -135,6 +135,17 @@ static jint get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;
 }
 
+static jobject get_object_array_element(JNIEnv* env, jarray array, jsize i) {
+  return ((struct llvm_java_objectarray*) array)->data[i];
+}
+
+static void set_object_array_element(JNIEnv* env,
+                                     jarray array,
+                                     jsize i,
+                                     jobject value) {
+  ((struct llvm_java_objectarray*) array)->data[i] = value;
+}
+
 #define HANDLE_NATIVE_TYPE(TYPE) \
   static j ## TYPE* get_##TYPE##_array_elements( \
     JNIEnv* env, \

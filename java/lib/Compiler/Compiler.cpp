@@ -117,7 +117,7 @@ namespace llvm { namespace Java { namespace {
             switch (type) {
                 // FIXME: this should really be a non-void type when the object
                 // model is finalized
-            case REFERENCE: return Type::VoidTy;
+            case REFERENCE: return PointerType::get(Type::VoidTy);
             case BOOLEAN: return Type::BoolTy;
             case CHAR: return Type::UByteTy;
             case FLOAT: return Type::FloatTy;
@@ -165,7 +165,7 @@ namespace llvm { namespace Java { namespace {
                     new AllocaInst(type, NULL, "local" + utostr(index));
                 locals_[index] = alloc;
                 Instruction* store = new StoreInst(
-                    llvm::Constant::getNullValue(alloc->getType()), alloc);
+                    llvm::Constant::getNullValue(type), alloc);
                 entry->getInstList().push_front(store);
                 entry->getInstList().push_front(alloc);
             }

@@ -15,34 +15,39 @@
 #ifndef LLVM_JAVA_OPERANDSTACK_H
 #define LLVM_JAVA_OPERANDSTACK_H
 
+#include "Resolver.h"
 #include <llvm/Value.h>
 #include <llvm/Instruction.h>
-#include <llvm/Java/Bytecode.h>
 #include <map>
 #include <vector>
 
 namespace llvm {
 
   class AllocaInst;
+  class Instruction;
+  class Value;
 
 } // namespace llvm
 
 namespace llvm {  namespace Java {
 
   class OperandStack {
-    unsigned currentDepth;
+    const Resolver* resolver_;
+    unsigned currentDepth_;
     typedef std::map<const Type*, AllocaInst*> SlotMap;
-    std::vector<SlotMap> TheStack;
+    std::vector<SlotMap> stack_;
 
   public:
-    explicit OperandStack(unsigned maxDepth)
-      : currentDepth(0), TheStack(maxDepth) { }
+    explicit OperandStack(const Resolver& resolver, unsigned maxDepth)
+      : resolver_(&resolver),
+        currentDepth_(0),
+        stack_(maxDepth) { }
 
-    unsigned getDepth() const { return currentDepth; }
+    unsigned getDepth() const { return currentDepth_; }
     void setDepth(unsigned newDepth) {
-      assert(newDepth < TheStack.size() &&
+      assert(newDepth < stack_.size() &&
              "Cannot set depth greater than the max depth!");
-      currentDepth = newDepth;
+      currentDepth_ = newDepth;
     }
 
     /// @brief - Pushes the value \c value on the virtual operand

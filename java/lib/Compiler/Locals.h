@@ -15,7 +15,7 @@
 #ifndef LLVM_JAVA_LOCALS_H
 #define LLVM_JAVA_LOCALS_H
 
-#include <llvm/Java/Bytecode.h>
+#include "Resolver.h"
 #include <map>
 #include <vector>
 
@@ -32,11 +32,12 @@ namespace llvm {
 namespace llvm { namespace Java {
 
   class Locals {
+    const Resolver* resolver_;
     typedef std::map<const Type*, AllocaInst*> SlotMap;
-    std::vector<SlotMap> TheLocals;
+    std::vector<SlotMap> locals_;
 
   public:
-    explicit Locals(unsigned maxLocals);
+    Locals(const Resolver& resolver, unsigned maxLocals);
 
     /// @brief - Stores the value \c value on the \c i'th local
     /// variable and appends any instructions to implement this to \c

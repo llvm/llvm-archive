@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Locals.h"
-#include "Support.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Function.h>
@@ -24,8 +23,9 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Locals::Locals(unsigned maxLocals)
-  : TheLocals(maxLocals)
+Locals::Locals(const Resolver& resolver, unsigned maxLocals)
+  : resolver_(&resolver),
+    locals_(maxLocals)
 {
 
 }
@@ -33,11 +33,11 @@ Locals::Locals(unsigned maxLocals)
 void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 {
   const Type* valueTy = value->getType();
-  const Type* storageTy = getStorageType(valueTy);
+  const Type* storageTy = resolver_->getStorageType(valueTy);
   if (valueTy != storageTy)
     value = new CastInst(value, storageTy, "to-storage-type", insertAtEnd);
 
-  SlotMap& slotMap = TheLocals[i];
+  SlotMap& slotMap = locals_[i];
   SlotMap::iterator it = slotMap.find(storageTy);
 
   if (it == slotMap.end()) {
@@ -54,9 +54,9 @@ void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 llvm::Value* Locals::load(unsigned i, const Type* valueTy,
                           BasicBlock* insertAtEnd)
 {
-  const Type* storageTy = getStorageType(valueTy);
+  const Type* storageTy = resolver_->getStorageType(valueTy);
 
-  SlotMap& slotMap = TheLocals[i];
+  SlotMap& slotMap = locals_[i];
   SlotMap::iterator it = slotMap.find(storageTy);
 
   assert(it != slotMap.end() && "Attempt to load a non initialized global!");

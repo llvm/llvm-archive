@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "OperandStack.h"
-#include "Support.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Function.h>
@@ -57,33 +56,33 @@ llvm::AllocaInst* OperandStack::getOrCreateSlot(SlotMap& slotMap,
 
 void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
 {
-  assert(currentDepth < TheStack.size() && "Pushing to a full stack!");
+  assert(currentDepth_ < stack_.size() && "Pushing to a full stack!");
   const Type* valueTy = value->getType();
 //   std::cerr << "PUSH(" << insertAtEnd << "/"
-//             << insertAtEnd->getParent()->getName() << " " << TheStack.size()
-//             << ") Depth: " << currentDepth << " type: " << *valueTy << '\n';
-  const Type* storageTy = getStorageType(valueTy);
+//             << insertAtEnd->getParent()->getName() << " " << stack_.size()
+//             << ") Depth: " << currentDepth_ << " type: " << *valueTy << '\n';
+  const Type* storageTy = resolver_->getStorageType(valueTy);
   if (valueTy != storageTy)
     value = new CastInst(value, storageTy, "to-storage-type", insertAtEnd);
 
-  SlotMap& slotMap = TheStack[currentDepth];
+  SlotMap& slotMap = stack_[currentDepth_];
   AllocaInst* slot = getOrCreateSlot(slotMap, storageTy, insertAtEnd);
   new StoreInst(value, slot, insertAtEnd);
-  currentDepth += 1 + isTwoSlotType(storageTy);
-  assert(currentDepth < TheStack.size() && "Pushed more than max stack depth!");
+  currentDepth_ += 1 + resolver_->isTwoSlotType(storageTy);
+  assert(currentDepth_ < stack_.size() && "Pushed more than max stack depth!");
 }
 
 llvm::Value* OperandStack::pop(const Type* valueTy, BasicBlock* insertAtEnd)
 {
-  const Type* storageTy = getStorageType(valueTy);
+  const Type* storageTy = resolver_->getStorageType(valueTy);
 
-  assert(currentDepth != 0 && "Popping from an empty stack!");
-  currentDepth -= 1 + isTwoSlotType(storageTy);
+  assert(currentDepth_ != 0 && "Popping from an empty stack!");
+  currentDepth_ -= 1 + resolver_->isTwoSlotType(storageTy);
 //   std::cerr << "POP(" << insertAtEnd->getName() << "/"
-//             << insertAtEnd->getParent()->getName() << " " << TheStack.size()
-//             << ")  Depth: " << currentDepth << " type: " << *valueTy << '\n';
+//             << insertAtEnd->getParent()->getName() << " " << stack_.size()
+//             << ")  Depth: " << currentDepth_ << " type: " << *valueTy << '\n';
 
-  SlotMap& slotMap = TheStack[currentDepth];
+  SlotMap& slotMap = stack_[currentDepth_];
   SlotMap::iterator it = slotMap.find(storageTy);
 
   assert(it != slotMap.end() && "Type mismatch on operand stack!");
@@ -96,8 +95,8 @@ llvm::Value* OperandStack::pop(const Type* valueTy, BasicBlock* insertAtEnd)
 /// ..., value -> ...
 void OperandStack::do_pop(BasicBlock* insertAtEnd)
 {
-  assert(currentDepth != 0 && "Popping from an empty stack!");
-  --currentDepth;
+  assert(currentDepth_ != 0 && "Popping from an empty stack!");
+  --currentDepth_;
 }
 
 /// ..., value2, value1 -> ...
@@ -111,49 +110,49 @@ void OperandStack::do_pop2(BasicBlock* insertAtEnd)
 /// ..., value -> ..., value, value
 void OperandStack::do_dup(BasicBlock* insertAtEnd)
 {
-  assert(currentDepth != 0 && "Popping from an empty stack!");
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth], insertAtEnd);
-  ++currentDepth;
+  assert(currentDepth_ != 0 && "Popping from an empty stack!");
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_], insertAtEnd);
+  ++currentDepth_;
 }
 
 /// ..., value2, value1 -> ..., value1, value2, value1
 void OperandStack::do_dup_x1(BasicBlock* insertAtEnd)
 {
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth], insertAtEnd);
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth-1], insertAtEnd);
-  copySlots(TheStack[currentDepth], TheStack[currentDepth-2], insertAtEnd);
-  ++currentDepth;
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_], insertAtEnd);
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_-1], insertAtEnd);
+  copySlots(stack_[currentDepth_], stack_[currentDepth_-2], insertAtEnd);
+  ++currentDepth_;
 }
 
 /// ..., value3, value2, value1 -> ..., value1, value3, value2, value1
 /// ..., value2, value1 -> ..., value1, value2, value1
 void OperandStack::do_dup_x2(BasicBlock* insertAtEnd)
 {
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth], insertAtEnd);
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth-1], insertAtEnd);
-  copySlots(TheStack[currentDepth-3], TheStack[currentDepth-2], insertAtEnd);
-  copySlots(TheStack[currentDepth], TheStack[currentDepth-3], insertAtEnd);
-  ++currentDepth;
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_], insertAtEnd);
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_-1], insertAtEnd);
+  copySlots(stack_[currentDepth_-3], stack_[currentDepth_-2], insertAtEnd);
+  copySlots(stack_[currentDepth_], stack_[currentDepth_-3], insertAtEnd);
+  ++currentDepth_;
 }
 
 /// ..., value2, value1 -> ..., value2, value1, value2, value1
 void OperandStack::do_dup2(BasicBlock* insertAtEnd)
 {
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth], insertAtEnd);
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth+1], insertAtEnd);
-  currentDepth += 2;
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_], insertAtEnd);
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_+1], insertAtEnd);
+  currentDepth_ += 2;
 }
 
 /// ..., value3, value2, value1 -> ..., value2, value1, value3, value2, value1
 /// ..., value2, value1 -> ..., value1, value2, value1
 void OperandStack::do_dup2_x1(BasicBlock* insertAtEnd)
 {
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth+1], insertAtEnd);
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth], insertAtEnd);
-  copySlots(TheStack[currentDepth-3], TheStack[currentDepth-1], insertAtEnd);
-  copySlots(TheStack[currentDepth+1], TheStack[currentDepth-2], insertAtEnd);
-  copySlots(TheStack[currentDepth], TheStack[currentDepth-3], insertAtEnd);
-  currentDepth += 2;
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_+1], insertAtEnd);
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_], insertAtEnd);
+  copySlots(stack_[currentDepth_-3], stack_[currentDepth_-1], insertAtEnd);
+  copySlots(stack_[currentDepth_+1], stack_[currentDepth_-2], insertAtEnd);
+  copySlots(stack_[currentDepth_], stack_[currentDepth_-3], insertAtEnd);
+  currentDepth_ += 2;
 }
 
 /// ..., value4, value3, value2, value1 -> ..., value2, value1, value4, value3, value2, value1
@@ -162,19 +161,19 @@ void OperandStack::do_dup2_x1(BasicBlock* insertAtEnd)
 /// ..., value2, value1 -> ..., value1, value2, value1
 void OperandStack::do_dup2_x2(BasicBlock* insertAtEnd)
 {
-  copySlots(TheStack[currentDepth-1], TheStack[currentDepth+1], insertAtEnd);
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth], insertAtEnd);
-  copySlots(TheStack[currentDepth-3], TheStack[currentDepth-1], insertAtEnd);
-  copySlots(TheStack[currentDepth-4], TheStack[currentDepth-2], insertAtEnd);
-  copySlots(TheStack[currentDepth+1], TheStack[currentDepth-3], insertAtEnd);
-  copySlots(TheStack[currentDepth], TheStack[currentDepth-4], insertAtEnd);
-  currentDepth += 2;
+  copySlots(stack_[currentDepth_-1], stack_[currentDepth_+1], insertAtEnd);
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_], insertAtEnd);
+  copySlots(stack_[currentDepth_-3], stack_[currentDepth_-1], insertAtEnd);
+  copySlots(stack_[currentDepth_-4], stack_[currentDepth_-2], insertAtEnd);
+  copySlots(stack_[currentDepth_+1], stack_[currentDepth_-3], insertAtEnd);
+  copySlots(stack_[currentDepth_], stack_[currentDepth_-4], insertAtEnd);
+  currentDepth_ += 2;
 }
 
 void OperandStack::do_swap(BasicBlock* insertAtEnd)
 {
   SlotMap tmp;
-  copySlots(TheStack[currentDepth-1], tmp, insertAtEnd);
-  copySlots(TheStack[currentDepth-2], TheStack[currentDepth-1], insertAtEnd);
-  copySlots(tmp, TheStack[currentDepth-2], insertAtEnd);
+  copySlots(stack_[currentDepth_-1], tmp, insertAtEnd);
+  copySlots(stack_[currentDepth_-2], stack_[currentDepth_-1], insertAtEnd);
+  copySlots(tmp, stack_[currentDepth_-2], insertAtEnd);
 }

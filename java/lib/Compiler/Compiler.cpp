@@ -1353,7 +1353,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokeinterface(unsigned bcI, unsigned index) {
-      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantInterfaceMethodRef* methodRef =
+        cf_->getConstantInterfaceMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
@@ -1386,15 +1387,14 @@ namespace llvm { namespace Java { namespace {
         new GetElementPtrInst(vtable, indices, TMP, BB);
       interfaceVTables = new LoadInst(interfaceVTables, TMP, BB);
       // get the actual interface vtable
-      indices.resize(1);
+      indices.clear();
       indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
       Value* interfaceVTable =
-        new GetElementPtrInst(vtable, indices, TMP, BB);
-      interfaceVTable =
-        new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
-                     TMP, BB);
+        new GetElementPtrInst(interfaceVTables, indices, TMP, BB);
       interfaceVTable =
         new LoadInst(interfaceVTable, className + "<vtable>", BB);
+      interfaceVTable =
+        new CastInst(interfaceVTable, vi.vtable->getType(), TMP, BB);
       // get the function pointer
       indices.resize(1);
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&

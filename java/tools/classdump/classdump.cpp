@@ -88,6 +88,9 @@ namespace {
       if (F->isFinal())
         Out << "final ";
 
+      if (F->isTransient())
+        Out << "transient ";
+
       Out << getPrettyString(F->getDescriptor()->str()) << ' '
           << F->getName()->str() << ";\n";
     }
@@ -101,14 +104,17 @@ namespace {
       else if (M->isPrivate())
         Out << "private ";
 
-      if (M->isSynchronized())
-        Out << "synchronized ";
-
       if (M->isStatic())
         Out << "static ";
 
+      if (M->isAbstract())
+        Out << "abstract ";
+
       if (M->isFinal())
         Out << "final ";
+
+      if (M->isSynchronized())
+        Out << "synchronized ";
 
       std::string Signature = getPrettyString(M->getDescriptor()->str());
       Signature.insert(Signature.find('('), M->getName()->str());
@@ -123,7 +129,11 @@ namespace {
 
     std::string getPrettyString(const std::string& Desc) {
       unsigned I = 0;
-      return getPrettyStringHelper(Desc, I);
+      std::string prettyString = getPrettyStringHelper(Desc, I);
+      for (unsigned i = 0, e = prettyString.size(); i != e; ++i)
+        if (prettyString[i] == '/')
+          prettyString[i] = '.';
+      return prettyString;
     }
 
     std::string getPrettyStringHelper(const std::string& Desc, unsigned& I) {
@@ -160,7 +170,7 @@ namespace {
         std::string Params;
         while (Desc[I] != ')') {
           if (Desc[I-1] != '(')
-            Params += ", ";
+            Params += ',';
           Params += getPrettyStringHelper(Desc, I);
         }
         return getPrettyStringHelper(Desc, ++I) + " (" + Params + ')';
@@ -180,7 +190,7 @@ namespace {
         Out << "iconst_m1";
       else if (value >=0 && value <= 5)
         Out << "iconst_" << value;
-      else if (value <= 255)
+      else if (value >= -128 && value <= 127)
         Out << "bipush " << value;
       else
         Out << "sipush " << value;
@@ -207,9 +217,17 @@ namespace {
         Out << "dconst " << value;
     }
     /// @brief called on LDC and LDC_W
-    void do_ldc(unsigned index) { Out << "ldc \t#" << index; }
+    void do_ldc(unsigned index) {
+      if (index <= 255)
+        Out << "ldc";
+      else
+        Out << "ldc_w";
+      Out <<  "\t#" << index << "; //" << *CF->getConstant(index);      
+    }
     /// @brief called on LDC2_W
-    void do_ldc2(unsigned index) { Out << "ldc2 \t#" << index; }
+    void do_ldc2(unsigned index) {
+      Out << "ldc2_w \t#" << index << "; //" << *CF->getConstant(index);
+    }
     /// @brief called on ILOAD and ILOAD_<n>
     void do_iload(unsigned index) {
       if (index <= 3)
@@ -540,7 +558,20 @@ namespace {
       printClassRef(index);
     }
     /// @brief called on NEWARRAY
-    void do_newarray(JType type) { Out << "newarray #" << type; abort(); }
+    void do_newarray(JType type) {
+      Out << "newarray ";
+      switch (type) {
+      case BOOLEAN: Out << "boolean"; break;
+      case CHAR: Out << "char"; break;
+      case FLOAT: Out << "float"; break;
+      case DOUBLE: Out << "byte"; break;
+      case SHORT: Out << "short"; break;
+      case INT: Out << "int"; break;
+      case LONG: Out << "long"; break;
+      default: assert(0 && "Unknown type for newarray!");
+      }
+    }
+
     /// @brief called on ANEWARRAY
     void do_anewarray(unsigned index) {
       Out << "anewarray #" << index << "; //class ";

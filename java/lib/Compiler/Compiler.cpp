@@ -856,8 +856,8 @@ namespace llvm { namespace Java { namespace {
 
     void do_if(unsigned bcI, JSetCC cc, JType type,
                unsigned t, unsigned f) {
-      Value* v2 = llvm::Constant::getNullValue(getType(type));
       Value* v1 = opStack_.top(); opStack_.pop();
+      Value* v2 = llvm::Constant::getNullValue(v1->getType());
       Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, getBBAt(bcI));
       new BranchInst(getBBAt(t), getBBAt(f), c, getBBAt(bcI));
     }

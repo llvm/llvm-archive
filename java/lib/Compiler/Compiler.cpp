@@ -633,13 +633,10 @@ namespace llvm { namespace Java { namespace {
             c = BinaryOperator::createSetLT(v1, v2, TMP, getBBAt(bcI));
             r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
                                getBBAt(bcI));
-            std::vector<Value*> params;
-            params.push_back(v1);
-            params.push_back(v2);
             c = new CallInst(module_->getOrInsertFunction
                              ("llvm.isunordered",
                               Type::BoolTy, v1->getType(), v2->getType(), 0),
-                params, TMP, getBBAt(bcI));
+                v1, v2, TMP, getBBAt(bcI));
             r = new SelectInst(c,
                                ConstantSInt::get(Type::IntTy, valueIfUnordered),
                                r, TMP, getBBAt(bcI));

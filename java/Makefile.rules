@@ -1,4 +1,4 @@
-#===-- Makefile.rules - Common make rules for LLVM -------*- makefile -*--====
+##==-- Makefile.rules - Common make rules for Java -------*- makefile -*--====##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -10,7 +10,6 @@
 ifdef BUILD_JAVA_SOURCE
 all:: .class-stamp
 .class-stamp: $(shell find . -name '*.java')
-	$(JIKES) --bootclasspath $(BOOTCLASSPATH) $?
+	$(JAVAC) $?
 	touch .class-stamp
 endif
-

@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 # make a MacOS bundle llvm-tv.app used to encapsulate llvm-tv
 # brg Tue Apr 27 15:10:22 CDT 2004
 #

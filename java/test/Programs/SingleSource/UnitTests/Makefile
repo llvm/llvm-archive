@@ -28,6 +28,11 @@ BYTECODE_LIBRARY=1
 SHARED_LIBRARY=1
 LIBRARYNAME=test
 
+all:: Test.h
+
+Test.h: Output/.compile-java
+	javah -classpath Output Test
+
 EXTRA_OBJS = $(LibDir)/libtest.bca
 
 include ../Makefile.singlesrc

@@ -1,7 +1,11 @@
 LEVEL = ../..
 TOOLNAME = llvm-tv
-USEDLIBS = 
 LLVMLIBS = analysis.a bcreader datastructure ipa.a support.a target.a vmcore
+
+# note: delete when FileUtils is assimilated into libsupport
+USEDLIBS = snapshot
+LLVMLIBS += bcwriter
+
 CPPFLAGS = $(shell $(LEVEL)/lib/wxwindows/wx-config --cflags)
 TOOLLINKOPTSB = $(shell $(LEVEL)/lib/wxwindows/wx-config --libs)
 

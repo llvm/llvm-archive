@@ -144,6 +144,8 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   displayHtml = new wxHtmlWindow(splitterWindow, LLVM_TV_HTML_WINDOW,
                                  wxDefaultPosition, wxDefaultSize,
                                  wxHW_SCROLLBAR_AUTO, "htmlWindow");
+  displayHtml->AppendToPage(Explanation);
+
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayHtml, 100);
 #endif

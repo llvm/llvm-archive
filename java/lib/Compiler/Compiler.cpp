@@ -432,28 +432,38 @@ namespace llvm { namespace Java { namespace {
     void emitClassInitializers(const VMClass* clazz) {
       static SetVector<const VMClass*> toInitClasses;
 
-      const ClassFile* classfile = clazz->getClassFile();
-      if (!classfile)
+      // If this is a primitive class we are done.
+      if (clazz->isPrimitive())
         return;
+
+      // If this class is already initialized, we are done.
+      if (!toInitClasses.insert(clazz))
+        return;
+
+      // If this class has a super class, initialize that first.
+      if (const VMClass* superClass = clazz->getSuperClass())
+        emitClassInitializers(superClass);
+
+      // If this class is an array, initialize its component class now.
+      if (const VMClass* componentClass = clazz->getComponentClass())
+        emitClassInitializers(componentClass);
+
+      // Schedule all its dynamically bound non abstract methods for
+      // compilation.
+      for (unsigned i = 0, e = clazz->getNumDynamicallyBoundMethods();
+           i != e; ++i) {
+        const VMMethod* method = clazz->getDynamicallyBoundMethod(i);
+        if (!method->isAbstract())
+          scheduleMethod(method);
+      }
+
       
-      if (toInitClasses.insert(clazz)) {
-        // If this class has a super class, initialize that first.
-        if (const VMClass* superClass = clazz->getSuperClass())
-          emitClassInitializers(superClass);
-
-        // Schedule all its dynamically bound non abstract methods for
-        // compilation.
-        for (unsigned i = 0, e = clazz->getNumDynamicallyBoundMethods();
-             i != e; ++i) {
-          const VMMethod* method = clazz->getDynamicallyBoundMethod(i);
-          if (!method->isAbstract())
-            scheduleMethod(method);
-        }
-
-        // Create constant strings for this class.
+      // If this class has a constant pool (was loaded from a
+      // classfile), create constant strings for it.
+      if (const ClassFile* classfile = clazz->getClassFile()) {
         Function* stringConstructors = module_->getOrInsertFunction(
-            clazz->getName() + "<strinit>",
-            FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false));
+          clazz->getName() + "<strinit>",
+          FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false));
         Instruction* I =
           new ReturnInst(NULL, new BasicBlock("entry", stringConstructors));
         for (unsigned i = 0, e = classfile->getNumConstants(); i != e; ++i)
@@ -1168,6 +1178,7 @@ namespace llvm { namespace Java { namespace {
 
       const VMClass* clazz = resolver_->getClass(type);
       const VMClass* arrayClass = resolver_->getArrayClass(clazz);
+      emitClassInitializers(arrayClass);
 
       push(allocateArray(arrayClass, count, currentBB_));
     }
@@ -1177,6 +1188,7 @@ namespace llvm { namespace Java { namespace {
 
       const VMClass* clazz = class_->getClass(index);
       const VMClass* arrayClass = resolver_->getArrayClass(clazz);
+      emitClassInitializers(arrayClass);
 
       push(allocateArray(arrayClass, count, currentBB_));
     }

@@ -83,7 +83,7 @@ minimum have a nested java.lang.Object struct as their first element.
 
 struct javaIntArray {
   struct java_lang_Object;
-  unsigned length;
+  int length;
   int array[0];
 };
 
@@ -98,7 +98,7 @@ contained elements):
 
 struct javaObjectArray {
   struct java_lang_Object;
-  unsigned length;
+  int length;
   java_lang_Object array[0];
 };
 

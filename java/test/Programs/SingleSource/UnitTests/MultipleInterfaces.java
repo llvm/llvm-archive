@@ -15,7 +15,7 @@ public class MultipleInterfaces
         public int i3();
     }
 
-    class C1 implements I3
+    private static class C1 implements I3
     {
         public int i1() { return 1; }
         public int i2() { return 2; }

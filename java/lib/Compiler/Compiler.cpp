@@ -621,7 +621,7 @@ namespace llvm { namespace Java { namespace {
                "Interface method not found in class definition!");
         unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
         init[i->second] = cast<ConstantStruct>(
-          classVI.vtable->getInitializer())->getElementAt(classMethodIdx);
+          classVI.vtable->getInitializer())->getOperand(classMethodIdx);
       }
 
       llvm::Constant* vtable = ConstantStruct::get(init);

@@ -21,21 +21,18 @@
 
 namespace llvm { namespace Java {
 
-  enum JType {
-    REFERENCE = 0, // this is not defined in the java spec
-    BOOLEAN = 4,
-    CHAR = 5,
-    FLOAT = 6,
-    DOUBLE = 7,
-    BYTE = 8,
-    SHORT = 9,
-    INT = 10,
-    LONG = 11,
-  };
+    enum JType {
+      BOOLEAN = 4,
+      CHAR = 5,
+      FLOAT = 6,
+      DOUBLE = 7,
+      BYTE = 8,
+      SHORT = 9,
+      INT = 10,
+      LONG = 11,
+    };
 
-  namespace Opcode {
-
-    enum {
+    enum Opcode {
       NOP = 0x00,
       ACONST_NULL = 0x01,
       ICONST_M1 = 0x02,
@@ -242,8 +239,6 @@ namespace llvm { namespace Java {
       IMPDEP1 = 0xFE,
       IMPDEP2 = 0xFF,
     };
-
-  } // namespace Opcode
 
   inline int readSByte(const uint8_t* code, unsigned& i) {
     return ((int8_t*)code)[++i];

@@ -923,9 +923,12 @@ namespace llvm { namespace Java { namespace {
           p->getType() == paramTy ? p : new CastInst(p, paramTy, TMP, bb);
       }
 
-      Value* r = new CallInst(fun, params, TMP, bb);
-      if (funTy->getReturnType() != Type::VoidTy)
+      if (funTy->getReturnType() == Type::VoidTy)
+        new CallInst(fun, params, "", bb);
+      else {
+        Value* r = new CallInst(fun, params, TMP, bb);
         opStack_.push(r);
+      }
     }
 
     void do_invokevirtual(unsigned bcI, unsigned index) {

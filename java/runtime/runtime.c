@@ -35,11 +35,11 @@ struct llvm_java_object_base {
 };
 
 struct llvm_java_object_typeinfo {
-  unsigned depth;
+  int depth;
   struct llvm_java_object_vtable** vtables;
-  unsigned lastIface;
+  int lastIface;
   union {
-    unsigned interfaceFlag;
+    int interfaceFlag;
     struct llvm_java_object_vtable** interfaces;
   };
 };
@@ -65,13 +65,18 @@ jint llvm_java_IsInstanceOf(jobject obj,
     return JNI_TRUE;
 
   /* we are checking against a class' typeinfo */
-  if (clazz->typeinfo.interfaceFlag != (unsigned)-1)
-    return objClazz->typeinfo.depth > clazz->typeinfo.depth &&
-           objClazz->typeinfo.vtables[objClazz->typeinfo.depth - clazz->typeinfo.depth - 1] == clazz;
+  if (clazz->typeinfo.interfaceFlag != -1) {
+    /* this class' vtable can only be found at this index */
+    int index = objClazz->typeinfo.depth - clazz->typeinfo.depth - 1;
+    return index >= 0 && objClazz->typeinfo.vtables[index] == clazz;
+  }
   /* otherwise we are checking against an interface's typeinfo */
-  else
-    return objClazz->typeinfo.lastIface >= clazz->typeinfo.lastIface &&
-           objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];
+  else {
+    /* this interface's vtable can only be found at this index */
+    int index = clazz->typeinfo.lastIface;
+    return objClazz->typeinfo.lastIface >= index &&
+           objClazz->typeinfo.interfaces[index];
+  }
 }
 
 

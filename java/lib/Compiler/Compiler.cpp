@@ -329,8 +329,8 @@ namespace llvm { namespace Java { namespace {
       // llvm_java_object_typeinfo struct first
 
       // depth
-      elements.push_back(Type::UIntTy);
-      init.push_back(llvm::ConstantUInt::get(elements[0], 0));
+      elements.push_back(Type::IntTy);
+      init.push_back(llvm::ConstantSInt::get(elements[0], 0));
       // superclasses vtable pointers
       elements.push_back(PointerType::get(PointerType::get(VTtype)));
       init.push_back(llvm::Constant::getNullValue(elements[1]));
@@ -566,7 +566,7 @@ namespace llvm { namespace Java { namespace {
       tie(depth, superClassesVTables) = buildSuperClassesVTables(cf, vi);
 
       // the depth (java/lang/Object has depth 0)
-      typeInfoInit.push_back(ConstantUInt::get(Type::UIntTy, depth));
+      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, depth));
       // the super classes' vtables
       typeInfoInit.push_back(superClassesVTables);
 

@@ -27,7 +27,7 @@ CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1
 LIBRARYNAME=test
 
-EXTRA_OBJS = $(LibDir)/libtest.bc
+EXTRA_OBJS = $(LibDir)/libtest.bca
 
 all:: Output/.compile-java $(addprefix Output/, $(addsuffix .llvm.bc, $(JAVA_TESTS)))
 

@@ -12,4 +12,9 @@
 	$(Echo) Compiling $< to bytecode
 	$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
 
+# optimize raw bytecode
+%.linked.bc: %.raw.bc $(LOPT)
+	$(Echo) Optimizing $<
+	$(Verb)$(LOPT) -simplifycfg -mem2reg -instcombine -f -o=$@ $<
+
 include $(LEVEL)/test/Makefile.test

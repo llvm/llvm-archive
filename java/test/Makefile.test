@@ -19,15 +19,16 @@ clean::
 # intermediate results
 .PRECIOUS: Output/.dir %.linked.bc %.raw.bc %.ll %.llvm.bc
 
-#rule to link in runtime to raw bytecode
-%.linked.bc: %.raw.bc $(LibDir)/libjrt.bc $(EXTRA_OBJS)
-	$(Echo) Linking $< with the Java runtime
-	$(Verb)$(LLINK) $^ -o=$@
+# -simplifycfg -mem2reg -instcombine 
 
-# rule to optimize the linked bytecode
-%.llvm.bc: %.linked.bc $(LOPT)
+# rule to link bytecode with runtime
+%.llvm: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
 	$(Echo) Optimizing $<
-	$(Verb)$(LOPT) -simplifycfg -mem2reg -instcombine -f -o=$@ $<
+	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) -ljrt $(EXTRA_OBJS)
+# rule to link bytecode with runtime
+%.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
+	$(Echo) Optimizing $<
+	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) -ljrt $(EXTRA_OBJS)
 
 # rule to make assembly from bytecode
 %.dis-ll: %.bc

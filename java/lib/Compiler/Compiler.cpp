@@ -462,6 +462,7 @@ namespace llvm { namespace Java { namespace {
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],
                            bc2bbMap_[f],
+                           in,
                            bc2bbMap_[bcI]);
         }
 
@@ -473,6 +474,7 @@ namespace llvm { namespace Java { namespace {
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],
                            bc2bbMap_[f],
+                           in,
                            bc2bbMap_[bcI]);
         }
 

@@ -330,17 +330,21 @@ namespace llvm { namespace Java { namespace {
             std::string methodDescr =
               method->getName()->str() +
               method->getDescriptor()->str();
-            unsigned& index = vi.m2iMap[methodDescr];
-            Function* vfun = module_->getOrInsertFunction
-              (className + '/' + methodDescr,
-               cast<FunctionType>(getType(method->getDescriptor(),
-                                          getClassInfo(className).type)));
+
+            std::string funcName = className + '/' + methodDescr;
+            const FunctionType* funcTy = cast<FunctionType>(
+              getType(method->getDescriptor(), getClassInfo(className).type));
+
+            Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
             toCompileFunctions_.insert(vfun);
+
+            unsigned& index = vi.m2iMap[methodDescr];
             if (!index) {
               index = elements.size();
-              elements.push_back(vfun->getType());
-              init.resize(elements.size(), NULL);
+              elements.resize(index + 1, NULL);
+              init.resize(index + 1, NULL);
             }
+            elements[index] = vfun->getType();
             init[index] = vfun;
           }
         }

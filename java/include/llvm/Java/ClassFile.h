@@ -79,9 +79,10 @@ namespace llvm { namespace Java {
     uint16_t getMinorVersion() const { return minorV_; }
     uint16_t getMajorVersion() const { return majorV_; }
 
-    ConstantMethodRef* getConstantMethodRef(unsigned index) const;
-    ConstantFieldRef* getConstantFieldRef(unsigned index) const;
     Constant* getConstant(unsigned index) const { return cPool_[index]; }
+    ConstantClass* getConstantClass(unsigned index) const;
+    ConstantFieldRef* getConstantFieldRef(unsigned index) const;
+    ConstantMethodRef* getConstantMethodRef(unsigned index) const;
 
     bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
     bool isFinal() const { return accessFlags_ & ACC_FINAL; }

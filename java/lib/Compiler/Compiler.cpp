@@ -138,7 +138,7 @@ namespace llvm { namespace Java { namespace {
       typedef std::map<std::string, unsigned> Field2IndexMap;
       Field2IndexMap f2iMap;
     };
-    typedef std::map<std::string, ClassInfo> Class2ClassInfoMap;
+    typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
 
     struct VTableInfo {
@@ -148,7 +148,7 @@ namespace llvm { namespace Java { namespace {
       typedef std::map<std::string, unsigned> Method2IndexMap;
       Method2IndexMap m2iMap;
     };
-    typedef std::map<std::string, VTableInfo> Class2VTableInfoMap;
+    typedef std::map<ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
 
   private:
@@ -159,7 +159,8 @@ namespace llvm { namespace Java { namespace {
       if (dynamic_cast<ConstantString*>(c))
         // FIXME: should return a String object represeting this ConstantString
         return ConstantPointerNull::get(
-          PointerType::get(getClassInfo("java/lang/String").type));
+          PointerType::get(
+            getClassInfo(ClassFile::get("java/lang/String")).type));
       else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
         return ConstantSInt::get(Type::IntTy, i->getValue());
       else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
@@ -175,7 +176,8 @@ namespace llvm { namespace Java { namespace {
     Type* getType(JType type) {
       switch (type) {
       case REFERENCE:
-        return PointerType::get(getClassInfo("java/lang/Object").type);
+        return PointerType::get(
+          getClassInfo(ClassFile::get("java/lang/Object")).type);
       case BOOLEAN: return Type::BoolTy;
       case CHAR: return Type::UShortTy;
       case FLOAT: return Type::FloatTy;
@@ -227,7 +229,7 @@ namespace llvm { namespace Java { namespace {
         unsigned e = descr.find(';', i);
         std::string className = descr.substr(i, e - i);
         i = e + 1;
-        return PointerType::get(getClassInfo(className).type);
+        return PointerType::get(getClassInfo(ClassFile::get(className)).type);
       }
       case '[':
         // FIXME: this should really be a new class
@@ -250,7 +252,8 @@ namespace llvm { namespace Java { namespace {
     void initializeClassInfoMap() {
       DEBUG(std::cerr << "Building ClassInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
-      ClassInfo& ci = c2ciMap_["java/lang/Object"];
+      ClassInfo& ci = c2ciMap_[cf];
+
       assert(!ci.type && ci.f2iMap.empty() &&
              "java/lang/Object ClassInfo should not be initialized!");
       ci.type = OpaqueType::get();
@@ -287,7 +290,8 @@ namespace llvm { namespace Java { namespace {
     void initializeVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
-      VTableInfo& vi = c2viMap_["java/lang/Object"];
+      VTableInfo& vi = c2viMap_[cf];
+
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "java/lang/Object VTableInfo should not be initialized!");
 
@@ -341,8 +345,7 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = "java/lang/Object/" + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(),
-                    getClassInfo("java/lang/Object").type));
+            getType(method->getDescriptor(), getClassInfo(cf).type));
 
           Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
           toCompileFunctions_.insert(vfun);
@@ -376,14 +379,15 @@ namespace llvm { namespace Java { namespace {
       initializeVTableInfoMap();
     }
 
-    const ClassInfo& getClassInfo(const std::string& className) {
-      Class2ClassInfoMap::iterator it = c2ciMap_.lower_bound(className);
-      if (it != c2ciMap_.end() && it->first == className)
+    const ClassInfo& getClassInfo(ClassFile* cf) {
+      const std::string& className = cf->getThisClass()->getName()->str();
+      Class2ClassInfoMap::iterator it = c2ciMap_.lower_bound(cf);
+      if (it != c2ciMap_.end() && it->first == cf)
         return it->second;
 
       DEBUG(std::cerr << "Building ClassInfo for: " << className << '\n');
-      ClassFile* cf = ClassFile::get(className);
-      ClassInfo& ci = c2ciMap_[className];
+      ClassInfo& ci = c2ciMap_[cf];
+
       assert(!ci.type && ci.f2iMap.empty() &&
              "got already initialized ClassInfo!");
       ci.type = OpaqueType::get();
@@ -391,7 +395,8 @@ namespace llvm { namespace Java { namespace {
       std::vector<const Type*> elements;
       ConstantClass* super = cf->getSuperClass();
       assert(super && "Class does not have superclass!");
-      const ClassInfo& superCI = getClassInfo(super->getName()->str());
+      const ClassInfo& superCI =
+        getClassInfo(ClassFile::get(super->getName()->str()));
       elements.push_back(superCI.type);
 
       const Fields& fields = cf->getFields();
@@ -452,14 +457,15 @@ namespace llvm { namespace Java { namespace {
         typeInfoInit);
     }
 
-    const VTableInfo& getVTableInfo(const std::string& className) {
-      Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(className);
-      if (it != c2viMap_.end() && it->first == className)
+    const VTableInfo& getVTableInfo(ClassFile* cf) {
+      const std::string& className = cf->getThisClass()->getName()->str();
+      Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(cf);
+      if (it != c2viMap_.end() && it->first == cf)
         return it->second;
 
       DEBUG(std::cerr << "Building VTableInfo for: " << className << '\n');
-      ClassFile* cf = ClassFile::get(className);
-      VTableInfo& vi = c2viMap_[className];
+      VTableInfo& vi = c2viMap_[cf];
+
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "got already initialized VTableInfo!");
 
@@ -467,7 +473,8 @@ namespace llvm { namespace Java { namespace {
       std::vector<llvm::Constant*> init;
       ConstantClass* super = cf->getSuperClass();
       assert(super && "Class does not have superclass!");
-      const VTableInfo& superVI = getVTableInfo(super->getName()->str());
+      const VTableInfo& superVI =
+        getVTableInfo(ClassFile::get(super->getName()->str()));
 
       vi.superVtables.push_back(superVI.vtable);
       vi.superVtables.reserve(superVI.superVtables.size() + 1);
@@ -503,7 +510,7 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = className + '/' + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), getClassInfo(className).type));
+            getType(method->getDescriptor(), getClassInfo(cf).type));
 
           Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
           toCompileFunctions_.insert(vfun);
@@ -543,7 +550,7 @@ namespace llvm { namespace Java { namespace {
 
       // get ClassInfo for class owning the field - this will force
       // the globals to be initialized
-      getClassInfo(fieldRef->getClass()->getName()->str());
+      getClassInfo(ClassFile::get(fieldRef->getClass()->getName()->str()));
 
       std::string globalName =
         fieldRef->getClass()->getName()->str() + '/' +
@@ -560,31 +567,29 @@ namespace llvm { namespace Java { namespace {
     Value* getField(unsigned bcI, unsigned index, Value* ptr) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
-
+      ClassFile* cf = ClassFile::get(fieldRef->getClass()->getName()->str());
       return getField(bcI,
-                      fieldRef->getClass()->getName()->str(),
+                      cf,
                       nameAndType->getName()->str(),
                       ptr);
     }
 
     Value* getField(unsigned bcI,
-                    std::string className,
+                    ClassFile* cf,
                     const std::string& fieldName,
                     Value* ptr) {
       // Cast ptr to correct type
-      ptr = new CastInst(ptr, PointerType::get(getClassInfo(className).type),
+      ptr = new CastInst(ptr, PointerType::get(getClassInfo(cf).type),
                          TMP, getBBAt(bcI));
-      ClassFile* classfile = ClassFile::get(className);
 
       // deref pointer
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       while (true) {
-        const ClassInfo& info = getClassInfo(className);
+        const ClassInfo& info = getClassInfo(cf);
         ClassInfo::Field2IndexMap::const_iterator it =
           info.f2iMap.find(fieldName);
         if (it == info.f2iMap.end()) {
-          className = classfile->getSuperClass()->getName()->str();
-          classfile = ClassFile::get(className);
+          cf = ClassFile::get(cf->getSuperClass()->getName()->str());
           indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
         }
         else {
@@ -1128,9 +1133,9 @@ namespace llvm { namespace Java { namespace {
       ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
-      const std::string className = methodRef->getClass()->getName()->str();
-      const ClassInfo& ci = getClassInfo(className);
-      const VTableInfo& vi = getVTableInfo(className);
+      ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
 
       std::string methodDescr =
         nameAndType->getName()->str() +
@@ -1139,7 +1144,7 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = opStack_.top(); // do not pop
       objRef = new CastInst(objRef, PointerType::get(ci.type),
                             "this", getBBAt(bcI));
-      Value* vtable = getField(bcI, className, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* vtable = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
                             TMP, getBBAt(bcI));
       vtable = new LoadInst(vtable, TMP, getBBAt(bcI));
@@ -1162,8 +1167,8 @@ namespace llvm { namespace Java { namespace {
       const std::string& methodDescr =
         methodName + nameAndType->getDescriptor()->str();
       std::string funcName = className + '/' + methodDescr;
+      const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
-      const ClassInfo& ci = getClassInfo(className);
       // constructor calls are statically bound
       if (methodName == "<init>") {
         FunctionType* funcType =
@@ -1200,15 +1205,14 @@ namespace llvm { namespace Java { namespace {
 
     void do_new(unsigned bcI, unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
-      const std::string& className = classRef->getName()->str();
-      ClassFile* cf = ClassFile::get(className);
-      const ClassInfo& ci = getClassInfo(className);
-      const VTableInfo& vi = getVTableInfo(className);
+      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
 
       Value* objRef = new MallocInst(ci.type,
                                      ConstantUInt::get(Type::UIntTy, 0),
                                      TMP, getBBAt(bcI));
-      Value* vtable = getField(bcI, className, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* vtable = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
                             TMP, getBBAt(bcI));
       vtable = new StoreInst(vi.vtable, vtable, getBBAt(bcI));
@@ -1243,11 +1247,11 @@ namespace llvm { namespace Java { namespace {
 
     void do_instanceof(unsigned bcI, unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
-      const std::string& className = classRef->getName()->str();
-      const VTableInfo& vi = getVTableInfo(className);
+      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const VTableInfo& vi = getVTableInfo(cf);
 
       Value* objRef = opStack_.top(); opStack_.pop();
-      Value* objBase = getField(bcI, className, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(LLVM_JAVA_ISINSTANCEOF,
                                                  Type::IntTy,
                                                  objBase->getType(),

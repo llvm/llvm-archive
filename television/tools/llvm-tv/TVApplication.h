@@ -16,6 +16,10 @@
 
 class TVFrame;
 
+/// FatalErrorBox - pop up an error message and quit.
+///
+void FatalErrorBox (const std::string msg);
+
 /// TVApplication - This class shows a window containing a status bar and a menu
 /// bar, and a list of files from a directory, that can be refreshed
 /// using a menu item.

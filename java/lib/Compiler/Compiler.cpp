@@ -1229,16 +1229,12 @@ namespace llvm { namespace Java { namespace {
       new StoreInst(v, getField(bcI, index, p), getBBAt(bcI));
     }
 
-    void makeCall(Value* fun, BasicBlock* bb) {
+    void makeCall(Value* fun,
+                  const std::vector<Value*> params,
+                  BasicBlock* bb) {
       const PointerType* funPtrTy = cast<PointerType>(fun->getType());
-      const FunctionType* funTy = cast<FunctionType>(funPtrTy->getElementType());
-      std::vector<Value*> params(funTy->getNumParams(), NULL);
-      for (unsigned i = 0, e = funTy->getNumParams(); i != e; ++i) {
-        Value* p = opStack_.top(); opStack_.pop();
-        const Type* paramTy = funTy->getParamType(i);
-        params[i] =
-          p->getType() == paramTy ? p : new CastInst(p, paramTy, TMP, bb);
-      }
+      const FunctionType* funTy =
+        cast<FunctionType>(funPtrTy->getElementType());
 
       if (funTy->getReturnType() == Type::VoidTy)
         new CallInst(fun, params, "", bb);
@@ -1246,6 +1242,20 @@ namespace llvm { namespace Java { namespace {
         Value* r = new CallInst(fun, params, TMP, bb);
         opStack_.push(r);
       }
+    }
+
+    std::vector<Value*> getParams(FunctionType* funTy, BasicBlock* bb) {
+      unsigned numParams = funTy->getNumParams();
+      std::vector<Value*> params(numParams);
+      while (numParams--) {
+        Value* p = opStack_.top(); opStack_.pop();
+        params[numParams] =
+          p->getType() == funTy->getParamType(numParams) ?
+          p :
+          new CastInst(p, funTy->getParamType(numParams), TMP, bb);
+      }
+
+      return params;
     }
 
     void do_invokevirtual(unsigned bcI, unsigned index) {
@@ -1261,27 +1271,33 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getName()->str() +
         nameAndType->getDescriptor()->str();
 
-      Value* objRef = opStack_.top(); // do not pop
+      FunctionType* funTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+
+      BasicBlock* BB = getBBAt(bcI);
+      std::vector<Value*> params(getParams(funTy, BB));
+
+      Value* objRef = params.front();
       objRef = new CastInst(objRef, PointerType::get(ci.type),
-                            "this", getBBAt(bcI));
+                            "this", BB);
       Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, getBBAt(bcI));
+      Value* vtable = new CallInst(f, objBase, TMP, BB);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
-                            TMP, getBBAt(bcI));
-      vtable = new LoadInst(vtable, className + "<vtable>", getBBAt(bcI));
+                            TMP, BB);
+      vtable = new LoadInst(vtable, className + "<vtable>", BB);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
              "could not find slot for virtual function!");
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
-        new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI));
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, getBBAt(bcI));
+        new GetElementPtrInst(vtable, indices, TMP, BB);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, BB);
 
-      makeCall(vfun, getBBAt(bcI));
+      makeCall(vfun, params, BB);
     }
 
     void do_invokespecial(unsigned bcI, unsigned index) {
@@ -1296,12 +1312,13 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
       // constructor calls are statically bound
+      BasicBlock* BB = getBBAt(bcI);
       if (methodName == "<init>") {
-        FunctionType* funcType =
+        FunctionType* funcTy =
           cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
-        Function* function = module_->getOrInsertFunction(funcName, funcType);
+        Function* function = module_->getOrInsertFunction(funcName, funcTy);
         toCompileFunctions_.insert(function);
-        makeCall(function, getBBAt(bcI));
+        makeCall(function, getParams(funcTy, BB), BB);
       }
       // otherwise we call the superclass' implementation of the method
       else {
@@ -1318,11 +1335,12 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getName()->str() +
         nameAndType->getDescriptor()->str();
 
-      FunctionType* funcType =
+      FunctionType* funcTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor()));
-      Function* function = module_->getOrInsertFunction(funcName, funcType);
+      Function* function = module_->getOrInsertFunction(funcName, funcTy);
       toCompileFunctions_.insert(function);
-      makeCall(function, getBBAt(bcI));
+      BasicBlock* BB = getBBAt(bcI);
+      makeCall(function, getParams(funcTy, BB), BB);
     }
 
     void do_invokeinterface(unsigned bcI, unsigned index) {
@@ -1338,30 +1356,36 @@ namespace llvm { namespace Java { namespace {
         nameAndType->getName()->str() +
         nameAndType->getDescriptor()->str();
 
-      Value* objRef = opStack_.top(); // do not pop
+      FunctionType* funTy =
+        cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+
+      BasicBlock* BB = getBBAt(bcI);
+      std::vector<Value*> params(getParams(funTy, BB));
+
+      Value* objRef = params.front();
       objRef = new CastInst(objRef, PointerType::get(ci.type),
-                            "this", getBBAt(bcI));
+                            "this", BB);
       Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, getBBAt(bcI));
+      Value* vtable = new CallInst(f, objBase, TMP, BB);
       // get the interfaces array of vtables
       std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 3));
       Value* interfaceVTables =
-        new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI));
-      interfaceVTables = new LoadInst(interfaceVTables, TMP, getBBAt(bcI));
+        new GetElementPtrInst(vtable, indices, TMP, BB);
+      interfaceVTables = new LoadInst(interfaceVTables, TMP, BB);
       // get the actual interface vtable
       indices.resize(1);
       indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
       Value* interfaceVTable =
-        new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI));
+        new GetElementPtrInst(vtable, indices, TMP, BB);
       interfaceVTable =
         new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
-                     TMP, getBBAt(bcI));
+                     TMP, BB);
       interfaceVTable =
-        new LoadInst(interfaceVTable, className + "<vtable>", getBBAt(bcI));
+        new LoadInst(interfaceVTable, className + "<vtable>", BB);
       // get the function pointer
       indices.resize(1);
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
@@ -1369,10 +1393,10 @@ namespace llvm { namespace Java { namespace {
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
-        new GetElementPtrInst(interfaceVTable, indices, TMP, getBBAt(bcI));
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, getBBAt(bcI));
+        new GetElementPtrInst(interfaceVTable, indices, TMP, BB);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, BB);
 
-      makeCall(vfun, getBBAt(bcI));
+      makeCall(vfun, params, BB);
     }
 
     void do_new(unsigned bcI, unsigned index) {
@@ -1427,7 +1451,8 @@ namespace llvm { namespace Java { namespace {
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
-      Value* r = new CallInst(f, objBase, vi.vtable, TMP, getBBAt(bcI));
+      Value* vtable = new CastInst(vi.vtable, PointerType::get(VTableInfo::VTableTy), TMP, getBBAt(bcI));
+      Value* r = new CallInst(f, objBase, vtable, TMP, getBBAt(bcI));
       opStack_.push(r);
     }
 

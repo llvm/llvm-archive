@@ -13,22 +13,16 @@ class PictureCanvas : public wxScrolledWindow {
   wxImage *myImage;
   wxBitmap *myBitmap;
 
-  void loadPicture (const wxString filename);
-  void setupBitmap ();
  public:
   PictureCanvas ()
     : wxScrolledWindow (0), myImage (0), myBitmap (0) {
   }
-  PictureCanvas (wxFrame *parent, const wxString filename)
-    : wxScrolledWindow (parent), myImage (0), myBitmap (0) {
-    loadPicture (filename);
-  }
-  PictureCanvas (wxFrame *parent, wxImage *image)
+  PictureCanvas (wxFrame *parent, wxImage *image = 0)
     : wxScrolledWindow (parent), myImage (image), myBitmap (0) {
-    setupBitmap ();
+    imageChanged ();
   }
+  void imageChanged ();
   void OnDraw (wxDC &aDC);
-  DECLARE_EVENT_TABLE ()
 };
 
 #endif // PICTURECANVAS_H

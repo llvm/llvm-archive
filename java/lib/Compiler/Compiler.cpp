@@ -74,20 +74,20 @@ namespace llvm { namespace Java { namespace {
                    unsigned t, unsigned f) {
             if (!bc2bbMap_[t])
                 bc2bbMap_[t] =
-                    new BasicBlock("bb@bc" + utostr(t), &function_);
+                    new BasicBlock("bc" + utostr(t), &function_);
             if (!bc2bbMap_[f])
                 bc2bbMap_[f] =
-                    new BasicBlock("bb@bc" + utostr(f), &function_);
+                    new BasicBlock("bc" + utostr(f), &function_);
         }
 
         void do_ifcmp(unsigned bcI, JSetCC cc,
                       unsigned t, unsigned f) {
             if (!bc2bbMap_[t])
                 bc2bbMap_[t] =
-                    new BasicBlock("bb@bc" + utostr(t), &function_);
+                    new BasicBlock("bc" + utostr(t), &function_);
             if (!bc2bbMap_[f])
                 bc2bbMap_[f] =
-                    new BasicBlock("bb@bc" + utostr(f), &function_);
+                    new BasicBlock("bc" + utostr(f), &function_);
         }
 
         void do_switch(unsigned bcI,
@@ -97,11 +97,11 @@ namespace llvm { namespace Java { namespace {
                 unsigned target = sw[i].second;
                 if (!bc2bbMap_[target])
                     bc2bbMap_[target] =
-                        new BasicBlock("bb@bc" + utostr(target), &function_);
+                        new BasicBlock("bc" + utostr(target), &function_);
             }
             if (!bc2bbMap_[defTarget])
                 bc2bbMap_[defTarget] =
-                    new BasicBlock("bb@bc" + utostr(defTarget), &function_);
+                    new BasicBlock("bc" + utostr(defTarget), &function_);
         }
 
     private:
@@ -117,7 +117,7 @@ namespace llvm { namespace Java { namespace {
             switch (type) {
                 // FIXME: this should really be a non-void type when the object
                 // model is finalized
-            case REFERENCE: return PointerType::get(Type::VoidTy);
+            case REFERENCE: return PointerType::get(Type::SByteTy);
             case BOOLEAN: return Type::BoolTy;
             case CHAR: return Type::UByteTy;
             case FLOAT: return Type::FloatTy;

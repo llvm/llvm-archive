@@ -242,7 +242,6 @@ namespace llvm { namespace Java { namespace {
 
       DEBUG(std::cerr << "Building ClassInfo for: " << className << '\n');
       ClassFile* cf = ClassFile::getClassFile(className);
-      emitStaticInitializers(cf);
       ClassInfo& ci = c2ciMap_[className];
       assert(!ci.type && ci.f2iMap.empty() &&
              "got already initialized ClassInfo!");
@@ -280,6 +279,7 @@ namespace llvm { namespace Java { namespace {
       module_->addTypeName(className, ci.type);
 
       assert(ci.type && "ClassInfo not initialized properly!");
+      emitStaticInitializers(cf);
       return ci;
     }
 

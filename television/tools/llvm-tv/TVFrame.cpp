@@ -11,6 +11,10 @@
 #include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm-tv/Config.h"
+#include "CFGGraphDrawer.h"
+#include "CallGraphDrawer.h"
+#include "DSAGraphDrawer.h"
+#include "PictureFrame.h"
 #include <dirent.h>
 #include <cassert>
 #include <sstream>
@@ -216,13 +220,25 @@ void TVFrame::Resize() {
   myTreeCtrl->SetSize(0, 0, size.x, 2*size.y/3);
 }
 
+// This method of TVApplication is placed in this file so that it can
+// be instantiated by all its callers.
+template<class Grapher>
+void TVApplication::OpenGraphView (TVTreeItemData *item) {
+  std::string title = Grapher::getDisplayTitle (item);
+  PictureFrame *wind = new PictureFrame (this, title.c_str ());
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new Grapher (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
+}
+
 void TVFrame::CallGraphView(wxCommandEvent &event) {
   // Get the selected LLVM object.
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new call graph view window.
-  myApp->OpenCallGraphView (item);
+  myApp->OpenGraphView<CallGraphDrawer> (item);
 }
 
 void TVFrame::CFGView(wxCommandEvent &event) {
@@ -231,17 +247,16 @@ void TVFrame::CFGView(wxCommandEvent &event) {
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new CFG view window.
-  myApp->OpenCFGView (item);
+  myApp->OpenGraphView<CFGGraphDrawer> (item);
 }
 
-// FIXME: These 3 functions are asking for a refactoring...
 void TVFrame::BUDSView(wxCommandEvent &event) {
   // Get the selected LLVM object.
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new BUDS view window.
-  myApp->OpenBUDSView(item);
+  myApp->OpenGraphView<BUGraphDrawer> (item);
 }
 
 void TVFrame::TDDSView(wxCommandEvent &event) {
@@ -250,7 +265,7 @@ void TVFrame::TDDSView(wxCommandEvent &event) {
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new TDDS view window.
-  myApp->OpenTDDSView(item);
+  myApp->OpenGraphView<TDGraphDrawer> (item);
 }
 
 void TVFrame::LocalDSView(wxCommandEvent &event) {
@@ -259,7 +274,7 @@ void TVFrame::LocalDSView(wxCommandEvent &event) {
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
   // Open up a new Local DS view window.
-  myApp->OpenLocalDSView(item);
+  myApp->OpenGraphView<LocalGraphDrawer> (item);
 }
 
 void TVFrame::CodeView(wxCommandEvent &event) {

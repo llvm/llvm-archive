@@ -311,7 +311,7 @@ namespace llvm { namespace Java { namespace {
 
       PATypeHolder holder = ci.type;
       cast<OpaqueType>(ci.type)->
-          refineAbstractTypeTo(StructType::get(elements));
+        refineAbstractTypeTo(StructType::get(elements));
       ci.type = holder.get();
 
       DEBUG(std::cerr << "Adding java/lang/Object = "
@@ -587,9 +587,9 @@ namespace llvm { namespace Java { namespace {
     /// Builds an interface VTable for the specified <class,interface>
     /// pair.
     llvm::Constant* buildInterfaceVTable(ClassFile* cf, ClassFile* interface) {
-        DEBUG(std::cerr << "Building interface vtable: "
-              << interface->getThisClass()->getName()->str() << " for: "
-              << cf->getThisClass()->getName()->str() << '\n');
+      DEBUG(std::cerr << "Building interface vtable: "
+            << interface->getThisClass()->getName()->str() << " for: "
+            << cf->getThisClass()->getName()->str() << '\n');
 
       const VTableInfo& classVI = getVTableInfo(cf);
       const VTableInfo& interfaceVI = getVTableInfo(interface);
@@ -1259,7 +1259,7 @@ namespace llvm { namespace Java { namespace {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "
               << classMethodDesc << '\n');
         FunctionType* jniFuncTy =
-            cast<FunctionType>(getJNIType(method->getDescriptor()));
+          cast<FunctionType>(getJNIType(method->getDescriptor()));
 
         std::string funcName =
           "Java_" +
@@ -1288,7 +1288,7 @@ namespace llvm { namespace Java { namespace {
         }
         Value* result = new CallInst(jniFunction, params, "", bb);
         if (result->getType() != Type::VoidTy)
-            result = new CastInst(result, function->getReturnType(), TMP,bb);
+          result = new CastInst(result, function->getReturnType(), TMP,bb);
         new ReturnInst(result, bb);
 
         return function;
@@ -1592,7 +1592,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_aload_common(Type* arrayTy) {
       Value* index = pop(Type::IntTy);
-      Value* arrayRef =	pop(PointerType::get(arrayTy));
+      Value* arrayRef = pop(PointerType::get(arrayTy));
 
       std::vector<Value*> indices;
       indices.reserve(3);

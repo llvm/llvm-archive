@@ -5,10 +5,9 @@ using namespace llvm;
 
 void TVSnapshot::readBytecodeFile () {
   std::string errorStr;
-  std::string FullFilePath = snapshotsPath + "/" + filename;
-  M = ParseBytecodeFile (FullFilePath, &errorStr);
+  M = ParseBytecodeFile (filename, &errorStr);
   if (!M)
-    std::cerr << "Error reading bytecode from '" << FullFilePath << "': "
-              << errorStr << "\n";
+    throw std::string ("Error reading bytecode from '" + filename + "': "
+                       + errorStr);
 }
 

@@ -2,11 +2,19 @@ Patterns used in LLVM-TV
 ------------------------
 
 1. TVTreeItem uses HTMLPrinter to display a Function or a Module as a
-   syntax-highlighted view. It also chooses a Strategy HTMLMarkup class to
+   syntax-highlighted view.  It also chooses a Strategy HTMLMarkup class to
    decide on whether to use a CSS-marked-up version or a regular HTML-based
    syntax-highlighting.
 
    HTMLPrinter is a Visitor which uses the InstVisitor C++ template, which in
    turn is an Iterator over the BasicBlocks of a Function, and all Instructions
-   in a BasicBlock. It calls methods on the HTMLMarkup that it is instantiated
+   in a BasicBlock.  It calls methods on the HTMLMarkup that it is instantiated
    with to emit syntax-highlighting for keywords, types, basic block names, etc.
+
+2. TVTreeItem is the abstract superclass for all nodes that appear in the tree
+   of LLVM-TV.  The root of the tree is the Singleton TVTreeRootItem which has
+   no displayable data.  The other subclasses of TVTreeItem are
+   TVTreeFunctionItem and TVTreeModuleItem which contain Function and Module
+   objects, respectively, corresponding to LLVM classes of the same name.
+
+3. The snapshots are encapsulated in the TVSnapshotList class...

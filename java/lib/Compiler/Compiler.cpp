@@ -1149,17 +1149,23 @@ namespace llvm { namespace Java { namespace {
     void do_laload() { do_aload_common(); }
     void do_faload() { do_aload_common(); }
     void do_daload() { do_aload_common(); }
-    void do_aaload() { do_aload_common(); }
-    void do_baload() { do_aload_common(); }
-    void do_caload() { do_aload_common(); }
-    void do_saload() { do_aload_common(); }
+    void do_aaload() {
+      do_aload_common();
+      do_cast_common(
+        PointerType::get(
+          getClassInfo(ClassFile::get("java/lang/Object")).type));
+    }
+    void do_baload() { do_aload_common(); do_cast_common(Type::IntTy); }
+    void do_caload() { do_aload_common(); do_cast_common(Type::IntTy); }
+    void do_saload() { do_aload_common(); do_cast_common(Type::IntTy); }
 
     void do_aload_common() {
       Value* index = currentOpStack_->pop(currentBB_);
       Value* arrayRef = currentOpStack_->pop(currentBB_);
 
       std::vector<Value*> indices;
-      indices.reserve(2);
+      indices.reserve(3);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 2));
       indices.push_back(index);
       Value* elementPtr =
@@ -1183,10 +1189,15 @@ namespace llvm { namespace Java { namespace {
     void do_lastore() { do_astore_common(); }
     void do_fastore() { do_astore_common(); }
     void do_dastore() { do_astore_common(); }
-    void do_aastore() { do_astore_common(); }
-    void do_bastore() { do_astore_common(); }
-    void do_castore() { do_astore_common(); }
-    void do_sastore() { do_astore_common(); }
+    void do_aastore() {
+      do_cast_common(
+        PointerType::get(
+          getClassInfo(ClassFile::get("java/lang/Object")).type));
+      do_astore_common();
+    }
+    void do_bastore() { do_cast_common(Type::SByteTy); do_astore_common(); }
+    void do_castore() { do_cast_common(Type::UShortTy); do_astore_common(); }
+    void do_sastore() { do_cast_common(Type::ShortTy); do_astore_common(); }
 
     void do_astore_common() {
       Value* value = currentOpStack_->pop(currentBB_);
@@ -1194,16 +1205,12 @@ namespace llvm { namespace Java { namespace {
       Value* arrayRef = currentOpStack_->pop(currentBB_);
 
       std::vector<Value*> indices;
-      indices.reserve(2);
+      indices.reserve(3);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 2));
       indices.push_back(index);
       Value* elementPtr =
 	new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
-      // We need this case because ints on the stack can be stored to
-      // arrays of bool, byte, short or char.
-      value = new CastInst(
-	value, cast<PointerType>(elementPtr->getType())->getElementType(),
-	TMP, currentBB_);
       new StoreInst(value, elementPtr, currentBB_);
     }
 

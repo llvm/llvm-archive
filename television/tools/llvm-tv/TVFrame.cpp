@@ -203,11 +203,10 @@ void TVFrame::CallGraphView(wxCommandEvent &event) {
 
   // Open up a new call graph view window.
   Module *M = item->getModule ();
-  if (!M) {
+  if (!M)
     wxMessageBox ("The selected item doesn't have a call graph to view.");
-    return;
-  }
-  myApp->OpenCallGraphView (M);
+  else
+    myApp->OpenCallGraphView (M);
 }
 
 void TVFrame::CFGView(wxCommandEvent &event) {
@@ -217,14 +216,12 @@ void TVFrame::CFGView(wxCommandEvent &event) {
 
   // Open up a new CFG view window.
   Function *F = item->getFunction ();
-  if (!F) {
+  if (!F)
     wxMessageBox ("The selected item doesn't have a CFG to view.");
-    return;
-  } else if (F->isExternal()) {
+  else if (F->isExternal())
     wxMessageBox("External functions have no CFG to view.");
-    return;
-  }
-  myApp->OpenCFGView (F);
+  else
+    myApp->OpenCFGView (F);
 }
 
 void TVFrame::CodeView(wxCommandEvent &event) {
@@ -234,14 +231,12 @@ void TVFrame::CodeView(wxCommandEvent &event) {
 
   // Open up a new CFG view window.
   Function *F = item->getFunction ();
-  if (!F) {
-    wxMessageBox ("The selected item doesn't have a CFG to view.");
-    return;
-  } else if (F->isExternal()) {
-    wxMessageBox("External functions have no code to view");
-    return;
-  }
-  myApp->OpenCodeView(F);
+  if (!F)
+    wxMessageBox ("Code can only be viewed on a per-function basis.");
+  else if (F->isExternal())
+    wxMessageBox("External functions have no code to view.");
+  else
+    myApp->OpenCodeView(F);
 }
 
 void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {

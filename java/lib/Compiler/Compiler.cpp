@@ -108,25 +108,21 @@ namespace llvm { namespace Java { namespace {
           new BranchInst(i->second, i->first);
     }
         
-    void do_if(unsigned bcI, JSetCC cc, JType type,
-               unsigned t, unsigned f) {
+    void do_if(JSetCC cc, JType type, unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
         bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
       if (!bc2bbMap_[f])
         bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
     }
 
-    void do_ifcmp(unsigned bcI, JSetCC cc,
-                  unsigned t, unsigned f) {
+    void do_ifcmp(JSetCC cc, unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
         bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
       if (!bc2bbMap_[f])
         bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
     }
 
-    void do_switch(unsigned bcI,
-                   unsigned defTarget,
-                   const SwitchCases& sw) {
+    void do_switch(unsigned defTarget, const SwitchCases& sw) {
       for (unsigned i = 0; i < sw.size(); ++i) {
         unsigned target = sw[i].second;
         if (!bc2bbMap_[target])
@@ -147,6 +143,7 @@ namespace llvm { namespace Java { namespace {
     Locals locals_;
     BC2BBMap bc2bbMap_;
     BasicBlock* prologue_;
+    BasicBlock* current_;
 
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
@@ -715,23 +712,17 @@ namespace llvm { namespace Java { namespace {
       return global;
     }
 
-    Value* getField(unsigned bcI, unsigned index, Value* ptr) {
+    Value* getField(unsigned index, Value* ptr) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
       ClassFile* cf = ClassFile::get(fieldRef->getClass()->getName()->str());
-      return getField(bcI,
-                      cf,
-                      nameAndType->getName()->str(),
-                      ptr);
+      return getField(cf, nameAndType->getName()->str(), ptr);
     }
 
-    Value* getField(unsigned bcI,
-                    ClassFile* cf,
-                    const std::string& fieldName,
-                    Value* ptr) {
+    Value* getField(ClassFile* cf, const std::string& fieldName, Value* ptr) {
       // Cast ptr to correct type
       ptr = new CastInst(ptr, PointerType::get(getClassInfo(cf).type),
-                         TMP, getBBAt(bcI));
+                         TMP, current_);
 
       // deref pointer
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
@@ -749,7 +740,7 @@ namespace llvm { namespace Java { namespace {
         }
       }
 
-      return new GetElementPtrInst(ptr, indices, TMP, getBBAt(bcI));
+      return new GetElementPtrInst(ptr, indices, TMP, current_);
     }
 
     Function* compileMethodOnly(const std::string& classMethodDesc) {
@@ -816,6 +807,8 @@ namespace llvm { namespace Java { namespace {
       // now insert fall through branches to all basic blocks that
       // don't have a terminator
       mapper.insertFallThroughBranches();
+
+      function->dump();
 
       return function;
     }
@@ -905,76 +898,80 @@ namespace llvm { namespace Java { namespace {
       // compile all other methods called by this method recursively
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
-//        compileMethodOnly(f->getName());
+        compileMethodOnly(f->getName());
       }
 
       return function;
     }
 
-    void do_aconst_null(unsigned bcI) {
+    void pre_inst(unsigned bcI) {
+      current_ = getBBAt(bcI);
+    }
+
+    void do_aconst_null() {
       opStack_.push(llvm::Constant::getNullValue(getType(REFERENCE)));
     }
 
-    void do_iconst(unsigned bcI, int value) {
+    void do_iconst(int value) {
       opStack_.push(ConstantSInt::get(Type::IntTy, value));
     }
 
-    void do_lconst(unsigned bcI, long long value) {
+    void do_lconst(long long value) {
       opStack_.push(ConstantSInt::get(Type::LongTy, value));
     }
 
-    void do_fconst(unsigned bcI, float value) {
+    void do_fconst(float value) {
       opStack_.push(ConstantFP::get(Type::FloatTy, value));
     }
 
-    void do_dconst(unsigned bcI, double value) {
+    void do_dconst(double value) {
       opStack_.push(ConstantFP::get(Type::DoubleTy, value));
     }
 
-    void do_ldc(unsigned bcI, unsigned index) {
+    void do_ldc(unsigned index) {
       Constant* c = cf_->getConstant(index);
       assert(getConstant(c) && "Java constant not handled!");
       opStack_.push(getConstant(c));
     }
 
-    void do_load(unsigned bcI, JType type, unsigned index) {
+    void do_load(JType type, unsigned index) {
       opStack_.push(new LoadInst(getOrCreateLocal(index, getType(type)),
-                                 TMP, getBBAt(bcI)));
+                                 TMP, current_));
     }
 
-    void do_aload(unsigned bcI, JType type) {
+    void do_aload(JType type) {
       assert(0 && "not implemented");
     }
 
-    void do_store(unsigned bcI, JType type, unsigned index) {
+    void do_store(JType type, unsigned index) {
       Value* val = opStack_.top(); opStack_.pop();
       const Type* valTy = val->getType();
       Value* ptr = getOrCreateLocal(index, getType(type));
       if (!valTy->isPrimitiveType() &&
           valTy != cast<PointerType>(ptr->getType())->getElementType())
-        ptr = new CastInst(ptr, PointerType::get(valTy), TMP, getBBAt(bcI));
-      opStack_.push(new StoreInst(val, ptr, getBBAt(bcI)));
+        ptr = new CastInst(ptr, PointerType::get(valTy), TMP, current_);
+      opStack_.push(new StoreInst(val, ptr, current_));
     }
 
-    void do_astore(unsigned bcI, JType type) {
+    void do_astore(JType type) {
       assert(0 && "not implemented");
     }
 
-    void do_pop(unsigned bcI) {
+    void do_pop() {
       opStack_.pop();
     }
 
-    void do_pop2(unsigned bcI) {
+    void do_pop2() {
       Value* v1 = opStack_.top(); opStack_.pop();
       if (isOneSlotValue(v1))
         opStack_.pop();
     }
 
-    void do_dup(unsigned bcI) {
+    void do_dup() {
       opStack_.push(opStack_.top());
     }
 
-    void do_dup_x1(unsigned bcI) {
+    void do_dup_x1() {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = opStack_.top(); opStack_.pop();
       opStack_.push(v1);
@@ -982,7 +979,7 @@ namespace llvm { namespace Java { namespace {
       opStack_.push(v1);
     }
 
-    void do_dup_x2(unsigned bcI) {
+    void do_dup_x2() {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = opStack_.top(); opStack_.pop();
       if (isOneSlotValue(v2)) {
@@ -999,7 +996,7 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    void do_dup2(unsigned bcI) {
+    void do_dup2() {
       Value* v1 = opStack_.top(); opStack_.pop();
       if (isOneSlotValue(v1)) {
         Value* v2 = opStack_.top(); opStack_.pop();
@@ -1014,7 +1011,7 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    void do_dup2_x1(unsigned bcI) {
+    void do_dup2_x1() {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = opStack_.top(); opStack_.pop();
       if (isOneSlotValue(v1)) {
@@ -1032,7 +1029,7 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    void do_dup2_x2(unsigned bcI) {
+    void do_dup2_x2() {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = opStack_.top(); opStack_.pop();
       if (isOneSlotValue(v1)) {
@@ -1070,231 +1067,227 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    void do_swap(unsigned bcI) {
+    void do_swap() {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = opStack_.top(); opStack_.pop();
       opStack_.push(v1);
       opStack_.push(v2);
     }
 
-    void do_add(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Add);
+    void do_add() {
+      do_binary_op_common(Instruction::Add);
     }
 
-    void do_sub(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Sub);
+    void do_sub() {
+      do_binary_op_common(Instruction::Sub);
     }
 
-    void do_mul(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Mul);
+    void do_mul() {
+      do_binary_op_common(Instruction::Mul);
     }
 
-    void do_div(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Div);
+    void do_div() {
+      do_binary_op_common(Instruction::Div);
     }
 
-    void do_rem(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Rem);
+    void do_rem() {
+      do_binary_op_common(Instruction::Rem);
     }
 
-    void do_neg(unsigned bcI) {
+    void do_neg() {
       Value* v1 = opStack_.top(); opStack_.pop();
-      opStack_.push(BinaryOperator::createNeg(v1, TMP, getBBAt(bcI)));
+      opStack_.push(BinaryOperator::createNeg(v1, TMP, current_));
     }
 
-    void do_shl(unsigned bcI) {
-      do_shift_common(bcI, Instruction::Shl);
+    void do_shl() {
+      do_shift_common(Instruction::Shl);
     }
 
-    void do_shr(unsigned bcI) {
-      do_shift_common(bcI, Instruction::Shr);
+    void do_shr() {
+      do_shift_common(Instruction::Shr);
     }
 
-    void do_ushr(unsigned bcI) {
+    void do_ushr() {
       // cast value to be shifted into its unsigned version
-      do_swap(bcI);
+      do_swap();
       Value* value = opStack_.top(); opStack_.pop();
       value = new CastInst(value, value->getType()->getUnsignedVersion(),
-                           TMP, getBBAt(bcI));
+                           TMP, current_);
       opStack_.push(value);
-      do_swap(bcI);
+      do_swap();
 
-      do_shift_common(bcI, Instruction::Shr);
+      do_shift_common(Instruction::Shr);
 
       value = opStack_.top(); opStack_.pop();
       // cast shifted value back to its original signed version
       opStack_.push(new CastInst(value, value->getType()->getSignedVersion(),
-                                 TMP, getBBAt(bcI)));
+                                 TMP, current_));
     }
 
-    void do_shift_common(unsigned bcI, Instruction::OtherOps op) {
+    void do_shift_common(Instruction::OtherOps op) {
       Value* amount = opStack_.top(); opStack_.pop();
       Value* value = opStack_.top(); opStack_.pop();
-      amount = new CastInst(amount, Type::UByteTy, TMP, getBBAt(bcI));
-      opStack_.push(new ShiftInst(op, value, amount, TMP, getBBAt(bcI)));
+      amount = new CastInst(amount, Type::UByteTy, TMP, current_);
+      opStack_.push(new ShiftInst(op, value, amount, TMP, current_));
     }
 
-    void do_and(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::And);
+    void do_and() {
+      do_binary_op_common(Instruction::And);
     }
 
-    void do_or(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Or);
+    void do_or() {
+      do_binary_op_common(Instruction::Or);
     }
 
-    void do_xor(unsigned bcI) {
-      do_binary_op_common(bcI, Instruction::Xor);
+    void do_xor() {
+      do_binary_op_common(Instruction::Xor);
     }
 
-    void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
+    void do_binary_op_common(Instruction::BinaryOps op) {
       Value* v2 = opStack_.top(); opStack_.pop();
       Value* v1 = opStack_.top(); opStack_.pop();
-      opStack_.push(BinaryOperator::create(op, v1, v2, TMP,getBBAt(bcI)));
+      opStack_.push(BinaryOperator::create(op, v1, v2, TMP,current_));
     }
 
 
-    void do_iinc(unsigned bcI, unsigned index, int amount) {
+    void do_iinc(unsigned index, int amount) {
       Value* v = new LoadInst(getOrCreateLocal(index, Type::IntTy),
-                              TMP, getBBAt(bcI));
+                              TMP, current_);
       BinaryOperator::createAdd(v, ConstantSInt::get(Type::IntTy, amount),
-                                TMP, getBBAt(bcI));
-      new StoreInst(v, getOrCreateLocal(index, Type::IntTy), getBBAt(bcI));
+                                TMP, current_);
+      new StoreInst(v, getOrCreateLocal(index, Type::IntTy), current_);
     }
 
-    void do_convert(unsigned bcI, JType to) {
+    void do_convert(JType to) {
       Value* v1 = opStack_.top(); opStack_.pop();
-      opStack_.push(new CastInst(v1, getType(to), TMP, getBBAt(bcI)));
+      opStack_.push(new CastInst(v1, getType(to), TMP, current_));
     }
 
-    void do_lcmp(unsigned bcI) {
+    void do_lcmp() {
       Value* v2 = opStack_.top(); opStack_.pop();
       Value* v1 = opStack_.top(); opStack_.pop();
-      Value* c = BinaryOperator::createSetGT(v1, v2, TMP, getBBAt(bcI));
+      Value* c = BinaryOperator::createSetGT(v1, v2, TMP, current_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
-                                getBBAt(bcI));
-      c = BinaryOperator::createSetLT(v1, v2, TMP, getBBAt(bcI));
+                                current_);
+      c = BinaryOperator::createSetLT(v1, v2, TMP, current_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
-                         getBBAt(bcI));
+                         current_);
       opStack_.push(r);
     }
 
-    void do_cmpl(unsigned bcI) {
-      do_cmp_common(bcI, -1);
+    void do_cmpl() {
+      do_cmp_common(-1);
     }
 
-    void do_cmpg(unsigned bcI) {
-      do_cmp_common(bcI, 1);
+    void do_cmpg() {
+      do_cmp_common(1);
     }
 
-    void do_cmp_common(unsigned bcI, int valueIfUnordered) {
+    void do_cmp_common(int valueIfUnordered) {
       Value* v2 = opStack_.top(); opStack_.pop();
       Value* v1 = opStack_.top(); opStack_.pop();
-      Value* c = BinaryOperator::createSetGT(v1, v2, TMP, getBBAt(bcI));
+      Value* c = BinaryOperator::createSetGT(v1, v2, TMP, current_);
       Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
                                 ConstantSInt::get(Type::IntTy, 0), TMP,
-                                getBBAt(bcI));
-      c = BinaryOperator::createSetLT(v1, v2, TMP, getBBAt(bcI));
+                                current_);
+      c = BinaryOperator::createSetLT(v1, v2, TMP, current_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
-                         getBBAt(bcI));
+                         current_);
       c = new CallInst(module_->getOrInsertFunction
                        ("llvm.isunordered",
                         Type::BoolTy, v1->getType(), v2->getType(), 0),
-                       v1, v2, TMP, getBBAt(bcI));
+                       v1, v2, TMP, current_);
       r = new SelectInst(c, ConstantSInt::get(Type::IntTy, valueIfUnordered),
-                         r, TMP, getBBAt(bcI));
+                         r, TMP, current_);
       opStack_.push(r);
     }
 
-    void do_if(unsigned bcI, JSetCC cc, JType type,
+    void do_if(JSetCC cc, JType type,
                unsigned t, unsigned f) {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = llvm::Constant::getNullValue(v1->getType());
-      Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, getBBAt(bcI));
-      new BranchInst(getBBAt(t), getBBAt(f), c, getBBAt(bcI));
+      Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, current_);
+      new BranchInst(getBBAt(t), getBBAt(f), c, current_);
     }
 
-    void do_ifcmp(unsigned bcI, JSetCC cc,
+    void do_ifcmp(JSetCC cc,
                   unsigned t, unsigned f) {
       Value* v2 = opStack_.top(); opStack_.pop();
       Value* v1 = opStack_.top(); opStack_.pop();
-      Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, getBBAt(bcI));
-      new BranchInst(getBBAt(t), getBBAt(f), c, getBBAt(bcI));
+      Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, current_);
+      new BranchInst(getBBAt(t), getBBAt(f), c, current_);
     }
 
-    void do_goto(unsigned bcI, unsigned target) {
-      new BranchInst(getBBAt(target), getBBAt(bcI));
+    void do_goto(unsigned target) {
+      new BranchInst(getBBAt(target), current_);
     }
 
-    void do_jsr(unsigned bcI, unsigned target) {
+    void do_jsr(unsigned target) {
       assert(0 && "not implemented");
     }
 
-    void do_ret(unsigned bcI, unsigned index) {
+    void do_ret(unsigned index) {
       assert(0 && "not implemented");
     }
 
-    void do_switch(unsigned bcI,
-                   unsigned defTarget,
-                   const SwitchCases& sw) {
+    void do_switch(unsigned defTarget, const SwitchCases& sw) {
       Value* v1 = opStack_.top(); opStack_.pop();
-      SwitchInst* in = new SwitchInst(v1, getBBAt(defTarget), getBBAt(bcI));
+      SwitchInst* in = new SwitchInst(v1, getBBAt(defTarget), current_);
       for (unsigned i = 0; i < sw.size(); ++i)
         in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
                     getBBAt(sw[i].second));
     }
 
-    void do_return(unsigned bcI) {
+    void do_return() {
       Value* v1 = opStack_.top(); opStack_.pop();
-      new ReturnInst(v1, getBBAt(bcI));
+      new ReturnInst(v1, current_);
     }
 
-    void do_return_void(unsigned bcI) {
-      new ReturnInst(NULL, getBBAt(bcI));
+    void do_return_void() {
+      new ReturnInst(NULL, current_);
     }
 
-    void do_getstatic(unsigned bcI, unsigned index) {
-      Value* v = new LoadInst(getStaticField(index), TMP, getBBAt(bcI));
+    void do_getstatic(unsigned index) {
+      Value* v = new LoadInst(getStaticField(index), TMP, current_);
       opStack_.push(v);
     }
 
-    void do_putstatic(unsigned bcI, unsigned index) {
+    void do_putstatic(unsigned index) {
       Value* v = opStack_.top(); opStack_.pop();
       Value* ptr = getStaticField(index);
       const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
       if (v->getType() != fieldTy)
-        v = new CastInst(v, fieldTy, TMP, getBBAt(bcI));
-      new StoreInst(v, ptr, getBBAt(bcI));
+        v = new CastInst(v, fieldTy, TMP, current_);
+      new StoreInst(v, ptr, current_);
     }
 
-    void do_getfield(unsigned bcI, unsigned index) {
+    void do_getfield(unsigned index) {
       Value* p = opStack_.top(); opStack_.pop();
-      Value* v = new LoadInst(getField(bcI, index, p), TMP, getBBAt(bcI));
+      Value* v = new LoadInst(getField(index, p), TMP, current_);
       opStack_.push(v);
     }
 
-    void do_putfield(unsigned bcI, unsigned index) {
+    void do_putfield(unsigned index) {
       Value* v = opStack_.top(); opStack_.pop();
       Value* p = opStack_.top(); opStack_.pop();
-      new StoreInst(v, getField(bcI, index, p), getBBAt(bcI));
+      new StoreInst(v, getField(index, p), current_);
     }
 
-    void makeCall(Value* fun,
-                  const std::vector<Value*> params,
-                  BasicBlock* bb) {
+    void makeCall(Value* fun, const std::vector<Value*> params) {
       const PointerType* funPtrTy = cast<PointerType>(fun->getType());
       const FunctionType* funTy =
         cast<FunctionType>(funPtrTy->getElementType());
 
       if (funTy->getReturnType() == Type::VoidTy)
-        new CallInst(fun, params, "", bb);
+        new CallInst(fun, params, "", current_);
       else {
-        Value* r = new CallInst(fun, params, TMP, bb);
+        Value* r = new CallInst(fun, params, TMP, current_);
         opStack_.push(r);
       }
     }
 
-    std::vector<Value*> getParams(FunctionType* funTy, BasicBlock* bb) {
+    std::vector<Value*> getParams(FunctionType* funTy) {
       unsigned numParams = funTy->getNumParams();
       std::vector<Value*> params(numParams);
       while (numParams--) {
@@ -1302,13 +1295,13 @@ namespace llvm { namespace Java { namespace {
         params[numParams] =
           p->getType() == funTy->getParamType(numParams) ?
           p :
-          new CastInst(p, funTy->getParamType(numParams), TMP, bb);
+          new CastInst(p, funTy->getParamType(numParams), TMP, current_);
       }
 
       return params;
     }
 
-    void do_invokevirtual(unsigned bcI, unsigned index) {
+    void do_invokevirtual(unsigned index) {
       ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
@@ -1324,33 +1317,32 @@ namespace llvm { namespace Java { namespace {
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
 
-      BasicBlock* BB = getBBAt(bcI);
-      std::vector<Value*> params(getParams(funTy, BB));
+      std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
       objRef = new CastInst(objRef, PointerType::get(ci.type),
-                            "this", BB);
-      Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
+                            "this", current_);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, BB);
+      Value* vtable = new CallInst(f, objBase, TMP, current_);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
-                            TMP, BB);
-      vtable = new LoadInst(vtable, className + "<vtable>", BB);
+                            TMP, current_);
+      vtable = new LoadInst(vtable, className + "<vtable>", current_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
              "could not find slot for virtual function!");
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
-        new GetElementPtrInst(vtable, indices, TMP, BB);
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, BB);
+        new GetElementPtrInst(vtable, indices, TMP, current_);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, current_);
 
-      makeCall(vfun, params, BB);
+      makeCall(vfun, params);
     }
 
-    void do_invokespecial(unsigned bcI, unsigned index) {
+    void do_invokespecial(unsigned index) {
       ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
@@ -1362,13 +1354,12 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
       // constructor calls are statically bound
-      BasicBlock* BB = getBBAt(bcI);
       if (methodName == "<init>") {
         FunctionType* funcTy =
           cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
         Function* function = module_->getOrInsertFunction(funcName, funcTy);
         toCompileFunctions_.insert(function);
-        makeCall(function, getParams(funcTy, BB), BB);
+        makeCall(function, getParams(funcTy));
       }
       // otherwise we call the superclass' implementation of the method
       else {
@@ -1376,7 +1367,7 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    void do_invokestatic(unsigned bcI, unsigned index) {
+    void do_invokestatic(unsigned index) {
       ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
@@ -1389,11 +1380,10 @@ namespace llvm { namespace Java { namespace {
         cast<FunctionType>(getType(nameAndType->getDescriptor()));
       Function* function = module_->getOrInsertFunction(funcName, funcTy);
       toCompileFunctions_.insert(function);
-      BasicBlock* BB = getBBAt(bcI);
-      makeCall(function, getParams(funcTy, BB), BB);
+      makeCall(function, getParams(funcTy));
     }
 
-    void do_invokeinterface(unsigned bcI, unsigned index) {
+    void do_invokeinterface(unsigned index) {
       ConstantInterfaceMethodRef* methodRef =
         cf_->getConstantInterfaceMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
@@ -1410,32 +1400,31 @@ namespace llvm { namespace Java { namespace {
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
 
-      BasicBlock* BB = getBBAt(bcI);
-      std::vector<Value*> params(getParams(funTy, BB));
+      std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
       objRef = new CastInst(objRef, PointerType::get(ci.type),
-                            "this", BB);
-      Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
+                            "this", current_);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
         objBase->getType(), NULL);
-      Value* vtable = new CallInst(f, objBase, TMP, BB);
+      Value* vtable = new CallInst(f, objBase, TMP, current_);
       // get the interfaces array of vtables
       std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 3));
       Value* interfaceVTables =
-        new GetElementPtrInst(vtable, indices, TMP, BB);
-      interfaceVTables = new LoadInst(interfaceVTables, TMP, BB);
+        new GetElementPtrInst(vtable, indices, TMP, current_);
+      interfaceVTables = new LoadInst(interfaceVTables, TMP, current_);
       // get the actual interface vtable
       indices.clear();
       indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
       Value* interfaceVTable =
-        new GetElementPtrInst(interfaceVTables, indices, TMP, BB);
+        new GetElementPtrInst(interfaceVTables, indices, TMP, current_);
       interfaceVTable =
-        new LoadInst(interfaceVTable, className + "<vtable>", BB);
+        new LoadInst(interfaceVTable, className + "<vtable>", current_);
       interfaceVTable =
-        new CastInst(interfaceVTable, vi.vtable->getType(), TMP, BB);
+        new CastInst(interfaceVTable, vi.vtable->getType(), TMP, current_);
       // get the function pointer
       indices.resize(1);
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
@@ -1443,13 +1432,13 @@ namespace llvm { namespace Java { namespace {
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
-        new GetElementPtrInst(interfaceVTable, indices, TMP, BB);
-      Value* vfun = new LoadInst(vfunPtr, methodDescr, BB);
+        new GetElementPtrInst(interfaceVTable, indices, TMP, current_);
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, current_);
 
-      makeCall(vfun, params, BB);
+      makeCall(vfun, params);
     }
 
-    void do_new(unsigned bcI, unsigned index) {
+    void do_new(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
       ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const ClassInfo& ci = getClassInfo(cf);
@@ -1457,71 +1446,71 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = new MallocInst(ci.type,
                                      ConstantUInt::get(Type::UIntTy, 0),
-                                     TMP, getBBAt(bcI));
-      Value* vtable = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
+                                     TMP, current_);
+      Value* vtable = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
-                            TMP, getBBAt(bcI));
-      vtable = new StoreInst(vi.vtable, vtable, getBBAt(bcI));
+                            TMP, current_);
+      vtable = new StoreInst(vi.vtable, vtable, current_);
       opStack_.push(objRef);
     }
 
-    void do_newarray(unsigned bcI, JType type) {
+    void do_newarray(JType type) {
       assert(0 && "not implemented");
     }
 
-    void do_anewarray(unsigned bcI, unsigned index) {
+    void do_anewarray(unsigned index) {
       assert(0 && "not implemented");
     }
 
-    void do_arraylength(unsigned bcI) {
+    void do_arraylength() {
       assert(0 && "not implemented");
     }
 
-    void do_athrow(unsigned bcI) {
+    void do_athrow() {
       Value* objRef = opStack_.top(); opStack_.pop();
       objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                            TMP, getBBAt(bcI));
+                            TMP, current_);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_THROW, Type::IntTy, objRef->getType(), NULL);
-      new CallInst(f, objRef, TMP, getBBAt(bcI));
+      new CallInst(f, objRef, TMP, current_);
     }
 
-    void do_checkcast(unsigned bcI, unsigned index) {
-      do_dup(bcI);
-      do_instanceof(bcI, index);
+    void do_checkcast(unsigned index) {
+      do_dup();
+      do_instanceof(index);
       Value* r = opStack_.top(); opStack_.pop();
       Value* b = new SetCondInst(Instruction::SetEQ,
                                  r, ConstantSInt::get(Type::IntTy, 1),
-                                 TMP, getBBAt(bcI));
+                                 TMP, current_);
       // FIXME: if b is false we must throw a ClassCast exception
     }
 
-    void do_instanceof(unsigned bcI, unsigned index) {
+    void do_instanceof(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
       ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const VTableInfo& vi = getVTableInfo(cf);
 
       Value* objRef = opStack_.top(); opStack_.pop();
-      Value* objBase = getField(bcI, cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
       Function* f = module_->getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
-      Value* vtable = new CastInst(vi.vtable, PointerType::get(VTableInfo::VTableTy), TMP, getBBAt(bcI));
-      Value* r = new CallInst(f, objBase, vtable, TMP, getBBAt(bcI));
+      Value* vtable = new CastInst(vi.vtable,
+                                   PointerType::get(VTableInfo::VTableTy),
+                                   TMP, current_);
+      Value* r = new CallInst(f, objBase, vtable, TMP, current_);
       opStack_.push(r);
     }
 
-    void do_monitorenter(unsigned bcI) {
+    void do_monitorenter() {
       assert(0 && "not implemented");
     }
 
-    void do_monitorexit(unsigned bcI) {
+    void do_monitorexit() {
       assert(0 && "not implemented");
     }
 
-    void do_multianewarray(unsigned bcI,
-                           unsigned index,
-                           unsigned dims) {
+    void do_multianewarray(unsigned index, unsigned dims) {
       assert(0 && "not implemented");
     }
   };

@@ -6,6 +6,8 @@
 
 #include "wx/wx.h"
 #include "TVFrame.h"
+#include <sstream>
+#include "llvm/Assembly/Writer.h"
 
 /// refreshView - Make sure the display is up-to-date with respect to
 /// the list.
@@ -21,6 +23,77 @@ void TVListCtrl::refreshView () {
   }
 }
 
+/// TreeCtrl constructor that creates the root and adds it to the tree
+///
+TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
+                       const wxPoint& pos, const wxSize& size,
+                       long style)
+  : wxTreeCtrl(parent, id, pos, size, style) {
+  wxTreeItemId rootId = AddRoot(wxT("Snapshots"),
+				-1, -1, new TVTreeItemData(wxT("Snapshot Root")));
+  
+  SetItemImage(rootId, TreeCtrlIcon_FolderOpened, wxTreeItemIcon_Expanded);
+}
+
+
+/// TreeCtrl desconstructor
+///      
+TVTreeCtrl::~TVTreeCtrl() {
+}
+
+/// AddSnapshotsToTree - Given a list of snapshots the tree is populated
+///
+void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
+  
+  wxTreeItemId rootId = GetRootItem();
+  for(std::vector<TVSnapshot>::iterator I = list.begin(), E = list.end(); I != E; ++I) {
+    
+    //Get the Module associated with this snapshot
+    Module *M = I->getModule();
+    
+    wxTreeItemId id = AppendItem(rootId, I->label(), -1, -1, new TVTreeModuleItem(I->label(), M));
+    
+    
+
+    //Loop over functions in the module and add them to the tree
+    for(Module::iterator I = M->begin(), E=M->end(); I != E; ++I) {
+      wxTreeItemId childID = AppendItem(id, ((Function*)I)->getName().c_str(), -1, -1, new TVTreeFunctionItem(((Function*)I)->getName().c_str(), I));
+    }
+    
+  }   
+}
+
+/// updateSnapshotList - Update the tree with the current snapshot list
+///
+void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
+  DeleteChildren(GetRootItem());
+  
+
+  AddSnapshotsToTree(list);
+}
+
+/// updateTextDisplayed  - Updates text with the data from the item selected
+///
+void TVTreeCtrl::updateTextDisplayed() {
+  //Get parent and then the text window
+  wxTextCtrl *textDisplay = (wxTextCtrl*) ((wxSplitterWindow*) GetParent())->GetWindow2();
+
+  TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());
+  std::ostringstream Out;
+  
+  item->print(Out);
+  
+  textDisplay->Clear();
+  textDisplay->AppendText(Out.str().c_str());
+  
+}
+
+/// OnSelChanged - Trigger the text display to be updated with the new
+/// item selected
+void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
+  updateTextDisplayed();
+}
+
 ///==---------------------------------------------------------------------==///
 
 /// Default ctor - used to set up typical appearance of demo frame
@@ -30,9 +103,20 @@ TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
   CreateStatusBar ();
   SetSize (wxRect (100, 100, 400, 200));
   Show (TRUE);
+  splitterWindow = new wxSplitterWindow(this, LLVM_TV_SPLITTER_WINDOW, wxDefaultPosition,
+  			 wxDefaultSize, wxSP_3D);
 
-  // We'll initialize this later...  hack hack hack
-  myListCtrl = 0;
+
+  //Create tree view of snapshots
+  CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER, mySnapshotList);
+  
+  //Create static text to display module
+  displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL, "LLVM Code goes here", wxDefaultPosition, wxDefaultSize, wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
+
+
+  //Split window vertically
+  splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
+  
 }
 
 /// OnExit - respond to a request to exit the program.
@@ -65,11 +149,32 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
   //       -->  adds only changed items, or whatever makes sense,
   //       -->  kind of like TVFrame::refreshView()>
   wxMessageBox ("the list is supposed to refresh now...");
-  refreshSnapshotList ();
+  //refreshSnapshotList ();
 }
+
+void TVFrame::Resize() {
+  wxSize size = GetClientSize();
+  myTreeCtrl->SetSize(0, 0, size.x, 2*size.y/3);
+  
+}
+
+void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
+  myTreeCtrl = new TVTreeCtrl(splitterWindow, LLVM_TV_TREE_CTRL,
+			      wxDefaultPosition, wxDefaultSize,
+                              style);
+  
+  //if(list)
+  //myTreeCtrl->AddSnapshotsToTree(list);
+  Resize();
+}
+
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (wxID_EXIT, TVFrame::OnExit)
   EVT_MENU (wxID_ABOUT, TVFrame::OnAbout)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
+END_EVENT_TABLE ()
+
+BEGIN_EVENT_TABLE(TVTreeCtrl, wxTreeCtrl)
+EVT_TREE_SEL_CHANGED(LLVM_TV_TREE_CTRL, TVTreeCtrl::OnSelChanged)
 END_EVENT_TABLE ()

@@ -55,8 +55,8 @@ void TVFrame::refreshSnapshotList () {
       mySnapshotList.push_back (de->d_name);
   closedir (d);
 
-  if (myListCtrl)
-    myListCtrl->refreshView ();
+  if (myTreeCtrl != 0)
+    myTreeCtrl->updateSnapshotList(mySnapshotList);
 }
 
 void TVFrame::initializeSnapshotListAndView (std::string dirName) {
@@ -65,8 +65,8 @@ void TVFrame::initializeSnapshotListAndView (std::string dirName) {
   refreshSnapshotList ();
 
   // Initialize the snapshot list view
-  if (!myListCtrl)
-    myListCtrl = new TVListCtrl (this, mySnapshotList);
+  if (myTreeCtrl == 0)
+    CreateTree(wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER, mySnapshotList);
   SetStatusText ("Snapshot list has been loaded.");
 }
 
@@ -119,3 +119,5 @@ bool TVApplication::OnInit () {
 
   return true;
 }
+
+

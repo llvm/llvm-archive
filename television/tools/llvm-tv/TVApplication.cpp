@@ -51,11 +51,9 @@ void TVFrame::refreshSnapshotList () {
     FatalErrorBox ("trying to open directory %s: %s", directoryName,
                    strerror (errno)); 
   while (struct dirent *de = readdir (d))
-    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3)) {
-      std::string FullFilePath = mySnapshotDirName + "/" + 
-        std::string(de->d_name);
-      mySnapshotList.push_back (FullFilePath.c_str());
-    }
+    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
+      mySnapshotList.push_back (de->d_name);
+
   closedir (d);
 
   if (myTreeCtrl != 0)

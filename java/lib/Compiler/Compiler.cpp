@@ -2221,7 +2221,9 @@ namespace llvm { namespace Java { namespace {
       makeCall(vfun, params);
     }
 
-    Value* allocateObject(const ClassInfo& ci, BasicBlock* bb) {
+    Value* allocateObject(const ClassInfo& ci,
+                          const VTableInfo& vi,
+                          BasicBlock* bb) {
       static std::vector<Value*> params(4);
 
       Value* objRef = new MallocInst(ci.getType(), NULL, TMP, bb);
@@ -2232,6 +2234,13 @@ namespace llvm { namespace Java { namespace {
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
       new CallInst(memset_, params, "", bb);
 
+      // Install the vtable pointer.
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
+      Value* vtable = new CastInst(vi.vtable,
+                                   VTableBaseRefTy,
+                                   TMP, currentBB_);
+      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
+
       return objRef;
     }
 
@@ -2241,13 +2250,7 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getClassInfo(cf);
       const VTableInfo& vi = getVTableInfo(cf);
 
-      Value* objRef = allocateObject(ci, currentBB_);
-      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Value* vtable = new CastInst(vi.vtable,
-                                   VTableBaseRefTy,
-                                   TMP, currentBB_);
-      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
-      push(objRef);
+      push(allocateObject(ci, vi, currentBB_));
     }
 
     Value* getArrayLengthPtr(Value* arrayRef) const {
@@ -2268,29 +2271,9 @@ namespace llvm { namespace Java { namespace {
       return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
     }
 
-    void do_newarray(JType type) {
-      Value* count = pop(Type::UIntTy);
-
-      const ClassInfo& ci = getPrimitiveArrayInfo(type);
-      const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
-
-      do_newarray_common(ci, getType(type), vi, count);
-    }
-
-    void do_anewarray(unsigned index) {
-      Value* count = pop(Type::UIntTy);
-
-      ConstantClass* classRef = cf_->getConstantClass(index);
-      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
-      const ClassInfo& ci = getObjectArrayInfo();
-      const ClassInfo& ei = getClassInfo(cf);
-      const VTableInfo& vi = getObjectArrayVTableInfo(cf);
-
-      do_newarray_common(ci, PointerType::get(ei.getType()), vi, count);
-    }
-
     Value* allocateArray(const ClassInfo& ci,
-                         Type* elementTy,
+                         const Type* elementTy,
+                         const VTableInfo& vi,
                          Value* count,
                          BasicBlock* bb) {
       static std::vector<Value*> params(4);
@@ -2322,23 +2305,34 @@ namespace llvm { namespace Java { namespace {
       Value* lengthPtr = getArrayLengthPtr(objRef);
       new StoreInst(count, lengthPtr, bb);
 
-      return new CastInst(objRef, PointerType::get(ci.getType()), TMP, bb);
-    }
-
-    void do_newarray_common(const ClassInfo& ci,
-                            Type* elementTy,
-                            const VTableInfo& vi,
-                            Value* count) {
-      Value* objRef = allocateArray(ci, elementTy, count, currentBB_);
+      new CastInst(objRef, PointerType::get(ci.getType()), TMP, bb);
 
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, ObjectBaseRefTy,
-                                    TMP, currentBB_);
-      Value* vtable = new CastInst(vi.vtable,
-                                   VTableBaseRefTy,
-                                   TMP, currentBB_);
-      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
-      push(objRef);
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, bb);
+      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, bb);
+      return new CallInst(setVtable_, objBase, vtable, "", bb);      
+    }
+
+    void do_newarray(JType type) {
+      Value* count = pop(Type::UIntTy);
+
+      const ClassInfo& ci = getPrimitiveArrayInfo(type);
+      const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
+
+      push(allocateArray(ci, getType(type), vi, count, currentBB_));
+    }
+
+    void do_anewarray(unsigned index) {
+      Value* count = pop(Type::UIntTy);
+
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassInfo& ci = getObjectArrayInfo();
+      const ClassInfo& ei = getClassInfo(cf);
+      const VTableInfo& vi = getObjectArrayVTableInfo(cf);
+
+      const Type* elementTy = PointerType::get(ei.getType());
+      push(allocateArray(ci, elementTy, vi, count, currentBB_));
     }
 
     void do_arraylength() {

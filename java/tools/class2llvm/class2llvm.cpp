@@ -29,6 +29,18 @@ using namespace llvm;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
+namespace {
+
+    std::auto_ptr<std::istream> getInputStream(const std::string& fn) {
+        std::auto_ptr<std::istream> in;
+        if (fn == "-") in.reset(new std::istream(std::cin.rdbuf()));
+        else in.reset(new std::ifstream(fn.c_str()));
+
+        return in;
+    }
+
+}
+
 int main(int argc, char* argv[])
 {
     PrintStackTraceOnErrorSignal();
@@ -36,9 +48,9 @@ int main(int argc, char* argv[])
                                 "classfile to llvm utility");
 
     try {
-        std::ifstream in(InputFilename.c_str());
+        std::auto_ptr<std::istream> in(getInputStream(InputFilename));
         
-        std::auto_ptr<Java::ClassFile> cf(Java::ClassFile::readClassFile(in));
+        std::auto_ptr<Java::ClassFile> cf(Java::ClassFile::readClassFile(*in));
 
         Java::Compiler compiler;
 

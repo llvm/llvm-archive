@@ -70,20 +70,44 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
 
 }
 
-void VMClass::addField(const std::string& name, const Type* type)
-{
-  f2iMap_.insert(std::make_pair(name, elementTypes_.size()));
-  elementTypes_.push_back(type);
-}
-
 int VMClass::getFieldIndex(const std::string& name) const {
   Field2IndexMap::const_iterator it = f2iMap_.find(name);
   return it == f2iMap_.end() ? -1 : it->second;
 }
 
-void VMClass::resolveType() {
+void VMClass::computeLayout() {
+  std::vector<const Type*> layout;
+  if (isArray()) {
+    layout.reserve(3);
+    layout.push_back(resolver_->getClass("java/lang/Object")->getLayoutType());
+    layout.push_back(Type::UIntTy);
+    layout.push_back(ArrayType::get(componentClass_->getType(), 0));
+  }
+  else if (isInterface()) {
+    layout.reserve(1);
+    layout.push_back(resolver_->getClass("java/lang/Object")->getLayoutType());
+  }
+  else {
+    if (const VMClass* superClass = getSuperClass())
+      layout.push_back(superClass->getLayoutType());
+    else // This is java/lang/Object
+      layout.push_back(resolver_->getObjectBaseLayoutType());
+    // Now add the fields.
+    const Fields& fields = classFile_->getFields();
+    for (unsigned i = 0, e = fields.size(); i != e; ++i) {
+      Field* field = fields[i];
+      if (!field->isStatic()) {
+        memberFields_.push_back(NULL);
+        f2iMap_.insert(std::make_pair(field->getName()->str(),
+                                      memberFields_.size()));
+        layout.push_back(
+          getClassForDescriptor(field->getDescriptorIndex())->getType());
+      }
+    }
+  }
+
   PATypeHolder holder = layoutType_;
-  Type* resolvedType = StructType::get(elementTypes_);
+  Type* resolvedType = StructType::get(layout);
   cast<OpaqueType>(layoutType_)->refineAbstractTypeTo(resolvedType);
   layoutType_ = holder.get();
   type_ = PointerType::get(layoutType_);
@@ -98,20 +122,14 @@ void VMClass::link()
   if (isArray()) {
     superClasses_.reserve(1);
     superClasses_.push_back(resolver_->getClass("java/lang/Object"));
-    addField("super", superClasses_[0]->getLayoutType());
-    addField("<length>", Type::UIntTy);
-    addField("<data>", ArrayType::get(componentClass_->getType(), 0));
 
     interfaces_.reserve(2);
     interfaces_.push_back(resolver_->getClass("java/lang/Cloneable"));
     interfaces_.push_back(resolver_->getClass("java/io/Serializable"));
   }
   else {
-    // This is java/lang/Object.
-    if (!classFile_->getSuperClass())
-      addField("base", resolver_->getObjectBaseLayoutType());
     // This is any class but java/lang/Object.
-    else {
+    if (classFile_->getSuperClass()) {
       // Our direct super class.
       const VMClass* superClass =
         getClassForClass(classFile_->getSuperClassIndex());
@@ -119,9 +137,6 @@ void VMClass::link()
       // Add the interfaces of our direct superclass.
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)
         interfaces_.push_back(superClass->getInterface(i));
-
-      // We first add the struct of the super class.
-      addField("super", superClass->getLayoutType());
 
       // Although we can safely assume that all interfaces inherit
       // from java/lang/Object, java/lang/Class.getSuperclass()
@@ -155,18 +170,9 @@ void VMClass::link()
     std::sort(interfaces_.begin(), interfaces_.end());
     interfaces_.erase(std::unique(interfaces_.begin(), interfaces_.end()),
                       interfaces_.end());
-
-    // Now add the rest of the fields.
-    const Fields& fields = classFile_->getFields();
-    for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-      Field* field = fields[i];
-      if (!field->isStatic())
-        addField(field->getName()->str(),
-                 getClassForDescriptor(field->getDescriptorIndex())->getType());
-    }
   }
 
-  resolveType();
+  computeLayout();
 
   assert(!isa<OpaqueType>(getLayoutType()) &&"Class not initialized properly!");
 }

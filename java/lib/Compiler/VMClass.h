@@ -15,6 +15,7 @@
 #ifndef LLVM_JAVA_VMCLASS_H
 #define LLVM_JAVA_VMCLASS_H
 
+#include "VMField.h"
 #include <llvm/Constant.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
@@ -39,14 +40,12 @@ namespace llvm { namespace Java {
     unsigned interfaceIndex_;
     typedef std::map<std::string, int> Field2IndexMap;
     Field2IndexMap f2iMap_;
-    typedef std::vector<const Type*> ElementTypes;
-    ElementTypes elementTypes_;
     mutable std::vector<void*> resolvedConstantPool_;
     std::vector<const VMClass*> superClasses_;
     std::vector<const VMClass*> interfaces_;
+    std::vector<const VMField*> memberFields_;
 
-    void addField(const std::string& name, const Type* type);
-    void resolveType();
+    void computeLayout();
 
     friend class Resolver;
 

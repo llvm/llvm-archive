@@ -13,6 +13,9 @@ class ItemDisplayer {
   ///
   virtual wxWindow *getWindow () = 0;
 
+  /// getDisplayTitle - Return a title appropriate for when this
+  /// ItemDisplayer displays the given item, or if item is NULL, any item.
+  ///
   virtual std::string getDisplayTitle (TVTreeItemData *item) = 0;
 };
 

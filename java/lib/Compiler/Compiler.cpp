@@ -49,21 +49,6 @@ namespace llvm { namespace Java { namespace {
     return !isTwoSlotValue(v);
   }
 
-  llvm::Constant* getConstant(Constant* c) {
-    if (dynamic_cast<ConstantString*>(c))
-      assert(0 && "not implemented");
-    else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
-      return ConstantSInt::get(Type::IntTy, i->getValue());
-    else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
-      return ConstantFP::get(Type::FloatTy, f->getValue());
-    else if (ConstantLong* l = dynamic_cast<ConstantLong*>(c))
-      return ConstantSInt::get(Type::LongTy, l->getValue());
-    else if (ConstantDouble* d = dynamic_cast<ConstantDouble*>(c))
-      return ConstantFP::get(Type::DoubleTy, d->getValue());
-    else
-      return NULL; // FIXME: throw something
-  }
-
   struct Bytecode2BasicBlockMapper
     : public BytecodeParser<Bytecode2BasicBlockMapper> {
   public:
@@ -160,6 +145,23 @@ namespace llvm { namespace Java { namespace {
     BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
 
   private:
+    llvm::Constant* getConstant(Constant* c) {
+      if (dynamic_cast<ConstantString*>(c))
+        // FIXME: should return a String object represeting this ConstantString
+        return ConstantPointerNull::get(
+          PointerType::get(getClassInfo("java/lang/String").type));
+      else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
+        return ConstantSInt::get(Type::IntTy, i->getValue());
+      else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
+        return ConstantFP::get(Type::FloatTy, f->getValue());
+      else if (ConstantLong* l = dynamic_cast<ConstantLong*>(c))
+        return ConstantSInt::get(Type::LongTy, l->getValue());
+      else if (ConstantDouble* d = dynamic_cast<ConstantDouble*>(c))
+        return ConstantFP::get(Type::DoubleTy, d->getValue());
+      else
+        assert(0 && "Unknown llvm::Java::Constant!");
+    }
+
     Type* getType(JType type) {
       switch (type) {
       case REFERENCE:
@@ -908,7 +910,11 @@ namespace llvm { namespace Java { namespace {
 
     void do_putstatic(unsigned bcI, unsigned index) {
       Value* v = opStack_.top(); opStack_.pop();
-      new StoreInst(v, getStaticField(index), getBBAt(bcI));
+      Value* ptr = getStaticField(index);
+      const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
+      if (v->getType() != fieldTy)
+        v = new CastInst(v, fieldTy, TMP, getBBAt(bcI));
+      new StoreInst(v, ptr, getBBAt(bcI));
     }
 
     void do_getfield(unsigned bcI, unsigned index) {

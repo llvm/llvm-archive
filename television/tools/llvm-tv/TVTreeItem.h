@@ -7,13 +7,12 @@
 #ifndef TVTREEITEM_H
 #define TVTREEITEM_H
 
-#include "wx/wx.h"
-#include "wx/treectrl.h"
+#include "llvm/Assembly/CachedWriter.h"
+#include <wx/wx.h>
+#include <wx/treectrl.h>
 #include <ostream>
-#include <sstream>
 
 namespace llvm {
-  class CachedWriter;
   class Function;
   class GlobalValue;
   class Module;
@@ -34,6 +33,7 @@ public:
 protected:
   void printFunction(llvm::Function *F, llvm::CachedWriter &cw);
   void printModule(llvm::Module *M, llvm::CachedWriter &cw);
+  llvm::CachedWriter cw;
 private:
   wxString m_desc;
 };

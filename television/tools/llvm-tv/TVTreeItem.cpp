@@ -6,6 +6,7 @@
 #include "llvm/Assembly/Writer.h"
 #include <wx/treectrl.h>
 #include <cstdlib>
+#include <sstream>
 using namespace llvm;
 
 static inline void htmlHeader(std::ostream &os) {
@@ -27,7 +28,7 @@ static inline void htmlType(CachedWriter &cw, const Type* type) {
 
 static inline std::ostream&
 wrapType(std::ostream &os, const std::string &word) {
-  return os <<"<font color=\"green\"><b>" << word << "</b></font>";
+  return os << "<font color=\"green\"><b>" << word << "</b></font>";
 }
 
 static inline std::ostream&
@@ -150,12 +151,11 @@ void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
     for (BasicBlock::iterator I = BB->begin(), Ie = BB->end(); I != Ie; ++I) {
       std::ostringstream oss;
       cw.setStream(oss);
-      cw << *I;
+      cw << &*I;
       std::string InstrVal = oss.str();
-      cw.setStream(os);
 
       // Prettify the instruction for HTML view
-      for (unsigned i = 0; i != InstrVal.length(); ++i)
+      for (unsigned i = 0; i != InstrVal.size(); ++i)
         if (InstrVal[i] == '\n') {                          // \n => <br>
           InstrVal[i] = '<';
           std::string br = "br>";
@@ -177,6 +177,7 @@ void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
       os << "</tt>";
     }
   }
+  cw.setStream(os);
 
   if (!F->isExternal ())
     os << "<tt>}</tt>";
@@ -218,7 +219,8 @@ void TVTreeModuleItem::print(std::ostream &os) {
 
 void TVTreeModuleItem::printHTML(std::ostream &os) {
   if (myModule) {
-    CachedWriter cw(myModule, os);
+    cw.setStream(os);
+    cw.setModule(myModule);
     cw << CachedWriter::SymTypeOn;
     printModule(myModule, cw);
   }
@@ -231,9 +233,9 @@ void TVTreeFunctionItem::print(std::ostream &os) {
 
 void TVTreeFunctionItem::printHTML(std::ostream &os) {
   if (myFunc) {
-    CachedWriter cw(myFunc->getParent(), os);
+    cw.setStream(os);
+    cw.setModule(myFunc->getParent());
     cw << CachedWriter::SymTypeOn;
-    std::ostream &os = cw.getStream();
     htmlHeader(os);
     printFunction(myFunc, cw); 
     htmlFooter(os);

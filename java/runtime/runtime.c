@@ -92,18 +92,18 @@ static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
 }
 
 #define HANDLE_NATIVE_TYPE(TYPE) \
-  static j ## TYPE* llvm_java_get_##TYPE##_array_elements( \
+  static j##TYPE* llvm_java_get_##TYPE##_array_elements( \
     JNIEnv* env, \
     jarray array, \
     jboolean* isCopy) { \
     if (isCopy) \
       *isCopy = JNI_FALSE; \
-    return ((struct llvm_java_ ##TYPE## array*) array)->data; \
+    return ((struct llvm_java_##TYPE##array*) array)->data; \
   }
 #include "types.def"
 
 #define HANDLE_NATIVE_TYPE(TYPE) \
-  static void llvm_java_release_ ##TYPE## _array_elements( \
+  static void llvm_java_release_##TYPE##_array_elements( \
     JNIEnv* env, \
     jarray array, \
     j##TYPE* elements, \

@@ -9,8 +9,3 @@
 
 CLASS2LLVM := $(ToolDir)/class2llvm$(EXEEXT)
 CLASSDUMP  := $(ToolDir)/classdump$(EXEEXT)
-
-# rule to make bytecode from assembly
-%.bc: %.ll
-	$(Echo) Assembling $< to bytecode
-	$(Verb)$(LLVMAS) < $< > $@ || rm -f $@

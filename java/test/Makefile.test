@@ -22,6 +22,17 @@ clean::
 	$(Echo) Linking $< with the Java runtime
 	-$(Verb)$(GCCLD) -o=$*.llvm $< -L $(CFERuntimeLibDir) -L $(LibDir) $(EXTRA_OBJS)
 
+# rule to link raw bytecode with runtime
+%.raw.llvm %.raw.llvm.bc: %.raw.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
+	$(Echo) Linking $< with the Java runtime
+	-$(Verb)$(GCCLD) -disable-opt -o=$*.raw.llvm $< -L $(CFERuntimeLibDir) -L $(LibDir) $(EXTRA_OBJS)
+
+# add function trace code
+%.tracef.llvm %.tracef.llvm.bc: %.llvm %.llvm.bc $(LOPT)
+	$(Echo) Adding function trace code to $<
+	$(Verb)$(CP) $*.llvm $*.tracef.llvm
+	$(Verb)$(LOPT) -tracem -tracedisablehashdisable -f -o=$*.tracef.llvm.bc $*.llvm.bc
+
 # rule to make assembly from bytecode
 %.dis-ll: %.bc
 	$(Echo) Disassembling $<

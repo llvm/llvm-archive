@@ -32,10 +32,11 @@ using namespace llvm::Java;
 
 namespace llvm { namespace Java { namespace {
 
+    const std::string TMP("tmp");
+
     typedef std::vector<BasicBlock*> BC2BBMap;
     typedef std::stack<Value*, std::vector<Value*> > OperandStack;
     typedef std::vector<Value*> Locals;
-
 
     inline bool isTwoSlotValue(const Value* v) {
         return v->getType() == Type::LongTy | v->getType() == Type::DoubleTy;
@@ -213,7 +214,7 @@ namespace llvm { namespace Java { namespace {
 
         void do_load(unsigned bcI, JType type, unsigned index) {
             Instruction* in =
-                new LoadInst(getOrCreateLocal(index, getType(type)));
+                new LoadInst(getOrCreateLocal(index, getType(type)), TMP);
             opStack_.push(in);
             bc2bbMap_[bcI]->getInstList().push_back(in);
         }
@@ -379,7 +380,7 @@ namespace llvm { namespace Java { namespace {
         void do_shl(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = new ShiftInst(Instruction::Shl, v1, v2);
+            Instruction* in = new ShiftInst(Instruction::Shl, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
@@ -387,7 +388,7 @@ namespace llvm { namespace Java { namespace {
         void do_shr(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = new ShiftInst(Instruction::Shr, v1, v2);
+            Instruction* in = new ShiftInst(Instruction::Shr, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
@@ -395,10 +396,10 @@ namespace llvm { namespace Java { namespace {
         void do_ushr(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in =
-                new CastInst(v1, v1->getType()->getUnsignedVersion());
+                new CastInst(v1, v1->getType()->getUnsignedVersion(), TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             Value* v2 = opStack_.top(); opStack_.pop();
-            in = new ShiftInst(Instruction::Shr, in, v2);
+            in = new ShiftInst(Instruction::Shr, in, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
@@ -418,7 +419,7 @@ namespace llvm { namespace Java { namespace {
         void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(op, v1, v2);
+            Instruction* in = BinaryOperator::create(op, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
@@ -430,7 +431,7 @@ namespace llvm { namespace Java { namespace {
 
         void do_convert(unsigned bcI, JType to) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new CastInst(v1, getType(to));
+            Instruction* in = new CastInst(v1, getType(to), TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
@@ -451,7 +452,7 @@ namespace llvm { namespace Java { namespace {
                    unsigned t, unsigned f) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = llvm::Constant::getNullValue(getType(type));
-            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2);
+            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],
                            bc2bbMap_[f],
@@ -462,7 +463,7 @@ namespace llvm { namespace Java { namespace {
                       unsigned t, unsigned f) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2);
+            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],
                            bc2bbMap_[f],

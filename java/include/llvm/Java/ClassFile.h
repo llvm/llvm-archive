@@ -181,6 +181,7 @@ namespace llvm { namespace Java {
     uint16_t nameIdx_;
   public:
     ConstantClass(const ClassFile* cf, std::istream& is);
+    unsigned getNameIndex() const { return nameIdx_; }
     ConstantUtf8* getName() const {
       return parent_->getConstantUtf8(nameIdx_);
     }
@@ -194,9 +195,11 @@ namespace llvm { namespace Java {
     ConstantMemberRef(const ClassFile* cf, std::istream& is);
 
   public:
+    unsigned getClassIndex() const { return classIdx_; }
     ConstantClass* getClass() const {
       return parent_->getConstantClass(classIdx_);
     }
+    unsigned getNameAndTypeIndex() const { return nameAndTypeIdx_; }
     ConstantNameAndType* getNameAndType() const {
       return parent_->getConstantNameAndType(nameAndTypeIdx_);
     }
@@ -227,6 +230,7 @@ namespace llvm { namespace Java {
     uint16_t stringIdx_;
   public:
     ConstantString(const ClassFile* cf, std::istream& is);
+    unsigned getStringIndex() const { return stringIdx_; }
     ConstantUtf8* getValue() const {
       return parent_->getConstantUtf8(stringIdx_);
     }
@@ -272,9 +276,11 @@ namespace llvm { namespace Java {
     uint16_t descriptorIdx_;
   public:
     ConstantNameAndType(const ClassFile* cf, std::istream& is);
+    unsigned getNameIndex() const { return nameIdx_; }
     ConstantUtf8* getName() const {
       return parent_->getConstantUtf8(nameIdx_);
     }
+    unsigned getDescriptorIndex() const { return descriptorIdx_; }
     ConstantUtf8* getDescriptor() const {
       return parent_->getConstantUtf8(descriptorIdx_);
     }
@@ -309,7 +315,9 @@ public:
     bool isFinal() const { return accessFlags_ & ACC_FINAL; }
 
     const ClassFile* getParent() const { return parent_; }
+    unsigned getNameIndex() const { return nameIdx_; }
     ConstantUtf8* getName() const { return parent_->getConstantUtf8(nameIdx_); }
+    unsigned getDescriptorIndex() const { return descriptorIdx_; }
     ConstantUtf8* getDescriptor() const {
       return parent_->getConstantUtf8(descriptorIdx_);
     }
@@ -365,17 +373,19 @@ public:
   }
 
   class Attribute {
-    ConstantUtf8* name_;
-
   protected:
-    Attribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is);
+    const ClassFile* parent_;
+    uint16_t nameIdx_;
+
+    Attribute(const ClassFile* cf, uint16_t nameIdx, std::istream& is);
 
   public:
     static Attribute* readAttribute(const ClassFile* cf, std::istream& is);
 
     virtual ~Attribute();
 
-    ConstantUtf8* getName() const { return name_; }
+    unsigned getNameIndex() const { return nameIdx_; }
+    ConstantUtf8* getName() const { return parent_->getConstantUtf8(nameIdx_); }
 
     virtual std::ostream& dump(std::ostream& os) const;
 
@@ -395,13 +405,14 @@ public:
   }
 
   class ConstantValueAttribute : public Attribute {
-    Constant* value_;
+    uint16_t valueIdx_;
   public:
-    ConstantValueAttribute(ConstantUtf8* name,
-                           const ClassFile* cf,
+    ConstantValueAttribute(const ClassFile* cf,
+                           uint16_t nameIdx,
                            std::istream& is);
 
-    Constant* getValue() const { return value_; }
+    unsigned getValueIndex() const { return valueIdx_; }
+    Constant* getValue() const { return parent_->getConstant(valueIdx_); }
 
     std::ostream& dump(std::ostream& os) const;
   };
@@ -409,10 +420,11 @@ public:
   class CodeAttribute : public Attribute {
   public:
     class Exception {
+      const ClassFile* parent_;
       uint16_t startPc_;
       uint16_t endPc_;
       uint16_t handlerPc_;
-      ConstantClass* catchType_;
+      uint16_t catchTypeIdx_;
 
     public:
       Exception(const ClassFile* cf, std::istream& is);
@@ -420,7 +432,10 @@ public:
       uint16_t getStartPc() const { return startPc_; }
       uint16_t getEndPc() const { return endPc_; }
       uint16_t getHandlerPc() const { return handlerPc_; }
-      ConstantClass* getCatchType() const { return catchType_; }
+      uint16_t getCatchTypeIndex() const { return catchTypeIdx_; }
+      ConstantClass* getCatchType() const {
+        return catchTypeIdx_ ? NULL : parent_->getConstantClass(catchTypeIdx_);
+      }
 
       std::ostream& dump(std::ostream& os) const;
     };
@@ -436,7 +451,7 @@ public:
     Attributes attributes_;
 
   public:
-    CodeAttribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is);
+    CodeAttribute(const ClassFile* cf, uint16_t nameIdx, std::istream& is);
     ~CodeAttribute();
     uint16_t getMaxStack() const { return maxStack_; }
     uint16_t getMaxLocals() const { return maxLocals_; }
@@ -455,12 +470,12 @@ public:
 
   class ExceptionsAttribute : public Attribute {
   private:
-    ConstantUtf8* name_;
+    uint16_t nameIdx_;
     Classes exceptions_;
 
   public:
-    ExceptionsAttribute(ConstantUtf8* name,
-                        const ClassFile* cf,
+    ExceptionsAttribute(const ClassFile* cf,
+                        uint16_t nameIdx,
                         std::istream& is);
 
     const Classes& getExceptions() const { return exceptions_; }

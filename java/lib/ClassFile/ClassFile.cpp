@@ -657,24 +657,26 @@ const std::string Attribute::DEPRECATED = "Deprecated";
 
 Attribute* Attribute::readAttribute(const ClassFile* cf, std::istream& is)
 {
-  ConstantUtf8* name = cf->getConstantUtf8(readU2(is));
+  uint16_t nameIdx = readU2(is);
+  ConstantUtf8* name = cf->getConstantUtf8(nameIdx);
   if (!name)
     throw ClassFileSemanticError(
       "Representation of attribute name is not of type ConstantUtf8");
 
   if (CONSTANT_VALUE == name->str())
-    return new ConstantValueAttribute(name, cf, is);
+    return new ConstantValueAttribute(cf, nameIdx, is);
   else if (CODE == name->str())
-    return new CodeAttribute(name, cf, is);
+    return new CodeAttribute(cf, nameIdx, is);
   else {
     uint32_t length = readU4(is);
     is.ignore(length);
-    return new Attribute(name, cf, is);
+    return new Attribute(cf, nameIdx, is);
   }
 }
 
-Attribute::Attribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is)
-  : name_(name)
+Attribute::Attribute(const ClassFile* cf, uint16_t nameIdx, std::istream& is)
+  : parent_(cf),
+    nameIdx_(nameIdx)
 {
 
 }
@@ -691,29 +693,29 @@ std::ostream& Attribute::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // AttributeConstantValue implementation
-ConstantValueAttribute::ConstantValueAttribute(ConstantUtf8* name,
-                                               const ClassFile* cf,
+ConstantValueAttribute::ConstantValueAttribute(const ClassFile* cf,
+                                               uint16_t nameIdx,
                                                std::istream& is)
-  : Attribute(name, cf, is)
+  : Attribute(cf, nameIdx, is)
 {
   uint32_t length = readU4(is);
   if (length != 2)
     throw ClassFileSemanticError(
       "Length of ConstantValueAttribute is not 2");
-  value_ = cf->getConstant(readU2(is));
+  valueIdx_ = readU2(is);
 }
 
 std::ostream& ConstantValueAttribute::dump(std::ostream& os) const
 {
-  return Attribute::dump(os) << ": " << *value_;
+  return Attribute::dump(os) << ": " << *getValue();
 }
 
 //===----------------------------------------------------------------------===//
 // AttributeCode implementation
-CodeAttribute::CodeAttribute(ConstantUtf8* name,
-                             const ClassFile* cf,
+CodeAttribute::CodeAttribute(const ClassFile* cf,
+                             uint16_t nameIdx,
                              std::istream& is)
-  : Attribute(name, cf, is)
+  : Attribute(cf, nameIdx, is)
 {
   uint32_t length = readU4(is);
   maxStack_ = readU2(is);
@@ -752,18 +754,15 @@ std::ostream& CodeAttribute::dump(std::ostream& os) const
 }
 
 CodeAttribute::Exception::Exception(const ClassFile* cf, std::istream& is)
-  : catchType_(NULL)
+  : parent_(cf),
+    startPc_(readU2(is)),
+    endPc_(readU2(is)),
+    handlerPc_(readU2(is)),
+    catchTypeIdx_(readU2(is))
 {
-  startPc_ = readU2(is);
-  endPc_ = readU2(is);
-  handlerPc_ = readU2(is);
-  uint16_t idx = readU2(is);
-  if (idx) {
-    catchType_ = cf->getConstantClass(idx);
-    if (!catchType_)
-      throw ClassFileSemanticError
-        ("Representation of catch type is not of type ConstantClass");
-  }
+  if (catchTypeIdx_ && !cf->getConstantClass(catchTypeIdx_))
+    throw ClassFileSemanticError
+      ("Representation of catch type is not of type ConstantClass");
 }
 
 std::ostream& CodeAttribute::Exception::dump(std::ostream& os) const
@@ -779,10 +778,10 @@ std::ostream& CodeAttribute::Exception::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // AttributeExceptions implementation
-ExceptionsAttribute::ExceptionsAttribute(ConstantUtf8* name,
-                                         const ClassFile* cf,
+ExceptionsAttribute::ExceptionsAttribute(const ClassFile* cf,
+                                         uint16_t nameIdx,
                                          std::istream& is)
-  : Attribute(name, cf, is)
+  : Attribute(cf, nameIdx, is)
 {
   uint32_t length = readU4(is);
   readClasses(exceptions_, cf, is);

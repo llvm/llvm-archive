@@ -25,13 +25,12 @@ void VMMethod::init()
 {
   const std::string& methodName = method_->getName()->str();
   const std::string& methodDescriptor = method_->getDescriptor()->str();
+  const std::string& functionName =
+    parent_->getName() + '/' + methodName + methodDescriptor;
+
   Resolver* resolver = parent_->getResolver();
   const FunctionType* functionType = cast<FunctionType>(
     resolver->getType(methodDescriptor, !method_->isStatic()));
-  const std::string& className =
-    parent_->getClassFile()->getThisClass()->getName()->str();
-  const std::string& functionName =
-    className + '/' + methodName + methodDescriptor;
   Module* module = resolver->getModule();
   function_ = module->getOrInsertFunction(functionName, functionType);
 }

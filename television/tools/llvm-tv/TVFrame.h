@@ -97,8 +97,7 @@ class TVFrame : public wxFrame {
   std::string mySnapshotDirName;
   
   wxSplitterWindow *splitterWindow;
-  wxTextCtrl *displayText;
-  wxHtmlWindow *displayHtml;
+  wxWindow *displayWidget;
 
   void Resize();
  public:

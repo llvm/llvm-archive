@@ -13,3 +13,5 @@ all:: .class-stamp
 	$(JAVAC) $?
 	touch .class-stamp
 endif
+
+CLASS2LLVM := $(LEVEL)/tools/Debug/class2llvm$(EXEEXT)

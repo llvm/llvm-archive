@@ -540,6 +540,7 @@ namespace llvm { namespace Java { namespace {
         return arrayInfo;
       }
       }
+      abort();
     }
 
     /// Returns the ClassInfo object associated with an array of the
@@ -923,6 +924,7 @@ namespace llvm { namespace Java { namespace {
         return arrayInfo;
       }
       }
+      abort();
     }
 
     /// Initializes the VTableInfo map for object arrays; in other
@@ -997,6 +999,7 @@ namespace llvm { namespace Java { namespace {
                                      "java/lang/Object[]<vtable>",
                                      &module_);
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object[]\n");
+      return true;
     }
 
     const VTableInfo& getObjectArrayVTableInfo(ClassFile* cf) {

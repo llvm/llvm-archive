@@ -21,6 +21,15 @@ using namespace llvm::Java;
 
 void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
 {
+  const Type* valueTy = value->getType();
+  // Values of jboolean, jbyte, jchar and jshort are extended to a
+  // jint when pushed on the operand stack.
+  if (valueTy == Type::BoolTy ||
+      valueTy == Type::SByteTy ||
+      valueTy == Type::UShortTy ||
+      valueTy == Type::ShortTy)
+    value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
+
   TheStack.push(new AllocaInst(value->getType(),
 			       NULL,
 			       "opStack" + utostr(TheStack.size()),

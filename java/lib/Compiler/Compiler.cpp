@@ -2302,14 +2302,20 @@ namespace llvm { namespace Java { namespace {
                             Type* elementTy,
                             const VTableInfo& vi,
                             Value* count) {
+      // The size of the element.
+      llvm::Constant* elementSize =
+        ConstantExpr::getCast(ConstantExpr::getSizeOf(elementTy), Type::UIntTy);
+
       // The size of the array part of the struct.
       Value* size = BinaryOperator::create(
-        Instruction::Mul, count, ConstantExpr::getSizeOf(elementTy),
-        TMP, currentBB_);
-      // Plus the size of the rest of the struct.
+        Instruction::Mul, count, elementSize, TMP, currentBB_);
+      // The size of the rest of the array object.
+      llvm::Constant* arrayObjectSize = 
+        ConstantExpr::getCast(ConstantExpr::getSizeOf(ci.type), Type::UIntTy);
+
+      // Add the array part plus the object part together.
       size = BinaryOperator::create(
-        Instruction::Add, size, ConstantExpr::getSizeOf(ci.type),
-        TMP, currentBB_);
+        Instruction::Add, size, arrayObjectSize, TMP, currentBB_);
       // Allocate memory for the object.
       Value* objRef = new MallocInst(Type::SByteTy, size, TMP, currentBB_);
       objRef = new CastInst(objRef, PointerType::get(ci.type), TMP, currentBB_);

@@ -8,6 +8,7 @@
 
 namespace llvm {
   class Function;
+  class GlobalValue;
   class Module;
 }
 
@@ -25,6 +26,7 @@ public:
   virtual void printHTML(std::ostream &os) {}
 protected:
   void printFunction(llvm::Function *F, std::ostream &os);
+  void printGlobal(llvm::GlobalValue *GV, std::ostream &os);
   void printModule(llvm::Module *M, std::ostream &os);
 private:
   wxString m_desc;

@@ -3,7 +3,7 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Writer.h"
-#include "wx/treectrl.h"
+#include <wx/treectrl.h>
 #include <cstdlib>
 using namespace llvm;
 
@@ -87,9 +87,8 @@ static inline std::string stylizeTypesAndKeywords(std::string &str) {
     std::cerr << "[" << tokens[i] << "], ";
   std::cerr << "\n";
 #endif
-  
-  for (unsigned i = 0, e = tokens.size(); i != e; ++i)
-  {
+
+  for (unsigned i = 0, e = tokens.size(); i != e; ++i) {
     // "Wrap" keywords
     for (unsigned k = 0, ke = sizeof(keywords)/sizeof(char*); k != ke; ++k)
       if (tokens[i] == keywords[k]) {
@@ -130,7 +129,7 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   // print out function return type, name, and arguments
   os << "<tt>";
   if (F->isExternal ())
-    os << "declare ";
+    os << wrapKeyword("declare ");
   htmlType(os, F->getReturnType(), F->getParent ());
   os << " " << F->getName() << "(";
   for (Function::aiterator arg = F->abegin(), ae = F->aend(); arg != ae; ++arg){
@@ -182,13 +181,31 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   }
 
   if (!F->isExternal ())
-    os << "<tt>}</tt><br>";
+    os << "<tt>}</tt>";
+  os << "<br>";
+}
+
+void TVTreeItemData::printGlobal(GlobalValue *GV, std::ostream &os) {
+  GV->print(os);
 }
 
 void TVTreeItemData::printModule(Module *M, std::ostream &os) {
-  // display target, endianness types
+  // Display target size (bits), endianness types
+  std::ostringstream oss;
+  oss << "target = "
+      << (M->getEndianness() ? "little" : "big") << " endian <br>\n ";
+  oss << "pointersize = "
+      << (M->getPointerSize() ? "32" : "64") << "\n<br><br>";
 
-  // display all functions
+  // Display globals
+  for (Module::giterator G = M->gbegin(), Ge = M->gend(); G != Ge; ++G) {
+    printGlobal(G, oss);
+    oss << "<br>";
+  }
+  std::string str = oss.str();
+  os << stylizeTypesAndKeywords(str) << "<br>";
+
+  // Display functions
   for (Module::iterator F = M->begin(), Fe = M->end(); F != Fe; ++F) {
     printFunction(F, os);
     os << "<br>";

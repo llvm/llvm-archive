@@ -42,9 +42,9 @@ namespace llvm { namespace Java {
     /// insertAtEnd BasicBlock
     void store(unsigned i, Value* value, BasicBlock* insertAtEnd);
 
-    /// @brief - Loads the value of the \c i'th local variable and
-    /// appends any instructions to implement this to \c insertAtEnd
-    /// BasicBlock
+    /// @brief - Loads the value of the \c i'th local variable of type
+    /// \c type and appends any instructions to implement this to \c
+    /// insertAtEnd BasicBlock
     Value* load(unsigned i, const Type* type, BasicBlock* insertAtEnd);
   };
 

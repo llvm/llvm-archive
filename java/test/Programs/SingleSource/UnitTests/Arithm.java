@@ -4,6 +4,6 @@ public class Arithm
         int one = 1;
         int two = 2;
 
-        System.out.println((one + two) - (two * two) + (two / one) + (two % one) + (two << one) - (two >> 1) + (-two)); // = 2
+        Test.print_int_ln((one + two) - (two * two) + (two / one) + (two % one) + (two << one) - (two >> 1) + (-two)); // = 2
     }
 }

@@ -9,8 +9,8 @@ public class StaticInitializers
     }
 
     public static void main(String[] args) {
-        System.out.println("foo = " + foo);
-        System.out.println("bar = " + bar);
-        System.out.println("baz = " + baz);
+        Test.print_int_ln(foo);
+        Test.print_int_ln(bar);
+        Test.print_int_ln(baz);
     }
 }

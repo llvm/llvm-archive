@@ -9,6 +9,6 @@ public class FloatCompare
         for (double d = 100; d > 0; d -= 11)
             ++count;
 
-        System.out.println(count);
+        Test.print_int_ln(count);
     }
 }

@@ -15,5 +15,11 @@ public class FieldAccess extends FieldAccessBase
         b.f = 2.0F;
         ((FieldAccessBase) b).i = 4;
         ((FieldAccessBase) b).f = 1.0F;
+
+        Test.print_int_ln(((FieldAccessBase)b).i);
+        Test.print_int_ln(b.i);
+        Test.print_float_ln(((FieldAccessBase)b).f);
+        Test.print_float_ln(b.f);
+        Test.print_double_ln(b.d);
     }
 }

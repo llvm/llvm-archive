@@ -5,6 +5,6 @@ public class ForLoop
         for (int i = 0; i < 100; ++i)
             sum += i;
 
-        System.out.println(sum);
+        Test.print_int_ln(sum);
     }
 }

@@ -78,7 +78,7 @@ jint llvm_java_Throw(jobject obj) {
     jint length; \
     j##TYPE data[0]; \
   };
-#include "llvm/Java/types.def"
+#include "types.def"
 
 static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;
@@ -93,7 +93,7 @@ static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
       *isCopy = JNI_FALSE; \
     return ((struct llvm_java_ ##TYPE## array*) array)->data; \
   }
-#include "llvm/Java/types.def"
+#include "types.def"
 
 #define HANDLE_TYPE(TYPE) \
   static void llvm_java_release_ ##TYPE## _array_elements( \
@@ -110,7 +110,7 @@ static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
       abort(); \
     } \
   }
-#include "llvm/Java/types.def"
+#include "types.def"
 
 /* The JNI interface definition */
 static const struct JNINativeInterface llvm_java_JNINativeInterface = {

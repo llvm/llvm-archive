@@ -10,7 +10,8 @@ CONTENTS=${APP}.app/Contents
 mkdir $CONTENTS
 mkdir ${CONTENTS}/MacOS
 mkdir ${CONTENTS}/Resources
-/Developer/Tools/Rez -t APPL Carbon.r $WX/lib/libwx_macd-2.4.0.r -o $APP
+# don't know what we need this for...
+#/Developer/Tools/Rez -t APPL Carbon.r $WX/lib/libwx_macd-2.4.0.r -o $APP
 cp $BINARY ${CONTENTS}/MacOS/${APP}
 sed -e "s/IDENTIFIER/llvm-tv/" \
     -e "s/EXECUTABLE/$APP/" \

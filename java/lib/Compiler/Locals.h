@@ -16,12 +16,14 @@
 #define LLVM_JAVA_LOCALS_H
 
 #include <llvm/Java/Bytecode.h>
+#include <map>
 #include <vector>
 
 namespace llvm {
 
   class AllocaInst;
   class BasicBlock;
+  class Type;
   class Value;
 
 } // namespace llvm
@@ -29,7 +31,8 @@ namespace llvm {
 namespace llvm { namespace Java {
 
   class Locals {
-    std::vector<AllocaInst*> TheLocals;
+    typedef std::map<const Type*, AllocaInst*> SlotMap;
+    std::vector<SlotMap> TheLocals;
 
   public:
     explicit Locals(unsigned maxLocals);
@@ -42,7 +45,7 @@ namespace llvm { namespace Java {
     /// @brief - Loads the value of the \c i'th local variable and
     /// appends any instructions to implement this to \c insertAtEnd
     /// BasicBlock
-    Value* load(unsigned i, BasicBlock* insertAtEnd);
+    Value* load(unsigned i, const Type* type, BasicBlock* insertAtEnd);
   };
 
 } } // namespace llvm::Java

@@ -37,29 +37,46 @@ void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
     value = new CastInst(value, ObjectBaseRefTy,
                          "to-object-base", insertAtEnd);
 
-  if (!TheLocals[i] ||
-      TheLocals[i]->getType()->getElementType() != value->getType()) {
+  // Values of jboolean, jbyte, jchar and jshort are extended to a
+  // jint when stored in a local slot.
+  else if (valueTy == Type::BoolTy ||
+	   valueTy == Type::SByteTy ||
+	   valueTy == Type::UShortTy ||
+	   valueTy == Type::ShortTy)
+    value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
+
+  valueTy = value->getType();
+
+  SlotMap& slotMap = TheLocals[i];
+  SlotMap::iterator it = slotMap.find(valueTy);
+
+  if (it == slotMap.end()) {
     // Insert the alloca at the beginning of the entry block.
     BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
+    AllocaInst* alloca;
     if (entry->empty())
-      TheLocals[i] = new AllocaInst(
+      alloca = new AllocaInst(
         value->getType(),
         NULL,
         "local" + utostr(i),
         entry);
     else
-      TheLocals[i] = new AllocaInst(
+      alloca = new AllocaInst(
         value->getType(),
         NULL,
         "local" + utostr(i),
         &entry->front());
+    it = slotMap.insert(it, std::make_pair(valueTy, alloca));
   }
 
-  new StoreInst(value, TheLocals[i], insertAtEnd);
+  new StoreInst(value, it->second, insertAtEnd);
 }
 
-llvm::Value* Locals::load(unsigned i, BasicBlock* insertAtEnd)
+llvm::Value* Locals::load(unsigned i, const Type* type, BasicBlock* insertAtEnd)
 {
-  assert(TheLocals[i] && "Attempt to load a non initialized global!");
-  return new LoadInst(TheLocals[i], "load", insertAtEnd);
+  SlotMap& slotMap = TheLocals[i];
+  SlotMap::iterator it = slotMap.find(type);
+
+  assert(it != slotMap.end() && "Attempt to load a non initialized global!");
+  return new LoadInst(it->second, "load", insertAtEnd);
 }

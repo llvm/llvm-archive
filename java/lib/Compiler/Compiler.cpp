@@ -77,8 +77,8 @@ namespace llvm { namespace Java { namespace {
     ClassFile* cf_;
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
-    typedef std::map<BasicBlock*, std::pair<Locals,OperandStack> > BBInfoMap;
-    BBInfoMap bbInfoMap_;
+    typedef std::map<BasicBlock*, OperandStack> OpStackMap;
+    OpStackMap opStackMap_;
     BasicBlock* currentBB_;
     Locals* currentLocals_;
     OperandStack* currentOpStack_;
@@ -1270,6 +1270,8 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/Integer") != 0 &&
           classMethodDesc.find("java/lang/Long") != 0 &&
           classMethodDesc.find("java/lang/Short") != 0 &&
+          classMethodDesc.find("java/lang/StringBuffer") != 0 &&
+          classMethodDesc.find("java/util/IndexOutOfBoundsException") != 0 &&
           classMethodDesc.find("java/util/NoSuchElementException") != 0 &&
           classMethodDesc.find("java/util/AbstractCollection") != 0 &&
           classMethodDesc.find("java/util/AbstractList") != 0 &&
@@ -1284,7 +1286,7 @@ namespace llvm { namespace Java { namespace {
 
       Java::CodeAttribute* codeAttr = method->getCodeAttribute();
 
-      bbInfoMap_.clear();
+      opStackMap_.clear();
       bbBuilder_.reset(new BasicBlockBuilder(function, codeAttr));
 
       // Put arguments into locals.
@@ -1302,10 +1304,10 @@ namespace llvm { namespace Java { namespace {
       // NOTE: We create an operand stack one size too big because we
       // push extra values on the stack to simplify code generation
       // (see implementation of ifne).
-      bbInfoMap_.insert(
+      currentLocals_ = &locals;
+      opStackMap_.insert(
         std::make_pair(&function->getEntryBlock(),
-                       std::make_pair(locals,
-                                      OperandStack(codeAttr->getMaxStack()+1))));
+                       OperandStack(codeAttr->getMaxStack()+1)));
 
       // Insert the entry block to the work list.
       bbWorkList_.push_back(&function->getEntryBlock());
@@ -1315,13 +1317,11 @@ namespace llvm { namespace Java { namespace {
         currentBB_ = bbWorkList_.front();
         bbWorkList_.pop_front();
 
-        BBInfoMap::iterator bbInfo = bbInfoMap_.find(currentBB_);
-        assert(bbInfo != bbInfoMap_.end() &&
-               "Unknown entry operand stack and locals for basic block in "
-               "work list!");
+        OpStackMap::iterator opStack = opStackMap_.find(currentBB_);
+        assert(opStack != opStackMap_.end() &&
+               "Unknown operand stack for basic block in work list!");
 
-        currentLocals_ = &bbInfo->second.first;
-        currentOpStack_ = &bbInfo->second.second;
+        currentOpStack_ = &opStack->second;
 
         unsigned start, end;
         tie(start, end) = bbBuilder_->getBytecodeIndices(currentBB_);
@@ -1344,12 +1344,10 @@ namespace llvm { namespace Java { namespace {
                SI = succ_begin(currentBB_), SE = succ_end(currentBB_);
              SI != SE; ++SI) {
           BasicBlock* Succ = *SI;
-          BBInfoMap::iterator bbSuccInfo = bbInfoMap_.lower_bound(Succ);
-          if (bbSuccInfo == bbInfoMap_.end() || bbSuccInfo->first != Succ) {
-            bbInfoMap_.insert(bbSuccInfo,
-                              std::make_pair(Succ,
-                                             std::make_pair(*currentLocals_,
-                                                            *currentOpStack_)));
+          OpStackMap::iterator succOpStack = opStackMap_.lower_bound(Succ);
+          if (succOpStack == opStackMap_.end() || succOpStack->first != Succ) {
+            opStackMap_.insert(succOpStack,
+                              std::make_pair(Succ, *currentOpStack_));
             bbWorkList_.push_back(Succ);
           }
         }
@@ -1528,14 +1526,14 @@ namespace llvm { namespace Java { namespace {
       do_ldc(index);
     }
 
-    void do_iload(unsigned index) { do_load_common(index); }
-    void do_lload(unsigned index) { do_load_common(index); }
-    void do_fload(unsigned index) { do_load_common(index); }
-    void do_dload(unsigned index) { do_load_common(index); }
-    void do_aload(unsigned index) { do_load_common(index); }
+    void do_iload(unsigned index) { do_load_common(index, Type::IntTy); }
+    void do_lload(unsigned index) { do_load_common(index, Type::LongTy); }
+    void do_fload(unsigned index) { do_load_common(index, Type::FloatTy); }
+    void do_dload(unsigned index) { do_load_common(index, Type::DoubleTy); }
+    void do_aload(unsigned index) { do_load_common(index, ObjectBaseRefTy); }
 
-    void do_load_common(unsigned index) {
-      Value* val = currentLocals_->load(index, currentBB_);
+    void do_load_common(unsigned index, Type* type) {
+      Value* val = currentLocals_->load(index, type, currentBB_);
       push(val);
     }
 
@@ -1806,7 +1804,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_iinc(unsigned index, int amount) {
-      Value* v = currentLocals_->load(index, currentBB_);
+      Value* v = currentLocals_->load(index, Type::IntTy, currentBB_);
       Value* a = ConstantSInt::get(Type::IntTy, amount);
       v = BinaryOperator::createAdd(v, a, TMP, currentBB_);
       currentLocals_->store(index, v, currentBB_);
@@ -2018,6 +2016,21 @@ namespace llvm { namespace Java { namespace {
       const PointerType* funPtrTy = cast<PointerType>(fun->getType());
       const FunctionType* funTy =
         cast<FunctionType>(funPtrTy->getElementType());
+
+      // Trace function calls.
+//       llvm::Constant* functionNameArray = ConstantArray::get(fun->getName());
+//       GlobalVariable* functionName =
+//         new GlobalVariable(functionNameArray->getType(),
+//                            true,
+//                            GlobalVariable::ExternalLinkage,
+//                            functionNameArray,
+//                            fun->getName() + "name",
+//                            &module_);
+//       Function* puts =
+//         module_.getOrInsertFunction("puts",
+//                                     Type::VoidTy,
+//                                     functionName->getType(), NULL);
+//       new CallInst(puts, std::vector<Value*>(1, functionName), "", currentBB_);
 
       if (funTy->getReturnType() == Type::VoidTy)
         new CallInst(fun, params, "", currentBB_);

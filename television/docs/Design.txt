@@ -71,3 +71,40 @@ Function or Module is shared among the 3 subclasses of DSAGraphDrawer.
 
 BUGraphDrawer, TDGraphDrawer, and LocalGraphDrawer are also ItemDisplayers,
 which allows them to be displayed in tabs or in separate new windows.
+
+
+Extending LLVM-TV
+-----------------
+
+In order to add a new visualization to LLVM-TV, the programmer should add a new
+concrete subclass of ItemDisplayer. The requirements for a new ItemDisplayer
+subclass are:
+
+1) An ItemDisplayer must create and hold a wxWindows display widget (subclass of
+wxWindow) to draw in.  The widget should be of a type appropriate to the
+visualization - for example, if you are displaying a list of things, use a
+wxListCtrl; if you are displaying a tree, use a wxTreeCtrl.  If you want to
+display an image, you probably will want to create a subclass of GraphDrawer
+instead (see below).  When your getWindow() method is called, you should create
+the display widget (if it has not already been created) and return a pointer to
+it.
+
+2) An ItemDisplayer must respond to the displayItem(TVTreeItemData *) message by
+updating its display widget to contain visual information about the given item.
+
+3) An ItemDisplayer must respond to the getDisplayTitle(TVTreeItemData *)
+message by returning a string, suitable for a window or tab title, which
+describes the visualization of the given item -- or if no item is passed in, a
+string which describes the kind of visualization it generally performs (e.g.,
+"Dominator tree view of java.lang.System.arraycopy()" vs. "Dominator tree
+view".)
+
+If you want to add a new visualization to LLVM-TV which *only* draws images and
+allows the user to view them, you can subclass GraphDrawer. Instead of
+requirements 1) and 2) above, a new subclass of GraphDrawer is required to
+respond to the drawModuleGraph(Module *) and drawFunctionGraph(Function *)
+messages by returning a wxImage object that contains an image representing the
+LLVM item passed in. GraphDrawer will take care of displaying the image in a
+scrolling canvas, either in a tab or a separate window.
+
+

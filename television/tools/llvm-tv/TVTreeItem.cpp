@@ -136,7 +136,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
   return os << str.substr(prev, str.size()-prev) << "</tt>";
 }
 
-void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
+void TVTreeItemData::printFunction(Function *F) {
   std::ostream &os = cw.getStream();
 
   // print out function return type, name, and arguments
@@ -183,7 +183,7 @@ void TVTreeItemData::printFunction(Function *F, CachedWriter &cw) {
   os << "<br>";
 }
 
-void TVTreeItemData::printModule(Module *M, CachedWriter &cw) {
+void TVTreeItemData::printModule(Module *M) {
   std::ostream &os = cw.getStream();
   htmlHeader(os);
 
@@ -204,7 +204,7 @@ void TVTreeItemData::printModule(Module *M, CachedWriter &cw) {
 
   // Display functions
   for (Module::iterator F = M->begin(), Fe = M->end(); F != Fe; ++F) {
-    printFunction(F, cw);
+    printFunction(F);
     os << "<br>";
   }
 
@@ -220,7 +220,7 @@ void TVTreeModuleItem::printHTML(std::ostream &os) {
     cw.setStream(os);
     cw.setModule(myModule);
     cw << CachedWriter::SymTypeOn;
-    printModule(myModule, cw);
+    printModule(myModule);
   }
 }
 
@@ -235,7 +235,7 @@ void TVTreeFunctionItem::printHTML(std::ostream &os) {
     cw.setModule(myFunc->getParent());
     cw << CachedWriter::SymTypeOn;
     htmlHeader(os);
-    printFunction(myFunc, cw); 
+    printFunction(myFunc); 
     htmlFooter(os);
   }
 }

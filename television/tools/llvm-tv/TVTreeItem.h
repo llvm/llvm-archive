@@ -31,8 +31,8 @@ public:
   virtual llvm::Function *getFunction() { return 0; }
   virtual void printHTML(std::ostream &os) {}
 protected:
-  void printFunction(llvm::Function *F, llvm::CachedWriter &cw);
-  void printModule(llvm::Module *M, llvm::CachedWriter &cw);
+  void printFunction(llvm::Function *F);
+  void printModule(llvm::Module *M);
   llvm::CachedWriter cw;
 private:
   wxString m_desc;

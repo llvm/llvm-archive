@@ -161,16 +161,16 @@ void TVTreeItemData::printFunctionHeader(Function *F) {
     os << "...";  // Output varargs portion of signature!
   }
 
-  os << ")";
+  os << ")</tt>";
 }
 
 void TVTreeItemData::printFunction(Function *F) {
   printFunctionHeader(F);
   std::ostream &os = cw.getStream();
 
+  os << "<tt>";
   if (!F->isExternal ())
     os << " {<br>";
-  os << "</tt>";
 
   for (Function::iterator BB = F->begin(), BBe = F->end(); BB != BBe; ++BB) {
     htmlBB(os, BB);
@@ -185,8 +185,8 @@ void TVTreeItemData::printFunction(Function *F) {
   cw.setStream(os);
 
   if (!F->isExternal ())
-    os << "<tt>}</tt>";
-  os << "<br>";
+    os << "}";
+  os << "</tt><br>";
 }
 
 void TVTreeItemData::printModule(Module *M) {

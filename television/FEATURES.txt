@@ -26,6 +26,9 @@ LLVM-TV FEATURES
 a. Coming soon (things we can accomplish this term)
 --------------
 * Use more patterns
+* Add Steensgaard pointer analysis viewer?
+* Rewrite HTML viewer to be a real visitor and to completely display types
+  correctly
 * ...
 
 

@@ -126,8 +126,8 @@ namespace llvm { namespace Java { namespace {
     private:
         const Type* getType(JType type) {
             switch (type) {
-                // FIXME: this should really be a non-void type when the object
-                // model is finalized
+            // FIXME: this should really be a pointer to an Object
+            // type when the object model is finalized
             case REFERENCE: return PointerType::get(Type::SByteTy);
             case BOOLEAN: return Type::BoolTy;
             case CHAR: return Type::UShortTy;

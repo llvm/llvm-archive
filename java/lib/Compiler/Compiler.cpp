@@ -50,7 +50,6 @@ void Compiler::compileMethodInit(Function& function,
 
     bc2bbMap_.clear();
     bc2bbMap_.assign(codeAttr.getCodeSize(), NULL);
-    bc2bbMap_[0] = new BasicBlock("entry", &function);
 
     const uint8_t* code = codeAttr.getCode();
     for (unsigned i = 0; i < codeAttr.getCodeSize(); ++i) {
@@ -161,13 +160,12 @@ void Compiler::compileMethodInit(Function& function,
         }
     }
 
-    unsigned i = 0;
-    BasicBlock* bb = bc2bbMap_[i];
-    while (++i < codeAttr.getCodeSize()) {
+    BasicBlock* bb = new BasicBlock("entry", &function);
+    for (unsigned i = 0; i < codeAttr.getCodeSize(); ++i) {
         if (bc2bbMap_[i])
-            bc2bbMap_[i] = bb;
-        else
             bb = bc2bbMap_[i];
+        else
+            bc2bbMap_[i] = bb;
     }
 }
 

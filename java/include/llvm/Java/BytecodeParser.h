@@ -546,7 +546,7 @@ namespace llvm { namespace Java {
           THIS->do_dreturn();
           break;
         case ARETURN:
-          THIS->do_return();
+          THIS->do_areturn();
           break;
         case RETURN:
           THIS->do_return();

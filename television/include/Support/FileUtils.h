@@ -16,6 +16,10 @@
 
 #include <string>
 
-unsigned llvm::GetNumFilesInDir(const std::string &path);
+namespace llvm {
+
+unsigned GetNumFilesInDir(const std::string &path);
+
+};
 
 #endif

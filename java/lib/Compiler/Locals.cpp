@@ -34,11 +34,11 @@ void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 				  "local" + utostr(i),
 				  insertAtEnd);
 
-  new StoreInst(value, TheLocals[i], false, insertAtEnd);
+  new StoreInst(value, TheLocals[i], insertAtEnd);
 }
 
 llvm::Value* Locals::load(unsigned i, BasicBlock* insertAtEnd)
 {
   assert(TheLocals[i] && "Attempt to load a non initialized global!");
-  return new LoadInst(TheLocals[i], "load", false, insertAtEnd);
+  return new LoadInst(TheLocals[i], "load", insertAtEnd);
 }

@@ -62,13 +62,12 @@ all:: $(DIFFS)
 
 # rule to run a .class file with the jvm
 %.out-nat: %.class
-	$(Echo) Running $(notdir $*) with the host JVM
-	-$(Verb)LD_LIBRARY_PATH=$(LibDir) $(JAVA) -cp Output $(notdir $*) > $*.out-nat || rm -f $*.out-nat
+	-$(Verb)LD_LIBRARY_PATH=$(LibDir) $(JAVA) -cp Output $(notdir $*) \
+		> $*.out-nat 2>&1
 
 # rule to run a .class file with the llvm jit
 %.out-jit: %.llvm.bc
-	$(Echo) Running $(notdir $*) with the llvm JIT
-	-$(Verb)$(LLI) $< > $*.out-jit
+	-$(Verb)$(LLI) $< > $*.out-jit 2>&1
 
 # rule to diff test output
 %.diff: %.out-nat %.out-jit

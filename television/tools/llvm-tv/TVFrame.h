@@ -88,6 +88,7 @@ class TVFrame : public wxFrame {
   void CodeView (wxCommandEvent &event);
   void OnAbout (wxCommandEvent &event);
   void OnHelp (wxCommandEvent &event);
+  void OnOpen (wxCommandEvent &event);
   void OnRefresh (wxCommandEvent &event);
   void CreateTree(long style, std::vector<TVSnapshot>&);
   void refreshSnapshotList ();

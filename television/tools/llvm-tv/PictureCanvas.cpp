@@ -14,15 +14,15 @@ void PictureCanvas::setupBitmap () {
   myBitmap = new wxBitmap (*myImage);
   SetVirtualSize (myImage->GetWidth (), myImage->GetHeight ());
   SetScrollRate (1, 1);
-  myParent->SetSizeHints (-1, -1, myImage->GetWidth (), myImage->GetHeight ());
-  myParent->Refresh ();
+  GetParent()->SetSizeHints (-1, -1, myImage->GetWidth (), myImage->GetHeight ());
+  GetParent()->Refresh ();
 }
 
 void PictureCanvas::loadPicture (const wxString filename) {
   if (!myImage)
     myImage = new wxImage;
   if (!myImage->LoadFile (filename)) {
-    myParent->Close ();
+    GetParent()->Close ();
     return;
   }
   setupBitmap ();

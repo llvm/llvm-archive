@@ -15,7 +15,7 @@ clean::
 
 # we don't want these files to be deleted by make, even if they are
 # intermediate results
-.PRECIOUS: %.linked.bc %.raw.bc %.ll %.llvm.bc
+.PRECIOUS: %.linked.bc %.raw.bc %.ll %.llvm.bc %.llc
 
 # rule to link bytecode with runtime
 %.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)

@@ -127,6 +127,9 @@ void Compiler::compileMethodInit(Function& function,
         case INSTANCEOF:
             i += 2;
             break;
+        case IINC:
+            i += 2 * (1 + wide);
+            break;
         case IFEQ:
         case IFNE:
         case IFLT:

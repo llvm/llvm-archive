@@ -310,9 +310,9 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   &llvm_java_release_char_array_elements,
   &llvm_java_release_short_array_elements,
   &llvm_java_release_int_array_elements,
+  &llvm_java_release_long_array_elements,
   &llvm_java_release_float_array_elements,
   &llvm_java_release_double_array_elements,
-  NULL,
   NULL,
   NULL, /* 200 */
   NULL,

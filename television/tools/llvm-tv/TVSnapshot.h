@@ -16,13 +16,14 @@ using namespace llvm;
 ///
 class TVSnapshot {
   Module *M;
+  std::string filename;
+
   void readBytecodeFile ();
  public:
-  std::string itemName;
-  TVSnapshot () : M (0), itemName ("") { }
-  TVSnapshot (const std::string &_name) : M (0), itemName (_name) { }
-  TVSnapshot (const char *_name) : M (0), itemName (_name) { }
-  const char *label () { return itemName.c_str (); }
+  TVSnapshot () : M (0), filename ("") { }
+  TVSnapshot (const std::string &_name) : M (0), filename (_name) { }
+  TVSnapshot (const char *_name) : M (0), filename (_name) { }
+  const char *label () { return filename.c_str (); }
   Module *getModule () {
     if (!M)
       readBytecodeFile ();

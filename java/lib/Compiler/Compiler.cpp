@@ -580,12 +580,14 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_store(unsigned bcI, JType type, unsigned index) {
-      Value* v1 = opStack_.top(); opStack_.pop();
-      opStack_.push(
-        new StoreInst(v1, getOrCreateLocal(index, getType(type)),
-                      getBBAt(bcI)));
+      Value* val = opStack_.top(); opStack_.pop();
+      const Type* valTy = val->getType();
+      Value* ptr = getOrCreateLocal(index, getType(type));
+      if (!valTy->isPrimitiveType() &&
+          valTy != cast<PointerType>(ptr->getType())->getElementType())
+        ptr = new CastInst(ptr, PointerType::get(valTy), TMP, getBBAt(bcI));
+      opStack_.push(new StoreInst(val, ptr, getBBAt(bcI)));
     }
-
 
     void do_astore(unsigned bcI, JType type) {
       assert(0 && "not implemented");

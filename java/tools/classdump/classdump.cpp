@@ -60,11 +60,10 @@ namespace {
       if (ConstantClass* super = CF->getSuperClass())
         Out << "extends " << super->getName()->str() << ' ';
 
-      if (!CF->getInterfaces().empty()) {
-        const Classes& interfaces = CF->getInterfaces();
-        Out << "implements " << interfaces[0]->getName()->str();
-        for (unsigned i = 1, e = interfaces.size(); i != e; ++i)
-          Out << ", " << interfaces[i]->getName()->str();
+      if (CF->getNumInterfaces()) {
+        Out << "implements " << CF->getInterface(0)->getName()->str();
+        for (unsigned i = 1, e = CF->getNumInterfaces(); i != e; ++i)
+          Out << ", " << CF->getInterface(i)->getName()->str();
         Out << ' ';
       }
       Out << "{\n";

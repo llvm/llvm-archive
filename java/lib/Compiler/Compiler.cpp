@@ -456,10 +456,10 @@ namespace llvm { namespace Java { namespace {
       // Add this interface's vtable if it was not added before.
       if (vtables[index] == nullVTable) {
         vtables[index] = buildInterfaceVTable(cf, interfaceCf);
-        const Classes& interfaces = interfaceCf->getInterfaces();
-        for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
+        unsigned numInterface = interfaceCf->getNumInterfaces();
+        for (unsigned i = 0, e = interfaceCf->getNumInterfaces(); i != e; ++i) {
           const ClassFile* superInterface =
-            ClassFile::get(interfaces[i]->getName()->str());
+            ClassFile::get(interfaceCf->getInterface(i)->getName()->str());
           insertVtablesForInterface(vtables, cf, superInterface);
         }
       }
@@ -492,10 +492,9 @@ namespace llvm { namespace Java { namespace {
 
       const ClassFile* curCf = cf;
       while (true) {
-        const Classes& interfaces = curCf->getInterfaces();
-        for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
+        for (unsigned i = 0, e = curCf->getNumInterfaces(); i != e; ++i) {
           const ClassFile* ifaceCf =
-            ClassFile::get(interfaces[i]->getName()->str());
+            ClassFile::get(curCf->getInterface(i)->getName()->str());
           insertVtablesForInterface(vtables, cf, ifaceCf);
         }
         if (!curCf->getSuperClass())
@@ -587,10 +586,9 @@ namespace llvm { namespace Java { namespace {
       // If this is an interface, add all methods from each interface
       // this inherits from.
       if (cf->isInterface()) {
-        const Classes& ifaces = cf->getInterfaces();
-        for (unsigned i = 0, e = ifaces.size(); i != e; ++i) {
+        for (unsigned i = 0, e = cf->getNumInterfaces(); i != e; ++i) {
           const ClassFile* ifaceCF =
-            ClassFile::get(ifaces[i]->getName()->str());
+            ClassFile::get(cf->getInterface(i)->getName()->str());
           const VTableInfo& ifaceVI = getVTableInfo(ifaceCF);
           ConstantStruct* ifaceInit =
             cast<ConstantStruct>(ifaceVI.vtable->getInitializer());
@@ -1016,9 +1014,9 @@ namespace llvm { namespace Java { namespace {
       if (global)
         return global;
 
-      const Classes& ifaces = cf->getInterfaces();
-      for (unsigned i = 0, e = ifaces.size(); i != e; ++i) {
-        const ClassFile* ifaceCF = ClassFile::get(ifaces[i]->getName()->str());
+      for (unsigned i = 0, e = cf->getNumInterfaces(); i != e; ++i) {
+        const ClassFile* ifaceCF =
+          ClassFile::get(cf->getInterface(i)->getName()->str());
         if (global = getStaticField(ifaceCF, name, type))
           return global;
       }

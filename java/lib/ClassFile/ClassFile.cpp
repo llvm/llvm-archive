@@ -84,20 +84,6 @@ namespace {
     return tmp.out;
   }
 
-  void readClasses(Classes& i, const ClassFile* cf, std::istream& is)
-  {
-    assert(i.empty() &&
-           "Should not call with a non-empty classes vector");
-    uint16_t count = readU2(is);
-    i.reserve(count);
-    while (count--) {
-      ConstantClass* c = cf->getConstantClass(readU2(is));
-      if (!c)
-        throw ClassFileSemanticError("ConstantClass expected");
-      i.push_back(c);
-    }
-  }
-
   void readFields(Fields& f, const ClassFile* parent, std::istream& is)
   {
     assert(f.empty() && "Should not call with a non-empty fields vector");
@@ -124,20 +110,6 @@ namespace {
     a.reserve(count);
     while(count--)
       a.push_back(Attribute::readAttribute(cf, is));
-  }
-
-  template <typename Container>
-  std::ostream& dumpCollection(Container& c,
-                               const char* const name,
-                               std::ostream& os) {
-    os << '\n' << name << "s:\n";
-    for (typename Container::const_iterator
-           i = c.begin(), e = c.end(); i != e; ++i)
-      if (*i)
-        (*i)->dump(os << name << ' ') << '\n';
-      else
-        os << name << " NULL\n";
-    return os;
   }
 
 }
@@ -228,7 +200,11 @@ ClassFile::ClassFile(std::istream& is)
   accessFlags_ = readU2(is);
   thisClassIdx_ = readU2(is);
   superClassIdx_ = readU2(is);
-  readClasses(interfaces_, this, is);
+  count = readU2(is);
+  interfaces_.reserve(count);
+  while (count--)
+    interfaces_.push_back(readU2(is));
+
   readFields(fields_, this, is);
   readMethods(methods_, this, is);
   readAttributes(attributes_, this, is);
@@ -329,10 +305,10 @@ std::ostream& ClassFile::dump(std::ostream& os) const
   if (isInterface()) os << " interface";
   if (isAbstract()) os << " abstract";
 
-  dumpCollection(interfaces_, "Interface", os);
-  dumpCollection(fields_, "Field", os);
-  dumpCollection(methods_, "Method", os);
-  dumpCollection(attributes_, "Attribute", os);
+//   dumpCollection(interfaces_, "Interface", os);
+//   dumpCollection(fields_, "Field", os);
+//   dumpCollection(methods_, "Method", os);
+//   dumpCollection(attributes_, "Attribute", os);
 
   return os;
 }
@@ -587,7 +563,7 @@ std::ostream& Field::dump(std::ostream& os) const
   if (isVolatile()) os << " volatile";
   if (isTransient()) os << " transient";
 
-  dumpCollection(attributes_, "Attribute", os);
+//   dumpCollection(attributes_, "Attribute", os);
 
   return os;
 }
@@ -627,7 +603,7 @@ std::ostream& Method::dump(std::ostream& os) const
   if (isNative()) os << " native";
   if (isStrict()) os << " strict";
 
-  dumpCollection(attributes_, "Attribute", os);
+//   dumpCollection(attributes_, "Attribute", os);
 
   return os;
 }
@@ -747,8 +723,8 @@ std::ostream& CodeAttribute::dump(std::ostream& os) const
     << "Max stack: " << maxStack_ << '\n'
     << "Max locals: " << maxLocals_ << '\n'
     << "Code size: " << codeSize_ << '\n';
-  dumpCollection(exceptions_, "Exception", os);
-  dumpCollection(attributes_, "Attribute", os);
+//   dumpCollection(exceptions_, "Exception", os);
+//   dumpCollection(attributes_, "Attribute", os);
 
   return os;
 }
@@ -784,14 +760,16 @@ ExceptionsAttribute::ExceptionsAttribute(const ClassFile* cf,
   : Attribute(cf, nameIdx, is)
 {
   uint32_t length = readU4(is);
-  readClasses(exceptions_, cf, is);
+  uint16_t count = readU2(is);
+  exceptions_.reserve(count);
+  while (count--)
+    exceptions_.push_back(readU2(is));
 }
 
 std::ostream& ExceptionsAttribute::dump(std::ostream& os) const
 {
   os << Attribute::dump(os) << ": ";
-  for (Classes::const_iterator
-         i = exceptions_.begin(), e = exceptions_.end(); i != e; ++i)
-    os << *i << ' ';
+  for (unsigned i = 0, e = getNumExceptions(); i != e; ++i)
+    os << *getException(i) << ' ';
   return os;
 }

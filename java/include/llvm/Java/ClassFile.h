@@ -60,7 +60,6 @@ namespace llvm { namespace Java {
   };
 
   typedef std::vector<Constant*> ConstantPool;
-  typedef std::vector<ConstantClass*> Classes;
   typedef std::vector<Field*> Fields;
   typedef std::vector<Method*> Methods;
   typedef std::vector<Attribute*> Attributes;
@@ -107,7 +106,11 @@ namespace llvm { namespace Java {
       return superClassIdx_ ? getConstantClass(superClassIdx_) : NULL;
     }
 
-    const Classes& getInterfaces() const { return interfaces_; }
+    unsigned getNumInterfaces() const { return interfaces_.size(); }
+    unsigned getInterfaceIndex(unsigned i) const { return interfaces_[i]; }
+    ConstantClass* getInterface(unsigned i) const {
+      return getConstantClass(getInterfaceIndex(i));
+    }
 
     const Fields& getFields() const { return fields_; }
 
@@ -127,7 +130,7 @@ namespace llvm { namespace Java {
     uint16_t accessFlags_;
     uint16_t thisClassIdx_;
     uint16_t superClassIdx_;
-    Classes interfaces_;
+    std::vector<uint16_t> interfaces_;
     Fields fields_;
     Methods methods_;
     Attributes attributes_;
@@ -471,14 +474,18 @@ public:
   class ExceptionsAttribute : public Attribute {
   private:
     uint16_t nameIdx_;
-    Classes exceptions_;
+    std::vector<uint16_t> exceptions_;
 
   public:
     ExceptionsAttribute(const ClassFile* cf,
                         uint16_t nameIdx,
                         std::istream& is);
 
-    const Classes& getExceptions() const { return exceptions_; }
+    unsigned getNumExceptions() const { return exceptions_.size(); }
+    unsigned getExceptionIndex(unsigned i) const { return exceptions_[i]; }
+    ConstantClass* getException(unsigned i) const {
+      return parent_->getConstantClass(getExceptionIndex(i));
+    }
 
     std::ostream& dump(std::ostream& os) const;
   };

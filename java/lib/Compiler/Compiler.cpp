@@ -221,7 +221,7 @@ namespace llvm { namespace Java { namespace {
                 return FunctionType::get(getTypeHelper(descr, ++i),
                                          params, false);
             }
-            // FIXME: Throw something
+                // FIXME: Throw something
             default:  return NULL;
             }
         }
@@ -232,7 +232,7 @@ namespace llvm { namespace Java { namespace {
                 ClassFile* cf = ClassFile::getClassFile(className);
                 OpaqueType* newType = OpaqueType::get();
                 it = c2ciMap_.insert(it, std::make_pair(className,
-                                                       ClassInfo(newType)));
+                                                        ClassInfo(newType)));
                 std::vector<const Type*> elements;
                 if (ConstantClass* super = cf->getSuperClass())
                     elements.push_back
@@ -440,7 +440,7 @@ namespace llvm { namespace Java { namespace {
             // insert an opaque type for java.lang.Object. This is
             // defined in runtime.ll
             c2ciMap_.insert(std::make_pair("java/lang/Object",
-                                          ClassInfo(OpaqueType::get())));
+                                           ClassInfo(OpaqueType::get())));
             module.addTypeName("java/lang/Object",
                                getClassInfo("java/lang/Object").type);
 
@@ -746,7 +746,7 @@ namespace llvm { namespace Java { namespace {
             c = new CallInst(module_->getOrInsertFunction
                              ("llvm.isunordered",
                               Type::BoolTy, v1->getType(), v2->getType(), 0),
-                v1, v2, TMP, getBBAt(bcI));
+                             v1, v2, TMP, getBBAt(bcI));
             r = new SelectInst(c,
                                ConstantSInt::get(Type::IntTy, valueIfUnordered),
                                r, TMP, getBBAt(bcI));
@@ -808,7 +808,7 @@ namespace llvm { namespace Java { namespace {
 
         void do_putstatic(unsigned bcI, unsigned index) {
             Value* v = opStack_.top(); opStack_.pop();
-            new StoreInst(v, getStaticField(index), getBBAt(bcI));            
+            new StoreInst(v, getStaticField(index), getBBAt(bcI));
         }
 
         void do_getfield(unsigned bcI, unsigned index) {

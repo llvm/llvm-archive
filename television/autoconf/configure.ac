@@ -25,5 +25,3 @@ AC_ARG_WITH(llvmobj,AC_HELP_STRING([--with-llvmobj],[Location of LLVM Object Cod
 
 dnl Create the output files
 AC_OUTPUT([Makefile.common Makefile.config])
-
-AC_MSG_WARN([Remember to configure wxWindows manually; see README.txt])

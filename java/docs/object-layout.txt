@@ -45,16 +45,18 @@ typeinfo's. More specifically if interfaces == -1 then this typeinfo
 is for an interface and the lastIface field is the unique number of
 this interface in the objects interfaces array. The field lastIface is
 the max index of all implemented interfaces. For a class that doesn't
-implement any it is -1.
+implement any it is -1. An additional field describes the elementSize
+of an array. This allows us to implement System.arraycopy().
 
 struct llvm_java_object_typeinfo {
-  unsigned depth;
+  jint depth;
   struct llvm_java_object_vtable** vtables;
-  int lastIface;
+  jint lastIface;
   union {
     struct llvm_java_object_vtable** interfaces;
-    int interfaceFlag;
+    jint interfaceFlag;
   };
+  jint elementSize;
 };
 
 The structure of llvm_java_object_typeinfo allows constant time

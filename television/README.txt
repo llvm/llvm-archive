@@ -1,4 +1,3 @@
-
 LLVM Visualization Tool
 CS497rej Spring 2004 term project
 Team members: Misha Brukman, Tanya Brethour, Brian Gaeke
@@ -31,4 +30,21 @@ We intend to implement this tool in C++, because it will dramatically
 simplify the task of integrating it with the LLVM compiler framework
 (which itself is 150,000 lines of C++). We intend to use wxWidgets as our
 GUI toolkit.
+
+How to compile:
+
+% cd lib/wxwindows
+% ./configure --enable-debug
+% cd ../../
+% ./configure --with-llvmsrc=[path] --with-llvmobj=[path]
+% gmake
+
+How to make snapshots:
+
+% opt -pass1 -snapshot -pass2 -snapshot -pass3 -snapshot [...]
+
+How to run llvm-tv:
+
+% cd llvm-tv/tools/llvm-tv
+% ./run-llvm-tv
 

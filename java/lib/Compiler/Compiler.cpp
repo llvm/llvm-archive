@@ -470,8 +470,6 @@ namespace llvm { namespace Java { namespace {
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "got already initialized VTableInfo!");
 
-      std::vector<const Type*> elements;
-      std::vector<llvm::Constant*> init;
       ConstantClass* super = cf->getSuperClass();
       assert(super && "Class does not have superclass!");
       const VTableInfo& superVI =
@@ -482,23 +480,19 @@ namespace llvm { namespace Java { namespace {
       std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
                 std::back_inserter(vi.superVtables));
 
-      // copy all the types from the super class' vtable
+      // copy all the constants from the super class' vtable
       assert(superVI.vtable && "No vtable found for super class!");
       ConstantStruct* superInit =
         cast<ConstantStruct>(superVI.vtable->getInitializer());
-      const StructType* superVTableTy = superInit->getType();
-      std::copy(superVTableTy->element_begin(),
-                superVTableTy->element_end(),
-                std::back_inserter(elements));
+      std::vector<llvm::Constant*> init(superInit->getNumOperands());
       for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
-        init.push_back(superInit->getOperand(i));
+        init[i] = superInit->getOperand(i);
       vi.m2iMap = superVI.m2iMap;
       // install the new typeinfo block for this class
       init[0] = getClassTypeInfo(cf, vi, superVI);
 
       // add member functions to the vtable
       const Methods& methods = cf->getMethods();
-      init.resize(elements.size(), NULL);
 
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
         Method* method = methods[i];
@@ -518,18 +512,17 @@ namespace llvm { namespace Java { namespace {
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
-            index = elements.size();
-            elements.resize(index + 1, NULL);
-            init.resize(index + 1, NULL);
+            index = init.size();
+            init.resize(index + 1);
           }
-          elements[index] = vfun->getType();
           init[index] = vfun;
         }
       }
 
-      vi.vtable = new GlobalVariable(StructType::get(elements),
+      llvm::Constant* vtable = ConstantStruct::get(init);
+      vi.vtable = new GlobalVariable(vtable->getType(),
                                      true, GlobalVariable::ExternalLinkage,
-                                     ConstantStruct::get(init),
+                                     vtable,
                                      className + "<vtable>",
                                      module_);
       return vi;

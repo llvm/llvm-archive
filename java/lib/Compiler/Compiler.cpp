@@ -135,6 +135,17 @@ namespace llvm { namespace Java { namespace {
     }
 
   private:
+    /// Schedule a method for compilation. Returns true if this is the
+    /// first time this function was scheduled.
+    bool scheduleFunction(Function* function) {
+      if (toCompileFunctions_.insert(function)) {
+        DEBUG(std::cerr << "Scheduling function: " << function->getName()
+              << " for compilation\n");
+        return true;
+      }
+      return false;
+    }
+
     /// Given a llvm::Java::Constant returns a llvm::Constant.
     llvm::Constant* getConstant(Constant* c) {
       if (dynamic_cast<ConstantString*>(c))
@@ -392,7 +403,7 @@ namespace llvm { namespace Java { namespace {
             getType(method->getDescriptor(), ci.type));
 
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
-          toCompileFunctions_.insert(vfun);
+          scheduleFunction(vfun);
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
@@ -762,7 +773,8 @@ namespace llvm { namespace Java { namespace {
           const FunctionType* funcTy = cast<FunctionType>(
             getType(method->getDescriptor(), getClassInfo(cf).type));
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
-          toCompileFunctions_.insert(vfun);
+          if (!method->isAbstract())
+            scheduleFunction(vfun);
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
@@ -1352,7 +1364,7 @@ namespace llvm { namespace Java { namespace {
 
           // Insert a call to it right before the terminator of the only
           // basic block in llvm_java_static_init.
-          bool inserted =  toCompileFunctions_.insert(init);
+          bool inserted =  scheduleFunction(init);
           assert(inserted && "Class initialization method already called!");
           assert(hook->front().getTerminator() &&
                  LLVM_JAVA_STATIC_INIT " should have a terminator!");
@@ -1427,12 +1439,12 @@ namespace llvm { namespace Java { namespace {
 
       // Create the method requested.
       Function* function = getFunction(getMethod(classMethodDesc));
-      toCompileFunctions_.insert(function);
+      scheduleFunction(function);
       // Compile the transitive closure of methods called by this method.
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
         compileMethodOnly(f->getName());
-        DEBUG(std::cerr << i << '/' << toCompileFunctions_.size()
+        DEBUG(std::cerr << i+1 << '/' << toCompileFunctions_.size()
               << " functions compiled\n");
       }
 
@@ -2097,14 +2109,14 @@ namespace llvm { namespace Java { namespace {
       FunctionType* funcTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
-      toCompileFunctions_.insert(function);
+      scheduleFunction(function);
       makeCall(function, getParams(funcTy));
     }
 
     void do_invokestatic(unsigned index) {
       Method* method = getMethod(cf_->getConstantMethodRef(index));
       Function* function = getFunction(method);
-      toCompileFunctions_.insert(function);
+      scheduleFunction(function);
       makeCall(function, getParams(function->getFunctionType()));
     }
 

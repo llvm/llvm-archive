@@ -372,6 +372,10 @@ namespace llvm { namespace Java { namespace {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
+      // get ClassInfo for class owning the field - this will force
+      // the globals to be initialized
+      getClassInfo(fieldRef->getClass()->getName()->str());
+
       std::string globalName =
         fieldRef->getClass()->getName()->str() + '/' +
         nameAndType->getName()->str();

@@ -99,8 +99,12 @@ namespace llvm { namespace Java {
     bool isInterface() const { return accessFlags_ & ACC_INTERFACE; }
     bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
 
-    ConstantClass* getThisClass() const { return thisClass_; }
-    ConstantClass* getSuperClass() const { return superClass_; }
+    ConstantClass* getThisClass() const {
+      return getConstantClass(thisClassIdx_);
+    }
+    ConstantClass* getSuperClass() const {
+      return superClassIdx_ ? getConstantClass(superClassIdx_) : NULL;
+    }
 
     const Classes& getInterfaces() const { return interfaces_; }
 
@@ -120,8 +124,8 @@ namespace llvm { namespace Java {
     uint16_t minorV_;
     ConstantPool cPool_;
     uint16_t accessFlags_;
-    ConstantClass* thisClass_;
-    ConstantClass* superClass_;
+    uint16_t thisClassIdx_;
+    uint16_t superClassIdx_;
     Classes interfaces_;
     Fields fields_;
     Methods methods_;

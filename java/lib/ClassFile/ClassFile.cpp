@@ -226,14 +226,8 @@ ClassFile::ClassFile(std::istream& is)
       cPool_.push_back(NULL);
   }
   accessFlags_ = readU2(is);
-  thisClass_ = getConstantClass(readU2(is));
-  if (!thisClass_)
-    throw ClassFileSemanticError(
-      "Representation of this class is not of type ConstantClass");
-  superClass_ = getConstantClass(readU2(is));
-  if (!superClass_ && thisClass_->getName()->str() != "java/lang/Object")
-    throw ClassFileSemanticError(
-      "Representation of super class is not of type ConstantClass");
+  thisClassIdx_ = readU2(is);
+  superClassIdx_ = readU2(is);
   readClasses(interfaces_, this, is);
   readFields(fields_, this, is);
   readMethods(methods_, this, is);

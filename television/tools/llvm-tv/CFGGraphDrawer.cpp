@@ -1,4 +1,5 @@
 #include "CFGGraphDrawer.h"
+#include "TVTreeItem.h"
 #include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/CFGPrinter.h"
@@ -17,4 +18,8 @@ wxImage *CFGGraphDrawer::drawFunctionGraph (Function *fn) {
   MP->releaseModule (); // Don't delete it when you go away, says I
   delete MP;
   return buildwxImageFromDotFile ("cfg." + fn->getName() + ".dot");
+}
+
+std::string CFGGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "Control-flow graph of " + item->getTitle ();
 }

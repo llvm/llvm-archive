@@ -1,6 +1,7 @@
 #include "CallGraphDrawer.h"
 #include "GraphPrinters.h"
 #include "llvm/PassManager.h"
+#include "TVTreeItem.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -13,3 +14,8 @@ wxImage *CallGraphDrawer::drawModuleGraph (Module *module) {
   PM.run (*module);
   return buildwxImageFromDotFile ("callgraph.dot");
 }
+
+std::string CallGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "Call graph of " + item->getTitle ();
+}
+

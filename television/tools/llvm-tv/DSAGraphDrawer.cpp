@@ -1,4 +1,5 @@
 #include "DSAGraphDrawer.h"
+#include "TVTreeItem.h"
 #include "GraphPrinters.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -27,6 +28,10 @@ wxImage *DSGraphDrawer::drawFunctionGraph(Function *F) {
   return buildwxImageFromDotFile(getFilename(F));
 }
 
+std::string DSGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "DS " + item->dsGraphName ();
+}
+
 //===----------------------------------------------------------------------===//
 
 // BUGraphDrawer implementation
@@ -44,6 +49,10 @@ std::string BUGraphDrawer::getFilename(Function *F) {
 
 std::string BUGraphDrawer::getFilename(Module *M) {
   return "buds.dot";
+}
+
+std::string BUGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "Bottom-up data structure " + item->dsGraphName ();
 }
 
 //===----------------------------------------------------------------------===//
@@ -65,6 +74,10 @@ std::string TDGraphDrawer::getFilename(Module *M) {
   return "tdds.dot";
 }
 
+std::string TDGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "Top-down data structure " + item->dsGraphName ();
+}
+
 //===----------------------------------------------------------------------===//
 
 // LocalGraphDrawer implementation
@@ -82,4 +95,8 @@ std::string LocalGraphDrawer::getFilename(Function *F) {
 
 std::string LocalGraphDrawer::getFilename(Module *M) {
   return "localds.dot";
+}
+
+std::string LocalGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
+  return "Local data structure " + item->dsGraphName ();
 }

@@ -1,13 +1,13 @@
 public class FieldAccess
 {
     private static class Base {
-        int i;
-        float f;
+        int i = 1;
+        float f = 1.0F;
     }
 
     private static class Derived extends Base {
-        int i;
-        double d;
+        int i = -1;
+        double d = -1.0;
     }
 
     public static void main(String[] args) {

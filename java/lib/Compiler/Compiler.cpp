@@ -643,8 +643,8 @@ namespace llvm { namespace Java { namespace {
       // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
       // Fill in the function pointers as they are in the super
-      // class. overriden methods will be replaced later.
-      for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
+      // class. Overriden methods will be replaced later.
+      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
 	init[i] = superInit->getOperand(i);
       vi.m2iMap = superVI.m2iMap;
 
@@ -720,8 +720,8 @@ namespace llvm { namespace Java { namespace {
       // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
       // Fill in the function pointers as they are in the super
-      // class. overriden methods will be replaced later.
-      for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
+      // class. Overriden methods will be replaced later.
+      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
 	init[i] = superInit->getOperand(i);
       vi.m2iMap = superVI.m2iMap;
 

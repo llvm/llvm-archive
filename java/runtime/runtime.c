@@ -79,7 +79,7 @@ extern struct llvm_java_class_record* llvm_java_class_records;
 struct llvm_java_class_record*
 llvm_java_find_class_record(const char* name) {
   struct llvm_java_class_record** cr = &llvm_java_class_records;
-  while (*cr)
+  for (; *cr; ++cr)
     if (strcmp((*cr)->typeinfo.name, name) == 0)
       return *cr;
 
@@ -121,8 +121,8 @@ extern void llvm_java_main(int, char**);
 
 int main(int argc, char** argv) {
   const ClassInitializerFunction* classInit = &llvm_java_class_initializers;
-  while (*classInit)
-    (*classInit++)();
+  for (; *classInit; ++classInit)
+    (*classInit)();
 
   llvm_java_main(argc, argv);
   return 0;

@@ -38,7 +38,7 @@ namespace llvm { namespace Java {
     typedef std::map<std::string, int> Field2IndexMap;
     Field2IndexMap f2iMap_;
     typedef std::vector<const Type*> ElementTypes;
-    ElementTypes elementTypes;
+    ElementTypes elementTypes_;
 
     void addField(const std::string& name, const Type* type);
     void resolveType();

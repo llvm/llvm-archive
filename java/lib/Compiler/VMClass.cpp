@@ -63,8 +63,8 @@ Class::Class(Resolver& resolver, const Type* type)
 
 void Class::addField(const std::string& name, const Type* type)
 {
-  f2iMap_.insert(std::make_pair(name, elementTypes.size()));
-  elementTypes.push_back(type);
+  f2iMap_.insert(std::make_pair(name, elementTypes_.size()));
+  elementTypes_.push_back(type);
 }
 
 int Class::getFieldIndex(const std::string& name) const {
@@ -74,7 +74,7 @@ int Class::getFieldIndex(const std::string& name) const {
 
 void Class::resolveType() {
   PATypeHolder holder = structType_;
-  Type* resolvedType = StructType::get(elementTypes);
+  Type* resolvedType = StructType::get(elementTypes_);
   cast<OpaqueType>(structType_)->refineAbstractTypeTo(resolvedType);
   structType_ = holder.get();
   type_ = PointerType::get(structType_);

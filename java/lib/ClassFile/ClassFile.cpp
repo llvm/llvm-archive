@@ -537,8 +537,8 @@ CodeAttribute::CodeAttribute(ConstantUtf8* name,
     maxStack_ = readU2(is);
     maxLocals_ = readU2(is);
     codeSize_ = readU4(is);
-    code_ = new char[codeSize_];
-    std::streamsize s = is.rdbuf()->sgetn(code_, codeSize_);
+    code_ = new uint8_t[codeSize_];
+    std::streamsize s = is.rdbuf()->sgetn(reinterpret_cast<char*>(code_), codeSize_);
     if (s != (std::streamsize) codeSize_)
         throw ClassFileParseError(
             "Could not read code from input stream");

@@ -387,7 +387,7 @@ namespace llvm { namespace Java {
         uint16_t maxStack_;
         uint16_t maxLocals_;
         uint32_t codeSize_;
-        char* code_;
+        uint8_t* code_;
         Exceptions exceptions_;
         Attributes attributes_;
 
@@ -398,7 +398,7 @@ namespace llvm { namespace Java {
         ~CodeAttribute();
         uint16_t getMaxStack() const { return maxStack_; }
         uint16_t getMaxLocals() const { return maxLocals_; }
-        const char* getCode() const { return code_; }
+        const uint8_t* getCode() const { return code_; }
         uint32_t getCodeSize() const { return codeSize_; }
         const Exceptions& getExceptions() const { return exceptions_; }
         const Attributes& getAttributes() const { return attributes_; }

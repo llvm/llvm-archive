@@ -400,8 +400,7 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = "java/lang/Object/" + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(),
-                    PointerType::get(ClassInfo::ObjectBaseTy)));
+            getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
 
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           scheduleFunction(vfun);
@@ -772,8 +771,7 @@ namespace llvm { namespace Java { namespace {
           std::string funcName = className + '/' + methodDescr;
 
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(),
-                    PointerType::get(ClassInfo::ObjectBaseTy)));
+            getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           if (!method->isAbstract())
             scheduleFunction(vfun);
@@ -1393,7 +1391,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy = cast<FunctionType>(
         getType(method->getDescriptor(),
-                method->isStatic() ? NULL : PointerType::get(ClassInfo::ObjectBaseTy)));
+                method->isStatic() ? NULL : ClassInfo::ObjectBaseTy));
       std::string funcName =
         clazz->getThisClass()->getName()->str() + '/' +
         method->getName()->str() + method->getDescriptor()->str();
@@ -2077,7 +2075,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   PointerType::get(ClassInfo::ObjectBaseTy)));
+                                   ClassInfo::ObjectBaseTy));
 
       std::vector<Value*> params(getParams(funTy));
 
@@ -2120,7 +2118,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   PointerType::get(ClassInfo::ObjectBaseTy)));
+                                   ClassInfo::ObjectBaseTy));
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
       scheduleFunction(function);
       makeCall(function, getParams(funcTy));
@@ -2162,7 +2160,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   PointerType::get(ClassInfo::ObjectBaseTy)));
+                                   ClassInfo::ObjectBaseTy));
 
       std::vector<Value*> params(getParams(funTy));
 

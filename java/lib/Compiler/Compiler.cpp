@@ -197,11 +197,11 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case ICONST_3:
         case ICONST_4:
         case ICONST_5:
-            opStack_.push(ConstantInt::get(Type::IntTy, code[i]-ICONST_0));
+            opStack_.push(ConstantSInt::get(Type::IntTy, code[i]-ICONST_0));
             break;
         case LCONST_0:
         case LCONST_1:
-            opStack_.push(ConstantInt::get(Type::LongTy, code[i]-LCONST_0));
+            opStack_.push(ConstantSInt::get(Type::LongTy, code[i]-LCONST_0));
             break;
         case FCONST_0:
         case FCONST_1:
@@ -214,12 +214,12 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
             break;
         case BIPUSH: {
             int imm = readSByte(code, i);
-            opStack_.push(ConstantInt::get(Type::IntTy, imm));
+            opStack_.push(ConstantSInt::get(Type::IntTy, imm));
             break;
         }
         case SIPUSH: {
             int imm = readSShort(code, i);
-            opStack_.push(ConstantInt::get(Type::IntTy, imm));
+            opStack_.push(ConstantSInt::get(Type::IntTy, imm));
             break;
         }
         case LDC: {

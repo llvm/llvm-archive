@@ -2,6 +2,7 @@
 #define GRAPHDRAWER_H
 
 #include "wx/wx.h"
+#include <string>
 
 //===----------------------------------------------------------------------===//
 
@@ -11,14 +12,12 @@ class GraphDrawer {
   wxImage *graphImage;
   virtual wxImage *drawGraphImage () = 0;
 
+ protected:
+  static wxImage *buildwxImageFromDotFile (const std::string filename);
+
  public:
   GraphDrawer () : graphImage (0) { }
-  wxImage *getGraphImage () {
-    if (!graphImage)
-      graphImage = drawGraphImage ();
-    // FIXME -- should make sure that it worked
-    return graphImage;
-  }
+  wxImage *getGraphImage ();
 };
 
 #endif // GRAPHDRAWER_H

@@ -15,16 +15,5 @@ wxImage *CFGGraphDrawer::drawGraphImage () {
   FunctionPassManager PM (&MP);
   PM.add (createCFGOnlyPrinterPass ());
   PM.run (*fn);
-  // Ok, it made us a CFG dot graph file, turn it into something we can load
-  std::string filename = "cfg." + fn->getName() + ".dot";
-  std::string cmd = "dot -Tpng " + filename + " > cfg.png";
-  system (cmd.c_str ());
-  unlink (filename.c_str ());
-  wxImage *graphImage = new wxImage;
-  if (!graphImage->LoadFile ("cfg.png")) {
-     std::cerr << "drawGraphImage(): wxImage::LoadFile returned false\n";
-     return 0;
-  }
-  unlink ("cfg.png");
-  return graphImage;
+  return buildwxImageFromDotFile ("cfg." + fn->getName() + ".dot");
 }

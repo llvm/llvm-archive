@@ -130,9 +130,8 @@ namespace llvm { namespace Java { namespace {
     }
   };
 
-  struct CompilerImpl :
+  class CompilerImpl :
     public BytecodeParser<CompilerImpl> {
-  private:
     Module* module_;
     ClassFile* cf_;
     OperandStack opStack_;
@@ -1525,13 +1524,15 @@ Compiler::~Compiler()
   delete compilerImpl_;
 }
 
-void Compiler::compile(Module& m, const std::string& className)
+std::auto_ptr<Module> Compiler::compile(const std::string& className)
 {
   DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
+  std::auto_ptr<Module> m(new Module(className));
+
   Function* main =
-    compilerImpl_->compileMethod(m, className + "/main([Ljava/lang/String;)V");
-  Function* javaMain = m.getOrInsertFunction
+    compilerImpl_->compileMethod(*m, className + "/main([Ljava/lang/String;)V");
+  Function* javaMain = m->getOrInsertFunction
     ("llvm_java_main", Type::VoidTy,
      Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);
 
@@ -1543,4 +1544,5 @@ void Compiler::compile(Module& m, const std::string& className)
                "",
                bb);
   new ReturnInst(NULL, bb);
+  return m;
 }

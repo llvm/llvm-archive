@@ -15,6 +15,7 @@
 #define LLVM_JAVA_COMPILER_H
 
 #include <llvm/Module.h>
+#include <memory>
 
 namespace llvm { namespace Java {
 
@@ -27,7 +28,7 @@ namespace llvm { namespace Java {
     Compiler();
     ~Compiler();
 
-    void compile(Module& m, const std::string& className);
+    std::auto_ptr<Module> compile(const std::string& className);
 
   private:
     // do not implement

@@ -37,13 +37,12 @@ int main(int argc, char* argv[])
   try {
     Java::Compiler compiler;
 
-    Module module(InputClass);
-    compiler.compile(module, InputClass);
+    std::auto_ptr<Module> module = compiler.compile(InputClass);
 
     PassManager passes;
     passes.add(createVerifierPass());
     passes.add(new WriteBytecodePass(&std::cout));
-    passes.run(module);
+    passes.run(*module);
   }
   catch (std::exception& e) {
     std::cerr << e.what() << '\n';

@@ -93,7 +93,8 @@ const VMField* VMClass::lookupField(const std::string& name) const
   return NULL;
 }
 
-void VMClass::computeLayout() {
+void VMClass::computeLayout()
+{
   std::vector<const Type*> layout;
   if (isArray()) {
     layout.reserve(3);

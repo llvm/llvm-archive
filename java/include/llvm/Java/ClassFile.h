@@ -399,13 +399,27 @@ namespace llvm { namespace Java {
         const Attributes& getAttributes() const { return attributes_; }
 
         std::ostream& dump(std::ostream& os) const;
-
     };
 
     inline std::ostream& operator<<(std::ostream& os,
                                     const AttributeCode::Exception& e) {
         return e.dump(os);
     }
+
+    class AttributeExceptions : public Attribute {
+    private:
+        ConstantUtf8* name_;
+        Classes exceptions_;
+
+    public:
+        AttributeExceptions(ConstantUtf8* name,
+                            const ConstantPool& cp,
+                            std::istream& is);
+
+        const Classes& getExceptions() const { return exceptions_; }
+
+        std::ostream& dump(std::ostream& os) const;
+    };
 
     class ClassFileParseError : public std::exception {
         std::string msg_;

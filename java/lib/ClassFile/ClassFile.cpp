@@ -71,15 +71,16 @@ namespace {
             cp.push_back(Constant::readConstant(cp, is));
     }
 
-    void readInterfaces(Classes& i, const ConstantPool& cp, std::istream& is)
+    void readClasses(Classes& i, const ConstantPool& cp, std::istream& is)
     {
         assert(i.empty() &&
-               "Should not call with a non-empty interfaces vector");
+               "Should not call with a non-empty classes vector");
         uint16_t count = readU2(is);
         i.reserve(count);
         while (count--) {
             ConstantClass* c = dynamic_cast<ConstantClass*>(cp[readU2(is)]);
-            if (!c) throw "FIXME: give better error message";
+            if (!c)
+                throw ClassFileSemanticError("ConstantClass expected");
             i.push_back(c);
         }
     }
@@ -156,7 +157,7 @@ ClassFile::ClassFile(std::istream& is)
     if (!superClass_)
         throw ClassFileSemanticError(
             "Representation of super class is not of type ConstantClass");
-    readInterfaces(interfaces_, cPool_, is);
+    readClasses(interfaces_, cPool_, is);
     readFields(fields_, cPool_, is);
     readMethods(methods_, cPool_, is);
     readAttributes(attributes_, cPool_, is);
@@ -505,7 +506,7 @@ std::ostream& AttributeConstantValue::dump(std::ostream& os) const
 }
 
 //===----------------------------------------------------------------------===//
-// Attribute code
+// AttributeCode implementation
 AttributeCode::AttributeCode(ConstantUtf8* name,
                              const ConstantPool& cp,
                              std::istream& is)
@@ -565,4 +566,23 @@ std::ostream& AttributeCode::Exception::dump(std::ostream& os) const
               << "Start PC: " << startPc_ << '\n'
               << "End PC: " << endPc_ << '\n'
               << "Handler PC: " << handlerPc_;
+}
+
+//===----------------------------------------------------------------------===//
+// AttributeExceptions implementation
+AttributeExceptions::AttributeExceptions(ConstantUtf8* name,
+                                         const ConstantPool& cp,
+                                         std::istream& is)
+    : Attribute(name, cp, is)
+{
+    uint32_t length = readU4(is);
+    readClasses(exceptions_, cp, is);
+}
+
+std::ostream& AttributeExceptions::dump(std::ostream& is) const
+{
+    for (Classes::const_iterator
+             i = exceptions_.begin(), e = exceptions_.end(); i != e; ++i)
+        is << *i << ' ';
+    return is;
 }

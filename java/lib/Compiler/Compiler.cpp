@@ -156,7 +156,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     template <typename InsertionPointTy>
-    Value* createNewString(const std::string& str, InsertionPointTy* ip) {
+    GlobalVariable* createNewString(const std::string& str,
+                                    InsertionPointTy* ip) {
       // Create a new byte[] object and initialize it with the
       // contents of this string constant.
       Value* count = ConstantUInt::get(Type::UIntTy, str.size());
@@ -190,12 +191,22 @@ namespace llvm { namespace Java { namespace {
       new CallInst(memcpy_, params, "", ip);
 
       // Get class information for java/lang/String.
-      const ClassFile* cf = ClassFile::get("java/lang/String");
       const Class& ci = resolver_->getClass("java/lang/String");
-      const VTableInfo& vi = getVTableInfo(cf);
+      const VTableInfo& vi = getVTableInfo(ci.getClassFile());
 
-      // Create a new java/lang/String object.
-      Value* objRef = allocateObject(ci, vi, ip);
+      // Create a zeroinitialized static java/lang/String object.
+      GlobalVariable* globalString =
+        new GlobalVariable(ci.getStructType(),
+                           false,
+                           GlobalVariable::LinkOnceLinkage,
+                           llvm::Constant::getNullValue(ci.getStructType()),
+                           str + ".java/lang/String",
+                           &module_);
+      // Install the vtable pointer.
+      Value* objBase =
+        new CastInst(globalString, resolver_->getObjectBaseRefType(), TMP, ip);
+      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      new CallInst(setVtable_, objBase, vtable, "", ip);
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
       Method* method = getMethod("java/lang/String/<init>([BI)V");
@@ -204,31 +215,18 @@ namespace llvm { namespace Java { namespace {
 
       params.reserve(3);
       params.clear();
-      params.push_back(new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, ip));
+      params.push_back(objBase);
       params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseRefType(), TMP, ip));
       params.push_back(ConstantSInt::get(Type::IntTy, 0));
       new CallInst(function, params, "", ip);
 
-      return objRef;
+      return globalString;
     }
 
-    Value* getConstantString(ConstantString* s) {
+    GlobalVariable* getConstantString(ConstantString* s) {
       const std::string& str = s->getValue()->str();
       StringMap::iterator it = stringMap_.find(str);
       if (it == stringMap_.end()) {
-        // Create the global variable for the string.
-        const Class& stringClass = resolver_->getClass("java/lang/String");
-        GlobalVariable* stringGlobal = new GlobalVariable(
-          stringClass.getType(),
-          false,
-          GlobalVariable::ExternalLinkage,
-          llvm::Constant::getNullValue(stringClass.getType()),
-          str + ".java/lang/String",
-          &module_);
-
-        // Insert this new string into the map.
-        it = stringMap_.insert(it, std::make_pair(str, stringGlobal));
-
         // Get the static initializer function and get its one and
         // only basic block to add code to.
         Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
@@ -236,13 +234,13 @@ namespace llvm { namespace Java { namespace {
         Instruction* I = hook->front().getTerminator();
         assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
 
-        Value* newString = createNewString(str, I);
+        GlobalVariable* stringGlobal = createNewString(str, I);
 
-        // Store the string reference to the global variable.
-        new StoreInst(newString, stringGlobal, I);
+        // Insert this new string into the map.
+        it = stringMap_.insert(it, std::make_pair(str, stringGlobal));
       }
 
-      return new LoadInst(it->second, TMP, currentBB_);
+      return it->second;
     }
 
     /// Given a llvm::Java::Constant returns a Value

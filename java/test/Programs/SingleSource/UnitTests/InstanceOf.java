@@ -1,38 +1,38 @@
-class InstanceOfBase
-{
-    int foo() { return 0; }
-    int bar() { return 0; }
-}
-
-interface InstanceOfInterface
-{
-    public int baz();
-}
-
-class InstanceOfDerived extends InstanceOfBase implements InstanceOfInterface
-{
-    int foo() { return 1; }
-    public int baz() { return foo(); }
-
-}
-
 public class InstanceOf
 {
+    private static class Base
+    {
+        int foo() { return 0; }
+        int bar() { return 0; }
+    }
+
+    interface Interface
+    {
+        public int baz();
+    }
+
+    private static class Derived extends Base implements Interface
+    {
+        int foo() { return 1; }
+        public int baz() { return foo(); }
+
+    }
+
     public static void main(String[] args) {
-        InstanceOfBase aa = new InstanceOfBase();
-        InstanceOfBase ab = new InstanceOfDerived();
-        InstanceOfInterface bb = new InstanceOfDerived();
+        Base aa = new Base();
+        Base ab = new Derived();
+        Interface bb = new Derived();
 
-        Test.print_boolean_ln(aa instanceof InstanceOfBase);
-        Test.print_boolean_ln(aa instanceof InstanceOfDerived);
-        Test.print_boolean_ln(aa instanceof InstanceOfInterface);
+        Test.print_boolean_ln(aa instanceof Base);
+        Test.print_boolean_ln(aa instanceof Derived);
+        Test.print_boolean_ln(aa instanceof Interface);
 
-        Test.print_boolean_ln(ab instanceof InstanceOfBase);
-        Test.print_boolean_ln(ab instanceof InstanceOfDerived);
-        Test.print_boolean_ln(ab instanceof InstanceOfInterface);
+        Test.print_boolean_ln(ab instanceof Base);
+        Test.print_boolean_ln(ab instanceof Derived);
+        Test.print_boolean_ln(ab instanceof Interface);
 
-        Test.print_boolean_ln(bb instanceof InstanceOfBase);
-        Test.print_boolean_ln(bb instanceof InstanceOfDerived);
-        Test.print_boolean_ln(bb instanceof InstanceOfInterface);
+        Test.print_boolean_ln(bb instanceof Base);
+        Test.print_boolean_ln(bb instanceof Derived);
+        Test.print_boolean_ln(bb instanceof Interface);
     }
 }

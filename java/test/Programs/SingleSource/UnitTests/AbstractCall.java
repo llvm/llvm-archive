@@ -1,17 +1,17 @@
-abstract class AbstractCallAbstract {
-    abstract int abstractMethod();
-
-    int concreteMethod() { return abstractMethod(); }
-}
-
-class AbstractCallConcrete extends AbstractCallAbstract {
-    int abstractMethod() { return 5; }
-}
-
 public class AbstractCall
 {
+    private static abstract class Abstract {
+        abstract int abstractMethod();
+
+        int concreteMethod() { return abstractMethod(); }
+    }
+
+    private static class Concrete extends Abstract {
+        int abstractMethod() { return 5; }
+    }
+
     public static void main(String[] args) {
-        AbstractCallAbstract a = new AbstractCallConcrete();
+        Abstract a = new Concrete();
         Test.print_int_ln(a.concreteMethod());
     }
 }

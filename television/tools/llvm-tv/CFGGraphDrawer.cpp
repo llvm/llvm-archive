@@ -1,4 +1,5 @@
 #include "CFGGraphDrawer.h"
+#include "llvm/Function.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/PassManager.h"

@@ -2,6 +2,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "wx/treectrl.h"
+#include <cstdlib>
 using namespace llvm;
 
 static inline void htmlHeader(std::ostream &os) {
@@ -13,7 +14,7 @@ static inline void htmlFooter(std::ostream &os) {
 }
 
 static inline void htmlBB(std::ostream &os, const BasicBlock *BB) {
-  os << "<font color=\"#cc0000\"><b>" << BB->getName() << ":</b><br>";
+  os << "<font color=\"#cc0000\"><b>" << BB->getName() << ":</b></font><br>";
 }
 
 static inline void htmlType(std::ostream &os, const Type* type) {
@@ -28,6 +29,10 @@ static inline std::string wrapType(const std::string &word) {
 
 static inline std::string wrapKeyword(const std::string &word) {
   return ("<font color=\"navy\"><b>" + word + "</b></font>");
+}
+
+static inline std::string wrapConstant(const std::string &c) {
+  return ("<font color=\"#770077\">" + c + "</font>");
 }
 
 // LLVM types
@@ -83,15 +88,24 @@ static inline std::string stylizeTypesAndKeywords(std::string &str) {
   {
     // "Wrap" keywords
     for (unsigned k = 0, ke = sizeof(keywords)/sizeof(char*); k != ke; ++k)
-      if (tokens[i] == keywords[k])
+      if (tokens[i] == keywords[k]) {
         tokens[i] = wrapKeyword(tokens[i]);
+        break;
+      }
 
     // "Wrap" types
     for (unsigned t = 0, te = sizeof(types)/sizeof(char*); t != te; ++t) {
       std::string type(types[t]);
-      if (tokens[i].substr(0, type.size()) == type)
+      if (tokens[i].substr(0, type.size()) == type) {
         tokens[i] = wrapType(tokens[i]);
+        break;
+      }
     }
+
+    // "Wrap" constants
+    if (strtol(tokens[i].c_str(), 0, 0))
+      tokens[i] = wrapConstant(tokens[i]);
+
   }
 
 #if 0

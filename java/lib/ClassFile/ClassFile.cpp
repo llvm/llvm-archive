@@ -23,7 +23,7 @@
 using namespace llvm::Java;
 
 //===----------------------------------------------------------------------===//
-// Utility functions
+// Internal utility functions
 namespace {
 
     uint8_t readU1(std::istream& is) {
@@ -189,6 +189,27 @@ std::ostream& ClassFile::dump(std::ostream& os) const
     dumpCollection(attributes_, "Attribute", os);
 
     return os;
+}
+
+//===----------------------------------------------------------------------===//
+// Utility functions
+const Attribute* llvm::Java::getAttribute(const Attributes& attrs,
+                                          const std::string& name)
+{
+    for (Attributes::const_iterator
+             i = attrs.begin(), e = attrs.end(); i != e; ++i) {
+        const Attribute* attr = *i;
+        if (attr->getName()->str() == name)
+            return attr;
+    }
+
+    return NULL;
+}
+
+const CodeAttribute* llvm::Java::getCodeAttribute(const Attributes& attrs)
+{
+    return static_cast<const CodeAttribute*>(
+        getAttribute(attrs, Attribute::CODE));
 }
 
 //===----------------------------------------------------------------------===//

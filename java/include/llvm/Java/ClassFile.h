@@ -22,6 +22,7 @@ namespace llvm { namespace Java {
 
     // Forward declarations
     class Attribute;
+    class CodeAttribute;
     class Constant;
     class ConstantClass;
     class ConstantNameAndType;
@@ -51,6 +52,10 @@ namespace llvm { namespace Java {
     typedef std::vector<Field*> Fields;
     typedef std::vector<Method*> Methods;
     typedef std::vector<Attribute*> Attributes;
+
+    const Attribute* getAttribute(const Attributes& attrs,
+                                  const std::string& name);
+    const CodeAttribute* getCodeAttribute(const Attributes& attrs);
 
     class ClassFile {
     public:

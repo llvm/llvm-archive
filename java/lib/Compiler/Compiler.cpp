@@ -430,8 +430,6 @@ namespace llvm { namespace Java { namespace {
     }
 
     Function* compileMethodOnly(const std::string& classMethodDesc) {
-      DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
-
       Method* method;
       tie(cf_, method) = findClassAndMethod(classMethodDesc);
 
@@ -445,6 +443,14 @@ namespace llvm { namespace Java { namespace {
       function->setLinkage(method->isPrivate() ?
                            Function::InternalLinkage :
                            Function::ExternalLinkage);
+
+      if (method->isNative()) {
+        DEBUG(std::cerr << "Ignoring native method: ";
+              std::cerr << classMethodDesc << '\n');
+        return function;
+      }
+
+      DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 
       Java::CodeAttribute* codeAttr = method->getCodeAttribute();
 

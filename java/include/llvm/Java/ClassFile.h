@@ -16,6 +16,7 @@
 #define LLVM_JAVA_CLASSFILE_H
 
 #include <iosfwd>
+#include <map>
 #include <stdexcept>
 #include <vector>
 
@@ -65,6 +66,8 @@ namespace llvm { namespace Java {
         static std::vector<std::string> getClassPath();
         static std::string getFileForClass(const std::string& classname);
 
+        typedef std::map<std::string, Method*> Name2MethodMap;
+
     public:
         static const ClassFile* getClassFile(const std::string& classname);
 
@@ -92,6 +95,8 @@ namespace llvm { namespace Java {
 
         const Attributes& getAttributes() const { return attributes_; }
 
+        const Method* getMethod(const std::string& nameAndDescr) const;
+
         std::ostream& dump(std::ostream& os) const;
 
     private:
@@ -105,6 +110,7 @@ namespace llvm { namespace Java {
         Fields fields_;
         Methods methods_;
         Attributes attributes_;
+        Name2MethodMap n2mMap_;
 
         ClassFile(std::istream& is);
     };
@@ -450,6 +456,22 @@ namespace llvm { namespace Java {
     public:
         explicit ClassFileSemanticError(const std::string& msg) : msg_(msg) { }
         virtual ~ClassFileSemanticError() throw();
+        virtual const char* what() const throw() { return msg_.c_str(); }
+    };
+
+    class ClassNotFoundException : public std::exception {
+        std::string msg_;
+    public:
+        explicit ClassNotFoundException(const std::string& msg) : msg_(msg) { }
+        virtual ~ClassNotFoundException() throw();
+        virtual const char* what() const throw() { return msg_.c_str(); }
+    };
+
+    class InvocationTargetException : public std::exception {
+        std::string msg_;
+    public:
+        explicit InvocationTargetException(const std::string& msg) : msg_(msg) { }
+        virtual ~InvocationTargetException() throw();
         virtual const char* what() const throw() { return msg_.c_str(); }
     };
 

@@ -186,7 +186,7 @@ std::string ClassFile::getFileForClass(const std::string& classname)
             return filename;
     }
 
-    throw ClassFileSemanticError("Class " + classname + " not found");
+    throw ClassNotFoundException("Class " + classname + " not found");
 }
 
 const ClassFile* ClassFile::getClassFile(const std::string& classname)
@@ -221,6 +221,17 @@ ClassFile::ClassFile(std::istream& is)
     readFields(fields_, cPool_, is);
     readMethods(methods_, cPool_, is);
     readAttributes(attributes_, cPool_, is);
+    for (Methods::const_iterator
+             i = methods_.begin(), e = methods_.end(); i != e; ++i)
+        n2mMap_.insert(
+            std::make_pair(
+                (*i)->getName()->str() + (*i)->getDescriptor()->str(), *i));
+}
+
+const Method* ClassFile::getMethod(const std::string& nameAndDescr) const
+{
+    Name2MethodMap::const_iterator it = n2mMap_.find(nameAndDescr);
+    return it == n2mMap_.end() ? NULL : it->second;
 }
 
 ClassFile::~ClassFile()
@@ -285,6 +296,20 @@ ClassFileParseError::~ClassFileParseError() throw()
 //===----------------------------------------------------------------------===//
 // ClassFileSemanticError implementation
 ClassFileSemanticError::~ClassFileSemanticError() throw()
+{
+
+}
+
+//===----------------------------------------------------------------------===//
+// ClassNotFoundException implementation
+ClassNotFoundException::~ClassNotFoundException() throw()
+{
+
+}
+
+//===----------------------------------------------------------------------===//
+// InvocationTargetException implementation
+InvocationTargetException::~InvocationTargetException() throw()
 {
 
 }

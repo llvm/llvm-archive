@@ -499,7 +499,12 @@ namespace {
     /// @brief called on RET
     void do_ret(unsigned index) { abort(); }
     /// @brief called on TABLESWITCH
-    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) { abort(); }
+    void do_tableswitch(unsigned defTarget, const SwitchCases& sw) {
+      Out << "tableswitch{ //" << sw.front().first << " to " << sw.back().first;
+      for (unsigned i = 0, e = sw.size(); i != e; ++i)
+        Out << "\n\t\t\t" << sw[i].first << ": " << sw[i].second << ';';
+      Out << ";\n\t\t\tdefault: " << defTarget << " }";
+    }
     /// @brief called on LOOKUPSWITCH
     void do_lookupswitch(unsigned defTarget, const SwitchCases& sw) { abort(); }
     /// @brief called on IRETURN
@@ -566,7 +571,8 @@ namespace {
       case BOOLEAN: Out << "boolean"; break;
       case CHAR: Out << "char"; break;
       case FLOAT: Out << "float"; break;
-      case DOUBLE: Out << "byte"; break;
+      case DOUBLE: Out << "double"; break;
+      case BYTE: Out << "byte"; break;
       case SHORT: Out << "short"; break;
       case INT: Out << "int"; break;
       case LONG: Out << "long"; break;

@@ -1,3 +1,9 @@
+//===-- ItemDisplayer.h - Interface for tabbed-view components --*- C++ -*-===//
+//
+// The interface for tabbed views.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef ITEMDISPLAYER_H
 #define ITEMDISPLAYER_H
 

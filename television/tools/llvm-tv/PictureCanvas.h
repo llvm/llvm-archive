@@ -1,3 +1,9 @@
+//===-- PictureCanvas.h - Host of graph images -------------------*- C++ -*-==//
+//
+// Visual pane for viewing analysis graphs
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef PICTURECANVAS_H
 #define PICTURECANVAS_H
 

@@ -797,7 +797,7 @@ namespace llvm { namespace Java { namespace {
 
       parse(codeAttr->getCode(), codeAttr->getCodeSize());
 
-      function->dump();
+      // function->dump();
 
       return function;
     }

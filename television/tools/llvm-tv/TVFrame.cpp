@@ -147,9 +147,10 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
                                         wxSP_3D);
 
   // Create tree view of snapshots
-  CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
-             mySnapshotList);
+  myTreeCtrl = new TVTreeCtrl(splitterWindow, LLVM_TV_TREE_CTRL);
+  Resize();
 
+  // Create right-hand pane's display widget
   displayWidget = createDisplayWidget (splitterWindow, Explanation);
 
   // Split window vertically
@@ -247,12 +248,6 @@ void TVFrame::CodeView(wxCommandEvent &event) {
                  wxOK | wxICON_ERROR, this);
   else
     myApp->OpenCodeView(F);
-}
-
-void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
-  myTreeCtrl = new TVTreeCtrl(splitterWindow, LLVM_TV_TREE_CTRL,
-                              wxDefaultPosition, wxDefaultSize, style);
-  Resize();
 }
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)

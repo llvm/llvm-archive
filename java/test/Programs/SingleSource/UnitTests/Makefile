@@ -8,50 +8,20 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../../../..
 
-JAVA_TESTS := AbstractCall \
-	Arithm \
-	Array \
-	BigConstants \
-	Call \
-	FieldAccess \
-	FloatCompare \
-	ForLoop \
-	If \
-	InnerClass \
-	InstanceOf \
-	InterfaceCall \
-	Lists \
-	Lists1 \
-	Lists2 \
-	LongCompare \
-	LookupSwitch \
-	Numbers \
-	StaticInitializers \
-	TableSwitch \
-	Test \
-	VirtualCall \
-	VTable \
-	ackermann \
-	ary \
-	fibo \
-	heapsort \
-	methcall \
-	nestedloop \
-	objinst \
-	sieve \
-	random \
-	takfp \
-#	Strings \
-#	MultipleInterfaces \
-#	MultiArray \
-
-
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1
 SHARED_LIBRARY=1
 LIBRARYNAME=test
 
-EXTRA_OBJS = $(LibDir)/libtest.bca
+include $(LEVEL)/Makefile.common
+
+EXTRA_OBJS = $(LibName.BCA)
+
+BUILD_JAVA_SOURCES=1
+
+include ../Makefile.singlesrc
+
+$(EXTRA_OBJS): Test.h
 
 Test.h: Output/Test.class
 	$(Verb)$(Echo) Creating JNI header for class $(basename $(notdir $<))
@@ -61,6 +31,3 @@ Test.h: Output/Test.class
 clean::
 	$(Verb)rm -f Test.h
 
-include ../Makefile.singlesrc
-
-$(EXTRA_OBJS): Test.h

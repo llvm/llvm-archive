@@ -7,12 +7,10 @@
 #
 ##===----------------------------------------------------------------------===##
 
-include $(LEVEL)/test/Makefile.test
-
 # rule to build raw bytecode from a classfile
 %.raw.bc: %.class $(CLASS2LLVM)
 	$(Echo) Compiling $< to bytecode
-	$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
+	-$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
 
 OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
               -ipsccp -simplifycfg -deadargelim -instcombine -simplifycfg \
@@ -25,4 +23,6 @@ OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
 # optimize raw bytecode
 %.linked.bc: %.raw.bc $(LOPT)
 	$(Echo) Optimizing $<
-	$(Verb)$(LOPT) $(OPT_PASSES) -f -o=$@ $<
+	-$(Verb)$(LOPT) $(OPT_PASSES) -f -o=$@ $<
+
+include $(LEVEL)/test/Makefile.test

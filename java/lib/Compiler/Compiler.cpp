@@ -434,7 +434,10 @@ namespace llvm { namespace Java { namespace {
     const ClassInfo& getPrimitiveArrayInfo(JType type) {
       switch (type) {
       case BOOLEAN: {
-        static ClassInfo arrayInfo = buildArrayClassInfo(Type::BoolTy);
+        // Because baload/bastore is used to load/store to both byte
+        // arrays and boolean arrays we use sbyte for java boolean
+        // arrays as well.
+        static ClassInfo arrayInfo = buildArrayClassInfo(Type::SByteTy);
         return arrayInfo;
       }
       case CHAR: {
@@ -812,7 +815,10 @@ namespace llvm { namespace Java { namespace {
     const VTableInfo& getPrimitiveArrayVTableInfo(JType type) {
       switch (type) {
       case BOOLEAN: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::BoolTy);
+        // Because baload/bastore is used to load/store to both byte
+        // arrays and boolean arrays we use sbyte for java boolean
+        // arrays as well.
+        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::SByteTy);
         return arrayInfo;
       }
       case CHAR: {
@@ -1285,6 +1291,8 @@ namespace llvm { namespace Java { namespace {
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
         compileMethodOnly(f->getName());
+        DEBUG(std::cerr << i << '/' << toCompileFunctions_.size()
+              << " functions compiled\n");
       }
 
       return function;
@@ -1338,15 +1346,10 @@ namespace llvm { namespace Java { namespace {
     void do_laload() { do_aload_common(); }
     void do_faload() { do_aload_common(); }
     void do_daload() { do_aload_common(); }
-    void do_aaload() {
-      do_aload_common();
-      do_cast_common(
-        PointerType::get(
-          getClassInfo(ClassFile::get("java/lang/Object")).type));
-    }
-    void do_baload() { do_aload_common(); do_cast_common(Type::IntTy); }
-    void do_caload() { do_aload_common(); do_cast_common(Type::IntTy); }
-    void do_saload() { do_aload_common(); do_cast_common(Type::IntTy); }
+    void do_aaload() { do_aload_common(); }
+    void do_baload() { do_aload_common(); }
+    void do_caload() { do_aload_common(); }
+    void do_saload() { do_aload_common(); }
 
     void do_aload_common() {
       Value* index = currentOpStack_->pop(currentBB_);
@@ -1379,21 +1382,20 @@ namespace llvm { namespace Java { namespace {
     void do_fastore() { do_astore_common(); }
     void do_dastore() { do_astore_common(); }
     void do_aastore() {
-      do_cast_common(
+      do_astore_common(
         PointerType::get(
           getClassInfo(ClassFile::get("java/lang/Object")).type));
-      do_astore_common();
     }
-    void do_bastore() { do_cast_common(Type::SByteTy); do_astore_common(); }
-    void do_castore() { do_cast_common(Type::UShortTy); do_astore_common(); }
-    void do_sastore() { do_cast_common(Type::ShortTy); do_astore_common(); }
+    void do_bastore() { do_astore_common(Type::SByteTy); }
+    void do_castore() { do_astore_common(Type::UShortTy); }
+    void do_sastore() { do_astore_common(Type::ShortTy); }
 
-    void do_astore_common() {
+    void do_astore_common(Type* castTo = NULL) {
       Value* value = currentOpStack_->pop(currentBB_);
+      if (castTo)
+        value = new CastInst(value, castTo, TMP, currentBB_);
       Value* index = currentOpStack_->pop(currentBB_);
       Value* arrayRef = currentOpStack_->pop(currentBB_);
-
-      arrayRef->dump();
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1767,11 +1769,13 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_jsr(unsigned target) {
-      assert(0 && "not implemented");
+      // assert(0 && "not implemented");
+      std::cerr << "WARNING: jsr is not implemented and ignored!\n";
     }
 
     void do_ret(unsigned index) {
-      assert(0 && "not implemented");
+      // assert(0 && "not implemented");
+      std::cerr << "WARNING: ret is not implemented and ignored!\n";
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {

@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "javacompiler"
+
 #include <llvm/Java/Bytecode.h>
 #include <llvm/Java/ClassFile.h>
 #include <llvm/Java/Compiler.h>
@@ -19,6 +21,7 @@
 #include <llvm/Instructions.h>
 #include <llvm/Value.h>
 #include <llvm/Type.h>
+#include <Support/Debug.h>
 #include <Support/StringExtras.h>
 
 using namespace llvm;
@@ -171,8 +174,10 @@ void Compiler::compileMethodInit(Function& function,
 void Compiler::compileMethod(Module& module, const Java::Method& method) {
     using namespace llvm::Java::Opcode;
 
+    DEBUG(std::cerr << "compiling method: " << method.getName()->str() << '\n');
+
     Function* function =
-        module.getOrInsertFunction(method.getName()->str(), Type::VoidTy);
+        module.getOrInsertFunction(method.getName()->str(), Type::VoidTy, 0);
 
     const Java::CodeAttribute* codeAttr =
         Java::getCodeAttribute(method.getAttributes());
@@ -776,6 +781,9 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
 
 Module* Compiler::compile(const ClassFile& cf)
 {
+    DEBUG(std::cerr << "compiling class: "
+          << cf.getThisClass()->getName()->str() << '\n');
+
     Module* module = new Module(cf.getThisClass()->getName()->str());
 
     const Java::Methods& methods = cf.getMethods();

@@ -1,5 +1,3 @@
-package edu.uiuc.cs.llvm;
-
 public class Arithm
 {
     public static int main(String[] args) {

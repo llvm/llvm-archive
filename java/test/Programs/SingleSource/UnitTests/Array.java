@@ -6,8 +6,7 @@ public class Array
         for (int i = 0, e = intArray.length; i != e; ++i)
             intArray[i] = intArray.length - i;
 
-        for (int i = 0, e = intArray.length; i != e; ++i)
-            Test.println(intArray[i]);
+        Util.printlnElements(intArray);
 
 
         Object[] objectArray = new Object[10];
@@ -16,7 +15,6 @@ public class Array
             objectArray[i] = intArray;
 
         intArray = (int[]) objectArray[4];
-        for (int i = 0, e = intArray.length; i != e; ++i)
-            Test.println(intArray[i]);
+        Util.printlnElements(intArray);
     }
 }

@@ -48,18 +48,12 @@ public class ArrayCopy
         fillArray(ldst, ldst.length, lsrc, lsrc.length);
         fillArray(odst, odst.length, osrc, osrc.length);
 
-        for (int i = 0; i < idst.length; ++i)
-            Test.println(idst[i]);
-        for (int i = 0; i < bdst.length; ++i)
-            Test.println(bdst[i]);
-        for (int i = 0; i < fdst.length; ++i)
-            Test.println(fdst[i]);
-        for (int i = 0; i < ddst.length; ++i)
-            Test.println(ddst[i]);
-        for (int i = 0; i < zdst.length; ++i)
-            Test.println(zdst[i]);
-        for (int i = 0; i < ldst.length; ++i)
-            Test.println(ldst[i]);
+        Util.printlnElements(idst);
+        Util.printlnElements(bdst);
+        Util.printlnElements(fdst);
+        Util.printlnElements(ddst);
+        Util.printlnElements(zdst);
+        Util.printlnElements(ldst);
         for (int i = 0; i < odst.length; ++i)
             Test.println(((Integer)odst[i]).intValue());
     }

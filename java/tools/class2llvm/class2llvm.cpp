@@ -16,8 +16,8 @@
 #include <llvm/Java/Compiler.h>
 #include <llvm/PassManager.h>
 #include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/System/Signals.h>
 #include <Support/CommandLine.h>
-#include <Support/Signals.h>
 
 #include <cstddef>
 #include <iostream>

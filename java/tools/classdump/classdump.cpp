@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Java/ClassFile.h>
+#include <llvm/System/Signals.h>
 #include <Support/CommandLine.h>
-#include <Support/Signals.h>
 
 #include <cstddef>
 #include <iostream>

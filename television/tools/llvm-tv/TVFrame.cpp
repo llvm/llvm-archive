@@ -6,6 +6,7 @@
 
 #include "wx/wx.h"
 #include "TVFrame.h"
+#include "TVApplication.h"
 #include <sstream>
 #include "llvm/Assembly/Writer.h"
 
@@ -96,12 +97,18 @@ void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
 
 ///==---------------------------------------------------------------------==///
 
+static const wxString Explanation
+  ("Click on a Module or Function in the left-hand pane\n"
+   "to display its code in the right-hand pane. Then, you\n"
+   "can choose from the View menu to see graphical code views.\n"); 
+
 /// Default ctor - used to set up typical appearance of demo frame
 ///
-TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
+TVFrame::TVFrame (TVApplication *app, const char *title)
+  : wxFrame (NULL, -1, title), myApp (app) {
   // Set up appearance
   CreateStatusBar ();
-  SetSize (wxRect (100, 100, 400, 200));
+  SetSize (wxRect (100, 100, 500, 200));
   Show (TRUE);
   splitterWindow = new wxSplitterWindow(this, LLVM_TV_SPLITTER_WINDOW,
                                         wxDefaultPosition, wxDefaultSize,
@@ -110,15 +117,10 @@ TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
   // Create tree view of snapshots
   CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
              mySnapshotList);
-
-  const wxString explanation
-   ("Click on a Module or Function in the left-hand pane\n"
-    "to display its code here. Then, you can choose from\n"
-    "the View menu to see graphical code views.\n"); 
   
   // Create static text to display module
   displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
-                               explanation, wxDefaultPosition,
+                               Explanation, wxDefaultPosition,
                                wxDefaultSize,
                                wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
 
@@ -126,18 +128,25 @@ TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
   splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
 }
 
+/// OnHelp - display the help dialog
+///
+void TVFrame::OnHelp (wxCommandEvent &event) {
+  wxMessageBox (Explanation);
+}
+
 /// OnExit - respond to a request to exit the program.
 ///
 void TVFrame::OnExit (wxCommandEvent &event) {
-  // They say that to exit the program, you should Destroy the top-level
-  // frame.
-  Destroy ();
+  myApp->Quit ();
 }
 
 /// OnExit - respond to a request to display the About box.
 ///
 void TVFrame::OnAbout (wxCommandEvent &event) {
-  wxMessageBox ("This is my demo. Is it not nifty??");
+  wxMessageBox("LLVM Visualization Tool\n\n"
+               "By Misha Brukman, Tanya Brethour, and Brian Gaeke\n"
+               "Copyright (C) 2004 University of Illinois at Urbana-Champaign\n"
+               "http://llvm.cs.uiuc.edu");
 }
 
 /// OnRefresh - respond to a request to refresh the list
@@ -168,19 +177,27 @@ void TVFrame::CallGraphView(wxCommandEvent &event) {
   TVTreeItemData *item =
     (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
 
-  // Display the assembly language for the selected LLVM object in the
-  // right-hand pane.
-  std::ostringstream Out;
+  // Open up a new call graph view window.
   Module *M = item->getModule ();
   if (!M) {
-    wxMessageBox ("The selected item doesn't have a call graph.");
+    wxMessageBox ("The selected item doesn't have a call graph to view.");
     return;
   }
-  wxMessageBox ("ready to display call graph");
+  myApp->OpenCallGraphView (M);
 }
 
 void TVFrame::CFGView(wxCommandEvent &event) {
-  wxMessageBox ("cfg view goes here");
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Open up a new CFG view window.
+  Function *F = item->getFunction ();
+  if (!F) {
+    wxMessageBox ("The selected item doesn't have a CFG to view.");
+    return;
+  }
+  myApp->OpenCFGView (F);
 }
 
 void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
@@ -192,6 +209,7 @@ void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (wxID_EXIT, TVFrame::OnExit)
   EVT_MENU (wxID_ABOUT, TVFrame::OnAbout)
+  EVT_MENU (wxID_HELP_CONTENTS, TVFrame::OnHelp)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
   EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
   EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)

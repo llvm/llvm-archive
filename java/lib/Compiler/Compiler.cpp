@@ -381,6 +381,9 @@ namespace llvm { namespace Java { namespace {
       // interfaces vtable pointers
       elements.push_back(PointerType::get(PointerType::get(VTtype)));
       init.push_back(llvm::Constant::getNullValue(elements[3]));
+      // the element size (0 for classes)
+      elements.push_back(Type::IntTy);
+      init.push_back(llvm::ConstantSInt::get(elements[4], 0));
 
       // This is a static variable.
       VTableInfo::TypeInfoTy = StructType::get(elements);
@@ -750,6 +753,8 @@ namespace llvm { namespace Java { namespace {
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, lastInterface));
       // The interfaces' vtables.
       typeInfoInit.push_back(interfacesVTables);
+      // the element size (0 for classes)
+      typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
 
       return ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
     }
@@ -945,6 +950,10 @@ namespace llvm { namespace Java { namespace {
       typeInfoInit.push_back(
         llvm::Constant::getNullValue(
           PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+      // the element size
+      typeInfoInit.push_back(
+        ConstantExpr::getCast(
+          ConstantExpr::getSizeOf(elementTy), Type::IntTy));
 
       init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
       vi.vtable->setInitializer(ConstantStruct::get(init));
@@ -1049,6 +1058,9 @@ namespace llvm { namespace Java { namespace {
       init.push_back(
         llvm::Constant::getNullValue(
           PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+      // the element size
+      init.push_back(ConstantExpr::getCast(
+                       ConstantExpr::getSizeOf(ObjectBaseRefTy), Type::IntTy));
 
       llvm::Constant* typeInfoInit =
         ConstantStruct::get(VTableInfo::TypeInfoTy, init);
@@ -1166,6 +1178,10 @@ namespace llvm { namespace Java { namespace {
       typeInfoInit.push_back(
         llvm::Constant::getNullValue(
           PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+      // the element size
+      typeInfoInit.push_back(
+        ConstantExpr::getCast(
+          ConstantExpr::getSizeOf(ObjectBaseRefTy), Type::IntTy));
 
       init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
       vi.vtable->setInitializer(ConstantStruct::get(init));
@@ -1319,12 +1335,15 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
           classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
           classMethodDesc.find("java/lang/RuntimeException") != 0 &&
+          classMethodDesc.find("java/lang/Math") != 0 &&
           classMethodDesc.find("java/lang/Number") != 0 &&
           classMethodDesc.find("java/lang/Byte") != 0 &&
           classMethodDesc.find("java/lang/Integer") != 0 &&
           classMethodDesc.find("java/lang/Long") != 0 &&
           classMethodDesc.find("java/lang/Short") != 0 &&
           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
+          (classMethodDesc.find("java/lang/System") != 0 ||
+           classMethodDesc.find("java/lang/System/<cl") == 0) &&
           classMethodDesc.find("java/util/") != 0) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');

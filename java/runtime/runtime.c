@@ -17,13 +17,14 @@ struct llvm_java_object_base {
 };
 
 struct llvm_java_object_typeinfo {
-  int depth;
+  jint depth;
   struct llvm_java_object_vtable** vtables;
-  int lastIface;
+  jint lastIface;
   union {
-    int interfaceFlag;
+    jint interfaceFlag;
     struct llvm_java_object_vtable** interfaces;
   };
+  jint elementSize; /* The element size - 0 for classes */
 };
 
 struct llvm_java_object_vtable {
@@ -355,4 +356,24 @@ int main(int argc, char** argv) {
   llvm_java_static_init();
   llvm_java_main(argc, argv);
   return 0;
+}
+
+void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
+                                       jobject srcObj, jint srcStart,
+                                       jobject dstObj, jint dstStart,
+                                       jint length) {
+  struct llvm_java_bytearray* srcArray = (struct llvm_java_bytearray*) srcObj;
+  struct llvm_java_bytearray* dstArray = (struct llvm_java_bytearray*) dstObj;
+
+  jbyte* src = srcArray->data;
+  jbyte* dst = dstArray->data;
+
+  if (srcObj->vtable->typeinfo.elementSize !=
+      dstObj->vtable->typeinfo.elementSize)
+    llvm_java_throw(NULL);
+
+  src += srcStart * srcObj->vtable->typeinfo.elementSize;
+  dst += dstStart * dstObj->vtable->typeinfo.elementSize;
+
+  memcpy(dst, src, length * srcObj->vtable->typeinfo.elementSize);
 }

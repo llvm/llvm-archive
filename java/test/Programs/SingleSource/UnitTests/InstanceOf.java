@@ -18,16 +18,16 @@ public class InstanceOf extends InstanceOfBase implements InstanceOfInterface
         InstanceOfBase ab = new InstanceOf();
         InstanceOfInterface bb = new InstanceOf();
 
-        boolean aaA = aa instanceof InstanceOfBase;
-        boolean aaB = aa instanceof InstanceOf;
-        boolean aaI = aa instanceof InstanceOfInterface;
+        Test.print_boolean_ln(aa instanceof InstanceOfBase);
+        Test.print_boolean_ln(aa instanceof InstanceOf);
+        Test.print_boolean_ln(aa instanceof InstanceOfInterface);
 
-        boolean abA = ab instanceof InstanceOfBase;
-        boolean abB = ab instanceof InstanceOf;
-        boolean abI = ab instanceof InstanceOfInterface;
+        Test.print_boolean_ln(ab instanceof InstanceOfBase);
+        Test.print_boolean_ln(ab instanceof InstanceOf);
+        Test.print_boolean_ln(ab instanceof InstanceOfInterface);
 
-        boolean bbA = bb instanceof InstanceOfBase;
-        boolean bbB = bb instanceof InstanceOf;
-        boolean bbI = bb instanceof InstanceOfInterface;
+        Test.print_boolean_ln(bb instanceof InstanceOfBase);
+        Test.print_boolean_ln(bb instanceof InstanceOf);
+        Test.print_boolean_ln(bb instanceof InstanceOfInterface);
     }
 }

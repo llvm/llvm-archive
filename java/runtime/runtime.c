@@ -380,12 +380,7 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
   src += srcStart * srcObj->vtable->typeinfo.elementSize;
   dst += dstStart * dstObj->vtable->typeinfo.elementSize;
 
-  // If arrays do not overlap use memcpy.
-  if ((dst > src ? dst - src : src - dst) > nbytes)
-    memcpy(dst, src, nbytes);
-  // If arrays overlap use memmove.
-  else
-    memmove(dst, src, nbytes);
+  memmove(dst, src, nbytes);
 }
 
 void Java_gnu_classpath_VMSystemProperties_preInit(JNIEnv *env, jobject clazz,

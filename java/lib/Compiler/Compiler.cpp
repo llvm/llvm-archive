@@ -47,7 +47,7 @@ using namespace llvm::Java;
 Type* llvm::Java::ObjectBaseTy = OpaqueType::get();
 Type* llvm::Java::ObjectBaseRefTy = PointerType::get(ObjectBaseTy);
 Type* llvm::Java::VTableBaseTy = OpaqueType::get();
-Type* llvm::Java::VTableBaseRefTy = PointerType::get(ObjectBaseTy);
+Type* llvm::Java::VTableBaseRefTy = PointerType::get(VTableBaseRefTy);
 
 namespace llvm { namespace Java { namespace {
 

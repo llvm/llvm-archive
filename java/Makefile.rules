@@ -9,3 +9,7 @@
 
 CLASS2LLVM := $(PROJTOOLCURRENT)/class2llvm$(EXEEXT)
 CLASSDUMP  := $(PROJTOOLCURRENT)/classdump$(EXEEXT)
+
+# rule to make bytecode from assembly
+%.bc: %.ll
+	$(LAS) < $< > $@

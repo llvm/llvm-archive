@@ -27,10 +27,6 @@ clean::
 %.dis-ll: %.bc
 	$(LDIS) < $< > $@
 
-# rule to make bytecode from assembly
-%.bc: %.ll
-	$(LAS) < $< > $@
-
 # rule to compile java source
 %.class: %.java
 	$(JAVAC) $<

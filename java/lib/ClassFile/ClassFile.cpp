@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "classfile"
 
 #include <llvm/Java/ClassFile.h>
+#include <Support/CommandLine.h>
 #include <Support/Debug.h>
 #include <Support/FileUtilities.h>
 #include <Support/STLExtras.h>
@@ -27,6 +28,22 @@
 #include <map>
 
 using namespace llvm::Java;
+
+namespace {
+
+    using namespace llvm;
+
+    static cl::opt<std::string>
+    ClassPath("cp",
+              cl::desc("A : separated list of directories"),
+              cl::value_desc("class search path"),
+              cl::init(getenv("CLASSPATH")));
+    static cl::alias
+    ClassPathA("classpath",
+               cl::desc("Alias for -cp"),
+               cl::aliasopt(ClassPath));
+
+}
 
 //===----------------------------------------------------------------------===//
 // Internal utility functions
@@ -153,14 +170,13 @@ ClassFile* ClassFile::readClassFile(std::istream& is)
 
 std::vector<std::string> ClassFile::getClassPath()
 {
-    std::string classpath = getenv("CLASSPATH");
-    DEBUG(std::cerr << "CLASSPATH=" << classpath << '\n');
+    DEBUG(std::cerr << "CLASSPATH=" << ClassPath << '\n');
 
     std::vector<std::string> result;
     unsigned b = 0, e = 0;
     do {
-        e = classpath.find(':', b);
-        result.push_back(classpath.substr(b, e));
+        e = ClassPath.find(':', b);
+        result.push_back(ClassPath.substr(b, e));
         b = e + 1;
     } while (e != std::string::npos);
 

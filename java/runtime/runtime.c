@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <llvm/Java/jni.h>
 
@@ -71,40 +72,45 @@ jint llvm_java_Throw(jobject obj) {
 
 /* The implementation of JNI functions */
 
-struct llvm_java_bytearray {
-  struct llvm_java_object_base object_base;
-  jint length;
-  jbyte data[0];
-};
+#define HANDLE_TYPE(TYPE) \
+  struct llvm_java_##TYPE##array { \
+    struct llvm_java_object_base object_base; \
+    jint length; \
+    j##TYPE data[0]; \
+  };
+#include "types.def"
 
-static jint llvm_java_GetArrayLength(JNIEnv* env, jarray array) {
-  return ((struct llvm_java_bytearray*) array)->length;
+static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
+  return ((struct llvm_java_booleanarray*) array)->length;
 }
 
-static jbyte* llvm_java_GetByteArrayElements(JNIEnv* env,
-                                             jarray array,
-                                             jboolean* isCopy) {
-  if (isCopy)
-    *isCopy = JNI_FALSE;
-  return ((struct llvm_java_bytearray*) array)->data;
-}
-
-static void llvm_java_ReleaseByteArrayElements(JNIEnv* env,
-                                               jarray array,
-                                               jbyte* elements,
-                                               jint mode) {
-  switch (mode) {
-  case 0:
-  case JNI_COMMIT:
-  case JNI_ABORT:
-    // Since we return a the live array we don't need to copy anything
-    // or delete the elememnts.
-    return;
-  default:
-    abort();
+#define HANDLE_TYPE(TYPE) \
+  static j ## TYPE* llvm_java_get_##TYPE##_array_elements( \
+    JNIEnv* env, \
+    jarray array, \
+    jboolean* isCopy) { \
+    if (isCopy) \
+      *isCopy = JNI_FALSE; \
+    return ((struct llvm_java_ ##TYPE## array*) array)->data; \
   }
-}
+#include "types.def"
 
+#define HANDLE_TYPE(TYPE) \
+  static void llvm_java_release_ ##TYPE## _array_elements( \
+    JNIEnv* env, \
+    jarray array, \
+    j##TYPE* elements, \
+    jint mode) { \
+    switch (mode) { \
+    case 0: \
+    case JNI_COMMIT: \
+    case JNI_ABORT: \
+      return; \
+    default: \
+      abort(); \
+    } \
+  }
+#include "types.def"
 
 /* The JNI interface definition */
 static const struct JNINativeInterface llvm_java_JNINativeInterface = {
@@ -279,7 +285,7 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL, /* 170 */
-  &llvm_java_GetArrayLength,
+  &llvm_java_get_array_length,
   NULL,
   NULL,
   NULL,
@@ -291,21 +297,21 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL, /* 180 */
   NULL,
   NULL,
-  NULL,
-  &llvm_java_GetByteArrayElements,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 190 */
-  NULL,
-  &llvm_java_ReleaseByteArrayElements,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  &llvm_java_get_boolean_array_elements,
+  &llvm_java_get_byte_array_elements,
+  &llvm_java_get_char_array_elements,
+  &llvm_java_get_short_array_elements,
+  &llvm_java_get_int_array_elements,
+  &llvm_java_get_long_array_elements,
+  &llvm_java_get_float_array_elements,
+  &llvm_java_get_double_array_elements,
+  &llvm_java_release_boolean_array_elements,
+  &llvm_java_release_byte_array_elements,
+  &llvm_java_release_char_array_elements,
+  &llvm_java_release_short_array_elements,
+  &llvm_java_release_int_array_elements,
+  &llvm_java_release_float_array_elements,
+  &llvm_java_release_double_array_elements,
   NULL,
   NULL,
   NULL, /* 200 */

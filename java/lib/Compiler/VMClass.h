@@ -30,7 +30,7 @@ namespace llvm { namespace Java {
   class Resolver;
 
   class VMClass {
-    static const unsigned INVALID_INTERFACE_INDEX = 0xFFFFFFFF;
+    static const int INVALID_INTERFACE_INDEX = -1;
 
     const std::string name_;
     Resolver* resolver_;
@@ -38,7 +38,7 @@ namespace llvm { namespace Java {
     const VMClass* componentClass_;
     Type* layoutType_;
     const Type* type_;
-    unsigned interfaceIndex_;
+    int interfaceIndex_;
     typedef std::map<std::string, VMField> FieldMap;
     FieldMap fieldMap_;
     typedef std::map<std::string, VMMethod> MethodMap;
@@ -90,7 +90,7 @@ namespace llvm { namespace Java {
     bool isArray() const { return getComponentClass(); }
     bool isPrimitive() const { return getType() == getLayoutType(); }
     bool isInterface() const { return classFile_ && classFile_->isInterface(); }
-    unsigned getInterfaceIndex() const { return interfaceIndex_; }
+    int getInterfaceIndex() const { return interfaceIndex_; }
 
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;

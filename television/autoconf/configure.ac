@@ -13,9 +13,6 @@ AC_CONFIG_MAKEFILE(lib/Snapshot/Makefile)
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(tools/llvm-tv/Makefile)
 
-dnl Configure wxWindows
-AC_CONFIG_SUBDIRS(lib/wxwindows)
-
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
@@ -28,3 +25,5 @@ AC_ARG_WITH(llvmobj,AC_HELP_STRING([--with-llvmobj],[Location of LLVM Object Cod
 
 dnl Create the output files
 AC_OUTPUT([Makefile.common Makefile.config])
+
+AC_MSG_WARN([Remember to configure wxWindows manually; see README.txt])

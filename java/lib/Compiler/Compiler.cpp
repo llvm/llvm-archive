@@ -909,6 +909,22 @@ namespace llvm { namespace Java { namespace {
       new StoreInst(v, getField(bcI, index, p), getBBAt(bcI));
     }
 
+    void makeCall(Value* fun, BasicBlock* bb) {
+      const PointerType* funPtrTy = cast<PointerType>(fun->getType());
+      const FunctionType* funTy = cast<FunctionType>(funPtrTy->getElementType());
+      std::vector<Value*> params(funTy->getNumParams(), NULL);
+      for (unsigned i = 0, e = funTy->getNumParams(); i != e; ++i) {
+        Value* p = opStack_.top(); opStack_.pop();
+        const Type* paramTy = funTy->getParamType(i);
+        params[i] =
+          p->getType() == paramTy ? p : new CastInst(p, paramTy, TMP, bb);
+      }
+
+      Value* r = new CallInst(fun, params, TMP, bb);
+      if (funTy->getReturnType() != Type::VoidTy)
+        opStack_.push(r);
+    }
+
     void do_invokevirtual(unsigned bcI, unsigned index) {
       ConstantMethodRef* methodRef =
         (ConstantMethodRef*)(cf_->getConstantPool()[index]);
@@ -934,22 +950,9 @@ namespace llvm { namespace Java { namespace {
              "could not find slot for virtual function!");
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
-      Value* vfun = new LoadInst
-        (new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI)), TMP,
-         getBBAt(bcI));
-
-      const FunctionType* vfunTy = cast<FunctionType>
-        (cast<PointerType>(vfun->getType())->getElementType());
-      std::vector<Value*> params(vfunTy->getNumParams(), NULL);
-      for (unsigned i = 0, e = vfunTy->getNumParams(); i != e; ++i) {
-        Value* p = opStack_.top(); opStack_.pop();
-        const Type* paramTy = vfunTy->getParamType(i);
-        params[i] = p->getType() == paramTy ? p :
-          new CastInst(p, paramTy, TMP, getBBAt(bcI));
-      }
-
-      Value* r = new CallInst(vfun, params, TMP, getBBAt(bcI));
-      opStack_.push(r);
+      Value* vfunPtr = new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI));
+      Value* vfun = new LoadInst(vfunPtr, TMP, getBBAt(bcI));
+      makeCall(vfun, getBBAt(bcI));
     }
 
     void do_invokespecial(unsigned bcI, unsigned index) {
@@ -968,18 +971,9 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcType =
         cast<FunctionType>(getType(nameAndType->getDescriptor()));
-      std::vector<Value*> params(funcType->getNumParams(), NULL);
-      for (unsigned i = 0, e = funcType->getNumParams(); i != e; ++i) {
-        Value* p = opStack_.top(); opStack_.pop();
-        const Type* paramTy = funcType->getParamType(i);
-        params[i] = p->getType() == paramTy ? p :
-          new CastInst(p, paramTy, TMP, getBBAt(bcI));
-      }
-
       Function* function = module_->getOrInsertFunction(funcName, funcType);
       toCompileFunctions_.insert(function);
-      Value* r = new CallInst(function, params, TMP, getBBAt(bcI));
-      opStack_.push(r);
+      makeCall(function, getBBAt(bcI));
     }
 
     void do_invokeinterface(unsigned bcI, unsigned index) {

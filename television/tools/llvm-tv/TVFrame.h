@@ -60,7 +60,7 @@ public:
   TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
                          const wxPoint& pos, const wxSize& size, long style);
   
-  virtual ~TVTreeCtrl();
+  virtual ~TVTreeCtrl() { }
   void AddSnapshotsToTree(std::vector<TVSnapshot>&);
   void updateSnapshotList(std::vector<TVSnapshot>&);
   void OnSelChanged(wxTreeEvent &event);

@@ -37,12 +37,6 @@ TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
   SetItemImage(rootId, TreeCtrlIcon_FolderOpened, wxTreeItemIcon_Expanded);
 }
 
-
-/// TreeCtrl desconstructor
-///      
-TVTreeCtrl::~TVTreeCtrl() {
-}
-
 /// AddSnapshotsToTree - Given a list of snapshots the tree is populated
 ///
 void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {

@@ -110,22 +110,28 @@ namespace {
     }
   }
 
-  void readFields(Fields& f, const ConstantPool& cp, std::istream& is)
+  void readFields(Fields& f,
+                  ConstantClass* parent,
+                  const ConstantPool& cp,
+                  std::istream& is)
   {
     assert(f.empty() && "Should not call with a non-empty fields vector");
     uint16_t count = readU2(is);
     f.reserve(count);
     while(count--)
-      f.push_back(Field::readField(cp, is));
+      f.push_back(Field::readField(parent, cp, is));
   }
 
-  void readMethods(Methods& m, const ConstantPool& cp, std::istream& is)
+  void readMethods(Methods& m,
+                   ConstantClass* parent,
+                   const ConstantPool& cp,
+                   std::istream& is)
   {
     assert(m.empty() && "Should not call with a non-empty methods vector");
     uint16_t count = readU2(is);
     m.reserve(count);
     while(count--)
-      m.push_back(Method::readMethod(cp, is));
+      m.push_back(Method::readMethod(parent, cp, is));
   }
 
   void readAttributes(Attributes& a,
@@ -234,8 +240,8 @@ ClassFile::ClassFile(std::istream& is)
     throw ClassFileSemanticError(
       "Representation of super class is not of type ConstantClass");
   readClasses(interfaces_, cPool_, is);
-  readFields(fields_, cPool_, is);
-  readMethods(methods_, cPool_, is);
+  readFields(fields_, thisClass_, cPool_, is);
+  readMethods(methods_, thisClass_, cPool_, is);
   readAttributes(attributes_, cPool_, is);
   for (Methods::const_iterator
          i = methods_.begin(), e = methods_.end(); i != e; ++i)
@@ -501,7 +507,8 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Field implementation
-Field::Field(const ConstantPool& cp, std::istream& is)
+Field::Field(ConstantClass* parent, const ConstantPool& cp, std::istream& is)
+  : parent_(parent)
 {
   accessFlags_ = readU2(is);
   name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
@@ -548,7 +555,8 @@ ConstantValueAttribute* Field::getConstantValueAttribute() const
 
 //===----------------------------------------------------------------------===//
 // Method implementation
-Method::Method(const ConstantPool& cp, std::istream& is)
+Method::Method(ConstantClass* parent, const ConstantPool& cp, std::istream& is)
+  : parent_(parent)
 {
   accessFlags_ = readU2(is);
   name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);

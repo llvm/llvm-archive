@@ -9,7 +9,6 @@
 #include "TVHtmlWindow.h"
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm-tv/Config.h"
 #include "CFGGraphDrawer.h"
 #include "CallGraphDrawer.h"
@@ -98,28 +97,12 @@ static const wxString Explanation
    "to display its code in the right-hand pane. Then, you\n"
    "can choose from the View menu to see graphical code views.\n"); 
 
-/// createDisplayWidget - Factory Method which returns a new display widget
-/// of the appropriate class, with the given parent & initial contents
-///
-ItemDisplayer *TVFrame::createDisplayWidget (wxWindow *parent,
-                                             const wxString &init,
-                                             unsigned nohtml) {
-  if (nohtml) {
-    // We'll use a static text control to display LLVM assembly 
-    return new TVTextCtrl(parent, init);
-  } else {
-    // We'll use a HTML viewer to display syntax-highlighted LLVM assembly 
-    return new TVHtmlWindow(parent, init);
-  }
-}
-
 /// updateDisplayedItem - Updates right-hand pane with a view of the item that
-/// is now selected
+/// is now selected.
 ///
 void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
   // Tell the current visualizer widget to display the selected
-  // LLVM object in its window, which is displayed in the right-hand
-  // pane.
+  // LLVM object in its window, which is displayed inside the notebook.
   assert (newlySelectedItem
           && "newlySelectedItem was null in updateDisplayedItem()");
   notebook->SetSelectedItem (newlySelectedItem);
@@ -167,9 +150,6 @@ bool TVNotebook::AddItemDisplayer (ItemDisplayer *displayer) {
   int pageIndex = GetPageCount ();
   displayers.resize (1 + pageIndex);
   displayers[pageIndex] = displayer;
-  // BIG FAT FIXME!! - have to decide what the display title should be,
-  // for a widget that has nothing to display!!! for now it's ok to pass a
-  // null pointer because html view & text view ignore the item passed in
   return AddPage (displayer->getWindow (),
                   displayer->getDisplayTitle (0).c_str (), true);
 }
@@ -203,10 +183,8 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
 
   // Create right-hand pane's display widget and stick it in a notebook control.
   notebook = new TVNotebook (splitterWindow);
-  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 0));
-  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
-  // Add another text display, just because we can
-  notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
+  notebook->AddItemDisplayer (new TVTextCtrl (notebook, Explanation));
+  notebook->AddItemDisplayer (new TVHtmlWindow (notebook, Explanation));
   notebook->AddItemDisplayer (new TDGraphDrawer (notebook));
 
   // Split window vertically
@@ -295,21 +273,7 @@ void TVFrame::LocalDSView(wxCommandEvent &event) {
 }
 
 void TVFrame::CodeView(wxCommandEvent &event) {
-  // Get the selected LLVM object.
-  TVTreeItemData *item = myTreeCtrl->GetSelectedItemData ();
-
-#if 0
-  // Open up a new CFG view window.
-  Function *F = item->getFunction ();
-  if (!F)
-    wxMessageBox("Code can only be viewed on a per-function basis.", "Error",
-                  wxOK | wxICON_ERROR, this);
-  else if (F->isExternal())
-    wxMessageBox("External functions have no code to view.", "Error",
-                 wxOK | wxICON_ERROR, this);
-  else
-    myApp->OpenCodeView(F);
-#endif
+  // Get the selected LLVM object and open up a new CodeViewer window.
   myApp->OpenGraphView<TVCodeViewer> (myTreeCtrl->GetSelectedItemData ());
 }
 

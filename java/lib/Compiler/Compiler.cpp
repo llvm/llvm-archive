@@ -844,7 +844,7 @@ namespace llvm { namespace Java { namespace {
 #endif
 
       const std::string& globalName =
-        elementTy->getDescription() + "<vtable>";
+        elementTy->getDescription() + "[]<vtable>";
 
       llvm::Constant* vtable = ConstantStruct::get(init);
       module_.addTypeName(globalName, vtable->getType());
@@ -868,7 +868,7 @@ namespace llvm { namespace Java { namespace {
         true,
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
-        elementTy->getDescription() + "<superclassesvtables>",
+        elementTy->getDescription() + "[]<superclassesvtables>",
         &module_);
 
       typeInfoInit.push_back(

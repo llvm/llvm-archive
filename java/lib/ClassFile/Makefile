@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../..
 
-LIBRARYNAME := classfile
+LIBRARYNAME := LLVMJavaClassfile
 
 BUILD_ARCHIVE = 1
 

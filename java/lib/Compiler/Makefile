@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../..
 
-LIBRARYNAME := compiler
+LIBRARYNAME := LLVMJavaCompiler
 
 BUILD_ARCHIVE = 1
 

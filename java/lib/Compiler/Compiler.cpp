@@ -182,7 +182,11 @@ namespace llvm { namespace Java { namespace {
                 // of type className
                 return PointerType::get(Type::SByteTy);
             }
-            case '[': return ArrayType::get(getTypeHelper(descr, i), 0);
+            case '[':
+                // FIXME: this should really be a new class
+                // represeting the array of the following type
+                return PointerType::get(
+                    ArrayType::get(getTypeHelper(descr, i), 0));
             case '(': {
                 std::vector<const Type*> params;
                 while (descr[i] != ')')

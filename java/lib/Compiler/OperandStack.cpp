@@ -47,10 +47,8 @@ llvm::AllocaInst* OperandStack::getOrCreateSlot(SlotMap& slotMap,
 
   if (it == slotMap.end()) {
     // Insert the alloca at the beginning of the entry block.
-    BasicBlock& entry = bb->getParent()->getEntryBlock();
-    assert(entry.getTerminator() && "Entry block must have a terminator!");
-    AllocaInst* alloca =
-      new AllocaInst(type, NULL, "opStack", entry.getTerminator());
+    BasicBlock* entry = &bb->getParent()->getEntryBlock();
+    AllocaInst* alloca = new AllocaInst(type, NULL, "opStack", entry);
     it = slotMap.insert(it, std::make_pair(type, alloca));
   }
 

@@ -1365,7 +1365,7 @@ namespace llvm { namespace Java { namespace {
       unsigned index = 0;
       for (Function::aiterator
              a = function->abegin(), ae = function->aend(); a != ae; ++a) {
-        locals_.store(index, a, function->getEntryBlock().getTerminator());
+        locals_.store(index, a, &function->getEntryBlock());
         index += isTwoSlotType(a->getType()) ? 2 : 1;
       }
 
@@ -1426,6 +1426,9 @@ namespace llvm { namespace Java { namespace {
           }
         }
       }
+
+      // Add an unconditional branch from the entry block to bb0.
+      new BranchInst(bb0, &function->getEntryBlock());
 
       // FIXME: remove empty basic blocks (we have empty basic blocks
       // because of our lack of exception support).

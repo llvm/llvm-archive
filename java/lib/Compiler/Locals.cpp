@@ -41,37 +41,14 @@ void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
   SlotMap::iterator it = slotMap.find(storageTy);
 
   if (it == slotMap.end()) {
-    // Insert the alloca at the beginning of the entry block.
-    BasicBlock& entry = insertAtEnd->getParent()->getEntryBlock();
-    assert(entry.getTerminator() && "Entry block must have a terminator!");
+    // Insert the alloca at the end of the entry block.
+    BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
     AllocaInst* alloca =
-      new AllocaInst(storageTy, NULL, "local"+utostr(i), entry.getTerminator());
+      new AllocaInst(storageTy, NULL, "local"+utostr(i), entry);
     it = slotMap.insert(it, std::make_pair(storageTy, alloca));
   }
 
   new StoreInst(value, it->second, insertAtEnd);
-}
-
-void Locals::store(unsigned i, Value* value, Instruction* insertBefore)
-{
-  const Type* valueTy = value->getType();
-  const Type* storageTy = getStorageType(valueTy);
-  if (valueTy != storageTy)
-    value = new CastInst(value, storageTy, "to-storage-type", insertBefore);
-
-  SlotMap& slotMap = TheLocals[i];
-  SlotMap::iterator it = slotMap.find(storageTy);
-
-  if (it == slotMap.end()) {
-    // Insert the alloca at the beginning of the entry block.
-    BasicBlock& entry = insertBefore->getParent()->getParent()->getEntryBlock();
-    assert(entry.getTerminator() && "Entry block must have a terminator!");
-    AllocaInst* alloca =
-      new AllocaInst(storageTy, NULL, "local"+utostr(i), entry.getTerminator());
-    it = slotMap.insert(it, std::make_pair(storageTy, alloca));
-  }
-
-  new StoreInst(value, it->second, insertBefore);
 }
 
 llvm::Value* Locals::load(unsigned i, const Type* valueTy,

@@ -51,9 +51,6 @@ namespace llvm { namespace Java {
       // Create the block for bytecode 0 (bb0).
       BasicBlock* bb = getOrCreateBasicBlockAt(0);
 
-      // Add an unconditional branch from the entry block to bb0.
-      new BranchInst(bb, entry);
-
       // Create basic blocks for exception handlers.
       const CodeAttribute::Exceptions& exceptions = c->getExceptions();
       for (unsigned i = 0, e = exceptions.size(); i != e; ++i)

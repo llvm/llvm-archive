@@ -21,7 +21,6 @@ namespace llvm {
   class Value;
 }
 
-
 /// TVCodeItem - contains an instruction, basic block, or function (which prints
 /// out as the header)
 ///
@@ -39,15 +38,13 @@ class TVCodeItem : public wxListItem {
 class TVCodeListCtrl : public wxListCtrl {
   typedef std::vector<TVCodeItem*> Items;
   Items itemList;
-
   std::map<llvm::Value*, TVCodeItem*> ValueToItem;
-  std::map<TVCodeItem*, unsigned> ItemToIndex;
+  std::map<TVCodeItem*, long> ItemToIndex;
 
   void refreshView();
  public:
   void SetFunction (llvm::Function *F);
   TVCodeListCtrl(wxWindow *_parent, llvm::Function *F);
-  void OnItemActivated(wxListEvent &event);  
   void OnItemSelected(wxListEvent &event);
   void OnItemDeselected(wxListEvent &event);
 
@@ -80,11 +77,7 @@ class CodeViewFrame : public wxFrame {
     codeViewer = new TVCodeListCtrl(this, F);
     setupAppearance();
   }
-
-  ~CodeViewFrame() {
-    delete codeViewer;
-  }
-
+  ~CodeViewFrame() { delete codeViewer; }
   void OnClose (wxCloseEvent &event);
   DECLARE_EVENT_TABLE ()
 };

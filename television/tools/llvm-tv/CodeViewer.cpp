@@ -43,10 +43,10 @@ void TVCodeItem::SetLabel() {
 
 void TVCodeListCtrl::refreshView() {
   // Hide the list while rewriting it from scratch to speed up rendering
-  this->Hide();
+  Hide();
 
   // Clear out the list and then re-add all the items.
-  unsigned index = 0;
+  long index = 0;
   ClearAll();
   for (Items::iterator i = itemList.begin(), e = itemList.end(); i != e; ++i) {
     InsertItem(index, (**i).m_text.c_str());
@@ -54,7 +54,7 @@ void TVCodeListCtrl::refreshView() {
     ++index;
   }
 
-  this->Show();
+  Show();
 }
 
 template<class T> void wipe (T x) { delete x; }
@@ -84,21 +84,12 @@ TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent, llvm::Function *F)
   refreshView();
 }
 
-void TVCodeListCtrl::OnItemActivated(wxListEvent &event) {
-  //std::cerr << "activated item: " << utostr((unsigned)event.GetIndex()) << "\n";
-}
-
 void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {
-  //std::cerr << "selected item: " << utostr((unsigned)event.GetIndex()) << "\n";
-  long int index = event.GetIndex();
-  // Highlight uses
-  Value *V = itemList[index]->getValue();
+  Value *V = itemList[event.GetIndex ()]->getValue();
   if (!V) return;
 
+  // Highlight uses
   for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u) {
-    //wxListItem &item = GetItem(event.GetIndex());
-    //item.SetTextColor(*wxRED);
-    //item.SetFont(*wxBOLD_FONT);
     TVCodeItem *item = ValueToItem[*u];
     item->m_itemId = ItemToIndex[item];
     item->SetTextColour(*wxRED);
@@ -110,16 +101,11 @@ void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {
 }
 
 void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
-  //std::cerr << "deselected item: " << utostr((unsigned)event.GetIndex()) << "\n";
-  long int index = event.GetIndex();
-  // Set uses back to normal
-  Value *V = itemList[index]->getValue();
+  Value *V = itemList[event.GetIndex ()]->getValue();
   if (!V) return;
 
+  // Set uses back to normal
   for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u) {
-    //wxListItem &item = GetItem(event.GetIndex());
-    //item.SetTextColor(*wxRED);
-    //item.SetFont(*wxBOLD_FONT);
     TVCodeItem *item = ValueToItem[*u];
     item->m_itemId = ItemToIndex[item];
     item->SetTextColour(*wxBLACK);
@@ -131,14 +117,11 @@ void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
 }
 
 BEGIN_EVENT_TABLE (TVCodeListCtrl, wxListCtrl)
-  EVT_LIST_ITEM_ACTIVATED(LLVM_TV_CODEVIEW_LIST,
-                          TVCodeListCtrl::OnItemActivated)
   EVT_LIST_ITEM_SELECTED(LLVM_TV_CODEVIEW_LIST,
                          TVCodeListCtrl::OnItemSelected)
   EVT_LIST_ITEM_DESELECTED(LLVM_TV_CODEVIEW_LIST,
                            TVCodeListCtrl::OnItemDeselected)
 END_EVENT_TABLE ()
-
 
 //===----------------------------------------------------------------------===//
 
@@ -148,7 +131,6 @@ void CodeViewFrame::OnClose (wxCloseEvent &event) {
   myApp->GoodbyeFrom (this);
   Destroy();
 }
-
 
 BEGIN_EVENT_TABLE (CodeViewFrame, wxFrame)
   EVT_CLOSE (CodeViewFrame::OnClose)

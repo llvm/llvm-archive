@@ -13,16 +13,13 @@ class TVApplication;
 ///
 class PictureFrame : public wxFrame {
   TVApplication *myApp;
-  PictureCanvas myPictureCanvas;
   void setupAppearance () {
     SetSize (wxRect (200, 200, 300, 300));
     Show (TRUE);
   }
  public:
-  PictureFrame::PictureFrame (TVApplication *app, const char *windowTitle,
-                              wxImage *image)
-    : wxFrame (NULL, -1, windowTitle), myApp (app),
-      myPictureCanvas (this, image) {
+  PictureFrame::PictureFrame (TVApplication *app, const char *windowTitle)
+    : wxFrame (NULL, -1, windowTitle), myApp (app) {
     setupAppearance ();
   }
   bool OnClose (wxCloseEvent &event);

@@ -22,7 +22,7 @@ clean::
 #rule to link in runtime to raw bytecode
 %.linked.bc: %.raw.bc $(DESTLIBBYTECODE)/libjrt.bc
 	@$(ECHO) Linking $< with the Java runtime
-	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $^ -o $@
+	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $^ -f -o $@
 
 # rule to make assembly from bytecode
 %.dis-ll: %.bc

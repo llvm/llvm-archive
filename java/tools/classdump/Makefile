@@ -11,6 +11,6 @@ LEVEL := ../..
 TOOLNAME := classdump
 
 USEDLIBS := classfile
-LLVMLIBS := LLVMSupport LLVMCore LLVMSystem
+LLVMLIBS := LLVMCore LLVMSystem.a LLVMSupport.a
 
 include $(LEVEL)/Makefile.common

@@ -11,6 +11,6 @@ LEVEL := ../..
 TOOLNAME := class2llvm
 
 USEDLIBS := classfile compiler
-LLVMLIBS := LLVMSupport LLVMCore LLVMBCWriter LLVMSystem
+LLVMLIBS := LLVMBCWriter LLVMCore LLVMSupport.a LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

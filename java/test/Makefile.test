@@ -12,12 +12,12 @@ include $(LEVEL)/Makefile.common
 .PHONY: clean
 
 clean::
-	$(RM) -f a.out core *.class .class-stamp
+	$(RM) -f a.out core
 	$(RM) -rf Output/
 
 # we don't want these files to be deleted by make, even if they are
 # intermediate results
-.PRECIOUS: Output/.dir %.bc %.ll %.llvm.bc %.llvm %.class
+.PRECIOUS: Output/.dir Output/%.class %.bc %.ll %.llvm.bc %.llvm
 
 #rule to link in runtime to raw bytecode
 %.linked.bc: %.raw.bc $(LEVEL)/runtime/runtime.bc
@@ -28,5 +28,13 @@ clean::
 	$(LDIS) < $< > $@
 
 # rule to compile java source
-%.class: %.java
-	$(JAVAC) $<
+Output/%.class: %.java Output/.dir
+	$(JAVAC) -d Output $<
+
+# rule to run a .class file with the jvm
+%.out-nat: %.class
+	$(JAVA) -cp Output $(subst /,.,$(subst Output/,,$*)) > $*.out-nat || rm -f $*.out-nat
+
+# rule to run a .class file with the llvm jit
+%.out-jit: %.llvm.bc
+	$(LLI) $< > $*.out-nat || rm -f $*.out-nat

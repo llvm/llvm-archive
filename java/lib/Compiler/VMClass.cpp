@@ -201,12 +201,10 @@ void VMClass::link()
 
       // In a classfile an interface is as if it inherits
       // java/lang/Object, but java/lang/Class/getSuperClass() should
-      // return null on any interface class. Thus we do the same here.
-      if (classFile_->isInterface())
-        interfaceIndex_ = resolver_->getNextInterfaceIndex();
-      else {
-        // Build the super classes array. The first class is the
-        // direct super class of this class.
+      // return null on any interface class. So we only add
+      // superclasses to if this is not an interface.
+      if (!classFile_->isInterface()) {
+        // The first class is the direct super class of this class.
         superClasses_.reserve(superClass->getNumSuperClasses() + 1);
         superClasses_.push_back(superClass);
         for (unsigned i = 0, e = superClass->getNumSuperClasses(); i != e; ++i)
@@ -227,6 +225,17 @@ void VMClass::link()
     std::sort(interfaces_.begin(), interfaces_.end());
     interfaces_.erase(std::unique(interfaces_.begin(), interfaces_.end()),
                       interfaces_.end());
+  }
+
+  // The interface index for an interface is a unique number generated
+  // from the resolver.
+  if (isInterface())
+    interfaceIndex_ = resolver_->getNextInterfaceIndex();
+  // For a class it is the max index of all the interfaces it implements.
+  else {
+    for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i)
+      interfaceIndex_ =
+        std::max(interfaceIndex_, getInterface(i)->getInterfaceIndex());
   }
 
   computeLayout();

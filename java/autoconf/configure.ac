@@ -1,10 +1,10 @@
 dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
-AC_INIT(Java, 0.0, llvmbugs@cs.uiuc.edu)
+AC_INIT([[Java]], [[0.0]], [llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
-AC_CONFIG_AUX_DIR(autoconf)
+AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Configure a header file
 
@@ -16,6 +16,8 @@ AC_CONFIG_MAKEFILE(lib/Makefile)
 AC_CONFIG_MAKEFILE(lib/ClassFile/Makefile)
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(tools/classdump/Makefile)
+
+AC_CONFIG_FILES(Makefile.common)
 
 dnl **************************************************************************
 dnl * Determine which system we are building on
@@ -57,19 +59,19 @@ dnl **************************************************************************
 
 dnl Location of LLVM source code
 AC_ARG_WITH([llvmsrc],
-            AC_HELP_STRING([--with-llvmsrc],
+            AS_HELP_STRING([--with-llvmsrc],
                            [Location of LLVM Source Code]),
             AC_SUBST(LLVM_SRC,$withval),
-            AC_SUBST(LLVM_SRC,`cd ${srcdir}/../..; pwd`))
+            AC_SUBST(LLVM_SRC,[`cd ${srcdir}/../..; pwd`]))
 
 dnl Location of LLVM object code
 AC_ARG_WITH([llvmobj],
-            AC_HELP_STRING([--with-llvmobj],
+            AS_HELP_STRING([--with-llvmobj],
                            [Location of LLVM Object Code]),
             AC_SUBST(LLVM_OBJ,$withval),
-            AC_SUBST(LLVM_OBJ,`cd ../..; pwd`))
+            AC_SUBST(LLVM_OBJ,[`cd ../..; pwd`]))
 
 dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
-AC_OUTPUT(Makefile.common)
+AC_OUTPUT

@@ -1,36 +1,33 @@
-class A
+class InstanceOfBase
 {
     int foo() { return 0; }
     int bar() { return 0; }
 }
 
-interface I {
+interface InstanceOfInterface {
     public int baz();
 }
 
-class B extends A implements I
+public class InstanceOf extends InstanceOfBase implements InstanceOfInterface
 {
     int foo() { return 1; }
     public int baz() { return foo(); }
-}
 
-public class InstanceOf
-{
     public static void main(String[] args) {
-        A aa = new A();
-        A ab = new B();
-        B bb = new B();
+        InstanceOfBase aa = new InstanceOfBase();
+        InstanceOfBase ab = new InstanceOf();
+        InstanceOfInterface bb = new InstanceOf();
 
-        boolean aaA = aa instanceof A;
-        boolean aaB = aa instanceof B;
-        boolean aaI = aa instanceof I;
+        boolean aaA = aa instanceof InstanceOfBase;
+        boolean aaB = aa instanceof InstanceOf;
+        boolean aaI = aa instanceof InstanceOfInterface;
 
-        boolean abA = ab instanceof A;
-        boolean abB = ab instanceof B;
-        boolean abI = ab instanceof I;
+        boolean abA = ab instanceof InstanceOfBase;
+        boolean abB = ab instanceof InstanceOf;
+        boolean abI = ab instanceof InstanceOfInterface;
 
-        boolean bbA = bb instanceof A;
-        boolean bbB = bb instanceof B;
-        boolean bbI = bb instanceof I;
+        boolean bbA = bb instanceof InstanceOfBase;
+        boolean bbB = bb instanceof InstanceOf;
+        boolean bbI = bb instanceof InstanceOfInterface;
     }
 }

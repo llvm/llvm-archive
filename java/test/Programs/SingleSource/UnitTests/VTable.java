@@ -1,22 +1,19 @@
-class A
+class VTableBase
 {
     int foo() { return 0; }
     int bar() { return 0; }
 }
 
-class B extends A
+public class VTable extends VTableBase
 {
     int foo() { return 1; }
-}
 
-public class VTable
-{
     public static void main(String[] args) {
-        A a = new A();
+        VTableBase a = new VTableBase();
         a.foo();
         a.bar();
 
-        a = new B();
+        a = new VTable();
         a.foo();
         a.bar();
     }

@@ -1,51 +1,6 @@
+#include "runtime.h"
 #include <stdlib.h>
 #include <string.h>
-#include <llvm/Java/jni.h>
-
-struct llvm_java_object_base;
-struct llvm_java_object_header;
-struct llvm_java_class_record;
-struct llvm_java_typeinfo;
-
-struct llvm_java_object_header {
-  /* gc info, hash info, locking */
-    int dummy;
-};
-
-struct llvm_java_object_base {
-  struct llvm_java_object_header header;
-  struct llvm_java_class_record* classRecord;
-};
-
-struct llvm_java_typeinfo {
-  /* The name of this class */
-  const char* name;
-
-  /* The number of super classes to java.lang.Object. */
-  jint depth;
-
-  /* The super class records up to java.lang.Object. */
-  struct llvm_java_class_record** superclasses;
-
-  /* If an interface its interface index, otherwise the last interface
-   * index implemented by this class. */
-  jint interfaceIndex;
-
-  /* The interface class records this class implements. */
-  struct llvm_java_class_record** interfaces;
-
-  /* The component class record if this is an array class, null
-   * otherwise. */
-  struct llvm_java_class_record* component;
-
-  /* If an array the size of its elements, otherwise 0 for classes, -1
-   * for interfaces and -2 for primitive classes. */
-  jint elementSize;
-};
-
-struct llvm_java_class_record {
-  struct llvm_java_typeinfo typeinfo;
-};
 
 jint llvm_java_is_primitive_class(struct llvm_java_class_record* cr)
 {
@@ -71,8 +26,8 @@ void llvm_java_set_class_record(jobject obj,
   obj->classRecord = cr;
 }
 
-jint llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
-                                  struct llvm_java_class_record* from) {
+jboolean llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
+                                      struct llvm_java_class_record* from) {
   /* trivial case: class records are the same */
   if (cr == from)
     return JNI_TRUE;
@@ -106,8 +61,8 @@ jint llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
   return JNI_FALSE;
 }
 
-jint llvm_java_is_instance_of(jobject obj,
-                              struct llvm_java_class_record* cr) {
+jboolean llvm_java_is_instance_of(jobject obj,
+                                  struct llvm_java_class_record* cr) {
   /* trivial case: a null object can be cast to any type */
   if (!obj)
     return JNI_TRUE;
@@ -131,14 +86,6 @@ static jclass llvm_java_find_class(JNIEnv* env, const char* name) {
 
   return NULL;
 }
-
-#define HANDLE_TYPE(TYPE) \
-  struct llvm_java_##TYPE##array { \
-    struct llvm_java_object_base object_base; \
-    jint length; \
-    j##TYPE data[0]; \
-  };
-#include "types.def"
 
 static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;

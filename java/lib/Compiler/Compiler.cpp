@@ -466,7 +466,7 @@ namespace llvm { namespace Java { namespace {
         }
 
 
-        void do_iinc(unsigned bcI, unsigned index, unsigned amount) {
+        void do_iinc(unsigned bcI, unsigned index, int amount) {
             assert(0 && "not implemented");
         }
 

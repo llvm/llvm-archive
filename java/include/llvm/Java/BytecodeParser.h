@@ -350,7 +350,7 @@ namespace llvm { namespace Java {
                     break;
                 case IINC:
                     THIS->do_iinc(
-                        curBC, readUByte(code, i), readUByte(code, i));
+                        curBC, readUByte(code, i), readSByte(code, i));
                     break;
                 case I2L:
                     THIS->do_convert(curBC, LONG);
@@ -688,7 +688,7 @@ namespace llvm { namespace Java {
         /// @brief called on IXOR and LXOR
         void do_xor(unsigned bcI) { }
         /// @brief called on IINC
-        void do_iinc(unsigned bcI, unsigned index, unsigned amount) { }
+        void do_iinc(unsigned bcI, unsigned index, int amount) { }
         /// @brief called on I2L, I2F, I2D, L2I, L2F, L2D, F2I, F2L,
         /// F2D, D2I, D2L, D2F, I2B, I2C, and I2S
         void do_convert(unsigned bcI, JType to) { }

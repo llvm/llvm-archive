@@ -54,14 +54,16 @@ dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 
 dnl Location of LLVM source code
-AC_ARG_WITH(llvmsrc,
-            AC_HELP_STRING(--with-llvmsrc,Location of LLVM Source Code),
+AC_ARG_WITH([llvmsrc],
+            AC_HELP_STRING([--with-llvmsrc],
+                           [Location of LLVM Source Code]),
             AC_SUBST(LLVM_SRC,$withval),
             AC_SUBST(LLVM_SRC,`cd ${srcdir}/../..; pwd`))
 
 dnl Location of LLVM object code
-AC_ARG_WITH(llvmobj,
-            AC_HELP_STRING(--with-llvmobj,Location of LLVM Object Code),
+AC_ARG_WITH([llvmobj],
+            AC_HELP_STRING([--with-llvmobj],
+                           [Location of LLVM Object Code]),
             AC_SUBST(LLVM_OBJ,$withval),
             AC_SUBST(LLVM_OBJ,`cd ../..; pwd`))
 

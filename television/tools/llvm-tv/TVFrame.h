@@ -11,19 +11,7 @@
 #include "wx/listctrl.h"
 #include <string>
 #include <vector>
-
-/// TVSnapshot - Wrapper class for snapshots.
-///
-class TVSnapshot {
- public:
-  std::string itemName;
-  TVSnapshot () : itemName ("") { }
-  TVSnapshot (const std::string &_name) : itemName (_name) { }
-  TVSnapshot (const char *_name) : itemName (_name) { }
-  const char *label () { return itemName.c_str (); }
-};
-
-///==---------------------------------------------------------------------==///
+#include "TVSnapshot.h"
 
 /// TVListCtrl - A specialization of wxListCtrl that displays a list of TV
 /// Snapshots. 

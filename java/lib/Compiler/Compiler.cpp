@@ -142,8 +142,14 @@ namespace llvm { namespace Java { namespace {
         BasicBlock* prologue_;
         typedef SetVector<Function*> FunctionSet;
         FunctionSet toCompileFunctions_;
-        typedef std::map<std::string, Type*> Class2TypeMap;
-        Class2TypeMap c2tMap_;
+        struct ClassInfo {
+            explicit ClassInfo(Type* t) : type(t) { }
+            Type* type;
+            typedef std::map<std::string, unsigned> Field2IndexMap;
+            Field2IndexMap f2iMap;
+        };
+        typedef std::map<std::string, ClassInfo> Class2InfoMap;
+        Class2InfoMap c2ciMap_;
 
     private:
         BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
@@ -152,7 +158,7 @@ namespace llvm { namespace Java { namespace {
         Type* getType(JType type) {
             switch (type) {
             case REFERENCE:
-                return PointerType::get(getTypeForClass("java/lang/Object"));
+                return PointerType::get(getClassInfo("java/lang/Object").type);
             case BOOLEAN: return Type::BoolTy;
             case CHAR: return Type::UShortTy;
             case FLOAT: return Type::FloatTy;
@@ -201,7 +207,7 @@ namespace llvm { namespace Java { namespace {
                 unsigned e = descr.find(';', i);
                 std::string className = descr.substr(i, e - i);
                 i = e + 1;
-                return PointerType::get(getTypeForClass(className));
+                return PointerType::get(getClassInfo(className).type);
             }
             case '[':
                 // FIXME: this should really be a new class
@@ -220,28 +226,33 @@ namespace llvm { namespace Java { namespace {
             }
         }
 
-        Type* getTypeForClass(const std::string& className) {
-            Class2TypeMap::iterator it = c2tMap_.lower_bound(className);
-            if (it == c2tMap_.end() || it->first != className) {
+        ClassInfo& getClassInfo(const std::string& className) {
+            Class2InfoMap::iterator it = c2ciMap_.lower_bound(className);
+            if (it == c2ciMap_.end() || it->first != className) {
                 ClassFile* cf = ClassFile::getClassFile(className);
                 OpaqueType* newType = OpaqueType::get();
-                it = c2tMap_.insert(it, std::make_pair(className, newType));
+                it = c2ciMap_.insert(it, std::make_pair(className,
+                                                       ClassInfo(newType)));
                 std::vector<const Type*> elements;
                 if (ConstantClass* super = cf->getSuperClass())
                     elements.push_back
-                        (getTypeForClass(super->getName()->str()));
+                        (getClassInfo(super->getName()->str()).type);
                 const Fields& fields = cf->getFields();
                 for (unsigned i = 0, e = fields.size(); i != e; ++i) {
                     Field* field = fields[i];
-                    if (!field->isStatic())
+                    if (!field->isStatic()) {
+                        it->second.f2iMap.insert(
+                            std::make_pair(field->getName()->str(),
+                                           elements.size()));
                         elements.push_back(getType(field->getDescriptor()));
+                    }
                 }
                 PATypeHolder holder = newType;
                 newType->refineAbstractTypeTo(StructType::get(elements));
-                it->second = holder.get();
+                it->second.type = holder.get();
                 DEBUG(std::cerr << "Adding " << className << " = "
-                      << *it->second << " to type map\n");
-                module_->addTypeName(className, it->second);
+                      << *it->second.type << " to type map\n");
+                module_->addTypeName(className, it->second.type);
             }
             return it->second;
         }
@@ -269,6 +280,40 @@ namespace llvm { namespace Java { namespace {
                 (globalName, getType(nameAndType->getDescriptor()));
 
             return global;
+        }
+
+        Value* getField(unsigned bcI, unsigned index, Value* ptr) {
+            ConstantFieldRef* fieldRef =
+                (ConstantFieldRef*)(cf_->getConstantPool()[index]);
+            ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
+
+            // Cast ptr to correct type
+            std::string className = fieldRef->getClass()->getName()->str();
+            ptr = new CastInst(ptr,
+                               PointerType::get(getClassInfo(className).type),
+                               TMP, getBBAt(bcI));
+            ClassFile* classfile = ClassFile::getClassFile(className);
+            std::string fieldName = nameAndType->getName()->str();
+
+            // deref pointer
+            std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
+            while (true) {
+                ClassInfo& info = getClassInfo(className);
+                ClassInfo::Field2IndexMap::iterator it =
+                    info.f2iMap.find(fieldName);
+                if (it == info.f2iMap.end()) {
+                    className = classfile->getSuperClass()->getName()->str();
+                    classfile = ClassFile::getClassFile(className);
+                    indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+                }
+                else {
+                    indices.push_back(ConstantUInt::get(Type::UIntTy,
+                                                        it->second));
+                    break;
+                }
+            }
+
+            return new GetElementPtrInst(ptr, indices, TMP, getBBAt(bcI));
         }
 
         Function* compileMethodOnly(const std::string& classMethodDesc) {
@@ -394,9 +439,10 @@ namespace llvm { namespace Java { namespace {
 
             // insert an opaque type for java.lang.Object. This is
             // defined in runtime.ll
-            c2tMap_.insert(std::make_pair("java/lang/Object",
-                                          OpaqueType::get()));
-            module.addTypeName("java/lang/Object", c2tMap_["java/lang/Object"]);
+            c2ciMap_.insert(std::make_pair("java/lang/Object",
+                                          ClassInfo(OpaqueType::get())));
+            module.addTypeName("java/lang/Object",
+                               getClassInfo("java/lang/Object").type);
 
             // compile the method requested
             Function* function = compileMethodOnly(classMethodDesc);
@@ -766,11 +812,15 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_getfield(unsigned bcI, unsigned index) {
-            assert(0 && "not implemented");
+            Value* p = opStack_.top(); opStack_.pop();
+            Value* v = new LoadInst(getField(bcI, index, p), TMP, getBBAt(bcI));
+            opStack_.push(v);
         }
 
         void do_putfield(unsigned bcI, unsigned index) {
-            assert(0 && "not implemented");
+            Value* v = opStack_.top(); opStack_.pop();
+            Value* p = opStack_.top(); opStack_.pop();
+            new StoreInst(v, getField(bcI, index, p), getBBAt(bcI));
         }
 
         void do_invokevirtual(unsigned bcI, unsigned index) {

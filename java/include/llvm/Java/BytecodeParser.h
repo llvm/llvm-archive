@@ -614,6 +614,9 @@ namespace llvm { namespace Java {
         case IMPDEP2:
         case NOP:
           break;
+        default:
+          // FIXME: must throw something
+          break;
         }
       }
     }

@@ -1360,6 +1360,7 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/lang/Math") != 0 &&
           classMethodDesc.find("java/lang/Number") != 0 &&
           classMethodDesc.find("java/lang/Byte") != 0 &&
+          classMethodDesc.find("java/lang/Float") != 0 &&
           classMethodDesc.find("java/lang/Integer") != 0 &&
           classMethodDesc.find("java/lang/Long") != 0 &&
           classMethodDesc.find("java/lang/Short") != 0 &&
@@ -1643,18 +1644,20 @@ namespace llvm { namespace Java { namespace {
       push(val);
     }
 
-    void do_iaload() { do_aload_common(getPrimitiveArrayInfo(INT).getType()); }
-    void do_laload() { do_aload_common(getPrimitiveArrayInfo(LONG).getType()); }
-    void do_faload() { do_aload_common(getPrimitiveArrayInfo(FLOAT).getType()); }
-    void do_daload() { do_aload_common(getPrimitiveArrayInfo(DOUBLE).getType()); }
-    void do_aaload() { do_aload_common(getObjectArrayInfo().getType()); }
-    void do_baload() { do_aload_common(getPrimitiveArrayInfo(BYTE).getType()); }
-    void do_caload() { do_aload_common(getPrimitiveArrayInfo(CHAR).getType()); }
-    void do_saload() { do_aload_common(getPrimitiveArrayInfo(SHORT).getType()); }
+    void do_iaload() { do_aload_common(Type::IntTy); }
+    void do_laload() { do_aload_common(Type::LongTy); }
+    void do_faload() { do_aload_common(Type::FloatTy); }
+    void do_daload() { do_aload_common(Type::DoubleTy); }
+    void do_aaload() { do_aload_common(ObjectBaseRefTy); }
+    void do_baload() { do_aload_common(Type::SByteTy); }
+    void do_caload() { do_aload_common(Type::UShortTy); }
+    void do_saload() { do_aload_common(Type::ShortTy); }
 
-    void do_aload_common(const Type* arrayTy) {
+    void do_aload_common(const Type* elementTy) {
       Value* index = pop(Type::IntTy);
-      Value* arrayRef = pop(PointerType::get(arrayTy));
+      const Type* arrayTy = getArrayInfo(elementTy).getType();
+      const Type* arrayRefTy = PointerType::get(arrayTy);
+      Value* arrayRef = pop(arrayRefTy);
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1690,7 +1693,8 @@ namespace llvm { namespace Java { namespace {
     void do_astore_common(const Type* elementTy) {
       Value* value = pop(elementTy);
       Value* index = pop(Type::IntTy);
-      const Type* arrayRefTy = PointerType::get(getArrayInfo(elementTy).getType());
+      const Type* arrayTy = getArrayInfo(elementTy).getType();
+      const Type* arrayRefTy = PointerType::get(arrayTy);
       Value* arrayRef = pop(arrayRefTy);
 
       std::vector<Value*> indices;
@@ -1781,19 +1785,8 @@ namespace llvm { namespace Java { namespace {
     void do_ishr() { do_shift_common(Instruction::Shr, Type::IntTy); }
     void do_lshr() { do_shift_common(Instruction::Shr, Type::LongTy); }
 
-    void do_iushr() { do_shift_unsigned_common(Type::IntTy); }
-    void do_lushr() { do_shift_unsigned_common(Type::LongTy); }
-
-    void do_shift_unsigned_common(const Type* type) {
-      llvm::Constant* mask =
-        type == Type::IntTy ? INT_SHIFT_MASK : LONG_SHIFT_MASK;
-      // Cast value to be shifted into its unsigned version.
-      Value* a = pop(Type::UByteTy);
-      a = BinaryOperator::create(Instruction::And, a, mask, TMP, currentBB_);
-      Value* v = pop(type->getUnsignedVersion());
-      Value* r = new ShiftInst(Instruction::Shr, v, a, TMP, currentBB_);
-      push(r);
-    }
+    void do_iushr() { do_shift_common(Instruction::Shr, Type::UIntTy); }
+    void do_lushr() { do_shift_common(Instruction::Shr, Type::ULongTy); }
 
     void do_shift_common(Instruction::OtherOps op, const Type* type) {
       llvm::Constant* mask =

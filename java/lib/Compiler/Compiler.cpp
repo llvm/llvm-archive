@@ -157,7 +157,8 @@ namespace llvm { namespace Java { namespace {
         Value* getOrCreateLocal(unsigned index, const Type* type) {
             if (!locals_[index]) {
                 BasicBlock* entry = bc2bbMap_[0];
-                Instruction* alloc = new AllocaInst(type);
+                Instruction* alloc =
+                    new AllocaInst(type, NULL, "local" + utostr(index));
                 locals_[index] = alloc;
                 Instruction* store = new StoreInst(
                     llvm::Constant::getNullValue(alloc->getType()), alloc);

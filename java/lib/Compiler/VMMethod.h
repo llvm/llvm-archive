@@ -41,12 +41,21 @@ namespace llvm { namespace Java {
 
   public:
     const VMClass* getParent() const { return parent_; }
+    const Method* getMethod() const { return method_; }
     Function* getFunction() const { return function_; }
+    bool isAbstract() const { return method_->isAbstract(); }
+    bool isNative() const { return method_->isNative(); }
+    bool isStatic() const { return method_->isStatic(); }
 
     // FIXME: remove when transition is complete.
-    std::string getNameAndDescriptor() const {
-      return method_->getName()->str() + method_->getDescriptor()->str();
+    const std::string& getName() const { return method_->getName()->str(); }
+    const std::string& getDescriptor() const {
+      return method_->getDescriptor()->str();
     }
+    std::string getNameAndDescriptor() const {
+      return getName() + getDescriptor();
+    }
+
   };
 
 } } // namespace llvm::Java

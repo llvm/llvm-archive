@@ -64,10 +64,9 @@ namespace llvm { namespace Java { namespace {
     Locals locals_;
     OperandStack opStack_;
     Function *getVtable_, *setVtable_, *throw_, *isInstanceOf_,
-      *memcpy_, *memset_;
+      *memcpy_, *memset_, *staticInit_;
 
-    typedef SetVector<Function*> FunctionSet;
-    FunctionSet toCompileFunctions_;
+    SetVector<const VMMethod*> toCompileMethods_;
 
     /// This class contains the vtable of a class, a vector with the
     /// vtables of its super classes (with the class higher in the
@@ -121,6 +120,10 @@ namespace llvm { namespace Java { namespace {
         "llvm.memset", Type::VoidTy,
         PointerType::get(Type::SByteTy),
         Type::UByteTy, Type::ULongTy, Type::UIntTy, NULL);
+      staticInit_ =
+        module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, NULL);
+      BasicBlock* staticInitBB = new BasicBlock("entry", staticInit_);
+      new ReturnInst(NULL, staticInitBB);
     }
 
   private:
@@ -134,10 +137,10 @@ namespace llvm { namespace Java { namespace {
 
     /// Schedule a method for compilation. Returns true if this is the
     /// first time this function was scheduled.
-    bool scheduleFunction(Function* function) {
-      if (toCompileFunctions_.insert(function)) {
-        DEBUG(std::cerr << "Scheduling function: " << function->getName()
-              << " for compilation\n");
+    bool scheduleMethod(const VMMethod* method) {
+      if (toCompileMethods_.insert(method)) {
+        DEBUG(std::cerr << "Scheduling function: "
+              << method->getFunction()->getName() << " for compilation\n");
         return true;
       }
       return false;
@@ -181,6 +184,8 @@ namespace llvm { namespace Java { namespace {
 
       // Get class information for java/lang/String.
       const VMClass* clazz = resolver_->getClass("java/lang/String");
+      emitStaticInitializers(clazz);
+
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       // Install the vtable pointer.
@@ -191,22 +196,21 @@ namespace llvm { namespace Java { namespace {
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
-      Method* method = getMethod("java/lang/String/<init>([BI)V");
-      Function* function = getFunction(method);
-      scheduleFunction(function);
+      const VMMethod* method = clazz->getMethod("<init>([BI)V");
+      scheduleMethod(method);
 
       params.reserve(3);
       params.clear();
       params.push_back(objBase);
       params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseType(), TMP, ip));
       params.push_back(ConstantSInt::get(Type::IntTy, 0));
-      new CallInst(function, params, "", ip);
+      new CallInst(method->getFunction(), params, "", ip);
     }
 
     /// Returns the type of the Java string descriptor for JNI.
-    const Type* getJNIType(ConstantUtf8* descr) {
+    const Type* getJNIType(const std::string& descr) {
       unsigned i = 0;
-      return getJNITypeHelper(descr->str(), i);
+      return getJNITypeHelper(descr, i);
     }
 
     const Type* getJNITypeHelper(const std::string& descr, unsigned& i) {
@@ -303,16 +307,11 @@ namespace llvm { namespace Java { namespace {
         if (!method->isStatic() &&
             !method->isPrivate() &&
             method->getName()->str()[0] != '<') {
-          std::string methodDescr =
-            method->getName()->str() +
-            method->getDescriptor()->str();
+          const std::string& methodDescr =
+            method->getName()->str() + method->getDescriptor()->str();
 
-          std::string funcName = "java/lang/Object/" + methodDescr;
-          const FunctionType* funcTy = cast<FunctionType>(
-            resolver_->getType(method->getDescriptor()->str(), true));
-
-          Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
-          scheduleFunction(vfun);
+          const VMMethod* method = clazz->getMethod(methodDescr);
+          scheduleMethod(method);
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
@@ -320,8 +319,8 @@ namespace llvm { namespace Java { namespace {
             elements.resize(index + 1, NULL);
             init.resize(index + 1, NULL);
           }
-          elements[index] = vfun->getType();
-          init[index] = vfun;
+          elements[index] = method->getFunction()->getType();
+          init[index] = method->getFunction();
         }
       }
 
@@ -588,24 +587,19 @@ namespace llvm { namespace Java { namespace {
           const std::string& methodDescr =
             method->getName()->str() + method->getDescriptor()->str();
 
-          std::string funcName = className + '/' + methodDescr;
-
-          const FunctionType* funcTy = cast<FunctionType>(
-            resolver_->getType(method->getDescriptor()->str(), true));
-          llvm::Constant* vfun = NULL;
+          const VMMethod* method = clazz->getMethod(methodDescr);
+          llvm::Constant* vf = method->getFunction();
           if (clazz->isInterface() || method->isAbstract())
-            vfun = llvm::Constant::getNullValue(PointerType::get(funcTy));
-          else {
-            vfun = module_->getOrInsertFunction(funcName, funcTy);
-            scheduleFunction(cast<Function>(vfun));
-          }
+            vf = llvm::Constant::getNullValue(method->getFunction()->getType());
+          else
+            scheduleMethod(method);
 
           unsigned& index = vi.m2iMap[methodDescr];
           if (!index) {
             index = init.size();
             init.resize(index + 1);
           }
-          init[index] = vfun;
+          init[index] = vf;
         }
       }
 
@@ -790,38 +784,40 @@ namespace llvm { namespace Java { namespace {
 
     /// Compiles the passed method only (it does not compile any
     /// callers or methods of objects it creates).
-    Function* compileMethodOnly(const std::string& classMethodDesc) {
-      Method* method = getMethod(classMethodDesc);
-      const std::string& className =
-        method->getParent()->getThisClass()->getName()->str();
-      class_ = resolver_->getClass(className);
+    void compileMethodOnly(const VMMethod* method) {
+      class_ = method->getParent();
 
-      Function* function = getFunction(method);
+      Function* function = method->getFunction();
       if (!function->empty()) {
-        DEBUG(std::cerr << "Function: " << function->getName() << " is already compiled!\n");
-        return function;
+        DEBUG(std::cerr << "Function: " << function->getName()
+              << " is already compiled!\n");
+        return;
       }
+
+      const std::string& className =
+        class_->getClassFile()->getThisClass()->getName()->str();
 
       if (method->isNative()) {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "
-              << classMethodDesc << '\n');
+              << function->getName() << '\n');
         const FunctionType* jniFuncTy =
           cast<FunctionType>(getJNIType(method->getDescriptor()));
 
         std::string funcName =
           "Java_" +
           getMangledString(className) + '_' +
-          getMangledString(method->getName()->str());
-        if (class_->getClassFile()->isNativeMethodOverloaded(*method)) {
+          getMangledString(method->getName());
+        if (class_->getClassFile()->isNativeMethodOverloaded(*method->getMethod())) {
           // We need to add two underscores and a mangled argument signature
           funcName += "__";
-          const std::string descr = method->getDescriptor()->str();
+          const std::string descr = method->getDescriptor();
           funcName += getMangledString(
             std::string(descr.begin() + descr.find('(') + 1,
                         descr.begin() + descr.find(')')));
         }
 
-        Function* jniFunction = module_->getOrInsertFunction(funcName,jniFuncTy);
+        Function* jniFunction =
+          module_->getOrInsertFunction(funcName, jniFuncTy);
 
         BasicBlock* bb = new BasicBlock("entry", function);
         std::vector<Value*> params;
@@ -838,46 +834,47 @@ namespace llvm { namespace Java { namespace {
           result = new CastInst(result, function->getReturnType(), TMP,bb);
         new ReturnInst(result, bb);
 
-        return function;
+        return;
       }
 
       assert (!method->isAbstract() && "Trying to compile an abstract method!");
 
       // HACK: skip most of the class libraries.
-      if ((classMethodDesc.find("java/") == 0 &&
-           classMethodDesc.find("java/lang/Object") != 0 &&
-           (classMethodDesc.find("java/lang/Throwable") != 0 ||
-            classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
-           classMethodDesc.find("java/lang/Exception") != 0 &&
-           classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
-           classMethodDesc.find("java/lang/IllegalStateException") != 0 &&
-           classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
-           classMethodDesc.find("java/lang/RuntimeException") != 0 &&
-           classMethodDesc.find("java/lang/Math") != 0 &&
-           classMethodDesc.find("java/lang/Number") != 0 &&
-           classMethodDesc.find("java/lang/Byte") != 0 &&
-           classMethodDesc.find("java/lang/Float") != 0 &&
-           classMethodDesc.find("java/lang/Integer") != 0 &&
-           classMethodDesc.find("java/lang/Long") != 0 &&
-           classMethodDesc.find("java/lang/Short") != 0 &&
-           (classMethodDesc.find("java/lang/String") != 0 ||
-            classMethodDesc.find("java/lang/String/<cl") == 0) &&
-           classMethodDesc.find("java/lang/StringBuffer") != 0 &&
-           classMethodDesc.find("java/lang/System") != 0 &&
-           classMethodDesc.find("java/lang/VMSystem") != 0 &&
-           (classMethodDesc.find("java/util/") != 0 ||
-            classMethodDesc.find("java/util/Locale/<cl") == 0 ||
-            classMethodDesc.find("java/util/ResourceBundle/<cl") == 0 ||
-            classMethodDesc.find("java/util/Calendar/<cl") == 0)) ||
-          (classMethodDesc.find("gnu/") == 0)) {
+      const std::string& funcName = function->getName();
+      if ((funcName.find("java/") == 0 &&
+           funcName.find("java/lang/Object") != 0 &&
+           (funcName.find("java/lang/Throwable") != 0 ||
+            funcName.find("java/lang/Throwable$StaticData/<cl") == 0) &&
+           funcName.find("java/lang/Exception") != 0 &&
+           funcName.find("java/lang/IllegalArgumentException") != 0 &&
+           funcName.find("java/lang/IllegalStateException") != 0 &&
+           funcName.find("java/lang/IndexOutOfBoundsException") != 0 &&
+           funcName.find("java/lang/RuntimeException") != 0 &&
+           funcName.find("java/lang/Math") != 0 &&
+           funcName.find("java/lang/Number") != 0 &&
+           funcName.find("java/lang/Byte") != 0 &&
+           funcName.find("java/lang/Float") != 0 &&
+           funcName.find("java/lang/Integer") != 0 &&
+           funcName.find("java/lang/Long") != 0 &&
+           funcName.find("java/lang/Short") != 0 &&
+           (funcName.find("java/lang/String") != 0 ||
+            funcName.find("java/lang/String/<cl") == 0) &&
+           funcName.find("java/lang/StringBuffer") != 0 &&
+           funcName.find("java/lang/System") != 0 &&
+           funcName.find("java/lang/VMSystem") != 0 &&
+           (funcName.find("java/util/") != 0 ||
+            funcName.find("java/util/Locale/<cl") == 0 ||
+            funcName.find("java/util/ResourceBundle/<cl") == 0 ||
+            funcName.find("java/util/Calendar/<cl") == 0)) ||
+          (funcName.find("gnu/") == 0)) {
         DEBUG(std::cerr << "Skipping compilation of method: "
-              << classMethodDesc << '\n');
-        return function;
+              << funcName << '\n');
+        return;
       }
 
-      DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
+      DEBUG(std::cerr << "Compiling method: " << funcName << '\n');
 
-      Java::CodeAttribute* codeAttr = method->getCodeAttribute();
+      Java::CodeAttribute* codeAttr = method->getMethod()->getCodeAttribute();
 
       opStackDepthMap_.clear();
       bbBuilder_.reset(new BasicBlockBuilder(function, codeAttr));
@@ -962,11 +959,8 @@ namespace llvm { namespace Java { namespace {
         else
           ++bb;
 
-      DEBUG(std::cerr << "Finished compilation of method: "
-            << classMethodDesc << '\n');
+      DEBUG(std::cerr << "Finished compilation of method: "<< funcName << '\n');
       // DEBUG(function->dump());
-
-      return function;
     }
 
     /// Emits static initializers for this class if not done already.
@@ -982,9 +976,7 @@ namespace llvm { namespace Java { namespace {
         if (const VMClass* superClass = clazz->getSuperClass())
           emitStaticInitializers(superClass);
 
-        Function* hook = module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                                      Type::VoidTy, 0);
-        Instruction* I = hook->front().getTerminator();
+        Instruction* I = staticInit_->front().getTerminator();
         assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
 
         // Create constant strings for this class.
@@ -993,95 +985,38 @@ namespace llvm { namespace Java { namespace {
             initializeString(clazz->getConstant(i), s->getValue()->str(), I);
 
         // Call its class initialization method if it exists.
-        if (const Method* method = classfile->getMethod("<clinit>()V")) {
-          const std::string& functionName =
-            classfile->getThisClass()->getName()->str() + '/' +
-            method->getName()->str() + method->getDescriptor()->str();
-          Function* init =
-            module_->getOrInsertFunction(functionName, Type::VoidTy, 0);
-
+        if (const VMMethod* method = clazz->getMethod("<clinit>()V")) {
           // Insert a call to it right before the terminator of the only
           // basic block in llvm_java_static_init.
-          bool inserted =  scheduleFunction(init);
+          bool inserted =  scheduleMethod(method);
           assert(inserted && "Class initialization method already called!");
-          new CallInst(init, "", I);
+          new CallInst(method->getFunction(), "", I);
         }
       }
-    }
-
-    /// Returns the llvm::Function corresponding to the specified
-    /// llvm::Java::Method.
-    Function* getFunction(Method* method) {
-      const ClassFile* clazz = method->getParent();
-
-      const FunctionType* funcTy = cast<FunctionType>(
-        resolver_->getType(method->getDescriptor()->str(),
-                           !method->isStatic()));
-      std::string funcName =
-        clazz->getThisClass()->getName()->str() + '/' +
-        method->getName()->str() + method->getDescriptor()->str();
-
-      Function* function = module_->getOrInsertFunction(funcName, funcTy);
-
-      return function;
-    }
-
-    /// Returns the llvm::Java::Method given a
-    /// llvm::Java::ClassMethodRef.
-    Method* getMethod(ConstantMethodRef* methodRef) {
-      return getMethod(methodRef->getClass()->getName()->str() + '/' +
-                       methodRef->getNameAndType()->getName()->str() +
-                       methodRef->getNameAndType()->getDescriptor()->str());
-    }
-
-    /// Returns the llvm::Java::Method given a <class,method>
-    /// descriptor.
-    Method* getMethod(const std::string& classMethodDesc) {
-      unsigned slash = classMethodDesc.rfind('/', classMethodDesc.find('('));
-      std::string className = classMethodDesc.substr(0, slash);
-      std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
-
-      while (true) {
-        const ClassFile* classfile = ClassFile::get(className);
-        emitStaticInitializers(resolver_->getClass(className));
-
-        Method* method = classfile->getMethod(methodNameAndDescr);
-        if (method)
-          return method;
-
-        if (!classfile->getSuperClass())
-          break;
-
-        className = classfile->getSuperClass()->getName()->str();
-      }
-
-      throw InvocationTargetException("Method " + methodNameAndDescr +
-                                      " not found in class " + className);
     }
 
   public:
     /// Compiles the specified method given a <class,method>
     /// descriptor and the transitive closure of all methods
     /// (possibly) called by it.
-    Function* compileMethod(const std::string& classMethodDesc) {
-      // Initialize the static initializer function.
-      Function* staticInit =
-        module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
-      BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
-      new ReturnInst(NULL, staticInitBB);
+    const VMMethod* compileMethod(const std::string& className,
+                                  const std::string& methodDesc) {
+      // Load the class.
+      const VMClass* clazz = resolver_->getClass(className);
+      emitStaticInitializers(clazz);
 
-      // Create the method requested.
-      Function* function = getFunction(getMethod(classMethodDesc));
-      scheduleFunction(function);
+      // Find the method.
+      const VMMethod* method = clazz->getMethod(methodDesc);
+      scheduleMethod(method);
       // Compile the transitive closure of methods called by this method.
-      for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
-        Function* f = toCompileFunctions_[i];
-        compileMethodOnly(f->getName());
-        DEBUG(std::cerr << i+1 << '/' << toCompileFunctions_.size()
+      for (unsigned i = 0; i != toCompileMethods_.size(); ++i) {
+        const VMMethod* m = toCompileMethods_[i];
+        compileMethodOnly(m);
+        DEBUG(std::cerr << i+1 << '/' << toCompileMethods_.size()
               << " functions compiled\n");
       }
 
-      return function;
+      return method;
     }
 
     void do_aconst_null() {
@@ -1573,8 +1508,8 @@ namespace llvm { namespace Java { namespace {
 
     void do_invokespecial(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
+      scheduleMethod(method);
       Function* function = method->getFunction();
-      scheduleFunction(function);
       makeCall(function, getParams(function->getFunctionType()));
     }
 
@@ -1594,7 +1529,7 @@ namespace llvm { namespace Java { namespace {
           new ReturnInst(NULL, new BasicBlock("entry", function));
       }
       else
-        scheduleFunction(function);
+        scheduleMethod(method);
       makeCall(function, getParams(function->getFunctionType()));
     }
 
@@ -1831,14 +1766,16 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
   m->addLibrary("jrt");
 
   Compiler c(m.get());
-  Function* main = c.compileMethod(className + "/main([Ljava/lang/String;)V");
+  const VMMethod* main =
+    c.compileMethod(className, "main([Ljava/lang/String;)V");
+
   Function* javaMain = m->getOrInsertFunction
     ("llvm_java_main", Type::VoidTy,
      Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);
 
   BasicBlock* bb = new BasicBlock("entry", javaMain);
-  const FunctionType* mainTy = main->getFunctionType();
-  new CallInst(main,
+  const FunctionType* mainTy = main->getFunction()->getFunctionType();
+  new CallInst(main->getFunction(),
                // FIXME: Forward correct params from llvm_java_main
                llvm::Constant::getNullValue(mainTy->getParamType(0)),
                "",

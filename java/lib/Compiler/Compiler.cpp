@@ -34,37 +34,6 @@ namespace {
         return !isTwoSlotValue(v);
     }
 
-    inline int readByteSigned(const uint8_t* code, unsigned& i) {
-        return code[++i];
-    }
-
-    inline unsigned readByteUnsigned(const uint8_t* code, unsigned& i) {
-        return code[++i];
-    }
-
-    inline int readShortSigned(const uint8_t* code, unsigned& i) {
-        return (readByteSigned(code, i) << 8) | readByteUnsigned(code, i);
-    }
-
-    inline unsigned readShortUnsigned(const uint8_t* code, unsigned& i) {
-        return (readByteUnsigned(code, i) << 8) | readByteUnsigned(code, i);
-    }
-
-    inline int readIntSigned(const uint8_t* code, unsigned& i) {
-        return ((readByteUnsigned(code, i) << 24) |
-                (readByteUnsigned(code, i) << 16) |
-                (readByteUnsigned(code, i) << 8) |
-                readByteUnsigned(code, i));
-    }
-
-    inline unsigned readIntUnsigned(const uint8_t* code, unsigned& i) {
-        return readIntSigned(code, i);
-    }
-
-    inline void skipPadBytes(const uint8_t* code, unsigned& i) {
-        while (((unsigned)&code[++i]) & 0XFF);
-    }
-
 } // namespace
 
 void Compiler::compileMethodInit(Function& function,
@@ -146,19 +115,19 @@ void Compiler::compileMethodInit(Function& function,
         case IF_IACMPNE:
         case IFNULL:
         case IFNONNULL: {
-            unsigned index = readShortUnsigned(code, i);
+            unsigned index = readUShort(code, i);
             bc2bbMap_[bcStart] = new BasicBlock(
                 std::string("bb@bc") + utostr(bcStart), &function);
             break;
         }
         case TABLESWITCH: {
             skipPadBytes(code, i);
-            readIntSigned(code, i);
-            int low = readIntSigned(code, i);
-            int high = readIntSigned(code, i);
+            readSInt(code, i);
+            int low = readSInt(code, i);
+            int high = readSInt(code, i);
             unsigned offsetCount = high - low + 1;
             while (offsetCount--) {
-                unsigned bcIndex = bcStart + readIntSigned(code, i);
+                unsigned bcIndex = bcStart + readSInt(code, i);
                 bc2bbMap_[bcIndex] = new BasicBlock(
                     std::string("bb@bc") + utostr(bcIndex), &function);
             }
@@ -166,10 +135,10 @@ void Compiler::compileMethodInit(Function& function,
         }
         case LOOKUPSWITCH: {
             skipPadBytes(code, i);
-            unsigned pairCount = readIntUnsigned(code, i);
+            unsigned pairCount = readUInt(code, i);
             while (pairCount--) {
-                readIntSigned(code, i);
-                unsigned bcIndex = bcStart + readIntSigned(code, i);
+                readSInt(code, i);
+                unsigned bcIndex = bcStart + readSInt(code, i);
                 bc2bbMap_[bcIndex] = new BasicBlock(
                     std::string("bb@bc") + utostr(bcIndex), &function);
             }
@@ -244,25 +213,25 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
             opStack_.push(ConstantFP::get(Type::DoubleTy, code[i]-DCONST_0));
             break;
         case BIPUSH: {
-            int imm = readByteSigned(code, i);
+            int imm = readSByte(code, i);
             opStack_.push(ConstantInt::get(Type::IntTy, imm));
             break;
         }
         case SIPUSH: {
-            int imm = readShortSigned(code, i);
+            int imm = readSShort(code, i);
             opStack_.push(ConstantInt::get(Type::IntTy, imm));
             break;
         }
         case LDC: {
-            unsigned index = readByteUnsigned(code, i);
+            unsigned index = readUByte(code, i);
             // FIXME: load constant from constant pool
         }
         case LDC_W: {
-            unsigned index = readShortUnsigned(code, i);
+            unsigned index = readUShort(code, i);
             // FIXME: load constant from constant pool
         }
         case LDC2_W: {
-            unsigned index = readShortUnsigned(code, i);
+            unsigned index = readUShort(code, i);
             // FIXME: load constant from constant pool
         }
         case ILOAD:
@@ -271,7 +240,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case DLOAD:
         case ALOAD: {
             // FIXME: use opcodes to perform type checking
-            unsigned index = readByteUnsigned(code, i);
+            unsigned index = readUByte(code, i);
             opStack_.push(locals_[index]);
             break;
         }

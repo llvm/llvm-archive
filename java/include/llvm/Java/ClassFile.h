@@ -59,18 +59,18 @@ namespace llvm { namespace Java {
     typedef std::vector<Method*> Methods;
     typedef std::vector<Attribute*> Attributes;
 
-    const Attribute* getAttribute(const Attributes& attrs,
-                                  const std::string& name);
+    Attribute* getAttribute(const Attributes& attrs,
+                            const std::string& name);
 
     class ClassFile {
-        static const ClassFile* readClassFile(std::istream& is);
+        static ClassFile* readClassFile(std::istream& is);
         static std::vector<std::string> getClassPath();
         static std::string getFileForClass(const std::string& classname);
 
         typedef std::map<std::string, Method*> Name2MethodMap;
 
     public:
-        static const ClassFile* getClassFile(const std::string& classname);
+        static ClassFile* getClassFile(const std::string& classname);
 
         ~ClassFile();
 
@@ -85,8 +85,8 @@ namespace llvm { namespace Java {
         bool isInterface() const { return accessFlags_ & ACC_INTERFACE; }
         bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
 
-        const ConstantClass* getThisClass() const { return thisClass_; }
-        const ConstantClass* getSuperClass() const { return superClass_; }
+        ConstantClass* getThisClass() const { return thisClass_; }
+        ConstantClass* getSuperClass() const { return superClass_; }
 
         const Classes& getInterfaces() const { return interfaces_; }
 
@@ -96,7 +96,7 @@ namespace llvm { namespace Java {
 
         const Attributes& getAttributes() const { return attributes_; }
 
-        const Method* getMethod(const std::string& nameAndDescr) const;
+        Method* getMethod(const std::string& nameAndDescr) const;
 
         std::ostream& dump(std::ostream& os) const;
 
@@ -160,8 +160,8 @@ namespace llvm { namespace Java {
         uint16_t nameIdx_;
     public:
         ConstantClass(const ConstantPool& cp, std::istream& is);
-        const ConstantUtf8* getName() const {
-            return (const ConstantUtf8*) cPool_[nameIdx_];
+        ConstantUtf8* getName() const {
+            return (ConstantUtf8*) cPool_[nameIdx_];
         }
         std::ostream& dump(std::ostream& os) const;
     };
@@ -173,11 +173,11 @@ namespace llvm { namespace Java {
         ConstantMemberRef(const ConstantPool& cp, std::istream& is);
 
     public:
-        const ConstantClass* getClass() const {
-            return (const ConstantClass*) cPool_[classIdx_];
+        ConstantClass* getClass() const {
+            return (ConstantClass*) cPool_[classIdx_];
         }
-        const ConstantNameAndType* getNameAndType() const {
-            return (const ConstantNameAndType*) cPool_[nameAndTypeIdx_];
+        ConstantNameAndType* getNameAndType() const {
+            return (ConstantNameAndType*) cPool_[nameAndTypeIdx_];
         }
         std::ostream& dump(std::ostream& os) const;
     };
@@ -201,8 +201,8 @@ namespace llvm { namespace Java {
         uint16_t stringIdx_;
     public:
         ConstantString(const ConstantPool& cp, std::istream& is);
-        const ConstantUtf8* getValue() const {
-            return  (const ConstantUtf8*) cPool_[stringIdx_];
+        ConstantUtf8* getValue() const {
+            return  (ConstantUtf8*) cPool_[stringIdx_];
         }
         std::ostream& dump(std::ostream& os) const;
     };
@@ -246,11 +246,11 @@ namespace llvm { namespace Java {
         uint16_t descriptorIdx_;
     public:
         ConstantNameAndType(const ConstantPool& cp, std::istream& is);
-        const ConstantUtf8* getName() const {
-            return (const ConstantUtf8*) cPool_[nameIdx_];
+        ConstantUtf8* getName() const {
+            return (ConstantUtf8*) cPool_[nameIdx_];
         }
-        const ConstantUtf8* getDescriptor() const {
-            return (const ConstantUtf8*) cPool_[descriptorIdx_];
+        ConstantUtf8* getDescriptor() const {
+            return (ConstantUtf8*) cPool_[descriptorIdx_];
         }
         std::ostream& dump(std::ostream& os) const;
     };
@@ -291,7 +291,7 @@ namespace llvm { namespace Java {
         ConstantUtf8* getName() const { return name_; }
         ConstantUtf8* getDescriptor() const { return descriptor_; }
         const Attributes& getAttributes() const { return attributes_; }
-        const ConstantValueAttribute* getConstantValueAttribute() const;
+        ConstantValueAttribute* getConstantValueAttribute() const;
 
         std::ostream& dump(std::ostream& os) const;
     };
@@ -328,8 +328,8 @@ namespace llvm { namespace Java {
         ConstantUtf8* getName() const { return name_; }
         ConstantUtf8* getDescriptor() const { return descriptor_; }
         const Attributes& getAttributes() const { return attributes_; }
-        const CodeAttribute* getCodeAttribute() const;
-        const ExceptionsAttribute* getExceptionsAttribute() const;
+        CodeAttribute* getCodeAttribute() const;
+        ExceptionsAttribute* getExceptionsAttribute() const;
 
         std::ostream& dump(std::ostream& os) const;
     };

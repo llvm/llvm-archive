@@ -141,7 +141,7 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 // ClassFile implementation
-const ClassFile* ClassFile::readClassFile(std::istream& is)
+ClassFile* ClassFile::readClassFile(std::istream& is)
 {
     if (readU1(is) != 0xCA) throw ClassFileParseError("bad magic");
     if (readU1(is) != 0xFE) throw ClassFileParseError("bad magic");
@@ -189,9 +189,9 @@ std::string ClassFile::getFileForClass(const std::string& classname)
     throw ClassNotFoundException("Class " + classname + " not found");
 }
 
-const ClassFile* ClassFile::getClassFile(const std::string& classname)
+ClassFile* ClassFile::getClassFile(const std::string& classname)
 {
-    typedef std::map<std::string, const ClassFile*> Name2ClassMap;
+    typedef std::map<std::string, ClassFile*> Name2ClassMap;
     static Name2ClassMap n2cMap_;
 
     Name2ClassMap::iterator it = n2cMap_.upper_bound(classname);
@@ -228,7 +228,7 @@ ClassFile::ClassFile(std::istream& is)
                 (*i)->getName()->str() + (*i)->getDescriptor()->str(), *i));
 }
 
-const Method* ClassFile::getMethod(const std::string& nameAndDescr) const
+Method* ClassFile::getMethod(const std::string& nameAndDescr) const
 {
     Name2MethodMap::const_iterator it = n2mMap_.find(nameAndDescr);
     return it == n2mMap_.end() ? NULL : it->second;
@@ -267,8 +267,8 @@ std::ostream& ClassFile::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Utility functions
-const Attribute* llvm::Java::getAttribute(const Attributes& attrs,
-                                          const std::string& name)
+Attribute* llvm::Java::getAttribute(const Attributes& attrs,
+                                    const std::string& name)
 {
     for (unsigned i = 0, e = attrs.size(); i != e; ++i)
         if (attrs[i]->getName()->str() == name)
@@ -500,7 +500,7 @@ std::ostream& Field::dump(std::ostream& os) const
     return os;
 }
 
-const ConstantValueAttribute* Field::getConstantValueAttribute() const
+ConstantValueAttribute* Field::getConstantValueAttribute() const
 {
     if (!isStatic())
         return NULL;
@@ -548,12 +548,12 @@ std::ostream& Method::dump(std::ostream& os) const
     return os;
 }
 
-const CodeAttribute* Method::getCodeAttribute() const
+CodeAttribute* Method::getCodeAttribute() const
 {
     return (CodeAttribute*) getAttribute(attributes_, Attribute::CODE);
 }
 
-const ExceptionsAttribute* Method::getExceptionsAttribute() const
+ExceptionsAttribute* Method::getExceptionsAttribute() const
 {
     return (ExceptionsAttribute*) getAttribute(attributes_,
                                                Attribute::EXCEPTIONS);

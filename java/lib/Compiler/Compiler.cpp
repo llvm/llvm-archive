@@ -158,6 +158,7 @@ namespace llvm { namespace Java { namespace {
       Field2IndexMap f2iMap;
 
       static unsigned InterfaceCount;
+      static Type* ObjectBaseTy;
     };
     typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
@@ -286,10 +287,10 @@ namespace llvm { namespace Java { namespace {
 
       // because this is java/lang/Object, we add the opaque
       // llvm_java_object_base type first
-      Type* base = OpaqueType::get();
-      module_->addTypeName(LLVM_JAVA_OBJECT_BASE, base);
+      ClassInfo::ObjectBaseTy = OpaqueType::get();
+      module_->addTypeName(LLVM_JAVA_OBJECT_BASE, ClassInfo::ObjectBaseTy);
       ci.f2iMap.insert(std::make_pair(LLVM_JAVA_OBJECT_BASE, elements.size()));
-      elements.push_back(base);
+      elements.push_back(ClassInfo::ObjectBaseTy);
 
       const Fields& fields = cf->getFields();
       for (unsigned i = 0, e = fields.size(); i != e; ++i) {
@@ -1515,6 +1516,7 @@ namespace llvm { namespace Java { namespace {
   };
 
   unsigned CompilerImpl::ClassInfo::InterfaceCount = 0;
+  Type* CompilerImpl::ClassInfo::ObjectBaseTy;
   StructType* CompilerImpl::VTableInfo::VTableTy;
   StructType* CompilerImpl::VTableInfo::TypeInfoTy;
 

@@ -2091,10 +2091,9 @@ namespace llvm { namespace Java { namespace {
 
     void do_new(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
-      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
-      emitStaticInitializers(cf);
       const Class& ci = resolver_->getClass(classRef->getName()->str());
-      const VTableInfo& vi = getVTableInfo(cf);
+      emitStaticInitializers(ci.getClassFile());
+      const VTableInfo& vi = getVTableInfo(ci.getClassFile());
 
       push(allocateObject(ci, vi, currentBB_));
     }
@@ -2185,7 +2184,7 @@ namespace llvm { namespace Java { namespace {
       // java/lang/Object's.
       const Class& clazz = resolver_->getClass("[Ljava/lang/Object;");
       const VTableInfo& vi =
-        getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
+        getObjectArrayVTableInfo(clazz.getClassFile());
 
       push(allocateArray(clazz, vi, count, currentBB_));
     }

@@ -27,6 +27,7 @@ using namespace llvm::Java;
 
 Class::Class(Resolver& resolver)
   : resolver_(&resolver),
+    classFile_(NULL),
     superClass_(NULL),
     componentClass_(NULL),
     structType_(OpaqueType::get()),
@@ -38,6 +39,7 @@ Class::Class(Resolver& resolver)
 
 Class::Class(Resolver& resolver, const Type* type)
   : resolver_(&resolver),
+    classFile_(NULL),
     superClass_(NULL),
     componentClass_(NULL),
     structType_(0),
@@ -68,12 +70,12 @@ void Class::resolveType() {
 
 void Class::buildClass(const std::string& className)
 {
-  const ClassFile* cf = ClassFile::get(className);
+  classFile_ = ClassFile::get(className);
 
   // This is any class but java/lang/Object.
-  if (cf->getSuperClass()) {
+  if (classFile_->getSuperClass()) {
     const Class& superClass =
-      resolver_->getClass(cf->getSuperClass()->getName()->str());
+      resolver_->getClass(classFile_->getSuperClass()->getName()->str());
 
     // We first add the struct of the super class.
     addField("super", superClass.getStructType());
@@ -83,7 +85,7 @@ void Class::buildClass(const std::string& className)
     // on interface types. So we only set the superClass_ field when
     // the class is not an interface type, but we model the LLVM type
     // of the interface to be as if it inherits java/lang/Object.
-    if (cf->isInterface())
+    if (classFile_->isInterface())
       interfaceIndex_ = resolver_->getNextInterfaceIndex();
     else
       superClass_ = &superClass;
@@ -93,7 +95,7 @@ void Class::buildClass(const std::string& className)
     addField("base", resolver_->getObjectBaseType());
 
   // Then we add the rest of the fields.
-  const Fields& fields = cf->getFields();
+  const Fields& fields = classFile_->getFields();
   for (unsigned i = 0, e = fields.size(); i != e; ++i) {
     Field& field = *fields[i];
     if (!field.isStatic())

@@ -22,12 +22,14 @@
 
 namespace llvm { namespace Java {
 
+  class ClassFile;
   class Resolver;
 
   class Class {
     static const unsigned INVALID_INTERFACE_INDEX = 0xFFFFFFFF;
 
     Resolver* resolver_;
+    const ClassFile* classFile_;
     const Class* superClass_;
     const Class* componentClass_;
     Type* structType_;
@@ -57,9 +59,11 @@ namespace llvm { namespace Java {
   public:
     const Type* getStructType() const { return structType_; }
     const Type* getType() const { return type_; }
+    const ClassFile* getClassFile() const { return classFile_; }
     const Class* getSuperClass() const { return superClass_; }
     const Class* getComponentClass() const { return componentClass_; }
     bool isArray() const { return componentClass_; }
+    bool isPrimitive() const { return !structType_; }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }
     int getFieldIndex(const std::string& name) const;
   };

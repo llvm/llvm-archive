@@ -71,25 +71,4 @@ public:
   wxWindow *getWindow () { return myListCtrl; }
 };
 
-/// CodeViewFrame
-///
-class CodeViewFrame : public wxFrame {
-  TVApplication *myApp;
-  TVCodeListCtrl *codeViewer;
-  void setupAppearance () {
-    SetSize (wxRect (200, 200, 300, 300));
-    Show (TRUE);
-  }
- public:
-  CodeViewFrame(TVApplication *app, llvm::Function *F)
-    : wxFrame (NULL, -1, "code viewer"), myApp (app) {
-    codeViewer = new TVCodeListCtrl(this, F);
-    setupAppearance();
-  }
-  ~CodeViewFrame() { delete codeViewer; }
-  void OnClose (wxCloseEvent &event);
-  DECLARE_EVENT_TABLE ()
-};
-
-
 #endif

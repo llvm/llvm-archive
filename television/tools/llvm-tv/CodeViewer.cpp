@@ -140,16 +140,3 @@ void TVCodeViewer::viewFunctionCode (Function *F) {
 
 void TVCodeViewer::viewModuleCode (Module *F) {
 }
-
-//===----------------------------------------------------------------------===//
-
-// CodeViewFrame implementation
-//
-void CodeViewFrame::OnClose (wxCloseEvent &event) {
-  myApp->GoodbyeFrom (this);
-  Destroy();
-}
-
-BEGIN_EVENT_TABLE (CodeViewFrame, wxFrame)
-  EVT_CLOSE (CodeViewFrame::OnClose)
-END_EVENT_TABLE ()

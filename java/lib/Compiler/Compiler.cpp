@@ -219,8 +219,8 @@ namespace llvm { namespace Java { namespace {
 
       std::vector<const Type*> elements;
 
-      // because this is java/lang/Object, we add the opaque
-      // llvm_java_object_base type first
+      // Because this is java/lang/Object, we add the opaque
+      // llvm_java_object_base type first.
       ClassInfo::ObjectBaseTy = OpaqueType::get();
       module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ClassInfo::ObjectBaseTy);
       ci.f2iMap.insert(std::make_pair(LLVM_JAVA_OBJECT_BASE, elements.size()));
@@ -262,8 +262,8 @@ namespace llvm { namespace Java { namespace {
       std::vector<const Type*> elements;
       std::vector<llvm::Constant*> init;
 
-      // this is java/lang/Object so we must add a
-      // llvm_java_object_typeinfo struct first
+      // This is java/lang/Object so we must add a
+      // llvm_java_object_typeinfo struct first.
 
       // depth
       elements.push_back(Type::IntTy);
@@ -278,32 +278,32 @@ namespace llvm { namespace Java { namespace {
       elements.push_back(PointerType::get(PointerType::get(VTtype)));
       init.push_back(llvm::Constant::getNullValue(elements[3]));
 
-      // this is a static variable
+      // This is a static variable.
       VTableInfo::TypeInfoTy = StructType::get(elements);
       module_.addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
       llvm::Constant* typeInfoInit =
 	ConstantStruct::get(VTableInfo::TypeInfoTy, init);
 
-      // now that we have both the type and initializer for the
+      // Now that we have both the type and initializer for the
       // llvm_java_object_typeinfo struct we can start adding the
-      // function pointers
+      // function pointers.
       elements.clear();
       init.clear();
 
-      /// first add the typeinfo struct itself
+      /// First add the typeinfo struct itself.
       elements.push_back(typeInfoInit->getType());
-      // add the typeinfo block for this class
+      // Add the typeinfo block for this class.
       init.push_back(typeInfoInit);
 
       const Methods& methods = cf->getMethods();
 
       const ClassInfo& ci = getClassInfo(cf);
 
-      // add member functions to the vtable
+      // Add member functions to the vtable.
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
 	Method* method = methods[i];
-	// the contructor is the only non-static method that is not
-	// dynamically dispatched so we skip it
+	// The contructor is the only non-static method that is not
+	// dynamically dispatched so we skip it.
 	if (!method->isStatic() && method->getName()->str() != "<init>") {
 	  std::string methodDescr =
 	    method->getName()->str() +
@@ -354,7 +354,7 @@ namespace llvm { namespace Java { namespace {
       assert(!ci.type && ci.f2iMap.empty() &&
 	     "got already initialized ClassInfo!");
 
-      // get the interface id
+      // Get the interface id.
       if (cf->isInterface())
 	ci.interfaceIdx = ClassInfo::InterfaceCount++;
 
@@ -413,7 +413,7 @@ namespace llvm { namespace Java { namespace {
 	  std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
     }
 
-    /// Builds an interface Vtable for the specified <class,interface>
+    /// Builds an interface VTable for the specified <class,interface>
     /// pair.
     llvm::Constant* buildInterfaceVTable(ClassFile* cf, ClassFile* interface) {
 
@@ -421,12 +421,15 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo& interfaceVI = getVTableInfo(interface);
       const Methods& methods = interface->getMethods();
 
-      // the size of the initializer will be 1 greater than the number
+      // The size of the initializer will be 1 greater than the number
       // of methods for this interface (the first slot is the typeinfo
-      // struct
+      // struct.
       std::vector<llvm::Constant*> init(interfaceVI.m2iMap.size()+1, NULL);
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
 
+      // For each method in this interface find the implementing
+      // method in the class' VTable and add it to the appropriate
+      // slot.
       for (VTableInfo::Method2IndexMap::const_iterator
 	     i = interfaceVI.m2iMap.begin(), e = interfaceVI.m2iMap.end();
 	   i != e; ++i) {
@@ -461,10 +464,10 @@ namespace llvm { namespace Java { namespace {
     /// return a pointer to 0xFFFFFFFF.
     std::pair<int, llvm::Constant*>
     buildInterfacesVTables(ClassFile* cf, const VTableInfo& vi) {
-      // if this is an interface then we are not implementing any
+      // If this is an interface then we are not implementing any
       // interfaces so the lastInterface field is our index and the
       // pointer to the array of interface vtables is an all-ones
-      // value
+      // value.
       if (cf->isInterface())
 	return std::make_pair(
 	  getClassInfo(cf).interfaceIdx,
@@ -472,6 +475,11 @@ namespace llvm { namespace Java { namespace {
 	    ConstantIntegral::getAllOnesValue(Type::LongTy),
 	    PointerType::get(PointerType::get(VTableInfo::VTableTy))));
 
+      // Otherwise we must fill in the interfaces vtables array. For
+      // each implemented vtable we insert a pointer to the
+      // <class,interface> vtable for this class. Note that we only
+      // fill in up to the highest index of the implemented
+      // interfaces.
       std::vector<llvm::Constant*> vtables;
       const Classes& interfaces = cf->getInterfaces();
       llvm::Constant* nullVTable =
@@ -518,19 +526,19 @@ namespace llvm { namespace Java { namespace {
       llvm::Constant* superClassesVTables;
       tie(depth, superClassesVTables) = buildSuperClassesVTables(cf, vi);
 
-      // the depth (java/lang/Object has depth 0)
+      // The depth (java/lang/Object has depth 0).
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, depth));
-      // the super classes' vtables
+      // The super classes' vtables.
       typeInfoInit.push_back(superClassesVTables);
 
       int lastInterface;
       llvm::Constant* interfacesVTables;
       tie(lastInterface, interfacesVTables) = buildInterfacesVTables(cf, vi);
 
-      // the last interface index or the interface index if this is an
-      // interface
+      // The last interface index or the interface index if this is an
+      // interface.
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, lastInterface));
-      // the interfaces' vtables
+      // The interfaces' vtables.
       typeInfoInit.push_back(interfacesVTables);
 
       return ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
@@ -554,43 +562,42 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo& superVI =
 	getVTableInfo(ClassFile::get(super->getName()->str()));
 
-      // copy the super vtables array
+      // Copy the super vtables array.
       vi.superVtables.push_back(superVI.vtable);
       vi.superVtables.reserve(superVI.superVtables.size() + 1);
       std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
 		std::back_inserter(vi.superVtables));
 
-      // copy all the constants from the super class' vtable
+      // Copy all the constants from the super class' vtable.
       assert(superVI.vtable && "No vtable found for super class!");
       ConstantStruct* superInit =
 	cast<ConstantStruct>(superVI.vtable->getInitializer());
       std::vector<llvm::Constant*> init(superInit->getNumOperands());
-      // use a null typeinfo struct for now
+      // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
-      // fill in the function pointers as they are in the super
-      // class. overriden methods will be replaced later
+      // Fill in the function pointers as they are in the super
+      // class. overriden methods will be replaced later.
       for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
 	init[i] = superInit->getOperand(i);
       vi.m2iMap = superVI.m2iMap;
 
-      // add member functions to the vtable
+      // Add member functions to the vtable.
       const Methods& methods = cf->getMethods();
 
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
 	Method* method = methods[i];
-	// the contructor is the only non-static method that is not
-	// dynamically dispatched so we skip it
+	// The contructor is the only non-static method that is not
+	// dynamically dispatched so we skip it.
 	if (!method->isStatic() && method->getName()->str() != "<init>") {
 	  const std::string& methodDescr =
 	    method->getName()->str() + method->getDescriptor()->str();
 
 	  std::string funcName = className + '/' + methodDescr;
 
-	  // if this is not an interface we will need to build up the
-	  const FunctionType* funcTy = cast<FunctionType>(
-	    getType(method->getDescriptor(), getClassInfo(cf).type));
-	  Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
-	  toCompileFunctions_.insert(vfun);
+          const FunctionType* funcTy = cast<FunctionType>(
+            getType(method->getDescriptor(), getClassInfo(cf).type));
+          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
+          toCompileFunctions_.insert(vfun);
 
 	  unsigned& index = vi.m2iMap[methodDescr];
 	  if (!index) {
@@ -619,7 +626,7 @@ namespace llvm { namespace Java { namespace {
 
       // Now the vtable is complete, install the new typeinfo block
       // for this class: we install it last because we need the vtable
-      // to exist in order to build it
+      // to exist in order to build it.
       init[0] = buildClassTypeInfo(cf, vi);
       vi.vtable->setInitializer(ConstantStruct::get(init));
 
@@ -633,8 +640,8 @@ namespace llvm { namespace Java { namespace {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
-      // get ClassInfo for class owning the field - this will force
-      // the globals to be initialized
+      // Get ClassInfo for class owning the field - this will force
+      // the globals to be initialized.
       getClassInfo(ClassFile::get(fieldRef->getClass()->getName()->str()));
 
       std::string globalName =
@@ -661,11 +668,11 @@ namespace llvm { namespace Java { namespace {
     /// Emits the necessary code to get a field from the passed
     /// pointer to an object.
     Value* getField(ClassFile* cf, const std::string& fieldName, Value* ptr) {
-      // Cast ptr to correct type
+      // Cast ptr to correct type.
       ptr = new CastInst(ptr, PointerType::get(getClassInfo(cf).type),
 			 TMP, currentBB_);
 
-      // deref pointer
+      // Deref pointer.
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       while (true) {
 	const ClassInfo& info = getClassInfo(cf);
@@ -710,7 +717,7 @@ namespace llvm { namespace Java { namespace {
       bbInfoMap_.clear();
       bbBuilder_.reset(new BasicBlockBuilder(function, codeAttr));
 
-      // put arguments into locals
+      // Put arguments into locals.
       Locals locals(codeAttr->getMaxLocals());
 
       unsigned index = 0;
@@ -720,14 +727,14 @@ namespace llvm { namespace Java { namespace {
 	index += isTwoSlotType(a->getType()) ? 2 : 1;
       }
       // For the entry block the operand stack is empty and the locals
-      // contain the arguments to the function
+      // contain the arguments to the function.
       bbInfoMap_.insert(std::make_pair(&function->getEntryBlock(),
 				       std::make_pair(locals, OperandStack())));
 
-      // Insert the entry block to the work list
+      // Insert the entry block to the work list.
       bbWorkList_.push_back(&function->getEntryBlock());
 
-      // Process the work list until we compile the whole function
+      // Process the work list until we compile the whole function.
       while (!bbWorkList_.empty()) {
 	currentBB_ = bbWorkList_.front();
 	bbWorkList_.pop_front();
@@ -743,12 +750,12 @@ namespace llvm { namespace Java { namespace {
 	unsigned start, end;
 	tie(start, end) = bbBuilder_->getBytecodeIndices(currentBB_);
 
-	// Compile this basic block
+	// Compile this basic block.
 	parse(codeAttr->getCode(), start, end);
 
 	// If this basic block does not have a terminator, it should
 	// have an unconditional branch to the next basic block
-	// (fallthrough)
+	// (fallthrough).
 	if (!currentBB_->getTerminator())
 	  new BranchInst(bbBuilder_->getBasicBlock(end), currentBB_);
 
@@ -794,15 +801,15 @@ namespace llvm { namespace Java { namespace {
 						   Type::VoidTy, 0);
       Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
 
-      // if this is the first time we scheduled this function
+      // If this is the first time we scheduled this function
       // for compilation insert a call to it right before the
       // terminator of the only basic block in
-      // llvm_java_static_init
+      // llvm_java_static_init/
       if (toCompileFunctions_.insert(init)) {
 	assert(hook->front().getTerminator() &&
 	       LLVM_JAVA_STATIC_INIT " should have a terminator!");
 	new CallInst(init, "", hook->front().getTerminator());
-	// we also create the global variables of this class
+	// We also create the global variables of this class.
 	const Fields& fields = classfile->getFields();
 	for (unsigned i = 0, e = fields.size(); i != e; ++i) {
 	  Field* field = fields[i];
@@ -828,6 +835,8 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
+    /// Returns the llvm::Function corresponding to the specified
+    /// llvm::Java::Method.
     Function* getFunction(Method* method) {
       ClassFile* clazz = method->getParent();
 
@@ -845,6 +854,8 @@ namespace llvm { namespace Java { namespace {
       return function;
     }
 
+    /// Returns the llvm::Java::Method given a <class,method>
+    /// descriptor.
     Method* getMethod(const std::string& classMethodDesc) {
       unsigned slash = classMethodDesc.rfind('/', classMethodDesc.find('('));
       std::string className = classMethodDesc.substr(0, slash);
@@ -862,21 +873,24 @@ namespace llvm { namespace Java { namespace {
     }
 
   public:
+    /// Compiles the specified method given a <class,method>
+    /// descriptor and the transitive closure of all methods
+    /// (possibly) called by it.
     Function* compileMethod(const std::string& classMethodDesc) {
-      // initialize the static initializer function
+      // Initialize the static initializer function.
       Function* staticInit =
 	module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
 
-      // initialize type maps and vtable globals
+      // Initialize type maps and vtable globals.
       initializeClassInfoMap();
       initializeVTableInfoMap();
 
-      // create the method requested
+      // Create the method requested.
       Function* function = getFunction(getMethod(classMethodDesc));
       toCompileFunctions_.insert(function);
-      // compile the transitive closure of methods called by this method
+      // Compile the transitive closure of methods called by this method.
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
 	Function* f = toCompileFunctions_[i];
 	compileMethodOnly(f->getName());
@@ -1130,7 +1144,7 @@ namespace llvm { namespace Java { namespace {
     void do_lushr() { do_shift_unsigned_common(); }
 
     void do_shift_unsigned_common() {
-      // cast value to be shifted into its unsigned version
+      // Cast value to be shifted into its unsigned version.
       do_swap();
       Value* v = currentOpStack_->pop(currentBB_);
       v = new CastInst(v, v->getType()->getUnsignedVersion(), TMP, currentBB_);
@@ -1140,7 +1154,7 @@ namespace llvm { namespace Java { namespace {
       do_shift_common(Instruction::Shr);
 
       v = currentOpStack_->pop(currentBB_);
-      // cast shifted value back to its original signed version
+      // Cast shifted value back to its original signed version.
       v = new CastInst(v, v->getType()->getSignedVersion(), TMP, currentBB_);
       currentOpStack_->push(v, currentBB_);
     }
@@ -1442,7 +1456,7 @@ namespace llvm { namespace Java { namespace {
       std::string funcName = className + '/' + methodDescr;
       const ClassInfo& ci = getClassInfo(ClassFile::get(className));
 
-      // constructor calls are statically bound
+      // Constructor calls are statically bound.
       if (methodName == "<init>") {
 	FunctionType* funcTy =
 	  cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
@@ -1450,7 +1464,7 @@ namespace llvm { namespace Java { namespace {
 	toCompileFunctions_.insert(function);
 	makeCall(function, getParams(funcTy));
       }
-      // otherwise we call the superclass' implementation of the method
+      // Otherwise we call the superclass' implementation of the method.
       else {
 	assert(0 && "not implemented");
       }
@@ -1505,7 +1519,7 @@ namespace llvm { namespace Java { namespace {
       Value* interfaceVTables =
 	new GetElementPtrInst(vtable, indices, TMP, currentBB_);
       interfaceVTables = new LoadInst(interfaceVTables, TMP, currentBB_);
-      // get the actual interface vtable
+      // Get the actual interface vtable.
       indices.clear();
       indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
       Value* interfaceVTable =
@@ -1514,7 +1528,7 @@ namespace llvm { namespace Java { namespace {
 	new LoadInst(interfaceVTable, className + "<vtable>", currentBB_);
       interfaceVTable =
 	new CastInst(interfaceVTable, vi.vtable->getType(), TMP, currentBB_);
-      // get the function pointer
+      // Get the function pointer.
       indices.resize(1);
       assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
 	     "could not find slot for virtual function!");

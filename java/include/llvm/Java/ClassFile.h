@@ -31,6 +31,8 @@ namespace llvm { namespace Java {
   class ExceptionsAttribute;
   class Constant;
   class ConstantClass;
+  class ConstantFieldRef;
+  class ConstantMethodRef;
   class ConstantNameAndType;
   class ConstantUtf8;
   class ClassFile;
@@ -78,6 +80,9 @@ namespace llvm { namespace Java {
     uint16_t getMajorVersion() const { return majorV_; }
 
     const ConstantPool& getConstantPool() const { return cPool_; }
+    ConstantMethodRef* getConstantMethodRef(unsigned index) const;
+    ConstantFieldRef* getConstantFieldRef(unsigned index) const;
+    Constant* getConstant(unsigned index) const { return cPool_[index]; }
 
     bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
     bool isFinal() const { return accessFlags_ & ACC_FINAL; }

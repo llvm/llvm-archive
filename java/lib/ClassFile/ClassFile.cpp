@@ -244,6 +244,20 @@ ClassFile::ClassFile(std::istream& is)
         (*i)->getName()->str() + (*i)->getDescriptor()->str(), *i));
 }
 
+ConstantMethodRef* ClassFile::getConstantMethodRef(unsigned index) const
+{
+  assert(dynamic_cast<ConstantMethodRef*>(getConstant(index)) &&
+         "Constant is not a ConstantMethodRef!");
+  return static_cast<ConstantMethodRef*>(getConstant(index));
+}
+
+ConstantFieldRef* ClassFile::getConstantFieldRef(unsigned index) const
+{
+  assert(dynamic_cast<ConstantFieldRef*>(getConstant(index)) &&
+         "Constant is not a ConstantFieldRef!");
+  return static_cast<ConstantFieldRef*>(getConstant(index));
+}
+
 Method* ClassFile::getMethod(const std::string& nameAndDescr) const
 {
   Name2MethodMap::const_iterator it = n2mMap_.find(nameAndDescr);

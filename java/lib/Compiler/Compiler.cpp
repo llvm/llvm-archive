@@ -1893,7 +1893,8 @@ namespace llvm { namespace Java { namespace {
 
     void do_return_common() {
       Value* r = currentOpStack_->pop(currentBB_);
-      new ReturnInst(r, currentBB_);
+      const Type* retTy = currentBB_->getParent()->getReturnType();
+      new ReturnInst(new CastInst(r, retTy, TMP, currentBB_), currentBB_);
     }
 
     void do_return() {

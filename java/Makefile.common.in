@@ -25,6 +25,17 @@ BUILD_SRC_ROOT:=$(LLVM_SRC_ROOT)/projects/Java
 BUILD_SRC_DIR := $(subst //,/,$(BUILD_SRC_ROOT)/$(patsubst $(BUILD_OBJ_ROOT)%,%, $(BUILD_OBJ_DIR)))
 
 #
+# Additional utilities
+#
+JIKES=@JIKES@
+
+#
 # Include LLVM's build rules.
 #
 include $(LLVM_SRC_ROOT)/Makefile.rules
+
+#
+# Include local build rules.
+#
+include $(LEVEL)/Makefile.rules
+

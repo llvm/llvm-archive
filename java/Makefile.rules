@@ -1,0 +1,16 @@
+#===-- Makefile.rules - Common make rules for LLVM -------*- makefile -*--====
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by the LLVM research group and is distributed under
+# the University of Illinois Open Source License. See LICENSE.TXT for details.
+#
+##===----------------------------------------------------------------------===##
+
+ifdef BUILD_JAVA_SOURCE
+all:: .class-stamp
+.class-stamp: $(shell find . -name '*.java')
+	$(JIKES) --bootclasspath $(BOOTCLASSPATH) $?
+	touch .class-stamp
+endif
+

@@ -61,7 +61,7 @@ DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
 # rule to link bytecode with runtime
 %.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
 	$(Echo) Linking $< with the Java runtime
-	-$(Verb)$(GCCLD) -o=$*.llvm $< -L $(LLVMGCCDIR)/lib -L $(LibDir) $(EXTRA_OBJS)
+	-$(Verb)$(GCCLD) -o=$*.llvm $< -L $(CFERuntimeLibDir) -L $(LibDir) $(EXTRA_OBJS)
 
 # rule to make assembly from bytecode
 %.dis-ll: %.bc

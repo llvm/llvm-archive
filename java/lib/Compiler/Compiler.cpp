@@ -66,12 +66,14 @@ namespace llvm { namespace Java { namespace {
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
     typedef std::map<BasicBlock*, unsigned> OpStackDepthMap;
-    OpStackDepthMap opStackDepthMap_;
+    OpStackDepthMap opStackDepthMap_; 
+    typedef std::map<std::string, GlobalVariable*> StringMap;
+    StringMap stringMap_;
     BasicBlock* currentBB_;
     Locals locals_;
     OperandStack opStack_;
     Function *getVtable_, *setVtable_, *throw_, *isInstanceOf_,
-      *memset_;
+      *memcpy_, *memset_;
 
     typedef SetVector<Function*> FunctionSet;
     FunctionSet toCompileFunctions_;
@@ -161,6 +163,11 @@ namespace llvm { namespace Java { namespace {
       isInstanceOf_ = module_.getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
         ObjectBaseRefTy, VTableBaseRefTy, NULL);
+      memcpy_ = module_.getOrInsertFunction(
+        "llvm.memcpy", Type::VoidTy,
+        PointerType::get(Type::SByteTy),
+        PointerType::get(Type::SByteTy),
+        Type::ULongTy, Type::UIntTy, NULL);
       memset_ = module_.getOrInsertFunction(
         "llvm.memset", Type::VoidTy,
         PointerType::get(Type::SByteTy),
@@ -187,13 +194,103 @@ namespace llvm { namespace Java { namespace {
       return false;
     }
 
-    /// Given a llvm::Java::Constant returns a llvm::Constant.
-    llvm::Constant* getConstant(Constant* c) {
-      if (dynamic_cast<ConstantString*>(c))
-        // FIXME: should return a String object represeting this ConstantString
-        return ConstantPointerNull::get(
-          PointerType::get(
-            getClassInfo(ClassFile::get("java/lang/String")).getType()));
+    template <typename InsertionPointTy>
+    Value* createNewString(const std::string& str, InsertionPointTy* ip) {
+      // Create a new byte[] object and initialize it with the
+      // contents of this string constant.
+      Value* count = ConstantUInt::get(Type::UIntTy, str.size());
+      Value* arrayRef = allocateArray(getPrimitiveArrayInfo(BYTE),
+                                      Type::SByteTy,
+                                      getPrimitiveArrayVTableInfo(BYTE),
+                                      count,
+                                      ip);
+      // Copy string data.
+      std::vector<Value*> indices;
+      indices.reserve(3);
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 2));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      Value* arrayData = new GetElementPtrInst(arrayRef, indices, TMP, ip);
+      llvm::Constant* init = ConstantArray::get(str);
+      GlobalVariable* chars = new GlobalVariable(
+        init->getType(),
+        true,
+        GlobalVariable::InternalLinkage,
+        init,
+        str + ".str",
+        &module_);
+        
+      std::vector<Value*> params;
+      params.reserve(4);
+      params.clear();
+      params.push_back(arrayData);
+      params.push_back(ConstantExpr::getPtrPtrFromArrayPtr(chars));
+      params.push_back(new CastInst(count, Type::ULongTy, TMP, ip));
+      params.push_back(ConstantUInt::get(Type::UIntTy, 0));
+      new CallInst(memcpy_, params, "", ip);
+
+      // Get class information for java/lang/String.
+      const ClassFile* cf = ClassFile::get("java/lang/String");
+      const ClassInfo& ci = getClassInfo(cf);
+      const VTableInfo& vi = getVTableInfo(cf);
+
+      // Create a new java/lang/String object.
+      Value* objRef = allocateObject(ci, vi, ip);
+      
+      // Initialize it: call java/lang/String/<init>(byte[],int)
+      Method* method = getMethod("java/lang/String/<init>([BI)V");
+      Function* function = getFunction(method);
+      scheduleFunction(function);
+
+      params.reserve(3);
+      params.clear();
+      params.push_back(new CastInst(objRef, ObjectBaseRefTy, TMP, ip));
+      params.push_back(new CastInst(arrayRef, ObjectBaseRefTy, TMP, ip));
+      params.push_back(ConstantSInt::get(Type::IntTy, 0));
+      new CallInst(function, params, "", ip);
+
+      return objRef;
+    }      
+
+    Value* getConstantString(ConstantString* s) {
+      const std::string& str = s->getValue()->str();
+      StringMap::iterator it = stringMap_.find(str);
+      if (it == stringMap_.end()) {
+        // Create the global variable for the string.
+        const Type* StringRefTy = PointerType::get(
+          getClassInfo(ClassFile::get("java/lang/String")).getType());
+        GlobalVariable* stringGlobal = new GlobalVariable(
+          StringRefTy,
+          false,
+          GlobalVariable::ExternalLinkage,
+          llvm::Constant::getNullValue(StringRefTy),
+          str + ".java/lang/String",
+          &module_);
+
+        // Insert this new string into the map.
+        it = stringMap_.insert(it, std::make_pair(str, stringGlobal));
+
+        // Get the static initializer function and get its one and
+        // only basic block to add code to.
+        Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+                                                     Type::VoidTy, 0);
+        Instruction* I = hook->front().getTerminator();
+        assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
+
+        Value* newString = createNewString(str, I);
+
+        // Store the string reference to the global variable.
+        new StoreInst(newString, stringGlobal, I);
+      }
+
+      return new LoadInst(it->second, TMP, currentBB_);
+    }
+
+    /// Given a llvm::Java::Constant returns a Value
+    /// (java/lang/Strings are not llvm::Constants).
+    Value* getConstant(Constant* c) {
+      if (ConstantString* s = dynamic_cast<ConstantString*>(c))
+        return getConstantString(s);
       else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
         return ConstantSInt::get(Type::IntTy, i->getValue());
       else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
@@ -1498,9 +1595,9 @@ namespace llvm { namespace Java { namespace {
             // final fields with static initializers.
             bool isConstant = field->isStatic();
             llvm::Constant* init;
-            if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
-              init =
-                ConstantExpr::getCast(getConstant(cv->getValue()), globalTy);
+            if (field->getConstantValueAttribute() &&
+                dyn_cast<llvm::Constant>(getConstant(field->getConstantValueAttribute()->getValue())))
+              init = ConstantExpr::getCast(dyn_cast<llvm::Constant>(getConstant(field->getConstantValueAttribute()->getValue())), globalTy);
             else {
               init = llvm::Constant::getNullValue(globalTy);
               isConstant = false;
@@ -2371,7 +2468,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_athrow() {
       Value* objRef = pop(ObjectBaseRefTy);
-      new CallInst(throw_, objRef, TMP, currentBB_);
+      new CallInst(throw_, objRef, "", currentBB_);
       new UnreachableInst(currentBB_);
     }
 

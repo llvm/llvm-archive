@@ -31,6 +31,13 @@ clean::
 	-$(Verb)$(LOPT) -load $(LibDir)/LLVMJavaTransforms -addstubs -f -o=$*.stubbed.raw.llvm.bc $*.raw.llvm.bc
 	-$(Verb)$(MV) -f $*.stubbed.raw.llvm.bc $*.raw.llvm.bc
 
+# rule to make native executable
+%.llc.s: %.llvm.bc
+	-$(Verb)$(LLC) -f $< -o $@
+
+%.llc: %.llc.s
+	-$(Verb)$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
+
 # add function trace code
 %.tracef.llvm %.tracef.llvm.bc: %.llvm %.llvm.bc $(LOPT)
 	$(Echo) Adding function trace code to $<
@@ -61,12 +68,14 @@ BYTECODE := $(addsuffix .llvm.bc, $(PREFIXED_JAVA_TESTS))
 # Output produced by tests
 NATIVE_OUTPUT := $(addsuffix .out-nat, $(PREFIXED_JAVA_TESTS))
 JIT_OUTPUT := $(addsuffix .out-jit, $(PREFIXED_JAVA_TESTS))
+LLC_OUTPUT := $(addsuffix .out-llc, $(PREFIXED_JAVA_TESTS))
 
 # Diffs of output produced by native and llvm-java runs
-DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
+JIT_DIFFS := $(addsuffix .diff-jit, $(PREFIXED_JAVA_TESTS))
+JIT_DIFFS := $(addsuffix .diff-llc, $(PREFIXED_JAVA_TESTS))
 
 # Keep the output and diffs
-.PRECIOUS: %.out-nat %.out-jit %.diff
+.PRECIOUS: %.out-nat %.out-jit %.out-llc %.diff-jit %.diff-llc
 
 # rule to run a .class file with the jvm
 %.out-nat: %.class
@@ -77,12 +86,21 @@ DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
 %.out-jit: %.llvm.bc
 	-$(Verb)$(LLI) $< > $*.out-jit 2>&1
 
-# rule to diff test output
-%.diff: %.out-nat %.out-jit
-	$(Verb)diff $*.out-nat $*.out-jit > $@ \
-	&& echo "PASS: $(notdir $*)" \
-	|| echo "FAIL: $(notdir $*)"
+# rule to run a .class file with llc
+%.out-llc: %.llc
+	-$(Verb)./$< > $*.out-llc 2>&1
 
-all-local:: $(DIFFS)
+# rule to diff test output
+%.diff-jit: %.out-nat %.out-jit
+	$(Verb)diff $*.out-nat $*.out-jit > $@ \
+	&& echo "PASS(jit): $(notdir $*)" \
+	|| echo "FAIL(jit): $(notdir $*)"
+
+%.diff-llc: %.out-nat %.out-llc
+	$(Verb)diff $*.out-nat $*.out-llc > $@ \
+	&& echo "PASS(llc): $(notdir $*)" \
+	|| echo "FAIL(llc): $(notdir $*)"
+
+all-local:: $(JIT_DIFFS) $(LLC_DIFFS)
 
 endif

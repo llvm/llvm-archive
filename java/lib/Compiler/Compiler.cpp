@@ -234,15 +234,21 @@ namespace llvm { namespace Java { namespace {
                 const Fields& fields = cf->getFields();
                 for (unsigned i = 0, e = fields.size(); i != e; ++i) {
                     const Field* field = fields[i];
-                    if (field->isStatic())
+                    if (field->isStatic()) {
+                        llvm::Constant* init = NULL;
+                        if (const ConstantValueAttribute* cv =
+                            field->getConstantValueAttribute())
+                            init = getConstant(cv->getValue());
+
                         new GlobalVariable(getType(field->getDescriptor()),
                                            field->isFinal(),
-                                           (field->isPrivate() ?
+                                           (field->isPrivate() & bool(init) ?
                                             GlobalVariable::InternalLinkage :
                                             GlobalVariable::ExternalLinkage),
-                                           NULL,
+                                           init,
                                            className + '/' + field->getName()->str(),
                                            module_);
+                    }
                     else
                         elements.push_back(getType(field->getDescriptor()));
                 }

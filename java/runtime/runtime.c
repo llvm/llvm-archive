@@ -380,3 +380,8 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
 
   memcpy(dst, src, length * srcObj->vtable->typeinfo.elementSize);
 }
+
+void Java_gnu_classpath_VMSystemProperties_preInit(JNIEnv *env, jobject clazz,
+                                                   jobject properties) {
+
+}

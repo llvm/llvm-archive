@@ -233,21 +233,6 @@ namespace llvm { namespace Java {
 
     } // namespace Opcode
 
-    namespace AType {
-
-        enum {
-            BOOLEAN = 4,
-            CHAR = 5,
-            FLOAT = 6,
-            DOUBLE = 7,
-            BYTE = 8,
-            SHORT = 9,
-            INT = 10,
-            LONG = 11,
-        };
-
-    } // namespace AType
-
     inline int readSByte(const uint8_t* code, unsigned& i) {
         return code[++i];
     }

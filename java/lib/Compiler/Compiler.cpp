@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "javacompiler"
 
 #include <llvm/Java/Bytecode.h>
+#include <llvm/Java/BytecodeParser.h>
 #include <llvm/Java/ClassFile.h>
 #include <llvm/Java/Compiler.h>
 #include <llvm/Constants.h>
@@ -23,11 +24,18 @@
 #include <llvm/Type.h>
 #include <Support/Debug.h>
 #include <Support/StringExtras.h>
+#include <stack>
+#include <vector>
 
 using namespace llvm;
 using namespace llvm::Java;
 
-namespace {
+namespace llvm { namespace Java { namespace {
+
+    typedef std::vector<BasicBlock*> BC2BBMap;
+    typedef std::stack<Value*, std::vector<Value*> > OperandStack;
+    typedef std::vector<Value*> Locals;
+
 
     inline bool isTwoSlotValue(const Value* v) {
         return v->getType() == Type::LongTy | v->getType() == Type::DoubleTy;
@@ -37,402 +45,219 @@ namespace {
         return !isTwoSlotValue(v);
     }
 
-} // namespace
+    struct Bytecode2BasicBlockMapper
+        : public BytecodeParser<Bytecode2BasicBlockMapper> {
+    public:
+        Bytecode2BasicBlockMapper(Function& f,
+                                  BC2BBMap& m,
+                                  const CodeAttribute& c)
+            : function_(f), bc2bbMap_(m), codeAttr_(c) { }
 
-void Compiler::compileMethodInit(Function& function,
-                                 const ClassFile& cf,
-                                 const CodeAttribute& codeAttr)
-{
-    while (!opStack_.empty())
-        opStack_.pop();
+        void compute() {
+            bc2bbMap_.clear();
+            bc2bbMap_.assign(codeAttr_.getCodeSize(), NULL);
 
-    locals_.clear();
-    locals_.assign(codeAttr.getMaxLocals(), NULL);
+            parse(codeAttr_.getCode(), codeAttr_.getCodeSize());
 
-    bc2bbMap_.clear();
-    bc2bbMap_.assign(codeAttr.getCodeSize(), NULL);
-
-    const uint8_t* code = codeAttr.getCode();
-    for (unsigned i = 0; i < codeAttr.getCodeSize(); ++i) {
-        using namespace llvm::Java::Opcode;
-
-        unsigned bcStart = i;
-        bool wide = code[i] == WIDE;
-        i += wide;
-        switch (code[i]) {
-        case BIPUSH:
-        case LDC:
-        case NEWARRAY:
-            ++i;
-            break;
-        case ILOAD:
-        case LLOAD:
-        case FLOAD:
-        case DLOAD:
-        case ALOAD:
-        case ISTORE:
-        case LSTORE:
-        case FSTORE:
-        case DSTORE:
-        case ASTORE:
-        case RET:
-            i += 1 + wide;
-            break;
-        case SIPUSH:
-        case LDC_W:
-        case LDC2_W:
-        case GOTO:
-        case JSR:
-        case GETSTATIC:
-        case PUTSTATIC:
-        case GETFIELD:
-        case PUTFIELD:
-        case INVOKEVIRTUAL:
-        case INVOKESPECIAL:
-        case INVOKESTATIC:
-        case INVOKEINTERFACE:
-        case NEW:
-        case ANEWARRAY:
-        case ARRAYLENGTH:
-        case ATHROW:
-        case CHECKCAST:
-        case INSTANCEOF:
-            i += 2;
-            break;
-        case IINC:
-            i += 2 * (1 + wide);
-            break;
-        case IFEQ:
-        case IFNE:
-        case IFLT:
-        case IFGE:
-        case IFGT:
-        case IFLE:
-        case IF_ICMPEQ:
-        case IF_ICMPNE:
-        case IF_ICMPLT:
-        case IF_ICMPGE:
-        case IF_ICMPGT:
-        case IF_ICMPLE:
-        case IF_IACMPEQ:
-        case IF_IACMPNE:
-        case IFNULL:
-        case IFNONNULL: {
-            unsigned index = readUShort(code, i);
-            bc2bbMap_[bcStart] = new BasicBlock(
-                std::string("bb@bc") + utostr(bcStart), &function);
-            break;
-        }
-        case TABLESWITCH: {
-            skipPadBytes(code, i);
-            readSInt(code, i);
-            int low = readSInt(code, i);
-            int high = readSInt(code, i);
-            while (low++ <= high) {
-                unsigned bcIndex = bcStart + readSInt(code, i);
-                bc2bbMap_[bcIndex] = new BasicBlock(
-                    std::string("bb@bc") + utostr(bcIndex), &function);
+            BasicBlock* bb = new BasicBlock("entry", &function_);
+            for (unsigned i = 0; i < bc2bbMap_.size(); ++i) {
+                if (bc2bbMap_[i])
+                    bb = bc2bbMap_[i];
+                else
+                    bc2bbMap_[i] = bb;
             }
-            break;
         }
-        case LOOKUPSWITCH: {
-            skipPadBytes(code, i);
-            readSInt(code, i);
-            unsigned pairCount = readUInt(code, i);
-            while (pairCount--) {
-                readSInt(code, i);
-                unsigned bcIndex = bcStart + readSInt(code, i);
-                bc2bbMap_[bcIndex] = new BasicBlock(
-                    std::string("bb@bc") + utostr(bcIndex), &function);
+
+        void do_if(unsigned bcI, JSetCC cc, JType type,
+                   unsigned t, unsigned f) {
+            if (!bc2bbMap_[t])
+                bc2bbMap_[t] =
+                    new BasicBlock("bb@bc" + utostr(t), &function_);
+            if (!bc2bbMap_[f])
+                bc2bbMap_[f] =
+                    new BasicBlock("bb@bc" + utostr(f), &function_);
+        }
+
+        void do_ifcmp(unsigned bcI, JSetCC cc,
+                      unsigned t, unsigned f) {
+            if (!bc2bbMap_[t])
+                bc2bbMap_[t] =
+                    new BasicBlock("bb@bc" + utostr(t), &function_);
+            if (!bc2bbMap_[f])
+                bc2bbMap_[f] =
+                    new BasicBlock("bb@bc" + utostr(f), &function_);
+        }
+
+        void do_switch(unsigned bcI,
+                       unsigned defTarget,
+                       const SwitchCases& sw) {
+            for (unsigned i = 0; i < sw.size(); ++i) {
+                unsigned target = sw[i].second;
+                if (!bc2bbMap_[target])
+                    bc2bbMap_[target] =
+                        new BasicBlock("bb@bc" + utostr(target), &function_);
             }
-            break;
         }
-        case XXXUNUSEDXXX:
-            throw "FIXME: create new exception class";
-        case MULTIANEWARRAY:
-            i += 3;
-            break;
-        case GOTO_W:
-        case JSR_W:
-            i+= 4;
-            break;
-        default:
-            break;
-        }
-    }
 
-    BasicBlock* bb = new BasicBlock("entry", &function);
-    for (unsigned i = 0; i < codeAttr.getCodeSize(); ++i) {
-        if (bc2bbMap_[i])
-            bb = bc2bbMap_[i];
-        else
-            bc2bbMap_[i] = bb;
-    }
-}
+    private:
+        Function& function_;
+        BC2BBMap& bc2bbMap_;
+        const CodeAttribute& codeAttr_;
+    };
 
-Value* Compiler::getOrCreateLocal(unsigned index, const Type* type)
-{
-    if (!locals_[index]) {
-        BasicBlock* entry = bc2bbMap_[0];
-        Instruction* alloc = new AllocaInst(type);
-        locals_[index] = alloc;
-        Instruction* store =
-            new StoreInst(llvm::Constant::getNullValue(type), locals_[index]);
-        entry->getInstList().push_front(store);
-        entry->getInstList().push_front(alloc);
-    }
+    struct CompilerImpl :
+        public BytecodeParser<CompilerImpl> {
+    private:
+        const Type* getType(JType type) {
+            switch (type) {
+                // FIXME: this should really be a non-void type when the object
+                // model is finalized
+            case REFERENCE: return Type::VoidTy;
+            case BOOLEAN: return Type::BoolTy;
+            case CHAR: return Type::UByteTy;
+            case FLOAT: return Type::FloatTy;
+            case DOUBLE: return Type::DoubleTy;
+            case BYTE: return Type::SByteTy;
+            case SHORT: return Type::ShortTy;
+            case INT: return Type::IntTy;
+            case LONG: return Type::LongTy;
+            default: assert(0 && "Invalid JType to Type conversion!");
+            }
 
-    return locals_[index];
-}
+            return NULL;
+        }
 
-void Compiler::compileMethod(Module& module,
-                             const ClassFile& cf,
-                             const Java::Method& method) {
-    using namespace llvm::Java::Opcode;
+        Instruction::BinaryOps getSetCC(JSetCC cc) {
+            switch (cc) {
+            case EQ: return Instruction::SetEQ;
+            case NE: return Instruction::SetNE;
+            case LT: return Instruction::SetLT;
+            case GE: return Instruction::SetGE;
+            case GT: return Instruction::SetGT;
+            case LE: return Instruction::SetLE;
+            default: assert(0 && "Invalid JSetCC to BinaryOps conversion!");
+            }
+            return static_cast<Instruction::BinaryOps>(-1);
+        }
 
-    DEBUG(std::cerr << "compiling method: " << method.getName()->str() << '\n');
+        void compileMethodInit(Function& function,
+                               const ClassFile& cf,
+                               const CodeAttribute& codeAttr) {
+            while (!opStack_.empty())
+                opStack_.pop();
 
-    Function* function =
-        module.getOrInsertFunction(method.getName()->str(), Type::VoidTy, 0);
+            locals_.clear();
+            locals_.assign(codeAttr.getMaxLocals(), NULL);
 
-    const Java::CodeAttribute* codeAttr =
-        Java::getCodeAttribute(method.getAttributes());
+            Bytecode2BasicBlockMapper mapper(function, bc2bbMap_, codeAttr);
+            mapper.compute();
+        }
 
-    compileMethodInit(*function, cf, *codeAttr);
+        Value* getOrCreateLocal(unsigned index, const Type* type) {
+            if (!locals_[index]) {
+                BasicBlock* entry = bc2bbMap_[0];
+                Instruction* alloc = new AllocaInst(type);
+                locals_[index] = alloc;
+                Instruction* store = new StoreInst(
+                    llvm::Constant::getNullValue(alloc->getType()), alloc);
+                entry->getInstList().push_front(store);
+                entry->getInstList().push_front(alloc);
+            }
 
-    // FIXME: this should really be a non-void type when the object
-    // model is finalized
-    const Type* ObjectTy = Type::VoidTy;
-    const Type* ObjectRefTy = PointerType::get(ObjectTy);
+            return locals_[index];
+        }
 
-    const uint8_t* code = codeAttr->getCode();
-    for (unsigned i = 0; i < codeAttr->getCodeSize(); ++i) {
-        unsigned bcStart = i;
-        bool wide = code[i] == WIDE;
-        i += wide;
-        switch (code[i]) {
-        case ACONST_NULL:
-            opStack_.push(llvm::Constant::getNullValue(ObjectRefTy));
-            break;
-        case ICONST_M1:
-        case ICONST_0:
-        case ICONST_1:
-        case ICONST_2:
-        case ICONST_3:
-        case ICONST_4:
-        case ICONST_5:
-            opStack_.push(ConstantSInt::get(Type::IntTy, code[i]-ICONST_0));
-            break;
-        case LCONST_0:
-        case LCONST_1:
-            opStack_.push(ConstantSInt::get(Type::LongTy, code[i]-LCONST_0));
-            break;
-        case FCONST_0:
-        case FCONST_1:
-        case FCONST_2:
-            opStack_.push(ConstantFP::get(Type::FloatTy, code[i]-FCONST_0));
-            break;
-        case DCONST_0:
-        case DCONST_1:
-            opStack_.push(ConstantFP::get(Type::DoubleTy, code[i]-DCONST_0));
-            break;
-        case BIPUSH: {
-            int imm = readSByte(code, i);
-            opStack_.push(ConstantSInt::get(Type::IntTy, imm));
-            break;
+    public:
+        void compileMethod(Module& module,
+                           const ClassFile& cf,
+                           const Method& method) {
+            DEBUG(std::cerr << "compiling method: "
+                  << method.getName()->str() << '\n');
+
+            Function* function =
+                module.getOrInsertFunction(method.getName()->str(),
+                                           Type::VoidTy, 0);
+
+            const Java::CodeAttribute* codeAttr =
+                Java::getCodeAttribute(method.getAttributes());
+
+            compileMethodInit(*function, cf, *codeAttr);
+
+            parse(codeAttr->getCode(), codeAttr->getCodeSize());
         }
-        case SIPUSH: {
-            int imm = readSShort(code, i);
-            opStack_.push(ConstantSInt::get(Type::IntTy, imm));
-            break;
+
+        void do_aconst_null(unsigned bcI) {
+            opStack_.push(llvm::Constant::getNullValue(
+                              PointerType::get(getType(REFERENCE))));
         }
-        case LDC: {
-            unsigned index = readUByte(code, i);
-            // FIXME: load constant from constant pool
+
+        void do_iconst(unsigned bcI, int value) {
+            opStack_.push(ConstantSInt::get(Type::IntTy, value));
         }
-        case LDC_W: {
-            unsigned index = readUShort(code, i);
-            // FIXME: load constant from constant pool
+
+        void do_lconst(unsigned bcI, long long value) {
+            opStack_.push(ConstantSInt::get(Type::LongTy, value));
         }
-        case LDC2_W: {
-            unsigned index = readUShort(code, i);
-            // FIXME: load constant from constant pool
+
+        void do_fconst(unsigned bcI, float value) {
+            opStack_.push(ConstantFP::get(Type::FloatTy, value));
         }
-        case ILOAD:
-        case LLOAD:
-        case FLOAD:
-        case DLOAD:
-        case ALOAD: {
-            // FIXME: use opcodes to perform type checking
-            unsigned index = readUByte(code, i);
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_dconst(unsigned bcI, double value) {
+            opStack_.push(ConstantFP::get(Type::DoubleTy, value));
         }
-        case ILOAD_0:
-        case ILOAD_1:
-        case ILOAD_2:
-        case ILOAD_3: {
-            unsigned index = code[i] - ILOAD_0;
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case LLOAD_0:
-        case LLOAD_1:
-        case LLOAD_2:
-        case LLOAD_3: {
-            unsigned index = code[i] - LLOAD_0;
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case FLOAD_0:
-        case FLOAD_1:
-        case FLOAD_2:
-        case FLOAD_3: {
-            unsigned index = code[i] - FLOAD_0;
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case DLOAD_0:
-        case DLOAD_1:
-        case DLOAD_2:
-        case DLOAD_3: {
-            unsigned index = code[i] - DLOAD_0;
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case ALOAD_0:
-        case ALOAD_1:
-        case ALOAD_2:
-        case ALOAD_3: {
-            unsigned index = code[i] - ALOAD_0;
-            Instruction* in =
-                new LoadInst(getOrCreateLocal(index, ObjectRefTy));
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case IALOAD:
-        case LALOAD:
-        case FALOAD:
-        case DALOAD:
-        case AALOAD:
-        case BALOAD:
-        case CALOAD:
-        case SALOAD:
+
+        void do_ldc(unsigned bcI, unsigned index) {
             assert(0 && "not implemented");
-        case ISTORE:
-        case LSTORE:
-        case FSTORE:
-        case DSTORE:
-        case ASTORE: {
-            // FIXME: use opcodes to perform type checking
-            unsigned index = readUByte(code, i);
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in = new StoreInst(v1, locals_[index]);
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
         }
-        case ISTORE_0:
-        case ISTORE_1:
-        case ISTORE_2:
-        case ISTORE_3: {
-            Value* v1 = opStack_.top(); opStack_.pop();
+
+        void do_load(unsigned bcI, JType type, unsigned index) {
             Instruction* in =
-                new StoreInst(v1, locals_[code[i]-ISTORE_0]);
+                new LoadInst(getOrCreateLocal(index, getType(type)));
             opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+            bc2bbMap_[bcI]->getInstList().push_back(in);
         }
-        case LSTORE_0:
-        case LSTORE_1:
-        case LSTORE_2:
-        case LSTORE_3: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new StoreInst(v1, locals_[code[i]-LSTORE_0]);
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case FSTORE_0:
-        case FSTORE_1:
-        case FSTORE_2:
-        case FSTORE_3: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new StoreInst(v1, locals_[code[i]-FSTORE_0]);
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case DSTORE_0:
-        case DSTORE_1:
-        case DSTORE_2:
-        case DSTORE_3: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new StoreInst(v1, locals_[code[i]-DSTORE_0]);
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case ASTORE_0:
-        case ASTORE_1:
-        case ASTORE_2:
-        case ASTORE_3: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Instruction* in =
-                new StoreInst(v1, locals_[code[i]-ASTORE_0]);
-            opStack_.push(in);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case IASTORE:
-        case LASTORE:
-        case FASTORE:
-        case DASTORE:
-        case AASTORE:
-        case BASTORE:
-        case CASTORE:
-        case SASTORE:
+
+        void do_aload(unsigned bcI, JType type) {
             assert(0 && "not implemented");
-        case POP:
+        }
+
+        void do_store(unsigned bcI, JType type, unsigned index) {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, getOrCreateLocal(index, getType(type)));
+            opStack_.push(in);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+        }
+
+
+        void do_astore(unsigned bcI, JType type) {
+            assert(0 && "not implemented");
+        }
+
+        void do_pop(unsigned bcI) {
             opStack_.pop();
-            break;
-        case POP2: {
+        }
+
+        void do_pop2(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             if (isOneSlotValue(v1))
                 opStack_.pop();
-            break;
         }
-        case DUP:
+
+        void do_dup(unsigned bcI) {
             opStack_.push(opStack_.top());
-            break;
-        case DUP_X1: {
+        }
+
+        void do_dup_x1(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             opStack_.push(v1);
             opStack_.push(v2);
             opStack_.push(v1);
-            break;
         }
-        case DUP_X2: {
+
+        void do_dup_x2(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             if (isOneSlotValue(v2)) {
@@ -447,9 +272,9 @@ void Compiler::compileMethod(Module& module,
                 opStack_.push(v2);
                 opStack_.push(v1);
             }
-            break;
         }
-        case DUP2: {
+
+        void do_dup2(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             if (isOneSlotValue(v1)) {
                 Value* v2 = opStack_.top(); opStack_.pop();
@@ -462,9 +287,9 @@ void Compiler::compileMethod(Module& module,
                 opStack_.push(v1);
                 opStack_.push(v1);
             }
-            break;
         }
-        case DUP2_X1: {
+
+        void do_dup2_x1(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             if (isOneSlotValue(v1)) {
@@ -480,9 +305,9 @@ void Compiler::compileMethod(Module& module,
                 opStack_.push(v2);
                 opStack_.push(v1);
             }
-            break;
         }
-        case DUP2_X2: {
+
+        void do_dup2_x2(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             if (isOneSlotValue(v1)) {
@@ -518,299 +343,255 @@ void Compiler::compileMethod(Module& module,
                     opStack_.push(v1);
                 }
             }
-            break;
         }
-        case SWAP: {
+
+        void do_swap(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             opStack_.push(v1);
             opStack_.push(v2);
-            break;
         }
-        case IADD:
-        case LADD:
-        case FADD:
-        case DADD: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Add, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_add(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Add);
         }
-        case ISUB:
-        case LSUB:
-        case FSUB:
-        case DSUB: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Sub, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_sub(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Sub);
         }
-        case IMUL:
-        case LMUL:
-        case FMUL:
-        case DMUL: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Mul, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_mul(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Mul);
         }
-        case IDIV:
-        case LDIV:
-        case FDIV:
-        case DDIV: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Div, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_div(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Div);
         }
-        case IREM:
-        case LREM:
-        case FREM:
-        case DREM: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Rem, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+
+        void do_rem(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Rem);
         }
-        case INEG:
-        case LNEG:
-        case FNEG:
-        case DNEG:
-        case ISHL:
-        case LSHL: {
+
+        void do_neg(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_shl(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             Instruction* in = new ShiftInst(Instruction::Shl, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
         }
-        case ISHR:
-        case LSHR: {
+
+        void do_shr(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
             Instruction* in = new ShiftInst(Instruction::Shr, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
         }
-        case IUSHR:
-        case LUSHR: {
+
+        void do_ushr(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in =
                 new CastInst(v1, v1->getType()->getUnsignedVersion());
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
             Value* v2 = opStack_.top(); opStack_.pop();
             in = new ShiftInst(Instruction::Shr, in, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
         }
-        case IAND:
-        case LAND: {
+
+        void do_and(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::And);
+        }
+
+        void do_or(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Or);
+        }
+
+        void do_xor(unsigned bcI) {
+            do_binary_op_common(bcI, Instruction::Xor);
+        }
+
+        void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
             Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::And, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
+            Instruction* in = BinaryOperator::create(op, v1, v2);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
         }
-        case IOR:
-        case LOR: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Or, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case IXOR:
-        case LXOR: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = BinaryOperator::create(Instruction::Xor, v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            break;
-        }
-        case IINC:
-        case I2L:
-        case I2F:
-        case I2D:
-        case L2I:
-        case L2F:
-        case L2D:
-        case F2I:
-        case F2L:
-        case F2D:
-        case D2I:
-        case D2L:
-        case D2F:
-        case I2B:
-        case I2C:
-        case I2S:
-        case LCMP:
-        case FCMPL:
-        case FCMPG:
-        case DCMPL:
-        case DCMPG:
+
+
+        void do_iinc(unsigned bcI, unsigned index, unsigned amount) {
             assert(0 && "not implemented");
-        case IFEQ:
-        case IFNE:
-        case IFLT:
-        case IFGE:
-        case IFGT:
-        case IFLE: {
-            static Instruction::BinaryOps java2llvm[] = {
-                Instruction::SetEQ,
-                Instruction::SetNE,
-                Instruction::SetLT,
-                Instruction::SetGE,
-                Instruction::SetGT,
-                Instruction::SetLE,
-            };
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = ConstantSInt::get(Type::IntTy, 0);
-            Instruction* in = new SetCondInst(java2llvm[i-IFEQ], v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
-                           bc2bbMap_[i + 1],
-                           bc2bbMap_[bcStart]);
-            break;
         }
-        case IF_ICMPEQ:
-        case IF_ICMPNE:
-        case IF_ICMPLT:
-        case IF_ICMPGE:
-        case IF_ICMPGT:
-        case IF_ICMPLE: {
-            static Instruction::BinaryOps java2llvm[] = {
-                Instruction::SetEQ,
-                Instruction::SetNE,
-                Instruction::SetLT,
-                Instruction::SetGE,
-                Instruction::SetGT,
-                Instruction::SetLE,
-            };
+
+        void do_convert(unsigned bcI, JType to) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = new SetCondInst(java2llvm[i-IF_ICMPEQ], v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
-                           bc2bbMap_[i + 1],
-                           bc2bbMap_[bcStart]);
-            break;
+            Instruction* in = new CastInst(v1, getType(to));
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            opStack_.push(in);
         }
-        case IF_IACMPEQ:
-        case IF_IACMPNE: {
-            static Instruction::BinaryOps java2llvm[] = {
-                Instruction::SetEQ,
-                Instruction::SetNE,
-            };
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = opStack_.top(); opStack_.pop();
-            Instruction* in = new SetCondInst(java2llvm[i-IF_IACMPEQ], v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
-                           bc2bbMap_[i + 1],
-                           bc2bbMap_[bcStart]);
-            break;
-        }
-        case GOTO:
-            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)]);
-            break;
-        case JSR:
-        case RET:
+
+        void do_cmp(unsigned bcI) {
             assert(0 && "not implemented");
-        case TABLESWITCH: {
+        }
+
+        void do_cmpl(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_cmpg(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_if(unsigned bcI, JSetCC cc, JType type,
+                   unsigned t, unsigned f) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            skipPadBytes(code, i);
-            int def = readSInt(code, i);
-            int low = readSInt(code, i);
-            int high = readSInt(code, i);
+            Value* v2 = llvm::Constant::getNullValue(getType(type));
+            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[t],
+                           bc2bbMap_[f],
+                           bc2bbMap_[bcI]);
+        }
+
+        void do_ifcmp(unsigned bcI, JSetCC cc,
+                      unsigned t, unsigned f) {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = new SetCondInst(getSetCC(cc), v1, v2);
+            bc2bbMap_[bcI]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[t],
+                           bc2bbMap_[f],
+                           bc2bbMap_[bcI]);
+        }
+
+        void do_goto(unsigned bcI, unsigned target) {
+            new BranchInst(bc2bbMap_[target], bc2bbMap_[bcI]);
+        }
+
+        void do_jsr(unsigned bcI, unsigned target) {
+            assert(0 && "not implemented");
+        }
+
+        void do_ret(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_switch(unsigned bcI,
+                       unsigned defTarget,
+                       const SwitchCases& sw) {
+            Value* v1 = opStack_.top(); opStack_.pop();
             SwitchInst* in =
-                new SwitchInst(v1, bc2bbMap_[bcStart + def],bc2bbMap_[bcStart]);
-            while (low <= high)
-                in->addCase(ConstantSInt::get(Type::IntTy, low++),
-                            bc2bbMap_[bcStart + readSInt(code, i)]);
-            break;
+                new SwitchInst(v1, bc2bbMap_[defTarget], bc2bbMap_[bcI]);
+            for (unsigned i = 0; i < sw.size(); ++i)
+                in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
+                            bc2bbMap_[sw[i].second]);
         }
-        case LOOKUPSWITCH: {
+
+        void do_return(unsigned bcI) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            skipPadBytes(code, i);
-            int def = readSInt(code, i);
-            unsigned pairCount = readUInt(code, i);
-            SwitchInst* in =
-                new SwitchInst(v1, bc2bbMap_[bcStart + def],bc2bbMap_[bcStart]);
-            while (pairCount--)
-                in->addCase(ConstantSInt::get(Type::IntTy, readSInt(code, i)),
-                           bc2bbMap_[bcStart + readSInt(code, i)]);
-            break;
+            new ReturnInst(v1, bc2bbMap_[bcI]);
         }
-        case IRETURN:
-        case LRETURN:
-        case FRETURN:
-        case DRETURN:
-        case ARETURN: {
-            Value* v1 = opStack_.top(); opStack_.pop();
-            new ReturnInst(v1, bc2bbMap_[bcStart]);
-            break;
+
+        void do_return_void(unsigned bcI) {
+            new ReturnInst(NULL, bc2bbMap_[bcI]);
         }
-        case RETURN:
-            new ReturnInst(NULL, bc2bbMap_[bcStart]);
-            break;
-        case GETSTATIC:
-        case PUTSTATIC:
-        case GETFIELD:
-        case PUTFIELD:
-        case INVOKEVIRTUAL:
+
+        void do_getstatic(unsigned bcI, unsigned index) {
             assert(0 && "not implemented");
-        case INVOKESPECIAL: {
-            unsigned index = readUShort(code, i);
+        }
+
+        void do_putstatic(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_getfield(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_putfield(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_invokevirtual(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_invokespecial(unsigned bcI, unsigned index) {
             DEBUG(std::cerr << "ignoring INVOKESPECIAL\n");
-            break;
         }
-        case INVOKESTATIC:
-        case INVOKEINTERFACE:
-        case XXXUNUSEDXXX:
-        case NEW:
-        case NEWARRAY:
-        case ANEWARRAY:
-        case ARRAYLENGTH:
-        case ATHROW:
-        case CHECKCAST:
-        case INSTANCEOF:
-        case MONITORENTER:
-        case MONITOREXIT:
-//      case WIDE:
-        case MULTIANEWARRAY:
+
+        void do_invokestatic(unsigned bcI, unsigned index) {
             assert(0 && "not implemented");
-        case IFNULL:
-        case IFNONNULL: {
-            static Instruction::BinaryOps java2llvm[] = {
-                Instruction::SetEQ,
-                Instruction::SetNE,
-            };
-            Value* v1 = opStack_.top(); opStack_.pop();
-            Value* v2 = llvm::Constant::getNullValue(ObjectRefTy);
-            Instruction* in = new SetCondInst(java2llvm[i-IFNULL], v1, v2);
-            bc2bbMap_[bcStart]->getInstList().push_back(in);
-            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
-                           bc2bbMap_[i + 1],
-                           bc2bbMap_[bcStart]);
-            break;
         }
-        case GOTO_W:
-            new BranchInst(bc2bbMap_[bcStart + readSInt(code, i)]);
-            break;
-        case JSR_W:
+
+        void do_invokeinterface(unsigned bcI, unsigned index) {
             assert(0 && "not implemented");
-        case BREAKPOINT:
-        case IMPDEP1:
-        case IMPDEP2:
-        case NOP:
-            break;
         }
-    }
+
+        void do_new(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_newarray(unsigned bcI, JType type) {
+            assert(0 && "not implemented");
+        }
+
+        void do_anewarray(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_arraylength(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_athrow(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_checkcast(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_instanceof(unsigned bcI, unsigned index) {
+            assert(0 && "not implemented");
+        }
+
+        void do_monitorenter(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_monitorexit(unsigned bcI) {
+            assert(0 && "not implemented");
+        }
+
+        void do_multianewarray(unsigned bcI,
+                               unsigned index,
+                               unsigned dims) {
+            assert(0 && "not implemented");
+        }
+
+    private:
+        OperandStack opStack_;
+        Locals locals_;
+        BC2BBMap bc2bbMap_;
+    };
+
+} } } // namespace llvm::Java::
+
+Compiler::Compiler()
+    : compilerImpl_(new CompilerImpl())
+{
+
+}
+
+Compiler::~Compiler()
+{
+    delete compilerImpl_;
 }
 
 Module* Compiler::compile(const ClassFile& cf)
@@ -823,7 +604,7 @@ Module* Compiler::compile(const ClassFile& cf)
     const Java::Methods& methods = cf.getMethods();
     for (Java::Methods::const_iterator
              i = methods.begin(), e = methods.end(); i != e; ++i)
-        compileMethod(*module, cf, **i);
+        compilerImpl_->compileMethod(*module, cf, **i);
 
     return module;
 }

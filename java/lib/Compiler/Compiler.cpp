@@ -48,8 +48,8 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Type* llvm::Java::java_lang_Object_Type;
-Type* llvm::Java::java_lang_Object_RefType;
+Type* llvm::Java::ObjectBaseTy = OpaqueType::get();
+Type* llvm::Java::ObjectBaseRefTy = PointerType::get(ObjectBaseTy);
 
 namespace llvm { namespace Java { namespace {
 
@@ -101,7 +101,6 @@ namespace llvm { namespace Java { namespace {
       Field2IndexMap f2iMap;
 
       static unsigned InterfaceCount;
-      static Type* ObjectBaseTy;
     };
     typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
@@ -220,25 +219,16 @@ namespace llvm { namespace Java { namespace {
       case 'V': return Type::VoidTy;
       case 'L': {
         unsigned e = descr.find(';', i);
-        std::string className = descr.substr(i, e - i);
         i = e + 1;
-        return PointerType::get(getClassInfo(ClassFile::get(className)).type);
+        return ObjectBaseRefTy;
       }
       case '[':
-        if (descr[i] == '[') {
+        // Skip '['s.
+        if (descr[i] == '[')
           do { ++i; } while (descr[i] == '[');
-          getTypeHelper(descr, i, NULL);
-          return PointerType::get(getObjectArrayInfo().type);
-        }
-        else if (descr[i] == 'L') {
-          getTypeHelper(descr, i, NULL);
-          return PointerType::get(getObjectArrayInfo().type);
-        }
-        else {
-           return PointerType::get(
-             getPrimitiveArrayInfo(getTypeHelper(descr, i, NULL)).type);
-        }
-        break;
+        // Consume the element type
+        getTypeHelper(descr, i, NULL);
+        return ObjectBaseRefTy;
       case '(': {
         std::vector<const Type*> params;
         if (self)
@@ -248,7 +238,7 @@ namespace llvm { namespace Java { namespace {
         return FunctionType::get(getTypeHelper(descr, ++i, NULL),params, false);
       }
         // FIXME: Throw something
-      default:  return NULL;
+      default:  assert(0 && "Cannot parse type descriptor!");
       }
     }
 
@@ -273,26 +263,27 @@ namespace llvm { namespace Java { namespace {
         // Both array and object types are pointers to llvm_object_base
       case 'L': {
         unsigned e = descr.find(';', i);
-        std::string className = descr.substr(i, e - i);
         i = e + 1;
-        return PointerType::get(ClassInfo::ObjectBaseTy);
+        return ObjectBaseRefTy;
       }
       case '[':
+        // Skip '['s.
         if (descr[i] == '[')
           do { ++i; } while (descr[i] == '[');
-        getJNITypeHelper(descr, i);
-        return PointerType::get(ClassInfo::ObjectBaseTy);
+        // Consume the element type
+        getTypeHelper(descr, i, NULL);
+        return ObjectBaseRefTy;
       case '(': {
         std::vector<const Type*> params;
         // JNIEnv*
         params.push_back(JNIEnvPtr_->getType());
-        params.push_back(PointerType::get(ClassInfo::ObjectBaseTy));
+        params.push_back(ObjectBaseRefTy);
         while (descr[i] != ')')
           params.push_back(getJNITypeHelper(descr, i));
         return FunctionType::get(getJNITypeHelper(descr, ++i), params, false);
       }
         // FIXME: Throw something
-      default:  return NULL;
+      default:  assert(0 && "Cannot parse type descriptor!");
       }
     }
 
@@ -303,18 +294,19 @@ namespace llvm { namespace Java { namespace {
       ClassFile* cf = ClassFile::get("java/lang/Object");
       ClassInfo& ci = c2ciMap_[cf];
 
+      module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ObjectBaseTy);
+
       assert(!ci.type && ci.f2iMap.empty() &&
              "java/lang/Object ClassInfo should not be initialized!");
+
       ci.type = OpaqueType::get();
 
       std::vector<const Type*> elements;
 
       // Because this is java/lang/Object, we add the opaque
       // llvm_java_object_base type first.
-      ClassInfo::ObjectBaseTy = OpaqueType::get();
-      module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ClassInfo::ObjectBaseTy);
       ci.f2iMap.insert(std::make_pair(LLVM_JAVA_OBJECT_BASE, elements.size()));
-      elements.push_back(ClassInfo::ObjectBaseTy);
+      elements.push_back(ObjectBaseTy);
 
       const Fields& fields = cf->getFields();
       for (unsigned i = 0, e = fields.size(); i != e; ++i) {
@@ -325,15 +317,15 @@ namespace llvm { namespace Java { namespace {
           elements.push_back(getType(field->getDescriptor()));
         }
       }
+
       PATypeHolder holder = ci.type;
-      cast<OpaqueType>(ci.type)->refineAbstractTypeTo(StructType::get(elements));
+      cast<OpaqueType>(ci.type)->
+          refineAbstractTypeTo(StructType::get(elements));
       ci.type = holder.get();
+
       DEBUG(std::cerr << "Adding java/lang/Object = "
             << *ci.type << " to type map\n");
       module_.addTypeName("java/lang/Object", ci.type);
-
-      java_lang_Object_Type = ci.type;
-      java_lang_Object_RefType = PointerType::get(ci.type);
 
       assert(ci.type && "ClassInfo not initialized properly!");
       emitStaticInitializers(cf);
@@ -405,7 +397,7 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = "java/lang/Object/" + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
+            getType(method->getDescriptor(), ObjectBaseTy));
 
           Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
           scheduleFunction(vfun);
@@ -495,7 +487,7 @@ namespace llvm { namespace Java { namespace {
 
       std::vector<const Type*> elements;
       elements.reserve(3);
-      elements.push_back(getClassInfo(ClassFile::get("java/lang/Object")).type);
+      elements.push_back(ObjectBaseTy);
       elements.push_back(Type::UIntTy);
       arrayInfo.f2iMap.insert(std::make_pair("<length>", elements.size()));
       elements.push_back(ArrayType::get(elementTy, 0));
@@ -564,9 +556,8 @@ namespace llvm { namespace Java { namespace {
     /// Returns the ClassInfo object associated with an array of the
     /// specified element type.
     const ClassInfo& getObjectArrayInfo() {
-      static ClassInfo arrayInfo = buildArrayClassInfo(
-        PointerType::get(
-          getClassInfo(ClassFile::get("java/lang/Object")).type));
+      static ClassInfo arrayInfo =
+        buildArrayClassInfo(ObjectBaseRefTy);
       return arrayInfo;
     }
 
@@ -792,7 +783,7 @@ namespace llvm { namespace Java { namespace {
           std::string funcName = className + '/' + methodDescr;
 
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
+            getType(method->getDescriptor(), ObjectBaseTy));
           llvm::Constant* vfun =
             llvm::Constant::getNullValue(PointerType::get(funcTy));
           if (!cf->isInterface() && !method->isAbstract()) {
@@ -1251,8 +1242,7 @@ namespace llvm { namespace Java { namespace {
         std::vector<Value*> params;
         params.push_back(JNIEnvPtr_);
         if (method->isStatic())
-          params.push_back(llvm::Constant::getNullValue(
-                             PointerType::get(ClassInfo::ObjectBaseTy)));
+          params.push_back(llvm::Constant::getNullValue(ObjectBaseRefTy));
         for (Function::aiterator A = function->abegin(), E = function->aend();
              A != E; ++A) {
           params.push_back(
@@ -1440,7 +1430,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy = cast<FunctionType>(
         getType(method->getDescriptor(),
-                method->isStatic() ? NULL : ClassInfo::ObjectBaseTy));
+                method->isStatic() ? NULL : ObjectBaseTy));
       std::string funcName =
         clazz->getThisClass()->getName()->str() + '/' +
         method->getName()->str() + method->getDescriptor()->str();
@@ -1509,9 +1499,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_aconst_null() {
-      ClassFile* root = ClassFile::get("java/lang/Object");
-      push(llvm::Constant::getNullValue(
-               PointerType::get(getClassInfo(root).type)));
+      push(llvm::Constant::getNullValue(ObjectBaseRefTy));
     }
 
     void do_iconst(int value) {
@@ -2123,7 +2111,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   ClassInfo::ObjectBaseTy));
+                                   ObjectBaseTy));
 
       std::vector<Value*> params(getParams(funTy));
 
@@ -2131,8 +2119,7 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci->type),
                             "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                     TMP, currentBB_);
+        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableBaseTy),
         objBase->getType(), NULL);
@@ -2165,7 +2152,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funcTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   ClassInfo::ObjectBaseTy));
+                                   ObjectBaseTy));
       Function* function = module_.getOrInsertFunction(funcName, funcTy);
       scheduleFunction(function);
       makeCall(function, getParams(funcTy));
@@ -2207,7 +2194,7 @@ namespace llvm { namespace Java { namespace {
 
       FunctionType* funTy =
         cast<FunctionType>(getType(nameAndType->getDescriptor(),
-                                   ClassInfo::ObjectBaseTy));
+                                   ObjectBaseTy));
 
       std::vector<Value*> params(getParams(funTy));
 
@@ -2215,8 +2202,7 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci->type),
                             "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                     TMP, currentBB_);
+        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableBaseTy),
         objBase->getType(), NULL);
@@ -2260,15 +2246,13 @@ namespace llvm { namespace Java { namespace {
       const VTableInfo& vi = getVTableInfo(cf);
 
       Value* objRef = new MallocInst(ci.type, NULL, TMP, currentBB_);
-      Value* objBase = new CastInst(objRef,
-                                    PointerType::get(ClassInfo::ObjectBaseTy),
-                                    TMP, currentBB_);
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
                                    PointerType::get(VTableInfo::VTableBaseTy),
                                    TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
-        PointerType::get(ClassInfo::ObjectBaseTy),
+        ObjectBaseRefTy,
         PointerType::get(VTableInfo::VTableBaseTy), NULL);
       new CallInst(f, objBase, vtable, "", currentBB_);
       push(objRef);
@@ -2341,15 +2325,14 @@ namespace llvm { namespace Java { namespace {
       Value* lengthPtr = getArrayLengthPtr(objRef);
       new StoreInst(count, lengthPtr, currentBB_);
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef,
-                                    PointerType::get(ClassInfo::ObjectBaseTy),
+      Value* objBase = new CastInst(objRef, ObjectBaseRefTy,
                                     TMP, currentBB_);
       Value* vtable = new CastInst(vi.vtable,
                                    PointerType::get(VTableInfo::VTableBaseTy),
                                    TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_SETOBJECTCLASS, Type::VoidTy,
-        PointerType::get(ClassInfo::ObjectBaseTy),
+        ObjectBaseRefTy,
         PointerType::get(VTableInfo::VTableBaseTy), NULL);
       new CallInst(f, objBase, vtable, "", currentBB_);
       push(objRef);
@@ -2368,11 +2351,10 @@ namespace llvm { namespace Java { namespace {
 
     void do_athrow() {
       Value* objRef = pop();
-      objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                            TMP, currentBB_);
+      objRef = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_THROW, Type::IntTy,
-        PointerType::get(ClassInfo::ObjectBaseTy), NULL);
+        ObjectBaseRefTy, NULL);
       new CallInst(f, objRef, TMP, currentBB_);
       new UnreachableInst(currentBB_);
     }
@@ -2386,8 +2368,7 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = pop();
       Value* objBase =
-        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                     TMP, currentBB_);
+        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableBaseTy), NULL);
@@ -2414,8 +2395,7 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = pop();
       Value* objBase =
-        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
-                     TMP, currentBB_);
+        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableBaseTy), NULL);
@@ -2440,7 +2420,6 @@ namespace llvm { namespace Java { namespace {
   };
 
   unsigned Compiler::ClassInfo::InterfaceCount = 0;
-  Type* Compiler::ClassInfo::ObjectBaseTy;
   Type* Compiler::VTableInfo::VTableBaseTy;
   StructType* Compiler::VTableInfo::VTableTy;
   StructType* Compiler::VTableInfo::TypeInfoTy;

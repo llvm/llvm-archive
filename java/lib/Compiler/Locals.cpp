@@ -34,7 +34,7 @@ void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
   // All pointer types are cast to a pointer to
   // llvm_java_lang_object_base.
   if (isa<PointerType>(valueTy))
-    value = new CastInst(value, java_lang_Object_RefType,
+    value = new CastInst(value, ObjectBaseRefTy,
                          "to-object-base", insertAtEnd);
 
   if (!TheLocals[i] ||

@@ -21,8 +21,8 @@ namespace llvm { namespace Java {
 
   std::auto_ptr<Module> compile(const std::string& className);
 
-  extern Type* java_lang_Object_Type;
-  extern Type* java_lang_Object_RefType;
+  extern Type* ObjectBaseTy;
+  extern Type* ObjectBaseRefTy;
 
 } } // namespace llvm::Java
 

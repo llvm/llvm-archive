@@ -1,5 +1,6 @@
 #include "CodeViewer.h"
 #include "TVApplication.h"
+#include "TVTreeItem.h"
 #include "TVFrame.h"
 #include "llvm/Function.h"
 #include "llvm/Instruction.h"
@@ -87,6 +88,11 @@ TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent, llvm::Function *F)
   SetFunction (F);
 }
 
+TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent)
+  : wxListCtrl(_parent, LLVM_TV_CODEVIEW_LIST, wxDefaultPosition, wxDefaultSize,
+               wxLC_LIST) {
+}
+
 void TVCodeListCtrl::changeItemTextAttrs (TVCodeItem *item, wxColour *newColor, 
                                           int newFontWeight) {
   item->m_itemId = ItemToIndex[item];
@@ -121,6 +127,19 @@ BEGIN_EVENT_TABLE (TVCodeListCtrl, wxListCtrl)
   EVT_LIST_ITEM_DESELECTED(LLVM_TV_CODEVIEW_LIST,
                            TVCodeListCtrl::OnItemDeselected)
 END_EVENT_TABLE ()
+
+//===----------------------------------------------------------------------===//
+
+void TVCodeViewer::displayItem (TVTreeItemData *item) {
+  item->viewCodeOn (this);
+}
+
+void TVCodeViewer::viewFunctionCode (Function *F) {
+  myListCtrl->SetFunction (F);
+}
+
+void TVCodeViewer::viewModuleCode (Module *F) {
+}
 
 //===----------------------------------------------------------------------===//
 

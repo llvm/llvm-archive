@@ -2279,7 +2279,8 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = currentOpStack_->pop(currentBB_);
       Value* objBase =
-        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
+        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                     TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
@@ -2306,7 +2307,8 @@ namespace llvm { namespace Java { namespace {
 
       Value* objRef = currentOpStack_->pop(currentBB_);
       Value* objBase =
-        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
+        new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                     TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
         objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);

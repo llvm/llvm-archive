@@ -45,6 +45,7 @@ static void setUpMenus (wxFrame *frame) {
   wxMenuBar *menuBar = new wxMenuBar ();
 
   wxMenu *fileMenu = new wxMenu ("", 0);
+  fileMenu->Append (wxID_OPEN, "Add module...");
   fileMenu->Append (LLVM_TV_REFRESH, "Refresh list");
   fileMenu->Append (wxID_EXIT, "Quit");
   menuBar->Append (fileMenu, "File");

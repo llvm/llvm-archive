@@ -1,4 +1,4 @@
-##===- tests/Makefile --------------------------------------*- Makefile -*-===##
+##===- test/Makefile ---------------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

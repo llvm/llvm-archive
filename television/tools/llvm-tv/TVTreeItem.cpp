@@ -192,9 +192,9 @@ void TVTreeItemData::printGlobal(GlobalValue *GV, std::ostream &os) {
 void TVTreeItemData::printModule(Module *M, std::ostream &os) {
   // Display target size (bits), endianness types
   std::ostringstream oss;
-  oss << "target = "
-      << (M->getEndianness() ? "little" : "big") << " endian <br>\n ";
-  oss << "pointersize = "
+  oss << "target endian = "
+      << (M->getEndianness() ? "little" : "big") << " <br>\n ";
+  oss << "target pointersize = "
       << (M->getPointerSize() ? "32" : "64") << "\n<br><br>";
 
   // Display globals

@@ -83,6 +83,7 @@ namespace llvm { namespace Java {
     uint16_t getMinorVersion() const { return minorV_; }
     uint16_t getMajorVersion() const { return majorV_; }
 
+    unsigned getNumConstants() const { return cPool_.size(); }
     Constant* getConstant(unsigned index) const { return cPool_[index]; }
     ConstantClass* getConstantClass(unsigned index) const;
     ConstantMemberRef* getConstantMemberRef(unsigned index) const;
@@ -187,9 +188,9 @@ namespace llvm { namespace Java {
   };
 
   class ConstantMemberRef : public Constant {
+  protected:
     uint16_t classIdx_;
     uint16_t nameAndTypeIdx_;
-  protected:
     ConstantMemberRef(const ClassFile* cf, std::istream& is);
 
   public:
@@ -199,25 +200,27 @@ namespace llvm { namespace Java {
     ConstantNameAndType* getNameAndType() const {
       return parent_->getConstantNameAndType(nameAndTypeIdx_);
     }
-    std::ostream& dump(std::ostream& os) const;
   };
 
   class ConstantFieldRef : public ConstantMemberRef {
   public:
     ConstantFieldRef(const ClassFile* cf, std::istream& is)
       : ConstantMemberRef(cf, is) { }
+    std::ostream& dump(std::ostream& os) const;
   };
 
   class ConstantMethodRef : public ConstantMemberRef {
   public:
     ConstantMethodRef(const ClassFile* cf, std::istream& is)
       : ConstantMemberRef(cf, is) { }
+    std::ostream& dump(std::ostream& os) const;
   };
 
   class ConstantInterfaceMethodRef : public ConstantMemberRef {
   public:
     ConstantInterfaceMethodRef(const ClassFile* cf, std::istream& is)
       : ConstantMemberRef(cf, is) { }
+    std::ostream& dump(std::ostream& os) const;
   };
 
   class ConstantString : public Constant {

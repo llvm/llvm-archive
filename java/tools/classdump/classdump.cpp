@@ -22,10 +22,23 @@
 
 using namespace llvm;
 
-static cl::opt<std::string>
-InputClass(cl::Positional, cl::desc("<input class>"));
-
 namespace {
+
+  enum DumpType { code, constantPool };
+
+  cl::opt<std::string>
+  InputClass(cl::Positional, cl::desc("<input class>"));
+
+  cl::opt<DumpType>
+  DumpMode(
+    "dumptype",
+    cl::desc("Dump type: (default = code)"),
+    cl::Prefix,
+    cl::values(
+      clEnumVal(code,         "code"),
+      clEnumVal(constantPool, "constant pool"),
+      clEnumValEnd),
+    cl::init(code));
 
   using namespace llvm::Java;
 
@@ -638,7 +651,29 @@ int main(int argc, char* argv[])
   try {
     const Java::ClassFile* cf(Java::ClassFile::get(InputClass));
 
-    ClassDump(cf, std::cout);
+    switch (DumpMode) {
+    default:
+      std::cerr << "no dump type selected";
+      abort();
+    case code: {
+      ClassDump(cf, std::cout);
+      break;
+    }
+    case constantPool: {
+      for (unsigned i = 0, e = cf->getNumConstants(); i != e; ++i) {
+        Constant* c = cf->getConstant(i);
+        std::cout.width(6);
+        std::cout << i << ": ";
+        std::cout.width(0);
+        if (c)
+          std::cout << *cf->getConstant(i);
+        else
+          std::cout << "empty";
+        std::cout << '\n';
+      }
+      break;
+    }
+    }
   }
   catch (std::exception& e) {
     std::cerr << e.what() << '\n';

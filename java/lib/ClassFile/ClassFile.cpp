@@ -426,7 +426,7 @@ ConstantClass::ConstantClass(const ClassFile* cf, std::istream& is)
 
 std::ostream& ConstantClass::dump(std::ostream& os) const
 {
-  return os << *getName();
+  return os << "class (Name=" << nameIdx_ << ')';
 }
 
 ConstantMemberRef::ConstantMemberRef(const ClassFile* cf, std::istream& is)
@@ -437,9 +437,22 @@ ConstantMemberRef::ConstantMemberRef(const ClassFile* cf, std::istream& is)
 
 }
 
-std::ostream& ConstantMemberRef::dump(std::ostream& os) const
+std::ostream& ConstantFieldRef::dump(std::ostream& os) const
 {
-  return os << *getNameAndType() << '(' << *getClass() << ')';
+  return os << "fieldRef (class=" << classIdx_
+            << ", nameAndType=" << nameAndTypeIdx_ << ')';
+}
+
+std::ostream& ConstantMethodRef::dump(std::ostream& os) const
+{
+  return os << "methodRef (class=" << classIdx_
+            << ", nameAndType=" << nameAndTypeIdx_ << ')';
+}
+
+std::ostream& ConstantInterfaceMethodRef::dump(std::ostream& os) const
+{
+  return os << "interfaceMethodRef (class=" << classIdx_
+            << ", nameAndType=" << nameAndTypeIdx_ << ')';
 }
 
 ConstantString::ConstantString(const ClassFile* cf, std::istream& is)
@@ -451,7 +464,7 @@ ConstantString::ConstantString(const ClassFile* cf, std::istream& is)
 
 std::ostream& ConstantString::dump(std::ostream& os) const
 {
-  return os << "String " << *getValue();
+  return os << "string (utf8=" << stringIdx_ << ')';
 }
 
 ConstantInteger::ConstantInteger(const ClassFile* cf, std::istream& is)
@@ -512,12 +525,8 @@ ConstantNameAndType::ConstantNameAndType(const ClassFile* cf, std::istream& is)
 
 std::ostream& ConstantNameAndType::dump(std::ostream& os) const
 {
-  if (getName()->str() == "<init>")
-    os << "\"<init>\"";
-  else
-    os << *getName();
-
-  return os << ':' << *getDescriptor();
+  return os << "nameAndType (name=" << nameIdx_
+            << ", descriptor=" << descriptorIdx_ << ')';
 }
 
 ConstantUtf8::ConstantUtf8(const ClassFile* cf, std::istream& is)

@@ -1,109 +1,117 @@
-LLVM Visualization Tool User Guide
+<h2>LLVM Visualization Tool User Guide</h2>
 
 
-Required Software
-------------------
- In order to compile and run the LLVM Visualization Tool the following software must be installed:
+<h3><u>Required Software:</u></h3>
+In order to compile and run the LLVM Visualization Tool, the following software must be installed:
   <ul>
-  <li>The Low Level Virtual Machine (LLVM) compiler infrastructure. You must
-  checkout the latest version from cvs. Visit the <a href="http://llvm.cs.uiuc.edu/docs/GettingStarted.html">LLVM Getting Started Guide</a> for details.
-  <li>Dot, which is part of <a href="http://www.research.att.com/sw/tools/graphviz/">Graphviz package for graph drawing.
+  <li><b>The Low Level Virtual Machine (LLVM) Compiler Infrastructure:</b> You must
+  checkout the latest version from cvs. See the <a href="http://llvm.cs.uiuc.edu/docs/GettingStarted.html">LLVM Getting Started Guide</a> for details.
+  <li><b>Dot</b>: A part of <a href="http://www.research.att.com/sw/tools/graphviz/">Graphviz</a> package for graph drawing.
   </ul>
-Download
----------
-Begin by downloading the LLVM Visualization tool. Then do the following:
-  <ul>
-  <li> cd <to your llvm directory>
-  <li> cd projects
-  <li> tar -xzvf llvm-tv.tgz
-  <li> cd llvm-tv
-  </ul>
+<p>
 
-Compiling
------------
+<h3><u>Download:</u></h3>
+Begin by downloading the LLVM Visualization tool. Then untar/unzip the file in the appropriate directory.<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;% cd <to your llvm directory><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;% cd projects<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;% tar -xzvf llvm-tv.tgz<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;% cd llvm-tv<br>
+
+<p>
+
+<h3><u>Compiling:</u></h3>
 You must then compile the LLVM Visualization tool.
-<ul>
-<li>./configure --with-llvmsrc=[path] --with-llvmobj=[path]
-   If you're building in llvm/projects/llvm-tv, then you don't need
-   to specify these --with options.
-<li>cd lib/wxwindows
-<li>./configure --enable-debug --prefix=`pwd`
-   Make absolutely sure that wxwindows's configure picks up the same
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;% ./configure --with-llvmsrc=[path] --with-llvmobj=[path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>If you're building in llvm/projects/llvm-tv, then you don't need
+   to specify these --with options.</i><br>
+&nbsp;&nbsp;&nbsp;&nbsp;% cd lib/wxwindows<br>
+&nbsp;&nbsp;&nbsp;&nbsp;% ./configure --enable-debug --prefix=`pwd`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Make absolutely sure that wxwindows's configure picks up the same
    C++ compiler that you're using for llvm. Otherwise, you may get
-   weird link errors when trying to link the llvm-tv tool.
-<li>cd ../../
-<li>gmake
-</ul>
+   weird link errors when trying to link the llvm-tv tool.</i><br>
+&nbsp;&nbsp;&nbsp;&nbsp;% cd ../../<br>
+&nbsp;&nbsp;&nbsp;&nbsp;% gmake<br>
 
-Using the LLVM Visualization tool
----------------------------------
-The main purpose of the LLVM Visualization tool is to view the effects of transformations written in the LLVM framework. We call the points in time after a transformation has been run "snapshots."
+<p>
+
+<h3><u>Using the LLVM Visualization Tool:</u></h3>
+
+The main purpose of the LLVM Visualization tool is to view the effects of transformations written in the LLVM framework. We call the points in time after a transformation has been run "snapshots." <p>
 
 Note: opt-snap and llvm-tv.exe may be found in the tools/Debug directory.
+<p>
 
-Acquiring a Snapshot:
+<h4>Acquiring a Snapshot:</h4>
 
-	  Using the LLVM tool 'opt', one runs transformations on an LLVM Bytecode file. Please see the <a href="http://llvm.cs.uiuc.edu/docs/CommandGuide/opt.html">man page</a> on opt for details on what transformations are available. 
+	  Using the LLVM tool 'opt', one runs transformations on an LLVM Bytecode file. Please see the <a href="http://llvm.cs.uiuc.edu/docs/CommandGuide/opt.html">man page</a> on opt for details on what transformations are available. <p>
 
 In order to aquire snapshots after a transformation or a series of
-transformations have been applied, you use the 'opt-snap' tool. You simply place the option '-snapshot' after specifying your transformation options. You may ask for a snapshot any number of times.
+transformations have been applied, you use the 'opt-snap' tool. You simply place the option '-snapshot' after specifying your transformation options. You may ask for a snapshot any number of times.<p>
 
-Here is an example of using opt to acquire snapshots:
-<li>opt-snap -debug -licm -snapshot -gcse -snapshot < bytecode-file.bc > /dev/null
+Here is an example of using opt to acquire snapshots:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;% opt-snap -debug -licm -snapshot -gcse -snapshot < bytecode-file.bc > /dev/null <p>
 
-All snapshots are placed in the directory /tmp/llvm-tv-username/snapshots, where username is your login name.
+All snapshots are placed in the directory /tmp/llvm-tv-username/snapshots, where username is your login name.<p>
 
-Viewing a Snapshot:
- Begin by starting up the LLVM Visualization tool GUI.
-<li>./llvm-tv.exe
+<h4>Viewing a Snapshot:</h4>
+ Begin by starting up the LLVM Visualization tool GUI.<br>
 
-This should pop up a window such as the following:
+&nbsp;&nbsp;&nbsp;&nbsp;% ./llvm-tv.exe <p>
 
-<insert screenshot here>
+This should pop up a window such as the following:<br>
+<img src=images/llvmtv-firstopen.jpg><p>
 
 Notice that all the snapshots are listed in the tree view structure on the left side of the frame. Compilation units in LLVM have a simple, hierarchical structure:
 a Module contains Functions, which contain BasicBlocks, which contain
-Instructions. The tree view will show you functions within the snapshot you are viewing.
+Instructions. The tree view will show you functions within the snapshot you are viewing. <p>
 
-From this screen shot you can see we have expanded the ...
-<insert screen shot here>
+From this screen shot you can see we have expanded the ...<br>
+<img src=images/llvmtv-expandmodule.jpg><p>
    
 
-To the right of the tree view is a tabbed pane that allows you to easily browse different views of the snapshot.
+To the right of the tree view is a tabbed pane that allows you to easily browse different views of the snapshot.<p>
 
-TextView:
-Explain, insert screen shot
+<b>TextView:</b><br>
+Explain, insert screen shot<br>
+<img src=images/llvmtv-TextView.jpg><p>
 
-HTMLView:
-Explain, insert screen shot
-
-DSGraph Views:
-Explain, insert screen shot
-
-CodeView:
-Explain, insert screen shot
+<b>HTMLView:</b><br>
+Explain, insert screen shot<br>
+<img src=images/llvmtv-HTMLView.jpg><p>
 
 
-There are also more views under the View menu. Select one of these views will open up a new frame with that view in it. There are two new views that we have not seen before: Call Graph view and Control Flow Graph view.
+<b>DSGraph Views:</b><br>
+Explain, insert screen shot<br>
+<img src=images/llvmtv-LocalDSGraph.jpg><p>
 
-<show screen shot>
+<b>CodeView:</b><br>
+Explain, insert screen shot<br>
+<img src=images/llvmtv-CodeView.jpg><p>
 
-Call Graph:
-explain.
-
-Control Flow Graph:
-explain and screen shot
-
-Additionally you can use the File menu to add more snapshots to the visualizer.
-
-Add Module:
-Explain
-
-Refresh:
-Explain
+There are also more views under the View menu. Select one of these views will open up a new frame with that view in it. There are two new views that we have not seen before: Call Graph view and Control Flow Graph view. <br>
 
 
-Snapshots and Signaling
+<img src=images/llvmtv-ViewMenu.jpg><p>
+
+<b>Call Graph:</b><br>
+explain.<br>
+
+<b>Control Flow Graph:</b><br>
+explain and screen shot<br>
+<img src=images/llvmtv-ControlFlow.jpg><p>
+
+Additionally you can use the File menu to add more snapshots to the visualizer. <br>
+<img src=images/llvmtv-FileView.jpg><p>
+
+<b>Add Module:</b><br>
+Explain<br>
+
+<b>Refresh:</b><br>
+Explain<br>
+
+
+<h4>Snapshots and Signaling:</h4>
 A neat feature of the LLVM Visualization tool is that the GUI will automatically refresh the snapshot listing when opt-snap signals that a new snapshot has been generated.
 
 

@@ -34,6 +34,22 @@ namespace {
         return !isTwoSlotValue(v);
     }
 
+    inline int readByteImmediate(const uint8_t* code, unsigned& i) {
+        return code[++i];
+    }
+
+    inline int readShortImmediate(const uint8_t* code, unsigned& i) {
+        return (code[++i] << 8) | code[++i];
+    }
+
+    inline unsigned readByteIndex(const uint8_t* code, unsigned& i) {
+        return code[++i];
+    }
+
+    inline unsigned readShortIndex(const uint8_t* code, unsigned& i) {
+        return (code[++i] << 8) | code[++i];
+    }
+
     void compileMethod(Module& module, const Java::Method& method) {
         using namespace llvm::Java::Opcode;
 
@@ -43,11 +59,14 @@ namespace {
         const Java::CodeAttribute* codeAttr =
             Java::getCodeAttribute(method.getAttributes());
 
-        std::stack<Value*> opStack;
-        std::vector<Value*> locals(codeAttr->getMaxLocals(), 0);
+        typedef std::stack<Value*> OperandStack;
+        OperandStack opStack;
+        typedef std::vector<Value*> Locals;
+        Locals locals(codeAttr->getMaxLocals(), 0);
 
         const uint8_t* code = codeAttr->getCode();
         for (unsigned i = 0; i < codeAttr->getCodeSize(); ++i) {
+            unsigned bcStart = i;
             bool wide = code[i] == WIDE;
             i += wide;
             switch (code[i]) {
@@ -79,25 +98,25 @@ namespace {
                 opStack.push(ConstantFP::get(Type::DoubleTy, code[i]-DCONST_0));
                 break;
             case BIPUSH: {
-                int imm = code[++i];
+                int imm = readByteImmediate(code, i);
                 opStack.push(ConstantInt::get(Type::IntTy, imm));
                 break;
             }
             case SIPUSH: {
-                int imm = (code[++i] << 8) | code[++i];
+                int imm = readShortImmediate(code, i);
                 opStack.push(ConstantInt::get(Type::IntTy, imm));
                 break;
             }
             case LDC: {
-                unsigned index = code[++i];
+                unsigned index = readByteIndex(code, i);
                 // FIXME: load constant from constant pool
             }
             case LDC_W: {
-                unsigned index = (code[++i] << 8) | code[++i];
+                unsigned index = readShortIndex(code, i);
                 // FIXME: load constant from constant pool
             }
             case LDC2_W: {
-                unsigned index = (code[++i] << 8) | code[++i];
+                unsigned index = readShortIndex(code, i);
                 // FIXME: load constant from constant pool
             }
             case ILOAD:
@@ -106,7 +125,7 @@ namespace {
             case DLOAD:
             case ALOAD: {
                 // FIXME: use opcodes to perform type checking
-                unsigned index = code[++i];
+                unsigned index = readByteIndex(code, i);
                 opStack.push(locals[index]);
                 break;
             }

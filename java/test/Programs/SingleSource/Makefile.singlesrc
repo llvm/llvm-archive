@@ -13,7 +13,7 @@
 	$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
 
 OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
-              -ipconstprop -deadargelim -instcombine -simplifycfg \
+              -ipsccp -simplifycfg -deadargelim -instcombine -simplifycfg \
               -inline -argpromotion -raise -tailduplicate -simplifycfg \
               -scalarrepl -instcombine -tailcallelim -simplifycfg \
               -licm -instcombine -indvars -loop-unroll -instcombine \

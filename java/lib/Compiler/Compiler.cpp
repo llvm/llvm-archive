@@ -481,20 +481,18 @@ namespace llvm { namespace Java { namespace {
 
             do_shift_common(bcI, Instruction::Shr);
 
-            // cast shifted value back to its original signed version
             value = opStack_.top(); opStack_.pop();
-            value = new CastInst(value,
-                                 value->getType()->getSignedVersion(),
-                                 TMP, getBBAt(bcI));
-            opStack_.push(value);
+            // cast shifted value back to its original signed version
+            opStack_.push(new CastInst(value,
+                                       value->getType()->getSignedVersion(),
+                                       TMP, getBBAt(bcI)));
         }
 
         void do_shift_common(unsigned bcI, Instruction::OtherOps op) {
             Value* amount = opStack_.top(); opStack_.pop();
             Value* value = opStack_.top(); opStack_.pop();
             amount = new CastInst(amount, Type::UByteTy, TMP, getBBAt(bcI));
-            Value* result = new ShiftInst(op, value, amount, TMP, getBBAt(bcI));
-            opStack_.push(result);
+            opStack_.push(new ShiftInst(op, value, amount, TMP, getBBAt(bcI)));
         }
 
         void do_and(unsigned bcI) {
@@ -512,8 +510,7 @@ namespace llvm { namespace Java { namespace {
         void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
             Value* v2 = opStack_.top(); opStack_.pop();
             Value* v1 = opStack_.top(); opStack_.pop();
-            Value* r = BinaryOperator::create(op, v1, v2, TMP, getBBAt(bcI));
-            opStack_.push(r);
+            opStack_.push(BinaryOperator::create(op, v1, v2, TMP,getBBAt(bcI)));
         }
 
 
@@ -529,8 +526,7 @@ namespace llvm { namespace Java { namespace {
 
         void do_convert(unsigned bcI, JType to) {
             Value* v1 = opStack_.top(); opStack_.pop();
-            Value* r = new CastInst(v1, getType(to), TMP, getBBAt(bcI));
-            opStack_.push(r);
+            opStack_.push(new CastInst(v1, getType(to), TMP, getBBAt(bcI)));
         }
 
         void do_lcmp(unsigned bcI) {

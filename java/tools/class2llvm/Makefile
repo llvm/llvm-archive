@@ -1,4 +1,4 @@
-##===- tools/Makefile --------------------------------------*- Makefile -*-===##
+#===- tools/class2llvm/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,11 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL := ..
+LEVEL := ../..
 
-PARALLEL_DIRS := classdump class2llvm
+TOOLNAME := class2llvm
+
+USEDLIBS := classfile compiler
+LLVMLIBS := support vmcore
 
 include $(LEVEL)/Makefile.common

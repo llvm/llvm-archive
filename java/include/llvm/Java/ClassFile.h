@@ -99,9 +99,11 @@ namespace llvm { namespace Java {
     bool isInterface() const { return accessFlags_ & ACC_INTERFACE; }
     bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
 
+    unsigned getThisClassIndex() const { return thisClassIdx_; }
     ConstantClass* getThisClass() const {
       return getConstantClass(thisClassIdx_);
     }
+    unsigned getSuperClassIndex() const { return superClassIdx_; }
     ConstantClass* getSuperClass() const {
       return superClassIdx_ ? getConstantClass(superClassIdx_) : NULL;
     }

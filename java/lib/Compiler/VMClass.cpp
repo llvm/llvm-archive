@@ -114,7 +114,7 @@ void VMClass::link()
     else {
       // Our direct super class.
       const VMClass* superClass =
-        resolver_->getClass(classFile_->getSuperClass()->getName()->str());
+        getClassForClass(classFile_->getSuperClassIndex());
 
       // Add the interfaces of our direct superclass.
       for (unsigned i = 0, e = superClass->getNumInterfaces(); i != e; ++i)

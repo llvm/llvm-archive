@@ -24,7 +24,7 @@ dnl **************************************************************************
 dnl **************************************************************************
 dnl * Check for programs.
 dnl **************************************************************************
-AC_CHECK_PROG(JIKES, jikes)
+AC_CHECK_PROG(JIKES, jikes, jikes)
 
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(Makefile.common.in)

@@ -37,7 +37,7 @@ namespace {
   ClassPath("cp",
             cl::desc("A : separated list of directories"),
             cl::value_desc("class search path"),
-            cl::init(getenv("CLASSPATH")));
+            cl::init(getenv("CLASSPATH") ? getenv("CLASSPATH") : ""));
   static cl::alias
   ClassPathA("classpath",
              cl::desc("Alias for -cp"),

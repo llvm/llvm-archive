@@ -36,20 +36,10 @@ void TVApplication::ReceivedSignal () {
   myFrame->refreshSnapshotList();
 }
 
-/// FatalErrorBox - pop up an error message (given in printf () form) and quit.
+/// FatalErrorBox - pop up an error message and quit.
 ///
-static void FatalErrorBox (const char *errfmt, ...) {
-  // Just write it to stderr for now; we can make a nice dialog box later.
-  va_list ap;
-  va_start (ap, errfmt);
-  fprintf (stderr,
-  "------------------------------------------------------------------------\n");
-  fprintf (stderr, "FATAL ERROR: ");
-  vfprintf (stderr, errfmt, ap);
-  fprintf (stderr, "\n");
-  fprintf (stderr,
-  "------------------------------------------------------------------------\n");
-  va_end (ap);
+void FatalErrorBox (const std::string msg) {
+  wxMessageBox(msg.c_str (), "Fatal Error", wxOK | wxICON_ERROR);
   exit (1);
 }
 
@@ -59,8 +49,8 @@ void TVFrame::refreshSnapshotList () {
   mySnapshotList.clear ();
   DIR *d = opendir (directoryName);
   if (!d)
-    FatalErrorBox ("trying to open directory %s: %s", directoryName,
-                   strerror (errno)); 
+    FatalErrorBox ("trying to open directory " + mySnapshotDirName + ": "
+                   + strerror(errno));
   while (struct dirent *de = readdir (d))
     if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
       mySnapshotList.push_back (mySnapshotDirName + "/" + de->d_name);

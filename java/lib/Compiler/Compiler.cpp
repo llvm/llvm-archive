@@ -249,7 +249,7 @@ namespace llvm { namespace Java { namespace {
 
     void initializeClassInfoMap() {
       DEBUG(std::cerr << "Building ClassInfo for: java/lang/Object\n");
-      ClassFile* cf = ClassFile::getClassFile("java/lang/Object");
+      ClassFile* cf = ClassFile::get("java/lang/Object");
       ClassInfo& ci = c2ciMap_["java/lang/Object"];
       assert(!ci.type && ci.f2iMap.empty() &&
              "java/lang/Object ClassInfo should not be initialized!");
@@ -286,7 +286,7 @@ namespace llvm { namespace Java { namespace {
 
     void initializeVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
-      ClassFile* cf = ClassFile::getClassFile("java/lang/Object");
+      ClassFile* cf = ClassFile::get("java/lang/Object");
       VTableInfo& vi = c2viMap_["java/lang/Object"];
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "java/lang/Object VTableInfo should not be initialized!");
@@ -382,7 +382,7 @@ namespace llvm { namespace Java { namespace {
         return it->second;
 
       DEBUG(std::cerr << "Building ClassInfo for: " << className << '\n');
-      ClassFile* cf = ClassFile::getClassFile(className);
+      ClassFile* cf = ClassFile::get(className);
       ClassInfo& ci = c2ciMap_[className];
       assert(!ci.type && ci.f2iMap.empty() &&
              "got already initialized ClassInfo!");
@@ -458,7 +458,7 @@ namespace llvm { namespace Java { namespace {
         return it->second;
 
       DEBUG(std::cerr << "Building VTableInfo for: " << className << '\n');
-      ClassFile* cf = ClassFile::getClassFile(className);
+      ClassFile* cf = ClassFile::get(className);
       VTableInfo& vi = c2viMap_[className];
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "got already initialized VTableInfo!");
@@ -574,7 +574,7 @@ namespace llvm { namespace Java { namespace {
       // Cast ptr to correct type
       ptr = new CastInst(ptr, PointerType::get(getClassInfo(className).type),
                          TMP, getBBAt(bcI));
-      ClassFile* classfile = ClassFile::getClassFile(className);
+      ClassFile* classfile = ClassFile::get(className);
 
       // deref pointer
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
@@ -584,7 +584,7 @@ namespace llvm { namespace Java { namespace {
           info.f2iMap.find(fieldName);
         if (it == info.f2iMap.end()) {
           className = classfile->getSuperClass()->getName()->str();
-          classfile = ClassFile::getClassFile(className);
+          classfile = ClassFile::get(className);
           indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
         }
         else {
@@ -700,7 +700,7 @@ namespace llvm { namespace Java { namespace {
       std::string className = classMethodDesc.substr(0, slash);
       std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 
-      ClassFile* classfile = ClassFile::getClassFile(className);
+      ClassFile* classfile = ClassFile::get(className);
       emitStaticInitializers(classfile);
       Method* method = classfile->getMethod(methodNameAndDescr);
 
@@ -1201,7 +1201,7 @@ namespace llvm { namespace Java { namespace {
     void do_new(unsigned bcI, unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
       const std::string& className = classRef->getName()->str();
-      ClassFile* cf = ClassFile::getClassFile(className);
+      ClassFile* cf = ClassFile::get(className);
       const ClassInfo& ci = getClassInfo(className);
       const VTableInfo& vi = getVTableInfo(className);
 

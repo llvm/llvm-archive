@@ -72,7 +72,7 @@ namespace llvm { namespace Java {
     typedef std::map<std::string, Method*> Name2MethodMap;
 
   public:
-    static ClassFile* getClassFile(const std::string& classname);
+    static ClassFile* get(const std::string& classname);
 
     ~ClassFile();
 

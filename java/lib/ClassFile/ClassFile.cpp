@@ -211,7 +211,7 @@ std::string ClassFile::getFileForClass(const std::string& classname)
   throw ClassNotFoundException("Class " + classname + " not found");
 }
 
-ClassFile* ClassFile::getClassFile(const std::string& classname)
+ClassFile* ClassFile::get(const std::string& classname)
 {
   typedef std::map<std::string, ClassFile*> Name2ClassMap;
   static Name2ClassMap n2cMap_;

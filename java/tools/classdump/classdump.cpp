@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
                               "class dump utility");
 
   try {
-    const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
+    const Java::ClassFile* cf(Java::ClassFile::get(InputClass));
 
     cf->dump(std::cout);
   }

@@ -26,10 +26,10 @@ class GraphDrawer : public ItemDisplayer {
 
 protected:
   static wxImage *buildwxImageFromDotFile (const std::string filename);
-
-public:
   GraphDrawer (wxWindow *parent)
     : myPictureCanvas (new PictureCanvas (parent)) { }
+
+public:
   virtual ~GraphDrawer () { delete myPictureCanvas; }
   wxWindow *getWindow () { return myPictureCanvas; }
   void displayItem (TVTreeItemData *item);

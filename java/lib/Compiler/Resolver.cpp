@@ -66,7 +66,8 @@ Resolver::Resolver(Module* module)
     StructType::get(std::vector<const Type*>(1, getTypeInfoType())));
   classRecordType_ = holder.get();
 
-  module_->addTypeName("struct.llvm_java_object_vtable", getClassRecordType());
+  module_->addTypeName("struct.llvm_java_object_class_record",
+                       getClassRecordType());
 
   classRecordPtrType_ = PointerType::get(classRecordType_);
 }
@@ -169,8 +170,9 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
     }
     it->second.link();
     if (!it->second.isPrimitive() && !it->second.isInterface())
-      module_->addTypeName(descriptor, it->second.getLayoutType());
-    DEBUG(std::cerr << "Loaded class: " << descriptor << '\n');
+      module_->addTypeName("struct." + descriptor, it->second.getLayoutType());
+    DEBUG(std::cerr << "Loaded class: " << descriptor);
+    DEBUG(std::cerr << " (" << it->second.getInterfaceIndex() << ")\n");
   }
 
   return &it->second;

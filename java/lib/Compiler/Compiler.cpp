@@ -61,27 +61,11 @@ namespace llvm { namespace Java { namespace {
     BasicBlock* currentBB_;
     Locals locals_;
     OperandStack opStack_;
-    Function *getVtable_, *setVtable_, *throw_, *isInstanceOf_,
+    Function *getClassRecord_, *setClassRecord_, *throw_, *isInstanceOf_,
       *memcpy_, *memset_;
     std::vector<llvm::Constant*> classInitializers_;
 
     SetVector<const VMMethod*> toCompileMethods_;
-
-    /// This class contains the vtable of a class, a vector with the
-    /// vtables of its super classes (with the class higher in the
-    /// hierarchy first). It also contains a map from methods to
-    /// struct indices for this class (used to index into the vtable).
-    struct VTableInfo {
-      VTableInfo() : vtable(NULL) { }
-      GlobalVariable* vtable;
-      std::vector<llvm::Constant*> superVtables;
-      typedef std::map<std::string, unsigned> Method2IndexMap;
-      typedef Method2IndexMap::iterator iterator;
-      typedef Method2IndexMap::const_iterator const_iterator;
-      Method2IndexMap m2iMap;
-    };
-    typedef std::map<const VMClass*, VTableInfo> Class2VTableInfoMap;
-    Class2VTableInfoMap c2viMap_;
 
   public:
     Compiler(Module* m)
@@ -97,19 +81,19 @@ namespace llvm { namespace Java { namespace {
                                       NULL,
                                       "llvm_java_JNIEnv",
                                       module_);
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      getVtable_ = module_->getOrInsertFunction(
-        "llvm_java_get_vtable", vtablePtrType,
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      getClassRecord_ = module_->getOrInsertFunction(
+        "llvm_java_get_class_record", classRecordPtrType,
         resolver_->getObjectBaseType(), NULL);
-      setVtable_ = module_->getOrInsertFunction(
-        "llvm_java_set_vtable", Type::VoidTy,
-        resolver_->getObjectBaseType(), vtablePtrType, NULL);
+      setClassRecord_ = module_->getOrInsertFunction(
+        "llvm_java_set_class_record", Type::VoidTy,
+        resolver_->getObjectBaseType(), classRecordPtrType, NULL);
       throw_ = module_->getOrInsertFunction(
         "llvm_java_throw", Type::IntTy,
         resolver_->getObjectBaseType(), NULL);
       isInstanceOf_ = module_->getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
-        resolver_->getObjectBaseType(), vtablePtrType, NULL);
+        resolver_->getObjectBaseType(), classRecordPtrType, NULL);
       memcpy_ = module_->getOrInsertFunction(
         "llvm.memcpy", Type::VoidTy,
         PointerType::get(Type::SByteTy),
@@ -148,10 +132,7 @@ namespace llvm { namespace Java { namespace {
       // Create a new byte[] object and initialize it with the
       // contents of this string constant.
       Value* count = ConstantUInt::get(Type::UIntTy, str.size());
-      Value* arrayRef = allocateArray(resolver_->getClass("[B"),
-                                      &getPrimitiveArrayVTableInfo(BYTE),
-                                      count,
-                                      ip);
+      Value* arrayRef = allocateArray(resolver_->getClass("[B"), count, ip);
       // Copy string data.
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -181,14 +162,13 @@ namespace llvm { namespace Java { namespace {
       const VMClass* clazz = resolver_->getClass("java/lang/String");
       emitClassInitializers(clazz);
 
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
-
-      // Install the vtable pointer.
+      // Install the class record.
       Value* objBase =
         new CastInst(globalString, resolver_->getObjectBaseType(), TMP, ip);
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, ip);
-      new CallInst(setVtable_, objBase, vtable, "", ip);
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      Value* classRecord =
+        new CastInst(clazz->getClassRecord(), classRecordPtrType, TMP, ip);
+      new CallInst(setClassRecord_, objBase, classRecord, "", ip);
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
       const VMMethod* method = clazz->getMethod("<init>([BI)V");
@@ -197,7 +177,8 @@ namespace llvm { namespace Java { namespace {
       params.reserve(3);
       params.clear();
       params.push_back(objBase);
-      params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseType(), TMP, ip));
+      params.push_back(
+        new CastInst(arrayRef, resolver_->getObjectBaseType(), TMP, ip));
       params.push_back(ConstantSInt::get(Type::IntTy, 0));
       new CallInst(method->getFunction(), params, "", ip);
     }
@@ -246,517 +227,6 @@ namespace llvm { namespace Java { namespace {
       default:  assert(0 && "Cannot parse type descriptor!");
       }
       return 0; // not reached
-    }
-
-    /// Initializes the VTableInfo map; in other words it adds the
-    /// VTableInfo for java.lang.Object.
-    bool initializeVTableInfoMap() {
-      DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
-      const VMClass* clazz = resolver_->getClass("java/lang/Object");
-      VTableInfo& vi = c2viMap_[clazz];
-
-      assert(!vi.vtable && vi.m2iMap.empty() &&
-             "java/lang/Object VTableInfo should not be initialized!");
-
-      Type* VTtype = OpaqueType::get();
-
-      std::vector<llvm::Constant*> init;
-
-      // This is java/lang/Object so we must add a typeinfo struct
-      // first.
-
-      const Type* vtablePtrPtrType =
-        PointerType::get(resolver_->getClassRecordPtrType());
-      // depth
-      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
-      // superclasses vtable pointers
-      init.push_back(llvm::Constant::getNullValue(vtablePtrPtrType));
-      // last interface index
-      init.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
-      // interfaces vtable pointers
-      init.push_back(llvm::Constant::getNullValue(vtablePtrPtrType));
-      // the element size (0 for classes)
-      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
-
-      llvm::Constant* typeInfoInit = ConstantStruct::get(init);
-      assert(typeInfoInit->getType() == resolver_->getTypeInfoType() &&
-             "TypeInfo types mismatch!");
-
-      // Now that we have both the type and initializer for the
-      // typeinfo struct we can start adding the function pointers.
-      std::vector<const Type*> elements;
-      init.clear();
-
-      /// First add the typeinfo struct itself.
-      elements.push_back(typeInfoInit->getType());
-      // Add the typeinfo block for this class.
-      init.push_back(typeInfoInit);
-
-      const Methods& methods = clazz->getClassFile()->getMethods();
-
-      // Add member functions to the vtable.
-      for (unsigned i = 0, e = methods.size(); i != e; ++i) {
-        Method* method = methods[i];
-        // Static methods, private instance methods and the contructor
-        // are statically bound so we don't add them to the vtable.
-        if (!method->isStatic() &&
-            !method->isPrivate() &&
-            method->getName()->str()[0] != '<') {
-          const std::string& methodDescr =
-            method->getName()->str() + method->getDescriptor()->str();
-
-          const VMMethod* method = clazz->getMethod(methodDescr);
-          scheduleMethod(method);
-
-          unsigned& index = vi.m2iMap[methodDescr];
-          if (!index) {
-            index = elements.size();
-            elements.resize(index + 1, NULL);
-            init.resize(index + 1, NULL);
-          }
-          elements[index] = method->getFunction()->getType();
-          init[index] = method->getFunction();
-        }
-      }
-
-      PATypeHolder holder = VTtype;
-      cast<OpaqueType>(VTtype)->refineAbstractTypeTo(StructType::get(elements));
-
-      VTtype = holder.get();
-      module_->addTypeName("java/lang/Object<vtable>", VTtype);
-
-      vi.vtable = new GlobalVariable(VTtype,
-                                     true, GlobalVariable::ExternalLinkage,
-                                     ConstantStruct::get(init),
-                                     "java/lang/Object<vtable>",
-                                     module_);
-      DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object\n");
-      return true;
-    }
-
-    /// Builds the super classes' vtable array for this classfile and
-    /// its corresponding VTable. The direct superclass goes first in
-    /// the array.
-    llvm::Constant*
-    buildSuperClassesVTables(const VMClass* clazz, const VTableInfo& vi) const {
-      std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
-      for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
-        superVtables[i] = ConstantExpr::getCast(
-          vi.superVtables[i], resolver_->getClassRecordPtrType());
-
-      llvm::Constant* init = ConstantArray::get(
-        ArrayType::get(resolver_->getClassRecordPtrType(), superVtables.size()),
-        superVtables);
-
-      GlobalVariable* vtablesArray = new GlobalVariable(
-        init->getType(),
-        true,
-        GlobalVariable::ExternalLinkage,
-        init,
-        clazz->getClassFile()->getThisClass()->getName()->str() +
-        "<superclassesvtables>",
-        module_);
-
-      return ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray);
-    }
-
-    /// Builds an interface VTable for the specified <class,interface>
-    /// pair.
-    llvm::Constant* buildInterfaceVTable(const VMClass* clazz,
-                                         const VMClass* interface) {
-      DEBUG(std::cerr << "Building interface vtable: "
-            << interface->getName() << " for: " << clazz->getName() << '\n');
-
-      const VTableInfo& classVI = getVTableInfo(clazz);
-      const VTableInfo& interfaceVI = getVTableInfo(interface);
-      const Methods& methods = interface->getClassFile()->getMethods();
-
-      // The size of the initializer will be 1 greater than the number
-      // of methods for this interface (the first slot is the typeinfo
-      // struct.
-      std::vector<llvm::Constant*> init(interfaceVI.m2iMap.size()+1, NULL);
-      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
-
-      // For each method in this interface find the implementing
-      // method in the class' VTable and add it to the appropriate
-      // slot.
-      for (VTableInfo::Method2IndexMap::const_iterator
-             i = interfaceVI.m2iMap.begin(), e = interfaceVI.m2iMap.end();
-           i != e; ++i) {
-        if (!clazz->getClassFile()->isAbstract()) {
-          assert(classVI.m2iMap.find(i->first) != classVI.m2iMap.end() &&
-                 "Interface method not found in class definition!");
-          unsigned classMethodIdx = classVI.m2iMap.find(i->first)->second;
-          init[i->second] = cast<ConstantStruct>(
-            classVI.vtable->getInitializer())->getOperand(classMethodIdx);
-        }
-        else
-          init[i->second] =
-            llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
-      }
-
-      llvm::Constant* vtable = ConstantStruct::get(init);
-      const std::string& globalName =
-        clazz->getName() + '+' + interface->getName() + "<vtable>";
-      module_->addTypeName(globalName, vtable->getType());
-
-      GlobalVariable* gv = new GlobalVariable(
-        vtable->getType(),
-        true,
-        GlobalVariable::ExternalLinkage,
-        vtable,
-        globalName,
-        module_);
-
-      return ConstantExpr::getCast(gv, resolver_->getClassRecordPtrType());
-    }
-
-    void insertVtablesForInterface(std::vector<llvm::Constant*>& vtables,
-                                   const VMClass* clazz,
-                                   const VMClass* interface) {
-      static llvm::Constant* nullVTable =
-        llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
-
-      assert(interface->isInterface() && "Classfile must be an interface!");
-      unsigned index = interface->getInterfaceIndex();
-      if (index >= vtables.size())
-        vtables.resize(index+1, nullVTable);
-      assert(vtables[index] == nullVTable && "Interface vtable already added!");
-      vtables[index] = buildInterfaceVTable(clazz, interface);
-    }
-
-    /// Builds the interfaces vtable array for this classfile and its
-    /// corresponding VTableInfo. If this classfile is an interface we
-    /// return a pointer to 0xFFFFFFFF.
-    std::pair<int, llvm::Constant*>
-    buildInterfacesVTables(const VMClass* clazz, const VTableInfo& vi) {
-      // If this is an interface then we are not implementing any
-      // interfaces so the lastInterface field is our index and the
-      // pointer to the array of interface vtables is an all-ones
-      // value.
-      if (clazz->isInterface())
-        return std::make_pair(
-          clazz->getInterfaceIndex(),
-          ConstantExpr::getCast(
-            ConstantIntegral::getAllOnesValue(Type::LongTy),
-            PointerType::get(resolver_->getClassRecordPtrType())));
-
-      // Otherwise we must fill in the interfaces vtables array. For
-      // each implemented interface we insert a pointer to the
-      // <class,interface> vtable for this class. Note that we only
-      // fill in up to the highest index of the implemented
-      // interfaces.
-      std::vector<llvm::Constant*> vtables;
-      llvm::Constant* nullVTable =
-        llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
-
-      for (unsigned i = 0, e = clazz->getNumInterfaces(); i != e; ++i)
-        insertVtablesForInterface(vtables, clazz, clazz->getInterface(i));
-
-      const std::string& globalName = clazz->getName() + "<interfacesvtables>";
-
-      llvm::Constant* init = ConstantArray::get(
-        ArrayType::get(resolver_->getClassRecordPtrType(), vtables.size()),
-        vtables);
-      module_->addTypeName(globalName, init->getType());
-
-      GlobalVariable* interfacesArray = new GlobalVariable(
-        init->getType(),
-        true,
-        GlobalVariable::ExternalLinkage,
-        init,
-        globalName,
-        module_);
-
-      return std::make_pair(
-        int(vtables.size())-1,
-        ConstantExpr::getPtrPtrFromArrayPtr(interfacesArray));
-    }
-
-    /// Given the classfile and its corresponding VTableInfo,
-    /// construct the typeinfo constant for it.
-    llvm::Constant* buildClassTypeInfo(const VMClass* clazz,
-                                       const VTableInfo& vi) {
-      std::vector<llvm::Constant*> typeInfoInit;
-
-      llvm::Constant* superClassesVTables = buildSuperClassesVTables(clazz, vi);
-
-      // The depth (java/lang/Object has depth 0).
-      typeInfoInit.push_back(
-        ConstantSInt::get(Type::IntTy, clazz->getNumSuperClasses()));
-      // The super classes' vtables.
-      typeInfoInit.push_back(superClassesVTables);
-
-      int lastInterface;
-      llvm::Constant* interfacesVTables;
-      tie(lastInterface, interfacesVTables) = buildInterfacesVTables(clazz, vi);
-
-      // The last interface index or the interface index if this is an
-      // interface.
-      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, lastInterface));
-      // The interfaces' vtables.
-      typeInfoInit.push_back(interfacesVTables);
-      // the element size (0 for classes)
-      typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, 0));
-
-      return ConstantStruct::get(typeInfoInit);
-    }
-
-    /// Returns the VTableInfo associated with this classfile.
-    const VTableInfo& getVTableInfo(const VMClass* clazz) {
-      static bool initialized = initializeVTableInfoMap();
-
-      Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(clazz);
-      if (it != c2viMap_.end() && it->first == clazz)
-        return it->second;
-
-      const std::string& className =
-        clazz->getClassFile()->getThisClass()->getName()->str();
-      DEBUG(std::cerr << "Building VTableInfo for: " << className << '\n');
-      VTableInfo& vi = c2viMap_[clazz];
-
-      assert(!vi.vtable && vi.m2iMap.empty() &&
-             "got already initialized VTableInfo!");
-
-      std::vector<llvm::Constant*> init(1);
-      // Use a null typeinfo struct for now.
-      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
-
-      // If this is an interface, add all methods from each interface
-      // this inherits from.
-      if (clazz->isInterface()) {
-        for (unsigned i = 0, e = clazz->getNumInterfaces(); i != e; ++i) {
-          const VMClass* interface = clazz->getInterface(i);
-          const VTableInfo& ifaceVI = getVTableInfo(interface);
-          const ClassFile* ifaceCF = interface->getClassFile();
-          ConstantStruct* ifaceInit =
-            cast<ConstantStruct>(ifaceVI.vtable->getInitializer());
-          for (VTableInfo::const_iterator MI = ifaceVI.m2iMap.begin(),
-                 ME = ifaceVI.m2iMap.end(); MI != ME; ++MI) {
-            const std::string& methodDescr = MI->first;
-            unsigned slot = MI->second;
-
-            unsigned& index = vi.m2iMap[methodDescr];
-            if (!index) {
-              index = init.size();
-              init.resize(index + 1);
-            }
-            init[index] = ifaceInit->getOperand(slot);
-          }
-        }
-      }
-      // Otherwise this is a class, so add all methods from its super
-      // class.
-      else {
-        const VMClass* superClass = clazz->getSuperClass();
-        assert(superClass && "Class does not have superclass!");
-        const VTableInfo& superVI = getVTableInfo(superClass);
-
-        // Copy the super vtables array.
-        vi.superVtables.reserve(superVI.superVtables.size() + 1);
-        vi.superVtables.push_back(superVI.vtable);
-        std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
-                  std::back_inserter(vi.superVtables));
-
-        assert(superVI.vtable && "No vtable found for super class!");
-        ConstantStruct* superInit =
-          cast<ConstantStruct>(superVI.vtable->getInitializer());
-        // Fill in the function pointers as they are in the super
-        // class. Overriden methods will be replaced later.
-        init.resize(superInit->getNumOperands());
-        for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
-          init[i] = superInit->getOperand(i);
-        vi.m2iMap = superVI.m2iMap;
-      }
-
-      // Add member functions to the vtable.
-      const Methods& methods = clazz->getClassFile()->getMethods();
-
-      for (unsigned i = 0, e = methods.size(); i != e; ++i) {
-        Method* method = methods[i];
-        // Static methods, private instance methods and the contructor
-        // are statically bound so we don't add them to the vtable.
-        if (!method->isStatic() &&
-            !method->isPrivate() &&
-            method->getName()->str()[0] != '<') {
-          const std::string& methodDescr =
-            method->getName()->str() + method->getDescriptor()->str();
-
-          const VMMethod* method = clazz->getMethod(methodDescr);
-          llvm::Constant* vf = method->getFunction();
-          if (clazz->isInterface() || method->isAbstract())
-            vf = llvm::Constant::getNullValue(method->getFunction()->getType());
-          else
-            scheduleMethod(method);
-
-          unsigned& index = vi.m2iMap[methodDescr];
-          if (!index) {
-            index = init.size();
-            init.resize(index + 1);
-          }
-          init[index] = vf;
-        }
-      }
-
-#ifndef NDEBUG
-      for (unsigned i = 0, e = init.size(); i != e; ++i)
-        assert(init[i] && "No elements in the initializer should be NULL!");
-#endif
-
-      const std::string& globalName = className + "<vtable>";
-
-      llvm::Constant* vtable = ConstantStruct::get(init);
-      module_->addTypeName(globalName, vtable->getType());
-      vi.vtable = new GlobalVariable(vtable->getType(),
-                                     true,
-                                     GlobalVariable::ExternalLinkage,
-                                     vtable,
-                                     globalName,
-                                     module_);
-
-      // Now the vtable is complete, install the new typeinfo block
-      // for this class: we install it last because we need the vtable
-      // to exist in order to build it.
-      init[0] = buildClassTypeInfo(clazz, vi);
-      vi.vtable->setInitializer(ConstantStruct::get(init));
-
-      DEBUG(std::cerr << "Built VTableInfo for: " << className << '\n');
-      return vi;
-    }
-
-    VTableInfo buildArrayVTableInfo(const Type* elementTy) {
-      VTableInfo vi;
-      const VTableInfo& superVI =
-        getVTableInfo(resolver_->getClass("java/lang/Object"));
-
-      // Add java/lang/Object as its superclass.
-      vi.superVtables.reserve(1);
-      vi.superVtables.push_back(
-        ConstantExpr::getCast(
-          superVI.vtable, resolver_->getClassRecordPtrType()));
-
-      // Copy the constants from java/lang/Object vtable.
-      ConstantStruct* superInit =
-        cast<ConstantStruct>(superVI.vtable->getInitializer());
-      std::vector<llvm::Constant*> init(superInit->getNumOperands());
-      // Use a null typeinfo struct for now.
-      init[0] = llvm::Constant::getNullValue(resolver_->getTypeInfoType());
-
-      // Fill in the function pointers as they are in
-      // java/lang/Object. There are no overriden methods.
-      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
-        init[i] = superInit->getOperand(i);
-      vi.m2iMap = superVI.m2iMap;
-
-#ifndef NDEBUG
-      for (unsigned i = 0, e = init.size(); i != e; ++i)
-        assert(init[i] && "No elements in the initializer should be NULL!");
-#endif
-
-      const std::string& globalName =
-        elementTy->getDescription() + "[]<vtable>";
-
-      llvm::Constant* vtable = ConstantStruct::get(init);
-      module_->addTypeName(globalName, vtable->getType());
-      vi.vtable = new GlobalVariable(vtable->getType(),
-                                     true,
-                                     GlobalVariable::ExternalLinkage,
-                                     vtable,
-                                     globalName,
-                                     module_);
-
-      // Construct the typeinfo now.
-      std::vector<llvm::Constant*> typeInfoInit;
-      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 1));
-      // Build the super classes' vtable array.
-      ArrayType* vtablesArrayTy =
-        ArrayType::get(resolver_->getClassRecordPtrType(),
-                       vi.superVtables.size());
-
-      GlobalVariable* vtablesArray = new GlobalVariable(
-        vtablesArrayTy,
-        true,
-        GlobalVariable::ExternalLinkage,
-        ConstantArray::get(vtablesArrayTy, vi.superVtables),
-        elementTy->getDescription() + "[]<superclassesvtables>",
-        module_);
-
-      typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
-      typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 0));
-      typeInfoInit.push_back(
-        llvm::Constant::getNullValue(
-          PointerType::get(resolver_->getClassRecordPtrType())));
-      // the element size
-      typeInfoInit.push_back(
-        ConstantExpr::getCast(
-          ConstantExpr::getSizeOf(elementTy), Type::IntTy));
-
-      init[0] = ConstantStruct::get(typeInfoInit);
-      vi.vtable->setInitializer(ConstantStruct::get(init));
-
-      return vi;
-    }
-
-    const VTableInfo& getPrimitiveArrayVTableInfo(const Type* type) {
-      if (Type::BoolTy == type) return getPrimitiveArrayVTableInfo(BOOLEAN);
-      else if (Type::UShortTy == type) return getPrimitiveArrayVTableInfo(CHAR);
-      else if (Type::FloatTy == type) return getPrimitiveArrayVTableInfo(FLOAT);
-      else if (Type::DoubleTy == type) return getPrimitiveArrayVTableInfo(DOUBLE);
-      else if (Type::SByteTy == type) return getPrimitiveArrayVTableInfo(BYTE);
-      else if (Type::ShortTy == type) return getPrimitiveArrayVTableInfo(SHORT);
-      else if (Type::IntTy == type) return getPrimitiveArrayVTableInfo(INT);
-      else if (Type::LongTy == type) return getPrimitiveArrayVTableInfo(LONG);
-      else abort();
-    }
-
-    // Returns the VTableInfo object for an array of the specified
-    // element type.
-    const VTableInfo& getPrimitiveArrayVTableInfo(JType type) {
-      switch (type) {
-      case BOOLEAN: {
-        // Because baload/bastore is used to load/store to both byte
-        // arrays and boolean arrays we use sbyte for java boolean
-        // arrays as well.
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::SByteTy);
-        return arrayInfo;
-      }
-      case CHAR: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::UShortTy);
-        return arrayInfo;
-      }
-      case FLOAT: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::FloatTy);
-        return arrayInfo;
-      }
-      case DOUBLE: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::DoubleTy);
-        return arrayInfo;
-      }
-      case BYTE: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::SByteTy);
-        return arrayInfo;
-      }
-      case SHORT: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::ShortTy);
-        return arrayInfo;
-      }
-      case INT: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::IntTy);
-        return arrayInfo;
-      }
-      case LONG: {
-        static VTableInfo arrayInfo = buildArrayVTableInfo(Type::LongTy);
-        return arrayInfo;
-      }
-      }
-      abort();
-    }
-
-    const VTableInfo& getObjectArrayVTableInfo() {
-      static VTableInfo arrayInfo =
-        buildArrayVTableInfo(resolver_->getObjectBaseType());
-
-      return arrayInfo;
     }
 
     std::string getMangledString(const std::string& str) {
@@ -970,6 +440,15 @@ namespace llvm { namespace Java { namespace {
         // If this class has a super class, initialize that first.
         if (const VMClass* superClass = clazz->getSuperClass())
           emitClassInitializers(superClass);
+
+        // Schedule all its dynamically bound non abstract methods for
+        // compilation.
+        for (unsigned i = 0, e = clazz->getNumDynamicallyBoundMethods();
+             i != e; ++i) {
+          const VMMethod* method = clazz->getDynamicallyBoundMethod(i);
+          if (!method->isAbstract())
+            scheduleMethod(method);
+        }
 
         // Create constant strings for this class.
         Function* stringConstructors = module_->getOrInsertFunction(
@@ -1481,24 +960,9 @@ namespace llvm { namespace Java { namespace {
       return params;
     }
 
-    const VTableInfo* getVTableInfoGeneric(const VMClass* clazz) {
-      assert(!clazz->isPrimitive() &&
-             "Cannot get VTableInfo for primitive class!");
-      if (clazz->isArray()) {
-        const VMClass* componentClass = clazz->getComponentClass();
-        if (componentClass->isPrimitive())
-          return &getPrimitiveArrayVTableInfo(componentClass->getType());
-        else
-          return &getObjectArrayVTableInfo();
-      }
-      else
-        return &getVTableInfo(clazz);
-    }
-
     void do_invokevirtual(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
       const VMClass* clazz = method->getParent();
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Function* function = method->getFunction();
       std::vector<Value*> params(getParams(function->getFunctionType()));
@@ -1507,19 +971,21 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
-      Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
-      vtable = new CastInst(vtable, vi->vtable->getType(),
-                            clazz->getName() + ".vtable", currentBB_);
+      Value* classRecord =
+        new CallInst(getClassRecord_, objBase, TMP, currentBB_);
+      classRecord = new CastInst(classRecord,
+                                 clazz->getClassRecord()->getType(),
+                                 clazz->getName() + ".classRecord", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
-      assert(vi->m2iMap.find(method->getNameAndDescriptor()) != vi->m2iMap.end() &&
-             "could not find slot for virtual function!");
-      unsigned vSlot = vi->m2iMap.find(method->getNameAndDescriptor())->second;
-      indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
-      Value* vfunPtr =
-        new GetElementPtrInst(vtable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, function->getName(), currentBB_);
+      assert(method->getMethodIndex() != -1 &&
+             "Method index not found for dynamically bound method!");
+      indices.push_back(
+        ConstantUInt::get(Type::UIntTy, method->getMethodIndex()+1));
+      Value* funPtr =
+        new GetElementPtrInst(classRecord, indices, TMP, currentBB_);
+      Value* fun = new LoadInst(funPtr, function->getName(), currentBB_);
 
-      makeCall(vfun, params);
+      makeCall(fun, params);
     }
 
     void do_invokespecial(unsigned index) {
@@ -1552,7 +1018,7 @@ namespace llvm { namespace Java { namespace {
     void do_invokeinterface(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
       const VMClass* clazz = method->getParent();
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
+      assert(clazz->isInterface() && "Class must be an interface!");
 
       Function* function = method->getFunction();
       std::vector<Value*> params(getParams(function->getFunctionType()));
@@ -1561,43 +1027,45 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
-      Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
-      vtable = new CastInst(vtable, resolver_->getClassRecordPtrType(),
-                            TMP, currentBB_);
-      // get the interfaces array of vtables
+      Value* classRecord =
+        new CallInst(getClassRecord_, objBase, TMP, currentBB_);
+      classRecord = new CastInst(classRecord,
+                                 resolver_->getClassRecordPtrType(),
+                                 TMP, currentBB_);
+      // get the interfaces array of class records
       std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 3));
-      Value* interfaceVTables =
-        new GetElementPtrInst(vtable, indices, TMP, currentBB_);
-      interfaceVTables = new LoadInst(interfaceVTables, TMP, currentBB_);
-      // Get the actual interface vtable.
+      Value* interfaceClassRecords =
+        new GetElementPtrInst(classRecord, indices, TMP, currentBB_);
+      interfaceClassRecords =
+        new LoadInst(interfaceClassRecords, TMP, currentBB_);
+      // Get the actual interface class record.
       indices.clear();
-      indices.push_back(ConstantUInt::get(Type::UIntTy,
-                                          clazz->getInterfaceIndex()));
-      Value* interfaceVTable =
-        new GetElementPtrInst(interfaceVTables, indices, TMP, currentBB_);
-      interfaceVTable =
-        new LoadInst(interfaceVTable, clazz->getName() + ".vtable", currentBB_);
-      interfaceVTable =
-        new CastInst(interfaceVTable, vi->vtable->getType(), TMP, currentBB_);
+      indices.push_back(
+        ConstantUInt::get(Type::UIntTy, clazz->getInterfaceIndex()));
+      Value* interfaceClassRecord =
+        new GetElementPtrInst(interfaceClassRecords, indices, TMP, currentBB_);
+      interfaceClassRecord =
+        new LoadInst(interfaceClassRecord,
+                     clazz->getName() + ".classRecord", currentBB_);
+      interfaceClassRecord =
+        new CastInst(interfaceClassRecord,
+                     clazz->getClassRecord()->getType(), TMP, currentBB_);
       // Get the function pointer.
-      assert(vi->m2iMap.find(method->getNameAndDescriptor()) != vi->m2iMap.end() &&
-             "could not find slot for virtual function!");
-      unsigned vSlot = vi->m2iMap.find(method->getNameAndDescriptor())->second;
+      assert(method->getMethodIndex() != -1 &&
+             "Method index not found for dynamically bound method!");
       indices.resize(2);
       indices[0] = ConstantUInt::get(Type::UIntTy, 0);
-      indices[1] = ConstantUInt::get(Type::UIntTy, vSlot);
-      Value* vfunPtr =
-        new GetElementPtrInst(interfaceVTable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, function->getName(), currentBB_);
+      indices[1] = ConstantUInt::get(Type::UIntTy, method->getMethodIndex()+1);
+      Value* funPtr =
+        new GetElementPtrInst(interfaceClassRecord, indices, TMP, currentBB_);
+      Value* fun = new LoadInst(funPtr, function->getName(), currentBB_);
 
-      makeCall(vfun, params);
+      makeCall(fun, params);
     }
 
     template<typename InsertionPointTy>
-    Value* allocateObject(const VMClass& clazz,
-                          const VTableInfo& vi,
-                          InsertionPointTy* ip) {
+    Value* allocateObject(const VMClass& clazz, InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
 
       Value* objRef = new MallocInst(clazz.getLayoutType(), NULL, TMP, ip);
@@ -1608,11 +1076,13 @@ namespace llvm { namespace Java { namespace {
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
       new CallInst(memset_, params, "", ip);
 
-      // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      Value* vtable = new CastInst(vi.vtable, vtablePtrType, TMP, ip);
-      new CallInst(setVtable_, objBase, vtable, "", ip);
+      // Install the class record.
+      Value* objBase =
+        new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      Value* classRecord =
+        new CastInst(clazz.getClassRecord(), classRecordPtrType, TMP, ip);
+      new CallInst(setClassRecord_, objBase, classRecord, "", ip);
 
       return objRef;
     }
@@ -1620,9 +1090,7 @@ namespace llvm { namespace Java { namespace {
     void do_new(unsigned index) {
       const VMClass* clazz = class_->getClass(index);
       emitClassInitializers(clazz);
-      const VTableInfo& vi = getVTableInfo(clazz);
-
-      push(allocateObject(*clazz, vi, currentBB_));
+      push(allocateObject(*clazz, currentBB_));
     }
 
     template <typename InsertionPointTy>
@@ -1647,7 +1115,6 @@ namespace llvm { namespace Java { namespace {
 
     template<typename InsertionPointTy>
     Value* allocateArray(const VMClass* clazz,
-                         const VTableInfo* vi,
                          Value* count,
                          InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
@@ -1686,11 +1153,12 @@ namespace llvm { namespace Java { namespace {
       Value* lengthPtr = getArrayLengthPtr(objRef, ip);
       new StoreInst(count, lengthPtr, ip);
 
-      // Install the vtable pointer.
+      // Install the class record.
       Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, ip);
-      new CallInst(setVtable_, objBase, vtable, "", ip);
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      Value* classRecord =
+        new CastInst(clazz->getClassRecord(), classRecordPtrType, TMP, ip);
+      new CallInst(setClassRecord_, objBase, classRecord, "", ip);
 
       return objRef;
     }
@@ -1700,9 +1168,8 @@ namespace llvm { namespace Java { namespace {
 
       const VMClass* clazz = resolver_->getClass(type);
       const VMClass* arrayClass = resolver_->getArrayClass(clazz);
-      const VTableInfo* vi = getVTableInfoGeneric(arrayClass);
 
-      push(allocateArray(arrayClass, vi, count, currentBB_));
+      push(allocateArray(arrayClass, count, currentBB_));
     }
 
     void do_anewarray(unsigned index) {
@@ -1710,9 +1177,8 @@ namespace llvm { namespace Java { namespace {
 
       const VMClass* clazz = class_->getClass(index);
       const VMClass* arrayClass = resolver_->getArrayClass(clazz);
-      const VTableInfo* vi = getVTableInfoGeneric(arrayClass);
 
-      push(allocateArray(arrayClass, vi, count, currentBB_));
+      push(allocateArray(arrayClass, count, currentBB_));
     }
 
     void do_arraylength() {
@@ -1731,12 +1197,13 @@ namespace llvm { namespace Java { namespace {
 
     void do_checkcast(unsigned index) {
       const VMClass* clazz = class_->getClass(index);
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseType());
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, currentBB_);
-      Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      Value* classRecord = new CastInst(clazz->getClassRecord(),
+                                        classRecordPtrType, TMP, currentBB_);
+      Value* r =
+        new CallInst(isInstanceOf_, objRef, classRecord, TMP, currentBB_);
 
       Value* b = new SetCondInst(Instruction::SetEQ,
                                  r, ConstantSInt::get(Type::IntTy, 1),
@@ -1747,12 +1214,13 @@ namespace llvm { namespace Java { namespace {
 
     void do_instanceof(unsigned index) {
       const VMClass* clazz = class_->getClass(index);
-      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseType());
-      const Type* vtablePtrType = resolver_->getClassRecordPtrType();
-      Value* vtable = new CastInst(vi->vtable, vtablePtrType, TMP, currentBB_);
-      Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
+      const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      Value* classRecord = new CastInst(clazz->getClassRecord(),
+                                        classRecordPtrType, TMP, currentBB_);
+      Value* r =
+        new CallInst(isInstanceOf_, objRef, classRecord, TMP, currentBB_);
       push(r);
     }
 

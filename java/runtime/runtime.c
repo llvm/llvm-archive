@@ -14,57 +14,79 @@ struct llvm_java_object_header {
 
 struct llvm_java_object_base {
   struct llvm_java_object_header header;
-  struct llvm_java_object_vtable* vtable;
+  struct llvm_java_object_class_record* classRecord;
 };
 
 struct llvm_java_object_typeinfo {
-  jint depth;
-  struct llvm_java_object_vtable** vtables;
-  jint lastIface;
-  union {
-    jint interfaceFlag;
-    struct llvm_java_object_vtable** interfaces;
-  };
-  jint elementSize; /* The element size - 0 for classes */
+  jint depth;       /* The number of super classes to java.lang.Object. */
+  struct llvm_java_object_class_record** vtables; /* The super class
+                                                   * records up to
+                                                   * java.lang.Object. */
+  jint interfaceIndex; /* If an interface its interface index,
+                        * otherwise the last interface index
+                        * implemented by this class. */
+  struct llvm_java_object_class_record** interfaces; /* The interface
+                                                      * class records
+                                                      * this class
+                                                      * implements */
+  jint elementSize; /* If an array the size of its elements, otherwise
+                     * 0 for classes, -1 for interfaces and -2 for
+                     * primitive classes */
 };
 
-struct llvm_java_object_vtable {
+struct llvm_java_object_class_record {
   struct llvm_java_object_typeinfo typeinfo;
 };
 
-struct llvm_java_object_vtable* llvm_java_get_vtable(jobject obj) {
-  return obj->vtable;
+jint llvm_java_is_primitive_class(struct llvm_java_object_class_record* cr)
+{
+  return cr->typeinfo.elementSize == -2;
 }
 
-void llvm_java_set_vtable(jobject obj, struct llvm_java_object_vtable* clazz) {
-  obj->vtable = clazz;
+jint llvm_java_is_interface_class(struct llvm_java_object_class_record* cr)
+{
+  return cr->typeinfo.elementSize == -1;
+}
+
+jint llvm_java_is_array_class(struct llvm_java_object_class_record* cr)
+{
+  return cr->typeinfo.elementSize >= 0;
+}
+
+struct llvm_java_object_class_record* llvm_java_get_class_record(jobject obj) {
+  return obj->classRecord;
+}
+
+void llvm_java_set_class_record(jobject obj,
+                                struct llvm_java_object_class_record* cr) {
+  obj->classRecord = cr;
 }
 
 jint llvm_java_is_instance_of(jobject obj,
-                              struct llvm_java_object_vtable* clazz) {
-  struct llvm_java_object_vtable* objClazz;
+                              struct llvm_java_object_class_record* clazz) {
+  struct llvm_java_object_class_record* objClazz;
 
   /* trivial case 1: a null object can be cast to any type */
   if (!obj)
     return JNI_TRUE;
 
-  objClazz = obj->vtable;
+  objClazz = obj->classRecord;
   /* trivial case 2: this object is of class clazz */
   if (objClazz == clazz)
     return JNI_TRUE;
 
-  /* we are checking against a class' typeinfo */
-  if (clazz->typeinfo.interfaceFlag != -1) {
+  /* instanceof AnInterface. */
+  if (llvm_java_is_interface_class(clazz)) {
+    /* this interface's vtable can only be found at this index */
+    int index = clazz->typeinfo.interfaceIndex;
+    return objClazz->typeinfo.interfaceIndex >= index &&
+           objClazz->typeinfo.interfaces[index];
+  }
+  /* instanceof AClass */
+  else {
     /* this class' vtable can only be found at this index */
     int index = objClazz->typeinfo.depth - clazz->typeinfo.depth - 1;
     return index >= 0 && objClazz->typeinfo.vtables[index] == clazz;
-  }
-  /* otherwise we are checking against an interface's typeinfo */
-  else {
-    /* this interface's vtable can only be found at this index */
-    int index = clazz->typeinfo.lastIface;
-    return objClazz->typeinfo.lastIface >= index &&
-           objClazz->typeinfo.interfaces[index];
   }
 }
 
@@ -373,18 +395,18 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
                                        jint length) {
   struct llvm_java_bytearray* srcArray = (struct llvm_java_bytearray*) srcObj;
   struct llvm_java_bytearray* dstArray = (struct llvm_java_bytearray*) dstObj;
-  unsigned nbytes = length * srcObj->vtable->typeinfo.elementSize;
+  unsigned nbytes = length * srcObj->classRecord->typeinfo.elementSize;
 
   jbyte* src = srcArray->data;
   jbyte* dst = dstArray->data;
 
   // FIXME: Need to perform a proper type check here.
-  if (srcObj->vtable->typeinfo.elementSize !=
-      dstObj->vtable->typeinfo.elementSize)
+  if (srcObj->classRecord->typeinfo.elementSize !=
+      dstObj->classRecord->typeinfo.elementSize)
     llvm_java_throw(NULL);
 
-  src += srcStart * srcObj->vtable->typeinfo.elementSize;
-  dst += dstStart * dstObj->vtable->typeinfo.elementSize;
+  src += srcStart * srcObj->classRecord->typeinfo.elementSize;
+  dst += dstStart * dstObj->classRecord->typeinfo.elementSize;
 
   memmove(dst, src, nbytes);
 }

@@ -34,7 +34,8 @@ VMClass::VMClass(Resolver* resolver, const std::string& className)
     layoutType_(OpaqueType::get()),
     type_(PointerType::get(layoutType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX),
-    resolvedConstantPool_(classFile_->getNumConstants())
+    resolvedConstantPool_(classFile_->getNumConstants()),
+    classRecord_(NULL)
 {
 
 }
@@ -46,7 +47,8 @@ VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
     componentClass_(componentClass),
     layoutType_(OpaqueType::get()),
     type_(PointerType::get(layoutType_)),
-    interfaceIndex_(INVALID_INTERFACE_INDEX)
+    interfaceIndex_(INVALID_INTERFACE_INDEX),
+    classRecord_(NULL)
 {
 
 }
@@ -65,7 +67,8 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
     componentClass_(NULL),
     layoutType_(const_cast<Type*>(type)),
     type_(type),
-    interfaceIndex_(INVALID_INTERFACE_INDEX)
+    interfaceIndex_(INVALID_INTERFACE_INDEX),
+    classRecord_(NULL)
 {
 
 }
@@ -87,8 +90,7 @@ const VMField* VMClass::lookupField(const std::string& name) const
       return field;
   }
 
-  assert(0 && "Field not found!");
-  abort();
+  return NULL;
 }
 
 const VMMethod* VMClass::lookupMethod(const std::string& nameAndType) const
@@ -109,8 +111,7 @@ const VMMethod* VMClass::lookupMethod(const std::string& nameAndType) const
         return method;
     }
 
-  assert(0 && "Method not found!");
-  abort();
+  return NULL;
 }
 
 void VMClass::computeLayout()
@@ -162,17 +163,199 @@ void VMClass::computeLayout()
   type_ = PointerType::get(layoutType_);
 }
 
-void VMClass::computeClassRecord()
+llvm::Constant* VMClass::buildSuperClassRecords() const
 {
-  if (classFile_) {
-    const Methods& methods = classFile_->getMethods();
-    for (unsigned i = 0, e = methods.size(); i != e; ++i) {
-      Method* method = methods[i];
-      const std::string& name =
-        method->getName()->str() + method->getDescriptor()->str();
-      methodMap_.insert(std::make_pair(name, VMMethod(this, method)));
+  std::vector<llvm::Constant*> init;
+  init.reserve(getNumSuperClasses());
+  for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i)
+    init.push_back(ConstantExpr::getCast(
+                     getSuperClass(i)->getClassRecord(),
+                     resolver_->getClassRecordPtrType()));
+
+  const ArrayType* superClassRecordsType =
+    ArrayType::get(resolver_->getClassRecordPtrType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      superClassRecordsType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(superClassRecordsType, init),
+      getName() + "<superClassRecords>",
+      resolver_->getModule()));
+}
+
+llvm::Constant*
+VMClass::buildInterfaceClassRecord(const VMClass* interface) const
+{
+  assert(interface->isInterface() && "Must be passed an interface!");
+
+  std::vector<llvm::Constant*> init;
+  init.reserve(interface->dynamicallyBoundMethods_.size()+1);
+  // Insert a null type info for this interface.
+  init.push_back(llvm::Constant::getNullValue(resolver_->getTypeInfoType()));
+  // For each method this interface declares, find the corresponding
+  // method in this class and put it in its slot.
+  for (unsigned i = 0, e = interface->dynamicallyBoundMethods_.size();
+       i != e; ++i) {
+    assert(init.size() == i+1 && "Interface method not found in class!");
+    const VMMethod* interfaceMethod = interface->dynamicallyBoundMethods_[i];
+    for (unsigned j = 0, f = dynamicallyBoundMethods_.size(); j != f; ++j) {
+      const VMMethod* method = dynamicallyBoundMethods_[j];
+      if (method->getName() == interfaceMethod->getName() &&
+          method->getDescriptor() == interfaceMethod->getDescriptor()) {
+        init.push_back(method->getFunction());
+        break;
+      }
     }
   }
+
+  llvm::Constant* classRecordInit = ConstantStruct::get(init);
+
+  return ConstantExpr::getCast(
+    new GlobalVariable(
+      classRecordInit->getType(),
+      true,
+      GlobalVariable::ExternalLinkage,
+      classRecordInit,
+      getName() + '+' + interface->getName() + "<classRecord>",
+      resolver_->getModule()),
+    resolver_->getClassRecordPtrType());
+}
+
+llvm::Constant* VMClass::buildInterfaceClassRecords() const
+{
+  // This is an interface or primitive class record so it doesn't
+  // implement any interfaces. Thus the pointer to the array of
+  // implemented interfaces is null.
+  if (isInterface() || isPrimitive()) {
+    const Type* classRecordPtrPtrType =
+      PointerType::get(resolver_->getClassRecordPtrType());
+
+    return llvm::Constant::getNullValue(classRecordPtrPtrType);
+  }
+
+  // Otherwise this is a class or array class record so we have to
+  // fill in the array of implemented interfaces up the max interface
+  // index and build each individual interface class record for this
+  // class.
+  llvm::Constant* nullClassRecord =
+    llvm::Constant::getNullValue(resolver_->getClassRecordPtrType());
+  std::vector<llvm::Constant*> init(getInterfaceIndex()+1, nullClassRecord);
+
+  for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i) {
+    const VMClass* interface = getInterface(i);
+    init[interface->getInterfaceIndex()] = buildInterfaceClassRecord(interface);
+  }
+
+  const ArrayType* interfaceClassRecordsType =
+    ArrayType::get(resolver_->getClassRecordPtrType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      interfaceClassRecordsType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(interfaceClassRecordsType, init),
+      getName() + "<interfaceClassRecords>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildClassTypeInfo() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(5);
+
+  init.push_back(ConstantSInt::get(Type::IntTy, getNumSuperClasses()));
+  init.push_back(buildSuperClassRecords());
+  init.push_back(ConstantSInt::get(Type::IntTy, getInterfaceIndex()));
+  init.push_back(buildInterfaceClassRecords());
+  if (isArray())
+    init.push_back(
+      ConstantExpr::getCast(
+        ConstantExpr::getSizeOf(getComponentClass()->getType()), Type::IntTy));
+  else if (isPrimitive())
+    init.push_back(ConstantSInt::get(Type::IntTy, -2));
+  else if (isInterface())
+    init.push_back(ConstantSInt::get(Type::IntTy, -1));
+  else // A class.
+    init.push_back(ConstantSInt::get(Type::IntTy, 0));
+
+  return ConstantStruct::get(init);
+}
+
+void VMClass::computeClassRecord()
+{
+  // Find dynamically bound methods.
+  if (!isPrimitive()) {
+    if (const VMClass* superClass = getSuperClass())
+      dynamicallyBoundMethods_ = superClass->dynamicallyBoundMethods_;
+
+    if (getClassFile()) {
+      const Methods& methods = classFile_->getMethods();
+      for (unsigned i = 0, e = methods.size(); i != e; ++i) {
+        Method* method = methods[i];
+        const std::string& name = method->getName()->str();
+        const std::string& descriptor = method->getDescriptor()->str();
+
+        // If method is statically bound just create it.
+        if (method->isPrivate() || method->isStatic() || name[0] == '<')
+          methodMap_.insert(
+            std::make_pair(name + descriptor, VMMethod(this, method)));
+        // Otherwise we need to assign an index for it and update the
+        // dynamicallyBoundMethods_ vector.
+        else {
+          const VMMethod* overridenMethod = NULL;
+          for (unsigned i = 0, e = getNumDynamicallyBoundMethods();
+               i != e; ++i) {
+            const VMMethod* m = getDynamicallyBoundMethod(i);
+            if (m->getName() == name && m->getDescriptor() == descriptor)
+              overridenMethod = m;
+          }
+
+          // If this is an overriden method reuse the method index
+          // with the overriding one.
+          if (overridenMethod) {
+            int index = overridenMethod->getMethodIndex();
+            MethodMap::iterator i = methodMap_.insert(
+              std::make_pair(name + descriptor,
+                             VMMethod(this, method, index))).first;
+            dynamicallyBoundMethods_[index] = &i->second;
+          }
+          // Otherwise assign it a new index.
+          else {
+            int index = dynamicallyBoundMethods_.size();
+            MethodMap::iterator i = methodMap_.insert(
+              std::make_pair(
+                name + descriptor, VMMethod(this, method, index))).first;
+            dynamicallyBoundMethods_.push_back(&i->second);
+          }
+        }
+      }
+    }
+  }
+
+  std::vector<llvm::Constant*> init;
+  init.reserve(1 + getNumDynamicallyBoundMethods());
+  init.push_back(buildClassTypeInfo());
+  for (unsigned i = 0, e = getNumDynamicallyBoundMethods(); i != e; ++i) {
+    const VMMethod* method = getDynamicallyBoundMethod(i);
+    init.push_back(
+      method->isAbstract() ?
+      llvm::Constant::getNullValue(method->getFunction()->getType()) :
+      method->getFunction());
+  }
+
+  llvm::Constant* classRecordInit = ConstantStruct::get(init);
+  resolver_->getModule()->addTypeName("classRecord." + getName(),
+                                      classRecordInit->getType());
+  classRecord_ = new GlobalVariable(
+    classRecordInit->getType(),
+    true,
+    GlobalVariable::ExternalLinkage,
+    classRecordInit,
+    getName() + "<classRecord>",
+    resolver_->getModule());
 }
 
 void VMClass::link()

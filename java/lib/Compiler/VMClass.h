@@ -47,9 +47,17 @@ namespace llvm { namespace Java {
     std::vector<const VMClass*> superClasses_;
     std::vector<const VMClass*> interfaces_;
     std::vector<const VMField*> memberFields_;
+    std::vector<const VMMethod*> dynamicallyBoundMethods_;
+    llvm::Constant* classRecord_;
 
     void computeLayout();
     void computeClassRecord();
+
+    llvm::Constant* buildSuperClassRecords() const;
+    llvm::Constant* buildInterfaceClassRecord(const VMClass* interface) const;
+    llvm::Constant* buildInterfaceClassRecords() const;
+    llvm::Constant* buildClassTypeInfo() const;
+
     const VMField* lookupField(const std::string& name) const;
     const VMMethod* lookupMethod(const std::string& nameAndType) const;
     
@@ -91,6 +99,13 @@ namespace llvm { namespace Java {
     bool isPrimitive() const { return getType() == getLayoutType(); }
     bool isInterface() const { return classFile_ && classFile_->isInterface(); }
     int getInterfaceIndex() const { return interfaceIndex_; }
+    unsigned getNumDynamicallyBoundMethods() const {
+      return dynamicallyBoundMethods_.size();
+    }
+    const VMMethod* getDynamicallyBoundMethod(unsigned i) const {
+      return dynamicallyBoundMethods_[i];
+    }
+    llvm::Constant* getClassRecord() const { return classRecord_; }
 
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;

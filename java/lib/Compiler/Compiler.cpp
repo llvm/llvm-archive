@@ -59,8 +59,14 @@ namespace llvm { namespace Java { namespace {
     return !isTwoSlotValue(v);
   }
 
-  struct Bytecode2BasicBlockMapper
+  class Bytecode2BasicBlockMapper
     : public BytecodeParser<Bytecode2BasicBlockMapper> {
+    Function& function_;
+    BC2BBMap& bc2bbMap_;
+    typedef std::map<BasicBlock*, BasicBlock*> FallThroughMap;
+    FallThroughMap ftMap_;
+    const CodeAttribute& codeAttr_;
+
   public:
     Bytecode2BasicBlockMapper(Function& f,
                               BC2BBMap& m,
@@ -75,16 +81,24 @@ namespace llvm { namespace Java { namespace {
 
       parse(codeAttr_.getCode(), codeAttr_.getCodeSize());
 
-      for (unsigned i = 0; i < bc2bbMap_.size(); ++i) {
-        if (bc2bbMap_[i])
-          bb = bc2bbMap_[i];
+      for (unsigned i = 0, e = bc2bbMap_.size(); i != e; ++i)
+        if (BasicBlock* next = bc2bbMap_[i]) {
+          ftMap_.insert(std::make_pair(bb, next));
+          bb = next;
+        }
         else
           bc2bbMap_[i] = bb;
-      }
 
       assert(function_.getEntryBlock().getName() == "entry");
     }
 
+    void insertFallThroughBranches() {
+      for (FallThroughMap::const_iterator i = ftMap_.begin(), e = ftMap_.end();
+           i != e; ++i)
+        if (!i->first->getTerminator())
+          new BranchInst(i->second, i->first);
+    }
+        
     void do_if(unsigned bcI, JSetCC cc, JType type,
                unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
@@ -113,11 +127,6 @@ namespace llvm { namespace Java { namespace {
         bc2bbMap_[defTarget] =
           new BasicBlock("bc" + utostr(defTarget), &function_);
     }
-
-  private:
-    Function& function_;
-    BC2BBMap& bc2bbMap_;
-    const CodeAttribute& codeAttr_;
   };
 
   struct CompilerImpl :
@@ -772,14 +781,9 @@ namespace llvm { namespace Java { namespace {
         new BranchInst(prologue_->getNext(), prologue_);
       }
 
-      // now scan the basic blocks of this function and insert fall
-      // through branches to all basic blocks that don't have a
-      // terminator (these are blocks in switch blocks without a break
-      // statement)
-      for (Function::iterator
-             BB = function->begin(), BBE = function->end(); BB != BBE; ++BB)
-        if (!BB->getTerminator())
-          new BranchInst(next(BB), BB);
+      // now insert fall through branches to all basic blocks that
+      // don't have a terminator
+      mapper.insertFallThroughBranches();
 
       return function;
     }
@@ -869,7 +873,7 @@ namespace llvm { namespace Java { namespace {
       // compile all other methods called by this method recursively
       for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
         Function* f = toCompileFunctions_[i];
-//        compileMethodOnly(f->getName());
+        compileMethodOnly(f->getName());
       }
 
       return function;

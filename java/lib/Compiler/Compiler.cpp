@@ -142,8 +142,8 @@ void Compiler::compileMethodInit(Function& function,
         case IF_ICMPGE:
         case IF_ICMPGT:
         case IF_ICMPLE:
-        case IF_ICMPACMPEQ:
-        case IF_ICMPACMPNE:
+        case IF_IACMPEQ:
+        case IF_IACMPNE:
         case IFNULL:
         case IFNONNULL: {
             unsigned index = readShortUnsigned(code, i);
@@ -531,8 +531,8 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case IF_ICMPGE:
         case IF_ICMPGT:
         case IF_ICMPLE:
-        case IF_ICMPACMPEQ:
-        case IF_ICMPACMPNE:
+        case IF_IACMPEQ:
+        case IF_IACMPNE:
         case GOTO:
         case JSR:
         case RET:

@@ -18,7 +18,6 @@
 #include <llvm/System/Path.h>
 
 #include <iosfwd>
-#include <map>
 #include <stdexcept>
 #include <vector>
 
@@ -72,8 +71,6 @@ namespace llvm { namespace Java {
     static std::vector<llvm::sys::Path> getClassPath();
     static sys::Path getFileForClass(const std::string& classname);
 
-    typedef std::map<std::string, Method*> Name2MethodMap;
-
   public:
     static const ClassFile* get(const std::string& classname);
 
@@ -120,7 +117,6 @@ namespace llvm { namespace Java {
 
     const Attributes& getAttributes() const { return attributes_; }
 
-    Method* getMethod(const std::string& nameAndDescr) const;
     bool isNativeMethodOverloaded(const Method& method) const;
 
     std::ostream& dump(std::ostream& os) const;
@@ -136,7 +132,6 @@ namespace llvm { namespace Java {
     Fields fields_;
     Methods methods_;
     Attributes attributes_;
-    Name2MethodMap n2mMap_;
 
     ClassFile(std::istream& is);
   };

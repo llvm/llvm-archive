@@ -208,11 +208,6 @@ ClassFile::ClassFile(std::istream& is)
   readFields(fields_, this, is);
   readMethods(methods_, this, is);
   readAttributes(attributes_, this, is);
-  for (Methods::const_iterator
-         i = methods_.begin(), e = methods_.end(); i != e; ++i)
-    n2mMap_.insert(
-      std::make_pair(
-        (*i)->getName()->str() + (*i)->getDescriptor()->str(), *i));
 }
 
 ConstantClass* ClassFile::getConstantClass(unsigned index) const
@@ -263,12 +258,6 @@ ConstantUtf8* ClassFile::getConstantUtf8(unsigned index) const
   assert(dynamic_cast<ConstantUtf8*>(getConstant(index)) &&
          "Constant is not a ConstantUtf8!");
   return static_cast<ConstantUtf8*>(getConstant(index));
-}
-
-Method* ClassFile::getMethod(const std::string& nameAndDescr) const
-{
-  Name2MethodMap::const_iterator it = n2mMap_.find(nameAndDescr);
-  return it == n2mMap_.end() ? NULL : it->second;
 }
 
 bool ClassFile::isNativeMethodOverloaded(const Method& method) const

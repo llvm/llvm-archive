@@ -1,4 +1,4 @@
-//===- Hello.cpp - Example code from "Writing an LLVM Pass" ---------------===//
+//===- StubAdder.cpp - Stub Adder Pass ------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,9 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This file implements two versions of the LLVM "Hello World" pass described
-// in docs/WritingAnLLVMPass.html
+// This file implements a stub adder pass. Because class2llvm is not able to
+// compile all of java at the moment, this pass is used to add dummy returns
+// to those functions.
 //
 //===----------------------------------------------------------------------===//
 

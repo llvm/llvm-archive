@@ -1148,7 +1148,7 @@ namespace llvm { namespace Java { namespace {
       unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr = new GetElementPtrInst(vtable, indices, TMP, getBBAt(bcI));
-      Value* vfun = new LoadInst(vfunPtr, TMP, getBBAt(bcI));
+      Value* vfun = new LoadInst(vfunPtr, methodDescr, getBBAt(bcI));
       makeCall(vfun, getBBAt(bcI));
     }
 

@@ -82,18 +82,20 @@ namespace llvm { namespace Java { namespace {
                                       "llvm_java_JNIEnv",
                                       module_);
       const Type* classRecordPtrType = resolver_->getClassRecordPtrType();
+      const Type* objectBaseType = resolver_->getObjectBaseType();
+
       getClassRecord_ = module_->getOrInsertFunction(
         "llvm_java_get_class_record", classRecordPtrType,
-        resolver_->getObjectBaseType(), NULL);
+        objectBaseType, NULL);
       setClassRecord_ = module_->getOrInsertFunction(
         "llvm_java_set_class_record", Type::VoidTy,
-        resolver_->getObjectBaseType(), classRecordPtrType, NULL);
+        objectBaseType, classRecordPtrType, NULL);
       throw_ = module_->getOrInsertFunction(
         "llvm_java_throw", Type::IntTy,
-        resolver_->getObjectBaseType(), NULL);
+        objectBaseType, NULL);
       isInstanceOf_ = module_->getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
-        resolver_->getObjectBaseType(), classRecordPtrType, NULL);
+        objectBaseType, classRecordPtrType, NULL);
       memcpy_ = module_->getOrInsertFunction(
         "llvm.memcpy", Type::VoidTy,
         PointerType::get(Type::SByteTy),

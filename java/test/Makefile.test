@@ -113,7 +113,7 @@ GCCLD_PASS_ARGS := $(shell $(GCCLD) /dev/null -debug-pass=Arguments 2>&1 | \
 	$(LBUGPOINT) $< -run-llc -output=$*.out-nat
 
 %.bugpoint.gccld: %.raw.llvm.bc %.out-nat
-	$(LBUGPOINT) $< $(GCCLD_PASS_ARGS)
+	$(LBUGPOINT) $< $(GCCLD_PASS_ARGS) -output=$*.out-nat
 
 all-local:: $(JIT_DIFFS) $(LLC_DIFFS)
 

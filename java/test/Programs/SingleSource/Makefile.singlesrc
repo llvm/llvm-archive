@@ -25,4 +25,9 @@ OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
 	$(Echo) Optimizing $<
 	-$(Verb)$(LOPT) $(OPT_PASSES) -f -o=$@ $<
 
+# add function trace code
+%.tracef.linked.bc: %.linked.bc $(LOPT)
+	$(Echo) Adding function trace code to $<
+	$(Verb)$(LOPT) -tracem -f -o=$@ $<
+
 include $(LEVEL)/test/Makefile.test

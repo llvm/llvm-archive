@@ -2184,7 +2184,7 @@ namespace llvm { namespace Java { namespace {
       // java/lang/Object's.
       const Class& clazz = resolver_->getClass("[Ljava/lang/Object;");
       const VTableInfo& vi =
-        getObjectArrayVTableInfo(clazz.getClassFile());
+        getObjectArrayVTableInfo(clazz.getComponentClass()->getClassFile());
 
       push(allocateArray(clazz, vi, count, currentBB_));
     }

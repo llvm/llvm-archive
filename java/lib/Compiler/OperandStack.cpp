@@ -23,6 +23,8 @@ using namespace llvm::Java;
 
 void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
 {
+  assert(currentDepth < TheStack.size() && "Pushing to a full stack!");
+
   const Type* valueTy = value->getType();
   // Values of jboolean, jbyte, jchar and jshort are extended to a
   // jint when pushed on the operand stack.
@@ -32,27 +34,31 @@ void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
       valueTy == Type::ShortTy)
     value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
 
-  // Insert the alloca at the beginning of the entry block.
-  BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
-  if (entry->empty())
-    TheStack.push(new AllocaInst(
-                    value->getType(),
-                    NULL,
-                    "opStack" + utostr(TheStack.size()),
-                    entry));
-  else
-    TheStack.push(new AllocaInst(
-                    value->getType(),
-                    NULL,
-                    "opStack" + utostr(TheStack.size()),
-                    &entry->front()));
+  // If we don't have an alloca already for this slot create one
+  if (!TheStack[currentDepth] ||
+      TheStack[currentDepth]->getAllocatedType() != value->getType()) {
+    // Insert the alloca at the beginning of the entry block.
+    BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
+    if (entry->empty())
+      TheStack[currentDepth] =
+        new AllocaInst(value->getType(),
+                       NULL,
+                       "opStack" + utostr(currentDepth),
+                       entry);
+    else
+      TheStack[currentDepth] =
+        new AllocaInst(value->getType(),
+                       NULL,
+                       "opStack" + utostr(currentDepth),
+                       &entry->front());
+  }
 
-  new StoreInst(value, TheStack.top(), insertAtEnd);
+  new StoreInst(value, TheStack[currentDepth++], insertAtEnd);
 }
 
 llvm::Value* OperandStack::pop(BasicBlock* insertAtEnd)
 {
-  Value* val = TheStack.top();
-  TheStack.pop();
-  return new LoadInst(val, "pop", insertAtEnd);
+  assert(currentDepth != 0 && "Popping from an empty stack!");
+
+  return new LoadInst(TheStack[--currentDepth], "pop", insertAtEnd);
 }

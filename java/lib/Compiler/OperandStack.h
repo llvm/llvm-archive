@@ -19,7 +19,7 @@
 #include <llvm/Instruction.h>
 #include <llvm/Java/Bytecode.h>
 
-#include <stack>
+#include <vector>
 
 namespace llvm {
 
@@ -30,9 +30,13 @@ namespace llvm {
 namespace llvm {  namespace Java {
 
   class OperandStack {
-    std::stack<AllocaInst*, std::vector<AllocaInst*> > TheStack;
+    unsigned currentDepth;
+    std::vector<AllocaInst*> TheStack;
 
   public:
+    explicit OperandStack(unsigned maxDepth)
+      : currentDepth(0), TheStack(maxDepth) { }
+
     /// @brief - Pushes the value \c value on the virtual operand
     /// stack and appends any instructions to implement this to \c
     /// insertAtEnd BasicBlock

@@ -1253,11 +1253,20 @@ namespace llvm { namespace Java { namespace {
       // HACK: skip most of the class libraries.
       if (classMethodDesc.find("java/") == 0 &&
           classMethodDesc.find("java/lang/Object") != 0 &&
+          (classMethodDesc.find("java/lang/Throwable") != 0 ||
+           classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
+          classMethodDesc.find("java/lang/Exception") != 0 &&
+          classMethodDesc.find("java/lang/RuntimeException") != 0 &&
           classMethodDesc.find("java/lang/Number") != 0 &&
           classMethodDesc.find("java/lang/Byte") != 0 &&
           classMethodDesc.find("java/lang/Integer") != 0 &&
           classMethodDesc.find("java/lang/Long") != 0 &&
-          classMethodDesc.find("java/lang/Short") != 0) {
+          classMethodDesc.find("java/lang/Short") != 0 &&
+          classMethodDesc.find("java/util/NoSuchElementException") != 0 &&
+          classMethodDesc.find("java/util/AbstractCollection") != 0 &&
+          classMethodDesc.find("java/util/AbstractList") != 0 &&
+          classMethodDesc.find("java/util/AbstractSequentialList") != 0 &&
+          classMethodDesc.find("java/util/LinkedList") != 0) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');
         return function;
@@ -1281,8 +1290,14 @@ namespace llvm { namespace Java { namespace {
       }
       // For the entry block the operand stack is empty and the locals
       // contain the arguments to the function.
-      bbInfoMap_.insert(std::make_pair(&function->getEntryBlock(),
-                                       std::make_pair(locals, OperandStack())));
+      //
+      // NOTE: We create an operand stack one size too big because we
+      // push extra values on the stack to simplify code generation
+      // (see implementation of ifne).
+      bbInfoMap_.insert(
+        std::make_pair(&function->getEntryBlock(),
+                       std::make_pair(locals,
+                                      OperandStack(codeAttr->getMaxStack()+1))));
 
       // Insert the entry block to the work list.
       bbWorkList_.push_back(&function->getEntryBlock());

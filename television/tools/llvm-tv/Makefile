@@ -1,7 +1,7 @@
 LEVEL = ../..
 TOOLNAME = llvm-tv
 USEDLIBS = 
-LLVMLIBS = bcreader vmcore support.a
+LLVMLIBS = analysis.a ipa.a bcreader vmcore support.a
 CPPFLAGS = $(shell $(LEVEL)/lib/wxwindows/wx-config --cflags)
 TOOLLINKOPTSB = $(shell $(LEVEL)/lib/wxwindows/wx-config --libs)
 

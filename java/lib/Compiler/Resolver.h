@@ -39,6 +39,13 @@ namespace llvm { namespace Java {
                               unsigned& i,
                               bool memberMethod = false) const;
 
+    std::string canonicalizeClassName(const std::string& className) {
+      if (className[0] == '[')
+        return className;
+      else
+        return 'L' + className + ';';
+    }
+
   public:
     Resolver(Module& module);
 
@@ -58,10 +65,7 @@ namespace llvm { namespace Java {
     }
 
     const Class& getClass(const std::string& className) {
-      if (className[0] == '[')
-        return getClassForDesc(className);
-      else
-        return getClassForDesc('L' + className + ';');
+      return getClassForDesc(canonicalizeClassName(className));
     }
     const Class& getClass(const Field& field) {
       return getClassForDesc(field.getDescriptor()->str());

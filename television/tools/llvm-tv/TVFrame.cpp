@@ -4,18 +4,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CallGraphDrawer.h"
+#include "CFGGraphDrawer.h"
+#include "CodeViewer.h"
+#include "DSAGraphDrawer.h"
+#include "PictureFrame.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
 #include "TVHtmlWindow.h"
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
 #include "llvm-tv/Config.h"
-#include "CFGGraphDrawer.h"
-#include "CallGraphDrawer.h"
-#include "DSAGraphDrawer.h"
-#include "PictureFrame.h"
-#include <dirent.h>
 #include <cassert>
+#include <dirent.h>
 #include <sstream>
 
 /// TreeCtrl constructor - creates the root and adds it to the tree
@@ -174,6 +175,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   notebook->AddItemDisplayer (new TVTextCtrl (notebook, Explanation));
   notebook->AddItemDisplayer (new TVHtmlWindow (notebook, Explanation));
   notebook->AddItemDisplayer (new TDGraphDrawer (notebook));
+  notebook->AddItemDisplayer (new TVCodeViewer (notebook));
 
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, notebook, 200);

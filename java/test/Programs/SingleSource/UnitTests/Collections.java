@@ -2,9 +2,12 @@ import java.util.*;
 
 public class Collections
 {
-    public static void fillCollectionWithInts(Collection c) {
-        for (int i = 0; i < 10; ++i)
-            c.add(new Integer(i));
+    public static Random rand = new Random(0);
+
+    public static void fillCollectionWithRandomInts(Collection c) {
+        int size = rand.nextInt(45) + 5;
+        for (int i = 0; i < size; ++i)
+            c.add(new Integer(rand.nextInt()));
     }
 
     public static void printIntCollection(Collection c) {
@@ -14,7 +17,7 @@ public class Collections
 
     public static void main(String[] args) {
         Collection c1 = new TreeSet();
-        fillCollectionWithInts(c1);
+        fillCollectionWithRandomInts(c1);
         Collection c2 = new TreeSet(c1);
 
         Test.println(c1.remove(new Integer(5)));

@@ -600,9 +600,7 @@ namespace llvm { namespace Java { namespace {
 
        return std::make_pair(
          vi.superVtables.size(),
-         ConstantExpr::getGetElementPtr(
-           vtablesArray,
-           std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+         ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
      }
 
      /// Builds an interface VTable for the specified <class,interface>
@@ -731,9 +729,7 @@ namespace llvm { namespace Java { namespace {
 
       return std::make_pair(
         int(vtables.size())-1,
-        ConstantExpr::getGetElementPtr(
-          interfacesArray,
-          std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+        ConstantExpr::getPtrPtrFromArrayPtr(interfacesArray));
     }
 
     /// Given the classfile and its corresponding VTableInfo,
@@ -952,10 +948,7 @@ namespace llvm { namespace Java { namespace {
         elementTy->getDescription() + "[]<superclassesvtables>",
         &module_);
 
-      typeInfoInit.push_back(
-        ConstantExpr::getGetElementPtr(
-          vtablesArray,
-          std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+      typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 0));
       typeInfoInit.push_back(
         llvm::Constant::getNullValue(
@@ -1058,9 +1051,7 @@ namespace llvm { namespace Java { namespace {
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
         "java/lang/Object[]<superclassesvtables>",
         &module_);
-      init.push_back(ConstantExpr::getGetElementPtr(
-                       vtablesArray,
-                       std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+      init.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
 
       // last interface index
       init.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
@@ -1179,9 +1170,7 @@ namespace llvm { namespace Java { namespace {
         className + "[]<superclassesvtables>",
         &module_);
 
-      typeInfoInit.push_back(ConstantExpr::getGetElementPtr(
-                               vtablesArray,
-                               std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+      typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
       // last interface index
       typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
       // interfaces vtable pointers

@@ -111,22 +111,25 @@ namespace {
   };
 
   template<class DSType>
-  class DSFunctionPrinter : public FunctionPass {
+  class DSFunctionPrinter : public Pass {
   protected:
+    Function *F;
     virtual std::string getFilename(Function &F) = 0;
 
   public:
-    bool runOnFunction(Function &F) {
+    DSFunctionPrinter(Function *_F) : F(_F) {}
+
+    bool run(Module &M) { 
       DSType *DS = &getAnalysis<DSType>();
-      std::string File = getFilename(F);
+      std::string File = getFilename(*F);
       std::ofstream of(File.c_str());
       if (of.good()) {
-        if (DS->hasGraph(F)) {
-          DS->getDSGraph(F).print(of);
+        if (DS->hasGraph(*F)) {
+          DS->getDSGraph(*F).print(of);
           of.close();
         } else
           // Can be more creative and print the analysis name here
-          std::cerr << "No DSGraph for: " << F.getName() << "\n";
+          std::cerr << "No DSGraph for: " << F->getName() << "\n";
       } else
         std::cerr << "Error writing to " << File << "!\n";
       return false;
@@ -150,8 +153,9 @@ namespace {
     std::string getFilename() { return "buds.dot"; }
   };
   struct BUFunctionPrinter : public DSFunctionPrinter<BUDataStructures> {
+    BUFunctionPrinter(Function *F) : DSFunctionPrinter<BUDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "buds." + F.getName() + "dot";
+      return "buds." + F.getName() + ".dot";
     }
   };
 }
@@ -165,8 +169,9 @@ namespace {
     std::string getFilename() { return "tdds.dot"; }
   };
   struct TDFunctionPrinter : public DSFunctionPrinter<TDDataStructures> {
+    TDFunctionPrinter(Function *F) : DSFunctionPrinter<TDDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "tdds." + F.getName() + "dot";
+      return "tdds." + F.getName() + ".dot";
     }
   };
 }
@@ -180,8 +185,10 @@ namespace {
     std::string getFilename() { return "localds.dot"; }
   };
   struct LocalFunctionPrinter : public DSFunctionPrinter<LocalDataStructures> {
+    LocalFunctionPrinter(Function *F) 
+      : DSFunctionPrinter<LocalDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "localds." + F.getName() + "dot";
+      return "localds." + F.getName() + ".dot";
     }
   };
 }
@@ -200,8 +207,8 @@ namespace llvm {
     return new BUModulePrinter();
   }
 
-  FunctionPass *createBUDSFunctionPrinterPass () {
-    return new BUFunctionPrinter();
+  Pass *createBUDSFunctionPrinterPass (Function *F) {
+    return new BUFunctionPrinter(F);
   }
 
   // TD DataStructures
@@ -210,8 +217,8 @@ namespace llvm {
     return new TDModulePrinter();
   }
 
-  FunctionPass *createTDDSFunctionPrinterPass () {
-    return new TDFunctionPrinter();
+  Pass *createTDDSFunctionPrinterPass (Function *F) {
+    return new TDFunctionPrinter(F);
   }
 
   // Local DataStructures
@@ -220,8 +227,8 @@ namespace llvm {
     return new LocalModulePrinter();
   }
 
-  FunctionPass *createLocalDSFunctionPrinterPass () {
-    return new LocalFunctionPrinter();
+  Pass *createLocalDSFunctionPrinterPass (Function *F) {
+    return new LocalFunctionPrinter(F);
   }
 
 } // end namespace llvm

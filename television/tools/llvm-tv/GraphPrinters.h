@@ -26,13 +26,13 @@ namespace llvm {
 Pass *createCallGraphPrinterPass ();
 
 Pass *createBUDSModulePrinterPass ();
-FunctionPass *createBUDSFunctionPrinterPass();
+Pass *createBUDSFunctionPrinterPass (Function *F);
 
 Pass *createTDDSModulePrinterPass ();
-FunctionPass *createTDDSFunctionPrinterPass ();
+Pass *createTDDSFunctionPrinterPass (Function *F);
 
 Pass *createLocalDSModulePrinterPass ();
-FunctionPass *createLocalDSFunctionPrinterPass ();
+Pass *createLocalDSFunctionPrinterPass (Function *F);
 
 
 } // end namespace llvm

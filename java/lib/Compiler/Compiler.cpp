@@ -628,6 +628,24 @@ namespace llvm { namespace Java { namespace {
       return ConstantExpr::getCast(gv, PointerType::get(VTableInfo::VTableTy));
     }
 
+    void insertVtablesForInterface(std::vector<llvm::Constant*>& vtables,
+                                   ClassFile* cf,
+                                   ClassFile* ifaceCf) {
+      static llvm::Constant* nullVTable =
+        llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
+
+      assert(ifaceCf->isInterface() && "Classfile must be an interface!");
+      const ClassInfo& ifaceCi = getClassInfo(ifaceCf);
+      if (ifaceCi.interfaceIdx >= vtables.size())
+        vtables.resize(ifaceCi.interfaceIdx+1, nullVTable);
+      vtables[ifaceCi.interfaceIdx] = buildInterfaceVTable(cf, ifaceCf);
+      const Classes& interfaces = ifaceCf->getInterfaces();
+      for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
+        ClassFile* otherCf = ClassFile::get(interfaces[i]->getName()->str());
+        insertVtablesForInterface(vtables, cf, otherCf);
+      }
+    }
+
     /// Builds the interfaces vtable array for this classfile and its
     /// corresponding VTableInfo. If this classfile is an interface we
     /// return a pointer to 0xFFFFFFFF.
@@ -657,15 +675,8 @@ namespace llvm { namespace Java { namespace {
       while (true) {
         const Classes& interfaces = curCf->getInterfaces();
         for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
-          ClassFile* interface =
-            ClassFile::get(interfaces[i]->getName()->str());
-          assert(interface->isInterface() &&
-                 "Class in interfaces list is not an interface!");
-          const ClassInfo& interfaceCI = getClassInfo(interface);
-          if (interfaceCI.interfaceIdx >= vtables.size())
-            vtables.resize(interfaceCI.interfaceIdx+1, nullVTable);
-          vtables[interfaceCI.interfaceIdx] =
-            buildInterfaceVTable(cf, interface);
+          ClassFile* ifaceCf = ClassFile::get(interfaces[i]->getName()->str());
+          insertVtablesForInterface(vtables, cf, ifaceCf);
         }
         if (!curCf->getSuperClass())
           break;

@@ -12,6 +12,7 @@ CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1
 SHARED_LIBRARY=1
 LIBRARYNAME=test
+BUILT_SOURCES = Test.h
 
 include $(LEVEL)/Makefile.common
 
@@ -21,8 +22,6 @@ BUILD_JAVA_SOURCES=1
 
 include ../Makefile.singlesrc
 
-$(EXTRA_OBJS): Test.h
-
 Test.h: Output/Test.class
 	$(Verb)$(Echo) Creating JNI header for class $(basename $(notdir $<))
 	$(Verb)$(RM) -f $@
@@ -30,4 +29,3 @@ Test.h: Output/Test.class
 
 clean::
 	$(Verb)rm -f Test.h
-

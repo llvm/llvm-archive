@@ -274,16 +274,16 @@ namespace llvm { namespace Java {
 
   class Field {
   private:
-    ConstantClass* parent_;
+    ClassFile* parent_;
     uint16_t accessFlags_;
     ConstantUtf8* name_;
     ConstantUtf8* descriptor_;
     Attributes attributes_;
 
-    Field(ConstantClass* parent, const ConstantPool& cp, std::istream& is);
+    Field(ClassFile* parent, const ConstantPool& cp, std::istream& is);
 
   public:
-    static Field* readField(ConstantClass* parent,
+    static Field* readField(ClassFile* parent,
                             const ConstantPool& cp,
                             std::istream& is) {
       return new Field(parent, cp, is);
@@ -299,7 +299,7 @@ namespace llvm { namespace Java {
     bool isVolatile() const { return accessFlags_ & ACC_VOLATILE; }
     bool isTransient() const { return accessFlags_ & ACC_TRANSIENT; }
 
-    ConstantClass* getParent() const { return parent_; }
+    ClassFile* getParent() const { return parent_; }
     ConstantUtf8* getName() const { return name_; }
     ConstantUtf8* getDescriptor() const { return descriptor_; }
     const Attributes& getAttributes() const { return attributes_; }
@@ -313,16 +313,16 @@ namespace llvm { namespace Java {
   }
 
   class Method {
-    ConstantClass* parent_;
+    ClassFile* parent_;
     uint16_t accessFlags_;
     ConstantUtf8* name_;
     ConstantUtf8* descriptor_;
     Attributes attributes_;
 
-    Method(ConstantClass* parent, const ConstantPool& cp, std::istream& is);
+    Method(ClassFile* parent, const ConstantPool& cp, std::istream& is);
 
   public:
-    static Method* readMethod(ConstantClass* parent,
+    static Method* readMethod(ClassFile* parent,
                               const ConstantPool& cp,
                               std::istream& is) {
       return new Method(parent, cp, is);
@@ -340,7 +340,7 @@ namespace llvm { namespace Java {
     bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
     bool isStrict() const { return accessFlags_ & ACC_STRICT; }
 
-    ConstantClass* getParent() const { return parent_; }
+    ClassFile* getParent() const { return parent_; }
     ConstantUtf8* getName() const { return name_; }
     ConstantUtf8* getDescriptor() const { return descriptor_; }
     const Attributes& getAttributes() const { return attributes_; }

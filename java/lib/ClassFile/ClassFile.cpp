@@ -111,7 +111,7 @@ namespace {
   }
 
   void readFields(Fields& f,
-                  ConstantClass* parent,
+                  ClassFile* parent,
                   const ConstantPool& cp,
                   std::istream& is)
   {
@@ -123,7 +123,7 @@ namespace {
   }
 
   void readMethods(Methods& m,
-                   ConstantClass* parent,
+                   ClassFile* parent,
                    const ConstantPool& cp,
                    std::istream& is)
   {
@@ -241,8 +241,8 @@ ClassFile::ClassFile(std::istream& is)
     throw ClassFileSemanticError(
       "Representation of super class is not of type ConstantClass");
   readClasses(interfaces_, cPool_, is);
-  readFields(fields_, thisClass_, cPool_, is);
-  readMethods(methods_, thisClass_, cPool_, is);
+  readFields(fields_, this, cPool_, is);
+  readMethods(methods_, this, cPool_, is);
   readAttributes(attributes_, cPool_, is);
   for (Methods::const_iterator
          i = methods_.begin(), e = methods_.end(); i != e; ++i)
@@ -516,7 +516,7 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Field implementation
-Field::Field(ConstantClass* parent, const ConstantPool& cp, std::istream& is)
+Field::Field(ClassFile* parent, const ConstantPool& cp, std::istream& is)
   : parent_(parent)
 {
   accessFlags_ = readU2(is);
@@ -564,7 +564,7 @@ ConstantValueAttribute* Field::getConstantValueAttribute() const
 
 //===----------------------------------------------------------------------===//
 // Method implementation
-Method::Method(ConstantClass* parent, const ConstantPool& cp, std::istream& is)
+Method::Method(ClassFile* parent, const ConstantPool& cp, std::istream& is)
   : parent_(parent)
 {
   accessFlags_ = readU2(is);

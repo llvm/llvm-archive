@@ -343,6 +343,8 @@ namespace llvm { namespace Java { namespace {
 
       const Methods& methods = cf->getMethods();
 
+      const ClassInfo& ci = getClassInfo(cf);
+
       // add member functions to the vtable
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
         Method* method = methods[i];
@@ -355,7 +357,7 @@ namespace llvm { namespace Java { namespace {
 
           std::string funcName = "java/lang/Object/" + methodDescr;
           const FunctionType* funcTy = cast<FunctionType>(
-            getType(method->getDescriptor(), getClassInfo(cf).type));
+            getType(method->getDescriptor(), ci.type));
 
           Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
           toCompileFunctions_.insert(vfun);
@@ -723,14 +725,17 @@ namespace llvm { namespace Java { namespace {
     Function* compileMethodOnly(const std::string& classMethodDesc) {
       Method* method;
       tie(cf_, method) = findClassAndMethod(classMethodDesc);
+      const ClassInfo& ci = getClassInfo(cf_);
 
       std::string name = cf_->getThisClass()->getName()->str();
       name += '/';
       name += method->getName()->str();
       name += method->getDescriptor()->str();
 
-      Function* function = module_->getOrInsertFunction
-        (name, cast<FunctionType>(getType(method->getDescriptor())));
+      FunctionType* funcTy = cast<FunctionType>(
+        getType(method->getDescriptor(), method->isStatic() ? NULL : ci.type));
+
+      Function* function = module_->getOrInsertFunction(name, funcTy);
       function->setLinkage(method->isPrivate() ?
                            Function::InternalLinkage :
                            Function::ExternalLinkage);

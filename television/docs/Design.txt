@@ -23,8 +23,17 @@ BasicBlock.  HTMLMarkup is a Strategy object, implementing either a simple HTML
 markup or one using CSS.  It is passed into HTMLPrinter which uses it to emit
 syntax-highlighting for keywords, types, basic block names, etc.
 
+TVNotebook is responsible for implementing the tabbed interface.
+
+ItemDisplayer is the abstract superclass for objects that can be displayed in
+tabs.  TVCodeViewer enables the view of use-def chains to live in a tab
+interface.   because their parent class DSAGraphDrawer 
+
 GraphDrawer is an abstract class specifying the interface for graph-drawing
-visualizers.
+visualizers.  It inherits the ItemDisplayer interface.
+
+CallGraphDrawer and CFGGraphDrawer are GraphDrawers for displaying the call
+graph (for a Module) and the CFG (for a Function), respectively.
 
 DSAGraphDrawer is an abstract class using the Template Method for
 DSA graph visualizers: it implements drawFunctionGraph() and drawModuleGraph()
@@ -34,10 +43,9 @@ LocalGraphDrawer, as well as the filename to which they output the results of
 their analysis.  The algorithm for running the pass on a Function or Module is
 shared among the 3 subclasses of DSAGraphDrawer.
 
-TVNotebook is responsible for implementing the tabbed interface.
+BUGraphDrawer, TDGraphDrawer, and LocalGraphDrawer are also ItemDisplayers,
+which allows them to be displayed in tabs or in separate new windows.
 
-ItemDisplayer is the abstract superclass for objects that can be displayed in
-tabs. TVCodeViewer enables the view of use-def chains to live in a tab
-interface.
-
-
+PictureCanvas is the container of a graphical visualizers, supporting an image
+display with scrolling.  PictureFrame is the window containing PictureCanvas and
+intercepts window events.

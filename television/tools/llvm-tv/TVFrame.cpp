@@ -71,6 +71,10 @@ void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
   myFrame->updateDisplayedItem (GetSelectedItemData ());
 }
 
+BEGIN_EVENT_TABLE(TVTreeCtrl, wxTreeCtrl)
+  EVT_TREE_SEL_CHANGED(LLVM_TV_TREE_CTRL, TVTreeCtrl::OnSelChanged)
+END_EVENT_TABLE ()
+
 ///==---------------------------------------------------------------------==///
 
 void TVTextCtrl::displayItem (TVTreeItemData *item) {
@@ -92,11 +96,6 @@ void TVHtmlWindow::displayItem (TVTreeItemData *item) {
 }
 
 ///==---------------------------------------------------------------------==///
-
-static const wxString Explanation
-  ("Click on a Module or Function in the left-hand pane\n"
-   "to display its code in the right-hand pane. Then, you\n"
-   "can choose from the View menu to see graphical code views.\n"); 
 
 /// updateDisplayedItem - Updates right-hand pane with a view of the item that
 /// is now selected.
@@ -144,7 +143,10 @@ bool TVNotebook::AddItemDisplayer (ItemDisplayer *displayer) {
 }
 
 void TVNotebook::OnSelChanged (wxNotebookEvent &event) {
-  displaySelectedItemOnPage (event.GetSelection ());
+  int newPage = event.GetSelection ();
+  displayers[newPage]->getWindow ()->SetSizeHints (-1, -1, -1, -1, -1, -1);
+  displaySelectedItemOnPage (newPage);
+  event.Skip ();
 }
 
 BEGIN_EVENT_TABLE (TVNotebook, wxNotebook)
@@ -152,6 +154,11 @@ BEGIN_EVENT_TABLE (TVNotebook, wxNotebook)
 END_EVENT_TABLE ()
 
 //==------------------------------------------------------------------------==//
+
+static const wxString Explanation
+  ("Click on a Module or Function in the left-hand pane\n"
+   "to display its code in the right-hand pane. Then, you\n"
+   "can choose from the View menu to see graphical code views.\n"); 
 
 /// TVFrame constructor - used to set up typical appearance of visualizer's
 /// top-level window.
@@ -283,8 +290,4 @@ BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (LLVM_TV_TDDS_VIEW, TVFrame::TDDSView)
   EVT_MENU (LLVM_TV_LOCALDS_VIEW, TVFrame::LocalDSView)
   EVT_MENU (LLVM_TV_CODEVIEW, TVFrame::CodeView)
-END_EVENT_TABLE ()
-
-BEGIN_EVENT_TABLE(TVTreeCtrl, wxTreeCtrl)
-  EVT_TREE_SEL_CHANGED(LLVM_TV_TREE_CTRL, TVTreeCtrl::OnSelChanged)
 END_EVENT_TABLE ()

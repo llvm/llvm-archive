@@ -18,13 +18,13 @@
 #include <llvm/Constant.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
+#include <llvm/Java/ClassFile.h>
 #include <map>
 #include <string>
 #include <vector>
 
 namespace llvm { namespace Java {
 
-  class ClassFile;
   class Resolver;
 
   class VMClass {
@@ -83,7 +83,7 @@ namespace llvm { namespace Java {
     const VMClass* getComponentClass() const { return componentClass_; }
     bool isArray() const { return getComponentClass(); }
     bool isPrimitive() const { return getType() == getLayoutType(); }
-    bool isInterface() const { return classFile_ && !getSuperClass(); }
+    bool isInterface() const { return classFile_ && classFile_->isInterface(); }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }
     int getFieldIndex(const std::string& name) const;
 

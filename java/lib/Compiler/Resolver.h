@@ -17,7 +17,6 @@
 
 #include "VMClass.h"
 #include <llvm/Java/Bytecode.h>
-#include <llvm/Java/ClassFile.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
 #include <map>

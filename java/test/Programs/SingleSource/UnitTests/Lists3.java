@@ -18,7 +18,8 @@ public class Lists3
         Test.println(((Integer)llist.removeLast()).intValue());
         Test.println(llist.size());
 
-        for (Iterator i = llist.iterator(); i.hasNext(); )
-            Test.println(((Integer)i.next()).intValue());
+        for (int i = 0; i < llist.size(); ++i) {
+            Test.println(((Integer)llist.get(i)).intValue());
+        }
     }
 }

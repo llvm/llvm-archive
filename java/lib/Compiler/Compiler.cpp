@@ -568,17 +568,6 @@ namespace llvm { namespace Java { namespace {
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "got already initialized VTableInfo!");
 
-      ConstantClass* super = cf->getSuperClass();
-      assert(super && "Class does not have superclass!");
-      const VTableInfo& superVI =
-        getVTableInfo(ClassFile::get(super->getName()->str()));
-
-      // Copy the super vtables array.
-      vi.superVtables.reserve(superVI.superVtables.size() + 1);
-      vi.superVtables.push_back(superVI.vtable);
-      std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
-                std::back_inserter(vi.superVtables));
-
       std::vector<llvm::Constant*> init(1);
       // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
@@ -609,6 +598,17 @@ namespace llvm { namespace Java { namespace {
       // Otherwise this is a class, so add all methods from its super
       // class.
       else {
+        ConstantClass* super = cf->getSuperClass();
+        assert(super && "Class does not have superclass!");
+        const VTableInfo& superVI =
+          getVTableInfo(ClassFile::get(super->getName()->str()));
+
+        // Copy the super vtables array.
+        vi.superVtables.reserve(superVI.superVtables.size() + 1);
+        vi.superVtables.push_back(superVI.vtable);
+        std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
+                  std::back_inserter(vi.superVtables));
+
         assert(superVI.vtable && "No vtable found for super class!");
         ConstantStruct* superInit =
           cast<ConstantStruct>(superVI.vtable->getInitializer());

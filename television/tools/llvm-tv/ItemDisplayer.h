@@ -7,6 +7,8 @@
 #ifndef ITEMDISPLAYER_H
 #define ITEMDISPLAYER_H
 
+#include <string>
+
 class TVTreeItemData;
 class wxWindow;
 

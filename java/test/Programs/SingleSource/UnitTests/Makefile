@@ -18,6 +18,7 @@ JAVA_TESTS := Abstract \
 	If \
 	InstanceOf \
 	InterfaceCall \
+	Lists \
 	LongCompare \
 	LookupSwitch \
 	Numbers \
@@ -27,7 +28,6 @@ JAVA_TESTS := Abstract \
 	VirtualCall \
 	VTable \
 #	Strings \
-#	List \
 #	MultipleInterfaces \
 #	MultiArray \
 

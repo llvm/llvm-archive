@@ -1,0 +1,17 @@
+##==-- test/Makefile.test - Common make rules Java tests -*- makefile -*--====##
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by the LLVM research group and is distributed under
+# the University of Illinois Open Source License. See LICENSE.TXT for details.
+#
+##===----------------------------------------------------------------------===##
+
+# rule to build raw bytecode from a classfile
+Output/%.rbc: %.class Output/.dir
+	$(CLASS2LLVM) $* | $(LLVMTOOLCURRENT)/opt$(EXEEXT) -mem2reg > $@
+
+%.ll: %.rbc
+	$(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT) < $< > $@
+
+include $(LEVEL)/Makefile.common

@@ -492,7 +492,18 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_lcmp(unsigned bcI) {
-            assert(0 && "not implemented");
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* c =
+                new SetCondInst(Instruction::SetGT, v1, v2, TMP, getBBAt(bcI));
+            Value* r =
+                new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
+                               ConstantSInt::get(Type::IntTy, 0), TMP,
+                               getBBAt(bcI));
+            c = new SetCondInst(Instruction::SetLT, v1, v2, TMP, getBBAt(bcI));
+            r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
+                               getBBAt(bcI));
+            opStack_.push(r);
         }
 
         void do_cmpl(unsigned bcI) {

@@ -434,39 +434,108 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case IADD:
         case LADD:
         case FADD:
-        case DADD:
+        case DADD: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Add, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case ISUB:
         case LSUB:
         case FSUB:
-        case DSUB:
+        case DSUB: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Sub, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IMUL:
         case LMUL:
         case FMUL:
-        case DMUL:
+        case DMUL: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Mul, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IDIV:
         case LDIV:
         case FDIV:
-        case DDIV:
+        case DDIV: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Div, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IREM:
         case LREM:
         case FREM:
-        case DREM:
+        case DREM: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Rem, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case INEG:
         case LNEG:
         case FNEG:
         case DNEG:
         case ISHL:
-        case LSHL:
+        case LSHL: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = new ShiftInst(Instruction::Shl, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case ISHR:
-        case LSHR:
+        case LSHR: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = new ShiftInst(Instruction::Shr, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IUSHR:
-        case LUSHR:
+        case LUSHR: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new CastInst(v1, v1->getType()->getUnsignedVersion());
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            Value* v2 = opStack_.top(); opStack_.pop();
+            in = new ShiftInst(Instruction::Shr, in, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IAND:
-        case LAND:
+        case LAND: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::And, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IOR:
-        case LOR:
+        case LOR: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Or, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IXOR:
-        case LXOR:
+        case LXOR: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = BinaryOperator::create(Instruction::Xor, v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IINC:
         case I2L:
         case I2F:
@@ -493,26 +562,104 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case IFLT:
         case IFGE:
         case IFGT:
-        case IFLE:
+        case IFLE: {
+            static Instruction::BinaryOps java2llvm[] = {
+                Instruction::SetEQ,
+                Instruction::SetNE,
+                Instruction::SetLT,
+                Instruction::SetGE,
+                Instruction::SetGT,
+                Instruction::SetLE,
+            };
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = ConstantSInt::get(Type::IntTy, 0);
+            Instruction* in = new SetCondInst(java2llvm[i-IFEQ], v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
+                           bc2bbMap_[i + 1],
+                           bc2bbMap_[bcStart]);
+            break;
+        }
         case IF_ICMPEQ:
         case IF_ICMPNE:
         case IF_ICMPLT:
         case IF_ICMPGE:
         case IF_ICMPGT:
-        case IF_ICMPLE:
+        case IF_ICMPLE: {
+            static Instruction::BinaryOps java2llvm[] = {
+                Instruction::SetEQ,
+                Instruction::SetNE,
+                Instruction::SetLT,
+                Instruction::SetGE,
+                Instruction::SetGT,
+                Instruction::SetLE,
+            };
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = new SetCondInst(java2llvm[i-IF_ICMPEQ], v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
+                           bc2bbMap_[i + 1],
+                           bc2bbMap_[bcStart]);
+            break;
+        }
         case IF_IACMPEQ:
-        case IF_IACMPNE:
+        case IF_IACMPNE: {
+            static Instruction::BinaryOps java2llvm[] = {
+                Instruction::SetEQ,
+                Instruction::SetNE,
+            };
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Instruction* in = new SetCondInst(java2llvm[i-IF_IACMPEQ], v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
+                           bc2bbMap_[i + 1],
+                           bc2bbMap_[bcStart]);
+            break;
+        }
         case GOTO:
+            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)]);
+            break;
         case JSR:
         case RET:
-        case TABLESWITCH:
-        case LOOKUPSWITCH:
+        case TABLESWITCH: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            skipPadBytes(code, i);
+            int def = readSInt(code, i);
+            int low = readSInt(code, i);
+            int high = readSInt(code, i);
+            SwitchInst* in =
+                new SwitchInst(v1, bc2bbMap_[bcStart + def],bc2bbMap_[bcStart]);
+            while (low <= high)
+                in->addCase(ConstantSInt::get(Type::IntTy, low++),
+                            bc2bbMap_[bcStart + readSInt(code, i)]);
+            break;
+        }
+        case LOOKUPSWITCH: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            skipPadBytes(code, i);
+            int def = readSInt(code, i);
+            unsigned pairCount = readUInt(code, i);
+            SwitchInst* in =
+                new SwitchInst(v1, bc2bbMap_[bcStart + def],bc2bbMap_[bcStart]);
+            while (pairCount--)
+                in->addCase(ConstantSInt::get(Type::IntTy, readSInt(code, i)),
+                           bc2bbMap_[bcStart + readSInt(code, i)]);
+            break;
+        }
         case IRETURN:
         case LRETURN:
         case FRETURN:
         case DRETURN:
-        case ARETURN:
+        case ARETURN: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            new ReturnInst(v1, bc2bbMap_[bcStart]);
+            break;
+        }
         case RETURN:
+            new ReturnInst(NULL, bc2bbMap_[bcStart]);
+            break;
         case GETSTATIC:
         case PUTSTATIC:
         case GETFIELD:
@@ -531,11 +678,27 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case INSTANCEOF:
         case MONITORENTER:
         case MONITOREXIT:
-        case WIDE:
+//      case WIDE:
         case MULTIANEWARRAY:
         case IFNULL:
-        case IFNONNULL:
+        case IFNONNULL: {
+            static Instruction::BinaryOps java2llvm[] = {
+                Instruction::SetEQ,
+                Instruction::SetNE,
+            };
+            Value* v1 = opStack_.top(); opStack_.pop();
+            // FIXME: should compare to a null pointer of type Object*
+            Value* v2 =ConstantPointerNull::get(PointerType::get(Type::VoidTy));
+            Instruction* in = new SetCondInst(java2llvm[i-IFNULL], v1, v2);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            new BranchInst(bc2bbMap_[bcStart + readSShort(code, i)],
+                           bc2bbMap_[i + 1],
+                           bc2bbMap_[bcStart]);
+            break;
+        }
         case GOTO_W:
+            new BranchInst(bc2bbMap_[bcStart + readSInt(code, i)]);
+            break;
         case JSR_W:
         case BREAKPOINT:
         case IMPDEP1:

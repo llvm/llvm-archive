@@ -74,3 +74,32 @@ int isInstanceOf(struct llvm_java_object_base* obj,
     return objClazz->typeinfo.lastIface >= clazz->typeinfo.lastIface &&
            objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];
 }
+
+Object Layout for Java Arrays
+-----------------------------
+
+Java primitive arrays inherit from java.lang.Object so they will at
+minimum have a nested java.lang.Object struct as their first element.
+
+struct javaIntArray {
+  struct java_lang_Object;
+  unsigned length;
+  int array[0];
+};
+
+The typeinfo struct inside this class' vtable will be filled in the
+same way as if this was a proper class. This will allow isInstanceOf
+to work transparently for primitive java arrays.
+
+For reference type arrays we use the same struct with a different
+typeinfo:
+
+struct javaObjectArray {
+  struct java_lang_Object;
+  unsigned length;
+  java_lang_Object[0];
+};
+
+The typeinfo struct will reflect a hierarchy of array types as if B[]
+derives from A[] if B derives from A. This will allow isInstanceOf to
+work transparently for object arrays as well.

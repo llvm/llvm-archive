@@ -182,8 +182,10 @@ std::vector<sys::Path> ClassFile::getClassPath()
   unsigned b = 0, e = 0;
   do {
     e = ClassPath.find(':', b);
-    if (path.setDirectory(ClassPath.substr(b, e - b)))
+    if (path.setDirectory(ClassPath.substr(b, e - b))) {
       result.push_back(path);
+      DEBUG(std::cerr << "Adding: " << path.toString() << " to CLASSPATH\nx");
+    }
     b = e + 1;
   } while (e != std::string::npos);
 
@@ -204,9 +206,10 @@ sys::Path ClassFile::getFileForClass(const std::string& classname)
 
   for (unsigned i = 0, e = classpath.size(); i != e; ++i) {
     sys::Path filename = classpath[i];
+    assert(filename.isDirectory() && "CLASSPATH element not a directory!");
     filename.appendFile(clazz);
     DEBUG(std::cerr << "Trying file: " << filename.toString() << '\n');
-    if (filename.isFile())
+    if (filename.exists())
       return filename;
   }
 

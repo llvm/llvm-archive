@@ -29,6 +29,7 @@ public:
   void ReceivedSignal ();
   void OpenCallGraphView (llvm::Module *M);
   void OpenCFGView (llvm::Function *F);
+  void OpenCodeView (llvm::Function *F);
   void Quit ();
 };
 

@@ -6,6 +6,10 @@
 
 #include "TVApplication.h"
 #include "TVFrame.h"
+#include "CFGGraphDrawer.h"
+#include "CallGraphDrawer.h"
+#include "PictureFrame.h"
+#include "CodeViewer.h"
 #include "llvm-tv/Config.h"
 #include <cerrno>
 #include <dirent.h>
@@ -17,9 +21,6 @@
 #include <string>
 #include <unistd.h>
 #include <functional>
-#include "CFGGraphDrawer.h"
-#include "CallGraphDrawer.h"
-#include "PictureFrame.h"
 
 ///==---------------------------------------------------------------------==///
 
@@ -92,6 +93,7 @@ static void setUpMenus (wxFrame *frame) {
   wxMenu *viewMenu = new wxMenu ("", 0);
   viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, "View call graph");
   viewMenu->Append (LLVM_TV_CFGVIEW, "View control-flow graph");
+  viewMenu->Append (LLVM_TV_CODEVIEW, "View code (interactive)");
   menuBar->Append (viewMenu, "View");
 
   wxMenu *helpMenu = new wxMenu ("", 0);
@@ -159,6 +161,11 @@ void TVApplication::OpenCFGView (Function *F) {
   allMyWindows.push_back (new PictureFrame (this, "control-flow graph",
                                             drawer.getGraphImage ()));
 }
+
+void TVApplication::OpenCodeView (Function *F) {
+  allMyWindows.push_back(new CodeViewFrame(this, F));
+}
+
 
 bool TVApplication::OnInit () {
   // Save my PID into the file where the snapshot-making pass knows to

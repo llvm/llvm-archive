@@ -17,10 +17,9 @@ void TVListCtrl::refreshView () {
   // Clear out the list and then re-add all the items.
   int index = 0;
   ClearAll ();
-  for (Items::iterator i = itemList.begin (), e = itemList.end ();
-	   i != e; ++i) {
-	InsertItem (index, i->label ());
-	++index;
+  for (Items::iterator i = itemList.begin(), e = itemList.end(); i != e; ++i) {
+    InsertItem (index, i->label ());
+    ++index;
   }
 }
 
@@ -123,7 +122,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
                                Explanation, wxDefaultPosition,
                                wxDefaultSize,
                                wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
-
+  
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
 }
@@ -196,8 +195,28 @@ void TVFrame::CFGView(wxCommandEvent &event) {
   if (!F) {
     wxMessageBox ("The selected item doesn't have a CFG to view.");
     return;
+  } else if (F->isExternal()) {
+    wxMessageBox("External functions have no CFG to view.");
+    return;
   }
   myApp->OpenCFGView (F);
+}
+
+void TVFrame::CodeView(wxCommandEvent &event) {
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Open up a new CFG view window.
+  Function *F = item->getFunction ();
+  if (!F) {
+    wxMessageBox ("The selected item doesn't have a CFG to view.");
+    return;
+  } else if (F->isExternal()) {
+    wxMessageBox("External functions have no code to view");
+    return;
+  }
+  myApp->OpenCodeView(F);
 }
 
 void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
@@ -213,6 +232,7 @@ BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
   EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
   EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)
+  EVT_MENU (LLVM_TV_CODEVIEW, TVFrame::CodeView)
 END_EVENT_TABLE ()
 
 BEGIN_EVENT_TABLE(TVTreeCtrl, wxTreeCtrl)

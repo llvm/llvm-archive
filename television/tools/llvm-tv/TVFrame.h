@@ -126,7 +126,8 @@ enum {
   LLVM_TV_TEXT_CTRL,
   LLVM_TV_SPLITTER_WINDOW,
   LLVM_TV_CALLGRAPHVIEW,
-  LLVM_TV_CFGVIEW
+  LLVM_TV_CFGVIEW,
+  LLVM_TV_CODEVIEW
 };
 
 class TVApplication;
@@ -142,6 +143,7 @@ class TVFrame : public wxFrame {
   
   wxSplitterWindow *splitterWindow;
   wxTextCtrl *displayText;
+  wxListCtrl *displayCode;
 
   void Resize();
  public:
@@ -149,6 +151,7 @@ class TVFrame : public wxFrame {
   void OnExit (wxCommandEvent &event);
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);
+  void CodeView (wxCommandEvent &event);
   void OnAbout (wxCommandEvent &event);
   void OnHelp (wxCommandEvent &event);
   void OnRefresh (wxCommandEvent &event);

@@ -45,7 +45,6 @@ namespace llvm { namespace Java {
     const Type* getObjectBaseType() const { return objectBaseType_; }
     const Type* getObjectBaseRefType() const { return objectBaseRefType_; }
 
-    const Class& getFieldClass(const std::string& descriptor);
     const Type* getType(const std::string& descriptor,
                         bool memberMethod = false) const;
     const Type* getStorageType(const Type* type) const;

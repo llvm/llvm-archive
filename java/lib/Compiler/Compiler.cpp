@@ -1831,11 +1831,11 @@ namespace llvm { namespace Java { namespace {
                           InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
 
-      Value* objRef = new MallocInst(clazz.getStructType(), NULL, TMP, ip);
+      Value* objRef = new MallocInst(clazz.getLayoutType(), NULL, TMP, ip);
       params[0] =
         new CastInst(objRef, PointerType::get(Type::SByteTy), TMP, ip); // dest
       params[1] = ConstantUInt::get(Type::UByteTy, 0); // value
-      params[2] = ConstantExpr::getSizeOf(clazz.getStructType()); // size
+      params[2] = ConstantExpr::getSizeOf(clazz.getLayoutType()); // size
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
       new CallInst(memset_, params, "", ip);
 
@@ -1895,7 +1895,7 @@ namespace llvm { namespace Java { namespace {
         Instruction::Mul, count, elementSize, TMP, ip);
       // The size of the rest of the array object.
       llvm::Constant* arrayObjectSize =
-        ConstantExpr::getCast(ConstantExpr::getSizeOf(clazz->getStructType()),
+        ConstantExpr::getCast(ConstantExpr::getSizeOf(clazz->getLayoutType()),
                               Type::UIntTy);
 
       // Add the array part plus the object part together.

@@ -98,7 +98,7 @@ void VMClass::link()
   if (isArray()) {
     superClasses_.reserve(1);
     superClasses_.push_back(resolver_->getClass("java/lang/Object"));
-    addField("super", superClasses_[0]->getStructType());
+    addField("super", superClasses_[0]->getLayoutType());
     addField("<length>", Type::UIntTy);
     addField("<data>", ArrayType::get(componentClass_->getType(), 0));
 
@@ -136,7 +136,7 @@ void VMClass::link()
                         interfaces_.end());
 
       // We first add the struct of the super class.
-      addField("super", superClass->getStructType());
+      addField("super", superClass->getLayoutType());
 
       // Although we can safely assume that all interfaces inherit
       // from java/lang/Object, java/lang/Class.getSuperclass()
@@ -168,7 +168,7 @@ void VMClass::link()
 
   resolveType();
 
-  assert(!isa<OpaqueType>(getStructType()) &&"Class not initialized properly!");
+  assert(!isa<OpaqueType>(getLayoutType()) &&"Class not initialized properly!");
 }
 
 llvm::Constant* VMClass::getConstant(unsigned index) const
@@ -186,7 +186,7 @@ llvm::Constant* VMClass::getConstant(unsigned index) const
     Constant* jc = classFile_->getConstant(index);
     if (ConstantString* s = dynamic_cast<ConstantString*>(jc)) {
       const VMClass* stringClass = resolver_->getClass("java/lang/String");
-      const Type* stringType = stringClass->getStructType();
+      const Type* stringType = stringClass->getLayoutType();
       resolvedConstantPool_[index] =
         new GlobalVariable(stringType,
                            false,

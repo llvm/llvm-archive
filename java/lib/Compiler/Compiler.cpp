@@ -125,8 +125,7 @@ void Compiler::compileMethodInit(Function& function,
             readSInt(code, i);
             int low = readSInt(code, i);
             int high = readSInt(code, i);
-            unsigned offsetCount = high - low + 1;
-            while (offsetCount--) {
+            while (low++ <= high) {
                 unsigned bcIndex = bcStart + readSInt(code, i);
                 bc2bbMap_[bcIndex] = new BasicBlock(
                     std::string("bb@bc") + utostr(bcIndex), &function);
@@ -135,6 +134,7 @@ void Compiler::compileMethodInit(Function& function,
         }
         case LOOKUPSWITCH: {
             skipPadBytes(code, i);
+            readSInt(code, i);
             unsigned pairCount = readUInt(code, i);
             while (pairCount--) {
                 readSInt(code, i);

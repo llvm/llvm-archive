@@ -116,6 +116,10 @@ const VMMethod* VMClass::lookupMethod(const std::string& nameAndType) const
 
 void VMClass::computeLayout()
 {
+  // The layout of primitive classes is already computed.
+  if (isPrimitive())
+    return;
+
   // If this is an interface, then its layout and type are the same as
   // java/lang/Object.
   if (isInterface()) {
@@ -362,9 +366,8 @@ void VMClass::link()
 {
   // Primitive classes require no linking.
   if (isPrimitive())
-    return;
-
-  if (isArray()) {
+    ;
+  else if (isArray()) {
     superClasses_.reserve(1);
     superClasses_.push_back(resolver_->getClass("java/lang/Object"));
 

@@ -359,8 +359,8 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL, /* 170 */
   &get_array_length,
   NULL,
-  NULL,
-  NULL,
+  &get_object_array_element,
+  &set_object_array_element,
   NULL,
   NULL,
   NULL,

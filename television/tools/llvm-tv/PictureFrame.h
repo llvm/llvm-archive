@@ -18,7 +18,7 @@ class PictureFrame : public wxFrame {
     Show (TRUE);
   }
  public:
-  PictureFrame::PictureFrame (TVApplication *app, const char *windowTitle)
+  PictureFrame::PictureFrame (TVApplication *app, const char *windowTitle = "")
     : wxFrame (NULL, -1, windowTitle), myApp (app) {
     setupAppearance ();
   }

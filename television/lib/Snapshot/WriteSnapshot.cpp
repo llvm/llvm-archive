@@ -68,6 +68,11 @@ namespace {
 /// this one. Signal llvm-tv that fresh bytecode file has arrived for
 /// consumption.
 bool Snapshot::run(Module &M) {
+  // Make sure the snapshots dir exists, which it will unless this
+  // is the first time we've ever run the -snapshot pass.
+  EnsureDirectoryExists (llvmtvPath);
+  EnsureDirectoryExists (snapshotsPath);
+
   // Assumption: directory only has numbered .bc files, from 0 -> n-1, next one
   // we add will be n.bc . Subtract 2 for "." and ".."
   unsigned numFiles = GetNumFilesInDir(snapshotsPath) - 2;

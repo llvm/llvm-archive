@@ -10,6 +10,7 @@
 #include "DSAGraphDrawer.h"
 #include "PictureFrame.h"
 #include "TVApplication.h"
+#include "TVTreeItem.h"
 #include "TVFrame.h"
 #include "llvm-tv/Config.h"
 #include <wx/image.h>
@@ -113,55 +114,49 @@ void TVApplication::Quit () {
   myFrame->Destroy ();
 }
 
-void TVApplication::OpenCallGraphView (Module *M) {
-  CallGraphDrawer drawer (M);
-  allMyWindows.push_back (new PictureFrame (this, "call graph",
-                                            drawer.getGraphImage ()));
+void TVApplication::OpenCallGraphView (TVTreeItemData *item) {
+  std::string title = "Call graph of " + item->getTitle ();
+  PictureFrame *wind = new PictureFrame (this, title.c_str ());
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new CallGraphDrawer (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
 }
 
-void TVApplication::OpenCFGView (Function *F) {
-  CFGGraphDrawer drawer (F);
-  allMyWindows.push_back (new PictureFrame (this, "control-flow graph",
-                                            drawer.getGraphImage ()));
+void TVApplication::OpenCFGView (TVTreeItemData *item) {
+  std::string title = "Control-flow graph of " + item->getTitle ();
+  PictureFrame *wind = new PictureFrame (this, title.c_str ());
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new CFGGraphDrawer (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
 }
 
-void TVApplication::OpenBUDSView (Function *F) {
-  BUGraphDrawer drawer (F);
-  std::string title = "BU graph: " + F->getName();
-  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
-                                            drawer.getGraphImage ()));
+void TVApplication::OpenBUDSView (TVTreeItemData *item) {
+  std::string title = "BU DataStructure " + item->dsGraphName ();
+  PictureFrame *wind = new PictureFrame (this, title.c_str ()); 
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new BUGraphDrawer (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
 }
 
-void TVApplication::OpenBUDSView (Module *M) {
-  BUGraphDrawer drawer (M);
-  allMyWindows.push_back (new PictureFrame (this, "BU graph (globals)",
-                                            drawer.getGraphImage ()));
+void TVApplication::OpenTDDSView (TVTreeItemData *item) {
+  std::string title = "TD DataStructure " + item->dsGraphName ();
+  PictureFrame *wind = new PictureFrame (this, title.c_str()); 
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new TDGraphDrawer (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
 }
 
-void TVApplication::OpenTDDSView (Function *F) {
-  TDGraphDrawer drawer (F);
-  std::string title = "TD graph: " + F->getName();
-  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
-                                            drawer.getGraphImage ()));
-}
-
-void TVApplication::OpenTDDSView (Module *M) {
-  TDGraphDrawer drawer (M);
-  allMyWindows.push_back (new PictureFrame (this, "TD graph (globals)",
-                                            drawer.getGraphImage ()));
-}
-
-void TVApplication::OpenLocalDSView (Function *F) {
-  TDGraphDrawer drawer (F);
-  std::string title = "Local graph: " + F->getName();
-  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
-                                            drawer.getGraphImage ()));
-}
-
-void TVApplication::OpenLocalDSView (Module *M) {
-  TDGraphDrawer drawer (M);
-  allMyWindows.push_back (new PictureFrame (this, "Local graph (globals)",
-                                            drawer.getGraphImage ()));
+void TVApplication::OpenLocalDSView (TVTreeItemData *item) {
+  std::string title = "Local DataStructure " + item->dsGraphName ();
+  PictureFrame *wind = new PictureFrame (this, title.c_str());
+  allMyWindows.push_back (wind);
+  ItemDisplayer *drawer = new LocalGraphDrawer (wind);
+  allMyDisplayers.push_back (drawer);
+  drawer->displayItem (item);
 }
 
 

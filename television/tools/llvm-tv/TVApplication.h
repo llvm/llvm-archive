@@ -19,6 +19,8 @@ namespace llvm {
 }
 
 class TVFrame;
+class TVTreeItemData;
+class ItemDisplayer;
 
 /// FatalErrorBox - pop up an error message and quit.
 ///
@@ -31,18 +33,16 @@ void FatalErrorBox (const std::string msg);
 class TVApplication : public wxApp {
   TVFrame *myFrame;
   std::vector<wxWindow *> allMyWindows;
+  std::vector<ItemDisplayer *> allMyDisplayers;
 public:
   bool OnInit ();
   void GoodbyeFrom (wxWindow *dyingWindow);
   void ReceivedSignal ();
-  void OpenCallGraphView (llvm::Module *M);
-  void OpenCFGView (llvm::Function *F);
-  void OpenBUDSView (llvm::Function *F);
-  void OpenBUDSView (llvm::Module *M);
-  void OpenTDDSView (llvm::Function *F);
-  void OpenTDDSView (llvm::Module *M);
-  void OpenLocalDSView (llvm::Function *F);
-  void OpenLocalDSView (llvm::Module *M);
+  void OpenCallGraphView (TVTreeItemData *M);
+  void OpenCFGView (TVTreeItemData *F);
+  void OpenBUDSView (TVTreeItemData *M);
+  void OpenTDDSView (TVTreeItemData *F);
+  void OpenLocalDSView (TVTreeItemData *F);
   void OpenCodeView (llvm::Function *F);
   void Quit ();
 };

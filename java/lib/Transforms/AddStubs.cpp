@@ -32,7 +32,9 @@ namespace {
   struct AddStubs : public ModulePass {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-        if (F->empty() && F->getName().find("java") != std::string::npos) {
+        if (F->empty() &&
+            (F->getName().find("java") != std::string::npos ||
+             F->getName().find("gnu") != std::string::npos)) {
           DEBUG(std::cerr << "Stubbing out: " << F->getName() << '\n');
           BasicBlock* entry = new BasicBlock("entry", F);
           if (F->getReturnType() == Type::VoidTy)

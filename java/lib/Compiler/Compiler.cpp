@@ -272,7 +272,7 @@ namespace llvm { namespace Java { namespace {
             return locals_[index];
         }
 
-        void compileMethodOnly(Module& module,
+        Function* compileMethodOnly(Module& module,
                                const std::string& classMethodDesc) {
             DEBUG(std::cerr << "Compiling method: " << classMethodDesc << '\n');
 
@@ -314,6 +314,8 @@ namespace llvm { namespace Java { namespace {
                 function->getBasicBlockList().push_front(prologue_);
                 new BranchInst(prologue_->getNext(), prologue_);
             }
+
+            return function;
         }
 
         std::pair<const ClassFile*, const Method*>
@@ -334,15 +336,18 @@ namespace llvm { namespace Java { namespace {
         }
 
     public:
-        void compileMethod(Module& module, const std::string& classMethodDesc) {
+        Function* compileMethod(Module& module,
+                                const std::string& classMethodDesc) {
             c2tMap_.insert(std::make_pair("java/lang/Object",
                                           OpaqueType::get()));
             module.addTypeName("java/lang/Object", c2tMap_["java/lang/Object"]);
-            compileMethodOnly(module, classMethodDesc);
+            Function* function = compileMethodOnly(module, classMethodDesc);
             for (unsigned i = 0; i != toCompileFunctions_.size(); ++i) {
                 Function* f = toCompileFunctions_[i];
                 compileMethodOnly(module, f->getName());
             }
+
+            return function;
         }
 
         void do_aconst_null(unsigned bcI) {
@@ -805,5 +810,20 @@ void Compiler::compile(Module& m, const std::string& className)
 {
     DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
-    compilerImpl_->compileMethod(m, className + "/main([Ljava/lang/String;)I");
+    Function* main =
+        compilerImpl_->compileMethod(m,
+                                     className + "/main([Ljava/lang/String;)I");
+    Function* javaMain = m.getOrInsertFunction
+        ("llvm_java_main", Type::IntTy,
+         Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);
+
+    BasicBlock* bb = new BasicBlock("entry", javaMain);
+    const FunctionType* mainTy = main->getFunctionType();
+    new ReturnInst(
+        new CallInst(main,
+                     // FIXME: Forward correct params from llvm_java_main
+                     llvm::Constant::getNullValue(mainTy->getParamType(0)),
+                     TMP,
+                     bb),
+                   bb);
 }

@@ -1,14 +1,24 @@
+//===-- PictureFrame.h - Window containing PictureCanvas ---------*- C++ -*-==//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// Window container for PictureCanvas objects.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef PICTUREFRAME_H
 #define PICTUREFRAME_H
 
-#include "wx/wx.h"
 #include "PictureCanvas.h"
-
-//===----------------------------------------------------------------------===//
-
-// PictureFrame interface
+#include "wx/wx.h"
 
 class TVApplication;
+
 /// PictureFrame - just a window that contains a PictureCanvas.
 ///
 class PictureFrame : public wxFrame {

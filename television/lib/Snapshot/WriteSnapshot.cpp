@@ -36,6 +36,8 @@
 #include <sys/types.h>
 using namespace llvm;
 
+extern char **environ;
+
 namespace {
   struct Snapshot : public Pass {
     /// getAnalysisUsage - this pass does not require or invalidate any analysis
@@ -136,7 +138,8 @@ std::string Snapshot::findOption(unsigned Idx) {
     if (*OptCmdline == '-') {
       size_t len = strcspn(OptCmdline, " ");
       // Do not add in the '-' or the space after the switch
-      char *arg = strndup(OptCmdline+1, len-1);
+      char *arg = strdup(OptCmdline+1);
+      arg[len - 1] = '\0';
       InputArgv.push_back(std::string(arg));
       free(arg);
     }

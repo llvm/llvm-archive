@@ -1,4 +1,4 @@
 LEVEL = ..
-DIRS = Snapshot wxwindows
+DIRS = Snapshot
 
 include $(LEVEL)/Makefile.common

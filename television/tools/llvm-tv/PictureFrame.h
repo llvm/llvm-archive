@@ -19,14 +19,9 @@ class PictureFrame : public wxFrame {
     Show (TRUE);
   }
  public:
-  PictureFrame::PictureFrame (TVApplication *app, const char *filename)
-    : wxFrame (NULL, -1, filename), myApp (app),
-      myPictureCanvas (this, filename) {
-    setupAppearance ();
-  }
-  PictureFrame::PictureFrame (TVApplication *app, const char *filename,
+  PictureFrame::PictureFrame (TVApplication *app, const char *windowTitle,
                               wxImage *image)
-    : wxFrame (NULL, -1, filename), myApp (app),
+    : wxFrame (NULL, -1, windowTitle), myApp (app),
       myPictureCanvas (this, image) {
     setupAppearance ();
   }

@@ -845,18 +845,6 @@ namespace llvm { namespace Java { namespace {
       return NULL;
     }
 
-    /// Emits the necessary code to get a field from the passed
-    /// pointer to an object.
-    Value* getField(const VMField* field, Value* ptr) {
-      std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
-      indices[1] = ConstantUInt::get(Type::UIntTy, field->getMemberIndex());
-
-      return new GetElementPtrInst(ptr,
-                                   indices,
-                                   field->getName()+'*',
-                                   currentBB_);
-    }
-
     std::string getMangledString(const std::string& str) {
       std::string mangledStr;
 
@@ -1603,7 +1591,12 @@ namespace llvm { namespace Java { namespace {
       const VMField* field = class_->getField(index);
 
       Value* p = pop(field->getParent()->getType());
-      Value* v = new LoadInst(getField(field, p), field->getName(), currentBB_);
+      std::vector<Value*> indices(2);
+      indices[0] = ConstantUInt::get(Type::UIntTy, 0);
+      indices[1] = ConstantUInt::get(Type::UIntTy, field->getMemberIndex());
+      Value* fieldPtr =
+        new GetElementPtrInst(p, indices, field->getName()+'*', currentBB_);
+      Value* v = new LoadInst(fieldPtr, field->getName(), currentBB_);
       push(v);
     }
 
@@ -1612,7 +1605,12 @@ namespace llvm { namespace Java { namespace {
 
       Value* v = pop(field->getClass()->getType());
       Value* p = pop(field->getParent()->getType());
-      new StoreInst(v, getField(field, p), currentBB_);
+      std::vector<Value*> indices(2);
+      indices[0] = ConstantUInt::get(Type::UIntTy, 0);
+      indices[1] = ConstantUInt::get(Type::UIntTy, field->getMemberIndex());
+      Value* fieldPtr =
+        new GetElementPtrInst(p, indices, field->getName()+'*', currentBB_);
+      new StoreInst(v, fieldPtr, currentBB_);
     }
 
     void makeCall(Value* fun, const std::vector<Value*> params) {

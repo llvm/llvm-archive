@@ -9,6 +9,7 @@
 
 # rule to build raw bytecode from a classfile
 %.raw.bc: %.class $(CLASS2LLVM)
-	$(CLASS2LLVM) $(subst /,.,$*) | $(LOPT) -mem2reg > $@
+	@$(ECHO) Compiling $<
+	$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) | $(LOPT) -mem2reg > $@
 
 include $(LEVEL)/test/Makefile.test

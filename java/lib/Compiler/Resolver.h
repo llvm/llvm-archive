@@ -46,6 +46,8 @@ namespace llvm { namespace Java {
       return classMap_.insert(i, std::make_pair(clazz.getName(), clazz));
     }
 
+    friend class Class;
+
   public:
     static std::string canonicalizeClassName(const std::string& className) {
       if (className[0] == '[')

@@ -796,10 +796,10 @@ namespace llvm { namespace Java { namespace {
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
       const std::string& className = fieldRef->getClass()->getName()->str();
-      GlobalVariable* global =
-        getStaticField(class_->getClass(fieldRef->getClassIndex()),
-                       nameAndType->getName()->str(),
-                       resolver_->getType(nameAndType->getDescriptor()->str()));
+      GlobalVariable* global = getStaticField(
+        class_->getClassForClass(fieldRef->getClassIndex()),
+        nameAndType->getName()->str(),
+        class_->getClassForDescriptor(nameAndType->getDescriptorIndex()));
 
       assert(global && "Cannot find global for static field!");
 
@@ -810,12 +810,13 @@ namespace llvm { namespace Java { namespace {
     /// super clases, or any of the interfaces it implements.
     GlobalVariable* getStaticField(const Class* clazz,
                                    const std::string& name,
-                                   const Type* type) {
+                                   const Class* fieldClass) {
       emitStaticInitializers(clazz->getClassFile());
 
       std::string globalName =
         clazz->getClassFile()->getThisClass()->getName()->str() + '/' + name;
       DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
+      const Type* type = fieldClass->getType();
       if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
         return g;
 
@@ -851,7 +852,7 @@ namespace llvm { namespace Java { namespace {
         class_->getClassFile()->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
       return getField(
-        class_->getClass(fieldRef->getClassIndex()),
+        class_->getClassForClass(fieldRef->getClassIndex()),
         nameAndType->getName()->str(),
         ptr);
     }
@@ -1100,7 +1101,9 @@ namespace llvm { namespace Java { namespace {
         for (unsigned i = 0, e = fields.size(); i != e; ++i) {
           Field* field = fields[i];
           if (field->isStatic()) {
-            const Type* globalTy = resolver_->getType(field->getDescriptor()->str());
+            const Class* fieldClass =
+              clazz->getClassForDescriptor(field->getDescriptorIndex());
+            const Type* globalTy = fieldClass->getType();
             // A java field can be final/constant even if it has a
             // dynamic initializer. Because LLVM does not currently
             // support these semantics, we consider constants only
@@ -1633,8 +1636,9 @@ namespace llvm { namespace Java { namespace {
     void do_putfield(unsigned index) {
       ConstantFieldRef* fieldRef =
         class_->getClassFile()->getConstantFieldRef(index);
-      const Type* type =
-        resolver_->getType(fieldRef->getNameAndType()->getDescriptor()->str());
+      const Class* fieldClass = class_->getClassForDescriptor(
+        fieldRef->getNameAndType()->getDescriptorIndex());
+      const Type* type = fieldClass->getType();
       Value* v = pop(type);
       Value* p = pop(resolver_->getObjectBaseRefType());
       Value* fp = getField(index, p);
@@ -1686,7 +1690,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* clazz = class_->getClass(methodRef->getClassIndex());
+      const Class* clazz = class_->getClassForClass(methodRef->getClassIndex());
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
@@ -1728,7 +1732,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& methodDescr =
         methodName + nameAndType->getDescriptor()->str();
       std::string funcName = className + '/' + methodDescr;
-      const Class* clazz = class_->getClass(methodRef->getClassIndex());
+      const Class* clazz = class_->getClassForClass(methodRef->getClassIndex());
 
       const FunctionType* funcTy = cast<FunctionType>(
         resolver_->getType(nameAndType->getDescriptor()->str(), true));
@@ -1740,7 +1744,7 @@ namespace llvm { namespace Java { namespace {
     void do_invokestatic(unsigned index) {
       ConstantMethodRef* methodRef =
         class_->getClassFile()->getConstantMethodRef(index);
-      const Class* clazz = class_->getClass(methodRef->getClassIndex());
+      const Class* clazz = class_->getClassForClass(methodRef->getClassIndex());
       emitStaticInitializers(clazz->getClassFile());
       Method* method = getMethod(methodRef);
       Function* function = getFunction(method);
@@ -1767,7 +1771,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* clazz = class_->getClass(methodRef->getClassIndex());
+      const Class* clazz = class_->getClassForClass(methodRef->getClassIndex());
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
@@ -1840,7 +1844,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_new(unsigned index) {
-      const Class* clazz = class_->getClass(index);
+      const Class* clazz = class_->getClassForClass(index);
       emitStaticInitializers(clazz->getClassFile());
       const VTableInfo& vi = getVTableInfo(clazz);
 
@@ -1929,7 +1933,7 @@ namespace llvm { namespace Java { namespace {
     void do_anewarray(unsigned index) {
       Value* count = pop(Type::UIntTy);
 
-      const Class* clazz = class_->getClass(index);
+      const Class* clazz = class_->getClassForClass(index);
       const Class* arrayClass = resolver_->getArrayClass(clazz);
       const VTableInfo* vi = getVTableInfoGeneric(arrayClass);
 
@@ -1951,7 +1955,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_checkcast(unsigned index) {
-      const Class* clazz = class_->getClass(index);
+      const Class* clazz = class_->getClassForClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());
@@ -1968,7 +1972,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_instanceof(unsigned index) {
-      const Class* clazz = class_->getClass(index);
+      const Class* clazz = class_->getClassForClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());

@@ -88,7 +88,8 @@ namespace llvm { namespace Java {
     int getFieldIndex(const std::string& name) const;
 
     llvm::Constant* getConstant(unsigned index) const;
-    const Class* getClass(unsigned index) const;
+    const Class* getClassForClass(unsigned index) const;
+    const Class* getClassForDescriptor(unsigned index) const;
   };
 
 } } // namespace llvm::Java

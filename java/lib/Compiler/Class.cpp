@@ -121,7 +121,8 @@ void Class::link()
       // For each of the interfaces we implement, load it and add that
       // interface and all the interfaces it inherits from.
       for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
-        const Class* interface = getClass(classFile_->getInterfaceIndex(i));
+        const Class* interface =
+          getClassForClass(classFile_->getInterfaceIndex(i));
         interfaces_.push_back(interface);
         for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
           interfaces_.push_back(interface->getInterface(j));
@@ -210,7 +211,7 @@ llvm::Constant* Class::getConstant(unsigned index) const
   return static_cast<llvm::Constant*>(resolvedConstantPool_[index]);
 }
 
-const Class* Class::getClass(unsigned index) const
+const Class* Class::getClassForClass(unsigned index) const
 {
   assert(classFile_ && "No constant pool!");
   assert(dynamic_cast<ConstantClass*>(classFile_->getConstant(index)) &&
@@ -221,6 +222,22 @@ const Class* Class::getClass(unsigned index) const
     ConstantClass* jc = classFile_->getConstantClass(index);
     resolvedConstantPool_[index] =
       const_cast<Class*>(resolver_->getClass(jc->getName()->str()));
+  }
+
+  return static_cast<const Class*>(resolvedConstantPool_[index]);
+}
+
+const Class* Class::getClassForDescriptor(unsigned index) const
+{
+  assert(classFile_ && "No constant pool!");
+  assert(dynamic_cast<ConstantUtf8*>(classFile_->getConstant(index)) &&
+         "Not an index to a descriptor reference!");
+
+  // If we haven't resolved this constant already, do so now.
+  if (!resolvedConstantPool_[index]) {
+    ConstantUtf8* jc = classFile_->getConstantUtf8(index);
+    resolvedConstantPool_[index] =
+      const_cast<Class*>(resolver_->getClassForDesc(jc->str()));
   }
 
   return static_cast<const Class*>(resolvedConstantPool_[index]);

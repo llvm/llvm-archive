@@ -60,7 +60,7 @@ namespace {
         return tmp.out;
     }
 
-    void readConstantPool(ClassFile::ConstantPool& cp, std::istream& is)
+    void readConstantPool(ConstantPool& cp, std::istream& is)
     {
         assert(cp.empty() && "Should not call with a non-empty constant pool");
         uint16_t count = readU2(is);
@@ -71,9 +71,7 @@ namespace {
             cp.push_back(Constant::readConstant(cp, is));
     }
 
-    void readInterfaces(ClassFile::Interfaces& i,
-                        const ClassFile::ConstantPool& cp,
-                        std::istream& is)
+    void readInterfaces(Classes& i, const ConstantPool& cp, std::istream& is)
     {
         assert(i.empty() &&
                "Should not call with a non-empty interfaces vector");
@@ -86,9 +84,7 @@ namespace {
         }
     }
 
-    void readFields(ClassFile::Fields& f,
-                    const ClassFile::ConstantPool& cp,
-                    std::istream& is)
+    void readFields(Fields& f, const ConstantPool& cp, std::istream& is)
     {
         assert(f.empty() && "Should not call with a non-empty fields vector");
         uint16_t count = readU2(is);
@@ -97,9 +93,7 @@ namespace {
             f.push_back(Field::readField(cp, is));
     }
 
-    void readMethods(ClassFile::Methods& m,
-                     const ClassFile::ConstantPool& cp,
-                     std::istream& is)
+    void readMethods(Methods& m, const ConstantPool& cp, std::istream& is)
     {
         assert(m.empty() && "Should not call with a non-empty methods vector");
         uint16_t count = readU2(is);
@@ -108,8 +102,8 @@ namespace {
             m.push_back(Method::readMethod(cp, is));
     }
 
-    void readAttributes(ClassFile::Attributes& a,
-                        const ClassFile::ConstantPool& cp,
+    void readAttributes(Attributes& a,
+                        const ConstantPool& cp,
                         std::istream& is)
     {
         assert(a.empty() &&
@@ -212,7 +206,7 @@ ClassFileSemanticError::~ClassFileSemanticError() throw()
 
 //===----------------------------------------------------------------------===//
 // Constant implementation
-Constant* Constant::readConstant(const ClassFile::ConstantPool& cp,
+Constant* Constant::readConstant(const ConstantPool& cp,
                                  std::istream& is)
 {
     Constant::Tag tag = static_cast<Constant::Tag>(readU1(is));
@@ -251,8 +245,7 @@ Constant::~Constant()
 
 }
 
-ConstantMemberRef::ConstantMemberRef(const ClassFile::ConstantPool&cp,
-                                     std::istream& is)
+ConstantMemberRef::ConstantMemberRef(const ConstantPool&cp, std::istream& is)
     : Constant(cp),
       classIdx_(readU2(is)),
       nameAndTypeIdx_(readU2(is))
@@ -265,8 +258,7 @@ std::ostream& ConstantMemberRef::dump(std::ostream& os) const
     return os << *getNameAndType() << '(' << *getClass() << ')';
 }
 
-ConstantClass::ConstantClass(const ClassFile::ConstantPool& cp,
-                             std::istream& is)
+ConstantClass::ConstantClass(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       nameIdx_(readU2(is))
 {
@@ -278,8 +270,7 @@ std::ostream& ConstantClass::dump(std::ostream& os) const
     return os << *getName();
 }
 
-ConstantString::ConstantString(const ClassFile::ConstantPool& cp,
-                               std::istream& is)
+ConstantString::ConstantString(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       stringIdx_(readU2(is))
 {
@@ -291,8 +282,7 @@ std::ostream& ConstantString::dump(std::ostream& os) const
     return os << "string " << *getValue();
 }
 
-ConstantInteger::ConstantInteger(const ClassFile::ConstantPool& cp,
-                                 std::istream& is)
+ConstantInteger::ConstantInteger(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       value_(static_cast<int32_t>(readU4(is)))
 {
@@ -304,8 +294,7 @@ std::ostream& ConstantInteger::dump(std::ostream& os) const
     return os << value_;
 }
 
-ConstantFloat::ConstantFloat(const ClassFile::ConstantPool& cp,
-                             std::istream& is)
+ConstantFloat::ConstantFloat(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       value_(int2float(readU4(is)))
 {
@@ -317,8 +306,7 @@ std::ostream& ConstantFloat::dump(std::ostream& os) const
     return os << value_;
 }
 
-ConstantLong::ConstantLong(const ClassFile::ConstantPool& cp,
-                           std::istream& is)
+ConstantLong::ConstantLong(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       value_(static_cast<int64_t>(readU8(is)))
 {
@@ -330,8 +318,7 @@ std::ostream& ConstantLong::dump(std::ostream& os) const
     return os << value_;
 }
 
-ConstantDouble::ConstantDouble(const ClassFile::ConstantPool& cp,
-                               std::istream& is)
+ConstantDouble::ConstantDouble(const ConstantPool& cp, std::istream& is)
     : Constant(cp),
       value_(long2double(readU8(is)))
 {
@@ -343,7 +330,7 @@ std::ostream& ConstantDouble::dump(std::ostream& os) const
     return os << value_;
 }
 
-ConstantNameAndType::ConstantNameAndType(const ClassFile::ConstantPool& cp,
+ConstantNameAndType::ConstantNameAndType(const ConstantPool& cp,
                                          std::istream& is)
     : Constant(cp),
       nameIdx_(readU2(is)),
@@ -357,8 +344,7 @@ std::ostream& ConstantNameAndType::dump(std::ostream& os) const
     return os << *getDescriptor() << ' ' << *getName();
 }
 
-ConstantUtf8::ConstantUtf8(const ClassFile::ConstantPool& cp,
-                           std::istream& is)
+ConstantUtf8::ConstantUtf8(const ConstantPool& cp, std::istream& is)
     : Constant(cp)
 {
     uint16_t length = readU2(is);
@@ -377,7 +363,7 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Field implementation
-Field::Field(const ClassFile::ConstantPool& cp, std::istream& is)
+Field::Field(const ConstantPool& cp, std::istream& is)
 {
     accessFlags_ = readU2(is);
     if (!name_)
@@ -414,7 +400,7 @@ std::ostream& Field::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Method implementation
-Method::Method(const ClassFile::ConstantPool& cp, std::istream& is)
+Method::Method(const ConstantPool& cp, std::istream& is)
 {
     accessFlags_ = readU2(is);
     name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
@@ -453,8 +439,7 @@ std::ostream& Method::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Attribute implementation
-Attribute* Attribute::readAttribute(const ClassFile::ConstantPool& cp,
-                                    std::istream& is)
+Attribute* Attribute::readAttribute(const ConstantPool& cp, std::istream& is)
 {
     ConstantUtf8* name = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
     if (!name)
@@ -473,7 +458,7 @@ Attribute* Attribute::readAttribute(const ClassFile::ConstantPool& cp,
 }
 
 Attribute::Attribute(ConstantUtf8* name,
-                     const ClassFile::ConstantPool& cp,
+                     const ConstantPool& cp,
                      std::istream& is)
     : name_(name)
 {
@@ -492,10 +477,9 @@ std::ostream& Attribute::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // AttributeConstantValue implementation
-AttributeConstantValue::AttributeConstantValue(
-    ConstantUtf8* name,
-    const ClassFile::ConstantPool& cp,
-    std::istream& is)
+AttributeConstantValue::AttributeConstantValue(ConstantUtf8* name,
+                                               const ConstantPool& cp,
+                                               std::istream& is)
     : Attribute(name, cp, is)
 {
     uint32_t length = readU4(is);
@@ -513,7 +497,7 @@ std::ostream& AttributeConstantValue::dump(std::ostream& os) const
 //===----------------------------------------------------------------------===//
 // Attribute code
 AttributeCode::AttributeCode(ConstantUtf8* name,
-                             const ClassFile::ConstantPool& cp,
+                             const ConstantPool& cp,
                              std::istream& is)
     : Attribute(name, cp, is)
 {
@@ -553,7 +537,7 @@ std::ostream& AttributeCode::dump(std::ostream& os) const
     return os;
 }
 
-AttributeCode::Exception::Exception(const ClassFile::ConstantPool& cp,
+AttributeCode::Exception::Exception(const ConstantPool& cp,
                                     std::istream& is)
 {
     startPc_ = readU2(is);

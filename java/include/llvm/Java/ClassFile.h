@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the ClassFileReader class,
-// which implements a ClassFile reader parser for use with the Java
-// frontend.
+// This file contains the declaration of the ClassFile and subordinate
+// classes, which represent a parsed class file.
 //
 //===----------------------------------------------------------------------===//
 

@@ -6,8 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
 LEVEL := ..
+
 PARALLEL_DIRS := classdump
 
 include $(LEVEL)/Makefile.common

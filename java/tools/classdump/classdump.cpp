@@ -1,4 +1,4 @@
-//===-- ClassFile.h - ClassFile support library -----------------*- C++ -*-===//
+//===-- classdump.cpp - classdump utility -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

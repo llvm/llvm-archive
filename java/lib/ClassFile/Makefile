@@ -1,4 +1,4 @@
-##===- lib/Analysis/Makefile -------------------------------*- Makefile -*-===##
+##===- lib/ClassFile/Makefile ------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,9 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+LEVEL := ../..
 
-LEVEL = ../..
-LIBRARYNAME = classfile
-#BUILD_ARCHIVE = 1
+LIBRARYNAME := classfile
+
+BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common

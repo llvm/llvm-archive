@@ -6,8 +6,8 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = .
+LEVEL := .
 
-DIRS = lib tools
+DIRS := lib tools
 
 include $(LEVEL)/Makefile.common

@@ -1,4 +1,4 @@
-#===- tools/llc/Makefile ------------------------------*- Makefile -*-===##
+#===- tools/classdump/Makefile -----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
-TOOLNAME = dumpclass
-USEDLIBS = classfile
+LEVEL := ../..
+
+TOOLNAME := classdump
+
+USEDLIBS := classfile
 
 include $(LEVEL)/Makefile.common

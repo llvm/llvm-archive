@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../../../..
 
-CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
+CPPFLAGS+=-I$(PROJ_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1
 SHARED_LIBRARY=1
 LIBRARYNAME=test

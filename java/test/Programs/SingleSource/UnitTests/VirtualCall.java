@@ -1,28 +1,37 @@
-class VirtualCallBase
-{
-    public int foo() { return 1; }
-    public int bar() { return 2; }
-}
-
-class VirtualCallDerived extends VirtualCallBase
-{
-    public int foo() { return 100; }
-    public int bar() { return super.bar() + super.foo(); }
-}
-
 public class VirtualCall
 {
+    static class A
+    {
+        public void m1() { Test.println(1); m2(); m3(); }
+        public void m2() { Test.println(2); m3(); }
+        public void m3() { Test.println(3); }
+    }
+
+    static class B extends A
+    {
+        public void m2() { Test.println(22); }
+        public void m3() { Test.println(33); }
+    }
+
+    static class C extends B
+    {
+        public void m2() { Test.println(222); m3(); }
+    }
+
     public static void main(String[] args) {
-        VirtualCallBase a = new VirtualCallBase();
-        Test.println(a.foo());
-        Test.println(a.bar());
+        A a = new A();
+        a.m1();
+        a.m2();
+        a.m3();
 
-        a = new VirtualCallDerived();
-        Test.println(a.foo());
-        Test.println(a.bar());
+        a = new B();
+        a.m1();
+        a.m2();
+        a.m3();
 
-        VirtualCallDerived b = new VirtualCallDerived();
-        Test.println(b.foo());
-        Test.println(b.bar());
+        a = new C();
+        a.m1();
+        a.m2();
+        a.m3();
     }
 }

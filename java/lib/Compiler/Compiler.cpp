@@ -2357,11 +2357,13 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_monitorenter() {
-      // assert(0 && "not implemented");
+      // FIXME: This is currently a noop
+      pop(ObjectBaseRefTy);
     }
 
     void do_monitorexit() {
-      // assert(0 && "not implemented");
+      // FIXME: This is currently a noop
+      pop(ObjectBaseRefTy);
     }
 
     void do_multianewarray(unsigned index, unsigned dims) {

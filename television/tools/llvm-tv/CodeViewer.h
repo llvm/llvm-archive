@@ -42,6 +42,8 @@ class TVCodeListCtrl : public wxListCtrl {
   std::map<TVCodeItem*, long> ItemToIndex;
 
   void refreshView();
+  void changeItemTextAttrs (TVCodeItem *item, wxColour *newColor, int newWgt);
+
  public:
   void SetFunction (llvm::Function *F);
   TVCodeListCtrl(wxWindow *_parent, llvm::Function *F);

@@ -87,20 +87,23 @@ TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent, llvm::Function *F)
   SetFunction (F);
 }
 
+void TVCodeListCtrl::changeItemTextAttrs (TVCodeItem *item, wxColour *newColor, 
+                                          int newFontWeight) {
+  item->m_itemId = ItemToIndex[item];
+  item->SetTextColour(*newColor);
+  wxFont Font = item->GetFont();
+  Font.SetWeight(newFontWeight);
+  item->SetFont(Font);
+  SetItem(*item);
+}
+
 void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {
   Value *V = itemList[event.GetIndex ()]->getValue();
   if (!V) return;
 
   // Highlight uses
-  for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u) {
-    TVCodeItem *item = ValueToItem[*u];
-    item->m_itemId = ItemToIndex[item];
-    item->SetTextColour(*wxRED);
-    wxFont Font = item->GetFont();
-    Font.SetWeight(wxBOLD);
-    item->SetFont(Font);
-    SetItem(*item);
-  }
+  for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u)
+    changeItemTextAttrs (ValueToItem[*u], wxRED, wxBOLD);
 }
 
 void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
@@ -108,15 +111,8 @@ void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
   if (!V) return;
 
   // Set uses back to normal
-  for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u) {
-    TVCodeItem *item = ValueToItem[*u];
-    item->m_itemId = ItemToIndex[item];
-    item->SetTextColour(*wxBLACK);
-    wxFont Font = item->GetFont();
-    Font.SetWeight(wxNORMAL);
-    item->SetFont(Font);
-    SetItem(*item);
-  }
+  for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u)
+    changeItemTextAttrs (ValueToItem[*u], wxBLACK, wxNORMAL);
 }
 
 BEGIN_EVENT_TABLE (TVCodeListCtrl, wxListCtrl)

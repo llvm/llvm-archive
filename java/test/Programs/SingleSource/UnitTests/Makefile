@@ -10,7 +10,6 @@ LEVEL := ../../../..
 
 JAVA_TESTS := Arithm \
 	BigConstants \
-	ClassTest \
 	FieldAccess \
 	FloatCompare \
 	ForLoop \
@@ -18,9 +17,9 @@ JAVA_TESTS := Arithm \
 	InstanceOf \
 	LongCompare \
 	LookupSwitch \
-	Return \
 	StaticInitializers \
 	TableSwitch \
+	VirtualCall \
 	VTable
 
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java

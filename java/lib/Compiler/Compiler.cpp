@@ -813,7 +813,7 @@ void Compiler::compile(Module& m, const std::string& className)
                                      className + "/main([Ljava/lang/String;)V");
     Function* javaMain = m.getOrInsertFunction
         ("llvm_java_main", Type::IntTy,
-         Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);
+         Type::VoidTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);
 
     BasicBlock* bb = new BasicBlock("entry", javaMain);
     const FunctionType* mainTy = main->getFunctionType();

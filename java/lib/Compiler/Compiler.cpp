@@ -92,6 +92,9 @@ namespace llvm { namespace Java { namespace {
         void do_switch(unsigned bcI,
                        unsigned defTarget,
                        const SwitchCases& sw) {
+            if (!bc2bbMap_[defTarget])
+                bc2bbMap_[defTarget] =
+                    new BasicBlock("bb@bc" + utostr(defTarget), &function_);
             for (unsigned i = 0; i < sw.size(); ++i) {
                 unsigned target = sw[i].second;
                 if (!bc2bbMap_[target])

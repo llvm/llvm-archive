@@ -817,7 +817,7 @@ namespace llvm { namespace Java { namespace {
       name += method->getDescriptor()->str();
 
       Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                                    Type::VoidTy, 0);
+                                                   Type::VoidTy, 0);
       Function* init = module_.getOrInsertFunction(name, Type::VoidTy, 0);
 
       // if this is the first time we scheduled this function
@@ -875,8 +875,7 @@ namespace llvm { namespace Java { namespace {
     Function* compileMethod(const std::string& classMethodDesc) {
       // initialize the static initializer function
       Function* staticInit =
-        module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                     Type::VoidTy, 0);
+        module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
 

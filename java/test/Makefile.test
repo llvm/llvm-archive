@@ -21,7 +21,7 @@ clean::
 %.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
 	$(Echo) Linking $< with the Java runtime
 	-$(Verb)$(GCCLD) -o=$*.llvm $< -L $(CFERuntimeLibDir) -L $(LibDir) $(EXTRA_OBJS)
-	-$(Verb)$(LOPT) -load $(LibDir)/LLVMJavaTransforms -stubadder -f -o=$*.stubbed.llvm.bc $*.llvm.bc
+	-$(Verb)$(LOPT) -load $(LibDir)/LLVMJavaTransforms -addstubs -f -o=$*.stubbed.llvm.bc $*.llvm.bc
 	-$(Verb)$(MV) -f $*.stubbed.llvm.bc $*.llvm.bc
 
 # rule to link raw bytecode with runtime

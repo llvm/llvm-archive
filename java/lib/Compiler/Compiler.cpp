@@ -797,7 +797,7 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = fieldRef->getClass()->getName()->str();
       GlobalVariable* global =
-        getStaticField(ClassFile::get(className),
+        getStaticField(class_->getClass(fieldRef->getClassIndex()),
                        nameAndType->getName()->str(),
                        resolver_->getType(nameAndType->getDescriptor()->str()));
 
@@ -808,35 +808,40 @@ namespace llvm { namespace Java { namespace {
 
     /// Finds a static field in the specified class, any of its
     /// super clases, or any of the interfaces it implements.
-    GlobalVariable* getStaticField(const ClassFile* cf,
+    GlobalVariable* getStaticField(const Class* clazz,
                                    const std::string& name,
                                    const Type* type) {
-      // Emit the static initializers for this class, making sure that
-      // the globals are inserted into the module.
-      emitStaticInitializers(cf);
-      const std::string& className = cf->getThisClass()->getName()->str();
-      const std::string& globalName = className + '/' + name;
+      emitStaticInitializers(clazz->getClassFile());
 
+      std::string globalName =
+        clazz->getClassFile()->getThisClass()->getName()->str() + '/' + name;
       DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-      GlobalVariable* global = module_->getGlobalVariable(globalName, type);
-      if (global)
-        return global;
+      if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
+        return g;
 
-      for (unsigned i = 0, e = cf->getNumInterfaces(); i != e; ++i) {
-        const ClassFile* ifaceCF =
-          ClassFile::get(cf->getInterface(i)->getName()->str());
-        if (global = getStaticField(ifaceCF, name, type))
-          return global;
+      for (unsigned i = 0, e = clazz->getNumInterfaces(); i != e; ++i) {
+        const Class* interface = clazz->getInterface(i);
+        emitStaticInitializers(interface->getClassFile());
+        globalName =
+          interface->getClassFile()->getThisClass()->getName()->str() +
+          '/' + name;
+        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
+        if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
+          return g;
       }
 
-      // If we have no super class it means the lookup terminates
-      // unsuccesfully.
-      if (!cf->getSuperClass())
-        return NULL;
+      for (unsigned i = 0, e = clazz->getNumSuperClasses(); i != e; ++i) {
+        const Class* superClass = clazz->getSuperClass(i);
+        emitStaticInitializers(superClass->getClassFile());
+        globalName =
+          superClass->getClassFile()->getThisClass()->getName()->str() +
+          '/' + name;
+        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
+        if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
+          return g;
+      }
 
-      const ClassFile* superCF =
-        ClassFile::get(cf->getSuperClass()->getName()->str());
-      return getStaticField(superCF, name, type);
+      return NULL;
     }
 
     /// Emits the necessary code to get a field from the passed

@@ -61,7 +61,7 @@ void HTMLPrinter::printFunctionHeader(Function &F) {
 void HTMLPrinter::visit(Module &M) {
   html.printHeader();
 
-  Table = new SlotCalculator(&M, true);
+  Table = new SlotCalculator(&M);
   // If the module has a symbol table, take all global types and stuff their
   // names into the TypeNames map.
   fillTypeNameTable(&M, TypeNames);
@@ -118,7 +118,7 @@ void HTMLPrinter::visit(GlobalVariable &GV) {
 void HTMLPrinter::visit(Function &F) {
   html.printHeader();
 
-  Table = new SlotCalculator(F.getParent(), true);
+  Table = new SlotCalculator(&F);
   // If the module has a symbol table, take all global types and stuff their
   // names into the TypeNames map.
   fillTypeNameTable(F.getParent(), TypeNames);

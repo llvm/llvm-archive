@@ -51,8 +51,8 @@ private:
   void printName(llvm::Instruction &I);
   void printOperands(llvm::Instruction &I);
 public:
-  HTMLPrinter(llvm::CachedWriter &CW, HTMLMarkup &HM) 
-    : cw(CW), os(CW.getStream()), html(HM) {}
+  HTMLPrinter(llvm::CachedWriter &CW, std::ostream &out, HTMLMarkup &HM) 
+    : cw(CW), os(out), html(HM) {}
 
   using llvm::InstVisitor<HTMLPrinter>::visit;
 

@@ -36,15 +36,15 @@ const Module *getModuleFromVal(const Value *V) {
 SlotCalculator *createSlotCalculator(const Value *V) {
   assert(!isa<Type>(V) && "Can't create an SC for a type!");
   if (const Argument *FA = dyn_cast<Argument>(V)) {
-    return new SlotCalculator(FA->getParent(), false);
+    return new SlotCalculator(FA->getParent());
   } else if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    return new SlotCalculator(I->getParent()->getParent(), false);
+    return new SlotCalculator(I->getParent()->getParent());
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(V)) {
-    return new SlotCalculator(BB->getParent(), false);
+    return new SlotCalculator(BB->getParent());
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
-    return new SlotCalculator(GV->getParent(), false);
+    return new SlotCalculator(GV->getParent());
   } else if (const Function *Func = dyn_cast<Function>(V)) {
-    return new SlotCalculator(Func, false);
+    return new SlotCalculator(Func);
   }
   return 0;
 }
@@ -80,19 +80,16 @@ void fillTypeNameTable(const Module *M,
                        std::map<const Type *, std::string> &TypeNames) {
   if (!M) return;
   const SymbolTable &ST = M->getSymbolTable();
-  SymbolTable::const_iterator PI = ST.find(Type::TypeTy);
-  if (PI != ST.end()) {
-    SymbolTable::type_const_iterator I = PI->second.begin();
-    for (; I != PI->second.end(); ++I) {
-      // As a heuristic, don't insert pointer to primitive types, because
-      // they are used too often to have a single useful name.
-      //
-      const Type *Ty = cast<Type>(I->second);
-      if (!isa<PointerType>(Ty) ||
-          !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
-          isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
-        TypeNames.insert(std::make_pair(Ty, getLLVMName(I->first)));
-    }
+  SymbolTable::type_const_iterator TI = ST.type_begin();
+  for (; TI != ST.type_end(); ++TI ) {
+    // As a heuristic, don't insert pointer to primitive types, because
+    // they are used too often to have a single useful name.
+    //
+    const Type *Ty = cast<Type>(TI->second);
+    if (!isa<PointerType>(Ty) ||
+        !cast<PointerType>(Ty)->getElementType()->isPrimitiveType() ||
+        isa<OpaqueType>(cast<PointerType>(Ty)->getElementType()))
+      TypeNames.insert(std::make_pair(Ty, getLLVMName(TI->first)));
   }
 }
 

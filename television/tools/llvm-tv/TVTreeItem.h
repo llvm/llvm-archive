@@ -7,7 +7,6 @@
 #ifndef TVTREEITEM_H
 #define TVTREEITEM_H
 
-#include "llvm/Assembly/CachedWriter.h"
 #include "GraphDrawer.h"
 #include "CodeViewer.h"
 #include <wx/wx.h>
@@ -38,7 +37,6 @@ protected:
   void printFunctionHeader(llvm::Function *F);
   void printFunction(llvm::Function *F);
   void printModule(llvm::Module *M);
-  llvm::CachedWriter cw;
   wxString m_desc;
 };
 

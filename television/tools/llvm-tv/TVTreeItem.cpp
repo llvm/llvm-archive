@@ -19,11 +19,10 @@ void TVTreeModuleItem::print(std::ostream &os) {
 
 void TVTreeModuleItem::printHTML(std::ostream &os) {
   if (myModule) {
-    cw.setStream(os);
-    cw.setModule(myModule);
+    CachedWriter cw(myModule, os);
     cw << CachedWriter::SymTypeOn;
     HTMLMarkup *Simple = createSimpleHTMLMarkup(os);
-    HTMLPrinter HP(cw, *Simple);
+    HTMLPrinter HP(cw, os, *Simple);
     HP.visit(*myModule);
   }
 }
@@ -34,11 +33,10 @@ void TVTreeFunctionItem::print(std::ostream &os) {
 
 void TVTreeFunctionItem::printHTML(std::ostream &os) {
   if (myFunc) {
-    cw.setStream(os);
-    cw.setModule(myFunc->getParent());
+    CachedWriter cw(myFunc->getParent(), os);
     cw << CachedWriter::SymTypeOn;
     HTMLMarkup *Simple = createSimpleHTMLMarkup(os);
-    HTMLPrinter HP(cw, *Simple);
+    HTMLPrinter HP(cw, os, *Simple);
     HP.visit(*myFunc);
   }
 }

@@ -20,7 +20,7 @@ clean::
 .PRECIOUS: Output/.dir Output/%.bc Output/%.ll Output/%.llvm.bc Output/%.llvm
 
 # rule to build raw bytecode from a classfile
-Output/%.raw.bc: %.class Output/.dir
+Output/%.raw.bc: %.class Output/.dir $(CLASS2LLVM)
 	$(CLASS2LLVM) $* | $(LOPT) -mem2reg > $@
 
 #rule to link in runtime to raw bytecode

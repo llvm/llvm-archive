@@ -24,3 +24,5 @@ $(DESTTOOLCURRENT)/opt-snap: Makefile
 		OPTPASSES=\"$$\*\" opt -load=$(DESTLIBCURRENT)/libsnapshot.so $$\* > $@
 	chmod u+x $@
 
+mac-app:
+	@./MakeMacOSBundle llvm-tv "$(LEVEL)/lib/wxwindows" "$(DESTTOOLCURRENT)/llvm-tv"

@@ -393,7 +393,7 @@ namespace llvm { namespace Java { namespace {
         Method* method = methods[i];
         // The contructor is the only non-static method that is not
         // dynamically dispatched so we skip it.
-        if (!method->isStatic() && method->getName()->str() != "<init>") {
+        if (!method->isStatic() && method->getName()->str()[0] != '<') {
           std::string methodDescr =
             method->getName()->str() +
             method->getDescriptor()->str();
@@ -764,7 +764,7 @@ namespace llvm { namespace Java { namespace {
         Method* method = methods[i];
         // The contructor is the only non-static method that is not
         // dynamically dispatched so we skip it.
-        if (!method->isStatic() && method->getName()->str() != "<init>") {
+        if (!method->isStatic() && method->getName()->str()[0] != '<') {
           const std::string& methodDescr =
             method->getName()->str() + method->getDescriptor()->str();
 

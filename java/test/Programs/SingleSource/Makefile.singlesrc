@@ -12,18 +12,12 @@
 	$(Echo) Compiling $< to bytecode
 	$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
 
-# OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
-#               -ipconstprop -deadargelim -instcombine -simplifycfg \
-#               -inline -argpromotion -raise -tailduplicate -simplifycfg \
-#               -scalarrepl -instcombine -tailcallelim -simplifycfg \
-#               -licm -instcombine -indvars -loop-unroll -instcombine \
-#               -load-vn -gcse -sccp -instcombine -dse -adce -simplifycfg \
-#               -deadtypeelim -constmerge
-
 OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
               -ipconstprop -deadargelim -instcombine -simplifycfg \
               -inline -argpromotion -raise -tailduplicate -simplifycfg \
-              -gcse -sccp -adce -simplifycfg \
+              -scalarrepl -instcombine -tailcallelim -simplifycfg \
+              -licm -instcombine -indvars -loop-unroll -instcombine \
+              -load-vn -gcse -sccp -instcombine -dse -adce -simplifycfg \
               -deadtypeelim -constmerge
 
 # optimize raw bytecode

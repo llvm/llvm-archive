@@ -24,7 +24,7 @@ clean::
 # rule to link bytecode with runtime
 %.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)
 	$(Echo) Linking $< with the Java runtime
-	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) -ljrt $(EXTRA_OBJS)
+	$(Verb)$(GCCLD) -disable-opt -o=$*.llvm $< -L $(LibDir) $(EXTRA_OBJS)
 
 # rule to make assembly from bytecode
 %.dis-ll: %.bc

@@ -2380,6 +2380,8 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
   DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
   std::auto_ptr<Module> m(new Module(className));
+  // Require the Java runtime.
+  m->addLibrary("jrt");
 
   Compiler c(*m);
   Function* main = c.compileMethod(className + "/main([Ljava/lang/String;)V");

@@ -401,7 +401,9 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_neg(unsigned bcI) {
-            assert(0 && "not implemented");
+            Value* v1 = opStack_.top(); opStack_.pop();
+            opStack_.push(
+                BinaryOperator::createNeg(v1, TMP, getBBAt(bcI)));
         }
 
         void do_shl(unsigned bcI) {

@@ -27,15 +27,15 @@ Resolver::Resolver(Module* module)
     objectBaseType_(OpaqueType::get()),
     objectBaseRefType_(PointerType::get(objectBaseType_))
 {
-  insertClass(Class(this, Type::SByteTy));
-  insertClass(Class(this, Type::UShortTy));
-  insertClass(Class(this, Type::DoubleTy));
-  insertClass(Class(this, Type::FloatTy));
-  insertClass(Class(this, Type::IntTy));
-  insertClass(Class(this, Type::LongTy));
-  insertClass(Class(this, Type::ShortTy));
-  insertClass(Class(this, Type::BoolTy));
-  insertClass(Class(this, Type::VoidTy));
+  insertClass(VMClass(this, Type::SByteTy));
+  insertClass(VMClass(this, Type::UShortTy));
+  insertClass(VMClass(this, Type::DoubleTy));
+  insertClass(VMClass(this, Type::FloatTy));
+  insertClass(VMClass(this, Type::IntTy));
+  insertClass(VMClass(this, Type::LongTy));
+  insertClass(VMClass(this, Type::ShortTy));
+  insertClass(VMClass(this, Type::BoolTy));
+  insertClass(VMClass(this, Type::VoidTy));
 
   module_->addTypeName("struct.llvm_java_object_base", objectBaseType_);
 }
@@ -88,7 +88,7 @@ const Type* Resolver::getTypeHelper(const std::string& descr,
   return 0; // not reached
 }
 
-const Class* Resolver::getClassForDesc(const std::string& descriptor)
+const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
 {
   ClassMap::iterator it = classMap_.lower_bound(descriptor);
   if (it == classMap_.end() || it->first != descriptor) {
@@ -108,12 +108,12 @@ const Class* Resolver::getClassForDesc(const std::string& descriptor)
     case 'L': {
       unsigned pos = descriptor.find(';', 1);
       const std::string& className = descriptor.substr(1, pos - 1);
-      it = insertClass(it, Class(this, className));
+      it = insertClass(it, VMClass(this, className));
       break;
     }
     case '[': {
       const std::string& componentDescriptor = descriptor.substr(1);
-      it = insertClass(it, Class(this, getClassForDesc(componentDescriptor)));
+      it = insertClass(it, VMClass(this, getClassForDesc(componentDescriptor)));
       break;
     }
     default:
@@ -128,7 +128,7 @@ const Class* Resolver::getClassForDesc(const std::string& descriptor)
   return &it->second;
 }
 
-const Class* Resolver::getClass(JType type)
+const VMClass* Resolver::getClass(JType type)
 {
   switch (type) {
   case BOOLEAN: return getClassForDesc("Z");

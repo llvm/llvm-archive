@@ -1,4 +1,4 @@
-//===-- Class.h - Compiler representation of a Java class -------*- C++ -*-===//
+//===-- VMClass.h - Compiler representation of a Java class -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,13 +27,13 @@ namespace llvm { namespace Java {
   class ClassFile;
   class Resolver;
 
-  class Class {
+  class VMClass {
     static const unsigned INVALID_INTERFACE_INDEX = 0xFFFFFFFF;
 
     const std::string name_;
     Resolver* resolver_;
     const ClassFile* classFile_;
-    const Class* componentClass_;
+    const VMClass* componentClass_;
     Type* structType_;
     const Type* type_;
     unsigned interfaceIndex_;
@@ -42,8 +42,8 @@ namespace llvm { namespace Java {
     typedef std::vector<const Type*> ElementTypes;
     ElementTypes elementTypes_;
     mutable std::vector<void*> resolvedConstantPool_;
-    std::vector<const Class*> superClasses_;
-    std::vector<const Class*> interfaces_;
+    std::vector<const VMClass*> superClasses_;
+    std::vector<const VMClass*> interfaces_;
 
     void addField(const std::string& name, const Type* type);
     void resolveType();
@@ -53,13 +53,13 @@ namespace llvm { namespace Java {
     // Resolver interface.
 
     // Load primitive class for type.
-    Class(Resolver* resolver, const Type* type);
+    VMClass(Resolver* resolver, const Type* type);
 
     // Load class by name.
-    Class(Resolver* resolver, const std::string& className);
+    VMClass(Resolver* resolver, const std::string& className);
 
     // Load array class of component the passed class.
-    Class(Resolver* resolver, const Class* componentClass);
+    VMClass(Resolver* resolver, const VMClass* componentClass);
 
     // Link the class.
     void link();
@@ -74,13 +74,13 @@ namespace llvm { namespace Java {
     const Type* getType() const { return type_; }
     const ClassFile* getClassFile() const { return classFile_; }
     unsigned getNumSuperClasses() const { return superClasses_.size(); }
-    const Class* getSuperClass(unsigned i) const { return superClasses_[i]; }
-    const Class* getSuperClass() const {
+    const VMClass* getSuperClass(unsigned i) const { return superClasses_[i]; }
+    const VMClass* getSuperClass() const {
       return getNumSuperClasses() ? getSuperClass(0) : NULL;
     }
     unsigned getNumInterfaces() const { return interfaces_.size(); }
-    const Class* getInterface(unsigned i) const { return interfaces_[i]; }
-    const Class* getComponentClass() const { return componentClass_; }
+    const VMClass* getInterface(unsigned i) const { return interfaces_[i]; }
+    const VMClass* getComponentClass() const { return componentClass_; }
     bool isArray() const { return componentClass_; }
     bool isPrimitive() const { return !structType_; }
     bool isInterface() const { return classFile_ && !getSuperClass(); }
@@ -88,8 +88,8 @@ namespace llvm { namespace Java {
     int getFieldIndex(const std::string& name) const;
 
     llvm::Constant* getConstant(unsigned index) const;
-    const Class* getClassForClass(unsigned index) const;
-    const Class* getClassForDescriptor(unsigned index) const;
+    const VMClass* getClassForClass(unsigned index) const;
+    const VMClass* getClassForDescriptor(unsigned index) const;
   };
 
 } } // namespace llvm::Java

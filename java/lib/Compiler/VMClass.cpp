@@ -1,4 +1,4 @@
-//===-- Class.cpp - Compiler representation of a Java class -----*- C++ -*-===//
+//===-- VMClass.cpp - Compiler representation of a Java class ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Class.h"
+#include "VMClass.h"
 #include "Resolver.h"
 #include <llvm/DerivedTypes.h>
 #include <llvm/Constants.h>
@@ -26,7 +26,7 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Class::Class(Resolver* resolver, const std::string& className)
+VMClass::VMClass(Resolver* resolver, const std::string& className)
   : name_(Resolver::canonicalizeClassName(className)),
     resolver_(resolver),
     classFile_(ClassFile::get(className)),
@@ -39,7 +39,7 @@ Class::Class(Resolver* resolver, const std::string& className)
 
 }
 
-Class::Class(Resolver* resolver, const Class* componentClass)
+VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
   : name_('[' + componentClass->getName()),
     resolver_(resolver),
     classFile_(NULL),
@@ -51,7 +51,7 @@ Class::Class(Resolver* resolver, const Class* componentClass)
 
 }
 
-Class::Class(Resolver* resolver, const Type* type)
+VMClass::VMClass(Resolver* resolver, const Type* type)
   : name_(type == Type::SByteTy  ? "B" :
           type == Type::UShortTy ? "C" :
           type == Type::DoubleTy ? "D" :
@@ -70,18 +70,18 @@ Class::Class(Resolver* resolver, const Type* type)
 
 }
 
-void Class::addField(const std::string& name, const Type* type)
+void VMClass::addField(const std::string& name, const Type* type)
 {
   f2iMap_.insert(std::make_pair(name, elementTypes_.size()));
   elementTypes_.push_back(type);
 }
 
-int Class::getFieldIndex(const std::string& name) const {
+int VMClass::getFieldIndex(const std::string& name) const {
   Field2IndexMap::const_iterator it = f2iMap_.find(name);
   return it == f2iMap_.end() ? -1 : it->second;
 }
 
-void Class::resolveType() {
+void VMClass::resolveType() {
   PATypeHolder holder = structType_;
   Type* resolvedType = StructType::get(elementTypes_);
   cast<OpaqueType>(structType_)->refineAbstractTypeTo(resolvedType);
@@ -89,7 +89,7 @@ void Class::resolveType() {
   type_ = PointerType::get(structType_);
 }
 
-void Class::link()
+void VMClass::link()
 {
   assert(!isPrimitive() && "Should not link primitive classes!");
 
@@ -111,7 +111,7 @@ void Class::link()
     // This is any class but java/lang/Object.
     else {
       // Our direct super class.
-      const Class* superClass =
+      const VMClass* superClass =
         resolver_->getClass(classFile_->getSuperClass()->getName()->str());
 
       // Add the interfaces of our direct superclass.
@@ -121,7 +121,7 @@ void Class::link()
       // For each of the interfaces we implement, load it and add that
       // interface and all the interfaces it inherits from.
       for (unsigned i = 0, e = classFile_->getNumInterfaces(); i != e; ++i) {
-        const Class* interface =
+        const VMClass* interface =
           getClassForClass(classFile_->getInterfaceIndex(i));
         interfaces_.push_back(interface);
         for (unsigned j = 0, f = interface->getNumInterfaces(); j != f; ++j)
@@ -169,7 +169,7 @@ void Class::link()
   assert(!isa<OpaqueType>(getStructType()) &&"Class not initialized properly!");
 }
 
-llvm::Constant* Class::getConstant(unsigned index) const
+llvm::Constant* VMClass::getConstant(unsigned index) const
 {
   assert(classFile_ && "No constant pool!");
   assert((dynamic_cast<ConstantString*>(classFile_->getConstant(index)) ||
@@ -183,7 +183,7 @@ llvm::Constant* Class::getConstant(unsigned index) const
   if (!resolvedConstantPool_[index]) {
     Constant* jc = classFile_->getConstant(index);
     if (ConstantString* s = dynamic_cast<ConstantString*>(jc)) {
-      const Class* stringClass = resolver_->getClass("java/lang/String");
+      const VMClass* stringClass = resolver_->getClass("java/lang/String");
       const Type* stringType = stringClass->getStructType();
       resolvedConstantPool_[index] =
         new GlobalVariable(stringType,
@@ -212,7 +212,7 @@ llvm::Constant* Class::getConstant(unsigned index) const
   return static_cast<llvm::Constant*>(resolvedConstantPool_[index]);
 }
 
-const Class* Class::getClassForClass(unsigned index) const
+const VMClass* VMClass::getClassForClass(unsigned index) const
 {
   assert(classFile_ && "No constant pool!");
   assert(dynamic_cast<ConstantClass*>(classFile_->getConstant(index)) &&
@@ -222,13 +222,13 @@ const Class* Class::getClassForClass(unsigned index) const
   if (!resolvedConstantPool_[index]) {
     ConstantClass* jc = classFile_->getConstantClass(index);
     resolvedConstantPool_[index] =
-      const_cast<Class*>(resolver_->getClass(jc->getName()->str()));
+      const_cast<VMClass*>(resolver_->getClass(jc->getName()->str()));
   }
 
-  return static_cast<const Class*>(resolvedConstantPool_[index]);
+  return static_cast<const VMClass*>(resolvedConstantPool_[index]);
 }
 
-const Class* Class::getClassForDescriptor(unsigned index) const
+const VMClass* VMClass::getClassForDescriptor(unsigned index) const
 {
   assert(classFile_ && "No constant pool!");
   assert(dynamic_cast<ConstantUtf8*>(classFile_->getConstant(index)) &&
@@ -238,8 +238,8 @@ const Class* Class::getClassForDescriptor(unsigned index) const
   if (!resolvedConstantPool_[index]) {
     ConstantUtf8* jc = classFile_->getConstantUtf8(index);
     resolvedConstantPool_[index] =
-      const_cast<Class*>(resolver_->getClassForDesc(jc->str()));
+      const_cast<VMClass*>(resolver_->getClassForDesc(jc->str()));
   }
 
-  return static_cast<const Class*>(resolvedConstantPool_[index]);
+  return static_cast<const VMClass*>(resolvedConstantPool_[index]);
 }

@@ -2,8 +2,12 @@ LEVEL = ../..
 TOOLNAME = llvm-tv
 USEDLIBS = 
 LLVMLIBS = analysis.a ipa.a bcreader vmcore support.a
-CPPFLAGS += $(shell $(LEVEL)/lib/wxwindows/wx-config --cflags)
+CPPFLAGS = $(shell $(LEVEL)/lib/wxwindows/wx-config --cflags)
 TOOLLINKOPTSB = $(shell $(LEVEL)/lib/wxwindows/wx-config --libs)
+
+ifdef NOHTML
+CPPFLAGS += -DNOHTML
+endif
 
 include $(LEVEL)/Makefile.common
 

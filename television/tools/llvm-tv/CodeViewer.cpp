@@ -139,4 +139,5 @@ void TVCodeViewer::viewFunctionCode (Function *F) {
 }
 
 void TVCodeViewer::viewModuleCode (Module *F) {
+  myListCtrl->ClearAll();
 }

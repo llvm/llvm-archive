@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 struct llvm_java_object_base;
 struct llvm_java_object_header;
 struct llvm_java_object_vtable;
@@ -79,6 +81,9 @@ jint llvm_java_IsInstanceOf(jobject obj,
   }
 }
 
+jint llvm_java_Throw(jobject obj) {
+  abort();
+}
 
 extern void llvm_java_static_init(void);
 extern void llvm_java_main(int, char**);

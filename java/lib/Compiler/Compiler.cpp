@@ -39,6 +39,7 @@
 
 #define LLVM_JAVA_ISINSTANCEOF  "llvm_java_IsInstanceOf"
 #define LLVM_JAVA_GETOBJECTCLASS "llvm_java_GetObjectClass"
+#define LLVM_JAVA_THROW "llvm_java_Throw"
 
 using namespace llvm;
 using namespace llvm::Java;
@@ -1477,7 +1478,12 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_athrow(unsigned bcI) {
-      assert(0 && "not implemented");
+      Value* objRef = opStack_.top(); opStack_.pop();
+      objRef = new CastInst(objRef, PointerType::get(ClassInfo::ObjectBaseTy),
+                            TMP, getBBAt(bcI));
+      Function* f = module_->getOrInsertFunction(
+        LLVM_JAVA_THROW, Type::IntTy, objRef->getType(), NULL);
+      new CallInst(f, objRef, TMP, getBBAt(bcI));
     }
 
     void do_checkcast(unsigned bcI, unsigned index) {

@@ -4,13 +4,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TVFrame.h"
 #include "TVApplication.h"
-#include "TVTreeItem.h"
-#include "llvm/Assembly/Writer.h"
-#include "wx/wx.h"
+#include "TVFrame.h"
 #include "TVHtmlWindow.h"
 #include "TVTextCtrl.h"
+#include "TVTreeItem.h"
+#include "llvm/Assembly/Writer.h"
+#include <wx/wx.h>
 #include <sstream>
 
 /// refreshView - Make sure the display is up-to-date with respect to

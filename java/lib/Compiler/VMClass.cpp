@@ -157,9 +157,10 @@ void Class::link()
     // Then we add the rest of the fields.
     const Fields& fields = classFile_->getFields();
     for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-      Field& field = *fields[i];
-      if (!field.isStatic())
-        addField(field.getName()->str(), resolver_->getClass(field)->getType());
+      Field* field = fields[i];
+      if (!field->isStatic())
+        addField(field->getName()->str(),
+                 getClassForDescriptor(field->getDescriptorIndex())->getType());
     }
   }
 

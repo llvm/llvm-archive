@@ -76,9 +76,7 @@ namespace llvm { namespace Java {
     const Class* getClass(const std::string& className) {
       return getClassForDesc(canonicalizeClassName(className));
     }
-    const Class* getClass(const Field& field) {
-      return getClassForDesc(field.getDescriptor()->str());
-    }
+
     const Class* getClass(JType type);
 
     const Class* getArrayClass(const Class* clazz) {

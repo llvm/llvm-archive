@@ -431,7 +431,7 @@ namespace llvm { namespace Java { namespace {
 
     std::pair<ClassFile*, Method*>
     findClassAndMethod(const std::string& classMethodDesc) {
-      unsigned slash = classMethodDesc.find('/');
+      unsigned slash = classMethodDesc.rfind('/', classMethodDesc.find('('));
       std::string className = classMethodDesc.substr(0, slash);
       std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 

@@ -1471,17 +1471,26 @@ namespace llvm { namespace Java { namespace {
           Field* field = fields[i];
           if (field->isStatic()) {
             Type* globalTy = getType(field->getDescriptor());
-            ConstantValueAttribute* cv = field->getConstantValueAttribute();
-            llvm::Constant* init = cv ?
-              ConstantExpr::getCast(getConstant(cv->getValue()), globalTy) :
-              llvm::Constant::getNullValue(globalTy);
+            // A java field can be final/constant even if it has a
+            // dynamic initializer. Because LLVM does not currently
+            // support these semantics, we consider constants only
+            // final fields with static initializers.
+            bool isConstant = field->isStatic();
+            llvm::Constant* init;
+            if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
+              init =
+                ConstantExpr::getCast(getConstant(cv->getValue()), globalTy);
+            else {
+              init = llvm::Constant::getNullValue(globalTy);
+              isConstant = false;
+            }
 
             std::string globalName =
               classfile->getThisClass()->getName()->str() + '/' +
               field->getName()->str();
             DEBUG(std::cerr << "Adding global: " << globalName << '\n');
             new GlobalVariable(globalTy,
-                               false,
+                               isConstant,
                                GlobalVariable::ExternalLinkage,
                                init,
                                globalName,

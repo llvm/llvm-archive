@@ -8,8 +8,21 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ../../../..
 
-JAVAFILES := $(wildcard *.java)
+JAVA_TESTS := Arithm \
+	BigConstants \
+	ForLoop \
+	If \
+	LookupSwitch \
+	Return \
+	StaticInitializers \
+	TableSwitch \
+#	ClassTest \
+#	FieldAccess \
+#	FloatCompare \
+#	LongCompare \
+#	InstanceOf \
+#	VTable
 
-all:: $(foreach ext,linked.dis-ll,$(JAVAFILES:%.java=Output/%.$(ext)))
+all:: Output/.compile-java $(addprefix Output/, $(addsuffix .llvm.bc, $(JAVA_TESTS)))
 
 include ../Makefile.singlesrc

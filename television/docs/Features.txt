@@ -22,16 +22,17 @@ LLVM-TV FEATURES
 3. Future
 =========
 
-
 a. Coming soon (things we can accomplish this term)
 --------------
 * Use more patterns
 * Add Steensgaard pointer analysis viewer?
 * ...
 
-
 b. Long-term ideas
 ------------------
+* Cache display of complex computed structures (graphs)
+* Calculate graphs in the background -- user should be able to change tabs while
+  the graph calculation is going on 
 * Rewrite LLVM-TV in XUL
   + As portable as Mozilla
   + HTML/CSS for code (can use links and mouseover!)

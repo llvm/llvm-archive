@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := ..
 
-PARALLEL_DIRS := ClassFile
+PARALLEL_DIRS := ClassFile Compiler
 
 include $(LEVEL)/Makefile.common

@@ -523,7 +523,8 @@ namespace llvm { namespace Java { namespace {
         assert(interface->isInterface() &&
                "Class in interfaces list is not an interface!");
         const ClassInfo& interfaceCI = getClassInfo(interface);
-        vtables.resize(interfaceCI.interfaceIdx, nullVTable);
+        if (interfaceCI.interfaceIdx >= vtables.size())
+          vtables.resize(interfaceCI.interfaceIdx+1, nullVTable);
         vtables[interfaceCI.interfaceIdx] = buildInterfaceVTable(cf, interface);
       }
 

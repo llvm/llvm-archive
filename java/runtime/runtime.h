@@ -53,7 +53,7 @@ struct llvm_java_class_record {
   struct llvm_java_typeinfo typeinfo;
 };
 
-#define HANDLE_TYPE(TYPE) \
+#define HANDLE_NATIVE_TYPE(TYPE) \
   struct llvm_java_##TYPE##array { \
     struct llvm_java_object_base object_base; \
     jint length; \

@@ -91,7 +91,7 @@ static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
   return ((struct llvm_java_booleanarray*) array)->length;
 }
 
-#define HANDLE_TYPE(TYPE) \
+#define HANDLE_NATIVE_TYPE(TYPE) \
   static j ## TYPE* llvm_java_get_##TYPE##_array_elements( \
     JNIEnv* env, \
     jarray array, \
@@ -102,7 +102,7 @@ static jint llvm_java_get_array_length(JNIEnv* env, jarray array) {
   }
 #include "types.def"
 
-#define HANDLE_TYPE(TYPE) \
+#define HANDLE_NATIVE_TYPE(TYPE) \
   static void llvm_java_release_ ##TYPE## _array_elements( \
     JNIEnv* env, \
     jarray array, \

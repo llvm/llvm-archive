@@ -28,6 +28,8 @@ BUILD_SRC_DIR := $(subst //,/,$(BUILD_SRC_ROOT)/$(patsubst $(BUILD_OBJ_ROOT)%,%,
 # Additional utilities
 #
 JIKES=@JIKES@
+JAVAC=@JAVAC@
+JAVA=@JAVA@
 
 #
 # Include LLVM's build rules.

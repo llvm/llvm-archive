@@ -375,8 +375,10 @@ namespace llvm { namespace Java { namespace {
         fieldRef->getClass()->getName()->str() + '/' +
         nameAndType->getName()->str();
 
+      DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
       GlobalVariable* global = module_->getGlobalVariable
         (globalName, getType(nameAndType->getDescriptor()));
+      assert(global && "Got NULL global variable!");
 
       return global;
     }
@@ -496,13 +498,17 @@ namespace llvm { namespace Java { namespace {
                 field->getConstantValueAttribute())
               init = getConstant(cv->getValue());
 
+            std::string globalName =
+              classfile->getThisClass()->getName()->str() + '/' +
+              field->getName()->str();
+            DEBUG(std::cerr << "Adding global: " << globalName << '\n');
             new GlobalVariable(getType(field->getDescriptor()),
                                field->isFinal(),
                                (field->isPrivate() & bool(init) ?
                                 GlobalVariable::InternalLinkage :
                                 GlobalVariable::ExternalLinkage),
                                init,
-                               classfile->getThisClass()->getName()->str() + '/' + field->getName()->str(),
+                               globalName,
                                module_);
           }
         }
@@ -1039,11 +1045,28 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_checkcast(unsigned bcI, unsigned index) {
-      assert(0 && "not implemented");
+      do_dup(bcI);
+      do_instanceof(bcI, index);
+      Value* r = opStack_.top(); opStack_.pop();
+      Value* b = new SetCondInst(Instruction::SetEQ,
+                                 r, ConstantSInt::get(Type::IntTy, 1),
+                                 TMP, getBBAt(bcI));
+      // FIXME: if b is false we must throw a ClassCast exception
     }
 
     void do_instanceof(unsigned bcI, unsigned index) {
-      assert(0 && "not implemented");
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      const std::string& className = classRef->getName()->str();
+      const VTableInfo& vi = getVTableInfo(className);
+
+      Value* objRef = opStack_.top(); opStack_.pop();
+      Value* vtable = getField(bcI, className, "<llvm_java_base>", objRef);
+      Function* f = module_->getOrInsertFunction("<llvm_java_instanceof>",
+                                                 Type::IntTy,
+                                                 vtable->getType(),
+                                                 vtable->getType(), NULL);
+      Value* r = new CallInst(f, vtable, vi.vtable, TMP, getBBAt(bcI));
+      opStack_.push(r);
     }
 
     void do_monitorenter(unsigned bcI) {

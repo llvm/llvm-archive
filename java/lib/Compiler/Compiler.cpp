@@ -95,7 +95,6 @@ namespace llvm { namespace Java { namespace {
     };
     typedef std::map<const ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
-    Class2VTableInfoMap ac2viMap_;
 
   public:
     Compiler(Module* m)
@@ -680,10 +679,7 @@ namespace llvm { namespace Java { namespace {
       return vi;
     }
 
-    VTableInfo buildArrayVTableInfo(Type* elementTy) {
-      assert(elementTy->isPrimitiveType() &&
-             "This should not be called for arrays of non-primitive types");
-
+    VTableInfo buildArrayVTableInfo(const Type* elementTy) {
       VTableInfo vi;
       const VTableInfo& superVI =
         getVTableInfo(ClassFile::get("java/lang/Object"));
@@ -809,175 +805,11 @@ namespace llvm { namespace Java { namespace {
       abort();
     }
 
-    /// Initializes the VTableInfo map for object arrays; in other
-    /// words it adds the VTableInfo for java.lang.Object[].
-    bool initializeObjectArrayVTableInfoMap() {
-      DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object[]\n");
-      const ClassFile* cf = ClassFile::get("java/lang/Object");
-      VTableInfo& vi = ac2viMap_[cf];
-      assert(!vi.vtable && vi.m2iMap.empty() &&
-             "java/lang/Object[] VTableInfo should not be initialized!");
+    const VTableInfo& getObjectArrayVTableInfo() {
+      static VTableInfo arrayInfo =
+        buildArrayVTableInfo(resolver_->getObjectBaseRefType());
 
-      const VTableInfo& javaLangObjectVI =
-        getVTableInfo(ClassFile::get("java/lang/Object"));
-      vi.superVtables.reserve(1);
-      vi.superVtables.push_back(javaLangObjectVI.vtable);
-
-      std::vector<llvm::Constant*> init;
-
-      // This is java/lang/Object[] so we must add a
-      // llvm_java_object_typeinfo struct first.
-
-      // depth
-      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 1));
-      // superclasses vtable pointers
-      ArrayType* vtablesArrayTy =
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy), 1);
-
-      GlobalVariable* vtablesArray = new GlobalVariable(
-        vtablesArrayTy,
-        true,
-        GlobalVariable::ExternalLinkage,
-        ConstantArray::get(vtablesArrayTy, vi.superVtables),
-        "java/lang/Object[]<superclassesvtables>",
-        module_);
-      init.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
-
-      // last interface index
-      init.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
-      // interfaces vtable pointers
-      init.push_back(
-        llvm::Constant::getNullValue(
-          PointerType::get(PointerType::get(VTableInfo::VTableTy))));
-      // the element size
-      init.push_back(ConstantExpr::getCast(
-                       ConstantExpr::getSizeOf(resolver_->getObjectBaseRefType()), Type::IntTy));
-
-      llvm::Constant* typeInfoInit =
-        ConstantStruct::get(VTableInfo::TypeInfoTy, init);
-
-      // Now that we have both the type and initializer for the
-      // llvm_java_object_typeinfo struct we can start adding the
-      // function pointers.
-      ConstantStruct* superInit =
-        cast<ConstantStruct>(javaLangObjectVI.vtable->getInitializer());
-
-      init.clear();
-      init.resize(superInit->getNumOperands());
-      // Add the typeinfo block for this class.
-      init[0] = typeInfoInit;
-
-      // Fill in the function pointers as they are in
-      // java/lang/Object. There are no overriden methods.
-      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
-        init[i] = superInit->getOperand(i);
-      vi.m2iMap = javaLangObjectVI.m2iMap;
-
-      llvm::Constant* vtable = ConstantStruct::get(init);
-      module_->addTypeName("java/lang/Object[]<vtable>", vtable->getType());
-
-      vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
-                                     true, GlobalVariable::ExternalLinkage,
-                                     vtable,
-                                     "java/lang/Object[]<vtable>",
-                                     module_);
-      DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object[]\n");
-      return true;
-    }
-
-    const VTableInfo& getObjectArrayVTableInfo(const ClassFile* cf) {
-      static bool initialized = initializeObjectArrayVTableInfoMap();
-
-      Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
-      if (it != ac2viMap_.end() && it->first == cf)
-        return it->second;
-
-      const std::string& className = cf->getThisClass()->getName()->str();
-      DEBUG(std::cerr << "Building VTableInfo for: " << className << "[]\n");
-      VTableInfo& vi = ac2viMap_[cf];
-
-      assert(!vi.vtable && vi.m2iMap.empty() &&
-             "got already initialized VTableInfo!");
-
-      ConstantClass* super = cf->getSuperClass();
-      assert(super && "Class does not have superclass!");
-      const VTableInfo& superVI =
-        getVTableInfo(ClassFile::get(super->getName()->str()));
-
-      // Copy the super vtables array.
-      vi.superVtables.reserve(superVI.superVtables.size() + 1);
-      vi.superVtables.push_back(superVI.vtable);
-      std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
-                std::back_inserter(vi.superVtables));
-
-      // Copy all the constants from the super class' vtable.
-      assert(superVI.vtable && "No vtable found for super class!");
-      ConstantStruct* superInit =
-        cast<ConstantStruct>(superVI.vtable->getInitializer());
-      std::vector<llvm::Constant*> init(superInit->getNumOperands());
-      // Use a null typeinfo struct for now.
-      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
-      // Fill in the function pointers as they are in the super
-      // class. There are no overriden methods.
-      for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
-        init[i] = superInit->getOperand(i);
-      vi.m2iMap = superVI.m2iMap;
-
-#ifndef NDEBUG
-      for (unsigned i = 0, e = init.size(); i != e; ++i)
-        assert(init[i] && "No elements in the initializer should be NULL!");
-#endif
-
-      const std::string& globalName = className + "[]<vtable>";
-
-      llvm::Constant* vtable = ConstantStruct::get(init);
-      module_->addTypeName(globalName, vtable->getType());
-      vi.vtable = new GlobalVariable(vtable->getType(),
-                                     true,
-                                     GlobalVariable::ExternalLinkage,
-                                     vtable,
-                                     globalName,
-                                     module_);
-
-      // Now the vtable is complete, install the new typeinfo block
-      // for this class: we install it last because we need the vtable
-      // to exist in order to build it.
-      std::vector<llvm::Constant*> typeInfoInit;
-      typeInfoInit.reserve(4);
-      // depth
-      typeInfoInit.push_back(
-        llvm::ConstantSInt::get(Type::IntTy, vi.superVtables.size()));
-      // superclasses vtable pointers
-      ArrayType* vtablesArrayTy =
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy),
-                       vi.superVtables.size());
-
-      GlobalVariable* vtablesArray = new GlobalVariable(
-        vtablesArrayTy,
-        true,
-        GlobalVariable::ExternalLinkage,
-        ConstantArray::get(vtablesArrayTy, vi.superVtables),
-        className + "[]<superclassesvtables>",
-        module_);
-
-      typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
-      // last interface index
-      typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
-      // interfaces vtable pointers
-      typeInfoInit.push_back(
-        llvm::Constant::getNullValue(
-          PointerType::get(PointerType::get(VTableInfo::VTableTy))));
-      // the element size
-      typeInfoInit.push_back(
-        ConstantExpr::getCast(
-          ConstantExpr::getSizeOf(resolver_->getObjectBaseRefType()), Type::IntTy));
-
-      init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
-      vi.vtable->setInitializer(ConstantStruct::get(init));
-
-      DEBUG(std::cerr << "Built VTableInfo for: " << className << "[]\n");
-      return vi;
-
+      return arrayInfo;
     }
 
     /// Emits the necessary code to get a pointer to a static field of
@@ -1860,7 +1692,7 @@ namespace llvm { namespace Java { namespace {
         if (componentClass->isPrimitive())
           return &getPrimitiveArrayVTableInfo(componentClass->getType());
         else
-          return &getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
+          return &getObjectArrayVTableInfo();
       }
       else
         return &getVTableInfo(clazz->getClassFile());

@@ -110,10 +110,15 @@ TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
   // Create tree view of snapshots
   CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
              mySnapshotList);
+
+  const wxString explanation
+   ("Click on a Module or Function in the left-hand pane\n"
+    "to display its code here. Then, you can choose from\n"
+    "the View menu to see graphical code views.\n"); 
   
   // Create static text to display module
   displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
-                               "LLVM Code goes here", wxDefaultPosition,
+                               explanation, wxDefaultPosition,
                                wxDefaultSize,
                                wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
 

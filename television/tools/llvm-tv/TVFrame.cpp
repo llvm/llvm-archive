@@ -53,9 +53,11 @@ void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
 
     // Loop over functions in the module and add them to the tree
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      wxTreeItemId childID =
-        AppendItem(id, ((Function*)I)->getName().c_str(), -1, -1,
-                   new TVTreeFunctionItem(((Function*)I)->getName().c_str(),I));
+      Function *F = I;
+      if (!F->isExternal()) {
+        const char *FuncName = F->getName().c_str();
+        AppendItem(id, FuncName, -1, -1, new TVTreeFunctionItem(FuncName, I));
+      }
     }
     
   }   

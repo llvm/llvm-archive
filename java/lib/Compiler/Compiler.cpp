@@ -628,7 +628,7 @@ namespace llvm { namespace Java { namespace {
         globalName,
         &module_);
 
-      return gv;
+      return ConstantExpr::getCast(gv, PointerType::get(VTableInfo::VTableTy));
     }
 
     /// Builds the interfaces vtable array for this classfile and its
@@ -648,37 +648,46 @@ namespace llvm { namespace Java { namespace {
             PointerType::get(PointerType::get(VTableInfo::VTableTy))));
 
       // Otherwise we must fill in the interfaces vtables array. For
-      // each implemented vtable we insert a pointer to the
+      // each implemented interface we insert a pointer to the
       // <class,interface> vtable for this class. Note that we only
       // fill in up to the highest index of the implemented
       // interfaces.
       std::vector<llvm::Constant*> vtables;
-      const Classes& interfaces = cf->getInterfaces();
       llvm::Constant* nullVTable =
         llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
 
-      for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
-        ClassFile* interface = ClassFile::get(interfaces[i]->getName()->str());
-        assert(interface->isInterface() &&
-               "Class in interfaces list is not an interface!");
-        const ClassInfo& interfaceCI = getClassInfo(interface);
-        if (interfaceCI.interfaceIdx >= vtables.size())
-          vtables.resize(interfaceCI.interfaceIdx+1, nullVTable);
-        vtables[interfaceCI.interfaceIdx] = buildInterfaceVTable(cf, interface);
+      ClassFile* curCf = cf;
+      while (true) {
+        const Classes& interfaces = curCf->getInterfaces();
+        for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
+          ClassFile* interface =
+            ClassFile::get(interfaces[i]->getName()->str());
+          assert(interface->isInterface() &&
+                 "Class in interfaces list is not an interface!");
+          const ClassInfo& interfaceCI = getClassInfo(interface);
+          if (interfaceCI.interfaceIdx >= vtables.size())
+            vtables.resize(interfaceCI.interfaceIdx+1, nullVTable);
+          vtables[interfaceCI.interfaceIdx] =
+            buildInterfaceVTable(cf, interface);
+        }
+        if (!curCf->getSuperClass())
+          break;
+        curCf = ClassFile::get(curCf->getSuperClass()->getName()->str());
       }
-
-      ArrayType* interfacesArrayTy =
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy), vtables.size());
 
       const std::string& globalName =
         cf->getThisClass()->getName()->str() + "<interfacesvtables>";
-      module_.addTypeName(globalName, interfacesArrayTy);
+
+      llvm::Constant* init = ConstantArray::get(
+        ArrayType::get(PointerType::get(VTableInfo::VTableTy), vtables.size()),
+        vtables);
+      module_.addTypeName(globalName, init->getType());
 
       GlobalVariable* interfacesArray = new GlobalVariable(
-        interfacesArrayTy,
+        init->getType(),
         true,
         GlobalVariable::ExternalLinkage,
-        ConstantArray::get(interfacesArrayTy, vtables),
+        init,
         globalName,
         &module_);
 
@@ -2191,11 +2200,12 @@ namespace llvm { namespace Java { namespace {
       interfaceVTable =
         new CastInst(interfaceVTable, vi->vtable->getType(), TMP, currentBB_);
       // Get the function pointer.
-      indices.resize(1);
       assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
              "could not find slot for virtual function!");
       unsigned vSlot = vi->m2iMap.find(methodDescr)->second;
-      indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
+      indices.resize(2);
+      indices[0] = ConstantUInt::get(Type::UIntTy, 0);
+      indices[1] = ConstantUInt::get(Type::UIntTy, vSlot);
       Value* vfunPtr =
         new GetElementPtrInst(interfaceVTable, indices, TMP, currentBB_);
       Value* vfun = new LoadInst(vfunPtr, className + '/' + methodDescr,

@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <string>
 #include <unistd.h>
@@ -89,21 +90,41 @@ static void setUpMenus (wxFrame *frame) {
 
 IMPLEMENT_APP (TVApplication)
 
-/// saveMyPID - Save my process ID into a file of the given name.
-static void saveMyPID (const std::string &pidfilename) {
-  std::ofstream pidFile (pidfilename.c_str ());
+static bool directoryExists (const std::string &dirPath) {
+  struct stat stbuf;
+  if (stat (dirPath.c_str (), &stbuf) < 0)
+    return false;
+  return S_ISDIR (stbuf.st_mode);
+}
+
+static void ensureDirectoryExists (const std::string &dirPath) {
+  if (!directoryExists (dirPath))
+    mkdir (dirPath.c_str (), 0777);
+}
+
+/// saveMyPID - Save my process ID into a temporary file.
+static void saveMyPID () {
+  ensureDirectoryExists (llvmtvPath);
+
+  std::ofstream pidFile (llvmtvPID.c_str ());
   if (pidFile.good () && pidFile.is_open ()) {
     pidFile << getpid ();
     pidFile.close ();
   } else {
-    std::cerr << "Warning: could not save PID into " << pidfilename << "\n";
+    std::cerr << "Warning: could not save PID into " << llvmtvPID << "\n";
   }
+}
+
+// eraseMyPID - Erase the PID file created by saveMyPID.
+static void eraseMyPID () {
+  unlink (llvmtvPID.c_str ());
 }
 
 bool TVApplication::OnInit () {
   // Save my PID into the file where the snapshot-making pass knows to
   // look for it.
-  saveMyPID (llvmtvPID);
+  saveMyPID ();
+  atexit (eraseMyPID);
 
   // Build top-level window.
   frame = new TVFrame ("Snapshot List");
@@ -114,11 +135,10 @@ bool TVApplication::OnInit () {
 
   // Read the snapshot list out of the given directory,
   // and load the snapshot list view into the frame.
+  ensureDirectoryExists (snapshotsPath);
   frame->initializeSnapshotListAndView (snapshotsPath);
 
   signal(SIGUSR1, sigHandler);
 
   return true;
 }
-
-

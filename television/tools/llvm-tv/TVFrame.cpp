@@ -97,8 +97,10 @@ void TVTreeCtrl::updateTextDisplayed() {
   textDisplay->AppendText(Out.str().c_str());
 #else
   item->printHTML(Out);
+  htmlDisplay->Hide();
   htmlDisplay->SetPage(wxString(""));
   htmlDisplay->AppendToPage(wxString(Out.str().c_str()));
+  htmlDisplay->Show();
 #endif
 }
 

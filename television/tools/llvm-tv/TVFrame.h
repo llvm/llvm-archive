@@ -17,30 +17,6 @@
 #include <string>
 #include <vector>
 
-
-/// TVListCtrl - A specialization of wxListCtrl that displays a list of TV
-/// Snapshots. 
-///
-class TVListCtrl : public wxListCtrl {
-  typedef std::vector<TVSnapshot> Items;
-  Items &itemList;
-
- public:
-  /// refreshView - Make sure the display is up-to-date with respect to
-  /// the list.
-  ///
-  void refreshView ();
-
-  TVListCtrl (wxWindow *_parent, Items &_itemList)
-    : wxListCtrl (_parent, -1, wxDefaultPosition, wxDefaultSize, wxLC_LIST),
-      itemList (_itemList) {
-    refreshView ();
-  }
-
-};
-
-///==---------------------------------------------------------------------==///
-
 /// TVTreeCtrl - A specialization of wxTreeCtrl that displays a list of LLVM
 /// Modules and Functions from a snapshot
 ///
@@ -92,14 +68,13 @@ class TVApplication;
 ///==---------------------------------------------------------------------==///
 
 /// TVFrame - The main application window for the demo, which displays
-/// the list view, status bar, and menu bar.
+/// the tree view, status bar, and menu bar.
 ///
 class TVFrame : public wxFrame {
   TVApplication *myApp;
   TVTreeCtrl *myTreeCtrl;
   std::vector<TVSnapshot> mySnapshotList;
   std::string mySnapshotDirName;
-  
   wxSplitterWindow *splitterWindow;
   wxWindow *displayWidget;
 

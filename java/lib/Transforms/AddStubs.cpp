@@ -1,4 +1,4 @@
-//===- StubAdder.cpp - Stub Adder Pass ------------------------------------===//
+//===- AddStubs.cpp - Add Stubs Pass --------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,8 +23,7 @@
 using namespace llvm;
 
 namespace {
-  // Hello - The first implementation, without getAnalysisUsage.
-  struct StubAdder : public ModulePass {
+  struct AddStubs : public ModulePass {
     virtual bool runOnModule(Module &M) {
       for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
         if (F->empty() && F->getName().find("java") != std::string::npos) {
@@ -37,5 +36,5 @@ namespace {
       return true;
     }
   };
-  RegisterOpt<StubAdder> X("stubadder", "Stub Adder Pass");
+  RegisterOpt<AddStubs> X("addstubs", "Add Stubs pass");
 }

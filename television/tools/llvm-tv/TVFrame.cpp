@@ -11,6 +11,7 @@
 #include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
 #include <dirent.h>
+#include <cassert>
 
 /// refreshView - Make sure the display is up-to-date with respect to
 /// the list.
@@ -74,12 +75,13 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
 ///
 void TVTreeCtrl::updateTextDisplayed() {
   // Get parent and then the text window, then get the selected LLVM object.
+  wxWindow *displayWidget = ((wxSplitterWindow *) GetParent())->GetWindow2();
 #if defined(NOHTML)
-  TVTextCtrl *textDisplay = (TVTextCtrl*)
-    ((wxSplitterWindow*) GetParent())->GetWindow2();
+  TVTextCtrl *textDisplay = dynamic_cast<TVTextCtrl *> (displayWidget);
+  assert (textDisplay && "could not retrieve display widget");
 #else
-  TVHtmlWindow *htmlDisplay = (TVHtmlWindow*)
-    ((wxSplitterWindow*) GetParent())->GetWindow2();
+  TVHtmlWindow *htmlDisplay = dynamic_cast<TVHtmlWindow *> (displayWidget);
+  assert (htmlDisplay && "could not retrieve display widget");
 #endif
 
   TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());

@@ -20,6 +20,7 @@
 #include "Support/StringExtras.h"
 #include "Support/SystemUtils.h"
 #include <csignal>
+#include <cstdlib>
 #include <dirent.h>
 #include <fstream>
 #include <string>
@@ -30,7 +31,10 @@ using namespace llvm;
 
 namespace {
   
-  const std::string llvmtvPath    = "/tmp/llvm-tv";
+  // To make sure we don't collide if working on the same machine,
+  // the llvm-tv data directory is user-specific
+  const std::string llvmtvPath    = "/tmp/llvm-tv-" +
+                                    std::string(getenv("USER"));
   const std::string snapshotsPath = llvmtvPath + "/snapshots";
   const std::string llvmtvPID     = llvmtvPath + "/llvm-tv.pid";
 
@@ -65,13 +69,12 @@ bool Snapshot::run(Module &M) {
   // Communicate to llvm-tv that we have added a new snapshot
   if (!sendSignalToLLVMTV()) return false;
 
-  // Clearly, we were not successful in sending a signal to an
-  // already-running instance of llvm-tv. Start a new instance and send a signal
-  // to it.
+  // Since we were not successful in sending a signal to an already-running
+  // instance of llvm-tv, start a new instance and send a signal to it.
   std::string llvmtvExe = FindExecutable("llvm-tv", ""); 
   if (llvmtvExe != "" && isExecutableFile(llvmtvExe)) {
     int pid = fork();
-    // child becomes llvm-tv
+    // Child process morphs into llvm-tv
     if (!pid) {
       char *argv[1]; argv[0] = 0; 
       char *envp[1]; envp[0] = 0;
@@ -90,17 +93,21 @@ bool Snapshot::run(Module &M) {
 }
 
 /// sendSignalToLLVMTV - read pid from file, send signal to llvm-tv process
+///
 bool Snapshot::sendSignalToLLVMTV() {
-  // First, see if we can open a file with llvm-tv pid in it
+  // See if we can open a file with llvm-tv's pid in it
   std::ifstream is(llvmtvPID.c_str());
   int pid = 0;
   if (is.good() && is.is_open())
     is >> pid;
+  else
+    return true;
 
-  if (pid > 0) {
-    kill(pid, SIGUSR1);
-    return false;
-  }
+  if (pid > 0)
+    if (kill(pid, SIGUSR1) == -1)
+      return true;
+    else
+      return false;
 
   return true;
 }

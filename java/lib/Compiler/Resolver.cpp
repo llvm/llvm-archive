@@ -125,7 +125,6 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
 {
   ClassMap::iterator it = classMap_.lower_bound(descriptor);
   if (it == classMap_.end() || it->first != descriptor) {
-    DEBUG(std::cerr << "Loading class: " << descriptor << '\n');
     switch (descriptor[0]) {
     case 'B':
       it = insertClass(it, VMClass(this, Type::SByteTy));
@@ -172,7 +171,7 @@ const VMClass* Resolver::getClassForDesc(const std::string& descriptor)
     it->second.link();
     if (!it->second.isPrimitive() && !it->second.isInterface())
       module_->addTypeName("struct." + descriptor, it->second.getLayoutType());
-    DEBUG(std::cerr << "Loaded class: " << descriptor);
+    DEBUG(std::cerr << "Loaded class: " << it->second.getName());
     DEBUG(std::cerr << " (" << it->second.getInterfaceIndex() << ")\n");
   }
 

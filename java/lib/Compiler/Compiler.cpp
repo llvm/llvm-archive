@@ -259,9 +259,6 @@ namespace llvm { namespace Java { namespace {
         return;
       }
 
-      const std::string& className =
-        class_->getClassFile()->getThisClass()->getName()->str();
-
       if (method->isNative()) {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "
               << function->getName() << '\n');
@@ -270,7 +267,7 @@ namespace llvm { namespace Java { namespace {
 
         std::string funcName =
           "Java_" +
-          getMangledString(className) + '_' +
+          getMangledString(class_->getName()) + '_' +
           getMangledString(method->getName());
         if (class_->getClassFile()->isNativeMethodOverloaded(*method->getMethod())) {
           // We need to add two underscores and a mangled argument signature

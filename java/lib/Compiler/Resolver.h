@@ -42,7 +42,7 @@ namespace llvm { namespace Java {
                               bool memberMethod = false) const;
 
     ClassMap::iterator insertClass(ClassMap::iterator i, const VMClass& clazz) {
-      return classMap_.insert(i, std::make_pair(clazz.getName(), clazz));
+      return classMap_.insert(i, std::make_pair(clazz.getDescriptor(), clazz));
     }
 
     friend class VMClass;
@@ -82,7 +82,7 @@ namespace llvm { namespace Java {
     const VMClass* getClass(JType type);
 
     const VMClass* getArrayClass(const VMClass* clazz) {
-      return getClassForDesc('[' + clazz->getName());
+      return getClassForDesc('[' + clazz->getDescriptor());
     }
 
     unsigned getNextInterfaceIndex() { return nextInterfaceIndex_++; }

@@ -33,6 +33,7 @@ namespace llvm { namespace Java {
     static const int INVALID_INTERFACE_INDEX = -1;
 
     const std::string name_;
+    const std::string descriptor_;
     Resolver* resolver_;
     const ClassFile* classFile_;
     const VMClass* componentClass_;
@@ -86,6 +87,7 @@ namespace llvm { namespace Java {
 
   public:
     const std::string& getName() const { return name_; }
+    const std::string& getDescriptor() const { return descriptor_; }
     Resolver* getResolver() const { return resolver_; }
     const Type* getLayoutType() const { return layoutType_; }
     const Type* getType() const { return type_; }

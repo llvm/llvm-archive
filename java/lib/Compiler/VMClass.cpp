@@ -42,7 +42,8 @@ void VMClass::init()
 }
 
 VMClass::VMClass(Resolver* resolver, const std::string& className)
-  : name_(Resolver::canonicalizeClassName(className)),
+  : name_(className),
+    descriptor_(Resolver::canonicalizeClassName(className)),
     resolver_(resolver),
     classFile_(ClassFile::get(className)),
     componentClass_(NULL),
@@ -55,7 +56,8 @@ VMClass::VMClass(Resolver* resolver, const std::string& className)
 }
 
 VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
-  : name_('[' + componentClass->getName()),
+  : name_('[' + componentClass->getDescriptor()),
+    descriptor_(name_),
     resolver_(resolver),
     classFile_(NULL),
     componentClass_(componentClass),
@@ -67,14 +69,22 @@ VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
 }
 
 VMClass::VMClass(Resolver* resolver, const Type* type)
-  : name_(type == Type::SByteTy  ? "B" :
-          type == Type::UShortTy ? "C" :
-          type == Type::DoubleTy ? "D" :
-          type == Type::FloatTy  ? "F" :
-          type == Type::IntTy    ? "I" :
-          type == Type::LongTy   ? "J" :
-          type == Type::ShortTy  ? "S" :
-          type == Type::BoolTy   ? "Z" : "V"),
+  : name_(type == Type::SByteTy  ? "byte" :
+          type == Type::UShortTy ? "char" :
+          type == Type::DoubleTy ? "double" :
+          type == Type::FloatTy  ? "float" :
+          type == Type::IntTy    ? "int" :
+          type == Type::LongTy   ? "long" :
+          type == Type::ShortTy  ? "short" :
+          type == Type::BoolTy   ? "boolean" : "void"),
+    descriptor_(type == Type::SByteTy  ? "B" :
+                type == Type::UShortTy ? "C" :
+                type == Type::DoubleTy ? "D" :
+                type == Type::FloatTy  ? "F" :
+                type == Type::IntTy    ? "I" :
+                type == Type::LongTy   ? "J" :
+                type == Type::ShortTy  ? "S" :
+                type == Type::BoolTy   ? "Z" : "V"),
     resolver_(resolver),
     classFile_(NULL),
     componentClass_(NULL),

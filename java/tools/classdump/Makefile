@@ -11,6 +11,6 @@ LEVEL := ../..
 TOOLNAME := classdump
 
 USEDLIBS := classfile
-LLVMLIBS := support vmcore
+LLVMLIBS := support vmcore LLVMsystem
 
 include $(LEVEL)/Makefile.common

@@ -26,7 +26,7 @@ InputClass(cl::Positional, cl::desc("<input class>"));
 
 int main(int argc, char* argv[])
 {
-  PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal();
   cl::ParseCommandLineOptions(argc, argv,
                               "class dump utility");
 

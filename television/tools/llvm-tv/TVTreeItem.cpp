@@ -26,9 +26,7 @@ static inline void htmlCleanAndEscape(std::string &str) {
       --i;
     }
 
-  // Replace as follows:
-  // <  :  &lt;
-  // >  :  &gt;
+  // Replace < with "&lt;" and > with "&gt;"
   for (unsigned i = 0; i != str.size(); ++i) {
     if (str[i] == '<') {
       str[i] = '&';
@@ -120,7 +118,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
   unsigned prev = 0;
   bool done = false;
   for (unsigned i = 0, e = str.size(); i != e; ++i) {
-    if (str[i] == ' ') {
+    if (str[i] == ' ' || i == e-1) {
       std::string token = str.substr(prev, i-prev);
       prev = i+1;
       done = false;
@@ -138,8 +136,10 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
       // Wrap types
       for (unsigned t = 0, te = sizeof(types)/sizeof(char*); t != te; ++t) {
         std::string type(types[t]);
-        if (token.substr(0, type.size()) == type) {
-          wrapType(os, token);
+        if (token.substr(0, type.size()) == type && 
+            !isalpha(token[type.size()])) {
+          wrapType(os, type);
+          os << token.substr(type.size(), token.size());
           done = true;
           break;
         }
@@ -157,7 +157,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
     }
   }
   // tack on the last segment
-  return os << str.substr(prev, str.size()-prev) << "</tt>";
+  return os << "</tt>";
 }
 
 void TVTreeItemData::printFunctionHeader(Function *F) {

@@ -1089,6 +1089,7 @@ namespace llvm { namespace Java { namespace {
       cf_ = method->getParent();
 
       Function* function = getFunction(method);
+      assert(function->empty() && "Compiling an already compiled method!");
 
       if (method->isNative()) {
         DEBUG(std::cerr << "Ignoring native method: ";
@@ -1250,6 +1251,14 @@ namespace llvm { namespace Java { namespace {
       return function;
     }
 
+    /// Returns the llvm::Java::Method given a
+    /// llvm::Java::ClassMethodRef.
+    Method* getMethod(ConstantMethodRef* methodRef) {
+      return getMethod(methodRef->getClass()->getName()->str() + '/' +
+                       methodRef->getNameAndType()->getName()->str() +
+                       methodRef->getNameAndType()->getDescriptor()->str());
+    }
+
     /// Returns the llvm::Java::Method given a <class,method>
     /// descriptor.
     Method* getMethod(const std::string& classMethodDesc) {
@@ -1257,15 +1266,22 @@ namespace llvm { namespace Java { namespace {
       std::string className = classMethodDesc.substr(0, slash);
       std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 
-      ClassFile* classfile = ClassFile::get(className);
-      emitStaticInitializers(classfile);
-      Method* method = classfile->getMethod(methodNameAndDescr);
+      while (true) {
+        ClassFile* classfile = ClassFile::get(className);
+        emitStaticInitializers(classfile);
 
-      if (!method)
-        throw InvocationTargetException("Method " + methodNameAndDescr +
-                                        " not found in class " + className);
+        Method* method = classfile->getMethod(methodNameAndDescr);
+        if (method)
+          return method;
 
-      return method;
+        if (!classfile->getSuperClass())
+          break;
+
+        className = classfile->getSuperClass()->getName()->str();
+      }
+
+      throw InvocationTargetException("Method " + methodNameAndDescr +
+                                      " not found in class " + className);
     }
 
   public:
@@ -1829,7 +1845,7 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    std::vector<Value*> getParams(FunctionType* funTy) {
+    std::vector<Value*> getParams(const FunctionType* funTy) {
       unsigned numParams = funTy->getNumParams();
       std::vector<Value*> params(numParams);
       while (numParams--) {
@@ -1959,19 +1975,10 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokestatic(unsigned index) {
-      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
-      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
-
-      std::string funcName =
-        methodRef->getClass()->getName()->str() + '/' +
-        nameAndType->getName()->str() +
-        nameAndType->getDescriptor()->str();
-
-      FunctionType* funcTy =
-        cast<FunctionType>(getType(nameAndType->getDescriptor()));
-      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      Method* method = getMethod(cf_->getConstantMethodRef(index));
+      Function* function = getFunction(method);
       toCompileFunctions_.insert(function);
-      makeCall(function, getParams(funcTy));
+      makeCall(function, getParams(function->getFunctionType()));
     }
 
     void do_invokeinterface(unsigned index) {

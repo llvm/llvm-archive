@@ -390,27 +390,27 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_shl(unsigned bcI) {
-            Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in = new ShiftInst(Instruction::Shl, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
 
         void do_shr(unsigned bcI) {
-            Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in = new ShiftInst(Instruction::Shr, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
         }
 
         void do_ushr(unsigned bcI) {
+            Value* v2 = opStack_.top(); opStack_.pop();
             Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in =
                 new CastInst(v1, v1->getType()->getUnsignedVersion(), TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
-            Value* v2 = opStack_.top(); opStack_.pop();
             in = new ShiftInst(Instruction::Shr, in, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
@@ -429,8 +429,8 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_binary_op_common(unsigned bcI, Instruction::BinaryOps op) {
-            Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in = BinaryOperator::create(op, v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             opStack_.push(in);
@@ -462,8 +462,8 @@ namespace llvm { namespace Java { namespace {
 
         void do_if(unsigned bcI, JSetCC cc, JType type,
                    unsigned t, unsigned f) {
-            Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = llvm::Constant::getNullValue(getType(type));
+            Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],
@@ -474,8 +474,8 @@ namespace llvm { namespace Java { namespace {
 
         void do_ifcmp(unsigned bcI, JSetCC cc,
                       unsigned t, unsigned f) {
-            Value* v1 = opStack_.top(); opStack_.pop();
             Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
             Instruction* in = new SetCondInst(getSetCC(cc), v1, v2, TMP);
             bc2bbMap_[bcI]->getInstList().push_back(in);
             new BranchInst(bc2bbMap_[t],

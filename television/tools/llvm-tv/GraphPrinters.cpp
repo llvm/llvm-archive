@@ -18,8 +18,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/DataStructure.h"
-#include "llvm/Analysis/DSGraph.h"
+#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "Support/GraphWriter.h"
 #include <fstream>
 using namespace llvm;

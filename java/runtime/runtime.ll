@@ -1,4 +1,6 @@
-"java/lang/Object" = type { }
+%llvm_java_base = type { %llvm_java_vtable_base* }
+%llvm_java_vtable_base = type { %llvm_java_type_info }
+%llvm_java_type_info = type { }
 
 implementation
 

@@ -1,17 +1,28 @@
+<html>
+<head>
+  <title>LLVM Visualization Tool User Guide</title>
+</head>
+<body>
+
 <h2>LLVM Visualization Tool User Guide</h2>
 
 
 <h3><u>Required Software:</u></h3>
-In order to compile and run the LLVM Visualization Tool, the following software must be installed:
-  <ul>
-  <li><b>The Low Level Virtual Machine (LLVM) Compiler Infrastructure:</b> You must
-  checkout the latest version from cvs. See the <a href="http://llvm.cs.uiuc.edu/docs/GettingStarted.html">LLVM Getting Started Guide</a> for details.
-  <li><b>Dot</b>: A part of <a href="http://www.research.att.com/sw/tools/graphviz/">Graphviz</a> package for graph drawing.
-  </ul>
+In order to compile and run the LLVM Visualization Tool, the following software
+must be installed:
+
+<ul>
+<li><b>The Low Level Virtual Machine (LLVM) Compiler Infrastructure:</b> You
+must checkout the latest version from cvs. See the <a
+href="http://llvm.cs.uiuc.edu/docs/GettingStarted.html">LLVM Getting Started
+Guide</a> for details.</li>
+<li><b>Dot</b>: A part of <a href="http://www.research.att.com/sw/tools/graphviz/">Graphviz</a> package for graph drawing.</li>
+</ul>
 <p>
 
 <h3><u>Download:</u></h3>
-Begin by downloading the LLVM Visualization tool. Then untar/unzip the file in the appropriate directory.<br>
+Begin by downloading the LLVM Visualization tool. Then untar/unzip the file in
+the appropriate directory.<br>
   &nbsp;&nbsp;&nbsp;&nbsp;% cd <to your llvm directory><br>
   &nbsp;&nbsp;&nbsp;&nbsp;% cd projects<br>
   &nbsp;&nbsp;&nbsp;&nbsp;% tar -xzvf llvm-tv.tgz<br>
@@ -44,15 +55,21 @@ Note: opt-snap and llvm-tv.exe may be found in the tools/Debug directory.
 
 <h4>Acquiring a Snapshot:</h4>
 
-	  Using the LLVM tool 'opt', one runs transformations on an LLVM Bytecode file. Please see the <a href="http://llvm.cs.uiuc.edu/docs/CommandGuide/opt.html">man page</a> on opt for details on what transformations are available. <p>
+Using the LLVM tool 'opt', one runs transformations on an LLVM Bytecode file.
+Please see the <a href="http://llvm.cs.uiuc.edu/docs/CommandGuide/opt.html">man
+page</a> on opt for details on what transformations are available. <p>
 
 In order to aquire snapshots after a transformation or a series of
-transformations have been applied, you use the 'opt-snap' tool. You simply place the option '-snapshot' after specifying your transformation options. You may ask for a snapshot any number of times.<p>
+transformations have been applied, you use the 'opt-snap' tool. You simply place
+the option '-snapshot' after specifying your transformation options. You may ask
+for a snapshot any number of times.<p>
 
 Here is an example of using opt to acquire snapshots:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;% opt-snap -debug -licm -snapshot -gcse -snapshot < bytecode-file.bc > /dev/null <p>
+&nbsp;&nbsp;&nbsp;&nbsp;% opt-snap -debug -licm -snapshot -gcse -snapshot &lt;
+bytecode-file.bc &gt; /dev/null <p>
 
-All snapshots are placed in the directory /tmp/llvm-tv-username/snapshots, where username is your login name.<p>
+All snapshots are placed in the directory /tmp/llvm-tv-username/snapshots, where
+username is your login name.<p>
 
 <h4>Viewing a Snapshot:</h4>
  Begin by starting up the LLVM Visualization tool GUI.<br>
@@ -62,63 +79,101 @@ All snapshots are placed in the directory /tmp/llvm-tv-username/snapshots, where
 This should pop up a window such as the following:<br>
 <img src=images/llvmtv-firstopen.jpg><p>
 
-Notice that all the snapshots are listed in the tree view structure on the left side of the frame. Compilation units in LLVM have a simple, hierarchical structure:
+Notice that all the snapshots are listed in the tree view structure on the left
+side of the frame. Compilation units in LLVM have a simple, hierarchical
+structure:
 a Module contains Functions, which contain BasicBlocks, which contain
 Instructions. The tree view will show you functions within the snapshot you are viewing. <p>
 
 From this screen shot you can see we have expanded the ...<br>
 <img src=images/llvmtv-expandmodule.jpg><p>
    
-
-To the right of the tree view is a tabbed pane that allows you to easily browse different views of the snapshot.<p>
+To the right of the tree view is a tabbed pane that allows you to easily browse
+different views of the snapshot.<p>
 
 <b>TextView:</b><br>
-Explain, insert screen shot<br>
+
+<p>The text view is a direct disassembly of the Module, showing the pointer size
+of the target architecture for which it was compiled, endianness, the
+user-defined types present in the module, global variables, and all function
+definitions.</p>
+
 <img src=images/llvmtv-TextView.jpg><p>
 
 <b>HTMLView:</b><br>
-Explain, insert screen shot<br>
+
+<p>The HTML view is a syntax-highlighted view with LLVM keywords in blue, types
+in green, and BasicBlock names in red. For brevity, the Module view does not
+include the types and the functions are given as prototypes. External functions,
+for which the Module has no code, are prepended with a `declare' keyword. Other
+functions' code can be viewed by clicking on the appropriate node in the tree
+list.</p>
+
 <img src=images/llvmtv-HTMLView.jpg><p>
 
 
 <b>DSGraph Views:</b><br>
-Explain, insert screen shot<br>
+
+<p>LLVM has a powerful alias analysis framework and here we are showcasing its
+novel Data Structure Analysis (DSA) algorithm. It has 3 components: the
+Bottom-Up DSGraph, Top-down DSGraph, and Local DSGraph. These graphs show
+points-to results analysis for global variables and other pointers in a
+program. Here we see the results of a local datastructure analysis run:</p>
+
 <img src=images/llvmtv-LocalDSGraph.jpg><p>
 
 <b>CodeView:</b><br>
-Explain, insert screen shot<br>
+
+<p>Because LLVM is in SSA (Static Single Assignment), any use of a variable must
+be preceeded by exactly one definition. We can thus form def-use chains which
+connect definitions of variables to their uses.  The CodeView enables one to
+click on any value and see where the uses of the variable occur, allowing a
+visual way to inspect code. As a side effect, clicking on a BasicBlock entry
+shows all users of the BasicBlock, which are branches that have the BasicBlock
+as a target, thus showing how many incoming edges a block has.</p>
+
 <img src=images/llvmtv-CodeView.jpg><p>
 
-There are also more views under the View menu. Select one of these views will open up a new frame with that view in it. There are two new views that we have not seen before: Call Graph view and Control Flow Graph view. <br>
-
+<p>There are also more views under the View menu. Select one of these views will
+open up a new frame with that view in it. There are two new views that we have
+not seen before: Call Graph view and Control Flow Graph view.</p>
 
 <img src=images/llvmtv-ViewMenu.jpg><p>
 
 <b>Call Graph:</b><br>
-explain.<br>
+
+<p>The Call Graph shows the callers and callees of the module. A graph of
+functions, here each node represents a function and an arrow from node A to node
+B means that function A calls function B at least once in its code.</p>
 
 <b>Control Flow Graph:</b><br>
-explain and screen shot<br>
+
+<p>The control flow graph displays graphically the control flow of the function,
+identifying each basic block as a node and labeling all branches between blocks
+as arrows.</p>
+
 <img src=images/llvmtv-ControlFlow.jpg><p>
 
-Additionally you can use the File menu to add more snapshots to the visualizer. <br>
+Additionally you can use the File menu to add more snapshots to the visualizer.
+<br>
 <img src=images/llvmtv-FileMenu.jpg><p>
 
 <b>Add Module:</b><br>
-Explain<br>
+
+<p>This will add a given Module to the list of snapshots without having to run
+opt-snap to deposit it to the snapshot collection.</p>
 
 <b>Refresh:</b><br>
-Explain<br>
 
+<p>This option will re-read the snapshot collection directory to see if any new
+Modules have been added manually by the user (by copying directly through the
+filesystem).</p>
 
 <h4>Snapshots and Signaling:</h4>
-A neat feature of the LLVM Visualization tool is that the GUI will automatically refresh the snapshot listing when opt-snap signals that a new snapshot has been generated.
+A neat feature of the LLVM Visualization tool is that the GUI will automatically
+refresh the snapshot listing when opt-snap signals that a new snapshot has been
+generated.
 
+</body>
+</html>
 
-
-
-
-
-
-   
-  

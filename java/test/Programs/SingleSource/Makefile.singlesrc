@@ -11,6 +11,6 @@
 %.raw.bc: %.class $(CLASS2LLVM)
 	@$(ECHO) Compiling $<
 	$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) | \
-	$(LOPT) -simplifycfg -mem2reg > $@
+	$(LOPT) -simplifycfg -instcombine -mem2reg > $@
 
 include $(LEVEL)/test/Makefile.test

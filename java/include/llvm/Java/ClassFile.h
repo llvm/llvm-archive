@@ -61,7 +61,6 @@ namespace llvm { namespace Java {
 
     const Attribute* getAttribute(const Attributes& attrs,
                                   const std::string& name);
-    const CodeAttribute* getCodeAttribute(const Attributes& attrs);
 
     class ClassFile {
         static const ClassFile* readClassFile(std::istream& is);

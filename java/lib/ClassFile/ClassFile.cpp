@@ -137,14 +137,6 @@ namespace {
         return os;
     }
 
-    const Attribute* getAttribute(const Attributes& attributes,
-                                  const std::string& name) {
-        for (unsigned i = 0, e = attributes.size(); i != e; ++i)
-            if (attributes[i]->getName()->str() == name)
-                return attributes[i];
-
-        return NULL;
-    }
 }
 
 //===----------------------------------------------------------------------===//
@@ -278,20 +270,11 @@ std::ostream& ClassFile::dump(std::ostream& os) const
 const Attribute* llvm::Java::getAttribute(const Attributes& attrs,
                                           const std::string& name)
 {
-    for (Attributes::const_iterator
-             i = attrs.begin(), e = attrs.end(); i != e; ++i) {
-        const Attribute* attr = *i;
-        if (attr->getName()->str() == name)
-            return attr;
-    }
+    for (unsigned i = 0, e = attrs.size(); i != e; ++i)
+        if (attrs[i]->getName()->str() == name)
+            return attrs[i];
 
     return NULL;
-}
-
-const CodeAttribute* llvm::Java::getCodeAttribute(const Attributes& attrs)
-{
-    return static_cast<const CodeAttribute*>(
-        getAttribute(attrs, Attribute::CODE));
 }
 
 //===----------------------------------------------------------------------===//

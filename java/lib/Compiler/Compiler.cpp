@@ -2110,7 +2110,7 @@ namespace llvm { namespace Java { namespace {
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, vi->vtable->getType(),
-                            className + "<vtable>", currentBB_);
+                            className + ".vtable", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
              "could not find slot for virtual function!");
@@ -2203,7 +2203,7 @@ namespace llvm { namespace Java { namespace {
       Value* interfaceVTable =
         new GetElementPtrInst(interfaceVTables, indices, TMP, currentBB_);
       interfaceVTable =
-        new LoadInst(interfaceVTable, className + "<vtable>", currentBB_);
+        new LoadInst(interfaceVTable, className + ".vtable", currentBB_);
       interfaceVTable =
         new CastInst(interfaceVTable, vi->vtable->getType(), TMP, currentBB_);
       // Get the function pointer.

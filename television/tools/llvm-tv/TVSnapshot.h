@@ -23,7 +23,11 @@ class TVSnapshot {
   TVSnapshot () : M (0), filename ("") { }
   TVSnapshot (const std::string &_name) : M (0), filename (_name) { }
   TVSnapshot (const char *_name) : M (0), filename (_name) { }
-  const char *label () { return basename (filename.c_str ()); }
+  const char *label () const { return basename (filename.c_str ()); }
+  unsigned getTimestamp () const { return (unsigned) strtol (label(), 0, 0); }
+  bool operator < (const TVSnapshot &s) const {
+    return getTimestamp () < s.getTimestamp ();
+  }
   Module *getModule () {
     if (!M)
       readBytecodeFile ();

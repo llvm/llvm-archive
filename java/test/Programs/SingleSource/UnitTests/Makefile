@@ -51,11 +51,16 @@ BYTECODE_LIBRARY=1
 SHARED_LIBRARY=1
 LIBRARYNAME=test
 
-all:: Test.h
-
-Test.h: Output/.compile-java
-	$(Verb)$(JAVAH) -classpath Output Test
-
 EXTRA_OBJS = $(LibDir)/libtest.bca
 
+Test.h: Output/Test.class
+	$(Verb)$(Echo) Creating JNI header for class $(basename $(notdir $<))
+	$(Verb)$(RM) -f $@
+	$(Verb)$(JAVAH) -classpath Output Test
+
+clean::
+	$(Verb)rm -f Test.h
+
 include ../Makefile.singlesrc
+
+$(EXTRA_OBJS): Test.h

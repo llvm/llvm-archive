@@ -33,16 +33,14 @@ clean::
 
 # rule to compile java sources
 ifdef JAVA_TESTS
-Output/.compile-java: $(addsuffix .java,$(JAVA_TESTS))
+PREFIXED_JAVA_TESTS := $(addprefix Output/, $(JAVA_TESTS))
+PREFIXED_CLASS_FILES := $(addsuffix .class/, $(PREFIXED_JAVA_TESTS))
+
+$(PREFIXED_CLASS_FILES): $(addsuffix .java,$(JAVA_TESTS))
 	$(Echo) Compiling $?
 	$(Verb)mkdir -p Output
 	$(Verb)$(JAVAC) -d Output $?
 	$(Verb)touch $@
-
-all:: Output/.compile-java
-endif
-
-PREFIXED_JAVA_TESTS := $(addprefix Output/, $(JAVA_TESTS))
 
 # Compiled bytecode for tests
 BYTECODE := $(addsuffix .llvm.bc, $(PREFIXED_JAVA_TESTS))
@@ -57,7 +55,6 @@ DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
 # Keep the output and diffs
 .PRECIOUS: %.out-nat %.out-jit %.diff
 
-all:: $(BYTECODE)
 all:: $(DIFFS)
 
 # rule to run a .class file with the jvm
@@ -74,3 +71,4 @@ all:: $(DIFFS)
 	$(Verb)diff $*.out-nat $*.out-jit > $@ \
 	&& echo "PASS: $(notdir $*)" \
 	|| echo "FAIL: $(notdir $*)"
+endif

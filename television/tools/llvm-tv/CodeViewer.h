@@ -1,8 +1,15 @@
-#ifndef INSTRVIEWER_H
-#define INSTRVIEWER_H
+//===-- CodeViewer.h - Interactive instruction stream viewer ----*- C++ -*-===//
+//
+// The interactive code explorer for llvm-tv.
+//
+//===----------------------------------------------------------------------===//
 
-#include "wx/wx.h"
+#ifndef CODEVIEWER_H
+#define CODEVIEWER_H
+
+#include <wx/wx.h>
 #include <wx/listctrl.h>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -14,16 +21,18 @@ namespace llvm {
 }
 
 
-/// TVCodeItem
+/// TVCodeItem - contains an instruction, basic block, or function (which prints
+/// out as the header)
 ///
-class TVCodeItem {
+class TVCodeItem : public wxListItem {
  private:
   llvm::Value *Val;
   std::string label;
 
+  void SetLabel();
  public:
-  TVCodeItem(llvm::Value *V) : Val(V) {}
-  const std::string& getLabel();
+  TVCodeItem(llvm::Value *V) : Val(V) { SetLabel(); }
+  llvm::Value* getValue() { return Val; }
 };
 
 
@@ -33,10 +42,17 @@ class TVCodeViewer : public wxListCtrl {
   typedef std::vector<TVCodeItem*> Items;
   Items itemList;
 
+  std::map<llvm::Value*, TVCodeItem*> ValueToItem;
+  std::map<TVCodeItem*, unsigned> ItemToIndex;
+
   void refreshView();
  public:
   TVCodeViewer(wxWindow *_parent, llvm::Function *F);
-  
+  void OnItemActivated(wxListEvent &event);  
+  void OnItemSelected(wxListEvent &event);
+  void OnItemDeselected(wxListEvent &event);
+
+  DECLARE_EVENT_TABLE ()
 };
 
 
@@ -60,7 +76,7 @@ class CodeViewFrame : public wxFrame {
     delete codeViewer;
   }
 
-  bool OnClose (wxCloseEvent &event);
+  void OnClose (wxCloseEvent &event);
   DECLARE_EVENT_TABLE ()
 };
 

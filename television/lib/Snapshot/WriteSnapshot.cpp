@@ -16,12 +16,12 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/SystemUtils.h"
+#include "llvm-tv/Support/FileUtils.h"
 #include "llvm-tv/Config.h"
-#include "Support/CommandLine.h"
-#include "Support/Debug.h"
-#include "Support/FileUtils.h"
-#include "Support/StringExtras.h"
-#include "Support/SystemUtils.h"
 #include <csignal>
 #include <cstdlib>
 #ifndef _GNU_SOURCE
@@ -46,8 +46,9 @@ namespace {
       AU.setPreservesAll();
     }
     
-    /// run - save the Module in a pre-defined location with our naming strategy
-    bool run(Module &M);
+    /// runPass - save the Module in a pre-defined location with our naming
+    /// strategy
+    bool runPass(Module &M);
 
   private:
     bool sendSignalToLLVMTV();
@@ -63,11 +64,11 @@ namespace {
 }
 
 
-/// run - save snapshot to a pre-defined directory with a consecutive number in
-/// the name (for alphabetization) and the name of the pass that ran just before
-/// this one. Signal llvm-tv that fresh bytecode file has arrived for
+/// runPass - save snapshot to a pre-defined directory with a consecutive number
+/// in the name (for alphabetization) and the name of the pass that ran just
+/// before this one. Signal llvm-tv that fresh bytecode file has arrived for
 /// consumption.
-bool Snapshot::run(Module &M) {
+bool Snapshot::runPass(Module &M) {
   // Make sure the snapshots dir exists, which it will unless this
   // is the first time we've ever run the -snapshot pass.
   EnsureDirectoryExists (llvmtvPath);

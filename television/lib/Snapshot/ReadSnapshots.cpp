@@ -12,8 +12,8 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
-#include "Support/FileUtils.h"
-#include "Support/Snapshots.h"
+#include "llvm-tv/Support/FileUtils.h"
+#include "llvm-tv/Support/Snapshots.h"
 #include <string>
 #include <vector>
 using namespace llvm;

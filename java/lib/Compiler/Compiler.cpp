@@ -237,15 +237,13 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-    /// Returns the type of the Java string descriptor for JNI. If the
-    /// Type* self is not NULL then that type is used as the first
-    /// type in function types
-    Type* getJNIType(ConstantUtf8* descr, Type* self = NULL) {
+    /// Returns the type of the Java string descriptor for JNI.
+    Type* getJNIType(ConstantUtf8* descr) {
       unsigned i = 0;
-      return getJNITypeHelper(descr->str(), i, self);
+      return getJNITypeHelper(descr->str(), i);
     }
 
-    Type* getJNITypeHelper(const std::string& descr, unsigned& i, Type* self) {
+    Type* getJNITypeHelper(const std::string& descr, unsigned& i) {
       assert(i < descr.size());
       switch (descr[i++]) {
       case 'B': return Type::SByteTy;
@@ -261,34 +259,21 @@ namespace llvm { namespace Java { namespace {
         unsigned e = descr.find(';', i);
         std::string className = descr.substr(i, e - i);
         i = e + 1;
-        return PointerType::get(Type::VoidTy);
+        return PointerType::get(ClassInfo::ObjectBaseTy);
       }
       case '[':
-        if (descr[i] == '[') {
+        if (descr[i] == '[')
           do { ++i; } while (descr[i] == '[');
-          getTypeHelper(descr, i, NULL);
-          return PointerType::get(Type::VoidTy);
-        }
-        else if (descr[i] == 'L') {
-          getTypeHelper(descr, i, NULL);
-          return PointerType::get(Type::VoidTy);
-        }
-        else {
-           return PointerType::get(
-             getPrimitiveArrayInfo(getTypeHelper(descr, i, NULL)).type);
-        }
-        break;
+        getJNITypeHelper(descr, i);
+        return PointerType::get(ClassInfo::ObjectBaseTy);
       case '(': {
         std::vector<const Type*> params;
         // JNIEnv*
         params.push_back(JNIEnvPtr_->getType());
-
-        assert(self && "first argument after JNIEnv* must be that of a "
-               "class or an object pointer");
-        params.push_back(PointerType::get(self));
+        params.push_back(PointerType::get(ClassInfo::ObjectBaseTy));
         while (descr[i] != ')')
-          params.push_back(getTypeHelper(descr, i, NULL));
-        return FunctionType::get(getTypeHelper(descr, ++i, NULL),params, false);
+          params.push_back(getJNITypeHelper(descr, i));
+        return FunctionType::get(getJNITypeHelper(descr, ++i), params, false);
       }
         // FIXME: Throw something
       default:  return NULL;
@@ -1225,9 +1210,9 @@ namespace llvm { namespace Java { namespace {
       if (method->isNative()) {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "
               << classMethodDesc << '\n');
-        FunctionType* funcTy = cast<FunctionType>(
-            getJNIType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
-
+        FunctionType* jniFuncTy =
+            cast<FunctionType>(getJNIType(method->getDescriptor()));
+        std::cerr << "JNI funtype: " << *jniFuncTy << '\n';
         std::string funcName =
           "Java_" +
           getMangledString(cf_->getThisClass()->getName()->str()) + '_' +
@@ -1241,7 +1226,7 @@ namespace llvm { namespace Java { namespace {
                         descr.begin() + descr.find(')')));
         }
 
-        Function* jniFunction = module_.getOrInsertFunction(funcName, funcTy);
+        Function* jniFunction = module_.getOrInsertFunction(funcName,jniFuncTy);
 
         BasicBlock* bb = new BasicBlock("entry", function);
         std::vector<Value*> params;
@@ -1252,9 +1237,12 @@ namespace llvm { namespace Java { namespace {
         for (Function::aiterator A = function->abegin(), E = function->aend();
              A != E; ++A) {
           params.push_back(
-            new CastInst(A, funcTy->getParamType(params.size()), TMP, bb));
+            new CastInst(A, jniFuncTy->getParamType(params.size()), TMP, bb));
         }
-        new ReturnInst(new CallInst(jniFunction, params, "", bb), bb);
+        Value* result = new CallInst(jniFunction, params, "", bb);
+        if (result->getType() != Type::VoidTy)
+            result = new CastInst(result, function->getReturnType(), TMP,bb);
+        new ReturnInst(result, bb);
 
         return function;
       }

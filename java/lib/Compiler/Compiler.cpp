@@ -48,7 +48,6 @@ namespace llvm { namespace Java { namespace {
 
   const std::string TMP("tmp");
 
-  typedef std::vector<BasicBlock*> BC2BBMap;
   typedef std::stack<Value*, std::vector<Value*> > OperandStack;
   typedef std::vector<Value*> Locals;
 
@@ -70,25 +69,18 @@ namespace llvm { namespace Java { namespace {
 
   class Bytecode2BasicBlockMapper
     : public BytecodeParser<Bytecode2BasicBlockMapper> {
-    Function& function_;
-    BC2BBMap& bc2bbMap_;
+    Function* function_;
+    typedef std::vector<BasicBlock*> BC2BBMap;
+    BC2BBMap bc2bbMap_;
     typedef std::map<BasicBlock*, BasicBlock*> FallThroughMap;
     FallThroughMap ftMap_;
-    const CodeAttribute& codeAttr_;
 
   public:
-    Bytecode2BasicBlockMapper(Function& f,
-                              BC2BBMap& m,
-                              CodeAttribute& c)
-      : function_(f), bc2bbMap_(m), codeAttr_(c) { }
+    Bytecode2BasicBlockMapper(Function* f, CodeAttribute* c)
+      : function_(f), bc2bbMap_(c->getCodeSize()) {
+      BasicBlock* bb = new BasicBlock("entry", function_);
 
-    void compute() {
-      bc2bbMap_.clear();
-      bc2bbMap_.assign(codeAttr_.getCodeSize(), NULL);
-
-      BasicBlock* bb = new BasicBlock("entry", &function_);
-
-      parse(codeAttr_.getCode(), codeAttr_.getCodeSize());
+      parse(c->getCode(), c->getCodeSize());
 
       for (unsigned i = 0, e = bc2bbMap_.size(); i != e; ++i)
         if (BasicBlock* next = bc2bbMap_[i]) {
@@ -98,39 +90,43 @@ namespace llvm { namespace Java { namespace {
         else
           bc2bbMap_[i] = bb;
 
-      assert(function_.getEntryBlock().getName() == "entry");
+      assert(function_->getEntryBlock().getName() == "entry");
     }
 
-    void insertFallThroughBranches() {
-      for (FallThroughMap::const_iterator i = ftMap_.begin(), e = ftMap_.end();
-           i != e; ++i)
-        if (!i->first->getTerminator())
-          new BranchInst(i->second, i->first);
+    BasicBlock* getBBAt(unsigned bcI) {
+      assert(bc2bbMap_.size() > bcI && "Invalid bytecode index!");
+      return bc2bbMap_[bcI];
     }
-        
+
+    BasicBlock* getFallThroughBranch(BasicBlock* bb) {
+      assert(ftMap_.find(bb) != ftMap_.end() &&
+             "Basic block is not in this mapper!");
+      return ftMap_.find(bb)->second;
+    }
+
     void do_if(JSetCC cc, JType type, unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
-        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
+        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), function_);
       if (!bc2bbMap_[f])
-        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
+        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), function_);
     }
 
     void do_ifcmp(JSetCC cc, unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
-        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
+        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), function_);
       if (!bc2bbMap_[f])
-        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
+        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), function_);
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
-      for (unsigned i = 0; i < sw.size(); ++i) {
+      for (unsigned i = 0, e = sw.size(); i != e; ++i) {
         unsigned target = sw[i].second;
         if (!bc2bbMap_[target])
-          bc2bbMap_[target] = new BasicBlock("bc" + utostr(target), &function_);
+          bc2bbMap_[target] = new BasicBlock("bc" + utostr(target), function_);
       }
       if (!bc2bbMap_[defTarget])
         bc2bbMap_[defTarget] =
-          new BasicBlock("bc" + utostr(defTarget), &function_);
+          new BasicBlock("bc" + utostr(defTarget), function_);
     }
   };
 
@@ -141,7 +137,7 @@ namespace llvm { namespace Java { namespace {
     ClassFile* cf_;
     OperandStack opStack_;
     Locals locals_;
-    BC2BBMap bc2bbMap_;
+    std::auto_ptr<Bytecode2BasicBlockMapper> mapper_;
     BasicBlock* prologue_;
     BasicBlock* current_;
 
@@ -173,9 +169,6 @@ namespace llvm { namespace Java { namespace {
     };
     typedef std::map<ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
-
-  private:
-    BasicBlock* getBBAt(unsigned bcI) { return bc2bbMap_[bcI]; }
 
   private:
     llvm::Constant* getConstant(Constant* c) {
@@ -782,8 +775,7 @@ namespace llvm { namespace Java { namespace {
       locals_.clear();
       locals_.assign(codeAttr->getMaxLocals(), NULL);
 
-      Bytecode2BasicBlockMapper mapper(*function, bc2bbMap_, *codeAttr);
-      mapper.compute();
+      mapper_.reset(new Bytecode2BasicBlockMapper(function, codeAttr));
 
       prologue_ = new BasicBlock("prologue");
       unsigned index = 0;
@@ -797,16 +789,13 @@ namespace llvm { namespace Java { namespace {
         index += isTwoSlotType(a->getType()) ? 2 : 1;
       }
 
-      parse(codeAttr->getCode(), codeAttr->getCodeSize());
-
-      // makethe prologue the entry block of the function with a
+      // make the prologue the entry block of the function with a
       // fallthrough branch to the original entry block
       function->getBasicBlockList().push_front(prologue_);
-      new BranchInst(prologue_->getNext(), prologue_);
+      current_ = prologue_->getNext();
+      new BranchInst(current_, prologue_);
 
-      // now insert fall through branches to all basic blocks that
-      // don't have a terminator
-      mapper.insertFallThroughBranches();
+      parse(codeAttr->getCode(), codeAttr->getCodeSize());
 
       function->dump();
 
@@ -905,7 +894,10 @@ namespace llvm { namespace Java { namespace {
     }
 
     void pre_inst(unsigned bcI) {
-      current_ = getBBAt(bcI);
+      BasicBlock* previous = current_;
+      current_ = mapper_->getBBAt(bcI);
+      if (previous != current_ && !previous->getTerminator())
+        new BranchInst(mapper_->getFallThroughBranch(previous), previous);
     }
 
     void do_aconst_null() {
@@ -1208,7 +1200,7 @@ namespace llvm { namespace Java { namespace {
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* v2 = llvm::Constant::getNullValue(v1->getType());
       Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, current_);
-      new BranchInst(getBBAt(t), getBBAt(f), c, current_);
+      new BranchInst(mapper_->getBBAt(t), mapper_->getBBAt(f), c, current_);
     }
 
     void do_ifcmp(JSetCC cc,
@@ -1216,11 +1208,11 @@ namespace llvm { namespace Java { namespace {
       Value* v2 = opStack_.top(); opStack_.pop();
       Value* v1 = opStack_.top(); opStack_.pop();
       Value* c = new SetCondInst(getSetCC(cc), v1, v2, TMP, current_);
-      new BranchInst(getBBAt(t), getBBAt(f), c, current_);
+      new BranchInst(mapper_->getBBAt(t), mapper_->getBBAt(f), c, current_);
     }
 
     void do_goto(unsigned target) {
-      new BranchInst(getBBAt(target), current_);
+      new BranchInst(mapper_->getBBAt(target), current_);
     }
 
     void do_jsr(unsigned target) {
@@ -1232,11 +1224,11 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
-      Value* v1 = opStack_.top(); opStack_.pop();
-      SwitchInst* in = new SwitchInst(v1, getBBAt(defTarget), current_);
-      for (unsigned i = 0; i < sw.size(); ++i)
+      Value* v = opStack_.top(); opStack_.pop();
+      SwitchInst* in = new SwitchInst(v, mapper_->getBBAt(defTarget), current_);
+      for (unsigned i = 0, e = sw.size(); i != e; ++i)
         in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
-                    getBBAt(sw[i].second));
+                    mapper_->getBBAt(sw[i].second));
     }
 
     void do_return() {

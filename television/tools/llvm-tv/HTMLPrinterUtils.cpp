@@ -264,7 +264,9 @@ void WriteConstantInt(std::ostream &Out, const Constant *CV,
         unsigned char C = cast<ConstantInt>(CA->getOperand(i))->getRawValue();
         
         if (isprint(C) && C != '"' && C != '\\') {
-          Out << C;
+          if (C == '<') Out << "&lt;";
+          else if (C == '>') Out << "&gt;";
+          else Out << C;
         } else {
           Out << '\\'
               << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))

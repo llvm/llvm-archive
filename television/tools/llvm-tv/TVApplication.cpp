@@ -13,7 +13,6 @@
 #include "CodeViewer.h"
 #include "llvm-tv/Config.h"
 #include <cerrno>
-#include <dirent.h>
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,32 +38,6 @@ void TVApplication::ReceivedSignal () {
 void FatalErrorBox (const std::string msg) {
   wxMessageBox(msg.c_str (), "Fatal Error", wxOK | wxICON_ERROR);
   exit (1);
-}
-
-void TVFrame::refreshSnapshotList () {
-  // re-load the list of snapshots
-  const char *directoryName = mySnapshotDirName.c_str ();
-  mySnapshotList.clear ();
-  DIR *d = opendir (directoryName);
-  if (!d)
-    FatalErrorBox ("trying to open directory " + mySnapshotDirName + ": "
-                   + strerror(errno));
-  while (struct dirent *de = readdir (d))
-    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
-      mySnapshotList.push_back (mySnapshotDirName + "/" + de->d_name);
-  sort (mySnapshotList.begin (), mySnapshotList.end ());
-
-  closedir (d);
-
-  if (myTreeCtrl != 0)
-    myTreeCtrl->updateSnapshotList(mySnapshotList);
-}
-
-void TVFrame::initializeSnapshotListAndView (std::string dirName) {
-  // Initialize the snapshot list
-  mySnapshotDirName = dirName;
-  refreshSnapshotList ();
-  SetStatusText ("Snapshot list has been loaded.");
 }
 
 static void setUpMenus (wxFrame *frame) {

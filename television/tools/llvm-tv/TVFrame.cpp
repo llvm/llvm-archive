@@ -10,8 +10,7 @@
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
-#include <wx/wx.h>
-#include <sstream>
+#include <dirent.h>
 
 /// refreshView - Make sure the display is up-to-date with respect to
 /// the list.
@@ -131,6 +130,32 @@ wxWindow *TVFrame::createDisplayWidget (wxWindow *parent, const wxString &init){
     // We'll use a HTML viewer to display syntax-highlighted LLVM assembly 
     return new TVHtmlWindow(parent, LLVM_TV_HTML_WINDOW, init);
   }
+}
+
+void TVFrame::refreshSnapshotList () {
+  // re-load the list of snapshots
+  const char *directoryName = mySnapshotDirName.c_str ();
+  mySnapshotList.clear ();
+  DIR *d = opendir (directoryName);
+  if (!d)
+    FatalErrorBox ("trying to open directory " + mySnapshotDirName + ": "
+                   + strerror(errno));
+  while (struct dirent *de = readdir (d))
+    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
+      mySnapshotList.push_back (mySnapshotDirName + "/" + de->d_name);
+  sort (mySnapshotList.begin (), mySnapshotList.end ());
+
+  closedir (d);
+
+  if (myTreeCtrl != 0)
+    myTreeCtrl->updateSnapshotList(mySnapshotList);
+}
+
+void TVFrame::initializeSnapshotListAndView (std::string dirName) {
+  // Initialize the snapshot list
+  mySnapshotDirName = dirName;
+  refreshSnapshotList ();
+  SetStatusText ("Snapshot list has been loaded.");
 }
 
 /// TVFrame constructor - used to set up typical appearance of visualizer's

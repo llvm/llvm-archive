@@ -13,4 +13,4 @@ CLASSDUMP  := $(ToolDir)/classdump$(EXEEXT)
 # rule to make bytecode from assembly
 %.bc: %.ll
 	$(Echo) Assembling $< to bytecode
-	$(Verb)$(LLVMAS) < $< > $@
+	$(Verb)$(LLVMAS) < $< > $@ || rm -f $@

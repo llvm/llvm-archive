@@ -1177,6 +1177,8 @@ namespace llvm { namespace Java { namespace {
         for (unsigned i = 0, e = className.size(); i != e; ++i) {
           if (className[i] == '/')
             funcName += '_';
+          else if (className[i] == '_')
+            funcName += "_1";
           else
             funcName += className[i];
         }

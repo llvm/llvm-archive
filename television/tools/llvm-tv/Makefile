@@ -1,7 +1,7 @@
 LEVEL = ../..
 TOOLNAME = llvm-tv
 LLVMLIBS = analysis.a bcreader bcwriter datastructure ipa.a support.a \
-           target.a vmcore 
+           target.a vmcore transformutils.a
 
 # note: delete when FileUtils is assimilated into libsupport
 USEDLIBS = snapshot

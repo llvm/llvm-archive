@@ -7,6 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 LEVEL := ..
+# FIXME: This needs to be handled by the configure script or alternatively
+# import jni.h in the java-fe.
+CPPFLAGS+=-I$(HOME)/projects/college/classpath-0.12/include
 BYTECODE_LIBRARY=1
 LIBRARYNAME=jrt
 

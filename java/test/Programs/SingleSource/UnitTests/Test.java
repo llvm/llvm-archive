@@ -9,6 +9,9 @@ public class Test
     public static native void println(long l);
     public static native void println(float f);
     public static native void println(double d);
+    public static void println(Object o) {
+        println(o.toString());
+    }
     public static void println(String s) {
         byte[] bytes = new byte[s.length()];
         s.getBytes(0, s.length(), bytes, 0);

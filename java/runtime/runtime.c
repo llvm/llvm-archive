@@ -3,6 +3,12 @@ struct llvm_java_object_header;
 struct llvm_java_object_vtable;
 struct llvm_java_object_typeinfo;
 
+/* Define VM internal types */
+typedef struct llvm_java_object_base* jobject;
+typedef unsigned jfieldID;
+typedef unsigned jmethodID;
+#define _JNI_VM_INTERNAL_TYPES_DEFINED
+
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
 };
@@ -27,11 +33,11 @@ struct llvm_java_object_vtable {
 };
 
 struct llvm_java_object_vtable*
-llvm_java_GetObjectClass(struct llvm_java_object_base* obj) {
+llvm_java_GetObjectClass(jobject obj) {
   return obj->vtable;
 }
 
-int llvm_java_IsInstanceOf(struct llvm_java_object_base* obj,
+int llvm_java_IsInstanceOf(jobject obj,
                            struct llvm_java_object_vtable* clazz) {
   struct llvm_java_object_vtable* objClazz = obj->vtable;
   if (objClazz == clazz)

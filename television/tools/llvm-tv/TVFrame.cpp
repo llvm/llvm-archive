@@ -299,6 +299,7 @@ void TVFrame::CodeView(wxCommandEvent &event) {
   // Get the selected LLVM object.
   TVTreeItemData *item = myTreeCtrl->GetSelectedItemData ();
 
+#if 0
   // Open up a new CFG view window.
   Function *F = item->getFunction ();
   if (!F)
@@ -309,6 +310,8 @@ void TVFrame::CodeView(wxCommandEvent &event) {
                  wxOK | wxICON_ERROR, this);
   else
     myApp->OpenCodeView(F);
+#endif
+  myApp->OpenGraphView<TVCodeViewer> (myTreeCtrl->GetSelectedItemData ());
 }
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)

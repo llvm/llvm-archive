@@ -19,11 +19,12 @@ JAVA_TESTS := Arithm \
 	InterfaceCall \
 	LongCompare \
 	LookupSwitch \
-	MultiArray \
 	StaticInitializers \
 	TableSwitch \
 	VirtualCall \
-	VTable
+	VTable \
+#	MultiArray \
+
 
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1

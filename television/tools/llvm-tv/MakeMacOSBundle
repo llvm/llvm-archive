@@ -5,11 +5,18 @@
 APP="$1"
 WX="$2"
 BINARY="$3"
-mkdir ${APP}.app
+make_dir () {
+  dir=$1
+  if [ ! -d $dir ]
+  then
+    mkdir $dir
+  fi
+}
+make_dir ${APP}.app
 CONTENTS=${APP}.app/Contents
-mkdir $CONTENTS
-mkdir ${CONTENTS}/MacOS
-mkdir ${CONTENTS}/Resources
+make_dir $CONTENTS
+make_dir ${CONTENTS}/MacOS
+make_dir ${CONTENTS}/Resources
 # don't know what we need this for...
 #/Developer/Tools/Rez -t APPL Carbon.r $WX/lib/libwx_macd-2.4.0.r -o $APP
 cp $BINARY ${CONTENTS}/MacOS/${APP}

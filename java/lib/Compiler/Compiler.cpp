@@ -1340,11 +1340,8 @@ namespace llvm { namespace Java { namespace {
             if (field->getConstantValueAttribute()) {
               Constant* constant =
                 field->getConstantValueAttribute()->getValue();
-              if (!dynamic_cast<ConstantString*>(constant)) {
-                init = ConstantExpr::getCast(
-                  dyn_cast<llvm::Constant>(getConstant(constant)), globalTy);
-                isConstant = field->isFinal();
-              }
+              init = ConstantExpr::getCast(getConstant(constant), globalTy);
+              isConstant = field->isFinal();
             }
 
             std::string globalName =

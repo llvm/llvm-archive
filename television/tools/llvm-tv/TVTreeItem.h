@@ -31,6 +31,7 @@ public:
   virtual llvm::Function *getFunction() { return 0; }
   virtual void printHTML(std::ostream &os) {}
 protected:
+  void printFunctionHeader(llvm::Function *F);
   void printFunction(llvm::Function *F);
   void printModule(llvm::Module *M);
   llvm::CachedWriter cw;

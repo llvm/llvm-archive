@@ -136,7 +136,7 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
   return os << str.substr(prev, str.size()-prev) << "</tt>";
 }
 
-void TVTreeItemData::printFunction(Function *F) {
+void TVTreeItemData::printFunctionHeader(Function *F) {
   std::ostream &os = cw.getStream();
 
   // print out function return type, name, and arguments
@@ -162,6 +162,12 @@ void TVTreeItemData::printFunction(Function *F) {
   }
 
   os << ")";
+}
+
+void TVTreeItemData::printFunction(Function *F) {
+  printFunctionHeader(F);
+  std::ostream &os = cw.getStream();
+
   if (!F->isExternal ())
     os << " {<br>";
   os << "</tt>";
@@ -204,7 +210,7 @@ void TVTreeItemData::printModule(Module *M) {
 
   // Display functions
   for (Module::iterator F = M->begin(), Fe = M->end(); F != Fe; ++F) {
-    printFunction(F);
+    printFunctionHeader(F);
     os << "<br>";
   }
 

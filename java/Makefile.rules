@@ -12,5 +12,5 @@ CLASSDUMP  := $(PROJTOOLCURRENT)/classdump$(EXEEXT)
 
 # rule to make bytecode from assembly
 %.bc: %.ll
-	@$(ECHO) Assembling $< to bytecode
-	$(LLVMAS) < $< > $@
+	$(Echo) Assembling $< to bytecode
+	$(Verb)$(LLVMAS) < $< > $@

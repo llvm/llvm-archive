@@ -213,15 +213,23 @@ void TVTreeItemData::printModule(Module *M, std::ostream &os) {
 }
 
 void TVTreeModuleItem::print(std::ostream &os) {
+#if !defined(NOHTML)
   htmlHeader(os);
+#endif
   myModule->print(os); 
+#if !defined(NOHTML)
   htmlFooter(os);
+#endif
 }
 
 void TVTreeFunctionItem::print(std::ostream &os) { 
+#if !defined(NOHTML)
   htmlHeader(os);
+#endif
   myFunc->print(os);
+#if !defined(NOHTML)
   htmlFooter(os);
+#endif
 }
 
 Module* TVTreeFunctionItem::getModule() {

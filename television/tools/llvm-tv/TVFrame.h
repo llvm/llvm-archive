@@ -129,10 +129,13 @@ enum {
   LLVM_TV_CFGVIEW
 };
 
+class TVApplication;
+
 /// TVFrame - The main application window for the demo, which displays
 /// the list view, status bar, and menu bar.
 ///
 class TVFrame : public wxFrame {
+  TVApplication *myApp;
   TVTreeCtrl *myTreeCtrl;
   std::vector<TVSnapshot> mySnapshotList;
   std::string mySnapshotDirName;
@@ -142,11 +145,12 @@ class TVFrame : public wxFrame {
 
   void Resize();
  public:
-  TVFrame (const char *title);
+  TVFrame (TVApplication *app, const char *title);
   void OnExit (wxCommandEvent &event);
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);
   void OnAbout (wxCommandEvent &event);
+  void OnHelp (wxCommandEvent &event);
   void OnRefresh (wxCommandEvent &event);
   void CreateTree(long style, std::vector<TVSnapshot>&);
   void refreshSnapshotList ();

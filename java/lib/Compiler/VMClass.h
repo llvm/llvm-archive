@@ -70,6 +70,7 @@ namespace llvm { namespace Java {
 
   public:
     const std::string& getName() const { return name_; }
+    Resolver* getResolver() const { return resolver_; }
     const Type* getLayoutType() const { return layoutType_; }
     const Type* getType() const { return type_; }
     const ClassFile* getClassFile() const { return classFile_; }

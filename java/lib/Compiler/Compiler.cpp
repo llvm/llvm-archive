@@ -788,63 +788,6 @@ namespace llvm { namespace Java { namespace {
       return arrayInfo;
     }
 
-    /// Emits the necessary code to get a pointer to a static field of
-    /// an object.
-    GlobalVariable* getStaticField(unsigned index) {
-      ConstantFieldRef* fieldRef =
-        class_->getClassFile()->getConstantFieldRef(index);
-      ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
-
-      const std::string& className = fieldRef->getClass()->getName()->str();
-      GlobalVariable* global = getStaticField(
-        class_->getClass(fieldRef->getClassIndex()),
-        nameAndType->getName()->str(),
-        class_->getClass(nameAndType->getDescriptorIndex()));
-
-      assert(global && "Cannot find global for static field!");
-
-      return global;
-    }
-
-    /// Finds a static field in the specified class, any of its
-    /// super clases, or any of the interfaces it implements.
-    GlobalVariable* getStaticField(const VMClass* clazz,
-                                   const std::string& name,
-                                   const VMClass* fieldClass) {
-      emitStaticInitializers(clazz->getClassFile());
-
-      std::string globalName =
-        clazz->getClassFile()->getThisClass()->getName()->str() + '/' + name;
-      DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-      const Type* type = fieldClass->getType();
-      if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
-        return g;
-
-      for (unsigned i = 0, e = clazz->getNumInterfaces(); i != e; ++i) {
-        const VMClass* interface = clazz->getInterface(i);
-        emitStaticInitializers(interface->getClassFile());
-        globalName =
-          interface->getClassFile()->getThisClass()->getName()->str() +
-          '/' + name;
-        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-        if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
-          return g;
-      }
-
-      for (unsigned i = 0, e = clazz->getNumSuperClasses(); i != e; ++i) {
-        const VMClass* superClass = clazz->getSuperClass(i);
-        emitStaticInitializers(superClass->getClassFile());
-        globalName =
-          superClass->getClassFile()->getThisClass()->getName()->str() +
-          '/' + name;
-        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-        if (GlobalVariable* g = module_->getGlobalVariable(globalName, type))
-          return g;
-      }
-
-      return NULL;
-    }
-
     std::string getMangledString(const std::string& str) {
       std::string mangledStr;
 
@@ -1058,39 +1001,6 @@ namespace llvm { namespace Java { namespace {
         const std::string& className =
           classfile->getThisClass()->getName()->str();
         const VMClass* clazz = resolver_->getClass(className);
-
-        // Create the global variables of this class.
-        const Fields& fields = classfile->getFields();
-        for (unsigned i = 0, e = fields.size(); i != e; ++i) {
-          Field* field = fields[i];
-          if (field->isStatic()) {
-            const VMClass* fieldClass =
-              clazz->getClass(field->getDescriptorIndex());
-            const Type* globalTy = fieldClass->getType();
-            // A java field can be final/constant even if it has a
-            // dynamic initializer. Because LLVM does not currently
-            // support these semantics, we consider constants only
-            // final fields with static initializers.
-            bool isConstant = false;
-            llvm::Constant* init = llvm::Constant::getNullValue(globalTy);
-            if (field->getConstantValueAttribute()) {
-              unsigned i = field->getConstantValueAttribute()->getValueIndex();
-              init = ConstantExpr::getCast(clazz->getConstant(i), globalTy);
-              isConstant = field->isFinal();
-            }
-
-            std::string globalName =
-              classfile->getThisClass()->getName()->str() + '/' +
-              field->getName()->str();
-            DEBUG(std::cerr << "Adding global: " << globalName << '\n');
-            new GlobalVariable(globalTy,
-                               isConstant,
-                               GlobalVariable::ExternalLinkage,
-                               init,
-                               globalName,
-                               module_);
-          }
-        }
 
         Function* hook = module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
                                                       Type::VoidTy, 0);
@@ -1576,15 +1486,17 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_getstatic(unsigned index) {
-      Value* v = new LoadInst(getStaticField(index), TMP, currentBB_);
+      const VMField* field = class_->getField(index);
+
+      Value* v = new LoadInst(field->getGlobal(), TMP, currentBB_);
       push(v);
     }
 
     void do_putstatic(unsigned index) {
-      Value* ptr = getStaticField(index);
-      const Type* fieldTy = cast<PointerType>(ptr->getType())->getElementType();
-      Value* v = pop(fieldTy);
-      new StoreInst(v, ptr, currentBB_);
+      const VMField* field = class_->getField(index);
+
+      Value* v = pop(field->getClass()->getType());
+      new StoreInst(v, field->getGlobal(), currentBB_);
     }
 
     void do_getfield(unsigned index) {

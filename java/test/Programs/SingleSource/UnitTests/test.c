@@ -27,5 +27,5 @@ void Java_Test_print_1float_1ln(JNIEnv *env, jclass clazz, jfloat aFloat)
 
 void Java_Test_print_1double_1ln(JNIEnv *env, jclass clazz, jdouble aDouble)
 {
-  printf("%lf\n", aDouble);
+  printf("%f\n", aDouble);
 }

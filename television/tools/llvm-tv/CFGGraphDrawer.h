@@ -1,24 +1,18 @@
 #ifndef CFGGRAPHDRAWER_H
 #define CFGGRAPHDRAWER_H
 
-#include "wx/wx.h"
+#include "GraphDrawer.h"
 #include "TVSnapshot.h"
 
 //===----------------------------------------------------------------------===//
 
 // CFGGraphDrawer interface
 
-class CFGGraphDrawer {
+class CFGGraphDrawer : public GraphDrawer {
   Function *fn;
-  wxImage *graphImage;
+  wxImage *drawGraphImage ();
  public:
-  CFGGraphDrawer (Function *_fn) : fn (_fn), graphImage (0) { }
-  void drawGraphImage ();
-  wxImage *getGraphImage () {
-    if (!graphImage)
-      drawGraphImage ();
-    return graphImage;
-  }
+  CFGGraphDrawer (Function *_fn) : fn (_fn) { }
 };
 
 #endif // CFGGRAPHDRAWER_H

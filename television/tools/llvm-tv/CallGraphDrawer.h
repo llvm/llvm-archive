@@ -1,24 +1,18 @@
 #ifndef CALLGRAPHDRAWER_H
 #define CALLGRAPHDRAWER_H
 
-#include "wx/wx.h"
+#include "GraphDrawer.h"
 #include "TVSnapshot.h"
 
 //===----------------------------------------------------------------------===//
 
 // CallGraphDrawer interface
 
-class CallGraphDrawer {
+class CallGraphDrawer : public GraphDrawer {
   Module *module;
-  wxImage *graphImage;
+  wxImage *drawGraphImage ();
  public:
-  CallGraphDrawer (Module *_mod) : module (_mod), graphImage (0) { }
-  void drawGraphImage ();
-  wxImage *getGraphImage () {
-    if (!graphImage)
-      drawGraphImage ();
-    return graphImage;
-  }
+  CallGraphDrawer (Module *_mod) : GraphDrawer (), module (_mod) { }
 };
 
 #endif // CALLGRAPHDRAWER_H

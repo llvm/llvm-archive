@@ -10,7 +10,7 @@ using namespace llvm;
 
 // CFGGraphDrawer implementation
 
-void CFGGraphDrawer::drawGraphImage () {
+wxImage *CFGGraphDrawer::drawGraphImage () {
   ExistingModuleProvider MP (fn->getParent ());
   FunctionPassManager PM (&MP);
   PM.add (createCFGOnlyPrinterPass ());
@@ -20,10 +20,11 @@ void CFGGraphDrawer::drawGraphImage () {
   std::string cmd = "dot -Tpng " + filename + " > cfg.png";
   system (cmd.c_str ());
   unlink (filename.c_str ());
-  graphImage = new wxImage;
+  wxImage *graphImage = new wxImage;
   if (!graphImage->LoadFile ("cfg.png")) {
      std::cerr << "drawGraphImage(): wxImage::LoadFile returned false\n";
-     return;
+     return 0;
   }
   unlink ("cfg.png");
+  return graphImage;
 }

@@ -22,7 +22,7 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"));
+InputClass(cl::Positional, cl::desc("<input class>"));
 
 int main(int argc, char* argv[])
 {
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
                                 "class dump utility");
 
     try {
-        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputFilename));
+        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
 
         cf->dump(std::cout);
     }

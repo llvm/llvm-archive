@@ -25,7 +25,7 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"));
+InputClass(cl::Positional, cl::desc("<input class>"));
 
 int main(int argc, char* argv[])
 {
@@ -34,11 +34,11 @@ int main(int argc, char* argv[])
                                 "classfile to llvm utility");
 
     try {
-        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputFilename));
+        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
 
         Java::Compiler compiler;
 
-        Module module(InputFilename);
+        Module module(InputClass);
         compiler.compile(module, *cf);
 
         PassManager passes;

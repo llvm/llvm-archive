@@ -46,6 +46,7 @@ namespace llvm { namespace Java {
     std::vector<const VMField*> memberFields_;
 
     void computeLayout();
+    const VMField* lookupField(const std::string& name) const;
 
     friend class Resolver;
 
@@ -88,6 +89,7 @@ namespace llvm { namespace Java {
 
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;
+    const VMField* getField(unsigned index) const;
   };
 
 } } // namespace llvm::Java

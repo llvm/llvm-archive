@@ -847,39 +847,14 @@ namespace llvm { namespace Java { namespace {
 
     /// Emits the necessary code to get a field from the passed
     /// pointer to an object.
-    Value* getField(unsigned index, Value* ptr) {
-      ConstantFieldRef* fieldRef =
-        class_->getClassFile()->getConstantFieldRef(index);
-      ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
-      return getField(
-        class_->getClass(fieldRef->getClassIndex()),
-        nameAndType->getName()->str(),
-        ptr);
-    }
+    Value* getField(const VMField* field, Value* ptr) {
+      std::vector<Value*> indices(2, ConstantUInt::get(Type::UIntTy, 0));
+      indices[1] = ConstantUInt::get(Type::UIntTy, field->getMemberIndex());
 
-    /// Emits the necessary code to get a field from the passed
-    /// pointer to an object.
-    Value* getField(const VMClass* clazz,
-                    const std::string& fieldName,
-                    Value* ptr) {
-      // Cast ptr to correct type.
-      ptr = new CastInst(ptr, clazz->getType(), TMP, currentBB_);
-
-      // Deref pointer.
-      std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
-      while (true) {
-        int slot = clazz->getFieldIndex(fieldName);
-        if (slot == -1) {
-          indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
-          clazz = clazz->getSuperClass();
-        }
-        else {
-          indices.push_back(ConstantUInt::get(Type::UIntTy, slot));
-          break;
-        }
-      }
-
-      return new GetElementPtrInst(ptr, indices, fieldName + '*', currentBB_);
+      return new GetElementPtrInst(ptr,
+                                   indices,
+                                   field->getName()+'*',
+                                   currentBB_);
     }
 
     std::string getMangledString(const std::string& str) {
@@ -1625,26 +1600,19 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_getfield(unsigned index) {
-      ConstantFieldRef* fieldRef =
-        class_->getClassFile()->getConstantFieldRef(index);
-      const std::string& name = fieldRef->getNameAndType()->getName()->str();
-      Value* p = pop(resolver_->getObjectBaseType());
-      Value* v = new LoadInst(getField(index, p), name, currentBB_);
+      const VMField* field = class_->getField(index);
+
+      Value* p = pop(field->getParent()->getType());
+      Value* v = new LoadInst(getField(field, p), field->getName(), currentBB_);
       push(v);
     }
 
     void do_putfield(unsigned index) {
-      ConstantFieldRef* fieldRef =
-        class_->getClassFile()->getConstantFieldRef(index);
-      const VMClass* fieldClass = class_->getClass(
-        fieldRef->getNameAndType()->getDescriptorIndex());
-      const Type* type = fieldClass->getType();
-      Value* v = pop(type);
-      Value* p = pop(resolver_->getObjectBaseType());
-      Value* fp = getField(index, p);
-      const Type* ft = cast<PointerType>(fp->getType())->getElementType();
-      v = new CastInst(v, ft, TMP, currentBB_);
-      new StoreInst(v, getField(index, p), currentBB_);
+      const VMField* field = class_->getField(index);
+
+      Value* v = pop(field->getClass()->getType());
+      Value* p = pop(field->getParent()->getType());
+      new StoreInst(v, getField(field, p), currentBB_);
     }
 
     void makeCall(Value* fun, const std::vector<Value*> params) {

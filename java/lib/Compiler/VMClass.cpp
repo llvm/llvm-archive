@@ -70,6 +70,29 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
 
 }
 
+const VMField* VMClass::lookupField(const std::string& name) const
+{
+  FieldMap::const_iterator it = fieldMap_.find(name);
+  if (it != fieldMap_.end())
+    return &it->second;
+
+  for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i) {
+    const VMClass* interface = getInterface(i);
+    it = interface->fieldMap_.find(name);
+    if (it != interface->fieldMap_.end())
+      return &it->second;
+  }
+
+  for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i) {
+    const VMClass* superClass = getSuperClass(i);
+    it = superClass->fieldMap_.find(name);
+    if (it != superClass->fieldMap_.end())
+      return &it->second;
+  }
+
+  return NULL;
+}
+
 int VMClass::getFieldIndex(const std::string& name) const {
   FieldMap::const_iterator it = fieldMap_.find(name);
   return it == fieldMap_.end() ? -1 : it->second.getMemberIndex();
@@ -101,10 +124,11 @@ void VMClass::computeLayout() {
       }
       else {
         const VMClass* fc = getClass(field->getDescriptorIndex());
+        unsigned index = memberFields_.size() + 1;
         FieldMap::iterator i =
           fieldMap_.insert(std::make_pair(
                              field->getName()->str(),
-                             VMField(fc, field, memberFields_.size()+1))).first;
+                             VMField(this, fc, field, index))).first;
         memberFields_.push_back(&i->second);
         layout.push_back(fc->getType());
       }
@@ -244,4 +268,22 @@ const VMClass* VMClass::getClass(unsigned index) const
   }
 
   return static_cast<const VMClass*>(resolvedConstantPool_[index]);
+}
+
+const VMField* VMClass::getField(unsigned index) const
+{
+  assert(classFile_ && "No constant pool!");
+  assert(dynamic_cast<ConstantFieldRef*>(classFile_->getConstant(index)) &&
+         "Not an index to a field reference!");
+
+  // If we haven't resolved this constant already, do so now.
+  if (!resolvedConstantPool_[index]) {
+    ConstantFieldRef* jc = classFile_->getConstantFieldRef(index);
+    const VMClass* clazz = getClass(jc->getClassIndex());
+    const std::string& name = jc->getNameAndType()->getName()->str();
+    resolvedConstantPool_[index] =
+      const_cast<VMField*>(clazz->lookupField(name));
+  }
+
+  return static_cast<const VMField*>(resolvedConstantPool_[index]);
 }

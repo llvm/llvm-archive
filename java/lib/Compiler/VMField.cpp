@@ -19,8 +19,11 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-VMField::VMField(const VMClass* clazz, const Field* field)
-  : clazz_(clazz),
+VMField::VMField(const VMClass* parent,
+                 const VMClass* clazz,
+                 const Field* field)
+  : parent_(parent),
+    clazz_(clazz),
     field_(field)
 {
   assert(isStatic() && "This should be a static field!");

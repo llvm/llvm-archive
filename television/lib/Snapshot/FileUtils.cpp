@@ -34,4 +34,20 @@ namespace llvm {
     }
     return n;
   }
+
+  /// GetFilesInDir - returns a listing of files in directory
+  ///
+  void GetFilesInDir(const std::string &path, std::vector<std::string> &list) {
+    struct dirent **namelist;
+    int n = scandir(path.c_str(), &namelist, 0, alphasort);
+    if (n < 0)
+      perror("scandir");
+    else {
+      while(n--) {
+        list.push_back(std::string(namelist[n]->d_name));
+        free(namelist[n]);
+      }
+      free(namelist);
+    }
+  }
 }

@@ -1823,7 +1823,7 @@ namespace llvm { namespace Java { namespace {
     }
     void do_ifnonnull(unsigned t, unsigned f) {
       do_aconst_null();
-      do_if_common(Instruction::SetEQ, ObjectBaseRefTy, t, f);
+      do_if_common(Instruction::SetNE, ObjectBaseRefTy, t, f);
     }
 
     void do_if_common(Instruction::BinaryOps cc, const Type* type,

@@ -458,9 +458,9 @@ Attribute* Attribute::readAttribute(const ConstantPool& cp, std::istream& is)
             "Representation of attribute name is not of type ConstantUtf8");
 
     if (CONSTANT_VALUE == name->str())
-        return new AttributeConstantValue(name, cp, is);
+        return new ConstantValueAttribute(name, cp, is);
     else if (CODE == name->str())
-        return new AttributeCode(name, cp, is);
+        return new CodeAttribute(name, cp, is);
     else {
         uint32_t length = readU4(is);
         is.ignore(length);
@@ -488,7 +488,7 @@ std::ostream& Attribute::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // AttributeConstantValue implementation
-AttributeConstantValue::AttributeConstantValue(ConstantUtf8* name,
+ConstantValueAttribute::ConstantValueAttribute(ConstantUtf8* name,
                                                const ConstantPool& cp,
                                                std::istream& is)
     : Attribute(name, cp, is)
@@ -496,18 +496,18 @@ AttributeConstantValue::AttributeConstantValue(ConstantUtf8* name,
     uint32_t length = readU4(is);
     if (length != 2)
         throw ClassFileSemanticError(
-            "Length of AttributeConstantValue is not 2");
+            "Length of ConstantValueAttribute is not 2");
     value_ = cp[readU2(is)];
 }
 
-std::ostream& AttributeConstantValue::dump(std::ostream& os) const
+std::ostream& ConstantValueAttribute::dump(std::ostream& os) const
 {
     return Attribute::dump(os) << ": " << *value_;
 }
 
 //===----------------------------------------------------------------------===//
 // AttributeCode implementation
-AttributeCode::AttributeCode(ConstantUtf8* name,
+CodeAttribute::CodeAttribute(ConstantUtf8* name,
                              const ConstantPool& cp,
                              std::istream& is)
     : Attribute(name, cp, is)
@@ -528,14 +528,14 @@ AttributeCode::AttributeCode(ConstantUtf8* name,
     readAttributes(attributes_, cp, is);
 }
 
-AttributeCode::~AttributeCode()
+CodeAttribute::~CodeAttribute()
 {
     delete[] code_;
     for_each(exceptions_.begin(), exceptions_.end(), deleter<Exception>);
     for_each(attributes_.begin(), attributes_.end(), deleter<Attribute>);
 }
 
-std::ostream& AttributeCode::dump(std::ostream& os) const
+std::ostream& CodeAttribute::dump(std::ostream& os) const
 {
     Attribute::dump(os)
         << '\n'
@@ -548,7 +548,7 @@ std::ostream& AttributeCode::dump(std::ostream& os) const
     return os;
 }
 
-AttributeCode::Exception::Exception(const ConstantPool& cp,
+CodeAttribute::Exception::Exception(const ConstantPool& cp,
                                     std::istream& is)
 {
     startPc_ = readU2(is);
@@ -560,7 +560,7 @@ AttributeCode::Exception::Exception(const ConstantPool& cp,
             "Representation of catch type is not of type ConstantClass");
 }
 
-std::ostream& AttributeCode::Exception::dump(std::ostream& os) const
+std::ostream& CodeAttribute::Exception::dump(std::ostream& os) const
 {
     return os << *getCatchType() << '\n'
               << "Start PC: " << startPc_ << '\n'
@@ -570,7 +570,7 @@ std::ostream& AttributeCode::Exception::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // AttributeExceptions implementation
-AttributeExceptions::AttributeExceptions(ConstantUtf8* name,
+ExceptionsAttribute::ExceptionsAttribute(ConstantUtf8* name,
                                          const ConstantPool& cp,
                                          std::istream& is)
     : Attribute(name, cp, is)
@@ -579,10 +579,11 @@ AttributeExceptions::AttributeExceptions(ConstantUtf8* name,
     readClasses(exceptions_, cp, is);
 }
 
-std::ostream& AttributeExceptions::dump(std::ostream& is) const
+std::ostream& ExceptionsAttribute::dump(std::ostream& os) const
 {
+    os << Attribute::dump(os) << ": ";
     for (Classes::const_iterator
              i = exceptions_.begin(), e = exceptions_.end(); i != e; ++i)
-        is << *i << ' ';
-    return is;
+        os << *i << ' ';
+    return os;
 }

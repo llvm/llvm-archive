@@ -345,10 +345,10 @@ namespace llvm { namespace Java {
         return a.dump(os);
     }
 
-    class AttributeConstantValue : public Attribute {
+    class ConstantValueAttribute : public Attribute {
         Constant* value_;
     public:
-        AttributeConstantValue(ConstantUtf8* name,
+        ConstantValueAttribute(ConstantUtf8* name,
                                const ConstantPool& cp,
                                std::istream& is);
 
@@ -357,7 +357,7 @@ namespace llvm { namespace Java {
         std::ostream& dump(std::ostream& os) const;
     };
 
-    class AttributeCode : public Attribute {
+    class CodeAttribute : public Attribute {
     public:
         class Exception {
             uint16_t startPc_;
@@ -387,10 +387,10 @@ namespace llvm { namespace Java {
         Attributes attributes_;
 
     public:
-        AttributeCode(ConstantUtf8* name,
+        CodeAttribute(ConstantUtf8* name,
                       const ConstantPool& cp,
                       std::istream& is);
-        ~AttributeCode();
+        ~CodeAttribute();
         uint16_t getMaxStack() const { return maxStack_; }
         uint16_t getMaxLocals() const { return maxLocals_; }
         const char* getCode() const { return code_; }
@@ -402,17 +402,17 @@ namespace llvm { namespace Java {
     };
 
     inline std::ostream& operator<<(std::ostream& os,
-                                    const AttributeCode::Exception& e) {
+                                    const CodeAttribute::Exception& e) {
         return e.dump(os);
     }
 
-    class AttributeExceptions : public Attribute {
+    class ExceptionsAttribute : public Attribute {
     private:
         ConstantUtf8* name_;
         Classes exceptions_;
 
     public:
-        AttributeExceptions(ConstantUtf8* name,
+        ExceptionsAttribute(ConstantUtf8* name,
                             const ConstantPool& cp,
                             std::istream& is);
 

@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm-tv/Config.h"
 #include "Support/FileUtils.h"
 #include "Support/StringExtras.h"
 #include "Support/SystemUtils.h"
@@ -31,13 +32,6 @@ using namespace llvm;
 
 namespace {
   
-  // To make sure we don't collide if working on the same machine,
-  // the llvm-tv data directory is user-specific
-  const std::string llvmtvPath    = "/tmp/llvm-tv-" +
-                                    std::string(getenv("USER"));
-  const std::string snapshotsPath = llvmtvPath + "/snapshots";
-  const std::string llvmtvPID     = llvmtvPath + "/llvm-tv.pid";
-
   struct Snapshot : public Pass {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) {
@@ -51,16 +45,16 @@ namespace {
 
   };
 
-  RegisterOpt<Snapshot> X("snapshot", "Snapshot a module, update llvm-tv view");
+  RegisterOpt<Snapshot> X("snapshot", "Snapshot a module, signal llvm-tv");
 }
 
 bool Snapshot::run(Module &M) {
   // Assumption: directory only has numbered .bc files, from 0 -> n-1, next one
-  // we add will be n.bc
-  unsigned numFiles = GetNumFilesInDir(snapshotsPath);
+  // we add will be n.bc . Subtract 2 for "." and ".."
+  unsigned numFiles = GetNumFilesInDir(snapshotsPath) - 2;
 
   std::string Filename(snapshotsPath);
-  Filename = Filename + utostr (numFiles) + ".bc";
+  Filename = Filename + "/" + utostr(numFiles) + ".bc";
 
   std::ofstream os(Filename.c_str());
   WriteBytecodeToFile(&M, os);
@@ -71,7 +65,7 @@ bool Snapshot::run(Module &M) {
 
   // Since we were not successful in sending a signal to an already-running
   // instance of llvm-tv, start a new instance and send a signal to it.
-  std::string llvmtvExe = FindExecutable("llvm-tv", ""); 
+  std::string llvmtvExe = FindExecutable("llvm-tv.exe", ""); 
   if (llvmtvExe != "" && isExecutableFile(llvmtvExe)) {
     int pid = fork();
     // Child process morphs into llvm-tv

@@ -493,7 +493,7 @@ namespace llvm { namespace Java {
                     break;
                 case TABLESWITCH: {
                     switchCases_.clear();
-                    skipPadBytes(code, i);
+                    skipPadBytes(i);
                     int def = readSInt(code, i);
                     int low = readSInt(code, i);
                     int high = readSInt(code, i);
@@ -506,7 +506,7 @@ namespace llvm { namespace Java {
                 }
                 case LOOKUPSWITCH: {
                     switchCases_.clear();
-                    skipPadBytes(code, i);
+                    skipPadBytes(i);
                     int def = readSInt(code, i);
                     unsigned pairCount = readUInt(code, i);
                     switchCases_.reserve(pairCount);

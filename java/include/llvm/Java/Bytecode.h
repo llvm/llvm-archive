@@ -250,18 +250,17 @@ namespace llvm { namespace Java {
     }
 
     inline int readSInt(const uint8_t* code, unsigned& i) {
-        return ((readUByte(code, i) << 24) |
-                (readUByte(code, i) << 16) |
-                (readUByte(code, i) << 8) |
-                readUByte(code, i));
+        return (readUShort(code, i) << 16) | readUShort(code, i);
     }
 
     inline unsigned readUInt(const uint8_t* code, unsigned& i) {
         return readSInt(code, i);
     }
 
-    inline void skipPadBytes(const uint8_t* code, unsigned& i) {
-        while (((unsigned)&code[++i]) & 0XFF);
+    inline void skipPadBytes(unsigned& i) {
+        unsigned lastTwoBits = i & 0x3;
+        i += (4 - lastTwoBits) & 0x3;
+        --i;
     }
 
 } } // namespace llvm::Java

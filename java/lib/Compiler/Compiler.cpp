@@ -58,9 +58,10 @@ namespace llvm { namespace Java { namespace {
             bc2bbMap_.clear();
             bc2bbMap_.assign(codeAttr_.getCodeSize(), NULL);
 
+            BasicBlock* bb = new BasicBlock("entry", &function_);
+
             parse(codeAttr_.getCode(), codeAttr_.getCodeSize());
 
-            BasicBlock* bb = new BasicBlock("entry", &function_);
             for (unsigned i = 0; i < bc2bbMap_.size(); ++i) {
                 if (bc2bbMap_[i])
                     bb = bc2bbMap_[i];
@@ -194,6 +195,8 @@ namespace llvm { namespace Java { namespace {
             compileMethodInit(*function, cf, *codeAttr);
 
             parse(codeAttr->getCode(), codeAttr->getCodeSize());
+
+            assert(function->getEntryBlock().getName() == "entry");
         }
 
         void do_aconst_null(unsigned bcI) {

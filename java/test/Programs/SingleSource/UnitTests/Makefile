@@ -15,13 +15,13 @@ JAVA_TESTS := Arithm \
 	FloatCompare \
 	ForLoop \
 	If \
-	InstanceOf
+	InstanceOf \
 	LongCompare \
 	LookupSwitch \
 	Return \
 	StaticInitializers \
 	TableSwitch \
-	VTable \
+	VTable
 
 CPPFLAGS+=-I$(BUILD_SRC_ROOT)/include/llvm/Java
 BYTECODE_LIBRARY=1

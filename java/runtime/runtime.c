@@ -352,11 +352,17 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
 
 const JNIEnv llvm_java_JNIEnv = &llvm_java_JNINativeInterface;
 
-extern void llvm_java_static_init(void);
+typedef void (*ClassInitializerFunction)(void);
+
+extern const ClassInitializerFunction llvm_java_class_initializers;
+
 extern void llvm_java_main(int, char**);
 
 int main(int argc, char** argv) {
-  llvm_java_static_init();
+  const ClassInitializerFunction* classInit = &llvm_java_class_initializers;
+  while (*classInit)
+    (*classInit++)();
+
   llvm_java_main(argc, argv);
   return 0;
 }

@@ -33,8 +33,6 @@
 #include <list>
 #include <vector>
 
-#define LLVM_JAVA_STATIC_INIT "llvm_java_static_init"
-
 using namespace llvm;
 using namespace llvm::Java;
 
@@ -64,7 +62,8 @@ namespace llvm { namespace Java { namespace {
     Locals locals_;
     OperandStack opStack_;
     Function *getVtable_, *setVtable_, *throw_, *isInstanceOf_,
-      *memcpy_, *memset_, *staticInit_;
+      *memcpy_, *memset_;
+    std::vector<llvm::Constant*> classInitializers_;
 
     SetVector<const VMMethod*> toCompileMethods_;
 
@@ -120,10 +119,6 @@ namespace llvm { namespace Java { namespace {
         "llvm.memset", Type::VoidTy,
         PointerType::get(Type::SByteTy),
         Type::UByteTy, Type::ULongTy, Type::UIntTy, NULL);
-      staticInit_ =
-        module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, NULL);
-      BasicBlock* staticInitBB = new BasicBlock("entry", staticInit_);
-      new ReturnInst(NULL, staticInitBB);
     }
 
   private:
@@ -184,7 +179,7 @@ namespace llvm { namespace Java { namespace {
 
       // Get class information for java/lang/String.
       const VMClass* clazz = resolver_->getClass("java/lang/String");
-      emitStaticInitializers(clazz);
+      emitClassInitializers(clazz);
 
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
@@ -964,7 +959,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     /// Emits static initializers for this class if not done already.
-    void emitStaticInitializers(const VMClass* clazz) {
+    void emitClassInitializers(const VMClass* clazz) {
       static SetVector<const VMClass*> toInitClasses;
 
       const ClassFile* classfile = clazz->getClassFile();
@@ -974,23 +969,26 @@ namespace llvm { namespace Java { namespace {
       if (toInitClasses.insert(clazz)) {
         // If this class has a super class, initialize that first.
         if (const VMClass* superClass = clazz->getSuperClass())
-          emitStaticInitializers(superClass);
-
-        Instruction* I = staticInit_->front().getTerminator();
-        assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
+          emitClassInitializers(superClass);
 
         // Create constant strings for this class.
+        Function* stringConstructors = module_->getOrInsertFunction(
+            clazz->getName() + "<strinit>",
+            FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false));
+        Instruction* I =
+          new ReturnInst(NULL, new BasicBlock("entry", stringConstructors));
         for (unsigned i = 0, e = classfile->getNumConstants(); i != e; ++i)
           if (ConstantString* s = dynamic_cast<ConstantString*>(classfile->getConstant(i)))
             initializeString(clazz->getConstant(i), s->getValue()->str(), I);
 
+        // Insert string constructors method in class initializers array.
+        classInitializers_.push_back(stringConstructors);
+
         // Call its class initialization method if it exists.
         if (const VMMethod* method = clazz->getMethod("<clinit>()V")) {
-          // Insert a call to it right before the terminator of the only
-          // basic block in llvm_java_static_init.
+          classInitializers_.push_back(method->getFunction());
           bool inserted =  scheduleMethod(method);
           assert(inserted && "Class initialization method already called!");
-          new CallInst(method->getFunction(), "", I);
         }
       }
     }
@@ -1003,7 +1001,7 @@ namespace llvm { namespace Java { namespace {
                                   const std::string& methodDesc) {
       // Load the class.
       const VMClass* clazz = resolver_->getClass(className);
-      emitStaticInitializers(clazz);
+      emitClassInitializers(clazz);
 
       // Find the method.
       const VMMethod* method = clazz->getMethod(methodDesc);
@@ -1015,6 +1013,24 @@ namespace llvm { namespace Java { namespace {
         DEBUG(std::cerr << i+1 << '/' << toCompileMethods_.size()
               << " functions compiled\n");
       }
+
+      // Null terminate the static initializers array and add the
+      // global to the module.
+      Type* classInitializerType = PointerType::get(
+          FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false));
+      classInitializers_.push_back(
+        llvm::Constant::getNullValue(classInitializerType));
+
+      ArrayType* classInitializersType =
+        ArrayType::get(classInitializerType, classInitializers_.size());
+      new GlobalVariable(classInitializersType,
+                         true,
+                         GlobalVariable::ExternalLinkage,
+                         ConstantArray::get(classInitializersType,
+                                            classInitializers_),
+                         "llvm_java_class_initializers",
+                         module_);
+
 
       return method;
     }
@@ -1403,7 +1419,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_getstatic(unsigned index) {
       const VMField* field = class_->getField(index);
-      emitStaticInitializers(field->getParent());
+      emitClassInitializers(field->getParent());
 
       Value* v = new LoadInst(field->getGlobal(), TMP, currentBB_);
       push(v);
@@ -1411,7 +1427,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_putstatic(unsigned index) {
       const VMField* field = class_->getField(index);
-      emitStaticInitializers(field->getParent());
+      emitClassInitializers(field->getParent());
 
       Value* v = pop(field->getClass()->getType());
       new StoreInst(v, field->getGlobal(), currentBB_);
@@ -1515,7 +1531,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_invokestatic(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
-      emitStaticInitializers(method->getParent());
+      emitClassInitializers(method->getParent());
       Function* function = method->getFunction();
       // Intercept java/lang/System/loadLibrary() calls and add
       // library deps to the module
@@ -1603,7 +1619,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_new(unsigned index) {
       const VMClass* clazz = class_->getClass(index);
-      emitStaticInitializers(clazz);
+      emitClassInitializers(clazz);
       const VTableInfo& vi = getVTableInfo(clazz);
 
       push(allocateObject(*clazz, vi, currentBB_));

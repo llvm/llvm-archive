@@ -1,3 +1,9 @@
+//===-- DSGraphDrawer.h - DSGraph viewing ------------------------*- C++ -*-==//
+//
+// Classes for viewing DataStructure analysis graphs
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef DSAGRAPHDRAWER_H
 #define DSAGRAPHDRAWER_H
 
@@ -7,36 +13,69 @@
 
 namespace llvm {
   class Function;
+  class FunctionPass;
   class Module;
+  class Pass;
 }
 
 //===----------------------------------------------------------------------===//
 
-// GraphDrawer abstract class
-
-class BUGraphDrawer : public GraphDrawer {
+// DSGraphDrawer abstract class
+//
+class DSGraphDrawer : public GraphDrawer {
+protected:
   llvm::Function *F;
   llvm::Module *M;
-  wxImage *drawGraphImage ();
- public:
-  BUGraphDrawer (llvm::Module *_M) : GraphDrawer(), F(0), M(_M) {}
-  BUGraphDrawer (llvm::Function *_F) : GraphDrawer(), F(_F), M(0) {}
+  wxImage *drawGraphImage();
+  virtual llvm::FunctionPass *getFunctionPass() = 0;
+  virtual llvm::Pass *getModulePass() = 0;
+  virtual std::string getFilename(llvm::Function *F) = 0;
+  virtual std::string getFilename(llvm::Module *M) = 0;
+public:
+  DSGraphDrawer(llvm::Function *_F) : GraphDrawer(), F(_F), M(0) {}
+  DSGraphDrawer(llvm::Module *_M) : GraphDrawer(), F(0), M(_M) {}
 };
 
-class TDGraphDrawer : public GraphDrawer {
-  llvm::Module *M;
-  wxImage *drawGraphImage ();
- public:
-  TDGraphDrawer (llvm::Module *_M) : GraphDrawer (), M (_M) { }
+//===----------------------------------------------------------------------===//
 
+// BUGraphDrawer 
+//
+class BUGraphDrawer : public DSGraphDrawer {
+  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getModulePass();
+  std::string getFilename(llvm::Function *F);
+  std::string getFilename(llvm::Module *M);
+public:
+  BUGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
+  BUGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
 };
 
-class LocalGraphDrawer : public GraphDrawer {
-  llvm::Module *M;
-  wxImage *drawGraphImage ();
- public:
-  LocalGraphDrawer (llvm::Module *_M) : GraphDrawer (), M (_M) { }
+//===----------------------------------------------------------------------===//
 
+// TDGraphDrawer 
+//
+class TDGraphDrawer : public DSGraphDrawer {
+  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getModulePass();
+  std::string getFilename(llvm::Function *F);
+  std::string getFilename(llvm::Module *M);
+public:
+  TDGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
+  TDGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
 };
 
-#endif // GRAPHDRAWER_H
+//===----------------------------------------------------------------------===//
+
+// LocalGraphDrawer 
+//
+class LocalGraphDrawer : public DSGraphDrawer {
+  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getModulePass();
+  std::string getFilename(llvm::Function *F);
+  std::string getFilename(llvm::Module *M);
+public:
+  LocalGraphDrawer(llvm::Module *M) : DSGraphDrawer(M) {}
+  LocalGraphDrawer(llvm::Function *F) : DSGraphDrawer(F) {}
+};
+
+#endif // DSAGRAPHDRAWER_H

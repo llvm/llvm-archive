@@ -28,9 +28,11 @@ Pass *createCallGraphPrinterPass ();
 Pass *createBUDSModulePrinterPass ();
 FunctionPass *createBUDSFunctionPrinterPass();
 
-Pass *createTDDSPrinterPass ();
+Pass *createTDDSModulePrinterPass ();
+FunctionPass *createTDDSFunctionPrinterPass ();
 
-Pass *createLocalDSPrinterPass ();
+Pass *createLocalDSModulePrinterPass ();
+FunctionPass *createLocalDSFunctionPrinterPass ();
 
 
 } // end namespace llvm

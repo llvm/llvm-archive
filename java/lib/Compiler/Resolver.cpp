@@ -24,10 +24,11 @@ using namespace llvm::Java;
 Resolver::Resolver(Module* module)
   : module_(module),
     nextInterfaceIndex_(0),
-    objectBaseType_(OpaqueType::get()),
-    objectBaseRefType_(PointerType::get(objectBaseType_))
+    objectBaseLayoutType_(OpaqueType::get()),
+    objectBaseType_(PointerType::get(objectBaseLayoutType_))
 {
-  module_->addTypeName("struct.llvm_java_object_base", objectBaseType_);
+  module_->addTypeName("struct.llvm_java_object_base",
+                       getObjectBaseLayoutType());
 }
 
 const Type* Resolver::getType(const std::string& descriptor,
@@ -55,7 +56,7 @@ const Type* Resolver::getTypeHelper(const std::string& descr,
   case 'L': {
     unsigned e = descr.find(';', i);
     i = e + 1;
-    return objectBaseRefType_;
+    return getObjectBaseType();
   }
   case '[':
     // Skip '['s.
@@ -63,11 +64,11 @@ const Type* Resolver::getTypeHelper(const std::string& descr,
       do { ++i; } while (descr[i] == '[');
     // Consume the element type
     getTypeHelper(descr, i);
-    return objectBaseRefType_;
+    return getObjectBaseType();
   case '(': {
     std::vector<const Type*> params;
     if (memberMethod)
-      params.push_back(objectBaseRefType_);
+      params.push_back(getObjectBaseType());
     while (descr[i] != ')')
       params.push_back(getTypeHelper(descr, i));
     return FunctionType::get(getTypeHelper(descr, ++i), params, false);
@@ -153,7 +154,7 @@ const VMClass* Resolver::getClass(JType type)
 const Type* Resolver::getStorageType(const Type* type) const
 {
   if (isa<PointerType>(type))
-    return objectBaseRefType_;
+    return getObjectBaseType();
   else if (type == Type::BoolTy ||
            type == Type::UByteTy ||
            type == Type::SByteTy ||

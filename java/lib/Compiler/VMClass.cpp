@@ -109,7 +109,7 @@ void VMClass::link()
   else {
     // This is java/lang/Object.
     if (!classFile_->getSuperClass())
-      addField("base", resolver_->getObjectBaseType());
+      addField("base", resolver_->getObjectBaseLayoutType());
     // This is any class but java/lang/Object.
     else {
       // Our direct super class.

@@ -30,8 +30,8 @@ namespace llvm { namespace Java {
     typedef std::map<std::string, VMClass> ClassMap;
     ClassMap classMap_;
     unsigned nextInterfaceIndex_;
+    const Type* objectBaseLayoutType_;
     const Type* objectBaseType_;
-    const Type* objectBaseRefType_;
 
     const VMClass* getClassForDesc(const std::string& descriptor);
 
@@ -55,8 +55,8 @@ namespace llvm { namespace Java {
 
     Resolver(Module* module);
 
+    const Type* getObjectBaseLayoutType() const {return objectBaseLayoutType_; }
     const Type* getObjectBaseType() const { return objectBaseType_; }
-    const Type* getObjectBaseRefType() const { return objectBaseRefType_; }
 
     const Type* getType(const std::string& descriptor,
                         bool memberMethod = false) const;

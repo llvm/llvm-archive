@@ -113,16 +113,16 @@ namespace llvm { namespace Java { namespace {
       module_->addTypeName("llvm_java_object_vtable", VTableBaseTy);
       getVtable_ = module_->getOrInsertFunction(
         "llvm_java_get_vtable", VTableBaseRefTy,
-        resolver_->getObjectBaseRefType(), NULL);
+        resolver_->getObjectBaseType(), NULL);
       setVtable_ = module_->getOrInsertFunction(
         "llvm_java_set_vtable", Type::VoidTy,
-        resolver_->getObjectBaseRefType(), VTableBaseRefTy, NULL);
+        resolver_->getObjectBaseType(), VTableBaseRefTy, NULL);
       throw_ = module_->getOrInsertFunction(
         "llvm_java_throw", Type::IntTy,
-        resolver_->getObjectBaseRefType(), NULL);
+        resolver_->getObjectBaseType(), NULL);
       isInstanceOf_ = module_->getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
-        resolver_->getObjectBaseRefType(), VTableBaseRefTy, NULL);
+        resolver_->getObjectBaseType(), VTableBaseRefTy, NULL);
       memcpy_ = module_->getOrInsertFunction(
         "llvm.memcpy", Type::VoidTy,
         PointerType::get(Type::SByteTy),
@@ -196,7 +196,7 @@ namespace llvm { namespace Java { namespace {
 
       // Install the vtable pointer.
       Value* objBase =
-        new CastInst(globalString, resolver_->getObjectBaseRefType(), TMP, ip);
+        new CastInst(globalString, resolver_->getObjectBaseType(), TMP, ip);
       Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
@@ -208,7 +208,7 @@ namespace llvm { namespace Java { namespace {
       params.reserve(3);
       params.clear();
       params.push_back(objBase);
-      params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseRefType(), TMP, ip));
+      params.push_back(new CastInst(arrayRef, resolver_->getObjectBaseType(), TMP, ip));
       params.push_back(ConstantSInt::get(Type::IntTy, 0));
       new CallInst(function, params, "", ip);
     }
@@ -235,7 +235,7 @@ namespace llvm { namespace Java { namespace {
       case 'L': {
         unsigned e = descr.find(';', i);
         i = e + 1;
-        return resolver_->getObjectBaseRefType();
+        return resolver_->getObjectBaseType();
       }
       case '[':
         // Skip '['s.
@@ -243,12 +243,12 @@ namespace llvm { namespace Java { namespace {
           do { ++i; } while (descr[i] == '[');
         // Consume the element type
         getJNITypeHelper(descr, i);
-        return resolver_->getObjectBaseRefType();
+        return resolver_->getObjectBaseType();
       case '(': {
         std::vector<const Type*> params;
         // JNIEnv*
         params.push_back(JNIEnvPtr_->getType());
-        params.push_back(resolver_->getObjectBaseRefType());
+        params.push_back(resolver_->getObjectBaseType());
         while (descr[i] != ')')
           params.push_back(getJNITypeHelper(descr, i));
         return FunctionType::get(getJNITypeHelper(descr, ++i), params, false);
@@ -783,7 +783,7 @@ namespace llvm { namespace Java { namespace {
 
     const VTableInfo& getObjectArrayVTableInfo() {
       static VTableInfo arrayInfo =
-        buildArrayVTableInfo(resolver_->getObjectBaseRefType());
+        buildArrayVTableInfo(resolver_->getObjectBaseType());
 
       return arrayInfo;
     }
@@ -939,7 +939,7 @@ namespace llvm { namespace Java { namespace {
         std::vector<Value*> params;
         params.push_back(JNIEnvPtr_);
         if (method->isStatic())
-          params.push_back(llvm::Constant::getNullValue(resolver_->getObjectBaseRefType()));
+          params.push_back(llvm::Constant::getNullValue(resolver_->getObjectBaseType()));
         for (Function::arg_iterator A = function->arg_begin(),
                E = function->arg_end(); A != E; ++A) {
           params.push_back(
@@ -1231,7 +1231,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_aconst_null() {
-      push(llvm::Constant::getNullValue(resolver_->getObjectBaseRefType()));
+      push(llvm::Constant::getNullValue(resolver_->getObjectBaseType()));
     }
 
     void do_iconst(int value) {
@@ -1264,7 +1264,7 @@ namespace llvm { namespace Java { namespace {
     void do_lload(unsigned index) { do_load_common(index, Type::LongTy); }
     void do_fload(unsigned index) { do_load_common(index, Type::FloatTy); }
     void do_dload(unsigned index) { do_load_common(index, Type::DoubleTy); }
-    void do_aload(unsigned index) { do_load_common(index, resolver_->getObjectBaseRefType()); }
+    void do_aload(unsigned index) { do_load_common(index, resolver_->getObjectBaseType()); }
 
     void do_load_common(unsigned index, const Type* type) {
       Value* val = locals_.load(index, type, currentBB_);
@@ -1301,7 +1301,7 @@ namespace llvm { namespace Java { namespace {
     void do_lstore(unsigned index) { do_store_common(index, Type::LongTy); }
     void do_fstore(unsigned index) { do_store_common(index, Type::FloatTy); }
     void do_dstore(unsigned index) { do_store_common(index, Type::DoubleTy); }
-    void do_astore(unsigned index) { do_store_common(index, resolver_->getObjectBaseRefType()); }
+    void do_astore(unsigned index) { do_store_common(index, resolver_->getObjectBaseType()); }
 
     void do_store_common(unsigned index, const Type* type) {
       Value* val = pop(type);
@@ -1541,18 +1541,18 @@ namespace llvm { namespace Java { namespace {
       do_if_common(Instruction::SetLE, Type::IntTy, t, f);
     }
     void do_if_acmpeq(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetEQ, resolver_->getObjectBaseRefType(), t, f);
+      do_if_common(Instruction::SetEQ, resolver_->getObjectBaseType(), t, f);
     }
     void do_if_acmpne(unsigned t, unsigned f) {
-      do_if_common(Instruction::SetNE, resolver_->getObjectBaseRefType(), t, f);
+      do_if_common(Instruction::SetNE, resolver_->getObjectBaseType(), t, f);
     }
     void do_ifnull(unsigned t, unsigned f) {
       do_aconst_null();
-      do_if_common(Instruction::SetEQ, resolver_->getObjectBaseRefType(), t, f);
+      do_if_common(Instruction::SetEQ, resolver_->getObjectBaseType(), t, f);
     }
     void do_ifnonnull(unsigned t, unsigned f) {
       do_aconst_null();
-      do_if_common(Instruction::SetNE, resolver_->getObjectBaseRefType(), t, f);
+      do_if_common(Instruction::SetNE, resolver_->getObjectBaseType(), t, f);
     }
 
     void do_if_common(Instruction::BinaryOps cc, const Type* type,
@@ -1573,7 +1573,7 @@ namespace llvm { namespace Java { namespace {
     void do_lreturn() { do_return_common(Type::LongTy); }
     void do_freturn() { do_return_common(Type::FloatTy); }
     void do_dreturn() { do_return_common(Type::DoubleTy); }
-    void do_areturn() { do_return_common(resolver_->getObjectBaseRefType()); }
+    void do_areturn() { do_return_common(resolver_->getObjectBaseType()); }
 
     void do_return_common(const Type* type) {
       Value* r = pop(type);
@@ -1628,7 +1628,7 @@ namespace llvm { namespace Java { namespace {
       ConstantFieldRef* fieldRef =
         class_->getClassFile()->getConstantFieldRef(index);
       const std::string& name = fieldRef->getNameAndType()->getName()->str();
-      Value* p = pop(resolver_->getObjectBaseRefType());
+      Value* p = pop(resolver_->getObjectBaseType());
       Value* v = new LoadInst(getField(index, p), name, currentBB_);
       push(v);
     }
@@ -1640,7 +1640,7 @@ namespace llvm { namespace Java { namespace {
         fieldRef->getNameAndType()->getDescriptorIndex());
       const Type* type = fieldClass->getType();
       Value* v = pop(type);
-      Value* p = pop(resolver_->getObjectBaseRefType());
+      Value* p = pop(resolver_->getObjectBaseType());
       Value* fp = getField(index, p);
       const Type* ft = cast<PointerType>(fp->getType())->getElementType();
       v = new CastInst(v, ft, TMP, currentBB_);
@@ -1706,7 +1706,7 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = params.front();
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, currentBB_);
+        new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, vi->vtable->getType(),
                             className + ".vtable", currentBB_);
@@ -1790,7 +1790,7 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = params.front();
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
-        new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, currentBB_);
+        new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
                             TMP, currentBB_);
@@ -1840,7 +1840,7 @@ namespace llvm { namespace Java { namespace {
       new CallInst(memset_, params, "", ip);
 
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, ip);
+      Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
       Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
@@ -1917,7 +1917,7 @@ namespace llvm { namespace Java { namespace {
       new StoreInst(count, lengthPtr, ip);
 
       // Install the vtable pointer.
-      Value* objBase = new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, ip);
+      Value* objBase = new CastInst(objRef, resolver_->getObjectBaseType(), TMP, ip);
       Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
@@ -1953,7 +1953,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_athrow() {
-      Value* objRef = pop(resolver_->getObjectBaseRefType());
+      Value* objRef = pop(resolver_->getObjectBaseType());
       new CallInst(throw_, objRef, "", currentBB_);
       new UnreachableInst(currentBB_);
     }
@@ -1962,7 +1962,7 @@ namespace llvm { namespace Java { namespace {
       const VMClass* clazz = class_->getClassForClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      Value* objRef = pop(resolver_->getObjectBaseRefType());
+      Value* objRef = pop(resolver_->getObjectBaseType());
       Value* vtable = new CastInst(vi->vtable,
                                    VTableBaseRefTy,
                                    TMP, currentBB_);
@@ -1979,7 +1979,7 @@ namespace llvm { namespace Java { namespace {
       const VMClass* clazz = class_->getClassForClass(index);
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      Value* objRef = pop(resolver_->getObjectBaseRefType());
+      Value* objRef = pop(resolver_->getObjectBaseType());
       Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy,
                                    TMP, currentBB_);
       Value* r = new CallInst(isInstanceOf_, objRef, vtable, TMP, currentBB_);
@@ -1988,12 +1988,12 @@ namespace llvm { namespace Java { namespace {
 
     void do_monitorenter() {
       // FIXME: This is currently a noop.
-      pop(resolver_->getObjectBaseRefType());
+      pop(resolver_->getObjectBaseType());
     }
 
     void do_monitorexit() {
       // FIXME: This is currently a noop.
-      pop(resolver_->getObjectBaseRefType());
+      pop(resolver_->getObjectBaseType());
     }
 
     void do_multianewarray(unsigned index, unsigned dims) {

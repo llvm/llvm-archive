@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the Class class that represents a
+// This file contains the declaration of the VMClass class that represents a
 // compile time representation of a Java class (java.lang.Class).
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_JAVA_CLASS_H
-#define LLVM_JAVA_CLASS_H
+#ifndef LLVM_JAVA_VMCLASS_H
+#define LLVM_JAVA_VMCLASS_H
 
 #include <llvm/Constant.h>
 #include <llvm/Module.h>
@@ -94,4 +94,4 @@ namespace llvm { namespace Java {
 
 } } // namespace llvm::Java
 
-#endif//LLVM_JAVA_CLASS_H
+#endif//LLVM_JAVA_VMCLASS_H

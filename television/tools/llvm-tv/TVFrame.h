@@ -7,12 +7,13 @@
 #ifndef TVFRAME_H
 #define TVFRAME_H
 
+#include "TVSnapshot.h"
 #include "wx/wx.h"
 #include "wx/listctrl.h"
 #include "wx/splitter.h"
 #include "wx/treectrl.h"
 #include "wx/textctrl.h"
-#include "TVSnapshot.h"
+#include "wx/html/htmlwin.h"
 #include <string>
 #include <vector>
 
@@ -38,50 +39,6 @@ class TVListCtrl : public wxListCtrl {
 
 };
 
-/// TVTreeItemData - Base class for LLVM TV Tree Data
-///  
-class TVTreeItemData : public wxTreeItemData {
-public:
-  TVTreeItemData(const wxString& desc) : m_desc(desc) { }
-  
-  void ShowInfo(wxTreeCtrl *tree);
-  const wxChar *GetDesc() const { return m_desc.c_str(); }
-  virtual void print(std::ostream&) {};
-  virtual Module *getModule() { return 0; }
-  virtual Function *getFunction() { return 0; }
-private:
-  wxString m_desc;
-};
-
-
-/// TVTreeModuleItem - Tree Item containing a Module
-///  
-class TVTreeModuleItem : public TVTreeItemData {
-public:
-  TVTreeModuleItem(const wxString& desc, Module *mod) : TVTreeItemData(desc), 
-							     myModule(mod) {}
-  
-  void print(std::ostream &out) { myModule->print(out); }
-  Module *getModule() { return myModule; }
-private:
-  Module *myModule;
-};
-
-/// TVTreeFunctionItem - Tree Item containing a Function
-///  
-class TVTreeFunctionItem : public TVTreeItemData {
-public:
-  TVTreeFunctionItem(const wxString& desc, Function *func) : TVTreeItemData(desc), 
-							     myFunc(func) {}
-  
-  void print(std::ostream &out) { myFunc->print(out); }
-  Module *getModule() { return myFunc->getParent (); }
-  Function *getFunction() { return myFunc; }
-private:
-  Function *myFunc;
-};
-
-
 ///==---------------------------------------------------------------------==///
 
 /// TVTreeCtrl - A specialization of wxTreeCtrl that displays a list of LLVM
@@ -91,23 +48,19 @@ private:
 ///==---------------------------------------------------------------------==///
 class TVTreeCtrl : public wxTreeCtrl {
   
-  enum
-    {
-      TreeCtrlIcon_File,
-      TreeCtrlIcon_FileSelected,
-      TreeCtrlIcon_Folder,
-      TreeCtrlIcon_FolderSelected,
-      TreeCtrlIcon_FolderOpened
-    };
+  enum {
+    TreeCtrlIcon_File,
+    TreeCtrlIcon_FileSelected,
+    TreeCtrlIcon_Folder,
+    TreeCtrlIcon_FolderSelected,
+    TreeCtrlIcon_FolderOpened
+  };
 
   void updateTextDisplayed();
 
 public:
   TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
-                       const wxPoint& pos, const wxSize& size,
-			 long style);
-
-  
+                         const wxPoint& pos, const wxSize& size, long style);
   
   virtual ~TVTreeCtrl();
   void AddSnapshotsToTree(std::vector<TVSnapshot>&);
@@ -124,6 +77,7 @@ enum {
   LLVM_TV_REFRESH = wxID_HIGHEST + 1,
   LLVM_TV_TREE_CTRL,
   LLVM_TV_TEXT_CTRL,
+  LLVM_TV_HTML_WINDOW,
   LLVM_TV_SPLITTER_WINDOW,
   LLVM_TV_CALLGRAPHVIEW,
   LLVM_TV_CFGVIEW,
@@ -143,7 +97,7 @@ class TVFrame : public wxFrame {
   
   wxSplitterWindow *splitterWindow;
   wxTextCtrl *displayText;
-  wxListCtrl *displayCode;
+  wxHtmlWindow *displayHtml;
 
   void Resize();
  public:

@@ -4,11 +4,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "wx/wx.h"
 #include "TVFrame.h"
 #include "TVApplication.h"
-#include <sstream>
+#include "TVTreeItem.h"
 #include "llvm/Assembly/Writer.h"
+#include "wx/wx.h"
+#include "wx/html/htmlwin.h"
+#include <sstream>
 
 /// refreshView - Make sure the display is up-to-date with respect to
 /// the list.
@@ -76,16 +78,28 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
 ///
 void TVTreeCtrl::updateTextDisplayed() {
   // Get parent and then the text window, then get the selected LLVM object.
+#if defined(NOHTML)
   wxTextCtrl *textDisplay = (wxTextCtrl*)
     ((wxSplitterWindow*) GetParent())->GetWindow2();
+#else
+  wxHtmlWindow *htmlDisplay = (wxHtmlWindow*)
+    ((wxSplitterWindow*) GetParent())->GetWindow2();
+#endif
+
   TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());
 
   // Display the assembly language for the selected LLVM object in the
   // right-hand pane.
   std::ostringstream Out;
+#if defined(NOHTML)
   item->print(Out);
   textDisplay->Clear();
   textDisplay->AppendText(Out.str().c_str());
+#else
+  item->printHTML(Out);
+  htmlDisplay->SetPage(wxString(""));
+  htmlDisplay->AppendToPage(wxString(Out.str().c_str()));
+#endif
 }
 
 /// OnSelChanged - Trigger the text display to be updated with the new
@@ -116,15 +130,24 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   // Create tree view of snapshots
   CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
              mySnapshotList);
-  
+
+#if defined(NOHTML)
   // Create static text to display module
   displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
                                Explanation, wxDefaultPosition,
                                wxDefaultSize,
                                wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
-  
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
+#else
+  // Create static text to display module
+  displayHtml = new wxHtmlWindow(splitterWindow, LLVM_TV_HTML_WINDOW,
+                                 wxDefaultPosition, wxDefaultSize,
+                                 wxHW_SCROLLBAR_AUTO, "htmlWindow");
+  // Split window vertically
+  splitterWindow->SplitVertically(myTreeCtrl, displayHtml, 100);
+#endif
+
 }
 
 /// OnHelp - display the help dialog

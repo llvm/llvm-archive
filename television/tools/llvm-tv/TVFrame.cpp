@@ -10,6 +10,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "wx/wx.h"
 #include "wx/html/htmlwin.h"
+#include "TVTextCtrl.h"
 #include <sstream>
 
 /// refreshView - Make sure the display is up-to-date with respect to
@@ -75,7 +76,7 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
 void TVTreeCtrl::updateTextDisplayed() {
   // Get parent and then the text window, then get the selected LLVM object.
 #if defined(NOHTML)
-  wxTextCtrl *textDisplay = (wxTextCtrl*)
+  TVTextCtrl *textDisplay = (TVTextCtrl*)
     ((wxSplitterWindow*) GetParent())->GetWindow2();
 #else
   wxHtmlWindow *htmlDisplay = (wxHtmlWindow*)
@@ -113,7 +114,8 @@ static const wxString Explanation
    "to display its code in the right-hand pane. Then, you\n"
    "can choose from the View menu to see graphical code views.\n"); 
 
-/// Default ctor - used to set up typical appearance of demo frame
+/// TVFrame constructor - used to set up typical appearance of visualizer's
+/// top-level window.
 ///
 TVFrame::TVFrame (TVApplication *app, const char *title)
   : wxFrame (NULL, -1, title), myApp (app) {
@@ -129,24 +131,25 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
              mySnapshotList);
 
+  unsigned nohtml;
 #if defined(NOHTML)
-  // Create static text to display module
-  displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
-                               Explanation, wxDefaultPosition,
-                               wxDefaultSize,
-                               wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
-  // Split window vertically
-  splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
+  nohtml = 1;
 #else
-  // Create static text to display module
-  displayHtml = new wxHtmlWindow(splitterWindow, LLVM_TV_HTML_WINDOW,
-                                 wxDefaultPosition, wxDefaultSize,
-                                 wxHW_SCROLLBAR_AUTO, "htmlWindow");
-  displayHtml->AppendToPage(Explanation);
+  nohtml = 0;
+#endif
+  if (nohtml) {
+    // Create static text to display module
+    displayWidget = new TVTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
+                                 Explanation);
+  } else {
+    // Create static text to display module
+    wxHtmlWindow *h = new wxHtmlWindow(splitterWindow, LLVM_TV_HTML_WINDOW);
+    h->AppendToPage(Explanation);
+    displayWidget = h;
+  }
 
   // Split window vertically
-  splitterWindow->SplitVertically(myTreeCtrl, displayHtml, 100);
-#endif
+  splitterWindow->SplitVertically(myTreeCtrl, displayWidget, 100);
   Show (TRUE);
 }
 

@@ -81,6 +81,11 @@ static void setUpMenus (wxFrame *frame) {
   fileMenu->Append (wxID_EXIT, "Quit");
   menuBar->Append (fileMenu, "File");
 
+  wxMenu *viewMenu = new wxMenu ("", 0);
+  viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, "View call graph");
+  viewMenu->Append (LLVM_TV_CFGVIEW, "View control-flow graph");
+  menuBar->Append (viewMenu, "View");
+
   wxMenu *helpMenu = new wxMenu ("", 0);
   helpMenu->Append (wxID_HELP_CONTENTS, "Help with LLVM-TV");
   helpMenu->Append (wxID_ABOUT, "About LLVM-TV");

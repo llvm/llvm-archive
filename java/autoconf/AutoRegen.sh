@@ -9,7 +9,7 @@ autoconf --version | egrep '2\.59' > /dev/null
 if test $? -ne 0 ; then
   die "Your autoconf was not detected as being 2.59"
 fi
-aclocal --version | egrep '1\.9\.1' > /dev/null
+aclocal --version | egrep '1\.9\.2' > /dev/null
 if test $? -ne 0 ; then
   die "Your aclocal was not detected as being 1.9.1"
 fi

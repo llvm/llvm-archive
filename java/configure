@@ -1274,6 +1274,30 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
           ac_config_commands="$ac_config_commands lib/ClassFile/Makefile"
 
 
+          ac_config_commands="$ac_config_commands test/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Makefile.test"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/SingleSource/UnitTests/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/SingleSource/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/SingleSource/Makefile.singlesrc"
+
+
+          ac_config_commands="$ac_config_commands test/Programs/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Regression/ClassFile/Makefile"
+
+
+          ac_config_commands="$ac_config_commands test/Regression/Makefile"
+
+
           ac_config_commands="$ac_config_commands tools/Makefile"
 
 
@@ -1973,6 +1997,14 @@ cat >>$CONFIG_STATUS <<_ACEOF
 ${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname lib/ClassFile/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile.test`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/UnitTests/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile.singlesrc`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Regression/ClassFile/Makefile`
+${srcdir}/autoconf/mkinstalldirs `dirname test/Regression/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
 ${srcdir}/autoconf/mkinstalldirs `dirname tools/classdump/Makefile`
 
@@ -1989,6 +2021,14 @@ do
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
   "lib/ClassFile/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/ClassFile/Makefile" ;;
+  "test/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile" ;;
+  "test/Makefile.test" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Makefile.test" ;;
+  "test/Programs/SingleSource/UnitTests/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/UnitTests/Makefile" ;;
+  "test/Programs/SingleSource/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile" ;;
+  "test/Programs/SingleSource/Makefile.singlesrc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/SingleSource/Makefile.singlesrc" ;;
+  "test/Programs/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Programs/Makefile" ;;
+  "test/Regression/ClassFile/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Regression/ClassFile/Makefile" ;;
+  "test/Regression/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS test/Regression/Makefile" ;;
   "tools/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
   "tools/classdump/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS tools/classdump/Makefile" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -2432,6 +2472,14 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
     lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
     lib/ClassFile/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/ClassFile/Makefile lib/ClassFile/Makefile ;;
+    test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
+    test/Makefile.test ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile.test test/Makefile.test ;;
+    test/Programs/SingleSource/UnitTests/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/UnitTests/Makefile test/Programs/SingleSource/UnitTests/Makefile ;;
+    test/Programs/SingleSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile test/Programs/SingleSource/Makefile ;;
+    test/Programs/SingleSource/Makefile.singlesrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile.singlesrc test/Programs/SingleSource/Makefile.singlesrc ;;
+    test/Programs/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile test/Programs/Makefile ;;
+    test/Regression/ClassFile/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Regression/ClassFile/Makefile test/Regression/ClassFile/Makefile ;;
+    test/Regression/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Regression/Makefile test/Regression/Makefile ;;
     tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
     tools/classdump/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/classdump/Makefile tools/classdump/Makefile ;;
   esac

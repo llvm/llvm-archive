@@ -11,12 +11,19 @@ dnl Configure a header file
 dnl Configure Makefiles
 dnl List every Makefile that exists within your source tree
 
-AC_CONFIG_MAKEFILE(Makefile)
-AC_CONFIG_MAKEFILE(lib/Makefile)
-AC_CONFIG_MAKEFILE(lib/ClassFile/Makefile)
+AC_CONFIG_MAKEFILE([Makefile])
+AC_CONFIG_MAKEFILE([lib/Makefile])
+AC_CONFIG_MAKEFILE([lib/ClassFile/Makefile])
 AC_CONFIG_MAKEFILE([test/Makefile])
-AC_CONFIG_MAKEFILE(tools/Makefile)
-AC_CONFIG_MAKEFILE(tools/classdump/Makefile)
+AC_CONFIG_MAKEFILE([test/Makefile.test])
+AC_CONFIG_MAKEFILE([test/Programs/SingleSource/UnitTests/Makefile])
+AC_CONFIG_MAKEFILE([test/Programs/SingleSource/Makefile])
+AC_CONFIG_MAKEFILE([test/Programs/SingleSource/Makefile.singlesrc])
+AC_CONFIG_MAKEFILE([test/Programs/Makefile])
+AC_CONFIG_MAKEFILE([test/Regression/ClassFile/Makefile])
+AC_CONFIG_MAKEFILE([test/Regression/Makefile])
+AC_CONFIG_MAKEFILE([tools/Makefile])
+AC_CONFIG_MAKEFILE([tools/classdump/Makefile])
 
 AC_CONFIG_FILES(Makefile.common)
 

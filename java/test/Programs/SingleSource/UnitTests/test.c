@@ -29,3 +29,12 @@ void Java_Test_println__D(JNIEnv *env, jclass clazz, jdouble aDouble)
 {
   printf("%f\n", aDouble);
 }
+
+void Java_Test_println___3B(JNIEnv *env, jclass clazz, jbyteArray array)
+{
+  jint size = (*env)->GetArrayLength(env, array);
+  jbyte* elements = (*env)->GetByteArrayElements(env, array, NULL);
+  printf("%.*s\n", size, elements);
+  // Since we didn't modify the array there is no point in copying it back
+  (*env)->ReleaseByteArrayElements(env, array, elements, JNI_ABORT);
+}

@@ -9,6 +9,8 @@ public class Test
     public static native void println(long l);
     public static native void println(float f);
     public static native void println(double d);
+    public static void println(String s) { println(s.getBytes()); }
+    private static native void println(byte[] a);
 
     public static void main(String[] args) {
         println(true);

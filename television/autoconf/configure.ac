@@ -8,6 +8,13 @@ AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Configure Makefiles
 AC_CONFIG_MAKEFILE(Makefile)
+AC_CONFIG_MAKEFILE(lib/Makefile)
+AC_CONFIG_MAKEFILE(lib/Snapshot/Makefile)
+AC_CONFIG_MAKEFILE(tools/Makefile)
+AC_CONFIG_MAKEFILE(tools/llvm-tv/Makefile)
+
+dnl Configure wxWindows
+AC_CONFIG_SUBDIRS(lib/wxwindows)
 
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])

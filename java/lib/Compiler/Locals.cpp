@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Locals.h"
+#include "Support.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Function.h>
@@ -31,52 +32,44 @@ Locals::Locals(unsigned maxLocals)
 void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 {
   const Type* valueTy = value->getType();
-  // All pointer types are cast to a pointer to
-  // llvm_java_lang_object_base.
-  if (isa<PointerType>(valueTy))
-    value = new CastInst(value, ObjectBaseRefTy,
-                         "to-object-base", insertAtEnd);
-
-  // Values of jboolean, jbyte, jchar and jshort are extended to a
-  // jint when stored in a local slot.
-  else if (valueTy == Type::BoolTy ||
-	   valueTy == Type::SByteTy ||
-	   valueTy == Type::UShortTy ||
-	   valueTy == Type::ShortTy)
-    value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
-
-  valueTy = value->getType();
+  const Type* storageTy = getStorageType(valueTy);
+  if (valueTy != storageTy)
+    value = new CastInst(value, storageTy, "to-storage-type", insertAtEnd);
 
   SlotMap& slotMap = TheLocals[i];
-  SlotMap::iterator it = slotMap.find(valueTy);
+  SlotMap::iterator it = slotMap.find(storageTy);
 
   if (it == slotMap.end()) {
     // Insert the alloca at the beginning of the entry block.
     BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
     AllocaInst* alloca;
     if (entry->empty())
-      alloca = new AllocaInst(
-        value->getType(),
-        NULL,
-        "local" + utostr(i),
-        entry);
+      alloca = new AllocaInst(storageTy,
+                              NULL,
+                              "local" + utostr(i),
+                              entry);
     else
-      alloca = new AllocaInst(
-        value->getType(),
-        NULL,
-        "local" + utostr(i),
-        &entry->front());
-    it = slotMap.insert(it, std::make_pair(valueTy, alloca));
+      alloca = new AllocaInst(storageTy,
+                              NULL,
+                              "local" + utostr(i),
+                              &entry->front());
+    it = slotMap.insert(it, std::make_pair(storageTy, alloca));
   }
 
   new StoreInst(value, it->second, insertAtEnd);
 }
 
-llvm::Value* Locals::load(unsigned i, const Type* type, BasicBlock* insertAtEnd)
+llvm::Value* Locals::load(unsigned i, const Type* valueTy,
+                          BasicBlock* insertAtEnd)
 {
+  const Type* storageTy = getStorageType(valueTy);
+
   SlotMap& slotMap = TheLocals[i];
-  SlotMap::iterator it = slotMap.find(type);
+  SlotMap::iterator it = slotMap.find(storageTy);
 
   assert(it != slotMap.end() && "Attempt to load a non initialized global!");
-  return new LoadInst(it->second, "load", insertAtEnd);
+  Value* value = new LoadInst(it->second, "load", insertAtEnd);
+  if (valueTy != storageTy)
+    value = new CastInst(value, valueTy, "from-storage-type", insertAtEnd);
+  return value;
 }

@@ -17,6 +17,7 @@
 #include "BasicBlockBuilder.h"
 #include "Locals.h"
 #include "OperandStack.h"
+#include "Support.h"
 #include <llvm/Java/Bytecode.h>
 #include <llvm/Java/BytecodeParser.h>
 #include <llvm/Java/ClassFile.h>
@@ -55,16 +56,8 @@ namespace llvm { namespace Java { namespace {
 
   const std::string TMP("tmp");
 
-  inline bool isTwoSlotType(const Type* t) {
-    return t == Type::LongTy | t == Type::DoubleTy;
-  }
-
   inline bool isTwoSlotValue(const Value* v) {
     return isTwoSlotType(v->getType());
-  }
-
-  inline bool isOneSlotType(const Type* t) {
-    return !isTwoSlotType(t);
   }
 
   inline bool isOneSlotValue(const Value* v) {

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "OperandStack.h"
+#include "Support.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Function.h>
@@ -27,33 +28,24 @@ void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
   assert(currentDepth < TheStack.size() && "Pushing to a full stack!");
 
   const Type* valueTy = value->getType();
-  // All pointer types are cast to a pointer to
-  // llvm_java_lang_object_base.
-  if (isa<PointerType>(valueTy))
-    value = new CastInst(value, ObjectBaseRefTy,
-                         "to-object-base", insertAtEnd);
-  // Values of jboolean, jbyte, jchar and jshort are extended to a
-  // jint when pushed on the operand stack.
-  else if (valueTy == Type::BoolTy ||
-	   valueTy == Type::SByteTy ||
-	   valueTy == Type::UShortTy ||
-	   valueTy == Type::ShortTy)
-    value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
+  const Type* storageTy = getStorageType(valueTy);
+  if (valueTy != storageTy)
+    value = new CastInst(value, storageTy, "to-storage-type", insertAtEnd);
 
   // If we don't have an alloca already for this slot create one
   if (!TheStack[currentDepth] ||
-      TheStack[currentDepth]->getAllocatedType() != value->getType()) {
+      TheStack[currentDepth]->getAllocatedType() != storageTy) {
     // Insert the alloca at the beginning of the entry block.
     BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
     if (entry->empty())
       TheStack[currentDepth] =
-        new AllocaInst(value->getType(),
+        new AllocaInst(storageTy,
                        NULL,
                        "opStack" + utostr(currentDepth),
                        entry);
     else
       TheStack[currentDepth] =
-        new AllocaInst(value->getType(),
+        new AllocaInst(storageTy,
                        NULL,
                        "opStack" + utostr(currentDepth),
                        &entry->front());

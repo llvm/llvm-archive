@@ -1,0 +1,69 @@
+The Java frontend translates Java bytecode (.class files) into LLVM
+bytecode. This happens in two passes: a basic block building pass,
+which creates and associates LLVM basic blocks to Java bytecode blocks
+and a compilation pass, which builds the LLVM bytecode for the given
+Java bytecode (in a sense: fill in the LLVM basic blocks with
+instructions).
+
+Creating BasicBlocks
+--------------------
+
+A pre-pass over the bytecode is performed that creates LLVM
+BasicBlocks and associates them with their corresponding Java basic
+block. This pass provides for a way to get the LLVM BasicBlock given a
+bytecode index. It also provides a way to get the Java bytecode bounds
+of the Java basic block given an LLVM BasicBlock.
+
+Modelling the operand stack
+---------------------------
+
+When compiling java bytecode to llvm we need to model the Java operand
+stack, as this is the Java computation model. Some complication arises
+though because longs and doubles are considered to take two slots in
+the Java operand stack.
+
+In this frontend we don't use two slots on the operand stack for longs
+or doubles. This simplyfies code generation for most instructions, but
+untyped stack manipulation ones. There we need to know what is that
+type of the poped items to figure out the final configuration of the
+stack.
+
+The class2llvm compiler keeps a compile time stack of alloca's, which
+loosly represent the slots of the java operand stack. These alloca's
+are lazily created in the basic block they are first introduced. The
+state of the stack is saved at the end of each basic block for its
+successors to use it. Obviously the entry blocks gets an empty stack
+as input.
+
+The type model is the obvious for the primitive types (int to int,
+float to float, etc). For reference types the alloca is always of type
+java.lang.Object*.
+
+Local variables
+---------------
+
+Similarly to the operand stack, the compiler keeps track of the local
+variable slots. Again we use a single slot for doubles and longs. A
+vector of sized to the max number of locals in the function is
+initialized when a function is compiled and the alloca's are lazily
+created on first use.
+
+Compilation
+-----------
+
+In order to compile a Java method to an LLVM function we use a work
+list of BasicBlocks to work through each basic block of the
+function. This is required because for each java basic block we
+compile we need to know the configuration of the operand stack and the
+locals. This is knows iff at least one predecessor of this block is
+compiled.
+
+So the work list is initialize with the entry basic block which has
+known entry operand stack and locals. The operand stack is empty and
+the locals contain the incoming arguments. When this basic block is
+compiled the operand stack and locals are associated with all its
+successors. For each successor this information is new (the operand
+stack or locals was unknown) we add it to the work list.
+
+The above guarantees that all reachable java basic blocks are going to
+be compiled.

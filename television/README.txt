@@ -34,22 +34,23 @@ GUI toolkit.
 How to compile:
 
 % ./configure --with-llvmsrc=[path] --with-llvmobj=[path]
-  (If you're building in llvm/projects/llvm-tv, then you don't need
-   to specify these --with options)
+   If you're building in llvm/projects/llvm-tv, then you don't need
+   to specify these --with options.
 % cd lib/wxwindows
 % ./configure --enable-debug --prefix=`pwd`
-  (Make absolutely sure that wxwindows's configure picks up the same
+   Make absolutely sure that wxwindows's configure picks up the same
    C++ compiler that you're using for llvm. Otherwise, you may get
-   weird link errors when trying to link the llvm-tv tool.)
+   weird link errors when trying to link the llvm-tv tool.
 % cd ../../
 % gmake
 
-How to make snapshots:
-
-% opt -pass1 -snapshot -pass2 -snapshot -pass3 -snapshot [...]
-
-How to run llvm-tv:
-
-% cd llvm-tv/tools/llvm-tv
-% ./run-llvm-tv
+Example of usage:
+ 
+% llvm-tv.exe &
+   The .exe is not a typo; this command starts up the visualizer in
+   the background using its wrapper script.
+% opt-snap -debug -licm -snapshot -gcse -snapshot < bytecode-file.bc > /dev/null
+   This runs the llvm optimizer driver with the snapshot pass loaded, using
+   another wrapper script, and makes two snapshots, which should appear
+   in your visualizer.
 

@@ -493,7 +493,7 @@ ConstantLong::ConstantLong(const ConstantPool& cp, std::istream& is)
 
 std::ostream& ConstantLong::dump(std::ostream& os) const
 {
-  return os << "long " << value_;
+  return os << "long " << value_ << 'l';
 }
 
 ConstantDouble::ConstantDouble(const ConstantPool& cp, std::istream& is)

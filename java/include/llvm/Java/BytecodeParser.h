@@ -361,9 +361,12 @@ namespace llvm { namespace Java {
         case LXOR:
           THIS->do_lxor();
           break;
-        case IINC:
-          THIS->do_iinc(readUByte(code, i), readSByte(code, i));
+        case IINC: {
+          unsigned index = wide ? readUShort(code, i) : readUByte(code, i);
+          int amount = wide ? readSShort(code, i) : readSByte(code, i);
+          THIS->do_iinc(index, amount);
           break;
+        }
         case I2L:
           THIS->do_i2l();
           break;
@@ -608,9 +611,12 @@ namespace llvm { namespace Java {
         case WIDE:
           // FIXME: must throw something
           break;
-        case MULTIANEWARRAY:
-          THIS->do_multianewarray(readUShort(code, i), readUByte(code, i));
+        case MULTIANEWARRAY: {
+          unsigned index = readUShort(code, i);
+          unsigned dims = readUByte(code, i);
+          THIS->do_multianewarray(index, dims);
           break;
+        }
         case IFNULL: {
           unsigned t = curBC + readUShort(code, i);
           THIS->do_ifnull(t, i + 1);

@@ -274,7 +274,8 @@ PACKAGE_STRING='Java 0.0'
 PACKAGE_BUGREPORT='llvmbugs@cs.uiuc.edu'
 
 ac_unique_file="Makefile.common.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS JAVA JAVAC JAVAH LLVM_SRC LLVM_OBJ LIBOBJS LTLIBOBJS'
+ac_unique_file="Makefile.common.in"
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_SRC LLVM_OBJ JAVA JAVAC JAVAH LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1258,7 +1259,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 ac_aux_dir=
-for ac_dir in autoconf $srcdir/autoconf; do
+for ac_dir in ../../autoconf $srcdir/../../autoconf; do
   if test -f $ac_dir/install-sh; then
     ac_aux_dir=$ac_dir
     ac_install_sh="$ac_aux_dir/install-sh -c"
@@ -1274,8 +1275,8 @@ for ac_dir in autoconf $srcdir/autoconf; do
   fi
 done
 if test -z "$ac_aux_dir"; then
-  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in autoconf $srcdir/autoconf" >&5
-echo "$as_me: error: cannot find install-sh or install.sh in autoconf $srcdir/autoconf" >&2;}
+  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in ../../autoconf $srcdir/../../autoconf" >&5
+echo "$as_me: error: cannot find install-sh or install.sh in ../../autoconf $srcdir/../../autoconf" >&2;}
    { (exit 1); exit 1; }; }
 fi
 ac_config_guess="$SHELL $ac_aux_dir/config.guess"
@@ -1283,6 +1284,33 @@ ac_config_sub="$SHELL $ac_aux_dir/config.sub"
 ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 
+
+# Check whether --with-llvmsrc or --without-llvmsrc was given.
+if test "${with_llvmsrc+set}" = set; then
+  withval="$with_llvmsrc"
+  llvm_src="$withval"
+else
+  llvm_src=`cd ${srcdir}/../..; pwd`
+fi;
+  LLVM_SRC=$llvm_src
+
+
+# Check whether --with-llvmobj or --without-llvmobj was given.
+if test "${with_llvmobj+set}" = set; then
+  withval="$with_llvmobj"
+  llvm_obj="$withval"
+else
+  llvm_obj=`cd ../..; pwd`
+fi;
+  LLVM_OBJ=$llvm_obj
+
+            ac_config_commands="$ac_config_commands setup"
+
+
+
+
+
+          ac_config_files="$ac_config_files Makefile.common"
 
 
           ac_config_commands="$ac_config_commands Makefile"
@@ -1323,9 +1351,6 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
           ac_config_commands="$ac_config_commands tools/classdump/Makefile"
 
-
-
-          ac_config_files="$ac_config_files Makefile.common"
 
 
 
@@ -1463,28 +1488,6 @@ fi
 
 
 
-
-
-# Check whether --with-llvmsrc or --without-llvmsrc was given.
-if test "${with_llvmsrc+set}" = set; then
-  withval="$with_llvmsrc"
-  LLVM_SRC=$withval
-
-else
-  LLVM_SRC=`cd ${srcdir}/../..; pwd`
-
-fi;
-
-
-# Check whether --with-llvmobj or --without-llvmobj was given.
-if test "${with_llvmobj+set}" = set; then
-  withval="$with_llvmobj"
-  LLVM_OBJ=$withval
-
-else
-  LLVM_OBJ=`cd ../..; pwd`
-
-fi;
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2035,19 +2038,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
 # INIT-COMMANDS section.
 #
 
-${srcdir}/autoconf/mkinstalldirs `dirname Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname lib/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname lib/ClassFile/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Makefile.test`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/UnitTests/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile.singlesrc`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Programs/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Regression/ClassFile/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname test/Regression/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/Makefile`
-${srcdir}/autoconf/mkinstalldirs `dirname tools/classdump/Makefile`
+llvm_src="${LLVM_SRC}"
 
 _ACEOF
 
@@ -2059,6 +2050,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile.common" ) CONFIG_FILES="$CONFIG_FILES Makefile.common" ;;
+  "setup" ) CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
   "Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
   "lib/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/Makefile" ;;
   "lib/ClassFile/Makefile" ) CONFIG_COMMANDS="$CONFIG_COMMANDS lib/ClassFile/Makefile" ;;
@@ -2156,11 +2148,11 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
+s,@LLVM_SRC@,$LLVM_SRC,;t t
+s,@LLVM_OBJ@,$LLVM_OBJ,;t t
 s,@JAVA@,$JAVA,;t t
 s,@JAVAC@,$JAVAC,;t t
 s,@JAVAH@,$JAVAH,;t t
-s,@LLVM_SRC@,$LLVM_SRC,;t t
-s,@LLVM_OBJ@,$LLVM_OBJ,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -2510,19 +2502,32 @@ esac
   { echo "$as_me:$LINENO: executing $ac_dest commands" >&5
 echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
-    Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
-    lib/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
-    lib/ClassFile/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/lib/ClassFile/Makefile lib/ClassFile/Makefile ;;
-    test/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
-    test/Makefile.test ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Makefile.test test/Makefile.test ;;
-    test/Programs/SingleSource/UnitTests/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/UnitTests/Makefile test/Programs/SingleSource/UnitTests/Makefile ;;
-    test/Programs/SingleSource/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile test/Programs/SingleSource/Makefile ;;
-    test/Programs/SingleSource/Makefile.singlesrc ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile.singlesrc test/Programs/SingleSource/Makefile.singlesrc ;;
-    test/Programs/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile test/Programs/Makefile ;;
-    test/Regression/ClassFile/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Regression/ClassFile/Makefile test/Regression/ClassFile/Makefile ;;
-    test/Regression/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/test/Regression/Makefile test/Regression/Makefile ;;
-    tools/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
-    tools/classdump/Makefile ) ${SHELL} ${srcdir}/autoconf/install-sh -c ${srcdir}/tools/classdump/Makefile tools/classdump/Makefile ;;
+    Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/Makefile Makefile ;;
+    lib/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/Makefile lib/Makefile ;;
+    lib/ClassFile/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname lib/ClassFile/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/lib/ClassFile/Makefile lib/ClassFile/Makefile ;;
+    test/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile test/Makefile ;;
+    test/Makefile.test ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Makefile.test`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Makefile.test test/Makefile.test ;;
+    test/Programs/SingleSource/UnitTests/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/UnitTests/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/UnitTests/Makefile test/Programs/SingleSource/UnitTests/Makefile ;;
+    test/Programs/SingleSource/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile test/Programs/SingleSource/Makefile ;;
+    test/Programs/SingleSource/Makefile.singlesrc ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Programs/SingleSource/Makefile.singlesrc`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Programs/SingleSource/Makefile.singlesrc test/Programs/SingleSource/Makefile.singlesrc ;;
+    test/Programs/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Programs/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Programs/Makefile test/Programs/Makefile ;;
+    test/Regression/ClassFile/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Regression/ClassFile/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Regression/ClassFile/Makefile test/Regression/ClassFile/Makefile ;;
+    test/Regression/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname test/Regression/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/test/Regression/Makefile test/Regression/Makefile ;;
+    tools/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/Makefile tools/Makefile ;;
+    tools/classdump/Makefile ) ${llvm_src}/autoconf/mkinstalldirs `dirname tools/classdump/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/tools/classdump/Makefile tools/classdump/Makefile ;;
   esac
 done
 _ACEOF

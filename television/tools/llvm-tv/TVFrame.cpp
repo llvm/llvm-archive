@@ -29,9 +29,9 @@ TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
 
 /// AddSnapshotsToTree - Given a list of snapshots the tree is populated
 ///
-void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
+void TVTreeCtrl::AddSnapshotsToTree(TVSnapshotList *list) {
   wxTreeItemId rootId = GetRootItem();
-  for (std::vector<TVSnapshot>::iterator I = list.begin(), E = list.end();
+  for (TVSnapshotList::iterator I = list->begin(), E = list->end();
        I != E; ++I) {
     // Get the Module associated with this snapshot and add it to the tree
     Module *M = I->getModule();
@@ -51,9 +51,9 @@ void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
 
 /// updateSnapshotList - Update the tree with the current snapshot list
 ///
-void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
+void TVTreeCtrl::updateSnapshotList(TVSnapshotList *myList) {
   DeleteChildren(GetRootItem());
-  AddSnapshotsToTree(list);
+  AddSnapshotsToTree(myList);
 }
 
 /// GetSelectedItemData - Return the currently-selected visualizable
@@ -109,27 +109,15 @@ void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
 }
 
 void TVFrame::refreshSnapshotList () {
-  // re-load the list of snapshots
-  const char *directoryName = mySnapshotDirName.c_str ();
-  mySnapshotList.clear ();
-  DIR *d = opendir (directoryName);
-  if (!d)
-    FatalErrorBox ("trying to open directory " + mySnapshotDirName + ": "
+  
+  if (!myApp->getSnapshotList()->refreshList())
+    FatalErrorBox ("trying to open directory " + myApp->getSnapshotList()->getSnapshotDirName() + ": "
                    + strerror(errno));
-  while (struct dirent *de = readdir (d))
-    if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
-      mySnapshotList.push_back (mySnapshotDirName + "/" + de->d_name);
-  sort (mySnapshotList.begin (), mySnapshotList.end ());
-
-  closedir (d);
-
   if (myTreeCtrl != 0)
-    myTreeCtrl->updateSnapshotList(mySnapshotList);
+    myTreeCtrl->updateSnapshotList(myApp->getSnapshotList());
 }
 
-void TVFrame::initializeSnapshotListAndView (std::string dirName) {
-  // Initialize the snapshot list
-  mySnapshotDirName = dirName;
+void TVFrame::initializeSnapshotListAndView () {
   refreshSnapshotList ();
   SetStatusText ("Snapshot list has been loaded.");
 }

@@ -7,7 +7,7 @@
 #ifndef TVFRAME_H
 #define TVFRAME_H
 
-#include "TVSnapshot.h"
+#include "TVSnapshotList.h"
 #include "TVWindowIDs.h"
 #include "wx/wx.h"
 #include "wx/listctrl.h"
@@ -31,8 +31,8 @@ public:
                          long style = wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE
                                     | wxSUNKEN_BORDER);
   virtual ~TVTreeCtrl() { }
-  void AddSnapshotsToTree(std::vector<TVSnapshot>&);
-  void updateSnapshotList(std::vector<TVSnapshot>&);
+  void AddSnapshotsToTree(TVSnapshotList*);
+  void updateSnapshotList(TVSnapshotList*);
   void OnSelChanged(wxTreeEvent &event);
   TVTreeItemData *GetSelectedItemData ();
 
@@ -67,10 +67,7 @@ public:
 class TVApplication;
 class TVFrame : public wxFrame {
   TVApplication *myApp;
-
-  std::vector<TVSnapshot> mySnapshotList;
-  std::string mySnapshotDirName;
-
+  
   wxSplitterWindow *splitterWindow; // divides this into left & right sides
   TVTreeCtrl *myTreeCtrl;           // left side - displays tree view of module
   TVNotebook *notebook;             // right side - tab views w/ item displayers
@@ -91,7 +88,7 @@ class TVFrame : public wxFrame {
   void OnRefresh (wxCommandEvent &event);
   void CreateTree(long style, std::vector<TVSnapshot>&);
   void refreshSnapshotList ();
-  void initializeSnapshotListAndView (std::string directoryName);
+  void initializeSnapshotListAndView ();
   void updateDisplayedItem (TVTreeItemData *newlyDisplayedItem);
 
   DECLARE_EVENT_TABLE ();

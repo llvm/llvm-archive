@@ -127,7 +127,10 @@ bool TVApplication::OnInit () {
   // Read the snapshot list out of the given directory,
   // and load the snapshot list view into the frame.
   ensureDirectoryExists (snapshotsPath);
-  myFrame->initializeSnapshotListAndView (snapshotsPath);
+  
+  snapshotList = new TVSnapshotList(snapshotsPath);
+  
+  myFrame->initializeSnapshotListAndView();
 
   // Set up signal handler so that we can get notified when
   // the -snapshot pass hands us new snapshot bytecode files.

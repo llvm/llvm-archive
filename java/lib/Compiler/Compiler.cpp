@@ -115,6 +115,7 @@ namespace llvm { namespace Java { namespace {
     struct CompilerImpl :
         public BytecodeParser<CompilerImpl> {
     private:
+        Module* module_;
         const ClassFile* cf_;
         OperandStack opStack_;
         Locals locals_;
@@ -216,6 +217,7 @@ namespace llvm { namespace Java { namespace {
             DEBUG(std::cerr << "compiling method: "
                   << method.getName()->str() << '\n');
 
+            module_ = &module;
             cf_ = &cf;
 
             std::string name = cf_->getThisClass()->getName()->str();
@@ -544,11 +546,34 @@ namespace llvm { namespace Java { namespace {
         }
 
         void do_cmpl(unsigned bcI) {
-            assert(0 && "not implemented");
+            do_cmp_common(bcI, -1);
         }
 
         void do_cmpg(unsigned bcI) {
-            assert(0 && "not implemented");
+            do_cmp_common(bcI, 1);
+        }
+
+        void do_cmp_common(unsigned bcI, int valueIfUnordered) {
+            Value* v2 = opStack_.top(); opStack_.pop();
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Value* c = BinaryOperator::createSetGT(v1, v2, TMP, getBBAt(bcI));
+            Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
+                                      ConstantSInt::get(Type::IntTy, 0), TMP,
+                                      getBBAt(bcI));
+            c = BinaryOperator::createSetLT(v1, v2, TMP, getBBAt(bcI));
+            r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
+                               getBBAt(bcI));
+            std::vector<Value*> params;
+            params.push_back(v1);
+            params.push_back(v2);
+            c = new CallInst(module_->getOrInsertFunction
+                             ("llvm.isunordered",
+                              Type::BoolTy, v1->getType(), v2->getType(), 0),
+                params, TMP, getBBAt(bcI));
+            r = new SelectInst(c,
+                               ConstantSInt::get(Type::IntTy, valueIfUnordered),
+                               r, TMP, getBBAt(bcI));
+            opStack_.push(r);
         }
 
         void do_if(unsigned bcI, JSetCC cc, JType type,

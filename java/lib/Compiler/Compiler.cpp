@@ -49,6 +49,23 @@ namespace llvm { namespace Java { namespace {
         return !isTwoSlotValue(v);
     }
 
+    llvm::Constant* getConstant(const Constant* c) {
+        if (dynamic_cast<const ConstantString*>(c))
+            assert(0 && "not implemented");
+        else if (const ConstantInteger* i =
+                 dynamic_cast<const ConstantInteger*>(c))
+            return ConstantSInt::get(Type::IntTy, i->getValue());
+        else if (const ConstantFloat* f = dynamic_cast<const ConstantFloat*>(c))
+            return ConstantFP::get(Type::FloatTy, f->getValue());
+        else if (const ConstantLong* l = dynamic_cast<const ConstantLong*>(c))
+            return ConstantSInt::get(Type::LongTy, l->getValue());
+        else if (const ConstantDouble* d =
+                 dynamic_cast<const ConstantDouble*>(c))
+            return ConstantFP::get(Type::DoubleTy, d->getValue());
+        else
+            return NULL; // FIXME: throw something
+    }
+
     struct Bytecode2BasicBlockMapper
         : public BytecodeParser<Bytecode2BasicBlockMapper> {
     public:
@@ -344,22 +361,8 @@ namespace llvm { namespace Java { namespace {
 
         void do_ldc(unsigned bcI, unsigned index) {
             const Constant* c = cf_->getConstantPool()[index];
-            if (dynamic_cast<const ConstantString*>(c))
-                assert(0 && "not implemented");
-            else if (const ConstantInteger* i =
-                     dynamic_cast<const ConstantInteger*>(c))
-                opStack_.push(ConstantSInt::get(Type::IntTy, i->getValue()));
-            else if (const ConstantFloat* f =
-                     dynamic_cast<const ConstantFloat*>(c))
-                opStack_.push(ConstantFP::get(Type::FloatTy, f->getValue()));
-            else if (const ConstantLong* l =
-                     dynamic_cast<const ConstantLong*>(c))
-                opStack_.push(ConstantSInt::get(Type::LongTy, l->getValue()));
-            else if (const ConstantDouble* d =
-                     dynamic_cast<const ConstantDouble*>(c))
-                opStack_.push(ConstantFP::get(Type::DoubleTy, d->getValue()));
-            else
-                ; // FIXME: throw something
+            assert(getConstant(c) && "Java constant not handled!");
+            opStack_.push(getConstant(c));
         }
 
         void do_load(unsigned bcI, JType type, unsigned index) {

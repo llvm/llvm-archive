@@ -1192,6 +1192,24 @@ namespace llvm { namespace Java { namespace {
       return new GetElementPtrInst(ptr, indices, fieldName, currentBB_);
     }
 
+    std::string getMangledString(const std::string& str) {
+      std::string mangledStr;
+
+      for (unsigned i = 0, e = str.size(); i != e; ++i) {
+        if (str[i] == '/')
+          mangledStr += '_';
+        else if (str[i] == '_')
+          mangledStr += "_1";
+        else if (str[i] == ';')
+          mangledStr += "_2";
+        else if (str[i] == '[')
+          mangledStr += "_3";
+        else
+          mangledStr += str[i];
+      }
+      return mangledStr;
+    }
+
     /// Compiles the passed method only (it does not compile any
     /// callers or methods of objects it creates).
     Function* compileMethodOnly(const std::string& classMethodDesc) {
@@ -1210,24 +1228,17 @@ namespace llvm { namespace Java { namespace {
         FunctionType* funcTy = cast<FunctionType>(
             getJNIType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
 
-        std::string funcName = "Java_";
-        const std::string& className = cf_->getThisClass()->getName()->str();
-        for (unsigned i = 0, e = className.size(); i != e; ++i) {
-          if (className[i] == '/')
-            funcName += '_';
-          else if (className[i] == '_')
-            funcName += "_1";
-          else
-            funcName += className[i];
-        }
-        funcName += '_';
-
-        const std::string& methodName = method->getName()->str();
-        for (unsigned i = 0, e = methodName.size(); i != e; ++i) {
-          if (methodName[i] == '_')
-            funcName += "_1";
-          else
-            funcName += methodName[i];
+        std::string funcName =
+          "Java_" +
+          getMangledString(cf_->getThisClass()->getName()->str()) + '_' +
+          getMangledString(method->getName()->str());
+        if (cf_->isNativeMethodOverloaded(*method)) {
+          // We need to add two underscores and a mangled argument signature
+          funcName += "__";
+          const std::string descr = method->getDescriptor()->str();
+          funcName += getMangledString(
+            std::string(descr.begin() + descr.find('(') + 1,
+                        descr.begin() + descr.find(')')));
         }
 
         Function* jniFunction = module_.getOrInsertFunction(funcName, funcTy);

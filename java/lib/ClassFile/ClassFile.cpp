@@ -184,7 +184,7 @@ std::vector<sys::Path> ClassFile::getClassPath()
     e = ClassPath.find(':', b);
     if (path.setDirectory(ClassPath.substr(b, e - b))) {
       result.push_back(path);
-      DEBUG(std::cerr << "Adding: " << path.toString() << " to CLASSPATH\nx");
+      DEBUG(std::cerr << "Adding: " << path.toString() << " to CLASSPATH\n");
     }
     b = e + 1;
   } while (e != std::string::npos);

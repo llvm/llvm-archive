@@ -40,8 +40,10 @@ DSA graph visualizers: it implements drawFunctionGraph() and drawModuleGraph()
 in terms of pure virtual C++ functions that return the pass to draw a graph,
 which is different for each of BUGraphDrawer, TDGraphDrawer, and
 LocalGraphDrawer, as well as the filename to which they output the results of
-their analysis.  The algorithm for running the pass on a Function or Module is
-shared among the 3 subclasses of DSAGraphDrawer.
+their analysis.  The functions createFunctionPass() and createModulePass() are
+Factory Methods as they create passes of different classes that are subclasses
+of FunctionPass or Pass, respectively.  The algorithm for running the pass on a
+Function or Module is shared among the 3 subclasses of DSAGraphDrawer.
 
 BUGraphDrawer, TDGraphDrawer, and LocalGraphDrawer are also ItemDisplayers,
 which allows them to be displayed in tabs or in separate new windows.

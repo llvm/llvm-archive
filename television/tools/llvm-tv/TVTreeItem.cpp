@@ -2,6 +2,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Assembly/Writer.h"
 #include "wx/treectrl.h"
 #include <cstdlib>
 using namespace llvm;
@@ -18,9 +19,10 @@ static inline void htmlBB(std::ostream &os, const BasicBlock *BB) {
   os << "<font color=\"#cc0000\"><b>" << BB->getName() << ":</b></font><br>";
 }
 
-static inline void htmlType(std::ostream &os, const Type* type) {
+static inline void htmlType(std::ostream &os, const Type* type,
+			    const Module *M) {
   os << "<font color=\"green\"><b>";
-  type->print(os);
+  WriteTypeSymbolic (os, type, M);
   os << "</b></font>";
 }
 
@@ -127,10 +129,10 @@ void TVTreeItemData::printFunction(Function *F, std::ostream &os) {
   // print out function return type, name, and arguments
   if (F->isExternal ())
     os << "declare ";
-  htmlType(os, F->getReturnType());
+  htmlType(os, F->getReturnType(), F->getParent ());
   os << " " << F->getName() << "(";
   for (Function::aiterator arg = F->abegin(), ae = F->aend(); arg != ae; ++arg){
-    htmlType(os, arg->getType());
+    htmlType(os, arg->getType(), F->getParent ());
     os << " " << arg->getName();
     Function::aiterator next = arg;
     ++next;

@@ -255,6 +255,7 @@ namespace llvm { namespace Java { namespace {
       case 'S': return Type::ShortTy;
       case 'Z': return Type::BoolTy;
       case 'V': return Type::VoidTy;
+        // Both array and object types are pointers to llvm_object_base
       case 'L': {
         unsigned e = descr.find(';', i);
         std::string className = descr.substr(i, e - i);
@@ -1212,7 +1213,7 @@ namespace llvm { namespace Java { namespace {
               << classMethodDesc << '\n');
         FunctionType* jniFuncTy =
             cast<FunctionType>(getJNIType(method->getDescriptor()));
-        std::cerr << "JNI funtype: " << *jniFuncTy << '\n';
+
         std::string funcName =
           "Java_" +
           getMangledString(cf_->getThisClass()->getName()->str()) + '_' +

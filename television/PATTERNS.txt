@@ -1,4 +1,12 @@
 Patterns used in LLVM-TV
 ------------------------
 
-1.
+1. TVTreeItem uses HTMLPrinter to display a Function or a Module as a
+   syntax-highlighted view. It also chooses a Strategy HTMLMarkup class to
+   decide on whether to use a CSS-marked-up version or a regular HTML-based
+   syntax-highlighting.
+
+   HTMLPrinter is a Visitor which uses the InstVisitor C++ template, which in
+   turn is an Iterator over the BasicBlocks of a Function, and all Instructions
+   in a BasicBlock. It calls methods on the HTMLMarkup that it is instantiated
+   with to emit syntax-highlighting for keywords, types, basic block names, etc.

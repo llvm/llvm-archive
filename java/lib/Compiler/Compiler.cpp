@@ -115,6 +115,7 @@ namespace llvm { namespace Java { namespace {
     struct CompilerImpl :
         public BytecodeParser<CompilerImpl> {
     private:
+        const ClassFile* cf_;
         OperandStack opStack_;
         Locals locals_;
         BC2BBMap bc2bbMap_;
@@ -156,21 +157,6 @@ namespace llvm { namespace Java { namespace {
             return static_cast<Instruction::BinaryOps>(-1);
         }
 
-        void compileMethodInit(Function& function,
-                               const ClassFile& cf,
-                               const CodeAttribute& codeAttr) {
-            while (!opStack_.empty())
-                opStack_.pop();
-
-            locals_.clear();
-            locals_.assign(codeAttr.getMaxLocals(), NULL);
-
-            Bytecode2BasicBlockMapper mapper(function, bc2bbMap_, codeAttr);
-            mapper.compute();
-
-            prologue_ = new BasicBlock("prologue");
-        }
-
         Value* getOrCreateLocal(unsigned index, const Type* type) {
             if (!locals_[index]) {
                 locals_[index] = new AllocaInst(type, NULL,
@@ -190,7 +176,9 @@ namespace llvm { namespace Java { namespace {
             DEBUG(std::cerr << "compiling method: "
                   << method.getName()->str() << '\n');
 
-            std::string name = cf.getThisClass()->getName()->str();
+            cf_ = &cf;
+
+            std::string name = cf_->getThisClass()->getName()->str();
             name += '/';
             name += method.getName()->str();
             name += method.getDescriptor()->str();
@@ -203,7 +191,16 @@ namespace llvm { namespace Java { namespace {
             const Java::CodeAttribute* codeAttr =
                 Java::getCodeAttribute(method.getAttributes());
 
-            compileMethodInit(*function, cf, *codeAttr);
+            while (!opStack_.empty())
+                opStack_.pop();
+
+            locals_.clear();
+            locals_.assign(codeAttr->getMaxLocals(), NULL);
+
+            Bytecode2BasicBlockMapper mapper(*function, bc2bbMap_, *codeAttr);
+            mapper.compute();
+
+            prologue_ = new BasicBlock("prologue");
 
             parse(codeAttr->getCode(), codeAttr->getCodeSize());
 

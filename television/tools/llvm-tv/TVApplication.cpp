@@ -16,14 +16,22 @@
 #include <signal.h>
 #include <string>
 #include <unistd.h>
+#include <functional>
+#include "CFGGraphDrawer.h"
+#include "CallGraphDrawer.h"
+#include "PictureFrame.h"
 
 ///==---------------------------------------------------------------------==///
 
-static TVFrame *frame;
+static TVApplication *TheApp;
 
 void sigHandler(int sigNum) {
-  printf("llvm-tv: caught update signal!\n");
-  frame->refreshSnapshotList();
+  TheApp->ReceivedSignal();
+}
+
+void TVApplication::ReceivedSignal () {
+  // Whenever we catch our prearranged signal, refresh the snapshot list.
+  myFrame->refreshSnapshotList();
 }
 
 /// FatalErrorBox - pop up an error message (given in printf () form) and quit.
@@ -126,24 +134,55 @@ static void eraseMyPID () {
   unlink (llvmtvPID.c_str ());
 }
 
+void TVApplication::GoodbyeFrom (wxWindow *dyingWindow) {
+  std::vector<wxWindow *>::iterator where =
+    find (allMyWindows.begin(), allMyWindows.end(), dyingWindow);
+  if (where != allMyWindows.end ())
+    allMyWindows.erase (where);
+}
+
+void TVApplication::Quit () {
+  // Destroy all the picture windows, then the toplevel window.
+  for_each (allMyWindows.begin (), allMyWindows.end (),
+            std::mem_fun (&wxWindow::Destroy));
+  myFrame->Destroy ();
+}
+
+void TVApplication::OpenCallGraphView (Module *M) {
+  CallGraphDrawer drawer (M);
+  allMyWindows.push_back (new PictureFrame (this, "call graph",
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenCFGView (Function *F) {
+  CFGGraphDrawer drawer (F);
+  allMyWindows.push_back (new PictureFrame (this, "control-flow graph",
+                                            drawer.getGraphImage ()));
+}
+
 bool TVApplication::OnInit () {
   // Save my PID into the file where the snapshot-making pass knows to
   // look for it.
   saveMyPID ();
   atexit (eraseMyPID);
 
+  wxInitAllImageHandlers ();
+
   // Build top-level window.
-  frame = new TVFrame ("Snapshot List");
-  SetTopWindow (frame);
+  myFrame = new TVFrame (this, "LLVM Visualizer");
+  SetTopWindow (myFrame);
 
   // Build top-level window's menu bar.
-  setUpMenus (frame);
+  setUpMenus (myFrame);
 
   // Read the snapshot list out of the given directory,
   // and load the snapshot list view into the frame.
   ensureDirectoryExists (snapshotsPath);
-  frame->initializeSnapshotListAndView (snapshotsPath);
+  myFrame->initializeSnapshotListAndView (snapshotsPath);
 
+  // Set up signal handler so that we can get notified when
+  // the -snapshot pass hands us new snapshot bytecode files.
+  TheApp = this;
   signal(SIGUSR1, sigHandler);
 
   return true;

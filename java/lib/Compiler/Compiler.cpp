@@ -33,20 +33,31 @@ namespace {
         return !isTwoSlotValue(v);
     }
 
-    inline int readByteImmediate(const uint8_t* code, unsigned& i) {
+    inline int readByteSigned(const uint8_t* code, unsigned& i) {
         return code[++i];
     }
 
-    inline int readShortImmediate(const uint8_t* code, unsigned& i) {
-        return (code[++i] << 8) | code[++i];
-    }
-
-    inline unsigned readByteIndex(const uint8_t* code, unsigned& i) {
+    inline unsigned readByteUnsigned(const uint8_t* code, unsigned& i) {
         return code[++i];
     }
 
-    inline unsigned readShortIndex(const uint8_t* code, unsigned& i) {
-        return (code[++i] << 8) | code[++i];
+    inline int readShortSigned(const uint8_t* code, unsigned& i) {
+        return (readByteSigned(code, i) << 8) | readByteUnsigned(code, i);
+    }
+
+    inline unsigned readShortUnsigned(const uint8_t* code, unsigned& i) {
+        return (readByteUnsigned(code, i) << 8) | readByteUnsigned(code, i);
+    }
+
+    inline int readIntSigned(const uint8_t* code, unsigned& i) {
+        return ((readByteUnsigned(code, i) << 24) |
+                (readByteUnsigned(code, i) << 16) |
+                (readByteUnsigned(code, i) << 8) |
+                readByteUnsigned(code, i));
+    }
+
+    inline unsigned readIntUnsigned(const uint8_t* code, unsigned& i) {
+        return readIntSigned(code, i);
     }
 
 } // namespace
@@ -105,25 +116,25 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
             opStack_.push(ConstantFP::get(Type::DoubleTy, code[i]-DCONST_0));
             break;
         case BIPUSH: {
-            int imm = readByteImmediate(code, i);
+            int imm = readByteSigned(code, i);
             opStack_.push(ConstantInt::get(Type::IntTy, imm));
             break;
         }
         case SIPUSH: {
-            int imm = readShortImmediate(code, i);
+            int imm = readShortSigned(code, i);
             opStack_.push(ConstantInt::get(Type::IntTy, imm));
             break;
         }
         case LDC: {
-            unsigned index = readByteIndex(code, i);
+            unsigned index = readByteUnsigned(code, i);
             // FIXME: load constant from constant pool
         }
         case LDC_W: {
-            unsigned index = readShortIndex(code, i);
+            unsigned index = readShortUnsigned(code, i);
             // FIXME: load constant from constant pool
         }
         case LDC2_W: {
-            unsigned index = readShortIndex(code, i);
+            unsigned index = readShortUnsigned(code, i);
             // FIXME: load constant from constant pool
         }
         case ILOAD:
@@ -132,7 +143,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case DLOAD:
         case ALOAD: {
             // FIXME: use opcodes to perform type checking
-            unsigned index = readByteIndex(code, i);
+            unsigned index = readByteUnsigned(code, i);
             opStack_.push(locals_[index]);
             break;
         }

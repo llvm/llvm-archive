@@ -15,6 +15,7 @@ JAVA_TESTS := Arithm \
 	ForLoop \
 	If \
 	InstanceOf \
+	InterfaceCall \
 	LongCompare \
 	LookupSwitch \
 	StaticInitializers \

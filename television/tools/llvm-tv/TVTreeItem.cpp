@@ -276,3 +276,7 @@ void TVTreeFunctionItem::printHTML(std::ostream &os) {
 Module* TVTreeFunctionItem::getModule() {
   return myFunc ? myFunc->getParent() : 0; 
 }
+
+std::string TVTreeFunctionItem::getTitle () {
+  return myFunc->getName () + "()";
+}

@@ -767,6 +767,15 @@ namespace llvm { namespace Java { namespace {
         new BranchInst(prologue_->getNext(), prologue_);
       }
 
+      // now scan the basic blocks of this function and insert fall
+      // through branches to all basic blocks that don't have a
+      // terminator (these are blocks in switch blocks without a break
+      // statement)
+      for (Function::iterator
+             BB = function->begin(), BBE = function->end(); BB != BBE; ++BB)
+        if (!BB->getTerminator())
+          new BranchInst(next(BB), BB);
+
       return function;
     }
 

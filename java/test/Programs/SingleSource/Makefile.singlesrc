@@ -28,6 +28,6 @@ OPT_PASSES := -simplifycfg -mem2reg -globalopt -globaldce \
 # add function trace code
 %.tracef.linked.bc: %.linked.bc $(LOPT)
 	$(Echo) Adding function trace code to $<
-	$(Verb)$(LOPT) -tracem -f -o=$@ $<
+	$(Verb)$(LOPT) -tracem -tracedisablehashdisable -f -o=$@ $<
 
 include $(LEVEL)/test/Makefile.test

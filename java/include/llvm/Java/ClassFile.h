@@ -134,6 +134,8 @@ namespace llvm { namespace Java {
         static Constant* readConstant(const ConstantPool& cp,
                                       std::istream& is);
 
+        virtual bool isSingleSlot() { return true; }
+        bool isDoubleSlot() { return !isSingleSlot(); }
         virtual ~Constant();
 
         virtual std::ostream& dump(std::ostream& os) const = 0;
@@ -214,6 +216,7 @@ namespace llvm { namespace Java {
         int64_t value_;
     public:
         ConstantLong(const ConstantPool& cp, std::istream& is);
+        virtual bool isSingleSlot() { return false; }
         int64_t getValue() const { return value_; }
         std::ostream& dump(std::ostream& os) const;
     };
@@ -222,6 +225,7 @@ namespace llvm { namespace Java {
         double value_;
     public:
         ConstantDouble(const ConstantPool& cp, std::istream& is);
+        virtual bool isSingleSlot() { return false; }
         double getValue() const { return value_; }
         std::ostream& dump(std::ostream& os) const;
     };

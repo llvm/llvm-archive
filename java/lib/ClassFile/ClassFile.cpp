@@ -66,9 +66,11 @@ namespace {
         uint16_t count = readU2(is);
         cp.reserve(count);
         cp.push_back(NULL);
-        --count;
-        while (count--)
+        while (cp.size() < count) {
             cp.push_back(Constant::readConstant(cp, is));
+            if (cp.back()->isDoubleSlot())
+                cp.push_back(NULL);
+        }
     }
 
     void readClasses(Classes& i, const ConstantPool& cp, std::istream& is)

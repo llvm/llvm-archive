@@ -30,9 +30,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Support/CFG.h>
 #include <llvm/Support/Debug.h>
-#include <iostream>
 #include <list>
-#include <stack>
 #include <vector>
 
 #define LLVM_JAVA_OBJECT_BASE "struct.llvm_java_object_base"
@@ -191,10 +189,20 @@ namespace llvm { namespace Java { namespace {
 	return PointerType::get(getClassInfo(ClassFile::get(className)).type);
       }
       case '[':
-	// FIXME: this should really be a new class
-	// represeting the array of the following type
-	return PointerType::get(
-	  ArrayType::get(getTypeHelper(descr, i, NULL), 0));
+        if (descr[i] == '[') {
+          do { ++i; } while (descr[i] == '[');
+          getTypeHelper(descr, i, NULL);
+          return PointerType::get(getObjectArrayInfo().type);
+        }
+        else if (descr[i] == 'L') {
+          getTypeHelper(descr, i, NULL);
+          return PointerType::get(getObjectArrayInfo().type);
+        }
+        else {
+           return PointerType::get(
+             getPrimitiveArrayInfo(getTypeHelper(descr, i, NULL)).type);
+        }
+        break;
       case '(': {
 	std::vector<const Type*> params;
 	if (self)
@@ -409,6 +417,18 @@ namespace llvm { namespace Java { namespace {
       return arrayInfo;
     }
 
+    const ClassInfo& getPrimitiveArrayInfo(Type* type) {
+      if (Type::BoolTy == type) return getPrimitiveArrayInfo(BOOLEAN);
+      else if (Type::UShortTy == type) return getPrimitiveArrayInfo(CHAR);
+      else if (Type::FloatTy == type) return getPrimitiveArrayInfo(FLOAT);
+      else if (Type::DoubleTy == type) return getPrimitiveArrayInfo(DOUBLE);
+      else if (Type::SByteTy == type) return getPrimitiveArrayInfo(BYTE);
+      else if (Type::ShortTy == type) return getPrimitiveArrayInfo(SHORT);
+      else if (Type::IntTy == type) return getPrimitiveArrayInfo(INT);
+      else if (Type::LongTy == type) return getPrimitiveArrayInfo(LONG);
+      else abort();
+    }
+
     /// Returns the ClassInfo object associated with an array of the
     /// specified element type.
     const ClassInfo& getPrimitiveArrayInfo(JType type) {
@@ -452,7 +472,8 @@ namespace llvm { namespace Java { namespace {
     /// specified element type.
     const ClassInfo& getObjectArrayInfo() {
       static ClassInfo arrayInfo = buildArrayClassInfo(
-	getClassInfo(ClassFile::get("java/lang/Object")).type);
+	PointerType::get(
+          getClassInfo(ClassFile::get("java/lang/Object")).type));
       return arrayInfo;
     }
 
@@ -719,8 +740,9 @@ namespace llvm { namespace Java { namespace {
       std::vector<llvm::Constant*> init(superInit->getNumOperands());
       // Use a null typeinfo struct for now.
       init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
-      // Fill in the function pointers as they are in the super
-      // class. Overriden methods will be replaced later.
+
+      // Fill in the function pointers as they are in
+      // java/lang/Object. There are no overriden methods.
       for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
 	init[i] = superInit->getOperand(i);
       vi.m2iMap = superVI.m2iMap;
@@ -773,6 +795,18 @@ namespace llvm { namespace Java { namespace {
       return vi;
     }
 
+    const VTableInfo& getPrimitiveArrayVTableInfo(Type* type) {
+      if (Type::BoolTy == type) return getPrimitiveArrayVTableInfo(BOOLEAN);
+      else if (Type::UShortTy == type) return getPrimitiveArrayVTableInfo(CHAR);
+      else if (Type::FloatTy == type) return getPrimitiveArrayVTableInfo(FLOAT);
+      else if (Type::DoubleTy == type) return getPrimitiveArrayVTableInfo(DOUBLE);
+      else if (Type::SByteTy == type) return getPrimitiveArrayVTableInfo(BYTE);
+      else if (Type::ShortTy == type) return getPrimitiveArrayVTableInfo(SHORT);
+      else if (Type::IntTy == type) return getPrimitiveArrayVTableInfo(INT);
+      else if (Type::LongTy == type) return getPrimitiveArrayVTableInfo(LONG);
+      else abort();
+    }
+
     // Returns the VTableInfo object for an array of the specified
     // element type.
     const VTableInfo& getPrimitiveArrayVTableInfo(JType type) {
@@ -812,26 +846,170 @@ namespace llvm { namespace Java { namespace {
       }
     }
 
-//     const VTableInfo& getArrayVTableInfo(ClassFile* cf) {
-//       Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
-//       if (it != ac2viMap_.end() && it->first == cf)
-//	return it->second;
+    /// Initializes the VTableInfo map for object arrays; in other
+    /// words it adds the VTableInfo for java.lang.Object[].
+    void initializeObjectArrayVTableInfoMap() {
+      DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object[]\n");
+      ClassFile* cf = ClassFile::get("java/lang/Object");
+      VTableInfo& vi = ac2viMap_[cf];
+      assert(!vi.vtable && vi.m2iMap.empty() &&
+	     "java/lang/Object[] VTableInfo should not be initialized!");
 
-//       const std::string& className = cf->getThisClass()->getName()->str();
-//       DEBUG(std::cerr << "Building VTableInfo for: " << className << "[]\n");
-//       VTableInfo& vi = ac2viMap_[cf];
+      const VTableInfo& javaLangObjectVI =
+        getVTableInfo(ClassFile::get("java/lang/Object"));
+      vi.superVtables.reserve(1);
+      vi.superVtables.push_back(javaLangObjectVI.vtable);
 
-//       assert(!vi.vtable && vi.m2iMap.empty() &&
-//	     "got already initialized VTableInfo!");
+      std::vector<llvm::Constant*> init;
 
+      // This is java/lang/Object[] so we must add a
+      // llvm_java_object_typeinfo struct first.
 
-//       ConstantClass* super = cf->getSuperClass();
-//       if (!super) {
-//       }
-//       else {
+      // depth
+      init.push_back(llvm::ConstantSInt::get(Type::IntTy, 1));
+      // superclasses vtable pointers
+      ArrayType* vtablesArrayTy =
+	ArrayType::get(PointerType::get(VTableInfo::VTableTy), 1);
 
-//       }
-//     }
+      GlobalVariable* vtablesArray = new GlobalVariable(
+	vtablesArrayTy,
+	true,
+	GlobalVariable::ExternalLinkage,
+	ConstantArray::get(vtablesArrayTy, vi.superVtables),
+	"java/lang/Object[]<superclassesvtables>",
+	&module_);
+      init.push_back(ConstantExpr::getGetElementPtr(
+                       vtablesArray,
+                       std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+
+      // last interface index
+      init.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
+      // interfaces vtable pointers
+      init.push_back(
+        llvm::Constant::getNullValue(
+          PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+
+      llvm::Constant* typeInfoInit =
+	ConstantStruct::get(VTableInfo::TypeInfoTy, init);
+
+      // Now that we have both the type and initializer for the
+      // llvm_java_object_typeinfo struct we can start adding the
+      // function pointers.
+      ConstantStruct* superInit =
+	cast<ConstantStruct>(javaLangObjectVI.vtable->getInitializer());
+
+      init.clear();
+      init.resize(superInit->getNumOperands());
+      // Add the typeinfo block for this class.
+      init[0] = typeInfoInit;
+
+      // Fill in the function pointers as they are in
+      // java/lang/Object. There are no overriden methods.
+      for (unsigned i = 1, e = superInit->getNumOperands(); i != e; ++i)
+	init[i] = superInit->getOperand(i);
+      vi.m2iMap = javaLangObjectVI.m2iMap;
+
+      llvm::Constant* vtable = ConstantStruct::get(init);
+      module_.addTypeName("java/lang/Object[]<vtable>", vtable->getType());
+
+      vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
+				     true, GlobalVariable::ExternalLinkage,
+                                     vtable,
+				     "java/lang/Object[]<vtable>",
+				     &module_);
+      DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object[]\n");
+    }
+
+    const VTableInfo& getObjectArrayVTableInfo(ClassFile* cf) {
+      Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
+      if (it != ac2viMap_.end() && it->first == cf)
+        return it->second;
+
+      const std::string& className = cf->getThisClass()->getName()->str();
+      DEBUG(std::cerr << "Building VTableInfo for: " << className << "[]\n");
+      VTableInfo& vi = ac2viMap_[cf];
+
+      assert(!vi.vtable && vi.m2iMap.empty() &&
+	     "got already initialized VTableInfo!");
+
+      ConstantClass* super = cf->getSuperClass();
+      assert(super && "Class does not have superclass!");
+      const VTableInfo& superVI =
+	getVTableInfo(ClassFile::get(super->getName()->str()));
+
+      // Copy the super vtables array.
+      vi.superVtables.reserve(superVI.superVtables.size() + 1);
+      vi.superVtables.push_back(superVI.vtable);
+      std::copy(superVI.superVtables.begin(), superVI.superVtables.end(),
+		std::back_inserter(vi.superVtables));
+
+      // Copy all the constants from the super class' vtable.
+      assert(superVI.vtable && "No vtable found for super class!");
+      ConstantStruct* superInit =
+	cast<ConstantStruct>(superVI.vtable->getInitializer());
+      std::vector<llvm::Constant*> init(superInit->getNumOperands());
+      // Use a null typeinfo struct for now.
+      init[0] = llvm::Constant::getNullValue(VTableInfo::TypeInfoTy);
+      // Fill in the function pointers as they are in the super
+      // class. There are no overriden methods.
+      for (unsigned i = 0, e = superInit->getNumOperands(); i != e; ++i)
+	init[i] = superInit->getOperand(i);
+      vi.m2iMap = superVI.m2iMap;
+
+#ifndef NDEBUG
+      for (unsigned i = 0, e = init.size(); i != e; ++i)
+	assert(init[i] && "No elements in the initializer should be NULL!");
+#endif
+
+      const std::string& globalName = className + "[]<vtable>";
+
+      llvm::Constant* vtable = ConstantStruct::get(init);
+      module_.addTypeName(globalName, vtable->getType());
+      vi.vtable = new GlobalVariable(vtable->getType(),
+				     true,
+				     GlobalVariable::ExternalLinkage,
+				     vtable,
+				     globalName,
+				     &module_);
+
+      // Now the vtable is complete, install the new typeinfo block
+      // for this class: we install it last because we need the vtable
+      // to exist in order to build it.
+      std::vector<llvm::Constant*> typeInfoInit;
+      typeInfoInit.reserve(4);
+      // depth
+      typeInfoInit.push_back(
+        llvm::ConstantSInt::get(Type::IntTy, vi.superVtables.size()));
+      // superclasses vtable pointers
+      ArrayType* vtablesArrayTy =
+	ArrayType::get(PointerType::get(VTableInfo::VTableTy),
+                       vi.superVtables.size());
+
+      GlobalVariable* vtablesArray = new GlobalVariable(
+	vtablesArrayTy,
+	true,
+	GlobalVariable::ExternalLinkage,
+	ConstantArray::get(vtablesArrayTy, vi.superVtables),
+	className + "[]<superclassesvtables>",
+	&module_);
+
+      typeInfoInit.push_back(ConstantExpr::getGetElementPtr(
+                               vtablesArray,
+                               std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+      // last interface index
+      typeInfoInit.push_back(llvm::ConstantSInt::get(Type::IntTy, -1));
+      // interfaces vtable pointers
+      typeInfoInit.push_back(
+        llvm::Constant::getNullValue(
+          PointerType::get(PointerType::get(VTableInfo::VTableTy))));
+
+      init[0] = ConstantStruct::get(VTableInfo::TypeInfoTy, typeInfoInit);
+      vi.vtable->setInitializer(ConstantStruct::get(init));
+
+      DEBUG(std::cerr << "Built VTableInfo for: " << className << "[]\n");
+      return vi;
+
+    }
 
     /// Emits the necessary code to get a pointer to a static field of
     /// an object.
@@ -980,7 +1158,7 @@ namespace llvm { namespace Java { namespace {
 
       DEBUG(std::cerr << "Finished compilation of method: "
 	    << classMethodDesc << '\n');
-      DEBUG(function->dump());
+      // DEBUG(function->dump());
 
       return function;
     }
@@ -996,15 +1174,17 @@ namespace llvm { namespace Java { namespace {
         for (unsigned i = 0, e = fields.size(); i != e; ++i) {
           Field* field = fields[i];
           if (field->isStatic()) {
+            Type* globalTy = getType(field->getDescriptor());
             llvm::Constant* init = NULL;
             if (ConstantValueAttribute* cv = field->getConstantValueAttribute())
-              init = getConstant(cv->getValue());
+              init =
+                ConstantExpr::getCast(getConstant(cv->getValue()), globalTy);
 
             std::string globalName =
               classfile->getThisClass()->getName()->str() + '/' +
               field->getName()->str();
             DEBUG(std::cerr << "Adding global: " << globalName << '\n');
-            new GlobalVariable(getType(field->getDescriptor()),
+            new GlobalVariable(globalTy,
                                field->isFinal(),
                                (field->isPrivate() & bool(init) ?
                                 GlobalVariable::InternalLinkage :
@@ -1088,6 +1268,7 @@ namespace llvm { namespace Java { namespace {
       // Initialize type maps and vtable globals.
       initializeClassInfoMap();
       initializeVTableInfoMap();
+      initializeObjectArrayVTableInfoMap();
 
       // Create the method requested.
       Function* function = getFunction(getMethod(classMethodDesc));
@@ -1203,6 +1384,8 @@ namespace llvm { namespace Java { namespace {
       Value* value = currentOpStack_->pop(currentBB_);
       Value* index = currentOpStack_->pop(currentBB_);
       Value* arrayRef = currentOpStack_->pop(currentBB_);
+
+      arrayRef->dump();
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1648,39 +1831,95 @@ namespace llvm { namespace Java { namespace {
       return params;
     }
 
+    std::pair<const ClassInfo*, const VTableInfo*>
+    getInfo(const std::string& className) {
+      const ClassInfo* ci = NULL;
+      const VTableInfo* vi = NULL;
+
+      if (className[0] == '[') {
+        if (className[1] == '[' || className[1] == 'L') {
+          vi = &getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
+          ci = &getObjectArrayInfo();
+        }
+        else switch (className[1]) {
+        case 'B':
+          vi = &getPrimitiveArrayVTableInfo(Type::SByteTy);
+          ci = &getPrimitiveArrayInfo(Type::SByteTy);
+          break;
+        case 'C':
+          vi = &getPrimitiveArrayVTableInfo(Type::UShortTy);
+          ci = &getPrimitiveArrayInfo(Type::UShortTy);
+          break;
+        case 'D':
+          vi = &getPrimitiveArrayVTableInfo(Type::DoubleTy);
+          ci = &getPrimitiveArrayInfo(Type::DoubleTy);
+          break;
+        case 'F':
+          vi = &getPrimitiveArrayVTableInfo(Type::FloatTy);
+          ci = &getPrimitiveArrayInfo(Type::FloatTy);
+          break;
+        case 'I':
+          vi = &getPrimitiveArrayVTableInfo(Type::IntTy);
+          ci = &getPrimitiveArrayInfo(Type::IntTy);
+          break;
+        case 'J':
+          vi = &getPrimitiveArrayVTableInfo(Type::LongTy);
+          ci = &getPrimitiveArrayInfo(Type::LongTy);
+          break;
+        case 'S':
+          vi = &getPrimitiveArrayVTableInfo(Type::ShortTy);
+          ci = &getPrimitiveArrayInfo(Type::ShortTy);
+          break;
+        case 'Z':
+          vi = &getPrimitiveArrayVTableInfo(Type::BoolTy);
+          ci = &getPrimitiveArrayInfo(Type::BoolTy);
+          break;
+        }
+      }
+      else {
+        ClassFile* cf = ClassFile::get(className);
+        vi = &getVTableInfo(cf);
+        ci = &getClassInfo(cf);
+      }
+
+      return std::make_pair(ci, vi);
+    }
+
     void do_invokevirtual(unsigned index) {
       ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
-      ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
-      const ClassInfo& ci = getClassInfo(cf);
-      const VTableInfo& vi = getVTableInfo(cf);
+      const std::string& className = methodRef->getClass()->getName()->str();
 
-      const std::string& className = cf->getThisClass()->getName()->str();
+      const ClassInfo* ci = NULL;
+      const VTableInfo* vi = NULL;
+      tie(ci, vi) = getInfo(className);
+
       const std::string& methodDescr =
 	nameAndType->getName()->str() +
 	nameAndType->getDescriptor()->str();
 
       FunctionType* funTy =
-	cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+	cast<FunctionType>(getType(nameAndType->getDescriptor(), ci->type));
 
       std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
-      objRef = new CastInst(objRef, PointerType::get(ci.type),
+      objRef = new CastInst(objRef, PointerType::get(ci->type),
 			    "this", currentBB_);
-      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase =
+        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
 	LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
 	objBase->getType(), NULL);
       Value* vtable = new CallInst(f, objBase, TMP, currentBB_);
-      vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
+      vtable = new CastInst(vtable, PointerType::get(vi->vtable->getType()),
 			    TMP, currentBB_);
       vtable = new LoadInst(vtable, className + "<vtable>", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
-      assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
+      assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
 	     "could not find slot for virtual function!");
-      unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
+      unsigned vSlot = vi->m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
 	new GetElementPtrInst(vtable, indices, TMP, currentBB_);
@@ -1728,24 +1967,26 @@ namespace llvm { namespace Java { namespace {
 	cf_->getConstantInterfaceMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
-      ClassFile* cf = ClassFile::get(methodRef->getClass()->getName()->str());
-      const ClassInfo& ci = getClassInfo(cf);
-      const VTableInfo& vi = getVTableInfo(cf);
+      const std::string& className = methodRef->getClass()->getName()->str();
 
-      const std::string& className = cf->getThisClass()->getName()->str();
+      const ClassInfo* ci = NULL;
+      const VTableInfo* vi = NULL;
+      tie(ci, vi) = getInfo(className);
+
       const std::string& methodDescr =
 	nameAndType->getName()->str() +
 	nameAndType->getDescriptor()->str();
 
       FunctionType* funTy =
-	cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+	cast<FunctionType>(getType(nameAndType->getDescriptor(), ci->type));
 
       std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
-      objRef = new CastInst(objRef, PointerType::get(ci.type),
+      objRef = new CastInst(objRef, PointerType::get(ci->type),
 			    "this", currentBB_);
-      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase =
+        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
 	LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
 	objBase->getType(), NULL);
@@ -1758,18 +1999,18 @@ namespace llvm { namespace Java { namespace {
       interfaceVTables = new LoadInst(interfaceVTables, TMP, currentBB_);
       // Get the actual interface vtable.
       indices.clear();
-      indices.push_back(ConstantUInt::get(Type::UIntTy, ci.interfaceIdx));
+      indices.push_back(ConstantUInt::get(Type::UIntTy, ci->interfaceIdx));
       Value* interfaceVTable =
 	new GetElementPtrInst(interfaceVTables, indices, TMP, currentBB_);
       interfaceVTable =
 	new LoadInst(interfaceVTable, className + "<vtable>", currentBB_);
       interfaceVTable =
-	new CastInst(interfaceVTable, vi.vtable->getType(), TMP, currentBB_);
+	new CastInst(interfaceVTable, vi->vtable->getType(), TMP, currentBB_);
       // Get the function pointer.
       indices.resize(1);
-      assert(vi.m2iMap.find(methodDescr) != vi.m2iMap.end() &&
+      assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
 	     "could not find slot for virtual function!");
-      unsigned vSlot = vi.m2iMap.find(methodDescr)->second;
+      unsigned vSlot = vi->m2iMap.find(methodDescr)->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
 	new GetElementPtrInst(interfaceVTable, indices, TMP, currentBB_);
@@ -1823,9 +2064,29 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ci = getPrimitiveArrayInfo(type);
       const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
 
+      do_newarray_common(ci, getType(type), vi, count);
+    }
+
+    void do_anewarray(unsigned index) {
+      Value* count = currentOpStack_->pop(currentBB_);
+      count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
+
+      ConstantClass* classRef = cf_->getConstantClass(index);
+      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassInfo& ci = getObjectArrayInfo();
+      const ClassInfo& ei = getClassInfo(cf);
+      const VTableInfo& vi = getObjectArrayVTableInfo(cf);
+
+      do_newarray_common(ci, PointerType::get(ei.type), vi, count);
+    }
+
+    void do_newarray_common(const ClassInfo& ci,
+                            Type* elementTy,
+                            const VTableInfo& vi,
+                            Value* count) {
       // The size of the array part of the struct.
       Value* size = BinaryOperator::create(
-	Instruction::Mul, count, ConstantExpr::getSizeOf(getType(type)),
+	Instruction::Mul, count, ConstantExpr::getSizeOf(elementTy),
 	TMP, currentBB_);
       // Plus the size of the rest of the struct.
       size = BinaryOperator::create(
@@ -1848,10 +2109,6 @@ namespace llvm { namespace Java { namespace {
 	objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
       new CallInst(f, objBase, vtable, "", currentBB_);
       currentOpStack_->push(objRef, currentBB_);
-    }
-
-    void do_anewarray(unsigned index) {
-      assert(0 && "not implemented");
     }
 
     void do_arraylength() {
@@ -1887,15 +2144,18 @@ namespace llvm { namespace Java { namespace {
 
     void do_instanceof(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
-      ClassFile* cf = ClassFile::get(classRef->getName()->str());
-      const VTableInfo& vi = getVTableInfo(cf);
+
+      const ClassInfo* ci = NULL;
+      const VTableInfo* vi = NULL;
+      tie(ci, vi) = getInfo(classRef->getName()->str());
 
       Value* objRef = currentOpStack_->pop(currentBB_);
-      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase =
+        new CastInst(objRef, ClassInfo::ObjectBaseTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
 	LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
 	objBase->getType(), PointerType::get(VTableInfo::VTableTy), NULL);
-      Value* vtable = new CastInst(vi.vtable,
+      Value* vtable = new CastInst(vi->vtable,
 				   PointerType::get(VTableInfo::VTableTy),
 				   TMP, currentBB_);
       Value* r = new CallInst(f, objBase, vtable, TMP, currentBB_);

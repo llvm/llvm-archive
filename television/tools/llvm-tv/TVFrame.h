@@ -12,6 +12,7 @@
 #include "wx/listctrl.h"
 #include "wx/splitter.h"
 #include "wx/treectrl.h"
+#include "wx/notebook.h"
 #include "ItemDisplayer.h"
 #include <string>
 #include <vector>
@@ -28,7 +29,6 @@ public:
                          const wxSize& size = wxDefaultSize,
                          long style = wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE
                                     | wxSUNKEN_BORDER);
-  
   virtual ~TVTreeCtrl() { }
   void AddSnapshotsToTree(std::vector<TVSnapshot>&);
   void updateSnapshotList(std::vector<TVSnapshot>&);
@@ -52,7 +52,8 @@ enum {
   LLVM_TV_TDDS_VIEW,
   LLVM_TV_LOCALDS_VIEW,
   LLVM_TV_CODEVIEW,
-  LLVM_TV_CODEVIEW_LIST
+  LLVM_TV_CODEVIEW_LIST,
+  LLVM_TV_NOTEBOOK
 };
 
 class TVApplication;
@@ -70,12 +71,14 @@ class TVFrame : public wxFrame {
 
   wxSplitterWindow *splitterWindow; // divides this into left & right sides
   TVTreeCtrl *myTreeCtrl;           // left side - displays tree view of module
-  ItemDisplayer *displayWidget;     // right side - displays selected tree item
+  wxNotebook *notebook;             // right side - contains tab views
+  ItemDisplayer *displayWidget;     // displays selected tree item inside a tab
+  ItemDisplayer *displayWidget2;    // displays selected tree item inside a tab
 
   void Resize();
  public:
   TVFrame (TVApplication *app, const char *title);
-  static ItemDisplayer *createDisplayWidget (wxWindow *parent, const wxString &init);
+  static ItemDisplayer *createDisplayWidget (wxWindow *parent, const wxString &init, unsigned nohtml);
   void OnExit (wxCommandEvent &event);
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);
@@ -90,6 +93,7 @@ class TVFrame : public wxFrame {
   void refreshSnapshotList ();
   void initializeSnapshotListAndView (std::string directoryName);
   void updateDisplayedItem (TVTreeItemData *newlyDisplayedItem);
+
   DECLARE_EVENT_TABLE ();
 };
 

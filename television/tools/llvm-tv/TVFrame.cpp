@@ -89,13 +89,8 @@ static const wxString Explanation
 /// of the appropriate class, with the given parent & initial contents
 ///
 ItemDisplayer *TVFrame::createDisplayWidget (wxWindow *parent,
-                                             const wxString &init) {
-  unsigned nohtml;
-#if defined(NOHTML)
-  nohtml = 1;
-#else
-  nohtml = 0;
-#endif
+                                             const wxString &init,
+                                             unsigned nohtml) {
   if (nohtml) {
     // We'll use a static text control to display LLVM assembly 
     return new TVTextCtrl(parent, LLVM_TV_TEXT_CTRL, init);
@@ -114,7 +109,12 @@ void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
   // pane.
   assert (newlySelectedItem
           && "newlySelectedItem was null in updateDisplayedItem()");
+
+  // FIXME: Talk about slow - what we SHOULD be doing is only redisplaying
+  // the VISIBLE pane, and redisplaying other panes only when the user selects
+  // them!
   displayWidget->displayItem (newlySelectedItem);
+  displayWidget2->displayItem (newlySelectedItem);
 }
 
 void TVFrame::refreshSnapshotList () {
@@ -160,11 +160,15 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   myTreeCtrl = new TVTreeCtrl(splitterWindow, this, LLVM_TV_TREE_CTRL);
   Resize();
 
-  // Create right-hand pane's display widget
-  displayWidget = createDisplayWidget (splitterWindow, Explanation);
+  // Create right-hand pane's display widget and stick it in a notebook control.
+  notebook = new wxNotebook(splitterWindow, LLVM_TV_NOTEBOOK);
+  displayWidget = createDisplayWidget (notebook, Explanation, 0);
+  displayWidget2 = createDisplayWidget (notebook, Explanation, 1);
+  notebook->AddPage (displayWidget->getWindow (), "HTML view", true);
+  notebook->AddPage (displayWidget2->getWindow (), "Text view", true);
 
   // Split window vertically
-  splitterWindow->SplitVertically(myTreeCtrl, displayWidget->getWindow(), 100);
+  splitterWindow->SplitVertically(myTreeCtrl, notebook, 200);
   Show (TRUE);
 }
 

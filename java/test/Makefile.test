@@ -7,11 +7,22 @@
 #
 ##===----------------------------------------------------------------------===##
 
-# rule to build raw bytecode from a classfile
-Output/%.rbc: %.class Output/.dir
-	$(CLASS2LLVM) $* | $(LLVMTOOLCURRENT)/opt$(EXEEXT) -mem2reg > $@
-
-%.ll: %.rbc
-	$(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT) < $< > $@
-
 include $(LEVEL)/Makefile.common
+
+.PHONY: clean
+
+clean::
+	$(RM) -f a.out core
+	$(RM) -rf Output/
+
+# we don't want these files to be deleted by make, even if they are
+# intermediate results
+.PRECIOUS: Output/.dir Output/%.bc Output/%.ll Output/%.llvm.bc Output/%.llvm
+
+# rule to build raw bytecode from a classfile
+Output/%.raw.bc: %.class Output/.dir
+	$(CLASS2LLVM) $* | $(LOPT) -mem2reg > $@
+
+#rule to link in runtime to raw bytecode
+Output/%.linked.bc: Output/%.raw.bc
+	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $< $(BUILD_SRC_ROOT)/runtime/runtime.bc -o $@

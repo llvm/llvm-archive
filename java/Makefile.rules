@@ -15,3 +15,15 @@ all:: .class-stamp
 endif
 
 CLASS2LLVM := $(LEVEL)/tools/Debug/class2llvm$(EXEEXT)
+LDIS  := $(LLVMTOOLCURRENT)/llvm-dis$(EXEEXT)
+LAS   := $(LLVMTOOLCURRENT)/llvm-as$(EXEEXT)
+LLINK := $(LLVMTOOLCURRENT)/llvm-link$(EXEEXT)
+LOPT  := $(LLVMTOOLCURRENT)/opt$(EXEEXT)
+
+# rule to make assembly from bytecode
+%.dis-ll: %.bc
+	$(LDIS) < $< > $@
+
+# rule to make bytecode from assembly
+%.bc: %.ll
+	$(LAS) < $< > $@

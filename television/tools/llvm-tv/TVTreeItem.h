@@ -28,8 +28,6 @@ public:
   void ShowInfo(wxTreeCtrl *tree);
   const wxChar *GetDesc() const { return m_desc.c_str(); }
   virtual void print(std::ostream&) { }
-  virtual llvm::Module *getModule() { return 0; }
-  virtual llvm::Function *getFunction() { return 0; }
   virtual wxImage *graphOn(GraphDrawer *grapher) { return 0; }
   virtual void viewCodeOn(TVCodeViewer *viewer) { }
   virtual void printHTML(std::ostream &os) { }
@@ -72,8 +70,6 @@ public:
 
   virtual std::string getTitle () { return m_desc.c_str(); }
   virtual std::string dsGraphName () { return "globals graph"; }
-
-  llvm::Module *getModule() { return myModule; }
 };
 
 
@@ -94,9 +90,6 @@ public:
   void viewCodeOn(TVCodeViewer *viewer) { viewer->viewFunctionCode (myFunc); }
 
   virtual std::string getTitle ();
-
-  llvm::Module *getModule();
-  llvm::Function *getFunction() { return myFunc; }
 };
 
 #endif

@@ -153,10 +153,9 @@ std::ostream& stylizeTypesAndKeywords(std::ostream &os, std::string &str) {
       else
         os << token;
 
-      os << " ";
+      os << ' ';
     }
   }
-  // tack on the last segment
   return os << "</tt>";
 }
 
@@ -170,10 +169,10 @@ void TVTreeItemData::printFunctionHeader(Function *F) {
 
   htmlType(cw, F->getReturnType());
 
-  os << " " << F->getName() << "(";
+  os << ' ' << F->getName() << "(";
   for (Function::aiterator arg = F->abegin(), ae = F->aend(); arg != ae; ++arg){
     htmlType(cw, arg->getType());
-    os << " " << arg->getName();
+    os << ' ' << arg->getName();
     Function::aiterator next = arg;
     ++next;
     if (next != F->aend()) 

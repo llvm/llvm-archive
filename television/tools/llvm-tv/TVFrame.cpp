@@ -150,7 +150,6 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
   //       --> <clears out list of items, re-adds items, OR
   //       -->  adds only changed items, or whatever makes sense,
   //       -->  kind of like TVFrame::refreshView()>
-  //wxMessageBox ("the list is supposed to refresh now...");
   refreshSnapshotList ();
 }
 

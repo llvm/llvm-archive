@@ -13,12 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "FileUtils.h"
+#include "Support/StringExtras.h"
+#include "Support/FileUtils.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
-#include <cdirent>
-#include <ostream>
+#include <dirent.h>
+#include <fstream>
 #include <string>
 #include <vector>
 using namespace llvm;
@@ -34,7 +35,7 @@ namespace {
     }
 
     bool run(Module &M);
-  }
+  };
 
   RegisterOpt<Snapshot> X("snapshot", "Snapshot a module, update llvm-tv view");
 }
@@ -44,8 +45,11 @@ bool Snapshot::run(Module &M) {
   // we add will be n.bc
   unsigned numFiles = GetNumFilesInDir(bytecodePath);
 
-  std::ostream os(bytecodePath + utostr(numFiles) + ".bc");
-  WriteBytecodeToFile(M, os);
+  std::string Filename (bytecodePath);
+  Filename = Filename + utostr (numFiles) + ".bc";
+
+  std::ofstream os (Filename.c_str ());
+  WriteBytecodeToFile(&M, os);
   os.close();
 
   // Communicate to llvm-tv that we have added a new snapshot

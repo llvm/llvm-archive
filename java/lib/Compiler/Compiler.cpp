@@ -1555,7 +1555,11 @@ namespace llvm { namespace Java { namespace {
       Value* objRef = new MallocInst(ci.type,
                                      ConstantUInt::get(Type::UIntTy, 0),
                                      TMP, current_);
-      Value* vtable = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Value* objBase = getField(cf, LLVM_JAVA_OBJECT_BASE, objRef);
+      Function* f = module_.getOrInsertFunction(
+        LLVM_JAVA_GETOBJECTCLASS, PointerType::get(VTableInfo::VTableTy),
+        objBase->getType(), NULL);
+      Value* vtable = new CallInst(f, objBase, TMP, current_);
       vtable = new CastInst(vtable, PointerType::get(vi.vtable->getType()),
                             TMP, current_);
       vtable = new StoreInst(vi.vtable, vtable, current_);

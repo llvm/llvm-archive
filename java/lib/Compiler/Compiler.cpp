@@ -241,39 +241,56 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case ALOAD: {
             // FIXME: use opcodes to perform type checking
             unsigned index = readUByte(code, i);
-            opStack_.push(locals_[index]);
+            Instruction* in = new LoadInst(locals_[index]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
         }
         case ILOAD_0:
         case ILOAD_1:
         case ILOAD_2:
-        case ILOAD_3:
-            opStack_.push(locals_[code[i]-ILOAD_0]);
+        case ILOAD_3: {
+            Instruction* in = new LoadInst(locals_[code[i]-ILOAD_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
+        }
         case LLOAD_0:
         case LLOAD_1:
         case LLOAD_2:
-        case LLOAD_3:
-            opStack_.push(locals_[code[i]-LLOAD_0]);
+        case LLOAD_3: {
+            Instruction* in = new LoadInst(locals_[code[i]-LLOAD_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
+        }
         case FLOAD_0:
         case FLOAD_1:
         case FLOAD_2:
-        case FLOAD_3:
-            opStack_.push(locals_[code[i]-FLOAD_0]);
+        case FLOAD_3: {
+            Instruction* in = new LoadInst(locals_[code[i]-FLOAD_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
+        }
         case DLOAD_0:
         case DLOAD_1:
         case DLOAD_2:
-        case DLOAD_3:
-            opStack_.push(locals_[code[i]-DLOAD_0]);
+        case DLOAD_3: {
+            Instruction* in = new LoadInst(locals_[code[i]-DLOAD_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
+        }
         case ALOAD_0:
         case ALOAD_1:
         case ALOAD_2:
-        case ALOAD_3:
-            opStack_.push(locals_[code[i]-ALOAD_0]);
+        case ALOAD_3: {
+            Instruction* in = new LoadInst(locals_[code[i]-ALOAD_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
             break;
+        }
         case IALOAD:
         case LALOAD:
         case FALOAD:
@@ -282,31 +299,75 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case BALOAD:
         case CALOAD:
         case SALOAD:
+            assert(0 && "not implemented");
         case ISTORE:
         case LSTORE:
         case FSTORE:
         case DSTORE:
-        case ASTORE:
+        case ASTORE: {
+            // FIXME: use opcodes to perform type checking
+            unsigned index = readUByte(code, i);
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in = new StoreInst(v1, locals_[index]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case ISTORE_0:
         case ISTORE_1:
         case ISTORE_2:
-        case ISTORE_3:
+        case ISTORE_3: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, locals_[code[i]-ISTORE_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case LSTORE_0:
         case LSTORE_1:
         case LSTORE_2:
-        case LSTORE_3:
+        case LSTORE_3: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, locals_[code[i]-LSTORE_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case FSTORE_0:
         case FSTORE_1:
         case FSTORE_2:
-        case FSTORE_3:
+        case FSTORE_3: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, locals_[code[i]-FSTORE_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case DSTORE_0:
         case DSTORE_1:
         case DSTORE_2:
-        case DSTORE_3:
+        case DSTORE_3: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, locals_[code[i]-DSTORE_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case ASTORE_0:
         case ASTORE_1:
         case ASTORE_2:
-        case ASTORE_3:
+        case ASTORE_3: {
+            Value* v1 = opStack_.top(); opStack_.pop();
+            Instruction* in =
+                new StoreInst(v1, locals_[code[i]-ASTORE_0]);
+            opStack_.push(in);
+            bc2bbMap_[bcStart]->getInstList().push_back(in);
+            break;
+        }
         case IASTORE:
         case LASTORE:
         case FASTORE:
@@ -557,6 +618,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case FCMPG:
         case DCMPL:
         case DCMPG:
+            assert(0 && "not implemented");
         case IFEQ:
         case IFNE:
         case IFLT:
@@ -623,6 +685,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
             break;
         case JSR:
         case RET:
+            assert(0 && "not implemented");
         case TABLESWITCH: {
             Value* v1 = opStack_.top(); opStack_.pop();
             skipPadBytes(code, i);
@@ -680,6 +743,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
         case MONITOREXIT:
 //      case WIDE:
         case MULTIANEWARRAY:
+            assert(0 && "not implemented");
         case IFNULL:
         case IFNONNULL: {
             static Instruction::BinaryOps java2llvm[] = {
@@ -700,6 +764,7 @@ void Compiler::compileMethod(Module& module, const Java::Method& method) {
             new BranchInst(bc2bbMap_[bcStart + readSInt(code, i)]);
             break;
         case JSR_W:
+            assert(0 && "not implemented");
         case BREAKPOINT:
         case IMPDEP1:
         case IMPDEP2:

@@ -86,7 +86,6 @@ namespace llvm { namespace Java {
     bool isPrimitive() const { return getType() == getLayoutType(); }
     bool isInterface() const { return classFile_ && classFile_->isInterface(); }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }
-    int getFieldIndex(const std::string& name) const;
 
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;

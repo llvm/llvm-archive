@@ -93,11 +93,6 @@ const VMField* VMClass::lookupField(const std::string& name) const
   return NULL;
 }
 
-int VMClass::getFieldIndex(const std::string& name) const {
-  FieldMap::const_iterator it = fieldMap_.find(name);
-  return it == fieldMap_.end() ? -1 : it->second.getMemberIndex();
-}
-
 void VMClass::computeLayout() {
   std::vector<const Type*> layout;
   if (isArray()) {

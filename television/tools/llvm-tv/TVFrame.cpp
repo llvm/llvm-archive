@@ -69,25 +69,23 @@ void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
 ///
 void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
   DeleteChildren(GetRootItem());
-  
-
   AddSnapshotsToTree(list);
 }
 
 /// updateTextDisplayed  - Updates text with the data from the item selected
 ///
 void TVTreeCtrl::updateTextDisplayed() {
-  //Get parent and then the text window
-  wxTextCtrl *textDisplay = (wxTextCtrl*) ((wxSplitterWindow*) GetParent())->GetWindow2();
-
+  // Get parent and then the text window, then get the selected LLVM object.
+  wxTextCtrl *textDisplay = (wxTextCtrl*)
+    ((wxSplitterWindow*) GetParent())->GetWindow2();
   TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());
+
+  // Display the assembly language for the selected LLVM object in the
+  // right-hand pane.
   std::ostringstream Out;
-  
   item->print(Out);
-  
   textDisplay->Clear();
   textDisplay->AppendText(Out.str().c_str());
-  
 }
 
 /// OnSelChanged - Trigger the text display to be updated with the new
@@ -105,20 +103,22 @@ TVFrame::TVFrame (const char *title) : wxFrame (NULL, -1, title) {
   CreateStatusBar ();
   SetSize (wxRect (100, 100, 400, 200));
   Show (TRUE);
-  splitterWindow = new wxSplitterWindow(this, LLVM_TV_SPLITTER_WINDOW, wxDefaultPosition,
-  			 wxDefaultSize, wxSP_3D);
+  splitterWindow = new wxSplitterWindow(this, LLVM_TV_SPLITTER_WINDOW,
+                                        wxDefaultPosition, wxDefaultSize,
+                                        wxSP_3D);
 
-
-  //Create tree view of snapshots
-  CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER, mySnapshotList);
+  // Create tree view of snapshots
+  CreateTree(wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE | wxSUNKEN_BORDER,
+             mySnapshotList);
   
-  //Create static text to display module
-  displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL, "LLVM Code goes here", wxDefaultPosition, wxDefaultSize, wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
+  // Create static text to display module
+  displayText = new wxTextCtrl(splitterWindow, LLVM_TV_TEXT_CTRL,
+                               "LLVM Code goes here", wxDefaultPosition,
+                               wxDefaultSize,
+                               wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);
 
-
-  //Split window vertically
+  // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayText, 100);
-  
 }
 
 /// OnExit - respond to a request to exit the program.
@@ -156,26 +156,42 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
 void TVFrame::Resize() {
   wxSize size = GetClientSize();
   myTreeCtrl->SetSize(0, 0, size.x, 2*size.y/3);
-  
+}
+
+void TVFrame::CallGraphView(wxCommandEvent &event) {
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Display the assembly language for the selected LLVM object in the
+  // right-hand pane.
+  std::ostringstream Out;
+  Module *M = item->getModule ();
+  if (!M) {
+    wxMessageBox ("The selected item doesn't have a call graph.");
+    return;
+  }
+  wxMessageBox ("ready to display call graph");
+}
+
+void TVFrame::CFGView(wxCommandEvent &event) {
+  wxMessageBox ("cfg view goes here");
 }
 
 void TVFrame::CreateTree(long style, std::vector<TVSnapshot> &list) {
   myTreeCtrl = new TVTreeCtrl(splitterWindow, LLVM_TV_TREE_CTRL,
-			      wxDefaultPosition, wxDefaultSize,
-                              style);
-  
-  //if(list)
-  //myTreeCtrl->AddSnapshotsToTree(list);
+                              wxDefaultPosition, wxDefaultSize, style);
   Resize();
 }
-
 
 BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (wxID_EXIT, TVFrame::OnExit)
   EVT_MENU (wxID_ABOUT, TVFrame::OnAbout)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
+  EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
+  EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)
 END_EVENT_TABLE ()
 
 BEGIN_EVENT_TABLE(TVTreeCtrl, wxTreeCtrl)
-EVT_TREE_SEL_CHANGED(LLVM_TV_TREE_CTRL, TVTreeCtrl::OnSelChanged)
+  EVT_TREE_SEL_CHANGED(LLVM_TV_TREE_CTRL, TVTreeCtrl::OnSelChanged)
 END_EVENT_TABLE ()

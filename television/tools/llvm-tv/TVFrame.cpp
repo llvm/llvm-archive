@@ -201,6 +201,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
   // Add another text display, just because we can
   notebook->AddItemDisplayer (createDisplayWidget (notebook, Explanation, 1));
+  notebook->AddItemDisplayer (new TDGraphDrawer (notebook));
 
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, notebook, 200);

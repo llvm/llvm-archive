@@ -3,13 +3,15 @@ class FieldAccessBase {
     float f;
 }
 
-public class FieldAccess extends FieldAccessBase
-{
+class FieldAccessDerived extends FieldAccessBase {
     int i;
     double d;
+}
 
+public class FieldAccess
+{
     public static void main(String[] args) {
-        FieldAccess b = new FieldAccess();
+        FieldAccessDerived b = new FieldAccessDerived();
         b.d = 4.0;
         b.i = 3;
         b.f = 2.0F;

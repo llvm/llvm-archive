@@ -16,31 +16,26 @@
 
 /// TreeCtrl constructor that creates the root and adds it to the tree
 ///
-TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
+TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
                        const wxPoint& pos, const wxSize& size,
                        long style)
-  : wxTreeCtrl(parent, id, pos, size, style) {
-  wxTreeItemId rootId = AddRoot(wxT("Snapshots"),
-				-1, -1, new TVTreeItemData(wxT("Snapshot Root")));
-  
-  SetItemImage(rootId, TreeCtrlIcon_FolderOpened, wxTreeItemIcon_Expanded);
+  : wxTreeCtrl(parent, id, pos, size, style), myFrame (frame) {
+  wxTreeItemId rootId = AddRoot("Snapshots", -1, -1,
+                                new TVTreeItemData("Snapshot Root"));
 }
 
 /// AddSnapshotsToTree - Given a list of snapshots the tree is populated
 ///
 void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
-  
   wxTreeItemId rootId = GetRootItem();
   for (std::vector<TVSnapshot>::iterator I = list.begin(), E = list.end();
        I != E; ++I) {
-    
-    // Get the Module associated with this snapshot
+    // Get the Module associated with this snapshot and add it to the tree
     Module *M = I->getModule();
-    
     wxTreeItemId id = AppendItem(rootId, I->label(), -1, -1,
                                  new TVTreeModuleItem(I->label(), M));
 
-    // Loop over functions in the module and add them to the tree
+    // Loop over functions in the module and add them to the tree as children
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       Function *F = I;
       if (!F->isExternal()) {
@@ -48,7 +43,6 @@ void TVTreeCtrl::AddSnapshotsToTree(std::vector<TVSnapshot> &list) {
         AppendItem(id, FuncName, -1, -1, new TVTreeFunctionItem(FuncName, I));
       }
     }
-    
   }   
 }
 
@@ -59,25 +53,11 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
   AddSnapshotsToTree(list);
 }
 
-/// updateTextDisplayed  - Updates text with the data from the item selected
-///
-void TVTreeCtrl::updateTextDisplayed() {
-  // Get parent and then the text window, then get the selected LLVM object.
-  wxWindow *displayWidget = ((wxSplitterWindow *) GetParent())->GetWindow2();
-  ItemDisplayer *dw = dynamic_cast<ItemDisplayer *> (displayWidget);
-  assert (dw && "could not retrieve display widget");
-
-  TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());
-
-  // Display the assembly language for the selected LLVM object in the
-  // right-hand pane.
-  dw->displayItem (item);
-}
-
 /// OnSelChanged - Trigger the text display to be updated with the new
 /// item selected
 void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
-  updateTextDisplayed();
+  myFrame->updateDisplayedItem
+    (dynamic_cast<TVTreeItemData *> (GetItemData (GetSelection ())));
 }
 
 ///==---------------------------------------------------------------------==///
@@ -85,17 +65,17 @@ void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
 void TVTextCtrl::displayItem (TVTreeItemData *item) {
   std::ostringstream Out;
   item->print (Out);
-  SetValue ("");
-  AppendText (Out.str ().c_str ());
+  myTextCtrl->SetValue ("");
+  myTextCtrl->AppendText (Out.str ().c_str ());
 }
 
 void TVHtmlWindow::displayItem (TVTreeItemData *item) {
   std::ostringstream Out;
   item->printHTML (Out);
-  Hide ();
-  SetPage (wxString (""));
-  AppendToPage (wxString (Out.str ().c_str ()));
-  Show ();
+  myHtmlWindow->Hide ();
+  myHtmlWindow->SetPage (wxString (""));
+  myHtmlWindow->AppendToPage (wxString (Out.str ().c_str ()));
+  myHtmlWindow->Show ();
 }
 
 ///==---------------------------------------------------------------------==///
@@ -108,7 +88,8 @@ static const wxString Explanation
 /// createDisplayWidget - Factory Method which returns a new display widget
 /// of the appropriate class, with the given parent & initial contents
 ///
-wxWindow *TVFrame::createDisplayWidget (wxWindow *parent, const wxString &init){
+ItemDisplayer *TVFrame::createDisplayWidget (wxWindow *parent,
+                                             const wxString &init) {
   unsigned nohtml;
 #if defined(NOHTML)
   nohtml = 1;
@@ -122,6 +103,18 @@ wxWindow *TVFrame::createDisplayWidget (wxWindow *parent, const wxString &init){
     // We'll use a HTML viewer to display syntax-highlighted LLVM assembly 
     return new TVHtmlWindow(parent, LLVM_TV_HTML_WINDOW, init);
   }
+}
+
+/// updateDisplayedItem - Updates right-hand pane with a view of the item that
+/// is now selected
+///
+void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
+  // Tell the current visualizer widget to display the selected
+  // LLVM object in its window, which is displayed in the right-hand
+  // pane.
+  assert (newlySelectedItem
+          && "newlySelectedItem was null in updateDisplayedItem()");
+  displayWidget->displayItem (newlySelectedItem);
 }
 
 void TVFrame::refreshSnapshotList () {
@@ -164,14 +157,14 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
                                         wxSP_3D);
 
   // Create tree view of snapshots
-  myTreeCtrl = new TVTreeCtrl(splitterWindow, LLVM_TV_TREE_CTRL);
+  myTreeCtrl = new TVTreeCtrl(splitterWindow, this, LLVM_TV_TREE_CTRL);
   Resize();
 
   // Create right-hand pane's display widget
   displayWidget = createDisplayWidget (splitterWindow, Explanation);
 
   // Split window vertically
-  splitterWindow->SplitVertically(myTreeCtrl, displayWidget, 100);
+  splitterWindow->SplitVertically(myTreeCtrl, displayWidget->getWindow(), 100);
   Show (TRUE);
 }
 

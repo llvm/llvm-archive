@@ -15,12 +15,12 @@ all :: $(DESTTOOLCURRENT)/llvm-tv.exe \
        $(DESTTOOLCURRENT)/opt-snap
 
 $(DESTTOOLCURRENT)/llvm-tv.exe: Makefile
-	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd) \
+	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd):\$$LD_LIBRARY_PATH \
 		llvm-tv  > $@
 	chmod u+x $@
 
 $(DESTTOOLCURRENT)/opt-snap: Makefile
-	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd) \
+	echo exec env LD_LIBRARY_PATH=$(shell cd $(LEVEL)/lib/wxwindows/lib; pwd):\$$LD_LIBRARY_PATH \
 		OPTPASSES=\"$$\*\" opt -load=$(DESTLIBCURRENT)/libsnapshot.so $$\* > $@
 	chmod u+x $@
 

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Java/ClassFile.h>
+#include <Support/Signals.h>
 
 #include <cstddef>
 #include <iostream>
@@ -22,6 +23,8 @@ using namespace llvm;
 
 int main(int argc, char* argv[])
 {
+    PrintStackTraceOnErrorSignal();
+
     try {
         std::auto_ptr<Java::ClassFile> cf(
             Java::ClassFile::readClassFile(std::cin));

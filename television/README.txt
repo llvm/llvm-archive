@@ -27,7 +27,7 @@ How to compile:
    C++ compiler that you're using for llvm. Otherwise, you may get
    weird link errors when trying to link the llvm-tv tool.
 
-2. Configure and compile llvm-tv:
+2. Configure and compile llvm-tv (you need an LLVM source and build trees):
 
 % cd path/to/llvm-tv
 % ./configure --with-llvmsrc=[path] --with-llvmobj=[path]

@@ -12,6 +12,7 @@ JAVA_TESTS := AbstractCall \
 	Arithm \
 	Array \
 	BigConstants \
+	Call \
 	FieldAccess \
 	FloatCompare \
 	ForLoop \

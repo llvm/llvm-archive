@@ -20,7 +20,7 @@ clean::
 .PRECIOUS: Output/.dir Output/%.class %.bc %.ll %.llvm.bc %.llvm
 
 #rule to link in runtime to raw bytecode
-%.linked.bc: %.raw.bc $(LEVEL)/runtime/runtime.bc
+%.linked.bc: %.raw.bc $(DESTLIBBYTECODE)/libjrt.bc
 	@$(ECHO) Linking $< with the Java runtime
 	$(LLVMTOOLCURRENT)/llvm-link$(EXEEXT) $^ -o $@
 

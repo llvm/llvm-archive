@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Java/ClassFile.h>
+#include <Support/CommandLine.h>
 #include <Support/Signals.h>
 
 #include <cstddef>
@@ -24,6 +25,8 @@ using namespace llvm;
 int main(int argc, char* argv[])
 {
     PrintStackTraceOnErrorSignal();
+    cl::ParseCommandLineOptions(argc, argv,
+                                "class dump utility");
 
     try {
         std::auto_ptr<Java::ClassFile> cf(

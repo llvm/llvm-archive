@@ -60,7 +60,7 @@ Resolver::Resolver(Module* module)
   elements.push_back(Type::IntTy);
   typeInfoType_ = StructType::get(elements);
 
-  module_->addTypeName("struct.llvm_java_object_typeinfo", getTypeInfoType());
+  module_->addTypeName("struct.llvm_java_typeinfo", getTypeInfoType());
 
   // Compute the class_record type.
   PATypeHolder holder = classRecordType_;
@@ -68,8 +68,7 @@ Resolver::Resolver(Module* module)
     StructType::get(std::vector<const Type*>(1, getTypeInfoType())));
   classRecordType_ = holder.get();
 
-  module_->addTypeName("struct.llvm_java_object_class_record",
-                       getClassRecordType());
+  module_->addTypeName("struct.llvm_java_class_record", getClassRecordType());
 
   classRecordPtrType_ = PointerType::get(classRecordType_);
 }

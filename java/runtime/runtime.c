@@ -4,8 +4,8 @@
 
 struct llvm_java_object_base;
 struct llvm_java_object_header;
-struct llvm_java_object_class_record;
-struct llvm_java_object_typeinfo;
+struct llvm_java_class_record;
+struct llvm_java_typeinfo;
 
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
@@ -14,10 +14,10 @@ struct llvm_java_object_header {
 
 struct llvm_java_object_base {
   struct llvm_java_object_header header;
-  struct llvm_java_object_class_record* classRecord;
+  struct llvm_java_class_record* classRecord;
 };
 
-struct llvm_java_object_typeinfo {
+struct llvm_java_typeinfo {
   /* The name of this class */
   const char* name;
 
@@ -25,54 +25,54 @@ struct llvm_java_object_typeinfo {
   jint depth;
 
   /* The super class records up to java.lang.Object. */
-  struct llvm_java_object_class_record** superclasses;
+  struct llvm_java_class_record** superclasses;
 
   /* If an interface its interface index, otherwise the last interface
    * index implemented by this class. */
   jint interfaceIndex;
 
   /* The interface class records this class implements. */
-  struct llvm_java_object_class_record** interfaces;
+  struct llvm_java_class_record** interfaces;
 
   /* The component class record if this is an array class, null
    * otherwise. */
-  struct llvm_java_object_class_record* component;
+  struct llvm_java_class_record* component;
 
   /* If an array the size of its elements, otherwise 0 for classes, -1
    * for interfaces and -2 for primitive classes. */
   jint elementSize;
 };
 
-struct llvm_java_object_class_record {
-  struct llvm_java_object_typeinfo typeinfo;
+struct llvm_java_class_record {
+  struct llvm_java_typeinfo typeinfo;
 };
 
-jint llvm_java_is_primitive_class(struct llvm_java_object_class_record* cr)
+jint llvm_java_is_primitive_class(struct llvm_java_class_record* cr)
 {
   return cr->typeinfo.elementSize == -2;
 }
 
-jint llvm_java_is_interface_class(struct llvm_java_object_class_record* cr)
+jint llvm_java_is_interface_class(struct llvm_java_class_record* cr)
 {
   return cr->typeinfo.elementSize == -1;
 }
 
-jint llvm_java_is_array_class(struct llvm_java_object_class_record* cr)
+jint llvm_java_is_array_class(struct llvm_java_class_record* cr)
 {
   return cr->typeinfo.elementSize > 0;
 }
 
-struct llvm_java_object_class_record* llvm_java_get_class_record(jobject obj) {
+struct llvm_java_class_record* llvm_java_get_class_record(jobject obj) {
   return obj->classRecord;
 }
 
 void llvm_java_set_class_record(jobject obj,
-                                struct llvm_java_object_class_record* cr) {
+                                struct llvm_java_class_record* cr) {
   obj->classRecord = cr;
 }
 
-jint llvm_java_is_assignable_from(struct llvm_java_object_class_record* cr,
-                                  struct llvm_java_object_class_record* from) {
+jint llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
+                                  struct llvm_java_class_record* from) {
   /* trivial case: class records are the same */
   if (cr == from)
     return JNI_TRUE;
@@ -107,7 +107,7 @@ jint llvm_java_is_assignable_from(struct llvm_java_object_class_record* cr,
 }
 
 jint llvm_java_is_instance_of(jobject obj,
-                              struct llvm_java_object_class_record* cr) {
+                              struct llvm_java_class_record* cr) {
   /* trivial case: a null object can be cast to any type */
   if (!obj)
     return JNI_TRUE;
@@ -121,10 +121,10 @@ jint llvm_java_throw(jobject obj) {
 
 /* The implementation of JNI functions */
 
-extern const struct llvm_java_object_class_record* llvm_java_class_records;
+extern const struct llvm_java_class_record* llvm_java_class_records;
 
 static jclass llvm_java_find_class(JNIEnv* env, const char* name) {
-  const struct llvm_java_object_class_record** clazz = &llvm_java_class_records;
+  const struct llvm_java_class_record** clazz = &llvm_java_class_records;
   while (*clazz)
     if (strcmp((*clazz)->typeinfo.name, name) == 0)
       return (jclass) clazz;

@@ -10,7 +10,7 @@ public class random {
         while (--N > 0) {
             gen_random(100);
         }
-        Test.print_double_ln(gen_random(100));
+        Test.println(gen_random(100));
     }
 
     public static int last = 42;

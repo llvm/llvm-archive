@@ -11,7 +11,7 @@ public class heapsort {
             ary[i] = gen_random(1);
         }
         heapsort(N, ary);
-        Test.print_double_ln(ary[N]);
+        Test.println(ary[N]);
     }
 
     public static long last = 42;

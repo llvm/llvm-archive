@@ -19,9 +19,9 @@ public class InterfaceCall
 
     public static void main(String[] args) {
         Interface i = new Base();
-        Test.print_int_ln(i.bar());
+        Test.println(i.bar());
 
         i = new Derived();
-        Test.print_int_ln(i.bar());
+        Test.println(i.bar());
     }
 }

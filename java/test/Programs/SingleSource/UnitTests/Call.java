@@ -21,6 +21,6 @@ public class Call
 
     public static void main(String[] args) {
         Interface i = new Concrete(10);
-        Test.print_int_ln(i.i1());
+        Test.println(i.i1());
     }
 }

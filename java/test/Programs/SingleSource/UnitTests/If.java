@@ -7,8 +7,8 @@ public class If
     public static void main(String[] args) {
         int i = 0;
         if (isZero(i))
-            Test.print_int_ln(0);
+            Test.println(0);
         else
-            Test.print_int_ln(1);
+            Test.println(1);
     }
 }

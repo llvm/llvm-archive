@@ -14,15 +14,15 @@ public class VirtualCall
 {
     public static void main(String[] args) {
         VirtualCallBase a = new VirtualCallBase();
-        Test.print_int_ln(a.foo());
-        Test.print_int_ln(a.bar());
+        Test.println(a.foo());
+        Test.println(a.bar());
 
         a = new VirtualCallDerived();
-        Test.print_int_ln(a.foo());
-        Test.print_int_ln(a.bar());
+        Test.println(a.foo());
+        Test.println(a.bar());
 
         VirtualCallDerived b = new VirtualCallDerived();
-        Test.print_int_ln(b.foo());
-        Test.print_int_ln(b.bar());
+        Test.println(b.foo());
+        Test.println(b.bar());
     }
 }

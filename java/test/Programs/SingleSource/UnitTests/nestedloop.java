@@ -9,6 +9,6 @@ public class nestedloop {
                         for (int e=0; e<n; e++)
                             for (int f=0; f<n; f++)
                                 x++;
-        Test.print_int_ln(x);
+        Test.println(x);
     }
 }

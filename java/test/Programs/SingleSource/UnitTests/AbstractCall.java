@@ -12,6 +12,6 @@ public class AbstractCall
 
     public static void main(String[] args) {
         Abstract a = new Concrete();
-        Test.print_int_ln(a.concreteMethod());
+        Test.println(a.concreteMethod());
     }
 }

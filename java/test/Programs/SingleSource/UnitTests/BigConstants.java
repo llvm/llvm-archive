@@ -6,9 +6,9 @@ public class BigConstants
         float f = -1.23456789e10F;
         double d = 1.23456789e100;
 
-        Test.print_int_ln(i);
-        Test.print_long_ln(l);
-        Test.print_float_ln(f);
-        Test.print_double_ln(d);
+        Test.println(i);
+        Test.println(l);
+        Test.println(f);
+        Test.println(d);
     }
 }

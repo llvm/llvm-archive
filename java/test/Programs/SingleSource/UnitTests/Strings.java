@@ -5,7 +5,7 @@ public class Strings
         String bar = "bar";
         String foobar = "foobar";
 
-        Test.print_boolean_ln(foobar == foo + bar);
-        Test.print_boolean_ln(foobar.equals(foo + bar));
+        Test.println(foobar == foo + bar);
+        Test.println(foobar.equals(foo + bar));
     }
 }

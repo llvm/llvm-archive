@@ -1,7 +1,7 @@
 public class takfp {
     public static void main(String args[]) {
         int n = 10;
-        Test.print_double_ln( Tak(n*3.0f, n*2.0f, n*1.0f) );
+        Test.println( Tak(n*3.0f, n*2.0f, n*1.0f) );
     }
 
   public static float Tak (float x, float y, float z) {

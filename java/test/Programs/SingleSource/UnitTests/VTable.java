@@ -16,15 +16,15 @@ public class VTable extends VTableBase implements VTableInterface
 
     public static void main(String[] args) {
         VTableBase a = new VTableBase();
-        Test.print_int_ln(a.foo());
-        Test.print_int_ln(a.bar());
+        Test.println(a.foo());
+        Test.println(a.bar());
 
         a = new VTable();
-        Test.print_int_ln(a.foo());
-        Test.print_int_ln(a.bar());
-        Test.print_int_ln(((VTableInterface)a).baz());
+        Test.println(a.foo());
+        Test.println(a.bar());
+        Test.println(((VTableInterface)a).baz());
 
         VTableInterface i = new VTable();
-        Test.print_int_ln(i.baz());
+        Test.println(i.baz());
     }
 }

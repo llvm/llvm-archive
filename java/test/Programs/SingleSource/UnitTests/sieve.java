@@ -18,6 +18,6 @@ public class sieve {
                 }
             }
         }
-        Test.print_int_ln(count);
+        Test.println(count);
     }
 }

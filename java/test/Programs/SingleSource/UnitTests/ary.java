@@ -10,7 +10,7 @@ public class ary {
             for (j = n-1; j >= 0; j--)
                 y[j] += x[j];
 
-        Test.print_int_ln(y[0]);
-        Test.print_int_ln(y[n-1]);
+        Test.println(y[0]);
+        Test.println(y[n-1]);
     }
 }

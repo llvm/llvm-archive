@@ -36,7 +36,7 @@ public class objinst {
         int n = 1500000;
         Toggle toggle1 = new Toggle(true);
         for (int i=0; i<5; i++) {
-            Test.print_boolean_ln(toggle1.activate().value());
+            Test.println(toggle1.activate().value());
         }
         for (int i=0; i<n; i++) {
             Toggle toggle = new Toggle(true);
@@ -44,7 +44,7 @@ public class objinst {
 
         NthToggle ntoggle1 = new NthToggle(true, 3);
         for (int i=0; i<8; i++) {
-            Test.print_boolean_ln(ntoggle1.activate().value());
+            Test.println(ntoggle1.activate().value());
         }
         for (int i=0; i<n; i++) {
             NthToggle toggle = new NthToggle(true, 3);

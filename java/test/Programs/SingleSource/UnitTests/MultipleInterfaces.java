@@ -28,16 +28,16 @@ public class MultipleInterfaces
         I2 i2 = o;
         I3 i3 = o;
 
-        Test.print_int_ln(o.i1());
-        Test.print_int_ln(o.i2());
-        Test.print_int_ln(o.i3());
+        Test.println(o.i1());
+        Test.println(o.i2());
+        Test.println(o.i3());
 
-        Test.print_int_ln(i1.i1());
+        Test.println(i1.i1());
 
-        Test.print_int_ln(i2.i2());
+        Test.println(i2.i2());
 
-        Test.print_int_ln(i3.i1());
-        Test.print_int_ln(i3.i2());
-        Test.print_int_ln(i3.i3());
+        Test.println(i3.i1());
+        Test.println(i3.i2());
+        Test.println(i3.i3());
     }
 }

@@ -10,8 +10,8 @@ public class Numbers
 
         for (int i = 0; i != numbers.length; ++i) {
             Number n = numbers[i];
-            Test.print_long_ln(n.longValue());
-            Test.print_double_ln(n.doubleValue());
+            Test.println(n.longValue());
+            Test.println(n.doubleValue());
          }
     }
 }

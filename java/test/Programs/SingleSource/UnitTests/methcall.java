@@ -40,13 +40,13 @@ public class methcall {
         for (int i=0; i<n; i++) {
             val = toggle.activate().value();
         }
-        Test.print_boolean_ln(val);
+        Test.println(val);
 
         val = true;
         NthToggle ntoggle = new NthToggle(true, 3);
         for (int i=0; i<n; i++) {
             val = ntoggle.activate().value();
         }
-        Test.print_boolean_ln(val);
+        Test.println(val);
     }
 }

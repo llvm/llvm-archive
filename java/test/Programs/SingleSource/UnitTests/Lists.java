@@ -10,7 +10,7 @@ public class Lists
 
         while (!llist.isEmpty()) {
             Integer I = (Integer) llist.removeFirst();
-            Test.print_int_ln(I.intValue());
+            Test.println(I.intValue());
         }
     }
 }

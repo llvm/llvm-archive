@@ -22,13 +22,13 @@ public class InnerClass
 
     public static void main(String[] args) {
         InnerClass i = new InnerClass();
-        Test.print_int_ln(i.i1());
-        Test.print_boolean_ln(i.b1());
+        Test.println(i.i1());
+        Test.println(i.b1());
 
         InnerClassInner ii = i.getInner();
-        Test.print_int_ln(ii.ii1());
-        Test.print_boolean_ln(ii.bb1());
-        Test.print_int_ln(ii.ii2());
-        Test.print_boolean_ln(ii.bb2());
+        Test.println(ii.ii1());
+        Test.println(ii.bb1());
+        Test.println(ii.ii2());
+        Test.println(ii.bb2());
     }
 }

@@ -18,10 +18,10 @@ public class FieldAccess
         ((Base) b).i = 4;
         ((Base) b).f = 1.0F;
 
-        Test.print_int_ln(((Base)b).i);
-        Test.print_int_ln(b.i);
-        Test.print_float_ln(((Base)b).f);
-        Test.print_float_ln(b.f);
-        Test.print_double_ln(b.d);
+        Test.println(((Base)b).i);
+        Test.println(b.i);
+        Test.println(((Base)b).f);
+        Test.println(b.f);
+        Test.println(b.d);
     }
 }

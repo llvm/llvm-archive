@@ -23,16 +23,16 @@ public class InstanceOf
         Base ab = new Derived();
         Interface bb = new Derived();
 
-        Test.print_boolean_ln(aa instanceof Base);
-        Test.print_boolean_ln(aa instanceof Derived);
-        Test.print_boolean_ln(aa instanceof Interface);
+        Test.println(aa instanceof Base);
+        Test.println(aa instanceof Derived);
+        Test.println(aa instanceof Interface);
 
-        Test.print_boolean_ln(ab instanceof Base);
-        Test.print_boolean_ln(ab instanceof Derived);
-        Test.print_boolean_ln(ab instanceof Interface);
+        Test.println(ab instanceof Base);
+        Test.println(ab instanceof Derived);
+        Test.println(ab instanceof Interface);
 
-        Test.print_boolean_ln(bb instanceof Base);
-        Test.print_boolean_ln(bb instanceof Derived);
-        Test.print_boolean_ln(bb instanceof Interface);
+        Test.println(bb instanceof Base);
+        Test.println(bb instanceof Derived);
+        Test.println(bb instanceof Interface);
     }
 }

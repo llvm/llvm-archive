@@ -9,6 +9,7 @@ struct llvm_java_object_typeinfo;
 
 struct llvm_java_object_header {
   /* gc info, hash info, locking */
+    int dummy;
 };
 
 struct llvm_java_object_base {
@@ -41,11 +42,13 @@ void llvm_java_set_vtable(jobject obj, struct llvm_java_object_vtable* clazz) {
 
 jint llvm_java_is_instance_of(jobject obj,
                               struct llvm_java_object_vtable* clazz) {
+  struct llvm_java_object_vtable* objClazz;
+
   /* trivial case 1: a null object can be cast to any type */
   if (!obj)
     return JNI_TRUE;
 
-  struct llvm_java_object_vtable* objClazz = obj->vtable;
+  objClazz = obj->vtable;
   /* trivial case 2: this object is of class clazz */
   if (objClazz == clazz)
     return JNI_TRUE;

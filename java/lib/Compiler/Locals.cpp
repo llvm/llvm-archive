@@ -21,6 +21,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Java/Compiler.h>
 
+using namespace llvm;
 using namespace llvm::Java;
 
 Locals::Locals(unsigned maxLocals)

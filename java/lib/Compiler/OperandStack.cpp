@@ -22,6 +22,7 @@
 #include <llvm/Java/Compiler.h>
 #include <iostream>
 
+using namespace llvm;
 using namespace llvm::Java;
 
 void OperandStack::copySlots(const SlotMap& src,

@@ -206,6 +206,7 @@ namespace llvm { namespace Java { namespace {
         return ConstantFP::get(Type::DoubleTy, d->getValue());
       else
         assert(0 && "Unknown llvm::Java::Constant!");
+      return 0; // not reached
     }
 
     /// Given a JType returns the appropriate llvm::Type.
@@ -268,6 +269,7 @@ namespace llvm { namespace Java { namespace {
         // FIXME: Throw something
       default:  assert(0 && "Cannot parse type descriptor!");
       }
+      return 0; // not reached
     }
 
     /// Returns the type of the Java string descriptor for JNI.
@@ -313,6 +315,7 @@ namespace llvm { namespace Java { namespace {
         // FIXME: Throw something
       default:  assert(0 && "Cannot parse type descriptor!");
       }
+      return 0; // not reached
     }
 
     /// Initializes the class info map; in other words it adds the

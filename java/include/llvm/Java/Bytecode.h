@@ -14,7 +14,7 @@
 #ifndef LLVM_JAVA_BYTECODE_H
 #define LLVM_JAVA_BYTECODE_H
 
-#include <stdint.h>
+#include <llvm/Support/DataTypes.h>
 
 namespace llvm { namespace Java {
 

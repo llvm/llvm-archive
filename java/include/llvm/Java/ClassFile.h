@@ -22,7 +22,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <stdint.h>
+#include <llvm/Support/DataTypes.h>
 
 namespace llvm { namespace Java {
 
@@ -193,17 +193,20 @@ namespace llvm { namespace Java {
     std::ostream& dump(std::ostream& os) const;
   };
 
-  struct ConstantFieldRef : public ConstantMemberRef {
+  class ConstantFieldRef : public ConstantMemberRef {
+  public:
     ConstantFieldRef(const ConstantPool& cp, std::istream& is)
       : ConstantMemberRef(cp, is) { }
   };
 
-  struct ConstantMethodRef : public ConstantMemberRef {
+  class ConstantMethodRef : public ConstantMemberRef {
+  public:
     ConstantMethodRef(const ConstantPool& cp, std::istream& is)
       : ConstantMemberRef(cp, is) { }
   };
 
-  struct ConstantInterfaceMethodRef : public ConstantMemberRef {
+  class ConstantInterfaceMethodRef : public ConstantMemberRef {
+  public:
     ConstantInterfaceMethodRef(const ConstantPool& cp, std::istream& is)
       : ConstantMemberRef(cp, is) { }
   };

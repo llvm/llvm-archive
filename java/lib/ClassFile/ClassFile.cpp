@@ -18,7 +18,9 @@
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
+#include <llvm/Config/alloca.h>
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <functional>
@@ -517,7 +519,7 @@ ConstantUtf8::ConstantUtf8(const ConstantPool& cp, std::istream& is)
   : Constant(cp)
 {
   uint16_t length = readU2(is);
-  char buf[length];
+  char *buf = (char *)alloca(length);
   std::streamsize s = is.rdbuf()->sgetn(buf, length);
   if (s != length)
     throw ClassFileParseError(

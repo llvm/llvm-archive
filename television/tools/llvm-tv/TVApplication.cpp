@@ -4,6 +4,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "wx/image.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
 #include "CFGGraphDrawer.h"

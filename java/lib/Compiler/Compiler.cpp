@@ -218,7 +218,7 @@ namespace llvm { namespace Java { namespace {
 
     /// Initializes the class info map; in other words it adds the
     /// class info of java.lang.Object.
-    void initializeClassInfoMap() {
+    bool initializeClassInfoMap() {
       DEBUG(std::cerr << "Building ClassInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
       ClassInfo& ci = c2ciMap_[cf];
@@ -255,11 +255,12 @@ namespace llvm { namespace Java { namespace {
       assert(ci.type && "ClassInfo not initialized properly!");
       emitStaticInitializers(cf);
       DEBUG(std::cerr << "Built ClassInfo for: java/lang/Object\n");
+      return true;
     }
 
     /// Initializes the VTableInfo map; in other words it adds the
     /// VTableInfo for java.lang.Object.
-    void initializeVTableInfoMap() {
+    bool initializeVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
       VTableInfo& vi = c2viMap_[cf];
@@ -349,10 +350,13 @@ namespace llvm { namespace Java { namespace {
                                      "java/lang/Object<vtable>",
                                      &module_);
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object\n");
+      return true;
     }
 
     /// Returns the ClassInfo object associated with this classfile.
     const ClassInfo& getClassInfo(ClassFile* cf) {
+      static bool initialized = initializeClassInfoMap();
+
       Class2ClassInfoMap::iterator it = c2ciMap_.lower_bound(cf);
       if (it != c2ciMap_.end() && it->first == cf)
         return it->second;
@@ -637,6 +641,8 @@ namespace llvm { namespace Java { namespace {
 
     /// Returns the VTableInfo associated with this classfile.
     const VTableInfo& getVTableInfo(ClassFile* cf) {
+      static bool initialized = initializeVTableInfoMap();
+
       Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(cf);
       if (it != c2viMap_.end() && it->first == cf)
         return it->second;
@@ -854,7 +860,7 @@ namespace llvm { namespace Java { namespace {
 
     /// Initializes the VTableInfo map for object arrays; in other
     /// words it adds the VTableInfo for java.lang.Object[].
-    void initializeObjectArrayVTableInfoMap() {
+    bool initializeObjectArrayVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object[]\n");
       ClassFile* cf = ClassFile::get("java/lang/Object");
       VTableInfo& vi = ac2viMap_[cf];
@@ -927,6 +933,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     const VTableInfo& getObjectArrayVTableInfo(ClassFile* cf) {
+      static bool initialized = initializeObjectArrayVTableInfoMap();
+
       Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
       if (it != ac2viMap_.end() && it->first == cf)
         return it->second;
@@ -1210,6 +1218,8 @@ namespace llvm { namespace Java { namespace {
           }
         }
 
+// FIXME: This pulls in too many methods for now so we disable it.
+#if 0
         // Call its class initialization method if it exists.
         if (const Method* method = classfile->getMethod("<clinit>()V")) {
           std::string name = classfile->getThisClass()->getName()->str();
@@ -1229,6 +1239,7 @@ namespace llvm { namespace Java { namespace {
                  LLVM_JAVA_STATIC_INIT " should have a terminator!");
           new CallInst(init, "", hook->front().getTerminator());
         }
+#endif
       }
     }
 
@@ -1294,11 +1305,6 @@ namespace llvm { namespace Java { namespace {
         module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
-
-      // Initialize type maps and vtable globals.
-      initializeClassInfoMap();
-      initializeVTableInfoMap();
-      initializeObjectArrayVTableInfoMap();
 
       // Create the method requested.
       Function* function = getFunction(getMethod(classMethodDesc));

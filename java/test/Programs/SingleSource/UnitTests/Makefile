@@ -33,7 +33,7 @@ LIBRARYNAME=test
 all:: Test.h
 
 Test.h: Output/.compile-java
-	$(Verb)javah -classpath Output Test
+	$(Verb)$(JAVAH) -classpath Output Test
 
 EXTRA_OBJS = $(LibDir)/libtest.bca
 

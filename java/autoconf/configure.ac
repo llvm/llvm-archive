@@ -34,10 +34,12 @@ dnl **************************************************************************
 dnl **************************************************************************
 dnl * Check for programs.
 dnl **************************************************************************
-AC_ARG_VAR(JAVAC, [The java compiler (used for testing)])
-AC_CHECK_PROG(JAVAC, javac, javac)
 AC_ARG_VAR(JAVA, [The Java Virtual Machine (used for testing)])
 AC_CHECK_PROG(JAVA, java, java)
+AC_ARG_VAR(JAVAC, [The java compiler (used for testing)])
+AC_CHECK_PROG(JAVAC, javac, javac)
+AC_ARG_VAR(JAVAH, [The java JNI header generator (used for testing)])
+AC_CHECK_PROG(JAVAH, javah, javah)
 
 if test -z "$JAVA"
 then
@@ -47,6 +49,11 @@ fi
 if test -z "$JAVAC"
 then
   AC_MSG_WARN([A Java compiler is required for the test suite, but it was not found])
+fi
+
+if test -z "$JAVAC"
+then
+  AC_MSG_WARN([A Java JNI header generator is required for the test suite, but it was not found])
 fi
 
 dnl Verify that the source directory is valid

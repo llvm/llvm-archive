@@ -38,8 +38,9 @@ include $(LLVM_SRC_ROOT)/Makefile.rules
 #
 # Additional utilities
 #
-JAVAC=@JAVAC@
 JAVA=@JAVA@
+JAVAC=@JAVAC@
+JAVAH=@JAVAH@
 
 #
 # Include local build rules.

@@ -25,6 +25,14 @@ namespace llvm {
 
 Pass *createCallGraphPrinterPass ();
 
+Pass *createBUDSModulePrinterPass ();
+FunctionPass *createBUDSFunctionPrinterPass();
+
+Pass *createTDDSPrinterPass ();
+
+Pass *createLocalDSPrinterPass ();
+
+
 } // end namespace llvm
 
 #endif // GRAPHPRINTERS_H

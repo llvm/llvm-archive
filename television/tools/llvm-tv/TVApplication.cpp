@@ -4,21 +4,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "wx/image.h"
+#include "CallGraphDrawer.h"
+#include "CFGGraphDrawer.h"
+#include "CodeViewer.h"
+#include "DSAGraphDrawer.h"
+#include "PictureFrame.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
-#include "CFGGraphDrawer.h"
-#include "CallGraphDrawer.h"
-#include "PictureFrame.h"
-#include "CodeViewer.h"
 #include "llvm-tv/Config.h"
+#include <wx/image.h>
 #include <cerrno>
 #include <fstream>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <functional>
 #include <signal.h>
 #include <unistd.h>
-#include <functional>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 ///==---------------------------------------------------------------------==///
 
@@ -51,6 +52,7 @@ static void setUpMenus (wxFrame *frame) {
   wxMenu *viewMenu = new wxMenu ("", 0);
   viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, "View call graph");
   viewMenu->Append (LLVM_TV_CFGVIEW, "View control-flow graph");
+  viewMenu->Append (LLVM_TV_BUDS_VIEW, "View BU datastructure graph");
   viewMenu->Append (LLVM_TV_CODEVIEW, "View code (interactive)");
   menuBar->Append (viewMenu, "View");
 
@@ -119,6 +121,20 @@ void TVApplication::OpenCFGView (Function *F) {
   allMyWindows.push_back (new PictureFrame (this, "control-flow graph",
                                             drawer.getGraphImage ()));
 }
+
+void TVApplication::OpenBUDSView (Function *F) {
+  BUGraphDrawer drawer (F);
+  std::string title = "BU graph: " + F->getName();
+  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenBUDSView (Module *M) {
+  BUGraphDrawer drawer (M);
+  allMyWindows.push_back (new PictureFrame (this, "BU graph (globals)",
+                                            drawer.getGraphImage ()));
+}
+
 
 void TVApplication::OpenCodeView (Function *F) {
   allMyWindows.push_back(new CodeViewFrame(this, F));

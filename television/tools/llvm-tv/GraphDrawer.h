@@ -1,7 +1,7 @@
 #ifndef GRAPHDRAWER_H
 #define GRAPHDRAWER_H
 
-#include "wx/wx.h"
+#include <wx/wx.h>
 #include <string>
 
 //===----------------------------------------------------------------------===//

@@ -14,10 +14,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Support/GraphWriter.h"
+#include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/DataStructure.h"
+#include "llvm/Analysis/DSGraph.h"
+#include "Support/GraphWriter.h"
 #include <fstream>
 using namespace llvm;
 
@@ -56,7 +59,6 @@ namespace llvm {
   };
 }
 
-
 namespace {
   struct CallGraphPrinter : public Pass {
     virtual bool run(Module &M) {
@@ -74,12 +76,144 @@ namespace {
 
   RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
                                         "Print Call Graph to 'dot' file");
-};
+}
+
+//===----------------------------------------------------------------------===//
+//                     BU DataStructures Graph Printer
+//===----------------------------------------------------------------------===//
+
+#if 0
+namespace llvm {
+  template<>
+  struct DOTGraphTraits<DSGraph*> : public DefaultDOTGraphTraits {
+    static std::string getGraphName(DSGraph *G) {
+      return "BU DataStructures Graph";
+    }
+    
+    static std::string getNodeLabel(DSNode *Node, DSGraph *G) {
+      if (Node->getFunction())
+        return ((Value*)Node->getFunction())->getName();
+      else
+        return "Indirect call node";
+    }
+  };
+}
+#endif
+
+namespace {
+  struct BUModulePrinter : public Pass {
+
+    virtual bool run(Module &M) {
+      BUDataStructures *BU = &getAnalysis<BUDataStructures>();
+      std::string File = "buds.dot";
+      std::ofstream of(File.c_str());
+      if (of.good()) {
+        BU->getGlobalsGraph().print(of);
+        of.close();
+      } else
+        std::cerr << "Error writing to " << File << "!\n";
+      return false;
+    }
+
+    void print(std::ostream &os) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<BUDataStructures>();
+      AU.setPreservesAll();
+    }
+  };
+
+  struct BUFunctionPrinter : public FunctionPass {
+  
+    virtual bool runOnFunction(Function &F) {
+      BUDataStructures *BU = &getAnalysis<BUDataStructures>();
+      std::string File = "buds." + F.getName() + ".dot";
+      std::ofstream of(File.c_str());
+      if (of.good()) {
+        if (BU->hasGraph(F)) {
+          BU->getDSGraph(F).print(of);
+          of.close();
+        } else
+          std::cerr << "No BU DSGraph for: " << F.getName() << "\n";
+      } else
+        std::cerr << "Error writing to " << File << "!\n";
+      return false;
+    }
+
+    void print(std::ostream &os) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<BUDataStructures>();
+      AU.setPreservesAll();
+    }
+  };
+}
+
+
+//===----------------------------------------------------------------------===//
+//                     TD DataStructures Graph Printer
+//===----------------------------------------------------------------------===//
+
+namespace {
+  struct TDGraphPrinter : public Pass {
+    TDDataStructures *TD;
+
+    TDGraphPrinter() : TD(0) {}
+
+    virtual bool run(Module &M) {
+      TD = &getAnalysis<TDDataStructures>();
+      return false;
+    }
+
+    void print(std::ostream &os) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TDDataStructures>();
+      AU.setPreservesAll();
+    }
+  };
+}
+
+//===----------------------------------------------------------------------===//
+//                   Local DataStructures Graph Printer
+//===----------------------------------------------------------------------===//
+
+namespace {
+  struct LocalGraphPrinter : public Pass {
+    LocalDataStructures *L;
+
+    LocalGraphPrinter() : L(0) {}
+
+    virtual bool run(Module &M) {
+      L = &getAnalysis<LocalDataStructures>();
+      return false;
+    }
+
+    void print(std::ostream &os) const {}
+    void printFunction(std::ostream &os, Function *F) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<LocalDataStructures>();
+      AU.setPreservesAll();
+    }
+  };
+
+
+
+}
 
 namespace llvm {
 
-Pass *createCallGraphPrinterPass () {
-  return new CallGraphPrinter;
-};
+Pass *createCallGraphPrinterPass () { return new CallGraphPrinter(); }
+
+Pass *createBUDSModulePrinterPass () { return new BUModulePrinter(); }
+
+FunctionPass *createBUDSFunctionPrinterPass () {
+  return new BUFunctionPrinter();
+}
+
+Pass *createTDDSPrinterPass () { return new TDGraphPrinter(); }
+
+Pass *createLocalDSPrinterPass () { return new LocalGraphPrinter(); }
 
 } // end namespace llvm

@@ -270,6 +270,31 @@ void TVFrame::CFGView(wxCommandEvent &event) {
     myApp->OpenCFGView (F);
 }
 
+void TVFrame::BUDSView(wxCommandEvent &event) {
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Open up a new BUDS view window. First, try to see if it's a Function.
+  Function *F = item->getFunction ();
+  if (F) {
+    if (F->isExternal())
+      wxMessageBox("External functions have no BU Datastructures to view.",
+                   "Error", wxOK | wxICON_ERROR, this);
+    else
+      myApp->OpenBUDSView(F);
+  } else {
+    // Maybe it's a Module?
+    Module *M = item->getModule();
+    if (M)
+      myApp->OpenBUDSView(M);
+    else
+      wxMessageBox("The selected item is invalid.", "Error",
+                   wxOK | wxICON_ERROR, this);
+  } 
+}
+
+
 void TVFrame::CodeView(wxCommandEvent &event) {
   // Get the selected LLVM object.
   TVTreeItemData *item =
@@ -294,6 +319,7 @@ BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
   EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
   EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)
+  EVT_MENU (LLVM_TV_BUDS_VIEW, TVFrame::BUDSView)  
   EVT_MENU (LLVM_TV_CODEVIEW, TVFrame::CodeView)
 END_EVENT_TABLE ()
 

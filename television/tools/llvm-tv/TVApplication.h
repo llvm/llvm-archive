@@ -10,9 +10,13 @@
 #include "wx/wx.h"
 #include <string>
 #include <vector>
-#include "llvm/Module.h"
 
 ///==---------------------------------------------------------------------==///
+
+namespace llvm {
+  class Function;
+  class Module;
+}
 
 class TVFrame;
 
@@ -33,6 +37,8 @@ public:
   void ReceivedSignal ();
   void OpenCallGraphView (llvm::Module *M);
   void OpenCFGView (llvm::Function *F);
+  void OpenBUDSView (llvm::Function *F);
+  void OpenBUDSView (llvm::Module *M);
   void OpenCodeView (llvm::Function *F);
   void Quit ();
 };

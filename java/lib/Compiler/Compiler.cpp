@@ -52,8 +52,7 @@ namespace llvm { namespace Java { namespace {
   llvm::Constant* getConstant(Constant* c) {
     if (dynamic_cast<ConstantString*>(c))
       assert(0 && "not implemented");
-    else if (ConstantInteger* i =
-             dynamic_cast<ConstantInteger*>(c))
+    else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(c))
       return ConstantSInt::get(Type::IntTy, i->getValue());
     else if (ConstantFloat* f = dynamic_cast<ConstantFloat*>(c))
       return ConstantFP::get(Type::FloatTy, f->getValue());
@@ -94,21 +93,17 @@ namespace llvm { namespace Java { namespace {
     void do_if(unsigned bcI, JSetCC cc, JType type,
                unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
-        bc2bbMap_[t] =
-          new BasicBlock("bc" + utostr(t), &function_);
+        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
       if (!bc2bbMap_[f])
-        bc2bbMap_[f] =
-          new BasicBlock("bc" + utostr(f), &function_);
+        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
     }
 
     void do_ifcmp(unsigned bcI, JSetCC cc,
                   unsigned t, unsigned f) {
       if (!bc2bbMap_[t])
-        bc2bbMap_[t] =
-          new BasicBlock("bc" + utostr(t), &function_);
+        bc2bbMap_[t] = new BasicBlock("bc" + utostr(t), &function_);
       if (!bc2bbMap_[f])
-        bc2bbMap_[f] =
-          new BasicBlock("bc" + utostr(f), &function_);
+        bc2bbMap_[f] = new BasicBlock("bc" + utostr(f), &function_);
     }
 
     void do_switch(unsigned bcI,
@@ -117,8 +112,7 @@ namespace llvm { namespace Java { namespace {
       for (unsigned i = 0; i < sw.size(); ++i) {
         unsigned target = sw[i].second;
         if (!bc2bbMap_[target])
-          bc2bbMap_[target] =
-            new BasicBlock("bc" + utostr(target), &function_);
+          bc2bbMap_[target] = new BasicBlock("bc" + utostr(target), &function_);
       }
       if (!bc2bbMap_[defTarget])
         bc2bbMap_[defTarget] =
@@ -234,8 +228,7 @@ namespace llvm { namespace Java { namespace {
           params.push_back(PointerType::get(self));
         while (descr[i] != ')')
           params.push_back(getTypeHelper(descr, i, NULL));
-        return FunctionType::get(getTypeHelper(descr, ++i, NULL),
-                                 params, false);
+        return FunctionType::get(getTypeHelper(descr, ++i, NULL),params, false);
       }
         // FIXME: Throw something
       default:  return NULL;
@@ -278,8 +271,7 @@ namespace llvm { namespace Java { namespace {
         }
       }
       PATypeHolder holder = ci.type;
-      cast<OpaqueType>(ci.type)->refineAbstractTypeTo
-        (StructType::get(elements));
+      cast<OpaqueType>(ci.type)->refineAbstractTypeTo(StructType::get(elements));
       ci.type = holder.get();
       DEBUG(std::cerr << "Adding " << className << " = "
             << *ci.type << " to type map\n");
@@ -323,8 +315,7 @@ namespace llvm { namespace Java { namespace {
 
       // Cast ptr to correct type
       std::string className = fieldRef->getClass()->getName()->str();
-      ptr = new CastInst(ptr,
-                         PointerType::get(getClassInfo(className).type),
+      ptr = new CastInst(ptr, PointerType::get(getClassInfo(className).type),
                          TMP, getBBAt(bcI));
       ClassFile* classfile = ClassFile::getClassFile(className);
       std::string fieldName = nameAndType->getName()->str();
@@ -341,8 +332,7 @@ namespace llvm { namespace Java { namespace {
           indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
         }
         else {
-          indices.push_back(ConstantUInt::get(Type::UIntTy,
-                                              it->second));
+          indices.push_back(ConstantUInt::get(Type::UIntTy, it->second));
           break;
         }
       }
@@ -404,11 +394,9 @@ namespace llvm { namespace Java { namespace {
       name += method->getName()->str();
       name += method->getDescriptor()->str();
 
-      Function* hook =
-        module_->getOrInsertFunction("llvm_java_static_init",
-                                     Type::VoidTy, 0);
-      Function* init =
-        module_->getOrInsertFunction(name, Type::VoidTy, 0);
+      Function* hook = module_->getOrInsertFunction("llvm_java_static_init",
+                                                    Type::VoidTy, 0);
+      Function* init = module_->getOrInsertFunction(name, Type::VoidTy, 0);
 
       // if this is the first time we scheduled this function
       // for compilation insert a call to it right before the
@@ -452,10 +440,8 @@ namespace llvm { namespace Java { namespace {
       Method* method = classfile->getMethod(methodNameAndDescr);
 
       if (!method)
-        throw InvocationTargetException(
-          "Method " + methodNameAndDescr +
-          " not found in class " + className);
-
+        throw InvocationTargetException("Method " + methodNameAndDescr +
+                                        " not found in class " + className);
 
       return std::make_pair(classfile, method);
     }
@@ -668,8 +654,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_neg(unsigned bcI) {
       Value* v1 = opStack_.top(); opStack_.pop();
-      opStack_.push(
-        BinaryOperator::createNeg(v1, TMP, getBBAt(bcI)));
+      opStack_.push(BinaryOperator::createNeg(v1, TMP, getBBAt(bcI)));
     }
 
     void do_shl(unsigned bcI) {
@@ -684,8 +669,7 @@ namespace llvm { namespace Java { namespace {
       // cast value to be shifted into its unsigned version
       do_swap(bcI);
       Value* value = opStack_.top(); opStack_.pop();
-      value = new CastInst(value,
-                           value->getType()->getUnsignedVersion(),
+      value = new CastInst(value, value->getType()->getUnsignedVersion(),
                            TMP, getBBAt(bcI));
       opStack_.push(value);
       do_swap(bcI);
@@ -694,8 +678,7 @@ namespace llvm { namespace Java { namespace {
 
       value = opStack_.top(); opStack_.pop();
       // cast shifted value back to its original signed version
-      opStack_.push(new CastInst(value,
-                                 value->getType()->getSignedVersion(),
+      opStack_.push(new CastInst(value, value->getType()->getSignedVersion(),
                                  TMP, getBBAt(bcI)));
     }
 
@@ -730,8 +713,7 @@ namespace llvm { namespace Java { namespace {
                               TMP, getBBAt(bcI));
       BinaryOperator::createAdd(v, ConstantSInt::get(Type::IntTy, amount),
                                 TMP, getBBAt(bcI));
-      new StoreInst(v, getOrCreateLocal(index, Type::IntTy),
-                    getBBAt(bcI));
+      new StoreInst(v, getOrCreateLocal(index, Type::IntTy), getBBAt(bcI));
     }
 
     void do_convert(unsigned bcI, JType to) {
@@ -774,8 +756,7 @@ namespace llvm { namespace Java { namespace {
                        ("llvm.isunordered",
                         Type::BoolTy, v1->getType(), v2->getType(), 0),
                        v1, v2, TMP, getBBAt(bcI));
-      r = new SelectInst(c,
-                         ConstantSInt::get(Type::IntTy, valueIfUnordered),
+      r = new SelectInst(c, ConstantSInt::get(Type::IntTy, valueIfUnordered),
                          r, TMP, getBBAt(bcI));
       opStack_.push(r);
     }
@@ -812,8 +793,7 @@ namespace llvm { namespace Java { namespace {
                    unsigned defTarget,
                    const SwitchCases& sw) {
       Value* v1 = opStack_.top(); opStack_.pop();
-      SwitchInst* in =
-        new SwitchInst(v1, getBBAt(defTarget), getBBAt(bcI));
+      SwitchInst* in = new SwitchInst(v1, getBBAt(defTarget), getBBAt(bcI));
       for (unsigned i = 0; i < sw.size(); ++i)
         in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
                     getBBAt(sw[i].second));
@@ -878,8 +858,7 @@ namespace llvm { namespace Java { namespace {
           new CastInst(p, paramTy, TMP, getBBAt(bcI));
       }
 
-      Function* function =
-        module_->getOrInsertFunction(funcName, funcType);
+      Function* function = module_->getOrInsertFunction(funcName, funcType);
       toCompileFunctions_.insert(function);
       Value* r = new CallInst(function, params, TMP, getBBAt(bcI));
       opStack_.push(r);
@@ -950,8 +929,7 @@ void Compiler::compile(Module& m, const std::string& className)
   DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
   Function* main =
-    compilerImpl_->compileMethod(m,
-                                 className + "/main([Ljava/lang/String;)V");
+    compilerImpl_->compileMethod(m, className + "/main([Ljava/lang/String;)V");
   Function* javaMain = m.getOrInsertFunction
     ("llvm_java_main", Type::VoidTy,
      Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);

@@ -819,7 +819,7 @@ void Compiler::compile(Module& m, const std::string& className)
     new CallInst(main,
                  // FIXME: Forward correct params from llvm_java_main
                  llvm::Constant::getNullValue(mainTy->getParamType(0)),
-                 TMP,
+                 "",
                  bb);
     new ReturnInst(NULL, bb);
 }

@@ -43,15 +43,17 @@ interfaces (they can only extend) the lastIface and interfaces are
 used to differentiate between class typeinfo's and interface
 typeinfo's. More specifically if interfaces == -1 then this typeinfo
 is for an interface and the lastIface field is the unique number of
-this interface in the objects interfaces array.
+this interface in the objects interfaces array. The field lastIface is
+the max index of all implemented interfaces. For a class that doesn't
+implement any it is -1.
 
 struct llvm_java_object_typeinfo {
   unsigned depth;
   struct llvm_java_object_vtable** vtables;
-  unsigned lastIface;
+  int lastIface;
   union {
     struct llvm_java_object_vtable** interfaces;
-    unsigned interfaceFlag;
+    int interfaceFlag;
   };
 };
 
@@ -64,7 +66,7 @@ int isInstanceOf(struct llvm_java_object_base* obj,
   if (objClazz == clazz)
     return 1;
   // we are checking against a class' typeinfo
-  if (clazz->typeinfo.interfaceFlag != (unsigned)-1)
+  if (clazz->typeinfo.interfaceFlag != -1)
     return objClazz->typeinfo.depth > clazz->typeinfo.depth &&
            objClazz->typeinfo.vtables[clazz->typeinfo.depth] == clazz;
   // otherwise we are checking against an interface's typeinfo

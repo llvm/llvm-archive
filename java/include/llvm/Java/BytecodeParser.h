@@ -508,12 +508,13 @@ namespace llvm { namespace Java {
                     switchCases_.clear();
                     skipPadBytes(i);
                     int def = readSInt(code, i);
-                    unsigned pairCount = readUInt(code, i);
+                    int pairCount = readSInt(code, i);
                     switchCases_.reserve(pairCount);
-                    while (pairCount--)
+                    while (pairCount--) {
+                        int value = readSInt(code, i);
                         switchCases_.push_back(
-                            std::make_pair(readSInt(code, i),
-                                           curBC + readSInt(code, i)));
+                            std::make_pair(value, curBC + readSInt(code, i)));
+                    }
                     THIS->do_switch(curBC, curBC + def, switchCases_);
                     break;
                 }

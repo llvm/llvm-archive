@@ -7,6 +7,7 @@
 #include "CodeViewer.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
+#include "Support/FileUtils.h"
 #include "llvm-tv/Config.h"
 #include <wx/image.h>
 #include <cerrno>
@@ -65,21 +66,9 @@ static void setUpMenus (wxFrame *frame) {
 
 IMPLEMENT_APP (TVApplication)
 
-static bool directoryExists (const std::string &dirPath) {
-  struct stat stbuf;
-  if (stat (dirPath.c_str (), &stbuf) < 0)
-    return false;
-  return S_ISDIR (stbuf.st_mode);
-}
-
-static void ensureDirectoryExists (const std::string &dirPath) {
-  if (!directoryExists (dirPath))
-    mkdir (dirPath.c_str (), 0777);
-}
-
 /// saveMyPID - Save my process ID into a temporary file.
 static void saveMyPID () {
-  ensureDirectoryExists (llvmtvPath);
+  EnsureDirectoryExists (llvmtvPath);
 
   std::ofstream pidFile (llvmtvPID.c_str ());
   if (pidFile.good () && pidFile.is_open ()) {
@@ -126,7 +115,7 @@ bool TVApplication::OnInit () {
 
   // Read the snapshot list out of the given directory,
   // and load the snapshot list view into the frame.
-  ensureDirectoryExists (snapshotsPath);
+  EnsureDirectoryExists (snapshotsPath);
   
   snapshotList = new TVSnapshotList(snapshotsPath);
   

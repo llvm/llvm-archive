@@ -102,6 +102,7 @@ class TVFrame : public wxFrame {
   void Resize();
  public:
   TVFrame (TVApplication *app, const char *title);
+  static wxWindow *createDisplayWidget (wxWindow *parent, const wxString &init);
   void OnExit (wxCommandEvent &event);
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);

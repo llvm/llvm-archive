@@ -15,16 +15,31 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "javaclass"
+
 #include "VMClass.h"
 #include "Resolver.h"
 #include <llvm/DerivedTypes.h>
 #include <llvm/Constants.h>
 #include <llvm/Java/ClassFile.h>
-
-#define LLVM_JAVA_OBJECT_BASE "struct.llvm_java_object_base"
+#include <llvm/Support/Debug.h>
 
 using namespace llvm;
 using namespace llvm::Java;
+
+// On initialization we create a placeholder global for the class
+// record that will be patched later when the class record is
+// computed.
+void VMClass::init()
+{
+  classRecord_ = new GlobalVariable(
+    OpaqueType::get(),
+    false,
+    GlobalVariable::ExternalLinkage,
+    NULL,
+    getName() + "<classRecord>",
+    resolver_->getModule());
+}
 
 VMClass::VMClass(Resolver* resolver, const std::string& className)
   : name_(Resolver::canonicalizeClassName(className)),
@@ -34,10 +49,9 @@ VMClass::VMClass(Resolver* resolver, const std::string& className)
     layoutType_(OpaqueType::get()),
     type_(PointerType::get(layoutType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX),
-    resolvedConstantPool_(classFile_->getNumConstants()),
-    classRecord_(NULL)
+    resolvedConstantPool_(classFile_->getNumConstants())
 {
-
+  init();
 }
 
 VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
@@ -47,10 +61,9 @@ VMClass::VMClass(Resolver* resolver, const VMClass* componentClass)
     componentClass_(componentClass),
     layoutType_(OpaqueType::get()),
     type_(PointerType::get(layoutType_)),
-    interfaceIndex_(INVALID_INTERFACE_INDEX),
-    classRecord_(NULL)
+    interfaceIndex_(INVALID_INTERFACE_INDEX)
 {
-
+  init();
 }
 
 VMClass::VMClass(Resolver* resolver, const Type* type)
@@ -67,10 +80,9 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
     componentClass_(NULL),
     layoutType_(const_cast<Type*>(type)),
     type_(type),
-    interfaceIndex_(INVALID_INTERFACE_INDEX),
-    classRecord_(NULL)
+    interfaceIndex_(INVALID_INTERFACE_INDEX)
 {
-
+  init();
 }
 
 const VMField* VMClass::lookupField(const std::string& name) const
@@ -116,9 +128,12 @@ const VMMethod* VMClass::lookupMethod(const std::string& nameAndType) const
 
 void VMClass::computeLayout()
 {
+  DEBUG(std::cerr << "Computing layout for: " << getName() << '\n');
   // The layout of primitive classes is already computed.
-  if (isPrimitive())
+  if (isPrimitive()) {
+    DEBUG(std::cerr << "Computed layout for: " << getName() << '\n');
     return;
+  }
 
   std::vector<const Type*> layout;
   if (isArray()) {
@@ -156,6 +171,8 @@ void VMClass::computeLayout()
   cast<OpaqueType>(layoutType_)->refineAbstractTypeTo(resolvedType);
   layoutType_ = holder.get();
   type_ = PointerType::get(layoutType_);
+
+  DEBUG(std::cerr << "Computed layout for: " << getName() << '\n');
 }
 
 llvm::Constant* VMClass::buildSuperClassRecords() const
@@ -266,6 +283,12 @@ llvm::Constant* VMClass::buildClassTypeInfo() const
   init.push_back(ConstantSInt::get(Type::IntTy, getInterfaceIndex()));
   init.push_back(buildInterfaceClassRecords());
   if (isArray())
+    init.push_back(ConstantExpr::getCast(getComponentClass()->getClassRecord(),
+                                         resolver_->getClassRecordPtrType()));
+  else
+    init.push_back(
+      llvm::Constant::getNullValue(resolver_->getClassRecordPtrType()));
+  if (isArray())
     init.push_back(
       ConstantExpr::getCast(
         ConstantExpr::getSizeOf(getComponentClass()->getType()), Type::IntTy));
@@ -281,6 +304,7 @@ llvm::Constant* VMClass::buildClassTypeInfo() const
 
 void VMClass::computeClassRecord()
 {
+  DEBUG(std::cerr << "Computing class record for: " << getName() << '\n');
   // Find dynamically bound methods.
   if (!isPrimitive()) {
     if (const VMClass* superClass = getSuperClass())
@@ -344,13 +368,18 @@ void VMClass::computeClassRecord()
   llvm::Constant* classRecordInit = ConstantStruct::get(init);
   resolver_->getModule()->addTypeName("classRecord." + getName(),
                                       classRecordInit->getType());
-  classRecord_ = new GlobalVariable(
-    classRecordInit->getType(),
-    true,
-    GlobalVariable::ExternalLinkage,
-    classRecordInit,
-    getName() + "<classRecord>",
-    resolver_->getModule());
+
+  // Now resolve the opaque type of the placeholder class record.
+  const Type* classRecordType =
+    cast<PointerType>(classRecord_->getType())->getElementType();
+  OpaqueType* opaqueType = cast<OpaqueType>(const_cast<Type*>(classRecordType));
+  opaqueType->refineAbstractTypeTo(classRecordInit->getType());
+  // Set the initializer of the class record.
+  classRecord_->setInitializer(classRecordInit);
+  // Mark the class record as constant.
+  classRecord_->setConstant(true);
+
+  DEBUG(std::cerr << "Computed class record for: " << getName() << '\n');
 }
 
 void VMClass::link()

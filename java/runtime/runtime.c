@@ -18,20 +18,27 @@ struct llvm_java_object_base {
 };
 
 struct llvm_java_object_typeinfo {
-  jint depth;       /* The number of super classes to java.lang.Object. */
-  struct llvm_java_object_class_record** vtables; /* The super class
-                                                   * records up to
-                                                   * java.lang.Object. */
-  jint interfaceIndex; /* If an interface its interface index,
-                        * otherwise the last interface index
-                        * implemented by this class. */
-  struct llvm_java_object_class_record** interfaces; /* The interface
-                                                      * class records
-                                                      * this class
-                                                      * implements */
-  jint elementSize; /* If an array the size of its elements, otherwise
-                     * 0 for classes, -1 for interfaces and -2 for
-                     * primitive classes */
+  /* The number of super classes to java.lang.Object. */
+  jint depth;
+
+  /* The super class records up to java.lang.Object. */
+  struct llvm_java_object_class_record** superclasses;
+
+  /* If an interface its interface index, otherwise the last interface
+   * index implemented by this class. */
+  jint interfaceIndex;
+
+
+  /* The interface class records this class implements. */
+  struct llvm_java_object_class_record** interfaces;
+
+  /* The component class record if this is an array class, null
+   * otherwise. */
+  struct llvm_java_object_class_record* component;
+
+  /* If an array the size of its elements, otherwise 0 for classes, -1
+   * for interfaces and -2 for primitive classes. */
+  jint elementSize;
 };
 
 struct llvm_java_object_class_record {
@@ -50,7 +57,7 @@ jint llvm_java_is_interface_class(struct llvm_java_object_class_record* cr)
 
 jint llvm_java_is_array_class(struct llvm_java_object_class_record* cr)
 {
-  return cr->typeinfo.elementSize >= 0;
+  return cr->typeinfo.elementSize > 0;
 }
 
 struct llvm_java_object_class_record* llvm_java_get_class_record(jobject obj) {
@@ -62,32 +69,48 @@ void llvm_java_set_class_record(jobject obj,
   obj->classRecord = cr;
 }
 
-jint llvm_java_is_instance_of(jobject obj,
-                              struct llvm_java_object_class_record* clazz) {
-  struct llvm_java_object_class_record* objClazz;
+jint llvm_java_is_assignable_from(struct llvm_java_object_class_record* cr,
+                                  struct llvm_java_object_class_record* from) {
+  /* trivial case: class records are the same */
+  if (cr == from)
+    return JNI_TRUE;
 
-  /* trivial case 1: a null object can be cast to any type */
+  /* if from is a primitive class then they must be of the same class */
+  if (llvm_java_is_primitive_class(from))
+    return cr == from;
+
+  /* if from is an interface class then the current class must
+   * implement that interface */
+  if (llvm_java_is_interface_class(from)) {
+    int index = from->typeinfo.interfaceIndex;
+    return (cr->typeinfo.interfaceIndex >= index &&
+            cr->typeinfo.interfaces[index]);
+  }
+
+  /* if from is an array class then the component types of must be
+   * assignable from */
+  if (llvm_java_is_array_class(from))
+    return (cr->typeinfo.component &&
+            llvm_java_is_assignable_from(cr->typeinfo.component,
+                                         from->typeinfo.component));
+
+  /* otherwise this is a class, check if from is a superclass of this
+   * class */
+  if (cr->typeinfo.depth > from->typeinfo.depth) {
+    int index = cr->typeinfo.depth - from->typeinfo.depth - 1;
+    return cr->typeinfo.superclasses[index] == from;
+  }
+
+  return JNI_FALSE;
+}
+
+jint llvm_java_is_instance_of(jobject obj,
+                              struct llvm_java_object_class_record* cr) {
+  /* trivial case: a null object can be cast to any type */
   if (!obj)
     return JNI_TRUE;
 
-  objClazz = obj->classRecord;
-  /* trivial case 2: this object is of class clazz */
-  if (objClazz == clazz)
-    return JNI_TRUE;
-
-  /* instanceof AnInterface. */
-  if (llvm_java_is_interface_class(clazz)) {
-    /* this interface's vtable can only be found at this index */
-    int index = clazz->typeinfo.interfaceIndex;
-    return objClazz->typeinfo.interfaceIndex >= index &&
-           objClazz->typeinfo.interfaces[index];
-  }
-  /* instanceof AClass */
-  else {
-    /* this class' vtable can only be found at this index */
-    int index = objClazz->typeinfo.depth - clazz->typeinfo.depth - 1;
-    return index >= 0 && objClazz->typeinfo.vtables[index] == clazz;
-  }
+  return llvm_java_is_assignable_from(obj->classRecord, cr);
 }
 
 jint llvm_java_throw(jobject obj) {

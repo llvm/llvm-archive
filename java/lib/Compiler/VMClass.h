@@ -48,7 +48,9 @@ namespace llvm { namespace Java {
     std::vector<const VMClass*> interfaces_;
     std::vector<const VMField*> memberFields_;
     std::vector<const VMMethod*> dynamicallyBoundMethods_;
-    llvm::Constant* classRecord_;
+    GlobalVariable* classRecord_;
+
+    void init();
 
     void computeLayout();
     void computeClassRecord();

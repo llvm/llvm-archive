@@ -55,6 +55,7 @@ Resolver::Resolver(Module* module)
   elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
   elements.push_back(Type::IntTy);
   elements.push_back(PointerType::get(PointerType::get(classRecordType_)));
+  elements.push_back(PointerType::get(classRecordType_));
   elements.push_back(Type::IntTy);
   typeInfoType_ = StructType::get(elements);
 

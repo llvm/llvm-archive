@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LEVEL := .
 
-DIRS := lib tools
+DIRS := lib tools runtime
 
 include $(LEVEL)/Makefile.common

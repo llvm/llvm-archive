@@ -852,13 +852,6 @@ namespace llvm { namespace Java { namespace {
       return function;
     }
 
-//     void pre_inst(unsigned bcI) {
-//       BasicBlock* previous = currentBB_;
-//       currentBB_ = bbBuilder_->getBBAt(bcI);
-//       if (previous != currentBB_ && !previous->getTerminator())
-//         new BranchInst(bbBuilder_->getFallThroughBranch(previous), previous);
-//     }
-
     void do_aconst_null() {
       ClassFile* root = ClassFile::get("java/lang/Object");
       currentOpStack_->push(llvm::Constant::getNullValue(

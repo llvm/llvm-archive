@@ -72,7 +72,7 @@ namespace llvm { namespace Java { namespace {
     BasicBlock* currentBB_;
     Locals locals_;
     OperandStack opStack_;
-    Function *getObjectClass_, *setObjectClass_, *throw_, *isInstanceOf_,
+    Function *getVtable_, *setVtable_, *throw_, *isInstanceOf_,
       *memset_;
 
     typedef SetVector<Function*> FunctionSet;
@@ -151,17 +151,17 @@ namespace llvm { namespace Java { namespace {
                                       &module_);
       module_.addTypeName("llvm_java_object_base", ObjectBaseTy);
       module_.addTypeName("llvm_java_object_vtable", VTableBaseTy);
-      getObjectClass_ = module_.getOrInsertFunction(
-        "llvm_java_GetObjectClass", VTableBaseRefTy,
+      getVtable_ = module_.getOrInsertFunction(
+        "llvm_java_get_vtable", VTableBaseRefTy,
         ObjectBaseRefTy, NULL);
-      setObjectClass_ = module_.getOrInsertFunction(
-        "llvm_java_SetObjectClass", Type::VoidTy,
+      setVtable_ = module_.getOrInsertFunction(
+        "llvm_java_set_vtable", Type::VoidTy,
         ObjectBaseRefTy, VTableBaseRefTy, NULL);
       throw_ = module_.getOrInsertFunction(
-        "llvm_java_Throw", Type::IntTy,
+        "llvm_java_throw", Type::IntTy,
         ObjectBaseRefTy, NULL);
       isInstanceOf_ = module_.getOrInsertFunction(
-        "llvm_java_IsInstanceOf", Type::IntTy,
+        "llvm_java_is_instance_of", Type::IntTy,
         ObjectBaseRefTy, VTableBaseRefTy, NULL);
       memset_ = module_.getOrInsertFunction(
         "llvm.memset", Type::VoidTy,
@@ -2063,7 +2063,7 @@ namespace llvm { namespace Java { namespace {
                             "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Value* vtable = new CallInst(getObjectClass_, objBase, TMP, currentBB_);
+      Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, vi->vtable->getType(),
                             className + "<vtable>", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
@@ -2143,7 +2143,7 @@ namespace llvm { namespace Java { namespace {
                             "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
-      Value* vtable = new CallInst(getObjectClass_, objBase, TMP, currentBB_);
+      Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, PointerType::get(VTableInfo::VTableTy),
                             TMP, currentBB_);
       // get the interfaces array of vtables
@@ -2196,7 +2196,7 @@ namespace llvm { namespace Java { namespace {
       Value* vtable = new CastInst(vi.vtable,
                                    VTableBaseRefTy,
                                    TMP, currentBB_);
-      new CallInst(setObjectClass_, objBase, vtable, "", currentBB_);
+      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
       push(objRef);
     }
 
@@ -2270,7 +2270,7 @@ namespace llvm { namespace Java { namespace {
       Value* vtable = new CastInst(vi.vtable,
                                    VTableBaseRefTy,
                                    TMP, currentBB_);
-      new CallInst(setObjectClass_, objBase, vtable, "", currentBB_);
+      new CallInst(setVtable_, objBase, vtable, "", currentBB_);
       push(objRef);
     }
 

@@ -816,11 +816,10 @@ void Compiler::compile(Module& m, const std::string& className)
 
     BasicBlock* bb = new BasicBlock("entry", javaMain);
     const FunctionType* mainTy = main->getFunctionType();
-    new ReturnInst(
-        new CallInst(main,
-                     // FIXME: Forward correct params from llvm_java_main
-                     llvm::Constant::getNullValue(mainTy->getParamType(0)),
-                     TMP,
-                     bb),
-                   bb);
+    new CallInst(main,
+                 // FIXME: Forward correct params from llvm_java_main
+                 llvm::Constant::getNullValue(mainTy->getParamType(0)),
+                 TMP,
+                 bb);
+    new ReturnInst(NULL, bb);
 }

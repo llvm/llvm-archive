@@ -32,7 +32,9 @@ int main(int argc, char* argv[])
         std::auto_ptr<Java::ClassFile> cf(
             Java::ClassFile::readClassFile(std::cin));
 
-        Module* module = Java::compile(*cf);
+        Java::Compiler compiler;
+
+        Module* module = compiler.compile(*cf);
 
         PassManager passes;
         passes.add(new PrintModulePass(&std::cout));

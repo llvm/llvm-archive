@@ -92,7 +92,7 @@ const Class& Resolver::getClassForDesc(const std::string& descriptor)
 {
   ClassMap::iterator it = classMap_.lower_bound(descriptor);
   if (it == classMap_.end() || it->first != descriptor) {
-    DEBUG(std::cerr << "Building Class for: " << descriptor << '\n');
+    DEBUG(std::cerr << "Loading class: " << descriptor << '\n');
     // Insert dummy class to the map.
     it = classMap_.insert(it, std::make_pair(descriptor, Class(*this)));
     switch (descriptor[0]) {
@@ -110,12 +110,12 @@ const Class& Resolver::getClassForDesc(const std::string& descriptor)
     case 'L': {
       unsigned pos = descriptor.find(';', 1);
       const std::string& className = descriptor.substr(1, pos - 1);
-      it->second.buildClass(className);
+      it->second.loadClass(className);
       break;
     }
     case '[': {
       const std::string& componentDescriptor = descriptor.substr(1);
-      it->second.buildArrayClass(getClassForDesc(componentDescriptor));
+      it->second.loadArrayClass(getClassForDesc(componentDescriptor));
       break;
     }
     default:
@@ -123,7 +123,7 @@ const Class& Resolver::getClassForDesc(const std::string& descriptor)
       abort();
     }
     module_.addTypeName(descriptor, it->second.getStructType());
-    DEBUG(std::cerr << "Built Class for: " << descriptor << '\n');
+    DEBUG(std::cerr << "Loaded class: " << descriptor << '\n');
   }
 
   return it->second;

@@ -43,18 +43,21 @@ namespace llvm { namespace Java {
     void addField(const std::string& name, const Type* type);
     void resolveType();
 
-    // Creates a dummy class.
-    explicit Class(Resolver& resolver);
-
     // Creates primitive class for type.
     Class(Resolver& resolver, const Type* type);
 
-    // Builds the class object for the named class.
-    void buildClass(const std::string& className);
-    // Builds the array class object of component type componentClass.
-    void buildArrayClass(const Class& componentClass);
-
     friend class Resolver;
+
+    // Resolver interface.
+
+    // Creates a dummy class.
+    explicit Class(Resolver& resolver);
+
+    // Builds the class object for the named class.
+    void loadClass(const std::string& className);
+    // Builds the array class object of component type componentClass.
+    void loadArrayClass(const Class& componentClass);
+
     
   public:
     const Type* getStructType() const { return structType_; }

@@ -68,7 +68,7 @@ void Class::resolveType() {
   type_ = PointerType::get(structType_);
 }
 
-void Class::buildClass(const std::string& className)
+void Class::loadClass(const std::string& className)
 {
   classFile_ = ClassFile::get(className);
 
@@ -107,7 +107,7 @@ void Class::buildClass(const std::string& className)
   assert(!isa<OpaqueType>(getStructType()) &&"Class not initialized properly!");
 }
 
-void Class::buildArrayClass(const Class& componentClass)
+void Class::loadArrayClass(const Class& componentClass)
 {
   superClass_ = &resolver_->getClass("java/lang/Object");
   componentClass_ = &componentClass;

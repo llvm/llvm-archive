@@ -7,8 +7,8 @@
 #ifndef GRAPHDRAWER_H
 #define GRAPHDRAWER_H
 
-#include "PictureCanvas.h"
 #include "ItemDisplayer.h"
+#include "PictureCanvas.h"
 #include "wx/wx.h"
 #include <iostream>
 
@@ -19,10 +19,8 @@ namespace llvm {
 
 class TVTreeItemData;
 
-//===----------------------------------------------------------------------===//
-
-// GraphDrawer abstract class
-
+/// GraphDrawer abstract class
+///
 class GraphDrawer : public ItemDisplayer {
   PictureCanvas *myPictureCanvas;
 

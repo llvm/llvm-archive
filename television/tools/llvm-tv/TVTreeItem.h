@@ -9,6 +9,7 @@
 
 #include "llvm/Assembly/CachedWriter.h"
 #include "GraphDrawer.h"
+#include "CodeViewer.h"
 #include <wx/wx.h>
 #include <wx/treectrl.h>
 #include <ostream>
@@ -32,6 +33,7 @@ public:
   virtual llvm::Module *getModule() { return 0; }
   virtual llvm::Function *getFunction() { return 0; }
   virtual wxImage *graphOn(GraphDrawer *grapher) { return 0; }
+  virtual void viewCodeOn(TVCodeViewer *viewer) { }
   virtual void printHTML(std::ostream &os) { }
   virtual std::string getTitle () { return "an untitled object"; }
   virtual std::string dsGraphName () { return "graph of " + getTitle (); }
@@ -58,6 +60,7 @@ public:
   wxImage *graphOn(GraphDrawer *grapher) {
     return grapher->drawModuleGraph (myModule);
   }
+  void viewCodeOn(TVCodeViewer *viewer) { viewer->viewModuleCode (myModule); }
 
   virtual std::string getTitle () { return m_desc.c_str(); }
   virtual std::string dsGraphName () { return "globals graph"; }
@@ -80,6 +83,7 @@ public:
   wxImage *graphOn(GraphDrawer *grapher) {
     return grapher->drawFunctionGraph (myFunc); 
   }
+  void viewCodeOn(TVCodeViewer *viewer) { viewer->viewFunctionCode (myFunc); }
 
   virtual std::string getTitle ();
 

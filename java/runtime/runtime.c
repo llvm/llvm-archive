@@ -77,7 +77,7 @@ jint llvm_java_throw(jobject obj) {
 extern struct llvm_java_class_record* llvm_java_class_records;
 
 struct llvm_java_class_record*
-llvm_java_find_class(JNIEnv* env, const char* name) {
+llvm_java_find_class_record(const char* name) {
   struct llvm_java_class_record** cr = &llvm_java_class_records;
   while (*cr)
     if (strcmp((*cr)->typeinfo.name, name) == 0)

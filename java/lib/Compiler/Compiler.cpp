@@ -517,9 +517,8 @@ namespace llvm { namespace Java { namespace {
         void do_iinc(unsigned bcI, unsigned index, int amount) {
             Value* v = new LoadInst(getOrCreateLocal(index, Type::IntTy),
                                     TMP, getBBAt(bcI));
-            BinaryOperator::create(Instruction::Add, v,
-                                   ConstantSInt::get(Type::IntTy, amount),
-                                   TMP, getBBAt(bcI));
+            BinaryOperator::createAdd(v, ConstantSInt::get(Type::IntTy, amount),
+                                      TMP, getBBAt(bcI));
             new StoreInst(v, getOrCreateLocal(index, Type::IntTy),
                           getBBAt(bcI));
         }
@@ -532,13 +531,11 @@ namespace llvm { namespace Java { namespace {
         void do_lcmp(unsigned bcI) {
             Value* v2 = opStack_.top(); opStack_.pop();
             Value* v1 = opStack_.top(); opStack_.pop();
-            Value* c =
-                new SetCondInst(Instruction::SetGT, v1, v2, TMP, getBBAt(bcI));
-            Value* r =
-                new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
-                               ConstantSInt::get(Type::IntTy, 0), TMP,
-                               getBBAt(bcI));
-            c = new SetCondInst(Instruction::SetLT, v1, v2, TMP, getBBAt(bcI));
+            Value* c = BinaryOperator::createSetGT(v1, v2, TMP, getBBAt(bcI));
+            Value* r = new SelectInst(c, ConstantSInt::get(Type::IntTy, 1),
+                                      ConstantSInt::get(Type::IntTy, 0), TMP,
+                                      getBBAt(bcI));
+            c = BinaryOperator::createSetLT(v1, v2, TMP, getBBAt(bcI));
             r = new SelectInst(c, ConstantSInt::get(Type::IntTy, -1), r, TMP,
                                getBBAt(bcI));
             opStack_.push(r);

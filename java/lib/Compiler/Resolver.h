@@ -87,7 +87,7 @@ namespace llvm { namespace Java {
 
     unsigned getNextInterfaceIndex() { return nextInterfaceIndex_++; }
     Module* getModule() { return module_; }
-
+    void emitClassRecordsArray() const;
   };
 
 } } // namespace llvm::Java

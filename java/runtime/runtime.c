@@ -4,7 +4,7 @@
 
 struct llvm_java_object_base;
 struct llvm_java_object_header;
-struct llvm_java_object_vtable;
+struct llvm_java_object_class_record;
 struct llvm_java_object_typeinfo;
 
 struct llvm_java_object_header {
@@ -19,7 +19,7 @@ struct llvm_java_object_base {
 
 struct llvm_java_object_typeinfo {
   /* The name of this class */
-  const char** name;
+  const char* name;
 
   /* The number of super classes to java.lang.Object. */
   jint depth;
@@ -30,7 +30,6 @@ struct llvm_java_object_typeinfo {
   /* If an interface its interface index, otherwise the last interface
    * index implemented by this class. */
   jint interfaceIndex;
-
 
   /* The interface class records this class implements. */
   struct llvm_java_object_class_record** interfaces;
@@ -122,6 +121,17 @@ jint llvm_java_throw(jobject obj) {
 
 /* The implementation of JNI functions */
 
+extern const struct llvm_java_object_class_record* llvm_java_class_records;
+
+static jclass llvm_java_find_class(JNIEnv* env, const char* name) {
+  const struct llvm_java_object_class_record** clazz = &llvm_java_class_records;
+  while (*clazz)
+    if (strcmp((*clazz)->typeinfo.name, name) == 0)
+      return (jclass) clazz;
+
+  return NULL;
+}
+
 #define HANDLE_TYPE(TYPE) \
   struct llvm_java_##TYPE##array { \
     struct llvm_java_object_base object_base; \
@@ -170,7 +180,7 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL,
   NULL,
   NULL,
-  NULL,
+  &llvm_java_find_class,
   NULL,
   NULL,
   NULL,

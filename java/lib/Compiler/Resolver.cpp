@@ -15,6 +15,7 @@
 
 #include "Resolver.h"
 #include <llvm/Java/ClassFile.h>
+#include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Support/Debug.h>
 
@@ -208,4 +209,28 @@ const Type* Resolver::getStorageType(const Type* type) const
     return Type::LongTy;
   else
     return type;
+}
+
+void Resolver::emitClassRecordsArray() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(classMap_.size() + 1);
+
+  for (ClassMap::const_iterator i = classMap_.begin(), e = classMap_.end();
+       i != e; ++i)
+    init.push_back(ConstantExpr::getCast(i->second.getClassRecord(),
+                                         classRecordPtrType_));
+
+  // Null terminate the array.
+  init.push_back(llvm::Constant::getNullValue(classRecordPtrType_));
+
+  const ArrayType* arrayType = ArrayType::get(classRecordPtrType_, init.size());
+
+  new GlobalVariable(
+    arrayType,
+    true,
+    GlobalVariable::ExternalLinkage,
+    ConstantArray::get(arrayType, init),
+    "llvm_java_class_records",
+    module_);                       
 }

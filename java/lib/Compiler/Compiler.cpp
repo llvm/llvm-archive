@@ -517,6 +517,8 @@ namespace llvm { namespace Java { namespace {
                          "llvm_java_class_initializers",
                          module_);
 
+      // Emit the array of all class records.
+      resolver_->emitClassRecordsArray();
 
       return method;
     }

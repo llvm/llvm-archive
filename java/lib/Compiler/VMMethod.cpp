@@ -21,9 +21,7 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-VMMethod::VMMethod(const VMClass* parent, const Method* method)
-  : parent_(parent),
-    method_(method)
+void VMMethod::init()
 {
   const std::string& methodName = method_->getName()->str();
   const std::string& methodDescriptor = method_->getDescriptor()->str();
@@ -36,4 +34,22 @@ VMMethod::VMMethod(const VMClass* parent, const Method* method)
     className + '/' + methodName + methodDescriptor;
   Module* module = resolver->getModule();
   function_ = module->getOrInsertFunction(functionName, functionType);
+}
+
+VMMethod::VMMethod(const VMClass* parent, const Method* method)
+  : parent_(parent),
+    method_(method),
+    index_(-1)
+{
+  assert(isStaticallyBound() && "This should be a statically bound method!");
+  init();
+}
+
+VMMethod::VMMethod(const VMClass* parent, const Method* method, int index)
+  : parent_(parent),
+    method_(method),
+    index_(index)
+{
+  assert(isDynamicallyBound() && "This should be a dynamically bound method!");
+  init();
 }

@@ -1,3 +1,9 @@
+//===-- DSGraphDrawer.cpp - DSGraph viewing ----------------------*- C++ -*-==//
+//
+// Classes for viewing DataStructure analysis graphs
+//
+//===----------------------------------------------------------------------===//
+
 #include "DSAGraphDrawer.h"
 #include "TVTreeItem.h"
 #include "GraphPrinters.h"
@@ -51,7 +57,7 @@ std::string BUGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
   if (item)
     return "Bottom-up data structure " + item->dsGraphName ();
   else
-    return "Bottom-up data structure graph";
+    return "Bottom-up DSGraph";
 }
 
 //===----------------------------------------------------------------------===//
@@ -77,7 +83,7 @@ std::string TDGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
   if (item)
     return "Top-down data structure " + item->dsGraphName ();
   else
-    return "Top-down data structure graph";
+    return "Top-down DSGraph";
 }
 
 //===----------------------------------------------------------------------===//
@@ -103,5 +109,5 @@ std::string LocalGraphDrawer::getDisplayTitle (TVTreeItemData *item) {
   if (item)
     return "Local data structure " + item->dsGraphName ();
   else 
-    return "Local data structure graph";
+    return "Local DSGraph";
 }

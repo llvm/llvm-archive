@@ -961,7 +961,28 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokespecial(unsigned bcI, unsigned index) {
-      assert(0 && "not implemented");
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
+      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
+
+      const std::string& className = methodRef->getClass()->getName()->str();
+      const std::string& methodName = nameAndType->getName()->str();
+      const std::string& methodDescr =
+        methodName + nameAndType->getDescriptor()->str();
+      std::string funcName = className + '/' + methodDescr;
+
+      const ClassInfo& ci = getClassInfo(className);
+      // constructor calls are statically bound
+      if (methodName == "<init>") {
+        FunctionType* funcType =
+          cast<FunctionType>(getType(nameAndType->getDescriptor(), ci.type));
+        Function* function = module_->getOrInsertFunction(funcName, funcType);
+        toCompileFunctions_.insert(function);
+        makeCall(function, getBBAt(bcI));
+      }
+      // otherwise we call the superclass' implementation of the method
+      else {
+        assert(0 && "not implemented");
+      }
     }
 
     void do_invokestatic(unsigned bcI, unsigned index) {

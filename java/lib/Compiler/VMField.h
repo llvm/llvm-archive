@@ -40,20 +40,10 @@ namespace llvm { namespace Java {
     // Interface for VMClass.
 
     // Create static field reference.
-    VMField(const VMClass* parent, const VMClass* clazz, const Field* field);
+    VMField(const VMClass* parent, const Field* field);
 
     // Create member field reference.
-    VMField(const VMClass* parent,
-            const VMClass* clazz,
-            const Field* field,
-            int index)
-      : parent_(parent),
-        class_(clazz),
-        field_(field) {
-      assert(!isStatic() && "This should be a member field!");
-      data_.index = index;
-    }
-
+    VMField(const VMClass* parent, const Field* field, int index);
 
   public:
     const std::string& getName() const { return field_->getName()->str(); }

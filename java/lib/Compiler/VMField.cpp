@@ -20,11 +20,9 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-VMField::VMField(const VMClass* parent,
-                 const VMClass* clazz,
-                 const Field* field)
+VMField::VMField(const VMClass* parent, const Field* field)
   : parent_(parent),
-    class_(clazz),
+    class_(parent->getClass(field->getDescriptorIndex())),
     field_(field)
 {
   assert(isStatic() && "This should be a static field!");
@@ -48,4 +46,13 @@ VMField::VMField(const VMClass* parent,
                                     init,
                                     parent_->getName() + '/' + getName(),
                                     parent_->getResolver()->getModule());
+}
+
+VMField::VMField(const VMClass* parent, const Field* field, int index)
+  : parent_(parent),
+    class_(parent->getClass(field->getDescriptorIndex())),
+    field_(field)
+{
+  assert(!isStatic() && "This should be a member field!");
+  data_.index = index;
 }

@@ -119,19 +119,17 @@ void VMClass::computeLayout() {
     const Fields& fields = classFile_->getFields();
     for (unsigned i = 0, e = fields.size(); i != e; ++i) {
       Field* field = fields[i];
-      const VMClass* fc = getClass(field->getDescriptorIndex());
+      const std::string& name = field->getName()->str();
       if (field->isStatic()) {
-        fieldMap_.insert(std::make_pair(field->getName()->str(),
-                                        VMField(this, fc, field)));
+        fieldMap_.insert(std::make_pair(name, VMField(this, field)));
       }
       else {
         unsigned index = memberFields_.size() + 1;
-        FieldMap::iterator i =
-          fieldMap_.insert(std::make_pair(
-                             field->getName()->str(),
-                             VMField(this, fc, field, index))).first;
-        memberFields_.push_back(&i->second);
-        layout.push_back(fc->getType());
+        FieldMap::iterator i = fieldMap_.insert(
+          std::make_pair(name, VMField(this, field, index))).first;
+        const VMField* vmf = &i->second;
+        memberFields_.push_back(vmf);
+        layout.push_back(vmf->getClass()->getType());
       }
     }
   }

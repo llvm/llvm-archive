@@ -18,7 +18,6 @@
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
-#include <llvm/Support/FileUtilities.h>
 
 #include <cassert>
 #include <fstream>
@@ -174,24 +173,26 @@ ClassFile* ClassFile::readClassFile(std::istream& is)
   return new ClassFile(is);
 }
 
-std::vector<std::string> ClassFile::getClassPath()
+std::vector<sys::Path> ClassFile::getClassPath()
 {
   DEBUG(std::cerr << "CLASSPATH=" << ClassPath << '\n');
 
-  std::vector<std::string> result;
+  std::vector<sys::Path> result;
+  sys::Path path;
   unsigned b = 0, e = 0;
   do {
     e = ClassPath.find(':', b);
-    result.push_back(ClassPath.substr(b, e - b));
+    if (path.setDirectory(ClassPath.substr(b, e - b)))
+      result.push_back(path);
     b = e + 1;
   } while (e != std::string::npos);
 
   return result;
 }
 
-std::string ClassFile::getFileForClass(const std::string& classname)
+sys::Path ClassFile::getFileForClass(const std::string& classname)
 {
-  static const std::vector<std::string> classpath = getClassPath();
+  static const std::vector<sys::Path> classpath = getClassPath();
   DEBUG(std::cerr << "Looking up class: " << classname << '\n');
 
   std::string clazz = classname;
@@ -202,9 +203,10 @@ std::string ClassFile::getFileForClass(const std::string& classname)
   clazz += ".class";
 
   for (unsigned i = 0, e = classpath.size(); i != e; ++i) {
-    std::string filename = classpath[i] + '/' + clazz;
-    DEBUG(std::cerr << "Trying file: " << filename << '\n');
-    if (FileOpenable(filename))
+    sys::Path filename = classpath[i];
+    filename.appendFile(clazz);
+    DEBUG(std::cerr << "Trying file: " << filename.toString() << '\n');
+    if (filename.isFile())
       return filename;
   }
 

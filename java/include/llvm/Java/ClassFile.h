@@ -15,6 +15,8 @@
 #ifndef LLVM_JAVA_CLASSFILE_H
 #define LLVM_JAVA_CLASSFILE_H
 
+#include <llvm/System/Path.h>
+
 #include <iosfwd>
 #include <map>
 #include <stdexcept>
@@ -67,8 +69,8 @@ namespace llvm { namespace Java {
 
   class ClassFile {
     static ClassFile* readClassFile(std::istream& is);
-    static std::vector<std::string> getClassPath();
-    static std::string getFileForClass(const std::string& classname);
+    static std::vector<llvm::sys::Path> getClassPath();
+    static sys::Path getFileForClass(const std::string& classname);
 
     typedef std::map<std::string, Method*> Name2MethodMap;
 

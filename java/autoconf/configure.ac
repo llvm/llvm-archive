@@ -14,6 +14,7 @@ dnl List every Makefile that exists within your source tree
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
 AC_CONFIG_MAKEFILE(lib/ClassFile/Makefile)
+AC_CONFIG_MAKEFILE([test/Makefile])
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(tools/classdump/Makefile)
 

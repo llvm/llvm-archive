@@ -14,19 +14,6 @@
 #include <cassert>
 #include <sstream>
 
-/// refreshView - Make sure the display is up-to-date with respect to
-/// the list.
-///
-void TVListCtrl::refreshView () {
-  // Clear out the list and then re-add all the items.
-  int index = 0;
-  ClearAll ();
-  for (Items::iterator i = itemList.begin(), e = itemList.end(); i != e; ++i) {
-    InsertItem (index, i->label ());
-    ++index;
-  }
-}
-
 /// TreeCtrl constructor that creates the root and adds it to the tree
 ///
 TVTreeCtrl::TVTreeCtrl(wxWindow *parent, const wxWindowID id,
@@ -77,29 +64,28 @@ void TVTreeCtrl::updateSnapshotList(std::vector<TVSnapshot>& list) {
 void TVTreeCtrl::updateTextDisplayed() {
   // Get parent and then the text window, then get the selected LLVM object.
   wxWindow *displayWidget = ((wxSplitterWindow *) GetParent())->GetWindow2();
-#if defined(NOHTML)
-  TVTextCtrl *textDisplay = dynamic_cast<TVTextCtrl *> (displayWidget);
-  assert (textDisplay && "could not retrieve display widget");
-#else
-  TVHtmlWindow *htmlDisplay = dynamic_cast<TVHtmlWindow *> (displayWidget);
-  assert (htmlDisplay && "could not retrieve display widget");
-#endif
+  ItemDisplayer *dw = dynamic_cast<ItemDisplayer *> (displayWidget);
+  assert (dw && "could not retrieve display widget");
 
   TVTreeItemData *item = (TVTreeItemData*)GetItemData(GetSelection());
 
   // Display the assembly language for the selected LLVM object in the
   // right-hand pane.
-#if defined(NOHTML)
-  textDisplay->displayItem (item);
-#else
-  htmlDisplay->displayItem (item);
-#endif
+  dw->displayItem (item);
 }
+
+/// OnSelChanged - Trigger the text display to be updated with the new
+/// item selected
+void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
+  updateTextDisplayed();
+}
+
+///==---------------------------------------------------------------------==///
 
 void TVTextCtrl::displayItem (TVTreeItemData *item) {
   std::ostringstream Out;
   item->print (Out);
-  Clear ();
+  SetValue ("");
   AppendText (Out.str ().c_str ());
 }
 
@@ -110,12 +96,6 @@ void TVHtmlWindow::displayItem (TVTreeItemData *item) {
   SetPage (wxString (""));
   AppendToPage (wxString (Out.str ().c_str ()));
   Show ();
-}
-
-/// OnSelChanged - Trigger the text display to be updated with the new
-/// item selected
-void TVTreeCtrl::OnSelChanged(wxTreeEvent &event) {
-  updateTextDisplayed();
 }
 
 ///==---------------------------------------------------------------------==///

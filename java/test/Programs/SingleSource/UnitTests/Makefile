@@ -22,6 +22,7 @@ JAVA_TESTS := Abstract \
 	LookupSwitch \
 	StaticInitializers \
 	TableSwitch \
+	Test \
 	VirtualCall \
 	VTable \
 #	MultiArray \

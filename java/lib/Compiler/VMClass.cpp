@@ -72,47 +72,41 @@ VMClass::VMClass(Resolver* resolver, const Type* type)
 
 const VMField* VMClass::lookupField(const std::string& name) const
 {
-  FieldMap::const_iterator it = fieldMap_.find(name);
-  if (it != fieldMap_.end())
-    return &it->second;
+  if (const VMField* field = getField(name))
+    return field;
 
   for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i) {
     const VMClass* interface = getInterface(i);
-    it = interface->fieldMap_.find(name);
-    if (it != interface->fieldMap_.end())
-      return &it->second;
+    if (const VMField* field = interface->getField(name))
+      return field;
   }
 
   for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i) {
     const VMClass* superClass = getSuperClass(i);
-    it = superClass->fieldMap_.find(name);
-    if (it != superClass->fieldMap_.end())
-      return &it->second;
+    if (const VMField* field = superClass->getField(name))
+      return field;
   }
 
   assert(0 && "Field not found!");
   abort();
 }
 
-const VMMethod* VMClass::lookupMethod(const std::string& name) const
+const VMMethod* VMClass::lookupMethod(const std::string& nameAndType) const
 {
-  MethodMap::const_iterator it = methodMap_.find(name);
-  if (it != methodMap_.end())
-    return &it->second;
+  if (const VMMethod* method = getMethod(nameAndType))
+    return method;
 
   if (isInterface())
     for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i) {
       const VMClass* interface = getInterface(i);
-      it = interface->methodMap_.find(name);
-      if (it != interface->methodMap_.end())
-        return &it->second;
+      if (const VMMethod* method = interface->getMethod(nameAndType))
+        return method;
     }
   else
     for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i) {
       const VMClass* superClass = getSuperClass(i);
-      it = superClass->methodMap_.find(name);
-      if (it != superClass->methodMap_.end())
-        return &it->second;
+      if (const VMMethod* method = superClass->getMethod(nameAndType))
+        return method;
     }
 
   assert(0 && "Method not found!");

@@ -51,7 +51,7 @@ namespace llvm { namespace Java {
     void computeLayout();
     void computeClassRecord();
     const VMField* lookupField(const std::string& name) const;
-    const VMMethod* lookupMethod(const std::string& name) const;
+    const VMMethod* lookupMethod(const std::string& nameAndType) const;
     
     friend class Resolver;
 
@@ -95,7 +95,15 @@ namespace llvm { namespace Java {
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;
     const VMField* getField(unsigned index) const;
+    const VMField* getField(const std::string& name) const {
+      FieldMap::const_iterator it = fieldMap_.find(name);
+      return it == fieldMap_.end() ? NULL : &it->second;
+    }
     const VMMethod* getMethod(unsigned index) const;
+    const VMMethod* getMethod(const std::string& nameAndType) const {
+      MethodMap::const_iterator it = methodMap_.find(nameAndType);
+      return it == methodMap_.end() ? NULL : &it->second;
+    }
   };
 
 } } // namespace llvm::Java

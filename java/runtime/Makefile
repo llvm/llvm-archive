@@ -7,11 +7,7 @@
 #
 ##===----------------------------------------------------------------------===##
 LEVEL := ..
+BYTECODE_LIBRARY=1
+LIBRARYNAME=jrt
 
 include $(LEVEL)/Makefile.common
-
-all:: runtime.bc
-
-clean::
-	rm -f *.bc
-

@@ -17,14 +17,19 @@ struct llvm_java_object_typeinfo {
   struct llvm_java_object_vtable** vtables;
   unsigned lastIface;
   union {
-    struct llvm_java_object_vtable** interfaces;
     unsigned interfaceFlag;
+    struct llvm_java_object_vtable** interfaces;
   };
 };
 
 struct llvm_java_object_vtable {
   struct llvm_java_object_typeinfo typeinfo;
 };
+
+struct llvm_java_object_vtable*
+llvm_java_GetObjectClass(struct llvm_java_object_base* obj) {
+  return obj->vtable;
+}
 
 int llvm_java_IsInstanceOf(struct llvm_java_object_base* obj,
                            struct llvm_java_object_vtable* clazz) {

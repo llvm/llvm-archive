@@ -791,10 +791,9 @@ namespace llvm { namespace Java { namespace {
             getType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
           llvm::Constant* vfun =
             llvm::Constant::getNullValue(PointerType::get(funcTy));
-          if (!cf->isInterface()) {
+          if (!cf->isInterface() && !method->isAbstract()) {
             vfun = module_.getOrInsertFunction(funcName, funcTy);
-            if (!method->isAbstract())
-              scheduleFunction(cast<Function>(vfun));
+            scheduleFunction(cast<Function>(vfun));
           }
 
           unsigned& index = vi.m2iMap[methodDescr];

@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Support/FileUtils.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 
 /// Returns the number of entries in the directory named PATH.
@@ -52,5 +54,17 @@ void llvm::GetFilesInDir(const std::string &path,
     }
     free(namelist);
   }
+}
+
+bool llvm::DirectoryExists (const std::string &dirPath) {
+  struct stat stbuf;
+  if (stat (dirPath.c_str (), &stbuf) < 0)
+    return false;
+  return S_ISDIR (stbuf.st_mode);
+}
+
+void llvm::EnsureDirectoryExists (const std::string &dirPath) {
+  if (!DirectoryExists (dirPath))
+    mkdir (dirPath.c_str (), 0777);
 }
 

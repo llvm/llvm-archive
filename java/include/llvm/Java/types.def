@@ -1,0 +1,29 @@
+//===-- llvm/Java/types.def - File that describes Java primitives -*- C++ -*-=//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// 
+//===----------------------------------------------------------------------===//
+//
+// This file contains descriptions of the various Java primitive types. This
+// is used as a central place for enumerating the different primitive types.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: NO INCLUDE GUARD DESIRED!
+
+// Provide definitions of macros so that users of this file do not have to
+// define everything to use it...
+
+HANDLE_TYPE(boolean)
+HANDLE_TYPE(byte)
+HANDLE_TYPE(char)
+HANDLE_TYPE(short)
+HANDLE_TYPE(int)
+HANDLE_TYPE(long)
+HANDLE_TYPE(float)
+HANDLE_TYPE(double)
+
+#undef HANDLE_TYPE

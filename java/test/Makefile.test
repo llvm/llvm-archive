@@ -44,20 +44,19 @@ DIFFS := $(addsuffix .diff, $(PREFIXED_JAVA_TESTS))
 .PRECIOUS: %.out-nat %.out-jit %.diff
 
 # rule to run a .class file with the jvm
-%.out-nat %.err-nat: %.class
+%.out-nat: %.class
 	-$(Verb)LD_LIBRARY_PATH=$(LibDir) $(JAVA) -cp Output $(notdir $*) \
-		> $*.out-nat 2> $*.err-nat
+		> $*.out-nat 2>&1
 
 # rule to run a .class file with the llvm jit
-%.out-jit %.err-jit: %.llvm.bc
-	-$(Verb)$(LLI) $< > $*.out-jit 2> $*.err-jit
+%.out-jit: %.llvm.bc
+	-$(Verb)$(LLI) $< > $*.out-jit 2>&1
 
 # rule to diff test output
-%.diff: %.out-nat %.err-nat %.out-jit %.err-jit
+%.diff: %.out-nat %.out-jit
 	$(Verb)diff $*.out-nat $*.out-jit > $@ \
-	&& echo -n "PASS: $(notdir $*)" || echo -n "FAIL: $(notdir $*)"
-	$(Verb)diff $*.err-nat $*.err-jit > /dev/null \
-	&& echo "" || echo " (stderr mismatch)"
+	&& echo "PASS: $(notdir $*)" \
+	|| echo "FAIL: $(notdir $*)"
 
 # rule to link bytecode with runtime
 %.llvm %.llvm.bc: %.linked.bc $(LibDir)/libjrt.bca $(EXTRA_OBJS) $(LOPT)

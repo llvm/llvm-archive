@@ -342,7 +342,6 @@ namespace llvm { namespace Java { namespace {
               init.resize(elements.size(), NULL);
             }
             init[index] = vfun;
-            DEBUG(std::cerr << index << " = " << methodDescr << '\n');
           }
         }
 
@@ -365,8 +364,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     GlobalVariable* getStaticField(unsigned index) {
-      ConstantFieldRef* fieldRef =
-        (ConstantFieldRef*)(cf_->getConstantPool()[index]);
+      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
       std::string globalName =
@@ -380,8 +378,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     Value* getField(unsigned bcI, unsigned index, Value* ptr) {
-      ConstantFieldRef* fieldRef =
-        (ConstantFieldRef*)(cf_->getConstantPool()[index]);
+      ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
       return getField(bcI,
@@ -568,7 +565,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_ldc(unsigned bcI, unsigned index) {
-      Constant* c = cf_->getConstantPool()[index];
+      Constant* c = cf_->getConstant(index);
       assert(getConstant(c) && "Java constant not handled!");
       opStack_.push(getConstant(c));
     }
@@ -926,8 +923,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokevirtual(unsigned bcI, unsigned index) {
-      ConstantMethodRef* methodRef =
-        (ConstantMethodRef*)(cf_->getConstantPool()[index]);
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       const std::string className = methodRef->getClass()->getName()->str();
@@ -960,8 +956,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokestatic(unsigned bcI, unsigned index) {
-      ConstantMethodRef* methodRef =
-        (ConstantMethodRef*)(cf_->getConstantPool()[index]);
+      ConstantMethodRef* methodRef = cf_->getConstantMethodRef(index);
       ConstantNameAndType* nameAndType = methodRef->getNameAndType();
 
       std::string funcName =

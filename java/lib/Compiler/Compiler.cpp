@@ -2281,6 +2281,13 @@ namespace llvm { namespace Java { namespace {
         Instruction::Add, size, arrayObjectSize, TMP, currentBB_);
       // Allocate memory for the object.
       Value* objRef = new MallocInst(Type::SByteTy, size, TMP, currentBB_);
+      std::vector<Value*> params;
+      params.reserve(4);
+      params.push_back(objRef); // dest
+      params.push_back(ConstantUInt::get(Type::UByteTy, 0)); // value
+      params.push_back(new CastInst(size, Type::ULongTy, TMP, currentBB_)); // size
+      params.push_back(ConstantUInt::get(Type::UIntTy, 0)); // alignment
+      new CallInst(memset_, params, "", currentBB_);
       objRef = new CastInst(objRef, PointerType::get(ci.getType()), TMP, currentBB_);
 
       // Store the size.

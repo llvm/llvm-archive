@@ -2129,7 +2129,19 @@ namespace llvm { namespace Java { namespace {
     void do_invokestatic(unsigned index) {
       Method* method = getMethod(cf_->getConstantMethodRef(index));
       Function* function = getFunction(method);
-      scheduleFunction(function);
+      // Intercept java/lang/System/loadLibrary() calls and add
+      // library deps to the module
+      if (function->getName().find(
+            "java/lang/System/loadLibrary(Ljava/lang/String;)V") == 0) {
+        // FIXME: we should get the string and add this library to the
+        // module.
+
+        // If this function is not defined, define it now.
+        if (function->empty())
+          new ReturnInst(NULL, new BasicBlock("entry", function));
+      }
+      else
+        scheduleFunction(function);
       makeCall(function, getParams(function->getFunctionType()));
     }
 

@@ -2290,6 +2290,9 @@ namespace llvm { namespace Java { namespace {
       params[3] = ConstantUInt::get(Type::UIntTy, 0); // alignment
       new CallInst(memset_, params, "", ip);
 
+      // Cast back to array type.
+      objRef = new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
+
       // Store the size.
       Value* lengthPtr = getArrayLengthPtr(objRef);
       new StoreInst(count, lengthPtr, ip);
@@ -2299,7 +2302,7 @@ namespace llvm { namespace Java { namespace {
       Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
-      return new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
+      return objRef;
     }
 
     void do_newarray(JType type) {

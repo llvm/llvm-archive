@@ -268,8 +268,7 @@ namespace llvm { namespace Java { namespace {
                                  Function::InternalLinkage :
                                  Function::ExternalLinkage);
 
-            const Java::CodeAttribute* codeAttr =
-                Java::getCodeAttribute(method->getAttributes());
+            const Java::CodeAttribute* codeAttr = method->getCodeAttribute();
 
             while (!opStack_.empty())
                 opStack_.pop();

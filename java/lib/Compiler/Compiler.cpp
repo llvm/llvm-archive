@@ -1958,21 +1958,6 @@ namespace llvm { namespace Java { namespace {
       const FunctionType* funTy =
         cast<FunctionType>(funPtrTy->getElementType());
 
-      // Trace function calls.
-//       llvm::Constant* functionNameArray = ConstantArray::get(fun->getName());
-//       GlobalVariable* functionName =
-//         new GlobalVariable(functionNameArray->getType(),
-//                            true,
-//                            GlobalVariable::ExternalLinkage,
-//                            functionNameArray,
-//                            fun->getName() + "name",
-//                            &module_);
-//       Function* puts =
-//         module_.getOrInsertFunction("puts",
-//                                     Type::VoidTy,
-//                                     functionName->getType(), NULL);
-//       new CallInst(puts, std::vector<Value*>(1, functionName), "", currentBB_);
-
       if (funTy->getReturnType() == Type::VoidTy)
         new CallInst(fun, params, "", currentBB_);
       else {

@@ -58,7 +58,7 @@ namespace llvm { namespace Java { namespace {
   llvm::Constant* LONG_SHIFT_MASK = ConstantUInt::get(Type::UByteTy, 0x3f);
 
   class Compiler : public BytecodeParser<Compiler> {
-    Module& module_;
+    Module* module_;
     std::auto_ptr<Resolver> resolver_;
     GlobalVariable* JNIEnvPtr_;
     const Class* class_;
@@ -98,38 +98,38 @@ namespace llvm { namespace Java { namespace {
     Class2VTableInfoMap ac2viMap_;
 
   public:
-    Compiler(Module& m)
+    Compiler(Module* m)
       : module_(m),
         resolver_(new Resolver(module_)),
-        locals_(*resolver_, 0),
-        opStack_(*resolver_, 0) {
+        locals_(resolver_.get(), 0),
+        opStack_(resolver_.get(), 0) {
       Type* JNIEnvTy = OpaqueType::get();
-      module_.addTypeName("JNIEnv", JNIEnvTy);
+      module_->addTypeName("JNIEnv", JNIEnvTy);
       JNIEnvPtr_ = new GlobalVariable(JNIEnvTy,
                                       true,
                                       GlobalVariable::ExternalLinkage,
                                       NULL,
                                       "llvm_java_JNIEnv",
-                                      &module_);
-      module_.addTypeName("llvm_java_object_vtable", VTableBaseTy);
-      getVtable_ = module_.getOrInsertFunction(
+                                      module_);
+      module_->addTypeName("llvm_java_object_vtable", VTableBaseTy);
+      getVtable_ = module_->getOrInsertFunction(
         "llvm_java_get_vtable", VTableBaseRefTy,
         resolver_->getObjectBaseRefType(), NULL);
-      setVtable_ = module_.getOrInsertFunction(
+      setVtable_ = module_->getOrInsertFunction(
         "llvm_java_set_vtable", Type::VoidTy,
         resolver_->getObjectBaseRefType(), VTableBaseRefTy, NULL);
-      throw_ = module_.getOrInsertFunction(
+      throw_ = module_->getOrInsertFunction(
         "llvm_java_throw", Type::IntTy,
         resolver_->getObjectBaseRefType(), NULL);
-      isInstanceOf_ = module_.getOrInsertFunction(
+      isInstanceOf_ = module_->getOrInsertFunction(
         "llvm_java_is_instance_of", Type::IntTy,
         resolver_->getObjectBaseRefType(), VTableBaseRefTy, NULL);
-      memcpy_ = module_.getOrInsertFunction(
+      memcpy_ = module_->getOrInsertFunction(
         "llvm.memcpy", Type::VoidTy,
         PointerType::get(Type::SByteTy),
         PointerType::get(Type::SByteTy),
         Type::ULongTy, Type::UIntTy, NULL);
-      memset_ = module_.getOrInsertFunction(
+      memset_ = module_->getOrInsertFunction(
         "llvm.memset", Type::VoidTy,
         PointerType::get(Type::SByteTy),
         Type::UByteTy, Type::ULongTy, Type::UIntTy, NULL);
@@ -163,7 +163,7 @@ namespace llvm { namespace Java { namespace {
       // contents of this string constant.
       Value* count = ConstantUInt::get(Type::UIntTy, str.size());
       Value* arrayRef = allocateArray(resolver_->getClass("[B"),
-                                      getPrimitiveArrayVTableInfo(BYTE),
+                                      &getPrimitiveArrayVTableInfo(BYTE),
                                       count,
                                       ip);
       // Copy string data.
@@ -180,7 +180,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::InternalLinkage,
         init,
         str + ".str",
-        &module_);
+        module_);
 
       std::vector<Value*> params;
       params.reserve(4);
@@ -192,13 +192,13 @@ namespace llvm { namespace Java { namespace {
       new CallInst(memcpy_, params, "", ip);
 
       // Get class information for java/lang/String.
-      const Class& ci = resolver_->getClass("java/lang/String");
-      const VTableInfo& vi = getVTableInfo(ci.getClassFile());
+      const Class* clazz = resolver_->getClass("java/lang/String");
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       // Install the vtable pointer.
       Value* objBase =
         new CastInst(globalString, resolver_->getObjectBaseRefType(), TMP, ip);
-      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
@@ -296,7 +296,7 @@ namespace llvm { namespace Java { namespace {
 
       // This is a static variable.
       VTableInfo::TypeInfoTy = StructType::get(elements);
-      module_.addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
+      module_->addTypeName(LLVM_JAVA_OBJECT_TYPEINFO, VTableInfo::TypeInfoTy);
       llvm::Constant* typeInfoInit =
         ConstantStruct::get(VTableInfo::TypeInfoTy, init);
 
@@ -329,7 +329,7 @@ namespace llvm { namespace Java { namespace {
           const FunctionType* funcTy = cast<FunctionType>(
             resolver_->getType(method->getDescriptor()->str(), true));
 
-          Function* vfun = module_.getOrInsertFunction(funcName, funcTy);
+          Function* vfun = module_->getOrInsertFunction(funcName, funcTy);
           scheduleFunction(vfun);
 
           unsigned& index = vi.m2iMap[methodDescr];
@@ -347,13 +347,13 @@ namespace llvm { namespace Java { namespace {
       cast<OpaqueType>(VTtype)->refineAbstractTypeTo(StructType::get(elements));
 
       VTableInfo::VTableTy = cast<StructType>(holder.get());
-      module_.addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
+      module_->addTypeName("java/lang/Object<vtable>", VTableInfo::VTableTy);
 
       vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
                                      true, GlobalVariable::ExternalLinkage,
                                      ConstantStruct::get(init),
                                      "java/lang/Object<vtable>",
-                                     &module_);
+                                     module_);
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object\n");
       return true;
     }
@@ -363,34 +363,34 @@ namespace llvm { namespace Java { namespace {
     /// the array.
     std::pair<unsigned,llvm::Constant*>
     buildSuperClassesVTables(const ClassFile* cf, const VTableInfo& vi) const {
-       std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
-       for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
-         superVtables[i] = ConstantExpr::getCast(
-           vi.superVtables[i],
-           PointerType::get(VTableInfo::VTableTy));
+      std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
+      for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
+        superVtables[i] = ConstantExpr::getCast(
+          vi.superVtables[i],
+          PointerType::get(VTableInfo::VTableTy));
 
-       llvm::Constant* init = ConstantArray::get(
-         ArrayType::get(PointerType::get(VTableInfo::VTableTy),
-                        superVtables.size()),
-         superVtables);
+      llvm::Constant* init = ConstantArray::get(
+        ArrayType::get(PointerType::get(VTableInfo::VTableTy),
+                       superVtables.size()),
+        superVtables);
 
-       GlobalVariable* vtablesArray = new GlobalVariable(
-         init->getType(),
-         true,
-         GlobalVariable::ExternalLinkage,
-         init,
-         cf->getThisClass()->getName()->str() + "<superclassesvtables>",
-         &module_);
+      GlobalVariable* vtablesArray = new GlobalVariable(
+        init->getType(),
+        true,
+        GlobalVariable::ExternalLinkage,
+        init,
+        cf->getThisClass()->getName()->str() + "<superclassesvtables>",
+        module_);
 
-       return std::make_pair(
-         vi.superVtables.size(),
-         ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
-     }
+      return std::make_pair(
+        vi.superVtables.size(),
+        ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
+    }
 
-     /// Builds an interface VTable for the specified <class,interface>
-     /// pair.
-     llvm::Constant* buildInterfaceVTable(const ClassFile* cf,
-                                          const ClassFile* interface) {
+    /// Builds an interface VTable for the specified <class,interface>
+    /// pair.
+    llvm::Constant* buildInterfaceVTable(const ClassFile* cf,
+                                         const ClassFile* interface) {
       DEBUG(std::cerr << "Building interface vtable: "
             << interface->getThisClass()->getName()->str() << " for: "
             << cf->getThisClass()->getName()->str() << '\n');
@@ -428,7 +428,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName =
         cf->getThisClass()->getName()->str() + '+' +
         interface->getThisClass()->getName()->str() + "<vtable>";
-      module_.addTypeName(globalName, vtable->getType());
+      module_->addTypeName(globalName, vtable->getType());
 
       GlobalVariable* gv = new GlobalVariable(
         vtable->getType(),
@@ -436,7 +436,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         vtable,
         globalName,
-        &module_);
+        module_);
 
       return ConstantExpr::getCast(gv, PointerType::get(VTableInfo::VTableTy));
     }
@@ -448,8 +448,9 @@ namespace llvm { namespace Java { namespace {
         llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
 
       assert(interfaceCf->isInterface() && "Classfile must be an interface!");
-      const Class& interface = resolver_->getClass(interfaceCf->getThisClass()->getName()->str());
-      unsigned index = interface.getInterfaceIndex();
+      const Class* interface =
+        resolver_->getClass(interfaceCf->getThisClass()->getName()->str());
+      unsigned index = interface->getInterfaceIndex();
       if (index >= vtables.size())
         vtables.resize(index+1, nullVTable);
       // Add this interface's vtable if it was not added before.
@@ -475,7 +476,7 @@ namespace llvm { namespace Java { namespace {
       // value.
       if (cf->isInterface())
         return std::make_pair(
-          resolver_->getClass(cf->getThisClass()->getName()->str()).getInterfaceIndex(),
+          resolver_->getClass(cf->getThisClass()->getName()->str())->getInterfaceIndex(),
           ConstantExpr::getCast(
             ConstantIntegral::getAllOnesValue(Type::LongTy),
             PointerType::get(PointerType::get(VTableInfo::VTableTy))));
@@ -508,7 +509,7 @@ namespace llvm { namespace Java { namespace {
       llvm::Constant* init = ConstantArray::get(
         ArrayType::get(PointerType::get(VTableInfo::VTableTy), vtables.size()),
         vtables);
-      module_.addTypeName(globalName, init->getType());
+      module_->addTypeName(globalName, init->getType());
 
       GlobalVariable* interfacesArray = new GlobalVariable(
         init->getType(),
@@ -516,7 +517,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         init,
         globalName,
-        &module_);
+        module_);
 
       return std::make_pair(
         int(vtables.size())-1,
@@ -642,7 +643,7 @@ namespace llvm { namespace Java { namespace {
           if (cf->isInterface() || method->isAbstract())
             vfun = llvm::Constant::getNullValue(PointerType::get(funcTy));
           else {
-            vfun = module_.getOrInsertFunction(funcName, funcTy);
+            vfun = module_->getOrInsertFunction(funcName, funcTy);
             scheduleFunction(cast<Function>(vfun));
           }
 
@@ -663,13 +664,13 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName = className + "<vtable>";
 
       llvm::Constant* vtable = ConstantStruct::get(init);
-      module_.addTypeName(globalName, vtable->getType());
+      module_->addTypeName(globalName, vtable->getType());
       vi.vtable = new GlobalVariable(vtable->getType(),
                                      true,
                                      GlobalVariable::ExternalLinkage,
                                      vtable,
                                      globalName,
-                                     &module_);
+                                     module_);
 
       // Now the vtable is complete, install the new typeinfo block
       // for this class: we install it last because we need the vtable
@@ -715,13 +716,13 @@ namespace llvm { namespace Java { namespace {
         elementTy->getDescription() + "[]<vtable>";
 
       llvm::Constant* vtable = ConstantStruct::get(init);
-      module_.addTypeName(globalName, vtable->getType());
+      module_->addTypeName(globalName, vtable->getType());
       vi.vtable = new GlobalVariable(vtable->getType(),
                                      true,
                                      GlobalVariable::ExternalLinkage,
                                      vtable,
                                      globalName,
-                                     &module_);
+                                     module_);
 
       // Construct the typeinfo now.
       std::vector<llvm::Constant*> typeInfoInit;
@@ -737,7 +738,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
         elementTy->getDescription() + "[]<superclassesvtables>",
-        &module_);
+        module_);
 
       typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
       typeInfoInit.push_back(ConstantSInt::get(Type::IntTy, 0));
@@ -841,7 +842,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
         "java/lang/Object[]<superclassesvtables>",
-        &module_);
+        module_);
       init.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
 
       // last interface index
@@ -875,13 +876,13 @@ namespace llvm { namespace Java { namespace {
       vi.m2iMap = javaLangObjectVI.m2iMap;
 
       llvm::Constant* vtable = ConstantStruct::get(init);
-      module_.addTypeName("java/lang/Object[]<vtable>", vtable->getType());
+      module_->addTypeName("java/lang/Object[]<vtable>", vtable->getType());
 
       vi.vtable = new GlobalVariable(VTableInfo::VTableTy,
                                      true, GlobalVariable::ExternalLinkage,
                                      vtable,
                                      "java/lang/Object[]<vtable>",
-                                     &module_);
+                                     module_);
       DEBUG(std::cerr << "Built VTableInfo for: java/lang/Object[]\n");
       return true;
     }
@@ -932,13 +933,13 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName = className + "[]<vtable>";
 
       llvm::Constant* vtable = ConstantStruct::get(init);
-      module_.addTypeName(globalName, vtable->getType());
+      module_->addTypeName(globalName, vtable->getType());
       vi.vtable = new GlobalVariable(vtable->getType(),
                                      true,
                                      GlobalVariable::ExternalLinkage,
                                      vtable,
                                      globalName,
-                                     &module_);
+                                     module_);
 
       // Now the vtable is complete, install the new typeinfo block
       // for this class: we install it last because we need the vtable
@@ -959,7 +960,7 @@ namespace llvm { namespace Java { namespace {
         GlobalVariable::ExternalLinkage,
         ConstantArray::get(vtablesArrayTy, vi.superVtables),
         className + "[]<superclassesvtables>",
-        &module_);
+        module_);
 
       typeInfoInit.push_back(ConstantExpr::getPtrPtrFromArrayPtr(vtablesArray));
       // last interface index
@@ -1011,7 +1012,7 @@ namespace llvm { namespace Java { namespace {
       const std::string& globalName = className + '/' + name;
 
       DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-      GlobalVariable* global = module_.getGlobalVariable(globalName, type);
+      GlobalVariable* global = module_->getGlobalVariable(globalName, type);
       if (global)
         return global;
 
@@ -1093,7 +1094,7 @@ namespace llvm { namespace Java { namespace {
       Method* method = getMethod(classMethodDesc);
       const std::string& className =
         method->getParent()->getThisClass()->getName()->str();
-      class_ = &resolver_->getClass(className);
+      class_ = resolver_->getClass(className);
 
       Function* function = getFunction(method);
       if (!function->empty()) {
@@ -1120,7 +1121,7 @@ namespace llvm { namespace Java { namespace {
                         descr.begin() + descr.find(')')));
         }
 
-        Function* jniFunction = module_.getOrInsertFunction(funcName,jniFuncTy);
+        Function* jniFunction = module_->getOrInsertFunction(funcName,jniFuncTy);
 
         BasicBlock* bb = new BasicBlock("entry", function);
         std::vector<Value*> params;
@@ -1182,7 +1183,7 @@ namespace llvm { namespace Java { namespace {
       bbBuilder_.reset(new BasicBlockBuilder(function, codeAttr));
 
       // Put arguments into locals.
-      locals_ = Locals(*resolver_, codeAttr->getMaxLocals());
+      locals_ = Locals(resolver_.get(), codeAttr->getMaxLocals());
 
       unsigned index = 0;
       for (Function::arg_iterator a = function->arg_begin(),
@@ -1199,7 +1200,7 @@ namespace llvm { namespace Java { namespace {
       // NOTE: We create an operand stack one size too big because we
       // push extra values on the stack to simplify code generation
       // (see implementation of ifne).
-      opStack_ = OperandStack(*resolver_, codeAttr->getMaxStack()+2);
+      opStack_ = OperandStack(resolver_.get(), codeAttr->getMaxStack()+2);
       opStackDepthMap_.insert(std::make_pair(bb0, 0));
 
       // Insert bb0 in the work list.
@@ -1281,7 +1282,7 @@ namespace llvm { namespace Java { namespace {
 
         const std::string& className =
           classfile->getThisClass()->getName()->str();
-        const Class& clazz = resolver_->getClass(className);
+        const Class* clazz = resolver_->getClass(className);
 
         // Create the global variables of this class.
         const Fields& fields = classfile->getFields();
@@ -1297,7 +1298,7 @@ namespace llvm { namespace Java { namespace {
             llvm::Constant* init = llvm::Constant::getNullValue(globalTy);
             if (field->getConstantValueAttribute()) {
               unsigned i = field->getConstantValueAttribute()->getValueIndex();
-              init = ConstantExpr::getCast(clazz.getConstant(i), globalTy);
+              init = ConstantExpr::getCast(clazz->getConstant(i), globalTy);
               isConstant = field->isFinal();
             }
 
@@ -1310,26 +1311,26 @@ namespace llvm { namespace Java { namespace {
                                GlobalVariable::ExternalLinkage,
                                init,
                                globalName,
-                               &module_);
+                               module_);
           }
         }
 
-        Function* hook = module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
-                                                     Type::VoidTy, 0);
+        Function* hook = module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT,
+                                                      Type::VoidTy, 0);
         Instruction* I = hook->front().getTerminator();
         assert(I && LLVM_JAVA_STATIC_INIT " should have a terminator!");
 
         // Create constant strings for this class.
         for (unsigned i = 0, e = classfile->getNumConstants(); i != e; ++i)
           if (ConstantString* s = dynamic_cast<ConstantString*>(classfile->getConstant(i)))
-            initializeString(clazz.getConstant(i), s->getValue()->str(), I);
+            initializeString(clazz->getConstant(i), s->getValue()->str(), I);
 
         // Call its class initialization method if it exists.
         if (const Method* method = classfile->getMethod("<clinit>()V")) {
           const std::string& functionName = className + '/' +
             method->getName()->str() + method->getDescriptor()->str();
           Function* init =
-            module_.getOrInsertFunction(functionName, Type::VoidTy, 0);
+            module_->getOrInsertFunction(functionName, Type::VoidTy, 0);
 
           // Insert a call to it right before the terminator of the only
           // basic block in llvm_java_static_init.
@@ -1352,7 +1353,7 @@ namespace llvm { namespace Java { namespace {
         clazz->getThisClass()->getName()->str() + '/' +
         method->getName()->str() + method->getDescriptor()->str();
 
-      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      Function* function = module_->getOrInsertFunction(funcName, funcTy);
 
       return function;
     }
@@ -1397,7 +1398,7 @@ namespace llvm { namespace Java { namespace {
     Function* compileMethod(const std::string& classMethodDesc) {
       // Initialize the static initializer function.
       Function* staticInit =
-        module_.getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
+        module_->getOrInsertFunction(LLVM_JAVA_STATIC_INIT, Type::VoidTy, 0);
       BasicBlock* staticInitBB = new BasicBlock("entry", staticInit);
       new ReturnInst(NULL, staticInitBB);
 
@@ -1466,10 +1467,10 @@ namespace llvm { namespace Java { namespace {
     void do_saload() { do_aload_common("[S"); }
 
     void do_aload_common(const std::string& className) {
-      const Class& arrayClass = resolver_->getClass(className);
-      assert(arrayClass.isArray() && "Not an array class!");
+      const Class* arrayClass = resolver_->getClass(className);
+      assert(arrayClass->isArray() && "Not an array class!");
       Value* index = pop(Type::IntTy);
-      Value* arrayRef = pop(arrayClass.getType());
+      Value* arrayRef = pop(arrayClass->getType());
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1503,12 +1504,12 @@ namespace llvm { namespace Java { namespace {
     void do_sastore() { do_astore_common("[S"); }
 
     void do_astore_common(const std::string& className) {
-      const Class& arrayClass = resolver_->getClass(className);
-      assert(arrayClass.isArray() && "Not an array class!");
-      const Class& componentClass = *arrayClass.getComponentClass();
-      Value* value = pop(componentClass.getType());
+      const Class* arrayClass = resolver_->getClass(className);
+      assert(arrayClass->isArray() && "Not an array class!");
+      const Class* componentClass = arrayClass->getComponentClass();
+      Value* value = pop(componentClass->getType());
       Value* index = pop(Type::IntTy);
-      Value* arrayRef = pop(arrayClass.getType());
+      Value* arrayRef = pop(arrayClass->getType());
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1675,7 +1676,7 @@ namespace llvm { namespace Java { namespace {
       Value* r = new SelectInst(c, ONE, ZERO, TMP, currentBB_);
       c = BinaryOperator::createSetLT(v1, v2, TMP, currentBB_);
       r = new SelectInst(c, MINUS_ONE, r, TMP, currentBB_);
-      c = new CallInst(module_.getOrInsertFunction
+      c = new CallInst(module_->getOrInsertFunction
                        ("llvm.isunordered",
                         Type::BoolTy, v1->getType(), v2->getType(), 0),
                        v1, v2, TMP, currentBB_);
@@ -1920,7 +1921,7 @@ namespace llvm { namespace Java { namespace {
 
       const FunctionType* funcTy = cast<FunctionType>(
         resolver_->getType(nameAndType->getDescriptor()->str(), true));
-      Function* function = module_.getOrInsertFunction(funcName, funcTy);
+      Function* function = module_->getOrInsertFunction(funcName, funcTy);
       scheduleFunction(function);
       makeCall(function, getParams(funcTy));
     }
@@ -2056,15 +2057,15 @@ namespace llvm { namespace Java { namespace {
     }
 
     template<typename InsertionPointTy>
-    Value* allocateArray(const Class& clazz,
-                         const VTableInfo& vi,
+    Value* allocateArray(const Class* clazz,
+                         const VTableInfo* vi,
                          Value* count,
                          InsertionPointTy* ip) {
       static std::vector<Value*> params(4);
 
-      assert(clazz.isArray() && "Not an array class!");
-      const Class& componentClass = *clazz.getComponentClass();
-      const Type* elementTy = componentClass.getType();
+      assert(clazz->isArray() && "Not an array class!");
+      const Class* componentClass = clazz->getComponentClass();
+      const Type* elementTy = componentClass->getType();
 
       // The size of the element.
       llvm::Constant* elementSize =
@@ -2075,7 +2076,7 @@ namespace llvm { namespace Java { namespace {
         Instruction::Mul, count, elementSize, TMP, ip);
       // The size of the rest of the array object.
       llvm::Constant* arrayObjectSize =
-        ConstantExpr::getCast(ConstantExpr::getSizeOf(clazz.getStructType()),
+        ConstantExpr::getCast(ConstantExpr::getSizeOf(clazz->getStructType()),
                               Type::UIntTy);
 
       // Add the array part plus the object part together.
@@ -2090,7 +2091,7 @@ namespace llvm { namespace Java { namespace {
       new CallInst(memset_, params, "", ip);
 
       // Cast back to array type.
-      objRef = new CastInst(objRef, clazz.getType(), TMP, ip);
+      objRef = new CastInst(objRef, clazz->getType(), TMP, ip);
 
       // Store the size.
       Value* lengthPtr = getArrayLengthPtr(objRef, ip);
@@ -2098,7 +2099,7 @@ namespace llvm { namespace Java { namespace {
 
       // Install the vtable pointer.
       Value* objBase = new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, ip);
-      Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
+      Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy, TMP, ip);
       new CallInst(setVtable_, objBase, vtable, "", ip);
 
       return objRef;
@@ -2107,8 +2108,8 @@ namespace llvm { namespace Java { namespace {
     void do_newarray(JType type) {
       Value* count = pop(Type::UIntTy);
 
-      const Class& clazz = resolver_->getArrayClass(type);
-      const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
+      const Class* clazz = resolver_->getArrayClass(type);
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       push(allocateArray(clazz, vi, count, currentBB_));
     }
@@ -2119,15 +2120,15 @@ namespace llvm { namespace Java { namespace {
       // FIXME: Need to handle different element types. This now
       // assumes that all arrays of reference type are arrays of
       // java/lang/Object's.
-      const Class* clazz = &resolver_->getClass("[Ljava/lang/Object;");
+      const Class* clazz = resolver_->getClass("[Ljava/lang/Object;");
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      push(allocateArray(*clazz, *vi, count, currentBB_));
+      push(allocateArray(clazz, vi, count, currentBB_));
     }
 
     void do_arraylength() {
-      const Class& clazz = resolver_->getClass("[Ljava/lang/Object;");
-      Value* arrayRef = pop(clazz.getType());
+      const Class* clazz = resolver_->getClass("[Ljava/lang/Object;");
+      Value* arrayRef = pop(clazz->getType());
       Value* lengthPtr = getArrayLengthPtr(arrayRef, currentBB_);
       Value* length = new LoadInst(lengthPtr, TMP, currentBB_);
       push(length);
@@ -2195,7 +2196,7 @@ std::auto_ptr<Module> llvm::Java::compile(const std::string& className)
   // Require the Java runtime.
   m->addLibrary("jrt");
 
-  Compiler c(*m);
+  Compiler c(m.get());
   Function* main = c.compileMethod(className + "/main([Ljava/lang/String;)V");
   Function* javaMain = m->getOrInsertFunction
     ("llvm_java_main", Type::VoidTy,

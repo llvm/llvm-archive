@@ -50,13 +50,13 @@ namespace llvm { namespace Java {
     // Resolver interface.
 
     // Load primitive class for type.
-    Class(Resolver& resolver, const Type* type);
+    Class(Resolver* resolver, const Type* type);
 
     // Load class by name.
-    Class(Resolver& resolver, const std::string& className);
+    Class(Resolver* resolver, const std::string& className);
 
     // Load array class of component the passed class.
-    Class(Resolver& resolver, const Class& componentClass);
+    Class(Resolver* resolver, const Class* componentClass);
 
     // Link the class.
     void link();

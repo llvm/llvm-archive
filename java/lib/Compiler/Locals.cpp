@@ -23,8 +23,8 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Locals::Locals(const Resolver& resolver, unsigned maxLocals)
-  : resolver_(&resolver),
+Locals::Locals(const Resolver* resolver, unsigned maxLocals)
+  : resolver_(resolver),
     locals_(maxLocals)
 {
 

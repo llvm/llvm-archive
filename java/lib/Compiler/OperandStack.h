@@ -38,8 +38,8 @@ namespace llvm {  namespace Java {
     std::vector<SlotMap> stack_;
 
   public:
-    explicit OperandStack(const Resolver& resolver, unsigned maxDepth)
-      : resolver_(&resolver),
+    explicit OperandStack(const Resolver* resolver, unsigned maxDepth)
+      : resolver_(resolver),
         currentDepth_(0),
         stack_(maxDepth) { }
 

@@ -26,8 +26,8 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Class::Class(Resolver& resolver, const std::string& className)
-  : resolver_(&resolver),
+Class::Class(Resolver* resolver, const std::string& className)
+  : resolver_(resolver),
     classFile_(ClassFile::get(className)),
     superClass_(NULL),
     componentClass_(NULL),
@@ -39,11 +39,11 @@ Class::Class(Resolver& resolver, const std::string& className)
 
 }
 
-Class::Class(Resolver& resolver, const Class& componentClass)
-  : resolver_(&resolver),
+Class::Class(Resolver* resolver, const Class* componentClass)
+  : resolver_(resolver),
     classFile_(NULL),
     superClass_(NULL),
-    componentClass_(&componentClass),
+    componentClass_(componentClass),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
     interfaceIndex_(INVALID_INTERFACE_INDEX)
@@ -51,8 +51,8 @@ Class::Class(Resolver& resolver, const Class& componentClass)
 
 }
 
-Class::Class(Resolver& resolver, const Type* type)
-  : resolver_(&resolver),
+Class::Class(Resolver* resolver, const Type* type)
+  : resolver_(resolver),
     classFile_(NULL),
     superClass_(NULL),
     componentClass_(NULL),
@@ -87,7 +87,7 @@ void Class::link()
   assert(!isPrimitive() && "Should not link primitive classes!");
 
   if (isArray()) {
-    superClass_ = &resolver_->getClass("java/lang/Object");
+    superClass_ = resolver_->getClass("java/lang/Object");
     addField("super", superClass_->getStructType());
     addField("<length>", Type::UIntTy);
     addField("<data>", ArrayType::get(componentClass_->getType(), 0));
@@ -95,11 +95,11 @@ void Class::link()
   else {
     // This is any class but java/lang/Object.
     if (classFile_->getSuperClass()) {
-      const Class& superClass =
+      const Class* superClass =
         resolver_->getClass(classFile_->getSuperClass()->getName()->str());
 
       // We first add the struct of the super class.
-      addField("super", superClass.getStructType());
+      addField("super", superClass->getStructType());
 
       // Although we can safely assume that all interfaces inherits
       // from java/lang/Object, java/lang/Class.getSuperclass()
@@ -110,7 +110,7 @@ void Class::link()
       if (classFile_->isInterface())
         interfaceIndex_ = resolver_->getNextInterfaceIndex();
       else
-        superClass_ = &superClass;
+        superClass_ = superClass;
     }
     // This is java/lang/Object.
     else
@@ -121,7 +121,7 @@ void Class::link()
     for (unsigned i = 0, e = fields.size(); i != e; ++i) {
       Field& field = *fields[i];
       if (!field.isStatic())
-        addField(field.getName()->str(), resolver_->getClass(field).getType());
+        addField(field.getName()->str(), resolver_->getClass(field)->getType());
     }
   }
 
@@ -144,15 +144,15 @@ llvm::Constant* Class::getConstant(unsigned index) const
   if (!resolvedConstantPool_[index]) {
     Constant* jc = classFile_->getConstant(index);
     if (ConstantString* s = dynamic_cast<ConstantString*>(jc)) {
-      const Class& stringClass = resolver_->getClass("java/lang/String");
-      const Type* stringType = stringClass.getStructType();
+      const Class* stringClass = resolver_->getClass("java/lang/String");
+      const Type* stringType = stringClass->getStructType();
       resolvedConstantPool_[index] =
         new GlobalVariable(stringType,
                            false,
                            GlobalVariable::LinkOnceLinkage,
                            llvm::Constant::getNullValue(stringType),
                            s->getValue()->str() + ".java/lang/String",
-                           &resolver_->getModule());
+                           resolver_->getModule());
     }
     else if (ConstantInteger* i = dynamic_cast<ConstantInteger*>(jc))
       resolvedConstantPool_[index] =
@@ -183,7 +183,7 @@ const Class* Class::getClass(unsigned index) const
   if (!resolvedConstantPool_[index]) {
     ConstantClass* jc = classFile_->getConstantClass(index);
     resolvedConstantPool_[index] =
-      const_cast<Class*>(&resolver_->getClass(jc->getName()->str()));
+      const_cast<Class*>(resolver_->getClass(jc->getName()->str()));
   }
 
   return static_cast<const Class*>(resolvedConstantPool_[index]);

@@ -37,7 +37,7 @@ namespace llvm { namespace Java {
     std::vector<SlotMap> locals_;
 
   public:
-    Locals(const Resolver& resolver, unsigned maxLocals);
+    Locals(const Resolver* resolver, unsigned maxLocals);
 
     /// @brief - Stores the value \c value on the \c i'th local
     /// variable and appends any instructions to implement this to \c

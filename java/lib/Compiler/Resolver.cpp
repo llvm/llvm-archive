@@ -21,23 +21,23 @@
 using namespace llvm;
 using namespace llvm::Java;
 
-Resolver::Resolver(Module& module)
+Resolver::Resolver(Module* module)
   : module_(module),
     nextInterfaceIndex_(0),
     objectBaseType_(OpaqueType::get()),
     objectBaseRefType_(PointerType::get(objectBaseType_))
 {
-  classMap_.insert(std::make_pair("B", Class(*this, Type::SByteTy)));
-  classMap_.insert(std::make_pair("C", Class(*this, Type::UShortTy)));
-  classMap_.insert(std::make_pair("D", Class(*this, Type::DoubleTy)));
-  classMap_.insert(std::make_pair("F", Class(*this, Type::FloatTy)));
-  classMap_.insert(std::make_pair("I", Class(*this, Type::IntTy)));
-  classMap_.insert(std::make_pair("J", Class(*this, Type::LongTy)));
-  classMap_.insert(std::make_pair("S", Class(*this, Type::ShortTy)));
-  classMap_.insert(std::make_pair("Z", Class(*this, Type::BoolTy)));
-  classMap_.insert(std::make_pair("V", Class(*this, Type::VoidTy)));
+  classMap_.insert(std::make_pair("B", Class(this, Type::SByteTy)));
+  classMap_.insert(std::make_pair("C", Class(this, Type::UShortTy)));
+  classMap_.insert(std::make_pair("D", Class(this, Type::DoubleTy)));
+  classMap_.insert(std::make_pair("F", Class(this, Type::FloatTy)));
+  classMap_.insert(std::make_pair("I", Class(this, Type::IntTy)));
+  classMap_.insert(std::make_pair("J", Class(this, Type::LongTy)));
+  classMap_.insert(std::make_pair("S", Class(this, Type::ShortTy)));
+  classMap_.insert(std::make_pair("Z", Class(this, Type::BoolTy)));
+  classMap_.insert(std::make_pair("V", Class(this, Type::VoidTy)));
 
-  module_.addTypeName("struct.llvm_java_object_base", objectBaseType_);
+  module_->addTypeName("struct.llvm_java_object_base", objectBaseType_);
 }
 
 const Type* Resolver::getType(const std::string& descriptor,
@@ -88,7 +88,7 @@ const Type* Resolver::getTypeHelper(const std::string& descr,
   return 0; // not reached
 }
 
-const Class& Resolver::getClassForDesc(const std::string& descriptor)
+const Class* Resolver::getClassForDesc(const std::string& descriptor)
 {
   ClassMap::iterator it = classMap_.lower_bound(descriptor);
   if (it == classMap_.end() || it->first != descriptor) {
@@ -110,14 +110,14 @@ const Class& Resolver::getClassForDesc(const std::string& descriptor)
       const std::string& className = descriptor.substr(1, pos - 1);
       it = classMap_.insert(
         it, std::make_pair(descriptor,
-                           Class(*this, className)));
+                           Class(this, className)));
       break;
     }
     case '[': {
       const std::string& componentDescriptor = descriptor.substr(1);
       it = classMap_.insert(
         it, std::make_pair(descriptor,
-                           Class(*this, getClassForDesc(componentDescriptor))));
+                           Class(this, getClassForDesc(componentDescriptor))));
       break;
     }
     default:
@@ -125,14 +125,14 @@ const Class& Resolver::getClassForDesc(const std::string& descriptor)
       abort();
     }
     it->second.link();
-    module_.addTypeName(descriptor, it->second.getStructType());
+    module_->addTypeName(descriptor, it->second.getStructType());
     DEBUG(std::cerr << "Loaded class: " << descriptor << '\n');
   }
 
-  return it->second;
+  return &it->second;
 }
 
-const Class& Resolver::getClass(JType type)
+const Class* Resolver::getClass(JType type)
 {
   switch (type) {
   case BOOLEAN: return getClassForDesc("Z");
@@ -147,7 +147,7 @@ const Class& Resolver::getClass(JType type)
   }
 }
 
-const Class& Resolver::getArrayClass(JType type)
+const Class* Resolver::getArrayClass(JType type)
 {
   switch (type) {
   case BOOLEAN: return getClassForDesc("[Z");

@@ -26,14 +26,14 @@
 namespace llvm { namespace Java {
 
   class Resolver {
-    Module& module_;
+    Module* module_;
     typedef std::map<std::string, Class> ClassMap;
     ClassMap classMap_;
     unsigned nextInterfaceIndex_;
     const Type* objectBaseType_;
     const Type* objectBaseRefType_;
 
-    const Class& getClassForDesc(const std::string& descriptor);
+    const Class* getClassForDesc(const std::string& descriptor);
 
     const Type* getTypeHelper(const std::string&,
                               unsigned& i,
@@ -47,7 +47,7 @@ namespace llvm { namespace Java {
     }
 
   public:
-    Resolver(Module& module);
+    Resolver(Module* module);
 
     const Type* getObjectBaseType() const { return objectBaseType_; }
     const Type* getObjectBaseRefType() const { return objectBaseRefType_; }
@@ -64,17 +64,17 @@ namespace llvm { namespace Java {
       return !isTwoSlotType(type);
     }
 
-    const Class& getClass(const std::string& className) {
+    const Class* getClass(const std::string& className) {
       return getClassForDesc(canonicalizeClassName(className));
     }
-    const Class& getClass(const Field& field) {
+    const Class* getClass(const Field& field) {
       return getClassForDesc(field.getDescriptor()->str());
     }
-    const Class& getClass(JType type);
-    const Class& getArrayClass(JType type);
+    const Class* getClass(JType type);
+    const Class* getArrayClass(JType type);
 
     unsigned getNextInterfaceIndex() { return nextInterfaceIndex_++; }
-    Module& getModule() { return module_; }
+    Module* getModule() { return module_; }
 
   };
 

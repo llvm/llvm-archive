@@ -204,7 +204,8 @@ void TVFrame::CallGraphView(wxCommandEvent &event) {
   // Open up a new call graph view window.
   Module *M = item->getModule ();
   if (!M)
-    wxMessageBox ("The selected item doesn't have a call graph to view.");
+    wxMessageBox ("The selected item doesn't have a call graph to view.",
+                  "Error", wxOK | wxICON_ERROR, this);
   else
     myApp->OpenCallGraphView (M);
 }
@@ -217,9 +218,11 @@ void TVFrame::CFGView(wxCommandEvent &event) {
   // Open up a new CFG view window.
   Function *F = item->getFunction ();
   if (!F)
-    wxMessageBox ("The selected item doesn't have a CFG to view.");
+    wxMessageBox("The selected item doesn't have a CFG to view.", "Error",
+                 wxOK | wxICON_ERROR, this);
   else if (F->isExternal())
-    wxMessageBox("External functions have no CFG to view.");
+    wxMessageBox("External functions have no CFG to view.", "Error",
+                 wxOK | wxICON_ERROR, this);
   else
     myApp->OpenCFGView (F);
 }
@@ -232,9 +235,11 @@ void TVFrame::CodeView(wxCommandEvent &event) {
   // Open up a new CFG view window.
   Function *F = item->getFunction ();
   if (!F)
-    wxMessageBox ("Code can only be viewed on a per-function basis.");
+    wxMessageBox("Code can only be viewed on a per-function basis.", "Error",
+                  wxOK | wxICON_ERROR, this);
   else if (F->isExternal())
-    wxMessageBox("External functions have no code to view.");
+    wxMessageBox("External functions have no code to view.", "Error",
+                 wxOK | wxICON_ERROR, this);
   else
     myApp->OpenCodeView(F);
 }

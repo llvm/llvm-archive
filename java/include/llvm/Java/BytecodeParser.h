@@ -35,14 +35,14 @@ namespace llvm { namespace Java {
   protected:
 #define THIS ((SubClass*)this)
 
-    /// @brief parse code pointed to by \c code of size \c size
+    /// @brief parse code pointed to by \c code beginning at \c start
+    /// bytecode and ending at \c end bytecode
     ///
-    /// This function parses the code pointed to by \c code and
-    /// calls the subclass's do_<bytecode> method
-    /// appropriately. When this function returns all code up to
-    /// \c size is parsed.
-    void parse(const uint8_t* code, unsigned size) {
-      for (unsigned i = 0; i < size; ++i) {
+    /// This function parses the code pointed to by \c code and calls
+    /// the subclass's do_<bytecode> method appropriately. When this
+    /// function returns all code in [start, end) is parsed.
+    void parse(const uint8_t* code, unsigned start, unsigned end) {
+      for (unsigned i = start; i < end; ++i) {
         unsigned curBC = i;
         bool wide = code[i] == WIDE;
         i += wide;

@@ -86,7 +86,7 @@ namespace llvm { namespace Java { namespace {
       : function_(f), bc2bbMap_(c->getCodeSize()) {
       BasicBlock* bb = new BasicBlock("entry", function_);
 
-      parse(c->getCode(), c->getCodeSize());
+      parse(c->getCode(), 0, c->getCodeSize());
 
       for (unsigned i = 0, e = bc2bbMap_.size(); i != e; ++i)
         if (BasicBlock* next = bc2bbMap_[i]) {
@@ -830,7 +830,7 @@ namespace llvm { namespace Java { namespace {
       current_ = prologue_->getNext();
       new BranchInst(current_, prologue_);
 
-      parse(codeAttr->getCode(), codeAttr->getCodeSize());
+      parse(codeAttr->getCode(), 0, codeAttr->getCodeSize());
 
       // function->dump();
 

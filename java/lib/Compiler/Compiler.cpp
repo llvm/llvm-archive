@@ -24,6 +24,7 @@
 #include <llvm/Type.h>
 #include <Support/Debug.h>
 #include <Support/StringExtras.h>
+#include <iostream>
 #include <stack>
 #include <vector>
 

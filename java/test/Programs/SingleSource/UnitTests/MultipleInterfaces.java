@@ -15,8 +15,8 @@ interface MultipleInterfacesI3 extends MultipleInterfacesI1, MultipleInterfacesI
 
 class MultipleInterfacesClass implements MultipleInterfacesI3
 {
-    public int i1() { return 3; }
-    public int i2() { return 3; }
+    public int i1() { return 1; }
+    public int i2() { return 2; }
     public int i3() { return 3; }
 }
 

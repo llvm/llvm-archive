@@ -2294,12 +2294,12 @@ namespace llvm { namespace Java { namespace {
       Value* lengthPtr = getArrayLengthPtr(objRef);
       new StoreInst(count, lengthPtr, ip);
 
-      new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
-
       // Install the vtable pointer.
       Value* objBase = new CastInst(objRef, ObjectBaseRefTy, TMP, ip);
       Value* vtable = new CastInst(vi.vtable, VTableBaseRefTy, TMP, ip);
-      return new CallInst(setVtable_, objBase, vtable, "", ip);
+      new CallInst(setVtable_, objBase, vtable, "", ip);
+
+      return new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
     }
 
     void do_newarray(JType type) {

@@ -90,7 +90,33 @@ const VMField* VMClass::lookupField(const std::string& name) const
       return &it->second;
   }
 
-  return NULL;
+  assert(0 && "Field not found!");
+  abort();
+}
+
+const VMMethod* VMClass::lookupMethod(const std::string& name) const
+{
+  MethodMap::const_iterator it = methodMap_.find(name);
+  if (it != methodMap_.end())
+    return &it->second;
+
+  if (isInterface())
+    for (unsigned i = 0, e = getNumInterfaces(); i != e; ++i) {
+      const VMClass* interface = getInterface(i);
+      it = interface->methodMap_.find(name);
+      if (it != interface->methodMap_.end())
+        return &it->second;
+    }
+  else
+    for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i) {
+      const VMClass* superClass = getSuperClass(i);
+      it = superClass->methodMap_.find(name);
+      if (it != superClass->methodMap_.end())
+        return &it->second;
+    }
+
+  assert(0 && "Method not found!");
+  abort();
 }
 
 void VMClass::computeLayout()
@@ -135,6 +161,19 @@ void VMClass::computeLayout()
   cast<OpaqueType>(layoutType_)->refineAbstractTypeTo(resolvedType);
   layoutType_ = holder.get();
   type_ = PointerType::get(layoutType_);
+}
+
+void VMClass::computeClassRecord()
+{
+  if (classFile_) {
+    const Methods& methods = classFile_->getMethods();
+    for (unsigned i = 0, e = methods.size(); i != e; ++i) {
+      Method* method = methods[i];
+      const std::string& name =
+        method->getName()->str() + method->getDescriptor()->str();
+      methodMap_.insert(std::make_pair(name, VMMethod(this, method)));
+    }
+  }
 }
 
 void VMClass::link()
@@ -195,6 +234,7 @@ void VMClass::link()
   }
 
   computeLayout();
+  computeClassRecord();
 
   assert(!isa<OpaqueType>(getLayoutType()) &&"Class not initialized properly!");
 }
@@ -281,4 +321,25 @@ const VMField* VMClass::getField(unsigned index) const
   }
 
   return static_cast<const VMField*>(resolvedConstantPool_[index]);
+}
+
+const VMMethod* VMClass::getMethod(unsigned index) const
+{
+  assert(classFile_ && "No constant pool!");
+  assert((dynamic_cast<ConstantMethodRef*>(classFile_->getConstant(index)) ||
+          dynamic_cast<ConstantInterfaceMethodRef*>(classFile_->getConstant(index))) &&
+         "Not an index to a method reference!");
+
+  // If we haven't resolved this constant already, do so now.
+  if (!resolvedConstantPool_[index]) {
+    ConstantMemberRef* jc = classFile_->getConstantMemberRef(index);
+    const VMClass* clazz = getClass(jc->getClassIndex());
+    ConstantNameAndType* ntc = jc->getNameAndType();
+    const std::string& name = ntc->getName()->str();
+    const std::string& descriptor = ntc->getDescriptor()->str();
+    resolvedConstantPool_[index] =
+      const_cast<VMMethod*>(clazz->lookupMethod(name + descriptor));
+  }
+
+  return static_cast<const VMMethod*>(resolvedConstantPool_[index]);
 }

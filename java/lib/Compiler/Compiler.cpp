@@ -1564,24 +1564,12 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokevirtual(unsigned index) {
-      ConstantMethodRef* methodRef =
-        class_->getClassFile()->getConstantMethodRef(index);
-      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
-
-      const std::string& className = methodRef->getClass()->getName()->str();
-
-      const VMClass* clazz =
-        class_->getClass(methodRef->getClassIndex());
+      const VMMethod* method = class_->getMethod(index);
+      const VMClass* clazz = method->getParent();
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      const std::string& methodDescr =
-        nameAndType->getName()->str() +
-        nameAndType->getDescriptor()->str();
-
-      const FunctionType* funTy = cast<FunctionType>(
-        resolver_->getType(nameAndType->getDescriptor()->str(), true));
-
-      std::vector<Value*> params(getParams(funTy));
+      Function* function = method->getFunction();
+      std::vector<Value*> params(getParams(function->getFunctionType()));
 
       Value* objRef = params.front();
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
@@ -1589,48 +1577,30 @@ namespace llvm { namespace Java { namespace {
         new CastInst(objRef, resolver_->getObjectBaseType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
       vtable = new CastInst(vtable, vi->vtable->getType(),
-                            className + ".vtable", currentBB_);
+                            clazz->getName() + ".vtable", currentBB_);
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
-      assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
+      assert(vi->m2iMap.find(method->getNameAndDescriptor()) != vi->m2iMap.end() &&
              "could not find slot for virtual function!");
-      unsigned vSlot = vi->m2iMap.find(methodDescr)->second;
+      unsigned vSlot = vi->m2iMap.find(method->getNameAndDescriptor())->second;
       indices.push_back(ConstantUInt::get(Type::UIntTy, vSlot));
       Value* vfunPtr =
         new GetElementPtrInst(vtable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, className + '/' + methodDescr,
-                                 currentBB_);
+      Value* vfun = new LoadInst(vfunPtr, function->getName(), currentBB_);
 
       makeCall(vfun, params);
     }
 
     void do_invokespecial(unsigned index) {
-      ConstantMethodRef* methodRef =
-        class_->getClassFile()->getConstantMethodRef(index);
-      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
-
-      const std::string& className = methodRef->getClass()->getName()->str();
-      const std::string& methodName = nameAndType->getName()->str();
-      const std::string& methodDescr =
-        methodName + nameAndType->getDescriptor()->str();
-      std::string funcName = className + '/' + methodDescr;
-      const VMClass* clazz =
-        class_->getClass(methodRef->getClassIndex());
-
-      const FunctionType* funcTy = cast<FunctionType>(
-        resolver_->getType(nameAndType->getDescriptor()->str(), true));
-      Function* function = module_->getOrInsertFunction(funcName, funcTy);
+      const VMMethod* method = class_->getMethod(index);
+      Function* function = method->getFunction();
       scheduleFunction(function);
-      makeCall(function, getParams(funcTy));
+      makeCall(function, getParams(function->getFunctionType()));
     }
 
     void do_invokestatic(unsigned index) {
-      ConstantMethodRef* methodRef =
-        class_->getClassFile()->getConstantMethodRef(index);
-      const VMClass* clazz =
-        class_->getClass(methodRef->getClassIndex());
-      emitStaticInitializers(clazz->getClassFile());
-      Method* method = getMethod(methodRef);
-      Function* function = getFunction(method);
+      const VMMethod* method = class_->getMethod(index);
+      emitStaticInitializers(method->getParent()->getClassFile());
+      Function* function = method->getFunction();
       // Intercept java/lang/System/loadLibrary() calls and add
       // library deps to the module
       if (function->getName().find(
@@ -1648,24 +1618,12 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_invokeinterface(unsigned index) {
-      ConstantInterfaceMethodRef* methodRef =
-        class_->getClassFile()->getConstantInterfaceMethodRef(index);
-      ConstantNameAndType* nameAndType = methodRef->getNameAndType();
-
-      const std::string& className = methodRef->getClass()->getName()->str();
-
-      const VMClass* clazz =
-        class_->getClass(methodRef->getClassIndex());
+      const VMMethod* method = class_->getMethod(index);
+      const VMClass* clazz = method->getParent();
       const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
-      const std::string& methodDescr =
-        nameAndType->getName()->str() +
-        nameAndType->getDescriptor()->str();
-
-      const FunctionType* funTy = cast<FunctionType>(
-        resolver_->getType(nameAndType->getDescriptor()->str(), true));
-
-      std::vector<Value*> params(getParams(funTy));
+      Function* function = method->getFunction();
+      std::vector<Value*> params(getParams(function->getFunctionType()));
 
       Value* objRef = params.front();
       objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
@@ -1687,20 +1645,19 @@ namespace llvm { namespace Java { namespace {
       Value* interfaceVTable =
         new GetElementPtrInst(interfaceVTables, indices, TMP, currentBB_);
       interfaceVTable =
-        new LoadInst(interfaceVTable, className + ".vtable", currentBB_);
+        new LoadInst(interfaceVTable, clazz->getName() + ".vtable", currentBB_);
       interfaceVTable =
         new CastInst(interfaceVTable, vi->vtable->getType(), TMP, currentBB_);
       // Get the function pointer.
-      assert(vi->m2iMap.find(methodDescr) != vi->m2iMap.end() &&
+      assert(vi->m2iMap.find(method->getNameAndDescriptor()) != vi->m2iMap.end() &&
              "could not find slot for virtual function!");
-      unsigned vSlot = vi->m2iMap.find(methodDescr)->second;
+      unsigned vSlot = vi->m2iMap.find(method->getNameAndDescriptor())->second;
       indices.resize(2);
       indices[0] = ConstantUInt::get(Type::UIntTy, 0);
       indices[1] = ConstantUInt::get(Type::UIntTy, vSlot);
       Value* vfunPtr =
         new GetElementPtrInst(interfaceVTable, indices, TMP, currentBB_);
-      Value* vfun = new LoadInst(vfunPtr, className + '/' + methodDescr,
-                                 currentBB_);
+      Value* vfun = new LoadInst(vfunPtr, function->getName(), currentBB_);
 
       makeCall(vfun, params);
     }

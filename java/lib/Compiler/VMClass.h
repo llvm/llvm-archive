@@ -16,6 +16,7 @@
 #define LLVM_JAVA_VMCLASS_H
 
 #include "VMField.h"
+#include "VMMethod.h"
 #include <llvm/Constant.h>
 #include <llvm/Module.h>
 #include <llvm/Type.h>
@@ -40,14 +41,18 @@ namespace llvm { namespace Java {
     unsigned interfaceIndex_;
     typedef std::map<std::string, VMField> FieldMap;
     FieldMap fieldMap_;
+    typedef std::map<std::string, VMMethod> MethodMap;
+    MethodMap methodMap_;
     mutable std::vector<void*> resolvedConstantPool_;
     std::vector<const VMClass*> superClasses_;
     std::vector<const VMClass*> interfaces_;
     std::vector<const VMField*> memberFields_;
 
     void computeLayout();
+    void computeClassRecord();
     const VMField* lookupField(const std::string& name) const;
-
+    const VMMethod* lookupMethod(const std::string& name) const;
+    
     friend class Resolver;
 
     // Resolver interface.
@@ -90,6 +95,7 @@ namespace llvm { namespace Java {
     llvm::Constant* getConstant(unsigned index) const;
     const VMClass* getClass(unsigned index) const;
     const VMField* getField(unsigned index) const;
+    const VMMethod* getMethod(unsigned index) const;
   };
 
 } } // namespace llvm::Java

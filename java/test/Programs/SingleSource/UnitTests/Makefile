@@ -29,6 +29,16 @@ JAVA_TESTS := AbstractCall \
 	Test \
 	VirtualCall \
 	VTable \
+	ackermann \
+	ary \
+	fibo \
+	heapsort \
+	methcall \
+	nestedloop \
+	objinst \
+	sieve \
+	random \
+	takfp \
 #	Lists1 \
 #	Strings \
 #	MultipleInterfaces \

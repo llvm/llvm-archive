@@ -1181,7 +1181,10 @@ namespace llvm { namespace Java { namespace {
       cf_ = method->getParent();
 
       Function* function = getFunction(method);
-      assert(function->empty() && "Compiling an already compiled method!");
+      if (!function->empty()) {
+        DEBUG(std::cerr << "Function: " << function->getName() << " is already compiled!\n");
+        return function;
+      }
 
       if (method->isNative()) {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "

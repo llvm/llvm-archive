@@ -118,7 +118,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   // Set up appearance
   CreateStatusBar ();
   SetSize (wxRect (100, 100, 500, 200));
-  Show (TRUE);
+  Show (FALSE);
   splitterWindow = new wxSplitterWindow(this, LLVM_TV_SPLITTER_WINDOW,
                                         wxDefaultPosition, wxDefaultSize,
                                         wxSP_3D);
@@ -145,7 +145,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   // Split window vertically
   splitterWindow->SplitVertically(myTreeCtrl, displayHtml, 100);
 #endif
-
+  Show (TRUE);
 }
 
 /// OnHelp - display the help dialog

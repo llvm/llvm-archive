@@ -23,7 +23,8 @@ void PictureCanvas::imageChanged () {
   myBitmap = new wxBitmap (*myImage);
   SetVirtualSize (myImage->GetWidth (), myImage->GetHeight ());
   SetScrollRate (1, 1);
-  GetParent ()->SetSizeHints (-1, -1, myImage->GetWidth (),
-                             myImage->GetHeight ());
-  GetParent ()->Refresh ();
+  if (wxFrame *frame = dynamic_cast<wxFrame *> (GetParent ())) {
+    frame->SetSizeHints (-1, -1, myImage->GetWidth (), myImage->GetHeight ());
+    frame->Refresh ();
+  }
 }

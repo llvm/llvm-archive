@@ -1539,9 +1539,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_aload_common(Type* arrayTy) {
       Value* index = pop(Type::IntTy);
-      Value* arrayRef =	new CastInst(pop(ObjectBaseRefTy),
-                                     PointerType::get(arrayTy),
-				     "cast-to-array", currentBB_);
+      Value* arrayRef =	pop(PointerType::get(arrayTy));
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1578,9 +1576,7 @@ namespace llvm { namespace Java { namespace {
       Value* value = pop(elementTy);
       Value* index = pop(Type::IntTy);
       const Type* arrayRefTy = PointerType::get(getArrayInfo(elementTy).type);
-      Value* arrayRef = new CastInst(pop(ObjectBaseRefTy),
-                                     arrayRefTy,
-				     "cast-to-array", currentBB_);
+      Value* arrayRef = pop(arrayRefTy);
 
       std::vector<Value*> indices;
       indices.reserve(3);
@@ -1830,8 +1826,6 @@ namespace llvm { namespace Java { namespace {
                       unsigned t, unsigned f) {
       Value* v2 = pop(type);
       Value* v1 = pop(type);
-      if (v1->getType() != v2->getType())
-        v1 = new CastInst(v1, v2->getType(), TMP, currentBB_);
       Value* c = new SetCondInst(cc, v1, v2, TMP, currentBB_);
       new BranchInst(bbBuilder_->getBasicBlock(t),
                      bbBuilder_->getBasicBlock(f),
@@ -2179,8 +2173,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_newarray(JType type) {
-      Value* count = pop(Type::IntTy);
-      count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
+      Value* count = pop(Type::UIntTy);
 
       const ClassInfo& ci = getPrimitiveArrayInfo(type);
       const VTableInfo& vi = getPrimitiveArrayVTableInfo(type);
@@ -2189,8 +2182,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_anewarray(unsigned index) {
-      Value* count = pop(Type::IntTy);
-      count = new CastInst(count, Type::UIntTy, TMP, currentBB_);
+      Value* count = pop(Type::UIntTy);
 
       ConstantClass* classRef = cf_->getConstantClass(index);
       ClassFile* cf = ClassFile::get(classRef->getName()->str());
@@ -2241,19 +2233,15 @@ namespace llvm { namespace Java { namespace {
     }
 
     void do_arraylength() {
-      Value* arrayRef = pop(ObjectBaseRefTy);
       const ClassInfo& ci = getObjectArrayInfo();
-      arrayRef =
-        new CastInst(arrayRef, PointerType::get(ci.type), TMP, currentBB_);
+      Value* arrayRef = pop(PointerType::get(ci.type));
       Value* lengthPtr = getArrayLengthPtr(arrayRef);
       Value* length = new LoadInst(lengthPtr, TMP, currentBB_);
-      length = new CastInst(length, Type::IntTy, TMP, currentBB_);
       push(length);
     }
 
     void do_athrow() {
       Value* objRef = pop(ObjectBaseRefTy);
-      objRef = new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_THROW, Type::IntTy,
         ObjectBaseRefTy, NULL);
@@ -2269,23 +2257,19 @@ namespace llvm { namespace Java { namespace {
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
       Value* objRef = pop(ObjectBaseRefTy);
-      Value* objBase =
-        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
-        objBase->getType(), PointerType::get(VTableInfo::VTableBaseTy), NULL);
+        ObjectBaseRefTy, PointerType::get(VTableInfo::VTableBaseTy), NULL);
       Value* vtable = new CastInst(vi->vtable,
                                    PointerType::get(VTableInfo::VTableBaseTy),
                                    TMP, currentBB_);
-      Value* r = new CallInst(f, objBase, vtable, TMP, currentBB_);
+      Value* r = new CallInst(f, objRef, vtable, TMP, currentBB_);
 
       Value* b = new SetCondInst(Instruction::SetEQ,
                                  r, ConstantSInt::get(Type::IntTy, 1),
                                  TMP, currentBB_);
       // FIXME: if b is false we must throw a ClassCast exception
-      Value* objCast =
-        new CastInst(objRef, PointerType::get(ci->type), TMP, currentBB_);
-      push(objCast);
+      push(objRef);
     }
 
     void do_instanceof(unsigned index) {
@@ -2296,15 +2280,13 @@ namespace llvm { namespace Java { namespace {
       tie(ci, vi) = getInfo(classRef->getName()->str());
 
       Value* objRef = pop(ObjectBaseRefTy);
-      Value* objBase =
-        new CastInst(objRef, ObjectBaseRefTy, TMP, currentBB_);
       Function* f = module_.getOrInsertFunction(
         LLVM_JAVA_ISINSTANCEOF, Type::IntTy,
-        objBase->getType(), PointerType::get(VTableInfo::VTableBaseTy), NULL);
+        ObjectBaseRefTy, PointerType::get(VTableInfo::VTableBaseTy), NULL);
       Value* vtable = new CastInst(vi->vtable,
                                    PointerType::get(VTableInfo::VTableBaseTy),
                                    TMP, currentBB_);
-      Value* r = new CallInst(f, objBase, vtable, TMP, currentBB_);
+      Value* r = new CallInst(f, objRef, vtable, TMP, currentBB_);
       push(r);
     }
 

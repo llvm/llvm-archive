@@ -1919,7 +1919,8 @@ namespace llvm { namespace Java { namespace {
     void do_switch(unsigned defTarget, const SwitchCases& sw) {
       Value* v = pop(Type::IntTy);
       SwitchInst* in =
-        new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), currentBB_);
+        new SwitchInst(v, bbBuilder_->getBasicBlock(defTarget), sw.size(), 
+                       currentBB_);
       for (unsigned i = 0, e = sw.size(); i != e; ++i)
         in->addCase(ConstantSInt::get(Type::IntTy, sw[i].first),
                     bbBuilder_->getBasicBlock(sw[i].second));

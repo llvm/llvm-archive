@@ -1,11 +1,11 @@
 public class LookupSwitch
 {
-    public static int main(String[] args) {
+    public static void main(String[] args) {
         switch (128) {
-        case 0: return 255;
-        case 128: return 128;
-        case 255: return 0;
-        default: return -1;
+        case 0: System.out.println(255);
+        case 128: System.out.println(128);
+        case 255: System.out.println(0);
+        default: System.out.println(-1);
         }
     }
 }

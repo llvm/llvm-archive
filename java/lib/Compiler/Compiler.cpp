@@ -812,7 +812,7 @@ void Compiler::compile(Module& m, const std::string& className)
 
     Function* main =
         compilerImpl_->compileMethod(m,
-                                     className + "/main([Ljava/lang/String;)I");
+                                     className + "/main([Ljava/lang/String;)V");
     Function* javaMain = m.getOrInsertFunction
         ("llvm_java_main", Type::IntTy,
          Type::IntTy, PointerType::get(PointerType::get(Type::SByteTy)), NULL);

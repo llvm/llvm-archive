@@ -1,10 +1,10 @@
 public class ForLoop
 {
-    public static int main(String[] args) {
+    public static void main(String[] args) {
         int sum = 0;
         for (int i = 0; i < 100; ++i)
             sum += i;
 
-        return sum;
+        System.out.println(sum);
     }
 }

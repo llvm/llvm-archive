@@ -2241,22 +2241,24 @@ namespace llvm { namespace Java { namespace {
       push(allocateObject(ci, vi, currentBB_));
     }
 
-    Value* getArrayLengthPtr(Value* arrayRef) const {
+    template <typename InsertionPointTy>
+    Value* getArrayLengthPtr(Value* arrayRef, InsertionPointTy* ip) const {
       std::vector<Value*> indices;
       indices.reserve(2);
       indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 1));
 
-      return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+      return new GetElementPtrInst(arrayRef, indices, TMP, ip);
     }
 
-    Value* getArrayObjectBasePtr(Value* arrayRef) const {
+    template <typename InsertionPointTy>
+    Value* getArrayObjectBasePtr(Value* arrayRef, InsertionPointTy* ip) const {
       std::vector<Value*> indices;
       indices.reserve(2);
       indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
       indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
 
-      return new GetElementPtrInst(arrayRef, indices, TMP, currentBB_);
+      return new GetElementPtrInst(arrayRef, indices, TMP, ip);
     }
 
     template<typename InsertionPointTy>
@@ -2294,7 +2296,7 @@ namespace llvm { namespace Java { namespace {
       objRef = new CastInst(objRef, PointerType::get(ci.getType()), TMP, ip);
 
       // Store the size.
-      Value* lengthPtr = getArrayLengthPtr(objRef);
+      Value* lengthPtr = getArrayLengthPtr(objRef, ip);
       new StoreInst(count, lengthPtr, ip);
 
       // Install the vtable pointer.
@@ -2330,7 +2332,7 @@ namespace llvm { namespace Java { namespace {
     void do_arraylength() {
       const ClassInfo& ci = getObjectArrayInfo();
       Value* arrayRef = pop(PointerType::get(ci.getType()));
-      Value* lengthPtr = getArrayLengthPtr(arrayRef);
+      Value* lengthPtr = getArrayLengthPtr(arrayRef, currentBB_);
       Value* length = new LoadInst(lengthPtr, TMP, currentBB_);
       push(length);
     }

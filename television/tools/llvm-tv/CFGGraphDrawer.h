@@ -18,10 +18,9 @@ namespace llvm {
 // CFGGraphDrawer interface
 
 class CFGGraphDrawer : public GraphDrawer {
-  llvm::Function *fn;
-  wxImage *drawGraphImage ();
  public:
-  CFGGraphDrawer (llvm::Function *_fn) : fn (_fn) { }
+  wxImage *drawFunctionGraph (llvm::Function *fn);
+  CFGGraphDrawer (wxWindow *parent) : GraphDrawer (parent) { }
 };
 
 #endif // CFGGRAPHDRAWER_H

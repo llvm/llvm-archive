@@ -9,7 +9,7 @@ using namespace llvm;
 
 // CFGGraphDrawer implementation
 
-wxImage *CFGGraphDrawer::drawGraphImage () {
+wxImage *CFGGraphDrawer::drawFunctionGraph (Function *fn) {
   ModuleProvider *MP = new ExistingModuleProvider (fn->getParent ());
   FunctionPassManager PM (MP);
   PM.add (createCFGOnlyPrinterPass ());

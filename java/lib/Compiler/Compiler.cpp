@@ -587,6 +587,9 @@ namespace llvm { namespace Java { namespace {
     /// Builds an interface VTable for the specified <class,interface>
     /// pair.
     llvm::Constant* buildInterfaceVTable(ClassFile* cf, ClassFile* interface) {
+        DEBUG(std::cerr << "Building interface vtable: "
+              << interface->getThisClass()->getName()->str() << " for: "
+              << cf->getThisClass()->getName()->str() << '\n');
 
       const VTableInfo& classVI = getVTableInfo(cf);
       const VTableInfo& interfaceVI = getVTableInfo(interface);
@@ -638,11 +641,14 @@ namespace llvm { namespace Java { namespace {
       const ClassInfo& ifaceCi = getClassInfo(ifaceCf);
       if (ifaceCi.interfaceIdx >= vtables.size())
         vtables.resize(ifaceCi.interfaceIdx+1, nullVTable);
-      vtables[ifaceCi.interfaceIdx] = buildInterfaceVTable(cf, ifaceCf);
-      const Classes& interfaces = ifaceCf->getInterfaces();
-      for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
-        ClassFile* otherCf = ClassFile::get(interfaces[i]->getName()->str());
-        insertVtablesForInterface(vtables, cf, otherCf);
+      // Add this interface's vtable if it was not added before.
+      if (vtables[ifaceCi.interfaceIdx] == nullVTable) {
+        vtables[ifaceCi.interfaceIdx] = buildInterfaceVTable(cf, ifaceCf);
+        const Classes& interfaces = ifaceCf->getInterfaces();
+        for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
+          ClassFile* otherCf = ClassFile::get(interfaces[i]->getName()->str());
+          insertVtablesForInterface(vtables, cf, otherCf);
+        }
       }
     }
 
@@ -1308,8 +1314,12 @@ namespace llvm { namespace Java { namespace {
           classMethodDesc.find("java/util/NoSuchElementException") != 0 &&
           classMethodDesc.find("java/util/AbstractCollection") != 0 &&
           classMethodDesc.find("java/util/AbstractList") != 0 &&
+          classMethodDesc.find("java/util/AbstractSet") != 0 &&
+          classMethodDesc.find("java/util/AbstractMap") != 0 &&
           classMethodDesc.find("java/util/AbstractSequentialList") != 0 &&
-          classMethodDesc.find("java/util/LinkedList") != 0) {
+          classMethodDesc.find("java/util/LinkedList") != 0 &&
+          classMethodDesc.find("java/util/TreeMap") != 0 &&
+          classMethodDesc.find("java/util/TreeSet") != 0) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << classMethodDesc << '\n');
         return function;

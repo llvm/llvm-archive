@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "OperandStack.h"
+#include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
+#include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/ADT/StringExtras.h>
 
@@ -30,10 +32,21 @@ void OperandStack::push(Value* value, BasicBlock* insertAtEnd)
       valueTy == Type::ShortTy)
     value = new CastInst(value, Type::IntTy, "int-extend", insertAtEnd);
 
-  TheStack.push(new AllocaInst(value->getType(),
-			       NULL,
-			       "opStack" + utostr(TheStack.size()),
-			       insertAtEnd));
+  // Insert the alloca at the beginning of the entry block.
+  BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
+  if (entry->empty())
+    TheStack.push(new AllocaInst(
+                    value->getType(),
+                    NULL,
+                    "opStack" + utostr(TheStack.size()),
+                    entry));
+  else
+    TheStack.push(new AllocaInst(
+                    value->getType(),
+                    NULL,
+                    "opStack" + utostr(TheStack.size()),
+                    &entry->front()));
+
   new StoreInst(value, TheStack.top(), insertAtEnd);
 }
 

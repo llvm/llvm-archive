@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Locals.h"
+#include <llvm/BasicBlock.h>
 #include <llvm/DerivedTypes.h>
+#include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/ADT/StringExtras.h>
 
@@ -28,11 +30,22 @@ Locals::Locals(unsigned maxLocals)
 void Locals::store(unsigned i, Value* value, BasicBlock* insertAtEnd)
 {
   if (!TheLocals[i] ||
-      TheLocals[i]->getType()->getElementType() != value->getType())
-    TheLocals[i] = new AllocaInst(value->getType(),
-				  NULL,
-				  "local" + utostr(i),
-				  insertAtEnd);
+      TheLocals[i]->getType()->getElementType() != value->getType()) {
+    // Insert the alloca at the beginning of the entry block.
+    BasicBlock* entry = &insertAtEnd->getParent()->getEntryBlock();
+    if (entry->empty())
+      TheLocals[i] = new AllocaInst(
+        value->getType(),
+        NULL,
+        "local" + utostr(i),
+        entry);
+    else
+      TheLocals[i] = new AllocaInst(
+        value->getType(),
+        NULL,
+        "local" + utostr(i),
+        &entry->front());
+  }
 
   new StoreInst(value, TheLocals[i], insertAtEnd);
 }

@@ -38,7 +38,7 @@ the right-hand side of the main window (the TVFrame).
 
 ItemDisplayer is the abstract superclass for objects that know how to visualize
 LLVM Functions and/or Modules. ItemDisplayers can be displayed in tabs in the
-TVNotebook view, or in their own windows.
+TVNotebook view, or in their own windows (called PictureFrames).
 
 TVCodeViewer is the ItemDisplayer which implements the "interactive code view"
 which highlights use-def chains. Each TVCodeViewer contains a TVCodeListCtrl,
@@ -51,14 +51,17 @@ GraphDrawer is an abstract superclass for all graph-drawing visualizers.  It
 inherits the ItemDisplayer interface, so all GraphDrawers are also
 ItemDisplayers. GraphDrawer simplifies the ItemDisplayer interface using the
 Template Method pattern.  Concrete GraphDrawers only need to be able to provide
-an image object given a TVTreeItem.
+an image object given a TVTreeItem; the abstract GraphDrawer class provides
+for displaying the image in a convenient scrolling viewer (called a
+PictureCanvas).
 
 CallGraphDrawer and CFGGraphDrawer are GraphDrawers for displaying the call
 graph (for a Module) and the control-flow graph (for a Function), respectively.
 
-DSAGraphDrawer is an abstract class using the Template Method for
-DSA graph visualizers: it implements drawFunctionGraph() and drawModuleGraph()
-in terms of pure virtual C++ functions that return the pass to draw a graph,
+DSAGraphDrawer is an abstract class for Data Structure Graph viewers.
+It implements GraphDrawer's Abstract Methods
+drawFunctionGraph() and drawModuleGraph() as Template Methods which rely on
+pure-virtual C++ methods that return the Pass object to write out the graph,
 which is different for each of BUGraphDrawer, TDGraphDrawer, and
 LocalGraphDrawer, as well as the filename to which they output the results of
 their analysis.  The functions createFunctionPass() and createModulePass() are
@@ -68,7 +71,3 @@ Function or Module is shared among the 3 subclasses of DSAGraphDrawer.
 
 BUGraphDrawer, TDGraphDrawer, and LocalGraphDrawer are also ItemDisplayers,
 which allows them to be displayed in tabs or in separate new windows.
-
-PictureCanvas is the container of a graphical visualizers, supporting an image
-display with scrolling.  PictureFrame is the window containing PictureCanvas and
-intercepts window events.

@@ -491,7 +491,7 @@ namespace llvm { namespace Java { namespace {
             opStack_.push(r);
         }
 
-        void do_cmp(unsigned bcI) {
+        void do_lcmp(unsigned bcI) {
             assert(0 && "not implemented");
         }
 

@@ -398,7 +398,7 @@ namespace llvm { namespace Java {
                     THIS->do_convert(curBC, SHORT);
                     break;
                 case LCMP:
-                    THIS->do_cmp(curBC);
+                    THIS->do_lcmp(curBC);
                     break;
                 case FCMPL:
                     THIS->do_cmpl(curBC);
@@ -693,7 +693,7 @@ namespace llvm { namespace Java {
         /// F2D, D2I, D2L, D2F, I2B, I2C, and I2S
         void do_convert(unsigned bcI, JType to) { }
         /// @brief called on LCMP
-        void do_cmp(unsigned bcI) { }
+        void do_lcmp(unsigned bcI) { }
         /// @brief called on FCMPL and DCMPL
         void do_cmpl(unsigned bcI) { }
         /// @brief called on FCMPG and DCMPG

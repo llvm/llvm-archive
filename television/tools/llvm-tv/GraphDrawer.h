@@ -1,8 +1,15 @@
+//===-- GraphDrawer.h - Graph viewing abstract class -------------*- C++ -*-==//
+//
+// Superclass for graph-drawing classes.
+//
+//===----------------------------------------------------------------------===//
+
 #ifndef GRAPHDRAWER_H
 #define GRAPHDRAWER_H
 
-#include <wx/wx.h>
 #include <string>
+
+class wxImage;
 
 //===----------------------------------------------------------------------===//
 

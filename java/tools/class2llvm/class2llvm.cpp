@@ -34,12 +34,10 @@ int main(int argc, char* argv[])
                                 "classfile to llvm utility");
 
     try {
-        const Java::ClassFile* cf(Java::ClassFile::getClassFile(InputClass));
-
         Java::Compiler compiler;
 
         Module module(InputClass);
-        compiler.compile(module, *cf);
+        compiler.compile(module, InputClass);
 
         PassManager passes;
         passes.add(new PrintModulePass(&std::cout));

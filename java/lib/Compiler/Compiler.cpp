@@ -752,9 +752,8 @@ Compiler::~Compiler()
     delete compilerImpl_;
 }
 
-void Compiler::compile(Module& m, const ClassFile& cf)
+void Compiler::compile(Module& m, const std::string& className)
 {
-    const std::string className = cf.getThisClass()->getName()->str();
     DEBUG(std::cerr << "Compiling class: " << className << '\n');
 
     compilerImpl_->compileMethod(m, className + "/main([Ljava/lang/String;)I");

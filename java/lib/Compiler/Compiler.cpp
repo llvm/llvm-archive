@@ -1207,11 +1207,7 @@ namespace llvm { namespace Java { namespace {
              A != E; ++A) {
           params.push_back(&*A);
         }
-        Value* r = new CallInst(jniFunction, params, "", bb);
-        if (r->getType() == Type::VoidTy)
-          new ReturnInst(NULL, bb);
-        else
-          new ReturnInst(r, bb);
+        new ReturnInst(new CallInst(jniFunction, params, "", bb), bb);
 
         return function;
       }

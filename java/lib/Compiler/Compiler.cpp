@@ -755,7 +755,7 @@ namespace llvm { namespace Java { namespace {
       return vi;
     }
 
-    const VTableInfo& getPrimitiveArrayVTableInfo(Type* type) {
+    const VTableInfo& getPrimitiveArrayVTableInfo(const Type* type) {
       if (Type::BoolTy == type) return getPrimitiveArrayVTableInfo(BOOLEAN);
       else if (Type::UShortTy == type) return getPrimitiveArrayVTableInfo(CHAR);
       else if (Type::FloatTy == type) return getPrimitiveArrayVTableInfo(FLOAT);
@@ -1853,45 +1853,18 @@ namespace llvm { namespace Java { namespace {
       return params;
     }
 
-    const VTableInfo* getVTableInfoGeneric(const std::string& className) {
-      const VTableInfo* vi = NULL;
-
-      if (className[0] == '[') {
-        if (className[1] == '[' || className[1] == 'L')
-          vi = &getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
-        else switch (className[1]) {
-        case 'B':
-          vi = &getPrimitiveArrayVTableInfo(Type::SByteTy);
-          break;
-        case 'C':
-          vi = &getPrimitiveArrayVTableInfo(Type::UShortTy);
-          break;
-        case 'D':
-          vi = &getPrimitiveArrayVTableInfo(Type::DoubleTy);
-          break;
-        case 'F':
-          vi = &getPrimitiveArrayVTableInfo(Type::FloatTy);
-          break;
-        case 'I':
-          vi = &getPrimitiveArrayVTableInfo(Type::IntTy);
-          break;
-        case 'J':
-          vi = &getPrimitiveArrayVTableInfo(Type::LongTy);
-          break;
-        case 'S':
-          vi = &getPrimitiveArrayVTableInfo(Type::ShortTy);
-          break;
-        case 'Z':
-          vi = &getPrimitiveArrayVTableInfo(Type::BoolTy);
-          break;
-        }
+     const VTableInfo* getVTableInfoGeneric(const Class* clazz) {
+      assert(!clazz->isPrimitive() &&
+             "Cannot get VTableInfo for primitive class!");
+      if (clazz->isArray()) {
+        const Class* componentClass = clazz->getComponentClass();
+        if (componentClass->isPrimitive())
+          return &getPrimitiveArrayVTableInfo(componentClass->getType());
+        else
+          return &getObjectArrayVTableInfo(ClassFile::get("java/lang/Object"));
       }
-      else {
-        const ClassFile* cf = ClassFile::get(className);
-        vi = &getVTableInfo(cf);
-      }
-
-      return vi;
+      else
+        return &getVTableInfo(clazz->getClassFile());
     }
 
     void do_invokevirtual(unsigned index) {
@@ -1901,8 +1874,8 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* ci = &resolver_->getClass(className);
-      const VTableInfo* vi = getVTableInfoGeneric(className);
+      const Class* clazz = &resolver_->getClass(className);
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
         nameAndType->getName()->str() +
@@ -1914,7 +1887,7 @@ namespace llvm { namespace Java { namespace {
       std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
-      objRef = new CastInst(objRef, ci->getType(), "this", currentBB_);
+      objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
@@ -1982,8 +1955,8 @@ namespace llvm { namespace Java { namespace {
 
       const std::string& className = methodRef->getClass()->getName()->str();
 
-      const Class* ci = &resolver_->getClass(className);
-      const VTableInfo* vi = getVTableInfoGeneric(className);
+      const Class* clazz = &resolver_->getClass(className);
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       const std::string& methodDescr =
         nameAndType->getName()->str() +
@@ -1995,7 +1968,7 @@ namespace llvm { namespace Java { namespace {
       std::vector<Value*> params(getParams(funTy));
 
       Value* objRef = params.front();
-      objRef = new CastInst(objRef, ci->getType(), "this", currentBB_);
+      objRef = new CastInst(objRef, clazz->getType(), "this", currentBB_);
       Value* objBase =
         new CastInst(objRef, resolver_->getObjectBaseRefType(), TMP, currentBB_);
       Value* vtable = new CallInst(getVtable_, objBase, TMP, currentBB_);
@@ -2009,7 +1982,8 @@ namespace llvm { namespace Java { namespace {
       interfaceVTables = new LoadInst(interfaceVTables, TMP, currentBB_);
       // Get the actual interface vtable.
       indices.clear();
-      indices.push_back(ConstantUInt::get(Type::UIntTy, ci->getInterfaceIndex()));
+      indices.push_back(ConstantUInt::get(Type::UIntTy,
+                                          clazz->getInterfaceIndex()));
       Value* interfaceVTable =
         new GetElementPtrInst(interfaceVTables, indices, TMP, currentBB_);
       interfaceVTable =
@@ -2172,8 +2146,8 @@ namespace llvm { namespace Java { namespace {
       ConstantClass* classRef =
         class_->getClassFile()->getConstantClass(index);
 
-      const Class* ci = &resolver_->getClass(classRef->getName()->str());
-      const VTableInfo* vi = getVTableInfoGeneric(classRef->getName()->str());
+      const Class* clazz = &resolver_->getClass(classRef->getName()->str());
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());
       Value* vtable = new CastInst(vi->vtable,
@@ -2192,8 +2166,8 @@ namespace llvm { namespace Java { namespace {
       ConstantClass* classRef =
         class_->getClassFile()->getConstantClass(index);
 
-      const Class* ci = &resolver_->getClass(classRef->getName()->str());
-      const VTableInfo* vi = getVTableInfoGeneric(classRef->getName()->str());
+      const Class* clazz = &resolver_->getClass(classRef->getName()->str());
+      const VTableInfo* vi = getVTableInfoGeneric(clazz);
 
       Value* objRef = pop(resolver_->getObjectBaseRefType());
       Value* vtable = new CastInst(vi->vtable, VTableBaseRefTy,

@@ -53,6 +53,8 @@ static void setUpMenus (wxFrame *frame) {
   viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, "View call graph");
   viewMenu->Append (LLVM_TV_CFGVIEW, "View control-flow graph");
   viewMenu->Append (LLVM_TV_BUDS_VIEW, "View BU datastructure graph");
+  viewMenu->Append (LLVM_TV_TDDS_VIEW, "View TD datastructure graph");
+  viewMenu->Append (LLVM_TV_LOCALDS_VIEW, "View Local datastructure graph");
   viewMenu->Append (LLVM_TV_CODEVIEW, "View code (interactive)");
   menuBar->Append (viewMenu, "View");
 
@@ -132,6 +134,32 @@ void TVApplication::OpenBUDSView (Function *F) {
 void TVApplication::OpenBUDSView (Module *M) {
   BUGraphDrawer drawer (M);
   allMyWindows.push_back (new PictureFrame (this, "BU graph (globals)",
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenTDDSView (Function *F) {
+  TDGraphDrawer drawer (F);
+  std::string title = "TD graph: " + F->getName();
+  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenTDDSView (Module *M) {
+  TDGraphDrawer drawer (M);
+  allMyWindows.push_back (new PictureFrame (this, "TD graph (globals)",
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenLocalDSView (Function *F) {
+  TDGraphDrawer drawer (F);
+  std::string title = "Local graph: " + F->getName();
+  allMyWindows.push_back (new PictureFrame (this, title.c_str(), 
+                                            drawer.getGraphImage ()));
+}
+
+void TVApplication::OpenLocalDSView (Module *M) {
+  TDGraphDrawer drawer (M);
+  allMyWindows.push_back (new PictureFrame (this, "Local graph (globals)",
                                             drawer.getGraphImage ()));
 }
 

@@ -59,6 +59,8 @@ enum {
   LLVM_TV_CALLGRAPHVIEW,
   LLVM_TV_CFGVIEW,
   LLVM_TV_BUDS_VIEW,
+  LLVM_TV_TDDS_VIEW,
+  LLVM_TV_LOCALDS_VIEW,
   LLVM_TV_CODEVIEW,
   LLVM_TV_CODEVIEW_LIST
 };
@@ -86,6 +88,8 @@ class TVFrame : public wxFrame {
   void CallGraphView (wxCommandEvent &event);
   void CFGView (wxCommandEvent &event);
   void BUDSView (wxCommandEvent &event);
+  void TDDSView (wxCommandEvent &event);
+  void LocalDSView (wxCommandEvent &event);
   void CodeView (wxCommandEvent &event);
   void OnAbout (wxCommandEvent &event);
   void OnHelp (wxCommandEvent &event);

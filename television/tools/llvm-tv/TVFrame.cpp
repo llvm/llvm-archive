@@ -238,6 +238,7 @@ void TVFrame::CFGView(wxCommandEvent &event) {
     myApp->OpenCFGView (F);
 }
 
+// FIXME: These 3 functions are asking for a refactoring...
 void TVFrame::BUDSView(wxCommandEvent &event) {
   // Get the selected LLVM object.
   TVTreeItemData *item =
@@ -247,7 +248,7 @@ void TVFrame::BUDSView(wxCommandEvent &event) {
   Function *F = item->getFunction ();
   if (F) {
     if (F->isExternal())
-      wxMessageBox("External functions have no BU Datastructures to view.",
+      wxMessageBox("External functions have no Datastructures to view.",
                    "Error", wxOK | wxICON_ERROR, this);
     else
       myApp->OpenBUDSView(F);
@@ -256,6 +257,54 @@ void TVFrame::BUDSView(wxCommandEvent &event) {
     Module *M = item->getModule();
     if (M)
       myApp->OpenBUDSView(M);
+    else
+      wxMessageBox("The selected item is invalid.", "Error",
+                   wxOK | wxICON_ERROR, this);
+  } 
+}
+
+void TVFrame::TDDSView(wxCommandEvent &event) {
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Open up a new TDDS view window. First, try to see if it's a Function.
+  Function *F = item->getFunction ();
+  if (F) {
+    if (F->isExternal())
+      wxMessageBox("External functions have no Datastructures to view.",
+                   "Error", wxOK | wxICON_ERROR, this);
+    else
+      myApp->OpenTDDSView(F);
+  } else {
+    // Maybe it's a Module?
+    Module *M = item->getModule();
+    if (M)
+      myApp->OpenTDDSView(M);
+    else
+      wxMessageBox("The selected item is invalid.", "Error",
+                   wxOK | wxICON_ERROR, this);
+  } 
+}
+
+void TVFrame::LocalDSView(wxCommandEvent &event) {
+  // Get the selected LLVM object.
+  TVTreeItemData *item =
+    (TVTreeItemData *) myTreeCtrl->GetItemData (myTreeCtrl->GetSelection ());
+
+  // Open up a new Local DS view window. First, try to see if it's a Function.
+  Function *F = item->getFunction ();
+  if (F) {
+    if (F->isExternal())
+      wxMessageBox("External functions have no Datastructures to view.",
+                   "Error", wxOK | wxICON_ERROR, this);
+    else
+      myApp->OpenLocalDSView(F);
+  } else {
+    // Maybe it's a Module?
+    Module *M = item->getModule();
+    if (M)
+      myApp->OpenLocalDSView(M);
     else
       wxMessageBox("The selected item is invalid.", "Error",
                    wxOK | wxICON_ERROR, this);
@@ -286,7 +335,9 @@ BEGIN_EVENT_TABLE (TVFrame, wxFrame)
   EVT_MENU (LLVM_TV_REFRESH, TVFrame::OnRefresh)
   EVT_MENU (LLVM_TV_CALLGRAPHVIEW, TVFrame::CallGraphView)
   EVT_MENU (LLVM_TV_CFGVIEW, TVFrame::CFGView)
-  EVT_MENU (LLVM_TV_BUDS_VIEW, TVFrame::BUDSView)  
+  EVT_MENU (LLVM_TV_BUDS_VIEW, TVFrame::BUDSView)
+  EVT_MENU (LLVM_TV_TDDS_VIEW, TVFrame::TDDSView)
+  EVT_MENU (LLVM_TV_LOCALDS_VIEW, TVFrame::LocalDSView)
   EVT_MENU (LLVM_TV_CODEVIEW, TVFrame::CodeView)
 END_EVENT_TABLE ()
 

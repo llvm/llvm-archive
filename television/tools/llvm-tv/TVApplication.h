@@ -39,6 +39,10 @@ public:
   void OpenCFGView (llvm::Function *F);
   void OpenBUDSView (llvm::Function *F);
   void OpenBUDSView (llvm::Module *M);
+  void OpenTDDSView (llvm::Function *F);
+  void OpenTDDSView (llvm::Module *M);
+  void OpenLocalDSView (llvm::Function *F);
+  void OpenLocalDSView (llvm::Module *M);
   void OpenCodeView (llvm::Function *F);
   void Quit ();
 };

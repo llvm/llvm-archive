@@ -27,6 +27,7 @@ using namespace llvm::Java;
 
 Class::Class(Resolver& resolver)
   : resolver_(&resolver),
+    superClass_(NULL),
     componentClass_(NULL),
     structType_(OpaqueType::get()),
     type_(PointerType::get(structType_)),
@@ -37,6 +38,7 @@ Class::Class(Resolver& resolver)
 
 Class::Class(Resolver& resolver, const Type* type)
   : resolver_(&resolver),
+    superClass_(NULL),
     componentClass_(NULL),
     structType_(0),
     type_(type),
@@ -68,9 +70,6 @@ void Class::buildClass(const std::string& className)
 {
   const ClassFile* cf = ClassFile::get(className);
 
-  if (cf->isInterface())
-    interfaceIndex_ = resolver_->getNextInterfaceIndex();
-
   // This is any class but java/lang/Object.
   if (cf->getSuperClass()) {
     const Class& superClass =
@@ -78,6 +77,16 @@ void Class::buildClass(const std::string& className)
 
     // We first add the struct of the super class.
     addField("super", superClass.getStructType());
+
+    // Although we can safely assume that all interfaces inherits from
+    // java/lang/Object, java/lang/Class.getSuperclass() returns null
+    // on interface types. So we only set the superClass_ field when
+    // the class is not an interface type, but we model the LLVM type
+    // of the interface to be as if it inherits java/lang/Object.
+    if (cf->isInterface())
+      interfaceIndex_ = resolver_->getNextInterfaceIndex();
+    else
+      superClass_ = &superClass;
   }
   // This is java/lang/Object.
   else
@@ -98,11 +107,11 @@ void Class::buildClass(const std::string& className)
 
 void Class::buildArrayClass(const Class& componentClass)
 {
+  superClass_ = &resolver_->getClass("java/lang/Object");
   componentClass_ = &componentClass;
-  addField("super", resolver_->getClass("java/lang/Object").getStructType());
+  addField("super", superClass_->getStructType());
   addField("<length>", Type::UIntTy);
   addField("<data>", ArrayType::get(componentClass_->getType(), 0));
 
   resolveType();
 }
-

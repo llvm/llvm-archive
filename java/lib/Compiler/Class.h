@@ -28,6 +28,7 @@ namespace llvm { namespace Java {
     static const unsigned INVALID_INTERFACE_INDEX = 0xFFFFFFFF;
 
     Resolver* resolver_;
+    const Class* superClass_;
     const Class* componentClass_;
     Type* structType_;
     const Type* type_;
@@ -56,6 +57,7 @@ namespace llvm { namespace Java {
   public:
     const Type* getStructType() const { return structType_; }
     const Type* getType() const { return type_; }
+    const Class* getSuperClass() const { return superClass_; }
     const Class* getComponentClass() const { return componentClass_; }
     bool isArray() const { return componentClass_; }
     unsigned getInterfaceIndex() const { return interfaceIndex_; }

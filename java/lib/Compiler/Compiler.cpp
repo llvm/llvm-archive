@@ -65,7 +65,7 @@ namespace llvm { namespace Java { namespace {
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
     typedef std::map<BasicBlock*, unsigned> OpStackDepthMap;
-    OpStackDepthMap opStackDepthMap_; 
+    OpStackDepthMap opStackDepthMap_;
     typedef std::map<std::string, GlobalVariable*> StringMap;
     StringMap stringMap_;
     BasicBlock* currentBB_;
@@ -179,7 +179,7 @@ namespace llvm { namespace Java { namespace {
         init,
         str + ".str",
         &module_);
-        
+
       std::vector<Value*> params;
       params.reserve(4);
       params.clear();
@@ -196,7 +196,7 @@ namespace llvm { namespace Java { namespace {
 
       // Create a new java/lang/String object.
       Value* objRef = allocateObject(ci, vi, ip);
-      
+
       // Initialize it: call java/lang/String/<init>(byte[],int)
       Method* method = getMethod("java/lang/String/<init>([BI)V");
       Function* function = getFunction(method);
@@ -210,7 +210,7 @@ namespace llvm { namespace Java { namespace {
       new CallInst(function, params, "", ip);
 
       return objRef;
-    }      
+    }
 
     Value* getConstantString(ConstantString* s) {
       const std::string& str = s->getValue()->str();
@@ -361,8 +361,6 @@ namespace llvm { namespace Java { namespace {
       init.push_back(typeInfoInit);
 
       const Methods& methods = cf->getMethods();
-
-      const Class& ci = resolver_->getClass("java/lang/Object");
 
       // Add member functions to the vtable.
       for (unsigned i = 0, e = methods.size(); i != e; ++i) {
@@ -1087,29 +1085,27 @@ namespace llvm { namespace Java { namespace {
     Value* getField(unsigned index, Value* ptr) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
-      return getField(fieldRef->getClass()->getName()->str(),
-                      nameAndType->getName()->str(),
-                      ptr);
+      return getField(
+        &resolver_->getClass(fieldRef->getClass()->getName()->str()),
+        nameAndType->getName()->str(),
+        ptr);
     }
 
     /// Emits the necessary code to get a field from the passed
     /// pointer to an object.
-    Value* getField(std::string className,
+    Value* getField(const Class* clazz,
                     const std::string& fieldName,
                     Value* ptr) {
       // Cast ptr to correct type.
-      ptr = new CastInst(ptr, resolver_->getClass(className).getType(),
-                         TMP, currentBB_);
+      ptr = new CastInst(ptr, clazz->getType(), TMP, currentBB_);
 
       // Deref pointer.
       std::vector<Value*> indices(1, ConstantUInt::get(Type::UIntTy, 0));
       while (true) {
-        const Class& clazz = resolver_->getClass(className);
-        int slot = clazz.getFieldIndex(fieldName);
+        int slot = clazz->getFieldIndex(fieldName);
         if (slot == -1) {
-          className =
-            ClassFile::get(className)->getSuperClass()->getName()->str();
           indices.push_back(ConstantUInt::get(Type::UIntTy, 0));
+          clazz = clazz->getSuperClass();
         }
         else {
           indices.push_back(ConstantUInt::get(Type::UIntTy, slot));

@@ -1487,6 +1487,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_getstatic(unsigned index) {
       const VMField* field = class_->getField(index);
+      emitStaticInitializers(field->getParent()->getClassFile());
 
       Value* v = new LoadInst(field->getGlobal(), TMP, currentBB_);
       push(v);
@@ -1494,6 +1495,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_putstatic(unsigned index) {
       const VMField* field = class_->getField(index);
+      emitStaticInitializers(field->getParent()->getClassFile());
 
       Value* v = pop(field->getClass()->getType());
       new StoreInst(v, field->getGlobal(), currentBB_);

@@ -25,8 +25,7 @@ TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
                        const wxPoint& pos, const wxSize& size,
                        long style)
   : wxTreeCtrl(parent, id, pos, size, style), myFrame (frame) {
-  wxTreeItemId rootId = AddRoot("Snapshots", -1, -1,
-                                new TVTreeItemData("Snapshot Root"));
+  wxTreeItemId rootId = AddRoot("Snapshots", -1, -1,TVTreeRootItem::instance());
 }
 
 /// AddSnapshotsToTree - Given a list of snapshots the tree is populated

@@ -176,7 +176,7 @@ std::vector<std::string> ClassFile::getClassPath()
     unsigned b = 0, e = 0;
     do {
         e = ClassPath.find(':', b);
-        result.push_back(ClassPath.substr(b, e));
+        result.push_back(ClassPath.substr(b, e - b));
         b = e + 1;
     } while (e != std::string::npos);
 

@@ -367,10 +367,12 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
                                        jint length) {
   struct llvm_java_bytearray* srcArray = (struct llvm_java_bytearray*) srcObj;
   struct llvm_java_bytearray* dstArray = (struct llvm_java_bytearray*) dstObj;
+  unsigned nbytes = length * srcObj->vtable->typeinfo.elementSize;
 
   jbyte* src = srcArray->data;
   jbyte* dst = dstArray->data;
 
+  // FIXME: Need to perform a proper type check here.
   if (srcObj->vtable->typeinfo.elementSize !=
       dstObj->vtable->typeinfo.elementSize)
     llvm_java_throw(NULL);
@@ -378,7 +380,12 @@ void Java_java_lang_VMSystem_arraycopy(JNIEnv *env, jobject clazz,
   src += srcStart * srcObj->vtable->typeinfo.elementSize;
   dst += dstStart * dstObj->vtable->typeinfo.elementSize;
 
-  memcpy(dst, src, length * srcObj->vtable->typeinfo.elementSize);
+  // If arrays do not overlap use memcpy.
+  if ((dst > src ? dst - src : src - dst) > nbytes)
+    memcpy(dst, src, nbytes);
+  // If arrays overlap use memmove.
+  else
+    memmove(dst, src, nbytes);
 }
 
 void Java_gnu_classpath_VMSystemProperties_preInit(JNIEnv *env, jobject clazz,

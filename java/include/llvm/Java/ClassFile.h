@@ -69,14 +69,14 @@ namespace llvm { namespace Java {
                           const std::string& name);
 
   class ClassFile {
-    static ClassFile* readClassFile(std::istream& is);
+    static const ClassFile* readClassFile(std::istream& is);
     static std::vector<llvm::sys::Path> getClassPath();
     static sys::Path getFileForClass(const std::string& classname);
 
     typedef std::map<std::string, Method*> Name2MethodMap;
 
   public:
-    static ClassFile* get(const std::string& classname);
+    static const ClassFile* get(const std::string& classname);
 
     ~ClassFile();
 
@@ -90,6 +90,8 @@ namespace llvm { namespace Java {
     ConstantMethodRef* getConstantMethodRef(unsigned index) const;
     ConstantInterfaceMethodRef*
     getConstantInterfaceMethodRef(unsigned index) const;
+    ConstantNameAndType* getConstantNameAndType(unsigned index) const;
+    ConstantUtf8* getConstantUtf8(unsigned index) const;
 
     bool isPublic() const { return accessFlags_ & ACC_PUBLIC; }
     bool isFinal() const { return accessFlags_ & ACC_FINAL; }
@@ -135,10 +137,10 @@ namespace llvm { namespace Java {
 
   class Constant {
   protected:
-    const ConstantPool& cPool_;
+    const ClassFile* parent_;
 
-    Constant(const ConstantPool& cp)
-      : cPool_(cp) { }
+    Constant(const ClassFile* cf)
+      : parent_(cf) { }
 
   public:
     enum Tag {
@@ -155,11 +157,12 @@ namespace llvm { namespace Java {
       UTF8 = 1
     };
 
-    static Constant* readConstant(const ConstantPool& cp,
-                                  std::istream& is);
+    static Constant* readConstant(const ClassFile* cf, std::istream& is);
 
     virtual bool isSingleSlot() { return true; }
     bool isDoubleSlot() { return !isSingleSlot(); }
+    const ClassFile* getParent() { return parent_; }
+
     virtual ~Constant();
 
     virtual std::ostream& dump(std::ostream& os) const = 0;
@@ -172,9 +175,9 @@ namespace llvm { namespace Java {
   class ConstantClass : public Constant {
     uint16_t nameIdx_;
   public:
-    ConstantClass(const ConstantPool& cp, std::istream& is);
+    ConstantClass(const ClassFile* cf, std::istream& is);
     ConstantUtf8* getName() const {
-      return (ConstantUtf8*) cPool_[nameIdx_];
+      return parent_->getConstantUtf8(nameIdx_);
     }
     std::ostream& dump(std::ostream& os) const;
   };
@@ -183,42 +186,42 @@ namespace llvm { namespace Java {
     uint16_t classIdx_;
     uint16_t nameAndTypeIdx_;
   protected:
-    ConstantMemberRef(const ConstantPool& cp, std::istream& is);
+    ConstantMemberRef(const ClassFile* cf, std::istream& is);
 
   public:
     ConstantClass* getClass() const {
-      return (ConstantClass*) cPool_[classIdx_];
+      return parent_->getConstantClass(classIdx_);
     }
     ConstantNameAndType* getNameAndType() const {
-      return (ConstantNameAndType*) cPool_[nameAndTypeIdx_];
+      return parent_->getConstantNameAndType(nameAndTypeIdx_);
     }
     std::ostream& dump(std::ostream& os) const;
   };
 
   class ConstantFieldRef : public ConstantMemberRef {
   public:
-    ConstantFieldRef(const ConstantPool& cp, std::istream& is)
-      : ConstantMemberRef(cp, is) { }
+    ConstantFieldRef(const ClassFile* cf, std::istream& is)
+      : ConstantMemberRef(cf, is) { }
   };
 
   class ConstantMethodRef : public ConstantMemberRef {
   public:
-    ConstantMethodRef(const ConstantPool& cp, std::istream& is)
-      : ConstantMemberRef(cp, is) { }
+    ConstantMethodRef(const ClassFile* cf, std::istream& is)
+      : ConstantMemberRef(cf, is) { }
   };
 
   class ConstantInterfaceMethodRef : public ConstantMemberRef {
   public:
-    ConstantInterfaceMethodRef(const ConstantPool& cp, std::istream& is)
-      : ConstantMemberRef(cp, is) { }
+    ConstantInterfaceMethodRef(const ClassFile* cf, std::istream& is)
+      : ConstantMemberRef(cf, is) { }
   };
 
   class ConstantString : public Constant {
     uint16_t stringIdx_;
   public:
-    ConstantString(const ConstantPool& cp, std::istream& is);
+    ConstantString(const ClassFile* cf, std::istream& is);
     ConstantUtf8* getValue() const {
-      return  (ConstantUtf8*) cPool_[stringIdx_];
+      return parent_->getConstantUtf8(stringIdx_);
     }
     std::ostream& dump(std::ostream& os) const;
   };
@@ -226,7 +229,7 @@ namespace llvm { namespace Java {
   class ConstantInteger : public Constant {
     int32_t value_;
   public:
-    ConstantInteger(const ConstantPool& cp, std::istream& is);
+    ConstantInteger(const ClassFile* cf, std::istream& is);
     int32_t getValue() const { return value_; }
     std::ostream& dump(std::ostream& os) const;
   };
@@ -234,7 +237,7 @@ namespace llvm { namespace Java {
   class ConstantFloat : public Constant {
     float value_;
   public:
-    ConstantFloat(const ConstantPool& cp, std::istream& is);
+    ConstantFloat(const ClassFile* cf, std::istream& is);
     float getValue() const { return value_; }
     std::ostream& dump(std::ostream& os) const;
   };
@@ -242,7 +245,7 @@ namespace llvm { namespace Java {
   class ConstantLong : public Constant {
     int64_t value_;
   public:
-    ConstantLong(const ConstantPool& cp, std::istream& is);
+    ConstantLong(const ClassFile* cf, std::istream& is);
     virtual bool isSingleSlot() { return false; }
     int64_t getValue() const { return value_; }
     std::ostream& dump(std::ostream& os) const;
@@ -251,7 +254,7 @@ namespace llvm { namespace Java {
   class ConstantDouble : public Constant {
     double value_;
   public:
-    ConstantDouble(const ConstantPool& cp, std::istream& is);
+    ConstantDouble(const ClassFile* cf, std::istream& is);
     virtual bool isSingleSlot() { return false; }
     double getValue() const { return value_; }
     std::ostream& dump(std::ostream& os) const;
@@ -261,12 +264,12 @@ namespace llvm { namespace Java {
     uint16_t nameIdx_;
     uint16_t descriptorIdx_;
   public:
-    ConstantNameAndType(const ConstantPool& cp, std::istream& is);
+    ConstantNameAndType(const ClassFile* cf, std::istream& is);
     ConstantUtf8* getName() const {
-      return (ConstantUtf8*) cPool_[nameIdx_];
+      return parent_->getConstantUtf8(nameIdx_);
     }
     ConstantUtf8* getDescriptor() const {
-      return (ConstantUtf8*) cPool_[descriptorIdx_];
+      return parent_->getConstantUtf8(descriptorIdx_);
     }
     std::ostream& dump(std::ostream& os) const;
   };
@@ -274,7 +277,7 @@ namespace llvm { namespace Java {
   class ConstantUtf8 : public Constant {
     std::string utf8_;
   public:
-    ConstantUtf8(const ConstantPool& cp, std::istream& is);
+    ConstantUtf8(const ClassFile* cf, std::istream& is);
     const std::string& str() const { return utf8_; }
 
     std::ostream& dump(std::ostream& os) const;
@@ -282,19 +285,17 @@ namespace llvm { namespace Java {
 
   class Field {
   private:
-    ClassFile* parent_;
+    const ClassFile* parent_;
     uint16_t accessFlags_;
     ConstantUtf8* name_;
     ConstantUtf8* descriptor_;
     Attributes attributes_;
 
-    Field(ClassFile* parent, const ConstantPool& cp, std::istream& is);
+    Field(const ClassFile* parent, std::istream& is);
 
   public:
-    static Field* readField(ClassFile* parent,
-                            const ConstantPool& cp,
-                            std::istream& is) {
-      return new Field(parent, cp, is);
+    static Field* readField(const ClassFile* parent, std::istream& is) {
+      return new Field(parent, is);
     }
 
     ~Field();
@@ -307,7 +308,7 @@ namespace llvm { namespace Java {
     bool isVolatile() const { return accessFlags_ & ACC_VOLATILE; }
     bool isTransient() const { return accessFlags_ & ACC_TRANSIENT; }
 
-    ClassFile* getParent() const { return parent_; }
+    const ClassFile* getParent() const { return parent_; }
     ConstantUtf8* getName() const { return name_; }
     ConstantUtf8* getDescriptor() const { return descriptor_; }
     const Attributes& getAttributes() const { return attributes_; }
@@ -321,19 +322,17 @@ namespace llvm { namespace Java {
   }
 
   class Method {
-    ClassFile* parent_;
+    const ClassFile* parent_;
     uint16_t accessFlags_;
     ConstantUtf8* name_;
     ConstantUtf8* descriptor_;
     Attributes attributes_;
 
-    Method(ClassFile* parent, const ConstantPool& cp, std::istream& is);
+    Method(const ClassFile* parent, std::istream& is);
 
   public:
-    static Method* readMethod(ClassFile* parent,
-                              const ConstantPool& cp,
-                              std::istream& is) {
-      return new Method(parent, cp, is);
+    static Method* readMethod(const ClassFile* parent, std::istream& is) {
+      return new Method(parent, is);
     }
 
     ~Method();
@@ -348,7 +347,7 @@ namespace llvm { namespace Java {
     bool isAbstract() const { return accessFlags_ & ACC_ABSTRACT; }
     bool isStrict() const { return accessFlags_ & ACC_STRICT; }
 
-    ClassFile* getParent() const { return parent_; }
+    const ClassFile* getParent() const { return parent_; }
     ConstantUtf8* getName() const { return name_; }
     ConstantUtf8* getDescriptor() const { return descriptor_; }
     const Attributes& getAttributes() const { return attributes_; }
@@ -366,13 +365,10 @@ namespace llvm { namespace Java {
     ConstantUtf8* name_;
 
   protected:
-    Attribute(ConstantUtf8* name,
-              const ConstantPool& cp,
-              std::istream& is);
+    Attribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is);
 
   public:
-    static Attribute* readAttribute(const ConstantPool& cp,
-                                    std::istream& is);
+    static Attribute* readAttribute(const ClassFile* cf, std::istream& is);
 
     virtual ~Attribute();
 
@@ -399,7 +395,7 @@ namespace llvm { namespace Java {
     Constant* value_;
   public:
     ConstantValueAttribute(ConstantUtf8* name,
-                           const ConstantPool& cp,
+                           const ClassFile* cf,
                            std::istream& is);
 
     Constant* getValue() const { return value_; }
@@ -416,7 +412,7 @@ namespace llvm { namespace Java {
       ConstantClass* catchType_;
 
     public:
-      Exception(const ConstantPool& cp, std::istream& is);
+      Exception(const ClassFile* cf, std::istream& is);
 
       uint16_t getStartPc() const { return startPc_; }
       uint16_t getEndPc() const { return endPc_; }
@@ -438,7 +434,7 @@ namespace llvm { namespace Java {
 
   public:
     CodeAttribute(ConstantUtf8* name,
-                  const ConstantPool& cp,
+                  const ClassFile* cf,
                   std::istream& is);
     ~CodeAttribute();
     uint16_t getMaxStack() const { return maxStack_; }
@@ -463,7 +459,7 @@ namespace llvm { namespace Java {
 
   public:
     ExceptionsAttribute(ConstantUtf8* name,
-                        const ConstantPool& cp,
+                        const ClassFile* cf,
                         std::istream& is);
 
     const Classes& getExceptions() const { return exceptions_; }

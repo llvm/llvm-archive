@@ -84,67 +84,46 @@ namespace {
     return tmp.out;
   }
 
-  void readConstantPool(ConstantPool& cp, std::istream& is)
-  {
-    assert(cp.empty() && "Should not call with a non-empty constant pool");
-    uint16_t count = readU2(is);
-    cp.reserve(count);
-    cp.push_back(NULL);
-    while (cp.size() < count) {
-      cp.push_back(Constant::readConstant(cp, is));
-      if (cp.back()->isDoubleSlot())
-        cp.push_back(NULL);
-    }
-  }
-
-  void readClasses(Classes& i, const ConstantPool& cp, std::istream& is)
+  void readClasses(Classes& i, const ClassFile* cf, std::istream& is)
   {
     assert(i.empty() &&
            "Should not call with a non-empty classes vector");
     uint16_t count = readU2(is);
     i.reserve(count);
     while (count--) {
-      ConstantClass* c = dynamic_cast<ConstantClass*>(cp[readU2(is)]);
+      ConstantClass* c = cf->getConstantClass(readU2(is));
       if (!c)
         throw ClassFileSemanticError("ConstantClass expected");
       i.push_back(c);
     }
   }
 
-  void readFields(Fields& f,
-                  ClassFile* parent,
-                  const ConstantPool& cp,
-                  std::istream& is)
+  void readFields(Fields& f, const ClassFile* parent, std::istream& is)
   {
     assert(f.empty() && "Should not call with a non-empty fields vector");
     uint16_t count = readU2(is);
     f.reserve(count);
     while(count--)
-      f.push_back(Field::readField(parent, cp, is));
+      f.push_back(Field::readField(parent, is));
   }
 
-  void readMethods(Methods& m,
-                   ClassFile* parent,
-                   const ConstantPool& cp,
-                   std::istream& is)
+  void readMethods(Methods& m, const ClassFile* parent, std::istream& is)
   {
     assert(m.empty() && "Should not call with a non-empty methods vector");
     uint16_t count = readU2(is);
     m.reserve(count);
     while(count--)
-      m.push_back(Method::readMethod(parent, cp, is));
+      m.push_back(Method::readMethod(parent, is));
   }
 
-  void readAttributes(Attributes& a,
-                      const ConstantPool& cp,
-                      std::istream& is)
+  void readAttributes(Attributes& a, const ClassFile* cf, std::istream& is)
   {
     assert(a.empty() &&
            "Should not call with a non-empty attributes vector");
     uint16_t count = readU2(is);
     a.reserve(count);
     while(count--)
-      a.push_back(Attribute::readAttribute(cp, is));
+      a.push_back(Attribute::readAttribute(cf, is));
   }
 
   template <typename Container>
@@ -165,7 +144,7 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 // ClassFile implementation
-ClassFile* ClassFile::readClassFile(std::istream& is)
+const ClassFile* ClassFile::readClassFile(std::istream& is)
 {
   if (readU1(is) != 0xCA) throw ClassFileParseError("bad magic");
   if (readU1(is) != 0xFE) throw ClassFileParseError("bad magic");
@@ -218,9 +197,9 @@ sys::Path ClassFile::getFileForClass(const std::string& classname)
   throw ClassNotFoundException("Class " + classname + " not found");
 }
 
-ClassFile* ClassFile::get(const std::string& classname)
+const ClassFile* ClassFile::get(const std::string& classname)
 {
-  typedef std::map<std::string, ClassFile*> Name2ClassMap;
+  typedef std::map<std::string, const ClassFile*> Name2ClassMap;
   static Name2ClassMap n2cMap_;
 
   Name2ClassMap::iterator it = n2cMap_.lower_bound(classname);
@@ -237,20 +216,28 @@ ClassFile::ClassFile(std::istream& is)
 {
   minorV_ = readU2(is);
   majorV_ = readU2(is);
-  readConstantPool(cPool_, is);
+  // Read constant pool.
+  uint16_t count = readU2(is);
+  cPool_.reserve(count);
+  cPool_.push_back(NULL);
+  while (cPool_.size() < count) {
+    cPool_.push_back(Constant::readConstant(this, is));
+    if (cPool_.back()->isDoubleSlot())
+      cPool_.push_back(NULL);
+  }
   accessFlags_ = readU2(is);
-  thisClass_ = dynamic_cast<ConstantClass*>(cPool_[readU2(is)]);
+  thisClass_ = getConstantClass(readU2(is));
   if (!thisClass_)
     throw ClassFileSemanticError(
       "Representation of this class is not of type ConstantClass");
-  superClass_ = dynamic_cast<ConstantClass*>(cPool_[readU2(is)]);
+  superClass_ = getConstantClass(readU2(is));
   if (!superClass_ && thisClass_->getName()->str() != "java/lang/Object")
     throw ClassFileSemanticError(
       "Representation of super class is not of type ConstantClass");
-  readClasses(interfaces_, cPool_, is);
-  readFields(fields_, this, cPool_, is);
-  readMethods(methods_, this, cPool_, is);
-  readAttributes(attributes_, cPool_, is);
+  readClasses(interfaces_, this, is);
+  readFields(fields_, this, is);
+  readMethods(methods_, this, is);
+  readAttributes(attributes_, this, is);
   for (Methods::const_iterator
          i = methods_.begin(), e = methods_.end(); i != e; ++i)
     n2mMap_.insert(
@@ -292,6 +279,20 @@ ClassFile::getConstantInterfaceMethodRef(unsigned index) const
   assert(dynamic_cast<ConstantInterfaceMethodRef*>(getConstant(index)) &&
          "Constant is not a ConstantInterfaceMethodRef!");
   return static_cast<ConstantInterfaceMethodRef*>(getConstant(index));
+}
+
+ConstantNameAndType* ClassFile::getConstantNameAndType(unsigned index) const
+{
+  assert(dynamic_cast<ConstantNameAndType*>(getConstant(index)) &&
+         "Constant is not a ConstantNameAndType!");
+  return static_cast<ConstantNameAndType*>(getConstant(index));
+}
+
+ConstantUtf8* ClassFile::getConstantUtf8(unsigned index) const
+{
+  assert(dynamic_cast<ConstantUtf8*>(getConstant(index)) &&
+         "Constant is not a ConstantUtf8!");
+  return static_cast<ConstantUtf8*>(getConstant(index));
 }
 
 Method* ClassFile::getMethod(const std::string& nameAndDescr) const
@@ -384,33 +385,32 @@ InvocationTargetException::~InvocationTargetException() throw()
 
 //===----------------------------------------------------------------------===//
 // Constant implementation
-Constant* Constant::readConstant(const ConstantPool& cp,
-                                 std::istream& is)
+Constant* Constant::readConstant(const ClassFile* cf, std::istream& is)
 {
   Constant::Tag tag = static_cast<Constant::Tag>(readU1(is));
   switch (tag) {
   case Constant::CLASS:
-    return new ConstantClass(cp, is);
+    return new ConstantClass(cf, is);
   case Constant::FIELD_REF:
-    return new ConstantFieldRef(cp, is);
+    return new ConstantFieldRef(cf, is);
   case Constant::METHOD_REF:
-    return new ConstantMethodRef(cp, is);
+    return new ConstantMethodRef(cf, is);
   case Constant::INTERFACE_METHOD_REF:
-    return new ConstantInterfaceMethodRef(cp, is);
+    return new ConstantInterfaceMethodRef(cf, is);
   case Constant::STRING:
-    return new ConstantString(cp, is);
+    return new ConstantString(cf, is);
   case Constant::INTEGER:
-    return new ConstantInteger(cp, is);
+    return new ConstantInteger(cf, is);
   case Constant::FLOAT:
-    return new ConstantFloat(cp, is);
+    return new ConstantFloat(cf, is);
   case Constant::LONG:
-    return new ConstantLong(cp, is);
+    return new ConstantLong(cf, is);
   case Constant::DOUBLE:
-    return new ConstantDouble(cp, is);
+    return new ConstantDouble(cf, is);
   case Constant::NAME_AND_TYPE:
-    return new ConstantNameAndType(cp, is);
+    return new ConstantNameAndType(cf, is);
   case Constant::UTF8:
-    return new ConstantUtf8(cp, is);
+    return new ConstantUtf8(cf, is);
   default:
     assert(0 && "Unknown constant tag");
   }
@@ -423,8 +423,20 @@ Constant::~Constant()
 
 }
 
-ConstantMemberRef::ConstantMemberRef(const ConstantPool&cp, std::istream& is)
-  : Constant(cp),
+ConstantClass::ConstantClass(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
+    nameIdx_(readU2(is))
+{
+
+}
+
+std::ostream& ConstantClass::dump(std::ostream& os) const
+{
+  return os << *getName();
+}
+
+ConstantMemberRef::ConstantMemberRef(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     classIdx_(readU2(is)),
     nameAndTypeIdx_(readU2(is))
 {
@@ -436,20 +448,8 @@ std::ostream& ConstantMemberRef::dump(std::ostream& os) const
   return os << *getNameAndType() << '(' << *getClass() << ')';
 }
 
-ConstantClass::ConstantClass(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
-    nameIdx_(readU2(is))
-{
-
-}
-
-std::ostream& ConstantClass::dump(std::ostream& os) const
-{
-  return os << *getName();
-}
-
-ConstantString::ConstantString(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
+ConstantString::ConstantString(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     stringIdx_(readU2(is))
 {
 
@@ -460,8 +460,8 @@ std::ostream& ConstantString::dump(std::ostream& os) const
   return os << "String " << *getValue();
 }
 
-ConstantInteger::ConstantInteger(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
+ConstantInteger::ConstantInteger(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     value_(static_cast<int32_t>(readU4(is)))
 {
 
@@ -472,8 +472,8 @@ std::ostream& ConstantInteger::dump(std::ostream& os) const
   return os << "int " << value_;
 }
 
-ConstantFloat::ConstantFloat(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
+ConstantFloat::ConstantFloat(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     value_(int2float(readU4(is)))
 {
 
@@ -484,8 +484,8 @@ std::ostream& ConstantFloat::dump(std::ostream& os) const
   return os << "float " << value_;
 }
 
-ConstantLong::ConstantLong(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
+ConstantLong::ConstantLong(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     value_(static_cast<int64_t>(readU8(is)))
 {
 
@@ -496,8 +496,8 @@ std::ostream& ConstantLong::dump(std::ostream& os) const
   return os << "long " << value_ << 'l';
 }
 
-ConstantDouble::ConstantDouble(const ConstantPool& cp, std::istream& is)
-  : Constant(cp),
+ConstantDouble::ConstantDouble(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     value_(long2double(readU8(is)))
 {
 
@@ -508,9 +508,8 @@ std::ostream& ConstantDouble::dump(std::ostream& os) const
   return os << "double " << value_;
 }
 
-ConstantNameAndType::ConstantNameAndType(const ConstantPool& cp,
-                                         std::istream& is)
-  : Constant(cp),
+ConstantNameAndType::ConstantNameAndType(const ClassFile* cf, std::istream& is)
+  : Constant(cf),
     nameIdx_(readU2(is)),
     descriptorIdx_(readU2(is))
 {
@@ -519,11 +518,16 @@ ConstantNameAndType::ConstantNameAndType(const ConstantPool& cp,
 
 std::ostream& ConstantNameAndType::dump(std::ostream& os) const
 {
-  return os << *getDescriptor() << ' ' << *getName();
+  if (getName()->str() == "<init>")
+    os << "\"<init>\"";
+  else
+    os << *getName();
+
+  return os << ':' << *getDescriptor();
 }
 
-ConstantUtf8::ConstantUtf8(const ConstantPool& cp, std::istream& is)
-  : Constant(cp)
+ConstantUtf8::ConstantUtf8(const ClassFile* cf, std::istream& is)
+  : Constant(cf)
 {
   uint16_t length = readU2(is);
   char *buf = (char *)alloca(length);
@@ -541,19 +545,19 @@ std::ostream& ConstantUtf8::dump(std::ostream& os) const
 
 //===----------------------------------------------------------------------===//
 // Field implementation
-Field::Field(ClassFile* parent, const ConstantPool& cp, std::istream& is)
+Field::Field(const ClassFile* parent, std::istream& is)
   : parent_(parent)
 {
   accessFlags_ = readU2(is);
-  name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+  name_ = parent_->getConstantUtf8(readU2(is));
   if (!name_)
     throw ClassFileSemanticError(
       "Representation of field name is not of type ConstantUtf8");
-  descriptor_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+  descriptor_ = parent_->getConstantUtf8(readU2(is));
   if (!descriptor_)
     throw ClassFileSemanticError(
       "Representation of field descriptor is not of type ConstantUtf8");
-  readAttributes(attributes_, cp, is);
+  readAttributes(attributes_, parent_, is);
 }
 
 Field::~Field()
@@ -589,19 +593,19 @@ ConstantValueAttribute* Field::getConstantValueAttribute() const
 
 //===----------------------------------------------------------------------===//
 // Method implementation
-Method::Method(ClassFile* parent, const ConstantPool& cp, std::istream& is)
+Method::Method(const ClassFile* parent, std::istream& is)
   : parent_(parent)
 {
   accessFlags_ = readU2(is);
-  name_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+  name_ = parent_->getConstantUtf8(readU2(is));
   if (!name_)
     throw ClassFileSemanticError(
       "Representation of method name is not of type ConstantUtf8");
-  descriptor_ = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+  descriptor_ = parent_->getConstantUtf8(readU2(is));
   if (!descriptor_)
     throw ClassFileSemanticError(
       "Representation of method descriptor is not of type ConstantUtf8");
-  readAttributes(attributes_, cp, is);
+  readAttributes(attributes_, parent_, is);
 }
 
 Method::~Method()
@@ -650,27 +654,25 @@ const std::string Attribute::LINE_NUMBER_TABLE = "LineNumberTable";
 const std::string Attribute::LOCAL_VARIABLE_TABLE = "LocalVariableTable";
 const std::string Attribute::DEPRECATED = "Deprecated";
 
-Attribute* Attribute::readAttribute(const ConstantPool& cp, std::istream& is)
+Attribute* Attribute::readAttribute(const ClassFile* cf, std::istream& is)
 {
-  ConstantUtf8* name = dynamic_cast<ConstantUtf8*>(cp[readU2(is)]);
+  ConstantUtf8* name = cf->getConstantUtf8(readU2(is));
   if (!name)
     throw ClassFileSemanticError(
       "Representation of attribute name is not of type ConstantUtf8");
 
   if (CONSTANT_VALUE == name->str())
-    return new ConstantValueAttribute(name, cp, is);
+    return new ConstantValueAttribute(name, cf, is);
   else if (CODE == name->str())
-    return new CodeAttribute(name, cp, is);
+    return new CodeAttribute(name, cf, is);
   else {
     uint32_t length = readU4(is);
     is.ignore(length);
-    return new Attribute(name, cp, is);
+    return new Attribute(name, cf, is);
   }
 }
 
-Attribute::Attribute(ConstantUtf8* name,
-                     const ConstantPool& cp,
-                     std::istream& is)
+Attribute::Attribute(ConstantUtf8* name, const ClassFile* cf, std::istream& is)
   : name_(name)
 {
 
@@ -689,15 +691,15 @@ std::ostream& Attribute::dump(std::ostream& os) const
 //===----------------------------------------------------------------------===//
 // AttributeConstantValue implementation
 ConstantValueAttribute::ConstantValueAttribute(ConstantUtf8* name,
-                                               const ConstantPool& cp,
+                                               const ClassFile* cf,
                                                std::istream& is)
-  : Attribute(name, cp, is)
+  : Attribute(name, cf, is)
 {
   uint32_t length = readU4(is);
   if (length != 2)
     throw ClassFileSemanticError(
       "Length of ConstantValueAttribute is not 2");
-  value_ = cp[readU2(is)];
+  value_ = cf->getConstant(readU2(is));
 }
 
 std::ostream& ConstantValueAttribute::dump(std::ostream& os) const
@@ -708,9 +710,9 @@ std::ostream& ConstantValueAttribute::dump(std::ostream& os) const
 //===----------------------------------------------------------------------===//
 // AttributeCode implementation
 CodeAttribute::CodeAttribute(ConstantUtf8* name,
-                             const ConstantPool& cp,
+                             const ClassFile* cf,
                              std::istream& is)
-  : Attribute(name, cp, is)
+  : Attribute(name, cf, is)
 {
   uint32_t length = readU4(is);
   maxStack_ = readU2(is);
@@ -724,8 +726,8 @@ CodeAttribute::CodeAttribute(ConstantUtf8* name,
   uint16_t exceptCount = readU2(is);
   exceptions_.reserve(exceptCount);
   while (exceptCount--)
-    exceptions_.push_back(new Exception(cp, is));
-  readAttributes(attributes_, cp, is);
+    exceptions_.push_back(new Exception(cf, is));
+  readAttributes(attributes_, cf, is);
 }
 
 CodeAttribute::~CodeAttribute()
@@ -748,8 +750,7 @@ std::ostream& CodeAttribute::dump(std::ostream& os) const
   return os;
 }
 
-CodeAttribute::Exception::Exception(const ConstantPool& cp,
-                                    std::istream& is)
+CodeAttribute::Exception::Exception(const ClassFile* cf, std::istream& is)
   : catchType_(NULL)
 {
   startPc_ = readU2(is);
@@ -757,7 +758,7 @@ CodeAttribute::Exception::Exception(const ConstantPool& cp,
   handlerPc_ = readU2(is);
   uint16_t idx = readU2(is);
   if (idx) {
-    catchType_ = dynamic_cast<ConstantClass*>(cp[idx]);
+    catchType_ = cf->getConstantClass(idx);
     if (!catchType_)
       throw ClassFileSemanticError
         ("Representation of catch type is not of type ConstantClass");
@@ -778,12 +779,12 @@ std::ostream& CodeAttribute::Exception::dump(std::ostream& os) const
 //===----------------------------------------------------------------------===//
 // AttributeExceptions implementation
 ExceptionsAttribute::ExceptionsAttribute(ConstantUtf8* name,
-                                         const ConstantPool& cp,
+                                         const ClassFile* cf,
                                          std::istream& is)
-  : Attribute(name, cp, is)
+  : Attribute(name, cf, is)
 {
   uint32_t length = readU4(is);
-  readClasses(exceptions_, cp, is);
+  readClasses(exceptions_, cf, is);
 }
 
 std::ostream& ExceptionsAttribute::dump(std::ostream& os) const

@@ -63,7 +63,7 @@ namespace llvm { namespace Java { namespace {
   class Compiler : public BytecodeParser<Compiler> {
     Module& module_;
     GlobalVariable* JNIEnvPtr_;
-    ClassFile* cf_;
+    const ClassFile* cf_;
     std::auto_ptr<BasicBlockBuilder> bbBuilder_;
     std::list<BasicBlock*> bbWorkList_;
     typedef std::map<BasicBlock*, unsigned> OpStackDepthMap;
@@ -114,7 +114,7 @@ namespace llvm { namespace Java { namespace {
       unsigned getInterfaceIndex() const { return interfaceIdx_; }
       void setNextInterfaceIndex() { interfaceIdx_ = InterfaceCount++; }
     };
-    typedef std::map<ClassFile*, ClassInfo> Class2ClassInfoMap;
+    typedef std::map<const ClassFile*, ClassInfo> Class2ClassInfoMap;
     Class2ClassInfoMap c2ciMap_;
 
     /// This class contains the vtable of a class, a vector with the
@@ -133,7 +133,7 @@ namespace llvm { namespace Java { namespace {
       static StructType* VTableTy;
       static StructType* TypeInfoTy;
     };
-    typedef std::map<ClassFile*, VTableInfo> Class2VTableInfoMap;
+    typedef std::map<const ClassFile*, VTableInfo> Class2VTableInfoMap;
     Class2VTableInfoMap c2viMap_;
     Class2VTableInfoMap ac2viMap_;
 
@@ -321,7 +321,7 @@ namespace llvm { namespace Java { namespace {
     /// class info of java.lang.Object.
     bool initializeClassInfoMap() {
       DEBUG(std::cerr << "Building ClassInfo for: java/lang/Object\n");
-      ClassFile* cf = ClassFile::get("java/lang/Object");
+      const ClassFile* cf = ClassFile::get("java/lang/Object");
       ClassInfo& ci = c2ciMap_[cf];
 
       module_.addTypeName(LLVM_JAVA_OBJECT_BASE, ObjectBaseTy);
@@ -357,7 +357,7 @@ namespace llvm { namespace Java { namespace {
     /// VTableInfo for java.lang.Object.
     bool initializeVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object\n");
-      ClassFile* cf = ClassFile::get("java/lang/Object");
+      const ClassFile* cf = ClassFile::get("java/lang/Object");
       VTableInfo& vi = c2viMap_[cf];
 
       assert(!vi.vtable && vi.m2iMap.empty() &&
@@ -452,7 +452,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     /// Returns the ClassInfo object associated with this classfile.
-    const ClassInfo& getClassInfo(ClassFile* cf) {
+    const ClassInfo& getClassInfo(const ClassFile* cf) {
       static bool initialized = initializeClassInfoMap();
 
       Class2ClassInfoMap::iterator it = c2ciMap_.lower_bound(cf);
@@ -577,36 +577,37 @@ namespace llvm { namespace Java { namespace {
     /// its corresponding VTable. The most generic class goes first in
     /// the array.
     std::pair<unsigned,llvm::Constant*>
-    buildSuperClassesVTables(ClassFile* cf, const VTableInfo& vi) const {
-      std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
-      for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
-        superVtables[i] = ConstantExpr::getCast(
-          vi.superVtables[i],
-          PointerType::get(VTableInfo::VTableTy));
+    buildSuperClassesVTables(const ClassFile* cf, const VTableInfo& vi) const {
+       std::vector<llvm::Constant*> superVtables(vi.superVtables.size());
+       for (unsigned i = 0, e = vi.superVtables.size(); i != e; ++i)
+         superVtables[i] = ConstantExpr::getCast(
+           vi.superVtables[i],
+           PointerType::get(VTableInfo::VTableTy));
 
-      llvm::Constant* init = ConstantArray::get(
-        ArrayType::get(PointerType::get(VTableInfo::VTableTy),
-                       superVtables.size()),
-        superVtables);
+       llvm::Constant* init = ConstantArray::get(
+         ArrayType::get(PointerType::get(VTableInfo::VTableTy),
+                        superVtables.size()),
+         superVtables);
 
-      GlobalVariable* vtablesArray = new GlobalVariable(
-        init->getType(),
-        true,
-        GlobalVariable::ExternalLinkage,
-        init,
-        cf->getThisClass()->getName()->str() + "<superclassesvtables>",
-        &module_);
+       GlobalVariable* vtablesArray = new GlobalVariable(
+         init->getType(),
+         true,
+         GlobalVariable::ExternalLinkage,
+         init,
+         cf->getThisClass()->getName()->str() + "<superclassesvtables>",
+         &module_);
 
-      return std::make_pair(
-        vi.superVtables.size(),
-        ConstantExpr::getGetElementPtr(
-          vtablesArray,
-          std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
-    }
+       return std::make_pair(
+         vi.superVtables.size(),
+         ConstantExpr::getGetElementPtr(
+           vtablesArray,
+           std::vector<llvm::Constant*>(2, ConstantUInt::get(Type::UIntTy, 0))));
+     }
 
-    /// Builds an interface VTable for the specified <class,interface>
-    /// pair.
-    llvm::Constant* buildInterfaceVTable(ClassFile* cf, ClassFile* interface) {
+     /// Builds an interface VTable for the specified <class,interface>
+     /// pair.
+     llvm::Constant* buildInterfaceVTable(const ClassFile* cf,
+                                          const ClassFile* interface) {
       DEBUG(std::cerr << "Building interface vtable: "
             << interface->getThisClass()->getName()->str() << " for: "
             << cf->getThisClass()->getName()->str() << '\n');
@@ -652,8 +653,8 @@ namespace llvm { namespace Java { namespace {
     }
 
     void insertVtablesForInterface(std::vector<llvm::Constant*>& vtables,
-                                   ClassFile* cf,
-                                   ClassFile* ifaceCf) {
+                                   const ClassFile* cf,
+                                   const ClassFile* ifaceCf) {
       static llvm::Constant* nullVTable =
         llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
 
@@ -666,7 +667,8 @@ namespace llvm { namespace Java { namespace {
         vtables[ifaceCi.getInterfaceIndex()] = buildInterfaceVTable(cf, ifaceCf);
         const Classes& interfaces = ifaceCf->getInterfaces();
         for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
-          ClassFile* otherCf = ClassFile::get(interfaces[i]->getName()->str());
+          const ClassFile* otherCf =
+            ClassFile::get(interfaces[i]->getName()->str());
           insertVtablesForInterface(vtables, cf, otherCf);
         }
       }
@@ -676,7 +678,7 @@ namespace llvm { namespace Java { namespace {
     /// corresponding VTableInfo. If this classfile is an interface we
     /// return a pointer to 0xFFFFFFFF.
     std::pair<int, llvm::Constant*>
-    buildInterfacesVTables(ClassFile* cf, const VTableInfo& vi) {
+    buildInterfacesVTables(const ClassFile* cf, const VTableInfo& vi) {
       // If this is an interface then we are not implementing any
       // interfaces so the lastInterface field is our index and the
       // pointer to the array of interface vtables is an all-ones
@@ -697,11 +699,12 @@ namespace llvm { namespace Java { namespace {
       llvm::Constant* nullVTable =
         llvm::Constant::getNullValue(PointerType::get(VTableInfo::VTableTy));
 
-      ClassFile* curCf = cf;
+      const ClassFile* curCf = cf;
       while (true) {
         const Classes& interfaces = curCf->getInterfaces();
         for (unsigned i = 0, e = interfaces.size(); i != e; ++i) {
-          ClassFile* ifaceCf = ClassFile::get(interfaces[i]->getName()->str());
+          const ClassFile* ifaceCf =
+            ClassFile::get(interfaces[i]->getName()->str());
           insertVtablesForInterface(vtables, cf, ifaceCf);
         }
         if (!curCf->getSuperClass())
@@ -734,7 +737,8 @@ namespace llvm { namespace Java { namespace {
 
     /// Given the classfile and its corresponding VTableInfo,
     /// construct the typeinfo constant for it.
-    llvm::Constant* buildClassTypeInfo(ClassFile* cf, const VTableInfo& vi) {
+    llvm::Constant* buildClassTypeInfo(const ClassFile* cf,
+                                       const VTableInfo& vi) {
       std::vector<llvm::Constant*> typeInfoInit;
 
       unsigned depth;
@@ -762,7 +766,7 @@ namespace llvm { namespace Java { namespace {
     }
 
     /// Returns the VTableInfo associated with this classfile.
-    const VTableInfo& getVTableInfo(ClassFile* cf) {
+    const VTableInfo& getVTableInfo(const ClassFile* cf) {
       static bool initialized = initializeVTableInfoMap();
 
       Class2VTableInfoMap::iterator it = c2viMap_.lower_bound(cf);
@@ -796,7 +800,8 @@ namespace llvm { namespace Java { namespace {
       if (cf->isInterface()) {
         const Classes& ifaces = cf->getInterfaces();
         for (unsigned i = 0, e = ifaces.size(); i != e; ++i) {
-          ClassFile* ifaceCF = ClassFile::get(ifaces[i]->getName()->str());
+          const ClassFile* ifaceCF =
+            ClassFile::get(ifaces[i]->getName()->str());
           const VTableInfo& ifaceVI = getVTableInfo(ifaceCF);
           ConstantStruct* ifaceInit =
             cast<ConstantStruct>(ifaceVI.vtable->getInitializer());
@@ -1022,7 +1027,7 @@ namespace llvm { namespace Java { namespace {
     /// words it adds the VTableInfo for java.lang.Object[].
     bool initializeObjectArrayVTableInfoMap() {
       DEBUG(std::cerr << "Building VTableInfo for: java/lang/Object[]\n");
-      ClassFile* cf = ClassFile::get("java/lang/Object");
+      const ClassFile* cf = ClassFile::get("java/lang/Object");
       VTableInfo& vi = ac2viMap_[cf];
       assert(!vi.vtable && vi.m2iMap.empty() &&
              "java/lang/Object[] VTableInfo should not be initialized!");
@@ -1096,7 +1101,7 @@ namespace llvm { namespace Java { namespace {
       return true;
     }
 
-    const VTableInfo& getObjectArrayVTableInfo(ClassFile* cf) {
+    const VTableInfo& getObjectArrayVTableInfo(const ClassFile* cf) {
       static bool initialized = initializeObjectArrayVTableInfoMap();
 
       Class2VTableInfoMap::iterator it = ac2viMap_.lower_bound(cf);
@@ -1204,7 +1209,7 @@ namespace llvm { namespace Java { namespace {
       while (true) {
         // Get ClassInfo for class owning the field - this will force
         // the globals to be initialized.
-        ClassFile* cf = ClassFile::get(className);
+        const ClassFile* cf = ClassFile::get(className);
         getClassInfo(cf);
 
         std::string globalName =
@@ -1228,13 +1233,16 @@ namespace llvm { namespace Java { namespace {
     Value* getField(unsigned index, Value* ptr) {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
-      ClassFile* cf = ClassFile::get(fieldRef->getClass()->getName()->str());
+      const ClassFile* cf =
+        ClassFile::get(fieldRef->getClass()->getName()->str());
       return getField(cf, nameAndType->getName()->str(), ptr);
     }
 
     /// Emits the necessary code to get a field from the passed
     /// pointer to an object.
-    Value* getField(ClassFile* cf, const std::string& fieldName, Value* ptr) {
+    Value* getField(const ClassFile* cf,
+                    const std::string& fieldName,
+                    Value* ptr) {
       // Cast ptr to correct type.
       ptr = new CastInst(ptr, PointerType::get(getClassInfo(cf).getType()),
                          TMP, currentBB_);
@@ -1502,7 +1510,7 @@ namespace llvm { namespace Java { namespace {
     /// Returns the llvm::Function corresponding to the specified
     /// llvm::Java::Method.
     Function* getFunction(Method* method) {
-      ClassFile* clazz = method->getParent();
+      const ClassFile* clazz = method->getParent();
 
       FunctionType* funcTy = cast<FunctionType>(
         getType(method->getDescriptor(),
@@ -1532,7 +1540,7 @@ namespace llvm { namespace Java { namespace {
       std::string methodNameAndDescr = classMethodDesc.substr(slash+1);
 
       while (true) {
-        ClassFile* classfile = ClassFile::get(className);
+        const ClassFile* classfile = ClassFile::get(className);
         emitStaticInitializers(classfile);
 
         Method* method = classfile->getMethod(methodNameAndDescr);
@@ -2065,7 +2073,7 @@ namespace llvm { namespace Java { namespace {
         }
       }
       else {
-        ClassFile* cf = ClassFile::get(className);
+        const ClassFile* cf = ClassFile::get(className);
         vi = &getVTableInfo(cf);
         ci = &getClassInfo(cf);
       }
@@ -2213,7 +2221,7 @@ namespace llvm { namespace Java { namespace {
 
     void do_new(unsigned index) {
       ConstantClass* classRef = cf_->getConstantClass(index);
-      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const ClassInfo& ci = getClassInfo(cf);
       const VTableInfo& vi = getVTableInfo(cf);
 
@@ -2266,7 +2274,7 @@ namespace llvm { namespace Java { namespace {
       Value* count = pop(Type::UIntTy);
 
       ConstantClass* classRef = cf_->getConstantClass(index);
-      ClassFile* cf = ClassFile::get(classRef->getName()->str());
+      const ClassFile* cf = ClassFile::get(classRef->getName()->str());
       const ClassInfo& ci = getObjectArrayInfo();
       const ClassInfo& ei = getClassInfo(cf);
       const VTableInfo& vi = getObjectArrayVTableInfo(cf);

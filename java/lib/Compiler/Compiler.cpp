@@ -700,8 +700,6 @@ namespace llvm { namespace Java { namespace {
       while (!bbWorkList_.empty()) {
 	currentBB_ = bbWorkList_.front();
 	bbWorkList_.pop_front();
-	DEBUG(std::cerr << "compiling basic block: "
-	      << currentBB_->getName() << '\n');
 
 	BBInfoMap::iterator bbInfo = bbInfoMap_.find(currentBB_);
 	assert(bbInfo != bbInfoMap_.end() &&
@@ -743,7 +741,9 @@ namespace llvm { namespace Java { namespace {
 	}
       }
 
-      function->dump();
+      DEBUG(std::cerr << "Finished compilation of method: "
+            << classMethodDesc << '\n');
+      DEBUG(function->dump());
 
       return function;
     }

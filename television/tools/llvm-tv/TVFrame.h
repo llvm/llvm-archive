@@ -47,6 +47,8 @@ public:
   void ShowInfo(wxTreeCtrl *tree);
   const wxChar *GetDesc() const { return m_desc.c_str(); }
   virtual void print(std::ostream&) {};
+  virtual Module *getModule() { return 0; }
+  virtual Function *getFunction() { return 0; }
 private:
   wxString m_desc;
 };
@@ -60,7 +62,7 @@ public:
 							     myModule(mod) {}
   
   void print(std::ostream &out) { myModule->print(out); }
-  
+  Module *getModule() { return myModule; }
 private:
   Module *myModule;
 };
@@ -73,6 +75,8 @@ public:
 							     myFunc(func) {}
   
   void print(std::ostream &out) { myFunc->print(out); }
+  Module *getModule() { return myFunc->getParent (); }
+  Function *getFunction() { return myFunc; }
 private:
   Function *myFunc;
 };
@@ -120,7 +124,9 @@ enum {
   LLVM_TV_REFRESH = wxID_HIGHEST + 1,
   LLVM_TV_TREE_CTRL,
   LLVM_TV_TEXT_CTRL,
-  LLVM_TV_SPLITTER_WINDOW
+  LLVM_TV_SPLITTER_WINDOW,
+  LLVM_TV_CALLGRAPHVIEW,
+  LLVM_TV_CFGVIEW
 };
 
 /// TVFrame - The main application window for the demo, which displays
@@ -138,6 +144,8 @@ class TVFrame : public wxFrame {
  public:
   TVFrame (const char *title);
   void OnExit (wxCommandEvent &event);
+  void CallGraphView (wxCommandEvent &event);
+  void CFGView (wxCommandEvent &event);
   void OnAbout (wxCommandEvent &event);
   void OnRefresh (wxCommandEvent &event);
   void CreateTree(long style, std::vector<TVSnapshot>&);

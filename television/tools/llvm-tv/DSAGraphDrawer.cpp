@@ -1,7 +1,7 @@
 #include "DSAGraphDrawer.h"
 #include "GraphPrinters.h"
 #include "llvm/Function.h"
-#include "llvm/ModuleProvider.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetData.h"
@@ -18,13 +18,11 @@ wxImage *DSGraphDrawer::drawGraphImage() {
     PM.run(*M);
     return buildwxImageFromDotFile(getFilename(M));
   } else if (F) {
-    ModuleProvider *MP = new ExistingModuleProvider(F->getParent());
-    FunctionPassManager PM(MP);
-    PM.add(new TargetData("llvm-tv", F->getParent()));
-    PM.add(getFunctionPass());
-    PM.run(*F);
-    MP->releaseModule(); // Don't delete it when you go away, says I
-    delete MP;
+    Module *M = F->getParent();
+    PassManager PM;
+    PM.add(new TargetData("llvm-tv", M));
+    PM.add(getFunctionPass(F));
+    PM.run(*M);
     return buildwxImageFromDotFile(getFilename(F));
   } else {
     std::cerr << "BUDS: both Function and Module are null!\n";
@@ -35,8 +33,8 @@ wxImage *DSGraphDrawer::drawGraphImage() {
 //===----------------------------------------------------------------------===//
 
 // BUGraphDrawer implementation
-FunctionPass *BUGraphDrawer::getFunctionPass() {
-  return createBUDSFunctionPrinterPass();
+Pass *BUGraphDrawer::getFunctionPass(Function *F) {
+  return createBUDSFunctionPrinterPass(F);
 }
 
 Pass *BUGraphDrawer::getModulePass() {
@@ -54,8 +52,8 @@ std::string BUGraphDrawer::getFilename(Module *M) {
 //===----------------------------------------------------------------------===//
 
 // TDGraphDrawer implementation
-FunctionPass *TDGraphDrawer::getFunctionPass() {
-  return createTDDSFunctionPrinterPass();
+Pass *TDGraphDrawer::getFunctionPass(Function *F) {
+  return createTDDSFunctionPrinterPass(F);
 }
 
 Pass *TDGraphDrawer::getModulePass() {
@@ -73,8 +71,8 @@ std::string TDGraphDrawer::getFilename(Module *M) {
 //===----------------------------------------------------------------------===//
 
 // LocalGraphDrawer implementation
-FunctionPass *LocalGraphDrawer::getFunctionPass() {
-  return createLocalDSFunctionPrinterPass();
+Pass *LocalGraphDrawer::getFunctionPass(Function *F) {
+  return createLocalDSFunctionPrinterPass(F);
 }
 
 Pass *LocalGraphDrawer::getModulePass() {

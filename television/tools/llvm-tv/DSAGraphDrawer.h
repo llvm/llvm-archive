@@ -13,7 +13,6 @@
 
 namespace llvm {
   class Function;
-  class FunctionPass;
   class Module;
   class Pass;
 }
@@ -27,7 +26,7 @@ protected:
   llvm::Function *F;
   llvm::Module *M;
   wxImage *drawGraphImage();
-  virtual llvm::FunctionPass *getFunctionPass() = 0;
+  virtual llvm::Pass *getFunctionPass(llvm::Function *F) = 0;
   virtual llvm::Pass *getModulePass() = 0;
   virtual std::string getFilename(llvm::Function *F) = 0;
   virtual std::string getFilename(llvm::Module *M) = 0;
@@ -41,7 +40,7 @@ public:
 // BUGraphDrawer 
 //
 class BUGraphDrawer : public DSGraphDrawer {
-  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getFunctionPass(llvm::Function *F);
   llvm::Pass *getModulePass();
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);
@@ -55,7 +54,7 @@ public:
 // TDGraphDrawer 
 //
 class TDGraphDrawer : public DSGraphDrawer {
-  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getFunctionPass(llvm::Function *F);
   llvm::Pass *getModulePass();
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);
@@ -69,7 +68,7 @@ public:
 // LocalGraphDrawer 
 //
 class LocalGraphDrawer : public DSGraphDrawer {
-  llvm::FunctionPass *getFunctionPass();
+  llvm::Pass *getFunctionPass(llvm::Function *F);
   llvm::Pass *getModulePass();
   std::string getFilename(llvm::Function *F);
   std::string getFilename(llvm::Module *M);

@@ -1170,7 +1170,7 @@ namespace llvm { namespace Java { namespace {
         DEBUG(std::cerr << "Adding stub for natively implemented method: "
               << classMethodDesc << '\n');
         FunctionType* funcTy = cast<FunctionType>(
-          getJNIType(method->getDescriptor(), Type::VoidTy));
+            getJNIType(method->getDescriptor(), ClassInfo::ObjectBaseTy));
 
         std::string funcName = "Java_";
         const std::string& className = cf_->getThisClass()->getName()->str();
@@ -1202,7 +1202,7 @@ namespace llvm { namespace Java { namespace {
         params.push_back(JNIEnvPtr_);
         if (method->isStatic())
           params.push_back(llvm::Constant::getNullValue(
-                             PointerType::get(Type::VoidTy)));
+                             PointerType::get(ClassInfo::ObjectBaseTy)));
         for (Function::aiterator A = function->abegin(), E = function->aend();
              A != E; ++A) {
           params.push_back(&*A);

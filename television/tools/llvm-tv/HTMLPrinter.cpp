@@ -112,7 +112,7 @@ void HTMLPrinter::visit(GlobalVariable &GV) {
     writeOperand(GV.getInitializer(), false, false);
 
   //printInfoComment(GV);
-  os << "\n";
+  os << "<br>";
 }
 
 void HTMLPrinter::visit(Function &F) {

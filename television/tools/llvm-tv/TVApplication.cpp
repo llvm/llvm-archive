@@ -53,7 +53,7 @@ void TVFrame::refreshSnapshotList () {
                    strerror (errno)); 
   while (struct dirent *de = readdir (d))
     if (memcmp(de->d_name, ".", 2) && memcmp(de->d_name, "..", 3))
-      mySnapshotList.push_back (de->d_name);
+      mySnapshotList.push_back (mySnapshotDirName + "/" + de->d_name);
 
   closedir (d);
 

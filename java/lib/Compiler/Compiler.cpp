@@ -1335,6 +1335,7 @@ namespace llvm { namespace Java { namespace {
            classMethodDesc.find("java/lang/Throwable$StaticData/<cl") == 0) &&
           classMethodDesc.find("java/lang/Exception") != 0 &&
           classMethodDesc.find("java/lang/IllegalArgumentException") != 0 &&
+          classMethodDesc.find("java/lang/IllegalStateException") != 0 &&
           classMethodDesc.find("java/lang/IndexOutOfBoundsException") != 0 &&
           classMethodDesc.find("java/lang/RuntimeException") != 0 &&
           classMethodDesc.find("java/lang/Math") != 0 &&

@@ -41,7 +41,7 @@ void TVCodeItem::SetLabel() {
 
 //===----------------------------------------------------------------------===//
 
-void TVCodeViewer::refreshView() {
+void TVCodeListCtrl::refreshView() {
   // Hide the list while rewriting it from scratch to speed up rendering
   this->Hide();
 
@@ -57,10 +57,16 @@ void TVCodeViewer::refreshView() {
   this->Show();
 }
 
+template<class T> void wipe (T x) { delete x; }
 
-TVCodeViewer::TVCodeViewer(wxWindow *_parent, llvm::Function *F)
-  : wxListCtrl(_parent, LLVM_TV_CODEVIEW_LIST, wxDefaultPosition, wxDefaultSize,
-               wxLC_LIST) {
+void TVCodeListCtrl::SetFunction (Function *F) {
+  // Empty out the code list.
+  if (!itemList.empty ())
+    for_each (itemList.begin (), itemList.end (), wipe<TVCodeItem *>);
+  itemList.clear ();
+  ValueToItem.clear ();
+
+  // Populate it with BasicBlocks and Instructions from F.
   for (Function::iterator BB = F->begin(), BBe = F->end(); BB != BBe; ++BB) {
     itemList.push_back(new TVCodeItem(BB));
     for (BasicBlock::iterator I = BB->begin(), Ie = BB->end(); I != Ie; ++I) {
@@ -69,14 +75,20 @@ TVCodeViewer::TVCodeViewer(wxWindow *_parent, llvm::Function *F)
       ValueToItem[I] = TCI;
     }
   }
+}
+
+TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent, llvm::Function *F)
+  : wxListCtrl(_parent, LLVM_TV_CODEVIEW_LIST, wxDefaultPosition, wxDefaultSize,
+               wxLC_LIST) {
+  SetFunction (F);
   refreshView();
 }
 
-void TVCodeViewer::OnItemActivated(wxListEvent &event) {
+void TVCodeListCtrl::OnItemActivated(wxListEvent &event) {
   //std::cerr << "activated item: " << utostr((unsigned)event.GetIndex()) << "\n";
 }
 
-void TVCodeViewer::OnItemSelected(wxListEvent &event) {
+void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {
   //std::cerr << "selected item: " << utostr((unsigned)event.GetIndex()) << "\n";
   long int index = event.GetIndex();
   // Highlight uses
@@ -97,7 +109,7 @@ void TVCodeViewer::OnItemSelected(wxListEvent &event) {
   }
 }
 
-void TVCodeViewer::OnItemDeselected(wxListEvent &event) {
+void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
   //std::cerr << "deselected item: " << utostr((unsigned)event.GetIndex()) << "\n";
   long int index = event.GetIndex();
   // Set uses back to normal
@@ -118,13 +130,13 @@ void TVCodeViewer::OnItemDeselected(wxListEvent &event) {
   }
 }
 
-BEGIN_EVENT_TABLE (TVCodeViewer, wxListCtrl)
+BEGIN_EVENT_TABLE (TVCodeListCtrl, wxListCtrl)
   EVT_LIST_ITEM_ACTIVATED(LLVM_TV_CODEVIEW_LIST,
-                          TVCodeViewer::OnItemActivated)
+                          TVCodeListCtrl::OnItemActivated)
   EVT_LIST_ITEM_SELECTED(LLVM_TV_CODEVIEW_LIST,
-                         TVCodeViewer::OnItemSelected)
+                         TVCodeListCtrl::OnItemSelected)
   EVT_LIST_ITEM_DESELECTED(LLVM_TV_CODEVIEW_LIST,
-                           TVCodeViewer::OnItemDeselected)
+                           TVCodeListCtrl::OnItemDeselected)
 END_EVENT_TABLE ()
 
 

@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "ItemDisplayer.h"
 
 class TVApplication;
 
@@ -35,10 +36,7 @@ class TVCodeItem : public wxListItem {
   llvm::Value* getValue() { return Val; }
 };
 
-
-/// TVCodeViewer
-///
-class TVCodeViewer : public wxListCtrl {
+class TVCodeListCtrl : public wxListCtrl {
   typedef std::vector<TVCodeItem*> Items;
   Items itemList;
 
@@ -47,7 +45,8 @@ class TVCodeViewer : public wxListCtrl {
 
   void refreshView();
  public:
-  TVCodeViewer(wxWindow *_parent, llvm::Function *F);
+  void SetFunction (llvm::Function *F);
+  TVCodeListCtrl(wxWindow *_parent, llvm::Function *F);
   void OnItemActivated(wxListEvent &event);  
   void OnItemSelected(wxListEvent &event);
   void OnItemDeselected(wxListEvent &event);
@@ -55,12 +54,22 @@ class TVCodeViewer : public wxListCtrl {
   DECLARE_EVENT_TABLE ()
 };
 
+/// TVCodeViewer
+///
+class TVCodeViewer : public ItemDisplayer {
+  TVCodeListCtrl *myListCtrl;
+public:
+  TVCodeViewer (wxWindow *_parent);
+  void displayItem (TVTreeItemData *data);
+  std::string getDisplayTitle (TVTreeItemData *data) { return "Code view"; }
+  wxWindow *getWindow () { return myListCtrl; }
+};
 
 /// CodeViewFrame
 ///
 class CodeViewFrame : public wxFrame {
   TVApplication *myApp;
-  TVCodeViewer *codeViewer;
+  TVCodeListCtrl *codeViewer;
   void setupAppearance () {
     SetSize (wxRect (200, 200, 300, 300));
     Show (TRUE);
@@ -68,7 +77,7 @@ class CodeViewFrame : public wxFrame {
  public:
   CodeViewFrame(TVApplication *app, llvm::Function *F)
     : wxFrame (NULL, -1, "code viewer"), myApp (app) {
-    codeViewer = new TVCodeViewer(this, F);
+    codeViewer = new TVCodeListCtrl(this, F);
     setupAppearance();
   }
 

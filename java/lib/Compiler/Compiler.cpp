@@ -1017,20 +1017,28 @@ namespace llvm { namespace Java { namespace {
       ConstantFieldRef* fieldRef = cf_->getConstantFieldRef(index);
       ConstantNameAndType* nameAndType = fieldRef->getNameAndType();
 
-      // Get ClassInfo for class owning the field - this will force
-      // the globals to be initialized.
-      getClassInfo(ClassFile::get(fieldRef->getClass()->getName()->str()));
+      std::string className = fieldRef->getClass()->getName()->str();
 
-      std::string globalName =
-	fieldRef->getClass()->getName()->str() + '/' +
-	nameAndType->getName()->str();
+      while (true) {
+        // Get ClassInfo for class owning the field - this will force
+        // the globals to be initialized.
+        ClassFile* cf = ClassFile::get(className); 
+        getClassInfo(cf);
 
-      DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
-      GlobalVariable* global = module_.getGlobalVariable
-	(globalName, getType(nameAndType->getDescriptor()));
-      assert(global && "Got NULL global variable!");
+        std::string globalName =
+          className + '/' + nameAndType->getName()->str();
 
-      return global;
+        DEBUG(std::cerr << "Looking up global: " << globalName << '\n');
+        GlobalVariable* global = module_.getGlobalVariable
+          (globalName, getType(nameAndType->getDescriptor()));
+        if (global)
+          return global;
+
+        assert(cf->getSuperClass() && "Cannot find global for static field!");
+        className = cf->getSuperClass()->getName()->str();
+      }
+
+      return NULL; // never reached
     }
 
     /// Emits the necessary code to get a field from the passed

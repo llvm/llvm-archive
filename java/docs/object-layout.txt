@@ -46,10 +46,13 @@ is for an interface and the lastIface field is the unique number of
 this interface in the objects interfaces array.
 
 struct llvm_java_object_typeinfo {
-  uint depth;
-  struct llvm_java_object_vtable* vtables;
-  uint lastIface;
-  struct llvm_java_object_vtable* interfaces;
+  unsigned depth;
+  struct llvm_java_object_vtable** vtables;
+  unsigned lastIface;
+  union {
+    struct llvm_java_object_vtable** interfaces;
+    unsigned interfaceFlag;
+  };
 };
 
 The structure of llvm_java_object_typeinfo allows constant time
@@ -61,11 +64,11 @@ int isInstanceOf(struct llvm_java_object_base* obj,
   if (objClazz == clazz)
     return 1;
   // we are checking against a class' typeinfo
-  if (clazz->typeinfo.interfaces != (struct llvm_java_object_vtable*)-1)
+  if (clazz->typeinfo.interfaceFlag != (unsigned)-1)
     return objClazz->typeinfo.depth > clazz->typeinfo.depth &&
-           &objClazz->typeinfo.vtables[clazz->typeinfo.depth] == clazz;
+           objClazz->typeinfo.vtables[clazz->typeinfo.depth] == clazz;
   // otherwise we are checking against an interface's typeinfo
   else
     return objClazz->typeinfo.lastIface >= clazz->typeinfo.lastIface &&
-           &objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];
+           objClazz->typeinfo.interfaces[clazz->typeinfo.lastIface];
 }

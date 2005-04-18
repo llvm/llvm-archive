@@ -13,7 +13,8 @@ using namespace llvm;
 extern void FatalErrorBox (const std::string msg);
 
 wxImage *GraphDrawer::buildwxImageFromDotFile (const std::string filename) {
-  if (!FileOpenable (filename))
+  sys::Path File (filename);
+  if (! File.readable ())
     FatalErrorBox ("buildwxImageFromDotFile() got passed a bogus filename: '"
                    + filename + "'");
 

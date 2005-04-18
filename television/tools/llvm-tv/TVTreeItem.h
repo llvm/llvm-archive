@@ -28,7 +28,6 @@ public:
   virtual void print(std::ostream&) { }
   virtual wxImage *graphOn(GraphDrawer *grapher) { return 0; }
   virtual void viewCodeOn(TVCodeViewer *viewer) { }
-  virtual void printHTML(std::ostream &os) { }
   virtual std::string getTitle () { return "an untitled object"; }
   virtual std::string dsGraphName () { return "graph of " + getTitle (); }
 
@@ -59,7 +58,6 @@ public:
     : TVTreeItemData(desc), myModule(mod) {}
   
   void print(std::ostream &out);
-  void printHTML(std::ostream &os);
   wxImage *graphOn(GraphDrawer *grapher) {
     return grapher->drawModuleGraph (myModule);
   }
@@ -80,7 +78,6 @@ public:
     : TVTreeItemData(desc),  myFunc(func) {}
   
   void print(std::ostream &out);
-  void printHTML(std::ostream &os);
   wxImage *graphOn(GraphDrawer *grapher) {
     return grapher->drawFunctionGraph (myFunc); 
   }

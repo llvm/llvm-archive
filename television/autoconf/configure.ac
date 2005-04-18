@@ -1,7 +1,7 @@
 dnl Process this file with autoconf 2.5x to create a configure script.
 
 dnl Initialize
-AC_INIT([[[LLVM]]],[[[1.0]]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[[LLVM-TV]]],[[[pre-release]]],[llvmbugs@cs.uiuc.edu])
 
 dnl Place all of the extra autoconf files into the config subdirectory
 AC_CONFIG_AUX_DIR([autoconf])

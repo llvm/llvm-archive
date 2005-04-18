@@ -11,12 +11,12 @@
 #include "PictureFrame.h"
 #include "TVApplication.h"
 #include "TVFrame.h"
-#include "TVHtmlWindow.h"
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
 #include "llvm-tv/Config.h"
 #include <cassert>
 #include <dirent.h>
+#include <errno.h>
 #include <sstream>
 
 /// TreeCtrl constructor - creates the root and adds it to the tree
@@ -84,15 +84,6 @@ void TVTextCtrl::displayItem (TVTreeItemData *item) {
   myTextCtrl->AppendText (Out.str ().c_str ());
   myTextCtrl->ShowPosition (0);
   myTextCtrl->SetInsertionPoint (0);
-}
-
-void TVHtmlWindow::displayItem (TVTreeItemData *item) {
-  std::ostringstream Out;
-  item->printHTML (Out);
-  myHtmlWindow->Hide ();
-  myHtmlWindow->SetPage (wxString (""));
-  myHtmlWindow->AppendToPage (wxString (Out.str ().c_str ()));
-  myHtmlWindow->Show ();
 }
 
 ///==---------------------------------------------------------------------==///
@@ -180,7 +171,6 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
   // Create right-hand pane's display widget and stick it in a notebook control.
   notebook = new TVNotebook (splitterWindow);
   notebook->AddItemDisplayer (new TVTextCtrl (notebook, Explanation));
-  notebook->AddItemDisplayer (new TVHtmlWindow (notebook, Explanation));
   notebook->AddItemDisplayer (new TDGraphDrawer (notebook));
   notebook->AddItemDisplayer (new BUGraphDrawer (notebook));
   notebook->AddItemDisplayer (new LocalGraphDrawer (notebook));

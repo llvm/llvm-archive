@@ -91,13 +91,14 @@ bool Snapshot::runPass(Module &M) {
 
   // Since we were not successful in sending a signal to an already-running
   // instance of llvm-tv, start a new instance and send a signal to it.
-  std::string llvmtvExe = FindExecutable("llvm-tv", ""); 
-  if (llvmtvExe != "" && isExecutableFile(llvmtvExe)) {
+  sys::Path llvmtvExe = FindExecutable("llvm-tv", ""); 
+  if (llvmtvExe.isValid() && !llvmtvExe.isEmpty() && llvmtvExe.isFile() &&
+      llvmtvExe.executable()) {
     int pid = fork();
     // Child process morphs into llvm-tv
     if (!pid) {
       char *argv[1]; argv[0] = 0; 
-      if (execve(llvmtvExe.c_str(), argv, environ) == -1) {
+      if (execve(llvmtvExe.toString().c_str(), argv, environ) == -1) {
         perror("execve");
         return false;
       }

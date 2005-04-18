@@ -1,32 +1,31 @@
 LEVEL = ../..
 TOOLNAME = llvm-tv
-LLVMLIBS = analysis.a bcreader bcwriter datastructure ipa.a support.a \
-           target.a vmcore transformutils.a
+LLVMLIBS = LLVMAnalysis.a LLVMBCReader LLVMBCWriter LLVMDataStructure \
+           LLVMipa.a LLVMSupport.a LLVMTarget.a LLVMCore LLVMTransformUtils.a \
+           LLVMSystem.a LLVMbzip2
 
 # note: delete when FileUtils is assimilated into libsupport
 USEDLIBS = snapshot
 
-CPPFLAGS = $(shell wx-config --cflags)
+CPPFLAGS = $(shell wx-config --cflags) -DNDEBUG
 TOOLLINKOPTSB = $(shell wx-config --libs)
 WXDIR = $(shell wx-config --prefix)
 WXLIB = $(WXDIR)/lib
 
-ifdef NOHTML
-CPPFLAGS += -DNOHTML
-endif
-
 include $(LEVEL)/Makefile.common
 
-all :: $(DESTTOOLCURRENT)/llvm-tv.exe \
-       $(DESTTOOLCURRENT)/opt-snap
+all :: $(LLVMToolDir)/llvm-tv.exe \
+       $(LLVMToolDir)/opt-snap
 
-$(DESTTOOLCURRENT)/llvm-tv.exe: Makefile
-	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH llvm-tv > $@
+LLVMTV = $(PROJ_OBJ_ROOT)/Debug/bin/llvm-tv
+
+$(LLVMToolDir)/llvm-tv.exe: Makefile
+	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH $(LLVMTV) > $@
 	chmod u+x $@
 
-$(DESTTOOLCURRENT)/opt-snap: Makefile
+$(LLVMToolDir)/opt-snap: Makefile
 	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH \
-		OPTPASSES=\"$$\*\" opt -load=$(DESTLIBCURRENT)/libsnapshot.so $$\* > $@
+		OPTPASSES=\"$$\*\" opt -load=$(LLVMLibDir)/libsnapshot.so $$\* > $@
 	chmod u+x $@
 
 ifeq ($(OS),Darwin)
@@ -35,7 +34,7 @@ clean :: clean-mac-app
 endif
 
 mac-app:
-	@./MakeMacOSBundle llvm-tv "$(WXDIR)" "$(DESTTOOLCURRENT)/llvm-tv"
+	@./MakeMacOSBundle llvm-tv "$(WXDIR)" "$(LLVMToolDir)/llvm-tv"
 
 clean-mac-app:
 	rm -rf llvm-tv.app

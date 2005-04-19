@@ -60,8 +60,8 @@ namespace llvm {
 }
 
 namespace {
-  struct CallGraphPrinter : public Pass {
-    virtual bool runPass(Module &M) {
+  struct CallGraphPrinter : public ModulePass {
+    virtual bool runOnModule(Module &M) {
       WriteGraphToFile(std::cerr, "callgraph", &getAnalysis<CallGraph>());
       return false;
     }
@@ -85,12 +85,12 @@ namespace {
 namespace {
 
   template<class DSType>
-  class DSModulePrinter : public Pass {
+  class DSModulePrinter : public ModulePass {
   protected:
     virtual std::string getFilename() = 0;
 
   public:
-    bool runPass(Module &M) {
+    bool runOnModule(Module &M) {
       DSType *DS = &getAnalysis<DSType>();
       std::string File = getFilename();
       std::ofstream of(File.c_str());
@@ -111,7 +111,7 @@ namespace {
   };
 
   template<class DSType>
-  class DSFunctionPrinter : public Pass {
+  class DSFunctionPrinter : public ModulePass {
   protected:
     Function *F;
     virtual std::string getFilename(Function &F) = 0;
@@ -119,7 +119,7 @@ namespace {
   public:
     DSFunctionPrinter(Function *_F) : F(_F) {}
 
-    bool runPass(Module &M) { 
+    bool runOnModule(Module &M) { 
       DSType *DS = &getAnalysis<DSType>();
       std::string File = getFilename(*F);
       std::ofstream of(File.c_str());

@@ -444,9 +444,12 @@ void VMClass::computeClassRecord()
         const std::string& descriptor = method->getDescriptor()->str();
 
         // If method is statically bound just create it.
-        if (method->isPrivate() || method->isStatic() || name[0] == '<')
-          methodMap_.insert(
-            std::make_pair(name + descriptor, VMMethod(this, method)));
+        if (method->isPrivate() || method->isStatic() || name[0] == '<') {
+          MethodMap::iterator i =
+            methodMap_.insert(
+              std::make_pair(name + descriptor, VMMethod(this, method)));
+          staticMethods_.push_back(&i->second);
+        }
         // Otherwise we need to assign an index for it and update the
         // dynamicMethods_ vector.
         else {

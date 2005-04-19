@@ -116,6 +116,12 @@ namespace llvm { namespace Java {
     const VMMethod* getDynamicMethod(unsigned i) const {
       return dynamicMethods_[i];
     }
+    unsigned getNumStaticMethods() const {
+      return staticMethods_.size();
+    }
+    const VMMethod* getStaticMethod(unsigned i) const {
+      return staticMethods_[i];
+    }
     llvm::Constant* getClassRecord() const { return classRecord_; }
 
     llvm::Constant* getConstant(unsigned index) const;

@@ -7,7 +7,7 @@ LLVMLIBS = LLVMAnalysis.a LLVMBCReader LLVMBCWriter LLVMDataStructure \
 # note: delete when FileUtils is assimilated into libsupport
 USEDLIBS = snapshot
 
-CPPFLAGS = $(shell wx-config --cflags) -DNDEBUG
+CPPFLAGS = $(shell wx-config --cflags)
 TOOLLINKOPTSB = $(shell wx-config --libs)
 WXDIR = $(shell wx-config --prefix)
 WXLIB = $(WXDIR)/lib
@@ -20,7 +20,8 @@ all :: $(LLVMToolDir)/llvm-tv.exe \
 LLVMTV = $(PROJ_OBJ_ROOT)/Debug/bin/llvm-tv
 
 $(LLVMToolDir)/llvm-tv.exe: Makefile
-	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH $(LLVMTV) > $@
+	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH $(LLVMTV) \
+		"2&>1 > /dev/null" > $@
 	chmod u+x $@
 
 $(LLVMToolDir)/opt-snap: Makefile

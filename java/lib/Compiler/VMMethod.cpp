@@ -29,6 +29,11 @@ void VMMethod::init()
     parent_->getName() + '/' + methodName + methodDescriptor;
 
   Resolver* resolver = parent_->getResolver();
+  // FIXME: This type should be taken from the owning class's constant
+  // pool (parsed only once per class). This means the
+  // Resolver::getType() should be moved in VMClass and its return
+  // value should be cached in the constant pool along with the
+  // others.
   const FunctionType* functionType = cast<FunctionType>(
     resolver->getType(methodDescriptor, !method_->isStatic()));
   Module* module = resolver->getModule();

@@ -215,17 +215,16 @@ VMClass::buildInterfaceClassRecord(const VMClass* interface) const
   assert(interface->isInterface() && "Must be passed an interface!");
 
   std::vector<llvm::Constant*> init;
-  init.reserve(interface->dynamicallyBoundMethods_.size()+1);
+  init.reserve(interface->getNumDynamicMethods() + 1);
   // Insert a null type info for this interface.
   init.push_back(llvm::Constant::getNullValue(resolver_->getTypeInfoType()));
   // For each method this interface declares, find the corresponding
   // method in this class and put it in its slot.
-  for (unsigned i = 0, e = interface->dynamicallyBoundMethods_.size();
-       i != e; ++i) {
+  for (unsigned i = 0, e = interface->getNumDynamicMethods(); i != e; ++i) {
     assert(init.size() == i+1 && "Interface method not found in class!");
-    const VMMethod* interfaceMethod = interface->dynamicallyBoundMethods_[i];
-    for (unsigned j = 0, f = dynamicallyBoundMethods_.size(); j != f; ++j) {
-      const VMMethod* method = dynamicallyBoundMethods_[j];
+    const VMMethod* interfaceMethod = interface->getDynamicMethod(i);
+    for (unsigned j = 0, f = getNumDynamicMethods(); j != f; ++j) {
+      const VMMethod* method = getDynamicMethod(j);
       if (method->getName() == interfaceMethod->getName() &&
           method->getDescriptor() == interfaceMethod->getDescriptor()) {
         init.push_back(method->getFunction());
@@ -435,7 +434,7 @@ void VMClass::computeClassRecord()
   // Find dynamically bound methods.
   if (!isPrimitive()) {
     if (const VMClass* superClass = getSuperClass())
-      dynamicallyBoundMethods_ = superClass->dynamicallyBoundMethods_;
+      dynamicMethods_ = superClass->dynamicMethods_;
 
     if (getClassFile()) {
       const Methods& methods = classFile_->getMethods();
@@ -449,12 +448,11 @@ void VMClass::computeClassRecord()
           methodMap_.insert(
             std::make_pair(name + descriptor, VMMethod(this, method)));
         // Otherwise we need to assign an index for it and update the
-        // dynamicallyBoundMethods_ vector.
+        // dynamicMethods_ vector.
         else {
           const VMMethod* overridenMethod = NULL;
-          for (unsigned i = 0, e = getNumDynamicallyBoundMethods();
-               i != e; ++i) {
-            const VMMethod* m = getDynamicallyBoundMethod(i);
+          for (unsigned i = 0, e = getNumDynamicMethods(); i != e; ++i) {
+            const VMMethod* m = getDynamicMethod(i);
             if (m->getName() == name && m->getDescriptor() == descriptor)
               overridenMethod = m;
           }
@@ -466,15 +464,15 @@ void VMClass::computeClassRecord()
             MethodMap::iterator i = methodMap_.insert(
               std::make_pair(name + descriptor,
                              VMMethod(this, method, index))).first;
-            dynamicallyBoundMethods_[index] = &i->second;
+            dynamicMethods_[index] = &i->second;
           }
           // Otherwise assign it a new index.
           else {
-            int index = dynamicallyBoundMethods_.size();
+            int index = dynamicMethods_.size();
             MethodMap::iterator i = methodMap_.insert(
               std::make_pair(
                 name + descriptor, VMMethod(this, method, index))).first;
-            dynamicallyBoundMethods_.push_back(&i->second);
+            dynamicMethods_.push_back(&i->second);
           }
         }
       }
@@ -482,10 +480,10 @@ void VMClass::computeClassRecord()
   }
 
   std::vector<llvm::Constant*> init;
-  init.reserve(1 + getNumDynamicallyBoundMethods());
+  init.reserve(1 + getNumDynamicMethods());
   init.push_back(buildClassTypeInfo());
-  for (unsigned i = 0, e = getNumDynamicallyBoundMethods(); i != e; ++i) {
-    const VMMethod* method = getDynamicallyBoundMethod(i);
+  for (unsigned i = 0, e = getNumDynamicMethods(); i != e; ++i) {
+    const VMMethod* method = getDynamicMethod(i);
     init.push_back(
       method->isAbstract() ?
       llvm::Constant::getNullValue(method->getFunction()->getType()) :

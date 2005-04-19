@@ -451,9 +451,8 @@ namespace llvm { namespace Java { namespace {
 
       // Schedule all its dynamically bound non abstract methods for
       // compilation.
-      for (unsigned i = 0, e = clazz->getNumDynamicallyBoundMethods();
-           i != e; ++i) {
-        const VMMethod* method = clazz->getDynamicallyBoundMethod(i);
+      for (unsigned i = 0, e = clazz->getNumDynamicMethods(); i != e; ++i) {
+        const VMMethod* method = clazz->getDynamicMethod(i);
         if (!method->isAbstract())
           scheduleMethod(method);
       }

@@ -37,7 +37,7 @@ void VMClass::init()
     false,
     GlobalVariable::ExternalLinkage,
     NULL,
-    getName() + "<classRecord>",
+    getName() + "<class_record>",
     resolver_->getModule());
 }
 
@@ -205,7 +205,7 @@ llvm::Constant* VMClass::buildSuperClassRecords() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(superClassRecordsType, init),
-      getName() + "<superClassRecords>",
+      getName() + "<super_class_records>",
       resolver_->getModule()));
 }
 
@@ -241,7 +241,7 @@ VMClass::buildInterfaceClassRecord(const VMClass* interface) const
       true,
       GlobalVariable::ExternalLinkage,
       classRecordInit,
-      getName() + '+' + interface->getName() + "<classRecord>",
+      getName() + '+' + interface->getName() + "<class_record>",
       resolver_->getModule()),
     resolver_->getClassRecordPtrType());
 }
@@ -280,7 +280,7 @@ llvm::Constant* VMClass::buildInterfaceClassRecords() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(interfaceClassRecordsType, init),
-      getName() + "<interfaceClassRecords>",
+      getName() + "<interface_class_records>",
       resolver_->getModule()));
 }
 
@@ -319,7 +319,7 @@ llvm::Constant* VMClass::buildFieldDescriptors() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(arrayType, init),
-      getName() + "<fielddescriptors>",
+      getName() + "<field_descriptors>",
       resolver_->getModule()));
 }
 
@@ -341,7 +341,7 @@ llvm::Constant* VMClass::buildFieldOffsets() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(arrayType, init),
-      getName() + "<fieldoffsets>",
+      getName() + "<field_offsets>",
       resolver_->getModule()));
 }
 
@@ -366,7 +366,7 @@ llvm::Constant* VMClass::buildStaticFieldDescriptors() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(arrayType, init),
-      getName() + "<staticfielddescriptors>",
+      getName() + "<static_field_descriptors>",
       resolver_->getModule()));
 }
 
@@ -389,7 +389,7 @@ llvm::Constant* VMClass::buildStaticFieldPointers() const
       true,
       GlobalVariable::ExternalLinkage,
       ConstantArray::get(arrayType, init),
-      getName() + "<staticfieldpointers>",
+      getName() + "<static_field_pointers>",
       resolver_->getModule()));
 }
 
@@ -447,7 +447,7 @@ void VMClass::computeClassRecord()
         if (method->isPrivate() || method->isStatic() || name[0] == '<') {
           MethodMap::iterator i =
             methodMap_.insert(
-              std::make_pair(name + descriptor, VMMethod(this, method)));
+              std::make_pair(name + descriptor, VMMethod(this, method))).first;
           staticMethods_.push_back(&i->second);
         }
         // Otherwise we need to assign an index for it and update the

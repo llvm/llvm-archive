@@ -69,7 +69,9 @@ void TVCodeListCtrl::SetFunction (Function *F) {
 
   // Populate it with BasicBlocks and Instructions from F.
   for (Function::iterator BB = F->begin(), BBe = F->end(); BB != BBe; ++BB) {
-    itemList.push_back(new TVCodeItem(BB));
+    TVCodeItem *TCBB = new TVCodeItem(BB);
+    itemList.push_back(TCBB);
+    ValueToItem[BB] = TCBB;
     for (BasicBlock::iterator I = BB->begin(), Ie = BB->end(); I != Ie; ++I) {
       TVCodeItem *TCI = new TVCodeItem(I);
       itemList.push_back(TCI);
@@ -107,9 +109,15 @@ void TVCodeListCtrl::OnItemSelected(wxListEvent &event) {
   Value *V = itemList[event.GetIndex ()]->getValue();
   if (!V) return;
 
-  // Highlight uses
+  // Highlight uses in red
   for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u)
     changeItemTextAttrs (ValueToItem[*u], wxRED, wxBOLD);
+
+  // Highlight definitions of operands in green
+  if (User *U = dyn_cast<User>(V))
+    for (User::op_iterator op = U->op_begin(), e = U->op_end(); op != e; ++op)
+      if (TVCodeItem *TCI = ValueToItem[*op])
+        changeItemTextAttrs (TCI, wxGREEN, wxBOLD);
 }
 
 void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
@@ -119,6 +127,13 @@ void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
   // Set uses back to normal
   for (User::use_iterator u = V->use_begin(), e = V->use_end(); u != e; ++u)
     changeItemTextAttrs (ValueToItem[*u], wxBLACK, wxNORMAL);
+
+  // Set definitions of operands back to normal
+  if (User *U = dyn_cast<User>(V))
+    for (User::op_iterator op = U->op_begin(), e = U->op_end(); op != e; ++op)
+      if (TVCodeItem *TCI = ValueToItem[*op])
+        changeItemTextAttrs (ValueToItem[*op], wxBLACK, wxNORMAL);
+
 }
 
 BEGIN_EVENT_TABLE (TVCodeListCtrl, wxListCtrl)

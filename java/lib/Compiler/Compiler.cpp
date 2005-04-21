@@ -174,7 +174,6 @@ namespace llvm { namespace Java { namespace {
 
       // Initialize it: call java/lang/String/<init>(byte[],int)
       const VMMethod* method = clazz->getMethod("<init>([BI)V");
-      scheduleMethod(method);
 
       params.reserve(3);
       params.clear();
@@ -316,7 +315,8 @@ namespace llvm { namespace Java { namespace {
            funcName.find("java/lang/IllegalStateException") != 0 &&
            funcName.find("java/lang/IndexOutOfBoundsException") != 0 &&
            funcName.find("java/lang/RuntimeException") != 0 &&
-           funcName.find("java/lang/Math") != 0 &&
+           (funcName.find("java/lang/Math") != 0 ||
+            funcName.find("java/lang/Math/<cl") == 0) &&
            funcName.find("java/lang/Number") != 0 &&
            funcName.find("java/lang/Byte") != 0 &&
            funcName.find("java/lang/Float") != 0 &&
@@ -326,12 +326,14 @@ namespace llvm { namespace Java { namespace {
            (funcName.find("java/lang/String") != 0 ||
             funcName.find("java/lang/String/<cl") == 0) &&
            funcName.find("java/lang/StringBuffer") != 0 &&
-           funcName.find("java/lang/System") != 0 &&
+           (funcName.find("java/lang/System") != 0 ||
+            funcName.find("java/lang/System/loadLibrary") == 0) &&
            funcName.find("java/lang/VMSystem") != 0 &&
            (funcName.find("java/util/") != 0 ||
             funcName.find("java/util/Locale/<cl") == 0 ||
             funcName.find("java/util/ResourceBundle/<cl") == 0 ||
-            funcName.find("java/util/Calendar/<cl") == 0)) ||
+            funcName.find("java/util/Calendar/<cl") == 0) ||
+            funcName.find("java/util/PropertyPermission/<cl") == 0) ||
           (funcName.find("gnu/") == 0)) {
         DEBUG(std::cerr << "Skipping compilation of method: "
               << funcName << '\n');
@@ -457,6 +459,13 @@ namespace llvm { namespace Java { namespace {
           scheduleMethod(method);
       }
 
+      // Schedule all its statically bound non abstract methods for
+      // compilation.
+      for (unsigned i = 0, e = clazz->getNumStaticMethods(); i != e; ++i) {
+        const VMMethod* method = clazz->getStaticMethod(i);
+        if (!method->isAbstract())
+          scheduleMethod(method);
+      }
       
       // If this class has a constant pool (was loaded from a
       // classfile), create constant strings for it.
@@ -474,11 +483,8 @@ namespace llvm { namespace Java { namespace {
         classInitializers_.push_back(stringConstructors);
 
         // Call its class initialization method if it exists.
-        if (const VMMethod* method = clazz->getMethod("<clinit>()V")) {
+        if (const VMMethod* method = clazz->getMethod("<clinit>()V"))
           classInitializers_.push_back(method->getFunction());
-          bool inserted =  scheduleMethod(method);
-          assert(inserted && "Class initialization method already called!");
-        }
       }
     }
 
@@ -494,7 +500,6 @@ namespace llvm { namespace Java { namespace {
 
       // Find the method.
       const VMMethod* method = clazz->getMethod(methodDesc);
-      scheduleMethod(method);
       // Compile the transitive closure of methods called by this method.
       for (unsigned i = 0; i != toCompileMethods_.size(); ++i) {
         const VMMethod* m = toCompileMethods_[i];
@@ -1002,7 +1007,6 @@ namespace llvm { namespace Java { namespace {
 
     void do_invokespecial(unsigned index) {
       const VMMethod* method = class_->getMethod(index);
-      scheduleMethod(method);
       Function* function = method->getFunction();
       makeCall(function, getParams(function->getFunctionType()));
     }
@@ -1011,19 +1015,6 @@ namespace llvm { namespace Java { namespace {
       const VMMethod* method = class_->getMethod(index);
       emitClassInitializers(method->getParent());
       Function* function = method->getFunction();
-      // Intercept java/lang/System/loadLibrary() calls and add
-      // library deps to the module
-      if (function->getName().find(
-            "java/lang/System/loadLibrary(Ljava/lang/String;)V") == 0) {
-        // FIXME: we should get the string and add this library to the
-        // module.
-
-        // If this function is not defined, define it now.
-        if (function->empty())
-          new ReturnInst(NULL, new BasicBlock("entry", function));
-      }
-      else
-        scheduleMethod(method);
       makeCall(function, getParams(function->getFunctionType()));
     }
 

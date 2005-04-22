@@ -3,7 +3,7 @@
 /* For now we cast a java/lang/Class reference to a class record. When
  * we get proper java/lang/Class representation this will be a field
  * access. */
-#define GET_CLASS_RECORD(clazz) ((struct llvm_java_object_class_record*) clazz)
+#define GET_CLASS_RECORD(clazz) ((struct llvm_java_class_record*) clazz)
 #define GET_CLASS(classRecord) ((jclass) classRecord)
 
 const JNIEnv llvm_java_JNIEnv;

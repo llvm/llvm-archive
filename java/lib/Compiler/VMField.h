@@ -16,6 +16,7 @@
 #define LLVM_JAVA_VMFIELD_H
 
 #include <llvm/Java/ClassFile.h>
+#include <cassert>
 
 namespace llvm {
 

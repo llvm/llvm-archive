@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+  class Constant;
   class Function;
   class FunctionType;
 
@@ -32,6 +33,8 @@ namespace llvm { namespace Java {
     const VMClass* parent_;
     const Method* method_;
     Function* function_;
+    Function* bridgeFunction_;
+
     int index_;
 
     void init();
@@ -69,6 +72,8 @@ namespace llvm { namespace Java {
       return getName() + getDescriptor();
     }
 
+    llvm::Constant* buildMethodDescriptor() const;
+    llvm::Constant* getBridgeFunction() const;
   };
 
 } } // namespace llvm::Java

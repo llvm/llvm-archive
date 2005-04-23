@@ -393,6 +393,104 @@ llvm::Constant* VMClass::buildStaticFieldPointers() const
       resolver_->getModule()));
 }
 
+llvm::Constant* VMClass::buildMethodDescriptors() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(getNumStaticMethods() + 1);
+
+  for (unsigned i = 0, e = getNumDynamicMethods(); i != e; ++i) {
+    const VMMethod* method = getDynamicMethod(i);
+    init.push_back(method->buildMethodDescriptor());
+  }
+  // Null terminate.
+  init.push_back(llvm::Constant::getNullValue(PointerType::get(Type::SByteTy)));
+
+  const ArrayType* arrayType =
+    ArrayType::get(init.back()->getType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<method_descriptors>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildMethodPointers() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(getNumStaticMethods());
+
+  const Type* pointerType = PointerType::get(Type::SByteTy);
+  for (unsigned i = 0, e = getNumDynamicMethods(); i != e; ++i) {
+    const VMMethod* method = getDynamicMethod(i);
+    init.push_back(ConstantExpr::getCast(method->getBridgeFunction(),
+                                         pointerType));
+  }
+
+  const ArrayType* arrayType = ArrayType::get(pointerType, init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<method_pointers>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildStaticMethodDescriptors() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(getNumStaticMethods() + 1);
+
+  for (unsigned i = 0, e = getNumStaticMethods(); i != e; ++i) {
+    const VMMethod* method = getStaticMethod(i);
+    init.push_back(method->buildMethodDescriptor());
+  }
+  // Null terminate.
+  init.push_back(llvm::Constant::getNullValue(PointerType::get(Type::SByteTy)));
+
+  const ArrayType* arrayType =
+    ArrayType::get(init.back()->getType(), init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<static_method_descriptors>",
+      resolver_->getModule()));
+}
+
+llvm::Constant* VMClass::buildStaticMethodPointers() const
+{
+  std::vector<llvm::Constant*> init;
+  init.reserve(getNumStaticMethods());
+
+  const Type* pointerType = PointerType::get(Type::SByteTy);
+  for (unsigned i = 0, e = getNumStaticMethods(); i != e; ++i) {
+    const VMMethod* method = getStaticMethod(i);
+    init.push_back(ConstantExpr::getCast(method->getBridgeFunction(),
+                                         pointerType));
+  }
+
+  const ArrayType* arrayType = ArrayType::get(pointerType, init.size());
+
+  return ConstantExpr::getPtrPtrFromArrayPtr(
+    new GlobalVariable(
+      arrayType,
+      true,
+      GlobalVariable::ExternalLinkage,
+      ConstantArray::get(arrayType, init),
+      getName() + "<static_method_pointers>",
+      resolver_->getModule()));
+}
+
 llvm::Constant* VMClass::buildClassTypeInfo() const
 {
   std::vector<llvm::Constant*> init;
@@ -424,6 +522,10 @@ llvm::Constant* VMClass::buildClassTypeInfo() const
   init.push_back(buildFieldOffsets());
   init.push_back(buildStaticFieldDescriptors());
   init.push_back(buildStaticFieldPointers());
+  init.push_back(buildMethodDescriptors());
+  init.push_back(buildMethodPointers());
+  init.push_back(buildStaticMethodDescriptors());
+  init.push_back(buildStaticMethodPointers());
 
   return ConstantStruct::get(init);
 }

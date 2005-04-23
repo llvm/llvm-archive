@@ -55,16 +55,34 @@ struct llvm_java_typeinfo {
 
   /* An array of offsets to fields. This is indexed the same way as
    * the field descriptor array. */
-  jfieldID* fieldOffsets;
+  unsigned* fieldOffsets;
 
   /* A null terminated array of strings describing the static fields
    * of this class. A field description is the concatenation of its
    * name with its descriptor. */
   const char** staticFieldDescriptors;
 
-  /* An array of pointers to static fields. This is the indexed the
+  /* An array of pointers to static fields. This is indexed the
    * same way as the static field descriptor array. */
   void** staticFields;
+
+  /* A null terminated array of strings describing the dynamic methods
+     of this class. A method descriptor is the concatenation of its
+     name with its descriptor. */
+  const char** methodDescriptors;
+
+  /* An array of pointers to bridge functions. This is indexed the
+   * same way as the dynamic method descriptor array. */
+  void** methodBridges;
+
+  /* A null terminated array of strings describing the static methods
+     of this class. A method descriptor is the concatenation of its
+     name with its descriptor. */
+  const char** staticMethodDescriptors;
+
+  /* An array of pointers to bridge functions. This is indexed the
+   * same way as the static method descriptor array. */
+  void** staticMethodBridges;
 };
 
 struct llvm_java_class_record {

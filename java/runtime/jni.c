@@ -84,6 +84,74 @@ static jfieldID get_fieldid(JNIEnv *env,
 
 /* Calling instance methods */
 
+static jmethodID get_methodid(JNIEnv *env,
+                              jclass clazz,
+                              const char *name,
+                              const char *sig) {
+  int nameLength;
+  int i;
+  const char* methodDescriptor;
+  struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz);
+
+  /* lookup the name+sig in the staticFieldDescriptors array and
+   * retrieve the index of the field */
+  nameLength = strlen(name);
+  for (i = 0; (methodDescriptor = cr->typeinfo.methodDescriptors[i]); ++i)
+    if (strncmp(name, methodDescriptor, nameLength) == 0 &&
+        strcmp(sig, methodDescriptor+nameLength) == 0)
+      return i;
+
+  return 0;
+}
+
+static void call_void_method_v(JNIEnv* env,
+                               jobject obj,
+                               jmethodID methodID,
+                               va_list args) {
+  typedef void (*BridgeFunPtr)(jobject obj, va_list);
+  struct llvm_java_class_record* cr = llvm_java_get_class_record(obj);
+
+  BridgeFunPtr f = (BridgeFunPtr) cr->typeinfo.methodBridges[methodID];
+  f(obj, args);
+}
+
+static void call_void_method(JNIEnv* env,
+                             jobject obj,
+                             jmethodID methodID,
+                             ...) {
+  va_list args;
+  va_start(args, methodID);
+  call_void_method_v(env, obj, methodID, args);
+  va_end(args);
+}
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE call_##TYPE##_method_v(JNIEnv* env, \
+                                        jobject obj, \
+                                        jmethodID methodID, \
+                                        va_list args) { \
+    typedef j##TYPE (*BridgeFunPtr)(jobject obj, va_list); \
+    struct llvm_java_class_record* cr = llvm_java_get_class_record(obj); \
+    BridgeFunPtr f = \
+      (BridgeFunPtr) cr->typeinfo.methodBridges[methodID]; \
+    return f(obj, args); \
+  }
+#include "types.def"
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE call_##TYPE##_method(JNIEnv* env, \
+                                      jobject obj, \
+                                      jmethodID methodID, \
+                                      ...) { \
+    va_list args; \
+    va_start(args, methodID); \
+    j##TYPE result = \
+      call_##TYPE##_method_v(env, obj, methodID, args); \
+    va_end(args); \
+    return result; \
+  }
+#include "types.def"
+
 /* Accessing static fields */
 
 static jfieldID get_static_fieldid(JNIEnv *env,
@@ -126,6 +194,74 @@ static jfieldID get_static_fieldid(JNIEnv *env,
 #include "types.def"
 
 /* Calling static methods */
+
+static jmethodID get_static_methodid(JNIEnv *env,
+                                     jclass clazz,
+                                     const char *name,
+                                     const char *sig) {
+  int nameLength;
+  int i;
+  const char* methodDescriptor;
+  struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz);
+
+  /* lookup the name+sig in the staticFieldDescriptors array and
+   * retrieve the index of the field */
+  nameLength = strlen(name);
+  for (i = 0; (methodDescriptor = cr->typeinfo.staticMethodDescriptors[i]); ++i)
+    if (strncmp(name, methodDescriptor, nameLength) == 0 &&
+        strcmp(sig, methodDescriptor+nameLength) == 0)
+      return i;
+
+  return 0;
+}
+
+static void call_static_void_method_v(JNIEnv* env,
+                                      jclass clazz,
+                                      jmethodID methodID,
+                                      va_list args) {
+  typedef void (*BridgeFunPtr)(jclass clazz, va_list);
+  struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz);
+
+  BridgeFunPtr f = (BridgeFunPtr) cr->typeinfo.staticMethodBridges[methodID];
+  f(clazz, args);
+}
+
+static void call_static_void_method(JNIEnv* env,
+                                    jclass clazz,
+                                    jmethodID methodID,
+                                    ...) {
+  va_list args;
+  va_start(args, methodID);
+  call_static_void_method_v(env, clazz, methodID, args);
+  va_end(args);
+}
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE call_static_##TYPE##_method_v(JNIEnv* env, \
+                                               jclass clazz, \
+                                               jmethodID methodID, \
+                                               va_list args) { \
+    typedef j##TYPE (*BridgeFunPtr)(jclass clazz, va_list); \
+    struct llvm_java_class_record* cr = GET_CLASS_RECORD(clazz); \
+    BridgeFunPtr f = \
+      (BridgeFunPtr) cr->typeinfo.staticMethodBridges[methodID]; \
+    return f(clazz, args); \
+  }
+#include "types.def"
+
+#define HANDLE_TYPE(TYPE) \
+  static j##TYPE call_static_##TYPE##_method(JNIEnv* env, \
+                                             jclass clazz, \
+                                             jmethodID methodID, \
+                                             ...) { \
+    va_list args; \
+    va_start(args, methodID); \
+    j##TYPE result = \
+      call_static_##TYPE##_method_v(env, clazz, methodID, args); \
+    va_end(args); \
+    return result; \
+  }
+#include "types.def"
 
 /* String operations */
 
@@ -219,36 +355,36 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   NULL, /* 30 */
   &get_object_class,
   &is_instance_of,
+  &get_methodid,
+  &call_object_method,
+  &call_object_method_v,
   NULL,
+  &call_boolean_method,
+  &call_boolean_method_v,
   NULL,
+  &call_byte_method,
+  &call_byte_method_v,
   NULL,
+  &call_char_method,
+  &call_char_method_v,
   NULL,
+  &call_short_method,
+  &call_short_method_v,
   NULL,
+  &call_int_method,
+  &call_int_method_v,
   NULL,
+  &call_long_method,
+  &call_long_method_v,
   NULL,
-  NULL, /* 40 */
+  &call_float_method,
+  &call_float_method_v,
   NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 50 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  &call_double_method,
+  &call_double_method_v,
   NULL, /* 60 */
-  NULL,
-  NULL,
+  &call_void_method,
+  &call_void_method_v,
   NULL,
   NULL,
   NULL,
@@ -299,33 +435,33 @@ static const struct JNINativeInterface llvm_java_JNINativeInterface = {
   &set_long_field,
   &set_float_field,
   &set_double_field,
+  &get_static_methodid,
+  &call_static_object_method,
+  &call_static_object_method_v,
   NULL,
+  &call_static_boolean_method,
+  &call_static_boolean_method_v,
   NULL,
+  &call_static_byte_method,
+  &call_static_byte_method_v,
   NULL,
+  &call_static_char_method,
+  &call_static_char_method_v,
   NULL,
+  &call_static_short_method,
+  &call_static_short_method_v,
   NULL,
+  &call_static_int_method,
+  &call_static_int_method_v,
   NULL,
+  &call_static_long_method,
+  &call_static_long_method_v,
   NULL,
-  NULL, /* 120 */
+  &call_static_float_method,
+  &call_static_float_method_v,
   NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL, /* 130 */
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  &call_static_double_method,
+  &call_static_double_method_v,
   NULL, /* 140 */
   NULL,
   NULL,

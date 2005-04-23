@@ -66,6 +66,10 @@ namespace llvm { namespace Java {
     llvm::Constant* buildFieldOffsets() const;
     llvm::Constant* buildStaticFieldDescriptors() const;
     llvm::Constant* buildStaticFieldPointers() const;
+    llvm::Constant* buildMethodDescriptors() const;
+    llvm::Constant* buildMethodPointers() const;
+    llvm::Constant* buildStaticMethodDescriptors() const;
+    llvm::Constant* buildStaticMethodPointers() const;
     llvm::Constant* buildClassTypeInfo() const;
 
     const VMField* lookupField(const std::string& name) const;

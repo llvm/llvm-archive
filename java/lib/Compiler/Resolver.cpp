@@ -51,6 +51,10 @@ Resolver::Resolver(Module* module)
   //   unsigned* fieldOffsets;
   //   char** staticFieldDescriptors;
   //   void** staticFields;
+  //   char** MethodDescriptors;
+  //   void** Methods;
+  //   char** staticMethodDescriptors;
+  //   void** staticMethods;
   // };
 
   // Compute the type_info type.
@@ -64,6 +68,10 @@ Resolver::Resolver(Module* module)
   elements.push_back(Type::IntTy);
   elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   elements.push_back(PointerType::get(Type::UIntTy));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
+  elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   elements.push_back(PointerType::get(PointerType::get(Type::SByteTy)));
   typeInfoType_ = StructType::get(elements);

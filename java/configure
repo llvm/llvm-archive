@@ -275,7 +275,7 @@ PACKAGE_BUGREPORT='llvmbugs@cs.uiuc.edu'
 
 ac_unique_file="Makefile.common.in"
 ac_unique_file="Makefile.common.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_SRC LLVM_OBJ JAVA JAVAC JAVAH LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS LLVM_SRC LLVM_OBJ JAVA JAVAC JAVAH CLASSPATH_JAVA_LIBRARY_PATH CLASSPATH_NATIVE_LIBRARY_PATH CLASSPATH_NATIVE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -802,6 +802,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-llvmsrc          Location of LLVM Source Code
   --with-llvmobj          Location of LLVM Object Code
+  --with-classpathdir     location of GNU classpath install dir (default
+                          /usr/local)
 
 Some influential environment variables:
   JAVA        The Java Virtual Machine (used for testing)
@@ -1484,6 +1486,34 @@ fi
 
 
 
+# Check whether --with-classpathdir or --without-classpathdir was given.
+if test "${with_classpathdir+set}" = set; then
+  withval="$with_classpathdir"
+  ac_cv_classpathdir=$withval
+else
+  ac_cv_classpathdir=/usr/local
+fi;
+
+CLASSPATH_JAVA_LIBRARY_PATH=$ac_cv_classpathdir/share/classpath
+
+
+CLASSPATH_NATIVE_LIBRARY_PATH=$ac_cv_classpathdir/lib/classpath
+
+
+CLASSPATH_NATIVE_LIBS="gtkpeer javaawt javaio javalang javalangreflect javanet javanio javautil"
+
+
+echo "$as_me:$LINENO: checking for GNU classpath libraries" >&5
+echo $ECHO_N "checking for GNU classpath libraries... $ECHO_C" >&6
+if test ! -f "$CLASSPATH_JAVA_LIBRARY_PATH/java/lang/Object.class"
+then
+  echo "$CLASSPATH_JAVA_LIBRARY_PATH/java/lang/Object.class"
+  { { echo "$as_me:$LINENO: error: A flat installation of GNU classpath is required" >&5
+echo "$as_me: error: A flat installation of GNU classpath is required" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+echo "$as_me:$LINENO: result: found at $CLASSPATH_JAVA_LIBRARY_PATH" >&5
+echo "${ECHO_T}found at $CLASSPATH_JAVA_LIBRARY_PATH" >&6
 
 
 
@@ -2153,6 +2183,9 @@ s,@LLVM_OBJ@,$LLVM_OBJ,;t t
 s,@JAVA@,$JAVA,;t t
 s,@JAVAC@,$JAVAC,;t t
 s,@JAVAH@,$JAVAH,;t t
+s,@CLASSPATH_JAVA_LIBRARY_PATH@,$CLASSPATH_JAVA_LIBRARY_PATH,;t t
+s,@CLASSPATH_NATIVE_LIBRARY_PATH@,$CLASSPATH_NATIVE_LIBRARY_PATH,;t t
+s,@CLASSPATH_NATIVE_LIBS@,$CLASSPATH_NATIVE_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

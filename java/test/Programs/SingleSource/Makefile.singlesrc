@@ -10,6 +10,8 @@
 # rule to build raw bytecode from a classfile
 %.linked.bc: %.class $(CLASS2LLVM)
 	$(Echo) Compiling $< to bytecode
-	-$(Verb)$(CLASS2LLVM) -cp $(CLASSPATH):Output $(subst /,.,$(*F)) -o=$@
+	-$(Verb)$(CLASS2LLVM) \
+	  -cp $(CLASSPATH_JAVA_LIBRARY_PATH):$(CLASSPATH):Output \
+	  $(subst /,.,$(*F)) -o=$@
 
 include $(LEVEL)/test/Makefile.test

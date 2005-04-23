@@ -66,8 +66,32 @@ dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(Makefile.common.in)
 
 dnl **************************************************************************
+dnl * Set the location of various third-party software packages
+dnl **************************************************************************
+AC_ARG_WITH([classpathdir],
+  AS_HELP_STRING([--with-classpathdir],
+                 [location of GNU classpath install dir (default /usr/local)]),
+                 [ac_cv_classpathdir=$withval],
+                 [ac_cv_classpathdir=/usr/local])
+
+CLASSPATH_JAVA_LIBRARY_PATH=$ac_cv_classpathdir/share/classpath
+AC_SUBST(CLASSPATH_JAVA_LIBRARY_PATH)
+
+CLASSPATH_NATIVE_LIBRARY_PATH=$ac_cv_classpathdir/lib/classpath
+AC_SUBST(CLASSPATH_NATIVE_LIBRARY_PATH)
+
+CLASSPATH_NATIVE_LIBS="gtkpeer javaawt javaio javalang javalangreflect javanet javanio javautil"
+AC_SUBST(CLASSPATH_NATIVE_LIBS)
+
+dnl **************************************************************************
 dnl * Check for libraries.
 dnl **************************************************************************
+AC_MSG_CHECKING([for GNU classpath libraries])
+if test ! -f "$CLASSPATH_JAVA_LIBRARY_PATH/java/lang/Object.class"
+then
+  AC_MSG_ERROR([A flat installation of GNU classpath is required])
+fi
+AC_MSG_RESULT([found at $CLASSPATH_JAVA_LIBRARY_PATH])
 
 dnl **************************************************************************
 dnl * Checks for header files.
@@ -83,10 +107,6 @@ dnl **************************************************************************
 
 dnl **************************************************************************
 dnl * Enable various compile-time options
-dnl **************************************************************************
-
-dnl **************************************************************************
-dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 
 dnl **************************************************************************

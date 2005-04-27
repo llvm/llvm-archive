@@ -1,5 +1,5 @@
 LEVEL = ../..
-LIBRARYNAME = snapshot
+LIBRARYNAME = LLVMTVSnapshot
 SHARED_LIBRARY = 1
 
 include $(LEVEL)/Makefile.common

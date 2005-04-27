@@ -5,7 +5,7 @@ LLVMLIBS = LLVMAnalysis.a LLVMBCReader LLVMBCWriter LLVMDataStructure \
            LLVMSystem.a LLVMbzip2
 
 # note: delete when FileUtils is assimilated into libsupport
-USEDLIBS = snapshot
+USEDLIBS = LLVMTVSnapshot
 
 CPPFLAGS = $(shell wx-config --cflags)
 TOOLLINKOPTSB = $(shell wx-config --libs)
@@ -26,7 +26,7 @@ $(LLVMToolDir)/llvm-tv.exe: Makefile
 
 $(LLVMToolDir)/opt-snap: Makefile
 	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH \
-		OPTPASSES=\"$$\*\" opt -load=$(LLVMLibDir)/libsnapshot.so $$\* > $@
+		OPTPASSES=\"$$\*\" opt -load=$(LibDir)/libLLVMTVSnapshot.so $$\* > $@
 	chmod u+x $@
 
 ifeq ($(OS),Darwin)

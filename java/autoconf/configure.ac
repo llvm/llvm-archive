@@ -89,9 +89,11 @@ dnl **************************************************************************
 AC_MSG_CHECKING([for GNU classpath libraries])
 if test ! -f "$CLASSPATH_JAVA_LIBRARY_PATH/java/lang/Object.class"
 then
+  AC_MSG_RESULT([no])
   AC_MSG_ERROR([A flat installation of GNU classpath is required])
+else
+  AC_MSG_RESULT([$CLASSPATH_JAVA_LIBRARY_PATH])
 fi
-AC_MSG_RESULT([found at $CLASSPATH_JAVA_LIBRARY_PATH])
 
 dnl **************************************************************************
 dnl * Checks for header files.

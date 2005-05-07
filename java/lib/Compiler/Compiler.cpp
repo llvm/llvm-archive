@@ -879,7 +879,9 @@ namespace llvm { namespace Java { namespace {
     void do_return_common(const Type* type) {
       Value* r = pop(type);
       const Type* retTy = currentBB_->getParent()->getReturnType();
-      new ReturnInst(new CastInst(r, retTy, TMP, currentBB_), currentBB_);
+      if (retTy != r->getType())
+        r = new CastInst(r, retTy, TMP, currentBB_);
+      new ReturnInst(r, currentBB_);
     }
 
     void do_return() {

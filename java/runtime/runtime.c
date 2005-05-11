@@ -32,7 +32,7 @@ llvm_java_get_superclass_record(struct llvm_java_class_record* cr) {
   if (llvm_java_is_interface_class(cr) || cr->typeinfo.depth == 0)
     return NULL;
 
-  return cr->typeinfo.superclasses[0];
+  return cr->typeinfo.superclasses[cr->typeinfo.depth - 1];
 }
 
 jboolean llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
@@ -63,7 +63,7 @@ jboolean llvm_java_is_assignable_from(struct llvm_java_class_record* cr,
   /* otherwise this is a class, check if from is a superclass of this
    * class */
   if (cr->typeinfo.depth > from->typeinfo.depth) {
-    int index = cr->typeinfo.depth - from->typeinfo.depth - 1;
+    int index = from->typeinfo.depth;
     return cr->typeinfo.superclasses[index] == from;
   }
 

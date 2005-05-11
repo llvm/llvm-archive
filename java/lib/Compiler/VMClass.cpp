@@ -191,7 +191,7 @@ llvm::Constant* VMClass::buildSuperClassRecords() const
 {
   std::vector<llvm::Constant*> init;
   init.reserve(getNumSuperClasses());
-  for (unsigned i = 0, e = getNumSuperClasses(); i != e; ++i)
+  for (unsigned i = getNumSuperClasses(); i--; )
     init.push_back(ConstantExpr::getCast(
                      getSuperClass(i)->getClassRecord(),
                      resolver_->getClassRecordPtrType()));

@@ -1,20 +1,3 @@
-* Create Class description information from ClassFile object and
-resolve all references (classfile constant pool) when loading the
-classfile. This way we will not create types, parse method strings,
-parse and find object fields on every refernce. This will both speedup
-compilation but more importantly it will simplify code generation.
-
-* Change all object types as arguments to functions, on the operand
-stack, or local variables should be of type llvm_object_base*. All
-primitive types should normalize to their Java counterparts (a bool is
-always an int on the operand stack).
-
-* Change object model so that we can support:
-  - Multiple inheritance of interfaces.
-  - Dynamic element type of an array.
-  - Distinguish between class or array objects dynamically.
-  - Reflection (used by JNI).
-
 * Exceptions.
 
 * Add GC hooks into the GC runtime.

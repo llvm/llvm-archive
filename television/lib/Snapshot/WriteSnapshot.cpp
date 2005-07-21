@@ -39,16 +39,16 @@ using namespace llvm;
 extern char **environ;
 
 namespace {
-  struct Snapshot : public Pass {
+  struct Snapshot : public ModulePass {
     /// getAnalysisUsage - this pass does not require or invalidate any analysis
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) {
       AU.setPreservesAll();
     }
     
-    /// runPass - save the Module in a pre-defined location with our naming
+    /// runOnModule - save the Module in a pre-defined location with our naming
     /// strategy
-    bool runPass(Module &M);
+    bool runOnModule(Module &M);
 
   private:
     bool sendSignalToLLVMTV();
@@ -64,11 +64,11 @@ namespace {
 }
 
 
-/// runPass - save snapshot to a pre-defined directory with a consecutive number
-/// in the name (for alphabetization) and the name of the pass that ran just
-/// before this one. Signal llvm-tv that fresh bytecode file has arrived for
-/// consumption.
-bool Snapshot::runPass(Module &M) {
+/// runOnModule - save snapshot to a pre-defined directory with a consecutive
+/// number in the name (for alphabetization) and the name of the pass that ran
+/// just before this one. Signal llvm-tv that fresh bytecode file has arrived
+/// for consumption.
+bool Snapshot::runOnModule(Module &M) {
   // Make sure the snapshots dir exists, which it will unless this
   // is the first time we've ever run the -snapshot pass.
   EnsureDirectoryExists (llvmtvPath);
@@ -93,7 +93,7 @@ bool Snapshot::runPass(Module &M) {
   // instance of llvm-tv, start a new instance and send a signal to it.
   sys::Path llvmtvExe = FindExecutable("llvm-tv", ""); 
   if (llvmtvExe.isValid() && !llvmtvExe.isEmpty() && llvmtvExe.isFile() &&
-      llvmtvExe.executable()) {
+      llvmtvExe.canExecute()) {
     int pid = fork();
     // Child process morphs into llvm-tv
     if (!pid) {

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
   }
   catch (std::exception& e) {
     std::cerr << e.what() << '\n';
-    sys::Path(OutputFilename).destroyFile();
+    sys::Path(OutputFilename).eraseFromDisk();
     return EXIT_FAILURE;
   }
 

@@ -135,7 +135,10 @@ std::vector<sys::Path> ClassFile::getClassPath()
   unsigned b = 0, e = 0;
   do {
     e = ClassPath.find(':', b);
-    if (path.setDirectory(ClassPath.substr(b, e - b))) {
+    // FIXME: Currently we only support flat class file reading. When
+    // jar files are supported this chech has to change to not require
+    // that each CLASSPATH component is a directory.
+    if (path.set(ClassPath.substr(b, e - b)) && path.isDirectory()) {
       result.push_back(path);
       DEBUG(std::cerr << "Adding: " << path.toString() << " to CLASSPATH\n");
     }
@@ -160,7 +163,7 @@ sys::Path ClassFile::getFileForClass(const std::string& classname)
   for (unsigned i = 0, e = classpath.size(); i != e; ++i) {
     sys::Path filename = classpath[i];
     assert(filename.isDirectory() && "CLASSPATH element not a directory!");
-    filename.appendFile(clazz);
+    filename.appendComponent(clazz);
     DEBUG(std::cerr << "Trying file: " << filename.toString() << '\n');
     if (filename.exists())
       return filename;

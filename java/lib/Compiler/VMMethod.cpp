@@ -63,7 +63,6 @@ void VMMethod::init()
     const Type* paramType = functionType->getParamType(i);
     const Type* argType = paramType->getVAArgsPromotedType();
     Value* arg = new VAArgInst(vaList, argType, "tmp", bb);
-    vaList = new VANextInst(vaList, argType, "", bb);
     if (paramType != argType)
       arg = new CastInst(arg, paramType, "tmp", bb);
     params.push_back(arg);

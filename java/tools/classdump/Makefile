@@ -10,7 +10,7 @@ LEVEL := ../..
 
 TOOLNAME := classdump
 
-USEDLIBS := LLVMJavaClassfile
+USEDLIBS := LLVMJavaClassfile.a
 LLVMLIBS := LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

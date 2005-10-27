@@ -10,7 +10,7 @@ LEVEL := ../..
 
 TOOLNAME := class2llvm
 
-USEDLIBS := LLVMJavaClassfile LLVMJavaCompiler
+USEDLIBS := LLVMJavaCompiler.a LLVMJavaClassfile.a
 LLVMLIBS := LLVMBCWriter LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common

@@ -23,6 +23,7 @@
 #include <llvm/Constants.h>
 #include <llvm/Java/ClassFile.h>
 #include <llvm/Support/Debug.h>
+#include <iostream>
 
 using namespace llvm;
 using namespace llvm::Java;

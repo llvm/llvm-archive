@@ -30,6 +30,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/Support/CFG.h>
 #include <llvm/Support/Debug.h>
+#include <iostream>
 #include <list>
 #include <vector>
 
@@ -793,7 +794,7 @@ namespace llvm { namespace Java { namespace {
       r = new SelectInst(c, MINUS_ONE, r, TMP, currentBB_);
       c = new CallInst(module_->getOrInsertFunction
                        ("llvm.isunordered",
-                        Type::BoolTy, v1->getType(), v2->getType(), 0),
+                        Type::BoolTy, v1->getType(), v2->getType(), NULL),
                        v1, v2, TMP, currentBB_);
       r = new SelectInst(c, pushOne ? ONE : MINUS_ONE, r, TMP, currentBB_);
       push(r);

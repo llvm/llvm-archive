@@ -18,6 +18,7 @@
 #include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/Support/Debug.h>
+#include <iostream>
 
 using namespace llvm;
 using namespace llvm::Java;

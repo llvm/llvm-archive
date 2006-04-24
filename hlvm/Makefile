@@ -1,6 +1,8 @@
-##===- projects/sample/Makefile ----------------------------*- Makefile -*-===##
+##===- Makefile --------------------------------------------*- Makefile -*-===##
 #
-# This is a sample Makefile for a project that uses LLVM.
+# This is the top level Makefile for the HLVM project.
+#
+# Copyright (C) 2006 Reid Spencer. All Rights Reserved.
 #
 ##===----------------------------------------------------------------------===##
 

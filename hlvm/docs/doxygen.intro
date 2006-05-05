@@ -17,7 +17,7 @@
 /// @file doxygen.intro
 /// @author Reid Spencer <rspencer@hlvm.org> (original author)
 /// @date 2006/05/04
-/// @brief XPS documentation introduction.
+/// @brief HLVM documentation introduction.
 ////////////////////////////////////////////////////////////////////////////////
 
 /// @mainpage HLVM:High Level Virtual Machine

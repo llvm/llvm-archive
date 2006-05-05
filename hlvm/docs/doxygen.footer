@@ -1,4 +1,4 @@
-<hr>
+<hr/>
 <p class="footer">
 Generated on $datetime for $projectname version $projectnumber by
 <a href="http://www.doxygen.org/index.html">doxygen $doxygenversion</a><br/>

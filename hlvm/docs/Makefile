@@ -48,10 +48,12 @@ $(DOCS_TGZ_FILE): apis/html/.dir $(DOCS_TAR_DEPS)
 	$(Verb) tar --directory $(PROJ_OBJ_DIR) -lrf $(DOCS_TAR_FILE) apis
 	$(Verb) gzip -f9 $(DOCS_TAR_FILE)
 
+WWW_ROOT := /var/www/sites/hlvm
 doxygen-install: $(DOCS_TGZ_FILE)
 	$(Echo) "Copying API docs to web site"
-	$(Verb) cp $(DOCS_TGZ_FILE) /var/www/sites/hlvm
-	$(Verb) cd /var/www/sites/hlvm ; \
+	$(Verb) cp $(DOCS_TGZ_FILE) $(WWW_ROOT)
+	$(Verb) cd $(WWW_ROOT)/apis/html ; svn rm --force *
+	$(Verb) cd $(WWW_ROOT); \
 	        tar zxf $(DOCS_TGZ_FILE) ; \
 		mv $(DOCS_TGZ_FILE) apis/doxygen.tar.gz
-	$(Verb) cd /var/www/sites/hlvm/apis/html ; svn add *
+	$(Verb) cd $(WWW_ROOT)/apis/html ; svn add *

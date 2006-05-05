@@ -53,6 +53,9 @@ namespace AST
       Node(Node* parent, const std::string& name) 
         : name_(name), parent_(parent), kids_() {}
       virtual ~Node();
+#ifndef _NDEBUG
+      virtual void dump() const;
+#endif
 
     /// @}
     /// @name Data

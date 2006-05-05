@@ -1,9 +1,8 @@
-##===- tools/Makefile --------------------------------------*- Makefile -*-===##
-
+##===- hlvm/Base/Makefile ----------------------------------*- Makefile -*-===##
 #
 # Relative path to the top of the source tree.
 #
-LEVEL=..
+LEVEL=../..
 
 #
 # List all of the subdirectories that we will compile.

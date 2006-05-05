@@ -1,0 +1,16 @@
+<hr>
+<p class="footer">
+Generated on $datetime for $projectname version $projectnumber by
+<a href="http://www.doxygen.org/index.html">doxygen $doxygenversion</a><br/>
+Copyright &copy; 2003-2005, eXtensible Systems, Inc. All Rights Reserved.<br/>
+<a href="/index.php" onmouseover="window.status='Go To XPS Home Page';return true;" title="XPS Home Page">
+<img src="/images/logo_xps_small.jpeg" style="border:none" alt="XPS Logo"/></a>
+<a href="http://sourceforge.net/" onmouseover="window.status='Go To Source Forge Home Page';return true;" title="Source Forge Home Page">
+<img src="http://sourceforge.net/sflogo.php?group_id=51164&amp;type=1" style="border:none" alt="SourceForge.net Logo"/>
+</a>
+<a href="http://www.opensource.org/docs/definition.php" onmouseover="window.status='Go To OSI Definition Page';return true;" 
+title="Open Source Definition">
+<img src="/theme/osi-certified-60x50.gif" alt="OSI Certification Logo" style="border:none"/></a>
+<a href="http://www.doxygen.org/index.html" onmouseover="window.status='Go To Doxygen Home Page';return true;" title="Doxygen Home Page">
+<img src="doxygen.png" alt="Doxygen Logo" style="border:none;"/></a> 
+</p></body></html>

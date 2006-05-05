@@ -1,0 +1,75 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2002-2005 eXtensible Systems, Inc. All Rights Reserved.
+//
+// This program is open source software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License (GPL) as published by
+// the Free Software Foundation; either version 2 of the License, or (at your
+// option) any later version. You should have received a copy of the GPL in a
+// file named COPYING that was included with this program; if not, you can
+// obtain a copy of the license through the Internet at http://www.fsf.org/
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+////////////////////////////////////////////////////////////////////////////////
+/// @file xps/base/Dirs.C.in
+/// @author Reid Spencer <rspencer@x10sys.com>
+/// @date 2003/04/25
+/// @since 0.1.9
+/// @brief Configuration template for getting configurable directories etc.
+////////////////////////////////////////////////////////////////////////////////
+
+#include <xps/base/Base.h>
+
+namespace XPS_base
+{
+
+const char xps_prefix[]            = "@XPS_PREFIX@";
+const char xps_workspace_dir[]     = "@XPS_WITH_WORKSPACE@";
+const char xps_bindir[]            = "@XPS_PREFIX@/bin";
+const char xps_libdir[]            = "@XPS_PREFIX@/lib";
+const char xps_includedir[]        = "@XPS_PREFIX@/include";
+const char xps_datadir[]           = "@XPS_PREFIX@/data";
+const char xps_configdir[]         = "@XPS_PREFIX@/etc";
+const char xps_infodir[]           = "@XPS_PREFIX@/info";
+const char xps_mandir[]            = "@XPS_PREFIX@/man";
+const char xps_schemasdir[]        = "@XPS_PREFIX@/schemas";
+const char xps_src_dir[]           = "@abs_top_srcdir@";
+const char xps_build_dir[]         = "@abs_top_builddir@";
+const char xps_config_time[]       = "@XPS_CONFIGTIME@";
+const char xps_config[]            = "XPS.cfg";
+const char xps_config_path[]       = "@XPS_PREFIX@/etc/XPS.cfg";
+const char xps_version[]           = "@XPS_VERSION@";
+const char xps_so_version[]        = "@XPS_SO_VERSION@";
+const char xps_xpl_rng_path[]      = "@XPS_PREFIX@/schemas/XPL.rng";
+const char xps_package_name[]      = "@PACKAGE_NAME@";
+const char xps_package_bugreport[] = "@PACKAGE_BUGREPORT@";
+const char xps_package_string[]    = "@PACKAGE_STRING@";
+const char xps_package_version[]   = "@PACKAGE_VERSION@";
+const int xps_lib_current = @XPS_SO_CURRENT@;
+const int xps_lib_revision = @XPS_SO_REVISION@;
+const int xps_lib_AGE = @XPS_SO_AGE@;
+
+const char Configuration_schema_location[] =
+  "http://x-p-s.net/XPS/Schemas/Configuration "
+  "@XPS_PREFIX@/schemas/Config.rng";
+
+const char XPL_schema_location[] =
+  "http://x-p-s.net/XPS/Schemas/XPL "
+  "@XPS_PREFIX@/schemas/XPL.rng";
+
+const char Command_schema_location[] =
+  "http://x-p-s.net/XPS/Schemas/Command "
+  "@XPS_PREFIX@/schemas/Command.rng";
+
+const char XHTML_schema_location[] =
+  "http://www.w3.org/1999/xhtml "
+  "@XPS_PREFIX@/schemas/XHTML.xsd";
+
+const char XSLT_schema_location[] =
+  "http://www.w3.org/1999/XSL/Transform "
+  "@XPS_PREFIX@/schemas/XSLT.xsd";
+}

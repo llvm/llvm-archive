@@ -1,0 +1,25 @@
+HLVM Configuration Details File - @HLVM_CONFIGTIME@
+=============================================================
+Package Name            : @PACKAGE_NAME@
+Short Name              : @PACKAGE_TARNAME@
+Copyright               : @HLVM_COPYRIGHT@
+Version                 : @HLVM_VERSION@
+Library Revision        : @HLVM_SO_VERSION@
+Maintainer              : @HLVM_CONFIGURE_MAINTAINER@
+Report Bugs To          : @PACKAGE_BUGREPORT@
+
+Source Directory        : @abs_top_srcdir@
+Object Directory        : @abs_top_builddir@
+Install Prefix          : @HLVM_PREFIX@
+XPS Workspace Directory : @HLVM_WITH_WORKSPACE@
+
+Configuration Name      : @HLVM_CFGNAME@
+enable-debug            : @HLVM_DEBUG@
+enable-assert           : @HLVM_ASSERT@
+enable-trace            : @HLVM_TRACE@
+enable-inline           : @HLVM_INLINE@
+enable-optimize         : @HLVM_OPTIMIZE@
+enable-small            : @HLVM_SMALL@
+enable-sharedprefix     : @HLVM_SHAREDPREFIX@
+enable-efence           : @HLVM_EFENCE@
+enable-profiling	: @HLVM_PROFILING@

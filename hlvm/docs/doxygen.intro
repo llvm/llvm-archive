@@ -1,0 +1,207 @@
+//------------------------------------------------------------------------------
+// Copyright (C) 2002 eXtensible Systems, Inc. All Rights Reserved.
+//
+// This program is open source software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License (GPL) as published by
+// the Free Software Foundation; either version 2 of the License, or (at your
+// option) any later version. You should have received a copy of the GPL in a
+// file named COPYING that was included with this program; if not, you can 
+// obtain a copy of the license through the Internet at http://www.fsf.org/
+// 
+// This program is distributed in the hope that it will be useful, but 
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+// or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License 
+// for more details.
+//
+////////////////////////////////////////////////////////////////////////////////
+/// @file doxygen.intro
+/// @author Reid Spencer <raspencer@users.sourceforge.net> (original author)
+/// @date 2003/04/17
+/// @brief XPS documentation introduction.
+////////////////////////////////////////////////////////////////////////////////
+
+/// @mainpage XPS:eXtensible Programming System
+///
+/// @section main_intro Introduction
+/// Welcome to the eXtensible Programming System (XPS). 
+///
+/// This documentation describes the @b internal software that makes 
+/// up XPS, not the @b external use of  XPS. There are no instructions
+/// here on how to use XPS, only how to develop it. For usage instructions 
+/// please obtain the programmer's guide or user's guide for XPL and XPS 
+/// respectively.
+///
+/// @section main_caveat Caveat 
+/// This documentation is generated directly from the source code with doxygen. 
+/// Since XPS is constantly under active development, what you're about to
+/// read is out of date! However, it may still be useful since  certain 
+/// portions of XPS are relatively stable (base, os, mem ). When XPS reaches 
+/// full stability (around release 0.9), this caveat will be removed and the 
+/// documentation will pertain to a specific release of the software. Until 
+/// then, refer back often to this page as it is updated between releases as 
+/// significant changes are made.
+///
+/// @section main_overview Overview
+/// XPS is a comprehensive programming platform that hides all the "hard stuff"
+/// and makes programming much easier. By "hard stuff" we mean at least the 
+/// following:
+/// - platform independence
+/// - flexible and efficient transient and persistent memory management
+/// - efficient network protocols implementations
+/// - internationalization (i18n) and localization (l10n)
+/// - security (authentication, authorization, encryption, non-repudiation)
+/// - asynchronous event management
+/// - correct pattern implementations for network programming
+/// - dynamic compilation, linking, and execution of programs
+/// - software version management
+/// - software configuration management
+/// - software deployment management
+/// - transaction coordination and management
+/// - multi-user distributed software development
+/// - multi-user distributed application architecture
+/// - development of robust, high-availability, fault-tolerant applications
+/// - dynamic application monitoring and tuning
+/// - extensibility
+///
+/// Individually, none of the "hard stuff" is new. 
+/// There are many software packages and tools that provide these functions
+/// competently.  What is new is the ability to package all the "hard stuff" 
+/// into a single well-integrated product that then hides the details from the 
+/// programmer. By providing a comprehensive platform upon which robust 
+/// Internet applications are developed, XPS makes that development easier.
+/// 
+/// But that's just the beginning. It isn't enough to produce just a 
+/// best-of-class development environment. Programming is also hampered by its 
+/// low level of abstraction. After 50+ years of software development, we're 
+/// still only a few levels removed from the physical machine. This low level 
+/// of abstraction still requires highly-skilled programmers to produce 
+/// extremely technical code. While that fosters job security, it doesn't do 
+/// much to advance the state of the art. One of XPS's stated goals is to 
+/// bring programming to layperson and expert alike. We envision a day when
+/// programming is just plain easy.
+/// 
+/// XPS uses a variety of techniques to address this situation:
+/// - use of an efficient virtual machine (XVM) 
+/// - a high-level programming language (XPL)
+/// - horizontal and vertical extensibility
+///
+/// Each of these is described in the following subsections.
+///
+/// @subsection xvm eXtensible Virtual Machine (XVM)
+/// The XVM is the basic building block of XPS. It is responsible for the 
+/// correct execution of XPL programs. Virtual machines are nothing new, 
+/// they've been around for decades. However, the XVM differs from previous 
+/// virtual machine implementations in the following ways:
+/// - there is no byte code interpretation, everything executes at machine 
+///   speeds (JITing as necessary).
+/// - the machine semantics are not limited by hardware constraints
+/// - operations range from the mundane low-level bit manipulations familiar in most virtual machines to very high-order operations such as transaction commit.
+/// - the machine only manages state, not execution. Consequently, there are no branching instructions!
+/// - special attention is paid to security, robustness, fault tolerance, and provable semantics.
+/// - the machine provides efficient monitoring, tracing, and debugging facilities.
+///
+/// @subsection xpl eXtensible Programming Language (XPL)
+/// XPL is a high-level programming language. It supports the usual definition of
+/// types, functions, object classes and methods, and etc.  However, it also
+/// provides numerous complicated features by simply declaring them. That is, you
+/// don't do any procedural programming for these features, you just declare that 
+/// you want them.  Some of the features that can be applied declaratively are:
+/// - reference counting
+/// - memory usage optimization
+/// - memory allocation strategies
+/// - persistent memory
+/// - multi-thread synchronization
+/// - asynchronous function/method invocation
+/// - atomic operations
+/// - parallelism
+/// - transactions
+/// - security
+/// - complex collection types
+/// - active objects
+/// - configurable program behavior
+/// - network protocols
+/// - software engineering features (assertions, invariants, etc.)
+///
+/// By handling these kinds of things as simple selectable options, the programmer
+/// needn't be bogged down in trying to correctly implement them in every program. 
+/// Furthermore, XPS handles any combination of these features efficiently. It 
+/// carefully analyzes which features a given program construct is requesting and 
+/// generates the best code for that combination.
+///   
+/// XPL is also very flexible. Because it is based on XML, all the power of XML
+/// processing tools can be utilized. Two are worthy of mentioning here:
+/// @par XML Substitution Groups (Horizontal Extension)
+/// XPL uses XML substitution groups in its schema definition to allow \em additional syntax 
+/// and semantics to be added to the base XPL language. Unlike more static languages, this 
+/// means it is possible for the XPL compiler recognize language constructs not originally 
+/// envisioned.
+/// @par XSL Transformations (Vertical Extension)
+/// The XPL compiler can compile higher order languages if there is an XSL Transformation
+/// available from the high order language to XPL. The transformations is automatically and
+/// transparently applied by the compiler. This allows programmers to rapidly invent their
+/// own languages to meet the needs of their particular application domain.
+///
+/// Together these two features comprise the extensibility features for XPL.
+///
+/// @subsection extension Horizontal and Vertical eXtensibility
+/// As just noted, XPL supports horizontal and vertical extensiblity. First, lets define what we mean by this. If you think of
+/// XPS as a black box sitting on the floor, you can put other boxes around (horizontally on the floor) or on top of it (building a
+/// stack vertically).  When we speak of horizontal extensibility, we mean adding things to the fundamental nature of XPS. For example,
+/// a web server's plugin is a kind of horizontal extensibility. You add some code that gets invoked through a well defined interface
+/// to make the web server do something it didn't do before .. little boxes laid out on the floor.  When we speak of vertical 
+/// extensibility we mean using the core features of XPS (and, possibily, its horizontal extensions) in new and interesting ways
+/// without changing XPS itself.  For example, the C pre-processor is an example of vertical extensibility. You can make regular old
+/// C and C++ programs much more concise by breaking it into multiple #included files and using macros to eliminate repetitive or
+/// complex constructs. 
+/// 
+/// To support horizontal extensibility, XPS provides the following:
+/// - XPL can be extended by including new programming constructs into the base language.
+/// - The XPL compiler can be extended to generate code in a variety of new ways, especially for XPL extensions.
+/// - The XVM can be extended by creating new fundamental opcodes that can be used in XPL programs.
+/// - The XPS daemon can be extended to provide new services to users of XPS.
+/// - The XPS shell can be extended to process new commands from users.
+///
+/// To support vertical extensibility, XPS provides the following:
+/// - The XPL compiler can recursively and automatically apply XSL Transformations to non-XPL XML input. That is, you can write your program in whatever language you like as long as a series of transformations to XPL (or some extension of XPL) is provided.
+/// - Similarly, the XPS shell can recursively translate and execute command definitions written in higher-order command languages.
+/// - The XVM can interpret opcode sets built strictly from other, existing opcodes.
+/// - The XPS daemon supports loadable services that can be re-used in XPL programs.
+///
+/// @section main_other Other Features
+/// Although the overview above describes the main features of XPS, there are some additional
+/// features worthy of at least making a note here:
+/// - XPS supports a complete build management service so that all programming related chores in XPS can be done remotely and safely. Programmer's have workspaces in which they can create, check-in, check-out, merge, compile, link, and execute their programs.
+/// - XPS supports a complete deployment management service so that applications can be rigorously and safely deployed into a production environment. Services for testing, configuring, updating, and activating a running application are provided in such a way that downtime is minimized.
+/// - Logic programming will be added as an extension to the core. It will look familiar to Prolog programmers.
+/// - Fuzzy logic programming will be added as an extension to the core. Fuzzy variables will be available to all programs.
+/// - A high-order multimedia 4D user interface extension will be added.
+/// - A 4D software development environment will be added once the user interface extensions is complete.
+///
+/// @section main_summary Summary
+/// XPS provides a wealth of tools to the programmer.  And, those tools are aimed at making
+/// programming easier, not more complicated.  The "hard stuff" is encoded into the internals
+/// of XPS so that programmer's can simply select the features they need in their programs.
+/// Extensibility further enhances simplicity by allowing programming to be done at higher
+/// and higher levels of abstraction without loss of performance. Planned extensions will
+/// directly support the rapid creation of high-quality software.
+/// 
+/// @section main_plug Shameless Plug
+/// If you've been programming for at least a couple of years, you're probably salivating
+/// by now. XPS, as described above, is aimed at being programming heaven. But, before you 
+/// get your hopes up too high, take to heart that XPS is currently a work in progress.  
+/// Much of what is described above is just jotted down notes, ruminations from past 
+/// experience, and the desire to be really, really lazy when it comes to programming high
+/// quality applications.  Unfortunately, it takes a lot of hard work to be that lazy.
+/// Although we believe XPS to be doable in the short term, it is definitely a challenge -- a challenge worth taking. 
+/// 
+/// So, here's where you come in. If you've gotten over laughing at the audaciousness
+/// of the project, and think it is a worthy ambition, why not lend a hand?  We need help
+/// in just about every area.  Why not utilize your best talents and add your name to the
+/// roster of contributors to what will eventually become @em the way to program Internet
+/// applications?
+/// 
+/// We look forward to your future contributions.
+///
+/// @section main_changelog Change Log
+/// - Original Introduction written 4/23/2003 by Reid Spencer
+/// - Overview, Other Features & Summary written 4/26/2003 by Reid Spencer

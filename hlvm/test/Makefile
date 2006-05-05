@@ -1,4 +1,4 @@
-##===- tools/Makefile --------------------------------------*- Makefile -*-===##
+##===- test/Makefile ---------------------------------------*- Makefile -*-===##
 
 #
 # Relative path to the top of the source tree.

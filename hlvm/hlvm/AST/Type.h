@@ -25,9 +25,27 @@
 #define HLVM_AST_TYPE_H
 
 #include <hlvm/AST/Node.h>
+#include <llvm/Support/Casting.h>
 
 namespace hlvm {
 namespace AST {
+  /// This enumeration is used to identify a specific type
+  enum TypeIDs {
+    VoidTypeID = 0,     ///< The Void Type
+    IntegerTypeID,      ///< The Integer Type
+    RangeTypeID,        ///< The Range Type
+    RealTypeID,         ///< The Real Number Type
+    PointerTypeID,      ///< The Pointer Type
+    ArrayTypeID,        ///< The Array Type
+    VectorTypeID,       ///< The Vector Type
+    StructureTypeID,    ///< The Structure Type
+    SignatureTypeID,    ///< The Function Signature Type
+
+    NumTypeIDs,         ///< The number of type identifiers in the enum
+    LastPrimitiveTypeID  = RealTypeID,
+    FirstContainerTypeID = PointerTypeID
+  };
+
   /// This class represents a Type in the HLVM Abstract Syntax Tree.  
   /// A Type defines the format of storage. 
   /// @brief HLVM AST Type Node
@@ -38,15 +56,38 @@ namespace AST {
     public:
       Type(
         Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Node(parent,name) {}
+        const std::string& name, ///< The name of the function
+        TypeIDs type_id ///< The Type identifier
+      ) : Node(parent,name), id_(type_id) {}
       virtual ~Type();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+      inline bool isPrimitiveType() const { return id_ <= LastPrimitiveTypeID; }
+      inline bool isIntegralType()  const { 
+        return id_ == IntegerTypeID || id_ == RangeTypeID; 
+      }
+      inline bool isContainerType() const { 
+        return id_ >= FirstContainerTypeID; 
+      }
+      inline bool isIntegerType() const { return id_ == IntegerTypeID; }
+      inline bool isRangeType() const { return id_ == RangeTypeID; }
+      inline bool isRealType() const { return id_ == RealTypeID; }
+      inline bool isPointerType() const { return id_ == PointerTypeID; }
+      inline bool isArrayType() const { return id_ == ArrayTypeID; }
+      inline bool isVectorType() const { return id_ == VectorTypeID; }
+      inline bool isStructureType() const { return id_ == StructureTypeID; }
+      inline bool isSignatureType() const { return id_ == SignatureTypeID; }
+
+    // Methods to support type inquiry via is, cast, dyn_cast
+    static inline bool classof(const Type*) { return true; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      Type* type_; ///< The type of the variable
+      TypeIDs id_; ///< The type identifier
     /// @}
   };
 
@@ -63,8 +104,16 @@ namespace AST {
       IntegerType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : Type(parent,name) {}
+      ) : Type(parent,name,IntegerTypeID) {}
       virtual ~IntegerType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const IntegerType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isIntegerType(); }
 
     /// @}
     /// @name Data
@@ -77,7 +126,7 @@ namespace AST {
   /// A RangeType is an IntegerType that allows the range of values to be
   /// constricted. The use of RangeType implies range checking whenever the
   /// value of a RangeType variable is assigned.
-  class RangeType: public IntegerType
+  class RangeType: public Type
   {
     /// @name Constructors
     /// @{
@@ -85,9 +134,16 @@ namespace AST {
       RangeType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : IntegerType(parent,name) {}
+      ) : Type(parent,name,RangeTypeID) {}
       virtual ~RangeType();
 
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const RangeType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isRangeType(); }
     /// @}
     /// @name Data
     /// @{
@@ -111,33 +167,16 @@ namespace AST {
       RealType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : Type(parent,name) {}
+      ) : Type(parent,name,RealTypeID) {}
       virtual ~RealType();
 
     /// @}
-    /// @name Data
-    /// @{
-    protected:
-      uint32_t precision_; ///< Number of decimal digits of precision
-      uint32_t mantissa_;  ///< Number of decimal digits in mantissa
-    /// @}
-  };
-
-  /// This class represents a fixed size, packed vector of some other type.
-  /// Where possible, HLVM will attempt to generate code that makes use of a
-  /// machines vector instructions to process such types. If not possible, HLVM
-  /// will treat the vector the same as an Array.
-  class VectorType : public Type
-  {
-    /// @name Constructors
+    /// @name Accessors
     /// @{
     public:
-      VectorType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Type(parent,name) {}
-      virtual ~VectorType();
-
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const RealType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isRealType(); }
     /// @}
     /// @name Data
     /// @{

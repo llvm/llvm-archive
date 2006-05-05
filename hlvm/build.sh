@@ -118,7 +118,7 @@ else
 
   echo
   echo "You have entered the following information:"
-  echo "HLVM_SRC_DIR=$DIR"
+  echo "HLVM_SRC_DIR=$HLVM_SRC_DIR"
   echo "INSTALL_PREFIX=$INSTALL_PREFIX"
   echo "WORKSPACE=$INSTALL_PREFIX"
   echo "LLVM_SRC=$LLVM_SRC"
@@ -143,7 +143,7 @@ else
   fi
 
   echo "# HLVM Configuration Options - automatically generated" > config.opts
-  echo "HLVM_SRC_DIR=$DIR" >> config.opts
+  echo "HLVM_SRC_DIR=$HLVM_SRC_DIR" >> config.opts
   echo "INSTALL_PREFIX=$INSTALL_PREFIX" >> config.opts
   echo "WORKSPACE=$INSTALL_PREFIX" >> config.opts
   echo "LLVM_SRC=$LLVM_SRC" >> config.opts

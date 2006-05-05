@@ -51,9 +51,10 @@ namespace AST
     /// @{
     public:
       LinkageItem(
+        NodeIDs id, ///< Subclass's node identifier
         Node* parent, ///< The Bundle to which this bundle belongs, or null
         const std::string& name ///< The name of the bundle
-      ) : Node(parent,name) {}
+      ) : Node(id,parent,name) {}
       virtual ~LinkageItem();
 
     /// @}

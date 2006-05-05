@@ -14,50 +14,45 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file hlvm/AST/Bundle.h
+/// @file hlvm/AST/Conditionable.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Bundle
+/// @brief Declares the class hlvm::AST::Conditionable
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HLVM_AST_BUNDLE_H
-#define HLVM_AST_BUNDLE_H
+#ifndef HLVM_AST_CONDITIONABLE_H
+#define HLVM_AST_CONDITIONABLE_H
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm
-{
-namespace AST
-{
+namespace hlvm {
+namespace AST {
+
   /// This class represents an HLVM Bundle. A Bundle is simply a collection of
   /// declarations and definitions. It is the root of the AST tree and also
   /// the grouping and namespace construct in HLVM. Every compilation unit is
   /// a Bundle. Bundles can also be nested in other Bundles. All programming
   /// constructs are defined as child nodes of some Bundle.
   /// @brief HLVM AST Bundle Node
-  class Bundle : public Node
+  class Conditionable : public Node
   {
     /// @name Constructors
     /// @{
     public:
-      Bundle(
-        Bundle* parent,         ///< The bundle to which this bundle belongs
-        const std::string& name ///< The name of this bundle
-      ) : Node(BundleID,parent,name) {}
-      virtual ~Bundle();
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      static inline bool classof(const Bundle*) { return true; }
-      static inline bool classof(const Node* N) { return N->isBundle(); }
+      Conditionable(
+        NodeIDs id,
+        Node* parent, 
+        const std::string& name,
+        const std::string& condition_name) 
+      : Node(id,parent,name), cond_name_(condition_name) {}
+      virtual ~Conditionable();
 
     /// @}
     /// @name Data
     /// @{
     protected:
+      std::string cond_name_;
     /// @}
   };
 } // AST

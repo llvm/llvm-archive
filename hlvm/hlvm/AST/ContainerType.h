@@ -37,10 +37,10 @@ namespace AST {
     /// @{
     public:
       ContainerType(
+        NodeIDs id, ///< The node id of the subclass
         Node* parent, ///< The bundle in which the function is defined
-        const std::string& name, ///< The name of the function
-        TypeIDs type_id
-      ) : Type(parent,name,type_id) {}
+        const std::string& name ///< The name of the function
+      ) : Type(id,parent,name) {}
       virtual ~ContainerType();
 
     /// @}
@@ -69,7 +69,7 @@ namespace AST {
       PointerType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : ContainerType(parent,name,PointerTypeID) {}
+      ) : ContainerType(PointerTypeID,parent,name) {}
       virtual ~PointerType();
 
     /// @}
@@ -96,7 +96,7 @@ namespace AST {
       ArrayType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : ContainerType(parent,name,ArrayTypeID) {}
+      ) : ContainerType(ArrayTypeID,parent,name) {}
       virtual ~ArrayType();
 
     /// @}
@@ -125,7 +125,7 @@ namespace AST {
       VectorType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : ContainerType(parent,name,VectorTypeID) {}
+      ) : ContainerType(VectorTypeID,parent,name) {}
       virtual ~VectorType();
 
     /// @}
@@ -152,7 +152,7 @@ namespace AST {
       StructureType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : ContainerType(parent,name,StructureTypeID) {}
+      ) : ContainerType(StructureTypeID,parent,name) {}
       virtual ~StructureType();
 
     /// @}
@@ -179,7 +179,7 @@ namespace AST {
       SignatureType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : ContainerType(parent,name,SignatureTypeID) {}
+      ) : ContainerType(SignatureTypeID,parent,name) {}
       virtual ~SignatureType();
 
     /// @}

@@ -22,16 +22,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <hlvm/AST/Node.h>
+#include <hlvm/AST/Conditionable.h>
 #include <hlvm/AST/Type.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Function.h>
 #include <hlvm/AST/Variable.h>
 
-namespace hlvm
-{
-namespace AST
-{
+namespace hlvm {
+namespace AST {
 
-}
-}
+}}

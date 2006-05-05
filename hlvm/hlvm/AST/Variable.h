@@ -46,8 +46,15 @@ namespace AST
       Variable(
         Node* parent, ///< The bundle or function that defines the ariable 
         const std::string& name ///< The name of the variable
-      ) : LinkageItem(parent,name) {}
+      ) : LinkageItem(VariableID,parent,name) {}
       virtual ~Variable();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      static inline bool classof(const Variable*) { return true; }
+      static inline bool classof(const Node* N) { return N->isVariable(); }
 
     /// @}
     /// @name Data

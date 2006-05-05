@@ -24,6 +24,7 @@
 #ifndef HLVM_AST_NODE_H
 #define HLVM_AST_NODE_H
 
+#include <llvm/Support/Casting.h>
 #include <vector>
 #include <string>
 
@@ -36,6 +37,34 @@ namespace hlvm
 /// node types of the AST are declared in this namespace.
 namespace AST
 {
+  /// This enumeration is used to identify a specific type
+  enum NodeIDs {
+    // Types
+    VoidTypeID = 0,     ///< The Void Type
+    IntegerTypeID,      ///< The Integer Type
+    RangeTypeID,        ///< The Range Type
+    RealTypeID,         ///< The Real Number Type
+    PointerTypeID,      ///< The Pointer Type
+    ArrayTypeID,        ///< The Array Type
+    VectorTypeID,       ///< The Vector Type
+    StructureTypeID,    ///< The Structure Type
+    SignatureTypeID,    ///< The Function Signature Type
+
+    // Containers
+    BundleID,           ///< The Bundle Node
+    FunctionID,         ///< The Function Node
+
+    // Declarations
+    VariableID,         ///< The Variable Node
+
+    // Enumeration Limits
+    NumNodeIDs,         ///< The number of type identifiers in the enum
+    FirstPrimitiveTypeID = VoidTypeID,
+    LastPrimitiveTypeID  = RealTypeID,
+    FirstContainerTypeID = PointerTypeID,
+    LastContainerTypeID  = SignatureTypeID
+  };
+
   class Type;
 
   /// A NamedType is simply a pair involving a name and a pointer to a Type.
@@ -50,19 +79,32 @@ namespace AST
     /// @name Constructors
     /// @{
     public:
-      Node(Node* parent, const std::string& name) 
-        : name_(name), parent_(parent), kids_() {}
+      Node(NodeIDs id, Node* parent = 0, const std::string& name = "") 
+        : id_(id), parent_(parent), name_(name), kids_() {}
       virtual ~Node();
 #ifndef _NDEBUG
       virtual void dump() const;
 #endif
 
     /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      inline bool isType() const { 
+        return id_ <= FirstPrimitiveTypeID && id_ >= LastContainerTypeID;
+      }
+      inline bool isBundle() const { return id_ == BundleID; }
+      inline bool isFunction() const { return id_ == FunctionID; }
+      inline bool isVariable() const { return id_ == VariableID; }
+      static inline bool classof(const Node*) { return true; }
+
+    /// @}
     /// @name Data
     /// @{
     protected:
-      std::string name_;        ///< The name of this node.
+      NodeIDs id_;              ///< Identification of the node kind.
       Node* parent_;            ///< The node that owns this node.
+      std::string name_;        ///< The name of this node.
       std::vector<Node> kids_;  ///< The vector of children nodes.
     /// @}
   };

@@ -25,26 +25,9 @@
 #define HLVM_AST_TYPE_H
 
 #include <hlvm/AST/Node.h>
-#include <llvm/Support/Casting.h>
 
 namespace hlvm {
 namespace AST {
-  /// This enumeration is used to identify a specific type
-  enum TypeIDs {
-    VoidTypeID = 0,     ///< The Void Type
-    IntegerTypeID,      ///< The Integer Type
-    RangeTypeID,        ///< The Range Type
-    RealTypeID,         ///< The Real Number Type
-    PointerTypeID,      ///< The Pointer Type
-    ArrayTypeID,        ///< The Array Type
-    VectorTypeID,       ///< The Vector Type
-    StructureTypeID,    ///< The Structure Type
-    SignatureTypeID,    ///< The Function Signature Type
-
-    NumTypeIDs,         ///< The number of type identifiers in the enum
-    LastPrimitiveTypeID  = RealTypeID,
-    FirstContainerTypeID = PointerTypeID
-  };
 
   /// This class represents a Type in the HLVM Abstract Syntax Tree.  
   /// A Type defines the format of storage. 
@@ -55,10 +38,10 @@ namespace AST {
     /// @{
     public:
       Type(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name, ///< The name of the function
-        TypeIDs type_id ///< The Type identifier
-      ) : Node(parent,name), id_(type_id) {}
+        NodeIDs id, ///< The Type identifier
+        Node* parent = 0, ///< The bundle in which the function is defined
+        const std::string& name = "" ///< The name of the function
+      ) : Node(id, parent, name)  {}
       virtual ~Type();
 
     /// @}
@@ -80,14 +63,14 @@ namespace AST {
       inline bool isStructureType() const { return id_ == StructureTypeID; }
       inline bool isSignatureType() const { return id_ == SignatureTypeID; }
 
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const Type*) { return true; }
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const Node*) { return true; }
+      static inline bool classof(const Type*) { return true; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      TypeIDs id_; ///< The type identifier
     /// @}
   };
 
@@ -102,9 +85,9 @@ namespace AST {
     /// @{
     public:
       IntegerType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Type(parent,name,IntegerTypeID) {}
+        Node* parent = 0, ///< The bundle in which the function is defined
+        const std::string& name = "" ///< The name of the function
+      ) : Type(IntegerTypeID,parent,name) {}
       virtual ~IntegerType();
 
     /// @}
@@ -134,7 +117,7 @@ namespace AST {
       RangeType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : Type(parent,name,RangeTypeID) {}
+      ) : Type(RangeTypeID,parent,name) {}
       virtual ~RangeType();
 
     /// @}
@@ -167,7 +150,7 @@ namespace AST {
       RealType(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : Type(parent,name,RealTypeID) {}
+      ) : Type(RealTypeID,parent,name) {}
       virtual ~RealType();
 
     /// @}

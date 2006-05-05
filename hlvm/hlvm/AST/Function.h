@@ -31,7 +31,7 @@ namespace hlvm
 namespace AST
 {
   class Block; // Forward declare
-  class Type;  // Forward declare
+  class SignatureType;  // Forward declare
 
   /// This class represents an Function in the HLVM Abstract Syntax Tree.  
   /// A Function is a callable block of code that accepts parameters and 
@@ -47,16 +47,22 @@ namespace AST
       Function(
         Bundle* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : LinkageItem(parent,name) {}
+      ) : LinkageItem(FunctionID,parent,name) {}
       virtual ~Function();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      static inline bool classof(const Function*) { return true; }
+      static inline bool classof(const Node* N) { return N->isFunction(); }
 
     /// @}
     /// @name Data
     /// @{
     protected:
       Block * block_;                   ///< The code block to be executed
-      Type* result_;                    ///< The type of the function's result
-      std::vector<NamedType> arguments_;///< The formal arguments 
+      SignatureType* signature_;        ///< The function signature.
     /// @}
   };
 } // AST

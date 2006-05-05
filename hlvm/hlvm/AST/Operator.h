@@ -14,57 +14,55 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file hlvm/AST/Program.h
+/// @file hlvm/AST/Variable.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Program
+/// @brief Declares the class hlvm::AST::Variable
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HLVM_AST_PROGRAM_H
-#define HLVM_AST_PROGRAM_H
+#ifndef HLVM_AST_OPERATOR_H
+#define HLVM_AST_OPERATOR_H
 
-#include <hlvm/AST/Function.h>
+#include <hlvm/AST/Node.h>
 
 namespace hlvm {
 namespace AST {
 
-  class Block; // Forward declare
-  class SignatureType;  // Forward declare
+  class Type; // Forward declare
 
-  /// This class represents a Program in the HLVM Abstract Syntax Tree.  
-  /// A Program is a function with a specific set of arguments. It represents
-  /// a starting point for any execution. To be executable, a Bundle must have
-  /// at least one Program node in it. The Program node is simply introduced
-  /// to ensure the signature of the function is correct and to serve as a way
-  /// to identify Program's quickly.
-  /// @brief HLVM AST Function Node
-  class Program : public Function
+  /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
+  /// A Variable is a storage location of a specific type. It can either be
+  /// global or local, depending on its parent. Global variables are always
+  /// contained in a Bundle. Local variables are always contained in a
+  /// Function.
+  /// @brief HLVM AST Variable Node
+  class Operator : public Node
   {
     /// @name Constructors
     /// @{
     public:
-      Program(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Function(SignatureTy,parent,name,ProgramID) {}
-      virtual ~Program();
+      Operator(
+        NodeIDs opID, ///< The Operator ID for this operator kind
+        Node* parent, ///< The bundle or function that defines the ariable 
+        const std::string& name ///< The name of the variable
+      ) : Node(opID,parent,name) {}
+      virtual ~Operator();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-      static inline bool classof(const Program*) { return true; }
-      static inline bool classof(const Node* N) { return N->isProgram(); }
+      static inline bool classof(const Operator*) { return true; }
+      static inline bool classof(const Node* N) { return N->isOperator(); }
 
     /// @}
     /// @name Data
     /// @{
-    private:
-      static SignatureType* SignatureTy; ///< The signature for programs
-      static SignatureType* initSignature(); 
+    protected:
+      std::vector<Operator*> Operands;  ///< The list of Operands
     /// @}
   };
 } // AST
-} // hlvm
+} // hlvm 
 #endif

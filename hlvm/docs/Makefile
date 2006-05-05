@@ -53,5 +53,5 @@ doxygen-install: $(DOCS_TGZ_FILE)
 	$(Verb) cp $(DOCS_TGZ_FILE) /var/www/sites/hlvm
 	$(Verb) cd /var/www/sites/hlvm ; \
 	        tar zxf $(DOCS_TGZ_FILE) ; \
-		mv $(DOCS_TGZ_FILE) apis
+		mv $(DOCS_TGZ_FILE) apis/doxygen.tar.gz
 	$(Verb) cd /var/www/sites/hlvm/apis/html ; svn add *

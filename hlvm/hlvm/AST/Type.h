@@ -14,15 +14,15 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file hlvm/AST/Bundle.h
+/// @file hlvm/AST/Type.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Bundle
+/// @brief Declares the class hlvm::AST::Type
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HLVM_AST_BUNDLE_H
-#define HLVM_AST_BUNDLE_H
+#ifndef HLVM_AST_TYPE_H
+#define HLVM_AST_TYPE_H
 
 #include <hlvm/AST/Node.h>
 
@@ -30,27 +30,25 @@ namespace hlvm
 {
 namespace AST
 {
-  /// This class represents an HLVM Bundle. A Bundle is simply a collection of
-  /// declarations and definitions. It is the root of the AST tree and also
-  /// the grouping and namespace construct in HLVM. Every compilation unit is
-  /// a Bundle. Bundles can also be nested in other Bundles. All programming
-  /// constructs are defined as child nodes of some Bundle.
-  /// @brief HLVM AST Bundle Node
-  class Bundle : public Node
+  /// This class represents a Type in the HLVM Abstract Syntax Tree.  
+  /// A Type defines the format of storage. 
+  /// @brief HLVM AST Type Node
+  class Type : public Node
   {
     /// @name Constructors
     /// @{
     public:
-      Bundle(
-        Bundle* parent,         ///< The bundle to which this bundle belongs
-        const std::string& name ///< The name of this bundle
+      Type(
+        Node* parent, ///< The bundle in which the function is defined
+        const std::string& name ///< The name of the function
       ) : Node(parent,name) {}
-      virtual ~Bundle();
+      virtual ~Type();
 
     /// @}
     /// @name Data
     /// @{
     protected:
+      Type* type_; ///< The type of the variable
     /// @}
   };
 } // AST

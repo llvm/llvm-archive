@@ -46,7 +46,7 @@ namespace AST
     /// @{
     public:
       Node(Node* parent, const std::string& name) 
-        : parent_(parent), name_(name) {}
+        : name_(name), parent_(parent), kids_() {}
       virtual ~Node();
 
     /// @}
@@ -58,5 +58,6 @@ namespace AST
       std::vector<Node> kids_;  ///< The vector of children nodes.
     /// @}
   };
-}
+} // AST
+} // hlvm
 #endif

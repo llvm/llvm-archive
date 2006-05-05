@@ -25,7 +25,6 @@
 #define HLVM_AST_FUNCTION_H
 
 #include <hlvm/AST/LinkageItem.h>
-#include <hlvm/AST/NamedType.h>
 
 namespace hlvm
 {
@@ -40,7 +39,7 @@ namespace AST
   /// has a name, a set of formal arguments, a return type, and a block of
   /// code to execute.
   /// @brief HLVM AST Function Node
-  class Function : LinkageItem
+  class Function : public LinkageItem
   {
     /// @name Constructors
     /// @{
@@ -60,6 +59,6 @@ namespace AST
       std::vector<NamedType> arguments_;///< The formal arguments 
     /// @}
   };
-}
-
+} // AST
+} // hlvm
 #endif

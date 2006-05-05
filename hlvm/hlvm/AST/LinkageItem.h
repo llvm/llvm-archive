@@ -34,10 +34,10 @@ namespace AST
   /// permitted for a LinkageItem.
   enum LinkageTypes {
     ExternalLinkage,    ///< Externally visible item
-    InternalLinkage     ///< Rename collisions when linking (static funcs)
+    InternalLinkage,    ///< Rename collisions when linking (static funcs)
     LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
     WeakLinkage,        ///< Keep one copy of item when linking (weak)
-    AppendingLinkage,   ///< Append item to an array of similar items
+    AppendingLinkage    ///< Append item to an array of similar items
   };
 
   /// This class represents an LinkageItem in the HLVM Abstract Syntax Tree. 
@@ -45,16 +45,16 @@ namespace AST
   /// elsewhere and linked into another bundle to resolve the reference. The
   /// LinkageItem declares what kind of linkage is to be performed.
   /// @brief HLVM AST Bundle Node
-  class LinkageItem : Node
+  class LinkageItem : public Node
   {
     /// @name Constructors
     /// @{
     public:
       LinkageItem(
-        Bundle* parent, ///< The Bundle to which this bundle belongs, or null
+        Node* parent, ///< The Bundle to which this bundle belongs, or null
         const std::string& name ///< The name of the bundle
       ) : Node(parent,name) {}
-      virtual ~Bundle();
+      virtual ~LinkageItem();
 
     /// @}
     /// @name Data
@@ -63,6 +63,6 @@ namespace AST
       LinkageTypes type_; ///< The type of linkage to perform for this item
     /// @}
   };
-}
-
+} // AST
+} // hlvm
 #endif

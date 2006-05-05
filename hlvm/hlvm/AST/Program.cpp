@@ -27,7 +27,10 @@
 namespace hlvm {
 namespace AST {
 
-SignatureType Program::SignatureTy(0,"_hlvm_ProgramSignature");
-
+SignatureType* Program::initSignature() {
+  SignatureType* result = new SignatureType(0,"_hlvm_ProgramSignature");
+  return result;
+}
+SignatureType* Program::SignatureTy = Program::initSignature();
 
 }}

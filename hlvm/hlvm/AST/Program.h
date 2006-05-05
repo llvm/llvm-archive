@@ -49,7 +49,7 @@ namespace AST {
       Program(
         Node* parent, ///< The bundle in which the function is defined
         const std::string& name ///< The name of the function
-      ) : Function(&SignatureTy,parent,name,ProgramID) {}
+      ) : Function(SignatureTy,parent,name,ProgramID) {}
       virtual ~Program();
 
     /// @}
@@ -66,7 +66,8 @@ namespace AST {
       Block * block_;                   ///< The code block to be executed
       SignatureType* signature_;        ///< The function signature.
     private:
-      static SignatureType SignatureTy; ///< The signature for programs
+      static SignatureType* SignatureTy; ///< The signature for programs
+      static SignatureType* initSignature(); 
     /// @}
   };
 } // AST

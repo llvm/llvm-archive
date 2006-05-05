@@ -47,3 +47,11 @@ $(DOCS_TGZ_FILE): apis/html/.dir $(DOCS_TAR_DEPS)
 	$(Verb) find $(PROJ_SRC_DIR) -type f -exec chmod 644 {} \; 
 	$(Verb) tar --directory $(PROJ_OBJ_DIR) -lrf $(DOCS_TAR_FILE) apis
 	$(Verb) gzip -f9 $(DOCS_TAR_FILE)
+
+doxygen-install: $(DOCS_TGZ_FILE)
+	$(Echo) "Copying API docs to web site"
+	$(Verb) cp $(DOCS_TGZ_FILE) /var/www/sites/hlvm
+	$(Verb) cd /var/www/sites/hlvm ; \
+	        tar zxf $(DOCS_TGZ_FILE) ; \
+		mv $(DOCS_TGZ_FILE) apis
+	$(Verb) cd /var/www/sites/hlvm/apis/html ; svn add *

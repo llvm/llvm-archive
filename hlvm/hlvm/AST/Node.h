@@ -53,6 +53,7 @@ namespace AST
     // Containers
     BundleID,           ///< The Bundle Node
     FunctionID,         ///< The Function Node
+    ProgramID,          ///< The Program Node
 
     // Declarations
     VariableID,         ///< The Variable Node
@@ -95,6 +96,7 @@ namespace AST
       }
       inline bool isBundle() const { return id_ == BundleID; }
       inline bool isFunction() const { return id_ == FunctionID; }
+      inline bool isProgram() const { return id_ == ProgramID; }
       inline bool isVariable() const { return id_ == VariableID; }
       static inline bool classof(const Node*) { return true; }
 

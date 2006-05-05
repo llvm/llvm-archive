@@ -21,11 +21,13 @@
 /// @brief Implements the functions of class hlvm::AST::Node.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <hlvm/AST/Node.h>
-#include <hlvm/AST/Conditionable.h>
+#include <hlvm/AST/Program.h>
 #include <hlvm/AST/ContainerType.h>
 
 namespace hlvm {
 namespace AST {
+
+SignatureType Program::SignatureTy(0,"_hlvm_ProgramSignature");
+
 
 }}

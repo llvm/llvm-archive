@@ -14,16 +14,14 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file hlvm/AST/Node.cpp
+/// @file hlvm/AST/Function.cpp
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the functions of class hlvm::AST::Function.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <hlvm/AST/Node.h>
-#include <hlvm/AST/Conditionable.h>
-#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Function.h>
 
 namespace hlvm {
 namespace AST {

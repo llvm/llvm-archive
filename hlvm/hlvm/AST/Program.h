@@ -21,44 +21,43 @@
 /// @brief Declares the class hlvm::AST::Function
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef HLVM_AST_FUNCTION_H
-#define HLVM_AST_FUNCTION_H
+#ifndef HLVM_AST_PROGRAM_H
+#define HLVM_AST_PROGRAM_H
 
-#include <hlvm/AST/LinkageItem.h>
+#include <hlvm/AST/Function.h>
 
-namespace hlvm
-{
-namespace AST
-{
-  // Forward declarations
-  class Block; 
-  class SignatureType;  
+namespace hlvm {
+namespace AST {
 
-  /// This class represents a Function in the HLVM Abstract Syntax Tree.  
-  /// A Function is a callable block of code that accepts parameters and 
+  class Block; // Forward declare
+  class SignatureType;  // Forward declare
+  class Bundle; // Forward declare
+
+  /// This class represents a Program in the HLVM Abstract Syntax Tree.  
+  /// A Program is a function with a specific set of arguments. It represents
+  /// a starting point for any execution. To be executable, a Bundle must have
+  /// at least one Program node in it. 
   /// returns a result.  This is the basic unit of code in HLVM. A Function
   /// has a name, a set of formal arguments, a return type, and a block of
   /// code to execute.
   /// @brief HLVM AST Function Node
-  class Function : public LinkageItem
+  class Program : public Function
   {
     /// @name Constructors
     /// @{
     public:
-      Function(
-        SignatureType* sig, ///< The function signature
+      Program(
         Node* parent, ///< The bundle in which the function is defined
-        const std::string& name, ///< The name of the function
-        NodeIDs id = FunctionID
-      ) : LinkageItem(id,parent,name), block_(0), signature_(sig) {}
-      virtual ~Function();
+        const std::string& name ///< The name of the function
+      ) : Function(&SignatureTy,parent,name,ProgramID) {}
+      virtual ~Program();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-      static inline bool classof(const Function*) { return true; }
-      static inline bool classof(const Node* N) { return N->isFunction(); }
+      static inline bool classof(const Program*) { return true; }
+      static inline bool classof(const Node* N) { return N->isProgram(); }
 
     /// @}
     /// @name Data
@@ -66,6 +65,8 @@ namespace AST
     protected:
       Block * block_;                   ///< The code block to be executed
       SignatureType* signature_;        ///< The function signature.
+    private:
+      static SignatureType SignatureTy; ///< The signature for programs
     /// @}
   };
 } // AST

@@ -27,8 +27,13 @@
 #include <vector>
 #include <string>
 
+/// This namespace is for all HLVM software. It ensures that HLVM software does
+/// not collide with any other software. Hopefully HLVM is not a namespace used
+/// elsewhere. 
 namespace hlvm
 {
+/// This namespace contains all the AST (Abstract Syntax Tree) module code. All
+/// node types of the AST are declared in this namespace.
 namespace AST
 {
   class Type;

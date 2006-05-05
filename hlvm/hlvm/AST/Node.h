@@ -59,7 +59,4 @@ namespace AST
     /// @}
   };
 }
-
-#endif
-
 #endif

@@ -56,5 +56,3 @@ namespace AST
 }
 
 #endif
-
-#endif

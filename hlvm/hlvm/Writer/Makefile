@@ -1,12 +1,12 @@
-##===- hlvm/Makefile ---------------------------------------*- Makefile -*-===##
+##===- hlvm/Writer/Makefile --------------------------------*- Makefile -*-===##
 #
 # Relative path to the top of the source tree.
 #
-LEVEL=..
+LEVEL=../..
 
 #
 # List all of the subdirectories that we will compile.
 #
-DIRS=Base AST Reader Writer
+DIRS=
 
 include $(LEVEL)/Makefile.hlvm

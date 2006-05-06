@@ -57,6 +57,7 @@ namespace AST {
       inline bool isIntegerType() const { return id_ == IntegerTypeID; }
       inline bool isRangeType() const { return id_ == RangeTypeID; }
       inline bool isRealType() const { return id_ == RealTypeID; }
+      inline bool isRationalType() const { return id_ == RationalTypeID; }
       inline bool isPointerType() const { return id_ == PointerTypeID; }
       inline bool isArrayType() const { return id_ == ArrayTypeID; }
       inline bool isVectorType() const { return id_ == VectorTypeID; }

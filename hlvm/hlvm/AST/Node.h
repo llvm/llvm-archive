@@ -39,28 +39,41 @@ namespace AST
 {
   /// This enumeration is used to identify a specific type
   enum NodeIDs {
-    // Types
-    VoidTypeID = 0,     ///< The Void Type
-    IntegerTypeID,      ///< The Integer Type
-    RangeTypeID,        ///< The Range Type
-    RealTypeID,         ///< The Real Number Type
-    StringTypeID,       ///< The String Type
-    PointerTypeID,      ///< The Pointer Type
-    ArrayTypeID,        ///< The Array Type
-    VectorTypeID,       ///< The Vector Type
-    StructureTypeID,    ///< The Structure Type
+    // Primitive Types
+    VoidTypeID = 0,     ///< The Void Type (The Null Type)
+    AnyTypeID,          ///< The Any Type (Union of any type)
+    BooleanTypeID,      ///< The Boolean Type (A simple on/off boolean value)
+    CharacterTypeID,    ///< The Character Type (UTF-16 encoded character)
+    OctetTypeID,        ///< The Octet Type (8 bits uninterpreted)
+    IntegerTypeID,      ///< The Integer Type (A number of bits of integer data)
+    RangeTypeID,        ///< The Range Type (A Range of Integer Values)
+    RealTypeID,         ///< The Real Number Type (Any Real Number)
+    RationalTypeID,     ///< The Rational Number Type (p/q type number)
+    StringTypeID,       ///< The String Type (Array of UTF-16 chars + length)
+
+    // Container Types
+    PointerTypeID,      ///< The Pointer Type (Pointer To storage of other Type)
+    ArrayTypeID,        ///< The Array Type (Linear array of some type)
+    VectorTypeID,       ///< The Vector Type (Packed Fixed Size Vector)
+    StructureTypeID,    ///< The Structure Type (Sequence of various types)
+    FieldID,            ///< Declare name and type of Structure Field
     SignatureTypeID,    ///< The Function Signature Type
-    ClassID,            ///< The Class Type
+    ArgumentID,         ///< Declare name and type of Signature Argument
+    ContinuationTypeID, ///< A Continuation Type (data passing to continuations)
 
     // Class Constructs (TBD)
+    InterfaceID,        ///< The Interface Type (set of Signatures)
+    ClassID,            ///< The Class Type (Object Oriented Class Definition)
+    MethodID,           ///< The Method Node (define a method)
+    ImplementsID,       ///< Specifies set of Interfaces implemented by class
 
-    // Variables
-    VariableID,         ///< The Variable Node
+    // Linkage Items
+    VariableID,         ///< The Variable Node (a storage location)
+    FunctionID,         ///< The Function Node (a callable function)
+    ProgramID,          ///< The Program Node (a
 
-    // Containers
-    BundleID,           ///< The Bundle Node
-    FunctionID,         ///< The Function Node
-    ProgramID,          ///< The Program Node
+    // Container
+    BundleID,           ///< The Bundle Node (a group of other declarations)
     BlockID,            ///< A Block Of Code Node
 
     // Control Flow And Invocation Operators
@@ -77,12 +90,16 @@ namespace AST
     LoopOpID,           ///< The General Purpose Loop Operator
     SelectOpID,         ///< The Select An Alternate Operator
 
+    // Scoping Operators
+    WithOpID,           ///< Create a shorthand for a Bundle (like using/import)
+
     // Memory Operators
-    LoadOpID,           ///< The Load Operator
-    StoreOpID,          ///< The Store Operator
-    AllocateOpID,       ///< The Allocate Memory Operator
-    FreeOpID,           ///< The Free Memory Operator
-    ReallocateOpID,     ///< The Reallocate Memory Operator
+    LoadOpID,           ///< The Load Operator (load a value from a location)
+    StoreOpID,          ///< The Store Operator (store a value to a location)
+    AllocateOpID,       ///< The Allocate Memory Operator (get some heap memory)
+    FreeOpID,           ///< The Free Memory Operator (free some heap memory)
+    ReallocateOpID,     ///< The Reallocate Memory Operator (realloc heap mem)
+    StackAllocOpID,     ///< The Stack Allocation Operator (get some stack mem)
     ReferenceOpID,      ///< The Reference A Memory Object Operator (for GC)
     DereferenceOpID,    ///< The Dereference A Memory Object Operator (for GC)
 
@@ -133,6 +150,10 @@ namespace AST
     GCDOpID,            ///< Real Number Greatest Common Divisor Operator
     LCMOpID,            ///< Real Number Least Common Multiplicator Operator
     
+    // Character And String Operators
+    MungeOpID,          ///< General Purpose String Editing Operator
+    LengthOpID,         ///< Extract Length of a String Operator
+
     // Constant Value Operators
     IntOpID,            ///< Constant Integer Value
     RealOpID,           ///< Constant Real Value
@@ -144,14 +165,22 @@ namespace AST
     VectorOpID,         ///< Constant Vector Value
     StructureOpID,      ///< Constant Structure Value
 
+    // Input/Output Operators
+    MapFileOpID,        ///< Map a file to memory (mmap)
+    OpenOpID,           ///< Open a stream from a URL
+    CloseOpID,          ///< Close a stream previously opened.
+    ReadOpID,           ///< Read from a stream
+    WriteOpID,          ///< Write to a stream
+    PositionOpID,       ///< Position a stream
+
     // Enumeration Ranges and Limits
-    NumNodeIDs,         ///< The number of type identifiers in the enum
-    FirstPrimitiveTypeID = VoidTypeID,
-    LastPrimitiveTypeID  = StringTypeID,
-    FirstContainerTypeID = PointerTypeID,
-    LastContainerTypeID  = SignatureTypeID,
-    FirstOperatorID = CallOpID,
-    LastOperatorID =  StructureOpID
+    NumNodeIDs,         ///< The number of node identifiers in the enum
+    FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
+    LastPrimitiveTypeID  = StringTypeID, ///< Last Primitive Type
+    FirstContainerTypeID = PointerTypeID, ///< First Container Type
+    LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
+    FirstOperatorID = CallOpID, ///< First Operator
+    LastOperatorID =  StructureOpID ///< Last Operator
   };
 
   class Type;

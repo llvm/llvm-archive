@@ -1,12 +1,11 @@
 ##===- hlvm/Base/Makefile ----------------------------------*- Makefile -*-===##
 #
-# Relative path to the top of the source tree.
-#
 LEVEL=../..
-
-#
-# List all of the subdirectories that we will compile.
-#
 DIRS=
+LIBRARYNAME = HLVMBase
+DONT_BUILD_RELINKED := 1
+BUILD_ARCHIVE := 1
+INSTALL_INCLUDES := Config.h URI.h URI.i
+
 
 include $(LEVEL)/Makefile.hlvm

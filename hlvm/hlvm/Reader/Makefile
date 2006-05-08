@@ -7,6 +7,6 @@ LEVEL=../..
 #
 # List all of the subdirectories that we will compile.
 #
-DIRS=XML
+DIRS=XML Yaml
 
 include $(LEVEL)/Makefile.hlvm

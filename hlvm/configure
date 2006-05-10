@@ -881,6 +881,14 @@ Optional Packages:
                           in DIR
   --with-APR-inc=DIR      Specify that the Apache Portable Runtime includes
                           are in DIR
+  --with-APR-UTIL=DIR     Specify that the Apache Portable Runtime Utilities
+                          install prefix is DIR
+  --with-APR-UTIL-bin=DIR Specify that the Apache Portable Runtime Utilities
+                          binary is in DIR
+  --with-APR-UTIL-lib=DIR Specify that Apache Portable Runtime Utilities
+                          libraries are in DIR
+  --with-APR-UTIL-inc=DIR Specify that the Apache Portable Runtime Utilities
+                          includes are in DIR
   --with-workspace=<dir>  dir=location of the HLVM workspace storage
                           (default=/opt/hlvm)
   --with-expat=<dir>      Specify where the expat lbrary is located
@@ -1612,6 +1620,265 @@ if test -n "/" -a -d "/" -a -n "" -a -d "//bin" -a -x "//bin/" ; then
 
   fi
   if test -n "libapr-1.so" -a -d "//lib" -a -f "//lib/libapr-1.so" ; then
+    _LIB=//lib
+
+  fi
+fi
+
+            if test -z "${checkval}" ; then
+              checkresult="no"
+            fi
+          fi
+        fi
+      fi
+    fi
+    echo "$as_me:$LINENO: result: $checkresult" >&5
+echo "${ECHO_T}$checkresult" >&6
+  fi
+fi
+
+
+echo "$as_me:$LINENO: checking for Apache Portable Runtime Utilities bin/lib/include locations" >&5
+echo $ECHO_N "checking for Apache Portable Runtime Utilities bin/lib/include locations... $ECHO_C" >&6
+
+# Check whether --with-APR-UTIL or --without-APR-UTIL was given.
+if test "${with_APR_UTIL+set}" = set; then
+  withval="$with_APR_UTIL"
+  apr-utilpfxdir=$withval
+else
+  apr-utilpfxdir=nada
+fi;
+
+# Check whether --with-APR-UTIL-bin or --without-APR-UTIL-bin was given.
+if test "${with_APR_UTIL_bin+set}" = set; then
+  withval="$with_APR_UTIL_bin"
+  apr-utilbindir=$withval
+else
+  apr-utilbindir=nada
+fi;
+
+# Check whether --with-APR-UTIL-lib or --without-APR-UTIL-lib was given.
+if test "${with_APR_UTIL_lib+set}" = set; then
+  withval="$with_APR_UTIL_lib"
+  apr-utillibdir=$withval
+else
+  apr-utillibdir=nada
+fi;
+
+# Check whether --with-APR-UTIL-inc or --without-APR-UTIL-inc was given.
+if test "${with_APR_UTIL_inc+set}" = set; then
+  withval="$with_APR_UTIL_inc"
+  apr-utilincdir=$withval
+else
+  apr-utilincdir=nada
+fi;
+eval pfxval=\$\{apr-utilpfxdir\}
+eval binval=\$\{apr-utilbindir\}
+eval incval=\$\{apr-utilincdir\}
+eval libvar=\$\{apr-utillibdir\}
+if test "${pfxval}" != "nada" ; then
+
+if test -n "${pfxval}" -a -d "${pfxval}" -a -n "" -a -d "${pfxval}/bin" -a -x "${pfxval}/bin/" ; then
+  USE_="USE_ = 1"
+
+  =${pfxval}/bin/
+
+  _BIN=${pfxval}/bin
+
+  _DIR=${pfxval}
+
+  if test -n "apr-1/apu.h" -a -d "${pfxval}/include" -a -f "${pfxval}/include/apr-1/apu.h" ; then
+    _INC=${pfxval}/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "${pfxval}/lib" -a -f "${pfxval}/lib/libaprutil-1.so" ; then
+    _LIB=${pfxval}/lib
+
+  fi
+fi
+
+elif test "${binval}" != "nada" ; then
+  if test "${libval}" != "nada" ; then
+    if test "${incval}" != "nada" ; then
+      if test -d "${binval}" ; then
+        if test -d "${incval}" ; then
+          if test -d "${libval}" ; then
+            =${binval}/apr-util
+
+            _BIN=${binval}
+
+            _INC=${incval}
+
+            _LIB=${libval}
+
+            USE_=1
+
+            echo "$as_me:$LINENO: result: found via --with options" >&5
+echo "${ECHO_T}found via --with options" >&6
+          else
+            echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+            { { echo "$as_me:$LINENO: error: The --with-apr-util-libdir value must be a directory" >&5
+echo "$as_me: error: The --with-apr-util-libdir value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+          fi
+        else
+          echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+          { { echo "$as_me:$LINENO: error: The --with-apr-util-incdir value must be a directory" >&5
+echo "$as_me: error: The --with-apr-util-incdir value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+      else
+        echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+        { { echo "$as_me:$LINENO: error: The --with-apr-util-bindir value must be a directory" >&5
+echo "$as_me: error: The --with-apr-util-bindir value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+      fi
+    else
+      echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+      { { echo "$as_me:$LINENO: error: The --with-apr-util-incdir option must be specified" >&5
+echo "$as_me: error: The --with-apr-util-incdir option must be specified" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+    { { echo "$as_me:$LINENO: error: The --with-apr-util-libdir option must be specified" >&5
+echo "$as_me: error: The --with-apr-util-libdir option must be specified" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  tmppfxdir=`which apr-util 2>&1`
+  if test -n "$tmppfxdir" -a -d "${tmppfxdir%*apr-util}" -a \
+          -d "${tmppfxdir%*apr-util}/.." ; then
+    tmppfxdir=`cd "${tmppfxdir%*apr-util}/.." ; pwd`
+
+if test -n "$tmppfxdir" -a -d "$tmppfxdir" -a -n "" -a -d "$tmppfxdir/bin" -a -x "$tmppfxdir/bin/" ; then
+  USE_="USE_ = 1"
+
+  =$tmppfxdir/bin/
+
+  _BIN=$tmppfxdir/bin
+
+  _DIR=$tmppfxdir
+
+  if test -n "apr-1/apu.h" -a -d "$tmppfxdir/include" -a -f "$tmppfxdir/include/apr-1/apu.h" ; then
+    _INC=$tmppfxdir/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "$tmppfxdir/lib" -a -f "$tmppfxdir/lib/libaprutil-1.so" ; then
+    _LIB=$tmppfxdir/lib
+
+  fi
+fi
+
+    echo "$as_me:$LINENO: result: found in PATH at $tmppfxdir" >&5
+echo "${ECHO_T}found in PATH at $tmppfxdir" >&6
+  else
+    checkresult="yes"
+    eval checkval=\$\{"USE_"\}
+
+if test -n "/usr" -a -d "/usr" -a -n "" -a -d "/usr/bin" -a -x "/usr/bin/" ; then
+  USE_="USE_ = 1"
+
+  =/usr/bin/
+
+  _BIN=/usr/bin
+
+  _DIR=/usr
+
+  if test -n "apr-1/apu.h" -a -d "/usr/include" -a -f "/usr/include/apr-1/apu.h" ; then
+    _INC=/usr/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "/usr/lib" -a -f "/usr/lib/libaprutil-1.so" ; then
+    _LIB=/usr/lib
+
+  fi
+fi
+
+    if test -z "${checkval}" ; then
+
+if test -n "/usr/local" -a -d "/usr/local" -a -n "" -a -d "/usr/local/bin" -a -x "/usr/local/bin/" ; then
+  USE_="USE_ = 1"
+
+  =/usr/local/bin/
+
+  _BIN=/usr/local/bin
+
+  _DIR=/usr/local
+
+  if test -n "apr-1/apu.h" -a -d "/usr/local/include" -a -f "/usr/local/include/apr-1/apu.h" ; then
+    _INC=/usr/local/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "/usr/local/lib" -a -f "/usr/local/lib/libaprutil-1.so" ; then
+    _LIB=/usr/local/lib
+
+  fi
+fi
+
+      if test -z "${checkval}" ; then
+
+if test -n "/sw" -a -d "/sw" -a -n "" -a -d "/sw/bin" -a -x "/sw/bin/" ; then
+  USE_="USE_ = 1"
+
+  =/sw/bin/
+
+  _BIN=/sw/bin
+
+  _DIR=/sw
+
+  if test -n "apr-1/apu.h" -a -d "/sw/include" -a -f "/sw/include/apr-1/apu.h" ; then
+    _INC=/sw/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "/sw/lib" -a -f "/sw/lib/libaprutil-1.so" ; then
+    _LIB=/sw/lib
+
+  fi
+fi
+
+        if test -z "${checkval}" ; then
+
+if test -n "/opt" -a -d "/opt" -a -n "" -a -d "/opt/bin" -a -x "/opt/bin/" ; then
+  USE_="USE_ = 1"
+
+  =/opt/bin/
+
+  _BIN=/opt/bin
+
+  _DIR=/opt
+
+  if test -n "apr-1/apu.h" -a -d "/opt/include" -a -f "/opt/include/apr-1/apu.h" ; then
+    _INC=/opt/include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "/opt/lib" -a -f "/opt/lib/libaprutil-1.so" ; then
+    _LIB=/opt/lib
+
+  fi
+fi
+
+          if test -z "${checkval}" ; then
+
+if test -n "/" -a -d "/" -a -n "" -a -d "//bin" -a -x "//bin/" ; then
+  USE_="USE_ = 1"
+
+  =//bin/
+
+  _BIN=//bin
+
+  _DIR=/
+
+  if test -n "apr-1/apu.h" -a -d "//include" -a -f "//include/apr-1/apu.h" ; then
+    _INC=//include
+
+  fi
+  if test -n "libaprutil-1.so" -a -d "//lib" -a -f "//lib/libaprutil-1.so" ; then
     _LIB=//lib
 
   fi
@@ -4424,7 +4691,8 @@ done
 
 
 
-for ac_header in apr-1/apr.h expat.h llvm/Module.h
+
+for ac_header in apr-1/apr.h apr-1/apu.h expat.h llvm/Module.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then

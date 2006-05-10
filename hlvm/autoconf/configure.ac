@@ -19,6 +19,7 @@ dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 FIND_PACKAGE([apr],[apr-1/apr.h],[libapr-1.so],[],[Apache Portable Runtime])
+FIND_PACKAGE([apr-util],[apr-1/apu.h],[libaprutil-1.so],[],[Apache Portable Runtime Utilities])
 
 dnl ----------------------------------------------------------------------------
 dnl -- Shared Object Versioning For libtool
@@ -334,7 +335,7 @@ dnl --
 dnl -- SECTION 5: Check For Needed Header Files
 dnl --
 dnl ----------------------------------------------------------------------------
-AC_CHECK_HEADERS([apr-1/apr.h expat.h llvm/Module.h])
+AC_CHECK_HEADERS([apr-1/apr.h apr-1/apu.h expat.h llvm/Module.h])
 
 dnl ----------------------------------------------------------------------------
 dnl --

@@ -40,6 +40,7 @@ namespace AST {
     public:
       Location(uint32_t line, uint32_t col, const std::string& fname)
         : line_(line), col_(col), fname_(fname)  {}
+      Location() : line_(0), col_(0), fname_("") {}
 
     /// @}
     /// @name Accessors

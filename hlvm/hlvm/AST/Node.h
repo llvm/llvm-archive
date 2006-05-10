@@ -25,8 +25,8 @@
 #define HLVM_AST_NODE_H
 
 #include <llvm/Support/Casting.h>
+#include <hlvm/AST/Location.h>
 #include <vector>
-#include <string>
 
 /// This namespace is for all HLVM software. It ensures that HLVM software does
 /// not collide with any other software. Hopefully HLVM is not a namespace used
@@ -229,6 +229,7 @@ namespace AST
       Node* parent_;            ///< The node that owns this node.
       std::vector<Node> kids_;  ///< The vector of children nodes.
       std::string name_;        ///< The name of this node.
+      Location loc_;            ///< The source location corresponding to node.
     /// @}
   };
 } // AST

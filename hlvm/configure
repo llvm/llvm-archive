@@ -315,7 +315,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION USE_  _BIN _DIR _INC _LIB HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_EXPAT HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_EXPAT HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake apr_INC apr_LIB apru_INC apru_LIB expat_INC expat_LIB syck_INC syck_LIB EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -873,22 +873,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-APR=DIR          Specify that the Apache Portable Runtime install
-                          prefix is DIR
-  --with-APR-bin=DIR      Specify that the Apache Portable Runtime binary is
-                          in DIR
-  --with-APR-lib=DIR      Specify that Apache Portable Runtime libraries are
-                          in DIR
-  --with-APR-inc=DIR      Specify that the Apache Portable Runtime includes
-                          are in DIR
-  --with-APR-UTIL=DIR     Specify that the Apache Portable Runtime Utilities
-                          install prefix is DIR
-  --with-APR-UTIL-bin=DIR Specify that the Apache Portable Runtime Utilities
-                          binary is in DIR
-  --with-APR-UTIL-lib=DIR Specify that Apache Portable Runtime Utilities
-                          libraries are in DIR
-  --with-APR-UTIL-inc=DIR Specify that the Apache Portable Runtime Utilities
-                          includes are in DIR
   --with-workspace=<dir>  dir=location of the HLVM workspace storage
                           (default=/opt/hlvm)
   --with-expat=<dir>      Specify where the expat lbrary is located
@@ -901,6 +885,28 @@ Optional Packages:
                           (default=/usr)
   --with-llvm-gcc=<dir>   dir=the location of LLVM's llvm-gcc compiler
                           (default=use normal gcc)
+  --with-APR=DIR          Specify that the Apache Portable Runtime install
+                          prefix is DIR
+  --with-APR-lib=DIR      Specify that Apache Portable Runtime libraries are
+                          in DIR
+  --with-APR-inc=DIR      Specify that the Apache Portable Runtime includes
+                          are in DIR
+  --with-APRU=DIR         Specify that the Apache Portable Runtime Utilities
+                          install prefix is DIR
+  --with-APRU-lib=DIR     Specify that Apache Portable Runtime Utilities
+                          libraries are in DIR
+  --with-APRU-inc=DIR     Specify that the Apache Portable Runtime Utilities
+                          includes are in DIR
+  --with-EXPAT=DIR        Specify that the expat XML Parser install prefix is
+                          DIR
+  --with-EXPAT-lib=DIR    Specify that expat XML Parser libraries are in DIR
+  --with-EXPAT-inc=DIR    Specify that the expat XML Parser includes are in
+                          DIR
+  --with-SYCK=DIR         Specify that the Syck Yaml Handler install prefix is
+                          DIR
+  --with-SYCK-lib=DIR     Specify that Syck Yaml Handler libraries are in DIR
+  --with-SYCK-inc=DIR     Specify that the Syck Yaml Handler includes are in
+                          DIR
 
 Some influential environment variables:
   CC          C compiler command
@@ -1376,525 +1382,6 @@ HLVM_PACKAGE=$PACKAGE
 
 
 
-
-
-
-echo "$as_me:$LINENO: checking for Apache Portable Runtime bin/lib/include locations" >&5
-echo $ECHO_N "checking for Apache Portable Runtime bin/lib/include locations... $ECHO_C" >&6
-
-# Check whether --with-APR or --without-APR was given.
-if test "${with_APR+set}" = set; then
-  withval="$with_APR"
-  aprpfxdir=$withval
-else
-  aprpfxdir=nada
-fi;
-
-# Check whether --with-APR-bin or --without-APR-bin was given.
-if test "${with_APR_bin+set}" = set; then
-  withval="$with_APR_bin"
-  aprbindir=$withval
-else
-  aprbindir=nada
-fi;
-
-# Check whether --with-APR-lib or --without-APR-lib was given.
-if test "${with_APR_lib+set}" = set; then
-  withval="$with_APR_lib"
-  aprlibdir=$withval
-else
-  aprlibdir=nada
-fi;
-
-# Check whether --with-APR-inc or --without-APR-inc was given.
-if test "${with_APR_inc+set}" = set; then
-  withval="$with_APR_inc"
-  aprincdir=$withval
-else
-  aprincdir=nada
-fi;
-eval pfxval=\$\{aprpfxdir\}
-eval binval=\$\{aprbindir\}
-eval incval=\$\{aprincdir\}
-eval libvar=\$\{aprlibdir\}
-if test "${pfxval}" != "nada" ; then
-
-if test -n "${pfxval}" -a -d "${pfxval}" -a -n "" -a -d "${pfxval}/bin" -a -x "${pfxval}/bin/" ; then
-  USE_="USE_ = 1"
-
-  =${pfxval}/bin/
-
-  _BIN=${pfxval}/bin
-
-  _DIR=${pfxval}
-
-  if test -n "apr-1/apr.h" -a -d "${pfxval}/include" -a -f "${pfxval}/include/apr-1/apr.h" ; then
-    _INC=${pfxval}/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "${pfxval}/lib" -a -f "${pfxval}/lib/libapr-1.so" ; then
-    _LIB=${pfxval}/lib
-
-  fi
-fi
-
-elif test "${binval}" != "nada" ; then
-  if test "${libval}" != "nada" ; then
-    if test "${incval}" != "nada" ; then
-      if test -d "${binval}" ; then
-        if test -d "${incval}" ; then
-          if test -d "${libval}" ; then
-            =${binval}/apr
-
-            _BIN=${binval}
-
-            _INC=${incval}
-
-            _LIB=${libval}
-
-            USE_=1
-
-            echo "$as_me:$LINENO: result: found via --with options" >&5
-echo "${ECHO_T}found via --with options" >&6
-          else
-            echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-            { { echo "$as_me:$LINENO: error: The --with-apr-libdir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-libdir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-          fi
-        else
-          echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-          { { echo "$as_me:$LINENO: error: The --with-apr-incdir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-incdir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-      else
-        echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-        { { echo "$as_me:$LINENO: error: The --with-apr-bindir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-bindir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-      fi
-    else
-      echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-      { { echo "$as_me:$LINENO: error: The --with-apr-incdir option must be specified" >&5
-echo "$as_me: error: The --with-apr-incdir option must be specified" >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-  else
-    echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-    { { echo "$as_me:$LINENO: error: The --with-apr-libdir option must be specified" >&5
-echo "$as_me: error: The --with-apr-libdir option must be specified" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-else
-  tmppfxdir=`which apr 2>&1`
-  if test -n "$tmppfxdir" -a -d "${tmppfxdir%*apr}" -a \
-          -d "${tmppfxdir%*apr}/.." ; then
-    tmppfxdir=`cd "${tmppfxdir%*apr}/.." ; pwd`
-
-if test -n "$tmppfxdir" -a -d "$tmppfxdir" -a -n "" -a -d "$tmppfxdir/bin" -a -x "$tmppfxdir/bin/" ; then
-  USE_="USE_ = 1"
-
-  =$tmppfxdir/bin/
-
-  _BIN=$tmppfxdir/bin
-
-  _DIR=$tmppfxdir
-
-  if test -n "apr-1/apr.h" -a -d "$tmppfxdir/include" -a -f "$tmppfxdir/include/apr-1/apr.h" ; then
-    _INC=$tmppfxdir/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "$tmppfxdir/lib" -a -f "$tmppfxdir/lib/libapr-1.so" ; then
-    _LIB=$tmppfxdir/lib
-
-  fi
-fi
-
-    echo "$as_me:$LINENO: result: found in PATH at $tmppfxdir" >&5
-echo "${ECHO_T}found in PATH at $tmppfxdir" >&6
-  else
-    checkresult="yes"
-    eval checkval=\$\{"USE_"\}
-
-if test -n "/usr" -a -d "/usr" -a -n "" -a -d "/usr/bin" -a -x "/usr/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/usr/bin/
-
-  _BIN=/usr/bin
-
-  _DIR=/usr
-
-  if test -n "apr-1/apr.h" -a -d "/usr/include" -a -f "/usr/include/apr-1/apr.h" ; then
-    _INC=/usr/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "/usr/lib" -a -f "/usr/lib/libapr-1.so" ; then
-    _LIB=/usr/lib
-
-  fi
-fi
-
-    if test -z "${checkval}" ; then
-
-if test -n "/usr/local" -a -d "/usr/local" -a -n "" -a -d "/usr/local/bin" -a -x "/usr/local/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/usr/local/bin/
-
-  _BIN=/usr/local/bin
-
-  _DIR=/usr/local
-
-  if test -n "apr-1/apr.h" -a -d "/usr/local/include" -a -f "/usr/local/include/apr-1/apr.h" ; then
-    _INC=/usr/local/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "/usr/local/lib" -a -f "/usr/local/lib/libapr-1.so" ; then
-    _LIB=/usr/local/lib
-
-  fi
-fi
-
-      if test -z "${checkval}" ; then
-
-if test -n "/sw" -a -d "/sw" -a -n "" -a -d "/sw/bin" -a -x "/sw/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/sw/bin/
-
-  _BIN=/sw/bin
-
-  _DIR=/sw
-
-  if test -n "apr-1/apr.h" -a -d "/sw/include" -a -f "/sw/include/apr-1/apr.h" ; then
-    _INC=/sw/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "/sw/lib" -a -f "/sw/lib/libapr-1.so" ; then
-    _LIB=/sw/lib
-
-  fi
-fi
-
-        if test -z "${checkval}" ; then
-
-if test -n "/opt" -a -d "/opt" -a -n "" -a -d "/opt/bin" -a -x "/opt/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/opt/bin/
-
-  _BIN=/opt/bin
-
-  _DIR=/opt
-
-  if test -n "apr-1/apr.h" -a -d "/opt/include" -a -f "/opt/include/apr-1/apr.h" ; then
-    _INC=/opt/include
-
-  fi
-  if test -n "libapr-1.so" -a -d "/opt/lib" -a -f "/opt/lib/libapr-1.so" ; then
-    _LIB=/opt/lib
-
-  fi
-fi
-
-          if test -z "${checkval}" ; then
-
-if test -n "/" -a -d "/" -a -n "" -a -d "//bin" -a -x "//bin/" ; then
-  USE_="USE_ = 1"
-
-  =//bin/
-
-  _BIN=//bin
-
-  _DIR=/
-
-  if test -n "apr-1/apr.h" -a -d "//include" -a -f "//include/apr-1/apr.h" ; then
-    _INC=//include
-
-  fi
-  if test -n "libapr-1.so" -a -d "//lib" -a -f "//lib/libapr-1.so" ; then
-    _LIB=//lib
-
-  fi
-fi
-
-            if test -z "${checkval}" ; then
-              checkresult="no"
-            fi
-          fi
-        fi
-      fi
-    fi
-    echo "$as_me:$LINENO: result: $checkresult" >&5
-echo "${ECHO_T}$checkresult" >&6
-  fi
-fi
-
-
-echo "$as_me:$LINENO: checking for Apache Portable Runtime Utilities bin/lib/include locations" >&5
-echo $ECHO_N "checking for Apache Portable Runtime Utilities bin/lib/include locations... $ECHO_C" >&6
-
-# Check whether --with-APR-UTIL or --without-APR-UTIL was given.
-if test "${with_APR_UTIL+set}" = set; then
-  withval="$with_APR_UTIL"
-  apr-utilpfxdir=$withval
-else
-  apr-utilpfxdir=nada
-fi;
-
-# Check whether --with-APR-UTIL-bin or --without-APR-UTIL-bin was given.
-if test "${with_APR_UTIL_bin+set}" = set; then
-  withval="$with_APR_UTIL_bin"
-  apr-utilbindir=$withval
-else
-  apr-utilbindir=nada
-fi;
-
-# Check whether --with-APR-UTIL-lib or --without-APR-UTIL-lib was given.
-if test "${with_APR_UTIL_lib+set}" = set; then
-  withval="$with_APR_UTIL_lib"
-  apr-utillibdir=$withval
-else
-  apr-utillibdir=nada
-fi;
-
-# Check whether --with-APR-UTIL-inc or --without-APR-UTIL-inc was given.
-if test "${with_APR_UTIL_inc+set}" = set; then
-  withval="$with_APR_UTIL_inc"
-  apr-utilincdir=$withval
-else
-  apr-utilincdir=nada
-fi;
-eval pfxval=\$\{apr-utilpfxdir\}
-eval binval=\$\{apr-utilbindir\}
-eval incval=\$\{apr-utilincdir\}
-eval libvar=\$\{apr-utillibdir\}
-if test "${pfxval}" != "nada" ; then
-
-if test -n "${pfxval}" -a -d "${pfxval}" -a -n "" -a -d "${pfxval}/bin" -a -x "${pfxval}/bin/" ; then
-  USE_="USE_ = 1"
-
-  =${pfxval}/bin/
-
-  _BIN=${pfxval}/bin
-
-  _DIR=${pfxval}
-
-  if test -n "apr-1/apu.h" -a -d "${pfxval}/include" -a -f "${pfxval}/include/apr-1/apu.h" ; then
-    _INC=${pfxval}/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "${pfxval}/lib" -a -f "${pfxval}/lib/libaprutil-1.so" ; then
-    _LIB=${pfxval}/lib
-
-  fi
-fi
-
-elif test "${binval}" != "nada" ; then
-  if test "${libval}" != "nada" ; then
-    if test "${incval}" != "nada" ; then
-      if test -d "${binval}" ; then
-        if test -d "${incval}" ; then
-          if test -d "${libval}" ; then
-            =${binval}/apr-util
-
-            _BIN=${binval}
-
-            _INC=${incval}
-
-            _LIB=${libval}
-
-            USE_=1
-
-            echo "$as_me:$LINENO: result: found via --with options" >&5
-echo "${ECHO_T}found via --with options" >&6
-          else
-            echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-            { { echo "$as_me:$LINENO: error: The --with-apr-util-libdir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-util-libdir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-          fi
-        else
-          echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-          { { echo "$as_me:$LINENO: error: The --with-apr-util-incdir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-util-incdir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-      else
-        echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-        { { echo "$as_me:$LINENO: error: The --with-apr-util-bindir value must be a directory" >&5
-echo "$as_me: error: The --with-apr-util-bindir value must be a directory" >&2;}
-   { (exit 1); exit 1; }; }
-      fi
-    else
-      echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-      { { echo "$as_me:$LINENO: error: The --with-apr-util-incdir option must be specified" >&5
-echo "$as_me: error: The --with-apr-util-incdir option must be specified" >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-  else
-    echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-    { { echo "$as_me:$LINENO: error: The --with-apr-util-libdir option must be specified" >&5
-echo "$as_me: error: The --with-apr-util-libdir option must be specified" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-else
-  tmppfxdir=`which apr-util 2>&1`
-  if test -n "$tmppfxdir" -a -d "${tmppfxdir%*apr-util}" -a \
-          -d "${tmppfxdir%*apr-util}/.." ; then
-    tmppfxdir=`cd "${tmppfxdir%*apr-util}/.." ; pwd`
-
-if test -n "$tmppfxdir" -a -d "$tmppfxdir" -a -n "" -a -d "$tmppfxdir/bin" -a -x "$tmppfxdir/bin/" ; then
-  USE_="USE_ = 1"
-
-  =$tmppfxdir/bin/
-
-  _BIN=$tmppfxdir/bin
-
-  _DIR=$tmppfxdir
-
-  if test -n "apr-1/apu.h" -a -d "$tmppfxdir/include" -a -f "$tmppfxdir/include/apr-1/apu.h" ; then
-    _INC=$tmppfxdir/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "$tmppfxdir/lib" -a -f "$tmppfxdir/lib/libaprutil-1.so" ; then
-    _LIB=$tmppfxdir/lib
-
-  fi
-fi
-
-    echo "$as_me:$LINENO: result: found in PATH at $tmppfxdir" >&5
-echo "${ECHO_T}found in PATH at $tmppfxdir" >&6
-  else
-    checkresult="yes"
-    eval checkval=\$\{"USE_"\}
-
-if test -n "/usr" -a -d "/usr" -a -n "" -a -d "/usr/bin" -a -x "/usr/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/usr/bin/
-
-  _BIN=/usr/bin
-
-  _DIR=/usr
-
-  if test -n "apr-1/apu.h" -a -d "/usr/include" -a -f "/usr/include/apr-1/apu.h" ; then
-    _INC=/usr/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "/usr/lib" -a -f "/usr/lib/libaprutil-1.so" ; then
-    _LIB=/usr/lib
-
-  fi
-fi
-
-    if test -z "${checkval}" ; then
-
-if test -n "/usr/local" -a -d "/usr/local" -a -n "" -a -d "/usr/local/bin" -a -x "/usr/local/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/usr/local/bin/
-
-  _BIN=/usr/local/bin
-
-  _DIR=/usr/local
-
-  if test -n "apr-1/apu.h" -a -d "/usr/local/include" -a -f "/usr/local/include/apr-1/apu.h" ; then
-    _INC=/usr/local/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "/usr/local/lib" -a -f "/usr/local/lib/libaprutil-1.so" ; then
-    _LIB=/usr/local/lib
-
-  fi
-fi
-
-      if test -z "${checkval}" ; then
-
-if test -n "/sw" -a -d "/sw" -a -n "" -a -d "/sw/bin" -a -x "/sw/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/sw/bin/
-
-  _BIN=/sw/bin
-
-  _DIR=/sw
-
-  if test -n "apr-1/apu.h" -a -d "/sw/include" -a -f "/sw/include/apr-1/apu.h" ; then
-    _INC=/sw/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "/sw/lib" -a -f "/sw/lib/libaprutil-1.so" ; then
-    _LIB=/sw/lib
-
-  fi
-fi
-
-        if test -z "${checkval}" ; then
-
-if test -n "/opt" -a -d "/opt" -a -n "" -a -d "/opt/bin" -a -x "/opt/bin/" ; then
-  USE_="USE_ = 1"
-
-  =/opt/bin/
-
-  _BIN=/opt/bin
-
-  _DIR=/opt
-
-  if test -n "apr-1/apu.h" -a -d "/opt/include" -a -f "/opt/include/apr-1/apu.h" ; then
-    _INC=/opt/include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "/opt/lib" -a -f "/opt/lib/libaprutil-1.so" ; then
-    _LIB=/opt/lib
-
-  fi
-fi
-
-          if test -z "${checkval}" ; then
-
-if test -n "/" -a -d "/" -a -n "" -a -d "//bin" -a -x "//bin/" ; then
-  USE_="USE_ = 1"
-
-  =//bin/
-
-  _BIN=//bin
-
-  _DIR=/
-
-  if test -n "apr-1/apu.h" -a -d "//include" -a -f "//include/apr-1/apu.h" ; then
-    _INC=//include
-
-  fi
-  if test -n "libaprutil-1.so" -a -d "//lib" -a -f "//lib/libaprutil-1.so" ; then
-    _LIB=//lib
-
-  fi
-fi
-
-            if test -z "${checkval}" ; then
-              checkresult="no"
-            fi
-          fi
-        fi
-      fi
-    fi
-    echo "$as_me:$LINENO: result: $checkresult" >&5
-echo "${ECHO_T}$checkresult" >&6
-  fi
-fi
 
 
 HLVM_SO_CURRENT="0"
@@ -4258,9 +3745,2069 @@ echo "${ECHO_T}\"Not found\"" >&6;
 
 
 
+
+
+# Check whether --with-APR or --without-APR was given.
+if test "${with_APR+set}" = set; then
+  withval="$with_APR"
+  aprpfxdir=$withval
+else
+  aprpfxdir=nada
+fi;
+
+# Check whether --with-APR-lib or --without-APR-lib was given.
+if test "${with_APR_lib+set}" = set; then
+  withval="$with_APR_lib"
+  aprlibdir=$withval
+else
+  aprlibdir=nada
+fi;
+
+# Check whether --with-APR-inc or --without-APR-inc was given.
+if test "${with_APR_inc+set}" = set; then
+  withval="$with_APR_inc"
+  aprincdir=$withval
+else
+  aprincdir=nada
+fi;
+pfxval="${aprpfxdir}"
+incval="${aprincdir}"
+libval="${aprlibdir}"
+echo "$as_me:$LINENO: checking for Apache Portable Runtime library and header" >&5
+echo $ECHO_N "checking for Apache Portable Runtime library and header... $ECHO_C" >&6
+hlvm_found_lib=0
+hlvm_found_inc=0
+if test "${pfxval}" != "nada" ; then
+  if test -d "${pfxval}" ; then
+
+hlvm_found_inc=0
+if test -d "${pfxval}" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+
+hlvm_found_lib=0
+if test -d "${pfxval}" ; then
+  if test -n "apr-1" ; then
+    for dir in "${pfxval}" "${pfxval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6;
+    { { echo "$as_me:$LINENO: error: The --with-apr value must be a directory" >&5
+echo "$as_me: error: The --with-apr value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  if test "${libval}" != "nada" ; then
+
+hlvm_found_lib=0
+if test -d "${libval}" ; then
+  if test -n "apr-1" ; then
+    for dir in "${libval}" "${libval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+  if test "${incval}" != "nada" ; then
+
+hlvm_found_inc=0
+if test -d "${incval}" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "${incval}/include" "${incval}" "${incval}/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr" ; then
+  if test -n "apr-1" ; then
+    for dir in "/usr" "/usr/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr/local" ; then
+  if test -n "apr-1" ; then
+    for dir in "/usr/local" "/usr/local/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/proj/install" ; then
+  if test -n "apr-1" ; then
+    for dir in "/proj/install" "/proj/install/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/sw" ; then
+  if test -n "apr-1" ; then
+    for dir in "/sw" "/sw/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/opt" ; then
+  if test -n "apr-1" ; then
+    for dir in "/opt" "/opt/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libapr-1.so" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.a" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libapr-1.la" ; then
+          apr_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "/usr/include" "/usr" "/usr/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr/local" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/proj/install" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/sw" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "/sw/include" "/sw" "/sw/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/opt" ; then
+  if test -n "apr-1/apr.h" ; then
+    for dir in "/opt/include" "/opt" "/opt/include/apr" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apr.h" ; then
+          apr_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" == 1 ; then
+  if test "$hlvm_found_lib" == 1 ; then
+    echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+    incdir=${apr_INC}
+    libdir=${apr_LIB}
+
+ echo "$LDFLAGS" | grep -- "-L"${libdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   LDFLAGS="$LDFLAGS -L"${libdir}""
+ fi
+
+    echo "$as_me:$LINENO: checking for library containing apr_allocator_alloc" >&5
+echo $ECHO_N "checking for library containing apr_allocator_alloc... $ECHO_C" >&6
+if test "${ac_cv_search_apr_allocator_alloc+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_apr_allocator_alloc=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char apr_allocator_alloc ();
+int
+main ()
+{
+apr_allocator_alloc ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_apr_allocator_alloc="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_apr_allocator_alloc" = no; then
+  for ac_lib in apr-1; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char apr_allocator_alloc ();
+int
+main ()
+{
+apr_allocator_alloc ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_apr_allocator_alloc="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_apr_allocator_alloc" >&5
+echo "${ECHO_T}$ac_cv_search_apr_allocator_alloc" >&6
+if test "$ac_cv_search_apr_allocator_alloc" != no; then
+  test "$ac_cv_search_apr_allocator_alloc" = "none required" || LIBS="$ac_cv_search_apr_allocator_alloc $LIBS"
+  found_sym=1
+else
+  found_sym=0
+fi
+
+    if test "$found_sym" == "1" ; then
+      { echo "$as_me:$LINENO: Found apr in ${incdir} and ${libdir}" >&5
+echo "$as_me: Found apr in ${incdir} and ${libdir}" >&6;}
+
+ echo "$CPPFLAGS" | grep -- "-I"${incdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   CPPFLAGS="$CPPFLAGS -I"${incdir}""
+ fi
+
+    else
+      { echo "$as_me:$LINENO: Symbol 'apr_allocator_alloc' not found in library apr-1 in ${libdir}" >&5
+echo "$as_me: Symbol 'apr_allocator_alloc' not found in library apr-1 in ${libdir}" >&6;}
+    fi
+  else
+    echo "$as_me:$LINENO: result: failed to find library file" >&5
+echo "${ECHO_T}failed to find library file" >&6
+    { { echo "$as_me:$LINENO: error: The --with-apr-libdir option must be used" >&5
+echo "$as_me: error: The --with-apr-libdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  echo "$as_me:$LINENO: result: failed to find header file" >&5
+echo "${ECHO_T}failed to find header file" >&6
+  { { echo "$as_me:$LINENO: error: The --with-apr-incdir option must be used" >&5
+echo "$as_me: error: The --with-apr-incdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+# Check whether --with-APRU or --without-APRU was given.
+if test "${with_APRU+set}" = set; then
+  withval="$with_APRU"
+  aprupfxdir=$withval
+else
+  aprupfxdir=nada
+fi;
+
+# Check whether --with-APRU-lib or --without-APRU-lib was given.
+if test "${with_APRU_lib+set}" = set; then
+  withval="$with_APRU_lib"
+  aprulibdir=$withval
+else
+  aprulibdir=nada
+fi;
+
+# Check whether --with-APRU-inc or --without-APRU-inc was given.
+if test "${with_APRU_inc+set}" = set; then
+  withval="$with_APRU_inc"
+  apruincdir=$withval
+else
+  apruincdir=nada
+fi;
+pfxval="${aprupfxdir}"
+incval="${apruincdir}"
+libval="${aprulibdir}"
+echo "$as_me:$LINENO: checking for Apache Portable Runtime Utilities library and header" >&5
+echo $ECHO_N "checking for Apache Portable Runtime Utilities library and header... $ECHO_C" >&6
+hlvm_found_lib=0
+hlvm_found_inc=0
+if test "${pfxval}" != "nada" ; then
+  if test -d "${pfxval}" ; then
+
+hlvm_found_inc=0
+if test -d "${pfxval}" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+
+hlvm_found_lib=0
+if test -d "${pfxval}" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "${pfxval}" "${pfxval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6;
+    { { echo "$as_me:$LINENO: error: The --with-apru value must be a directory" >&5
+echo "$as_me: error: The --with-apru value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  if test "${libval}" != "nada" ; then
+
+hlvm_found_lib=0
+if test -d "${libval}" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "${libval}" "${libval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+  if test "${incval}" != "nada" ; then
+
+hlvm_found_inc=0
+if test -d "${incval}" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "${incval}/include" "${incval}" "${incval}/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "/usr" "/usr/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr/local" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "/usr/local" "/usr/local/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/proj/install" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "/proj/install" "/proj/install/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/sw" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "/sw" "/sw/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/opt" ; then
+  if test -n "aprutil-1" ; then
+    for dir in "/opt" "/opt/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libaprutil-1.so" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.a" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libaprutil-1.la" ; then
+          apru_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "/usr/include" "/usr" "/usr/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr/local" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/proj/install" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/sw" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "/sw/include" "/sw" "/sw/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/opt" ; then
+  if test -n "apr-1/apu.h" ; then
+    for dir in "/opt/include" "/opt" "/opt/include/apru" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/apr-1/apu.h" ; then
+          apru_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" == 1 ; then
+  if test "$hlvm_found_lib" == 1 ; then
+    echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+    incdir=${apru_INC}
+    libdir=${apru_LIB}
+
+ echo "$LDFLAGS" | grep -- "-L"${libdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   LDFLAGS="$LDFLAGS -L"${libdir}""
+ fi
+
+    echo "$as_me:$LINENO: checking for library containing apu_version" >&5
+echo $ECHO_N "checking for library containing apu_version... $ECHO_C" >&6
+if test "${ac_cv_search_apu_version+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_apu_version=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char apu_version ();
+int
+main ()
+{
+apu_version ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_apu_version="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_apu_version" = no; then
+  for ac_lib in aprutil-1; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char apu_version ();
+int
+main ()
+{
+apu_version ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_apu_version="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_apu_version" >&5
+echo "${ECHO_T}$ac_cv_search_apu_version" >&6
+if test "$ac_cv_search_apu_version" != no; then
+  test "$ac_cv_search_apu_version" = "none required" || LIBS="$ac_cv_search_apu_version $LIBS"
+  found_sym=1
+else
+  found_sym=0
+fi
+
+    if test "$found_sym" == "1" ; then
+      { echo "$as_me:$LINENO: Found apru in ${incdir} and ${libdir}" >&5
+echo "$as_me: Found apru in ${incdir} and ${libdir}" >&6;}
+
+ echo "$CPPFLAGS" | grep -- "-I"${incdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   CPPFLAGS="$CPPFLAGS -I"${incdir}""
+ fi
+
+    else
+      { echo "$as_me:$LINENO: Symbol 'apu_version' not found in library aprutil-1 in ${libdir}" >&5
+echo "$as_me: Symbol 'apu_version' not found in library aprutil-1 in ${libdir}" >&6;}
+    fi
+  else
+    echo "$as_me:$LINENO: result: failed to find library file" >&5
+echo "${ECHO_T}failed to find library file" >&6
+    { { echo "$as_me:$LINENO: error: The --with-apru-libdir option must be used" >&5
+echo "$as_me: error: The --with-apru-libdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  echo "$as_me:$LINENO: result: failed to find header file" >&5
+echo "${ECHO_T}failed to find header file" >&6
+  { { echo "$as_me:$LINENO: error: The --with-apru-incdir option must be used" >&5
+echo "$as_me: error: The --with-apru-incdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+# Check whether --with-EXPAT or --without-EXPAT was given.
+if test "${with_EXPAT+set}" = set; then
+  withval="$with_EXPAT"
+  expatpfxdir=$withval
+else
+  expatpfxdir=nada
+fi;
+
+# Check whether --with-EXPAT-lib or --without-EXPAT-lib was given.
+if test "${with_EXPAT_lib+set}" = set; then
+  withval="$with_EXPAT_lib"
+  expatlibdir=$withval
+else
+  expatlibdir=nada
+fi;
+
+# Check whether --with-EXPAT-inc or --without-EXPAT-inc was given.
+if test "${with_EXPAT_inc+set}" = set; then
+  withval="$with_EXPAT_inc"
+  expatincdir=$withval
+else
+  expatincdir=nada
+fi;
+pfxval="${expatpfxdir}"
+incval="${expatincdir}"
+libval="${expatlibdir}"
+echo "$as_me:$LINENO: checking for expat XML Parser library and header" >&5
+echo $ECHO_N "checking for expat XML Parser library and header... $ECHO_C" >&6
+hlvm_found_lib=0
+hlvm_found_inc=0
+if test "${pfxval}" != "nada" ; then
+  if test -d "${pfxval}" ; then
+
+hlvm_found_inc=0
+if test -d "${pfxval}" ; then
+  if test -n "expat.h" ; then
+    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+
+hlvm_found_lib=0
+if test -d "${pfxval}" ; then
+  if test -n "expat" ; then
+    for dir in "${pfxval}" "${pfxval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6;
+    { { echo "$as_me:$LINENO: error: The --with-expat value must be a directory" >&5
+echo "$as_me: error: The --with-expat value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  if test "${libval}" != "nada" ; then
+
+hlvm_found_lib=0
+if test -d "${libval}" ; then
+  if test -n "expat" ; then
+    for dir in "${libval}" "${libval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+  if test "${incval}" != "nada" ; then
+
+hlvm_found_inc=0
+if test -d "${incval}" ; then
+  if test -n "expat.h" ; then
+    for dir in "${incval}/include" "${incval}" "${incval}/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr" ; then
+  if test -n "expat" ; then
+    for dir in "/usr" "/usr/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr/local" ; then
+  if test -n "expat" ; then
+    for dir in "/usr/local" "/usr/local/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/proj/install" ; then
+  if test -n "expat" ; then
+    for dir in "/proj/install" "/proj/install/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/sw" ; then
+  if test -n "expat" ; then
+    for dir in "/sw" "/sw/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/opt" ; then
+  if test -n "expat" ; then
+    for dir in "/opt" "/opt/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libexpat.so" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.a" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libexpat.la" ; then
+          expat_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr" ; then
+  if test -n "expat.h" ; then
+    for dir in "/usr/include" "/usr" "/usr/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr/local" ; then
+  if test -n "expat.h" ; then
+    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/proj/install" ; then
+  if test -n "expat.h" ; then
+    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/sw" ; then
+  if test -n "expat.h" ; then
+    for dir in "/sw/include" "/sw" "/sw/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/opt" ; then
+  if test -n "expat.h" ; then
+    for dir in "/opt/include" "/opt" "/opt/include/expat" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/expat.h" ; then
+          expat_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" == 1 ; then
+  if test "$hlvm_found_lib" == 1 ; then
+    echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+    incdir=${expat_INC}
+    libdir=${expat_LIB}
+
+ echo "$LDFLAGS" | grep -- "-L"${libdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   LDFLAGS="$LDFLAGS -L"${libdir}""
+ fi
+
+    echo "$as_me:$LINENO: checking for library containing XML_ParserCreate" >&5
+echo $ECHO_N "checking for library containing XML_ParserCreate... $ECHO_C" >&6
+if test "${ac_cv_search_XML_ParserCreate+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_XML_ParserCreate=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XML_ParserCreate ();
+int
+main ()
+{
+XML_ParserCreate ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_XML_ParserCreate="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_XML_ParserCreate" = no; then
+  for ac_lib in expat; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XML_ParserCreate ();
+int
+main ()
+{
+XML_ParserCreate ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_XML_ParserCreate="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_XML_ParserCreate" >&5
+echo "${ECHO_T}$ac_cv_search_XML_ParserCreate" >&6
+if test "$ac_cv_search_XML_ParserCreate" != no; then
+  test "$ac_cv_search_XML_ParserCreate" = "none required" || LIBS="$ac_cv_search_XML_ParserCreate $LIBS"
+  found_sym=1
+else
+  found_sym=0
+fi
+
+    if test "$found_sym" == "1" ; then
+      { echo "$as_me:$LINENO: Found expat in ${incdir} and ${libdir}" >&5
+echo "$as_me: Found expat in ${incdir} and ${libdir}" >&6;}
+
+ echo "$CPPFLAGS" | grep -- "-I"${incdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   CPPFLAGS="$CPPFLAGS -I"${incdir}""
+ fi
+
+    else
+      { echo "$as_me:$LINENO: Symbol 'XML_ParserCreate' not found in library expat in ${libdir}" >&5
+echo "$as_me: Symbol 'XML_ParserCreate' not found in library expat in ${libdir}" >&6;}
+    fi
+  else
+    echo "$as_me:$LINENO: result: failed to find library file" >&5
+echo "${ECHO_T}failed to find library file" >&6
+    { { echo "$as_me:$LINENO: error: The --with-expat-libdir option must be used" >&5
+echo "$as_me: error: The --with-expat-libdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  echo "$as_me:$LINENO: result: failed to find header file" >&5
+echo "${ECHO_T}failed to find header file" >&6
+  { { echo "$as_me:$LINENO: error: The --with-expat-incdir option must be used" >&5
+echo "$as_me: error: The --with-expat-incdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+# Check whether --with-SYCK or --without-SYCK was given.
+if test "${with_SYCK+set}" = set; then
+  withval="$with_SYCK"
+  syckpfxdir=$withval
+else
+  syckpfxdir=nada
+fi;
+
+# Check whether --with-SYCK-lib or --without-SYCK-lib was given.
+if test "${with_SYCK_lib+set}" = set; then
+  withval="$with_SYCK_lib"
+  sycklibdir=$withval
+else
+  sycklibdir=nada
+fi;
+
+# Check whether --with-SYCK-inc or --without-SYCK-inc was given.
+if test "${with_SYCK_inc+set}" = set; then
+  withval="$with_SYCK_inc"
+  syckincdir=$withval
+else
+  syckincdir=nada
+fi;
+pfxval="${syckpfxdir}"
+incval="${syckincdir}"
+libval="${sycklibdir}"
+echo "$as_me:$LINENO: checking for Syck Yaml Handler library and header" >&5
+echo $ECHO_N "checking for Syck Yaml Handler library and header... $ECHO_C" >&6
+hlvm_found_lib=0
+hlvm_found_inc=0
+if test "${pfxval}" != "nada" ; then
+  if test -d "${pfxval}" ; then
+
+hlvm_found_inc=0
+if test -d "${pfxval}" ; then
+  if test -n "syck.h" ; then
+    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+
+hlvm_found_lib=0
+if test -d "${pfxval}" ; then
+  if test -n "syck" ; then
+    for dir in "${pfxval}" "${pfxval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  else
+    echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6;
+    { { echo "$as_me:$LINENO: error: The --with-syck value must be a directory" >&5
+echo "$as_me: error: The --with-syck value must be a directory" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  if test "${libval}" != "nada" ; then
+
+hlvm_found_lib=0
+if test -d "${libval}" ; then
+  if test -n "syck" ; then
+    for dir in "${libval}" "${libval}/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+  if test "${incval}" != "nada" ; then
+
+hlvm_found_inc=0
+if test -d "${incval}" ; then
+  if test -n "syck.h" ; then
+    for dir in "${incval}/include" "${incval}" "${incval}/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+  fi
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr" ; then
+  if test -n "syck" ; then
+    for dir in "/usr" "/usr/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/usr/local" ; then
+  if test -n "syck" ; then
+    for dir in "/usr/local" "/usr/local/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/proj/install" ; then
+  if test -n "syck" ; then
+    for dir in "/proj/install" "/proj/install/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/sw" ; then
+  if test -n "syck" ; then
+    for dir in "/sw" "/sw/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_lib" != 1 ; then
+
+hlvm_found_lib=0
+if test -d "/opt" ; then
+  if test -n "syck" ; then
+    for dir in "/opt" "/opt/lib" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/libsyck.so" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.a" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        elif test -f "$dir/libsyck.la" ; then
+          syck_LIB=$dir
+
+          hlvm_found_lib=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr" ; then
+  if test -n "syck.h" ; then
+    for dir in "/usr/include" "/usr" "/usr/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/usr/local" ; then
+  if test -n "syck.h" ; then
+    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/proj/install" ; then
+  if test -n "syck.h" ; then
+    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/sw" ; then
+  if test -n "syck.h" ; then
+    for dir in "/sw/include" "/sw" "/sw/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" != 1 ; then
+
+hlvm_found_inc=0
+if test -d "/opt" ; then
+  if test -n "syck.h" ; then
+    for dir in "/opt/include" "/opt" "/opt/include/syck" ; do
+      if test -d "$dir" ; then
+        if test -f "$dir/syck.h" ; then
+          syck_INC="$dir"
+
+          hlvm_found_inc=1
+        fi
+      fi
+    done
+  fi
+fi
+
+fi
+if test "$hlvm_found_inc" == 1 ; then
+  if test "$hlvm_found_lib" == 1 ; then
+    echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6
+    incdir=${syck_INC}
+    libdir=${syck_LIB}
+
+ echo "$LDFLAGS" | grep -- "-L"${libdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   LDFLAGS="$LDFLAGS -L"${libdir}""
+ fi
+
+    echo "$as_me:$LINENO: checking for library containing syck_parse" >&5
+echo $ECHO_N "checking for library containing syck_parse... $ECHO_C" >&6
+if test "${ac_cv_search_syck_parse+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_syck_parse=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char syck_parse ();
+int
+main ()
+{
+syck_parse ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_syck_parse="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_syck_parse" = no; then
+  for ac_lib in syck; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char syck_parse ();
+int
+main ()
+{
+syck_parse ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_syck_parse="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_syck_parse" >&5
+echo "${ECHO_T}$ac_cv_search_syck_parse" >&6
+if test "$ac_cv_search_syck_parse" != no; then
+  test "$ac_cv_search_syck_parse" = "none required" || LIBS="$ac_cv_search_syck_parse $LIBS"
+  found_sym=1
+else
+  found_sym=0
+fi
+
+    if test "$found_sym" == "1" ; then
+      { echo "$as_me:$LINENO: Found syck in ${incdir} and ${libdir}" >&5
+echo "$as_me: Found syck in ${incdir} and ${libdir}" >&6;}
+
+ echo "$CPPFLAGS" | grep -- "-I"${incdir}"" >/dev/null 2>/dev/null
+ if test $? -ne 0 ; then
+   CPPFLAGS="$CPPFLAGS -I"${incdir}""
+ fi
+
+    else
+      { echo "$as_me:$LINENO: Symbol 'syck_parse' not found in library syck in ${libdir}" >&5
+echo "$as_me: Symbol 'syck_parse' not found in library syck in ${libdir}" >&6;}
+    fi
+  else
+    echo "$as_me:$LINENO: result: failed to find library file" >&5
+echo "${ECHO_T}failed to find library file" >&6
+    { { echo "$as_me:$LINENO: error: The --with-syck-libdir option must be used" >&5
+echo "$as_me: error: The --with-syck-libdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  echo "$as_me:$LINENO: result: failed to find header file" >&5
+echo "${ECHO_T}failed to find header file" >&6
+  { { echo "$as_me:$LINENO: error: The --with-syck-incdir option must be used" >&5
+echo "$as_me: error: The --with-syck-incdir option must be used" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
 LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug -L${prefix}/lib -L/usr/local/lib ${LDFLAGS}"
 if test "$HLVM_EFENCE" = true ; then
-
 
 echo "$as_me:$LINENO: checking for malloc in -lefence" >&5
 echo $ECHO_N "checking for malloc in -lefence... $ECHO_C" >&6
@@ -4339,99 +5886,6 @@ echo "$as_me: error: Electric Fence library is required: -lefence" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-fi
-if test "$HLVM_WITH_EXPAT" = "/usr" ; then
-if test "${ac_cv_lib_expat_ok+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-echo "$as_me:$LINENO: checking for XML_Parse in -lexpat" >&5
-echo $ECHO_N "checking for XML_Parse in -lexpat... $ECHO_C" >&6
-if test "${ac_cv_lib_expat_XML_Parse+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lexpat  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char XML_Parse ();
-int
-main ()
-{
-XML_Parse ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_expat_XML_Parse=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_expat_XML_Parse=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_expat_XML_Parse" >&5
-echo "${ECHO_T}$ac_cv_lib_expat_XML_Parse" >&6
-if test $ac_cv_lib_expat_XML_Parse = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBEXPAT 1
-_ACEOF
-
-  LIBS="-lexpat $LIBS"
-
-else
-  { { echo "$as_me:$LINENO: error: expat Library is required: -lexpat" >&5
-echo "$as_me: error: expat Library is required: -lexpat" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-fi
-
-else
-  if test -r "$HLVM_WITH_EXPAT/libexpat.la" ; then
-    LIBS="$HLVM_WITH_EXPAT/libexpat.la $LIBS"
-  else
-    { { echo "$as_me:$LINENO: error: Can't find libexpat.la" >&5
-echo "$as_me: error: Can't find libexpat.la" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
 fi
 
 
@@ -4691,8 +6145,7 @@ done
 
 
 
-
-for ac_header in apr-1/apr.h apr-1/apu.h expat.h llvm/Module.h
+for ac_header in expat_external.h llvm/Module.h syck_st.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -5548,11 +7001,6 @@ s,@LIBS@,$LIBS,;t t
 s,@HLVM_COPYRIGHT@,$HLVM_COPYRIGHT,;t t
 s,@HLVM_PACKAGE@,$HLVM_PACKAGE,;t t
 s,@HLVM_VERSION@,$HLVM_VERSION,;t t
-s,@USE_@,$USE_,;t t
-s,@_BIN@,$_BIN,;t t
-s,@_DIR@,$_DIR,;t t
-s,@_INC@,$_INC,;t t
-s,@_LIB@,$_LIB,;t t
 s,@HLVM_SO_VERSION@,$HLVM_SO_VERSION,;t t
 s,@HLVM_SO_CURRENT@,$HLVM_SO_CURRENT,;t t
 s,@HLVM_SO_REVISION@,$HLVM_SO_REVISION,;t t
@@ -5584,6 +7032,14 @@ s,@CXX@,$CXX,;t t
 s,@CXXFLAGS@,$CXXFLAGS,;t t
 s,@ac_ct_CXX@,$ac_ct_CXX,;t t
 s,@ifGNUmake@,$ifGNUmake,;t t
+s,@apr_INC@,$apr_INC,;t t
+s,@apr_LIB@,$apr_LIB,;t t
+s,@apru_INC@,$apru_INC,;t t
+s,@apru_LIB@,$apru_LIB,;t t
+s,@expat_INC@,$expat_INC,;t t
+s,@expat_LIB@,$expat_LIB,;t t
+s,@syck_INC@,$syck_INC,;t t
+s,@syck_LIB@,$syck_LIB,;t t
 s,@EGREP@,$EGREP,;t t
 s,@HLVM_CFGNAME@,$HLVM_CFGNAME,;t t
 s,@HLVM_CONFIGTIME@,$HLVM_CONFIGTIME,;t t

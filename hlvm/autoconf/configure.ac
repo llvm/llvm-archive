@@ -15,12 +15,6 @@ AC_SUBST(HLVM_VERSION)
 AC_PREFIX_DEFAULT([/usr/local/hlvm])
 
 
-dnl **************************************************************************
-dnl * Set the location of various third-party software packages
-dnl **************************************************************************
-FIND_PACKAGE([apr],[apr-1/apr.h],[libapr-1.so],[],[Apache Portable Runtime])
-FIND_PACKAGE([apr-util],[apr-1/apu.h],[libaprutil-1.so],[],[Apache Portable Runtime Utilities])
-
 dnl ----------------------------------------------------------------------------
 dnl -- Shared Object Versioning For libtool
 dnl -- 
@@ -305,6 +299,13 @@ dnl --
 dnl -- SECTION 4: Check For Needed Libraries
 dnl --
 dnl ----------------------------------------------------------------------------
+HLVM_FIND_LIBRARY([apr],[apr-1/apr.h],[apr-1],[apr_allocator_alloc],
+                  [Apache Portable Runtime])
+HLVM_FIND_LIBRARY([apru],[apr-1/apu.h],[aprutil-1],[apu_version],
+                  [Apache Portable Runtime Utilities])
+HLVM_FIND_LIBRARY([expat],[expat.h],[expat],[XML_ParserCreate],
+                  [expat XML Parser])
+HLVM_FIND_LIBRARY([syck],[syck.h],[syck],[syck_parse],[Syck Yaml Handler])
 
 dnl -- Check for specific libraries we depend on.
 LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug -L${prefix}/lib -L/usr/local/lib ${LDFLAGS}"
@@ -312,30 +313,13 @@ if test "$HLVM_EFENCE" = true ; then
   AC_CHECK_LIB(efence,malloc,,
                AC_MSG_ERROR(Electric Fence library is required: -lefence) )
 fi
-dnl AC_CACHE_VAL(hlvm_cv_lib_c_ok, 
-dnl     [AC_CHECK_LIB(c,exit,,
-dnl      AC_MSG_ERROR(Standard C Library is required: -lc)) ])
-dnl AC_CACHE_VAL(hlvm_cv_lib_m_ok,
-dnl     [AC_CHECK_LIB(m,floor,,
-dnl      AC_MSG_ERROR(Standard Math Library is required: -lm)) ])
-if test "$HLVM_WITH_EXPAT" = "/usr" ; then
-AC_CACHE_VAL(ac_cv_lib_expat_ok,
-    [AC_CHECK_LIB(expat,XML_Parse,,
-     AC_MSG_ERROR(expat Library is required: -lexpat)) ])
-else
-  if test -r "$HLVM_WITH_EXPAT/libexpat.la" ; then
-    LIBS="$HLVM_WITH_EXPAT/libexpat.la $LIBS"
-  else
-    AC_MSG_ERROR([Can't find libexpat.la])
-  fi
-fi
 
 dnl ----------------------------------------------------------------------------
 dnl --
 dnl -- SECTION 5: Check For Needed Header Files
 dnl --
 dnl ----------------------------------------------------------------------------
-AC_CHECK_HEADERS([apr-1/apr.h apr-1/apu.h expat.h llvm/Module.h])
+AC_CHECK_HEADERS([expat_external.h llvm/Module.h syck_st.h])
 
 dnl ----------------------------------------------------------------------------
 dnl --

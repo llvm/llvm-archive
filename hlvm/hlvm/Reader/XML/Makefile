@@ -1,12 +1,13 @@
-##===- hlvm/Reader/XML/Makefile ----------------------------*- Makefile -*-===##
+#-------------------------------------------------------------------------------
+# 
+# Copyright (C) 2006 HLVM Group. All Rights Reserved
 #
-# Relative path to the top of the source tree.
-#
-LEVEL=../../..
+#-------------------------------------------------------------------------------
 
-#
-# List all of the subdirectories that we will compile.
-#
-DIRS=
+LEVEL = ../../..
+LIBRARYNAME = HLVMXMLReader
+DONT_BUILD_RELINKED := 1
+BUILD_ARCHIVE := 1
+INSTALL_INCLUDES := XMLReader.h
 
 include $(LEVEL)/Makefile.hlvm

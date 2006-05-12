@@ -2,7 +2,7 @@
 //
 //                      High Level Virtual Machine (HLVM)
 //
-// Copyright (C) 2006 HLVM Group. All Rights Reserved.
+// Copyright (C) 2006 Reid Spencer. All Rights Reserved.
 //
 // This software is free software; you can redistribute it and/or modify it 
 // under the terms of the GNU Lesser General Public License as published by 

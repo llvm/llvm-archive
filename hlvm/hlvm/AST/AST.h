@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Node.cpp - AST Abstract Node Class -------------*- C++ -*-===//
+//===-- hlvm/AST/AST.h - AST Container Class --------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,24 +20,53 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Node.cpp
+/// @file hlvm/AST/AST.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Declares the class hlvm::AST::AST
 //===----------------------------------------------------------------------===//
 
+#ifndef HLVM_AST_AST_H
+#define HLVM_AST_AST_H
+
 #include <hlvm/AST/Node.h>
-#include <hlvm/AST/Conditionable.h>
-#include <hlvm/AST/ContainerType.h>
 
-namespace hlvm {
-namespace AST {
-
+/// This namespace is for all HLVM software. It ensures that HLVM software does
+/// not collide with any other software. Hopefully HLVM is not a namespace used
+/// elsewhere. 
+namespace hlvm
+{
+/// This namespace contains all the AST (Abstract Syntax Tree) module code. All
+/// node types of the AST are declared in this namespace.
+namespace AST
+{
+  /// This class is used to hold or contain an Abstract Syntax Tree. It provides
+  /// those aspects of the tree that are not part of the tree itself.
+  /// @brief AST Container Class
+  class AST
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      AST() : tree_(0) {}
+      virtual ~AST();
 #ifndef _NDEBUG
-void 
-Node::dump() const {
-}
+      virtual void dump() const;
 #endif
 
-}}
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Node* tree_;
+    /// @}
+  };
+} // AST
+} // hlvm
+#endif

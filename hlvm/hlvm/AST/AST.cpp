@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Node.cpp - AST Abstract Node Class -------------*- C++ -*-===//
+//===-- hlvm/AST/AST.cpp - AST Container Class ------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,23 +20,23 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Node.cpp
+/// @file hlvm/AST/AST.cpp
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the functions of class hlvm::AST::AST.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Node.h>
-#include <hlvm/AST/Conditionable.h>
-#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/AST.h>
 
 namespace hlvm {
 namespace AST {
 
+AST::~AST() {
+}
 #ifndef _NDEBUG
 void 
-Node::dump() const {
+AST::dump() const {
 }
 #endif
 

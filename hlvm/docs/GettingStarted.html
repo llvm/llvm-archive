@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Getting Started with HLVM</title>
+  <link rel="stylesheet" href="hlvm.css" type="text/css">
+</head>
+<body>
+<div class="title">Getting Started with the HLVM System</div>
+<ol>
+  <li><a href="#quickstart">Quick Start (For The Impatient)</a>
+  <li><a href="#overview">Overview</a>
+  <li><a href="#requirements">Requirements</a>
+    <ol>
+      <li><a href="#hardware">Hardware</a>
+      <li><a href="#software">Software</a>
+      <li><a href="#brokengcc">Broken versions of GCC</a>
+    </ol></li>
+
+  <li><a href="#starting">Getting Started with LLVM</a>
+    <ol>
+      <li><a href="#terminology">Terminology and Notation</a>
+      <li><a href="#environment">Setting Up Your Environment</a>
+      <li><a href="#unpack">Unpacking the LLVM Archives</a>
+      <li><a href="#checkout">Checkout LLVM from CVS</a>
+      <li><a href="#installcf">Install the GCC Front End</a>
+      <li><a href="#config">Local LLVM Configuration</a>
+      <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
+      <li><a href="#objfiles">The Location of LLVM Object Files</a>
+      <li><a href="#optionalconfig">Optional Configuration Items</a>
+    </ol></li>
+
+  <li><a href="#layout">Program layout</a>
+    <ol>
+      <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
+      <li><a href="#examples"><tt>llvm/examples</tt></a>
+      <li><a href="#include"><tt>llvm/include</tt></a>
+      <li><a href="#lib"><tt>llvm/lib</tt></a>
+      <li><a href="#projects"><tt>llvm/projects</tt></a>
+      <li><a href="#runtime"><tt>llvm/runtime</tt></a>  
+      <li><a href="#test"><tt>llvm/test</tt></a>
+      <li><a href="#tools"><tt>llvm/tools</tt></a>  
+      <li><a href="#utils"><tt>llvm/utils</tt></a>
+      <li><a href="#win32"><tt>llvm/win32</tt></a>
+    </ol></li>
+
+  <li><a href="#problems">Common Problems</a>
+  <li><a href="#links">Links</a>
+</ol>
+
+<div class="author">
+  <p>Author:<a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section">
+  <a name="quickstart"><b>Quick Start (For The Impatient)</b></a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="text">
+<p>Here's the quick start for getting up and running quickly with HLVM. Note
+that this is for experts and the impatient only.</p>
+<ol>
+  <li>Read the documentation.</li>
+  <li>Read the documentation.</li>
+  <li>Remember that you were warned twice about reading the documentation.</li>
+  <li>Obtain, build, and install the dependent packages. You need LLVM, APR,
+  APR-Utils, expat, GCC, Gnu Make, and the Gnu C Library</li>
+  <li>Obtain the HLVM Source Code (svn://hlvm.org/hlvm).</li>
+  <li>Configure the HLVM Build Environment. There's two ways to do this. Either
+  run the <tt>build.sh</tt> script (read the top of it to find out how) or:
+  <ol>
+    <li><tt>cd <i>where-you-want-to-build-llvm</i></tt></li>
+    <li><tt><i>/path/to/hlvm/</i>configure [options]</tt><br/>
+    Some common options:
+      <ul>
+        <li><tt>--prefix=<i>directory</i></tt><br/>
+        Specify for <i>directory</i> the full pathname of where you
+        want the HLVM tools and libraries to be installed (default
+        <tt>/usr/local</tt>).</li>
+        <li><tt>--with-llvm-src=<i>directory</i></tt><br/>Specify source location
+        for LLVM.</li>
+        <li><tt>--with-llvm-obj=<i>directory</i></tt><br/>Specify object location
+        for LLVM.</li>
+        <li><tt>--with-APR=<i>directory</i></tt><br/>Specify installed location
+        for APR.</li>
+        <li><tt>--with-APRU=<i>directory</i></tt><br/>Specify installed location
+        for APR Utils.</li>
+        <li><tt>--with-EXPAT=<i>directory</i></tt><br/>Specify installed location
+        for Expat XML Parser.</li>
+        <li><tt>--with-SYCK=<i>directory</i></tt><br/>Specify installed location
+        for Syck library.</li>
+      </ul>
+  </ol></li>
+
+  <li>Build HLVM. If you already ran build.sh, skip this step,
+  otherwise just run <tt>make</tt> or <tt>gmake</tt></li>
+  <li>Install HLVM. If you already ran build.sh, skip this step, otherwise just
+  run <tt>make install</tt> or <tt>gmake install</tt></li>
+</ol>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="overview"><b>Overview</b></a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+<p>Welcome to HLVM! This document shows you how to get started with the High
+Level Virtual Machine. Before you do that, lets get some questions answered up
+front to make sure you actually want to get started with HLVM.</p>
+<dl>
+  <dt>What is HLVM?</dt>
+  <dd>HLVM is a toolkit for building virtual machines for dynamic languages. Its
+  not something everyone is going to want to mess with. Generally, it is highly
+  technical and doesn't really do much for an end user. On the other hand, if
+  you're developing your own dynamic programming language, HLVM is <em>just</em>
+  the ticket.</dd>
+  <dt>Who uses HLVM?</dt>
+  <dd>Generally, programming language researchers and software tool vendors 
+  use HLVM.</dd>
+  <dt>What does HLVM do?</dt>
+  <dd>HLVM doesn't really <em>do</em> anything. While it provides a few
+  executables, these are ancillary in nature. Most of HLVM's capabilities are
+  provided through a set of code libraries that can be incorporated into other
+  programs. HLVM does provide a virtual machine executable but without a program
+  to run (one that has been compiled by HLVM based tools), the virtual machine
+  won't do anything. So, if you're an end use of software, HLVM probably isn't
+  for you. If you're a developer, however, we think you'll find HLVM quite
+  spiffy.</dd>
+  <dt>How hard is HLVM to build?</dt>
+  <dd>Although we've tried to make building HLVM dead simple, it is a
+  complicated system and you must understand some of those complexities to get
+  it right. One of its major complexities is that it incorporates many other
+  packages that are not distributed with HLVM. You must build and install those
+  packages yourself.</dd>
+</dl>
+<p>Okay, if you're still interested in HLVM, then we have a few more
+introductory things to cover:</p>
+<ol>
+  <li>HLVM provides a suite of libraries and a few tools. These are statically
+  linked (archive files and object files) so that you can incorporate the
+  appropriate pieces into your project. This was done purposefully since we
+  don't believe that creating a monolithic shared library (DLL) is particularly
+  useful. This architecture gives you the freedom to construct your own
+  libraries by picking the appropriate things from the palette that HLVM offers.
+  </li>
+  <li>Although HLVM provides several tools, these are ancillary in nature. They
+  are provided to help either with testing HLVM or to help you use HLVM. The
+  <tt>hlvm</tt> program (the actual virtual machine) is a reference
+  implementation. You may choose to implement it differently (with the help of
+  HLVM's runtime libraries, of course).</li>
+</ol>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="overview"><b>Overview</b></a></div>
+<!-- *********************************************************************** -->
+<p>HLVM is dependent on a number of other software packages. These
+packages will be required before you can build HLVM. Fortunately, the configure
+script will tell you which packages you lack. The table below shows the software
+that HLVM depends on. You <b>must</b> obtain and build these packages yourself
+if they are not already present on your system.</p>
+
+
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="requirements"><b>Requirements</b></a></div>
+<!-- *********************************************************************** -->
+
+<div class="text">
+
+<p>Before you begin to use the LLVM system, review the requirements given below.
+This may save you some trouble by knowing ahead of time what hardware and
+software you will need.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="hardware"><b>Hardware</b></a></div>
+<div class="text">
+  <p>HLVM supports whatever hardware LLVM supports. For details, please see
+  <a href="http://llvm.org/docs/GettingStarted.html#hardware">LLVM's documentation</a></p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="software"><b>Software</b></a></div>
+<div class="text">
+  <p>Compiling HLVM requires that you have several software packages installed. 
+  The table below lists those required packages. The Package column is the usual
+  name for the software package that HLVM depends on. The Version column 
+  provides "known to work" versions of the package. The Notes column describes 
+  how HLVM uses the package and provides other details.</p>
+  <table>
+    <tr><th>Package</th><th>Version</th><th>Notes</th></tr>
+    <tr>
+      <td><a href="http://llvm.org/">LLVM</a></td>
+      <td>1.7</td>
+      <td>optimization, code generation, bytecode, JIT</td>
+    </tr>
+    <tr>
+      <td><a href="http://apr.apache.org/">APR</a></td>
+      <td>1.2.7</td>
+      <td>runtime environment, OS abstraction, threading, loading, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/make">GNU Make</a></td>
+      <td>3.79, 3.79.1</td>
+      <td>Makefile/build processor</td>
+    </tr>
+    <tr>
+      <td><a href="http://gcc.gnu.org">GCC</a></td>
+      <td>&ge;3.4.4</td>
+      <td>C/C++ compiler<sup><a href="#sf1">1</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.gnu.org/software/flex">Flex</a></td>
+      <td>2.5.4</td>
+      <td>LEX compiler</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.gnu.org/software/bison/bison.html">Bison</a></td>
+      <td>1.28, 1.35, 1.75, 1.875d, 2.0, or 2.1<br/>(not 1.85 or 1.875)</td>
+      <td>YACC compiler</td>
+    </tr>
+    <tr>
+      <td><a href="http://subversion.tigris.org/">Subversion</a></td>
+      <td>&ge;1.1</td>
+      <td>Suversion access to HLVM source<sup><a href="#sf2">2</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
+      <td>1.4.2</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.tcl.tk/software/tcltk/">tcl</a></td>
+      <td>8.3, 8.4</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://expect.nist.gov/">expect</a></td>
+      <td>5.38.0</td>
+      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/m4">GNU M4</a>
+      <td>1.4</td>
+      <td>Macro processor for configuration<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.gnu.org/software/autoconf">GNU Autoconf</a></td>
+      <td>2.59</td>
+      <td>Configuration script builder<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://www.gnu.org/software/automake">GNU Automake</a></td>
+      <td>1.9.2</td>
+      <td>aclocal macro generator<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+    <tr>
+      <td><a href="http://savannah.gnu.org/projects/libtool">libtool</a></td>
+      <td>1.5.10</td>
+      <td>Shared library manager<sup><a href="#sf4">4</a></sup></td>
+    </tr>
+  </table>
+
+  <p><b>Notes:</b></p>
+  <div class="notes">
+  <ol>
+    <li><a name="sf3">Only the C and C++ languages are needed so there's no
+      need to build the other languages for LLVM's purposes.</a> See 
+      <a href="#brokengcc">below</a> for specific version info.</li>
+    <li><a name="sf2">You only need CVS if you intend to build from the 
+      latest LLVM sources. If you're working from a release distribution, you
+      don't need CVS.</a></li>
+    <li><a name="sf3">Only needed if you want to run the automated test 
+      suite in the <tt>llvm/test</tt> directory.</a></li>
+    <li><a name="sf4">If you want to make changes to the configure scripts, 
+      you will need GNU autoconf (2.59), and consequently, GNU M4 (version 1.4 
+      or higher). You will also need automake (1.9.2). We only use aclocal 
+      from that package.</a></li>
+  </ol>
+  </div>
+  
+  <p>Additionally, your compilation host is expected to have the usual 
+  plethora of Unix utilities. Specifically:</p>
+  <ul>
+    <li><b>ar</b> - archive library builder</li>
+    <li><b>bzip2*</b> - bzip2 command for distribution generation</li>
+    <li><b>bunzip2*</b> - bunzip2 command for distribution checking</li>
+    <li><b>chmod</b> - change permissions on a file</li>
+    <li><b>cat</b> - output concatenation utility</li>
+    <li><b>cp</b> - copy files</li>
+    <li><b>date</b> - print the current date/time </li>
+    <li><b>echo</b> - print to standard output</li>
+    <li><b>egrep</b> - extended regular expression search utility</li>
+    <li><b>etags</b> - C/C++ tag file creator for vim/emacs</li>
+    <li><b>find</b> - find files/dirs in a file system</li>
+    <li><b>grep</b> - regular expression search utility</li>
+    <li><b>gzip*</b> - gzip command for distribution generation</li>
+    <li><b>gunzip*</b> - gunzip command for distribution checking</li>
+    <li><b>install</b> - install directories/files </li>
+    <li><b>mkdir</b> - create a directory</li>
+    <li><b>mv</b> - move (rename) files</li>
+    <li><b>ranlib</b> - symbol table builder for archive libraries</li>
+    <li><b>rm</b> - remove (delete) files and directories</li>
+    <li><b>sed</b> - stream editor for transforming output</li>
+    <li><b>sh</b> - Bourne shell for make build scripts</li>
+    <li><b>tar</b> - tape archive for distribution generation</li>
+    <li><b>test</b> - test things in file system</li>
+    <li><b>unzip*</b> - unzip command for distribution checking</li>
+    <li><b>zip*</b> - zip command for distribution generation</li>
+  </ul>
+</div>
+</body>
+</html>

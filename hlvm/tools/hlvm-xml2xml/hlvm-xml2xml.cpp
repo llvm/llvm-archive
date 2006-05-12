@@ -30,9 +30,11 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
 #include <fstream>
+#include <iostream>
 
+using namespace llvm;
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+InputFilename(cl::Positional, cl::desc("<input XML>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
@@ -41,7 +43,8 @@ OutputFilename("o", cl::desc("Override output filename"),
 int main(int argc, char**argv) 
 {
   try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
+    cl::ParseCommandLineOptions(argc, argv, 
+      "hlvm-xml2xml XML->AST->XML translator\n");
     sys::PrintStackTraceOnErrorSignal();
 
     std::ostream *Out = &std::cout;  // Default to printing to stdout.
@@ -70,7 +73,7 @@ int main(int argc, char**argv)
     }
 
     if (Out != &std::cout) {
-      ((std::ofstream*)Out)->close();
+      static_cast<std::ofstream*>(Out)->close();
       delete Out;
     }
     return 0;

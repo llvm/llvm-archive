@@ -27,12 +27,14 @@
 /// @brief Implements the main program for the hlvm-xml2xml executable
 //===----------------------------------------------------------------------===//
 
+#include <hlvm/Reader/XML/XMLReader.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
 #include <fstream>
 #include <iostream>
 
 using namespace llvm;
+using namespace hlvm;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input XML>"), cl::init("-"));
 
@@ -71,6 +73,9 @@ int main(int argc, char**argv)
                 << ": sending to stdout instead!\n";
       Out = &std::cout;
     }
+
+    XMLReader* rdr = XMLReader::create(llvm::sys::Path(InputFilename));
+    rdr->read();
 
     if (Out != &std::cout) {
       static_cast<std::ofstream*>(Out)->close();

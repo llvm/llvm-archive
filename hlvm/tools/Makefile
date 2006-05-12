@@ -1,6 +1,6 @@
 ##===- tools/Makefile --------------------------------------*- Makefile -*-===##
 
 LEVEL=..
-DIRS=hlvm-yaml2xml hlvm-xml2yaml
+DIRS=hlvm-xml2xml
 
 include $(LEVEL)/Makefile.hlvm

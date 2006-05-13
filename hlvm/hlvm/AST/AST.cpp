@@ -32,12 +32,4 @@
 namespace hlvm {
 namespace AST {
 
-AST::~AST() {
-}
-#ifndef _NDEBUG
-void 
-AST::dump() const {
-}
-#endif
-
 }}

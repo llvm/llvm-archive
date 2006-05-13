@@ -50,10 +50,6 @@ namespace AST
     /// @{
     public:
       AST() : tree_(0) {}
-      virtual ~AST();
-#ifndef _NDEBUG
-      virtual void dump() const;
-#endif
 
     /// @}
     /// @name Accessors

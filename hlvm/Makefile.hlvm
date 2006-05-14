@@ -24,10 +24,10 @@ ifeq ($(HLVM_ASSERT),true)
 CPPFLAGS += -DHLVM_ASSERT=1
 endif
 
-HLVM_COMMONFLAGS = -pipe -Wall -W -Wpointer-arith -Wcast-align -Wwrite-strings \
-		   -Winline -Wno-unused-parameter
+HLVM_COMMONFLAGS := -pipe -Wall -W -Wwrite-strings -Wno-unused -Wcast-align \
+                     -Wpointer-arith
 CXXFLAGS += $(HLVM_COMMONFLAGS) -Wno-deprecated -Wold-style-cast \
-	    -Woverloaded-virtual -ffor-scope -foperator-names
+            -Woverloaded-virtual -ffor-scope -foperator-names
 CFLAGS += $(HLVM_COMMONFLAGS)
 
 ifeq ($(HLVM_DEBUG),true)
@@ -116,20 +116,22 @@ $(InstalledIncludes): $(PROJ_includedir)/$(PartialPath)/% : $(PROJ_SRC_DIR)/%
 endif
 
 printvars::
-	$(Echo) "BuildMode       : " '$(BuildMode)'
-	$(Echo) "HLVM_VERSION	 : " '$(HLVM_VERSION)'
-	$(Echo) "HLVM_SO_VERSION	 : " '$(HLVM_SO_VERSION)'
-	$(Echo) "HLVM_bindir	 : " '$(HLVM_bindir)'
-	$(Echo) "HLVM_libdir	 : " '$(HLVM_libdir)'
-	$(Echo) "HLVM_sbindir	 : " '$(HLVM_sbindir)'
-	$(Echo) "HLVM_libexecdir	 : " '$(HLVM_libexecdir)'
-	$(Echo) "HLVM_datadir	 : " '$(HLVM_datadir)'
-	$(Echo) "HLVM_configdir	 : " '$(HLVM_configdir)'
-	$(Echo) "HLVM_infodir	 : " '$(HLVM_infodir)'
-	$(Echo) "HLVM_mandir	 : " '$(HLVM_mandir)'
-	$(Echo) "HLVM_schemasdir	 : " '$(HLVM_schemasdir)'
-	$(Echo) "HLVM_wrkspcdir	 : " '$(HLVM_wrkspcdir)'
-	$(Echo) "HLVM_llvmsrcdir	 : " '$(HLVM_llvmsrcdir)'
-	$(Echo) "HLVM_llvmobjdir	 : " '$(HLVM_llvmobjdir)'
+	$(Echo) "BuildMode        : " '$(BuildMode)'
+	$(Echo) "HLVM_VERSION	  : " '$(HLVM_VERSION)'
+	$(Echo) "HLVM_SO_VERSION  : " '$(HLVM_SO_VERSION)'
+	$(Echo) "HLVM_bindir	  : " '$(HLVM_bindir)'
+	$(Echo) "HLVM_libdir	  : " '$(HLVM_libdir)'
+	$(Echo) "HLVM_sbindir	  : " '$(HLVM_sbindir)'
+	$(Echo) "HLVM_libexecdir  : " '$(HLVM_libexecdir)'
+	$(Echo) "HLVM_datadir	  : " '$(HLVM_datadir)'
+	$(Echo) "HLVM_configdir	  : " '$(HLVM_configdir)'
+	$(Echo) "HLVM_infodir	  : " '$(HLVM_infodir)'
+	$(Echo) "HLVM_mandir	  : " '$(HLVM_mandir)'
+	$(Echo) "HLVM_schemasdir  : " '$(HLVM_schemasdir)'
+	$(Echo) "HLVM_wrkspcdir	  : " '$(HLVM_wrkspcdir)'
+	$(Echo) "HLVM_llvmsrcdir  : " '$(HLVM_llvmsrcdir)'
+	$(Echo) "HLVM_llvmobjdir  : " '$(HLVM_llvmobjdir)'
 	$(Echo) "HLVM_top_srcdir  : " '$(HLVM_top_srcdir)'
 	$(Echo) "HLVM_top_builddir: " '$(HLVM_top_builddir)'
+	$(Echo) "CXXFLAGS         : " '$(CXXFLAGS)'
+	$(Echo) "CFLAGS           : " '$(CFLAGS)'

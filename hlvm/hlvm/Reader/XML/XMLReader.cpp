@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Reader/XML/XMLReader.h>
+#include <hlvm/Reader/XML/HLVMTokenizer.h>
 #include <hlvm/Base/Locator.h>
 #include <hlvm/AST/AST.h>
 #include <expat.h>
@@ -53,6 +54,16 @@ enum AttributeTypes
   ENTITY_AttrType,
   ENTITIES_AttrType,
   NOTATION_AttrType,
+};
+
+enum SpecialTokens 
+{
+  NamespaceToken = -1,
+  CharactersToken = -2,
+  CommentToken = -3,
+  CDATASectionToken = -4,
+  ProcessingInstructionToken = -5,
+
 };
 
 struct AttrInfo
@@ -140,10 +151,10 @@ private:
 
     // Fill in the element info
     ei.local = name;
-    ei.token = d.tokenize(name);
+    ei.token = HLVM_Reader_XML::HLVMTokenizer::recognize(name);
     ei.set(
-      p->source_->publicId(),
-      p->source_->systemId(),
+      "",
+      p->path_.c_str(),
       uint32_t(XML_GetCurrentLineNumber(p->xp_)), 
       uint32_t(XML_GetCurrentColumnNumber(p->xp_))
     );
@@ -163,28 +174,11 @@ private:
         // Resize the attrs vector to accommodate this attribute and get
         // a preference to that current attribute for ease of expression
         ei.attrs.resize(curr_attr+1);
-        XPS_xml::AttrInfo& attr = ei.attrs[curr_attr];
-
-        // Handle the namespace^Dname couplet
-        const XML_Char* attr_ns_name = *attributes;
-        XML_Char* attr_name = strrchr(attr_ns_name, Namespace_Separator);
-        if (attr_name == 0)
-        {
-          attr.ns = 0;
-          attr_name = const_cast<XML_Char*>(attr_ns_name);
-        }
-        else
-        {
-          *attr_name = 0; // Terminate namespace name
-          attr_name++;    // Advance to start of attribute name
-          NSMapType::const_iterator NSI = p->nsmap_.find(attr_ns_name);
-          XPS_assert(NSI != p->nsmap_.end());
-          attr.ns = NSI->second;
-        }
+        AttrInfo& attr = ei.attrs[curr_attr];
 
         // Get the token for the
-        attr.local = attr_name;
-        attr.token = d.tokenize(attr_name);
+        attr.local = *attributes;
+        attr.token = HLVM_Reader_XML::HLVMTokenizer::recognize(*attributes);
         attr.value = attributes[1];
 
         // Increment loop counters
@@ -194,7 +188,7 @@ private:
     }
 
     // Tell the handler about the element
-    p->handler_->ElementStart(ei);
+    //p->handler_->ElementStart(ei);
   }
 
   static void XMLCALL 
@@ -207,44 +201,16 @@ private:
     int line = XML_GetCurrentLineNumber( p->xp_ );
     int column = XML_GetCurrentColumnNumber( p->xp_ );
 
-    // Find the separator that separates the namespace name from the local name
-    const XML_Char* ns_name = name;
-    int ns = 0;
-    XML_Char* local_name = strrchr(name, Namespace_Separator);
-
-    // If we didn't find the separator, then there's no namespace. This means
-    // that we've returned to the anonymous namespace so accommodate that now.
-    if (local_name == 0) {
-      local_name = const_cast<XML_Char*>(name);
-    }
-
-    // Otherwise we have a namespace and we need to decouple the couplet
-    else
-    {
-      *local_name = 0; // terminate namespace
-      local_name++;    // get start of local name
-
-      // Lookup the namespace by prefix. Its a hard error to not find the 
-      // namespace name in the map because the Namespace start handler should
-      // have already placed it there.
-      NSMapType::const_iterator NSI = p->nsmap_.find(ns_name);
-      XPS_assert(NSI != p->nsmap_.end());
-      ns = NSI->second;
-    }
-
-    // Get the dialect
-    const Dialect& d = p->find_dialect(ns);
-
     // Convert the element name to a token
-    int name_token = d.tokenize(local_name);
+    int name_token = HLVM_Reader_XML::HLVMTokenizer::recognize(name);
 
     // Save the previous token before poping it and make sure that it is the
     // same as the one the parser told us we're popping.
     int32_t token = p->elems_.back().token;
-    XPS_assert(token == name_token);
+    assert(token == name_token);
 
     // Tell the handler that we're ending an element.
-    p->handler_->ElementEnd( p->elems_.back(), line, column );
+    // p->handler_->ElementEnd( p->elems_.back(), line, column );
 
     // Pop the element token and then push it on the "kids" list of the 
     // parent element indicating that we've completed parsing one child element.
@@ -255,10 +221,6 @@ private:
       p->etop_ = & p->elems_.back();
       p->etop_->kids.push_back(ki);
     }
-
-    // Fix the string we modified
-    if (ns != 0)
-      *(--local_name) = Namespace_Separator;
   }
 
   static void XMLCALL 
@@ -270,7 +232,7 @@ private:
     // Tell the handler about the characters
     std::string tmp;
     tmp.assign(s,len);
-    p->handler_->Characters(tmp);
+    // p->handler_->Characters(tmp);
   }
 
   static void XMLCALL 
@@ -281,7 +243,7 @@ private:
     register XMLReaderImpl* p = reinterpret_cast<XMLReaderImpl*>(user_data);
 
     // Tell the handler about the processing instruction
-    p->handler_->ProcessingInstruction(target,data);
+    // p->handler_->ProcessingInstruction(target,data);
   }
 
   static void XMLCALL 
@@ -291,7 +253,7 @@ private:
     register XMLReaderImpl* p = reinterpret_cast<XMLReaderImpl*>(user_data);
 
     // Comments are always valid
-    p->handler_->Comment(data);
+    // p->handler_->Comment(data);
   }
 
   static void XMLCALL 
@@ -311,7 +273,7 @@ private:
     p->elems_.push_back(ei);
 
     // Inform the handler of the CData Section
-    p->handler_->CDataSectionStart();
+    // p->handler_->CDataSectionStart();
   }
 
   static void XMLCALL 
@@ -321,7 +283,7 @@ private:
     register XMLReaderImpl* p = reinterpret_cast<XMLReaderImpl*>(user_data);
 
     // validate that the top of stack is a CDataSection
-    XPS_assert(p->etop_->token == CDATASectionToken);
+    assert(p->etop_->token == CDATASectionToken);
 
     // Pop the CData off the stack
     NodeInfo ki = static_cast<NodeInfo&>(p->elems_.back());
@@ -330,7 +292,7 @@ private:
     p->etop_->kids.push_back(ki);
 
     // Inform the handler (always valid)
-    p->handler_->CDataSectionEnd();
+    // p->handler_->CDataSectionEnd();
   }
 
   static void XMLCALL 
@@ -440,8 +402,6 @@ XMLReaderImpl::read() {
   XML_ParserReset(xp_,"UTF-8");
   XML_SetUserData(xp_, this );
   XML_SetElementHandler(xp_, &StartElementHandler, &EndElementHandler );
-  XML_SetNamespaceDeclHandler(xp_, StartNamespaceDeclHandler, 
-    EndNamespaceDeclHandler );
   XML_SetCharacterDataHandler( xp_, CharacterDataHandler );
   XML_SetProcessingInstructionHandler(xp_, ProcessingInstructionHandler );
   XML_SetCommentHandler( xp_, CommentHandler );

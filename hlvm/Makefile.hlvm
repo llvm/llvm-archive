@@ -93,10 +93,14 @@ $(PROJ_OBJ_ROOT)/Makefile.hlvm: $(PROJ_SRC_ROOT)/Makefile.hlvm
 
 preconditions: $(PROJ_OBJ_DIR)/Makefile.hlvm
 
-#$(PROJ_OBJ_DIR)/%Tokenizer.cpp $(PROJ_OBJ_DIR)/%Tokenizer.h $(PROJ_OBJ_DIR)/%TokenHash.i : $(PROJ_SRC_DIR)/%.rng $(HLVM_top_srcdir)/utils/tmplt/Tokenizer_Template.cpp $(HLVM_top_srcdir)/utils/tmplt/Tokenizer_Template.h $(HLVM_top_srcdir)/utils/bin/mkTokenizer
-#	$(Echo) Building Tokenizer For $*
-#	$(Verb) $(HLVM_top_srcdir)/utils/bin/mkTokenizer -f \
-#	  $(PROJ_SRC_DIR)/$*.rng
+$(PROJ_OBJ_DIR)/%Tokenizer.cpp $(PROJ_OBJ_DIR)/%Tokenizer.h \
+  $(PROJ_OBJ_DIR)/%TokenHash.i : $(PROJ_SRC_DIR)/%.rng \
+  $(HLVM_top_srcdir)/utils/tmplt/Tokenizer_Template.cpp \
+  $(HLVM_top_srcdir)/utils/tmplt/Tokenizer_Template.h \
+  $(HLVM_top_srcdir)/utils/bin/mkTokenizer
+	$(Echo) Building Tokenizer For $*
+	$(Verb) $(HLVM_top_srcdir)/utils/bin/mkTokenizer -f \
+	  $(PROJ_SRC_DIR)/$*.rng
 
 ifdef INSTALL_INCLUDES
 PartialPath := $(patsubst $(PROJ_SRC_ROOT)/%,%,$(PROJ_SRC_DIR))

@@ -1,0 +1,133 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2002 eXtensible Systems, Inc. All Rights Reserved
+#
+# This program is open source software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License (GPL) as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version. You should have received a copy of the GPL in a
+# file named COPYING that was included with this program; if not, you can 
+# obtain a copy of the license through the Internet at http://www.fsf.org/
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License 
+# for more details.
+#-------------------------------------------------------------------------------
+#
+# This script will extract the identifier names from a RelaxNG schema. The
+# identifier names form the token set that act as terminals in the grammar. We
+# make parsing efficient by generating a perfect hash function with gperf from
+# the set of token identifiers.
+#
+# Identifier names are X in the following schema constructs:
+#    <element name="X">
+#    <attribute name="X">
+#    <value>X</value>
+#
+# Usage: 
+#   mkTokenizer -f <schema_file> <hlvm_src_root>
+#
+$SchemaFile = shift;
+if ("$SchemaFile" eq "-f") {
+  $Force = 1;
+  $SchemaFile = shift;
+}
+die "USAGE: $0 <schema_file> <hlvm_src_root>\n" if -z "$SchemaFile";
+$HLVM_root = shift;
+die "USAGE: $0 <schema_file> <hlvm_src_root>\n" if -z "$HLVM_root";
+print "$HLVM_root\n";
+
+$Schema = $SchemaFile;
+$Schema =~ s/\.rng//;
+$Schema = substr($Schema,rindex($Schema,'/')+1);
+$PreambleFile = "$HLVM_root"."/utils/tmplt/Preamble_Code";
+$HeaderTemplate = "$HLVM_root"."/utils/tmplt/Tokenizer_Template.h";
+$HeaderFile = "$Schema"."Tokenizer.h";
+$SourceTemplate = "$HLVM_root"."/utils/tmplt/Tokenizer_Template.cpp";     
+$SourceFile = "$Schema"."Tokenizer.cpp";
+$TokenHashClass = "$Schema" . "TokenHash";
+$TokenHashFile = "$TokenHashClass" . ".i";
+
+# Check the validity of the files we use/create
+die "Invalid schema file name" if ! -e "$SchemaFile";
+die "ERROR: '$PreambleFile' doesn't exist" if ! -e "$PreambleFile";
+if (!$Force) {
+  die "ERROR: '$HeaderFile' exists" if -e "$HeaderFile";
+  die "ERROR: '$SourceFile' exists" if -e "$SourceFile";
+  die "ERROR: '$TokenHashFile' exists" if -e "$TokenHashFile";
+}
+
+# Get the plain old schema name from the file name
+
+use FindBin;
+use lib $FindBin::Bin;
+use mkFuncs;
+use File::Copy;
+
+sub sortUnique
+{
+  my @list = @_;
+  my %set;
+  my @result = ();
+  for ($i = 0; $i <= $#_; $i++) 
+  {
+    if (!exists $set{$list[$i]} )
+    {
+      $set{$_[$i]} = 1;
+      push @result, $_[$i];
+    }
+  }
+  return sort(@result);
+}
+
+sub getTokens
+{
+  my $fname = shift(@_);
+  my $stage = 0;
+  my @tokens;
+
+  open( SCHEMA, "< $fname") || die "Couldn't open $fname for reading.\n";
+
+  while ( defined($line = <SCHEMA>) )
+  {
+    while ($line =~ /<element[^>]*name="([^"]*)"/g) {
+      push @tokens,$1;
+    }
+    while ($line =~ /<attribute[^>]*name="([^"]*)"/g) {
+      push @tokens,$1;
+    }
+    while ($line =~ /<value>\s*([^<\s]*)/g) {
+      push @tokens,$1;
+    }
+  }
+  close SCHEMA;
+
+  return sortUnique(@tokens);
+}
+
+# Extract the terminal tokens from the schema file
+my @tokens = getTokens($SchemaFile);
+
+# Set up a gperf invocation to convert the token list into a perfect hash 
+# function
+open(GPERF,"| gperf -tcDCIoGl --fast 0 -L C++ -Z $TokenHashClass -s 2 -S 1 -k '*' > $TokenHashFile");
+
+# Run the input through GPERF to create the perfect hash function
+$hlvmdir = get_hlvm_dir();
+chomp($Module = `pwd`);
+$Module =~ s|$hlvmdir\/hlvm\/(.*)|$1|;
+$Module =~ s|\/|_|g;
+print GPERF "struct TokenMap {\n";
+print GPERF "const char *name; HLVM_$Module"."::".$Schema."Tokens token;\n" ;
+print GPERF "};\n%%\n" ;
+print GPERF "\"$_\", HLVM_".$Module."::TKN_".$_.",\n" foreach @tokens;
+print GPERF "%%\n";
+close GPERF;
+
+# Generate the header file for the tokenizer, starting it with the preamble for
+# C++ source files
+$TOKEN_LIST = "TKN_" . join(",\n    TKN_",@tokens) . ",";
+$SCHEMA_NAME = $Schema;
+process_file($PreambleFile,$HeaderTemplate,$HeaderFile);
+process_file($PreambleFile,$SourceTemplate,$SourceFile);

@@ -29,6 +29,8 @@ namespace {
 
 class YamlReaderImpl : public hlvm::YamlReader {
   public:
+    typedef std::map<SYMID,hlvm::AST::Node> NodeIDMap;
+  public:
     YamlReaderImpl() {
       parser_ = syck_new_parser();
       syck_parser_handler(parser_, SyckNodeHandler(NodeHandler));
@@ -37,8 +39,20 @@ class YamlReaderImpl : public hlvm::YamlReader {
         SyckBadAnchorHandler(BadAnchorHandler));
     }
 
-    static SYMID NodeHandler(SyckParser*, SyckNode* )
+    static SYMID NodeHandler(SyckParser*p, SyckNode* n)
     {
+      switch (n->kind) {
+        case syck_str_kind: // Scalar
+          break;
+        case syck_seq_kind: // Array
+          break;
+        case syck_map_kind: // Map
+          break;
+        default:
+          // Unknown kind? 
+          // FIXME: Should we generate an error here?
+          break;/
+      }
       return 0;
     }
 

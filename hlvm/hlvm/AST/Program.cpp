@@ -39,4 +39,8 @@ SignatureType* Program::initSignature() {
 }
 SignatureType* Program::SignatureTy = Program::initSignature();
 
+Program::~Program()
+{
+}
+
 }}

@@ -31,11 +31,9 @@
 #define XPS_WRITER_XML_XMLWRITER_H
 
 #include <hlvm/Writer/Writer.h>
-#include <llvm/System/Path.h>
+#include <ostream>
 
 namespace hlvm {
-
-  class AST::AST;
 
   class XMLWriter: public Writer
   {
@@ -43,7 +41,7 @@ namespace hlvm {
     /// This method instantiates an XMLReader that is prepared to read from
     /// the path provided.
     /// @brief Create a new XmlReader
-    static XMLWriter* create(const llvm::sys::Path& path);
+    static XMLWriter* create(std::ostream& out);
 
     virtual ~XMLWriter() {}
   };

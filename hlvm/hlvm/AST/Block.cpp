@@ -32,4 +32,7 @@
 namespace hlvm {
 namespace AST {
 
+Block::~Block()
+{
+}
 }}

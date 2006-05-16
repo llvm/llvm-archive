@@ -30,17 +30,15 @@
 #ifndef XPS_WRITER_WRITER_H
 #define XPS_WRITER_WRITER_H
 
-#include <llvm/System/Path.h>
-
 namespace hlvm {
-namespace AST { class AST; }
+namespace AST { class Node; }
 
   class Writer
   {
   public:
     /// This method writes the entire content of the AST to the writer's
     /// destination
-    virtual void write(AST::AST* source) = 0;
+    virtual void write(AST::Node* source) = 0;
   };
 }
 #endif

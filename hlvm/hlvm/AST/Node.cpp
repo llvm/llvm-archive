@@ -28,10 +28,13 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Node.h>
-#include <hlvm/AST/Conditionable.h>
-#include <hlvm/AST/ContainerType.h>
 
 namespace hlvm { namespace AST {
+
+Node::Node(NodeIDs id, Node* parent, const std::string& name)
+  : id_(id), parent_(parent), kids_(), name_(name)
+{
+}
 
 Node::~Node()
 {
@@ -45,7 +48,8 @@ Node::removeFromTree()
 
 #ifndef _NDEBUG
 void 
-Node::dump() const {
+hlvm::AST::Node::dump() const 
+{
 }
 #endif
 

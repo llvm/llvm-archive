@@ -28,46 +28,257 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Writer/XML/XMLWriter.h>
-#include <hlvm/AST/AST.h>
+#include <hlvm/AST/Node.h>
 #include <hlvm/AST/Bundle.h>
 #include <iostream>
-#include <fstream>
+#include <cassert>
 
 using namespace hlvm;
 
 namespace {
 
-class XMLWriterImpl : public XMLWriter {
-  llvm::sys::Path path_;
-  std::fstream* out_;
-  AST::AST* ast_;
+// An ostream that automatically indents and provides methods to control it.
+class ostream_indent
+{
+  uint32_t indent_;
 public:
-  XMLWriterImpl(const llvm::sys::Path& path) :
-    path_(path), out_(0), ast_(0)
+  std::ostream& strm_;
+  ostream_indent(std::ostream& os) : indent_(0), strm_(os) {}
+
+  inline void nl()
   {
+    strm_ << '\n';
+    strm_.width(indent_);
+    strm_ << ' ';
   }
+
+  inline void in( bool with_newline = false)
+  {
+    indent_++;
+    if (with_newline)
+      nl();
+  }
+
+  inline void out( bool with_newline = false)
+  {
+    indent_--;
+    if (with_newline)
+      nl();
+  }
+};
+
+class XMLWriterImpl : public XMLWriter {
+  ostream_indent ind_;
+  std::ostream& out_;
+  AST::Node* node_;
+public:
+  XMLWriterImpl(std::ostream& out)
+    : ind_(out), out_(out), node_(0)
+  { }
 
   virtual ~XMLWriterImpl() 
   { 
-    if (out_) {
-      out_->flush();
-      out_->close();
-      delete out_;
-    }
+    out_.flush();
   }
 
-  virtual void write(AST::AST* ast);
+  virtual void write(AST::Node* node);
+
+private:
+  inline void putHeader();
+  inline void putFooter();
+  inline void put(AST::Node* node);
+  inline void put(AST::Bundle* node);
 };
 
+std::string 
+sanitize(const std::string* input)
+{
+  // Replace all the & in the name with &amp;  and simliarly for < and > 
+  // because XML doesn't like 'em
+  std::string output(*input);
+  std::string::size_type pos = 0;
+  while (std::string::npos != (pos = output.find('&',pos)))
+  {
+    output.replace(pos,1,"&amp;");
+    pos += 5;
+  }
+  pos = 0;
+  while (std::string::npos != (pos = output.find('<',pos)))
+  {
+    output.replace(pos,1,"&lt;");
+    pos += 4;
+  }
+  pos = 0;
+  while (std::string::npos != (pos = output.find('>',pos)))
+  {
+    output.replace(pos,1,"&gt;");
+    pos += 4;
+  }
+  return output;
+}
+
+std::string 
+sanitize(const std::string& input)
+{
+  return sanitize(&input);
+}
+
 void
-XMLWriterImpl::write(AST::AST* ast) {
-  ast_ = ast;
+XMLWriterImpl::putHeader() 
+{
+  out_ << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+  out_ << "<!DOCTYPE hlvm PUBLIC \"-//HLVM/DTD HLVM 1.0//EN\" ";
+  out_ << "\"http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng\">\n";
+  out_ << "<hlvm>\n";
+  ind_.in();
+}
+
+void
+XMLWriterImpl::putFooter()
+{
+  ind_.out();
+  out_ << "</hlvm>\n";
+}
+
+inline void 
+XMLWriterImpl::put(AST::Bundle* b)
+{
+  out_ << "<bundle pubId=\"" << b->getName() << "\">\n";
+  ind_.in();
+}
+
+void
+XMLWriterImpl::put(AST::Node* node) 
+{
+  switch (node->getID()) 
+  {
+    case hlvm::AST::VoidTypeID:		break;     
+    case hlvm::AST::AnyTypeID:		break;          
+    case hlvm::AST::BooleanTypeID:	break;      
+    case hlvm::AST::CharacterTypeID:	break;    
+    case hlvm::AST::OctetTypeID:	break;        
+    case hlvm::AST::IntegerTypeID:	break;      
+    case hlvm::AST::RangeTypeID:	break;        
+    case hlvm::AST::RealTypeID:		break;         
+    case hlvm::AST::RationalTypeID:	break;     
+    case hlvm::AST::StringTypeID:	break;       
+    case hlvm::AST::PointerTypeID:	break;      
+    case hlvm::AST::ArrayTypeID:	break;        
+    case hlvm::AST::VectorTypeID:	break;       
+    case hlvm::AST::StructureTypeID:	break;    
+    case hlvm::AST::FieldID:		break;            
+    case hlvm::AST::SignatureTypeID:	break;    
+    case hlvm::AST::ArgumentID:		break;         
+    case hlvm::AST::ContinuationTypeID:	break; 
+    case hlvm::AST::InterfaceID:	break;        
+    case hlvm::AST::ClassID:		break;            
+    case hlvm::AST::MethodID:		break;           
+    case hlvm::AST::ImplementsID:	break;       
+    case hlvm::AST::VariableID:		break;         
+    case hlvm::AST::FunctionID:		break;         
+    case hlvm::AST::ProgramID:		break;          
+    case hlvm::AST::BundleID:		
+      put(llvm::cast<hlvm::AST::Bundle>(node)); 
+      break;
+    case hlvm::AST::BlockID:		break;            
+    case hlvm::AST::CallOpID:		break;           
+    case hlvm::AST::InvokeOpID:		break;         
+    case hlvm::AST::DispatchOpID:	break;
+    case hlvm::AST::CreateContOpID:	break;     
+    case hlvm::AST::CallWithContOpID:	break;   
+    case hlvm::AST::ReturnOpID:		break;         
+    case hlvm::AST::ThrowOpID:		break;          
+    case hlvm::AST::JumpToOpID:		break;         
+    case hlvm::AST::BreakOpID:		break;          
+    case hlvm::AST::IfOpID:		break;             
+    case hlvm::AST::LoopOpID:		break;           
+    case hlvm::AST::SelectOpID:		break;         
+    case hlvm::AST::WithOpID:		break;           
+    case hlvm::AST::LoadOpID:		break;           
+    case hlvm::AST::StoreOpID:		break;          
+    case hlvm::AST::AllocateOpID:	break;       
+    case hlvm::AST::FreeOpID:		break;           
+    case hlvm::AST::ReallocateOpID:	break;     
+    case hlvm::AST::StackAllocOpID:	break;     
+    case hlvm::AST::ReferenceOpID:	break;      
+    case hlvm::AST::DereferenceOpID:	break;    
+    case hlvm::AST::NegateOpID:		break;         
+    case hlvm::AST::ComplementOpID:	break;     
+    case hlvm::AST::PreIncrOpID:	break;        
+    case hlvm::AST::PostIncrOpID:	break;       
+    case hlvm::AST::PreDecrOpID:	break;        
+    case hlvm::AST::PostDecrOpID:	break;       
+    case hlvm::AST::AddOpID:		break;            
+    case hlvm::AST::SubtractOpID:	break;       
+    case hlvm::AST::MultiplyOpID:	break;       
+    case hlvm::AST::DivideOpID:		break;         
+    case hlvm::AST::ModulusOpID:	break;        
+    case hlvm::AST::BAndOpID:		break;           
+    case hlvm::AST::BOrOpID:		break;            
+    case hlvm::AST::BXOrOpID:		break;           
+    case hlvm::AST::AndOpID:		break;            
+    case hlvm::AST::OrOpID:		break;             
+    case hlvm::AST::NorOpID:		break;            
+    case hlvm::AST::XorOpID:		break;            
+    case hlvm::AST::NotOpID:		break;            
+    case hlvm::AST::LTOpID:		break;             
+    case hlvm::AST::GTOpID:		break;             
+    case hlvm::AST::LEOpID:		break;             
+    case hlvm::AST::GEOpID:		break;             
+    case hlvm::AST::EQOpID:		break;             
+    case hlvm::AST::NEOpID:		break;             
+    case hlvm::AST::IsPInfOpID:		break;         
+    case hlvm::AST::IsNInfOpID:		break;         
+    case hlvm::AST::IsNaNOpID:		break;          
+    case hlvm::AST::TruncOpID:		break;          
+    case hlvm::AST::RoundOpID:		break;          
+    case hlvm::AST::FloorOpID:		break;          
+    case hlvm::AST::CeilingOpID:	break;        
+    case hlvm::AST::PowerOpID:		break;          
+    case hlvm::AST::LogEOpID:		break;           
+    case hlvm::AST::Log2OpID:		break;           
+    case hlvm::AST::Log10OpID:		break;          
+    case hlvm::AST::SqRootOpID:		break;         
+    case hlvm::AST::RootOpID:		break;           
+    case hlvm::AST::FactorialOpID:	break;      
+    case hlvm::AST::GCDOpID:		break;            
+    case hlvm::AST::LCMOpID:		break;            
+    case hlvm::AST::MungeOpID:		break;          
+    case hlvm::AST::LengthOpID:		break;         
+    case hlvm::AST::IntOpID:		break;            
+    case hlvm::AST::RealOpID:		break;           
+    case hlvm::AST::PInfOpID:		break;           
+    case hlvm::AST::NInfOpID:		break;           
+    case hlvm::AST::NaNOpID:		break;            
+    case hlvm::AST::StringOpID:		break;         
+    case hlvm::AST::ArrayOpID:		break;          
+    case hlvm::AST::VectorOpID:		break;         
+    case hlvm::AST::StructureOpID:	break;      
+    case hlvm::AST::MapFileOpID:	break;        
+    case hlvm::AST::OpenOpID:		break;           
+    case hlvm::AST::CloseOpID:		break;          
+    case hlvm::AST::ReadOpID:		break;           
+    case hlvm::AST::WriteOpID:		break;          
+    case hlvm::AST::PositionOpID:	break;       
+    default:
+      assert(!"Invalid Node ID");
+      break;
+  }
+}
+
+void
+XMLWriterImpl::write(AST::Node* node) 
+{
+  node_ = node;
+  putHeader();
+  put(node);
+  putFooter();
 }
 
 }
 
 XMLWriter* 
-XMLWriter::create(const llvm::sys::Path& path)
+hlvm::XMLWriter::create(std::ostream& out)
 {
-  return new XMLWriterImpl(path);
+  return new XMLWriterImpl(out);
 }

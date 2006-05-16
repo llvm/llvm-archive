@@ -360,7 +360,6 @@ private:
     return 1;
   }
 
-/// @}
 };
 
 AST::AST*
@@ -415,7 +414,8 @@ XMLReaderImpl::ElementStart( const ElementInfo& elem)
       const std::string* pubid = 0;
       elem.find_attrs(TKN_pubid,pubid);
       if (pubid) {
-        elem.node = new AST::Bundle(static_cast<AST::Bundle*>(0),*pubid);
+        elem.node = 
+          new hlvm::AST::Bundle(static_cast<hlvm::AST::Bundle*>(0),*pubid);
       }
       break;
     }
@@ -508,7 +508,7 @@ ElementInfo::find_attrs(
 }
 
 XMLReader* 
-XMLReader::create(const llvm::sys::Path& path)
+hlvm::XMLReader::create(const llvm::sys::Path& path)
 {
   return new XMLReaderImpl(path);
 }

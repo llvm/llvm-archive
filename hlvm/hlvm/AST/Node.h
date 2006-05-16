@@ -197,12 +197,12 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      Node(NodeIDs id, Node* parent = 0, const std::string& name = "") 
-        : id_(id), parent_(parent), kids_(), name_(name) {}
-      virtual ~Node();
+      Node(NodeIDs id, Node* parent = 0, const std::string& name = ""); 
+
 #ifndef _NDEBUG
       virtual void dump() const;
 #endif
+      virtual ~Node();
 
     /// @}
     /// @name Accessors

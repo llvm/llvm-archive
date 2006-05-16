@@ -32,4 +32,8 @@
 namespace hlvm {
 namespace AST {
 
+Variable::~Variable()
+{
+}
+
 }}

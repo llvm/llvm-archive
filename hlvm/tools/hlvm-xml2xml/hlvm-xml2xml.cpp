@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Reader/XML/XMLReader.h>
+#include <hlvm/Writer/XML/XMLWriter.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
 #include <fstream>
@@ -75,7 +76,14 @@ int main(int argc, char**argv)
     }
 
     XMLReader* rdr = XMLReader::create(llvm::sys::Path(InputFilename));
+    XMLWriter* wrtr = XMLWriter::create(*Out);
     rdr->read();
+    AST::Node* node = rdr->get();
+    if (node) {
+      wrtr->write(node);
+    }
+    delete rdr;
+    delete wrtr;
 
     if (Out != &std::cout) {
       static_cast<std::ofstream*>(Out)->close();

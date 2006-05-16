@@ -30,7 +30,6 @@
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Reader/XML/HLVMTokenizer.h>
 #include <hlvm/Base/Locator.h>
-#include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <expat.h>
 #include <vector>
@@ -110,13 +109,13 @@ struct ElementInfo : public NodeInfo {
 
 class XMLReaderImpl : public XMLReader {
   llvm::sys::Path path_;
-  AST::AST* ast_;
+  AST::Node* node_;
   XML_Parser xp_;
   std::vector<ElementInfo> elems_; ///< The element stack
   ElementInfo* etop_; ///< A pointer to the top of the element stack
 public:
   XMLReaderImpl(const llvm::sys::Path& path) :
-    path_(path), ast_(0), xp_(0), elems_(), etop_(0)
+    path_(path), node_(0), xp_(0), elems_(), etop_(0)
   {
     xp_ = XML_ParserCreate( "UTF-8");
     // Reserve some space on the elements and attributes list so we aren't
@@ -129,12 +128,12 @@ public:
 
   virtual ~XMLReaderImpl() 
   { 
-    if (ast_) delete ast_; 
+    if (node_) delete node_; 
     XML_ParserFree( xp_ );
   }
 
   virtual void read();
-  virtual AST::AST* get();
+  virtual AST::Node* get();
 
   void CDataSectionStart(void );
   void CDataSectionEnd();
@@ -362,18 +361,16 @@ private:
 
 };
 
-AST::AST*
+AST::Node*
 XMLReaderImpl::get()
 {
-  return ast_;
+  return node_;
 }
 
 static const XML_Char Namespace_Separator = 4; 
 
 void
 XMLReaderImpl::read() {
-  ast_ = new AST::AST();
-
   // Set up the parser for parsing a document.
   XML_ParserReset(xp_,"UTF-8");
   XML_SetUserData(xp_, this );
@@ -416,6 +413,7 @@ XMLReaderImpl::ElementStart( const ElementInfo& elem)
       if (pubid) {
         elem.node = 
           new hlvm::AST::Bundle(static_cast<hlvm::AST::Bundle*>(0),*pubid);
+        node_ = elem.node;
       }
       break;
     }

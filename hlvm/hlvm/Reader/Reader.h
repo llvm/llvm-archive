@@ -33,7 +33,7 @@
 #include <llvm/System/Path.h>
 
 namespace hlvm {
-namespace AST { class AST; }
+namespace AST { class Node; }
 
   class Reader
   {
@@ -43,7 +43,7 @@ namespace AST { class AST; }
 
     /// This method retrieves the construct AST that resulted from reading.
     /// @returns 0 if nothing has been read yet
-    virtual AST::AST* get() = 0;
+    virtual AST::Node* get() = 0;
   };
 }
 #endif

@@ -5806,7 +5806,7 @@ echo "$as_me: error: The --with-syck-incdir option must be used" >&2;}
 fi
 
 
-LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug -L${prefix}/lib -L/usr/local/lib ${LDFLAGS}"
+LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug ${LDFLAGS}"
 if test "$HLVM_EFENCE" = true ; then
 
 echo "$as_me:$LINENO: checking for malloc in -lefence" >&5

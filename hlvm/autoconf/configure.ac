@@ -308,7 +308,7 @@ HLVM_FIND_LIBRARY([expat],[expat.h],[expat],[XML_ParserCreate],
 HLVM_FIND_LIBRARY([syck],[syck.h],[syck],[syck_parse],[Syck Yaml Handler])
 
 dnl -- Check for specific libraries we depend on.
-LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug -L${prefix}/lib -L/usr/local/lib ${LDFLAGS}"
+LDFLAGS="-L${HLVM_WITH_LLVM_OBJ}/lib/Debug ${LDFLAGS}"
 if test "$HLVM_EFENCE" = true ; then 
   AC_CHECK_LIB(efence,malloc,,
                AC_MSG_ERROR(Electric Fence library is required: -lefence) )

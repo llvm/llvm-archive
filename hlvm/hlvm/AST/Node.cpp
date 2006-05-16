@@ -31,8 +31,17 @@
 #include <hlvm/AST/Conditionable.h>
 #include <hlvm/AST/ContainerType.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm { namespace AST {
+
+Node::~Node()
+{
+  removeFromTree();
+}
+
+void
+Node::removeFromTree()
+{
+}
 
 #ifndef _NDEBUG
 void 

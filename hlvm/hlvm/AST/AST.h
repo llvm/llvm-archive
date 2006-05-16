@@ -30,8 +30,6 @@
 #ifndef HLVM_AST_AST_H
 #define HLVM_AST_AST_H
 
-#include <hlvm/AST/Node.h>
-
 /// This namespace is for all HLVM software. It ensures that HLVM software does
 /// not collide with any other software. Hopefully HLVM is not a namespace used
 /// elsewhere. 
@@ -41,6 +39,8 @@ namespace hlvm
 /// node types of the AST are declared in this namespace.
 namespace AST
 {
+  class Bundle;
+
   /// This class is used to hold or contain an Abstract Syntax Tree. It provides
   /// those aspects of the tree that are not part of the tree itself.
   /// @brief AST Container Class
@@ -55,12 +55,13 @@ namespace AST
     /// @name Accessors
     /// @{
     public:
+      Bundle* getBundle() { return tree_; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      Node* tree_;
+      Bundle* tree_;
     /// @}
   };
 } // AST

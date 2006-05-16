@@ -208,18 +208,39 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      /// Get the type of node
+      inline bool getID() const { return id_; }
+
+      /// Get the name of the node
+      inline const std::string& getName() { return name_; }
+
+      /// Determine if the node is a Type
       inline bool isType() const { 
         return id_ >= FirstPrimitiveTypeID && id_ <= LastContainerTypeID;
       }
+      /// Determine if the node is any of the Operators
       inline bool isOperator() const { 
         return id_ >= FirstOperatorID && id_ <= LastOperatorID;
       }
+      /// Determine if the node is a Block
       inline bool isBlock() const { return id_ == BlockID; }
+      /// Determine if the node is a Bundle
       inline bool isBundle() const { return id_ == BundleID; }
+      /// Determine if the node is a Function
       inline bool isFunction() const { return id_ == FunctionID; }
+      /// Determine if the node is a Program
       inline bool isProgram() const { return id_ == ProgramID; }
+      /// Determine if the node is a Variable
       inline bool isVariable() const { return id_ == VariableID; }
+      /// Provide support for isa<X> and friends
       static inline bool classof(const Node*) { return true; }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    protected:
+      void removeFromTree();
+
 
     /// @}
     /// @name Data

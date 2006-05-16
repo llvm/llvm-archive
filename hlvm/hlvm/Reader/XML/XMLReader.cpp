@@ -30,6 +30,7 @@
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Reader/XML/HLVMTokenizer.h>
 #include <hlvm/Base/Locator.h>
+#include <hlvm/Base/Source.h>
 #include <hlvm/AST/Bundle.h>
 #include <expat.h>
 #include <vector>
@@ -108,14 +109,14 @@ struct ElementInfo : public NodeInfo {
 };
 
 class XMLReaderImpl : public XMLReader {
-  llvm::sys::Path path_;
+  hlvm::Base::Source* in_;
   AST::Node* node_;
   XML_Parser xp_;
   std::vector<ElementInfo> elems_; ///< The element stack
   ElementInfo* etop_; ///< A pointer to the top of the element stack
 public:
-  XMLReaderImpl(const llvm::sys::Path& path) :
-    path_(path), node_(0), xp_(0), elems_(), etop_(0)
+  XMLReaderImpl(Base::Source* input)
+    : in_(input), node_(0), xp_(0), elems_(), etop_(0)
   {
     xp_ = XML_ParserCreate( "UTF-8");
     // Reserve some space on the elements and attributes list so we aren't
@@ -206,9 +207,7 @@ private:
     // Fill in the element info
     ei.local = name;
     ei.token = HLVMTokenizer::recognize(name);
-    ei.set(
-      "",
-      p->path_.c_str(),
+    ei.set("", "{in}",
       uint32_t(XML_GetCurrentLineNumber(p->xp_)), 
       uint32_t(XML_GetCurrentColumnNumber(p->xp_))
     );
@@ -381,6 +380,41 @@ XMLReaderImpl::read() {
   XML_SetCdataSectionHandler( xp_, StartCdataSectionHandler, 
     EndCdataSectionHandler );
   XML_SetUnknownEncodingHandler( xp_, UnknownEncodingHandler, this);
+
+  try
+  {
+    int actual_len = 0;
+    in_->prepare(65536);
+
+    // While there is more input to read
+    while ( in_->more() )
+    {
+      // Read a chunk of data
+      const char* ptr = in_->read(actual_len);
+
+      // Parse it.
+      int parse_result = XML_Parse( xp_, ptr, actual_len, in_->more() ) ;
+
+      if ( XML_STATUS_ERROR == parse_result )
+      {
+        std::cerr << "Parsing Error\n";
+
+        // Signal end of the parsing if we didn't already
+        if (in_->more())
+          XML_Parse( xp_, 0, 0, 1 );
+        in_->finish();
+        return;
+      }
+    }
+
+    // Signal the end of parsing
+    XML_StopParser( xp_, 0);
+    in_->finish();
+  } catch (...) {
+    XML_StopParser(xp_,0);
+    in_->finish();
+    throw;
+  }
 }
 
 void 
@@ -506,7 +540,7 @@ ElementInfo::find_attrs(
 }
 
 XMLReader* 
-hlvm::XMLReader::create(const llvm::sys::Path& path)
+hlvm::XMLReader::create(hlvm::Base::Source* src)
 {
-  return new XMLReaderImpl(path);
+  return new XMLReaderImpl(src);
 }

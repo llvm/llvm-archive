@@ -86,8 +86,11 @@ else
   getDirectory "Enter path to LLVM object root" "/proj/llvm/build" 
   LLVM_OBJ="$DIR"
   
-  getDirectory "Enter path to expat libraries" "/proj/install/lib" 
+  getDirectory "Enter path to expat libraries" "/proj/install" 
   EXPAT_OBJ="$DIR"
+
+  getDirectory "Enter path to apr libraries" "/proj/install" 
+  APR_OBJ="$DIR"
 
   getDirectory "Enter path for additional header files" "/proj/install/include" 
   HEADERS="$DIR"
@@ -124,6 +127,7 @@ else
   echo "LLVM_SRC=$LLVM_SRC"
   echo "LLVM_OBJ=$LLVM_OBJ"
   echo "EXPAT_OBJ=$EXPAT_OBJ"
+  echo "APR_OBJ=$APR_OBJ"
   echo "HEADERS=$HEADERS"
   echo "LIBRARIES=$LIBRARIES"
   echo "PROGRAMS=$PROGRAMS"
@@ -149,6 +153,7 @@ else
   echo "LLVM_SRC=$LLVM_SRC" >> config.opts
   echo "LLVM_OBJ=$LLVM_OBJ" >> config.opts
   echo "EXPAT_OBJ=$EXPAT_OBJ" >> config.opts
+  echo "APR_OBJ=$APR_OBJ" >> config.opts
   echo "HEADERS=$HEADERS" >> config.opts
   echo "LIBRARIES=$LIBRARIES" >> config.opts
   echo "PROGRAMS=$PROGRAMS" >> config.opts
@@ -223,7 +228,9 @@ CPPFLAGS="-I${HEADERS}" ${HLVM_SRC_DIR}/configure \
     --enable-small=${enable_SMALL} \
     --enable-efence=${enable_EFENCE} \
     --enable-profiling=${enable_PROFILING} \
-    --with-expat=${EXPAT_OBJ} \
+    --with-EXPAT=${EXPAT_OBJ} \
+    --with-APR=${APR_OBJ} \
+    --with-APRU=${APR_OBJ} \
     --with-llvm-src=${LLVM_SRC} \
     --with-llvm-obj=${LLVM_OBJ} \
     --with-workspace=${WORKSPACE} \

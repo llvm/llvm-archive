@@ -315,7 +315,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_EXPAT HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake apr_INC apr_LIB apru_INC apru_LIB expat_INC expat_LIB syck_INC syck_LIB EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake apr_INC apr_LIB apru_INC apru_LIB expat_INC expat_LIB syck_INC syck_LIB EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -875,8 +875,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-workspace=<dir>  dir=location of the HLVM workspace storage
                           (default=/opt/hlvm)
-  --with-expat=<dir>      Specify where the expat lbrary is located
-                          (default=/usr/local)
   --with-includes=-I<dir>...
                           Specify additional header file directories
                           (efault=none)
@@ -1588,25 +1586,6 @@ else
 fi;
 echo "$as_me:$LINENO: result: $HLVM_WITH_WORKSPACE" >&5
 echo "${ECHO_T}$HLVM_WITH_WORKSPACE" >&6
-
-
-echo "$as_me:$LINENO: checking location of expat library" >&5
-echo $ECHO_N "checking location of expat library... $ECHO_C" >&6
-
-# Check whether --with-expat or --without-expat was given.
-if test "${with_expat+set}" = set; then
-  withval="$with_expat"
-  case "${withval}" in
-     /*) HLVM_WITH_EXPAT=$withval ;;
-     *) { { echo "$as_me:$LINENO: error: bad value ${withval} for --with-expat" >&5
-echo "$as_me: error: bad value ${withval} for --with-expat" >&2;}
-   { (exit 1); exit 1; }; } ;;
-  esac
-else
-  HLVM_WITH_EXPAT=/usr
-fi;
-echo "$as_me:$LINENO: result: $HLVM_WITH_EXPAT" >&5
-echo "${ECHO_T}$HLVM_WITH_EXPAT" >&6
 
 
 echo "$as_me:$LINENO: checking location of additional header files" >&5
@@ -7014,7 +6993,6 @@ s,@HLVM_SMALL@,$HLVM_SMALL,;t t
 s,@HLVM_EFENCE@,$HLVM_EFENCE,;t t
 s,@HLVM_PROFILING@,$HLVM_PROFILING,;t t
 s,@HLVM_WITH_WORKSPACE@,$HLVM_WITH_WORKSPACE,;t t
-s,@HLVM_WITH_EXPAT@,$HLVM_WITH_EXPAT,;t t
 s,@HLVM_WITH_INCLUDES@,$HLVM_WITH_INCLUDES,;t t
 s,@HLVM_WITH_LLVM_SRC@,$HLVM_WITH_LLVM_SRC,;t t
 s,@HLVM_WITH_LLVM_OBJ@,$HLVM_WITH_LLVM_OBJ,;t t

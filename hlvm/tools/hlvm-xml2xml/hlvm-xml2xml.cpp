@@ -27,6 +27,7 @@
 /// @brief Implements the main program for the hlvm-xml2xml executable
 //===----------------------------------------------------------------------===//
 
+#include <hlvm/Base/Memory.h>
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <llvm/Support/CommandLine.h>
@@ -46,9 +47,9 @@ OutputFilename("o", cl::desc("Override output filename"),
 int main(int argc, char**argv) 
 {
   try {
+    Base::initialize(argc,argv);
     cl::ParseCommandLineOptions(argc, argv, 
       "hlvm-xml2xml XML->AST->XML translator\n");
-    sys::PrintStackTraceOnErrorSignal();
 
     std::ostream *Out = &std::cout;  // Default to printing to stdout.
 
@@ -75,7 +76,23 @@ int main(int argc, char**argv)
       Out = &std::cout;
     }
 
-    XMLReader* rdr = XMLReader::create(llvm::sys::Path(InputFilename));
+    Base::Source* src = 0;
+    llvm::sys::MappedFile* mf = 0;
+    if (InputFilename == "-" ) {
+      src = Base::new_StreamSource(std::cin);
+    } else {
+      llvm::sys::Path path(InputFilename);
+      if (path.canRead()) {
+        mf = new llvm::sys::MappedFile(path);
+        src = Base::new_MappedFileSource(*mf);
+      } else {
+        std::cerr << argv[0] << ": can't read input file: " << InputFilename
+                  << "\n";
+        exit(2);
+      }
+    }
+
+    XMLReader* rdr = XMLReader::create(src);
     XMLWriter* wrtr = XMLWriter::create(*Out);
     rdr->read();
     AST::Node* node = rdr->get();
@@ -84,6 +101,10 @@ int main(int argc, char**argv)
     }
     delete rdr;
     delete wrtr;
+    if (mf) {
+      mf->close();
+      delete mf;
+    }
 
     if (Out != &std::cout) {
       static_cast<std::ofstream*>(Out)->close();

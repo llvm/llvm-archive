@@ -211,18 +211,6 @@ AC_ARG_WITH(workspace,
 AC_MSG_RESULT($HLVM_WITH_WORKSPACE)
 AC_SUBST(HLVM_WITH_WORKSPACE)
 
-dnl -- with-expat: specifies the location of the expat library
-AC_MSG_CHECKING(location of expat library)
-AC_ARG_WITH(expat,
-  AS_HELP_STRING([--with-expat=<dir>],
-    [Specify where the expat lbrary is located (default=/usr/local)]),
-  [case "${withval}" in   
-     /*) HLVM_WITH_EXPAT=$withval ;;
-     *) AC_MSG_ERROR(bad value ${withval} for --with-expat) ;;
-  esac],[HLVM_WITH_EXPAT=/usr])
-AC_MSG_RESULT($HLVM_WITH_EXPAT)
-AC_SUBST(HLVM_WITH_EXPAT)
-
 dnl -- with-includes: specifies the location of additional header file dirs
 AC_MSG_CHECKING(location of additional header files)
 AC_ARG_WITH(includes,

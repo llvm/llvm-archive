@@ -1,4 +1,4 @@
-//===-- hlvm/Reader/Reader.h - AST Abstract Reader Class --------*- C++ -*-===//
+//===-- hlvm/Base/URI.cpp - Uniform Resource Identifier ---------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,28 +20,59 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Reader/Reader.h
-/// @author Reid Spencer <rspencer@x10sys.com>
-/// @date 2006/05/12
+/// @file hlvm/Base/URI.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Provides the interface to hlvm::Reader
+/// @brief Declares the class hlvm::Base::URI
 //===----------------------------------------------------------------------===//
 
-#ifndef XPS_READER_READER_H
-#define XPS_READER_READER_H
+#include <hlvm/Base/URI.h>
+#include <hlvm/Base/Memory.h>
+#include <iostream>
 
-namespace hlvm {
-namespace AST { class Node; }
+namespace hlvm { namespace Base {
 
-  class Reader
-  {
-  public:
-    /// This method reads the entire content of the reader's source.
-    virtual void read() = 0;
-
-    /// This method retrieves the construct AST that resulted from reading.
-    /// @returns 0 if nothing has been read yet
-    virtual AST::Node* get() = 0;
-  };
+URI::URI( const char * text)
+{
+  apr_uri_parse(POOL, text, &uri_);
 }
-#endif
+
+URI::URI( const std::string& str)
+{
+  apr_uri_parse(POOL, str.c_str(), &uri_);
+}
+
+URI::~URI ( void )
+{
+}
+
+std::string 
+URI::as_string( void ) const
+{
+  const char* result = apr_uri_unparse(POOL, &uri_, 0);
+  return std::string( result );
+}
+
+/// @brief Clears the URI, releases memory.
+void 
+URI::clear( void )
+{
+  /// FIXME: how do we do this with the APR pools?
+}
+
+std::string 
+URI::resolveToFile() const
+{
+  const char* scheme = this->scheme();
+  if (scheme)
+  {
+    if (strncmp("file",this->scheme(),4) == 0)
+    {
+      return this->path();
+    }
+  }
+  return "";
+}
+
+}}

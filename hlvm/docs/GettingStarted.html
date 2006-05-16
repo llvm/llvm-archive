@@ -18,6 +18,7 @@
       <li><a href="#software">Software</a>
     </ol>
   </li>
+  <li><a href="#other_packages">Building Other Packages</a></li>
 </ol>
 
 <div class="author">
@@ -282,6 +283,36 @@ software you will need.</p>
     <li><b>test</b> - test things in file system</li>
     <li><b>unzip*</b> - unzip command for distribution checking</li>
     <li><b>zip*</b> - zip command for distribution generation</li>
+  </ul>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="other_packages">Building Other Packages</a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <h2>Separate Install Area</h2>
+  <p>It is suggested that you keep a separate installation area for building the
+  things that HLVM depends upon. This is the location in your file system where
+  you will install the built packages. It is used with the <tt>--prefix</tt>
+  option to the configure programs of the packages. By using a separate install
+  area, you ensure that the HLVM version of required packages doesn't interfere
+  with any of your system installed packages.</p>
+  <h2>expat</h2>
+  <ul>
+    <li>Always build expat first. It doesn't depend on anything else</li>
+    <li>Use version 2.0 or later</li>
+  </ul>
+  <h2>apr</h2>
+  <ul>
+    <li>Optionally use the <tt>--enable-debug</tt> configure flag.</li>
+    <li>Required to use the <tt>--enable-threads</tt> configure flag.</li>
+    <li>Required to use the <tt>--enable-other-child</tt> configure flag.</li>
+  </ul>
+  <h2>apr-util</h2>
+  <ul>
+    <li>APR Utils depends on expat and so does HLVM. They must use the same
+    version or HLVM tools will not link properly. To ensure this, always provide
+    the apr-util configure script with <tt>--with-expat=/your/install</tt></li>
   </ul>
 </div>
 </body>

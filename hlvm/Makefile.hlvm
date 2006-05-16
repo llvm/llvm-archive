@@ -17,22 +17,20 @@ include $(LEVEL)/Makefile.config
 # 
 
 CPPFLAGS += -D_POSIX_THREADS -D_POSIX_THREAD_SAFE_FUNCTIONS \
-	    -I$(HLVM_top_srcdir) \
-	    -I$(HLVM_top_objdir) \
+            -I$(HLVM_top_srcdir) -I$(HLVM_top_objdir)
 
 ifeq ($(HLVM_ASSERT),true)
 CPPFLAGS += -DHLVM_ASSERT=1
 endif
 
-HLVM_COMMONFLAGS := -pipe -Wall -W -Wwrite-strings -Wno-unused -Wcast-align \
-                     -Wpointer-arith
+HLVM_COMMONFLAGS := -pipe -Wcast-align -Wpointer-arith
 CXXFLAGS += $(HLVM_COMMONFLAGS) -Wno-deprecated -Wold-style-cast \
-            -Woverloaded-virtual -ffor-scope -foperator-names
+            -Woverloaded-virtual -ffor-scope -fno-operator-names
 CFLAGS += $(HLVM_COMMONFLAGS)
 
 ifeq ($(HLVM_DEBUG),true)
-CXXFLAGS += -ggdb
-CFLAGS   += -ggdb
+#CXXFLAGS += -ggdb
+#CFLAGS   += -ggdb
 endif
 
 ifeq ($(HLVM_OPTIMIZE),true)
@@ -56,16 +54,6 @@ CXXFLAGS += -pg
 CFLAGS	 += -pg
 endif
 
-#
-# Define the ICU Resource stuff
-#
-SUFFIXES		= .E
-ICU_DATA_FILE 		= $(ICU_NAME).dat
-ICU_MSGS_FILES		= $(ICU_RESOURCES:%=%.msgs)
-ICU_RES_FILES		= $(ICU_RESOURCES:%=$(ICU_NAME)_%.res)
-ICU_FILE_LIST 		= $(ICU_NAME).files
-ALL_MSGS_FILES		= $(HLVM_ALL_LANGUAGES:%=%.msgs)
-
 # LLVM Requirements for makefile system
 PROJECT_NAME    := $(HLVM_name)
 PROJECT_VERSION := $(HLVM_version)
@@ -84,7 +72,6 @@ include $(HLVM_llvmobjdir)/Makefile.common
 
 EchoCmd  := $(ECHO) hlvm [$(MAKELEVEL)]:
 Echo     := @$(EchoCmd)
-
 
 $(PROJ_OBJ_ROOT)/Makefile.hlvm: $(PROJ_SRC_ROOT)/Makefile.hlvm
 	$(Echo) "Updating Makefile.hlvm"

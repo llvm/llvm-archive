@@ -62,7 +62,7 @@ H1 {
   border-bottom: 1px solid #CCEEFF;
   text-align: center;
   vertical-align: middle;
-  font-size: 150%;
+  font-size: 140%;
   font-weight: bold;
   padding: 0.1em 0.1em 0.1em 0.1em; 
   width: 100%;
@@ -74,7 +74,7 @@ H2 {
   background-color: #4444AA;
   color: #EEEEFF;
   text-align: left;  
-  font-size: 125%;
+  font-size: 120%;
   font-weight: bold;
 }
 H3 {
@@ -145,7 +145,8 @@ TD {
   border-style: solid none solid none;
   text-align: center;
   vertical-align: middle;
-  font-weight: bold; font-size: 18pt;
+  font-weight: bold; 
+  font-size: 16pt;
   background-color: #000088;
   color: #eeeeff;
   padding: 0.1em 0.1em 0.1em .1em; 
@@ -156,7 +157,7 @@ TD {
 .subsection {
   width: 75%;
   text-align: left;  
-  font-size: 12pt; 
+  font-size: 13pt; 
 }
 .subsubsection { 
   margin: 1.0em 0.5em 0.5em 0.5em;

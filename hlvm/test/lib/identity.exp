@@ -1,0 +1,70 @@
+#===-test/lib/identity.exp - Script for identity tests ---------------------===#
+#
+#                      High Level Virtual Machine (HLVM)
+# 
+#  Copyright (C) 2006 Reid Spencer. All Rights Reserved.
+# 
+#  This software is free software; you can redistribute it and/or modify it 
+#  under the terms of the GNU Lesser General Public License as published by 
+#  the Free Software Foundation; either version 2.1 of the License, or (at 
+#  your option) any later version.
+# 
+#  This software is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for 
+#  more details.
+# 
+#  You should have received a copy of the GNU Lesser General Public License 
+#  along with this library in the file named LICENSE.txt; if not, write to the 
+#  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+#  MA 02110-1301 USA
+# 
+#===------------------------------------------------------------------------===#
+proc hlvm-identity-tests { prog pat } {
+  global srcdir subdir objdir tmpdir objrootdir
+  set outdir [file join $objdir $subdir]
+  set tool [file join $objrootdir Debug bin $prog ]
+  set source [file join $srcdir $subdir ]
+  set files [lsort [
+    glob -nocomplain -tails -types {f r} -directory $source $pat]]
+  set dirs [lsort [
+    glob -nocomplain -tails -types {d r} -directory $source *]]
+
+  if { [file isdirectory $outdir] } {
+    cd $outdir
+  } else {
+    if { [file exists $outdir] } {
+      fail "identity: $outdir exists and is not a directory. Remove it"
+      exit(2)
+    } else {
+      file mkdir $outdir
+    }
+  }
+  
+  foreach test $files {
+    set output [file join $outdir ${test}.out]
+    set testsrc [file join $source $test]
+    set retval [ catch {exec $tool $testsrc -o $output >>&$output } ]
+    if { $retval == 1 } {
+      #Get output
+      set outputFile [open $output {RDONLY}]
+      set result [read $outputFile]
+      close $outputFile
+      fail "$test: $tool returned $retval\n$result"
+    } else {
+      # Do the identity test
+      set diffout [file join ${output}.diff]
+      set retval [ catch {exec diff $testsrc $output >&$diffout } ]
+      if {$retval == 1} {
+        #Get output
+        set difffile [open $diffout {RDONLY}]
+        set result [read $difffile]
+        close $difffile
+        fail "$test: identity test failed:\n$result"
+      } else {
+        file delete $diffout
+        pass "$test"
+      }
+    }
+  }
+}

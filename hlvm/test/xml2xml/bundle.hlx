@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE hlvm PUBLIC "-//HLVM/DTD HLVM 1.0//EN" "http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
-<hlvm>
- <bundle pubId="name">
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
+ <bundle pubid="name">
  </bundle>
 </hlvm>

@@ -44,7 +44,7 @@ proc hlvm-identity-tests { prog pat } {
   foreach test $files {
     set output [file join $outdir ${test}.out]
     set testsrc [file join $source $test]
-    set retval [ catch {exec $tool $testsrc -o $output >>&$output } ]
+    set retval [ catch {exec $tool $testsrc -o $output } ]
     if { $retval == 1 } {
       #Get output
       set outputFile [open $output {RDONLY}]

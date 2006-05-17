@@ -209,7 +209,7 @@ namespace AST {
     /// @{
     public:
       /// Get the type of node
-      inline bool getID() const { return id_; }
+      inline NodeIDs getID() const { return id_; }
 
       /// Get the name of the node
       inline const std::string& getName() { return name_; }

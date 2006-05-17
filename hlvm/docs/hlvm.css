@@ -150,7 +150,8 @@ TD {
   color: #eeeeff;
   padding: 0.1em 0.1em 0.1em .1em; 
   width: 100%;
-  margin-bottom: 0.3em; 
+  margin-bottom: 0.2em; 
+  margin-top: 0.3em;
 }
 .subsection {
   width: 75%;

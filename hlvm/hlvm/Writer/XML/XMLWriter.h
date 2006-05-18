@@ -41,7 +41,7 @@ namespace hlvm {
     /// This method instantiates an XMLReader that is prepared to read from
     /// the path provided.
     /// @brief Create a new XmlReader
-    static XMLWriter* create(std::ostream& out);
+    static XMLWriter* create(const char* fname);
 
     virtual ~XMLWriter() {}
   };

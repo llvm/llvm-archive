@@ -89,7 +89,7 @@ int main(int argc, char**argv)
     }
 
     XMLReader* rdr = XMLReader::create(InputFilename);
-    XMLWriter* wrtr = XMLWriter::create(*Out);
+    XMLWriter* wrtr = XMLWriter::create(OutputFilename.c_str());
     rdr->read();
     AST::AST* node = rdr->get();
     if (node) {

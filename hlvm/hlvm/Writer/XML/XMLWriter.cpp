@@ -30,6 +30,7 @@
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <libxml/xmlwriter.h>
 #include <iostream>
 #include <cassert>
 
@@ -37,53 +38,44 @@ using namespace hlvm;
 
 namespace {
 
-// An ostream that automatically indents and provides methods to control it.
-class ostream_indent
-{
-  uint32_t indent_;
-public:
-  std::ostream& strm_;
-  ostream_indent(std::ostream& os) : indent_(0), strm_(os) {}
-
-  inline void nl()
-  {
-    strm_ << '\n';
-    strm_.width(indent_);
-    strm_ << ' ';
-  }
-
-  inline void in( bool with_newline = false)
-  {
-    indent_++;
-    if (with_newline)
-      nl();
-  }
-
-  inline void out( bool with_newline = false)
-  {
-    indent_--;
-    if (with_newline)
-      nl();
-  }
-};
-
 class XMLWriterImpl : public XMLWriter {
-  ostream_indent ind_;
-  std::ostream& out_;
-  AST::AST* node_;
+  xmlTextWriterPtr writer;
+  AST::AST* node;
 public:
-  XMLWriterImpl(std::ostream& out)
-    : ind_(out), out_(out), node_(0)
-  { }
+  XMLWriterImpl(const char* fname)
+    : writer(0), node(0)
+  { 
+    writer = xmlNewTextWriterFilename(fname,0);
+    assert(writer && "Can't allocate writer");
+    xmlTextWriterSetIndent(writer,1);
+    xmlTextWriterSetIndentString(writer,reinterpret_cast<const xmlChar*>("  "));
+  }
 
   virtual ~XMLWriterImpl() 
   { 
-    out_.flush();
+    xmlFreeTextWriter(writer);
   }
 
   virtual void write(AST::AST* node);
 
 private:
+  inline void writeComment(const char* cmt)
+    { xmlTextWriterWriteComment(writer,
+        reinterpret_cast<const xmlChar*>(cmt)); }
+  inline void startElement(const char* elem) 
+    { xmlTextWriterStartElement(writer, 
+        reinterpret_cast<const xmlChar*>(elem)); }
+  inline void endElement() 
+    { xmlTextWriterEndElement(writer); }
+  inline void writeAttribute(const char*name, const char*val)
+    { xmlTextWriterWriteAttribute(writer, 
+        reinterpret_cast<const xmlChar*>(name), 
+        reinterpret_cast<const xmlChar*>(val)); }
+  inline void writeElement(const char* elem, const char* body)
+    { xmlTextWriterWriteElement(writer,
+        reinterpret_cast<const xmlChar*>(elem),
+        reinterpret_cast<const xmlChar*>(body)); }
+
   inline void putHeader();
   inline void putFooter();
   inline void put(AST::Node* node);
@@ -126,26 +118,24 @@ sanitize(const std::string& input)
 void
 XMLWriterImpl::putHeader() 
 {
-  out_ << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-  out_ << "<hlvm xmlns=\"http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng\">";
-  ind_.in(true);
+  xmlTextWriterStartDocument(writer,0,"UTF-8",0);
+  startElement("hlvm");
+  writeAttribute("xmlns","http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng");
 }
 
 void
 XMLWriterImpl::putFooter()
 {
-  ind_.out(true);
-  out_ << "</hlvm>\n";
+  endElement();
 }
 
 inline void 
 XMLWriterImpl::put(AST::Bundle* b)
 {
-  out_ << "<bundle pubid=\"" << b->getName() << "\">";
-  ind_.in(true);
-  ind_.out(true);
-  out_ << "</bundle>";
-  ind_.out(false);
+  startElement("bundle");
+  writeAttribute("pubid",b->getName().c_str());
+  endElement();
+  xmlTextWriterEndDocument(writer);
 }
 
 void
@@ -270,7 +260,7 @@ XMLWriterImpl::put(AST::Node* node)
 void
 XMLWriterImpl::write(AST::AST* ast) 
 {
-  node_ = ast;
+  node = ast;
   putHeader();
   put(ast->getRoot());
   putFooter();
@@ -279,7 +269,7 @@ XMLWriterImpl::write(AST::AST* ast)
 }
 
 XMLWriter* 
-hlvm::XMLWriter::create(std::ostream& out)
+hlvm::XMLWriter::create(const char* fname)
 {
-  return new XMLWriterImpl(out);
+  return new XMLWriterImpl(fname);
 }

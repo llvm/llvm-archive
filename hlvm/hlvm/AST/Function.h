@@ -52,26 +52,30 @@ namespace AST
     /// @{
     public:
       Function(
-        SignatureType* sig, ///< The function signature
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name, ///< The name of the function
         NodeIDs id = FunctionID
-      ) : LinkageItem(id,parent,name), block_(0), signature_(sig) {}
+      ) : LinkageItem(id), block(0), signature(0) {}
       virtual ~Function();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+      Block* getBlock() { return block; }
+      SignatureType* getSignature() { return signature; }
       static inline bool classof(const Function*) { return true; }
       static inline bool classof(const Node* N) { return N->isFunction(); }
 
     /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setSignature(SignatureType* SigTy) { signature = SigTy; }
+    /// @}
     /// @name Data
     /// @{
     protected:
-      Block * block_;                   ///< The code block to be executed
-      SignatureType* signature_;        ///< The function signature.
+      Block * block;                   ///< The code block to be executed
+      SignatureType* signature;        ///< The function signature.
     /// @}
   };
 } // AST

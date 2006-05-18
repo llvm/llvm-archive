@@ -50,10 +50,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      Program(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Function(SignatureTy,parent,name,ProgramID) {}
+      Program() : Function(ProgramID) {}
       virtual ~Program();
 
     /// @}

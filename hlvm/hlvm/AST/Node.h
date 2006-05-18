@@ -31,16 +31,21 @@
 #define HLVM_AST_NODE_H
 
 #include <llvm/Support/Casting.h>
-#include <hlvm/AST/Location.h>
+#include <hlvm/AST/Locator.h>
 #include <vector>
 
 namespace hlvm {
 namespace AST {
 
-  /// This enumeration is used to identify a specific type
+  /// This enumeration is used to identify a specific type. Its organization is
+  /// very specific and dependent on the class hierarchy. In order to use these
+  /// values as ranges for class identification (classof methods), we need to 
+  /// group things by inheritance rather than by function. In particular the
+  /// ParentNode group needs to be distinguished.
   enum NodeIDs {
-    // Primitive Types
-    VoidTypeID = 0,     ///< The Void Type (The Null Type)
+    NoTypeID = 0,       ///< Use this for an invalid type ID.
+    // Primitive Types (no child nodes)
+    VoidTypeID = 1,     ///< The Void Type (The Null Type)
     AnyTypeID,          ///< The Any Type (Union of any type)
     BooleanTypeID,      ///< The Boolean Type (A simple on/off boolean value)
     CharacterTypeID,    ///< The Character Type (UTF-16 encoded character)
@@ -70,11 +75,11 @@ namespace AST {
     // Linkage Items
     VariableID,         ///< The Variable Node (a storage location)
     FunctionID,         ///< The Function Node (a callable function)
-    ProgramID,          ///< The Program Node (a
+    ProgramID,          ///< The Program Node (a program starting point)
 
     // Container
     BundleID,           ///< The Bundle Node (a group of other declarations)
-    BlockID,            ///< A Block Of Code Node
+    BlockID,            ///< A Block Of Code Nodes
 
     // Control Flow And Invocation Operators
     CallOpID,           ///< The Call Operator
@@ -154,6 +159,14 @@ namespace AST {
     MungeOpID,          ///< General Purpose String Editing Operator
     LengthOpID,         ///< Extract Length of a String Operator
 
+    // Input/Output Operators
+    MapFileOpID,        ///< Map a file to memory (mmap)
+    OpenOpID,           ///< Open a stream from a URL
+    CloseOpID,          ///< Close a stream previously opened.
+    ReadOpID,           ///< Read from a stream
+    WriteOpID,          ///< Write to a stream
+    PositionOpID,       ///< Position a stream
+
     // Constant Value Operators
     IntOpID,            ///< Constant Integer Value
     RealOpID,           ///< Constant Real Value
@@ -165,14 +178,6 @@ namespace AST {
     VectorOpID,         ///< Constant Vector Value
     StructureOpID,      ///< Constant Structure Value
 
-    // Input/Output Operators
-    MapFileOpID,        ///< Map a file to memory (mmap)
-    OpenOpID,           ///< Open a stream from a URL
-    CloseOpID,          ///< Close a stream previously opened.
-    ReadOpID,           ///< Read from a stream
-    WriteOpID,          ///< Write to a stream
-    PositionOpID,       ///< Position a stream
-
     // Enumeration Ranges and Limits
     NumNodeIDs,         ///< The number of node identifiers in the enum
     FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
@@ -180,14 +185,12 @@ namespace AST {
     FirstContainerTypeID = PointerTypeID, ///< First Container Type
     LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
     FirstOperatorID = CallOpID, ///< First Operator
-    LastOperatorID =  StructureOpID ///< Last Operator
+    LastOperatorID =  StructureOpID, ///< Last Operator
+    FirstParentNodeID = PointerTypeID,
+    LastParentNodeID = PositionOpID
   };
 
-  class Type;
-
-  /// A NamedType is simply a pair involving a name and a pointer to a Type.
-  /// This is so frequently needed, it is declared here for convenience.
-  typedef std::pair<std::string,Type*> NamedType;
+  class ParentNode;
 
   /// This class is the base class of HLVM Abstract Syntax Tree (AST). All 
   /// other AST nodes are subclasses of this class.
@@ -196,12 +199,9 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
+    protected:
+      Node(NodeIDs ID) : id(ID), parent(0), loc() {}
     public:
-      Node(NodeIDs id, Node* parent = 0, const std::string& name = ""); 
-
-#ifndef _NDEBUG
-      virtual void dump() const;
-#endif
       virtual ~Node();
 
     /// @}
@@ -209,29 +209,42 @@ namespace AST {
     /// @{
     public:
       /// Get the type of node
-      inline NodeIDs getID() const { return id_; }
+      inline NodeIDs getID() const { return NodeIDs(id); }
 
-      /// Get the name of the node
-      inline const std::string& getName() { return name_; }
+      /// Get the parent node
+      inline Node* getParent() const { return parent; }
+
+      /// Get the flags
+      inline unsigned getFlags() const { return flags; }
+
+      /// Get the Locator
+      inline const Locator& getLocator() const { return loc; }
 
       /// Determine if the node is a Type
-      inline bool isType() const { 
-        return id_ >= FirstPrimitiveTypeID && id_ <= LastContainerTypeID;
+      inline bool isType() const {
+        return id >= FirstPrimitiveTypeID && id <= LastPrimitiveTypeID;
       }
       /// Determine if the node is any of the Operators
       inline bool isOperator() const { 
-        return id_ >= FirstOperatorID && id_ <= LastOperatorID;
+        return id >= FirstOperatorID && id <= LastOperatorID;
       }
+
+      /// Determine if the node is a ParentNode
+      inline bool isParentNode() const {
+        return id >= FirstParentNodeID && id <= LastParentNodeID;
+      }
+
       /// Determine if the node is a Block
-      inline bool isBlock() const { return id_ == BlockID; }
+      inline bool isBlock() const { return id == BlockID; }
       /// Determine if the node is a Bundle
-      inline bool isBundle() const { return id_ == BundleID; }
+      inline bool isBundle() const { return id == BundleID; }
       /// Determine if the node is a Function
-      inline bool isFunction() const { return id_ == FunctionID; }
+      inline bool isFunction() const { return id == FunctionID; }
       /// Determine if the node is a Program
-      inline bool isProgram() const { return id_ == ProgramID; }
+      inline bool isProgram() const { return id == ProgramID; }
       /// Determine if the node is a Variable
-      inline bool isVariable() const { return id_ == VariableID; }
+      inline bool isVariable() const { return id == VariableID; }
+
       /// Provide support for isa<X> and friends
       static inline bool classof(const Node*) { return true; }
 
@@ -239,18 +252,76 @@ namespace AST {
     /// @name Mutators
     /// @{
     protected:
-      void removeFromTree();
+      virtual void removeFromTree();
+      virtual void setParent(ParentNode *n);
+      void setLocator(const Locator& l) { loc = l; }
+      void setFlags(unsigned f) {
+        assert(f < 1 << 24 && "Flags out of range");
+        flags = f;
+      }
 
+    /// @}
+    /// @name Utilities
+    /// @{
+    public:
+#ifndef _NDEBUG
+      virtual void dump() const;
+#endif
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      NodeIDs id_;              ///< Identification of the node kind.
-      Node* parent_;            ///< The node that owns this node.
-      std::vector<Node> kids_;  ///< The vector of children nodes.
-      std::string name_;        ///< The name of this node.
-      Location loc_;            ///< The source location corresponding to node.
+      unsigned id : 8;         ///< Really a value in NodeIDs
+      unsigned flags : 24;     ///< 24 boolean flags, subclass dependent interp.
+      Node* parent;            ///< The node that owns this node.
+      Locator loc;             ///< The source location corresponding to node.
+    /// @}
+  };
+
+  class ParentNode : public Node {
+    /// @name Types
+    /// @{
+    public:
+      typedef std::vector<Node*> NodeList;
+      typedef NodeList::iterator iterator;
+      typedef NodeList::const_iterator const_iterator;
+
+    /// @}
+    /// @name Constructors
+    /// @{
+    protected:
+      ParentNode(NodeIDs id) 
+        : Node(id), name(), kids() {}
+    public:
+      virtual ~ParentNode();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Get the name of the node
+      inline const std::string& getName() { return name; }
+
+      /// Determine if the node has child nodes
+      inline bool hasKids() const { return !kids.empty(); }
+
+      static inline bool classof(const ParentNode*) { return true; }
+      static inline bool classof(const Node* N) { return N->isParentNode(); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setName(const std::string& n) { name = n; }
+      virtual void addChild(Node* n);
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      std::string name;  ///< The name of this node.
+      NodeList    kids;  ///< The vector of children nodes.
     /// @}
   };
 } // AST

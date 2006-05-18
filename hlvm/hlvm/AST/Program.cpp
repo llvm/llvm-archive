@@ -34,7 +34,8 @@ namespace hlvm {
 namespace AST {
 
 SignatureType* Program::initSignature() {
-  SignatureType* result = new SignatureType(0,"_hlvm_ProgramSignature");
+  SignatureType* result = new SignatureType();
+  result->setName("_hlvm_ProgramSignature");
   return result;
 }
 SignatureType* Program::SignatureTy = Program::initSignature();

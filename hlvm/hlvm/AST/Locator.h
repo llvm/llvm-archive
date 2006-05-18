@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Location.h - AST Location Class ----------------*- C++ -*-===//
+//===-- hlvm/AST/Locator.h - AST Location Class -----------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Location.h
+/// @file hlvm/AST/Locator.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Location
+/// @brief Declares the class hlvm::AST::Locator
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_LOCATION_H
-#define HLVM_AST_LOCATION_H
+#ifndef HLVM_AST_LOCATOR_H
+#define HLVM_AST_LOCATOR_H
 
 #include <string>
 
@@ -39,14 +39,14 @@ namespace AST {
   /// number and column number. This is used for generating error messages and
   /// for debugging support.
   /// @brief Source location holder class.
-  class Location
+  class Locator
   {
     /// @name Constructors
     /// @{
     public:
-      Location(uint32_t line, uint32_t col, const std::string& fname)
-        : line_(line), col_(col), fname_(fname)  {}
-      Location() : line_(0), col_(0), fname_("") {}
+      Locator(uint32_t line, uint32_t col, const std::string* fname)
+        : line_(line), col_(col), fname_(fname) {}
+      Locator() : line_(0), col_(0), fname_(0) {}
 
     /// @}
     /// @name Accessors
@@ -59,7 +59,7 @@ namespace AST {
     protected:
       uint32_t line_;           ///< Line number of source location
       uint32_t col_;            ///< Column number of source location
-      std::string fname_;       ///< File name of source location
+      const std::string* fname_;///< File name of source location
     /// @}
   };
 } // AST

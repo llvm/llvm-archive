@@ -51,16 +51,14 @@ namespace AST
   /// elsewhere and linked into another bundle to resolve the reference. The
   /// LinkageItem declares what kind of linkage is to be performed.
   /// @brief HLVM AST Bundle Node
-  class LinkageItem : public Node
+  class LinkageItem : public ParentNode
   {
     /// @name Constructors
     /// @{
     public:
       LinkageItem(
-        NodeIDs id, ///< Subclass's node identifier
-        Node* parent, ///< The Bundle to which this bundle belongs, or null
-        const std::string& name ///< The name of the bundle
-      ) : Node(id,parent,name) {}
+        NodeIDs id ///< Subclass's node identifier
+      ) : ParentNode(id) {}
       virtual ~LinkageItem();
 
     /// @}

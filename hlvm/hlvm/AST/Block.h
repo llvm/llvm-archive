@@ -43,15 +43,12 @@ namespace AST {
   /// contained in a Bundle. Local variables are always contained in a
   /// Function.
   /// @brief HLVM AST Variable Node
-  class Block : public Node
+  class Block : public ParentNode
   {
     /// @name Constructors
     /// @{
     public:
-      Block(
-        Node* parent, ///< The bundle or function that defines the ariable 
-        const std::string& name ///< The name of the variable
-      ) : Node(BlockID,parent,name) {}
+      Block() : ParentNode(BlockID), ops_() {}
       virtual ~Block();
 
     /// @}

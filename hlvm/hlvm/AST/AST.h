@@ -30,6 +30,8 @@
 #ifndef HLVM_AST_AST_H
 #define HLVM_AST_AST_H
 
+#include <string>
+
 /// This namespace is for all HLVM software. It ensures that HLVM software does
 /// not collide with any other software. Hopefully HLVM is not a namespace used
 /// elsewhere. 
@@ -40,6 +42,7 @@ namespace hlvm
 namespace AST
 {
   class Bundle;
+  class Locator;
 
   /// This class is used to hold or contain an Abstract Syntax Tree. It provides
   /// those aspects of the tree that are not part of the tree itself.
@@ -49,19 +52,36 @@ namespace AST
     /// @name Constructors
     /// @{
     public:
-      AST() : tree_(0) {}
+      AST() : sysid(), pubid(), root(0) {}
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-      Bundle* getBundle() { return tree_; }
+      const std::string& getSystemID() { return sysid; }
+      const std::string& getPublicID() { return pubid; }
+      Bundle* getRoot() { return root; }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setSystemID(const std::string& id) { sysid = id; }
+      void setPublicID(const std::string& id) { pubid = id; }
+      void setRoot(Bundle* top) { root = top; }
+    /// @}
+    /// @name Factories
+    /// @{
+    public:
+      static Bundle* new_Bundle(const Locator& loc, const std::string& id);
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      Bundle* tree_;
+      std::string sysid;
+      std::string pubid;
+      Bundle* root;
     /// @}
   };
 } // AST

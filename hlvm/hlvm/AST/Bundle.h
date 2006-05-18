@@ -40,15 +40,15 @@ namespace AST {
   /// a Bundle. Bundles can also be nested in other Bundles. All programming
   /// constructs are defined as child nodes of some Bundle.
   /// @brief HLVM AST Bundle Node
-  class Bundle : public Node
+  class Bundle : public ParentNode
   {
     /// @name Constructors
     /// @{
     public:
-      Bundle(
-        Bundle* parent,         ///< The bundle to which this bundle belongs
-        const std::string& name ///< The name of this bundle
-      ) : Node(BundleID,parent,name) {}
+      static Bundle* create(const Locator& location, const std::string& pubid);
+
+    protected:
+      Bundle() : ParentNode(BundleID) {}
       virtual ~Bundle();
 
     /// @}

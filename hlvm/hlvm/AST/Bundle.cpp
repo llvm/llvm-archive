@@ -36,4 +36,13 @@ Bundle::~Bundle()
 {
 }
 
+Bundle*
+Bundle::create(const Locator& loc, const std::string& id)
+{
+  Bundle* result = new Bundle();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
 }}

@@ -49,10 +49,7 @@ namespace AST
     /// @name Constructors
     /// @{
     public:
-      Variable(
-        Node* parent, ///< The bundle or function that defines the ariable 
-        const std::string& name ///< The name of the variable
-      ) : LinkageItem(VariableID,parent,name) {}
+      Variable() : LinkageItem(VariableID) {}
       virtual ~Variable();
 
     /// @}

@@ -20,11 +20,11 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Type.h
+/// @file hlvm/AST/ContainerType.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Type
+/// @brief Declares the class hlvm::AST::ContainerType
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_AST_CONTAINERTYPE_H
@@ -43,10 +43,8 @@ namespace AST {
     /// @{
     public:
       ContainerType(
-        NodeIDs id, ///< The node id of the subclass
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Type(id,parent,name) {}
+        NodeIDs id ///< The node id of the subclass
+      ) : Type(id) {}
       virtual ~ContainerType();
 
     /// @}
@@ -72,10 +70,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      PointerType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : ContainerType(PointerTypeID,parent,name) {}
+      PointerType() : ContainerType(PointerTypeID) {}
       virtual ~PointerType();
 
     /// @}
@@ -85,6 +80,7 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const PointerType*) { return true; }
       static inline bool classof(const Type* T) { return T->isPointerType(); }
+
     /// @}
     /// @name Data
     /// @{
@@ -99,10 +95,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      ArrayType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : ContainerType(ArrayTypeID,parent,name) {}
+      ArrayType() : ContainerType(ArrayTypeID) {}
       virtual ~ArrayType();
 
     /// @}
@@ -128,10 +121,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      VectorType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : ContainerType(VectorTypeID,parent,name) {}
+      VectorType() : ContainerType(VectorTypeID) {}
       virtual ~VectorType();
 
     /// @}
@@ -155,10 +145,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      StructureType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : ContainerType(StructureTypeID,parent,name) {}
+      StructureType() : ContainerType(StructureTypeID) {}
       virtual ~StructureType();
 
     /// @}
@@ -182,10 +169,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      SignatureType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : ContainerType(SignatureTypeID,parent,name) {}
+      SignatureType() : ContainerType(SignatureTypeID) {}
       virtual ~SignatureType();
 
     /// @}

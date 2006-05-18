@@ -31,14 +31,13 @@
 
 namespace hlvm { namespace AST {
 
-Node::Node(NodeIDs id, Node* parent, const std::string& name)
-  : id_(id), parent_(parent), kids_(), name_(name)
-{
-}
-
 Node::~Node()
 {
   removeFromTree();
+}
+
+ParentNode::~ParentNode()
+{
 }
 
 void
@@ -46,11 +45,24 @@ Node::removeFromTree()
 {
 }
 
+void
+Node::setParent(ParentNode* p)
+{
+  parent = p;
+  p->addChild(this);
+}
+
 #ifndef _NDEBUG
 void 
-hlvm::AST::Node::dump() const 
+Node::dump() const 
 {
 }
 #endif
+
+void
+ParentNode::addChild(Node* n)
+{
+  kids.push_back(n);
+}
 
 }}

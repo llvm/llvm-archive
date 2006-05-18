@@ -28,8 +28,16 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/AST.h>
+#include <hlvm/AST/Bundle.h>
 
 namespace hlvm {
 namespace AST {
+
+Bundle*
+AST::new_Bundle(const Locator& loc, const std::string& id)
+{
+  Bundle* result = Bundle::create(loc,id);
+  return result;
+}
 
 }}

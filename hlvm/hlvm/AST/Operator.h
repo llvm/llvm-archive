@@ -49,10 +49,8 @@ namespace AST {
     /// @{
     public:
       Operator(
-        NodeIDs opID, ///< The Operator ID for this operator kind
-        Node* parent, ///< The bundle or function that defines the ariable 
-        const std::string& name ///< The name of the variable
-      ) : Node(opID,parent,name) {}
+        NodeIDs opID ///< The Operator ID for this operator kind
+      ) : Node(opID), Operands() {}
       virtual ~Operator();
 
     /// @}

@@ -38,37 +38,35 @@ namespace AST {
   /// This class represents a Type in the HLVM Abstract Syntax Tree.  
   /// A Type defines the format of storage. 
   /// @brief HLVM AST Type Node
-  class Type : public Node
+  class Type : public ParentNode
   {
     /// @name Constructors
     /// @{
     public:
       Type(
-        NodeIDs id, ///< The Type identifier
-        Node* parent = 0, ///< The bundle in which the function is defined
-        const std::string& name = "" ///< The name of the function
-      ) : Node(id, parent, name)  {}
+        NodeIDs id ///< The Type identifier
+      ) : ParentNode(id )  {}
       virtual ~Type();
 
     /// @}
     /// @name Accessors
     /// @{
-      inline bool isPrimitiveType() const { return id_ <= LastPrimitiveTypeID; }
+      inline bool isPrimitiveType() const { return id <= LastPrimitiveTypeID; }
       inline bool isIntegralType()  const { 
-        return id_ == IntegerTypeID || id_ == RangeTypeID; 
+        return id == IntegerTypeID || id == RangeTypeID; 
       }
       inline bool isContainerType() const { 
-        return id_ >= FirstContainerTypeID; 
+        return id >= FirstContainerTypeID; 
       }
-      inline bool isIntegerType() const { return id_ == IntegerTypeID; }
-      inline bool isRangeType() const { return id_ == RangeTypeID; }
-      inline bool isRealType() const { return id_ == RealTypeID; }
-      inline bool isRationalType() const { return id_ == RationalTypeID; }
-      inline bool isPointerType() const { return id_ == PointerTypeID; }
-      inline bool isArrayType() const { return id_ == ArrayTypeID; }
-      inline bool isVectorType() const { return id_ == VectorTypeID; }
-      inline bool isStructureType() const { return id_ == StructureTypeID; }
-      inline bool isSignatureType() const { return id_ == SignatureTypeID; }
+      inline bool isIntegerType() const { return id == IntegerTypeID; }
+      inline bool isRangeType() const { return id == RangeTypeID; }
+      inline bool isRealType() const { return id == RealTypeID; }
+      inline bool isRationalType() const { return id == RationalTypeID; }
+      inline bool isPointerType() const { return id == PointerTypeID; }
+      inline bool isArrayType() const { return id == ArrayTypeID; }
+      inline bool isVectorType() const { return id == VectorTypeID; }
+      inline bool isStructureType() const { return id == StructureTypeID; }
+      inline bool isSignatureType() const { return id == SignatureTypeID; }
 
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const Node*) { return true; }
@@ -81,6 +79,10 @@ namespace AST {
     /// @}
   };
 
+  /// A NamedType is simply a pair involving a name and a pointer to a Type.
+  /// This is so frequently needed, it is declared here for convenience.
+  typedef std::pair<std::string,Type*> NamedType;
+
   /// This class represents all HLVM integer types. An integer type declares the
   /// the minimum number of bits that are required to store the integer type.
   /// HLVM will convert this specification to the most appropriate sized 
@@ -91,10 +93,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      IntegerType(
-        Node* parent = 0, ///< The bundle in which the function is defined
-        const std::string& name = "" ///< The name of the function
-      ) : Type(IntegerTypeID,parent,name) {}
+      IntegerType() : Type(IntegerTypeID) {}
       virtual ~IntegerType();
 
     /// @}
@@ -121,10 +120,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      RangeType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Type(RangeTypeID,parent,name) {}
+      RangeType() : Type(RangeTypeID) {}
       virtual ~RangeType();
 
     /// @}
@@ -154,10 +150,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      RealType(
-        Node* parent, ///< The bundle in which the function is defined
-        const std::string& name ///< The name of the function
-      ) : Type(RealTypeID,parent,name) {}
+      RealType() : Type(RealTypeID) {}
       virtual ~RealType();
 
     /// @}

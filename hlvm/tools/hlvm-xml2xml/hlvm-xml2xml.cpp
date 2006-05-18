@@ -76,23 +76,19 @@ int main(int argc, char**argv)
       Out = &std::cout;
     }
 
-    Base::Source* src = 0;
-    llvm::sys::MappedFile* mf = 0;
     if (InputFilename == "-" ) {
-      src = Base::new_StreamSource(std::cin);
+      std::cerr << "Not supported yet: input from stdin\n";
+      exit(2);
     } else {
       llvm::sys::Path path(InputFilename);
-      if (path.canRead()) {
-        mf = new llvm::sys::MappedFile(path);
-        src = Base::new_MappedFileSource(*mf);
-      } else {
+      if (!path.canRead()) {
         std::cerr << argv[0] << ": can't read input file: " << InputFilename
                   << "\n";
         exit(2);
       }
     }
 
-    XMLReader* rdr = XMLReader::create(src);
+    XMLReader* rdr = XMLReader::create(InputFilename);
     XMLWriter* wrtr = XMLWriter::create(*Out);
     rdr->read();
     AST::Node* node = rdr->get();
@@ -101,10 +97,6 @@ int main(int argc, char**argv)
     }
     delete rdr;
     delete wrtr;
-    if (mf) {
-      mf->close();
-      delete mf;
-    }
 
     if (Out != &std::cout) {
       static_cast<std::ofstream*>(Out)->close();

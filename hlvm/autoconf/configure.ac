@@ -291,8 +291,8 @@ HLVM_FIND_LIBRARY([apr],[apr-1/apr.h],[apr-1],[apr_allocator_alloc],
                   [Apache Portable Runtime])
 HLVM_FIND_LIBRARY([apru],[apr-1/apu.h],[aprutil-1],[apu_version],
                   [Apache Portable Runtime Utilities])
-HLVM_FIND_LIBRARY([expat],[expat.h],[expat],[XML_ParserCreate],
-                  [expat XML Parser])
+HLVM_FIND_LIBRARY([xml2],[libxml/parser.h],[xml2],
+                  [xmlCreateFileParserCtxt],[libxml2 XML C Parser])
 HLVM_FIND_LIBRARY([syck],[syck.h],[syck],[syck_parse],[Syck Yaml Handler])
 
 dnl -- Check for specific libraries we depend on.

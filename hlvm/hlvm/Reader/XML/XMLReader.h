@@ -31,7 +31,7 @@
 #define XPS_READER_XML_XMLREADER_H
 
 #include <hlvm/Reader/Reader.h>
-#include <hlvm/Base/Source.h>
+#include <string>
 
 namespace hlvm {
 
@@ -43,7 +43,7 @@ namespace hlvm {
     /// This method instantiates an XMLReader that is prepared to read from
     /// the path provided.
     /// @brief Create a new XmlReader
-    static XMLReader* create(Base::Source* in);
+    static XMLReader* create(const std::string& path);
 
     virtual ~XMLReader() {}
   };

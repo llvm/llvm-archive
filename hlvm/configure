@@ -315,7 +315,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake apr_INC apr_LIB apru_INC apru_LIB expat_INC expat_LIB syck_INC syck_LIB EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS HLVM_COPYRIGHT HLVM_PACKAGE HLVM_VERSION HLVM_SO_VERSION HLVM_SO_CURRENT HLVM_SO_REVISION HLVM_SO_AGE HLVM_SHAREDPREFIX HLVM_DEBUG HLVM_OPTIMIZE HLVM_INLINE HLVM_ASSERT HLVM_TRACE HLVM_SMALL HLVM_EFENCE HLVM_PROFILING HLVM_WITH_WORKSPACE HLVM_WITH_INCLUDES HLVM_WITH_LLVM_SRC HLVM_WITH_LLVM_OBJ HLVM_WITH_LLVMGCC CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP CXX CXXFLAGS ac_ct_CXX ifGNUmake apr_INC apr_LIB apru_INC apru_LIB xml2_INC xml2_LIB syck_INC syck_LIB EGREP HLVM_CFGNAME HLVM_CONFIGTIME HLVM_PREFIX LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -895,11 +895,12 @@ Optional Packages:
                           libraries are in DIR
   --with-APRU-inc=DIR     Specify that the Apache Portable Runtime Utilities
                           includes are in DIR
-  --with-EXPAT=DIR        Specify that the expat XML Parser install prefix is
+  --with-XML2=DIR         Specify that the libxml2 XML C Parser install prefix
+                          is DIR
+  --with-XML2-lib=DIR     Specify that libxml2 XML C Parser libraries are in
                           DIR
-  --with-EXPAT-lib=DIR    Specify that expat XML Parser libraries are in DIR
-  --with-EXPAT-inc=DIR    Specify that the expat XML Parser includes are in
-                          DIR
+  --with-XML2-inc=DIR     Specify that the libxml2 XML C Parser includes are
+                          in DIR
   --with-SYCK=DIR         Specify that the Syck Yaml Handler install prefix is
                           DIR
   --with-SYCK-lib=DIR     Specify that Syck Yaml Handler libraries are in DIR
@@ -4756,34 +4757,34 @@ fi
 
 
 
-# Check whether --with-EXPAT or --without-EXPAT was given.
-if test "${with_EXPAT+set}" = set; then
-  withval="$with_EXPAT"
-  expatpfxdir=$withval
+# Check whether --with-XML2 or --without-XML2 was given.
+if test "${with_XML2+set}" = set; then
+  withval="$with_XML2"
+  xml2pfxdir=$withval
 else
-  expatpfxdir=nada
+  xml2pfxdir=nada
 fi;
 
-# Check whether --with-EXPAT-lib or --without-EXPAT-lib was given.
-if test "${with_EXPAT_lib+set}" = set; then
-  withval="$with_EXPAT_lib"
-  expatlibdir=$withval
+# Check whether --with-XML2-lib or --without-XML2-lib was given.
+if test "${with_XML2_lib+set}" = set; then
+  withval="$with_XML2_lib"
+  xml2libdir=$withval
 else
-  expatlibdir=nada
+  xml2libdir=nada
 fi;
 
-# Check whether --with-EXPAT-inc or --without-EXPAT-inc was given.
-if test "${with_EXPAT_inc+set}" = set; then
-  withval="$with_EXPAT_inc"
-  expatincdir=$withval
+# Check whether --with-XML2-inc or --without-XML2-inc was given.
+if test "${with_XML2_inc+set}" = set; then
+  withval="$with_XML2_inc"
+  xml2incdir=$withval
 else
-  expatincdir=nada
+  xml2incdir=nada
 fi;
-pfxval="${expatpfxdir}"
-incval="${expatincdir}"
-libval="${expatlibdir}"
-echo "$as_me:$LINENO: checking for expat XML Parser library and header" >&5
-echo $ECHO_N "checking for expat XML Parser library and header... $ECHO_C" >&6
+pfxval="${xml2pfxdir}"
+incval="${xml2incdir}"
+libval="${xml2libdir}"
+echo "$as_me:$LINENO: checking for libxml2 XML C Parser library and header" >&5
+echo $ECHO_N "checking for libxml2 XML C Parser library and header... $ECHO_C" >&6
 hlvm_found_lib=0
 hlvm_found_inc=0
 if test "${pfxval}" != "nada" ; then
@@ -4791,11 +4792,11 @@ if test "${pfxval}" != "nada" ; then
 
 hlvm_found_inc=0
 if test -d "${pfxval}" ; then
-  if test -n "expat.h" ; then
-    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "${pfxval}/include" "${pfxval}" "${pfxval}/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -4807,19 +4808,19 @@ fi
 
 hlvm_found_lib=0
 if test -d "${pfxval}" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "${pfxval}" "${pfxval}/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4831,8 +4832,8 @@ fi
   else
     echo "$as_me:$LINENO: result: failed" >&5
 echo "${ECHO_T}failed" >&6;
-    { { echo "$as_me:$LINENO: error: The --with-expat value must be a directory" >&5
-echo "$as_me: error: The --with-expat value must be a directory" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-xml2 value must be a directory" >&5
+echo "$as_me: error: The --with-xml2 value must be a directory" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
@@ -4840,19 +4841,19 @@ else
 
 hlvm_found_lib=0
 if test -d "${libval}" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "${libval}" "${libval}/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4866,11 +4867,11 @@ fi
 
 hlvm_found_inc=0
 if test -d "${incval}" ; then
-  if test -n "expat.h" ; then
-    for dir in "${incval}/include" "${incval}" "${incval}/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "${incval}/include" "${incval}" "${incval}/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -4885,19 +4886,19 @@ if test "$hlvm_found_lib" != 1 ; then
 
 hlvm_found_lib=0
 if test -d "/usr" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "/usr" "/usr/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4911,19 +4912,19 @@ if test "$hlvm_found_lib" != 1 ; then
 
 hlvm_found_lib=0
 if test -d "/usr/local" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "/usr/local" "/usr/local/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4937,19 +4938,19 @@ if test "$hlvm_found_lib" != 1 ; then
 
 hlvm_found_lib=0
 if test -d "/proj/install" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "/proj/install" "/proj/install/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4963,19 +4964,19 @@ if test "$hlvm_found_lib" != 1 ; then
 
 hlvm_found_lib=0
 if test -d "/sw" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "/sw" "/sw/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -4989,19 +4990,19 @@ if test "$hlvm_found_lib" != 1 ; then
 
 hlvm_found_lib=0
 if test -d "/opt" ; then
-  if test -n "expat" ; then
+  if test -n "xml2" ; then
     for dir in "/opt" "/opt/lib" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/libexpat.so" ; then
-          expat_LIB=$dir
+        if test -f "$dir/libxml2.so" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.a" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.a" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
-        elif test -f "$dir/libexpat.la" ; then
-          expat_LIB=$dir
+        elif test -f "$dir/libxml2.la" ; then
+          xml2_LIB=$dir
 
           hlvm_found_lib=1
         fi
@@ -5015,11 +5016,11 @@ if test "$hlvm_found_inc" != 1 ; then
 
 hlvm_found_inc=0
 if test -d "/usr" ; then
-  if test -n "expat.h" ; then
-    for dir in "/usr/include" "/usr" "/usr/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "/usr/include" "/usr" "/usr/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -5033,11 +5034,11 @@ if test "$hlvm_found_inc" != 1 ; then
 
 hlvm_found_inc=0
 if test -d "/usr/local" ; then
-  if test -n "expat.h" ; then
-    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "/usr/local/include" "/usr/local" "/usr/local/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -5051,11 +5052,11 @@ if test "$hlvm_found_inc" != 1 ; then
 
 hlvm_found_inc=0
 if test -d "/proj/install" ; then
-  if test -n "expat.h" ; then
-    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "/proj/install/include" "/proj/install" "/proj/install/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -5069,11 +5070,11 @@ if test "$hlvm_found_inc" != 1 ; then
 
 hlvm_found_inc=0
 if test -d "/sw" ; then
-  if test -n "expat.h" ; then
-    for dir in "/sw/include" "/sw" "/sw/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "/sw/include" "/sw" "/sw/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -5087,11 +5088,11 @@ if test "$hlvm_found_inc" != 1 ; then
 
 hlvm_found_inc=0
 if test -d "/opt" ; then
-  if test -n "expat.h" ; then
-    for dir in "/opt/include" "/opt" "/opt/include/expat" ; do
+  if test -n "libxml/parser.h" ; then
+    for dir in "/opt/include" "/opt" "/opt/include/xml2" ; do
       if test -d "$dir" ; then
-        if test -f "$dir/expat.h" ; then
-          expat_INC="$dir"
+        if test -f "$dir/libxml/parser.h" ; then
+          xml2_INC="$dir"
 
           hlvm_found_inc=1
         fi
@@ -5105,21 +5106,21 @@ if test "$hlvm_found_inc" == 1 ; then
   if test "$hlvm_found_lib" == 1 ; then
     echo "$as_me:$LINENO: result: found" >&5
 echo "${ECHO_T}found" >&6
-    incdir=${expat_INC}
-    libdir=${expat_LIB}
+    incdir=${xml2_INC}
+    libdir=${xml2_LIB}
 
  echo "$LDFLAGS" | grep -- "-L"${libdir}"" >/dev/null 2>/dev/null
  if test $? -ne 0 ; then
    LDFLAGS="$LDFLAGS -L"${libdir}""
  fi
 
-    echo "$as_me:$LINENO: checking for library containing XML_ParserCreate" >&5
-echo $ECHO_N "checking for library containing XML_ParserCreate... $ECHO_C" >&6
-if test "${ac_cv_search_XML_ParserCreate+set}" = set; then
+    echo "$as_me:$LINENO: checking for library containing xmlCreateFileParserCtxt" >&5
+echo $ECHO_N "checking for library containing xmlCreateFileParserCtxt... $ECHO_C" >&6
+if test "${ac_cv_search_xmlCreateFileParserCtxt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_func_search_save_LIBS=$LIBS
-ac_cv_search_XML_ParserCreate=no
+ac_cv_search_xmlCreateFileParserCtxt=no
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -5133,11 +5134,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char XML_ParserCreate ();
+char xmlCreateFileParserCtxt ();
 int
 main ()
 {
-XML_ParserCreate ();
+xmlCreateFileParserCtxt ();
   ;
   return 0;
 }
@@ -5164,7 +5165,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_XML_ParserCreate="none required"
+  ac_cv_search_xmlCreateFileParserCtxt="none required"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -5172,8 +5173,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
-if test "$ac_cv_search_XML_ParserCreate" = no; then
-  for ac_lib in expat; do
+if test "$ac_cv_search_xmlCreateFileParserCtxt" = no; then
+  for ac_lib in xml2; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -5188,11 +5189,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char XML_ParserCreate ();
+char xmlCreateFileParserCtxt ();
 int
 main ()
 {
-XML_ParserCreate ();
+xmlCreateFileParserCtxt ();
   ;
   return 0;
 }
@@ -5219,7 +5220,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_XML_ParserCreate="-l$ac_lib"
+  ac_cv_search_xmlCreateFileParserCtxt="-l$ac_lib"
 break
 else
   echo "$as_me: failed program was:" >&5
@@ -5232,18 +5233,18 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 LIBS=$ac_func_search_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_search_XML_ParserCreate" >&5
-echo "${ECHO_T}$ac_cv_search_XML_ParserCreate" >&6
-if test "$ac_cv_search_XML_ParserCreate" != no; then
-  test "$ac_cv_search_XML_ParserCreate" = "none required" || LIBS="$ac_cv_search_XML_ParserCreate $LIBS"
+echo "$as_me:$LINENO: result: $ac_cv_search_xmlCreateFileParserCtxt" >&5
+echo "${ECHO_T}$ac_cv_search_xmlCreateFileParserCtxt" >&6
+if test "$ac_cv_search_xmlCreateFileParserCtxt" != no; then
+  test "$ac_cv_search_xmlCreateFileParserCtxt" = "none required" || LIBS="$ac_cv_search_xmlCreateFileParserCtxt $LIBS"
   found_sym=1
 else
   found_sym=0
 fi
 
     if test "$found_sym" == "1" ; then
-      { echo "$as_me:$LINENO: Found expat in ${incdir} and ${libdir}" >&5
-echo "$as_me: Found expat in ${incdir} and ${libdir}" >&6;}
+      { echo "$as_me:$LINENO: Found xml2 in ${incdir} and ${libdir}" >&5
+echo "$as_me: Found xml2 in ${incdir} and ${libdir}" >&6;}
 
  echo "$CPPFLAGS" | grep -- "-I"${incdir}"" >/dev/null 2>/dev/null
  if test $? -ne 0 ; then
@@ -5251,21 +5252,21 @@ echo "$as_me: Found expat in ${incdir} and ${libdir}" >&6;}
  fi
 
     else
-      { echo "$as_me:$LINENO: Symbol 'XML_ParserCreate' not found in library expat in ${libdir}" >&5
-echo "$as_me: Symbol 'XML_ParserCreate' not found in library expat in ${libdir}" >&6;}
+      { echo "$as_me:$LINENO: Symbol 'xmlCreateFileParserCtxt' not found in library xml2 in ${libdir}" >&5
+echo "$as_me: Symbol 'xmlCreateFileParserCtxt' not found in library xml2 in ${libdir}" >&6;}
     fi
   else
     echo "$as_me:$LINENO: result: failed to find library file" >&5
 echo "${ECHO_T}failed to find library file" >&6
-    { { echo "$as_me:$LINENO: error: The --with-expat-libdir option must be used" >&5
-echo "$as_me: error: The --with-expat-libdir option must be used" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-xml2-libdir option must be used" >&5
+echo "$as_me: error: The --with-xml2-libdir option must be used" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
   echo "$as_me:$LINENO: result: failed to find header file" >&5
 echo "${ECHO_T}failed to find header file" >&6
-  { { echo "$as_me:$LINENO: error: The --with-expat-incdir option must be used" >&5
-echo "$as_me: error: The --with-expat-incdir option must be used" >&2;}
+  { { echo "$as_me:$LINENO: error: The --with-xml2-incdir option must be used" >&5
+echo "$as_me: error: The --with-xml2-incdir option must be used" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -7013,8 +7014,8 @@ s,@apr_INC@,$apr_INC,;t t
 s,@apr_LIB@,$apr_LIB,;t t
 s,@apru_INC@,$apru_INC,;t t
 s,@apru_LIB@,$apru_LIB,;t t
-s,@expat_INC@,$expat_INC,;t t
-s,@expat_LIB@,$expat_LIB,;t t
+s,@xml2_INC@,$xml2_INC,;t t
+s,@xml2_LIB@,$xml2_LIB,;t t
 s,@syck_INC@,$syck_INC,;t t
 s,@syck_LIB@,$syck_LIB,;t t
 s,@EGREP@,$EGREP,;t t

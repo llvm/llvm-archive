@@ -129,22 +129,24 @@ XMLWriterImpl::putHeader()
   out_ << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
   out_ << "<!DOCTYPE hlvm PUBLIC \"-//HLVM/DTD HLVM 1.0//EN\" ";
   out_ << "\"http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng\">\n";
-  out_ << "<hlvm>\n";
-  ind_.in();
+  out_ << "<hlvm>";
+  ind_.in(true);
 }
 
 void
 XMLWriterImpl::putFooter()
 {
-  ind_.out();
+  ind_.out(true);
   out_ << "</hlvm>\n";
 }
 
 inline void 
 XMLWriterImpl::put(AST::Bundle* b)
 {
-  out_ << "<bundle pubId=\"" << b->getName() << "\">\n";
-  ind_.in();
+  out_ << "<bundle pubId=\"" << b->getName() << "\">";
+  ind_.in(true);
+  ind_.out(true);
+  out_ << "</bundle>";
 }
 
 void

@@ -114,8 +114,9 @@ open(GPERF,"| gperf -tcDCIoGl --fast 0 -L C++ -Z $TokenHashClass -s 2 -S 1 -k '*
 
 # Run the input through GPERF to create the perfect hash function
 $hlvmdir = get_hlvm_dir();
-chomp($Module = `pwd`);
-$Module =~ s|$hlvmdir\/hlvm\/(.*)|$1|;
+chomp($ModulePath = `pwd`);
+$ModulePath = substr($ModulePath,rindex($ModulePath,"/hlvm/")+6); 
+$Module = $ModulePath;
 $Module =~ s|\/|_|g;
 print GPERF "struct TokenMap {\n";
 print GPERF "const char *name; HLVM_$Module"."::".$Schema."Tokens token;\n" ;

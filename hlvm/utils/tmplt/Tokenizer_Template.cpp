@@ -5,8 +5,8 @@
 /// @brief Implements the functions of class %SCHEMA_NAME%Tokenizer.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <%MODULE_PATH%/%SCHEMA_NAME%Tokenizer.h>
-#include <%MODULE_PATH%/%SCHEMA_NAME%TokenHash.i>
+#include <hlvm/%MODULE_PATH%/%SCHEMA_NAME%Tokenizer.h>
+#include <hlvm/%MODULE_PATH%/%SCHEMA_NAME%TokenHash.i>
 
 namespace HLVM_%MODULE% {
 

@@ -18,7 +18,7 @@ sub process_file
   my $hlvmdir = get_hlvm_dir();
 
   chomp($MODULE_PATH = `pwd`);
-  $MODULE_PATH =~ s|$hlvmdir\/hlvm\/(.*)|$1|;
+  $MODULE_PATH = substr($MODULE_PATH,rindex($MODULE_PATH,"/hlvm/")+6); 
   $MODULE = $MODULE_PATH;
   $MODULE =~ s|\/|_|g;
 
@@ -50,7 +50,7 @@ sub process_file
       }
   }
 
-  local $NAMESPACE 		= "HLVM_$MODULE";
+  local $NAMESPACE 	= "HLVM_$MODULE";
   local $module_header 	= ucfirst($MODULE);
   local $MODULE_INCLUDE = "<hlvm/$MODULE/${module_header}.h>";
   local $CLASS_INCLUDE	= "<hlvm/$MODULE/${CLASS}.h>";

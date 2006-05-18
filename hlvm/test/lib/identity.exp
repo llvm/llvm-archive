@@ -47,9 +47,13 @@ proc hlvm-identity-tests { prog pat } {
     set retval [ catch {exec $tool $testsrc -o $output } ]
     if { $retval == 1 } {
       #Get output
-      set outputFile [open $output {RDONLY}]
-      set result [read $outputFile]
-      close $outputFile
+      if { [file exists $output] } {
+        set outputFile [open $output {RDONLY}]
+        set result [read $outputFile]
+        close $outputFile
+      } else {
+        set result "no output file"
+      }
       fail "$test: $tool returned $retval\n$result"
     } else {
       # Do the identity test
@@ -57,9 +61,13 @@ proc hlvm-identity-tests { prog pat } {
       set retval [ catch {exec diff $testsrc $output >&$diffout } ]
       if {$retval == 1} {
         #Get output
-        set difffile [open $diffout {RDONLY}]
-        set result [read $difffile]
-        close $difffile
+        if { [file exists $diffout] } {
+          set difffile [open $diffout {RDONLY}]
+          set result [read $difffile]
+          close $difffile
+        } else {
+          set result "no diff file"
+        }
         fail "$test: identity test failed:\n$result"
       } else {
         file delete $diffout

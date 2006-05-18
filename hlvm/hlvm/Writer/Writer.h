@@ -31,14 +31,14 @@
 #define XPS_WRITER_WRITER_H
 
 namespace hlvm {
-namespace AST { class Node; }
+namespace AST { class AST; }
 
   class Writer
   {
   public:
     /// This method writes the entire content of the AST to the writer's
     /// destination
-    virtual void write(AST::Node* source) = 0;
+    virtual void write(AST::AST* source) = 0;
   };
 }
 #endif

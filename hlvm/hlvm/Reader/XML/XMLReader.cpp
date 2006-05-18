@@ -31,6 +31,7 @@
 #include <hlvm/Reader/XML/HLVMTokenizer.h>
 #include <hlvm/Base/Locator.h>
 #include <hlvm/Base/Source.h>
+#include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <libxml/parser.h>
 #include <libxml/relaxng.h>
@@ -48,29 +49,31 @@ const char HLVMGrammar[] =
 ;
 
 class XMLReaderImpl : public XMLReader {
-  std::string path_;
-  AST::Node* node_;
-  xmlDocPtr doc_;
+  std::string path;
+  AST::AST* node;
+  xmlDocPtr doc;
 public:
-  XMLReaderImpl(const std::string& path)
-    : path_(path), node_(0)
+  XMLReaderImpl(const std::string& p)
+    : path(p), node(0)
   {
+    node = new AST::AST();
+    node->setSystemID(p);
   }
 
   virtual ~XMLReaderImpl() 
   { 
-    if (node_) delete node_; 
-    if (doc_) xmlFreeDoc(doc_);
+    if (node) delete node; 
+    if (doc) xmlFreeDoc(doc);
   }
 
   virtual void read();
-  virtual AST::Node* get();
+  virtual AST::AST* get();
 
   void error(const std::string& msg) {
     std::cerr << msg << "\n";
   }
 
-  std::string getToken(int32_t token) const
+  std::string lookupToken(int32_t token) const
   {
     return HLVMTokenizer::lookup(token);
   }
@@ -79,7 +82,7 @@ public:
   inline void handleValidationError(xmlErrorPtr error);
 
   void parseTree();
-  void parseBundle(xmlNodePtr cur);
+  AST::Bundle* parseBundle(xmlNodePtr& cur);
 private:
 };
 
@@ -115,42 +118,57 @@ void ValidationHandler(void* userData, xmlErrorPtr error)
   reader->handleValidationError(error);
 }
 
-bool skipBlanks(xmlNodePtr cur)
+bool skipBlanks(xmlNodePtr &cur)
 {
-  while ( cur && xmlIsBlankNode ( cur ) ) 
+  while (cur && 
+      (cur->type == XML_TEXT_NODE ||
+       cur->type == XML_COMMENT_NODE ||
+       cur->type == XML_PI_NODE))
   {
     cur = cur -> next;
   }
   return cur == 0;
 }
 
-void
-XMLReaderImpl::parseBundle(xmlNodePtr cur) 
+inline const char* getAttribute(xmlNodePtr cur,const char*name)
 {
-  int tkn = 
-    HLVMTokenizer::recognize(reinterpret_cast<const char*>(cur->name));
+  return reinterpret_cast<const char*>(
+    xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>(name)));
+}
+
+inline int getToken(const xmlChar* name)
+{
+  return HLVMTokenizer::recognize(reinterpret_cast<const char*>(name));
+}
+
+AST::Bundle*
+XMLReaderImpl::parseBundle(xmlNodePtr &cur) 
+{
+  int tkn = getToken(cur->name);
   assert(tkn == TKN_bundle && "Expecting bundle element");
-  xmlChar* pubid = 
-    xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>("pubid"));
+  std::string pubid(getAttribute(cur, "pubid"));
+  AST::Locator loc(cur->line,0,&node->getSystemID());
+  AST::Bundle* bundle = AST::AST::new_Bundle(loc,pubid);
+  return bundle;
 }
 
 void
 XMLReaderImpl::parseTree() 
 {
-  if (node_)
-    delete node_;
-  node_ = 0;
-  xmlNodePtr cur = xmlDocGetRootElement(doc_);
+  if (node)
+    delete node;
+  node = new AST::AST();
+  xmlNodePtr cur = xmlDocGetRootElement(doc);
   if (!cur) {
     error("No root node");
     return;
   }
-  int tkn = 
-    HLVMTokenizer::recognize(reinterpret_cast<const char*>(cur->name));
+  int tkn = getToken(cur->name);
   assert(tkn == TKN_hlvm && "Expecting hlvm element");
-  cur = cur->xmlChildrenNode;
+  cur = cur->children;
   if (skipBlanks(cur)) return;
-  parseBundle(cur);
+  AST::Bundle* bundle = parseBundle(cur);
+  node->setRoot(bundle);
 }
 
 // Implement the read interface to parse, validate, and convert the
@@ -189,8 +207,8 @@ XMLReaderImpl::read() {
   }
 
   // Parse the file, creating a Document tree
-  doc_ = xmlCtxtReadFile(ctxt, path_.c_str(), 0, 0);
-  if (!doc_) {
+  doc = xmlCtxtReadFile(ctxt, path.c_str(), 0, 0);
+  if (!doc) {
     error("Failed to parse the document");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
@@ -205,8 +223,8 @@ XMLReaderImpl::read() {
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);
-    xmlFreeDoc(doc_);
-    doc_ = 0;
+    xmlFreeDoc(doc);
+    doc = 0;
     return;
   }
 
@@ -214,12 +232,13 @@ XMLReaderImpl::read() {
   xmlRelaxNGSetValidStructuredErrors(validation, ValidationHandler, this);
 
   // Validate the document with the schema
-  if (xmlRelaxNGValidateDoc(validation, doc_)) {
+  if (xmlRelaxNGValidateDoc(validation, doc)) {
     error("Document didn't pass RNG schema validation");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);
-    xmlFreeDoc(doc_);
+    xmlFreeDoc(doc);
+    doc = 0;
     xmlRelaxNGFreeValidCtxt(validation);
     return;
   }
@@ -230,12 +249,14 @@ XMLReaderImpl::read() {
   xmlRelaxNGFree(schema);
   xmlFreeParserCtxt(ctxt);
   xmlRelaxNGFreeValidCtxt(validation);
+  xmlFreeDoc(doc);
+  doc = 0;
 }
 
-AST::Node*
+AST::AST*
 XMLReaderImpl::get()
 {
-  return node_;
+  return node;
 }
 
 

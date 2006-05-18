@@ -31,7 +31,7 @@
 #define XPS_READER_READER_H
 
 namespace hlvm {
-namespace AST { class Node; }
+namespace AST { class AST; }
 
   class Reader
   {
@@ -41,7 +41,7 @@ namespace AST { class Node; }
 
     /// This method retrieves the construct AST that resulted from reading.
     /// @returns 0 if nothing has been read yet
-    virtual AST::Node* get() = 0;
+    virtual AST::AST* get() = 0;
   };
 }
 #endif

@@ -28,7 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Writer/XML/XMLWriter.h>
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <iostream>
 #include <cassert>
@@ -70,7 +70,7 @@ public:
 class XMLWriterImpl : public XMLWriter {
   ostream_indent ind_;
   std::ostream& out_;
-  AST::Node* node_;
+  AST::AST* node_;
 public:
   XMLWriterImpl(std::ostream& out)
     : ind_(out), out_(out), node_(0)
@@ -81,7 +81,7 @@ public:
     out_.flush();
   }
 
-  virtual void write(AST::Node* node);
+  virtual void write(AST::AST* node);
 
 private:
   inline void putHeader();
@@ -127,9 +127,7 @@ void
 XMLWriterImpl::putHeader() 
 {
   out_ << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-  out_ << "<!DOCTYPE hlvm PUBLIC \"-//HLVM/DTD HLVM 1.0//EN\" ";
-  out_ << "\"http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng\">\n";
-  out_ << "<hlvm>";
+  out_ << "<hlvm xmlns=\"http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng\">";
   ind_.in(true);
 }
 
@@ -143,10 +141,11 @@ XMLWriterImpl::putFooter()
 inline void 
 XMLWriterImpl::put(AST::Bundle* b)
 {
-  out_ << "<bundle pubId=\"" << b->getName() << "\">";
+  out_ << "<bundle pubid=\"" << b->getName() << "\">";
   ind_.in(true);
   ind_.out(true);
   out_ << "</bundle>";
+  ind_.out(false);
 }
 
 void
@@ -269,11 +268,11 @@ XMLWriterImpl::put(AST::Node* node)
 }
 
 void
-XMLWriterImpl::write(AST::Node* node) 
+XMLWriterImpl::write(AST::AST* ast) 
 {
-  node_ = node;
+  node_ = ast;
   putHeader();
-  put(node);
+  put(ast->getRoot());
   putFooter();
 }
 

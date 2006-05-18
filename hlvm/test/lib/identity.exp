@@ -44,17 +44,10 @@ proc hlvm-identity-tests { prog pat } {
   foreach test $files {
     set output [file join $outdir ${test}.out]
     set testsrc [file join $source $test]
-    set retval [ catch {exec $tool $testsrc -o $output } ]
+    set execout ""
+    set retval [ catch { exec -keepnewline $tool $testsrc -o $output } msg ]
     if { $retval == 1 } {
-      #Get output
-      if { [file exists $output] } {
-        set outputFile [open $output {RDONLY}]
-        set result [read $outputFile]
-        close $outputFile
-      } else {
-        set result "no output file"
-      }
-      fail "$test: $tool returned $retval\n$result"
+      fail "$test: $tool returned $retval\n$msg"
     } else {
       # Do the identity test
       set diffout [file join ${output}.diff]

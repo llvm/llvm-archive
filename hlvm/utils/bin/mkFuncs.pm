@@ -1,14 +1,12 @@
 #!/usr/bin/perl
 
+use FindBin;
+
 sub get_hlvm_dir 
 {
-  chomp(my $cwd=`pwd`);
-  my $hlvmdir = $cwd;
-  $hlvmdir =~ s|(.*hlvm).*|$1|;
-  if (-d"$hlvmdir/AST") {
-    $hlvmdir =~ s|(.*)/hlvm|$1|;
-  }
-  return $hlvmdir;
+  my $hlvmdir = $FindBin::Bin;
+  my $index = rindex($hlvmdir, "/utils/bin");
+  return substr($hlvmdir,0,$index);
 }
 
 sub process_file

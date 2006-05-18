@@ -28,26 +28,30 @@
 # Usage: 
 #   mkTokenizer -f <schema_file> <hlvm_src_root>
 #
+use FindBin;
+use lib $FindBin::Bin;
+use mkFuncs;
+use File::Copy;
+
 $SchemaFile = shift;
 if ("$SchemaFile" eq "-f") {
   $Force = 1;
   $SchemaFile = shift;
 }
 die "USAGE: $0 <schema_file> <hlvm_src_root>\n" if -z "$SchemaFile";
-$HLVM_root = shift;
+$HLVM_root = get_hlvm_dir();
 die "USAGE: $0 <schema_file> <hlvm_src_root>\n" if -z "$HLVM_root";
-print "$HLVM_root\n";
 
 $Schema = $SchemaFile;
 $Schema =~ s/\.rng//;
 $Schema = substr($Schema,rindex($Schema,'/')+1);
-$PreambleFile = "$HLVM_root"."/utils/tmplt/Preamble_Code";
-$HeaderTemplate = "$HLVM_root"."/utils/tmplt/Tokenizer_Template.h";
-$HeaderFile = "$Schema"."Tokenizer.h";
-$SourceTemplate = "$HLVM_root"."/utils/tmplt/Tokenizer_Template.cpp";     
-$SourceFile = "$Schema"."Tokenizer.cpp";
-$TokenHashClass = "$Schema" . "TokenHash";
-$TokenHashFile = "$TokenHashClass" . ".i";
+$PreambleFile = $HLVM_root . "/utils/tmplt/Preamble_Code";
+$HeaderTemplate = $HLVM_root . "/utils/tmplt/Tokenizer_Template.h";
+$HeaderFile = $Schema . "Tokenizer.h";
+$SourceTemplate = $HLVM_root . "/utils/tmplt/Tokenizer_Template.cpp";     
+$SourceFile = $Schema . "Tokenizer.cpp";
+$TokenHashClass = $Schema . "TokenHash";
+$TokenHashFile = $TokenHashClass . ".i";
 
 # Check the validity of the files we use/create
 die "Invalid schema file name" if ! -e "$SchemaFile";
@@ -59,11 +63,6 @@ if (!$Force) {
 }
 
 # Get the plain old schema name from the file name
-
-use FindBin;
-use lib $FindBin::Bin;
-use mkFuncs;
-use File::Copy;
 
 sub sortUnique
 {

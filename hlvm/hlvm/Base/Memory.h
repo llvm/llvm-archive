@@ -20,7 +20,6 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Base/Memory.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
@@ -32,8 +31,6 @@
 
 #include <apr-1/apr_pools.h>
 
-/// The BASE module implements fundamental utilities at the core of XPS.
-/// @brief The most elemental module in XPS.
 namespace hlvm { namespace Base {
 
 /// An APR pool to allocate memory into. This is the master pool of all XPS

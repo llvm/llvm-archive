@@ -20,7 +20,6 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/SymbolTable.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0

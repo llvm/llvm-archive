@@ -59,7 +59,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const ContainerType*) { return true; }
       static inline bool classof(const Type* T) { return T->isContainerType(); }

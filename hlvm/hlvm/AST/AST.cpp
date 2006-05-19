@@ -168,6 +168,18 @@ AST::new_RangeType(const Locator&loc, const std::string& id, int64_t min, int64_
   return result;
 }
 
+EnumerationType* 
+AST::new_EnumerationType(
+  const Locator&loc, 
+  const std::string& id )
+{
+  EnumerationType* result = new EnumerationType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
 RealType* 
 AST::new_RealType(
   const Locator&loc,

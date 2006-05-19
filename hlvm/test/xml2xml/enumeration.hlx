@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
+  <bundle pubid="bundle">
+    <enumeration name="anEnumeration">
+      <enumerator id="one"/>
+      <enumerator id="two"/>
+      <enumerator id="three"/>
+      <enumerator id="four"/>
+    </enumeration>
+  </bundle>
+</hlvm>

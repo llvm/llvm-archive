@@ -63,6 +63,7 @@ namespace AST
   class StructureType;
   class SignatureType;
   class OpaqueType;
+  class EnumerationType;
 
   /// This class is used to hold or contain an Abstract Syntax Tree. It provides
   /// those aspects of the tree that are not part of the tree itself.
@@ -120,6 +121,10 @@ namespace AST
         const std::string& id,  ///< The name of the atom
         int64_t min,            ///< The minimum value accepted in range
         int64_t max             ///< The maximum value accepted in range
+      );
+      EnumerationType* new_EnumerationType(
+        const Locator&loc,      ///< The locator of the declaration
+        const std::string& id   ///< The name of the atom
       );
       RealType* new_RealType(
         const Locator&loc,      ///< The locator of the declaration

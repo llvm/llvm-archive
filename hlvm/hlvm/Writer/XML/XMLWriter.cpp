@@ -99,6 +99,7 @@ private:
   inline void put(AST::CharacterType* t);
   inline void put(AST::IntegerType* t);
   inline void put(AST::RangeType* t);
+  inline void put(AST::EnumerationType* t);
   inline void put(AST::RealType* t);
   inline void put(AST::OctetType* t);
   inline void put(AST::VoidType* t);
@@ -194,6 +195,26 @@ XMLWriterImpl::put(AST::IntegerType* t)
 void
 XMLWriterImpl::put(AST::RangeType* t)
 {
+  startElement("range");
+  writeAttribute("name",t->getName());
+  writeAttribute("min",t->getMin());
+  writeAttribute("max",t->getMax());
+  endElement();
+}
+
+void 
+XMLWriterImpl::put(AST::EnumerationType* t)
+{
+  startElement("enumeration");
+  writeAttribute("name",t->getName());
+  for (AST::EnumerationType::const_iterator I = t->begin(), E = t->end(); 
+       I != E; ++I)
+  {
+    startElement("enumerator");
+    writeAttribute("id",*I);
+    endElement();
+  }
+  endElement();
 }
 
 void
@@ -324,6 +345,7 @@ XMLWriterImpl::put(AST::Bundle* b)
       case AST::CharacterTypeID:    put(cast<AST::CharacterType>(*I)); break;
       case AST::IntegerTypeID:      put(cast<AST::IntegerType>(*I)); break;
       case AST::RangeTypeID:        put(cast<AST::RangeType>(*I)); break;
+      case AST::EnumerationTypeID:  put(cast<AST::EnumerationType>(*I)); break;
       case AST::RealTypeID:         put(cast<AST::RealType>(*I)); break;
       case AST::OctetTypeID:        put(cast<AST::OctetType>(*I)); break;
       case AST::VoidTypeID:         put(cast<AST::VoidType>(*I)); break;

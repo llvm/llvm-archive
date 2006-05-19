@@ -57,6 +57,10 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      bool isNilaryOperator();
+      bool isUnaryOperator();
+      bool isBinaryOperator();
+      bool isTernaryOperator();
       static inline bool classof(const Operator*) { return true; }
       static inline bool classof(const Node* N) { return N->isOperator(); }
 

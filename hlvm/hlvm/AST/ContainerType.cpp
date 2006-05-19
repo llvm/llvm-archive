@@ -56,7 +56,7 @@ ContainerType::removeChild(Node* n)
 }
 
 const char* 
-ContainerType::getPrimitiveName()
+ContainerType::getPrimitiveName() const
 {
   return 0;
 }

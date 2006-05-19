@@ -54,8 +54,8 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
-      bool isPrimitive() { return getPrimitiveName() != 0; }
+      virtual const char* getPrimitiveName() const;
+      bool isPrimitive() const { return getPrimitiveName() != 0; }
 
     /// @}
     /// @name Type Identification
@@ -116,7 +116,8 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
+
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const AnyType*) { return true; }
       static inline bool classof(const Type* T) { return T->isAnyType(); }
@@ -137,7 +138,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const BooleanType*) { return true; }
       static inline bool classof(const Type* T) { return T->isBooleanType(); }
@@ -158,7 +159,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const CharacterType*) { return true; }
       static inline bool classof(const Type* T) { return T->isCharacterType(); }
@@ -180,7 +181,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const OctetType*) { return true; }
       static inline bool classof(const Type* T) { return T->isOctetType(); }
@@ -201,7 +202,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const VoidType*) { return true; }
       static inline bool classof(const Type* T) { return T->isVoidType(); }
@@ -228,7 +229,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
 
       /// Return the number of bits
       uint64_t getBits()  const { return numBits; }
@@ -242,7 +243,7 @@ namespace AST {
       static inline bool classof(const Node* T) { return T->is(IntegerTypeID); }
 
     /// @}
-    /// @name Accessors
+    /// @name Mutators
     /// @{
     public:
       /// Set the number of bits for this integer type
@@ -278,7 +279,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       /// Get min value of range
       int64_t getMin() { return min; }
 
@@ -291,7 +292,7 @@ namespace AST {
       static inline bool classof(const Node* T) { return T->is(RangeTypeID); }
 
     /// @}
-    /// @name Accessors
+    /// @name Mutators
     /// @{
     public:
       /// Set min value of range
@@ -306,6 +307,68 @@ namespace AST {
     protected:
       int64_t min; ///< Lowest value accepted
       int64_t max; ///< Highest value accepted
+    /// @}
+    friend class AST;
+  };
+
+  /// This class represents an enumeration of things. Although represented by
+  /// an integer type, enumerations have no value. They only have a collation
+  /// order. 
+  class EnumerationType : public Type
+  {
+    /// @name Types
+    /// @{
+    public:
+      typedef std::vector<std::string> EnumeratorList;
+      typedef EnumeratorList::iterator iterator;
+      typedef EnumeratorList::const_iterator const_iterator;
+
+    /// @}
+    /// @name Constructors
+    /// @{
+    protected:
+      EnumerationType() : Type(EnumerationTypeID), enumerators() {}
+    public:
+      virtual ~EnumerationType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual const char* getPrimitiveName() const;
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const EnumerationType*) { return true; }
+      static inline bool classof(const Type* T) 
+        { return T->is(EnumerationTypeID); }
+      static inline bool classof(const Node* T) 
+        { return T->is(EnumerationTypeID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void addEnumerator(const std::string& en) { enumerators.push_back(en); }
+
+    /// @}
+    /// @name Iterators
+    /// @{
+    public:
+      iterator          begin()       { return enumerators.begin(); }
+      const_iterator    begin() const { return enumerators.begin(); }
+      iterator          end  ()       { return enumerators.end(); }
+      const_iterator    end  () const { return enumerators.end(); }
+      size_t            size () const { return enumerators.size(); }
+      bool              empty() const { return enumerators.empty(); }
+      std::string       front()       { return enumerators.front(); }
+      const std::string front() const { return enumerators.front(); }
+      std::string       back()        { return enumerators.back(); }
+      const std::string back()  const { return enumerators.back(); }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      EnumeratorList enumerators; ///< The list of the enumerators
     /// @}
     friend class AST;
   };
@@ -329,7 +392,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       /// Get the mantissa bits
       uint32_t getMantissa() { return mantissa; }
 
@@ -472,7 +535,7 @@ namespace AST {
       static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
 
     /// @}
-    /// @name Accessors
+    /// @name Mutators
     /// @{
     public:
       /// Set the type of the vector's elements.
@@ -506,7 +569,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName();
+      virtual const char* getPrimitiveName() const;
       // Get the name for the type
       const std::string&  getName() const { return name; }
       

@@ -43,7 +43,7 @@ Type::insertChild(Node* n)
 }
 
 const char*
-Type::getPrimitiveName()
+Type::getPrimitiveName() const
 {
   return 0;
 }
@@ -53,7 +53,7 @@ AnyType::~AnyType()
 }
 
 const char* 
-AnyType::getPrimitiveName()
+AnyType::getPrimitiveName() const
 {
   return "any";
 }
@@ -63,7 +63,7 @@ BooleanType::~BooleanType()
 }
 
 const char* 
-BooleanType::getPrimitiveName()
+BooleanType::getPrimitiveName() const
 {
   return "bool";
 }
@@ -73,7 +73,7 @@ CharacterType::~CharacterType()
 }
 
 const char* 
-CharacterType::getPrimitiveName()
+CharacterType::getPrimitiveName() const
 {
   return "char";
 }
@@ -83,7 +83,7 @@ IntegerType::~IntegerType()
 }
 
 const char* 
-IntegerType::getPrimitiveName()
+IntegerType::getPrimitiveName() const
 {
   if (numBits > 128)
     return 0;
@@ -119,7 +119,7 @@ OctetType::~OctetType()
 }
 
 const char* 
-OctetType::getPrimitiveName()
+OctetType::getPrimitiveName() const
 {
   return "octet";
 }
@@ -129,7 +129,7 @@ RangeType::~RangeType()
 }
 
 const char* 
-RangeType::getPrimitiveName()
+RangeType::getPrimitiveName() const
 {
   if (min < 0) {
     if (min >= 0 && max <= 255U)
@@ -159,12 +159,24 @@ RangeType::getPrimitiveName()
   return 0;
 }
 
+EnumerationType::~EnumerationType()
+{
+}
+
+const char* 
+EnumerationType::getPrimitiveName() const
+{
+  if (size() < 4294967295U)
+    return "u32";
+  return 0;
+}
+
 RealType::~RealType()
 {
 }
 
 const char* 
-RealType::getPrimitiveName()
+RealType::getPrimitiveName() const
 {
   switch (mantissa) {
     case 23:
@@ -198,7 +210,7 @@ VoidType::~VoidType()
 }
 
 const char* 
-VoidType::getPrimitiveName()
+VoidType::getPrimitiveName() const
 {
   return "void";
 }
@@ -220,7 +232,7 @@ AliasType::~AliasType()
 }
 
 const char*
-AliasType::getPrimitiveName()
+AliasType::getPrimitiveName() const
 {
   return type->getPrimitiveName();
 }

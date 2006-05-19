@@ -51,6 +51,7 @@ namespace AST {
     OctetTypeID,        ///< The Octet Type (8 bits uninterpreted)
     IntegerTypeID,      ///< The Integer Type (A number of bits of integer data)
     RangeTypeID,        ///< The Range Type (A Range of Integer Values)
+    EnumerationTypeID,  ///< The Enumeration Type (set of enumerated ids)
     RealTypeID,         ///< The Real Number Type (Any Real Number)
     RationalTypeID,     ///< The Rational Number Type (p/q type number)
     StringTypeID,       ///< The String Type (Array of UTF-16 chars + length)

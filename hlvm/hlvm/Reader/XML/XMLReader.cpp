@@ -86,17 +86,18 @@ public:
   inline void handleValidationError(xmlErrorPtr error);
 
   void parseTree();
+  AST::AliasType*parseAlias(xmlNodePtr& cur);
+  AST::Type*     parseArray(xmlNodePtr& cur);
+  AST::Type*     parseAtom(xmlNodePtr& cur);
   AST::Bundle*   parseBundle(xmlNodePtr& cur);
+  AST::Type*     parseEnumeration(xmlNodePtr& cur);
   AST::Function* parseFunction(xmlNodePtr& cur);
   AST::Import*   parseImport(xmlNodePtr& cur);
-  AST::Variable* parseVariable(xmlNodePtr& cur);
-  AST::AliasType*parseAlias(xmlNodePtr& cur);
-  AST::Type*     parseAtom(xmlNodePtr& cur);
   AST::Type*     parsePointer(xmlNodePtr& cur);
-  AST::Type*     parseArray(xmlNodePtr& cur);
-  AST::Type*     parseVector(xmlNodePtr& cur);
   AST::Type*     parseStructure(xmlNodePtr& cur);
   AST::Type*     parseSignature(xmlNodePtr& cur);
+  AST::Variable* parseVariable(xmlNodePtr& cur);
+  AST::Type*     parseVector(xmlNodePtr& cur);
 private:
 };
 
@@ -325,6 +326,23 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
   assert(!"Atom definition element expected");
 }
 
+AST::Type*
+XMLReaderImpl::parseEnumeration(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_enumeration);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  AST::EnumerationType* en = ast->new_EnumerationType(loc,name);
+  xmlNodePtr child = cur->children;
+  while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    assert(getToken(child->name) == TKN_enumerator);
+    std::string id = getAttribute(child,"id");
+    en->addEnumerator(id);
+    child = child->next;
+  }
+  return en;
+}
+
 AST::Type*     
 XMLReaderImpl::parsePointer(xmlNodePtr& cur)
 {
@@ -392,7 +410,7 @@ XMLReaderImpl::parseSignature(xmlNodePtr& cur)
     sig->setIsVarArgs(recognize_boolean(varargs));
   xmlNodePtr child = cur->children;
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    assert(getToken(child->name) == TKN_arg && "Structure only has fields");
+    assert(getToken(child->name) == TKN_arg && "Signature only has args");
     std::string name = getAttribute(child,"name");
     std::string type = getAttribute(child,"type");
     AST::AliasType* nt = ast->new_AliasType(loc,name,ast->resolveType(type));
@@ -432,6 +450,7 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
       case TKN_function : n = parseFunction(child); break;
       case TKN_alias    : n = parseAlias(child); break;
       case TKN_atom     : n = parseAtom(child); break;
+      case TKN_enumeration: n = parseEnumeration(child); break;
       case TKN_pointer  : n = parsePointer(child); break;
       case TKN_array    : n = parseArray(child); break;
       case TKN_vector   : n = parseVector(child); break;

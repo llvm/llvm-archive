@@ -166,17 +166,17 @@
     </optional>
     <zeroOrMore>
       <choice>
-        <ref name="Bundle.elem"/>
-        <ref name="Function.elem"/>
         <ref name="Alias.elem"/>
-        <ref name="Atom.elem"/>
-        <ref name="Enumeration.elem"/>
-        <ref name="Pointer.elem"/>
         <ref name="Array.elem"/>
-        <ref name="Vector.elem"/>
+        <ref name="Atom.elem"/>
+        <ref name="Bundle.elem"/>
+        <ref name="Enumeration.elem"/>
+        <ref name="Function.elem"/>
+        <ref name="Pointer.elem"/>
         <ref name="Structure.elem"/>
         <ref name="Signature.elem"/>
         <ref name="Variable.elem"/>
+        <ref name="Vector.elem"/>
       </choice>
     </zeroOrMore>
   </define>
@@ -284,12 +284,13 @@
   </define>
 
   <define name="Enumeration.elem">
-    <element name="enum">
+    <element name="enumeration">
       <ref name="Named_Element.pat"/>
       <oneOrMore>
-        <element name="value">
-          <ref name="Named_Element.pat"/>
-          <ref name="IntegerLiteral.pat"/>
+        <element name="enumerator">
+          <attribute name="id">
+            <ref name="Unprefixed_Identifier.type"/>
+          </attribute>
         </element>
       </oneOrMore>
     </element>

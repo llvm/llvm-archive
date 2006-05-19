@@ -31,7 +31,8 @@ A:active {
         font-style: italic;
 }
 DL.el { margin-left: -1cm }
-DIV.fragment { width: 100%; border: none; background-color: #eeeeee }
+DIV.fragment { width: 100%; border: none; background-color: #eeeeee;
+  font-size:95%; }
 DIV.ah { background-color: black; font-weight: bold; color: #ffffff; margin-bottom: 3px; margin-top: 3px }
 TD.md { background-color: #f2f2ff; font-weight: bold; }
 TD.mdname1 { background-color: #f2f2ff; font-weight: bold; color: #602020; }

@@ -91,6 +91,12 @@ public:
   AST::Import*   parseImport(xmlNodePtr& cur);
   AST::Type*     parseType(xmlNodePtr& cur);
   AST::Variable* parseVariable(xmlNodePtr& cur);
+  AST::Type*     parseAtom(xmlNodePtr& cur);
+  AST::Type*     parsePointer(xmlNodePtr& cur);
+  AST::Type*     parseArray(xmlNodePtr& cur);
+  AST::Type*     parseVector(xmlNodePtr& cur);
+  AST::Type*     parseStructure(xmlNodePtr& cur);
+  AST::Type*     parseSignature(xmlNodePtr& cur);
 private:
 };
 
@@ -128,7 +134,8 @@ ValidationHandler(void* userData, xmlErrorPtr error)
   reader->handleValidationError(error);
 }
 
-bool 
+
+inline bool 
 skipBlanks(xmlNodePtr &cur)
 {
   while (cur && 
@@ -139,6 +146,38 @@ skipBlanks(xmlNodePtr &cur)
     cur = cur -> next;
   }
   return cur != 0;
+}
+
+uint64_t
+recognize_nonNegativeInteger(const char* str)
+{
+    return uint64_t(::atoll(str));
+}
+
+int64_t
+recognize_Integer(const char * str)
+{
+  return ::atoll(str);
+}
+
+inline bool 
+recognize_boolean(const std::string& str)
+{
+  switch (str[0])
+  {
+    case 'F': if (str == "FALSE") return false; break;
+    case 'N': if (str == "NO")    return false; break;
+    case 'T': if (str == "TRUE")  return true; break;
+    case 'Y': if (str == "YES")   return true; break;
+    case 'f': if (str == "false") return false; break;
+    case 'n': if (str == "no")    return false; break;
+    case 't': if (str == "true")  return true; break;
+    case 'y': if (str == "yes")   return true; break;
+    case '0': if (str == "0")     return false; break;
+    case '1': if (str == "1")     return true; break;
+    default: break;
+  }
+  assert(!"Invalid boolean value");
 }
 
 inline const char* 
@@ -182,10 +221,141 @@ XMLReaderImpl::parseImport(xmlNodePtr& cur)
   return imp;
 }
 
+AST::Type*     
+XMLReaderImpl::parseAtom(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_atom);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+
+  xmlNodePtr child = cur->children;
+  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    int tkn = getToken(child->name);
+    switch (tkn) {
+      case TKN_intrinsic: {
+        const char* is = getAttribute(child,"is");
+        if (!is)
+          assert(!"intrinsic element requires 'is' attribute");
+        AST::Type* result = 0;
+        int typeTkn = getToken(reinterpret_cast<const xmlChar*>(is));
+        switch (typeTkn) {
+          case TKN_any:  result=ast->new_AnyType(loc,name); break;
+          case TKN_bool: result=ast->new_BooleanType(loc,name); break;
+          case TKN_char: result=ast->new_CharacterType(loc,name); break;
+          case TKN_f128: result=ast->new_RealType(loc,name,112,15); break;
+          case TKN_f32:  result=ast->new_RealType(loc,name,23,8); break;
+          case TKN_f43:  result=ast->new_RealType(loc,name,32,11); break;
+          case TKN_f64:  result=ast->new_RealType(loc,name,52,11); break;
+          case TKN_f80:  result=ast->new_RealType(loc,name,64,15); break;
+          case TKN_octet:result=ast->new_OctetType(loc,name); break;
+          case TKN_s128: result=ast->new_IntegerType(loc,name,128,true); break;
+          case TKN_s16:  result=ast->new_IntegerType(loc,name,16,true); break;
+          case TKN_s32:  result=ast->new_IntegerType(loc,name,32,true); break;
+          case TKN_s64:  result=ast->new_IntegerType(loc,name,64,true); break;
+          case TKN_s8:   result=ast->new_IntegerType(loc,name,8,true); break;
+          case TKN_u128: result=ast->new_IntegerType(loc,name,128,false); break;
+          case TKN_u16:  result=ast->new_IntegerType(loc,name,16,false); break;
+          case TKN_u32:  result=ast->new_IntegerType(loc,name,32,false); break;
+          case TKN_u64:  result=ast->new_IntegerType(loc,name,64,false); break;
+          case TKN_u8:   result=ast->new_IntegerType(loc,name,8,false); break;
+          case TKN_void: result=ast->new_VoidType(loc,name); break;
+          default:
+            assert(!"Invalid intrinsic kind");
+        }
+        return result;
+      }
+      case TKN_signed: {
+        const char* bits = getAttribute(child,"bits");
+        if (bits) {
+          uint64_t numBits = recognize_nonNegativeInteger(bits);
+          return ast->new_IntegerType(loc,name,numBits,/*signed=*/true);
+        }
+        assert(!"Missing 'bits' attribute");
+        break;
+      }
+      case TKN_unsigned: {
+        const char* bits = getAttribute(child,"bits");
+        if (bits) {
+          uint64_t numBits = recognize_nonNegativeInteger(bits);
+          return ast->new_IntegerType(loc,name,numBits,/*signed=*/false);
+        }
+        assert(!"Missing 'bits' attribute");
+        break;
+      }      
+      case TKN_range: {
+        const char* min = getAttribute(child, "min");
+        const char* max = getAttribute(child, "max");
+        if (min && max) {
+          int64_t minVal = recognize_Integer(min);
+          int64_t maxVal = recognize_Integer(max);
+          return ast->new_RangeType(loc,name,minVal,maxVal);
+        }
+        assert(!"Missing 'min' or 'max' attribute");
+        break;
+      }
+      case TKN_real: {
+        const char* mantissa = getAttribute(child, "mantissa");
+        const char* exponent = getAttribute(child, "exponent");
+        if (mantissa && exponent) {
+          int32_t mantVal = recognize_nonNegativeInteger(mantissa);
+          int32_t expoVal = recognize_nonNegativeInteger(exponent);
+          return ast->new_RealType(loc,name,mantVal,expoVal);
+        }
+        break;
+      }
+      default:
+        assert(!"Invalid content for bundle");
+        break;
+    }
+  }
+  assert(!"Atom definition element expected");
+}
+
+AST::Type*     
+XMLReaderImpl::parsePointer(xmlNodePtr& cur)
+{
+  return 0;
+}
+
+AST::Type*     
+XMLReaderImpl::parseArray(xmlNodePtr& cur)
+{
+  return 0;
+}
+
+AST::Type*     
+XMLReaderImpl::parseVector(xmlNodePtr& cur)
+{
+  return 0;
+}
+
+AST::Type*     
+XMLReaderImpl::parseStructure(xmlNodePtr& cur)
+{
+  return 0;
+}
+
+AST::Type*     
+XMLReaderImpl::parseSignature(xmlNodePtr& cur)
+{
+  return 0;
+}
+
 AST::Type*
 XMLReaderImpl::parseType(xmlNodePtr& cur)
 {
-  return 0;
+  AST::Type* T = 0;
+  switch (getToken(cur->name)) {
+    case TKN_atom:       T = parseAtom(cur); break;
+    case TKN_pointer:    T = parsePointer(cur); break;
+    case TKN_array:      T = parseArray(cur); break;
+    case TKN_vector:     T = parseVector(cur); break;
+    case TKN_structure:  T = parseStructure(cur); break;
+    case TKN_signature:  T = parseSignature(cur); break;
+    default:
+      assert(!"Invalid Type!");
+  }
+  return T;
 }
 
 AST::Variable*
@@ -216,14 +386,14 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
       case TKN_import   : n = parseImport(child); break;
       case TKN_bundle   : n = parseBundle(child); break;
       case TKN_function : n = parseFunction(child); break;
-      case TKN_type:      n = parseType(child); break;
-      case TKN_var:       n = parseVariable(child); break;
+      case TKN_atom     : n = parseType(child); break;
+      case TKN_var      : n = parseVariable(child); break;
       default:
         assert(!"Invalid content for bundle");
         break;
     }
     if (n)
-      bundle->addChild(n);
+      n->setParent(bundle); 
     child = child->next;
   }
   return bundle;

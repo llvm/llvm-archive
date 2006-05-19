@@ -36,7 +36,41 @@ Type::~Type()
 {
 }
 
+void
+Type::insertChild(Node* n)
+{
+  assert(!"This type doesn't accept children!");
+}
+
+AnyType::~AnyType()
+{
+}
+
+BooleanType::~BooleanType()
+{
+}
+
+CharacterType::~CharacterType()
+{
+}
+
 IntegerType::~IntegerType()
+{
+}
+
+OctetType::~OctetType()
+{
+}
+
+RangeType::~RangeType()
+{
+}
+
+RealType::~RealType()
+{
+}
+
+VoidType::~VoidType()
 {
 }
 

@@ -208,29 +208,83 @@
     </element>
   </define>
 
-  <define name="Atom.elem">
-    <element name="atom">
-      <ref name="Named_Element.pat"/>
+  <define name="Intrinsic.elem">
+    <element name="intrinsic">
       <attribute name="is">
         <ref name="Intrinsic_Atoms.type"/>
       </attribute>
     </element>
   </define>
 
+  <define name="Signed.elem">
+    <element name="signed">
+      <attribute name="bits">
+        <ref name="Integer.type"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="Unsigned.elem">
+    <element name="unsigned">
+      <attribute name="bits">
+        <ref name="Integer.type"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="Range.elem">
+    <element name="range">
+      <attribute name="min">
+        <ref name="Integer.type"/>
+      </attribute>
+      <attribute name="max">
+        <ref name="Integer.type"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="Real.elem">
+    <element name="real">
+      <attribute name="precision">
+        <ref name="Integer.type"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="Atom.elem">
+    <element name="atom">
+      <ref name="Named_Element.pat"/>
+      <choice>
+        <ref name="Intrinsic.elem"/>
+        <ref name="Signed.elem"/>
+        <ref name="Unsigned.elem"/>
+        <ref name="Range.elem"/>
+        <ref name="Real.elem"/>
+      </choice>
+    </element>
+  </define>
+
   <define name="Intrinsic_Atoms.type">
     <choice>
+      <value>any</value>
       <value>bool</value>
       <value>char</value>
       <value>f32</value>
+      <value>f43</value>
       <value>f64</value>
-      <value>i8</value>
-      <value>i16</value>
-      <value>i32</value>
-      <value>i64</value>
+      <value>f80</value>
+      <value>f128</value>
+      <value>octet</value>
+      <value>s8</value>
+      <value>s16</value>
+      <value>s32</value>
+      <value>s64</value>
+      <value>s128</value>
       <value>u8</value>
       <value>u16</value>
       <value>u32</value>
       <value>u64</value>
+      <value>u128</value>
       <value>void</value>
     </choice>
   </define>
@@ -241,7 +295,7 @@
       <oneOrMore>
         <element name="value">
           <ref name="Named_Element.pat"/>
-          <ref name="Constant.pat"/>
+          <ref name="IntegerLiteral.pat"/>
         </element>
       </oneOrMore>
     </element>
@@ -389,10 +443,7 @@
 
   <define name="Literal.pat">
     <choice>
-      <ref name="Binary_Literal.elem"/>
-      <ref name="Octal_Literal.elem"/>
-      <ref name="Decimal_Literal.elem"/>
-      <ref name="Hexadecimal_Literal.elem"/>
+      <ref name="IntegerLiteral.pat"/>
       <ref name="Boolean_Literal.elem"/>
       <ref name="Character_Literal.elem"/>
       <ref name="Real_Literal.elem"/>
@@ -401,6 +452,24 @@
       <ref name="Array_Literal.elem"/>
       <ref name="Vector_Literal.elem"/>
       <ref name="Aggregate_Literal.elem"/>
+    </choice>
+  </define>
+
+  <define name="IntegerLiteral.pat">
+    <choice>
+      <ref name="Binary_Literal.elem"/>
+      <ref name="Octal_Literal.elem"/>
+      <ref name="Decimal_Literal.elem"/>
+      <ref name="Hexadecimal_Literal.elem"/>
+    </choice>
+  </define>
+
+  <define name="Integer.type">
+    <choice>
+      <ref name="Binary.type"/>
+      <ref name="Octal.type"/>
+      <ref name="Decimal.type"/>
+      <ref name="Hexadecimal.type"/>
     </choice>
   </define>
 

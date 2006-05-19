@@ -39,27 +39,57 @@ namespace AST {
   /// @brief HLVM AST Type Node
   class ContainerType : public Type
   {
+    /// @name Types
+    /// @{
+    public:
+      typedef std::vector<Type*> TypeList;
+      typedef TypeList::iterator iterator;
+      typedef TypeList::const_iterator const_iterator;
+
+    /// @}
     /// @name Constructors
     /// @{
     public:
       ContainerType(
         NodeIDs id ///< The node id of the subclass
-      ) : Type(id) {}
+      ) : Type(id), types() {}
       virtual ~ContainerType();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const ContainerType*) { return true; }
       static inline bool classof(const Type* T) { return T->isContainerType(); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
+      virtual void removeChild(Node* n);
+
+    /// @}
+    /// @name Iterators
+    /// @{
+    public:
+      iterator       begin()       { return types.begin(); }
+      const_iterator begin() const { return types.begin(); }
+      iterator       end  ()       { return types.end(); }
+      const_iterator end  () const { return types.end(); }
+      size_t         size () const { return types.size(); }
+      bool           empty() const { return types.empty(); }
+      Type*          front()       { return types.front(); }
+      const Type*    front() const { return types.front(); }
+      Type*          back()        { return types.back(); }
+      const Type*    back()  const { return types.back(); }
+
     /// @}
     /// @name Data
     /// @{
     protected:
-      std::vector<Type*> types_; ///< The contained types
+      std::vector<Type*> types; ///< The contained types
     /// @}
   };
 
@@ -80,6 +110,13 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const PointerType*) { return true; }
       static inline bool classof(const Type* T) { return T->isPointerType(); }
+      static inline bool classof(const Node* T) { return T->is(PointerTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
 
     /// @}
     /// @name Data
@@ -105,6 +142,14 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const ArrayType*) { return true; }
       static inline bool classof(const Type* T) { return T->isArrayType(); }
+      static inline bool classof(const Node* T) { return T->is(ArrayTypeID); }
+      
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
+
     /// @}
     /// @name Data
     /// @{
@@ -131,6 +176,14 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const VectorType*) { return true; }
       static inline bool classof(const Type* T) { return T->isVectorType(); }
+      static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
+
     /// @}
     /// @name Data
     /// @{
@@ -155,6 +208,15 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const StructureType*) { return true; }
       static inline bool classof(const Type* T) { return T->isStructureType(); }
+      static inline bool classof(const Node* T) 
+        { return T->is(StructureTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
+
     /// @}
     /// @name Data
     /// @{
@@ -179,6 +241,15 @@ namespace AST {
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const SignatureType*) { return true; }
       static inline bool classof(const Type* T) { return T->isSignatureType(); }
+      static inline bool classof(const Node* T) 
+        { return T->is(SignatureTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual void insertChild(Node* n);
+
     /// @}
     /// @name Data
     /// @{

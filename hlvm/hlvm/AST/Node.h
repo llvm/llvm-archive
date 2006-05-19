@@ -40,8 +40,7 @@ namespace AST {
   /// This enumeration is used to identify a specific type. Its organization is
   /// very specific and dependent on the class hierarchy. In order to use these
   /// values as ranges for class identification (classof methods), we need to 
-  /// group things by inheritance rather than by function. In particular the
-  /// ParentNode group needs to be distinguished.
+  /// group things by inheritance rather than by function. 
   enum NodeIDs {
     NoTypeID = 0,       ///< Use this for an invalid type ID.
     // Primitive Types (no child nodes)
@@ -61,9 +60,8 @@ namespace AST {
     ArrayTypeID,        ///< The Array Type (Linear array of some type)
     VectorTypeID,       ///< The Vector Type (Packed Fixed Size Vector)
     StructureTypeID,    ///< The Structure Type (Sequence of various types)
-    FieldID,            ///< Declare name and type of Structure Field
+    NamedTypeID,        ///< The name and type combo for fields and arguments
     SignatureTypeID,    ///< The Function Signature Type
-    ArgumentID,         ///< Declare name and type of Signature Argument
     ContinuationTypeID, ///< A Continuation Type (data passing to continuations)
 
     // Class Constructs (TBD)
@@ -186,9 +184,7 @@ namespace AST {
     FirstContainerTypeID = PointerTypeID, ///< First Container Type
     LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
     FirstOperatorID = CallOpID, ///< First Operator
-    LastOperatorID =  StructureOpID, ///< Last Operator
-    FirstParentNodeID = PointerTypeID,
-    LastParentNodeID = PositionOpID
+    LastOperatorID =  StructureOpID ///< Last Operator
   };
 
   class ParentNode;
@@ -234,9 +230,7 @@ namespace AST {
       }
 
       /// Determine if the node is a ParentNode
-      inline bool isParentNode() const {
-        return id >= FirstParentNodeID && id <= LastParentNodeID;
-      }
+      bool isNamedNode() const ; 
 
       /// Determine if the node is a Block
       inline bool isBlock() const { return id == BlockID; }
@@ -255,15 +249,17 @@ namespace AST {
     /// @}
     /// @name Mutators
     /// @{
-    protected:
-      virtual void removeFromTree();
-      virtual void setParent(ParentNode *n);
+    public:
       void setLocator(const Locator& l) { loc = l; }
       void setFlags(unsigned f) {
         assert(f < 1 << 24 && "Flags out of range");
         flags = f;
       }
+      virtual void setParent(Node* parent);
 
+    protected:
+      virtual void insertChild(Node* child);
+      virtual void removeChild(Node* child);
     /// @}
     /// @name Utilities
     /// @{
@@ -284,22 +280,13 @@ namespace AST {
     friend class AST;
   };
 
-  class ParentNode : public Node {
-    /// @name Types
-    /// @{
-    public:
-      typedef std::vector<Node*> NodeList;
-      typedef NodeList::iterator iterator;
-      typedef NodeList::const_iterator const_iterator;
-
-    /// @}
+  class NamedNode : public Node {
     /// @name Constructors
     /// @{
     protected:
-      ParentNode(NodeIDs id) 
-        : Node(id), name(), kids() {}
+      NamedNode(NodeIDs id) : Node(id), name() {}
     public:
-      virtual ~ParentNode();
+      virtual ~NamedNode();
 
     /// @}
     /// @name Accessors
@@ -308,40 +295,20 @@ namespace AST {
       /// Get the name of the node
       inline const std::string& getName() { return name; }
 
-      /// Determine if the node has child nodes
-      inline bool hasKids() const { return !kids.empty(); }
-
-      static inline bool classof(const ParentNode*) { return true; }
-      static inline bool classof(const Node* N) { return N->isParentNode(); }
+      static inline bool classof(const NamedNode*) { return true; }
+      static inline bool classof(const Node* N) { return N->isNamedNode(); }
 
     /// @}
     /// @name Mutators
     /// @{
     public:
       void setName(const std::string& n) { name = n; }
-      virtual void addChild(Node* n);
-
-    /// @}
-    /// @name Iterators
-    /// @{
-    public:
-      iterator       begin()       { return kids.begin(); }
-      const_iterator begin() const { return kids.begin(); }
-      iterator       end  ()       { return kids.end(); }
-      const_iterator end  () const { return kids.end(); }
-      size_t         size () const { return kids.size(); }
-      bool           empty() const { return kids.empty(); }
-      Node*          front()       { return kids.front(); }
-      const Node*    front() const { return kids.front(); }
-      Node*          back()        { return kids.back(); }
-      const Node*    back()  const { return kids.back(); }
 
     /// @}
     /// @name Data
     /// @{
     protected:
       std::string name;  ///< The name of this node.
-      NodeList    kids;  ///< The vector of children nodes.
     /// @}
     friend class AST;
   };

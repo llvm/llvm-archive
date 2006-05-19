@@ -29,10 +29,37 @@
 
 #include <hlvm/AST/Function.h>
 
-namespace hlvm {
-namespace AST {
+using namespace llvm;
+
+namespace hlvm { namespace AST {
 
 Function::~Function() 
 {
+}
+
+void 
+Function::insertChild(Node* kid)
+{
+  if (isa<SignatureType>(kid)) {
+    if (signature)
+      signature->setParent(0);
+    signature = cast<SignatureType>(kid);
+  } else if (isa<Block>(kid)) {
+    if (block)
+      block->setParent(0);
+    block = cast<Block>(kid);
+  } else {
+    assert(!"Can't insert one of those here");
+  }
+}
+
+void 
+Function::removeChild(Node* kid)
+{
+  if (isa<SignatureType>(kid)) {
+  } else if (isa<Block>(kid)) {
+  } else {
+    assert(!"Can't insert one of those here");
+  }
 }
 }}

@@ -30,7 +30,7 @@
 #ifndef HLVM_AST_IMPORT_H
 #define HLVM_AST_IMPORT_H
 
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/LinkageItem.h>
 
 namespace hlvm { namespace AST {
 
@@ -40,12 +40,13 @@ namespace hlvm { namespace AST {
   /// has a name, a set of formal arguments, a return type, and a block of
   /// code to execute.
   /// @brief HLVM AST Function Node
-  class Import : public Node
+  class Import : public LinkageItem
   {
     /// @name Constructors
     /// @{
     protected:
-      Import() : Node(ImportID) {}
+      Import() : LinkageItem(ImportID) {}
+
     public:
       virtual ~Import();
 

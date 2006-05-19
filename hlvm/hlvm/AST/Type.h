@@ -30,27 +30,31 @@
 #ifndef HLVM_AST_TYPE_H
 #define HLVM_AST_TYPE_H
 
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/LinkageItem.h>
 
 namespace hlvm {
 namespace AST {
 
+  class IntrinsicType;
+
   /// This class represents a Type in the HLVM Abstract Syntax Tree.  
   /// A Type defines the format of storage. 
   /// @brief HLVM AST Type Node
-  class Type : public ParentNode
+  class Type : public LinkageItem
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       Type(
         NodeIDs id ///< The Type identifier
-      ) : ParentNode(id )  {}
+      ) : LinkageItem(id)  {}
+    public:
       virtual ~Type();
 
     /// @}
     /// @name Accessors
     /// @{
+    public:
       inline bool isPrimitiveType() const { return id <= LastPrimitiveTypeID; }
       inline bool isIntegralType()  const { 
         return id == IntegerTypeID || id == RangeTypeID; 
@@ -58,6 +62,10 @@ namespace AST {
       inline bool isContainerType() const { 
         return id >= FirstContainerTypeID; 
       }
+      inline bool isAnyType() const { return id == AnyTypeID; }
+      inline bool isBooleanType() const { return id == BooleanTypeID; }
+      inline bool isCharacterType() const { return id == CharacterTypeID; }
+      inline bool isOctetType() const { return id == OctetTypeID; }
       inline bool isIntegerType() const { return id == IntegerTypeID; }
       inline bool isRangeType() const { return id == RangeTypeID; }
       inline bool isRealType() const { return id == RealTypeID; }
@@ -67,10 +75,20 @@ namespace AST {
       inline bool isVectorType() const { return id == VectorTypeID; }
       inline bool isStructureType() const { return id == StructureTypeID; }
       inline bool isSignatureType() const { return id == SignatureTypeID; }
+      inline bool isVoidType() const { return id == VoidTypeID; }
 
       // Methods to support type inquiry via is, cast, dyn_cast
-      static inline bool classof(const Node*) { return true; }
       static inline bool classof(const Type*) { return true; }
+      static inline bool classof(const Node* n) { return n->isType(); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      // We override receiveChild generically here to produce an error. Most
+      // Type subclasses can't receive children. Those that do, can override
+      // again.
+      virtual void insertChild(Node* n);
 
     /// @}
     /// @name Data
@@ -80,9 +98,150 @@ namespace AST {
     friend class AST;
   };
 
-  /// A NamedType is simply a pair involving a name and a pointer to a Type.
-  /// This is so frequently needed, it is declared here for convenience.
-  typedef std::pair<std::string,Type*> NamedType;
+  /// This class is type that combines a name with an arbitrary type. This
+  /// construct is used any where a named and typed object is needed such as
+  /// the parameter to a function or the field of a structure. 
+  class NamedType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      NamedType() : Type(NamedTypeID) {}
+      virtual ~NamedType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Get the name for the type
+      const std::string&  getName() const { return name; }
+      
+      // Get the type for the name
+      Type *  getType() const { return type; }
+
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const NamedType*) { return true; }
+      static inline bool classof(const Node* T) { return T->is(NamedTypeID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      // Set the name for the type
+      void setName(const std::string& n) { name = n; }
+      
+      // Set the type for the name
+      void setType(Type * t) { type = t; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Type* type;
+      std::string name;
+    /// @}
+  };
+
+  class AnyType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      AnyType() : Type(AnyTypeID) {}
+      virtual ~AnyType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const AnyType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isAnyType(); }
+      static inline bool classof(const Node* T) { return T->is(AnyTypeID); }
+    /// @}
+    friend class AST;
+  };
+
+  class BooleanType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      BooleanType() : Type(BooleanTypeID) {}
+      virtual ~BooleanType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const BooleanType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isBooleanType(); }
+      static inline bool classof(const Node* T) { return T->is(BooleanTypeID); }
+    /// @}
+    friend class AST;
+  };
+
+  class CharacterType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      CharacterType() : Type(CharacterTypeID) {}
+      virtual ~CharacterType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const CharacterType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isCharacterType(); }
+      static inline bool classof(const Node* T) 
+        { return T->is(CharacterTypeID); }
+    /// @}
+    friend class AST;
+  };
+
+  class OctetType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      OctetType() : Type(OctetTypeID) {}
+      virtual ~OctetType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const OctetType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isOctetType(); }
+      static inline bool classof(const Node* T) { return T->is(OctetTypeID); }
+    /// @}
+    friend class AST;
+  };
+
+  class VoidType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      VoidType() : Type(VoidTypeID) {}
+      virtual ~VoidType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const VoidType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isVoidType(); }
+      static inline bool classof(const Node* T) { return T->is(VoidTypeID); }
+    /// @}
+    friend class AST;
+  };
 
   /// This class represents all HLVM integer types. An integer type declares the
   /// the minimum number of bits that are required to store the integer type.
@@ -94,22 +253,42 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      IntegerType() : Type(IntegerTypeID), numBits(32) {}
+      IntegerType() : Type(IntegerTypeID), numBits(32), signedness(true) {}
       virtual ~IntegerType();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+
+      /// Return the number of bits
+      uint64_t getBits()  const { return numBits; }
+
+      /// Return the signedness of the type
+      bool     isSigned() const { return signedness ; }
+
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const IntegerType*) { return true; }
       static inline bool classof(const Type* T) { return T->isIntegerType(); }
+      static inline bool classof(const Node* T) { return T->is(IntegerTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Set the number of bits for this integer type
+      void setBits(uint64_t bits) { numBits = bits; }
+
+      /// Set the signedness of the type
+      void setSigned(bool isSigned) { signedness = isSigned; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
       uint32_t numBits; ///< Minimum number of bits
+      bool signedness;  ///< Whether the integer type is signed or not
+
     /// @}
     friend class AST;
   };
@@ -122,22 +301,40 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      RangeType() : Type(RangeTypeID) {}
+      RangeType() : Type(RangeTypeID), min(0), max(256) {}
       virtual ~RangeType();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+      /// Get min value of range
+      int64_t getMin() { return min; }
+
+      /// Get max value of range
+      int64_t getMax() { return max; }
+
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const RangeType*) { return true; }
       static inline bool classof(const Type* T) { return T->isRangeType(); }
+      static inline bool classof(const Node* T) { return T->is(RangeTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Set min value of range
+      void setMin(int64_t val) { min = val; }
+
+      /// Set max value of range
+      void setMax(int64_t val) { max = val; }
+
     /// @}
     /// @name Data
     /// @{
     protected:
-      uint64_t min_value_; ///< Lowest value accepted
-      uint64_t max_value_; ///< Highest value accepted
+      int64_t min; ///< Lowest value accepted
+      int64_t max; ///< Highest value accepted
     /// @}
     friend class AST;
   };
@@ -153,22 +350,40 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      RealType() : Type(RealTypeID) {}
+      RealType() : Type(RealTypeID), mantissa(52), exponent(11) {}
       virtual ~RealType();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+      /// Get the mantissa bits
+      uint32_t getMantissa() { return mantissa; }
+
+      /// Get the exponent bits
+      uint32_t getExponent() { return exponent; }
+
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const RealType*) { return true; }
       static inline bool classof(const Type* T) { return T->isRealType(); }
+      static inline bool classof(const Node* T) { return T->is(RealTypeID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      /// Set the mantissa bits
+      void setMantissa(uint32_t bits) { mantissa = bits; }
+
+      /// Set the exponent bits
+      void setExponent(uint32_t bits) { exponent = bits; }
+
     /// @}
     /// @name Data
     /// @{
     protected:
-      uint32_t precision_; ///< Number of decimal digits of precision
-      uint32_t mantissa_;  ///< Number of decimal digits in mantissa
+      uint32_t mantissa;  ///< Number of decimal digits in mantissa
+      uint32_t exponent; ///< Number of decimal digits of precision
     /// @}
     friend class AST;
   };

@@ -72,6 +72,91 @@ AST::new_Import(const Locator& loc, const std::string& pfx)
   return result;
 }
 
+Type* 
+AST::new_IntegerType(
+  const Locator&loc, 
+  const std::string& id, 
+  uint64_t bits, 
+  bool isSigned )
+{
+  IntegerType* result = new IntegerType();
+  result->setBits(bits);
+  result->setSigned(isSigned);
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_RealType(
+  const Locator&loc,
+  const std::string& id,  
+  uint32_t mantissa, 
+  uint32_t exponent)
+{
+  RealType* result = new RealType();
+  result->setMantissa(mantissa);
+  result->setExponent(exponent);
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_AnyType(const Locator&loc, const std::string& id)
+{
+  AnyType* result = new AnyType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_BooleanType(const Locator&loc, const std::string& id)
+{
+  BooleanType* result = new BooleanType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_CharacterType(const Locator&loc, const std::string& id)
+{
+  CharacterType* result = new CharacterType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_OctetType(const Locator&loc, const std::string& id)
+{
+  OctetType* result = new OctetType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_VoidType(const Locator&loc, const std::string& id)
+{
+  VoidType* result = new VoidType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Type* 
+AST::new_RangeType(const Locator&loc, const std::string& id, int64_t min, int64_t max)
+{
+  RangeType* result = new RangeType();
+  result->setLocator(loc);
+  result->setName(id);
+  result->setMin(min);
+  result->setMax(max);
+  return result;
+}
 SignatureType*
 AST::new_SignatureType(const Locator& loc, const std::string& id)
 {

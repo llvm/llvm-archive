@@ -43,12 +43,20 @@ namespace AST {
   /// contained in a Bundle. Local variables are always contained in a
   /// Function.
   /// @brief HLVM AST Variable Node
-  class Block : public ParentNode
+  class Block : public Node
   {
+    /// @name Types
+    /// @{
+    public:
+      typedef std::vector<Operator*> NodeList;
+      typedef NodeList::iterator iterator;
+      typedef NodeList::const_iterator const_iterator;
+
+    /// @}
     /// @name Constructors
     /// @{
     public:
-      Block() : ParentNode(BlockID), ops_() {}
+      Block() : Node(BlockID), ops() {}
       virtual ~Block();
 
     /// @}
@@ -59,10 +67,25 @@ namespace AST {
       static inline bool classof(const Node* N) { return N->isBlock(); }
 
     /// @}
+    /// @name Iterators
+    /// @{
+    public:
+      iterator       begin()       { return ops.begin(); }
+      const_iterator begin() const { return ops.begin(); }
+      iterator       end  ()       { return ops.end(); }
+      const_iterator end  () const { return ops.end(); }
+      size_t         size () const { return ops.size(); }
+      bool           empty() const { return ops.empty(); }
+      Operator*      front()       { return ops.front(); }
+      const Operator*front() const { return ops.front(); }
+      Operator*      back()        { return ops.back(); }
+      const Operator*back()  const { return ops.back(); }
+
+    /// @}
     /// @name Data
     /// @{
     protected:
-      std::vector<Operator*> ops_; ///< The operators the Block contains
+      std::vector<Operator*> ops; ///< The operators the Block contains
     /// @}
     friend class AST;
   };

@@ -33,23 +33,42 @@ namespace hlvm { namespace AST {
 
 Node::~Node()
 {
-  removeFromTree();
 }
 
-ParentNode::~ParentNode()
+NamedNode::~NamedNode()
 {
 }
 
-void
-Node::removeFromTree()
+bool 
+Node::isNamedNode() const
 {
+  return isType() || isBundle() || isFunction() || isProgram() || isVariable();
 }
 
-void
-Node::setParent(ParentNode* p)
+void 
+Node::insertChild(Node* child)
 {
+  assert(!"This node doesn't accept child nodes");
+}
+
+void 
+Node::removeChild(Node* child)
+{
+  assert(!"This node doesn't have child nodes");
+}
+
+void 
+Node::setParent(Node* p)
+{
+  if (p == 0)
+  {
+    parent->removeChild(this);
+  }
   parent = p;
-  p->addChild(this);
+  if (p != 0)
+  {
+    p->insertChild(this);
+  }
 }
 
 #ifndef _NDEBUG
@@ -58,11 +77,5 @@ Node::dump() const
 {
 }
 #endif
-
-void
-ParentNode::addChild(Node* n)
-{
-  kids.push_back(n);
-}
 
 }}

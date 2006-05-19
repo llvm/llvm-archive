@@ -29,14 +29,85 @@
 
 #include <hlvm/AST/ContainerType.h>
 
+using namespace llvm;
+
 namespace hlvm { namespace AST {
 
 ContainerType::~ContainerType()
 {
 }
 
+void 
+ContainerType::insertChild(Node* n)
+{
+  assert(isa<Type>(n) && "Can't insert those here");
+  types.push_back(cast<Type>(n));
+}
+
+void 
+ContainerType::removeChild(Node* n)
+{
+  assert(isa<Type>(n) && "Can't remove those here");
+  // This is sucky slow, but we probably won't be removing nodes that much.
+  for (iterator I = begin(), E = end(); I != E; ++I ) {
+    if (*I == n) { types.erase(I); break; }
+  }
+  assert(!"That node isn't my child");
+}
+
+PointerType::~PointerType()
+{
+}
+
+void
+PointerType::insertChild(Node* n)
+{
+  assert(this->empty() && "Can't point to multiple types");
+  ContainerType::insertChild(n);
+}
+
+ArrayType::~ArrayType()
+{
+}
+
+void
+ArrayType::insertChild(Node* n)
+{
+  assert(this->empty() && "Can't have multi-typed arrays");
+  ContainerType::insertChild(n);
+}
+
+VectorType::~VectorType()
+{
+}
+
+void
+VectorType::insertChild(Node* n)
+{
+  assert(this->empty() && "Can't have multi-typed vectors");
+  ContainerType::insertChild(n);
+}
+
+StructureType::~StructureType()
+{
+}
+
+void
+StructureType::insertChild(Node* n)
+{
+  assert(isa<NamedType>(n) && "Can't insert those here");
+  types.push_back(cast<NamedType>(n));
+}
+
 SignatureType::~SignatureType()
 {
+}
+
+void 
+SignatureType::insertChild(Node* n)
+{
+  assert(isa<NamedType>(n) && "Can't insert those here");
+  types.push_back(cast<NamedType>(n));
 }
 
 }}

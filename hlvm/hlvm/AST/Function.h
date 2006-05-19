@@ -31,14 +31,10 @@
 #define HLVM_AST_FUNCTION_H
 
 #include <hlvm/AST/LinkageItem.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Block.h>
 
-namespace hlvm
-{
-namespace AST
-{
-  // Forward declarations
-  class Block; 
-  class SignatureType;  
+namespace hlvm { namespace AST {
 
   /// This class represents a Function in the HLVM Abstract Syntax Tree.  
   /// A Function is a callable block of code that accepts parameters and 
@@ -69,7 +65,10 @@ namespace AST
     /// @name Mutators
     /// @{
     public:
-      void setSignature(SignatureType* SigTy) { signature = SigTy; }
+      virtual void insertChild(Node* kid);
+      virtual void removeChild(Node* kid);
+      //void setSignature(SignatureType* sig) { sig->Node::setParent(this); }
+      //void setBlock(Block* blk) { blk->Node::setParent(this); }
     /// @}
     /// @name Data
     /// @{

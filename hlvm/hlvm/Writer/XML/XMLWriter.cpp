@@ -34,6 +34,7 @@
 #include <hlvm/AST/Import.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Variable.h>
+#include <llvm/ADT/StringExtras.h>
 #include <libxml/xmlwriter.h>
 #include <iostream>
 #include <cassert>
@@ -76,6 +77,8 @@ private:
     { xmlTextWriterWriteAttribute(writer, 
         reinterpret_cast<const xmlChar*>(name), 
         reinterpret_cast<const xmlChar*>(val)); }
+  inline void writeAttribute(const char* name, const std::string& val) 
+    { writeAttribute(name, val.c_str()); }
   inline void writeElement(const char* elem, const char* body)
     { xmlTextWriterWriteElement(writer,
         reinterpret_cast<const xmlChar*>(elem),
@@ -87,6 +90,14 @@ private:
   inline void put(AST::Bundle* b);
   inline void put(AST::Variable* v);
   inline void put(AST::Function* f);
+  inline void put(AST::AnyType* t);
+  inline void put(AST::BooleanType* t);
+  inline void put(AST::CharacterType* t);
+  inline void put(AST::IntegerType* t);
+  inline void put(AST::RangeType* t);
+  inline void put(AST::RealType* t);
+  inline void put(AST::OctetType* t);
+  inline void put(AST::VoidType* t);
 };
 
 
@@ -110,6 +121,167 @@ XMLWriterImpl::put(AST::Function* f)
 {
 }
 
+void 
+XMLWriterImpl::put(AST::AnyType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  startElement("intrinsic");
+  writeAttribute("is","any");
+  endElement();
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::BooleanType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  startElement("intrinsic");
+  writeAttribute("is","bool");
+  endElement();
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::CharacterType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  startElement("intrinsic");
+  writeAttribute("is","char");
+  endElement();
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::IntegerType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  if (t->getBits() <= 128) {
+    if (t->isSigned()) {
+      switch (t->getBits()) {
+        case 128: startElement("intrinsic"); writeAttribute("is","s128"); break;
+        case 64:  startElement("intrinsic"); writeAttribute("is","s64"); break;
+        case 32:  startElement("intrinsic"); writeAttribute("is","s32"); break;
+        case 16:  startElement("intrinsic"); writeAttribute("is","s16"); break;
+        case 8 :  startElement("intrinsic"); writeAttribute("is","s8"); break;
+        default:
+          startElement("signed");
+          writeAttribute("bits", llvm::utostr(t->getBits()));
+          break;
+      }
+    } else {
+      switch (t->getBits()) {
+        case 128: startElement("intrinsic"); writeAttribute("is","u128"); break;
+        case 64:  startElement("intrinsic"); writeAttribute("is","u64"); break;
+        case 32:  startElement("intrinsic"); writeAttribute("is","u32"); break;
+        case 16:  startElement("intrinsic"); writeAttribute("is","u16"); break;
+        case 8 :  startElement("intrinsic"); writeAttribute("is","u8"); break;
+        default:
+          startElement("unsigned");
+          writeAttribute("bits", llvm::utostr(t->getBits()));
+          break;
+      }
+    }
+    endElement();
+  } else {
+    if (t->isSigned()) {
+      startElement("signed");
+    } else {
+      startElement("unsigned");
+    }
+    writeAttribute("bits", llvm::utostr(t->getBits()));
+    endElement();
+  }
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::RangeType* t)
+{
+}
+
+void
+XMLWriterImpl::put(AST::RealType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  bool done = false;
+  switch (t->getMantissa()) {
+    case 23:
+      if (t->getExponent() == 8) {
+        startElement("intrinsic"); 
+        writeAttribute("is","f32"); 
+        done = true; 
+      }
+      break;
+    case 32:
+      if (t->getExponent() == 11) {
+        startElement("intrinsic"); 
+        writeAttribute("is","f43"); 
+        done = true; 
+      }
+      break;
+    case 52:
+      if (t->getExponent() == 11) {
+        startElement("intrinsic"); 
+        writeAttribute("is","f64"); 
+        done = true; 
+      }
+      break;
+    case 64:
+      if (t->getExponent() == 15) {
+        startElement("intrinsic"); 
+        writeAttribute("is","f80"); 
+        done = true; 
+      }
+      break;
+    case 112:
+      if (t->getExponent() == 15) {
+        startElement("intrinsic"); 
+        writeAttribute("is","f128"); 
+        done = true; 
+      }
+      break;
+    default:
+      break;
+  }
+
+  if (done) {
+    endElement();
+  } else {
+    startElement("real");
+    writeAttribute("mantissa", llvm::utostr(t->getMantissa()));
+    writeAttribute("exponent", llvm::utostr(t->getExponent()));
+    endElement();
+  }
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::OctetType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  startElement("intrinsic");
+  writeAttribute("is","octet");
+  endElement();
+  endElement();
+}
+
+void
+XMLWriterImpl::put(AST::VoidType* t)
+{
+  startElement("atom");
+  writeAttribute("name",t->getName().c_str());
+  startElement("intrinsic");
+  writeAttribute("is","void");
+  endElement();
+  endElement();
+}
+
 inline void
 XMLWriterImpl::put(AST::Variable* v)
 {
@@ -124,12 +296,20 @@ XMLWriterImpl::put(AST::Bundle* b)
 {
   startElement("bundle");
   writeAttribute("pubid",b->getName().c_str());
-  for (AST::ParentNode::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
+  for (AST::Bundle::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
   {
     switch ((*I)->getID()) 
     {
-      case AST::VariableID: put(cast<AST::Variable>(*I)); break;
-      case AST::FunctionID: put(cast<AST::Function>(*I)); break;
+      case AST::VariableID:         put(cast<AST::Variable>(*I)); break;
+      case AST::FunctionID:         put(cast<AST::Function>(*I)); break;
+      case AST::AnyTypeID:          put(cast<AST::AnyType>(*I)); break;
+      case AST::BooleanTypeID:      put(cast<AST::BooleanType>(*I)); break;
+      case AST::CharacterTypeID:    put(cast<AST::CharacterType>(*I)); break;
+      case AST::IntegerTypeID:      put(cast<AST::IntegerType>(*I)); break;
+      case AST::RangeTypeID:        put(cast<AST::RangeType>(*I)); break;
+      case AST::RealTypeID:         put(cast<AST::RealType>(*I)); break;
+      case AST::OctetTypeID:        put(cast<AST::OctetType>(*I)); break;
+      case AST::VoidTypeID:         put(cast<AST::VoidType>(*I)); break;
       default:
         assert(!"Invalid bundle content");
     }
@@ -155,10 +335,9 @@ XMLWriterImpl::put(AST::Node* node)
     case hlvm::AST::PointerTypeID:	break;      
     case hlvm::AST::ArrayTypeID:	break;        
     case hlvm::AST::VectorTypeID:	break;       
+    case hlvm::AST::NamedTypeID:        break;            
     case hlvm::AST::StructureTypeID:	break;    
-    case hlvm::AST::FieldID:		break;            
     case hlvm::AST::SignatureTypeID:	break;    
-    case hlvm::AST::ArgumentID:		break;         
     case hlvm::AST::ContinuationTypeID:	break; 
     case hlvm::AST::InterfaceID:	break;        
     case hlvm::AST::ClassID:		break;            

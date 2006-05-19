@@ -90,7 +90,29 @@ namespace AST
       Import* new_Import(const Locator& loc, const std::string& id);
       SignatureType* new_SignatureType(const Locator& l, const std::string& id);
       Variable* new_Variable(const Locator& loc, const std::string& id);
-
+      Type* new_IntegerType(
+        const Locator&loc,      ///< The locator of the declaration
+        const std::string& id,  ///< The name of the atom
+        uint64_t bits = 32,     ///< The number of bits
+        bool isSigned = true    ///< The signedness
+      );
+      Type* new_RangeType(
+        const Locator&loc,      ///< The locator of the declaration
+        const std::string& id,  ///< The name of the atom
+        int64_t min,            ///< The minimum value accepted in range
+        int64_t max             ///< The maximum value accepted in range
+      );
+      Type* new_RealType(
+        const Locator&loc,      ///< The locator of the declaration
+        const std::string& id,  ///< The name of the atom
+        uint32_t mantissa = 52, ///< The bits in the mantissa (fraction)
+        uint32_t exponent = 11  ///< The bits in the exponent
+      );
+      Type* new_AnyType(const Locator&loc, const std::string& id);
+      Type* new_BooleanType(const Locator&loc, const std::string& id);
+      Type* new_CharacterType(const Locator&loc, const std::string& id);
+      Type* new_OctetType(const Locator&loc, const std::string& id);
+      Type* new_VoidType(const Locator&loc, const std::string& id);
     /// @}
     /// @name Data
     /// @{

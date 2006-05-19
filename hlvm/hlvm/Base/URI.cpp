@@ -1,4 +1,4 @@
-//===-- hlvm/Base/URI.cpp - Uniform Resource Identifier ---------*- C++ -*-===//
+//===-- Uniform Resource Identifier -----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,6 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
+/// @file hlvm/Base/URI.cpp
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0

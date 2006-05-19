@@ -1,4 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
+/// @file hlvm/%MODULE_PATH%/%SCHEMA_NAME%Tokenizer.cpp
 /// @author %AUTHOR%
 /// @date %DATE%
 /// @brief Implements the functions of class %SCHEMA_NAME%Tokenizer.

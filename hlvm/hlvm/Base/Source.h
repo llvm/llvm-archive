@@ -1,4 +1,4 @@
-//===-- hlvm/Base/Source.h - AST Abstract Input Source Class ----*- C++ -*-===//
+//===-- AST Abstract Input Source Class -------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,6 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
+/// @file hlvm/Base/Source.h
 /// @author Reid Spencer <reid@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0

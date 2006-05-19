@@ -1,4 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
+/// @file hlvm/%MODULE_PATH%/%SCHEMA_NAME%Tokenizer.h
 /// @author %AUTHOR%
 /// @date %DATE%
 /// @brief Declares the HLVM_%MODULE%::%SCHEMA_NAME%Tokenizer class.

@@ -20,6 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
+/// @file hlvm/AST/Import.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/05/18
 /// @since 0.1.0

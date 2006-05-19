@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Function.cpp - AST SymbolTable Class -----------*- C++ -*-===//
+//===-- AST SymbolTable Class -----------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,6 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
+/// @file hlvm/AST/SymbolTable.cpp
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0

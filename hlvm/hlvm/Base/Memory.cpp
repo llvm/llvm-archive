@@ -1,4 +1,4 @@
-//===-- hlvm/Base/Memory.h - HLVM Memory Facilities -------------*- C++ -*-===//
+//===-- HLVM Memory Facilities ----------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,9 +20,10 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
+/// @file hlvm/Base/Memory.cpp
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
-/// @since 0.1.0
+/// @since 0.1
 /// @brief Declares the HLVM Memory Facilities
 //===----------------------------------------------------------------------===//
 

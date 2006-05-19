@@ -29,14 +29,64 @@
 
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Function.h>
+#include <hlvm/AST/Import.h>
+#include <hlvm/AST/Variable.h>
 
 namespace hlvm {
 namespace AST {
 
+Type* 
+AST::resolveType(const std::string& name) const
+{
+  IntegerType* result = new IntegerType();
+  result->setName(name);
+  return result;
+}
+
 Bundle*
 AST::new_Bundle(const Locator& loc, const std::string& id)
 {
-  Bundle* result = Bundle::create(loc,id);
+  Bundle* result = new Bundle();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Function*
+AST::new_Function(const Locator& loc, const std::string& id)
+{
+  Function* result = new Function();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Import*
+AST::new_Import(const Locator& loc, const std::string& pfx)
+{
+  Import* result = new Import();
+  result->setLocator(loc);
+  result->setPrefix(pfx);
+  return result;
+}
+
+SignatureType*
+AST::new_SignatureType(const Locator& loc, const std::string& id)
+{
+  SignatureType* result = new SignatureType();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Variable*
+AST::new_Variable(const Locator& loc, const std::string& id)
+{
+  Variable* result = new Variable();
+  result->setLocator(loc);
+  result->setName(id);
   return result;
 }
 

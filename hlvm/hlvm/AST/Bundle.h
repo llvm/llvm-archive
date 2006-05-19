@@ -63,6 +63,7 @@ namespace AST {
     /// @{
     protected:
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

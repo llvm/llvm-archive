@@ -49,22 +49,33 @@ namespace AST
     /// @name Constructors
     /// @{
     public:
+      static Variable* create(const Locator& loc, std::string name);
+    protected:
       Variable() : LinkageItem(VariableID) {}
+    public:
       virtual ~Variable();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+      Type* getType() const { return type; }
       static inline bool classof(const Variable*) { return true; }
       static inline bool classof(const Node* N) { return N->isVariable(); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      void setType(Type* t) { type = t; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      Type* type_; ///< The type of the variable
+      Type* type; ///< The type of the variable
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm 

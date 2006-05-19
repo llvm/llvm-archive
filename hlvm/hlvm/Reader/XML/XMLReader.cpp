@@ -33,6 +33,10 @@
 #include <hlvm/Base/Source.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Function.h>
+#include <hlvm/AST/Import.h>
+#include <hlvm/AST/Variable.h>
 #include <libxml/parser.h>
 #include <libxml/relaxng.h>
 #include <vector>
@@ -50,19 +54,19 @@ const char HLVMGrammar[] =
 
 class XMLReaderImpl : public XMLReader {
   std::string path;
-  AST::AST* node;
+  AST::AST* ast;
   xmlDocPtr doc;
 public:
   XMLReaderImpl(const std::string& p)
-    : path(p), node(0)
+    : path(p), ast(0)
   {
-    node = new AST::AST();
-    node->setSystemID(p);
+    ast = new AST::AST();
+    ast->setSystemID(p);
   }
 
   virtual ~XMLReaderImpl() 
   { 
-    if (node) delete node; 
+    if (ast) delete ast; 
     if (doc) xmlFreeDoc(doc);
   }
 
@@ -82,7 +86,11 @@ public:
   inline void handleValidationError(xmlErrorPtr error);
 
   void parseTree();
-  AST::Bundle* parseBundle(xmlNodePtr& cur);
+  AST::Bundle*   parseBundle(xmlNodePtr& cur);
+  AST::Function* parseFunction(xmlNodePtr& cur);
+  AST::Import*   parseImport(xmlNodePtr& cur);
+  AST::Type*     parseType(xmlNodePtr& cur);
+  AST::Variable* parseVariable(xmlNodePtr& cur);
 private:
 };
 
@@ -106,19 +114,22 @@ XMLReaderImpl::handleParseError(xmlErrorPtr e)
     << ": " << e->message << "\n";
 }
 
-void ParseHandler(void* userData, xmlErrorPtr error) 
+void 
+ParseHandler(void* userData, xmlErrorPtr error) 
 {
   XMLReaderImpl* reader = reinterpret_cast<XMLReaderImpl*>(userData);
   reader->handleParseError(error);
 }
 
-void ValidationHandler(void* userData, xmlErrorPtr error)
+void 
+ValidationHandler(void* userData, xmlErrorPtr error)
 {
   XMLReaderImpl* reader = reinterpret_cast<XMLReaderImpl*>(userData);
   reader->handleValidationError(error);
 }
 
-bool skipBlanks(xmlNodePtr &cur)
+bool 
+skipBlanks(xmlNodePtr &cur)
 {
   while (cur && 
       (cur->type == XML_TEXT_NODE ||
@@ -127,37 +138,100 @@ bool skipBlanks(xmlNodePtr &cur)
   {
     cur = cur -> next;
   }
-  return cur == 0;
+  return cur != 0;
 }
 
-inline const char* getAttribute(xmlNodePtr cur,const char*name)
+inline const char* 
+getAttribute(xmlNodePtr cur,const char*name)
 {
   return reinterpret_cast<const char*>(
     xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>(name)));
 }
 
-inline int getToken(const xmlChar* name)
+inline int 
+getToken(const xmlChar* name)
 {
   return HLVMTokenizer::recognize(reinterpret_cast<const char*>(name));
 }
 
-AST::Bundle*
-XMLReaderImpl::parseBundle(xmlNodePtr &cur) 
+inline void 
+getNameType(xmlNodePtr& cur, std::string& name, std::string& type)
 {
-  int tkn = getToken(cur->name);
-  assert(tkn == TKN_bundle && "Expecting bundle element");
+  name = getAttribute(cur,"name");
+  type = getAttribute(cur,"type");
+}
+
+AST::Function*
+XMLReaderImpl::parseFunction(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_import);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name, type;
+  getNameType(cur, name, type);
+  AST::Function* func = ast->new_Function(loc,name);
+  return func;
+}
+
+AST::Import*
+XMLReaderImpl::parseImport(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_import);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string pfx = getAttribute(cur,"prefix");
+  AST::Import* imp = ast->new_Import(loc,pfx);
+  return imp;
+}
+
+AST::Type*
+XMLReaderImpl::parseType(xmlNodePtr& cur)
+{
+  return 0;
+}
+
+AST::Variable*
+XMLReaderImpl::parseVariable(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_var);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name, type;
+  getNameType(cur, name, type);
+  AST::Variable* var = ast->new_Variable(loc,name);
+  var->setType(ast->resolveType(type));
+  return var;
+}
+
+AST::Bundle*
+XMLReaderImpl::parseBundle(xmlNodePtr& cur) 
+{
+  assert(getToken(cur->name) == TKN_bundle && "Expecting bundle element");
   std::string pubid(getAttribute(cur, "pubid"));
-  AST::Locator loc(cur->line,0,&node->getSystemID());
-  AST::Bundle* bundle = AST::AST::new_Bundle(loc,pubid);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  AST::Bundle* bundle = ast->new_Bundle(loc,pubid);
+  xmlNodePtr child = cur->children;
+  while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
+  {
+    int tkn = getToken(child->name);
+    AST::Node* n = 0;
+    switch (tkn) {
+      case TKN_import   : n = parseImport(child); break;
+      case TKN_bundle   : n = parseBundle(child); break;
+      case TKN_function : n = parseFunction(child); break;
+      case TKN_type:      n = parseType(child); break;
+      case TKN_var:       n = parseVariable(child); break;
+      default:
+        assert(!"Invalid content for bundle");
+        break;
+    }
+    if (n)
+      bundle->addChild(n);
+    child = child->next;
+  }
   return bundle;
 }
 
 void
 XMLReaderImpl::parseTree() 
 {
-  if (node)
-    delete node;
-  node = new AST::AST();
   xmlNodePtr cur = xmlDocGetRootElement(doc);
   if (!cur) {
     error("No root node");
@@ -166,15 +240,14 @@ XMLReaderImpl::parseTree()
   int tkn = getToken(cur->name);
   assert(tkn == TKN_hlvm && "Expecting hlvm element");
   cur = cur->children;
-  if (skipBlanks(cur)) return;
-  AST::Bundle* bundle = parseBundle(cur);
-  node->setRoot(bundle);
+  if (skipBlanks(cur)) {
+    AST::Bundle* bundle = parseBundle(cur);
+    ast->setRoot(bundle);
+  }
 }
 
 // Implement the read interface to parse, validate, and convert the
 // XML document into AST Nodes. 
-// TODO: This needs  to (eventually) use the XMLTextReader API that libxml2
-// supports. 
 void
 XMLReaderImpl::read() {
 
@@ -256,9 +329,8 @@ XMLReaderImpl::read() {
 AST::AST*
 XMLReaderImpl::get()
 {
-  return node;
+  return ast;
 }
-
 
 }
 

@@ -67,6 +67,7 @@ namespace AST {
       static SignatureType* SignatureTy; ///< The signature for programs
       static SignatureType* initSignature(); 
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

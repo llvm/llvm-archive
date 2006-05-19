@@ -32,6 +32,15 @@
 namespace hlvm {
 namespace AST {
 
+Variable* 
+Variable::create(const Locator& loc, std::string name)
+{
+  Variable* result = new Variable();
+  result->setName(name);
+  result->setLocator(loc);
+  return result;
+}
+
 Variable::~Variable()
 {
 }

@@ -67,6 +67,7 @@ namespace AST
     protected:
       LinkageTypes type_; ///< The type of linkage to perform for this item
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

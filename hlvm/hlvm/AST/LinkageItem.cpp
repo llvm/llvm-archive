@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Type.cpp - AST Type Class ----------------------*- C++ -*-===//
+//===-- hlvm/AST/LinkageItem.cpp - AST LinkageItem Class --------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,23 +20,18 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Type.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/LinkageItem.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Type.
+/// @brief Implements the functions of class hlvm::AST::LinkageItem.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Type.h>
+#include <hlvm/AST/LinkageItem.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm { namespace AST {
 
-Type::~Type()
-{
-}
-
-IntegerType::~IntegerType()
+LinkageItem::~LinkageItem()
 {
 }
 

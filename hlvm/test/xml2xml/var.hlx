@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
+  <bundle pubid="bundle">
+    <var name="var" type="int"/>
+  </bundle>
+</hlvm>

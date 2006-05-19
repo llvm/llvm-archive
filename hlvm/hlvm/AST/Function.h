@@ -77,6 +77,7 @@ namespace AST
       Block * block;                   ///< The code block to be executed
       SignatureType* signature;        ///< The function signature.
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

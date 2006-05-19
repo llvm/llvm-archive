@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Type.cpp - AST Type Class ----------------------*- C++ -*-===//
+//===-- hlvm/AST/ContainerType.cpp - AST ContainerType Class ----*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,23 +20,22 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Type.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/ContainerType.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Type.
+/// @brief Implements the functions of the various AST container types
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Type.h>
+#include <hlvm/AST/ContainerType.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm { namespace AST {
 
-Type::~Type()
+ContainerType::~ContainerType()
 {
 }
 
-IntegerType::~IntegerType()
+SignatureType::~SignatureType()
 {
 }
 

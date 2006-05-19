@@ -159,16 +159,18 @@
   <define name="bundle.pat">
     <attribute name="pubid"><data type="anyURI"/></attribute>
     <ref name="Documentation.pat"/>
+    <optional>
+      <zeroOrMore>
+        <ref name="import.elem"/>
+      </zeroOrMore>
+    </optional>
     <zeroOrMore>
-      <ref name="import.elem"/>
-    </zeroOrMore>
-    <zeroOrMore>
-      <interleave>
+      <choice>
         <ref name="Bundle.elem"/>
         <ref name="Function.elem"/>
         <ref name="Type.pat"/>
         <ref name="Variable.elem"/>
-      </interleave>
+      </choice>
     </zeroOrMore>
   </define>
 

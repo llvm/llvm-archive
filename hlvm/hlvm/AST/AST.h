@@ -41,8 +41,13 @@ namespace hlvm
 /// node types of the AST are declared in this namespace.
 namespace AST
 {
-  class Bundle;
-  class Locator;
+  class Bundle;   
+  class Function; 
+  class Import;
+  class Locator; 
+  class SignatureType;
+  class Type;
+  class Variable; 
 
   /// This class is used to hold or contain an Abstract Syntax Tree. It provides
   /// those aspects of the tree that are not part of the tree itself.
@@ -69,11 +74,22 @@ namespace AST
       void setSystemID(const std::string& id) { sysid = id; }
       void setPublicID(const std::string& id) { pubid = id; }
       void setRoot(Bundle* top) { root = top; }
+
+    /// @}
+    /// @name Lookup
+    /// @{
+    public:
+      Type* resolveType(const std::string& name) const;
+
     /// @}
     /// @name Factories
     /// @{
     public:
-      static Bundle* new_Bundle(const Locator& loc, const std::string& id);
+      Bundle* new_Bundle(const Locator& loc, const std::string& id);
+      Function* new_Function(const Locator& loc, const std::string& id);
+      Import* new_Import(const Locator& loc, const std::string& id);
+      SignatureType* new_SignatureType(const Locator& l, const std::string& id);
+      Variable* new_Variable(const Locator& loc, const std::string& id);
 
     /// @}
     /// @name Data

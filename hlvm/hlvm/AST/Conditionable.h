@@ -60,6 +60,7 @@ namespace AST {
     protected:
       std::string cond_name_;
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

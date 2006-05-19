@@ -186,6 +186,7 @@ namespace AST {
       Type* result_;   ///< The result type of the function signature
       bool isVarArgs;  ///< Indicates variable arguments function
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

@@ -30,11 +30,16 @@
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/Function.h>
+#include <hlvm/AST/Import.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Variable.h>
 #include <libxml/xmlwriter.h>
 #include <iostream>
 #include <cassert>
 
 using namespace hlvm;
+using namespace llvm;
 
 namespace {
 
@@ -79,41 +84,11 @@ private:
   inline void putHeader();
   inline void putFooter();
   inline void put(AST::Node* node);
-  inline void put(AST::Bundle* node);
+  inline void put(AST::Bundle* b);
+  inline void put(AST::Variable* v);
+  inline void put(AST::Function* f);
 };
 
-std::string 
-sanitize(const std::string* input)
-{
-  // Replace all the & in the name with &amp;  and simliarly for < and > 
-  // because XML doesn't like 'em
-  std::string output(*input);
-  std::string::size_type pos = 0;
-  while (std::string::npos != (pos = output.find('&',pos)))
-  {
-    output.replace(pos,1,"&amp;");
-    pos += 5;
-  }
-  pos = 0;
-  while (std::string::npos != (pos = output.find('<',pos)))
-  {
-    output.replace(pos,1,"&lt;");
-    pos += 4;
-  }
-  pos = 0;
-  while (std::string::npos != (pos = output.find('>',pos)))
-  {
-    output.replace(pos,1,"&gt;");
-    pos += 4;
-  }
-  return output;
-}
-
-std::string 
-sanitize(const std::string& input)
-{
-  return sanitize(&input);
-}
 
 void
 XMLWriterImpl::putHeader() 
@@ -127,6 +102,21 @@ void
 XMLWriterImpl::putFooter()
 {
   endElement();
+  xmlTextWriterEndDocument(writer);
+}
+
+inline void
+XMLWriterImpl::put(AST::Function* f)
+{
+}
+
+inline void
+XMLWriterImpl::put(AST::Variable* v)
+{
+  startElement("var");
+  writeAttribute("name",v->getName().c_str());
+  writeAttribute("type",v->getType()->getName().c_str());
+  endElement();
 }
 
 inline void 
@@ -134,8 +124,17 @@ XMLWriterImpl::put(AST::Bundle* b)
 {
   startElement("bundle");
   writeAttribute("pubid",b->getName().c_str());
+  for (AST::ParentNode::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
+  {
+    switch ((*I)->getID()) 
+    {
+      case AST::VariableID: put(cast<AST::Variable>(*I)); break;
+      case AST::FunctionID: put(cast<AST::Function>(*I)); break;
+      default:
+        assert(!"Invalid bundle content");
+    }
+  }
   endElement();
-  xmlTextWriterEndDocument(writer);
 }
 
 void

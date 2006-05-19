@@ -80,6 +80,7 @@ namespace AST {
     // Container
     BundleID,           ///< The Bundle Node (a group of other declarations)
     BlockID,            ///< A Block Of Code Nodes
+    ImportID,           ///< A bundle's Import declaration
 
     // Control Flow And Invocation Operators
     CallOpID,           ///< The Call Operator
@@ -220,6 +221,9 @@ namespace AST {
       /// Get the Locator
       inline const Locator& getLocator() const { return loc; }
 
+      /// Determine if the node is a specific kind
+      inline bool is(NodeIDs kind) const { return id == unsigned(kind); }
+
       /// Determine if the node is a Type
       inline bool isType() const {
         return id >= FirstPrimitiveTypeID && id <= LastPrimitiveTypeID;
@@ -277,6 +281,7 @@ namespace AST {
       Node* parent;            ///< The node that owns this node.
       Locator loc;             ///< The source location corresponding to node.
     /// @}
+    friend class AST;
   };
 
   class ParentNode : public Node {
@@ -317,12 +322,28 @@ namespace AST {
       virtual void addChild(Node* n);
 
     /// @}
+    /// @name Iterators
+    /// @{
+    public:
+      iterator       begin()       { return kids.begin(); }
+      const_iterator begin() const { return kids.begin(); }
+      iterator       end  ()       { return kids.end(); }
+      const_iterator end  () const { return kids.end(); }
+      size_t         size () const { return kids.size(); }
+      bool           empty() const { return kids.empty(); }
+      Node*          front()       { return kids.front(); }
+      const Node*    front() const { return kids.front(); }
+      Node*          back()        { return kids.back(); }
+      const Node*    back()  const { return kids.back(); }
+
+    /// @}
     /// @name Data
     /// @{
     protected:
       std::string name;  ///< The name of this node.
       NodeList    kids;  ///< The vector of children nodes.
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Block.cpp - AST Function Class -----------------*- C++ -*-===//
+//===-- hlvm/AST/Import.h - AST Import Class ----------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,52 +20,56 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Block.h
+/// @file hlvm/AST/Import.h
 /// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Block
+/// @brief Declares the class hlvm::AST::Import
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_BLOCK_H
-#define HLVM_AST_BLOCK_H
+#ifndef HLVM_AST_IMPORT_H
+#define HLVM_AST_IMPORT_H
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm { namespace AST {
 
-  class Operator; // Forward declare
-
-  /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-  /// A Variable is a storage location of a specific type. It can either be
-  /// global or local, depending on its parent. Global variables are always
-  /// contained in a Bundle. Local variables are always contained in a
-  /// Function.
-  /// @brief HLVM AST Variable Node
-  class Block : public ParentNode
+  /// This class represents a Import in the HLVM Abstract Syntax Tree.  
+  /// A Function is a callable block of code that accepts parameters and 
+  /// returns a result.  This is the basic unit of code in HLVM. A Function
+  /// has a name, a set of formal arguments, a return type, and a block of
+  /// code to execute.
+  /// @brief HLVM AST Function Node
+  class Import : public Node
   {
     /// @name Constructors
     /// @{
+    protected:
+      Import() : Node(ImportID) {}
     public:
-      Block() : ParentNode(BlockID), ops_() {}
-      virtual ~Block();
+      virtual ~Import();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-      static inline bool classof(const Block*) { return true; }
-      static inline bool classof(const Node* N) { return N->isBlock(); }
+      static inline bool classof(const Import*) { return true; }
+      static inline bool classof(const Node* N) { return N->is(ImportID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setPrefix(const std::string& pfx) { prefix = pfx; }
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      std::vector<Operator*> ops_; ///< The operators the Block contains
+      std::string prefix;
     /// @}
     friend class AST;
   };
 } // AST
-} // hlvm 
+} // hlvm
 #endif

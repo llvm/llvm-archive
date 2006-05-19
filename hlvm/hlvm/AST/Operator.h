@@ -66,6 +66,7 @@ namespace AST {
     protected:
       std::vector<Operator*> Operands;  ///< The list of Operands
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm 

@@ -77,6 +77,7 @@ namespace AST {
     /// @{
     protected:
     /// @}
+    friend class AST;
   };
 
   /// A NamedType is simply a pair involving a name and a pointer to a Type.
@@ -93,7 +94,7 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      IntegerType() : Type(IntegerTypeID) {}
+      IntegerType() : Type(IntegerTypeID), numBits(32) {}
       virtual ~IntegerType();
 
     /// @}
@@ -110,6 +111,7 @@ namespace AST {
     protected:
       uint32_t numBits; ///< Minimum number of bits
     /// @}
+    friend class AST;
   };
 
   /// A RangeType is an IntegerType that allows the range of values to be
@@ -137,6 +139,7 @@ namespace AST {
       uint64_t min_value_; ///< Lowest value accepted
       uint64_t max_value_; ///< Highest value accepted
     /// @}
+    friend class AST;
   };
 
   /// This class represents all HLVM real number types. The precision and 
@@ -167,6 +170,7 @@ namespace AST {
       uint32_t precision_; ///< Number of decimal digits of precision
       uint32_t mantissa_;  ///< Number of decimal digits in mantissa
     /// @}
+    friend class AST;
   };
 } // AST
 } // hlvm

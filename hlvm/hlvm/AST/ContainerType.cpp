@@ -61,39 +61,6 @@ ContainerType::getPrimitiveName()
   return 0;
 }
 
-PointerType::~PointerType()
-{
-}
-
-void
-PointerType::insertChild(Node* n)
-{
-  assert(this->empty() && "Can't point to multiple types");
-  ContainerType::insertChild(n);
-}
-
-ArrayType::~ArrayType()
-{
-}
-
-void
-ArrayType::insertChild(Node* n)
-{
-  assert(this->empty() && "Can't have multi-typed arrays");
-  ContainerType::insertChild(n);
-}
-
-VectorType::~VectorType()
-{
-}
-
-void
-VectorType::insertChild(Node* n)
-{
-  assert(this->empty() && "Can't have multi-typed vectors");
-  ContainerType::insertChild(n);
-}
-
 StructureType::~StructureType()
 {
 }
@@ -101,8 +68,8 @@ StructureType::~StructureType()
 void
 StructureType::insertChild(Node* n)
 {
-  assert(isa<NamedType>(n) && "Can't insert those here");
-  types.push_back(cast<NamedType>(n));
+  assert(isa<AliasType>(n) && "Can't insert those here");
+  types.push_back(cast<AliasType>(n));
 }
 
 SignatureType::~SignatureType()
@@ -112,8 +79,8 @@ SignatureType::~SignatureType()
 void 
 SignatureType::insertChild(Node* n)
 {
-  assert(isa<NamedType>(n) && "Can't insert those here");
-  types.push_back(cast<NamedType>(n));
+  assert(isa<AliasType>(n) && "Can't insert those here");
+  types.push_back(cast<AliasType>(n));
 }
 
 }}

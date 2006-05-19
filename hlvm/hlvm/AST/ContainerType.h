@@ -94,104 +94,6 @@ namespace AST {
     /// @}
   };
 
-  /// This class represents a storage location that is a pointer to another
-  /// type. 
-  class PointerType : public ContainerType
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      PointerType() : ContainerType(PointerTypeID) {}
-      virtual ~PointerType();
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      // Methods to support type inquiry via is, cast, dyn_cast
-      static inline bool classof(const PointerType*) { return true; }
-      static inline bool classof(const Type* T) { return T->isPointerType(); }
-      static inline bool classof(const Node* T) { return T->is(PointerTypeID); }
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      virtual void insertChild(Node* n);
-
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-    /// @}
-  };
-
-  /// This class represents a resizeable, aligned array of some other type. The
-  /// Array references a Type that specifies the type of elements in the array.
-  class ArrayType : public ContainerType
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      ArrayType() : ContainerType(ArrayTypeID) {}
-      virtual ~ArrayType();
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      // Methods to support type inquiry via is, cast, dyn_cast
-      static inline bool classof(const ArrayType*) { return true; }
-      static inline bool classof(const Type* T) { return T->isArrayType(); }
-      static inline bool classof(const Node* T) { return T->is(ArrayTypeID); }
-      
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      virtual void insertChild(Node* n);
-
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-    /// @}
-  };
-
-  /// This class represents a fixed size, packed vector of some other type.
-  /// Where possible, HLVM will attempt to generate code that makes use of a
-  /// machines vector instructions to process such types. If not possible, HLVM
-  /// will treat the vector the same as an Array.
-  class VectorType : public ContainerType
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      VectorType() : ContainerType(VectorTypeID) {}
-      virtual ~VectorType();
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      // Methods to support type inquiry via is, cast, dyn_cast
-      static inline bool classof(const VectorType*) { return true; }
-      static inline bool classof(const Type* T) { return T->isVectorType(); }
-      static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      virtual void insertChild(Node* n);
-
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-    /// @}
-  };
-
   /// This class represents an HLVM type that is a sequence of data fields 
   /// of varying type. 
   class StructureType : public ContainerType
@@ -232,13 +134,17 @@ namespace AST {
     /// @name Constructors
     /// @{
     public:
-      SignatureType() : ContainerType(SignatureTypeID) {}
+      SignatureType() 
+        : ContainerType(SignatureTypeID), result(0), varargs(false) {}
       virtual ~SignatureType();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
+      Type* getResultType() const { return result; }
+      bool  isVarArgs() const { return varargs; }
+
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const SignatureType*) { return true; }
       static inline bool classof(const Type* T) { return T->isSignatureType(); }
@@ -249,14 +155,16 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      void setResultType(Type* ty) { result = ty; }
+      void setIsVarArgs(bool is) { varargs = is; }
       virtual void insertChild(Node* n);
 
     /// @}
     /// @name Data
     /// @{
     protected:
-      Type* result_;   ///< The result type of the function signature
-      bool isVarArgs;  ///< Indicates variable arguments function
+      Type* result;    ///< The result type of the function signature
+      bool varargs;  ///< Indicates variable arguments function
     /// @}
     friend class AST;
   };

@@ -42,6 +42,12 @@ Type::insertChild(Node* n)
   assert(!"This type doesn't accept children!");
 }
 
+const char*
+Type::getPrimitiveName()
+{
+  return 0;
+}
+
 AnyType::~AnyType()
 {
 }
@@ -195,6 +201,32 @@ const char*
 VoidType::getPrimitiveName()
 {
   return "void";
+}
+
+PointerType::~PointerType()
+{
+}
+
+ArrayType::~ArrayType()
+{
+}
+
+VectorType::~VectorType()
+{
+}
+
+AliasType::~AliasType()
+{
+}
+
+const char*
+AliasType::getPrimitiveName()
+{
+  return type->getPrimitiveName();
+}
+
+OpaqueType::~OpaqueType()
+{
 }
 
 }}

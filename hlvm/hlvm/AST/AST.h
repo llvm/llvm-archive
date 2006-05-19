@@ -48,6 +48,21 @@ namespace AST
   class SignatureType;
   class Type;
   class Variable; 
+  class AnyType;
+  class BooleanType;
+  class CharacterType;
+  class OctetType;
+  class VoidType;
+  class IntegerType;
+  class RangeType;
+  class RealType;
+  class PointerType;
+  class VectorType;
+  class ArrayType;
+  class AliasType;
+  class StructureType;
+  class SignatureType;
+  class OpaqueType;
 
   /// This class is used to hold or contain an Abstract Syntax Tree. It provides
   /// those aspects of the tree that are not part of the tree itself.
@@ -57,7 +72,12 @@ namespace AST
     /// @name Constructors
     /// @{
     public:
+      static AST* create();
+      static void destroy(AST* ast);
+
+    protected:
       AST() : sysid(), pubid(), root(0) {}
+      ~AST();
 
     /// @}
     /// @name Accessors
@@ -79,7 +99,7 @@ namespace AST
     /// @name Lookup
     /// @{
     public:
-      Type* resolveType(const std::string& name) const;
+      Type* resolveType(const std::string& name);
 
     /// @}
     /// @name Factories
@@ -88,31 +108,93 @@ namespace AST
       Bundle* new_Bundle(const Locator& loc, const std::string& id);
       Function* new_Function(const Locator& loc, const std::string& id);
       Import* new_Import(const Locator& loc, const std::string& id);
-      SignatureType* new_SignatureType(const Locator& l, const std::string& id);
       Variable* new_Variable(const Locator& loc, const std::string& id);
-      Type* new_IntegerType(
+      IntegerType* new_IntegerType(
         const Locator&loc,      ///< The locator of the declaration
         const std::string& id,  ///< The name of the atom
         uint64_t bits = 32,     ///< The number of bits
         bool isSigned = true    ///< The signedness
       );
-      Type* new_RangeType(
+      RangeType* new_RangeType(
         const Locator&loc,      ///< The locator of the declaration
         const std::string& id,  ///< The name of the atom
         int64_t min,            ///< The minimum value accepted in range
         int64_t max             ///< The maximum value accepted in range
       );
-      Type* new_RealType(
+      RealType* new_RealType(
         const Locator&loc,      ///< The locator of the declaration
         const std::string& id,  ///< The name of the atom
         uint32_t mantissa = 52, ///< The bits in the mantissa (fraction)
         uint32_t exponent = 11  ///< The bits in the exponent
       );
-      Type* new_AnyType(const Locator&loc, const std::string& id);
-      Type* new_BooleanType(const Locator&loc, const std::string& id);
-      Type* new_CharacterType(const Locator&loc, const std::string& id);
-      Type* new_OctetType(const Locator&loc, const std::string& id);
-      Type* new_VoidType(const Locator&loc, const std::string& id);
+      AnyType* new_AnyType(const Locator&loc, const std::string& id);
+      BooleanType* 
+        new_BooleanType(const Locator&loc, const std::string& id);
+      CharacterType* 
+        new_CharacterType(const Locator&loc, const std::string& id);
+      OctetType* 
+        new_OctetType(const Locator&loc, const std::string& id);
+      VoidType* new_VoidType(const Locator&loc, const std::string& id);
+      PointerType* new_PointerType(
+        const Locator& loc, 
+        const std::string& id,
+        Type* target
+      );
+      ArrayType* new_ArrayType(
+        const Locator& loc, 
+        const std::string& id,
+        Type* elemType,
+        uint64_t maxSize
+      );
+      VectorType* new_VectorType(
+        const Locator& loc, 
+        const std::string& id,
+        Type* elemType,
+        uint64_t size
+      );
+      AliasType* new_AliasType(
+        const Locator& loc,
+        const std::string& id,
+        Type* referrant
+      );
+      StructureType* 
+        new_StructureType(const Locator& l, const std::string& id);
+      SignatureType* new_SignatureType(
+        const Locator& loc, 
+        const std::string& id,
+        Type *resultType
+      );
+      OpaqueType* new_OpaqueType(const std::string& id);
+      RealType* new_f128(const Locator& l, const std::string& id)
+      { return new_RealType(l,id,112,15); }
+      RealType* new_f80(const Locator& l, const std::string& id)
+      { return new_RealType(l,id,64,15); }
+      RealType* new_f64(const Locator& l, const std::string& id)
+      { return new_RealType(l,id,52,11); }
+      RealType* new_f43(const Locator& l, const std::string& id)
+      { return new_RealType(l,id,32,11); }
+      RealType* new_f32(const Locator& l, const std::string& id)
+      { return new_RealType(l,id,23,8); }
+      IntegerType* new_s128(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,128,true); }
+      IntegerType* new_s64(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,64,true); }
+      IntegerType* new_s32(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,32,true); }
+      IntegerType* new_s16(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,16,true); }
+      IntegerType* new_s8(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,8,true); }
+      IntegerType* new_u128(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,128,false); }
+      IntegerType* new_u64(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,64,false); }
+      IntegerType* new_u32(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,32,false); }
+      IntegerType* new_u16(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,16,false); }
+      IntegerType* new_u8(const Locator& l, const std::string& id)
+      { return new_IntegerType(l,id,8,false); }
     /// @}
     /// @name Data
     /// @{

@@ -60,13 +60,13 @@ public:
   XMLReaderImpl(const std::string& p)
     : path(p), ast(0)
   {
-    ast = new AST::AST();
+    ast = AST::AST::create();
     ast->setSystemID(p);
   }
 
   virtual ~XMLReaderImpl() 
   { 
-    if (ast) delete ast; 
+    if (ast) AST::AST::destroy(ast); 
     if (doc) xmlFreeDoc(doc);
   }
 
@@ -89,8 +89,8 @@ public:
   AST::Bundle*   parseBundle(xmlNodePtr& cur);
   AST::Function* parseFunction(xmlNodePtr& cur);
   AST::Import*   parseImport(xmlNodePtr& cur);
-  AST::Type*     parseType(xmlNodePtr& cur);
   AST::Variable* parseVariable(xmlNodePtr& cur);
+  AST::AliasType*parseAlias(xmlNodePtr& cur);
   AST::Type*     parseAtom(xmlNodePtr& cur);
   AST::Type*     parsePointer(xmlNodePtr& cur);
   AST::Type*     parseArray(xmlNodePtr& cur);
@@ -181,10 +181,14 @@ recognize_boolean(const std::string& str)
 }
 
 inline const char* 
-getAttribute(xmlNodePtr cur,const char*name)
+getAttribute(xmlNodePtr cur,const char*name,bool required = true)
 {
-  return reinterpret_cast<const char*>(
-    xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>(name)));
+  const char* result = reinterpret_cast<const char*>(
+   xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>(name)));
+  if (!result && required) {
+    assert(!"Missing Attribute");
+  }
+  return result;
 }
 
 inline int 
@@ -221,6 +225,16 @@ XMLReaderImpl::parseImport(xmlNodePtr& cur)
   return imp;
 }
 
+AST::AliasType*
+XMLReaderImpl::parseAlias(xmlNodePtr& cur)
+{
+  assert(getToken(cur->name)==TKN_alias);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  std::string type = getAttribute(cur,"renames");
+  return ast->new_AliasType(loc,name,ast->resolveType(type));
+}
+
 AST::Type*     
 XMLReaderImpl::parseAtom(xmlNodePtr& cur)
 {
@@ -242,22 +256,22 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
           case TKN_any:  result=ast->new_AnyType(loc,name); break;
           case TKN_bool: result=ast->new_BooleanType(loc,name); break;
           case TKN_char: result=ast->new_CharacterType(loc,name); break;
-          case TKN_f128: result=ast->new_RealType(loc,name,112,15); break;
-          case TKN_f32:  result=ast->new_RealType(loc,name,23,8); break;
-          case TKN_f43:  result=ast->new_RealType(loc,name,32,11); break;
-          case TKN_f64:  result=ast->new_RealType(loc,name,52,11); break;
-          case TKN_f80:  result=ast->new_RealType(loc,name,64,15); break;
+          case TKN_f128: result=ast->new_f128(loc,name); break;
+          case TKN_f32:  result=ast->new_f32(loc,name); break;
+          case TKN_f43:  result=ast->new_f43(loc,name); break;
+          case TKN_f64:  result=ast->new_f64(loc,name); break;
+          case TKN_f80:  result=ast->new_f80(loc,name); break;
           case TKN_octet:result=ast->new_OctetType(loc,name); break;
-          case TKN_s128: result=ast->new_IntegerType(loc,name,128,true); break;
-          case TKN_s16:  result=ast->new_IntegerType(loc,name,16,true); break;
-          case TKN_s32:  result=ast->new_IntegerType(loc,name,32,true); break;
-          case TKN_s64:  result=ast->new_IntegerType(loc,name,64,true); break;
-          case TKN_s8:   result=ast->new_IntegerType(loc,name,8,true); break;
-          case TKN_u128: result=ast->new_IntegerType(loc,name,128,false); break;
-          case TKN_u16:  result=ast->new_IntegerType(loc,name,16,false); break;
-          case TKN_u32:  result=ast->new_IntegerType(loc,name,32,false); break;
-          case TKN_u64:  result=ast->new_IntegerType(loc,name,64,false); break;
-          case TKN_u8:   result=ast->new_IntegerType(loc,name,8,false); break;
+          case TKN_s128: result=ast->new_s128(loc,name); break;
+          case TKN_s16:  result=ast->new_s16(loc,name); break;
+          case TKN_s32:  result=ast->new_s32(loc,name); break;
+          case TKN_s64:  result=ast->new_s64(loc,name); break;
+          case TKN_s8:   result=ast->new_s8(loc,name); break;
+          case TKN_u128: result=ast->new_u128(loc,name); break;
+          case TKN_u16:  result=ast->new_u16(loc,name); break;
+          case TKN_u32:  result=ast->new_u32(loc,name); break;
+          case TKN_u64:  result=ast->new_u64(loc,name); break;
+          case TKN_u8:   result=ast->new_u8(loc,name); break;
           case TKN_void: result=ast->new_VoidType(loc,name); break;
           default:
             assert(!"Invalid intrinsic kind");
@@ -314,48 +328,78 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
 AST::Type*     
 XMLReaderImpl::parsePointer(xmlNodePtr& cur)
 {
-  return 0;
+  assert(getToken(cur->name)==TKN_pointer);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  std::string type = getAttribute(cur,"to");
+  return ast->new_PointerType(loc,name,ast->resolveType(type));
 }
 
 AST::Type*     
 XMLReaderImpl::parseArray(xmlNodePtr& cur)
 {
-  return 0;
+  assert(getToken(cur->name)==TKN_array);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  std::string type = getAttribute(cur,"of");
+  const char* len = getAttribute(cur,"length");
+  return ast->new_ArrayType(loc, name, ast->resolveType(type), 
+                            recognize_nonNegativeInteger(len));
 }
 
 AST::Type*     
 XMLReaderImpl::parseVector(xmlNodePtr& cur)
 {
-  return 0;
+  assert(getToken(cur->name)==TKN_vector);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  std::string type = getAttribute(cur,"of");
+  const char* len  = getAttribute(cur,"length");
+  return ast->new_VectorType(loc,name,ast->resolveType(type),
+                             recognize_nonNegativeInteger(len));
 }
 
 AST::Type*     
 XMLReaderImpl::parseStructure(xmlNodePtr& cur)
 {
-  return 0;
+  assert(getToken(cur->name)==TKN_structure);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  AST::StructureType* struc = ast->new_StructureType(loc,name);
+  xmlNodePtr child = cur->children;
+  while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    assert(getToken(child->name) == TKN_field && "Structure only has fields");
+    std::string name = getAttribute(child,"name");
+    std::string type = getAttribute(child,"type");
+    AST::AliasType* nt = ast->new_AliasType(loc,name,ast->resolveType(type));
+    nt->setParent(struc);
+    child = child->next;
+  }
+  return struc;
 }
 
 AST::Type*     
 XMLReaderImpl::parseSignature(xmlNodePtr& cur)
 {
-  return 0;
-}
-
-AST::Type*
-XMLReaderImpl::parseType(xmlNodePtr& cur)
-{
-  AST::Type* T = 0;
-  switch (getToken(cur->name)) {
-    case TKN_atom:       T = parseAtom(cur); break;
-    case TKN_pointer:    T = parsePointer(cur); break;
-    case TKN_array:      T = parseArray(cur); break;
-    case TKN_vector:     T = parseVector(cur); break;
-    case TKN_structure:  T = parseStructure(cur); break;
-    case TKN_signature:  T = parseSignature(cur); break;
-    default:
-      assert(!"Invalid Type!");
+  assert(getToken(cur->name)==TKN_signature);
+  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  std::string name = getAttribute(cur,"name");
+  std::string result = getAttribute(cur,"result");
+  const char* varargs = getAttribute(cur,"varargs",false);
+  AST::SignatureType* sig = 
+    ast->new_SignatureType(loc,name,ast->resolveType(result));
+  if (varargs)
+    sig->setIsVarArgs(recognize_boolean(varargs));
+  xmlNodePtr child = cur->children;
+  while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    assert(getToken(child->name) == TKN_arg && "Structure only has fields");
+    std::string name = getAttribute(child,"name");
+    std::string type = getAttribute(child,"type");
+    AST::AliasType* nt = ast->new_AliasType(loc,name,ast->resolveType(type));
+    nt->setParent(sig);
+    child = child->next;
   }
-  return T;
+  return sig;
 }
 
 AST::Variable*
@@ -386,7 +430,13 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
       case TKN_import   : n = parseImport(child); break;
       case TKN_bundle   : n = parseBundle(child); break;
       case TKN_function : n = parseFunction(child); break;
-      case TKN_atom     : n = parseType(child); break;
+      case TKN_alias    : n = parseAlias(child); break;
+      case TKN_atom     : n = parseAtom(child); break;
+      case TKN_pointer  : n = parsePointer(child); break;
+      case TKN_array    : n = parseArray(child); break;
+      case TKN_vector   : n = parseVector(child); break;
+      case TKN_structure: n = parseStructure(child); break;
+      case TKN_signature: n = parseSignature(child); break;
       case TKN_var      : n = parseVariable(child); break;
       default:
         assert(!"Invalid content for bundle");

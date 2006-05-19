@@ -56,13 +56,14 @@ namespace AST {
     StringTypeID,       ///< The String Type (Array of UTF-16 chars + length)
 
     // Container Types
+    AliasTypeID,        ///< A new name for an existing type
     PointerTypeID,      ///< The Pointer Type (Pointer To storage of other Type)
     ArrayTypeID,        ///< The Array Type (Linear array of some type)
     VectorTypeID,       ///< The Vector Type (Packed Fixed Size Vector)
     StructureTypeID,    ///< The Structure Type (Sequence of various types)
-    NamedTypeID,        ///< The name and type combo for fields and arguments
     SignatureTypeID,    ///< The Function Signature Type
     ContinuationTypeID, ///< A Continuation Type (data passing to continuations)
+    OpaqueTypeID,       ///< A placeholder for unresolved types
 
     // Class Constructs (TBD)
     InterfaceID,        ///< The Interface Type (set of Signatures)
@@ -184,7 +185,9 @@ namespace AST {
     FirstContainerTypeID = PointerTypeID, ///< First Container Type
     LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
     FirstOperatorID = CallOpID, ///< First Operator
-    LastOperatorID =  StructureOpID ///< Last Operator
+    LastOperatorID =  StructureOpID, ///< Last Operator
+    FirstTypeID = VoidTypeID,
+    LastTypeID = OpaqueTypeID
   };
 
   class ParentNode;
@@ -222,7 +225,7 @@ namespace AST {
 
       /// Determine if the node is a Type
       inline bool isType() const {
-        return id >= FirstPrimitiveTypeID && id <= LastPrimitiveTypeID;
+        return id >= FirstTypeID && id <= LastTypeID;
       }
       /// Determine if the node is any of the Operators
       inline bool isOperator() const { 
@@ -231,6 +234,9 @@ namespace AST {
 
       /// Determine if the node is a ParentNode
       bool isNamedNode() const ; 
+
+      /// Determine if the node is a LinkageItem
+      bool isLinkageItem() const;
 
       /// Determine if the node is a Block
       inline bool isBlock() const { return id == BlockID; }

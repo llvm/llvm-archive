@@ -65,6 +65,12 @@ namespace AST
     /// @}
     /// @name Mutators
     /// @{
+    public:
+      static inline bool classof(const LinkageItem*) { return true; }
+      static inline bool classof(const Node* N) { return N->isLinkageItem(); }
+    /// @}
+    /// @name Mutators
+    /// @{
 
     /// @}
     /// @name Data

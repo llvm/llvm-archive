@@ -79,6 +79,10 @@ private:
         reinterpret_cast<const xmlChar*>(val)); }
   inline void writeAttribute(const char* name, const std::string& val) 
     { writeAttribute(name, val.c_str()); }
+  inline void writeAttribute(const char* name, AST::Type* t)
+    { writeAttribute(name, t->getName()); }
+  inline void writeAttribute(const char* name, uint64_t val)
+    { writeAttribute(name, llvm::utostr(val)); }
   inline void writeElement(const char* elem, const char* body)
     { xmlTextWriterWriteElement(writer,
         reinterpret_cast<const xmlChar*>(elem),
@@ -86,10 +90,10 @@ private:
 
   inline void putHeader();
   inline void putFooter();
-  inline void put(AST::Node* node);
   inline void put(AST::Bundle* b);
   inline void put(AST::Variable* v);
   inline void put(AST::Function* f);
+  inline void put(AST::AliasType* t);
   inline void put(AST::AnyType* t);
   inline void put(AST::BooleanType* t);
   inline void put(AST::CharacterType* t);
@@ -98,6 +102,11 @@ private:
   inline void put(AST::RealType* t);
   inline void put(AST::OctetType* t);
   inline void put(AST::VoidType* t);
+  inline void put(AST::PointerType* t);
+  inline void put(AST::ArrayType* t);
+  inline void put(AST::VectorType* t);
+  inline void put(AST::StructureType* t);
+  inline void put(AST::SignatureType* t);
 };
 
 
@@ -116,16 +125,24 @@ XMLWriterImpl::putFooter()
   xmlTextWriterEndDocument(writer);
 }
 
-inline void
+void
 XMLWriterImpl::put(AST::Function* f)
 {
 }
 
 void 
+XMLWriterImpl::put(AST::AliasType* t)
+{
+  startElement("alias");
+  writeAttribute("name",t->getName());
+  writeAttribute("renames",t->getType());
+  endElement();
+}
+void 
 XMLWriterImpl::put(AST::AnyType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   startElement("intrinsic");
   writeAttribute("is","any");
   endElement();
@@ -213,14 +230,75 @@ void
 XMLWriterImpl::put(AST::VoidType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   startElement("intrinsic");
   writeAttribute("is","void");
   endElement();
   endElement();
 }
 
-inline void
+void 
+XMLWriterImpl::put(AST::PointerType* t)
+{
+  startElement("pointer");
+  writeAttribute("name", t->getName());
+  writeAttribute("to", t->getTargetType());
+  endElement();
+}
+
+void 
+XMLWriterImpl::put(AST::ArrayType* t)
+{
+  startElement("array");
+  writeAttribute("name", t->getName());
+  writeAttribute("of", t->getElementType());
+  writeAttribute("length", t->getMaxSize());
+  endElement();
+}
+
+void 
+XMLWriterImpl::put(AST::VectorType* t)
+{
+  startElement("vector");
+  writeAttribute("name", t->getName());
+  writeAttribute("of", t->getElementType());
+  writeAttribute("length", t->getSize());
+  endElement();
+}
+
+void 
+XMLWriterImpl::put(AST::StructureType* t)
+{
+  startElement("structure");
+  writeAttribute("name",t->getName());
+  for (AST::StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+    startElement("field");
+    AST::AliasType* nt = cast<AST::AliasType>(*I);
+    writeAttribute("name",nt->getName());
+    writeAttribute("type",nt->getType());
+    endElement();
+  }
+  endElement();
+}
+
+void 
+XMLWriterImpl::put(AST::SignatureType* t)
+{
+  startElement("signature");
+  writeAttribute("name",t->getName());
+  writeAttribute("result",t->getResultType());
+  writeAttribute("varargs",t->isVarArgs() ? "true" : "false");
+  for (AST::SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+    startElement("arg");
+    AST::AliasType* nt = cast<AST::AliasType>(*I);
+    writeAttribute("name",nt->getName());
+    writeAttribute("type",nt->getType());
+    endElement();
+  }
+  endElement();
+}
+
+void
 XMLWriterImpl::put(AST::Variable* v)
 {
   startElement("var");
@@ -229,7 +307,7 @@ XMLWriterImpl::put(AST::Variable* v)
   endElement();
 }
 
-inline void 
+void 
 XMLWriterImpl::put(AST::Bundle* b)
 {
   startElement("bundle");
@@ -240,6 +318,7 @@ XMLWriterImpl::put(AST::Bundle* b)
     {
       case AST::VariableID:         put(cast<AST::Variable>(*I)); break;
       case AST::FunctionID:         put(cast<AST::Function>(*I)); break;
+      case AST::AliasTypeID:        put(cast<AST::AliasType>(*I)); break;
       case AST::AnyTypeID:          put(cast<AST::AnyType>(*I)); break;
       case AST::BooleanTypeID:      put(cast<AST::BooleanType>(*I)); break;
       case AST::CharacterTypeID:    put(cast<AST::CharacterType>(*I)); break;
@@ -248,129 +327,16 @@ XMLWriterImpl::put(AST::Bundle* b)
       case AST::RealTypeID:         put(cast<AST::RealType>(*I)); break;
       case AST::OctetTypeID:        put(cast<AST::OctetType>(*I)); break;
       case AST::VoidTypeID:         put(cast<AST::VoidType>(*I)); break;
+      case AST::PointerTypeID:      put(cast<AST::PointerType>(*I)); break;
+      case AST::ArrayTypeID:        put(cast<AST::ArrayType>(*I)); break;
+      case AST::VectorTypeID:       put(cast<AST::VectorType>(*I)); break;
+      case AST::StructureTypeID:    put(cast<AST::StructureType>(*I)); break;
+      case AST::SignatureTypeID:    put(cast<AST::SignatureType>(*I)); break;
       default:
         assert(!"Invalid bundle content");
     }
   }
   endElement();
-}
-
-void
-XMLWriterImpl::put(AST::Node* node) 
-{
-  switch (node->getID()) 
-  {
-    case hlvm::AST::VoidTypeID:		break;     
-    case hlvm::AST::AnyTypeID:		break;          
-    case hlvm::AST::BooleanTypeID:	break;      
-    case hlvm::AST::CharacterTypeID:	break;    
-    case hlvm::AST::OctetTypeID:	break;        
-    case hlvm::AST::IntegerTypeID:	break;      
-    case hlvm::AST::RangeTypeID:	break;        
-    case hlvm::AST::RealTypeID:		break;         
-    case hlvm::AST::RationalTypeID:	break;     
-    case hlvm::AST::StringTypeID:	break;       
-    case hlvm::AST::PointerTypeID:	break;      
-    case hlvm::AST::ArrayTypeID:	break;        
-    case hlvm::AST::VectorTypeID:	break;       
-    case hlvm::AST::NamedTypeID:        break;            
-    case hlvm::AST::StructureTypeID:	break;    
-    case hlvm::AST::SignatureTypeID:	break;    
-    case hlvm::AST::ContinuationTypeID:	break; 
-    case hlvm::AST::InterfaceID:	break;        
-    case hlvm::AST::ClassID:		break;            
-    case hlvm::AST::MethodID:		break;           
-    case hlvm::AST::ImplementsID:	break;       
-    case hlvm::AST::VariableID:		break;         
-    case hlvm::AST::FunctionID:		break;         
-    case hlvm::AST::ProgramID:		break;          
-    case hlvm::AST::BundleID:		
-      put(llvm::cast<hlvm::AST::Bundle>(node)); 
-      break;
-    case hlvm::AST::BlockID:		break;            
-    case hlvm::AST::CallOpID:		break;           
-    case hlvm::AST::InvokeOpID:		break;         
-    case hlvm::AST::DispatchOpID:	break;
-    case hlvm::AST::CreateContOpID:	break;     
-    case hlvm::AST::CallWithContOpID:	break;   
-    case hlvm::AST::ReturnOpID:		break;         
-    case hlvm::AST::ThrowOpID:		break;          
-    case hlvm::AST::JumpToOpID:		break;         
-    case hlvm::AST::BreakOpID:		break;          
-    case hlvm::AST::IfOpID:		break;             
-    case hlvm::AST::LoopOpID:		break;           
-    case hlvm::AST::SelectOpID:		break;         
-    case hlvm::AST::WithOpID:		break;           
-    case hlvm::AST::LoadOpID:		break;           
-    case hlvm::AST::StoreOpID:		break;          
-    case hlvm::AST::AllocateOpID:	break;       
-    case hlvm::AST::FreeOpID:		break;           
-    case hlvm::AST::ReallocateOpID:	break;     
-    case hlvm::AST::StackAllocOpID:	break;     
-    case hlvm::AST::ReferenceOpID:	break;      
-    case hlvm::AST::DereferenceOpID:	break;    
-    case hlvm::AST::NegateOpID:		break;         
-    case hlvm::AST::ComplementOpID:	break;     
-    case hlvm::AST::PreIncrOpID:	break;        
-    case hlvm::AST::PostIncrOpID:	break;       
-    case hlvm::AST::PreDecrOpID:	break;        
-    case hlvm::AST::PostDecrOpID:	break;       
-    case hlvm::AST::AddOpID:		break;            
-    case hlvm::AST::SubtractOpID:	break;       
-    case hlvm::AST::MultiplyOpID:	break;       
-    case hlvm::AST::DivideOpID:		break;         
-    case hlvm::AST::ModulusOpID:	break;        
-    case hlvm::AST::BAndOpID:		break;           
-    case hlvm::AST::BOrOpID:		break;            
-    case hlvm::AST::BXOrOpID:		break;           
-    case hlvm::AST::AndOpID:		break;            
-    case hlvm::AST::OrOpID:		break;             
-    case hlvm::AST::NorOpID:		break;            
-    case hlvm::AST::XorOpID:		break;            
-    case hlvm::AST::NotOpID:		break;            
-    case hlvm::AST::LTOpID:		break;             
-    case hlvm::AST::GTOpID:		break;             
-    case hlvm::AST::LEOpID:		break;             
-    case hlvm::AST::GEOpID:		break;             
-    case hlvm::AST::EQOpID:		break;             
-    case hlvm::AST::NEOpID:		break;             
-    case hlvm::AST::IsPInfOpID:		break;         
-    case hlvm::AST::IsNInfOpID:		break;         
-    case hlvm::AST::IsNaNOpID:		break;          
-    case hlvm::AST::TruncOpID:		break;          
-    case hlvm::AST::RoundOpID:		break;          
-    case hlvm::AST::FloorOpID:		break;          
-    case hlvm::AST::CeilingOpID:	break;        
-    case hlvm::AST::PowerOpID:		break;          
-    case hlvm::AST::LogEOpID:		break;           
-    case hlvm::AST::Log2OpID:		break;           
-    case hlvm::AST::Log10OpID:		break;          
-    case hlvm::AST::SqRootOpID:		break;         
-    case hlvm::AST::RootOpID:		break;           
-    case hlvm::AST::FactorialOpID:	break;      
-    case hlvm::AST::GCDOpID:		break;            
-    case hlvm::AST::LCMOpID:		break;            
-    case hlvm::AST::MungeOpID:		break;          
-    case hlvm::AST::LengthOpID:		break;         
-    case hlvm::AST::IntOpID:		break;            
-    case hlvm::AST::RealOpID:		break;           
-    case hlvm::AST::PInfOpID:		break;           
-    case hlvm::AST::NInfOpID:		break;           
-    case hlvm::AST::NaNOpID:		break;            
-    case hlvm::AST::StringOpID:		break;         
-    case hlvm::AST::ArrayOpID:		break;          
-    case hlvm::AST::VectorOpID:		break;         
-    case hlvm::AST::StructureOpID:	break;      
-    case hlvm::AST::MapFileOpID:	break;        
-    case hlvm::AST::OpenOpID:		break;           
-    case hlvm::AST::CloseOpID:		break;          
-    case hlvm::AST::ReadOpID:		break;           
-    case hlvm::AST::WriteOpID:		break;          
-    case hlvm::AST::PositionOpID:	break;       
-    default:
-      assert(!"Invalid Node ID");
-      break;
-  }
 }
 
 void

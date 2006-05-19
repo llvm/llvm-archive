@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
+  <bundle pubid="bundle">
+    <atom name="someType">
+      <intrinsic is="any"/>
+    </atom>
+    <alias name="anAlias" renames="someType"/>
+  </bundle>
+</hlvm>

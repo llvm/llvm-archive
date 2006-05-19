@@ -48,14 +48,13 @@ namespace AST {
       Type(
         NodeIDs id ///< The Type identifier
       ) : LinkageItem(id)  {}
-    public:
       virtual ~Type();
 
     /// @}
     /// @name Accessors
     /// @{
     public:
-      virtual const char* getPrimitiveName() = 0;
+      virtual const char* getPrimitiveName();
       bool isPrimitive() { return getPrimitiveName() != 0; }
 
     /// @}
@@ -105,56 +104,11 @@ namespace AST {
     friend class AST;
   };
 
-  /// This class is type that combines a name with an arbitrary type. This
-  /// construct is used any where a named and typed object is needed such as
-  /// the parameter to a function or the field of a structure. 
-  class NamedType : public Type
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      NamedType() : Type(NamedTypeID) {}
-      virtual ~NamedType();
-
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      virtual const char* getPrimitiveName();
-      // Get the name for the type
-      const std::string&  getName() const { return name; }
-      
-      // Get the type for the name
-      Type *  getType() const { return type; }
-
-      // Methods to support type inquiry via is, cast, dyn_cast
-      static inline bool classof(const NamedType*) { return true; }
-      static inline bool classof(const Node* T) { return T->is(NamedTypeID); }
-
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      // Set the name for the type
-      void setName(const std::string& n) { name = n; }
-      
-      // Set the type for the name
-      void setType(Type * t) { type = t; }
-
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      Type* type;
-      std::string name;
-    /// @}
-  };
-
   class AnyType : public Type
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       AnyType() : Type(AnyTypeID) {}
       virtual ~AnyType();
 
@@ -175,7 +129,7 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       BooleanType() : Type(BooleanTypeID) {}
       virtual ~BooleanType();
 
@@ -196,7 +150,7 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       CharacterType() : Type(CharacterTypeID) {}
       virtual ~CharacterType();
 
@@ -218,7 +172,7 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       OctetType() : Type(OctetTypeID) {}
       virtual ~OctetType();
 
@@ -239,7 +193,7 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       VoidType() : Type(VoidTypeID) {}
       virtual ~VoidType();
 
@@ -265,8 +219,9 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       IntegerType() : Type(IntegerTypeID), numBits(32), signedness(true) {}
+    public:
       virtual ~IntegerType();
 
     /// @}
@@ -314,8 +269,9 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       RangeType() : Type(RangeTypeID), min(0), max(256) {}
+    public:
       virtual ~RangeType();
 
     /// @}
@@ -364,8 +320,9 @@ namespace AST {
   {
     /// @name Constructors
     /// @{
-    public:
+    protected:
       RealType() : Type(RealTypeID), mantissa(52), exponent(11) {}
+    public:
       virtual ~RealType();
 
     /// @}
@@ -403,6 +360,204 @@ namespace AST {
     /// @}
     friend class AST;
   };
+
+  /// This class represents a storage location that is a pointer to another
+  /// type. 
+  class PointerType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    protected:
+      PointerType() : Type(PointerTypeID) {}
+      virtual ~PointerType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      // Get the target type
+      Type* getTargetType() { return type; }
+
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const PointerType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isPointerType(); }
+      static inline bool classof(const Node* T) { return T->is(PointerTypeID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setTargetType(Type* t) { type = t; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Type* type;
+    /// @}
+    friend class AST;
+  };
+
+  /// This class represents a resizeable, aligned array of some other type. The
+  /// Array references a Type that specifies the type of elements in the array.
+  class ArrayType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    protected:
+      ArrayType() : Type(ArrayTypeID), type(0), maxSize(0) {}
+    public:
+      virtual ~ArrayType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Get the type of the array's elements.
+      Type* getElementType() const { return type; }
+
+      /// Get the maximum size the array can grow to.
+      uint64_t getMaxSize()  const { return maxSize; }
+
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const ArrayType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isArrayType(); }
+      static inline bool classof(const Node* T) { return T->is(ArrayTypeID); }
+      
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      /// Set the type of the array's elements.
+      void setElementType(Type* t) { type = t; }
+
+      /// Set the maximum size the array can grow to.
+      void setMaxSize(uint64_t max) { maxSize = max; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Type* type;       ///< The type of the elements of the array
+      uint64_t maxSize; ///< The maximum number of elements in the array
+    /// @}
+    friend class AST;
+  };
+
+  /// This class represents a fixed size, packed vector of some other type.
+  /// Where possible, HLVM will attempt to generate code that makes use of a
+  /// machines vector instructions to process such types. If not possible, HLVM
+  /// will treat the vector the same as an Array.
+  class VectorType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    protected:
+      VectorType() : Type(VectorTypeID), type(0), size(0) {}
+      virtual ~VectorType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Get the type of the array's elements.
+      Type* getElementType() const { return type; }
+
+      /// Get the maximum size the array can grow to.
+      uint64_t getSize()  const { return size; }
+
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const VectorType*) { return true; }
+      static inline bool classof(const Type* T) { return T->isVectorType(); }
+      static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Set the type of the vector's elements.
+      void setElementType(Type* t) { type = t; }
+
+      /// Set the size of the vector.
+      void setSize(uint64_t max) { size = max; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Type* type;    ///< The type of the vector's elements.
+      uint64_t size; ///< The (fixed) size of the vector
+    /// @}
+    friend class AST;
+  };
+
+  /// This class is type that combines a name with an arbitrary type. This
+  /// construct is used any where a named and typed object is needed such as
+  /// the parameter to a function or the field of a structure. 
+  class AliasType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    public:
+      AliasType() : Type(AliasTypeID) {}
+      virtual ~AliasType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      virtual const char* getPrimitiveName();
+      // Get the name for the type
+      const std::string&  getName() const { return name; }
+      
+      // Get the type for the name
+      Type *  getType() const { return type; }
+
+      // Methods to support type inquiry via is, cast, dyn_cast
+      static inline bool classof(const AliasType*) { return true; }
+      static inline bool classof(const Node* T) { return T->is(AliasTypeID); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      // Set the name for the type
+      void setName(const std::string& n) { name = n; }
+      
+      // Set the type for the name
+      void setType(Type * t) { type = t; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Type* type;
+      std::string name;
+    /// @}
+  };
+
+  class OpaqueType : public Type
+  {
+    /// @name Constructors
+    /// @{
+    protected:
+      OpaqueType(const std::string& nm) : 
+        Type(OpaqueTypeID) { this->setName(nm); }
+    public:
+      virtual ~OpaqueType();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      static inline bool classof(const OpaqueType*) { return true; }
+      static inline bool classof(const Node* N) 
+        { return N->is(OpaqueTypeID); }
+
+    /// @}
+    friend class AST;
+  };
+
 } // AST
 } // hlvm
 #endif

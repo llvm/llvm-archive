@@ -168,7 +168,14 @@
       <choice>
         <ref name="Bundle.elem"/>
         <ref name="Function.elem"/>
-        <ref name="Type.pat"/>
+        <ref name="Alias.elem"/>
+        <ref name="Atom.elem"/>
+        <ref name="Enumeration.elem"/>
+        <ref name="Pointer.elem"/>
+        <ref name="Array.elem"/>
+        <ref name="Vector.elem"/>
+        <ref name="Structure.elem"/>
+        <ref name="Signature.elem"/>
         <ref name="Variable.elem"/>
       </choice>
     </zeroOrMore>
@@ -187,19 +194,6 @@
   </define>
 
   <!--PATTERNS FOR DEFINING TYPES -->
-
-  <define name="Type.pat">
-    <choice>
-      <ref name="Alias.elem"/>
-      <ref name="Atom.elem"/>
-      <ref name="Enumeration.elem"/>
-      <ref name="Pointer.elem"/>
-      <ref name="Array.elem"/>
-      <ref name="Vector.elem"/>
-      <ref name="Structure.elem"/>
-      <ref name="Signature.elem"/>
-    </choice>
-  </define>
 
   <define name="Alias.elem">
     <element name="alias">
@@ -311,10 +305,10 @@
   <define name="Vector.elem">
     <element name="vector">
       <ref name="Named_Element.pat"/>
-      <attribute name="length"><data type="nonNegativeInteger"/></attribute>
       <attribute name="of">
         <ref name="Intrinsic_Atoms.type"/>
       </attribute>
+      <attribute name="length"><data type="nonNegativeInteger"/></attribute>
     </element>
   </define>
 

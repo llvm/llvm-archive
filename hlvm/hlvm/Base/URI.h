@@ -98,7 +98,7 @@ public:
   /// @brief Return the password part of the URI
   const char* const password() const;
 
-  /// @breif Return the user part of the URI
+  /// @brief Return the user part of the URI
   const char* const user() const;
 
   /// @brief Return the host name from the URI

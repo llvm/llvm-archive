@@ -29,7 +29,7 @@
 
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Reader/XML/HLVMTokenizer.h>
-#include <hlvm/Base/Locator.h>
+#include <hlvm/AST/Locator.h>
 #include <hlvm/Base/Source.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>

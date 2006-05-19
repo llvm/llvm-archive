@@ -55,6 +55,12 @@ ContainerType::removeChild(Node* n)
   assert(!"That node isn't my child");
 }
 
+const char* 
+ContainerType::getPrimitiveName()
+{
+  return 0;
+}
+
 PointerType::~PointerType()
 {
 }

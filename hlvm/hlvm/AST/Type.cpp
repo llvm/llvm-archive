@@ -46,32 +46,155 @@ AnyType::~AnyType()
 {
 }
 
+const char* 
+AnyType::getPrimitiveName()
+{
+  return "any";
+}
+
 BooleanType::~BooleanType()
 {
+}
+
+const char* 
+BooleanType::getPrimitiveName()
+{
+  return "bool";
 }
 
 CharacterType::~CharacterType()
 {
 }
 
+const char* 
+CharacterType::getPrimitiveName()
+{
+  return "char";
+}
+
 IntegerType::~IntegerType()
 {
+}
+
+const char* 
+IntegerType::getPrimitiveName()
+{
+  if (numBits > 128)
+    return 0;
+
+  if (signedness) {
+    if (numBits > 64)
+      return "s128";
+    else if (numBits > 32)
+      return "s64";
+    else if (numBits > 16)
+      return "s32";
+    else if (numBits > 8)
+      return "s16";
+    else
+      return "s8";
+  } else {
+    if (numBits > 64)
+      return "u128";
+    else if (numBits > 32)
+      return "u64";
+    else if (numBits > 16)
+      return "u32";
+    else if (numBits > 8)
+      return "u16";
+    else
+      return "u8";
+  }
+  assert(!"Can't get here");
 }
 
 OctetType::~OctetType()
 {
 }
 
+const char* 
+OctetType::getPrimitiveName()
+{
+  return "octet";
+}
+
 RangeType::~RangeType()
 {
+}
+
+const char* 
+RangeType::getPrimitiveName()
+{
+  if (min < 0) {
+    if (min >= 0 && max <= 255U)
+      return "u8";
+    else if (min >= 0 && max <= 65535U)
+      return "u16";
+    else if (min >= 0 && max <= 4294967295U)
+      return "u32";
+    else if (min >= 0 && max <= 9223372036854775807LL)
+      return "u64";
+    else
+      // FIXME: handle u128 case
+      return 0;
+  } else {
+    if (min >= -127 && max <= 127)
+      return "s8";
+    else if (min >= -32767 && max <= 32767)
+      return "s16";
+    else if (min >= -2147483647 && max <= 2147483647)
+      return "s32";
+    else if (min >= -9223372036854775807LL && max <= 9223372036854775807LL)
+      return "s64";
+    else
+      // FIXME: handle s128 case
+      return 0;
+  }
+  return 0;
 }
 
 RealType::~RealType()
 {
 }
 
+const char* 
+RealType::getPrimitiveName()
+{
+  switch (mantissa) {
+    case 23:
+      if (exponent  == 8)
+        return "f32";
+      break;
+    case 32:
+      if (exponent == 11)
+        return "f43";
+      break;
+    case 52:
+      if (exponent == 11) 
+        return "f64";
+      break;
+    case 64:
+      if (exponent == 15) 
+        return "f80";
+      break;
+    case 112:
+      if (exponent == 15)
+        return "f128";
+      break;
+    default:
+      break;
+  }
+  return 0;
+}
+
 VoidType::~VoidType()
 {
+}
+
+const char* 
+VoidType::getPrimitiveName()
+{
+  return "void";
 }
 
 }}

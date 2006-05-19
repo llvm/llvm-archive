@@ -55,6 +55,13 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName() = 0;
+      bool isPrimitive() { return getPrimitiveName() != 0; }
+
+    /// @}
+    /// @name Type Identification
+    /// @{
+    public:
       inline bool isPrimitiveType() const { return id <= LastPrimitiveTypeID; }
       inline bool isIntegralType()  const { 
         return id == IntegerTypeID || id == RangeTypeID; 
@@ -113,6 +120,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Get the name for the type
       const std::string&  getName() const { return name; }
       
@@ -154,6 +162,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const AnyType*) { return true; }
       static inline bool classof(const Type* T) { return T->isAnyType(); }
@@ -174,6 +183,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const BooleanType*) { return true; }
       static inline bool classof(const Type* T) { return T->isBooleanType(); }
@@ -194,6 +204,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const CharacterType*) { return true; }
       static inline bool classof(const Type* T) { return T->isCharacterType(); }
@@ -215,6 +226,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const OctetType*) { return true; }
       static inline bool classof(const Type* T) { return T->isOctetType(); }
@@ -235,6 +247,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       // Methods to support type inquiry via is, cast, dyn_cast
       static inline bool classof(const VoidType*) { return true; }
       static inline bool classof(const Type* T) { return T->isVoidType(); }
@@ -260,6 +273,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
 
       /// Return the number of bits
       uint64_t getBits()  const { return numBits; }
@@ -308,6 +322,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       /// Get min value of range
       int64_t getMin() { return min; }
 
@@ -357,6 +372,7 @@ namespace AST {
     /// @name Accessors
     /// @{
     public:
+      virtual const char* getPrimitiveName();
       /// Get the mantissa bits
       uint32_t getMantissa() { return mantissa; }
 

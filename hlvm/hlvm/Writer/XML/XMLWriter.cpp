@@ -159,42 +159,18 @@ XMLWriterImpl::put(AST::IntegerType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
-  if (t->getBits() <= 128) {
-    if (t->isSigned()) {
-      switch (t->getBits()) {
-        case 128: startElement("intrinsic"); writeAttribute("is","s128"); break;
-        case 64:  startElement("intrinsic"); writeAttribute("is","s64"); break;
-        case 32:  startElement("intrinsic"); writeAttribute("is","s32"); break;
-        case 16:  startElement("intrinsic"); writeAttribute("is","s16"); break;
-        case 8 :  startElement("intrinsic"); writeAttribute("is","s8"); break;
-        default:
-          startElement("signed");
-          writeAttribute("bits", llvm::utostr(t->getBits()));
-          break;
-      }
-    } else {
-      switch (t->getBits()) {
-        case 128: startElement("intrinsic"); writeAttribute("is","u128"); break;
-        case 64:  startElement("intrinsic"); writeAttribute("is","u64"); break;
-        case 32:  startElement("intrinsic"); writeAttribute("is","u32"); break;
-        case 16:  startElement("intrinsic"); writeAttribute("is","u16"); break;
-        case 8 :  startElement("intrinsic"); writeAttribute("is","u8"); break;
-        default:
-          startElement("unsigned");
-          writeAttribute("bits", llvm::utostr(t->getBits()));
-          break;
-      }
-    }
-    endElement();
-  } else {
-    if (t->isSigned()) {
-      startElement("signed");
-    } else {
-      startElement("unsigned");
-    }
+  const char* primName = t->getPrimitiveName();
+  if (primName) {
+    startElement("intrinsic");
+    writeAttribute("is",primName);
+  } else if (t->isSigned()) {
+    startElement("signed");
     writeAttribute("bits", llvm::utostr(t->getBits()));
-    endElement();
+  } else {
+    startElement("unsigned");
+    writeAttribute("bits", llvm::utostr(t->getBits()));
   }
+  endElement();
   endElement();
 }
 
@@ -208,48 +184,10 @@ XMLWriterImpl::put(AST::RealType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
-  bool done = false;
-  switch (t->getMantissa()) {
-    case 23:
-      if (t->getExponent() == 8) {
-        startElement("intrinsic"); 
-        writeAttribute("is","f32"); 
-        done = true; 
-      }
-      break;
-    case 32:
-      if (t->getExponent() == 11) {
-        startElement("intrinsic"); 
-        writeAttribute("is","f43"); 
-        done = true; 
-      }
-      break;
-    case 52:
-      if (t->getExponent() == 11) {
-        startElement("intrinsic"); 
-        writeAttribute("is","f64"); 
-        done = true; 
-      }
-      break;
-    case 64:
-      if (t->getExponent() == 15) {
-        startElement("intrinsic"); 
-        writeAttribute("is","f80"); 
-        done = true; 
-      }
-      break;
-    case 112:
-      if (t->getExponent() == 15) {
-        startElement("intrinsic"); 
-        writeAttribute("is","f128"); 
-        done = true; 
-      }
-      break;
-    default:
-      break;
-  }
-
-  if (done) {
+  const char* primName = t->getPrimitiveName();
+  if (primName) {
+    startElement("intrinsic");
+    writeAttribute("is",primName);
     endElement();
   } else {
     startElement("real");

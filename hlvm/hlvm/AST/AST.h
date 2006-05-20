@@ -42,6 +42,7 @@ namespace hlvm
 namespace AST
 {
   class Bundle;   
+  class Documentation;
   class Function; 
   class Import;
   class Locator; 
@@ -171,35 +172,38 @@ namespace AST
       );
       OpaqueType* new_OpaqueType(const std::string& id);
       RealType* new_f128(const Locator& l, const std::string& id)
-      { return new_RealType(l,id,112,15); }
+        { return new_RealType(l,id,112,15); }
       RealType* new_f80(const Locator& l, const std::string& id)
-      { return new_RealType(l,id,64,15); }
+        { return new_RealType(l,id,64,15); }
       RealType* new_f64(const Locator& l, const std::string& id)
-      { return new_RealType(l,id,52,11); }
+        { return new_RealType(l,id,52,11); }
       RealType* new_f43(const Locator& l, const std::string& id)
-      { return new_RealType(l,id,32,11); }
+        { return new_RealType(l,id,32,11); }
       RealType* new_f32(const Locator& l, const std::string& id)
-      { return new_RealType(l,id,23,8); }
+        { return new_RealType(l,id,23,8); }
       IntegerType* new_s128(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,128,true); }
+        { return new_IntegerType(l,id,128,true); }
       IntegerType* new_s64(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,64,true); }
+        { return new_IntegerType(l,id,64,true); }
       IntegerType* new_s32(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,32,true); }
+        { return new_IntegerType(l,id,32,true); }
       IntegerType* new_s16(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,16,true); }
+        { return new_IntegerType(l,id,16,true); }
       IntegerType* new_s8(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,8,true); }
+        { return new_IntegerType(l,id,8,true); }
       IntegerType* new_u128(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,128,false); }
+        { return new_IntegerType(l,id,128,false); }
       IntegerType* new_u64(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,64,false); }
+        { return new_IntegerType(l,id,64,false); }
       IntegerType* new_u32(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,32,false); }
+        { return new_IntegerType(l,id,32,false); }
       IntegerType* new_u16(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,16,false); }
+        { return new_IntegerType(l,id,16,false); }
       IntegerType* new_u8(const Locator& l, const std::string& id)
-      { return new_IntegerType(l,id,8,false); }
+        { return new_IntegerType(l,id,8,false); }
+
+      Documentation* new_Documentation(const Locator& loc);
+
     /// @}
     /// @name Data
     /// @{

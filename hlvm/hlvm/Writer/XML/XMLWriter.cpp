@@ -30,6 +30,7 @@
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/Function.h>
 #include <hlvm/AST/Import.h>
 #include <hlvm/AST/ContainerType.h>
@@ -90,7 +91,9 @@ private:
 
   inline void putHeader();
   inline void putFooter();
+  inline void putDoc(AST::Documentable* node);
   inline void put(AST::Bundle* b);
+  inline void put(AST::Documentation* b);
   inline void put(AST::Variable* v);
   inline void put(AST::Function* f);
   inline void put(AST::AliasType* t);
@@ -110,6 +113,14 @@ private:
   inline void put(AST::SignatureType* t);
 };
 
+inline void
+XMLWriterImpl::putDoc(AST::Documentable* node)
+{
+  AST::Documentation* theDoc = node->getDoc();
+  if (theDoc) {
+    this->put(theDoc);
+  }
+}
 
 void
 XMLWriterImpl::putHeader() 
@@ -132,11 +143,22 @@ XMLWriterImpl::put(AST::Function* f)
 }
 
 void 
+XMLWriterImpl::put(AST::Documentation* b)
+{
+  startElement("doc");
+  const std::string& data = b->getDoc();
+  xmlTextWriterWriteRawLen(writer,
+    reinterpret_cast<const xmlChar*>(data.c_str()),data.length());
+  endElement();
+}
+
+void 
 XMLWriterImpl::put(AST::AliasType* t)
 {
   startElement("alias");
   writeAttribute("name",t->getName());
   writeAttribute("renames",t->getType());
+  putDoc(t);
   endElement();
 }
 void 
@@ -144,6 +166,7 @@ XMLWriterImpl::put(AST::AnyType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName());
+  putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","any");
   endElement();
@@ -155,6 +178,7 @@ XMLWriterImpl::put(AST::BooleanType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
+  putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","bool");
   endElement();
@@ -166,6 +190,7 @@ XMLWriterImpl::put(AST::CharacterType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
+  putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","char");
   endElement();
@@ -177,6 +202,7 @@ XMLWriterImpl::put(AST::IntegerType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
+  putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
     startElement("intrinsic");
@@ -199,6 +225,7 @@ XMLWriterImpl::put(AST::RangeType* t)
   writeAttribute("name",t->getName());
   writeAttribute("min",t->getMin());
   writeAttribute("max",t->getMax());
+  putDoc(t);
   endElement();
 }
 
@@ -207,6 +234,7 @@ XMLWriterImpl::put(AST::EnumerationType* t)
 {
   startElement("enumeration");
   writeAttribute("name",t->getName());
+  putDoc(t);
   for (AST::EnumerationType::const_iterator I = t->begin(), E = t->end(); 
        I != E; ++I)
   {
@@ -222,6 +250,7 @@ XMLWriterImpl::put(AST::RealType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
+  putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
     startElement("intrinsic");
@@ -241,6 +270,7 @@ XMLWriterImpl::put(AST::OctetType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
+  putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","octet");
   endElement();
@@ -252,6 +282,7 @@ XMLWriterImpl::put(AST::VoidType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName());
+  putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","void");
   endElement();
@@ -264,6 +295,7 @@ XMLWriterImpl::put(AST::PointerType* t)
   startElement("pointer");
   writeAttribute("name", t->getName());
   writeAttribute("to", t->getTargetType());
+  putDoc(t);
   endElement();
 }
 
@@ -274,6 +306,7 @@ XMLWriterImpl::put(AST::ArrayType* t)
   writeAttribute("name", t->getName());
   writeAttribute("of", t->getElementType());
   writeAttribute("length", t->getMaxSize());
+  putDoc(t);
   endElement();
 }
 
@@ -284,6 +317,7 @@ XMLWriterImpl::put(AST::VectorType* t)
   writeAttribute("name", t->getName());
   writeAttribute("of", t->getElementType());
   writeAttribute("length", t->getSize());
+  putDoc(t);
   endElement();
 }
 
@@ -292,11 +326,13 @@ XMLWriterImpl::put(AST::StructureType* t)
 {
   startElement("structure");
   writeAttribute("name",t->getName());
+  putDoc(t);
   for (AST::StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("field");
-    AST::AliasType* nt = cast<AST::AliasType>(*I);
-    writeAttribute("name",nt->getName());
-    writeAttribute("type",nt->getType());
+    AST::AliasType* alias = cast<AST::AliasType>(*I);
+    writeAttribute("name",alias->getName());
+    writeAttribute("type",alias->getType());
+    putDoc(alias);
     endElement();
   }
   endElement();
@@ -309,11 +345,13 @@ XMLWriterImpl::put(AST::SignatureType* t)
   writeAttribute("name",t->getName());
   writeAttribute("result",t->getResultType());
   writeAttribute("varargs",t->isVarArgs() ? "true" : "false");
+  putDoc(t);
   for (AST::SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("arg");
-    AST::AliasType* nt = cast<AST::AliasType>(*I);
-    writeAttribute("name",nt->getName());
-    writeAttribute("type",nt->getType());
+    AST::AliasType* alias = cast<AST::AliasType>(*I);
+    writeAttribute("name",alias->getName());
+    writeAttribute("type",alias->getType());
+    putDoc(alias);
     endElement();
   }
   endElement();
@@ -325,6 +363,7 @@ XMLWriterImpl::put(AST::Variable* v)
   startElement("var");
   writeAttribute("name",v->getName().c_str());
   writeAttribute("type",v->getType()->getName().c_str());
+  putDoc(v);
   endElement();
 }
 
@@ -333,10 +372,12 @@ XMLWriterImpl::put(AST::Bundle* b)
 {
   startElement("bundle");
   writeAttribute("pubid",b->getName().c_str());
+  putDoc(b);
   for (AST::Bundle::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
   {
     switch ((*I)->getID()) 
     {
+      case AST::DocumentationID:    put(cast<AST::Documentation>(*I)); break;
       case AST::VariableID:         put(cast<AST::Variable>(*I)); break;
       case AST::FunctionID:         put(cast<AST::Function>(*I)); break;
       case AST::AliasTypeID:        put(cast<AST::AliasType>(*I)); break;

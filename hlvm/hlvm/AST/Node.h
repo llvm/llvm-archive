@@ -37,6 +37,8 @@
 namespace hlvm {
 namespace AST {
 
+  class Documentation;
+
   /// This enumeration is used to identify a specific type. Its organization is
   /// very specific and dependent on the class hierarchy. In order to use these
   /// values as ranges for class identification (classof methods), we need to 
@@ -179,6 +181,9 @@ namespace AST {
     VectorOpID,         ///< Constant Vector Value
     StructureOpID,      ///< Constant Structure Value
 
+    // Miscellaneous Nodes
+    DocumentationID,    ///< XHTML Documentation Node
+
     // Enumeration Ranges and Limits
     NumNodeIDs,         ///< The number of node identifiers in the enum
     FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
@@ -233,8 +238,11 @@ namespace AST {
         return id >= FirstOperatorID && id <= LastOperatorID;
       }
 
-      /// Determine if the node is a ParentNode
+      /// Determine if the node is a NamedNode
       bool isNamedNode() const ; 
+
+      /// Determine if the node is a Documentable Node
+      bool isDocumentable() const;
 
       /// Determine if the node is a LinkageItem
       bool isLinkageItem() const;
@@ -287,11 +295,46 @@ namespace AST {
     friend class AST;
   };
 
-  class NamedNode : public Node {
+  class Documentable : public Node
+  {
     /// @name Constructors
     /// @{
     protected:
-      NamedNode(NodeIDs id) : Node(id), name() {}
+      Documentable(NodeIDs id) : Node(id), doc(0) {}
+    public:
+      virtual ~Documentable();
+
+    /// @}
+    /// @name Accessors
+    /// @{
+    public:
+      /// Get the name of the node
+      inline Documentation* getDoc() { return doc; }
+
+      static inline bool classof(const Documentable*) { return true; }
+      static inline bool classof(const Node* N) { return N->isDocumentable(); }
+
+    /// @}
+    /// @name Mutators
+    /// @{
+    public:
+      void setDoc(Documentation* d) { doc = d; }
+
+    /// @}
+    /// @name Data
+    /// @{
+    protected:
+      Documentation* doc;///< All named nodes can have documentation
+    /// @}
+    friend class AST;
+  };
+
+  class NamedNode : public Documentable 
+  {
+    /// @name Constructors
+    /// @{
+    protected:
+      NamedNode(NodeIDs id) : Documentable(id), name() {}
     public:
       virtual ~NamedNode();
 
@@ -316,6 +359,7 @@ namespace AST {
     /// @{
     protected:
       std::string name;  ///< The name of this node.
+      Documentation* doc;///< All named nodes can have documentation
     /// @}
     friend class AST;
   };

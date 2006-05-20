@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Node.cpp - AST Abstract Node Class -------------*- C++ -*-===//
+//===-- AST Documentation Classes -------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,72 +20,18 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Node.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/Documentation.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/19
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the functions of class hlvm::AST::Documentation.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/Documentation.h>
 
 namespace hlvm { namespace AST {
 
-Node::~Node()
-{
-}
-
-bool 
-Node::isNamedNode() const
-{
-  return isType() || isBundle() || isFunction() || isProgram() || isVariable();
-}
-
-bool 
-Node::isLinkageItem() const
-{
-  return isFunction() || isType() || isProgram() || isVariable();
-}
-
-
-void 
-Node::insertChild(Node* child)
-{
-  assert(!"This node doesn't accept child nodes");
-}
-
-void 
-Node::removeChild(Node* child)
-{
-  assert(!"This node doesn't have child nodes");
-}
-
-void 
-Node::setParent(Node* p)
-{
-  if (p == 0)
-  {
-    parent->removeChild(this);
-  }
-  parent = p;
-  if (p != 0)
-  {
-    p->insertChild(this);
-  }
-}
-
-#ifndef _NDEBUG
-void 
-Node::dump() const 
-{
-}
-#endif
-
-Documentable::~Documentable()
-{
-}
-
-NamedNode::~NamedNode()
+Documentation::~Documentation()
 {
 }
 

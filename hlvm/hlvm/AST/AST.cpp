@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Function.h>
 #include <hlvm/AST/Import.h>
@@ -340,6 +341,14 @@ OpaqueType*
 AST::new_OpaqueType(const std::string& id)
 {
   return new OpaqueType(id);
+}
+
+Documentation* 
+AST::new_Documentation(const Locator& loc)
+{
+  Documentation* result = new Documentation();
+  result->setLocator(loc);
+  return result;
 }
 
 }}

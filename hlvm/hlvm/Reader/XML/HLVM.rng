@@ -118,27 +118,27 @@
   <!-- PATTERNS THAT DEFINE name AND type ATTRIBUTES -->
 
   <define name="Named_Element.pat">
-    <ref name="Documentation.pat"/>
     <attribute name="name">
       <ref name="Identifier.type"/>
     </attribute>
+    <ref name="Documentation.pat"/>
   </define>
 
   <define name="Typed_Element.pat">
-    <ref name="Documentation.pat"/>
     <attribute name="type">
       <ref name="Identifier.type"/>
     </attribute>
+    <ref name="Documentation.pat"/>
   </define>
 
   <define name="Named_Typed_Element.pat">
-    <ref name="Documentation.pat"/>
     <attribute name="name">
       <ref name="Identifier.type"/>
     </attribute>
     <attribute name="type">
       <ref name="Identifier.type"/>
     </attribute>
+    <ref name="Documentation.pat"/>
   </define>
 
   <!-- HLVM PATTERN -->
@@ -183,13 +183,13 @@
 
   <define name="import.elem">
     <element name="import">
-      <ref name="Documentation.pat"/>
       <attribute name="prefix">
         <ref name="Identifier.type"/>
       </attribute>
       <attribute name="pubid">
         <data type="anyURI"/>
       </attribute>
+      <ref name="Documentation.pat"/>
     </element>
   </define>
 
@@ -291,6 +291,7 @@
           <attribute name="id">
             <ref name="Unprefixed_Identifier.type"/>
           </attribute>
+          <ref name="Documentation.pat"/>
         </element>
       </oneOrMore>
     </element>

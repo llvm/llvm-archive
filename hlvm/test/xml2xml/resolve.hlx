@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">
+  <bundle pubid="bundle">
+    <structure name="struct1">
+      <field name="field1" type="SomeType"/>
+    </structure>
+    <structure name="struct2">
+      <field name="field1" type="SomeType"/>
+      <field name="field2" type="PtrToSomeType"/>
+    </structure>
+    <pointer name="PtrToSomeType" to="SomeType"/>
+    <atom name="SomeType">
+      <intrinsic is="any"/>
+    </atom>
+  </bundle>
+</hlvm>

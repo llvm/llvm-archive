@@ -4228,15 +4228,15 @@ echo "$as_me: Symbol 'apr_allocator_alloc' not found in library apr-1 in ${libdi
   else
     echo "$as_me:$LINENO: result: failed to find library file" >&5
 echo "${ECHO_T}failed to find library file" >&6
-    { { echo "$as_me:$LINENO: error: The --with-apr-libdir option must be used" >&5
-echo "$as_me: error: The --with-apr-libdir option must be used" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-APR-lib option must be used" >&5
+echo "$as_me: error: The --with-APR-lib option must be used" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
   echo "$as_me:$LINENO: result: failed to find header file" >&5
 echo "${ECHO_T}failed to find header file" >&6
-  { { echo "$as_me:$LINENO: error: The --with-apr-incdir option must be used" >&5
-echo "$as_me: error: The --with-apr-incdir option must be used" >&2;}
+  { { echo "$as_me:$LINENO: error: The --with-APR-inc option must be used" >&5
+echo "$as_me: error: The --with-APR-inc option must be used" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -4743,15 +4743,15 @@ echo "$as_me: Symbol 'apu_version' not found in library aprutil-1 in ${libdir}" 
   else
     echo "$as_me:$LINENO: result: failed to find library file" >&5
 echo "${ECHO_T}failed to find library file" >&6
-    { { echo "$as_me:$LINENO: error: The --with-apru-libdir option must be used" >&5
-echo "$as_me: error: The --with-apru-libdir option must be used" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-APRU-lib option must be used" >&5
+echo "$as_me: error: The --with-APRU-lib option must be used" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
   echo "$as_me:$LINENO: result: failed to find header file" >&5
 echo "${ECHO_T}failed to find header file" >&6
-  { { echo "$as_me:$LINENO: error: The --with-apru-incdir option must be used" >&5
-echo "$as_me: error: The --with-apru-incdir option must be used" >&2;}
+  { { echo "$as_me:$LINENO: error: The --with-APRU-inc option must be used" >&5
+echo "$as_me: error: The --with-APRU-inc option must be used" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -5258,15 +5258,15 @@ echo "$as_me: Symbol 'xmlCreateFileParserCtxt' not found in library xml2 in ${li
   else
     echo "$as_me:$LINENO: result: failed to find library file" >&5
 echo "${ECHO_T}failed to find library file" >&6
-    { { echo "$as_me:$LINENO: error: The --with-xml2-libdir option must be used" >&5
-echo "$as_me: error: The --with-xml2-libdir option must be used" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-XML2-lib option must be used" >&5
+echo "$as_me: error: The --with-XML2-lib option must be used" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
   echo "$as_me:$LINENO: result: failed to find header file" >&5
 echo "${ECHO_T}failed to find header file" >&6
-  { { echo "$as_me:$LINENO: error: The --with-xml2-incdir option must be used" >&5
-echo "$as_me: error: The --with-xml2-incdir option must be used" >&2;}
+  { { echo "$as_me:$LINENO: error: The --with-XML2-inc option must be used" >&5
+echo "$as_me: error: The --with-XML2-inc option must be used" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -5773,15 +5773,15 @@ echo "$as_me: Symbol 'syck_parse' not found in library syck in ${libdir}" >&6;}
   else
     echo "$as_me:$LINENO: result: failed to find library file" >&5
 echo "${ECHO_T}failed to find library file" >&6
-    { { echo "$as_me:$LINENO: error: The --with-syck-libdir option must be used" >&5
-echo "$as_me: error: The --with-syck-libdir option must be used" >&2;}
+    { { echo "$as_me:$LINENO: error: The --with-SYCK-lib option must be used" >&5
+echo "$as_me: error: The --with-SYCK-lib option must be used" >&2;}
    { (exit 1); exit 1; }; }
   fi
 else
   echo "$as_me:$LINENO: result: failed to find header file" >&5
 echo "${ECHO_T}failed to find header file" >&6
-  { { echo "$as_me:$LINENO: error: The --with-syck-incdir option must be used" >&5
-echo "$as_me: error: The --with-syck-incdir option must be used" >&2;}
+  { { echo "$as_me:$LINENO: error: The --with-SYCK-inc option must be used" >&5
+echo "$as_me: error: The --with-SYCK-inc option must be used" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

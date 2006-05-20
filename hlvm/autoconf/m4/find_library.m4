@@ -144,10 +144,10 @@ if test "$hlvm_found_inc" == 1 ; then
     fi
   else
     AC_MSG_RESULT([failed to find library file])
-    AC_MSG_ERROR([The --with-]$1[-libdir option must be used])
+    AC_MSG_ERROR([The --with-]allcapsname()[-lib option must be used])
   fi
 else
   AC_MSG_RESULT([failed to find header file])
-  AC_MSG_ERROR([The --with-]$1[-incdir option must be used])
+  AC_MSG_ERROR([The --with-]allcapsname()[-inc option must be used])
 fi
 ])

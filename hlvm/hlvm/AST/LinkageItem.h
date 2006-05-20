@@ -34,52 +34,51 @@
 
 namespace hlvm
 {
-namespace AST
+
+/// This enumeration is used to specify the kinds of linkage that are
+/// permitted for a LinkageItem.
+enum LinkageTypes {
+  ExternalLinkage,    ///< Externally visible item
+  InternalLinkage,    ///< Rename collisions when linking (static funcs)
+  LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
+  WeakLinkage,        ///< Keep one copy of item when linking (weak)
+  AppendingLinkage    ///< Append item to an array of similar items
+};
+
+/// This class represents an LinkageItem in the HLVM Abstract Syntax Tree. 
+/// A LinkageItem is any construct that can be linked; that is, referred to
+/// elsewhere and linked into another bundle to resolve the reference. The
+/// LinkageItem declares what kind of linkage is to be performed.
+/// @brief HLVM AST Bundle Node
+class LinkageItem : public NamedNode
 {
-  /// This enumeration is used to specify the kinds of linkage that are
-  /// permitted for a LinkageItem.
-  enum LinkageTypes {
-    ExternalLinkage,    ///< Externally visible item
-    InternalLinkage,    ///< Rename collisions when linking (static funcs)
-    LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
-    WeakLinkage,        ///< Keep one copy of item when linking (weak)
-    AppendingLinkage    ///< Append item to an array of similar items
-  };
+  /// @name Constructors
+  /// @{
+  protected:
+    LinkageItem(
+      NodeIDs id ///< Subclass's node identifier
+    ) : NamedNode(id) {}
+  public:
+    virtual ~LinkageItem();
 
-  /// This class represents an LinkageItem in the HLVM Abstract Syntax Tree. 
-  /// A LinkageItem is any construct that can be linked; that is, referred to
-  /// elsewhere and linked into another bundle to resolve the reference. The
-  /// LinkageItem declares what kind of linkage is to be performed.
-  /// @brief HLVM AST Bundle Node
-  class LinkageItem : public NamedNode
-  {
-    /// @name Constructors
-    /// @{
-    protected:
-      LinkageItem(
-        NodeIDs id ///< Subclass's node identifier
-      ) : NamedNode(id) {}
-    public:
-      virtual ~LinkageItem();
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    static inline bool classof(const LinkageItem*) { return true; }
+    static inline bool classof(const Node* N) { return N->isLinkageItem(); }
+  /// @}
+  /// @name Mutators
+  /// @{
 
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      static inline bool classof(const LinkageItem*) { return true; }
-      static inline bool classof(const Node* N) { return N->isLinkageItem(); }
-    /// @}
-    /// @name Mutators
-    /// @{
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    LinkageTypes type_; ///< The type of linkage to perform for this item
+  /// @}
+  friend class AST;
+};
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      LinkageTypes type_; ///< The type of linkage to perform for this item
-    /// @}
-    friend class AST;
-  };
-} // AST
 } // hlvm
 #endif

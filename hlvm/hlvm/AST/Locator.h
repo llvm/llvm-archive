@@ -32,36 +32,36 @@
 
 #include <string>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm
+{
 
-  /// This class is used to hold a source code location as a filename, line
-  /// number and column number. This is used for generating error messages and
-  /// for debugging support.
-  /// @brief Source location holder class.
-  class Locator
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      Locator(uint32_t line, uint32_t col, const std::string* fname)
-        : line_(line), col_(col), fname_(fname) {}
-      Locator() : line_(0), col_(0), fname_(0) {}
+/// This class is used to hold a source code location as a filename, line
+/// number and column number. This is used for generating error messages and
+/// for debugging support.
+/// @brief Source location holder class.
+class Locator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    Locator(uint32_t line, uint32_t col, const std::string* fname)
+      : line_(line), col_(col), fname_(fname) {}
+    Locator() : line_(0), col_(0), fname_(0) {}
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      uint32_t line_;           ///< Line number of source location
-      uint32_t col_;            ///< Column number of source location
-      const std::string* fname_;///< File name of source location
-    /// @}
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    uint32_t line_;           ///< Line number of source location
+    uint32_t col_;            ///< Column number of source location
+    const std::string* fname_;///< File name of source location
+  /// @}
+};
+
 } // hlvm
 #endif

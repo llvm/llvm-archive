@@ -30,7 +30,6 @@
 #include <hlvm/AST/Variable.h>
 
 namespace hlvm {
-namespace AST {
 
 Variable* 
 Variable::create(const Locator& loc, std::string name)
@@ -45,4 +44,4 @@ Variable::~Variable()
 {
 }
 
-}}
+}

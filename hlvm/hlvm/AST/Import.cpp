@@ -29,10 +29,10 @@
 
 #include <hlvm/AST/Import.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 Import::~Import()
 {
 }
 
-}}
+}

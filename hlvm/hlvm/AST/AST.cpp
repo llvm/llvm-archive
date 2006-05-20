@@ -36,7 +36,7 @@
 #include <hlvm/AST/Variable.h>
 #include <hlvm/AST/SymbolTable.h>
 
-using namespace hlvm::AST;
+using namespace hlvm;
 
 namespace {
 class ASTImpl : public AST
@@ -90,7 +90,6 @@ ASTImpl::addType(Type* ty)
 }
 
 namespace hlvm {
-namespace AST {
 
 AST* 
 AST::create()
@@ -351,4 +350,4 @@ AST::new_Documentation(const Locator& loc)
   return result;
 }
 
-}}
+}

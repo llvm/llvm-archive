@@ -35,17 +35,16 @@
 
 namespace hlvm {
 
-  class AST::AST;
+class XMLReader : public Reader
+{
+public:
+  /// This method instantiates an XMLReader that is prepared to read from
+  /// the path provided.
+  /// @brief Create a new XmlReader
+  static XMLReader* create(const std::string& path);
 
-  class XMLReader : public Reader
-  {
-  public:
-    /// This method instantiates an XMLReader that is prepared to read from
-    /// the path provided.
-    /// @brief Create a new XmlReader
-    static XMLReader* create(const std::string& path);
+  virtual ~XMLReader() {}
+};
 
-    virtual ~XMLReader() {}
-  };
 }
 #endif

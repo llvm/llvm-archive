@@ -32,45 +32,46 @@
 
 #include <hlvm/AST/LinkageItem.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm
+{
 
-  /// This class represents a Import in the HLVM Abstract Syntax Tree.  
-  /// A Function is a callable block of code that accepts parameters and 
-  /// returns a result.  This is the basic unit of code in HLVM. A Function
-  /// has a name, a set of formal arguments, a return type, and a block of
-  /// code to execute.
-  /// @brief HLVM AST Function Node
-  class Import : public LinkageItem
-  {
-    /// @name Constructors
-    /// @{
-    protected:
-      Import() : LinkageItem(ImportID) {}
+/// This class represents a Import in the HLVM Abstract Syntax Tree.  
+/// A Function is a callable block of code that accepts parameters and 
+/// returns a result.  This is the basic unit of code in HLVM. A Function
+/// has a name, a set of formal arguments, a return type, and a block of
+/// code to execute.
+/// @brief HLVM AST Function Node
+class Import : public LinkageItem
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Import() : LinkageItem(ImportID) {}
 
-    public:
-      virtual ~Import();
+  public:
+    virtual ~Import();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      static inline bool classof(const Import*) { return true; }
-      static inline bool classof(const Node* N) { return N->is(ImportID); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const Import*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ImportID); }
 
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      void setPrefix(const std::string& pfx) { prefix = pfx; }
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setPrefix(const std::string& pfx) { prefix = pfx; }
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      std::string prefix;
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string prefix;
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

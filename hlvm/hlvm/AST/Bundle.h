@@ -32,72 +32,73 @@
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm 
+{ 
 
-  class LinkageItem;
+class LinkageItem;
 
-  /// This class represents an HLVM Bundle. A Bundle is simply a collection of
-  /// declarations and definitions. It is the root of the AST tree and also
-  /// the grouping and namespace construct in HLVM. Every compilation unit is
-  /// a Bundle. Bundles can also be nested in other Bundles. All programming
-  /// constructs are defined as child nodes of some Bundle.
-  /// @brief HLVM AST Bundle Node
-  class Bundle : public NamedNode
-  {
-    /// @name Types
-    /// @{
-    public:
-      typedef std::vector<LinkageItem*> NodeList;
-      typedef NodeList::iterator iterator;
-      typedef NodeList::const_iterator const_iterator;
+/// This class represents an HLVM Bundle. A Bundle is simply a collection of
+/// declarations and definitions. It is the root of the AST tree and also
+/// the grouping and namespace construct in HLVM. Every compilation unit is
+/// a Bundle. Bundles can also be nested in other Bundles. All programming
+/// constructs are defined as child nodes of some Bundle.
+/// @brief HLVM AST Bundle Node
+class Bundle : public NamedNode
+{
+  /// @name Types
+  /// @{
+  public:
+    typedef std::vector<LinkageItem*> NodeList;
+    typedef NodeList::iterator iterator;
+    typedef NodeList::const_iterator const_iterator;
 
-    /// @}
-    /// @name Constructors
-    /// @{
-    public:
-      static Bundle* create(const Locator& location, const std::string& pubid);
+  /// @}
+  /// @name Constructors
+  /// @{
+  public:
+    static Bundle* create(const Locator& location, const std::string& pubid);
 
-    protected:
-      Bundle() : NamedNode(BundleID) {}
-      virtual ~Bundle();
+  protected:
+    Bundle() : NamedNode(BundleID) {}
+    virtual ~Bundle();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      static inline bool classof(const Bundle*) { return true; }
-      static inline bool classof(const Node* N) { return N->isBundle(); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const Bundle*) { return true; }
+    static inline bool classof(const Node* N) { return N->isBundle(); }
 
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      virtual void insertChild(Node* kid);
-      virtual void removeChild(Node* kid);
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    virtual void insertChild(Node* kid);
+    virtual void removeChild(Node* kid);
 
-    /// @}
-    /// @name Iterators
-    /// @{
-    public:
-      iterator           begin()       { return kids.begin(); }
-      const_iterator     begin() const { return kids.begin(); }
-      iterator           end  ()       { return kids.end(); }
-      const_iterator     end  () const { return kids.end(); }
-      size_t             size () const { return kids.size(); }
-      bool               empty() const { return kids.empty(); }
-      LinkageItem*       front()       { return kids.front(); }
-      const LinkageItem* front() const { return kids.front(); }
-      LinkageItem*       back()        { return kids.back(); }
-      const LinkageItem* back()  const { return kids.back(); }
+  /// @}
+  /// @name Iterators
+  /// @{
+  public:
+    iterator           begin()       { return kids.begin(); }
+    const_iterator     begin() const { return kids.begin(); }
+    iterator           end  ()       { return kids.end(); }
+    const_iterator     end  () const { return kids.end(); }
+    size_t             size () const { return kids.size(); }
+    bool               empty() const { return kids.empty(); }
+    LinkageItem*       front()       { return kids.front(); }
+    const LinkageItem* front() const { return kids.front(); }
+    LinkageItem*       back()        { return kids.back(); }
+    const LinkageItem* back()  const { return kids.back(); }
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      NodeList    kids;  ///< The vector of children nodes.
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    NodeList    kids;  ///< The vector of children nodes.
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

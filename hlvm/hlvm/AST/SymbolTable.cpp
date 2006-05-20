@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <cassert>
 
-using namespace hlvm::AST;
+using namespace hlvm;
 
 std::string 
 SymbolTable::getUniqueName(const std::string &base_name) const {

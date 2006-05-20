@@ -29,7 +29,7 @@
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 Node::~Node()
 {
@@ -89,4 +89,4 @@ NamedNode::~NamedNode()
 {
 }
 
-}}
+}

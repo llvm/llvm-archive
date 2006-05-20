@@ -32,46 +32,46 @@
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm 
+{
 
-  class Type; // Forward declare
+class Type; // Forward declare
 
-  /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-  /// A Variable is a storage location of a specific type. It can either be
-  /// global or local, depending on its parent. Global variables are always
-  /// contained in a Bundle. Local variables are always contained in a
-  /// Function.
-  /// @brief HLVM AST Variable Node
-  class Operator : public Node
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      Operator(
-        NodeIDs opID ///< The Operator ID for this operator kind
-      ) : Node(opID), Operands() {}
-      virtual ~Operator();
+/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
+/// A Variable is a storage location of a specific type. It can either be
+/// global or local, depending on its parent. Global variables are always
+/// contained in a Bundle. Local variables are always contained in a
+/// Function.
+/// @brief HLVM AST Variable Node
+class Operator : public Node
+{
+  /// @name Constructors
+  /// @{
+  public:
+    Operator(
+      NodeIDs opID ///< The Operator ID for this operator kind
+    ) : Node(opID), Operands() {}
+    virtual ~Operator();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      bool isNilaryOperator();
-      bool isUnaryOperator();
-      bool isBinaryOperator();
-      bool isTernaryOperator();
-      static inline bool classof(const Operator*) { return true; }
-      static inline bool classof(const Node* N) { return N->isOperator(); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    bool isNilaryOperator();
+    bool isUnaryOperator();
+    bool isBinaryOperator();
+    bool isTernaryOperator();
+    static inline bool classof(const Operator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isOperator(); }
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      std::vector<Operator*> Operands;  ///< The list of Operands
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::vector<Operator*> Operands;  ///< The list of Operands
+  /// @}
+  friend class AST;
+};
+
 } // hlvm 
 #endif

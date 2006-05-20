@@ -35,15 +35,16 @@
 
 namespace hlvm {
 
-  class XMLWriter: public Writer
-  {
-  public:
-    /// This method instantiates an XMLReader that is prepared to read from
-    /// the path provided.
-    /// @brief Create a new XmlReader
-    static XMLWriter* create(const char* fname);
+class XMLWriter: public Writer
+{
+public:
+  /// This method instantiates an XMLReader that is prepared to read from
+  /// the path provided.
+  /// @brief Create a new XmlReader
+  static XMLWriter* create(const char* fname);
 
-    virtual ~XMLWriter() {}
-  };
+  virtual ~XMLWriter() {}
+};
+
 }
 #endif

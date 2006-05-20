@@ -32,51 +32,50 @@
 
 #include <hlvm/AST/LinkageItem.h>
 
-namespace hlvm
+namespace hlvm 
 {
-namespace AST
+
+class Type; // Forward declare
+
+/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
+/// A Variable is a storage location of a specific type. It can either be
+/// global or local, depending on its parent. Global variables are always
+/// contained in a Bundle. Local variables are always contained in a
+/// Function.
+/// @brief HLVM AST Variable Node
+class Variable : public LinkageItem
 {
-  class Type; // Forward declare
+  /// @name Constructors
+  /// @{
+  public:
+    static Variable* create(const Locator& loc, std::string name);
+  protected:
+    Variable() : LinkageItem(VariableID) {}
+  public:
+    virtual ~Variable();
 
-  /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-  /// A Variable is a storage location of a specific type. It can either be
-  /// global or local, depending on its parent. Global variables are always
-  /// contained in a Bundle. Local variables are always contained in a
-  /// Function.
-  /// @brief HLVM AST Variable Node
-  class Variable : public LinkageItem
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      static Variable* create(const Locator& loc, std::string name);
-    protected:
-      Variable() : LinkageItem(VariableID) {}
-    public:
-      virtual ~Variable();
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    Type* getType() const { return type; }
+    static inline bool classof(const Variable*) { return true; }
+    static inline bool classof(const Node* N) { return N->isVariable(); }
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      Type* getType() const { return type; }
-      static inline bool classof(const Variable*) { return true; }
-      static inline bool classof(const Node* N) { return N->isVariable(); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    void setType(Type* t) { type = t; }
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      void setType(Type* t) { type = t; }
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    Type* type; ///< The type of the variable
+  /// @}
+  friend class AST;
+};
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      Type* type; ///< The type of the variable
-    /// @}
-    friend class AST;
-  };
-} // AST
 } // hlvm 
 #endif

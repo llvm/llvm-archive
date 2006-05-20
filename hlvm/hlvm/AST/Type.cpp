@@ -30,7 +30,6 @@
 #include <hlvm/AST/Type.h>
 
 namespace hlvm {
-namespace AST {
 
 Type::~Type()
 {
@@ -241,4 +240,4 @@ OpaqueType::~OpaqueType()
 {
 }
 
-}}
+}

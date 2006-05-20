@@ -32,7 +32,7 @@
 
 using namespace llvm; 
 
-namespace hlvm { namespace AST { 
+namespace hlvm {
 
 Bundle*
 Bundle::create(const Locator& loc, const std::string& id)
@@ -65,4 +65,4 @@ Bundle::removeChild(Node* kid)
   assert(!"That node isn't my child");
 }
 
-}}
+}

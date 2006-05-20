@@ -31,17 +31,19 @@
 #define XPS_READER_READER_H
 
 namespace hlvm {
-namespace AST { class AST; }
 
-  class Reader
-  {
-  public:
-    /// This method reads the entire content of the reader's source.
-    virtual void read() = 0;
+class AST;
 
-    /// This method retrieves the construct AST that resulted from reading.
-    /// @returns 0 if nothing has been read yet
-    virtual AST::AST* get() = 0;
-  };
+class Reader
+{
+public:
+  /// This method reads the entire content of the reader's source.
+  virtual void read() = 0;
+
+  /// This method retrieves the construct AST that resulted from reading.
+  /// @returns 0 if nothing has been read yet
+  virtual AST* get() = 0;
+};
+
 }
 #endif

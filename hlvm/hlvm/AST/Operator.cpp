@@ -30,10 +30,9 @@
 #include <hlvm/AST/Operator.h>
 
 namespace hlvm {
-namespace AST {
 
 Operator::~Operator()
 {
 }
 
-}}
+}

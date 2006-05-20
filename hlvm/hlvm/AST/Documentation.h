@@ -32,52 +32,53 @@
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm 
+{
 
-  /// The HLVM AST permits documentation (not just comments) to be included into
-  /// the nodes of the AST. Each such block of documentation is represented by
-  /// a Documentation node, implemented by this class. The content of a 
-  /// documentation node is simply a block of text. The intended use is that
-  /// the text contain XHTML markup. In this way, an automated documentation
-  /// facility can translate the AST into XHTML documentation with perfect
-  /// precision. Since the documentation node can be associated with any kind
-  /// of node, this affords a complete system for documenting HLVM programs 
-  /// with XHTML markup.
-  /// @brief HLVM AST Function Node
-  class Documentation : public Node
-  {
-    /// @name Constructors
-    /// @{
-    protected:
-      Documentation() : Node(DocumentationID) {}
+/// The HLVM AST permits documentation (not just comments) to be included into
+/// the nodes of the AST. Each such block of documentation is represented by
+/// a Documentation node, implemented by this class. The content of a 
+/// documentation node is simply a block of text. The intended use is that
+/// the text contain XHTML markup. In this way, an automated documentation
+/// facility can translate the AST into XHTML documentation with perfect
+/// precision. Since the documentation node can be associated with any kind
+/// of node, this affords a complete system for documenting HLVM programs 
+/// with XHTML markup.
+/// @brief HLVM AST Function Node
+class Documentation : public Node
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Documentation() : Node(DocumentationID) {}
 
-    public:
-      virtual ~Documentation();
+  public:
+    virtual ~Documentation();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      const std::string& getDoc() const { return doc; }
-      static inline bool classof(const Documentation*) { return true; }
-      static inline bool classof(const Node* N) 
-      { return N->is(DocumentationID); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getDoc() const { return doc; }
+    static inline bool classof(const Documentation*) { return true; }
+    static inline bool classof(const Node* N) 
+    { return N->is(DocumentationID); }
 
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      void setDoc(const std::string& d) { doc = d; }
-      void addDoc(const std::string& d) { doc += d; }
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setDoc(const std::string& d) { doc = d; }
+    void addDoc(const std::string& d) { doc += d; }
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      std::string doc;
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string doc;
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

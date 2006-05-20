@@ -29,10 +29,10 @@
 
 #include <hlvm/AST/Documentation.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 Documentation::~Documentation()
 {
 }
 
-}}
+}

@@ -34,50 +34,51 @@
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Block.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm 
+{
 
-  /// This class represents a Function in the HLVM Abstract Syntax Tree.  
-  /// A Function is a callable block of code that accepts parameters and 
-  /// returns a result.  This is the basic unit of code in HLVM. A Function
-  /// has a name, a set of formal arguments, a return type, and a block of
-  /// code to execute.
-  /// @brief HLVM AST Function Node
-  class Function : public LinkageItem
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      Function(
-        NodeIDs id = FunctionID
-      ) : LinkageItem(id), block(0), signature(0) {}
-      virtual ~Function();
+/// This class represents a Function in the HLVM Abstract Syntax Tree.  
+/// A Function is a callable block of code that accepts parameters and 
+/// returns a result.  This is the basic unit of code in HLVM. A Function
+/// has a name, a set of formal arguments, a return type, and a block of
+/// code to execute.
+/// @brief HLVM AST Function Node
+class Function : public LinkageItem
+{
+  /// @name Constructors
+  /// @{
+  public:
+    Function(
+      NodeIDs id = FunctionID
+    ) : LinkageItem(id), block(0), signature(0) {}
+    virtual ~Function();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      Block* getBlock() { return block; }
-      SignatureType* getSignature() { return signature; }
-      static inline bool classof(const Function*) { return true; }
-      static inline bool classof(const Node* N) { return N->isFunction(); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    Block* getBlock() { return block; }
+    SignatureType* getSignature() { return signature; }
+    static inline bool classof(const Function*) { return true; }
+    static inline bool classof(const Node* N) { return N->isFunction(); }
 
-    /// @}
-    /// @name Mutators
-    /// @{
-    public:
-      virtual void insertChild(Node* kid);
-      virtual void removeChild(Node* kid);
-      //void setSignature(SignatureType* sig) { sig->Node::setParent(this); }
-      //void setBlock(Block* blk) { blk->Node::setParent(this); }
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      Block * block;                   ///< The code block to be executed
-      SignatureType* signature;        ///< The function signature.
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    virtual void insertChild(Node* kid);
+    virtual void removeChild(Node* kid);
+    //void setSignature(SignatureType* sig) { sig->Node::setParent(this); }
+    //void setBlock(Block* blk) { blk->Node::setParent(this); }
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    Block * block;                   ///< The code block to be executed
+    SignatureType* signature;        ///< The function signature.
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

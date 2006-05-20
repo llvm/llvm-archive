@@ -31,7 +31,7 @@
 
 using namespace llvm;
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 ContainerType::~ContainerType()
 {
@@ -83,4 +83,4 @@ SignatureType::insertChild(Node* n)
   types.push_back(cast<AliasType>(n));
 }
 
-}}
+}

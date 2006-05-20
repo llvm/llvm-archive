@@ -47,7 +47,7 @@ namespace {
 
 class XMLWriterImpl : public XMLWriter {
   xmlTextWriterPtr writer;
-  AST::AST* node;
+  AST* node;
 public:
   XMLWriterImpl(const char* fname)
     : writer(0), node(0)
@@ -63,7 +63,7 @@ public:
     xmlFreeTextWriter(writer);
   }
 
-  virtual void write(AST::AST* node);
+  virtual void write(AST* node);
 
 private:
   inline void writeComment(const char* cmt)
@@ -80,7 +80,7 @@ private:
         reinterpret_cast<const xmlChar*>(val)); }
   inline void writeAttribute(const char* name, const std::string& val) 
     { writeAttribute(name, val.c_str()); }
-  inline void writeAttribute(const char* name, AST::Type* t)
+  inline void writeAttribute(const char* name, Type* t)
     { writeAttribute(name, t->getName()); }
   inline void writeAttribute(const char* name, uint64_t val)
     { writeAttribute(name, llvm::utostr(val)); }
@@ -91,32 +91,32 @@ private:
 
   inline void putHeader();
   inline void putFooter();
-  inline void putDoc(AST::Documentable* node);
-  inline void put(AST::Bundle* b);
-  inline void put(AST::Documentation* b);
-  inline void put(AST::Variable* v);
-  inline void put(AST::Function* f);
-  inline void put(AST::AliasType* t);
-  inline void put(AST::AnyType* t);
-  inline void put(AST::BooleanType* t);
-  inline void put(AST::CharacterType* t);
-  inline void put(AST::IntegerType* t);
-  inline void put(AST::RangeType* t);
-  inline void put(AST::EnumerationType* t);
-  inline void put(AST::RealType* t);
-  inline void put(AST::OctetType* t);
-  inline void put(AST::VoidType* t);
-  inline void put(AST::PointerType* t);
-  inline void put(AST::ArrayType* t);
-  inline void put(AST::VectorType* t);
-  inline void put(AST::StructureType* t);
-  inline void put(AST::SignatureType* t);
+  inline void putDoc(Documentable* node);
+  inline void put(Bundle* b);
+  inline void put(Documentation* b);
+  inline void put(Variable* v);
+  inline void put(Function* f);
+  inline void put(AliasType* t);
+  inline void put(AnyType* t);
+  inline void put(BooleanType* t);
+  inline void put(CharacterType* t);
+  inline void put(IntegerType* t);
+  inline void put(RangeType* t);
+  inline void put(EnumerationType* t);
+  inline void put(RealType* t);
+  inline void put(OctetType* t);
+  inline void put(VoidType* t);
+  inline void put(PointerType* t);
+  inline void put(ArrayType* t);
+  inline void put(VectorType* t);
+  inline void put(StructureType* t);
+  inline void put(SignatureType* t);
 };
 
 inline void
-XMLWriterImpl::putDoc(AST::Documentable* node)
+XMLWriterImpl::putDoc(Documentable* node)
 {
-  AST::Documentation* theDoc = node->getDoc();
+  Documentation* theDoc = node->getDoc();
   if (theDoc) {
     this->put(theDoc);
   }
@@ -138,12 +138,12 @@ XMLWriterImpl::putFooter()
 }
 
 void
-XMLWriterImpl::put(AST::Function* f)
+XMLWriterImpl::put(Function* f)
 {
 }
 
 void 
-XMLWriterImpl::put(AST::Documentation* b)
+XMLWriterImpl::put(Documentation* b)
 {
   startElement("doc");
   const std::string& data = b->getDoc();
@@ -153,7 +153,7 @@ XMLWriterImpl::put(AST::Documentation* b)
 }
 
 void 
-XMLWriterImpl::put(AST::AliasType* t)
+XMLWriterImpl::put(AliasType* t)
 {
   startElement("alias");
   writeAttribute("name",t->getName());
@@ -162,7 +162,7 @@ XMLWriterImpl::put(AST::AliasType* t)
   endElement();
 }
 void 
-XMLWriterImpl::put(AST::AnyType* t)
+XMLWriterImpl::put(AnyType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName());
@@ -174,7 +174,7 @@ XMLWriterImpl::put(AST::AnyType* t)
 }
 
 void
-XMLWriterImpl::put(AST::BooleanType* t)
+XMLWriterImpl::put(BooleanType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
@@ -186,7 +186,7 @@ XMLWriterImpl::put(AST::BooleanType* t)
 }
 
 void
-XMLWriterImpl::put(AST::CharacterType* t)
+XMLWriterImpl::put(CharacterType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
@@ -198,7 +198,7 @@ XMLWriterImpl::put(AST::CharacterType* t)
 }
 
 void
-XMLWriterImpl::put(AST::IntegerType* t)
+XMLWriterImpl::put(IntegerType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
@@ -219,7 +219,7 @@ XMLWriterImpl::put(AST::IntegerType* t)
 }
 
 void
-XMLWriterImpl::put(AST::RangeType* t)
+XMLWriterImpl::put(RangeType* t)
 {
   startElement("range");
   writeAttribute("name",t->getName());
@@ -230,12 +230,12 @@ XMLWriterImpl::put(AST::RangeType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::EnumerationType* t)
+XMLWriterImpl::put(EnumerationType* t)
 {
   startElement("enumeration");
   writeAttribute("name",t->getName());
   putDoc(t);
-  for (AST::EnumerationType::const_iterator I = t->begin(), E = t->end(); 
+  for (EnumerationType::const_iterator I = t->begin(), E = t->end(); 
        I != E; ++I)
   {
     startElement("enumerator");
@@ -246,7 +246,7 @@ XMLWriterImpl::put(AST::EnumerationType* t)
 }
 
 void
-XMLWriterImpl::put(AST::RealType* t)
+XMLWriterImpl::put(RealType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
@@ -266,7 +266,7 @@ XMLWriterImpl::put(AST::RealType* t)
 }
 
 void
-XMLWriterImpl::put(AST::OctetType* t)
+XMLWriterImpl::put(OctetType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName().c_str());
@@ -278,7 +278,7 @@ XMLWriterImpl::put(AST::OctetType* t)
 }
 
 void
-XMLWriterImpl::put(AST::VoidType* t)
+XMLWriterImpl::put(VoidType* t)
 {
   startElement("atom");
   writeAttribute("name",t->getName());
@@ -290,7 +290,7 @@ XMLWriterImpl::put(AST::VoidType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::PointerType* t)
+XMLWriterImpl::put(PointerType* t)
 {
   startElement("pointer");
   writeAttribute("name", t->getName());
@@ -300,7 +300,7 @@ XMLWriterImpl::put(AST::PointerType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::ArrayType* t)
+XMLWriterImpl::put(ArrayType* t)
 {
   startElement("array");
   writeAttribute("name", t->getName());
@@ -311,7 +311,7 @@ XMLWriterImpl::put(AST::ArrayType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::VectorType* t)
+XMLWriterImpl::put(VectorType* t)
 {
   startElement("vector");
   writeAttribute("name", t->getName());
@@ -322,14 +322,14 @@ XMLWriterImpl::put(AST::VectorType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::StructureType* t)
+XMLWriterImpl::put(StructureType* t)
 {
   startElement("structure");
   writeAttribute("name",t->getName());
   putDoc(t);
-  for (AST::StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+  for (StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("field");
-    AST::AliasType* alias = cast<AST::AliasType>(*I);
+    AliasType* alias = cast<AliasType>(*I);
     writeAttribute("name",alias->getName());
     writeAttribute("type",alias->getType());
     putDoc(alias);
@@ -339,16 +339,16 @@ XMLWriterImpl::put(AST::StructureType* t)
 }
 
 void 
-XMLWriterImpl::put(AST::SignatureType* t)
+XMLWriterImpl::put(SignatureType* t)
 {
   startElement("signature");
   writeAttribute("name",t->getName());
   writeAttribute("result",t->getResultType());
   writeAttribute("varargs",t->isVarArgs() ? "true" : "false");
   putDoc(t);
-  for (AST::SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+  for (SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("arg");
-    AST::AliasType* alias = cast<AST::AliasType>(*I);
+    AliasType* alias = cast<AliasType>(*I);
     writeAttribute("name",alias->getName());
     writeAttribute("type",alias->getType());
     putDoc(alias);
@@ -358,7 +358,7 @@ XMLWriterImpl::put(AST::SignatureType* t)
 }
 
 void
-XMLWriterImpl::put(AST::Variable* v)
+XMLWriterImpl::put(Variable* v)
 {
   startElement("var");
   writeAttribute("name",v->getName().c_str());
@@ -368,33 +368,33 @@ XMLWriterImpl::put(AST::Variable* v)
 }
 
 void 
-XMLWriterImpl::put(AST::Bundle* b)
+XMLWriterImpl::put(Bundle* b)
 {
   startElement("bundle");
   writeAttribute("pubid",b->getName().c_str());
   putDoc(b);
-  for (AST::Bundle::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
+  for (Bundle::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
   {
     switch ((*I)->getID()) 
     {
-      case AST::DocumentationID:    put(cast<AST::Documentation>(*I)); break;
-      case AST::VariableID:         put(cast<AST::Variable>(*I)); break;
-      case AST::FunctionID:         put(cast<AST::Function>(*I)); break;
-      case AST::AliasTypeID:        put(cast<AST::AliasType>(*I)); break;
-      case AST::AnyTypeID:          put(cast<AST::AnyType>(*I)); break;
-      case AST::BooleanTypeID:      put(cast<AST::BooleanType>(*I)); break;
-      case AST::CharacterTypeID:    put(cast<AST::CharacterType>(*I)); break;
-      case AST::IntegerTypeID:      put(cast<AST::IntegerType>(*I)); break;
-      case AST::RangeTypeID:        put(cast<AST::RangeType>(*I)); break;
-      case AST::EnumerationTypeID:  put(cast<AST::EnumerationType>(*I)); break;
-      case AST::RealTypeID:         put(cast<AST::RealType>(*I)); break;
-      case AST::OctetTypeID:        put(cast<AST::OctetType>(*I)); break;
-      case AST::VoidTypeID:         put(cast<AST::VoidType>(*I)); break;
-      case AST::PointerTypeID:      put(cast<AST::PointerType>(*I)); break;
-      case AST::ArrayTypeID:        put(cast<AST::ArrayType>(*I)); break;
-      case AST::VectorTypeID:       put(cast<AST::VectorType>(*I)); break;
-      case AST::StructureTypeID:    put(cast<AST::StructureType>(*I)); break;
-      case AST::SignatureTypeID:    put(cast<AST::SignatureType>(*I)); break;
+      case DocumentationID:    put(cast<Documentation>(*I)); break;
+      case VariableID:         put(cast<Variable>(*I)); break;
+      case FunctionID:         put(cast<Function>(*I)); break;
+      case AliasTypeID:        put(cast<AliasType>(*I)); break;
+      case AnyTypeID:          put(cast<AnyType>(*I)); break;
+      case BooleanTypeID:      put(cast<BooleanType>(*I)); break;
+      case CharacterTypeID:    put(cast<CharacterType>(*I)); break;
+      case IntegerTypeID:      put(cast<IntegerType>(*I)); break;
+      case RangeTypeID:        put(cast<RangeType>(*I)); break;
+      case EnumerationTypeID:  put(cast<EnumerationType>(*I)); break;
+      case RealTypeID:         put(cast<RealType>(*I)); break;
+      case OctetTypeID:        put(cast<OctetType>(*I)); break;
+      case VoidTypeID:         put(cast<VoidType>(*I)); break;
+      case PointerTypeID:      put(cast<PointerType>(*I)); break;
+      case ArrayTypeID:        put(cast<ArrayType>(*I)); break;
+      case VectorTypeID:       put(cast<VectorType>(*I)); break;
+      case StructureTypeID:    put(cast<StructureType>(*I)); break;
+      case SignatureTypeID:    put(cast<SignatureType>(*I)); break;
       default:
         assert(!"Invalid bundle content");
     }
@@ -403,7 +403,7 @@ XMLWriterImpl::put(AST::Bundle* b)
 }
 
 void
-XMLWriterImpl::write(AST::AST* ast) 
+XMLWriterImpl::write(AST* ast) 
 {
   node = ast;
   putHeader();

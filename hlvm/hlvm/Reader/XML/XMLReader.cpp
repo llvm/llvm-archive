@@ -55,24 +55,24 @@ const char HLVMGrammar[] =
 
 class XMLReaderImpl : public XMLReader {
   std::string path;
-  AST::AST* ast;
+  AST* ast;
   xmlDocPtr doc;
 public:
   XMLReaderImpl(const std::string& p)
     : path(p), ast(0)
   {
-    ast = AST::AST::create();
+    ast = AST::create();
     ast->setSystemID(p);
   }
 
   virtual ~XMLReaderImpl() 
   { 
-    if (ast) AST::AST::destroy(ast); 
+    if (ast) AST::destroy(ast); 
     if (doc) xmlFreeDoc(doc);
   }
 
   virtual void read();
-  virtual AST::AST* get();
+  virtual AST* get();
 
   void error(const std::string& msg) {
     std::cerr << msg << "\n";
@@ -87,20 +87,20 @@ public:
   inline void handleValidationError(xmlErrorPtr error);
 
   void                parseTree          ();
-  AST::AliasType*     parseAlias         (xmlNodePtr& cur);
-  AST::Type*          parseArray         (xmlNodePtr& cur);
-  AST::Type*          parseAtom          (xmlNodePtr& cur);
-  AST::Bundle*        parseBundle        (xmlNodePtr& cur);
-  AST::Documentation* parseDocumentation (xmlNodePtr& cur);
-  AST::Type*          parseEnumeration   (xmlNodePtr& cur);
-  AST::Function*      parseFunction      (xmlNodePtr& cur);
-  AST::Import*        parseImport        (xmlNodePtr& cur);
-  AST::Type*          parsePointer       (xmlNodePtr& cur);
-  AST::Type*          parseStructure     (xmlNodePtr& cur);
-  AST::Type*          parseSignature     (xmlNodePtr& cur);
-  AST::Variable*      parseVariable      (xmlNodePtr& cur);
-  AST::Type*          parseVector        (xmlNodePtr& cur);
-  inline xmlNodePtr   checkDoc(xmlNodePtr cur, AST::Documentable* node);
+  AliasType*     parseAlias         (xmlNodePtr& cur);
+  Type*          parseArray         (xmlNodePtr& cur);
+  Type*          parseAtom          (xmlNodePtr& cur);
+  Bundle*        parseBundle        (xmlNodePtr& cur);
+  Documentation* parseDocumentation (xmlNodePtr& cur);
+  Type*          parseEnumeration   (xmlNodePtr& cur);
+  Function*      parseFunction      (xmlNodePtr& cur);
+  Import*        parseImport        (xmlNodePtr& cur);
+  Type*          parsePointer       (xmlNodePtr& cur);
+  Type*          parseStructure     (xmlNodePtr& cur);
+  Type*          parseSignature     (xmlNodePtr& cur);
+  Variable*      parseVariable      (xmlNodePtr& cur);
+  Type*          parseVector        (xmlNodePtr& cur);
+  inline xmlNodePtr   checkDoc(xmlNodePtr cur, Documentable* node);
 private:
 };
 
@@ -208,20 +208,20 @@ getNameType(xmlNodePtr& cur, std::string& name, std::string& type)
   type = getAttribute(cur,"type");
 }
 
-AST::Documentation*
+Documentation*
 XMLReaderImpl::parseDocumentation(xmlNodePtr& cur)
 {
   // Documentation is always optional so don't error out if the
   // node is not a TKN_doc
   if (cur && skipBlanks(cur) && getToken(cur->name) == TKN_doc) {
-    AST::Locator loc(cur->line,0,&ast->getSystemID());
+    Locator loc(cur->line,0,&ast->getSystemID());
     xmlBufferPtr buffer = xmlBufferCreate();
     xmlNodeDump(buffer,doc,cur,0,0);
     int length = xmlBufferLength(buffer);
     std::string str(reinterpret_cast<const char*>(xmlBufferContent(buffer)));
     str.erase(0,5); // Zap the <doc> at the start
     str.erase(str.length()-6); // Zap the </doc> at the end
-    AST::Documentation* progDoc = ast->new_Documentation(loc);
+    Documentation* progDoc = ast->new_Documentation(loc);
     progDoc->setDoc(str);
     xmlBufferFree(buffer);
     return progDoc;
@@ -231,10 +231,10 @@ XMLReaderImpl::parseDocumentation(xmlNodePtr& cur)
 }
 
 inline xmlNodePtr
-XMLReaderImpl::checkDoc(xmlNodePtr cur, AST::Documentable* node)
+XMLReaderImpl::checkDoc(xmlNodePtr cur, Documentable* node)
 {
   xmlNodePtr child = cur->children;
-  AST::Documentation* theDoc = parseDocumentation(child);
+  Documentation* theDoc = parseDocumentation(child);
   if (theDoc) {
     node->setDoc(theDoc);
     return child->next;
@@ -242,51 +242,51 @@ XMLReaderImpl::checkDoc(xmlNodePtr cur, AST::Documentable* node)
   return child;
 }
 
-AST::Function*
+Function*
 XMLReaderImpl::parseFunction(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_function);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name, type;
   getNameType(cur, name, type);
-  AST::Function* func = ast->new_Function(loc,name);
+  Function* func = ast->new_Function(loc,name);
   checkDoc(cur,func);
   return func;
 }
 
-AST::Import*
+Import*
 XMLReaderImpl::parseImport(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_import);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string pfx = getAttribute(cur,"prefix");
-  AST::Import* imp = ast->new_Import(loc,pfx);
+  Import* imp = ast->new_Import(loc,pfx);
   checkDoc(cur,imp);
   return imp;
 }
 
-AST::AliasType*
+AliasType*
 XMLReaderImpl::parseAlias(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_alias);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"renames");
-  AST::AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+  AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
   checkDoc(cur,alias);
   return alias;
 }
 
-AST::Type*     
+Type*     
 XMLReaderImpl::parseAtom(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_atom);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   xmlNodePtr child = cur->children;
-  AST::Documentation* theDoc = parseDocumentation(child);
+  Documentation* theDoc = parseDocumentation(child);
   child = (theDoc==0 ? child : child->next );
-  AST::Type* result = 0;
+  Type* result = 0;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     int tkn = getToken(child->name);
     switch (tkn) {
@@ -376,13 +376,13 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
   assert(!"Atom definition element expected");
 }
 
-AST::Type*
+Type*
 XMLReaderImpl::parseEnumeration(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_enumeration);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
-  AST::EnumerationType* en = ast->new_EnumerationType(loc,name);
+  EnumerationType* en = ast->new_EnumerationType(loc,name);
   xmlNodePtr child = checkDoc(cur,en);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     assert(getToken(child->name) == TKN_enumerator);
@@ -393,61 +393,61 @@ XMLReaderImpl::parseEnumeration(xmlNodePtr& cur)
   return en;
 }
 
-AST::Type*     
+Type*     
 XMLReaderImpl::parsePointer(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_pointer);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"to");
-  AST::PointerType* result = 
+  PointerType* result = 
     ast->new_PointerType(loc,name,ast->resolveType(type));
   checkDoc(cur,result);
   return result;
 }
 
-AST::Type*     
+Type*     
 XMLReaderImpl::parseArray(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_array);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"of");
   const char* len = getAttribute(cur,"length");
-  AST::ArrayType* result = ast->new_ArrayType(
+  ArrayType* result = ast->new_ArrayType(
     loc, name, ast->resolveType(type), recognize_nonNegativeInteger(len));
   checkDoc(cur,result);
   return result;
 }
 
-AST::Type*     
+Type*     
 XMLReaderImpl::parseVector(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_vector);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"of");
   const char* len  = getAttribute(cur,"length");
-  AST::VectorType* result =
+  VectorType* result =
     ast->new_VectorType(
       loc,name,ast->resolveType(type), recognize_nonNegativeInteger(len));
   checkDoc(cur,result);
   return result;
 }
 
-AST::Type*
+Type*
 XMLReaderImpl::parseStructure(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_structure);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
-  AST::StructureType* struc = ast->new_StructureType(loc,name);
+  StructureType* struc = ast->new_StructureType(loc,name);
   xmlNodePtr child = checkDoc(cur,struc); 
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     assert(getToken(child->name) == TKN_field && "Structure only has fields");
     std::string name = getAttribute(child,"name");
     std::string type = getAttribute(child,"type");
-    AST::AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+    AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
     alias->setParent(struc);
     checkDoc(child,alias);
     child = child->next;
@@ -455,15 +455,15 @@ XMLReaderImpl::parseStructure(xmlNodePtr& cur)
   return struc;
 }
 
-AST::Type*     
+Type*     
 XMLReaderImpl::parseSignature(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_signature);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string result = getAttribute(cur,"result");
   const char* varargs = getAttribute(cur,"varargs",false);
-  AST::SignatureType* sig = 
+  SignatureType* sig = 
     ast->new_SignatureType(loc,name,ast->resolveType(result));
   if (varargs)
     sig->setIsVarArgs(recognize_boolean(varargs));
@@ -472,7 +472,7 @@ XMLReaderImpl::parseSignature(xmlNodePtr& cur)
     assert(getToken(child->name) == TKN_arg && "Signature only has args");
     std::string name = getAttribute(child,"name");
     std::string type = getAttribute(child,"type");
-    AST::AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+    AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
     alias->setParent(sig);
     checkDoc(child,alias);
     child = child->next;
@@ -480,34 +480,34 @@ XMLReaderImpl::parseSignature(xmlNodePtr& cur)
   return sig;
 }
 
-AST::Variable*
+Variable*
 XMLReaderImpl::parseVariable(xmlNodePtr& cur)
 {
   assert(getToken(cur->name)==TKN_var);
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
+  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name, type;
   getNameType(cur, name, type);
-  AST::Variable* var = ast->new_Variable(loc,name);
+  Variable* var = ast->new_Variable(loc,name);
   var->setType(ast->resolveType(type));
   checkDoc(cur,var);
   return var;
 }
 
-AST::Bundle*
+Bundle*
 XMLReaderImpl::parseBundle(xmlNodePtr& cur) 
 {
   assert(getToken(cur->name) == TKN_bundle && "Expecting bundle element");
   std::string pubid(getAttribute(cur, "pubid"));
-  AST::Locator loc(cur->line,0,&ast->getSystemID());
-  AST::Bundle* bundle = ast->new_Bundle(loc,pubid);
+  Locator loc(cur->line,0,&ast->getSystemID());
+  Bundle* bundle = ast->new_Bundle(loc,pubid);
   xmlNodePtr child = cur->children;
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {
     int tkn = getToken(child->name);
-    AST::Node* n = 0;
+    Node* n = 0;
     switch (tkn) {
       case TKN_doc      :
-        AST::Documentation* theDoc = parseDocumentation(child);
+        Documentation* theDoc = parseDocumentation(child);
         if (theDoc)
           bundle->setDoc(theDoc);
         break;
@@ -546,7 +546,7 @@ XMLReaderImpl::parseTree()
   assert(tkn == TKN_hlvm && "Expecting hlvm element");
   cur = cur->children;
   if (skipBlanks(cur)) {
-    AST::Bundle* bundle = parseBundle(cur);
+    Bundle* bundle = parseBundle(cur);
     ast->setRoot(bundle);
   }
 }
@@ -631,7 +631,7 @@ XMLReaderImpl::read() {
   doc = 0;
 }
 
-AST::AST*
+AST*
 XMLReaderImpl::get()
 {
   return ast;

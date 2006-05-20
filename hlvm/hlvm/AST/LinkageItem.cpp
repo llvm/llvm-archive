@@ -29,10 +29,10 @@
 
 #include <hlvm/AST/LinkageItem.h>
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 LinkageItem::~LinkageItem()
 {
 }
 
-}}
+}

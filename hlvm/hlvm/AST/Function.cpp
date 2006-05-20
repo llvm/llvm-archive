@@ -31,7 +31,7 @@
 
 using namespace llvm;
 
-namespace hlvm { namespace AST {
+namespace hlvm {
 
 Function::~Function() 
 {
@@ -62,4 +62,5 @@ Function::removeChild(Node* kid)
     assert(!"Can't insert one of those here");
   }
 }
-}}
+
+}

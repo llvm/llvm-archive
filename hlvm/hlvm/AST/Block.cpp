@@ -30,9 +30,9 @@
 #include <hlvm/AST/Block.h>
 
 namespace hlvm {
-namespace AST {
 
 Block::~Block()
 {
 }
-}}
+
+}

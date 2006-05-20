@@ -32,36 +32,36 @@
 
 #include <hlvm/AST/Node.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm 
+{
 
-  /// This class represents an HLVM Bundle. A Bundle is simply a collection of
-  /// declarations and definitions. It is the root of the AST tree and also
-  /// the grouping and namespace construct in HLVM. Every compilation unit is
-  /// a Bundle. Bundles can also be nested in other Bundles. All programming
-  /// constructs are defined as child nodes of some Bundle.
-  /// @brief HLVM AST Bundle Node
-  class Conditionable : public Node
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      Conditionable(
-        NodeIDs id,
-        Node* parent, 
-        const std::string& name,
-        const std::string& condition_name) 
-      : Node(id,parent,name), cond_name_(condition_name) {}
-      virtual ~Conditionable();
+/// This class represents an HLVM Bundle. A Bundle is simply a collection of
+/// declarations and definitions. It is the root of the AST tree and also
+/// the grouping and namespace construct in HLVM. Every compilation unit is
+/// a Bundle. Bundles can also be nested in other Bundles. All programming
+/// constructs are defined as child nodes of some Bundle.
+/// @brief HLVM AST Bundle Node
+class Conditionable : public Node
+{
+  /// @name Constructors
+  /// @{
+  public:
+    Conditionable(
+      NodeIDs id,
+      Node* parent, 
+      const std::string& name,
+      const std::string& condition_name) 
+    : Node(id,parent,name), cond_name_(condition_name) {}
+    virtual ~Conditionable();
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      std::string cond_name_;
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string cond_name_;
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

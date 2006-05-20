@@ -31,7 +31,6 @@
 #include <hlvm/AST/ContainerType.h>
 
 namespace hlvm {
-namespace AST {
 
 SignatureType* Program::initSignature() {
   SignatureType* result = new SignatureType();
@@ -44,4 +43,4 @@ Program::~Program()
 {
 }
 
-}}
+}

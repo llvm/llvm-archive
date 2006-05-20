@@ -32,43 +32,43 @@
 
 #include <hlvm/AST/Function.h>
 
-namespace hlvm {
-namespace AST {
+namespace hlvm 
+{
 
-  class Block; // Forward declare
-  class SignatureType;  // Forward declare
+class Block; // Forward declare
+class SignatureType;  // Forward declare
 
-  /// This class represents a Program in the HLVM Abstract Syntax Tree.  
-  /// A Program is a function with a specific set of arguments. It represents
-  /// a starting point for any execution. To be executable, a Bundle must have
-  /// at least one Program node in it. The Program node is simply introduced
-  /// to ensure the signature of the function is correct and to serve as a way
-  /// to identify Program's quickly.
-  /// @brief HLVM AST Function Node
-  class Program : public Function
-  {
-    /// @name Constructors
-    /// @{
-    public:
-      Program() : Function(ProgramID) {}
-      virtual ~Program();
+/// This class represents a Program in the HLVM Abstract Syntax Tree.  
+/// A Program is a function with a specific set of arguments. It represents
+/// a starting point for any execution. To be executable, a Bundle must have
+/// at least one Program node in it. The Program node is simply introduced
+/// to ensure the signature of the function is correct and to serve as a way
+/// to identify Program's quickly.
+/// @brief HLVM AST Function Node
+class Program : public Function
+{
+  /// @name Constructors
+  /// @{
+  public:
+    Program() : Function(ProgramID) {}
+    virtual ~Program();
 
-    /// @}
-    /// @name Accessors
-    /// @{
-    public:
-      static inline bool classof(const Program*) { return true; }
-      static inline bool classof(const Node* N) { return N->isProgram(); }
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const Program*) { return true; }
+    static inline bool classof(const Node* N) { return N->isProgram(); }
 
-    /// @}
-    /// @name Data
-    /// @{
-    private:
-      static SignatureType* SignatureTy; ///< The signature for programs
-      static SignatureType* initSignature(); 
-    /// @}
-    friend class AST;
-  };
-} // AST
+  /// @}
+  /// @name Data
+  /// @{
+  private:
+    static SignatureType* SignatureTy; ///< The signature for programs
+    static SignatureType* initSignature(); 
+  /// @}
+  friend class AST;
+};
+
 } // hlvm
 #endif

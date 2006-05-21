@@ -1,0 +1,7 @@
+#
+SConscript([
+  'Base/SConscript',
+  'AST/SConscript',
+  'Reader/SConscript',
+  'Writer/SConscript'
+])

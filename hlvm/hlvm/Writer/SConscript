@@ -1,0 +1,4 @@
+#
+SConscript([
+  'XML/SConscript',
+])

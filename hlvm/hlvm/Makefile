@@ -7,6 +7,6 @@ LEVEL=..
 #
 # List all of the subdirectories that we will compile.
 #
-DIRS=Base AST Reader Writer
+DIRS=Base AST Pass Reader Writer
 
 include $(LEVEL)/Makefile.hlvm

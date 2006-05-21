@@ -28,10 +28,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "hlvm/AST/SymbolTable.h"
+#include "hlvm/Base/Assert.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <algorithm>
-#include <cassert>
 
 using namespace hlvm;
 
@@ -69,7 +69,7 @@ bool SymbolTable::erase(Node *N) {
 
 // remove - Remove a node from the symbol table...
 Node* SymbolTable::erase(iterator Entry) {
-  assert(Entry != map_.end() && "Invalid entry to remove!");
+  hlvmAssert(Entry != map_.end() && "Invalid entry to remove!");
   const Node* Result = Entry->second;
   map_.erase(Entry);
   return const_cast<Node*>(Result);
@@ -77,7 +77,7 @@ Node* SymbolTable::erase(iterator Entry) {
 
 // insert - Insert a node into the symbol table with the specified name...
 void SymbolTable::insert(const std::string& Name, const Node* N) {
-  assert(N && "Can't insert null node into symbol table!");
+  hlvmAssert(N && "Can't insert null node into symbol table!");
 
   // Check to see if there is a naming conflict.  If so, rename this type!
   std::string unique_name = Name;

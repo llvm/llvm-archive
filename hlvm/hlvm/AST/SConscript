@@ -1,0 +1,5 @@
+#
+import glob
+files = glob.glob('*.cpp')
+Import('env')
+env.Library('HLVMast',files)

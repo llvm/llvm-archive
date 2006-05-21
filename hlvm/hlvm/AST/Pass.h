@@ -77,30 +77,6 @@ class Pass
     /// subclass to disambiguate the Node.
     virtual void handle(Node* n);
 
-    /// Handle a Block node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Block* b);
-
-    /// Handle a Bundle node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Bundle* b);
-
-    /// Handle a Function node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Function* f);
-
-    /// Handle a Program node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Program* p);
-
-    /// Handle a Operator node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Operator* o);
-
-    /// Handle a Type node. Subclasses should override this; default 
-    /// implementation does nothing.
-    virtual void handle(Type* t);
-
   /// @}
   /// @name Invocators
   /// @{

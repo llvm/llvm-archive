@@ -1,0 +1,11 @@
+# HLVM scons Software Construction Specification
+# 
+
+# Set up scons
+import os
+from scons.main import GetBuildEnvironment
+env = GetBuildEnvironment(COMMAND_LINE_TARGETS)
+Export('env')
+
+SConscript('hlvm/SConscript',build_dir=os.path.join(env['BuildDir'],"hlvm"))
+SConscript('tools/SConscript',build_dir=os.path.join(env['BuildDir'],"tools"))

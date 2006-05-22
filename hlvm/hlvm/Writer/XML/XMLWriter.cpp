@@ -35,10 +35,10 @@
 #include <hlvm/AST/Import.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Variable.h>
+#include <hlvm/Base/Assert.h>
 #include <llvm/ADT/StringExtras.h>
 #include <libxml/xmlwriter.h>
 #include <iostream>
-#include <cassert>
 
 using namespace hlvm;
 using namespace llvm;
@@ -53,7 +53,7 @@ public:
     : writer(0), node(0)
   { 
     writer = xmlNewTextWriterFilename(fname,0);
-    assert(writer && "Can't allocate writer");
+    hlvmAssert(writer && "Can't allocate writer");
     xmlTextWriterSetIndent(writer,1);
     xmlTextWriterSetIndentString(writer,reinterpret_cast<const xmlChar*>("  "));
   }
@@ -396,7 +396,7 @@ XMLWriterImpl::put(Bundle* b)
       case StructureTypeID:    put(cast<StructureType>(*I)); break;
       case SignatureTypeID:    put(cast<SignatureType>(*I)); break;
       default:
-        assert(!"Invalid bundle content");
+        hlvmDeadCode("Invalid bundle content");
     }
   }
   endElement();

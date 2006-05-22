@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/LinkageItem.h>
+#include <hlvm/Base/Assert.h>
 
 using namespace llvm; 
 
@@ -50,19 +51,19 @@ Bundle::~Bundle()
 void 
 Bundle::insertChild(Node* kid)
 {
-  assert(isa<LinkageItem>(kid) && "Can't insert that here");
+  hlvmAssert(isa<LinkageItem>(kid) && "Can't insert that here");
   kids.push_back(cast<LinkageItem>(kid));
 }
 
 void
 Bundle::removeChild(Node* kid)
 {
-  assert(isa<LinkageItem>(kid) && "Can't remove that here");
+  hlvmAssert(isa<LinkageItem>(kid) && "Can't remove that here");
   // This is sucky slow, but we probably won't be removing nodes that much.
   for (iterator I = begin(), E = end(); I != E; ++I ) {
     if (*I == kid) { kids.erase(I); return; }
   }
-  assert(!"That node isn't my child");
+  hlvmAssert(!"That node isn't my child");
 }
 
 }

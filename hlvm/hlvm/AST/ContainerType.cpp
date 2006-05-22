@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/ContainerType.h>
+#include <hlvm/Base/Assert.h>
 
 using namespace llvm;
 
@@ -40,19 +41,19 @@ ContainerType::~ContainerType()
 void 
 ContainerType::insertChild(Node* n)
 {
-  assert(isa<Type>(n) && "Can't insert those here");
+  hlvmAssert(isa<Type>(n) && "Can't insert those here");
   types.push_back(cast<Type>(n));
 }
 
 void 
 ContainerType::removeChild(Node* n)
 {
-  assert(isa<Type>(n) && "Can't remove those here");
+  hlvmAssert(isa<Type>(n) && "Can't remove those here");
   // This is sucky slow, but we probably won't be removing nodes that much.
   for (iterator I = begin(), E = end(); I != E; ++I ) {
     if (*I == n) { types.erase(I); break; }
   }
-  assert(!"That node isn't my child");
+  hlvmAssert(!"That node isn't my child");
 }
 
 const char* 
@@ -68,7 +69,7 @@ StructureType::~StructureType()
 void
 StructureType::insertChild(Node* n)
 {
-  assert(isa<AliasType>(n) && "Can't insert those here");
+  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
   types.push_back(cast<AliasType>(n));
 }
 
@@ -79,7 +80,7 @@ SignatureType::~SignatureType()
 void 
 SignatureType::insertChild(Node* n)
 {
-  assert(isa<AliasType>(n) && "Can't insert those here");
+  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
   types.push_back(cast<AliasType>(n));
 }
 

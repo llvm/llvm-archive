@@ -266,10 +266,7 @@ class Node
   /// @{
   public:
     void setLocator(const Locator& l) { loc = l; }
-    void setFlags(unsigned f) {
-      assert(f < 1 << 24 && "Flags out of range");
-      flags = f;
-    }
+    void setFlags(unsigned f); 
     virtual void setParent(Node* parent);
 
   protected:

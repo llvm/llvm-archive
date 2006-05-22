@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Type.h>
+#include <hlvm/Base/Assert.h>
 
 namespace hlvm {
 
@@ -38,7 +39,7 @@ Type::~Type()
 void
 Type::insertChild(Node* n)
 {
-  assert(!"This type doesn't accept children!");
+  hlvmAssert(!"This type doesn't accept children!");
 }
 
 const char*
@@ -110,7 +111,7 @@ IntegerType::getPrimitiveName() const
     else
       return "u8";
   }
-  assert(!"Can't get here");
+  hlvmDeadCode("Primitive Name");
 }
 
 OctetType::~OctetType()

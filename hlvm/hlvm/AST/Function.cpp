@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Function.h>
+#include <hlvm/Base/Assert.h>
 
 using namespace llvm;
 
@@ -49,7 +50,7 @@ Function::insertChild(Node* kid)
       block->setParent(0);
     block = cast<Block>(kid);
   } else {
-    assert(!"Can't insert one of those here");
+    hlvmAssert(!"Can't insert one of those here");
   }
 }
 
@@ -59,7 +60,7 @@ Function::removeChild(Node* kid)
   if (isa<SignatureType>(kid)) {
   } else if (isa<Block>(kid)) {
   } else {
-    assert(!"Can't insert one of those here");
+    hlvmAssert(!"Can't insert one of those here");
   }
 }
 

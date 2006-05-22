@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Node.h>
+#include <hlvm/Base/Assert.h>
 
 namespace hlvm {
 
@@ -51,13 +52,20 @@ Node::isLinkageItem() const
 void 
 Node::insertChild(Node* child)
 {
-  assert(!"This node doesn't accept child nodes");
+  hlvmNotImplemented("Node::insertChild");
 }
 
 void 
 Node::removeChild(Node* child)
 {
-  assert(!"This node doesn't have child nodes");
+  hlvmNotImplemented("Node::insertChild");
+}
+
+void 
+Node::setFlags(unsigned f)
+{
+  hlvmAssert(f < 1 << 24 && "Flags out of range");
+  flags = f;
 }
 
 void 

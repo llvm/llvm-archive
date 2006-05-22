@@ -28,11 +28,11 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Base/Memory.h>
+#include <hlvm/Base/Assert.h>
 #include <llvm/System/Signals.h>
 #include <memory>
 #include <new>
 #include <iostream>
-#include <cassert>
 
 namespace hlvm { namespace Base {
 
@@ -54,20 +54,20 @@ the_new_handler( void )
   }
   else
   {
-    assert( _memory_reserve != 0 && "No memory!");
+    hlvmAssert( _memory_reserve != 0 && "No memory!");
   }
 }
 
 static void
 the_unexpected_handler( void )
 {
-  assert(!"Unexpected Handler.");
+  hlvmNotImplemented("Unexpected Handler");
 }
 
 static void
 the_terminate_handler( void )
 {
-  assert(!"Terminate Handler.");
+  hlvmNotImplemented("Terminate Handler");
 }
 
 static void
@@ -109,11 +109,11 @@ initialize(int& /*argc*/, char** /*argv*/)
 
       // Initialize APR
       if (APR_SUCCESS != apr_initialize())
-        assert(!"Can't initialize APR");
+        hlvmAssert(!"Can't initialize APR");
 
       // Allocate the master pool
       if (APR_SUCCESS != apr_pool_create(&POOL,0))
-        assert(!"Can't allocate the master pool");
+        hlvmAssert(!"Can't allocate the master pool");
 
 #ifdef XPS_DEBUG
       // Make sure we print stack trace if we get bad signals
@@ -123,11 +123,11 @@ initialize(int& /*argc*/, char** /*argv*/)
     }
     catch ( ... )
     {
-      assert(!"Unexpected exception during initialization.");
+      hlvmAssert(!"Unexpected exception during initialization.");
     }
 
     if (0 != atexit(terminate))
-      assert(!"Can't register termination at exit");
+      hlvmAssert(!"Can't register termination at exit");
 
     // We've made it through initialization .. indicate that.
     initialized = true;

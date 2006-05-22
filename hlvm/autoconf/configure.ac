@@ -293,7 +293,6 @@ HLVM_FIND_LIBRARY([apru],[apr-1/apu.h],[aprutil-1],[apu_version],
                   [Apache Portable Runtime Utilities])
 HLVM_FIND_LIBRARY([xml2],[libxml/parser.h],[xml2],
                   [xmlCreateFileParserCtxt],[libxml2 XML C Parser])
-HLVM_FIND_LIBRARY([syck],[syck.h],[syck],[syck_parse],[Syck Yaml Handler])
 
 dnl -- Check for specific libraries we depend on.
 if test "$HLVM_EFENCE" = true ; then 
@@ -306,7 +305,7 @@ dnl --
 dnl -- SECTION 5: Check For Needed Header Files
 dnl --
 dnl ----------------------------------------------------------------------------
-AC_CHECK_HEADERS([expat_external.h llvm/Module.h syck_st.h])
+AC_CHECK_HEADERS([llvm/Module.h])
 
 dnl ----------------------------------------------------------------------------
 dnl --

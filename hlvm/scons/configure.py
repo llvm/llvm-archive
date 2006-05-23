@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         library += alib + context.env['LIBSUFFIX']
         if not exists(library):
           continue
-        objects = " "
+        objects = []
         count = 0
         for o in objs:
           obj =  pjoin(libdir,context.env['OBJPREFIX'])
@@ -81,7 +81,8 @@ int main(int argc, char **argv) {
             continue;
           else:
             count += 1
-            objects += obj + " "
+            objects.append(obj)
+            print "objects(",len(objects),"=",objects
         if count != len(objs):
           continue
         for incdir in ['include', 'inc', 'incl']:
@@ -105,6 +106,8 @@ int main(int argc, char **argv) {
             context.env.Replace(LIBS=lastLIBS, LIBPATH=lastLIBPATH, 
               CPPPATH=lastCPPPATH, LINKFLAGS=lastLINKFLAGS)
             continue
+          else:
+            context.env.Replace(LIBS=lastLIBS, LINKFLAGS=lastLINKFLAGS)
           context.env[pkgname + '_lib'] = libdir
           context.env[pkgname + '_inc'] = hdrdir
           context.Result('Found: (' + hdrdir + ',' + libdir + ')')

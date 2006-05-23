@@ -80,15 +80,17 @@ def ProvisionEnvironment(env,targets,arguments):
   env['Variant'] = VariantName
   env['BuildDir'] = BuildDir
   env['LIBPATH'] = [
-    pjoin(BuildDir,'hlvm/Base'),
-    pjoin(BuildDir,'hlvm/AST'),
-    pjoin(BuildDir,'hlvm/Reader/XML'),
-    pjoin(BuildDir,'hlvm/Writer/XML')
+    pjoin('#',BuildDir,'hlvm/Base'),
+    pjoin('#',BuildDir,'hlvm/AST'),
+    pjoin('#',BuildDir,'hlvm/Reader/XML'),
+    pjoin('#',BuildDir,'hlvm/Writer/XML')
   ];
+  print 'LIBPATH=',env['LIBPATH']
   env.BuildDir(pjoin(BuildDir,'hlvm'),'hlvm',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'tools'),'tools',duplicate=0)
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])
+  env.SConsignFile(pjoin(BuildDir,'sconsign'))
 
   opts.Save('options.cache', env)
   env.Help(opts.GenerateHelpText(env,sort=cmp))

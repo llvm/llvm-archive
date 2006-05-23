@@ -77,17 +77,17 @@ def RNGTokenizerAction(target,source,env):
   tknFilename = pjoin(tgtDir,Schema) + "Tokens.tmp"
   tknFile = open(tknFilename,"w")
   tknFile.write('struct TokenMap {\n')
-  tknFile.write('const char *name; hlvm::'+Schema+'Tokens token;\n')
+  tknFile.write('const char *name; HLVM_'+Module+'::'+Schema+'Tokens token;\n')
   tknFile.write('};\n%%\n')
   for tkn in tokens:
-    tknFile.write('"' + tkn + '", hlvm::TKN_' + tkn + ',\n')
+    tknFile.write('"' + tkn + '", HLVM_'+Module+'::TKN_' + tkn + ',\n')
   tknFile.write('%%\n')
   tknFile.close()
   gperfAction = env.Action(
     "$GPERF -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
     " -s 2 -S 1 -k '*' " + tknFilename + " >" + TokenHashFile)
   env.Execute(gperfAction)
-  tokenList = "TKN_"
+  tokenList = ""
   for tkn in tokens:
     tokenList += "TKN_" + tkn + ",\n    "
   from datetime import date

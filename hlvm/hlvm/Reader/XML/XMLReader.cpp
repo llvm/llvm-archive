@@ -183,6 +183,7 @@ recognize_boolean(const std::string& str)
     default: break;
   }
   hlvmDeadCode("Invalid boolean value");
+  return 0;
 }
 
 inline const char* 
@@ -376,6 +377,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
     }
   }
   hlvmAssert(!"Atom definition element expected");
+  return 0;
 }
 
 Type*
@@ -548,8 +550,7 @@ XMLReaderImpl::parseTree()
     error("No root node");
     return;
   }
-  int tkn = getToken(cur->name);
-  hlvmAssert(tkn == TKN_hlvm && "Expecting hlvm element");
+  hlvmAssert(getToken(cur->name) == TKN_hlvm && "Expecting hlvm element");
   cur = cur->children;
   if (skipBlanks(cur)) {
     Bundle* bundle = parseBundle(cur);

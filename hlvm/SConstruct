@@ -20,7 +20,7 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-from scons import hlvm
+from build import hlvm
 env = hlvm.GetBuildEnvironment(COMMAND_LINE_TARGETS,ARGUMENTS)
 Export('env')
 hlvm.Dirs(env,['hlvm','tools','test'])

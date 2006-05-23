@@ -20,9 +20,8 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-#
+from build import hlvm
 Import('env')
-from scons import hlvm
 hlvm.GetRNGQuoteSource(env)
 hlvm.GetRNGTokenizer(env)
 env.RNGQuoteSource('HLVM.rng.inc','HLVM.rng')

@@ -18,11 +18,11 @@ def GetAllCXXFiles(env):
   return env.Flatten([p1,p2,p3])
 
 def GetRNGQuoteSource(env):
-  from scons import filterbuilders
+  from build import filterbuilders
   return filterbuilders.RNGQuoteSource(env)
 
 def GetRNGTokenizer(env):
-  from scons import filterbuilders
+  from build import filterbuilders
   return filterbuilders.RNGTokenizer(env)
 
 def Dirs(env,dirlist=[]):
@@ -172,7 +172,7 @@ Options:                                                     (Default)
   print "HLVM BUILD MODE:", VariantName
   env = ConfigureHLVM(env)
   if 'check' in targets:
-    from scons import check
+    from build import check
     check.Check(env)
   return env
 

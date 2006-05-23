@@ -20,8 +20,7 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-#
+from build import hlvm
 Import('env')
-from scons import hlvm
 lib = env.Library('HLVMBase',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)

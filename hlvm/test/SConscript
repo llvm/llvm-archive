@@ -20,5 +20,5 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-from scons import hlvm
+from build import hlvm
 Import('env')

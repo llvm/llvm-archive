@@ -6,6 +6,6 @@ from os import path
 from scons import main
 env = main.GetBuildEnvironment(COMMAND_LINE_TARGETS,ARGUMENTS)
 Export('env')
-
-SConscript(path.join(env['BuildDir'],'hlvm','SConscript'))
-SConscript(path.join(env['BuildDir'],'tools','SConscript'))
+main.Dirs(env,['hlvm','tools','test'])
+if 'check' in COMMAND_LINE_TARGETS:
+  main.GetCheck(env)

@@ -20,6 +20,7 @@ def _sedit(input,output,substs):
 def QuoteSourceAction(target,source,env):
   substs = [['[\\\\]','\\\\\\\\'],['"','\\"'],['^(.*)$','"\\1"']]
   _sedit(source,target,substs)
+  return 0
 
 def QuoteSourceMessage(target,source,env):
   return "Converting %s to %s as quoted source" % (source[0],target[0])
@@ -110,4 +111,5 @@ def RNGTokenizer(env):
   a = env.Action(RNGTokenizerAction,RNGTokenizerMessage)
   b = env.Builder(action=a,suffix='h',src_suffix='rng',single_source=1)
   env.Append(BUILDERS = {'RNGTokenizer':b})
+  return 1
 

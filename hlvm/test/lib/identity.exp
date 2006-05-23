@@ -23,7 +23,7 @@
 proc hlvm-identity-tests { prog pat } {
   global srcdir subdir objdir tmpdir objrootdir
   set outdir [file join $objdir $subdir]
-  set tool [file join $objrootdir Debug bin $prog ]
+  set tool [file join $objrootdir tools $prog $prog ]
   set source [file join $srcdir $subdir ]
   set files [lsort [
     glob -nocomplain -tails -types {f r} -directory $source $pat]]

@@ -149,6 +149,9 @@ def CheckStdCXXHeaders(conf,env):
 def CheckForPrograms(conf,env):
   if not conf.CheckProgram('gperf','GPERF'):
     env.Exit(1)
+  if not conf.CheckProgram('runtest','RUNTEST'):
+    env['RUNTEST'] = None
+    print "*** TESTING DISABLED ***"
   return 1
 
 #dnl AC_PATH_PROG(path_EGREP, egrep, egrep)

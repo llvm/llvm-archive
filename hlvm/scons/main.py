@@ -34,5 +34,13 @@ def GetRNGTokenizer(env):
   from scons import filterbuilders
   return filterbuilders.RNGTokenizer(env)
 
+def GetCheck(env):
+  from scons import check
+  return check.Check(env)
+
+def Dirs(env,dirlist=[]):
+  for d in dirlist:
+    env.SConscript(path.join(env['BuildDir'],d,'SConscript'))
+
 def join(one,two):
   return path.join([one,two])

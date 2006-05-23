@@ -1,3 +1,7 @@
-import glob
-files = glob.glob('*.cpp')
-Library('HLVMXMLReader',files)
+Import('env')
+from scons import main
+main.GetRNGQuoteSource(env)
+main.GetRNGTokenizer(env)
+env.RNGQuoteSource('HLVM.rng.inc','HLVM.rng')
+env.RNGTokenizer('HLVMTokenizer.cpp','HLVM.rng')
+env.Library('HLVMXMLReader',main.GetAllCXXFiles(env))

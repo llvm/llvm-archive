@@ -51,7 +51,7 @@ using namespace HLVM_Reader_XML;
 namespace {
 
 const char HLVMGrammar[] = 
-#include "HLVM.rng.inc"
+#include <hlvm/Reader/XML/HLVM.rng.inc>
 ;
 
 class XMLReaderImpl : public XMLReader {
@@ -219,7 +219,8 @@ XMLReaderImpl::parseDocumentation(xmlNodePtr& cur)
     xmlBufferPtr buffer = xmlBufferCreate();
     xmlNodeDump(buffer,doc,cur,0,0);
     int length = xmlBufferLength(buffer);
-    std::string str(reinterpret_cast<const char*>(xmlBufferContent(buffer)));
+    std::string 
+      str(reinterpret_cast<const char*>(xmlBufferContent(buffer)),length);
     str.erase(0,5); // Zap the <doc> at the start
     str.erase(str.length()-6); // Zap the </doc> at the end
     Documentation* progDoc = ast->new_Documentation(loc);

@@ -1,4 +1,2 @@
-#
-SConscript([
-  'XML/SConscript',
-])
+Import('env')
+SConscript('XML/SConscript')

@@ -1,0 +1,4 @@
+from scons import main
+Import('env')
+env.Program('hlvm-xml2xml', main.GetAllCXXFiles(env),
+ LIBS=['HLVMAST','HLVMXMLReader','HLVMXMLWriter','HLVMBase','xml2','LLVMSupport'])

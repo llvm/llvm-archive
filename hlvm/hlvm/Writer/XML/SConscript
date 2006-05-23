@@ -1,3 +1,3 @@
-import glob
-files = glob.glob('*.cpp')
-Library('HLVMXMLWriter',files)
+Import('env')
+from scons import main
+env.Library('HLVMXMLWriter',main.GetAllCXXFiles(env))

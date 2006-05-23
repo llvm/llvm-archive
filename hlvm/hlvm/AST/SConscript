@@ -1,5 +1,3 @@
-#
-import glob
-files = glob.glob('*.cpp')
+from scons import main
 Import('env')
-env.Library('HLVMast',files)
+env.Library('HLVMast',main.GetAllCXXFiles(env))

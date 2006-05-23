@@ -1,7 +1,6 @@
 #
-SConscript([
-  'Base/SConscript',
-  'AST/SConscript',
-  'Reader/SConscript',
-  'Writer/SConscript'
-])
+Import('env')
+env.SConscript('Base/SConscript')
+env.SConscript('AST/SConscript')
+env.SConscript('Reader/SConscript')
+env.SConscript('Writer/SConscript')

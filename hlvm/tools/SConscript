@@ -1,3 +1,4 @@
-SConscript([
+Import('env')
+env.SConscript([
   'hlvm-xml2xml/SConscript'
 ])

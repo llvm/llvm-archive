@@ -2,10 +2,10 @@
 # 
 
 # Set up scons
-import os
-from scons.main import GetBuildEnvironment
-env = GetBuildEnvironment(COMMAND_LINE_TARGETS)
+from os import path
+from scons import main
+env = main.GetBuildEnvironment(COMMAND_LINE_TARGETS,ARGUMENTS)
 Export('env')
 
-SConscript('hlvm/SConscript',build_dir=os.path.join(env['BuildDir'],"hlvm"))
-SConscript('tools/SConscript',build_dir=os.path.join(env['BuildDir'],"tools"))
+SConscript(path.join(env['BuildDir'],'hlvm','SConscript'))
+SConscript(path.join(env['BuildDir'],'tools','SConscript'))

@@ -7,16 +7,11 @@ from os.path import exists as exists
 from os import environ as environ
 
 def CheckProgram(context,progname,varname,moredirs=[]):
-  ret = 0
   context.Message("Checking for " + progname + "...")
-  PATH = environ['PATH']
-  dirs = PATH.split(':') + moredirs
-  for dir in dirs:
-    fname = pjoin(dir,progname)
-    if exists(fname) and isfile(fname):
-      context.env[varname] = fname
-      ret = 1
-      break;
+  fname = context.env.WhereIs(progname,environ['PATH'])
+  ret = fname != None
+  if ret:
+    context.env[varname] = fname
   context.Result(ret)
   return ret
 
@@ -82,7 +77,6 @@ int main(int argc, char **argv) {
           else:
             count += 1
             objects.append(obj)
-            print "objects(",len(objects),"=",objects
         if count != len(objs):
           continue
         for incdir in ['include', 'inc', 'incl']:

@@ -508,26 +508,29 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
     int tkn = getToken(child->name);
     Node* n = 0;
     switch (tkn) {
-      case TKN_doc      :
+      case TKN_doc      : {
         Documentation* theDoc = parseDocumentation(child);
         if (theDoc)
           bundle->setDoc(theDoc);
         break;
-      case TKN_import   : n = parseImport(child); break;
-      case TKN_bundle   : n = parseBundle(child); break;
-      case TKN_function : n = parseFunction(child); break;
-      case TKN_alias    : n = parseAlias(child); break;
-      case TKN_atom     : n = parseAtom(child); break;
-      case TKN_enumeration: n = parseEnumeration(child); break;
-      case TKN_pointer  : n = parsePointer(child); break;
-      case TKN_array    : n = parseArray(child); break;
-      case TKN_vector   : n = parseVector(child); break;
-      case TKN_structure: n = parseStructure(child); break;
-      case TKN_signature: n = parseSignature(child); break;
-      case TKN_var      : n = parseVariable(child); break;
+      }
+      case TKN_import   : { n = parseImport(child); break; }
+      case TKN_bundle   : { n = parseBundle(child); break; }
+      case TKN_function : { n = parseFunction(child); break; }
+      case TKN_alias    : { n = parseAlias(child); break; }
+      case TKN_atom     : { n = parseAtom(child); break; }
+      case TKN_enumeration: { n = parseEnumeration(child); break; }
+      case TKN_pointer  : { n = parsePointer(child); break; }
+      case TKN_array    : { n = parseArray(child); break; }
+      case TKN_vector   : { n = parseVector(child); break; }
+      case TKN_structure: { n = parseStructure(child); break; }
+      case TKN_signature: { n = parseSignature(child); break; }
+      case TKN_var      : { n = parseVariable(child); break; }
       default:
+      {
         hlvmDeadCode("Invalid content for bundle");
         break;
+      }
     }
     if (n)
       n->setParent(bundle); 

@@ -1,5 +1,4 @@
 from SCons.Environment import Environment as Environment
-from environment import ProvisionEnvironment as ProvisionEnvironment
 import re,fileinput,os,glob
 from string import join as sjoin
 from os.path import join as pjoin
@@ -40,7 +39,8 @@ def CheckAction(target,source,env):
   context = os.path.basename(env.File(target[0]).path)
   context = re.sub('(.*?)\..*','\\1',context)
   print "context=",context
-  os.system('DEJAGNU="'+pjoin(env['AbsObjRoot'],'test','site.exp')+'" '+
+  os.system('cd ' + pjoin(env['BuildDir'],'test') +
+      '; DEJAGNU="'+pjoin(env['AbsObjRoot'],'test','site.exp')+'" '+
       env['RUNTEST'] + ' --tool ' + context)
   return 0
 

@@ -1,5 +1,4 @@
 from SCons.Environment import Environment as Environment
-from environment import ProvisionEnvironment as ProvisionEnvironment
 import re,fileinput,os
 from string import join as sjoin
 from os.path import join as pjoin
@@ -85,7 +84,7 @@ def RNGTokenizerAction(target,source,env):
   tknFile.write('%%\n')
   tknFile.close()
   gperfAction = env.Action(
-    "$GPERF -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
+    env['GPERF'] + " -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
     " -s 2 -S 1 -k '*' " + tknFilename + " >" + TokenHashFile)
   env.Execute(gperfAction)
   tokenList = ""

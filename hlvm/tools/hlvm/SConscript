@@ -1,4 +1,4 @@
-#===-- Build Script For hlvm/Reader ---------------------------*- Python -*-===#
+#===-- Build Script For test ----------------------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -20,6 +20,19 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
+#
 from scons import hlvm
 Import('env')
-hlvm.Dirs(env,['XML'])
+env.Program('hlvm', hlvm.GetAllCXXFiles(env),
+  LIBS=[
+    'HLVMXMLReader',
+    'HLVMXMLWriter',
+    'HLVMAST',
+    'HLVMBase',
+    'xml2',
+    'LLVMSupport',
+    'LLVMSystem',
+    'apr-1',
+    'stdc++'
+  ],
+)

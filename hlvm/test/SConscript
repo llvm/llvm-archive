@@ -22,3 +22,6 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
+if 'check' in COMMAND_LINE_TARGETS:
+  from build import check
+  check.Check(env)

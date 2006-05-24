@@ -165,8 +165,5 @@ Options:                                                     (Default)
 """)
   print "HLVM BUILD MODE:", VariantName
   ConfigureHLVM(env)
-  if 'check' in targets:
-    from build import check
-    check.Check(env)
   return env
 

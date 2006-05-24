@@ -373,13 +373,10 @@ XMLWriterImpl::put(Bundle* b)
   startElement("bundle");
   writeAttribute("pubid",b->getName().c_str());
   putDoc(b);
-  for (Bundle::const_iterator I = b->begin(),E = b->end(); I != E; ++I)
+  for (Bundle::type_const_iterator I = b->type_begin(), E = b->type_end();
+       I != E; ++I)
   {
-    switch ((*I)->getID()) 
-    {
-      case DocumentationID:    put(cast<Documentation>(*I)); break;
-      case VariableID:         put(cast<Variable>(*I)); break;
-      case FunctionID:         put(cast<Function>(*I)); break;
+    switch ((*I)->getID()) {
       case AliasTypeID:        put(cast<AliasType>(*I)); break;
       case AnyTypeID:          put(cast<AnyType>(*I)); break;
       case BooleanTypeID:      put(cast<BooleanType>(*I)); break;
@@ -396,9 +393,16 @@ XMLWriterImpl::put(Bundle* b)
       case StructureTypeID:    put(cast<StructureType>(*I)); break;
       case SignatureTypeID:    put(cast<SignatureType>(*I)); break;
       default:
-        hlvmDeadCode("Invalid bundle content");
+        hlvmDeadCode("Unknown Type");
+        break;
     }
   }
+  for (Bundle::var_const_iterator I = b->var_begin(), E = b->var_end();
+       I != E; ++I)
+    put(cast<Variable>(*I));
+  for (Bundle::func_const_iterator I = b->func_begin(), E = b->func_end();
+       I != E; ++I)
+    put(cast<Function>(*I));
   endElement();
 }
 

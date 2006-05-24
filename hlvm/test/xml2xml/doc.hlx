@@ -120,11 +120,11 @@
         <doc>Documentation for field 2</doc>
       </field>
     </structure>
-    <var name="var" type="int">
-      <doc><p>This is documentation for a <i>var</i>iable</p></doc>
-    </var>
     <vector name="aVector" of="f32" length="128">
       <doc>Vector doc</doc>
     </vector>
+    <var name="var" type="int">
+      <doc><p>This is documentation for a <i>var</i>iable</p></doc>
+    </var>
   </bundle>
 </hlvm>

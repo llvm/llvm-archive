@@ -28,7 +28,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Bundle.h>
-#include <hlvm/AST/LinkageItem.h>
+#include <hlvm/AST/Type.h>
+#include <hlvm/AST/Variable.h>
+#include <hlvm/AST/Function.h>
 #include <hlvm/Base/Assert.h>
 
 using namespace llvm; 
@@ -51,8 +53,14 @@ Bundle::~Bundle()
 void 
 Bundle::insertChild(Node* kid)
 {
-  hlvmAssert(isa<LinkageItem>(kid) && "Can't insert that here");
-  kids.push_back(cast<LinkageItem>(kid));
+  if (kid->isType())
+    types.push_back(cast<Type>(kid));
+  else if (kid->isVariable())
+    vars.push_back(cast<Variable>(kid));
+  else if (kid->isFunction())
+    funcs.push_back(cast<Function>(kid));
+  else
+    hlvmAssert(isa<LinkageItem>(kid) && "Can't insert that here");
 }
 
 void
@@ -60,8 +68,18 @@ Bundle::removeChild(Node* kid)
 {
   hlvmAssert(isa<LinkageItem>(kid) && "Can't remove that here");
   // This is sucky slow, but we probably won't be removing nodes that much.
-  for (iterator I = begin(), E = end(); I != E; ++I ) {
-    if (*I == kid) { kids.erase(I); return; }
+  if (kid->isType()) {
+    for (type_iterator I = type_begin(), E = type_end(); I != E; ++I ) {
+      if (*I == kid) { types.erase(I); return; }
+    }
+  } else if (kid->isVariable()) {
+    for (var_iterator I = var_begin(), E = var_end(); I != E; ++I ) {
+      if (*I == kid) { vars.erase(I); return; }
+    }
+  } else if (kid->isFunction()) {
+    for (func_iterator I = func_begin(), E = func_end(); I != E; ++I ) {
+      if (*I == kid) { funcs.erase(I); return; }
+    }
   }
   hlvmAssert(!"That node isn't my child");
 }

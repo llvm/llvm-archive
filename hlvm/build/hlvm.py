@@ -89,8 +89,8 @@ def GetBuildEnvironment(targets,arguments):
   env['CCFLAGS']  = ' -pipe -Wall -Wcast-align -Wpointer-arith'
   env['CXXFLAGS'] = ' -pipe -Wall -Wcast-align -Wpointer-arith -Wno-deprecated'
   env['CXXFLAGS']+= ' -Wold-style-cast -Woverloaded-virtual -ffor-scope'
-  env['CXXFLAGS']+= ' -fno-operator-names'
-  env['CPPDEFINES'] = { '__STDC_LIMIT_MACROS':None }
+  env['CXXFLAGS']+= ' -fno-operator-names -Wno-unused'
+  env['CPPDEFINES'] = { '__STDC_LIMIT_MACROS':None, '_GNU_SOURCE':None }
   VariantName=''
   if env['small'] == 1:
     VariantName='S'

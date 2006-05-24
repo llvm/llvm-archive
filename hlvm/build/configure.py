@@ -142,9 +142,9 @@ def CheckProgram(context,progname,varname,moredirs=[]):
 def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('algorithm'):
     env.Exit(1)
-  if not conf.CheckCXXHeader('apr-1/apr_pools.h'):
+  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_pools.h']):
     env.Exit(1)
-  if not conf.CheckCXXHeader('apr-1/apr_uri.h'):
+  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_uri.h']):
     env.Exit(1)
   if not conf.CheckCXXHeader('cassert'):
     env.Exit(1)
@@ -154,11 +154,11 @@ def CheckForHeaders(conf,env):
     env.Exit(1)
   if not conf.CheckCXXHeader('istream'):
     env.Exit(1)
-  if not conf.CheckCXXHeader('libxml/parser.h'):
+  if not conf.CheckCHeader('libxml/parser.h'):
     env.Exit(1)
-  if not conf.CheckCXXHeader('libxml/relaxng.h'):
+  if not conf.CheckCHeader('libxml/relaxng.h'):
     env.Exit(1)
-  if not conf.CheckCXXHeader('libxml/xmlwriter.h'):
+  if not conf.CheckCHeader('libxml/xmlwriter.h'):
     env.Exit(1)
   if not conf.CheckCXXHeader('llvm/ADT/StringExtras.h'):
     env.Exit(1)

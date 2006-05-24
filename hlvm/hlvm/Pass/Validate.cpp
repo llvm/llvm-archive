@@ -27,7 +27,7 @@
 /// @brief Implements the functions of class hlvm::Pass::Validate.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Pass/Validate.h>
+#include <hlvm/Pass/Pass.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Bundle.h>
@@ -40,11 +40,11 @@ using namespace hlvm;
 using namespace llvm;
 
 namespace {
-class ValidateImpl : public Validate
+class ValidateImpl : public Pass
 {
   public:
-    ValidateImpl() : Validate(0) {}
-    virtual void handle(Node* b,Pass::PassMode m);
+    ValidateImpl() : Pass(0,Pass::PostOrderTraversal) {}
+    virtual void handle(Node* b,Pass::TraversalKinds k);
     inline void error(Node*n, const char* msg);
     inline void validateName(NamedNode* n);
     inline void validateIntegerType(IntegerType* n);
@@ -152,7 +152,7 @@ ValidateImpl::validateBundle(Bundle* n)
 }
 
 void
-ValidateImpl::handle(Node* n,Pass::PassMode m)
+ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
 {
   switch (n->getID())
   {
@@ -311,11 +311,8 @@ ValidateImpl::handle(Node* n,Pass::PassMode m)
 
 }
 
-Validate::~Validate()
-{
-}
-
-Validate* Validate::create()
+Pass* 
+Pass::new_ValidatePass()
 {
   return new ValidateImpl();
 }

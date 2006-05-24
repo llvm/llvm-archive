@@ -56,7 +56,7 @@ private:
   class WriterPass : public Pass
   {
     public:
-      WriterPass(const char* fname) : Pass(0,Pass::Both_Mode) {
+      WriterPass(const char* fname) : Pass(0,Pass::PreAndPostOrderTraversal) {
         writer = xmlNewTextWriterFilename(fname,0);
         hlvmAssert(writer && "Can't allocate writer");
         xmlTextWriterSetIndent(writer,1);
@@ -112,7 +112,7 @@ private:
     inline void put(StructureType* t);
     inline void put(SignatureType* t);
 
-    virtual void handle(Node* n,Pass::PassMode mode);
+    virtual void handle(Node* n,Pass::TraversalKinds mode);
 
   private:
     xmlTextWriterPtr writer;
@@ -370,9 +370,9 @@ XMLWriterImpl::WriterPass::put(Bundle* b)
 }
 
 void
-XMLWriterImpl::WriterPass::handle(Node* n,Pass::PassMode mode)
+XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
 {
-  if (mode & Pass::Begin_Mode) {
+  if (mode & Pass::PreOrderTraversal) {
     switch (n->getID()) 
     {
       case AliasTypeID:        put(cast<AliasType>(n)); break;
@@ -398,7 +398,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::PassMode mode)
         break;
     }
   }
-  if (mode & Pass::End_Mode) {
+  if (mode & Pass::PostOrderTraversal) {
     endElement();
   }
 }

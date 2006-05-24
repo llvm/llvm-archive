@@ -35,38 +35,40 @@
 #include <hlvm/AST/Variable.h>
 
 using namespace hlvm;
+using namespace llvm;
 
 namespace {
 
 class PassManagerImpl : public PassManager
 {
 public:
-  PassManagerImpl() : PassManager(), begins(), ends(0) {}
+  PassManagerImpl() : PassManager(), pre(), post() {}
   void addPass(Pass* p);
   void runOn(AST* tree);
 
-  inline void runIfInterested(Pass* p, Node* n, Pass::PassMode m);
-  inline void runBegins(Node* n);
-  inline void runEnds(Node* n);
+  inline void runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m);
+  inline void runPreOrder(Node* n);
+  inline void runPostOrder(Node* n);
+  inline void runOn(Operator* b);
+  inline void runOn(Block* b);
   inline void runOn(Bundle* b);
 
 private:
-  std::vector<Pass*> begins;
-  std::vector<Pass*> ends;
-  Pass* bfsFirst; // First pass for breadth first traversal
+  std::vector<Pass*> pre;
+  std::vector<Pass*> post;
 };
 
 void
 PassManagerImpl::addPass(Pass* p)
 {
-  if (p->mode() & Pass::Begin_Mode)
-    begins.push_back(p);
-  if (p->mode() & Pass::End_Mode)
-    ends.push_back(p);
+  if (p->mode() & Pass::PreOrderTraversal)
+    pre.push_back(p);
+  if (p->mode() & Pass::PostOrderTraversal)
+    post.push_back(p);
 }
 
 inline void
-PassManagerImpl::runIfInterested(Pass* p, Node* n, Pass::PassMode m)
+PassManagerImpl::runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m)
 {
   int interest = p->interest();
   if (interest == 0 ||
@@ -82,53 +84,77 @@ PassManagerImpl::runIfInterested(Pass* p, Node* n, Pass::PassMode m)
 }
 
 inline void 
-PassManagerImpl::runBegins(Node* n)
+PassManagerImpl::runPreOrder(Node* n)
 {
-  std::vector<Pass*>::iterator I = begins.begin(), E = begins.end();
+  std::vector<Pass*>::iterator I = pre.begin(), E = pre.end();
   while (I != E) {
-    runIfInterested(*I,n,Pass::Begin_Mode);
+    runIfInterested(*I,n,Pass::PreOrderTraversal);
     ++I;
   }
 }
 
 inline void 
-PassManagerImpl::runEnds(Node* n)
+PassManagerImpl::runPostOrder(Node* n)
 {
-  std::vector<Pass*>::iterator I = ends.begin(), E = ends.end();
+  std::vector<Pass*>::iterator I = post.begin(), E = post.end();
   while (I != E) {
-    runIfInterested(*I,n,Pass::End_Mode);
+    runIfInterested(*I,n,Pass::PostOrderTraversal);
     ++I;
   }
+}
+
+inline void
+PassManagerImpl::runOn(Operator* op)
+{
+  runPreOrder(op);
+  runPostOrder(op);
+}
+
+inline void
+PassManagerImpl::runOn(Block* b)
+{
+  runPreOrder(b);
+  for (Block::iterator I = b->begin(), E = b->end(); I != E; ++I) {
+    if (isa<Block>(*I))
+      runOn(cast<Block>(*I)); // recurse!
+    else
+      runOn(cast<Operator>(*I)); 
+  }
+  runPostOrder(b);
 }
 
 inline void 
 PassManagerImpl::runOn(Bundle* b)
 {
-  runBegins(b);
-  for (Bundle::type_iterator I=b->type_begin(), E=b->type_end(); I != E; ++I) {
-    runBegins((*I));
-    runEnds((*I));
+  runPreOrder(b);
+  for (Bundle::type_iterator TI =b->type_begin(), TE = b->type_end(); 
+       TI != TE; ++TI) {
+    runPreOrder(*TI);
+    runPostOrder(*TI);
   }
-  for (Bundle::var_iterator I=b->var_begin(), E=b->var_end(); I != E; ++I) {
-    runBegins((*I));
-    runEnds((*I));
+  for (Bundle::var_iterator VI = b->var_begin(), VE = b->var_end(); 
+       VI != VE; ++VI) {
+    runPreOrder(*VI);
+    runPostOrder(*VI);
   }
-  for (Bundle::func_iterator I=b->func_begin(), E=b->func_end(); I != E; ++I) {
-    runBegins((*I));
-    runEnds((*I));
+  for (Bundle::func_iterator FI = b->func_begin(), FE = b->func_end(); 
+       FI != FE; ++FI) {
+    runPreOrder(*FI);
+    runOn((*FI)->getBlock());
+    runPostOrder(*FI);
   }
-  runEnds(b);
+  runPostOrder(b);
 }
 
 void PassManagerImpl::runOn(AST* tree)
 {
-  if (begins.empty() && ends.empty())
+  // Just a little optimization for empty pass managers
+  if (pre.empty() && post.empty())
     return;
 
+  // Traverse each of the bundles in the AST node.
   for (AST::iterator I = tree->begin(), E = tree->end(); I != E; ++I)
-  {
     runOn(*I);
-  }
 }
 
 } // anonymous namespace

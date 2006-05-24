@@ -30,12 +30,10 @@
 #ifndef HLVM_AST_BLOCK_H
 #define HLVM_AST_BLOCK_H
 
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/Operator.h>
 
 namespace hlvm 
 {
-
-class Operator; // Forward declare
 
 /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
 /// A Variable is a storage location of a specific type. It can either be
@@ -43,7 +41,7 @@ class Operator; // Forward declare
 /// contained in a Bundle. Local variables are always contained in a
 /// Function.
 /// @brief HLVM AST Variable Node
-class Block : public Node
+class Block : public Operator
 {
   /// @name Types
   /// @{
@@ -56,7 +54,7 @@ class Block : public Node
   /// @name Constructors
   /// @{
   public:
-    Block() : Node(BlockID), ops() {}
+    Block() : Operator(BlockID), ops() {}
     virtual ~Block();
 
   /// @}
@@ -64,6 +62,7 @@ class Block : public Node
   /// @{
   public:
     static inline bool classof(const Block*) { return true; }
+    static inline bool classof(const Operator* O) { return O->isBlock(); }
     static inline bool classof(const Node* N) { return N->isBlock(); }
 
   /// @}

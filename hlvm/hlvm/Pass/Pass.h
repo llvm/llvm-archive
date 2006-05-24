@@ -46,7 +46,7 @@ class Pass
   public:
     /// Or these together and pass to the constructor to indicate which
     /// kinds of things you are interested in.
-    enum PassInterest {
+    enum InterestKinds {
       All_Interest = 0,           ///< Pass is interested in everything
       Block_Interest = 1,         ///< Pass is interested in Blocks
       Operator_Interest = 2,      ///< Pass is interested in Operators
@@ -56,20 +56,29 @@ class Pass
       Variable_Interest = 32      ///< Pass is interested in Variables
     };
 
-    enum PassMode {
-      None_Mode = 0,   ///< Pass doesn't want to be called!
-      Begin_Mode = 1,  ///< Call pass at node begin (going down tree)
-      End_Mode = 2,    ///< Call pass at node end (going up tree)
-      Both_Mode = 3    ///< Call pass at both begin and end of node
+    /// Specifies the kinds of traversals that a pass can request. The
+    /// PassManager always walks the tree in a depth-first search (DFS) and it
+    /// can call the pass either when it arrives at the node (preorder) on the
+    /// way down, or when it leaves the node (postorder) on the way up. A pass
+    /// can also specify that it wants both pre-order and post-order traversal.
+    enum TraversalKinds {
+      NoTraversal = 0,             ///< Pass doesn't want to be called!
+      PreOrderTraversal = 1,       ///< Call pass on the way down the DFS walk
+      PostOrderTraversal = 2,      ///< Call pass on the way up the DFS walk
+      PreAndPostOrderTraversal = 3 ///< Call pass on both the way down and up
     };
 
   /// @}
   /// @name Constructors
   /// @{
   protected:
-    Pass(int i, int m) : interest_(i), mode_(m) {}
+    Pass(int i, TraversalKinds m) : interest_(i), mode_(m) {}
   public:
     virtual ~Pass();
+
+    /// Instantiate the standard passes
+    static Pass* new_ValidatePass();
+    static Pass* new_ResolveTypesPass();
 
   /// @}
   /// @name Handlers
@@ -79,21 +88,21 @@ class Pass
     /// implementation does nothing. This handler is only called if the
     /// interest is set to 0 (interested in everything). It is left to the
     /// subclass to disambiguate the Node.
-    virtual void handle(Node* n, PassMode mode) = 0;
+    virtual void handle(Node* n, TraversalKinds mode) = 0;
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    int mode() { return mode_; }
-    int interest() { return interest_; }
+    int mode()     const { return mode_; }
+    int interest() const { return interest_; }
 
   /// @}
   /// @name Data
   /// @{
   private:
     int interest_;
-    int mode_;
+    TraversalKinds mode_;
   /// @}
 };
 

@@ -44,6 +44,7 @@ def InstallProgram(env,prog):
   return 1
 
 def InstallLibrary(env,lib):
+  env.AppendUnique(LIBPATH=env.Dir('.'))
   if 'install' in COMMAND_LINE_TARGETS:
     libdir = pjoin(env['prefix'],'lib')
     env.Install(dir,lib)
@@ -140,14 +141,9 @@ def GetBuildEnvironment(targets,arguments):
   env['BuildDir'] = BuildDir
   env['AbsObjRoot'] = env.Dir(BuildDir).abspath
   env['AbsSrcRoot'] = env.Dir('#').abspath
-  env['LIBPATH'] = [
-    pjoin('#',BuildDir,'hlvm/Base'),
-    pjoin('#',BuildDir,'hlvm/AST'),
-    pjoin('#',BuildDir,'hlvm/Reader/XML'),
-    pjoin('#',BuildDir,'hlvm/Writer/XML')
-  ];
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])
+  env['LIBPATH'] = []
   env.BuildDir(pjoin(BuildDir,'hlvm'),'hlvm',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'tools'),'tools',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'test'),'test',duplicate=0)

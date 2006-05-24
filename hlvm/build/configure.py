@@ -139,14 +139,42 @@ def FindLibXML2(conf,env):
   return conf.FindPackage('LIBXML2',pjoin('libxml','parser.h'),['xml2'],code,
     [],[],'libxml2')
 
-def CheckStdCXXHeaders(conf,env):
-  if not conf.CheckCXXHeader('vector'):
+def CheckForHeaders(conf,env):
+  if not conf.CheckCXXHeader('algorithm'):
     env.Exit(1)
-  if not conf.CheckCXXHeader('map'):
+  if not conf.CheckCXXHeader('apr-1/apr_pools.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('apr-1/apr_uri.h'):
     env.Exit(1)
   if not conf.CheckCXXHeader('cassert'):
     env.Exit(1)
+  if not conf.CheckCXXHeader('ios'):
+    env.Exit(1)
   if not conf.CheckCXXHeader('iostream'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('istream'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('libxml/parser.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('libxml/relaxng.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('libxml/xmlwriter.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('llvm/ADT/StringExtras.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('llvm/System/Path.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('map'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('memory'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('new'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('ostream'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('string'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('vector'):
     env.Exit(1)
   return 1
 
@@ -156,6 +184,9 @@ def CheckForPrograms(conf,env):
   if not conf.CheckProgram('runtest','RUNTEST'):
     env['RUNTEST'] = None
     print "*** TESTING DISABLED ***"
+  if not conf.CheckProgram('doxygen','DOXYGEN'):
+    env['DOXYGEN'] = None
+    print "*** DOXYGEN DISABLED ***"
   return 1
 
 #dnl AC_PATH_PROG(path_EGREP, egrep, egrep)
@@ -174,10 +205,10 @@ def ConfigureHLVM(env):
     log_file=pjoin(env['BuildDir'],'config.log')
   )
   env['LIBS'] = ""
-  CheckForPrograms(conf,env)
-  CheckStdCXXHeaders(conf,env)
   FindLibXML2(conf,env)
   FindAPR(conf,env)
   FindAPRU(conf,env)
   FindLLVM(conf,env)
+  CheckForPrograms(conf,env)
+  CheckForHeaders(conf,env)
   conf.Finish()

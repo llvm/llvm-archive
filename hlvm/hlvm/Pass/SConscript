@@ -1,4 +1,4 @@
-#===-- Build Script For hlvm ----------------------------------*- Python -*-===#
+#===-- Build Script For hlvm/AST ------------------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -22,4 +22,6 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['Base','AST','Pass','Reader','Writer'])
+lib = env.StaticLibrary('HLVMPass',hlvm.GetAllCXXFiles(env))
+hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,hlvm.GetFiles(env,'*.h'))

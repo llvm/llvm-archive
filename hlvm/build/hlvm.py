@@ -27,16 +27,16 @@ def GetRNGTokenizer(env):
 
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
-  top = env.Dir('#').path
-  if top == dir:
-    path = pjoin('#',env['BuildDir'])
+  print "dir=",dir
+  if (dir == env.Dir('#').path):
+    dir = '#' + env['BuildDir']
   else:
-    path = ''
-  print "Entering Directory",dir
-  result = []
+    dir = '#' + dir
+  print "dir=",dir
   for d in dirlist:
-    result.append(pjoin(path,d,'SConscript'))
-  env.SConscript(result)
+    sconsfile = pjoin(dir,d,'SConscript')
+    print "sconsfile=",sconsfile
+    env.SConscript(sconsfile)
 
 def InstallProgram(env,prog):
   dir = pjoin(env['prefix'],'bin')
@@ -55,9 +55,6 @@ def InstallHeader(env,hdrname):
   env.Install(dir,hdrname)
   env.Alias('install',dir)
   return 1
-
-def join(one,two):
-  return pjoin([one,two])
 
 def GetBuildEnvironment(targets,arguments):
   env = Environment();
@@ -145,11 +142,11 @@ def GetBuildEnvironment(targets,arguments):
     pjoin('#',BuildDir,'hlvm/Reader/XML'),
     pjoin('#',BuildDir,'hlvm/Writer/XML')
   ];
+  env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
+  env.Prepend(CPPPATH=['#'])
   env.BuildDir(pjoin(BuildDir,'hlvm'),'hlvm',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'tools'),'tools',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'test'),'test',duplicate=0)
-  env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
-  env.Prepend(CPPPATH=['#'])
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   env.Help("""
 HLVM Build Environment
@@ -170,7 +167,7 @@ Options:                                                     (Default)
   prefix=<path>     - specify where HLVM should be installed (/usr/local)
 """)
   print "HLVM BUILD MODE:", VariantName
-  env = ConfigureHLVM(env)
+  ConfigureHLVM(env)
   if 'check' in targets:
     from build import check
     check.Check(env)

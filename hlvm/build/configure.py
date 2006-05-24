@@ -117,7 +117,7 @@ def _getline(env,msg):
   return response
 
 def FindLLVM(conf,env):
-  code = 'llvm::Module* M = new llvm::Module("Name");'
+  code = 'new llvm::Module("Name");'
   return conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
       code,['/proj/install/llvm'],['LLVMCore','LLVMbzip2'])
 
@@ -176,4 +176,4 @@ def ConfigureHLVM(env):
   FindAPR(conf,env)
   FindAPRU(conf,env)
   FindLLVM(conf,env)
-  return conf.Finish()
+  conf.Finish()

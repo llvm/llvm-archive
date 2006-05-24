@@ -27,7 +27,7 @@
 /// @brief Implements the functions of class hlvm::AST::Pass.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Pass.h>
+#include <hlvm/Pass/Pass.h>
 
 namespace hlvm { namespace AST {
 

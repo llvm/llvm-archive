@@ -1,4 +1,4 @@
-//===-- AST Pass Classes ----------------------------------------*- C++ -*-===//
+//===-- Pass Interface Class ------------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,11 +20,11 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Pass.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
+/// @file hlvm/Pass/Pass.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Pass
+/// @brief Declares the class hlvm::Pass::Pass
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_AST_PASS_H
@@ -32,14 +32,8 @@
 
 namespace hlvm 
 {
-
-class Block;
-class Bundle;
-class Function;
 class Node;
-class Program;
-class Operator;
-class Type;
+
 /// This class provides an abstract interface to Pass execution. This class
 /// is meant to be subclassed and the various "handle" methods overriden to
 /// gain access to the information in the AST.

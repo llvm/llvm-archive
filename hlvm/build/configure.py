@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
 }
 """
   context.env.AppendUnique(LIBS = libs)
-  paths += ['/proj','/proj/install','/opt/','/sw','/usr/local','/usr','/']
+  paths += 
+    ['/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/']
   for p in paths:
     for ldir in ['lib','bin','libexec','libs','LIBS']:
       libdir = pjoin(p,ldir)

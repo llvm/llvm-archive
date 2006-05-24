@@ -101,8 +101,8 @@ class PassManager
 {
   protected:
     PassManager() {}
-    virtual ~PassManager();
   public:
+    virtual ~PassManager();
     static  PassManager* create();
     virtual void addPass(Pass* p) = 0;
     virtual void runOn(AST* tree) = 0;

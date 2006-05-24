@@ -30,6 +30,7 @@
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Writer/XML/XMLWriter.h>
+#include <hlvm/Pass/Validate.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
 #include <fstream>
@@ -93,6 +94,12 @@ int main(int argc, char**argv)
     rdr->read();
     AST* node = rdr->get();
     if (node) {
+      PassManager* PM = PassManager::create();
+      Validate* pass = Validate::create();
+      PM->addPass( pass );
+      PM->runOn(node);
+      delete PM;
+      delete pass;
       wrtr->write(node);
     }
     delete rdr;

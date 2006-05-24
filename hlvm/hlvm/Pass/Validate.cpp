@@ -315,7 +315,7 @@ Validate::~Validate()
 {
 }
 
-Validate* new_Validate()
+Validate* Validate::create()
 {
   return new ValidateImpl();
 }

@@ -46,7 +46,7 @@ class Validate : public Pass
   protected:
     Validate(int interest) : Pass(interest,true) {}
   public:
-    Validate* new_Validate();
+    static Validate* create();
     virtual ~Validate();
 
   /// @}

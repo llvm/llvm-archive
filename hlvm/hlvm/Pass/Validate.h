@@ -30,7 +30,7 @@
 #ifndef HLVM_PASS_VALIDATE_H
 #define HLVM_PASS_VALIDATE_H
 
-#include <hlvm/AST/Pass.h>
+#include <hlvm/Pass/Pass.h>
 
 namespace hlvm 
 {

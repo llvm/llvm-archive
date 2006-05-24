@@ -26,6 +26,7 @@ prog = env.Program('hlvm-xml2xml', hlvm.GetAllCXXFiles(env),
  LIBS=[
    'HLVMXMLReader',
    'HLVMXMLWriter',
+   'HLVMPass',
    'HLVMAST',
    'HLVMBase',
    'xml2',

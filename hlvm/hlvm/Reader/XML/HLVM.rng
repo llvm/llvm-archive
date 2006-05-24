@@ -144,7 +144,9 @@
   <!-- HLVM PATTERN -->
   <define name="HLVM.elem">
     <element name="hlvm">
-      <ref name="Bundle.elem"/>
+      <oneOrMore>
+        <ref name="Bundle.elem"/>
+      </oneOrMore>
     </element>
   </define>
 

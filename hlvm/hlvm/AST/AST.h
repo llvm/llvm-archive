@@ -31,6 +31,7 @@
 #define HLVM_AST_AST_H
 
 #include <string>
+#include <vector>
 
 /// This namespace is for all HLVM software. It ensures that HLVM software does
 /// not collide with any other software. Hopefully HLVM is not a namespace used
@@ -68,6 +69,14 @@ class EnumerationType;
 /// @brief AST Container Class
 class AST
 {
+  /// @name Types
+  /// @{
+  public:
+    typedef std::vector<Bundle*> NodeList;
+    typedef NodeList::iterator   iterator;
+    typedef NodeList::const_iterator const_iterator;
+
+  /// @}
   /// @name Constructors
   /// @{
   public:
@@ -75,7 +84,7 @@ class AST
     static void destroy(AST* ast);
 
   protected:
-    AST() : sysid(), pubid(), root(0) {}
+    AST() : sysid(), pubid(), nodes(0) {}
     ~AST();
 
   /// @}
@@ -84,7 +93,6 @@ class AST
   public:
     const std::string& getSystemID() { return sysid; }
     const std::string& getPublicID() { return pubid; }
-    Bundle* getRoot() { return root; }
 
   /// @}
   /// @name Mutators
@@ -92,13 +100,28 @@ class AST
   public:
     void setSystemID(const std::string& id) { sysid = id; }
     void setPublicID(const std::string& id) { pubid = id; }
-    void setRoot(Bundle* top) { root = top; }
+    void addBundle(Bundle* b) { nodes.push_back(b); }
 
   /// @}
   /// @name Lookup
   /// @{
   public:
     Type* resolveType(const std::string& name);
+
+  /// @}
+  /// @name Iterators
+  /// @{
+  public:
+    iterator           begin()       { return nodes.begin(); }
+    const_iterator     begin() const { return nodes.begin(); }
+    iterator           end  ()       { return nodes.end(); }
+    const_iterator     end  () const { return nodes.end(); }
+    size_t             size () const { return nodes.size(); }
+    bool               empty() const { return nodes.empty(); }
+    Bundle*            front()       { return nodes.front(); }
+    const Bundle*      front() const { return nodes.front(); }
+    Bundle*            back()        { return nodes.back(); }
+    const Bundle*      back()  const { return nodes.back(); }
 
   /// @}
   /// @name Factories
@@ -207,7 +230,7 @@ class AST
   protected:
     std::string sysid;
     std::string pubid;
-    Bundle* root;
+    NodeList nodes;
   /// @}
 };
 

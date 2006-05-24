@@ -44,7 +44,7 @@ class Validate : public Pass
   /// @name Constructors
   /// @{
   protected:
-    Validate(int interest) : Pass(interest) {}
+    Validate(int interest) : Pass(interest,true) {}
   public:
     Validate* new_Validate();
     virtual ~Validate();

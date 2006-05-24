@@ -33,6 +33,7 @@
 namespace hlvm 
 {
 class Node;
+class AST;
 
 /// This class provides an abstract interface to Pass execution. This class
 /// is meant to be subclassed and the various "handle" methods overriden to
@@ -51,13 +52,22 @@ class Pass
       Operator_Interest = 2,      ///< Pass is interested in Operators
       Function_Interest = 4,      ///< Pass is interested in Functions
       Program_Interest = 8,       ///< Pass is interested in Programs
-      Type_Interest = 16          ///< Pass is interested in Types
+      Type_Interest = 16,         ///< Pass is interested in Types
+      Variable_Interest = 32      ///< Pass is interested in Variables
     };
+
+    enum PassMode {
+      None_Mode = 0,   ///< Pass doesn't want to be called!
+      Begin_Mode = 1,  ///< Call pass at node begin (going down tree)
+      End_Mode = 2,    ///< Call pass at node end (going up tree)
+      Both_Mode = 3    ///< Call pass at both begin and end of node
+    };
+
   /// @}
   /// @name Constructors
   /// @{
   protected:
-    Pass(int interest);
+    Pass(int i, int m) : interest_(i), mode_(m) {}
   public:
     virtual ~Pass();
 
@@ -69,24 +79,33 @@ class Pass
     /// implementation does nothing. This handler is only called if the
     /// interest is set to 0 (interested in everything). It is left to the
     /// subclass to disambiguate the Node.
-    virtual void handle(Node* n);
+    virtual void handle(Node* n, PassMode mode) = 0;
 
   /// @}
-  /// @name Invocators
+  /// @name Accessors
   /// @{
   public:
-    /// Run the pass with the default interest given during construction.
-    void run();
-
-    /// Run the pass with the interest specified
-    void runWithInterest(int interest);
+    int mode() { return mode_; }
+    int interest() { return interest_; }
 
   /// @}
   /// @name Data
   /// @{
-  protected:
-    int interest;
+  private:
+    int interest_;
+    int mode_;
   /// @}
+};
+
+class PassManager 
+{
+  protected:
+    PassManager() {}
+    virtual ~PassManager();
+  public:
+    static  PassManager* create();
+    virtual void addPass(Pass* p) = 0;
+    virtual void runOn(AST* tree) = 0;
 };
 
 } // hlvm

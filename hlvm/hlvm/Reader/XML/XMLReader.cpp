@@ -554,7 +554,7 @@ XMLReaderImpl::parseTree()
   cur = cur->children;
   if (skipBlanks(cur)) {
     Bundle* bundle = parseBundle(cur);
-    ast->setRoot(bundle);
+    ast->addBundle(bundle);
   }
 }
 

@@ -33,7 +33,6 @@ def Dirs(env,dirlist=[]):
     dir = '#' + dir
   for d in dirlist:
     sconsfile = pjoin(dir,d,'SConscript')
-    print "sconsfile=",sconsfile
     env.SConscript(sconsfile)
 
 def InstallProgram(env,prog):

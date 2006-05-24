@@ -16,7 +16,7 @@ def CheckProgram(context,progname,varname,moredirs=[]):
   return ret
 
   
-def AskForDirs(context,pkgname,hdr,lib):
+def AskForDirs(context,pkgname,hdr,libs):
   hdrdir = _getline(context.env,
     'Enter directory containing %(name)s headers: ' % {'name':pkgname }
   )
@@ -25,20 +25,21 @@ def AskForDirs(context,pkgname,hdr,lib):
     libdir = _getline(context.env,
       'Enter directory containing %(name)s libraries: ' % { 'name':pkgname }
     )
-    libpath = pjoin(libdir,context.env['LIBPREFIX'])
-    libpath += lib
-    libpath += context.env['LIBSUFFIX']
-    if isfile(libpath):
-      context.env[pkgname + '_lib'] = libdir
-      context.env[pkgname + '_inc'] = hdrdir
-      context.env.AppendUnique(LIBPATH=[libdir],CPPPATH=[hdrdir])
-      return 1
-    else:
-      print "Didn't find ",pkgname," libraries in ",libpath,". Try again."
-      return AskForDirs(context,pkgname,hdr,lib)
+    for lib in libs:
+      libpath = pjoin(libdir,context.env['LIBPREFIX'])
+      libpath += lib
+      libpath += context.env['LIBSUFFIX']
+      if isfile(libpath):
+        context.env[pkgname + '_lib'] = libdir
+        context.env[pkgname + '_inc'] = hdrdir
+        context.env.AppendUnique(LIBPATH=[libdir],CPPPATH=[hdrdir])
+        return 1
+      else:
+        print "Didn't find ",pkgname," libraries in ",libpath,". Try again."
+        return AskForDirs(context,pkgname,hdr,libs)
   else:
     print "Didn't find ",pkgname," headers in ",hdrpath,". Try again."
-    return AskForDirs(context,pkgname,hdr,lib)
+    return AskForDirs(context,pkgname,hdr,libs)
 
 def FindPackage(context,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
                 objs=[], hdrpfx=''):
@@ -56,8 +57,9 @@ int main(int argc, char **argv) {
 }
 """
   context.env.AppendUnique(LIBS = libs)
-  paths += 
-    ['/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/']
+  paths += [
+    '/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/'
+  ]
   for p in paths:
     for ldir in ['lib','bin','libexec','libs','LIBS']:
       libdir = pjoin(p,ldir)

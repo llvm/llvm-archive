@@ -24,3 +24,4 @@ from build import hlvm
 Import('env')
 lib = env.Library('HLVMXMLWriter',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,['XMLWriter.h'])

@@ -29,3 +29,4 @@ env.RNGTokenizer('HLVMTokenizer.cpp','HLVM.rng')
 lib = env.Library('HLVMXMLReader',
         hlvm.GetAllCXXFiles(env)+['HLVMTokenizer.cpp'])
 hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,['XMLReader.h'])

@@ -22,5 +22,6 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-lib = env.Library('HLVMAST',hlvm.GetAllCXXFiles(env))
+lib = env.StaticLibrary('HLVMAST',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,hlvm.GetFiles(env,'*.h'))

@@ -27,12 +27,10 @@ def GetRNGTokenizer(env):
 
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
-  print "dir=",dir
   if (dir == env.Dir('#').path):
     dir = '#' + env['BuildDir']
   else:
     dir = '#' + dir
-  print "dir=",dir
   for d in dirlist:
     sconsfile = pjoin(dir,d,'SConscript')
     print "sconsfile=",sconsfile

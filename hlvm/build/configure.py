@@ -123,12 +123,13 @@ def FindLLVM(conf,env):
 
 def FindAPR(conf,env):
   code = 'apr_initialize();'
-  return conf.FindPackage('APR',pjoin('apr-1','apr_general.h'),['apr-1'],code)
+  return conf.FindPackage('APR',pjoin('apr-1','apr_general.h'),['apr-1'],code,
+      ['/usr/local/apr'])
 
 def FindAPRU(conf,env):
   code = 'apu_version_string();'
   return conf.FindPackage('APRU',pjoin('apr-1','apu_version.h'),['aprutil-1'],
-      code)
+      code,['/usr/local/apr'])
 
 def FindLibXML2(conf,env):
   code = 'xmlNewParserCtxt();'

@@ -6,16 +6,14 @@ from os.path import isfile as isfile
 from os.path import exists as exists
 from os import environ as environ
 
-def CheckProgram(context,progname,varname,moredirs=[]):
-  context.Message("Checking for " + progname + "...")
-  fname = context.env.WhereIs(progname,environ['PATH'])
-  ret = fname != None
-  if ret:
-    context.env[varname] = fname
-  context.Result(ret)
-  return ret
-
   
+def _getline(env,msg):
+  response = raw_input(msg)
+  if response == 'quit' or response == "exit":
+    print "Configuration terminated by user"
+    env.Exit(1)
+  return response
+
 def AskForDirs(context,pkgname,hdr,libs):
   hdrdir = _getline(context.env,
     'Enter directory containing %(name)s headers: ' % {'name':pkgname }
@@ -112,32 +110,34 @@ int main(int argc, char **argv) {
   context.Result( 'Not Found' )
   return AskForDirs(context,pkgname,hdr,libs)
 
-def _getline(env,msg):
-  response = raw_input(msg)
-  if response == 'quit' or response == "exit":
-    print "Configuration terminated by user"
-    env.Exit(1)
-  return response
-
 def FindLLVM(conf,env):
   code = 'new llvm::Module("Name");'
   return conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
-      code,['/proj/install/llvm'],['LLVMCore','LLVMbzip2'])
+      code,[env['with_llvm'],'/proj/install/llvm'],['LLVMCore','LLVMbzip2'])
 
 def FindAPR(conf,env):
   code = 'apr_initialize();'
   return conf.FindPackage('APR',pjoin('apr-1','apr_general.h'),['apr-1'],code,
-      ['/usr/local/apr'])
+      [env['with_apr']])
 
 def FindAPRU(conf,env):
   code = 'apu_version_string();'
   return conf.FindPackage('APRU',pjoin('apr-1','apu_version.h'),['aprutil-1'],
-      code,['/usr/local/apr'])
+      code,[env['with_apru']])
 
 def FindLibXML2(conf,env):
   code = 'xmlNewParserCtxt();'
   return conf.FindPackage('LIBXML2',pjoin('libxml','parser.h'),['xml2'],code,
-    [],[],'libxml2')
+    [env['with_xml2']],[],'libxml2')
+
+def CheckProgram(context,progname,varname,moredirs=[]):
+  context.Message("Checking for " + progname + "...")
+  fname = context.env.WhereIs(progname,environ['PATH'])
+  ret = fname != None
+  if ret:
+    context.env[varname] = fname
+  context.Result(ret)
+  return ret
 
 def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('algorithm'):

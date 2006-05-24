@@ -70,12 +70,12 @@ def GetBuildEnvironment(targets,arguments):
     BoolOption('optimize','Build object files with optimization',0),
     BoolOption('profile','Generate profiling aware code',0),
     BoolOption('small','Generate smaller code rather than faster',0),
-    PackageOption('llvm','Specify where LLVM is located','search'),
-    PackageOption('apr','Specify where apr is located','search'),
-    PackageOption('apru','Specify where apr-utils is located','search'),
-    PackageOption('xml2','Specify where LibXml2 is located','search'),
   )
   opts.Add('prefix','Specify where to install HLVM','/usr/local')
+  opts.Add('with_llvm','Specify where LLVM is located','/usr/local'),
+  opts.Add('with_apr','Specify where apr is located','/usr/local/apr'),
+  opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr'),
+  opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local'),
   opts.Update(env)
   opts.Save('.options_cache',env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'

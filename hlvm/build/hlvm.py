@@ -44,7 +44,7 @@ def InstallProgram(env,prog):
   return 1
 
 def InstallLibrary(env,lib):
-  env.AppendUnique(LIBPATH=env.Dir('.'))
+  env.AppendUnique(LIBPATH=[env.Dir('.')])
   if 'install' in COMMAND_LINE_TARGETS:
     libdir = pjoin(env['prefix'],'lib')
     env.Install(dir,lib)

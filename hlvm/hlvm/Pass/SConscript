@@ -1,4 +1,4 @@
-#===-- Build Script For hlvm/AST ------------------------------*- Python -*-===#
+#===-- Build Script For hlvm/Pass -----------------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #

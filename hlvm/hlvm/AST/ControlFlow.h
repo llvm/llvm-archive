@@ -1,4 +1,4 @@
-//===-- AST Function Class --------------------------------------*- C++ -*-===//
+//===-- AST Control Flow Operators ------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,42 +20,43 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Block.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/ControlFlow.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/05/25
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Block
+/// @brief Declares the AST Control flow classes (Loop, If, Call, Return, etc.)
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_BLOCK_H
-#define HLVM_AST_BLOCK_H
+#ifndef HLVM_AST_CONTROLFLOW_H
+#define HLVM_AST_CONTROLFLOW_H
 
 #include <hlvm/AST/Operator.h>
 
 namespace hlvm 
 {
 
-/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-/// A Variable is a storage location of a specific type. It can either be
-/// global or local, depending on its parent. Global variables are always
-/// contained in a Bundle. Local variables are always contained in a
-/// Function.
-/// @brief HLVM AST Variable Node
-class Block : public MultiOperator
+/// This class represents a return operator. The return operator returns from 
+/// the inner most enclosed function. It takes one operand which is the value
+/// to return to the caller.
+/// @brief HLVM AST Return Operator Node
+class ReturnOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
   public:
-    Block() : MultiOperator(BlockID){}
-    virtual ~Block();
+    static ReturnOp* create();
+
+  protected:
+    ReturnOp() : UnaryOperator(ReturnOpID)  {}
+    virtual ~ReturnOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const Block*) { return true; }
-    static inline bool classof(const Operator* O) { return O->isBlock(); }
-    static inline bool classof(const Node* N) { return N->isBlock(); }
+    Operator* getResult() { return UnaryOperator::op1; }
+    static inline bool classof(const ReturnOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ReturnOpID); }
 
   /// @}
   friend class AST;

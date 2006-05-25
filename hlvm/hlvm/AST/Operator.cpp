@@ -35,4 +35,58 @@ Operator::~Operator()
 {
 }
 
+NilaryOperator::~NilaryOperator()
+{
+}
+
+Operator*
+NilaryOperator::getOperand(unsigned idx)
+{
+  assert(!"Can't get operands from a NilaryOperator");
+}
+
+UnaryOperator::~UnaryOperator()
+{
+}
+
+Operator*
+UnaryOperator::getOperand(unsigned idx)
+{
+  assert(idx == 0 && "Operand index out of range");
+  return op1;
+}
+
+BinaryOperator::~BinaryOperator()
+{
+}
+
+Operator*
+BinaryOperator::getOperand(unsigned idx)
+{
+  assert(idx <= 1 && "Operand index out of range");
+  return ops[idx];
+}
+
+TernaryOperator::~TernaryOperator()
+{
+}
+
+Operator*
+TernaryOperator::getOperand(unsigned idx)
+{
+  assert(idx <= 2 && "Operand index out of range");
+  return ops[idx];
+}
+
+MultiOperator::~MultiOperator()
+{
+}
+
+Operator*
+MultiOperator::getOperand(unsigned idx)
+{
+  assert(idx <= ops.size() && "Operand index out of range");
+  return ops[idx];
+}
+
 }

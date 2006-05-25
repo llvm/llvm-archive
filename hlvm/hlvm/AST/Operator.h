@@ -35,40 +35,175 @@
 namespace hlvm 
 {
 
-class Type; // Forward declare
+class Type; 
 
-/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-/// A Variable is a storage location of a specific type. It can either be
-/// global or local, depending on its parent. Global variables are always
-/// contained in a Bundle. Local variables are always contained in a
-/// Function.
-/// @brief HLVM AST Variable Node
-class Operator : public Node
+/// This class is the abstract superclass for all Operators. It provides the
+/// methods and virtual signature that is common to all Operator nodes.
+/// @brief HLVM AST Abstract Operator Node
+class Operator : public Documentable
 {
   /// @name Constructors
   /// @{
-  public:
-    Operator(
-      NodeIDs opID ///< The Operator ID for this operator kind
-    ) : Node(opID), Operands() {}
+  protected:
+    Operator(NodeIDs opID) : Documentable(opID)  {}
     virtual ~Operator();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    bool isNilaryOperator();
-    bool isUnaryOperator();
-    bool isBinaryOperator();
-    bool isTernaryOperator();
+    /// Get a specific operand of this operator.
+    virtual Operator* getOperand(unsigned opnum) = 0;
+
+    /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }
     static inline bool classof(const Node* N) { return N->isOperator(); }
+
+  /// @}
+  friend class AST;
+};
+
+// An operator that takes no operands
+class NilaryOperator : public Operator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    NilaryOperator(NodeIDs opID ) : Operator(opID) {}
+    virtual ~NilaryOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual Operator* getOperand(unsigned opnum);
+    static inline bool classof(const NilaryOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isNilaryOperator(); }
+  /// @}
+  friend class AST;
+};
+
+class UnaryOperator : public Operator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    UnaryOperator(NodeIDs opID) : Operator(opID), op1(0) {}
+    virtual ~UnaryOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual Operator* getOperand(unsigned opnum);
+    static inline bool classof(const UnaryOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isUnaryOperator(); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::vector<Operator*> Operands;  ///< The list of Operands
+    Operator* op1;
+  /// @}
+  friend class AST;
+};
+
+class BinaryOperator : public Operator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    BinaryOperator(NodeIDs opID) : Operator(opID)
+    { ops[0] = ops[1] = 0; }
+    virtual ~BinaryOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual Operator* getOperand(unsigned opnum);
+    static inline bool classof(const BinaryOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isBinaryOperator(); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    Operator* ops[2];
+  /// @}
+  friend class AST;
+};
+
+class TernaryOperator : public Operator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    TernaryOperator(NodeIDs opID) : Operator(opID)
+    { ops[0] = ops[1] = ops[2] = 0; }
+    virtual ~TernaryOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual Operator* getOperand(unsigned opnum);
+    static inline bool classof(const TernaryOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isTernaryOperator(); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    Operator* ops[3];
+  /// @}
+  friend class AST;
+};
+
+class MultiOperator : public Operator
+{
+  /// @name Types
+  /// @{
+  public:
+    typedef std::vector<Operator*> OpList;
+    typedef OpList::iterator iterator;
+    typedef OpList::const_iterator const_iterator;
+
+  /// @}
+  /// @name Constructors
+  /// @{
+  protected:
+    MultiOperator(NodeIDs opID) : Operator(opID), ops(8) {}
+    virtual ~MultiOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual Operator* getOperand(unsigned opnum);
+    static inline bool classof(const MultiOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->isMultiOperator(); }
+
+  /// @}
+  /// @name Iterators
+  /// @{
+  public:
+    iterator       begin()       { return ops.begin(); }
+    const_iterator begin() const { return ops.begin(); }
+    iterator       end  ()       { return ops.end(); }
+    const_iterator end  () const { return ops.end(); }
+    size_t         size () const { return ops.size(); }
+    bool           empty() const { return ops.empty(); }
+    Operator*      front()       { return ops.front(); }
+    const Operator*front() const { return ops.front(); }
+    Operator*      back()        { return ops.back(); }
+    const Operator*back()  const { return ops.back(); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    OpList ops; ///< The operands of this Operator
   /// @}
   friend class AST;
 };

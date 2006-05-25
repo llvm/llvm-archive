@@ -43,7 +43,8 @@ class Documentation;
 /// very specific and dependent on the class hierarchy. In order to use these
 /// values as ranges for class identification (classof methods), we need to 
 /// group things by inheritance rather than by function. 
-enum NodeIDs {
+enum NodeIDs 
+{
   NoTypeID = 0,       ///< Use this for an invalid type ID.
   // Primitive Types (no child nodes)
   VoidTypeID = 1,     ///< The Void Type (The Null Type)
@@ -84,40 +85,54 @@ enum NodeIDs {
   BlockID,            ///< A Block Of Code Nodes
   ImportID,           ///< A bundle's Import declaration
 
-  // Control Flow And Invocation Operators
-  CallOpID,           ///< The Call Operator
-  InvokeOpID,         ///< The Invoke Operator
-  DispatchOpID,       ///< The Object Method Dispatch  Operator
-  CreateContOpID,     ///< The Create Continutation Operator
-  CallWithContOpID,   ///< The Call with Continuation Operator
+  // Nilary Operators (those taking no operands)
+  BreakOpID,          ///< Break out of the enclosing loop
+  PInfOpID,           ///< Constant Positive Infinity Real Value
+  NInfOpID,           ///< Constant Negative Infinity Real Value
+  NaNOpID,            ///< Constant Not-A-Number Real Value
+
+  // Control Flow Unary Operators
   ReturnOpID,         ///< The Return A Value Operator
-  ThrowOpID,          ///< The Throw And Exception Operator
+  ThrowOpID,          ///< The Throw an Exception Operator
   JumpToOpID,         ///< The Jump To Labelled Block Operator
-  BreakOpID,          ///< The Break Out Of Block Operator
-  IfOpID,             ///< The If-Then-Else Operator
-  LoopOpID,           ///< The General Purpose Loop Operator
-  SelectOpID,         ///< The Select An Alternate Operator
 
-  // Scoping Operators
-  WithOpID,           ///< Create a shorthand for a Bundle (like using/import)
-
-  // Memory Operators
-  LoadOpID,           ///< The Load Operator (load a value from a location)
-  StoreOpID,          ///< The Store Operator (store a value to a location)
-  AllocateOpID,       ///< The Allocate Memory Operator (get some heap memory)
-  FreeOpID,           ///< The Free Memory Operator (free some heap memory)
-  ReallocateOpID,     ///< The Reallocate Memory Operator (realloc heap mem)
-  StackAllocOpID,     ///< The Stack Allocation Operator (get some stack mem)
-  ReferenceOpID,      ///< The Reference A Memory Object Operator (for GC)
-  DereferenceOpID,    ///< The Dereference A Memory Object Operator (for GC)
-
-  // Arithmetic Operators
+  // Integer Arithmetic Unary Operators
   NegateOpID,         ///< The Negation Unary Integer Operator
   ComplementOpID,     ///< The Bitwise Complement Unary Integer Operator
   PreIncrOpID,        ///< The Pre-Increment Unary Integer Operator
   PostIncrOpID,       ///< The Post-Increment Unary Integer Operator
   PreDecrOpID,        ///< The Pre-Decrement Unary Integer Operator
   PostDecrOpID,       ///< The Post-Decrement Unary Integer Operator
+
+  // Real Arithmetic Unary Operators
+  IsPInfOpID,         ///< Real Number Positive Infinity Test Operator
+  IsNInfOpID,         ///< Real Number Negative Infinity Test Operator
+  IsNaNOpID,          ///< Real Number Not-A-Number Test Operator
+  TruncOpID,          ///< Real Number Truncation Operator
+  RoundOpID,          ///< Real Number Rounding Operator
+  FloorOpID,          ///< Real Number Floor Operator
+  CeilingOpID,        ///< Real Number Ceiling Operator
+  LogEOpID,           ///< Real Number Base e (Euler's Number) logarithm 
+  Log2OpID,           ///< Real Number Base 2 logarithm Operator
+  Log10OpID,          ///< Real Number Base 10 logarithm Operator
+  SqRootOpID,         ///< Real Number Square Root Operator
+  FactorialOpID,      ///< Real Number Factorial Operator
+
+  // Memory Unary Operators
+  LoadOpID,           ///< The Load Operator (load a value from a location)
+  AllocateOpID,       ///< The Allocate Memory Operator (get some heap memory)
+  FreeOpID,           ///< The Free Memory Operator (free some heap memory)
+  StackAllocOpID,     ///< The Stack Allocation Operator (get some stack mem)
+  ReferenceOpID,      ///< The Reference A Memory Object Operator (for GC)
+  DereferenceOpID,    ///< The Dereference A Memory Object Operator (for GC)
+
+  // Other Unary Operators
+  TellOpID,           ///< Tell the position of a stream
+  CloseOpID,          ///< Close a stream previously opened.
+  LengthOpID,         ///< Extract Length of a String Operator
+  WithOpID,           ///< Scoping Operator (shorthand for a Bundle, e.g.using) 
+
+  // Arithmetic Binary Operators
   AddOpID,            ///< The Addition Binary Integer Operator
   SubtractOpID,       ///< The Subtraction Binary Integer Operator
   MultiplyOpID,       ///< The Multiplcation Binary Integer Operator
@@ -127,7 +142,7 @@ enum NodeIDs {
   BOrOpID,            ///< The Bitwise Or Binary Integer Operator
   BXOrOpID,           ///< The Bitwise XOr Binary Integer Operator
 
-  // Boolean Operators
+  // Boolean Binary Operators
   AndOpID,            ///< The And Binary Boolean Operator
   OrOpID,             ///< The Or Binary Boolean Operator
   NorOpID,            ///< The Nor Binary Boolean Operator
@@ -140,46 +155,36 @@ enum NodeIDs {
   EQOpID,             ///< The esual Binary Boolean Operator
   NEOpID,             ///< The not-equal Binary Comparison Operator
 
-  // Real Arithmetic Operators
-  IsPInfOpID,         ///< Real Number Positive Infinity Test Operator
-  IsNInfOpID,         ///< Real Number Negative Infinity Test Operator
-  IsNaNOpID,          ///< Real Number Not-A-Number Test Operator
-  TruncOpID,          ///< Real Number Truncation Operator
-  RoundOpID,          ///< Real Number Rounding Operator
-  FloorOpID,          ///< Real Number Floor Operator
-  CeilingOpID,        ///< Real Number Ceiling Operator
+  // Real Arithmetic Binary Operators
   PowerOpID,          ///< Real Number Power Operator
-  LogEOpID,           ///< Real Number Base e (Euler's Number) logarithm 
-  Log2OpID,           ///< Real Number Base 2 logarithm Operator
-  Log10OpID,          ///< Real Number Base 10 logarithm Operator
-  SqRootOpID,         ///< Real Number Square Root Operator
   RootOpID,           ///< Real Number Arbitrary Root Operator
-  FactorialOpID,      ///< Real Number Factorial Operator
   GCDOpID,            ///< Real Number Greatest Common Divisor Operator
   LCMOpID,            ///< Real Number Least Common Multiplicator Operator
   
-  // Character And String Operators
-  MungeOpID,          ///< General Purpose String Editing Operator
-  LengthOpID,         ///< Extract Length of a String Operator
+  // Memory Binary Operators
+  ReallocateOpID,     ///< The Reallocate Memory Operator (realloc heap mem)
+  StoreOpID,          ///< The Store Operator (store a value to a location)
 
-  // Input/Output Operators
-  MapFileOpID,        ///< Map a file to memory (mmap)
+  // Other Binary Operators
   OpenOpID,           ///< Open a stream from a URL
-  CloseOpID,          ///< Close a stream previously opened.
   ReadOpID,           ///< Read from a stream
   WriteOpID,          ///< Write to a stream
-  PositionOpID,       ///< Position a stream
+  CreateContOpID,     ///< The Create Continutation Operator
 
-  // Constant Value Operators
-  IntOpID,            ///< Constant Integer Value
-  RealOpID,           ///< Constant Real Value
-  PInfOpID,           ///< Constant Positive Infinity Real Value
-  NInfOpID,           ///< Constant Negative Infinity Real Value
-  NaNOpID,            ///< Constant Not-A-Number Real Value
-  StringOpID,         ///< Constant String Value
-  ArrayOpID,          ///< Constant Array Value
-  VectorOpID,         ///< Constant Vector Value
-  StructureOpID,      ///< Constant Structure Value
+  // Ternary Operators
+  IfOpID,             ///< The If-Then-Else Operator
+  StrInsertOpID,      ///< Insert(str,where,what)
+  StrEraseOpID,       ///< Erase(str,at,len)
+  StrReplaceOpID,     ///< Replace(str,at,len,what)
+  PositionOpID,       ///< Position a stream (stream,where,relative-to)
+
+  // Multi Operators
+  CallOpID,           ///< The Call Operator (n operands)
+  InvokeOpID,         ///< The Invoke Operator (n operands)
+  DispatchOpID,       ///< The Object Method Dispatch  Operator (n operands)
+  CallWithContOpID,   ///< The Call with Continuation Operator (n operands)
+  SelectOpID,         ///< The Select An Alternate Operator (n operands)
+  LoopOpID,           ///< The General Purpose Loop Operator (5 operands)
 
   // Miscellaneous Nodes
   DocumentationID,    ///< XHTML Documentation Node
@@ -190,10 +195,20 @@ enum NodeIDs {
   LastPrimitiveTypeID  = StringTypeID, ///< Last Primitive Type
   FirstContainerTypeID = PointerTypeID, ///< First Container Type
   LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
-  FirstOperatorID = CallOpID, ///< First Operator
-  LastOperatorID =  StructureOpID, ///< Last Operator
-  FirstTypeID = VoidTypeID,
-  LastTypeID = OpaqueTypeID
+  FirstTypeID          = VoidTypeID,
+  LastTypeID           = OpaqueTypeID,
+  FirstOperatorID      = BreakOpID, ///< First Operator
+  LastOperatorID       = LoopOpID,  ///< Last Operator
+  FirstNilaryOpID      = BreakOpID,
+  LastNilaryOpID       = NaNOpID,
+  FirstUnaryOpID       = ReturnOpID,
+  LastUnaryOpID        = WithOpID,
+  FirstBinaryOpID      = AddOpID,
+  LastBinaryOpID       = CreateContOpID,
+  FirstTernaryOpID     = IfOpID,
+  LastTernaryOpID      = PositionOpID,
+  FirstMultiOpID       = CallOpID,
+  LastMultiOpID        = LoopOpID
 };
 
 class ParentNode;
@@ -236,6 +251,21 @@ class Node
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
       return id >= FirstOperatorID && id <= LastOperatorID;
+    }
+    inline bool isNilaryOperator() const {
+      return id >= FirstNilaryOpID && id <= LastNilaryOpID;
+    }
+    inline bool isUnaryOperator() const {
+      return id >= FirstUnaryOpID && id <= LastUnaryOpID;
+    }
+    inline bool isBinaryOperator() const {
+      return id >= FirstBinaryOpID && id <= LastBinaryOpID;
+    }
+    inline bool isTernaryOperator() const {
+      return id >= FirstTernaryOpID && id <= LastTernaryOpID;
+    }
+    inline bool isMultiOperator() const {
+      return id >= FirstMultiOpID && id <= LastMultiOpID;
     }
 
     /// Determine if the node is a NamedNode
@@ -356,7 +386,6 @@ class NamedNode : public Documentable
   /// @{
   protected:
     std::string name;  ///< The name of this node.
-    Documentation* doc;///< All named nodes can have documentation
   /// @}
   friend class AST;
 };

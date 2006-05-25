@@ -283,25 +283,18 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case FactorialOpID:
     case GCDOpID:
     case LCMOpID:
-    case MungeOpID:
     case LengthOpID:
-    case MapFileOpID:
     case OpenOpID:
     case CloseOpID:
     case ReadOpID:
     case WriteOpID:
     case PositionOpID:
-    case IntOpID:
-    case RealOpID:
     case PInfOpID:
     case NInfOpID:
     case NaNOpID:
-    case StringOpID:
-    case ArrayOpID:
-    case VectorOpID:
-    case StructureOpID:
       break; // Not implemented yet
     case DocumentationID:
+      /// Nothing to validate (any doc is a good thing :)
       break;
     default:
       hlvmDeadCode("Invalid Node Kind");

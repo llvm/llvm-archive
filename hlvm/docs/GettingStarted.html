@@ -176,29 +176,30 @@ software you will need.</p>
       <td>runtime environment, OS abstraction, threading, loading, etc.</td>
     </tr>
     <tr>
-      <td><a href="http://savannah.gnu.org/projects/make">GNU Make</a></td>
-      <td>3.79, 3.79.1</td>
-      <td>Makefile/build processor</td>
+      <td><a href="http://xmlsoft.org/downloads.html">LibXml2</a></td>
+      <td>2.6.24</td>
+      <td>XML parsing and validation toolkit</td>
+    </tr>
+    <tr>
+      <td><a href="http://www.gnu.org/software/gperf/">gperf</a></td>
+      <td>2.7.2 (3.0.1 won't work)</td>
+      <td>GNU Perfect Hash Function Generator, used for recognizing element
+      and attribute names in XML documents.</td>
     </tr>
     <tr>
       <td><a href="http://gcc.gnu.org">GCC</a></td>
       <td>&ge;3.4.4</td>
-      <td>C/C++ compiler<sup><a href="#sf1">1</a></sup></td>
-    </tr>
-    <tr>
-      <td><a href="http://www.gnu.org/software/flex">Flex</a></td>
-      <td>2.5.4</td>
-      <td>LEX compiler</td>
-    </tr>
-    <tr>
-      <td><a href="http://www.gnu.org/software/bison/bison.html">Bison</a></td>
-      <td>1.28, 1.35, 1.75, 1.875d, 2.0, or 2.1<br/>(not 1.85 or 1.875)</td>
-      <td>YACC compiler</td>
+      <td>C/C++ compiler for compiling HLVM</td>
     </tr>
     <tr>
       <td><a href="http://subversion.tigris.org/">Subversion</a></td>
       <td>&ge;1.1</td>
-      <td>Suversion access to HLVM source<sup><a href="#sf2">2</a></sup></td>
+      <td>Suversion access to HLVM source</td>
+    </tr>
+    <tr>
+      <td><a href="http://scons.org/download.php">scons</a></td>
+      <td>0.96.92</td>
+      <td>Software Construction system used for HLVM's build</td>
     </tr>
     <tr>
       <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
@@ -215,43 +216,13 @@ software you will need.</p>
       <td>5.38.0</td>
       <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
     </tr>
-    <tr>
-      <td><a href="http://savannah.gnu.org/projects/m4">GNU M4</a>
-      <td>1.4</td>
-      <td>Macro processor for configuration<sup><a href="#sf4">4</a></sup></td>
-    </tr>
-    <tr>
-      <td><a href="http://www.gnu.org/software/autoconf">GNU Autoconf</a></td>
-      <td>2.59</td>
-      <td>Configuration script builder<sup><a href="#sf4">4</a></sup></td>
-    </tr>
-    <tr>
-      <td><a href="http://www.gnu.org/software/automake">GNU Automake</a></td>
-      <td>1.9.2</td>
-      <td>aclocal macro generator<sup><a href="#sf4">4</a></sup></td>
-    </tr>
-    <tr>
-      <td><a href="http://savannah.gnu.org/projects/libtool">libtool</a></td>
-      <td>1.5.10</td>
-      <td>Shared library manager<sup><a href="#sf4">4</a></sup></td>
-    </tr>
   </table>
 
   <p><b>Notes:</b></p>
   <div class="notes">
   <ol>
-    <li><a name="sf3">Only the C and C++ languages are needed so there's no
-      need to build the other languages for LLVM's purposes.</a> See 
-      <a href="#brokengcc">below</a> for specific version info.</li>
-    <li><a name="sf2">You only need CVS if you intend to build from the 
-      latest LLVM sources. If you're working from a release distribution, you
-      don't need CVS.</a></li>
     <li><a name="sf3">Only needed if you want to run the automated test 
       suite in the <tt>llvm/test</tt> directory.</a></li>
-    <li><a name="sf4">If you want to make changes to the configure scripts, 
-      you will need GNU autoconf (2.59), and consequently, GNU M4 (version 1.4 
-      or higher). You will also need automake (1.9.2). We only use aclocal 
-      from that package.</a></li>
   </ol>
   </div>
   

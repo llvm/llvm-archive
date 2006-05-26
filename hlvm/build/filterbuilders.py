@@ -7,17 +7,27 @@ def _sedit(input,output,substs):
   res = []
   f=open(output[0].path,'w')
   for subst in substs:
-    res.append(re.compile(subst[0]))
+    res.append(re.compile(subst[0],re.MULTILINE|re.DOTALL))
+  lines =""
   for line in fileinput.input(input[0].path):
-    count = 0
-    for r in res:
-      line = res[count].sub(substs[count][1],line,0)
-      count += 1
-    f.write(line)
+    lines+= line
+  count = 0
+  for r in res:
+    lines = res[count].sub(substs[count][1],lines,0)
+    count += 1
+  lines += '\n'
+  f.write(lines)
   f.close()
 
 def QuoteSourceAction(target,source,env):
-  substs = [['[\\\\]','\\\\\\\\'],['"','\\"'],['^(.*)$','"\\1"']]
+  substs = [
+    ['<!--.*?-->',''],
+    ['<annotation>.*?</annotation>',''],
+    ['[\\\\]','\\\\\\\\'],
+    ['"','\\"'],
+    ['^([^\\n]*)$','"\\1"'],
+    ['^"[ \\t]*?"$\\n','']
+  ]
   _sedit(source,target,substs)
   return 0
 

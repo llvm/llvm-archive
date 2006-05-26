@@ -147,6 +147,7 @@ def GetBuildEnvironment(targets,arguments):
   env.BuildDir(pjoin(BuildDir,'hlvm'),'hlvm',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'tools'),'tools',duplicate=0)
   env.BuildDir(pjoin(BuildDir,'test'),'test',duplicate=0)
+  env.BuildDir(pjoin(BuildDir,'docs'),'docs',duplicate=0)
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   if 'install' in COMMAND_LINE_TARGETS:
     env.Alias('install',pjoin(env['prefix'],'bin'))

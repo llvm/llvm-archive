@@ -926,7 +926,7 @@ CLASS_GRAPH            = YES
 # indirect implementation dependencies (inheritance, containment, and 
 # class references variables) of the class with other documented classes.
 
-COLLABORATION_GRAPH    = YES
+COLLABORATION_GRAPH    = NO
 
 # If set to YES, the inheritance and collaboration graphs will show the 
 # relations between templates and their instances.
@@ -961,7 +961,7 @@ DOT_IMAGE_FORMAT       = gif
 # The tag DOT_PATH can be used to specify the path where the dot tool can be 
 # found. If left blank, it is assumed the dot tool can be found on the path.
 
-DOT_PATH               = 
+DOT_PATH               =
 
 # The DOTFILE_DIRS tag can be used to specify one or more directories that 
 # contain dot files that are included in the documentation (see the 
@@ -983,7 +983,7 @@ MAX_DOT_GRAPH_WIDTH    = 800
 # the specified constraint. Beware that most browsers cannot cope with very 
 # large images.
 
-MAX_DOT_GRAPH_HEIGHT   = 240
+MAX_DOT_GRAPH_HEIGHT   = 600
 
 # If the GENERATE_LEGEND tag is set to YES (the default) Doxygen will 
 # generate a legend page explaining the meaning of the various boxes and 

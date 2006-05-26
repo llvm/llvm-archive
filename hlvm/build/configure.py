@@ -187,6 +187,9 @@ def CheckForPrograms(conf,env):
   if not conf.CheckProgram('doxygen','DOXYGEN'):
     env['DOXYGEN'] = None
     print "*** DOXYGEN DISABLED ***"
+  if not conf.CheckProgram('xsltproc','XSLTPROC'):
+    env['XSLTPROC'] = None
+    print "*** XSLTPROC DISABLED ***"
   return 1
 
 #dnl AC_PATH_PROG(path_EGREP, egrep, egrep)

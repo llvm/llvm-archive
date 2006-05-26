@@ -29,11 +29,15 @@
 
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/Import.h>
 #include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/Function.h>
-#include <hlvm/AST/Import.h>
 #include <hlvm/AST/Variable.h>
+#include <hlvm/AST/Constants.h>
+#include <hlvm/AST/Function.h>
+#include <hlvm/AST/Program.h>
+#include <hlvm/AST/Block.h>
+#include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/SymbolTable.h>
 
 using namespace hlvm;
@@ -117,15 +121,6 @@ Bundle*
 AST::new_Bundle(const Locator& loc, const std::string& id)
 {
   Bundle* result = new Bundle();
-  result->setLocator(loc);
-  result->setName(id);
-  return result;
-}
-
-Function*
-AST::new_Function(const Locator& loc, const std::string& id)
-{
-  Function* result = new Function();
   result->setLocator(loc);
   result->setName(id);
   return result;
@@ -327,6 +322,20 @@ AST::new_SignatureType(const Locator& loc, const std::string& id, Type* ty)
   return result;
 }
 
+OpaqueType*
+AST::new_OpaqueType(const std::string& id)
+{
+  return new OpaqueType(id);
+}
+
+ConstLiteralInteger*
+AST::new_ConstLiteralInteger(const Locator& loc)
+{
+  ConstLiteralInteger* result = new ConstLiteralInteger();
+  result->setLocator(loc);
+  return result;
+}
+
 Variable*
 AST::new_Variable(const Locator& loc, const std::string& id)
 {
@@ -336,10 +345,38 @@ AST::new_Variable(const Locator& loc, const std::string& id)
   return result;
 }
 
-OpaqueType*
-AST::new_OpaqueType(const std::string& id)
+Function*
+AST::new_Function(const Locator& loc, const std::string& id)
 {
-  return new OpaqueType(id);
+  Function* result = new Function();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Program*
+AST::new_Program(const Locator& loc, const std::string& id)
+{
+  Program* result = new Program();
+  result->setLocator(loc);
+  result->setName(id);
+  return result;
+}
+
+Block*
+AST::new_Block(const Locator& loc)
+{
+  Block* result = new Block();
+  result->setLocator(loc);
+  return result;
+}
+
+ReturnOp*
+AST::new_ReturnOp(const Locator& loc)
+{
+  ReturnOp* result = new ReturnOp();
+  result->setLocator(loc);
+  return result;
 }
 
 Documentation* 

@@ -30,7 +30,7 @@
 #ifndef HLVM_AST_TYPE_H
 #define HLVM_AST_TYPE_H
 
-#include <hlvm/AST/LinkageItem.h>
+#include <hlvm/AST/Node.h>
 
 namespace hlvm 
 {
@@ -40,20 +40,19 @@ class IntrinsicType;
 /// This class represents a Type in the HLVM Abstract Syntax Tree.  
 /// A Type defines the format of storage. 
 /// @brief HLVM AST Type Node
-class Type : public LinkageItem
+class Type : public Documentable
 {
   /// @name Constructors
   /// @{
   protected:
-    Type(
-      NodeIDs id ///< The Type identifier
-    ) : LinkageItem(id)  {}
+    Type( NodeIDs id ) : Documentable(id)  {}
     virtual ~Type();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    const std::string& getName() const { return name; }
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
 
@@ -85,6 +84,7 @@ class Type : public LinkageItem
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const Type*) { return true; }
+    static inline bool classof(const Documentable* n) { return n->isType(); }
     static inline bool classof(const Node* n) { return n->isType(); }
 
   /// @}
@@ -96,10 +96,13 @@ class Type : public LinkageItem
     // again.
     virtual void insertChild(Node* n);
 
+    virtual void setName(const std::string n) { name = n; }
+
   /// @}
   /// @name Data
   /// @{
   protected:
+    std::string name;
   /// @}
   friend class AST;
 };
@@ -562,7 +565,7 @@ class AliasType : public Type
   /// @name Constructors
   /// @{
   public:
-    AliasType() : Type(AliasTypeID) {}
+    AliasType() : Type(AliasTypeID), type(0) {}
     virtual ~AliasType();
 
   /// @}
@@ -570,8 +573,6 @@ class AliasType : public Type
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
-    // Get the name for the type
-    const std::string&  getName() const { return name; }
     
     // Get the type for the name
     Type *  getType() const { return type; }
@@ -584,9 +585,6 @@ class AliasType : public Type
   /// @name Mutators
   /// @{
   public:
-    // Set the name for the type
-    void setName(const std::string& n) { name = n; }
-    
     // Set the type for the name
     void setType(Type * t) { type = t; }
 
@@ -595,7 +593,6 @@ class AliasType : public Type
   /// @{
   protected:
     Type* type;
-    std::string name;
   /// @}
 };
 

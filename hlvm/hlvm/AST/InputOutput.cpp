@@ -1,4 +1,4 @@
-//===-- AST Program Class ---------------------------------------*- C++ -*-===//
+//===-- AST Input and Output Nodes ------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,30 +20,45 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Program.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/InputOutput.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the functions of class hlvm::AST::InputOutput.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Program.h>
-#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/InputOutput.h>
 
-using namespace hlvm;
+namespace hlvm {
 
-namespace {
-SignatureType* initSignature() {
-  SignatureType* result = new SignatureType();
-  result->setName("_hlvm_ProgramSignature");
-  return result;
-}
-}
-
-
-SignatureType* 
-Program::SignatureTy = initSignature();
-
-Program::~Program()
+OpenOp::~OpenOp()
 {
+}
+
+OpenOp* 
+OpenOp::create()
+{
+  return new OpenOp;
+}
+
+CloseOp::~CloseOp()
+{
+}
+
+CloseOp* 
+CloseOp::create()
+{
+  return new CloseOp;
+}
+
+WriteOp::~WriteOp()
+{
+}
+
+WriteOp* 
+WriteOp::create()
+{
+  return new WriteOp;
+}
+
 }

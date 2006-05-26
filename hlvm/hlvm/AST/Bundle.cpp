@@ -60,7 +60,7 @@ Bundle::insertChild(Node* kid)
   else if (kid->isFunction())
     funcs.push_back(cast<Function>(kid));
   else
-    hlvmAssert(isa<LinkageItem>(kid) && "Can't insert that here");
+    hlvmAssert("Don't know how to insert that in a Bundle");
 }
 
 void

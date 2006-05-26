@@ -1,4 +1,4 @@
-//===-- AST Program Class ---------------------------------------*- C++ -*-===//
+//===-- HLVM AST String Operators -------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,30 +20,16 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Program.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/StringOps.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the various AST string operators.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Program.h>
-#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/StringOps.h>
 
-using namespace hlvm;
-
-namespace {
-SignatureType* initSignature() {
-  SignatureType* result = new SignatureType();
-  result->setName("_hlvm_ProgramSignature");
-  return result;
-}
-}
+namespace hlvm {
 
 
-SignatureType* 
-Program::SignatureTy = initSignature();
-
-Program::~Program()
-{
 }

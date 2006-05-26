@@ -45,7 +45,7 @@ class Function;
 /// a Bundle. Bundles can also be nested in other Bundles. All programming
 /// constructs are defined as child nodes of some Bundle.
 /// @brief HLVM AST Bundle Node
-class Bundle : public NamedNode
+class Bundle : public Documentable
 {
   /// @name Types
   /// @{
@@ -69,13 +69,14 @@ class Bundle : public NamedNode
     static Bundle* create(const Locator& location, const std::string& pubid);
 
   protected:
-    Bundle() : NamedNode(BundleID) {}
+    Bundle() : Documentable(BundleID), name(), types(), vars(), funcs() {}
     virtual ~Bundle();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    const std::string& getName() const { return name; }
     static inline bool classof(const Bundle*) { return true; }
     static inline bool classof(const Node* N) { return N->isBundle(); }
 
@@ -83,6 +84,7 @@ class Bundle : public NamedNode
   /// @name Mutators
   /// @{
   public:
+    void setName(const std::string& n) { name = n; }
     virtual void insertChild(Node* kid);
     virtual void removeChild(Node* kid);
 
@@ -126,9 +128,10 @@ class Bundle : public NamedNode
   /// @name Data
   /// @{
   protected:
-    TypeList    types;  ///< The vector of children nodes.
-    VarList     vars;
-    FuncList    funcs;
+    std::string name;   ///< The name for this bundle
+    TypeList    types;  ///< The list of types
+    VarList     vars;   ///< The list of variables
+    FuncList    funcs;  ///< The list of functions
   /// @}
   friend class AST;
 };

@@ -144,6 +144,7 @@
   <!-- HLVM PATTERN -->
   <define name="HLVM.elem">
     <element name="hlvm">
+      <attribute name="pubid"><data type="anyURI"/></attribute>
       <oneOrMore>
         <ref name="Bundle.elem"/>
       </oneOrMore>
@@ -154,33 +155,31 @@
 
   <define name="Bundle.elem">
     <element name="bundle">
-      <ref name="bundle.pat"/>
-    </element>
-  </define>
-
-  <define name="bundle.pat">
-    <attribute name="pubid"><data type="anyURI"/></attribute>
-    <ref name="Documentation.pat"/>
-    <optional>
+      <ref name="Named_Element.pat"/>
+      <ref name="Documentation.pat"/>
+      <optional>
+        <zeroOrMore>
+          <ref name="import.elem"/>
+        </zeroOrMore>
+      </optional>
       <zeroOrMore>
-        <ref name="import.elem"/>
+        <choice>
+          <ref name="Alias.elem"/>
+          <ref name="Array.elem"/>
+          <ref name="Atom.elem"/>
+          <ref name="Bundle.elem"/>
+          <ref name="Enumeration.elem"/>
+          <ref name="Function.elem"/>
+          <ref name="Pointer.elem"/>
+          <ref name="Structure.elem"/>
+          <ref name="Signature.elem"/>
+          <ref name="Vector.elem"/>
+          <ref name="Variable.elem"/>
+          <ref name="Function.elem"/>
+          <ref name="Program.elem"/>
+        </choice>
       </zeroOrMore>
-    </optional>
-    <zeroOrMore>
-      <choice>
-        <ref name="Alias.elem"/>
-        <ref name="Array.elem"/>
-        <ref name="Atom.elem"/>
-        <ref name="Bundle.elem"/>
-        <ref name="Enumeration.elem"/>
-        <ref name="Function.elem"/>
-        <ref name="Pointer.elem"/>
-        <ref name="Structure.elem"/>
-        <ref name="Signature.elem"/>
-        <ref name="Variable.elem"/>
-        <ref name="Vector.elem"/>
-      </choice>
-    </zeroOrMore>
+    </element>
   </define>
 
   <define name="import.elem">
@@ -399,16 +398,20 @@
     <element name="function">
       <ref name="Named_Typed_Element.pat"/>
       <optional>
-        <attribute name="symbol"><ref name="Identifier.type"/></attribute>
-      </optional>
-      <optional>
         <attribute name="linkage"><ref name="Linkage.type"/></attribute>
       </optional>
       <zeroOrMore>
-        <element name="var">
-          <ref name="Named_Typed_Element.pat"/>
-        </element>
+        <ref name="Block.elem"/>
       </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="Program.elem">
+    <element name="program">
+      <ref name="Named_Element.pat"/>
+      <optional>
+        <attribute name="linkage"><ref name="Linkage.type"/></attribute>
+      </optional>
       <zeroOrMore>
         <ref name="Block.elem"/>
       </zeroOrMore>
@@ -420,6 +423,9 @@
       <optional>
         <attribute name="label"><ref name="Identifier.type"/></attribute>
       </optional>
+      <oneOrMore>
+        <ref name="Operator.pat"/>
+      </oneOrMore>
     </element>
   </define>
 
@@ -607,4 +613,26 @@
       </oneOrMore>
     </element>
   </define>
+
+  <!-- PATTERNS FOR OPERATORS -->
+
+  <define name="Operator.pat">
+    <choice>
+      <ref name="ControlFlowOps.pat"/>
+      <ref name="Literal.pat"/>
+    </choice>
+  </define>
+
+  <define name="ControlFlowOps.pat">
+    <choice>
+      <ref name="Return.elem"/>
+    </choice>
+  </define>
+
+  <define name="Return.elem">
+    <element name="ret">
+      <ref name="Operator.pat"/>
+    </element>
+  </define>
+
 </grammar>

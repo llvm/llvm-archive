@@ -40,12 +40,12 @@ class Type;
 /// This class is the abstract superclass for all Operators. It provides the
 /// methods and virtual signature that is common to all Operator nodes.
 /// @brief HLVM AST Abstract Operator Node
-class Operator : public Documentable
+class Operator : public Value
 {
   /// @name Constructors
   /// @{
   protected:
-    Operator(NodeIDs opID) : Documentable(opID)  {}
+    Operator(NodeIDs opID) : Value(opID)  {}
     virtual ~Operator();
 
   /// @}
@@ -53,7 +53,8 @@ class Operator : public Documentable
   /// @{
   public:
     /// Get a specific operand of this operator.
-    virtual Operator* getOperand(unsigned opnum) = 0;
+    virtual size_t  numOperands() const = 0;
+    virtual Operator* getOperand(unsigned opnum) const = 0;
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }
@@ -76,9 +77,17 @@ class NilaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual Operator* getOperand(unsigned opnum);
+    virtual size_t  numOperands() const;
+    virtual Operator* getOperand(unsigned opnum) const;
     static inline bool classof(const NilaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isNilaryOperator(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
   /// @}
   friend class AST;
 };
@@ -95,9 +104,17 @@ class UnaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual Operator* getOperand(unsigned opnum);
+    virtual size_t  numOperands() const;
+    virtual Operator* getOperand(unsigned opnum) const;
     static inline bool classof(const UnaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isUnaryOperator(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   /// @}
   /// @name Data
@@ -121,9 +138,17 @@ class BinaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual Operator* getOperand(unsigned opnum);
+    virtual size_t  numOperands() const;
+    virtual Operator* getOperand(unsigned opnum) const;
     static inline bool classof(const BinaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isBinaryOperator(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   /// @}
   /// @name Data
@@ -147,9 +172,17 @@ class TernaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual Operator* getOperand(unsigned opnum);
+    virtual size_t  numOperands() const;
+    virtual Operator* getOperand(unsigned opnum) const;
     static inline bool classof(const TernaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isTernaryOperator(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   /// @}
   /// @name Data
@@ -173,14 +206,15 @@ class MultiOperator : public Operator
   /// @name Constructors
   /// @{
   protected:
-    MultiOperator(NodeIDs opID) : Operator(opID), ops(8) {}
+    MultiOperator(NodeIDs opID) : Operator(opID), ops() {}
     virtual ~MultiOperator();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    virtual Operator* getOperand(unsigned opnum);
+    virtual size_t  numOperands() const;
+    virtual Operator* getOperand(unsigned opnum) const;
     static inline bool classof(const MultiOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isMultiOperator(); }
 
@@ -198,6 +232,15 @@ class MultiOperator : public Operator
     const Operator*front() const { return ops.front(); }
     Operator*      back()        { return ops.back(); }
     const Operator*back()  const { return ops.back(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void addOperand(Operator* op) { op->setParent(this); }
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   /// @}
   /// @name Data

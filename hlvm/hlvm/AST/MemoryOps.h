@@ -1,4 +1,4 @@
-//===-- AST Function Class --------------------------------------*- C++ -*-===//
+//===-- HLVM AST Memory Operations ------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,57 +20,88 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Block.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/MemoryOps.h
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Block
+/// @brief Provides the interface to the HLVM memory operations.
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_BLOCK_H
-#define HLVM_AST_BLOCK_H
+#ifndef HLVM_AST_MEMORYOPS_H
+#define HLVM_AST_MEMORYOPS_H
 
 #include <hlvm/AST/Operator.h>
 
-namespace hlvm 
+namespace hlvm
 {
 
-/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-/// A Variable is a storage location of a specific type. It can either be
-/// global or local, depending on its parent. Global variables are always
-/// contained in a Bundle. Local variables are always contained in a
-/// Function.
-/// @brief HLVM AST Variable Node
-class Block : public MultiOperator
+/// This operator represents the load operation for loading a variable into a
+/// register.
+/// @brief HLVM AST Memory Load Operator
+class LoadOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
+  protected:
+    LoadOp() : UnaryOperator(LoadOpID) {}
+
   public:
-    Block() : MultiOperator(BlockID){}
-    virtual ~Block();
+    virtual ~LoadOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    const std::string& getLabel() const { return label; }
-    static inline bool classof(const Block*) { return true; }
-    static inline bool classof(const Operator* O) { return O->isBlock(); }
-    static inline bool classof(const Node* N) { return N->isBlock(); }
+    static inline bool classof(const LoadOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(LoadOpID); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
-    void setLabel(const std::string& l) { label = l; }
+
   /// @}
   /// @name Data
   /// @{
-  public:
-    std::string label;
+  protected:
   /// @}
   friend class AST;
 };
 
-} // hlvm 
+/// This operator represents the 
+/// @brief HLVM AST String Insert Node
+class LoadOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    LoadOp() : UnaryOperator(LoadOpID) {}
+
+  public:
+    virtual ~LoadOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const LoadOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(LoadOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+  /// @}
+  friend class AST;
+};
+} // hlvm
+
 #endif
+namespace hlvm {
+
+}

@@ -30,11 +30,14 @@
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
-#include <hlvm/AST/Documentation.h>
-#include <hlvm/AST/Function.h>
 #include <hlvm/AST/Import.h>
+#include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Variable.h>
+#include <hlvm/AST/Program.h>
+#include <hlvm/AST/Block.h>
+#include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/Constants.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/ADT/StringExtras.h>
@@ -88,14 +91,15 @@ private:
       { xmlTextWriterWriteElement(writer,
           reinterpret_cast<const xmlChar*>(elem),
           reinterpret_cast<const xmlChar*>(body)); }
+    inline void writeString(const std::string& text)
+      { xmlTextWriterWriteString(writer,
+          reinterpret_cast<const xmlChar*>(text.c_str())); }
 
     inline void putHeader();
     inline void putFooter();
     inline void putDoc(Documentable* node);
     inline void put(Bundle* b);
     inline void put(Documentation* b);
-    inline void put(Variable* v);
-    inline void put(Function* f);
     inline void put(AliasType* t);
     inline void put(AnyType* t);
     inline void put(BooleanType* t);
@@ -111,6 +115,12 @@ private:
     inline void put(VectorType* t);
     inline void put(StructureType* t);
     inline void put(SignatureType* t);
+    inline void put(ConstLiteralInteger* t);
+    inline void put(Variable* v);
+    inline void put(Function* f);
+    inline void put(Program* p);
+    inline void put(Block* f);
+    inline void put(ReturnOp* f);
 
     virtual void handle(Node* n,Pass::TraversalKinds mode);
 
@@ -122,6 +132,22 @@ private:
 private:
   WriterPass pass;
 };
+
+inline const char* 
+getLinkageKind(LinkageKinds lk)
+{
+  switch (lk) {
+    case WeakLinkage:        return "weak";
+    case ExternalLinkage:    return "external";
+    case InternalLinkage:    return "internal";
+    case LinkOnceLinkage:    return "linkonce";
+    case AppendingLinkage:   return "appending";
+    default:
+      hlvmDeadCode("Bad LinkageKinds");
+      break;
+  }
+  return "error";
+}
 
 inline void
 XMLWriterImpl::WriterPass::putDoc(Documentable* node)
@@ -138,6 +164,7 @@ XMLWriterImpl::WriterPass::putHeader()
   xmlTextWriterStartDocument(writer,0,"UTF-8",0);
   startElement("hlvm");
   writeAttribute("xmlns","http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng");
+  writeAttribute("pubid",node->getPublicID());
 }
 
 void
@@ -146,12 +173,6 @@ XMLWriterImpl::WriterPass::putFooter()
   endElement();
   xmlTextWriterEndDocument(writer);
 }
-
-void
-XMLWriterImpl::WriterPass::put(Function* f)
-{
-}
-
 void 
 XMLWriterImpl::WriterPass::put(Documentation* b)
 {
@@ -185,7 +206,7 @@ void
 XMLWriterImpl::WriterPass::put(BooleanType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","bool");
@@ -196,7 +217,7 @@ void
 XMLWriterImpl::WriterPass::put(CharacterType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","char");
@@ -207,7 +228,7 @@ void
 XMLWriterImpl::WriterPass::put(IntegerType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
@@ -252,7 +273,7 @@ void
 XMLWriterImpl::WriterPass::put(RealType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
@@ -271,7 +292,7 @@ void
 XMLWriterImpl::WriterPass::put(OctetType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName().c_str());
+  writeAttribute("name",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","octet");
@@ -352,20 +373,61 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   }
 }
 
+void 
+XMLWriterImpl::WriterPass::put(ConstLiteralInteger* i)
+{
+  startElement("dec");
+  writeString(llvm::utostr(i->getValue()));
+}
+
 void
 XMLWriterImpl::WriterPass::put(Variable* v)
 {
   startElement("var");
-  writeAttribute("name",v->getName().c_str());
-  writeAttribute("type",v->getType()->getName().c_str());
+  writeAttribute("name",v->getName());
+  writeAttribute("type",v->getType()->getName());
   putDoc(v);
+}
+
+void
+XMLWriterImpl::WriterPass::put(Function* f)
+{
+  startElement("function");
+  writeAttribute("name",f->getName());
+  writeAttribute("type",f->getSignature()->getName());
+  writeAttribute("linkage",getLinkageKind(f->getLinkageKind()));
+  putDoc(f);
+}
+
+void 
+XMLWriterImpl::WriterPass::put(Program* p)
+{
+  startElement("program");
+  writeAttribute("name",p->getName());
+  putDoc(p);
+}
+
+void 
+XMLWriterImpl::WriterPass::put(Block* b)
+{
+  startElement("block");
+  if (!b->getLabel().empty())
+    writeAttribute("label",b->getLabel());
+  putDoc(b);
+}
+
+void 
+XMLWriterImpl::WriterPass::put(ReturnOp* r)
+{
+  startElement("ret");
+  putDoc(r);
 }
 
 void 
 XMLWriterImpl::WriterPass::put(Bundle* b)
 {
   startElement("bundle");
-  writeAttribute("pubid",b->getName().c_str());
+  writeAttribute("name",b->getName());
   putDoc(b);
 }
 
@@ -375,24 +437,28 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
   if (mode & Pass::PreOrderTraversal) {
     switch (n->getID()) 
     {
-      case AliasTypeID:        put(cast<AliasType>(n)); break;
-      case AnyTypeID:          put(cast<AnyType>(n)); break;
-      case BooleanTypeID:      put(cast<BooleanType>(n)); break;
-      case BundleID:           put(cast<Bundle>(n)); break;
-      case CharacterTypeID:    put(cast<CharacterType>(n)); break;
-      case IntegerTypeID:      put(cast<IntegerType>(n)); break;
-      case RangeTypeID:        put(cast<RangeType>(n)); break;
-      case EnumerationTypeID:  put(cast<EnumerationType>(n)); break;
-      case RealTypeID:         put(cast<RealType>(n)); break;
-      case OctetTypeID:        put(cast<OctetType>(n)); break;
-      case VoidTypeID:         put(cast<VoidType>(n)); break;
-      case PointerTypeID:      put(cast<PointerType>(n)); break;
-      case ArrayTypeID:        put(cast<ArrayType>(n)); break;
-      case VectorTypeID:       put(cast<VectorType>(n)); break;
-      case StructureTypeID:    put(cast<StructureType>(n)); break;
-      case SignatureTypeID:    put(cast<SignatureType>(n)); break;
-      case VariableID:         put(cast<Variable>(n)); break;
-      case FunctionID:         put(cast<Function>(n)); break;
+      case AliasTypeID:               put(cast<AliasType>(n)); break;
+      case AnyTypeID:                 put(cast<AnyType>(n)); break;
+      case BooleanTypeID:             put(cast<BooleanType>(n)); break;
+      case BundleID:                  put(cast<Bundle>(n)); break;
+      case CharacterTypeID:           put(cast<CharacterType>(n)); break;
+      case IntegerTypeID:             put(cast<IntegerType>(n)); break;
+      case RangeTypeID:               put(cast<RangeType>(n)); break;
+      case EnumerationTypeID:         put(cast<EnumerationType>(n)); break;
+      case RealTypeID:                put(cast<RealType>(n)); break;
+      case OctetTypeID:               put(cast<OctetType>(n)); break;
+      case VoidTypeID:                put(cast<VoidType>(n)); break;
+      case PointerTypeID:             put(cast<PointerType>(n)); break;
+      case ArrayTypeID:               put(cast<ArrayType>(n)); break;
+      case VectorTypeID:              put(cast<VectorType>(n)); break;
+      case StructureTypeID:           put(cast<StructureType>(n)); break;
+      case SignatureTypeID:           put(cast<SignatureType>(n)); break;
+      case ConstLiteralIntegerOpID:   put(cast<ConstLiteralInteger>(n)); break;
+      case VariableID:                put(cast<Variable>(n)); break;
+      case FunctionID:                put(cast<Function>(n)); break;
+      case ProgramID:                 put(cast<Program>(n)); break;
+      case BlockID:                   put(cast<Block>(n)); break;
+      case ReturnOpID:                put(cast<ReturnOp>(n)); break;
       default:
         hlvmDeadCode("Unknown Type");
         break;

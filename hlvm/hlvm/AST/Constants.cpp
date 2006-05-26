@@ -1,4 +1,4 @@
-//===-- AST Program Class ---------------------------------------*- C++ -*-===//
+//===-- AST Constant Expression Operators -----------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,30 +20,35 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Program.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/Constants.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Implements the classes that provide constant expressions
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Program.h>
-#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Constants.h>
 
-using namespace hlvm;
+namespace hlvm {
 
-namespace {
-SignatureType* initSignature() {
-  SignatureType* result = new SignatureType();
-  result->setName("_hlvm_ProgramSignature");
-  return result;
-}
-}
-
-
-SignatureType* 
-Program::SignatureTy = initSignature();
-
-Program::~Program()
+ConstLiteralInteger::~ConstLiteralInteger()
 {
+}
+
+ConstLiteralInteger* 
+ConstLiteralInteger::create()
+{
+  return new ConstLiteralInteger;
+}
+
+ConstLiteralString::~ConstLiteralString()
+{
+}
+
+ConstLiteralString* 
+ConstLiteralString::create()
+{
+  return new ConstLiteralString;
+}
+
 }

@@ -46,7 +46,7 @@ class ValidateImpl : public Pass
     ValidateImpl() : Pass(0,Pass::PostOrderTraversal) {}
     virtual void handle(Node* b,Pass::TraversalKinds k);
     inline void error(Node*n, const char* msg);
-    inline void validateName(NamedNode* n);
+    inline void validateName(Node*n, const std::string& name);
     inline void validateIntegerType(IntegerType* n);
     inline void validateRangeType(RangeType* n);
     inline void validateEnumerationType(EnumerationType* n);
@@ -70,17 +70,16 @@ ValidateImpl::error(Node* n, const char* msg)
 }
 
 inline void
-ValidateImpl::validateName(NamedNode* n)
+ValidateImpl::validateName(Node*n, const std::string& name)
 {
-  const std::string& name = n->getName();
   if (name.empty()) {
-    error(n,"Empty Name");
+    error(0,"Empty Name");
   }
 }
 inline void
 ValidateImpl::validateIntegerType(IntegerType* n)
 {
-  validateName(n);
+  validateName(n,n->getName());
   if (n->getBits() == 0) {
     error(n,"Invalid number of bits");
   }
@@ -164,7 +163,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case BooleanTypeID:
     case CharacterTypeID:
     case OctetTypeID:
-      validateName(cast<NamedNode>(n));
+      validateName(n,cast<Type>(n)->getName());
       break; 
     case IntegerTypeID:
       validateIntegerType(cast<IntegerType>(n));
@@ -292,6 +291,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case PInfOpID:
     case NInfOpID:
     case NaNOpID:
+    case ConstLiteralIntegerOpID:
       break; // Not implemented yet
     case DocumentationID:
       /// Nothing to validate (any doc is a good thing :)

@@ -1,4 +1,4 @@
-//===-- AST Function Class --------------------------------------*- C++ -*-===//
+//===-- HLVM AST String Operations ------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,57 +20,55 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Block.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/StringOps.h
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Block
+/// @brief Provides the interface to class hlvm::AST::StringOps.
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_BLOCK_H
-#define HLVM_AST_BLOCK_H
+#ifndef HLVM_AST_STRINGOPS_H
+#define HLVM_AST_STRINGOPS_H
 
 #include <hlvm/AST/Operator.h>
 
-namespace hlvm 
+namespace hlvm
 {
 
-/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-/// A Variable is a storage location of a specific type. It can either be
-/// global or local, depending on its parent. Global variables are always
-/// contained in a Bundle. Local variables are always contained in a
-/// Function.
-/// @brief HLVM AST Variable Node
-class Block : public MultiOperator
+/// Represents the String insert operator.
+/// @brief HLVM AST String Insert Node
+class StrInsertOp : public TernaryOperator
 {
   /// @name Constructors
   /// @{
+  protected:
+    StrInsertOp() : TernaryOperator(StrInsertOpID) {}
+
   public:
-    Block() : MultiOperator(BlockID){}
-    virtual ~Block();
+    virtual ~StrInsertOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    const std::string& getLabel() const { return label; }
-    static inline bool classof(const Block*) { return true; }
-    static inline bool classof(const Operator* O) { return O->isBlock(); }
-    static inline bool classof(const Node* N) { return N->isBlock(); }
+    static inline bool classof(const StrInsertOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(StrInsertOpID); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
-    void setLabel(const std::string& l) { label = l; }
+
   /// @}
   /// @name Data
   /// @{
-  public:
-    std::string label;
+  protected:
   /// @}
   friend class AST;
 };
 
-} // hlvm 
+} // hlvm
 #endif
+namespace hlvm {
+
+}

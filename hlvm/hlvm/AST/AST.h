@@ -41,7 +41,9 @@ namespace hlvm
 
 class Bundle;   
 class Documentation;
+class Block;
 class Function; 
+class Program; 
 class Import;
 class Locator; 
 class SignatureType;
@@ -63,6 +65,8 @@ class StructureType;
 class SignatureType;
 class OpaqueType;
 class EnumerationType;
+class ConstLiteralInteger;
+class ReturnOp;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It provides
 /// those aspects of the tree that are not part of the tree itself.
@@ -129,6 +133,9 @@ class AST
   public:
     Bundle* new_Bundle(const Locator& loc, const std::string& id);
     Function* new_Function(const Locator& loc, const std::string& id);
+    ReturnOp* new_ReturnOp(const Locator& loc);
+    Block* new_Block(const Locator& loc);
+    Program* new_Program(const Locator& loc, const std::string& id);
     Import* new_Import(const Locator& loc, const std::string& id);
     Variable* new_Variable(const Locator& loc, const std::string& id);
     IntegerType* new_IntegerType(
@@ -222,6 +229,7 @@ class AST
     IntegerType* new_u8(const Locator& l, const std::string& id)
       { return new_IntegerType(l,id,8,false); }
 
+    ConstLiteralInteger* new_ConstLiteralInteger(const Locator& loc);
     Documentation* new_Documentation(const Locator& loc);
 
   /// @}

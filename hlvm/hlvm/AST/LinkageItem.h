@@ -37,7 +37,7 @@ namespace hlvm
 
 /// This enumeration is used to specify the kinds of linkage that are
 /// permitted for a LinkageItem.
-enum LinkageTypes {
+enum LinkageKinds {
   ExternalLinkage,    ///< Externally visible item
   InternalLinkage,    ///< Rename collisions when linking (static funcs)
   LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
@@ -50,32 +50,36 @@ enum LinkageTypes {
 /// elsewhere and linked into another bundle to resolve the reference. The
 /// LinkageItem declares what kind of linkage is to be performed.
 /// @brief HLVM AST Bundle Node
-class LinkageItem : public NamedNode
+class LinkageItem : public Value
 {
   /// @name Constructors
   /// @{
   protected:
-    LinkageItem(
-      NodeIDs id ///< Subclass's node identifier
-    ) : NamedNode(id) {}
+    LinkageItem( NodeIDs id ) : Value(id), kind(InternalLinkage), name() {}
   public:
     virtual ~LinkageItem();
 
   /// @}
-  /// @name Mutators
+  /// @name Accessors
   /// @{
   public:
+    inline const std::string& getName() { return name; }
+    inline LinkageKinds getLinkageKind() { return kind; }
     static inline bool classof(const LinkageItem*) { return true; }
     static inline bool classof(const Node* N) { return N->isLinkageItem(); }
+
   /// @}
   /// @name Mutators
   /// @{
+    void setName(const std::string& n) { name = n; }
+    void setLinkageKind(LinkageKinds k) { kind = k; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    LinkageTypes type_; ///< The type of linkage to perform for this item
+    LinkageKinds kind; ///< The type of linkage to perform for this item
+    std::string name;
   /// @}
   friend class AST;
 };

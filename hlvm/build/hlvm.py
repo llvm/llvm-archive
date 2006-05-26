@@ -115,8 +115,8 @@ def GetBuildEnvironment(targets,arguments):
 
   if env['debug'] == 1 :
     VariantName += 'D'
-    env.Append(CCFLAGS=' -g')
-    env.Append(CXXFLAGS=' -g')
+    env.Append(CCFLAGS=' -ggdb')
+    env.Append(CXXFLAGS=' -ggdb')
     env.Append(CPPDEFINES={'HLVM_DEBUG':None})
   else :
     VariantName+='d'
@@ -133,8 +133,6 @@ def GetBuildEnvironment(targets,arguments):
     env.Append(CXXFLAGS=' -O3')
   else :
     VariantName+='o'
-    env.Append(CCFLAGS=' -O1')
-    env.Append(CXXFLAGS=' -O1')
 
   BuildDir = 'build.' + VariantName
   env['Variant'] = VariantName

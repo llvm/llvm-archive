@@ -28,6 +28,10 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Operator.h>
+#include <hlvm/Base/Assert.h>
+#include <llvm/Support/Casting.h>
+
+using namespace llvm;
 
 namespace hlvm {
 
@@ -40,9 +44,27 @@ NilaryOperator::~NilaryOperator()
 }
 
 Operator*
-NilaryOperator::getOperand(unsigned idx)
+NilaryOperator::getOperand(unsigned idx) const
 {
-  assert(!"Can't get operands from a NilaryOperator");
+  hlvmAssert(!"Can't get operands from a NilaryOperator");
+}
+
+size_t  
+NilaryOperator::numOperands() const
+{
+  return 0;
+}
+
+void 
+NilaryOperator::insertChild(Node* child)
+{
+  hlvmAssert(!"NilaryOperators don't accept children");
+}
+
+void 
+NilaryOperator::removeChild(Node* child)
+{
+  hlvmAssert(!"Can't remove from a NilaryOperator");
 }
 
 UnaryOperator::~UnaryOperator()
@@ -50,10 +72,36 @@ UnaryOperator::~UnaryOperator()
 }
 
 Operator*
-UnaryOperator::getOperand(unsigned idx)
+UnaryOperator::getOperand(unsigned idx) const
 {
   assert(idx == 0 && "Operand index out of range");
   return op1;
+}
+
+size_t  
+UnaryOperator::numOperands() const
+{
+  return op1 != 0;
+}
+
+void 
+UnaryOperator::insertChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (!op1)
+    op1 = cast<Operator>(child);
+  else
+    hlvmAssert("UnaryOperator full");
+}
+
+void 
+UnaryOperator::removeChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (op1 == child) {
+    op1 = 0;
+  } else
+    hlvmAssert(!"Can't remove child from UnaryOperator");
 }
 
 BinaryOperator::~BinaryOperator()
@@ -61,10 +109,40 @@ BinaryOperator::~BinaryOperator()
 }
 
 Operator*
-BinaryOperator::getOperand(unsigned idx)
+BinaryOperator::getOperand(unsigned idx) const
 {
   assert(idx <= 1 && "Operand index out of range");
   return ops[idx];
+}
+
+size_t  
+BinaryOperator::numOperands() const
+{
+  return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0);
+}
+
+void 
+BinaryOperator::insertChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (!ops[0])
+    ops[0] = cast<Operator>(child);
+  else if (!ops[1])
+    ops[1] = cast<Operator>(child);
+  else
+    hlvmAssert(!"BinaryOperator full!");
+}
+
+void 
+BinaryOperator::removeChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (ops[0] == child)
+    ops[0] = 0;
+  else if (ops[1] == child)
+    ops[1] = 0;
+  else
+    hlvmAssert(!"Can't remove child from BinaryOperator");
 }
 
 TernaryOperator::~TernaryOperator()
@@ -72,10 +150,44 @@ TernaryOperator::~TernaryOperator()
 }
 
 Operator*
-TernaryOperator::getOperand(unsigned idx)
+TernaryOperator::getOperand(unsigned idx) const
 {
   assert(idx <= 2 && "Operand index out of range");
   return ops[idx];
+}
+
+size_t  
+TernaryOperator::numOperands() const
+{
+  return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0) + (ops[2] ? 1 : 0);
+}
+
+void 
+TernaryOperator::insertChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (!ops[0])
+    ops[0] = cast<Operator>(child);
+  else if (!ops[1])
+    ops[1] = cast<Operator>(child);
+  else if (!ops[2])
+    ops[2] = cast<Operator>(child);
+  else
+    hlvmAssert(!"TernaryOperator full!");
+}
+
+void 
+TernaryOperator::removeChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  if (ops[0] == child)
+    ops[0] = 0;
+  else if (ops[1] == child)
+    ops[1] = 0;
+  else if (ops[2] == child)
+    ops[2] = 0;
+  else
+    hlvmAssert(!"Can't remove child from TernaryOperator!");
 }
 
 MultiOperator::~MultiOperator()
@@ -83,10 +195,32 @@ MultiOperator::~MultiOperator()
 }
 
 Operator*
-MultiOperator::getOperand(unsigned idx)
+MultiOperator::getOperand(unsigned idx) const
 {
   assert(idx <= ops.size() && "Operand index out of range");
   return ops[idx];
+}
+
+size_t  
+MultiOperator::numOperands() const
+{
+  return ops.size();
+}
+
+void 
+MultiOperator::insertChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  ops.push_back(cast<Operator>(child));
+}
+
+void 
+MultiOperator::removeChild(Node* child)
+{
+  hlvmAssert(isa<Operator>(child));
+  for (iterator I = begin(), E = end(); I != E; ++I ) {
+      if (*I == child) { ops.erase(I); return; }
+  }
 }
 
 }

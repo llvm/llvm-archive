@@ -36,18 +36,6 @@ Node::~Node()
 {
 }
 
-bool 
-Node::isNamedNode() const
-{
-  return isType() || isBundle() || isFunction() || isProgram() || isVariable();
-}
-
-bool 
-Node::isLinkageItem() const
-{
-  return isFunction() || isType() || isProgram() || isVariable();
-}
-
 
 void 
 Node::insertChild(Node* child)
@@ -93,7 +81,7 @@ Documentable::~Documentable()
 {
 }
 
-NamedNode::~NamedNode()
+Value::~Value()
 {
 }
 

@@ -50,7 +50,8 @@ class Program : public Function
   /// @name Constructors
   /// @{
   public:
-    Program() : Function(ProgramID) {}
+    Program() : Function(ProgramID) 
+    { setSignature(SignatureTy); setLinkageKind(ExternalLinkage); }
     virtual ~Program();
 
   /// @}
@@ -58,6 +59,7 @@ class Program : public Function
   /// @{
   public:
     static inline bool classof(const Program*) { return true; }
+    static inline bool classof(const Function*F) { return F->isProgram(); }
     static inline bool classof(const Node* N) { return N->isProgram(); }
 
   /// @}
@@ -65,7 +67,7 @@ class Program : public Function
   /// @{
   private:
     static SignatureType* SignatureTy; ///< The signature for programs
-    static SignatureType* initSignature(); 
+    LinkageItem::setLinkageKind;
   /// @}
   friend class AST;
 };

@@ -59,6 +59,11 @@ class ReturnOp : public UnaryOperator
     static inline bool classof(const Node* N) { return N->is(ReturnOpID); }
 
   /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    void setResult(Operator* op) { op->setParent(this); }
+  /// @}
   friend class AST;
 };
 

@@ -37,6 +37,7 @@
 namespace hlvm
 {
 
+class Type;
 class Documentation;
 
 /// This enumeration is used to identify a specific type. Its organization is
@@ -45,152 +46,155 @@ class Documentation;
 /// group things by inheritance rather than by function. 
 enum NodeIDs 
 {
-  NoTypeID = 0,       ///< Use this for an invalid type ID.
+  NoTypeID = 0,            ///< Use this for an invalid type ID.
   // Primitive Types (no child nodes)
-  VoidTypeID = 1,     ///< The Void Type (The Null Type)
-  AnyTypeID,          ///< The Any Type (Union of any type)
-  BooleanTypeID,      ///< The Boolean Type (A simple on/off boolean value)
-  CharacterTypeID,    ///< The Character Type (UTF-16 encoded character)
-  OctetTypeID,        ///< The Octet Type (8 bits uninterpreted)
-  IntegerTypeID,      ///< The Integer Type (A number of bits of integer data)
-  RangeTypeID,        ///< The Range Type (A Range of Integer Values)
-  EnumerationTypeID,  ///< The Enumeration Type (set of enumerated ids)
-  RealTypeID,         ///< The Real Number Type (Any Real Number)
-  RationalTypeID,     ///< The Rational Number Type (p/q type number)
-  StringTypeID,       ///< The String Type (Array of UTF-16 chars + length)
+  VoidTypeID = 1,          ///< The Void Type (The Null Type)
+  AnyTypeID,               ///< The Any Type (Union of any type)
+  BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
+  CharacterTypeID,         ///< The Character Type (UTF-16 encoded character)
+  OctetTypeID,             ///< The Octet Type (8 bits uninterpreted)
+  IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
+  RangeTypeID,             ///< The Range Type (A Range of Integer Values)
+  EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
+  RealTypeID,              ///< The Real Number Type (Any Real Number)
+  RationalTypeID,          ///< The Rational Number Type (p/q type number)
+  StringTypeID,            ///< The String Type (Array of UTF-16 chars + length)
 
   // Container Types
-  AliasTypeID,        ///< A new name for an existing type
-  PointerTypeID,      ///< The Pointer Type (Pointer To storage of other Type)
-  ArrayTypeID,        ///< The Array Type (Linear array of some type)
-  VectorTypeID,       ///< The Vector Type (Packed Fixed Size Vector)
-  StructureTypeID,    ///< The Structure Type (Sequence of various types)
-  SignatureTypeID,    ///< The Function Signature Type
-  ContinuationTypeID, ///< A Continuation Type (data passing to continuations)
-  OpaqueTypeID,       ///< A placeholder for unresolved types
+  AliasTypeID,             ///< A new name for an existing type
+  PointerTypeID,           ///< The Pointer Type (Pointer To object of Type)
+  ArrayTypeID,             ///< The Array Type (Linear array of some type)
+  VectorTypeID,            ///< The Vector Type (Packed Fixed Size Vector)
+  StructureTypeID,         ///< The Structure Type (Sequence of various types)
+  SignatureTypeID,         ///< The Function Signature Type
+  ContinuationTypeID,      ///< A Continuation Type (data to continuations)
+  OpaqueTypeID,            ///< A placeholder for unresolved types
 
   // Class Constructs (TBD)
-  InterfaceID,        ///< The Interface Type (set of Signatures)
-  ClassID,            ///< The Class Type (Object Oriented Class Definition)
-  MethodID,           ///< The Method Node (define a method)
-  ImplementsID,       ///< Specifies set of Interfaces implemented by class
+  InterfaceID,             ///< The Interface Type (set of Signatures)
+  ClassID,                 ///< The Class Type (OO Class Definition)
+  MethodID,                ///< The Method Node (define a method)
+  ImplementsID,            ///< Specifies set of Interfaces implemented by class
 
   // Linkage Items
-  VariableID,         ///< The Variable Node (a storage location)
-  FunctionID,         ///< The Function Node (a callable function)
-  ProgramID,          ///< The Program Node (a program starting point)
+  VariableID,              ///< The Variable Node (a storage location)
+  FunctionID,              ///< The Function Node (a callable function)
+  ProgramID,               ///< The Program Node (a program starting point)
 
   // Container
-  BundleID,           ///< The Bundle Node (a group of other declarations)
-  BlockID,            ///< A Block Of Code Nodes
-  ImportID,           ///< A bundle's Import declaration
+  BundleID,                ///< The Bundle Node (a group of other declarations)
+  BlockID,                 ///< A Block Of Code Nodes
+  ImportID,                ///< A bundle's Import declaration
 
   // Nilary Operators (those taking no operands)
-  BreakOpID,          ///< Break out of the enclosing loop
-  PInfOpID,           ///< Constant Positive Infinity Real Value
-  NInfOpID,           ///< Constant Negative Infinity Real Value
-  NaNOpID,            ///< Constant Not-A-Number Real Value
+  BreakOpID,               ///< Break out of the enclosing loop
+  ConstLiteralIntegerOpID, ///< Constant Literal Integer
+  ConstLiteralRealOpID,    ///< Constant Literal Real
+  ConstLiteralStringOpID,  ///< Constant Literal String
+  PInfOpID,                ///< Constant Positive Infinity Real Value
+  NInfOpID,                ///< Constant Negative Infinity Real Value
+  NaNOpID,                 ///< Constant Not-A-Number Real Value
 
   // Control Flow Unary Operators
-  ReturnOpID,         ///< The Return A Value Operator
-  ThrowOpID,          ///< The Throw an Exception Operator
-  JumpToOpID,         ///< The Jump To Labelled Block Operator
+  ReturnOpID,              ///< The Return A Value Operator
+  ThrowOpID,               ///< The Throw an Exception Operator
+  JumpToOpID,              ///< The Jump To Labelled Block Operator
 
   // Integer Arithmetic Unary Operators
-  NegateOpID,         ///< The Negation Unary Integer Operator
-  ComplementOpID,     ///< The Bitwise Complement Unary Integer Operator
-  PreIncrOpID,        ///< The Pre-Increment Unary Integer Operator
-  PostIncrOpID,       ///< The Post-Increment Unary Integer Operator
-  PreDecrOpID,        ///< The Pre-Decrement Unary Integer Operator
-  PostDecrOpID,       ///< The Post-Decrement Unary Integer Operator
+  NotOpID,                 ///< Not Unary Boolean Operator
+  NegateOpID,              ///< Negation Unary Integer Operator
+  ComplementOpID,          ///< Bitwise Complement Unary Integer Operator
+  PreIncrOpID,             ///< Pre-Increment Unary Integer Operator
+  PostIncrOpID,            ///< Post-Increment Unary Integer Operator
+  PreDecrOpID,             ///< Pre-Decrement Unary Integer Operator
+  PostDecrOpID,            ///< Post-Decrement Unary Integer Operator
 
   // Real Arithmetic Unary Operators
-  IsPInfOpID,         ///< Real Number Positive Infinity Test Operator
-  IsNInfOpID,         ///< Real Number Negative Infinity Test Operator
-  IsNaNOpID,          ///< Real Number Not-A-Number Test Operator
-  TruncOpID,          ///< Real Number Truncation Operator
-  RoundOpID,          ///< Real Number Rounding Operator
-  FloorOpID,          ///< Real Number Floor Operator
-  CeilingOpID,        ///< Real Number Ceiling Operator
-  LogEOpID,           ///< Real Number Base e (Euler's Number) logarithm 
-  Log2OpID,           ///< Real Number Base 2 logarithm Operator
-  Log10OpID,          ///< Real Number Base 10 logarithm Operator
-  SqRootOpID,         ///< Real Number Square Root Operator
-  FactorialOpID,      ///< Real Number Factorial Operator
+  IsPInfOpID,              ///< Real Number Positive Infinity Test Operator
+  IsNInfOpID,              ///< Real Number Negative Infinity Test Operator
+  IsNaNOpID,               ///< Real Number Not-A-Number Test Operator
+  TruncOpID,               ///< Real Number Truncation Operator
+  RoundOpID,               ///< Real Number Rounding Operator
+  FloorOpID,               ///< Real Number Floor Operator
+  CeilingOpID,             ///< Real Number Ceiling Operator
+  LogEOpID,                ///< Real Number Base e (Euler's Number) logarithm 
+  Log2OpID,                ///< Real Number Base 2 logarithm Operator
+  Log10OpID,               ///< Real Number Base 10 logarithm Operator
+  SqRootOpID,              ///< Real Number Square Root Operator
+  FactorialOpID,           ///< Real Number Factorial Operator
 
   // Memory Unary Operators
-  LoadOpID,           ///< The Load Operator (load a value from a location)
-  AllocateOpID,       ///< The Allocate Memory Operator (get some heap memory)
-  FreeOpID,           ///< The Free Memory Operator (free some heap memory)
-  StackAllocOpID,     ///< The Stack Allocation Operator (get some stack mem)
-  ReferenceOpID,      ///< The Reference A Memory Object Operator (for GC)
-  DereferenceOpID,    ///< The Dereference A Memory Object Operator (for GC)
+  LoadOpID,                ///< The Load Operator (load a value from a location)
+  AllocateOpID,            ///< The Allocate Memory Operator (get some heap memory)
+  FreeOpID,                ///< The Free Memory Operator (free some heap memory)
+  StackAllocOpID,          ///< The Stack Allocation Operator (get some stack mem)
+  ReferenceOpID,           ///< The Reference A Memory Object Operator (for GC)
+  DereferenceOpID,         ///< The Dereference A Memory Object Operator (for GC)
 
   // Other Unary Operators
-  TellOpID,           ///< Tell the position of a stream
-  CloseOpID,          ///< Close a stream previously opened.
-  LengthOpID,         ///< Extract Length of a String Operator
-  WithOpID,           ///< Scoping Operator (shorthand for a Bundle, e.g.using) 
+  TellOpID,                ///< Tell the position of a stream
+  CloseOpID,               ///< Close a stream previously opened.
+  LengthOpID,              ///< Extract Length of a String Operator
+  WithOpID,                ///< Scoping Operator (shorthand for a Bundle, e.g.using) 
 
   // Arithmetic Binary Operators
-  AddOpID,            ///< The Addition Binary Integer Operator
-  SubtractOpID,       ///< The Subtraction Binary Integer Operator
-  MultiplyOpID,       ///< The Multiplcation Binary Integer Operator
-  DivideOpID,         ///< The Division Binary Integer Operator
-  ModulusOpID,        ///< The Modulus Binary Integer Operator
-  BAndOpID,           ///< The Bitwise And Binary Integer Operator
-  BOrOpID,            ///< The Bitwise Or Binary Integer Operator
-  BXOrOpID,           ///< The Bitwise XOr Binary Integer Operator
+  AddOpID,                 ///< Addition Binary Operator
+  SubtractOpID,            ///< Subtraction Binary Operator
+  MultiplyOpID,            ///< Multiplcation Binary Operator
+  DivideOpID,              ///< Division Binary Operator
+  ModulusOpID,             ///< Modulus Binary Operator
+  BAndOpID,                ///< Bitwise And Binary Operator
+  BOrOpID,                 ///< Bitwise Or Binary Operator
+  BXOrOpID,                ///< Bitwise XOr Binary Operator
 
   // Boolean Binary Operators
-  AndOpID,            ///< The And Binary Boolean Operator
-  OrOpID,             ///< The Or Binary Boolean Operator
-  NorOpID,            ///< The Nor Binary Boolean Operator
-  XorOpID,            ///< The Xor Binary Boolean Operator
-  NotOpID,            ///< The Not Unary Boolean Operator
-  LTOpID,             ///< The less-than Binary Boolean Operator
-  GTOpID,             ///< The greater-than Binary Boolean Operator
-  LEOpID,             ///< The less-than-or-equal Binary Boolean Operator
-  GEOpID,             ///< The greather-than-or-equal Binary Boolean Operator
-  EQOpID,             ///< The esual Binary Boolean Operator
-  NEOpID,             ///< The not-equal Binary Comparison Operator
+  AndOpID,                 ///< And Binary Boolean Operator
+  OrOpID,                  ///< Or Binary Boolean Operator
+  NorOpID,                 ///< Nor Binary Boolean Operator
+  XorOpID,                 ///< Xor Binary Boolean Operator
+  LTOpID,                  ///< <  Binary Comparison Operator
+  GTOpID,                  ///< >  Binary Comparison Operator
+  LEOpID,                  ///< <= Binary Comparison Operator
+  GEOpID,                  ///< >= Binary Comparison Operator
+  EQOpID,                  ///< == Binary Comparison Operator
+  NEOpID,                  ///< != Binary Comparison Operator
 
   // Real Arithmetic Binary Operators
-  PowerOpID,          ///< Real Number Power Operator
-  RootOpID,           ///< Real Number Arbitrary Root Operator
-  GCDOpID,            ///< Real Number Greatest Common Divisor Operator
-  LCMOpID,            ///< Real Number Least Common Multiplicator Operator
+  PowerOpID,               ///< Real Number Power Operator
+  RootOpID,                ///< Real Number Arbitrary Root Operator
+  GCDOpID,                 ///< Real Number Greatest Common Divisor Operator
+  LCMOpID,                 ///< Real Number Least Common Multiplicator Operator
   
   // Memory Binary Operators
-  ReallocateOpID,     ///< The Reallocate Memory Operator (realloc heap mem)
-  StoreOpID,          ///< The Store Operator (store a value to a location)
+  ReallocateOpID,          ///< The Reallocate Memory Operator 
+  StoreOpID,               ///< The Store Operator (store a value to a location)
 
   // Other Binary Operators
-  OpenOpID,           ///< Open a stream from a URL
-  ReadOpID,           ///< Read from a stream
-  WriteOpID,          ///< Write to a stream
-  CreateContOpID,     ///< The Create Continutation Operator
+  OpenOpID,                ///< Open a stream from a URL
+  ReadOpID,                ///< Read from a stream
+  WriteOpID,               ///< Write to a stream
+  CreateContOpID,          ///< The Create Continutation Operator
 
   // Ternary Operators
-  IfOpID,             ///< The If-Then-Else Operator
-  StrInsertOpID,      ///< Insert(str,where,what)
-  StrEraseOpID,       ///< Erase(str,at,len)
-  StrReplaceOpID,     ///< Replace(str,at,len,what)
-  PositionOpID,       ///< Position a stream (stream,where,relative-to)
+  IfOpID,                  ///< The If-Then-Else Operator
+  StrInsertOpID,           ///< Insert(str,where,what)
+  StrEraseOpID,            ///< Erase(str,at,len)
+  StrReplaceOpID,          ///< Replace(str,at,len,what)
+  PositionOpID,            ///< Position a stream (stream,where,relative-to)
 
   // Multi Operators
-  CallOpID,           ///< The Call Operator (n operands)
-  InvokeOpID,         ///< The Invoke Operator (n operands)
-  DispatchOpID,       ///< The Object Method Dispatch  Operator (n operands)
-  CallWithContOpID,   ///< The Call with Continuation Operator (n operands)
-  SelectOpID,         ///< The Select An Alternate Operator (n operands)
-  LoopOpID,           ///< The General Purpose Loop Operator (5 operands)
+  CallOpID,                ///< The Call Operator (n operands)
+  InvokeOpID,              ///< The Invoke Operator (n operands)
+  DispatchOpID,            ///< The Object Method Dispatch Operator (n operands)
+  CallWithContOpID,        ///< The Call with Continuation Operator (n operands)
+  SelectOpID,              ///< The Select An Alternate Operator (n operands)
+  LoopOpID,                ///< The General Purpose Loop Operator (5 operands)
 
   // Miscellaneous Nodes
-  DocumentationID,    ///< XHTML Documentation Node
+  DocumentationID,         ///< XHTML Documentation Node
 
   // Enumeration Ranges and Limits
-  NumNodeIDs,         ///< The number of node identifiers in the enum
+  NumNodeIDs,              ///< The number of node identifiers in the enum
   FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
   LastPrimitiveTypeID  = StringTypeID, ///< Last Primitive Type
   FirstContainerTypeID = PointerTypeID, ///< First Container Type
@@ -268,21 +272,24 @@ class Node
       return id >= FirstMultiOpID && id <= LastMultiOpID;
     }
 
-    /// Determine if the node is a NamedNode
-    bool isNamedNode() const ; 
-
     /// Determine if the node is a Documentable Node
-    bool isDocumentable() const;
+    bool isDocumentable() const { return isValue() || isType() || isBundle();}
 
     /// Determine if the node is a LinkageItem
-    bool isLinkageItem() const;
+    bool isLinkageItem() const {
+      return isFunction() || isVariable();
+    }
+
+    /// Determine if the node is a Value
+    bool isValue() const { return isLinkageItem() || isOperator(); }
 
     /// Determine if the node is a Block
     inline bool isBlock() const { return id == BlockID; }
     /// Determine if the node is a Bundle
     inline bool isBundle() const { return id == BundleID; }
     /// Determine if the node is a Function
-    inline bool isFunction() const { return id == FunctionID; }
+    inline bool isFunction() const 
+      { return id == FunctionID || id == ProgramID;}
     /// Determine if the node is a Program
     inline bool isProgram() const { return id == ProgramID; }
     /// Determine if the node is a Variable
@@ -356,36 +363,36 @@ class Documentable : public Node
   friend class AST;
 };
 
-class NamedNode : public Documentable 
+class Value : public Documentable
 {
   /// @name Constructors
   /// @{
   protected:
-    NamedNode(NodeIDs id) : Documentable(id), name() {}
+    Value(NodeIDs id) : Documentable(id), type(0)  {}
   public:
-    virtual ~NamedNode();
+    virtual ~Value();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    /// Get the name of the node
-    inline const std::string& getName() { return name; }
+    // Get the type of the value
+    inline const Type* getType() const { return type; }
 
-    static inline bool classof(const NamedNode*) { return true; }
-    static inline bool classof(const Node* N) { return N->isNamedNode(); }
+    static inline bool classof(const Value*) { return true; }
+    static inline bool classof(const Node* N) { return N->isValue(); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
-    void setName(const std::string& n) { name = n; }
+    void setType(const Type* t) { type = t; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::string name;  ///< The name of this node.
+    const Type* type; ///< The type of this node.
   /// @}
   friend class AST;
 };

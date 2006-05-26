@@ -107,6 +107,10 @@ inline void
 PassManagerImpl::runOn(Operator* op)
 {
   runPreOrder(op);
+  size_t limit = op->numOperands();
+  for (size_t i = 0; i < limit; ++i) {
+    runOn(op->getOperand(i));
+  }
   runPostOrder(op);
 }
 
@@ -115,6 +119,8 @@ PassManagerImpl::runOn(Block* b)
 {
   runPreOrder(b);
   for (Block::iterator I = b->begin(), E = b->end(); I != E; ++I) {
+    if (!*I)
+      break;
     if (isa<Block>(*I))
       runOn(cast<Block>(*I)); // recurse!
     else

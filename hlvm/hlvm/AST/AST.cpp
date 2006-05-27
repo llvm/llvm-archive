@@ -39,30 +39,82 @@
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/SymbolTable.h>
+#include <hlvm/Base/Assert.h>
+#include <llvm/Support/Casting.h>
 
 using namespace hlvm;
 
-namespace {
+namespace 
+{
+
 class ASTImpl : public AST
 {
   public:
-    ASTImpl() {}
+    ASTImpl()
+      : types(), vars(), funcs(), unresolvedTypes(), 
+        VoidSingleton(0), BooleanSingleton(), CharacterSingleton(0), 
+        OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
+        UInt32Singleton(0), UInt64Singleton(0), UInt128Singleton(0),
+        SInt8Singleton(0), SInt16Singleton(0), SInt32Singleton(0),
+        SInt64Singleton(0), SInt128Singleton(0),  Float32Singleton(0),
+        Float44Singleton(0), Float64Singleton(0), Float80Singleton(0),
+        Float128Singleton(0), ProgramTypeSingleton(0)
+      {}
     ~ASTImpl();
+
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   private:
     // Pool pool;
-    SymbolTable types;
-    SymbolTable vars;
-    SymbolTable funcs;
-    SymbolTable unresolvedTypes;
+    SymbolTable    types;
+    SymbolTable    vars;
+    SymbolTable    funcs;
+    SymbolTable    unresolvedTypes;
+    VoidType*      VoidSingleton;
+    BooleanType*   BooleanSingleton;
+    CharacterType* CharacterSingleton;
+    OctetType*     OctetSingleton;
+    IntegerType*   UInt8Singleton;
+    IntegerType*   UInt16Singleton;;
+    IntegerType*   UInt32Singleton;
+    IntegerType*   UInt64Singleton;
+    IntegerType*   UInt128Singleton;
+    IntegerType*   SInt8Singleton;
+    IntegerType*   SInt16Singleton;
+    IntegerType*   SInt32Singleton;
+    IntegerType*   SInt64Singleton;
+    IntegerType*   SInt128Singleton;  
+    RealType*      Float32Singleton;
+    RealType*      Float44Singleton;
+    RealType*      Float64Singleton;
+    RealType*      Float80Singleton;
+    RealType*      Float128Singleton;
+    SignatureType* ProgramTypeSingleton;
 
   public:
     Type* resolveType(const std::string& name);
     void addType(Type*);
+    virtual void setParent(Node* parent);
+    friend class AST;
 };
 
 ASTImpl::~ASTImpl()
 {
+}
+
+void 
+ASTImpl::insertChild(Node* child)
+{
+  hlvmAssert(llvm::isa<Bundle>(child) && "Can't insert that here");
+  bundles.push_back(llvm::cast<Bundle>(child));
+}
+
+void 
+ASTImpl::removeChild(Node* child)
+{
+  hlvmAssert(llvm::isa<Bundle>(child) && "Can't remove that here");
 }
 
 Type*
@@ -91,9 +143,16 @@ ASTImpl::addType(Type* ty)
   types.insert(ty->getName(),ty);
 }
 
+void
+ASTImpl::setParent(Node* n)
+{
+  hlvmAssert(!"Can't set parent of root node (AST)");
 }
 
-namespace hlvm {
+}
+
+namespace hlvm 
+{
 
 AST* 
 AST::create()
@@ -142,7 +201,7 @@ AST::new_IntegerType(
   uint64_t bits, 
   bool isSigned )
 {
-  IntegerType* result = new IntegerType();
+  IntegerType* result = new IntegerType(IntegerTypeID);
   result->setBits(bits);
   result->setSigned(isSigned);
   result->setLocator(loc);
@@ -182,7 +241,7 @@ AST::new_RealType(
   uint32_t mantissa, 
   uint32_t exponent)
 {
-  RealType* result = new RealType();
+  RealType* result = new RealType(RealTypeID);
   result->setMantissa(mantissa);
   result->setExponent(exponent);
   result->setLocator(loc);
@@ -357,9 +416,25 @@ AST::new_Function(const Locator& loc, const std::string& id)
 Program*
 AST::new_Program(const Locator& loc, const std::string& id)
 {
+  ASTImpl* ast = static_cast<ASTImpl*>(this);
+  if (!ast->ProgramTypeSingleton) {
+    ast->ProgramTypeSingleton = new SignatureType();
+    ast->ProgramTypeSingleton->setLocator(loc);
+    ast->ProgramTypeSingleton->setName(id);
+    Type* intType = getPrimitiveType(SInt32TypeID);
+    ast->ProgramTypeSingleton->setResultType(intType);
+    ArrayType* arg_array = new_ArrayType(loc,"arg_array",
+      new_StringType(loc,"string"),0);
+    PointerType* args = new_PointerType(loc,"arg_array_ptr",arg_array);
+    Argument* param = new_Argument(loc,"args",args);
+    ast->ProgramTypeSingleton->addArgument(param);
+  }
+
   Program* result = new Program();
   result->setLocator(loc);
   result->setName(id);
+  result->setSignature(ast->ProgramTypeSingleton); 
+  result->setLinkageKind(ExternalLinkage);
   return result;
 }
 
@@ -385,6 +460,150 @@ AST::new_Documentation(const Locator& loc)
   Documentation* result = new Documentation();
   result->setLocator(loc);
   return result;
+}
+
+Argument* 
+AST::new_Argument(const Locator& loc, const std::string& id, Type* ty )
+{
+  Argument* result = new Argument();
+  result->setLocator(loc);
+  result->setName(id);
+  result->setType(ty);
+  return result;
+}
+
+StringType*
+AST::new_StringType(const Locator& loc, const std::string& id)
+{
+  StringType* result = new StringType(id);
+  result->setLocator(loc);
+  return result;
+}
+
+Type* 
+AST::getPrimitiveType(NodeIDs pid)
+{
+  ASTImpl* ast = static_cast<ASTImpl*>(this);
+  switch (pid) 
+  {
+    case VoidTypeID:
+      if (!ast->VoidSingleton) {
+        ast->VoidSingleton = new VoidType();
+        ast->VoidSingleton->setName("void");
+      }
+      return ast->VoidSingleton;
+    case BooleanTypeID:
+      if (!ast->BooleanSingleton) {
+        ast->BooleanSingleton = new BooleanType();
+        ast->BooleanSingleton->setName("bool");
+      }
+      return ast->BooleanSingleton;
+    case CharacterTypeID:
+      if (!ast->CharacterSingleton) {
+        ast->CharacterSingleton = new CharacterType();
+        ast->CharacterSingleton->setName("char");
+      }
+      return ast->CharacterSingleton;
+    case OctetTypeID:
+      if (!ast->OctetSingleton) {
+        ast->OctetSingleton = new OctetType();
+        ast->OctetSingleton->setName("octet");
+      }
+      return ast->OctetSingleton;
+    case UInt8TypeID:
+      if (!ast->UInt8Singleton) {
+        ast->UInt8Singleton = new IntegerType(UInt8TypeID,8,false);
+        ast->UInt8Singleton->setName("uint8_t");
+      }
+      return ast->UInt8Singleton;
+    case UInt16TypeID:
+      if (!ast->UInt16Singleton) {
+        ast->UInt16Singleton = new IntegerType(UInt16TypeID,16,false);
+        ast->UInt16Singleton->setName("uint16_t");
+      }
+      return ast->UInt16Singleton;
+    case UInt32TypeID:
+      if (!ast->UInt32Singleton) {
+        ast->UInt32Singleton = new IntegerType(UInt32TypeID,32,false);
+        ast->UInt32Singleton->setName("uint32_t");
+      }
+      return ast->UInt32Singleton;
+    case UInt64TypeID:
+      if (!ast->UInt64Singleton) {
+        ast->UInt64Singleton = new IntegerType(UInt64TypeID,64,false);
+        ast->UInt64Singleton->setName("uint64_t");
+      }
+      return ast->UInt64Singleton;
+    case UInt128TypeID:
+      if (!ast->UInt128Singleton) {
+        ast->UInt128Singleton = new IntegerType(UInt128TypeID,128,false);
+        ast->UInt128Singleton->setName("uint128_t");
+      }
+      return ast->UInt128Singleton;
+    case SInt8TypeID:
+      if (!ast->SInt8Singleton) {
+        ast->SInt8Singleton = new IntegerType(SInt8TypeID,8,false);
+        ast->SInt8Singleton->setName("int8_t");
+      }
+      return ast->SInt8Singleton;
+    case SInt16TypeID:
+      if (!ast->SInt16Singleton) {
+        ast->SInt16Singleton = new IntegerType(SInt16TypeID,16,false);
+        ast->SInt16Singleton->setName("int16_t");
+      }
+      return ast->SInt16Singleton;
+    case SInt32TypeID:
+      if (!ast->SInt32Singleton) {
+        ast->SInt32Singleton = new IntegerType(SInt32TypeID,32,false);
+        ast->SInt32Singleton->setName("int32_t");
+      }
+      return ast->SInt32Singleton;
+    case SInt64TypeID:
+      if (!ast->SInt64Singleton) {
+        ast->SInt64Singleton = new IntegerType(SInt64TypeID,64,false);
+        ast->SInt64Singleton->setName("int64_t");
+      }
+      return ast->SInt64Singleton;
+    case SInt128TypeID:
+      if (!ast->SInt128Singleton) {
+        ast->SInt128Singleton = new IntegerType(SInt128TypeID,128,false);
+        ast->SInt128Singleton->setName("int128_t");
+      }
+      return ast->SInt128Singleton;
+    case Float32TypeID:
+      if (!ast->Float32Singleton) {
+        ast->Float32Singleton = new RealType(Float32TypeID,23,8);
+        ast->Float32Singleton->setName("f32");
+      }
+      return ast->Float32Singleton;
+    case Float44TypeID:
+      if (!ast->Float44Singleton) {
+        ast->Float44Singleton = new RealType(Float44TypeID,32,11);
+        ast->Float44Singleton->setName("f44");
+      }
+      return ast->Float44Singleton;
+    case Float64TypeID:
+      if (!ast->Float64Singleton) {
+        ast->Float64Singleton = new RealType(Float64TypeID,52,11);
+        ast->Float64Singleton->setName("f64");
+      }
+      return ast->Float64Singleton;
+    case Float80TypeID:
+      if (!ast->Float80Singleton) {
+        ast->Float80Singleton = new RealType(Float80TypeID,64,15);
+        ast->Float80Singleton->setName("f80");
+      }
+      return ast->Float80Singleton;
+    case Float128TypeID:
+      if (!ast->Float128Singleton) {
+        ast->Float128Singleton = new RealType(Float128TypeID,112,15);
+        ast->Float128Singleton->setName("f128");
+      }
+      return ast->Float128Singleton;
+    default:
+      hlvmDeadCode("Invalid Primitive");
+      break;
+  }
 }
 
 }

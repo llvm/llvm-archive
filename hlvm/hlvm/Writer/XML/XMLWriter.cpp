@@ -377,7 +377,10 @@ void
 XMLWriterImpl::WriterPass::put(ConstLiteralInteger* i)
 {
   startElement("dec");
-  writeString(llvm::utostr(i->getValue()));
+  if (cast<IntegerType>(i->getType())->isSigned())
+    writeString(llvm::itostr(i->getValue()));
+  else
+    writeString(llvm::utostr(i->getValue(0)));
 }
 
 void

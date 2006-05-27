@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/Base/Assert.h>
+#include <llvm/ADT/StringExtras.h>
 
 using namespace llvm;
 
@@ -41,8 +42,8 @@ ContainerType::~ContainerType()
 void 
 ContainerType::insertChild(Node* n)
 {
-  hlvmAssert(isa<Type>(n) && "Can't insert those here");
-  types.push_back(cast<Type>(n));
+  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
+  contents.push_back(cast<AliasType>(n));
 }
 
 void 
@@ -51,7 +52,7 @@ ContainerType::removeChild(Node* n)
   hlvmAssert(isa<Type>(n) && "Can't remove those here");
   // This is sucky slow, but we probably won't be removing nodes that much.
   for (iterator I = begin(), E = end(); I != E; ++I ) {
-    if (*I == n) { types.erase(I); break; }
+    if (*I == n) { contents.erase(I); break; }
   }
   hlvmAssert(!"That node isn't my child");
 }
@@ -66,22 +67,8 @@ StructureType::~StructureType()
 {
 }
 
-void
-StructureType::insertChild(Node* n)
-{
-  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
-  types.push_back(cast<AliasType>(n));
-}
-
 SignatureType::~SignatureType()
 {
-}
-
-void 
-SignatureType::insertChild(Node* n)
-{
-  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
-  types.push_back(cast<AliasType>(n));
 }
 
 }

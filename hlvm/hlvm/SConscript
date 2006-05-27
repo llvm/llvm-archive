@@ -22,4 +22,4 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['Base','AST','Pass','Reader','Writer','Runtime'])
+hlvm.Dirs(env,['Base','AST','Pass','Reader','Writer','CodeGen','Runtime'])

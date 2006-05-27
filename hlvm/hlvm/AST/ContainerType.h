@@ -43,17 +43,15 @@ class ContainerType : public Type
   /// @name Types
   /// @{
   public:
-    typedef std::vector<Type*> TypeList;
-    typedef TypeList::iterator iterator;
-    typedef TypeList::const_iterator const_iterator;
+    typedef std::vector<AliasType*> ContentsList;
+    typedef ContentsList::iterator iterator;
+    typedef ContentsList::const_iterator const_iterator;
 
   /// @}
   /// @name Constructors
   /// @{
-  public:
-    ContainerType(
-      NodeIDs id ///< The node id of the subclass
-    ) : Type(id), types() {}
+  protected:
+    ContainerType(NodeIDs id) : Type(id), contents() {}
     virtual ~ContainerType();
 
   /// @}
@@ -66,9 +64,9 @@ class ContainerType : public Type
     static inline bool classof(const Type* T) { return T->isContainerType(); }
 
   /// @}
-  /// @name Accessors
+  /// @name Mutators
   /// @{
-  public:
+  protected:
     virtual void insertChild(Node* n);
     virtual void removeChild(Node* n);
 
@@ -76,24 +74,26 @@ class ContainerType : public Type
   /// @name Iterators
   /// @{
   public:
-    iterator       begin()       { return types.begin(); }
-    const_iterator begin() const { return types.begin(); }
-    iterator       end  ()       { return types.end(); }
-    const_iterator end  () const { return types.end(); }
-    size_t         size () const { return types.size(); }
-    bool           empty() const { return types.empty(); }
-    Type*          front()       { return types.front(); }
-    const Type*    front() const { return types.front(); }
-    Type*          back()        { return types.back(); }
-    const Type*    back()  const { return types.back(); }
+    iterator         begin()       { return contents.begin(); }
+    const_iterator   begin() const { return contents.begin(); }
+    iterator         end  ()       { return contents.end(); }
+    const_iterator   end  () const { return contents.end(); }
+    size_t           size () const { return contents.size(); }
+    bool             empty() const { return contents.empty(); }
+    AliasType*       front()       { return contents.front(); }
+    const AliasType* front() const { return contents.front(); }
+    AliasType*       back()        { return contents.back(); }
+    const AliasType* back()  const { return contents.back(); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::vector<Type*> types; ///< The contained types
+    ContentsList contents; ///< The contained types
   /// @}
 };
+
+typedef AliasType Field;
 
 /// This class represents an HLVM type that is a sequence of data fields 
 /// of varying type. 
@@ -116,10 +116,10 @@ class StructureType : public ContainerType
       { return T->is(StructureTypeID); }
 
   /// @}
-  /// @name Accessors
+  /// @name Mutators
   /// @{
-  public:
-    virtual void insertChild(Node* n);
+  protected:
+    void addField(Field* field) { contents.push_back(field); }
 
   /// @}
   /// @name Data
@@ -127,6 +127,8 @@ class StructureType : public ContainerType
   protected:
   /// @}
 };
+
+typedef AliasType Argument;
 
 /// This class represents an HLVM type that is a sequence of data fields 
 /// of varying type. 
@@ -153,12 +155,12 @@ class SignatureType : public ContainerType
       { return T->is(SignatureTypeID); }
 
   /// @}
-  /// @name Accessors
+  /// @name Mutators
   /// @{
   public:
     void setResultType(Type* ty) { result = ty; }
     void setIsVarArgs(bool is) { varargs = is; }
-    virtual void insertChild(Node* n);
+    void addArgument(Argument* arg) { contents.push_back(arg); }
 
   /// @}
   /// @name Data

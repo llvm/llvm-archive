@@ -263,6 +263,7 @@ XMLReaderImpl::parseBinary(xmlNodePtr& cur)
   hlvmAssert(!child && "Illegal chlldren of <bin> element");
   Locator loc(cur->line,0,&ast->getSystemID());
   ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
 }
@@ -286,6 +287,7 @@ XMLReaderImpl::parseOctal(xmlNodePtr& cur)
   hlvmAssert(!child && "Illegal chlldren of <oct> element");
   Locator loc(cur->line,0,&ast->getSystemID());
   ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
 }
@@ -309,6 +311,7 @@ XMLReaderImpl::parseDecimal(xmlNodePtr& cur)
   hlvmAssert(!child && "Illegal chlldren of <dec> element");
   Locator loc(cur->line,0,&ast->getSystemID());
   ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
 }
@@ -352,6 +355,7 @@ XMLReaderImpl::parseHexadecimal(xmlNodePtr& cur)
   hlvmAssert(!child && "Illegal chlldren of <hex> element");
   Locator loc(cur->line,0,&ast->getSystemID());
   ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
 }

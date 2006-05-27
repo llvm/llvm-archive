@@ -132,7 +132,8 @@ def FindLibXML2(conf,env):
 
 def CheckProgram(context,progname,varname,moredirs=[]):
   context.Message("Checking for " + progname + "...")
-  fname = context.env.WhereIs(progname,environ['PATH'])
+  paths = environ['PATH'] 
+  fname = context.env.WhereIs(progname,paths)
   ret = fname != None
   if ret:
     context.env[varname] = fname
@@ -180,6 +181,8 @@ def CheckForHeaders(conf,env):
 
 def CheckForPrograms(conf,env):
   if not conf.CheckProgram('gperf','GPERF'):
+    env.Exit(1)
+  if not conf.CheckProgram('llc','LLC'):
     env.Exit(1)
   if not conf.CheckProgram('runtest','RUNTEST'):
     env['RUNTEST'] = None

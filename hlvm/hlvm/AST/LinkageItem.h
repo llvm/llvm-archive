@@ -39,10 +39,10 @@ namespace hlvm
 /// permitted for a LinkageItem.
 enum LinkageKinds {
   ExternalLinkage,    ///< Externally visible item
-  InternalLinkage,    ///< Rename collisions when linking (static funcs)
   LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
   WeakLinkage,        ///< Keep one copy of item when linking (weak)
-  AppendingLinkage    ///< Append item to an array of similar items
+  AppendingLinkage,   ///< Append item to an array of similar items
+  InternalLinkage     ///< Rename collisions when linking (static funcs)
 };
 
 /// This class represents an LinkageItem in the HLVM Abstract Syntax Tree. 

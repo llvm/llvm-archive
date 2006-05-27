@@ -30,6 +30,8 @@
 #ifndef HLVM_AST_AST_H
 #define HLVM_AST_AST_H
 
+#include <hlvm/AST/Node.h>
+#include <hlvm/AST/Type.h>
 #include <string>
 #include <vector>
 
@@ -47,38 +49,25 @@ class Program;
 class Import;
 class Locator; 
 class SignatureType;
-class Type;
-class Variable; 
-class AnyType;
-class BooleanType;
-class CharacterType;
-class OctetType;
-class VoidType;
-class IntegerType;
-class RangeType;
-class RealType;
-class PointerType;
-class VectorType;
-class ArrayType;
-class AliasType;
 class StructureType;
-class SignatureType;
-class OpaqueType;
-class EnumerationType;
+class Variable; 
 class ConstLiteralInteger;
 class ReturnOp;
+class AliasType;
+typedef AliasType Argument;
+typedef AliasType Field;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It provides
 /// those aspects of the tree that are not part of the tree itself.
 /// @brief AST Container Class
-class AST
+class AST : public Node
 {
   /// @name Types
   /// @{
   public:
-    typedef std::vector<Bundle*> NodeList;
-    typedef NodeList::iterator   iterator;
-    typedef NodeList::const_iterator const_iterator;
+    typedef std::vector<Bundle*> BundleList;
+    typedef BundleList::iterator   iterator;
+    typedef BundleList::const_iterator const_iterator;
 
   /// @}
   /// @name Constructors
@@ -88,15 +77,15 @@ class AST
     static void destroy(AST* ast);
 
   protected:
-    AST() : sysid(), pubid(), nodes(0) {}
+    AST() : Node(TreeTopID), sysid(), pubid(), bundles() {}
     ~AST();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    const std::string& getSystemID() { return sysid; }
-    const std::string& getPublicID() { return pubid; }
+    const std::string& getSystemID() const { return sysid; }
+    const std::string& getPublicID() const { return pubid; }
 
   /// @}
   /// @name Mutators
@@ -104,7 +93,7 @@ class AST
   public:
     void setSystemID(const std::string& id) { sysid = id; }
     void setPublicID(const std::string& id) { pubid = id; }
-    void addBundle(Bundle* b) { nodes.push_back(b); }
+    void addBundle(Bundle* b) { bundles.push_back(b); }
 
   /// @}
   /// @name Lookup
@@ -116,16 +105,16 @@ class AST
   /// @name Iterators
   /// @{
   public:
-    iterator           begin()       { return nodes.begin(); }
-    const_iterator     begin() const { return nodes.begin(); }
-    iterator           end  ()       { return nodes.end(); }
-    const_iterator     end  () const { return nodes.end(); }
-    size_t             size () const { return nodes.size(); }
-    bool               empty() const { return nodes.empty(); }
-    Bundle*            front()       { return nodes.front(); }
-    const Bundle*      front() const { return nodes.front(); }
-    Bundle*            back()        { return nodes.back(); }
-    const Bundle*      back()  const { return nodes.back(); }
+    iterator           begin()       { return bundles.begin(); }
+    const_iterator     begin() const { return bundles.begin(); }
+    iterator           end  ()       { return bundles.end(); }
+    const_iterator     end  () const { return bundles.end(); }
+    size_t             size () const { return bundles.size(); }
+    bool               empty() const { return bundles.empty(); }
+    Bundle*            front()       { return bundles.front(); }
+    const Bundle*      front() const { return bundles.front(); }
+    Bundle*            back()        { return bundles.back(); }
+    const Bundle*      back()  const { return bundles.back(); }
 
   /// @}
   /// @name Factories
@@ -229,8 +218,14 @@ class AST
     IntegerType* new_u8(const Locator& l, const std::string& id)
       { return new_IntegerType(l,id,8,false); }
 
+    Argument* 
+      new_Argument(const Locator& loc, const std::string& id, Type* ty );
+
+    StringType* new_StringType(const Locator& loc, const std::string& id);
+
     ConstLiteralInteger* new_ConstLiteralInteger(const Locator& loc);
     Documentation* new_Documentation(const Locator& loc);
+    Type* getPrimitiveType(NodeIDs kind);
 
   /// @}
   /// @name Data
@@ -238,7 +233,7 @@ class AST
   protected:
     std::string sysid;
     std::string pubid;
-    NodeList nodes;
+    BundleList bundles;;
   /// @}
 };
 

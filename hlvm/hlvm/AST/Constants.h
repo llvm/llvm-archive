@@ -46,14 +46,15 @@ class ConstLiteralInteger : public NilaryOperator
     static ConstLiteralInteger* create();
 
   protected:
-    ConstLiteralInteger() : NilaryOperator(ConstLiteralIntegerOpID)  {}
+    ConstLiteralInteger() : NilaryOperator(ConstLiteralIntegerOpID) {}
     virtual ~ConstLiteralInteger();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    uint64_t getValue() { return value; }
+    uint64_t getValue(int) const { return value.u; }
+    int64_t  getValue()    const { return value.s; }
     static inline bool classof(const ConstLiteralInteger*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstLiteralIntegerOpID); }
@@ -62,13 +63,17 @@ class ConstLiteralInteger : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
-    void setValue(uint64_t v) { value = v; }
+    void setValue(uint64_t v) { value.u = v; }
+    void setValue(int64_t v)  { value.s = v; }
 
   /// @}
   /// @name Data
   /// @{
   public:
-    uint64_t value;
+    union {
+      uint64_t u;
+      int64_t  s;
+    } value;
   /// @}
   friend class AST;
 };

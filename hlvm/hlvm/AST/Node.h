@@ -39,8 +39,15 @@ namespace hlvm
 
 class Type;
 class Documentation;
+class AST;
 
-/// This enumeration is used to identify a specific type. Its organization is
+/// This enumeration is used to identify the primitive types. Each of these 
+/// types is a node with a NodeID but they are treated specially because of
+/// their frequency of use. 
+enum PrimitiveTypes {
+};
+
+/// This enumeration is used to identify a specific node. Its organization is
 /// very specific and dependent on the class hierarchy. In order to use these
 /// values as ranges for class identification (classof methods), we need to 
 /// group things by inheritance rather than by function. 
@@ -49,10 +56,25 @@ enum NodeIDs
   NoTypeID = 0,            ///< Use this for an invalid type ID.
   // Primitive Types (no child nodes)
   VoidTypeID = 1,          ///< The Void Type (The Null Type)
-  AnyTypeID,               ///< The Any Type (Union of any type)
   BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
   CharacterTypeID,         ///< The Character Type (UTF-16 encoded character)
   OctetTypeID,             ///< The Octet Type (8 bits uninterpreted)
+  UInt8TypeID,             ///< Unsigned 8-bit integer quantity
+  UInt16TypeID,            ///< Unsigned 16-bit integer quantity
+  UInt32TypeID,            ///< Unsigned 32-bit integer quantity
+  UInt64TypeID,            ///< Unsigned 64-bit integer quantity
+  UInt128TypeID,           ///< Unsigned 128-bit integer quantity
+  SInt8TypeID,             ///< Signed 8-bit integer quantity
+  SInt16TypeID,            ///< Signed 16-bit integer quantity
+  SInt32TypeID,            ///< Signed 32-bit integer quantity
+  SInt64TypeID,            ///< Signed 64-bit integer quantity
+  SInt128TypeID,           ///< Signed 128-bit integer quantity
+  Float32TypeID,           ///< 32-bit IEEE single precision 
+  Float44TypeID,           ///< 43-bit IEEE extended single precision 
+  Float64TypeID,           ///< 64-bit IEEE double precision
+  Float80TypeID,           ///< 80-bit IEEE extended double precision
+  Float128TypeID,          ///< 128-bit IEEE quad precision
+  AnyTypeID,               ///< The Any Type (Union of any type)
   IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
   RangeTypeID,             ///< The Range Type (A Range of Integer Values)
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
@@ -125,17 +147,17 @@ enum NodeIDs
 
   // Memory Unary Operators
   LoadOpID,                ///< The Load Operator (load a value from a location)
-  AllocateOpID,            ///< The Allocate Memory Operator (get some heap memory)
-  FreeOpID,                ///< The Free Memory Operator (free some heap memory)
-  StackAllocOpID,          ///< The Stack Allocation Operator (get some stack mem)
-  ReferenceOpID,           ///< The Reference A Memory Object Operator (for GC)
-  DereferenceOpID,         ///< The Dereference A Memory Object Operator (for GC)
+  AllocateOpID,            ///< The Allocate Memory Operator (get heap memory)
+  FreeOpID,                ///< The Free Memory Operator (free heap memory)
+  StackAllocOpID,          ///< The Stack Allocation Operator (get stack mem)
+  ReferenceOpID,           ///< The Reference Memory Object Operator (for GC)
+  DereferenceOpID,         ///< The Dereference Memory Object Operator (for GC)
 
   // Other Unary Operators
   TellOpID,                ///< Tell the position of a stream
   CloseOpID,               ///< Close a stream previously opened.
   LengthOpID,              ///< Extract Length of a String Operator
-  WithOpID,                ///< Scoping Operator (shorthand for a Bundle, e.g.using) 
+  WithOpID,                ///< Scoping Operator (shorthand for a Bundle) 
 
   // Arithmetic Binary Operators
   AddOpID,                 ///< Addition Binary Operator
@@ -192,11 +214,14 @@ enum NodeIDs
 
   // Miscellaneous Nodes
   DocumentationID,         ///< XHTML Documentation Node
+  TreeTopID,               ///< The AST node which is always root of the tree
 
   // Enumeration Ranges and Limits
   NumNodeIDs,              ///< The number of node identifiers in the enum
   FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
-  LastPrimitiveTypeID  = StringTypeID, ///< Last Primitive Type
+  LastPrimitiveTypeID  = Float128TypeID, ///< Last Primitive Type
+  FirstSimpleTypeID    = AnyTypeID,
+  LastSimpleTypeID     = StringTypeID,
   FirstContainerTypeID = PointerTypeID, ///< First Container Type
   LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
   FirstTypeID          = VoidTypeID,
@@ -233,6 +258,8 @@ class Node
   /// @name Accessors
   /// @{
   public:
+    inline AST* getRoot(); 
+
     /// Get the type of node
     inline NodeIDs getID() const { return NodeIDs(id); }
 
@@ -252,6 +279,43 @@ class Node
     inline bool isType() const {
       return id >= FirstTypeID && id <= LastTypeID;
     }
+
+    inline bool isIntegralType()  const { 
+      return (id >= UInt8TypeID && id <= UInt128TypeID) ||
+             (id == IntegerTypeID) || (id == RangeTypeID) || 
+             (id == EnumerationTypeID);
+    }
+
+    /// Determine if the node is a primitive type
+    inline bool isPrimitiveType() const {
+      return id >= FirstPrimitiveTypeID && id <= LastPrimitiveTypeID;
+    }
+
+    /// Determine if the node is a simple type
+    inline bool isSimpleType() const {
+      return id >= FirstSimpleTypeID && id <= LastSimpleTypeID;
+    }
+
+    /// Determine if the node is a container type
+    inline bool isContainerType() const {
+      return id >= FirstContainerTypeID && id <= LastContainerTypeID;
+    }
+
+    inline bool isAnyType() const { return id == AnyTypeID; }
+    inline bool isBooleanType() const { return id == BooleanTypeID; }
+    inline bool isCharacterType() const { return id == CharacterTypeID; }
+    inline bool isOctetType() const { return id == OctetTypeID; }
+    inline bool isIntegerType() const { return id == IntegerTypeID; }
+    inline bool isRangeType() const { return id == RangeTypeID; }
+    inline bool isRealType() const { return id == RealTypeID; }
+    inline bool isRationalType() const { return id == RationalTypeID; }
+    inline bool isPointerType() const { return id == PointerTypeID; }
+    inline bool isArrayType() const { return id == ArrayTypeID; }
+    inline bool isVectorType() const { return id == VectorTypeID; }
+    inline bool isStructureType() const { return id == StructureTypeID; }
+    inline bool isSignatureType() const { return id == SignatureTypeID; }
+    inline bool isVoidType() const { return id == VoidTypeID; }
+
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
       return id >= FirstOperatorID && id <= LastOperatorID;

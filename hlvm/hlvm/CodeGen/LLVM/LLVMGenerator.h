@@ -1,4 +1,4 @@
-//===-- hlvm/AST/Node.cpp - AST Abstract Node Class -------------*- C++ -*-===//
+//===-- LLVM Code Generation Interface --------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,81 +20,29 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Node.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/CodeGen/LLVM/LLVMGenerator.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/05/26
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Node.
+/// @brief Declares the interface for generating code with LLVM
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Node.h>
-#include <hlvm/AST/AST.h>
-#include <hlvm/Base/Assert.h>
-#include <llvm/Support/Casting.h>
+#ifndef HLVM_CODEGEN_LLVM_LLVMGENERATOR_H
+#define HLVM_CODEGEN_LLVM_LLVMGENERATOR_H
 
-namespace hlvm {
+#include <ostream>
 
-Node::~Node()
+namespace hlvm 
 {
-}
+  class AST;
 
-AST*
-Node::getRoot()
-{
-  Node* p = parent, *last = this; 
-  while (p!=0) { 
-    last = p; 
-    p = p->parent; 
-  }
-  return llvm::cast<AST>(last);
-}
+  /// Convert an Abstract Syntax Tree into LLVM bytecode written on the output 
+  /// stream.
+  void generateBytecode(AST* input, std::ostream& output);
 
-void 
-Node::insertChild(Node* child)
-{
-  hlvmNotImplemented("Node::insertChild");
-}
+  /// Convert an Abstract Syntax Tree into LLVM assembly written on the output
+  /// stream.
+  void generateAssembly(AST* input, std::ostream& output);
 
-void 
-Node::removeChild(Node* child)
-{
-  hlvmNotImplemented("Node::insertChild");
-}
-
-void 
-Node::setFlags(unsigned f)
-{
-  hlvmAssert(f < 1 << 24 && "Flags out of range");
-  flags = f;
-}
-
-void 
-Node::setParent(Node* p)
-{
-  if (p == 0)
-  {
-    parent->removeChild(this);
-  }
-  parent = p;
-  if (p != 0)
-  {
-    p->insertChild(this);
-  }
-}
-
-#ifndef _NDEBUG
-void 
-Node::dump() const 
-{
-}
+} // hlvm
 #endif
-
-Documentable::~Documentable()
-{
-}
-
-Value::~Value()
-{
-}
-
-}

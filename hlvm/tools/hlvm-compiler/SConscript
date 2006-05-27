@@ -1,4 +1,4 @@
-#===-- Build Script For test ----------------------------------*- Python -*-===#
+#===-- Build Script For tools/hlvm-xml2xml --------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -20,8 +20,30 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
+from os.path import join as pjoin
 from build import hlvm
 Import('env')
-if 'check' in COMMAND_LINE_TARGETS:
-  from build import check
-  check.Check(env,['xml2xml','return0'])
+prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
+ LIBS=[
+   'HLVMLLVMCG',
+   'HLVMXMLReader',
+   'HLVMXMLWriter',
+   'HLVMPass',
+   'HLVMAST',
+   'HLVMBase',
+   'xml2',
+   'LLVMLinker',
+   'LLVMSupport',
+   'LLVMSystem',
+   'apr-1',
+   'stdc++'
+  ],
+ LINKFLAGS=[
+   pjoin(env['LLVM_lib'],'LLVMCore') + env['OBJSUFFIX'],
+   pjoin(env['LLVM_lib'],'LLVMBCReader') + env['OBJSUFFIX'],
+   pjoin(env['LLVM_lib'],'LLVMBCWriter') + env['OBJSUFFIX'],
+   pjoin(env['LLVM_lib'],'LLVMbzip2') + env['OBJSUFFIX']
+ ]
+)
+hlvm.InstallProgram(env,prog)
+

@@ -60,27 +60,6 @@ class Type : public Documentable
   /// @name Type Identification
   /// @{
   public:
-    inline bool isPrimitiveType() const { return id <= LastPrimitiveTypeID; }
-    inline bool isIntegralType()  const { 
-      return id == IntegerTypeID || id == RangeTypeID; 
-    }
-    inline bool isContainerType() const { 
-      return id >= FirstContainerTypeID; 
-    }
-    inline bool isAnyType() const { return id == AnyTypeID; }
-    inline bool isBooleanType() const { return id == BooleanTypeID; }
-    inline bool isCharacterType() const { return id == CharacterTypeID; }
-    inline bool isOctetType() const { return id == OctetTypeID; }
-    inline bool isIntegerType() const { return id == IntegerTypeID; }
-    inline bool isRangeType() const { return id == RangeTypeID; }
-    inline bool isRealType() const { return id == RealTypeID; }
-    inline bool isRationalType() const { return id == RationalTypeID; }
-    inline bool isPointerType() const { return id == PointerTypeID; }
-    inline bool isArrayType() const { return id == ArrayTypeID; }
-    inline bool isVectorType() const { return id == VectorTypeID; }
-    inline bool isStructureType() const { return id == StructureTypeID; }
-    inline bool isSignatureType() const { return id == SignatureTypeID; }
-    inline bool isVoidType() const { return id == VoidTypeID; }
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const Type*) { return true; }
@@ -221,12 +200,18 @@ class VoidType : public Type
 /// it implies infinite precision integer arithmetic.
 class IntegerType : public Type
 {
+  /// @name Types
+  /// @{
+  public:
   /// @name Constructors
   /// @{
   protected:
-    IntegerType() : Type(IntegerTypeID), numBits(32), signedness(true) {}
+    IntegerType(NodeIDs id, int bits = 32, bool sign = true) 
+      : Type(id), numBits(bits), signedness(sign) {}
   public:
     virtual ~IntegerType();
+    IntegerType* clone(const std::string& newname);
+
 
   /// @}
   /// @name Accessors
@@ -242,8 +227,8 @@ class IntegerType : public Type
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isIntegerType(); }
-    static inline bool classof(const Node* T) { return T->is(IntegerTypeID); }
+    static inline bool classof(const Type* T) { return T->isIntegralType(); }
+    static inline bool classof(const Node* T) { return T->isIntegralType(); }
 
   /// @}
   /// @name Mutators
@@ -387,7 +372,8 @@ class RealType : public Type
   /// @name Constructors
   /// @{
   protected:
-    RealType() : Type(RealTypeID), mantissa(52), exponent(11) {}
+    RealType(NodeIDs id, uint32_t m=52, uint32_t x=11) 
+      : Type(id), mantissa(m), exponent(x) {}
   public:
     virtual ~RealType();
 
@@ -442,7 +428,7 @@ class PointerType : public Type
   /// @{
   public:
     // Get the target type
-    Type* getTargetType() { return type; }
+    Type* getTargetType() const { return type; }
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const PointerType*) { return true; }
@@ -470,9 +456,8 @@ class ArrayType : public Type
 {
   /// @name Constructors
   /// @{
-  protected:
-    ArrayType() : Type(ArrayTypeID), type(0), maxSize(0) {}
   public:
+    ArrayType() : Type(ArrayTypeID), type(0), maxSize(0) {}
     virtual ~ArrayType();
 
   /// @}
@@ -594,6 +579,28 @@ class AliasType : public Type
   protected:
     Type* type;
   /// @}
+};
+
+class StringType : public Type
+{
+  /// @name Constructors
+  /// @{
+  public:
+    StringType(const std::string& nm) : 
+      Type(StringTypeID) { this->setName(nm); }
+  public:
+    virtual ~StringType();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const StringType*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(StringTypeID); }
+
+  /// @}
+  friend class AST;
 };
 
 class OpaqueType : public Type

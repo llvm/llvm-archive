@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Constants.h>
+#include <hlvm/AST/Type.h>
 
 namespace hlvm {
 

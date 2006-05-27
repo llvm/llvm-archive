@@ -49,9 +49,9 @@ class Program : public Function
 {
   /// @name Constructors
   /// @{
-  public:
-    Program() : Function(ProgramID) 
-    { setSignature(SignatureTy); setLinkageKind(ExternalLinkage); }
+  protected:
+    Program() : Function(ProgramID) {}
+      
     virtual ~Program();
 
   /// @}
@@ -66,7 +66,6 @@ class Program : public Function
   /// @name Data
   /// @{
   private:
-    static SignatureType* SignatureTy; ///< The signature for programs
     LinkageItem::setLinkageKind;
   /// @}
   friend class AST;

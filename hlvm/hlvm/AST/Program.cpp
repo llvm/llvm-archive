@@ -32,18 +32,6 @@
 
 using namespace hlvm;
 
-namespace {
-SignatureType* initSignature() {
-  SignatureType* result = new SignatureType();
-  result->setName("_hlvm_ProgramSignature");
-  return result;
-}
-}
-
-
-SignatureType* 
-Program::SignatureTy = initSignature();
-
 Program::~Program()
 {
 }

@@ -118,6 +118,7 @@ def GetBuildEnvironment(targets,arguments):
     env.Append(CCFLAGS=' -ggdb')
     env.Append(CXXFLAGS=' -ggdb')
     env.Append(CPPDEFINES={'HLVM_DEBUG':None})
+    env.Append(LINKFLAGS='-ggdb')
   else :
     VariantName+='d'
 
@@ -131,6 +132,7 @@ def GetBuildEnvironment(targets,arguments):
     VariantName+='O'
     env.Append(CCFLAGS=' -O3')
     env.Append(CXXFLAGS=' -O3')
+    env.Append(LINKFLAGS='-O3')
   else :
     VariantName+='o'
 

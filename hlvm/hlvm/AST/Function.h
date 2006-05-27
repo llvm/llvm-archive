@@ -68,7 +68,7 @@ class Function : public LinkageItem
   public:
     virtual void insertChild(Node* kid);
     virtual void removeChild(Node* kid);
-    void setSignature(SignatureType* sig) { sig->setParent(this); }
+    void setSignature(SignatureType* sig) { signature = sig; }
     void setBlock(Block* blk) { blk->setParent(this); }
 
   /// @}

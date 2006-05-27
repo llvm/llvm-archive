@@ -1,4 +1,4 @@
-#===-- Build Script For test ----------------------------------*- Python -*-===#
+#===-- Build Script For hlvm ----------------------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -22,6 +22,4 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-if 'check' in COMMAND_LINE_TARGETS:
-  from build import check
-  check.Check(env,['xml2xml','return0'])
+hlvm.Dirs(env,['LLVM'])

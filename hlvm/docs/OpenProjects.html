@@ -1,0 +1,71 @@
+<!--#include virtual="/incl/header.incl" -->
+<h1>Open LLVM Projects</h1>
+<ul>
+  <li><a href="#what">What is this?</a></li>
+  <li><a href="#what">Coding Projects</a></li>
+</ul>
+
+<!-- *********************************************************************** -->
+<div class="sectiontitle"><a name="what">What is this?</a></div>
+<!-- *********************************************************************** -->
+
+<div class="text">
+<p>This document is a "TODO" list for HLVM.  Each project in this document is 
+something that would be useful for HLVM to have, and would also be a great way 
+to get familiar with the system.  Some of these projects are small and 
+self-contained, which may be implemented in a couple of days. Others are 
+larger.  In any case, we welcome all contributions.</p>
+
+<p>If you are thinking about tackling one of these projects, please send a mail
+to the <a href="/hlvm-dev.shtml">HLVM Developer's</a> mailing list, so that we 
+know the project is being worked on.  Additionally this is a good way to get 
+more information about a specific project or to suggest other projects to add 
+to this page.</p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="sectiontitle"><a name="code">Coding Projects</a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <ol>
+    <li><em>RNG->XHTML XSLT Stylesheet</em>. We will use the Relax/NG grammar
+    for the XML version of the AST to document the AST. However, the Relax/NG
+    specification is not particularly user friendly. What we need is a way to
+    publish (in XHTML) the specification with descriptive documentation. A
+    fairly straightforward XSLT stylsheet to translate Relax/NG to XHTML should
+    do nicely. This is a nice self-contained project for someone who knows
+    XSLT and can understand Relax/NG.</li>
+    <li><em>Test Cases</em></li>. In order to explore and test the AST node
+    construction and code generation, we need to develop test cases that
+    exercise these aspects of HLVM. Test cases currently come in two flavors:
+    <ul>
+      <li><b>xml2xml</b>. These are snippets of XML to test construction of the
+      AST by using the hlvm-xml2xml program. Many of these test cases will
+      explore ideas for what should or shouldn't be in the AST.</li>
+      <li><b>return0</b>. Thse are full HLVM programs written in the AST XML
+      language that should return from main with a value of 0 if the test
+      succeeds. They are intended to check control flow, arithmetic, and other
+      aspects of runtime behavior of the HLVM code generator and runtime system.
+      </li>
+    </ul></li>
+    <li><em>APR Abstractions</em></li>. The runtime portion of HLVM will use APR
+    as its portability layer. However, APR is written in C and not particularly
+    object-oriented. We need some of the things APR supports to be wrapped in
+    simple C++ classes that take care of the book keeping such as deleting APR
+    objects at the right time.  Abstracts we need to wrap, currently, are Pool
+    and File. These should go in HLVM's "base" library.</li>
+    <li><em>Code Generation</em></li>. If you know or would like to learn LLVM,
+    we could use help with conversion of HLVM's AST into LLVM's IR. </li>
+    <li><em>API Documentation</em></li>. Documenting the HLVM AST API is very
+    important. Currently it needs some work. Someone who knows Doxygen and 
+    would like to keep the documentation up to date would be very helpful.</li>
+    <li><em>Yaml Reader/Writer</em></li>. We intend to support a reader and
+    writer of the AST in Yaml syntax. Some people just don't like XML and having
+    an alternate way to build the AST from a nicer-to-read source would be
+    useful in helping some people comprehend HLVM. The design should be very
+    similar to the XML Reader/Writer and be based on the Syck library.</li>
+  </ol>
+</div>
+
+
+<!--#include virtual="/incl/footer.incl" -->

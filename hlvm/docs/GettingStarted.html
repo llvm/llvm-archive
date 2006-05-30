@@ -38,38 +38,12 @@ that this is for experts and the impatient only.</p>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
   <li>Obtain, build, and install the dependent packages. You need LLVM, APR,
-  APR-Utils, libxml2, GCC, Gnu Make, and the Gnu C Library</li>
+  APR-Utils, libxml2, scons and GCC</li>
   <li>Obtain the HLVM Source Code (svn://hlvm.org/hlvm).</li>
-  <li>Configure the HLVM Build Environment. There's two ways to do this. Either
-  run the <tt>build.sh</tt> script (read the top of it to find out how) or:
-  <ol>
-    <li><tt>cd <i>where-you-want-to-build-llvm</i></tt></li>
-    <li><tt><i>/path/to/hlvm/</i>configure [options]</tt><br/>
-    Some common options:
-      <ul>
-        <li><tt>--prefix=<i>directory</i></tt><br/>
-        Specify for <i>directory</i> the full pathname of where you
-        want the HLVM tools and libraries to be installed (default
-        <tt>/usr/local</tt>).</li>
-        <li><tt>--with-llvm-src=<i>directory</i></tt><br/>Specify source location
-        for LLVM.</li>
-        <li><tt>--with-llvm-obj=<i>directory</i></tt><br/>Specify object location
-        for LLVM.</li>
-        <li><tt>--with-APR=<i>directory</i></tt><br/>Specify installed location
-        for APR.</li>
-        <li><tt>--with-APRU=<i>directory</i></tt><br/>Specify installed location
-        for APR Utils.</li>
-        <li><tt>--with-EXPAT=<i>directory</i></tt><br/>Specify installed location
-        for Expat XML Parser.</li>
-        <li><tt>--with-SYCK=<i>directory</i></tt><br/>Specify installed location
-        for Syck library.</li>
-      </ul>
-  </ol></li>
-
-  <li>Build HLVM. If you already ran build.sh, skip this step,
-  otherwise just run <tt>make</tt> or <tt>gmake</tt></li>
-  <li>Install HLVM. If you already ran build.sh, skip this step, otherwise just
-  run <tt>make install</tt> or <tt>gmake install</tt></li>
+  <li>Build hlvm with the "scons -Q" command.</li>
+  <li>The configuration utility might ask you where your 3rd party software is
+  located. Please enter the paths appropriately.</li>
+  <li>Install hlvm with "scons install prefix=/path/to/put/hlvm".</li>
 </ol>
 </div>
 
@@ -141,7 +115,7 @@ if they are not already present on your system.</p>
 
 <div class="text">
 
-<p>Before you begin to use the LLVM system, review the requirements given below.
+<p>Before you begin to use the HLVM system, review the requirements given below.
 This may save you some trouble by knowing ahead of time what hardware and
 software you will need.</p>
 
@@ -203,25 +177,25 @@ software you will need.</p>
     <tr>
       <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
       <td>1.4.2</td>
-      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+      <td>Automated test suite<sup><a href="#sf1">1</a></sup></td>
     </tr>
     <tr>
       <td><a href="http://www.tcl.tk/software/tcltk/">tcl</a></td>
       <td>8.3, 8.4</td>
-      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+      <td>Automated test suite<sup><a href="#sf1">1</a></sup></td>
     </tr>
     <tr>
       <td><a href="http://expect.nist.gov/">expect</a></td>
       <td>5.38.0</td>
-      <td>Automated test suite<sup><a href="#sf3">3</a></sup></td>
+      <td>Automated test suite<sup><a href="#sf1">1</a></sup></td>
     </tr>
   </table>
 
   <p><b>Notes:</b></p>
   <div class="notes">
   <ol>
-    <li><a name="sf3">Only needed if you want to run the automated test 
-      suite in the <tt>llvm/test</tt> directory.</a></li>
+    <li><a name="sf1">Only needed if you want to run the automated test 
+      suite in the <tt>hlvm/test</tt> directory.</a></li>
   </ol>
   </div>
   

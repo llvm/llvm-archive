@@ -22,4 +22,5 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['LLVM'])
+lib = env.Library('HLVMLCodeGen',hlvm.GetAllCXXFiles(env))
+hlvm.InstallLibrary(env,lib)

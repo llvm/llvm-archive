@@ -43,6 +43,7 @@
 #include <llvm/Module.h>
 #include <llvm/BasicBlock.h>
 #include <llvm/Function.h>
+#include <llvm/GlobalVariable.h>
 #include <llvm/Instructions.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/TypeSymbolTable.h>
@@ -342,6 +343,60 @@ LLVMGeneratorPass::gen(Function* f)
 }
 
 void
+LLVMGeneratorPass::gen(Program* p)
+{
+  const llvm::FunctionType* entry_signature = 
+    llvm::cast<llvm::FunctionType>(getType(p->getSignature()));
+  lfunc = new llvm::Function(entry_signature,
+    llvm::GlobalValue::InternalLinkage,getLinkageName(p),lmod);
+
+  /// Programs are stored in a global array of pointers to functions so the
+  /// VM can find them quickly. This array is called _hlvm_entry_points and it
+  /// uses LLVM's appending linkage to keep appending entry points to the end
+  /// of it. Here, we search for it and create it if we don't find it.
+  llvm::GlobalVariable *entry_points = 
+    lmod->getNamedGlobal("_hlvm_entry_points");
+  if (entry_points == 0) {
+    // Define the type of the array elements (a structure with a pointer to
+    // a string and a pointer to the function).
+    std::vector<const llvm::Type*> Fields;
+    Fields.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
+    Fields.push_back(llvm::PointerType::get(entry_signature));
+    llvm::StructType* entry_elem_type = llvm::StructType::get(Fields);
+
+    // Define the type of the array for the entry points
+    llvm::ArrayType* array_type = llvm::ArrayType::get(entry_elem_type,1);
+
+    // Get a constant for the name of the entry point (char array)
+    llvm::Constant* name = llvm::ConstantArray::get(getLinkageName(p));
+
+    // Get a constant structure for the entry containing the name and pointer
+    // to the function.
+    std::vector<llvm::Constant*> items;
+    items.push_back(name);
+    items.push_back(lfunc);
+    llvm::Constant* entry = llvm::ConstantStruct::get(entry_elem_type,items);
+
+    // Get the constant array with the one entry
+    std::vector<llvm::Constant*> array_items;
+    array_items.push_back(entry);
+    llvm::Constant* array = llvm::ConstantArray::get(array_type,array_items);
+
+    // Now get the GlobalVariable
+    entry_points = new llvm::GlobalVariable(
+      /*Type=*/llvm::PointerType::get(array_type),
+      /*isConstant=*/true,
+      /*Linkage=*/llvm::GlobalValue::AppendingLinkage,
+      /*Initializer=*/array,
+      /*Name=*/"_hlvm_entry_points",
+      /*Parent=*/lmod
+    );
+  }
+
+  // Now that we have the entry points array
+}
+
+void
 LLVMGeneratorPass::gen(Bundle* b)
 {
   lmod = new llvm::Module(b->getName());
@@ -357,7 +412,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     switch (n->getID()) {
     case BundleID:                gen(llvm::cast<Bundle>(n)); break;
     case FunctionID:              gen(llvm::cast<Function>(n)); break;
-    case ProgramID:               gen(llvm::cast<Function>(n)); break;
+    case ProgramID:               gen(llvm::cast<Program>(n)); break;
     case BlockID:                 gen(llvm::cast<Block>(n)); break;
     default:
       break;

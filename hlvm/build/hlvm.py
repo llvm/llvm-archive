@@ -169,15 +169,13 @@ def GetBuildEnvironment(targets,arguments):
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])
   env['LIBPATH'] = []
-  env.BuildDir(pjoin(BuildDir,'hlvm'),'hlvm',duplicate=0)
-  env.BuildDir(pjoin(BuildDir,'tools'),'tools',duplicate=0)
-  env.BuildDir(pjoin(BuildDir,'test'),'test',duplicate=0)
-  env.BuildDir(pjoin(BuildDir,'docs'),'docs',duplicate=0)
+  env.BuildDir(BuildDir,'#',duplicate=0)
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   if 'install' in COMMAND_LINE_TARGETS:
     env.Alias('install',pjoin(env['prefix'],'bin'))
     env.Alias('install',pjoin(env['prefix'],'lib'))
     env.Alias('install',pjoin(env['prefix'],'include'))
+    env.Alias('install',pjoin(env['prefix'],'docs'))
   env.Help("""
 HLVM Build Environment
 

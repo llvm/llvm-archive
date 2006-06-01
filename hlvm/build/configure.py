@@ -42,7 +42,7 @@ def AskForDirs(context,pkgname,hdr,libs):
 
 def FindPackage(context,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
                 objs=[],hdrpfx='',progs=[]):
-  msg = 'Checking for ' + pkgname + '...'
+  msg = 'Checking for Package ' + pkgname + '...'
   context.Message(msg)
   lastLIBS = context.env['LIBS']
   lastLIBPATH = context.env['LIBPATH']

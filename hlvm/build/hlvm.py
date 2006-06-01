@@ -168,7 +168,9 @@ def GetBuildEnvironment(targets,arguments):
   env['AbsSrcRoot'] = env.Dir('#').abspath
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])
+  env['OBJPREFIX'] = pjoin(BuildDir,'')
   env['LIBPATH'] = []
+  env['BINPATH'] = []
   env.BuildDir(BuildDir,'#',duplicate=0)
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   if 'install' in COMMAND_LINE_TARGETS:

@@ -7,38 +7,54 @@ from os.path import exists as exists
 from os import environ as environ
 from string import join as sjoin
 
+def _failed(env):
+  print "*** Configuration Check Failed. Required component missing"
+  env.Exit(1)
   
 def _getline(env,msg):
   response = raw_input(msg)
   if response == 'quit' or response == "exit":
     print "Configuration terminated by user"
-    env.Exit(1)
+    _failed(env)
   return response
 
-def AskForDirs(context,pkgname,hdr,libs):
+def AskForDirs(context,pkgname,hdr,libs,progs=[]):
   hdrdir = _getline(context.env,
     'Enter directory containing %(name)s headers: ' % {'name':pkgname }
   )
   hdrpath = pjoin(hdrdir,hdr)
-  if isfile(hdrpath):
-    libdir = _getline(context.env,
-      'Enter directory containing %(name)s libraries: ' % { 'name':pkgname }
-    )
-    for lib in libs:
-      libpath = pjoin(libdir,context.env['LIBPREFIX'])
-      libpath += lib
-      libpath += context.env['LIBSUFFIX']
-      if isfile(libpath):
-        context.env[pkgname + '_lib'] = libdir
-        context.env[pkgname + '_inc'] = hdrdir
-        context.env.AppendUnique(LIBPATH=[libdir],CPPPATH=[hdrdir])
-        return 1
-      else:
-        print "Didn't find ",pkgname," libraries in ",libpath,". Try again."
-        return AskForDirs(context,pkgname,hdr,libs)
-  else:
+  if not isfile(hdrpath):
     print "Didn't find ",pkgname," headers in ",hdrpath,". Try again."
-    return AskForDirs(context,pkgname,hdr,libs)
+    return AskForDirs(context,pkgname,hdr,libs,progs)
+
+  libdir = _getline(context.env,
+    'Enter directory containing %(name)s libraries: ' % { 'name':pkgname }
+  )
+  for lib in libs:
+    libpath = pjoin(libdir,context.env['LIBPREFIX'])
+    libpath += lib
+    libpath += context.env['LIBSUFFIX']
+    if not isfile(libpath):
+      print "Didn't find ",pkgname," libraries in ",libpath,". Try again."
+      return AskForDirs(context,pkgname,hdr,libs,progs)
+
+  progdir = None
+  if len(progs) > 0:
+    bindir = _getline(context.env,
+      'Enter directory containing %(nm)s programs: ' % { 'nm':pkgname }
+    )
+  for prog in progs:
+    binpath = pjoin(bindir,prog)
+    if not isfile(binpath):
+      print "Didn't find ",pkgname," programs in ",bindir,". Try again."
+      return AskForDirs(context,pkgname,hdr,libs,progs)
+
+  context.env[pkgname + '_lib'] = libdir
+  context.env[pkgname + '_inc'] = hdrdir
+  context.env[pkgname + '_bin'] = bindir
+  context.env.AppendUnique(LIBPATH=[libdir],CPPPATH=[hdrdir],BINPATH=[bindir])
+
+  return 1
 
 def FindPackage(context,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
                 objs=[],hdrpfx='',progs=[]):
@@ -46,7 +62,8 @@ def FindPackage(context,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
   context.Message(msg)
   lastLIBS = context.env['LIBS']
   lastLIBPATH = context.env['LIBPATH']
-  lastCPPPATH= context.env['CPPPATH']
+  lastCPPPATH = context.env['CPPPATH']
+  lastBINPATH = context.env['BINPATH']
   lastLINKFLAGS = context.env['LINKFLAGS']
   prog_template = """
 #include <%(include)s>
@@ -59,73 +76,122 @@ int main(int argc, char **argv) {
   paths += [
     '/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/'
   ]
+  # Check each path
   for p in paths:
-    for ldir in ['lib','bin','libexec','libs','LIBS']:
+    # Clear old settings from previous iterations
+    libdir = None
+    incdir = None
+    bindir = None
+    objects = []
+    # Check various library directory names
+    for ldir in ['lib','libs','LIBS','Lib','Libs','Library','Libraries']:
       libdir = pjoin(p,ldir)
+      # Skip this ldir if it doesn't exist
       if not isdir(libdir):
         continue
+
+      # Check each required library to make sure its a file
+      count = 0
       for alib in libs:
         library = pjoin(libdir,context.env['LIBPREFIX'])
         library += alib + context.env['LIBSUFFIX']
-        if not exists(library):
+        if not isfile(library):
+          break
+        else:
+          count += 1
+
+      # if we didn't get them all then then try the next path
+      if count != len(libs):
+        continue
+
+      # Check each of the required object files
+      count = 0
+      for o in objs:
+        obj =  pjoin(libdir,context.env['OBJPREFIX'])
+        obj += o + context.env['OBJSUFFIX']
+        if not isfile(obj):
           continue
-        objects = []
-        count = 0
-        for o in objs:
-          obj =  pjoin(libdir,context.env['OBJPREFIX'])
-          obj += o + context.env['OBJSUFFIX']
-          if not exists(obj):
-            continue;
-          else:
-            count += 1
-            objects.append(obj)
-        if count != len(objs):
+        else:
+          count += 1
+          objects.append(obj)
+
+      # If we didn't find them all, try the next library path
+      if count != len(objs):
+        continue
+
+      # Otherwise we found the right library path
+      break
+    
+    # At this point we have a valid libdir. Now check the various include 
+    # diretory names
+    count = 0
+    for incdir in ['include', 'inc', 'incl']:
+      hdrdir = pjoin(p,incdir)
+      if not isdir(hdrdir):
+        continue
+      if hdrpfx != '':
+        hdrdir = pjoin(hdrdir,hdrpfx)
+        if not isdir(hdrdir):
           continue
-        for incdir in ['include', 'inc', 'incl']:
-          hdrdir = pjoin(p,incdir)
-          if not isdir(hdrdir):
-            continue
-          if hdrpfx != '':
-            hdrdir = pjoin(hdrdir,hdrpfx)
-            if not exists(hdrdir):
-              continue
-          header = pjoin(hdrdir,hdr)
-          if not exists(hdrdir):
-            continue
-          context.env.AppendUnique(LIBPATH = [libdir])
-          context.env.AppendUnique(CPPPATH = [hdrdir])
-          context.env.AppendUnique(LINKFLAGS = objects)
-          ret = context.TryRun(
-            prog_template % {'include':hdr,'code':code},'.cpp'
-          )
-          if not ret:
-            context.env.Replace(LIBS=lastLIBS, LIBPATH=lastLIBPATH, 
-              CPPPATH=lastCPPPATH, LINKFLAGS=lastLINKFLAGS)
-            continue
-          else:
-            context.env.Replace(LIBS=lastLIBS, LINKFLAGS=lastLINKFLAGS)
-          ret = 1
-          bindir = pjoin(p,'bin')
-          for pr in progs:
-            if not exists(pjoin(bindir,pr)):
-              ret = 0
-              break;
-          if not ret:
-            continue
-          if len(progs) > 0:
-            context.env[pkgname + '_bin'] = bindir
-          context.env[pkgname + '_lib'] = libdir
-          context.env[pkgname + '_inc'] = hdrdir
-          context.Result('Found: (' + hdrdir + ',' + libdir + ')')
-          return [libdir,hdrdir]
+      header = pjoin(hdrdir,hdr)
+      if not isfile(header):
+        continue
+      else:
+        count += 1
+        break
+
+    if count != 1:
+      continue
+
+    # Check for programs
+    count = 0
+    for pr in progs:
+      bindir = pjoin(p,'bin')
+      if not exists(pjoin(bindir,pr)):
+        break
+      else:
+        count += 1
+
+    # If we didn't find all the programs, try the next path
+    if count != len(progs):
+      continue
+
+    # We found everything we're looking for, now test it out
+    context.env.AppendUnique(LIBPATH = [libdir])
+    context.env.AppendUnique(CPPPATH = [hdrdir])
+    context.env.AppendUnique(BINPATH = [bindir])
+    context.env.AppendUnique(LINKFLAGS = objects)
+    ret = context.TryRun(
+      prog_template % {'include':hdr,'code':code},'.cpp'
+    )
+
+    # If the test failed, reset the variables and try next path
+    if not ret:
+      context.env.Replace(LIBS=lastLIBS, LIBPATH=lastLIBPATH, 
+        CPPPATH=lastCPPPATH, BINPATH=lastBINPATH, LINKFLAGS=lastLINKFLAGS)
+      continue
+
+    # Otherwise, we've succeded, unset temporary environment settings and
+    # set up the the packages environment variables.
+
+    context.env.Replace(LIBS=lastLIBS, LINKFLAGS=lastLINKFLAGS)
+    context.env[pkgname + '_bin'] = bindir
+    context.env[pkgname + '_lib'] = libdir
+    context.env[pkgname + '_inc'] = hdrdir
+    context.Result('Found: (' + hdrdir + ',' + libdir + ')')
+    return [libdir,hdrdir,bindir]
+
+  # After processing all paths, we didn't find it
   context.Result( 'Not Found' )
-  return AskForDirs(context,pkgname,hdr,libs)
+
+  # So, lets try manually asking for it
+  return AskForDirs(context,pkgname,hdr,libs,progs)
 
 def FindLLVM(conf,env):
   code = 'new llvm::Module("Name");'
   conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
      code,[env['with_llvm'],'/proj/install/llvm'],['LLVMCore','LLVMbzip2'],
-     '', ['llvm-as','llc'] )
+     '', ['llvm2cpp','llvm-as','llc'] )
 
 
 def FindAPR(conf,env):
@@ -158,58 +224,58 @@ def CheckProgram(context,progname,varname,moredirs=[]):
 
 def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('algorithm'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('cassert'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('ios'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('iostream'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('istream'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('map'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('memory'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('new'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('ostream'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('string'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('vector'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('llvm/ADT/StringExtras.h'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCXXHeader('llvm/System/Path.h'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_pools.h']):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_uri.h']):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCHeader('libxml/parser.h'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCHeader('libxml/relaxng.h'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckCHeader('libxml/xmlwriter.h'):
-    env.Exit(1)
+    _failed(env)
   return 1
 
 def CheckForPrograms(conf,env):
   if not conf.CheckProgram('gperf','with_gperf'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llc','with_llc'):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llvm-dis','with_llvmdis',[env['LLVM_bin']]):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llvm-as','with_llvmas',[env['LLVM_bin']]):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llvm-gcc','with_llvmgcc',[env['LLVM_bin']]):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llvm-g++','with_llvmgxx',[env['LLVM_bin']]):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('llvm2cpp','with_llvm2cpp',[env['LLVM_bin']]):
-    env.Exit(1)
+    _failed(env)
   if not conf.CheckProgram('runtest','with_runtest'):
     env['with_runtest'] = None
     print "*** TESTING DISABLED ***"

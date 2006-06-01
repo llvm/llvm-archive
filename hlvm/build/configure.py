@@ -144,7 +144,7 @@ def FindLibXML2(conf,env):
     [env['with_xml2']],[],'libxml2')
 
 def CheckProgram(context,progname,varname,moredirs=[]):
-  context.Message("Checking for " + progname + "...")
+  context.Message("Checking for Program " + progname + "...")
   if exists(context.env[varname]):
     ret = 1
   else:
@@ -159,10 +159,6 @@ def CheckProgram(context,progname,varname,moredirs=[]):
 def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('algorithm'):
     env.Exit(1)
-  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_pools.h']):
-    env.Exit(1)
-  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_uri.h']):
-    env.Exit(1)
   if not conf.CheckCXXHeader('cassert'):
     env.Exit(1)
   if not conf.CheckCXXHeader('ios'):
@@ -170,16 +166,6 @@ def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('iostream'):
     env.Exit(1)
   if not conf.CheckCXXHeader('istream'):
-    env.Exit(1)
-  if not conf.CheckCHeader('libxml/parser.h'):
-    env.Exit(1)
-  if not conf.CheckCHeader('libxml/relaxng.h'):
-    env.Exit(1)
-  if not conf.CheckCHeader('libxml/xmlwriter.h'):
-    env.Exit(1)
-  if not conf.CheckCXXHeader('llvm/ADT/StringExtras.h'):
-    env.Exit(1)
-  if not conf.CheckCXXHeader('llvm/System/Path.h'):
     env.Exit(1)
   if not conf.CheckCXXHeader('map'):
     env.Exit(1)
@@ -192,6 +178,20 @@ def CheckForHeaders(conf,env):
   if not conf.CheckCXXHeader('string'):
     env.Exit(1)
   if not conf.CheckCXXHeader('vector'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('llvm/ADT/StringExtras.h'):
+    env.Exit(1)
+  if not conf.CheckCXXHeader('llvm/System/Path.h'):
+    env.Exit(1)
+  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_pools.h']):
+    env.Exit(1)
+  if not conf.CheckCHeader(['apr-1/apr.h','apr-1/apr_uri.h']):
+    env.Exit(1)
+  if not conf.CheckCHeader('libxml/parser.h'):
+    env.Exit(1)
+  if not conf.CheckCHeader('libxml/relaxng.h'):
+    env.Exit(1)
+  if not conf.CheckCHeader('libxml/xmlwriter.h'):
     env.Exit(1)
   return 1
 

@@ -27,7 +27,7 @@
 /// @brief Provides the implementation of the HLVM -> LLVM Code Generator
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/CodeGen/LLVM/LLVMGenerator.h>
+#include <hlvm/CodeGen/LLVMGenerator.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Import.h>
@@ -53,12 +53,18 @@
 #include <llvm/PassManager.h>
 #include <llvm/Assembly/PrintModulePass.h>
 
-using namespace hlvm;
+//namespace {
+//using namespace llvm;
+//include <hlvm/CodeGen/string_decl.inc>
+//include <hlvm/CodeGen/program.inc>
+//}
+
 
 namespace 
 {
+using namespace hlvm;
 
-class LLVMGeneratorPass : public Pass
+class LLVMGeneratorPass : public hlvm::Pass
 {
   public:
     LLVMGeneratorPass(const AST* tree)
@@ -68,7 +74,7 @@ class LLVMGeneratorPass : public Pass
     ~LLVMGeneratorPass() { }
 
   /// Conversion functions
-  inline const llvm::Type* getType(const Type* ty);
+  inline const llvm::Type* getType(const hlvm::Type* ty);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
 
@@ -84,14 +90,14 @@ class LLVMGeneratorPass : public Pass
   inline void gen(RealType* t);
   inline void gen(OctetType* t);
   inline void gen(VoidType* t);
-  inline void gen(PointerType* t);
-  inline void gen(ArrayType* t);
+  inline void gen(hlvm::PointerType* t);
+  inline void gen(hlvm::ArrayType* t);
   inline void gen(VectorType* t);
   inline void gen(StructureType* t);
   inline void gen(SignatureType* t);
   inline void gen(ConstLiteralInteger* t);
   inline void gen(Variable* v);
-  inline void gen(Function* f);
+  inline void gen(hlvm::Function* f);
   inline void gen(Program* p);
   inline void gen(Block* f);
   inline void gen(ReturnOp* f);
@@ -113,13 +119,13 @@ private:
     ///< The current LLVM instructions we're generating
   const AST* ast;            ///< The current Tree we're traversing
   const Bundle* bundle;      ///< The current Bundle we're traversing
-  const Function* function;  ///< The current Function we're traversing
+  const hlvm::Function* function;  ///< The current Function we're traversing
   const Block* block;        ///< The current Block we're traversing
 };
 
 
 const llvm::Type*
-LLVMGeneratorPass::getType(const Type* ty)
+LLVMGeneratorPass::getType(const hlvm::Type* ty)
 {
   // First, lets see if its cached already
   const llvm::Type* result = ltypes.lookup(ty->getName());
@@ -182,12 +188,12 @@ LLVMGeneratorPass::getType(const Type* ty)
     }
     case PointerTypeID: {
       result = llvm::PointerType::get(
-        getType(llvm::cast<PointerType>(ty)->getTargetType()));
+        getType(llvm::cast<hlvm::PointerType>(ty)->getTargetType()));
       break;
     }
     case ArrayTypeID: {
       const llvm::Type* elemType = 
-        getType(llvm::cast<ArrayType>(ty)->getElementType());
+        getType(llvm::cast<hlvm::ArrayType>(ty)->getElementType());
       std::vector<const llvm::Type*> Fields;
       Fields.push_back(llvm::Type::UIntTy);
       Fields.push_back(llvm::PointerType::get(elemType));
@@ -253,12 +259,12 @@ LLVMGeneratorPass::gen(VoidType* t)
 }
 
 void 
-LLVMGeneratorPass::gen(PointerType* t)
+LLVMGeneratorPass::gen(hlvm::PointerType* t)
 {
 }
 
 void 
-LLVMGeneratorPass::gen(ArrayType* t)
+LLVMGeneratorPass::gen(hlvm::ArrayType* t)
 {
 }
 
@@ -280,7 +286,7 @@ LLVMGeneratorPass::gen(SignatureType* t)
 void 
 LLVMGeneratorPass::gen(ConstLiteralInteger* i)
 {
-  const Type* hType = i->getType();
+  const hlvm::Type* hType = i->getType();
   const llvm::Type* lType = getType(hType);
   if (llvm::cast<IntegerType>(hType)->isSigned())
     lops.push_back(llvm::ConstantSInt::get(lType,i->getValue()));
@@ -334,7 +340,7 @@ LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
 }
 
 void
-LLVMGeneratorPass::gen(Function* f)
+LLVMGeneratorPass::gen(hlvm::Function* f)
 {
   lfunc = new llvm::Function(
     llvm::cast<llvm::FunctionType>(getType(f->getSignature())),
@@ -411,7 +417,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     // container that is being asked for.
     switch (n->getID()) {
     case BundleID:                gen(llvm::cast<Bundle>(n)); break;
-    case FunctionID:              gen(llvm::cast<Function>(n)); break;
+    case FunctionID:              gen(llvm::cast<hlvm::Function>(n)); break;
     case ProgramID:               gen(llvm::cast<Program>(n)); break;
     case BlockID:                 gen(llvm::cast<Block>(n)); break;
     default:
@@ -432,8 +438,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case RealTypeID:              gen(llvm::cast<RealType>(n)); break;
     case OctetTypeID:             gen(llvm::cast<OctetType>(n)); break;
     case VoidTypeID:              gen(llvm::cast<VoidType>(n)); break;
-    case PointerTypeID:           gen(llvm::cast<PointerType>(n)); break;
-    case ArrayTypeID:             gen(llvm::cast<ArrayType>(n)); break;
+    case PointerTypeID:           gen(llvm::cast<hlvm::PointerType>(n)); break;
+    case ArrayTypeID:             gen(llvm::cast<hlvm::ArrayType>(n)); break;
     case VectorTypeID:            gen(llvm::cast<VectorType>(n)); break;
     case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
     case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
@@ -460,8 +466,10 @@ LLVMGeneratorPass::linkModules()
 
 }
 
+namespace hlvm {
+
 void
-hlvm::generateBytecode(AST* tree,std::ostream& output)
+generateBytecode(AST* tree,std::ostream& output)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -474,7 +482,7 @@ hlvm::generateBytecode(AST* tree,std::ostream& output)
 }
 
 void
-hlvm::generateAssembly(AST* tree, std::ostream& output)
+generateAssembly(AST* tree, std::ostream& output)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -486,4 +494,6 @@ hlvm::generateAssembly(AST* tree, std::ostream& output)
   Passes.run(*mod);
   delete mod;
   delete PM;
+}
+
 }

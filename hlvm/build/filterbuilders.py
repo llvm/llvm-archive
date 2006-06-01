@@ -94,7 +94,7 @@ def RNGTokenizerAction(target,source,env):
   tknFile.write('%%\n')
   tknFile.close()
   gperfAction = env.Action(
-    env['GPERF'] + " -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
+    env['with_gperf'] + " -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
     " -s 2 -S 1 -k '*' " + tknFilename + " >" + TokenHashFile)
   env.Execute(gperfAction)
   tokenList = ""

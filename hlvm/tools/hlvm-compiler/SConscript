@@ -25,7 +25,7 @@ from build import hlvm
 Import('env')
 prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
  LIBS=[
-   'HLVMLLVMCG',
+   'HLVMCodeGen',
    'HLVMXMLReader',
    'HLVMXMLWriter',
    'HLVMPass',
@@ -33,17 +33,15 @@ prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
    'HLVMBase',
    'xml2',
    'LLVMLinker',
+   'LLVMBCReader',
+   'LLVMBCWriter',
+   'LLVMCore',
    'LLVMSupport',
+   'LLVMbzip2',
    'LLVMSystem',
    'apr-1',
    'stdc++'
-  ],
- LINKFLAGS=[
-   pjoin(env['LLVM_lib'],'LLVMCore') + env['OBJSUFFIX'],
-   pjoin(env['LLVM_lib'],'LLVMBCReader') + env['OBJSUFFIX'],
-   pjoin(env['LLVM_lib'],'LLVMBCWriter') + env['OBJSUFFIX'],
-   pjoin(env['LLVM_lib'],'LLVMbzip2') + env['OBJSUFFIX']
- ]
+  ]
 )
 hlvm.InstallProgram(env,prog)
 

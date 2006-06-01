@@ -31,7 +31,7 @@
 #include <hlvm/Reader/XML/XMLReader.h>
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/Pass/Pass.h>
-#include <hlvm/CodeGen/LLVM/LLVMGenerator.h>
+#include <hlvm/CodeGen/LLVMGenerator.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/System/Signals.h>
 #include <fstream>

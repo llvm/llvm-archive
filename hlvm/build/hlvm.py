@@ -17,7 +17,7 @@ def GetFiles(env,pat,dir=''):
   return glob.glob(spec)
 
 def GetAllCXXFiles(env):
-  return env.Flatten([GetFiles(env,'*.cpp')])
+  return GetFiles(env,'*.cpp')
 
 def GetRNGQuoteSource(env):
   from build import filterbuilders

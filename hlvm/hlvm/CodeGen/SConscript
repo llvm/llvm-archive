@@ -22,5 +22,10 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-lib = env.Library('HLVMLCodeGen',hlvm.GetAllCXXFiles(env))
+hlvm.GetCpp2LLVMCpp(env)
+env.Cpp2LLVMCpp('string_decl.inc','string.cxx',
+  LLVM2CPPFLAGS='-gen-type -for struct._hlvm_string -funcname getStringDecl')
+env.Cpp2LLVMCpp('program.inc','program.cxx',
+  LLVM2CPPFLAGS='-gen-contents -funcname "getProgramDef"')
+lib = env.Library('HLVMCodeGen',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)

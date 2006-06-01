@@ -77,7 +77,7 @@ class ASTImpl : public AST
     CharacterType* CharacterSingleton;
     OctetType*     OctetSingleton;
     IntegerType*   UInt8Singleton;
-    IntegerType*   UInt16Singleton;;
+    IntegerType*   UInt16Singleton;
     IntegerType*   UInt32Singleton;
     IntegerType*   UInt64Singleton;
     IntegerType*   UInt128Singleton;

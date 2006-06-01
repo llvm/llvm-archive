@@ -110,10 +110,12 @@ def GetBuildEnvironment(targets,arguments):
   env['HLVM_SO_AGE'] = '0'
   env['HLVM_SO_VERSION'] = env['HLVM_SO_CURRENT']+':'+env['HLVM_SO_REVISION']
   env['HLVM_SO_VERSION'] += ':' + env['HLVM_SO_AGE']
-  env['CCFLAGS']  = ' -pipe -Wall -Wcast-align -Wpointer-arith -pedantic'
+  env['CCFLAGS']  = ' -pipe -Wall -Wcast-align -Wpointer-arith -Wno-long-long'
+  env['CCFLAGS'] += ' -pedantic'
   env['CXXFLAGS'] = ' -pipe -Wall -Wcast-align -Wpointer-arith -Wno-deprecated'
-  env['CXXFLAGS']+= ' -Wold-style-cast -Woverloaded-virtual -Wno-unused' 
-  env['CXXFLAGS']+= ' -pedantic -fno-operator-names -ffor-scope -fconst-strings'
+  env['CXXFLAGS']+= ' -Wold-style-cast -Woverloaded-virtual -Wno-unused'
+  env['CXXFLAGS']+= ' -Wno-long-long -pedantic -fno-operator-names -ffor-scope'
+  env['CXXFLAGS']+= ' -fconst-strings'
   env['CPPDEFINES'] = { '__STDC_LIMIT_MACROS':None, '_GNU_SOURCE':None }
   VariantName=''
   if env['small'] == 1:

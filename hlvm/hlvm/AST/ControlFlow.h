@@ -67,5 +67,5 @@ class ReturnOp : public UnaryOperator
   friend class AST;
 };
 
-} // hlvm 
+} // end hlvm namespace
 #endif

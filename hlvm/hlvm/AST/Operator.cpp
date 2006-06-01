@@ -47,6 +47,7 @@ Operator*
 NilaryOperator::getOperand(unsigned idx) const
 {
   hlvmAssert(!"Can't get operands from a NilaryOperator");
+  return 0;
 }
 
 size_t  

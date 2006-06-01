@@ -604,6 +604,7 @@ AST::getPrimitiveType(NodeIDs pid)
       hlvmDeadCode("Invalid Primitive");
       break;
   }
+  return 0;
 }
 
 }

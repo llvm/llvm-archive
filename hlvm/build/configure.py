@@ -5,6 +5,7 @@ from os.path import isdir as isdir
 from os.path import isfile as isfile
 from os.path import exists as exists
 from os import environ as environ
+from string import join as sjoin
 
   
 def _getline(env,msg):
@@ -40,7 +41,7 @@ def AskForDirs(context,pkgname,hdr,libs):
     return AskForDirs(context,pkgname,hdr,libs)
 
 def FindPackage(context,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
-                objs=[], hdrpfx=''):
+                objs=[],hdrpfx='',progs=[]):
   msg = 'Checking for ' + pkgname + '...'
   context.Message(msg)
   lastLIBS = context.env['LIBS']
@@ -103,6 +104,16 @@ int main(int argc, char **argv) {
             continue
           else:
             context.env.Replace(LIBS=lastLIBS, LINKFLAGS=lastLINKFLAGS)
+          ret = 1
+          bindir = pjoin(p,'bin')
+          for pr in progs:
+            if not exists(pjoin(bindir,pr)):
+              ret = 0
+              break;
+          if not ret:
+            continue
+          if len(progs) > 0:
+            context.env[pkgname + '_bin'] = bindir
           context.env[pkgname + '_lib'] = libdir
           context.env[pkgname + '_inc'] = hdrdir
           context.Result('Found: (' + hdrdir + ',' + libdir + ')')
@@ -112,8 +123,10 @@ int main(int argc, char **argv) {
 
 def FindLLVM(conf,env):
   code = 'new llvm::Module("Name");'
-  return conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
-      code,[env['with_llvm'],'/proj/install/llvm'],['LLVMCore','LLVMbzip2'])
+  conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
+     code,[env['with_llvm'],'/proj/install/llvm'],['LLVMCore','LLVMbzip2'],
+     '', ['llvm-as','llc'] )
+
 
 def FindAPR(conf,env):
   code = 'apr_initialize();'
@@ -132,11 +145,14 @@ def FindLibXML2(conf,env):
 
 def CheckProgram(context,progname,varname,moredirs=[]):
   context.Message("Checking for " + progname + "...")
-  paths = environ['PATH'] 
-  fname = context.env.WhereIs(progname,paths)
-  ret = fname != None
-  if ret:
-    context.env[varname] = fname
+  if exists(context.env[varname]):
+    ret = 1
+  else:
+    paths = sjoin(moredirs,':') + environ['PATH'] 
+    fname = context.env.WhereIs(progname,paths)
+    ret = fname != None
+    if ret:
+      context.env[varname] = fname
   context.Result(ret)
   return ret
 
@@ -180,18 +196,28 @@ def CheckForHeaders(conf,env):
   return 1
 
 def CheckForPrograms(conf,env):
-  if not conf.CheckProgram('gperf','GPERF'):
+  if not conf.CheckProgram('gperf','with_gperf'):
     env.Exit(1)
-  if not conf.CheckProgram('llc','LLC'):
+  if not conf.CheckProgram('llc','with_llc'):
     env.Exit(1)
-  if not conf.CheckProgram('runtest','RUNTEST'):
-    env['RUNTEST'] = None
+  if not conf.CheckProgram('llvm-dis','with_llvmdis',[env['LLVM_bin']]):
+    env.Exit(1)
+  if not conf.CheckProgram('llvm-as','with_llvmas',[env['LLVM_bin']]):
+    env.Exit(1)
+  if not conf.CheckProgram('llvm-gcc','with_llvmgcc',[env['LLVM_bin']]):
+    env.Exit(1)
+  if not conf.CheckProgram('llvm-g++','with_llvmgxx',[env['LLVM_bin']]):
+    env.Exit(1)
+  if not conf.CheckProgram('llvm2cpp','with_llvm2cpp',[env['LLVM_bin']]):
+    env.Exit(1)
+  if not conf.CheckProgram('runtest','with_runtest'):
+    env['with_runtest'] = None
     print "*** TESTING DISABLED ***"
-  if not conf.CheckProgram('doxygen','DOXYGEN'):
-    env['DOXYGEN'] = None
+  if not conf.CheckProgram('doxygen','with_doxygen'):
+    env['with_runtest'] = None
     print "*** DOXYGEN DISABLED ***"
-  if not conf.CheckProgram('xsltproc','XSLTPROC'):
-    env['XSLTPROC'] = None
+  if not conf.CheckProgram('xsltproc','with_xsltproc'):
+    env['with_runtest'] = None
     print "*** XSLTPROC DISABLED ***"
   return 1
 

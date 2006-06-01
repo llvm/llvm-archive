@@ -17,11 +17,15 @@ def GetFiles(env,pat,dir=''):
   return glob.glob(spec)
 
 def GetAllCXXFiles(env):
-  return env.Flatten([GetFiles(env,'*.cpp'),GetFiles(env,'*.cxx')])
+  return env.Flatten([GetFiles(env,'*.cpp')])
 
 def GetRNGQuoteSource(env):
   from build import filterbuilders
   return filterbuilders.RNGQuoteSource(env)
+
+def GetCpp2LLVMCpp(env):
+  from build import codegen
+  return codegen.Cpp2LLVMCpp(env)
 
 def GetRNGTokenizer(env):
   from build import filterbuilders
@@ -77,6 +81,26 @@ def GetBuildEnvironment(targets,arguments):
   opts.Add('with_apr','Specify where apr is located','/usr/local/apr'),
   opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr'),
   opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local'),
+  opts.Add('with_gperf','Specify where the gperf program is located',
+           '/usr/local/bin/gperf')
+  opts.Add('with_llc','Specify where the LLVM compiler is located',
+           '/usr/local/bin/llc')
+  opts.Add('with_llvmdis','Specify where the LLVM disassembler is located',
+           '/usr/local/bin/llvm-dis')
+  opts.Add('with_llvmas','Specify where the LLVM assembler is located',
+           '/usr/local/bin/llvm-as')
+  opts.Add('with_llvmgcc','Specify where the LLVM C compiler is located',
+           '/usr/local/bin/llvm-gcc')
+  opts.Add('with_llvmgxx','Specify where the LLVM C++ compiler is located',
+           '/usr/local/bin/llvm-g++')
+  opts.Add('with_llvm2cpp','Specify where the LLVM llvm2cpp program is located',
+           '/usr/local/bin/llvm2cpp')
+  opts.Add('with_runtest','Specify where DejaGnu runtest program is located',
+           '/usr/local/bin/runtest')
+  opts.Add('with_doxygen','Specify where the doxygen program is located',
+           '/usr/local/bin/doxygen')
+  opts.Add('with_xsltproc','Specify where the XSLT processor is located',
+           '/usr/local/bin/xsltproc')
   opts.Update(env)
   opts.Save('.options_cache',env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'
@@ -87,10 +111,10 @@ def GetBuildEnvironment(targets,arguments):
   env['HLVM_SO_AGE'] = '0'
   env['HLVM_SO_VERSION'] = env['HLVM_SO_CURRENT']+':'+env['HLVM_SO_REVISION']
   env['HLVM_SO_VERSION'] += ':' + env['HLVM_SO_AGE']
-  env['CCFLAGS']  = ' -pipe -Wall -Wcast-align -Wpointer-arith'
+  env['CCFLAGS']  = ' -pipe -Wall -Wcast-align -Wpointer-arith -pedantic'
   env['CXXFLAGS'] = ' -pipe -Wall -Wcast-align -Wpointer-arith -Wno-deprecated'
-  env['CXXFLAGS']+= ' -Wold-style-cast -Woverloaded-virtual -ffor-scope'
-  env['CXXFLAGS']+= ' -fno-operator-names -Wno-unused'
+  env['CXXFLAGS']+= ' -Wold-style-cast -Woverloaded-virtual -Wno-unused' 
+  env['CXXFLAGS']+= ' -pedantic -fno-operator-names -ffor-scope -fconst-strings'
   env['CPPDEFINES'] = { '__STDC_LIMIT_MACROS':None, '_GNU_SOURCE':None }
   VariantName=''
   if env['small'] == 1:

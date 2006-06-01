@@ -233,7 +233,7 @@ class AST : public Node
   protected:
     std::string sysid;
     std::string pubid;
-    BundleList bundles;;
+    BundleList bundles;
   /// @}
 };
 

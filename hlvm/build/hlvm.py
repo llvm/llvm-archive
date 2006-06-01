@@ -102,7 +102,6 @@ def GetBuildEnvironment(targets,arguments):
   opts.Add('with_xsltproc','Specify where the XSLT processor is located',
            '/usr/local/bin/xsltproc')
   opts.Update(env)
-  opts.Save('.options_cache',env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'
   env['HLVM_Maintainer'] = 'Reid Spencer <rspencer@reidspencer>'
   env['HLVM_Version'] = '0.1svn'
@@ -191,5 +190,6 @@ Options:
 """ + opts.GenerateHelpText(env,sort=cmp))
   print "HLVM BUILD MODE:", VariantName
   ConfigureHLVM(env)
+  opts.Save('.options_cache',env)
   return env
 

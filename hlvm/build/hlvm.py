@@ -11,10 +11,14 @@ from string import join as sjoin
 from string import replace as strrepl
 import glob
 
-def GetFiles(env,pat,dir=''):
-  spec = pjoin(env.Dir('.').abspath,dir,pat)
-  spec = strrepl(spec,pjoin(env['BuildDir'],''),'',1)
-  return glob.glob(spec)
+def GetFiles(env,pat):
+  prefix = env.Dir('.').abspath
+  modprefix = strrepl(prefix,pjoin(env['BuildDir'],''),'',1)
+  files = glob.glob(pjoin(modprefix,pat))
+  result = []
+  for f in files:
+    result += [strrepl(f,modprefix,prefix,1)]
+  return result
 
 def GetAllCXXFiles(env):
   return GetFiles(env,'*.cpp')
@@ -168,7 +172,6 @@ def GetBuildEnvironment(targets,arguments):
   env['AbsSrcRoot'] = env.Dir('#').abspath
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])
-  env['OBJPREFIX'] = pjoin(BuildDir,'')
   env['LIBPATH'] = []
   env['BINPATH'] = []
   env.BuildDir(BuildDir,'#',duplicate=0)

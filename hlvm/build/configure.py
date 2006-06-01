@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
     incdir = None
     bindir = None
     objects = []
+    foundlib = 0
     # Check various library directory names
     for ldir in ['lib','libs','LIBS','Lib','Libs','Library','Libraries']:
       libdir = pjoin(p,ldir)
@@ -104,24 +105,30 @@ int main(int argc, char **argv) {
       if count != len(libs):
         continue
 
-      # Check each of the required object files
-      count = 0
-      for o in objs:
-        obj =  pjoin(libdir,context.env['OBJPREFIX'])
-        obj += o + context.env['OBJSUFFIX']
-        if not isfile(obj):
-          continue
-        else:
-          count += 1
-          objects.append(obj)
+      # If we were given some object files to check
+      if len(objs) > 0:
+        count = 0
+        # Check each of the required object files
+        for o in objs:
+          obj =  pjoin(libdir,context.env['OBJPREFIX'])
+          obj += o + context.env['OBJSUFFIX']
+          if not isfile(obj):
+            break
+          else:
+            count += 1
+            objects.append(obj)
 
-      # If we didn't find them all, try the next library path
-      if count != len(objs):
-        continue
+        # If we didn't find them all, try the next library path
+        if count != len(objs):
+          continue
 
       # Otherwise we found the right library path
+      foundlib = 1
       break
     
+    if not foundlib:
+      continue
+
     # At this point we have a valid libdir. Now check the various include 
     # diretory names
     count = 0
@@ -140,6 +147,7 @@ int main(int argc, char **argv) {
         count += 1
         break
 
+    # Check that we found the header file
     if count != 1:
       continue
 
@@ -189,10 +197,9 @@ int main(int argc, char **argv) {
 
 def FindLLVM(conf,env):
   code = 'new llvm::Module("Name");'
-  conf.FindPackage('LLVM','llvm/Module.h',['LLVMSupport','LLVMSystem'],
-     code,[env['with_llvm'],'/proj/install/llvm'],['LLVMCore','LLVMbzip2'],
-     '', ['llvm2cpp','llvm-as','llc'] )
-
+  conf.FindPackage('LLVM','llvm/Module.h',['LLVMCore','LLVMSystem'],
+     code,[env['with_llvm'],'/proj/install/llvm'],[],'',
+     ['llvm2cpp','llvm-as','llc'] )
 
 def FindAPR(conf,env):
   code = 'apr_initialize();'

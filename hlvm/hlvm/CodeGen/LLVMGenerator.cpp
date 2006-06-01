@@ -53,12 +53,11 @@
 #include <llvm/PassManager.h>
 #include <llvm/Assembly/PrintModulePass.h>
 
-//namespace {
-//using namespace llvm;
-//include <hlvm/CodeGen/string_decl.inc>
-//include <hlvm/CodeGen/program.inc>
-//}
-
+namespace {
+using namespace llvm;
+#include <hlvm/CodeGen/string_decl.inc>
+#include <hlvm/CodeGen/program.inc>
+}
 
 namespace 
 {
@@ -466,10 +465,8 @@ LLVMGeneratorPass::linkModules()
 
 }
 
-namespace hlvm {
-
 void
-generateBytecode(AST* tree,std::ostream& output)
+hlvm::generateBytecode(AST* tree,std::ostream& output)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -482,7 +479,7 @@ generateBytecode(AST* tree,std::ostream& output)
 }
 
 void
-generateAssembly(AST* tree, std::ostream& output)
+hlvm::generateAssembly(AST* tree, std::ostream& output)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -494,6 +491,4 @@ generateAssembly(AST* tree, std::ostream& output)
   Passes.run(*mod);
   delete mod;
   delete PM;
-}
-
 }

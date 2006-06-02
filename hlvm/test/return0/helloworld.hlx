@@ -2,11 +2,23 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng"
       pubid="http://hlvm.org/src/hlvm/test/xml2xml/helloworld.hlx">
   <bundle name="helloworld">
-    <var name="var" type="string"/>
+    <const name="hw" type="text"><text>Hello, World&#10;</text></const>
     <program name="helloworld">
-      <var name="stdin"/>
-      <store name="stdin"><open>pipe:///stdin</open></store>
-      <ret><int>0</int></ret>
+      <var name="stdout" type="io"/>
+      <store name="stdout">
+        <open>hlvm:std:out</open>
+      </store>
+      <write>
+        <ref name="stdout"/>
+        <ref name="hw"/>
+        <len><ref name="hw"/></len>
+      </write>
+      <close>
+        <ref name="stdout"/>
+      </close>
+      <ret>
+        <int>0</int>
+      </ret>
     </program>
   </bundle>
 </hlvm>

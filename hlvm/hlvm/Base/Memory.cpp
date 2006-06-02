@@ -30,11 +30,12 @@
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/System/Signals.h>
+#include <apr-1/apr_general.h>
 #include <memory>
 #include <new>
 #include <iostream>
 
-namespace hlvm { namespace Base {
+namespace hlvm {
 
 // The following provides a 64KByte emergency memory reserve for the program 
 // heap.  Application writers are encouraged to use the memory facilities 
@@ -54,7 +55,7 @@ the_new_handler( void )
   }
   else
   {
-    hlvmAssert( _memory_reserve != 0 && "No memory!");
+    panic("No memory");
   }
 }
 
@@ -85,9 +86,8 @@ memory_is_low( void )
   return _memory_reserve == 0;
 }
 
-apr_pool_t* POOL = 0;
-
 static bool initialized = false;
+
 void
 initialize(int& /*argc*/, char** /*argv*/)
 {
@@ -110,10 +110,6 @@ initialize(int& /*argc*/, char** /*argv*/)
       // Initialize APR
       if (APR_SUCCESS != apr_initialize())
         hlvmAssert(!"Can't initialize APR");
-
-      // Allocate the master pool
-      if (APR_SUCCESS != apr_pool_create(&POOL,0))
-        hlvmAssert(!"Can't allocate the master pool");
 
 #ifdef XPS_DEBUG
       // Make sure we print stack trace if we get bad signals
@@ -150,16 +146,11 @@ terminate( void )
   }
 }
 
-}}
-
-void* 
-operator new(size_t size, apr_pool_t* pool) 
+void
+panic(const char* msg)
 {
-  return apr_palloc(pool,size);
+  std::cerr << "HLVM PANIC: " << msg << "\n";
+  exit(99);
 }
 
-void*
-operator new[](size_t size, apr_pool_t* pool)
-{
-  return apr_palloc(pool,size);
-}
+} // end hlvm namespace

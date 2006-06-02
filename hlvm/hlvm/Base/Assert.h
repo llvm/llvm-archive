@@ -110,4 +110,8 @@
 #define hlvmRangeCheck(value,min,max) {}
 #endif
 
+namespace hlvm {
+void panic(const char* msg);
+}
+
 #endif

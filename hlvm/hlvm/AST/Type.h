@@ -581,23 +581,23 @@ class AliasType : public Type
   /// @}
 };
 
-class StringType : public Type
+class TextType : public Type
 {
   /// @name Constructors
   /// @{
   public:
-    StringType(const std::string& nm) : 
-      Type(StringTypeID) { this->setName(nm); }
+    TextType(const std::string& nm) : 
+      Type(TextTypeID) { this->setName(nm); }
   public:
-    virtual ~StringType();
+    virtual ~TextType();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const StringType*) { return true; }
+    static inline bool classof(const TextType*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(StringTypeID); }
+      { return N->is(TextTypeID); }
 
   /// @}
   friend class AST;

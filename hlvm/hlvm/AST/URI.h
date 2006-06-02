@@ -27,13 +27,16 @@
 /// @brief Declares the class hlvm::Base::URI
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_BASE_URI_H
-#define HLVM_BASE_URI_H
+#ifndef HLVM_AST_URI_H
+#define HLVM_AST_URI_H
 
-#include <apr-1/apr_uri.h>
 #include <string>
 
-namespace hlvm { namespace Base {
+namespace hlvm {
+
+// Forward References
+class AST; 
+class Pool;
 
 /// A class to represent Uniform Resource Identifiers (URIs). This class can
 /// also support URLs and URNs. The implementation is based on the APR-UTIL
@@ -56,20 +59,15 @@ class URI
 /// @name Constructors
 /// @{
 public:
-  /// @brief Default Constructor builds empty uri
-  URI ( void );
-
   /// @brief Parsing constructor builds uri by parsing the string parameter
-  URI( const char * str );
+  static URI* create( const std::string& xmlStr, Pool* p);
 
-  /// @brief Parsing constructor builds uri by parsing the string parameter
-  URI( const std::string& xmlStr);
+  virtual ~URI ( void );
 
-  /// @brief Copy Constructor.
-  URI ( const URI & that );
-
-  /// @brief Destructor.
-  ~URI ( void );
+protected:
+  // This is an abstract class, don't allow instantiation
+  URI () {}
+  URI ( const URI & that ) {}
 
 /// @}
 /// @name Operators
@@ -88,72 +86,72 @@ public:
 
   /// @brief Return the URI as a string (escaped). Caller must
   /// free the returned string.
-  std::string as_string( void ) const;
+  virtual std::string as_string( void ) const = 0;
 
   /// @brief Set a string to the value of the URI with escapes.
-  void get_string( std::string& str_to_fill ) const;
+  virtual void get_string( std::string& str_to_fill ) const = 0;
 
   /// @brief Return the scheme of the URI
-  const char* const scheme() const;
+  virtual const char* const scheme() const = 0;
 
   /// @brief Return the password part of the URI
-  const char* const password() const;
+  virtual const char* const password() const = 0;
 
   /// @brief Return the user part of the URI
-  const char* const user() const;
+  virtual const char* const user() const = 0;
 
   /// @brief Return the host name from the URI
-  const char* const hostname() const;
+  virtual const char* const hostname() const = 0;
 
   /// @brief Return the combined [user[:password]\@host:port/ part of the URI
-  const char* const hostinfo() const;
+  virtual const char* const hostinfo() const = 0;
 
   /// @brief Return the port part of the URI
-  uint32_t port() const;
+  virtual uint32_t port() const = 0;
 
   /// @brief Return the path part of the URI
-  const char* const path() const;
+  virtual const char* const path() const = 0;
 
   /// @brief Return the query part of the URI
-  const char* const query() const;
+  virtual const char* const query() const = 0;
 
   /// @brief Return the fragment identifier part of the URI
-  const char* const fragment() const;
+  virtual const char* const fragment() const = 0;
 
   /// @brief Determines if two URIs are equal
-  bool equals( const URI& that ) const;
+  virtual bool equals( const URI& that ) const = 0;
 
-  std::string resolveToFile() const;
+  virtual std::string resolveToFile() const = 0;
 /// @}
 /// @name Mutators
 /// @{
 public:
   /// @brief Assignment of one URI to another
-  URI& assign( const URI& that );
+  virtual URI& assign( const URI& that ) = 0;
 
   /// @brief Assignment of an std::string to a URI. 
-  void assign( const std::string& that );
+  virtual void assign( const std::string& that ) = 0;
 
   /// @brief Clears the URI, releases memory.
-  void clear( void );
+  virtual void clear( void ) = 0;
 
   /// @brief Sets the scheme
-  //void scheme( const char* const scheme );
+  virtual void scheme( const char* const scheme ) = 0;
 
   /// @brief Set the opaque part of the URI
-  //void opaque( const char* const opaque );
+  virtual void opaque( const char* const opaque ) = 0;
 
   /// @brief Sets the authority.
-  //void authority( const char* const authority );
+  virtual void authority( const char* const authority ) = 0;
 
   /// @brief Sets the user.
-  //void user( const char* const user );
+  virtual void user( const char* const user ) = 0;
 
   /// @brief Sets the server.
-  //void server( const char* const server );
+  virtual void server( const char* const server ) = 0;
 
   /// @brief Sets the port.
-  //void port( uint32_t portnum );
+  virtual void port( uint32_t portnum ) = 0;
 
 /// @}
 /// @name Functions
@@ -162,35 +160,8 @@ public:
   static uint32_t port_for_scheme( const char* scheme );
 
 /// @}
-/// @name Data
-/// @{
-private:
-  apr_uri_t uri_;
-/// @}
-/// @name Unimplemented
-/// @{
-private:
-/// @}
 
 };
-
-inline
-URI::URI()
-{
-}
-
-inline URI&
-URI::assign( const URI& that )
-{
-  this->uri_ = that.uri_;
-  return *this;
-}
-
-inline
-URI::URI ( const URI & that )
-{
-  this->assign(that);
-}
 
 inline URI & 
 URI::operator = ( const URI & that )
@@ -204,54 +175,6 @@ URI::operator == ( const URI & that ) const
   return this->equals(that);
 }
 
-inline const char* const
-URI::scheme() const
-{
-  return uri_.scheme;
-}
-
-inline const char* const
-URI::password() const
-{
-  return uri_.password;
-}
-
-inline const char* const
-URI::user() const 
-{
-  return uri_.user;
-}
-
-inline const char* const
-URI::hostname() const 
-{
-  return uri_.hostname;
-}
-
-inline uint32_t 
-URI::port() const 
-{
-  return atoi(uri_.port_str);
-}
-
-inline const char* const
-URI::path() const 
-{
-  return uri_.path;
-}
-
-inline const char* const
-URI::query() const 
-{
-  return uri_.query;
-}
-
-inline const char* const
-URI::fragment() const 
-{
-  return uri_.fragment;
-}
-
-}}
+} // end hlvm namespace
 
 #endif

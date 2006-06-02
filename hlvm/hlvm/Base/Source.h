@@ -30,50 +30,52 @@
 #ifndef HLVM_BASE_SOURCE_H
 #define HLVM_BASE_SOURCE_H
 
-#include <hlvm/Base/URI.h>
 #include <llvm/System/MappedFile.h>
 #include <istream>
 
-namespace hlvm { namespace Base {
-  /// This class is the base class of a family of input source classes that can
-  /// be used to provide input to some parsing facility. This abstracts away
-  /// the details of how the input is acquired. Four functions must be 
-  /// implemented by subclasses: prepare, more, read, and finish.
-  /// @brief Abstract Input Source Class
-  class Source
-  {
-  /// @name Methods
-  /// @{
-  public:
-    /// @brief This destructor does nothing, but declared virtual for subclasses
-    virtual ~Source();
+namespace hlvm {
 
-    /// @brief Tells the source to prepare to be read
-    virtual void prepare(intptr_t block_len) = 0;
+class URI;
 
-    /// @brief Requests a block of data.
-    virtual const char* read(intptr_t& actual_len) = 0;
+/// This class is the base class of a family of input source classes that can
+/// be used to provide input to some parsing facility. This abstracts away
+/// the details of how the input is acquired. Four functions must be 
+/// implemented by subclasses: prepare, more, read, and finish.
+/// @brief Abstract Input Source Class
+class Source
+{
+/// @name Methods
+/// @{
+public:
+  /// @brief This destructor does nothing, but declared virtual for subclasses
+  virtual ~Source();
 
-    /// @brief Indicates if more data waits
-    virtual bool more() = 0;
+  /// @brief Tells the source to prepare to be read
+  virtual void prepare(intptr_t block_len) = 0;
 
-    /// @brief Tells the source to finish up.
-    virtual void finish() = 0;
+  /// @brief Requests a block of data.
+  virtual const char* read(intptr_t& actual_len) = 0;
 
-    /// @brief Get the system identifier of the source
-    virtual std::string systemId() const = 0;
+  /// @brief Indicates if more data waits
+  virtual bool more() = 0;
 
-    /// @brief Get the public identifier of the source
-    virtual std::string publicId() const = 0;
+  /// @brief Tells the source to finish up.
+  virtual void finish() = 0;
 
-  /// @}
-  };
+  /// @brief Get the system identifier of the source
+  virtual std::string systemId() const = 0;
 
-  Source* new_MappedFileSource(llvm::sys::MappedFile& mf);
-  Source* new_StreamSource(std::istream&, std::string sysId = "<istream>", 
-      size_t bSize = 65536);
-  Source* new_URISource(const URI& uri);
+  /// @brief Get the public identifier of the source
+  virtual std::string publicId() const = 0;
 
-}}
+/// @}
+};
+
+Source* new_MappedFileSource(llvm::sys::MappedFile& mf);
+Source* new_StreamSource(std::istream&, std::string sysId = "<istream>", 
+    size_t bSize = 65536);
+Source* new_URISource(const URI* uri);
+
+} // end hlvm namespace
 
 #endif

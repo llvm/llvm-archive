@@ -48,6 +48,7 @@
 #include <llvm/DerivedTypes.h>
 #include <llvm/TypeSymbolTable.h>
 #include <llvm/Constants.h>
+#include <llvm/CallingConv.h>
 #include <llvm/Linker.h>
 #include <llvm/Bytecode/Writer.h>
 #include <llvm/PassManager.h>
@@ -56,6 +57,7 @@
 namespace {
 using namespace llvm;
 #include <hlvm/CodeGen/string_decl.inc>
+#include <hlvm/CodeGen/string_clear.inc>
 #include <hlvm/CodeGen/program.inc>
 }
 
@@ -174,7 +176,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       break;
     case RealTypeID:
       hlvmNotImplemented("arbitrary precision real");
-    case StringTypeID: {
+    case TextTypeID: {
       std::vector<const llvm::Type*> Fields;
       Fields.push_back(llvm::Type::UIntTy);
       Fields.push_back(llvm::PointerType::get(llvm::Type::UShortTy));

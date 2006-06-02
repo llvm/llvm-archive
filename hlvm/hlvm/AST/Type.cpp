@@ -245,7 +245,7 @@ AliasType::getPrimitiveName() const
   return type->getPrimitiveName();
 }
 
-StringType::~StringType()
+TextType::~TextType()
 {
 }
 

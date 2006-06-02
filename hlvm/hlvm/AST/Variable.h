@@ -58,7 +58,7 @@ class Variable : public LinkageItem
   /// @name Accessors
   /// @{
   public:
-    Type* getType() const { return type; }
+    const Type* getType() const { return type; }
     static inline bool classof(const Variable*) { return true; }
     static inline bool classof(const Node* N) { return N->isVariable(); }
 
@@ -66,13 +66,13 @@ class Variable : public LinkageItem
   /// @name Accessors
   /// @{
   public:
-    void setType(Type* t) { type = t; }
+    void setType(const Type* t) { type = t; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    Type* type; ///< The type of the variable
+    const Type* type; ///< The type of the variable
   /// @}
   friend class AST;
 };

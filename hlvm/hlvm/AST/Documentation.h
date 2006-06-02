@@ -24,7 +24,7 @@
 /// @author Reid Spencer <reid@hlvm.org> (original author)
 /// @date 2006/05/19
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Documentation
+/// @brief Declares the class hlvm::Documentation
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_AST_DOCUMENTATION_H

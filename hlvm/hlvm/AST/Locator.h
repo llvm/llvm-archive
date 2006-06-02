@@ -21,15 +21,16 @@
 //
 //===----------------------------------------------------------------------===//
 /// @file hlvm/AST/Locator.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Locator
+/// @brief Declares the class hlvm::AST::Locator and friends
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_AST_LOCATOR_H
 #define HLVM_AST_LOCATOR_H
 
+#include <hlvm/AST/URI.h>
 #include <string>
 
 namespace hlvm
@@ -42,24 +43,110 @@ namespace hlvm
 class Locator
 {
   /// @name Constructors
+  protected:
+    Locator() : SubclassID(0) {}
+  /// @name Accessors
   /// @{
   public:
-    Locator(uint32_t line, uint32_t col, const std::string* fname)
-      : line_(line), col_(col), fname_(fname) {}
-    Locator() : line_(0), col_(0), fname_(0) {}
+    virtual void getReference(std::string& ref) const = 0;
+    virtual bool equals(const Locator& that) const = 0;
+    bool operator==(const Locator& that) { return this->equals(that); }
+    unsigned short id() const { return SubclassID; }
+  /// @}
+  protected:
+    unsigned short SubclassID;
+};
+
+class URILocator : public Locator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    URILocator(const URI* u) : Locator(), uri(u) { SubclassID = 1; }
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    virtual void getReference(std::string& ref) const;
+    virtual bool equals(const Locator& that) const;
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    uint32_t line_;           ///< Line number of source location
-    uint32_t col_;            ///< Column number of source location
-    const std::string* fname_;///< File name of source location
+    const URI* uri;
+  /// @}
+};
+
+class LineLocator : public URILocator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    LineLocator(const URI* u, uint32_t l) : URILocator(u), line(l) {
+      SubclassID = 2; 
+    }
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual void getReference(std::string& ref) const;
+    virtual bool equals(const Locator& that) const;
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    uint32_t line;           ///< Line number of source location
+  /// @}
+};
+
+class LineColumnLocator : public LineLocator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    LineColumnLocator(const URI* u, uint32_t l, uint32_t c) 
+      : LineLocator(u,l), col(c) { SubclassID = 3; }
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual void getReference(std::string& ref) const;
+    virtual bool equals(const Locator& that) const;
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    uint32_t col;            ///< Column number of source location
+  /// @}
+};
+
+class RangeLocator : public LineColumnLocator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    RangeLocator(const URI* u, uint32_t l, uint32_t c, uint32_t l2, uint32_t c2)
+      : LineColumnLocator(u,l,c), line2(l2), col2(c2) { SubclassID = 4; }
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual void getReference(std::string& ref) const;
+    virtual bool equals(const Locator& that) const;
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    uint32_t line2;           ///< Column number of source location
+    uint32_t col2;            ///< Column number of source location
   /// @}
 };
 

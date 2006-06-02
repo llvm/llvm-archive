@@ -43,7 +43,7 @@ ProgramToRun(cl::Positional, cl::desc("URI Of Program To Run"));
 int main(int argc, char**argv) 
 {
   try {
-    Base::initialize(argc,argv);
+    initialize(argc,argv);
     cl::ParseCommandLineOptions(argc, argv, 
       "hlvm: High Level Virtual Machine\n");
 

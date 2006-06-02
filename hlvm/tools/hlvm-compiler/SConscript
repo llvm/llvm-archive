@@ -39,6 +39,7 @@ prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
    'LLVMSupport',
    'LLVMbzip2',
    'LLVMSystem',
+   'aprutil-1',
    'apr-1',
    'stdc++'
   ]

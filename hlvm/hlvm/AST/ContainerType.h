@@ -145,7 +145,7 @@ class SignatureType : public ContainerType
   /// @name Accessors
   /// @{
   public:
-    Type* getResultType() const { return result; }
+    const Type* getResultType() const { return result; }
     bool  isVarArgs() const { return varargs; }
 
     // Methods to support type inquiry via is, cast, dyn_cast
@@ -158,7 +158,7 @@ class SignatureType : public ContainerType
   /// @name Mutators
   /// @{
   public:
-    void setResultType(Type* ty) { result = ty; }
+    void setResultType(const Type* ty) { result = ty; }
     void setIsVarArgs(bool is) { varargs = is; }
     void addArgument(Argument* arg) { contents.push_back(arg); }
 
@@ -166,8 +166,8 @@ class SignatureType : public ContainerType
   /// @name Data
   /// @{
   protected:
-    Type* result;    ///< The result type of the function signature
-    bool varargs;  ///< Indicates variable arguments function
+    const Type* result;  ///< The result type of the function signature
+    bool varargs;        ///< Indicates variable arguments function
   /// @}
   friend class AST;
 };

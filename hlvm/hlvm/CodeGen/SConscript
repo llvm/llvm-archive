@@ -25,6 +25,8 @@ Import('env')
 hlvm.GetCpp2LLVMCpp(env)
 env.Cpp2LLVMCpp('string_decl.inc','string.cxx',
   LLVM2CPPFLAGS='-gen-type -for struct._hlvm_string -funcname getStringDecl')
+env.Cpp2LLVMCpp('string_clear.inc','string.cxx',
+  LLVM2CPPFLAGS='-gen-inline -for _hlvm_string_clear -funcname getStringClear')
 env.Cpp2LLVMCpp('program.inc','program.cxx',
   LLVM2CPPFLAGS='-gen-contents -funcname "getProgramDef"')
 lib = env.Library('HLVMCodeGen',hlvm.GetAllCXXFiles(env))

@@ -61,12 +61,15 @@ class XMLReaderImpl : public XMLReader {
   std::string path;
   AST* ast;
   xmlDocPtr doc;
+  Locator* loc;
+  URI* uri;
 public:
   XMLReaderImpl(const std::string& p)
-    : path(p), ast(0)
+    : path(p), ast(0), loc(0)
   {
     ast = AST::create();
     ast->setSystemID(p);
+    uri = URI::create(p,ast->getPool());
   }
 
   virtual ~XMLReaderImpl() 
@@ -85,6 +88,15 @@ public:
   std::string lookupToken(int32_t token) const
   {
     return HLVMTokenizer::lookup(token);
+  }
+
+  Locator* getLocator(xmlNodePtr& cur) {
+    if (loc) {
+      LineLocator tmp(uri,cur->line);
+      if (*loc == tmp)
+        return loc;
+    }
+    return loc = new LineLocator(uri,cur->line);
   }
 
   inline void handleParseError(xmlErrorPtr error);
@@ -261,8 +273,7 @@ XMLReaderImpl::parseBinary(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <bin> element");
-  Locator loc(cur->line,0,&ast->getSystemID());
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
@@ -285,8 +296,7 @@ XMLReaderImpl::parseOctal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <oct> element");
-  Locator loc(cur->line,0,&ast->getSystemID());
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
@@ -309,8 +319,7 @@ XMLReaderImpl::parseDecimal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <dec> element");
-  Locator loc(cur->line,0,&ast->getSystemID());
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
@@ -353,8 +362,7 @@ XMLReaderImpl::parseHexadecimal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <hex> element");
-  Locator loc(cur->line,0,&ast->getSystemID());
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(loc);
+  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
   result->setValue(value);
   return result;
@@ -366,7 +374,6 @@ XMLReaderImpl::parseDocumentation(xmlNodePtr& cur)
   // Documentation is always optional so don't error out if the
   // node is not a TKN_doc
   if (cur && skipBlanks(cur) && getToken(cur->name) == TKN_doc) {
-    Locator loc(cur->line,0,&ast->getSystemID());
     xmlBufferPtr buffer = xmlBufferCreate();
     xmlNodeDump(buffer,doc,cur,0,0);
     int length = xmlBufferLength(buffer);
@@ -374,7 +381,7 @@ XMLReaderImpl::parseDocumentation(xmlNodePtr& cur)
       str(reinterpret_cast<const char*>(xmlBufferContent(buffer)),length);
     str.erase(0,5); // Zap the <doc> at the start
     str.erase(str.length()-6); // Zap the </doc> at the end
-    Documentation* progDoc = ast->new_Documentation(loc);
+    Documentation* progDoc = ast->new_Documentation(getLocator(cur));
     progDoc->setDoc(str);
     xmlBufferFree(buffer);
     return progDoc;
@@ -399,9 +406,8 @@ Import*
 XMLReaderImpl::parseImport(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_import);
-  Locator loc(cur->line,0,&ast->getSystemID());
   std::string pfx = getAttribute(cur,"prefix");
-  Import* imp = ast->new_Import(loc,pfx);
+  Import* imp = ast->new_Import(pfx,getLocator(cur));
   checkDoc(cur,imp);
   return imp;
 }
@@ -410,10 +416,10 @@ AliasType*
 XMLReaderImpl::parseAlias(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_alias);
-  Locator loc(cur->line,0,&ast->getSystemID());
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"renames");
-  AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+  AliasType* alias = 
+    ast->new_AliasType(name,ast->resolveType(type),getLocator(cur));
   checkDoc(cur,alias);
   return alias;
 }
@@ -422,7 +428,7 @@ Type*
 XMLReaderImpl::parseAtom(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_atom);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
   xmlNodePtr child = cur->children;
   Documentation* theDoc = parseDocumentation(child);
@@ -437,26 +443,26 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
           hlvmAssert(!"intrinsic element requires 'is' attribute");
         int typeTkn = getToken(reinterpret_cast<const xmlChar*>(is));
         switch (typeTkn) {
-          case TKN_any:  result=ast->new_AnyType(loc,name); break;
-          case TKN_bool: result=ast->new_BooleanType(loc,name); break;
-          case TKN_char: result=ast->new_CharacterType(loc,name); break;
-          case TKN_f128: result=ast->new_f128(loc,name); break;
-          case TKN_f32:  result=ast->new_f32(loc,name); break;
-          case TKN_f43:  result=ast->new_f43(loc,name); break;
-          case TKN_f64:  result=ast->new_f64(loc,name); break;
-          case TKN_f80:  result=ast->new_f80(loc,name); break;
-          case TKN_octet:result=ast->new_OctetType(loc,name); break;
-          case TKN_s128: result=ast->new_s128(loc,name); break;
-          case TKN_s16:  result=ast->new_s16(loc,name); break;
-          case TKN_s32:  result=ast->new_s32(loc,name); break;
-          case TKN_s64:  result=ast->new_s64(loc,name); break;
-          case TKN_s8:   result=ast->new_s8(loc,name); break;
-          case TKN_u128: result=ast->new_u128(loc,name); break;
-          case TKN_u16:  result=ast->new_u16(loc,name); break;
-          case TKN_u32:  result=ast->new_u32(loc,name); break;
-          case TKN_u64:  result=ast->new_u64(loc,name); break;
-          case TKN_u8:   result=ast->new_u8(loc,name); break;
-          case TKN_void: result=ast->new_VoidType(loc,name); break;
+          case TKN_any:  result=ast->new_AnyType(name,loc); break;
+          case TKN_bool: result=ast->new_BooleanType(name,loc); break;
+          case TKN_char: result=ast->new_CharacterType(name,loc); break;
+          case TKN_f128: result=ast->new_f128(name,loc); break;
+          case TKN_f32:  result=ast->new_f32(name,loc); break;
+          case TKN_f43:  result=ast->new_f44(name,loc); break;
+          case TKN_f64:  result=ast->new_f64(name,loc); break;
+          case TKN_f80:  result=ast->new_f80(name,loc); break;
+          case TKN_octet:result=ast->new_OctetType(name,loc); break;
+          case TKN_s128: result=ast->new_s128(name,loc); break;
+          case TKN_s16:  result=ast->new_s16(name,loc); break;
+          case TKN_s32:  result=ast->new_s32(name,loc); break;
+          case TKN_s64:  result=ast->new_s64(name,loc); break;
+          case TKN_s8:   result=ast->new_s8(name,loc); break;
+          case TKN_u128: result=ast->new_u128(name,loc); break;
+          case TKN_u16:  result=ast->new_u16(name,loc); break;
+          case TKN_u32:  result=ast->new_u32(name,loc); break;
+          case TKN_u64:  result=ast->new_u64(name,loc); break;
+          case TKN_u8:   result=ast->new_u8(name,loc); break;
+          case TKN_void: result=ast->new_VoidType(name,loc); break;
           default:
             hlvmDeadCode("Invalid intrinsic kind");
         }
@@ -466,7 +472,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         const char* bits = getAttribute(child,"bits");
         if (bits) {
           uint64_t numBits = recognize_nonNegativeInteger(bits);
-          result = ast->new_IntegerType(loc,name,numBits,/*signed=*/true);
+          result = ast->new_IntegerType(name,numBits,/*signed=*/true,loc);
           break;
         }
         hlvmAssert(!"Missing 'bits' attribute");
@@ -476,7 +482,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         const char* bits = getAttribute(child,"bits");
         if (bits) {
           uint64_t numBits = recognize_nonNegativeInteger(bits);
-          result = ast->new_IntegerType(loc,name,numBits,/*signed=*/false);
+          result = ast->new_IntegerType(name,numBits,/*signed=*/false,loc);
           break;
         }
         hlvmAssert(!"Missing 'bits' attribute");
@@ -488,7 +494,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         if (min && max) {
           int64_t minVal = recognize_Integer(min);
           int64_t maxVal = recognize_Integer(max);
-          result = ast->new_RangeType(loc,name,minVal,maxVal);
+          result = ast->new_RangeType(name,minVal,maxVal,loc);
           break;
         }
         hlvmAssert(!"Missing 'min' or 'max' attribute");
@@ -500,7 +506,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         if (mantissa && exponent) {
           int32_t mantVal = recognize_nonNegativeInteger(mantissa);
           int32_t expoVal = recognize_nonNegativeInteger(exponent);
-          result = ast->new_RealType(loc,name,mantVal,expoVal);
+          result = ast->new_RealType(name,mantVal,expoVal,loc);
         }
         break;
       }
@@ -522,9 +528,9 @@ Type*
 XMLReaderImpl::parseEnumeration(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_enumeration);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
-  EnumerationType* en = ast->new_EnumerationType(loc,name);
+  EnumerationType* en = ast->new_EnumerationType(name,loc);
   xmlNodePtr child = checkDoc(cur,en);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     hlvmAssert(getToken(child->name) == TKN_enumerator);
@@ -539,11 +545,11 @@ Type*
 XMLReaderImpl::parsePointer(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_pointer);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"to");
   PointerType* result = 
-    ast->new_PointerType(loc,name,ast->resolveType(type));
+    ast->new_PointerType(name,ast->resolveType(type),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -552,12 +558,12 @@ Type*
 XMLReaderImpl::parseArray(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_array);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"of");
   const char* len = getAttribute(cur,"length");
   ArrayType* result = ast->new_ArrayType(
-    loc, name, ast->resolveType(type), recognize_nonNegativeInteger(len));
+    name, ast->resolveType(type), recognize_nonNegativeInteger(len),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -566,13 +572,13 @@ Type*
 XMLReaderImpl::parseVector(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_vector);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
   std::string type = getAttribute(cur,"of");
   const char* len  = getAttribute(cur,"length");
   VectorType* result =
     ast->new_VectorType(
-      loc,name,ast->resolveType(type), recognize_nonNegativeInteger(len));
+      name,ast->resolveType(type), recognize_nonNegativeInteger(len),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -581,16 +587,16 @@ Type*
 XMLReaderImpl::parseStructure(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_structure);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
-  StructureType* struc = ast->new_StructureType(loc,name);
+  StructureType* struc = ast->new_StructureType(name,loc);
   xmlNodePtr child = checkDoc(cur,struc); 
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     hlvmAssert(getToken(child->name) == TKN_field && 
                "Structure only has fields");
     std::string name = getAttribute(child,"name");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+    AliasType* alias = ast->new_AliasType(name,ast->resolveType(type),loc);
     alias->setParent(struc);
     checkDoc(child,alias);
     child = child->next;
@@ -602,12 +608,12 @@ Type*
 XMLReaderImpl::parseSignature(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_signature);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"name");
   std::string result = getAttribute(cur,"result");
   const char* varargs = getAttribute(cur,"varargs",false);
   SignatureType* sig = 
-    ast->new_SignatureType(loc,name,ast->resolveType(result));
+    ast->new_SignatureType(name,ast->resolveType(result),loc);
   if (varargs)
     sig->setIsVarArgs(recognize_boolean(varargs));
   xmlNodePtr child = checkDoc(cur,sig); 
@@ -615,7 +621,7 @@ XMLReaderImpl::parseSignature(xmlNodePtr& cur)
     hlvmAssert(getToken(child->name) == TKN_arg && "Signature only has args");
     std::string name = getAttribute(child,"name");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(loc,name,ast->resolveType(type));
+    AliasType* alias = ast->new_AliasType(name,ast->resolveType(type),loc);
     alias->setParent(sig);
     checkDoc(child,alias);
     child = child->next;
@@ -627,11 +633,10 @@ Variable*
 XMLReaderImpl::parseVariable(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_var);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  Variable* var = ast->new_Variable(loc,name);
-  var->setType(ast->resolveType(type));
+  Variable* var = ast->new_Variable(name,ast->resolveType(type),loc);
   checkDoc(cur,var);
   return var;
 }
@@ -640,7 +645,7 @@ ReturnOp*
 XMLReaderImpl::parseReturn(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name) == TKN_ret && "Expecting block element");
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   ReturnOp* ret = ast->new_ReturnOp(loc);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
@@ -673,11 +678,13 @@ Block*
 XMLReaderImpl::parseBlock(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name) == TKN_block && "Expecting block element");
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   const char* label = getAttribute(cur, "label",false);
-  Block* block = ast->new_Block(loc);
+  Block* block = 0;
   if (label)
-    block->setLabel(label);
+    block = ast->new_Block(label,loc);
+  else
+    block = ast->new_Block("",loc);
   xmlNodePtr child = cur->children;
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {
@@ -692,10 +699,10 @@ Function*
 XMLReaderImpl::parseFunction(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_function);
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  Function* func = ast->new_Function(loc,name);
+  Function* func = ast->new_Function(name,loc);
   checkDoc(cur,func);
   return func;
 }
@@ -704,9 +711,9 @@ Program*
 XMLReaderImpl::parseProgram(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name) == TKN_program && "Expecting program element");
-  Locator loc(cur->line,0,&ast->getSystemID());
+  Locator* loc = getLocator(cur);
   std::string name(getAttribute(cur, "name"));
-  Program* program = ast->new_Program(loc,name);
+  Program* program = ast->new_Program(name,loc);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     Block* b = parseBlock(child);
@@ -722,8 +729,8 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name) == TKN_bundle && "Expecting bundle element");
   std::string pubid(getAttribute(cur, "name"));
-  Locator loc(cur->line,0,&ast->getSystemID());
-  Bundle* bundle = ast->new_Bundle(loc,pubid);
+  Locator* loc = getLocator(cur);
+  Bundle* bundle = ast->new_Bundle(pubid,loc);
   xmlNodePtr child = cur->children;
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {

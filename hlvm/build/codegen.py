@@ -13,6 +13,8 @@ def CPP2LLVMCPPAction(target,source,env):
     env['with_llvmdis'] + " -o - | " + 
     env['with_llvm2cpp'] + " " + env['LLVM2CPPFLAGS'] + " -o " + tgt
   )
+  env.Depends(tgt,env['with_llvm2cpp'])
+  env.Depends(tgt,env['with_llvmdis'])
   env.Execute(theAction);
   return 0
 

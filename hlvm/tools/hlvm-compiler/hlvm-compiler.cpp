@@ -69,7 +69,7 @@ static cl::opt<GenerationOptions> WhatToGenerate(
 int main(int argc, char**argv) 
 {
   try {
-    Base::initialize(argc,argv);
+    initialize(argc,argv);
     cl::ParseCommandLineOptions(argc, argv, 
       "hlvm-xml2xml XML->AST->XML translator\n");
 

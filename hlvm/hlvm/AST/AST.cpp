@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/AST.h>
+#include <hlvm/AST/Locator.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Import.h>
 #include <hlvm/AST/Documentation.h>
@@ -40,6 +41,7 @@
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/SymbolTable.h>
 #include <hlvm/Base/Assert.h>
+#include <hlvm/Base/Pool.h>
 #include <llvm/Support/Casting.h>
 
 using namespace hlvm;
@@ -59,7 +61,9 @@ class ASTImpl : public AST
         SInt64Singleton(0), SInt128Singleton(0),  Float32Singleton(0),
         Float44Singleton(0), Float64Singleton(0), Float80Singleton(0),
         Float128Singleton(0), ProgramTypeSingleton(0)
-      {}
+      {
+        pool = Pool::create("ASTPool",0,false,1024,4,0);
+      }
     ~ASTImpl();
 
   protected:
@@ -176,8 +180,27 @@ AST::resolveType(const std::string& name)
   return static_cast<const ASTImpl*>(this)->resolveType(name);
 }
 
+Locator*
+AST::new_Locator(const URI* uri, uint32_t line, uint32_t col, uint32_t line2,
+    uint32_t col2)
+{
+  hlvmAssert(uri != 0);
+  if (line != 0)
+    if (col != 0)
+      if (line2 != 0 && col2 != 0)
+        return new RangeLocator(uri,line,col,line2,col2);
+      else
+        return new LineColumnLocator(uri,line,col);
+    else 
+      return new LineLocator(uri,line);
+  else
+    return new URILocator(uri);
+  hlvmDeadCode("Invalid Locator construction");
+  return 0;
+}
+
 Bundle*
-AST::new_Bundle(const Locator& loc, const std::string& id)
+AST::new_Bundle(const std::string& id, const Locator* loc)
 {
   Bundle* result = new Bundle();
   result->setLocator(loc);
@@ -186,7 +209,7 @@ AST::new_Bundle(const Locator& loc, const std::string& id)
 }
 
 Import*
-AST::new_Import(const Locator& loc, const std::string& pfx)
+AST::new_Import(const std::string& pfx, const Locator* loc)
 {
   Import* result = new Import();
   result->setLocator(loc);
@@ -196,10 +219,10 @@ AST::new_Import(const Locator& loc, const std::string& pfx)
 
 IntegerType* 
 AST::new_IntegerType(
-  const Locator&loc, 
   const std::string& id, 
   uint64_t bits, 
-  bool isSigned )
+  bool isSigned,
+  const Locator* loc)
 {
   IntegerType* result = new IntegerType(IntegerTypeID);
   result->setBits(bits);
@@ -211,7 +234,7 @@ AST::new_IntegerType(
 }
 
 RangeType* 
-AST::new_RangeType(const Locator&loc, const std::string& id, int64_t min, int64_t max)
+AST::new_RangeType(const std::string& id, int64_t min, int64_t max, const Locator* loc)
 {
   RangeType* result = new RangeType();
   result->setLocator(loc);
@@ -224,8 +247,8 @@ AST::new_RangeType(const Locator&loc, const std::string& id, int64_t min, int64_
 
 EnumerationType* 
 AST::new_EnumerationType(
-  const Locator&loc, 
-  const std::string& id )
+  const std::string& id,
+  const Locator* loc)
 {
   EnumerationType* result = new EnumerationType();
   result->setLocator(loc);
@@ -236,10 +259,10 @@ AST::new_EnumerationType(
 
 RealType* 
 AST::new_RealType(
-  const Locator&loc,
   const std::string& id,  
   uint32_t mantissa, 
-  uint32_t exponent)
+  uint32_t exponent,
+  const Locator* loc)
 {
   RealType* result = new RealType(RealTypeID);
   result->setMantissa(mantissa);
@@ -251,7 +274,7 @@ AST::new_RealType(
 }
 
 AnyType* 
-AST::new_AnyType(const Locator&loc, const std::string& id)
+AST::new_AnyType(const std::string& id, const Locator* loc)
 {
   AnyType* result = new AnyType();
   result->setLocator(loc);
@@ -261,7 +284,7 @@ AST::new_AnyType(const Locator&loc, const std::string& id)
 }
 
 BooleanType* 
-AST::new_BooleanType(const Locator&loc, const std::string& id)
+AST::new_BooleanType(const std::string& id, const Locator* loc)
 {
   BooleanType* result = new BooleanType();
   result->setLocator(loc);
@@ -271,7 +294,7 @@ AST::new_BooleanType(const Locator&loc, const std::string& id)
 }
 
 CharacterType* 
-AST::new_CharacterType(const Locator&loc, const std::string& id)
+AST::new_CharacterType(const std::string& id, const Locator* loc)
 {
   CharacterType* result = new CharacterType();
   result->setLocator(loc);
@@ -281,7 +304,7 @@ AST::new_CharacterType(const Locator&loc, const std::string& id)
 }
 
 OctetType* 
-AST::new_OctetType(const Locator&loc, const std::string& id)
+AST::new_OctetType(const std::string& id, const Locator* loc)
 {
   OctetType* result = new OctetType();
   result->setLocator(loc);
@@ -291,7 +314,7 @@ AST::new_OctetType(const Locator&loc, const std::string& id)
 }
 
 VoidType* 
-AST::new_VoidType(const Locator&loc, const std::string& id)
+AST::new_VoidType(const std::string& id, const Locator* loc)
 {
   VoidType* result = new VoidType();
   result->setLocator(loc);
@@ -302,10 +325,9 @@ AST::new_VoidType(const Locator&loc, const std::string& id)
 
 PointerType* 
 AST::new_PointerType(
-  const Locator& loc, 
   const std::string& id,
-  Type* target
-)
+  Type* target,
+  const Locator* loc)
 {
   PointerType* result = new PointerType();
   result->setLocator(loc);
@@ -317,11 +339,10 @@ AST::new_PointerType(
 
 ArrayType* 
 AST::new_ArrayType(
-  const Locator& loc, 
   const std::string& id,
   Type* elemType,
-  uint64_t maxSize
-)
+  uint64_t maxSize,
+  const Locator* loc)
 {
   ArrayType* result = new ArrayType();
   result->setLocator(loc);
@@ -334,11 +355,10 @@ AST::new_ArrayType(
 
 VectorType* 
 AST::new_VectorType(
-  const Locator& loc, 
   const std::string& id,
   Type* elemType,
-  uint64_t size
-)
+  uint64_t size,
+  const Locator* loc)
 {
   VectorType* result = new VectorType();
   result->setLocator(loc);
@@ -350,7 +370,7 @@ AST::new_VectorType(
 }
 
 AliasType* 
-AST::new_AliasType(const Locator& loc, const std::string& id, Type* referrant)
+AST::new_AliasType(const std::string& id, Type* referrant, const Locator* loc)
 {
   AliasType* result = new AliasType();
   result->setLocator(loc);
@@ -361,7 +381,7 @@ AST::new_AliasType(const Locator& loc, const std::string& id, Type* referrant)
 }
 
 StructureType*
-AST::new_StructureType(const Locator& loc, const std::string& id)
+AST::new_StructureType(const std::string& id, const Locator* loc)
 {
   StructureType* result = new StructureType();
   result->setLocator(loc);
@@ -371,7 +391,11 @@ AST::new_StructureType(const Locator& loc, const std::string& id)
 }
 
 SignatureType*
-AST::new_SignatureType(const Locator& loc, const std::string& id, Type* ty)
+AST::new_SignatureType(
+  const std::string& id, 
+  const Type* ty, 
+  bool isVarArgs,
+  const Locator* loc)
 {
   SignatureType* result = new SignatureType();
   result->setLocator(loc);
@@ -388,7 +412,7 @@ AST::new_OpaqueType(const std::string& id)
 }
 
 ConstLiteralInteger*
-AST::new_ConstLiteralInteger(const Locator& loc)
+AST::new_ConstLiteralInteger(const Locator* loc)
 {
   ConstLiteralInteger* result = new ConstLiteralInteger();
   result->setLocator(loc);
@@ -396,16 +420,17 @@ AST::new_ConstLiteralInteger(const Locator& loc)
 }
 
 Variable*
-AST::new_Variable(const Locator& loc, const std::string& id)
+AST::new_Variable(const std::string& id, const Type* Ty, const Locator* loc)
 {
   Variable* result = new Variable();
   result->setLocator(loc);
+  result->setType(Ty);
   result->setName(id);
   return result;
 }
 
 Function*
-AST::new_Function(const Locator& loc, const std::string& id)
+AST::new_Function(const std::string& id, const Locator* loc)
 {
   Function* result = new Function();
   result->setLocator(loc);
@@ -414,7 +439,7 @@ AST::new_Function(const Locator& loc, const std::string& id)
 }
 
 Program*
-AST::new_Program(const Locator& loc, const std::string& id)
+AST::new_Program(const std::string& id, const Locator* loc)
 {
   ASTImpl* ast = static_cast<ASTImpl*>(this);
   if (!ast->ProgramTypeSingleton) {
@@ -423,10 +448,10 @@ AST::new_Program(const Locator& loc, const std::string& id)
     ast->ProgramTypeSingleton->setName(id);
     Type* intType = getPrimitiveType(SInt32TypeID);
     ast->ProgramTypeSingleton->setResultType(intType);
-    ArrayType* arg_array = new_ArrayType(loc,"arg_array",
-      new_StringType(loc,"string"),0);
-    PointerType* args = new_PointerType(loc,"arg_array_ptr",arg_array);
-    Argument* param = new_Argument(loc,"args",args);
+    ArrayType* arg_array = new_ArrayType("arg_array",
+      new_TextType("string",loc),0,loc);
+    PointerType* args = new_PointerType("arg_array_ptr",arg_array,loc);
+    Argument* param = new_Argument("args",args,loc);
     ast->ProgramTypeSingleton->addArgument(param);
   }
 
@@ -439,15 +464,16 @@ AST::new_Program(const Locator& loc, const std::string& id)
 }
 
 Block*
-AST::new_Block(const Locator& loc)
+AST::new_Block(const std::string& label, const Locator* loc)
 {
   Block* result = new Block();
+  result->setLabel(label);
   result->setLocator(loc);
   return result;
 }
 
 ReturnOp*
-AST::new_ReturnOp(const Locator& loc)
+AST::new_ReturnOp(const Locator* loc)
 {
   ReturnOp* result = new ReturnOp();
   result->setLocator(loc);
@@ -455,7 +481,7 @@ AST::new_ReturnOp(const Locator& loc)
 }
 
 Documentation* 
-AST::new_Documentation(const Locator& loc)
+AST::new_Documentation(const Locator* loc)
 {
   Documentation* result = new Documentation();
   result->setLocator(loc);
@@ -463,7 +489,7 @@ AST::new_Documentation(const Locator& loc)
 }
 
 Argument* 
-AST::new_Argument(const Locator& loc, const std::string& id, Type* ty )
+AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
 {
   Argument* result = new Argument();
   result->setLocator(loc);
@@ -472,10 +498,10 @@ AST::new_Argument(const Locator& loc, const std::string& id, Type* ty )
   return result;
 }
 
-StringType*
-AST::new_StringType(const Locator& loc, const std::string& id)
+TextType*
+AST::new_TextType(const std::string& id, const Locator* loc)
 {
-  StringType* result = new StringType(id);
+  TextType* result = new TextType(id);
   result->setLocator(loc);
   return result;
 }

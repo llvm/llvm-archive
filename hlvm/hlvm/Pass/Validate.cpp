@@ -179,7 +179,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
       break;
     case RationalTypeID:
       break; // Not implemented yet
-    case StringTypeID:
+    case TextTypeID:
       break; // Not imlpemented yet
     case AliasTypeID:
       validateAliasType(cast<AliasType>(n));

@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Base/Source.h>
+#include <hlvm/AST/URI.h>
 #include <llvm/System/MappedFile.h>
 #include <iostream>
 #include <ios>
@@ -37,7 +38,7 @@ using namespace hlvm;
 namespace 
 {
 
-class MappedFileSource : public Base::Source 
+class MappedFileSource : public Source 
 {
 public:
   MappedFileSource(llvm::sys::MappedFile& mf)
@@ -105,7 +106,7 @@ private:
   intptr_t read_len_;
 };
 
-class StreamSource : public Base::Source 
+class StreamSource : public Source 
 {
 public:
   StreamSource(std::istream& strm, std::string sysId, size_t bsize) : s_(strm) 
@@ -178,19 +179,19 @@ private:
   size_t buffSize;
 };
 
-class URISource : public Base::Source 
+class URISource : public Source 
 {
 private:
-  hlvm::Base::URI uri_;
+  const hlvm::URI* uri_;
   llvm::sys::MappedFile* mf_;
   MappedFileSource* mfs_;
 public:
-  URISource(const Base::URI& uri ) 
+  URISource(const URI* uri ) 
     : uri_(uri) 
     , mf_(0)
     , mfs_(0)
   {
-    mf_ = new llvm::sys::MappedFile(llvm::sys::Path(uri_.resolveToFile()));
+    mf_ = new llvm::sys::MappedFile(llvm::sys::Path(uri_->resolveToFile()));
     mfs_ = new MappedFileSource(*mf_);
   }
   virtual ~URISource() {}
@@ -205,7 +206,7 @@ public:
 
 }
 
-namespace hlvm { namespace Base {
+namespace hlvm {
 
 Source::~Source() 
 {
@@ -225,9 +226,9 @@ new_StreamSource(std::istream& strm, std::string sysId, size_t bSize)
 }
 
 Source* 
-new_URISource(const Base::URI& uri)
+new_URISource(const URI* uri)
 {
   return new URISource(uri);
 }
 
-}}
+} // end hlvm namespace

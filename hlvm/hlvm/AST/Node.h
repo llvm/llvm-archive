@@ -80,7 +80,7 @@ enum NodeIDs
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
   RealTypeID,              ///< The Real Number Type (Any Real Number)
   RationalTypeID,          ///< The Rational Number Type (p/q type number)
-  StringTypeID,            ///< The String Type (Array of UTF-16 chars + length)
+  TextTypeID,              ///< The Text Type (Array of UTF-16 chars + length)
 
   // Container Types
   AliasTypeID,             ///< A new name for an existing type
@@ -221,7 +221,7 @@ enum NodeIDs
   FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
   LastPrimitiveTypeID  = Float128TypeID, ///< Last Primitive Type
   FirstSimpleTypeID    = AnyTypeID,
-  LastSimpleTypeID     = StringTypeID,
+  LastSimpleTypeID     = TextTypeID,  
   FirstContainerTypeID = PointerTypeID, ///< First Container Type
   LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
   FirstTypeID          = VoidTypeID,
@@ -250,7 +250,7 @@ class Node
   /// @name Constructors
   /// @{
   protected:
-    Node(NodeIDs ID) : id(ID), parent(0), loc() {}
+    Node(NodeIDs ID) : id(ID), parent(0), loc(0) {}
   public:
     virtual ~Node();
 
@@ -270,7 +270,7 @@ class Node
     inline unsigned getFlags() const { return flags; }
 
     /// Get the Locator
-    inline const Locator& getLocator() const { return loc; }
+    inline const Locator* getLocator() const { return loc; }
 
     /// Determine if the node is a specific kind
     inline bool is(NodeIDs kind) const { return id == unsigned(kind); }
@@ -366,7 +366,7 @@ class Node
   /// @name Mutators
   /// @{
   public:
-    void setLocator(const Locator& l) { loc = l; }
+    void setLocator(const Locator* l) { loc = l; }
     void setFlags(unsigned f); 
     virtual void setParent(Node* parent);
 
@@ -388,7 +388,7 @@ class Node
     unsigned id : 8;         ///< Really a value in NodeIDs
     unsigned flags : 24;     ///< 24 boolean flags, subclass dependent interp.
     Node* parent;            ///< The node that owns this node.
-    Locator loc;             ///< The source location corresponding to node.
+    const Locator* loc;      ///< The source location corresponding to node.
   /// @}
   friend class AST;
 };

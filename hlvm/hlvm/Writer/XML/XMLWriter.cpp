@@ -83,7 +83,7 @@ private:
           reinterpret_cast<const xmlChar*>(val)); }
     inline void writeAttribute(const char* name, const std::string& val) 
       { writeAttribute(name, val.c_str()); }
-    inline void writeAttribute(const char* name, Type* t)
+    inline void writeAttribute(const char* name, const Type* t)
       { writeAttribute(name, t->getName()); }
     inline void writeAttribute(const char* name, uint64_t val)
       { writeAttribute(name, llvm::utostr(val)); }

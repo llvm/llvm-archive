@@ -38,7 +38,7 @@ using namespace llvm;
 namespace hlvm {
 
 Bundle*
-Bundle::create(const Locator& loc, const std::string& id)
+Bundle::create(const Locator* loc, const std::string& id)
 {
   Bundle* result = new Bundle();
   result->setLocator(loc);

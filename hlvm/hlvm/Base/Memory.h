@@ -30,16 +30,7 @@
 #ifndef HLVM_BASE_MEMORY_H
 #define HLVM_BASE_MEMORY_H
 
-#include <apr-1/apr_pools.h>
-
-namespace hlvm { namespace Base {
-
-/// An APR pool to allocate memory into. This is the master pool of all XPS
-/// allocated pools and generally the one used to allocate APRish stuff into.
-/// Note that this doesn't exist until after the call to initialize()
-/// @see initialize
-/// @brief The main memory pool for XPS
-extern apr_pool_t* POOL;
+namespace hlvm {
 
 /// Determine if emergency memory reserve has been exhausted.
 /// @brief Detemine if heap memory is low.
@@ -48,9 +39,6 @@ extern bool memory_is_low( void );
 void initialize(int& argc, char**argv );
 void terminate();
 
-}}
-
-void* operator new(size_t size, apr_pool_t* pool);
-void* operator new[](size_t size, apr_pool_t* pool);
+} // end hlvm namespace
 
 #endif

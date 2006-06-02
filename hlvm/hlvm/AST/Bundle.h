@@ -66,7 +66,7 @@ class Bundle : public Documentable
   /// @name Constructors
   /// @{
   public:
-    static Bundle* create(const Locator& location, const std::string& pubid);
+    static Bundle* create(const Locator* location, const std::string& pubid);
 
   protected:
     Bundle() : Documentable(BundleID), name(), types(), vars(), funcs() {}

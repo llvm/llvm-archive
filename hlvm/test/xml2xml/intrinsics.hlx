@@ -1,64 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle name="bundle">
-    <atom name="1">
+  <bundle id="bundle">
+    <atom id="1">
       <intrinsic is="any"/>
     </atom>
-    <atom name="2">
+    <atom id="2">
       <intrinsic is="bool"/>
     </atom>
-    <atom name="3">
+    <atom id="3">
       <intrinsic is="char"/>
     </atom>
-    <atom name="4">
+    <atom id="4">
       <intrinsic is="f128"/>
     </atom>
-    <atom name="5">
+    <atom id="5">
       <intrinsic is="f80"/>
     </atom>
-    <atom name="6">
+    <atom id="6">
       <intrinsic is="f64"/>
     </atom>
-    <atom name="7">
-      <intrinsic is="f43"/>
+    <atom id="7">
+      <intrinsic is="f44"/>
     </atom>
-    <atom name="8">
+    <atom id="8">
       <intrinsic is="f32"/>
     </atom>
-    <atom name="9">
+    <atom id="9">
       <intrinsic is="s128"/>
     </atom>
-    <atom name="10">
+    <atom id="10">
       <intrinsic is="s64"/>
     </atom>
-    <atom name="11">
+    <atom id="11">
       <intrinsic is="s32"/>
     </atom>
-    <atom name="12">
+    <atom id="12">
       <intrinsic is="s16"/>
     </atom>
-    <atom name="13">
+    <atom id="13">
       <intrinsic is="s8"/>
     </atom>
-    <atom name="14">
+    <atom id="14">
       <intrinsic is="octet"/>
     </atom>
-    <atom name="15">
+    <atom id="15">
       <intrinsic is="u128"/>
     </atom>
-    <atom name="16">
+    <atom id="16">
       <intrinsic is="u64"/>
     </atom>
-    <atom name="17">
+    <atom id="17">
       <intrinsic is="u32"/>
     </atom>
-    <atom name="18">
+    <atom id="18">
       <intrinsic is="u16"/>
     </atom>
-    <atom name="19">
+    <atom id="19">
       <intrinsic is="u8"/>
     </atom>
-    <atom name="20">
+    <atom id="20">
       <intrinsic is="void"/>
     </atom>
   </bundle>

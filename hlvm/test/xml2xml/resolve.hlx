@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle name="bundle">
-    <structure name="struct1">
-      <field name="field1" type="SomeType"/>
+  <bundle id="bundle">
+    <structure id="struct1">
+      <field id="field1" type="SomeType"/>
     </structure>
-    <structure name="struct2">
-      <field name="field1" type="SomeType"/>
-      <field name="field2" type="PtrToSomeType"/>
+    <structure id="struct2">
+      <field id="field1" type="SomeType"/>
+      <field id="field2" type="PtrToSomeType"/>
     </structure>
-    <pointer name="PtrToSomeType" to="SomeType"/>
-    <atom name="SomeType">
+    <pointer id="PtrToSomeType" to="SomeType"/>
+    <atom id="SomeType">
       <intrinsic is="any"/>
     </atom>
   </bundle>

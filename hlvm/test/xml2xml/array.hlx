@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle name="bundle">
-    <atom name="someType">
+  <bundle id="bundle">
+    <atom id="someType">
       <intrinsic is="any"/>
     </atom>
-    <array name="anArray" of="someType" length="128"/>
+    <array id="anArray" of="someType" length="128"/>
   </bundle>
 </hlvm>

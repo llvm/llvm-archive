@@ -193,7 +193,7 @@ RealType::getPrimitiveName() const
       break;
     case 32:
       if (exponent == 11)
-        return "f43";
+        return "f44";
       break;
     case 52:
       if (exponent == 11) 

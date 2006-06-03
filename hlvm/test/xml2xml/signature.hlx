@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle name="bundle">
-    <atom name="someType">
+  <bundle id="bundle">
+    <atom id="someType">
       <intrinsic is="any"/>
     </atom>
-    <signature name="sig1" result="someType" varargs="false">
-      <arg name="arg1" type="someType"/>
+    <signature id="sig1" result="someType" varargs="false">
+      <arg id="arg1" type="someType"/>
     </signature>
-    <signature name="struct2" result="someType" varargs="true">
-      <arg name="arg1" type="someType"/>
-      <arg name="arg1" type="someType"/>
+    <signature id="struct2" result="someType" varargs="true">
+      <arg id="arg1" type="someType"/>
+      <arg id="arg1" type="someType"/>
     </signature>
   </bundle>
 </hlvm>

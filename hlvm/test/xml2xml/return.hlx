@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
-  <bundle name="return">
-    <program name="return">
+  <bundle id="return">
+    <program id="return">
       <block>
         <ret>
           <dec>42</dec>

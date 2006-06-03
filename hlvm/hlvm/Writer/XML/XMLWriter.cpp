@@ -187,7 +187,7 @@ void
 XMLWriterImpl::WriterPass::put(AliasType* t)
 {
   startElement("alias");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   writeAttribute("renames",t->getType());
   putDoc(t);
 }
@@ -195,7 +195,7 @@ void
 XMLWriterImpl::WriterPass::put(AnyType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","any");
@@ -206,7 +206,7 @@ void
 XMLWriterImpl::WriterPass::put(BooleanType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","bool");
@@ -217,7 +217,7 @@ void
 XMLWriterImpl::WriterPass::put(CharacterType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","char");
@@ -228,7 +228,7 @@ void
 XMLWriterImpl::WriterPass::put(IntegerType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
@@ -248,7 +248,7 @@ void
 XMLWriterImpl::WriterPass::put(RangeType* t)
 {
   startElement("range");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   writeAttribute("min",t->getMin());
   writeAttribute("max",t->getMax());
   putDoc(t);
@@ -258,7 +258,7 @@ void
 XMLWriterImpl::WriterPass::put(EnumerationType* t)
 {
   startElement("enumeration");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   for (EnumerationType::const_iterator I = t->begin(), E = t->end(); 
        I != E; ++I)
@@ -273,7 +273,7 @@ void
 XMLWriterImpl::WriterPass::put(RealType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
@@ -292,7 +292,7 @@ void
 XMLWriterImpl::WriterPass::put(OctetType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","octet");
@@ -303,7 +303,7 @@ void
 XMLWriterImpl::WriterPass::put(VoidType* t)
 {
   startElement("atom");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","void");
@@ -314,7 +314,7 @@ void
 XMLWriterImpl::WriterPass::put(PointerType* t)
 {
   startElement("pointer");
-  writeAttribute("name", t->getName());
+  writeAttribute("id", t->getName());
   writeAttribute("to", t->getTargetType());
   putDoc(t);
 }
@@ -323,7 +323,7 @@ void
 XMLWriterImpl::WriterPass::put(ArrayType* t)
 {
   startElement("array");
-  writeAttribute("name", t->getName());
+  writeAttribute("id", t->getName());
   writeAttribute("of", t->getElementType());
   writeAttribute("length", t->getMaxSize());
   putDoc(t);
@@ -333,7 +333,7 @@ void
 XMLWriterImpl::WriterPass::put(VectorType* t)
 {
   startElement("vector");
-  writeAttribute("name", t->getName());
+  writeAttribute("id", t->getName());
   writeAttribute("of", t->getElementType());
   writeAttribute("length", t->getSize());
   putDoc(t);
@@ -343,12 +343,12 @@ void
 XMLWriterImpl::WriterPass::put(StructureType* t)
 {
   startElement("structure");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   putDoc(t);
   for (StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("field");
     AliasType* alias = cast<AliasType>(*I);
-    writeAttribute("name",alias->getName());
+    writeAttribute("id",alias->getName());
     writeAttribute("type",alias->getType());
     putDoc(alias);
     endElement();
@@ -359,14 +359,14 @@ void
 XMLWriterImpl::WriterPass::put(SignatureType* t)
 {
   startElement("signature");
-  writeAttribute("name",t->getName());
+  writeAttribute("id",t->getName());
   writeAttribute("result",t->getResultType());
   writeAttribute("varargs",t->isVarArgs() ? "true" : "false");
   putDoc(t);
   for (SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("arg");
     AliasType* alias = cast<AliasType>(*I);
-    writeAttribute("name",alias->getName());
+    writeAttribute("id",alias->getName());
     writeAttribute("type",alias->getType());
     putDoc(alias);
     endElement();
@@ -386,8 +386,8 @@ XMLWriterImpl::WriterPass::put(ConstLiteralInteger* i)
 void
 XMLWriterImpl::WriterPass::put(Variable* v)
 {
-  startElement("var");
-  writeAttribute("name",v->getName());
+  startElement("variable");
+  writeAttribute("id",v->getName());
   writeAttribute("type",v->getType()->getName());
   putDoc(v);
 }
@@ -396,7 +396,7 @@ void
 XMLWriterImpl::WriterPass::put(Function* f)
 {
   startElement("function");
-  writeAttribute("name",f->getName());
+  writeAttribute("id",f->getName());
   writeAttribute("type",f->getSignature()->getName());
   writeAttribute("linkage",getLinkageKind(f->getLinkageKind()));
   putDoc(f);
@@ -406,7 +406,7 @@ void
 XMLWriterImpl::WriterPass::put(Program* p)
 {
   startElement("program");
-  writeAttribute("name",p->getName());
+  writeAttribute("id",p->getName());
   putDoc(p);
 }
 
@@ -430,7 +430,7 @@ void
 XMLWriterImpl::WriterPass::put(Bundle* b)
 {
   startElement("bundle");
-  writeAttribute("name",b->getName());
+  writeAttribute("id",b->getName());
   putDoc(b);
 }
 

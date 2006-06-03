@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle name="bundle">
-    <enumeration name="anEnumeration">
+  <bundle id="bundle">
+    <enumeration id="anEnumeration">
       <enumerator id="one"/>
       <enumerator id="two"/>
       <enumerator id="three"/>

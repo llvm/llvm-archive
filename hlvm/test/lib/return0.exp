@@ -25,6 +25,9 @@ proc hlvm-ret-zero-test { pat } {
   set outdir [file join $objdir $subdir]
   set compiler [file join $objrootdir tools hlvm-compiler hlvm-compiler ]
   set source [file join $srcdir $subdir ]
+  set rtlib [file join $objrootdir hlvm Runtime HLVMRuntime.bca ]
+  set vmlib [file join $objrootdir tools hlvm hlvm.bca ]
+  set vmmain [file join $objrootdir tools hlvm hlvm.bc ]
   set files [lsort [
     glob -nocomplain -tails -types {f r} -directory $source $pat]]
   set dirs [lsort [
@@ -44,18 +47,24 @@ proc hlvm-ret-zero-test { pat } {
   foreach test $files {
     set output [file join $outdir ${test}.out]
     set testsrc [file join $source $test]
-    set testexe [file rootname $test]
+    set testexe [file join $outdir [file rootname $test] ]
+    set testbc  [file join $outdir ${test}.bc ]
     set execout ""
-    set retval [ catch { exec -keepnewline $compiler $testsrc -llvmbc -o - | $llcpath -f -march x86 -o $testexe } msg ]
+    set retval [ catch { exec -keepnewline $compiler $testsrc -llvmbc -o $testbc } msg ] 
     if { $retval != 0 } {
       fail "$test: hlvm-compiler returned $retval:\n$msg"
     } else {
+      set retval [ catch { exec -keepnewline gccld -native -o $testexe $vmmain $vmlib $rtlib $testbc -L/proj/llvm/cfrontend/install/lib -L/proj/install/lib -L/proj/hlvm/hlvm/build.spADio/hlvm/Base -lHLVMBase -lLLVMSupport -lLLVMbzip2 -LLLVMSystem -lapr-1 -laprutil-1 -lstdc++ -lgcc -lc } msg ]
       # Run the program compiled and see if it returns 0
-      set retval [ catch {exec $testexe } msg ]
-      if {$retval == 1} {
-        fail "$test: $testexe returned $retval:\n$msg"
+      if { $retval != 0 } {
+        fail "$test: gccld returned $retval:\n$msg"
       } else {
-        pass "$test"
+        set retval [ catch {exec $testexe } msg ]
+        if {$retval == 1} {
+          fail "$test: $testexe returned $retval:\n$msg"
+        } else {
+          pass "$test"
+        }
       }
     }
   }

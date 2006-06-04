@@ -38,7 +38,7 @@ extern "C"
 {
 
 void* 
-_hlvm_op_file_open(_hlvm_ty_string* fname, uint32_t flags)
+_hlvm_op_file_open(_hlvm_ty_string* uri)
 {
   return 0;
 }

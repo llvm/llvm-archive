@@ -102,6 +102,8 @@ def GetBuildEnvironment(targets,arguments):
            '/usr/local/bin/llvm-gcc')
   opts.Add('with_llvmgxx','Specify where the LLVM C++ compiler is located',
            '/usr/local/bin/llvm-g++')
+  opts.Add('with_llvmar','Specify where the LLVM bytecode archiver is located',
+           '/usr/local/bin/llvm-g++')
   opts.Add('with_llvm2cpp','Specify where the LLVM llvm2cpp program is located',
            '/usr/local/bin/llvm2cpp')
   opts.Add('with_runtest','Specify where DejaGnu runtest program is located',

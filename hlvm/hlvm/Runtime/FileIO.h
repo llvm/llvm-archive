@@ -31,16 +31,15 @@
 #define HLVM_RUNTIME_FILEIO_H
 
 #include <hlvm/Runtime/String.h>
-#include <llvm/Support/DataTypes.h>
 
 extern "C" 
 {
 
-void* _hlvm_op_file_open(_hlvm_ty_string* fname, uint32_t flags);
-
-void _hlvm_op_file_close(void* file);
+void* _hlvm_op_file_open(_hlvm_ty_string* uri);
 
 uint32_t _hovm_op_file_write(void* file, void* data, size_t len);
+
+void _hlvm_op_file_close(void* file);
 }
 
 #endif

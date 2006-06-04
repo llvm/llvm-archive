@@ -30,9 +30,6 @@
 #include <hlvm/Runtime/String.h>
 #include <apr-1/apr_strings.h>
 
-namespace {
-}
-
 extern "C" {
 
 }

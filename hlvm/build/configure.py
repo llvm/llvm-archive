@@ -282,6 +282,8 @@ def CheckForPrograms(conf,env):
     _failed(env)
   if not conf.CheckProgram('llvm2cpp','with_llvm2cpp',[env['LLVM_bin']]):
     _failed(env)
+  if not conf.CheckProgram('llvm-ar','with_llvmar',[env['LLVM_bin']]):
+    _failed(env)
   if not conf.CheckProgram('runtest','with_runtest'):
     env['with_runtest'] = None
     print "*** TESTING DISABLED ***"

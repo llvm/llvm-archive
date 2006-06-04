@@ -20,8 +20,10 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-from build import hlvm
 Import('env')
+from build import hlvm
+hlvm.GetBytecode(env)
+env.BytecodeArchive('HLVMRuntime.bca',hlvm.GetAllCXXFiles(env))
 lib = env.SharedLibrary('HLVMRuntime',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)
 hlvm.InstallHeader(env,hlvm.GetFiles(env,'*.h'))

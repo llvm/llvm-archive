@@ -40,6 +40,7 @@
 #endif
 
 #include <string>
+#include <stdint.h>
 
 namespace hlvm {
 

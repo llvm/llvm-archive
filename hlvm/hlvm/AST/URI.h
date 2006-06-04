@@ -31,6 +31,7 @@
 #define HLVM_AST_URI_H
 
 #include <string>
+#include <stdint.h>
 
 namespace hlvm {
 

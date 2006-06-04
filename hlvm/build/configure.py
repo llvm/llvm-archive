@@ -76,6 +76,11 @@ int main(int argc, char **argv) {
   paths += [
     '/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/'
   ]
+  #Quick hack until I figure out how to do it the SCons way.
+  extrapaths=open('build/paths','r')
+  if not extrapaths==None:
+    for path in extrapaths:
+      paths.insert(0,path.strip())
   # Check each path
   for p in paths:
     # Clear old settings from previous iterations

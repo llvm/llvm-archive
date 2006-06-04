@@ -35,6 +35,10 @@ def GetRNGTokenizer(env):
   from build import filterbuilders
   return filterbuilders.RNGTokenizer(env)
 
+def GetBytecode(env):
+  from build import bytecode
+  return bytecode.Bytecode(env)
+
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
   if (dir == env.Dir('#').path):
@@ -81,6 +85,7 @@ def GetBuildEnvironment(targets,arguments):
     BoolOption('small','Generate smaller code rather than faster',0),
   )
   opts.Add('prefix','Specify where to install HLVM','/usr/local')
+  opts.Add('confpath','Specify additional configuration dirs to search',''),
   opts.Add('with_llvm','Specify where LLVM is located','/usr/local'),
   opts.Add('with_apr','Specify where apr is located','/usr/local/apr'),
   opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr'),

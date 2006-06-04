@@ -73,14 +73,9 @@ int main(int argc, char **argv) {
 }
 """
   context.env.AppendUnique(LIBS = libs)
-  paths += [
-    '/proj','/proj/install','/opt/local','/opt/','/sw','/usr/local','/usr','/'
-  ]
-  #Quick hack until I figure out how to do it the SCons way.
-  extrapaths=open('build/paths','r')
-  if not extrapaths==None:
-    for path in extrapaths:
-      paths.insert(0,path.strip())
+  if len(context.env['confpath']) > 0:
+    paths = context.env['confpath'].split(':') + paths
+  paths += [ '/opt/local','/opt/','/sw/local','/sw','/usr/local','/usr','/' ]
   # Check each path
   for p in paths:
     # Clear old settings from previous iterations
@@ -202,9 +197,8 @@ int main(int argc, char **argv) {
 
 def FindLLVM(conf,env):
   code = 'new llvm::Module("Name");'
-  conf.FindPackage('LLVM','llvm/Module.h',['LLVMCore','LLVMSystem'],
-     code,[env['with_llvm'],'/proj/install/llvm'],[],'',
-     ['llvm2cpp','llvm-as','llc'] )
+  conf.FindPackage('LLVM','llvm/Module.h',['LLVMCore','LLVMSystem'],code,
+    [env['with_llvm']],[],'',['llvm2cpp','llvm-as','llc'] )
 
 def FindAPR(conf,env):
   code = 'apr_initialize();'

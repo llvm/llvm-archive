@@ -1,4 +1,4 @@
-//===-- AST Constant Expression Operators -----------------------*- C++ -*-===//
+//===-- AST Constant Node ---------------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,31 +20,18 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Constants.cpp
-/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
+/// @file hlvm/AST/Constant.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/02
 /// @since 0.1.0
-/// @brief Implements the classes that provide constant expressions
+/// @brief Implements the functions of class hlvm::Constant.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Constants.h>
-#include <hlvm/AST/Type.h>
+#include <hlvm/AST/Constant.h>
 
 namespace hlvm {
 
-ConstantInteger::~ConstantInteger()
-{
-}
-
-ConstantReal::~ConstantReal()
-{
-}
-
-ConstantText::~ConstantText()
-{
-}
-
-ConstantZero::~ConstantZero()
+Constant::~Constant()
 {
 }
 

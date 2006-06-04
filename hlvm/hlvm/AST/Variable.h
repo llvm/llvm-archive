@@ -36,6 +36,7 @@ namespace hlvm
 {
 
 class Type; // Forward declare
+class Constant;
 
 /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
 /// A Variable is a storage location of a specific type. It can either be
@@ -47,8 +48,6 @@ class Variable : public LinkageItem
 {
   /// @name Constructors
   /// @{
-  public:
-    static Variable* create(const Locator& loc, std::string name);
   protected:
     Variable() : LinkageItem(VariableID) {}
   public:
@@ -58,21 +57,24 @@ class Variable : public LinkageItem
   /// @name Accessors
   /// @{
   public:
-    const Type* getType() const { return type; }
+    bool isConstant() { return isConst; }
+    Constant* getInitializer() { return init; }
     static inline bool classof(const Variable*) { return true; }
     static inline bool classof(const Node* N) { return N->isVariable(); }
 
   /// @}
-  /// @name Accessors
+  /// @name Mutators
   /// @{
   public:
-    void setType(const Type* t) { type = t; }
+    void setIsConstant(bool v) { isConst = v; }
+    void setInitializer(Constant* C) { init = C; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    const Type* type; ///< The type of the variable
+    Constant* init;
+    bool isConst;
   /// @}
   friend class AST;
 };

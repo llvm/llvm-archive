@@ -180,6 +180,25 @@ AST::resolveType(const std::string& name)
   return static_cast<const ASTImpl*>(this)->resolveType(name);
 }
 
+SignatureType* 
+AST::getProgramType() const
+{
+  ASTImpl* ast = const_cast<ASTImpl*>(static_cast<const ASTImpl*>(this));
+  if (!ast->ProgramTypeSingleton) {
+    ast->ProgramTypeSingleton = new SignatureType();
+    ast->ProgramTypeSingleton->setLocator(loc);
+    ast->ProgramTypeSingleton->setName("ProgramType");
+    Type* intType = ast->getPrimitiveType(SInt32TypeID);
+    ast->ProgramTypeSingleton->setResultType(intType);
+    ArrayType* arg_array = ast->new_ArrayType("arg_array",
+      ast->new_TextType("string",loc),0,loc);
+    PointerType* args = ast->new_PointerType("arg_array_ptr",arg_array,loc);
+    Argument* param = ast->new_Argument("args",args,loc);
+    ast->ProgramTypeSingleton->addArgument(param);
+  }
+  return ast->ProgramTypeSingleton;
+}
+
 Locator*
 AST::new_Locator(const URI* uri, uint32_t line, uint32_t col, uint32_t line2,
     uint32_t col2)
@@ -411,11 +430,39 @@ AST::new_OpaqueType(const std::string& id)
   return new OpaqueType(id);
 }
 
-ConstLiteralInteger*
-AST::new_ConstLiteralInteger(const Locator* loc)
+ConstantInteger*
+AST::new_ConstantInteger(uint64_t v, const Locator* loc)
 {
-  ConstLiteralInteger* result = new ConstLiteralInteger();
+  ConstantInteger* result = new ConstantInteger();
   result->setLocator(loc);
+  result->setValue(v);
+  return result;
+}
+
+ConstantReal*
+AST::new_ConstantReal(double v, const Locator* loc)
+{
+  ConstantReal* result = new ConstantReal();
+  result->setLocator(loc);
+  result->setValue(v);
+  return result;
+}
+
+ConstantText*
+AST::new_ConstantText(const std::string& v, const Locator* loc)
+{
+  ConstantText* result = new ConstantText();
+  result->setLocator(loc);
+  result->setValue(v);
+  return result;
+}
+
+ConstantZero*
+AST::new_ConstantZero(const Type* Ty, const Locator* loc)
+{
+  ConstantZero* result = new ConstantZero();
+  result->setLocator(loc);
+  result->setType(Ty);
   return result;
 }
 
@@ -441,24 +488,13 @@ AST::new_Function(const std::string& id, const Locator* loc)
 Program*
 AST::new_Program(const std::string& id, const Locator* loc)
 {
+  SignatureType* program_type = getProgramType();
   ASTImpl* ast = static_cast<ASTImpl*>(this);
-  if (!ast->ProgramTypeSingleton) {
-    ast->ProgramTypeSingleton = new SignatureType();
-    ast->ProgramTypeSingleton->setLocator(loc);
-    ast->ProgramTypeSingleton->setName(id);
-    Type* intType = getPrimitiveType(SInt32TypeID);
-    ast->ProgramTypeSingleton->setResultType(intType);
-    ArrayType* arg_array = new_ArrayType("arg_array",
-      new_TextType("string",loc),0,loc);
-    PointerType* args = new_PointerType("arg_array_ptr",arg_array,loc);
-    Argument* param = new_Argument("args",args,loc);
-    ast->ProgramTypeSingleton->addArgument(param);
-  }
 
   Program* result = new Program();
   result->setLocator(loc);
   result->setName(id);
-  result->setSignature(ast->ProgramTypeSingleton); 
+  result->setSignature(program_type);
   result->setLinkageKind(ExternalLinkage);
   return result;
 }

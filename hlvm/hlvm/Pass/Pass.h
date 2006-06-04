@@ -84,11 +84,19 @@ class Pass
   /// @name Handlers
   /// @{
   public:
+    /// Handle initialization. This is called before any other handle method
+    /// is called. Default implementation does nothing
+    virtual void handleInitialize();
+
     /// Handle any kind of node. Subclasses should override this; the default
     /// implementation does nothing. This handler is only called if the
     /// interest is set to 0 (interested in everything). It is left to the
     /// subclass to disambiguate the Node.
     virtual void handle(Node* n, TraversalKinds mode) = 0;
+
+    /// Handle termination. This is called after all other handle methods
+    /// are called. Default implementation does nothing
+    virtual void handleTerminate();
 
   /// @}
   /// @name Accessors

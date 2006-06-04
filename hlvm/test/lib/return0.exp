@@ -48,12 +48,12 @@ proc hlvm-ret-zero-test { pat } {
     set execout ""
     set retval [ catch { exec -keepnewline $compiler $testsrc -llvmbc -o - | $llcpath -f -march x86 -o $testexe } msg ]
     if { $retval != 0 } {
-      fail "$test: $testexe returned $retval\n$msg"
+      fail "$test: hlvm-compiler returned $retval:\n$msg"
     } else {
       # Run the program compiled and see if it returns 0
       set retval [ catch {exec $testexe } msg ]
       if {$retval == 1} {
-        fail "$test: return 0 test failed:\n$msg"
+        fail "$test: $testexe returned $retval:\n$msg"
       } else {
         pass "$test"
       }

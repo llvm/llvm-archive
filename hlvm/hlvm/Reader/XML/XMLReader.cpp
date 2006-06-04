@@ -102,10 +102,13 @@ public:
   inline void handleParseError(xmlErrorPtr error);
   inline void handleValidationError(xmlErrorPtr error);
 
-  inline ConstLiteralInteger* parseBinary(xmlNodePtr& cur);
-  inline ConstLiteralInteger* parseOctal(xmlNodePtr& cur);
-  inline ConstLiteralInteger* parseDecimal(xmlNodePtr& cur);
-  inline ConstLiteralInteger* parseHexadecimal(xmlNodePtr& cur);
+  inline ConstantInteger* parseBinary(xmlNodePtr& cur);
+  inline ConstantInteger* parseOctal(xmlNodePtr& cur);
+  inline ConstantInteger* parseDecimal(xmlNodePtr& cur);
+  inline ConstantInteger* parseHexadecimal(xmlNodePtr& cur);
+  inline ConstantReal*    parseFloat(xmlNodePtr& cur);
+  inline ConstantReal*    parseDouble(xmlNodePtr& cur);
+  inline ConstantText*    parseText(xmlNodePtr& cur);
   void           parseTree          ();
   AliasType*     parseAlias         (xmlNodePtr& cur);
   Type*          parseArray         (xmlNodePtr& cur);
@@ -120,8 +123,13 @@ public:
   Type*          parseSignature     (xmlNodePtr& cur);
   Variable*      parseVariable      (xmlNodePtr& cur);
   Type*          parseVector        (xmlNodePtr& cur);
-  ReturnOp*      parseReturn        (xmlNodePtr& cur);
+  Constant*      parseConstant      (xmlNodePtr& cur);
+  Constant*      parseConstant      (xmlNodePtr& cur, int token);
   Operator*      parseOperator      (xmlNodePtr& cur);
+  Operator*      parseOperator      (xmlNodePtr& cur, int token);
+  Value*         parseValue         (xmlNodePtr& cur);
+  Value*         parseValue         (xmlNodePtr& cur, int token);
+  ReturnOp*      parseReturn        (xmlNodePtr& cur);
   Block*         parseBlock         (xmlNodePtr& cur);
   Program*       parseProgram       (xmlNodePtr& cur);
   inline xmlNodePtr   checkDoc(xmlNodePtr cur, Documentable* node);
@@ -169,6 +177,12 @@ getToken(const xmlChar* name)
   return HLVMTokenizer::recognize(reinterpret_cast<const char*>(name));
 }
 
+inline int
+getToken(const char* name)
+{
+  return HLVMTokenizer::recognize(name);
+}
+
 inline bool 
 skipBlanks(xmlNodePtr &cur, bool skipText = true)
 {
@@ -190,7 +204,7 @@ skipBlanks(xmlNodePtr &cur, bool skipText = true)
 }
 
 LinkageKinds
-recognize_LinkageKinds(const xmlChar* str)
+recognize_LinkageKinds(const char* str)
 {
   switch (getToken(str)) 
   {
@@ -256,7 +270,7 @@ getNameType(xmlNodePtr& cur, std::string& name, std::string& type)
   type = getAttribute(cur,"type");
 }
 
-inline ConstLiteralInteger*
+inline ConstantInteger*
 XMLReaderImpl::parseBinary(xmlNodePtr& cur)
 {
   uint64_t value = 0;
@@ -273,13 +287,12 @@ XMLReaderImpl::parseBinary(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <bin> element");
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
+  ConstantInteger* result = ast->new_ConstantInteger(value,getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
-  result->setValue(value);
   return result;
 }
 
-inline ConstLiteralInteger*
+inline ConstantInteger*
 XMLReaderImpl::parseOctal(xmlNodePtr& cur)
 {
   uint64_t value = 0;
@@ -296,13 +309,12 @@ XMLReaderImpl::parseOctal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <oct> element");
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
+  ConstantInteger* result = ast->new_ConstantInteger(value,getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
-  result->setValue(value);
   return result;
 }
 
-inline ConstLiteralInteger*
+inline ConstantInteger*
 XMLReaderImpl::parseDecimal(xmlNodePtr& cur)
 {
   uint64_t value = 0;
@@ -319,13 +331,12 @@ XMLReaderImpl::parseDecimal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <dec> element");
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
+  ConstantInteger* result = ast->new_ConstantInteger(value,getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
-  result->setValue(value);
   return result;
 }
 
-inline ConstLiteralInteger*
+inline ConstantInteger*
 XMLReaderImpl::parseHexadecimal(xmlNodePtr& cur)
 {
   uint64_t value = 0;
@@ -362,10 +373,62 @@ XMLReaderImpl::parseHexadecimal(xmlNodePtr& cur)
   }
   if (child) skipBlanks(child);
   hlvmAssert(!child && "Illegal chlldren of <hex> element");
-  ConstLiteralInteger* result = ast->new_ConstLiteralInteger(getLocator(cur));
+  ConstantInteger* result = ast->new_ConstantInteger(value,getLocator(cur));
   result->setType(ast->getPrimitiveType(UInt64TypeID));
-  result->setValue(value);
   return result;
+}
+
+inline ConstantReal*
+XMLReaderImpl::parseFloat(xmlNodePtr& cur)
+{
+  double value = 0;
+  std::string buffer;
+  xmlNodePtr child = cur->children;
+  if (child) skipBlanks(child,false);
+  while (child && child->type == XML_TEXT_NODE) {
+    buffer += reinterpret_cast<const char*>(cur->content);
+    child = child->next;
+  }
+  if (child) skipBlanks(child);
+  hlvmAssert(!child && "Illegal chlldren of <flt> element");
+  value = atof(buffer.c_str());
+  ConstantReal* result = ast->new_ConstantReal(value,getLocator(cur));
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
+  return result;
+}
+
+inline ConstantReal*
+XMLReaderImpl::parseDouble(xmlNodePtr& cur)
+{
+  double value = 0;
+  std::string buffer;
+  xmlNodePtr child = cur->children;
+  if (child) skipBlanks(child,false);
+  while (child && child->type == XML_TEXT_NODE) {
+    buffer += reinterpret_cast<const char*>(cur->content);
+    child = child->next;
+  }
+  if (child) skipBlanks(child);
+  hlvmAssert(!child && "Illegal chlldren of <dbl> element");
+  value = atof(buffer.c_str());
+  ConstantReal* result = ast->new_ConstantReal(value,getLocator(cur));
+  result->setType(ast->getPrimitiveType(UInt64TypeID));
+  return result;
+}
+
+inline ConstantText*
+XMLReaderImpl::parseText(xmlNodePtr& cur)
+{
+  std::string buffer;
+  xmlNodePtr child = cur->children;
+  if (child) skipBlanks(child,false);
+  while (child && child->type == XML_TEXT_NODE) {
+    buffer += reinterpret_cast<const char*>(cur->content);
+    child = child->next;
+  }
+  if (child) skipBlanks(child);
+  hlvmAssert(!child && "Illegal chlldren of <text> element");
+  return ast->new_ConstantText(buffer,getLocator(cur));
 }
 
 Documentation*
@@ -636,8 +699,19 @@ XMLReaderImpl::parseVariable(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  Variable* var = ast->new_Variable(name,ast->resolveType(type),loc);
-  checkDoc(cur,var);
+  const char* cnst = getAttribute(cur, "const", false);
+  const char* lnkg = getAttribute(cur, "linkage", false);
+  const Type* Ty = ast->resolveType(type);
+  Variable* var = ast->new_Variable(name,Ty,loc);
+  if (cnst)
+    var->setIsConstant(recognize_boolean(cnst));
+  if (lnkg)
+    var->setLinkageKind(recognize_LinkageKinds(lnkg));
+  xmlNodePtr child = checkDoc(cur,var);
+  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    Constant* C = parseConstant(child);
+    var->setInitializer(C);
+  }
   return var;
 }
 
@@ -649,29 +723,109 @@ XMLReaderImpl::parseReturn(xmlNodePtr& cur)
   ReturnOp* ret = ast->new_ReturnOp(loc);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    Operator* op = parseOperator(child);
+    Value* op = parseValue(child);
     ret->setResult(op);
   }
   return ret;
 }
 
-Operator*
+inline Constant*
+XMLReaderImpl::parseConstant(xmlNodePtr& cur)
+{
+  return parseConstant(cur, getToken(cur->name));
+}
+
+Constant*
+XMLReaderImpl::parseConstant(xmlNodePtr& cur, int tkn)
+{
+  Constant* C = 0;
+  switch (tkn) {
+    case TKN_bin:          C = parseBinary(cur); break;
+    case TKN_oct:          C = parseOctal(cur); break;
+    case TKN_dec:          C = parseDecimal(cur); break;
+    case TKN_hex:          C = parseHexadecimal(cur); break;
+    case TKN_flt:          C = parseFloat(cur); break;
+    case TKN_dbl:          C = parseDouble(cur); break;
+    case TKN_text:         C = parseText(cur); break;
+    default:
+      hlvmAssert(!"Invalid kind of constant");
+      break;
+  }
+  return C;
+}
+
+
+inline Operator*
 XMLReaderImpl::parseOperator(xmlNodePtr& cur)
 {
-  int tkn = getToken(cur->name);
+  return parseOperator(cur, getToken(cur->name));
+}
+
+Operator*
+XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
+{
   Operator* op = 0;
   switch (tkn) {
-    case TKN_bin:          op = parseBinary(cur); break;
-    case TKN_oct:          op = parseOctal(cur); break;
-    case TKN_dec:          op = parseDecimal(cur); break;
-    case TKN_hex:          op = parseHexadecimal(cur); break;
     case TKN_ret:          op = parseReturn(cur); break;
     case TKN_block:        op = parseBlock(cur); break;
+    case TKN_store:
+    case TKN_load:
+    case TKN_open:
+    case TKN_write:
+    case TKN_close:
+      std::cerr << "Operator " << cur->name << " not imlpemented.\n";
+      break;
     default:
       hlvmDeadCode("Unrecognized operator");
       break;
   }
   return op;
+}
+
+inline Value*
+XMLReaderImpl::parseValue(xmlNodePtr& cur)
+{
+  return parseValue(cur,getToken(cur->name));
+}
+
+Value*
+XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
+{
+  Value* v = 0;
+  switch (tkn) {
+    case TKN_bin:
+    case TKN_oct:
+    case TKN_dec:
+    case TKN_hex:
+    case TKN_flt:
+    case TKN_dbl:
+    case TKN_text:
+    case TKN_zero:
+      v = parseConstant(cur,tkn);
+      break;
+    case TKN_ret:
+    case TKN_open:
+    case TKN_write:
+    case TKN_close:
+    case TKN_store:
+    case TKN_load:
+    case TKN_block: 
+      v = parseOperator(cur,tkn);
+      break;
+    case TKN_program:
+      v = parseProgram(cur);
+      break;
+    case TKN_function:
+      v = parseFunction(cur);
+      break;
+    case TKN_variable:
+      v = parseVariable(cur);
+      break;
+    default:
+      hlvmDeadCode("Unrecognized operator");
+      break;
+  }
+  return v;
 }
 
 Block*
@@ -688,7 +842,7 @@ XMLReaderImpl::parseBlock(xmlNodePtr& cur)
   xmlNodePtr child = cur->children;
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {
-    Operator* op = parseOperator(child);
+    Value* op = parseValue(child);
     block->addOperand(op);
     child = child->next;
   }
@@ -703,6 +857,9 @@ XMLReaderImpl::parseFunction(xmlNodePtr& cur)
   std::string name, type;
   getNameType(cur, name, type);
   Function* func = ast->new_Function(name,loc);
+  const char* lnkg = getAttribute(cur, "linkage", false);
+  if (lnkg)
+    func->setLinkageKind(recognize_LinkageKinds(lnkg));
   checkDoc(cur,func);
   return func;
 }

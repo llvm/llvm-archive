@@ -54,7 +54,7 @@ class Operator : public Value
   public:
     /// Get a specific operand of this operator.
     virtual size_t  numOperands() const = 0;
-    virtual Operator* getOperand(unsigned opnum) const = 0;
+    virtual Value* getOperand(unsigned opnum) const = 0;
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }
@@ -78,7 +78,7 @@ class NilaryOperator : public Operator
   /// @{
   public:
     virtual size_t  numOperands() const;
-    virtual Operator* getOperand(unsigned opnum) const;
+    virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const NilaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isNilaryOperator(); }
 
@@ -105,7 +105,7 @@ class UnaryOperator : public Operator
   /// @{
   public:
     virtual size_t  numOperands() const;
-    virtual Operator* getOperand(unsigned opnum) const;
+    virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const UnaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isUnaryOperator(); }
 
@@ -115,12 +115,13 @@ class UnaryOperator : public Operator
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
+    virtual void setOperand(Value* oprnd) { op1 = oprnd; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    Operator* op1;
+    Value* op1;
   /// @}
   friend class AST;
 };
@@ -139,7 +140,7 @@ class BinaryOperator : public Operator
   /// @{
   public:
     virtual size_t  numOperands() const;
-    virtual Operator* getOperand(unsigned opnum) const;
+    virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const BinaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isBinaryOperator(); }
 
@@ -154,7 +155,7 @@ class BinaryOperator : public Operator
   /// @name Data
   /// @{
   protected:
-    Operator* ops[2];
+    Value* ops[2];
   /// @}
   friend class AST;
 };
@@ -173,7 +174,7 @@ class TernaryOperator : public Operator
   /// @{
   public:
     virtual size_t  numOperands() const;
-    virtual Operator* getOperand(unsigned opnum) const;
+    virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const TernaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isTernaryOperator(); }
 
@@ -188,7 +189,7 @@ class TernaryOperator : public Operator
   /// @name Data
   /// @{
   protected:
-    Operator* ops[3];
+    Value* ops[3];
   /// @}
   friend class AST;
 };
@@ -198,9 +199,9 @@ class MultiOperator : public Operator
   /// @name Types
   /// @{
   public:
-    typedef std::vector<Operator*> OpList;
-    typedef OpList::iterator iterator;
-    typedef OpList::const_iterator const_iterator;
+    typedef std::vector<Value*> OprndList;
+    typedef OprndList::iterator iterator;
+    typedef OprndList::const_iterator const_iterator;
 
   /// @}
   /// @name Constructors
@@ -214,7 +215,7 @@ class MultiOperator : public Operator
   /// @{
   public:
     virtual size_t  numOperands() const;
-    virtual Operator* getOperand(unsigned opnum) const;
+    virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const MultiOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isMultiOperator(); }
 
@@ -228,16 +229,16 @@ class MultiOperator : public Operator
     const_iterator end  () const { return ops.end(); }
     size_t         size () const { return ops.size(); }
     bool           empty() const { return ops.empty(); }
-    Operator*      front()       { return ops.front(); }
-    const Operator*front() const { return ops.front(); }
-    Operator*      back()        { return ops.back(); }
-    const Operator*back()  const { return ops.back(); }
+    Value*         front()       { return ops.front(); }
+    const Value*   front() const { return ops.front(); }
+    Value*         back()        { return ops.back(); }
+    const Value*   back()  const { return ops.back(); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
-    void addOperand(Operator* op) { op->setParent(this); }
+    void addOperand(Value* v) { v->setParent(this); }
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -246,7 +247,7 @@ class MultiOperator : public Operator
   /// @name Data
   /// @{
   protected:
-    OpList ops; ///< The operands of this Operator
+    OprndList ops; ///< The operands of this Operator
   /// @}
   friend class AST;
 };

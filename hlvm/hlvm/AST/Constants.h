@@ -30,7 +30,7 @@
 #ifndef HLVM_AST_CONSTANTS_H
 #define HLVM_AST_CONSTANTS_H
 
-#include <hlvm/AST/Operator.h>
+#include <hlvm/AST/Constant.h>
 
 namespace hlvm 
 {
@@ -38,16 +38,13 @@ namespace hlvm
 /// This class represents an operator that yields a literal constant integer 
 /// value.
 /// @brief HLVM AST Constant Integer Node
-class ConstLiteralInteger : public NilaryOperator
+class ConstantInteger: public Constant
 {
   /// @name Constructors
   /// @{
-  public:
-    static ConstLiteralInteger* create();
-
   protected:
-    ConstLiteralInteger() : NilaryOperator(ConstLiteralIntegerOpID) {}
-    virtual ~ConstLiteralInteger();
+    ConstantInteger() : Constant(ConstantIntegerID) {}
+    virtual ~ConstantInteger();
 
   /// @}
   /// @name Accessors
@@ -55,9 +52,9 @@ class ConstLiteralInteger : public NilaryOperator
   public:
     uint64_t getValue(int) const { return value.u; }
     int64_t  getValue()    const { return value.s; }
-    static inline bool classof(const ConstLiteralInteger*) { return true; }
+    static inline bool classof(const ConstantInteger*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(ConstLiteralIntegerOpID); }
+      { return N->is(ConstantIntegerID); }
 
   /// @}
   /// @name Accessors
@@ -78,25 +75,55 @@ class ConstLiteralInteger : public NilaryOperator
   friend class AST;
 };
 
-class ConstLiteralString : public NilaryOperator
+class ConstantReal : public Constant
 {
   /// @name Constructors
   /// @{
-  public:
-    static ConstLiteralString* create();
-
   protected:
-    ConstLiteralString() : NilaryOperator(ConstLiteralStringOpID)  {}
-    virtual ~ConstLiteralString();
+    ConstantReal() : Constant(ConstantTextID)  {}
+    virtual ~ConstantReal();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    double getValue() { return value; }
+    static inline bool classof(const ConstantReal*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantRealID); }
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    void setValue(double v ) { value = v; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    double value;
+  /// @}
+  friend class AST;
+};
+
+/// A constant textual string
+class ConstantText : public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantText() : Constant(ConstantTextID)  {}
+    virtual ~ConstantText();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
     const std::string&  getValue() { return value; }
-    static inline bool classof(const ConstLiteralString*) { return true; }
+    static inline bool classof(const ConstantText*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(ConstLiteralStringOpID); }
+      { return N->is(ConstantTextID); }
 
   /// @}
   /// @name Accessors
@@ -113,5 +140,28 @@ class ConstLiteralString : public NilaryOperator
   friend class AST;
 };
 
-} // hlvm 
+/// A zero initializer constant. It represents a constant of any type whose
+/// entire data is filled with zero bytes.
+class ConstantZero : public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantZero() : Constant(ConstantZeroID)  {}
+    virtual ~ConstantZero();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantZero*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantTextID); }
+
+  /// @}
+  friend class AST;
+};
+
+} // end hlvm namespace
+
 #endif

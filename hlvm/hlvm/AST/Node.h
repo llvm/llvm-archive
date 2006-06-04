@@ -80,7 +80,7 @@ enum NodeIDs
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
   RealTypeID,              ///< The Real Number Type (Any Real Number)
   RationalTypeID,          ///< The Rational Number Type (p/q type number)
-  TextTypeID,              ///< The Text Type (Array of UTF-16 chars + length)
+  TextTypeID = 26,         ///< The Text Type (Array of UTF-16 chars + length)
 
   // Container Types
   AliasTypeID,             ///< A new name for an existing type
@@ -90,13 +90,19 @@ enum NodeIDs
   StructureTypeID,         ///< The Structure Type (Sequence of various types)
   SignatureTypeID,         ///< The Function Signature Type
   ContinuationTypeID,      ///< A Continuation Type (data to continuations)
-  OpaqueTypeID,            ///< A placeholder for unresolved types
+  OpaqueTypeID = 34,       ///< A placeholder for unresolved types
 
   // Class Constructs (TBD)
   InterfaceID,             ///< The Interface Type (set of Signatures)
   ClassID,                 ///< The Class Type (OO Class Definition)
   MethodID,                ///< The Method Node (define a method)
   ImplementsID,            ///< Specifies set of Interfaces implemented by class
+
+  // Constants
+  ConstantZeroID,          ///< A zero-filled constant of any type
+  ConstantIntegerID,       ///< A constant integer value
+  ConstantRealID,          ///< A constant real value
+  ConstantTextID,          ///< A constant text value
 
   // Linkage Items
   VariableID,              ///< The Variable Node (a storage location)
@@ -110,9 +116,6 @@ enum NodeIDs
 
   // Nilary Operators (those taking no operands)
   BreakOpID,               ///< Break out of the enclosing loop
-  ConstLiteralIntegerOpID, ///< Constant Literal Integer
-  ConstLiteralRealOpID,    ///< Constant Literal Real
-  ConstLiteralStringOpID,  ///< Constant Literal String
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
@@ -226,6 +229,8 @@ enum NodeIDs
   LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
   FirstTypeID          = VoidTypeID,
   LastTypeID           = OpaqueTypeID,
+  FirstConstantID      = ConstantIntegerID,
+  LastConstantID       = ProgramID,
   FirstOperatorID      = BreakOpID, ///< First Operator
   LastOperatorID       = LoopOpID,  ///< Last Operator
   FirstNilaryOpID      = BreakOpID,
@@ -250,7 +255,7 @@ class Node
   /// @name Constructors
   /// @{
   protected:
-    Node(NodeIDs ID) : id(ID), parent(0), loc(0) {}
+    Node(NodeIDs ID) : id(ID), flags(0), parent(0), loc(0) {}
   public:
     virtual ~Node();
 
@@ -316,6 +321,11 @@ class Node
     inline bool isSignatureType() const { return id == SignatureTypeID; }
     inline bool isVoidType() const { return id == VoidTypeID; }
 
+    /// Determine if the node is one of the Constant values.
+    inline bool isConstant() const {
+      return id >= FirstConstantID && id <= LastConstantID;
+    }
+
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
       return id >= FirstOperatorID && id <= LastOperatorID;
@@ -345,7 +355,7 @@ class Node
     }
 
     /// Determine if the node is a Value
-    bool isValue() const { return isLinkageItem() || isOperator(); }
+    bool isValue() const { return isOperator() || isConstant(); }
 
     /// Determine if the node is a Block
     inline bool isBlock() const { return id == BlockID; }
@@ -385,10 +395,10 @@ class Node
   /// @name Data
   /// @{
   protected:
-    unsigned id : 8;         ///< Really a value in NodeIDs
-    unsigned flags : 24;     ///< 24 boolean flags, subclass dependent interp.
-    Node* parent;            ///< The node that owns this node.
-    const Locator* loc;      ///< The source location corresponding to node.
+    uint16_t id;         ///< Really a value in NodeIDs
+    uint16_t flags;      ///< 16 flags, subclass dependent interpretation
+    Node* parent;        ///< The node that owns this node.
+    const Locator* loc;  ///< The source location corresponding to node.
   /// @}
   friend class AST;
 };

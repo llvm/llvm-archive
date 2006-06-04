@@ -33,6 +33,7 @@
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Program.h>
 #include <hlvm/AST/Variable.h>
+#include <hlvm/Base/Assert.h>
 
 using namespace hlvm;
 using namespace llvm;
@@ -52,15 +53,19 @@ public:
   inline void runOn(Operator* b);
   inline void runOn(Block* b);
   inline void runOn(Bundle* b);
+  inline void runOn(Value* b);
+  inline void runOn(Constant* b);
 
 private:
   std::vector<Pass*> pre;
   std::vector<Pass*> post;
+  std::vector<Pass*> all;
 };
 
 void
 PassManagerImpl::addPass(Pass* p)
 {
+  all.push_back(p);
   if (p->mode() & Pass::PreOrderTraversal)
     pre.push_back(p);
   if (p->mode() & Pass::PostOrderTraversal)
@@ -104,6 +109,16 @@ PassManagerImpl::runPostOrder(Node* n)
 }
 
 inline void
+PassManagerImpl::runOn(Constant* cst)
+{
+  hlvmAssert(isa<Constant>(cst));
+  runPreOrder(cst);
+  // FIXME: Eventually we'll have structured constants which need to have 
+  // their contents examined as well.
+  runPostOrder(cst);
+}
+
+inline void
 PassManagerImpl::runOn(Operator* op)
 {
   runPreOrder(op);
@@ -115,6 +130,17 @@ PassManagerImpl::runOn(Operator* op)
 }
 
 inline void
+PassManagerImpl::runOn(Value* v)
+{
+  if (isa<Constant>(v))
+    runOn(cast<Constant>(v));
+  else if (isa<Operator>(v))
+    runOn(cast<Operator>(v));
+  else
+    hlvmDeadCode("Value not an Operator or Constant?");
+}
+
+inline void
 PassManagerImpl::runOn(Block* b)
 {
   runPreOrder(b);
@@ -123,8 +149,12 @@ PassManagerImpl::runOn(Block* b)
       break;
     if (isa<Block>(*I))
       runOn(cast<Block>(*I)); // recurse!
-    else
+    else if (isa<Variable>(*I))
+      runOn(cast<Variable>(*I));
+    else if (isa<Operator>(*I))
       runOn(cast<Operator>(*I)); 
+    else
+      hlvmDeadCode("Block has invalid content");
   }
   runPostOrder(b);
 }
@@ -154,6 +184,10 @@ PassManagerImpl::runOn(Bundle* b)
 
 void PassManagerImpl::runOn(AST* tree)
 {
+  // Call the initializers
+  std::vector<Pass*>::iterator PI = all.begin(), PE = all.end();
+  while (PI != PE) { (*PI)->handleInitialize(); ++PI; }
+
   // Just a little optimization for empty pass managers
   if (pre.empty() && post.empty())
     return;
@@ -161,11 +195,25 @@ void PassManagerImpl::runOn(AST* tree)
   // Traverse each of the bundles in the AST node.
   for (AST::iterator I = tree->begin(), E = tree->end(); I != E; ++I)
     runOn(*I);
+
+  // Call the terminators
+  PI = all.begin(), PE = all.end();
+  while (PI != PE) { (*PI)->handleTerminate(); ++PI; }
 }
 
 } // anonymous namespace
 
 Pass::~Pass()
+{
+}
+
+void 
+Pass::handleInitialize()
+{
+}
+
+void 
+Pass::handleTerminate()
 {
 }
 

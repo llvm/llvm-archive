@@ -291,7 +291,9 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case PInfOpID:
     case NInfOpID:
     case NaNOpID:
-    case ConstLiteralIntegerOpID:
+    case ConstantIntegerID:
+    case ConstantRealID:
+    case ConstantTextID:
       break; // Not implemented yet
     case DocumentationID:
       /// Nothing to validate (any doc is a good thing :)

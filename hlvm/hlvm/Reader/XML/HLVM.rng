@@ -173,7 +173,6 @@
           <ref name="structure.elem"/>
           <ref name="signature.elem"/>
           <ref name="vector.elem"/>
-          <ref name="constant.elem"/>
           <ref name="variable.elem"/>
           <ref name="function.elem"/>
           <ref name="program.elem"/>
@@ -363,6 +362,9 @@
     <element name="variable">
       <ref name="Named_Typed_Element.pat"/>
       <optional>
+        <attribute name="const"><data type="boolean"/></attribute>
+      </optional>
+      <optional>
         <choice>
           <element name="init">
             <ref name="Constant.pat"/>
@@ -435,14 +437,7 @@
     </element>
   </define>
 
-  <!-- PATTERNS FOR DEFINING NAMED CONSTANTS -->
-
-  <define name="constant.elem">
-    <element name="constant">
-      <ref name="Named_Typed_Element.pat"/>
-      <ref name="Constant.pat"/>
-    </element>
-  </define>
+  <!-- PATTERNS FOR DEFINING CONSTANTS -->
 
   <define name="Constant.pat">
     <choice>
@@ -465,7 +460,6 @@
     </element>
   </define>
 
-  <!-- PATTERNS FOR CONSTANT EXPRESSIONS -->
   <define name="ConstantExpression.pat">
     <choice>
       <ref name="index.elem"/>
@@ -904,11 +898,11 @@
 
   <define name="ControlFlowOps.pat">
     <choice>
-      <ref name="Return.elem"/>
+      <ref name="ret.elem"/>
     </choice>
   </define>
 
-  <define name="Return.elem">
+  <define name="ret.elem">
     <element name="ret">
       <ref name="Operators.pat"/>
     </element>

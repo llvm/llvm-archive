@@ -2,7 +2,6 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng"
       pubid="http://hlvm.org/src/hlvm/test/xml2xml/helloworld.hlx">
   <bundle id="helloworld">
-    <constant id="hw" type="text"><text>Hello, World&#10;</text></constant>
     <program id="helloworld">
       <block>
         <variable id="stdout" type="io"/>
@@ -12,8 +11,8 @@
         </store>
         <write>
           <load><ref id="stdout"/></load>
-          <load><ref id="hw"/></load>
-          <length><ref id="hw"/></length>
+          <text>Hello, World&#10;</text>
+          <dec>13</dec>
         </write>
         <close>
           <load><ref id="stdout"/></load>

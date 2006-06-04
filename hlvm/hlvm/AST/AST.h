@@ -51,7 +51,10 @@ class Locator;
 class SignatureType;
 class StructureType;
 class Variable; 
-class ConstLiteralInteger;
+class ConstantInteger;
+class ConstantReal;
+class ConstantText;
+class ConstantZero;
 class ReturnOp;
 class AliasType;
 class Pool;
@@ -88,6 +91,7 @@ class AST : public Node
     const std::string& getSystemID() const { return sysid; }
     const std::string& getPublicID() const { return pubid; }
     Pool* getPool() const { return pool; }
+    SignatureType* getProgramType() const;
 
   /// @}
   /// @name Mutators
@@ -393,10 +397,27 @@ class AST : public Node
       const Type* ty,         ///< The type of the variable
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new ConstantLiteralInteger node.
-    ConstLiteralInteger* new_ConstLiteralInteger(
+    /// Create a new ConstantZero node
+    ConstantZero* new_ConstantZero(
+      const Type* Ty,         ///< The type for the constant zero
       const Locator* loc = 0  ///< The source locator
     );
+    /// Create a new ConstantInteger node.
+    ConstantInteger* new_ConstantInteger(
+      uint64_t value,         ///< The value of the ConstantInteger
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Create a new ConstantInteger node.
+    ConstantReal* new_ConstantReal(
+      double value,           ///< The value of the ConstantReal
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Create a new ConstantText node.
+    ConstantText* new_ConstantText(
+      const std::string& value, ///< The value of the ConstantText
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantText node.
     /// Create a new ReturnOp node. The ReturnOp is an operator that returns
     /// immediately from the enclosing function, possibly with a result value.
     ReturnOp* new_ReturnOp(

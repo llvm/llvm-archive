@@ -30,7 +30,7 @@
 #ifndef HLVM_AST_LINKAGEITEM_H
 #define HLVM_AST_LINKAGEITEM_H
 
-#include <hlvm/AST/Node.h>
+#include <hlvm/AST/Constant.h>
 
 namespace hlvm
 {
@@ -50,12 +50,12 @@ enum LinkageKinds {
 /// elsewhere and linked into another bundle to resolve the reference. The
 /// LinkageItem declares what kind of linkage is to be performed.
 /// @brief HLVM AST Bundle Node
-class LinkageItem : public Value
+class LinkageItem : public Constant
 {
   /// @name Constructors
   /// @{
   protected:
-    LinkageItem( NodeIDs id ) : Value(id), kind(InternalLinkage), name() {}
+    LinkageItem( NodeIDs id ) : Constant(id), kind(InternalLinkage), name() {}
   public:
     virtual ~LinkageItem();
 

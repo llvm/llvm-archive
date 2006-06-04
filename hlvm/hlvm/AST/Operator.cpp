@@ -43,7 +43,7 @@ NilaryOperator::~NilaryOperator()
 {
 }
 
-Operator*
+Value*
 NilaryOperator::getOperand(unsigned idx) const
 {
   hlvmAssert(!"Can't get operands from a NilaryOperator");
@@ -72,7 +72,7 @@ UnaryOperator::~UnaryOperator()
 {
 }
 
-Operator*
+Value*
 UnaryOperator::getOperand(unsigned idx) const
 {
   assert(idx == 0 && "Operand index out of range");
@@ -88,9 +88,9 @@ UnaryOperator::numOperands() const
 void 
 UnaryOperator::insertChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (!op1)
-    op1 = cast<Operator>(child);
+    op1 = cast<Value>(child);
   else
     hlvmAssert("UnaryOperator full");
 }
@@ -98,7 +98,7 @@ UnaryOperator::insertChild(Node* child)
 void 
 UnaryOperator::removeChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (op1 == child) {
     op1 = 0;
   } else
@@ -109,7 +109,7 @@ BinaryOperator::~BinaryOperator()
 {
 }
 
-Operator*
+Value*
 BinaryOperator::getOperand(unsigned idx) const
 {
   assert(idx <= 1 && "Operand index out of range");
@@ -125,11 +125,11 @@ BinaryOperator::numOperands() const
 void 
 BinaryOperator::insertChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (!ops[0])
-    ops[0] = cast<Operator>(child);
+    ops[0] = cast<Value>(child);
   else if (!ops[1])
-    ops[1] = cast<Operator>(child);
+    ops[1] = cast<Value>(child);
   else
     hlvmAssert(!"BinaryOperator full!");
 }
@@ -137,7 +137,7 @@ BinaryOperator::insertChild(Node* child)
 void 
 BinaryOperator::removeChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (ops[0] == child)
     ops[0] = 0;
   else if (ops[1] == child)
@@ -150,7 +150,7 @@ TernaryOperator::~TernaryOperator()
 {
 }
 
-Operator*
+Value*
 TernaryOperator::getOperand(unsigned idx) const
 {
   assert(idx <= 2 && "Operand index out of range");
@@ -166,13 +166,13 @@ TernaryOperator::numOperands() const
 void 
 TernaryOperator::insertChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (!ops[0])
-    ops[0] = cast<Operator>(child);
+    ops[0] = cast<Value>(child);
   else if (!ops[1])
-    ops[1] = cast<Operator>(child);
+    ops[1] = cast<Value>(child);
   else if (!ops[2])
-    ops[2] = cast<Operator>(child);
+    ops[2] = cast<Value>(child);
   else
     hlvmAssert(!"TernaryOperator full!");
 }
@@ -180,7 +180,7 @@ TernaryOperator::insertChild(Node* child)
 void 
 TernaryOperator::removeChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   if (ops[0] == child)
     ops[0] = 0;
   else if (ops[1] == child)
@@ -195,7 +195,7 @@ MultiOperator::~MultiOperator()
 {
 }
 
-Operator*
+Value*
 MultiOperator::getOperand(unsigned idx) const
 {
   assert(idx <= ops.size() && "Operand index out of range");
@@ -211,14 +211,14 @@ MultiOperator::numOperands() const
 void 
 MultiOperator::insertChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
-  ops.push_back(cast<Operator>(child));
+  hlvmAssert(isa<Value>(child));
+  ops.push_back(cast<Value>(child));
 }
 
 void 
 MultiOperator::removeChild(Node* child)
 {
-  hlvmAssert(isa<Operator>(child));
+  hlvmAssert(isa<Value>(child));
   for (iterator I = begin(), E = end(); I != E; ++I ) {
       if (*I == child) { ops.erase(I); return; }
   }

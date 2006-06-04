@@ -407,8 +407,8 @@ class RealType : public Type
   /// @name Data
   /// @{
   protected:
-    uint32_t mantissa;  ///< Number of decimal digits in mantissa
-    uint32_t exponent; ///< Number of decimal digits of precision
+    uint32_t mantissa; ///< Number of bits in mantissa
+    uint32_t exponent; ///< Number of bits of precision
   /// @}
   friend class AST;
 };

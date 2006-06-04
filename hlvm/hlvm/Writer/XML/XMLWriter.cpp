@@ -115,7 +115,10 @@ private:
     inline void put(VectorType* t);
     inline void put(StructureType* t);
     inline void put(SignatureType* t);
-    inline void put(ConstLiteralInteger* t);
+    inline void put(ConstantInteger* t);
+    inline void put(ConstantReal* t);
+    inline void put(ConstantText* t);
+    inline void put(ConstantZero* t);
     inline void put(Variable* v);
     inline void put(Function* f);
     inline void put(Program* p);
@@ -374,13 +377,33 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
 }
 
 void 
-XMLWriterImpl::WriterPass::put(ConstLiteralInteger* i)
+XMLWriterImpl::WriterPass::put(ConstantInteger* i)
 {
   startElement("dec");
   if (cast<IntegerType>(i->getType())->isSigned())
     writeString(llvm::itostr(i->getValue()));
   else
     writeString(llvm::utostr(i->getValue(0)));
+}
+
+void
+XMLWriterImpl::WriterPass::put(ConstantReal* r)
+{
+  startElement("dbl");
+  writeString(llvm::ftostr(r->getValue()));
+}
+
+void
+XMLWriterImpl::WriterPass::put(ConstantText* t)
+{
+  startElement("text");
+  writeString(t->getValue());
+}
+
+void
+XMLWriterImpl::WriterPass::put(ConstantZero* t)
+{
+  startElement("zero");
 }
 
 void
@@ -456,7 +479,10 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case VectorTypeID:              put(cast<VectorType>(n)); break;
       case StructureTypeID:           put(cast<StructureType>(n)); break;
       case SignatureTypeID:           put(cast<SignatureType>(n)); break;
-      case ConstLiteralIntegerOpID:   put(cast<ConstLiteralInteger>(n)); break;
+      case ConstantIntegerID:         put(cast<ConstantInteger>(n)); break;
+      case ConstantRealID:            put(cast<ConstantReal>(n)); break;
+      case ConstantTextID:            put(cast<ConstantText>(n)); break;
+      case ConstantZeroID:            put(cast<ConstantZero>(n)); break;
       case VariableID:                put(cast<Variable>(n)); break;
       case FunctionID:                put(cast<Function>(n)); break;
       case ProgramID:                 put(cast<Program>(n)); break;

@@ -74,104 +74,105 @@
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_1">Pre-Release 0.1 Features</a></div>
 <div class="text">
-  <h3><a name="buildenv">Build Environment</a></h3>
-  <p>A multi-platform build system so that software can be compiled properly.
-  </p>
-  <h3><a name="testharn">Test Harness</a></h3>
-  <p>A deja-gnu based test framework to manage and execute the large number of 
-  test cases needed to verify that the HLVM system is working correctly.</p>
-  <h3><a name="ASTNodes">AST Nodes</a></h3>
-  <p>Define and implement several (not all) AST nodes. The most fundamental 
+<ul>
+  <li><a name="buildenv"><em>Build Environment</em></a>. 
+  A multi-platform build system so that software can be compiled properly.</li>
+  <li><a name="testharn"><em>Test Harness</em></a>. 
+  A deja-gnu based test framework to manage and execute the large number of 
+  test cases needed to verify that the HLVM system is working correctly.</li>
+  <li><a name="ASTNodes"><em>AST Nodes</em></a>.
+  Define and implement several (not all) AST nodes. The most fundamental 
   nodes should be implemented: structuring, functions, blocks, arithmetic 
   operators, constants, etc. The list will be expanded in subsequent releases.
-  </p>
-  <h3><a name="XMLReader">XML Reader</a></h3>
-  <p>A library to read in an XML representation of the AST and generate the AST
-  C++ Nodes.
-  <h3><a name="XMLWriter">XML Writer</a></h3>
-  <p>A library to write out an XML representation of the Abstract Syntax
-  Tree.</p>
-  <h3><a name="xml2xml">hlvm-xml2xml</a></h3>
-  <p>A program to convert XML AST documents back into XML. This tests the
-  correct construction of the AST as well as the pass management features.</p>
-  <h3><a name="ASTsuite">AST Test Suite</a></h3>
-  <p>A suite of XML based test files need to be developed for use with the
+  </li>
+  <li><a name="XMLReader"><em>XML Reader</em></a>.
+  A library to read in an XML representation of the AST and generate the AST
+  C++ Nodes.</li>
+  <li><a name="XMLWriter"><em>XML Writer</em></a>.
+  A library to write out an XML representation of the Abstract Syntax
+  Tree.</li>
+  <li><a name="xml2xml"><em>hlvm-xml2xml</em></a>.
+  A program to convert XML AST documents back into XML. This tests the
+  correct construction of the AST as well as the pass management features.</li>
+  <li><a name="ASTsuite"><em>AST Test Suite</em></a>.
+  A suite of XML based test files need to be developed for use with the
   hlvm_xml2xml program. All implemented aspects of the AST must be covered by
-  one or more test cases.
-  <h3><a name="compiler">hlvm-compiler</a></h3>
-  <p>A program to compile HLVM sources into something executable. This release
+  one or more test cases.</li>
+  <li><a name="compiler"><em>hlvm-compiler</em></a>.
+  A program to compile HLVM sources into something executable. This release
   0.1 vesion will read in XML AST files and produce LLVM bytecode. Other options
-  will be added in the future.
-  <h3><a name="vm">hlvm machine</a></h3>
-  <p>This program provides the runtime environment for executing HLVM
+  will be added in the future.</li>
+  <li><a name="vm"><em>hlvm machine</em></a>.
+  This program provides the runtime environment for executing HLVM
   programs. This 0.1 version will read an LLVM bytecode file and JIT execute 
-  it. More features later.</p>
-  <h3><a name="HelloWorld">Hello World</a></h3>
-  <p>Sufficient capabilities will be added to the runtime and compiler in order
-  to get the "Hello, World" program running.</h3>
+  it. More features later.</li>
+  <li><a name="HelloWorld"><em>Hello World</em></a>.
+  Sufficient capabilities will be added to the runtime and compiler in order
+  to get the "Hello, World" program running.</li>
+</ul>
 </div>
 
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_2">Pre-Release 0.2 Features</a></div>
 <div class="text">
-  <h3><a name="ruby">Ruby Features</a></h3>
-  <p>Add sufficient nodes to the system to support the language features of
-  Ruby.</p>
-  <h3><a name="rubytest">Ruby Tests</a></h3>
-  <p>Add test cases that exercise the features added for Ruby. These are XML
-  based test cases, not Ruby source</p>
+  <li><a name="ruby"><em>Ruby Features</em></a>.
+  Add sufficient nodes to the system to support the language features of
+  Ruby.</li>
+  <li><a name="rubytest"><em>Ruby Tests</em></a>.
+  Add test cases that exercise the features added for Ruby. These are XML
+  based test cases, not Ruby source</li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_3">Pre-Release 0.3 Features</a></div>
 <div class="text">
-  <h3><a name="scheme">Scheme Features</a></h3>
-  <p>Add sufficient nodes to the system to support the language features of
-  Scheme.</p>
-  <h3><a name="schemetest">Scheme Tests</a></h3>
-  <p>Add test cases that exercise the features added for Scheme. These are XML
-  based test cases, not Ruby source</p>
+  <li><a name="scheme"><em>Scheme Features</em></a>.
+  Add sufficient nodes to the system to support the language features of
+  Scheme.</li>
+  <li><a name="schemetest"><em>Scheme Tests</em></a>.
+  Add test cases that exercise the features added for Scheme. These are XML
+  based test cases, not Ruby source</li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_4">Pre-Release 0.4 Features</a></div>
 <div class="text">
-  <h3><a name="python">Python Features</a></h3>
-  <p>Add sufficient nodes to the system to support the language features of
-  Python.</p>
-  <h3><a name="pythontest">Python Tests</a></h3>
-  <p>Add test cases that exercise the features added for Scheme. These are XML
-  based test cases, not Python source</p>
+  <li><a name="python"><em>Python Features</em></a>.
+  Add sufficient nodes to the system to support the language features of
+  Python.</li>
+  <li><a name="pythontest"><em>Python Tests</em></a>.
+  Add test cases that exercise the features added for Scheme. These are XML
+  based test cases, not Python source</li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_5">Pre-Release 0.5 Features</a></div>
 <div class="text">
-  <h3><a name="frontend">Front End Features</a></h3>
-  <p>Add new libraries and utilities to make it easy to build front end
-  languages. Implement Ruby, Python and Scheme using this infrastructure.</p>
+  <li><a name="frontend"><em>Front End Features</em></a>.
+  Add new libraries and utilities to make it easy to build front end
+  languages. Implement Ruby, Python and Scheme using this infrastructure.</li>
 </div>
 
 <!-- ======================================================================= -->
 <div class="subsection"><a name="f0_9">Pre-Release 0.9 Features</a></div>
 <div class="text">
-  <h3><a name="refactor">Refactoring</a></h3>
-  <p>Review the entire HLVM source base and re-factor to common components
-  with the goal of software reuse and shrinkage of library sizes.</p>
-  <h3><a name="fulltest">Full Test Suite</a></h3>
-  <p>Ensure that HLVM is covered by a full test suite that tests every aspect of
-  its functionality.</p>
-  <h3><a name="quality">Quality</a></h3>
-  <p>Improve quality of HLVM at both compile and run times. This feature ensures
+  <li><a name="refactor"><em>Refactoring</em></a>.
+  Review the entire HLVM source base and re-factor to common components
+  with the goal of software reuse and shrinkage of library sizes.</li>
+  <li><a name="fulltest"><em>Full Test Suite</em></a>.
+  Ensure that HLVM is covered by a full test suite that tests every aspect of
+  its functionality.</li>
+  <li><a name="quality"><em>Quality</em></a>.
+  Improve quality of HLVM at both compile and run times. This feature ensures
   that HLVM will properly handle corner conditions, error situations,
-  exceptions, etc.</p>
-  <h3><a name="optimize">Performance Optimization</a></h3>
-  <p>Analyze the compile and run time environments to ensure they are running at
+  exceptions, etc.</li>
+  <li><a name="optimize"><em>Performance Optimization</em></a>.
+  Analyze the compile and run time environments to ensure they are running at
   optimal speeds. Ensure that the generated code can be optimized to run
-  efficiently.</p>
-  <h3><a name="docs">Documentation</a></h3>
-  <p>Write sufficient documentation to cover usage of HLVM and programming with
-  HLVM</p>
+  efficiently.</li>
+  <li><a name="docs"><em>Documentation</em></a>.
+  Write sufficient documentation to cover usage of HLVM and programming with
+  HLVM</li>
 </div>
 
 <!-- *********************************************************************** -->
@@ -182,19 +183,20 @@
   <table>
     <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
     <tr>
-      <td><a name="#buildenv">Build Environment</a><br/>Mostly complete.</td>
-      <td><a name="#testharn">Test Harness</a><br/>Completed for this release.</td>
-      <td><a name="#ASTNodes">AST Nodes</a><br/>Most nodes developed.</td>
+      <td><a href="#buildenv">Build Environment</a><br/>Mostly complete.</td>
+      <td><a href="#testharn">Test Harness</a><br/>Completed for this release.</td>
+      <td><a href="#ASTNodes">AST Nodes</a><br/>Most nodes developed.</td>
     </tr><tr>
-      <td><a name="#XMLReader">XML Reader</a><br/>Infrastructure complete.</td>
-      <td><a name="#XMLWriter">XML Writer</a><br/>Infrastructure complete.</td>
-      <td><a name="#xml2xml">hlvm-xml2xml</a><br/>Done.</td>
+    <td><a href="#XMLReader">XML Reader</a><br/>Works for nodes developed.</td>
+      <td><a href="#XMLWriter">XML Writer</a><br/>Works for nodes developed.</td>
+      <td><a href="#xml2xml">hlvm-xml2xml</a><br/>Done.</td>
     </tr><tr>
-      <td><a name="#xml2xml">hlvm-compiler</a><br/>Just Starting.</td>
-      <td><a name="#vm">hlvm</a><br/>Just Starting.</td>
-      <td><a name="#ASTsuite">AST Test Suite</a><br/>Just starting.</td>
+      <td><a href="#compiler">hlvm-compiler</a><br/>Now produces LLVM assembly
+        and bytecode for a limited range of prgrams..</td>
+      <td><a href="#vm">hlvm</a><br/>Just Starting.</td>
+      <td><a href="#ASTsuite">AST Test Suite</a><br/>13 tests written.</td>
     </tr><tr>
-      <td><a name="#HelloWorld">Hello World</a><br/>Just starting.</td>
+      <td colspan="3"><a href="#HelloWorld">Hello World</a><br/>Syntax selected.</td>
     </tr>
   </table>
 </div>

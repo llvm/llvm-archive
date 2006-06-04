@@ -129,7 +129,9 @@ TD {
 .hilite  { color: blue; font-weight: bold; }
 .notes   { background: #fafafa; border: 1px solid #cecece; padding: 1em }
 .title,.section { 
-  font-size: 24pt; 
+  margin-left: 0.1em;
+  margin-top: 24pt;
+  font-size: 20pt; 
   text-align: center; 
   font-weight: bold; 
   background: url("img/lines.png");
@@ -153,6 +155,7 @@ TD {
   width: 100%;
   margin-bottom: 0.2em; 
   margin-top: 0.3em;
+  margin-left: 0.5em;
 }
 .subsection {
   width: 75%;

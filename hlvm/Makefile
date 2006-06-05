@@ -13,7 +13,7 @@ all:
 	scons -Q
 
 check: 
-	scons -Q all
+	scons -Q check
 
 install:
 	scons -Q install

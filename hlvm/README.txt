@@ -23,3 +23,16 @@ HLVM comes with full documentation in HTML format. These are provided in the
 docs directory. Please open <hlvm>/docs/index.html to get an index of the
 documentation that is available. You will find conceptual guides as well as
 build and installation instructions there.
+
+Quick Build
+===========
+HLVM uses the SCons tool for software construction. However a compatible
+Makefile is also provided. One slight difference, there is no "configure" step
+for SCons. Your first build will configure HLVM for your platform, mostly
+automatically unless you have dependent packages installed in non-standard
+locations. 
+
+The usual will work:
+    make
+    make check
+    make install

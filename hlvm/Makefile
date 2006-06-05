@@ -1,19 +1,20 @@
-##===- Makefile --------------------------------------------*- Makefile -*-===##
+#------------------------------------------------------------------------------
+# Makefile.hlvm - Make -> scons conversion
 #
-# This is the top level Makefile for the HLVM project.
+# Copyright (C) 2006 Reid Spencer. All Rights Reserved
 #
-# Copyright (C) 2006 Reid Spencer. All Rights Reserved.
-#
-##===----------------------------------------------------------------------===##
+#------------------------------------------------------------------------------
+# This makefile simply converts standard make targets into the equivalent 
+# scons invocation in order to retain compatibility for those who wish to use
+# make.
+#------------------------------------------------------------------------------
 
-#
-# Indicates our relative path to the top of the project's root directory.
-#
-LEVEL = .
-DIRS = hlvm tools
-EXTRA_DIST = include
+all:
+	scons -Q
 
-#
-# Include the Master Makefile that knows how to build all.
-#
-include $(LEVEL)/Makefile.hlvm
+check: 
+	scons -Q all
+
+install:
+	scons -Q install
+

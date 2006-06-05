@@ -1,7 +1,0 @@
-------------------------------------------------------------------------------
-Autoconf Files
-------------------------------------------------------------------------------
-All autoconf files are licensed under the GNU Public License.
-
-Please see the source files for additional copyrights.
-

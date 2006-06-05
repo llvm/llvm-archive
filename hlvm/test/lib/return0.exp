@@ -28,6 +28,7 @@ proc hlvm-ret-zero-test { pat } {
   set rtlib [file join $objrootdir hlvm Runtime HLVMRuntime.bca ]
   set vmlib [file join $objrootdir tools hlvm hlvm.bca ]
   set vmmain [file join $objrootdir tools hlvm hlvm.bc ]
+  set cfelib [file join / proj llvm cfrontend install lib ]
   set files [lsort [
     glob -nocomplain -tails -types {f r} -directory $source $pat]]
   set dirs [lsort [
@@ -46,24 +47,40 @@ proc hlvm-ret-zero-test { pat } {
   
   foreach test $files {
     set output [file join $outdir ${test}.out]
-    set testsrc [file join $source $test]
-    set testexe [file join $outdir [file rootname $test] ]
-    set testbc  [file join $outdir ${test}.bc ]
+    set testsrc       [file join $source $test]
+    set testexe       [file join $outdir [file rootname $test] ]
+    set testbc        [file join $outdir ${test}.bc ]
+    set testlinked    [file join $outdir ${test}.linked ]
+    set testlinkedbc  [file join $outdir ${test}.linked.bc ]
+    set tests         [file join $outdir ${test}.s ]
+    set cfestdcpp     [file join $cfelib libstdc++.a ]
+    set cfegcc        [file join $cfelib libgcc.a ]
+    set cfec          [file join $cfelib libc.a ]
+    set crtend        [file join $cfelib libcrtend.a ]
     set execout ""
-    set retval [ catch { exec -keepnewline $compiler $testsrc -llvmbc -o $testbc } msg ] 
+    set retval [ catch { exec $compiler $testsrc -llvmbc -o $testbc } msg ] 
     if { $retval != 0 } {
       fail "$test: hlvm-compiler returned $retval:\n$msg"
     } else {
-      set retval [ catch { exec -keepnewline gccld -native -o $testexe $vmmain $vmlib $rtlib $testbc -L/proj/llvm/cfrontend/install/lib -L/proj/install/lib -L/proj/hlvm/hlvm/build.spADio/hlvm/Base -lHLVMBase -lLLVMSupport -lLLVMbzip2 -LLLVMSystem -lapr-1 -laprutil-1 -lstdc++ -lgcc -lc } msg ]
-      # Run the program compiled and see if it returns 0
+      set retval [ catch { exec gccld -o $testlinked $testbc $vmmain $vmlib $rtlib -L/proj/llvm/cfrontend/install/lib -L/proj/install/lib } msg ]
       if { $retval != 0 } {
         fail "$test: gccld returned $retval:\n$msg"
       } else {
-        set retval [ catch {exec $testexe } msg ]
-        if {$retval == 1} {
-          fail "$test: $testexe returned $retval:\n$msg"
+        set retval [ catch { exec llc -f -o $tests $testlinkedbc } msg ]
+        if { $retval != 0 } {
+          fail "$test: llc returned $retval:\n$msg"
         } else {
-          pass "$test"
+          set retval [ catch { exec gcc -f -o $testexe $tests -L/proj/hlvm/hlvm/build.spADio/hlvm/Base -L/proj/install/llvm/lib -lHLVMBase -lLLVMSupport -lLLVMbzip2 -LLLVMSystem -lapr-1 -laprutil-1 -lstdc++ } msg ]
+          if { $retval != 0 } {
+            fail "$test: gcc returned $retval:\n$msg"
+          } else {
+            set retval [ catch {exec $testexe } msg ]
+            if {$retval == 1} {
+              fail "$test: $testexe returned $retval:\n$msg"
+            } else {
+              pass "$test"
+            }
+          }
         }
       }
     }

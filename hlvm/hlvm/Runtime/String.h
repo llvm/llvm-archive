@@ -34,7 +34,7 @@
 
 extern "C" {
 
-struct _hlvm_ty_string {
+struct hlvm_string {
   uint64_t    len;
   const char* str;
 };

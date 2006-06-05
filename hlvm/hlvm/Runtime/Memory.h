@@ -1,4 +1,4 @@
-//===-- Runtime File I/O Interface ------------------------------*- C++ -*-===//
+//===-- Runtime Program Interface -------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,26 +20,24 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/FileIO.h
+/// @file hlvm/Runtime/Program.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime File Input/Output operations
+/// @brief Declares the interface to the runtime program facilities
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_FILEIO_H
-#define HLVM_RUNTIME_FILEIO_H
+#ifndef HLVM_RUNTIME_MEMORY_H
+#define HLVM_RUNTIME_MEMORY_H
 
-#include <hlvm/Runtime/String.h>
+#include <llvm/Support/DataTypes.h>
 
-extern "C" 
-{
+extern "C" {
 
-void* hlvm_op_file_open(hlvm_string* uri);
+void* hlvm_allocate_array(uint64_t count, uint64_t elemSize);
 
-uint32_t hlvm_op_file_write(void* file, void* data, size_t len);
+void hlvm_deallocate_array(void* ptr);
 
-void hlvm_op_file_close(void* file);
 }
 
 #endif

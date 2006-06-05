@@ -1,4 +1,4 @@
-//===-- Runtime File I/O Interface ------------------------------*- C++ -*-===//
+//===-- Runtime Program Interface -------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,26 +20,36 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/FileIO.h
+/// @file hlvm/Runtime/Program.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime File Input/Output operations
+/// @brief Declares the interface to the runtime program facilities
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_FILEIO_H
-#define HLVM_RUNTIME_FILEIO_H
+#ifndef HLVM_RUNTIME_PROGRAM_H
+#define HLVM_RUNTIME_PROGRAM_H
 
 #include <hlvm/Runtime/String.h>
 
-extern "C" 
-{
+extern "C" {
 
-void* hlvm_op_file_open(hlvm_string* uri);
+struct hlvm_program_args {
+  uint32_t argc;
+  hlvm_string* argv;
+};
 
-uint32_t hlvm_op_file_write(void* file, void* data, size_t len);
+typedef uint32_t (*hlvm_program_type)(hlvm_program_args* args);
 
-void hlvm_op_file_close(void* file);
+struct hlvm_programs_element {
+  const char* program_name;
+  hlvm_program_type program_entry;
+};
+
+extern hlvm_programs_element hlvm_programs[];
+
+extern hlvm_program_type hlvm_find_program(const char* uri);
+
 }
 
 #endif

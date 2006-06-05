@@ -1,4 +1,4 @@
-//===-- Runtime File I/O Interface ------------------------------*- C++ -*-===//
+//===-- Runtime Program Implementation --------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,26 +20,34 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/FileIO.h
-/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
-/// @date 2006/05/24
+/// @file hlvm/Runtime/Program.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/06/04
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime File Input/Output operations
+/// @brief Implements the runtime program facilities.
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_FILEIO_H
-#define HLVM_RUNTIME_FILEIO_H
+#include <hlvm/Runtime/Program.h>
+#include <llvm/Support/CommandLine.h>
 
-#include <hlvm/Runtime/String.h>
+namespace {
 
-extern "C" 
-{
 
-void* hlvm_op_file_open(hlvm_string* uri);
-
-uint32_t hlvm_op_file_write(void* file, void* data, size_t len);
-
-void hlvm_op_file_close(void* file);
 }
 
-#endif
+extern "C" {
+
+hlvm_programs_element hlvm_programs[1];
+
+hlvm_program_type 
+hlvm_find_program(const char* uri)
+{
+  hlvm_programs_element* p = &hlvm_programs[0];
+  while (p && p->program_entry) {
+    if (strcmp(p->program_name,uri) == 0)
+      return p->program_entry;
+  }
+  return 0;
+}
+
+}

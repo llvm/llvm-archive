@@ -38,18 +38,18 @@ extern "C"
 {
 
 void* 
-_hlvm_op_file_open(_hlvm_ty_string* uri)
+hlvm_op_file_open(hlvm_string* uri)
 {
   return 0;
 }
 
 void 
-_hlvm_op_file_close(void* fnum)
+hlvm_op_file_close(void* fnum)
 {
 }
 
 uint32_t 
-_hovm_op_file_write(void* fnum, void* data, size_t len)
+hovm_op_file_write(void* fnum, void* data, size_t len)
 {
   return 0;
 }

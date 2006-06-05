@@ -26,14 +26,12 @@ hlvm.GetBytecode(env)
 env.BytecodeArchive('hlvm.bca',hlvm.GetAllCXXFiles(env))
 env.Program('hlvm', hlvm.GetAllCXXFiles(env),
   LIBS=[
-    'HLVMXMLReader',
-    'HLVMXMLWriter',
-    'HLVMAST',
+    'HLVMRuntime',
     'HLVMBase',
-    'xml2',
     'LLVMSupport',
     'LLVMSystem',
     'apr-1',
+    'aprutil-1',
     'stdc++'
   ],
 )

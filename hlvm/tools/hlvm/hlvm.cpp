@@ -27,31 +27,9 @@
 /// @brief Implements the main program for the HLVM Virtual Machine
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Base/Memory.h>
-#include <hlvm/Reader/XML/XMLReader.h>
-#include <hlvm/Writer/XML/XMLWriter.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm/System/Signals.h>
-#include <fstream>
-#include <iostream>
-
-using namespace llvm;
-using namespace hlvm;
-static cl::opt<std::string>
-ProgramToRun(cl::Positional, cl::desc("URI Of Program To Run"));
+#include <hlvm/Runtime/Main.h>
 
 int main(int argc, char**argv) 
 {
-  try {
-    initialize(argc,argv);
-    cl::ParseCommandLineOptions(argc, argv, 
-      "hlvm: High Level Virtual Machine\n");
-
-    std::cout << "Unfortunately, the hlvm virtual machine isn't implemented.\n";
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
-  }
-  return 1;
+  return hlvm_runtime_main(argc,argv);
 }

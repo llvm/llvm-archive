@@ -127,7 +127,7 @@ TD {
 .warning { color: red; font-weight: bold; }
 .text    { text-align: left; padding-left: 20pt; padding-right: 10pt }
 .hilite  { color: blue; font-weight: bold; }
-.notes   { background: #fafafa; border: 1px solid #cecece; padding: 1em }
+.notes   { background: #fafafa; border: 1px solid #cecece; padding: 0.5em }
 .title,.section { 
   margin-left: 0.1em;
   margin-top: 24pt;

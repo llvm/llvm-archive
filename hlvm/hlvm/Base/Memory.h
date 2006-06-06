@@ -38,6 +38,7 @@ extern bool memory_is_low( void );
 
 void initialize(int& argc, char**argv );
 void terminate();
+void print_version();
 
 } // end hlvm namespace
 

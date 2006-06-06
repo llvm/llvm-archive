@@ -29,6 +29,7 @@
 
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Base/Assert.h>
+#include <hlvm/Base/Config.h>
 #include <llvm/System/Signals.h>
 #include <apr-1/apr_general.h>
 #include <memory>
@@ -151,6 +152,11 @@ panic(const char* msg)
 {
   std::cerr << "HLVM PANIC: " << msg << "\n";
   exit(99);
+}
+
+void print_version()
+{
+  std::cout << "HLVM " << HLVM_Version << " (see http://hlvm.org)\n";
 }
 
 } // end hlvm namespace

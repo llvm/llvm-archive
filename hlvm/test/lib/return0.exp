@@ -24,9 +24,12 @@ proc hlvm-ret-zero-test { pat } {
   global srcdir subdir objdir tmpdir objrootdir llcpath
   set outdir [file join $objdir $subdir]
   set compiler [file join $objrootdir tools hlvm-compiler hlvm-compiler ]
+  set llc /proj/llvm/build/Debug/bin/llc
+  set gccld /proj/llvm/build/Debug/bin/gccld
+  set gcc /proj/install/bin/g++
   set source [file join $srcdir $subdir ]
   set rtlib [file join $objrootdir hlvm Runtime HLVMRuntime.bca ]
-  set vmlib [file join $objrootdir tools hlvm hlvm.bca ]
+  set baselib [file join $objrootdir hlvm Base HLVMBase.bca ]
   set vmmain [file join $objrootdir tools hlvm hlvm.bc ]
   set cfelib [file join / proj llvm cfrontend install lib ]
   set files [lsort [
@@ -62,19 +65,19 @@ proc hlvm-ret-zero-test { pat } {
     if { $retval != 0 } {
       fail "$test: hlvm-compiler returned $retval:\n$msg"
     } else {
-      set retval [ catch { exec gccld -o $testlinked $testbc $vmmain $vmlib $rtlib -L/proj/llvm/cfrontend/install/lib -L/proj/install/lib } msg ]
+      set retval [ catch { exec $gccld -disable-opt -o $testlinked $testbc $vmmain $rtlib $baselib -L/proj/llvm/cfrontend/install/lib } msg ]
       if { $retval != 0 } {
         fail "$test: gccld returned $retval:\n$msg"
       } else {
-        set retval [ catch { exec llc -f -o $tests $testlinkedbc } msg ]
+        set retval [ catch { exec $llc -fast -f -o $tests $testlinkedbc } msg ]
         if { $retval != 0 } {
           fail "$test: llc returned $retval:\n$msg"
         } else {
-          set retval [ catch { exec gcc -f -o $testexe $tests -L/proj/hlvm/hlvm/build.spADio/hlvm/Base -L/proj/install/llvm/lib -lHLVMBase -lLLVMSupport -lLLVMbzip2 -LLLVMSystem -lapr-1 -laprutil-1 -lstdc++ } msg ]
+          set retval [ catch { exec $gcc -g -o $testexe $tests -L/proj/hlvm/hlvm/build.spADio/hlvm/Base -L/proj/install/lib -lHLVMBase -lLLVMSupport -lLLVMbzip2 -LLLVMSystem -lapr-1 -laprutil-1 -lstdc++ } msg ]
           if { $retval != 0 } {
             fail "$test: gcc returned $retval:\n$msg"
           } else {
-            set retval [ catch {exec $testexe } msg ]
+            set retval [ catch {exec $testexe -start $testexe } msg ]
             if {$retval == 1} {
               fail "$test: $testexe returned $retval:\n$msg"
             } else {

@@ -39,8 +39,8 @@
   (::new(pool) type args )
 #endif
 
+#include <llvm/Support/DataTypes.h>
 #include <string>
-#include <stdint.h>
 
 namespace hlvm {
 

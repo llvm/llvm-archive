@@ -122,3 +122,30 @@ def RNGTokenizer(env):
   env.Append(BUILDERS = {'RNGTokenizer':b})
   return 1
 
+def ConfigFileMessage(target,source,env):
+  return "Generating Configuration File " + target[0].path
+
+def ConfigFileAction(target,source,env):
+  pat = re.compile('@([^@]+)@')
+  tgt = open(target[0].path,'w')
+  for line in fileinput.input(source[0].path):
+    matchobj = pat.search(line)
+    if None != matchobj:
+      var = matchobj.expand('\\1')
+      print 'var:',var
+      if env._dict.has_key(var):
+        substval = env[var]
+        if type(substval) != str:
+          substval = `env[var]`
+        print 'before:',line
+        line = pat.sub(substval,line)
+        print 'after :',line
+    tgt.write(line)
+    continue
+  tgt.close()
+
+def ConfigFile(env):
+  action  = env.Action(ConfigFileAction,ConfigFileMessage)
+  builder = env.Builder(action=action,src_suffix='.in',single_source=1)
+  env.Append(BUILDERS = {'ConfigFile':builder})
+  return 1

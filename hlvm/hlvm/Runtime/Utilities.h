@@ -1,4 +1,4 @@
-//===-- Runtime File I/O Implementation -------------------------*- C++ -*-===//
+//===-- Runtime Utilities Interface -----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,39 +20,34 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/FileIO.cpp
-/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
+/// @file hlvm/Runtime/Utilities.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/05
 /// @since 0.1.0
-/// @brief Implements the functions for runtime file input/output.
+/// @brief Declares the interface to the runtime utilities
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Runtime/FileIO.h>
-#include <apr-1/apr_file_io.h>
-#include <hlvm/Runtime/Utilities.h>
+#ifndef HLVM_RUNTIME_UTILITIES_H
+#define HLVM_RUNTIME_UTILITIES_H
 
-namespace 
-{
-}
+#include <hlvm/Base/Config.h>
+
+/// This is the HLVM runtime assert macro. It is very much similar to
+/// the <cassert> version but without some of the overhead. It also lets
+/// us take control of what to do when an assertion happens. The standard
+/// implementation just prints and aborts.
+#define hlvm_assert(expr) \
+  (static_cast<void>((expr) ? 0 : \
+    (hlvm_assert_fail(" #expr ", __FILE__, __LINE__))))
 
 extern "C" 
 {
 
-void* 
-hlvm_op_file_open(hlvm_string* uri)
-{
-  return 0;
-}
-
-void 
-hlvm_op_file_close(void* fnum)
-{
-}
-
-uint32_t 
-hovm_op_file_write(void* fnum, void* data, size_t len)
-{
-  return 0;
-}
+/// This function gets called by the hlvm_assert macro, and in other situations
+/// where a "panic" happens. It provides the proper escape mechanism given the
+/// configuration of the runtime.
+void hlvm_assert_fail(const char* expression, const char* file, int line_num);
 
 }
+
+#endif

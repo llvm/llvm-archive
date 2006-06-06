@@ -22,7 +22,7 @@
 //===----------------------------------------------------------------------===//
 /// @file hlvm/Runtime/String.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
+/// @date 2006/05/25
 /// @since 0.1.0
 /// @brief Implements the functions for runtime string support
 //===----------------------------------------------------------------------===//

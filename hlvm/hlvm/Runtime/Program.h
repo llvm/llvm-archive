@@ -34,20 +34,17 @@
 
 extern "C" {
 
-struct hlvm_program_args {
-  uint32_t argc;
-  hlvm_string* argv;
-};
+/// This is the type of a program entry point function.
+typedef int (*hlvm_program_type)(int, signed char **);
 
-typedef uint32_t (*hlvm_program_type)(hlvm_program_args* args);
-
+/// This is the type of the appending array of program entry elements
 struct hlvm_programs_element {
   const char* program_name;
   hlvm_program_type program_entry;
 };
 
-extern hlvm_programs_element hlvm_programs[];
-
+/// This function searches the hlvm_programs array for an entry matching
+/// uri and returns a pointer to the corresponding program.
 extern hlvm_program_type hlvm_find_program(const char* uri);
 
 }

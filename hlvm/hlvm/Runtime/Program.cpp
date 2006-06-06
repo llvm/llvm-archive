@@ -37,15 +37,23 @@ namespace {
 
 extern "C" {
 
-hlvm_programs_element hlvm_programs[1];
+/// Declare the external function that gets use the first element in
+/// the hlvm_programs appending array. This function is implemented in the
+/// hlvm_get_programs.ll file.
+extern hlvm_programs_element* hlvm_get_programs();
 
+/// Search the list of programs for a matching entry point. This uses a dumb
+/// linear search but it should be okay because the number of program entry
+/// points in any given executable should not be huge. If it is, someone is
+/// designing their software poorly and they deserve what they get :)
 hlvm_program_type 
 hlvm_find_program(const char* uri)
 {
-  hlvm_programs_element* p = &hlvm_programs[0];
+  hlvm_programs_element* p = hlvm_get_programs();
   while (p && p->program_entry) {
     if (strcmp(p->program_name,uri) == 0)
       return p->program_entry;
+    ++p;
   }
   return 0;
 }

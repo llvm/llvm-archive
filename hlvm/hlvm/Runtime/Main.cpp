@@ -35,36 +35,41 @@
 #include <string.h>
 #include <iostream>
 
-namespace {
-
 using namespace llvm;
 
-static cl::opt<std::string>
-ProgramToRun(cl::Positional, cl::desc("URI of program to run"));
+namespace {
 
+/// Option to indicate which program to start running
+static cl::opt<std::string> Start("start",
+  cl::Required,
+  cl::desc("Specify the starting point for the program"),
+  cl::value_desc("program URI")
+);
+
+/// This is the Main class that handles the basic execution framework for
+/// all HLVM programs.
 class Main {
   int argc;
   char ** argv;
 public:
+  /// Construct the "Main" and handle argument processing.
   Main(int ac, char**av) : argc(ac), argv(av) {
+    llvm::cl::SetVersionPrinter(hlvm::print_version);
     llvm::cl::ParseCommandLineOptions(argc,argv,"High Level Virtual Machine\n");
   }
+
+  /// Run the requested program.
   int run() {
-    hlvm_program_type func = hlvm_find_program(ProgramToRun.c_str());
+    // First, find the function that represents the start point.
+    hlvm_program_type func = hlvm_find_program(Start.c_str());
+
+    // If we got a start function ..
     if (func) {
-      hlvm_program_args args;
-      args.argc = argc - 1;
-      args.argv = (hlvm_string*) 
-        hlvm_allocate_array(argc-1, sizeof(hlvm_string));
-      for (unsigned i = 0; i < args.argc; i++) {
-        uint64_t len = strlen(argv[i]);
-        args.argv[i].len = len;
-        args.argv[i].str = (const char*)
-          hlvm_allocate_array(len, sizeof(args.argv[i].str[0]));
-      }
-      return (*func)(&args);
+      // Invoke it.
+      return (*func)(argc-1,(signed char**)&argv[1]);
     } else {
-      std::cerr << argv[0] << ": Program '" << ProgramToRun << "' not found.\n";
+      // Give an error
+      std::cerr << argv[0] << ": Program '" << Start << "' not found.\n";
       return 1;
     }
   }
@@ -74,6 +79,10 @@ public:
 
 extern "C" {
 
+/// This is the function called from the real main() in hlvm/tools/hlvm.  We 
+/// do this because we don't want to expose the "Main" class to the outside
+/// world. The interface to the HLVM Runtime is C even though the
+/// implementation uses C++.
 int hlvm_runtime_main(int argc, char**argv)
 {
   int result = 0;

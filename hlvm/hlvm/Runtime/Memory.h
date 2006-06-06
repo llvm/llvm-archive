@@ -1,4 +1,4 @@
-//===-- Runtime Program Interface -------------------------------*- C++ -*-===//
+//===-- Runtime Memory Management Interface ---------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,11 +20,11 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/Program.h
+/// @file hlvm/Runtime/Memory.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
-/// @date 2006/05/24
+/// @date 2006/06/05
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime program facilities
+/// @brief Declares the interface to the runtime memory management facilities
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_RUNTIME_MEMORY_H

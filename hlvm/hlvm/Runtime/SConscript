@@ -23,7 +23,10 @@
 Import('env')
 from build import hlvm
 hlvm.GetBytecode(env)
-env.BytecodeArchive('HLVMRuntime.bca',hlvm.GetAllCXXFiles(env))
-lib = env.SharedLibrary('HLVMRuntime',hlvm.GetAllCXXFiles(env))
+env.BytecodeArchive('HLVMRuntime.bca',hlvm.GetAllCXXFiles(env) + [
+  'hlvm_get_programs.ll'])
+asm = env.bc2s(source=['hlvm_get_programs.bc'])
+obj = env.StaticObject(source=asm)
+lib = env.StaticLibrary('HLVMRuntime',hlvm.GetAllCXXFiles(env) + obj)
 hlvm.InstallLibrary(env,lib)
 hlvm.InstallHeader(env,hlvm.GetFiles(env,'*.h'))

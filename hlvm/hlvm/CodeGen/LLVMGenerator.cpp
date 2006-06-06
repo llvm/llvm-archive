@@ -67,17 +67,35 @@ using namespace hlvm;
 
 class LLVMGeneratorPass : public hlvm::Pass
 {
+  typedef std::vector<llvm::Module*> ModuleList;
+  typedef std::vector<llvm::Value*> OperandList;
+  ModuleList modules;        ///< The list of modules we construct
+  llvm::Module*     lmod;    ///< The current module we're generation 
+  llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
+  llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
+  llvm::BasicBlock::InstListType linst; 
+  OperandList lops;          ///< The current list of instruction operands
+  llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
+    ///< The current LLVM instructions we're generating
+  const AST* ast;            ///< The current Tree we're traversing
+  const Bundle* bundle;      ///< The current Bundle we're traversing
+  const hlvm::Function* function;  ///< The current Function we're traversing
+  const Block* block;        ///< The current Block we're traversing
+  std::vector<llvm::Function*> progs; ///< The list of programs to emit
+  const llvm::FunctionType* entry_FT; ///< The llvm function type for programs
+
   public:
     LLVMGeneratorPass(const AST* tree)
       : Pass(0,Pass::PreAndPostOrderTraversal),
       modules(), lmod(0), lfunc(0), lblk(0), linst(), lops(), ltypes(),
-      ast(tree),   bundle(0), function(0), block(0) { }
+      ast(tree),   bundle(0), function(0), block(0), entry_FT(0) { }
     ~LLVMGeneratorPass() { }
 
   /// Conversion functions
   inline const llvm::Type* getType(const hlvm::Type* ty);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
+  const llvm::FunctionType* getProgramFT();
 
   /// Generators
   inline void gen(Bundle* b);
@@ -109,25 +127,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   virtual void handleTerminate();
 
   inline llvm::Module* linkModules();
-
-private:
-  typedef std::vector<llvm::Module*> ModuleList;
-  typedef std::vector<llvm::Value*> OperandList;
-  ModuleList modules;        ///< The list of modules we construct
-  llvm::Module*     lmod;    ///< The current module we're generation 
-  llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
-  llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
-  llvm::BasicBlock::InstListType linst; 
-  OperandList lops;          ///< The current list of instruction operands
-  llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
-    ///< The current LLVM instructions we're generating
-  const AST* ast;            ///< The current Tree we're traversing
-  const Bundle* bundle;      ///< The current Bundle we're traversing
-  const hlvm::Function* function;  ///< The current Function we're traversing
-  const Block* block;        ///< The current Block we're traversing
-  std::vector<llvm::Function*> progs; ///< The list of programs to emit at the end
 };
-
 
 const llvm::Type*
 LLVMGeneratorPass::getType(const hlvm::Type* ty)
@@ -343,10 +343,25 @@ LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 std::string
 LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
 {
-  if (lk->isProgram())
-    return std::string("_hlvm_entry_") + lk->getName();
+  // if (lk->isProgram())
+    // return std::string("_hlvm_entry_") + lk->getName();
   // FIXME: This needs to incorporate the bundle name
   return lk->getName();
+}
+
+const llvm::FunctionType*
+LLVMGeneratorPass::getProgramFT()
+{
+  if (!entry_FT) {
+    // Get the type of function that all entry points must have
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(llvm::Type::IntTy);
+    arg_types.push_back(
+      llvm::PointerType::get(llvm::PointerType::get(llvm::Type::SByteTy)));
+    entry_FT = llvm::FunctionType::get(llvm::Type::IntTy,arg_types,false);
+    lmod->addTypeName("hlvm_program_signature",entry_FT);
+  }
+  return entry_FT;
 }
 
 void
@@ -365,8 +380,7 @@ LLVMGeneratorPass::gen(Program* p)
   std::string linkageName = getLinkageName(p);
 
   // Get the FunctionType for entry points (programs)
-  const llvm::FunctionType* entry_signature = 
-    llvm::cast<llvm::FunctionType>(getType(p->getSignature()));
+  const llvm::FunctionType* entry_signature = getProgramFT();
 
   // Create a new function for the program based on the signature
   lfunc = new llvm::Function(entry_signature,
@@ -436,8 +450,7 @@ void
 LLVMGeneratorPass::handleTerminate()
 {
   // Get the type of function that all entry points must have
-  const llvm::FunctionType* entry_signature = 
-    llvm::cast<llvm::FunctionType>(getType(ast->getProgramType())); 
+  const llvm::FunctionType* entry_signature = getProgramFT();
 
   // Define the type of the array elements (a structure with a pointer to
   // a string and a pointer to the function).
@@ -496,7 +509,7 @@ LLVMGeneratorPass::handleTerminate()
     /*isConstant=*/true,
     /*Linkage=*/llvm::GlobalValue::AppendingLinkage,
     /*Initializer=*/entry_points_initializer,
-    /*Name=*/"_hlvm_entry_points",
+    /*Name=*/"hlvm_programs",
     /*Parent=*/lmod
   );
 }

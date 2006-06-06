@@ -1,70 +1,63 @@
-/* xps/base/config.h.in.  Generated from autoconf/configure.ac by autoheader.  */
+//===-- HLVM Configuration Template -----------------------------*- C++ -*-===//
+//
+//                      High Level Virtual Machine (HLVM)
+//
+// Copyright (C) 2006 Reid Spencer. All Rights Reserved.
+//
+// This software is free software; you can redistribute it and/or modify it 
+// under the terms of the GNU Lesser General Public License as published by 
+// the Free Software Foundation; either version 2.1 of the License, or (at 
+// your option) any later version.
+//
+// This software is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for 
+// more details.
+//
+// You should have received a copy of the GNU Lesser General Public License 
+// along with this library in the file named LICENSE.txt; if not, write to the 
+// Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+// MA 02110-1301 USA
+//
+//===----------------------------------------------------------------------===//
+/// @file hlvm/Base/Config.h.in
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/05/04
+/// @since 0.1.0
+/// @brief Template header for capturing configuration data
+//===----------------------------------------------------------------------===//
 
-/* Define to 1 if you have the <apr-1/apr.h> header file. */
-#undef HAVE_APR_1_APR_H
-
-/* Define to 1 if you have the <expat.h> header file. */
-#undef HAVE_EXPAT_H
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `aprutil-1' library (-laprutil-1). */
-#undef HAVE_LIBAPRUTIL_1
-
-/* Define to 1 if you have the `apr-1' library (-lapr-1). */
-#undef HAVE_LIBAPR_1
-
-/* Define to 1 if you have the `efence' library (-lefence). */
-#undef HAVE_LIBEFENCE
-
-/* Define to 1 if you have the `expat' library (-lexpat). */
-#undef HAVE_LIBEXPAT
-
-/* Define to 1 if you have the <llvm/Module.h> header file. */
-#undef HAVE_LLVM_MODULE_H
-
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
-
-/* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
-
-/* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
-
-/* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
-
-/* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
-
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
-
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
-
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
-
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
-
-/* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
-
-/* Defined if all configurations share the same prefix */
-#undef XPS_SHAREDPREFIX
+#define HLVM_ConfigTime    "@HLVM_ConfigTime@ UTC"
+#define HLVM_Copyright     "@HLVM_Copyright@"
+#define HLVM_Maintainer    "@HLVM_Maintainer@"
+#define HLVM_Version       "@HLVM_Version@"
+#define HLVM_debug         (@debug@)
+#define HLVM_assertions    (@assertions@)
+#define HLVM_optimize      (@optimize@)
+#define HLVM_small         (@small@)
+#define HLVM_profile       (@profile@)
+#define HLVM_inline        (@inline@)
+#define HLVM_prefix        "@prefix@"
+#define HLVM_confpath      "@confpath@"
+#define HLVM_with_llvm     "@with_llvm@"
+#define HLVM_with_apr      "@with_apr@"
+#define HLVM_with_apru     "@with_apru@"
+#define HLVM_with_xml2     "@with_xml2@"
+#define HLVM_with_gperf    "@with_gperf@"
+#define HLVM_with_llc      "@with_llc@"
+#define HLVM_with_llvmdis  "@with_llvmdis@"
+#define HLVM_with_llvmas   "@with_llvmas@"
+#define HLVM_with_llvmgcc  "@with_llvmgcc@"
+#define HLVM_with_llvmgxx  "@with_llvmgxx@"
+#define HLVM_with_llvmar   "@with_llvmar@"
+#define HLVM_with_llvm2cpp "@with_llvm2cpp@"
+#define HLVM_with_runtest  "@with_runtest@"
+#define HLVM_with_doxygen  "@with_doxygen@"
+#define HLVM_with_xsltproc "@with_xsltproc@"
+#define HLVM_SO_CURRENT    "@HLVM_SO_CURRENT@"
+#define HLVM_SO_REVISION   "@HLVM_SO_REVISION@"
+#define HLVM_SO_AGE        "@HLVM_SO_AGE@"
+#define HLVM_SO_VERSION    "@HLVM_SO_VERSION@"
+#define HLVM_Variant       "@Variant@"
+#define HLVM_AbsObjRoot    "@AbsObjRoot@"
+#define HLVM_AbsSrcRoot    "@AbsSrcRoot@"

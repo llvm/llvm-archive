@@ -22,5 +22,9 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
+hlvm.GetBytecode(env)
+hlvm.GetConfigFile(env)
+env.ConfigFile(source=['Config.h.in'])
+env.BytecodeArchive('HLVMBase',hlvm.GetAllCXXFiles(env))
 lib = env.Library('HLVMBase',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)

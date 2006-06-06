@@ -55,9 +55,14 @@ class ConstantInteger;
 class ConstantReal;
 class ConstantText;
 class ConstantZero;
-class ReturnOp;
 class AliasType;
 class Pool;
+class ReturnOp;
+class StoreOp;
+class LoadOp;
+class OpenOp;
+class CloseOp;
+class WriteOp;
 typedef AliasType Argument;
 typedef AliasType Field;
 
@@ -417,11 +422,70 @@ class AST : public Node
       const std::string& value, ///< The value of the ConstantText
       const Locator* loc = 0    ///< The source locator
     );
-    /// Create a new ConstantText node.
+
+    /// Provide a template function for creating a nilary operator
+    template<class OpClass>
+    OpClass* new_NilaryOp(
+      const Locator* loc = 0 ///< The source locator
+    );
+
+    /// Provide a template function for creating a unary operator
+    template<class OpClass>
+    OpClass* new_UnaryOp(
+      Value* oprnd1,         ///< The first operand
+      const Locator* loc = 0 ///< The source locator
+    );
+
+    /// Provide a template function for creating a binary operator
+    template<class OpClass>
+    OpClass* new_BinaryOp(
+      Value* oprnd1,         ///< The first operand
+      Value* oprnd2,         ///< The second operand
+      const Locator* loc = 0 ///< The source locator
+    );
+
+    /// Provide a template function for creating a ternary operator
+    template<class OpClass>
+    OpClass* new_TernaryOp(
+      Value* oprnd1,         ///< The first operand
+      Value* oprnd2,         ///< The second operand
+      Value* oprnd3,         ///< The third operand
+      const Locator* loc = 0 ///< The source locator
+    );
+
     /// Create a new ReturnOp node. The ReturnOp is an operator that returns
     /// immediately from the enclosing function, possibly with a result value.
     ReturnOp* new_ReturnOp(
-      const Locator* loc = 0 ///< The 
+      Value* val,            ///< The value to return
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a new StoreOp node.
+    StoreOp* new_StoreOp(
+      Value* var,            ///< The variable whose value is assigned
+      Value* val,            ///< The value to assign to the variable
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a new LoadOp node.
+    LoadOp* new_LoadOp(
+      Value* var,            ///< The variable from which the value is loaded
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a new OpenOp node.
+    OpenOp* new_OpenOp(
+      Value* uri,            ///< The URI saying what to open and how
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a new WriteOp node.
+    WriteOp* new_WriteOp(
+      Value* strm,           ///< The stream to write
+      Value* buffer,         ///< The buffer that should be written
+      Value* len,            ///< The length of the buffer
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a new CloseOp node.
+    CloseOp* new_CloseOp(
+      const Value* strm,     ///< The stream to close
+      const Locator* loc = 0 ///< The source locator
     );
 
   /// @}

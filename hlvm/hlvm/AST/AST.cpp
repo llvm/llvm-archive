@@ -39,6 +39,8 @@
 #include <hlvm/AST/Program.h>
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/InputOutput.h>
 #include <hlvm/AST/SymbolTable.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Base/Pool.h>
@@ -508,13 +510,82 @@ AST::new_Block(const std::string& label, const Locator* loc)
   return result;
 }
 
-ReturnOp*
-AST::new_ReturnOp(const Locator* loc)
+template<class OpClass> 
+OpClass* 
+AST::new_NilaryOp(
+  const Locator* loc ///< The source locator
+)
 {
-  ReturnOp* result = new ReturnOp();
+  OpClass* result = new OpClass();
   result->setLocator(loc);
   return result;
 }
+
+/// Provide a template function for creating a unary operator
+template<class OpClass>
+OpClass* 
+AST::new_UnaryOp(
+  Value* oprnd1,     ///< The first operand
+  const Locator* loc ///< The source locator
+)
+{
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setOperand(0,oprnd1);
+  return result;
+}
+
+/// Provide a template function for creating a binary operator
+template<class OpClass>
+OpClass* 
+AST::new_BinaryOp(
+  Value* oprnd1,     ///< The first operand
+  Value* oprnd2,     ///< The second operand
+  const Locator* loc ///< The source locator
+)
+{
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setOperand(0,oprnd1);
+  result->setOperand(1,oprnd2);
+  return result;
+}
+
+/// Provide a template function for creating a ternary operator
+template<class OpClass>
+OpClass* 
+AST::new_TernaryOp(
+  Value* oprnd1,     ///< The first operand
+  Value* oprnd2,     ///< The second operand
+  Value* oprnd3,     ///< The third operand
+  const Locator* loc ///< The source locator
+)
+{
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setOperand(0,oprnd1);
+  result->setOperand(1,oprnd2);
+  result->setOperand(2,oprnd3);
+  return result;
+}
+
+// Control Flow Operators
+template ReturnOp* 
+AST::new_UnaryOp<ReturnOp>(Value*op1,const Locator*loc);
+// Memory Operators
+template StoreOp*  
+AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc);
+template LoadOp*   
+AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc);
+template ReferenceOp* 
+AST::new_NilaryOp<ReferenceOp>(const Locator*loc);
+// Input/Output Operators
+template OpenOp* 
+AST::new_UnaryOp<OpenOp>(Value*op1,const Locator*loc);
+template WriteOp* 
+AST::new_TernaryOp<WriteOp>(Value*op1,Value*op2,Value*op3,const Locator*loc);
+template CloseOp* 
+AST::new_UnaryOp<CloseOp>(Value*op1,const Locator*loc);
 
 Documentation* 
 AST::new_Documentation(const Locator* loc)

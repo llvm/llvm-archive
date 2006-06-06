@@ -61,6 +61,12 @@ class Operator : public Value
     static inline bool classof(const Node* N) { return N->isOperator(); }
 
   /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    virtual void setOperand(unsigned opnum, Value* oprnd) = 0;
+
+  /// @}
   friend class AST;
 };
 
@@ -85,6 +91,9 @@ class NilaryOperator : public Operator
   /// @}
   /// @name Mutators
   /// @{
+  public:
+    virtual void setOperand(unsigned opnum, Value* oprnd);
+
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -112,6 +121,8 @@ class UnaryOperator : public Operator
   /// @}
   /// @name Mutators
   /// @{
+  public:
+    virtual void setOperand(unsigned opnum, Value* oprnd);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -147,6 +158,8 @@ class BinaryOperator : public Operator
   /// @}
   /// @name Mutators
   /// @{
+  public:
+    virtual void setOperand(unsigned opnum, Value* oprnd);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -181,6 +194,8 @@ class TernaryOperator : public Operator
   /// @}
   /// @name Mutators
   /// @{
+  public:
+    virtual void setOperand(unsigned opnum, Value* oprnd);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -238,6 +253,7 @@ class MultiOperator : public Operator
   /// @name Mutators
   /// @{
   public:
+    virtual void setOperand(unsigned opnum, Value* oprnd);
     void addOperand(Value* v) { v->setParent(this); }
   protected:
     virtual void insertChild(Node* child);

@@ -1,4 +1,4 @@
-//===-- HLVM AST String Operators -------------------------------*- C++ -*-===//
+//===-- HLVM AST Memory Operators -------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,16 +20,19 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/StringOps.cpp
+/// @file hlvm/AST/MemoryOps.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/05/18
 /// @since 0.1.0
-/// @brief Implements the various AST string operators.
+/// @brief Implements the various AST memory operators
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/StringOps.h>
+#include <hlvm/AST/MemoryOps.h>
 
 namespace hlvm {
 
+LoadOp::~LoadOp() {}
+StoreOp::~StoreOp() {}
+ReferenceOp::~ReferenceOp() {}
 
 }

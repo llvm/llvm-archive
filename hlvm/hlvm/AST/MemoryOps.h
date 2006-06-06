@@ -70,22 +70,22 @@ class LoadOp : public UnaryOperator
 
 /// This operator represents the 
 /// @brief HLVM AST String Insert Node
-class LoadOp : public UnaryOperator
+class StoreOp : public BinaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    LoadOp() : UnaryOperator(LoadOpID) {}
+    StoreOp() : BinaryOperator(LoadOpID) {}
 
   public:
-    virtual ~LoadOp();
+    virtual ~StoreOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const LoadOp*) { return true; }
-    static inline bool classof(const Node* N) { return N->is(LoadOpID); }
+    static inline bool classof(const StoreOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(StoreOpID); }
 
   /// @}
   /// @name Mutators
@@ -96,6 +96,41 @@ class LoadOp : public UnaryOperator
   /// @name Data
   /// @{
   protected:
+  /// @}
+  friend class AST;
+};
+
+/// This operator yields the value of a named variable
+/// @brief HLVM AST Variable Reference Operator
+class ReferenceOp : public NilaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ReferenceOp() : NilaryOperator(ReferenceOpID) {}
+
+  public:
+    virtual ~ReferenceOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string getVarName() const { return varName; }
+    static inline bool classof(const ReferenceOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ReferenceOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setVarName(const std::string& name) { varName = name; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string varName;
   /// @}
   friend class AST;
 };

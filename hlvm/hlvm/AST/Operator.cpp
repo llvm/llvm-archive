@@ -56,6 +56,12 @@ NilaryOperator::numOperands() const
   return 0;
 }
 
+void
+NilaryOperator::setOperand(unsigned opnum, Value* operand)
+{
+  hlvmAssert(!"Can't set operands on a NilaryOperator!");
+}
+
 void 
 NilaryOperator::insertChild(Node* child)
 {
@@ -83,6 +89,14 @@ size_t
 UnaryOperator::numOperands() const
 {
   return op1 != 0;
+}
+
+void
+UnaryOperator::setOperand(unsigned opnum, Value* operand)
+{
+  hlvmAssert(opnum == 0 && "Operand Index out of range for UnaryOperator!");
+  operand->setParent(this);
+  op1 = operand;
 }
 
 void 
@@ -120,6 +134,14 @@ size_t
 BinaryOperator::numOperands() const
 {
   return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0);
+}
+
+void
+BinaryOperator::setOperand(unsigned opnum, Value* operand)
+{
+  hlvmAssert(opnum <= 1 && "Operand Index out of range for BinaryOperator!");
+  operand->setParent(this);
+  ops[opnum] = operand;
 }
 
 void 
@@ -161,6 +183,14 @@ size_t
 TernaryOperator::numOperands() const
 {
   return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0) + (ops[2] ? 1 : 0);
+}
+
+void
+TernaryOperator::setOperand(unsigned opnum, Value* operand)
+{
+  hlvmAssert(opnum <= 2 && "Operand Index out of range for TernaryOperator!");
+  operand->setParent(this);
+  ops[opnum] = operand;
 }
 
 void 
@@ -206,6 +236,15 @@ size_t
 MultiOperator::numOperands() const
 {
   return ops.size();
+}
+
+void
+MultiOperator::setOperand(unsigned opnum, Value* operand)
+{
+  if (ops.capacity() < opnum + 1)
+    ops.resize(opnum+1);
+  operand->setParent(this);
+  ops[opnum] = operand;
 }
 
 void 

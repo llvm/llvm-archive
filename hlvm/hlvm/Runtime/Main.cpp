@@ -66,7 +66,7 @@ public:
     // If we got a start function ..
     if (func) {
       // Invoke it.
-      return (*func)(argc-1,(signed char**)&argv[1]);
+      return (*func)(argc-1,reinterpret_cast<signed char**>(&argv[1]));
     } else {
       // Give an error
       std::cerr << argv[0] << ": Program '" << Start << "' not found.\n";

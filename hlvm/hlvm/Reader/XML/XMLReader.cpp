@@ -41,6 +41,8 @@
 #include <hlvm/AST/Program.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/InputOutput.h>
 #include <hlvm/Base/Assert.h>
 #include <libxml/parser.h>
 #include <libxml/relaxng.h>
@@ -131,8 +133,18 @@ public:
   Value*         parseValue         (xmlNodePtr& cur, int token);
   ReturnOp*      parseReturn        (xmlNodePtr& cur);
   Block*         parseBlock         (xmlNodePtr& cur);
+  ReferenceOp*   parseReference     (xmlNodePtr& cur);
   Program*       parseProgram       (xmlNodePtr& cur);
   inline xmlNodePtr   checkDoc(xmlNodePtr cur, Documentable* node);
+  inline Value*  getValue(xmlNodePtr&);
+  template<class OpClass>
+  OpClass* parseNilaryOp(xmlNodePtr& cur);
+  template<class OpClass>
+  OpClass* parseUnaryOp(xmlNodePtr& cur);
+  template<class OpClass>
+  OpClass* parseBinaryOp(xmlNodePtr& cur);
+  template<class OpClass>
+  OpClass* parseTernaryOp(xmlNodePtr& cur);
 private:
 };
 
@@ -465,6 +477,16 @@ XMLReaderImpl::checkDoc(xmlNodePtr cur, Documentable* node)
   return child;
 }
 
+inline Value*
+XMLReaderImpl::getValue(xmlNodePtr& cur)
+{
+  if (cur && skipBlanks(cur) && cur->type == XML_ELEMENT_NODE)
+    return parseValue(cur);
+  else
+    hlvmDeadCode("Expecting a value");
+  return 0;
+}
+
 Import*
 XMLReaderImpl::parseImport(xmlNodePtr& cur)
 {
@@ -715,18 +737,56 @@ XMLReaderImpl::parseVariable(xmlNodePtr& cur)
   return var;
 }
 
-ReturnOp*
-XMLReaderImpl::parseReturn(xmlNodePtr& cur)
+ReferenceOp*
+XMLReaderImpl::parseReference(xmlNodePtr& cur)
 {
-  hlvmAssert(getToken(cur->name) == TKN_ret && "Expecting block element");
+  std::string id = getAttribute(cur,"id");
   Locator* loc = getLocator(cur);
-  ReturnOp* ret = ast->new_ReturnOp(loc);
+  ReferenceOp* result = ast->new_NilaryOp<ReferenceOp>(loc);
+  result->setVarName(id);
+  return result;
+}
+
+template<class OpClass>
+OpClass*
+XMLReaderImpl::parseNilaryOp(xmlNodePtr& cur)
+{
   xmlNodePtr child = cur->children;
-  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    Value* op = parseValue(child);
-    ret->setResult(op);
-  }
-  return ret;
+  Locator* loc = getLocator(cur);
+  return ast->new_UnaryOp<OpClass>(loc);
+}
+
+template<class OpClass>
+OpClass*
+XMLReaderImpl::parseUnaryOp(xmlNodePtr& cur)
+{
+  xmlNodePtr child = cur->children;
+  Value* oprnd1 = getValue(child);
+  Locator* loc = getLocator(cur);
+  return ast->new_UnaryOp<OpClass>(oprnd1,loc);
+}
+
+template<class OpClass>
+OpClass*
+XMLReaderImpl::parseBinaryOp(xmlNodePtr& cur)
+{
+  xmlNodePtr child = cur->children;
+  Value* oprnd1 = getValue(child);
+  Value* oprnd2 = getValue(child);
+  Locator* loc = getLocator(cur);
+  return ast->new_BinaryOp<OpClass>(oprnd1,oprnd2,loc);
+}
+
+template<class OpClass>
+OpClass*
+XMLReaderImpl::parseTernaryOp(xmlNodePtr& cur)
+{
+  xmlNodePtr child = cur->children;
+  Value* oprnd1 = getValue(child);
+  Value* oprnd2 = getValue(child);
+  Value* oprnd3 = getValue(child);
+  Locator* loc = getLocator(cur);
+  return ast->new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
 }
 
 inline Constant*
@@ -766,15 +826,14 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
 {
   Operator* op = 0;
   switch (tkn) {
-    case TKN_ret:          op = parseReturn(cur); break;
+    case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
     case TKN_block:        op = parseBlock(cur); break;
-    case TKN_store:
-    case TKN_load:
-    case TKN_open:
-    case TKN_write:
-    case TKN_close:
-      std::cerr << "Operator " << cur->name << " not imlpemented.\n";
-      break;
+    case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
+    case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
+    case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
+    case TKN_write:        op = parseTernaryOp<WriteOp>(cur); break;
+    case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
+    case TKN_ref:          op = parseReference(cur); break;
     default:
       hlvmDeadCode("Unrecognized operator");
       break;
@@ -809,8 +868,11 @@ XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
     case TKN_close:
     case TKN_store:
     case TKN_load:
-    case TKN_block: 
+    case TKN_ref:
       v = parseOperator(cur,tkn);
+      break;
+    case TKN_block: 
+      v = parseBlock(cur);
       break;
     case TKN_program:
       v = parseProgram(cur);

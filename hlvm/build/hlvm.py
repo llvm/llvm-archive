@@ -10,6 +10,7 @@ from os.path import join as pjoin
 from string import join as sjoin
 from string import replace as strrepl
 import glob
+import datetime
 
 def GetFiles(env,pat):
   prefix = env.Dir('.').abspath
@@ -38,6 +39,10 @@ def GetRNGTokenizer(env):
 def GetBytecode(env):
   from build import bytecode
   return bytecode.Bytecode(env)
+
+def GetConfigFile(env):
+  from build import filterbuilders
+  return filterbuilders.ConfigFile(env)
 
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
@@ -75,7 +80,12 @@ def GetBuildEnvironment(targets,arguments):
   env.EnsureSConsVersion(0,96)
   env.SetOption('implicit_cache',1)
   env.TargetSignatures('build')
-  opts = Options('.options_cache',arguments)
+  if 'mode' in arguments:
+    buildname = arguments['mode']
+  else:
+    buildname = 'default'
+  options_file = '.' + buildname + '_options'
+  opts = Options(options_file)
   opts.AddOptions(
     BoolOption('assertions','Include assertions in the code',1),
     BoolOption('debug','Build with debug options turned on',1),
@@ -85,11 +95,11 @@ def GetBuildEnvironment(targets,arguments):
     BoolOption('small','Generate smaller code rather than faster',0),
   )
   opts.Add('prefix','Specify where to install HLVM','/usr/local')
-  opts.Add('confpath','Specify additional configuration dirs to search',''),
-  opts.Add('with_llvm','Specify where LLVM is located','/usr/local'),
-  opts.Add('with_apr','Specify where apr is located','/usr/local/apr'),
-  opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr'),
-  opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local'),
+  opts.Add('confpath','Specify additional configuration dirs to search','')
+  opts.Add('with_llvm','Specify where LLVM is located','/usr/local')
+  opts.Add('with_apr','Specify where apr is located','/usr/local/apr')
+  opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr')
+  opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local')
   opts.Add('with_gperf','Specify where the gperf program is located',
            '/usr/local/bin/gperf')
   opts.Add('with_llc','Specify where the LLVM compiler is located',
@@ -181,6 +191,10 @@ def GetBuildEnvironment(targets,arguments):
   env.Prepend(CPPPATH=['#'])
   env['LIBPATH'] = []
   env['BINPATH'] = []
+  env['LLVMASFLAGS'] = ''
+  env['LLVM2CPPFLAGS'] = ''
+  env['LLVMGXXFLAGS'] = ''
+  env['LLVMGCCFLAGS'] = ''
   env.BuildDir(BuildDir,'#',duplicate=0)
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   if 'install' in COMMAND_LINE_TARGETS:
@@ -200,8 +214,8 @@ Usage Examples::
 
 Options:
 """ + opts.GenerateHelpText(env,sort=cmp))
-  print "HLVM BUILD MODE:", VariantName
+  print "HLVM BUILD MODE: " + VariantName + " (" + buildname + ")"
   ConfigureHLVM(env)
-  opts.Save('.options_cache',env)
+  opts.Save(options_file,env)
   return env
 

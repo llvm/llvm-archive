@@ -121,6 +121,13 @@
   <li><a name="rubytest"><em>Ruby Tests</em></a>.
   Add test cases that exercise the features added for Ruby. These are XML
   based test cases, not Ruby source</li>
+  <li><a name="interp"><em>Interpreter</em></a>.
+  We will introduce the HLVM interpreter in this release. It will interpret
+  AST nodes directly and execute them.</li>
+  <li><a name="jit"><em>JIT Runtime</em></a>.
+  The JIT runtime will notice which functions being executed are being invoked
+  frequently and will use LLVM to convert them to just-in-time compiled native
+  code.</li>
 </div>
 
 <!-- ======================================================================= -->

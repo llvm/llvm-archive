@@ -27,8 +27,12 @@
 /// @brief Implements the main program for the HLVM Virtual Machine
 //===----------------------------------------------------------------------===//
 
+#include <iostream>
 #include <hlvm/Runtime/Main.h>
 
+/// Yup, the HLVM virtual machine is just a one line program. We do this so that
+/// The runtime library is completely self-contained and can be invoked from
+/// within a larger context.
 int main(int argc, char**argv) 
 {
   return hlvm_runtime_main(argc,argv);

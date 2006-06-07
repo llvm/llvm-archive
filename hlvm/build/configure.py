@@ -39,6 +39,7 @@ def AskForDirs(context,pkgname,hdr,libs,progs=[]):
       return AskForDirs(context,pkgname,hdr,libs,progs)
 
   progdir = None
+  bindir = None
   if len(progs) > 0:
     bindir = _getline(context.env,
       'Enter directory containing %(nm)s programs: ' % { 'nm':pkgname }

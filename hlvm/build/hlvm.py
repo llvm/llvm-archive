@@ -7,6 +7,7 @@ from SCons.Script import COMMAND_LINE_TARGETS as COMMAND_LINE_TARGETS
 from SCons.Environment import Environment as Environment
 from configure import ConfigureHLVM as ConfigureHLVM
 from os.path import join as pjoin
+from os.path import exists as exists
 from string import join as sjoin
 from string import replace as strrepl
 import glob
@@ -85,7 +86,10 @@ def GetBuildEnvironment(targets,arguments):
   else:
     buildname = 'default'
   options_file = '.' + buildname + '_options'
-  opts = Options(options_file)
+  if not exists(options_file):
+    opts = Options('.options_cache')
+  else:
+    opts = Options(options_file)
   opts.AddOptions(
     BoolOption('assertions','Include assertions in the code',1),
     BoolOption('debug','Build with debug options turned on',1),

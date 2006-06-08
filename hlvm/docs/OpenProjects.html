@@ -43,7 +43,7 @@ to this page.</p>
     fairly straightforward XSLT stylsheet to translate Relax/NG to XHTML should
     do nicely. This is a nice self-contained project for someone who knows
     XSLT and can understand Relax/NG.</li>
-    <li><em>Test Cases</em></li>. In order to explore and test the AST node
+    <li><em>Test Cases</em>. In order to explore and test the AST node
     construction and code generation, we need to develop test cases that
     exercise these aspects of HLVM. Test cases currently come in two flavors:
     <ul>
@@ -56,18 +56,18 @@ to this page.</p>
       aspects of runtime behavior of the HLVM code generator and runtime system.
       </li>
     </ul></li>
-    <li><em>APR Abstractions</em></li>. The runtime portion of HLVM will use APR
+    <li><em>APR Abstractions</em>. The runtime portion of HLVM will use APR
     as its portability layer. However, APR is written in C and not particularly
     object-oriented. We need some of the things APR supports to be wrapped in
     simple C++ classes that take care of the book keeping such as deleting APR
     objects at the right time.  Abstracts we need to wrap, currently, are Pool
     and File. These should go in HLVM's "base" library.</li>
-    <li><em>Code Generation</em></li>. If you know or would like to learn LLVM,
+    <li><em>Code Generation</em>. If you know or would like to learn LLVM,
     we could use help with conversion of HLVM's AST into LLVM's IR. </li>
-    <li><em>API Documentation</em></li>. Documenting the HLVM AST API is very
+    <li><em>API Documentation</em>. Documenting the HLVM AST API is very
     important. Currently it needs some work. Someone who knows Doxygen and 
     would like to keep the documentation up to date would be very helpful.</li>
-    <li><em>Yaml Reader/Writer</em></li>. We intend to support a reader and
+    <li><em>Yaml Reader/Writer</em>. We intend to support a reader and
     writer of the AST in Yaml syntax. Some people just don't like XML and having
     an alternate way to build the AST from a nicer-to-read source would be
     useful in helping some people comprehend HLVM. The design should be very

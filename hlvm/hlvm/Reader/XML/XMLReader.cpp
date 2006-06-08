@@ -753,7 +753,7 @@ XMLReaderImpl::parseNilaryOp(xmlNodePtr& cur)
 {
   xmlNodePtr child = cur->children;
   Locator* loc = getLocator(cur);
-  return ast->new_UnaryOp<OpClass>(loc);
+  return ast->new_NilaryOp<OpClass>(loc);
 }
 
 template<class OpClass>

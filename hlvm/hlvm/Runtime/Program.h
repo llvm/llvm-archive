@@ -35,7 +35,7 @@
 extern "C" {
 
 /// This is the type of a program entry point function.
-typedef int (*hlvm_program_type)(int, signed char **);
+typedef int (*hlvm_program_type)(int, const char **);
 
 /// This is the type of the appending array of program entry elements
 struct hlvm_programs_element {

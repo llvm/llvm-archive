@@ -316,7 +316,8 @@ class AST : public Node
     /// be exposed. You cannot create an object of OpaqueType but you can 
     /// obtain its location.
     OpaqueType* new_OpaqueType(
-      const std::string& id   ///< The name of the opaque type
+      const std::string& id, ///< The name of the opaque type
+      const Locator* loc = 0 ///< The source locator
     );
     /// Create a new 128 bit primitive floating point type.
     RealType* new_f128(

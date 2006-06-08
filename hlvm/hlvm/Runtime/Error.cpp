@@ -1,4 +1,4 @@
-//===-- AST Variable Class --------------------------------------*- C++ -*-===//
+//===-- Runtime Error Handler Implementation --------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,27 +20,40 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Variable.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/Runtime/Error.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
+/// @date 2006/06/07
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Variable.
+/// @brief Implements the runtime error handling facilities.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Block.h>
-#include <llvm/Support/Casting.h>
+extern "C" {
 
-namespace hlvm {
+#include <apr-1/apr_file_io.h>
+#include <hlvm/Runtime/Error.h>
+#include <hlvm/Runtime/Internal.h>
+#include <stdlib.h>
 
-Variable::~Variable()
+void 
+hlvm_error(ErrorCodes ec, const char* arg)
 {
+  const char* msg = "Unknown";
+  switch (ec) {
+    case E_UNHANDLED_EXCEPTION: msg = "Unhandled Exception"; break;
+    case E_BAD_OPTION         : msg = "Unrecognized option"; break;
+    case E_MISSING_ARGUMENT   : msg = "Missing option argument"; break;
+    case E_NO_PROGRAM_NAME    : msg = "Program name not specified"; break;
+    case E_PROGRAM_NOT_FOUND  : msg = "Program not found"; break;
+    default: break;
+  }
+  if (arg)
+    apr_file_printf(_hlvm_stderr, "Error: %s: %s\n", msg, arg);
+  else
+    apr_file_printf(_hlvm_stderr, "Error: %s\n", msg);
 }
 
-bool
-Variable::isLocal() const
-{
-  return llvm::isa<Block>(this->getParent());
+void hlvm_panic(const char* msg) {
+  exit(254);
 }
 
 }

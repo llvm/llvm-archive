@@ -427,9 +427,11 @@ AST::new_SignatureType(
 }
 
 OpaqueType*
-AST::new_OpaqueType(const std::string& id)
+AST::new_OpaqueType(const std::string& id, const Locator* loc)
 {
-  return new OpaqueType(id);
+  OpaqueType* result = new OpaqueType(id);
+  result->setLocator(loc);
+  return result;
 }
 
 ConstantInteger*

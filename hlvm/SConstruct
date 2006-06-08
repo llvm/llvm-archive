@@ -21,7 +21,6 @@
 #
 #===----------------------------------------------------------------------===#
 from build import hlvm
-from os.path import join as pjoin
 env = hlvm.GetBuildEnvironment(COMMAND_LINE_TARGETS,ARGUMENTS)
 Export('env')
 hlvm.Dirs(env,['hlvm','tools','test','docs'])

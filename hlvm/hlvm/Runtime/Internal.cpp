@@ -1,4 +1,4 @@
-//===-- AST Variable Class --------------------------------------*- C++ -*-===//
+//===-- Runtime Internal Sharing Implementation -----------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,27 +20,31 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Variable.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/Runtime/Internal.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/05
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Variable.
+/// @brief Declares the implementation to the internal runtime facilities
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Block.h>
-#include <llvm/Support/Casting.h>
+#include <apr-1/apr_file_io.h>
 
-namespace hlvm {
+extern "C" {
 
-Variable::~Variable()
+#include <hlvm/Runtime/Internal.h>
+#include <hlvm/Runtime/Error.h>
+
+apr_pool_t* _hlvm_pool = 0;
+apr_file_t* _hlvm_stderr = 0;
+
+void _hlvm_initialize()
 {
-}
-
-bool
-Variable::isLocal() const
-{
-  return llvm::isa<Block>(this->getParent());
+  if (APR_SUCCESS != apr_initialize())
+    hlvm_panic("Can't initialize apr");
+  if (APR_SUCCESS != apr_pool_create(&_hlvm_pool, 0))
+    hlvm_panic("Can't create the pool");
+  if (APR_SUCCESS != apr_file_open_stderr(&_hlvm_stderr, _hlvm_pool))
+    hlvm_panic("Can't open stderr");
 }
 
 }

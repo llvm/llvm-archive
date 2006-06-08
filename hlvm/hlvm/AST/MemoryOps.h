@@ -35,6 +35,8 @@
 namespace hlvm
 {
 
+class Variable;
+
 /// This operator represents the load operation for loading a variable into a
 /// register.
 /// @brief HLVM AST Memory Load Operator
@@ -100,8 +102,9 @@ class StoreOp : public BinaryOperator
   friend class AST;
 };
 
-/// This operator yields the value of a named variable
-/// @brief HLVM AST Variable Reference Operator
+/// This operator yields the value of a named variable, either an automatic
+/// variable (function scoped) or global variable (bundle scoped). 
+/// @brief HLVM AST Variable Operator
 class ReferenceOp : public NilaryOperator
 {
   /// @name Constructors
@@ -116,7 +119,7 @@ class ReferenceOp : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
-    const std::string getVarName() const { return varName; }
+    const Variable* getReferent() const { return referent; }
     static inline bool classof(const ReferenceOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ReferenceOpID); }
 
@@ -124,13 +127,46 @@ class ReferenceOp : public NilaryOperator
   /// @name Mutators
   /// @{
   public:
-    void setVarName(const std::string& name) { varName = name; }
+    void setReferent(const Variable* var ) { referent = var; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::string varName;
+    const Variable* referent;
+  /// @}
+  friend class AST;
+};
+
+/// This operator indexes into an Array and yields the address of an element of
+/// the array.
+/// @brief HLVM AST Variable Operator
+class IndexOp : public MultiOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    IndexOp() : MultiOperator(IndexOpID) {}
+
+  public:
+    virtual ~IndexOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const IndexOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(IndexOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
   /// @}
   friend class AST;
 };

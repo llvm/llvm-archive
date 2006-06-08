@@ -30,8 +30,6 @@
 #ifndef HLVM_RUNTIME_UTILITIES_H
 #define HLVM_RUNTIME_UTILITIES_H
 
-#include <hlvm/Base/Config.h>
-
 /// This is the HLVM runtime assert macro. It is very much similar to
 /// the <cassert> version but without some of the overhead. It also lets
 /// us take control of what to do when an assertion happens. The standard
@@ -40,14 +38,11 @@
   (static_cast<void>((expr) ? 0 : \
     (hlvm_assert_fail(" #expr ", __FILE__, __LINE__))))
 
-extern "C" 
-{
 
 /// This function gets called by the hlvm_assert macro, and in other situations
 /// where a "panic" happens. It provides the proper escape mechanism given the
 /// configuration of the runtime.
 void hlvm_assert_fail(const char* expression, const char* file, int line_num);
 
-}
 
 #endif

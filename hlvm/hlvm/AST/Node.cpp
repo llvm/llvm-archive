@@ -61,12 +61,6 @@ Node::removeChild(Node* child)
   hlvmNotImplemented("Node::insertChild");
 }
 
-void 
-Node::setFlags(unsigned f)
-{
-  hlvmAssert(f < 1 << 24 && "Flags out of range");
-  flags = f;
-}
 
 void 
 Node::setParent(Node* p)

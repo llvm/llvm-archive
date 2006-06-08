@@ -1,4 +1,4 @@
-//===-- AST Variable Class --------------------------------------*- C++ -*-===//
+//===-- Runtime Internal Sharing Interface ----------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,27 +20,21 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Variable.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/Runtime/Internal.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/05
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Variable.
+/// @brief Declares the interface to the internally shared runtime facilities
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Block.h>
-#include <llvm/Support/Casting.h>
+#ifndef HLVM_RUNTIME_INTERNAL_H 
+#define HLVM_RUNTIME_INTERNAL_H 
 
-namespace hlvm {
+#include <apr-1/apr_pools.h>
 
-Variable::~Variable()
-{
-}
+extern apr_pool_t* _hlvm_pool;
+extern apr_file_t* _hlvm_stderr;
 
-bool
-Variable::isLocal() const
-{
-  return llvm::isa<Block>(this->getParent());
-}
+extern void _hlvm_initialize();
 
-}
+#endif

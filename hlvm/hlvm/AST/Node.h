@@ -80,7 +80,7 @@ enum NodeIDs
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
   RealTypeID,              ///< The Real Number Type (Any Real Number)
   RationalTypeID,          ///< The Rational Number Type (p/q type number)
-  TextTypeID = 26,         ///< The Text Type (Array of UTF-16 chars + length)
+  TextTypeID,              ///< The Text Type (Array of UTF-16 chars + length)
 
   // Container Types
   AliasTypeID,             ///< A new name for an existing type
@@ -90,7 +90,7 @@ enum NodeIDs
   StructureTypeID,         ///< The Structure Type (Sequence of various types)
   SignatureTypeID,         ///< The Function Signature Type
   ContinuationTypeID,      ///< A Continuation Type (data to continuations)
-  OpaqueTypeID = 34,       ///< A placeholder for unresolved types
+  OpaqueTypeID,            ///< A placeholder for unresolved types
 
   // Class Constructs (TBD)
   InterfaceID,             ///< The Interface Type (set of Signatures)
@@ -119,6 +119,7 @@ enum NodeIDs
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
+  AutoVarOpID,             ///< Declaration of an automatic (stack) variable
 
   // Control Flow Unary Operators
   ReturnOpID,              ///< The Return A Value Operator
@@ -153,6 +154,7 @@ enum NodeIDs
   AllocateOpID,            ///< The Allocate Memory Operator (get heap memory)
   FreeOpID,                ///< The Free Memory Operator (free heap memory)
   StackAllocOpID,          ///< The Stack Allocation Operator (get stack mem)
+  IndexOpID,               ///< The Index Operator for indexing an array
   ReferenceOpID,           ///< The Reference Memory Object Operator (for GC)
   DereferenceOpID,         ///< The Dereference Memory Object Operator (for GC)
 
@@ -377,7 +379,7 @@ class Node
   /// @{
   public:
     void setLocator(const Locator* l) { loc = l; }
-    void setFlags(unsigned f); 
+    void setFlags(uint16_t f) { flags = f; }
     virtual void setParent(Node* parent);
 
   protected:

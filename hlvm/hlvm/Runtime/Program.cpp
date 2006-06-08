@@ -28,7 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Runtime/Program.h>
-#include <llvm/Support/CommandLine.h>
+#include <string.h>
 
 namespace {
 

@@ -87,7 +87,7 @@ class ConstantReal : public Constant
   /// @name Accessors
   /// @{
   public:
-    double getValue() { return value; }
+    double getValue() const { return value; }
     static inline bool classof(const ConstantReal*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantRealID); }
@@ -120,7 +120,7 @@ class ConstantText : public Constant
   /// @name Accessors
   /// @{
   public:
-    const std::string&  getValue() { return value; }
+    const std::string&  getValue() const{ return value; }
     static inline bool classof(const ConstantText*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantTextID); }

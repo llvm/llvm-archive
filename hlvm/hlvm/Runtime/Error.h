@@ -1,4 +1,4 @@
-//===-- AST Variable Class --------------------------------------*- C++ -*-===//
+//===-- HLVM Runtime Error Handling Interface -------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,27 +20,25 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Variable.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/Runtime/Error.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/05
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Variable.
+/// @brief Declares the interface to the runtime error handler 
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Block.h>
-#include <llvm/Support/Casting.h>
+#ifndef HLVM_RUNTIME_ERROR_H
+#define HLVM_RUNTIME_ERROR_H
 
-namespace hlvm {
+enum ErrorCodes {
+  E_UNHANDLED_EXCEPTION,
+  E_BAD_OPTION,
+  E_MISSING_ARGUMENT,
+  E_NO_PROGRAM_NAME,
+  E_PROGRAM_NOT_FOUND
+};
 
-Variable::~Variable()
-{
-}
+void hlvm_error(ErrorCodes ec, const char* msg);
+void hlvm_panic(const char *msg);
 
-bool
-Variable::isLocal() const
-{
-  return llvm::isa<Block>(this->getParent());
-}
-
-}
+#endif

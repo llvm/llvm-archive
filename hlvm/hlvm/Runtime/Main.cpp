@@ -27,57 +27,22 @@
 /// @brief Implements the runtime main program.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Base/Memory.h>
+#include <apr-1/apr_getopt.h>
+#include <apr-1/apr_file_io.h>
+
+extern "C" {
+
 #include <hlvm/Runtime/Main.h>
 #include <hlvm/Runtime/Program.h>
 #include <hlvm/Runtime/Memory.h>
-#include <llvm/Support/CommandLine.h>
-#include <string.h>
-#include <iostream>
+#include <hlvm/Runtime/Error.h>
+#include <hlvm/Runtime/Internal.h>
 
-using namespace llvm;
-
-namespace {
-
-/// Option to indicate which program to start running
-static cl::opt<std::string> Start("start",
-  cl::Required,
-  cl::desc("Specify the starting point for the program"),
-  cl::value_desc("program URI")
-);
-
-/// This is the Main class that handles the basic execution framework for
-/// all HLVM programs.
-class Main {
-  int argc;
-  char ** argv;
-public:
-  /// Construct the "Main" and handle argument processing.
-  Main(int ac, char**av) : argc(ac), argv(av) {
-    llvm::cl::SetVersionPrinter(hlvm::print_version);
-    llvm::cl::ParseCommandLineOptions(argc,argv,"High Level Virtual Machine\n");
-  }
-
-  /// Run the requested program.
-  int run() {
-    // First, find the function that represents the start point.
-    hlvm_program_type func = hlvm_find_program(Start.c_str());
-
-    // If we got a start function ..
-    if (func) {
-      // Invoke it.
-      return (*func)(argc-1,reinterpret_cast<signed char**>(&argv[1]));
-    } else {
-      // Give an error
-      std::cerr << argv[0] << ": Program '" << Start << "' not found.\n";
-      return 1;
-    }
-  }
+apr_getopt_option_t hlvm_options[] = {
+  { "help", 'h', 0, "Provides help on using HLVM" },
+  { 0, 0, 0, 0 }
 };
 
-}
-
-extern "C" {
 
 /// This is the function called from the real main() in hlvm/tools/hlvm.  We 
 /// do this because we don't want to expose the "Main" class to the outside
@@ -87,15 +52,69 @@ int hlvm_runtime_main(int argc, char**argv)
 {
   int result = 0;
   try {
-    hlvm::initialize(argc,argv);
-    Main main(argc,argv);
-    result = main.run();
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg;
+    // Initialize APR and HLVM
+    _hlvm_initialize();
+
+    // Process the options
+    apr_getopt_t* options = 0;
+    if (APR_SUCCESS != apr_getopt_init(&options, _hlvm_pool, argc, argv))
+      hlvm_panic("Can't initialize apr_getopt");
+    options->interleave = 0;
+    int ch;
+    const char* arg;
+    apr_status_t stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
+    while (stat != APR_EOF) {
+      switch (stat) {
+        case APR_SUCCESS:
+        {
+          switch (ch) {
+            case 'h':
+              break;
+            default:
+              break;
+          }
+        }
+        case APR_BADCH:
+        {
+          hlvm_error(E_BAD_OPTION,0);
+          return E_BAD_OPTION;
+        }
+        case APR_BADARG:
+        {
+          hlvm_error(E_MISSING_ARGUMENT,0);
+          return E_MISSING_ARGUMENT;
+        }
+        case APR_EOF:
+        default:
+        {
+          hlvm_panic("Unknown response from apr_getopt_long");
+          break;
+        }
+      }
+      stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
+    }
+
+    // Find the function that represents the start point.
+    if (options->ind == 0) {
+      hlvm_error(E_NO_PROGRAM_NAME,0);
+      return E_NO_PROGRAM_NAME;
+    } else {
+      const char* prog_name = argv[options->ind];
+      hlvm_program_type func = hlvm_find_program(prog_name);
+
+      // If we got a start function ..
+      if (func) {
+        // Invoke it.
+        return (*func)(options->argc, options->argv);
+      } else {
+        // Give an error
+        hlvm_error(E_PROGRAM_NOT_FOUND,argv[1]);
+        return E_PROGRAM_NOT_FOUND;
+      }
+    }
   } catch (...) {
-    std::cerr << argv[0] << ": Unhandled exception\n";
+    hlvm_error(E_UNHANDLED_EXCEPTION,0);
   }
   return result;
 }
-
 }

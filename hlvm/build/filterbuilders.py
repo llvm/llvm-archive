@@ -134,14 +134,11 @@ def ConfigFileAction(target,source,env):
     matchobj = pat.search(line)
     if None != matchobj:
       var = matchobj.expand('\\1')
-      print 'var:',var
       if env._dict.has_key(var):
         substval = env[var]
         if type(substval) != str:
           substval = `env[var]`
-        print 'before:',line
         line = pat.sub(substval,line)
-        print 'after :',line
     tgt.write(line)
     continue
   tgt.close()

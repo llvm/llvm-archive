@@ -123,6 +123,7 @@ public:
   Type*          parsePointer       (xmlNodePtr& cur);
   Type*          parseStructure     (xmlNodePtr& cur);
   Type*          parseSignature     (xmlNodePtr& cur);
+  Type*          parseOpaque        (xmlNodePtr& cur);
   Variable*      parseVariable      (xmlNodePtr& cur);
   Type*          parseVector        (xmlNodePtr& cur);
   Constant*      parseConstant      (xmlNodePtr& cur);
@@ -714,6 +715,17 @@ XMLReaderImpl::parseSignature(xmlNodePtr& cur)
   return sig;
 }
 
+Type*
+XMLReaderImpl::parseOpaque(xmlNodePtr& cur)
+{
+  hlvmAssert(getToken(cur->name)==TKN_opaque);
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  OpaqueType* result = ast->new_OpaqueType(name,loc);
+  checkDoc(cur,result);
+  return result;
+}
+
 Variable*
 XMLReaderImpl::parseVariable(xmlNodePtr& cur)
 {
@@ -972,6 +984,7 @@ XMLReaderImpl::parseBundle(xmlNodePtr& cur)
       case TKN_vector      : { n = parseVector(child); break; }
       case TKN_structure   : { n = parseStructure(child); break; }
       case TKN_signature   : { n = parseSignature(child); break; }
+      case TKN_opaque      : { n = parseOpaque(child); break; }
       case TKN_variable    : { n = parseVariable(child); break; }
       case TKN_program     : { n = parseProgram(child); break; }
       case TKN_function    : { n = parseFunction(child); break; }

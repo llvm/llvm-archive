@@ -37,6 +37,8 @@
 #include <hlvm/AST/Program.h>
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/InputOutput.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
@@ -92,35 +94,16 @@ class LLVMGeneratorPass : public hlvm::Pass
     ~LLVMGeneratorPass() { }
 
   /// Conversion functions
-  inline const llvm::Type* getType(const hlvm::Type* ty);
+  const llvm::Type* getType(const hlvm::Type* ty);
+  llvm::Constant* getConstant(const hlvm::Constant* C);
+  llvm::Value* getVariable(const hlvm::Variable* V);
+  const llvm::FunctionType* getProgramFT();
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
-  const llvm::FunctionType* getProgramFT();
 
-  /// Generators
-  inline void gen(Bundle* b);
-  inline void gen(AliasType* t);
-  inline void gen(AnyType* t);
-  inline void gen(BooleanType* t);
-  inline void gen(CharacterType* t);
-  inline void gen(IntegerType* t);
-  inline void gen(RangeType* t);
-  inline void gen(EnumerationType* t);
-  inline void gen(RealType* t);
-  inline void gen(OctetType* t);
-  inline void gen(VoidType* t);
-  inline void gen(hlvm::PointerType* t);
-  inline void gen(hlvm::ArrayType* t);
-  inline void gen(VectorType* t);
-  inline void gen(StructureType* t);
-  inline void gen(SignatureType* t);
-  inline void gen(ConstantInteger* t);
-  inline void gen(ConstantText* t);
-  inline void gen(Variable* v);
-  inline void gen(hlvm::Function* f);
-  inline void gen(Program* p);
-  inline void gen(Block* f);
-  inline void gen(ReturnOp* f);
+  /// Generator
+  template <class NodeClass>
+  inline void gen(NodeClass *nc);
 
   virtual void handleInitialize();
   virtual void handle(Node* n,Pass::TraversalKinds mode);
@@ -139,17 +122,6 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
-    case SignatureTypeID:
-    {
-      std::vector<const llvm::Type*> params;
-      const SignatureType* st = llvm::cast<SignatureType>(ty);
-      for (SignatureType::const_iterator I = st->begin(), E = st->end(); 
-           I != E; ++I)
-        params.push_back(getType(*I));
-      result = llvm::FunctionType::get(
-        getType(st->getResultType()),params,st->isVarArgs());
-      break;
-    }
     case VoidTypeID: result = llvm::Type::VoidTy; break;
     case BooleanTypeID: result = llvm::Type::BoolTy; break;
     case CharacterTypeID: result = llvm::Type::UShortTy; break;
@@ -175,6 +147,9 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
     case Float128TypeID: 
       hlvmNotImplemented("extended and quad floating point");
       break;
+    case AnyTypeID:
+      hlvmNotImplemented("Any Type");
+      break;
     case IntegerTypeID:
       hlvmNotImplemented("arbitrary precision integer");
       break;
@@ -196,13 +171,43 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
         getType(llvm::cast<hlvm::PointerType>(ty)->getTargetType()));
       break;
     }
+    case VectorTypeID: {
+      const hlvm::VectorType* VT = llvm::cast<hlvm::VectorType>(ty);
+      const llvm::Type* elemType = getType(VT->getElementType());
+      result = llvm::ArrayType::get(elemType, VT->getSize());
+      break;
+    }
     case ArrayTypeID: {
-      const llvm::Type* elemType = 
-        getType(llvm::cast<hlvm::ArrayType>(ty)->getElementType());
+      const hlvm::ArrayType* AT = llvm::cast<hlvm::ArrayType>(ty);
+      const llvm::Type* elemType = getType(AT->getElementType());
       std::vector<const llvm::Type*> Fields;
       Fields.push_back(llvm::Type::UIntTy);
       Fields.push_back(llvm::PointerType::get(elemType));
       result = llvm::StructType::get(Fields);
+      break;
+    }
+    case StructureTypeID: {
+      const hlvm::StructureType* ST = llvm::cast<hlvm::StructureType>(ty);
+      std::vector<const llvm::Type*> Fields;
+      for (StructureType::const_iterator I = ST->begin(), E = ST->end(); 
+           I != E; ++I)
+        Fields.push_back(getType((*I)->getType()));
+      result = llvm::StructType::get(Fields);
+      break;
+    }
+    case SignatureTypeID:
+    {
+      std::vector<const llvm::Type*> params;
+      const SignatureType* st = llvm::cast<SignatureType>(ty);
+      for (SignatureType::const_iterator I = st->begin(), E = st->end(); 
+           I != E; ++I)
+        params.push_back(getType(*I));
+      result = llvm::FunctionType::get(
+        getType(st->getResultType()),params,st->isVarArgs());
+      break;
+    }
+    case OpaqueTypeID: {
+      return llvm::OpaqueType::get();
       break;
     }
     default:
@@ -214,139 +219,80 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
   return result;
 }
 
-void 
-LLVMGeneratorPass::gen(AliasType* t)
+llvm::Constant*
+LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
 {
-}
-void 
-LLVMGeneratorPass::gen(AnyType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(BooleanType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(CharacterType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(IntegerType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(RangeType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(EnumerationType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(RealType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(OctetType* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(VoidType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(hlvm::PointerType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(hlvm::ArrayType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(VectorType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(StructureType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(SignatureType* t)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(ConstantInteger* i)
-{
-  const hlvm::Type* hType = i->getType();
+  if (C == 0)
+    return 0;
+  const hlvm::Type* hType = C->getType();
   const llvm::Type* lType = getType(hType);
-  if (llvm::cast<IntegerType>(hType)->isSigned())
-    lops.push_back(llvm::ConstantSInt::get(lType,i->getValue()));
-  else
-    lops.push_back(llvm::ConstantUInt::get(lType,i->getValue(0)));
-}
-
-void
-LLVMGeneratorPass::gen(ConstantText* t)
-{
-}
-
-void
-LLVMGeneratorPass::gen(Variable* v)
-{
-}
-
-void 
-LLVMGeneratorPass::gen(Block* b)
-{
-  lblk = new llvm::BasicBlock(b->getLabel(),lfunc,0);
-}
-
-void
-LLVMGeneratorPass::gen(ReturnOp* r)
-{
-  llvm::ReturnInst* ret = 0;
-  if (lops.empty())
-    ret =  new llvm::ReturnInst(lblk);
-  else {
-    hlvmAssert(lops.size() == 1 && "Too many operands for ReturnInst");
-    llvm::Value* retVal = lops[0];;
-    const llvm::Type* retTy = retVal->getType();
-    if (retTy != lfunc->getReturnType()) {
-      retVal = new llvm::CastInst(retVal,lfunc->getReturnType(),"",lblk);
+  switch (C->getID()) 
+  {
+    case ConstantIntegerID:
+    {
+      const ConstantInteger* CI = llvm::cast<const ConstantInteger>(C);
+      if (llvm::cast<IntegerType>(hType)->isSigned())
+        return llvm::ConstantSInt::get(lType,CI->getValue());
+      else
+         return llvm::ConstantUInt::get(lType,CI->getValue(0));
     }
-    ret = new llvm::ReturnInst(retVal,lblk);
-    lops.clear();
+    case ConstantRealID:
+      return llvm::ConstantFP::get(lType,
+        llvm::cast<ConstantReal>(C)->getValue());
+    case ConstantTextID:
+      return llvm::ConstantArray::get(
+        llvm::cast<ConstantText>(C)->getValue(),true);
+    case ConstantZeroID:
+    {
+      switch (lType->getTypeID()) {
+        case llvm::Type::VoidTyID:
+          hlvmDeadCode("Can't get constant for void type");
+          break;
+        case llvm::Type::BoolTyID:
+          return llvm::ConstantBool::get(false);
+          break;
+        case llvm::Type::UByteTyID:
+        case llvm::Type::SByteTyID:
+        case llvm::Type::UShortTyID:
+        case llvm::Type::ShortTyID:
+        case llvm::Type::UIntTyID:
+        case llvm::Type::IntTyID:
+        case llvm::Type::ULongTyID:
+        case llvm::Type::LongTyID:
+          return llvm::ConstantInt::get(lType,0);
+          break;
+        case llvm::Type::FloatTyID:
+        case llvm::Type::DoubleTyID:
+          return llvm::ConstantFP::get(lType,0.0);
+          break;
+        case llvm::Type::LabelTyID:
+          hlvmDeadCode("Can't get constant for label type");
+          break;
+        case llvm::Type::FunctionTyID:
+        case llvm::Type::StructTyID:
+        case llvm::Type::ArrayTyID:
+        case llvm::Type::PointerTyID:
+        case llvm::Type::OpaqueTyID:
+        case llvm::Type::PackedTyID:
+          return llvm::ConstantAggregateZero::get(lType);
+        default:
+          hlvmDeadCode("Invalid LLVM Type ID");
+          break;
+      }
+      break;
+    }
+    default:
+      break;
   }
-  // RetInst is never the operand of another instruction (Terminator)
+  hlvmDeadCode("Can't decipher constant");
+  return 0;
 }
 
-llvm::GlobalValue::LinkageTypes
-LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
+llvm::Value*
+LLVMGeneratorPass::getVariable(const Variable* V) 
 {
-  return llvm::GlobalValue::LinkageTypes(lk);
-}
-
-std::string
-LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
-{
-  // if (lk->isProgram())
-    // return std::string("_hlvm_entry_") + lk->getName();
-  // FIXME: This needs to incorporate the bundle name
-  return lk->getName();
+  // FIXME: implement
+  return 0;
 }
 
 const llvm::FunctionType*
@@ -364,8 +310,235 @@ LLVMGeneratorPass::getProgramFT()
   return entry_FT;
 }
 
-void
-LLVMGeneratorPass::gen(hlvm::Function* f)
+llvm::GlobalValue::LinkageTypes
+LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
+{
+  return llvm::GlobalValue::LinkageTypes(lk);
+}
+
+std::string
+LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
+{
+  // if (lk->isProgram())
+    // return std::string("_hlvm_entry_") + lk->getName();
+  // FIXME: This needs to incorporate the bundle name
+  return lk->getName();
+}
+
+template<> void 
+LLVMGeneratorPass::gen<AliasType>(AliasType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t->getType()));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<AnyType>(AnyType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<BooleanType>(BooleanType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<CharacterType>(CharacterType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<IntegerType>(IntegerType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<RangeType>(RangeType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<EnumerationType>(EnumerationType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<RealType>(RealType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<OctetType>(OctetType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void
+LLVMGeneratorPass::gen<VoidType>(VoidType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<hlvm::PointerType>(hlvm::PointerType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<hlvm::ArrayType>(hlvm::ArrayType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<VectorType>(VectorType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<StructureType>(StructureType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<SignatureType>(SignatureType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<hlvm::OpaqueType>(hlvm::OpaqueType* t)
+{
+  lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<ConstantInteger>(ConstantInteger* i)
+{
+  llvm::Constant* C = getConstant(i);
+  lops.push_back(C);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ConstantText>(ConstantText* t)
+{
+  llvm::Constant* C = getConstant(t);
+  lops.push_back(C);
+}
+
+template<> void
+LLVMGeneratorPass::gen<Variable>(Variable* v)
+{
+  if (v->isLocal()) {
+    assert(lblk  != 0 && "Not in block context");
+    // emit a stack variable
+    const llvm::Type* elemType = getType(v->getType());
+    lops.push_back(
+      new llvm::AllocaInst(
+        /*Ty=*/ elemType,
+        /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
+        /*Name=*/ v->getName(),
+        /*InsertAtEnd=*/ lblk
+      )
+    );
+    // FIXME: Handle initializer
+  } else {
+    llvm::Constant* Initializer = getConstant(v->getInitializer());
+    new llvm::GlobalVariable(
+      /*Ty=*/ getType(v->getType()),
+      /*isConstant=*/ false,
+      /*Linkage=*/ llvm::GlobalValue::ExternalLinkage,
+      /*Initializer=*/ Initializer,
+      /*Name=*/ getLinkageName(v),
+      /*Parent=*/ lmod);
+  }
+}
+
+template<> void 
+LLVMGeneratorPass::gen<Block>(Block* b)
+{
+  lblk = new llvm::BasicBlock(b->getLabel(),lfunc,0);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ReturnOp>(ReturnOp* r)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for ReturnInst");
+  llvm::Value* retVal = lops.back(); lops.pop_back();
+  const llvm::Type* retTy = retVal->getType();
+  if (retTy != lfunc->getReturnType()) {
+    retVal = new llvm::CastInst(retVal,lfunc->getReturnType(),"",lblk);
+  }
+  new llvm::ReturnInst(retVal,lblk);
+  // RetInst is never the operand of another instruction (Terminator)
+}
+
+template<> void
+LLVMGeneratorPass::gen<StoreOp>(StoreOp* s)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for StoreOp");
+  llvm::Value* value = lops.back(); lops.pop_back();
+  llvm::Value* location = lops.back(); lops.pop_back();
+  lops.push_back(new StoreInst(location,value,lblk));
+}
+
+template<> void
+LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
+{
+  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for LoadOp");
+  llvm::Value* location = lops.back(); lops.pop_back();
+  lops.push_back(new LoadInst(location,"",lblk));
+}
+
+template<> void
+LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
+{
+  hlvmAssert(lops.size() >= 0 && "Wrong number of ops for ReferenceOp");
+  llvm::Value* v = getVariable(r->getReferent());
+  lops.push_back(v);
+}
+
+template<> void
+LLVMGeneratorPass::gen<IndexOp>(IndexOp* r)
+{
+  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for IndexOp");
+}
+
+template<> void
+LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
+{
+  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for StoreOp");
+  llvm::Value* uri = lops.back(); lops.pop_back();
+}
+
+template<> void
+LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
+{
+  hlvmAssert(lops.size() >= 3 && "Wrong number of ops for StoreOp");
+  llvm::Value* length = lops.back(); lops.pop_back();
+  llvm::Value* buffer = lops.back(); lops.pop_back();
+  llvm::Value* stream = lops.back(); lops.pop_back();
+}
+
+template<> void
+LLVMGeneratorPass::gen<CloseOp>(CloseOp* o)
+{
+  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for StoreOp");
+  llvm::Value* stream = lops.back(); lops.pop_back();
+}
+
+
+template<> void
+LLVMGeneratorPass::gen<hlvm::Function>(hlvm::Function* f)
 {
   lfunc = new llvm::Function(
     llvm::cast<llvm::FunctionType>(getType(f->getSignature())),
@@ -373,8 +546,8 @@ LLVMGeneratorPass::gen(hlvm::Function* f)
     getLinkageName(f), lmod);
 }
 
-void
-LLVMGeneratorPass::gen(Program* p)
+template<> void
+LLVMGeneratorPass::gen<hlvm::Program>(Program* p)
 {
   // points after the entire parse is completed.
   std::string linkageName = getLinkageName(p);
@@ -390,8 +563,8 @@ LLVMGeneratorPass::gen(Program* p)
   progs.push_back(lfunc);
 }
 
-void
-LLVMGeneratorPass::gen(Bundle* b)
+template<> void
+LLVMGeneratorPass::gen<Bundle>(Bundle* b)
 {
   lmod = new llvm::Module(b->getName());
   modules.push_back(lmod);
@@ -436,11 +609,28 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case VectorTypeID:            gen(llvm::cast<VectorType>(n)); break;
     case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
     case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
+    case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
     case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
     case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
     case VariableID:              gen(llvm::cast<Variable>(n)); break;
     case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
+    case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
+    case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
+    case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+    case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
+    case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
+    case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
+
+    // ignore end of block, program, function and bundle
+    case BundleID:
+    case ProgramID:
+    case FunctionID:
+    case BlockID:
+      break;
+
+    // everything else is an error
     default:
+      hlvmNotImplemented("Node of unimplemented type");
       break;
     }
   }

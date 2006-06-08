@@ -67,6 +67,13 @@
     </data>
   </define>
 
+  <define name="C_Identifier.type">
+    <data type="string">
+      <param name="pattern">[A-Za-z_][A-Za-z0-9_]*</param>
+      <param name="maxLength">256</param>
+    </data>
+  </define>
+
   <define name="Boolean.type">
     <choice>
       <data type="boolean"/>
@@ -158,11 +165,9 @@
     <element name="bundle">
       <ref name="Named_Element.pat"/>
       <ref name="Documentation.pat"/>
-      <optional>
-        <zeroOrMore>
-          <ref name="import.elem"/>
-        </zeroOrMore>
-      </optional>
+      <zeroOrMore>
+        <ref name="import.elem"/>
+      </zeroOrMore>
       <zeroOrMore>
         <choice>
           <ref name="alias.elem"/>
@@ -173,6 +178,7 @@
           <ref name="structure.elem"/>
           <ref name="signature.elem"/>
           <ref name="vector.elem"/>
+          <ref name="opaque.elem"/>
           <ref name="variable.elem"/>
           <ref name="function.elem"/>
           <ref name="program.elem"/>
@@ -400,9 +406,12 @@
       <optional>
         <attribute name="linkage"><ref name="Linkage.type"/></attribute>
       </optional>
-      <zeroOrMore>
-        <ref name="block.elem"/>
-      </zeroOrMore>
+      <choice>
+        <element name="as"><ref name="C_Identifier.type"/></element>
+        <zeroOrMore>
+          <ref name="block.elem"/>
+        </zeroOrMore>
+      </choice>
     </element>
   </define>
 

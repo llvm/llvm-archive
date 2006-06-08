@@ -2,9 +2,11 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng"
       pubid="http://hlvm.org/src/hlvm/test/xml2xml/helloworld.hlx">
   <bundle id="helloworld">
+    <opaque id="stream"/>
+    <pointer id="streamp" to="stream"/>
     <program id="helloworld">
       <block>
-        <variable id="stdout" type="io"/>
+        <variable id="stdout" type="streamp"/>
         <store>
           <ref id="stdout"/>
           <open><text>hlvm:std:out</text></open>

@@ -8,8 +8,8 @@ def CPP2LLVMCPPAction(target,source,env):
   src = source[0].path
   tgt = target[0].path
   theAction = env.Action(
-    "PATH='" + env['LLVM_bin'] + "' " + env['with_llvmgxx'] + 
-      " -c -x c++ " + src + " -o - | " + 
+    "PATH='" + env['LLVM_bin'] + "' " + env['with_llvmgxx'] + env['CXXFLAGS'] +
+      " -c --emit-llvm -O3 -x c++ " + src + " -o - | " + 
     env['with_llvmdis'] + " -o - | " + 
     env['with_llvm2cpp'] + " " + env['LLVM2CPPFLAGS'] + " -o " + tgt
   )

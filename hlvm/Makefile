@@ -9,12 +9,18 @@
 # make.
 #------------------------------------------------------------------------------
 
+.PHONY: all check install hlvm tools
 all:
 	scons -Q
 
-check: 
+check:  all
 	scons -Q check
 
 install:
 	scons -Q install
 
+hlvm:
+	cd hlvm ; scons -Q -u
+
+tools:
+	cd tools ; scons -Q -u

@@ -742,8 +742,8 @@ XMLReaderImpl::parseReference(xmlNodePtr& cur)
 {
   std::string id = getAttribute(cur,"id");
   Locator* loc = getLocator(cur);
-  ReferenceOp* result = ast->new_NilaryOp<ReferenceOp>(loc);
-  result->setVarName(id);
+  ReferenceOp* result = ast->AST::new_NilaryOp<ReferenceOp>(loc);
+  // result->setReferent(id);
   return result;
 }
 
@@ -753,7 +753,7 @@ XMLReaderImpl::parseNilaryOp(xmlNodePtr& cur)
 {
   xmlNodePtr child = cur->children;
   Locator* loc = getLocator(cur);
-  return ast->new_NilaryOp<OpClass>(loc);
+  return ast->AST::new_NilaryOp<OpClass>(loc);
 }
 
 template<class OpClass>
@@ -763,7 +763,7 @@ XMLReaderImpl::parseUnaryOp(xmlNodePtr& cur)
   xmlNodePtr child = cur->children;
   Value* oprnd1 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->new_UnaryOp<OpClass>(oprnd1,loc);
+  return ast->AST::new_UnaryOp<OpClass>(oprnd1,loc);
 }
 
 template<class OpClass>
@@ -774,7 +774,7 @@ XMLReaderImpl::parseBinaryOp(xmlNodePtr& cur)
   Value* oprnd1 = getValue(child);
   Value* oprnd2 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->new_BinaryOp<OpClass>(oprnd1,oprnd2,loc);
+  return ast->AST::new_BinaryOp<OpClass>(oprnd1,oprnd2,loc);
 }
 
 template<class OpClass>
@@ -786,7 +786,7 @@ XMLReaderImpl::parseTernaryOp(xmlNodePtr& cur)
   Value* oprnd2 = getValue(child);
   Value* oprnd3 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
+  return ast->AST::new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
 }
 
 inline Constant*

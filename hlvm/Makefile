@@ -16,6 +16,9 @@ all:
 check:  all
 	scons -Q check
 
+clean:
+	scons -Q --clean 
+
 install:
 	scons -Q install
 

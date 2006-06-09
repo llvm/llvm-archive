@@ -41,7 +41,7 @@ def BytecodeFromCppAction(target,source,env):
   tgt = target[0].path
   theAction = env.Action(
     "PATH='" + env['LLVM_bin'] + "' " + env['with_llvmgxx'] + ' $CXXFLAGS ' + 
-    includes + defines + " -c --emit-llvm -g -O3 -x c++ " + src + " -o " + tgt )
+    includes + defines + " -c -emit-llvm -g -O3 -x c++ " + src + " -o " + tgt )
   env.Depends(target,env['with_llvmgxx'])
   return env.Execute(theAction);
 

@@ -354,7 +354,7 @@ INPUT                  = @AbsSrcRoot@/hlvm @AbsObjRoot@/hlvm @AbsSrcRoot@/docs/d
 # *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx *.hpp 
 # *.h++ *.idl *.odl
 
-FILE_PATTERNS          = *.cpp *.C *.h *.i *.t *.p *.doxy *.msgs
+FILE_PATTERNS          = *.cpp *.c *.cxx *.h *.inc
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories 
 # should be searched for input files as well. Possible values are YES and NO. 

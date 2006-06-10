@@ -21,12 +21,11 @@
 #
 #===----------------------------------------------------------------------===#
 from build import hlvm
-from os.path import join as pjoin
 Import('env')
-hlvm.GetDoxygen(env)
-hlvm.GetXSLTproc(env)
-hlvm.GetConfigFile(env)
-env.ConfigFile('Doxyfile','Doxyfile.in')
-env.Doxygen('doxygen.tar.gz','Doxyfile')
-env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])
-
+if 'docs' in COMMAND_LINE_TARGETS:
+  hlvm.GetDoxygen(env)
+  hlvm.GetXSLTproc(env)
+  hlvm.GetConfigFile(env)
+  env.ConfigFile('Doxyfile','Doxyfile.in')
+  env.Doxygen('doxygen.tar.gz','Doxyfile')
+  env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])

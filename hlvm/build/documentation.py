@@ -26,7 +26,7 @@ def DoxygenAction(target,source,env):
   env.Depends(tgtpath,'doxygen.intro')
   env.Depends(tgtpath,'doxygen.css')
   env.Depends(tgtpath,getHeaders(env))
-  if env.Execute(env['with_doxygen'] + ' ' + srcpath + ' >' + 
+  if 0 == env.Execute(env['with_doxygen'] + ' ' + srcpath + ' >' + 
       pjoin(tgtdir,'doxygen.out')):
     return env.Execute(env['TAR'] + ' zcf ' + tgtpath + ' ' + 
       pjoin(tgtdir,'apis'))

@@ -40,3 +40,18 @@ linkage requirements are permitted.
 The Runtime library must not #include any system headers. Instead it should use
 the facilities of the APR or APRUTIL libraries.
 
+7. Three Layers
+------------------------
+There are three layers of abstraction in the runtime. The first layer is what
+user programs can see. At this level, most everything is a void*. This is so
+that the implementation choices are not restricted and so that runtime
+implementation can change without affecting its users. 
+
+The second layer is that which is common to the runtime. That is, between
+compilation units of the runtime itself. At this level, most of the types are
+defined as simple structs which allow access to data members between modules.
+
+The third layer is that which is internal to the defining module.  Each module
+might decide to embellish the inter-module definition of a given type,
+including by making it a C++ class. None of this can be exposed outside the
+module.

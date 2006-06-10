@@ -27,29 +27,47 @@
 /// @brief Implements the runtime error handling facilities.
 //===----------------------------------------------------------------------===//
 
+#include <hlvm/Runtime/Internal.h>
+
 extern "C" {
 
-#include <apr-1/apr_file_io.h>
 #include <hlvm/Runtime/Error.h>
-#include <hlvm/Runtime/Internal.h>
 #include <stdlib.h>
 
-void 
-hlvm_error(ErrorCodes ec, const char* arg)
+void
+hlvm_verror(ErrorCodes ec, va_list ap)
 {
-  const char* msg = "Unknown";
+  const char* format = "Unknown Error";
   switch (ec) {
-    case E_UNHANDLED_EXCEPTION: msg = "Unhandled Exception"; break;
-    case E_BAD_OPTION         : msg = "Unrecognized option"; break;
-    case E_MISSING_ARGUMENT   : msg = "Missing option argument"; break;
-    case E_NO_PROGRAM_NAME    : msg = "Program name not specified"; break;
-    case E_PROGRAM_NOT_FOUND  : msg = "Program not found"; break;
+    case E_UNHANDLED_EXCEPTION: format = "Unhandled Exception"; break;
+    case E_BAD_OPTION         : format = "Unrecognized option: %s"; break;
+    case E_MISSING_ARGUMENT   : format = "Missing option argument for %s";break;
+    case E_NO_PROGRAM_NAME    : format = "Program name not specified"; break;
+    case E_PROGRAM_NOT_FOUND  : format = "Program '%s' not found"; break;
+    case E_APR_ERROR          : format = "%s while %s"; break;
+    case E_ASSERT_FAIL        : format = "Assertion Failure: (%s) at %s:%d"; break;
+    case E_OPTION_ERROR       : format = "In Options: %s"; break;
     default: break;
   }
-  if (arg)
-    apr_file_printf(_hlvm_stderr, "Error: %s: %s\n", msg, arg);
-  else
-    apr_file_printf(_hlvm_stderr, "Error: %s\n", msg);
+  char* msg = apr_pvsprintf(_hlvm_pool, format, ap);
+  apr_file_printf(_hlvm_stderr, "Error: %s\n", msg);
+}
+
+void 
+hlvm_error(ErrorCodes ec, ...)
+{
+  va_list ap;
+  va_start(ap,ec);
+  hlvm_verror(ec,ap);
+}
+
+void 
+hlvm_fatal(ErrorCodes ec, ...)
+{
+  va_list ap;
+  va_start(ap,ec);
+  hlvm_verror(ec,ap);
+  exit(ec);
 }
 
 void hlvm_panic(const char* msg) {

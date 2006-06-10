@@ -58,10 +58,9 @@ class Variable : public LinkageItem
   /// @{
   public:
     bool isConstant() const { return isConst; }
-    bool isLocal() const;
     Constant* getInitializer() { return init; }
     static inline bool classof(const Variable*) { return true; }
-    static inline bool classof(const Node* N) { return N->isVariable(); }
+    static inline bool classof(const Node* N) { return N->is(VariableID); }
 
   /// @}
   /// @name Mutators

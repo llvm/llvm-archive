@@ -2,58 +2,9 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
     <doc><p>This is a documentation node for a bundle element</p></doc>
-    <atom id="someType">
-      <doc><p>Atom Doc</p></doc>
-      <intrinsic is="any"/>
-    </atom>
-    <alias id="anAlias" renames="someType">
-      <doc><p>Alias Doc</p></doc>
-    </alias>
-    <array id="anArray" of="someType" length="128">
-      <doc><p>Array Doc</p></doc>
-    </array>
-    <enumeration id="anEnumeration">
-      <doc>This is anEnumeration</doc>
-      <enumerator id="one"/>
-      <enumerator id="two"/>
-      <enumerator id="three"/>
-      <enumerator id="four"/>
-    </enumeration>
     <atom id="1">
       <doc>Any can hold anything. It provides the dynamic typing</doc>
       <intrinsic is="any"/>
-    </atom>
-    <atom id="2">
-      <doc>Obviously this is a boolean</doc>
-      <intrinsic is="bool"/>
-    </atom>
-    <atom id="3">
-      <doc>UTF-16 character</doc>
-      <intrinsic is="char"/>
-    </atom>
-    <atom id="4">
-      <doc>IEEE Quad Floating Point (128 bits)</doc>
-      <intrinsic is="f128"/>
-    </atom>
-    <atom id="5">
-      <doc>IEEE Extended Double Floating Point (80 bits)</doc>
-      <intrinsic is="f80"/>
-    </atom>
-    <atom id="6">
-      <doc>IEEE Double Floating Point (64 bits)</doc>
-      <intrinsic is="f64"/>
-    </atom>
-    <atom id="7">
-      <doc>IEEE Extended Single Floating Point (43 bits)</doc>
-      <intrinsic is="f44"/>
-    </atom>
-    <atom id="8">
-      <doc>IEEE Single Floating Point (32 bits)</doc>
-      <intrinsic is="f32"/>
-    </atom>
-    <atom id="9">
-      <doc>Signed 128 bit integer</doc>
-      <intrinsic is="s128"/>
     </atom>
     <atom id="10">
       <doc>Signed 64 bit integer</doc>
@@ -95,14 +46,62 @@
       <doc>Unsigned 8 bit integer</doc>
       <intrinsic is="u8"/>
     </atom>
+    <atom id="2">
+      <doc>Obviously this is a boolean</doc>
+      <intrinsic is="bool"/>
+    </atom>
     <atom id="20">
       <doc>The void type, zero size</doc>
       <intrinsic is="void"/>
     </atom>
+    <atom id="3">
+      <doc>UTF-16 character</doc>
+      <intrinsic is="char"/>
+    </atom>
+    <atom id="4">
+      <doc>IEEE Quad Floating Point (128 bits)</doc>
+      <intrinsic is="f128"/>
+    </atom>
+    <atom id="5">
+      <doc>IEEE Extended Double Floating Point (80 bits)</doc>
+      <intrinsic is="f80"/>
+    </atom>
+    <atom id="6">
+      <doc>IEEE Double Floating Point (64 bits)</doc>
+      <intrinsic is="f64"/>
+    </atom>
+    <atom id="7">
+      <doc>IEEE Extended Single Floating Point (43 bits)</doc>
+      <intrinsic is="f44"/>
+    </atom>
+    <atom id="8">
+      <doc>IEEE Single Floating Point (32 bits)</doc>
+      <intrinsic is="f32"/>
+    </atom>
+    <atom id="9">
+      <doc>Signed 128 bit integer</doc>
+      <intrinsic is="s128"/>
+    </atom>
     <pointer id="aPointerType" to="someType">
       <doc>A Pointer Type</doc>
     </pointer>
-    <signature id="struct2" result="someType" varargs="true">
+    <vector id="aVector" of="f32" length="128">
+      <doc>Vector doc</doc>
+    </vector>
+    <alias id="anAlias" renames="someType">
+      <doc><p>Alias Doc</p></doc>
+    </alias>
+    <array id="anArray" of="someType" length="128">
+      <doc><p>Array Doc</p></doc>
+    </array>
+    <enumeration id="anEnumeration">
+      <doc>This is anEnumeration</doc>
+      <enumerator id="one"/>
+      <enumerator id="two"/>
+      <enumerator id="three"/>
+      <enumerator id="four"/>
+    </enumeration>
+    <signature id="sig1" result="someType" varargs="true">
       <doc>This is signature doc</doc>
       <arg id="arg1" type="someType">
         <doc>Doc for "arg1"</doc>
@@ -111,6 +110,10 @@
         <doc><i>Doc for "arg2"</i></doc>
       </arg>
     </signature>
+    <atom id="someType">
+      <doc><p>Atom Doc</p></doc>
+      <intrinsic is="any"/>
+    </atom>
     <structure id="struct2">
       <doc>This is structure doc</doc>
       <field id="field1" type="someType">
@@ -120,9 +123,6 @@
         <doc>Documentation for field 2</doc>
       </field>
     </structure>
-    <vector id="aVector" of="f32" length="128">
-      <doc>Vector doc</doc>
-    </vector>
     <variable id="var" type="int">
       <doc><p>This is documentation for a <i>var</i>iable</p></doc>
     </variable>

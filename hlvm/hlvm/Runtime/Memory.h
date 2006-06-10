@@ -30,14 +30,8 @@
 #ifndef HLVM_RUNTIME_MEMORY_H
 #define HLVM_RUNTIME_MEMORY_H
 
-#include <llvm/Support/DataTypes.h>
+#include <apr-1/apr.h>
 
-extern "C" {
-
-void* hlvm_allocate_array(uint64_t count, uint64_t elemSize);
-
-void hlvm_deallocate_array(void* ptr);
-
-}
+typedef apr_uint64_t hlvm_size;
 
 #endif

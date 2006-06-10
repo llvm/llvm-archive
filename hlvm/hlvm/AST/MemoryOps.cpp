@@ -33,6 +33,8 @@ namespace hlvm {
 
 LoadOp::~LoadOp() {}
 StoreOp::~StoreOp() {}
+AutoVarOp::~AutoVarOp() {}
 ReferenceOp::~ReferenceOp() {}
+IndexOp::~IndexOp() {}
 
 }

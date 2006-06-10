@@ -44,9 +44,6 @@ class OpenOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
-  public:
-    static OpenOp* create();
-
   protected:
     OpenOp() : UnaryOperator(OpenOpID)  {}
     virtual ~OpenOp();
@@ -70,9 +67,6 @@ class CloseOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
-  public:
-    static CloseOp* create();
-
   protected:
     CloseOp() : UnaryOperator(CloseOpID)  {}
     virtual ~CloseOp();
@@ -92,15 +86,35 @@ class CloseOp : public UnaryOperator
 /// operands: [1] the stream to write, [2] the data buffer to write, [3] the
 /// length of the data buffer.
 /// @brief HLVM AST Write Stream Operator
-class WriteOp : public TernaryOperator
+class ReadOp : public BinaryOperator
 {
   /// @name Constructors
   /// @{
-  public:
-    static WriteOp* create();
-
   protected:
-    WriteOp() : TernaryOperator(WriteOpID)  {}
+    ReadOp() : BinaryOperator(ReadOpID)  {}
+    virtual ~ReadOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ReadOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ReadOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This node type represents a stream write operation. There are three 
+/// operands: [1] the stream to write, [2] the data buffer to write, [3] the
+/// length of the data buffer.
+/// @brief HLVM AST Write Stream Operator
+class WriteOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    WriteOp() : BinaryOperator(WriteOpID)  {}
     virtual ~WriteOp();
 
   /// @}

@@ -113,6 +113,7 @@ class UnaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
+    Value* getOperand() const { return op1; }
     virtual size_t  numOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const UnaryOperator*) { return true; }

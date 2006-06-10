@@ -38,11 +38,11 @@ namespace hlvm
 
   /// Convert an Abstract Syntax Tree into LLVM bytecode written on the output 
   /// stream.
-  void generateBytecode(AST* input, std::ostream& output);
+  void generateBytecode(AST* input, std::ostream& output, bool verify = true);
 
   /// Convert an Abstract Syntax Tree into LLVM assembly written on the output
   /// stream.
-  void generateAssembly(AST* input, std::ostream& output);
+  void generateAssembly(AST* input, std::ostream& output, bool verify = true);
 
 } // hlvm
 #endif

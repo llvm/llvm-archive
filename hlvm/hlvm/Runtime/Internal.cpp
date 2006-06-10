@@ -27,11 +27,10 @@
 /// @brief Declares the implementation to the internal runtime facilities
 //===----------------------------------------------------------------------===//
 
-#include <apr-1/apr_file_io.h>
+#include <hlvm/Runtime/Internal.h>
 
 extern "C" {
 
-#include <hlvm/Runtime/Internal.h>
 #include <hlvm/Runtime/Error.h>
 
 apr_pool_t* _hlvm_pool = 0;
@@ -45,6 +44,23 @@ void _hlvm_initialize()
     hlvm_panic("Can't create the pool");
   if (APR_SUCCESS != apr_file_open_stderr(&_hlvm_stderr, _hlvm_pool))
     hlvm_panic("Can't open stderr");
+}
+
+bool hlvm_apr_error(apr_status_t stat, const char* whilst)
+{
+  if (APR_SUCCESS != stat) {
+    char buffer[1024];
+    apr_strerror(stat,buffer,1024);
+    hlvm_error(E_APR_ERROR, buffer, whilst);
+    return false;
+  }
+  return true;
+}
+
+bool hlvm_assert_fail(const char* expr, const char* file, int line)
+{
+  hlvm_error(E_ASSERT_FAIL,expr,file,line);
+  return false;
 }
 
 }

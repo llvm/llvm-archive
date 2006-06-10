@@ -28,11 +28,45 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Block.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/Base/Assert.h>    
+#include <llvm/Support/Casting.h>
 
 namespace hlvm {
 
 Block::~Block()
 {
+}
+
+void 
+Block::insertChild(Node* child)
+{
+  hlvmAssert(llvm::isa<Operator>(child));
+  if (llvm::isa<AutoVarOp>(child)) {
+    AutoVarOp* av = llvm::cast<AutoVarOp>(child);
+    autovars[av->getName()] = av;
+  }
+  MultiOperator::insertChild(child);
+}
+
+void 
+Block::removeChild(Node* child)
+{
+  hlvmAssert(llvm::isa<Operator>(child));
+  if (llvm::isa<AutoVarOp>(child)) {
+    AutoVarOp* av = llvm::cast<AutoVarOp>(child);
+    autovars.erase(av->getName());
+  }
+  MultiOperator::removeChild(child);
+}
+
+AutoVarOp*   
+Block::getAutoVar(const std::string& name) const
+{
+  AutoVarMap::const_iterator I = autovars.find(name);
+  if (I == autovars.end())
+    return 0;
+  return I->second;
 }
 
 }

@@ -30,10 +30,6 @@
 #ifndef HLVM_RUNTIME_PROGRAM_H
 #define HLVM_RUNTIME_PROGRAM_H
 
-#include <hlvm/Runtime/String.h>
-
-extern "C" {
-
 /// This is the type of a program entry point function.
 typedef int (*hlvm_program_type)(int, const char **);
 
@@ -46,7 +42,5 @@ struct hlvm_programs_element {
 /// This function searches the hlvm_programs array for an entry matching
 /// uri and returns a pointer to the corresponding program.
 extern hlvm_program_type hlvm_find_program(const char* uri);
-
-}
 
 #endif

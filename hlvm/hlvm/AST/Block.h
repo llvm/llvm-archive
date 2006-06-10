@@ -31,9 +31,12 @@
 #define HLVM_AST_BLOCK_H
 
 #include <hlvm/AST/Operator.h>
+#include <map>
 
 namespace hlvm 
 {
+
+class AutoVarOp;
 
 /// This class represents an Variable in the HLVM Abstract Syntax Tree.  
 /// A Variable is a storage location of a specific type. It can either be
@@ -54,20 +57,25 @@ class Block : public MultiOperator
   /// @{
   public:
     const std::string& getLabel() const { return label; }
+    AutoVarOp*   getAutoVar(const std::string& name) const; 
     static inline bool classof(const Block*) { return true; }
-    static inline bool classof(const Operator* O) { return O->isBlock(); }
-    static inline bool classof(const Node* N) { return N->isBlock(); }
+    static inline bool classof(const Node* N) { return N->is(BlockID); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
     void setLabel(const std::string& l) { label = l; }
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
   /// @}
   /// @name Data
   /// @{
-  public:
+  private:
+    typedef std::map<std::string,AutoVarOp*> AutoVarMap;
     std::string label;
+    AutoVarMap  autovars;
   /// @}
   friend class AST;
 };

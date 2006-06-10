@@ -35,10 +35,15 @@ enum ErrorCodes {
   E_BAD_OPTION,
   E_MISSING_ARGUMENT,
   E_NO_PROGRAM_NAME,
-  E_PROGRAM_NOT_FOUND
+  E_PROGRAM_NOT_FOUND,
+  E_APR_ERROR,
+  E_ASSERT_FAIL,
+  E_OPTION_ERROR
 };
 
-void hlvm_error(ErrorCodes ec, const char* msg);
+void hlvm_error(ErrorCodes ec, ...);
+void hlvm_verror(ErrorCodes ec, va_list ap);
+void hlvm_fatal(ErrorCodes ec, ...);
 void hlvm_panic(const char *msg);
 
 #endif

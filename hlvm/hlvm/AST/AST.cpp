@@ -56,13 +56,15 @@ class ASTImpl : public AST
   public:
     ASTImpl()
       : types(), vars(), funcs(), unresolvedTypes(), 
+        AnyTypeSingleton(0),
         VoidSingleton(0), BooleanSingleton(), CharacterSingleton(0), 
         OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
         UInt32Singleton(0), UInt64Singleton(0), UInt128Singleton(0),
         SInt8Singleton(0), SInt16Singleton(0), SInt32Singleton(0),
         SInt64Singleton(0), SInt128Singleton(0),  Float32Singleton(0),
         Float44Singleton(0), Float64Singleton(0), Float80Singleton(0),
-        Float128Singleton(0), ProgramTypeSingleton(0)
+        Float128Singleton(0), TextTypeSingleton(0), StreamTypeSingleton(0),
+        BufferTypeSingleton(0), ProgramTypeSingleton(0)
       {
         pool = Pool::create("ASTPool",0,false,1024,4,0);
       }
@@ -78,6 +80,7 @@ class ASTImpl : public AST
     SymbolTable    vars;
     SymbolTable    funcs;
     SymbolTable    unresolvedTypes;
+    AnyType*       AnyTypeSingleton;
     VoidType*      VoidSingleton;
     BooleanType*   BooleanSingleton;
     CharacterType* CharacterSingleton;
@@ -97,6 +100,9 @@ class ASTImpl : public AST
     RealType*      Float64Singleton;
     RealType*      Float80Singleton;
     RealType*      Float128Singleton;
+    TextType*      TextTypeSingleton;
+    StreamType*    StreamTypeSingleton;
+    BufferType*    BufferTypeSingleton;
     SignatureType* ProgramTypeSingleton;
 
   public:
@@ -353,7 +359,7 @@ AST::new_PointerType(
   PointerType* result = new PointerType();
   result->setLocator(loc);
   result->setName(id);
-  result->setTargetType(target);
+  result->setElementType(target);
   static_cast<ASTImpl*>(this)->addType(result);
   return result;
 }
@@ -396,7 +402,7 @@ AST::new_AliasType(const std::string& id, Type* referrant, const Locator* loc)
   AliasType* result = new AliasType();
   result->setLocator(loc);
   result->setName(id);
-  result->setType(referrant);
+  result->setElementType(referrant);
   static_cast<ASTImpl*>(this)->addType(result);
   return result;
 }
@@ -435,20 +441,22 @@ AST::new_OpaqueType(const std::string& id, const Locator* loc)
 }
 
 ConstantInteger*
-AST::new_ConstantInteger(uint64_t v, const Locator* loc)
+AST::new_ConstantInteger(uint64_t v, Type* Ty, const Locator* loc)
 {
   ConstantInteger* result = new ConstantInteger();
   result->setLocator(loc);
   result->setValue(v);
+  result->setType(Ty);
   return result;
 }
 
 ConstantReal*
-AST::new_ConstantReal(double v, const Locator* loc)
+AST::new_ConstantReal(double v, Type* Ty, const Locator* loc)
 {
   ConstantReal* result = new ConstantReal();
   result->setLocator(loc);
   result->setValue(v);
+  result->setType(Ty);
   return result;
 }
 
@@ -458,6 +466,7 @@ AST::new_ConstantText(const std::string& v, const Locator* loc)
   ConstantText* result = new ConstantText();
   result->setLocator(loc);
   result->setValue(v);
+  result->setType( getPrimitiveType(TextTypeID) );
   return result;
 }
 
@@ -579,13 +588,15 @@ template StoreOp*
 AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc);
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc);
+template AutoVarOp*
+AST::new_UnaryOp<AutoVarOp>(Value*op1,const Locator* loc);
 template ReferenceOp* 
 AST::new_NilaryOp<ReferenceOp>(const Locator*loc);
 // Input/Output Operators
 template OpenOp* 
 AST::new_UnaryOp<OpenOp>(Value*op1,const Locator*loc);
 template WriteOp* 
-AST::new_TernaryOp<WriteOp>(Value*op1,Value*op2,Value*op3,const Locator*loc);
+AST::new_BinaryOp<WriteOp>(Value*op1,Value*op2,const Locator*loc);
 template CloseOp* 
 AST::new_UnaryOp<CloseOp>(Value*op1,const Locator*loc);
 
@@ -603,14 +614,33 @@ AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
   Argument* result = new Argument();
   result->setLocator(loc);
   result->setName(id);
-  result->setType(ty);
+  result->setElementType(ty);
+  return result;
+}
+
+BufferType* 
+AST::new_BufferType( const std::string& id, const Locator* loc)
+{
+  BufferType* result = new BufferType();
+  result->setName(id);
+  result->setLocator(loc);
+  return result;
+}
+
+StreamType* 
+AST::new_StreamType( const std::string& id, const Locator* loc)
+{
+  StreamType* result = new StreamType();
+  result->setName(id);
+  result->setLocator(loc);
   return result;
 }
 
 TextType*
 AST::new_TextType(const std::string& id, const Locator* loc)
 {
-  TextType* result = new TextType(id);
+  TextType* result = new TextType();
+  result->setName(id);
   result->setLocator(loc);
   return result;
 }
@@ -621,6 +651,12 @@ AST::getPrimitiveType(NodeIDs pid)
   ASTImpl* ast = static_cast<ASTImpl*>(this);
   switch (pid) 
   {
+    case AnyTypeID:
+      if (!ast->AnyTypeSingleton) {
+        ast->AnyTypeSingleton = new AnyType();
+        ast->AnyTypeSingleton->setName("any");
+      }
+      return ast->AnyTypeSingleton;
     case VoidTypeID:
       if (!ast->VoidSingleton) {
         ast->VoidSingleton = new VoidType();
@@ -735,6 +771,21 @@ AST::getPrimitiveType(NodeIDs pid)
         ast->Float128Singleton->setName("f128");
       }
       return ast->Float128Singleton;
+    case TextTypeID:
+      if (!ast->TextTypeSingleton) {
+        ast->TextTypeSingleton = new TextType();
+      }
+      return ast->TextTypeSingleton;
+    case StreamTypeID:
+      if (!ast->StreamTypeSingleton) {
+        ast->StreamTypeSingleton = new StreamType();
+      }
+      return ast->StreamTypeSingleton;
+    case BufferTypeID:
+      if (!ast->BufferTypeSingleton) {
+        ast->BufferTypeSingleton = new BufferType();
+      }
+      return ast->BufferTypeSingleton;
     default:
       hlvmDeadCode("Invalid Primitive");
       break;

@@ -54,11 +54,11 @@ void
 Bundle::insertChild(Node* kid)
 {
   if (kid->isType())
-    types.push_back(cast<Type>(kid));
-  else if (kid->isVariable())
-    vars.push_back(cast<Variable>(kid));
+    types.insert(cast<Type>(kid)->getName(), kid);
+  else if (kid->is(VariableID))
+    vars.insert(cast<Variable>(kid)->getName(), kid);
   else if (kid->isFunction())
-    funcs.push_back(cast<Function>(kid));
+    funcs.insert(cast<Function>(kid)->getName(), kid);
   else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }
@@ -69,19 +69,31 @@ Bundle::removeChild(Node* kid)
   hlvmAssert(isa<LinkageItem>(kid) && "Can't remove that here");
   // This is sucky slow, but we probably won't be removing nodes that much.
   if (kid->isType()) {
-    for (type_iterator I = type_begin(), E = type_end(); I != E; ++I ) {
-      if (*I == kid) { types.erase(I); return; }
-    }
-  } else if (kid->isVariable()) {
-    for (var_iterator I = var_begin(), E = var_end(); I != E; ++I ) {
-      if (*I == kid) { vars.erase(I); return; }
-    }
+    types.erase(cast<Type>(kid)->getName());
+  } else if (kid->is(VariableID)) {
+    vars.erase(cast<Variable>(kid)->getName());
   } else if (kid->isFunction()) {
-    for (func_iterator I = func_begin(), E = func_end(); I != E; ++I ) {
-      if (*I == kid) { funcs.erase(I); return; }
-    }
+    funcs.erase(cast<Function>(kid)->getName());
   }
   hlvmAssert(!"That node isn't my child");
+}
+
+Type*  
+Bundle::type_find(const std::string& name) const
+{
+  return llvm::cast<Type>(types.lookup(name));
+}
+
+Function*  
+Bundle::func_find(const std::string& name) const
+{
+  return llvm::cast<Function>(funcs.lookup(name));
+}
+
+Variable*  
+Bundle::var_find(const std::string& name) const
+{
+  return llvm::cast<Variable>(vars.lookup(name));
 }
 
 }

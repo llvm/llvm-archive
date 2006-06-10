@@ -79,10 +79,10 @@ PassManagerImpl::runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m)
   if (interest == 0 ||
      ((interest & Pass::Type_Interest) && n->isType()) ||
      ((interest & Pass::Function_Interest) && n->isFunction()) ||
-     ((interest & Pass::Block_Interest) && n->isBlock()) ||
+     ((interest & Pass::Block_Interest) && n->is(BlockID)) ||
      ((interest & Pass::Operator_Interest) && n->isOperator()) ||
-     ((interest & Pass::Program_Interest) && n->isProgram()) ||
-     ((interest & Pass::Variable_Interest) && n->isVariable())
+     ((interest & Pass::Program_Interest) && n->is(ProgramID)) ||
+     ((interest & Pass::Variable_Interest) && n->is(VariableID))
      ) {
     p->handle(n,m);
   }
@@ -165,19 +165,19 @@ PassManagerImpl::runOn(Bundle* b)
   runPreOrder(b);
   for (Bundle::type_iterator TI =b->type_begin(), TE = b->type_end(); 
        TI != TE; ++TI) {
-    runPreOrder(*TI);
-    runPostOrder(*TI);
+    runPreOrder(const_cast<Node*>(TI->second));
+    runPostOrder(const_cast<Node*>(TI->second));
   }
   for (Bundle::var_iterator VI = b->var_begin(), VE = b->var_end(); 
        VI != VE; ++VI) {
-    runPreOrder(*VI);
-    runPostOrder(*VI);
+    runPreOrder(const_cast<Node*>(VI->second));
+    runPostOrder(const_cast<Node*>(VI->second));
   }
   for (Bundle::func_iterator FI = b->func_begin(), FE = b->func_end(); 
        FI != FE; ++FI) {
-    runPreOrder(*FI);
-    runOn((*FI)->getBlock());
-    runPostOrder(*FI);
+    runPreOrder(const_cast<Node*>(FI->second));
+    runOn(llvm::cast<Function>(FI->second)->getBlock());
+    runPostOrder(const_cast<Node*>(FI->second));
   }
   runPostOrder(b);
 }

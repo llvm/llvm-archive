@@ -39,7 +39,7 @@ Type::~Type()
 void
 Type::insertChild(Node* n)
 {
-  hlvmAssert(!"This type doesn't accept children!");
+  hlvmAssert(!"This Type doesn't accept children!");
 }
 
 const char*
@@ -221,32 +221,6 @@ const char*
 VoidType::getPrimitiveName() const
 {
   return "void";
-}
-
-PointerType::~PointerType()
-{
-}
-
-ArrayType::~ArrayType()
-{
-}
-
-VectorType::~VectorType()
-{
-}
-
-AliasType::~AliasType()
-{
-}
-
-const char*
-AliasType::getPrimitiveName() const
-{
-  return type->getPrimitiveName();
-}
-
-TextType::~TextType()
-{
 }
 
 OpaqueType::~OpaqueType()

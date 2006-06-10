@@ -4,30 +4,6 @@
     <atom id="1">
       <intrinsic is="any"/>
     </atom>
-    <atom id="2">
-      <intrinsic is="bool"/>
-    </atom>
-    <atom id="3">
-      <intrinsic is="char"/>
-    </atom>
-    <atom id="4">
-      <intrinsic is="f128"/>
-    </atom>
-    <atom id="5">
-      <intrinsic is="f80"/>
-    </atom>
-    <atom id="6">
-      <intrinsic is="f64"/>
-    </atom>
-    <atom id="7">
-      <intrinsic is="f44"/>
-    </atom>
-    <atom id="8">
-      <intrinsic is="f32"/>
-    </atom>
-    <atom id="9">
-      <intrinsic is="s128"/>
-    </atom>
     <atom id="10">
       <intrinsic is="s64"/>
     </atom>
@@ -58,8 +34,32 @@
     <atom id="19">
       <intrinsic is="u8"/>
     </atom>
+    <atom id="2">
+      <intrinsic is="bool"/>
+    </atom>
     <atom id="20">
       <intrinsic is="void"/>
+    </atom>
+    <atom id="3">
+      <intrinsic is="char"/>
+    </atom>
+    <atom id="4">
+      <intrinsic is="f128"/>
+    </atom>
+    <atom id="5">
+      <intrinsic is="f80"/>
+    </atom>
+    <atom id="6">
+      <intrinsic is="f64"/>
+    </atom>
+    <atom id="7">
+      <intrinsic is="f44"/>
+    </atom>
+    <atom id="8">
+      <intrinsic is="f32"/>
+    </atom>
+    <atom id="9">
+      <intrinsic is="s128"/>
     </atom>
   </bundle>
 </hlvm>

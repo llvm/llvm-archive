@@ -35,30 +35,16 @@ OpenOp::~OpenOp()
 {
 }
 
-OpenOp* 
-OpenOp::create()
-{
-  return new OpenOp;
-}
-
 CloseOp::~CloseOp()
 {
 }
 
-CloseOp* 
-CloseOp::create()
+ReadOp::~ReadOp()
 {
-  return new CloseOp;
 }
 
 WriteOp::~WriteOp()
 {
-}
-
-WriteOp* 
-WriteOp::create()
-{
-  return new WriteOp;
 }
 
 }

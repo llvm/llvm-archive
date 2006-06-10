@@ -31,15 +31,15 @@
 #define HLVM_AST_MEMORYOPS_H
 
 #include <hlvm/AST/Operator.h>
+#include <hlvm/AST/Constant.h>
 
 namespace hlvm
 {
 
 class Variable;
 
-/// This operator represents the load operation for loading a variable into a
-/// register.
-/// @brief HLVM AST Memory Load Operator
+/// This operator loads the value of a memory location.
+/// @brief HLVM Memory Load Operator
 class LoadOp : public UnaryOperator
 {
   /// @name Constructors
@@ -70,14 +70,16 @@ class LoadOp : public UnaryOperator
   friend class AST;
 };
 
-/// This operator represents the 
-/// @brief HLVM AST String Insert Node
+/// This operator stores a value into a memory location. The first operand 
+/// resolves to the storage location into which the value is stored. The second
+/// operand provides the value to store.
+/// @brief HLVM Memory Store Operator
 class StoreOp : public BinaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    StoreOp() : BinaryOperator(LoadOpID) {}
+    StoreOp() : BinaryOperator(StoreOpID) {}
 
   public:
     virtual ~StoreOp();
@@ -102,6 +104,44 @@ class StoreOp : public BinaryOperator
   friend class AST;
 };
 
+/// This operator represents a local (stack) variable whose lifespan is the
+/// lifespan of the enclosing block. Its value is the initialized value.
+/// @brief HLVM AST Automatic Variable Operator
+class AutoVarOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    AutoVarOp() : UnaryOperator(AutoVarOpID) {}
+
+  public:
+    virtual ~AutoVarOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getName() { return name; }
+    Constant* getInitializer() { return static_cast<Constant*>(getOperand());}
+    static inline bool classof(const AutoVarOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(AutoVarOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setName(const std::string& n) { name = n; }
+    void setInitializer(Constant* c) { setOperand(c); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string name;
+  /// @}
+  friend class AST;
+};
+
 /// This operator yields the value of a named variable, either an automatic
 /// variable (function scoped) or global variable (bundle scoped). 
 /// @brief HLVM AST Variable Operator
@@ -119,7 +159,7 @@ class ReferenceOp : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
-    const Variable* getReferent() const { return referent; }
+    Value* getReferent() const { return referent; }
     static inline bool classof(const ReferenceOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ReferenceOpID); }
 
@@ -127,13 +167,13 @@ class ReferenceOp : public NilaryOperator
   /// @name Mutators
   /// @{
   public:
-    void setReferent(const Variable* var ) { referent = var; }
+    void setReferent(Value* ref) { referent = ref; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    const Variable* referent;
+    Value* referent;
   /// @}
   friend class AST;
 };

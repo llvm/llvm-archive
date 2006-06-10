@@ -57,7 +57,7 @@ class Function : public LinkageItem
   /// @name Accessors
   /// @{
   public:
-    Block* getBlock() { return block; }
+    Block* getBlock() const { return block; }
     SignatureType* getSignature() { return signature; }
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }

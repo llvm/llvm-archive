@@ -1,4 +1,4 @@
-//===-- Runtime File I/O Implementation -------------------------*- C++ -*-===//
+//===-- Runtime String Implementation ---------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,39 +20,53 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/FileIO.cpp
+/// @file hlvm/Runtime/String.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
+/// @date 2006/05/25
 /// @since 0.1.0
-/// @brief Implements the functions for runtime file input/output.
+/// @brief Implements the functions for runtime string support
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Runtime/FileIO.h>
-#include <apr-1/apr_file_io.h>
-#include <hlvm/Runtime/Utilities.h>
+#include <apr-1/apr_strings.h>
 
-namespace 
-{
+#include <hlvm/Runtime/Internal.h>
+
+extern "C" {
+#include <hlvm/Runtime/Text.h>
 }
 
-extern "C" 
-{
+namespace {
 
-void* 
-hlvm_op_file_open(hlvm_string* uri)
-{
-  return 0;
+class Text : public hlvm_text_obj {
+};
+
 }
 
-void 
-hlvm_op_file_close(void* fnum)
+extern "C" {
+
+hlvm_text 
+hlvm_text_create(const char* initializer)
 {
+  Text* result = new Text();
+  if (initializer) {
+    result->len = strlen(initializer);
+    result->str = const_cast<char*>(initializer);
+    result->is_const = true;
+  } else {
+    result->len = 0;
+    result->str = 0;
+    result->is_const = false;
+  }
+  return hlvm_text(result);
 }
 
-uint32_t 
-hovm_op_file_write(void* fnum, void* data, size_t len)
+void
+hlvm_text_delete(hlvm_text T)
 {
-  return 0;
+  Text* t = reinterpret_cast<Text*>(T);
+  if (!t->is_const && t->str)
+    delete [] t->str;
+  delete t;
 }
 
 }

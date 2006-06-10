@@ -49,12 +49,14 @@
 #include <llvm/Instructions.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/TypeSymbolTable.h>
+#include <llvm/ValueSymbolTable.h>
 #include <llvm/Constants.h>
 #include <llvm/CallingConv.h>
 #include <llvm/Linker.h>
 #include <llvm/Bytecode/Writer.h>
 #include <llvm/PassManager.h>
 #include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Analysis/Verifier.h>
 
 namespace {
 using namespace llvm;
@@ -71,35 +73,81 @@ class LLVMGeneratorPass : public hlvm::Pass
 {
   typedef std::vector<llvm::Module*> ModuleList;
   typedef std::vector<llvm::Value*> OperandList;
+  typedef std::map<hlvm::Variable*,llvm::Value*> VariableDictionary;
+  typedef std::map<hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
+  typedef std::map<hlvm::Constant*,llvm::Constant*> ConstantDictionary;
   ModuleList modules;        ///< The list of modules we construct
   llvm::Module*     lmod;    ///< The current module we're generation 
   llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
   llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
   llvm::BasicBlock::InstListType linst; 
   OperandList lops;          ///< The current list of instruction operands
+  VariableDictionary gvars;
+  AutoVarDictionary lvars;
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
+  ConstantDictionary consts; ///< The cached LLVM constants we've generated
     ///< The current LLVM instructions we're generating
   const AST* ast;            ///< The current Tree we're traversing
   const Bundle* bundle;      ///< The current Bundle we're traversing
   const hlvm::Function* function;  ///< The current Function we're traversing
   const Block* block;        ///< The current Block we're traversing
   std::vector<llvm::Function*> progs; ///< The list of programs to emit
-  const llvm::FunctionType* entry_FT; ///< The llvm function type for programs
+
+  /// Interfaces to the HLVM Runtime Library
+  llvm::PointerType*  hlvm_text;          ///< Opaque type for text objects
+  llvm::Function*     hlvm_text_create;   ///< Create a new text object
+  llvm::Function*     hlvm_text_delete;   ///< Delete a text object
+  llvm::Function*     hlvm_text_to_buffer;///< Convert text to a buffer
+  llvm::PointerType*  hlvm_buffer;        ///< Pointer To octet
+  llvm::Function*     hlvm_buffer_create; ///< Create a new buffer object
+  llvm::Function*     hlvm_buffer_delete; ///< Delete a buffer
+  llvm::PointerType*  hlvm_stream;        ///< Pointer to stream type
+  llvm::Function*     hlvm_stream_open;   ///< Function for stream_open
+  llvm::Function*     hlvm_stream_read;   ///< Function for stream_read
+  llvm::Function*     hlvm_stream_write_buffer; ///< Write buffer to stream
+  llvm::Function*     hlvm_stream_write_text;   ///< Write text to stream
+  llvm::Function*     hlvm_stream_close;  ///< Function for stream_close
+  llvm::FunctionType* hlvm_program_signature; ///< The llvm type for programs
 
   public:
     LLVMGeneratorPass(const AST* tree)
       : Pass(0,Pass::PreAndPostOrderTraversal),
-      modules(), lmod(0), lfunc(0), lblk(0), linst(), lops(), ltypes(),
-      ast(tree),   bundle(0), function(0), block(0), entry_FT(0) { }
+      modules(), lmod(0), lfunc(0), lblk(0), linst(), lops(), 
+      gvars(), lvars(), ltypes(), consts(),
+      ast(tree),   bundle(0), function(0), block(0),
+      hlvm_text(0), hlvm_text_create(0), hlvm_text_delete(0),
+      hlvm_text_to_buffer(0),
+      hlvm_buffer(0), hlvm_buffer_create(0), hlvm_buffer_delete(0),
+      hlvm_stream(0),
+      hlvm_stream_open(0), hlvm_stream_read(0),
+      hlvm_stream_write_buffer(0), hlvm_stream_write_text(0), 
+      hlvm_stream_close(0), hlvm_program_signature(0)
+      { }
     ~LLVMGeneratorPass() { }
 
   /// Conversion functions
   const llvm::Type* getType(const hlvm::Type* ty);
   llvm::Constant* getConstant(const hlvm::Constant* C);
   llvm::Value* getVariable(const hlvm::Variable* V);
-  const llvm::FunctionType* getProgramFT();
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
+
+  /// Accessors for HLVM Runtime Library things
+  inline llvm::Type*         get_hlvm_size();
+  inline llvm::PointerType*  get_hlvm_text();
+  inline llvm::Function*     get_hlvm_text_create();
+  inline llvm::Function*     get_hlvm_text_delete();
+  inline llvm::Function*     get_hlvm_text_to_buffer();
+  inline llvm::PointerType*  get_hlvm_buffer();
+  inline llvm::Function*     get_hlvm_buffer_create();
+  inline llvm::Function*     get_hlvm_buffer_delete();
+  inline llvm::PointerType*  get_hlvm_stream();
+  inline llvm::Function*     get_hlvm_stream_open();
+  inline llvm::Function*     get_hlvm_stream_read();
+  inline llvm::Function*     get_hlvm_stream_write_buffer();
+  inline llvm::Function*     get_hlvm_stream_write_text();
+  inline llvm::Function*     get_hlvm_stream_close();
+  inline llvm::FunctionType* get_hlvm_program_signature();
 
   /// Generator
   template <class NodeClass>
@@ -112,6 +160,228 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline llvm::Module* linkModules();
 };
 
+llvm::Type*
+LLVMGeneratorPass::get_hlvm_size()
+{
+  return llvm::Type::ULongTy;
+}
+
+llvm::PointerType*
+LLVMGeneratorPass::get_hlvm_text()
+{
+  if (! hlvm_text) {
+    llvm::OpaqueType* opq = llvm::OpaqueType::get();
+    lmod->addTypeName("hlvm_text_obj", opq);
+    hlvm_text = llvm::PointerType::get(opq);
+    lmod->addTypeName("hlvm_text", hlvm_text);
+  }
+  return hlvm_text;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_text_create()
+{
+  if (! hlvm_text_create) {
+    llvm::Type* result = get_hlvm_text();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_text_create",FT);
+    hlvm_text_create = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+      "hlvm_text_create", lmod);
+  }
+  return hlvm_text_create;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_text_delete()
+{
+  if (! hlvm_text_delete) {
+    llvm::Type* result = get_hlvm_text();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_text());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_text_delete",FT);
+    hlvm_text_delete = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+      "hlvm_text_delete", lmod);
+  }
+  return hlvm_text_delete;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_text_to_buffer()
+{
+  if (! hlvm_text_to_buffer) {
+    llvm::Type* result = get_hlvm_buffer();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_text());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_text_to_buffer_signature",FT);
+    hlvm_text_to_buffer = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+      "hlvm_text_to_buffer", lmod);
+  }
+  return hlvm_text_to_buffer;
+}
+
+llvm::PointerType*
+LLVMGeneratorPass::get_hlvm_buffer()
+{
+  if (! hlvm_buffer) {
+    llvm::OpaqueType* opq = llvm::OpaqueType::get();
+    lmod->addTypeName("hlvm_buffer_obj", opq);
+    hlvm_buffer = llvm::PointerType::get(opq);
+    lmod->addTypeName("hlvm_buffer", hlvm_buffer);
+  }
+  return hlvm_buffer;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_buffer_create()
+{
+  if (! hlvm_buffer_create) {
+    llvm::Type* result = get_hlvm_buffer();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_size());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_buffer_create",FT);
+    hlvm_buffer_create = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+      "hlvm_buffer_create", lmod);
+  }
+  return hlvm_buffer_create;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_buffer_delete()
+{
+  if (! hlvm_buffer_delete) {
+    llvm::Type* result = get_hlvm_buffer();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_buffer());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_buffer_delete",FT);
+    hlvm_buffer_delete = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+      "hlvm_buffer_delete", lmod);
+  }
+  return hlvm_buffer_delete;
+}
+
+llvm::PointerType* 
+LLVMGeneratorPass::get_hlvm_stream()
+{
+  if (! hlvm_stream) {
+    llvm::OpaqueType* opq = llvm::OpaqueType::get();
+    lmod->addTypeName("hlvm_stream_obj", opq);
+    hlvm_stream= llvm::PointerType::get(opq);
+    lmod->addTypeName("hlvm_stream", hlvm_stream);
+  }
+  return hlvm_stream;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_open()
+{
+  if (!hlvm_stream_open) {
+    llvm::Type* result = get_hlvm_stream();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_text());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_open_signature",FT);
+    hlvm_stream_open = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage, 
+        "hlvm_stream_open", lmod);
+  }
+  return hlvm_stream_open;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_read()
+{
+  if (!hlvm_stream_read) {
+    llvm::Type* result = get_hlvm_size();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_stream());
+    arg_types.push_back(get_hlvm_buffer());
+    arg_types.push_back(get_hlvm_size());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_read_signature",FT);
+    hlvm_stream_read = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage,
+      "hlvm_stream_read", lmod);
+  }
+  return hlvm_stream_read;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_write_buffer()
+{
+  if (!hlvm_stream_write_buffer) {
+    llvm::Type* result = get_hlvm_size();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_stream());
+    arg_types.push_back(get_hlvm_buffer());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_write_buffer_signature",FT);
+    hlvm_stream_write_buffer = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage,
+      "hlvm_stream_write_buffer", lmod);
+  }
+  return hlvm_stream_write_buffer;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_write_text()
+{
+  if (!hlvm_stream_write_text) {
+    llvm::Type* result = get_hlvm_size();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_stream());
+    arg_types.push_back(get_hlvm_text());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_write_text_signature",FT);
+    hlvm_stream_write_text = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage,
+      "hlvm_stream_write_text", lmod);
+  }
+  return hlvm_stream_write_text;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_close()
+{
+  if (!hlvm_stream_close) {
+    llvm::Type* result = llvm::Type::VoidTy;
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_stream());
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_close_signature",FT);
+    hlvm_stream_close = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage,
+      "hlvm_stream_close", lmod);
+  }
+  return hlvm_stream_close;
+}
+
+llvm::FunctionType*
+LLVMGeneratorPass::get_hlvm_program_signature()
+{
+  if (!hlvm_program_signature) {
+    // Get the type of function that all entry points must have
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(llvm::Type::IntTy);
+    arg_types.push_back(
+      llvm::PointerType::get(llvm::PointerType::get(llvm::Type::SByteTy)));
+    hlvm_program_signature = 
+      llvm::FunctionType::get(llvm::Type::IntTy,arg_types,false);
+    lmod->addTypeName("hlvm_program_signature",hlvm_program_signature);
+  }
+  return hlvm_program_signature;
+}
+
 const llvm::Type*
 LLVMGeneratorPass::getType(const hlvm::Type* ty)
 {
@@ -122,26 +392,26 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
-    case VoidTypeID: result = llvm::Type::VoidTy; break;
-    case BooleanTypeID: result = llvm::Type::BoolTy; break;
-    case CharacterTypeID: result = llvm::Type::UShortTy; break;
-    case OctetTypeID: result = llvm::Type::UByteTy; break;
-    case UInt8TypeID: result = llvm::Type::UByteTy; break;
-    case UInt16TypeID: result = llvm::Type::UShortTy; break;
-    case UInt32TypeID: result = llvm::Type::UIntTy; break;
-    case UInt64TypeID: result = llvm::Type::ULongTy; break;
+    case VoidTypeID:               result = llvm::Type::VoidTy; break;
+    case BooleanTypeID:            result = llvm::Type::BoolTy; break;
+    case CharacterTypeID:          result = llvm::Type::UShortTy; break;
+    case OctetTypeID:              result = llvm::Type::SByteTy; break;
+    case UInt8TypeID:              result = llvm::Type::UByteTy; break;
+    case UInt16TypeID:             result = llvm::Type::UShortTy; break;
+    case UInt32TypeID:             result = llvm::Type::UIntTy; break;
+    case UInt64TypeID:             result = llvm::Type::ULongTy; break;
     case UInt128TypeID: 
       hlvmNotImplemented("128 bit primitive integer");
       break;
-    case SInt8TypeID: result = llvm::Type::SByteTy; break;
-    case SInt16TypeID: result = llvm::Type::ShortTy; break;
-    case SInt32TypeID: result = llvm::Type::IntTy; break;
-    case SInt64TypeID: result = llvm::Type::LongTy; break;
+    case SInt8TypeID:              result = llvm::Type::SByteTy; break;
+    case SInt16TypeID:             result = llvm::Type::ShortTy; break;
+    case SInt32TypeID:             result = llvm::Type::IntTy; break;
+    case SInt64TypeID:             result = llvm::Type::LongTy; break;
     case SInt128TypeID: 
       hlvmNotImplemented("128 bit primitive integer");
       break;
-    case Float32TypeID: result = llvm::Type::FloatTy; break;
-    case Float64TypeID: result = llvm::Type::FloatTy; break;
+    case Float32TypeID:             result = llvm::Type::FloatTy; break;
+    case Float64TypeID:             result = llvm::Type::DoubleTy; break;
     case Float44TypeID: 
     case Float80TypeID: 
     case Float128TypeID: 
@@ -155,20 +425,29 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       break;
     case RealTypeID:
       hlvmNotImplemented("arbitrary precision real");
-    case TextTypeID: {
-      std::vector<const llvm::Type*> Fields;
-      Fields.push_back(llvm::Type::UIntTy);
-      Fields.push_back(llvm::PointerType::get(llvm::Type::UShortTy));
-      result = llvm::StructType::get(Fields);
+    case TextTypeID:
+      result = get_hlvm_text();
       break;
-    }
-    case AliasTypeID: {
-      result = getType(llvm::cast<AliasType>(ty)->getType());
+    case StreamTypeID: 
+      result = get_hlvm_stream();
       break;
-    }
-    case PointerTypeID: {
-      result = llvm::PointerType::get(
-        getType(llvm::cast<hlvm::PointerType>(ty)->getTargetType()));
+    case BufferTypeID: 
+      result = get_hlvm_buffer();
+      break;
+    case AliasTypeID:
+      result = getType(llvm::cast<AliasType>(ty)->getElementType());
+      break;
+    case PointerTypeID: 
+    {
+      hlvm::Type* hElemType = 
+        llvm::cast<hlvm::PointerType>(ty)->getElementType();
+      const llvm::Type* lElemType = getType(hElemType);
+      result = llvm::PointerType::get(lElemType);
+
+      // If the element type is opaque then we need to add a type name for this
+      // pointer type because all opaques are unique unless named similarly.
+      if (llvm::isa<llvm::OpaqueType>(lElemType))
+        lmod->addTypeName(ty->getName(), result);
       break;
     }
     case VectorTypeID: {
@@ -191,7 +470,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       std::vector<const llvm::Type*> Fields;
       for (StructureType::const_iterator I = ST->begin(), E = ST->end(); 
            I != E; ++I)
-        Fields.push_back(getType((*I)->getType()));
+        Fields.push_back(getType((*I)->getElementType()));
       result = llvm::StructType::get(Fields);
       break;
     }
@@ -224,68 +503,54 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
 {
   if (C == 0)
     return 0;
+
+  // First, lets see if its cached already
+  ConstantDictionary::iterator I = consts.find(const_cast<hlvm::Constant*>(C));
+  if (I != consts.end())
+    return I->second;
+
   const hlvm::Type* hType = C->getType();
   const llvm::Type* lType = getType(hType);
+  llvm::Constant* result = 0;
   switch (C->getID()) 
   {
     case ConstantIntegerID:
     {
       const ConstantInteger* CI = llvm::cast<const ConstantInteger>(C);
       if (llvm::cast<IntegerType>(hType)->isSigned())
-        return llvm::ConstantSInt::get(lType,CI->getValue());
+        result = llvm::ConstantSInt::get(lType,CI->getValue());
       else
-         return llvm::ConstantUInt::get(lType,CI->getValue(0));
+        result = llvm::ConstantUInt::get(lType,CI->getValue(0));
+      break;
     }
     case ConstantRealID:
-      return llvm::ConstantFP::get(lType,
+    {
+      result = llvm::ConstantFP::get(lType,
         llvm::cast<ConstantReal>(C)->getValue());
+      break;
+    }
     case ConstantTextID:
-      return llvm::ConstantArray::get(
+    {
+      llvm::Constant* CA = llvm::ConstantArray::get(
         llvm::cast<ConstantText>(C)->getValue(),true);
+      llvm::GlobalVariable* GV = new llvm::GlobalVariable(
+        CA->getType(), true, llvm::GlobalValue::InternalLinkage, CA, "", lmod);
+      result = ConstantExpr::getPtrPtrFromArrayPtr(GV);
+      break;
+    }
     case ConstantZeroID:
     {
-      switch (lType->getTypeID()) {
-        case llvm::Type::VoidTyID:
-          hlvmDeadCode("Can't get constant for void type");
-          break;
-        case llvm::Type::BoolTyID:
-          return llvm::ConstantBool::get(false);
-          break;
-        case llvm::Type::UByteTyID:
-        case llvm::Type::SByteTyID:
-        case llvm::Type::UShortTyID:
-        case llvm::Type::ShortTyID:
-        case llvm::Type::UIntTyID:
-        case llvm::Type::IntTyID:
-        case llvm::Type::ULongTyID:
-        case llvm::Type::LongTyID:
-          return llvm::ConstantInt::get(lType,0);
-          break;
-        case llvm::Type::FloatTyID:
-        case llvm::Type::DoubleTyID:
-          return llvm::ConstantFP::get(lType,0.0);
-          break;
-        case llvm::Type::LabelTyID:
-          hlvmDeadCode("Can't get constant for label type");
-          break;
-        case llvm::Type::FunctionTyID:
-        case llvm::Type::StructTyID:
-        case llvm::Type::ArrayTyID:
-        case llvm::Type::PointerTyID:
-        case llvm::Type::OpaqueTyID:
-        case llvm::Type::PackedTyID:
-          return llvm::ConstantAggregateZero::get(lType);
-        default:
-          hlvmDeadCode("Invalid LLVM Type ID");
-          break;
-      }
+      result = llvm::Constant::getNullValue(lType);
       break;
     }
     default:
       break;
   }
-  hlvmDeadCode("Can't decipher constant");
-  return 0;
+  if (result)
+    consts[const_cast<hlvm::Constant*>(C)] = result;
+  else
+    hlvmDeadCode("Didn't find constant");
+  return result;
 }
 
 llvm::Value*
@@ -295,20 +560,6 @@ LLVMGeneratorPass::getVariable(const Variable* V)
   return 0;
 }
 
-const llvm::FunctionType*
-LLVMGeneratorPass::getProgramFT()
-{
-  if (!entry_FT) {
-    // Get the type of function that all entry points must have
-    std::vector<const llvm::Type*> arg_types;
-    arg_types.push_back(llvm::Type::IntTy);
-    arg_types.push_back(
-      llvm::PointerType::get(llvm::PointerType::get(llvm::Type::SByteTy)));
-    entry_FT = llvm::FunctionType::get(llvm::Type::IntTy,arg_types,false);
-    lmod->addTypeName("hlvm_program_signature",entry_FT);
-  }
-  return entry_FT;
-}
 
 llvm::GlobalValue::LinkageTypes
 LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
@@ -328,7 +579,7 @@ LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
 template<> void 
 LLVMGeneratorPass::gen<AliasType>(AliasType* t)
 {
-  lmod->addTypeName(t->getName(), getType(t->getType()));
+  lmod->addTypeName(t->getName(), getType(t->getElementType()));
 }
 
 template<> void 
@@ -429,38 +680,89 @@ LLVMGeneratorPass::gen<ConstantInteger>(ConstantInteger* i)
 }
 
 template<> void
+LLVMGeneratorPass::gen<ConstantReal>(ConstantReal* r)
+{
+  llvm::Constant* C = getConstant(r);
+  lops.push_back(C);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ConstantZero>(ConstantZero* z)
+{
+  llvm::Constant* C = getConstant(z);
+  lops.push_back(C);
+}
+
+template<> void
 LLVMGeneratorPass::gen<ConstantText>(ConstantText* t)
 {
   llvm::Constant* C = getConstant(t);
-  lops.push_back(C);
+  std::vector<llvm::Value*> args;
+  args.push_back(C);
+  llvm::CallInst* CI = new CallInst(get_hlvm_text_create(),args,"",lblk);
+  lops.push_back(CI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
+{
+  assert(lblk  != 0 && "Not in block context");
+  // emit a stack variable
+  const llvm::Type* elemType = getType(av->getType());
+  llvm::Value* init = lops.back(); lops.pop_back();
+  llvm::Value* alloca = new llvm::AllocaInst(
+      /*Ty=*/ elemType,
+      /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
+      /*Name=*/ av->getName(),
+      /*InsertAtEnd=*/ lblk
+  );
+  // FIXME: Handle initializer
+  llvm::Constant* C = getConstant(av->getInitializer());
+  if (C) {
+    const llvm::Type* CType = C->getType();
+    if (CType != elemType) {
+      if (llvm::isa<llvm::PointerType>(CType) && 
+          llvm::isa<llvm::PointerType>(elemType)) {
+        const llvm::Type* CElemType = 
+          llvm::cast<llvm::PointerType>(CType)->getElementType();
+        const llvm::Type* avElemType = 
+            llvm::cast<llvm::PointerType>(elemType)->getElementType();
+        if (CElemType != avElemType)
+        {
+          // We have pointers to different element types. This *can* be okay if
+          // we apply conversions.
+          if (CElemType == llvm::Type::SByteTy) {
+            // The initializer is an sbyte*, which we can conver to either a
+            // hlvm_text or an hlvm_buffer.
+            if (elemType = get_hlvm_buffer()) {
+              // Assign the constant string to the buffer
+            } else if (elemType == get_hlvm_text()) {
+            }
+          }
+        }
+      }
+      hlvmAssert(CType->isLosslesslyConvertibleTo(elemType));
+      C = ConstantExpr::getCast(C,elemType);
+    }
+    llvm::Value* store = new llvm::StoreInst(C,alloca,"",lblk);
+  }
+  lops.push_back(alloca);
+  lvars[av] = alloca;
 }
 
 template<> void
 LLVMGeneratorPass::gen<Variable>(Variable* v)
 {
-  if (v->isLocal()) {
-    assert(lblk  != 0 && "Not in block context");
-    // emit a stack variable
-    const llvm::Type* elemType = getType(v->getType());
-    lops.push_back(
-      new llvm::AllocaInst(
-        /*Ty=*/ elemType,
-        /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
-        /*Name=*/ v->getName(),
-        /*InsertAtEnd=*/ lblk
-      )
-    );
-    // FIXME: Handle initializer
-  } else {
-    llvm::Constant* Initializer = getConstant(v->getInitializer());
-    new llvm::GlobalVariable(
-      /*Ty=*/ getType(v->getType()),
-      /*isConstant=*/ false,
-      /*Linkage=*/ llvm::GlobalValue::ExternalLinkage,
-      /*Initializer=*/ Initializer,
-      /*Name=*/ getLinkageName(v),
-      /*Parent=*/ lmod);
-  }
+  llvm::Constant* Initializer = getConstant(v->getInitializer());
+  llvm::Value* gv = new llvm::GlobalVariable(
+    /*Ty=*/ getType(v->getType()),
+    /*isConstant=*/ false,
+    /*Linkage=*/ llvm::GlobalValue::ExternalLinkage,
+    /*Initializer=*/ Initializer,
+    /*Name=*/ getLinkageName(v),
+    /*Parent=*/ lmod
+  );
+  gvars[v] = gv;
 }
 
 template<> void 
@@ -486,15 +788,15 @@ template<> void
 LLVMGeneratorPass::gen<StoreOp>(StoreOp* s)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for StoreOp");
-  llvm::Value* value = lops.back(); lops.pop_back();
+  llvm::Value* value =    lops.back(); lops.pop_back();
   llvm::Value* location = lops.back(); lops.pop_back();
-  lops.push_back(new StoreInst(location,value,lblk));
+  lops.push_back(new StoreInst(value,location,lblk));
 }
 
 template<> void
 LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
 {
-  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for LoadOp");
+  hlvmAssert(lops.size() >= 1 && "Too few operands for LoadOp");
   llvm::Value* location = lops.back(); lops.pop_back();
   lops.push_back(new LoadInst(location,"",lblk));
 }
@@ -502,40 +804,75 @@ LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
 template<> void
 LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
 {
-  hlvmAssert(lops.size() >= 0 && "Wrong number of ops for ReferenceOp");
-  llvm::Value* v = getVariable(r->getReferent());
+  hlvm::Value* referent = r->getReferent();
+  llvm::Value* v = 0;
+  if (isa<Variable>(referent)) {
+    VariableDictionary::iterator I = gvars.find(cast<Variable>(referent));
+    hlvmAssert(I != gvars.end());
+    v = I->second;
+  } 
+  else if (isa<AutoVarOp>(referent)) 
+  {
+    AutoVarDictionary::const_iterator I = lvars.find(cast<AutoVarOp>(referent));
+    hlvmAssert(I != lvars.end());
+    v = I->second;
+  }
+  else
+    hlvmDeadCode("Referent not a variable");
   lops.push_back(v);
 }
 
 template<> void
 LLVMGeneratorPass::gen<IndexOp>(IndexOp* r)
 {
-  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for IndexOp");
+  hlvmAssert(lops.size() >= 2 && "Too few operands for IndexOp");
 }
 
 template<> void
 LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
 {
-  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for StoreOp");
-  llvm::Value* uri = lops.back(); lops.pop_back();
+  hlvmAssert(lops.size() >= 1 && "Too few operands for OpenOp");
+  std::vector<llvm::Value*> args;
+  args.push_back(lops.back()); lops.pop_back();
+  llvm::CallInst* ci = new CallInst(get_hlvm_stream_open(), args, "", lblk);
+  lops.push_back(ci);
 }
 
 template<> void
 LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
 {
-  hlvmAssert(lops.size() >= 3 && "Wrong number of ops for StoreOp");
-  llvm::Value* length = lops.back(); lops.pop_back();
-  llvm::Value* buffer = lops.back(); lops.pop_back();
-  llvm::Value* stream = lops.back(); lops.pop_back();
+  hlvmAssert(lops.size() >= 2 && "Too few operands for WriteOp");
+  std::vector<llvm::Value*> args;
+  llvm::Value* arg2 = lops.back(); lops.pop_back();
+  llvm::Value* strm = lops.back(); lops.pop_back();
+  args.push_back(strm);
+  args.push_back(arg2);
+  if (arg2->getType() == get_hlvm_text())
+    lops.push_back(new CallInst(get_hlvm_stream_write_text(), args, "", lblk));
+  else
+    lops.push_back(new CallInst(get_hlvm_stream_write_buffer(), args, "",lblk));
+}
+
+template<> void
+LLVMGeneratorPass::gen<ReadOp>(ReadOp* o)
+{
+  hlvmAssert(lops.size() >= 3 && "Too few operands for ReadOp");
+  std::vector<llvm::Value*> args;
+  args.insert(args.end(),lops.end()-3,lops.end());
+  lops.erase(lops.end()-3,lops.end());
+  llvm::CallInst* ci = new CallInst(get_hlvm_stream_read(), args, "", lblk);
+  lops.push_back(ci);
 }
 
 template<> void
 LLVMGeneratorPass::gen<CloseOp>(CloseOp* o)
 {
-  hlvmAssert(lops.size() >= 1 && "Wrong number of ops for StoreOp");
-  llvm::Value* stream = lops.back(); lops.pop_back();
+  hlvmAssert(lops.size() >= 1 && "Too few operands for CloseOp");
+  std::vector<llvm::Value*> args;
+  args.push_back(lops.back()); lops.pop_back();
+  llvm::CallInst* ci = new CallInst(get_hlvm_stream_close(), args, "", lblk);
+  lops.push_back(ci);
 }
-
 
 template<> void
 LLVMGeneratorPass::gen<hlvm::Function>(hlvm::Function* f)
@@ -544,6 +881,7 @@ LLVMGeneratorPass::gen<hlvm::Function>(hlvm::Function* f)
     llvm::cast<llvm::FunctionType>(getType(f->getSignature())),
     getLinkageTypes(f->getLinkageKind()), 
     getLinkageName(f), lmod);
+  lvars.clear();
 }
 
 template<> void
@@ -552,12 +890,10 @@ LLVMGeneratorPass::gen<hlvm::Program>(Program* p)
   // points after the entire parse is completed.
   std::string linkageName = getLinkageName(p);
 
-  // Get the FunctionType for entry points (programs)
-  const llvm::FunctionType* entry_signature = getProgramFT();
-
   // Create a new function for the program based on the signature
-  lfunc = new llvm::Function(entry_signature,
+  lfunc = new llvm::Function(get_hlvm_program_signature(),
     llvm::GlobalValue::InternalLinkage,linkageName,lmod);
+  lvars.clear();
 
   // Save the program so it can be generated into the list of program entry
   progs.push_back(lfunc);
@@ -568,11 +904,14 @@ LLVMGeneratorPass::gen<Bundle>(Bundle* b)
 {
   lmod = new llvm::Module(b->getName());
   modules.push_back(lmod);
+  lvars.clear();
+  gvars.clear();
 }
 
 void
 LLVMGeneratorPass::handleInitialize()
 {
+  // Nothing to do
 }
 
 void
@@ -610,22 +949,30 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
     case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
     case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
+    case ConstantZeroID:          gen(llvm::cast<ConstantZero>(n));break;
     case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
+    case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
     case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
     case VariableID:              gen(llvm::cast<Variable>(n)); break;
     case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
     case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
     case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
     case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+    case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
     case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
     case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
     case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
+    case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
 
     // ignore end of block, program, function and bundle
     case BundleID:
+      break;
     case ProgramID:
     case FunctionID:
+      lfunc = 0;
+      break;
     case BlockID:
+      lblk = 0;
       break;
 
     // everything else is an error
@@ -639,18 +986,20 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
 void
 LLVMGeneratorPass::handleTerminate()
 {
-  // Get the type of function that all entry points must have
-  const llvm::FunctionType* entry_signature = getProgramFT();
+  // Short circuit if there's nothing to do
+  if (progs.empty())
+    return;
 
   // Define the type of the array elements (a structure with a pointer to
   // a string and a pointer to the function).
   std::vector<const llvm::Type*> Fields;
   Fields.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
-  Fields.push_back(llvm::PointerType::get(entry_signature));
+  Fields.push_back(llvm::PointerType::get(get_hlvm_program_signature()));
   llvm::StructType* entry_elem_type = llvm::StructType::get(Fields);
 
   // Define the type of the array for the entry points
-  llvm::ArrayType* entry_points_type = llvm::ArrayType::get(entry_elem_type,1);
+  llvm::ArrayType* entry_points_type = 
+    llvm::ArrayType::get(entry_elem_type,progs.size());
 
   // Create a vector to hold the entry elements as they are created.
   std::vector<llvm::Constant*> entry_points_items;
@@ -660,11 +1009,11 @@ LLVMGeneratorPass::handleTerminate()
   {
     const std::string& funcName = (*I)->getName();
     // Get a constant for the name of the entry point (char array)
-    llvm::Constant* name_val = llvm::ConstantArray::get(funcName,false);
+    llvm::Constant* name_val = llvm::ConstantArray::get(funcName,true);
 
     // Create a constant global variable to hold the name of the program.
     llvm::GlobalVariable* name = new llvm::GlobalVariable(
-      /*Type=*/llvm::ArrayType::get(llvm::Type::SByteTy, funcName.length()),
+      /*Type=*/name_val->getType(),
       /*isConst=*/true,
       /*Linkage=*/llvm::GlobalValue::InternalLinkage, 
       /*Initializer=*/name_val, 
@@ -672,11 +1021,7 @@ LLVMGeneratorPass::handleTerminate()
       /*InsertInto=*/lmod
     );
 
-    // Get the GEP for indexing in to the name string
-    std::vector<llvm::Constant*> Indices;
-    Indices.push_back(llvm::Constant::getNullValue(llvm::Type::IntTy));
-    Indices.push_back(llvm::Constant::getNullValue(llvm::Type::IntTy));
-    llvm::Constant* index = llvm::ConstantExpr::getGetElementPtr(name,Indices);
+    llvm::Constant* index = llvm::ConstantExpr::getPtrPtrFromArrayPtr(name);
 
     // Get a constant structure for the entry containing the name and pointer
     // to the function.
@@ -685,7 +1030,7 @@ LLVMGeneratorPass::handleTerminate()
     items.push_back(*I);
     llvm::Constant* entry = llvm::ConstantStruct::get(entry_elem_type,items);
 
-    // Save the entry into the list of entry_point items
+    // Save the entry into the list of entry point items
     entry_points_items.push_back(entry);
   }
 
@@ -719,20 +1064,21 @@ LLVMGeneratorPass::linkModules()
 }
 
 void
-hlvm::generateBytecode(AST* tree,std::ostream& output)
+hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
   PM->addPass(&genPass);
   PM->runOn(tree);
   llvm::Module* mod = genPass.linkModules();
+  llvm::verifyModule(*mod, llvm::PrintMessageAction);
   llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
   delete mod;
   delete PM;
 }
 
 void
-hlvm::generateAssembly(AST* tree, std::ostream& output)
+hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);

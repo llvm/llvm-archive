@@ -1,4 +1,4 @@
-//===-- Runtime String Interface --------------------------------*- C++ -*-===//
+//===-- AST Runtime Type Implementation -------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,25 +20,40 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/String.h
-/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @file hlvm/AST/RuntimeType.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime string facilities
+/// @brief Implements the functions of the runtime types
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_STRING_H
-#define HLVM_RUNTIME_STRING_H
+#include <hlvm/AST/RuntimeType.h>
+#include <hlvm/Base/Assert.h>
 
-#include <llvm/Support/DataTypes.h>
+namespace hlvm {
 
-extern "C" {
 
-struct hlvm_string {
-  uint64_t    len;
-  const char* str;
-};
-
+const char* 
+RuntimeType::getPrimitiveName() const
+{
+  hlvmDeadCode("RuntimeTypes don't have primitive names");
+  return "";
 }
 
-#endif
+RuntimeType::~RuntimeType()
+{
+}
+
+TextType::~TextType()
+{
+}
+
+StreamType::~StreamType()
+{
+}
+
+BufferType::~BufferType()
+{
+}
+
+}

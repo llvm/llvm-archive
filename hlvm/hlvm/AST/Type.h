@@ -102,7 +102,6 @@ class AnyType : public Type
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const AnyType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isAnyType(); }
     static inline bool classof(const Node* T) { return T->is(AnyTypeID); }
   /// @}
   friend class AST;
@@ -123,7 +122,6 @@ class BooleanType : public Type
     virtual const char* getPrimitiveName() const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const BooleanType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isBooleanType(); }
     static inline bool classof(const Node* T) { return T->is(BooleanTypeID); }
   /// @}
   friend class AST;
@@ -144,9 +142,7 @@ class CharacterType : public Type
     virtual const char* getPrimitiveName() const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const CharacterType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isCharacterType(); }
-    static inline bool classof(const Node* T) 
-      { return T->is(CharacterTypeID); }
+    static inline bool classof(const Node* T) { return T->is(CharacterTypeID); }
   /// @}
   friend class AST;
 };
@@ -166,7 +162,6 @@ class OctetType : public Type
     virtual const char* getPrimitiveName() const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const OctetType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isOctetType(); }
     static inline bool classof(const Node* T) { return T->is(OctetTypeID); }
   /// @}
   friend class AST;
@@ -187,7 +182,6 @@ class VoidType : public Type
     virtual const char* getPrimitiveName() const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const VoidType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isVoidType(); }
     static inline bool classof(const Node* T) { return T->is(VoidTypeID); }
   /// @}
   friend class AST;
@@ -227,7 +221,6 @@ class IntegerType : public Type
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isIntegralType(); }
     static inline bool classof(const Node* T) { return T->isIntegralType(); }
 
   /// @}
@@ -276,7 +269,6 @@ class RangeType: public Type
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RangeType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isRangeType(); }
     static inline bool classof(const Node* T) { return T->is(RangeTypeID); }
 
   /// @}
@@ -326,8 +318,6 @@ class EnumerationType : public Type
     virtual const char* getPrimitiveName() const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const EnumerationType*) { return true; }
-    static inline bool classof(const Type* T) 
-      { return T->is(EnumerationTypeID); }
     static inline bool classof(const Node* T) 
       { return T->is(EnumerationTypeID); }
 
@@ -390,7 +380,6 @@ class RealType : public Type
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RealType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isRealType(); }
     static inline bool classof(const Node* T) { return T->is(RealTypeID); }
 
   /// @}
@@ -409,196 +398,6 @@ class RealType : public Type
   protected:
     uint32_t mantissa; ///< Number of bits in mantissa
     uint32_t exponent; ///< Number of bits of precision
-  /// @}
-  friend class AST;
-};
-
-/// This class represents a storage location that is a pointer to another
-/// type. 
-class PointerType : public Type
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    PointerType() : Type(PointerTypeID) {}
-    virtual ~PointerType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    // Get the target type
-    Type* getTargetType() const { return type; }
-
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const PointerType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isPointerType(); }
-    static inline bool classof(const Node* T) { return T->is(PointerTypeID); }
-
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-    void setTargetType(Type* t) { type = t; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-    Type* type;
-  /// @}
-  friend class AST;
-};
-
-/// This class represents a resizeable, aligned array of some other type. The
-/// Array references a Type that specifies the type of elements in the array.
-class ArrayType : public Type
-{
-  /// @name Constructors
-  /// @{
-  public:
-    ArrayType() : Type(ArrayTypeID), type(0), maxSize(0) {}
-    virtual ~ArrayType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    /// Get the type of the array's elements.
-    Type* getElementType() const { return type; }
-
-    /// Get the maximum size the array can grow to.
-    uint64_t getMaxSize()  const { return maxSize; }
-
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const ArrayType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isArrayType(); }
-    static inline bool classof(const Node* T) { return T->is(ArrayTypeID); }
-    
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-    /// Set the type of the array's elements.
-    void setElementType(Type* t) { type = t; }
-
-    /// Set the maximum size the array can grow to.
-    void setMaxSize(uint64_t max) { maxSize = max; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-    Type* type;       ///< The type of the elements of the array
-    uint64_t maxSize; ///< The maximum number of elements in the array
-  /// @}
-  friend class AST;
-};
-
-/// This class represents a fixed size, packed vector of some other type.
-/// Where possible, HLVM will attempt to generate code that makes use of a
-/// machines vector instructions to process such types. If not possible, HLVM
-/// will treat the vector the same as an Array.
-class VectorType : public Type
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    VectorType() : Type(VectorTypeID), type(0), size(0) {}
-    virtual ~VectorType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    /// Get the type of the array's elements.
-    Type* getElementType() const { return type; }
-
-    /// Get the maximum size the array can grow to.
-    uint64_t getSize()  const { return size; }
-
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const VectorType*) { return true; }
-    static inline bool classof(const Type* T) { return T->isVectorType(); }
-    static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
-
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-    /// Set the type of the vector's elements.
-    void setElementType(Type* t) { type = t; }
-
-    /// Set the size of the vector.
-    void setSize(uint64_t max) { size = max; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-    Type* type;    ///< The type of the vector's elements.
-    uint64_t size; ///< The (fixed) size of the vector
-  /// @}
-  friend class AST;
-};
-
-/// This class is type that combines a name with an arbitrary type. This
-/// construct is used any where a named and typed object is needed such as
-/// the parameter to a function or the field of a structure. 
-class AliasType : public Type
-{
-  /// @name Constructors
-  /// @{
-  public:
-    AliasType() : Type(AliasTypeID), type(0) {}
-    virtual ~AliasType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    virtual const char* getPrimitiveName() const;
-    
-    // Get the type for the name
-    Type *  getType() const { return type; }
-
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const AliasType*) { return true; }
-    static inline bool classof(const Node* T) { return T->is(AliasTypeID); }
-
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-    // Set the type for the name
-    void setType(Type * t) { type = t; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-    Type* type;
-  /// @}
-};
-
-class TextType : public Type
-{
-  /// @name Constructors
-  /// @{
-  public:
-    TextType(const std::string& nm) : 
-      Type(TextTypeID) { this->setName(nm); }
-  public:
-    virtual ~TextType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    static inline bool classof(const TextType*) { return true; }
-    static inline bool classof(const Node* N) 
-      { return N->is(TextTypeID); }
-
   /// @}
   friend class AST;
 };

@@ -120,6 +120,9 @@ public:
   /// @returns the Node that was erased from the symbol table.
   Node* erase(iterator TI);
 
+  /// Remove a node using a specific key
+  bool erase(const std::string& name) { return map_.erase(name) > 0; }
+
   /// Remove a specific Node from the symbol table. This isn't fast, linear
   /// search, O(n), algorithm.
   /// @returns true if the erase was successful (TI was found)

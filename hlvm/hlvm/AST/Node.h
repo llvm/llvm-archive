@@ -54,8 +54,21 @@ enum PrimitiveTypes {
 enum NodeIDs 
 {
   NoTypeID = 0,            ///< Use this for an invalid type ID.
-  // Primitive Types (no child nodes)
-  VoidTypeID = 1,          ///< The Void Type (The Null Type)
+
+  // SUBCLASSES OF NODE
+  TreeTopID,               ///< The AST node which is always root of the tree
+FirstNodeID = TreeTopID,
+  DocumentationID,         ///< XHTML Documentation Node
+  DocumentableID,          ///< A node that can have a Documentation Node
+FirstDocumentableID = DocumentableID,
+  BundleID,                ///< The Bundle Node (a group of other declarations)
+  ImportID,                ///< A bundle's Import declaration
+
+  // SUBCLASSES OF TYPE
+  // Primitive Types (inherently supported by HLVM)
+  VoidTypeID,              ///< The Void Type (The Null Type)
+FirstTypeID          = VoidTypeID,
+FirstPrimitiveTypeID = VoidTypeID,
   BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
   CharacterTypeID,         ///< The Character Type (UTF-16 encoded character)
   OctetTypeID,             ///< The Octet Type (8 bits uninterpreted)
@@ -74,23 +87,43 @@ enum NodeIDs
   Float64TypeID,           ///< 64-bit IEEE double precision
   Float80TypeID,           ///< 80-bit IEEE extended double precision
   Float128TypeID,          ///< 128-bit IEEE quad precision
+LastPrimitiveTypeID  = Float128TypeID, 
+
+  // Simple Types (no nested classes)
   AnyTypeID,               ///< The Any Type (Union of any type)
+FirstSimpleTypeID    = AnyTypeID,
   IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
   RangeTypeID,             ///< The Range Type (A Range of Integer Values)
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
   RealTypeID,              ///< The Real Number Type (Any Real Number)
   RationalTypeID,          ///< The Rational Number Type (p/q type number)
-  TextTypeID,              ///< The Text Type (Array of UTF-16 chars + length)
+  OpaqueTypeID,            ///< A placeholder for unresolved types
+LastSimpleTypeID     = OpaqueTypeID,  
 
-  // Container Types
+  // Uniform Container Types
   AliasTypeID,             ///< A new name for an existing type
+FirstContainerTypeID = AliasTypeID,
+FirstUniformContainerTypeID = AliasTypeID,
   PointerTypeID,           ///< The Pointer Type (Pointer To object of Type)
   ArrayTypeID,             ///< The Array Type (Linear array of some type)
   VectorTypeID,            ///< The Vector Type (Packed Fixed Size Vector)
+LastUniformContainerTypeID = VectorTypeID,
+
+  // Disparate Container Types
   StructureTypeID,         ///< The Structure Type (Sequence of various types)
+FirstDisparateContainerTypeID = StructureTypeID,
   SignatureTypeID,         ///< The Function Signature Type
   ContinuationTypeID,      ///< A Continuation Type (data to continuations)
-  OpaqueTypeID,            ///< A placeholder for unresolved types
+LastDisparateContainerTypeID  = ContinuationTypeID,
+LastContainerTypeID = ContinuationTypeID,
+
+  // Runtime Types
+  BufferTypeID,            ///< A buffer of octets for I/O
+FirstRuntimeTypeID = BufferTypeID,
+  StreamTypeID,            ///< A stream handle
+  TextTypeID,              ///< A UTF-8 or UTF-16 encoded text string
+LastRuntimeTypeID = TextTypeID,
+LastTypeID = TextTypeID,
 
   // Class Constructs (TBD)
   InterfaceID,             ///< The Interface Type (set of Signatures)
@@ -98,31 +131,41 @@ enum NodeIDs
   MethodID,                ///< The Method Node (define a method)
   ImplementsID,            ///< Specifies set of Interfaces implemented by class
 
+  // SUBCLASSES OF VALUE
+
   // Constants
   ConstantZeroID,          ///< A zero-filled constant of any type
+FirstValueID = ConstantZeroID,
+FirstConstantID = ConstantZeroID,
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
   ConstantTextID,          ///< A constant text value
+  SizeOfID,                ///< Size of a type
 
   // Linkage Items
   VariableID,              ///< The Variable Node (a storage location)
+FirstLinkageItemID = VariableID,
   FunctionID,              ///< The Function Node (a callable function)
   ProgramID,               ///< The Program Node (a program starting point)
+LastLinkageItemID = ProgramID,
+LastConstantID = ProgramID,
 
-  // Container
-  BundleID,                ///< The Bundle Node (a group of other declarations)
-  BlockID,                 ///< A Block Of Code Nodes
-  ImportID,                ///< A bundle's Import declaration
+  // Operator
+  BlockID,                 ///< A Block Of Operators
+FirstOperatorID = BlockID,
 
   // Nilary Operators (those taking no operands)
   BreakOpID,               ///< Break out of the enclosing loop
+FirstNilaryOperatorID = BreakOpID,
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
-  AutoVarOpID,             ///< Declaration of an automatic (stack) variable
+  ReferenceOpID,           ///< Obtain pointer to local/global variable
+LastNilaryOperatorID = ReferenceOpID,
 
   // Control Flow Unary Operators
   ReturnOpID,              ///< The Return A Value Operator
+FirstUnaryOperatorID = ReturnOpID,
   ThrowOpID,               ///< The Throw an Exception Operator
   JumpToOpID,              ///< The Jump To Labelled Block Operator
 
@@ -153,19 +196,20 @@ enum NodeIDs
   LoadOpID,                ///< The Load Operator (load a value from a location)
   AllocateOpID,            ///< The Allocate Memory Operator (get heap memory)
   FreeOpID,                ///< The Free Memory Operator (free heap memory)
-  StackAllocOpID,          ///< The Stack Allocation Operator (get stack mem)
+  AutoVarOpID,             ///< Declaration of an automatic (stack) variable
   IndexOpID,               ///< The Index Operator for indexing an array
-  ReferenceOpID,           ///< The Reference Memory Object Operator (for GC)
-  DereferenceOpID,         ///< The Dereference Memory Object Operator (for GC)
 
-  // Other Unary Operators
+  // Input/Output Unary Operators
   TellOpID,                ///< Tell the position of a stream
   CloseOpID,               ///< Close a stream previously opened.
-  LengthOpID,              ///< Extract Length of a String Operator
-  WithOpID,                ///< Scoping Operator (shorthand for a Bundle) 
+
+  // Other Unary Operators
+  LengthOpID,              ///< Extract Length of a Text/Array/Vector
+LastUnaryOperatorID = LengthOpID,
 
   // Arithmetic Binary Operators
   AddOpID,                 ///< Addition Binary Operator
+FirstBinaryOperatorID = AddOpID,
   SubtractOpID,            ///< Subtraction Binary Operator
   MultiplyOpID,            ///< Multiplcation Binary Operator
   DivideOpID,              ///< Division Binary Operator
@@ -201,53 +245,33 @@ enum NodeIDs
   ReadOpID,                ///< Read from a stream
   WriteOpID,               ///< Write to a stream
   CreateContOpID,          ///< The Create Continutation Operator
+LastBinaryOperatorID = CreateContOpID,
 
   // Ternary Operators
   IfOpID,                  ///< The If-Then-Else Operator
+FirstTernaryOperatorID = IfOpID,
   StrInsertOpID,           ///< Insert(str,where,what)
   StrEraseOpID,            ///< Erase(str,at,len)
   StrReplaceOpID,          ///< Replace(str,at,len,what)
   PositionOpID,            ///< Position a stream (stream,where,relative-to)
+LastTernaryOperatorID = PositionOpID,
 
   // Multi Operators
   CallOpID,                ///< The Call Operator (n operands)
+FirstMultiOperatorID = CallOpID,
   InvokeOpID,              ///< The Invoke Operator (n operands)
   DispatchOpID,            ///< The Object Method Dispatch Operator (n operands)
   CallWithContOpID,        ///< The Call with Continuation Operator (n operands)
   SelectOpID,              ///< The Select An Alternate Operator (n operands)
   LoopOpID,                ///< The General Purpose Loop Operator (5 operands)
+LastMultiOperatorID = LoopOpID,
+LastOperatorID = LoopOpID,
+LastValueID = LoopOpID,
+LastDocumentableID = LoopOpID,
+LastNodeID = LoopOpID,
 
-  // Miscellaneous Nodes
-  DocumentationID,         ///< XHTML Documentation Node
-  TreeTopID,               ///< The AST node which is always root of the tree
-
-  // Enumeration Ranges and Limits
-  NumNodeIDs,              ///< The number of node identifiers in the enum
-  FirstPrimitiveTypeID = VoidTypeID, ///< First Primitive Type
-  LastPrimitiveTypeID  = Float128TypeID, ///< Last Primitive Type
-  FirstSimpleTypeID    = AnyTypeID,
-  LastSimpleTypeID     = TextTypeID,  
-  FirstContainerTypeID = PointerTypeID, ///< First Container Type
-  LastContainerTypeID  = ContinuationTypeID, ///< Last Container Type
-  FirstTypeID          = VoidTypeID,
-  LastTypeID           = OpaqueTypeID,
-  FirstConstantID      = ConstantIntegerID,
-  LastConstantID       = ProgramID,
-  FirstOperatorID      = BreakOpID, ///< First Operator
-  LastOperatorID       = LoopOpID,  ///< Last Operator
-  FirstNilaryOpID      = BreakOpID,
-  LastNilaryOpID       = NaNOpID,
-  FirstUnaryOpID       = ReturnOpID,
-  LastUnaryOpID        = WithOpID,
-  FirstBinaryOpID      = AddOpID,
-  LastBinaryOpID       = CreateContOpID,
-  FirstTernaryOpID     = IfOpID,
-  LastTernaryOpID      = PositionOpID,
-  FirstMultiOpID       = CallOpID,
-  LastMultiOpID        = LoopOpID
+  NumNodeIDs               ///< The number of node identifiers in the enum
 };
-
-class ParentNode;
 
 /// This class is the base class of HLVM Abstract Syntax Tree (AST). All 
 /// other AST nodes are subclasses of this class.
@@ -284,92 +308,81 @@ class Node
 
     /// Determine if the node is a Type
     inline bool isType() const {
-      return id >= FirstTypeID && id <= LastTypeID;
-    }
+      return id >= FirstTypeID && 
+             id <= LastTypeID; }
 
     inline bool isIntegralType()  const { 
       return (id >= UInt8TypeID && id <= UInt128TypeID) ||
              (id == IntegerTypeID) || (id == RangeTypeID) || 
-             (id == EnumerationTypeID);
-    }
+             (id == EnumerationTypeID); }
 
     /// Determine if the node is a primitive type
     inline bool isPrimitiveType() const {
-      return id >= FirstPrimitiveTypeID && id <= LastPrimitiveTypeID;
-    }
+      return id >= FirstPrimitiveTypeID && 
+             id <= LastPrimitiveTypeID; }
 
     /// Determine if the node is a simple type
     inline bool isSimpleType() const {
-      return id >= FirstSimpleTypeID && id <= LastSimpleTypeID;
+      return id >= FirstSimpleTypeID && 
+             id <= LastSimpleTypeID;
     }
+
+    /// Determine if the node is a uniform container type
+    inline bool isUniformContainerType() const {
+      return id >= FirstUniformContainerTypeID && 
+             id <= LastUniformContainerTypeID;
+    }
+    /// Determine if the node is a disparate container type
+    inline bool isDisparateContainerType() const {
+      return id >= FirstDisparateContainerTypeID && 
+             id <= LastDisparateContainerTypeID; }
+
+    /// Determine if the node is a runtime type
+    inline bool isRuntimeType() const {
+      return id >= FirstRuntimeTypeID &&
+             id <= LastRuntimeTypeID; }
 
     /// Determine if the node is a container type
     inline bool isContainerType() const {
       return id >= FirstContainerTypeID && id <= LastContainerTypeID;
     }
-
-    inline bool isAnyType() const { return id == AnyTypeID; }
-    inline bool isBooleanType() const { return id == BooleanTypeID; }
-    inline bool isCharacterType() const { return id == CharacterTypeID; }
-    inline bool isOctetType() const { return id == OctetTypeID; }
-    inline bool isIntegerType() const { return id == IntegerTypeID; }
-    inline bool isRangeType() const { return id == RangeTypeID; }
-    inline bool isRealType() const { return id == RealTypeID; }
-    inline bool isRationalType() const { return id == RationalTypeID; }
-    inline bool isPointerType() const { return id == PointerTypeID; }
-    inline bool isArrayType() const { return id == ArrayTypeID; }
-    inline bool isVectorType() const { return id == VectorTypeID; }
-    inline bool isStructureType() const { return id == StructureTypeID; }
-    inline bool isSignatureType() const { return id == SignatureTypeID; }
-    inline bool isVoidType() const { return id == VoidTypeID; }
-
     /// Determine if the node is one of the Constant values.
     inline bool isConstant() const {
-      return id >= FirstConstantID && id <= LastConstantID;
-    }
+      return id >= FirstConstantID && id <= LastConstantID; }
+
+    /// Determine if the node is a LinkageItem
+    inline bool isLinkageItem() const {
+      return id >= FirstLinkageItemID && id <= LastLinkageItemID; }
 
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
-      return id >= FirstOperatorID && id <= LastOperatorID;
-    }
+      return id >= FirstOperatorID && id <= LastOperatorID; }
+
     inline bool isNilaryOperator() const {
-      return id >= FirstNilaryOpID && id <= LastNilaryOpID;
-    }
+      return id >= FirstNilaryOperatorID && id <= LastNilaryOperatorID; }
+
     inline bool isUnaryOperator() const {
-      return id >= FirstUnaryOpID && id <= LastUnaryOpID;
-    }
+      return id >= FirstUnaryOperatorID && id <= LastUnaryOperatorID; }
+
     inline bool isBinaryOperator() const {
-      return id >= FirstBinaryOpID && id <= LastBinaryOpID;
-    }
+      return id >= FirstBinaryOperatorID && id <= LastBinaryOperatorID; }
+
     inline bool isTernaryOperator() const {
-      return id >= FirstTernaryOpID && id <= LastTernaryOpID;
-    }
+      return id >= FirstTernaryOperatorID && id <= LastTernaryOperatorID; }
+
     inline bool isMultiOperator() const {
-      return id >= FirstMultiOpID && id <= LastMultiOpID;
-    }
+      return id >= FirstMultiOperatorID && id <= LastMultiOperatorID; }
 
     /// Determine if the node is a Documentable Node
-    bool isDocumentable() const { return isValue() || isType() || isBundle();}
-
-    /// Determine if the node is a LinkageItem
-    bool isLinkageItem() const {
-      return isFunction() || isVariable();
-    }
+    bool isDocumentable() const { 
+      return id >= FirstDocumentableID && id <= LastDocumentableID; }
 
     /// Determine if the node is a Value
-    bool isValue() const { return isOperator() || isConstant(); }
+    bool isValue() const { 
+      return id >= FirstValueID && id <= LastValueID; }
 
-    /// Determine if the node is a Block
-    inline bool isBlock() const { return id == BlockID; }
-    /// Determine if the node is a Bundle
-    inline bool isBundle() const { return id == BundleID; }
-    /// Determine if the node is a Function
     inline bool isFunction() const 
-      { return id == FunctionID || id == ProgramID;}
-    /// Determine if the node is a Program
-    inline bool isProgram() const { return id == ProgramID; }
-    /// Determine if the node is a Variable
-    inline bool isVariable() const { return id == VariableID; }
+      { return id == FunctionID || id == ProgramID; }
 
     /// Provide support for isa<X> and friends
     static inline bool classof(const Node*) { return true; }

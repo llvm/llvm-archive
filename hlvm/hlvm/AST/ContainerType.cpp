@@ -35,19 +35,77 @@ using namespace llvm;
 
 namespace hlvm {
 
-ContainerType::~ContainerType()
+UniformContainerType::~UniformContainerType()
 {
 }
 
+const char* 
+UniformContainerType::getPrimitiveName() const
+{
+  hlvmDeadCode("getPrimitiveName called on a container type");
+  return 0;
+}
+
 void 
-ContainerType::insertChild(Node* n)
+UniformContainerType::insertChild(Node* n)
+{
+  hlvmAssert(isa<Type>(n) && "Can't insert those here");
+  if (type)
+    type->setParent(0);
+  type = cast<Type>(n);
+}
+
+void 
+UniformContainerType::removeChild(Node* n)
+{
+  hlvmAssert(isa<Type>(n) && "Can't remove those here");
+  hlvmAssert(n->getParent() == this && "Node isn't my kid!");
+  hlvmAssert(type == n && "Node isn't mine");
+  type = 0;
+}
+
+PointerType::~PointerType()
+{
+}
+
+ArrayType::~ArrayType()
+{
+}
+
+VectorType::~VectorType()
+{
+}
+
+AliasType::~AliasType()
+{
+}
+
+const char*
+AliasType::getPrimitiveName() const
+{
+  return type->getPrimitiveName();
+}
+
+DisparateContainerType::~DisparateContainerType()
+{
+}
+
+const char* 
+DisparateContainerType::getPrimitiveName() const
+{
+  hlvmDeadCode("getPrimitiveName called on a container type");
+  return 0;
+}
+
+void 
+DisparateContainerType::insertChild(Node* n)
 {
   hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
   contents.push_back(cast<AliasType>(n));
 }
 
 void 
-ContainerType::removeChild(Node* n)
+DisparateContainerType::removeChild(Node* n)
 {
   hlvmAssert(isa<Type>(n) && "Can't remove those here");
   // This is sucky slow, but we probably won't be removing nodes that much.
@@ -55,12 +113,6 @@ ContainerType::removeChild(Node* n)
     if (*I == n) { contents.erase(I); break; }
   }
   hlvmAssert(!"That node isn't my child");
-}
-
-const char* 
-ContainerType::getPrimitiveName() const
-{
-  return 0;
 }
 
 StructureType::~StructureType()

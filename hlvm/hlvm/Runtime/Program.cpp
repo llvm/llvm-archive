@@ -27,15 +27,11 @@
 /// @brief Implements the runtime program facilities.
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Runtime/Program.h>
-#include <string.h>
-
-namespace {
-
-
-}
+#include <hlvm/Runtime/Internal.h>
 
 extern "C" {
+
+#include <hlvm/Runtime/Program.h>
 
 /// Declare the external function that gets use the first element in
 /// the hlvm_programs appending array. This function is implemented in the
@@ -51,7 +47,7 @@ hlvm_find_program(const char* uri)
 {
   hlvm_programs_element* p = hlvm_get_programs();
   while (p && p->program_entry) {
-    if (strcmp(p->program_name,uri) == 0)
+    if (0 == apr_strnatcmp(p->program_name,uri))
       return p->program_entry;
     ++p;
   }

@@ -232,15 +232,12 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case IfOpID:
     case LoopOpID:
     case SelectOpID:
-    case WithOpID:
     case LoadOpID:
     case StoreOpID:
     case AllocateOpID:
     case FreeOpID:
     case ReallocateOpID:
-    case StackAllocOpID:
     case ReferenceOpID:
-    case DereferenceOpID:
     case NegateOpID:
     case ComplementOpID:
     case PreIncrOpID:
@@ -269,6 +266,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case IsPInfOpID:
     case IsNInfOpID:
     case IsNaNOpID:
+    case AutoVarOpID:
     case TruncOpID:
     case RoundOpID:
     case FloorOpID:
@@ -294,6 +292,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ConstantIntegerID:
     case ConstantRealID:
     case ConstantTextID:
+    case ConstantZeroID:
       break; // Not implemented yet
     case DocumentationID:
       /// Nothing to validate (any doc is a good thing :)

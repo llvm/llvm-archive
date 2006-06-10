@@ -80,7 +80,7 @@ class ConstantReal : public Constant
   /// @name Constructors
   /// @{
   protected:
-    ConstantReal() : Constant(ConstantTextID)  {}
+    ConstantReal() : Constant(ConstantRealID)  {}
     virtual ~ConstantReal();
 
   /// @}
@@ -156,7 +156,7 @@ class ConstantZero : public Constant
   public:
     static inline bool classof(const ConstantZero*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(ConstantTextID); }
+      { return N->is(ConstantZeroID); }
 
   /// @}
   friend class AST;

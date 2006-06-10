@@ -59,8 +59,7 @@ class Program : public Function
   /// @{
   public:
     static inline bool classof(const Program*) { return true; }
-    static inline bool classof(const Function*F) { return F->isProgram(); }
-    static inline bool classof(const Node* N) { return N->isProgram(); }
+    static inline bool classof(const Node* N) { return N->is(ProgramID); }
 
   /// @}
   /// @name Data

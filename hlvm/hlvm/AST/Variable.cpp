@@ -37,10 +37,4 @@ Variable::~Variable()
 {
 }
 
-bool
-Variable::isLocal() const
-{
-  return llvm::isa<Block>(this->getParent());
-}
-
 }

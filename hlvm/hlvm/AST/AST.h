@@ -32,6 +32,8 @@
 
 #include <hlvm/AST/Node.h>
 #include <hlvm/AST/Type.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/RuntimeType.h>
 #include <string>
 #include <vector>
 
@@ -48,14 +50,11 @@ class Function;
 class Program; 
 class Import;
 class Locator; 
-class SignatureType;
-class StructureType;
 class Variable; 
 class ConstantInteger;
 class ConstantReal;
 class ConstantText;
 class ConstantZero;
-class AliasType;
 class Pool;
 class ReturnOp;
 class StoreOp;
@@ -63,8 +62,6 @@ class LoadOp;
 class OpenOp;
 class CloseOp;
 class WriteOp;
-typedef AliasType Argument;
-typedef AliasType Field;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It provides
 /// those aspects of the tree that are not part of the tree itself.
@@ -235,15 +232,27 @@ class AST : public Node
       const std::string& id,  ///< The name of the type
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new CharacterType node. A CharacterType represents a single 
-    /// textual character in UTF-16 encoding.
-    CharacterType* new_CharacterType(
+    /// Create a new BufferType node. A BufferType is a runtime type that is
+    /// used to buffer input and output.
+    BufferType* new_BufferType(
       const std::string& id,  ///< The name of the type
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new TextType node. A TextType represents a string or block 
-    /// of text of arbitrary length in UTF-16 encoding.
+    /// Create a new TextType node. A TextType is a runtime type that is
+    /// used to represent unicode strings of text.
     TextType* new_TextType(
+      const std::string& id,  ///< The name of the type
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Create a new StreamType node. A StreamType is a runtime type that is
+    /// used as a handle for input/output streams.
+    StreamType* new_StreamType(
+      const std::string& id,  ///< The name of the type
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Create a new CharacterType node. A CharacterType represents a single 
+    /// textual character in UTF-16 encoding.
+    CharacterType* new_CharacterType(
       const std::string& id,  ///< The name of the type
       const Locator* loc = 0  ///< The source locator
     );
@@ -411,11 +420,13 @@ class AST : public Node
     /// Create a new ConstantInteger node.
     ConstantInteger* new_ConstantInteger(
       uint64_t value,         ///< The value of the ConstantInteger
+      Type* Ty,               ///< The type of the integer
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantInteger node.
     ConstantReal* new_ConstantReal(
       double value,           ///< The value of the ConstantReal
+      Type* Ty,               ///< The type of the real
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantText node.

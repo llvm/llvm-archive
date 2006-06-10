@@ -268,6 +268,7 @@
     <choice>
       <value>any</value>
       <value>bool</value>
+      <value>buffer</value>
       <value>char</value>
       <value>f32</value>
       <value>f44</value>
@@ -280,6 +281,7 @@
       <value>s32</value>
       <value>s64</value>
       <value>s128</value>
+      <value>stream</value>
       <value>text</value>
       <value>u8</value>
       <value>u16</value>
@@ -430,7 +432,6 @@
   <define name="Block.pat">
     <oneOrMore>
       <choice>
-        <ref name="variable.elem"/>
         <ref name="Operators.pat"/>
         <ref name="block.elem"/>
       </choice>
@@ -454,7 +455,7 @@
       <!-- 
       FIXME: This is hacked out right now because it causes infinite recursion
       in libxml2 function xmlRelaxNGGetElements. Debugging it didn't help me
-      find out whey.
+      find out why.
       <ref name="ConstantExpression.pat"/>
       -->
     </choice>
@@ -693,7 +694,7 @@
 
   <define name="Operators.pat">
     <choice>
-      <ref name="var.elem"/>
+      <ref name="autovar.elem"/>
       <ref name="ComparisonOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
@@ -733,9 +734,15 @@
     <empty/>
   </define>
 
-  <define name="var.elem">
-    <element name="var">
+  <define name="autovar.elem">
+    <element name="autovar">
       <ref name="Named_Typed_Element.pat"/>
+      <choice>
+        <ref name="Constant.pat"/>
+        <element name="zero">
+          <empty/>
+        </element>
+      </choice>
     </element>
   </define>
 
@@ -810,6 +817,13 @@
     <element name="write">
       <ref name="Documentation.pat"/>
       <ref name="Value.pat"/>
+      <ref name="Value.pat"/>
+    </element>
+  </define>
+
+  <define name="read.elem">
+    <element name="read">
+      <ref name="Documentation.pat"/>
       <ref name="Value.pat"/>
       <ref name="Value.pat"/>
     </element>

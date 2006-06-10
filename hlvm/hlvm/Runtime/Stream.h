@@ -1,4 +1,4 @@
-//===-- Runtime Utilities Interface -----------------------------*- C++ -*-===//
+//===-- Runtime Stream I/O Interface ----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,29 +20,28 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/Utilities.h
+/// @file hlvm/Runtime/Stream.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
-/// @date 2006/06/05
+/// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime utilities
+/// @brief Declares the interface to the runtime Stream Input/Output operations
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_UTILITIES_H
-#define HLVM_RUNTIME_UTILITIES_H
+#ifndef HLVM_RUNTIME_STREAM_H
+#define HLVM_RUNTIME_STREAM_H
 
-/// This is the HLVM runtime assert macro. It is very much similar to
-/// the <cassert> version but without some of the overhead. It also lets
-/// us take control of what to do when an assertion happens. The standard
-/// implementation just prints and aborts.
-#define hlvm_assert(expr) \
-  (static_cast<void>((expr) ? 0 : \
-    (hlvm_assert_fail(" #expr ", __FILE__, __LINE__))))
+#include <hlvm/Runtime/Text.h>
 
+typedef struct hlvm_stream_obj* hlvm_stream;
+typedef struct hlvm_buffer_obj* hlvm_buffer;
 
-/// This function gets called by the hlvm_assert macro, and in other situations
-/// where a "panic" happens. It provides the proper escape mechanism given the
-/// configuration of the runtime.
-void hlvm_assert_fail(const char* expression, const char* file, int line_num);
+extern hlvm_stream 
+hlvm_stream_open(hlvm_text uri);
 
+extern hlvm_size 
+hlvm_stream_write(hlvm_stream str, hlvm_buffer data, hlvm_size len);
+
+extern void 
+hlvm_op_file_close(hlvm_stream file);
 
 #endif

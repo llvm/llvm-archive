@@ -60,7 +60,7 @@ extern apr_file_t* _hlvm_stderr;
 extern void _hlvm_initialize();
 
 /// This is the HLVM runtime assert macro. It is very much similar to
-/// the <cassert> version but without some of the overhead. It also lets
+/// the "assert.h" version but without some of the overhead. It also lets
 /// us take control of what to do when an assertion happens. The standard
 /// implementation just prints and aborts.
 #define hlvm_stringize(expr) #expr

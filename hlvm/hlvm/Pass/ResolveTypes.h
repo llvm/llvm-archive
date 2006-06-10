@@ -47,7 +47,7 @@ namespace Pass {
     /// @name Constructors
     /// @{
     protected:
-      ResolveTypes() : Pass(0);
+      ResolveTypes() : Pass(0) {}
     public:
       ~ResolveTypes();
 

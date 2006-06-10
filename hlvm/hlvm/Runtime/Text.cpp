@@ -1,4 +1,4 @@
-//===-- Runtime String Implementation ---------------------------*- C++ -*-===//
+//===-- Runtime Text String Implementation ----------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,11 +20,11 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/String.cpp
+/// @file hlvm/Runtime/Text.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/05/25
 /// @since 0.1.0
-/// @brief Implements the functions for runtime string support
+/// @brief Implements the functions for runtime text string support
 //===----------------------------------------------------------------------===//
 
 #include <apr-1/apr_strings.h>

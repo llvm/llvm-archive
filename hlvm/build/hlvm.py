@@ -45,6 +45,10 @@ def GetConfigFile(env):
   from build import filterbuilders
   return filterbuilders.ConfigFile(env)
 
+def GetDoxygen(env):
+  from build import doxygen
+  return doxygen.Doxygen(env)
+
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
   if (dir == env.Dir('#').path):

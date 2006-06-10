@@ -14,13 +14,13 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file doxygen.intro
-/// @author Reid Spencer <rspencer@hlvm.org> (original author)
+/// @file docs/doxygen.intro
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @brief HLVM documentation introduction.
 ////////////////////////////////////////////////////////////////////////////////
 
-/// @mainpage HLVM:High Level Virtual Machine
+/// @mainpage HLVM: High Level Virtual Machine
 ///
 /// @section main_intro Introduction
 /// Welcome to the High Level Virtual Machine (HLVM). 

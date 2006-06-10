@@ -1,3 +1,4 @@
+//===-- AST Yaml Reader Implementation --------------------------*- C++ -*-===//
 //
 // Copyright (C) 2006 HLVM Group. All Rights Reserved.
 //
@@ -14,8 +15,8 @@
 // for more details.
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// @file hlvm/Reader/Yaml/YamlReader.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
+/// @file hlvm/Reader/YamlReader.cpp
+/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
 /// @brief Declares the class hlvm::YamlReader.cpp

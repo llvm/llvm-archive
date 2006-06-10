@@ -1,4 +1,4 @@
-//===-- hlvm/Writer/XML/XMLWriter.h - AST XML Writer Class ------*- C++ -*-===//
+//===-- AST XML Writer Interface --------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Writer/XML/XMLWriter.h
-/// @author Reid Spencer <rspencer@x10sys.com>
+/// @file hlvm/Writer/XMLWriter.h
+/// @author Reid Spencer <rspencer@reidspencer.com>
 /// @date 2006/05/12
 /// @since 0.1.0
 /// @brief Provides the interface to hlvm::XMLWriter
 //===----------------------------------------------------------------------===//
 
-#ifndef XPS_WRITER_XML_XMLWRITER_H
-#define XPS_WRITER_XML_XMLWRITER_H
+#ifndef XPS_WRITER_XMLWRITER_H
+#define XPS_WRITER_XMLWRITER_H
 
 #include <hlvm/Writer/Writer.h>
 #include <ostream>

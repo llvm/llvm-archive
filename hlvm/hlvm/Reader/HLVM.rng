@@ -18,7 +18,7 @@
 <!-- Boston, MA 02110-1301 USA                                               -->
 <!--                                                                         -->
 <!--=========================================================================-->
-<!-- @file hlvm/Reader/XML/HLVM.rng                                          -->
+<!-- @file hlvm/Reader/HLVM.rng                                              -->
 <!-- @author Reid Spencer <rspencer@reidspencer.com> (original author)       -->
 <!-- @date 2006/05/13                                                        -->
 <!-- @since 0.1.0                                                            -->

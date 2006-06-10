@@ -1,4 +1,4 @@
-//===-- Runtime String Interface --------------------------------*- C++ -*-===//
+//===-- Runtime Text String Interface ---------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/String.h
+/// @file hlvm/Runtime/Text.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/24
 /// @since 0.1.0
-/// @brief Declares the interface to the runtime string facilities
+/// @brief Declares the interface to the runtime text string facilities
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_RUNTIME_STRING_H
-#define HLVM_RUNTIME_STRING_H
+#ifndef HLVM_RUNTIME_TEXT_H
+#define HLVM_RUNTIME_TEXT_H
 
 #include <hlvm/Runtime/Memory.h>
 

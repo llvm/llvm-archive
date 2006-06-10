@@ -20,7 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/CodeGen/LLVM/LLVMGenerator.h
+/// @file hlvm/CodeGen/LLVMGenerator.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/26
 /// @since 0.1.0

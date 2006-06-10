@@ -20,7 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/Program.cpp
+/// @file hlvm/Runtime/Memory.cpp
 /// @author Reid Spencer <rspencer@reidspencer.org> (original author)
 /// @date 2006/06/04
 /// @since 0.1.0

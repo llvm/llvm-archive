@@ -20,7 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Runtime/Internal.h
+/// @file hlvm/Runtime/Internal.cpp
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/06/05
 /// @since 0.1.0

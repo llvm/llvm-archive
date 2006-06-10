@@ -1,4 +1,4 @@
-//===-- hlvm/Reader/XML/XMLReader.h - AST XML Reader Class ------*- C++ -*-===//
+//===-- AST XML Reader Interface --------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Reader/XML/XMLReader.h
+/// @file hlvm/Reader/XMLReader.h
 /// @author Reid Spencer <rspencer@x10sys.com>
 /// @date 2006/05/12
 /// @since 0.1.0
 /// @brief Provides the interface to hlvm::XMLReader
 //===----------------------------------------------------------------------===//
 
-#ifndef XPS_READER_XML_XMLREADER_H
-#define XPS_READER_XML_XMLREADER_H
+#ifndef XPS_READER_XMLREADER_H
+#define XPS_READER_XMLREADER_H
 
 #include <hlvm/Reader/Reader.h>
 #include <string>

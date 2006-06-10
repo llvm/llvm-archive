@@ -20,7 +20,7 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/Reader/XML/XMLReader.cpp
+/// @file hlvm/Reader/XMLReader.cpp
 /// @author Reid Spencer <rspencer@x10sys.com>
 /// @date 2006/05/12
 /// @since 0.1.0

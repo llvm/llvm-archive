@@ -35,8 +35,12 @@
 namespace hlvm 
 {
 
-/// This class represents a Type that uses a single other element type in its
-/// construction.
+/// This class provides an Abstract Syntax Tree node that represents a uniform
+/// container type.  Uniform container types are those types that reference 
+/// another type. They may have multiple elements but all elements are of the
+/// same type, hence they are uniform.  This is true of types such as AliasType
+/// (a simple renaming of another type), PointerType, ArrayType, and VectorTYpe.
+/// AST Abstract Uniform Container Type Node
 class UniformContainerType : public Type
 {
   /// @name Constructors
@@ -75,8 +79,11 @@ class UniformContainerType : public Type
   /// @}
 };
 
-/// This class represents a storage location that is a pointer to another
-/// type. 
+/// This class provides an Abstract Syntax Tree node that represents a storage 
+/// location that is a pointer to another storage location of a specific type.
+/// PointerType is a UniformContainerType meaning that the referrent object is
+/// of only one type.
+/// @brief AST Pointer Type Node
 class PointerType : public UniformContainerType
 {
   /// @name Constructors
@@ -97,8 +104,18 @@ class PointerType : public UniformContainerType
   friend class AST;
 };
 
-/// This class represents a resizeable, aligned array of some other type. The
-/// Array references a Type that specifies the type of elements in the array.
+/// This class provides an Abstract Syntax Tree note that represents an array of
+/// some type.  An array is a sequential layout of multiple elements all of the
+/// same type. Arrays in HLVM are dynamically resizeable but the type 
+/// specification can indicate a maximum size beyond which the array cannot
+/// grow.  Setting the maximum size to 0 indicates that the size of the array
+/// is unbounded and it may grow to the limits of available memory. This 
+/// usage is discouraged as knowing the maximum memory size can make the 
+/// implementation of the array more efficient in its use of memory and limit
+/// the amount of reallocation necessary when the array changes size. An
+/// ArrayType is a UniformContainerType because it contains a number of elements
+/// all of uniform type.
+/// @brief AST Array Type Node
 class ArrayType : public UniformContainerType
 {
   /// @name Constructors
@@ -134,10 +151,15 @@ class ArrayType : public UniformContainerType
   friend class AST;
 };
 
-/// This class represents a fixed size, packed vector of some other type.
-/// Where possible, HLVM will attempt to generate code that makes use of a
-/// machines vector instructions to process such types. If not possible, HLVM
-/// will treat the vector the same as an Array.
+/// This class provides an Abstract Syntax Tree Node that represents a fixed 
+/// size, packed vector of some other type. Some languages call this an "array"
+/// but arrays in HLVM can be dynamically resized. Vectors, however, cannot 
+/// be resized.  Where possible, HLVM will attempt to generate code that makes 
+/// use of a machines vector instructions to process vector types. Except for
+/// the fixed size, VectorType objects are identical in functionality to 
+/// ArrayType objects. VectorType is a UniformContainerType because it
+/// represents a container of uniformly typed elements.
+/// @brief AST Vector Type Node
 class VectorType : public UniformContainerType
 {
   /// @name Constructors
@@ -173,9 +195,19 @@ class VectorType : public UniformContainerType
   friend class AST;
 };
 
-/// This class is type that combines a name with an arbitrary type. This
-/// construct is used any where a named and typed object is needed such as
-/// the parameter to a function or the field of a structure. 
+/// This class provides an Abstract Syntax Tree node that is simply a renaming
+/// of another type.  It adopts the characteristics of the referrent type. This
+/// construct is necessary in HLVM because type equivalence is done by name, 
+/// not by semantics.  To dissociate two types of equivalent semantics, say
+/// an integer type, one uses an AliasType to provide a new type name with the
+/// same semantics. AliasType is a UniformContainerType because it refers to
+/// another type of uniform type. AliasTypes are also used in the definition of
+/// a Function's formal arguments and a Structure's fields. In these situations
+/// the name provided by the AliasType forms the name of the argument or 
+/// structure field.
+/// @see Function
+/// @see Structure
+/// @brief AST Alias Type Node
 class AliasType : public UniformContainerType
 {
   /// @name Constructors
@@ -197,9 +229,12 @@ class AliasType : public UniformContainerType
   friend class AST;
 };
 
-/// This class represents a Type in the HLVM Abstract Syntax Tree.  
-/// A Type defines the format of storage. 
-/// @brief HLVM AST Type Node
+/// This class provides an Abstract Syntax Tree node that represents a Type that
+/// contains elements of potentially disparate other types. 
+/// @see ContinuationType
+/// @see StructureType
+/// @see SignatureType
+/// @brief AST Abstract Disparate Container Type Node
 class DisparateContainerType : public Type
 {
   /// @name Types
@@ -256,11 +291,14 @@ class DisparateContainerType : public Type
   /// @}
 };
 
-
 typedef AliasType Field;
 
-/// This class represents an HLVM type that is a sequence of data fields 
-/// of varying type. 
+/// This class provides an Abstract Syntax Tree node that represents an 
+/// sequence type. A sequence type is a type that lays out its elements in 
+/// sequential memory locations. Unlike ArrayType, SequenceType allows its 
+/// elements to be of disparate type. Consequently, StructureType is a
+/// DisparateContainerType.  
+/// @brief AST Structure Type Node
 class StructureType : public DisparateContainerType
 {
   /// @name Constructors
@@ -293,7 +331,14 @@ class StructureType : public DisparateContainerType
   friend class AST;
 };
 
-/// This class holds data for a continuation. TBD later.
+/// This class provides an Abstract Syntax Tree node that represents data held
+/// for a continuation.  A ContinutationType is a StructureType because it has
+/// the same semantics as a structure. It allows the programmer to store various
+/// bits of information that are to be restored at a later time, when the 
+/// continuation is called. In addition, HLVM will (transparently) associate
+/// the runtime context for the continutation with the programmer's 
+/// ContinuationType.  
+/// @brief AST Continuation Type Node
 class ContinuationType : public StructureType
 {
   /// @name Constructors
@@ -315,10 +360,16 @@ class ContinuationType : public StructureType
   friend class AST;
 };
 
+/// This typedef is used to just provide a more convenient name for AliasType
+/// when AliasType is being used as the Argument to a SignatureType.
+/// @brief AST Argument Type Node
 typedef AliasType Argument;
 
-/// This class represents an HLVM type that is a sequence of data fields 
+/// This class provides an Abstract Syntax Tree node that represents the call
+/// signature of an HLVM function. A SignatureType encapsulates the
 /// of varying type. 
+/// @see Function
+/// @brief AST Signature Type Node
 class SignatureType : public DisparateContainerType
 {
   /// @name Constructors

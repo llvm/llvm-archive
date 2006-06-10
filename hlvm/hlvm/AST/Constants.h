@@ -1,4 +1,4 @@
-//===-- AST Constant Expression Operators -----------------------*- C++ -*-===//
+//===-- AST Constant Values -------------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -35,9 +35,11 @@
 namespace hlvm 
 {
 
-/// This class represents an operator that yields a literal constant integer 
-/// value.
-/// @brief HLVM AST Constant Integer Node
+/// This class provides an Abstract Syntax Tree node that yields a 
+/// constant integer value. This kind of constant can represent integer valued
+/// constants of any of the signed or unsigned integer types of any bitsize.
+/// @see IntegerType
+/// @brief AST Constant Integer Node
 class ConstantInteger: public Constant
 {
   /// @name Constructors
@@ -75,6 +77,11 @@ class ConstantInteger: public Constant
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that yields a constant
+/// real number value. This kind of constant can represent a constant real
+/// number value of any mantissa or exponent size. 
+/// @see RealType
+/// @brief AST Constant Real Node
 class ConstantReal : public Constant
 {
   /// @name Constructors
@@ -107,7 +114,15 @@ class ConstantReal : public Constant
   friend class AST;
 };
 
-/// A constant textual string
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// text value. The constant value is encoded in UTF-8 but may be converted 
+/// to other encodings depending on how it is used. For example, when used to
+/// initialize a TextType Variable that is using UTF-16 encoding, the conversion
+/// will occur whenever the Variable is loaded. UTF-8 encoding is used for
+/// constant text values to reduce storage requirements and for compatibility
+/// with older non-Unicode systems.
+/// @see TextType
+/// @brief AST Constant Text Node
 class ConstantText : public Constant
 {
   /// @name Constructors
@@ -140,8 +155,13 @@ class ConstantText : public Constant
   friend class AST;
 };
 
-/// A zero initializer constant. It represents a constant of any type whose
-/// entire data is filled with zero bytes.
+/// This class provides an Abstract Syntax Tree node that yields a zero value
+/// for any type. In essence, this is a short-cut. Zero value constants are very
+/// common and defining them explicitly for each type of constant makes use of
+/// the AST constants cumbersome. The way to think about this node is that it
+/// represents a constant value of any type such that all the bits of that type
+/// are zero.
+/// AST Constant Zero Node
 class ConstantZero : public Constant
 {
   /// @name Constructors

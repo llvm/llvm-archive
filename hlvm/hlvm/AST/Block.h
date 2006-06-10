@@ -38,12 +38,13 @@ namespace hlvm
 
 class AutoVarOp;
 
-/// This class represents an Variable in the HLVM Abstract Syntax Tree.  
-/// A Variable is a storage location of a specific type. It can either be
-/// global or local, depending on its parent. Global variables are always
-/// contained in a Bundle. Local variables are always contained in a
-/// Function.
-/// @brief HLVM AST Variable Node
+/// This class represents an block of operators in the HLVM Abstract Syntax 
+/// Tree.  A block is simply a sequential list of Operator nodes that are
+/// executed in sequence. Block itself is an operator. Its result value is
+/// the value of the last operator executed. As such, blocks can be nested
+/// within blocks. Blocks are used as the operands of the control flow 
+/// operators as well.
+/// @brief AST Block Node
 class Block : public MultiOperator
 {
   /// @name Constructors

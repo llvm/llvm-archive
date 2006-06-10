@@ -36,14 +36,18 @@ namespace hlvm
 {
 
 /// This abstract base class represents a constant value in the HLVM Abstract 
-/// Syntax Tree.  All ConstantValues are immutable values of a specific type. 
-/// ConstantValues do not have a storage location nor an address. However, 
-/// as they are values they may be used as the operand of any instruction or
-/// in other places.  ConstantValues are not suitable for linking. For that
-/// kind of constant you want the Constant class in Variable.h. 
-/// There are many kinds of ConstantValues from simple literal values to 
-/// complex constant expressions. 
-/// @brief HLVM AST Constant Node
+/// Syntax Tree.  All Constants are immutable values of a specific type. 
+/// Constants do not have a storage location nor an address nor do they
+/// participate in linking.  However, as they are values they may be used as 
+/// the operand of instructions or as the initializers of variables. Constants
+/// do not participate in linking and are always internal to the bundle in which
+/// they appear. To create a linkable constant, declare a variable that is 
+/// constant and initialize it with a Constant.  There are many kinds of 
+/// constants including simple literal values (numbers an text), complex 
+/// constant expressions (constant computations), and aggregate constants that
+/// represent constant arrays, vectors, pointers and structures.
+/// @see hlvm/AST/Constants.h
+/// @brief AST Abstract Constant Node
 class Constant : public Value
 {
   /// @name Constructors

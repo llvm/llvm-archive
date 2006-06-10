@@ -38,8 +38,8 @@
 #include <vector>
 
 /// This namespace is for all HLVM software. It ensures that HLVM software does
-/// not collide with any other software. Hopefully HLVM is not a namespace used
-/// elsewhere. 
+/// not collide with any other software. Hopefully "hlvm" is not a namespace 
+/// used elsewhere.
 namespace hlvm
 {
 
@@ -63,9 +63,12 @@ class OpenOp;
 class CloseOp;
 class WriteOp;
 
-/// This class is used to hold or contain an Abstract Syntax Tree. It provides
-/// those aspects of the tree that are not part of the tree itself.
-/// @brief AST Container Class
+/// This class is used to hold or contain an Abstract Syntax Tree. It forms the
+/// root node of a multi-way tree of other nodes. As such, its parent node is
+/// null and this is only true of the AST node.  AST provides a number of 
+/// facilities for management of the tree as a whole. It also provides all the 
+/// factory functions for creating AST nodes.  
+/// @brief AST Tree Root Class
 class AST : public Node
 {
   /// @name Types
@@ -511,5 +514,5 @@ class AST : public Node
   /// @}
 };
 
-} // hlvm
+} // env hlvm namespace
 #endif

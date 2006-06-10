@@ -40,12 +40,15 @@ class Type;
 class Variable;
 class Function;
 
-/// This class represents an HLVM Bundle. A Bundle is simply a collection of
-/// declarations and definitions. It is the root of the AST tree and also
-/// the grouping and namespace construct in HLVM. Every compilation unit is
-/// a Bundle. Bundles can also be nested in other Bundles. All programming
-/// constructs are defined as child nodes of some Bundle.
-/// @brief HLVM AST Bundle Node
+/// This class is simply a collection of definitions. Things that can be 
+/// defined in a bundle include types, global variables, functions, classes,
+/// etc. A bundle is the unit of linking and loading. A given compilation unit 
+/// may define as many bundles as it desires. When a bundle is loaded, all of 
+/// its definitions become active.  Only those things defined in a bundle 
+/// participate in linking A Bundle's parent is always the AST node. Each 
+/// Bundle has a name and that name forms a namespace for the definitions 
+/// within the bundle. Bundles cannot be nested. 
+/// @brief AST Bundle Node
 class Bundle : public Documentable
 {
   /// @name Types
@@ -133,5 +136,5 @@ class Bundle : public Documentable
   friend class AST;
 };
 
-} // hlvm
+} // end hlvm namespace
 #endif

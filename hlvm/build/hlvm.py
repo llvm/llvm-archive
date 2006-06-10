@@ -104,10 +104,12 @@ def GetBuildEnvironment(targets,arguments):
   opts.Add('with_apr','Specify where apr is located','/usr/local/apr')
   opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr')
   opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local')
-  opts.Add('with_gperf','Specify where the gperf program is located',
-           '/usr/local/bin/gperf')
+  opts.Add('with_gxx','Specify where the GCC C++ compiler is located',
+           '/usr/local/bin/g++')
   opts.Add('with_llc','Specify where the LLVM compiler is located',
            '/usr/local/bin/llc')
+  opts.Add('with_gccld','Specify where the LLVM GCC Linker is located',
+           '/usr/local/bin/gccld')
   opts.Add('with_llvmdis','Specify where the LLVM disassembler is located',
            '/usr/local/bin/llvm-dis')
   opts.Add('with_llvmas','Specify where the LLVM assembler is located',
@@ -120,6 +122,8 @@ def GetBuildEnvironment(targets,arguments):
            '/usr/local/bin/llvm-g++')
   opts.Add('with_llvm2cpp','Specify where the LLVM llvm2cpp program is located',
            '/usr/local/bin/llvm2cpp')
+  opts.Add('with_gperf','Specify where the gperf program is located',
+           '/usr/local/bin/gperf')
   opts.Add('with_runtest','Specify where DejaGnu runtest program is located',
            '/usr/local/bin/runtest')
   opts.Add('with_doxygen','Specify where the doxygen program is located',

@@ -80,9 +80,9 @@ int main(int argc, char **argv) {
   # Check each path
   for p in paths:
     # Clear old settings from previous iterations
-    libdir = None
-    incdir = None
-    bindir = None
+    libdir = ''
+    incdir = ''
+    bindir = ''
     objects = []
     foundlib = 0
     # Check various library directory names
@@ -269,9 +269,11 @@ def CheckForHeaders(conf,env):
   return 1
 
 def CheckForPrograms(conf,env):
-  if not conf.CheckProgram('gperf','with_gperf'):
+  if not conf.CheckProgram('g++','with_gxx'):
     _failed(env)
   if not conf.CheckProgram('llc','with_llc'):
+    _failed(env)
+  if not conf.CheckProgram('gccld','with_gccld'):
     _failed(env)
   if not conf.CheckProgram('llvm-dis','with_llvmdis',[env['LLVM_bin']]):
     _failed(env)
@@ -284,6 +286,8 @@ def CheckForPrograms(conf,env):
   if not conf.CheckProgram('llvm2cpp','with_llvm2cpp',[env['LLVM_bin']]):
     _failed(env)
   if not conf.CheckProgram('llvm-ar','with_llvmar',[env['LLVM_bin']]):
+    _failed(env)
+  if not conf.CheckProgram('gperf','with_gperf'):
     _failed(env)
   if not conf.CheckProgram('runtest','with_runtest'):
     env['with_runtest'] = None

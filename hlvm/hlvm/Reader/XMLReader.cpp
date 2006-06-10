@@ -27,8 +27,8 @@
 /// @brief Provides the interface to hlvm::XMLReader
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Reader/XML/XMLReader.h>
-#include <hlvm/Reader/XML/HLVMTokenizer.h>
+#include <hlvm/Reader/XMLReader.h>
+#include <hlvm/Reader/HLVMTokenizer.h>
 #include <hlvm/AST/Locator.h>
 #include <hlvm/Base/Source.h>
 #include <hlvm/AST/AST.h>
@@ -51,7 +51,7 @@
 #include <iostream>
 
 using namespace hlvm;
-using namespace HLVM_Reader_XML;
+using namespace HLVM_Reader;
 
 namespace {
 

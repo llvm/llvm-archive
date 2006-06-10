@@ -28,7 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Base/Memory.h>
-#include <hlvm/Reader/XML/XMLReader.h>
+#include <hlvm/Reader/XMLReader.h>
 #include <hlvm/Writer/XML/XMLWriter.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/Support/CommandLine.h>

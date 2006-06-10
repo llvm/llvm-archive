@@ -22,5 +22,10 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['XML'])
-hlvm.InstallHeader(env,['Reader.h'])
+hlvm.GetRNGQuoteSource(env)
+hlvm.GetRNGTokenizer(env)
+env.RNGQuoteSource('HLVM.rng.inc','HLVM.rng')
+env.RNGTokenizer('HLVMTokenizer.cpp','HLVM.rng')
+lib = env.Library('HLVMXMLReader',['XMLReader.cpp','HLVMTokenizer.cpp'])
+hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,['XMLReader.h'])

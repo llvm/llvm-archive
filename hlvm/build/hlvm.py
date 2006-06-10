@@ -220,6 +220,8 @@ Options:
 """ + opts.GenerateHelpText(env,sort=cmp))
   print "HLVM BUILD MODE: " + VariantName + " (" + buildname + ")"
   ConfigureHLVM(env)
+  now = datetime.datetime.utcnow();
+  env['HLVM_ConfigTime'] = now.ctime();
   opts.Save(options_file,env)
   return env
 

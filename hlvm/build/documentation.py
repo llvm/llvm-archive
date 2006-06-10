@@ -41,3 +41,15 @@ def Doxygen(env):
   env.Append(BUILDERS = {'Doxygen':doxygenBuilder} )
   env.Alias('doxygen','doxygen.tar.gz')
   return 1
+
+def XSLTMessage(target,source,env):
+  return "Creating " + target[0].path + " via XSLT from " + source[0].path
+
+def XSLTAction(target,source,env):
+  env.Execute( env['with_xsltproc'] + ' ' + source[0].path + ' ' + 
+    source[1].path + ' >' + target[0].path )
+
+def XSLTproc(env):
+  xsltAction = env.Action(XSLTAction,XSLTMessage)
+  xsltBuilder = env.Builder(action=xsltAction)
+  env.Append(BUILDERS = {'XSLTproc':xsltBuilder} )

@@ -32,60 +32,59 @@
 
 #include <hlvm/AST/Pass.h>
 
-namespace hlvm { 
-  using namespace AST;
-  
-namespace Pass {
+namespace hlvm {
 
-  /// This class provides a type resolution capability. It searches for 
-  /// instances of OpaqueType and resolves all their uses to the correct actual
-  /// type.
-  /// @brief Type Resolution Pass
-  class ResolveTypes : public Pass 
-  {
-    /// @}
-    /// @name Constructors
-    /// @{
-    protected:
-      ResolveTypes() : Pass(0) {}
-    public:
-      ~ResolveTypes();
+using namespace AST;
 
-    /// @}
-    /// @name Handlers
-    /// @{
-    public:
-      /// Handle a Block node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Block* b);
+/// This class provides a type resolution capability. It searches for 
+/// instances of OpaqueType and resolves all their uses to the correct actual
+/// type.
+/// @brief Type Resolution Pass
+class ResolveTypes : public Pass 
+{
+  /// @}
+  /// @name Constructors
+  /// @{
+  protected:
+    ResolveTypes() : Pass(0) {}
+  public:
+    ~ResolveTypes();
 
-      /// Handle a Bundle node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Bundle* b);
+  /// @}
+  /// @name Handlers
+  /// @{
+  public:
+    /// Handle a Block node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Block* b);
 
-      /// Handle a Function node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Function* f);
+    /// Handle a Bundle node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Bundle* b);
 
-      /// Handle a Program node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Program* p);
+    /// Handle a Function node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Function* f);
 
-      /// Handle a Operator node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Operator* o);
+    /// Handle a Program node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Program* p);
 
-      /// Handle a Type node. Subclasses should override this; default 
-      /// implementation does nothing.
-      virtual void handle(Type* t);
+    /// Handle a Operator node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Operator* o);
 
-    /// @}
-    /// @name Data
-    /// @{
-    protected:
-      int interest;
-    /// @}
-  };
-} // AST
-} // hlvm
+    /// Handle a Type node. Subclasses should override this; default 
+    /// implementation does nothing.
+    virtual void handle(Type* t);
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    int interest;
+  /// @}
+};
+
+} // end namespace hlvm
 #endif

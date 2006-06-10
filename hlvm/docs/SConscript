@@ -24,14 +24,9 @@ from build import hlvm
 from os.path import join as pjoin
 Import('env')
 hlvm.GetDoxygen(env)
+hlvm.GetXSLTproc(env)
 hlvm.GetConfigFile(env)
 env.ConfigFile('Doxyfile','Doxyfile.in')
+env.Doxygen('doxygen.tar.gz','Doxyfile')
+env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])
 
-if 'doxygen' in COMMAND_LINE_TARGETS:
-  env.Doxygen('doxygen.tar.gz','Doxyfile')
-
-cmd = '$with_xsltproc ' + pjoin(env['AbsSrcRoot'],'docs','RngToXHTML.xsl') + ' $SOURCE > $TARGET'
-rng2xhtml = Builder(action=cmd, src_suffix='rng', suffix='html')
-env.Append(BUILDERS= {'Rng2XHTML':rng2xhtml})
-env.Rng2XHTML('HLVM.rng.html',['HLVM.rng'])
-env.Depends('HLVM.rng.html','RngToXHTML.xsl')

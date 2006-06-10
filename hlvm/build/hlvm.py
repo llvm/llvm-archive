@@ -46,8 +46,12 @@ def GetConfigFile(env):
   return filterbuilders.ConfigFile(env)
 
 def GetDoxygen(env):
-  from build import doxygen
-  return doxygen.Doxygen(env)
+  from build import documentation
+  return documentation.Doxygen(env)
+
+def GetXSLTproc(env):
+  from build import documentation
+  return documentation.XSLTproc(env)
 
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path

@@ -27,7 +27,7 @@
 /// @brief Provides the interface to hlvm::XMLWriter
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Writer/XML/XMLWriter.h>
+#include <hlvm/Writer/XMLWriter.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Import.h>

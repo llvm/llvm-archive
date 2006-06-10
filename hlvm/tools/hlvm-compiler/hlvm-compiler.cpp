@@ -29,7 +29,7 @@
 
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Reader/XMLReader.h>
-#include <hlvm/Writer/XML/XMLWriter.h>
+#include <hlvm/Writer/XMLWriter.h>
 #include <hlvm/Pass/Pass.h>
 #include <hlvm/CodeGen/LLVMGenerator.h>
 #include <llvm/Support/CommandLine.h>

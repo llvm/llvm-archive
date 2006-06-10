@@ -26,8 +26,8 @@ Import('env')
 prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
  LIBS=[
    'HLVMCodeGen',
-   'HLVMXMLReader',
-   'HLVMXMLWriter',
+   'HLVMReader',
+   'HLVMWriter',
    'HLVMPass',
    'HLVMAST',
    'HLVMBase',

@@ -24,8 +24,8 @@ from build import hlvm
 Import('env')
 prog = env.Program('hlvm-xml2xml', hlvm.GetAllCXXFiles(env),
  LIBS=[
-   'HLVMXMLReader',
-   'HLVMXMLWriter',
+   'HLVMReader',
+   'HLVMWriter',
    'HLVMPass',
    'HLVMAST',
    'HLVMBase',

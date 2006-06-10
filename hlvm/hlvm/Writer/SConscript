@@ -22,5 +22,6 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['XML'])
-hlvm.InstallHeader(env,['Writer.h'])
+lib = env.Library('HLVMWriter',hlvm.GetAllCXXFiles(env))
+hlvm.InstallLibrary(env,lib)
+hlvm.InstallHeader(env,['XMLWriter.h'])

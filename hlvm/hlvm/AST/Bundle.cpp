@@ -96,4 +96,8 @@ Bundle::var_find(const std::string& name) const
   return llvm::cast<Variable>(vars.lookup(name));
 }
 
+Import::~Import()
+{
+}
+
 }

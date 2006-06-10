@@ -35,10 +35,11 @@
 namespace hlvm 
 {
 
-/// This class represents a return operator. The return operator returns from 
-/// the inner most enclosed function. It takes one operand which is the value
-/// to return to the caller.
-/// @brief HLVM AST Return Operator Node
+/// This class provides an Abstract Syntax Tree node that represents a return 
+/// operator. The return operator returns from the function that contains it.
+/// The ReturnOp takes one operand which is the value to return to the caller
+/// of the Function.
+/// @brief AST Return Operator Node
 class ReturnOp : public UnaryOperator
 {
   /// @name Constructors

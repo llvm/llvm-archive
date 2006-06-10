@@ -40,7 +40,7 @@ namespace hlvm
 /// another type. They may have multiple elements but all elements are of the
 /// same type, hence they are uniform.  This is true of types such as AliasType
 /// (a simple renaming of another type), PointerType, ArrayType, and VectorTYpe.
-/// AST Abstract Uniform Container Type Node
+/// @brief AST Abstract Uniform Container Type Node
 class UniformContainerType : public Type
 {
   /// @name Constructors
@@ -55,7 +55,7 @@ class UniformContainerType : public Type
   public:
     Type* getElementType() const { return type; }
     virtual const char* getPrimitiveName() const; // asserting override
-    // Methods to support type inquiry via isa, cast, dyn_cast
+    /// Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const UniformContainerType*) { return true; }
     static inline bool classof(const Type* T) { 
       return T->isUniformContainerType(); 
@@ -96,7 +96,7 @@ class PointerType : public UniformContainerType
   /// @name Accessors
   /// @{
   public:
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const PointerType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(PointerTypeID); }
 
@@ -131,7 +131,7 @@ class ArrayType : public UniformContainerType
     /// Get the maximum size the array can grow to.
     uint64_t getMaxSize()  const { return maxSize; }
 
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const ArrayType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(ArrayTypeID); }
     
@@ -175,7 +175,7 @@ class VectorType : public UniformContainerType
     /// Get the maximum size the array can grow to.
     uint64_t getSize()  const { return size; }
 
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const VectorType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(VectorTypeID); }
 
@@ -221,7 +221,7 @@ class AliasType : public UniformContainerType
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const AliasType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(AliasTypeID); }
 
@@ -256,7 +256,7 @@ class DisparateContainerType : public Type
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const DisparateContainerType*) { return true; }
     static inline bool classof(const Node* N) { 
       return N->isDisparateContainerType(); }
@@ -312,7 +312,7 @@ class StructureType : public DisparateContainerType
   /// @name Accessors
   /// @{
   public:
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const StructureType*) { return true; }
     static inline bool classof(const Node* T) 
       { return T->is(StructureTypeID); }
@@ -351,7 +351,7 @@ class ContinuationType : public StructureType
   /// @name Accessors
   /// @{
   public:
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const ContinuationType*) { return true; }
     static inline bool classof(const Node* T) 
       { return T->is(ContinuationTypeID); }
@@ -386,7 +386,7 @@ class SignatureType : public DisparateContainerType
     const Type* getResultType() const { return result; }
     bool  isVarArgs() const { return varargs; }
 
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const SignatureType*) { return true; }
     static inline bool classof(const Node* T) 
       { return T->is(SignatureTypeID); }

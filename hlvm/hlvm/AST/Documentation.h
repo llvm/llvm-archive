@@ -35,16 +35,24 @@
 namespace hlvm 
 {
 
-/// The HLVM AST permits documentation (not just comments) to be included into
-/// the nodes of the AST. Each such block of documentation is represented by
-/// a Documentation node, implemented by this class. The content of a 
-/// documentation node is simply a block of text. The intended use is that
-/// the text contain XHTML markup. In this way, an automated documentation
-/// facility can translate the AST into XHTML documentation with perfect
-/// precision. Since the documentation node can be associated with any kind
-/// of node, this affords a complete system for documenting HLVM programs 
-/// with XHTML markup.
-/// @brief HLVM AST Function Node
+/// This class provides an Abstract Syntax Tree node that represents program
+/// documentation. Documentation nodes may be attached to any Documentable which
+/// is an abstract base class of nearly every type of AST node. This construct
+/// permits documentation (not just comments) to be included directly into the
+/// nodes of the Abstract Syntax Tree as first class objects, not just addenda.
+/// Each Documentation node simply contains a block of text that provides the
+/// documentation for the Documentable to which the Documentation is attached.
+/// The intended use is that the text contain XHTML markup. In this way, an 
+/// automated documentation facility can translate the AST into XHTML 
+/// documentation with great accuracy in associating documentation with the
+/// nodes of the AST. Since the documentation node can be associated with 
+/// nearly any kind of node, this affords a complete system for documenting 
+/// HLVM programs with XHTML markup. There is, however, no firm requirement 
+/// that XHTML be used for the documentation. Any kind of documentation that is
+/// expressible in UTF-8 notation can be accommodated including other markup
+/// languages or simple ASCII text.
+/// @see Documentable
+/// @brief AST Documentation Node
 class Documentation : public Node
 {
   /// @name Constructors

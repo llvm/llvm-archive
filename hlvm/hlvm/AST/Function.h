@@ -1,4 +1,4 @@
-//===-- AST Function Class --------------------------------------*- C++ -*-===//
+//===-- AST Function Node Interface -----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -37,12 +37,21 @@
 namespace hlvm 
 {
 
-/// This class represents a Function in the HLVM Abstract Syntax Tree.  
+/// This class provides an Abstract Syntax Tree node that represents a Function.
 /// A Function is a callable block of code that accepts parameters and 
 /// returns a result.  This is the basic unit of code in HLVM. A Function
-/// has a name, a set of formal arguments, a return type, and a block of
-/// code to execute.
-/// @brief HLVM AST Function Node
+/// has a name, a set of formal arguments, a return type, and, optionally, a 
+/// Block of code to execute. The name of a function is used for linking 
+/// purposes. The formal arguments and return type are encapsulated in the
+/// Function's associated SignatureType. If a Block is associated with the
+/// Function then the function is defined and the Block defines the computation
+/// the Function provides. If a Block is not associated with the Function, then
+/// the function is undefined and serves as a reference to a function in another
+/// Bundle.
+/// @see Block
+/// @see Bundle
+/// @see SignatureType
+/// @brief AST Function Node
 class Function : public LinkageItem
 {
   /// @name Constructors

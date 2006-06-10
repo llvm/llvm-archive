@@ -30,7 +30,6 @@
 #include <hlvm/CodeGen/LLVMGenerator.h>
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
-#include <hlvm/AST/Import.h>
 #include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Variable.h>

@@ -34,8 +34,6 @@
 
 namespace hlvm {
 
-using namespace AST;
-
 /// This class provides a type resolution capability. It searches for 
 /// instances of OpaqueType and resolves all their uses to the correct actual
 /// type.

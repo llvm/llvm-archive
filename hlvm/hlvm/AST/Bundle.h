@@ -136,5 +136,45 @@ class Bundle : public Documentable
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents an Import 
+/// of one Bundle into another. An Import encapsulates two data items: the URI
+/// of the Bundle that is to be imported, and a prefix by which items in that
+/// Bundle can be referenced. For example, if Bundle "Fooness" contains a 
+/// definition named "foo" then another bundle specifying an import of "Fooness"
+/// with prefix "F" can refer to "foo" in "Fooness" with "F:foo".
+/// @see Bundle
+/// @brief AST Import Node
+class Import : public Documentable
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Import() : Documentable(ImportID) {}
+
+  public:
+    virtual ~Import();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const Import*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ImportID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setPrefix(const std::string& pfx) { prefix = pfx; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string prefix;
+  /// @}
+  friend class AST;
+};
+
 } // end hlvm namespace
 #endif

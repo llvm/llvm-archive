@@ -22,6 +22,9 @@ clean:
 install:
 	scons -Q install
 
+doc:
+	scons -Q docs
+
 hlvm:
 	cd hlvm ; scons -Q -u
 

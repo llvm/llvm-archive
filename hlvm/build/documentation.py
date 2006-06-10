@@ -8,9 +8,11 @@ from os.path import exists
 def getHeaders(env):
   context = pjoin(env['AbsSrcRoot'],'hlvm')
   result = []
-  for d in glob.glob(pjoin(context,'*.h')):
-    if not os.path.isdir(d):
-      result.append(d)
+  for d in glob.glob(pjoin(context,'*')):
+    if os.path.isdir(d):
+      for f in glob.glob(pjoin(context,d,'*.h')):
+        if not os.path.isdir(f):
+          result.append(f)
   return result
 
 def DoxygenAction(target,source,env):
@@ -25,7 +27,8 @@ def DoxygenAction(target,source,env):
   env.Depends(tgtpath,'doxygen.header')
   env.Depends(tgtpath,'doxygen.intro')
   env.Depends(tgtpath,'doxygen.css')
-  env.Depends(tgtpath,getHeaders(env))
+  for f in getHeaders(env):
+    env.Depends(tgtpath,f)
   if 0 == env.Execute(env['with_doxygen'] + ' ' + srcpath + ' >' + 
       pjoin(tgtdir,'doxygen.out')):
     return env.Execute(env['TAR'] + ' zcf ' + tgtpath + ' ' + 

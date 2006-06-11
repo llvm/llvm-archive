@@ -29,6 +29,5 @@ env.Cpp2LLVMCpp('string_clear.inc','string.cxx',
   LLVM2CPPFLAGS='-gen-inline -for _hlvm_string_clear -funcname getStringClear')
 env.Cpp2LLVMCpp('program.inc','program.cxx',
   LLVM2CPPFLAGS='-gen-contents -funcname "getProgramDef"')
-env.Cpp2LLVMCpp('tryit.inc','tryit.cxx')
 lib = env.Library('HLVMCodeGen',hlvm.GetAllCXXFiles(env))
 hlvm.InstallLibrary(env,lib)

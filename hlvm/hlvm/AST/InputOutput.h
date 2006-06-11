@@ -1,4 +1,4 @@
-//===-- AST Input/Output Operators ------------------------------*- C++ -*-===//
+//===-- AST Input/Output Operators Interface --------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -35,11 +35,15 @@
 namespace hlvm 
 {
 
-/// This node type represents a stream open operation. Streams can be files,
-/// sockets, or any other kind of sequential or random access media. The URL
-/// provided to the operator as its first operand determines what will get 
-/// opened and how.
-/// @brief HLVM AST Open Stream Operator
+/// This class provides an Abstract Syntax Tree node that represents a stream 
+/// open operation. Streams can be files, sockets, or any other kind of 
+/// sequential media. This operator takes one operand which is a URI indicating
+/// what should be opened. The URI specifies the resource and any parameters to
+/// indicate how the resource should be opened. The operator returns a value of
+/// type StreamType which is a built-in runtime defined opaque type.
+/// @see CloseOp
+/// @see StreamType
+/// @brief AST Open Stream Operator
 class OpenOp : public UnaryOperator
 {
   /// @name Constructors
@@ -59,10 +63,17 @@ class OpenOp : public UnaryOperator
   friend class AST;
 };
 
-/// This node type represents a stream close operation. The operand must be a
-/// value returned by the stream open operation. The associated stream is 
-/// flushed of data and closed permanently.
-/// @brief HLVM AST Close Stream Operator
+/// This class provides an Abstract Syntax Tree node that represents a stream 
+/// close operation. This operator takes one operand which must be the stream
+/// to be closed. The operand's type is StreamType which must have been 
+/// previously returned by the OpenOp operator. The operator causes all 
+/// buffers written to the stream to be flushed. After the operator completes, 
+/// the stream will no longer be available for input/output operations. This 
+/// operator returns a value of type VoidType.
+/// @see OpenOp
+/// @see StreamType
+/// @see VoidType
+/// @brief AST Close Stream Operator
 class CloseOp : public UnaryOperator
 {
   /// @name Constructors
@@ -82,10 +93,19 @@ class CloseOp : public UnaryOperator
   friend class AST;
 };
 
-/// This node type represents a stream write operation. There are three 
-/// operands: [1] the stream to write, [2] the data buffer to write, [3] the
-/// length of the data buffer.
-/// @brief HLVM AST Write Stream Operator
+/// This class provides an Abstract Syntax Tree node that represents a stream 
+/// read operation. There are two operands: [1] the stream from which data will
+/// be read and [2] the BufferType or TextType into which the data should be
+/// placed. The first operand must be of type StreamType and previously opened
+/// with the OpenOp operator. The second operand may be of BufferType or 
+/// TextType. The value of the second operand will be replaced with the data
+/// read. The previous value of the second operand, if any, is consequently
+/// discarded by this operation.
+/// @see OpenOp
+/// @see StreamType
+/// @see BufferType
+/// @see TextType
+/// @brief AST Stream Write Operator
 class ReadOp : public BinaryOperator
 {
   /// @name Constructors
@@ -105,10 +125,16 @@ class ReadOp : public BinaryOperator
   friend class AST;
 };
 
-/// This node type represents a stream write operation. There are three 
-/// operands: [1] the stream to write, [2] the data buffer to write, [3] the
-/// length of the data buffer.
-/// @brief HLVM AST Write Stream Operator
+/// This class provides an Asbstract Syntax Tree node that represents a stream 
+/// write operation. There are two operands: [1] the stream to write, and [2]
+/// the data buffer or text to write. The second operands can be either a
+/// BufferType object or a TextType object. The entire buffer or text value is
+/// written to the stream. The result of this operator is an integer value of
+/// type u64 which indicates the number of bytes actually written to the stream.
+/// @see StreamType
+/// @see BufferType
+/// @see TextType
+/// @brief AST Stream Write Operator
 class WriteOp : public BinaryOperator
 {
   /// @name Constructors

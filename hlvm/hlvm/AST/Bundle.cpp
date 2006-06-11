@@ -29,8 +29,7 @@
 
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Type.h>
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Function.h>
+#include <hlvm/AST/LinkageItems.h>
 #include <hlvm/Base/Assert.h>
 
 using namespace llvm; 

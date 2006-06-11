@@ -31,8 +31,7 @@
 #include <hlvm/Base/Assert.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Bundle.h>
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Program.h>
+#include <hlvm/AST/LinkageItems.h>
 #include <llvm/Support/Casting.h>
 #include <iostream>
 

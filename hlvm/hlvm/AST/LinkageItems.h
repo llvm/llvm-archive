@@ -1,4 +1,4 @@
-//===-- AST Function Node Interface -----------------------------*- C++ -*-===//
+//===-- AST Linkage Items Interface -----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Function.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
-/// @date 2006/05/04
+/// @file hlvm/AST/LinkageItems.h
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/10
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Function
+/// @brief Declares the interface to all subclasses of LinkageItem
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_FUNCTION_H
-#define HLVM_AST_FUNCTION_H
+#ifndef HLVM_AST_LINKAGEITEMS_H
+#define HLVM_AST_LINKAGEITEMS_H
 
 #include <hlvm/AST/LinkageItem.h>
 #include <hlvm/AST/ContainerType.h>
@@ -36,6 +36,54 @@
 
 namespace hlvm 
 {
+
+class Type; // Forward declare
+class Constant;
+
+/// This class provides an Abstract Syntax Tree node that represents a 
+/// global Variable.  A Variable can only be declared as a component of a 
+/// Bundle. It is visible throughout the Bundle that declares it and may 
+/// be a candidate for linkage with other Bundles. A Variable is a storage 
+/// location, with an address, of a specific type. Global variables may have
+/// a constant value in which case HLVM will ensure that the value of the
+/// global variable is immutable. Variables can be of any type except VoidType.
+/// @see LinkageItem
+/// @see Bundle
+/// @brief AST Variable Node
+class Variable : public LinkageItem
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Variable() : LinkageItem(VariableID) {}
+  public:
+    virtual ~Variable();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    bool isConstant() const { return isConst; }
+    Constant* getInitializer() { return init; }
+    static inline bool classof(const Variable*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(VariableID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setIsConstant(bool v) { isConst = v; }
+    void setInitializer(Constant* C) { init = C; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    Constant* init;
+    bool isConst;
+  /// @}
+  friend class AST;
+};
 
 /// This class provides an Abstract Syntax Tree node that represents a Function.
 /// A Function is a callable block of code that accepts parameters and 
@@ -90,5 +138,44 @@ class Function : public LinkageItem
   friend class AST;
 };
 
-} // hlvm
+class Block; // Forward declare
+class SignatureType;  // Forward declare
+
+/// This class provides an Abstract Syntax Tree node that represents a Program 
+/// in HLVM. A Program is an entry point for running HLVM programs. It is 
+/// simply a Function with a specific signature. It represents the first
+/// function to be executed by the runtime after option processing.  To be
+/// executable, a Bundle must have at least one Program node in it. 
+/// The Program node exists to simply ensure that the signature of the function
+/// is correct and to serve as a way to identify Program's quickly.
+/// @see Function
+/// @see Bundle
+/// @see SignatureType
+/// @brief AST Program Node
+class Program : public Function
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Program() : Function(ProgramID) {}
+      
+    virtual ~Program();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const Program*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ProgramID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  private:
+    LinkageItem::setLinkageKind;
+  /// @}
+  friend class AST;
+};
+
+} // end hlvm namespace
 #endif

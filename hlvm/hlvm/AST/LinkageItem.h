@@ -37,6 +37,7 @@ namespace hlvm
 
 /// This enumeration is used to specify the kinds of linkage that are
 /// permitted for a LinkageItem.
+/// @brief Enumeration of ways to link bundles
 enum LinkageKinds {
   ExternalLinkage,    ///< Externally visible item
   LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
@@ -45,11 +46,19 @@ enum LinkageKinds {
   InternalLinkage     ///< Rename collisions when linking (static funcs)
 };
 
-/// This class represents an LinkageItem in the HLVM Abstract Syntax Tree. 
-/// A LinkageItem is any construct that can be linked; that is, referred to
-/// elsewhere and linked into another bundle to resolve the reference. The
-/// LinkageItem declares what kind of linkage is to be performed.
-/// @brief HLVM AST Bundle Node
+/// This class provides an Abstract Syntax Tree node that represents an item
+/// which can be linked with other Bundles. LinkageItem is an abstract base 
+/// class and cannot be instantiated. All LinkageItem's are Constant values
+/// because they represents a runtime value that is a constant address. The
+/// value pointed to by the LinkageItem may be mutable or immutable depending
+/// on its type and options.  As the name suggests, LinkageItems participate
+/// in linkage. A Bundle referring to a name in another Bundle will only link
+/// with a LinkageItem and nothing else. There are several ways in which 
+/// LinkageItems can be linked together, specified by the LinkageKinds value.
+/// @see LinkageKinds
+/// @see Bundle
+/// @see Constant
+/// @brief AST Bundle Node
 class LinkageItem : public Constant
 {
   /// @name Constructors

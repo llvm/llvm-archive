@@ -1,4 +1,4 @@
-//===-- AST Variable Class --------------------------------------*- C++ -*-===//
+//===-- AST Linkage Items Implementation ------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,20 +20,57 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/Variable.cpp
-/// @author Reid Spencer <reid@hlvm.org> (original author)
+/// @file hlvm/AST/LinkageItems.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Implements the functions of class hlvm::AST::Variable.
+/// @brief Implements the subclasses of LinkageItem
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/Variable.h>
+#include <hlvm/AST/LinkageItems.h>
 #include <hlvm/AST/Block.h>
+#include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
+
+using namespace llvm;
 
 namespace hlvm {
 
 Variable::~Variable()
+{
+}
+
+Function::~Function() 
+{
+}
+
+void 
+Function::insertChild(Node* kid)
+{
+  if (isa<SignatureType>(kid)) {
+    if (signature)
+      signature->setParent(0);
+    signature = cast<SignatureType>(kid);
+  } else if (isa<Block>(kid)) {
+    if (block)
+      block->setParent(0);
+    block = cast<Block>(kid);
+  } else {
+    hlvmAssert(!"Can't insert one of those here");
+  }
+}
+
+void 
+Function::removeChild(Node* kid)
+{
+  if (isa<SignatureType>(kid)) {
+  } else if (isa<Block>(kid)) {
+  } else {
+    hlvmAssert(!"Can't insert one of those here");
+  }
+}
+
+Program::~Program()
 {
 }
 

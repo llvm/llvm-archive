@@ -35,9 +35,7 @@
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Documentation.h>
-#include <hlvm/AST/Function.h>
-#include <hlvm/AST/Variable.h>
-#include <hlvm/AST/Program.h>
+#include <hlvm/AST/LinkageItems.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>

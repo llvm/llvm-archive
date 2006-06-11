@@ -21,11 +21,22 @@
 #
 #===----------------------------------------------------------------------===#
 from build import hlvm
+from os.path import join as pjoin
 Import('env')
 if 'docs' in COMMAND_LINE_TARGETS:
   hlvm.GetDoxygen(env)
-  hlvm.GetXSLTproc(env)
   hlvm.GetConfigFile(env)
+  hlvm.GetXSLTproc(env)
   env.ConfigFile('Doxyfile','Doxyfile.in')
   env.Doxygen('doxygen.tar.gz','Doxyfile')
   env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])
+  env.Alias('docs','doxygen.tar.gz')
+  env.Alias('docs','HLVM.rng.html')
+
+if 'doxy-install' in COMMAND_LINE_TARGETS:
+  hlvm.GetDoxygenInstall(env)
+  installtgt = '/var/www/sites/hlvm/apis/doxygen.tar.gz'
+  installsrc = 'doxygen.tar.gz'
+  env.DoxygenInstall(installtgt,installsrc)
+  env.Alias('doxy-install',installtgt)
+

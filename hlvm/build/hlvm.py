@@ -49,6 +49,10 @@ def GetDoxygen(env):
   from build import documentation
   return documentation.Doxygen(env)
 
+def GetDoxygenInstall(env):
+  from build import documentation
+  return documentation.DoxygenInstall(env)
+
 def GetXSLTproc(env):
   from build import documentation
   return documentation.XSLTproc(env)
@@ -201,7 +205,7 @@ def GetBuildEnvironment(targets,arguments):
   BuildDir = 'build.' + VariantName
   env['Variant'] = VariantName
   env['BuildDir'] = BuildDir
-  env['AbsObjRoot'] = env.Dir(BuildDir).abspath
+  env['AbsObjRoot'] = env.Dir('#' + BuildDir).abspath
   env['AbsSrcRoot'] = env.Dir('#').abspath
   env.Prepend(CPPPATH=[pjoin('#',BuildDir)])
   env.Prepend(CPPPATH=['#'])

@@ -1,5 +1,6 @@
 from SCons.Environment import Environment as Environment
 from SCons.Defaults import Mkdir
+from SCons.Defaults import Copy as Copy
 import re,fileinput,os,glob
 from string import join as sjoin
 from os.path import join as pjoin
@@ -15,6 +16,9 @@ def getHeaders(env):
           result.append(f)
   return result
 
+def DoxygenMessage(target,source,env):
+  return "Creating API Documentation With Doxygen (be patient)"
+
 def DoxygenAction(target,source,env):
   if env['with_doxygen'] == None:
     print "Documentation generation disabled because 'doxygen' was not found"
@@ -22,6 +26,9 @@ def DoxygenAction(target,source,env):
   tgtdir = target[0].dir.path
   srcpath = source[0].path
   tgtpath = target[0].path
+  docsdir = target[0].dir.path
+  tarpath = pjoin(docsdir,'apis')
+
   env.Depends(tgtpath,srcpath)
   env.Depends(tgtpath,'doxygen.footer')
   env.Depends(tgtpath,'doxygen.header')
@@ -31,19 +38,32 @@ def DoxygenAction(target,source,env):
     env.Depends(tgtpath,f)
   if 0 == env.Execute(env['with_doxygen'] + ' ' + srcpath + ' >' + 
       pjoin(tgtdir,'doxygen.out')):
-    return env.Execute(env['TAR'] + ' zcf ' + tgtpath + ' ' + 
-      pjoin(tgtdir,'apis'))
+    return env.Execute(env['TAR'] + ' zcf ' + tgtpath + ' -C ' + tarpath + 
+    ' html')
   return 0
-
-def DoxygenMessage(target,source,env):
-  return "Creating API Documentation With Doxygen (be patient)"
 
 def Doxygen(env):
   doxyAction = env.Action(DoxygenAction,DoxygenMessage)
   doxygenBuilder = env.Builder(action=doxyAction)
   env.Append(BUILDERS = {'Doxygen':doxygenBuilder} )
-  env.Alias('doxygen','doxygen.tar.gz')
   return 1
+
+def DoxygenInstallMessage(target,source,env):
+  return "Installing API Documentation Into Subversion"
+
+def DoxygenInstallAction(target,source,env):
+  tarfile = target[0].path
+  tgtdir  = target[0].dir.path
+  srcpath = source[0].path
+  env.Execute(Copy(tarfile,srcpath))
+  env.Execute(env['TAR'] + ' zxf ' + tarfile + ' -C ' + tgtdir )
+  return 0
+
+def DoxygenInstall(env):
+  doxyInstAction = env.Action(DoxygenInstallAction,DoxygenInstallMessage)
+  doxyInstBuilder = env.Builder(action=doxyInstAction)
+  env.Append(BUILDERS = {'DoxygenInstall':doxyInstBuilder} )
+  return 1;
 
 def XSLTMessage(target,source,env):
   return "Creating " + target[0].path + " via XSLT from " + source[0].path

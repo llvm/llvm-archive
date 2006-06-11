@@ -1,4 +1,4 @@
-//===-- Uniform Resource Identifier -----------------------------*- C++ -*-===//
+//===-- Uniform Resource Identifier Interface -------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -40,20 +40,19 @@ class AST;
 class Pool;
 
 /// A class to represent Uniform Resource Identifiers (URIs). This class can
-/// also support URLs and URNs. The implementation is based on the APR-UTIL
-/// apr_uri set of functions and associated data types. 
-/// @see RFC 2396 states that hostnames take the form described in 
-/// @see RFC 1034 (Section 3) Hostname Syntax
-/// @see RFC 1123 (Section 2.1). Hostnames
-/// @see RFC 1609 Universal Resource Identifiers in WWW - Berners-Lee.
-/// @see RFC 1738 Uniform Resource Locators - Berners-Lee.
-/// @see RFC 1808 Relative Uniform Resource Locators - Fielding
-/// @see RFC 2059 Uniform Resource Locators for z39.50 - Denenberg
-/// @see RFC 2111 Content-ID and Message-ID Uniform Resource Locators-Levinson
-/// @see RFC 2396 Uniform Resource Identifiers (URI) - Berners-Lee
-/// @see RFC 3305 URI/URL/URN Clarifications and Recommendations - Mealling
-/// @see RFC 3406 URN Namespace Definition Mechanisms - Daigle
-/// @see RFC 3508 URL Schem Registration - Levin
+/// also support URLs and URNs. HLVM uses URIs to uniquely identify bundles and
+/// as the operand of OpenOp operators to specify the resource to be opened.
+/// HLVM defines its own namespace, "hlvm", in which certain classes of 
+/// resources can be specified.
+/// @see RFC 2396 Uniform Resource Identifiers (URI): Generic Syntax
+/// @see RFC 1034 HEMS Variable Definitions (Section 3, Hostname Syntax)
+/// @see RFC 1123 Requirements for Internet Hosts (Section 2.1, Hostnames)
+/// @see RFC 1738 Uniform Resource Locators (URL)
+/// @see RFC 1808 Relative Uniform Resource Locators
+/// @see RFC 2111 Content-ID and Message-ID Uniform Resource Locators
+/// @see RFC 3305 URI/URL/URN Clarifications and Recommendations
+/// @see RFC 3406 URN Namespace Definition Mechanisms
+/// @see RFC 3508 H.323 URL Scheme Registration 
 /// @brief HLVM Uniform Resource Identifier Class
 class URI
 {

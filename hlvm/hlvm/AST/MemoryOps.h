@@ -1,4 +1,4 @@
-//===-- HLVM AST Memory Operations ------------------------------*- C++ -*-===//
+//===-- HLVM AST Memory Operations Interface --------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -38,8 +38,12 @@ namespace hlvm
 
 class Variable;
 
-/// This operator loads the value of a memory location.
-/// @brief HLVM Memory Load Operator
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for loading a value from a memory location. This operator takes a single
+/// operand which must resolve to the address of a memory location, either 
+/// global or local (stack). The result of the operator is the value of the
+/// memory object, whatever type it may be.
+/// @brief AST Memory Load Operator
 class LoadOp : public UnaryOperator
 {
   /// @name Constructors
@@ -70,10 +74,11 @@ class LoadOp : public UnaryOperator
   friend class AST;
 };
 
-/// This operator stores a value into a memory location. The first operand 
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for storing a a value into a memory location. The first operand 
 /// resolves to the storage location into which the value is stored. The second
-/// operand provides the value to store.
-/// @brief HLVM Memory Store Operator
+/// operand provides the value to store. The operator returns a void value.
+/// @brief AST Memory Store Operator
 class StoreOp : public BinaryOperator
 {
   /// @name Constructors
@@ -104,9 +109,18 @@ class StoreOp : public BinaryOperator
   friend class AST;
 };
 
-/// This operator represents a local (stack) variable whose lifespan is the
-/// lifespan of the enclosing block. Its value is the initialized value.
-/// @brief HLVM AST Automatic Variable Operator
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for defining an automatic (local) variable on a function's stack. The scope
+/// of such a variable is the block that contains it from the point at which
+/// the declaration occurs, onward.  Automatic variables are allocated
+/// automatically on a function's stack. When execution leaves the block in 
+/// which the variable is defined, the variable is automatically deallocated. 
+/// Automatic variables are not LinkageItems and do not participate in linkage
+/// at all. They don't exist until a Function is activated. Automatic variables
+/// are operators because they provide the value of their initializer. Automatic
+/// variables may be declared to be constant in which case they must have an
+/// initializer and their value is immutable.
+/// @brief AST Automatic Variable Operator
 class AutoVarOp : public UnaryOperator
 {
   /// @name Constructors
@@ -142,9 +156,15 @@ class AutoVarOp : public UnaryOperator
   friend class AST;
 };
 
-/// This operator yields the value of a named variable, either an automatic
-/// variable (function scoped) or global variable (bundle scoped). 
-/// @brief HLVM AST Variable Operator
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for obtaining the address of a named variable.  The operator has no operands
+/// but has a property that is the Value to be referenced. It is presumed that
+/// this value is either an AutoVarOp or one of the LinkageItems. This operator
+/// bridges between non-operator Values and Operators. The result of this
+/// operator is the address of the memory object.  Typically this operator is
+/// used as the operand of a LoadOp or StoreOp.
+/// @see Variable AutoVarOp Operator Value LinkageItem LoadOp StoreOp
+/// @brief AST Reference Operator
 class ReferenceOp : public NilaryOperator
 {
   /// @name Constructors
@@ -178,9 +198,19 @@ class ReferenceOp : public NilaryOperator
   friend class AST;
 };
 
-/// This operator indexes into an Array and yields the address of an element of
-/// the array.
-/// @brief HLVM AST Variable Operator
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for indexing into a ContainerType.  The Index operator can have many
+//operands but in all cases requires at least two.  The first operand must
+//resolve to the address of a memory location, such as returned by the
+//ReferenceOp. The second and subsequent operands must all be of integer type.
+/// They specify which elements of the memory object should be indexed. This
+/// operator is the means by which the elements of memory objects of type 
+/// PointerType, ArrayType, VectorType, StructureType, and ContinuationType can
+/// be accessed. The resulting value of the operator is the address of the
+/// corresponding memory location. In the case of StructureType and 
+/// ContinuationType elements, the corresponding index indicates the field, in
+/// declaration order, that is accessed. Field numbering begins at zero.
+/// @brief AST Index Operator
 class IndexOp : public MultiOperator
 {
   /// @name Constructors

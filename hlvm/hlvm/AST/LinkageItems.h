@@ -63,7 +63,7 @@ class Variable : public LinkageItem
   /// @name Accessors
   /// @{
   public:
-    bool isConstant() const { return isConst; }
+    bool isConstant() const { return flags & 0x0008; }
     Constant* getInitializer() { return init; }
     static inline bool classof(const Variable*) { return true; }
     static inline bool classof(const Node* N) { return N->is(VariableID); }
@@ -72,7 +72,7 @@ class Variable : public LinkageItem
   /// @name Mutators
   /// @{
   public:
-    void setIsConstant(bool v) { isConst = v; }
+    void setIsConstant(bool v) { flags |= 0x0008; }
     void setInitializer(Constant* C) { init = C; }
 
   /// @}
@@ -80,7 +80,6 @@ class Variable : public LinkageItem
   /// @{
   protected:
     Constant* init;
-    bool isConst;
   /// @}
   friend class AST;
 };

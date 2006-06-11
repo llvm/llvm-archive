@@ -39,11 +39,11 @@ namespace hlvm
 /// permitted for a LinkageItem.
 /// @brief Enumeration of ways to link bundles
 enum LinkageKinds {
-  ExternalLinkage,    ///< Externally visible item
-  LinkOnceLinkage,    ///< Keep one copy of item when linking (inline)
-  WeakLinkage,        ///< Keep one copy of item when linking (weak)
-  AppendingLinkage,   ///< Append item to an array of similar items
-  InternalLinkage     ///< Rename collisions when linking (static funcs)
+  ExternalLinkage   = 1, ///< Externally visible item
+  LinkOnceLinkage   = 2, ///< Keep one copy of item when linking (inline)
+  WeakLinkage       = 3, ///< Keep one copy of item when linking (weak)
+  AppendingLinkage  = 4, ///< Append item to an array of similar items
+  InternalLinkage   = 5  ///< Rename collisions when linking (static funcs)
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an item
@@ -64,7 +64,9 @@ class LinkageItem : public Constant
   /// @name Constructors
   /// @{
   protected:
-    LinkageItem( NodeIDs id ) : Constant(id), kind(InternalLinkage), name() {}
+    LinkageItem( NodeIDs id ) : Constant(id), name() {
+      setLinkageKind(InternalLinkage);
+    }
   public:
     virtual ~LinkageItem();
 
@@ -73,7 +75,7 @@ class LinkageItem : public Constant
   /// @{
   public:
     inline const std::string& getName() { return name; }
-    inline LinkageKinds getLinkageKind() { return kind; }
+    inline LinkageKinds getLinkageKind() { return LinkageKinds(flags & 0x0007); }
     static inline bool classof(const LinkageItem*) { return true; }
     static inline bool classof(const Node* N) { return N->isLinkageItem(); }
 
@@ -81,13 +83,14 @@ class LinkageItem : public Constant
   /// @name Mutators
   /// @{
     void setName(const std::string& n) { name = n; }
-    void setLinkageKind(LinkageKinds k) { kind = k; }
+    void setLinkageKind(LinkageKinds k) { 
+      flags &= 0xFFF8; flags |= uint16_t(k); 
+    }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    LinkageKinds kind; ///< The type of linkage to perform for this item
     std::string name;
   /// @}
   friend class AST;

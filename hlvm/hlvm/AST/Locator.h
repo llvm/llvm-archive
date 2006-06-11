@@ -36,10 +36,17 @@
 namespace hlvm
 {
 
-/// This class is used to hold a source code location as a filename, line
-/// number and column number. This is used for generating error messages and
-/// for debugging support.
-/// @brief Source location holder class.
+/// This abstract base class is the superclass of the various Locator classes
+/// that are used to associate a source code location with a node in the 
+/// AST. Locators are not Abstract Syntax Tree nodes,  but they are referenced 
+/// as a value of any Node subclass. These classes are retained separately from
+/// the Node class so that multiple nodes can share an instance of a Locator.
+/// This can occur frequently when a single line of source code produces several
+/// AST operator nodes. By keeping the Locator as a separate object, the memory
+/// consumption of the AST is reduced. This abstrat base class provides a single
+/// virtual method, getReference, which should produce a string that identifies
+/// the source code location. This will be used in error messages, etc.
+/// @brief Source Code Location Abstract Base Class
 class Locator
 {
   /// @name Constructors
@@ -57,6 +64,12 @@ class Locator
     unsigned short SubclassID;
 };
 
+/// This Locator subclass provides a locator that specifies the location as
+/// simply being some resource (URI). While this usually isn't sufficient, it
+/// may be useful in some contexts and also serves as the base class of other
+/// Locator classes.
+/// @see Locator
+/// @brief Locator that contains just a URI
 class URILocator : public Locator
 {
   /// @name Constructors
@@ -79,6 +92,10 @@ class URILocator : public Locator
   /// @}
 };
 
+/// This Locator can be used to locate a specific line within some resource. It
+/// is a URILocator sublcass.
+/// @see Locator
+/// @brief Locator with URI (file) and line number.
 class LineLocator : public URILocator
 {
   /// @name Constructors
@@ -103,6 +120,9 @@ class LineLocator : public URILocator
   /// @}
 };
 
+/// This class provides a locator that specifies a specific column on a specific
+/// line of a given URI (file). 
+/// @brief Locator with File, Line and Column
 class LineColumnLocator : public LineLocator
 {
   /// @name Constructors
@@ -126,6 +146,12 @@ class LineColumnLocator : public LineLocator
   /// @}
 };
 
+/// This class provides a Locator that identifies a range of text in a source
+/// location. The range is specified by a pair of Line/Column pairs. That is,
+/// the range specifies a starting line and column number and an ending line and
+/// column number.
+/// @see Locator
+/// @brief Locator for specifying a range of text in a source file.
 class RangeLocator : public LineColumnLocator
 {
   /// @name Constructors

@@ -35,10 +35,11 @@
 namespace hlvm 
 {
 
-class IntrinsicType;
-
-/// This class represents a Type in the HLVM Abstract Syntax Tree.  
-/// A Type defines the format of storage. 
+/// This class provides the Abstract Syntax Tree base class for all Types. A
+/// Type describes the memory layout of a Value. There are many subclasses of
+/// of Type, each with a particular way of describing memory layout. In HLVM,
+/// Type resolution is done by name. That is, two types with identical layout
+/// but different names are not equivalent.
 /// @brief HLVM AST Type Node
 class Type : public Documentable
 {
@@ -86,6 +87,15 @@ class Type : public Documentable
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node for describing a type that
+/// can accept any type of Value. The AnyType can be used to represent
+/// dynamically typed variables and it, essentially, bypasses the HLVM type 
+/// system but in a type-safe way.  The AnyType instances will, internally,
+/// carry a type identifier with the value. If the value changes to a new type,
+/// then the type identifier changes with it. In this way, the correct type for
+/// whatever is assigned to an AnyType is maintained by the runtime so that it
+/// cannot be mis-used.
+/// @brief AST Dynamically Typed Type
 class AnyType : public Type
 {
   /// @name Constructors
@@ -107,6 +117,10 @@ class AnyType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node to represent the boolean
+/// type. Booleans have a simple true-or-false value and could be represented by
+/// a single bit.
+/// @brief AST Boolean Type
 class BooleanType : public Type
 {
   /// @name Constructors
@@ -127,6 +141,10 @@ class BooleanType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node to represent the character
+/// type. A Character is a UTF-16 encoded value. It is sixteen bits long and
+/// interpreted with the UTF-16 codeset. 
+/// @brief AST Character Type
 class CharacterType : public Type
 {
   /// @name Constructors
@@ -147,6 +165,12 @@ class CharacterType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents an octet
+/// type. Octets are simply 8 bits of data without interpretation. Octets are
+/// used as the element type of a buffer. Octets cannot be used in arithmetic
+/// computation. They simply hold 8 bits of data.  Octets are commonly used in
+/// stream I/O to represent the raw data flowing on the stream. 
+/// @brief AST Octet Type
 class OctetType : public Type
 {
   /// @name Constructors
@@ -167,6 +191,10 @@ class OctetType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents the void
+/// type.  The void type represents a Value that has no value. It is zero bits
+/// long. Consequently, its utility is limited. 
+/// @brief AST Void Type
 class VoidType : public Type
 {
   /// @name Constructors
@@ -187,39 +215,51 @@ class VoidType : public Type
   friend class AST;
 };
 
-/// This class represents all HLVM integer types. An integer type declares the
-/// the minimum number of bits that are required to store the integer type.
-/// HLVM will convert this specification to the most appropriate sized 
-/// machine type for computation. If the number of bits is specified as zero
-/// it implies infinite precision integer arithmetic.
+/// This class provides an Abstract Syntax Tree node that represents an integer
+/// type in HLVM. An integer is simply a sequence of bits, of specific length,
+/// that is interpreted to be an integer value.  An integer type declares the
+/// the minimum number of bits that are required to store the integer type. The
+/// runtime may, for pragmatic reason, choose to store the type in more bits 
+/// than specified by the type. There are a number of "primitive" integer types
+/// of specific size, that line up with the natural word sizes of an underlying
+/// machines. Such types are preferred because they imply less translation and
+/// a more efficient computation.  If the number of bits is specified as zero,
+/// it implies infinite precision integer arithmetic. Integer types may be
+/// declared as either signed or unsigned. The maximum number of bits for an 
+/// integer type that may be specified is 32,767. Larger integer types should
+/// use infinite precision (number of bits = 0).
 class IntegerType : public Type
 {
-  /// @name Types
-  /// @{
-  public:
   /// @name Constructors
   /// @{
   protected:
-    IntegerType(NodeIDs id, int bits = 32, bool sign = true) 
-      : Type(id), numBits(bits), signedness(sign) {}
+    IntegerType(
+      NodeIDs id,  ///< The node type identifier, passed on to Node base class
+      int16_t bits = 32, ///< The number of bits in this integer type
+      bool sign = true ///< Indicates if this is a signed integer type, or not.
+    ) : Type(id), numBits(bits) {
+      setSigned(sign); 
+    }
+
   public:
     virtual ~IntegerType();
     IntegerType* clone(const std::string& newname);
-
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    /// Get the primitive name for this type. That is, if this type conforms to
+    /// one of the primitive integer types, then return that primitive's name.
     virtual const char* getPrimitiveName() const;
 
-    /// Return the number of bits
-    uint64_t getBits()  const { return numBits; }
+    /// @brief Return the number of bits in this integer type
+    int16_t getBits()  const { return int16_t(numBits&0x7FFF); }
 
-    /// Return the signedness of the type
-    bool     isSigned() const { return signedness ; }
+    /// @brief Return the signedness of this type
+    bool     isSigned() const { return flags & 0x8000; }
 
-    // Methods to support type inquiry via is, cast, dyn_cast
+    /// @brief Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
     static inline bool classof(const Node* T) { return T->isIntegralType(); }
 
@@ -227,26 +267,27 @@ class IntegerType : public Type
   /// @name Mutators
   /// @{
   public:
-    /// Set the number of bits for this integer type
-    void setBits(uint64_t bits) { numBits = bits; }
+    /// An int
+    /// @brief Set the number of bits for this integer type
+    void setBits(int16_t bits) { 
+      numBits &= 0x8000; numBits |= uint16_t(bits)&0x7FFF; }
 
-    /// Set the signedness of the type
-    void setSigned(bool isSigned) { signedness = isSigned; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-    uint32_t numBits; ///< Minimum number of bits
-    bool signedness;  ///< Whether the integer type is signed or not
+    /// @brief Set the signedness of the type
+    void setSigned(bool isSigned) { 
+      if (isSigned) flags |= 0x8000; else flags &= 0x7FFF; }
 
   /// @}
   friend class AST;
 };
 
-/// A RangeType is an IntegerType that allows the range of values to be
-/// constricted. The use of RangeType implies range checking whenever the
-/// value of a RangeType variable is assigned.
+/// This class specifies an Abstract Syntax Tree node that represents a range
+/// type. A RangeType is an integral type that constricts the set of allowed 
+/// values for the integer to be within an inclusive range. The number of bits
+/// required to represent the range is selected by HLVM. The selected integer
+/// size will contain sufficient bits to represent the requested range. Range
+/// types are limited to values within the limits of a signed 64-bit integer.
+/// The use of RangeType implies range checking whenever the value of a 
+/// RangeType variable is assigned.
 class RangeType: public Type
 {
   /// @name Constructors
@@ -291,9 +332,17 @@ class RangeType: public Type
   friend class AST;
 };
 
-/// This class represents an enumeration of things. Although represented by
-/// an integer type, enumerations have no value. They only have a collation
-/// order. 
+/// This class provides an Abstract Syntax Tree node that represents an 
+/// enumeration of names. Enumerations consist of a set of enumerators. An
+/// enumerator is simply a name that uniquely identifies one of the possible
+/// values of the EnumerationType.  Enumerators are not integers as in some 
+/// other languages. HLVM will select a representation that is efficient based 
+/// on the characteristics of the EnumerationType. The enumerators define, by 
+/// their order of insertion into the enumeration, a collation order for the
+/// enumerators. This collation order can be used to test enumeration values
+/// for equivalence or inequivalence using the equality and inequality 
+/// operators. 
+/// @brief AST Enumeration Type
 class EnumerationType : public Type
 {
   /// @name Types
@@ -351,12 +400,15 @@ class EnumerationType : public Type
   friend class AST;
 };
 
-/// This class represents all HLVM real number types. The precision and 
-/// mantissa are specified as a number of decimal digits to be provided as a
-/// minimum.  HLVM will use the machine's natural floating point 
-/// representation for those real types that can fit within the requested
-/// precision and mantissa lengths. If not, infinite precision floating point
-/// arithmetic will be utilized.
+/// This class provides an Abstract Syntax Tree node that represents a real
+/// number. All floating point and real number arithmetic is done using values
+/// of this type. The precision and mantissa are specified as a number of 
+/// binary digits to be provided as a minimum.  HLVM will use the machine's 
+/// natural floating point representation for those RealTypes that can fit 
+/// within the precision and mantissa lengths supported by the machine. 
+/// Otherwise, if a machine floating point type cannot meet the requirements of
+/// the RealType, infinite precision floating point arithmetic will be utilized.
+/// @brief AST Real Number Type
 class RealType : public Type
 {
   /// @name Constructors
@@ -402,6 +454,16 @@ class RealType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents an opaque
+/// type. Opaque types are those whose definition is not known. Opaque types are
+/// used to handle forward type references and recursion within container types.
+/// HLVM will automatically resolve OpaqueTypes whose definition is later 
+/// discovered. It can also be used as the element type of a PointerType to 
+/// effectively hide the implementation details of a given type. This helps
+/// libraries to retain control over the implementation details of a type that
+/// is to be treated as generic by the library's users.
+/// @see PointerType
+/// @brief AST Opaque Type
 class OpaqueType : public Type
 {
   /// @name Constructors

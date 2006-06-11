@@ -37,9 +37,18 @@ namespace hlvm
 
 class Type; 
 
-/// This class is the abstract superclass for all Operators. It provides the
-/// methods and virtual signature that is common to all Operator nodes.
-/// @brief HLVM AST Abstract Operator Node
+/// This class is the abstract base class in the Abstract Syntax Tree for all
+/// operators. An Operator is an instruction to the virtual machine to take
+/// some action. Operators form the content of a Block.  As this is the base
+/// class of all operators, the Operator class only provides the functionality
+/// that is common to all operators: getting the number of operands
+/// (numOperands), getting the Value of an operand (getOperand), and  setting 
+/// the Value of an operand (setOperand). Since Operand is a Value, this implies
+/// two things: (1) Operators can be the operand of other operators and (2) eery
+/// Operator has a type.
+/// @see Value
+/// @see Block
+/// @brief AST Abstract Operator Node
 class Operator : public Value
 {
   /// @name Constructors
@@ -70,7 +79,9 @@ class Operator : public Value
   friend class AST;
 };
 
-// An operator that takes no operands
+/// This class provides an Abstract Syntax Tree base class for all Operators
+/// that have no operands.
+/// @brief AST Operator With No Operands
 class NilaryOperator : public Operator
 {
   /// @name Constructors
@@ -101,6 +112,9 @@ class NilaryOperator : public Operator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree base class for Operators that 
+/// take a single operand.
+/// @brief AST Operator With One Operand
 class UnaryOperator : public Operator
 {
   /// @name Constructors
@@ -138,6 +152,9 @@ class UnaryOperator : public Operator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree base class for all operators
+/// that have two operands. The operands may be of any Type.
+/// @brief AST Operator With Two Operands
 class BinaryOperator : public Operator
 {
   /// @name Constructors
@@ -174,6 +191,9 @@ class BinaryOperator : public Operator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree base class for all operators
+/// that have three operands. The operands may be of any Type.
+/// @brief AST Operator With Three Operands
 class TernaryOperator : public Operator
 {
   /// @name Constructors
@@ -210,6 +230,13 @@ class TernaryOperator : public Operator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree base class for all operators
+/// that have multiple operands. The operands may be of any Type. Although the
+/// interface to this class permits any number of operands, in practice the
+/// number of allowed operands for a given MultiOperator subclass is limited. 
+/// The subclass's insertChild and removeChild method overrides will enforce
+/// the correct arity for that subclass. 
+/// @brief AST Operator With Multiple Operands
 class MultiOperator : public Operator
 {
   /// @name Types
@@ -269,5 +296,5 @@ class MultiOperator : public Operator
   friend class AST;
 };
 
-} // hlvm 
+} // end hlvm namespace
 #endif

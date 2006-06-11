@@ -96,7 +96,7 @@ IntegerType::getPrimitiveName() const
   if (numBits > 128)
     return 0;
 
-  if (signedness) {
+  if (isSigned()) {
     if (numBits > 64)
       return "s128";
     else if (numBits > 32)

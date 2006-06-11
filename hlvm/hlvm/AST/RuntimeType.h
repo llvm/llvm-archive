@@ -35,9 +35,12 @@
 namespace hlvm 
 {
 
-/// This class represents an opaque type that the runtime will use. The generic
-/// definition (in LLVM lingo) is a "pointer to opaque". The Runtime then is
-/// able to define what the types are without breaking compatibility across
+/// This class provides an Abstract Syntax Tree base class for the various types
+/// that are manipulated by the HLVM runtime.  In general, a RuntimeType is
+/// simply a pointer (handle) to some internal data structure of the runtime.
+/// The subclasses of RuntimeType exist to differentiate between the different
+/// kinds of objects the runtime manipulates.  The Runtime then is able to 
+/// define what the actualy types are without breaking compatibility across
 /// releases. Runtime types are disginguished by their names.
 class RuntimeType : public Type
 {
@@ -59,12 +62,17 @@ class RuntimeType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a Text Type
+/// object. TextType objects are unicode strings of either variable or constant
+/// value. Internall, the encoding of a TextType string is UTF-8. However, the
+/// string can be converted to any of a number of Unicode encodings.
+/// @brief AST Unicode Text Type
 class TextType : public RuntimeType
 {
   /// @name Constructors
   /// @{
   protected:
-    TextType() : RuntimeType(TextTypeID,"hlvm_text") {}
+    TextType() : RuntimeType(TextTypeID,"text") {}
     virtual ~TextType();
 
   /// @}
@@ -79,6 +87,11 @@ class TextType : public RuntimeType
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a stream 
+/// type. A StreamType is used for input and output. The StreamType represents
+/// a handle that the HLVM runtime uses to identify the source of the program's
+/// input or the destination of a program's output.
+/// @brief AST Input Output Stream Type
 class StreamType : public RuntimeType
 {
   /// @name Constructors
@@ -98,6 +111,10 @@ class StreamType : public RuntimeType
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a data 
+/// buffer in the HLVM runtime. A buffer is logically the combination of an 
+/// area of memory and an integer length for the size of that memory area.
+/// @brief AST Buffer Type
 class BufferType : public RuntimeType
 {
   /// @name Constructors

@@ -1,4 +1,4 @@
-//===-- Abstract Node Class -------------------------------------*- C++ -*-===//
+//===-- Abstract Node Class Interface ---------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -21,10 +21,10 @@
 //
 //===----------------------------------------------------------------------===//
 /// @file hlvm/AST/Node.h
-/// @author Reid Spencer <reid@hlvm.org> (original author)
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Declares the class hlvm::AST::Node
+/// @brief Declares the class hlvm::AST::Node and basic subclasses
 //===----------------------------------------------------------------------===//
 
 #ifndef HLVM_AST_NODE_H
@@ -41,16 +41,13 @@ class Type;
 class Documentation;
 class AST;
 
-/// This enumeration is used to identify the primitive types. Each of these 
-/// types is a node with a NodeID but they are treated specially because of
-/// their frequency of use. 
-enum PrimitiveTypes {
-};
-
-/// This enumeration is used to identify a specific node. Its organization is
-/// very specific and dependent on the class hierarchy. In order to use these
-/// values as ranges for class identification (classof methods), we need to 
-/// group things by inheritance rather than by function. 
+/// This enumeration is used to identify the various kinds of Abstract Syntax
+/// Tre nodes. Its organization is very specific and dependent on the class 
+/// hierarchy. In order to use these values as ranges for class identification 
+/// (classof methods), we need to group things by inheritance rather than by 
+/// function. Items beginning with "First" or "Last" identify a useful range
+/// of node types and do not introduce any value of their own.
+/// @brief Identifiers of th AST Node Types.
 enum NodeIDs 
 {
   NoTypeID = 0,            ///< Use this for an invalid type ID.
@@ -273,9 +270,12 @@ LastNodeID = LoopOpID,
   NumNodeIDs               ///< The number of node identifiers in the enum
 };
 
-/// This class is the base class of HLVM Abstract Syntax Tree (AST). All 
-/// other AST nodes are subclasses of this class.
-/// @brief Abstract base class of all HLVM AST node classes
+/// This class is the abstract base class of all the Abstract Syntax Tree (AST)
+/// node types. All other AST nodes are subclasses of this class. This class
+/// must only provide functionality that is common to all AST Node subclasses.
+/// It provides for class identification, insertion of nodes, management of a
+/// set of flags, 
+/// @brief Abstract Base Class of All HLVM AST Nodes
 class Node
 {
   /// @name Constructors
@@ -418,6 +418,12 @@ class Node
   friend class AST;
 };
 
+/// This class is an abstract base class in the Abstract Syntax Tree for any 
+/// node type that can be documented. That is, it provides a facility for
+/// attaching a Documentation node. This is the base class of most definitions
+/// in the AST. 
+/// @see Documentation
+/// @brief AST Documentable Node
 class Documentable : public Node
 {
   /// @name Constructors
@@ -452,6 +458,14 @@ class Documentable : public Node
   friend class AST;
 };
 
+/// This class is an abstract base class in the Abstract Syntax Tree for things
+/// that have a value at runtime. Every Value has a Type. All Operators, 
+/// LinkageItems, and Constants are values.
+/// @see Type
+/// @see LinkageItem
+/// @see Operator
+/// @see Constant
+/// @brief AST Value Node
 class Value : public Documentable
 {
   /// @name Constructors

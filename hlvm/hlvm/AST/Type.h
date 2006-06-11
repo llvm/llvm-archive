@@ -237,7 +237,8 @@ class IntegerType : public Type
       NodeIDs id,  ///< The node type identifier, passed on to Node base class
       int16_t bits = 32, ///< The number of bits in this integer type
       bool sign = true ///< Indicates if this is a signed integer type, or not.
-    ) : Type(id), numBits(bits) {
+    ) : Type(id) {
+      setBits(bits);
       setSigned(sign); 
     }
 
@@ -254,7 +255,7 @@ class IntegerType : public Type
     virtual const char* getPrimitiveName() const;
 
     /// @brief Return the number of bits in this integer type
-    int16_t getBits()  const { return int16_t(numBits&0x7FFF); }
+    int16_t getBits()  const { return int16_t(flags & 0x7FFF); }
 
     /// @brief Return the signedness of this type
     bool     isSigned() const { return flags & 0x8000; }
@@ -270,7 +271,7 @@ class IntegerType : public Type
     /// An int
     /// @brief Set the number of bits for this integer type
     void setBits(int16_t bits) { 
-      numBits &= 0x8000; numBits |= uint16_t(bits)&0x7FFF; }
+      flags &= 0x8000; flags |= uint16_t(bits)&0x7FFF; }
 
     /// @brief Set the signedness of the type
     void setSigned(bool isSigned) { 

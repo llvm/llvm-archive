@@ -93,6 +93,7 @@ IntegerType::clone(const std::string& newname)
 const char* 
 IntegerType::getPrimitiveName() const
 {
+  int16_t numBits = getBits();
   if (numBits > 128)
     return 0;
 

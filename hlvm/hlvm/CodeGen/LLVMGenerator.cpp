@@ -150,6 +150,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   template <class NodeClass>
   inline void gen(NodeClass *nc);
 
+  void genProgramLinkage();
+
   virtual void handleInitialize();
   virtual void handle(Node* n,Pass::TraversalKinds mode);
   virtual void handleTerminate();
@@ -905,83 +907,8 @@ LLVMGeneratorPass::gen<Bundle>(Bundle* b)
   gvars.clear();
 }
 
-void
-LLVMGeneratorPass::handleInitialize()
-{
-  // Nothing to do
-}
-
-void
-LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
-{
-  if (mode == Pass::PreOrderTraversal) {
-    // We process container nodes here (preorder) to ensure that we create the
-    // container that is being asked for.
-    switch (n->getID()) {
-    case BundleID:                gen(llvm::cast<Bundle>(n)); break;
-    case FunctionID:              gen(llvm::cast<hlvm::Function>(n)); break;
-    case ProgramID:               gen(llvm::cast<Program>(n)); break;
-    case BlockID:                 gen(llvm::cast<Block>(n)); break;
-    default:
-      break;
-    }
-  } else {
-    // We process non-container nodes and operators. Operators are done
-    // post-order because we want their operands to be constructed first.
-    switch (n->getID()) 
-    {
-    case AliasTypeID:             gen(llvm::cast<AliasType>(n)); break;
-    case AnyTypeID:               gen(llvm::cast<AnyType>(n)); break;
-    case BooleanTypeID:           gen(llvm::cast<BooleanType>(n)); break;
-    case CharacterTypeID:         gen(llvm::cast<CharacterType>(n)); break;
-    case IntegerTypeID:           gen(llvm::cast<IntegerType>(n)); break;
-    case RangeTypeID:             gen(llvm::cast<RangeType>(n)); break;
-    case EnumerationTypeID:       gen(llvm::cast<EnumerationType>(n)); break;
-    case RealTypeID:              gen(llvm::cast<RealType>(n)); break;
-    case OctetTypeID:             gen(llvm::cast<OctetType>(n)); break;
-    case VoidTypeID:              gen(llvm::cast<VoidType>(n)); break;
-    case PointerTypeID:           gen(llvm::cast<hlvm::PointerType>(n)); break;
-    case ArrayTypeID:             gen(llvm::cast<hlvm::ArrayType>(n)); break;
-    case VectorTypeID:            gen(llvm::cast<VectorType>(n)); break;
-    case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
-    case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
-    case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
-    case ConstantZeroID:          gen(llvm::cast<ConstantZero>(n));break;
-    case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
-    case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
-    case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
-    case VariableID:              gen(llvm::cast<Variable>(n)); break;
-    case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
-    case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
-    case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
-    case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
-    case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
-    case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
-    case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
-    case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
-    case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
-
-    // ignore end of block, program, function and bundle
-    case BundleID:
-      break;
-    case ProgramID:
-    case FunctionID:
-      lfunc = 0;
-      break;
-    case BlockID:
-      lblk = 0;
-      break;
-
-    // everything else is an error
-    default:
-      hlvmNotImplemented("Node of unimplemented type");
-      break;
-    }
-  }
-}
-
-void
-LLVMGeneratorPass::handleTerminate()
+void 
+LLVMGeneratorPass::genProgramLinkage()
 {
   // Short circuit if there's nothing to do
   if (progs.empty())
@@ -1046,6 +973,88 @@ LLVMGeneratorPass::handleTerminate()
   );
 }
 
+void
+LLVMGeneratorPass::handleInitialize()
+{
+  // Nothing to do
+}
+
+void
+LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
+{
+  if (mode == Pass::PreOrderTraversal) {
+    // We process container nodes here (preorder) to ensure that we create the
+    // container that is being asked for.
+    switch (n->getID()) {
+    case BundleID:                gen(llvm::cast<Bundle>(n)); break;
+    case FunctionID:              gen(llvm::cast<hlvm::Function>(n)); break;
+    case ProgramID:               gen(llvm::cast<Program>(n)); break;
+    case BlockID:                 gen(llvm::cast<Block>(n)); break;
+    default:
+      break;
+    }
+  } else {
+    // We process non-container nodes and operators. Operators are done
+    // post-order because we want their operands to be constructed first.
+    switch (n->getID()) 
+    {
+    case AliasTypeID:             gen(llvm::cast<AliasType>(n)); break;
+    case AnyTypeID:               gen(llvm::cast<AnyType>(n)); break;
+    case BooleanTypeID:           gen(llvm::cast<BooleanType>(n)); break;
+    case CharacterTypeID:         gen(llvm::cast<CharacterType>(n)); break;
+    case IntegerTypeID:           gen(llvm::cast<IntegerType>(n)); break;
+    case RangeTypeID:             gen(llvm::cast<RangeType>(n)); break;
+    case EnumerationTypeID:       gen(llvm::cast<EnumerationType>(n)); break;
+    case RealTypeID:              gen(llvm::cast<RealType>(n)); break;
+    case OctetTypeID:             gen(llvm::cast<OctetType>(n)); break;
+    case VoidTypeID:              gen(llvm::cast<VoidType>(n)); break;
+    case PointerTypeID:           gen(llvm::cast<hlvm::PointerType>(n)); break;
+    case ArrayTypeID:             gen(llvm::cast<hlvm::ArrayType>(n)); break;
+    case VectorTypeID:            gen(llvm::cast<VectorType>(n)); break;
+    case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
+    case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
+    case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
+    case ConstantZeroID:          gen(llvm::cast<ConstantZero>(n));break;
+    case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
+    case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
+    case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
+    case VariableID:              gen(llvm::cast<Variable>(n)); break;
+    case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
+    case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
+    case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
+    case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+    case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
+    case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
+    case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
+    case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
+    case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
+
+    // ignore end of block, program, function and bundle
+    case BundleID:
+      genProgramLinkage();
+      lmod = 0;
+      break;
+    case ProgramID:
+    case FunctionID:
+      lfunc = 0;
+      break;
+    case BlockID:
+      lblk = 0;
+      break;
+
+    // everything else is an error
+    default:
+      hlvmNotImplemented("Node of unimplemented type");
+      break;
+    }
+  }
+}
+
+void
+LLVMGeneratorPass::handleTerminate()
+{
+  // Nothing to do.
+}
 
 llvm::Module*
 LLVMGeneratorPass::linkModules()

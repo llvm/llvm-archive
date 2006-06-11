@@ -37,13 +37,13 @@ that this is for experts and the impatient only.</p>
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Obtain, build, and install the dependent packages. You need LLVM, APR,
-  APR-Utils, libxml2, scons and GCC</li>
+  <li>Obtain, build, and install the dependent packages. You need llvm, 
+  llvm-gcc, apr, apr-util, libxml2, scons and gcc</li>
   <li>Obtain the HLVM Source Code (svn://hlvm.org/hlvm).</li>
   <li>Build hlvm with the "scons -Q" command.</li>
   <li>The configuration utility might ask you where your 3rd party software is
   located. Please enter the paths appropriately.</li>
-  <li>Install hlvm with "scons install prefix=/path/to/put/hlvm".</li>
+  <li>Install hlvm with "scons -Q install prefix=/path/to/put/hlvm".</li>
 </ol>
 </div>
 
@@ -70,7 +70,7 @@ front to make sure you actually want to get started with HLVM.</p>
   provided through a set of code libraries that can be incorporated into other
   programs. HLVM does provide a virtual machine executable but without a program
   to run (one that has been compiled by HLVM based tools), the virtual machine
-  won't do anything. So, if you're an end use of software, HLVM probably isn't
+  won't do anything. So, if you're an end user of software, HLVM probably isn't
   for you. If you're a developer, however, we think you'll find HLVM quite
   spiffy.</dd>
   <dt>How hard is HLVM to build?</dt>
@@ -107,8 +107,6 @@ script will tell you which packages you lack. The table below shows the software
 that HLVM depends on. You <b>must</b> obtain and build these packages yourself
 if they are not already present on your system.</p>
 
-
-
 <!-- *********************************************************************** -->
 <div class="section"><a name="requirements"><b>Requirements</b></a></div>
 <!-- *********************************************************************** -->
@@ -139,17 +137,27 @@ software you will need.</p>
   <table>
     <tr><th>Package</th><th>Version</th><th>Notes</th></tr>
     <tr>
-      <td><a href="http://llvm.org/">LLVM</a></td>
+      <td><a href="http://llvm.org/">llvm</a></td>
       <td>1.8cvs<a href="#sf2"><sup>2</sup></a></td>
       <td>optimization, code generation, bytecode, JIT</td>
     </tr>
     <tr>
-      <td><a href="http://apr.apache.org/">APR</a></td>
+      <td><a href="http://llvm.org/">llvm-gcc</a></td>
+      <td>4</a></td>
+      <td>C and C++ compilation to llvm bytecode</td>
+    </tr>
+    <tr>
+      <td><a href="http://apr.apache.org/">apr</a></td>
       <td>1.2.7</td>
       <td>runtime environment, OS abstraction, threading, loading, etc.</td>
     </tr>
     <tr>
-      <td><a href="http://xmlsoft.org/downloads.html">LibXml2</a></td>
+      <td><a href="http://apr.apache.org/">apr-util</a></td>
+      <td>1.2.7</td>
+      <td>additional runtime utilities</td>
+    </tr>
+    <tr>
+      <td><a href="http://xmlsoft.org/downloads.html">libxml2</a></td>
       <td>2.6.24</td>
       <td>XML parsing and validation toolkit</td>
     </tr>
@@ -160,12 +168,12 @@ software you will need.</p>
       and attribute names in XML documents.</td>
     </tr>
     <tr>
-      <td><a href="http://gcc.gnu.org">GCC</a></td>
+      <td><a href="http://gcc.gnu.org">gcc</a></td>
       <td>&ge;3.4.4</td>
       <td>C/C++ compiler for compiling HLVM</td>
     </tr>
     <tr>
-      <td><a href="http://subversion.tigris.org/">Subversion</a></td>
+      <td><a href="http://subversion.tigris.org/">subversion</a></td>
       <td>&ge;1.1</td>
       <td>Suversion access to HLVM source</td>
     </tr>
@@ -175,7 +183,7 @@ software you will need.</p>
       <td>Software Construction system used for HLVM's build</td>
     </tr>
     <tr>
-      <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
+      <td><a href="http://savannah.gnu.org/projects/dejagnu">dejagnu</a></td>
       <td>1.4.2</td>
       <td>Automated test suite<sup><a href="#sf1">1</a></sup></td>
     </tr>
@@ -189,6 +197,16 @@ software you will need.</p>
       <td>5.38.0</td>
       <td>Automated test suite<sup><a href="#sf1">1</a></sup></td>
     </tr>
+    <tr>
+      <td><a href="http://www.stack.nl/~dimitri/doxygen/">doxygen</a></td>
+      <td>&ge;1.4.4<a href="#sf3"><sup>3</sup></a></td>
+      <td>C/C++ automated documentation generator</td>
+    </tr>
+    <tr>
+      <td><a href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</a></td>
+      <td>&ge;2.6.24<a href="#sf3"><sup>3</sup></a></td>
+      <td>XSLT Processor (comes with libxml2)</td>
+    </tr>
   </table>
 
   <p><b>Notes:</b></p>
@@ -198,12 +216,14 @@ software you will need.</p>
       suite in the <tt>hlvm/test</tt> directory.</a></li>
     <li><a name="sf2">Certain LLVM tools are being modified to accommodate HLVM
       as it progresses. Until this development slows you are urged to obtain
-      LLVM from the CVS sources and keep it up to date.</li>
+      LLVM from the CVS sources and keep it up to date.</a></li>
+    <li><a name="sf3">You only need this tool if you intend to build the 
+      documentation.</a></li>
   </ol>
   </div>
   
-  <p>Additionally, your compilation host is expected to have the usual 
-  plethora of Unix utilities. Specifically:</p>
+  <p>Additionally, your compilation host is expected to have the usual Unix 
+  utilities, specifically:</p>
   <ul>
     <li><b>ar</b> - archive library builder</li>
     <li><b>gzip*</b> - gzip command for distribution generation</li>
@@ -237,6 +257,36 @@ software you will need.</p>
   </ul>
   <h2>apr-util</h2>
   <p>No special instructions.</p>
+  <h2>llvm</h2>
+  <ul>
+    <li>You <em>must</em> use the latest CVS version of LLVM. LLVM is HLVM's 
+    sister project and the two are intricately connected. Consequently, patches
+    are made to LLVM in order to satisfy HLVM's requirements. At some point,
+    this restriction will be lifted as a released version of LLVM will contain
+    all of HLVM's requirements. However, while in development you should
+    checkout the latest version of LLVM and keep it up to date.</li>
+    <li>Configure LLVM with --prefix=/path/to/install/llvm</li>
+    <li>Build LLVM with "make tools-only". You don't need the runtime library
+    because we will be using llvm-gcc4</li>
+  </ul>
+  <h2>llvm-gcc</h2>
+  <ul>
+    <li>You <em>must</em> use version for of llvm-gcc, not version 3.</li>
+    <li>Obtain llvm-gcc4 source from 
+    <a href="http://nondot.org/sabre/2006-06-01-llvm-gcc-4.tar.gz">
+      http://nondot.org/sabre/2006-06-01-llvm-gcc-4.tar.gz</a></li>
+    <li>Alternatively, you can obtain a binary version of llvm-gcc4 for
+    Linux (Fedora Core 3) from
+    <a href="http://llvm.org/2006-06-01-llvm-gcc4-linux-x86-binary.tar.gz">
+      http://llvm.org/2006-06-01-llvm-gcc4-linux-x86-binary.tar.gz</a></li>
+    <li>You <em>must</em> install llvm-gcc4 into an installation area that
+    is not used by any other software, particularly gcc. This is required
+    because you might clobber your compiler's runtime libraries and tools
+    otherwise.</li>
+    <li>See the <tt>README.llvm</tt> in the top of the llvm-gcc4 source bundel
+    if you're inclined to build llvm-gcc4 on your own. It isn't hard but there
+    are a few things you need to do correctly.</li>
+  </ul>
 </div>
 </body>
 </html>

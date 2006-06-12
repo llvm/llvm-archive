@@ -23,15 +23,16 @@
 from build import hlvm
 from os.path import join as pjoin
 Import('env')
-if 'docs' in COMMAND_LINE_TARGETS:
+if 'install' in COMMAND_LINE_TARGETS:
   hlvm.GetDoxygen(env)
   hlvm.GetConfigFile(env)
   hlvm.GetXSLTproc(env)
+  hlvm.InstallDocs(env,hlvm.GetFiles(env,'*.html')+['hlvm.css'])
+  env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])
+  hlvm.InstallDocs(env,'HLVM.rng.html')
   env.ConfigFile('Doxyfile','Doxyfile.in')
   env.Doxygen('doxygen.tar.gz','Doxyfile')
-  env.XSLTproc('HLVM.rng.html',['RngToXHTML.xsl','#hlvm/Reader/HLVM.rng'])
-  env.Alias('docs','doxygen.tar.gz')
-  env.Alias('docs','HLVM.rng.html')
+  hlvm.InstallDocs(env,'doxygen.tar.gz')
 
 if 'doxy-install' in COMMAND_LINE_TARGETS:
   hlvm.GetDoxygenInstall(env)
@@ -40,5 +41,4 @@ if 'doxy-install' in COMMAND_LINE_TARGETS:
   env.DoxygenInstall(installtgt,installsrc)
   env.Alias('doxy-install',installtgt)
 
-if 'install' in COMMAND_LINE_TARGETS:
-  hlvm.InstallDocs(env,hlvm.GetFiles(env,'*.html')+['hlvm.css'])
+hlvm.Dirs(env,['tools'])

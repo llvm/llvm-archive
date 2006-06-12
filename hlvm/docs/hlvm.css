@@ -69,13 +69,14 @@ H1 {
   margin-bottom: 0.3em; 
 }
 H2 {
-  border-top: 1px solid #0000AA;
-  border-bottom: 1px solid #0000AA;
-  background-color: #4444AA;
+  border-top: 1px solid #000088;
+  border-bottom: 1px solid #000088;
+  background-color: #000088;
   color: #EEEEFF;
   text-align: left;  
   font-size: 120%;
   font-weight: bold;
+  width:60%;
 }
 H3 {
   color: #EEEEFF;

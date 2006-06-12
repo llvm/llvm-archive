@@ -24,7 +24,7 @@ from build import hlvm
 Import('env')
 hlvm.GetBytecode(env)
 env.BytecodeArchive('hlvm.bca',hlvm.GetAllCXXFiles(env))
-env.Program('hlvm', hlvm.GetAllCXXFiles(env),
+prog = env.Program('hlvm', hlvm.GetAllCXXFiles(env),
   LIBS=[
     'HLVMRuntime',
     'HLVMBase',
@@ -35,3 +35,4 @@ env.Program('hlvm', hlvm.GetAllCXXFiles(env),
     'stdc++'
   ],
 )
+hlvm.InstallProgram(env,prog)

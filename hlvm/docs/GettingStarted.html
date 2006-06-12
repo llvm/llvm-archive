@@ -35,6 +35,11 @@
       <li><a href="#targets">Build Targets</a></li>
     </ol>
   </li>
+  <li><a href="#make">Building HLVM With Make</a>
+    <ol>
+      <li><a href="#make_targets">Targets Supported</a></li>
+    </ol>
+  </li>
 </ol>
 
 <div class="author">
@@ -530,6 +535,90 @@ introductory things to cover:</p>
     time consuming and not necessary for each build. When this alias is used,
     the doxygen and XSLT generated documentation will be built.</li>
   </ul>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="make">Building HLVM With Make</a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>If you don't want to learn how to use SCons, HLVM provides a 
+  <tt>Makefile</tt> that will invoke it for you. All the usual targets are 
+  provided.  To use this facility, simply do a local edit of the Makefile
+  and adjust the three variables:</p>
+  <dl>
+    <dt>MYMODE</dt>
+    <dd>Indicates the name of the build mode you want to build by default. This
+    can be any string, but it will be more useful if it is one of these:
+    <ul>
+      <li><em>Debug</em> - specifies a debug build with assertions turned on and
+      inline functions turned off. Initialize this build mode with 
+      <tt>make Debug</tt>.</li>
+      <li><em>Optimized</em> - specifies an optimized build with debug turned
+      off, inline turned on, and assertions turned on.  Initialize this build
+      mode with <tt>make Optimized</tt>.</li>
+      <li><em>Release</em> - specifies an optimized build with assertions turned
+      off and symbols stripped. Initialize this build with 
+      <tt>make Release</tt>.</li>
+      <li><em>Profile</em> - specifies an optimized profiling build with 
+      assertions turned off, inline turned on and with profiling options
+      suitable for profiling the tools with gmon. Initialize this build with 
+      <tt>make Profile</tt>.</li>
+    </ul></dd>
+    <dt>MYPATH</dt>
+    <dd>This provides a path for the 3rd party software that HLVM depends on.
+    You should change this path to match your local environment. If you don't
+    get this right then the first time you run scons, it will ask you to
+    manually enter paths for things like the APR library and LLVM.</dd>
+    <dt>MYPREFIX</dt>
+    <dd>This provides the directory into which HLVM will be installed. If it is
+    not specifed, the default will be /usr/local.</dd>
+  </dl>
+  <p>Once you've made these adjustments you can use the various targets in the
+  Makefile to build HLVM. Note that these targets just convert the target into
+  the appropriate invocation of the <tt>scons</tt> command.</p>
+  <h2><a name="make_targets">Targets Supported</a></h2>
+  <p>You can use the following targets to build HLVM in various ways:
+  <dl>
+    <dt>all</dt>
+    <dd>Builds HLVM in the default mode, as specified by <em>MYMODE</em>.
+    Typically this is a Debug build.</dd>
+    <dt>debug Debug</dt>
+    <dd>This builds HLVM in a mode named "Debug" and sets the various options
+    appropriately for a debug build. You should use this target the first time 
+    you want a Debug build.</dd>
+    <dt>optimized Optimized</dt>
+    <dd>This builds HLVM in a mode named "Optimized" and sets the various 
+    options appropriately for an optimized build. You should use this target 
+    the first time you want an Optimized build.</dd>
+    <dt>release Release</dt>
+    <dd>This builds HLVM in a mode named "Release" and sets the various options
+    appropriately for a release build. You should use this target the first
+    time you want a Release build.</dd>
+    <dt>profile Profile</dt>
+    <dd>This builds HLVM in a mode named "Profile" and sets the various options
+    appropriately for an profiled build. You should use this target the first
+    time you want an Profile build.</dd>
+    <dt>check</dt>
+    <dd>This doesn't build HLVM but instead invokes the test suite via dejagnu.
+    Use this to make sure that your local modifications haven't caused any
+    regressions.</dd>
+    <dt>clean</dt>
+    <dd>This removes all the build targets that were previously built. The next
+    time you build the <tt>all</tt> target, everything will be rebuilt.</dd>
+    <dt>doc</dt>
+    <dd>This builds the documentation for HLVM. It will run doxygen and xsltproc
+    to build the generated portion of the documentation.</dd>
+    <dt>hlvm</dt>
+    <dd>This provides a partial build of HLVM. It descends into the 
+    <tt>hlvm</tt> directory and builds only the libraries located there.</dd>
+    <dt>install</dt>
+    <dd>This will installed HLVM libraries, headers and executable tools into 
+    the directory named by the <em>MYPREFIX</em> variable.</dd>
+    <dt>tools</dt>
+    <dd>This provides a partial build of HLVM. It skips building the libraries 
+    in the <tt>hlvm</tt> directory and instead descends into the <tt>tools</tt>
+    and builds the executable tools there.</dd>
+  </dl>
 </div>
 </body>
 </html>

@@ -9,8 +9,14 @@
 # make.
 #------------------------------------------------------------------------------
 
+# Select the name of the build mode you want to build by default.
 MYMODE := Debug
+
+# Specify a path for where the 3rd party software is installed
 MYPATH := /proj/llvm/cfe/install:/proj/install
+
+# Specify where you want HLVM to be installed
+MYPREFIX := /proj/install/hlvm
 
 .PHONY: all debug Debug optimized Optimized release Release check clean \
 	install hlvm tools
@@ -20,19 +26,19 @@ all:
 
 debug Debug:
 	scons -Q mode=Debug debug=1 assertions=1 optimized=0 inline=0 \
-	small=0 confpath=$(MYPATH)
+	small=0 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 optimized Optimized:
 	scons -Q mode=Optimized debug=0 assertions=1 optimized=1 inline=1 \
-	small=0 strip=0 confpath=$(MYPATH)
+	small=0 strip=0 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 release Release:
 	scons -Q mode=Release debug=0 assertions=0 optimized=1 inline=1 \
-	small=1 strip=1 confpath=$(MYPATH)
+	small=1 strip=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 profile Profile:
 	scons -Q mode=Profile debug=0 assertions=0 optimized=1 inline=1 \
-	small=0 strip=0 profile=1 confpath=$(MYPATH)
+	small=0 strip=0 profile=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 check:  all
 	scons -Q check mode=$(MYMODE)

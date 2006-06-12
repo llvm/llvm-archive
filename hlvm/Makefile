@@ -13,6 +13,16 @@
 all:
 	scons -Q
 
+debug:
+	scons -Q mode=debug debug=1 assertions=1 optimized=0 inline=0 small=0
+
+optimized:
+	scons -Q mode=optimized debug=0 assertions=1 optimized=1 inline=1 \
+	small=0
+
+release:
+	scons -Q mode=release debug=0 assertions=0 optimized=1 inline=1 small=1
+
 check:  all
 	scons -Q check
 

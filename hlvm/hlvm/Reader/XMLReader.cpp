@@ -220,6 +220,7 @@ recognize_LinkageKinds(const char* str)
     default:
       hlvmDeadCode("Invalid Linkage Type");
   }
+  return ExternalLinkage;
 }
 
 uint64_t

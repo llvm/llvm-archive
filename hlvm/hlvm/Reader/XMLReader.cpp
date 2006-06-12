@@ -53,7 +53,7 @@ using namespace HLVM_Reader;
 namespace {
 
 const char HLVMGrammar[] = 
-#include <hlvm/Reader/XML/HLVM.rng.inc>
+#include <hlvm/Reader/HLVM.rng.inc>
 ;
 
 class XMLReaderImpl : public XMLReader {

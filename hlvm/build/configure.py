@@ -190,6 +190,8 @@ def CheckProgram(ctxt,progname,varname,moredirs=[],critical=1):
     ret = fname != None
     if ret:
       ctxt.env[varname] = fname
+    else:
+      ctxt.env[varname] = None
   ctxt.Result(ret)
   if critical and not ret:
     print "Required Program '" + progname + "' is missing."
@@ -243,14 +245,13 @@ def CheckForPrograms(conf):
   conf.CheckProgram('llvm-gcc','with_llvmgcc')
   conf.CheckProgram('llvm-g++','with_llvmgxx')
   conf.CheckProgram('gperf','with_gperf')
+  conf.CheckProgram('pod2html','with_pod2html',[],0)
+  conf.CheckProgram('pod2man','with_pod2man',[],0)
   if not conf.CheckProgram('runtest','with_runtest',[],0):
-    env['with_runtest'] = None
     print "*** TESTING DISABLED ***"
   if not conf.CheckProgram('doxygen','with_doxygen',[],0):
-    env['with_runtest'] = None
     print "*** DOXYGEN DISABLED ***"
   if not conf.CheckProgram('xsltproc','with_xsltproc',[],0):
-    env['with_runtest'] = None
     print "*** XSLTPROC DISABLED ***"
   return 1
 

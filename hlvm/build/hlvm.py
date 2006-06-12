@@ -58,6 +58,10 @@ def GetXSLTproc(env):
   from build import documentation
   return documentation.XSLTproc(env)
 
+def GetPodGen(env):
+  from build import documentation
+  return documentation.PodGen(env)
+
 def Dirs(env,dirlist=[]):
   dir = env.Dir('.').path
   if (dir == env.Dir('#').path):
@@ -98,10 +102,19 @@ def InstallHeader(env,hdrs):
 
 def InstallDocs(env,docs):
   if 'install' in COMMAND_LINE_TARGETS:
-    dir = pjoin(env['prefix'],'docs')
+    moddir = strrepl(env.Dir('.').path,pjoin(env['BuildDir'],''),'',1)
+    dir = pjoin(env['prefix'],moddir)
     if not exists(dir):
       env.Execute(Mkdir(dir))
     env.Install(dir=dir,source=docs)
+
+def InstallMan(env,mans):
+  if 'install' in COMMAND_LINE_TARGETS:
+    dir = pjoin(env['prefix'],'docs','man','man1')
+    if not exists(dir):
+      env.Execute(Mkdir(dir))
+    env.Install(dir=dir,source=mans)
+
 
 def GetBuildEnvironment(targets,arguments):
   env = Environment();
@@ -159,6 +172,10 @@ def GetBuildEnvironment(targets,arguments):
            '/usr/local/bin/doxygen')
   opts.Add('with_xsltproc','Specify where the XSLT processor is located',
            '/usr/local/bin/xsltproc')
+  opts.Add('with_pod2html','Specify where the POD to HTML generator is located',
+           '/usr/local/bin/pod2html')
+  opts.Add('with_pod2man','Specify where the POD to MAN generator is located',
+           '/usr/local/bin/pod2man')
   opts.Update(env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'
   env['HLVM_Maintainer'] = 'Reid Spencer <rspencer@reidspencer>'
@@ -266,4 +283,3 @@ Options:
   env['HLVM_ConfigTime'] = now.ctime();
   opts.Save(options_file,env)
   return env
-

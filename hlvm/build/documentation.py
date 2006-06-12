@@ -5,6 +5,7 @@ import re,fileinput,os,glob
 from string import join as sjoin
 from os.path import join as pjoin
 from os.path import exists
+import os.path as path
 
 def getHeaders(env):
   context = pjoin(env['AbsSrcRoot'],'hlvm')
@@ -55,9 +56,9 @@ def DoxygenInstallAction(target,source,env):
   tarfile = target[0].path
   tgtdir  = target[0].dir.path
   srcpath = source[0].path
-  env.Execute(Copy(tarfile,srcpath))
-  env.Execute(env['TAR'] + ' zxf ' + tarfile + ' -C ' + tgtdir )
-  return 0
+  if not env.Execute(Copy(tarfile,srcpath)):
+    return env.Execute(env['TAR'] + ' zxf ' + tarfile + ' -C ' + tgtdir )
+  return 1
 
 def DoxygenInstall(env):
   doxyInstAction = env.Action(DoxygenInstallAction,DoxygenInstallMessage)
@@ -69,10 +70,36 @@ def XSLTMessage(target,source,env):
   return "Creating " + target[0].path + " via XSLT from " + source[0].path
 
 def XSLTAction(target,source,env):
-  env.Execute( env['with_xsltproc'] + ' ' + source[0].path + ' ' + 
+  return env.Execute( env['with_xsltproc'] + ' ' + source[0].path + ' ' + 
     source[1].path + ' >' + target[0].path )
 
 def XSLTproc(env):
   xsltAction = env.Action(XSLTAction,XSLTMessage)
   xsltBuilder = env.Builder(action=xsltAction)
   env.Append(BUILDERS = {'XSLTproc':xsltBuilder} )
+
+def Pod2HtmlMessage(target,source,env):
+  return "Generating HTML From POD: " + source[0].path 
+  
+def Pod2HtmlAction(target,source,env):
+  title = path.splitext(path.basename(source[0].path))[0]
+  return env.Execute( env['with_pod2html'] + ' --css=man.css --htmlroot=.' +
+      ' --podpath=. --noindex --infile=' + source[0].path + 
+      ' --outfile=' + target[0].path + ' --title="' + title + ' command"')
+
+def Pod2ManMessage(target,source,env):
+  return "Generating MAN Page From POD: " + source[0].path 
+  
+def Pod2ManAction(target,source,env):
+  title = path.splitext(path.basename(source[0].path))[0]
+  return env.Execute( env['with_pod2man'] + ' --release=CVS' +
+    ' --center="HLVM Tools Manual" ' + source[0].path + ' ' + target[0].path )
+
+def PodGen(env):
+  p2hAction = env.Action(Pod2HtmlAction,Pod2HtmlMessage)
+  p2hBuildr = env.Builder(action=p2hAction,suffix='.html',src_suffix='.pod',
+      single_source=1)
+  p2mAction = env.Action(Pod2ManAction,Pod2ManMessage)
+  p2mBuildr = env.Builder(action=p2mAction,suffix='.1',src_suffix='.pod',
+      single_source=1)
+  env.Append(BUILDERS = {'Pod2Html':p2hBuildr, 'Pod2Man':p2mBuildr} )

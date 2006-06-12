@@ -33,13 +33,10 @@ def SiteExpAction(target,source,env):
   outf.write('set LLVM_bin "' + env['LLVM_bin'] + '"\n')
   outf.write('set LIBXML2_lib "' + env['LIBXML2_lib'] + '"\n')
   outf.write('set LIBXML2_inc "' + env['LIBXML2_inc'] + '"\n')
-  outf.write('set LIBXML2_bin "' + env['LIBXML2_bin'] + '"\n')
   outf.write('set APR_lib "' + env['APR_lib'] + '"\n')
   outf.write('set APR_inc "' + env['APR_inc'] + '"\n')
-  outf.write('set APR_bin "' + env['APR_bin'] + '"\n')
   outf.write('set APRU_lib "' + env['APRU_lib'] + '"\n')
   outf.write('set APRU_inc "' + env['APRU_inc'] + '"\n')
-  outf.write('set APRU_bin "' + env['APRU_bin'] + '"\n')
   outf.write('set llc "' + env['with_llc'] + '"\n')
   outf.write('set gccld "' + env['with_gccld'] + '"\n')
   outf.write('set gxx "' + env['with_gxx'] + '"\n')
@@ -77,5 +74,7 @@ def Check(env,dirs):
     env.Check(['#test/' + dir + '.sum','#test/' + dir + '.log'],
               getTestCases(dir,env)+['#test/site.exp'])
     env.Alias('check','#test/' + dir + '.log')
+  env.Depends('check','#tools/hlvm-compiler/hlvm-compiler')
+  env.Depends('check','#tools/hlvm-xml2xml/hlvm-xml2xml')
   return 1
 

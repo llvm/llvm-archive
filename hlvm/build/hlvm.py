@@ -77,7 +77,7 @@ def InstallLibrary(env,lib):
   env.AppendUnique(LIBPATH=[env.Dir('.')])
   if 'install' in COMMAND_LINE_TARGETS:
     libdir = pjoin(env['prefix'],'lib')
-    env.Install(dir,lib)
+    env.Install(libdir,lib.path)
   return 1
 
 def InstallHeader(env,hdrs):
@@ -86,6 +86,11 @@ def InstallHeader(env,hdrs):
     dir = pjoin(env['prefix'],'include',moddir)
     env.Install(dir,hdrs)
   return 1
+
+def InstallDoc(env,docs):
+  if 'install' in COMMAND_LINE_TARGETS:
+    dir = pjoin(env['prefix'],'docs')
+    env.install(dir,docs)
 
 def GetBuildEnvironment(targets,arguments):
   env = Environment();
@@ -99,9 +104,9 @@ def GetBuildEnvironment(targets,arguments):
     buildname = 'default'
   options_file = '.' + buildname + '_options'
   if not exists(options_file):
-    opts = Options('.options_cache')
+    opts = Options('.options_cache',arguments)
   else:
-    opts = Options(options_file)
+    opts = Options(options_file,arguments)
   opts.AddOptions(
     BoolOption('assertions','Include assertions in the code',1),
     BoolOption('debug','Build with debug options turned on',1),
@@ -115,7 +120,7 @@ def GetBuildEnvironment(targets,arguments):
   opts.Add('with_llvm','Specify where LLVM is located','/usr/local')
   opts.Add('with_apr','Specify where apr is located','/usr/local/apr')
   opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr')
-  opts.Add('with_xml2','Specify where LibXml2 is located','/usr/local')
+  opts.Add('with_libxml2','Specify where LibXml2 is located','/usr/local')
   opts.Add('with_gxx','Specify where the GCC C++ compiler is located',
            '/usr/local/bin/g++')
   opts.Add('with_llc','Specify where the LLVM compiler is located',
@@ -202,7 +207,7 @@ def GetBuildEnvironment(targets,arguments):
   else :
     VariantName+='o'
 
-  BuildDir = 'build.' + VariantName
+  BuildDir = '_' + buildname 
   env['Variant'] = VariantName
   env['BuildDir'] = BuildDir
   env['AbsObjRoot'] = env.Dir('#' + BuildDir).abspath
@@ -230,7 +235,7 @@ Usage Examples::
   scons --clean     - to remove all derived (built) objects
   scons check       - to run the DejaGnu test suite
   scons install     - to install HLVM to a target directory
-  scons doxygen     - to generate the doxygen documentation
+  scons docs        - to generate the doxygen documentation
 
 Options:
 """ + opts.GenerateHelpText(env,sort=cmp))

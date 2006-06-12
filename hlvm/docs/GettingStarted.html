@@ -18,6 +18,7 @@
     </ol>
   </li>
   <li><a href="#other_packages">Building Other Packages</a></li>
+  <li><a href="#building">Building HLVM With SCons</a></li>
 </ol>
 
 <div class="author">
@@ -99,24 +100,19 @@ introductory things to cover:</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="section"><a name="overview"><b>Overview</b></a></div>
-<!-- *********************************************************************** -->
-<p>HLVM is dependent on a number of other software packages. These
-packages will be required before you can build HLVM. Fortunately, the configure
-script will tell you which packages you lack. The table below shows the software
-that HLVM depends on. You <b>must</b> obtain and build these packages yourself
-if they are not already present on your system.</p>
-
-<!-- *********************************************************************** -->
 <div class="section"><a name="requirements"><b>Requirements</b></a></div>
 <!-- *********************************************************************** -->
 
 <div class="text">
 
-<p>Before you begin to use the HLVM system, review the requirements given below.
-This may save you some trouble by knowing ahead of time what hardware and
-software you will need.</p>
-
+  <p>Before you attempt to build HLVM, you need to understand its requirements.
+  HLVM is non-trivial and depends on a number of other software packages. These
+  packages will be required before you can build HLVM. Taking
+  a moment to familiarize yourself with HLVM's requirements may save you some 
+  time in the long run.<p>
+  <p>The table below shows the software that HLVM depends on. You <b>must</b> 
+  obtain and build these packages yourself if they are not already present on 
+  your system. HLVM won't compile or run without them.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -139,27 +135,39 @@ software you will need.</p>
     <tr>
       <td><a href="http://llvm.org/">llvm</a></td>
       <td>1.8cvs<a href="#sf2"><sup>2</sup></a></td>
-      <td>optimization, code generation, bytecode, JIT</td>
+      <td>Low Level Virtual Machine. This compler infrastructure provides the
+        low level code generation and optimization, linking, bytecode, JIT,
+        and other facilities HLVM needs.  LLVM is HLVM's sister project. 
+        It handles all the low level details for HLVM.</td>
     </tr>
     <tr>
-      <td><a href="http://llvm.org/">llvm-gcc</a></td>
+      <td><a href="http://llvm.org/">llvm-gcc4</a></td>
       <td>4</a></td>
-      <td>C and C++ compilation to llvm bytecode</td>
+    <td>LLVM C/C++ Frontend, Version 4. This is a full GCC (Gnu Compiler 
+      Collection) compiler but with extensions for generating code via LLVM 
+      instead of GCC's normal RTL-based backend. This tool can compile C, C++,
+      Objective-C and Objective-C++ languages into either native binary or
+      LLVM bytecode. In either case, it utilizes LLVM's suite of passes for code
+      optimization.</td>
     </tr>
     <tr>
       <td><a href="http://apr.apache.org/">apr</a></td>
       <td>1.2.7</td>
-      <td>runtime environment, OS abstraction, threading, loading, etc.</td>
+      <td>Apache Portable Runtime. APR is used as the portability layer to
+        abstract away differences between the various operating systems that
+        HLVM runs on. This simplifies the HLVM Runtime library implementation
+        and also endows it with some robustness. It handles various OS 
+        abstraction such as file I/O, threading, locking, loading, etc.</td>
     </tr>
     <tr>
       <td><a href="http://apr.apache.org/">apr-util</a></td>
       <td>1.2.7</td>
-      <td>additional runtime utilities</td>
+      <td>Apache Portable Runtime Utilities. Additional runtime utilities.</td>
     </tr>
     <tr>
       <td><a href="http://xmlsoft.org/downloads.html">libxml2</a></td>
       <td>2.6.24</td>
-      <td>XML parsing and validation toolkit</td>
+      <td>XML parsing and validation toolkit.</td>
     </tr>
     <tr>
       <td><a href="http://www.gnu.org/software/gperf/">gperf</a></td>
@@ -175,12 +183,17 @@ software you will need.</p>
     <tr>
       <td><a href="http://subversion.tigris.org/">subversion</a></td>
       <td>&ge;1.1</td>
-      <td>Suversion access to HLVM source</td>
+      <td>Suversion access to HLVM source repository.</td>
     </tr>
     <tr>
       <td><a href="http://scons.org/download.php">scons</a></td>
       <td>0.96.92</td>
-      <td>Software Construction system used for HLVM's build</td>
+      <td>Software Construction system used for HLVM's build system.</td>
+    </tr>
+    <tr>
+      <td><a href="http://python.org/">python</a></td>
+      <td>2.3</td>
+      <td>Python programming language, required by scons</td>
     </tr>
     <tr>
       <td><a href="http://savannah.gnu.org/projects/dejagnu">dejagnu</a></td>
@@ -286,6 +299,100 @@ software you will need.</p>
     <li>See the <tt>README.llvm</tt> in the top of the llvm-gcc4 source bundel
     if you're inclined to build llvm-gcc4 on your own. It isn't hard but there
     are a few things you need to do correctly.</li>
+  </ul>
+</div>
+<!-- *********************************************************************** -->
+<div class="section"><a name="building">Building HLVM With SCons</a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>HLVM uses the SCons tool for software construction. While <tt>make</tt> 
+  and the various <tt>auto*</tt> tools were originally used, the full
+  programming language support (Python) of SCons was attractive because of the
+  platform support and the need to do intricate things to build HLVM. If you
+  are not familiar with SCons, we recommend you take a quick peek at the
+  <a href="http://www.scons.org/doc/0.96.92/HTML/scons-user.html">SCons User 
+    Manual</a>. While an in depth knowledge is not needed to build HLVM, having
+  some understanding of scons will definitely help.</p>
+  <p>The details on using scons for HLVM can be found in the 
+  <a href="DevelopersGuide.html">Developer's Guide</a>, but here's a precis to
+  help you get started:</p>
+  <ul>
+    <li>You can still use <tt>make</tt> as the <tt>Makefile</tt> in the top
+    level has the customary targets that will invoke the corresponding
+    <tt>scons</tt> command.</li>
+    <li>HLVM uses a number of customizations to the facilities provided in order
+    to keep the SConstruct and SConscript files minimized. These facilities are
+    provided in a Python module named <tt>build</tt> at the root directory. This
+    departure was necessary in order to hide the implementation details of many
+    of the build rules and configuration details that HLVM requires.</li>
+    <li>An important thing to know is that configuration is done on every build.
+    However, if the dependencies haven't changed, the result is cached and this
+    runs quite quickly. This is a huge help to the project because it
+    automatically detects environment changes and reconfigures HLVM accordingly
+    which saves time and also catches problems very early.</li>
+    <li>There are numerous configuration options available. You should use the
+    <tt>scons -Q --help</tt> option to get a description of all of them.</li>
+    <li>Configuration options are saved in cache files so you don't have to keep
+    repeating them on each invocation of <tt>scons</tt></li>
+    <li>The important options to use are:
+    <ul>
+      <li><em>-Q</em>. Normally scons is quite verbose about all the
+      configuration checks it is doing. This option just tells scons to be quiet
+      about such things.</li>
+      <li><em>--prefx=/path/to/install/dir</em>. This option tells the build
+      system where HLVM should be installed. The default is <tt>/usr/local</tt>.
+      </li>
+      <li><em>confpath=&lt;path&gt;</em>. This option provides a colon (:)
+      separated list of paths to search when configuring HLVM. This is handy if
+      you normally install your software in an unusual place. For example, some
+      of our developers install software to <tt>/proj/install</tt> or 
+      <tt>/more/install</tt>. By using this option, the configuration code will
+      search the paths for the packages and tools that it is looking for.
+      Furthermore, it will give priority to the <tt>confpath</tt> paths over the
+      regular places that it looks.</li>
+      <li><em>mode=&lt;mode_name&gt;</em>. This gives a name to your
+      configuration. You can replace <tt>&lt;mode_name&gt;</tt> with any name
+      you like.  For example you might think of your configuration as
+      "debug" or "optimized". When you name a configuration this way, your
+      configuration parameters will be saved in a file named
+      <tt>.&lt;mode_name&gt;_options</tt>. To repeat the options specified the
+      first time, simply issue the command <tt>scons mode=&lt;mode_name&gt;</tt>
+      and all your configuration options will be read from the cache file.</li>
+      <li><em>debug=0|1</em>. This turns debug mode on and off. Debug mode
+      causes the compiler to emit debug symbols and turns on the HLVM_DEBUG
+      pre-processor symbol so that debug code can be included.</li>
+      <li><em>assertions=0|1</em>. This turns assertions on or off. This is
+      separate from debug because we might want to have a release or optimized
+      version that includes assertions but not debug code.</li>
+      <li><em>inline=0|1</em>. This controls whether the compiler should emit
+      inline functions as real functions or attempt to inline them. When
+      building a version you intend to debug with <tt>gdb</tt>, it is often
+      handy to turn this off. You pay a performance penalty but it is also much
+      easier to debug the code.</li>
+      <li><em>optimize</em>. This option tells the compiler to optimize the
+      generated code. This may make it difficult to debug the resulting program.
+      However, it will also make the program run much faster.</li>
+      <li><em>with_*</em>. There are a variety of options that are prefixed with
+      <tt>with_</tt>, for example <tt>with_llvm</tt> or <tt>with_apr</tt>. Thise
+      options allow you to tell scons where a specific package is located on
+      your system. See the <tt>scons -Q --help</tt> output for a full list of
+      these options.</li>
+    </ul></li>
+    <li>The default target will simply build all the libraries and tools.</li>
+    <li>There are additional pseudo-targets (<i>aliases</i> in SCons lingo) that
+    you can build:
+    <ul>
+      <li><em>check</em>. This will run the Deja-Gnu test suite located in the
+      <tt>test</tt> directory. If you're making changes to HLVM, it is handy to
+      run this frequently to ensure that you haven't caused any regressions.
+      Patches that do not pass this test suite will not be accepted.</li>
+      <li><em>install</em>. This alias will install the HLVM header files,
+      libraries, tools and documentation to the install directory (which was
+      specified with the <tt>--prefix=</tt> configuration option).</li>
+      <li><em>docs</em>. By default, documentation is not built because it is
+      time consuming and not necessary for each build. When this alias is used,
+      the doxygen and XSLT generated documentation will be built.</li>
+    </ul></li>
   </ul>
 </div>
 </body>

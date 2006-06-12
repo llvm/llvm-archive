@@ -202,6 +202,12 @@ contributions will be handled.</p>
       memory constrained platforms.</td>
     <td>0</td></tr>
   <tr>
+    <td>strip</td>
+    <td>Strip executables of their symbols. This can significantly reduce the
+      size of the executable. Useful for release preparation when trying to
+      minimize the size of a tarball or RPM package.</td>
+    <td>0</td></tr>
+  <tr>
     <td>prefix</td>
     <td>Specify where to install HLVM. This is the root directory of where HLVM
       will be installed when you run <tt>scons install</tt></td>
@@ -227,7 +233,7 @@ contributions will be handled.</p>
     <td>Specify where apr-utils is installed.</td>
     <td>/usr/local/apr</td></tr>
   <tr>
-    <td>with_xml2</td>
+    <td>with_libxml2</td>
     <td>Specify where LibXml2 is installed.</td>
     <td>/usr/local</td></tr>
   <tr>

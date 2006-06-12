@@ -54,7 +54,6 @@ def CheckAction(target,source,env):
 
   context = os.path.basename(env.File(target[0]).path)
   context = re.sub('(.*?)\..*','\\1',context)
-  print "context=",context
   os.system('cd ' + pjoin(env['BuildDir'],'test') +
       '; DEJAGNU="'+pjoin(env['AbsObjRoot'],'test','site.exp')+'" '+
       env['with_runtest'] + ' --tool ' + context)
@@ -74,7 +73,5 @@ def Check(env,dirs):
     env.Check(['#test/' + dir + '.sum','#test/' + dir + '.log'],
               getTestCases(dir,env)+['#test/site.exp'])
     env.Alias('check','#test/' + dir + '.log')
-  env.Depends('check','#tools/hlvm-compiler/hlvm-compiler')
-  env.Depends('check','#tools/hlvm-xml2xml/hlvm-xml2xml')
   return 1
 

@@ -23,4 +23,4 @@
 from build import hlvm
 env = hlvm.GetBuildEnvironment(COMMAND_LINE_TARGETS,ARGUMENTS)
 Export('env')
-hlvm.Dirs(env,['hlvm','tools','test','docs'])
+hlvm.Dirs(env,['hlvm','tools','docs','test'])

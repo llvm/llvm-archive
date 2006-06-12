@@ -9,34 +9,45 @@
 # make.
 #------------------------------------------------------------------------------
 
-.PHONY: all check install hlvm tools
+MYMODE := Debug
+MYPATH := /proj/llvm/cfe/install:/proj/install
+
+.PHONY: all debug Debug optimized Optimized release Release check clean \
+	install hlvm tools
+
 all:
-	scons -Q
+	scons -Q mode=$(MYMODE)
 
-debug:
-	scons -Q mode=debug debug=1 assertions=1 optimized=0 inline=0 small=0
+debug Debug:
+	scons -Q mode=Debug debug=1 assertions=1 optimized=0 inline=0 \
+	small=0 confpath=$(MYPATH)
 
-optimized:
-	scons -Q mode=optimized debug=0 assertions=1 optimized=1 inline=1 \
-	small=0
+optimized Optimized:
+	scons -Q mode=Optimized debug=0 assertions=1 optimized=1 inline=1 \
+	small=0 strip=0 confpath=$(MYPATH)
 
-release:
-	scons -Q mode=release debug=0 assertions=0 optimized=1 inline=1 small=1
+release Release:
+	scons -Q mode=Release debug=0 assertions=0 optimized=1 inline=1 \
+	small=1 strip=1 confpath=$(MYPATH)
+
+profile Profile:
+	scons -Q mode=Profile debug=0 assertions=0 optimized=1 inline=1 \
+	small=0 strip=0 profile=1 confpath=$(MYPATH)
 
 check:  all
-	scons -Q check
+	scons -Q check mode=$(MYMODE)
 
 clean:
-	scons -Q --clean 
+	scons -Q --clean mode=$(MYMODE)
 
 install:
-	scons -Q install
+	scons -Q install mode=$(MYMODE)
 
 doc:
-	scons -Q docs
+	scons -Q docs mode=$(MYMODE)
 
 hlvm:
-	cd hlvm ; scons -Q -u
+	cd hlvm ; scons -Q -u mode=$(MYMODE)
 
 tools:
-	cd tools ; scons -Q -u
+	cd tools ; scons -Q -u mode=$(MYMODE)

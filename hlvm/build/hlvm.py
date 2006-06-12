@@ -71,6 +71,8 @@ def InstallProgram(env,prog):
   if 'install' in COMMAND_LINE_TARGETS:
     dir = pjoin(env['prefix'],'bin')
     env.Install(dir,prog)
+  if 'check' in COMMAND_LINE_TARGETS:
+    env.Depends('check',prog[0].path)
   return 1
 
 def InstallLibrary(env,lib):
@@ -114,6 +116,7 @@ def GetBuildEnvironment(targets,arguments):
     BoolOption('optimize','Build object files with optimization',0),
     BoolOption('profile','Generate profiling aware code',0),
     BoolOption('small','Generate smaller code rather than faster',0),
+    BoolOption('strip','Strip executables of their symbols',0),
   )
   opts.Add('prefix','Specify where to install HLVM','/usr/local')
   opts.Add('confpath','Specify additional configuration dirs to search','')
@@ -207,7 +210,13 @@ def GetBuildEnvironment(targets,arguments):
   else :
     VariantName+='o'
 
-  BuildDir = '_' + buildname 
+  if env['strip']:
+    VariantName +='T'
+    env['LINKFLAGS'] += ' -s'
+  else:
+    VariantName += 't'
+
+  BuildDir = buildname 
   env['Variant'] = VariantName
   env['BuildDir'] = BuildDir
   env['AbsObjRoot'] = env.Dir('#' + BuildDir).abspath

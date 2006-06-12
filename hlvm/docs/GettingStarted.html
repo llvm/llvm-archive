@@ -38,6 +38,7 @@
   <li><a href="#make">Building HLVM With Make</a>
     <ol>
       <li><a href="#make_targets">Targets Supported</a></li>
+      <li><a href="#tipsntricks">Tips And Tricks</a></li>
     </ol>
   </li>
 </ol>
@@ -619,6 +620,18 @@ introductory things to cover:</p>
     in the <tt>hlvm</tt> directory and instead descends into the <tt>tools</tt>
     and builds the executable tools there.</dd>
   </dl>
+  <h2><a name="tipsntricks">Tips And Tricks</a></h2>
+  <ul>
+    <li><em>Override MYMODE</em>. On the <tt>make</tt> command line you can
+    override the value of <tt>MYMODE</tt> makefile variable. This allows you to
+    use any of the usual targets with a different build mode. For example,
+    suppose your <tt>Makefile</tt> specifies a value of "Debug" for
+    <tt>MYMODE</tt>. This situation indicates that the "Debug" configuration
+    will be used for all regular builds. However, if you want to install the
+    Release version, say, you could issue this command:<pre>
+    make install MYMODE=Release</pre></li>
+  </ul>
+
 </div>
 </body>
 </html>

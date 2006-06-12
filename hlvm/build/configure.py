@@ -267,7 +267,7 @@ def ConfigureHLVM(env):
     if p != '' and exists(p) and exists(pjoin(p,'bin')):
       rlist = [p] + rlist
   for p in rlist:
-      env['ENV']['PATH'] = pjoin(p,'bin') + ':' + env['ENV']['PATH']
+    env.PrependENVPath('PATH', pjoin(p,'bin'))
 
   env['LIBS'] = ''
 

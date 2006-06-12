@@ -5,6 +5,7 @@ from SCons.Options import PackageOption as PackageOption
 from SCons.Script.SConscript import SConsEnvironment as SConsEnvironment
 from SCons.Script import COMMAND_LINE_TARGETS as COMMAND_LINE_TARGETS
 from SCons.Environment import Environment as Environment
+from SCons.Defaults import Mkdir as Mkdir
 from configure import ConfigureHLVM as ConfigureHLVM
 from os.path import join as pjoin
 from os.path import exists as exists
@@ -67,32 +68,40 @@ def Dirs(env,dirlist=[]):
     sconsfile = pjoin(dir,d,'SConscript')
     env.SConscript(sconsfile)
 
-def InstallProgram(env,prog):
+def InstallProgram(env,progs):
   if 'install' in COMMAND_LINE_TARGETS:
     dir = pjoin(env['prefix'],'bin')
-    env.Install(dir,prog)
+    if not exists(dir):
+      env.Execute(Mkdir(dir))
+    env.Install(dir=env.Dir(dir),source=progs)
   if 'check' in COMMAND_LINE_TARGETS:
-    env.Depends('check',prog[0].path)
+    env.Depends('check',progs)
   return 1
 
-def InstallLibrary(env,lib):
+def InstallLibrary(env,libs):
   env.AppendUnique(LIBPATH=[env.Dir('.')])
   if 'install' in COMMAND_LINE_TARGETS:
     libdir = pjoin(env['prefix'],'lib')
-    env.Install(libdir,lib.path)
+    if not exists(libdir):
+      env.Execute(Mkdir(libdir))
+    env.Install(dir=env.Dir(libdir),source=libs)
   return 1
 
 def InstallHeader(env,hdrs):
   if 'install' in COMMAND_LINE_TARGETS:
     moddir = strrepl(env.Dir('.').path,pjoin(env['BuildDir'],''),'',1)
     dir = pjoin(env['prefix'],'include',moddir)
-    env.Install(dir,hdrs)
+    if not exists(dir):
+      env.Execute(Mkdir(dir))
+    env.Install(dir=env.Dir(dir),source=hdrs)
   return 1
 
-def InstallDoc(env,docs):
+def InstallDocs(env,docs):
   if 'install' in COMMAND_LINE_TARGETS:
     dir = pjoin(env['prefix'],'docs')
-    env.install(dir,docs)
+    if not exists(dir):
+      env.Execute(Mkdir(dir))
+    env.Install(dir=dir,source=docs)
 
 def GetBuildEnvironment(targets,arguments):
   env = Environment();
@@ -232,10 +241,13 @@ def GetBuildEnvironment(targets,arguments):
   env.BuildDir(BuildDir,'#',duplicate=0)
   env.SConsignFile(pjoin(BuildDir,'sconsign'))
   if 'install' in COMMAND_LINE_TARGETS:
-    env.Alias('install',pjoin(env['prefix'],'bin'))
-    env.Alias('install',pjoin(env['prefix'],'lib'))
-    env.Alias('install',pjoin(env['prefix'],'include'))
-    env.Alias('install',pjoin(env['prefix'],'docs'))
+    env.Alias('install',[
+      env.Dir(pjoin(env['prefix'],'bin')),
+      env.Dir(pjoin(env['prefix'],'lib')),
+      env.Dir(pjoin(env['prefix'],'include')),
+      env.Dir(pjoin(env['prefix'],'docs'))
+    ])
+
   env.Help("""
 HLVM Build Environment
 

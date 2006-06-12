@@ -41,4 +41,4 @@ if 'doxy-install' in COMMAND_LINE_TARGETS:
   env.Alias('doxy-install',installtgt)
 
 if 'install' in COMMAND_LINE_TARGETS:
-  hlvm.InstallDocs(env,hlvm.GetFiles('*.html')+['hlvm.css'])
+  hlvm.InstallDocs(env,hlvm.GetFiles(env,'*.html')+['hlvm.css'])

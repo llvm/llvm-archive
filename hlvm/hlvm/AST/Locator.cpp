@@ -34,6 +34,12 @@
 namespace hlvm
 {
 
+Locator::~Locator() {}
+URILocator::~URILocator() {}
+LineLocator::~LineLocator() {}
+LineColumnLocator::~LineColumnLocator() {}
+RangeLocator::~RangeLocator() {}
+
 bool 
 URILocator::equals(const Locator& that) const
 {

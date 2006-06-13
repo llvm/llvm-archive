@@ -731,9 +731,9 @@ LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
           // We have pointers to different element types. This *can* be okay if
           // we apply conversions.
           if (CElemType == llvm::Type::SByteTy) {
-            // The initializer is an sbyte*, which we can conver to either a
+            // The initializer is an sbyte*, which we can convert to either a
             // hlvm_text or an hlvm_buffer.
-            if (elemType = get_hlvm_buffer()) {
+            if (elemType == get_hlvm_buffer()) {
               // Assign the constant string to the buffer
             } else if (elemType == get_hlvm_text()) {
             }

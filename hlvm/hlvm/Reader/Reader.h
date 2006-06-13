@@ -37,6 +37,8 @@ class AST;
 class Reader
 {
 public:
+  virtual ~Reader() {}
+
   /// This method reads the entire content of the reader's source.
   virtual void read() = 0;
 

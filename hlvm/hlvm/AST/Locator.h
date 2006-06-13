@@ -52,6 +52,7 @@ class Locator
   /// @name Constructors
   protected:
     Locator() : SubclassID(0) {}
+    virtual ~Locator();
   /// @name Accessors
   /// @{
   public:
@@ -76,6 +77,7 @@ class URILocator : public Locator
   /// @{
   public:
     URILocator(const URI* u) : Locator(), uri(u) { SubclassID = 1; }
+    virtual ~URILocator();
 
   /// @}
   /// @name Accessors
@@ -104,6 +106,7 @@ class LineLocator : public URILocator
     LineLocator(const URI* u, uint32_t l) : URILocator(u), line(l) {
       SubclassID = 2; 
     }
+    virtual ~LineLocator();
 
   /// @}
   /// @name Accessors
@@ -130,6 +133,7 @@ class LineColumnLocator : public LineLocator
   public:
     LineColumnLocator(const URI* u, uint32_t l, uint32_t c) 
       : LineLocator(u,l), col(c) { SubclassID = 3; }
+    virtual ~LineColumnLocator();
 
   /// @}
   /// @name Accessors
@@ -159,6 +163,7 @@ class RangeLocator : public LineColumnLocator
   public:
     RangeLocator(const URI* u, uint32_t l, uint32_t c, uint32_t l2, uint32_t c2)
       : LineColumnLocator(u,l,c), line2(l2), col2(c2) { SubclassID = 4; }
+    virtual ~RangeLocator();
 
   /// @}
   /// @name Accessors

@@ -37,6 +37,7 @@ class AST;
 class Writer
 {
 public:
+  virtual ~Writer() {}
   /// This method writes the entire content of the AST to the writer's
   /// destination
   virtual void write(AST* source) = 0;

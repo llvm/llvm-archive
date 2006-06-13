@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>HLVM Release Notes</title>
+  <link rel="stylesheet" href="hlvm.css" type="text/css">
+</head>
+<body>
+<div class="title">HLVM Release Notes</div>
+<ol>
+  <li><a href="#introduction">Introduction</a>
+  <li><a href="#new">What's New</a>
+  <ol>
+    <li><a href="#features">New Features</a></li>
+    <li><a href="#changes">Significant Changes</a></li>
+    <li><a href="#platforms">Platform Support</a></li>
+  </ol></li>
+  <li><a href="#problems">Known Problems</a></li>
+  <li><a href="#install">Installation Notes</a></li>
+</ol>
+
+<div class="author">
+  <p>Author: <a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="introduction">Introduction</a></div>
+<!-- *********************************************************************** -->
+
+<div class="text">
+  <p>Welcome to the High Level Virtual Machine (HLVM). This document contains 
+  the release notes for HLVM. Here we describe what's new, what changed, what
+  platforms are supported, known problems, and installation notes.</p>
+  <p>This document can be updated as things are discovered after the software 
+  is released. If you are reading this from the release files, you should go
+  to the <a href="http://hlvm.org/releases/">HLVM Releases Site</a>
+  to read the most recent version. If you are reading this from the SVN sources,
+  the release notes apply to the <i>next</i> release of HLVM, not the most
+  recent release.</p>
+  <p>For information on upcoming releases and future plans, please refer to the
+  <a href="http://hlvm.org/Plans.shtml">HLVM Release Plans</a> page.
+  <p>For more information on HLVM, please visit the main
+  <a href="http://hlvm.org/">HLVM web site</a>. If you have questions or
+  comments, you should send them to the 
+  <a href="http://hlvm.org/hlvm-dev.shtml">HLVM Developers List</a>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="new"><b>What's New</b></a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>This is the first public release of the High Level Virtual Machine. This is
+  a very early pre-release, version 0.1. That is, HLVM is not complete yet and
+  it doesn't do very much.  The main goal for this release was to get HLVM to
+  run the "Hello, World" program, which it does.  However, completing that goal
+  means that two things are in place: (1) the build system and (2) the basic
+  architecture of the project.</p>
+  <p>This release is probably only of interest to the HLVM developers and those
+  who are just crazily interested in virtual machine technology. This software
+  is being released early because of our release policy which follows Linus
+  Torvald's philosophy: Release Early, Release Often.  Essentially, we define 
+  feature sets for upcoming releases in small increments. When those features 
+  are completed we release it to the public. This requires the developers to
+  quickly cycle through the entire software development life cycle and ensures
+  that HLVM never gets too far off course or loses quality.</p>
+  <h2><a name="features">New Features In HLVM 0.1</a></h2>
+  <p>Since this is the first release of HLVM, <i>everything</i> in HLVM is new!
+  However, here are the main things accomplished in this release:</p>
+  <ol>
+    <li><em>Build System</em>. A build system based on 
+    <a href="http://www.scons.org">scons</a> was implemented and currently
+    handles building the software, running the test suite, generating the
+    documentation, participating in code generation, compiling the runtime with
+    LLVM, and installing the final product.</li>
+    <li><em>Basic Architecture</em>. We have defined several libraries for HLVM:
+    <ul>
+      <li><b>AST</b>. This library provides the implementation of the Abstract
+      Syntax Tree which is the heart of the HLVM implementation. These classes
+      form a multi-way tree that is used as the representation of the user's
+      program.</li>
+      <li><b>Base</b>. This library provides common utilities shared across all
+      of HLVM.</li>
+      <li><b>Reader</b>. This library will contain readers to translate a
+      variety of on-disk format into the in-memory AST nodes. Currently there 
+      is only an implemented reader for XML.</li>
+      <li><b>Writer</b>. This library will contain writers to translate from the
+      in-memory AST nodes to a variety of on-disk formats. Currently there is
+      only an implemented writer for XML. This library complements the Reader
+      library and the two libraries should be synchronized in the formats they
+      read and write.</li>
+      <li><b>Pass</b>. This library provides a mechanism for making a
+      <i>pass</i> over the AST nodes and various pass implementations.
+      Currently, only a rudimentary verification pass has been implemented. In
+      the future this library will contain optimization passes and other
+      AST-&gt;AST passes.</li>
+      <li><b>CodeGen</b>. This library provides code generation passes. This is
+      a separate library because none of thse passes produce AST nodes. Instead,
+      they translate the AST into some other form, from which translation back
+      to AST is not possible. Currently a rudimentary code generator for 
+      <a href="http://llvm.org/">LLVM</a> is provided. In the future there may
+      be other code generators for generating XHTML documentation, C code, 
+      etc.</li>
+      <li><b>Runtime</b>. This library provides the HLVM runtime. This is the
+      component of HLVM that is linked with the user's program to provide
+      services to it. Currently, the HLVM runtime provides a few functions for
+      handling output and command line arguments so that the "Hello, World"
+      program could be implmented.</li>
+    </ul></li>
+    <li><em>Tools</em>. HLVM has a set of executable tools built from the 
+    libraries that HLVM provides. Currently, the tool set includes:
+    <ul>
+      <li><b>hlvm</b>. This tool provides an implementation of the HLVM Runtime
+      as a stand alone executable. Currently it doesn't do much but tell you its
+      version and provide help with options</li>
+      <li><b>hlvm-xml2xml</b>. This tool converts HLVM XML input into the AST
+      tree nodes and then back out to HLVM XML again. This is used mainly as a
+      test driver to ensure construction and pass management is working in HLVM
+      without invoking other parts of the sytsem.</li>
+      <li><b>hlvm-compiler</b>. This tool converts HLVM XML into LLVM bytecode 
+      or LLVM assembly code. In the future it may be able to compile HLVM into 
+      any of the other forms that HLVM supports as well as create stand-alone
+      programs.</li>
+    </ul></li>
+    <li><em>Test Suite</em>. HLVM provides a test suite that uses Deja-Gnu to
+    automate the tests. Currently the test suite provides two kinds of tests.
+    The <tt>xml2xml</tt> test suite uses the <tt>hlvm-xml2xml</tt> tool to
+    validate that HLVM can generate its input to its output. These are
+    fundamental tests that ensure the stability of the AST.</li> The
+    <tt>return0</tt> test suite uses the <tt>hlvm-compiler</tt> to generate an
+    executable program from XML source, execute it, and assert that the program
+    returns 0. Right now there's only a few programs in this category but there
+    will be many more in the future.</li>
+  </ol>
+  <h2><a name="changes">Significant Changes in HLVM 0.1</a></h2>
+  <p>There have been no changes since the last release.</p>
+  <h2><a name="platforms">Platform Support</a></h2>
+  <p>HLVM is known to work on the following platforms:</p>
+  <ol>
+    <li>x86 machines running Linux (FC3, FC5, SuSE)</li>
+    <li>PPC machines running Mac OS/X (10.4 Tiger)</li>
+  </ol>
+  <p>HLVM probably runs on many other operating systems and hardware but the
+  developers have not yet tried them. If you are successful in bulding HLVM on
+  another platform, <i>please let us know!</i></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="problems"><b>Known Problems</b></a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>The main known problem with this release is that there isn't enough of HLVM
+  implemented to be useful in any significant way.</p>
+</div>
+<!-- *********************************************************************** -->
+<div class="section"><a name="install"><b>Installation Notes</b></a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>Please see the <a href="GettingStarted.html">Getting Started Guide</a> that
+  accompanies these relese notes. </p>
+</div>
+</body>
+</html>

@@ -32,9 +32,9 @@ ADDRESS IMG {
 ADDRESS { 
   clear: right; 
 }
-B { font-weight: bold; }
+B { font-weight: bolder; }
 BODY {
-  background: #f0f0f0;
+  background: #f4f4f4;
   color: #000000;
   text-align: left;
   line-height: normal;
@@ -43,7 +43,7 @@ BODY {
   font-family: "Verdana,Arial,sans";
   font-size: medium;
   font-style: normal;
-  font-weight: bold;
+  font-weight: normal;
   font-variant: normal;
   position: relative;
   margin-left: 0em;

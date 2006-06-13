@@ -7,13 +7,16 @@
 </head>
 <body>
 <div class="title">HLVM Release Plans</div>
-<div class="warning">CAUTION: This document is <em>always</em> a work in progress.</div>
+<div class="warning">
+WARNING: This document is <em>always</em> a work in progress.
+</div>
 <ol>
   <li><a href="#introduction">Introduction</a>
-  <li><a href="#overview">Overview</a></li>
-  <li><a href="#features">Features</a></li>
-  <li><a href="#status">Status</a></li>
+  <li><a href="#upcoming">Upcoming Releases</a></li>
+  <li><a href="#completed">Completed Releases</a></li>
+  <li><a href="#status">Current Status</a></li>
   <li><a href="#released">Released Features</a>
+  <li><a href="#features">Feature Definitions</a></li>
 </ol>
 
 <div class="author">
@@ -24,20 +27,6 @@
 <div class="section"><a name="introduction">Introduction</a></div>
 <!-- *********************************************************************** -->
 
-<div class="warning">
-  <blockquote>
-    <h2>WARNING</h2>
-    <p>This document is ephemeral. We change it all the time. It gets updated 
-    with our current plans for the definition of a release. As such, referring 
-    to it often will help you understand where HLVM is going in upcoming 
-    releases.</p>
-    <p>However, <em>nothing</em> within these plans should be relied upon or 
-    taken as a committment from the developers. Open Source projects proceed 
-    as time and talent permits and this one is no exception. We are simply 
-    trying to provide you with information about what is likely to occur in 
-    the next few releases.</p>
-  </blockquote>
-</div>
 <div class="text">
   <p>This document contains the Release plans for HLVM. Each release is broken
   down into a set of high-level features that we are intending to implement in
@@ -46,203 +35,303 @@
   <p>One of the reasons we publish this information is so that developers can
   see where they might be able to help. If you have an interest in implementing
   one of the features, please contact us.</p>
+  <p><b class="warning">NOTE: </b>
+  This document is ephemeral. We change it all the time. It gets updated 
+  with our current plans for the definition of a release. As such, referring 
+  to it often will help you understand where HLVM is going in upcoming 
+  releases.  However, <em>nothing</em> within these plans should be relied 
+  upon or taken as a committment from the developers. Open Source projects 
+  proceed as time and talent permits and this one is no exception. We are 
+  simply trying to provide you with information about what is likely to 
+  occur in the next few releases.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="section"><a name="overview"><b>Overview</b></a></div>
+<div class="section"><a name="upcoming"><b>Upcoming Releases</b></a></div>
 <!-- *********************************************************************** -->
 <div class="text">
-  <p>The table below shows the releases we are thinking about.</p>
+  <p>The table below provides an overview of the planned upcoming releases.</p>
   <table>
-    <tr><th>Release</th><th>Title</th><th>Links</th></tr>
     <tr>
-      <td>0.1</td>
-      <td>AST Construction</td>
-      <td><a href="#f0_1">Features</a>&nbsp;<a href="#s0_1">Status</a></td>
+      <th style="width:15%">Release</th>
+      <th style="width:70%">Description</th>
+      <th style="width:15%">Links</th>
     </tr>
     <tr>
       <td>0.2</td>
-      <td>Code Generation</td>
-      <td><a href="#f0_2">Features</a>&nbsp;<a href="#s0_2">Status</a></td>
+      <td>Turing Complete, JIT Execution</td>
+      <td><a href="#f0_2">Features</a>&nbsp;<a href="#status">Status</a></td>
+    </tr>
+    <tr>
+      <td>0.3</td>
+      <td>Front End Library, Interpreted Execution</td>
+      <td><a href="#f0_3">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.4</td>
+      <td>Ruby Front End</td>
+      <td><a href="#f0_4">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.5</td>
+      <td>Scheme Front End</td>
+      <td><a href="#f0_5">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.6</td>
+      <td>Python Front End</td>
+      <td><a href="#f0_6">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.9</td>
+      <td>Quality Enhancements, Pre-Beta Touchups</td>
+      <td><a href="#f0_9">Features</a></td>
     </tr>
   </table>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="section"><a name="features">Features</a></div>
+<div class="section"><a name="completed"><b>Completed Releases</b></a></div>
 <!-- *********************************************************************** -->
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_1">Pre-Release 0.1 Features</a></div>
 <div class="text">
-<ul>
-  <li><a name="buildenv"><em>Build Environment</em></a>. 
-  A multi-platform build system so that software can be compiled properly.</li>
-  <li><a name="testharn"><em>Test Harness</em></a>. 
-  A deja-gnu based test framework to manage and execute the large number of 
-  test cases needed to verify that the HLVM system is working correctly.</li>
-  <li><a name="ASTNodes"><em>AST Nodes</em></a>.
-  Define and implement several (not all) AST nodes. The most fundamental 
-  nodes should be implemented: structuring, functions, blocks, arithmetic 
-  operators, constants, etc. The list will be expanded in subsequent releases.
-  </li>
-  <li><a name="XMLReader"><em>XML Reader</em></a>.
-  A library to read in an XML representation of the AST and generate the AST
-  C++ Nodes.</li>
-  <li><a name="XMLWriter"><em>XML Writer</em></a>.
-  A library to write out an XML representation of the Abstract Syntax
-  Tree.</li>
-  <li><a name="xml2xml"><em>hlvm-xml2xml</em></a>.
-  A program to convert XML AST documents back into XML. This tests the
-  correct construction of the AST as well as the pass management features.</li>
-  <li><a name="ASTsuite"><em>AST Test Suite</em></a>.
-  A suite of XML based test files need to be developed for use with the
-  hlvm_xml2xml program. All implemented aspects of the AST must be covered by
-  one or more test cases.</li>
-  <li><a name="compiler"><em>hlvm-compiler</em></a>.
-  A program to compile HLVM sources into something executable. This release
-  0.1 vesion will read in XML AST files and produce LLVM bytecode. Other options
-  will be added in the future.</li>
-  <li><a name="vm"><em>hlvm machine</em></a>.
-  This program provides the runtime environment for executing HLVM
-  programs. This 0.1 version will read an LLVM bytecode file and JIT execute 
-  it. More features later.</li>
-  <li><a name="HelloWorld"><em>Hello World</em></a>.
-  Sufficient capabilities will be added to the runtime and compiler in order
-  to get the "Hello, World" program running.</li>
-</ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_2">Pre-Release 0.2 Features</a></div>
-<div class="text">
-  <li><a name="ruby"><em>Ruby Features</em></a>.
-  Add sufficient nodes to the system to support the language features of
-  Ruby.</li>
-  <li><a name="rubytest"><em>Ruby Tests</em></a>.
-  Add test cases that exercise the features added for Ruby. These are XML
-  based test cases, not Ruby source</li>
-  <li><a name="interp"><em>Interpreter</em></a>.
-  We will introduce the HLVM interpreter in this release. It will interpret
-  AST nodes directly and execute them.</li>
-  <li><a name="jit"><em>JIT Runtime</em></a>.
-  The JIT runtime will notice which functions being executed are being invoked
-  frequently and will use LLVM to convert them to just-in-time compiled native
-  code.</li>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_3">Pre-Release 0.3 Features</a></div>
-<div class="text">
-  <li><a name="scheme"><em>Scheme Features</em></a>.
-  Add sufficient nodes to the system to support the language features of
-  Scheme.</li>
-  <li><a name="schemetest"><em>Scheme Tests</em></a>.
-  Add test cases that exercise the features added for Scheme. These are XML
-  based test cases, not Ruby source</li>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_4">Pre-Release 0.4 Features</a></div>
-<div class="text">
-  <li><a name="python"><em>Python Features</em></a>.
-  Add sufficient nodes to the system to support the language features of
-  Python.</li>
-  <li><a name="pythontest"><em>Python Tests</em></a>.
-  Add test cases that exercise the features added for Scheme. These are XML
-  based test cases, not Python source</li>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_5">Pre-Release 0.5 Features</a></div>
-<div class="text">
-  <li><a name="frontend"><em>Front End Features</em></a>.
-  Add new libraries and utilities to make it easy to build front end
-  languages. Implement Ruby, Python and Scheme using this infrastructure.</li>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="f0_9">Pre-Release 0.9 Features</a></div>
-<div class="text">
-  <li><a name="refactor"><em>Refactoring</em></a>.
-  Review the entire HLVM source base and re-factor to common components
-  with the goal of software reuse and shrinkage of library sizes.</li>
-  <li><a name="fulltest"><em>Full Test Suite</em></a>.
-  Ensure that HLVM is covered by a full test suite that tests every aspect of
-  its functionality.</li>
-  <li><a name="quality"><em>Quality</em></a>.
-  Improve quality of HLVM at both compile and run times. This feature ensures
-  that HLVM will properly handle corner conditions, error situations,
-  exceptions, etc.</li>
-  <li><a name="optimize"><em>Performance Optimization</em></a>.
-  Analyze the compile and run time environments to ensure they are running at
-  optimal speeds. Ensure that the generated code can be optimized to run
-  efficiently.</li>
-  <li><a name="docs"><em>Documentation</em></a>.
-  Write sufficient documentation to cover usage of HLVM and programming with
-  HLVM</li>
+  <p>The table below provides a list of the releases already completed.</p>
+  <table>
+    <tr>
+      <th style="width:15%">Release</th>
+      <th style="width:70%">Description</th>
+      <th style="width:15%">Links</th>
+    </tr>
+    <tr>
+      <td>0.1</td>
+      <td>Hello World, AST Construction, Build System</td>
+      <td><a href="#f0_1">Features</a>&nbsp;<a href="#s0_1">Status</a></td>
+    </tr>
+  </table>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="section"><a name="status">Current Status</a></div>
+<div class="section"><a name="status">Current Status (Release 0.2)</a></div>
 <!-- *********************************************************************** -->
-<div class="subsection"><a name="s0_1">Release 0.1 Status</b></a></div>
+<!-- ======================================================================= -->
+<div class="text">
+  <p>The table below shows the status of the current release. Click the feature
+  name to get a complete description of the feature.</p>
+  <table>
+    <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
+    <tr>
+      <td><a href="#arithmetic">Arithmetic Operators</a><br/>Not Started</td>
+      <td><a href="#controlflow">Control Flow Operators</a><br/>Not Started</td>
+      <td><a href="#booleanops">Boolean Operators</a><br/>Not Started</td>
+    </tr><tr>
+      <td><a href="#textops">Text Operators</a><br/>Not Started</td>
+      <td><a href="#args">Program Arguments</a><br/>Not Started</td>
+      <td><a href="#jit">JIT Compilation</a><br/>Not Started</td>
+    </tr>
+  </table>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="section"><a name="status">Previous Release Status</a></div>
+<!-- *********************************************************************** -->
+<div class="text">
+  <p>This section lists the final status information for previous releases.</p>
+</div>
+<div class="subsection"><a name="s0_1">Release 0.1 (Hello World)</b></a></div>
 <div class="text">
   <table>
     <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
     <tr>
-      <td><a href="#buildenv">Build Environment</a><br/>Mostly complete.</td>
-      <td><a href="#testharn">Test Harness</a><br/>Completed for this release.</td>
-      <td><a href="#ASTNodes">AST Nodes</a><br/>Most nodes developed.</td>
+      <td><a href="#buildenv">Build Environment</a>
+        <br/>SCons is working well. All targets necessary for building, testing,
+        document generation, and installation are completed.
+      </td>
+      <td><a href="#testharn">Test Harness</a>
+        <br/>Dejagnu test harness implemented with 2 types of tests based on
+        available tools. This will grow as HLVM grows.
+      </td>
+      <td><a href="#ASTNodes">AST Nodes</a>
+        <br/>61 node classes implemented. The type system is complete. More
+        operators are defined than code generation permits.
+      </td>
     </tr><tr>
-    <td><a href="#XMLReader">XML Reader</a><br/>Works for nodes developed.</td>
-      <td><a href="#XMLWriter">XML Writer</a><br/>Works for nodes developed.</td>
-      <td><a href="#xml2xml">hlvm-xml2xml</a><br/>Done.</td>
+      <td><a href="#XMLReader">XML Reader</a>
+        <br/>Correctly reads and validates all 61 AST node classes implemented 
+        so far.
+      </td>
+      <td><a href="#XMLWriter">XML Writer</a>
+        <br/>Correctly generates XML for all 61 AST node classes implemente so
+        far.</td>
+      <td><a href="#xml2xml">hlvm-xml2xml</a>
+        <br/>Done. This tool will gain functionality as the XML Reader and XML
+        Writer libraries implement more node types to read/write.
+      </td>
     </tr><tr>
-      <td><a href="#compiler">hlvm-compiler</a><br/>Now produces LLVM assembly
-        and bytecode for a limited range of prgrams..</td>
-      <td><a href="#vm">hlvm</a><br/>Just Starting.</td>
-      <td><a href="#ASTsuite">AST Test Suite</a><br/>13 tests written.</td>
+      <td><a href="#compiler">hlvm-compiler</a>
+        <br/>Sufficient code generation capabilities for "Hello, World"
+      </td> 
+      <td><a href="#vm">hlvm</a>
+        <br/>Provides output for "Hello World". Provides options processing.
+      </td>
+      <td><a href="#ASTsuite">AST Test Suite</a>
+        <br/>16 tests written in 2 categories.
+      </td>
     </tr><tr>
-      <td colspan="3"><a href="#HelloWorld">Hello World</a><br/>Syntax selected.</td>
+      <td colspan="3"><a href="#HelloWorld">Hello World</a><br/>Done.</td>
     </tr>
   </table>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="s0_2">Release 0.2 Status</a></div>
-<div class="text">
-  <p>No status yet.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="s0_3">Release 0.3 Status</a></div>
-<div class="text">
-  <p>No status yet.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="s0_4">Release 0.4 Status</a></div>
-<div class="text">
-  <p>No status yet.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="s0_5">Release 0.5 Status</a></div>
-<div class="text">
-  <p>No status yet.</p>
-</div>
-
-<!-- ======================================================================= -->
-<div class="subsection"><a name="s0_9">Release 0.9 Status</a></div>
-<div class="text">
-  <p>No status yet.</p>
-</div>
-
 <!-- *********************************************************************** -->
-<div class="section"><a name="released">Released Features</a></div>
+<div class="section"><a name="features">Feature Definitions</a></div>
 <!-- *********************************************************************** -->
 <div class="text">
-  <p>No releases yet.</p>
+  <p>This section defines the individual features for all releases.</p>
+<!-- ======================================================================= -->
+<div class="subsection">
+  <a name="f0_1">Release 0.1 Features (Hello World)</a>
+</div>
+<div class="text">
+  <ol>
+    <li><a name="buildenv"><em>Build Environment</em></a>. 
+    A multi-platform build system so software can be compiled properly.</li>
+    <li><a name="testharn"><em>Test Harness</em></a>. 
+    A deja-gnu based test framework to manage and execute the large number of 
+    test cases needed to verify that the HLVM system is working correctly.</li>
+    <li><a name="ASTNodes"><em>AST Nodes</em></a>.
+    Define and implement several (not all) AST nodes. The most fundamental 
+    nodes should be implemented: structuring, functions, blocks, arithmetic 
+    operators, constants, etc. The list will be expanded in subsequent releases.
+    </li>
+    <li><a name="XMLReader"><em>XML Reader</em></a>.
+    A library to read in an XML representation of the AST and generate the AST
+    C++ Nodes.</li>
+    <li><a name="XMLWriter"><em>XML Writer</em></a>.
+    A library to write out an XML representation of the Abstract Syntax
+    Tree.</li>
+    <li><a name="xml2xml"><em>hlvm-xml2xml</em></a>.
+    A program to convert XML AST documents back into XML. This tests the correct
+    construction of the AST as well as the pass management features.</li>
+    <li><a name="ASTsuite"><em>AST Test Suite</em></a>.
+    A suite of XML based test files need to be developed for use with the
+    hlvm_xml2xml program. All implemented aspects of the AST must be covered by
+    one or more test cases.</li>
+    <li><a name="compiler"><em>hlvm-compiler</em></a>.
+    A program to compile HLVM sources into something executable. This release
+    0.1 vesion will read in XML AST files and produce LLVM bytecode. Other 
+    options will be added in the future.</li>
+    <li><a name="vm"><em>hlvm machine</em></a>.
+    This program provides the runtime environment for executing HLVM
+    programs. This 0.1 version will read an LLVM bytecode file and JIT execute 
+    it. More features later.</li>
+    <li><a name="HelloWorld"><em>Hello World</em></a>.
+    Sufficient capabilities will be added to the runtime and compiler in order
+    to get the "Hello, World" program running.</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection">
+  <a name="f0_2">Release 0.2 Features (Turing Complete)</a></div>
+<div class="text">
+  <ol>
+    <li><a name="arithmetic"><em>Arithmetic Operators</em></a>. Extend the AST
+    library to support all the arithmetic operators for integer and floating
+    point arithmetic. Provide LLVM code generation support for these
+    operators.</li>
+    <li><a name="controlflow"><em>Control Flow Operators</em></a>. Extend the
+    AST library to support a set of control flow operators (if,while,for,switch)
+    and provide LLVM code generation for them.</li>
+    <li><a name="booleanops"><em>Boolean Operators</em></a>. Extend the AST
+    library to provide boolean comparison operators and LLVM code generation for
+    them.</li>
+    <li><a name="textops"><em>Text Operators</em></a>. Extend the AST
+    library to provide a complete set of operators for manipulating strings of
+    text and the LLVM code generation for them.</li>
+    <li><a name="args"><em>Program Arguments</em></a>. Extend the Runtime
+    library to correctly pass an HLVM program's arguments as an HLVM array of
+    text.</li>
+    <li><a name="jit"><em>JIT Compilation</em></a>. Extend the Runtime library
+    to support just-in-time compilation and execution via LLVM's JIT 
+    facilities.</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection">
+  <a name="f0_3">Release 0.3 Features (Front End)</a>
+</div>
+<div class="text">
+  <ol>
+    <li><a name="frontend"><em>Front End Library</em></a>.
+    Add a new library to make it easy to build front end languages. The library
+    will assist with: lexical analysis, parsing, AST node generation, etc.</li> 
+    <li><a name="interp"><em>Interpreter</em></a>.
+    We will introduce the HLVM interpreter in this release. It will interpret
+    AST nodes directly and execute them.</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="f0_4">Release 0.4 Features (Ruby)</a></div>
+<div class="text">
+  <ol>
+    <li><a name="ruby"><em>Ruby Features</em></a>.
+    Add sufficient nodes to the system to support the language features of
+    Ruby.</li>
+    <li><a name="rubytest"><em>Ruby Tests</em></a>.
+    Add test cases that exercise the features added for Ruby. These are XML
+    based test cases, not Ruby source</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="f0_5">Release 0.5 Features (Scheme)</a></div>
+<div class="text">
+  <ol>
+    <li><a name="scheme"><em>Scheme Features</em></a>.
+    Add sufficient nodes to the system to support the language features of
+    Scheme.</li>
+    <li><a name="schemetest"><em>Scheme Tests</em></a>.
+    Add test cases that exercise the features added for Scheme. These are XML
+    based test cases, not Ruby source</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="f0_6">Release 0.6 Features (Python)</a></div>
+<div class="text">
+  <ol>
+    <li><a name="python"><em>Python Features</em></a>.
+    Add sufficient nodes to the system to support the language features of
+    Python.</li>
+    <li><a name="pythontest"><em>Python Tests</em></a>.
+    Add test cases that exercise the features added for Scheme. These are XML
+    based test cases, not Python source</li>
+  </ol>
+</div>
+
+<!-- ======================================================================= -->
+<div class="subsection"><a name="f0_9">Release 0.9 Features (Quality)</a></div>
+<div class="text">
+  <ol>
+    <li><a name="refactor"><em>Refactoring</em></a>.
+    Review the entire HLVM source base and re-factor to common components
+    with the goal of software reuse and shrinkage of library sizes.</li>
+    <li><a name="fulltest"><em>Full Test Suite</em></a>.
+    Ensure that HLVM is covered by a full test suite that tests every aspect of
+    its functionality.</li>
+    <li><a name="quality"><em>Quality</em></a>.
+    Improve quality of HLVM at both compile and run times. This feature ensures
+    that HLVM will properly handle corner conditions, error situations,
+    exceptions, etc.</li>
+    <li><a name="optimize"><em>Performance Optimization</em></a>.
+    Analyze the compile and run time environments to ensure they are running at
+    optimal speeds. Ensure that the generated code can be optimized to run
+    efficiently.</li>
+    <li><a name="docs"><em>Documentation</em></a>.
+    Write sufficient documentation to cover usage of HLVM and programming with
+    HLVM</li>
+  </ol>
 </div>
 </body>
 </html>

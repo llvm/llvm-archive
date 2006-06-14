@@ -1,4 +1,4 @@
-//===-- AST Control Flow Nodes ----------------------------------*- C++ -*-===//
+//===-- AST Boolean Operators Implementation --------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,22 +20,28 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/ControlFlow.cpp
-/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
-/// @since 0.1.0
-/// @brief Implements the classes that provide program control flow
+/// @file hlvm/AST/BooleanOps.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/14
+/// @since 0.2.0
+/// @brief Implements the AST Boolean Operators 
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/BooleanOps.h>
 
-namespace hlvm {
+namespace hlvm 
+{
 
-SelectOp::~SelectOp() {}
-SwitchOp::~SwitchOp() {}
-LoopOp::~LoopOp() {}
-ReturnOp::~ReturnOp() { }
-BreakOp::~BreakOp() {}
-ContinueOp::~ContinueOp() {}
+NotOp::~NotOp() {}
+AndOp::~AndOp() {}
+OrOp::~OrOp() {}
+NorOp::~NorOp() {}
+XorOp::~XorOp() {}
+LessThanOp::~LessThanOp() {}
+GreaterThanOp::~GreaterThanOp() {}
+LessEqualOp::~LessEqualOp() {}
+GreaterEqualOp::~GreaterEqualOp() {}
+EqualityOp::~EqualityOp() {}
+InequalityOp::~InequalityOp() {}
 
-}
+} // end hlvm namespace

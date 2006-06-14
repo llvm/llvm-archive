@@ -1,4 +1,4 @@
-//===-- AST Control Flow Nodes ----------------------------------*- C++ -*-===//
+//===-- AST Arithemetic Operators Implementation ----------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,22 +20,31 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/ControlFlow.cpp
-/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
-/// @since 0.1.0
-/// @brief Implements the classes that provide program control flow
+/// @file hlvm/AST/Arithmetic.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/14
+/// @since 0.2.0
+/// @brief Implements the AST Arithmentic Operators 
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/Arithmetic.h>
 
-namespace hlvm {
+namespace hlvm 
+{
 
-SelectOp::~SelectOp() {}
-SwitchOp::~SwitchOp() {}
-LoopOp::~LoopOp() {}
-ReturnOp::~ReturnOp() { }
-BreakOp::~BreakOp() {}
-ContinueOp::~ContinueOp() {}
+NegateOp::~NegateOp() {}
+ComplementOp::~ComplementOp() {}
+PreIncrOp::~PreIncrOp() {}
+PostIncrOp::~PostIncrOp() {}
+PreDecrOp::~PreDecrOp() {}
+PostDecrOp::~PostDecrOp() {}
+AddOp::~AddOp() {}
+SubtractOp::~SubtractOp() {}
+MultiplyOp::~MultiplyOp() {}
+DivideOp::~DivideOp() {}
+ModuloOp::~ModuloOp() {}
+BAndOp::~BAndOp() {}
+BOrOp::~BOrOp() {}
+BXorOp::~BXorOp() {}
 
-}
+} // end hlvm namespace

@@ -161,7 +161,7 @@ class ConstantText : public Constant
 /// the AST constants cumbersome. The way to think about this node is that it
 /// represents a constant value of any type such that all the bits of that type
 /// are zero.
-/// AST Constant Zero Node
+/// @brief AST Constant Zero Node
 class ConstantZero : public Constant
 {
   /// @name Constructors
@@ -177,6 +177,92 @@ class ConstantZero : public Constant
     static inline bool classof(const ConstantZero*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantZeroID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant
+/// aggregate. This can be used to specify constant values of aggregate types
+/// such as arrays, vectors, structures and continuations. It simply contains 
+/// a list of other elements which themselves must be constants.
+/// @brief AST Constant Array Node.
+class ConstantAggregate : public Constant
+{
+  /// @name Types
+  /// @{
+  public:
+    typedef std::vector<Constant*> ElementsList;
+    typedef ElementsList::iterator iterator;
+    typedef ElementsList::const_iterator const_iterator;
+
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantAggregate() : Constant(ConstantAggregateID), elems()  {}
+    virtual ~ConstantAggregate();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantAggregate*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantAggregateID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    virtual void insertChild(Node* n);
+    virtual void removeChild(Node* n);
+
+  /// @}
+  /// @name Iterators
+  /// @{
+  public:
+    iterator         begin()       { return elems.begin(); }
+    const_iterator   begin() const { return elems.begin(); }
+    iterator         end  ()       { return elems.end(); }
+    const_iterator   end  () const { return elems.end(); }
+    size_t           size () const { return elems.size(); }
+    bool             empty() const { return elems.empty(); }
+    Constant*        front()       { return elems.front(); }
+    const Constant*  front() const { return elems.front(); }
+    Constant*        back()        { return elems.back(); }
+    const Constant*  back()  const { return elems.back(); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    ElementsList elems; ///< The contained types
+  /// @}
+
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant
+/// expression. The expression uses a limited set of operator identifiers that
+/// can yield constants such as arithmetic or comparison operators. 
+/// @brief AST Constant Expression Node.
+class ConstantExpression : public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantExpression(NodeIDs exprOp) : Constant(ConstantExpressionID)
+      { flags = exprOp; }
+    virtual ~ConstantExpression();
+  public:
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantExpression*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantExpressionID); }
 
   /// @}
   friend class AST;

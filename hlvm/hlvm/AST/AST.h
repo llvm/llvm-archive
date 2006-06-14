@@ -34,6 +34,7 @@
 #include <hlvm/AST/Type.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/RuntimeType.h>
+#include <hlvm/AST/Constant.h>
 #include <string>
 #include <vector>
 
@@ -436,6 +437,19 @@ class AST : public Node
     ConstantText* new_ConstantText(
       const std::string& value, ///< The value of the ConstantText
       const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a unary ConstantExpression Node.
+    Constant* new_UnaryCE(
+      NodeIDs id,            ///< The operator for the constant expression
+      Constant* C,           ///< The constant operand of the unary operator
+      const Locator* loc = 0 ///< The source locator
+    );
+    /// Create a binary ConstantExpression Node.
+    Constant* new_BinaryCE(
+      NodeIDs id,            ///< The operator for the constant expression
+      Constant* C1,          ///< The first operand of the binary operator
+      Constant* C2,          ///< The second operand of the binary operator
+      const Locator* loc = 0 ///< The source locator
     );
 
     /// Provide a template function for creating a nilary operator

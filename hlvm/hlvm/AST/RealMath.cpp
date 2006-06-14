@@ -1,4 +1,4 @@
-//===-- AST Control Flow Nodes ----------------------------------*- C++ -*-===//
+//===-- AST Real Math Operators Implementation ------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,22 +20,33 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/ControlFlow.cpp
-/// @author Reid Spencer <rspencer@reidspencer.org> (original author)
-/// @date 2006/05/24
-/// @since 0.1.0
-/// @brief Implements the classes that provide program control flow
+/// @file hlvm/AST/RealMath.cpp
+/// @author Reid Spencer <rspencer@reidspencer.com> (original author)
+/// @date 2006/06/14
+/// @since 0.2.0
+/// @brief Implements the AST Real Math Operators 
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/RealMath.h>
 
 namespace hlvm {
 
-SelectOp::~SelectOp() {}
-SwitchOp::~SwitchOp() {}
-LoopOp::~LoopOp() {}
-ReturnOp::~ReturnOp() { }
-BreakOp::~BreakOp() {}
-ContinueOp::~ContinueOp() {}
+IsPInfOp::~IsPInfOp() {}
+IsNInfOp::~IsNInfOp() {}
+IsNanOp::~IsNanOp() {}
+TruncOp::~TruncOp() {}
+RoundOp::~RoundOp() {}
+FloorOp::~FloorOp() {}
+CeilingOp::~CeilingOp() {}
+LogEOp::~LogEOp() {}
+Log2Op::~Log2Op() {}
+Log10Op::~Log10Op() {}
+SquareRootOp::~SquareRootOp() {}
+CubeRootOp::~CubeRootOp() {}
+FactorialOp::~FactorialOp() {}
+PowerOp::~PowerOp() {}
+RootOp::~RootOp() {}
+GCDOp::~GCDOp() {}
+LCMOp::~LCMOp() {}
 
-}
+} // end hlvm namespace

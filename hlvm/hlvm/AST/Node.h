@@ -137,6 +137,8 @@ FirstConstantID = ConstantZeroID,
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
   ConstantTextID,          ///< A constant text value
+  ConstantAggregateID,     ///< A constant aggregate for arrays, structures, etc
+  ConstantExpressionID,    ///< A constant expression
   SizeOfID,                ///< Size of a type
 
   // Linkage Items
@@ -154,6 +156,7 @@ FirstOperatorID = BlockID,
   // Nilary Operators (those taking no operands)
   BreakOpID,               ///< Break out of the enclosing loop
 FirstNilaryOperatorID = BreakOpID,
+  ContinueOpID,            ///< Continue from start of enclosing block
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
@@ -164,7 +167,6 @@ LastNilaryOperatorID = ReferenceOpID,
   ReturnOpID,              ///< The Return A Value Operator
 FirstUnaryOperatorID = ReturnOpID,
   ThrowOpID,               ///< The Throw an Exception Operator
-  JumpToOpID,              ///< The Jump To Labelled Block Operator
 
   // Integer Arithmetic Unary Operators
   NotOpID,                 ///< Not Unary Boolean Operator
@@ -178,7 +180,7 @@ FirstUnaryOperatorID = ReturnOpID,
   // Real Arithmetic Unary Operators
   IsPInfOpID,              ///< Real Number Positive Infinity Test Operator
   IsNInfOpID,              ///< Real Number Negative Infinity Test Operator
-  IsNaNOpID,               ///< Real Number Not-A-Number Test Operator
+  IsNanOpID,               ///< Real Number Not-A-Number Test Operator
   TruncOpID,               ///< Real Number Truncation Operator
   RoundOpID,               ///< Real Number Rounding Operator
   FloorOpID,               ///< Real Number Floor Operator
@@ -186,15 +188,15 @@ FirstUnaryOperatorID = ReturnOpID,
   LogEOpID,                ///< Real Number Base e (Euler's Number) logarithm 
   Log2OpID,                ///< Real Number Base 2 logarithm Operator
   Log10OpID,               ///< Real Number Base 10 logarithm Operator
-  SqRootOpID,              ///< Real Number Square Root Operator
+  SquareRootOpID,          ///< Real Number Square Root Operator
+  CubeRootOpID,            ///< Real Number Cube Root Operator
   FactorialOpID,           ///< Real Number Factorial Operator
 
   // Memory Unary Operators
   LoadOpID,                ///< The Load Operator (load a value from a location)
-  AllocateOpID,            ///< The Allocate Memory Operator (get heap memory)
-  FreeOpID,                ///< The Free Memory Operator (free heap memory)
+  AllocateOpID,            ///< The Allocate Memory Operator 
+  DeallocateOpID,          ///< The Deallocate Memory Operator
   AutoVarOpID,             ///< Declaration of an automatic (stack) variable
-  IndexOpID,               ///< The Index Operator for indexing an array
 
   // Input/Output Unary Operators
   TellOpID,                ///< Tell the position of a stream
@@ -210,22 +212,22 @@ FirstBinaryOperatorID = AddOpID,
   SubtractOpID,            ///< Subtraction Binary Operator
   MultiplyOpID,            ///< Multiplcation Binary Operator
   DivideOpID,              ///< Division Binary Operator
-  ModulusOpID,             ///< Modulus Binary Operator
+  ModuloOpID,              ///< Modulus Binary Operator
   BAndOpID,                ///< Bitwise And Binary Operator
   BOrOpID,                 ///< Bitwise Or Binary Operator
-  BXOrOpID,                ///< Bitwise XOr Binary Operator
+  BXorOpID,                ///< Bitwise XOr Binary Operator
 
   // Boolean Binary Operators
   AndOpID,                 ///< And Binary Boolean Operator
   OrOpID,                  ///< Or Binary Boolean Operator
   NorOpID,                 ///< Nor Binary Boolean Operator
   XorOpID,                 ///< Xor Binary Boolean Operator
-  LTOpID,                  ///< <  Binary Comparison Operator
-  GTOpID,                  ///< >  Binary Comparison Operator
-  LEOpID,                  ///< <= Binary Comparison Operator
-  GEOpID,                  ///< >= Binary Comparison Operator
-  EQOpID,                  ///< == Binary Comparison Operator
-  NEOpID,                  ///< != Binary Comparison Operator
+  LessThanOpID,            ///< <  Binary Comparison Operator
+  GreaterThanOpID,         ///< >  Binary Comparison Operator
+  LessEqualOpID,           ///< <= Binary Comparison Operator
+  GreaterEqualOpID,        ///< >= Binary Comparison Operator
+  EqualityOpID,            ///< == Binary Comparison Operator
+  InequalityOpID,          ///< != Binary Comparison Operator
 
   // Real Arithmetic Binary Operators
   PowerOpID,               ///< Real Number Power Operator
@@ -245,13 +247,14 @@ FirstBinaryOperatorID = AddOpID,
 LastBinaryOperatorID = CreateContOpID,
 
   // Ternary Operators
-  IfOpID,                  ///< The If-Then-Else Operator
-FirstTernaryOperatorID = IfOpID,
+  SelectOpID,                  ///< The select an alternate operator
+FirstTernaryOperatorID = SelectOpID,
   StrInsertOpID,           ///< Insert(str,where,what)
   StrEraseOpID,            ///< Erase(str,at,len)
   StrReplaceOpID,          ///< Replace(str,at,len,what)
   PositionOpID,            ///< Position a stream (stream,where,relative-to)
-LastTernaryOperatorID = PositionOpID,
+  LoopOpID,                ///< The General Purpose Loop Operator
+LastTernaryOperatorID = LoopOpID,
 
   // Multi Operators
   CallOpID,                ///< The Call Operator (n operands)
@@ -259,13 +262,13 @@ FirstMultiOperatorID = CallOpID,
   InvokeOpID,              ///< The Invoke Operator (n operands)
   DispatchOpID,            ///< The Object Method Dispatch Operator (n operands)
   CallWithContOpID,        ///< The Call with Continuation Operator (n operands)
-  SelectOpID,              ///< The Select An Alternate Operator (n operands)
-  LoopOpID,                ///< The General Purpose Loop Operator (5 operands)
-LastMultiOperatorID = LoopOpID,
-LastOperatorID = LoopOpID,
-LastValueID = LoopOpID,
-LastDocumentableID = LoopOpID,
-LastNodeID = LoopOpID,
+  IndexOpID,               ///< The Index Operator for indexing an array
+  SwitchOpID,              ///< The Switch Operator (n operands)
+LastMultiOperatorID = SwitchOpID,
+LastOperatorID = SwitchOpID,
+LastValueID = SwitchOpID,
+LastDocumentableID = SwitchOpID,
+LastNodeID = SwitchOpID,
 
   NumNodeIDs               ///< The number of node identifiers in the enum
 };

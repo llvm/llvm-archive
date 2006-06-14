@@ -29,9 +29,17 @@
 
 #include <hlvm/Pass/Pass.h>
 #include <hlvm/Base/Assert.h>
-#include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Bundle.h>
+#include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/RuntimeType.h>
+#include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/InputOutput.h>
+#include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Constants.h>
 #include <llvm/Support/Casting.h>
 #include <iostream>
 
@@ -46,20 +54,9 @@ class ValidateImpl : public Pass
     virtual void handle(Node* b,Pass::TraversalKinds k);
     inline void error(Node*n, const char* msg);
     inline void validateName(Node*n, const std::string& name);
-    inline void validateIntegerType(IntegerType* n);
-    inline void validateRangeType(RangeType* n);
-    inline void validateEnumerationType(EnumerationType* n);
-    inline void validateRealType(RealType* n);
-    inline void validateAliasType(AliasType* n);
-    inline void validatePointerType(PointerType* n);
-    inline void validateArrayType(ArrayType* n);
-    inline void validateVectorType(VectorType* n);
-    inline void validateStructureType(StructureType* n);
-    inline void validateSignatureType(SignatureType* n);
-    inline void validateVariable(Variable* n);
-    inline void validateFunction(Variable* n);
-    inline void validateProgram(Program* n);
-    inline void validateBundle(Bundle* n);
+
+    template <class NodeClass>
+    inline void validate(NodeClass* C);
 };
 
 void 
@@ -75,8 +72,34 @@ ValidateImpl::validateName(Node*n, const std::string& name)
     error(0,"Empty Name");
   }
 }
-inline void
-ValidateImpl::validateIntegerType(IntegerType* n)
+
+template<> inline void
+ValidateImpl::validate(VoidType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(AnyType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(BooleanType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(CharacterType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(OctetType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(IntegerType* n)
 {
   validateName(n,n->getName());
   if (n->getBits() == 0) {
@@ -84,68 +107,419 @@ ValidateImpl::validateIntegerType(IntegerType* n)
   }
 }
 
-inline void
-ValidateImpl::validateRangeType(RangeType* n)
+template<> inline void
+ValidateImpl::validate(RangeType* n)
 {
 }
 
-inline void
-ValidateImpl::validateEnumerationType(EnumerationType* n)
+template<> inline void
+ValidateImpl::validate(EnumerationType* n)
 {
 }
 
-inline void
-ValidateImpl::validateRealType(RealType* n)
+template<> inline void
+ValidateImpl::validate(RealType* n)
 {
 }
 
-inline void
-ValidateImpl::validateAliasType(AliasType* n)
+template<> inline void
+ValidateImpl::validate(OpaqueType* n)
 {
 }
 
-inline void
-ValidateImpl::validatePointerType(PointerType* n)
+template<> inline void
+ValidateImpl::validate(TextType* n)
 {
 }
 
-inline void
-ValidateImpl::validateArrayType(ArrayType* n)
+template<> inline void
+ValidateImpl::validate(StreamType* n)
 {
 }
 
-inline void
-ValidateImpl::validateVectorType(VectorType* n)
+template<> inline void
+ValidateImpl::validate(BufferType* n)
 {
 }
 
-inline void
-ValidateImpl::validateStructureType(StructureType* n)
+template<> inline void
+ValidateImpl::validate(AliasType* n)
 {
 }
 
-inline void
-ValidateImpl::validateSignatureType(SignatureType* n)
+template<> inline void
+ValidateImpl::validate(PointerType* n)
 {
 }
 
-inline void
-ValidateImpl::validateVariable(Variable* n)
+template<> inline void
+ValidateImpl::validate(ArrayType* n)
 {
 }
 
-inline void
-ValidateImpl::validateFunction(Variable* n)
+template<> inline void
+ValidateImpl::validate(VectorType* n)
 {
 }
 
-inline void
-ValidateImpl::validateProgram(Program* n)
+template<> inline void
+ValidateImpl::validate(StructureType* n)
 {
 }
 
-inline void
-ValidateImpl::validateBundle(Bundle* n)
+template<> inline void
+ValidateImpl::validate(ContinuationType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(SignatureType* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Variable* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Function* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Program* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Block* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ReturnOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(BreakOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ContinueOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(SelectOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LoopOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(SwitchOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(AllocateOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(DeallocateOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LoadOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(StoreOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(AutoVarOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(NegateOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ComplementOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(PreIncrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(PostIncrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(PreDecrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(PostDecrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(AddOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(SubtractOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(MultiplyOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(DivideOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ModuloOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(BAndOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(BOrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(BXorOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(NotOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(AndOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(OrOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(NorOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(XorOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LessThanOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(GreaterThanOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LessEqualOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(GreaterEqualOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(EqualityOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(InequalityOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(IsPInfOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(IsNInfOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(IsNanOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(TruncOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(RoundOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(FloorOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(CeilingOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LogEOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Log2Op* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Log10Op* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(SquareRootOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(CubeRootOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(FactorialOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(PowerOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(RootOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(GCDOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(LCMOp* n)
+{
+}
+
+
+template<> inline void
+ValidateImpl::validate(OpenOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(CloseOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ReadOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(WriteOp* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantInteger* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantReal* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantText* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantZero* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantAggregate* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantExpression* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Bundle* n)
+{
+}
+
+template<> inline void
+ValidateImpl::validate(Import* n)
 {
 }
 
@@ -157,141 +531,113 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case NoTypeID:
       hlvmDeadCode("Invalid Node Kind");
       break;
-    case VoidTypeID:
-    case AnyTypeID:
-    case BooleanTypeID:
-    case CharacterTypeID:
-    case OctetTypeID:
-      validateName(n,cast<Type>(n)->getName());
-      break; 
-    case IntegerTypeID:
-      validateIntegerType(cast<IntegerType>(n));
-      break;
-    case RangeTypeID:
-      validateRangeType(cast<RangeType>(n));
-      break;
-    case EnumerationTypeID:
-      validateEnumerationType(cast<EnumerationType>(n));
-      break;
-    case RealTypeID:
-      validateRealType(cast<RealType>(n));
-      break;
-    case RationalTypeID:
-      break; // Not implemented yet
-    case TextTypeID:
-      break; // Not imlpemented yet
-    case AliasTypeID:
-      validateAliasType(cast<AliasType>(n));
-      break;
-    case PointerTypeID:
-      validatePointerType(cast<PointerType>(n));
-      break;
-    case ArrayTypeID:
-      validateArrayType(cast<ArrayType>(n));
-      break;
-    case VectorTypeID:
-      validateVectorType(cast<VectorType>(n));
-      break;
-    case StructureTypeID:
-      validateStructureType(cast<StructureType>(n));
-      break;
-    case SignatureTypeID:
-      validateSignatureType(cast<SignatureType>(n));
-      break;
-    case ContinuationTypeID:
-    case OpaqueTypeID:
-    case InterfaceID:
-    case ClassID:
-    case MethodID:
-    case ImplementsID:
-      break; // Not implemented yet
-    case VariableID:
-      validateVariable(cast<Variable>(n));
-      break;
-    case FunctionID:
-      validateFunction(cast<Variable>(n));
-      break;
-    case ProgramID:
-      validateProgram(cast<Program>(n));
-      break;
-    case BundleID:
-      validateBundle(cast<Bundle>(n));
-      break;
-    case BlockID:
-    case ImportID:
-    case CallOpID:
-    case InvokeOpID:
-    case DispatchOpID:
-    case CreateContOpID:
-    case CallWithContOpID:
-    case ReturnOpID:
-    case ThrowOpID:
-    case JumpToOpID:
-    case BreakOpID:
-    case IfOpID:
-    case LoopOpID:
-    case SelectOpID:
-    case LoadOpID:
-    case StoreOpID:
-    case AllocateOpID:
-    case FreeOpID:
-    case ReallocateOpID:
-    case ReferenceOpID:
-    case NegateOpID:
-    case ComplementOpID:
-    case PreIncrOpID:
-    case PostIncrOpID:
-    case PreDecrOpID:
-    case PostDecrOpID:
-    case AddOpID:
-    case SubtractOpID:
-    case MultiplyOpID:
-    case DivideOpID:
-    case ModulusOpID:
-    case BAndOpID:
-    case BOrOpID:
-    case BXOrOpID:
-    case AndOpID:
-    case OrOpID:
-    case NorOpID:
-    case XorOpID:
-    case NotOpID:
-    case LTOpID:
-    case GTOpID:
-    case LEOpID:
-    case GEOpID:
-    case EQOpID:
-    case NEOpID:
-    case IsPInfOpID:
-    case IsNInfOpID:
-    case IsNaNOpID:
-    case AutoVarOpID:
-    case TruncOpID:
-    case RoundOpID:
-    case FloorOpID:
-    case CeilingOpID:
-    case PowerOpID:
-    case LogEOpID:
-    case Log2OpID:
-    case Log10OpID:
-    case SqRootOpID:
-    case RootOpID:
-    case FactorialOpID:
-    case GCDOpID:
-    case LCMOpID:
-    case LengthOpID:
-    case OpenOpID:
-    case CloseOpID:
-    case ReadOpID:
-    case WriteOpID:
-    case PositionOpID:
-    case PInfOpID:
-    case NInfOpID:
-    case NaNOpID:
-    case ConstantIntegerID:
-    case ConstantRealID:
-    case ConstantTextID:
-    case ConstantZeroID:
+    case VoidTypeID:             validate(cast<VoidType>(n)); break;
+    case AnyTypeID:              validate(cast<AnyType>(n)); break;
+    case BooleanTypeID:          validate(cast<BooleanType>(n)); break;
+    case CharacterTypeID:        validate(cast<CharacterType>(n)); break;
+    case OctetTypeID:            validate(cast<OctetType>(n)); break;
+    case IntegerTypeID:          validate(cast<IntegerType>(n)); break;
+    case RangeTypeID:            validate(cast<RangeType>(n)); break;
+    case EnumerationTypeID:      validate(cast<EnumerationType>(n)); break;
+    case RealTypeID:             validate(cast<RealType>(n)); break;
+    case RationalTypeID:         /*validate(cast<RationalType>(n));*/ break;
+    case TextTypeID:             validate(cast<TextType>(n)); break;
+    case StreamTypeID:           validate(cast<StreamType>(n)); break;
+    case BufferTypeID:           validate(cast<BufferType>(n)); break;
+    case AliasTypeID:            validate(cast<AliasType>(n)); break;
+    case PointerTypeID:          validate(cast<PointerType>(n)); break;
+    case ArrayTypeID:            validate(cast<ArrayType>(n)); break;
+    case VectorTypeID:           validate(cast<VectorType>(n)); break;
+    case StructureTypeID:        validate(cast<StructureType>(n)); break;
+    case SignatureTypeID:        validate(cast<SignatureType>(n)); break;
+    case ContinuationTypeID:     validate(cast<ContinuationType>(n)); break;
+    case OpaqueTypeID:           validate(cast<OpaqueType>(n)); break;
+    case InterfaceID:            /*validate(cast<InterfaceID>);*/ break;
+    case ClassID:                /*validate(cast<ClassID>);*/ break;
+    case MethodID:               /*validate(cast<MethodID>);*/ break;
+    case ImplementsID:           /*validate(cast<ImplementsID>);*/ break;
+    case VariableID:             validate(cast<Variable>(n)); break;
+    case FunctionID:             validate(cast<Function>(n)); break;
+    case ProgramID:              validate(cast<Program>(n)); break;
+    case BundleID:               validate(cast<Bundle>(n)); break;
+    case BlockID:                validate(cast<Block>(n)); break;
+    case ImportID:               validate(cast<Import>(n)); break;
+    case CallOpID:               /*validate(cast<CallOp>(n));*/ break;
+    case InvokeOpID:             /*validate(cast<InvokeOp>(n));*/ break;
+    case DispatchOpID:           /*validate(cast<DispatchOp>(n));*/ break;
+    case CreateContOpID:         /*validate(cast<CreateContOp>(n));*/ break;
+    case CallWithContOpID:       /*validate(cast<CallWithContOp>(n));*/ break;
+    case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
+    case ThrowOpID:              /*validate(cast<ThrowOp>(n));*/ break;
+    case ContinueOpID:           /*validate(cast<ContinueOp>(n));*/ break;
+    case BreakOpID:              validate(cast<BreakOp>(n)); break;
+    case SelectOpID:             validate(cast<SelectOp>(n)); break;
+    case LoopOpID:               validate(cast<LoopOp>(n)); break;
+    case SwitchOpID:             validate(cast<SwitchOp>(n)); break;
+    case LoadOpID:               validate(cast<LoadOp>(n)); break;
+    case StoreOpID:              validate(cast<StoreOp>(n)); break;
+    case AllocateOpID:           validate(cast<AllocateOp>(n)); break;
+    case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
+    case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;
+    case ReferenceOpID:          /*validate(cast<ReferenceOp>(n));*/ break;
+    case AutoVarOpID:            validate(cast<AutoVarOp>(n)); break;
+    case NegateOpID:             validate(cast<NegateOp>(n)); break;
+    case ComplementOpID:         validate(cast<ComplementOp>(n)); break;
+    case PreIncrOpID:            validate(cast<PreIncrOp>(n)); break;
+    case PostIncrOpID:           validate(cast<PostIncrOp>(n)); break;
+    case PreDecrOpID:            validate(cast<PreDecrOp>(n)); break;
+    case PostDecrOpID:           validate(cast<PostDecrOp>(n)); break;
+    case AddOpID:                validate(cast<AddOp>(n)); break;
+    case SubtractOpID:           validate(cast<SubtractOp>(n)); break;
+    case MultiplyOpID:           validate(cast<MultiplyOp>(n)); break;
+    case DivideOpID:             validate(cast<DivideOp>(n)); break;
+    case ModuloOpID:             validate(cast<ModuloOp>(n)); break;
+    case BAndOpID:               validate(cast<BAndOp>(n)); break;
+    case BOrOpID:                validate(cast<BOrOp>(n)); break;
+    case BXorOpID:               validate(cast<BXorOp>(n)); break;
+    case AndOpID:                validate(cast<AndOp>(n)); break;
+    case OrOpID:                 validate(cast<OrOp>(n)); break;
+    case NorOpID:                validate(cast<NorOp>(n)); break;
+    case XorOpID:                validate(cast<XorOp>(n)); break;
+    case NotOpID:                validate(cast<NotOp>(n)); break;
+    case LessThanOpID:           validate(cast<LessThanOp>(n)); break;
+    case GreaterThanOpID:        validate(cast<GreaterThanOp>(n)); break;
+    case LessEqualOpID:          validate(cast<LessEqualOp>(n)); break;
+    case GreaterEqualOpID:       validate(cast<GreaterEqualOp>(n)); break;
+    case EqualityOpID:           validate(cast<EqualityOp>(n)); break;
+    case InequalityOpID:         validate(cast<InequalityOp>(n)); break;
+    case IsPInfOpID:             validate(cast<IsPInfOp>(n)); break;
+    case IsNInfOpID:             validate(cast<IsNInfOp>(n)); break;
+    case IsNanOpID:              validate(cast<IsNanOp>(n)); break;
+    case TruncOpID:              validate(cast<TruncOp>(n)); break;
+    case RoundOpID:              validate(cast<RoundOp>(n)); break;
+    case FloorOpID:              validate(cast<FloorOp>(n)); break;
+    case CeilingOpID:            validate(cast<CeilingOp>(n)); break;
+    case LogEOpID:               validate(cast<LogEOp>(n)); break;
+    case Log2OpID:               validate(cast<Log2Op>(n)); break;
+    case Log10OpID:              validate(cast<Log10Op>(n)); break;
+    case SquareRootOpID:         validate(cast<SquareRootOp>(n)); break;
+    case CubeRootOpID:           validate(cast<CubeRootOp>(n)); break;
+    case FactorialOpID:          validate(cast<FactorialOp>(n)); break;
+    case PowerOpID:              validate(cast<PowerOp>(n)); break;
+    case RootOpID:               validate(cast<RootOp>(n)); break;
+    case GCDOpID:                validate(cast<GCDOp>(n)); break;
+    case LCMOpID:                validate(cast<LCMOp>(n)); break;
+    case LengthOpID:             /*validate(cast<LengthOp>(n)); */ break;
+    case OpenOpID:               validate(cast<OpenOp>(n)); break;
+    case CloseOpID:              validate(cast<CloseOp>(n)); break;
+    case ReadOpID:               validate(cast<ReadOp>(n)); break;
+    case WriteOpID:              validate(cast<WriteOp>(n)); break;
+    case PositionOpID:           /*validate(cast<PositionOp>(n));*/ break;
+    case PInfOpID:               /*validate(cast<PInfOp>(n));*/ break;
+    case NInfOpID:               /*validate(cast<NInfoOp>(n));*/ break;
+    case NaNOpID:                /*validate(cast<NaNOp>(n));*/ break;
+    case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
+    case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
+    case ConstantTextID:         validate(cast<ConstantText>(n)); break;
+    case ConstantZeroID:         validate(cast<ConstantZero>(n)); break;
+    case ConstantAggregateID:    validate(cast<ConstantAggregate>(n)); break;
+    case ConstantExpressionID:   validate(cast<ConstantExpression>(n)); break;
       break; // Not implemented yet
     case DocumentationID:
       /// Nothing to validate (any doc is a good thing :)

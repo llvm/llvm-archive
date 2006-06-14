@@ -39,6 +39,64 @@ namespace hlvm
 class Variable;
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
+/// for allocating memory from the heap. The type of this operator indicates the
+/// element size for the allocation. The single operand must be of an integral
+/// type and indicates the number of elements to allocate.
+/// @brief AST Memory Allocation Operator
+class AllocateOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    AllocateOp() : UnaryOperator(AllocateOpID) {}
+
+  public:
+    virtual ~AllocateOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const AllocateOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(AllocateOpID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for deallocating memory from the heap. This operator requires one operand
+/// which must be the value returned from a previous AllocateOp.
+/// @brief AST Memory Deallocation Operator
+class DeallocateOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    DeallocateOp() : UnaryOperator(DeallocateOpID) {}
+
+  public:
+    virtual ~DeallocateOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const DeallocateOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(DeallocateOpID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+  /// @}
+  friend class AST;
+};
+/// This class provides an Abstract Syntax Tree node that represents an operator
 /// for loading a value from a memory location. This operator takes a single
 /// operand which must resolve to the address of a memory location, either 
 /// global or local (stack). The result of the operator is the value of the

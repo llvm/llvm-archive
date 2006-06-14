@@ -1,7 +1,7 @@
 ==============================================================================
 HLVM Release License
 ==============================================================================
-Copyright (c) 2006 HLVM Group. All rights reserved.
+Copyright (c) 2006 Reid Spencer. All rights reserved.
 
 Unless otherwise stated, the license for HLVM software is the Lesser General
 Public License (LGPL) as given below. 
@@ -19,8 +19,8 @@ directories above them.
 
 The disclaimer of warranty in the LGPL applies equally to all code in the HLVM 
 Distribution, and nothing in any of the other licenses gives permission to use 
-the names of the HLVM Group to endorse or promote products derived from this 
-Software.
+the names of any of the developers to endorse or promote products derived from 
+this software.
 
 The following pieces of software have additional or alternate copyrights,
 licenses, and/or restrictions:

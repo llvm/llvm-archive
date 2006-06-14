@@ -1,6 +1,6 @@
 //===-- AST Yaml Reader Implementation --------------------------*- C++ -*-===//
 //
-// Copyright (C) 2006 HLVM Group. All Rights Reserved.
+// Copyright (C) 2006 Reid Spencer. All Rights Reserved.
 //
 // This program is open source software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License (GPL) as published by

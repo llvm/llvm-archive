@@ -1,4 +1,4 @@
-2006.06.13 - Release 0.1 of HLVM. This corresponds to revision 265 in the SVN
+2006.06.13 - Release 0.1 of HLVM. This corresponds to revision 266 in the SVN
              repository. This version correctly compiles the "Hello, World" test
 	     program. See the Release Notes in docs/ReleaseNotes.html
 2006.06.10 - HLVM runs its first "Hello, World" program

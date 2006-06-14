@@ -61,7 +61,7 @@ tools:
 	cd tools ; scons $(SCONSOPTS) -u mode=$(MYMODE)
 
 dist: exclusions
-	tar jcf hlvm-0.1-tar.bz2 -C .. --exclude-from exclusions hlvm
+	tar jcf hlvm-0.1-tar.bz2 -C .. --exclude-from exclusions hlvm-0.1
 
 exclusions: Makefile
 	echo exclusions > exclusions

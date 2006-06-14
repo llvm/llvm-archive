@@ -61,13 +61,14 @@ tools:
 	cd tools ; scons $(SCONSOPTS) -u mode=$(MYMODE)
 
 dist: exclusions
-	tar jcf hlvm-0.1-tar.bz2 -C .. --exclude-from exclusions hlvm-0.1
+	tar jcf hlvm-0.1-tar.bz2 -C .. --exclude-from exclusions hlvm
 
 exclusions: Makefile
 	echo exclusions > exclusions
 	echo .svn >> exclusions
 	echo '.*_options' >> exclusions
 	echo '*.pyc' >> exclusions
+	echo '*.tmp' >> exclusions
 	echo Debug >> exclusions
 	echo Optimized >> exclusions
 	echo Release >> exclusions

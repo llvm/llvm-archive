@@ -179,7 +179,7 @@ def GetBuildEnvironment(targets,arguments):
   opts.Update(env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'
   env['HLVM_Maintainer'] = 'Reid Spencer <rspencer@reidspencer>'
-  env['HLVM_Version'] = '0.1svn'
+  env['HLVM_Version'] = '0.1'
   env['HLVM_SO_CURRENT'] = '0'
   env['HLVM_SO_REVISION'] = '1'
   env['HLVM_SO_AGE'] = '0'

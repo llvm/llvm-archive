@@ -18,8 +18,12 @@ def _sedit(input,output,substs):
   lines += '\n'
   f.write(lines)
   f.close()
+  return 0
 
 def QuoteSourceAction(target,source,env):
+  if env.Execute(env['with_xmllint'] + ' --relaxng ' + source[0].path + 
+      ' test/return0/helloworld.hlx >/dev/null'):
+    return 1
   substs = [
     ['<!--.*?-->',''],
     ['<annotation>.*?</annotation>',''],
@@ -30,8 +34,7 @@ def QuoteSourceAction(target,source,env):
     ['^([^\\n]*)$','"\\1"'],
     ['^"[ \\t]*?"$\\n','']
   ]
-  _sedit(source,target,substs)
-  return 0
+  return _sedit(source,target,substs)
 
 def QuoteSourceMessage(target,source,env):
   return "Converting %s to %s as quoted source" % (source[0],target[0])
@@ -48,13 +51,9 @@ def getSchemaTokens(fname):
   valuPat = re.compile('<value>\s*([^<\s]*)')
   tokens = []
   for line in fileinput.input(fname):
-    print line;
-    new_tokens = []
-    new_tokens += elemPat.findall(line)
-    new_tokens += attrPat.findall(line)
-    new_tokens += valuPat.findall(line)
-    print "    ",new_tokens
-    tokens += new_tokens
+    tokens += elemPat.findall(line)
+    tokens += attrPat.findall(line)
+    tokens += valuPat.findall(line)
   dict = {}
   for tok in tokens:
     dict[tok] = 1
@@ -102,7 +101,8 @@ def RNGTokenizerAction(target,source,env):
   gperfAction = env.Action(
     env['with_gperf'] + " -tcDCIoGl --fast 0 -L C++ -Z " + TokenHashClass +
     " -s 2 -S 1 -k '*' " + tknFilename + " >" + TokenHashFile)
-  env.Execute(gperfAction)
+  if env.Execute(gperfAction):
+    return 1;
   tokenList = ""
   for tkn in tokens:
     tokenList += "TKN_" + tkn + ",\n    "

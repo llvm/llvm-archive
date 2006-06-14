@@ -176,6 +176,8 @@ def GetBuildEnvironment(targets,arguments):
            '/usr/local/bin/pod2html')
   opts.Add('with_pod2man','Specify where the POD to MAN generator is located',
            '/usr/local/bin/pod2man')
+  opts.Add('with_xmllint','Specify where the xmllint program is located',
+           '/usr/local/bin/xmllint')
   opts.Update(env)
   env['HLVM_Copyright'] = 'Copyright (c) 2006 Reid Spencer'
   env['HLVM_Maintainer'] = 'Reid Spencer <rspencer@reidspencer>'

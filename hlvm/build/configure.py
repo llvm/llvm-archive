@@ -178,7 +178,7 @@ def FindAPRU(conf):
 def FindLibXML2(conf):
   code = 'xmlNewParserCtxt();'
   return conf.FindPackage('LIBXML2',pjoin('libxml','parser.h'),['xml2'],code,
-    [conf.env['with_libxml2']],[],'libxml2')
+    [conf.env['with_libxml2']],[],'libxml2',['xmllint'])
 
 def CheckProgram(ctxt,progname,varname,moredirs=[],critical=1):
   ctxt.Message("Checking for Program " + progname + "...")
@@ -247,6 +247,7 @@ def CheckForPrograms(conf):
   conf.CheckProgram('gperf','with_gperf')
   conf.CheckProgram('pod2html','with_pod2html',[],0)
   conf.CheckProgram('pod2man','with_pod2man',[],0)
+  conf.CheckProgram('xmllint','with_xmllint',['LIBXML2_bin'],0)
   if not conf.CheckProgram('runtest','with_runtest',[],0):
     print "*** TESTING DISABLED ***"
   if not conf.CheckProgram('doxygen','with_doxygen',[],0):

@@ -43,14 +43,18 @@ def RNGQuoteSource(env):
   return b
 
 def getSchemaTokens(fname):
-  elemPat = re.compile('<element[^>]*name="([^"]*)"')
-  attrPat = re.compile('<attribute[^>]*name="([^"]*)"')
+  elemPat = re.compile('<element[^>]*name[ ]*=[ ]*"([^"]*)"')
+  attrPat = re.compile('<attribute[^>]*name[ ]*=[ ]*"([^"]*)"')
   valuPat = re.compile('<value>\s*([^<\s]*)')
   tokens = []
   for line in fileinput.input(fname):
-    tokens += elemPat.findall(line)
-    tokens += attrPat.findall(line)
-    tokens += valuPat.findall(line)
+    print line;
+    new_tokens = []
+    new_tokens += elemPat.findall(line)
+    new_tokens += attrPat.findall(line)
+    new_tokens += valuPat.findall(line)
+    print "    ",new_tokens
+    tokens += new_tokens
   dict = {}
   for tok in tokens:
     dict[tok] = 1

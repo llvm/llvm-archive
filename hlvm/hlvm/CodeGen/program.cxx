@@ -27,8 +27,6 @@
 /// @brief Input to llvm2cpp for Program related code generation
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/Runtime/Program.h>
-
 extern "C" {
 
 }

@@ -61,7 +61,8 @@ class ASTImpl : public AST
         SInt64Singleton(0), SInt128Singleton(0),  Float32Singleton(0),
         Float44Singleton(0), Float64Singleton(0), Float80Singleton(0),
         Float128Singleton(0), TextTypeSingleton(0), StreamTypeSingleton(0),
-        BufferTypeSingleton(0), ProgramTypeSingleton(0)
+        BufferTypeSingleton(0), ProgramTypeSingleton(0),
+        BooleanTrueSingleton(0), BooleanFalseSingleton(0)
       {
         pool = Pool::create("ASTPool",0,false,1024,4,0);
       }
@@ -101,6 +102,8 @@ class ASTImpl : public AST
     StreamType*    StreamTypeSingleton;
     BufferType*    BufferTypeSingleton;
     SignatureType* ProgramTypeSingleton;
+    ConstantBoolean* BooleanTrueSingleton;
+    ConstantBoolean* BooleanFalseSingleton;
 
   public:
     Type* resolveType(const std::string& name);
@@ -467,6 +470,21 @@ AST::new_ConstantText(const std::string& v, const Locator* loc)
   return result;
 }
 
+ConstantBoolean* 
+AST::new_ConstantBoolean(bool t_or_f, const Locator* loc)
+{
+  ASTImpl* ast = static_cast<ASTImpl*>(this);
+  if (t_or_f) {
+    if (!ast->BooleanTrueSingleton)
+      ast->BooleanTrueSingleton = new ConstantBoolean(true);
+    return ast->BooleanTrueSingleton;
+  } else {
+    if (!ast->BooleanFalseSingleton)
+      ast->BooleanFalseSingleton = new ConstantBoolean(false);
+    return ast->BooleanFalseSingleton;
+  }
+}
+
 ConstantZero*
 AST::new_ConstantZero(const Type* Ty, const Locator* loc)
 {
@@ -577,9 +595,31 @@ AST::new_TernaryOp(
   return result;
 }
 
+template<class OpClass>
+OpClass* 
+AST::new_MultiOp(const Locator* loc) 
+{
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  return result;
+}
+
 // Control Flow Operators
+template NoOperator* 
+AST::new_NilaryOp<NoOperator>(const Locator*loc);
+template SelectOp*
+AST::new_TernaryOp<SelectOp>(Value*op1,Value*op2,Value*op3,const Locator* loc);
+template LoopOp*
+AST::new_TernaryOp<LoopOp>(Value*op1,Value*op2,Value*op3,const Locator* loc);
+template SwitchOp*
+AST::new_MultiOp<SwitchOp>(const Locator* loc);
+template BreakOp* 
+AST::new_NilaryOp<BreakOp>(const Locator*loc);
+template ContinueOp* 
+AST::new_NilaryOp<ContinueOp>(const Locator*loc);
 template ReturnOp* 
 AST::new_UnaryOp<ReturnOp>(Value*op1,const Locator*loc);
+
 // Memory Operators
 template StoreOp*  
 AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc);

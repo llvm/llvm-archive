@@ -137,6 +137,9 @@ public:
   OpClass* parseBinaryOp(xmlNodePtr& cur);
   template<class OpClass>
   OpClass* parseTernaryOp(xmlNodePtr& cur);
+  template<class OpClass>
+  OpClass* parseMultiOp(xmlNodePtr& cur);
+
 private:
 };
 
@@ -564,7 +567,7 @@ XMLReaderImpl::getValue(xmlNodePtr& cur)
     cur = cur->next;
     return result;
   }
-  else
+  else if (cur != 0)
     hlvmDeadCode("Expecting a value");
   return 0;
 }
@@ -814,6 +817,21 @@ XMLReaderImpl::parseTernaryOp(xmlNodePtr& cur)
   return ast->AST::new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
 }
 
+template<class OpClass>
+OpClass*
+XMLReaderImpl::parseMultiOp(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  OpClass* result = ast->AST::new_MultiOp<OpClass>(loc);
+  xmlNodePtr child = cur->children;
+  Value* operand = getValue(child);
+  while (operand != 0) {
+    operand->setParent(result);
+    operand = getValue(child);
+  }
+  return result;
+}
+
 template<> Block*
 XMLReaderImpl::parse<Block>(xmlNodePtr& cur)
 {
@@ -1020,6 +1038,8 @@ XMLReaderImpl::parseConstant(xmlNodePtr& cur, const Type* Ty, int tkn)
     case TKN_flt:          C = parseFloat(cur); break;
     case TKN_dbl:          C = parseDouble(cur); break;
     case TKN_text:         C = parseText(cur); break;
+    case TKN_false:        C = ast->new_ConstantBoolean(false); break;
+    case TKN_true:         C = ast->new_ConstantBoolean(true); break;
     case TKN_zero:         C = parseZero(cur,Ty); break;
     default:
       hlvmAssert(!"Invalid kind of constant");
@@ -1040,6 +1060,12 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
 {
   Operator* op = 0;
   switch (tkn) {
+    case TKN_noop:         op = parseNilaryOp<NoOperator>(cur); break;
+    case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
+    case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
+    case TKN_loop:         op = parseTernaryOp<LoopOp>(cur); break;
+    case TKN_break:        op = parseNilaryOp<BreakOp>(cur); break;
+    case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;
     case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
     case TKN_block:        op = parse<Block>(cur); break;
     case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
@@ -1075,8 +1101,16 @@ XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
     case TKN_dbl:
     case TKN_text:
     case TKN_zero:
+    case TKN_false:
+    case TKN_true:
       v = parseConstant(cur,0,tkn);
       break;
+    case TKN_noop:
+    case TKN_select:
+    case TKN_switch:
+    case TKN_loop:
+    case TKN_break:
+    case TKN_continue:
     case TKN_ret:
     case TKN_open:
     case TKN_write:

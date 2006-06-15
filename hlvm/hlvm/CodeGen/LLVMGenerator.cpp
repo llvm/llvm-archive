@@ -36,6 +36,9 @@
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
+#include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>

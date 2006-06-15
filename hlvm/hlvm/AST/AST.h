@@ -52,6 +52,7 @@ class Program;
 class Import;
 class Locator; 
 class Variable; 
+class ConstantBoolean;
 class ConstantInteger;
 class ConstantReal;
 class ConstantText;
@@ -416,6 +417,11 @@ class AST : public Node
       const Type* ty,         ///< The type of the variable
       const Locator* loc = 0  ///< The source locator
     );
+    /// Createa new ConstantBoolean node
+    ConstantBoolean* new_ConstantBoolean(
+      bool t_or_f,            ///< The value for the constant
+      const Locator* loc = 0  ///< The source locator
+    );
     /// Create a new ConstantZero node
     ConstantZero* new_ConstantZero(
       const Type* Ty,         ///< The type for the constant zero
@@ -479,6 +485,11 @@ class AST : public Node
       Value* oprnd1,         ///< The first operand
       Value* oprnd2,         ///< The second operand
       Value* oprnd3,         ///< The third operand
+      const Locator* loc = 0 ///< The source locator
+    );
+
+    template<class OpClass>
+    OpClass* new_MultiOp(
       const Locator* loc = 0 ///< The source locator
     );
 

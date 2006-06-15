@@ -46,5 +46,6 @@ ModuloOp::~ModuloOp() {}
 BAndOp::~BAndOp() {}
 BOrOp::~BOrOp() {}
 BXorOp::~BXorOp() {}
+BNorOp::~BNorOp() {}
 
 } // end hlvm namespace

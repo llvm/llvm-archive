@@ -31,6 +31,7 @@
 
 namespace hlvm {
 
+NoOperator::~NoOperator() {}
 SelectOp::~SelectOp() {}
 SwitchOp::~SwitchOp() {}
 LoopOp::~LoopOp() {}

@@ -360,6 +360,29 @@ class BXorOp : public BinaryOperator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a bitwise
+/// not or operator. The BNorOp is a binary operator that computes the
+/// bitwise nor of its two operands and returns that value.
+/// @brief AST Bitwise Nor Operator Node   
+class BNorOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    BNorOp() : BinaryOperator(BNorOpID)  {}
+    virtual ~BNorOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const BNorOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(BNorOpID); }
+
+  /// @}
+  friend class AST;
+};
+
 } // end hlvm namespace
 
 #endif

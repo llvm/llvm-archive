@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
+  <bundle id="return">
+    <program id="return">
+      <block>
+        <ret>
+          <switch>
+            <dec>6</dec>
+            <dec>0</dec>
+            <dec>1</dec>
+            <dec>1</dec>
+            <dec>2</dec>
+            <dec>2</dec>
+            <dec>3</dec>
+            <dec>3</dec>
+            <dec>4</dec>
+            <dec>4</dec>
+            <dec>5</dec>
+            <dec>5</dec>
+            <dec>42</dec>
+            <dec>21</dec>
+          </switch>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

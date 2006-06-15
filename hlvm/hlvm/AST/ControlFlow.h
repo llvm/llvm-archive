@@ -35,6 +35,28 @@
 namespace hlvm 
 {
 
+/// This class provides an Abstract Syntax Tree node for the "noop" operator
+/// that does nothing.
+/// @brief AST NoOp Operator
+class NoOperator : public NilaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    NoOperator() : NilaryOperator(NoOperatorID) {}
+    virtual ~NoOperator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const NoOperator*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(NoOperatorID); }
+
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that represents a select 
 /// operator. The select operator is a ternary operator that evaluates its first
 /// operand as a boolean. If the result is true, the second operand is evaluated

@@ -134,6 +134,7 @@ LastTypeID = TextTypeID,
   ConstantZeroID,          ///< A zero-filled constant of any type
 FirstValueID = ConstantZeroID,
 FirstConstantID = ConstantZeroID,
+  ConstantBooleanID,       ///< A constant boolean value
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
   ConstantTextID,          ///< A constant text value
@@ -164,8 +165,9 @@ FirstNilaryOperatorID = BreakOpID,
 LastNilaryOperatorID = ReferenceOpID,
 
   // Control Flow Unary Operators
+  NoOperatorID,            ///< The "do nothing" NoOp Operators
+FirstUnaryOperatorID = NoOperatorID,
   ReturnOpID,              ///< The Return A Value Operator
-FirstUnaryOperatorID = ReturnOpID,
   ThrowOpID,               ///< The Throw an Exception Operator
 
   // Integer Arithmetic Unary Operators
@@ -216,6 +218,7 @@ FirstBinaryOperatorID = AddOpID,
   BAndOpID,                ///< Bitwise And Binary Operator
   BOrOpID,                 ///< Bitwise Or Binary Operator
   BXorOpID,                ///< Bitwise XOr Binary Operator
+  BNorOpID,                ///< Bitwise Nor Binary Operator
 
   // Boolean Binary Operators
   AndOpID,                 ///< And Binary Boolean Operator

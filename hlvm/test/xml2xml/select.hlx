@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
+  <bundle id="return">
+    <program id="return">
+      <block>
+        <ret>
+          <select>
+            <dec>0</dec>
+            <dec>42</dec>
+            <dec>21</dec>
+          </select>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

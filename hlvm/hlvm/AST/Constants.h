@@ -36,6 +36,34 @@ namespace hlvm
 {
 
 /// This class provides an Abstract Syntax Tree node that yields a 
+/// constant boolean value. 
+/// @brief AST Constant Boolean Node
+class ConstantBoolean: public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantBoolean(bool val) : Constant(ConstantBooleanID), value(val) {}
+    virtual ~ConstantBoolean();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantBoolean*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantBooleanID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    bool value;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a 
 /// constant integer value. This kind of constant can represent integer valued
 /// constants of any of the signed or unsigned integer types of any bitsize.
 /// @see IntegerType
@@ -59,7 +87,7 @@ class ConstantInteger: public Constant
       { return N->is(ConstantIntegerID); }
 
   /// @}
-  /// @name Accessors
+  /// @name Mutators
   /// @{
   public:
     void setValue(uint64_t v) { value.u = v; }

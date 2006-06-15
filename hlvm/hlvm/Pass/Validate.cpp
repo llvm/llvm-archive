@@ -198,6 +198,11 @@ ValidateImpl::validate(Block* n)
 }
 
 template<> inline void
+ValidateImpl::validate(NoOperator* n)
+{
+}
+
+template<> inline void
 ValidateImpl::validate(ReturnOp* n)
 {
 }
@@ -567,9 +572,10 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case DispatchOpID:           /*validate(cast<DispatchOp>(n));*/ break;
     case CreateContOpID:         /*validate(cast<CreateContOp>(n));*/ break;
     case CallWithContOpID:       /*validate(cast<CallWithContOp>(n));*/ break;
-    case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
     case ThrowOpID:              /*validate(cast<ThrowOp>(n));*/ break;
-    case ContinueOpID:           /*validate(cast<ContinueOp>(n));*/ break;
+    case NoOperatorID:           validate(cast<NoOperator>(n)); break;
+    case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
+    case ContinueOpID:           validate(cast<ContinueOp>(n)); break;
     case BreakOpID:              validate(cast<BreakOp>(n)); break;
     case SelectOpID:             validate(cast<SelectOp>(n)); break;
     case LoopOpID:               validate(cast<LoopOp>(n)); break;

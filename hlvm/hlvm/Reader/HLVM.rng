@@ -694,7 +694,7 @@
 
   <define name="Operators.pat">
     <choice>
-      <ref name="autovar.elem"/>
+      <ref name="noop.elem"/>
       <ref name="ComparisonOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
@@ -706,11 +706,32 @@
     </choice>
   </define>
 
-  <define name="cast.elem">
-    <empty/>
+  <define name="UnaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Value.pat"/>
   </define>
 
-  <define name="select.elem">
+
+  <define name="BinaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Value.pat"/>
+    <ref name="Value.pat"/>
+  </define>
+
+  <define name="TernaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Value.pat"/>
+    <ref name="Value.pat"/>
+    <ref name="Value.pat"/>
+  </define>
+
+  <define name="noop.elem">
+    <element name="noop">
+      <empty/>
+    </element>
+  </define>
+
+  <define name="cast.elem">
     <empty/>
   </define>
 
@@ -734,17 +755,7 @@
     <empty/>
   </define>
 
-  <define name="autovar.elem">
-    <element name="autovar">
-      <ref name="Named_Typed_Element.pat"/>
-      <choice>
-        <ref name="Constant.pat"/>
-        <element name="zero">
-          <empty/>
-        </element>
-      </choice>
-    </element>
-  </define>
+  <!-- MEMORY OPERATORS -->
 
   <define name="MemoryOps.pat">
     <choice>
@@ -752,6 +763,7 @@
       <ref name="store.elem"/>
       <ref name="index.elem"/>
       <ref name="length.elem"/>
+      <ref name="autovar.elem"/>
     </choice>
   </define>
 
@@ -786,6 +798,20 @@
       <ref name="Location.pat"/>
     </element>
   </define>
+
+  <define name="autovar.elem">
+    <element name="autovar">
+      <ref name="Named_Typed_Element.pat"/>
+      <choice>
+        <ref name="Constant.pat"/>
+        <element name="zero">
+          <empty/>
+        </element>
+      </choice>
+    </element>
+  </define>
+
+  <!-- INPUT/OUTPUT OPERATORS -->
 
   <define name="InputOutputOps.pat">
     <choice>
@@ -829,6 +855,8 @@
     </element>
   </define>
 
+  <!-- UNARY ARITHMETIC OPERATORS -->
+
   <define name="UnaryArithmeticOperators.pat">
     <choice>
       <ref name="neg.elem"/>
@@ -838,38 +866,55 @@
 
   <define name="neg.elem">
     <element name="neg">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="UnaryOperator.pat"/>
     </element>
   </define>
 
   <define name="cmpl.elem">
     <element name="cmpl">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="UnaryOperator.pat"/>
     </element>
   </define>
+
+  <!-- BINARY ARITHMETIC OPERATORS -->
 
   <define name="BinaryArithmeticOperators.pat">
     <choice>
       <ref name="add.elem"/>
       <ref name="sub.elem"/>
+      <ref name="mul.elem"/>
+      <ref name="div.elem"/>
+      <ref name="mod.elem"/>
     </choice>
   </define>
 
   <define name="add.elem">
     <element name="add">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
       
   <define name="sub.elem">
     <element name="sub">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="mul.elem">
+    <element name="mul">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="div.elem">
+    <element name="div">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="mod.elem">
+    <element name="mod">
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
 
@@ -877,22 +922,25 @@
     <choice>
       <ref name="bor.elem"/>
       <ref name="band.elem"/>
+      <ref name="bxor.elem"/>
     </choice>
   </define>
 
   <define name="bor.elem">
     <element name="bor">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
 
   <define name="band.elem">
     <element name="band">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="bxor.elem">
+    <element name="bxor">
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
 
@@ -905,29 +953,98 @@
 
   <define name="eq.elem">
     <element name="eq">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
 
   <define name="ne.elem">
     <element name="ne">
-      <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="lt.elem">
+    <element name="lt">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="gt.elem">
+    <element name="gt">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="le.elem">
+    <element name="le">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="ge.elem">
+    <element name="ge">
+      <ref name="BinaryOperator.pat"/>
     </element>
   </define>
 
   <define name="ControlFlowOps.pat">
     <choice>
+      <ref name="select.elem"/>
+      <ref name="switch.elem"/>
+      <ref name="loop.elem"/>
+      <ref name="break.elem"/>
+      <ref name="continue.elem"/>
       <ref name="ret.elem"/>
     </choice>
   </define>
 
-  <define name="ret.elem">
-    <element name="ret">
+  <define name="select.elem">
+    <element name="select">
+      <ref name="Documentation.pat"/>
+      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
       <ref name="Operators.pat"/>
     </element>
   </define>
+
+  <define name="switch.elem">
+    <element name="switch">
+      <ref name="Documentation.pat"/>
+      <ref name="Value.pat"/>       <!-- Control Expression -->
+      <ref name="Operators.pat"/>   <!-- Default Case -->
+      <zeroOrMore>
+        <ref name="Operators.pat"/> <!-- Case Expression -->
+        <ref name="Operators.pat"/> <!-- Case Block -->
+      </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="loop.elem">
+    <element name="loop">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>  <!-- Pre-Loop Test -->
+      <ref name="Operators.pat"/>  <!-- Loop Body -->
+      <ref name="Operators.pat"/>  <!-- Post-Loop Test -->
+    </element>
+  </define>
+
+  <define name="break.elem">
+    <element name="break">
+      <ref name="Documentation.pat"/>
+    </element>
+  </define>
+
+  <define name="continue.elem">
+    <element name="continue">
+      <ref name="Documentation.pat"/>
+    </element>
+  </define>
+
+  <define name="ret.elem">
+    <element name="ret">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
+    </element>
+  </define>
+
 </grammar>

@@ -446,6 +446,47 @@ XMLWriterImpl::WriterPass::put<AutoVarOp>(AutoVarOp* av)
   putDoc(av);
 }
 
+template<> void
+XMLWriterImpl::WriterPass::put<NoOperator>(NoOperator* op)
+{
+  startElement("noop");
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<SelectOp>(SelectOp* op)
+{
+  startElement("select");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<SwitchOp>(SwitchOp* op) 
+{
+  startElement("switch");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<LoopOp>(LoopOp* op) 
+{
+  startElement("loop");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<BreakOp>(BreakOp* op)
+{
+  startElement("break");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<ContinueOp>(ContinueOp* op)
+{
+  startElement("continue");
+  putDoc(op);
+}
+
 template<> void 
 XMLWriterImpl::WriterPass::put<ReturnOp>(ReturnOp* r)
 {
@@ -540,6 +581,12 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case ProgramID:            put(cast<Program>(n)); break;
       case BlockID:              put(cast<Block>(n)); break;
       case AutoVarOpID:          put(cast<AutoVarOp>(n)); break;
+      case NoOperatorID:         put(cast<NoOperator>(n)); break;
+      case SelectOpID:           put(cast<SelectOp>(n)); break;
+      case SwitchOpID:           put(cast<SwitchOp>(n)); break;
+      case LoopOpID:             put(cast<LoopOp>(n)); break;
+      case BreakOpID:            put(cast<BreakOp>(n)); break;
+      case ContinueOpID:         put(cast<ContinueOp>(n)); break;
       case ReturnOpID:           put(cast<ReturnOp>(n)); break;
       case StoreOpID:            put(cast<StoreOp>(n)); break;
       case LoadOpID:             put(cast<LoadOp>(n)); break;

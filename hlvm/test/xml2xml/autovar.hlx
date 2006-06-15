@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/autovar.hlx">
+  <bundle id="autovar">
+    <program id="autovar">
+      <block>
+        <autovar id="v1" type="u32">
+          <zero/>
+        </autovar>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

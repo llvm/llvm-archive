@@ -40,6 +40,9 @@
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
+#include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/BooleanOps.h>
+#include <hlvm/AST/RealMath.h>
 #include <hlvm/Base/Assert.h>
 #include <libxml/parser.h>
 #include <libxml/relaxng.h>
@@ -1060,7 +1063,33 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
 {
   Operator* op = 0;
   switch (tkn) {
+    case TKN_neg:          op = parseUnaryOp<NegateOp>(cur); break;
+    case TKN_cmpl:         op = parseUnaryOp<ComplementOp>(cur); break;
+    case TKN_preinc:       op = parseUnaryOp<PreIncrOp>(cur); break;
+    case TKN_predec:       op = parseUnaryOp<PreDecrOp>(cur); break;
+    case TKN_postinc:      op = parseUnaryOp<PostIncrOp>(cur); break;
+    case TKN_postdec:      op = parseUnaryOp<PostDecrOp>(cur); break;
+    case TKN_add:          op = parseBinaryOp<AddOp>(cur); break;
+    case TKN_sub:          op = parseBinaryOp<SubtractOp>(cur); break;
+    case TKN_mul:          op = parseBinaryOp<MultiplyOp>(cur); break;
+    case TKN_div:          op = parseBinaryOp<DivideOp>(cur); break;
+    case TKN_mod:          op = parseBinaryOp<ModuloOp>(cur); break;
+    case TKN_band:         op = parseBinaryOp<BAndOp>(cur); break;
+    case TKN_bor:          op = parseBinaryOp<BOrOp>(cur); break;
+    case TKN_bxor:         op = parseBinaryOp<BXorOp>(cur); break;
+    case TKN_bnor:         op = parseBinaryOp<BNorOp>(cur); break;
     case TKN_noop:         op = parseNilaryOp<NoOperator>(cur); break;
+    case TKN_not:          op = parseUnaryOp<NotOp>(cur); break;
+    case TKN_and:          op = parseBinaryOp<AndOp>(cur); break;
+    case TKN_or:           op = parseBinaryOp<OrOp>(cur); break;
+    case TKN_nor:          op = parseBinaryOp<NorOp>(cur); break;
+    case TKN_xor:          op = parseBinaryOp<XorOp>(cur); break;
+    case TKN_eq:           op = parseBinaryOp<EqualityOp>(cur); break;
+    case TKN_ne:           op = parseBinaryOp<InequalityOp>(cur); break;
+    case TKN_lt:           op = parseBinaryOp<LessThanOp>(cur); break;
+    case TKN_gt:           op = parseBinaryOp<GreaterThanOp>(cur); break;
+    case TKN_ge:           op = parseBinaryOp<GreaterEqualOp>(cur); break;
+    case TKN_le:           op = parseBinaryOp<LessEqualOp>(cur); break;
     case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
     case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
     case TKN_loop:         op = parseTernaryOp<LoopOp>(cur); break;
@@ -1112,6 +1141,12 @@ XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
     case TKN_break:
     case TKN_continue:
     case TKN_ret:
+    case TKN_neg:
+    case TKN_cmpl:
+    case TKN_preinc:
+    case TKN_predec:
+    case TKN_postinc:
+    case TKN_postdec:
     case TKN_open:
     case TKN_write:
     case TKN_close:

@@ -38,6 +38,9 @@
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
+#include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/BooleanOps.h>
+#include <hlvm/AST/RealMath.h>
 #include <hlvm/AST/SymbolTable.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Base/Pool.h>
@@ -604,6 +607,62 @@ AST::new_MultiOp(const Locator* loc)
   return result;
 }
 
+// Arithmetic Operators
+template NegateOp*
+AST::new_UnaryOp<NegateOp>(Value* op1, const Locator* loc);
+template ComplementOp*
+AST::new_UnaryOp<ComplementOp>(Value* op1, const Locator* loc);
+template PreIncrOp*
+AST::new_UnaryOp<PreIncrOp>(Value* op1, const Locator* loc);
+template PreDecrOp*
+AST::new_UnaryOp<PreDecrOp>(Value* op1, const Locator* loc);
+template PostIncrOp*
+AST::new_UnaryOp<PostIncrOp>(Value* op1, const Locator* loc);
+template PostDecrOp*
+AST::new_UnaryOp<PostDecrOp>(Value* op1, const Locator* loc);
+template AddOp*
+AST::new_BinaryOp<AddOp>(Value* op1, Value* op2, const Locator* loc);
+template SubtractOp*
+AST::new_BinaryOp<SubtractOp>(Value* op1, Value* op2, const Locator* loc);
+template MultiplyOp*
+AST::new_BinaryOp<MultiplyOp>(Value* op1, Value* op2, const Locator* loc);
+template DivideOp*
+AST::new_BinaryOp<DivideOp>(Value* op1, Value* op2, const Locator* loc);
+template ModuloOp*
+AST::new_BinaryOp<ModuloOp>(Value* op1, Value* op2, const Locator* loc);
+template BAndOp*
+AST::new_BinaryOp<BAndOp>(Value* op1, Value* op2, const Locator* loc);
+template BOrOp*
+AST::new_BinaryOp<BOrOp>(Value* op1, Value* op2, const Locator* loc);
+template BXorOp*
+AST::new_BinaryOp<BXorOp>(Value* op1, Value* op2, const Locator* loc);
+template BNorOp*
+AST::new_BinaryOp<BNorOp>(Value* op1, Value* op2, const Locator* loc);
+
+// Boolean Operators
+template NotOp*
+AST::new_UnaryOp<NotOp>(Value* op1, const Locator* loc);
+template AndOp*
+AST::new_BinaryOp<AndOp>(Value* op1, Value* op2, const Locator* loc);
+template OrOp*
+AST::new_BinaryOp<OrOp>(Value* op1, Value* op2, const Locator* loc);
+template NorOp*
+AST::new_BinaryOp<NorOp>(Value* op1, Value* op2, const Locator* loc);
+template XorOp*
+AST::new_BinaryOp<XorOp>(Value* op1, Value* op2, const Locator* loc);
+template LessThanOp*
+AST::new_BinaryOp<LessThanOp>(Value* op1, Value* op2, const Locator* loc);
+template GreaterThanOp* 
+AST::new_BinaryOp<GreaterThanOp>(Value* op1, Value* op2,const Locator* loc);
+template LessEqualOp* 
+AST::new_BinaryOp<LessEqualOp>(Value* op1, Value* op2, const Locator* loc);
+template GreaterEqualOp* 
+AST::new_BinaryOp<GreaterEqualOp>(Value* op1,Value* op2, const Locator* loc);
+template EqualityOp*
+AST::new_BinaryOp<EqualityOp>(Value* op1, Value* op2, const Locator* loc);
+template InequalityOp*
+AST::new_BinaryOp<InequalityOp>(Value* op1,Value* op2,const Locator* loc);
+
 // Control Flow Operators
 template NoOperator* 
 AST::new_NilaryOp<NoOperator>(const Locator*loc);
@@ -721,61 +780,61 @@ AST::getPrimitiveType(NodeIDs pid)
     case UInt8TypeID:
       if (!ast->UInt8Singleton) {
         ast->UInt8Singleton = new IntegerType(UInt8TypeID,8,false);
-        ast->UInt8Singleton->setName("uint8_t");
+        ast->UInt8Singleton->setName("u8");
       }
       return ast->UInt8Singleton;
     case UInt16TypeID:
       if (!ast->UInt16Singleton) {
         ast->UInt16Singleton = new IntegerType(UInt16TypeID,16,false);
-        ast->UInt16Singleton->setName("uint16_t");
+        ast->UInt16Singleton->setName("u16");
       }
       return ast->UInt16Singleton;
     case UInt32TypeID:
       if (!ast->UInt32Singleton) {
         ast->UInt32Singleton = new IntegerType(UInt32TypeID,32,false);
-        ast->UInt32Singleton->setName("uint32_t");
+        ast->UInt32Singleton->setName("u32");
       }
       return ast->UInt32Singleton;
     case UInt64TypeID:
       if (!ast->UInt64Singleton) {
         ast->UInt64Singleton = new IntegerType(UInt64TypeID,64,false);
-        ast->UInt64Singleton->setName("uint64_t");
+        ast->UInt64Singleton->setName("u64");
       }
       return ast->UInt64Singleton;
     case UInt128TypeID:
       if (!ast->UInt128Singleton) {
         ast->UInt128Singleton = new IntegerType(UInt128TypeID,128,false);
-        ast->UInt128Singleton->setName("uint128_t");
+        ast->UInt128Singleton->setName("u128");
       }
       return ast->UInt128Singleton;
     case SInt8TypeID:
       if (!ast->SInt8Singleton) {
         ast->SInt8Singleton = new IntegerType(SInt8TypeID,8,false);
-        ast->SInt8Singleton->setName("int8_t");
+        ast->SInt8Singleton->setName("i8");
       }
       return ast->SInt8Singleton;
     case SInt16TypeID:
       if (!ast->SInt16Singleton) {
         ast->SInt16Singleton = new IntegerType(SInt16TypeID,16,false);
-        ast->SInt16Singleton->setName("int16_t");
+        ast->SInt16Singleton->setName("i16");
       }
       return ast->SInt16Singleton;
     case SInt32TypeID:
       if (!ast->SInt32Singleton) {
         ast->SInt32Singleton = new IntegerType(SInt32TypeID,32,false);
-        ast->SInt32Singleton->setName("int32_t");
+        ast->SInt32Singleton->setName("i32");
       }
       return ast->SInt32Singleton;
     case SInt64TypeID:
       if (!ast->SInt64Singleton) {
         ast->SInt64Singleton = new IntegerType(SInt64TypeID,64,false);
-        ast->SInt64Singleton->setName("int64_t");
+        ast->SInt64Singleton->setName("i64");
       }
       return ast->SInt64Singleton;
     case SInt128TypeID:
       if (!ast->SInt128Singleton) {
         ast->SInt128Singleton = new IntegerType(SInt128TypeID,128,false);
-        ast->SInt128Singleton->setName("int128_t");
+        ast->SInt128Singleton->setName("i128");
       }
       return ast->SInt128Singleton;
     case Float32TypeID:

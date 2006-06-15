@@ -43,22 +43,19 @@ class ConstantBoolean: public Constant
   /// @name Constructors
   /// @{
   protected:
-    ConstantBoolean(bool val) : Constant(ConstantBooleanID), value(val) {}
+    ConstantBoolean(bool val) : Constant(ConstantBooleanID) {
+      flags = val; }
     virtual ~ConstantBoolean();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    bool getValue() { return flags != 0; }
     static inline bool classof(const ConstantBoolean*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantBooleanID); }
 
-  /// @}
-  /// @name Data
-  /// @{
-  public:
-    bool value;
   /// @}
   friend class AST;
 };

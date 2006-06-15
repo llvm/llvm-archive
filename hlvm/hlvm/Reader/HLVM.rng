@@ -463,10 +463,7 @@
 
   <define name="ref.elem">
     <element name="ref">
-      <attribute name="id">
-        <ref name="Identifier.type"/>
-      </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
@@ -480,10 +477,9 @@
       <ref name="extract.elem"/>
       <ref name="insert.elem"/>
       <ref name="shuffle.elem"/>
-      <ref name="ComparisonOperators.pat"/>
+      <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
-      <ref name="BinaryBitwiseOperators.pat"/>
     </choice>
   </define>
 
@@ -682,6 +678,7 @@
     <choice>
       <ref name="Operators.pat"/>
       <ref name="Constant.pat"/>
+      <ref name="Location.pat"/>
     </choice>
   </define>
 
@@ -695,10 +692,9 @@
   <define name="Operators.pat">
     <choice>
       <ref name="noop.elem"/>
-      <ref name="ComparisonOperators.pat"/>
+      <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
-      <ref name="BinaryBitwiseOperators.pat"/>
       <ref name="MemoryOps.pat"/>
       <ref name="InputOutputOps.pat"/>
       <ref name="ControlFlowOps.pat"/>
@@ -861,6 +857,10 @@
     <choice>
       <ref name="neg.elem"/>
       <ref name="cmpl.elem"/>
+      <ref name="preinc.elem"/>
+      <ref name="predec.elem"/>
+      <ref name="postinc.elem"/>
+      <ref name="postdec.elem"/>
     </choice>
   </define>
 
@@ -876,6 +876,30 @@
     </element>
   </define>
 
+  <define name="preinc.elem">
+    <element name="preinc">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="predec.elem">
+    <element name="predec">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="postinc.elem">
+    <element name="postinc">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="postdec.elem">
+    <element name="postdec">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
   <!-- BINARY ARITHMETIC OPERATORS -->
 
   <define name="BinaryArithmeticOperators.pat">
@@ -885,6 +909,10 @@
       <ref name="mul.elem"/>
       <ref name="div.elem"/>
       <ref name="mod.elem"/>
+      <ref name="band.elem"/>
+      <ref name="bor.elem"/>
+      <ref name="bxor.elem"/>
+      <ref name="bnor.elem"/>
     </choice>
   </define>
 
@@ -918,14 +946,6 @@
     </element>
   </define>
 
-  <define name="BinaryBitwiseOperators.pat">
-    <choice>
-      <ref name="bor.elem"/>
-      <ref name="band.elem"/>
-      <ref name="bxor.elem"/>
-    </choice>
-  </define>
-
   <define name="bor.elem">
     <element name="bor">
       <ref name="BinaryOperator.pat"/>
@@ -944,11 +964,58 @@
     </element>
   </define>
 
-  <define name="ComparisonOperators.pat">
+  <define name="bnor.elem">
+    <element name="bnor">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <!-- Comparison Operators -->
+
+  <define name="BooleanOperators.pat">
     <choice>
+      <ref name="not.elem"/>
+      <ref name="and.elem"/>
+      <ref name="or.elem"/>
+      <ref name="xor.elem"/>
+      <ref name="nor.elem"/>
       <ref name="eq.elem"/>
       <ref name="ne.elem"/>
+      <ref name="lt.elem"/>
+      <ref name="gt.elem"/>
+      <ref name="le.elem"/>
+      <ref name="ge.elem"/>
     </choice>
+  </define>
+
+  <define name="not.elem">
+    <element name="not">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="and.elem">
+    <element name="and">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="or.elem">
+    <element name="or">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="xor.elem">
+    <element name="xor">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="nor.elem">
+    <element name="nor">
+      <ref name="BinaryOperator.pat"/>
+    </element>
   </define>
 
   <define name="eq.elem">

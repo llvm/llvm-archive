@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/unaryarithmetic.hlx">
+  <bundle id="unaryarithmetic">
+    <program id="unaryarithmetic">
+      <block>
+        <autovar id="v1" type="bool">
+          <true/>
+        </autovar>
+        <autovar id="v2" type="bool">
+          <false/>
+        </autovar>
+        <not>
+          <ref id="v1"/>
+        </not>
+        <and>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </and>
+        <or>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </or>
+        <nor>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </nor>
+        <xor>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </xor>
+        <eq>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </eq>
+        <ne>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </ne>
+        <gt>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </gt>
+        <lt>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </lt>
+        <ge>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </ge>
+        <le>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </le>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

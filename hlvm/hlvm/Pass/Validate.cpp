@@ -328,6 +328,11 @@ ValidateImpl::validate(BXorOp* n)
 }
 
 template<> inline void
+ValidateImpl::validate(BNorOp* n)
+{
+}
+
+template<> inline void
 ValidateImpl::validate(NotOp* n)
 {
 }
@@ -489,6 +494,11 @@ ValidateImpl::validate(WriteOp* n)
 }
 
 template<> inline void
+ValidateImpl::validate(ConstantBoolean* n)
+{
+}
+
+template<> inline void
 ValidateImpl::validate(ConstantInteger* n)
 {
 }
@@ -601,11 +611,12 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case BAndOpID:               validate(cast<BAndOp>(n)); break;
     case BOrOpID:                validate(cast<BOrOp>(n)); break;
     case BXorOpID:               validate(cast<BXorOp>(n)); break;
+    case BNorOpID:               validate(cast<BNorOp>(n)); break;
+    case NotOpID:                validate(cast<NotOp>(n)); break;
     case AndOpID:                validate(cast<AndOp>(n)); break;
     case OrOpID:                 validate(cast<OrOp>(n)); break;
     case NorOpID:                validate(cast<NorOp>(n)); break;
     case XorOpID:                validate(cast<XorOp>(n)); break;
-    case NotOpID:                validate(cast<NotOp>(n)); break;
     case LessThanOpID:           validate(cast<LessThanOp>(n)); break;
     case GreaterThanOpID:        validate(cast<GreaterThanOp>(n)); break;
     case LessEqualOpID:          validate(cast<LessEqualOp>(n)); break;
@@ -638,6 +649,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case PInfOpID:               /*validate(cast<PInfOp>(n));*/ break;
     case NInfOpID:               /*validate(cast<NInfoOp>(n));*/ break;
     case NaNOpID:                /*validate(cast<NaNOp>(n));*/ break;
+    case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
     case ConstantTextID:         validate(cast<ConstantText>(n)); break;

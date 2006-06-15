@@ -38,6 +38,9 @@
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
+#include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/BooleanOps.h>
+#include <hlvm/AST/RealMath.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/ADT/StringExtras.h>
@@ -372,6 +375,15 @@ XMLWriterImpl::WriterPass::put<SignatureType>(SignatureType* t)
 }
 
 template<> void 
+XMLWriterImpl::WriterPass::put<ConstantBoolean>(ConstantBoolean* i)
+{
+  if (i->getValue())
+    startElement("true");
+  else
+    startElement("false");
+}
+
+template<> void 
 XMLWriterImpl::WriterPass::put<ConstantInteger>(ConstantInteger* i)
 {
   startElement("dec");
@@ -445,6 +457,189 @@ XMLWriterImpl::WriterPass::put<AutoVarOp>(AutoVarOp* av)
   writeAttribute("type",av->getType()->getName());
   putDoc(av);
 }
+
+template<> void
+XMLWriterImpl::WriterPass::put<NegateOp>(NegateOp* op)
+{
+  startElement("neg");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<ComplementOp>(ComplementOp* op)
+{
+  startElement("cmpl");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<PreIncrOp>(PreIncrOp* op)
+{
+  startElement("preinc");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<PreDecrOp>(PreDecrOp* op)
+{
+  startElement("predec");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<PostIncrOp>(PostIncrOp* op)
+{
+  startElement("postinc");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<PostDecrOp>(PostDecrOp* op)
+{
+  startElement("postdec");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<AddOp>(AddOp* op)
+{
+  startElement("add");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<SubtractOp>(SubtractOp* op)
+{
+  startElement("sub");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<MultiplyOp>(MultiplyOp* op)
+{
+  startElement("mul");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<DivideOp>(DivideOp* op)
+{
+  startElement("div");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<ModuloOp>(ModuloOp* op)
+{
+  startElement("mod");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<BAndOp>(BAndOp* op)
+{
+  startElement("band");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<BOrOp>(BOrOp* op)
+{
+  startElement("bor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<BXorOp>(BXorOp* op)
+{
+  startElement("bxor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<BNorOp>(BNorOp* op)
+{
+  startElement("bnor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<NotOp>(NotOp* op)
+{
+  startElement("not");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<AndOp>(AndOp* op)
+{
+  startElement("and");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<OrOp>(OrOp* op)
+{
+  startElement("or");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<XorOp>(XorOp* op)
+{
+  startElement("xor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<NorOp>(NorOp* op)
+{
+  startElement("nor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<EqualityOp>(EqualityOp* op)
+{
+  startElement("eq");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<InequalityOp>(InequalityOp* op)
+{
+  startElement("ne");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<LessThanOp>(LessThanOp* op)
+{
+  startElement("lt");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<GreaterThanOp>(GreaterThanOp* op)
+{
+  startElement("gt");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<LessEqualOp>(LessEqualOp* op)
+{
+  startElement("le");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put<GreaterEqualOp>(GreaterEqualOp* op)
+{
+  startElement("ge");
+  putDoc(op);
+}
+
 
 template<> void
 XMLWriterImpl::WriterPass::put<NoOperator>(NoOperator* op)
@@ -572,6 +767,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case VectorTypeID:         put(cast<VectorType>(n)); break;
       case StructureTypeID:      put(cast<StructureType>(n)); break;
       case SignatureTypeID:      put(cast<SignatureType>(n)); break;
+      case ConstantBooleanID:    put(cast<ConstantBoolean>(n)); break;
       case ConstantIntegerID:    put(cast<ConstantInteger>(n)); break;
       case ConstantRealID:       put(cast<ConstantReal>(n)); break;
       case ConstantTextID:       put(cast<ConstantText>(n)); break;
@@ -581,6 +777,32 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case ProgramID:            put(cast<Program>(n)); break;
       case BlockID:              put(cast<Block>(n)); break;
       case AutoVarOpID:          put(cast<AutoVarOp>(n)); break;
+      case NegateOpID:           put(cast<NegateOp>(n)); break;
+      case ComplementOpID:       put(cast<ComplementOp>(n)); break;
+      case PreIncrOpID:          put(cast<PreIncrOp>(n)); break;
+      case PreDecrOpID:          put(cast<PreDecrOp>(n)); break;
+      case PostIncrOpID:         put(cast<PostIncrOp>(n)); break;
+      case PostDecrOpID:         put(cast<PostDecrOp>(n)); break;
+      case AddOpID:              put(cast<AddOp>(n)); break;
+      case SubtractOpID:         put(cast<SubtractOp>(n)); break;
+      case MultiplyOpID:         put(cast<MultiplyOp>(n)); break;
+      case DivideOpID:           put(cast<DivideOp>(n)); break;
+      case ModuloOpID:           put(cast<ModuloOp>(n)); break;
+      case BAndOpID:             put(cast<BAndOp>(n)); break;
+      case BOrOpID:              put(cast<BOrOp>(n)); break;
+      case BXorOpID:             put(cast<BXorOp>(n)); break;
+      case BNorOpID:             put(cast<BNorOp>(n)); break;
+      case NotOpID:              put(cast<NotOp>(n)); break;
+      case AndOpID:              put(cast<AndOp>(n)); break;
+      case OrOpID:               put(cast<OrOp>(n)); break;
+      case XorOpID:              put(cast<XorOp>(n)); break;
+      case NorOpID:              put(cast<NorOp>(n)); break;
+      case EqualityOpID:         put(cast<EqualityOp>(n)); break;
+      case InequalityOpID:       put(cast<InequalityOp>(n)); break;
+      case LessThanOpID:         put(cast<LessThanOp>(n)); break;
+      case GreaterThanOpID:      put(cast<GreaterThanOp>(n)); break;
+      case LessEqualOpID:        put(cast<LessEqualOp>(n)); break;
+      case GreaterEqualOpID:     put(cast<GreaterEqualOp>(n)); break;
       case NoOperatorID:         put(cast<NoOperator>(n)); break;
       case SelectOpID:           put(cast<SelectOp>(n)); break;
       case SwitchOpID:           put(cast<SwitchOp>(n)); break;

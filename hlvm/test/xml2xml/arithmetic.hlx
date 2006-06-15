@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/unaryarithmetic.hlx">
+  <bundle id="unaryarithmetic">
+    <program id="unaryarithmetic">
+      <block>
+        <autovar id="v1" type="u32">
+          <zero/>
+        </autovar>
+        <autovar id="v2" type="u32">
+          <zero/>
+        </autovar>
+        <preinc>
+          <ref id="v1"/>
+        </preinc>
+        <postinc>
+          <ref id="v1"/>
+        </postinc>
+        <postdec>
+          <ref id="v2"/>
+        </postdec>
+        <predec>
+          <ref id="v2"/>
+        </predec>
+        <neg>
+          <ref id="v1"/>
+        </neg>
+        <cmpl>
+          <ref id="v2"/>
+        </cmpl>
+        <add>
+          <ref id="v1"/>
+          <dec>1</dec>
+        </add>
+        <sub>
+          <ref id="v1"/>
+          <dec>1</dec>
+        </sub>
+        <mul>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </mul>
+        <div>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </div>
+        <mod>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </mod>
+        <band>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </band>
+        <bor>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </bor>
+        <bxor>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </bxor>
+        <bnor>
+          <ref id="v1"/>
+          <ref id="v2"/>
+        </bnor>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

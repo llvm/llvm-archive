@@ -43,7 +43,7 @@ profile Profile:
 	inline=1 small=0 strip=0 profile=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 check: 
-	scons $(SCONSOPTS) check mode=$(MYMODE)
+	scons -Q check mode=$(MYMODE)
 
 clean:
 	scons $(SCONSOPTS) --clean mode=$(MYMODE)

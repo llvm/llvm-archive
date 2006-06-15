@@ -58,13 +58,6 @@
 #include <llvm/Assembly/PrintModulePass.h>
 #include <llvm/Analysis/Verifier.h>
 
-namespace {
-using namespace llvm;
-#include <hlvm/CodeGen/string_decl.inc>
-#include <hlvm/CodeGen/string_clear.inc>
-#include <hlvm/CodeGen/program.inc>
-}
-
 namespace 
 {
 using namespace hlvm;
@@ -131,6 +124,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::Value* getVariable(const hlvm::Variable* V);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
+  inline llvm::Value* toBoolean(llvm::Value*);
 
   /// Accessors for HLVM Runtime Library things
   inline llvm::Type*         get_hlvm_size();
@@ -537,7 +531,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
         llvm::cast<ConstantText>(C)->getValue(),true);
       llvm::GlobalVariable* GV = new llvm::GlobalVariable(
         CA->getType(), true, llvm::GlobalValue::InternalLinkage, CA, "", lmod);
-      result = ConstantExpr::getPtrPtrFromArrayPtr(GV);
+      result = llvm::ConstantExpr::getPtrPtrFromArrayPtr(GV);
       break;
     }
     case ConstantZeroID:
@@ -567,6 +561,23 @@ llvm::GlobalValue::LinkageTypes
 LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 {
   return llvm::GlobalValue::LinkageTypes(lk);
+}
+
+llvm::Value* 
+LLVMGeneratorPass::toBoolean(llvm::Value* V)
+{
+  const llvm::Type* Ty = V->getType();
+  if (Ty == llvm::Type::BoolTy)
+    return V;
+
+  if (Ty->isInteger() || Ty->isFloatingPoint()) {
+    llvm::Constant* CI = llvm::Constant::getNullValue(V->getType());
+    return new llvm::SetCondInst(llvm::Instruction::SetNE, V, CI, "i2b", lblk);
+  } else if (llvm::isa<llvm::GlobalValue>(V)) {
+    // GlobalValues always have non-zero constant address values, so always true
+    return llvm::ConstantBool::get(true);
+  }
+  hlvmAssert(!"Don't know how to convert V into bool");
 }
 
 std::string
@@ -701,7 +712,7 @@ LLVMGeneratorPass::gen<ConstantText>(ConstantText* t)
   llvm::Constant* C = getConstant(t);
   std::vector<llvm::Value*> args;
   args.push_back(C);
-  llvm::CallInst* CI = new CallInst(get_hlvm_text_create(),args,"",lblk);
+  llvm::CallInst* CI = new llvm::CallInst(get_hlvm_text_create(),args,"",lblk);
   lops.push_back(CI);
 }
 
@@ -744,7 +755,7 @@ LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
         }
       }
       hlvmAssert(CType->isLosslesslyConvertibleTo(elemType));
-      C = ConstantExpr::getCast(C,elemType);
+      C = llvm::ConstantExpr::getCast(C,elemType);
     }
     llvm::Value* store = new llvm::StoreInst(C,alloca,"",lblk);
   }
@@ -774,6 +785,343 @@ LLVMGeneratorPass::gen<Block>(Block* b)
 }
 
 template<> void
+LLVMGeneratorPass::gen<NegateOp>(NegateOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for NegateOp");
+  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* neg = 
+    llvm::BinaryOperator::createNeg(operand,"neg",lblk);
+  lops.push_back(neg);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ComplementOp>(ComplementOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for ComplementOp");
+  llvm::Value* operand = lops.back(); lops.pop_back();
+  const llvm::Type* lType = operand->getType();
+  hlvmAssert(lType->isInteger() && "Can't complement non-integral type");
+  llvm::ConstantIntegral* allOnes = 
+    llvm::ConstantIntegral::getAllOnesValue(lType);
+  llvm::BinaryOperator* cmpl = llvm::BinaryOperator::create(
+      llvm::Instruction::Xor,operand,allOnes,"cmpl",lblk);
+  lops.push_back(cmpl);
+}
+
+template<> void
+LLVMGeneratorPass::gen<PreIncrOp>(PreIncrOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for PreIncrOp");
+  llvm::Value* operand = lops.back(); lops.pop_back();
+  const llvm::Type* lType = operand->getType();
+  if (lType->isFloatingPoint()) {
+    llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
+    llvm::BinaryOperator* add = llvm::BinaryOperator::create(
+      llvm::Instruction::Add, operand, one, "preincr", lblk);
+    lops.push_back(add);
+  } else if (lType->isInteger()) {
+    llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
+    llvm::BinaryOperator* add = llvm::BinaryOperator::create(
+      llvm::Instruction::Add, operand, one, "preincr", lblk);
+    lops.push_back(add);
+  } else {
+    hlvmAssert(!"PreIncrOp on non-numeric");
+  }
+}
+
+template<> void
+LLVMGeneratorPass::gen<PreDecrOp>(PreDecrOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for PreDecrOp");
+  llvm::Value* operand = lops.back(); lops.pop_back();
+  const llvm::Type* lType = operand->getType();
+  if (lType->isFloatingPoint()) {
+    llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
+    llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
+      llvm::Instruction::Sub, operand, one, "predecr", lblk);
+    lops.push_back(sub);
+  } else if (lType->isInteger()) {
+    llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
+    llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
+      llvm::Instruction::Sub, operand, one, "predecr", lblk);
+    lops.push_back(sub);
+  } else {
+    hlvmAssert(!"PreIncrOp on non-numeric");
+  }
+}
+
+template<> void
+LLVMGeneratorPass::gen<PostIncrOp>(PostIncrOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for PostIncrOp");
+}
+
+template<> void
+LLVMGeneratorPass::gen<PostDecrOp>(PostDecrOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for PostDecrOp");
+}
+
+template<> void
+LLVMGeneratorPass::gen<AddOp>(AddOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for AddOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* add = llvm::BinaryOperator::create(
+    llvm::Instruction::Add, op1, op2, "add", lblk);
+  lops.push_back(add);
+}
+
+template<> void
+LLVMGeneratorPass::gen<SubtractOp>(SubtractOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for SubtractOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
+    llvm::Instruction::Sub, op1, op2, "add", lblk);
+  lops.push_back(sub);
+}
+
+template<> void
+LLVMGeneratorPass::gen<MultiplyOp>(MultiplyOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for MultiplyOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* mul = llvm::BinaryOperator::create(
+    llvm::Instruction::Mul, op1, op2, "mul", lblk);
+  lops.push_back(mul);
+}
+
+template<> void
+LLVMGeneratorPass::gen<DivideOp>(DivideOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for DivideOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* div = llvm::BinaryOperator::create(
+    llvm::Instruction::Div, op1, op2, "div", lblk);
+  lops.push_back(div);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ModuloOp>(ModuloOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for ModuloOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* rem = llvm::BinaryOperator::create(
+    llvm::Instruction::Rem, op1, op2, "mod", lblk);
+  lops.push_back(rem);
+}
+
+template<> void
+LLVMGeneratorPass::gen<BAndOp>(BAndOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BAndOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* band = llvm::BinaryOperator::create(
+    llvm::Instruction::And, op1, op2, "band", lblk);
+  lops.push_back(band);
+}
+
+template<> void
+LLVMGeneratorPass::gen<BOrOp>(BOrOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BOrOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
+    llvm::Instruction::Or, op1, op2, "bor", lblk);
+  lops.push_back(bor);
+}
+
+template<> void
+LLVMGeneratorPass::gen<BXorOp>(BXorOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BXorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
+    llvm::Instruction::Xor, op1, op2, "bor", lblk);
+  lops.push_back(Xor);
+}
+
+template<> void
+LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
+    llvm::Instruction::Or, op1, op2, "bor", lblk);
+  llvm::BinaryOperator* nor = llvm::BinaryOperator::createNot(bor,"bor",lblk);
+  lops.push_back(nor);
+}
+
+template<> void
+LLVMGeneratorPass::gen<NoOperator>(NoOperator* op)
+{
+}
+
+template<> void
+LLVMGeneratorPass::gen<NotOp>(NotOp* op)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for BNorOp");
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* b1 = toBoolean(op1);
+  llvm::BinaryOperator* Not = llvm::BinaryOperator::createNot(b1,"not",lblk);
+  lops.push_back(Not);
+}
+
+template<> void
+LLVMGeneratorPass::gen<AndOp>(AndOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* b1 = toBoolean(op1);
+  llvm::Value* b2 = toBoolean(op2);
+  llvm::BinaryOperator* And = llvm::BinaryOperator::create(
+    llvm::Instruction::And, b1, b2, "and", lblk);
+  lops.push_back(And);
+}
+
+template<> void
+LLVMGeneratorPass::gen<OrOp>(OrOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* b1 = toBoolean(op1);
+  llvm::Value* b2 = toBoolean(op2);
+  llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
+    llvm::Instruction::Or, b1, b2, "or", lblk);
+  lops.push_back(Or);
+}
+
+template<> void
+LLVMGeneratorPass::gen<NorOp>(NorOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for NorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* b1 = toBoolean(op1);
+  llvm::Value* b2 = toBoolean(op2);
+  llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
+    llvm::Instruction::Or, b1, b2, "nor", lblk);
+  llvm::BinaryOperator* Nor = llvm::BinaryOperator::createNot(Or,"nor",lblk);
+  lops.push_back(Nor);
+}
+
+template<> void
+LLVMGeneratorPass::gen<XorOp>(XorOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for XorOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* b1 = toBoolean(op1);
+  llvm::Value* b2 = toBoolean(op2);
+  llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
+    llvm::Instruction::Xor, b1, b2, "xor", lblk);
+  lops.push_back(Xor);
+}
+
+template<> void
+LLVMGeneratorPass::gen<EqualityOp>(EqualityOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for EqualityOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetEQ, op1,op2,"eq",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<InequalityOp>(InequalityOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for InequalityOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetNE, op1,op2,"ne",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<LessThanOp>(LessThanOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for LessThanOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetLT, op1,op2,"lt",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<GreaterThanOp>(GreaterThanOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterThanOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetGT, op1,op2,"gt",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<GreaterEqualOp>(GreaterEqualOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterEqualOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetGE, op1,op2,"ge",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<LessEqualOp>(LessEqualOp* op)
+{
+  hlvmAssert(lops.size() >= 2 && "Too few operands for LessEqualOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::SetCondInst* SCI = 
+    new llvm::SetCondInst(llvm::Instruction::SetLE, op1,op2,"le",lblk);
+  lops.push_back(SCI);
+}
+
+template<> void
+LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
+{
+}
+
+template<> void
+LLVMGeneratorPass::gen<SwitchOp>(SwitchOp* op)
+{
+}
+
+template<> void
+LLVMGeneratorPass::gen<LoopOp>(LoopOp* op)
+{
+}
+
+template<> void
+LLVMGeneratorPass::gen<BreakOp>(BreakOp* op)
+{
+}
+
+template<> void
+LLVMGeneratorPass::gen<ContinueOp>(ContinueOp* op)
+{
+}
+
+template<> void
 LLVMGeneratorPass::gen<ReturnOp>(ReturnOp* r)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for ReturnInst");
@@ -792,7 +1140,7 @@ LLVMGeneratorPass::gen<StoreOp>(StoreOp* s)
   hlvmAssert(lops.size() >= 2 && "Too few operands for StoreOp");
   llvm::Value* value =    lops.back(); lops.pop_back();
   llvm::Value* location = lops.back(); lops.pop_back();
-  lops.push_back(new StoreInst(value,location,lblk));
+  lops.push_back(new llvm::StoreInst(value,location,lblk));
 }
 
 template<> void
@@ -800,7 +1148,7 @@ LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for LoadOp");
   llvm::Value* location = lops.back(); lops.pop_back();
-  lops.push_back(new LoadInst(location,"",lblk));
+  lops.push_back(new llvm::LoadInst(location,"",lblk));
 }
 
 template<> void
@@ -808,14 +1156,15 @@ LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
 {
   hlvm::Value* referent = r->getReferent();
   llvm::Value* v = 0;
-  if (isa<Variable>(referent)) {
-    VariableDictionary::iterator I = gvars.find(cast<Variable>(referent));
+  if (llvm::isa<Variable>(referent)) {
+    VariableDictionary::iterator I = gvars.find(llvm::cast<Variable>(referent));
     hlvmAssert(I != gvars.end());
     v = I->second;
   } 
-  else if (isa<AutoVarOp>(referent)) 
+  else if (llvm::isa<AutoVarOp>(referent)) 
   {
-    AutoVarDictionary::const_iterator I = lvars.find(cast<AutoVarOp>(referent));
+    AutoVarDictionary::const_iterator I = 
+      lvars.find(llvm::cast<AutoVarOp>(referent));
     hlvmAssert(I != lvars.end());
     v = I->second;
   }
@@ -836,7 +1185,8 @@ LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
   hlvmAssert(lops.size() >= 1 && "Too few operands for OpenOp");
   std::vector<llvm::Value*> args;
   args.push_back(lops.back()); lops.pop_back();
-  llvm::CallInst* ci = new CallInst(get_hlvm_stream_open(), args, "", lblk);
+  llvm::CallInst* ci = new 
+    llvm::CallInst(get_hlvm_stream_open(), args, "", lblk);
   lops.push_back(ci);
 }
 
@@ -850,9 +1200,11 @@ LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
   args.push_back(strm);
   args.push_back(arg2);
   if (arg2->getType() == get_hlvm_text())
-    lops.push_back(new CallInst(get_hlvm_stream_write_text(), args, "", lblk));
+    lops.push_back(
+      new llvm::CallInst(get_hlvm_stream_write_text(), args, "", lblk));
   else
-    lops.push_back(new CallInst(get_hlvm_stream_write_buffer(), args, "",lblk));
+    lops.push_back(
+      new llvm::CallInst(get_hlvm_stream_write_buffer(), args, "",lblk));
 }
 
 template<> void
@@ -862,7 +1214,8 @@ LLVMGeneratorPass::gen<ReadOp>(ReadOp* o)
   std::vector<llvm::Value*> args;
   args.insert(args.end(),lops.end()-3,lops.end());
   lops.erase(lops.end()-3,lops.end());
-  llvm::CallInst* ci = new CallInst(get_hlvm_stream_read(), args, "", lblk);
+  llvm::CallInst* ci = 
+    new llvm::CallInst(get_hlvm_stream_read(), args, "", lblk);
   lops.push_back(ci);
 }
 
@@ -872,7 +1225,8 @@ LLVMGeneratorPass::gen<CloseOp>(CloseOp* o)
   hlvmAssert(lops.size() >= 1 && "Too few operands for CloseOp");
   std::vector<llvm::Value*> args;
   args.push_back(lops.back()); lops.pop_back();
-  llvm::CallInst* ci = new CallInst(get_hlvm_stream_close(), args, "", lblk);
+  llvm::CallInst* ci = 
+    new llvm::CallInst(get_hlvm_stream_close(), args, "", lblk);
   lops.push_back(ci);
 }
 
@@ -1022,6 +1376,38 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
     case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
     case VariableID:              gen(llvm::cast<Variable>(n)); break;
+    case NegateOpID:              gen(llvm::cast<NegateOp>(n)); break;
+    case ComplementOpID:          gen(llvm::cast<ComplementOp>(n)); break;
+    case PreIncrOpID:             gen(llvm::cast<PreIncrOp>(n)); break;
+    case PreDecrOpID:             gen(llvm::cast<PreDecrOp>(n)); break;
+    case PostIncrOpID:            gen(llvm::cast<PostIncrOp>(n)); break;
+    case PostDecrOpID:            gen(llvm::cast<PostDecrOp>(n)); break;
+    case AddOpID:                 gen(llvm::cast<AddOp>(n)); break;
+    case SubtractOpID:            gen(llvm::cast<SubtractOp>(n)); break;
+    case MultiplyOpID:            gen(llvm::cast<MultiplyOp>(n)); break;
+    case DivideOpID:              gen(llvm::cast<DivideOp>(n)); break;
+    case ModuloOpID:              gen(llvm::cast<ModuloOp>(n)); break;
+    case BAndOpID:                gen(llvm::cast<BAndOp>(n)); break;
+    case BOrOpID:                 gen(llvm::cast<BOrOp>(n)); break;
+    case BXorOpID:                gen(llvm::cast<BXorOp>(n)); break;
+    case BNorOpID:                gen(llvm::cast<BNorOp>(n)); break;
+    case NoOperatorID:            gen(llvm::cast<NoOperator>(n)); break;
+    case NotOpID:                 gen(llvm::cast<NotOp>(n)); break;
+    case AndOpID:                 gen(llvm::cast<AndOp>(n)); break;
+    case OrOpID:                  gen(llvm::cast<OrOp>(n)); break;
+    case NorOpID:                 gen(llvm::cast<NorOp>(n)); break;
+    case XorOpID:                 gen(llvm::cast<XorOp>(n)); break;
+    case EqualityOpID:            gen(llvm::cast<EqualityOp>(n)); break;
+    case InequalityOpID:          gen(llvm::cast<InequalityOp>(n)); break;
+    case LessThanOpID:            gen(llvm::cast<LessThanOp>(n)); break;
+    case GreaterThanOpID:         gen(llvm::cast<GreaterThanOp>(n)); break;
+    case GreaterEqualOpID:        gen(llvm::cast<GreaterEqualOp>(n)); break;
+    case LessEqualOpID:           gen(llvm::cast<LessEqualOp>(n)); break;
+    case SelectOpID:              gen(llvm::cast<SelectOp>(n)); break;
+    case SwitchOpID:              gen(llvm::cast<SwitchOp>(n)); break;
+    case LoopOpID:                gen(llvm::cast<LoopOp>(n)); break;
+    case BreakOpID:               gen(llvm::cast<BreakOp>(n)); break;
+    case ContinueOpID:            gen(llvm::cast<ContinueOp>(n)); break;
     case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
     case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
     case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;

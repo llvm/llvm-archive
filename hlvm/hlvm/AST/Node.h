@@ -322,6 +322,10 @@ class Node
              (id == IntegerTypeID) || (id == RangeTypeID) || 
              (id == EnumerationTypeID); }
 
+    inline bool isRealType() const {
+      return (id >= Float32TypeID && id <= Float128TypeID) ||
+             (id == RealTypeID); }
+
     /// Determine if the node is a primitive type
     inline bool isPrimitiveType() const {
       return id >= FirstPrimitiveTypeID && 

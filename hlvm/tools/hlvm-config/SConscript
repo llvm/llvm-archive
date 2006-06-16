@@ -1,4 +1,4 @@
-#===-- Build Script For tools ---------------------------------*- Python -*-===#
+#===-- Build Script For test ----------------------------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -22,4 +22,15 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['hlvm-config','hlvm-xml2xml','hlvm-compiler','hlvm'])
+prog = env.Program('hlvm-config', hlvm.GetAllCXXFiles(env),
+  LIBS=[
+    'HLVMRuntime',
+    'HLVMBase',
+    'LLVMSupport',
+    'LLVMSystem',
+    'apr-1',
+    'aprutil-1',
+    'stdc++'
+  ],
+)
+hlvm.InstallProgram(env,prog)

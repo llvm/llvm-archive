@@ -678,7 +678,6 @@
     <choice>
       <ref name="Operators.pat"/>
       <ref name="Constant.pat"/>
-      <ref name="Location.pat"/>
     </choice>
   </define>
 

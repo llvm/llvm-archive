@@ -51,7 +51,7 @@ UniformContainerType::insertChild(Node* n)
 {
   hlvmAssert(isa<Type>(n) && "Can't insert those here");
   if (type)
-    type->setParent(0);
+    const_cast<Type*>(type)->setParent(0);
   type = cast<Type>(n);
 }
 

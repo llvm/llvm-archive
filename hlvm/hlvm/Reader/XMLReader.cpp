@@ -104,6 +104,9 @@ public:
     return loc = new LineLocator(uri,cur->line);
   }
 
+  inline Type* getType(const std::string& name );
+
+
   inline void handleParseError(xmlErrorPtr error);
   inline void handleValidationError(xmlErrorPtr error);
 
@@ -128,6 +131,8 @@ public:
   Operator*      parseOperator      (xmlNodePtr& cur, int token);
   Value*         parseValue         (xmlNodePtr& cur);
   Value*         parseValue         (xmlNodePtr& cur, int token);
+  StoreOp*       parseStoreOp       (xmlNodePtr& cur);
+  LoadOp*        parseLoadOp        (xmlNodePtr& cur);
 
   template<class OpClass>
   OpClass*       parse(xmlNodePtr& cur);
@@ -352,6 +357,17 @@ getNameType(xmlNodePtr& cur, std::string& name, std::string& type)
 {
   name = getAttribute(cur,"id");
   type = getAttribute(cur,"type");
+}
+
+Type* 
+XMLReaderImpl::getType(const std::string& name )
+{
+  Type* Ty = recognize_builtin_type(ast,name);
+  if (!Ty) {
+    Ty = ast->resolveType(name);
+  }
+  hlvmAssert(Ty != 0 && "Couldn't get Type!");
+  return Ty;
 }
 
 inline ConstantInteger*
@@ -582,7 +598,7 @@ XMLReaderImpl::parse<AliasType>(xmlNodePtr& cur)
   std::string name = getAttribute(cur,"id");
   std::string type = getAttribute(cur,"renames");
   AliasType* alias = 
-    ast->new_AliasType(name,ast->resolveType(type),getLocator(cur));
+    ast->new_AliasType(name,getType(type),getLocator(cur));
   checkDoc(cur,alias);
   return alias;
 }
@@ -612,7 +628,7 @@ XMLReaderImpl::parse<PointerType>(xmlNodePtr& cur)
   std::string name = getAttribute(cur,"id");
   std::string type = getAttribute(cur,"to");
   PointerType* result = 
-    ast->new_PointerType(name,ast->resolveType(type),loc);
+    ast->new_PointerType(name,getType(type),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -626,7 +642,7 @@ XMLReaderImpl::parse<ArrayType>(xmlNodePtr& cur)
   std::string type = getAttribute(cur,"of");
   const char* len = getAttribute(cur,"length");
   ArrayType* result = ast->new_ArrayType(
-    name, ast->resolveType(type), recognize_nonNegativeInteger(len),loc);
+    name, getType(type), recognize_nonNegativeInteger(len),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -641,7 +657,7 @@ XMLReaderImpl::parse<VectorType>(xmlNodePtr& cur)
   const char* len  = getAttribute(cur,"length");
   VectorType* result =
     ast->new_VectorType(
-      name,ast->resolveType(type), recognize_nonNegativeInteger(len),loc);
+      name,getType(type), recognize_nonNegativeInteger(len),loc);
   checkDoc(cur,result);
   return result;
 }
@@ -659,7 +675,7 @@ XMLReaderImpl::parse<StructureType>(xmlNodePtr& cur)
                "Structure only has fields");
     std::string name = getAttribute(child,"id");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(name,ast->resolveType(type),loc);
+    AliasType* alias = ast->new_AliasType(name,getType(type),loc);
     alias->setParent(struc);
     checkDoc(child,alias);
     child = child->next;
@@ -676,7 +692,7 @@ XMLReaderImpl::parse<SignatureType>(xmlNodePtr& cur)
   std::string result = getAttribute(cur,"result");
   const char* varargs = getAttribute(cur,"varargs",false);
   SignatureType* sig = 
-    ast->new_SignatureType(name,ast->resolveType(result),loc);
+    ast->new_SignatureType(name,getType(result),loc);
   if (varargs)
     sig->setIsVarArgs(recognize_boolean(varargs));
   xmlNodePtr child = checkDoc(cur,sig); 
@@ -684,7 +700,7 @@ XMLReaderImpl::parse<SignatureType>(xmlNodePtr& cur)
     hlvmAssert(getToken(child->name) == TKN_arg && "Signature only has args");
     std::string name = getAttribute(child,"id");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(name,ast->resolveType(type),loc);
+    AliasType* alias = ast->new_AliasType(name,getType(type),loc);
     alias->setParent(sig);
     checkDoc(child,alias);
     child = child->next;
@@ -712,9 +728,7 @@ XMLReaderImpl::parse<Variable>(xmlNodePtr& cur)
   getNameType(cur, name, type);
   const char* cnst = getAttribute(cur, "const", false);
   const char* lnkg = getAttribute(cur, "linkage", false);
-  const Type* Ty = recognize_builtin_type(ast,type);
-  if (!Ty)
-    Ty = ast->resolveType(type);
+  const Type* Ty = getType(type);
   Variable* var = ast->new_Variable(name,Ty,loc);
   if (cnst)
     var->setIsConstant(recognize_boolean(cnst));
@@ -734,9 +748,7 @@ XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
   std::string name, type;
   getNameType(cur, name, type);
   Locator* loc = getLocator(cur);
-  const Type* Ty = recognize_builtin_type(ast,type);
-  if (Ty == 0)
-    Ty = ast->resolveType(type);
+  const Type* Ty = getType(type);
   xmlNodePtr child = cur->children;
   Constant* C = 0;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
@@ -744,10 +756,7 @@ XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
   } else {
     C = ast->new_ConstantZero(Ty,loc);
   }
-  AutoVarOp* result = ast->AST::new_UnaryOp<AutoVarOp>(C,loc);
-  result->setName(name);
-  result->setType(Ty);
-  return result;
+  return ast->AST::new_AutoVarOp(name,Ty,C,loc);
 }
 
 template<> ReferenceOp*
@@ -756,15 +765,15 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
   std::string id = getAttribute(cur,"id");
   Locator* loc = getLocator(cur);
 
-  ReferenceOp* result = ast->AST::new_NilaryOp<ReferenceOp>(loc);
-
   // Find the referrent variable in a block
   Block* blk = block;
+  Value* referent = 0;
   while (blk != 0) {
-    if (AutoVarOp* av = blk->getAutoVar(id)) {
-      result->setReferent(av);
-      return result;
-    }
+    if (AutoVarOp* av = blk->getAutoVar(id))
+      if (av->getName() == id) {
+        referent = av;
+        break;
+      }
     if (llvm::isa<Block>(blk->getParent()))
       blk = llvm::cast<Block>(blk->getParent());
     else
@@ -772,10 +781,31 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
   }
 
   // Didn't find an autovar, try a global variable
-  Variable* var = bundle->var_find(id);
-  hlvmAssert(var && "Variable not found");
-  result->setReferent(var);
-  return result;
+  if (!referent) {
+    referent = bundle->var_find(id);
+    hlvmAssert(referent && "Variable not found");
+  }
+
+  return ast->AST::new_ReferenceOp(referent, loc);
+}
+
+StoreOp*
+XMLReaderImpl::parseStoreOp(xmlNodePtr& cur)
+{
+  xmlNodePtr child = cur->children;
+  Value* oprnd1 = getValue(child);
+  Value* oprnd2 = getValue(child);
+  Locator* loc = getLocator(cur);
+  return ast->AST::new_BinaryOp<StoreOp>(oprnd1,oprnd2,loc);
+}
+
+LoadOp*
+XMLReaderImpl::parseLoadOp(xmlNodePtr& cur)
+{
+  xmlNodePtr child = cur->children;
+  Value* oprnd1 = getValue(child);
+  Locator* loc = getLocator(cur);
+  return ast->AST::new_UnaryOp<LoadOp>(oprnd1,loc);
 }
 
 template<class OpClass>
@@ -825,14 +855,14 @@ OpClass*
 XMLReaderImpl::parseMultiOp(xmlNodePtr& cur)
 {
   Locator* loc = getLocator(cur);
-  OpClass* result = ast->AST::new_MultiOp<OpClass>(loc);
   xmlNodePtr child = cur->children;
   Value* operand = getValue(child);
+  MultiOperator::OprndList ol;
   while (operand != 0) {
-    operand->setParent(result);
+    ol.push_back(operand);
     operand = getValue(child);
   }
-  return result;
+  return ast->AST::new_MultiOp<OpClass>(ol,loc);
 }
 
 template<> Block*
@@ -1097,8 +1127,8 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
     case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;
     case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
     case TKN_block:        op = parse<Block>(cur); break;
-    case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
-    case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
+    case TKN_store:        op = parseStoreOp(cur); break;
+    case TKN_load:         op = parseLoadOp(cur); break;
     case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
     case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
     case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;

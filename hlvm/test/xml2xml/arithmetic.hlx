@@ -10,58 +10,102 @@
           <zero/>
         </autovar>
         <preinc>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
         </preinc>
         <postinc>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
         </postinc>
         <postdec>
-          <ref id="v2"/>
+          <load>
+            <ref id="v2"/>
+          </load>
         </postdec>
         <predec>
-          <ref id="v2"/>
+          <load>
+            <ref id="v2"/>
+          </load>
         </predec>
         <neg>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
         </neg>
         <cmpl>
-          <ref id="v2"/>
+          <load>
+            <ref id="v2"/>
+          </load>
         </cmpl>
         <add>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
           <dec>1</dec>
         </add>
         <sub>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
           <dec>1</dec>
         </sub>
         <mul>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </mul>
         <div>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </div>
         <mod>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </mod>
         <band>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </band>
         <bor>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </bor>
         <bxor>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </bxor>
         <bnor>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </bnor>
       </block>
     </program>

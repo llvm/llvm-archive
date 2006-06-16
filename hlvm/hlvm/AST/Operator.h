@@ -42,7 +42,8 @@ class Type;
 /// some action. Operators form the content of a Block.  As this is the base
 /// class of all operators, the Operator class only provides the functionality
 /// that is common to all operators: getting the number of operands
-/// (numOperands), getting the Value of an operand (getOperand), and  setting 
+/// (getNumOperands), getting the Value of an operand (getOperand), and  
+/// setting 
 /// the Value of an operand (setOperand). Since Operand is a Value, this implies
 /// two things: (1) Operators can be the operand of other operators and (2) eery
 /// Operator has a type.
@@ -62,7 +63,7 @@ class Operator : public Value
   /// @{
   public:
     /// Get a specific operand of this operator.
-    virtual size_t  numOperands() const = 0;
+    virtual size_t  getNumOperands() const = 0;
     virtual Value* getOperand(unsigned opnum) const = 0;
 
     /// Determine if this is a classof some other type.
@@ -94,7 +95,7 @@ class NilaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual size_t  numOperands() const;
+    virtual size_t  getNumOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const NilaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isNilaryOperator(); }
@@ -128,7 +129,7 @@ class UnaryOperator : public Operator
   /// @{
   public:
     Value* getOperand() const { return op1; }
-    virtual size_t  numOperands() const;
+    virtual size_t  getNumOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const UnaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isUnaryOperator(); }
@@ -168,7 +169,7 @@ class BinaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual size_t  numOperands() const;
+    virtual size_t  getNumOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const BinaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isBinaryOperator(); }
@@ -207,7 +208,7 @@ class TernaryOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual size_t  numOperands() const;
+    virtual size_t  getNumOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const TernaryOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isTernaryOperator(); }
@@ -257,7 +258,7 @@ class MultiOperator : public Operator
   /// @name Accessors
   /// @{
   public:
-    virtual size_t  numOperands() const;
+    virtual size_t  getNumOperands() const;
     virtual Value* getOperand(unsigned opnum) const;
     static inline bool classof(const MultiOperator*) { return true; }
     static inline bool classof(const Node* N) { return N->isMultiOperator(); }
@@ -283,6 +284,9 @@ class MultiOperator : public Operator
   public:
     virtual void setOperand(unsigned opnum, Value* oprnd);
     void addOperand(Value* v) { v->setParent(this); }
+    void addOperands(const OprndList& new_ops) {
+      ops.insert(ops.end(),new_ops.begin(),new_ops.end());
+    }
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);

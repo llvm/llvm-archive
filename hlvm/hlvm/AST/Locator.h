@@ -56,7 +56,7 @@ class Locator
   /// @name Accessors
   /// @{
   public:
-    virtual void getReference(std::string& ref) const = 0;
+    virtual void getLocation(std::string& ref) const = 0;
     virtual bool equals(const Locator& that) const = 0;
     bool operator==(const Locator& that) { return this->equals(that); }
     unsigned short id() const { return SubclassID; }
@@ -83,7 +83,7 @@ class URILocator : public Locator
   /// @name Accessors
   /// @{
   public:
-    virtual void getReference(std::string& ref) const;
+    virtual void getLocation(std::string& ref) const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -112,7 +112,7 @@ class LineLocator : public URILocator
   /// @name Accessors
   /// @{
   public:
-    virtual void getReference(std::string& ref) const;
+    virtual void getLocation(std::string& ref) const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -139,7 +139,7 @@ class LineColumnLocator : public LineLocator
   /// @name Accessors
   /// @{
   public:
-    virtual void getReference(std::string& ref) const;
+    virtual void getLocation(std::string& ref) const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -169,7 +169,7 @@ class RangeLocator : public LineColumnLocator
   /// @name Accessors
   /// @{
   public:
-    virtual void getReference(std::string& ref) const;
+    virtual void getLocation(std::string& ref) const;
     virtual bool equals(const Locator& that) const;
 
   /// @}

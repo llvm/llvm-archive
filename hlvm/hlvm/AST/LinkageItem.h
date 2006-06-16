@@ -74,8 +74,9 @@ class LinkageItem : public Constant
   /// @name Accessors
   /// @{
   public:
-    inline const std::string& getName() { return name; }
-    inline LinkageKinds getLinkageKind() { return LinkageKinds(flags & 0x0007); }
+    inline const std::string& getName() const { return name; }
+    inline LinkageKinds getLinkageKind() const { 
+      return LinkageKinds(flags & 0x0007); }
     static inline bool classof(const LinkageItem*) { return true; }
     static inline bool classof(const Node* N) { return N->isLinkageItem(); }
 

@@ -69,9 +69,9 @@ def Check(env,dirs):
   sitexpBuilder = env.Builder(action=sitexpAction,suffix='exp')
   env.Append(BUILDERS = {'Check':checkBuilder,'SiteExp':sitexpBuilder})
   env.SiteExp('#test/site.exp',[])
+  env.SetOption('num_jobs',1)
   for dir in dirs:
     env.Check(['#test/' + dir + '.sum','#test/' + dir + '.log'],
               getTestCases(dir,env)+['#test/site.exp'])
     env.Alias('check','#test/' + dir + '.log')
   return 1
-

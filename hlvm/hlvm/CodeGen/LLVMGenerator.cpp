@@ -58,6 +58,15 @@
 #include <llvm/Assembly/PrintModulePass.h>
 #include <llvm/Analysis/Verifier.h>
 
+namespace llvm {
+  void dump(llvm::Value* V) {
+    V->dump();
+  }
+  void dumpType(llvm::Type* T) {
+    T->dump();
+  }
+}
+
 namespace 
 {
 using namespace hlvm;
@@ -124,7 +133,10 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::Value* getVariable(const hlvm::Variable* V);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(LinkageItem* li);
-  inline llvm::Value* toBoolean(llvm::Value*);
+  inline llvm::Value* getBoolean(llvm::Value* op);
+  inline llvm::Value* getInteger(llvm::Value* op);
+  inline llvm::Value* toBoolean(llvm::Value* op);
+  inline llvm::Value* ptr2Value(llvm::Value* op);
 
   /// Accessors for HLVM Runtime Library things
   inline llvm::Type*         get_hlvm_size();
@@ -435,7 +447,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       break;
     case PointerTypeID: 
     {
-      hlvm::Type* hElemType = 
+      const hlvm::Type* hElemType = 
         llvm::cast<hlvm::PointerType>(ty)->getElementType();
       const llvm::Type* lElemType = getType(hElemType);
       result = llvm::PointerType::get(lElemType);
@@ -578,6 +590,20 @@ LLVMGeneratorPass::toBoolean(llvm::Value* V)
     return llvm::ConstantBool::get(true);
   }
   hlvmAssert(!"Don't know how to convert V into bool");
+}
+
+llvm::Value* 
+LLVMGeneratorPass::ptr2Value(llvm::Value* V)
+{
+  if (!llvm::isa<llvm::PointerType>(V->getType()))
+    return V;
+
+ // llvm::GetElementPtrInst* GEP = new llvm::GetElementPtrIns(V,
+  //    llvm::ConstantInt::get(llvm::Type::UIntTy,0),
+   //   llvm::ConstantInt::get(llvm::Type::UIntTy,0),
+    //  "ptr2Value", lblk);
+  llvm::LoadInst* Load = new llvm::LoadInst(V,"ptr2Value",lblk);
+  return Load;
 }
 
 std::string
@@ -789,6 +815,9 @@ LLVMGeneratorPass::gen<NegateOp>(NegateOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for NegateOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
+  hlvmAssert((operand->getType()->isInteger() || 
+              operand->getType()->isFloatingPoint()) && 
+              "Can't negate non-numeric");
   llvm::BinaryOperator* neg = 
     llvm::BinaryOperator::createNeg(operand,"neg",lblk);
   lops.push_back(neg);
@@ -799,6 +828,7 @@ LLVMGeneratorPass::gen<ComplementOp>(ComplementOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for ComplementOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
+  operand = ptr2Value(operand);
   const llvm::Type* lType = operand->getType();
   hlvmAssert(lType->isInteger() && "Can't complement non-integral type");
   llvm::ConstantIntegral* allOnes = 
@@ -868,6 +898,8 @@ LLVMGeneratorPass::gen<AddOp>(AddOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for AddOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* add = llvm::BinaryOperator::create(
     llvm::Instruction::Add, op1, op2, "add", lblk);
   lops.push_back(add);
@@ -879,6 +911,8 @@ LLVMGeneratorPass::gen<SubtractOp>(SubtractOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for SubtractOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
     llvm::Instruction::Sub, op1, op2, "add", lblk);
   lops.push_back(sub);
@@ -890,6 +924,8 @@ LLVMGeneratorPass::gen<MultiplyOp>(MultiplyOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for MultiplyOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* mul = llvm::BinaryOperator::create(
     llvm::Instruction::Mul, op1, op2, "mul", lblk);
   lops.push_back(mul);
@@ -901,6 +937,8 @@ LLVMGeneratorPass::gen<DivideOp>(DivideOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for DivideOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* div = llvm::BinaryOperator::create(
     llvm::Instruction::Div, op1, op2, "div", lblk);
   lops.push_back(div);
@@ -912,6 +950,8 @@ LLVMGeneratorPass::gen<ModuloOp>(ModuloOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for ModuloOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* rem = llvm::BinaryOperator::create(
     llvm::Instruction::Rem, op1, op2, "mod", lblk);
   lops.push_back(rem);
@@ -923,6 +963,8 @@ LLVMGeneratorPass::gen<BAndOp>(BAndOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BAndOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* band = llvm::BinaryOperator::create(
     llvm::Instruction::And, op1, op2, "band", lblk);
   lops.push_back(band);
@@ -934,6 +976,8 @@ LLVMGeneratorPass::gen<BOrOp>(BOrOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BOrOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
     llvm::Instruction::Or, op1, op2, "bor", lblk);
   lops.push_back(bor);
@@ -945,6 +989,8 @@ LLVMGeneratorPass::gen<BXorOp>(BXorOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BXorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
     llvm::Instruction::Xor, op1, op2, "bor", lblk);
   lops.push_back(Xor);
@@ -956,6 +1002,8 @@ LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
     llvm::Instruction::Or, op1, op2, "bor", lblk);
   llvm::BinaryOperator* nor = llvm::BinaryOperator::createNot(bor,"bor",lblk);
@@ -972,6 +1020,7 @@ LLVMGeneratorPass::gen<NotOp>(NotOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for BNorOp");
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
   llvm::Value* b1 = toBoolean(op1);
   llvm::BinaryOperator* Not = llvm::BinaryOperator::createNot(b1,"not",lblk);
   lops.push_back(Not);
@@ -983,6 +1032,8 @@ LLVMGeneratorPass::gen<AndOp>(AndOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* And = llvm::BinaryOperator::create(
@@ -996,6 +1047,8 @@ LLVMGeneratorPass::gen<OrOp>(OrOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
@@ -1009,6 +1062,8 @@ LLVMGeneratorPass::gen<NorOp>(NorOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for NorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
@@ -1023,6 +1078,8 @@ LLVMGeneratorPass::gen<XorOp>(XorOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for XorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
@@ -1036,6 +1093,8 @@ LLVMGeneratorPass::gen<EqualityOp>(EqualityOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for EqualityOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::SetCondInst* SCI = 
     new llvm::SetCondInst(llvm::Instruction::SetEQ, op1,op2,"eq",lblk);
   lops.push_back(SCI);
@@ -1047,6 +1106,8 @@ LLVMGeneratorPass::gen<InequalityOp>(InequalityOp* op)
   hlvmAssert(lops.size() >= 2 && "Too few operands for InequalityOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+  op1 = ptr2Value(op1);
+  op2 = ptr2Value(op2);
   llvm::SetCondInst* SCI = 
     new llvm::SetCondInst(llvm::Instruction::SetNE, op1,op2,"ne",lblk);
   lops.push_back(SCI);
@@ -1154,7 +1215,7 @@ LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
 template<> void
 LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
 {
-  hlvm::Value* referent = r->getReferent();
+  hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
   llvm::Value* v = 0;
   if (llvm::isa<Variable>(referent)) {
     VariableDictionary::iterator I = gvars.find(llvm::cast<Variable>(referent));

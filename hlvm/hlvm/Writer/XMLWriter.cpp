@@ -707,7 +707,7 @@ template<> void
 XMLWriterImpl::WriterPass::put(ReferenceOp* r)
 {
   startElement("ref");
-  Value* ref = r->getReferent();
+  const Value* ref = r->getReferent();
   const std::string& name = 
      (isa<Variable>(ref) ? cast<Variable>(ref)->getName() :
       (isa<AutoVarOp>(ref) ? cast<AutoVarOp>(ref)->getName() : "oops" ));

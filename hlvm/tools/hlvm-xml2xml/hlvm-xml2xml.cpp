@@ -94,12 +94,8 @@ int main(int argc, char**argv)
     rdr->read();
     AST* node = rdr->get();
     if (node) {
-      PassManager* PM = PassManager::create();
-      Pass* pass = Pass::new_ValidatePass(); 
-      PM->addPass( pass );
-      PM->runOn(node);
-      delete PM;
-      delete pass;
+      if (!validate(node))
+        return 1;
       wrtr->write(node);
     }
     delete rdr;

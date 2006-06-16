@@ -210,6 +210,24 @@ AST::getProgramType() const
   return ast->ProgramTypeSingleton;
 }
 
+PointerType* 
+AST::getPointerTo(const Type* Ty)
+{
+  hlvmAssert(Ty != 0);
+  ASTImpl* ast = const_cast<ASTImpl*>(static_cast<const ASTImpl*>(this));
+  std::string ptr_name = Ty->getName() + "*";
+  Node* n = ast->types.lookup(ptr_name);
+  if (n && llvm::isa<PointerType>(n))
+    return llvm::cast<PointerType>(n);
+
+  // Okay, type doesn't exist already, create it a new
+  PointerType* PT = new PointerType();
+  PT->setElementType(Ty);
+  PT->setName(ptr_name);
+  ast->types.insert(ptr_name,Ty);
+  return PT;
+}
+
 Locator*
 AST::new_Locator(const URI* uri, uint32_t line, uint32_t col, uint32_t line2,
     uint32_t col2)
@@ -227,6 +245,14 @@ AST::new_Locator(const URI* uri, uint32_t line, uint32_t col, uint32_t line2,
     return new URILocator(uri);
   hlvmDeadCode("Invalid Locator construction");
   return 0;
+}
+
+Documentation* 
+AST::new_Documentation(const Locator* loc)
+{
+  Documentation* result = new Documentation();
+  result->setLocator(loc);
+  return result;
 }
 
 Bundle*
@@ -317,6 +343,36 @@ BooleanType*
 AST::new_BooleanType(const std::string& id, const Locator* loc)
 {
   BooleanType* result = new BooleanType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
+BufferType* 
+AST::new_BufferType(const std::string& id, const Locator* loc)
+{
+  BufferType* result = new BufferType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
+TextType* 
+AST::new_TextType( const std::string& id, const Locator* loc)
+{
+  TextType* result = new TextType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
+StreamType* 
+AST::new_StreamType(const std::string& id,  const Locator* loc)
+{
+  StreamType* result = new StreamType();
   result->setLocator(loc);
   result->setName(id);
   static_cast<ASTImpl*>(this)->addType(result);
@@ -507,6 +563,16 @@ AST::new_Variable(const std::string& id, const Type* Ty, const Locator* loc)
   return result;
 }
 
+Argument* 
+AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
+{
+  Argument* result = new Argument();
+  result->setLocator(loc);
+  result->setName(id);
+  result->setElementType(ty);
+  return result;
+}
+
 Function*
 AST::new_Function(const std::string& id, const Locator* loc)
 {
@@ -539,50 +605,135 @@ AST::new_Block(const std::string& label, const Locator* loc)
   return result;
 }
 
-template<class OpClass> 
-OpClass* 
+AutoVarOp*
+AST::new_AutoVarOp(
+    const std::string& name, const Type* Ty, Constant* op1,const Locator* loc)
+{
+  hlvmAssert(Ty != 0 && "AutoVarOp must have a Type!");
+  AutoVarOp* result = new AutoVarOp();
+  result->setType(Ty);
+  result->setLocator(loc);
+  result->setInitializer(op1);
+  result->setName(name);
+  return result;
+}
+
+ReferenceOp* 
+AST::new_ReferenceOp(const Value* V, const Locator*loc)
+{
+  hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
+  hlvmAssert(llvm::isa<Variable>(V) || llvm::isa<AutoVarOp>(V));
+  const Type* elemType = V->getType();
+  PointerType* PT = getPointerTo(elemType);
+  ReferenceOp* result = new ReferenceOp();
+  result->setLocator(loc);
+  result->setReferent(V);
+  result->setType(PT);
+  return result;
+}
+
+template<class OpClass> OpClass* 
+AST::new_NilaryOp(
+  const Type* Ty,    ///< Result type of the operator
+  const Locator* loc ///< The source locator
+)
+{
+  hlvmAssert(Ty != 0 && "Need a type to instantiate a NilaryOp");
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setType(Ty);
+  return result;
+}
+
+template<class OpClass> OpClass* 
 AST::new_NilaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  OpClass* result = new OpClass();
-  result->setLocator(loc);
-  return result;
+  return new_NilaryOp<OpClass>(getPrimitiveType(VoidTypeID),loc);
 }
 
 /// Provide a template function for creating a unary operator
-template<class OpClass>
-OpClass* 
+template<class OpClass> OpClass* 
+AST::new_UnaryOp(
+  const Type* Ty,    ///< Result type of the operator
+  Value* oprnd1,     ///< The first operand
+  const Locator* loc ///< The source locator
+)
+{
+  hlvmAssert(Ty != 0 && "Need a type to instantiate a UnaryOp");
+  hlvmAssert(oprnd1 != 0 && "Invalid Operand for UnaryOp");
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setType(Ty);
+  result->setOperand(0,oprnd1);
+  return result;
+}
+
+template<class OpClass> OpClass* 
 AST::new_UnaryOp(
   Value* oprnd1,     ///< The first operand
   const Locator* loc ///< The source locator
 )
 {
+  return new_UnaryOp<OpClass>(oprnd1->getType(),oprnd1,loc);
+}
+
+/// Provide a template function for creating a binary operator
+template<class OpClass> OpClass* 
+AST::new_BinaryOp(
+  const Type* Ty,    ///< Result type of the operator
+  Value* oprnd1,     ///< The first operand
+  Value* oprnd2,     ///< The second operand
+  const Locator* loc ///< The source locator
+)
+{
+  hlvmAssert(Ty != 0 && "Need a type to instantiate a BinaryOp");
+  hlvmAssert(oprnd1 != 0 && "Invalid Operand for BinaryOp");
+  hlvmAssert(oprnd2 != 0 && "Invalid Operand for BinUnaryOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
+  result->setType(Ty);
   result->setOperand(0,oprnd1);
+  result->setOperand(1,oprnd2);
   return result;
 }
 
 /// Provide a template function for creating a binary operator
-template<class OpClass>
-OpClass* 
+template<class OpClass> OpClass* 
 AST::new_BinaryOp(
   Value* oprnd1,     ///< The first operand
   Value* oprnd2,     ///< The second operand
   const Locator* loc ///< The source locator
 )
 {
-  OpClass* result = new OpClass();
-  result->setLocator(loc);
-  result->setOperand(0,oprnd1);
-  result->setOperand(1,oprnd2);
-  return result;
+  return new_BinaryOp<OpClass>(oprnd1->getType(),oprnd1,oprnd2,loc);
 }
 
 /// Provide a template function for creating a ternary operator
-template<class OpClass>
-OpClass* 
+template<class OpClass> OpClass* 
+AST::new_TernaryOp(
+  const Type* Ty,    ///< Result type of the operator
+  Value* oprnd1,     ///< The first operand
+  Value* oprnd2,     ///< The second operand
+  Value* oprnd3,     ///< The third operand
+  const Locator* loc ///< The source locator
+)
+{
+  hlvmAssert(Ty != 0 && "Need a type to instantiate a TernaryOp");
+  hlvmAssert(oprnd1 != 0 && "Invalid Operand for TernaryOp");
+  hlvmAssert(oprnd2 != 0 && "Invalid Operand for TernUnaryOp");
+  hlvmAssert(oprnd3 != 0 && "Invalid Operand for TernUnaryOp");
+  OpClass* result = new OpClass();
+  result->setLocator(loc);
+  result->setType(Ty);
+  result->setOperand(0,oprnd1);
+  result->setOperand(1,oprnd2);
+  result->setOperand(2,oprnd3);
+  return result;
+}
+
+template<class OpClass> OpClass* 
 AST::new_TernaryOp(
   Value* oprnd1,     ///< The first operand
   Value* oprnd2,     ///< The second operand
@@ -590,155 +741,289 @@ AST::new_TernaryOp(
   const Locator* loc ///< The source locator
 )
 {
+  return new_TernaryOp<OpClass>(oprnd1->getType(),oprnd1,oprnd2,oprnd3,loc);
+}
+
+template<class OpClass> OpClass* 
+AST::new_MultiOp(
+  const Type* Ty,         ///< Result type of the operator
+  const std::vector<Value*>& oprnds,
+  const Locator* loc
+) 
+{
+  hlvmAssert(Ty != 0 && "Need a type to instantiate a MultiOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
-  result->setOperand(0,oprnd1);
-  result->setOperand(1,oprnd2);
-  result->setOperand(2,oprnd3);
+  result->setType(Ty);
+  result->addOperands(oprnds);
   return result;
 }
 
-template<class OpClass>
-OpClass* 
-AST::new_MultiOp(const Locator* loc) 
+template<class OpClass> OpClass* 
+AST::new_MultiOp(
+  const std::vector<Value*>& oprnds,
+  const Locator* loc
+)
 {
-  OpClass* result = new OpClass();
-  result->setLocator(loc);
-  return result;
+  return new_MultiOp<OpClass>(oprnds[0]->getType(),oprnds,loc);
 }
 
 // Arithmetic Operators
 template NegateOp*
+AST::new_UnaryOp<NegateOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
+template NegateOp*
 AST::new_UnaryOp<NegateOp>(Value* op1, const Locator* loc);
+
+template ComplementOp*
+AST::new_UnaryOp<ComplementOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
 template ComplementOp*
 AST::new_UnaryOp<ComplementOp>(Value* op1, const Locator* loc);
+
+template PreIncrOp*
+AST::new_UnaryOp<PreIncrOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
 template PreIncrOp*
 AST::new_UnaryOp<PreIncrOp>(Value* op1, const Locator* loc);
+
+template PreDecrOp*
+AST::new_UnaryOp<PreDecrOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
 template PreDecrOp*
 AST::new_UnaryOp<PreDecrOp>(Value* op1, const Locator* loc);
+
+template PostIncrOp*
+AST::new_UnaryOp<PostIncrOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
 template PostIncrOp*
 AST::new_UnaryOp<PostIncrOp>(Value* op1, const Locator* loc);
+
+template PostDecrOp*
+AST::new_UnaryOp<PostDecrOp>(
+    const Type* Ty, Value* op1, const Locator* loc);
 template PostDecrOp*
 AST::new_UnaryOp<PostDecrOp>(Value* op1, const Locator* loc);
+
+template AddOp*
+AST::new_BinaryOp<AddOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template AddOp*
 AST::new_BinaryOp<AddOp>(Value* op1, Value* op2, const Locator* loc);
+
+template SubtractOp*
+AST::new_BinaryOp<SubtractOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template SubtractOp*
 AST::new_BinaryOp<SubtractOp>(Value* op1, Value* op2, const Locator* loc);
+
+template MultiplyOp*
+AST::new_BinaryOp<MultiplyOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template MultiplyOp*
 AST::new_BinaryOp<MultiplyOp>(Value* op1, Value* op2, const Locator* loc);
+
+template DivideOp*
+AST::new_BinaryOp<DivideOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template DivideOp*
 AST::new_BinaryOp<DivideOp>(Value* op1, Value* op2, const Locator* loc);
+
+template ModuloOp*
+AST::new_BinaryOp<ModuloOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template ModuloOp*
 AST::new_BinaryOp<ModuloOp>(Value* op1, Value* op2, const Locator* loc);
+
+template BAndOp*
+AST::new_BinaryOp<BAndOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template BAndOp*
 AST::new_BinaryOp<BAndOp>(Value* op1, Value* op2, const Locator* loc);
+
+template BOrOp*
+AST::new_BinaryOp<BOrOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template BOrOp*
 AST::new_BinaryOp<BOrOp>(Value* op1, Value* op2, const Locator* loc);
+
+template BXorOp*
+AST::new_BinaryOp<BXorOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template BXorOp*
 AST::new_BinaryOp<BXorOp>(Value* op1, Value* op2, const Locator* loc);
+
+template BNorOp*
+AST::new_BinaryOp<BNorOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template BNorOp*
 AST::new_BinaryOp<BNorOp>(Value* op1, Value* op2, const Locator* loc);
 
 // Boolean Operators
 template NotOp*
+AST::new_UnaryOp<NotOp>(const Type* Ty, Value* op1, const Locator* loc);
+template NotOp*
 AST::new_UnaryOp<NotOp>(Value* op1, const Locator* loc);
+
+template AndOp*
+AST::new_BinaryOp<AndOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template AndOp*
 AST::new_BinaryOp<AndOp>(Value* op1, Value* op2, const Locator* loc);
+
+template OrOp*
+AST::new_BinaryOp<OrOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template OrOp*
 AST::new_BinaryOp<OrOp>(Value* op1, Value* op2, const Locator* loc);
+
+template NorOp*
+AST::new_BinaryOp<NorOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template NorOp*
 AST::new_BinaryOp<NorOp>(Value* op1, Value* op2, const Locator* loc);
+
+template XorOp*
+AST::new_BinaryOp<XorOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template XorOp*
 AST::new_BinaryOp<XorOp>(Value* op1, Value* op2, const Locator* loc);
+
+template LessThanOp*
+AST::new_BinaryOp<LessThanOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template LessThanOp*
 AST::new_BinaryOp<LessThanOp>(Value* op1, Value* op2, const Locator* loc);
+
+template GreaterThanOp* 
+AST::new_BinaryOp<GreaterThanOp>(
+    const Type* Ty, Value* op1, Value* op2,const Locator* loc);
 template GreaterThanOp* 
 AST::new_BinaryOp<GreaterThanOp>(Value* op1, Value* op2,const Locator* loc);
+
+template LessEqualOp* 
+AST::new_BinaryOp<LessEqualOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template LessEqualOp* 
 AST::new_BinaryOp<LessEqualOp>(Value* op1, Value* op2, const Locator* loc);
+
+template GreaterEqualOp* 
+AST::new_BinaryOp<GreaterEqualOp>(
+    const Type* Ty, Value* op1,Value* op2, const Locator* loc);
 template GreaterEqualOp* 
 AST::new_BinaryOp<GreaterEqualOp>(Value* op1,Value* op2, const Locator* loc);
+
+template EqualityOp*
+AST::new_BinaryOp<EqualityOp>(
+    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
 template EqualityOp*
 AST::new_BinaryOp<EqualityOp>(Value* op1, Value* op2, const Locator* loc);
+
+template InequalityOp*
+AST::new_BinaryOp<InequalityOp>(
+    const Type* Ty, Value* op1,Value* op2,const Locator* loc);
 template InequalityOp*
 AST::new_BinaryOp<InequalityOp>(Value* op1,Value* op2,const Locator* loc);
 
 // Control Flow Operators
 template NoOperator* 
+AST::new_NilaryOp<NoOperator>(const Type* Ty, const Locator*loc);
+template NoOperator* 
 AST::new_NilaryOp<NoOperator>(const Locator*loc);
+
 template SelectOp*
-AST::new_TernaryOp<SelectOp>(Value*op1,Value*op2,Value*op3,const Locator* loc);
+AST::new_TernaryOp<SelectOp>(
+    const Type* Ty, Value*op1,Value*op2,Value*op3,const Locator* loc);
+template<> SelectOp*
+AST::new_TernaryOp<SelectOp>(Value*op1,Value*op2,Value*op3,const Locator* loc)
+{
+  return new_TernaryOp<SelectOp>(op2->getType(),op1,op2,op3,loc);
+}
+
 template LoopOp*
-AST::new_TernaryOp<LoopOp>(Value*op1,Value*op2,Value*op3,const Locator* loc);
+AST::new_TernaryOp<LoopOp>(const Type* Ty, Value*op1,Value*op2,Value*op3,const Locator* loc);
+
+template<> LoopOp*
+AST::new_TernaryOp<LoopOp>(Value*op1,Value*op2,Value*op3,const Locator* loc)
+{
+  const Type* Ty = op2->getType();
+  if (llvm::isa<Block>(Ty))
+    Ty = llvm::cast<Block>(op2)->getResultType();
+  return new_TernaryOp<LoopOp>(Ty,op1,op2,op3,loc);
+}
+
 template SwitchOp*
-AST::new_MultiOp<SwitchOp>(const Locator* loc);
+AST::new_MultiOp<SwitchOp>(
+    const Type* Ty, const std::vector<Value*>& ops, const Locator* loc);
+template<> SwitchOp*
+AST::new_MultiOp<SwitchOp>(const std::vector<Value*>& ops, const Locator* loc)
+{
+  hlvmAssert(ops.size() >= 2 && "Too few operands for SwitchOp");
+  const Type* Ty = ops[1]->getType();
+  if (llvm::isa<Block>(Ty))
+    Ty = llvm::cast<Block>(ops[1])->getResultType();
+  return new_MultiOp<SwitchOp>(Ty, ops, loc);
+}
+
+template BreakOp* 
+AST::new_NilaryOp<BreakOp>(const Type*Ty, const Locator*loc);
 template BreakOp* 
 AST::new_NilaryOp<BreakOp>(const Locator*loc);
+
+template ContinueOp* 
+AST::new_NilaryOp<ContinueOp>(const Type* Ty, const Locator*loc);
 template ContinueOp* 
 AST::new_NilaryOp<ContinueOp>(const Locator*loc);
+
+template ReturnOp* 
+AST::new_UnaryOp<ReturnOp>(const Type*Ty, Value*op1,const Locator*loc);
 template ReturnOp* 
 AST::new_UnaryOp<ReturnOp>(Value*op1,const Locator*loc);
 
 // Memory Operators
 template StoreOp*  
-AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc);
+AST::new_BinaryOp<StoreOp>(const Type*, Value*op1,Value*op2,const Locator*loc);
+template<> StoreOp*  
+AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc)
+{
+  return new_BinaryOp<StoreOp>(getPrimitiveType(VoidTypeID),op1,op2,loc);
+}
+
 template LoadOp*   
-AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc);
-template AutoVarOp*
-AST::new_UnaryOp<AutoVarOp>(Value*op1,const Locator* loc);
-template ReferenceOp* 
-AST::new_NilaryOp<ReferenceOp>(const Locator*loc);
+AST::new_UnaryOp<LoadOp>(const Type* Ty, Value*op1,const Locator*loc);
+template<> LoadOp*   
+AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc)
+{
+  hlvmAssert(llvm::isa<PointerType>(op1->getType()) && 
+      "LoadOp Requires PointerType operand");
+  const Type* Ty = llvm::cast<PointerType>(op1->getType())->getElementType();
+  return new_UnaryOp<LoadOp>(Ty, op1, loc);
+}
+
 // Input/Output Operators
 template OpenOp* 
-AST::new_UnaryOp<OpenOp>(Value*op1,const Locator*loc);
+AST::new_UnaryOp<OpenOp>(const Type* Ty, Value*op1,const Locator*loc);
+template<> OpenOp* 
+AST::new_UnaryOp<OpenOp>(Value*op1,const Locator*loc)
+{
+  return new_UnaryOp<OpenOp>(getPrimitiveType(StreamTypeID),op1,loc);
+}
+
 template WriteOp* 
-AST::new_BinaryOp<WriteOp>(Value*op1,Value*op2,const Locator*loc);
+AST::new_BinaryOp<WriteOp>(
+  const Type* Ty, Value*op1,Value*op2, const Locator*loc);
+template<> WriteOp* 
+AST::new_BinaryOp<WriteOp>(Value*op1,Value*op2,const Locator*loc)
+{
+  return new_BinaryOp<WriteOp>(getPrimitiveType(UInt64TypeID),op1,op2,loc);
+}
+
 template CloseOp* 
-AST::new_UnaryOp<CloseOp>(Value*op1,const Locator*loc);
-
-Documentation* 
-AST::new_Documentation(const Locator* loc)
+AST::new_UnaryOp<CloseOp>(const Type* Ty, Value*op1,const Locator*loc);
+template<> CloseOp* 
+AST::new_UnaryOp<CloseOp>(Value*op1,const Locator*loc)
 {
-  Documentation* result = new Documentation();
-  result->setLocator(loc);
-  return result;
-}
-
-Argument* 
-AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
-{
-  Argument* result = new Argument();
-  result->setLocator(loc);
-  result->setName(id);
-  result->setElementType(ty);
-  return result;
-}
-
-BufferType* 
-AST::new_BufferType( const std::string& id, const Locator* loc)
-{
-  BufferType* result = new BufferType();
-  result->setName(id);
-  result->setLocator(loc);
-  return result;
-}
-
-StreamType* 
-AST::new_StreamType( const std::string& id, const Locator* loc)
-{
-  StreamType* result = new StreamType();
-  result->setName(id);
-  result->setLocator(loc);
-  return result;
-}
-
-TextType*
-AST::new_TextType(const std::string& id, const Locator* loc)
-{
-  TextType* result = new TextType();
-  result->setName(id);
-  result->setLocator(loc);
-  return result;
+  return new_UnaryOp<CloseOp>(getPrimitiveType(VoidTypeID),op1,loc);
 }
 
 Type* 
@@ -870,16 +1155,19 @@ AST::getPrimitiveType(NodeIDs pid)
     case TextTypeID:
       if (!ast->TextTypeSingleton) {
         ast->TextTypeSingleton = new TextType();
+        ast->TextTypeSingleton->setName("text");
       }
       return ast->TextTypeSingleton;
     case StreamTypeID:
       if (!ast->StreamTypeSingleton) {
         ast->StreamTypeSingleton = new StreamType();
+        ast->StreamTypeSingleton->setName("stream");
       }
       return ast->StreamTypeSingleton;
     case BufferTypeID:
       if (!ast->BufferTypeSingleton) {
         ast->BufferTypeSingleton = new BufferType();
+        ast->BufferTypeSingleton->setName("buffer");
       }
       return ast->BufferTypeSingleton;
     default:

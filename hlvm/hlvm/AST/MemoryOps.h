@@ -193,7 +193,7 @@ class AutoVarOp : public UnaryOperator
   /// @name Accessors
   /// @{
   public:
-    const std::string& getName() { return name; }
+    const std::string& getName() const { return name; }
     Constant* getInitializer() { return static_cast<Constant*>(getOperand());}
     static inline bool classof(const AutoVarOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(AutoVarOpID); }
@@ -237,7 +237,7 @@ class ReferenceOp : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
-    Value* getReferent() const { return referent; }
+    const Value* getReferent() const { return referent; }
     static inline bool classof(const ReferenceOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ReferenceOpID); }
 
@@ -245,22 +245,22 @@ class ReferenceOp : public NilaryOperator
   /// @name Mutators
   /// @{
   public:
-    void setReferent(Value* ref) { referent = ref; }
+    void setReferent(const Value* ref) { referent = ref; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    Value* referent;
+    const Value* referent;
   /// @}
   friend class AST;
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
 /// for indexing into a ContainerType.  The Index operator can have many
-//operands but in all cases requires at least two.  The first operand must
-//resolve to the address of a memory location, such as returned by the
-//ReferenceOp. The second and subsequent operands must all be of integer type.
+/// operands but in all cases requires at least two.  The first operand must
+/// resolve to the address of a memory location, such as returned by the
+/// ReferenceOp. The second and subsequent operands must all be of integer type.
 /// They specify which elements of the memory object should be indexed. This
 /// operator is the means by which the elements of memory objects of type 
 /// PointerType, ArrayType, VectorType, StructureType, and ContinuationType can

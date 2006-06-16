@@ -58,12 +58,8 @@ class ConstantReal;
 class ConstantText;
 class ConstantZero;
 class Pool;
-class ReturnOp;
-class StoreOp;
-class LoadOp;
-class OpenOp;
-class CloseOp;
-class WriteOp;
+class AutoVarOp;
+class ReferenceOp;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It forms the
 /// root node of a multi-way tree of other nodes. As such, its parent node is
@@ -112,12 +108,20 @@ class AST : public Node
   /// @name Lookup
   /// @{
   public:
+    /// Get one of the primitive types directly by its identifier
+    Type* getPrimitiveType(NodeIDs kind);
+
+    /// Resolve a type name into a Type and allow for forward referencing.
     Type* resolveType(const std::string& name);
+
+    /// Get a standard pointer type to the element type Ty.
+    PointerType* getPointerTo(const Type* Ty);
 
   /// @}
   /// @name Iterators
   /// @{
   public:
+    /// Bundle Iteration
     iterator           begin()       { return bundles.begin(); }
     const_iterator     begin() const { return bundles.begin(); }
     iterator           end  ()       { return bundles.end(); }
@@ -133,9 +137,6 @@ class AST : public Node
   /// @name Factories
   /// @{
   public:
-    /// Get one of the primitive types directly by its identifier
-    Type* getPrimitiveType(NodeIDs kind);
-
     /// Create a new Locator object. Locators indicate where in the source
     /// a particular AST node is located. Locators can be very general (just
     /// the URI) or very specific (the exact range of bytes in the file). The
@@ -458,6 +459,21 @@ class AST : public Node
       const Locator* loc = 0 ///< The source locator
     );
 
+    /// Create a new AutoVarOp. This one is a little unusual because it
+    /// requires the user to know the type. Other operators can deduce the
+    /// type from the operands.
+    AutoVarOp* new_AutoVarOp(
+      const std::string& name, ///< Name of the autovar in its scope
+      const Type* Ty,          ///< Type of the autovar
+      Constant* op1,           ///< Initializer for the autovar
+      const Locator* loc       ///< The source locator
+    );
+
+    ReferenceOp* new_ReferenceOp(
+      const Value* V,       ///< The value being referred to
+      const Locator*loc = 0 ///< The source locator
+    );
+
     /// Provide a template function for creating a nilary operator
     template<class OpClass>
     OpClass* new_NilaryOp(
@@ -488,45 +504,55 @@ class AST : public Node
       const Locator* loc = 0 ///< The source locator
     );
 
+    /// Provide a template function for creating a multi-operand operator
     template<class OpClass>
     OpClass* new_MultiOp(
+      const std::vector<Value*>& o, ///< The list of operands
+      const Locator* loc = 0
+    );
+  protected:
+    /// Provide a template function for creating a nilary operator
+    template<class OpClass>
+    OpClass* new_NilaryOp(
+      const Type* Ty,        ///< Result type of the operator
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Create a new ReturnOp node. The ReturnOp is an operator that returns
-    /// immediately from the enclosing function, possibly with a result value.
-    ReturnOp* new_ReturnOp(
-      Value* val,            ///< The value to return
+    /// Provide a template function for creating a unary operator
+    template<class OpClass>
+    OpClass* new_UnaryOp(
+      const Type* Ty,        ///< Result type of the operator
+      Value* oprnd1,         ///< The first operand
       const Locator* loc = 0 ///< The source locator
     );
-    /// Create a new StoreOp node.
-    StoreOp* new_StoreOp(
-      Value* var,            ///< The variable whose value is assigned
-      Value* val,            ///< The value to assign to the variable
+
+    /// Provide a template function for creating a binary operator
+    template<class OpClass>
+    OpClass* new_BinaryOp(
+      const Type* Ty,        ///< Result type of the operator
+      Value* oprnd1,         ///< The first operand
+      Value* oprnd2,         ///< The second operand
       const Locator* loc = 0 ///< The source locator
     );
-    /// Create a new LoadOp node.
-    LoadOp* new_LoadOp(
-      Value* var,            ///< The variable from which the value is loaded
+
+    /// Provide a template function for creating a ternary operator
+    template<class OpClass>
+    OpClass* new_TernaryOp(
+      const Type* Ty,        ///< Result type of the operator
+      Value* oprnd1,         ///< The first operand
+      Value* oprnd2,         ///< The second operand
+      Value* oprnd3,         ///< The third operand
       const Locator* loc = 0 ///< The source locator
     );
-    /// Create a new OpenOp node.
-    OpenOp* new_OpenOp(
-      Value* uri,            ///< The URI saying what to open and how
-      const Locator* loc = 0 ///< The source locator
+
+    /// Provide a template function for creating a multi-operand operator
+    template<class OpClass>
+    OpClass* new_MultiOp(
+      const Type* Ty,         ///< Result type of the operator
+      const std::vector<Value*>& o, ///< The list of operands
+      const Locator* loc = 0
     );
-    /// Create a new WriteOp node.
-    WriteOp* new_WriteOp(
-      Value* strm,           ///< The stream to write
-      Value* buffer,         ///< The buffer that should be written
-      Value* len,            ///< The length of the buffer
-      const Locator* loc = 0 ///< The source locator
-    );
-    /// Create a new CloseOp node.
-    CloseOp* new_CloseOp(
-      const Value* strm,     ///< The stream to close
-      const Locator* loc = 0 ///< The source locator
-    );
+
 
   /// @}
   /// @name Data

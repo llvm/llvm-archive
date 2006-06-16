@@ -53,7 +53,7 @@ class UniformContainerType : public Type
   /// @name Accessors
   /// @{
   public:
-    Type* getElementType() const { return type; }
+    const Type* getElementType() const { return type; }
     virtual const char* getPrimitiveName() const; // asserting override
     /// Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const UniformContainerType*) { return true; }
@@ -65,7 +65,7 @@ class UniformContainerType : public Type
   /// @name Mutators
   /// @{
   public:
-    void setElementType(Type* t) { type = t; }
+    void setElementType(const Type* t) { type = t; }
 
   protected:
     virtual void insertChild(Node* n);
@@ -75,7 +75,7 @@ class UniformContainerType : public Type
   /// @name Data
   /// @{
   protected:
-    Type* type; ///< The contained types
+    const Type* type; ///< The contained types
   /// @}
 };
 

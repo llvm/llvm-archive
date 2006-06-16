@@ -10,47 +10,89 @@
           <false/>
         </autovar>
         <not>
-          <ref id="v1"/>
+          <load>
+            <ref id="v1"/>
+          </load>
         </not>
         <and>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </and>
         <or>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </or>
         <nor>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </nor>
         <xor>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </xor>
         <eq>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </eq>
         <ne>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </ne>
         <gt>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </gt>
         <lt>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </lt>
         <ge>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </ge>
         <le>
-          <ref id="v1"/>
-          <ref id="v2"/>
+          <load>
+            <ref id="v1"/>
+          </load>
+          <load>
+            <ref id="v2"/>
+          </load>
         </le>
       </block>
     </program>

@@ -30,7 +30,6 @@
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Base/Config.h>
-#include <llvm/System/Signals.h>
 #include <apr-1/apr_general.h>
 #include <memory>
 #include <new>
@@ -111,11 +110,6 @@ initialize(int& /*argc*/, char** /*argv*/)
       // Initialize APR
       if (APR_SUCCESS != apr_initialize())
         hlvmAssert(!"Can't initialize APR");
-
-#ifdef XPS_DEBUG
-      // Make sure we print stack trace if we get bad signals
-      llvm::sys::PrintStackTraceOnErrorSignal();
-#endif
 
     }
     catch ( ... )

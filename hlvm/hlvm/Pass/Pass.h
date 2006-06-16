@@ -72,7 +72,7 @@ class Pass
   /// @name Constructors
   /// @{
   protected:
-    Pass(int i, TraversalKinds m) : interest_(i), mode_(m) {}
+    Pass(int i, TraversalKinds m) : interest_(i), mode_(m), passed_(true) {}
   public:
     virtual ~Pass();
 
@@ -104,6 +104,7 @@ class Pass
   public:
     int mode()     const { return mode_; }
     int interest() const { return interest_; }
+    int passed()   const { return passed_; }
 
   /// @}
   /// @name Data
@@ -111,6 +112,8 @@ class Pass
   private:
     int interest_;
     TraversalKinds mode_;
+  protected:
+    bool passed_;
   /// @}
 };
 
@@ -125,5 +128,6 @@ class PassManager
     virtual void runOn(AST* tree) = 0;
 };
 
+bool validate(AST* tree);
 } // hlvm
 #endif

@@ -51,16 +51,16 @@ URILocator::equals(const Locator& that) const
 }
 
 void 
-URILocator::getReference(std::string& ref) const
+URILocator::getLocation(std::string& ref) const
 {
   hlvmAssert(uri != 0);
   ref = uri->as_string();
 }
 
 void 
-LineLocator::getReference(std::string& ref) const
+LineLocator::getLocation(std::string& ref) const
 {
-  URILocator::getReference(ref);
+  URILocator::getLocation(ref);
   ref += ":" + llvm::utostr(line);
 }
 
@@ -75,9 +75,9 @@ LineLocator::equals(const Locator& that) const
   return false;
 }
 void
-LineColumnLocator::getReference(std::string& ref) const
+LineColumnLocator::getLocation(std::string& ref) const
 {
-  LineLocator::getReference(ref);
+  LineLocator::getLocation(ref);
   ref += ":" + llvm::utostr(col);
 }
 
@@ -93,9 +93,9 @@ LineColumnLocator::equals(const Locator& that) const
 }
 
 void
-RangeLocator::getReference(std::string& ref) const
+RangeLocator::getLocation(std::string& ref) const
 {
-  URILocator::getReference(ref);
+  URILocator::getLocation(ref);
   ref += "(" + llvm::utostr(line) + ":" + llvm::utostr(col) + "," 
              + llvm::utostr(line2) + ":" + llvm::utostr(col2) + ")"; 
 }

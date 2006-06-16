@@ -47,7 +47,7 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
-static cl::opt<bool> Validate("validate", 
+static cl::opt<bool> Validate("validate", cl::init(true),
   cl::desc("Validate input before generating code"));
 
 enum GenerationOptions {

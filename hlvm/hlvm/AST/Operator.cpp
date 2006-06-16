@@ -51,7 +51,7 @@ NilaryOperator::getOperand(unsigned idx) const
 }
 
 size_t  
-NilaryOperator::numOperands() const
+NilaryOperator::getNumOperands() const
 {
   return 0;
 }
@@ -86,7 +86,7 @@ UnaryOperator::getOperand(unsigned idx) const
 }
 
 size_t  
-UnaryOperator::numOperands() const
+UnaryOperator::getNumOperands() const
 {
   return op1 != 0;
 }
@@ -131,7 +131,7 @@ BinaryOperator::getOperand(unsigned idx) const
 }
 
 size_t  
-BinaryOperator::numOperands() const
+BinaryOperator::getNumOperands() const
 {
   return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0);
 }
@@ -180,7 +180,7 @@ TernaryOperator::getOperand(unsigned idx) const
 }
 
 size_t  
-TernaryOperator::numOperands() const
+TernaryOperator::getNumOperands() const
 {
   return (ops[0] ? 1 : 0) + (ops[1] ? 1 : 0) + (ops[2] ? 1 : 0);
 }
@@ -233,7 +233,7 @@ MultiOperator::getOperand(unsigned idx) const
 }
 
 size_t  
-MultiOperator::numOperands() const
+MultiOperator::getNumOperands() const
 {
   return ops.size();
 }

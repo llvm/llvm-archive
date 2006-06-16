@@ -121,7 +121,7 @@ inline void
 PassManagerImpl::runOn(Operator* op)
 {
   runPreOrder(op);
-  size_t limit = op->numOperands();
+  size_t limit = op->getNumOperands();
   for (size_t i = 0; i < limit; ++i) {
     runOn(op->getOperand(i));
   }

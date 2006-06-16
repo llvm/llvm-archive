@@ -3,7 +3,7 @@
   <bundle id="helloworld">
     <program id="helloworld">
       <block>
-        <autovar id="stdout" type="hlvm_stream">
+        <autovar id="stdout" type="stream">
           <zero/>
         </autovar>
         <store>

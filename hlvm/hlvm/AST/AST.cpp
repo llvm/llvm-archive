@@ -596,11 +596,10 @@ AST::new_Program(const std::string& id, const Locator* loc)
   return result;
 }
 
-Block*
-AST::new_Block(const std::string& label, const Locator* loc)
+Block* 
+AST::new_Block( const Locator* loc)
 {
   Block* result = new Block();
-  result->setLabel(label);
   result->setLocator(loc);
   return result;
 }
@@ -926,6 +925,12 @@ template InequalityOp*
 AST::new_BinaryOp<InequalityOp>(Value* op1,Value* op2,const Locator* loc);
 
 // Control Flow Operators
+template Block* 
+AST::new_MultiOp<Block>(
+    const Type* Ty, const std::vector<Value*>& ops, const Locator*loc);
+template Block* 
+AST::new_MultiOp<Block>(const std::vector<Value*>& ops, const Locator*loc);
+
 template NoOperator* 
 AST::new_NilaryOp<NoOperator>(const Type* Ty, const Locator*loc);
 template NoOperator* 

@@ -185,7 +185,7 @@ void PassManagerImpl::runOn(AST* tree)
 {
   // Call the initializers
   std::vector<Pass*>::iterator PI = all.begin(), PE = all.end();
-  while (PI != PE) { (*PI)->handleInitialize(); ++PI; }
+  while (PI != PE) { (*PI)->handleInitialize(tree); ++PI; }
 
   // Just a little optimization for empty pass managers
   if (pre.empty() && post.empty())
@@ -207,7 +207,7 @@ Pass::~Pass()
 }
 
 void 
-Pass::handleInitialize()
+Pass::handleInitialize(AST* tree)
 {
 }
 

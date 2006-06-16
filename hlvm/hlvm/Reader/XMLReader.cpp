@@ -774,7 +774,7 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
         referent = av;
         break;
       }
-    if (llvm::isa<Block>(blk->getParent()))
+    if (blk->getParent() && llvm::isa<Block>(blk->getParent()))
       blk = llvm::cast<Block>(blk->getParent());
     else
       blk = 0;
@@ -869,18 +869,18 @@ template<> Block*
 XMLReaderImpl::parse<Block>(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name) == TKN_block && "Expecting block element");
+  hlvmAssert(func != 0);
   Locator* loc = getLocator(cur);
   const char* label = getAttribute(cur, "label",false);
-  if (label)
-    block = ast->new_Block(label,loc);
-  else
-    block = ast->new_Block("",loc);
-  hlvmAssert(func != 0);
-  block->setParent(func);
   xmlNodePtr child = cur->children;
+  MultiOperator::OprndList ops;
+  block = ast->new_Block(loc);
+  block->setParent(func);
+  if (label)
+    block->setLabel(label);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {
-    Value* op = parseOperator(child);
+    Operator* op = parseOperator(child);
     block->addOperand(op);
     child = child->next;
   }
@@ -1165,29 +1165,47 @@ XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
       v = parseConstant(cur,0,tkn);
       break;
     case TKN_noop:
-    case TKN_select:
-    case TKN_switch:
-    case TKN_loop:
-    case TKN_break:
-    case TKN_continue:
-    case TKN_ret:
     case TKN_neg:
-    case TKN_cmpl:
-    case TKN_preinc:
-    case TKN_predec:
+    case TKN_cmpl:   
+    case TKN_preinc: 
+    case TKN_predec: 
     case TKN_postinc:
     case TKN_postdec:
-    case TKN_open:
-    case TKN_write:
-    case TKN_close:
-    case TKN_store:
-    case TKN_load:
-    case TKN_ref:
-    case TKN_autovar:
+    case TKN_add:    
+    case TKN_sub:   
+    case TKN_mul:  
+    case TKN_div: 
+    case TKN_mod:
+    case TKN_band:       
+    case TKN_bor:       
+    case TKN_bxor:     
+    case TKN_bnor:    
+    case TKN_not:   
+    case TKN_and:  
+    case TKN_or:  
+    case TKN_nor:
+    case TKN_xor:
+    case TKN_eq: 
+    case TKN_ne: 
+    case TKN_lt: 
+    case TKN_gt: 
+    case TKN_ge:     
+    case TKN_le:      
+    case TKN_select: 
+    case TKN_switch: 
+    case TKN_loop:   
+    case TKN_break:  
+    case TKN_continue:
+    case TKN_ret:    
+    case TKN_store:  
+    case TKN_load:   
+    case TKN_open:   
+    case TKN_write:  
+    case TKN_close:  
+    case TKN_ref:    
+    case TKN_autovar: 
+    case TKN_block:  
       v = parseOperator(cur,tkn);
-      break;
-    case TKN_block: 
-      v = parse<Block>(cur);
       break;
     case TKN_program:
       v = parse<Program>(cur);

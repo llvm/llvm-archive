@@ -80,19 +80,25 @@ Bundle::removeChild(Node* kid)
 Type*  
 Bundle::type_find(const std::string& name) const
 {
-  return llvm::cast<Type>(types.lookup(name));
+  if (Node* result = types.lookup(name))
+    return llvm::cast<Type>(result);
+  return 0;
 }
 
 Function*  
 Bundle::func_find(const std::string& name) const
 {
-  return llvm::cast<Function>(funcs.lookup(name));
+  if (Node* result = funcs.lookup(name))
+    return llvm::cast<Function>(result);
+  return 0;
 }
 
 Variable*  
 Bundle::var_find(const std::string& name) const
 {
-  return llvm::cast<Variable>(vars.lookup(name));
+  if (Node* result = vars.lookup(name))
+    return llvm::cast<Variable>(result);
+  return 0;
 }
 
 Import::~Import()

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/complement.hlx">
+  <bundle id="complement">
+    <program id="complement">
+      <block>
+        <autovar id="v" type="s32"><zero/></autovar>
+        <ret>
+          <cmpl><cmpl><load><ref id="v"/></load></cmpl></cmpl>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

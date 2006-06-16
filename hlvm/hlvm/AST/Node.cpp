@@ -65,14 +65,14 @@ Node::removeChild(Node* child)
 void 
 Node::setParent(Node* p)
 {
-  if (p == 0)
+  if (parent != 0)
   {
     parent->removeChild(this);
   }
   parent = p;
-  if (p != 0)
+  if (parent != 0)
   {
-    p->insertChild(this);
+    parent->insertChild(this);
   }
 }
 

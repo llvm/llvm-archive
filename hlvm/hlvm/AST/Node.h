@@ -317,10 +317,12 @@ class Node
       return id >= FirstTypeID && 
              id <= LastTypeID; }
 
+    inline bool isIntegerType() const {
+      return (id >= UInt8TypeID && id <= SInt128TypeID) || id == IntegerTypeID;}
+
     inline bool isIntegralType()  const { 
-      return (id >= UInt8TypeID && id <= UInt128TypeID) ||
-             (id == IntegerTypeID) || (id == RangeTypeID) || 
-             (id == EnumerationTypeID); }
+      return isIntegerType() || (id == RangeTypeID) || 
+        (id == EnumerationTypeID) || (id == BooleanTypeID);  }
 
     inline bool isRealType() const {
       return (id >= Float32TypeID && id <= Float128TypeID) ||

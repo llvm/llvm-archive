@@ -86,7 +86,7 @@ class Pass
   public:
     /// Handle initialization. This is called before any other handle method
     /// is called. Default implementation does nothing
-    virtual void handleInitialize();
+    virtual void handleInitialize(AST* tree);
 
     /// Handle any kind of node. Subclasses should override this; the default
     /// implementation does nothing. This handler is only called if the

@@ -106,7 +106,7 @@ class Function : public LinkageItem
   public:
     Function(
       NodeIDs id = FunctionID
-    ) : LinkageItem(id), block(0), signature(0) {}
+    ) : LinkageItem(id), block(0) {}
     virtual ~Function();
 
   /// @}
@@ -114,7 +114,7 @@ class Function : public LinkageItem
   /// @{
   public:
     Block* getBlock() const { return block; }
-    SignatureType* getSignature() { return signature; }
+    const SignatureType* getSignature() const;
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }
 
@@ -124,7 +124,7 @@ class Function : public LinkageItem
   public:
     virtual void insertChild(Node* kid);
     virtual void removeChild(Node* kid);
-    void setSignature(SignatureType* sig) { signature = sig; }
+    void setSignature(SignatureType* sig) { type = sig; }
     void setBlock(Block* blk) { blk->setParent(this); }
 
   /// @}
@@ -132,7 +132,6 @@ class Function : public LinkageItem
   /// @{
   protected:
     Block * block;                   ///< The code block to be executed
-    SignatureType* signature;        ///< The function signature.
   /// @}
   friend class AST;
 };

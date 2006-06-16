@@ -29,9 +29,8 @@
 
 #include <hlvm/Pass/Pass.h>
 #include <hlvm/Base/Assert.h>
+#include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
-#include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/RuntimeType.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
@@ -49,36 +48,29 @@ using namespace llvm;
 namespace {
 class ValidateImpl : public Pass
 {
+  AST* ast;
   public:
-    ValidateImpl() : Pass(0,Pass::PostOrderTraversal) {}
+    ValidateImpl() : Pass(0,Pass::PostOrderTraversal), ast(0) {}
+    virtual void handleInitialize(AST* tree) { ast = tree; }
     virtual void handle(Node* b,Pass::TraversalKinds k);
     inline void error(Node*n, const char* msg);
-    inline void validateName(Node*n, const std::string& name);
     inline bool checkNonPointer(Value*n);
-    inline bool checkNumOperands(Operator*n,unsigned num, bool exact = true);
+    inline bool checkNode(Node*);
+    inline bool checkType(Type*,NodeIDs id);
+    inline bool checkValue(Value*,NodeIDs id);
+    inline bool checkConstant(Constant*,NodeIDs id);
+    inline bool checkOperator(
+        Operator*,NodeIDs id,unsigned numOps, bool exact = true);
+    inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
+    inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
+    inline bool checkLinkageItem(LinkageItem* LI, NodeIDs id);
 
     template <class NodeClass>
     inline void validate(NodeClass* C);
 };
 
 bool
-ValidateImpl::checkNumOperands(Operator*n, unsigned num, bool exact)
-{
-  if (n->getType() == 0) {
-    error(n,"Operator has no type");
-    return false;
-  } else if (num > n->getNumOperands()) {
-    error(n,"Too few operands");
-    return false;
-  } else if (exact && num != n->getNumOperands()) {
-    error(n, "Too many operands");
-    return false;
-  }
-  return true;
-}
-
-bool
-ValidateImpl::checkNonPointer(Value*n)
+ValidateImpl::checkNonPointer(Value* n)
 {
   const Type* Ty = n->getType();
   if (Ty) {
@@ -88,6 +80,131 @@ ValidateImpl::checkNonPointer(Value*n)
     }
   }
   return true;
+}
+
+bool
+ValidateImpl::checkNode(Node* n)
+{
+  bool result = true;
+  if (n->getParent() == 0) {
+    error(n,"Node has no parent");
+    result = false;
+  }
+  if (n->getID() < FirstNodeID || n->getID() > LastNodeID) {
+    error(n,"Node ID out of range");
+    result = false;
+  }
+  return result;;
+}
+
+bool
+ValidateImpl::checkType(Type* t,NodeIDs id)
+{
+  bool result = checkNode(t);
+  if (t->getID() != id) {
+    error(t,"Unexpected NodeID for Type");
+    result = false;
+  } else if (!t->isType()) {
+    error(t,"Bad ID for a Type");
+    result = false;
+  }
+  if (t->getName().empty()) {
+    error(t, "Empty type name");
+    result = false;
+  }
+  return result;
+}
+
+bool
+ValidateImpl::checkValue(Value* v, NodeIDs id)
+{
+  bool result = checkNode(v);
+  if (v->getID() != id) {
+    error(v,"Unexpected NodeID for Value");
+    result = false;
+  } else if (!v->isValue()) {
+    error(v,"Bad ID for a Value");
+    result = false;
+  }
+  if (v->getType() == 0) {
+    error(v,"Value with no type");
+    result = false;
+  }
+  return result;
+}
+
+bool
+ValidateImpl::checkConstant(Constant* C,NodeIDs id)
+{
+  return checkValue(C,id);
+}
+
+bool
+ValidateImpl::checkOperator(Operator*n, NodeIDs id, unsigned num, bool exact)
+{
+  bool result = checkValue(n,id);
+  if (result)
+    if (num > n->getNumOperands()) {
+      error(n,"Too few operands");
+      result = false;
+    } else if (exact && num != n->getNumOperands()) {
+      error(n, "Too many operands");
+      result = false;
+    }
+  return result;
+}
+
+bool 
+ValidateImpl::checkUniformContainer(UniformContainerType* n, NodeIDs id)
+{
+  bool result = true;
+  if (!checkType(n,id))
+    result = false;
+  else if (n->getElementType() == 0) {
+    error(n,"UniformContainerType without element type");
+    result = false;
+  } else if (n->getElementType() == n) {
+    error(n,"Self-referential UniformContainerType");
+    result = false;
+  } else if (n->getName() == n->getElementType()->getName()) {
+    error(n,"UniformCOontainerType has same name as its element type");
+    result = false;
+  }
+  return result;
+}
+
+bool 
+ValidateImpl::checkDisparateContainer(DisparateContainerType* n, NodeIDs id)
+{
+  bool result = true;
+  if (!checkType(n,id))
+    result = false;
+  else if (n->size() == 0) {
+    error(n,"DisparateContainerType without elements");
+    result = false;
+  } else
+    for (DisparateContainerType::iterator I = n->begin(), E = n->end(); 
+         I != E; ++I)
+      result &= checkUniformContainer(*I, AliasTypeID);
+  return result;
+}
+
+bool 
+ValidateImpl::checkLinkageItem(LinkageItem* LI, NodeIDs id)
+{
+  bool result = checkConstant(LI,id);
+  if (result) {
+    if (LI->getLinkageKind() < ExternalLinkage || 
+        LI->getLinkageKind() > InternalLinkage) {
+      error(LI,"Invalid LinkageKind for LinkageItem");
+      result = false;
+    }
+    if (LI->getName().length() == 0)  {
+      error(LI,"Zero length name for LinkageItem");
+      result = false;
+    }
+  }
+  return result;
 }
 
 void 
@@ -107,187 +224,246 @@ ValidateImpl::error(Node* n, const char* msg)
   passed_ = false;
 }
 
-inline void
-ValidateImpl::validateName(Node*n, const std::string& name)
-{
-  if (name.empty()) {
-    error(n,"Empty Name");
-  }
-}
-
 template<> inline void
 ValidateImpl::validate(VoidType* n)
 {
+  checkType(n,VoidTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(AnyType* n)
 {
+  checkType(n,AnyTypeID); 
 }
 
 template<> inline void
 ValidateImpl::validate(BooleanType* n)
 {
+  checkType(n,BooleanTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(CharacterType* n)
 {
+  checkType(n,CharacterTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(OctetType* n)
 {
+  checkType(n,OctetTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(IntegerType* n)
 {
-  validateName(n,n->getName());
-  if (n->getBits() == 0) {
-    error(n,"Invalid number of bits");
-  }
+  if (checkNode(n))
+    if (!n->isIntegerType())
+      error(n,"Bad ID for IntegerType");
+    else if (n->getBits() == 0)
+      error(n,"Invalid number of bits");
 }
 
 template<> inline void
 ValidateImpl::validate(RangeType* n)
 {
+  if (checkType(n,RangeTypeID))
+    if (n->getMin() > n->getMax())
+      error(n,"RangeType has negative range");
 }
 
 template<> inline void
 ValidateImpl::validate(EnumerationType* n)
 {
+  if (checkType(n,EnumerationTypeID))
+    for (EnumerationType::iterator I = n->begin(), E = n->end(); I != E; ++I )
+      if ((I)->length() == 0)
+        error(n,"Enumerator with zero length");
 }
 
 template<> inline void
 ValidateImpl::validate(RealType* n)
 {
+  if (checkNode(n))
+    if (!n->isRealType())
+      error(n,"Bad ID for RealType");
+    else {
+      uint64_t bits = n->getMantissa() + n->getExponent();
+      if (bits > UINT32_MAX)
+        error(n,"Too many bits in RealType");
+    }
 }
 
 template<> inline void
 ValidateImpl::validate(OpaqueType* n)
 {
+  checkType(n,OpaqueTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(TextType* n)
 {
+  checkType(n,TextTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(StreamType* n)
 {
+  checkType(n,StreamTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(BufferType* n)
 {
+  checkType(n,BufferTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(AliasType* n)
 {
+  checkUniformContainer(n, AliasTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(PointerType* n)
 {
+  checkUniformContainer(n, PointerTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(ArrayType* n)
 {
+  checkUniformContainer(n, ArrayTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(VectorType* n)
 {
+  checkUniformContainer(n, VectorTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(StructureType* n)
 {
+  checkDisparateContainer(n, StructureTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(ContinuationType* n)
 {
+  checkDisparateContainer(n, ContinuationTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(SignatureType* n)
 {
+  checkDisparateContainer(n, SignatureTypeID);
 }
 
 template<> inline void
 ValidateImpl::validate(Variable* n)
 {
+  checkLinkageItem(n, VariableID);
 }
 
 template<> inline void
-ValidateImpl::validate(Function* n)
+ValidateImpl::validate(Function* F)
 {
+  if (checkLinkageItem(F, FunctionID)) {
+    if (F->getSignature() == 0)
+      error(F,"Function without signature");
+    else if (F->getSignature()->getID() != SignatureTypeID)
+      error(F,"Function does not have SignatureType signature");
+    if (F->getLinkageKind() != ExternalLinkage && F->getBlock() == 0)
+      error(F,"Non-external Function without defining block");
+  }
 }
 
 template<> inline void
-ValidateImpl::validate(Program* n)
+ValidateImpl::validate(Program* P)
 {
+  if (checkLinkageItem(P, ProgramID)) {
+    if (P->getSignature() == 0)
+      error(P,"Program without signature");
+    else if (P->getSignature()->getID() != SignatureTypeID)
+      error(P,"Program does not have SignatureType signature");
+    else if (P->getSignature() != ast->getProgramType())
+      error(P,"Program has wrong signature");
+    if (P->getLinkageKind() != ExternalLinkage && P->getBlock() == 0)
+      error(P,"Non-external Program without defining block");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(Block* n)
 {
+  if (checkValue(n,BlockID))
+    if (n->getNumOperands() == 0)
+      error(n,"Block with no operands");
+    else
+      for (MultiOperator::iterator I = n->begin(), E = n->end(); I != E; ++I)
+        if (!llvm::isa<Operator>(*I))
+          error(n,"Block contains non-operator");
 }
 
 template<> inline void
 ValidateImpl::validate(NoOperator* n)
 {
+  checkOperator(n,NoOperatorID,0);
 }
 
 template<> inline void
 ValidateImpl::validate(ReturnOp* n)
 {
+  checkOperator(n,ReturnOpID,1);
 }
 
 template<> inline void
 ValidateImpl::validate(BreakOp* n)
 {
+  checkOperator(n,BreakOpID,0);
 }
 
 template<> inline void
 ValidateImpl::validate(ContinueOp* n)
 {
+  checkOperator(n,ContinueOpID,0);
 }
 
 template<> inline void
 ValidateImpl::validate(SelectOp* n)
 {
+  checkOperator(n,SelectOpID,3);
 }
 
 template<> inline void
 ValidateImpl::validate(LoopOp* n)
 {
+  checkOperator(n,LoopOpID,3);
 }
 
 template<> inline void
 ValidateImpl::validate(SwitchOp* n)
 {
+  checkOperator(n,SwitchOpID,2,false);
 }
 
 template<> inline void
 ValidateImpl::validate(AllocateOp* n)
 {
+  checkOperator(n,AllocateOpID,2);
 }
 
 template<> inline void
 ValidateImpl::validate(DeallocateOp* n)
 {
+  checkOperator(n,DeallocateOpID,1);
 }
 
 template<> inline void
 ValidateImpl::validate(LoadOp* n)
 {
-  if (checkNumOperands(n,1)) {
+  if (checkOperator(n,LoadOpID,1)) {
     Value* oprnd = n->getOperand(0);
     if (!isa<PointerType>(oprnd->getType()))
       error(n,"LoadOp expects a pointer type operand");
@@ -300,7 +476,7 @@ ValidateImpl::validate(LoadOp* n)
 template<> inline void
 ValidateImpl::validate(StoreOp* n)
 {
-  if (checkNumOperands(n,2)) {
+  if (checkOperator(n,StoreOpID,2)) {
     Value* op1 = n->getOperand(0);
     Value* op2 = n->getOperand(1);
     if (!isa<PointerType>(op1->getType()))
@@ -314,304 +490,308 @@ ValidateImpl::validate(StoreOp* n)
 template<> inline void
 ValidateImpl::validate(AutoVarOp* n)
 {
+  if (checkOperator(n,AutoVarOpID,0,false))
+    ;
 }
 
 template<> inline void
 ValidateImpl::validate(NegateOp* n)
 {
+  if (checkOperator(n,NegateOpID,1))
+    ;
 }
 
 template<> inline void
 ValidateImpl::validate(ComplementOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,ComplementOpID,1))
     checkNonPointer(n->getOperand(0));
 }
 
 template<> inline void
 ValidateImpl::validate(PreIncrOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,PreIncrOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(PostIncrOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,PostIncrOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(PreDecrOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,PreDecrOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(PostDecrOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,PostDecrOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(AddOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,AddOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(SubtractOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,SubtractOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(MultiplyOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,MultiplyOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(DivideOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,DivideOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(ModuloOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,ModuloOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(BAndOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,BAndOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(BOrOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,BOrOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(BXorOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,BXorOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(BNorOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,BNorOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(NotOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,NotOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(AndOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,AndOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(OrOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,OrOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(NorOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,NorOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(XorOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,XorOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(LessThanOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,LessThanOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(GreaterThanOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,GreaterThanOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(LessEqualOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,LessEqualOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(GreaterEqualOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,GreaterEqualOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(EqualityOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,EqualityOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(InequalityOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,InequalityOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(IsPInfOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,IsPInfOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(IsNInfOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,IsNInfOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(IsNanOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,IsNanOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(TruncOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,TruncOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(RoundOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,RoundOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(FloorOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,FloorOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(CeilingOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,CeilingOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(LogEOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,LogEOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(Log2Op* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,Log2OpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(Log10Op* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,Log10OpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(SquareRootOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,SquareRootOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(CubeRootOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,CubeRootOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(FactorialOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,FactorialOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(PowerOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,PowerOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(RootOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,RootOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(GCDOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,GCDOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(LCMOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,LCMOpID,2))
     ;
 }
 
@@ -619,28 +799,28 @@ ValidateImpl::validate(LCMOp* n)
 template<> inline void
 ValidateImpl::validate(OpenOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,OpenOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(CloseOp* n)
 {
-  if (checkNumOperands(n,1))
+  if (checkOperator(n,CloseOpID,1))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(ReadOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,ReadOpID,2))
     ;
 }
 
 template<> inline void
 ValidateImpl::validate(WriteOp* n)
 {
-  if (checkNumOperands(n,2))
+  if (checkOperator(n,WriteOpID,2))
     ;
 }
 

@@ -189,11 +189,6 @@ class AST : public Node
       const std::string& id, ///< The name of the program
       const Locator* loc = 0 ///< The source locator
     );
-    /// Create a new Block node. A block is a sequence of operators.
-    Block* new_Block(
-      const std::string& id, ///< The name (label) of the block
-      const Locator* loc = 0 ///< The source locator
-    );
     /// Create a new IntegerType node. This is a general interface for creating
     /// integer types. By default it creates a signed 32-bit integer.
     IntegerType* new_IntegerType(
@@ -459,6 +454,12 @@ class AST : public Node
       const Locator* loc = 0 ///< The source locator
     );
 
+    /// Create a new Block. You can also create Blocks with new_MulitOp<Block>
+    /// interface. This one allows you to create the block before creating its
+    /// content, for situations where that matters (like XML parsing).
+    Block* new_Block(
+      const Locator* loc  ///< The source locator
+    );
     /// Create a new AutoVarOp. This one is a little unusual because it
     /// requires the user to know the type. Other operators can deduce the
     /// type from the operands.

@@ -82,14 +82,6 @@ IntegerType::~IntegerType()
 {
 }
 
-IntegerType* 
-IntegerType::clone(const std::string& newname)
-{
-  IntegerType* result = new IntegerType(*this);
-  result->setName(newname);
-  return result;
-}
-
 const char* 
 IntegerType::getPrimitiveName() const
 {

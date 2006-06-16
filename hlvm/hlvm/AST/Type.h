@@ -244,7 +244,6 @@ class IntegerType : public Type
 
   public:
     virtual ~IntegerType();
-    IntegerType* clone(const std::string& newname);
 
   /// @}
   /// @name Accessors

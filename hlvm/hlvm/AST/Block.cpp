@@ -47,6 +47,7 @@ Block::insertChild(Node* child)
     autovars[av->getName()] = av;
   }
   MultiOperator::insertChild(child);
+  type = getResultType(); // update type to match type of thing just added
 }
 
 void 

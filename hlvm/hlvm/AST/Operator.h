@@ -284,9 +284,7 @@ class MultiOperator : public Operator
   public:
     virtual void setOperand(unsigned opnum, Value* oprnd);
     void addOperand(Value* v) { v->setParent(this); }
-    void addOperands(const OprndList& new_ops) {
-      ops.insert(ops.end(),new_ops.begin(),new_ops.end());
-    }
+    void addOperands(const OprndList& new_ops); 
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);

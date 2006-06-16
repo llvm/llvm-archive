@@ -44,14 +44,16 @@ Function::~Function()
 {
 }
 
+const SignatureType* 
+Function::getSignature() const
+{ 
+  return cast<SignatureType>(type); 
+}
+
 void 
 Function::insertChild(Node* kid)
 {
-  if (isa<SignatureType>(kid)) {
-    if (signature)
-      signature->setParent(0);
-    signature = cast<SignatureType>(kid);
-  } else if (isa<Block>(kid)) {
+  if (isa<Block>(kid)) {
     if (block)
       block->setParent(0);
     block = cast<Block>(kid);
@@ -63,10 +65,10 @@ Function::insertChild(Node* kid)
 void 
 Function::removeChild(Node* kid)
 {
-  if (isa<SignatureType>(kid)) {
-  } else if (isa<Block>(kid)) {
+  if (isa<Block>(kid) && kid == block) {
+    block = 0;
   } else {
-    hlvmAssert(!"Can't insert one of those here");
+    hlvmAssert(!"Can't remove one of those here");
   }
 }
 

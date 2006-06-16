@@ -248,6 +248,16 @@ MultiOperator::setOperand(unsigned opnum, Value* operand)
 }
 
 void 
+MultiOperator::addOperands(const OprndList& oprnds) 
+{
+  for (const_iterator I = oprnds.begin(), E = oprnds.end(); I != E; ++I )
+  {
+    hlvmAssert(isa<Value>(*I));
+    (*I)->setParent(this);
+  }
+}
+
+void 
 MultiOperator::insertChild(Node* child)
 {
   hlvmAssert(isa<Value>(child));

@@ -1,0 +1,10 @@
+<!--#set var="title" value="HLVM Status Updates" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>HLVM Status Updates</h1>
+<ul>
+  <li><a href="/status/2006-04-25.html">April 25, 2006</a> - basic web and 
+  svn framework completed so team can get work done.</li>
+  <li><a href="/status/2006-05-25.html">May 25, 2006</a> - implemented xml2xml
+  and a test suite for testing AST construction</li>
+</ul>
+<!--#include virtual="/incl/footer.incl" -->

@@ -1,0 +1,19 @@
+<!--#set var="title" value="Status As Of April 25, 2006" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>Status As Of April 25,2006</h1>
+<p>HLVM is just getting started. The idea was generated from some discussion on
+the LLVM IRC channel. There is much that needs to be done in order to get LLVM
+fully coherent as a virtual machine. While LLVM provides the raw materials, HLVM
+will provide the finished product.</p>
+<p>Current, we have been collecting resources. As of today, we have:</p>
+<ul>
+  <li>Four interested developers</li>
+  <li>Reserved hlvm.org domain name</li>
+  <li>Brought up a Subversion repository for the code</li>
+  <li>Built a <a href="/wiki/">wiki</a></li>
+  <li>Built an introductory web site</li>
+  <li>Discussed many ideas about what HLVM should be</li>
+  <li>Documented some architecture and data flow in the wiki</li>
+</ul>
+<p><a href="/status/index.shtml">Back To Status Index</a></p>
+<!--#include virtual="/incl/footer.incl" -->

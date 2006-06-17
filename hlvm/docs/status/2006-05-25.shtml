@@ -1,0 +1,78 @@
+<!--#set var="title" value="HLVM Status As Of May 25, 2006" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>Status As Of May 25, 2006</h1>
+<p>HLVM is moving along nicely. We have accomplished much in our first month:
+<ul>
+  <li>A few new people became interested in HLVM (Hi laurence and Slant).</li>
+  <li>Everyone participated in making some design documentation in the wiki 
+  site. It was populated with some designs and a mind map.</li>
+  <li>Implemented 43 node types for the 
+  <a href="/apis/html/classhlvm_1_1AST.html">Abstract Syntax Tree (AST)</a>in 
+  C++. These represent the various program constructs (
+  <a href="/apis/html/classhlvm_1_1Bundle.html">Bundle</a>, 
+  <a href="/apis/html/classhlvm_1_1Program.html">Program</a>,
+  <a href="/apis/html/classhlvm_1_1Function.html">Function</a>,
+  <a href="/apis/html/classhlvm_1_1Variable.html">Type</a>,
+  <a href="/apis/html/classhlvm_1_1Variable.html">Value</a>,
+  <a href="/apis/html/classhlvm_1_1Variable.html">Variable</a>,
+  <a href="/apis/html/classhlvm_1_1Block.html">Block</a>,
+  <a href="/apis/html/classhlvm_1_1Operator.html">Operator</a>, etc.) that can 
+  be defined by a source language. There are also a few super-classes 
+  (
+  <a href="/apis/html/classhlvm_1_1Node.html">Node</a>, 
+  <a href="/apis/html/classhlvm_1_1Documentable.html">Documentable</a>,
+  <a href="/apis/html/classhlvm_1_1LinkageItem.html">LinkageItem</a>) to allow 
+  identification of categories of the AST nodes. See the 
+  <a href="/apis/html/hierarchy.html">class hierarchy</a> for more details.
+  A simple model for AST construction was adopted, that of "setParent".
+  To insert a node, you simply tell it which node is its parent. The parent
+  node then "owns" that child node.</li>
+  <li>Implemented an 
+  <a href="/apis/html/classhlvm_1_1XMLReader.html">XMLReader</a> based on 
+  libxml2 to convert XML into AST nodes. This library uses the 
+  <a href="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng">HLVM grammar</a> to
+  validate an XML document that corresponds to the structure of the Abstract
+  Syntax Tree.
+  This is how we populate the AST in memory.</li>
+  <li>Implemented a 
+  <a href="/apis/html/classhlvm_1_1Pass.html">Pass</a> and 
+  <a href="/apis/html/classhlvm_1_1PassManager.html">PassManager</a> 
+  infrastructure for traversals through the AST. Passes can ask for pre-order, 
+  post-order and both-order calls as the PassManager traverses the tree. This 
+  gives us a single location in which the logic for walking the HLVM AST is 
+  implemented.</li>
+  <li>Implemented an 
+  <a href="/apis/html/classhlvm_1_1XMLWriter.html">XMLWriter</a> based on 
+  libxml2 to convert AST nodes into XML. This is the converse of the reader. 
+  It takes an in-memory AST and generates XML output. The XMLWriter uses an 
+  HLVM Pass to walk the tree.</li>
+  <li>Implemented the 
+  <a href="/src/tools/hlvm-xml2xml/hlvm-xml2xml.cpp">hlvm-xml2xml</a> tool to 
+  convert XML -&gt; AST -&gt; XML. This is simply a combination of the 
+  XMLReader, AST, and XMLWriter. Its purpose is to provide the means for 
+  testing AST construction and validation.</li>
+  <li>Implemented the beginnings of a validation pass to validate the AST
+  nodes. This pass is now invoked from the hlvm-xml2xml program to validate that
+  what was read is a legal AST.</li>
+  <li>Started an implementation of a type resolving pass to assist with forward
+  references in the tree and resolve them to their actual types.</li>
+  <li>Implemented 12 test cases via deja-gnu to exercise AST construction with 
+  the hlvm-xml2xml program. These implement an identity test where the output
+  must match the input exactly. All tests pass as of this date.</li>
+  <li>David began preparing additional test cases, as XML documents, to explore
+  the AST nodes that are needed in HLVM, based on a review of Ruby.</li>
+  <li>Completely rewrote the build system to use scons. The Makefile system,
+  although working, was difficult to maintain and modify. scons gives us much
+  more flexibility and some new capabilities as well.</li>
+  <li>Got the doxygen documentation to auto-build and generated it to the public
+  web site.</li>
+  <li>David started work on documenting the AST specification in the HLVM.rng
+  grammar (Relax/NG grammar for the Abstract Syntax Tree). We'll use XSLT to 
+  convert this to HTML so we have one source for specifying and documenting 
+  the AST nodes.</li>
+  <li>David got HLVM to build on Mac OS/X.</li>
+  <li>Saem got HLVM to build on SuSE Linux.</li>
+  <li>Reid got HLVM to build on Fedora Core 3</li>
+</ul>
+<p><a href="/status/index.shtml">Back To Status Index</a></p>
+<!--#include virtual="/incl/footer.incl" -->

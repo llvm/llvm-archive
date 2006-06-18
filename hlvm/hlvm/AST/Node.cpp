@@ -61,7 +61,6 @@ Node::removeChild(Node* child)
   hlvmNotImplemented("Node::insertChild");
 }
 
-
 void 
 Node::setParent(Node* p)
 {
@@ -76,12 +75,9 @@ Node::setParent(Node* p)
   }
 }
 
-#ifndef _NDEBUG
-void 
-Node::dump() const 
+Documentation::~Documentation()
 {
 }
-#endif
 
 Documentable::~Documentable()
 {

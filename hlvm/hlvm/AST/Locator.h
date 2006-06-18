@@ -57,6 +57,10 @@ class Locator
   /// @{
   public:
     virtual void getLocation(std::string& ref) const = 0;
+    virtual uint32_t getLine() const = 0;
+    virtual uint32_t getColumn() const = 0;
+    virtual uint32_t getEndLine() const = 0;
+    virtual uint32_t getEndColumn() const = 0;
     virtual bool equals(const Locator& that) const = 0;
     bool operator==(const Locator& that) { return this->equals(that); }
     unsigned short id() const { return SubclassID; }
@@ -75,7 +79,7 @@ class URILocator : public Locator
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     URILocator(const URI* u) : Locator(), uri(u) { SubclassID = 1; }
     virtual ~URILocator();
 
@@ -84,6 +88,10 @@ class URILocator : public Locator
   /// @{
   public:
     virtual void getLocation(std::string& ref) const;
+    virtual uint32_t getLine() const;
+    virtual uint32_t getColumn() const;
+    virtual uint32_t getEndLine() const;
+    virtual uint32_t getEndColumn() const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -92,6 +100,7 @@ class URILocator : public Locator
   protected:
     const URI* uri;
   /// @}
+  friend class AST;
 };
 
 /// This Locator can be used to locate a specific line within some resource. It
@@ -102,7 +111,7 @@ class LineLocator : public URILocator
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     LineLocator(const URI* u, uint32_t l) : URILocator(u), line(l) {
       SubclassID = 2; 
     }
@@ -113,6 +122,10 @@ class LineLocator : public URILocator
   /// @{
   public:
     virtual void getLocation(std::string& ref) const;
+    virtual uint32_t getLine() const;
+    virtual uint32_t getColumn() const;
+    virtual uint32_t getEndLine() const;
+    virtual uint32_t getEndColumn() const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -121,6 +134,7 @@ class LineLocator : public URILocator
   protected:
     uint32_t line;           ///< Line number of source location
   /// @}
+  friend class AST;
 };
 
 /// This class provides a locator that specifies a specific column on a specific
@@ -130,7 +144,7 @@ class LineColumnLocator : public LineLocator
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     LineColumnLocator(const URI* u, uint32_t l, uint32_t c) 
       : LineLocator(u,l), col(c) { SubclassID = 3; }
     virtual ~LineColumnLocator();
@@ -140,6 +154,10 @@ class LineColumnLocator : public LineLocator
   /// @{
   public:
     virtual void getLocation(std::string& ref) const;
+    virtual uint32_t getLine() const;
+    virtual uint32_t getColumn() const;
+    virtual uint32_t getEndLine() const;
+    virtual uint32_t getEndColumn() const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -148,6 +166,7 @@ class LineColumnLocator : public LineLocator
   protected:
     uint32_t col;            ///< Column number of source location
   /// @}
+  friend class AST;
 };
 
 /// This class provides a Locator that identifies a range of text in a source
@@ -160,7 +179,7 @@ class RangeLocator : public LineColumnLocator
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     RangeLocator(const URI* u, uint32_t l, uint32_t c, uint32_t l2, uint32_t c2)
       : LineColumnLocator(u,l,c), line2(l2), col2(c2) { SubclassID = 4; }
     virtual ~RangeLocator();
@@ -170,6 +189,10 @@ class RangeLocator : public LineColumnLocator
   /// @{
   public:
     virtual void getLocation(std::string& ref) const;
+    virtual uint32_t getLine() const;
+    virtual uint32_t getColumn() const;
+    virtual uint32_t getEndLine() const;
+    virtual uint32_t getEndColumn() const;
     virtual bool equals(const Locator& that) const;
 
   /// @}
@@ -179,6 +202,7 @@ class RangeLocator : public LineColumnLocator
     uint32_t line2;           ///< Column number of source location
     uint32_t col2;            ///< Column number of source location
   /// @}
+  friend class AST;
 };
 
 } // hlvm

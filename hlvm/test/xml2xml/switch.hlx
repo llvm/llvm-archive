@@ -1,24 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
   <bundle id="return">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="1" type="s32">
+      <dec>1</dec>
+    </constant>
+    <constant id="2" type="s32">
+      <dec>2</dec>
+    </constant>
+    <constant id="21" type="s32">
+      <dec>21</dec>
+    </constant>
+    <constant id="3" type="s32">
+      <dec>3</dec>
+    </constant>
+    <constant id="4" type="s32">
+      <dec>4</dec>
+    </constant>
+    <constant id="42" type="s32">
+      <dec>42</dec>
+    </constant>
+    <constant id="5" type="s32">
+      <dec>5</dec>
+    </constant>
     <program id="return">
       <block>
         <ret>
           <switch>
-            <dec>6</dec>
-            <dec>0</dec>
-            <dec>1</dec>
-            <dec>1</dec>
-            <dec>2</dec>
-            <dec>2</dec>
-            <dec>3</dec>
-            <dec>3</dec>
-            <dec>4</dec>
-            <dec>4</dec>
-            <dec>5</dec>
-            <dec>5</dec>
-            <dec>42</dec>
-            <dec>21</dec>
+            <cref id="42"/>
+            <cref id="42"/>
+            <cref id="1"/>
+            <cref id="1"/>
+            <cref id="2"/>
+            <cref id="2"/>
+            <cref id="3"/>
+            <cref id="3"/>
+            <cref id="4"/>
+            <cref id="4"/>
+            <cref id="5"/>
+            <cref id="5"/>
+            <cref id="42"/>
+            <cref id="21"/>
           </switch>
         </ret>
       </block>

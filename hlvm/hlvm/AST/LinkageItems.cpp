@@ -36,13 +36,10 @@ using namespace llvm;
 
 namespace hlvm {
 
-Variable::~Variable()
-{
-}
-
-Function::~Function() 
-{
-}
+LinkageItem::~LinkageItem() { }
+Variable::~Variable() { }
+Function::~Function() { }
+Program::~Program() { }
 
 const SignatureType* 
 Function::getSignature() const
@@ -70,10 +67,6 @@ Function::removeChild(Node* kid)
   } else {
     hlvmAssert(!"Can't remove one of those here");
   }
-}
-
-Program::~Program()
-{
 }
 
 }

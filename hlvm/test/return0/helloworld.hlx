@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng"
-      pubid="http://hlvm.org/src/hlvm/test/xml2xml/helloworld.hlx">
+      pubid="http://hlvm.org/src/hlvm/test/return0/helloworld.hlx">
   <bundle id="helloworld">
+    <constant id="hw" type="string">
+      <string>Hello, World&#10;</string>
+    </constant>
+    <constant id="stdout" type="string">
+      <string>hlvm:std:out</string>
+    </constant>
+    <constant id="zero" type="s32">
+      <dec>0</dec>
+    </constant>
     <program id="helloworld">
       <block>
-        <autovar id="stdout" type="stream"><zero/></autovar>
+        <autovar id="stdout" type="stream"></autovar>
         <store>
           <ref id="stdout"/>
-          <open><text>hlvm:std:out</text></open>
+          <open><cref id="stdout"/></open>
         </store>
         <write>
           <load><ref id="stdout"/></load>
-          <text>Hello, World&#10;</text>
+          <cref id="hw"/>
         </write>
         <close>
           <load><ref id="stdout"/></load>
         </close>
         <ret>
-          <dec>0</dec>
+          <cref id="zero"/>
         </ret>
       </block>
     </program>

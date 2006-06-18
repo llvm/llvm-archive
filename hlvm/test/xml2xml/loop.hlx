@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
   <bundle id="return">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="1" type="s32">
+      <dec>1</dec>
+    </constant>
     <program id="return">
       <block>
         <ret>
           <loop>
-            <dec>1</dec>
-            <dec>0</dec>
+            <ne>
+              <cref id="1"/>
+              <cref id="0"/>
+            </ne>
+            <cref id="0"/>
             <noop/>
           </loop>
         </ret>

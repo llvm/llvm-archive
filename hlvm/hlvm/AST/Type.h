@@ -54,6 +54,7 @@ class Type : public Documentable
   /// @{
   public:
     const std::string& getName() const { return name; }
+    bool isSized() const { return id != VoidTypeID; }
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
 
@@ -113,6 +114,31 @@ class AnyType : public Type
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const AnyType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(AnyTypeID); }
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node for describing a character
+/// string type. The StringType value is a sequence of UTF-8 encoded characters
+/// with a null terminator.
+/// @brief AST String Type
+class StringType : public Type
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    StringType() : Type(StringTypeID) {}
+    virtual ~StringType();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual const char* getPrimitiveName() const;
+
+    // Methods to support type inquiry via is, cast, dyn_cast
+    static inline bool classof(const StringType*) { return true; }
+    static inline bool classof(const Node* T) { return T->is(StringTypeID); }
   /// @}
   friend class AST;
 };
@@ -241,9 +267,20 @@ class IntegerType : public Type
       setBits(bits);
       setSigned(sign); 
     }
-
-  public:
     virtual ~IntegerType();
+
+  /// @}
+  /// @name Constants
+  /// @{
+  public:
+    /// The enum defines various masks and shifts to interpret the bits in
+    /// the Node's flag field.
+    enum FlagsMasks {
+      BitsMask = 0x7FFF, ///< Mask the # of bits, 10 bits
+      SignMask = 0x8000, ///< Mask the sign bit, 1 bit
+      BitsShift = 0,     ///< Bits to shift flags to get # of bits 
+      SignShift = 15     ///< Bits to shift flags to get sign bit
+    };
 
   /// @}
   /// @name Accessors
@@ -254,10 +291,10 @@ class IntegerType : public Type
     virtual const char* getPrimitiveName() const;
 
     /// @brief Return the number of bits in this integer type
-    int16_t getBits()  const { return int16_t(flags & 0x7FFF); }
+    uint16_t getBits()  const { return uint16_t((flags & BitsMask)>>BitsShift);}
 
     /// @brief Return the signedness of this type
-    bool     isSigned() const { return flags & 0x8000; }
+    bool isSigned() const { return flags & SignMask; }
 
     /// @brief Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
@@ -267,14 +304,13 @@ class IntegerType : public Type
   /// @name Mutators
   /// @{
   public:
-    /// An int
     /// @brief Set the number of bits for this integer type
-    void setBits(int16_t bits) { 
-      flags &= 0x8000; flags |= uint16_t(bits)&0x7FFF; }
+    void setBits(uint16_t bits) { 
+      flags &= ~BitsMask; flags |= (bits << BitsShift) & BitsMask; }
 
     /// @brief Set the signedness of the type
     void setSigned(bool isSigned) { 
-      if (isSigned) flags |= 0x8000; else flags &= 0x7FFF; }
+      if (isSigned) flags |= SignMask; else flags &= ~SignMask; }
 
   /// @}
   friend class AST;
@@ -294,7 +330,6 @@ class RangeType: public Type
   /// @{
   protected:
     RangeType() : Type(RangeTypeID), min(0), max(256) {}
-  public:
     virtual ~RangeType();
 
   /// @}
@@ -357,7 +392,6 @@ class EnumerationType : public Type
   /// @{
   protected:
     EnumerationType() : Type(EnumerationTypeID), enumerators() {}
-  public:
     virtual ~EnumerationType();
 
   /// @}
@@ -416,7 +450,6 @@ class RealType : public Type
   protected:
     RealType(NodeIDs id, uint32_t m=52, uint32_t x=11) 
       : Type(id), mantissa(m), exponent(x) {}
-  public:
     virtual ~RealType();
 
   /// @}
@@ -471,7 +504,6 @@ class OpaqueType : public Type
   protected:
     OpaqueType(const std::string& nm) : 
       Type(OpaqueTypeID) { this->setName(nm); }
-  public:
     virtual ~OpaqueType();
 
   /// @}

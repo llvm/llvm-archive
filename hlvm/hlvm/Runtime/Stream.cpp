@@ -62,17 +62,22 @@ namespace
       HLVM_APR(apr_file_write(this->fp, data, &nbytes),"writing a stream");
       return nbytes;
     }
+    hlvm_size write(const char* string) {
+      apr_size_t nbytes = strlen(string);
+      HLVM_APR(apr_file_write(this->fp, string, &nbytes),"writing a stream");
+      return nbytes;
+    }
   };
 }
 
 extern "C" {
 
 hlvm_stream
-hlvm_stream_open(hlvm_text uri)
+hlvm_stream_open(const char* uri)
 {
-  hlvm_assert(uri && uri->str);
+  hlvm_assert(uri);
   Stream* result = new Stream();
-  return result->open(uri->str);
+  return result->open(uri);
 }
 
 void 
@@ -99,6 +104,15 @@ hlvm_stream_write_text(hlvm_stream stream, hlvm_text txt)
   hlvm_assert(txt && txt->str);
   Stream* strm = static_cast<Stream*>(stream);
   return strm->write(txt->str,txt->len);
+}
+
+hlvm_size 
+hlvm_stream_write_string(hlvm_stream stream, const char* string)
+{
+  hlvm_assert(stream);
+  hlvm_assert(string);
+  Stream* strm = static_cast<Stream*>(stream);
+  return strm->write(string);
 }
 
 }

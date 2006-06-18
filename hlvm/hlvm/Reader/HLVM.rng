@@ -79,16 +79,79 @@
       <data type="boolean"/>
       <value>TRUE</value>
       <value>True</value>
-      <value>yes</value>
-      <value>Yes</value>
+      <value>true</value>
       <value>YES</value>
+      <value>Yes</value>
+      <value>yes</value>
       <value>1</value>
       <value>FALSE</value>
       <value>False</value>
-      <value>no</value>
-      <value>No</value>
+      <value>false</value>
       <value>NO</value>
+      <value>No</value>
+      <value>no</value>
       <value>0</value>
+    </choice>
+  </define>
+
+  <define name="Binary.type">
+    <data type="string">
+      <param name="minLength">1</param>
+      <param name="maxLength">1024</param>
+      <param name="pattern">[01]+</param>
+    </data>
+  </define>
+
+  <define name="Octal.type" >
+    <data type="string">
+      <param name="minLength">1</param>
+      <param name="maxLength">1024</param>
+      <param name="pattern">[0-7]+</param>
+    </data>
+  </define>
+
+  <define name="Decimal.type">
+    <data type="string">
+      <param name="minLength">1</param>
+      <param name="maxLength">1024</param>
+      <param name="pattern">[+\-]?\d+</param>
+    </data>
+  </define>
+
+  <define name="Hexadecimal.type">
+    <data type="string">
+      <param name="minLength">1</param>
+      <param name="maxLength">1024</param>
+      <param name="pattern">([0-9A-Fa-f][0-9A-Fa-f])+</param>
+    </data>
+  </define>
+
+  <define name="Integer.type">
+    <choice>
+      <ref name="Binary.type"/>
+      <ref name="Octal.type"/>
+      <ref name="Decimal.type"/>
+      <ref name="Hexadecimal.type"/>
+    </choice>
+  </define>
+
+  <define name="Real.type">
+    <data type="string">
+      <param name="minLength">1</param>
+      <param name="maxLength">1024</param>
+      <param name="pattern">ninf|pinf|nan|signan|zero|nzero|[+\-]?0x[0-9A-Fa-f](\.[0-9A-Fa-f]+)?p[-+][0-9]+|#[0-9A-Fa-f]{16}|#[0-9a-fA-F]{8}|[+\-]?\d+\.\d*([Ee][+\-]?\d+)?</param>
+    </data>
+  </define>
+
+  <define name="Character.type">
+    <choice>
+      <data type="string">
+        <param name="length">1</param>
+      </data>
+      <data type="string">
+        <param name="length">5</param>
+        <param name="pattern">[#][0-9A-Fa-f]{4,4}</param>
+      </data>
     </choice>
   </define>
 
@@ -179,6 +242,7 @@
           <ref name="signature.elem"/>
           <ref name="vector.elem"/>
           <ref name="opaque.elem"/>
+          <ref name="constant.elem"/>
           <ref name="variable.elem"/>
           <ref name="function.elem"/>
           <ref name="program.elem"/>
@@ -282,7 +346,7 @@
       <value>s64</value>
       <value>s128</value>
       <value>stream</value>
-      <value>text</value>
+      <value>string</value>
       <value>u8</value>
       <value>u16</value>
       <value>u32</value>
@@ -364,27 +428,169 @@
     </element>
   </define>
 
-  <!--PATTERNS FOR VARIABLES-->
+  <!-- PATTERNS FOR CONSTANTS -->
+
+  <define name="constant.elem">
+    <element name="constant">
+      <ref name="Named_Typed_Element.pat"/>
+      <ref name="Literal.pat"/>
+    </element>
+  </define>
+
+  <!-- PATTERNS FOR LITERAL CONSTANTS -->
+
+  <define name="Typed_Literal.pat">
+    <optional>
+      <attribute name="type">
+        <ref name="Identifier.type"/>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="Literal.pat">
+    <choice>
+      <ref name="Boolean_Literal.pat"/>
+      <ref name="Integer_Literal.pat"/>
+      <ref name="Real_Literal.pat"/>
+      <ref name="char.elem"/>
+      <ref name="string.elem"/>
+      <ref name="null.elem"/>
+      <ref name="ptr.elem"/>
+      <ref name="arr.elem"/>
+      <ref name="vect.elem"/>
+      <ref name="struct.elem"/>
+      <ref name="cont.elem"/>
+    </choice>
+  </define>
+
+  <define name="Boolean_Literal.pat">
+    <choice>
+      <element name="true">
+        <empty/>
+      </element>
+      <element name="false">
+        <empty/>
+      </element>
+      <element name="bool">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Boolean.type"/>
+      </element>
+    </choice>
+  </define>
+
+
+  <define name="Integer_Literal.pat">
+    <choice>
+      <element name="bin">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Binary.type"/>
+      </element>
+      <element name="oct">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Octal.type"/>
+      </element>
+      <element name="dec">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Decimal.type"/>
+      </element>
+      <element name="hex">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Hexadecimal.type"/>
+      </element>
+    </choice>
+  </define>
+
+  <define name="Real_Literal.pat">
+    <choice>
+      <element name="flt">
+        <ref name="Real.type"/>
+      </element>
+      <element name="dbl">
+        <ref name="Real.type"/>
+      </element>
+      <element name="real">
+        <ref name="Typed_Literal.pat"/>
+        <ref name="Real.type"/>
+      </element>
+    </choice>
+  </define>
+
+  <define name="char.elem">
+    <element name="char">
+      <ref name="Typed_Literal.pat"/>
+      <ref name="Character.type"/>
+    </element>
+  </define>
+
+  <define name="string.elem">
+    <element name="string">
+      <ref name="Typed_Literal.pat"/>
+      <text/>
+    </element>
+  </define>
+
+  <define name="null.elem">
+    <element name="null">
+      <ref name="Typed_Literal.pat"/>
+      <empty/>
+    </element>
+  </define>
+
+  <define name="ptr.elem">
+    <element name="ptr">
+      <ref name="Typed_Literal.pat"/>
+      <ref name="Literal.pat"/>
+    </element>
+  </define>
+
+  <define name="arr.elem">
+    <element name="arr">
+      <ref name="Typed_Literal.pat"/>
+      <oneOrMore>
+        <ref name="Literal.pat"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="vect.elem">
+    <element name="vect">
+      <ref name="Typed_Literal.pat"/>
+      <oneOrMore>
+        <ref name="Literal.pat"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="struct.elem">
+    <element name="struct">
+      <ref name="Typed_Literal.pat"/>
+      <oneOrMore>
+        <ref name="Literal.pat"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="cont.elem">
+    <element name="cont">
+      <ref name="Typed_Literal.pat"/>
+      <oneOrMore>
+        <ref name="Literal.pat"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <!-- PATTERNS FOR VARIABLES-->
 
   <define name="variable.elem">
     <element name="variable">
       <ref name="Named_Typed_Element.pat"/>
       <optional>
         <attribute name="const"><data type="boolean"/></attribute>
-      </optional>
-      <optional>
-        <choice>
-          <element name="init">
-            <ref name="Constant.pat"/>
-          </element>
-          <element name="zero">
-            <empty/>
-          </element>
-        </choice>
-      </optional>
-      <optional>
         <attribute name="linkage">
           <ref name="Linkage.type"/>
+        </attribute>
+        <attribute name="init">
+          <ref name="Identifier.type"/>
         </attribute>
       </optional>
     </element>
@@ -429,43 +635,8 @@
     </element>
   </define>
 
-  <define name="Block.pat">
-    <oneOrMore>
-      <choice>
-        <ref name="Operators.pat"/>
-        <ref name="block.elem"/>
-      </choice>
-    </oneOrMore>
-  </define>
-
-  <define name="block.elem">
-    <element name="block">
-      <optional>
-        <attribute name="label"><ref name="Identifier.type"/></attribute>
-      </optional>
-      <ref name="Block.pat"/>
-    </element>
-  </define>
 
   <!-- PATTERNS FOR DEFINING CONSTANTS -->
-
-  <define name="Constant.pat">
-    <choice>
-      <ref name="Literal.pat"/>
-      <!-- 
-      FIXME: This is hacked out right now because it causes infinite recursion
-      in libxml2 function xmlRelaxNGGetElements. Debugging it didn't help me
-      find out why.
-      <ref name="ConstantExpression.pat"/>
-      -->
-    </choice>
-  </define>
-
-  <define name="ref.elem">
-    <element name="ref">
-      <ref name="Named_Element.pat"/>
-    </element>
-  </define>
 
   <define name="ConstantExpression.pat">
     <choice>
@@ -483,202 +654,39 @@
     </choice>
   </define>
 
-  <!-- PATTERNS FOR LITERAL CONSTANTS -->
-
-  <define name="Literal.pat">
-    <choice>
-      <ref name="IntegerLiteral.pat"/>
-      <ref name="Boolean_Literal.elem"/>
-      <ref name="Character_Literal.elem"/>
-      <ref name="Real_Literal.elem"/>
-      <ref name="Text_Literal.elem"/>
-      <ref name="Null_Literal.elem"/>
-      <ref name="Array_Literal.elem"/>
-      <ref name="Vector_Literal.elem"/>
-      <ref name="Structure_Literal.elem"/>
-    </choice>
-  </define>
-
-  <define name="IntegerLiteral.pat">
-    <choice>
-      <ref name="Binary_Literal.elem"/>
-      <ref name="Octal_Literal.elem"/>
-      <ref name="Decimal_Literal.elem"/>
-      <ref name="Hexadecimal_Literal.elem"/>
-    </choice>
-  </define>
-
-  <define name="Integer.type">
-    <choice>
-      <ref name="Binary.type"/>
-      <ref name="Octal.type"/>
-      <ref name="Decimal.type"/>
-      <ref name="Hexadecimal.type"/>
-    </choice>
-  </define>
-
-  <define name="Typed_Literal.pat">
-    <optional>
-      <attribute name="type">
-        <ref name="Identifier.type"/>
-      </attribute>
-    </optional>
-  </define>
-
-  <define name="Binary_Literal.elem">
-    <element name="bin">
-      <ref name="Typed_Literal.pat"/>
-      <ref name="Binary.type"/>
-    </element>
-  </define>
-
-  <define name="Binary.type">
-    <data type="string">
-      <param name="minLength">1</param>
-      <param name="maxLength">1024</param>
-      <param name="pattern">[01]+</param>
-    </data>
-  </define>
-
-  <define name="Octal_Literal.elem">
-    <element name="oct">
-      <ref name="Typed_Literal.pat"/>
-      <ref name="Octal.type"/>
-    </element>
-  </define>
-
-  <define name="Octal.type" >
-    <data type="string">
-      <param name="minLength">1</param>
-      <param name="maxLength">1024</param>
-      <param name="pattern">[0-7]+</param>
-    </data>
-  </define>
-
-  <define name="Decimal_Literal.elem">
-    <element name="dec">
-      <ref name="Typed_Literal.pat"/>
-      <ref name="Decimal.type"/>
-    </element>
-  </define>
-
-  <define name="Decimal.type">
-    <data type="string">
-      <param name="minLength">1</param>
-      <param name="maxLength">1024</param>
-      <param name="pattern">[+\-]?\d+</param>
-    </data>
-  </define>
-
-  <define name="Hexadecimal_Literal.elem">
-    <element name="hex">
-      <ref name="Typed_Literal.pat"/>
-      <ref name="Hexadecimal.type"/>
-    </element>
-  </define>
-
-  <define name="Hexadecimal.type">
-    <data type="string">
-      <param name="minLength">1</param>
-      <param name="maxLength">1024</param>
-      <param name="pattern">([0-9A-Fa-f][0-9A-Fa-f])+</param>
-    </data>
-  </define>
-
-  <define name="Boolean_Literal.elem">
-    <choice>
-      <element name="true">
-        <empty/>
-      </element>
-      <element name="false">
-        <empty/>
-      </element>
-    </choice>
-  </define>
-
-  <define name="Character_Literal.elem">
-    <element name="char">
-      <ref name="Character.type"/>
-    </element>
-  </define>
-
-  <define name="Text_Literal.elem">
-    <element name="text">
-      <text/>
-    </element>
-  </define>
-
-  <define name="Character.type">
-    <choice>
-      <data type="string">
-        <param name="length">1</param>
-      </data>
-      <data type="string">
-        <param name="length">5</param>
-        <param name="pattern">[#][0-9A-Fa-f]{4,4}</param>
-      </data>
-    </choice>
-  </define>
-
-  <define name="Real_Literal.elem">
-    <choice>
-      <element name="flt">
-        <ref name="Real.type"/>
-      </element>
-      <element name="dbl">
-        <ref name="Real.type"/>
-      </element>
-    </choice>
-  </define>
-
-  <define name="Real.type">
-    <data type="string">
-      <param name="minLength">1</param>
-      <param name="maxLength">1024</param>
-      <param name="pattern">ninf|pinf|nan|signan|zero|nzero|[+\-]?0x[0-9A-Fa-f](\.[0-9A-Fa-f]+)?p[-+][0-9]+|#[0-9A-Fa-f]{16}|#[0-9a-fA-F]{8}|[+\-]?\d+\.\d*([Ee][+\-]?\d+)?</param>
-    </data>
-  </define>
-
-  <define name="Null_Literal.elem">
-    <element name="null">
-      <empty/>
-    </element>
-  </define>
-
-  <define name="Array_Literal.elem">
-    <element name="arr">
-      <ref name="Typed_Element.pat"/>
-      <oneOrMore>
-        <ref name="Constant.pat"/>
-      </oneOrMore>
-    </element>
-  </define>
-
-  <define name="Vector_Literal.elem">
-    <element name="vect">
-      <ref name="Typed_Element.pat"/>
-      <oneOrMore>
-        <ref name="Constant.pat"/>
-      </oneOrMore>
-    </element>
-  </define>
-
-  <define name="Structure_Literal.elem">
-    <element name="struct">
-      <ref name="Typed_Element.pat"/>
-      <oneOrMore>
-        <ref name="Constant.pat"/>
-      </oneOrMore>
-    </element>
-  </define>
-
   <!-- PATTERNS FOR OPERATORS -->
 
-  <define name="Value.pat">
+  <define name="Operators.pat">
     <choice>
-      <ref name="Operators.pat"/>
-      <ref name="Constant.pat"/>
+      <ref name="block.elem"/>
+      <ref name="cref.elem"/>
+      <ref name="noop.elem"/>
+      <ref name="BooleanOperators.pat"/>
+      <ref name="UnaryArithmeticOperators.pat"/>
+      <ref name="BinaryArithmeticOperators.pat"/>
+      <ref name="MemoryOps.pat"/>
+      <ref name="InputOutputOps.pat"/>
+      <ref name="ControlFlowOps.pat"/>
     </choice>
+  </define>
+
+  <define name="UnaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Operators.pat"/>
+  </define>
+
+
+  <define name="BinaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Operators.pat"/>
+    <ref name="Operators.pat"/>
+  </define>
+
+  <define name="TernaryOperator.pat">
+    <ref name="Documentation.pat"/>
+    <ref name="Operators.pat"/>
+    <ref name="Operators.pat"/>
+    <ref name="Operators.pat"/>
   </define>
 
   <define name="Location.pat">
@@ -688,36 +696,22 @@
     </choice>
   </define>
 
-  <define name="Operators.pat">
-    <choice>
-      <ref name="noop.elem"/>
-      <ref name="BooleanOperators.pat"/>
-      <ref name="UnaryArithmeticOperators.pat"/>
-      <ref name="BinaryArithmeticOperators.pat"/>
-      <ref name="MemoryOps.pat"/>
-      <ref name="InputOutputOps.pat"/>
-      <ref name="ControlFlowOps.pat"/>
-      <ref name="Literal.pat"/>
-    </choice>
+  <define name="block.elem">
+    <element name="block">
+      <optional>
+        <attribute name="label"><ref name="Identifier.type"/></attribute>
+      </optional>
+      <oneOrMore>
+        <ref name="Operators.pat"/>
+      </oneOrMore>
+    </element>
   </define>
 
-  <define name="UnaryOperator.pat">
-    <ref name="Documentation.pat"/>
-    <ref name="Value.pat"/>
-  </define>
-
-
-  <define name="BinaryOperator.pat">
-    <ref name="Documentation.pat"/>
-    <ref name="Value.pat"/>
-    <ref name="Value.pat"/>
-  </define>
-
-  <define name="TernaryOperator.pat">
-    <ref name="Documentation.pat"/>
-    <ref name="Value.pat"/>
-    <ref name="Value.pat"/>
-    <ref name="Value.pat"/>
+  <define name="cref.elem">
+    <element name="cref">
+      <ref name="Named_Element.pat"/>
+      <empty/>
+    </element>
   </define>
 
   <define name="noop.elem">
@@ -735,7 +729,7 @@
   </define>
 
   <define name="addrof.elem">
-    <ref name="Value.pat"/>
+    <ref name="Operators.pat"/>
   </define>
 
   <define name="extract.elem">
@@ -762,6 +756,12 @@
     </choice>
   </define>
 
+  <define name="ref.elem">
+    <element name="ref">
+      <ref name="Named_Element.pat"/>
+    </element>
+  </define>
+
   <define name="load.elem">
     <element name="load">
       <ref name="Documentation.pat"/>
@@ -773,16 +773,16 @@
     <element name="store">
       <ref name="Documentation.pat"/>
       <ref name="Location.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
   <define name="index.elem">
     <element name="index">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
       <oneOrMore>
-        <ref name="Value.pat"/>
+        <ref name="Operators.pat"/>
       </oneOrMore>
     </element>
   </define>
@@ -797,12 +797,11 @@
   <define name="autovar.elem">
     <element name="autovar">
       <ref name="Named_Typed_Element.pat"/>
-      <choice>
-        <ref name="Constant.pat"/>
-        <element name="zero">
-          <empty/>
-        </element>
-      </choice>
+      <optional>
+        <attribute name="init">
+          <ref name="Identifier.type"/>
+        </attribute>
+      </optional>
     </element>
   </define>
 
@@ -823,30 +822,30 @@
   <define name="open.elem">
     <element name="open">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
   <define name="close.elem">
     <element name="close">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
   <define name="write.elem">
     <element name="write">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
   <define name="read.elem">
     <element name="read">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
@@ -877,25 +876,25 @@
 
   <define name="preinc.elem">
     <element name="preinc">
-      <ref name="UnaryOperator.pat"/>
+      <ref name="ref.elem"/>
     </element>
   </define>
 
   <define name="predec.elem">
     <element name="predec">
-      <ref name="UnaryOperator.pat"/>
+      <ref name="ref.elem"/>
     </element>
   </define>
 
   <define name="postinc.elem">
     <element name="postinc">
-      <ref name="UnaryOperator.pat"/>
+      <ref name="ref.elem"/>
     </element>
   </define>
 
   <define name="postdec.elem">
     <element name="postdec">
-      <ref name="UnaryOperator.pat"/>
+      <ref name="ref.elem"/>
     </element>
   </define>
 
@@ -1067,7 +1066,7 @@
   <define name="select.elem">
     <element name="select">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>
+      <ref name="Operators.pat"/>
       <ref name="Operators.pat"/>
       <ref name="Operators.pat"/>
     </element>
@@ -1076,7 +1075,7 @@
   <define name="switch.elem">
     <element name="switch">
       <ref name="Documentation.pat"/>
-      <ref name="Value.pat"/>       <!-- Control Expression -->
+      <ref name="Operators.pat"/>       <!-- Control Expression -->
       <ref name="Operators.pat"/>   <!-- Default Case -->
       <zeroOrMore>
         <ref name="Operators.pat"/> <!-- Case Expression -->

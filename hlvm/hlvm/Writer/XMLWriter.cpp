@@ -45,7 +45,6 @@
 #include <hlvm/Pass/Pass.h>
 #include <llvm/ADT/StringExtras.h>
 #include <libxml/xmlwriter.h>
-//#include <libxml/entities.h>
 #include <iostream>
 
 using namespace hlvm;
@@ -95,7 +94,7 @@ private:
       { xmlTextWriterWriteElement(writer,
           reinterpret_cast<const xmlChar*>(elem),
           reinterpret_cast<const xmlChar*>(body)); }
-    inline void writeString(const std::string& text) ;
+    inline void writeString(const std::string& str) ;
 
     inline void putHeader();
     inline void putFooter();
@@ -132,10 +131,10 @@ getLinkageKind(LinkageKinds lk)
 }
 
 void 
-XMLWriterImpl::WriterPass::writeString(const std::string& text)
+XMLWriterImpl::WriterPass::writeString(const std::string& str)
 { 
   const xmlChar* str_to_write = // xmlEncodeSpecialChars(
-      reinterpret_cast<const xmlChar*>(text.c_str()); // ); 
+      reinterpret_cast<const xmlChar*>(str.c_str()); // ); 
   xmlTextWriterWriteString(writer, str_to_write);
   // xmlMemFree(str_to_write);
 }
@@ -192,6 +191,17 @@ XMLWriterImpl::WriterPass::put(AnyType* t)
   putDoc(t);
   startElement("intrinsic");
   writeAttribute("is","any");
+  endElement();
+}
+
+template<> void 
+XMLWriterImpl::WriterPass::put(StringType* t)
+{
+  startElement("atom");
+  writeAttribute("id",t->getName());
+  putDoc(t);
+  startElement("intrinsic");
+  writeAttribute("is","string");
   endElement();
 }
 
@@ -377,40 +387,52 @@ XMLWriterImpl::WriterPass::put<SignatureType>(SignatureType* t)
 template<> void 
 XMLWriterImpl::WriterPass::put<ConstantBoolean>(ConstantBoolean* i)
 {
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
   if (i->getValue())
     startElement("true");
   else
     startElement("false");
+  endElement();
 }
 
 template<> void 
 XMLWriterImpl::WriterPass::put<ConstantInteger>(ConstantInteger* i)
 {
-  startElement("dec");
-  if (cast<IntegerType>(i->getType())->isSigned())
-    writeString(llvm::itostr(i->getValue()));
-  else
-    writeString(llvm::utostr(i->getValue(0)));
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+  switch (i->getBase()) {
+    case 2: startElement("bin"); break;
+    case 8: startElement("oct"); break;
+    case 16: startElement("hex"); break;
+    default: startElement("dec"); break;
+  }
+  writeString(i->getValue());
+  endElement();
 }
 
 template<> void
 XMLWriterImpl::WriterPass::put<ConstantReal>(ConstantReal* r)
 {
+  startElement("constant");
+  writeAttribute("id",r->getName());
+  writeAttribute("type",r->getType()->getName());
   startElement("dbl");
-  writeString(llvm::ftostr(r->getValue()));
+  writeString(r->getValue());
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ConstantText>(ConstantText* t)
+XMLWriterImpl::WriterPass::put<ConstantString>(ConstantString* t)
 {
-  startElement("text");
+  startElement("constant");
+  writeAttribute("id",t->getName());
+  writeAttribute("type",t->getType()->getName());
+  startElement("string");
   writeString(t->getValue());
-}
-
-template<> void
-XMLWriterImpl::WriterPass::put<ConstantZero>(ConstantZero* t)
-{
-  startElement("zero");
+  endElement();
 }
 
 template<> void
@@ -419,6 +441,10 @@ XMLWriterImpl::WriterPass::put<Variable>(Variable* v)
   startElement("variable");
   writeAttribute("id",v->getName());
   writeAttribute("type",v->getType()->getName());
+  if (v->hasInitializer()) {
+    Constant* C = llvm::cast<Constant>(v->getInitializer());
+    writeAttribute("id",C->getName());
+  }
   putDoc(v);
 }
 
@@ -455,6 +481,10 @@ XMLWriterImpl::WriterPass::put<AutoVarOp>(AutoVarOp* av)
   startElement("autovar");
   writeAttribute("id",av->getName());
   writeAttribute("type",av->getType()->getName());
+  if (av->hasInitializer()) {
+    Constant* C = llvm::cast<Constant>(av->getInitializer());
+    writeAttribute("init",C->getName());
+  }
   putDoc(av);
 }
 
@@ -703,6 +733,13 @@ XMLWriterImpl::WriterPass::put(LoadOp* r)
   putDoc(r);
 }
 
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantReferenceOp* cr)
+{
+  startElement("cref");
+  writeAttribute("id",cr->getReferent()->getName());
+}
+
 template<> void 
 XMLWriterImpl::WriterPass::put(ReferenceOp* r)
 {
@@ -752,6 +789,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
     {
       case AliasTypeID:          put(cast<AliasType>(n)); break;
       case AnyTypeID:            put(cast<AnyType>(n)); break;
+      case StringTypeID:         put(cast<StringType>(n)); break;
       case BooleanTypeID:        put(cast<BooleanType>(n)); break;
       case BundleID:             put(cast<Bundle>(n)); break;
       case CharacterTypeID:      put(cast<CharacterType>(n)); break;
@@ -770,8 +808,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case ConstantBooleanID:    put(cast<ConstantBoolean>(n)); break;
       case ConstantIntegerID:    put(cast<ConstantInteger>(n)); break;
       case ConstantRealID:       put(cast<ConstantReal>(n)); break;
-      case ConstantTextID:       put(cast<ConstantText>(n)); break;
-      case ConstantZeroID:       put(cast<ConstantZero>(n)); break;
+      case ConstantStringID:     put(cast<ConstantString>(n)); break;
       case VariableID:           put(cast<Variable>(n)); break;
       case FunctionID:           put(cast<Function>(n)); break;
       case ProgramID:            put(cast<Program>(n)); break;
@@ -812,6 +849,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case ReturnOpID:           put(cast<ReturnOp>(n)); break;
       case StoreOpID:            put(cast<StoreOp>(n)); break;
       case LoadOpID:             put(cast<LoadOp>(n)); break;
+      case ConstantReferenceOpID:put(cast<ConstantReferenceOp>(n)); break;
       case ReferenceOpID:        put(cast<ReferenceOp>(n)); break;
       case OpenOpID:             put(cast<OpenOp>(n)); break;
       case CloseOpID:            put(cast<CloseOp>(n)); break;
@@ -843,4 +881,9 @@ XMLWriter*
 hlvm::XMLWriter::create(const char* fname)
 {
   return new XMLWriterImpl(fname);
+}
+
+void 
+hlvm::dump(Node*)
+{
 }

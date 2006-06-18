@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/bitwise.hlx">
+  <bundle id="bitwise">
+    <constant id="0f0f0f0f" type="u32"><hex>0f0f0f0f</hex></constant>
+    <constant id="08080808" type="u32"><hex>08080808</hex></constant>
+    <constant id="04040404" type="u32"><hex>04040404</hex></constant>
+    <constant id="00000000" type="u32"><hex>00000000</hex></constant>
+    <program id="bitwise">
+      <block>
+        <ret>
+          <band>
+            <bnor>
+              <bor>
+                <bxor>
+                  <cref id="0f0f0f0f"/>
+                  <cref id="08080808"/>
+                </bxor>
+                <cref id="04040404"/>
+              </bor>
+              <cref id="0f0f0f0f"/>
+            </bnor>
+            <cref id="00000000"/>
+          </band>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return0.hlx">
   <bundle id="return0">
+    <constant id="zero" type="s32"><dec>0</dec></constant>
     <program id="return0">
       <block>
         <ret>
-          <dec>0</dec>
+          <cref id="zero"/>
         </ret>
       </block>
     </program>

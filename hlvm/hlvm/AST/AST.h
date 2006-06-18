@@ -34,7 +34,7 @@
 #include <hlvm/AST/Type.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/RuntimeType.h>
-#include <hlvm/AST/Constant.h>
+#include <hlvm/AST/Constants.h>
 #include <string>
 #include <vector>
 
@@ -55,11 +55,13 @@ class Variable;
 class ConstantBoolean;
 class ConstantInteger;
 class ConstantReal;
-class ConstantText;
-class ConstantZero;
+class ConstantString;
 class Pool;
+class Operator;
 class AutoVarOp;
 class ReferenceOp;
+class ConstantReferenceOp;
+class URI;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It forms the
 /// root node of a multi-way tree of other nodes. As such, its parent node is
@@ -137,6 +139,11 @@ class AST : public Node
   /// @name Factories
   /// @{
   public:
+    /// Create a new URI object. URIs indicate the source file from which the
+    /// AST is being constructued. They are used by locators and bundles to
+    /// identify source locations.
+    URI* new_URI(const std::string& uri);
+
     /// Create a new Locator object. Locators indicate where in the source
     /// a particular AST node is located. Locators can be very general (just
     /// the URI) or very specific (the exact range of bytes in the file). The
@@ -193,8 +200,8 @@ class AST : public Node
     /// integer types. By default it creates a signed 32-bit integer.
     IntegerType* new_IntegerType(
       const std::string& id,  ///< The name of the type
-      uint64_t bits = 32,     ///< The number of bits
-      bool isSigned = true,    ///< The signedness
+      uint16_t bits = 32,     ///< The number of bits
+      bool isSigned = true,   ///< The signedness
       const Locator* loc = 0  ///< The locator of the declaration
     );
     /// Create a new RangeType node. RangeType nodes are integer nodes that
@@ -224,6 +231,12 @@ class AST : public Node
     /// Create a new AnyType node. An AnyType node is a type that can hold a
     /// value of any other HLVM type. 
     AnyType* new_AnyType(
+      const std::string& id, ///< The name of the type
+      const Locator* loc = 0  ///< The source locator 
+    );
+    /// Create a new StringType node. A StringType node is a type that holds a
+    /// sequence of UTF-8 encoded characters.
+    StringType* new_StringType(
       const std::string& id, ///< The name of the type
       const Locator* loc = 0  ///< The source locator 
     );
@@ -418,25 +431,21 @@ class AST : public Node
       bool t_or_f,            ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new ConstantZero node
-    ConstantZero* new_ConstantZero(
-      const Type* Ty,         ///< The type for the constant zero
-      const Locator* loc = 0  ///< The source locator
-    );
     /// Create a new ConstantInteger node.
     ConstantInteger* new_ConstantInteger(
-      uint64_t value,         ///< The value of the ConstantInteger
-      Type* Ty,               ///< The type of the integer
+      const std::string& val, ///< The value of the ConstantInteger
+      uint16_t base,          ///< The numeric base the value is encoded in
+      const Type* Ty,         ///< The type of the integer
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantInteger node.
     ConstantReal* new_ConstantReal(
-      double value,           ///< The value of the ConstantReal
-      Type* Ty,               ///< The type of the real
+      const std::string& val, ///< The value of the ConstantReal
+      const Type* Ty,         ///< The type of the real
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantText node.
-    ConstantText* new_ConstantText(
+    ConstantString* new_ConstantString(
       const std::string& value, ///< The value of the ConstantText
       const Locator* loc = 0    ///< The source locator
     );
@@ -470,87 +479,91 @@ class AST : public Node
       const Locator* loc       ///< The source locator
     );
 
+    /// Create a new ReferenceOp.
     ReferenceOp* new_ReferenceOp(
-      const Value* V,       ///< The value being referred to
+      const Value* V,       ///< The value being referenced
       const Locator*loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a nilary operator
+    /// Create a new ReferenceOp.
+    ConstantReferenceOp* new_ConstantReferenceOp(
+      const Constant* C,     ///< The constant being referenced
+      const Locator* loc = 0 ///< The source locator
+    );
+
+    /// Provide a template function for creating standard nilary operators
     template<class OpClass>
     OpClass* new_NilaryOp(
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a unary operator
+    /// Provide a template function for creating standard unary operators
     template<class OpClass>
     OpClass* new_UnaryOp(
-      Value* oprnd1,         ///< The first operand
+      Operator* oprnd1,         ///< The first operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a binary operator
+    /// Provide a template function for creating standard binary operators
     template<class OpClass>
     OpClass* new_BinaryOp(
-      Value* oprnd1,         ///< The first operand
-      Value* oprnd2,         ///< The second operand
+      Operator* oprnd1,         ///< The first operand
+      Operator* oprnd2,         ///< The second operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a ternary operator
+    /// Provide a template function for creating standard ternary operators
     template<class OpClass>
     OpClass* new_TernaryOp(
-      Value* oprnd1,         ///< The first operand
-      Value* oprnd2,         ///< The second operand
-      Value* oprnd3,         ///< The third operand
+      Operator* oprnd1,         ///< The first operand
+      Operator* oprnd2,         ///< The second operand
+      Operator* oprnd3,         ///< The third operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a multi-operand operator
+    /// Provide a template function for creating standard multi-operand
+    /// operators
     template<class OpClass>
     OpClass* new_MultiOp(
-      const std::vector<Value*>& o, ///< The list of operands
+      const std::vector<Operator*>& o, ///< The list of operands
       const Locator* loc = 0
     );
+
   protected:
-    /// Provide a template function for creating a nilary operator
     template<class OpClass>
     OpClass* new_NilaryOp(
       const Type* Ty,        ///< Result type of the operator
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a unary operator
     template<class OpClass>
     OpClass* new_UnaryOp(
       const Type* Ty,        ///< Result type of the operator
-      Value* oprnd1,         ///< The first operand
+      Operator* oprnd1,         ///< The first operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a binary operator
     template<class OpClass>
     OpClass* new_BinaryOp(
       const Type* Ty,        ///< Result type of the operator
-      Value* oprnd1,         ///< The first operand
-      Value* oprnd2,         ///< The second operand
+      Operator* oprnd1,         ///< The first operand
+      Operator* oprnd2,         ///< The second operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a ternary operator
     template<class OpClass>
     OpClass* new_TernaryOp(
       const Type* Ty,        ///< Result type of the operator
-      Value* oprnd1,         ///< The first operand
-      Value* oprnd2,         ///< The second operand
-      Value* oprnd3,         ///< The third operand
+      Operator* oprnd1,         ///< The first operand
+      Operator* oprnd2,         ///< The second operand
+      Operator* oprnd3,         ///< The third operand
       const Locator* loc = 0 ///< The source locator
     );
 
-    /// Provide a template function for creating a multi-operand operator
     template<class OpClass>
     OpClass* new_MultiOp(
       const Type* Ty,         ///< Result type of the operator
-      const std::vector<Value*>& o, ///< The list of operands
+      const std::vector<Operator*>& o, ///< The list of operands
       const Locator* loc = 0
     );
 

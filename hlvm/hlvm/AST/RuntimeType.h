@@ -97,7 +97,7 @@ class StreamType : public RuntimeType
   /// @name Constructors
   /// @{
   protected:
-    StreamType() : RuntimeType(StreamTypeID,"hlvm_stream") {}
+    StreamType() : RuntimeType(StreamTypeID,"stream") {}
     virtual ~StreamType();
   /// @}
   /// @name Accessors
@@ -120,7 +120,7 @@ class BufferType : public RuntimeType
   /// @name Constructors
   /// @{
   protected:
-    BufferType() : RuntimeType(BufferTypeID,"hlvm_buffer") {}
+    BufferType() : RuntimeType(BufferTypeID,"buffer") {}
     virtual ~BufferType();
   /// @}
   /// @name Accessors

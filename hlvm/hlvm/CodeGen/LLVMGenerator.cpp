@@ -108,6 +108,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::Function*     hlvm_stream_read;   ///< Function for stream_read
   llvm::Function*     hlvm_stream_write_buffer; ///< Write buffer to stream
   llvm::Function*     hlvm_stream_write_text;   ///< Write text to stream
+  llvm::Function*     hlvm_stream_write_string; ///< Write string to stream
   llvm::Function*     hlvm_stream_close;  ///< Function for stream_close
   llvm::FunctionType* hlvm_program_signature; ///< The llvm type for programs
 
@@ -123,6 +124,7 @@ class LLVMGeneratorPass : public hlvm::Pass
       hlvm_stream(0),
       hlvm_stream_open(0), hlvm_stream_read(0),
       hlvm_stream_write_buffer(0), hlvm_stream_write_text(0), 
+      hlvm_stream_write_string(0),
       hlvm_stream_close(0), hlvm_program_signature(0)
       { }
     ~LLVMGeneratorPass() { }
@@ -137,6 +139,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline llvm::Value* getInteger(llvm::Value* op);
   inline llvm::Value* toBoolean(llvm::Value* op);
   inline llvm::Value* ptr2Value(llvm::Value* op);
+  inline llvm::Value* coerce(llvm::Value* op);
 
   /// Accessors for HLVM Runtime Library things
   inline llvm::Type*         get_hlvm_size();
@@ -152,6 +155,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline llvm::Function*     get_hlvm_stream_read();
   inline llvm::Function*     get_hlvm_stream_write_buffer();
   inline llvm::Function*     get_hlvm_stream_write_text();
+  inline llvm::Function*     get_hlvm_stream_write_string();
   inline llvm::Function*     get_hlvm_stream_close();
   inline llvm::FunctionType* get_hlvm_program_signature();
 
@@ -161,7 +165,7 @@ class LLVMGeneratorPass : public hlvm::Pass
 
   void genProgramLinkage();
 
-  virtual void handleInitialize();
+  virtual void handleInitialize(AST* tree);
   virtual void handle(Node* n,Pass::TraversalKinds mode);
   virtual void handleTerminate();
 
@@ -296,7 +300,7 @@ LLVMGeneratorPass::get_hlvm_stream_open()
   if (!hlvm_stream_open) {
     llvm::Type* result = get_hlvm_stream();
     std::vector<const llvm::Type*> arg_types;
-    arg_types.push_back(get_hlvm_text());
+    arg_types.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
     llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
     lmod->addTypeName("hlvm_stream_open_signature",FT);
     hlvm_stream_open = 
@@ -339,6 +343,23 @@ LLVMGeneratorPass::get_hlvm_stream_write_buffer()
       "hlvm_stream_write_buffer", lmod);
   }
   return hlvm_stream_write_buffer;
+}
+
+llvm::Function*
+LLVMGeneratorPass::get_hlvm_stream_write_string()
+{
+  if (!hlvm_stream_write_string) {
+    llvm::Type* result = get_hlvm_size();
+    std::vector<const llvm::Type*> arg_types;
+    arg_types.push_back(get_hlvm_stream());
+    arg_types.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
+    llvm::FunctionType* FT = llvm::FunctionType::get(result,arg_types,false);
+    lmod->addTypeName("hlvm_stream_write_string_signature",FT);
+    hlvm_stream_write_string = 
+      new llvm::Function(FT, llvm::GlobalValue::ExternalLinkage,
+      "hlvm_stream_write_string", lmod);
+  }
+  return hlvm_stream_write_string;
 }
 
 llvm::Function*
@@ -428,6 +449,9 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
     case AnyTypeID:
       hlvmNotImplemented("Any Type");
       break;
+    case StringTypeID:              
+      result = llvm::PointerType::get(llvm::Type::SByteTy);
+      break;
     case IntegerTypeID:
       hlvmNotImplemented("arbitrary precision integer");
       break;
@@ -509,8 +533,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 llvm::Constant*
 LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
 {
-  if (C == 0)
-    return 0;
+  hlvmAssert(C!=0);
 
   // First, lets see if its cached already
   ConstantDictionary::iterator I = consts.find(const_cast<hlvm::Constant*>(C));
@@ -522,33 +545,39 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
   llvm::Constant* result = 0;
   switch (C->getID()) 
   {
+    case ConstantBooleanID:
+    {
+      const ConstantBoolean* CI = llvm::cast<const ConstantBoolean>(C);
+      result = llvm::ConstantBool::get(CI->getValue());
+      break;
+    }
     case ConstantIntegerID:
     {
       const ConstantInteger* CI = llvm::cast<const ConstantInteger>(C);
-      if (llvm::cast<IntegerType>(hType)->isSigned())
-        result = llvm::ConstantSInt::get(lType,CI->getValue());
-      else
-        result = llvm::ConstantUInt::get(lType,CI->getValue(0));
+      const IntegerType* iType = llvm::cast<IntegerType>(hType);
+      if (iType->isSigned()) {
+        int64_t val = strtoll(CI->getValue().c_str(),0,CI->getBase());
+        result = llvm::ConstantSInt::get(lType,val);
+      }
+      else {
+        uint64_t val = strtoull(CI->getValue().c_str(),0,CI->getBase());
+        result = llvm::ConstantUInt::get(lType,val);
+      }
       break;
     }
     case ConstantRealID:
     {
-      result = llvm::ConstantFP::get(lType,
-        llvm::cast<ConstantReal>(C)->getValue());
+      const ConstantReal* CR = llvm::cast<const ConstantReal>(C);
+      double  val = strtod(CR->getValue().c_str(),0);
+      result = llvm::ConstantFP::get(lType, val);
       break;
     }
-    case ConstantTextID:
+    case ConstantStringID:
     {
-      llvm::Constant* CA = llvm::ConstantArray::get(
-        llvm::cast<ConstantText>(C)->getValue(),true);
-      llvm::GlobalVariable* GV = new llvm::GlobalVariable(
-        CA->getType(), true, llvm::GlobalValue::InternalLinkage, CA, "", lmod);
-      result = llvm::ConstantExpr::getPtrPtrFromArrayPtr(GV);
-      break;
-    }
-    case ConstantZeroID:
-    {
-      result = llvm::Constant::getNullValue(lType);
+      const ConstantString* CT = llvm::cast<ConstantString>(C);
+      llvm::Constant* CA = llvm::ConstantArray::get(CT->getValue(), true);
+      result = new llvm::GlobalVariable(CA->getType(), true, 
+          llvm::GlobalValue::InternalLinkage, CA, C->getName(), lmod);
       break;
     }
     default:
@@ -625,6 +654,12 @@ template<> void
 LLVMGeneratorPass::gen<AnyType>(AnyType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
+}
+
+template<> void 
+LLVMGeneratorPass::gen<StringType>(StringType* s)
+{
+  lmod->addTypeName(s->getName(), getType(s));
 }
 
 template<> void
@@ -715,31 +750,24 @@ template<> void
 LLVMGeneratorPass::gen<ConstantInteger>(ConstantInteger* i)
 {
   llvm::Constant* C = getConstant(i);
-  lops.push_back(C);
+}
+
+template<> void
+LLVMGeneratorPass::gen<ConstantBoolean>(ConstantBoolean* b)
+{
+  getConstant(b);
 }
 
 template<> void
 LLVMGeneratorPass::gen<ConstantReal>(ConstantReal* r)
 {
-  llvm::Constant* C = getConstant(r);
-  lops.push_back(C);
+  getConstant(r);
 }
 
 template<> void
-LLVMGeneratorPass::gen<ConstantZero>(ConstantZero* z)
+LLVMGeneratorPass::gen<ConstantString>(ConstantString* t)
 {
-  llvm::Constant* C = getConstant(z);
-  lops.push_back(C);
-}
-
-template<> void
-LLVMGeneratorPass::gen<ConstantText>(ConstantText* t)
-{
-  llvm::Constant* C = getConstant(t);
-  std::vector<llvm::Value*> args;
-  args.push_back(C);
-  llvm::CallInst* CI = new llvm::CallInst(get_hlvm_text_create(),args,"",lblk);
-  lops.push_back(CI);
+  getConstant(t);
 }
 
 template<> void
@@ -748,15 +776,18 @@ LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
   assert(lblk  != 0 && "Not in block context");
   // emit a stack variable
   const llvm::Type* elemType = getType(av->getType());
-  llvm::Value* init = lops.back(); lops.pop_back();
   llvm::Value* alloca = new llvm::AllocaInst(
       /*Ty=*/ elemType,
       /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
       /*Name=*/ av->getName(),
       /*InsertAtEnd=*/ lblk
   );
-  // FIXME: Handle initializer
-  llvm::Constant* C = getConstant(av->getInitializer());
+  llvm::Constant* C = 0;
+  if (av->hasInitializer())
+    C = getConstant(av->getInitializer());
+  else
+    C = llvm::Constant::getNullValue(elemType);
+
   if (C) {
     const llvm::Type* CType = C->getType();
     if (CType != elemType) {
@@ -792,7 +823,11 @@ LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
 template<> void
 LLVMGeneratorPass::gen<Variable>(Variable* v)
 {
-  llvm::Constant* Initializer = getConstant(v->getInitializer());
+  llvm::Constant* Initializer = 0;
+  if (v->hasInitializer())
+    Initializer = getConstant(v->getInitializer());
+  else
+    Initializer = llvm::Constant::getNullValue(getType(v->getType()));
   llvm::Value* gv = new llvm::GlobalVariable(
     /*Ty=*/ getType(v->getType()),
     /*isConstant=*/ false,
@@ -992,7 +1027,7 @@ LLVMGeneratorPass::gen<BXorOp>(BXorOp* op)
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
-    llvm::Instruction::Xor, op1, op2, "bor", lblk);
+    llvm::Instruction::Xor, op1, op2, "bxor", lblk);
   lops.push_back(Xor);
 }
 
@@ -1005,8 +1040,8 @@ LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
-    llvm::Instruction::Or, op1, op2, "bor", lblk);
-  llvm::BinaryOperator* nor = llvm::BinaryOperator::createNot(bor,"bor",lblk);
+    llvm::Instruction::Or, op1, op2, "bnor", lblk);
+  llvm::BinaryOperator* nor = llvm::BinaryOperator::createNot(bor,"bnor",lblk);
   lops.push_back(nor);
 }
 
@@ -1235,6 +1270,14 @@ LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
 }
 
 template<> void
+LLVMGeneratorPass::gen<ConstantReferenceOp>(ConstantReferenceOp* r)
+{
+  hlvm::Constant* referent = const_cast<hlvm::Constant*>(r->getReferent());
+  llvm::Constant* C = getConstant(referent);
+  hlvmAssert(C && "Can't generate constant?");
+  lops.push_back(C);
+}
+template<> void
 LLVMGeneratorPass::gen<IndexOp>(IndexOp* r)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for IndexOp");
@@ -1244,8 +1287,26 @@ template<> void
 LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for OpenOp");
+  llvm::Value* strm = lops.back(); lops.pop_back();
   std::vector<llvm::Value*> args;
-  args.push_back(lops.back()); lops.pop_back();
+  if (const llvm::PointerType* PT = 
+      llvm::dyn_cast<llvm::PointerType>(strm->getType())) {
+    const llvm::Type* Ty = PT->getElementType();
+    if (Ty == llvm::Type::SByteTy) {
+      args.push_back(strm);
+    } else if (llvm::isa<llvm::ArrayType>(Ty) && 
+               llvm::cast<llvm::ArrayType>(Ty)->getElementType() == 
+               llvm::Type::SByteTy) {
+      std::vector<llvm::Value*> indices;
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      llvm::GetElementPtrInst* gep = 
+        new llvm::GetElementPtrInst(strm,indices,"",lblk);
+      args.push_back(gep);
+    } else
+      hlvmAssert(!"Array element type is not SByteTy");
+  } else
+    hlvmAssert(!"OpenOp parameter is not a pointer");
   llvm::CallInst* ci = new 
     llvm::CallInst(get_hlvm_stream_open(), args, "", lblk);
   lops.push_back(ci);
@@ -1255,15 +1316,20 @@ template<> void
 LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for WriteOp");
-  std::vector<llvm::Value*> args;
   llvm::Value* arg2 = lops.back(); lops.pop_back();
   llvm::Value* strm = lops.back(); lops.pop_back();
+  std::vector<llvm::Value*> args;
   args.push_back(strm);
   args.push_back(arg2);
+  if (llvm::isa<llvm::PointerType>(arg2->getType()))
+    if (llvm::cast<llvm::PointerType>(arg2->getType())->getElementType() ==
+        llvm::Type::SByteTy)
+      lops.push_back(
+        new llvm::CallInst(get_hlvm_stream_write_string(), args, "", lblk));
   if (arg2->getType() == get_hlvm_text())
     lops.push_back(
       new llvm::CallInst(get_hlvm_stream_write_text(), args, "", lblk));
-  else
+  else if (arg2->getType() == get_hlvm_buffer())
     lops.push_back(
       new llvm::CallInst(get_hlvm_stream_write_buffer(), args, "",lblk));
 }
@@ -1392,7 +1458,7 @@ LLVMGeneratorPass::genProgramLinkage()
 }
 
 void
-LLVMGeneratorPass::handleInitialize()
+LLVMGeneratorPass::handleInitialize(AST* tree)
 {
   // Nothing to do
 }
@@ -1418,6 +1484,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     {
     case AliasTypeID:             gen(llvm::cast<AliasType>(n)); break;
     case AnyTypeID:               gen(llvm::cast<AnyType>(n)); break;
+    case StringTypeID:            gen(llvm::cast<StringType>(n)); break;
     case BooleanTypeID:           gen(llvm::cast<BooleanType>(n)); break;
     case CharacterTypeID:         gen(llvm::cast<CharacterType>(n)); break;
     case IntegerTypeID:           gen(llvm::cast<IntegerType>(n)); break;
@@ -1432,10 +1499,10 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
     case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
     case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
-    case ConstantZeroID:          gen(llvm::cast<ConstantZero>(n));break;
+    case ConstantBooleanID:       gen(llvm::cast<ConstantBoolean>(n));break;
     case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
     case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
-    case ConstantTextID:          gen(llvm::cast<ConstantText>(n));break;
+    case ConstantStringID:        gen(llvm::cast<ConstantString>(n));break;
     case VariableID:              gen(llvm::cast<Variable>(n)); break;
     case NegateOpID:              gen(llvm::cast<NegateOp>(n)); break;
     case ComplementOpID:          gen(llvm::cast<ComplementOp>(n)); break;
@@ -1473,6 +1540,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
     case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
     case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+    case ConstantReferenceOpID:   gen(llvm::cast<ConstantReferenceOp>(n)); 
+                                  break;
     case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
     case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
     case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;

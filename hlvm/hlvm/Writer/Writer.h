@@ -33,6 +33,7 @@
 namespace hlvm {
 
 class AST;
+class Node;
 
 class Writer
 {
@@ -42,6 +43,10 @@ public:
   /// destination
   virtual void write(AST* source) = 0;
 };
+
+#ifdef HLVM_DEBUG
+void dump(Node*);
+#endif
 
 }
 #endif

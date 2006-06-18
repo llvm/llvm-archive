@@ -54,13 +54,14 @@ class ValidateImpl : public Pass
     virtual void handleInitialize(AST* tree) { ast = tree; }
     virtual void handle(Node* b,Pass::TraversalKinds k);
     inline void error(Node*n, const char* msg);
-    inline bool checkNonPointer(Value*n);
+    inline void warning(Node*n, const char* msg);
     inline bool checkNode(Node*);
     inline bool checkType(Type*,NodeIDs id);
     inline bool checkValue(Value*,NodeIDs id);
     inline bool checkConstant(Constant*,NodeIDs id);
     inline bool checkOperator(
         Operator*,NodeIDs id,unsigned numOps, bool exact = true);
+    inline bool checkTerminator(Operator* op);
     inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
     inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
     inline bool checkLinkageItem(LinkageItem* LI, NodeIDs id);
@@ -69,18 +70,37 @@ class ValidateImpl : public Pass
     inline void validate(NodeClass* C);
 };
 
-bool
-ValidateImpl::checkNonPointer(Value* n)
+void 
+ValidateImpl::warning(Node* n, const char* msg)
 {
-  const Type* Ty = n->getType();
-  if (Ty) {
-    if (isa<PointerType>(Ty)) {
-      error(n,"Expecting a non-pointer value");
-      return false;
-    }
+  if (n) {
+    const Locator* loc = n->getLocator();
+    if (loc) {
+      std::string location;
+      loc->getLocation(location);
+      std::cerr << location << ": ";
+    } else
+      std::cerr << "Unknown Location: ";
   }
-  return true;
+  std::cerr << msg << "\n";
 }
+
+void 
+ValidateImpl::error(Node* n, const char* msg)
+{
+  if (n) {
+    const Locator* loc = n->getLocator();
+    if (loc) {
+      std::string location;
+      loc->getLocation(location);
+      std::cerr << location << ": ";
+    } else
+      std::cerr << "Unknown Location: ";
+  }
+  std::cerr << msg << "\n";
+  passed_ = false;
+}
+
 
 bool
 ValidateImpl::checkNode(Node* n)
@@ -154,6 +174,21 @@ ValidateImpl::checkOperator(Operator*n, NodeIDs id, unsigned num, bool exact)
   return result;
 }
 
+bool
+ValidateImpl::checkTerminator(Operator *n)
+{
+  if (Block* b = llvm::dyn_cast<Block>(n->getParent())) {
+    if (b->back() != n) {
+      error(n,"Terminating operator is not last operator in block");
+      return false;
+    }
+  } else {
+    error(n,"Operator not in block!");
+    return false;
+  }
+  return true;
+}
+
 bool 
 ValidateImpl::checkUniformContainer(UniformContainerType* n, NodeIDs id)
 {
@@ -205,23 +240,6 @@ ValidateImpl::checkLinkageItem(LinkageItem* LI, NodeIDs id)
     }
   }
   return result;
-}
-
-void 
-ValidateImpl::error(Node* n, const char* msg)
-{
-  if (n) {
-    const Locator* loc = n->getLocator();
-    if (loc) {
-      std::string msg;
-      loc->getLocation(msg);
-      std::cerr << msg << " ";
-    } else
-      std::cerr << "Unknown Location: ";
-    std::cerr << "Node(" << n << "): ";
-  }
-  std::cerr << msg << "\n";
-  passed_ = false;
 }
 
 template<> inline void
@@ -415,60 +433,98 @@ ValidateImpl::validate(NoOperator* n)
 template<> inline void
 ValidateImpl::validate(ReturnOp* n)
 {
-  checkOperator(n,ReturnOpID,1);
+  if (checkOperator(n,ReturnOpID,1))
+    checkTerminator(n);
 }
 
 template<> inline void
 ValidateImpl::validate(BreakOp* n)
 {
-  checkOperator(n,BreakOpID,0);
+  if (checkOperator(n,BreakOpID,0))
+    checkTerminator(n);
 }
 
 template<> inline void
 ValidateImpl::validate(ContinueOp* n)
 {
-  checkOperator(n,ContinueOpID,0);
+  if (checkOperator(n,ContinueOpID,0))
+    checkTerminator(n);
 }
 
 template<> inline void
 ValidateImpl::validate(SelectOp* n)
 {
-  checkOperator(n,SelectOpID,3);
+  if (checkOperator(n,SelectOpID,3)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<BooleanType>(Ty))
+      error(n,"SelectOp expects first operand to be type boolean");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(LoopOp* n)
 {
-  checkOperator(n,LoopOpID,3);
+  if (checkOperator(n,LoopOpID,3)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<BooleanType>(Ty) && !isa<VoidType>(Ty))
+      error(n,"LoopOp expects first operand to be type boolean or void");
+    Ty = n->getOperand(2)->getType();
+    if (!isa<BooleanType>(Ty) && !isa<VoidType>(Ty))
+      error(n,"LoopOp expects third operand to be type boolean or void");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(SwitchOp* n)
 {
-  checkOperator(n,SwitchOpID,2,false);
+  if (checkOperator(n,SwitchOpID,2,false)) {
+    if (n->getNumOperands() == 2)
+      warning(n,"Why not just use a SelectOp?");
+    if (n->getNumOperands() % 2 != 0)
+      error(n,"SwitchOp requires even number of operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(AllocateOp* n)
 {
-  checkOperator(n,AllocateOpID,2);
+  if (checkOperator(n,AllocateOpID,2)) {
+    if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) {
+      if (const Type* Ty = PT->getElementType()) {
+        if (!Ty->isSized())
+          error(n,"Can't allocate an unsized type");
+      } else 
+        error(n,"AllocateOp's pointer type has no element type!");
+    } else
+      error(n,"AllocateOp's type must be a pointer type");
+    if (!llvm::isa<IntegerType>(n->getType())) 
+      error(n,"AllocateOp's operand must be of integer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(DeallocateOp* n)
 {
-  checkOperator(n,DeallocateOpID,1);
+  if (checkOperator(n,DeallocateOpID,1)) {
+    if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) {
+      if (const Type* Ty = PT->getElementType()) {
+        if (!Ty->isSized())
+          error(n,"Can't deallocate an unsized type");
+      } else 
+        error(n,"DeallocateOp's pointer type has no element type!");
+    } else
+      error(n,"DeallocateOp expects its first operand to be a pointer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(LoadOp* n)
 {
   if (checkOperator(n,LoadOpID,1)) {
-    Value* oprnd = n->getOperand(0);
-    if (!isa<PointerType>(oprnd->getType()))
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<PointerType>(Ty))
       error(n,"LoadOp expects a pointer type operand");
-    else if (n->getType() != 
-             cast<PointerType>(oprnd->getType())->getElementType())
+    else if (n->getType() != cast<PointerType>(Ty)->getElementType())
       error(n,"LoadOp type and operand type do not agree");
   }
 }
@@ -477,12 +533,11 @@ template<> inline void
 ValidateImpl::validate(StoreOp* n)
 {
   if (checkOperator(n,StoreOpID,2)) {
-    Value* op1 = n->getOperand(0);
-    Value* op2 = n->getOperand(1);
-    if (!isa<PointerType>(op1->getType()))
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!isa<PointerType>(Ty1))
       error(n,"StoreOp expects first operand to be pointer type");
-    else if (cast<PointerType>(op1->getType())->getElementType() != 
-             op2->getType())
+    else if (cast<PointerType>(Ty1)->getElementType() != Ty2)
       error(n,"StoreOp operands do not agree in type");
   }
 }
@@ -490,148 +545,250 @@ ValidateImpl::validate(StoreOp* n)
 template<> inline void
 ValidateImpl::validate(AutoVarOp* n)
 {
-  if (checkOperator(n,AutoVarOpID,0,false))
-    ;
+  if (checkOperator(n,AutoVarOpID,0,false)) {
+    if (n->hasInitializer()) {
+      if (n->getType() != n->getInitializer()->getType()) {
+        error(n,"AutoVarOp's type does not agree with type of its Initializer");
+      } 
+    }
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(NegateOp* n)
 {
-  if (checkOperator(n,NegateOpID,1))
-    ;
+  if (checkOperator(n,NegateOpID,1)) {
+    const Type* Ty = n->getType();
+    if (!Ty->isNumericType())
+      error(n,"You can only negate objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ComplementOp* n)
 {
-  if (checkOperator(n,ComplementOpID,1))
-    checkNonPointer(n->getOperand(0));
+  if (checkOperator(n,ComplementOpID,1)) {
+    const Type* Ty = n->getType();
+    if (!Ty->isIntegralType())
+      error(n,"You can only complement objects of integral type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(PreIncrOp* n)
 {
-  if (checkOperator(n,PreIncrOpID,1))
-    ;
+  if (checkOperator(n,PreIncrOpID,1)) {
+    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
+      const Value* V = oprnd->getReferent();
+      if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
+        if (!V->getType()->isNumericType())
+          error(n,"Target of PostIncrOp is not numeric type");
+      } else
+        ; // Handled elsewhere
+    } else 
+      error(n,"Operand of PostIncrOp must be a ReferenceOp");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(PostIncrOp* n)
 {
-  if (checkOperator(n,PostIncrOpID,1))
-    ;
+  if (checkOperator(n,PostIncrOpID,1)) {
+    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
+      const Value* V = oprnd->getReferent();
+      if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
+        if (!V->getType()->isNumericType())
+          error(n,"Target of PostIncrOp is not numeric type");
+      } else
+        ; // Handled elsewhere
+    } else 
+      error(n,"Operand of PostIncrOp must be a ReferenceOp");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(PreDecrOp* n)
 {
-  if (checkOperator(n,PreDecrOpID,1))
-    ;
+  if (checkOperator(n,PreDecrOpID,1)){
+    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
+      const Value* V = oprnd->getReferent();
+      if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
+        if (!V->getType()->isNumericType())
+          error(n,"Target of PreDecrOp is not numeric type");
+      } else
+        ; // Handled elsewhere
+    } else 
+      error(n,"Operand of PreDecrOp must be a ReferenceOp");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(PostDecrOp* n)
 {
-  if (checkOperator(n,PostDecrOpID,1))
-    ;
+  if (checkOperator(n,PostDecrOpID,1)) {
+    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
+      const Value* V = oprnd->getReferent();
+      if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
+        if (!V->getType()->isNumericType())
+          error(n,"Target of PostDecrOp is not numeric type");
+      } else
+        ; // Handled elsewhere
+    } else 
+      error(n,"Operand of PostDecrOp must be a ReferenceOp");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(AddOp* n)
 {
-  if (checkOperator(n,AddOpID,2))
-    ;
+  if (checkOperator(n,AddOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isNumericType() || !Ty2->isNumericType())
+      error(n,"You can only add objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(SubtractOp* n)
 {
-  if (checkOperator(n,SubtractOpID,2))
-    ;
+  if (checkOperator(n,SubtractOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isNumericType() || !Ty2->isNumericType())
+      error(n,"You can only subtract objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(MultiplyOp* n)
 {
-  if (checkOperator(n,MultiplyOpID,2))
-    ;
+  if (checkOperator(n,MultiplyOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isNumericType() || !Ty2->isNumericType())
+      error(n,"You can only multiply objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(DivideOp* n)
 {
-  if (checkOperator(n,DivideOpID,2))
-    ;
+  if (checkOperator(n,DivideOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isNumericType() || !Ty2->isNumericType())
+      error(n,"You can only multiply objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ModuloOp* n)
 {
-  if (checkOperator(n,ModuloOpID,2))
-    ;
+  if (checkOperator(n,ModuloOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isNumericType() || !Ty2->isNumericType())
+      error(n,"You can only multiply objects of numeric type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(BAndOp* n)
 {
-  if (checkOperator(n,BAndOpID,2))
-    ;
+  if (checkOperator(n,BAndOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+      error(n,"You can only bitwise and objects of integer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(BOrOp* n)
 {
-  if (checkOperator(n,BOrOpID,2))
-    ;
+  if (checkOperator(n,BOrOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+      error(n,"You can only bitwise or objects of integer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(BXorOp* n)
 {
-  if (checkOperator(n,BXorOpID,2))
-    ;
+  if (checkOperator(n,BXorOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+      error(n,"You can only bitwise xor objects of integer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(BNorOp* n)
 {
-  if (checkOperator(n,BNorOpID,2))
-    ;
+  if (checkOperator(n,BNorOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+      error(n,"You can only bitwise nor objects of integer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(NotOp* n)
 {
-  if (checkOperator(n,NotOpID,1))
-    ;
+  if (checkOperator(n,NotOpID,1)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!Ty->is(BooleanTypeID))
+      error(n,"NotOp expects boolean typed operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(AndOp* n)
 {
-  if (checkOperator(n,AndOpID,2))
-    ;
+  if (checkOperator(n,AndOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->is(BooleanTypeID) || !Ty2->is(BooleanTypeID))
+      error(n,"AndOp expects two boolean typed operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(OrOp* n)
 {
-  if (checkOperator(n,OrOpID,2))
-    ;
+  if (checkOperator(n,OrOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->is(BooleanTypeID) || !Ty2->is(BooleanTypeID))
+      error(n,"OrOp expects two boolean typed operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(NorOp* n)
 {
-  if (checkOperator(n,NorOpID,2))
-    ;
+  if (checkOperator(n,NorOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->is(BooleanTypeID) || !Ty2->is(BooleanTypeID))
+      error(n,"NorOp expects two boolean typed operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(XorOp* n)
 {
-  if (checkOperator(n,XorOpID,2))
-    ;
+  if (checkOperator(n,XorOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->is(BooleanTypeID) || !Ty2->is(BooleanTypeID))
+      error(n,"XorOp expects two boolean typed operands");
+  }
 }
 
 template<> inline void
@@ -799,29 +956,54 @@ ValidateImpl::validate(LCMOp* n)
 template<> inline void
 ValidateImpl::validate(OpenOp* n)
 {
-  if (checkOperator(n,OpenOpID,1))
-    ;
+  if (checkOperator(n,OpenOpID,1)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<StringType>(Ty))
+      error(n,"OpenOp expects first operand to be a string");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(CloseOp* n)
 {
-  if (checkOperator(n,CloseOpID,1))
-    ;
+  if (checkOperator(n,CloseOpID,1)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<StreamType>(Ty))
+      error(n,"CloseOp expects first operand to be a stream");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ReadOp* n)
 {
-  if (checkOperator(n,ReadOpID,2))
-    ;
+  if (checkOperator(n,ReadOpID,2)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<StreamType>(Ty))
+      error(n,"ReadOp expects first operand to be a stream");
+    Ty = n->getOperand(1)->getType();
+    if (!isa<BufferType>(Ty))
+      error(n,"ReadOp expects second operand to be a buffer");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(WriteOp* n)
 {
-  if (checkOperator(n,WriteOpID,2))
-    ;
+  if (checkOperator(n,WriteOpID,2)) {
+    const Type* Ty = n->getOperand(0)->getType();
+    if (!isa<StreamType>(Ty))
+      error(n,"WriteOp expects first operand to be a stream");
+    Ty = n->getOperand(1)->getType();
+    switch (Ty->getID()) {
+      case BufferTypeID:
+      case TextTypeID:
+      case StringTypeID:
+        break;
+      default:
+        error(n,"WriteOp expects second operand to be a writable type");
+        break;
+    }
+  }
 }
 
 template<> inline void
@@ -840,12 +1022,7 @@ ValidateImpl::validate(ConstantReal* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantText* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantZero* n)
+ValidateImpl::validate(ConstantString* n)
 {
 }
 
@@ -927,6 +1104,8 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
     case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;
     case ReferenceOpID:          /*validate(cast<ReferenceOp>(n));*/ break;
+    case ConstantReferenceOpID:  /*validate(cast<ConstantReferenceOp>(n));*/ 
+                                                                     break;
     case AutoVarOpID:            validate(cast<AutoVarOp>(n)); break;
     case NegateOpID:             validate(cast<NegateOp>(n)); break;
     case ComplementOpID:         validate(cast<ComplementOp>(n)); break;
@@ -983,8 +1162,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
-    case ConstantTextID:         validate(cast<ConstantText>(n)); break;
-    case ConstantZeroID:         validate(cast<ConstantZero>(n)); break;
+    case ConstantStringID:       validate(cast<ConstantString>(n)); break;
     case ConstantAggregateID:    validate(cast<ConstantAggregate>(n)); break;
     case ConstantExpressionID:   validate(cast<ConstantExpression>(n)); break;
       break; // Not implemented yet

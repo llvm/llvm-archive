@@ -114,12 +114,8 @@ int main(int argc, char**argv)
     rdr->read();
     AST* node = rdr->get();
     if (node && Validate) {
-      PassManager* PM = PassManager::create();
-      Pass* pass = Pass::new_ValidatePass(); 
-      PM->addPass( pass );
-      PM->runOn(node);
-      delete PM;
-      delete pass;
+      if (!validate(node))
+        return 3;
     }
     if (WhatToGenerate == GenLLVMBytecode) {
       generateBytecode(node,*Out);

@@ -57,6 +57,11 @@ URILocator::getLocation(std::string& ref) const
   ref = uri->as_string();
 }
 
+uint32_t URILocator::getLine() const { return 0; }
+uint32_t URILocator::getColumn() const { return 0; }
+uint32_t URILocator::getEndLine() const { return 0; }
+uint32_t URILocator::getEndColumn() const { return 0; }
+
 void 
 LineLocator::getLocation(std::string& ref) const
 {
@@ -74,12 +79,23 @@ LineLocator::equals(const Locator& that) const
       this->line == static_cast<const LineLocator&>(that).line;
   return false;
 }
+
+uint32_t LineLocator::getLine() const { return line; }
+uint32_t LineLocator::getColumn() const { return 0; }
+uint32_t LineLocator::getEndLine() const { return line; }
+uint32_t LineLocator::getEndColumn() const { return 0; }
+
 void
 LineColumnLocator::getLocation(std::string& ref) const
 {
   LineLocator::getLocation(ref);
   ref += ":" + llvm::utostr(col);
 }
+
+uint32_t LineColumnLocator::getLine() const { return line; }
+uint32_t LineColumnLocator::getColumn() const { return col; }
+uint32_t LineColumnLocator::getEndLine() const { return line; }
+uint32_t LineColumnLocator::getEndColumn() const { return col; }
 
 bool
 LineColumnLocator::equals(const Locator& that) const
@@ -99,6 +115,11 @@ RangeLocator::getLocation(std::string& ref) const
   ref += "(" + llvm::utostr(line) + ":" + llvm::utostr(col) + "," 
              + llvm::utostr(line2) + ":" + llvm::utostr(col2) + ")"; 
 }
+
+uint32_t RangeLocator::getLine() const { return line; }
+uint32_t RangeLocator::getColumn() const { return col; }
+uint32_t RangeLocator::getEndLine() const { return line2; }
+uint32_t RangeLocator::getEndColumn() const { return col2; }
 
 bool
 RangeLocator::equals(const Locator& that) const

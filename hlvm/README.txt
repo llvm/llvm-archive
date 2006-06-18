@@ -34,6 +34,6 @@ automatically unless you have dependent packages installed in non-standard
 locations. 
 
 The usual will work:
-    make
+    make 
     make check
     make install

@@ -38,7 +38,6 @@ namespace hlvm
 {
 
 class Type;
-class Documentation;
 class AST;
 
 /// This enumeration is used to identify the various kinds of Abstract Syntax
@@ -89,6 +88,7 @@ LastPrimitiveTypeID  = Float128TypeID,
   // Simple Types (no nested classes)
   AnyTypeID,               ///< The Any Type (Union of any type)
 FirstSimpleTypeID    = AnyTypeID,
+  StringTypeID,            ///< A string of characters type
   IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
   RangeTypeID,             ///< The Range Type (A Range of Integer Values)
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
@@ -131,13 +131,12 @@ LastTypeID = TextTypeID,
   // SUBCLASSES OF VALUE
 
   // Constants
-  ConstantZeroID,          ///< A zero-filled constant of any type
-FirstValueID = ConstantZeroID,
-FirstConstantID = ConstantZeroID,
   ConstantBooleanID,       ///< A constant boolean value
+FirstValueID = ConstantBooleanID,
+FirstConstantID = ConstantBooleanID,
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
-  ConstantTextID,          ///< A constant text value
+  ConstantStringID,        ///< A constant string value
   ConstantAggregateID,     ///< A constant aggregate for arrays, structures, etc
   ConstantExpressionID,    ///< A constant expression
   SizeOfID,                ///< Size of a type
@@ -162,7 +161,8 @@ FirstNilaryOperatorID = BreakOpID,
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
   ReferenceOpID,           ///< Obtain pointer to local/global variable
-LastNilaryOperatorID = ReferenceOpID,
+  ConstantReferenceOpID,   ///< Obtain pointer to local/global variable
+LastNilaryOperatorID = ConstantReferenceOpID,
 
   // Control Flow Unary Operators
   NoOperatorID,            ///< The "do nothing" NoOp Operators
@@ -328,6 +328,9 @@ class Node
       return (id >= Float32TypeID && id <= Float128TypeID) ||
              (id == RealTypeID); }
 
+    inline bool isNumericType() const {
+      return isIntegralType() || isRealType() || id == RangeTypeID; }
+
     /// Determine if the node is a primitive type
     inline bool isPrimitiveType() const {
       return id >= FirstPrimitiveTypeID && 
@@ -410,13 +413,6 @@ class Node
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
-  /// @}
-  /// @name Utilities
-  /// @{
-  public:
-#ifndef _NDEBUG
-    virtual void dump() const;
-#endif
 
   /// @}
   /// @name Data
@@ -426,6 +422,57 @@ class Node
     uint16_t flags;      ///< 16 flags, subclass dependent interpretation
     Node* parent;        ///< The node that owns this node.
     const Locator* loc;  ///< The source location corresponding to node.
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents program
+/// documentation. Documentation nodes may be attached to any Documentable which
+/// is an abstract base class of nearly every type of AST node. This construct
+/// permits documentation (not just comments) to be included directly into the
+/// nodes of the Abstract Syntax Tree as first class objects, not just addenda.
+/// Each Documentation node simply contains a block of text that provides the
+/// documentation for the Documentable to which the Documentation is attached.
+/// The intended use is that the text contain XHTML markup. In this way, an 
+/// automated documentation facility can translate the AST into XHTML 
+/// documentation with great accuracy in associating documentation with the
+/// nodes of the AST. Since the documentation node can be associated with 
+/// nearly any kind of node, this affords a complete system for documenting 
+/// HLVM programs with XHTML markup. There is, however, no firm requirement 
+/// that XHTML be used for the documentation. Any kind of documentation that is
+/// expressible in UTF-8 notation can be accommodated including other markup
+/// languages or simple ASCII text.
+/// @see Documentable
+/// @brief AST Documentation Node
+class Documentation : public Node
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Documentation() : Node(DocumentationID) {}
+    virtual ~Documentation();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getDoc() const { return doc; }
+    static inline bool classof(const Documentation*) { return true; }
+    static inline bool classof(const Node* N) 
+    { return N->is(DocumentationID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setDoc(const std::string& d) { doc = d; }
+    void addDoc(const std::string& d) { doc += d; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string doc;
   /// @}
   friend class AST;
 };
@@ -507,7 +554,7 @@ class Value : public Documentable
   /// @name Data
   /// @{
   protected:
-    const Type* type; ///< The type of this node.
+    const Type* type; ///< The type of this value.
   /// @}
   friend class AST;
 };

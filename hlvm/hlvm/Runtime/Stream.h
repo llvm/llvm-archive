@@ -36,10 +36,13 @@ typedef struct hlvm_stream_obj* hlvm_stream;
 typedef struct hlvm_buffer_obj* hlvm_buffer;
 
 extern hlvm_stream 
-hlvm_stream_open(hlvm_text uri);
+hlvm_stream_open(const char* uri);
 
 extern hlvm_size 
-hlvm_stream_write(hlvm_stream str, hlvm_buffer data, hlvm_size len);
+hlvm_stream_write_buffer(hlvm_stream str, hlvm_buffer data, hlvm_size len);
+
+extern hlvm_size 
+hlvm_stream_write_string(hlvm_stream str, const char* string);
 
 extern void 
 hlvm_op_file_close(hlvm_stream file);

@@ -30,10 +30,55 @@
 #ifndef HLVM_AST_CONSTANTS_H
 #define HLVM_AST_CONSTANTS_H
 
-#include <hlvm/AST/Constant.h>
+#include <hlvm/AST/Node.h>
 
 namespace hlvm 
 {
+
+/// This abstract base class represents a constant value in the HLVM Abstract 
+/// Syntax Tree.  All Constants are immutable values of a specific type. 
+/// Constants do not have a storage location nor an address nor do they
+/// participate in linking.  However, as they are values they may be used as 
+/// the operand of instructions or as the initializers of variables. Constants
+/// do not participate in linking and are always internal to the bundle in which
+/// they appear. To create a linkable constant, declare a variable that is 
+/// constant and initialize it with a Constant.  There are many kinds of 
+/// constants including simple literal values (numbers an text), complex 
+/// constant expressions (constant computations), and aggregate constants that
+/// represent constant arrays, vectors, pointers and structures.
+/// @see hlvm/AST/Constants.h
+/// @brief AST Abstract Constant Node
+class Constant : public Value
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Constant(NodeIDs id) : Value(id), name()  {}
+    virtual ~Constant();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    // Get the type of the value
+    inline const std::string& getName() const { return name; }
+    static inline bool classof(const Constant*) { return true; }
+    static inline bool classof(const Node* N) { return N->isConstant(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setName(const std::string& n) { name = n; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string name; ///< The name of this Value.
+  /// @}
+  friend class AST;
+};
 
 /// This class provides an Abstract Syntax Tree node that yields a 
 /// constant boolean value. 
@@ -51,7 +96,7 @@ class ConstantBoolean: public Constant
   /// @name Accessors
   /// @{
   public:
-    bool getValue() { return flags != 0; }
+    bool getValue() const { return flags != 0; }
     static inline bool classof(const ConstantBoolean*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantBooleanID); }
@@ -70,15 +115,15 @@ class ConstantInteger: public Constant
   /// @name Constructors
   /// @{
   protected:
-    ConstantInteger() : Constant(ConstantIntegerID) {}
+    ConstantInteger(uint16_t base) : Constant(ConstantIntegerID) {}
     virtual ~ConstantInteger();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    uint64_t getValue(int) const { return value.u; }
-    int64_t  getValue()    const { return value.s; }
+    const std::string& getValue() const { return value; }
+    uint16_t getBase() const { return flags; }
     static inline bool classof(const ConstantInteger*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantIntegerID); }
@@ -87,17 +132,14 @@ class ConstantInteger: public Constant
   /// @name Mutators
   /// @{
   public:
-    void setValue(uint64_t v) { value.u = v; }
-    void setValue(int64_t v)  { value.s = v; }
+    void setValue(const std::string& v) { value = v; }
+    void setBase(uint16_t base) { flags = base; }
 
   /// @}
   /// @name Data
   /// @{
   public:
-    union {
-      uint64_t u;
-      int64_t  s;
-    } value;
+    std::string value;
   /// @}
   friend class AST;
 };
@@ -119,51 +161,10 @@ class ConstantReal : public Constant
   /// @name Accessors
   /// @{
   public:
-    double getValue() const { return value; }
+    const std::string& getValue() const { return value; }
     static inline bool classof(const ConstantReal*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantRealID); }
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    void setValue(double v ) { value = v; }
-
-  /// @}
-  /// @name Data
-  /// @{
-  public:
-    double value;
-  /// @}
-  friend class AST;
-};
-
-/// This class provides an Abstract Syntax Tree node that yields a constant 
-/// text value. The constant value is encoded in UTF-8 but may be converted 
-/// to other encodings depending on how it is used. For example, when used to
-/// initialize a TextType Variable that is using UTF-16 encoding, the conversion
-/// will occur whenever the Variable is loaded. UTF-8 encoding is used for
-/// constant text values to reduce storage requirements and for compatibility
-/// with older non-Unicode systems.
-/// @see TextType
-/// @brief AST Constant Text Node
-class ConstantText : public Constant
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    ConstantText() : Constant(ConstantTextID)  {}
-    virtual ~ConstantText();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    const std::string&  getValue() const{ return value; }
-    static inline bool classof(const ConstantText*) { return true; }
-    static inline bool classof(const Node* N) 
-      { return N->is(ConstantTextID); }
 
   /// @}
   /// @name Accessors
@@ -180,29 +181,38 @@ class ConstantText : public Constant
   friend class AST;
 };
 
-/// This class provides an Abstract Syntax Tree node that yields a zero value
-/// for any type. In essence, this is a short-cut. Zero value constants are very
-/// common and defining them explicitly for each type of constant makes use of
-/// the AST constants cumbersome. The way to think about this node is that it
-/// represents a constant value of any type such that all the bits of that type
-/// are zero.
-/// @brief AST Constant Zero Node
-class ConstantZero : public Constant
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// string value. The constant value is encoded in UTF-8 with a null terminator.
+/// @see StringType
+/// @brief AST Constant String Node
+class ConstantString : public Constant
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantZero() : Constant(ConstantZeroID)  {}
-    virtual ~ConstantZero();
+    ConstantString() : Constant(ConstantStringID)  {}
+    virtual ~ConstantString();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const ConstantZero*) { return true; }
+    const std::string&  getValue() const{ return value; }
+    static inline bool classof(const ConstantString*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(ConstantZeroID); }
+      { return N->is(ConstantStringID); }
 
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    void setValue(const std::string& v ) { value = v; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    std::string value;
   /// @}
   friend class AST;
 };
@@ -221,6 +231,7 @@ class ConstantAggregate : public Constant
     typedef ElementsList::iterator iterator;
     typedef ElementsList::const_iterator const_iterator;
 
+  /// @}
   /// @name Constructors
   /// @{
   protected:

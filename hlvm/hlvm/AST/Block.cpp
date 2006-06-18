@@ -70,4 +70,16 @@ Block::getAutoVar(const std::string& name) const
   return I->second;
 }
 
+Block* 
+Block::getParentBlock() const
+{
+  Node* p = getParent();
+  while (p) {
+    if (llvm::isa<Block>(p))
+      return llvm::cast<Block>(p);
+    p = p->getParent();
+  }
+  return 0;
+}
+
 }

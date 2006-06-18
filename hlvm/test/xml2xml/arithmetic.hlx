@@ -1,33 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/unaryarithmetic.hlx">
   <bundle id="unaryarithmetic">
+    <constant id="one" type="u32">
+      <dec>1</dec>
+    </constant>
     <program id="unaryarithmetic">
       <block>
-        <autovar id="v1" type="u32">
-          <zero/>
-        </autovar>
-        <autovar id="v2" type="u32">
-          <zero/>
-        </autovar>
+        <autovar id="v1" type="u32"/>
+        <autovar id="v2" type="u32"/>
         <preinc>
-          <load>
-            <ref id="v1"/>
-          </load>
+          <ref id="v1"/>
         </preinc>
         <postinc>
-          <load>
-            <ref id="v1"/>
-          </load>
+          <ref id="v1"/>
         </postinc>
         <postdec>
-          <load>
-            <ref id="v2"/>
-          </load>
+          <ref id="v2"/>
         </postdec>
         <predec>
-          <load>
-            <ref id="v2"/>
-          </load>
+          <ref id="v2"/>
         </predec>
         <neg>
           <load>
@@ -43,13 +34,13 @@
           <load>
             <ref id="v1"/>
           </load>
-          <dec>1</dec>
+          <cref id="one"/>
         </add>
         <sub>
           <load>
             <ref id="v1"/>
           </load>
-          <dec>1</dec>
+          <cref id="one"/>
         </sub>
         <mul>
           <load>

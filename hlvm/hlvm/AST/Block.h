@@ -49,7 +49,7 @@ class Block : public MultiOperator
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     Block() : MultiOperator(BlockID){}
     virtual ~Block();
 
@@ -60,6 +60,7 @@ class Block : public MultiOperator
     const std::string& getLabel() const { return label; }
     AutoVarOp*   getAutoVar(const std::string& name) const; 
     const Type* getResultType() { return this->back()->getType(); }
+    Block* getParentBlock() const;
     static inline bool classof(const Block*) { return true; }
     static inline bool classof(const Node* N) { return N->is(BlockID); }
 

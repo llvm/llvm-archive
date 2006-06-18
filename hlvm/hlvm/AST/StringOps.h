@@ -43,8 +43,6 @@ class StrInsertOp : public TernaryOperator
   /// @{
   protected:
     StrInsertOp() : TernaryOperator(StrInsertOpID) {}
-
-  public:
     virtual ~StrInsertOp();
 
   /// @}

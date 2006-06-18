@@ -31,7 +31,7 @@
 #define HLVM_AST_MEMORYOPS_H
 
 #include <hlvm/AST/Operator.h>
-#include <hlvm/AST/Constant.h>
+#include <hlvm/AST/Constants.h>
 
 namespace hlvm
 {
@@ -49,8 +49,6 @@ class AllocateOp : public UnaryOperator
   /// @{
   protected:
     AllocateOp() : UnaryOperator(AllocateOpID) {}
-
-  public:
     virtual ~AllocateOp();
 
   /// @}
@@ -78,8 +76,6 @@ class DeallocateOp : public UnaryOperator
   /// @{
   protected:
     DeallocateOp() : UnaryOperator(DeallocateOpID) {}
-
-  public:
     virtual ~DeallocateOp();
 
   /// @}
@@ -108,8 +104,6 @@ class LoadOp : public UnaryOperator
   /// @{
   protected:
     LoadOp() : UnaryOperator(LoadOpID) {}
-
-  public:
     virtual ~LoadOp();
 
   /// @}
@@ -143,8 +137,6 @@ class StoreOp : public BinaryOperator
   /// @{
   protected:
     StoreOp() : BinaryOperator(StoreOpID) {}
-
-  public:
     virtual ~StoreOp();
 
   /// @}
@@ -179,14 +171,12 @@ class StoreOp : public BinaryOperator
 /// variables may be declared to be constant in which case they must have an
 /// initializer and their value is immutable.
 /// @brief AST Automatic Variable Operator
-class AutoVarOp : public UnaryOperator
+class AutoVarOp : public NilaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    AutoVarOp() : UnaryOperator(AutoVarOpID) {}
-
-  public:
+    AutoVarOp() : NilaryOperator(AutoVarOpID), name(), initializer(0) {}
     virtual ~AutoVarOp();
 
   /// @}
@@ -194,7 +184,9 @@ class AutoVarOp : public UnaryOperator
   /// @{
   public:
     const std::string& getName() const { return name; }
-    Constant* getInitializer() { return static_cast<Constant*>(getOperand());}
+    bool hasInitializer() const { return initializer != 0; }
+    Constant* getInitializer() const { return initializer; }
+    bool isZeroInitialized() const { return initializer == 0; }
     static inline bool classof(const AutoVarOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(AutoVarOpID); }
 
@@ -203,13 +195,14 @@ class AutoVarOp : public UnaryOperator
   /// @{
   public:
     void setName(const std::string& n) { name = n; }
-    void setInitializer(Constant* c) { setOperand(c); }
+    void setInitializer(Constant* C) { initializer = C; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
     std::string name;
+    Constant* initializer;
   /// @}
   friend class AST;
 };
@@ -229,8 +222,6 @@ class ReferenceOp : public NilaryOperator
   /// @{
   protected:
     ReferenceOp() : NilaryOperator(ReferenceOpID) {}
-
-  public:
     virtual ~ReferenceOp();
 
   /// @}
@@ -257,6 +248,47 @@ class ReferenceOp : public NilaryOperator
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
+/// for obtaining the value of a named constant.  The operator has no operands
+/// but has a property that is the Constant to be referenced. It is presumed 
+/// This operator bridges between non-operator Constants and Operators. The 
+/// result of this operator is the value of the constnat. Typically this 
+/// operator is used as the operand of some other operator to introduce the
+/// value of a constant.
+/// @see Reference Constant Operator Value
+/// @brief AST ConstantReference Operator
+class ConstantReferenceOp : public NilaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantReferenceOp() : NilaryOperator(ConstantReferenceOpID) {}
+    virtual ~ConstantReferenceOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const Constant* getReferent() const { return referent; }
+    static inline bool classof(const ConstantReferenceOp*) { return true; }
+    static inline bool classof(const Node* N) { 
+      return N->is(ConstantReferenceOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setReferent(const Constant* ref) { referent = ref; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    const Constant* referent;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents an operator
 /// for indexing into a ContainerType.  The Index operator can have many
 /// operands but in all cases requires at least two.  The first operand must
 /// resolve to the address of a memory location, such as returned by the
@@ -275,8 +307,6 @@ class IndexOp : public MultiOperator
   /// @{
   protected:
     IndexOp() : MultiOperator(IndexOpID) {}
-
-  public:
     virtual ~IndexOp();
 
   /// @}

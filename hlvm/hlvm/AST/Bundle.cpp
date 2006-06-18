@@ -36,18 +36,7 @@ using namespace llvm;
 
 namespace hlvm {
 
-Bundle*
-Bundle::create(const Locator* loc, const std::string& id)
-{
-  Bundle* result = new Bundle();
-  result->setLocator(loc);
-  result->setName(id);
-  return result;
-}
-
-Bundle::~Bundle()
-{
-}
+Bundle::~Bundle() { }
 
 void 
 Bundle::insertChild(Node* kid)
@@ -58,6 +47,8 @@ Bundle::insertChild(Node* kid)
     vars.insert(cast<Variable>(kid)->getName(), kid);
   else if (kid->isFunction())
     funcs.insert(cast<Function>(kid)->getName(), kid);
+  else if (kid->isConstant()) // must be last, everything above isa<Constant>
+    consts.insert(cast<Constant>(kid)->getName(), kid);
   else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }
@@ -65,7 +56,7 @@ Bundle::insertChild(Node* kid)
 void
 Bundle::removeChild(Node* kid)
 {
-  hlvmAssert(isa<LinkageItem>(kid) && "Can't remove that here");
+  hlvmAssert(isa<Constant>(kid) && "Can't remove that here");
   // This is sucky slow, but we probably won't be removing nodes that much.
   if (kid->isType()) {
     types.erase(cast<Type>(kid)->getName());
@@ -73,31 +64,41 @@ Bundle::removeChild(Node* kid)
     vars.erase(cast<Variable>(kid)->getName());
   } else if (kid->isFunction()) {
     funcs.erase(cast<Function>(kid)->getName());
-  }
-  hlvmAssert(!"That node isn't my child");
+  } else if (kid->isConstant()) {
+    consts.erase(cast<Constant>(kid)->getName());
+  } else 
+    hlvmAssert(!"That node isn't my child");
 }
 
 Type*  
-Bundle::type_find(const std::string& name) const
+Bundle::find_type(const std::string& name) const
 {
   if (Node* result = types.lookup(name))
     return llvm::cast<Type>(result);
   return 0;
 }
 
-Function*  
-Bundle::func_find(const std::string& name) const
+Constant*  
+Bundle::find_const(const std::string& name) const
 {
-  if (Node* result = funcs.lookup(name))
-    return llvm::cast<Function>(result);
+  if (Node* result = consts.lookup(name))
+    return llvm::cast<Constant>(result);
   return 0;
 }
 
 Variable*  
-Bundle::var_find(const std::string& name) const
+Bundle::find_var(const std::string& name) const
 {
   if (Node* result = vars.lookup(name))
     return llvm::cast<Variable>(result);
+  return 0;
+}
+
+Function*  
+Bundle::find_func(const std::string& name) const
+{
+  if (Node* result = funcs.lookup(name))
+    return llvm::cast<Function>(result);
   return 0;
 }
 

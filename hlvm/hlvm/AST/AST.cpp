@@ -56,7 +56,7 @@ class ASTImpl : public AST
   public:
     ASTImpl()
       : types(), vars(), funcs(), unresolvedTypes(), 
-        AnyTypeSingleton(0),
+        AnyTypeSingleton(0), StringTypeSingleton(0),
         VoidSingleton(0), BooleanSingleton(), CharacterSingleton(0), 
         OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
         UInt32Singleton(0), UInt64Singleton(0), UInt128Singleton(0),
@@ -82,6 +82,7 @@ class ASTImpl : public AST
     SymbolTable    funcs;
     SymbolTable    unresolvedTypes;
     AnyType*       AnyTypeSingleton;
+    StringType*    StringTypeSingleton;
     VoidType*      VoidSingleton;
     BooleanType*   BooleanSingleton;
     CharacterType* CharacterSingleton;
@@ -228,6 +229,13 @@ AST::getPointerTo(const Type* Ty)
   return PT;
 }
 
+URI* 
+AST::new_URI(const std::string& uri)
+{
+  URI* result = URI::create(uri,getPool());
+  return result;
+}
+
 Locator*
 AST::new_Locator(const URI* uri, uint32_t line, uint32_t col, uint32_t line2,
     uint32_t col2)
@@ -276,13 +284,11 @@ AST::new_Import(const std::string& pfx, const Locator* loc)
 IntegerType* 
 AST::new_IntegerType(
   const std::string& id, 
-  uint64_t bits, 
+  uint16_t bits, 
   bool isSigned,
   const Locator* loc)
 {
-  IntegerType* result = new IntegerType(IntegerTypeID);
-  result->setBits(bits);
-  result->setSigned(isSigned);
+  IntegerType* result = new IntegerType(IntegerTypeID,bits,isSigned);
   result->setLocator(loc);
   result->setName(id);
   static_cast<ASTImpl*>(this)->addType(result);
@@ -333,6 +339,16 @@ AnyType*
 AST::new_AnyType(const std::string& id, const Locator* loc)
 {
   AnyType* result = new AnyType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
+StringType* 
+AST::new_StringType(const std::string& id, const Locator* loc)
+{
+  StringType* result = new StringType();
   result->setLocator(loc);
   result->setName(id);
   static_cast<ASTImpl*>(this)->addType(result);
@@ -500,9 +516,10 @@ AST::new_OpaqueType(const std::string& id, const Locator* loc)
 }
 
 ConstantInteger*
-AST::new_ConstantInteger(uint64_t v, Type* Ty, const Locator* loc)
+AST::new_ConstantInteger(
+  const std::string&  v, uint16_t base, const Type* Ty, const Locator* loc)
 {
-  ConstantInteger* result = new ConstantInteger();
+  ConstantInteger* result = new ConstantInteger(base);
   result->setLocator(loc);
   result->setValue(v);
   result->setType(Ty);
@@ -510,7 +527,7 @@ AST::new_ConstantInteger(uint64_t v, Type* Ty, const Locator* loc)
 }
 
 ConstantReal*
-AST::new_ConstantReal(double v, Type* Ty, const Locator* loc)
+AST::new_ConstantReal(const std::string& v, const Type* Ty, const Locator* loc)
 {
   ConstantReal* result = new ConstantReal();
   result->setLocator(loc);
@@ -519,13 +536,13 @@ AST::new_ConstantReal(double v, Type* Ty, const Locator* loc)
   return result;
 }
 
-ConstantText*
-AST::new_ConstantText(const std::string& v, const Locator* loc)
+ConstantString*
+AST::new_ConstantString(const std::string& v, const Locator* loc)
 {
-  ConstantText* result = new ConstantText();
+  ConstantString* result = new ConstantString();
   result->setLocator(loc);
   result->setValue(v);
-  result->setType( getPrimitiveType(TextTypeID) );
+  result->setType( getPrimitiveType(StringTypeID) );
   return result;
 }
 
@@ -534,23 +551,18 @@ AST::new_ConstantBoolean(bool t_or_f, const Locator* loc)
 {
   ASTImpl* ast = static_cast<ASTImpl*>(this);
   if (t_or_f) {
-    if (!ast->BooleanTrueSingleton)
+    if (!ast->BooleanTrueSingleton) {
       ast->BooleanTrueSingleton = new ConstantBoolean(true);
+      ast->BooleanTrueSingleton->setType(getPrimitiveType(BooleanTypeID));
+    }
     return ast->BooleanTrueSingleton;
   } else {
-    if (!ast->BooleanFalseSingleton)
+    if (!ast->BooleanFalseSingleton) {
       ast->BooleanFalseSingleton = new ConstantBoolean(false);
+      ast->BooleanFalseSingleton->setType(getPrimitiveType(BooleanTypeID));
+    }
     return ast->BooleanFalseSingleton;
   }
-}
-
-ConstantZero*
-AST::new_ConstantZero(const Type* Ty, const Locator* loc)
-{
-  ConstantZero* result = new ConstantZero();
-  result->setLocator(loc);
-  result->setType(Ty);
-  return result;
 }
 
 Variable*
@@ -631,6 +643,17 @@ AST::new_ReferenceOp(const Value* V, const Locator*loc)
   return result;
 }
 
+ConstantReferenceOp* 
+AST::new_ConstantReferenceOp(const Constant* C, const Locator* loc)
+{
+  hlvmAssert(C != 0 && "ConstantReferenceOp must have a Constant to reference");
+  ConstantReferenceOp* result = new ConstantReferenceOp();
+  result->setLocator(loc);
+  result->setReferent(C);
+  result->setType(C->getType());
+  return result;
+}
+
 template<class OpClass> OpClass* 
 AST::new_NilaryOp(
   const Type* Ty,    ///< Result type of the operator
@@ -656,7 +679,7 @@ AST::new_NilaryOp(
 template<class OpClass> OpClass* 
 AST::new_UnaryOp(
   const Type* Ty,    ///< Result type of the operator
-  Value* oprnd1,     ///< The first operand
+  Operator* oprnd1,     ///< The first operand
   const Locator* loc ///< The source locator
 )
 {
@@ -671,7 +694,7 @@ AST::new_UnaryOp(
 
 template<class OpClass> OpClass* 
 AST::new_UnaryOp(
-  Value* oprnd1,     ///< The first operand
+  Operator* oprnd1,     ///< The first operand
   const Locator* loc ///< The source locator
 )
 {
@@ -682,8 +705,8 @@ AST::new_UnaryOp(
 template<class OpClass> OpClass* 
 AST::new_BinaryOp(
   const Type* Ty,    ///< Result type of the operator
-  Value* oprnd1,     ///< The first operand
-  Value* oprnd2,     ///< The second operand
+  Operator* oprnd1,     ///< The first operand
+  Operator* oprnd2,     ///< The second operand
   const Locator* loc ///< The source locator
 )
 {
@@ -701,8 +724,8 @@ AST::new_BinaryOp(
 /// Provide a template function for creating a binary operator
 template<class OpClass> OpClass* 
 AST::new_BinaryOp(
-  Value* oprnd1,     ///< The first operand
-  Value* oprnd2,     ///< The second operand
+  Operator* oprnd1,     ///< The first operand
+  Operator* oprnd2,     ///< The second operand
   const Locator* loc ///< The source locator
 )
 {
@@ -713,9 +736,9 @@ AST::new_BinaryOp(
 template<class OpClass> OpClass* 
 AST::new_TernaryOp(
   const Type* Ty,    ///< Result type of the operator
-  Value* oprnd1,     ///< The first operand
-  Value* oprnd2,     ///< The second operand
-  Value* oprnd3,     ///< The third operand
+  Operator* oprnd1,     ///< The first operand
+  Operator* oprnd2,     ///< The second operand
+  Operator* oprnd3,     ///< The third operand
   const Locator* loc ///< The source locator
 )
 {
@@ -734,9 +757,9 @@ AST::new_TernaryOp(
 
 template<class OpClass> OpClass* 
 AST::new_TernaryOp(
-  Value* oprnd1,     ///< The first operand
-  Value* oprnd2,     ///< The second operand
-  Value* oprnd3,     ///< The third operand
+  Operator* oprnd1,     ///< The first operand
+  Operator* oprnd2,     ///< The second operand
+  Operator* oprnd3,     ///< The third operand
   const Locator* loc ///< The source locator
 )
 {
@@ -746,7 +769,7 @@ AST::new_TernaryOp(
 template<class OpClass> OpClass* 
 AST::new_MultiOp(
   const Type* Ty,         ///< Result type of the operator
-  const std::vector<Value*>& oprnds,
+  const std::vector<Operator*>& oprnds,
   const Locator* loc
 ) 
 {
@@ -760,7 +783,7 @@ AST::new_MultiOp(
 
 template<class OpClass> OpClass* 
 AST::new_MultiOp(
-  const std::vector<Value*>& oprnds,
+  const std::vector<Operator*>& oprnds,
   const Locator* loc
 )
 {
@@ -770,166 +793,200 @@ AST::new_MultiOp(
 // Arithmetic Operators
 template NegateOp*
 AST::new_UnaryOp<NegateOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template NegateOp*
-AST::new_UnaryOp<NegateOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<NegateOp>(Operator* op1, const Locator* loc);
 
 template ComplementOp*
 AST::new_UnaryOp<ComplementOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template ComplementOp*
-AST::new_UnaryOp<ComplementOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<ComplementOp>(Operator* op1, const Locator* loc);
 
 template PreIncrOp*
 AST::new_UnaryOp<PreIncrOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template PreIncrOp*
-AST::new_UnaryOp<PreIncrOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<PreIncrOp>(Operator* op1, const Locator* loc);
 
 template PreDecrOp*
 AST::new_UnaryOp<PreDecrOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template PreDecrOp*
-AST::new_UnaryOp<PreDecrOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<PreDecrOp>(Operator* op1, const Locator* loc);
 
 template PostIncrOp*
 AST::new_UnaryOp<PostIncrOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template PostIncrOp*
-AST::new_UnaryOp<PostIncrOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<PostIncrOp>(Operator* op1, const Locator* loc);
 
 template PostDecrOp*
 AST::new_UnaryOp<PostDecrOp>(
-    const Type* Ty, Value* op1, const Locator* loc);
+    const Type* Ty, Operator* op1, const Locator* loc);
 template PostDecrOp*
-AST::new_UnaryOp<PostDecrOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<PostDecrOp>(Operator* op1, const Locator* loc);
 
 template AddOp*
 AST::new_BinaryOp<AddOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template AddOp*
-AST::new_BinaryOp<AddOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<AddOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template SubtractOp*
 AST::new_BinaryOp<SubtractOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template SubtractOp*
-AST::new_BinaryOp<SubtractOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<SubtractOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template MultiplyOp*
 AST::new_BinaryOp<MultiplyOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template MultiplyOp*
-AST::new_BinaryOp<MultiplyOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<MultiplyOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template DivideOp*
 AST::new_BinaryOp<DivideOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template DivideOp*
-AST::new_BinaryOp<DivideOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<DivideOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template ModuloOp*
 AST::new_BinaryOp<ModuloOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template ModuloOp*
-AST::new_BinaryOp<ModuloOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<ModuloOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template BAndOp*
 AST::new_BinaryOp<BAndOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BAndOp*
-AST::new_BinaryOp<BAndOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<BAndOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template BOrOp*
 AST::new_BinaryOp<BOrOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BOrOp*
-AST::new_BinaryOp<BOrOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<BOrOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template BXorOp*
 AST::new_BinaryOp<BXorOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BXorOp*
-AST::new_BinaryOp<BXorOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<BXorOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 template BNorOp*
 AST::new_BinaryOp<BNorOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BNorOp*
-AST::new_BinaryOp<BNorOp>(Value* op1, Value* op2, const Locator* loc);
+AST::new_BinaryOp<BNorOp>(Operator* op1, Operator* op2, const Locator* loc);
 
 // Boolean Operators
 template NotOp*
-AST::new_UnaryOp<NotOp>(const Type* Ty, Value* op1, const Locator* loc);
-template NotOp*
-AST::new_UnaryOp<NotOp>(Value* op1, const Locator* loc);
+AST::new_UnaryOp<NotOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template<> NotOp*
+AST::new_UnaryOp<NotOp>(Operator* op1, const Locator* loc)
+{
+  return AST::new_UnaryOp<NotOp>(getPrimitiveType(BooleanTypeID),op1,loc);
+}
 
 template AndOp*
 AST::new_BinaryOp<AndOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template AndOp*
-AST::new_BinaryOp<AndOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> AndOp*
+AST::new_BinaryOp<AndOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<AndOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template OrOp*
 AST::new_BinaryOp<OrOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template OrOp*
-AST::new_BinaryOp<OrOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> OrOp*
+AST::new_BinaryOp<OrOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<OrOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template NorOp*
 AST::new_BinaryOp<NorOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template NorOp*
-AST::new_BinaryOp<NorOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> NorOp*
+AST::new_BinaryOp<NorOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<NorOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template XorOp*
 AST::new_BinaryOp<XorOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template XorOp*
-AST::new_BinaryOp<XorOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> XorOp*
+AST::new_BinaryOp<XorOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<XorOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template LessThanOp*
 AST::new_BinaryOp<LessThanOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template LessThanOp*
-AST::new_BinaryOp<LessThanOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> LessThanOp*
+AST::new_BinaryOp<LessThanOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<LessThanOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template GreaterThanOp* 
 AST::new_BinaryOp<GreaterThanOp>(
-    const Type* Ty, Value* op1, Value* op2,const Locator* loc);
-template GreaterThanOp* 
-AST::new_BinaryOp<GreaterThanOp>(Value* op1, Value* op2,const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2,const Locator* loc);
+template<> GreaterThanOp* 
+AST::new_BinaryOp<GreaterThanOp>(Operator* op1, Operator* op2,const Locator* loc)
+{
+  return AST::new_BinaryOp<GreaterThanOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template LessEqualOp* 
 AST::new_BinaryOp<LessEqualOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template LessEqualOp* 
-AST::new_BinaryOp<LessEqualOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> LessEqualOp* 
+AST::new_BinaryOp<LessEqualOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<LessEqualOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template GreaterEqualOp* 
 AST::new_BinaryOp<GreaterEqualOp>(
-    const Type* Ty, Value* op1,Value* op2, const Locator* loc);
-template GreaterEqualOp* 
-AST::new_BinaryOp<GreaterEqualOp>(Value* op1,Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1,Operator* op2, const Locator* loc);
+template<> GreaterEqualOp* 
+AST::new_BinaryOp<GreaterEqualOp>(Operator* op1,Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<GreaterEqualOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template EqualityOp*
 AST::new_BinaryOp<EqualityOp>(
-    const Type* Ty, Value* op1, Value* op2, const Locator* loc);
-template EqualityOp*
-AST::new_BinaryOp<EqualityOp>(Value* op1, Value* op2, const Locator* loc);
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template<> EqualityOp*
+AST::new_BinaryOp<EqualityOp>(Operator* op1, Operator* op2, const Locator* loc)
+{
+  return AST::new_BinaryOp<EqualityOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
 
 template InequalityOp*
 AST::new_BinaryOp<InequalityOp>(
-    const Type* Ty, Value* op1,Value* op2,const Locator* loc);
-template InequalityOp*
-AST::new_BinaryOp<InequalityOp>(Value* op1,Value* op2,const Locator* loc);
+    const Type* Ty, Operator* op1,Operator* op2,const Locator* loc);
+template<> InequalityOp*
+AST::new_BinaryOp<InequalityOp>(Operator* op1,Operator* op2,const Locator* loc)
+{
+  return AST::new_BinaryOp<InequalityOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+}
+
 
 // Control Flow Operators
 template Block* 
 AST::new_MultiOp<Block>(
-    const Type* Ty, const std::vector<Value*>& ops, const Locator*loc);
+    const Type* Ty, const std::vector<Operator*>& ops, const Locator*loc);
 template Block* 
-AST::new_MultiOp<Block>(const std::vector<Value*>& ops, const Locator*loc);
+AST::new_MultiOp<Block>(const std::vector<Operator*>& ops, const Locator*loc);
 
 template NoOperator* 
 AST::new_NilaryOp<NoOperator>(const Type* Ty, const Locator*loc);
@@ -938,18 +995,18 @@ AST::new_NilaryOp<NoOperator>(const Locator*loc);
 
 template SelectOp*
 AST::new_TernaryOp<SelectOp>(
-    const Type* Ty, Value*op1,Value*op2,Value*op3,const Locator* loc);
+    const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
 template<> SelectOp*
-AST::new_TernaryOp<SelectOp>(Value*op1,Value*op2,Value*op3,const Locator* loc)
+AST::new_TernaryOp<SelectOp>(Operator*op1,Operator*op2,Operator*op3,const Locator* loc)
 {
   return new_TernaryOp<SelectOp>(op2->getType(),op1,op2,op3,loc);
 }
 
 template LoopOp*
-AST::new_TernaryOp<LoopOp>(const Type* Ty, Value*op1,Value*op2,Value*op3,const Locator* loc);
+AST::new_TernaryOp<LoopOp>(const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
 
 template<> LoopOp*
-AST::new_TernaryOp<LoopOp>(Value*op1,Value*op2,Value*op3,const Locator* loc)
+AST::new_TernaryOp<LoopOp>(Operator*op1,Operator*op2,Operator*op3,const Locator* loc)
 {
   const Type* Ty = op2->getType();
   if (llvm::isa<Block>(Ty))
@@ -959,9 +1016,9 @@ AST::new_TernaryOp<LoopOp>(Value*op1,Value*op2,Value*op3,const Locator* loc)
 
 template SwitchOp*
 AST::new_MultiOp<SwitchOp>(
-    const Type* Ty, const std::vector<Value*>& ops, const Locator* loc);
+    const Type* Ty, const std::vector<Operator*>& ops, const Locator* loc);
 template<> SwitchOp*
-AST::new_MultiOp<SwitchOp>(const std::vector<Value*>& ops, const Locator* loc)
+AST::new_MultiOp<SwitchOp>(const std::vector<Operator*>& ops, const Locator* loc)
 {
   hlvmAssert(ops.size() >= 2 && "Too few operands for SwitchOp");
   const Type* Ty = ops[1]->getType();
@@ -981,23 +1038,23 @@ template ContinueOp*
 AST::new_NilaryOp<ContinueOp>(const Locator*loc);
 
 template ReturnOp* 
-AST::new_UnaryOp<ReturnOp>(const Type*Ty, Value*op1,const Locator*loc);
+AST::new_UnaryOp<ReturnOp>(const Type*Ty, Operator*op1,const Locator*loc);
 template ReturnOp* 
-AST::new_UnaryOp<ReturnOp>(Value*op1,const Locator*loc);
+AST::new_UnaryOp<ReturnOp>(Operator*op1,const Locator*loc);
 
 // Memory Operators
 template StoreOp*  
-AST::new_BinaryOp<StoreOp>(const Type*, Value*op1,Value*op2,const Locator*loc);
+AST::new_BinaryOp<StoreOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
 template<> StoreOp*  
-AST::new_BinaryOp<StoreOp>(Value*op1,Value*op2,const Locator*loc)
+AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,const Locator*loc)
 {
   return new_BinaryOp<StoreOp>(getPrimitiveType(VoidTypeID),op1,op2,loc);
 }
 
 template LoadOp*   
-AST::new_UnaryOp<LoadOp>(const Type* Ty, Value*op1,const Locator*loc);
+AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> LoadOp*   
-AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc)
+AST::new_UnaryOp<LoadOp>(Operator*op1,const Locator*loc)
 {
   hlvmAssert(llvm::isa<PointerType>(op1->getType()) && 
       "LoadOp Requires PointerType operand");
@@ -1007,26 +1064,26 @@ AST::new_UnaryOp<LoadOp>(Value*op1,const Locator*loc)
 
 // Input/Output Operators
 template OpenOp* 
-AST::new_UnaryOp<OpenOp>(const Type* Ty, Value*op1,const Locator*loc);
+AST::new_UnaryOp<OpenOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> OpenOp* 
-AST::new_UnaryOp<OpenOp>(Value*op1,const Locator*loc)
+AST::new_UnaryOp<OpenOp>(Operator*op1,const Locator*loc)
 {
   return new_UnaryOp<OpenOp>(getPrimitiveType(StreamTypeID),op1,loc);
 }
 
 template WriteOp* 
 AST::new_BinaryOp<WriteOp>(
-  const Type* Ty, Value*op1,Value*op2, const Locator*loc);
+  const Type* Ty, Operator*op1,Operator*op2, const Locator*loc);
 template<> WriteOp* 
-AST::new_BinaryOp<WriteOp>(Value*op1,Value*op2,const Locator*loc)
+AST::new_BinaryOp<WriteOp>(Operator*op1,Operator*op2,const Locator*loc)
 {
   return new_BinaryOp<WriteOp>(getPrimitiveType(UInt64TypeID),op1,op2,loc);
 }
 
 template CloseOp* 
-AST::new_UnaryOp<CloseOp>(const Type* Ty, Value*op1,const Locator*loc);
+AST::new_UnaryOp<CloseOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> CloseOp* 
-AST::new_UnaryOp<CloseOp>(Value*op1,const Locator*loc)
+AST::new_UnaryOp<CloseOp>(Operator*op1,const Locator*loc)
 {
   return new_UnaryOp<CloseOp>(getPrimitiveType(VoidTypeID),op1,loc);
 }
@@ -1043,6 +1100,12 @@ AST::getPrimitiveType(NodeIDs pid)
         ast->AnyTypeSingleton->setName("any");
       }
       return ast->AnyTypeSingleton;
+    case StringTypeID:
+      if (!ast->StringTypeSingleton) {
+        ast->StringTypeSingleton = new StringType();
+        ast->StringTypeSingleton->setName("string");
+      }
+      return ast->StringTypeSingleton;
     case VoidTypeID:
       if (!ast->VoidSingleton) {
         ast->VoidSingleton = new VoidType();
@@ -1099,32 +1162,32 @@ AST::getPrimitiveType(NodeIDs pid)
       return ast->UInt128Singleton;
     case SInt8TypeID:
       if (!ast->SInt8Singleton) {
-        ast->SInt8Singleton = new IntegerType(SInt8TypeID,8,false);
-        ast->SInt8Singleton->setName("i8");
+        ast->SInt8Singleton = new IntegerType(SInt8TypeID,8,true);
+        ast->SInt8Singleton->setName("s8");
       }
       return ast->SInt8Singleton;
     case SInt16TypeID:
       if (!ast->SInt16Singleton) {
-        ast->SInt16Singleton = new IntegerType(SInt16TypeID,16,false);
-        ast->SInt16Singleton->setName("i16");
+        ast->SInt16Singleton = new IntegerType(SInt16TypeID,16,true);
+        ast->SInt16Singleton->setName("s16");
       }
       return ast->SInt16Singleton;
     case SInt32TypeID:
       if (!ast->SInt32Singleton) {
-        ast->SInt32Singleton = new IntegerType(SInt32TypeID,32,false);
-        ast->SInt32Singleton->setName("i32");
+        ast->SInt32Singleton = new IntegerType(SInt32TypeID,32,true);
+        ast->SInt32Singleton->setName("s32");
       }
       return ast->SInt32Singleton;
     case SInt64TypeID:
       if (!ast->SInt64Singleton) {
-        ast->SInt64Singleton = new IntegerType(SInt64TypeID,64,false);
-        ast->SInt64Singleton->setName("i64");
+        ast->SInt64Singleton = new IntegerType(SInt64TypeID,64,true);
+        ast->SInt64Singleton->setName("s64");
       }
       return ast->SInt64Singleton;
     case SInt128TypeID:
       if (!ast->SInt128Singleton) {
-        ast->SInt128Singleton = new IntegerType(SInt128TypeID,128,false);
-        ast->SInt128Singleton->setName("i128");
+        ast->SInt128Singleton = new IntegerType(SInt128TypeID,128,true);
+        ast->SInt128Singleton->setName("s128");
       }
       return ast->SInt128Singleton;
     case Float32TypeID:

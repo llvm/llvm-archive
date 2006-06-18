@@ -31,8 +31,4 @@
 
 namespace hlvm {
 
-Documentation::~Documentation()
-{
-}
-
 }

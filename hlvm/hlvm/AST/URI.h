@@ -56,111 +56,108 @@ class Pool;
 /// @brief HLVM Uniform Resource Identifier Class
 class URI
 {
-/// @name Constructors
-/// @{
-public:
-  /// @brief Parsing constructor builds uri by parsing the string parameter
-  static URI* create( const std::string& xmlStr, Pool* p);
+  /// @name Constructors
+  /// @{
+  protected:
+    // This is an abstract class, don't allow construction or copying
+    URI () {}
+    URI ( const URI & that ) {}
+    /// @brief Parsing constructor builds uri by parsing the string parameter
+    static URI* create( const std::string& uriStr, Pool* p);
+    virtual ~URI ( void );
 
-  virtual ~URI ( void );
+  /// @}
+  /// @name Operators
+  /// @{
+  public:
+    /// @brief Equality Operator.
+    bool operator == ( const URI & that ) const;
 
-protected:
-  // This is an abstract class, don't allow instantiation
-  URI () {}
-  URI ( const URI & that ) {}
+    /// @brief Assignment Operator.
+    URI & operator = ( const URI & that );
 
-/// @}
-/// @name Operators
-/// @{
-public:
-  /// @brief Equality Operator.
-  bool operator == ( const URI & that ) const;
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
 
-  /// @brief Assignment Operator.
-  URI & operator = ( const URI & that );
+    /// @brief Return the URI as a string (escaped). Caller must
+    /// free the returned string.
+    virtual std::string as_string( void ) const = 0;
 
-/// @}
-/// @name Accessors
-/// @{
-public:
+    /// @brief Set a string to the value of the URI with escapes.
+    virtual void get_string( std::string& str_to_fill ) const = 0;
 
-  /// @brief Return the URI as a string (escaped). Caller must
-  /// free the returned string.
-  virtual std::string as_string( void ) const = 0;
+    /// @brief Return the scheme of the URI
+    virtual const char* const scheme() const = 0;
 
-  /// @brief Set a string to the value of the URI with escapes.
-  virtual void get_string( std::string& str_to_fill ) const = 0;
+    /// @brief Return the password part of the URI
+    virtual const char* const password() const = 0;
 
-  /// @brief Return the scheme of the URI
-  virtual const char* const scheme() const = 0;
+    /// @brief Return the user part of the URI
+    virtual const char* const user() const = 0;
 
-  /// @brief Return the password part of the URI
-  virtual const char* const password() const = 0;
+    /// @brief Return the host name from the URI
+    virtual const char* const hostname() const = 0;
 
-  /// @brief Return the user part of the URI
-  virtual const char* const user() const = 0;
+    /// @brief Return the combined [user[:password]\@host:port/ part of the URI
+    virtual const char* const hostinfo() const = 0;
 
-  /// @brief Return the host name from the URI
-  virtual const char* const hostname() const = 0;
+    /// @brief Return the port part of the URI
+    virtual uint32_t port() const = 0;
 
-  /// @brief Return the combined [user[:password]\@host:port/ part of the URI
-  virtual const char* const hostinfo() const = 0;
+    /// @brief Return the path part of the URI
+    virtual const char* const path() const = 0;
 
-  /// @brief Return the port part of the URI
-  virtual uint32_t port() const = 0;
+    /// @brief Return the query part of the URI
+    virtual const char* const query() const = 0;
 
-  /// @brief Return the path part of the URI
-  virtual const char* const path() const = 0;
+    /// @brief Return the fragment identifier part of the URI
+    virtual const char* const fragment() const = 0;
 
-  /// @brief Return the query part of the URI
-  virtual const char* const query() const = 0;
+    /// @brief Determines if two URIs are equal
+    virtual bool equals( const URI& that ) const = 0;
 
-  /// @brief Return the fragment identifier part of the URI
-  virtual const char* const fragment() const = 0;
+    virtual std::string resolveToFile() const = 0;
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    /// @brief Assignment of one URI to another
+    virtual URI& assign( const URI& that ) = 0;
 
-  /// @brief Determines if two URIs are equal
-  virtual bool equals( const URI& that ) const = 0;
+    /// @brief Assignment of an std::string to a URI. 
+    virtual void assign( const std::string& that ) = 0;
 
-  virtual std::string resolveToFile() const = 0;
-/// @}
-/// @name Mutators
-/// @{
-public:
-  /// @brief Assignment of one URI to another
-  virtual URI& assign( const URI& that ) = 0;
+    /// @brief Clears the URI, releases memory.
+    virtual void clear( void ) = 0;
 
-  /// @brief Assignment of an std::string to a URI. 
-  virtual void assign( const std::string& that ) = 0;
+    /// @brief Sets the scheme
+    virtual void scheme( const char* const scheme ) = 0;
 
-  /// @brief Clears the URI, releases memory.
-  virtual void clear( void ) = 0;
+    /// @brief Set the opaque part of the URI
+    virtual void opaque( const char* const opaque ) = 0;
 
-  /// @brief Sets the scheme
-  virtual void scheme( const char* const scheme ) = 0;
+    /// @brief Sets the authority.
+    virtual void authority( const char* const authority ) = 0;
 
-  /// @brief Set the opaque part of the URI
-  virtual void opaque( const char* const opaque ) = 0;
+    /// @brief Sets the user.
+    virtual void user( const char* const user ) = 0;
 
-  /// @brief Sets the authority.
-  virtual void authority( const char* const authority ) = 0;
+    /// @brief Sets the server.
+    virtual void server( const char* const server ) = 0;
 
-  /// @brief Sets the user.
-  virtual void user( const char* const user ) = 0;
+    /// @brief Sets the port.
+    virtual void port( uint32_t portnum ) = 0;
 
-  /// @brief Sets the server.
-  virtual void server( const char* const server ) = 0;
+  /// @}
+  /// @name Functions
+  /// @{
+  public:
+    static uint32_t port_for_scheme( const char* scheme );
+  /// @}
 
-  /// @brief Sets the port.
-  virtual void port( uint32_t portnum ) = 0;
-
-/// @}
-/// @name Functions
-/// @{
-public:
-  static uint32_t port_for_scheme( const char* scheme );
-
-/// @}
-
+  friend class AST;
 };
 
 inline URI & 

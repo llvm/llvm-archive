@@ -44,6 +44,7 @@
 #include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/RealMath.h>
 #include <hlvm/Base/Assert.h>
+#include <llvm/ADT/StringExtras.h>
 #include <libxml/parser.h>
 #include <libxml/relaxng.h>
 #include <vector>
@@ -68,13 +69,14 @@ class XMLReaderImpl : public XMLReader {
   Block* block;
   Function* func;
   Bundle* bundle;
+  bool isError;
 public:
   XMLReaderImpl(const std::string& p)
-    : path(p), ast(0), loc(0), uri(0), block(0), func(0), bundle(0)
+    : path(p), ast(0), loc(0), uri(0), block(0), func(0), bundle(0), isError(0)
   {
     ast = AST::create();
     ast->setSystemID(p);
-    uri = URI::create(p,ast->getPool());
+    uri = ast->new_URI(p);
   }
 
   virtual ~XMLReaderImpl() 
@@ -86,10 +88,6 @@ public:
   virtual void read();
   virtual AST* get();
 
-  void error(const std::string& msg) {
-    std::cerr << msg << "\n";
-  }
-
   std::string lookupToken(int32_t token) const
   {
     return HLVMTokenizer::lookup(token);
@@ -97,11 +95,10 @@ public:
 
   Locator* getLocator(xmlNodePtr& cur) {
     if (loc) {
-      LineLocator tmp(uri,cur->line);
-      if (*loc == tmp)
+      if (loc->getLine() == cur->line)
         return loc;
     }
-    return loc = new LineLocator(uri,cur->line);
+    return loc = ast->new_Locator(uri,cur->line);
   }
 
   inline Type* getType(const std::string& name );
@@ -110,29 +107,16 @@ public:
   inline void handleParseError(xmlErrorPtr error);
   inline void handleValidationError(xmlErrorPtr error);
 
-  inline ConstantInteger* parseBinary(xmlNodePtr& cur);
-  inline ConstantInteger* parseOctal(xmlNodePtr& cur);
-  inline ConstantInteger* parseDecimal(xmlNodePtr& cur);
-  inline ConstantInteger* parseHexadecimal(xmlNodePtr& cur);
-  inline ConstantReal*    parseFloat(xmlNodePtr& cur);
-  inline ConstantReal*    parseDouble(xmlNodePtr& cur);
-  inline ConstantText*    parseText(xmlNodePtr& cur);
-  inline ConstantZero*    parseZero(xmlNodePtr& cur,const Type* Ty);
+  inline void error(Locator* loc, const std::string& msg);
 
   inline xmlNodePtr   checkDoc(xmlNodePtr cur, Documentable* node);
-  inline Value*  getValue(xmlNodePtr&);
 
-  void           parseTree          ();
-
-  Type*          parseAtom          (xmlNodePtr& cur);
-  Constant*      parseConstant      (xmlNodePtr& cur, const Type* Ty);
-  Constant*      parseConstant      (xmlNodePtr& cur, const Type* Ty, int tkn);
+  Constant*      parseLiteralConstant(xmlNodePtr& cur, const std::string& name,
+    const Type* Ty);
+  Constant*      parseConstant      (xmlNodePtr& cur);
   Operator*      parseOperator      (xmlNodePtr& cur);
-  Operator*      parseOperator      (xmlNodePtr& cur, int token);
-  Value*         parseValue         (xmlNodePtr& cur);
-  Value*         parseValue         (xmlNodePtr& cur, int token);
-  StoreOp*       parseStoreOp       (xmlNodePtr& cur);
-  LoadOp*        parseLoadOp        (xmlNodePtr& cur);
+  void           parseTree          ();
+  Type*          parseAtom          (xmlNodePtr& cur);
 
   template<class OpClass>
   OpClass*       parse(xmlNodePtr& cur);
@@ -147,6 +131,11 @@ public:
   OpClass* parseTernaryOp(xmlNodePtr& cur);
   template<class OpClass>
   OpClass* parseMultiOp(xmlNodePtr& cur);
+
+  inline const char* 
+  getAttribute(xmlNodePtr cur,const char*name,bool required = true);
+  inline void getTextContent(xmlNodePtr cur, std::string& buffer);
+  inline void getNameType(xmlNodePtr& cur, std::string& name,std::string& type);
 
 private:
 };
@@ -246,22 +235,25 @@ recognize_Integer(const char * str)
   return ::atoll(str);
 }
 
-
 inline bool 
-recognize_boolean(const std::string& str)
+recognize_boolean(const char* str)
 {
-  switch (str[0])
+  switch (getToken(str))
   {
-    case 'F': if (str == "FALSE") return false; break;
-    case 'N': if (str == "NO")    return false; break;
-    case 'T': if (str == "TRUE")  return true; break;
-    case 'Y': if (str == "YES")   return true; break;
-    case 'f': if (str == "false") return false; break;
-    case 'n': if (str == "no")    return false; break;
-    case 't': if (str == "true")  return true; break;
-    case 'y': if (str == "yes")   return true; break;
-    case '0': if (str == "0")     return false; break;
-    case '1': if (str == "1")     return true; break;
+    case TKN_FALSE: return false;
+    case TKN_False: return false;
+    case TKN_false: return false;
+    case TKN_NO: return false;
+    case TKN_No: return false;
+    case TKN_no: return false;
+    case TKN_0: return false;
+    case TKN_TRUE: return true;
+    case TKN_True: return true;
+    case TKN_true: return true;
+    case TKN_YES: return true;
+    case TKN_Yes: return true;
+    case TKN_yes: return true;
+    case TKN_1: return true;
     default: break;
   }
   hlvmDeadCode("Invalid boolean value");
@@ -290,7 +282,7 @@ recognize_builtin_type( hlvm::AST* ast, const std::string& tname)
     case TKN_s64:    result = ast->getPrimitiveType(SInt64TypeID); break;
     case TKN_s8:     result = ast->getPrimitiveType(SInt8TypeID); break;
     case TKN_stream: result = ast->getPrimitiveType(StreamTypeID); break;
-    case TKN_text:   result = ast->getPrimitiveType(TextTypeID); break;
+    case TKN_string: result = ast->getPrimitiveType(StringTypeID); break;
     case TKN_u128:   result = ast->getPrimitiveType(UInt128TypeID); break;
     case TKN_u16:    result = ast->getPrimitiveType(UInt16TypeID); break;
     case TKN_u32:    result = ast->getPrimitiveType(UInt32TypeID); break;
@@ -329,7 +321,7 @@ create_builtin_type(
     case TKN_s64:     result = ast->new_s64(name,loc); break;
     case TKN_s8:      result = ast->new_s8(name,loc); break;
     case TKN_stream:  result = ast->new_StreamType(name,loc); break;
-    case TKN_text:    result = ast->new_TextType(name,loc); break;
+    case TKN_string:  result = ast->new_StringType(name,loc); break;
     case TKN_u128:    result = ast->new_u128(name,loc); break;
     case TKN_u16:     result = ast->new_u16(name,loc); break;
     case TKN_u32:     result = ast->new_u32(name,loc); break;
@@ -342,21 +334,46 @@ create_builtin_type(
 }
 
 inline const char* 
-getAttribute(xmlNodePtr cur,const char*name,bool required = true)
+XMLReaderImpl::getAttribute(xmlNodePtr cur,const char*name,bool required )
 {
   const char* result = reinterpret_cast<const char*>(
    xmlGetNoNsProp(cur,reinterpret_cast<const xmlChar*>(name)));
   if (!result && required) {
-    hlvmAssert(!"Missing Attribute");
+    error(getLocator(cur),std::string("Requred Attribute '") + name + 
+          "' is missing.");
   }
   return result;
 }
 
+inline void
+XMLReaderImpl::getTextContent(xmlNodePtr cur, std::string& buffer)
+{
+  buffer.clear();
+  if (cur) skipBlanks(cur,false);
+  while (cur && cur->type == XML_TEXT_NODE) {
+    buffer += reinterpret_cast<const char*>(cur->content);
+    cur = cur->next;
+  }
+  if (cur) skipBlanks(cur);
+}
+
 inline void 
-getNameType(xmlNodePtr& cur, std::string& name, std::string& type)
+XMLReaderImpl::getNameType(xmlNodePtr& cur, std::string& name,std::string& type)
 {
   name = getAttribute(cur,"id");
   type = getAttribute(cur,"type");
+}
+
+inline void
+XMLReaderImpl::error(Locator* loc, const std::string& msg)
+{
+  std::string location;
+  if (loc)
+    loc->getLocation(location);
+  else
+    location = "Unknown Location";
+  std::cerr << location << ": " << msg << "\n";
+  isError = true;
 }
 
 Type* 
@@ -370,178 +387,125 @@ XMLReaderImpl::getType(const std::string& name )
   return Ty;
 }
 
-inline ConstantInteger*
-XMLReaderImpl::parseBinary(xmlNodePtr& cur)
+Constant*
+XMLReaderImpl::parseLiteralConstant(
+    xmlNodePtr& cur, 
+    const std::string& name,
+    const Type* Ty)
 {
-  uint64_t value = 0;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    const xmlChar* p = child->content;
-    while (*p != 0) {
-      value <<= 1;
-      hlvmAssert(*p == '1' || *p == '0');
-      value |= (*p++ == '1' ? 1 : 0);
+  if (!name.empty() && bundle->find_const(name) != 0) {
+    error(getLocator(cur),std::string("Constant '") + name 
+          + "' already exists.");
+    return 0;
+  }
+
+  // skip over blank text to find next element
+  skipBlanks(cur);
+
+  Constant* C = 0;
+  const char* prefix = 0;
+  std::string actualName(name);
+  int token = getToken(cur->name);
+  switch (token) {
+    case TKN_false:   
+    {
+      C = ast->new_ConstantBoolean(false, getLocator(cur)); 
+      if (actualName.empty())
+        C->setName("bool_false");
+      else
+        C->setName(actualName);
+      break;
     }
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <bin> element");
-  ConstantInteger* result = ast->new_ConstantInteger(value,
-      ast->getPrimitiveType(UInt64TypeID),
-      getLocator(cur));
-  return result;
-}
-
-inline ConstantInteger*
-XMLReaderImpl::parseOctal(xmlNodePtr& cur)
-{
-  uint64_t value = 0;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    const xmlChar* p = cur->content;
-    while (*p != 0) {
-      value <<= 3;
-      hlvmAssert(*p >= '0' || *p == '7');
-      value += *p++ - '0';
+    case TKN_true:
+    {
+      C = ast->new_ConstantBoolean(true, getLocator(cur));
+      if (actualName.empty())
+        C->setName("bool_true");
+      else
+        C->setName(actualName);
+      break;
     }
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <oct> element");
-  ConstantInteger* result = ast->new_ConstantInteger(value,
-      ast->getPrimitiveType(UInt64TypeID),
-      getLocator(cur));
-  return result;
-}
-
-inline ConstantInteger*
-XMLReaderImpl::parseDecimal(xmlNodePtr& cur)
-{
-  uint64_t value = 0;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    const xmlChar* p = child->content;
-    while (*p != 0) {
-      value *= 10;
-      hlvmAssert(*p >= '0' || *p <= '9');
-      value += *p++ - '0';
+    case TKN_bool:
+    {
+      hlvmAssert(Ty->is(BooleanTypeID));
+      std::string buffer;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,buffer);
+      bool value = recognize_boolean( buffer.c_str() );
+      C = ast->new_ConstantBoolean(value, getLocator(cur));
+      if (actualName.empty())
+        C->setName(std::string("bool_") + (value?"true":"false"));
+      else
+        C->setName(actualName);
+      break;
     }
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <dec> element");
-  ConstantInteger* result = ast->new_ConstantInteger(value,
-      ast->getPrimitiveType(UInt64TypeID),
-      getLocator(cur));
-  return result;
-}
-
-inline ConstantInteger*
-XMLReaderImpl::parseHexadecimal(xmlNodePtr& cur)
-{
-  uint64_t value = 0;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    const xmlChar* p = cur->content;
-    while (*p != 0) {
-      value <<= 4;
-      switch (*p) {
-        case '0': break;
-        case '1': value += 1; break;
-        case '2': value += 2; break;
-        case '3': value += 3; break;
-        case '4': value += 4; break;
-        case '5': value += 5; break;
-        case '6': value += 6; break;
-        case '7': value += 7; break;
-        case '8': value += 8; break;
-        case '9': value += 9; break;
-        case 'a': case 'A': value += 10; break;
-        case 'b': case 'B': value += 11; break;
-        case 'c': case 'C': value += 12; break;
-        case 'd': case 'D': value += 13; break;
-        case 'e': case 'E': value += 14; break;
-        case 'f': case 'F': value += 15; break;
-        default:
-          hlvmAssert("Invalid hex digit");
-          break;
-      }
-      p++;
+    case TKN_bin:
+    case TKN_oct:
+    case TKN_dec:
+    case TKN_hex:
+    {
+      hlvmAssert(Ty->isIntegerType());
+      std::string value;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,value);
+      uint16_t base = (token == TKN_dec ? 10 : (token == TKN_hex ? 16 : 
+                      (token == TKN_oct ? 8 : (token == TKN_bin ? 2 : 10))));
+      C = ast->new_ConstantInteger(value, base, Ty, getLocator(cur));
+      if (actualName.empty())
+        C->setName(std::string("int_") + value);
+      else
+        C->setName(actualName);
+      break;
     }
-    child = child->next;
+    case TKN_flt:
+    case TKN_dbl:
+    case TKN_real:
+    {
+      hlvmAssert(Ty->isRealType());
+      std::string value;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,value);
+      C = ast->new_ConstantReal(value, Ty, getLocator(cur));
+      if (actualName.empty())
+        C->setName(std::string("real_") + value);
+      else
+        C->setName(actualName);
+      break;
+    }
+    case TKN_string:
+    {
+      hlvmAssert(Ty->is(StringTypeID));
+      std::string value;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,value);
+      C =  ast->new_ConstantString(value,getLocator(cur));
+      if (actualName.empty())
+        C->setName(std::string("str_") + value);
+      else
+        C->setName(actualName);
+      break;
+    }
+    default:
+      hlvmAssert(!"Invalid kind of constant");
+      break;
   }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <hex> element");
-  ConstantInteger* result = ast->new_ConstantInteger(value,
-      ast->getPrimitiveType(UInt64TypeID),
-      getLocator(cur));
-  return result;
+  hlvmAssert(C && C->getType() == Ty && "Constant/Type mismatch");
+  if (C)
+    C->setParent(bundle);
+  return C;
 }
 
-inline ConstantReal*
-XMLReaderImpl::parseFloat(xmlNodePtr& cur)
+inline Constant*
+XMLReaderImpl::parseConstant(xmlNodePtr& cur)
 {
-  double value = 0;
-  std::string buffer;
+  hlvmAssert(getToken(cur->name) == TKN_constant);
+  std::string name;
+  std::string type;
+  getNameType(cur,name,type);
+  Type* Ty = getType(type);
   xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    buffer += reinterpret_cast<const char*>(cur->content);
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <flt> element");
-  value = atof(buffer.c_str());
-  ConstantReal* result = ast->new_ConstantReal(value,
-    ast->getPrimitiveType(UInt64TypeID),getLocator(cur));
-  return result;
-}
-
-inline ConstantReal*
-XMLReaderImpl::parseDouble(xmlNodePtr& cur)
-{
-  double value = 0;
-  std::string buffer;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    buffer += reinterpret_cast<const char*>(cur->content);
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <dbl> element");
-  value = atof(buffer.c_str());
-  ConstantReal* result = ast->new_ConstantReal(value,
-    ast->getPrimitiveType(UInt64TypeID), getLocator(cur));
-  return result;
-}
-
-inline ConstantText*
-XMLReaderImpl::parseText(xmlNodePtr& cur)
-{
-  std::string buffer;
-  xmlNodePtr child = cur->children;
-  if (child) skipBlanks(child,false);
-  while (child && child->type == XML_TEXT_NODE) {
-    buffer += reinterpret_cast<const char*>(child->content);
-    child = child->next;
-  }
-  if (child) skipBlanks(child);
-  hlvmAssert(!child && "Illegal chlldren of <text> element");
-  return ast->new_ConstantText(buffer,getLocator(cur));
-}
-
-inline ConstantZero*
-XMLReaderImpl::parseZero(xmlNodePtr& cur, const Type* Ty)
-{
-  hlvmAssert(cur->children == 0);
-  if (Ty == 0)
-    Ty = ast->new_s32("zero",getLocator(cur));
-  return ast->new_ConstantZero(Ty,getLocator(cur));
+  Constant* C = parseLiteralConstant(child,name,Ty);
+  return C;
 }
 
 template<> Documentation*
@@ -578,27 +542,14 @@ XMLReaderImpl::checkDoc(xmlNodePtr cur, Documentable* node)
   return child;
 }
 
-inline Value*
-XMLReaderImpl::getValue(xmlNodePtr& cur)
-{
-  if (cur && skipBlanks(cur) && cur->type == XML_ELEMENT_NODE) {
-    Value* result = parseValue(cur);
-    cur = cur->next;
-    return result;
-  }
-  else if (cur != 0)
-    hlvmDeadCode("Expecting a value");
-  return 0;
-}
-
 template<> AliasType*
 XMLReaderImpl::parse<AliasType>(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_alias);
-  std::string name = getAttribute(cur,"id");
-  std::string type = getAttribute(cur,"renames");
+  std::string id = getAttribute(cur,"id");
+  std::string renames = getAttribute(cur,"renames");
   AliasType* alias = 
-    ast->new_AliasType(name,getType(type),getLocator(cur));
+    ast->new_AliasType(id,getType(renames),getLocator(cur));
   checkDoc(cur,alias);
   return alias;
 }
@@ -728,35 +679,43 @@ XMLReaderImpl::parse<Variable>(xmlNodePtr& cur)
   getNameType(cur, name, type);
   const char* cnst = getAttribute(cur, "const", false);
   const char* lnkg = getAttribute(cur, "linkage", false);
+  const char* init = getAttribute(cur, "init", false);
   const Type* Ty = getType(type);
   Variable* var = ast->new_Variable(name,Ty,loc);
   if (cnst)
     var->setIsConstant(recognize_boolean(cnst));
   if (lnkg)
     var->setLinkageKind(recognize_LinkageKinds(lnkg));
-  xmlNodePtr child = checkDoc(cur,var);
-  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    Constant* C = parseConstant(child,Ty);
-    var->setInitializer(C);
+  if (init) {
+    Constant* initializer = bundle->find_const(init);
+    if (initializer)
+      var->setInitializer(initializer);
+    else 
+      error(loc,std::string("Constant '") + init + 
+            "' not found in initializer."); 
   }
+  checkDoc(cur,var);
   return var;
 }
 
 template<> AutoVarOp*
 XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
 {
+  Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  Locator* loc = getLocator(cur);
   const Type* Ty = getType(type);
-  xmlNodePtr child = cur->children;
-  Constant* C = 0;
-  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    C = parseConstant(child,Ty);
-  } else {
-    C = ast->new_ConstantZero(Ty,loc);
+  const char* init = getAttribute(cur,"init",false);
+  Constant *initializer = 0;
+  if (init) {
+    initializer = bundle->find_const(init);
+    if (!initializer)
+      error(loc,std::string("Constant '") + init + 
+            "' not found in initializer.");
   }
-  return ast->AST::new_AutoVarOp(name,Ty,C,loc);
+  AutoVarOp* autovar = ast->AST::new_AutoVarOp(name,Ty,initializer,loc);
+  checkDoc(cur,autovar);
+  return autovar;
 }
 
 template<> ReferenceOp*
@@ -774,38 +733,32 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
         referent = av;
         break;
       }
-    if (blk->getParent() && llvm::isa<Block>(blk->getParent()))
-      blk = llvm::cast<Block>(blk->getParent());
-    else
-      blk = 0;
+    blk = blk->getParentBlock();
   }
 
   // Didn't find an autovar, try a global variable
   if (!referent) {
-    referent = bundle->var_find(id);
-    hlvmAssert(referent && "Variable not found");
+    referent = bundle->find_var(id);
+    if (!referent) {
+      error(loc,std::string("Variable '") + id + "' not found");
+    }
   }
 
   return ast->AST::new_ReferenceOp(referent, loc);
 }
 
-StoreOp*
-XMLReaderImpl::parseStoreOp(xmlNodePtr& cur)
+template<> ConstantReferenceOp*
+XMLReaderImpl::parse<ConstantReferenceOp>(xmlNodePtr& cur)
 {
-  xmlNodePtr child = cur->children;
-  Value* oprnd1 = getValue(child);
-  Value* oprnd2 = getValue(child);
+  std::string id = getAttribute(cur,"id");
   Locator* loc = getLocator(cur);
-  return ast->AST::new_BinaryOp<StoreOp>(oprnd1,oprnd2,loc);
-}
-
-LoadOp*
-XMLReaderImpl::parseLoadOp(xmlNodePtr& cur)
-{
-  xmlNodePtr child = cur->children;
-  Value* oprnd1 = getValue(child);
-  Locator* loc = getLocator(cur);
-  return ast->AST::new_UnaryOp<LoadOp>(oprnd1,loc);
+  Constant* referent = bundle->find_const(id);
+  if (!referent) {
+    error(loc,std::string("Constant '") + id + 
+          "' not found. Substituting false.");
+    referent = ast->new_ConstantBoolean(false, getLocator(cur)); 
+  }
+  return ast->AST::new_ConstantReferenceOp(referent, loc);
 }
 
 template<class OpClass>
@@ -821,33 +774,68 @@ template<class OpClass>
 OpClass*
 XMLReaderImpl::parseUnaryOp(xmlNodePtr& cur)
 {
-  xmlNodePtr child = cur->children;
-  Value* oprnd1 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->AST::new_UnaryOp<OpClass>(oprnd1,loc);
+  xmlNodePtr child = cur->children;
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    return ast->AST::new_UnaryOp<OpClass>(oprnd1,loc);
+  } else
+    error(loc,std::string("Operator '") + 
+      reinterpret_cast<const char*>(cur->name) + "' requires one operand.");
+  return 0;
 }
 
 template<class OpClass>
 OpClass*
 XMLReaderImpl::parseBinaryOp(xmlNodePtr& cur)
 {
-  xmlNodePtr child = cur->children;
-  Value* oprnd1 = getValue(child);
-  Value* oprnd2 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->AST::new_BinaryOp<OpClass>(oprnd1,oprnd2,loc);
+  xmlNodePtr child = cur->children;
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    child = child->next;
+    if (child && skipBlanks(child)) {
+      Operator* oprnd2 = parseOperator(child);
+      return ast->AST::new_BinaryOp<OpClass>(oprnd1,oprnd2,loc);
+    } else {
+      error(loc,std::string("Operator '") + 
+            reinterpret_cast<const char*>(cur->name) + 
+            "' needs a second operand.");
+    }
+  } else {
+    error(loc,std::string("Operator '") + 
+          reinterpret_cast<const char*>(cur->name) + "' requires 2 operands.");
+  }
+  return 0;
 }
 
 template<class OpClass>
 OpClass*
 XMLReaderImpl::parseTernaryOp(xmlNodePtr& cur)
 {
-  xmlNodePtr child = cur->children;
-  Value* oprnd1 = getValue(child);
-  Value* oprnd2 = getValue(child);
-  Value* oprnd3 = getValue(child);
   Locator* loc = getLocator(cur);
-  return ast->AST::new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
+  xmlNodePtr child = cur->children;
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    child = child->next;
+    if (child && skipBlanks(child)) {
+      Operator* oprnd2 = parseOperator(child);
+      child = child->next;
+      if (child && skipBlanks(child)) {
+        Operator* oprnd3 = parseOperator(child);
+        return ast->AST::new_TernaryOp<OpClass>(oprnd1,oprnd2,oprnd3,loc);
+      } else
+        error(loc,std::string("Operator '") + 
+              reinterpret_cast<const char*>(cur->name) +
+              "' needs a third operand.");
+    } else
+      error(loc,std::string("Operator '") + 
+            reinterpret_cast<const char*>(cur->name) + 
+            "' needs a second operand.");
+  } else
+    error(loc,std::string("Operator '") + 
+          reinterpret_cast<const char*>(cur->name) + "' requires 3 operands.");
+  return 0;
 }
 
 template<class OpClass>
@@ -856,11 +844,14 @@ XMLReaderImpl::parseMultiOp(xmlNodePtr& cur)
 {
   Locator* loc = getLocator(cur);
   xmlNodePtr child = cur->children;
-  Value* operand = getValue(child);
   MultiOperator::OprndList ol;
-  while (operand != 0) {
-    ol.push_back(operand);
-    operand = getValue(child);
+  while (child != 0 && skipBlanks(child)) {
+    Operator* operand = parseOperator(child);
+    if (operand)
+      ol.push_back(operand);
+    else
+      break;
+    child = child->next;
   }
   return ast->AST::new_MultiOp<OpClass>(ol,loc);
 }
@@ -960,6 +951,7 @@ XMLReaderImpl::parse<Bundle>(xmlNodePtr& cur)
       case TKN_structure   : { n = parse<StructureType>(child); break; }
       case TKN_signature   : { n = parse<SignatureType>(child); break; }
       case TKN_opaque      : { n = parse<OpaqueType>(child); break; }
+      case TKN_constant    : { n = parseConstant(child); break; }
       case TKN_variable    : { n = parse<Variable>(child); break; }
       case TKN_program     : { n = parse<Program>(child); break; }
       case TKN_function    : { n = parse<Function>(child); break; }
@@ -991,10 +983,9 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
     switch (tkn) {
       case TKN_intrinsic: {
         const char* is = getAttribute(child,"is");
-        if (!is)
-          hlvmAssert(!"intrinsic element requires 'is' attribute");
         result = create_builtin_type(ast,is,name,loc);
-        hlvmAssert(result && "Invalid intrinsic kind");
+        if (!result)
+          error(loc,"Invalid intrinsic kind");
         break;
       }
       case TKN_signed: {
@@ -1002,9 +993,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         if (bits) {
           uint64_t numBits = recognize_nonNegativeInteger(bits);
           result = ast->new_IntegerType(name,numBits,/*signed=*/true,loc);
-          break;
         }
-        hlvmAssert(!"Missing 'bits' attribute");
         break;
       }
       case TKN_unsigned: {
@@ -1012,9 +1001,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         if (bits) {
           uint64_t numBits = recognize_nonNegativeInteger(bits);
           result = ast->new_IntegerType(name,numBits,/*signed=*/false,loc);
-          break;
         }
-        hlvmAssert(!"Missing 'bits' attribute");
         break;
       }      
       case TKN_range: {
@@ -1024,9 +1011,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
           int64_t minVal = recognize_Integer(min);
           int64_t maxVal = recognize_Integer(max);
           result = ast->new_RangeType(name,minVal,maxVal,loc);
-          break;
         }
-        hlvmAssert(!"Missing 'min' or 'max' attribute");
         break;
       }
       case TKN_real: {
@@ -1040,7 +1025,7 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
         break;
       }
       default:
-        hlvmAssert(!"Invalid content for atom");
+        error(loc, "Invalid content for atom");
         break;
     }
     if (result) {
@@ -1049,178 +1034,66 @@ XMLReaderImpl::parseAtom(xmlNodePtr& cur)
       return result;
     }
   }
-  hlvmAssert(!"Atom definition element expected");
+  error(loc,"Atom definition element expected");
   return 0;
 }
 
-inline Constant*
-XMLReaderImpl::parseConstant(xmlNodePtr& cur,const Type* Ty)
-{
-  return parseConstant(cur, Ty, getToken(cur->name));
-}
-
-Constant*
-XMLReaderImpl::parseConstant(xmlNodePtr& cur, const Type* Ty, int tkn)
-{
-  Constant* C = 0;
-  switch (tkn) {
-    case TKN_bin:          C = parseBinary(cur); break;
-    case TKN_oct:          C = parseOctal(cur); break;
-    case TKN_dec:          C = parseDecimal(cur); break;
-    case TKN_hex:          C = parseHexadecimal(cur); break;
-    case TKN_flt:          C = parseFloat(cur); break;
-    case TKN_dbl:          C = parseDouble(cur); break;
-    case TKN_text:         C = parseText(cur); break;
-    case TKN_false:        C = ast->new_ConstantBoolean(false); break;
-    case TKN_true:         C = ast->new_ConstantBoolean(true); break;
-    case TKN_zero:         C = parseZero(cur,Ty); break;
-    default:
-      hlvmAssert(!"Invalid kind of constant");
-      break;
-  }
-  return C;
-}
-
-
-inline Operator*
+Operator*
 XMLReaderImpl::parseOperator(xmlNodePtr& cur)
 {
-  return parseOperator(cur, getToken(cur->name));
-}
-
-Operator*
-XMLReaderImpl::parseOperator(xmlNodePtr& cur, int tkn)
-{
-  Operator* op = 0;
-  switch (tkn) {
-    case TKN_neg:          op = parseUnaryOp<NegateOp>(cur); break;
-    case TKN_cmpl:         op = parseUnaryOp<ComplementOp>(cur); break;
-    case TKN_preinc:       op = parseUnaryOp<PreIncrOp>(cur); break;
-    case TKN_predec:       op = parseUnaryOp<PreDecrOp>(cur); break;
-    case TKN_postinc:      op = parseUnaryOp<PostIncrOp>(cur); break;
-    case TKN_postdec:      op = parseUnaryOp<PostDecrOp>(cur); break;
-    case TKN_add:          op = parseBinaryOp<AddOp>(cur); break;
-    case TKN_sub:          op = parseBinaryOp<SubtractOp>(cur); break;
-    case TKN_mul:          op = parseBinaryOp<MultiplyOp>(cur); break;
-    case TKN_div:          op = parseBinaryOp<DivideOp>(cur); break;
-    case TKN_mod:          op = parseBinaryOp<ModuloOp>(cur); break;
-    case TKN_band:         op = parseBinaryOp<BAndOp>(cur); break;
-    case TKN_bor:          op = parseBinaryOp<BOrOp>(cur); break;
-    case TKN_bxor:         op = parseBinaryOp<BXorOp>(cur); break;
-    case TKN_bnor:         op = parseBinaryOp<BNorOp>(cur); break;
-    case TKN_noop:         op = parseNilaryOp<NoOperator>(cur); break;
-    case TKN_not:          op = parseUnaryOp<NotOp>(cur); break;
-    case TKN_and:          op = parseBinaryOp<AndOp>(cur); break;
-    case TKN_or:           op = parseBinaryOp<OrOp>(cur); break;
-    case TKN_nor:          op = parseBinaryOp<NorOp>(cur); break;
-    case TKN_xor:          op = parseBinaryOp<XorOp>(cur); break;
-    case TKN_eq:           op = parseBinaryOp<EqualityOp>(cur); break;
-    case TKN_ne:           op = parseBinaryOp<InequalityOp>(cur); break;
-    case TKN_lt:           op = parseBinaryOp<LessThanOp>(cur); break;
-    case TKN_gt:           op = parseBinaryOp<GreaterThanOp>(cur); break;
-    case TKN_ge:           op = parseBinaryOp<GreaterEqualOp>(cur); break;
-    case TKN_le:           op = parseBinaryOp<LessEqualOp>(cur); break;
-    case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
-    case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
-    case TKN_loop:         op = parseTernaryOp<LoopOp>(cur); break;
-    case TKN_break:        op = parseNilaryOp<BreakOp>(cur); break;
-    case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;
-    case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
-    case TKN_block:        op = parse<Block>(cur); break;
-    case TKN_store:        op = parseStoreOp(cur); break;
-    case TKN_load:         op = parseLoadOp(cur); break;
-    case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
-    case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
-    case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
-    case TKN_ref:          op = parse<ReferenceOp>(cur); break;
-    case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
-    default:
-      hlvmDeadCode("Unrecognized operator");
-      break;
-  }
-  return op;
-}
-
-inline Value*
-XMLReaderImpl::parseValue(xmlNodePtr& cur)
-{
-  return parseValue(cur,getToken(cur->name));
-}
-
-Value*
-XMLReaderImpl::parseValue(xmlNodePtr& cur, int tkn)
-{
-  Value* v = 0;
-  switch (tkn) {
-    case TKN_bin:
-    case TKN_oct:
-    case TKN_dec:
-    case TKN_hex:
-    case TKN_flt:
-    case TKN_dbl:
-    case TKN_text:
-    case TKN_zero:
-    case TKN_false:
-    case TKN_true:
-      v = parseConstant(cur,0,tkn);
-      break;
-    case TKN_noop:
-    case TKN_neg:
-    case TKN_cmpl:   
-    case TKN_preinc: 
-    case TKN_predec: 
-    case TKN_postinc:
-    case TKN_postdec:
-    case TKN_add:    
-    case TKN_sub:   
-    case TKN_mul:  
-    case TKN_div: 
-    case TKN_mod:
-    case TKN_band:       
-    case TKN_bor:       
-    case TKN_bxor:     
-    case TKN_bnor:    
-    case TKN_not:   
-    case TKN_and:  
-    case TKN_or:  
-    case TKN_nor:
-    case TKN_xor:
-    case TKN_eq: 
-    case TKN_ne: 
-    case TKN_lt: 
-    case TKN_gt: 
-    case TKN_ge:     
-    case TKN_le:      
-    case TKN_select: 
-    case TKN_switch: 
-    case TKN_loop:   
-    case TKN_break:  
-    case TKN_continue:
-    case TKN_ret:    
-    case TKN_store:  
-    case TKN_load:   
-    case TKN_open:   
-    case TKN_write:  
-    case TKN_close:  
-    case TKN_ref:    
-    case TKN_autovar: 
-    case TKN_block:  
-      v = parseOperator(cur,tkn);
-      break;
-    case TKN_program:
-      v = parse<Program>(cur);
-      break;
-    case TKN_function:
-      v = parse<Function>(cur);
-      break;
-    case TKN_variable:
-      v = parse<Variable>(cur);
-      break;
-    default:
-      hlvmDeadCode("Unrecognized operator");
-      break;
-  }
-  return v;
+  if (cur && skipBlanks(cur) && cur->type == XML_ELEMENT_NODE) {
+    Operator* op = 0;
+    switch (getToken(cur->name)) {
+      case TKN_neg:          op = parseUnaryOp<NegateOp>(cur); break;
+      case TKN_cmpl:         op = parseUnaryOp<ComplementOp>(cur); break;
+      case TKN_preinc:       op = parseUnaryOp<PreIncrOp>(cur); break;
+      case TKN_predec:       op = parseUnaryOp<PreDecrOp>(cur); break;
+      case TKN_postinc:      op = parseUnaryOp<PostIncrOp>(cur); break;
+      case TKN_postdec:      op = parseUnaryOp<PostDecrOp>(cur); break;
+      case TKN_add:          op = parseBinaryOp<AddOp>(cur); break;
+      case TKN_sub:          op = parseBinaryOp<SubtractOp>(cur); break;
+      case TKN_mul:          op = parseBinaryOp<MultiplyOp>(cur); break;
+      case TKN_div:          op = parseBinaryOp<DivideOp>(cur); break;
+      case TKN_mod:          op = parseBinaryOp<ModuloOp>(cur); break;
+      case TKN_band:         op = parseBinaryOp<BAndOp>(cur); break;
+      case TKN_bor:          op = parseBinaryOp<BOrOp>(cur); break;
+      case TKN_bxor:         op = parseBinaryOp<BXorOp>(cur); break;
+      case TKN_bnor:         op = parseBinaryOp<BNorOp>(cur); break;
+      case TKN_noop:         op = parseNilaryOp<NoOperator>(cur); break;
+      case TKN_not:          op = parseUnaryOp<NotOp>(cur); break;
+      case TKN_and:          op = parseBinaryOp<AndOp>(cur); break;
+      case TKN_or:           op = parseBinaryOp<OrOp>(cur); break;
+      case TKN_nor:          op = parseBinaryOp<NorOp>(cur); break;
+      case TKN_xor:          op = parseBinaryOp<XorOp>(cur); break;
+      case TKN_eq:           op = parseBinaryOp<EqualityOp>(cur); break;
+      case TKN_ne:           op = parseBinaryOp<InequalityOp>(cur); break;
+      case TKN_lt:           op = parseBinaryOp<LessThanOp>(cur); break;
+      case TKN_gt:           op = parseBinaryOp<GreaterThanOp>(cur); break;
+      case TKN_ge:           op = parseBinaryOp<GreaterEqualOp>(cur); break;
+      case TKN_le:           op = parseBinaryOp<LessEqualOp>(cur); break;
+      case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
+      case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
+      case TKN_loop:         op = parseTernaryOp<LoopOp>(cur); break;
+      case TKN_break:        op = parseNilaryOp<BreakOp>(cur); break;
+      case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;
+      case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
+      case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
+      case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
+      case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
+      case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
+      case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
+      case TKN_ref:          op = parse<ReferenceOp>(cur); break;
+      case TKN_cref:         op = parse<ConstantReferenceOp>(cur); break;
+      case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
+      case TKN_block:        op = parse<Block>(cur); break;
+      default:
+        hlvmDeadCode("Unrecognized operator");
+        break;
+    }
+    return op;
+  } else if (cur != 0)
+    hlvmDeadCode("Expecting a value");
+  return 0;
 }
 
 void
@@ -1228,7 +1101,7 @@ XMLReaderImpl::parseTree()
 {
   xmlNodePtr cur = xmlDocGetRootElement(doc);
   if (!cur) {
-    error("No root node");
+    error(0,"No root node");
     return;
   }
   hlvmAssert(getToken(cur->name) == TKN_hlvm && "Expecting hlvm element");
@@ -1250,7 +1123,7 @@ XMLReaderImpl::read() {
   xmlRelaxNGParserCtxtPtr rngparser =
     xmlRelaxNGNewMemParserCtxt(HLVMGrammar, sizeof(HLVMGrammar));
   if (!rngparser) {
-    error("Failed to allocate RNG Parser Context");
+    error(0,"Failed to allocate RNG Parser Context");
     return;
   }
 
@@ -1260,7 +1133,7 @@ XMLReaderImpl::read() {
   // Parse the schema and build an internal structure for it
   xmlRelaxNGPtr schema = xmlRelaxNGParse(rngparser);
   if (!schema) {
-    error("Failed to parse the RNG Schema");
+    error(0,"Failed to parse the RNG Schema");
     xmlRelaxNGFreeParserCtxt(rngparser);
     return;
   }
@@ -1268,7 +1141,7 @@ XMLReaderImpl::read() {
   // create a document parser context
   xmlParserCtxtPtr ctxt = xmlNewParserCtxt();
   if (!ctxt) {
-    error("Failed to allocate document parser context");
+    error(0,"Failed to allocate document parser context");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     return;
@@ -1277,7 +1150,7 @@ XMLReaderImpl::read() {
   // Parse the file, creating a Document tree
   doc = xmlCtxtReadFile(ctxt, path.c_str(), 0, 0);
   if (!doc) {
-    error("Failed to parse the document");
+    error(0,"Failed to parse the document");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);
@@ -1287,7 +1160,7 @@ XMLReaderImpl::read() {
   // Create a validation context
   xmlRelaxNGValidCtxtPtr validation = xmlRelaxNGNewValidCtxt(schema);
   if (!validation) {
-    error("Failed to create the validation context");
+    error(0,"Failed to create the validation context");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);
@@ -1301,7 +1174,7 @@ XMLReaderImpl::read() {
 
   // Validate the document with the schema
   if (xmlRelaxNGValidateDoc(validation, doc)) {
-    error("Document didn't pass RNG schema validation");
+    error(0,"Document didn't pass RNG schema validation");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);

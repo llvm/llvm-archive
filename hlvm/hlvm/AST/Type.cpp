@@ -58,6 +58,16 @@ AnyType::getPrimitiveName() const
   return "any";
 }
 
+StringType::~StringType()
+{
+}
+
+const char*
+StringType::getPrimitiveName() const
+{
+  return "string";
+}
+
 BooleanType::~BooleanType()
 {
 }

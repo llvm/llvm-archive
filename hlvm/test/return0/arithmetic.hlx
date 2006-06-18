@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/arithmetic.hlx">
+  <bundle id="arithmetic">
+    <constant id="42" type="s32"><dec>42</dec></constant>
+    <constant id="7" type="s32"><dec>7</dec></constant>
+    <constant id="1" type="s32"><dec>1</dec></constant>
+    <constant id="2" type="s32"><dec>2</dec></constant>
+    <constant id="8" type="s32"><dec>8</dec></constant>
+    <program id="arithmetic">
+      <block>
+        <ret>
+          <sub>
+            <add>
+              <mul>
+                <div>
+                  <cref id="42"/>
+                  <cref id="7"/>
+                </div>
+                <cref id="1"/>
+              </mul>
+              <cref id="2"/>
+            </add>
+            <cref id="8"/>
+          </sub>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

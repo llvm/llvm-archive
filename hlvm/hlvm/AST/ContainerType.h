@@ -304,8 +304,7 @@ class StructureType : public DisparateContainerType
   /// @name Constructors
   /// @{
   protected:
-    StructureType(NodeIDs id = StructureTypeID ) : 
-      DisparateContainerType(id) {}
+    StructureType(NodeIDs id = StructureTypeID ) : DisparateContainerType(id) {}
     virtual ~StructureType();
 
   /// @}

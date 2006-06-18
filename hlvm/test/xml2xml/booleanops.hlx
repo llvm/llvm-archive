@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/unaryarithmetic.hlx">
-  <bundle id="unaryarithmetic">
-    <program id="unaryarithmetic">
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/booleanops.hlx">
+  <bundle id="booleanops">
+    <constant id="false" type="bool">
+      <false/>
+    </constant>
+    <constant id="true" type="bool">
+      <true/>
+    </constant>
+    <program id="booleanops">
       <block>
-        <autovar id="v1" type="bool">
-          <true/>
-        </autovar>
-        <autovar id="v2" type="bool">
-          <false/>
-        </autovar>
+        <autovar id="v1" type="bool" init="true"/>
+        <autovar id="v2" type="bool" init="false"/>
         <not>
           <load>
             <ref id="v1"/>

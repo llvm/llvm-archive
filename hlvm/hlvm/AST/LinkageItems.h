@@ -30,7 +30,7 @@
 #ifndef HLVM_AST_LINKAGEITEMS_H
 #define HLVM_AST_LINKAGEITEMS_H
 
-#include <hlvm/AST/LinkageItem.h>
+#include <hlvm/AST/Constants.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Block.h>
 
@@ -39,6 +39,58 @@ namespace hlvm
 
 class Type; // Forward declare
 class Constant;
+
+/// This enumeration is used to specify the kinds of linkage that are
+/// permitted for a LinkageItem.
+/// @brief Enumeration of ways to link bundles
+enum LinkageKinds {
+  ExternalLinkage   = 1, ///< Externally visible item
+  LinkOnceLinkage   = 2, ///< Keep one copy of item when linking (inline)
+  WeakLinkage       = 3, ///< Keep one copy of item when linking (weak)
+  AppendingLinkage  = 4, ///< Append item to an array of similar items
+  InternalLinkage   = 5  ///< Rename collisions when linking (static funcs)
+};
+
+/// This class provides an Abstract Syntax Tree node that represents an item
+/// which can be linked with other Bundles. LinkageItem is an abstract base 
+/// class and cannot be instantiated. All LinkageItem's are Constant values
+/// because they represents a runtime value that is a constant address. The
+/// value pointed to by the LinkageItem may be mutable or immutable depending
+/// on its type and options.  As the name suggests, LinkageItems participate
+/// in linkage. A Bundle referring to a name in another Bundle will only link
+/// with a LinkageItem and nothing else. There are several ways in which 
+/// LinkageItems can be linked together, specified by the LinkageKinds value.
+/// @see LinkageKinds
+/// @see Bundle
+/// @see Constant
+/// @brief AST Bundle Node
+class LinkageItem : public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    LinkageItem( NodeIDs id ) : Constant(id) { setLinkageKind(InternalLinkage);}
+    virtual ~LinkageItem();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    inline LinkageKinds getLinkageKind() const { 
+      return LinkageKinds(flags & 0x0007); }
+    static inline bool classof(const LinkageItem*) { return true; }
+    static inline bool classof(const Node* N) { return N->isLinkageItem(); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+    void setLinkageKind(LinkageKinds k) { 
+      flags &= 0xFFF8; flags |= uint16_t(k); 
+    }
+
+  /// @}
+  friend class AST;
+};
 
 /// This class provides an Abstract Syntax Tree node that represents a 
 /// global Variable.  A Variable can only be declared as a component of a 
@@ -55,8 +107,7 @@ class Variable : public LinkageItem
   /// @name Constructors
   /// @{
   protected:
-    Variable() : LinkageItem(VariableID) {}
-  public:
+    Variable() : LinkageItem(VariableID), init(0) {}
     virtual ~Variable();
 
   /// @}
@@ -64,7 +115,9 @@ class Variable : public LinkageItem
   /// @{
   public:
     bool isConstant() const { return flags & 0x0008; }
-    Constant* getInitializer() { return init; }
+    Constant* getInitializer() const { return init; }
+    bool hasInitializer() const { return init != 0; }
+    bool isZeroInitialized() const { return init == 0; }
     static inline bool classof(const Variable*) { return true; }
     static inline bool classof(const Node* N) { return N->is(VariableID); }
 
@@ -103,10 +156,8 @@ class Function : public LinkageItem
 {
   /// @name Constructors
   /// @{
-  public:
-    Function(
-      NodeIDs id = FunctionID
-    ) : LinkageItem(id), block(0) {}
+  protected:
+    Function(NodeIDs id = FunctionID) : LinkageItem(id), block(0) {}
     virtual ~Function();
 
   /// @}
@@ -156,7 +207,6 @@ class Program : public Function
   /// @{
   protected:
     Program() : Function(ProgramID) {}
-      
     virtual ~Program();
 
   /// @}

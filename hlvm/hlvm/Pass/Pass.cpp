@@ -44,7 +44,8 @@ class PassManagerImpl : public PassManager
 public:
   PassManagerImpl() : PassManager(), pre(), post() {}
   void addPass(Pass* p);
-  void runOn(AST* tree);
+  virtual void runOn(AST* tree);
+  virtual void runOn(AST* tree, Node* startAt);
 
   inline void runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m);
   inline void runPreOrder(Node* n);
@@ -123,7 +124,9 @@ PassManagerImpl::runOn(Operator* op)
   runPreOrder(op);
   size_t limit = op->getNumOperands();
   for (size_t i = 0; i < limit; ++i) {
-    runOn(op->getOperand(i));
+    // Skip non-operator operands as they've been handled elsewhere
+    if (isa<Operator>(op))
+      runOn(op->getOperand(i));
   }
   runPostOrder(op);
 }
@@ -167,6 +170,12 @@ PassManagerImpl::runOn(Bundle* b)
     runPreOrder(const_cast<Node*>(TI->second));
     runPostOrder(const_cast<Node*>(TI->second));
   }
+  for (Bundle::constant_iterator CI = b->const_begin(), CE = b->const_end();
+      CI != CE; ++CI)
+  {
+    runPreOrder(const_cast<Node*>(CI->second));
+    runPostOrder(const_cast<Node*>(CI->second));
+  }
   for (Bundle::var_iterator VI = b->var_begin(), VE = b->var_end(); 
        VI != VE; ++VI) {
     runPreOrder(const_cast<Node*>(VI->second));
@@ -198,6 +207,28 @@ void PassManagerImpl::runOn(AST* tree)
   // Call the terminators
   PI = all.begin(), PE = all.end();
   while (PI != PE) { (*PI)->handleTerminate(); ++PI; }
+}
+
+void 
+PassManagerImpl::runOn(AST* tree, Node* startAt)
+{
+  // Check to make sure startAt is in tree
+  hlvmAssert(tree != 0 && "Can't run passes on null tree");
+  hlvmAssert(startAt != 0 && "Can't run passes from null start");
+  Node* parent = startAt;
+  while (parent->getParent() != 0) parent = parent->getParent();
+  hlvmAssert(parent == tree && "Can't run passes on node that isn't in tree");
+
+  if (isa<Bundle>(startAt))
+    runOn(cast<Bundle>(startAt));
+  else if (isa<Block>(startAt))
+    runOn(cast<Block>(startAt));
+  else if (isa<Operator>(startAt))
+    runOn(cast<Operator>(startAt));
+  else if (isa<Constant>(startAt))
+    runOn(cast<Constant>(startAt));
+  else if (isa<Value>(startAt))
+    runOn(cast<Value>(startAt));
 }
 
 } // anonymous namespace

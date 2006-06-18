@@ -84,11 +84,6 @@ public:
   /// @brief The number of name/node pairs is returned.
   inline unsigned size() const { return unsigned(map_.size()); }
 
-  /// This function can be used from the debugger to display the
-  /// content of the symbol table while debugging.
-  /// @brief Print out symbol table on stderr
-  void dump() const;
-
 /// @}
 /// @name Iteration
 /// @{

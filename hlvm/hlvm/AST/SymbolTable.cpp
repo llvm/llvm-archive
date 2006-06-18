@@ -105,16 +105,3 @@ bool SymbolTable::rename(Node *N, const std::string &name) {
   }
   return false;
 }
-
-#ifndef _NDEBUG
-static void DumpNodes(const std::pair<const std::string, const Node*>& I ) {
-  std::cerr << "  '" << I.first << "' = ";
-  I.second->dump();
-  std::cerr << "\n";
-}
-
-void SymbolTable::dump() const {
-  std::cerr << "SymbolTable: ";
-  for_each(map_.begin(), map_.end(), DumpNodes);
-}
-#endif

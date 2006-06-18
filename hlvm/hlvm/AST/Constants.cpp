@@ -32,13 +32,10 @@
 
 namespace hlvm {
 
+Constant::~Constant() { }
 ConstantBoolean::~ConstantBoolean() { }
 ConstantInteger::~ConstantInteger() { }
-
 ConstantReal::~ConstantReal() { }
-
-ConstantText::~ConstantText() { }
-
-ConstantZero::~ConstantZero() { }
+ConstantString::~ConstantString() { }
 
 }

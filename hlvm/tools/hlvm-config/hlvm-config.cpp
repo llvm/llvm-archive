@@ -85,7 +85,6 @@ static const char* NodeIDStrs[] =
   "Class",
   "Method",
   "Implements",
-  "ConstantZero",
   "ConstantBoolean",
   "ConstantInteger",
   "ConstantReal",
@@ -103,6 +102,7 @@ static const char* NodeIDStrs[] =
   "NInfOp",
   "NaNOp",
   "ReferenceOp",
+  "ConstantReferenceOp",
   "NoOperator",
   "ReturnOp",
   "ThrowOp",
@@ -186,13 +186,14 @@ main(int argc, char**argv)
   if (ShowNodeIds)
   {
     unsigned rowcount = 4;
-    for (unsigned i = FirstNodeID; i < LastNodeID; i++) {
+    for (unsigned i = FirstNodeID; i <= LastNodeID; i++) {
       if (rowcount % 4 == 0)
         std::cout << "\n";
       std::cout << "  " << i << ":" << NodeIDStrs[i];
       rowcount++;
     }
-    std::cout << "Number of NodeIDs: " << NumNodeIDs << "\n";
+
+    std::cout << "\n\nNumber of NodeIDs: " << NumNodeIDs << "\n";
     std::cout << "Nodes: " 
               << FirstNodeID << " -> "
               << LastNodeID << "\n";
@@ -247,6 +248,9 @@ main(int argc, char**argv)
     std::cout << "MultiOperators: " 
               << FirstMultiOperatorID << " -> "
               << LastMultiOperatorID << "\n";
+    if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs)
+      std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n";
+
   }
   return 0;
 }

@@ -156,7 +156,12 @@ ValidateImpl::checkValue(Value* v, NodeIDs id)
 bool
 ValidateImpl::checkConstant(Constant* C,NodeIDs id)
 {
-  return checkValue(C,id);
+  if (checkValue(C,id)) {
+    if (C->getName().empty())
+      error(C,"Constants must not have empty name");
+      return false;
+  }
+  return true;
 }
 
 bool
@@ -283,6 +288,12 @@ ValidateImpl::validate(IntegerType* n)
 }
 
 template<> inline void
+ValidateImpl::validate(OpaqueType* n)
+{
+  checkType(n,OpaqueTypeID);
+}
+
+template<> inline void
 ValidateImpl::validate(RangeType* n)
 {
   if (checkType(n,RangeTypeID))
@@ -313,9 +324,9 @@ ValidateImpl::validate(RealType* n)
 }
 
 template<> inline void
-ValidateImpl::validate(OpaqueType* n)
+ValidateImpl::validate(StringType* n)
 {
-  checkType(n,OpaqueTypeID);
+  checkType(n,StringTypeID);
 }
 
 template<> inline void
@@ -379,9 +390,55 @@ ValidateImpl::validate(SignatureType* n)
 }
 
 template<> inline void
+ValidateImpl::validate(ConstantBoolean* n)
+{
+  checkConstant(n,ConstantBooleanID);
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantInteger* n)
+{
+  checkConstant(n,ConstantIntegerID);
+  // FIXME: validate that the constant value is in the right numeric base
+  // FIXME: validate that the constant value is in range for the type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantReal* n)
+{
+  checkConstant(n,ConstantRealID);
+  // FIXME: validate that the constant value is in range for the type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantString* n)
+{
+  if (checkConstant(n,ConstantStringID))
+    if (std::string::npos != n->getValue().find('\0'))
+      error(n,"String constants may not contain a null byte");
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantAggregate* n)
+{
+  checkConstant(n,ConstantAggregateID);
+  // FIXME: validate fields vs. type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantExpression* n)
+{
+  checkConstant(n,ConstantExpressionID);
+  // FIXME: validate opcodes and operands
+}
+
+template<> inline void
 ValidateImpl::validate(Variable* n)
 {
-  checkLinkageItem(n, VariableID);
+  if (checkLinkageItem(n, VariableID)) 
+    if (n->hasInitializer())
+      if (n->getType() != n->getInitializer()->getType())
+        error(n,"Variable and its initializer do not agree in type");
 }
 
 template<> inline void
@@ -537,8 +594,18 @@ ValidateImpl::validate(StoreOp* n)
     const Type* Ty2 = n->getOperand(1)->getType();
     if (!isa<PointerType>(Ty1))
       error(n,"StoreOp expects first operand to be pointer type");
-    else if (cast<PointerType>(Ty1)->getElementType() != Ty2)
+    else if (cast<PointerType>(Ty1)->getElementType() != Ty2) {
       error(n,"StoreOp operands do not agree in type");
+    } else if (const ReferenceOp* ref = 
+               dyn_cast<ReferenceOp>(n->getOperand(0))) {
+      const Value* R = ref->getReferent();
+      if (isa<Variable>(R) && cast<Variable>(R)->isConstant())
+        error(n,"Can't store to constant variable");
+      else if (isa<AutoVarOp>(R) && cast<AutoVarOp>(R)->isConstant())
+        error(n,"Can't store to constant automatic variable");
+    } else if (const IndexOp* ref = dyn_cast<IndexOp>(n)) {
+      /// FIXME: Implement this
+    }
   }
 }
 
@@ -552,6 +619,20 @@ ValidateImpl::validate(AutoVarOp* n)
       } 
     }
   }
+}
+
+template<> inline void
+ValidateImpl::validate(ReferenceOp* op)
+{
+  checkOperator(op,ReferenceOpID,0,true);
+  /// FIXME: check referent out
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantReferenceOp* op)
+{
+  checkOperator(op,ConstantReferenceOpID,0,true);
+  /// FIXME: check referent out
 }
 
 template<> inline void
@@ -836,122 +917,176 @@ ValidateImpl::validate(InequalityOp* n)
 template<> inline void
 ValidateImpl::validate(IsPInfOp* n)
 {
-  if (checkOperator(n,IsPInfOpID,1))
-    ;
+  if (checkOperator(n,IsPInfOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"IsPInfoOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(IsNInfOp* n)
 {
-  if (checkOperator(n,IsNInfOpID,1))
-    ;
+  if (checkOperator(n,IsNInfOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"IsPInfoOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(IsNanOp* n)
 {
-  if (checkOperator(n,IsNanOpID,1))
-    ;
+  if (checkOperator(n,IsNanOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"IsNanOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(TruncOp* n)
 {
-  if (checkOperator(n,TruncOpID,1))
-    ;
+  if (checkOperator(n,TruncOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"TruncOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(RoundOp* n)
 {
-  if (checkOperator(n,RoundOpID,1))
-    ;
+  if (checkOperator(n,RoundOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"RoundOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(FloorOp* n)
 {
-  if (checkOperator(n,FloorOpID,1))
-    ;
+  if (checkOperator(n,FloorOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"FloorOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(CeilingOp* n)
 {
-  if (checkOperator(n,CeilingOpID,1))
-    ;
+  if (checkOperator(n,CeilingOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"CeilingOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(LogEOp* n)
 {
-  if (checkOperator(n,LogEOpID,1))
-    ;
+  if (checkOperator(n,LogEOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"LogEOpID requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(Log2Op* n)
 {
-  if (checkOperator(n,Log2OpID,1))
-    ;
+  if (checkOperator(n,Log2OpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"Log2OpID requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(Log10Op* n)
 {
-  if (checkOperator(n,Log10OpID,1))
-    ;
+  if (checkOperator(n,Log10OpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"Log10OpID requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(SquareRootOp* n)
 {
-  if (checkOperator(n,SquareRootOpID,1))
-    ;
+  if (checkOperator(n,SquareRootOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"SquareRootOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(CubeRootOp* n)
 {
-  if (checkOperator(n,CubeRootOpID,1))
-    ;
+  if (checkOperator(n,CubeRootOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"CubeRootOpID requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(FactorialOp* n)
 {
-  if (checkOperator(n,FactorialOpID,1))
-    ;
+  if (checkOperator(n,FactorialOpID,1)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    if (!Ty1->isRealType())
+      error(n,"FactorialOp requires real number operand");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(PowerOp* n)
 {
-  if (checkOperator(n,PowerOpID,2))
-    ;
+  if (checkOperator(n,PowerOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isRealType() || !Ty2->isRealType())
+      error(n,"LogEOpID requires two real number operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(RootOp* n)
 {
-  if (checkOperator(n,RootOpID,2))
-    ;
+  if (checkOperator(n,RootOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isRealType() || !Ty2->isRealType())
+      error(n,"RootOp requires two real number operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(GCDOp* n)
 {
-  if (checkOperator(n,GCDOpID,2))
-    ;
+  if (checkOperator(n,GCDOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isRealType() || !Ty2->isRealType())
+      error(n,"GCDOp requires two real number operands");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(LCMOp* n)
 {
-  if (checkOperator(n,LCMOpID,2))
-    ;
+  if (checkOperator(n,LCMOpID,2)) {
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getOperand(1)->getType();
+    if (!Ty1->isRealType() || !Ty2->isRealType())
+      error(n,"LCMOp requires two real number operands");
+  }
 }
-
 
 template<> inline void
 ValidateImpl::validate(OpenOp* n)
@@ -1007,43 +1142,15 @@ ValidateImpl::validate(WriteOp* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantBoolean* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantInteger* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantReal* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantString* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantAggregate* n)
-{
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantExpression* n)
-{
-}
-
-template<> inline void
 ValidateImpl::validate(Bundle* n)
 {
+  // FIXME: checkNode(n);
 }
 
 template<> inline void
 ValidateImpl::validate(Import* n)
 {
+  // FIXME: checkNode(n);
 }
 
 void
@@ -1103,8 +1210,8 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case AllocateOpID:           validate(cast<AllocateOp>(n)); break;
     case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
     case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;
-    case ReferenceOpID:          /*validate(cast<ReferenceOp>(n));*/ break;
-    case ConstantReferenceOpID:  /*validate(cast<ConstantReferenceOp>(n));*/ 
+    case ReferenceOpID:          validate(cast<ReferenceOp>(n)); break;
+    case ConstantReferenceOpID:  validate(cast<ConstantReferenceOp>(n)); 
                                                                      break;
     case AutoVarOpID:            validate(cast<AutoVarOp>(n)); break;
     case NegateOpID:             validate(cast<NegateOp>(n)); break;
@@ -1156,9 +1263,9 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ReadOpID:               validate(cast<ReadOp>(n)); break;
     case WriteOpID:              validate(cast<WriteOp>(n)); break;
     case PositionOpID:           /*validate(cast<PositionOp>(n));*/ break;
-    case PInfOpID:               /*validate(cast<PInfOp>(n));*/ break;
-    case NInfOpID:               /*validate(cast<NInfoOp>(n));*/ break;
-    case NaNOpID:                /*validate(cast<NaNOp>(n));*/ break;
+    case PInfOpID:               /*validate(cast<PInfOp>(n)); */ break;
+    case NInfOpID:               /*validate(cast<NInfoOp>(n)); */ break;
+    case NaNOpID:                /*validate(cast<NaNOp>(n)); */ break;
     case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;

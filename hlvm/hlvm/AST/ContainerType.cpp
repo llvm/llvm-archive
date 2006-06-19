@@ -101,6 +101,10 @@ void
 DisparateContainerType::insertChild(Node* n)
 {
   hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
+#ifdef HLVM_ASSERT
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    hlvmAssert((*I) != n);
+#endif
   contents.push_back(cast<AliasType>(n));
 }
 

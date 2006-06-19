@@ -102,6 +102,7 @@ void
 UnaryOperator::insertChild(Node* child)
 {
   hlvmAssert(isa<Operator>(child));
+  hlvmAssert(child != op1 && "Re-insertion of child");
   if (!op1)
     op1 = cast<Operator>(child);
   else
@@ -146,6 +147,7 @@ void
 BinaryOperator::insertChild(Node* child)
 {
   hlvmAssert(isa<Operator>(child));
+  hlvmAssert(child != ops[0] && child != ops[1] && "Re-insertion of child");
   if (!ops[0])
     ops[0] = cast<Operator>(child);
   else if (!ops[1])
@@ -194,6 +196,8 @@ void
 TernaryOperator::insertChild(Node* child)
 {
   hlvmAssert(isa<Operator>(child));
+  hlvmAssert(child != ops[0] && child != ops[1] && child != ops[2] && 
+             "Re-insertion of child");
   if (!ops[0])
     ops[0] = cast<Operator>(child);
   else if (!ops[1])
@@ -257,6 +261,10 @@ void
 MultiOperator::insertChild(Node* child)
 {
   hlvmAssert(isa<Operator>(child));
+#ifdef HLVM_ASSERT
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    hlvmAssert((*I) != child && "Re-insertion of child");
+#endif
   ops.push_back(cast<Operator>(child));
 }
 

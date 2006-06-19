@@ -41,6 +41,7 @@ Bundle::~Bundle() { }
 void 
 Bundle::insertChild(Node* kid)
 {
+  hlvmAssert(kid && "Null child!");
   if (kid->isType())
     types.insert(cast<Type>(kid)->getName(), kid);
   else if (kid->is(VariableID))

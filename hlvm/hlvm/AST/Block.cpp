@@ -42,11 +42,11 @@ void
 Block::insertChild(Node* child)
 {
   hlvmAssert(llvm::isa<Operator>(child));
+  MultiOperator::insertChild(child);
   if (llvm::isa<AutoVarOp>(child)) {
     AutoVarOp* av = llvm::cast<AutoVarOp>(child);
     autovars[av->getName()] = av;
   }
-  MultiOperator::insertChild(child);
   type = getResultType(); // update type to match type of thing just added
 }
 

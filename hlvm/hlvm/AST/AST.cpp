@@ -124,6 +124,10 @@ void
 ASTImpl::insertChild(Node* child)
 {
   hlvmAssert(llvm::isa<Bundle>(child) && "Can't insert that here");
+#ifdef HLVM_ASSERT
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    hlvmAssert((*I) != child && "Attempt to duplicate insertion of child");
+#endif
   bundles.push_back(llvm::cast<Bundle>(child));
 }
 
@@ -131,6 +135,7 @@ void
 ASTImpl::removeChild(Node* child)
 {
   hlvmAssert(llvm::isa<Bundle>(child) && "Can't remove that here");
+  //FIXME: bundles.erase(llvm::cast<Bundle>(child));
 }
 
 Type*
@@ -269,6 +274,7 @@ AST::new_Bundle(const std::string& id, const Locator* loc)
   Bundle* result = new Bundle();
   result->setLocator(loc);
   result->setName(id);
+  result->setParent(this);
   return result;
 }
 

@@ -1,6 +1,6 @@
-<!--#set var="title" value="Getting Started with the HLVM System" -->
+<!--#set var="title" value="Getting Started with HLVM" -->
 <!--#include virtual="/incl/header.incl" -->
-<h1>Getting Started with the HLVM System</h1>
+<h1>Getting Started with HLVM</h1>
 <ol>
   <li><a href="#quickstart">Quick Start (For The Impatient)</a>
   <li><a href="#overview">Overview</a>
@@ -41,12 +41,7 @@
   <p>Author: <a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section">
-  <a name="quickstart"><b>Quick Start (For The Impatient)</b></a>
-</div>
-<!-- *********************************************************************** -->
-
+<h2><a name="quickstart"><b>Quick Start (For The Impatient)</b></a></h2>
 <div class="text">
 <p>Here's the quick start for getting up and running quickly with HLVM. Note
 that this is for experts and the impatient only.</p>
@@ -67,9 +62,7 @@ that this is for experts and the impatient only.</p>
 </ol>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="overview"><b>Overview</b></a></div>
-<!-- *********************************************************************** -->
+<h2><a name="overview"><b>Overview</b></a></h2>
 <div class="text">
 <p>Welcome to HLVM! This document shows you how to get started with the High
 Level Virtual Machine. Before you do that, lets get some questions answered up
@@ -118,12 +111,8 @@ introductory things to cover:</p>
 </ol>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="requirements"><b>Requirements</b></a></div>
-<!-- *********************************************************************** -->
-
+<h2><a name="requirements"><b>Requirements</b></a></h2>
 <div class="text">
-
   <p>Before you attempt to build HLVM, you need to understand its requirements.
   HLVM is non-trivial and depends on a number of other software packages. These
   packages will be required before you can build HLVM. Taking
@@ -133,11 +122,11 @@ introductory things to cover:</p>
   obtain and build these packages yourself if they are not already present on 
   your system. HLVM won't compile or run without them.</p>
 
-  <h2><a name="hardware">Hardware</a></h2>
+  <h3><a name="hardware">Hardware</a></h3>
   <p>HLVM supports whatever hardware LLVM supports. For details, please see
   <a href="http://llvm.org/docs/GettingStarted.html#hardware">LLVM's documentation</a></p>
 
-  <h2><a name="software">Software</a></h2>
+  <h3><a name="software">Software</a></h3>
   <p>Compiling HLVM requires that you have several software packages installed. 
   The table below lists those required packages. The Package column is the usual
   name for the software package that HLVM depends on. The Version column 
@@ -272,17 +261,17 @@ introductory things to cover:</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="section"><a name="other_packages">Building Other Packages</a></div>
+<h2><a name="other_packages">Building Other Packages</a></h2>
 <!-- *********************************************************************** -->
 <div class="text">
-  <h2><a name="SSIA">Single Separate Install Area</a></h2>
+  <h3><a name="SSIA">Single Separate Install Area</a></h3>
   <p>It is suggested that you keep a separate installation area for building the
   things upon which HLVM depends. This is the location in your file system where
   you will install the built packages. It is the parameter to the 
   <tt>--prefix</tt> options to the configure programs of those packages. By 
   using a separate install area, you ensure that the HLVM version of required 
   packages doesn't interfere with any of your system installed packages.</p>
-  <h2><a hame="libxml2">libxml2</a></h2>
+  <h3><a hame="libxml2">libxml2</a></h3>
   <ul>
     <li>If your system doesn't already have a modern version of libxml2, you can
     generally build this quite painlessly as it doesn't depend on much
@@ -300,7 +289,7 @@ introductory things to cover:</p>
     configuration options; it has many. Not everything libxml2 provides is
     needed. We need the parser, the textwriter and the relaxng validator.</li>
   </ul>
-  <h2><a name="apr">apr</a></h2>
+  <h3><a name="apr">apr</a></h3>
   <ul>
     <li>This package builds quite easily as well and doesn't depend on 
     anything other than your operating system.</li>
@@ -314,7 +303,7 @@ introductory things to cover:</p>
     <li>Optionally use the <tt>--enable-debug</tt> configure flag for making
     debugging easier (and your HLVM programs run slower).</li>
   </ul>
-  <h2><a name="apr-util">apr-util</a></h2>
+  <h3><a name="apr-util">apr-util</a></h3>
   <ul>
     <li>This package builds quite easily and doesn't depend on much.</li>
     <li>Build with:<pre>
@@ -328,7 +317,7 @@ introductory things to cover:</p>
     might want to use the various <tt>--with-*</tt> options to tell apr-util
     where your packages are located.</li>
   </ul>
-  <h2><a name="llvm">llvm</a></h2>
+  <h3><a name="llvm">llvm</a></h3>
   <ul>
     <li>You <em>must</em> use the latest CVS version of LLVM. LLVM is HLVM's 
     sister project and the two are intricately connected. Consequently, patches
@@ -357,7 +346,7 @@ introductory things to cover:</p>
     tools being built. Use of llvm-gcc4 completely gets around this problem and
     so it is only necessary to build the LLVM tools and not the runtime library.
   </ul>
-  <h2><a name="llvm-gcc4">llvm-gcc4</a></h2>
+  <h3><a name="llvm-gcc4">llvm-gcc4</a></h3>
   <ul>
     <li>You <em>must</em> use version 4 of llvm-gcc, not version 3. Version 4 is
     much better integrated with LLVM, supports more languages, builds native
@@ -399,7 +388,7 @@ introductory things to cover:</p>
     HLVM only needs C and C++ so you can shorten the build for llvm-gcc4 a
     little by dropping <tt>,objc,obj-c++</tt> from this option.</li>
   </ul>
-  <h2><a name="gperf">gperf</a></h2>
+  <h3><a name="gperf">gperf</a></h3>
   <ul>
     <li>Pretty simple tool to build.</li>
     <li>You need version 2.7.2. HLVM hasn't been tried with any other
@@ -409,7 +398,7 @@ introductory things to cover:</p>
     make
     make install</pre></li>
   </ul>
-  <h2><a name="deja-gnu">deja-gnu/</a></h2>
+  <h3><a name="deja-gnu">deja-gnu/</a></h3>
   <ul>
     <li>Simple tool to build</li>
     <li>You need version 1.4.4 or later</li>
@@ -420,11 +409,9 @@ introductory things to cover:</p>
   </ul>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="building">Building HLVM With SCons</a></div>
-<!-- *********************************************************************** -->
+<h2><a name="building">Building HLVM With SCons</a></h2>
 <div class="text">
-  <h2><a name="quick">Quick Start</a></h2>
+  <h3><a name="quick">Quick Start</a></h3>
   <p>If you took our advice and built all dependent packages (except llvm-gcc4)
   into a separate install area, then you can build HLVM quickly by using this
   command:<pre>
@@ -436,7 +423,7 @@ introductory things to cover:</p>
   be the <a href="#SSIA">Single Separate Install Area</a> where you installed 
   all the other packages such as llvm, apr, apr-util, etc.</p>
 
-  <h2><a name="about_scons">About SCons And HLVM</a></h2>
+  <h3><a name="about_scons">About SCons And HLVM</a></h3>
   <p>HLVM uses the SCons tool for software construction. While <tt>make</tt> 
   and the various <tt>auto*</tt> tools were originally used, the full
   programming language support of SCons (Python) was attractive because of the
@@ -469,7 +456,7 @@ introductory things to cover:</p>
     <li>Configuration options are saved in cache files so you don't have to keep
     repeating them on each invocation of <tt>scons</tt></li>
   </ul>
-  <h2><a name="scons_options">SCons Options Supported</a></h2>
+  <h3><a name="scons_options">SCons Options Supported</a></h3>
   <p>The important options that may be given on the scons command line are:</p>
   <ul>
     <li><em>-Q</em>. Normally scons is quite verbose about all the
@@ -514,7 +501,7 @@ introductory things to cover:</p>
     your system. See the <tt>scons -Q --help</tt> output for a full list of
     these options.</li>
   </ul>
-  <h2><a name="targets">Build Targets</a></h2>
+  <h3><a name="targets">Build Targets</a></h3>
   <p>The default build target will simply build all the libraries and tools. 
   There are additional pseudo-targets (<i>aliases</i> in SCons lingo) that you 
   can build:</p>
@@ -571,7 +558,7 @@ introductory things to cover:</p>
   <p>Once you've made these adjustments you can use the various targets in the
   Makefile to build HLVM. Note that these targets just convert the target into
   the appropriate invocation of the <tt>scons</tt> command.</p>
-  <h2><a name="make_targets">Targets Supported</a></h2>
+  <h3><a name="make_targets">Targets Supported</a></h3>
   <p>You can use the following targets to build HLVM in various ways:
   <dl>
     <dt>all</dt>
@@ -614,7 +601,7 @@ introductory things to cover:</p>
     in the <tt>hlvm</tt> directory and instead descends into the <tt>tools</tt>
     and builds the executable tools there.</dd>
   </dl>
-  <h2><a name="tipsntricks">Tips And Tricks</a></h2>
+  <h3><a name="tipsntricks">Tips And Tricks</a></h3>
   <ul>
     <li><em>Override MYMODE</em>. On the <tt>make</tt> command line you can
     override the value of <tt>MYMODE</tt> makefile variable. This allows you to

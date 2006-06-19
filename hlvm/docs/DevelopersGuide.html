@@ -1,4 +1,4 @@
-<!--#set var="title" value="HLVM Developer's Guide" -->
+<!--#set var="title" value="Developer's Guide" -->
 <!--#include virtual="/incl/header.incl" -->
 <h1 class="title">HLVM Developer's Guide</h1>
 <div class="warning">CAUTION: This document is a work in progress.</div>
@@ -27,29 +27,24 @@
 </ol>
 
 <div class="author">
-  <p>Author:<a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
+  <p>Author: <a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="intro">Introduction</a></div>
-<!-- *********************************************************************** -->
+<h2><a name="intro">Introduction</a></h2>
 <div class="text">
   <p>This document is a manual for developers who wish to contribute to the HLVM
   project. It covers topics such as copyright assignment, license, coding style,
   the build system and project rules.</p>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="contributions">Contributions</a></div>
-<!-- *********************************************************************** -->
+<h2><a name="contributions">Contributions</a></h2>
 <div class="text">
 <p>Contributions to the HLVM source base are very much appreciated. If you are
 able to contribute source code, this section provides details about how your
 contributions will be handled.</p>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="copyright">Copyright</a></div>
+<h3><a name="copyright">Copyright</a></h3>
 <div class="text">
   <p>The founders of the HLVM project intend for a formal non-profit legal 
   entity to be incorporated that will hold the copyright of all HLVM software. 
@@ -70,8 +65,7 @@ contributions will be handled.</p>
   </ul>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="license">License</a></div>
+<h3><a name="license">License</a></h3>
 <div class="text">
   <p>It is the intention of the HLVM project to release the HLVM software for
   distribution under the terms of the Lesser General Public License (LGPL). This
@@ -93,8 +87,7 @@ contributions will be handled.</p>
   <p>See <a href="#LGPL">below</a> for the complete text of the LGPL license</p>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="patches">Patches</a></div>
+<h3><a name="patches">Patches</a></h3>
 <div class="text">
   <p>The HLVM group welcomes your patches. If you find something wrong with the
   HLVM software or you wish to make a contribution to extend HLVM, you may send
@@ -118,14 +111,12 @@ contributions will be handled.</p>
   </ul>
 </div>
 
-<!-- ======================================================================= -->
-<div class="section"><a name="build">Build System</a></div>
+<h2><a name="build">Build System</a></h2>
 <div class="text">
   <p>This section describes the HLVM build system.</p>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="scons">About SCONS</a></div>
+<h3><a name="scons">About SCONS</a></h3>
 <div class="text">
   <p>The HLVM project uses the <a href="http://www.scons.org/">scons</a>
   software construction tool to orchestrate its builds. This gives us superior
@@ -137,10 +128,9 @@ contributions will be handled.</p>
   section.</p>
 </div>
 
-<!-- ======================================================================= -->
-<div class="subsection"><a name="config">Configuring</a></div>
+<h3><a name="config">Configuring</a></h3>
 <div class="text">
-  <h3>Configuration On Every Build</h3>
+  <h4>Configuration On Every Build</h4>
   <p>Unlike some other build systems (e.g. autoconf/automake), the
   configuration and construction phases of building are not separated with
   scons. The configuration parameters are checked every time you build. While
@@ -149,7 +139,7 @@ contributions will be handled.</p>
   stable. If something changes in your environment, only those pieces affected
   will get re-configured. This saves a lot of time and hassle by telling you of
   any configuration errors on the very next build.</p>
-  <h3>The Options Cache</h3>
+  <h4>The Options Cache</h4>
   <p>Configuration parameters are specified on the scons command line. The
   values of these parameters are stored in the <i>options cache</i> which is
   simply a file named .options_cache in the root source directory. If the file
@@ -157,7 +147,7 @@ contributions will be handled.</p>
   runs, the values are loaded from this cache and used unless new values are
   given on the command line. In this way, you only need to specify your options
   once and then they "stick" from that point forward.</p>
-  <h3>Configuration Options</h3>
+  <h4>Configuration Options</h4>
   <p>HLVM has a variety of options to assist with configuring HLVM for your
   environment and build choices. Each option has a default that will work in
   many environments but might need adjusting for your environment. The default
@@ -276,7 +266,7 @@ contributions will be handled.</p>
     <td>/usr/local/bin/xsltproc</td>
   </tr>
   </table>
-  <h3>Configuration Prompts</h3>
+  <h4>Configuration Prompts</h4>
   <p>When you first run <tt>scons</tt> against HLVM, if you did not specify the
   <tt>confpath</tt> option or the configuration code cannot otherwise find a
   package it needs, you will be prompted to enter the applicable path names
@@ -288,18 +278,18 @@ contributions will be handled.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="subsection"><a name="rules">Build Rules</a></div>
+<h3><a name="rules">Build Rules</a></h3>
 <div class="text">
   <p>This subsection describes the various build rules and extensions to SCons
   that HLVM uses.</p>
-  <h3>The <tt>build</tt> python module</h3>
+  <h4>The <tt>build</tt> python module</h4>
   <p>For convenience, and to unclutter the SConscript files, the top level
   <tt>build</tt> directory contains a python module that provides the build
   facilities for HLVM. This module manipulates an SCons environment to set the
   variables and define the builder rules for HLVM. The public interface to this
   library is in the <tt>hlvm.py</tt> module. No other module should be imported
   into the SConscript files.</p>
-  <h3>HLVM Builder Rules</h3>
+  <h4>HLVM Builder Rules</h4>
   <p>HLVM requires some specialized build rules beyond what SCons provides.
   While general construction of static libraries, shared libraries, and
   executables use the standard SCons builders, several more are defined in the
@@ -376,8 +366,7 @@ contributions will be handled.</p>
   </table>
 </div>
 
-<!-- ======================================================================= -->
-<div class="section"><a name="style">Coding Style</a></div>
+<h2><a name="style">Coding Style</a></h2>
 <div class="text">
   <p>Contributions to HLVM must meet the following Coding Style
   requirements:</p>
@@ -396,12 +385,10 @@ contributions will be handled.</p>
   </ul>
 </div>
 
-<!-- *********************************************************************** -->
-<div class="section"><a name="appendices">Appendices</a></div>
-<!-- *********************************************************************** -->
+<h2><a name="appendices">Appendices</a></h2>
 <div class="text">&nbsp;</div>
 <!-- ======================================================================= -->
-<div class="subsection"><a name="LGPL">Lesser General Public License</a></div>
+<h3><a name="LGPL">Lesser General Public License</a></h3>
 <pre>
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999

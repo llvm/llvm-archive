@@ -1,4 +1,4 @@
-<!--#set var="title" value="HLVM Release Plans" -->
+<!--#set var="title" value="Release Plans" -->
 <!--#include virtual="/incl/header.incl" -->
 <h1>HLVM Release Plans</h1>
 <div class="warning">
@@ -6,10 +6,17 @@ WARNING: This document is <em>always</em> a work in progress.
 </div>
 <ol>
   <li><a href="#introduction">Introduction</a>
-  <li><a href="#upcoming">Upcoming Releases</a></li>
-  <li><a href="#completed">Completed Releases</a></li>
-  <li><a href="#status">Current Status</a></li>
-  <li><a href="#released">Released Features</a>
+  <li><a href="#releases">Release Index</a>
+  <ol>
+    <li><a href="#upcoming">Upcoming Releases</a></li>
+    <li><a href="#completed">Completed Releases</a></li>
+  </ol>
+  <li><a href="#status">Release Status</a>
+  <ol>
+    <li><a href="#current">Current Release</a></li>
+    <li><a href="#previous">Previous Releases</a></li>
+    </li>
+  </ol>
   <li><a href="#features">Feature Definitions</a></li>
 </ol>
 
@@ -17,9 +24,7 @@ WARNING: This document is <em>always</em> a work in progress.
   <p>Author:<a href="mailto:rspencer@reidspencer.com">Reid Spencer</a>.</p>
 </div>
 
-<!-- *********************************************************************** -->
 <h2><a name="introduction">Introduction</a></h2>
-<!-- *********************************************************************** -->
 <div class="text">
   <p>This document contains the Release plans for HLVM. Each release is broken
   down into a set of high-level features that we are intending to implement in
@@ -39,9 +44,13 @@ WARNING: This document is <em>always</em> a work in progress.
   occur in the next few releases.</p>
 </div>
 
-<!-- *********************************************************************** -->
-<h2><a name="upcoming">Upcoming Releases</a></h2>
-<!-- *********************************************************************** -->
+<h2><a name="releases"></a>Release Index</h2>
+<div class="text">
+  <p>The table below provides an index into the information for all
+  releases.</p>
+</div>
+
+<h3><a name="upcoming">Upcoming Releases</a></h3>
 <div class="text">
   <p>The table below provides an overview of the planned upcoming releases.</p>
   <table>
@@ -53,7 +62,7 @@ WARNING: This document is <em>always</em> a work in progress.
     <tr>
       <td>0.2</td>
       <td>Turing Complete, JIT Execution</td>
-      <td><a href="#f0_2">Features</a>&nbsp;<a href="#status">Status</a></td>
+      <td><a href="#f0_2">Features</a>&nbsp;<a href="#current">Status</a></td>
     </tr>
     <tr>
       <td>0.3</td>
@@ -83,9 +92,7 @@ WARNING: This document is <em>always</em> a work in progress.
   </table>
 </div>
 
-<!-- *********************************************************************** -->
-<h2><a name="completed">Completed Releases</a></h2>
-<!-- *********************************************************************** -->
+<h3><a name="completed">Completed Releases</a></h3>
 <div class="text">
   <p>The table below provides a list of the releases already completed.</p>
   <table>
@@ -102,19 +109,21 @@ WARNING: This document is <em>always</em> a work in progress.
   </table>
 </div>
 
-<!-- *********************************************************************** -->
-<h2><a name="status">Current Status (Release 0.2)</a></h2>
-<!-- *********************************************************************** -->
-<!-- ======================================================================= -->
+<h2><a name="status">Release Status</a></h2>
+<div class="text">
+  <p>This section provides the status for the current and previous releases.</p>
+</div>
+
+<h3><a name="status">Current Status (Release 0.2)</a></h3>
 <div class="text">
   <p>The table below shows the status of the current release. Click the feature
   name to get a complete description of the feature.</p>
   <table>
     <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
     <tr>
-      <td><a href="#arithmetic">Arithmetic Operators</a><br/>Not Started</td>
+      <td><a href="#arithmetic">Arithmetic Operators</a><br/>Implemented.</td>
       <td><a href="#controlflow">Control Flow Operators</a><br/>Not Started</td>
-      <td><a href="#booleanops">Boolean Operators</a><br/>Not Started</td>
+      <td><a href="#booleanops">Boolean Operators</a><br/>Implemented.</td>
     </tr><tr>
       <td><a href="#textops">Text Operators</a><br/>Not Started</td>
       <td><a href="#args">Program Arguments</a><br/>Not Started</td>
@@ -123,13 +132,11 @@ WARNING: This document is <em>always</em> a work in progress.
   </table>
 </div>
 
-<!-- *********************************************************************** -->
-<h2><a name="released">Previously Released Status</a></h2>
-<!-- *********************************************************************** -->
+<h3><a name="released">Previous Releases</a></h3>
 <div class="text">
   <p>This section lists the final status information for previous releases.</p>
 </div>
-<h3><a name="s0_1">Release 0.1 (Hello World)</a></h3>
+<h4><a name="s0_1">Release 0.1 (Hello World)</a></h4>
 <div class="text">
   <table>
     <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
@@ -174,13 +181,11 @@ WARNING: This document is <em>always</em> a work in progress.
   </table>
 </div>
 
-<!-- *********************************************************************** -->
 <h2><a name="features">Feature Definitions</a></h2>
-<!-- *********************************************************************** -->
 <div class="text">
   <p>This section defines the individual features for all releases.</p>
 </div>
-<!-- ======================================================================= -->
+
 <h3><a name="f0_1">Release 0.1 Features (Hello World)</a></h3>
 <div class="text">
   <ol>
@@ -221,7 +226,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_2">Release 0.2 Features (Turing Complete)</a></h3>
 <div class="text">
   <ol>
@@ -250,7 +254,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_3">Release 0.3 Features (Front End)</a></h3>
 <div class="text">
   <ol>
@@ -263,7 +266,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_4">Release 0.4 Features (Ruby)</a></h3>
 <div class="text">
   <ol>
@@ -276,7 +278,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_5">Release 0.5 Features (Scheme)</a></h3>
 <div class="text">
   <ol>
@@ -289,7 +290,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_6">Release 0.6 Features (Python)</a></h3>
 <div class="text">
   <ol>
@@ -302,7 +302,6 @@ WARNING: This document is <em>always</em> a work in progress.
   </ol>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="f0_9">Release 0.9 Features (Quality)</a></h3>
 <div class="text">
   <ol>

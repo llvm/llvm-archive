@@ -5,4 +5,65 @@
 not a marketing tool. These really are the questions we keep answering.</p>
 <p>Didn't find your question? 
 <a href="http://hlvm.org/Feedback.php">Submit a new one!</a></p> 
+<h2>Question Index</h2>
+<table>
+  <tr>
+    <td>
+      <ol>
+        <li><a href="#compare">How does HLVM compare to other VMs?</a></li>
+      </ol>
+    </td>
+    <td>
+      <ol>
+        <li>
+      </ol>
+    </td>
+  </tr>
+</table>
+<h2>Answers</h2>
+<h3><a name="compare">How does HLVM compare to other VMs?</a></h3>
+<p>The table below provides a comparison of various virtual machines</p>
+<table>
+  <tr><th>Feature</th><th>HLVM</th><th>Parrot</th><th>Mono (CLR)</th><th>JVM</th></tr>
+  <tr><td>Language Support</td>
+    <td>None, yet, but designed to targets any language; focusing first on
+      dynamic languages like Python and Ruby</td>
+    <td>Perl mainly, possibly Python and Tcl in the future.</td>
+    <td>C# mainly, but other languages possible</td>
+    <td>Java almost exclusively: very hard to use JVM for other languages</td>
+  </tr>
+  <tr><td>Execution Models</td>
+    <td>HLVM will be able to execute a program in any of the following models:
+      <ul>
+        <li>Interpretation of AST quickly compiled from source (coming).</li>
+        <li>JIT compilation from bytecode (already implemented by LLVM).</li>
+        <li>Native, optimized, binary execution (works now).</li>
+      </ul>
+    </td>
+    <td>TBD</td>
+    <td>TBD</td>
+    <td>TBD</td>
+  <tr><td>Optimization</td>
+    <td>Offers a wide range of optimization levels from "none" to "life long".
+      Most of this is provided by LLVM and works today. LLVM is "state of the
+      art" for optimizing compilers. The amount of optimization applied can be
+      specified by the user or inferred from the program's usage and workload.
+    </td>
+    <td>TBD</td>
+    <td>TBD</td>
+    <td>TBD</td>
+  </tr>
+  <tr><td>Language Interoperability</td>
+    <td>AST</td>
+    <td>PIR</td>
+    <td>IL</td>
+    <td>JVM Bytecode</td>
+  </tr>
+  <tr><td>License</td>
+    <td>LGPL</td>
+    <td>?</td>
+    <td>Mono:? CLR:Proprietary</td>
+    <td>?</td>
+  </tr>
+</table>
 <!--#include virtual="/incl/footer.incl" -->

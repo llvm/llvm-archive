@@ -6,8 +6,8 @@
   <li><a href="#overview">Overview</a></li>
   <li><a href="#requirements">Requirements</a>
     <ol>
-      <li><a href="#hardware">Hardware</a>
-      <li><a href="#software">Software</a>
+      <li><a href="#hardware">Hardware</a></li>
+      <li><a href="#software">Software</a></li>
     </ol>
   </li>
   <li><a href="#other_packages">Building Other Packages</a>
@@ -271,7 +271,7 @@ introductory things to cover:</p>
   <tt>--prefix</tt> options to the configure programs of those packages. By 
   using a separate install area, you ensure that the HLVM version of required 
   packages doesn't interfere with any of your system installed packages.</p>
-  <h3><a hame="libxml2">libxml2</a></h3>
+  <h3><a name="libxml2">libxml2</a></h3>
   <ul>
     <li>If your system doesn't already have a modern version of libxml2, you can
     generally build this quite painlessly as it doesn't depend on much
@@ -345,6 +345,7 @@ introductory things to cover:</p>
     runtime libraries depend on llvm-gcc3 but llvm-gcc3 depends on the LLVM
     tools being built. Use of llvm-gcc4 completely gets around this problem and
     so it is only necessary to build the LLVM tools and not the runtime library.
+    </li>
   </ul>
   <h3><a name="llvm-gcc4">llvm-gcc4</a></h3>
   <ul>
@@ -414,9 +415,8 @@ introductory things to cover:</p>
   <h3><a name="quick">Quick Start</a></h3>
   <p>If you took our advice and built all dependent packages (except llvm-gcc4)
   into a separate install area, then you can build HLVM quickly by using this
-  command:<pre>
+  command:</p><pre>
   scons -Q mode=debug confpath=/path/to/llvm-gcc4/install:/path/to/install</pre>
-  </p>
   <p>The <tt>confpath</tt> option indicates to the HLVM build system some 
   additional places to search for software. The first path should be the 
   location in which the llmv-gcc4 software was installed. The second path should
@@ -559,7 +559,7 @@ introductory things to cover:</p>
   Makefile to build HLVM. Note that these targets just convert the target into
   the appropriate invocation of the <tt>scons</tt> command.</p>
   <h3><a name="make_targets">Targets Supported</a></h3>
-  <p>You can use the following targets to build HLVM in various ways:
+  <p>You can use the following targets to build HLVM in various ways:</p>
   <dl>
     <dt>all</dt>
     <dd>Builds HLVM in the default mode, as specified by <em>MYMODE</em>.

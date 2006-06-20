@@ -3,7 +3,7 @@
 <h1 class="title">HLVM Developer's Guide</h1>
 <div class="warning">CAUTION: This document is a work in progress.</div>
 <ol>
-  <li><a href="#intro">Introduction</a>
+  <li><a href="#intro">Introduction</a></li>
   <li><a href="#contributions">Contributions</a>
     <ol>
       <li><a href="#copyright">Copyright</a></li>
@@ -11,7 +11,7 @@
       <li><a href="#patches">Patches</a></li>
     </ol>
   </li>
-  <li><a href="#build">Build System</a></li>
+  <li><a href="#build">Build System</a>
     <ol>
       <li><a href="#scons">About SCONS</a></li>
       <li><a href="#config">Configuring</a></li>
@@ -77,7 +77,6 @@ contributions will be handled.</p>
     from being incorporated into commercial and proprietary products. The
     founders wish to encourage HLVM's use both in open source and proprietary
     projects.</li>
-    <li>
     <li>The LGPL protects the contributors by ensuring that distributions of
     HLVM retain copyright and the LGPL license for any modifications to
     HLVM.</li>
@@ -383,8 +382,7 @@ contributions will be handled.</p>
   <p>Once you've found a suitable location for HLVM, create the following
   directory structure:</p><pre>
   cd /proj
-  mkdir gcc llvm llvm-gcc4 libxml2 apr apru hlvm gperf scons install
-  </pre>
+  mkdir gcc llvm llvm-gcc4 libxml2 apr apru hlvm gperf scons install</pre>
   <p>In the following sections you will build each of these packages and install
   them into <tt>/proj/install</tt> which will keep it separate from anything
   else in your system.</p>
@@ -398,16 +396,14 @@ contributions will be handled.</p>
   cd ../build
   ../src/configure  --prefix=/proj/install
   make 
-  make install
-  </pre>
+  make install</pre>
   <h4>Set Environment</h4>
   <p>Now that you have gcc installed in a separate location, you will need to
   change your environment to ensure that that version of gcc is the one used in
   subsequent builds. Details vary from platform to platform, but on Linux, the
   following should work:</p><pre>
   export PATH=/proj/install/bin:$PATH
-  export LD_LIBRARY_PATH=/proj/install/lib:$LD_LIBRARY_PATH
-  </pre>
+  export LD_LIBRARY_PATH=/proj/install/lib:$LD_LIBRARY_PATH</pre>
   <p>The essential point is to change your environment so that programs and
   libraries installed into /proj/install will be found first. You should do this
   in any shell environment in which you'll be building HLVM related software.
@@ -423,8 +419,7 @@ contributions will be handled.</p>
   cd build
   ../gperf-2.7.2/configure --prefix=/proj/install
   make
-  make install
-  </pre>
+  make install</pre>
   <h4>Build libxml2</h4>
   <p>This package provides all XML services for HLVM. It is part of GNome and
   many other packages and quite stable. It should build quickly and easily for
@@ -436,9 +431,12 @@ contributions will be handled.</p>
   cd build
   ../libxml2-2.6.24/configure --prefix=/proj/install
   make
-  make install
-  </pre>
+  make install</pre>
   <h4>Build apr</h4>
+  <p>The Apache Portable Runtime is a portability layer used within the Apache
+  HTTP Server. Although it is still undergoing active development, stable
+  releases are available. HLVM uses APR for portability in the runtime. Build 
+  APR with the following commands:</p>
   <pre>
   cd /proj/apr
   wget http://mirror.olnevhost.net/pub/apache/apr/apr-1.2.7.tar.gz
@@ -450,9 +448,10 @@ contributions will be handled.</p>
   ../apr-1.2.7/configure --prefix=/proj/install --enable-debug \
     --enable-threads --enable-other-child
   make
-  make install
-  </pre>
+  make install</pre>
   <h4>Build apr-util</h4>
+  <p>The apr-util package is some additional utilities that go with APR. Build 
+  apr-util with the following commands:</p>
   <pre>
   cd /proj/apru
   wget http://mirror.olnevhost.net/pub/apache/apr/apr-util-1.2.7.tar.gz
@@ -464,9 +463,15 @@ contributions will be handled.</p>
   ../apr-util-1.2.7/configure --prefix=/proj/install --enable-debug \
     --enable-threads --enable-other-child
   make
-  make install
-  </pre>
+  make install</pre>
   <h4>Build LLVM</h4>
+  <p>For now, you must build LLVM from the CVS repository. Although LLVM is
+  actively being developed, it is generally stable and this is safe. If you get
+  tempted to use a release tarball, it will fail. HLVM depends on post-1.7
+  features of LLVM. When you build LLVM, use the "tools-only" target. This will
+  avoid building the "runtime" portion of LLVM which was necessary for an older
+  version of llvm-gcc (v3). Since we'll be using llvm-gcc4, this is unnecessary
+  and will eliminate some chicken-and-egg type problems.</p>
   <pre>
   cd /proj/llvm
   cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login
@@ -477,9 +482,12 @@ contributions will be handled.</p>
   ../llvm/configure --prefix=/proj/install
   make tools-only
   make install
-  make ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2 tools-only
-  </pre>
+  make ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2 tools-only</pre>
   <h4>Build llvm-gcc4</h4>
+  <p>Apple provides a Subversion repository for llvm-gcc4. You need this latest
+  version because HLVM depends on some of the features. You might find this one
+  a bit tricky. See the README.LLVM file in the top source directory for
+  additional help and late breaking news.</p>
   <pre>
   cd /proj/llvm-gcc4
   svn co svn://anonsvn.opensource.apple.com/svn/llvm cfe
@@ -1033,5 +1041,4 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 </pre>
-</div>
 <!--#include virtual="/incl/footer.incl" -->

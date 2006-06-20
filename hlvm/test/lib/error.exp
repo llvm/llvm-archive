@@ -1,0 +1,55 @@
+#===-test/lib/error.exp - Script for error check tests ---------------------===#
+#
+#                      High Level Virtual Machine (HLVM)
+# 
+#  Copyright (C) 2006 Reid Spencer. All Rights Reserved.
+# 
+#  This software is free software; you can redistribute it and/or modify it 
+#  under the terms of the GNU Lesser General Public License as published by 
+#  the Free Software Foundation; either version 2.1 of the License, or (at 
+#  your option) any later version.
+# 
+#  This software is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for 
+#  more details.
+# 
+#  You should have received a copy of the GNU Lesser General Public License 
+#  along with this library in the file named LICENSE.txt; if not, write to the 
+#  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+#  MA 02110-1301 USA
+# 
+#===------------------------------------------------------------------------===#
+proc hlvm-error-tests { prog pat } {
+  global srcdir subdir objdir tmpdir objrootdir
+  set outdir [file join $objdir $subdir]
+  set tool [file join $objrootdir tools $prog $prog ]
+  set source [file join $srcdir $subdir ]
+  set files [lsort [
+    glob -nocomplain -tails -types {f r} -directory $source $pat]]
+  set dirs [lsort [
+    glob -nocomplain -tails -types {d r} -directory $source *]]
+
+  if { [file isdirectory $outdir] } {
+    cd $outdir
+  } else {
+    if { [file exists $outdir] } {
+      fail "identity: $outdir exists and is not a directory. Remove it"
+      exit(2)
+    } else {
+      file mkdir $outdir
+    }
+  }
+  
+  foreach test $files {
+    set output [file join $outdir ${test}.out]
+    set testsrc [file join $source $test]
+    set execout ""
+    set retval [ catch { exec -keepnewline $tool $testsrc -o $output } msg ]
+    if { $retval != 0 } {
+      pass "$test"
+    } else {
+      fail "$test: $tool return $retval\n$msg"
+    }
+  }
+}

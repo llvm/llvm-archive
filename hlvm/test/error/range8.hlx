@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/range8.hlx">
+  <bundle id="range8">
+    <constant id="0001" type="s8"><dec>128</dec></constant>
+    <constant id="0002" type="s8"><dec>-129</dec></constant>
+    <constant id="0003" type="u8"><dec>256</dec></constant>
+    <constant id="0004" type="u8"><dec>-1</dec></constant>
+  </bundle>
+</hlvm>

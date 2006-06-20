@@ -24,4 +24,4 @@ from build import hlvm
 Import('env')
 if 'check' in COMMAND_LINE_TARGETS:
   from build import check
-  check.Check(env,['xml2xml','return0'])
+  check.Check(env,['xml2xml','error','return0'])

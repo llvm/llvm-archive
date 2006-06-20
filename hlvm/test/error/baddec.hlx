@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/baddec.hlx">
+  <bundle id="baddec">
+    <constant id="0000" type="s8"><dec>1234abc</dec></constant>
+  </bundle>
+</hlvm>

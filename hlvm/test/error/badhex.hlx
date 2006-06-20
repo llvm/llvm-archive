@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/badhex.hlx">
+  <bundle id="badhex">
+    <constant id="0000" type="s8"><hex>$!%^@$</hex></constant>
+  </bundle>
+</hlvm>

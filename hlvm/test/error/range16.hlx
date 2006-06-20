@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/range16.hlx">
+  <bundle id="range16">
+    <constant id="0001" type="s16"><dec>32768</dec></constant>
+    <constant id="0002" type="s16"><dec>-32769</dec></constant>
+    <constant id="0003" type="u16"><dec>65536</dec></constant>
+    <constant id="0004" type="u16"><dec>-1</dec></constant>
+  </bundle>
+</hlvm>

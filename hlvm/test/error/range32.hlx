@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/range32.hlx">
+  <bundle id="range32">
+    <constant id="0001" type="s32"><dec>2147483648</dec></constant>
+    <constant id="0002" type="s32"><dec>-2147483649</dec></constant>
+    <constant id="0003" type="u32"><dec>4294967296</dec></constant>
+    <constant id="0004" type="u32"><dec>-1</dec></constant>
+  </bundle>
+</hlvm>

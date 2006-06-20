@@ -519,7 +519,13 @@ template<> inline void
 ValidateImpl::validate(ReturnOp* n)
 {
   if (checkOperator(n,ReturnOpID,1))
-    checkTerminator(n);
+    if (checkTerminator(n)) {
+      Operator* res = n->getOperand(0);
+      const Function* F = n->getContainingFunction();
+      const SignatureType* SigTy = F->getSignature();
+      if (res->getType() != SigTy->getResultType())
+        error(n,"ReturnOp operand does not agree in type with Function result");
+    }
 }
 
 template<> inline void
@@ -540,9 +546,19 @@ template<> inline void
 ValidateImpl::validate(SelectOp* n)
 {
   if (checkOperator(n,SelectOpID,3)) {
-    const Type* Ty = n->getOperand(0)->getType();
-    if (!isa<BooleanType>(Ty))
+    Operator* Op1 = n->getOperand(0);
+    Operator* Op2 = n->getOperand(1);
+    Operator* Op3 = n->getOperand(2);
+    const Type* Ty1 = Op1->getType();
+    const Type* Ty2 = Op2->getType();
+    const Type* Ty3 = Op3->getType();
+    if (!isa<BooleanType>(Ty1))
       error(n,"SelectOp expects first operand to be type boolean");
+    else if ( Ty1 != Ty2 )
+      error(n,"Second and third operands for SelectOp must agree in type");
+    else if (isa<Block>(Op2) != isa<Block>(Op3))
+      error(n,"SelectOp requires operands 2 and 3 to both be blocks or "
+              "neither be blocks");
   }
 }
 

@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Operator.h>
+#include <hlvm/AST/LinkageItems.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 
@@ -37,6 +38,14 @@ namespace hlvm {
 
 Operator::~Operator()
 {
+}
+
+Function* 
+Operator::getContainingFunction()
+{
+  Node* p = getParent();
+  while (p && !isa<Function>(p)) p = p->getParent();
+  return cast<Function>(p);
 }
 
 NilaryOperator::~NilaryOperator()

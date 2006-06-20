@@ -539,7 +539,7 @@ class Value : public Documentable
   /// @{
   public:
     // Get the type of the value
-    inline const Type* getType() const { return type; }
+    virtual const Type* getType() const { return type; }
 
     static inline bool classof(const Value*) { return true; }
     static inline bool classof(const Node* N) { return N->isValue(); }

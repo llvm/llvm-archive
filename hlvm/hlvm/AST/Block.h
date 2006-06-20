@@ -57,6 +57,7 @@ class Block : public MultiOperator
   /// @name Accessors
   /// @{
   public:
+    virtual const Type* getType() const { return this->back()->getType(); }
     const std::string& getLabel() const { return label; }
     AutoVarOp*   getAutoVar(const std::string& name) const; 
     const Type* getResultType() { return this->back()->getType(); }

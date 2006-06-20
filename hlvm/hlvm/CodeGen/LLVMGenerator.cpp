@@ -1195,16 +1195,45 @@ LLVMGeneratorPass::gen<LessEqualOp>(LessEqualOp* op)
 template<> void
 LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
 {
+  hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
+  llvm::Value* op3 = lops.back(); lops.pop_back();
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+  hlvmAssert(op1->getType() == llvm::Type::BoolTy);
+  hlvmAssert(op2->getType() == op2->getType());
+  hlvmAssert(llvm::isa<llvm::BasicBlock>(op2) == 
+             llvm::isa<llvm::BasicBlock>(op3));
+  if (llvm::isa<llvm::BasicBlock>(op2)) {
+    // both are blocks, emit a BranchInstr
+    new llvm::BranchInst(
+        llvm::cast<llvm::BasicBlock>(op2),
+        llvm::cast<llvm::BasicBlock>(op3),op1,lblk);
+    return;
+  } 
+
+  // A this point, we can only be left with a first class type since all HLVM
+  // operators translate to a first class type. Since the select operator
+  // requires first class types, its okay to just use it here.
+  hlvmAssert(op2->getType()->isFirstClassType());
+  new llvm::SelectInst(op1,op2,op3,"select",lblk);
 }
 
 template<> void
 LLVMGeneratorPass::gen<SwitchOp>(SwitchOp* op)
 {
+  hlvmAssert(lops.size() >= 2 && "Too few operands for SwitchOp");
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
+
 }
 
 template<> void
 LLVMGeneratorPass::gen<LoopOp>(LoopOp* op)
 {
+  hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
+  llvm::Value* op3 = lops.back(); lops.pop_back();
+  llvm::Value* op2 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = lops.back(); lops.pop_back();
 }
 
 template<> void

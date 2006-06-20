@@ -36,6 +36,7 @@ namespace hlvm
 {
 
 class Type; 
+class Function;
 
 /// This class is the abstract base class in the Abstract Syntax Tree for all
 /// operators. An Operator is an instruction to the virtual machine to take
@@ -65,6 +66,9 @@ class Operator : public Value
     /// Get a specific operand of this operator.
     virtual size_t  getNumOperands() const = 0;
     virtual Operator* getOperand(unsigned opnum) const = 0;
+
+    /// Return the function containing this operator
+    Function* getContainingFunction();
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }

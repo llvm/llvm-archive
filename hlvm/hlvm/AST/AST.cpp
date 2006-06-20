@@ -528,6 +528,7 @@ AST::new_ConstantInteger(
   ConstantInteger* result = new ConstantInteger(base);
   result->setLocator(loc);
   result->setValue(v);
+  result->setBase(base);
   result->setType(Ty);
   return result;
 }

@@ -40,6 +40,8 @@
 #include <hlvm/AST/LinkageItems.h>
 #include <hlvm/AST/Constants.h>
 #include <llvm/Support/Casting.h>
+#include <llvm/Support/MathExtras.h>
+#include <llvm/ADT/StringExtras.h>
 #include <iostream>
 
 using namespace hlvm;
@@ -53,8 +55,8 @@ class ValidateImpl : public Pass
     ValidateImpl() : Pass(0,Pass::PostOrderTraversal), ast(0) {}
     virtual void handleInitialize(AST* tree) { ast = tree; }
     virtual void handle(Node* b,Pass::TraversalKinds k);
-    inline void error(Node*n, const char* msg);
-    inline void warning(Node*n, const char* msg);
+    inline void error(Node*n, const std::string& msg);
+    inline void warning(Node*n, const std::string& msg);
     inline bool checkNode(Node*);
     inline bool checkType(Type*,NodeIDs id);
     inline bool checkValue(Value*,NodeIDs id);
@@ -71,7 +73,7 @@ class ValidateImpl : public Pass
 };
 
 void 
-ValidateImpl::warning(Node* n, const char* msg)
+ValidateImpl::warning(Node* n, const std::string& msg)
 {
   if (n) {
     const Locator* loc = n->getLocator();
@@ -86,7 +88,7 @@ ValidateImpl::warning(Node* n, const char* msg)
 }
 
 void 
-ValidateImpl::error(Node* n, const char* msg)
+ValidateImpl::error(Node* n, const std::string& msg)
 {
   if (n) {
     const Locator* loc = n->getLocator();
@@ -105,16 +107,15 @@ ValidateImpl::error(Node* n, const char* msg)
 bool
 ValidateImpl::checkNode(Node* n)
 {
-  bool result = true;
   if (n->getParent() == 0) {
     error(n,"Node has no parent");
-    result = false;
+    return false;
   }
   if (n->getID() < FirstNodeID || n->getID() > LastNodeID) {
     error(n,"Node ID out of range");
-    result = false;
+    return false;
   }
-  return result;;
+  return true;
 }
 
 bool
@@ -157,9 +158,10 @@ bool
 ValidateImpl::checkConstant(Constant* C,NodeIDs id)
 {
   if (checkValue(C,id)) {
-    if (C->getName().empty())
+    if (C->getName().empty()) {
       error(C,"Constants must not have empty name");
       return false;
+    }
   }
   return true;
 }
@@ -396,18 +398,44 @@ ValidateImpl::validate(ConstantBoolean* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantInteger* n)
+ValidateImpl::validate(ConstantInteger* CI)
 {
-  checkConstant(n,ConstantIntegerID);
-  // FIXME: validate that the constant value is in the right numeric base
-  // FIXME: validate that the constant value is in range for the type
+  if (checkConstant(CI,ConstantIntegerID)) {
+    const IntegerType* Ty = cast<IntegerType>(CI->getType());
+    // Check that it can be converted to binary
+    const char* startp = CI->getValue().c_str();
+    char* endp = 0;
+    int64_t val = strtoll(startp,&endp,CI->getBase());
+    if (!endp || startp == endp || *endp != '\0')
+      error(CI,"Invalid integer constant. Conversion failed.");
+    else if (val < 0 && !Ty->isSigned()) {
+      error(CI,"Invalid integer constant. " 
+               "Signed value not accepted by unsigned type");
+    } else {
+      // It converted to binary okay, check that it is in range
+      uint64_t uval = (val < 0) ? -val : val;
+      unsigned leading_zeros = llvm::CountLeadingZeros_64(uval);
+      unsigned bits_required = (sizeof(uint64_t)*8 - leading_zeros) + 
+                               unsigned(Ty->isSigned());
+      unsigned bits_allowed  = Ty->getBits();
+      if (bits_required > bits_allowed)
+        error(CI, "Invalid integer constant. Value requires " + 
+              utostr(bits_required) + " bits, but type only holds " +
+              utostr(bits_allowed) + " bits.");
+    }
+  }
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantReal* n)
+ValidateImpl::validate(ConstantReal* CR)
 {
-  checkConstant(n,ConstantRealID);
-  // FIXME: validate that the constant value is in range for the type
+  if (checkConstant(CR,ConstantRealID)) {
+    const char* startp = CR->getValue().c_str();
+    char* endp = 0;
+    double val = strtod(startp,&endp);
+    if (!endp || startp == endp || *endp != '\0')
+      error(CR,"Invalid real constant. Conversion failed.");
+  }
 }
 
 template<> inline void

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/range_real32.hlx">
+  <bundle id="range_real32">
+    <constant id="0001" type="f32"><flt>1.0E+39</flt></constant>
+    <constant id="0002" type="f32"><flt>1.0E-39</flt></constant>
+    <constant id="0003" type="f32"><flt>-1.0E+39</flt></constant>
+    <constant id="0004" type="f64"><dbl>1.0E+309</dbl></constant>
+    <constant id="0005" type="f64"><dbl>1.0E-309</dbl></constant>
+    <constant id="0006" type="f64"><dbl>-1.0E+309</dbl></constant>
+  </bundle>
+</hlvm>

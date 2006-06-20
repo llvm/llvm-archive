@@ -13,7 +13,7 @@
 MYMODE := Debug
 
 # Specify a path for where the 3rd party software is installed
-MYPATH := /proj/llvm/cfe/install:/proj/install
+MYPATH := /proj/install:/proj/llvm/cfe/install
 
 # Specify where you want HLVM to be installed
 MYPREFIX := /proj/install/hlvm

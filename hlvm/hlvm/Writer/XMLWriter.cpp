@@ -883,7 +883,9 @@ hlvm::XMLWriter::create(const char* fname)
   return new XMLWriterImpl(fname);
 }
 
+#ifdef HLVM_DEBUG
 void 
 hlvm::dump(Node*)
 {
 }
+#endif

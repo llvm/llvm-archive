@@ -16,6 +16,7 @@
       <li><a href="#scons">About SCONS</a></li>
       <li><a href="#config">Configuring</a></li>
       <li><a href="#rules">Build Rules</a></li>
+      <li><a href="#sanity">Sane Build Environment</a></li>
     </ol>
   </li>
   <li><a href="#style">Coding Style</a></li>
@@ -277,7 +278,6 @@ contributions will be handled.</p>
   </p>
 </div>
 
-<!-- ======================================================================= -->
 <h3><a name="rules">Build Rules</a></h3>
 <div class="text">
   <p>This subsection describes the various build rules and extensions to SCons
@@ -366,6 +366,145 @@ contributions will be handled.</p>
   </table>
 </div>
 
+<h3><a name="sanity">A Sane Build Environment</a></h3>
+<div class="text">
+  <p>Building HLVM is no small feat. It depends on a lot of software that is
+  quite version dependent. To bring a little sanity to the process, here is a
+  step-by-step procedure we know to work.</p>
+  <h4>Build Separation</h4>
+  <p>In building HLVM, you'll be installing compilers and library that may
+  already exist on your system. You don't want to overwrite your system versions
+  of these things or it will wreak havoc on your system. So, we suggest that you
+  start with a fresh directory. In the discussion that follows, we'll call it
+  <tt>/proj</tt> (that's what Reid uses).  But, it could be anything you want, 
+  as long as its new.  <tt>~/hlvm</tt> would work just as well.  Choosing the
+  disk location for this should not be taken lightly. You will need upwards of
+  40GB of storage to build all this software.</p>
+  <p>Once you've found a suitable location for HLVM, create the following
+  directory structure:</p><pre>
+  cd /proj
+  mkdir gcc llvm llvm-gcc4 libxml2 apr apru hlvm gperf scons install
+  </pre>
+  <p>In the following sections you will build each of these packages and install
+  them into <tt>/proj/install</tt> which will keep it separate from anything
+  else in your system.</p>
+  <h4>Build GCC 3.4.6</h4>
+  <p>First, start with obtaining GCC 3.4.6. This will be the compiler that you
+  use for all the remaining compilations. Use the following commands to obtain,
+  build and install GCC 3.4.6:</p><pre>
+  cd /proj/gcc
+  mkdir build
+  svn svn://gcc.gnu.org/svn/gcc/tags/gcc_3_4_6_release src
+  cd ../build
+  ../src/configure  --prefix=/proj/install
+  make 
+  make install
+  </pre>
+  <h4>Set Environment</h4>
+  <p>Now that you have gcc installed in a separate location, you will need to
+  change your environment to ensure that that version of gcc is the one used in
+  subsequent builds. Details vary from platform to platform, but on Linux, the
+  following should work:</p><pre>
+  export PATH=/proj/install/bin:$PATH
+  export LD_LIBRARY_PATH=/proj/install/lib:$LD_LIBRARY_PATH
+  </pre>
+  <p>The essential point is to change your environment so that programs and
+  libraries installed into /proj/install will be found first. You should do this
+  in any shell environment in which you'll be building HLVM related software.
+  </p>
+  <h4>Build gperf</h4>
+  <p>This package is used for generating perfect hash functions. It is used by
+  HLVM for fast recognition of XML element and attribute names. Its easy and
+  fast to build:</p><pre>
+  cd /proj/gperf
+  wget http://mirrors.kernel.org/gnu/gperf/gperf-2.7.2.tar.gz
+  tar zxf gperf-2.7.2.tar.gz
+  mkdir build
+  cd build
+  ../gperf-2.7.2/configure --prefix=/proj/install
+  make
+  make install
+  </pre>
+  <h4>Build libxml2</h4>
+  <p>This package provides all XML services for HLVM. It is part of GNome and
+  many other packages and quite stable. It should build quickly and easily for
+  you. Use these commands:</p><pre>
+  cd /proj/libxml2
+  wget ftp://xmlsoft.org/libxml2/libxml2-2.6.24.tar.gz
+  tar zxf libxml2-2.6.24.tar.gz
+  mkdir build
+  cd build
+  ../libxml2-2.6.24/configure --prefix=/proj/install
+  make
+  make install
+  </pre>
+  <h4>Build apr</h4>
+  <pre>
+  cd /proj/apr
+  wget http://mirror.olnevhost.net/pub/apache/apr/apr-1.2.7.tar.gz
+  tar zxf apr-1.2.7.tar.gz
+  mkdir build
+  cd apr-1.2.7
+  ./buildconf
+  cd ../build
+  ../apr-1.2.7/configure --prefix=/proj/install --enable-debug \
+    --enable-threads --enable-other-child
+  make
+  make install
+  </pre>
+  <h4>Build apr-util</h4>
+  <pre>
+  cd /proj/apru
+  wget http://mirror.olnevhost.net/pub/apache/apr/apr-util-1.2.7.tar.gz
+  tar zxf apr-1.2.7.tar.gz
+  mkdir build
+  cd apr-util-1.2.7
+  ./buildconf
+  cd ../build
+  ../apr-util-1.2.7/configure --prefix=/proj/install --enable-debug \
+    --enable-threads --enable-other-child
+  make
+  make install
+  </pre>
+  <h4>Build LLVM</h4>
+  <pre>
+  cd /proj/llvm
+  cvs -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login
+  &lt;return&gt;
+  cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm co llvm
+  mkdir build
+  cd build
+  ../llvm/configure --prefix=/proj/install
+  make tools-only
+  make install
+  make ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2 tools-only
+  </pre>
+  <h4>Build llvm-gcc4</h4>
+  <pre>
+  cd /proj/llvm-gcc4
+  svn co svn://anonsvn.opensource.apple.com/svn/llvm cfe
+  mkdir build install
+  cd build
+  ../cfe/configure --prefix=/proj/llvm-gcc4/cfe/install \
+    --enable-llvm=/proj/llvm/build --enable-languages=c,c++
+  make
+  make install
+  </pre>
+  <h4>Build HLVM</h4>
+  <p>Note in the following that if you've actually used <tt>/proj</tt> as your
+  build area then you don't need to provide any arguments to <tt>make</tt> as
+  these paths are the default. Also note that the arguments are only needed the
+  first time you build HLVM. Subsequently, these options will be remembered. See
+  the description of SCons above.</p>
+  <pre>
+  cd /proj/hlvm
+  svn co svn://hlvm.org/hlvm hlvm
+  cd hlvm
+  make MYMODE=Debug MYPATH=/proj/llvm/cfe/install:/proj/install \
+    MYPREFIX=/proj/install/bin
+  </pre>
+</div>
+
 <h2><a name="style">Coding Style</a></h2>
 <div class="text">
   <p>Contributions to HLVM must meet the following Coding Style
@@ -382,12 +521,13 @@ contributions will be handled.</p>
     build related.</li>
     <li>Files must not exceed 80 columns in width</li>
     <li>Indentation is 2 spaces (no tabs).</li>
+    <li>Doxygen documentation must be provided in header files.</li>
   </ul>
 </div>
 
 <h2><a name="appendices">Appendices</a></h2>
 <div class="text">&nbsp;</div>
-<!-- ======================================================================= -->
+
 <h3><a name="LGPL">Lesser General Public License</a></h3>
 <pre>
 		  GNU LESSER GENERAL PUBLIC LICENSE

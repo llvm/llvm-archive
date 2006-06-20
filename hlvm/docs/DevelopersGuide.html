@@ -496,8 +496,21 @@ contributions will be handled.</p>
   ../cfe/configure --prefix=/proj/llvm-gcc4/cfe/install \
     --enable-llvm=/proj/llvm/build --enable-languages=c,c++
   make
-  make install
-  </pre>
+  make install</pre>
+  <h4>Install SCons</h4>
+  <p>As noted earlier, HLVM uses the SCons tool for its builds. You need version
+  0.96.92. Install it like this:</p>
+  <pre>
+  cd /proj/scons
+  wget http://internap.dl.sourceforge.net/sourceforge/scons/scons-0.96.92.tar.gz
+  tar zxf scons-0.96.92.tar.gz
+  python config.py install</pre>
+  <p>Alternatively, you could use one of the SCons packages, such as:</p>
+  <pre>
+  cd /proj/scons
+  wget http://internap.dl.sourceforge.net/sourceforge/scons/scons-0.96.92-1.noarch.rpm
+  rpm --install scons-0.96.92-1.noarch.rpm</pre>
+
   <h4>Build HLVM</h4>
   <p>Note in the following that if you've actually used <tt>/proj</tt> as your
   build area then you don't need to provide any arguments to <tt>make</tt> as
@@ -509,8 +522,7 @@ contributions will be handled.</p>
   svn co svn://hlvm.org/hlvm hlvm
   cd hlvm
   make MYMODE=Debug MYPATH=/proj/llvm/cfe/install:/proj/install \
-    MYPREFIX=/proj/install/bin
-  </pre>
+    MYPREFIX=/proj/install/bin</pre>
 </div>
 
 <h2><a name="style">Coding Style</a></h2>

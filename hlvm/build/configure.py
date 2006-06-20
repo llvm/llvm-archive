@@ -182,7 +182,7 @@ def FindLibXML2(conf):
 
 def CheckProgram(ctxt,progname,varname,moredirs=[],critical=1):
   ctxt.Message("Checking for Program " + progname + "...")
-  if exists(ctxt.env[varname]):
+  if ctxt.env[varname] is not None and exists(ctxt.env[varname]):
     ret = 1
   else:
     paths = sjoin(moredirs,':') + ':' + ctxt.env['ENV']['PATH'] 

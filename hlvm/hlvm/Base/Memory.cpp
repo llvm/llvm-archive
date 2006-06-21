@@ -29,7 +29,7 @@
 
 #include <hlvm/Base/Memory.h>
 #include <hlvm/Base/Assert.h>
-#include <hlvm/Base/Config.h>
+#include <hlvm/Base/Configuration.h>
 #include <apr-1/apr_general.h>
 #include <memory>
 #include <new>

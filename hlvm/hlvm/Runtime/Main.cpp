@@ -31,7 +31,7 @@
 #include <apr-1/apr_file_io.h>
 #include <stdlib.h>
 #include <hlvm/Runtime/Internal.h>
-#include <hlvm/Base/Config.h>
+#include <hlvm/Base/Configuration.h>
 
 namespace {
 

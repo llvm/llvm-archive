@@ -66,7 +66,7 @@ proc hlvm-ret-zero-test { pat } {
         if { $retval != 0 } {
           fail "$test: llc returned $retval:\n$msg"
         } else {
-          set retval [ catch { exec $gxx -g -o $testexe $tests -L $APR_lib -lapr-1 -laprutil-1 } msg ]
+          set retval [ catch { exec $gxx -g -o $testexe $tests -L$APR_lib -lapr-1 -laprutil-1 } msg ]
           if { $retval != 0 } {
             fail "$test: gxx returned $retval:\n$msg"
           } else {

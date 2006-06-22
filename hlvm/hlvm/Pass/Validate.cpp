@@ -221,7 +221,7 @@ ValidateImpl::checkDisparateContainer(DisparateContainerType* n, NodeIDs id)
   bool result = true;
   if (!checkType(n,id))
     result = false;
-  else if (n->size() == 0) {
+  else if (n->size() == 0 && !llvm::isa<SignatureType>(n)) {
     error(n,"DisparateContainerType without elements");
     result = false;
   } else

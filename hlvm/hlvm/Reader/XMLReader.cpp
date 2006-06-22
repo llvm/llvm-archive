@@ -876,11 +876,34 @@ XMLReaderImpl::parse<Function>(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  func = ast->new_Function(name,loc);
-  const char* lnkg = getAttribute(cur, "linkage", false);
-  if (lnkg)
-    func->setLinkageKind(recognize_LinkageKinds(lnkg));
+  Linkable* lkbl = bundle->find_linkable(name);
+  if (lkbl) {
+    if (llvm::isa<Function>(lkbl)) {
+      func = llvm::cast<Function>(lkbl);
+      if (func->hasBlock()) {
+        error(loc,std::string("Function '") + name + "' was already defined.");
+        return func;
+      }
+    } else {
+      error(loc,std::string("Name '") + name + "' was already used.");
+      return 0;
+    }
+  } else {
+    const Type* Ty = getType(type);
+    if (llvm::isa<SignatureType>(Ty)) {
+      func = ast->new_Function(name,llvm::cast<SignatureType>(Ty),loc);
+      const char* lnkg = getAttribute(cur, "linkage", false);
+      if (lnkg)
+        func->setLinkageKind(recognize_LinkageKinds(lnkg));
+    } else {
+      error(loc,"Invalid type for a function, must be signature");
+    }
+  }
   checkDoc(cur,func);
+  xmlNodePtr child = cur->children;
+  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    parse<Block>(child);
+  }
   return func;
 }
 
@@ -892,6 +915,7 @@ XMLReaderImpl::parse<Program>(xmlNodePtr& cur)
   std::string name(getAttribute(cur, "id"));
   Program* program = ast->new_Program(name,loc);
   func = program;
+  checkDoc(cur,func);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
     parse<Block>(child);

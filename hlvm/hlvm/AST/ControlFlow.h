@@ -254,6 +254,9 @@ class CallOp : public MultiOperator
   /// @name Accessors
   /// @{
   public:
+    /// Returns the type of the value of the call. This is the same as the
+    /// result type of the function's signature.
+    const Type* getType() const; 
     Function* getCalledFunction() const;
     static inline bool classof(const CallOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(CallOpID); }

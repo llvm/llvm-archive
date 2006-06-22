@@ -42,8 +42,8 @@ Function::~Function() { }
 Program::~Program() { }
 
 const SignatureType* 
-Function::getSignature() const
-{ 
+Function::getSignature() const 
+{
   return cast<SignatureType>(type); 
 }
 

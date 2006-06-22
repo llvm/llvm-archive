@@ -5,35 +5,28 @@
     <constant id="false" type="bool"><false/></constant>
     <constant id="one" type="s32"><dec>1</dec></constant>
     <constant id="zero" type="s32"><dec>0</dec></constant>
-    <signature id="compute_type" result="bool"/>
     <program id="boolean">
       <block>
-        <select>
-          <call><ref id="compute"/></call>
-          <ref id="one"/>
-          <ref id="zero"/>
-        </select>
-      </block>
-    </program>
-
-    <function id="compute" type="compute_type">
-      <block>
         <ret>
-          <and>
-            <nor>
-              <or>
-                <xor>
-                  <ref id="true"/>
+          <select>
+            <and>
+              <nor>
+                <or>
+                  <xor>
+                    <ref id="true"/>
+                    <ref id="false"/>
+                  </xor>
                   <ref id="false"/>
-                </xor>
-                <ref id="false"/>
-              </or>
-              <ref id="true"/>
-            </nor>
-            <ref id="false"/>
-          </and>
+                </or>
+                <ref id="true"/>
+              </nor>
+              <ref id="false"/>
+            </and>
+            <ref id="one"/>
+            <ref id="zero"/>
+          </select>
         </ret>
       </block>
-    </function>
+    </program>
   </bundle>
 </hlvm>

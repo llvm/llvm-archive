@@ -591,11 +591,13 @@ AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
 }
 
 Function*
-AST::new_Function(const std::string& id, const Locator* loc)
+AST::new_Function(
+  const std::string& id, const SignatureType* ty, const Locator* loc)
 {
   Function* result = new Function();
   result->setLocator(loc);
   result->setName(id);
+  result->setType(ty);
   return result;
 }
 

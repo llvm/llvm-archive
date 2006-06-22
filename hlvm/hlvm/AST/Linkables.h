@@ -164,8 +164,10 @@ class Function : public Linkable
   /// @name Accessors
   /// @{
   public:
+    bool hasBlock() const { return block != 0; }
     Block* getBlock() const { return block; }
     const SignatureType* getSignature() const;
+
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }
 

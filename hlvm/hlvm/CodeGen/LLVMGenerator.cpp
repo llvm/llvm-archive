@@ -1209,9 +1209,9 @@ LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
              llvm::isa<llvm::BasicBlock>(op3));
   if (llvm::isa<llvm::BasicBlock>(op2)) {
     // both are blocks, emit a BranchInstr
-    new llvm::BranchInst(
-        llvm::cast<llvm::BasicBlock>(op2),
-        llvm::cast<llvm::BasicBlock>(op3),op1,lblk);
+    lops.push_back(new llvm::BranchInst(
+      llvm::cast<llvm::BasicBlock>(op2),
+      llvm::cast<llvm::BasicBlock>(op3),op1,lblk));
     return;
   } 
 
@@ -1219,7 +1219,7 @@ LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
   // operators translate to a first class type. Since the select operator
   // requires first class types, its okay to just use it here.
   hlvmAssert(op2->getType()->isFirstClassType());
-  new llvm::SelectInst(op1,op2,op3,"select",lblk);
+  lops.push_back(new llvm::SelectInst(op1,op2,op3,"select",lblk));
 }
 
 template<> void
@@ -1259,8 +1259,10 @@ LLVMGeneratorPass::gen<ReturnOp>(ReturnOp* r)
   if (retTy != lfunc->getReturnType()) {
     retVal = new llvm::CastInst(retVal,lfunc->getReturnType(),"",lblk);
   }
+  // RetInst is never the operand of another instruction because it is
+  // a terminator and cannot return a value. Consequently, we don't push it
+  // on the lops stack.
   new llvm::ReturnInst(retVal,lblk);
-  // RetInst is never the operand of another instruction (Terminator)
 }
 
 template<> void

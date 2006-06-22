@@ -179,6 +179,7 @@ class AST : public Node
     /// Create a new Function node. 
     Function* new_Function(
       const std::string& id, ///< The name of the function
+      const SignatureType* type,   ///< The type of the function
       const Locator* loc = 0 ///< The source locator
     );
     /// Create a new Argument node. Arguments are used as the formal argument

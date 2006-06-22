@@ -56,4 +56,12 @@ CallOp::getCalledFunction() const
   return const_cast<Function*>(cast<Function>(referent));
 }
 
+const Type* 
+CallOp::getType() const 
+{
+  Function* F = getCalledFunction();
+  hlvmAssert(F && "Call With No Function?");
+  return F->getSignature()->getResultType();
+}
+
 }

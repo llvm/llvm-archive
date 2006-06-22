@@ -1,4 +1,4 @@
-//===-- AST Linkage Items Interface -----------------------------*- C++ -*-===//
+//===-- AST Linkables Interface ---------------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,15 +20,15 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/LinkageItems.h
+/// @file hlvm/AST/Linkables.h
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/06/10
 /// @since 0.1.0
-/// @brief Declares the interface to all subclasses of LinkageItem
+/// @brief Declares the interface to all subclasses of Linkable
 //===----------------------------------------------------------------------===//
 
-#ifndef HLVM_AST_LINKAGEITEMS_H
-#define HLVM_AST_LINKAGEITEMS_H
+#ifndef HLVM_AST_LINKABLE_H
+#define HLVM_AST_LINKABLE_H
 
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/ContainerType.h>
@@ -41,7 +41,7 @@ class Type; // Forward declare
 class Constant;
 
 /// This enumeration is used to specify the kinds of linkage that are
-/// permitted for a LinkageItem.
+/// permitted for a Linkable.
 /// @brief Enumeration of ways to link bundles
 enum LinkageKinds {
   ExternalLinkage   = 1, ///< Externally visible item
@@ -52,25 +52,25 @@ enum LinkageKinds {
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an item
-/// which can be linked with other Bundles. LinkageItem is an abstract base 
-/// class and cannot be instantiated. All LinkageItem's are Constant values
+/// which can be linked with other Bundles. Linkabe is an abstract base 
+/// class and cannot be instantiated. All Linkables are Constant values
 /// because they represents a runtime value that is a constant address. The
-/// value pointed to by the LinkageItem may be mutable or immutable depending
-/// on its type and options.  As the name suggests, LinkageItems participate
+/// value pointed to by the Linkable may be mutable or immutable depending
+/// on its type and options.  As the name suggests, Linkables participate
 /// in linkage. A Bundle referring to a name in another Bundle will only link
-/// with a LinkageItem and nothing else. There are several ways in which 
-/// LinkageItems can be linked together, specified by the LinkageKinds value.
+/// with a Linkable and nothing else. There are several ways in which 
+/// Linkables can be linked together, specified by the LinkageKinds value.
 /// @see LinkageKinds
 /// @see Bundle
 /// @see Constant
 /// @brief AST Bundle Node
-class LinkageItem : public Constant
+class Linkable : public Constant
 {
   /// @name Constructors
   /// @{
   protected:
-    LinkageItem( NodeIDs id ) : Constant(id) { setLinkageKind(InternalLinkage);}
-    virtual ~LinkageItem();
+    Linkable( NodeIDs id ) : Constant(id) { setLinkageKind(InternalLinkage);}
+    virtual ~Linkable();
 
   /// @}
   /// @name Accessors
@@ -78,8 +78,8 @@ class LinkageItem : public Constant
   public:
     inline LinkageKinds getLinkageKind() const { 
       return LinkageKinds(flags & 0x0007); }
-    static inline bool classof(const LinkageItem*) { return true; }
-    static inline bool classof(const Node* N) { return N->isLinkageItem(); }
+    static inline bool classof(const Linkable*) { return true; }
+    static inline bool classof(const Node* N) { return N->isLinkable(); }
 
   /// @}
   /// @name Mutators
@@ -99,15 +99,15 @@ class LinkageItem : public Constant
 /// location, with an address, of a specific type. Global variables may have
 /// a constant value in which case HLVM will ensure that the value of the
 /// global variable is immutable. Variables can be of any type except VoidType.
-/// @see LinkageItem
+/// @see Linkable
 /// @see Bundle
 /// @brief AST Variable Node
-class Variable : public LinkageItem
+class Variable : public Linkable
 {
   /// @name Constructors
   /// @{
   protected:
-    Variable() : LinkageItem(VariableID), init(0) {}
+    Variable() : Linkable(VariableID), init(0) {}
     virtual ~Variable();
 
   /// @}
@@ -115,7 +115,7 @@ class Variable : public LinkageItem
   /// @{
   public:
     bool isConstant() const { return flags & 0x0008; }
-    Constant* getInitializer() const { return init; }
+    ConstantValue* getInitializer() const { return init; }
     bool hasInitializer() const { return init != 0; }
     bool isZeroInitialized() const { return init == 0; }
     static inline bool classof(const Variable*) { return true; }
@@ -126,13 +126,13 @@ class Variable : public LinkageItem
   /// @{
   public:
     void setIsConstant(bool v) { flags |= 0x0008; }
-    void setInitializer(Constant* C) { init = C; }
+    void setInitializer(ConstantValue* C) { init = C; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    Constant* init;
+    ConstantValue* init;
   /// @}
   friend class AST;
 };
@@ -152,12 +152,12 @@ class Variable : public LinkageItem
 /// @see Bundle
 /// @see SignatureType
 /// @brief AST Function Node
-class Function : public LinkageItem
+class Function : public Linkable
 {
   /// @name Constructors
   /// @{
   protected:
-    Function(NodeIDs id = FunctionID) : LinkageItem(id), block(0) {}
+    Function(NodeIDs id = FunctionID) : Linkable(id), block(0) {}
     virtual ~Function();
 
   /// @}
@@ -220,7 +220,7 @@ class Program : public Function
   /// @name Data
   /// @{
   private:
-    LinkageItem::setLinkageKind;
+    Linkable::setLinkageKind;
   /// @}
   friend class AST;
 };

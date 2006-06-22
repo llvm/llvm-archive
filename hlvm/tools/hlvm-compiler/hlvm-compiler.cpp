@@ -52,7 +52,9 @@ static cl::opt<bool> Validate("validate", cl::init(true),
 
 enum GenerationOptions {
   GenLLVMBytecode,
-  GenLLVMAssembly
+  GenLLVMAssembly,
+  GenNativeExecutable,
+  GenLoadableModule
 };
 
 static cl::opt<GenerationOptions> WhatToGenerate(
@@ -60,8 +62,10 @@ static cl::opt<GenerationOptions> WhatToGenerate(
   cl::desc("Choose what kind of output to generate"),
   cl::init(GenLLVMBytecode),
   cl::values(
-    clEnumValN(GenLLVMBytecode, "llvmbc", "Generate LLVM Bytecode"),
-    clEnumValN(GenLLVMAssembly, "llvmasm", "Generate LLVM Assembly"),
+    clEnumValN(GenLLVMBytecode,     "llvmbc",  "Generate LLVM Bytecode"),
+    clEnumValN(GenLLVMAssembly,     "llvmasm", "Generate LLVM Assembly"),
+    clEnumValN(GenNativeExecutable, "native",  "Generate Native Executable"),
+    clEnumValN(GenLoadableModule,   "module",  "Generate Loadable Module"),
     clEnumValEnd
   )
 );

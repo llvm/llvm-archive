@@ -29,8 +29,9 @@
 
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Type.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/Base/Assert.h>
+#include <llvm/Support/Casting.h>
 
 using namespace llvm; 
 
@@ -42,14 +43,12 @@ void
 Bundle::insertChild(Node* kid)
 {
   hlvmAssert(kid && "Null child!");
-  if (kid->isType())
-    types.insert(cast<Type>(kid)->getName(), kid);
-  else if (kid->is(VariableID))
-    vars.insert(cast<Variable>(kid)->getName(), kid);
-  else if (kid->isFunction())
-    funcs.insert(cast<Function>(kid)->getName(), kid);
-  else if (kid->isConstant()) // must be last, everything above isa<Constant>
-    consts.insert(cast<Constant>(kid)->getName(), kid);
+  if (isa<Type>(kid))
+    types.insert(cast<Type>(kid)->getName(), cast<Type>(kid));
+  else if (isa<ConstantValue>(kid))
+    cvals.insert(cast<ConstantValue>(kid)->getName(), cast<ConstantValue>(kid));
+  else if (isa<Linkable>(kid))
+    linkables.insert(cast<Linkable>(kid)->getName(), cast<Linkable>(kid));
   else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }
@@ -59,15 +58,13 @@ Bundle::removeChild(Node* kid)
 {
   hlvmAssert(isa<Constant>(kid) && "Can't remove that here");
   // This is sucky slow, but we probably won't be removing nodes that much.
-  if (kid->isType()) {
+  if (isa<Type>(kid))
     types.erase(cast<Type>(kid)->getName());
-  } else if (kid->is(VariableID)) {
-    vars.erase(cast<Variable>(kid)->getName());
-  } else if (kid->isFunction()) {
-    funcs.erase(cast<Function>(kid)->getName());
-  } else if (kid->isConstant()) {
-    consts.erase(cast<Constant>(kid)->getName());
-  } else 
+  else if (isa<ConstantValue>(kid))
+    cvals.erase(cast<ConstantValue>(kid)->getName());
+  else if (isa<Linkable>(kid))
+    linkables.erase(cast<Linkable>(kid)->getName());
+  else 
     hlvmAssert(!"That node isn't my child");
 }
 
@@ -79,27 +76,19 @@ Bundle::find_type(const std::string& name) const
   return 0;
 }
 
-Constant*  
-Bundle::find_const(const std::string& name) const
+ConstantValue*  
+Bundle::find_cval(const std::string& name) const
 {
-  if (Node* result = consts.lookup(name))
-    return llvm::cast<Constant>(result);
+  if (Node* result = cvals.lookup(name))
+    return llvm::cast<ConstantValue>(result);
   return 0;
 }
 
-Variable*  
-Bundle::find_var(const std::string& name) const
+Linkable*  
+Bundle::find_linkable(const std::string& name) const
 {
-  if (Node* result = vars.lookup(name))
-    return llvm::cast<Variable>(result);
-  return 0;
-}
-
-Function*  
-Bundle::find_func(const std::string& name) const
-{
-  if (Node* result = funcs.lookup(name))
-    return llvm::cast<Function>(result);
+  if (Node* result = linkables.lookup(name))
+    return llvm::cast<Linkable>(result);
   return 0;
 }
 

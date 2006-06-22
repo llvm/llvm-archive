@@ -32,7 +32,7 @@
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
@@ -77,7 +77,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   typedef std::vector<llvm::Value*> OperandList;
   typedef std::map<hlvm::Variable*,llvm::Value*> VariableDictionary;
   typedef std::map<hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
-  typedef std::map<hlvm::Constant*,llvm::Constant*> ConstantDictionary;
+  typedef std::map<hlvm::ConstantValue*,llvm::Constant*> ConstantDictionary;
+  typedef std::map<hlvm::Function*,llvm::Function*> FunctionDictionary;
   ModuleList modules;        ///< The list of modules we construct
   llvm::Module*     lmod;    ///< The current module we're generation 
   llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
@@ -88,6 +89,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   AutoVarDictionary lvars;
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
   ConstantDictionary consts; ///< The cached LLVM constants we've generated
+  FunctionDictionary funcs;  ///< The cached LLVM constants we've generated
     ///< The current LLVM instructions we're generating
   const AST* ast;            ///< The current Tree we're traversing
   const Bundle* bundle;      ///< The current Bundle we're traversing
@@ -131,10 +133,10 @@ class LLVMGeneratorPass : public hlvm::Pass
 
   /// Conversion functions
   const llvm::Type* getType(const hlvm::Type* ty);
-  llvm::Constant* getConstant(const hlvm::Constant* C);
+  llvm::Constant* getConstant(const hlvm::ConstantValue* C);
   llvm::Value* getVariable(const hlvm::Variable* V);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
-  inline std::string getLinkageName(LinkageItem* li);
+  inline std::string getLinkageName(Linkable* li);
   inline llvm::Value* getBoolean(llvm::Value* op);
   inline llvm::Value* getInteger(llvm::Value* op);
   inline llvm::Value* toBoolean(llvm::Value* op);
@@ -531,12 +533,14 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 }
 
 llvm::Constant*
-LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
+LLVMGeneratorPass::getConstant(const hlvm::ConstantValue* C)
 {
   hlvmAssert(C!=0);
+  hlvmAssert(C->isConstantValue());
 
   // First, lets see if its cached already
-  ConstantDictionary::iterator I = consts.find(const_cast<hlvm::Constant*>(C));
+  ConstantDictionary::iterator I = 
+    consts.find(const_cast<hlvm::ConstantValue*>(C));
   if (I != consts.end())
     return I->second;
 
@@ -584,7 +588,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
       break;
   }
   if (result)
-    consts[const_cast<hlvm::Constant*>(C)] = result;
+    consts[const_cast<hlvm::ConstantValue*>(C)] = result;
   else
     hlvmDeadCode("Didn't find constant");
   return result;
@@ -636,7 +640,7 @@ LLVMGeneratorPass::ptr2Value(llvm::Value* V)
 }
 
 std::string
-LLVMGeneratorPass::getLinkageName(LinkageItem* lk)
+LLVMGeneratorPass::getLinkageName(Linkable* lk)
 {
   // if (lk->isProgram())
     // return std::string("_hlvm_entry_") + lk->getName();
@@ -1046,7 +1050,7 @@ LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<NoOperator>(NoOperator* op)
+LLVMGeneratorPass::gen<NullOp>(NullOp* op)
 {
 }
 
@@ -1281,16 +1285,30 @@ LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
 {
   hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
   llvm::Value* v = 0;
-  if (llvm::isa<Variable>(referent)) {
-    VariableDictionary::iterator I = gvars.find(llvm::cast<Variable>(referent));
-    hlvmAssert(I != gvars.end());
-    v = I->second;
-  } 
-  else if (llvm::isa<AutoVarOp>(referent)) 
+  if (llvm::isa<AutoVarOp>(referent)) 
   {
     AutoVarDictionary::const_iterator I = 
       lvars.find(llvm::cast<AutoVarOp>(referent));
     hlvmAssert(I != lvars.end());
+    v = I->second;
+  }
+  else if (llvm::isa<ConstantValue>(referent))
+  {
+    const hlvm::ConstantValue* cval = llvm::cast<ConstantValue>(referent);
+    llvm::Constant* C = getConstant(cval);
+    hlvmAssert(C && "Can't generate constant?");
+    v = C;
+  }
+  else if (llvm::isa<Variable>(referent)) 
+  {
+    VariableDictionary::iterator I = gvars.find(llvm::cast<Variable>(referent));
+    hlvmAssert(I != gvars.end());
+    v = I->second;
+  } 
+  else if (llvm::isa<Function>(referent)) 
+  {
+    FunctionDictionary::iterator I = funcs.find(llvm::cast<Function>(referent));
+    hlvmAssert(I != funcs.end());
     v = I->second;
   }
   else
@@ -1298,14 +1316,6 @@ LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
   lops.push_back(v);
 }
 
-template<> void
-LLVMGeneratorPass::gen<ConstantReferenceOp>(ConstantReferenceOp* r)
-{
-  hlvm::Constant* referent = const_cast<hlvm::Constant*>(r->getReferent());
-  llvm::Constant* C = getConstant(referent);
-  hlvmAssert(C && "Can't generate constant?");
-  lops.push_back(C);
-}
 template<> void
 LLVMGeneratorPass::gen<IndexOp>(IndexOp* r)
 {
@@ -1394,6 +1404,7 @@ LLVMGeneratorPass::gen<hlvm::Function>(hlvm::Function* f)
     getLinkageTypes(f->getLinkageKind()), 
     getLinkageName(f), lmod);
   lvars.clear();
+  funcs[f] = lfunc;
 }
 
 template<> void
@@ -1418,6 +1429,7 @@ LLVMGeneratorPass::gen<Bundle>(Bundle* b)
   modules.push_back(lmod);
   lvars.clear();
   gvars.clear();
+  funcs.clear();
 }
 
 void 
@@ -1548,7 +1560,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case BOrOpID:                 gen(llvm::cast<BOrOp>(n)); break;
     case BXorOpID:                gen(llvm::cast<BXorOp>(n)); break;
     case BNorOpID:                gen(llvm::cast<BNorOp>(n)); break;
-    case NoOperatorID:            gen(llvm::cast<NoOperator>(n)); break;
+    case NullOpID:                gen(llvm::cast<NullOp>(n)); break;
     case NotOpID:                 gen(llvm::cast<NotOp>(n)); break;
     case AndOpID:                 gen(llvm::cast<AndOp>(n)); break;
     case OrOpID:                  gen(llvm::cast<OrOp>(n)); break;
@@ -1569,8 +1581,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
     case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
     case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
-    case ConstantReferenceOpID:   gen(llvm::cast<ConstantReferenceOp>(n)); 
-                                  break;
     case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
     case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
     case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;

@@ -38,20 +38,20 @@ namespace hlvm
 /// This class provides an Abstract Syntax Tree node for the "noop" operator
 /// that does nothing.
 /// @brief AST NoOp Operator
-class NoOperator : public NilaryOperator
+class NullOp : public NilaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    NoOperator() : NilaryOperator(NoOperatorID) {}
-    virtual ~NoOperator();
+    NullOp() : NilaryOperator(NullOpID) {}
+    virtual ~NullOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const NoOperator*) { return true; }
-    static inline bool classof(const Node* N) { return N->is(NoOperatorID); }
+    static inline bool classof(const NullOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(NullOpID); }
 
   /// @}
   friend class AST;
@@ -229,6 +229,34 @@ class ContinueOp : public NilaryOperator
   public:
     static inline bool classof(const ContinueOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ContinueOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents a function
+/// call operator. A CallOp invokes a function, possibly passing it arguments,
+/// and obtains the result of that function. The value of the CallOp becomes the
+/// result of the called function. 
+/// @brief AST Call Operator Node
+class CallOp : public MultiOperator
+{
+  /// @name Constructors
+  /// @{
+  public:
+    static CallOp* create();
+
+  protected:
+    CallOp() : MultiOperator(CallOpID)  {}
+    virtual ~CallOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    Function* getCalledFunction() const;
+    static inline bool classof(const CallOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(CallOpID); }
 
   /// @}
   friend class AST;

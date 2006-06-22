@@ -53,15 +53,15 @@ class Constant : public Value
   /// @name Constructors
   /// @{
   protected:
-    Constant(NodeIDs id) : Value(id), name()  {}
+    Constant(NodeIDs id) : Value(id), name() {}
     virtual ~Constant();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    // Get the type of the value
-    inline const std::string& getName() const { return name; }
+    /// Get the name of the Constant
+    const std::string& getName() const { return name; }
     static inline bool classof(const Constant*) { return true; }
     static inline bool classof(const Node* N) { return N->isConstant(); }
 
@@ -69,13 +69,38 @@ class Constant : public Value
   /// @name Mutators
   /// @{
   public:
+    /// Set the name of the Constant
     void setName(const std::string& n) { name = n; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::string name; ///< The name of this Value.
+    std::string name; ///< The name of this value.
+
+  /// @}
+  friend class AST;
+};
+
+/// This is an abstract base class in the Abstract Syntax Tree that represents
+/// a constant value used in the program.
+/// @brief AST Constant Value Node
+class ConstantValue: public Constant
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantValue(NodeIDs id) : Constant(id) {}
+    virtual ~ConstantValue();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantValue*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->isConstantValue(); }
+
   /// @}
   friend class AST;
 };
@@ -83,12 +108,12 @@ class Constant : public Value
 /// This class provides an Abstract Syntax Tree node that yields a 
 /// constant boolean value. 
 /// @brief AST Constant Boolean Node
-class ConstantBoolean: public Constant
+class ConstantBoolean: public ConstantValue
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantBoolean(bool val) : Constant(ConstantBooleanID) {
+    ConstantBoolean(bool val) : ConstantValue(ConstantBooleanID) {
       flags = val; }
     virtual ~ConstantBoolean();
 
@@ -110,12 +135,12 @@ class ConstantBoolean: public Constant
 /// constants of any of the signed or unsigned integer types of any bitsize.
 /// @see IntegerType
 /// @brief AST Constant Integer Node
-class ConstantInteger: public Constant
+class ConstantInteger: public ConstantValue
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantInteger(uint16_t base) : Constant(ConstantIntegerID) {}
+    ConstantInteger(uint16_t base) : ConstantValue(ConstantIntegerID) {}
     virtual ~ConstantInteger();
 
   /// @}
@@ -149,12 +174,12 @@ class ConstantInteger: public Constant
 /// number value of any mantissa or exponent size. 
 /// @see RealType
 /// @brief AST Constant Real Node
-class ConstantReal : public Constant
+class ConstantReal : public ConstantValue
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantReal() : Constant(ConstantRealID)  {}
+    ConstantReal() : ConstantValue(ConstantRealID)  {}
     virtual ~ConstantReal();
 
   /// @}
@@ -185,12 +210,12 @@ class ConstantReal : public Constant
 /// string value. The constant value is encoded in UTF-8 with a null terminator.
 /// @see StringType
 /// @brief AST Constant String Node
-class ConstantString : public Constant
+class ConstantString : public ConstantValue
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantString() : Constant(ConstantStringID)  {}
+    ConstantString() : ConstantValue(ConstantStringID)  {}
     virtual ~ConstantString();
 
   /// @}
@@ -222,12 +247,12 @@ class ConstantString : public Constant
 /// such as arrays, vectors, structures and continuations. It simply contains 
 /// a list of other elements which themselves must be constants.
 /// @brief AST Constant Array Node.
-class ConstantAggregate : public Constant
+class ConstantAggregate : public ConstantValue
 {
   /// @name Types
   /// @{
   public:
-    typedef std::vector<Constant*> ElementsList;
+    typedef std::vector<ConstantValue*> ElementsList;
     typedef ElementsList::iterator iterator;
     typedef ElementsList::const_iterator const_iterator;
 
@@ -235,7 +260,7 @@ class ConstantAggregate : public Constant
   /// @name Constructors
   /// @{
   protected:
-    ConstantAggregate() : Constant(ConstantAggregateID), elems()  {}
+    ConstantAggregate() : ConstantValue(ConstantAggregateID), elems()  {}
     virtual ~ConstantAggregate();
 
   /// @}
@@ -257,16 +282,16 @@ class ConstantAggregate : public Constant
   /// @name Iterators
   /// @{
   public:
-    iterator         begin()       { return elems.begin(); }
-    const_iterator   begin() const { return elems.begin(); }
-    iterator         end  ()       { return elems.end(); }
-    const_iterator   end  () const { return elems.end(); }
-    size_t           size () const { return elems.size(); }
-    bool             empty() const { return elems.empty(); }
-    Constant*        front()       { return elems.front(); }
-    const Constant*  front() const { return elems.front(); }
-    Constant*        back()        { return elems.back(); }
-    const Constant*  back()  const { return elems.back(); }
+    iterator             begin()       { return elems.begin(); }
+    const_iterator       begin() const { return elems.begin(); }
+    iterator             end  ()       { return elems.end(); }
+    const_iterator       end  () const { return elems.end(); }
+    size_t               size () const { return elems.size(); }
+    bool                 empty() const { return elems.empty(); }
+    ConstantValue*       front()       { return elems.front(); }
+    const ConstantValue* front() const { return elems.front(); }
+    ConstantValue*       back()        { return elems.back(); }
+    const ConstantValue* back()  const { return elems.back(); }
 
   /// @}
   /// @name Data
@@ -282,12 +307,12 @@ class ConstantAggregate : public Constant
 /// expression. The expression uses a limited set of operator identifiers that
 /// can yield constants such as arithmetic or comparison operators. 
 /// @brief AST Constant Expression Node.
-class ConstantExpression : public Constant
+class ConstantExpression : public ConstantValue
 {
   /// @name Constructors
   /// @{
   protected:
-    ConstantExpression(NodeIDs exprOp) : Constant(ConstantExpressionID)
+    ConstantExpression(NodeIDs exprOp) : ConstantValue(ConstantExpressionID)
       { flags = exprOp; }
     virtual ~ConstantExpression();
   public:

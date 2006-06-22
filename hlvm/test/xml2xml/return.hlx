@@ -7,7 +7,7 @@
     <program id="return">
       <block>
         <ret>
-          <cref id="42"/>
+          <ref id="42"/>
         </ret>
       </block>
     </program>

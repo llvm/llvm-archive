@@ -32,7 +32,7 @@
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/ControlFlow.h>
@@ -55,7 +55,7 @@ class ASTImpl : public AST
 {
   public:
     ASTImpl()
-      : types(), vars(), funcs(), unresolvedTypes(), 
+      : types(), unresolvedTypes(), 
         AnyTypeSingleton(0), StringTypeSingleton(0),
         VoidSingleton(0), BooleanSingleton(), CharacterSingleton(0), 
         OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
@@ -77,10 +77,8 @@ class ASTImpl : public AST
 
   private:
     // Pool pool;
-    SymbolTable    types;
-    SymbolTable    vars;
-    SymbolTable    funcs;
-    SymbolTable    unresolvedTypes;
+    SymbolTable<Type>    types;
+    SymbolTable<Type>    unresolvedTypes;
     AnyType*       AnyTypeSingleton;
     StringType*    StringTypeSingleton;
     VoidType*      VoidSingleton;
@@ -625,7 +623,10 @@ AST::new_Block( const Locator* loc)
 
 AutoVarOp*
 AST::new_AutoVarOp(
-    const std::string& name, const Type* Ty, Constant* op1,const Locator* loc)
+    const std::string& name, 
+    const Type* Ty, 
+    ConstantValue* op1,
+    const Locator* loc)
 {
   hlvmAssert(Ty != 0 && "AutoVarOp must have a Type!");
   AutoVarOp* result = new AutoVarOp();
@@ -640,24 +641,17 @@ ReferenceOp*
 AST::new_ReferenceOp(const Value* V, const Locator*loc)
 {
   hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
-  hlvmAssert(llvm::isa<Variable>(V) || llvm::isa<AutoVarOp>(V));
-  const Type* elemType = V->getType();
-  PointerType* PT = getPointerTo(elemType);
+  hlvmAssert(llvm::isa<Constant>(V) || llvm::isa<AutoVarOp>(V));
   ReferenceOp* result = new ReferenceOp();
+  const Type* refType = V->getType();
+  if (llvm::isa<ConstantValue>(V)) {
+    result->setType(refType);
+  } else {
+    PointerType* PT = getPointerTo(refType);
+    result->setType(PT);
+  }
   result->setLocator(loc);
   result->setReferent(V);
-  result->setType(PT);
-  return result;
-}
-
-ConstantReferenceOp* 
-AST::new_ConstantReferenceOp(const Constant* C, const Locator* loc)
-{
-  hlvmAssert(C != 0 && "ConstantReferenceOp must have a Constant to reference");
-  ConstantReferenceOp* result = new ConstantReferenceOp();
-  result->setLocator(loc);
-  result->setReferent(C);
-  result->setType(C->getType());
   return result;
 }
 
@@ -995,10 +989,10 @@ AST::new_MultiOp<Block>(
 template Block* 
 AST::new_MultiOp<Block>(const std::vector<Operator*>& ops, const Locator*loc);
 
-template NoOperator* 
-AST::new_NilaryOp<NoOperator>(const Type* Ty, const Locator*loc);
-template NoOperator* 
-AST::new_NilaryOp<NoOperator>(const Locator*loc);
+template NullOp* 
+AST::new_NilaryOp<NullOp>(const Type* Ty, const Locator*loc);
+template NullOp* 
+AST::new_NilaryOp<NullOp>(const Locator*loc);
 
 template SelectOp*
 AST::new_TernaryOp<SelectOp>(
@@ -1048,6 +1042,11 @@ template ReturnOp*
 AST::new_UnaryOp<ReturnOp>(const Type*Ty, Operator*op1,const Locator*loc);
 template ReturnOp* 
 AST::new_UnaryOp<ReturnOp>(Operator*op1,const Locator*loc);
+
+template CallOp* 
+AST::new_MultiOp<CallOp>(const Type*Ty, const std::vector<Operator*>& ops, const Locator*loc);
+template CallOp* 
+AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, const Locator* loc);
 
 // Memory Operators
 template StoreOp*  

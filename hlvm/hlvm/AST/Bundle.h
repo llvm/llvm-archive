@@ -38,8 +38,7 @@ namespace hlvm
 { 
 
 class Type;
-class Variable;
-class Function;
+class Linkable;
 
 /// This class is simply a collection of definitions. Things that can be 
 /// defined in a bundle include types, global variables, functions, classes,
@@ -55,27 +54,23 @@ class Bundle : public Documentable
   /// @name Types
   /// @{
   public:
-    typedef SymbolTable TypeList;
+    typedef SymbolTable<Type> TypeList;
     typedef TypeList::iterator type_iterator;
     typedef TypeList::const_iterator type_const_iterator;
 
-    typedef SymbolTable FuncList;
-    typedef FuncList::iterator func_iterator;
-    typedef FuncList::const_iterator func_const_iterator;
+    typedef SymbolTable<ConstantValue> CValList;
+    typedef CValList::iterator cval_iterator;
+    typedef CValList::const_iterator cval_const_iterator;
 
-    typedef SymbolTable VarList;
-    typedef VarList::iterator var_iterator;
-    typedef VarList::const_iterator var_const_iterator;
-
-    typedef SymbolTable ConstList;
-    typedef ConstList::iterator constant_iterator;
-    typedef ConstList::const_iterator constant_const_iterator;
+    typedef SymbolTable<Linkable> LinkableList;
+    typedef LinkableList::iterator linkable_iterator;
+    typedef LinkableList::const_iterator linkable_const_iterator;
 
   /// @}
   /// @name Constructors
   /// @{
   protected:
-    Bundle() : Documentable(BundleID), name(), types(), vars(), funcs() {}
+    Bundle() : Documentable(BundleID), name(), types(), linkables() {}
     virtual ~Bundle();
 
   /// @}
@@ -98,10 +93,9 @@ class Bundle : public Documentable
   /// @name Finders
   /// @{
   public:
-    Type*     find_type(const std::string& n) const;
-    Constant* find_const(const std::string& n) const;
-    Variable* find_var(const std::string& n) const;
-    Function* find_func(const std::string& n) const;
+    Type*              find_type(const std::string& n) const;
+    ConstantValue*     find_cval(const std::string& n) const;
+    Linkable*          find_linkable(const std::string& n) const;
 
   /// @}
   /// @name Iterators
@@ -115,39 +109,30 @@ class Bundle : public Documentable
     size_t                  type_size () const { return types.size(); }
     bool                    type_empty() const { return types.empty(); }
 
-    /// Constant iteration
-    constant_iterator       const_begin()       { return consts.begin(); }
-    constant_const_iterator const_begin() const { return consts.begin(); }
-    constant_iterator       const_end  ()       { return consts.end(); }
-    constant_const_iterator const_end  () const { return consts.end(); }
-    size_t                  const_size () const { return consts.size(); }
-    bool                    const_empty() const { return consts.empty(); }
+    /// Type iteration
+    cval_iterator           cval_begin()       { return cvals.begin(); }
+    cval_const_iterator     cval_begin() const { return cvals.begin(); }
+    cval_iterator           cval_end  ()       { return cvals.end(); }
+    cval_const_iterator     cval_end  () const { return cvals.end(); }
+    size_t                  cval_size () const { return cvals.size(); }
+    bool                    cval_empty() const { return cvals.empty(); }
 
-    /// Variable iteration
-    var_iterator            var_begin()       { return vars.begin(); }
-    var_const_iterator      var_begin() const { return vars.begin(); }
-    var_iterator            var_end  ()       { return vars.end(); }
-    var_const_iterator      var_end  () const { return vars.end(); }
-    size_t                  var_size () const { return vars.size(); }
-    bool                    var_empty() const { return vars.empty(); }
-
-    /// Function iteration
-    func_iterator           func_begin()       { return funcs.begin(); }
-    func_const_iterator     func_begin() const { return funcs.begin(); }
-    func_iterator           func_end  ()       { return funcs.end(); }
-    func_const_iterator     func_end  () const { return funcs.end(); }
-    size_t                  func_size () const { return funcs.size(); }
-    bool                    func_empty() const { return funcs.empty(); }
+    /// Value iteration
+    linkable_iterator       linkable_begin()       { return linkables.begin(); }
+    linkable_const_iterator linkable_begin() const { return linkables.begin(); }
+    linkable_iterator       linkable_end  ()       { return linkables.end(); }
+    linkable_const_iterator linkable_end  () const { return linkables.end(); }
+    size_t                  linkable_size () const { return linkables.size(); }
+    bool                    linkable_empty() const { return linkables.empty(); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::string name;   ///< The name for this bundle
-    TypeList    types;  ///< The list of types
-    ConstList   consts; ///< The list of constants
-    VarList     vars;   ///< The list of variables
-    FuncList    funcs;  ///< The list of functions
+    std::string  name;      ///< The name for this bundle
+    TypeList     types;     ///< The list of types
+    CValList     cvals;     ///< The list of constant values
+    LinkableList linkables; ///< The list of linkables
 
   /// @}
   friend class AST;

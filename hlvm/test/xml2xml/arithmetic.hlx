@@ -34,13 +34,13 @@
           <load>
             <ref id="v1"/>
           </load>
-          <cref id="one"/>
+          <ref id="one"/>
         </add>
         <sub>
           <load>
             <ref id="v1"/>
           </load>
-          <cref id="one"/>
+          <ref id="one"/>
         </sub>
         <mul>
           <load>

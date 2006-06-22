@@ -1,4 +1,4 @@
-//===-- AST Linkage Items Implementation ------------------------*- C++ -*-===//
+//===-- AST Linkables Implementation ----------------------------*- C++ -*-===//
 //
 //                      High Level Virtual Machine (HLVM)
 //
@@ -20,14 +20,14 @@
 // MA 02110-1301 USA
 //
 //===----------------------------------------------------------------------===//
-/// @file hlvm/AST/LinkageItems.cpp
+/// @file hlvm/AST/Linkables.cpp
 /// @author Reid Spencer <rspencer@reidspencer.com> (original author)
 /// @date 2006/05/04
 /// @since 0.1.0
-/// @brief Implements the subclasses of LinkageItem
+/// @brief Implements the subclasses of Linkable
 //===----------------------------------------------------------------------===//
 
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Block.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
@@ -36,7 +36,7 @@ using namespace llvm;
 
 namespace hlvm {
 
-LinkageItem::~LinkageItem() { }
+Linkable::~Linkable() { }
 Variable::~Variable() { }
 Function::~Function() { }
 Program::~Program() { }

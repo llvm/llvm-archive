@@ -35,7 +35,6 @@ LoadOp::~LoadOp() {}
 StoreOp::~StoreOp() {}
 AutoVarOp::~AutoVarOp() {}
 ReferenceOp::~ReferenceOp() {}
-ConstantReferenceOp::~ConstantReferenceOp() {}
 IndexOp::~IndexOp() {}
 
 }

@@ -659,7 +659,6 @@
   <define name="Operators.pat">
     <choice>
       <ref name="block.elem"/>
-      <ref name="cref.elem"/>
       <ref name="noop.elem"/>
       <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
@@ -707,13 +706,6 @@
     </element>
   </define>
 
-  <define name="cref.elem">
-    <element name="cref">
-      <ref name="Named_Element.pat"/>
-      <empty/>
-    </element>
-  </define>
-
   <define name="noop.elem">
     <element name="noop">
       <empty/>
@@ -753,6 +745,7 @@
       <ref name="index.elem"/>
       <ref name="length.elem"/>
       <ref name="autovar.elem"/>
+      <ref name="ref.elem"/>
     </choice>
   </define>
 
@@ -1115,10 +1108,9 @@
 
   <define name="call.elem">
     <element name="call">
-      <ref name="Named_Element.pat"/>
-      <zeroOrMore>
+      <oneOrMore>
         <ref name="Operators.pat"/>
-      </zeroOrMore>
+      </oneOrMore>
     </element>
   </define>
 

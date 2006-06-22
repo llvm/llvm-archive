@@ -37,7 +37,7 @@
 #include <hlvm/AST/Arithmetic.h>
 #include <hlvm/AST/RealMath.h>
 #include <hlvm/AST/BooleanOps.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Constants.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/MathExtras.h>
@@ -66,7 +66,7 @@ class ValidateImpl : public Pass
     inline bool checkTerminator(Operator* op);
     inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
     inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
-    inline bool checkLinkageItem(LinkageItem* LI, NodeIDs id);
+    inline bool checkLinkable(Linkable* LI, NodeIDs id);
 
     template <class NodeClass>
     inline void validate(NodeClass* C);
@@ -232,17 +232,17 @@ ValidateImpl::checkDisparateContainer(DisparateContainerType* n, NodeIDs id)
 }
 
 bool 
-ValidateImpl::checkLinkageItem(LinkageItem* LI, NodeIDs id)
+ValidateImpl::checkLinkable(Linkable* LI, NodeIDs id)
 {
   bool result = checkConstant(LI,id);
   if (result) {
     if (LI->getLinkageKind() < ExternalLinkage || 
         LI->getLinkageKind() > InternalLinkage) {
-      error(LI,"Invalid LinkageKind for LinkageItem");
+      error(LI,"Invalid LinkageKind for Linkable");
       result = false;
     }
     if (LI->getName().length() == 0)  {
-      error(LI,"Zero length name for LinkageItem");
+      error(LI,"Zero length name for Linkable");
       result = false;
     }
   }
@@ -463,7 +463,7 @@ ValidateImpl::validate(ConstantExpression* n)
 template<> inline void
 ValidateImpl::validate(Variable* n)
 {
-  if (checkLinkageItem(n, VariableID)) 
+  if (checkLinkable(n, VariableID)) 
     if (n->hasInitializer())
       if (n->getType() != n->getInitializer()->getType())
         error(n,"Variable and its initializer do not agree in type");
@@ -472,7 +472,7 @@ ValidateImpl::validate(Variable* n)
 template<> inline void
 ValidateImpl::validate(Function* F)
 {
-  if (checkLinkageItem(F, FunctionID)) {
+  if (checkLinkable(F, FunctionID)) {
     if (F->getSignature() == 0)
       error(F,"Function without signature");
     else if (F->getSignature()->getID() != SignatureTypeID)
@@ -485,7 +485,7 @@ ValidateImpl::validate(Function* F)
 template<> inline void
 ValidateImpl::validate(Program* P)
 {
-  if (checkLinkageItem(P, ProgramID)) {
+  if (checkLinkable(P, ProgramID)) {
     if (P->getSignature() == 0)
       error(P,"Program without signature");
     else if (P->getSignature()->getID() != SignatureTypeID)
@@ -510,9 +510,9 @@ ValidateImpl::validate(Block* n)
 }
 
 template<> inline void
-ValidateImpl::validate(NoOperator* n)
+ValidateImpl::validate(NullOp* n)
 {
-  checkOperator(n,NoOperatorID,0);
+  checkOperator(n,NullOpID,0);
 }
 
 template<> inline void
@@ -554,7 +554,7 @@ ValidateImpl::validate(SelectOp* n)
     const Type* Ty3 = Op3->getType();
     if (!isa<BooleanType>(Ty1))
       error(n,"SelectOp expects first operand to be type boolean");
-    else if ( Ty1 != Ty2 )
+    else if ( Ty2 != Ty3 )
       error(n,"Second and third operands for SelectOp must agree in type");
     else if (isa<Block>(Op2) != isa<Block>(Op3))
       error(n,"SelectOp requires operands 2 and 3 to both be blocks or "
@@ -584,6 +584,12 @@ ValidateImpl::validate(SwitchOp* n)
     if (n->getNumOperands() % 2 != 0)
       error(n,"SwitchOp requires even number of operands");
   }
+}
+
+template<> inline void
+ValidateImpl::validate(CallOp* n)
+{
+  checkOperator(n,CallOpID,0,false);
 }
 
 template<> inline void
@@ -669,13 +675,6 @@ template<> inline void
 ValidateImpl::validate(ReferenceOp* op)
 {
   checkOperator(op,ReferenceOpID,0,true);
-  /// FIXME: check referent out
-}
-
-template<> inline void
-ValidateImpl::validate(ConstantReferenceOp* op)
-{
-  checkOperator(op,ConstantReferenceOpID,0,true);
   /// FIXME: check referent out
 }
 
@@ -1236,13 +1235,13 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case BundleID:               validate(cast<Bundle>(n)); break;
     case BlockID:                validate(cast<Block>(n)); break;
     case ImportID:               validate(cast<Import>(n)); break;
-    case CallOpID:               /*validate(cast<CallOp>(n));*/ break;
+    case CallOpID:               validate(cast<CallOp>(n)); break;
     case InvokeOpID:             /*validate(cast<InvokeOp>(n));*/ break;
     case DispatchOpID:           /*validate(cast<DispatchOp>(n));*/ break;
     case CreateContOpID:         /*validate(cast<CreateContOp>(n));*/ break;
     case CallWithContOpID:       /*validate(cast<CallWithContOp>(n));*/ break;
     case ThrowOpID:              /*validate(cast<ThrowOp>(n));*/ break;
-    case NoOperatorID:           validate(cast<NoOperator>(n)); break;
+    case NullOpID:               validate(cast<NullOp>(n)); break;
     case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
     case ContinueOpID:           validate(cast<ContinueOp>(n)); break;
     case BreakOpID:              validate(cast<BreakOp>(n)); break;
@@ -1255,8 +1254,6 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
     case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;
     case ReferenceOpID:          validate(cast<ReferenceOp>(n)); break;
-    case ConstantReferenceOpID:  validate(cast<ConstantReferenceOp>(n)); 
-                                                                     break;
     case AutoVarOpID:            validate(cast<AutoVarOp>(n)); break;
     case NegateOpID:             validate(cast<NegateOp>(n)); break;
     case ComplementOpID:         validate(cast<ComplementOp>(n)); break;

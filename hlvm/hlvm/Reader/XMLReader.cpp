@@ -35,7 +35,7 @@
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/Documentation.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/AST/MemoryOps.h>
@@ -393,7 +393,7 @@ XMLReaderImpl::parseLiteralConstant(
     const std::string& name,
     const Type* Ty)
 {
-  if (!name.empty() && bundle->find_const(name) != 0) {
+  if (!name.empty() && bundle->find_linkable(name) != 0) {
     error(getLocator(cur),std::string("Constant '") + name 
           + "' already exists.");
     return 0;
@@ -687,7 +687,7 @@ XMLReaderImpl::parse<Variable>(xmlNodePtr& cur)
   if (lnkg)
     var->setLinkageKind(recognize_LinkageKinds(lnkg));
   if (init) {
-    Constant* initializer = bundle->find_const(init);
+    ConstantValue* initializer = bundle->find_cval(init);
     if (initializer)
       var->setInitializer(initializer);
     else 
@@ -706,9 +706,9 @@ XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
   getNameType(cur, name, type);
   const Type* Ty = getType(type);
   const char* init = getAttribute(cur,"init",false);
-  Constant *initializer = 0;
+  ConstantValue *initializer = 0;
   if (init) {
-    initializer = bundle->find_const(init);
+    initializer = bundle->find_cval(init);
     if (!initializer)
       error(loc,std::string("Constant '") + init + 
             "' not found in initializer.");
@@ -736,29 +736,20 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
     blk = blk->getParentBlock();
   }
 
-  // Didn't find an autovar, try a global variable
-  if (!referent) {
-    referent = bundle->find_var(id);
-    if (!referent) {
-      error(loc,std::string("Variable '") + id + "' not found");
-    }
-  }
+  // Didn't find an autovar? Try a constant value.
+  if (!referent)
+    referent= bundle->find_cval(id);
+    
+  // Didn't find an constant? Try a linkable
+  if (!referent)
+    referent = bundle->find_linkable(id);
+
+
+  // Didn't find a linkable? Try an error message for size
+  if (!referent)
+      error(loc,std::string("Referent '") + id + "' not found");
 
   return ast->AST::new_ReferenceOp(referent, loc);
-}
-
-template<> ConstantReferenceOp*
-XMLReaderImpl::parse<ConstantReferenceOp>(xmlNodePtr& cur)
-{
-  std::string id = getAttribute(cur,"id");
-  Locator* loc = getLocator(cur);
-  Constant* referent = bundle->find_const(id);
-  if (!referent) {
-    error(loc,std::string("Constant '") + id + 
-          "' not found. Substituting false.");
-    referent = ast->new_ConstantBoolean(false, getLocator(cur)); 
-  }
-  return ast->AST::new_ConstantReferenceOp(referent, loc);
 }
 
 template<class OpClass>
@@ -903,8 +894,7 @@ XMLReaderImpl::parse<Program>(xmlNodePtr& cur)
   func = program;
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    Block* b = parse<Block>(child);
-    program->setBlock(b);
+    parse<Block>(child);
   } else {
     hlvmDeadCode("Program Without Block!");
   }
@@ -1059,7 +1049,7 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_bor:          op = parseBinaryOp<BOrOp>(cur); break;
       case TKN_bxor:         op = parseBinaryOp<BXorOp>(cur); break;
       case TKN_bnor:         op = parseBinaryOp<BNorOp>(cur); break;
-      case TKN_noop:         op = parseNilaryOp<NoOperator>(cur); break;
+      case TKN_noop:         op = parseNilaryOp<NullOp>(cur); break;
       case TKN_not:          op = parseUnaryOp<NotOp>(cur); break;
       case TKN_and:          op = parseBinaryOp<AndOp>(cur); break;
       case TKN_or:           op = parseBinaryOp<OrOp>(cur); break;
@@ -1077,13 +1067,13 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_break:        op = parseNilaryOp<BreakOp>(cur); break;
       case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;
       case TKN_ret:          op = parseUnaryOp<ReturnOp>(cur); break;
+      case TKN_call:         op = parseMultiOp<CallOp>(cur); break;
       case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
       case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
       case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
       case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
       case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
       case TKN_ref:          op = parse<ReferenceOp>(cur); break;
-      case TKN_cref:         op = parse<ConstantReferenceOp>(cur); break;
       case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
       case TKN_block:        op = parse<Block>(cur); break;
       default:

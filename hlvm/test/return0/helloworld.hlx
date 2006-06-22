@@ -13,20 +13,20 @@
     </constant>
     <program id="helloworld">
       <block>
-        <autovar id="stdout" type="stream"></autovar>
+        <autovar id="out" type="stream"></autovar>
         <store>
-          <ref id="stdout"/>
-          <open><cref id="stdout"/></open>
+          <ref id="out"/>
+          <open><ref id="stdout"/></open>
         </store>
         <write>
-          <load><ref id="stdout"/></load>
-          <cref id="hw"/>
+          <load><ref id="out"/></load>
+          <ref id="hw"/>
         </write>
         <close>
-          <load><ref id="stdout"/></load>
+          <load><ref id="out"/></load>
         </close>
         <ret>
-          <cref id="zero"/>
+          <ref id="zero"/>
         </ret>
       </block>
     </program>

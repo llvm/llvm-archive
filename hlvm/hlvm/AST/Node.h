@@ -134,19 +134,20 @@ LastTypeID = TextTypeID,
   ConstantBooleanID,       ///< A constant boolean value
 FirstValueID = ConstantBooleanID,
 FirstConstantID = ConstantBooleanID,
+FirstConstantValueID = ConstantBooleanID,
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
   ConstantStringID,        ///< A constant string value
   ConstantAggregateID,     ///< A constant aggregate for arrays, structures, etc
   ConstantExpressionID,    ///< A constant expression
-  SizeOfID,                ///< Size of a type
+LastConstantValueID = ConstantExpressionID,
 
   // Linkage Items
   VariableID,              ///< The Variable Node (a storage location)
-FirstLinkageItemID = VariableID,
+FirstLinkableID = VariableID,
   FunctionID,              ///< The Function Node (a callable function)
   ProgramID,               ///< The Program Node (a program starting point)
-LastLinkageItemID = ProgramID,
+LastLinkableID = ProgramID,
 LastConstantID = ProgramID,
 
   // Operator
@@ -160,13 +161,12 @@ FirstNilaryOperatorID = BreakOpID,
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
-  ReferenceOpID,           ///< Obtain pointer to local/global variable
-  ConstantReferenceOpID,   ///< Obtain pointer to local/global variable
-LastNilaryOperatorID = ConstantReferenceOpID,
+  ReferenceOpID,           ///< Obtain value of Variable/Function/Constant
+LastNilaryOperatorID = ReferenceOpID,
 
   // Control Flow Unary Operators
-  NoOperatorID,            ///< The "do nothing" NoOp Operators
-FirstUnaryOperatorID = NoOperatorID,
+  NullOpID,                ///< The "do nothing" NullOp (no-op) Operator
+FirstUnaryOperatorID = NullOpID,
   ReturnOpID,              ///< The Return A Value Operator
   ThrowOpID,               ///< The Throw an Exception Operator
 
@@ -178,6 +178,7 @@ FirstUnaryOperatorID = NoOperatorID,
   PostIncrOpID,            ///< Post-Increment Unary Integer Operator
   PreDecrOpID,             ///< Pre-Decrement Unary Integer Operator
   PostDecrOpID,            ///< Post-Decrement Unary Integer Operator
+  SizeOfID,                ///< Size of a constant
 
   // Real Arithmetic Unary Operators
   IsPInfOpID,              ///< Real Number Positive Infinity Test Operator
@@ -365,9 +366,13 @@ class Node
     inline bool isConstant() const {
       return id >= FirstConstantID && id <= LastConstantID; }
 
-    /// Determine if the node is a LinkageItem
-    inline bool isLinkageItem() const {
-      return id >= FirstLinkageItemID && id <= LastLinkageItemID; }
+    /// Determine if the node is one of the Constant values.
+    inline bool isConstantValue() const {
+      return id >= FirstConstantValueID && id <= LastConstantValueID; }
+
+    /// Determine if the node is a Linkable
+    inline bool isLinkable() const {
+      return id >= FirstLinkableID && id <= LastLinkableID; }
 
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
@@ -518,12 +523,11 @@ class Documentable : public Node
 };
 
 /// This class is an abstract base class in the Abstract Syntax Tree for things
-/// that have a value at runtime. Every Value has a Type. All Operators, 
-/// LinkageItems, and Constants are values.
+/// that have a value at runtime. Every Value has a Type. All Operators, and
+/// Linkables are Values.
 /// @see Type
-/// @see LinkageItem
+/// @see Linkable
 /// @see Operator
-/// @see Constant
 /// @brief AST Value Node
 class Value : public Documentable
 {
@@ -559,5 +563,6 @@ class Value : public Documentable
   friend class AST;
 };
 
-} // hlvm
+
+} // end hlvm namespace
 #endif

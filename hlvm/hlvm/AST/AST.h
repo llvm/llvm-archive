@@ -475,7 +475,7 @@ class AST : public Node
     AutoVarOp* new_AutoVarOp(
       const std::string& name, ///< Name of the autovar in its scope
       const Type* Ty,          ///< Type of the autovar
-      Constant* op1,           ///< Initializer for the autovar
+      ConstantValue* op1,      ///< Initializer for the autovar
       const Locator* loc       ///< The source locator
     );
 
@@ -483,12 +483,6 @@ class AST : public Node
     ReferenceOp* new_ReferenceOp(
       const Value* V,       ///< The value being referenced
       const Locator*loc = 0 ///< The source locator
-    );
-
-    /// Create a new ReferenceOp.
-    ConstantReferenceOp* new_ConstantReferenceOp(
-      const Constant* C,     ///< The constant being referenced
-      const Locator* loc = 0 ///< The source locator
     );
 
     /// Provide a template function for creating standard nilary operators

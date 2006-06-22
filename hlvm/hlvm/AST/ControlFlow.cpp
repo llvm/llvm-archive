@@ -28,15 +28,32 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/Linkables.h>
+#include <hlvm/Base/Assert.h>
+#include <llvm/Support/Casting.h>
+
+using namespace llvm;
 
 namespace hlvm {
 
-NoOperator::~NoOperator() {}
+NullOp::~NullOp() {}
 SelectOp::~SelectOp() {}
 SwitchOp::~SwitchOp() {}
 LoopOp::~LoopOp() {}
 ReturnOp::~ReturnOp() { }
 BreakOp::~BreakOp() {}
 ContinueOp::~ContinueOp() {}
+CallOp::~CallOp() {}
+
+Function* 
+CallOp::getCalledFunction() const
+{
+  hlvmAssert(isa<ReferenceOp>(getOperand(0)));
+  ReferenceOp* refop = cast<ReferenceOp>(getOperand(0));
+  const Value* referent = refop->getReferent();
+  hlvmAssert(isa<Function>(referent));
+  return const_cast<Function*>(cast<Function>(referent));
+}
 
 }

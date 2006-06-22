@@ -3,24 +3,37 @@
   <bundle id="boolean">
     <constant id="true" type="bool"><true/></constant>
     <constant id="false" type="bool"><false/></constant>
+    <constant id="one" type="s32"><dec>1</dec></constant>
+    <constant id="zero" type="s32"><dec>0</dec></constant>
+    <signature id="compute_type" result="bool"/>
     <program id="boolean">
+      <block>
+        <select>
+          <call><ref id="compute"/></call>
+          <ref id="one"/>
+          <ref id="zero"/>
+        </select>
+      </block>
+    </program>
+
+    <function id="compute" type="compute_type">
       <block>
         <ret>
           <and>
             <nor>
               <or>
                 <xor>
-                  <cref id="true"/>
-                  <cref id="false"/>
+                  <ref id="true"/>
+                  <ref id="false"/>
                 </xor>
-                <cref id="false"/>
+                <ref id="false"/>
               </or>
-              <cref id="true"/>
+              <ref id="true"/>
             </nor>
-            <cref id="false"/>
+            <ref id="false"/>
           </and>
         </ret>
       </block>
-    </program>
+    </function>
   </bundle>
 </hlvm>

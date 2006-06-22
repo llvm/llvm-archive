@@ -28,15 +28,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "hlvm/AST/SymbolTable.h"
+#include "hlvm/AST/Type.h"
+#include "hlvm/AST/Linkables.h"
 #include "hlvm/Base/Assert.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <algorithm>
 
-using namespace hlvm;
+namespace hlvm {
 
+template<class ElemType>
 std::string 
-SymbolTable::getUniqueName(const std::string &base_name) const {
+SymbolTable<ElemType>::getUniqueName(const std::string &base_name) const {
   std::string try_name = base_name;
   const_iterator end = map_.end();
 
@@ -49,15 +52,17 @@ SymbolTable::getUniqueName(const std::string &base_name) const {
 }
 
 // lookup a node by name - returns null on failure
-Node* SymbolTable::lookup(const std::string& name) const {
+template<class ElemType>
+ElemType* SymbolTable<ElemType>::lookup(const std::string& name) const {
   const_iterator TI = map_.find(name);
   if (TI != map_.end())
-    return const_cast<Node*>(TI->second);
+    return const_cast<ElemType*>(TI->second);
   return 0;
 }
 
 // Erase a specific type from the symbol table
-bool SymbolTable::erase(Node *N) {
+template<class ElemType>
+bool SymbolTable<ElemType>::erase(ElemType *N) {
   for (iterator TI = map_.begin(), TE = map_.end(); TI != TE; ++TI) {
     if (TI->second == N) {
       this->erase(TI);
@@ -68,15 +73,17 @@ bool SymbolTable::erase(Node *N) {
 }
 
 // remove - Remove a node from the symbol table...
-Node* SymbolTable::erase(iterator Entry) {
+template<class ElemType>
+ElemType* SymbolTable<ElemType>::erase(iterator Entry) {
   hlvmAssert(Entry != map_.end() && "Invalid entry to remove!");
-  const Node* Result = Entry->second;
+  const ElemType* Result = Entry->second;
   map_.erase(Entry);
-  return const_cast<Node*>(Result);
+  return const_cast<ElemType*>(Result);
 }
 
 // insert - Insert a node into the symbol table with the specified name...
-void SymbolTable::insert(const std::string& Name, const Node* N) {
+template<class ElemType>
+void SymbolTable<ElemType>::insert(const std::string& Name, const ElemType* N) {
   hlvmAssert(N && "Can't insert null node into symbol table!");
 
   // Check to see if there is a naming conflict.  If so, rename this type!
@@ -93,7 +100,8 @@ void SymbolTable::insert(const std::string& Name, const Node* N) {
 /// doing "remove(V), V->Name = Name, insert(V)", but is faster, and will not
 /// temporarily remove the symbol table plane if V is the last value in the
 /// symtab with that name (which could invalidate iterators to that plane).
-bool SymbolTable::rename(Node *N, const std::string &name) {
+template<class ElemType>
+bool SymbolTable<ElemType>::rename(ElemType *N, const std::string &name) {
   for (iterator NI = map_.begin(), NE = map_.end(); NI != NE; ++NI) {
     if (NI->second == N) {
       // Remove the old entry.
@@ -104,4 +112,11 @@ bool SymbolTable::rename(Node *N, const std::string &name) {
     }
   }
   return false;
+}
+
+// instantiate for Types and Linkabes
+template class SymbolTable<Type>;
+template class SymbolTable<ConstantValue>;
+template class SymbolTable<Linkable>;
+
 }

@@ -15,11 +15,11 @@
         <ret>
           <select>
             <ne>
-              <cref id="0"/>
-              <cref id="21"/>
+              <ref id="0"/>
+              <ref id="21"/>
             </ne>
-            <cref id="42"/>
-            <cref id="21"/>
+            <ref id="42"/>
+            <ref id="21"/>
           </select>
         </ret>
       </block>

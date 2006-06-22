@@ -13,14 +13,14 @@
             <add>
               <mul>
                 <div>
-                  <cref id="42"/>
-                  <cref id="7"/>
+                  <ref id="42"/>
+                  <ref id="7"/>
                 </div>
-                <cref id="1"/>
+                <ref id="1"/>
               </mul>
-              <cref id="2"/>
+              <ref id="2"/>
             </add>
-            <cref id="8"/>
+            <ref id="8"/>
           </sub>
         </ret>
       </block>

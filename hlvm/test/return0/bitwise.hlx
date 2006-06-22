@@ -12,14 +12,14 @@
             <bnor>
               <bor>
                 <bxor>
-                  <cref id="0f0f0f0f"/>
-                  <cref id="08080808"/>
+                  <ref id="0f0f0f0f"/>
+                  <ref id="08080808"/>
                 </bxor>
-                <cref id="04040404"/>
+                <ref id="04040404"/>
               </bor>
-              <cref id="0f0f0f0f"/>
+              <ref id="0f0f0f0f"/>
             </bnor>
-            <cref id="00000000"/>
+            <ref id="00000000"/>
           </band>
         </ret>
       </block>

@@ -31,7 +31,7 @@
 #include <hlvm/AST/AST.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/Base/Assert.h>
 
 using namespace hlvm;
@@ -55,6 +55,7 @@ public:
   inline void runOn(Bundle* b);
   inline void runOn(Value* b);
   inline void runOn(Constant* b);
+  inline void runOn(Linkable* b);
 
 private:
   std::vector<Pass*> pre;
@@ -147,14 +148,8 @@ PassManagerImpl::runOn(Block* b)
 {
   runPreOrder(b);
   for (Block::iterator I = b->begin(), E = b->end(); I != E; ++I) {
-    if (!*I)
-      break;
-    if (isa<Block>(*I))
-      runOn(cast<Block>(*I)); // recurse!
-    else if (isa<Variable>(*I))
-      runOn(cast<Variable>(*I));
-    else if (isa<Operator>(*I))
-      runOn(cast<Operator>(*I)); 
+    if (isa<Operator>(*I))
+      runOn(cast<Operator>(*I)); // recurse, possibly!
     else
       hlvmDeadCode("Block has invalid content");
   }
@@ -165,27 +160,23 @@ inline void
 PassManagerImpl::runOn(Bundle* b)
 {
   runPreOrder(b);
-  for (Bundle::type_iterator TI =b->type_begin(), TE = b->type_end(); 
+  for (Bundle::type_iterator TI = b->type_begin(), TE = b->type_end(); 
        TI != TE; ++TI) {
-    runPreOrder(const_cast<Node*>(TI->second));
-    runPostOrder(const_cast<Node*>(TI->second));
+    runPreOrder(const_cast<Type*>(TI->second));
+    runPostOrder(const_cast<Type*>(TI->second));
   }
-  for (Bundle::constant_iterator CI = b->const_begin(), CE = b->const_end();
-      CI != CE; ++CI)
+  for (Bundle::cval_iterator CI = b->cval_begin(), CE = b->cval_end(); 
+       CI != CE; ++CI) {
+    runPreOrder(const_cast<ConstantValue*>(CI->second));
+    runPostOrder(const_cast<ConstantValue*>(CI->second));
+  }
+  for (Bundle::linkable_iterator LI = b->linkable_begin(), 
+       LE = b->linkable_end(); LI != LE; ++LI)
   {
-    runPreOrder(const_cast<Node*>(CI->second));
-    runPostOrder(const_cast<Node*>(CI->second));
-  }
-  for (Bundle::var_iterator VI = b->var_begin(), VE = b->var_end(); 
-       VI != VE; ++VI) {
-    runPreOrder(const_cast<Node*>(VI->second));
-    runPostOrder(const_cast<Node*>(VI->second));
-  }
-  for (Bundle::func_iterator FI = b->func_begin(), FE = b->func_end(); 
-       FI != FE; ++FI) {
-    runPreOrder(const_cast<Node*>(FI->second));
-    runOn(llvm::cast<Function>(FI->second)->getBlock());
-    runPostOrder(const_cast<Node*>(FI->second));
+    runPreOrder(const_cast<Linkable*>(LI->second));
+    if (isa<Function>(LI->second))
+      runOn(llvm::cast<Function>(LI->second)->getBlock());
+    runPostOrder(const_cast<Linkable*>(LI->second));
   }
   runPostOrder(b);
 }

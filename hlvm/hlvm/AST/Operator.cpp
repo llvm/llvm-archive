@@ -28,7 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Operator.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 

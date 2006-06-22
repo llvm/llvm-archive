@@ -92,7 +92,6 @@ static const char* NodeIDStrs[] =
   "ConstantString",
   "ConstantAggregate",
   "ConstantExpression",
-  "SizeOf",
   "Variable",
   "Function",
   "Program",
@@ -103,8 +102,7 @@ static const char* NodeIDStrs[] =
   "NInfOp",
   "NaNOp",
   "ReferenceOp",
-  "ConstantReferenceOp",
-  "NoOperator",
+  "NullOp",
   "ReturnOp",
   "ThrowOp",
   "NotOp",
@@ -114,6 +112,7 @@ static const char* NodeIDStrs[] =
   "PostIncrOp",
   "PreDecrOp",
   "PostDecrOp",
+  "SizeOf",
   "IsPInfOp",
   "IsNInfOp",
   "IsNanOp",
@@ -228,9 +227,12 @@ main(int argc, char**argv)
     std::cout << "Constants: " 
               << FirstConstantID << " -> "
               << LastConstantID << "\n";
-    std::cout << "LinkageItems: " 
-              << FirstLinkageItemID << " -> "
-              << LastLinkageItemID << "\n";
+    std::cout << "ConstantValues: " 
+              << FirstConstantValueID << " -> "
+              << LastConstantValueID << "\n";
+    std::cout << "Linkables: " 
+              << FirstLinkableID << " -> "
+              << LastLinkableID << "\n";
     std::cout << "Operators: " 
               << FirstOperatorID << " -> "
               << LastOperatorID << "\n";
@@ -250,7 +252,7 @@ main(int argc, char**argv)
               << FirstMultiOperatorID << " -> "
               << LastMultiOperatorID << "\n";
     if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs)
-      std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n";
+      std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n\n";
 
   }
   return 0;

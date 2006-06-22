@@ -32,7 +32,7 @@
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/Documentation.h>
 #include <hlvm/AST/ContainerType.h>
-#include <hlvm/AST/LinkageItems.h>
+#include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/ControlFlow.h>
@@ -273,7 +273,7 @@ XMLWriterImpl::WriterPass::put(EnumerationType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<RealType>(RealType* t)
+XMLWriterImpl::WriterPass::put(RealType* t)
 {
   startElement("atom");
   writeAttribute("id",t->getName());
@@ -292,7 +292,7 @@ XMLWriterImpl::WriterPass::put<RealType>(RealType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<OctetType>(OctetType* t)
+XMLWriterImpl::WriterPass::put(OctetType* t)
 {
   startElement("atom");
   writeAttribute("id",t->getName());
@@ -303,7 +303,7 @@ XMLWriterImpl::WriterPass::put<OctetType>(OctetType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<VoidType>(VoidType* t)
+XMLWriterImpl::WriterPass::put(VoidType* t)
 {
   startElement("atom");
   writeAttribute("id",t->getName());
@@ -314,7 +314,7 @@ XMLWriterImpl::WriterPass::put<VoidType>(VoidType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<OpaqueType>(OpaqueType* op)
+XMLWriterImpl::WriterPass::put(OpaqueType* op)
 {
   startElement("opaque");
   writeAttribute("id",op->getName());
@@ -322,7 +322,7 @@ XMLWriterImpl::WriterPass::put<OpaqueType>(OpaqueType* op)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<PointerType>(PointerType* t)
+XMLWriterImpl::WriterPass::put(PointerType* t)
 {
   startElement("pointer");
   writeAttribute("id", t->getName());
@@ -331,7 +331,7 @@ XMLWriterImpl::WriterPass::put<PointerType>(PointerType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<ArrayType>(ArrayType* t)
+XMLWriterImpl::WriterPass::put(ArrayType* t)
 {
   startElement("array");
   writeAttribute("id", t->getName());
@@ -341,7 +341,7 @@ XMLWriterImpl::WriterPass::put<ArrayType>(ArrayType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<VectorType>(VectorType* t)
+XMLWriterImpl::WriterPass::put(VectorType* t)
 {
   startElement("vector");
   writeAttribute("id", t->getName());
@@ -351,7 +351,7 @@ XMLWriterImpl::WriterPass::put<VectorType>(VectorType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<StructureType>(StructureType* t)
+XMLWriterImpl::WriterPass::put(StructureType* t)
 {
   startElement("structure");
   writeAttribute("id",t->getName());
@@ -367,7 +367,7 @@ XMLWriterImpl::WriterPass::put<StructureType>(StructureType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<SignatureType>(SignatureType* t)
+XMLWriterImpl::WriterPass::put(SignatureType* t)
 {
   startElement("signature");
   writeAttribute("id",t->getName());
@@ -385,7 +385,7 @@ XMLWriterImpl::WriterPass::put<SignatureType>(SignatureType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<ConstantBoolean>(ConstantBoolean* i)
+XMLWriterImpl::WriterPass::put(ConstantBoolean* i)
 {
   startElement("constant");
   writeAttribute("id",i->getName());
@@ -398,7 +398,7 @@ XMLWriterImpl::WriterPass::put<ConstantBoolean>(ConstantBoolean* i)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<ConstantInteger>(ConstantInteger* i)
+XMLWriterImpl::WriterPass::put(ConstantInteger* i)
 {
   startElement("constant");
   writeAttribute("id",i->getName());
@@ -414,7 +414,7 @@ XMLWriterImpl::WriterPass::put<ConstantInteger>(ConstantInteger* i)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ConstantReal>(ConstantReal* r)
+XMLWriterImpl::WriterPass::put(ConstantReal* r)
 {
   startElement("constant");
   writeAttribute("id",r->getName());
@@ -425,7 +425,7 @@ XMLWriterImpl::WriterPass::put<ConstantReal>(ConstantReal* r)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ConstantString>(ConstantString* t)
+XMLWriterImpl::WriterPass::put(ConstantString* t)
 {
   startElement("constant");
   writeAttribute("id",t->getName());
@@ -436,7 +436,7 @@ XMLWriterImpl::WriterPass::put<ConstantString>(ConstantString* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<Variable>(Variable* v)
+XMLWriterImpl::WriterPass::put(Variable* v)
 {
   startElement("variable");
   writeAttribute("id",v->getName());
@@ -449,7 +449,7 @@ XMLWriterImpl::WriterPass::put<Variable>(Variable* v)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<Function>(Function* f)
+XMLWriterImpl::WriterPass::put(Function* f)
 {
   startElement("function");
   writeAttribute("id",f->getName());
@@ -459,7 +459,7 @@ XMLWriterImpl::WriterPass::put<Function>(Function* f)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<Program>(Program* p)
+XMLWriterImpl::WriterPass::put(Program* p)
 {
   startElement("program");
   writeAttribute("id",p->getName());
@@ -467,7 +467,7 @@ XMLWriterImpl::WriterPass::put<Program>(Program* p)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<Block>(Block* b)
+XMLWriterImpl::WriterPass::put(Block* b)
 {
   startElement("block");
   if (!b->getLabel().empty())
@@ -476,7 +476,7 @@ XMLWriterImpl::WriterPass::put<Block>(Block* b)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<AutoVarOp>(AutoVarOp* av)
+XMLWriterImpl::WriterPass::put(AutoVarOp* av)
 {
   startElement("autovar");
   writeAttribute("id",av->getName());
@@ -489,182 +489,182 @@ XMLWriterImpl::WriterPass::put<AutoVarOp>(AutoVarOp* av)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<NegateOp>(NegateOp* op)
+XMLWriterImpl::WriterPass::put(NegateOp* op)
 {
   startElement("neg");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ComplementOp>(ComplementOp* op)
+XMLWriterImpl::WriterPass::put(ComplementOp* op)
 {
   startElement("cmpl");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<PreIncrOp>(PreIncrOp* op)
+XMLWriterImpl::WriterPass::put(PreIncrOp* op)
 {
   startElement("preinc");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<PreDecrOp>(PreDecrOp* op)
+XMLWriterImpl::WriterPass::put(PreDecrOp* op)
 {
   startElement("predec");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<PostIncrOp>(PostIncrOp* op)
+XMLWriterImpl::WriterPass::put(PostIncrOp* op)
 {
   startElement("postinc");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<PostDecrOp>(PostDecrOp* op)
+XMLWriterImpl::WriterPass::put(PostDecrOp* op)
 {
   startElement("postdec");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<AddOp>(AddOp* op)
+XMLWriterImpl::WriterPass::put(AddOp* op)
 {
   startElement("add");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<SubtractOp>(SubtractOp* op)
+XMLWriterImpl::WriterPass::put(SubtractOp* op)
 {
   startElement("sub");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<MultiplyOp>(MultiplyOp* op)
+XMLWriterImpl::WriterPass::put(MultiplyOp* op)
 {
   startElement("mul");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<DivideOp>(DivideOp* op)
+XMLWriterImpl::WriterPass::put(DivideOp* op)
 {
   startElement("div");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ModuloOp>(ModuloOp* op)
+XMLWriterImpl::WriterPass::put(ModuloOp* op)
 {
   startElement("mod");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<BAndOp>(BAndOp* op)
+XMLWriterImpl::WriterPass::put(BAndOp* op)
 {
   startElement("band");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<BOrOp>(BOrOp* op)
+XMLWriterImpl::WriterPass::put(BOrOp* op)
 {
   startElement("bor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<BXorOp>(BXorOp* op)
+XMLWriterImpl::WriterPass::put(BXorOp* op)
 {
   startElement("bxor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<BNorOp>(BNorOp* op)
+XMLWriterImpl::WriterPass::put(BNorOp* op)
 {
   startElement("bnor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<NotOp>(NotOp* op)
+XMLWriterImpl::WriterPass::put(NotOp* op)
 {
   startElement("not");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<AndOp>(AndOp* op)
+XMLWriterImpl::WriterPass::put(AndOp* op)
 {
   startElement("and");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<OrOp>(OrOp* op)
+XMLWriterImpl::WriterPass::put(OrOp* op)
 {
   startElement("or");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<XorOp>(XorOp* op)
+XMLWriterImpl::WriterPass::put(XorOp* op)
 {
   startElement("xor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<NorOp>(NorOp* op)
+XMLWriterImpl::WriterPass::put(NorOp* op)
 {
   startElement("nor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<EqualityOp>(EqualityOp* op)
+XMLWriterImpl::WriterPass::put(EqualityOp* op)
 {
   startElement("eq");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<InequalityOp>(InequalityOp* op)
+XMLWriterImpl::WriterPass::put(InequalityOp* op)
 {
   startElement("ne");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<LessThanOp>(LessThanOp* op)
+XMLWriterImpl::WriterPass::put(LessThanOp* op)
 {
   startElement("lt");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<GreaterThanOp>(GreaterThanOp* op)
+XMLWriterImpl::WriterPass::put(GreaterThanOp* op)
 {
   startElement("gt");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<LessEqualOp>(LessEqualOp* op)
+XMLWriterImpl::WriterPass::put(LessEqualOp* op)
 {
   startElement("le");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<GreaterEqualOp>(GreaterEqualOp* op)
+XMLWriterImpl::WriterPass::put(GreaterEqualOp* op)
 {
   startElement("ge");
   putDoc(op);
@@ -672,50 +672,57 @@ XMLWriterImpl::WriterPass::put<GreaterEqualOp>(GreaterEqualOp* op)
 
 
 template<> void
-XMLWriterImpl::WriterPass::put<NoOperator>(NoOperator* op)
+XMLWriterImpl::WriterPass::put(NullOp* op)
 {
   startElement("noop");
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<SelectOp>(SelectOp* op)
+XMLWriterImpl::WriterPass::put(SelectOp* op)
 {
   startElement("select");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<SwitchOp>(SwitchOp* op) 
+XMLWriterImpl::WriterPass::put(SwitchOp* op) 
 {
   startElement("switch");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<LoopOp>(LoopOp* op) 
+XMLWriterImpl::WriterPass::put(LoopOp* op) 
 {
   startElement("loop");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<BreakOp>(BreakOp* op)
+XMLWriterImpl::WriterPass::put(BreakOp* op)
 {
   startElement("break");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put<ContinueOp>(ContinueOp* op)
+XMLWriterImpl::WriterPass::put(ContinueOp* op)
 {
   startElement("continue");
   putDoc(op);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<ReturnOp>(ReturnOp* r)
+XMLWriterImpl::WriterPass::put(ReturnOp* r)
 {
   startElement("ret");
+  putDoc(r);
+}
+
+template<> void 
+XMLWriterImpl::WriterPass::put(CallOp* r)
+{
+  startElement("call");
   putDoc(r);
 }
 
@@ -733,21 +740,18 @@ XMLWriterImpl::WriterPass::put(LoadOp* r)
   putDoc(r);
 }
 
-template<> void
-XMLWriterImpl::WriterPass::put(ConstantReferenceOp* cr)
-{
-  startElement("cref");
-  writeAttribute("id",cr->getReferent()->getName());
-}
-
 template<> void 
 XMLWriterImpl::WriterPass::put(ReferenceOp* r)
 {
   startElement("ref");
   const Value* ref = r->getReferent();
-  const std::string& name = 
-     (isa<Variable>(ref) ? cast<Variable>(ref)->getName() :
-      (isa<AutoVarOp>(ref) ? cast<AutoVarOp>(ref)->getName() : "oops" ));
+  std::string name;
+  if (isa<AutoVarOp>(ref))
+    name = cast<AutoVarOp>(ref)->getName();
+  else if (isa<Constant>(ref))
+    name = cast<Constant>(ref)->getName();
+  else
+    name = "oops";
   writeAttribute("id",name);
   putDoc(r);
 }
@@ -774,7 +778,7 @@ XMLWriterImpl::WriterPass::put(CloseOp* r)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put<Bundle>(Bundle* b)
+XMLWriterImpl::WriterPass::put(Bundle* b)
 {
   startElement("bundle");
   writeAttribute("id",b->getName());
@@ -840,16 +844,16 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case GreaterThanOpID:      put(cast<GreaterThanOp>(n)); break;
       case LessEqualOpID:        put(cast<LessEqualOp>(n)); break;
       case GreaterEqualOpID:     put(cast<GreaterEqualOp>(n)); break;
-      case NoOperatorID:         put(cast<NoOperator>(n)); break;
+      case NullOpID:             put(cast<NullOp>(n)); break;
       case SelectOpID:           put(cast<SelectOp>(n)); break;
       case SwitchOpID:           put(cast<SwitchOp>(n)); break;
       case LoopOpID:             put(cast<LoopOp>(n)); break;
       case BreakOpID:            put(cast<BreakOp>(n)); break;
       case ContinueOpID:         put(cast<ContinueOp>(n)); break;
       case ReturnOpID:           put(cast<ReturnOp>(n)); break;
+      case CallOpID:             put(cast<CallOp>(n)); break;
       case StoreOpID:            put(cast<StoreOp>(n)); break;
       case LoadOpID:             put(cast<LoadOp>(n)); break;
-      case ConstantReferenceOpID:put(cast<ConstantReferenceOp>(n)); break;
       case ReferenceOpID:        put(cast<ReferenceOp>(n)); break;
       case OpenOpID:             put(cast<OpenOp>(n)); break;
       case CloseOpID:            put(cast<CloseOp>(n)); break;

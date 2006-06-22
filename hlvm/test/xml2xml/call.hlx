@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/call.hlx">
+  <bundle id="call">
+    <signature id="callee_type" result="void"/>
+    <function id="callee" type="callee_type" linkage="external"/>
+    <program id="return">
+      <block>
+        <call>
+          <ref id="callee"/>
+        </call>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

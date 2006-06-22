@@ -50,12 +50,9 @@ public:
   inline void runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m);
   inline void runPreOrder(Node* n);
   inline void runPostOrder(Node* n);
-  inline void runOn(Operator* b);
-  inline void runOn(Block* b);
-  inline void runOn(Bundle* b);
-  inline void runOn(Value* b);
-  inline void runOn(Constant* b);
-  inline void runOn(Linkable* b);
+
+  template<class NodeClass>
+  inline void runOn(NodeClass* b);
 
 private:
   std::vector<Pass*> pre;
@@ -109,9 +106,10 @@ PassManagerImpl::runPostOrder(Node* n)
   }
 }
 
-inline void
-PassManagerImpl::runOn(Constant* cst)
+template<> inline void
+PassManagerImpl::runOn(ConstantValue* cst)
 {
+  hlvmAssert(cst && "Null constant?");
   hlvmAssert(isa<Constant>(cst));
   runPreOrder(cst);
   // FIXME: Eventually we'll have structured constants which need to have 
@@ -119,46 +117,41 @@ PassManagerImpl::runOn(Constant* cst)
   runPostOrder(cst);
 }
 
-inline void
+template<> inline void
 PassManagerImpl::runOn(Operator* op)
 {
+  hlvmAssert(op && "Null operator?");
   runPreOrder(op);
   size_t limit = op->getNumOperands();
-  for (size_t i = 0; i < limit; ++i) {
-    // Skip non-operator operands as they've been handled elsewhere
-    if (isa<Operator>(op))
-      runOn(op->getOperand(i));
-  }
+  for (size_t i = 0; i < limit; ++i)
+    runOn(op->getOperand(i));
   runPostOrder(op);
 }
 
-inline void
-PassManagerImpl::runOn(Value* v)
-{
-  if (isa<Constant>(v))
-    runOn(cast<Constant>(v));
-  else if (isa<Operator>(v))
-    runOn(cast<Operator>(v));
-  else
-    hlvmDeadCode("Value not an Operator or Constant?");
-}
-
-inline void
+template<> inline void
 PassManagerImpl::runOn(Block* b)
 {
+  hlvmAssert(b && "Null block?");
   runPreOrder(b);
-  for (Block::iterator I = b->begin(), E = b->end(); I != E; ++I) {
-    if (isa<Operator>(*I))
-      runOn(cast<Operator>(*I)); // recurse, possibly!
-    else
-      hlvmDeadCode("Block has invalid content");
-  }
+  for (Block::iterator I = b->begin(), E = b->end(); I != E; ++I)
+    runOn(cast<Operator>(*I)); // recurse, possibly!
   runPostOrder(b);
 }
 
-inline void 
+template<> inline void
+PassManagerImpl::runOn(Linkable* l)
+{
+  runPreOrder(l);
+  if (isa<Function>(l))
+    if (Block* b = cast<Function>(l)->getBlock())
+      runOn(b);
+  runPostOrder(l);
+}
+
+template<> inline void 
 PassManagerImpl::runOn(Bundle* b)
 {
+  hlvmAssert(b && "Null bundle?");
   runPreOrder(b);
   for (Bundle::type_iterator TI = b->type_begin(), TE = b->type_end(); 
        TI != TE; ++TI) {
@@ -173,16 +166,14 @@ PassManagerImpl::runOn(Bundle* b)
   for (Bundle::linkable_iterator LI = b->linkable_begin(), 
        LE = b->linkable_end(); LI != LE; ++LI)
   {
-    runPreOrder(const_cast<Linkable*>(LI->second));
-    if (isa<Function>(LI->second))
-      runOn(llvm::cast<Function>(LI->second)->getBlock());
-    runPostOrder(const_cast<Linkable*>(LI->second));
+    runOn(const_cast<Linkable*>(LI->second));
   }
   runPostOrder(b);
 }
 
 void PassManagerImpl::runOn(AST* tree)
 {
+  hlvmAssert(tree && "Null tree?");
   // Call the initializers
   std::vector<Pass*>::iterator PI = all.begin(), PE = all.end();
   while (PI != PE) { (*PI)->handleInitialize(tree); ++PI; }
@@ -214,12 +205,12 @@ PassManagerImpl::runOn(AST* tree, Node* startAt)
     runOn(cast<Bundle>(startAt));
   else if (isa<Block>(startAt))
     runOn(cast<Block>(startAt));
-  else if (isa<Operator>(startAt))
-    runOn(cast<Operator>(startAt));
-  else if (isa<Constant>(startAt))
-    runOn(cast<Constant>(startAt));
-  else if (isa<Value>(startAt))
-    runOn(cast<Value>(startAt));
+  else if (isa<Linkable>(startAt))
+    runOn(cast<Linkable>(startAt));
+  else if (isa<ConstantValue>(startAt))
+    runOn(cast<ConstantValue>(startAt));
+  else
+    hlvmAssert(!"startAt type not supported");
 }
 
 } // anonymous namespace

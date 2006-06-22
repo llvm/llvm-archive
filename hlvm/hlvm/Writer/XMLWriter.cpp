@@ -372,7 +372,8 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   startElement("signature");
   writeAttribute("id",t->getName());
   writeAttribute("result",t->getResultType());
-  writeAttribute("varargs",t->isVarArgs() ? "true" : "false");
+  if (t->isVarArgs())
+    writeAttribute("varargs","true");
   putDoc(t);
   for (SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("arg");

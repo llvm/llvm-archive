@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/call.hlx">
+  <bundle id="call">
+    <constant id="zero" type="s32"><dec>0</dec></constant>
+    <signature id="zero_func" result="s32"/>
+    <function id="getResult" type="zero_func">
+      <block>
+        <ret>
+          <ref id="zero"/>
+        </ret>
+      </block>
+    </function>
+
+    <program id="call">
+      <block>
+        <ret>
+          <call>
+            <ref id="getResult"/>
+          </call>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

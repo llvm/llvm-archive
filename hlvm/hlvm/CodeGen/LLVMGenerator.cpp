@@ -75,10 +75,10 @@ class LLVMGeneratorPass : public hlvm::Pass
 {
   typedef std::vector<llvm::Module*> ModuleList;
   typedef std::vector<llvm::Value*> OperandList;
-  typedef std::map<hlvm::Variable*,llvm::Value*> VariableDictionary;
-  typedef std::map<hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
-  typedef std::map<hlvm::ConstantValue*,llvm::Constant*> ConstantDictionary;
-  typedef std::map<hlvm::Function*,llvm::Function*> FunctionDictionary;
+  typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
+  typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
+  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> ConstantDictionary;
+  typedef std::map<const hlvm::Function*,llvm::Function*> FunctionDictionary;
   ModuleList modules;        ///< The list of modules we construct
   llvm::Module*     lmod;    ///< The current module we're generation 
   llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
@@ -135,8 +135,9 @@ class LLVMGeneratorPass : public hlvm::Pass
   const llvm::Type* getType(const hlvm::Type* ty);
   llvm::Constant* getConstant(const hlvm::ConstantValue* C);
   llvm::Value* getVariable(const hlvm::Variable* V);
+  llvm::Function* getFunction(const hlvm::Function* F);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
-  inline std::string getLinkageName(Linkable* li);
+  inline std::string getLinkageName(const Linkable* li);
   inline llvm::Value* getBoolean(llvm::Value* op);
   inline llvm::Value* getInteger(llvm::Value* op);
   inline llvm::Value* toBoolean(llvm::Value* op);
@@ -413,6 +414,15 @@ LLVMGeneratorPass::get_hlvm_program_signature()
   return hlvm_program_signature;
 }
 
+std::string
+LLVMGeneratorPass::getLinkageName(const Linkable* lk)
+{
+  // if (lk->isProgram())
+    // return std::string("_hlvm_entry_") + lk->getName();
+  // FIXME: This needs to incorporate the bundle name
+  return lk->getName();
+}
+
 const llvm::Type*
 LLVMGeneratorPass::getType(const hlvm::Type* ty)
 {
@@ -597,15 +607,67 @@ LLVMGeneratorPass::getConstant(const hlvm::ConstantValue* C)
 llvm::Value*
 LLVMGeneratorPass::getVariable(const Variable* V) 
 {
-  // FIXME: implement
-  return 0;
+  hlvmAssert(V != 0);
+  hlvmAssert(V->is(VariableID));
+
+  // First, lets see if its cached already
+  VariableDictionary::iterator I = 
+    gvars.find(const_cast<hlvm::Variable*>(V));
+  if (I != gvars.end())
+    return I->second;
+
+  // Not found, create it
+  llvm::Constant* Initializer = 0;
+  if (V->hasInitializer())
+    Initializer = getConstant(V->getInitializer());
+  else
+    Initializer = llvm::Constant::getNullValue(getType(V->getType()));
+  llvm::Value* gv = new llvm::GlobalVariable(
+    /*Ty=*/ getType(V->getType()),
+    /*isConstant=*/ false,
+    /*Linkage=*/ getLinkageTypes(V->getLinkageKind()), 
+    /*Initializer=*/ Initializer,
+    /*Name=*/ getLinkageName(V),
+    /*Parent=*/ lmod
+  );
+  gvars[V] = gv;
+  return gv;
 }
 
+llvm::Function*
+LLVMGeneratorPass::getFunction(const hlvm::Function* F)
+{
+  hlvmAssert(F != 0);
+  hlvmAssert(F->is(FunctionID));
+
+  // First, lets see if its cached already
+  FunctionDictionary::iterator I = funcs.find(const_cast<hlvm::Function*>(F));
+  if (I != funcs.end())
+    return I->second;
+
+  llvm::Function* func = new llvm::Function(
+    /*Type=*/ llvm::cast<llvm::FunctionType>(getType(F->getType())),
+    /*Linkage=*/ getLinkageTypes(F->getLinkageKind()), 
+    /*Name=*/ getLinkageName(F),
+    /*Parent=*/ lmod
+  );
+  funcs[F] = func;
+  return func;
+}
 
 llvm::GlobalValue::LinkageTypes
 LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 {
-  return llvm::GlobalValue::LinkageTypes(lk);
+  switch (lk) {
+    case hlvm::ExternalLinkage : return llvm::GlobalValue::ExternalLinkage; 
+    case hlvm::LinkOnceLinkage : return llvm::GlobalValue::LinkOnceLinkage; 
+    case hlvm::WeakLinkage     : return llvm::GlobalValue::WeakLinkage; 
+    case hlvm::AppendingLinkage: return llvm::GlobalValue::AppendingLinkage; 
+    case hlvm::InternalLinkage : return llvm::GlobalValue::InternalLinkage; 
+    default:
+      hlvmAssert(!lk && "Bad LinkageKinds");
+  }
+  return llvm::GlobalValue::InternalLinkage;
 }
 
 llvm::Value* 
@@ -639,107 +701,98 @@ LLVMGeneratorPass::ptr2Value(llvm::Value* V)
   return Load;
 }
 
-std::string
-LLVMGeneratorPass::getLinkageName(Linkable* lk)
-{
-  // if (lk->isProgram())
-    // return std::string("_hlvm_entry_") + lk->getName();
-  // FIXME: This needs to incorporate the bundle name
-  return lk->getName();
-}
-
 template<> void 
-LLVMGeneratorPass::gen<AliasType>(AliasType* t)
+LLVMGeneratorPass::gen(AliasType* t)
 {
   lmod->addTypeName(t->getName(), getType(t->getElementType()));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<AnyType>(AnyType* t)
+LLVMGeneratorPass::gen(AnyType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<StringType>(StringType* s)
+LLVMGeneratorPass::gen(StringType* s)
 {
   lmod->addTypeName(s->getName(), getType(s));
 }
 
 template<> void
-LLVMGeneratorPass::gen<BooleanType>(BooleanType* t)
+LLVMGeneratorPass::gen(BooleanType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<CharacterType>(CharacterType* t)
+LLVMGeneratorPass::gen(CharacterType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<IntegerType>(IntegerType* t)
+LLVMGeneratorPass::gen(IntegerType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<RangeType>(RangeType* t)
+LLVMGeneratorPass::gen(RangeType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<EnumerationType>(EnumerationType* t)
+LLVMGeneratorPass::gen(EnumerationType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<RealType>(RealType* t)
+LLVMGeneratorPass::gen(RealType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<OctetType>(OctetType* t)
+LLVMGeneratorPass::gen(OctetType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void
-LLVMGeneratorPass::gen<VoidType>(VoidType* t)
+LLVMGeneratorPass::gen(VoidType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<hlvm::PointerType>(hlvm::PointerType* t)
+LLVMGeneratorPass::gen(hlvm::PointerType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<hlvm::ArrayType>(hlvm::ArrayType* t)
+LLVMGeneratorPass::gen(hlvm::ArrayType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<VectorType>(VectorType* t)
+LLVMGeneratorPass::gen(VectorType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<StructureType>(StructureType* t)
+LLVMGeneratorPass::gen(StructureType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
 
 template<> void 
-LLVMGeneratorPass::gen<SignatureType>(SignatureType* t)
+LLVMGeneratorPass::gen(SignatureType* t)
 {
   lmod->addTypeName(t->getName(), getType(t));
 }
@@ -751,31 +804,31 @@ LLVMGeneratorPass::gen<hlvm::OpaqueType>(hlvm::OpaqueType* t)
 }
 
 template<> void 
-LLVMGeneratorPass::gen<ConstantInteger>(ConstantInteger* i)
+LLVMGeneratorPass::gen(ConstantInteger* i)
 {
   llvm::Constant* C = getConstant(i);
 }
 
 template<> void
-LLVMGeneratorPass::gen<ConstantBoolean>(ConstantBoolean* b)
+LLVMGeneratorPass::gen(ConstantBoolean* b)
 {
   getConstant(b);
 }
 
 template<> void
-LLVMGeneratorPass::gen<ConstantReal>(ConstantReal* r)
+LLVMGeneratorPass::gen(ConstantReal* r)
 {
   getConstant(r);
 }
 
 template<> void
-LLVMGeneratorPass::gen<ConstantString>(ConstantString* t)
+LLVMGeneratorPass::gen(ConstantString* t)
 {
   getConstant(t);
 }
 
 template<> void
-LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
+LLVMGeneratorPass::gen(AutoVarOp* av)
 {
   assert(lblk  != 0 && "Not in block context");
   // emit a stack variable
@@ -825,32 +878,19 @@ LLVMGeneratorPass::gen<AutoVarOp>(AutoVarOp* av)
 }
 
 template<> void
-LLVMGeneratorPass::gen<Variable>(Variable* v)
+LLVMGeneratorPass::gen(Variable* v)
 {
-  llvm::Constant* Initializer = 0;
-  if (v->hasInitializer())
-    Initializer = getConstant(v->getInitializer());
-  else
-    Initializer = llvm::Constant::getNullValue(getType(v->getType()));
-  llvm::Value* gv = new llvm::GlobalVariable(
-    /*Ty=*/ getType(v->getType()),
-    /*isConstant=*/ false,
-    /*Linkage=*/ llvm::GlobalValue::ExternalLinkage,
-    /*Initializer=*/ Initializer,
-    /*Name=*/ getLinkageName(v),
-    /*Parent=*/ lmod
-  );
-  gvars[v] = gv;
+  getVariable(v);
 }
 
 template<> void 
-LLVMGeneratorPass::gen<Block>(Block* b)
+LLVMGeneratorPass::gen(Block* b)
 {
   lblk = new llvm::BasicBlock(b->getLabel(),lfunc,0);
 }
 
 template<> void
-LLVMGeneratorPass::gen<NegateOp>(NegateOp* op)
+LLVMGeneratorPass::gen(NegateOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for NegateOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
@@ -863,7 +903,7 @@ LLVMGeneratorPass::gen<NegateOp>(NegateOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<ComplementOp>(ComplementOp* op)
+LLVMGeneratorPass::gen(ComplementOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for ComplementOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
@@ -878,7 +918,7 @@ LLVMGeneratorPass::gen<ComplementOp>(ComplementOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<PreIncrOp>(PreIncrOp* op)
+LLVMGeneratorPass::gen(PreIncrOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for PreIncrOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
@@ -899,7 +939,7 @@ LLVMGeneratorPass::gen<PreIncrOp>(PreIncrOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<PreDecrOp>(PreDecrOp* op)
+LLVMGeneratorPass::gen(PreDecrOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for PreDecrOp");
   llvm::Value* operand = lops.back(); lops.pop_back();
@@ -920,19 +960,19 @@ LLVMGeneratorPass::gen<PreDecrOp>(PreDecrOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<PostIncrOp>(PostIncrOp* op)
+LLVMGeneratorPass::gen(PostIncrOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for PostIncrOp");
 }
 
 template<> void
-LLVMGeneratorPass::gen<PostDecrOp>(PostDecrOp* op)
+LLVMGeneratorPass::gen(PostDecrOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for PostDecrOp");
 }
 
 template<> void
-LLVMGeneratorPass::gen<AddOp>(AddOp* op)
+LLVMGeneratorPass::gen(AddOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for AddOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -945,7 +985,7 @@ LLVMGeneratorPass::gen<AddOp>(AddOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<SubtractOp>(SubtractOp* op)
+LLVMGeneratorPass::gen(SubtractOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for SubtractOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -958,7 +998,7 @@ LLVMGeneratorPass::gen<SubtractOp>(SubtractOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<MultiplyOp>(MultiplyOp* op)
+LLVMGeneratorPass::gen(MultiplyOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for MultiplyOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -971,7 +1011,7 @@ LLVMGeneratorPass::gen<MultiplyOp>(MultiplyOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<DivideOp>(DivideOp* op)
+LLVMGeneratorPass::gen(DivideOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for DivideOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -984,7 +1024,7 @@ LLVMGeneratorPass::gen<DivideOp>(DivideOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<ModuloOp>(ModuloOp* op)
+LLVMGeneratorPass::gen(ModuloOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for ModuloOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -997,7 +1037,7 @@ LLVMGeneratorPass::gen<ModuloOp>(ModuloOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<BAndOp>(BAndOp* op)
+LLVMGeneratorPass::gen(BAndOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BAndOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1010,7 +1050,7 @@ LLVMGeneratorPass::gen<BAndOp>(BAndOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<BOrOp>(BOrOp* op)
+LLVMGeneratorPass::gen(BOrOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BOrOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1023,7 +1063,7 @@ LLVMGeneratorPass::gen<BOrOp>(BOrOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<BXorOp>(BXorOp* op)
+LLVMGeneratorPass::gen(BXorOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BXorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1036,7 +1076,7 @@ LLVMGeneratorPass::gen<BXorOp>(BXorOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
+LLVMGeneratorPass::gen(BNorOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1050,12 +1090,13 @@ LLVMGeneratorPass::gen<BNorOp>(BNorOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<NullOp>(NullOp* op)
+LLVMGeneratorPass::gen(NullOp* op)
 {
+  // Not surprisingly, there's nothing to do here.
 }
 
 template<> void
-LLVMGeneratorPass::gen<NotOp>(NotOp* op)
+LLVMGeneratorPass::gen(NotOp* op)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for BNorOp");
   llvm::Value* op1 = lops.back(); lops.pop_back();
@@ -1066,7 +1107,7 @@ LLVMGeneratorPass::gen<NotOp>(NotOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<AndOp>(AndOp* op)
+LLVMGeneratorPass::gen(AndOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1081,7 +1122,7 @@ LLVMGeneratorPass::gen<AndOp>(AndOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<OrOp>(OrOp* op)
+LLVMGeneratorPass::gen(OrOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1096,7 +1137,7 @@ LLVMGeneratorPass::gen<OrOp>(OrOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<NorOp>(NorOp* op)
+LLVMGeneratorPass::gen(NorOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for NorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1112,7 +1153,7 @@ LLVMGeneratorPass::gen<NorOp>(NorOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<XorOp>(XorOp* op)
+LLVMGeneratorPass::gen(XorOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for XorOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1127,7 +1168,7 @@ LLVMGeneratorPass::gen<XorOp>(XorOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<EqualityOp>(EqualityOp* op)
+LLVMGeneratorPass::gen(EqualityOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for EqualityOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1140,7 +1181,7 @@ LLVMGeneratorPass::gen<EqualityOp>(EqualityOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<InequalityOp>(InequalityOp* op)
+LLVMGeneratorPass::gen(InequalityOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for InequalityOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1153,7 +1194,7 @@ LLVMGeneratorPass::gen<InequalityOp>(InequalityOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<LessThanOp>(LessThanOp* op)
+LLVMGeneratorPass::gen(LessThanOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for LessThanOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1164,7 +1205,7 @@ LLVMGeneratorPass::gen<LessThanOp>(LessThanOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<GreaterThanOp>(GreaterThanOp* op)
+LLVMGeneratorPass::gen(GreaterThanOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterThanOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1175,7 +1216,7 @@ LLVMGeneratorPass::gen<GreaterThanOp>(GreaterThanOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<GreaterEqualOp>(GreaterEqualOp* op)
+LLVMGeneratorPass::gen(GreaterEqualOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterEqualOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1186,7 +1227,7 @@ LLVMGeneratorPass::gen<GreaterEqualOp>(GreaterEqualOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<LessEqualOp>(LessEqualOp* op)
+LLVMGeneratorPass::gen(LessEqualOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for LessEqualOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1197,7 +1238,7 @@ LLVMGeneratorPass::gen<LessEqualOp>(LessEqualOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
+LLVMGeneratorPass::gen(SelectOp* op)
 {
   hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
   llvm::Value* op3 = lops.back(); lops.pop_back();
@@ -1223,7 +1264,7 @@ LLVMGeneratorPass::gen<SelectOp>(SelectOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<SwitchOp>(SwitchOp* op)
+LLVMGeneratorPass::gen(SwitchOp* op)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for SwitchOp");
   llvm::Value* op2 = lops.back(); lops.pop_back();
@@ -1232,7 +1273,7 @@ LLVMGeneratorPass::gen<SwitchOp>(SwitchOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<LoopOp>(LoopOp* op)
+LLVMGeneratorPass::gen(LoopOp* op)
 {
   hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
   llvm::Value* op3 = lops.back(); lops.pop_back();
@@ -1241,17 +1282,17 @@ LLVMGeneratorPass::gen<LoopOp>(LoopOp* op)
 }
 
 template<> void
-LLVMGeneratorPass::gen<BreakOp>(BreakOp* op)
+LLVMGeneratorPass::gen(BreakOp* op)
 {
 }
 
 template<> void
-LLVMGeneratorPass::gen<ContinueOp>(ContinueOp* op)
+LLVMGeneratorPass::gen(ContinueOp* op)
 {
 }
 
 template<> void
-LLVMGeneratorPass::gen<ReturnOp>(ReturnOp* r)
+LLVMGeneratorPass::gen(ReturnOp* r)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for ReturnInst");
   llvm::Value* retVal = lops.back(); lops.pop_back();
@@ -1266,7 +1307,23 @@ LLVMGeneratorPass::gen<ReturnOp>(ReturnOp* r)
 }
 
 template<> void
-LLVMGeneratorPass::gen<StoreOp>(StoreOp* s)
+LLVMGeneratorPass::gen(CallOp* co)
+{
+  hlvm::Function* hFunc = co->getCalledFunction();
+  const SignatureType* sigTy = hFunc->getSignature();
+  std::vector<llvm::Value*> args;
+  hlvmAssert(lops.size() >= sigTy->size()+1 && "Too few operands for CallOp");
+  if (sigTy->size() > 0) {
+    for (unsigned i = sigTy->size()-1; i >= 0; i++)
+      args.push_back(lops.back()); lops.pop_back();
+  }
+  hlvmAssert(llvm::isa<llvm::Function>(lops.back()));
+  llvm::Function* F = llvm::cast<llvm::Function>(lops.back()); lops.pop_back();
+  lops.push_back(new llvm::CallInst(F,args,"call_" + hFunc->getName(),lblk));
+}
+
+template<> void
+LLVMGeneratorPass::gen(StoreOp* s)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for StoreOp");
   llvm::Value* value =    lops.back(); lops.pop_back();
@@ -1275,7 +1332,7 @@ LLVMGeneratorPass::gen<StoreOp>(StoreOp* s)
 }
 
 template<> void
-LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
+LLVMGeneratorPass::gen(LoadOp* s)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for LoadOp");
   llvm::Value* location = lops.back(); lops.pop_back();
@@ -1283,7 +1340,7 @@ LLVMGeneratorPass::gen<LoadOp>(LoadOp* s)
 }
 
 template<> void
-LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
+LLVMGeneratorPass::gen(ReferenceOp* r)
 {
   hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
   llvm::Value* v = 0;
@@ -1303,29 +1360,29 @@ LLVMGeneratorPass::gen<ReferenceOp>(ReferenceOp* r)
   }
   else if (llvm::isa<Variable>(referent)) 
   {
-    VariableDictionary::iterator I = gvars.find(llvm::cast<Variable>(referent));
-    hlvmAssert(I != gvars.end());
-    v = I->second;
+    llvm::Value* V = getVariable(llvm::cast<hlvm::Variable>(referent));
+    hlvmAssert(V && "Variable not found?");
+    v = V;
   } 
   else if (llvm::isa<Function>(referent)) 
   {
-    FunctionDictionary::iterator I = funcs.find(llvm::cast<Function>(referent));
-    hlvmAssert(I != funcs.end());
-    v = I->second;
+    llvm::Function* F = getFunction(llvm::cast<hlvm::Function>(referent));
+    hlvmAssert(F && "Function not found?");
+    v = F;
   }
   else
-    hlvmDeadCode("Referent not a variable");
+    hlvmDeadCode("Referent not a linkable or autovar?");
   lops.push_back(v);
 }
 
 template<> void
-LLVMGeneratorPass::gen<IndexOp>(IndexOp* r)
+LLVMGeneratorPass::gen(IndexOp* r)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for IndexOp");
 }
 
 template<> void
-LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
+LLVMGeneratorPass::gen(OpenOp* o)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for OpenOp");
   llvm::Value* strm = lops.back(); lops.pop_back();
@@ -1354,7 +1411,7 @@ LLVMGeneratorPass::gen<OpenOp>(OpenOp* o)
 }
 
 template<> void
-LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
+LLVMGeneratorPass::gen(WriteOp* o)
 {
   hlvmAssert(lops.size() >= 2 && "Too few operands for WriteOp");
   llvm::Value* arg2 = lops.back(); lops.pop_back();
@@ -1376,7 +1433,7 @@ LLVMGeneratorPass::gen<WriteOp>(WriteOp* o)
 }
 
 template<> void
-LLVMGeneratorPass::gen<ReadOp>(ReadOp* o)
+LLVMGeneratorPass::gen(ReadOp* o)
 {
   hlvmAssert(lops.size() >= 3 && "Too few operands for ReadOp");
   std::vector<llvm::Value*> args;
@@ -1388,7 +1445,7 @@ LLVMGeneratorPass::gen<ReadOp>(ReadOp* o)
 }
 
 template<> void
-LLVMGeneratorPass::gen<CloseOp>(CloseOp* o)
+LLVMGeneratorPass::gen(CloseOp* o)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for CloseOp");
   std::vector<llvm::Value*> args;
@@ -1399,25 +1456,25 @@ LLVMGeneratorPass::gen<CloseOp>(CloseOp* o)
 }
 
 template<> void
-LLVMGeneratorPass::gen<hlvm::Function>(hlvm::Function* f)
+LLVMGeneratorPass::gen(hlvm::Function* f)
 {
-  lfunc = new llvm::Function(
-    llvm::cast<llvm::FunctionType>(getType(f->getSignature())),
-    getLinkageTypes(f->getLinkageKind()), 
-    getLinkageName(f), lmod);
+  // Get/Create the function
+  lfunc = getFunction(f);
+  // Clear the LLVM vars
   lvars.clear();
-  funcs[f] = lfunc;
 }
 
 template<> void
-LLVMGeneratorPass::gen<hlvm::Program>(Program* p)
+LLVMGeneratorPass::gen(Program* p)
 {
-  // points after the entire parse is completed.
-  std::string linkageName = getLinkageName(p);
-
   // Create a new function for the program based on the signature
-  lfunc = new llvm::Function(get_hlvm_program_signature(),
-    llvm::GlobalValue::InternalLinkage,linkageName,lmod);
+  lfunc = new llvm::Function(
+      /*Type=*/ get_hlvm_program_signature(),
+      /*Linkage=*/llvm::GlobalValue::InternalLinkage,
+      /*Name=*/ getLinkageName(p),
+      /*Module=*/ lmod
+  );
+  // Clear LLVM vars
   lvars.clear();
 
   // Save the program so it can be generated into the list of program entry
@@ -1425,7 +1482,7 @@ LLVMGeneratorPass::gen<hlvm::Program>(Program* p)
 }
 
 template<> void
-LLVMGeneratorPass::gen<Bundle>(Bundle* b)
+LLVMGeneratorPass::gen(Bundle* b)
 {
   lmod = new llvm::Module(b->getName());
   modules.push_back(lmod);
@@ -1514,6 +1571,21 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     // container that is being asked for.
     switch (n->getID()) {
     case BundleID:                gen(llvm::cast<Bundle>(n)); break;
+    case ConstantBooleanID:       
+      getConstant(llvm::cast<ConstantBoolean>(n));
+      break;
+    case ConstantIntegerID:       
+      getConstant(llvm::cast<ConstantInteger>(n));
+      break;
+    case ConstantRealID:          
+      getConstant(llvm::cast<ConstantReal>(n));
+      break;
+    case ConstantStringID:        
+      getConstant(llvm::cast<ConstantString>(n));
+      break;
+    case VariableID:              
+      getVariable(llvm::cast<Variable>(n)); 
+      break;
     case FunctionID:              gen(llvm::cast<hlvm::Function>(n)); break;
     case ProgramID:               gen(llvm::cast<Program>(n)); break;
     case BlockID:                 gen(llvm::cast<Block>(n)); break;
@@ -1542,11 +1614,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
     case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
     case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
-    case ConstantBooleanID:       gen(llvm::cast<ConstantBoolean>(n));break;
-    case ConstantIntegerID:       gen(llvm::cast<ConstantInteger>(n));break;
-    case ConstantRealID:          gen(llvm::cast<ConstantReal>(n));break;
-    case ConstantStringID:        gen(llvm::cast<ConstantString>(n));break;
-    case VariableID:              gen(llvm::cast<Variable>(n)); break;
     case NegateOpID:              gen(llvm::cast<NegateOp>(n)); break;
     case ComplementOpID:          gen(llvm::cast<ComplementOp>(n)); break;
     case PreIncrOpID:             gen(llvm::cast<PreIncrOp>(n)); break;
@@ -1580,6 +1647,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case BreakOpID:               gen(llvm::cast<BreakOp>(n)); break;
     case ContinueOpID:            gen(llvm::cast<ContinueOp>(n)); break;
     case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
+    case CallOpID:                gen(llvm::cast<CallOp>(n)); break;
     case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
     case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
     case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
@@ -1593,6 +1661,12 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     case BundleID:
       genProgramLinkage();
       lmod = 0;
+      break;
+    case ConstantBooleanID:       
+    case ConstantIntegerID:      
+    case ConstantRealID:        
+    case ConstantStringID:     
+    case VariableID: 
       break;
     case ProgramID:
     case FunctionID:

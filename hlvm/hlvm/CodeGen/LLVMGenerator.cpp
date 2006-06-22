@@ -685,6 +685,7 @@ LLVMGeneratorPass::toBoolean(llvm::Value* V)
     return llvm::ConstantBool::get(true);
   }
   hlvmAssert(!"Don't know how to convert V into bool");
+  return llvm::ConstantBool::get(true);
 }
 
 llvm::Value* 
@@ -699,132 +700,6 @@ LLVMGeneratorPass::ptr2Value(llvm::Value* V)
     //  "ptr2Value", lblk);
   llvm::LoadInst* Load = new llvm::LoadInst(V,"ptr2Value",lblk);
   return Load;
-}
-
-template<> void 
-LLVMGeneratorPass::gen(AliasType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t->getElementType()));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(AnyType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(StringType* s)
-{
-  lmod->addTypeName(s->getName(), getType(s));
-}
-
-template<> void
-LLVMGeneratorPass::gen(BooleanType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(CharacterType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(IntegerType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(RangeType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(EnumerationType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(RealType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(OctetType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void
-LLVMGeneratorPass::gen(VoidType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(hlvm::PointerType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(hlvm::ArrayType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(VectorType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(StructureType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(SignatureType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen<hlvm::OpaqueType>(hlvm::OpaqueType* t)
-{
-  lmod->addTypeName(t->getName(), getType(t));
-}
-
-template<> void 
-LLVMGeneratorPass::gen(ConstantInteger* i)
-{
-  llvm::Constant* C = getConstant(i);
-}
-
-template<> void
-LLVMGeneratorPass::gen(ConstantBoolean* b)
-{
-  getConstant(b);
-}
-
-template<> void
-LLVMGeneratorPass::gen(ConstantReal* r)
-{
-  getConstant(r);
-}
-
-template<> void
-LLVMGeneratorPass::gen(ConstantString* t)
-{
-  getConstant(t);
 }
 
 template<> void
@@ -877,17 +752,6 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
   lvars[av] = alloca;
 }
 
-template<> void
-LLVMGeneratorPass::gen(Variable* v)
-{
-  getVariable(v);
-}
-
-template<> void 
-LLVMGeneratorPass::gen(Block* b)
-{
-  lblk = new llvm::BasicBlock(b->getLabel(),lfunc,0);
-}
 
 template<> void
 LLVMGeneratorPass::gen(NegateOp* op)
@@ -1455,42 +1319,6 @@ LLVMGeneratorPass::gen(CloseOp* o)
   lops.push_back(ci);
 }
 
-template<> void
-LLVMGeneratorPass::gen(hlvm::Function* f)
-{
-  // Get/Create the function
-  lfunc = getFunction(f);
-  // Clear the LLVM vars
-  lvars.clear();
-}
-
-template<> void
-LLVMGeneratorPass::gen(Program* p)
-{
-  // Create a new function for the program based on the signature
-  lfunc = new llvm::Function(
-      /*Type=*/ get_hlvm_program_signature(),
-      /*Linkage=*/llvm::GlobalValue::InternalLinkage,
-      /*Name=*/ getLinkageName(p),
-      /*Module=*/ lmod
-  );
-  // Clear LLVM vars
-  lvars.clear();
-
-  // Save the program so it can be generated into the list of program entry
-  progs.push_back(lfunc);
-}
-
-template<> void
-LLVMGeneratorPass::gen(Bundle* b)
-{
-  lmod = new llvm::Module(b->getName());
-  modules.push_back(lmod);
-  lvars.clear();
-  gvars.clear();
-  funcs.clear();
-}
-
 void 
 LLVMGeneratorPass::genProgramLinkage()
 {
@@ -1569,117 +1397,161 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
   if (mode == Pass::PreOrderTraversal) {
     // We process container nodes here (preorder) to ensure that we create the
     // container that is being asked for.
-    switch (n->getID()) {
-    case BundleID:                gen(llvm::cast<Bundle>(n)); break;
-    case ConstantBooleanID:       
-      getConstant(llvm::cast<ConstantBoolean>(n));
-      break;
-    case ConstantIntegerID:       
-      getConstant(llvm::cast<ConstantInteger>(n));
-      break;
-    case ConstantRealID:          
-      getConstant(llvm::cast<ConstantReal>(n));
-      break;
-    case ConstantStringID:        
-      getConstant(llvm::cast<ConstantString>(n));
-      break;
-    case VariableID:              
-      getVariable(llvm::cast<Variable>(n)); 
-      break;
-    case FunctionID:              gen(llvm::cast<hlvm::Function>(n)); break;
-    case ProgramID:               gen(llvm::cast<Program>(n)); break;
-    case BlockID:                 gen(llvm::cast<Block>(n)); break;
-    default:
-      break;
+    switch (n->getID()) 
+    {
+      case BundleID:
+      {
+        lmod = new llvm::Module(llvm::cast<Bundle>(n)->getName());
+        modules.push_back(lmod);
+        lvars.clear();
+        gvars.clear();
+        funcs.clear();
+        break;
+      }
+      case ConstantBooleanID:       
+        getConstant(llvm::cast<ConstantBoolean>(n));
+        break;
+      case ConstantIntegerID:       
+        getConstant(llvm::cast<ConstantInteger>(n));
+        break;
+      case ConstantRealID:          
+        getConstant(llvm::cast<ConstantReal>(n));
+        break;
+      case ConstantStringID:        
+        getConstant(llvm::cast<ConstantString>(n));
+        break;
+      case VariableID:              
+        getVariable(llvm::cast<Variable>(n)); 
+        break;
+      case FunctionID:
+      {
+        // Get/Create the function
+        lfunc = getFunction(llvm::cast<Function>(n));
+        // Clear the LLVM vars
+        lvars.clear();
+        break;
+      }
+      case ProgramID:
+      {
+        // Create a new function for the program based on the signature
+        lfunc = new llvm::Function(
+            /*Type=*/ get_hlvm_program_signature(),
+            /*Linkage=*/llvm::GlobalValue::InternalLinkage,
+            /*Name=*/ getLinkageName(llvm::cast<Program>(n)),
+            /*Module=*/ lmod
+        );
+        // Clear LLVM vars
+        lvars.clear();
+        // Save the program so it can be generated into the list of program 
+        // entry points.
+        progs.push_back(lfunc);
+        break;
+      }
+      case BlockID:
+      {
+        lblk = new llvm::BasicBlock(llvm::cast<Block>(n)->getLabel(),lfunc,0);
+        break;
+      }
+      default:
+        break;
     }
   } else {
     // We process non-container nodes and operators. Operators are done
     // post-order because we want their operands to be constructed first.
     switch (n->getID()) 
     {
-    case AliasTypeID:             gen(llvm::cast<AliasType>(n)); break;
-    case AnyTypeID:               gen(llvm::cast<AnyType>(n)); break;
-    case StringTypeID:            gen(llvm::cast<StringType>(n)); break;
-    case BooleanTypeID:           gen(llvm::cast<BooleanType>(n)); break;
-    case CharacterTypeID:         gen(llvm::cast<CharacterType>(n)); break;
-    case IntegerTypeID:           gen(llvm::cast<IntegerType>(n)); break;
-    case RangeTypeID:             gen(llvm::cast<RangeType>(n)); break;
-    case EnumerationTypeID:       gen(llvm::cast<EnumerationType>(n)); break;
-    case RealTypeID:              gen(llvm::cast<RealType>(n)); break;
-    case OctetTypeID:             gen(llvm::cast<OctetType>(n)); break;
-    case VoidTypeID:              gen(llvm::cast<VoidType>(n)); break;
-    case PointerTypeID:           gen(llvm::cast<hlvm::PointerType>(n)); break;
-    case ArrayTypeID:             gen(llvm::cast<hlvm::ArrayType>(n)); break;
-    case VectorTypeID:            gen(llvm::cast<VectorType>(n)); break;
-    case StructureTypeID:         gen(llvm::cast<StructureType>(n)); break;
-    case SignatureTypeID:         gen(llvm::cast<SignatureType>(n)); break;
-    case OpaqueTypeID:            gen(llvm::cast<hlvm::OpaqueType>(n)); break;
-    case NegateOpID:              gen(llvm::cast<NegateOp>(n)); break;
-    case ComplementOpID:          gen(llvm::cast<ComplementOp>(n)); break;
-    case PreIncrOpID:             gen(llvm::cast<PreIncrOp>(n)); break;
-    case PreDecrOpID:             gen(llvm::cast<PreDecrOp>(n)); break;
-    case PostIncrOpID:            gen(llvm::cast<PostIncrOp>(n)); break;
-    case PostDecrOpID:            gen(llvm::cast<PostDecrOp>(n)); break;
-    case AddOpID:                 gen(llvm::cast<AddOp>(n)); break;
-    case SubtractOpID:            gen(llvm::cast<SubtractOp>(n)); break;
-    case MultiplyOpID:            gen(llvm::cast<MultiplyOp>(n)); break;
-    case DivideOpID:              gen(llvm::cast<DivideOp>(n)); break;
-    case ModuloOpID:              gen(llvm::cast<ModuloOp>(n)); break;
-    case BAndOpID:                gen(llvm::cast<BAndOp>(n)); break;
-    case BOrOpID:                 gen(llvm::cast<BOrOp>(n)); break;
-    case BXorOpID:                gen(llvm::cast<BXorOp>(n)); break;
-    case BNorOpID:                gen(llvm::cast<BNorOp>(n)); break;
-    case NullOpID:                gen(llvm::cast<NullOp>(n)); break;
-    case NotOpID:                 gen(llvm::cast<NotOp>(n)); break;
-    case AndOpID:                 gen(llvm::cast<AndOp>(n)); break;
-    case OrOpID:                  gen(llvm::cast<OrOp>(n)); break;
-    case NorOpID:                 gen(llvm::cast<NorOp>(n)); break;
-    case XorOpID:                 gen(llvm::cast<XorOp>(n)); break;
-    case EqualityOpID:            gen(llvm::cast<EqualityOp>(n)); break;
-    case InequalityOpID:          gen(llvm::cast<InequalityOp>(n)); break;
-    case LessThanOpID:            gen(llvm::cast<LessThanOp>(n)); break;
-    case GreaterThanOpID:         gen(llvm::cast<GreaterThanOp>(n)); break;
-    case GreaterEqualOpID:        gen(llvm::cast<GreaterEqualOp>(n)); break;
-    case LessEqualOpID:           gen(llvm::cast<LessEqualOp>(n)); break;
-    case SelectOpID:              gen(llvm::cast<SelectOp>(n)); break;
-    case SwitchOpID:              gen(llvm::cast<SwitchOp>(n)); break;
-    case LoopOpID:                gen(llvm::cast<LoopOp>(n)); break;
-    case BreakOpID:               gen(llvm::cast<BreakOp>(n)); break;
-    case ContinueOpID:            gen(llvm::cast<ContinueOp>(n)); break;
-    case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
-    case CallOpID:                gen(llvm::cast<CallOp>(n)); break;
-    case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
-    case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
-    case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
-    case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
-    case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
-    case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
-    case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
-    case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
+      case AliasTypeID:
+      {
+        AliasType* t = llvm::cast<AliasType>(n);
+        lmod->addTypeName(t->getName(), getType(t->getElementType()));
+        break;
+      }
+      case AnyTypeID:
+      case StringTypeID:
+      case BooleanTypeID:
+      case CharacterTypeID:
+      case IntegerTypeID:
+      case RangeTypeID:
+      case EnumerationTypeID:
+      case RealTypeID:
+      case OctetTypeID:
+      case VoidTypeID:
+      case PointerTypeID:
+      case ArrayTypeID:
+      case VectorTypeID:
+      case StructureTypeID:
+      case SignatureTypeID:
+      case OpaqueTypeID:
+      {
+        Type* t = llvm::cast<Type>(n);
+        lmod->addTypeName(t->getName(), getType(t));
+        break;
+      }
+      case NegateOpID:              gen(llvm::cast<NegateOp>(n)); break;
+      case ComplementOpID:          gen(llvm::cast<ComplementOp>(n)); break;
+      case PreIncrOpID:             gen(llvm::cast<PreIncrOp>(n)); break;
+      case PreDecrOpID:             gen(llvm::cast<PreDecrOp>(n)); break;
+      case PostIncrOpID:            gen(llvm::cast<PostIncrOp>(n)); break;
+      case PostDecrOpID:            gen(llvm::cast<PostDecrOp>(n)); break;
+      case AddOpID:                 gen(llvm::cast<AddOp>(n)); break;
+      case SubtractOpID:            gen(llvm::cast<SubtractOp>(n)); break;
+      case MultiplyOpID:            gen(llvm::cast<MultiplyOp>(n)); break;
+      case DivideOpID:              gen(llvm::cast<DivideOp>(n)); break;
+      case ModuloOpID:              gen(llvm::cast<ModuloOp>(n)); break;
+      case BAndOpID:                gen(llvm::cast<BAndOp>(n)); break;
+      case BOrOpID:                 gen(llvm::cast<BOrOp>(n)); break;
+      case BXorOpID:                gen(llvm::cast<BXorOp>(n)); break;
+      case BNorOpID:                gen(llvm::cast<BNorOp>(n)); break;
+      case NullOpID:                gen(llvm::cast<NullOp>(n)); break;
+      case NotOpID:                 gen(llvm::cast<NotOp>(n)); break;
+      case AndOpID:                 gen(llvm::cast<AndOp>(n)); break;
+      case OrOpID:                  gen(llvm::cast<OrOp>(n)); break;
+      case NorOpID:                 gen(llvm::cast<NorOp>(n)); break;
+      case XorOpID:                 gen(llvm::cast<XorOp>(n)); break;
+      case EqualityOpID:            gen(llvm::cast<EqualityOp>(n)); break;
+      case InequalityOpID:          gen(llvm::cast<InequalityOp>(n)); break;
+      case LessThanOpID:            gen(llvm::cast<LessThanOp>(n)); break;
+      case GreaterThanOpID:         gen(llvm::cast<GreaterThanOp>(n)); break;
+      case GreaterEqualOpID:        gen(llvm::cast<GreaterEqualOp>(n)); break;
+      case LessEqualOpID:           gen(llvm::cast<LessEqualOp>(n)); break;
+      case SelectOpID:              gen(llvm::cast<SelectOp>(n)); break;
+      case SwitchOpID:              gen(llvm::cast<SwitchOp>(n)); break;
+      case LoopOpID:                gen(llvm::cast<LoopOp>(n)); break;
+      case BreakOpID:               gen(llvm::cast<BreakOp>(n)); break;
+      case ContinueOpID:            gen(llvm::cast<ContinueOp>(n)); break;
+      case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
+      case CallOpID:                gen(llvm::cast<CallOp>(n)); break;
+      case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
+      case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
+      case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+      case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
+      case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
+      case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
+      case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
+      case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
 
-    // ignore end of block, program, function and bundle
-    case BundleID:
-      genProgramLinkage();
-      lmod = 0;
-      break;
-    case ConstantBooleanID:       
-    case ConstantIntegerID:      
-    case ConstantRealID:        
-    case ConstantStringID:     
-    case VariableID: 
-      break;
-    case ProgramID:
-    case FunctionID:
-      lfunc = 0;
-      break;
-    case BlockID:
-      lblk = 0;
-      break;
+      case BundleID:
+        genProgramLinkage();
+        lmod = 0;
+        break;
+      case ConstantBooleanID:       
+      case ConstantIntegerID:      
+      case ConstantRealID:        
+      case ConstantStringID:     
+      case VariableID: 
+        break;
+      case ProgramID:
+      case FunctionID:
+        lfunc = 0;
+        break;
+      case BlockID:
+        lblk = 0;
+        break;
 
-    // everything else is an error
-    default:
-      hlvmNotImplemented("Node of unimplemented type");
-      break;
+      // everything else is an error
+      default:
+        hlvmNotImplemented("Node of unimplemented type");
+        break;
     }
   }
 }

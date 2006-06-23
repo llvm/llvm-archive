@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/argscall.hlx">
+  <bundle id="argscall">
+    <signature id="no_args" result="void"/>
+    <signature id="one_arg" result="void">
+      <arg id="one" type="u32"/>
+    </signature>
+    <signature id="two_arg" result="double">
+      <arg id="one" type="u32"/>
+      <arg id="two" type="u32"/>
+    </signature>
+    <signature id="varargs" result="double" varargs="true">
+      <arg id="one" type="u32"/>
+      <arg id="two" type="u32"/>
+    </signature>
+    <constant id="answer" type="u32">
+      <dec>42</dec>
+    </constant>
+    <function id="none" type="no_args" linkage="external"/>
+    <function id="one" type="one_arg" linkage="external"/>
+    <function id="two" type="two_arg" linkage="external"/>
+    <function id="va" type="varargs" linkage="external"/>
+    <program id="argscall">
+      <block>
+        <call>
+          <ref id="none"/>
+        </call>
+        <call>
+          <ref id="one"/>
+          <ref id="answer"/>
+        </call>
+        <call>
+          <ref id="two"/>
+          <ref id="answer"/>
+          <ref id="answer"/>
+        </call>
+        <call>
+          <ref id="va"/>
+          <ref id="answer"/>
+          <ref id="answer"/>
+          <ref id="answer"/>
+        </call>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

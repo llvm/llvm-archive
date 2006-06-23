@@ -578,7 +578,8 @@ ValidateImpl::validate(LoopOp* n)
 template<> inline void
 ValidateImpl::validate(SwitchOp* n)
 {
-  if (checkOperator(n,SwitchOpID,2,false)) {
+  if (checkOperator(n,SwitchOpID,2,false)) 
+  {
     if (n->getNumOperands() == 2)
       warning(n,"Why not just use a SelectOp?");
     if (n->getNumOperands() % 2 != 0)
@@ -587,17 +588,37 @@ ValidateImpl::validate(SwitchOp* n)
 }
 
 template<> inline void
-ValidateImpl::validate(CallOp* n)
+ValidateImpl::validate(CallOp* op)
 {
-  checkOperator(n,CallOpID,0,false);
+  if (checkOperator(op,CallOpID,0,false)) 
+  {
+    hlvm::Function* F = op->getCalledFunction();
+    const SignatureType* sig = F->getSignature();
+    if (sig->isVarArgs() && (sig->size() >= op->getNumOperands()))
+        error(op,"Too few arguments for varargs function call");
+    else if (!sig->isVarArgs() && (sig->size() != op->getNumOperands()-1))
+      error(op,"Incorrect number of arguments for function call");
+    else 
+    {
+      unsigned opNum = 1;
+      for (SignatureType::const_iterator I = sig->begin(), E = sig->end(); 
+           I != E; ++I)
+        if ((*I)->getElementType() != op->getOperand(opNum++)->getType())
+          error(op,std::string("Argument #") + utostr(opNum-1) +
+              " has wrong type for function");
+    }
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(AllocateOp* n)
 {
-  if (checkOperator(n,AllocateOpID,2)) {
-    if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) {
-      if (const Type* Ty = PT->getElementType()) {
+  if (checkOperator(n,AllocateOpID,2)) 
+  {
+    if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) 
+    {
+      if (const Type* Ty = PT->getElementType()) 
+      {
         if (!Ty->isSized())
           error(n,"Can't allocate an unsized type");
       } else 

@@ -142,9 +142,9 @@ template<> inline void
 PassManagerImpl::runOn(Linkable* l)
 {
   runPreOrder(l);
-  if (isa<Function>(l))
-    if (Block* b = cast<Function>(l)->getBlock())
-      runOn(b);
+  if (Function* F = dyn_cast<Function>(l))
+    if (Block* B = F->getBlock())
+      runOn(B);
   runPostOrder(l);
 }
 
@@ -158,15 +158,13 @@ PassManagerImpl::runOn(Bundle* b)
     runPreOrder(const_cast<Type*>(TI->second));
     runPostOrder(const_cast<Type*>(TI->second));
   }
-  for (Bundle::cval_iterator CI = b->cval_begin(), CE = b->cval_end(); 
+  for (Bundle::value_iterator CI = b->value_begin(), CE = b->value_end(); 
        CI != CE; ++CI) {
-    runPreOrder(const_cast<ConstantValue*>(CI->second));
-    runPostOrder(const_cast<ConstantValue*>(CI->second));
-  }
-  for (Bundle::linkable_iterator LI = b->linkable_begin(), 
-       LE = b->linkable_end(); LI != LE; ++LI)
-  {
-    runOn(const_cast<Linkable*>(LI->second));
+    runPreOrder(const_cast<Value*>(*CI));
+    if (Function* F = dyn_cast<Function>(*CI))
+      if (Block* B = F->getBlock())
+        runOn(B);
+    runPostOrder(const_cast<Value*>(*CI));
   }
   runPostOrder(b);
 }

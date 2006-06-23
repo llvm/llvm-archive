@@ -69,6 +69,7 @@ namespace llvm {
 
 namespace 
 {
+
 using namespace hlvm;
 
 class LLVMGeneratorPass : public hlvm::Pass
@@ -77,7 +78,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   typedef std::vector<llvm::Value*> OperandList;
   typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
   typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
-  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> ConstantDictionary;
+  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> 
+    ConstantDictionary;
   typedef std::map<const hlvm::Function*,llvm::Function*> FunctionDictionary;
   ModuleList modules;        ///< The list of modules we construct
   llvm::Module*     lmod;    ///< The current module we're generation 
@@ -85,8 +87,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
   llvm::BasicBlock::InstListType linst; 
   OperandList lops;          ///< The current list of instruction operands
-  VariableDictionary gvars;
-  AutoVarDictionary lvars;
+  VariableDictionary gvars;  ///< Dictionary of HLVM -> LLVM gvars
+  AutoVarDictionary lvars;   ///< Dictionary of HLVM -> LLVM auto vars
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
   ConstantDictionary consts; ///< The cached LLVM constants we've generated
   FunctionDictionary funcs;  ///< The cached LLVM constants we've generated
@@ -1177,12 +1179,17 @@ LLVMGeneratorPass::gen(CallOp* co)
   const SignatureType* sigTy = hFunc->getSignature();
   std::vector<llvm::Value*> args;
   hlvmAssert(lops.size() >= sigTy->size()+1 && "Too few operands for CallOp");
-  if (sigTy->size() > 0) {
-    for (unsigned i = sigTy->size()-1; i >= 0; i++)
-      args.push_back(lops.back()); lops.pop_back();
+  const llvm::Value* arg = lops.back(); lops.pop_back();
+  while (!lops.empty() && !llvm::isa<llvm::Function>(arg)) {
+    args.push_back(const_cast<llvm::Value*>(arg));
+    arg = lops.back(); 
+    lops.pop_back();
   }
-  hlvmAssert(llvm::isa<llvm::Function>(lops.back()));
-  llvm::Function* F = llvm::cast<llvm::Function>(lops.back()); lops.pop_back();
+  hlvmAssert(sigTy->isVarArgs() || lops.size() == sigTy->size());
+  hlvmAssert(!sigTy->isVarArgs() || lops.size() >= sigTy->size());
+  hlvmAssert(llvm::isa<llvm::Function>(arg));
+  llvm::Function* F = const_cast<llvm::Function*>(
+      llvm::cast<llvm::Function>(arg));
   lops.push_back(new llvm::CallInst(F,args,"call_" + hFunc->getName(),lblk));
 }
 

@@ -58,6 +58,10 @@ class Bundle : public Documentable
     typedef TypeList::iterator type_iterator;
     typedef TypeList::const_iterator type_const_iterator;
 
+    typedef std::vector<Value*> ValueList;
+    typedef ValueList::iterator value_iterator;
+    typedef ValueList::const_iterator value_const_iterator;
+
     typedef SymbolTable<ConstantValue> CValList;
     typedef CValList::iterator cval_iterator;
     typedef CValList::const_iterator cval_const_iterator;
@@ -109,7 +113,16 @@ class Bundle : public Documentable
     size_t                  type_size () const { return types.size(); }
     bool                    type_empty() const { return types.empty(); }
 
-    /// Type iteration
+    /// Value Insertion Order Iteration
+    //
+    value_iterator          value_begin()       { return values.begin(); }
+    value_const_iterator    value_begin() const { return values.begin(); }
+    value_iterator          value_end  ()       { return values.end(); }
+    value_const_iterator    value_end  () const { return values.end(); }
+    size_t                  value_size () const { return values.size(); }
+    bool                    value_empty() const { return values.empty(); }
+
+    /// ConstantValue Symbol Table iteration
     cval_iterator           cval_begin()       { return cvals.begin(); }
     cval_const_iterator     cval_begin() const { return cvals.begin(); }
     cval_iterator           cval_end  ()       { return cvals.end(); }
@@ -117,7 +130,7 @@ class Bundle : public Documentable
     size_t                  cval_size () const { return cvals.size(); }
     bool                    cval_empty() const { return cvals.empty(); }
 
-    /// Value iteration
+    /// Linkable Symbol Table iteration
     linkable_iterator       linkable_begin()       { return linkables.begin(); }
     linkable_const_iterator linkable_begin() const { return linkables.begin(); }
     linkable_iterator       linkable_end  ()       { return linkables.end(); }
@@ -131,6 +144,7 @@ class Bundle : public Documentable
   protected:
     std::string  name;      ///< The name for this bundle
     TypeList     types;     ///< The list of types
+    ValueList    values;    ///< The list of values in insertion order
     CValList     cvals;     ///< The list of constant values
     LinkableList linkables; ///< The list of linkables
 

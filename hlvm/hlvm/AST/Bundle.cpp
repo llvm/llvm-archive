@@ -45,11 +45,15 @@ Bundle::insertChild(Node* kid)
   hlvmAssert(kid && "Null child!");
   if (isa<Type>(kid))
     types.insert(cast<Type>(kid)->getName(), cast<Type>(kid));
-  else if (isa<ConstantValue>(kid))
-    cvals.insert(cast<ConstantValue>(kid)->getName(), cast<ConstantValue>(kid));
-  else if (isa<Linkable>(kid))
-    linkables.insert(cast<Linkable>(kid)->getName(), cast<Linkable>(kid));
-  else
+  else if (isa<Value>(kid)) {
+    values.push_back(cast<Value>(kid));
+    if (isa<ConstantValue>(kid)) {
+      cvals.insert(cast<ConstantValue>(kid)->getName(), 
+                   cast<ConstantValue>(kid));
+    } else if (isa<Linkable>(kid)) {
+      linkables.insert(cast<Linkable>(kid)->getName(), cast<Linkable>(kid));
+    }
+  } else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }
 
@@ -60,11 +64,14 @@ Bundle::removeChild(Node* kid)
   // This is sucky slow, but we probably won't be removing nodes that much.
   if (isa<Type>(kid))
     types.erase(cast<Type>(kid)->getName());
-  else if (isa<ConstantValue>(kid))
-    cvals.erase(cast<ConstantValue>(kid)->getName());
-  else if (isa<Linkable>(kid))
-    linkables.erase(cast<Linkable>(kid)->getName());
-  else 
+  else if (isa<Value>(kid)) {
+    for (value_iterator I = value_begin(), E = value_end(); I != E; ++I )
+      if (*I == kid) { values.erase(I); break; }
+    if (isa<ConstantValue>(kid))
+      cvals.erase(cast<ConstantValue>(kid)->getName());
+    else if (isa<Linkable>(kid))
+      linkables.erase(cast<Linkable>(kid)->getName());
+  } else 
     hlvmAssert(!"That node isn't my child");
 }
 

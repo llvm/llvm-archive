@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/argscall.hlx">
+  <bundle id="argscall">
+    <signature id="two_arg" result="double">
+      <arg id="one" type="u32"/>
+      <arg id="two" type="s32"/>
+    </signature>
+    <constant id="answer" type="u32">
+      <dec>42</dec>
+    </constant>
+    <program id="argscall">
+      <block>
+        <call>
+          <ref id="two"/>
+          <ref id="answer"/>
+          <ref id="answer"/>
+        </call>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

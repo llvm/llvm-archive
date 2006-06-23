@@ -375,7 +375,7 @@ class SignatureType : public DisparateContainerType
   /// @{
   protected:
     SignatureType() 
-      : DisparateContainerType(SignatureTypeID), result(0), varargs(false) {}
+      : DisparateContainerType(SignatureTypeID), result(0) {}
     virtual ~SignatureType();
 
   /// @}
@@ -383,7 +383,7 @@ class SignatureType : public DisparateContainerType
   /// @{
   public:
     const Type* getResultType() const { return result; }
-    bool  isVarArgs() const { return varargs; }
+    bool  isVarArgs() const { return flags != 0; }
 
     /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const SignatureType*) { return true; }
@@ -395,7 +395,7 @@ class SignatureType : public DisparateContainerType
   /// @{
   public:
     void setResultType(const Type* ty) { result = ty; }
-    void setIsVarArgs(bool is) { varargs = is; }
+    void setIsVarArgs(bool is) { flags = is ? 1 : 0; }
     void addArgument(Argument* arg) { contents.push_back(arg); }
 
   /// @}
@@ -403,7 +403,6 @@ class SignatureType : public DisparateContainerType
   /// @{
   protected:
     const Type* result;  ///< The result type of the function signature
-    bool varargs;        ///< Indicates variable arguments function
   /// @}
   friend class AST;
 };

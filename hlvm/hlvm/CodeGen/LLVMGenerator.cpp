@@ -1599,11 +1599,12 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
   LLVMGeneratorPass genPass(tree);
   PM->addPass(&genPass);
   PM->runOn(tree);
-  llvm::Module* mod = genPass.linkModules();
-  llvm::verifyModule(*mod, llvm::PrintMessageAction);
-  llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
-  delete mod;
   delete PM;
+  llvm::Module* mod = genPass.linkModules();
+  if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
+    llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
+  }
+  delete mod;
 }
 
 void
@@ -1613,10 +1614,12 @@ hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
   LLVMGeneratorPass genPass(tree);
   PM->addPass(&genPass);
   PM->runOn(tree);
-  llvm::Module* mod = genPass.linkModules();
-  llvm::PassManager Passes;
-  Passes.add(new llvm::PrintModulePass(&output));
-  Passes.run(*mod);
-  delete mod;
   delete PM;
+  llvm::Module* mod = genPass.linkModules();
+  if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
+    llvm::PassManager Passes;
+    Passes.add(new llvm::PrintModulePass(&output));
+    Passes.run(*mod);
+  }
+  delete mod;
 }

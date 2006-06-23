@@ -30,6 +30,7 @@
 #include <hlvm/AST/Block.h>
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/Base/Assert.h>    
+#include <hlvm/AST/Linkables.h>    
 #include <llvm/Support/Casting.h>
 
 namespace hlvm {
@@ -74,7 +75,7 @@ Block*
 Block::getParentBlock() const
 {
   Node* p = getParent();
-  while (p) {
+  while (p && !llvm::isa<Function>(p)) {
     if (llvm::isa<Block>(p))
       return llvm::cast<Block>(p);
     p = p->getParent();

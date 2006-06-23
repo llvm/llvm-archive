@@ -76,6 +76,7 @@ class LLVMGeneratorPass : public hlvm::Pass
 {
   typedef std::vector<llvm::Module*> ModuleList;
   typedef std::vector<llvm::Value*> OperandList;
+  typedef std::vector<llvm::BasicBlock*> BlockStack;
   typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
   typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
   typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> 
@@ -85,8 +86,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::Module*     lmod;    ///< The current module we're generation 
   llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
   llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
-  llvm::BasicBlock::InstListType linst; 
   OperandList lops;          ///< The current list of instruction operands
+  BlockStack blocks;         ///< The stack of blocks we're constructing
   VariableDictionary gvars;  ///< Dictionary of HLVM -> LLVM gvars
   AutoVarDictionary lvars;   ///< Dictionary of HLVM -> LLVM auto vars
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
@@ -119,7 +120,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   public:
     LLVMGeneratorPass(const AST* tree)
       : Pass(0,Pass::PreAndPostOrderTraversal),
-      modules(), lmod(0), lfunc(0), lblk(0), linst(), lops(), 
+      modules(), lmod(0), lfunc(0), lblk(0), lops(), blocks(),
       gvars(), lvars(), ltypes(), consts(),
       ast(tree),   bundle(0), function(0), block(0),
       hlvm_text(0), hlvm_text_create(0), hlvm_text_delete(0),
@@ -1436,6 +1437,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         lfunc = getFunction(llvm::cast<Function>(n));
         // Clear the LLVM vars
         lvars.clear();
+        blocks.clear();
+        lops.clear();
         break;
       }
       case ProgramID:
@@ -1449,6 +1452,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         );
         // Clear LLVM vars
         lvars.clear();
+        blocks.clear();
+        lops.clear();
         // Save the program so it can be generated into the list of program 
         // entry points.
         progs.push_back(lfunc);
@@ -1457,6 +1462,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BlockID:
       {
         lblk = new llvm::BasicBlock(llvm::cast<Block>(n)->getLabel(),lfunc,0);
+        blocks.push_back(lblk);
         break;
       }
       default:
@@ -1552,7 +1558,11 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         lfunc = 0;
         break;
       case BlockID:
-        lblk = 0;
+        blocks.pop_back();
+        if (blocks.empty())
+          lblk = 0;
+        else
+          lblk = blocks.back();
         break;
 
       // everything else is an error

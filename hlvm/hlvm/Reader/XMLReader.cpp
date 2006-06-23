@@ -67,12 +67,14 @@ class XMLReaderImpl : public XMLReader {
   Locator* loc;
   URI* uri;
   Block* block;
+  std::vector<Block*> blocks;
   Function* func;
   Bundle* bundle;
   bool isError;
 public:
   XMLReaderImpl(const std::string& p)
-    : path(p), ast(0), loc(0), uri(0), block(0), func(0), bundle(0), isError(0)
+    : path(p), ast(0), loc(0), uri(0), block(0), blocks(), func(0), bundle(0), 
+      isError(0)
   {
     ast = AST::create();
     ast->setSystemID(p);
@@ -856,8 +858,10 @@ XMLReaderImpl::parse<Block>(xmlNodePtr& cur)
   const char* label = getAttribute(cur, "label",false);
   xmlNodePtr child = cur->children;
   MultiOperator::OprndList ops;
-  block = ast->new_Block(loc);
-  block->setParent(func);
+  if (block)
+    blocks.push_back(block);
+  Block* result = ast->new_Block(loc);
+  block = result;
   if (label)
     block->setLabel(label);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
@@ -866,7 +870,13 @@ XMLReaderImpl::parse<Block>(xmlNodePtr& cur)
     block->addOperand(op);
     child = child->next;
   }
-  return block;
+  if (blocks.empty())
+    block = 0;
+  else {
+    block = blocks.back();
+    blocks.pop_back();
+  }
+  return result;
 }
 
 template<> Function*
@@ -902,7 +912,8 @@ XMLReaderImpl::parse<Function>(xmlNodePtr& cur)
   checkDoc(cur,func);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    parse<Block>(child);
+    Block* b = parse<Block>(child);
+    b->setParent(func);
   }
   return func;
 }
@@ -918,7 +929,8 @@ XMLReaderImpl::parse<Program>(xmlNodePtr& cur)
   checkDoc(cur,func);
   xmlNodePtr child = cur->children;
   if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    parse<Block>(child);
+    Block* b = parse<Block>(child);
+    b->setParent(func);
   } else {
     hlvmDeadCode("Program Without Block!");
   }

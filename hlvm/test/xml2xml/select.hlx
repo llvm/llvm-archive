@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/return.hlx">
-  <bundle id="return">
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/select.hlx">
+  <bundle id="select">
     <constant id="0" type="s32">
       <dec>0</dec>
     </constant>
@@ -10,7 +10,7 @@
     <constant id="42" type="s32">
       <dec>42</dec>
     </constant>
-    <program id="return">
+    <program id="select">
       <block>
         <ret>
           <select>

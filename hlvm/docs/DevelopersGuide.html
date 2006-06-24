@@ -497,6 +497,11 @@ contributions will be handled.</p>
     --enable-llvm=/proj/llvm/build --enable-languages=c,c++
   make
   make install</pre>
+  <p><em class="warning">IMPORTANT: </em>You <em>MUST</em> install llvm-gcc4
+  into its own installation area. Do <em>NOT</em> be tempted to install it into
+  <tt>/proj/install</tt>. If you do, it will overwrite your gcc 3.4.6
+  installation and you will have corrupted your build environment. 
+  <i>You've been warned.</i></p>
   <h4>Install SCons</h4>
   <p>As noted earlier, HLVM uses the SCons tool for its builds. You need version
   0.96.92. Install it like this:</p>
@@ -522,7 +527,7 @@ contributions will be handled.</p>
   svn co svn://hlvm.org/hlvm hlvm
   cd hlvm
   make MYMODE=Debug MYPATH=/proj/llvm/cfe/install:/proj/install \
-    MYPREFIX=/proj/install/bin</pre>
+    MYPREFIX=/proj/install</pre>
 </div>
 
 <h2><a name="style">Coding Style</a></h2>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/select.hlx">
+  <bundle id="select">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="21" type="s32">
+      <dec>21</dec>
+    </constant>
+    <constant id="42" type="s32">
+      <dec>42</dec>
+    </constant>
+    <program id="select">
+      <block>
+        <ret>
+          <select>
+            <block>
+              <ne><ref id="42"/><ref id="21"/></ne>
+            </block>
+            <block>
+              <ref id="0"/>
+            </block>
+            <block>
+              <ref id="42"/>
+            </block>
+          </select>
+        </ret>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

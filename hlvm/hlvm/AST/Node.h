@@ -167,8 +167,9 @@ LastNilaryOperatorID = ReferenceOpID,
   // Control Flow Unary Operators
   NullOpID,                ///< The "do nothing" NullOp (no-op) Operator
 FirstUnaryOperatorID = NullOpID,
-  ReturnOpID,              ///< The Return A Value Operator
-  ThrowOpID,               ///< The Throw an Exception Operator
+  ReturnOpID,              ///< Return a value to the function's caller
+  ResultOpID,              ///< Specify the result of a block
+  ThrowOpID,               ///< Throw an exception out of the function
 
   // Integer Arithmetic Unary Operators
   NotOpID,                 ///< Not Unary Boolean Operator
@@ -377,6 +378,10 @@ class Node
     /// Determine if the node is any of the Operators
     inline bool isOperator() const { 
       return id >= FirstOperatorID && id <= LastOperatorID; }
+
+    inline bool isTerminator() const {
+      return (id >= BreakOpID && id <= ContinueOpID) || 
+             (id >= ReturnOpID && id <= ThrowOpID); }
 
     inline bool isNilaryOperator() const {
       return id >= FirstNilaryOperatorID && id <= LastNilaryOperatorID; }

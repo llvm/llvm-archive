@@ -41,9 +41,10 @@ class AutoVarOp;
 /// This class represents an block of operators in the HLVM Abstract Syntax 
 /// Tree.  A block is simply a sequential list of Operator nodes that are
 /// executed in sequence. Block itself is an operator. Its result value is
-/// the value of the last operator executed. As such, blocks can be nested
-/// within blocks. Blocks are used as the operands of the control flow 
-/// operators as well.
+/// is provided by a ResultOp operator. This approach allows processing to
+/// continue after a result for the block has been determined. Blocks can be
+/// nested within other blocks and used as the operands of other operators.
+/// @see ResultOp
 /// @brief AST Block Node
 class Block : public MultiOperator
 {
@@ -80,6 +81,36 @@ class Block : public MultiOperator
     typedef std::map<std::string,AutoVarOp*> AutoVarMap;
     std::string label;
     AutoVarMap  autovars;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that indicates the result
+/// of a Block operator. The result operator may be utilized anywhere in the 
+/// block. The last such result executed provides the value for the block.
+/// @see Block
+/// @brief AST Result Operator Node
+class ResultOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ResultOp() : UnaryOperator(ResultOpID)  {}
+    virtual ~ResultOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    Operator* getResult() { return UnaryOperator::op1; }
+    static inline bool classof(const ResultOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ResultOpID); }
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    void setResult(Operator* op) { op->setParent(this); }
   /// @}
   friend class AST;
 };

@@ -47,7 +47,7 @@ Block::insertChild(Node* child)
   if (llvm::isa<AutoVarOp>(child)) {
     AutoVarOp* av = llvm::cast<AutoVarOp>(child);
     autovars[av->getName()] = av;
-  }
+  } else if (llvm::isa<ResultOp>(child))
   type = getResultType(); // update type to match type of thing just added
 }
 
@@ -83,4 +83,5 @@ Block::getParentBlock() const
   return 0;
 }
 
+ResultOp::~ResultOp() {}
 }

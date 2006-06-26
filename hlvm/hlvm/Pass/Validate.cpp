@@ -515,17 +515,27 @@ ValidateImpl::validate(NullOp* n)
   checkOperator(n,NullOpID,0);
 }
 
+
+template<> inline void
+ValidateImpl::validate(ResultOp* n)
+{
+  if (checkOperator(n,ResultOpID,1)) {
+    const Function* F = n->getContainingFunction();
+    const Block* B = n->getContainingBlock();
+    if (F->getBlock() == B) {
+      const SignatureType* SigTy = F->getSignature();
+      Operator* res = n->getOperand(0);
+      if (res->getType() != SigTy->getResultType())
+        error(n,"ResultOp operand does not agree in type with Function result");
+    }
+  }
+}
+
 template<> inline void
 ValidateImpl::validate(ReturnOp* n)
 {
-  if (checkOperator(n,ReturnOpID,1))
-    if (checkTerminator(n)) {
-      Operator* res = n->getOperand(0);
-      const Function* F = n->getContainingFunction();
-      const SignatureType* SigTy = F->getSignature();
-      if (res->getType() != SigTy->getResultType())
-        error(n,"ReturnOp operand does not agree in type with Function result");
-    }
+  if (checkOperator(n,ReturnOpID,0))
+    checkTerminator(n);
 }
 
 template<> inline void
@@ -1264,6 +1274,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ThrowOpID:              /*validate(cast<ThrowOp>(n));*/ break;
     case NullOpID:               validate(cast<NullOp>(n)); break;
     case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
+    case ResultOpID:             validate(cast<ResultOp>(n)); break;
     case ContinueOpID:           validate(cast<ContinueOp>(n)); break;
     case BreakOpID:              validate(cast<BreakOp>(n)); break;
     case SelectOpID:             validate(cast<SelectOp>(n)); break;

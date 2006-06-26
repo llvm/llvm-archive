@@ -9,7 +9,7 @@
     </constant>
     <program id="return">
       <block>
-        <ret>
+        <result>
           <loop>
             <ne>
               <ref id="1"/>
@@ -18,7 +18,8 @@
             <ref id="0"/>
             <noop/>
           </loop>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

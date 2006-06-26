@@ -12,7 +12,7 @@
     </constant>
     <program id="block">
       <block>
-        <ret>
+        <result>
           <select>
             <block>
               <ne>
@@ -27,7 +27,8 @@
               <ref id="21"/>
             </block>
           </select>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

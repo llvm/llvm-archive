@@ -7,7 +7,7 @@
     <constant id="zero" type="s32"><dec>0</dec></constant>
     <program id="boolean">
       <block>
-        <ret>
+        <result>
           <select>
             <and>
               <nor>
@@ -25,7 +25,8 @@
             <ref id="one"/>
             <ref id="zero"/>
           </select>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

@@ -1041,9 +1041,14 @@ template ContinueOp*
 AST::new_NilaryOp<ContinueOp>(const Locator*loc);
 
 template ReturnOp* 
-AST::new_UnaryOp<ReturnOp>(const Type*Ty, Operator*op1,const Locator*loc);
+AST::new_NilaryOp<ReturnOp>(const Type*Ty, const Locator*loc);
 template ReturnOp* 
-AST::new_UnaryOp<ReturnOp>(Operator*op1,const Locator*loc);
+AST::new_NilaryOp<ReturnOp>(const Locator*loc);
+
+template ResultOp* 
+AST::new_UnaryOp<ResultOp>(const Type*Ty, Operator*op1,const Locator*loc);
+template ResultOp* 
+AST::new_UnaryOp<ResultOp>(Operator*op1,const Locator*loc);
 
 template CallOp* 
 AST::new_MultiOp<CallOp>(const Type*Ty, const std::vector<Operator*>& ops, const Locator*loc);

@@ -1053,6 +1053,7 @@
       <ref name="break.elem"/>
       <ref name="continue.elem"/>
       <ref name="ret.elem"/>
+      <ref name="result.elem"/>
       <ref name="call.elem"/>
     </choice>
   </define>
@@ -1101,6 +1102,12 @@
 
   <define name="ret.elem">
     <element name="ret">
+      <ref name="Documentation.pat"/>
+    </element>
+  </define>
+
+  <define name="result.elem">
+    <element name="result">
       <ref name="Documentation.pat"/>
       <ref name="Operators.pat"/>
     </element>

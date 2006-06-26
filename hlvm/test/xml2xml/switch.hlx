@@ -27,7 +27,7 @@
     </constant>
     <program id="return">
       <block>
-        <ret>
+        <result>
           <switch>
             <ref id="42"/>
             <ref id="42"/>
@@ -44,7 +44,8 @@
             <ref id="42"/>
             <ref id="21"/>
           </switch>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

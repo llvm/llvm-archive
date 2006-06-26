@@ -153,27 +153,21 @@ class LoopOp : public TernaryOperator
 /// The ReturnOp takes one operand which is the value to return to the caller
 /// of the Function.
 /// @brief AST Return Operator Node
-class ReturnOp : public UnaryOperator
+class ReturnOp : public NilaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    ReturnOp() : UnaryOperator(ReturnOpID)  {}
+    ReturnOp() : NilaryOperator(ReturnOpID)  {}
     virtual ~ReturnOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    Value* getResult() { return UnaryOperator::op1; }
     static inline bool classof(const ReturnOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ReturnOpID); }
 
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    void setResult(Value* op) { op->setParent(this); }
   /// @}
   friend class AST;
 };

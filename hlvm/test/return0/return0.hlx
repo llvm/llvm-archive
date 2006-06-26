@@ -4,9 +4,10 @@
     <constant id="zero" type="s32"><dec>0</dec></constant>
     <program id="return0">
       <block>
-        <ret>
+        <result>
           <ref id="zero"/>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

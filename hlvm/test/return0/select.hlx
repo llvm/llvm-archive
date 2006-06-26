@@ -12,7 +12,7 @@
     </constant>
     <program id="select">
       <block>
-        <ret>
+        <result>
           <select>
             <block>
               <ne><ref id="42"/><ref id="21"/></ne>
@@ -24,7 +24,8 @@
               <ref id="42"/>
             </block>
           </select>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

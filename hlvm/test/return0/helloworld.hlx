@@ -25,9 +25,10 @@
         <close>
           <load><ref id="out"/></load>
         </close>
-        <ret>
+        <result>
           <ref id="zero"/>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

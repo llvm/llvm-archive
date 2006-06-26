@@ -155,9 +155,10 @@ LastConstantID = ProgramID,
 FirstOperatorID = BlockID,
 
   // Nilary Operators (those taking no operands)
-  BreakOpID,               ///< Break out of the enclosing loop
+  BreakOpID,               ///< Break out of the enclosing block
 FirstNilaryOperatorID = BreakOpID,
-  ContinueOpID,            ///< Continue from start of enclosing block
+  ContinueOpID,            ///< Continue from start of enclosing loop
+  ReturnOpID,              ///< Return to the function's caller
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
@@ -167,8 +168,7 @@ LastNilaryOperatorID = ReferenceOpID,
   // Control Flow Unary Operators
   NullOpID,                ///< The "do nothing" NullOp (no-op) Operator
 FirstUnaryOperatorID = NullOpID,
-  ReturnOpID,              ///< Return a value to the function's caller
-  ResultOpID,              ///< Specify the result of a block
+  ResultOpID,              ///< Specify the result of a block or function
   ThrowOpID,               ///< Throw an exception out of the function
 
   // Integer Arithmetic Unary Operators

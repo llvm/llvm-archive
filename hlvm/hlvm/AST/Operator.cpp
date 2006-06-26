@@ -48,6 +48,14 @@ Operator::getContainingFunction()
   return cast<Function>(p);
 }
 
+Block*
+Operator::getContainingBlock()
+{
+  Node* p = getParent();
+  while (p && !isa<Block>(p)) p = p->getParent();
+  return cast<Block>(p);
+}
+
 NilaryOperator::~NilaryOperator()
 {
 }

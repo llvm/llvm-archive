@@ -77,6 +77,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   typedef std::vector<llvm::Module*> ModuleList;
   typedef std::vector<llvm::Value*> OperandList;
   typedef std::vector<llvm::BasicBlock*> BlockStack;
+  typedef std::vector<llvm::Value*> ResultStack;
   typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
   typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
   typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> 
@@ -88,12 +89,12 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
   OperandList lops;          ///< The current list of instruction operands
   BlockStack blocks;         ///< The stack of blocks we're constructing
+  ResultStack results;       ///< The stack of block results
   VariableDictionary gvars;  ///< Dictionary of HLVM -> LLVM gvars
   AutoVarDictionary lvars;   ///< Dictionary of HLVM -> LLVM auto vars
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
   ConstantDictionary consts; ///< The cached LLVM constants we've generated
   FunctionDictionary funcs;  ///< The cached LLVM constants we've generated
-    ///< The current LLVM instructions we're generating
   const AST* ast;            ///< The current Tree we're traversing
   const Bundle* bundle;      ///< The current Bundle we're traversing
   const hlvm::Function* function;  ///< The current Function we're traversing
@@ -120,8 +121,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   public:
     LLVMGeneratorPass(const AST* tree)
       : Pass(0,Pass::PreAndPostOrderTraversal),
-      modules(), lmod(0), lfunc(0), lblk(0), lops(), blocks(),
-      gvars(), lvars(), ltypes(), consts(),
+      modules(), lmod(0), lfunc(0), lblk(0), lops(), blocks(), results(),
+      gvars(), lvars(), ltypes(), consts(), funcs(),
       ast(tree),   bundle(0), function(0), block(0),
       hlvm_text(0), hlvm_text_create(0), hlvm_text_delete(0),
       hlvm_text_to_buffer(0),
@@ -1142,7 +1143,7 @@ LLVMGeneratorPass::gen(SwitchOp* op)
 template<> void
 LLVMGeneratorPass::gen(LoopOp* op)
 {
-  hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
+  hlvmAssert(lops.size() >= 3 && "Too few operands for LoopOp");
   llvm::Value* op3 = lops.back(); lops.pop_back();
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
@@ -1159,18 +1160,32 @@ LLVMGeneratorPass::gen(ContinueOp* op)
 }
 
 template<> void
+LLVMGeneratorPass::gen(ResultOp* r)
+{
+  hlvmAssert(lops.size() >= 1 && "Too few operands for ResultOp");
+  llvm::Value* result = lops.back(); lops.pop_back();
+  const llvm::Type* resultTy = result->getType();
+  if (resultTy != lfunc->getReturnType()) {
+    result = new llvm::CastInst(result,lfunc->getReturnType(),"result",lblk);
+  }
+  // Save the result value for use in other blocks or as the result of the
+  // function
+  results.push_back(result);
+}
+
+template<> void
 LLVMGeneratorPass::gen(ReturnOp* r)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for ReturnInst");
-  llvm::Value* retVal = lops.back(); lops.pop_back();
-  const llvm::Type* retTy = retVal->getType();
-  if (retTy != lfunc->getReturnType()) {
-    retVal = new llvm::CastInst(retVal,lfunc->getReturnType(),"",lblk);
+  // If this function returns a result then we need a return value
+  llvm::Value* result = 0;
+  if (lfunc->getReturnType() != llvm::Type::VoidTy) {
+    hlvmAssert(!results.empty() && "No result for function");
+    result = results.back(); results.pop_back();
   }
   // RetInst is never the operand of another instruction because it is
   // a terminator and cannot return a value. Consequently, we don't push it
   // on the lops stack.
-  new llvm::ReturnInst(retVal,lblk);
+  new llvm::ReturnInst(result,lblk);
 }
 
 template<> void
@@ -1439,6 +1454,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         lvars.clear();
         blocks.clear();
         lops.clear();
+        results.clear();
         break;
       }
       case ProgramID:
@@ -1461,7 +1477,9 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       }
       case BlockID:
       {
-        lblk = new llvm::BasicBlock(llvm::cast<Block>(n)->getLabel(),lfunc,0);
+        Block* B = llvm::cast<Block>(n);
+
+        lblk = new llvm::BasicBlock(B->getLabel(),lfunc,0);
         blocks.push_back(lblk);
         break;
       }
@@ -1533,6 +1551,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BreakOpID:               gen(llvm::cast<BreakOp>(n)); break;
       case ContinueOpID:            gen(llvm::cast<ContinueOp>(n)); break;
       case ReturnOpID:              gen(llvm::cast<ReturnOp>(n)); break;
+      case ResultOpID:              gen(llvm::cast<ResultOp>(n)); break;
       case CallOpID:                gen(llvm::cast<CallOp>(n)); break;
       case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
       case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;

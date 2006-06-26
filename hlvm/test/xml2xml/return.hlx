@@ -6,9 +6,10 @@
     </constant>
     <program id="return">
       <block>
-        <ret>
+        <result>
           <ref id="42"/>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

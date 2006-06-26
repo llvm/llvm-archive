@@ -4,7 +4,7 @@
     <program id="complement">
       <block>
         <autovar id="v" type="s32"/>
-        <ret>
+        <result>
           <cmpl>
             <cmpl>
               <load>
@@ -12,7 +12,8 @@
               </load>
             </cmpl>
           </cmpl>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

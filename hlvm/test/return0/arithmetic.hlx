@@ -8,7 +8,7 @@
     <constant id="8" type="s32"><dec>8</dec></constant>
     <program id="arithmetic">
       <block>
-        <ret>
+        <result>
           <sub>
             <add>
               <mul>
@@ -22,7 +22,8 @@
             </add>
             <ref id="8"/>
           </sub>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

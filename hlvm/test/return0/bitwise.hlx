@@ -7,7 +7,7 @@
     <constant id="00000000" type="s32"><hex>00000000</hex></constant>
     <program id="bitwise">
       <block>
-        <ret>
+        <result>
           <band>
             <bnor>
               <bor>
@@ -21,7 +21,8 @@
             </bnor>
             <ref id="00000000"/>
           </band>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

@@ -5,19 +5,21 @@
     <signature id="zero_func" result="s32"/>
     <function id="getResult" type="zero_func">
       <block>
-        <ret>
+        <result>
           <ref id="zero"/>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </function>
 
     <program id="call">
       <block>
-        <ret>
+        <result>
           <call>
             <ref id="getResult"/>
           </call>
-        </ret>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

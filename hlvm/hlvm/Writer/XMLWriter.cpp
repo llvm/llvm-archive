@@ -721,6 +721,13 @@ XMLWriterImpl::WriterPass::put(ReturnOp* r)
 }
 
 template<> void 
+XMLWriterImpl::WriterPass::put(ResultOp* r)
+{
+  startElement("result");
+  putDoc(r);
+}
+
+template<> void 
 XMLWriterImpl::WriterPass::put(CallOp* r)
 {
   startElement("call");
@@ -852,6 +859,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case BreakOpID:            put(cast<BreakOp>(n)); break;
       case ContinueOpID:         put(cast<ContinueOp>(n)); break;
       case ReturnOpID:           put(cast<ReturnOp>(n)); break;
+      case ResultOpID:           put(cast<ResultOp>(n)); break;
       case CallOpID:             put(cast<CallOp>(n)); break;
       case StoreOpID:            put(cast<StoreOp>(n)); break;
       case LoadOpID:             put(cast<LoadOp>(n)); break;

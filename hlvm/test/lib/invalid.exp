@@ -1,4 +1,4 @@
-#===-test/lib/error.exp - Script for error check tests ---------------------===#
+#===-test/lib/invalid.exp - Script for invalid input tests -----------------===#
 #
 #                      High Level Virtual Machine (HLVM)
 # 
@@ -20,7 +20,7 @@
 #  MA 02110-1301 USA
 # 
 #===------------------------------------------------------------------------===#
-proc hlvm-error-tests { prog pat } {
+proc hlvm-invalid-tests { prog pat } {
   global srcdir subdir objdir tmpdir objrootdir
   set outdir [file join $objdir $subdir]
   set tool [file join $objrootdir tools $prog $prog ]

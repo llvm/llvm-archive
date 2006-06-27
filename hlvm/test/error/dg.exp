@@ -1,3 +1,0 @@
-load_lib error.exp
-
-hlvm-error-tests hlvm-xml2xml "*.hlx"

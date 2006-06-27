@@ -3,7 +3,13 @@
   <bundle id="autovar">
     <program id="autovar">
       <block>
-        <autovar id="v1" type="u32"/>
+        <autovar id="v1" type="s32"/>
+        <result>
+          <load>
+            <ref id="v1"/>
+          </load>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

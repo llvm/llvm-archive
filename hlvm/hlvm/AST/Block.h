@@ -51,7 +51,7 @@ class Block : public MultiOperator
   /// @name Constructors
   /// @{
   protected:
-    Block() : MultiOperator(BlockID){}
+    Block() : MultiOperator(BlockID), label(), result(0), autovars() {}
     virtual ~Block();
 
   /// @}
@@ -60,9 +60,14 @@ class Block : public MultiOperator
   public:
     virtual const Type* getType() const { return this->back()->getType(); }
     const std::string& getLabel() const { return label; }
-    AutoVarOp*   getAutoVar(const std::string& name) const; 
-    const Type* getResultType() { return this->back()->getType(); }
+    AutoVarOp* getAutoVar(const std::string& name) const; 
+    const Type* getResultType() const { return result->getType(); }
+    const Operator* getResult() const { return result; }
     Block* getParentBlock() const;
+    bool isTerminated() const { 
+      if (empty()) return false; 
+      return back()->isTerminator();
+    }
     static inline bool classof(const Block*) { return true; }
     static inline bool classof(const Node* N) { return N->is(BlockID); }
 
@@ -71,6 +76,7 @@ class Block : public MultiOperator
   /// @{
   public:
     void setLabel(const std::string& l) { label = l; }
+
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -80,6 +86,7 @@ class Block : public MultiOperator
   private:
     typedef std::map<std::string,AutoVarOp*> AutoVarMap;
     std::string label;
+    Operator* result;
     AutoVarMap  autovars;
   /// @}
   friend class AST;

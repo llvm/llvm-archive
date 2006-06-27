@@ -3,11 +3,18 @@
   <bundle id="call">
     <signature id="callee_type" result="void"/>
     <function id="callee" type="callee_type" linkage="external"/>
+    <constant id="result" type="s32">
+      <dec>0</dec>
+    </constant>
     <program id="return">
       <block>
         <call>
           <ref id="callee"/>
         </call>
+        <result>
+          <ref id="result"/>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

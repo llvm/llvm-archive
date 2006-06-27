@@ -55,8 +55,8 @@ class ValidateImpl : public Pass
     ValidateImpl() : Pass(0,Pass::PostOrderTraversal), ast(0) {}
     virtual void handleInitialize(AST* tree) { ast = tree; }
     virtual void handle(Node* b,Pass::TraversalKinds k);
-    inline void error(Node*n, const std::string& msg);
-    inline void warning(Node*n, const std::string& msg);
+    inline void error(const Node*n, const std::string& msg);
+    inline void warning(const Node*n, const std::string& msg);
     inline bool checkNode(Node*);
     inline bool checkType(Type*,NodeIDs id);
     inline bool checkValue(Value*,NodeIDs id);
@@ -67,13 +67,14 @@ class ValidateImpl : public Pass
     inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
     inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
     inline bool checkLinkable(Linkable* LI, NodeIDs id);
+    inline bool checkExpressionBlock(const Block* B);
 
     template <class NodeClass>
     inline void validate(NodeClass* C);
 };
 
 void 
-ValidateImpl::warning(Node* n, const std::string& msg)
+ValidateImpl::warning(const Node* n, const std::string& msg)
 {
   if (n) {
     const Locator* loc = n->getLocator();
@@ -88,7 +89,7 @@ ValidateImpl::warning(Node* n, const std::string& msg)
 }
 
 void 
-ValidateImpl::error(Node* n, const std::string& msg)
+ValidateImpl::error(const Node* n, const std::string& msg)
 {
   if (n) {
     const Locator* loc = n->getLocator();
@@ -247,6 +248,21 @@ ValidateImpl::checkLinkable(Linkable* LI, NodeIDs id)
     }
   }
   return result;
+}
+
+bool 
+ValidateImpl::checkExpressionBlock(const Block* B)
+{
+  bool result = true;
+  if (!B->getResult()) {
+    error(B,"Expression block without result");
+    result = false;
+  }
+  if (B->isTerminated()) {
+    error(B,"Expression blocks cannot have terminators");
+    result = false;
+  }
+  return true;
 }
 
 template<> inline void
@@ -503,10 +519,39 @@ ValidateImpl::validate(Block* n)
   if (checkValue(n,BlockID))
     if (n->getNumOperands() == 0)
       error(n,"Block with no operands");
-    else
-      for (MultiOperator::iterator I = n->begin(), E = n->end(); I != E; ++I)
-        if (!llvm::isa<Operator>(*I))
+    else {
+      Operator* terminator = 0;
+      Operator* result = 0;
+      for (MultiOperator::iterator I = n->begin(), E = n->end(); I != E; ++I) {
+        if (llvm::isa<ResultOp>(*I))
+          result = *I;
+        else if ((*I)->isTerminator()) {
+          if (terminator)
+            error(n,"Block contains multiple terminators");
+          else
+            terminator = *I;
+        } else if (terminator)
+          error(n,"Block has operators after terminator");
+        else if (!llvm::isa<Operator>(*I))
           error(n,"Block contains non-operator");
+      }
+      if (terminator) {
+        if (llvm::isa<ReturnOp>(terminator)) {
+          if (!result) {
+            Function* F= n->getContainingFunction();
+            if (F->getResultType() != ast->getPrimitiveType(VoidTypeID))
+              error(terminator,"Missing result in return from function");
+          }
+        } else if (result) {
+          warning(result,"Result will not be used in terminated block");
+        }
+      } else if (result) {
+        if (n == n->getContainingFunction()->getBlock())
+          error(result,"Function's main block has result but no return");
+      } else {
+        error(n,"Block does not contain a result or terminator");
+      }
+    }
 }
 
 template<> inline void
@@ -521,12 +566,18 @@ ValidateImpl::validate(ResultOp* n)
 {
   if (checkOperator(n,ResultOpID,1)) {
     const Function* F = n->getContainingFunction();
-    const Block* B = n->getContainingBlock();
-    if (F->getBlock() == B) {
-      const SignatureType* SigTy = F->getSignature();
-      Operator* res = n->getOperand(0);
-      if (res->getType() != SigTy->getResultType())
-        error(n,"ResultOp operand does not agree in type with Function result");
+    if (!F)
+      error(n,"ResultOp not in Function!");
+    else {
+      const Block* B = n->getContainingBlock();
+      if (!B)
+        error(n,"ResultOp not in a Block");
+      else if (F->getBlock() == B) {
+          const SignatureType* SigTy = F->getSignature();
+          Operator* res = n->getOperand(0);
+          if (res->getType() != SigTy->getResultType())
+            error(n,"Operand does not agree in type with Function result");
+      }
     }
   }
 }
@@ -542,14 +593,18 @@ template<> inline void
 ValidateImpl::validate(BreakOp* n)
 {
   if (checkOperator(n,BreakOpID,0))
-    checkTerminator(n);
+    if (checkTerminator(n))
+      if (!n->getContainingLoop())
+        error(n,"Break not within a loop scope");
 }
 
 template<> inline void
 ValidateImpl::validate(ContinueOp* n)
 {
   if (checkOperator(n,ContinueOpID,0))
-    checkTerminator(n);
+    if (checkTerminator(n)) 
+      if (!n->getContainingLoop())
+        error(n,"Continue not within a loop scope");
 }
 
 template<> inline void
@@ -564,11 +619,17 @@ ValidateImpl::validate(SelectOp* n)
     const Type* Ty3 = Op3->getType();
     if (!isa<BooleanType>(Ty1))
       error(n,"SelectOp expects first operand to be type boolean");
-    else if ( Ty2 != Ty3 )
-      error(n,"Second and third operands for SelectOp must agree in type");
-    else if (isa<Block>(Op2) != isa<Block>(Op3))
+    if (isa<Block>(Op1))
+      checkExpressionBlock(cast<Block>(Op1));
+    if (Ty2 != Ty3)
+      error(n,"Second and third operands for SelectOp must have same type");
+    if (isa<Block>(Op2) != isa<Block>(Op3))
       error(n,"SelectOp requires operands 2 and 3 to both be blocks or "
               "neither be blocks");
+    if (isa<Block>(Op2))
+      checkExpressionBlock(cast<Block>(Op2));
+    if (isa<Block>(Op3))
+      checkExpressionBlock(cast<Block>(Op3));
   }
 }
 
@@ -576,12 +637,19 @@ template<> inline void
 ValidateImpl::validate(LoopOp* n)
 {
   if (checkOperator(n,LoopOpID,3)) {
-    const Type* Ty = n->getOperand(0)->getType();
-    if (!isa<BooleanType>(Ty) && !isa<VoidType>(Ty))
+    const Operator* Op1 = n->getOperand(0);
+    const Operator* Op2 = n->getOperand(1);
+    const Operator* Op3 = n->getOperand(2);
+    const Type* Ty1 = Op1->getType();
+    const Type* Ty3 = Op3->getType();
+    if (!isa<BooleanType>(Ty1) && !isa<VoidType>(Ty1))
       error(n,"LoopOp expects first operand to be type boolean or void");
-    Ty = n->getOperand(2)->getType();
-    if (!isa<BooleanType>(Ty) && !isa<VoidType>(Ty))
+    if (!isa<BooleanType>(Ty3) && !isa<VoidType>(Ty3))
       error(n,"LoopOp expects third operand to be type boolean or void");
+    if (isa<Block>(Op1))
+      checkExpressionBlock(cast<Block>(Op1));
+    if (isa<Block>(Op3))
+      checkExpressionBlock(cast<Block>(Op3));
   }
 }
 

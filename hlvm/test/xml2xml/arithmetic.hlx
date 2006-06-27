@@ -4,6 +4,9 @@
     <constant id="one" type="u32">
       <dec>1</dec>
     </constant>
+    <constant id="result" type="s32">
+      <dec>0</dec>
+    </constant>
     <program id="unaryarithmetic">
       <block>
         <autovar id="v1" type="u32"/>
@@ -98,6 +101,10 @@
             <ref id="v2"/>
           </load>
         </bnor>
+        <result>
+          <ref id="result"/>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

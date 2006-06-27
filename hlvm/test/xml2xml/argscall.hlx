@@ -16,6 +16,9 @@
     <constant id="answer" type="u32">
       <dec>42</dec>
     </constant>
+    <constant id="result" type="s32">
+      <dec>0</dec>
+    </constant>
     <function id="none" type="no_args" linkage="external"/>
     <function id="one" type="one_arg" linkage="external"/>
     <function id="two" type="two_arg" linkage="external"/>
@@ -40,6 +43,10 @@
           <ref id="answer"/>
           <ref id="answer"/>
         </call>
+        <result>
+          <ref id="result"/>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

@@ -62,8 +62,14 @@ class NullOp : public NilaryOperator
 /// operand as a boolean. If the result is true, the second operand is evaluated
 /// and its result is the result of the select operator. If the result of the
 /// first operand is false, the third operand is evaluated and its result is the
-/// result of the select operator. This is similar to an "if" statement in other
-/// languages except it is unrestricted. The three operands can be of any type.
+/// result of the select operator. This is similar to the ternary operator in
+/// other languages, such as ?: in C.  It also fulfills the purpose of an "if"
+/// statement except it is more generalized because the operator has a result
+/// value whereas most "if" statements do not. The second and third operands 
+/// can be any type but they must both be the same type. If the second and 
+/// third operands are blocks, and neither contains a result operator, the
+/// result of those blocks has type "void" and consequently so does the result
+/// of the select operator.
 /// @brief AST Select Operator Node
 class SelectOp : public TernaryOperator
 {

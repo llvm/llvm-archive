@@ -1090,12 +1090,22 @@
 
   <define name="break.elem">
     <element name="break">
+      <optional>
+        <attribute name="id">
+          <ref name="Identifier.type"/>
+        </attribute>
+      </optional>
       <ref name="Documentation.pat"/>
     </element>
   </define>
 
   <define name="continue.elem">
     <element name="continue">
+      <optional>
+        <attribute name="id">
+          <ref name="Identifier.type"/>
+        </attribute>
+      </optional>
       <ref name="Documentation.pat"/>
     </element>
   </define>

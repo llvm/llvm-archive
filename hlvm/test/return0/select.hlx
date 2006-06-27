@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/select.hlx">
   <bundle id="select">
-    <constant id="0" type="s32">
-      <dec>0</dec>
-    </constant>
-    <constant id="21" type="s32">
-      <dec>21</dec>
-    </constant>
-    <constant id="42" type="s32">
-      <dec>42</dec>
-    </constant>
+    <constant id="0" type="s32"><dec>0</dec></constant>
+    <constant id="21" type="s32"><dec>21</dec></constant>
+    <constant id="42" type="s32"><dec>42</dec></constant>
+    <constant id="true" type="bool"><true/></constant>
+    <constant id="false" type="bool"><false/></constant>
     <program id="select">
       <block>
         <result>
           <select>
             <block>
-              <ne><ref id="42"/><ref id="21"/></ne>
+              <result>
+                <select>
+                  <ne><ref id="42"/><ref id="21"/></ne>
+                  <ref id="true"/>
+                  <ref id="false"/>
+                </select>
+              </result>
             </block>
             <block>
-              <ref id="0"/>
+              <result><ref id="0"/></result>
             </block>
             <block>
-              <ref id="42"/>
+              <result><ref id="42"/></result>
             </block>
           </select>
         </result>

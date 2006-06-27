@@ -77,7 +77,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   typedef std::vector<llvm::Module*> ModuleList;
   typedef std::vector<llvm::Value*> OperandList;
   typedef std::vector<llvm::BasicBlock*> BlockStack;
-  typedef std::vector<llvm::Value*> ResultStack;
+  typedef std::map<llvm::BasicBlock*,llvm::Value*> ResultDictionary;
   typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
   typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
   typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> 
@@ -89,7 +89,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
   OperandList lops;          ///< The current list of instruction operands
   BlockStack blocks;         ///< The stack of blocks we're constructing
-  ResultStack results;       ///< The stack of block results
+  ResultDictionary results;  ///< Dictionary of LLVM blocks to result values
   VariableDictionary gvars;  ///< Dictionary of HLVM -> LLVM gvars
   AutoVarDictionary lvars;   ///< Dictionary of HLVM -> LLVM auto vars
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
@@ -1112,23 +1112,74 @@ LLVMGeneratorPass::gen(SelectOp* op)
   llvm::Value* op3 = lops.back(); lops.pop_back();
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
-  hlvmAssert(op1->getType() == llvm::Type::BoolTy);
   hlvmAssert(op2->getType() == op2->getType());
   hlvmAssert(llvm::isa<llvm::BasicBlock>(op2) == 
              llvm::isa<llvm::BasicBlock>(op3));
-  if (llvm::isa<llvm::BasicBlock>(op2)) {
-    // both are blocks, emit a BranchInstr
-    lops.push_back(new llvm::BranchInst(
-      llvm::cast<llvm::BasicBlock>(op2),
-      llvm::cast<llvm::BasicBlock>(op3),op1,lblk));
-    return;
-  } 
 
-  // A this point, we can only be left with a first class type since all HLVM
-  // operators translate to a first class type. Since the select operator
-  // requires first class types, its okay to just use it here.
-  hlvmAssert(op2->getType()->isFirstClassType());
-  lops.push_back(new llvm::SelectInst(op1,op2,op3,"select",lblk));
+  /// If the first operand is a basic block then it is an expression block, by
+  /// definition. We can therefore discard the LLVM basic block and incorporate
+  /// its contents into the current block. We also replace "op1" with the 
+  /// BasicBlock's result which was cached.
+  if (llvm::BasicBlock* BB1 = llvm::dyn_cast<llvm::BasicBlock>(op1)) {
+    hlvmAssert(!BB1->getTerminator() && "expression block with terminator?");
+    // Move the contents of the basic block into the current one
+    llvm::BasicBlock::InstListType& IL = lblk->getInstList();
+    for (llvm::BasicBlock::iterator I = BB1->begin(), E = BB1->end();
+         I != E; )  {
+      // be careful with iterator invalidation
+      llvm::Instruction* one2move = &(*I);
+      ++I;
+      // move the instruction from one block to the other
+      one2move->removeFromParent();
+      IL.push_back(one2move);
+    }
+    op1 = results[BB1];
+    results.erase(BB1);
+    BB1->eraseFromParent();
+  }
+
+  if (llvm::isa<llvm::BasicBlock>(op2)) {
+    // Both op2 and op3 are blocks, so we must emit a branch instruction for 
+    // the select.  That will terminate the current block so we need to set up
+    // another block to receive the result of the selection.  We also need to 
+    // make sure that the two operand blocks are properly terminated.
+    llvm::BasicBlock* BB2 = llvm::cast<llvm::BasicBlock>(op2);
+    llvm::BasicBlock* BB3 = llvm::cast<llvm::BasicBlock>(op3);
+    // Neither block should have a terminator, they are expression blocks
+    hlvmAssert(!BB2->getTerminator() && !BB3->getTerminator());
+    // Create an auto variable to hold the result of the select.
+    llvm::AllocaInst* select_result = new llvm::AllocaInst(
+      /*Ty=*/ results[BB2]->getType(),
+      /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
+      /*Name=*/ "select_result",
+      /*InsertAtEnd=*/ lblk
+    );
+    // Set up the branch to terminate the current block
+    new llvm::BranchInst(BB2,BB3,op1,lblk);
+    // Create the exit block
+    llvm::BasicBlock* exit = new llvm::BasicBlock("select_exit",lfunc);
+    // Make the exit block the current block
+    lblk = exit;
+    // Store the result of the "true" case into the autovar
+    new llvm::StoreInst(results[BB2],select_result,BB2);
+    // Branch to the exit block
+    BB2->setName("select_true");
+    new llvm::BranchInst(exit,BB2);
+    // Store the result of the "false" case into the autovar
+    new llvm::StoreInst(results[BB3],select_result,BB3);
+    // Branch to the exit block
+    BB3->setName("select_false");
+    new llvm::BranchInst(exit,BB3);
+    // Load the result and put it on the operand stack
+    lops.push_back(new llvm::LoadInst(select_result,"select",exit));
+  } else { 
+    // A this point, we can only be left with a first class type since all HLVM
+    // operators translate to a first class type. Since the select operator
+    // requires first class types, its okay to just use it here.
+    hlvmAssert(op2->getType()->isFirstClassType());
+    hlvmAssert(op3->getType()->isFirstClassType());
+    lops.push_back(new llvm::SelectInst(op1,op2,op3,"select",lblk));
+  }
 }
 
 template<> void
@@ -1147,6 +1198,7 @@ LLVMGeneratorPass::gen(LoopOp* op)
   llvm::Value* op3 = lops.back(); lops.pop_back();
   llvm::Value* op2 = lops.back(); lops.pop_back();
   llvm::Value* op1 = lops.back(); lops.pop_back();
+
 }
 
 template<> void
@@ -1164,13 +1216,9 @@ LLVMGeneratorPass::gen(ResultOp* r)
 {
   hlvmAssert(lops.size() >= 1 && "Too few operands for ResultOp");
   llvm::Value* result = lops.back(); lops.pop_back();
-  const llvm::Type* resultTy = result->getType();
-  if (resultTy != lfunc->getReturnType()) {
-    result = new llvm::CastInst(result,lfunc->getReturnType(),"result",lblk);
-  }
   // Save the result value for use in other blocks or as the result of the
   // function
-  results.push_back(result);
+  results[lblk] = result;
 }
 
 template<> void
@@ -1180,8 +1228,14 @@ LLVMGeneratorPass::gen(ReturnOp* r)
   llvm::Value* result = 0;
   if (lfunc->getReturnType() != llvm::Type::VoidTy) {
     hlvmAssert(!results.empty() && "No result for function");
-    result = results.back(); results.pop_back();
+    result = results[lblk];
+    const llvm::Type* resultTy = result->getType();
+    if (resultTy != lfunc->getReturnType()) {
+      result = new llvm::CastInst(result,lfunc->getReturnType(),"result",lblk);
+    }
+    hlvmAssert(result && "No result for function");
   }
+
   // RetInst is never the operand of another instruction because it is
   // a terminator and cannot return a value. Consequently, we don't push it
   // on the lops stack.
@@ -1478,7 +1532,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BlockID:
       {
         Block* B = llvm::cast<Block>(n);
-
         lblk = new llvm::BasicBlock(B->getLabel(),lfunc,0);
         blocks.push_back(lblk);
         break;
@@ -1577,6 +1630,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         lfunc = 0;
         break;
       case BlockID:
+        lops.push_back(lblk);
         blocks.pop_back();
         if (blocks.empty())
           lblk = 0;

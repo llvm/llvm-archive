@@ -15,16 +15,22 @@
         <result>
           <select>
             <block>
-              <ne>
-                <ref id="0"/>
+              <result>
+                <ne>
+                  <ref id="0"/>
+                  <ref id="21"/>
+                </ne>
+              </result>
+            </block>
+            <block>
+              <result>
+                <ref id="42"/>
+              </result>
+            </block>
+            <block>
+              <result>
                 <ref id="21"/>
-              </ne>
-            </block>
-            <block>
-              <ref id="42"/>
-            </block>
-            <block>
-              <ref id="21"/>
+              </result>
             </block>
           </select>
         </result>

@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Operator.h>
 #include <hlvm/AST/Linkables.h>
+#include <hlvm/AST/ControlFlow.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 
@@ -45,6 +46,8 @@ Operator::getContainingFunction()
 {
   Node* p = getParent();
   while (p && !isa<Function>(p)) p = p->getParent();
+  if (!p)
+    return 0;
   return cast<Function>(p);
 }
 
@@ -53,7 +56,19 @@ Operator::getContainingBlock()
 {
   Node* p = getParent();
   while (p && !isa<Block>(p)) p = p->getParent();
+  if (!p)
+    return 0;
   return cast<Block>(p);
+}
+
+LoopOp*
+Operator::getContainingLoop()
+{
+  Node* p = getParent();
+  while (p && !isa<LoopOp>(p)) p = p->getParent();
+  if (!p)
+    return 0;
+  return cast<LoopOp>(p);
 }
 
 NilaryOperator::~NilaryOperator()

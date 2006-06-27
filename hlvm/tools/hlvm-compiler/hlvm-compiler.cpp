@@ -47,8 +47,8 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
-static cl::opt<bool> Validate("validate", cl::init(true),
-  cl::desc("Validate input before generating code"));
+static cl::opt<bool> NoValidate("no-validate", cl::init(false),
+  cl::desc("Don't validate input before generating code"));
 
 enum GenerationOptions {
   GenLLVMBytecode,
@@ -117,7 +117,7 @@ int main(int argc, char**argv)
     XMLReader* rdr = XMLReader::create(InputFilename);
     rdr->read();
     AST* node = rdr->get();
-    if (node && Validate) {
+    if (node && !NoValidate) {
       if (!validate(node))
         return 3;
     }

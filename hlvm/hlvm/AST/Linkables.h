@@ -167,6 +167,7 @@ class Function : public Linkable
     bool hasBlock() const { return block != 0; }
     Block* getBlock() const { return block; }
     const SignatureType* getSignature() const;
+    const Type* getResultType() const { return getSignature()->getResultType();}
 
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }

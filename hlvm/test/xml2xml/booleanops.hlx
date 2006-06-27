@@ -7,6 +7,9 @@
     <constant id="true" type="bool">
       <true/>
     </constant>
+    <constant id="result" type="s32">
+      <dec>0</dec>
+    </constant>
     <program id="booleanops">
       <block>
         <autovar id="v1" type="bool" init="true"/>
@@ -96,6 +99,10 @@
             <ref id="v2"/>
           </load>
         </le>
+        <result>
+          <ref id="result"/>
+        </result>
+        <ret/>
       </block>
     </program>
   </bundle>

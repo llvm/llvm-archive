@@ -380,8 +380,7 @@ class Node
       return id >= FirstOperatorID && id <= LastOperatorID; }
 
     inline bool isTerminator() const {
-      return (id >= BreakOpID && id <= ContinueOpID) || 
-             (id >= ReturnOpID && id <= ThrowOpID); }
+      return (id >= BreakOpID && id <= ReturnOpID) || (id == ThrowOpID); }
 
     inline bool isNilaryOperator() const {
       return id >= FirstNilaryOperatorID && id <= LastNilaryOperatorID; }

@@ -38,6 +38,7 @@ namespace hlvm
 class Type; 
 class Function;
 class Block;
+class LoopOp;
 
 /// This class is the abstract base class in the Abstract Syntax Tree for all
 /// operators. An Operator is an instruction to the virtual machine to take
@@ -73,6 +74,9 @@ class Operator : public Value
 
     /// Return the block containing this operator
     Block* getContainingBlock();
+
+    /// Return the loop operator containing this operator
+    LoopOp* getContainingLoop();
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }

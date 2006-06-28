@@ -43,6 +43,7 @@
 #include <llvm/Support/MathExtras.h>
 #include <llvm/ADT/StringExtras.h>
 #include <iostream>
+#include <cfloat>
 
 using namespace hlvm;
 using namespace llvm;
@@ -498,9 +499,49 @@ ValidateImpl::validate(ConstantReal* CR)
   if (checkConstant(CR,ConstantRealID)) {
     const char* startp = CR->getValue().c_str();
     char* endp = 0;
-    double val = strtod(startp,&endp);
+    long double val = strtold(startp,&endp);
     if (!endp || startp == endp || *endp != '\0')
       error(CR,"Invalid real constant. Conversion failed.");
+    else {
+      // It converted to a double okay, check that it is in range
+      unsigned numBits = 0;
+      switch (CR->getType()->getID()) {
+        case Float32TypeID: numBits = 32; break;
+        case Float44TypeID: numBits = 44; break;
+        case Float64TypeID: numBits = 64; break;
+        case Float80TypeID: numBits = 80; break;
+        case Float128TypeID: numBits = 128; break;
+        case RealTypeID: 
+        {
+          const RealType* Ty = llvm::cast<RealType>(CR->getType());
+          numBits = Ty->getMantissa() + Ty->getExponent() + 1; 
+          break;
+        }
+        default:
+          error(CR,"Invalid floating point type");
+          return;
+      }
+      bool isValid = false;
+      if (numBits <= sizeof(float)*8) {
+        float x = val;
+        long double x2 = x;
+        isValid = (val <= FLT_MAX && val >= FLT_MIN && val == x2);
+      } 
+      else if (numBits <= sizeof(double)*8)
+      {
+        double x = val;
+        long double x2 = x;
+        isValid = (val <= DBL_MAX && val >= DBL_MIN && val == x2);
+      }
+      else if (numBits > sizeof(long double)*8)
+      {
+        warning(CR,"Don't know how to check range of real type > 128 bits");
+        isValid = true;
+      }
+      if (!isValid)
+        error(CR,"Real constant out of range for real requiring " +
+          utostr(numBits) + " bits");
+    }
   }
 }
 

@@ -672,14 +672,11 @@ template<> inline void
 ValidateImpl::validate(SelectOp* n)
 {
   if (checkOperator(n,SelectOpID,3)) {
-    Operator* Op1 = n->getOperand(0);
-    Operator* Op2 = n->getOperand(1);
-    Operator* Op3 = n->getOperand(2);
-    checkBooleanExpression(Op1);
-    checkResult(Op2);
-    checkResult(Op3);
-    if (Op2->getType() != Op3->getType())
-      error(n,"Second and third operands for SelectOp must have same type");
+    checkBooleanExpression(n->getOperand(0));
+    if (checkResult(n->getOperand(1)))
+      if (checkResult(n->getOperand(2)))
+        if (n->getOperand(1)->getType() != n->getOperand(2)->getType())
+          error(n,"Second and third operands for SelectOp must have same type");
   }
 }
 
@@ -725,8 +722,6 @@ ValidateImpl::validate(SwitchOp* n)
 {
   if (checkOperator(n,SwitchOpID,2,false)) 
   {
-    checkIntegralExpression(n->getOperand(0));
-    checkResult(n->getOperand(1));
     if (n->getNumOperands() % 2 != 0)
       error(n,"SwitchOp requires even number of operands");
     else {

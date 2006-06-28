@@ -67,7 +67,10 @@ class ValidateImpl : public Pass
     inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
     inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
     inline bool checkLinkable(Linkable* LI, NodeIDs id);
-    inline bool checkExpressionBlock(const Block* B,bool optional = false);
+    inline bool checkExpression(const Operator* op);
+    inline bool checkBooleanExpression(const Operator* op);
+    inline bool checkIntegralExpression(const Operator* op);
+    inline bool checkResult(const Operator* op);
 
     template <class NodeClass>
     inline void validate(NodeClass* C);
@@ -246,24 +249,68 @@ ValidateImpl::checkLinkable(Linkable* LI, NodeIDs id)
   return result;
 }
 
-bool 
-ValidateImpl::checkExpressionBlock(const Block* B, bool optional)
+bool
+ValidateImpl::checkExpression(const Operator* op) 
 {
   bool result = true;
-  if (!B->getResult()) {
-    if (optional) {
-      if (!isa<Block>(B->getParent()->getParent())) {
-        error(B,"Block has no result, but its use expects a result");
+  if (const Block* B = dyn_cast<Block>(op)) {
+    if (const Operator* block_result = B->getResult()) {
+      if (!block_result->getType()) {
+        error(op,"Block with void result used where expression expected");
         result = false;
       }
     } else {
-      error(B,"Expression block without result");
+      error(op,"Block without result used where expression expected");
       result = false;
     }
-  }
-  if (!optional && B->isTerminated()) {
-    error(B,"Expression blocks cannot have terminators");
+    if (B->isTerminated()){
+      error(op,"Terminator found in block used as an expression");
+      result = false;
+    }
+  } else if (!op->getType()) {
+    error(op,"Operator with void result used where expression expected");
     result = false;
+  }
+  return result;
+}
+
+bool
+ValidateImpl::checkBooleanExpression(const Operator* op)
+{
+  if (checkExpression(op))
+    if (!isa<BooleanType>(op->getType())) {
+      error(op,std::string("Expecting boolean expression but type '") +
+        op->getType()->getName() + "' was found");
+      return false;
+    } else
+      return true;
+  return false;
+}
+
+bool
+ValidateImpl::checkIntegralExpression(const Operator* op)
+{
+  if (checkExpression(op))
+    if (!op->getType()->isIntegralType()) {
+      error(op,std::string("Expecting integral expression but type '") +
+        op->getType()->getName() + "' was found");
+      return false;
+    } else
+      return true;
+  return false;
+}
+
+bool 
+ValidateImpl::checkResult(const Operator* op)
+{
+  if (const Block* B = dyn_cast<Block>(op)) {
+    if (!B->getResult() && !isa<Block>(B->getParent()->getParent())) {
+      error(B,"Block with no result used where an expression is expected");
+      return false;
+    }
+  } else if (!op->getType() && !isa<Block>(op->getParent()->getParent()))  {
+    error(op,"Operator with void result used where an expression is expected");
+    return false;
   }
   return true;
 }
@@ -628,22 +675,11 @@ ValidateImpl::validate(SelectOp* n)
     Operator* Op1 = n->getOperand(0);
     Operator* Op2 = n->getOperand(1);
     Operator* Op3 = n->getOperand(2);
-    const Type* Ty1 = Op1->getType();
-    const Type* Ty2 = Op2->getType();
-    const Type* Ty3 = Op3->getType();
-    if (!isa<BooleanType>(Ty1))
-      error(n,"SelectOp expects first operand to be type boolean");
-    if (isa<Block>(Op1))
-      checkExpressionBlock(cast<Block>(Op1));
-    if (Ty2 != Ty3)
+    checkBooleanExpression(Op1);
+    checkResult(Op2);
+    checkResult(Op3);
+    if (Op2->getType() != Op3->getType())
       error(n,"Second and third operands for SelectOp must have same type");
-    if (isa<Block>(Op2) != isa<Block>(Op3))
-      error(n,"SelectOp requires operands 2 and 3 to both be blocks or "
-              "neither be blocks");
-    if (isa<Block>(Op2))
-      checkExpressionBlock(cast<Block>(Op2),true);
-    if (isa<Block>(Op3))
-      checkExpressionBlock(cast<Block>(Op3),true);
   }
 }
 
@@ -651,14 +687,8 @@ template<> inline void
 ValidateImpl::validate(WhileOp* n)
 {
   if (checkOperator(n,WhileOpID,2)) {
-    const Operator* Op1 = n->getOperand(0);
-    const Operator* Op2 = n->getOperand(1);
-    if (!isa<BooleanType>(Op1->getType()))
-      error(n,"WhileOp expects first operand to be type boolean");
-    if (const Block* B1 = dyn_cast<Block>(Op1))
-      checkExpressionBlock(B1);
-    if (const Block* B2 = dyn_cast<Block>(Op2))
-      checkExpressionBlock(B2,true);
+    checkBooleanExpression(n->getOperand(0));
+    checkResult(n->getOperand(1));
   }
 }
 
@@ -666,14 +696,8 @@ template<> inline void
 ValidateImpl::validate(UnlessOp* n)
 {
   if (checkOperator(n,UnlessOpID,2)) {
-    const Operator* Op1 = n->getOperand(0);
-    const Operator* Op2 = n->getOperand(1);
-    if (!isa<BooleanType>(Op1->getType()))
-      error(n,"WhileOp expects first operand to be type boolean");
-    if (const Block* B1 = dyn_cast<Block>(Op1))
-      checkExpressionBlock(B1);
-    if (const Block* B2 = dyn_cast<Block>(Op2))
-      checkExpressionBlock(B2,true);
+    checkBooleanExpression(n->getOperand(0));
+    checkResult(n->getOperand(1));
   }
 }
 
@@ -681,14 +705,8 @@ template<> inline void
 ValidateImpl::validate(UntilOp* n)
 {
   if (checkOperator(n,UntilOpID,2)) {
-    const Operator* Op1 = n->getOperand(0);
-    const Operator* Op2 = n->getOperand(1);
-    if (!isa<BooleanType>(Op2->getType()))
-      error(n,"WhileOp expects second operand to be type boolean");
-    if (const Block* B1 = dyn_cast<Block>(Op1))
-      checkExpressionBlock(B1,true);
-    if (const Block* B2 = dyn_cast<Block>(Op2))
-      checkExpressionBlock(B2);
+    checkResult(n->getOperand(0));
+    checkBooleanExpression(n->getOperand(1));
   }
 }
 
@@ -696,22 +714,9 @@ template<> inline void
 ValidateImpl::validate(LoopOp* n)
 {
   if (checkOperator(n,LoopOpID,3)) {
-    const Operator* Op1 = n->getOperand(0);
-    const Operator* Op2 = n->getOperand(1);
-    const Operator* Op3 = n->getOperand(2);
-    const Type* Ty1 = Op1->getType();
-    const Type* Ty3 = Op3->getType();
-    if (!isa<BooleanType>(Ty1))
-      error(n,"LoopOp expects first operand to be type boolean");
-    if (!isa<BooleanType>(Ty3))
-      error(n,"LoopOp expects third operand to be type boolean");
-    if (isa<Block>(Op1))
-      checkExpressionBlock(cast<Block>(Op1));
-    if (isa<Block>(Op3))
-      checkExpressionBlock(cast<Block>(Op3));
-    if (const Block* B = dyn_cast<Block>(Op2))
-      checkExpressionBlock(B,true);
-
+    checkBooleanExpression(n->getOperand(0));
+    checkResult(n->getOperand(1));
+    checkBooleanExpression(n->getOperand(2));
   }
 }
 
@@ -720,10 +725,19 @@ ValidateImpl::validate(SwitchOp* n)
 {
   if (checkOperator(n,SwitchOpID,2,false)) 
   {
-    if (n->getNumOperands() == 2)
-      warning(n,"Why not just use a SelectOp?");
+    checkIntegralExpression(n->getOperand(0));
+    checkResult(n->getOperand(1));
     if (n->getNumOperands() % 2 != 0)
       error(n,"SwitchOp requires even number of operands");
+    else {
+      const Type* resultTy = n->getOperand(1)->getType();
+      for (SwitchOp::iterator I = n->begin(), E = n->end(); I != E; ++I ) {
+        checkIntegralExpression(*I++);
+        if (checkResult(*I))
+          if (resultTy != (*I)->getType())
+            error(*I,"Inconsistent result type for SwitchOp");
+      }
+    }
   }
 }
 

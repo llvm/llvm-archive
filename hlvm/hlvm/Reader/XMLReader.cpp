@@ -87,7 +87,7 @@ public:
     if (doc) xmlFreeDoc(doc);
   }
 
-  virtual void read();
+  virtual bool read();
   virtual AST* get();
 
   std::string lookupToken(int32_t token) const
@@ -1145,7 +1145,7 @@ XMLReaderImpl::parseTree()
 
 // Implement the read interface to parse, validate, and convert the
 // XML document into AST Nodes. 
-void
+bool
 XMLReaderImpl::read() {
 
   // create the RelaxNG Parser Context
@@ -1153,7 +1153,7 @@ XMLReaderImpl::read() {
     xmlRelaxNGNewMemParserCtxt(HLVMGrammar, sizeof(HLVMGrammar));
   if (!rngparser) {
     error(0,"Failed to allocate RNG Parser Context");
-    return;
+    return false;
   }
 
   // Provide the error handler for parsing the schema
@@ -1164,7 +1164,7 @@ XMLReaderImpl::read() {
   if (!schema) {
     error(0,"Failed to parse the RNG Schema");
     xmlRelaxNGFreeParserCtxt(rngparser);
-    return;
+    return false;
   }
 
   // create a document parser context
@@ -1173,7 +1173,7 @@ XMLReaderImpl::read() {
     error(0,"Failed to allocate document parser context");
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
-    return;
+    return false;
   }
 
   // Parse the file, creating a Document tree
@@ -1183,7 +1183,7 @@ XMLReaderImpl::read() {
     xmlRelaxNGFreeParserCtxt(rngparser);
     xmlRelaxNGFree(schema);
     xmlFreeParserCtxt(ctxt);
-    return;
+    return false;
   }
 
   // Create a validation context
@@ -1195,7 +1195,7 @@ XMLReaderImpl::read() {
     xmlFreeParserCtxt(ctxt);
     xmlFreeDoc(doc);
     doc = 0;
-    return;
+    return false;
   }
 
   // Provide the error handler for parsing the schema
@@ -1210,7 +1210,7 @@ XMLReaderImpl::read() {
     xmlFreeDoc(doc);
     doc = 0;
     xmlRelaxNGFreeValidCtxt(validation);
-    return;
+    return false;
   }
 
   // Parse
@@ -1221,6 +1221,7 @@ XMLReaderImpl::read() {
   xmlRelaxNGFreeValidCtxt(validation);
   xmlFreeDoc(doc);
   doc = 0;
+  return true;
 }
 
 AST*

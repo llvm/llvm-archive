@@ -79,25 +79,26 @@ int main(int argc, char**argv)
 
     if (InputFilename == "-" ) {
       std::cerr << "Not supported yet: input from stdin\n";
-      exit(2);
+      return 2;
     } else {
       llvm::sys::Path path(InputFilename);
       if (!path.canRead()) {
         std::cerr << argv[0] << ": can't read input file: " << InputFilename
                   << "\n";
-        exit(2);
+        return 2;
       }
     }
 
     XMLReader* rdr = XMLReader::create(InputFilename);
     XMLWriter* wrtr = XMLWriter::create(OutputFilename.c_str());
-    rdr->read();
+    if (!rdr->read())
+      return 3;
     AST* node = rdr->get();
-    if (node) {
-      if (!validate(node))
-        return 1;
-      wrtr->write(node);
-    }
+    if (!node)
+      return 4;
+    if (!validate(node))
+      return 5;
+    wrtr->write(node);
     delete rdr;
     delete wrtr;
 

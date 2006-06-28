@@ -40,7 +40,7 @@ public:
   virtual ~Reader() {}
 
   /// This method reads the entire content of the reader's source.
-  virtual void read() = 0;
+  virtual bool read() = 0;
 
   /// This method retrieves the construct AST that resulted from reading.
   /// @returns 0 if nothing has been read yet

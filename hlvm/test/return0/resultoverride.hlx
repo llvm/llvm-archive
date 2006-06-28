@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/return0/resultoverride.hlx">
+  <bundle id="resultoverride">
+    <constant id="0" type="s32"><dec>0</dec></constant>
+    <constant id="1" type="s32"><dec>1</dec></constant>
+    <program id="resultoverride">
+      <block>
+        <result>
+          <ref id="1"/>
+        </result>
+        <result>
+          <ref id="0"/>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

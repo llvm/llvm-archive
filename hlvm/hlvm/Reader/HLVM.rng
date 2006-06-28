@@ -1049,6 +1049,9 @@
     <choice>
       <ref name="select.elem"/>
       <ref name="switch.elem"/>
+      <ref name="while.elem"/>
+      <ref name="unless.elem"/>
+      <ref name="until.elem"/>
       <ref name="loop.elem"/>
       <ref name="break.elem"/>
       <ref name="continue.elem"/>
@@ -1076,6 +1079,30 @@
         <ref name="Operators.pat"/> <!-- Case Expression -->
         <ref name="Operators.pat"/> <!-- Case Block -->
       </zeroOrMore>
+    </element>
+  </define>
+
+  <define name="while.elem">
+    <element name="while">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>  <!-- Pre-Loop Test -->
+      <ref name="Operators.pat"/>  <!-- Loop Body -->
+    </element>
+  </define>
+
+  <define name="unless.elem">
+    <element name="unless">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>  <!-- Pre-Loop Test -->
+      <ref name="Operators.pat"/>  <!-- Loop Body -->
+    </element>
+  </define>
+
+  <define name="until.elem">
+    <element name="until">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>  <!-- Loop Body -->
+      <ref name="Operators.pat"/>  <!-- Post-Loop Test -->
     </element>
   </define>
 

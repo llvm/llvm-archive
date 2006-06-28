@@ -61,7 +61,7 @@ class Block : public MultiOperator
     virtual const Type* getType() const { return this->back()->getType(); }
     const std::string& getLabel() const { return label; }
     AutoVarOp* getAutoVar(const std::string& name) const; 
-    const Type* getResultType() const { return result->getType(); }
+    const Type* getResultType() const { return (result?result->getType():0); }
     const Operator* getResult() const { return result; }
     Block* getParentBlock() const;
     bool isTerminated() const { 

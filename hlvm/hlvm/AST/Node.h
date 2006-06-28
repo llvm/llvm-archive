@@ -244,6 +244,11 @@ FirstBinaryOperatorID = AddOpID,
   ReallocateOpID,          ///< The Reallocate Memory Operator 
   StoreOpID,               ///< The Store Operator (store a value to a location)
 
+  // Binary Control Flow Operators
+  WhileOpID,               ///< While expression is true loop
+  UnlessOpID,              ///< Unless expression is true loop
+  UntilOpID,               ///< Do block until expression is true loop
+
   // Other Binary Operators
   OpenOpID,                ///< Open a stream from a URL
   ReadOpID,                ///< Read from a stream

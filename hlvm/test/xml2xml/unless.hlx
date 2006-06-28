@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/unless.hlx">
+  <bundle id="unless">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="1" type="s32">
+      <dec>1</dec>
+    </constant>
+    <program id="unless">
+      <block>
+        <unless>
+          <ne>
+            <ref id="1"/>
+            <ref id="0"/>
+          </ne>
+          <ref id="0"/>
+        </unless>
+        <result>
+          <ref id="0"/>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

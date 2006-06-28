@@ -1005,6 +1005,21 @@ AST::new_TernaryOp<SelectOp>(Operator*op1,Operator*op2,Operator*op3,const Locato
   return new_TernaryOp<SelectOp>(op2->getType(),op1,op2,op3,loc);
 }
 
+template WhileOp*
+AST::new_BinaryOp<WhileOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template WhileOp*
+AST::new_BinaryOp<WhileOp>(Operator* op1, Operator* op2,const Locator* loc);
+
+template UnlessOp*
+AST::new_BinaryOp<UnlessOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template UnlessOp*
+AST::new_BinaryOp<UnlessOp>(Operator* op1, Operator* op2,const Locator* loc);
+
+template UntilOp*
+AST::new_BinaryOp<UntilOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template UntilOp*
+AST::new_BinaryOp<UntilOp>(Operator* op1, Operator* op2,const Locator* loc);
+
 template LoopOp*
 AST::new_TernaryOp<LoopOp>(const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
 

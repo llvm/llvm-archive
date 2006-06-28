@@ -693,6 +693,27 @@ XMLWriterImpl::WriterPass::put(SwitchOp* op)
 }
 
 template<> void
+XMLWriterImpl::WriterPass::put(WhileOp* op) 
+{
+  startElement("while");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(UnlessOp* op) 
+{
+  startElement("unless");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(UntilOp* op) 
+{
+  startElement("until");
+  putDoc(op);
+}
+
+template<> void
 XMLWriterImpl::WriterPass::put(LoopOp* op) 
 {
   startElement("loop");
@@ -855,6 +876,9 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case NullOpID:             put(cast<NullOp>(n)); break;
       case SelectOpID:           put(cast<SelectOp>(n)); break;
       case SwitchOpID:           put(cast<SwitchOp>(n)); break;
+      case WhileOpID:            put(cast<WhileOp>(n)); break;
+      case UnlessOpID:           put(cast<UnlessOp>(n)); break;
+      case UntilOpID:            put(cast<UntilOp>(n)); break;
       case LoopOpID:             put(cast<LoopOp>(n)); break;
       case BreakOpID:            put(cast<BreakOp>(n)); break;
       case ContinueOpID:         put(cast<ContinueOp>(n)); break;

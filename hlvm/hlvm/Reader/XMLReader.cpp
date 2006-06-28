@@ -1099,6 +1099,9 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_le:           op = parseBinaryOp<LessEqualOp>(cur); break;
       case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
       case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
+      case TKN_while:        op = parseBinaryOp<WhileOp>(cur); break;
+      case TKN_unless:       op = parseBinaryOp<UnlessOp>(cur); break;
+      case TKN_until:        op = parseBinaryOp<UntilOp>(cur); break;
       case TKN_loop:         op = parseTernaryOp<LoopOp>(cur); break;
       case TKN_break:        op = parseNilaryOp<BreakOp>(cur); break;
       case TKN_continue:     op = parseNilaryOp<ContinueOp>(cur); break;

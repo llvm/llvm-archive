@@ -67,7 +67,7 @@ class ValidateImpl : public Pass
     inline bool checkUniformContainer(UniformContainerType* T, NodeIDs id);
     inline bool checkDisparateContainer(DisparateContainerType* T, NodeIDs id);
     inline bool checkLinkable(Linkable* LI, NodeIDs id);
-    inline bool checkExpressionBlock(const Block* B);
+    inline bool checkExpressionBlock(const Block* B,bool optional = false);
 
     template <class NodeClass>
     inline void validate(NodeClass* C);
@@ -146,10 +146,6 @@ ValidateImpl::checkValue(Value* v, NodeIDs id)
     result = false;
   } else if (!v->isValue()) {
     error(v,"Bad ID for a Value");
-    result = false;
-  }
-  if (v->getType() == 0) {
-    error(v,"Value with no type");
     result = false;
   }
   return result;
@@ -251,14 +247,21 @@ ValidateImpl::checkLinkable(Linkable* LI, NodeIDs id)
 }
 
 bool 
-ValidateImpl::checkExpressionBlock(const Block* B)
+ValidateImpl::checkExpressionBlock(const Block* B, bool optional)
 {
   bool result = true;
   if (!B->getResult()) {
-    error(B,"Expression block without result");
-    result = false;
+    if (optional) {
+      if (!isa<Block>(B->getParent()->getParent())) {
+        error(B,"Block has no result, but its use expects a result");
+        result = false;
+      }
+    } else {
+      error(B,"Expression block without result");
+      result = false;
+    }
   }
-  if (B->isTerminated()) {
+  if (!optional && B->isTerminated()) {
     error(B,"Expression blocks cannot have terminators");
     result = false;
   }
@@ -548,8 +551,6 @@ ValidateImpl::validate(Block* n)
       } else if (result) {
         if (n == n->getContainingFunction()->getBlock())
           error(result,"Function's main block has result but no return");
-      } else {
-        error(n,"Block does not contain a result or terminator");
       }
     }
 }
@@ -565,6 +566,10 @@ template<> inline void
 ValidateImpl::validate(ResultOp* n)
 {
   if (checkOperator(n,ResultOpID,1)) {
+    if (!isa<Block>(n->getParent())) {
+      error(n, "ResultOp not in a Block");
+      return;
+    }
     const Function* F = n->getContainingFunction();
     if (!F)
       error(n,"ResultOp not in Function!");
@@ -573,10 +578,19 @@ ValidateImpl::validate(ResultOp* n)
       if (!B)
         error(n,"ResultOp not in a Block");
       else if (F->getBlock() == B) {
-          const SignatureType* SigTy = F->getSignature();
-          Operator* res = n->getOperand(0);
-          if (res->getType() != SigTy->getResultType())
-            error(n,"Operand does not agree in type with Function result");
+        const SignatureType* SigTy = F->getSignature();
+        Operator* res = n->getOperand(0);
+        if (res) {
+          if (res->getType()) {
+            if (res->getType() != SigTy->getResultType())
+              error(n,"Result does not agree in type with Function result");
+          } else if (SigTy->getResultType() != 
+              ast->getPrimitiveType(VoidTypeID)) {
+            error(n,"Void function result for non-void function");
+          }
+        } else {
+          error(n,"Result operator with no operand");
+        }
       }
     }
   }
@@ -627,9 +641,54 @@ ValidateImpl::validate(SelectOp* n)
       error(n,"SelectOp requires operands 2 and 3 to both be blocks or "
               "neither be blocks");
     if (isa<Block>(Op2))
-      checkExpressionBlock(cast<Block>(Op2));
+      checkExpressionBlock(cast<Block>(Op2),true);
     if (isa<Block>(Op3))
-      checkExpressionBlock(cast<Block>(Op3));
+      checkExpressionBlock(cast<Block>(Op3),true);
+  }
+}
+
+template<> inline void
+ValidateImpl::validate(WhileOp* n)
+{
+  if (checkOperator(n,WhileOpID,2)) {
+    const Operator* Op1 = n->getOperand(0);
+    const Operator* Op2 = n->getOperand(1);
+    if (!isa<BooleanType>(Op1->getType()))
+      error(n,"WhileOp expects first operand to be type boolean");
+    if (const Block* B1 = dyn_cast<Block>(Op1))
+      checkExpressionBlock(B1);
+    if (const Block* B2 = dyn_cast<Block>(Op2))
+      checkExpressionBlock(B2,true);
+  }
+}
+
+template<> inline void
+ValidateImpl::validate(UnlessOp* n)
+{
+  if (checkOperator(n,UnlessOpID,2)) {
+    const Operator* Op1 = n->getOperand(0);
+    const Operator* Op2 = n->getOperand(1);
+    if (!isa<BooleanType>(Op1->getType()))
+      error(n,"WhileOp expects first operand to be type boolean");
+    if (const Block* B1 = dyn_cast<Block>(Op1))
+      checkExpressionBlock(B1);
+    if (const Block* B2 = dyn_cast<Block>(Op2))
+      checkExpressionBlock(B2,true);
+  }
+}
+
+template<> inline void
+ValidateImpl::validate(UntilOp* n)
+{
+  if (checkOperator(n,UntilOpID,2)) {
+    const Operator* Op1 = n->getOperand(0);
+    const Operator* Op2 = n->getOperand(1);
+    if (!isa<BooleanType>(Op2->getType()))
+      error(n,"WhileOp expects second operand to be type boolean");
+    if (const Block* B1 = dyn_cast<Block>(Op1))
+      checkExpressionBlock(B1,true);
+    if (const Block* B2 = dyn_cast<Block>(Op2))
+      checkExpressionBlock(B2);
   }
 }
 
@@ -642,14 +701,17 @@ ValidateImpl::validate(LoopOp* n)
     const Operator* Op3 = n->getOperand(2);
     const Type* Ty1 = Op1->getType();
     const Type* Ty3 = Op3->getType();
-    if (!isa<BooleanType>(Ty1) && !isa<VoidType>(Ty1))
-      error(n,"LoopOp expects first operand to be type boolean or void");
-    if (!isa<BooleanType>(Ty3) && !isa<VoidType>(Ty3))
-      error(n,"LoopOp expects third operand to be type boolean or void");
+    if (!isa<BooleanType>(Ty1))
+      error(n,"LoopOp expects first operand to be type boolean");
+    if (!isa<BooleanType>(Ty3))
+      error(n,"LoopOp expects third operand to be type boolean");
     if (isa<Block>(Op1))
       checkExpressionBlock(cast<Block>(Op1));
     if (isa<Block>(Op3))
       checkExpressionBlock(cast<Block>(Op3));
+    if (const Block* B = dyn_cast<Block>(Op2))
+      checkExpressionBlock(B,true);
+
   }
 }
 
@@ -1346,6 +1408,9 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ContinueOpID:           validate(cast<ContinueOp>(n)); break;
     case BreakOpID:              validate(cast<BreakOp>(n)); break;
     case SelectOpID:             validate(cast<SelectOp>(n)); break;
+    case WhileOpID:              validate(cast<WhileOp>(n)); break;
+    case UnlessOpID:             validate(cast<UnlessOp>(n)); break;
+    case UntilOpID:              validate(cast<UntilOp>(n)); break;
     case LoopOpID:               validate(cast<LoopOp>(n)); break;
     case SwitchOpID:             validate(cast<SwitchOp>(n)); break;
     case LoadOpID:               validate(cast<LoadOp>(n)); break;

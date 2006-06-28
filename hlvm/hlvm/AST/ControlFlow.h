@@ -122,6 +122,94 @@ class SwitchOp : public MultiOperator
   friend class AST;
 };
 
+/// This class prvoides an Abstract Syntax Tree node that represents a loop
+/// construct with two operands. The first operand is a boolean expression 
+/// that is tested before each iteration. If the expression evaluates to false,
+/// the loop terminates. The second operand is the expression or block to be 
+/// executed on each iteration. This is similar to a "while" loop in other 
+/// languages, hence the name. If the second operand declares a result, then
+/// the value of that result on the final iteration is the value of the loop.
+/// Otherwise the WhileOp may not be used as a value (has type void).
+/// @brief AST While Loop Operator Node
+class WhileOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    WhileOp() : BinaryOperator(WhileOpID) {}
+    virtual ~WhileOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual const Type* getType() const;
+    static inline bool classof(const WhileOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(WhileOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class prvoides an Abstract Syntax Tree node that represents a loop
+/// construct with two operands. The first operand is a boolean expression 
+/// that is tested before each iteration. If the expression evaluates to true, 
+/// the loop terminates. The second operand is the expression or block to be 
+/// executed on each iteration. This is similar to a "while" loop in other 
+/// languages, except the logic of the control expression is inverted. If the 
+/// second operand declares a result, then the value of that result on the 
+/// final iteration is the value of the loop.  Otherwise the UnlessOp may 
+/// not be used as a value (has type void).
+/// @brief AST Unless Loop Operator Node
+class UnlessOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    UnlessOp() : BinaryOperator(UnlessOpID) {}
+    virtual ~UnlessOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual const Type* getType() const;
+    static inline bool classof(const UnlessOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(UnlessOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class prvoides an Abstract Syntax Tree node that represents a loop
+/// construct with two operands. The second operand is a boolean expression 
+/// that is tested after each iteration. If the expression evaluates to true, 
+/// the loop terminates. The first operand is the expression or block to be 
+/// executed on each iteration. This is similar to a "do" loop in other 
+/// languages. If the first operand declares a result, then the value of that 
+/// result on the final iteration is the value of the loop.  Otherwise the 
+/// UntilOp may not be used as a value (has type void).
+/// @brief AST Unless Loop Operator Node
+class UntilOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    UntilOp() : BinaryOperator(UntilOpID) {}
+    virtual ~UntilOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual const Type* getType() const;
+    static inline bool classof(const UntilOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(UntilOpID); }
+
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that represents a
 /// generalized loop construct for HLVM. The LoopOp takes three operands, as
 /// follows:
@@ -131,9 +219,7 @@ class SwitchOp : public MultiOperator
 ///    loop. This is the main body of the loop
 /// -# a boolean expression to be evaluated after each iteration ends that 
 ///    controls loop termination
-/// Either or both of the control expressions can be a NoOp operator in which
-/// case the test is not performed. If both control expressions are NoOp, the 
-/// loop is infinite.
+/// This construct is similar to combining a WhileOp with an UntilOp.
 /// @brief AST Loop Operator Node
 class LoopOp : public TernaryOperator
 {
@@ -147,6 +233,7 @@ class LoopOp : public TernaryOperator
   /// @name Accessors
   /// @{
   public:
+    virtual const Type* getType() const;
     static inline bool classof(const LoopOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(LoopOpID); }
 

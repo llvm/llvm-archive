@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/xml2xml/funcresult.hlx">
+  <bundle id="funcresult">
+    <constant id="1" type="u32">
+      <dec>1</dec>
+    </constant>
+    <program id="funcresult">
+      <block>
+        <result>
+          <ref id="1"/>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

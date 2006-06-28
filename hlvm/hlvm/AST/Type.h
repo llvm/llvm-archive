@@ -458,10 +458,10 @@ class RealType : public Type
   public:
     virtual const char* getPrimitiveName() const;
     /// Get the mantissa bits
-    uint32_t getMantissa() { return mantissa; }
+    uint32_t getMantissa() const { return mantissa; }
 
     /// Get the exponent bits
-    uint32_t getExponent() { return exponent; }
+    uint32_t getExponent() const { return exponent; }
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RealType*) { return true; }

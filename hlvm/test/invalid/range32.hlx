@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/error/range32.hlx">
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/range32.hlx">
   <bundle id="range32">
     <constant id="0001" type="s32"><dec>2147483648</dec></constant>
     <constant id="0002" type="s32"><dec>-2147483649</dec></constant>

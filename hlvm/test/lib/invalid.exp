@@ -47,7 +47,16 @@ proc hlvm-invalid-tests { prog pat } {
     set execout ""
     set retval [ catch { exec -keepnewline $tool $testsrc -o $output } msg ]
     if { $retval != 0 } {
-      pass "$test"
+      if {[lindex $::errorCode 0] eq "CHILDSTATUS"} {
+        set status [lindex $::errorCode 2]
+        if { $status eq 0 } {
+          fail "$test: $tool return $retval\n$msg"
+        } else {
+          pass "$test"
+        }
+      } else {
+        fail "$test: $tool return $::errorCode\n$msg"
+      } 
     } else {
       fail "$test: $tool return $retval\n$msg"
     }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/select.hlx">
+  <bundle id="select">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="21" type="s32">
+      <dec>21</dec>
+    </constant>
+    <constant id="42" type="s32">
+      <dec>42</dec>
+    </constant>
+    <program id="select">
+      <block>
+        <!-- Non-boolean expression -->
+        <select>
+          <ref id="0"/>
+          <ref id="21"/>
+          <ref id="42"/>
+        </select>
+        <!-- Operand 2 as block with no result where required -->
+        <result>
+          <select>
+            <ne>
+              <ref id="0"/>
+              <ref id="21"/>
+            </ne>
+            <block><ref id="21"/></block>
+            <ref id="42"/>
+          </select>
+        </result>
+        <!-- Operand 3 as block with no result where required -->
+        <result>
+          <select>
+            <ne>
+              <ref id="0"/>
+              <ref id="21"/>
+            </ne>
+            <ref id="42"/>
+            <block><ref id="21"/></block>
+          </select>
+        </result>
+        <!-- Mismatched result types -->
+        <result>
+          <select>
+            <ne>
+              <ref id="0"/>
+              <ref id="21"/>
+            </ne>
+            <ref id="42"/>
+            <ne>
+              <ref id="0"/>
+              <ref id="21"/>
+            </ne>
+          </select>
+        </result>
+        <result>
+          <ref id="0"/>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

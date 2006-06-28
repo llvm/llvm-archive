@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/return.hlx">
+  <bundle id="return">
+    <constant id="0" type="s32"><dec>0</dec></constant>
+    <constant id="1" type="s32"><dec>1</dec></constant>
+    <constant id="2" type="s32"><dec>2</dec></constant>
+    <constant id="3" type="s32"><dec>3</dec></constant>
+    <constant id="4" type="s32"><dec>4</dec></constant>
+    <constant id="5" type="s32"><dec>5</dec></constant>
+    <constant id="21" type="s32"><dec>21</dec></constant>
+    <constant id="42" type="s32"><dec>42</dec></constant>
+    <constant id="3.0" type="f64"><dbl>3.0</dbl></constant>
+    <program id="return">
+      <block>
+        <!-- Switch with non-integral control expression -->
+        <switch>
+          <ref id="3.0"/>
+          <ref id="5"/>
+        </switch>
+        <!-- Switch with non-result block that requires one -->
+        <result>
+          <switch>
+            <ref id="42"/>
+            <ref id="5"/>
+            <ref id="21"/>
+            <block><ref id="1"/></block>
+          </switch>
+        </result>
+        <!-- Switch with case results that don't agree in type -->
+        <switch>
+          <ref id="42"/>
+          <ref id="5"/>
+          <ref id="21"/>
+          <block><result><ref id="1"/></result></block>
+          <ref id="2"/>
+          <ne><ref id="42"/><ref id="21"/></ne>
+        </switch>
+        <result>
+          <ref id="42"/>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

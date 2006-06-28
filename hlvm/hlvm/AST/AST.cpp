@@ -686,7 +686,6 @@ AST::new_UnaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  hlvmAssert(Ty != 0 && "Need a type to instantiate a UnaryOp");
   hlvmAssert(oprnd1 != 0 && "Invalid Operand for UnaryOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
@@ -713,7 +712,6 @@ AST::new_BinaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  hlvmAssert(Ty != 0 && "Need a type to instantiate a BinaryOp");
   hlvmAssert(oprnd1 != 0 && "Invalid Operand for BinaryOp");
   hlvmAssert(oprnd2 != 0 && "Invalid Operand for BinUnaryOp");
   OpClass* result = new OpClass();
@@ -745,7 +743,6 @@ AST::new_TernaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  hlvmAssert(Ty != 0 && "Need a type to instantiate a TernaryOp");
   hlvmAssert(oprnd1 != 0 && "Invalid Operand for TernaryOp");
   hlvmAssert(oprnd2 != 0 && "Invalid Operand for TernUnaryOp");
   hlvmAssert(oprnd3 != 0 && "Invalid Operand for TernUnaryOp");
@@ -776,7 +773,6 @@ AST::new_MultiOp(
   const Locator* loc
 ) 
 {
-  hlvmAssert(Ty != 0 && "Need a type to instantiate a MultiOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
   result->setType(Ty);

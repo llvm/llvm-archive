@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Node.h>
+#include <hlvm/Base/Configuration.h>
 #include <llvm/Support/CommandLine.h>
 #include <iostream>
 
@@ -181,84 +182,105 @@ static const char* NodeIDStrs[] =
   "SwitchOp",
 };
 
+void showNodeIds()
+{
+  unsigned rowcount = 4;
+  for (unsigned i = FirstNodeID; i <= LastNodeID; i++) {
+    if (rowcount % 4 == 0)
+      std::cout << "\n";
+    std::cout << "  " << i << ":" << NodeIDStrs[i];
+    rowcount++;
+  }
+
+  std::cout << "\n\nNumber of NodeIDs: " << NumNodeIDs << "\n";
+  std::cout << "Nodes: " 
+            << FirstNodeID << " -> "
+            << LastNodeID << "\n";
+  std::cout << "Documentables: " 
+            << FirstDocumentableID << " -> "
+            << LastDocumentableID << "\n";
+  std::cout << "Types:" 
+            << FirstTypeID << " -> " 
+            << LastTypeID << "\n";
+  std::cout << "PrimitiveTypes: " 
+            << FirstPrimitiveTypeID << " -> " 
+            << LastPrimitiveTypeID << "\n";
+  std::cout << "SimpleTypeID: " 
+            << FirstSimpleTypeID << " -> " 
+            << LastSimpleTypeID << "\n";
+  std::cout << "ContainerTypes: " 
+            << FirstContainerTypeID << " -> "
+            << LastContainerTypeID << "\n";
+  std::cout << "UniformContainerTypes: " 
+            << FirstUniformContainerTypeID << " -> "
+            << LastUniformContainerTypeID << "\n";
+  std::cout << "DisparateContainerTypes: " 
+            << FirstDisparateContainerTypeID << " -> "
+            << LastDisparateContainerTypeID << "\n";
+  std::cout << "RuntimeTypes: " 
+            << FirstRuntimeTypeID << " -> "
+            << LastRuntimeTypeID << "\n";
+  std::cout << "Values: " 
+            << FirstValueID << " -> " 
+            << LastValueID << "\n";
+  std::cout << "Constants: " 
+            << FirstConstantID << " -> "
+            << LastConstantID << "\n";
+  std::cout << "ConstantValues: " 
+            << FirstConstantValueID << " -> "
+            << LastConstantValueID << "\n";
+  std::cout << "Linkables: " 
+            << FirstLinkableID << " -> "
+            << LastLinkableID << "\n";
+  std::cout << "Operators: " 
+            << FirstOperatorID << " -> "
+            << LastOperatorID << "\n";
+  std::cout << "NilaryOperators: " 
+            << FirstNilaryOperatorID << " -> "
+            << LastNilaryOperatorID << "\n";
+  std::cout << "UnaryOperators: " 
+            << FirstUnaryOperatorID << " -> "
+            << LastUnaryOperatorID << "\n";
+  std::cout << "BinaryOperators: " 
+            << FirstBinaryOperatorID << " -> "
+            << LastBinaryOperatorID << "\n";
+  std::cout << "TernaryOperators: " 
+            << FirstTernaryOperatorID << " -> "
+            << LastTernaryOperatorID << "\n";
+  std::cout << "MultiOperators: " 
+            << FirstMultiOperatorID << " -> "
+            << LastMultiOperatorID << "\n";
+  if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs)
+    std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n\n";
+}
+
+void printVersion() 
+{
+  std::cout << HLVM_Version << "\n";
+}
+
+static llvm::cl::opt<bool> ConfigTime("config-time", cl::init(false),
+  cl::desc("Show when HLVM was configured"));
+static llvm::cl::opt<bool> Copyright("copyright", cl::init(false),
+  cl::desc("Show when HLVM copyright notice"));
+static llvm::cl::opt<bool> Maintainer("maintainer", cl::init(false),
+  cl::desc("Show the maintainer of this HLVM release"));
 
 int 
 main(int argc, char**argv) 
 {
+  cl::SetVersionPrinter(printVersion);
   cl::ParseCommandLineOptions(argc, argv, 
     "hlvm-config: HLVM Configuration Utility\n");
 
   if (ShowNodeIds)
-  {
-    unsigned rowcount = 4;
-    for (unsigned i = FirstNodeID; i <= LastNodeID; i++) {
-      if (rowcount % 4 == 0)
-        std::cout << "\n";
-      std::cout << "  " << i << ":" << NodeIDStrs[i];
-      rowcount++;
-    }
+    showNodeIds();
+  if (ConfigTime)
+    std::cout << HLVM_ConfigTime << "\n";
+  if (Copyright)
+    std::cout << HLVM_Copyright << "\n";
+  if (Maintainer)
+    std::cout << HLVM_Maintainer << "\n";
 
-    std::cout << "\n\nNumber of NodeIDs: " << NumNodeIDs << "\n";
-    std::cout << "Nodes: " 
-              << FirstNodeID << " -> "
-              << LastNodeID << "\n";
-    std::cout << "Documentables: " 
-              << FirstDocumentableID << " -> "
-              << LastDocumentableID << "\n";
-    std::cout << "Types:" 
-              << FirstTypeID << " -> " 
-              << LastTypeID << "\n";
-    std::cout << "PrimitiveTypes: " 
-              << FirstPrimitiveTypeID << " -> " 
-              << LastPrimitiveTypeID << "\n";
-    std::cout << "SimpleTypeID: " 
-              << FirstSimpleTypeID << " -> " 
-              << LastSimpleTypeID << "\n";
-    std::cout << "ContainerTypes: " 
-              << FirstContainerTypeID << " -> "
-              << LastContainerTypeID << "\n";
-    std::cout << "UniformContainerTypes: " 
-              << FirstUniformContainerTypeID << " -> "
-              << LastUniformContainerTypeID << "\n";
-    std::cout << "DisparateContainerTypes: " 
-              << FirstDisparateContainerTypeID << " -> "
-              << LastDisparateContainerTypeID << "\n";
-    std::cout << "RuntimeTypes: " 
-              << FirstRuntimeTypeID << " -> "
-              << LastRuntimeTypeID << "\n";
-    std::cout << "Values: " 
-              << FirstValueID << " -> " 
-              << LastValueID << "\n";
-    std::cout << "Constants: " 
-              << FirstConstantID << " -> "
-              << LastConstantID << "\n";
-    std::cout << "ConstantValues: " 
-              << FirstConstantValueID << " -> "
-              << LastConstantValueID << "\n";
-    std::cout << "Linkables: " 
-              << FirstLinkableID << " -> "
-              << LastLinkableID << "\n";
-    std::cout << "Operators: " 
-              << FirstOperatorID << " -> "
-              << LastOperatorID << "\n";
-    std::cout << "NilaryOperators: " 
-              << FirstNilaryOperatorID << " -> "
-              << LastNilaryOperatorID << "\n";
-    std::cout << "UnaryOperators: " 
-              << FirstUnaryOperatorID << " -> "
-              << LastUnaryOperatorID << "\n";
-    std::cout << "BinaryOperators: " 
-              << FirstBinaryOperatorID << " -> "
-              << LastBinaryOperatorID << "\n";
-    std::cout << "TernaryOperators: " 
-              << FirstTernaryOperatorID << " -> "
-              << LastTernaryOperatorID << "\n";
-    std::cout << "MultiOperators: " 
-              << FirstMultiOperatorID << " -> "
-              << LastMultiOperatorID << "\n";
-    if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs)
-      std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n\n";
-
-  }
   return 0;
 }

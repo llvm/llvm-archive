@@ -140,8 +140,9 @@ def GetBuildEnvironment(targets,arguments):
     BoolOption('small','Generate smaller code rather than faster',0),
     BoolOption('strip','Strip executables of their symbols',0),
   )
-  opts.Add('prefix','Specify where to install HLVM','/usr/local')
   opts.Add('confpath','Specify additional configuration dirs to search','')
+  opts.Add('prefix','Specify where to install HLVM','/usr/local')
+  opts.Add('suites','Specify a list of test suites to run')
   opts.Add('with_llvm','Specify where LLVM is located','/usr/local')
   opts.Add('with_apr','Specify where apr is located','/usr/local/apr')
   opts.Add('with_apru','Specify where apr-utils is located','/usr/local/apr')

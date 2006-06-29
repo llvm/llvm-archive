@@ -137,6 +137,42 @@ class Variable : public Linkable
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents an argument
+/// to a Function. An Argument is simply a Value that has a name. Arguments can
+/// be used within a function's blocks to access the value of the argument.
+/// @see Value
+/// @see Function
+/// @brief AST Argument Node
+class Argument : public Value
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    Argument() : Value(ArgumentID) {}
+    virtual ~Argument();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getName() const { return name; }
+    static inline bool classof(const Argument*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ArgumentID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setName(const std::string& N) { name = N; }
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string name;
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that represents a Function.
 /// A Function is a callable block of code that accepts parameters and 
 /// returns a result.  This is the basic unit of code in HLVM. A Function
@@ -154,10 +190,18 @@ class Variable : public Linkable
 /// @brief AST Function Node
 class Function : public Linkable
 {
+  /// @name Types
+  /// @{
+  public:
+    typedef std::vector<Argument*> ArgumentList;
+    typedef ArgumentList::iterator iterator;
+    typedef ArgumentList::const_iterator const_iterator;
+
+  /// @}
   /// @name Constructors
   /// @{
   protected:
-    Function(NodeIDs id = FunctionID) : Linkable(id), block(0) {}
+    Function(NodeIDs id = FunctionID) : Linkable(id), block(0), args() {}
     virtual ~Function();
 
   /// @}
@@ -166,11 +210,29 @@ class Function : public Linkable
   public:
     bool hasBlock() const { return block != 0; }
     Block* getBlock() const { return block; }
-    const SignatureType* getSignature() const;
-    const Type* getResultType() const { return getSignature()->getResultType();}
+    const SignatureType* getSignature() const 
+      { return static_cast<const SignatureType*>(type); }
+    const Type* getResultType() const 
+      { return getSignature()->getResultType();}
+    Value* getArgument(const std::string& name) const;
 
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }
+
+  /// @}
+  /// @name Iterators
+  /// @{
+  public:
+    iterator         begin()       { return args.begin(); }
+    const_iterator   begin() const { return args.begin(); }
+    iterator         end  ()       { return args.end();   }
+    const_iterator   end  () const { return args.end();   }
+    size_t           size () const { return args.size();  }
+    bool             empty() const { return args.empty(); }
+    Argument*        front()       { return args.front(); }
+    const Argument*  front() const { return args.front(); }
+    Argument*        back()        { return args.back();  }
+    const Argument*  back()  const { return args.back();  }
 
   /// @}
   /// @name Mutators
@@ -178,20 +240,18 @@ class Function : public Linkable
   public:
     virtual void insertChild(Node* kid);
     virtual void removeChild(Node* kid);
-    void setSignature(SignatureType* sig) { type = sig; }
     void setBlock(Block* blk) { blk->setParent(this); }
+    void addArgument(Argument* arg) { args.push_back(arg); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
     Block * block;                   ///< The code block to be executed
+    ArgumentList args;
   /// @}
   friend class AST;
 };
-
-class Block; // Forward declare
-class SignatureType;  // Forward declare
 
 /// This class provides an Abstract Syntax Tree node that represents a Program 
 /// in HLVM. A Program is an entry point for running HLVM programs. It is 

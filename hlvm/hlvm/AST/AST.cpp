@@ -196,7 +196,7 @@ AST::resolveType(const std::string& name)
 }
 
 SignatureType* 
-AST::getProgramType() const
+AST::getProgramType()
 {
   ASTImpl* ast = const_cast<ASTImpl*>(static_cast<const ASTImpl*>(this));
   if (!ast->ProgramTypeSingleton) {
@@ -205,11 +205,16 @@ AST::getProgramType() const
     ast->ProgramTypeSingleton->setName("ProgramType");
     Type* intType = ast->getPrimitiveType(SInt32TypeID);
     ast->ProgramTypeSingleton->setResultType(intType);
-    ArrayType* arg_array = ast->new_ArrayType("arg_array",
-      ast->new_TextType("string",loc),0,loc);
-    PointerType* args = ast->new_PointerType("arg_array_ptr",arg_array,loc);
-    Argument* param = ast->new_Argument("args",args,loc);
-    ast->ProgramTypeSingleton->addArgument(param);
+    ArgumentType* argc = new ArgumentType();
+    argc->setName("argc");
+    argc->setElementType(intType);
+    ast->ProgramTypeSingleton->addArgument(argc);
+    const PointerType* argv_type = getPointerTo(getPointerTo(
+      ast->getPrimitiveType(StringTypeID)));
+    ArgumentType* argv = new ArgumentType();
+    argv->setName("argv");
+    argv->setElementType(argv);
+    ast->ProgramTypeSingleton->addArgument(argv);
   }
   return ast->ProgramTypeSingleton;
 }
@@ -586,7 +591,7 @@ AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
   Argument* result = new Argument();
   result->setLocator(loc);
   result->setName(id);
-  result->setElementType(ty);
+  result->setType(ty);
   return result;
 }
 
@@ -598,20 +603,40 @@ AST::new_Function(
   result->setLocator(loc);
   result->setName(id);
   result->setType(ty);
+  for (SignatureType::const_iterator I = ty->begin(), E = ty->end(); 
+       I != E; ++I ) 
+  {
+    const Type* Ty = (*I)->getElementType();
+    assert(!Ty->is(VoidTypeID) && "Arguments can't be void type");
+    Argument* arg = new Argument();
+    arg->setType(Ty);
+    arg->setName((*I)->getName());
+    result->addArgument(arg);
+  }
   return result;
 }
 
 Program*
 AST::new_Program(const std::string& id, const Locator* loc)
 {
-  SignatureType* program_type = getProgramType();
+  SignatureType* ty = getProgramType();
   ASTImpl* ast = static_cast<ASTImpl*>(this);
 
   Program* result = new Program();
   result->setLocator(loc);
   result->setName(id);
-  result->setSignature(program_type);
+  result->setType(ty);
   result->setLinkageKind(ExternalLinkage);
+  for (SignatureType::const_iterator I = ty->begin(), E = ty->end(); 
+       I != E; ++I ) 
+  {
+    const Type* Ty = (*I)->getElementType();
+    assert(!Ty->is(VoidTypeID) && "Arguments can't be void type");
+    Argument* arg = new Argument();
+    arg->setType(Ty);
+    arg->setName((*I)->getName());
+    result->addArgument(arg);
+  }
   return result;
 }
 
@@ -643,14 +668,15 @@ ReferenceOp*
 AST::new_ReferenceOp(const Value* V, const Locator*loc)
 {
   hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
-  hlvmAssert(llvm::isa<Constant>(V) || llvm::isa<AutoVarOp>(V));
   ReferenceOp* result = new ReferenceOp();
   const Type* refType = V->getType();
-  if (llvm::isa<ConstantValue>(V)) {
+  if (llvm::isa<ConstantValue>(V) || llvm::isa<Argument>(V)) {
     result->setType(refType);
-  } else {
+  } else if (llvm::isa<AutoVarOp>(V) || llvm::isa<Constant>(V)) {
     PointerType* PT = getPointerTo(refType);
     result->setType(PT);
+  } else {
+    hlvmAssert(!"Invalid referent type");
   }
   result->setLocator(loc);
   result->setReferent(V);

@@ -38,13 +38,16 @@ namespace hlvm {
 
 Linkable::~Linkable() { }
 Variable::~Variable() { }
+Argument::~Argument() { }
 Function::~Function() { }
-Program::~Program() { }
 
-const SignatureType* 
-Function::getSignature() const 
+Value* 
+Function::getArgument(const std::string& name) const
 {
-  return cast<SignatureType>(type); 
+  for (const_iterator I = begin(), E = end(); I != E ; ++I )
+    if ((*I)->getName() == name)
+      return *I;
+  return 0;
 }
 
 void 
@@ -68,5 +71,7 @@ Function::removeChild(Node* kid)
     hlvmAssert(!"Can't remove one of those here");
   }
 }
+
+Program::~Program() { }
 
 }

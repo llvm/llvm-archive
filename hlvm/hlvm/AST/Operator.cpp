@@ -45,7 +45,7 @@ Function*
 Operator::getContainingFunction()
 {
   Node* p = getParent();
-  while (p && !isa<Function>(p)) p = p->getParent();
+  while (p && !p->isFunction()) p = p->getParent();
   if (!p)
     return 0;
   return cast<Function>(p);

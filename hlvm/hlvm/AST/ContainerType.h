@@ -291,7 +291,9 @@ class DisparateContainerType : public Type
   /// @}
 };
 
-typedef AliasType Field;
+/// This typedef just uses a more common name when accessing the fields of a
+/// structure.
+typedef AliasType FieldType;
 
 /// This class provides an Abstract Syntax Tree node that represents an 
 /// sequence type. A sequence type is a type that lays out its elements in 
@@ -320,7 +322,7 @@ class StructureType : public DisparateContainerType
   /// @name Mutators
   /// @{
   protected:
-    void addField(Field* field) { contents.push_back(field); }
+    void addField(FieldType* field) { contents.push_back(field); }
 
   /// @}
   /// @name Data
@@ -359,10 +361,9 @@ class ContinuationType : public StructureType
   friend class AST;
 };
 
-/// This typedef is used to just provide a more convenient name for AliasType
-/// when AliasType is being used as the Argument to a SignatureType.
-/// @brief AST Argument Type Node
-typedef AliasType Argument;
+/// This typedef just provides a more common name for accessing the types of
+/// the arguments of a signature.
+typedef AliasType ArgumentType;
 
 /// This class provides an Abstract Syntax Tree node that represents the call
 /// signature of an HLVM function. A SignatureType encapsulates the
@@ -396,7 +397,7 @@ class SignatureType : public DisparateContainerType
   public:
     void setResultType(const Type* ty) { result = ty; }
     void setIsVarArgs(bool is) { flags = is ? 1 : 0; }
-    void addArgument(Argument* arg) { contents.push_back(arg); }
+    void addArgument(ArgumentType* arg) { contents.push_back(arg); }
 
   /// @}
   /// @name Data

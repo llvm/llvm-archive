@@ -738,6 +738,10 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
     blk = blk->getParentBlock();
   }
 
+  // Didn't find an autovar? Try a function argument
+  if (!referent)
+    referent = func->getArgument(id);
+
   // Didn't find an autovar? Try a constant value.
   if (!referent)
     referent= bundle->find_cval(id);
@@ -745,7 +749,6 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
   // Didn't find an constant? Try a linkable
   if (!referent)
     referent = bundle->find_linkable(id);
-
 
   // Didn't find a linkable? Try an error message for size
   if (!referent)

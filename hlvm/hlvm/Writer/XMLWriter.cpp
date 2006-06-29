@@ -777,6 +777,8 @@ XMLWriterImpl::WriterPass::put(ReferenceOp* r)
   std::string name;
   if (isa<AutoVarOp>(ref))
     name = cast<AutoVarOp>(ref)->getName();
+  else if (isa<Argument>(ref))
+    name = cast<Argument>(ref)->getName();
   else if (isa<Constant>(ref))
     name = cast<Constant>(ref)->getName();
   else

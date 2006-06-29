@@ -48,6 +48,7 @@ class Bundle;
 class Documentation;
 class Block;
 class Function; 
+class Argument;
 class Program; 
 class Import;
 class Locator; 
@@ -96,7 +97,7 @@ class AST : public Node
     const std::string& getSystemID() const { return sysid; }
     const std::string& getPublicID() const { return pubid; }
     Pool* getPool() const { return pool; }
-    SignatureType* getProgramType() const;
+    SignatureType* getProgramType();
 
   /// @}
   /// @name Mutators

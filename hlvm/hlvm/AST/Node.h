@@ -129,10 +129,11 @@ LastTypeID = TextTypeID,
   ImplementsID,            ///< Specifies set of Interfaces implemented by class
 
   // SUBCLASSES OF VALUE
+  ArgumentID,              ///< An argument to a function
+FirstValueID = ArgumentID,
 
   // Constants
   ConstantBooleanID,       ///< A constant boolean value
-FirstValueID = ConstantBooleanID,
 FirstConstantID = ConstantBooleanID,
 FirstConstantValueID = ConstantBooleanID,
   ConstantIntegerID,       ///< A constant integer value

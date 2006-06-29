@@ -614,12 +614,12 @@
       <optional>
         <attribute name="linkage"><ref name="Linkage.type"/></attribute>
       </optional>
-      <choice>
-        <element name="as"><ref name="C_Identifier.type"/></element>
-        <zeroOrMore>
+      <optional>
+        <choice>
+          <element name="as"><ref name="C_Identifier.type"/></element>
           <ref name="block.elem"/>
-        </zeroOrMore>
-      </choice>
+        </choice>
+      </optional>
     </element>
   </define>
 

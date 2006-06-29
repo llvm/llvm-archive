@@ -8,6 +8,7 @@
     <constant id="answer" type="u32">
       <dec>42</dec>
     </constant>
+    <function id="two" type="two_arg" linkage="external"/>
     <program id="argscall">
       <block>
         <call>

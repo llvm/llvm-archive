@@ -67,7 +67,8 @@ class XMLReaderImpl : public XMLReader {
   Locator* loc;
   URI* uri;
   Block* block;
-  std::vector<Block*> blocks;
+  typedef std::vector<Block*> BlockStack;
+  BlockStack blocks;
   Function* func;
   Bundle* bundle;
   bool isError;
@@ -725,15 +726,16 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
 
   // Find the referrent variable in a block
-  Block* blk = block;
   Value* referent = 0;
-  while (blk != 0) {
+  for (BlockStack::reverse_iterator I = blocks.rbegin(), E = blocks.rend(); 
+       I != E; ++I )
+  {
+    Block* blk = *I;
     if (AutoVarOp* av = blk->getAutoVar(id))
       if (av->getName() == id) {
         referent = av;
         break;
       }
-    blk = blk->getParentBlock();
   }
 
   // Didn't find an autovar? Try a function argument
@@ -859,24 +861,22 @@ XMLReaderImpl::parse<Block>(xmlNodePtr& cur)
   const char* label = getAttribute(cur, "label",false);
   xmlNodePtr child = cur->children;
   MultiOperator::OprndList ops;
-  if (block)
-    blocks.push_back(block);
   Block* result = ast->new_Block(loc);
   block = result;
   if (label)
     block->setLabel(label);
+  blocks.push_back(block);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) 
   {
     Operator* op = parseOperator(child);
     block->addOperand(op);
     child = child->next;
   }
+  blocks.pop_back();
   if (blocks.empty())
     block = 0;
-  else {
+  else
     block = blocks.back();
-    blocks.pop_back();
-  }
   return result;
 }
 

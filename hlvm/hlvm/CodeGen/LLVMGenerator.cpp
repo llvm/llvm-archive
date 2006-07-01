@@ -150,6 +150,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline std::string getLinkageName(const Linkable* li);
   inline llvm::Value* getBoolean(llvm::Value* op);
   inline llvm::Value* getInteger(llvm::Value* op);
+  inline llvm::Value* getReferent(hlvm::ReferenceOp* r);
   inline llvm::Value* toBoolean(llvm::Value* op);
   inline llvm::Value* ptr2Value(llvm::Value* op);
   inline llvm::Value* coerce(llvm::Value* op);
@@ -170,7 +171,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline void branchIfNotTerminated(
     llvm::BasicBlock* to, llvm::BasicBlock* from);
 
-  inline void startNewFunction();
+  inline void startNewFunction(llvm::Function* f);
   void resolveBranches(BranchList& list, llvm::BasicBlock* exit);
 
   /// Accessors for HLVM Runtime Library things
@@ -699,6 +700,36 @@ LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 }
 
 llvm::Value* 
+LLVMGeneratorPass::getReferent(hlvm::ReferenceOp* r)
+{
+  hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
+  llvm::Value* v = 0;
+  if (llvm::isa<AutoVarOp>(referent)) {
+    AutoVarMap::const_iterator I = 
+      lvars.find(llvm::cast<AutoVarOp>(referent));
+    hlvmAssert(I != lvars.end());
+    v = I->second;
+  } else if (llvm::isa<ConstantValue>(referent)) {
+    const hlvm::ConstantValue* cval = llvm::cast<ConstantValue>(referent);
+    llvm::Constant* C = getConstant(cval);
+    hlvmAssert(C && "Can't generate constant?");
+    v = C;
+  } else if (llvm::isa<Variable>(referent)) {
+    llvm::Value* V = getVariable(llvm::cast<hlvm::Variable>(referent));
+    hlvmAssert(V && "Variable not found?");
+    v = V;
+  } else if (llvm::isa<Function>(referent)) {
+    llvm::Function* F = getFunction(llvm::cast<hlvm::Function>(referent));
+    hlvmAssert(F && "Function not found?");
+    v = F;
+  } else if (llvm::isa<Argument>(referent)) {
+    ;
+  } else
+    hlvmDeadCode("Referent not a linkable or autovar?");
+  return v;
+}
+
+llvm::Value* 
 LLVMGeneratorPass::toBoolean(llvm::Value* V)
 {
   const llvm::Type* Ty = V->getType();
@@ -788,8 +819,9 @@ LLVMGeneratorPass::popOperandAsBlock(
         new llvm::CastInst(V,V->getType(),"",entry_block);
     }
   }
-  if (result)
-    result->setName(name + "_val");
+
+  if (result && result->getType() != llvm::Type::VoidTy)
+    result->setName(name + "_rslt");
   return result;
 }
 
@@ -844,8 +876,8 @@ LLVMGeneratorPass::getOperatorResult(Operator* op, const std::string& name)
     result = new llvm::AllocaInst(
       /*Ty=*/ Ty,
       /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
-      /*Name=*/ name,
-      /*InsertAtEnd=*/ lblk
+      /*Name=*/ name + "_var",
+      /*InsertAtEnd=*/ &lfunc->front()
     ); 
     new llvm::StoreInst(llvm::Constant::getNullValue(Ty),result,lblk);
   }
@@ -856,7 +888,9 @@ llvm::Value*
 LLVMGeneratorPass::getBlockResult(Block* B)
 {
   if (B->getResult() && !lblk->getTerminator()) {
-    llvm::Instruction* result = llvm::cast<llvm::Instruction>(operands[B]);
+    llvm::Value* result = operands[B];
+    if (llvm::isa<llvm::LoadInst>(result))
+      result = llvm::cast<llvm::LoadInst>(result)->getOperand(0);
     result = new llvm::LoadInst(result,lblk->getName()+"_result",lblk);
     pushOperand(result,B);
     return result;
@@ -873,7 +907,7 @@ LLVMGeneratorPass::branchIfNotTerminated(
 }
 
 void
-LLVMGeneratorPass::startNewFunction()
+LLVMGeneratorPass::startNewFunction(llvm::Function* F)
 {
   // Clear the function related variables
   lblk = 0;
@@ -884,6 +918,14 @@ LLVMGeneratorPass::startNewFunction()
   breaks.clear();
   continues.clear();
   lvars.clear();
+  // Instantiate an entry block for the alloca'd variables. This block
+  // is only used for such variables. By placing the alloca'd variables in
+  // the entry block, their allocation is free since the stack pointer 
+  // must be adjusted anyway, all that happens is that it gets adjusted
+  // by a larger amount. This block is not entered onto the block stack as it
+  // has no use but for the alloca'd variables. It is terminated when
+  // the function exits
+  new llvm::BasicBlock("entry",F);
 }
 
 void 
@@ -899,19 +941,22 @@ template<> void
 LLVMGeneratorPass::gen(AutoVarOp* av)
 {
   assert(lblk  != 0 && "Not in block context");
-  // emit a stack variable
+  // Emit an automatic variable. Note that this is inserted into the entry 
+  // block, not the current block, for efficiency. This makes automatic 
+  // variables zero cost as well as safeguarding against stack growth if the
+  // alloca is in a block that is in a loop.
   const llvm::Type* elemType = getType(av->getType());
   llvm::Value* alloca = new llvm::AllocaInst(
     /*Ty=*/ elemType,
     /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
     /*Name=*/ av->getName(),
-    /*InsertAtEnd=*/ lblk
+    /*InsertAtEnd=*/ &lfunc->front()
   );
   llvm::Constant* C = 0;
   if (av->hasInitializer())
-  C = getConstant(av->getInitializer());
+    C = getConstant(av->getInitializer());
   else
-  C = llvm::Constant::getNullValue(elemType);
+    C = llvm::Constant::getNullValue(elemType);
 
   if (C) {
     const llvm::Type* CType = C->getType();
@@ -1058,7 +1103,7 @@ LLVMGeneratorPass::gen(PostDecrOp* op)
   hlvmAssert(llvm::isa<llvm::PointerType>(lType));
   const llvm::PointerType* PT = llvm::cast<llvm::PointerType>(lType);
   lType = PT->getElementType();
-  llvm::LoadInst* load = new llvm::LoadInst(operand,"postincr",lblk);
+  llvm::LoadInst* load = new llvm::LoadInst(operand,"postdecr",lblk);
   if (lType->isFloatingPoint()) {
     llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
     llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
@@ -1566,12 +1611,14 @@ template<> void
 LLVMGeneratorPass::gen(BreakOp* op)
 {
   // Make sure the block result is stored
-  Block* B = llvm::cast<Block>(op->getParent());
+  Block* B = llvm::cast<Block>(op->getContainingBlock());
   getBlockResult(B);
 
   // Just push a place-holder branch onto the breaks list so it can
   // be fixed up later once we know the destination
-  breaks.push_back(new llvm::BranchInst(lblk,lblk));
+  llvm::BranchInst* brnch = new llvm::BranchInst(lblk,lblk);
+  breaks.push_back(brnch);
+  pushOperand(brnch,op);
 }
 
 template<> void
@@ -1583,7 +1630,9 @@ LLVMGeneratorPass::gen(ContinueOp* op)
 
   // Just push a place-holder branch onto the continues list so it can
   // be fixed up later once we know the destination
-  continues.push_back(new llvm::BranchInst(lblk,lblk));
+  llvm::BranchInst* brnch = new llvm::BranchInst(lblk,lblk);
+  continues.push_back(brnch);
+  pushOperand(brnch,op);
 }
 
 template<> void
@@ -1594,7 +1643,10 @@ LLVMGeneratorPass::gen(ResultOp* r)
   // Get the block this result applies to
   hlvm::Block* B = llvm::cast<hlvm::Block>(r->getParent());
   // Generate a store into the location set up by the block for its result
-  new llvm::StoreInst(result,operands[B],lblk);
+  llvm::Value* instr = operands[B];
+  if (llvm::isa<llvm::LoadInst>(instr))
+    instr = llvm::cast<llvm::LoadInst>(instr)->getOperand(0);
+  new llvm::StoreInst(result,instr,lblk);
 }
 
 template<> void
@@ -1678,29 +1730,8 @@ LLVMGeneratorPass::gen(LoadOp* l)
 template<> void
 LLVMGeneratorPass::gen(ReferenceOp* r)
 {
-  hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
-  llvm::Value* v = 0;
-  if (llvm::isa<AutoVarOp>(referent)) {
-    AutoVarMap::const_iterator I = 
-      lvars.find(llvm::cast<AutoVarOp>(referent));
-    hlvmAssert(I != lvars.end());
-    v = I->second;
-  } else if (llvm::isa<ConstantValue>(referent)) {
-    const hlvm::ConstantValue* cval = llvm::cast<ConstantValue>(referent);
-    llvm::Constant* C = getConstant(cval);
-    hlvmAssert(C && "Can't generate constant?");
-    v = C;
-  } else if (llvm::isa<Variable>(referent)) {
-    llvm::Value* V = getVariable(llvm::cast<hlvm::Variable>(referent));
-    hlvmAssert(V && "Variable not found?");
-    v = V;
-  } else if (llvm::isa<Function>(referent)) {
-    llvm::Function* F = getFunction(llvm::cast<hlvm::Function>(referent));
-    hlvmAssert(F && "Function not found?");
-    v = F;
-  } else
-    hlvmDeadCode("Referent not a linkable or autovar?");
-  pushOperand(v,r);
+  llvm::Value* referent = getReferent(r);
+  pushOperand(referent,r);
 }
 
 template<> void
@@ -1892,7 +1923,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         // Get/Create the function
         function = llvm::cast<hlvm::Function>(n);
         lfunc = getFunction(function);
-        startNewFunction();
+        startNewFunction(lfunc);
         break;
       }
       case ProgramID:
@@ -1905,7 +1936,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
             /*Name=*/ getLinkageName(function),
             /*Module=*/ lmod
         );
-        startNewFunction();
+        startNewFunction(lfunc);
         // Save the program so it can be generated into the list of program 
         // entry points.
         progs.push_back(lfunc);
@@ -1914,16 +1945,15 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BlockID:
       {
         Block* B = llvm::cast<Block>(n);
-        std::string name = B->getLabel().empty() ?
-            (blocks.empty()? "entry" : "block") : B->getLabel();
+        std::string name = B->getLabel().empty() ? "block" : B->getLabel();
         enters[B] = pushBlock(name);
         if (B->getResult()) {
           const llvm::Type* Ty = getType(B->getType());
           llvm::AllocaInst* result = new llvm::AllocaInst(
             /*Ty=*/ Ty,
             /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
-            /*Name=*/ name,
-            /*InsertAtEnd=*/ lblk
+            /*Name=*/ name + "_var",
+            /*InsertAtEnd=*/ &lfunc->front()
           ); 
           // Initialize the autovar to null
           new llvm::StoreInst(llvm::Constant::getNullValue(Ty),result,lblk);
@@ -2028,6 +2058,10 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case ProgramID:
         /* FALL THROUGH */
       case FunctionID:
+        // The entry block was created to hold the automatic variables. We now
+        // need to terminate the block by branching it to the first active block
+        // in the function.
+        new llvm::BranchInst(lfunc->front().getNext(),&lfunc->front());
         function = 0;
         lfunc = 0;
         break;

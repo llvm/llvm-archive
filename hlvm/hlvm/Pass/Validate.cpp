@@ -190,9 +190,6 @@ ValidateImpl::checkTerminator(Operator *n)
       error(n,"Terminating operator is not last operator in block");
       return false;
     }
-  } else {
-    error(n,"Operator not in block!");
-    return false;
   }
   return true;
 }

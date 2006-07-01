@@ -20,6 +20,8 @@ MYPREFIX := /proj/install/hlvm
 
 SCONSOPTS := -Q -j 2
 
+SUITES := all
+
 .PHONY: all debug Debug optimized Optimized release Release check clean \
 	install hlvm tools
 
@@ -43,7 +45,7 @@ profile Profile:
 	inline=1 small=0 strip=0 profile=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
 
 check: 
-	scons -Q check mode=$(MYMODE)
+	scons -Q check mode=$(MYMODE) suites=$(SUITES)
 
 clean:
 	scons $(SCONSOPTS) --clean mode=$(MYMODE)

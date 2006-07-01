@@ -1,19 +1,21 @@
 <!--#set var="title" value="Status As Of June 30, 2006" -->
 <!--#include virtual="/incl/header.incl" -->
 <h1>Status As Of June 30, 2006</h1>
-<p>HLVM has made much significant progress in the last month. Here is the
+<p>HLVM has made significant progress in the last month. Here is the
 status of HLVM as of Subversion revision #358.</p>
 <h2>General Update</h2>
 <ul>
-  <li>The first release was made on June 13th, 2006. This release provided the
-  "Hello World" functionality. For details, please see the 
+  <li>The first release (0.1) was made on June 13th, 2006. This release 
+   provided the "Hello World" functionality. For details, please see the 
   <a href="/releases/0.1/docs/ReleaseNotes.html">Release Notes</a>.</li>
   <li>Since the release we've been working on making HLVM "Turing Complete"
   (using the usual loose definition).</li>
-  <li>We are now about mid way through the 0.2 functionality set.</li>
+  <li>We are now about half way through the 0.2 functionality set.</li>
 </ul>
 <h2>Functionality Changes</h2>
 <ul>
+  <li>There are now 138 node types in the AST. Most of these are the new
+  arithmetic and Boolean operators.</li>
   <li>A full set of arithmetic operators for both integer and floating point 
   arithmetic was implemented.</li>
   <li>Constant values for simple types are implemented, but not yet for
@@ -37,8 +39,6 @@ status of HLVM as of Subversion revision #358.</p>
 </ul>
 <h2>Test Case Changes</h2>
 <ul>
-  <li>There are now 138 node types in the AST. Most of these are the new
-  arithmetic and Boolean operators.</li>
   <li>There is a new test suite named "invalid" which tests to make sure that
   HLVM tools will generate appropriate error messages on invalid input and not
   let invalid trees be used. There are 21 test cases in this new suite.</li>
@@ -71,7 +71,7 @@ status of HLVM as of Subversion revision #358.</p>
 </ul>
 <h2>Platform Support Changes</h2>
 <ul>
-  <li>Several new developers got HLVM building on Mac OS/X.</li>
+  <li>Several new users got HLVM building on Mac OS/X.</li>
   <li>Reid got HLVM to build on Fedora Core 5.</li>
 </ul>
 <h2>Other Changes and News</h2>

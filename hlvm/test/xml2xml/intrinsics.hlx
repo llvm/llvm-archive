@@ -37,9 +37,6 @@
     <atom id="2">
       <intrinsic is="bool"/>
     </atom>
-    <atom id="20">
-      <intrinsic is="void"/>
-    </atom>
     <atom id="3">
       <intrinsic is="char"/>
     </atom>

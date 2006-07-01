@@ -290,7 +290,6 @@ recognize_builtin_type( hlvm::AST* ast, const std::string& tname)
     case TKN_u32:    result = ast->getPrimitiveType(UInt32TypeID); break;
     case TKN_u64:    result = ast->getPrimitiveType(UInt64TypeID); break;
     case TKN_u8:     result = ast->getPrimitiveType(UInt8TypeID); break;
-    case TKN_void:   result = ast->getPrimitiveType(VoidTypeID); break;
     default:
       break;
   }
@@ -329,7 +328,6 @@ create_builtin_type(
     case TKN_u32:     result = ast->new_u32(name,loc); break;
     case TKN_u64:     result = ast->new_u64(name,loc); break;
     case TKN_u8:      result = ast->new_u8(name,loc); break;
-    case TKN_void:    result = ast->new_VoidType(name,loc); break;
     default: break;
   }
   return result;
@@ -1088,7 +1086,6 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_bor:          op = parseBinaryOp<BOrOp>(cur); break;
       case TKN_bxor:         op = parseBinaryOp<BXorOp>(cur); break;
       case TKN_bnor:         op = parseBinaryOp<BNorOp>(cur); break;
-      case TKN_noop:         op = parseNilaryOp<NullOp>(cur); break;
       case TKN_not:          op = parseUnaryOp<NotOp>(cur); break;
       case TKN_and:          op = parseBinaryOp<AndOp>(cur); break;
       case TKN_or:           op = parseBinaryOp<OrOp>(cur); break;

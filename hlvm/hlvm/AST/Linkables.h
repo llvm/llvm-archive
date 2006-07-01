@@ -98,7 +98,7 @@ class Linkable : public Constant
 /// be a candidate for linkage with other Bundles. A Variable is a storage 
 /// location, with an address, of a specific type. Global variables may have
 /// a constant value in which case HLVM will ensure that the value of the
-/// global variable is immutable. Variables can be of any type except VoidType.
+/// global variable is immutable. Variables can be of any type.
 /// @see Linkable
 /// @see Bundle
 /// @brief AST Variable Node

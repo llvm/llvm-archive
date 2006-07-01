@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/return0/break.hlx">
+  <bundle id="break">
+    <constant id="0" type="s32">
+      <dec>0</dec>
+    </constant>
+    <constant id="1" type="s32">
+      <dec>1</dec>
+    </constant>
+    <program id="break">
+      <block>
+        <result>
+          <while>
+            <ne><ref id="1"/><ref id="0"/></ne>
+            <block>
+              <select>
+                <ne><ref id="1"/><ref id="0"/></ne>
+                <block><break/></block>
+                <ref id="1"/>
+              </select>
+              <result><ref id="1"/></result>
+            </block>
+          </while>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

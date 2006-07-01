@@ -216,16 +216,6 @@ RealType::getPrimitiveName() const
   return 0;
 }
 
-VoidType::~VoidType()
-{
-}
-
-const char* 
-VoidType::getPrimitiveName() const
-{
-  return "void";
-}
-
 OpaqueType::~OpaqueType()
 {
 }

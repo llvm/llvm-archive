@@ -50,10 +50,6 @@
       <doc>Obviously this is a boolean</doc>
       <intrinsic is="bool"/>
     </atom>
-    <atom id="20">
-      <doc>The void type, zero size</doc>
-      <intrinsic is="void"/>
-    </atom>
     <atom id="3">
       <doc>UTF-16 character</doc>
       <intrinsic is="char"/>

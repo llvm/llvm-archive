@@ -50,6 +50,9 @@ OutputFilename("o", cl::desc("Override output filename"),
 static cl::opt<bool> NoValidate("no-validate", cl::init(false),
   cl::desc("Don't validate input before generating code"));
 
+static cl::opt<bool> NoVerify("no-verify", cl::init(false),
+  cl::desc("Don't verify generated LLVM module"));
+
 enum GenerationOptions {
   GenLLVMBytecode,
   GenLLVMAssembly,
@@ -75,7 +78,7 @@ int main(int argc, char**argv)
   try {
     initialize(argc,argv);
     cl::ParseCommandLineOptions(argc, argv, 
-      "hlvm-xml2xml XML->AST->XML translator\n");
+      "hlvm-compile: Compile HLVM AST To Other Forms\n");
 
     std::ostream *Out = &std::cout;  // Default to printing to stdout.
 
@@ -119,12 +122,14 @@ int main(int argc, char**argv)
     AST* node = rdr->get();
     if (node && !NoValidate) {
       if (!validate(node))
-        return 3;
+        exit(3);
     }
     if (WhatToGenerate == GenLLVMBytecode) {
-      generateBytecode(node,*Out);
+      if (!generateBytecode(node,*Out, !NoVerify))
+        exit(4);
     } else if (WhatToGenerate == GenLLVMAssembly) {
-      generateAssembly(node,*Out);
+      if (!generateAssembly(node,*Out, !NoVerify))
+        exit(4);
     }
     delete rdr;
 

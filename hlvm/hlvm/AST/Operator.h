@@ -75,8 +75,10 @@ class Operator : public Value
     /// Return the block containing this operator
     Block* getContainingBlock();
 
-    /// Return the loop operator containing this operator
-    LoopOp* getContainingLoop();
+    /// Return the loop operator containing this operator. This can return
+    /// any of the loop constructs (Loop, While, Unless, etc.) so its result
+    /// type is Operator*.
+    Operator* getContainingLoop();
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }

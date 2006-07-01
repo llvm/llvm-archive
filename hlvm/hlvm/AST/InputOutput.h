@@ -69,10 +69,9 @@ class OpenOp : public UnaryOperator
 /// previously returned by the OpenOp operator. The operator causes all 
 /// buffers written to the stream to be flushed. After the operator completes, 
 /// the stream will no longer be available for input/output operations. This 
-/// operator returns a value of type VoidType.
+/// operator has no result value
 /// @see OpenOp
 /// @see StreamType
-/// @see VoidType
 /// @brief AST Close Stream Operator
 class CloseOp : public UnaryOperator
 {

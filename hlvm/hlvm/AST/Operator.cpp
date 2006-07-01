@@ -61,14 +61,14 @@ Operator::getContainingBlock()
   return cast<Block>(p);
 }
 
-LoopOp*
+Operator*
 Operator::getContainingLoop()
 {
   Node* p = getParent();
-  while (p && !isa<LoopOp>(p)) p = p->getParent();
+  while (p && !p->isLoop()) p = p->getParent();
   if (!p)
     return 0;
-  return cast<LoopOp>(p);
+  return cast<Operator>(p);
 }
 
 NilaryOperator::~NilaryOperator()

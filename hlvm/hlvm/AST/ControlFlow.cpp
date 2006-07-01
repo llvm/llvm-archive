@@ -37,7 +37,6 @@ using namespace llvm;
 
 namespace hlvm {
 
-NullOp::~NullOp() {}
 SelectOp::~SelectOp() {}
 SwitchOp::~SwitchOp() {}
 WhileOp::~WhileOp() {}
@@ -46,13 +45,7 @@ WhileOp::getType() const
 {
   hlvmAssert(getNumOperands() == 2);
   Operator* op2 = getOperand(1);
-  if (Block* B = llvm::dyn_cast<Block>(op2)) {
-    if (const Type* Ty = B->getResultType())
-      return Ty;
-    return 0;
-  } else {
-    return op2->getType();
-  }
+  return op2->getType();
 }
 
 UnlessOp::~UnlessOp() {}
@@ -61,13 +54,7 @@ UnlessOp::getType() const
 {
   hlvmAssert(getNumOperands() == 2);
   Operator* op2 = getOperand(1);
-  if (Block* B = llvm::dyn_cast<Block>(op2)) {
-    if (const Type* Ty = B->getResultType())
-      return Ty;
-    return 0;
-  } else {
-    return op2->getType();
-  }
+  return op2->getType();
 }
 
 UntilOp::~UntilOp() {}
@@ -76,13 +63,7 @@ UntilOp::getType() const
 {
   hlvmAssert(getNumOperands() == 2);
   Operator* op1 = getOperand(0);
-  if (Block* B = llvm::dyn_cast<Block>(op1)) {
-    if (const Type* Ty = B->getResultType())
-      return Ty;
-    return 0;
-  } else {
-    return op1->getType();
-  }
+  return op1->getType();
 }
 
 LoopOp::~LoopOp() {}
@@ -92,13 +73,7 @@ LoopOp::getType() const
 {
   hlvmAssert(getNumOperands() == 3);
   Operator* op2 = getOperand(1);
-  if (Block* B = llvm::dyn_cast<Block>(op2)) {
-    if (const Type* Ty = B->getResultType())
-      return Ty;
-    return 0;
-  } else {
-    return op2->getType();
-  }
+  return op2->getType();
 }
 
 ReturnOp::~ReturnOp() { }

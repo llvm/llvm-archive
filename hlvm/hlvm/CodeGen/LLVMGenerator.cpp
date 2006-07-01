@@ -75,30 +75,35 @@ using namespace hlvm;
 class LLVMGeneratorPass : public hlvm::Pass
 {
   typedef std::vector<llvm::Module*> ModuleList;
-  typedef std::vector<llvm::Value*> OperandList;
+  typedef std::vector<llvm::BranchInst*> BranchList;
   typedef std::vector<llvm::BasicBlock*> BlockStack;
-  typedef std::map<llvm::BasicBlock*,llvm::Value*> ResultsDictionary;
-  typedef std::map<const hlvm::Variable*,llvm::Value*> VariableDictionary;
-  typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarDictionary;
-  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> 
-    ConstantDictionary;
-  typedef std::map<const hlvm::Function*,llvm::Function*> FunctionDictionary;
-  ModuleList modules;        ///< The list of modules we construct
-  llvm::Module*     lmod;    ///< The current module we're generation 
-  llvm::Function*   lfunc;   ///< The current LLVM function we're generating 
-  llvm::BasicBlock* lblk;    ///< The current LLVM block we're generating
-  OperandList lops;          ///< The current list of instruction operands
-  BlockStack blocks;         ///< The stack of blocks we're constructing
-  ResultsDictionary results; ///< Dictionary of LLVM blocks to result values
-  VariableDictionary gvars;  ///< Dictionary of HLVM -> LLVM gvars
-  AutoVarDictionary lvars;   ///< Dictionary of HLVM -> LLVM auto vars
+  typedef std::map<const hlvm::Operator*,llvm::Value*> OperandMap;
+  typedef std::map<const hlvm::Block*,llvm::BasicBlock*> BlockMap;
+  typedef std::map<const hlvm::Operator*,llvm::BasicBlock*> LoopMap;
+  typedef std::map<const hlvm::Block*,llvm::Instruction*> ResultsMap;
+  typedef std::map<const hlvm::Variable*,llvm::Value*> VariableMap;
+  typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarMap;
+  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> ConstantMap;
+  typedef std::map<const hlvm::Function*,llvm::Function*> FunctionMap;
+  ModuleList modules;           ///< The list of modules we construct
+  llvm::Module*     lmod;       ///< The current module we're generation 
+  llvm::Function*   lfunc;      ///< The current LLVM function we're generating 
+  llvm::BasicBlock* lblk;       ///< The current LLVM block we're generating
+  OperandMap operands;          ///< The current list of instruction operands
+  BlockMap enters;              ///< Map of Block to entry BasicBlock
+  BlockMap exits;               ///< Map of Block to exit BasicBlock
+  BlockStack blocks;            ///< The stack of blocks we're constructing
+  BranchList breaks;            ///< The list of break instructions to fix up
+  BranchList continues;         ///< The list of continue instructions to fix up
+  VariableMap gvars;            ///< Map of HLVM -> LLVM gvars
+  AutoVarMap lvars;             ///< Map of HLVM -> LLVM auto vars
   llvm::TypeSymbolTable ltypes; ///< The cached LLVM types we've generated
-  ConstantDictionary consts; ///< The cached LLVM constants we've generated
-  FunctionDictionary funcs;  ///< The cached LLVM constants we've generated
-  const AST* ast;            ///< The current Tree we're traversing
-  const Bundle* bundle;      ///< The current Bundle we're traversing
+  ConstantMap consts;           ///< The cached LLVM constants we've generated
+  FunctionMap funcs;            ///< The cached LLVM constants we've generated
+  const AST* ast;               ///< The current Tree we're traversing
+  const Bundle* bundle;         ///< The current Bundle we're traversing
   const hlvm::Function* function;  ///< The current Function we're traversing
-  const Block* block;        ///< The current Block we're traversing
+  const Block* block;           ///< The current Block we're traversing
   std::vector<llvm::Function*> progs; ///< The list of programs to emit
 
   /// Interfaces to the HLVM Runtime Library
@@ -121,7 +126,8 @@ class LLVMGeneratorPass : public hlvm::Pass
   public:
     LLVMGeneratorPass(const AST* tree)
       : Pass(0,Pass::PreAndPostOrderTraversal),
-      modules(), lmod(0), lfunc(0), lblk(0), lops(), blocks(), results(),
+      modules(), lmod(0), lfunc(0), lblk(0), operands(), blocks(), breaks(), 
+      continues(),
       gvars(), lvars(), ltypes(), consts(), funcs(),
       ast(tree),   bundle(0), function(0), block(0),
       hlvm_text(0), hlvm_text_create(0), hlvm_text_delete(0),
@@ -147,12 +153,25 @@ class LLVMGeneratorPass : public hlvm::Pass
   inline llvm::Value* toBoolean(llvm::Value* op);
   inline llvm::Value* ptr2Value(llvm::Value* op);
   inline llvm::Value* coerce(llvm::Value* op);
-  inline void saveOperand(llvm::Value* v, const Operator* op);
-  inline bool hasResult(llvm::BasicBlock* B) const;
-  llvm::AllocaInst* getBlockResult(llvm::BasicBlock* B, const char* name);
-  llvm::BasicBlock* getBodyBlock(llvm::Value* V, const std::string& name);
-  llvm::BasicBlock* getExpressionBlock(
-    llvm::Value* V, llvm::Value*& cond, const std::string& name);
+  inline void pushOperand(llvm::Value* v, const Operator* op);
+  inline llvm::Value* popOperand(const Operator*op);
+  inline llvm::Value* popOperandAsBlock(
+    const Operator* op, const std::string&,
+    llvm::BasicBlock*& entry_block, llvm::BasicBlock*& exit_block);
+  inline llvm::Value* popOperandAsCondition(
+    const Operator* op, const std::string&,
+    llvm::BasicBlock*& entry_block, llvm::BasicBlock*& exit_block);
+  inline llvm::BasicBlock* newBlock(const std::string& name);
+  inline llvm::BasicBlock* pushBlock(const std::string& name);
+  inline llvm::BasicBlock* popBlock(llvm::BasicBlock* curBlock);
+  inline bool hasResult(hlvm::Block* B) const;
+  llvm::AllocaInst* getOperatorResult(Operator* op, const std::string& name);
+  llvm::Value* getBlockResult(Block* blk);
+  inline void branchIfNotTerminated(
+    llvm::BasicBlock* to, llvm::BasicBlock* from);
+
+  inline void startNewFunction();
+  void resolveBranches(BranchList& list, llvm::BasicBlock* exit);
 
   /// Accessors for HLVM Runtime Library things
   inline llvm::Type*         get_hlvm_size();
@@ -443,7 +462,6 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
-    case VoidTypeID:               result = llvm::Type::VoidTy; break;
     case BooleanTypeID:            result = llvm::Type::BoolTy; break;
     case CharacterTypeID:          result = llvm::Type::UShortTy; break;
     case OctetTypeID:              result = llvm::Type::SByteTy; break;
@@ -559,7 +577,7 @@ LLVMGeneratorPass::getConstant(const hlvm::ConstantValue* C)
   hlvmAssert(C->isConstantValue());
 
   // First, lets see if its cached already
-  ConstantDictionary::iterator I = 
+  ConstantMap::iterator I = 
     consts.find(const_cast<hlvm::ConstantValue*>(C));
   if (I != consts.end())
     return I->second;
@@ -621,7 +639,7 @@ LLVMGeneratorPass::getVariable(const Variable* V)
   hlvmAssert(V->is(VariableID));
 
   // First, lets see if its cached already
-  VariableDictionary::iterator I = 
+  VariableMap::iterator I = 
     gvars.find(const_cast<hlvm::Variable*>(V));
   if (I != gvars.end())
     return I->second;
@@ -651,7 +669,7 @@ LLVMGeneratorPass::getFunction(const hlvm::Function* F)
   hlvmAssert(F->is(FunctionID));
 
   // First, lets see if its cached already
-  FunctionDictionary::iterator I = funcs.find(const_cast<hlvm::Function*>(F));
+  FunctionMap::iterator I = funcs.find(const_cast<hlvm::Function*>(F));
   if (I != funcs.end())
     return I->second;
 
@@ -713,87 +731,168 @@ LLVMGeneratorPass::ptr2Value(llvm::Value* V)
 }
 
 void 
-LLVMGeneratorPass::saveOperand(llvm::Value* v, const Operator* op)
+LLVMGeneratorPass::pushOperand(llvm::Value* v, const Operator* op)
 {
-  if (op)
-    if (!llvm::isa<Block>(op->getParent()))
-      lops.push_back(v);
+  hlvmAssert(v && "No value to push for operand?");
+  hlvmAssert(op && "No operator for value to be pushed?");
+  operands[op] = v;
 }
 
-bool 
-LLVMGeneratorPass::hasResult(llvm::BasicBlock* B) const
+llvm::Value*
+LLVMGeneratorPass::popOperand(const Operator* op)
 {
-  if (B) {
-    ResultsDictionary::const_iterator I = results.find(B);
-    return I != results.end();
+  hlvmAssert(op && "No operator to pop?");
+  OperandMap::iterator I = operands.find(op);
+  if (I == operands.end())
+    return 0;
+  llvm::Value* result = I->second;
+  operands.erase(I);
+  return result;
+}
+
+llvm::Value*
+LLVMGeneratorPass::popOperandAsBlock(
+  const Operator* op, const std::string& name,
+  llvm::BasicBlock*& entry_block, llvm::BasicBlock*& exit_block)
+{
+  llvm::Value* result = 0;
+  llvm::Value* operand = popOperand(op);
+
+  if (const hlvm::Block* B = llvm::dyn_cast<hlvm::Block>(op)) {
+    // Get the corresponding entry and exit blocks for B1
+    entry_block = enters[B];
+    hlvmAssert(entry_block && "No entry block?");
+    exit_block = exits[B];
+    hlvmAssert(exit_block && "No exit block?");
+    // Set the name of the entry block to match its purpose here
+    if (entry_block != exit_block) {
+      entry_block->setName(name + "_entry");
+      exit_block->setName(name + "_exit");
+    } else {
+      entry_block->setName(name);
+    }
+    result = operand;
+  } else {
+    hlvmAssert(operand && "No operand for operator?");
+    entry_block = exit_block = new llvm::BasicBlock(name,lfunc); 
+    llvm::Value* V = operand;
+    hlvmAssert(V && "No value for operand?");
+    if (llvm::Instruction* ins = llvm::dyn_cast<llvm::Instruction>(V)) {
+      ins->removeFromParent();
+      entry_block->getInstList().push_back(ins);
+      result = ins;
+    } else {
+      // Its just a value or a constant or something, just cast it to itself
+      // so we can get its value
+      result = 
+        new llvm::CastInst(V,V->getType(),"",entry_block);
+    }
   }
-  return false;
+  if (result)
+    result->setName(name + "_val");
+  return result;
+}
+
+llvm::Value*
+LLVMGeneratorPass::popOperandAsCondition(
+  const Operator* op, const std::string& name,
+  llvm::BasicBlock*& entry_block, llvm::BasicBlock*& exit_block)
+{
+  llvm::Value* result = 
+    popOperandAsBlock(op,name+"_cond",entry_block,exit_block);
+  hlvmAssert(result);
+  hlvmAssert(result->getType() == llvm::Type::BoolTy);
+
+  return result;
+}
+
+llvm::BasicBlock*
+LLVMGeneratorPass::pushBlock(const std::string& name)
+{
+  lblk = new llvm::BasicBlock(name,lfunc);
+  blocks.push_back(lblk);
+  return lblk;
+}
+
+llvm::BasicBlock* 
+LLVMGeneratorPass::popBlock(llvm::BasicBlock* curBlock)
+{
+  llvm::BasicBlock* result = blocks.back();
+  blocks.pop_back();
+  if (blocks.empty())
+    lblk = 0;
+  else
+    lblk = blocks.back();
+  return result;
+}
+
+llvm::BasicBlock*
+LLVMGeneratorPass::newBlock(const std::string& name)
+{
+  blocks.pop_back();
+  lblk = new llvm::BasicBlock(name,lfunc);
+  blocks.push_back(lblk);
+  return lblk;
 }
 
 llvm::AllocaInst* 
-LLVMGeneratorPass::getBlockResult(llvm::BasicBlock* B, const char* name)
+LLVMGeneratorPass::getOperatorResult(Operator* op, const std::string& name)
 {
-  if (hasResult(B)) {
-    const llvm::Type* Ty = results[B]->getType();
-    llvm::AllocaInst* result = new llvm::AllocaInst(
+  llvm::AllocaInst* result = 0;
+  if (!llvm::isa<Block>(op->getParent())) {
+    const llvm::Type* Ty = getType(op->getType());
+    result = new llvm::AllocaInst(
       /*Ty=*/ Ty,
       /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
       /*Name=*/ name,
       /*InsertAtEnd=*/ lblk
     ); 
-    // Initialize the autovar to null
     new llvm::StoreInst(llvm::Constant::getNullValue(Ty),result,lblk);
-    // Store the value on each iteration
-    new llvm::StoreInst(results[B],result,B);
+  }
+  return result;
+}
+
+llvm::Value* 
+LLVMGeneratorPass::getBlockResult(Block* B)
+{
+  if (B->getResult() && !lblk->getTerminator()) {
+    llvm::Instruction* result = llvm::cast<llvm::Instruction>(operands[B]);
+    result = new llvm::LoadInst(result,lblk->getName()+"_result",lblk);
+    pushOperand(result,B);
     return result;
   }
   return 0;
 }
 
-llvm::BasicBlock* 
-LLVMGeneratorPass::getBodyBlock(llvm::Value* V, const std::string& name)
+void 
+LLVMGeneratorPass::branchIfNotTerminated(
+  llvm::BasicBlock* to, llvm::BasicBlock* from )
 {
-  llvm::BasicBlock* B = llvm::dyn_cast<llvm::BasicBlock>(V);
-  if (B)
-    return B;
-  B = new llvm::BasicBlock(name,lfunc);
-  if (llvm::Instruction* ins = llvm::dyn_cast<llvm::Instruction>(V)) {
-    ins->removeFromParent();
-    B->getInstList().push_back(ins);
-    results[B] = ins;
-  } else {
-    // Its just a value or a constant or something, just cast it to itself
-    // so we can get its value
-    results[B] = new llvm::CastInst(V,V->getType(),name+"_result",B);
-  }
-  return B;
+  if (!from->getTerminator())
+    new llvm::BranchInst(to,from);
 }
 
-llvm::BasicBlock*
-LLVMGeneratorPass::getExpressionBlock(
-  llvm::Value* V, llvm::Value*& cond, const std::string& name)
+void
+LLVMGeneratorPass::startNewFunction()
 {
-  // Extract the condition value and make sure the condition expression is
-  // a block.
-  cond = 0;
-  llvm::BasicBlock* B = llvm::dyn_cast<llvm::BasicBlock>(V);
-  if (B) {
-    hlvmAssert(hasResult(B) && "No result in expression block?");
-    cond = results[B];
-    return B;
+  // Clear the function related variables
+  lblk = 0;
+  operands.clear();
+  enters.clear();
+  exits.clear();
+  blocks.clear();
+  breaks.clear();
+  continues.clear();
+  lvars.clear();
+}
+
+void 
+LLVMGeneratorPass::resolveBranches(BranchList& list, llvm::BasicBlock* exit)
+{
+  for (BranchList::iterator I = list.begin(), E = list.end(); I != E; ++I) {
+    (*I)->setOperand(0,exit);
   }
-  B = new llvm::BasicBlock(name,lfunc);
-  if (llvm::Instruction* ins = llvm::dyn_cast<llvm::Instruction>(V)) {
-    ins->removeFromParent();
-    B->getInstList().push_back(ins);
-    cond = results[B] = V;
-  } else {
-    // Its just a value or a constant or something, just cast it to itself
-    // so we can get its value
-    cond = results[B] = new llvm::CastInst(V,V->getType(),name+"_result",B);
-  }
-  hlvmAssert(cond->getType() == llvm::Type::BoolTy);
-  return B;
+  list.clear();
 }
 
 template<> void
@@ -803,16 +902,16 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
   // emit a stack variable
   const llvm::Type* elemType = getType(av->getType());
   llvm::Value* alloca = new llvm::AllocaInst(
-      /*Ty=*/ elemType,
-      /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
-      /*Name=*/ av->getName(),
-      /*InsertAtEnd=*/ lblk
+    /*Ty=*/ elemType,
+    /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
+    /*Name=*/ av->getName(),
+    /*InsertAtEnd=*/ lblk
   );
   llvm::Constant* C = 0;
   if (av->hasInitializer())
-    C = getConstant(av->getInitializer());
+  C = getConstant(av->getInitializer());
   else
-    C = llvm::Constant::getNullValue(elemType);
+  C = llvm::Constant::getNullValue(elemType);
 
   if (C) {
     const llvm::Type* CType = C->getType();
@@ -840,9 +939,9 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
       hlvmAssert(CType->isLosslesslyConvertibleTo(elemType));
       C = llvm::ConstantExpr::getCast(C,elemType);
     }
-    llvm::Value* store = new llvm::StoreInst(C,alloca,"",lblk);
+    llvm::Value* store = new llvm::StoreInst(C,alloca,lblk);
   }
-  saveOperand(alloca,av);
+  pushOperand(alloca,av);
   lvars[av] = alloca;
 }
 
@@ -850,36 +949,33 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
 template<> void
 LLVMGeneratorPass::gen(NegateOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for NegateOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   hlvmAssert((operand->getType()->isInteger() || 
-              operand->getType()->isFloatingPoint()) && 
-              "Can't negate non-numeric");
+            operand->getType()->isFloatingPoint()) && 
+            "Can't negate non-numeric");
   llvm::BinaryOperator* neg = 
-    llvm::BinaryOperator::createNeg(operand,"neg",lblk);
-  saveOperand(neg,op);
+  llvm::BinaryOperator::createNeg(operand,"neg",lblk);
+  pushOperand(neg,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ComplementOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for ComplementOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   operand = ptr2Value(operand);
   const llvm::Type* lType = operand->getType();
   hlvmAssert(lType->isInteger() && "Can't complement non-integral type");
   llvm::ConstantIntegral* allOnes = 
-    llvm::ConstantIntegral::getAllOnesValue(lType);
+  llvm::ConstantIntegral::getAllOnesValue(lType);
   llvm::BinaryOperator* cmpl = llvm::BinaryOperator::create(
-      llvm::Instruction::Xor,operand,allOnes,"cmpl",lblk);
-  saveOperand(cmpl,op);
+    llvm::Instruction::Xor,operand,allOnes,"cmpl",lblk);
+  pushOperand(cmpl,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(PreIncrOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for PreIncrOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   const llvm::Type* lType = operand->getType();
   hlvmAssert(llvm::isa<llvm::PointerType>(lType));
   const llvm::PointerType* PT = llvm::cast<llvm::PointerType>(lType);
@@ -889,14 +985,14 @@ LLVMGeneratorPass::gen(PreIncrOp* op)
     llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
     llvm::BinaryOperator* add = llvm::BinaryOperator::create(
       llvm::Instruction::Add, load, one, "preincr", lblk);
-    new llvm::StoreInst(add,operand,"preincr",lblk);
-    saveOperand(add,op);
+    new llvm::StoreInst(add,operand,lblk);
+    pushOperand(add,op);
   } else if (lType->isInteger()) {
     llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
     llvm::BinaryOperator* add = llvm::BinaryOperator::create(
       llvm::Instruction::Add, load, one, "preincr", lblk);
-    new llvm::StoreInst(add,operand,"preincr",lblk);
-    saveOperand(add,op);
+    new llvm::StoreInst(add,operand,lblk);
+    pushOperand(add,op);
   } else {
     hlvmAssert(!"PreIncrOp on non-numeric");
   }
@@ -905,8 +1001,7 @@ LLVMGeneratorPass::gen(PreIncrOp* op)
 template<> void
 LLVMGeneratorPass::gen(PreDecrOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for PreDecrOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   const llvm::Type* lType = operand->getType();
   hlvmAssert(llvm::isa<llvm::PointerType>(lType));
   const llvm::PointerType* PT = llvm::cast<llvm::PointerType>(lType);
@@ -916,14 +1011,14 @@ LLVMGeneratorPass::gen(PreDecrOp* op)
     llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
     llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
       llvm::Instruction::Sub, load, one, "predecr", lblk);
-    new llvm::StoreInst(sub,operand,"predecr",lblk);
-    saveOperand(sub,op);
+    new llvm::StoreInst(sub,operand,lblk);
+    pushOperand(sub,op);
   } else if (lType->isInteger()) {
     llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
     llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
       llvm::Instruction::Sub, load, one, "predecr", lblk);
-    new llvm::StoreInst(sub,operand,"predecr",lblk);
-    saveOperand(sub,op);
+    new llvm::StoreInst(sub,operand,lblk);
+    pushOperand(sub,op);
   } else {
     hlvmAssert(!"PreIncrOp on non-numeric");
   }
@@ -932,8 +1027,7 @@ LLVMGeneratorPass::gen(PreDecrOp* op)
 template<> void
 LLVMGeneratorPass::gen(PostIncrOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for PostIncrOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   const llvm::Type* lType = operand->getType();
   hlvmAssert(llvm::isa<llvm::PointerType>(lType));
   const llvm::PointerType* PT = llvm::cast<llvm::PointerType>(lType);
@@ -943,14 +1037,14 @@ LLVMGeneratorPass::gen(PostIncrOp* op)
     llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
     llvm::BinaryOperator* add = llvm::BinaryOperator::create(
       llvm::Instruction::Add, load, one, "postincr", lblk);
-    new llvm::StoreInst(add,operand,"postincr",lblk);
-    saveOperand(load,op);
+    new llvm::StoreInst(add,operand,lblk);
+    pushOperand(load,op);
   } else if (lType->isInteger()) {
     llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
     llvm::BinaryOperator* add = llvm::BinaryOperator::create(
       llvm::Instruction::Add, load, one, "postincr", lblk);
-    new llvm::StoreInst(add,operand,"postincr",lblk);
-    saveOperand(load,op);
+    new llvm::StoreInst(add,operand,lblk);
+    pushOperand(load,op);
   } else {
     hlvmAssert(!"PostDecrOp on non-numeric");
   }
@@ -959,8 +1053,7 @@ LLVMGeneratorPass::gen(PostIncrOp* op)
 template<> void
 LLVMGeneratorPass::gen(PostDecrOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for PostDecrOp");
-  llvm::Value* operand = lops.back(); lops.pop_back();
+  llvm::Value* operand = popOperand(op->getOperand(0)); 
   const llvm::Type* lType = operand->getType();
   hlvmAssert(llvm::isa<llvm::PointerType>(lType));
   const llvm::PointerType* PT = llvm::cast<llvm::PointerType>(lType);
@@ -970,14 +1063,14 @@ LLVMGeneratorPass::gen(PostDecrOp* op)
     llvm::ConstantFP* one = llvm::ConstantFP::get(lType,1.0);
     llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
       llvm::Instruction::Sub, load, one, "postdecr", lblk);
-    new llvm::StoreInst(sub,operand,"postdecr",lblk);
-    saveOperand(load,op);
+    new llvm::StoreInst(sub,operand,lblk);
+    pushOperand(load,op);
   } else if (lType->isInteger()) {
     llvm::ConstantInt* one = llvm::ConstantInt::get(lType,1);
     llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
       llvm::Instruction::Sub, load, one, "postdecr", lblk);
-    new llvm::StoreInst(sub,operand,"postdecr",lblk);
-    saveOperand(load,op);
+    new llvm::StoreInst(sub,operand,lblk);
+    pushOperand(load,op);
   } else {
     hlvmAssert(!"PostDecrOp on non-numeric");
   }
@@ -986,542 +1079,548 @@ LLVMGeneratorPass::gen(PostDecrOp* op)
 template<> void
 LLVMGeneratorPass::gen(AddOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for AddOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* add = llvm::BinaryOperator::create(
-    llvm::Instruction::Add, op1, op2, "add", lblk);
-  saveOperand(add,op);
+  llvm::Instruction::Add, op1, op2, "add", lblk);
+  pushOperand(add,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(SubtractOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for SubtractOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* sub = llvm::BinaryOperator::create(
-    llvm::Instruction::Sub, op1, op2, "add", lblk);
-  saveOperand(sub,op);
+  llvm::Instruction::Sub, op1, op2, "add", lblk);
+  pushOperand(sub,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(MultiplyOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for MultiplyOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* mul = llvm::BinaryOperator::create(
-    llvm::Instruction::Mul, op1, op2, "mul", lblk);
-  saveOperand(mul,op);
+  llvm::Instruction::Mul, op1, op2, "mul", lblk);
+  pushOperand(mul,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(DivideOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for DivideOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* div = llvm::BinaryOperator::create(
-    llvm::Instruction::Div, op1, op2, "div", lblk);
-  saveOperand(div,op);
+  llvm::Instruction::Div, op1, op2, "div", lblk);
+  pushOperand(div,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ModuloOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for ModuloOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* rem = llvm::BinaryOperator::create(
-    llvm::Instruction::Rem, op1, op2, "mod", lblk);
-  saveOperand(rem,op);
+  llvm::Instruction::Rem, op1, op2, "mod", lblk);
+  pushOperand(rem,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(BAndOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BAndOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* band = llvm::BinaryOperator::create(
-    llvm::Instruction::And, op1, op2, "band", lblk);
-  saveOperand(band,op);
+  llvm::Instruction::And, op1, op2, "band", lblk);
+  pushOperand(band,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(BOrOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BOrOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
-    llvm::Instruction::Or, op1, op2, "bor", lblk);
-  saveOperand(bor,op);
+  llvm::Instruction::Or, op1, op2, "bor", lblk);
+  pushOperand(bor,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(BXorOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BXorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
-    llvm::Instruction::Xor, op1, op2, "bxor", lblk);
-  saveOperand(Xor,op);
+  llvm::Instruction::Xor, op1, op2, "bxor", lblk);
+  pushOperand(Xor,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(BNorOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
-    llvm::Instruction::Or, op1, op2, "bnor", lblk);
+  llvm::Instruction::Or, op1, op2, "bnor", lblk);
   llvm::BinaryOperator* nor = llvm::BinaryOperator::createNot(bor,"bnor",lblk);
-  saveOperand(nor,op);
-}
-
-template<> void
-LLVMGeneratorPass::gen(NullOp* op)
-{
-  // Not surprisingly, there's nothing to do here.
+  pushOperand(nor,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(NotOp* op)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for BNorOp");
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   llvm::Value* b1 = toBoolean(op1);
   llvm::BinaryOperator* Not = llvm::BinaryOperator::createNot(b1,"not",lblk);
-  saveOperand(Not,op);
+  pushOperand(Not,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(AndOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* And = llvm::BinaryOperator::create(
-    llvm::Instruction::And, b1, b2, "and", lblk);
-  saveOperand(And,op);
+  llvm::Instruction::And, b1, b2, "and", lblk);
+  pushOperand(And,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(OrOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for BNorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
-    llvm::Instruction::Or, b1, b2, "or", lblk);
-  saveOperand(Or,op);
+  llvm::Instruction::Or, b1, b2, "or", lblk);
+  pushOperand(Or,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(NorOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for NorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Or = llvm::BinaryOperator::create(
-    llvm::Instruction::Or, b1, b2, "nor", lblk);
+  llvm::Instruction::Or, b1, b2, "nor", lblk);
   llvm::BinaryOperator* Nor = llvm::BinaryOperator::createNot(Or,"nor",lblk);
-  saveOperand(Nor,op);
+  pushOperand(Nor,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(XorOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for XorOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::Value* b1 = toBoolean(op1);
   llvm::Value* b2 = toBoolean(op2);
   llvm::BinaryOperator* Xor = llvm::BinaryOperator::create(
-    llvm::Instruction::Xor, b1, b2, "xor", lblk);
-  saveOperand(Xor,op);
+  llvm::Instruction::Xor, b1, b2, "xor", lblk);
+  pushOperand(Xor,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(EqualityOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for EqualityOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetEQ, op1,op2,"eq",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetEQ, op1,op2,"eq",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(InequalityOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for InequalityOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetNE, op1,op2,"ne",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetNE, op1,op2,"ne",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(LessThanOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for LessThanOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetLT, op1,op2,"lt",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetLT, op1,op2,"lt",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(GreaterThanOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterThanOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetGT, op1,op2,"gt",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetGT, op1,op2,"gt",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(GreaterEqualOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for GreaterEqualOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetGE, op1,op2,"ge",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetGE, op1,op2,"ge",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(LessEqualOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for LessEqualOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
   llvm::SetCondInst* SCI = 
-    new llvm::SetCondInst(llvm::Instruction::SetLE, op1,op2,"le",lblk);
-  saveOperand(SCI,op);
+  new llvm::SetCondInst(llvm::Instruction::SetLE, op1,op2,"le",lblk);
+  pushOperand(SCI,op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(SelectOp* op)
 {
-  hlvmAssert(lops.size() >= 3 && "Too few operands for SelectOp");
-  llvm::Value* op3 = lops.back(); lops.pop_back();
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
-  hlvmAssert(llvm::isa<llvm::BasicBlock>(op2) == 
-             llvm::isa<llvm::BasicBlock>(op3));
-
-  /// If the first operand is a basic block then it is an expression block, by
-  /// definition. We can therefore discard the LLVM basic block and incorporate
-  /// its contents into the current block. We also replace "op1" with the 
-  /// BasicBlock's result which was cached.
-  if (llvm::BasicBlock* BB1 = llvm::dyn_cast<llvm::BasicBlock>(op1)) {
-    hlvmAssert(!BB1->getTerminator() && "expression block with terminator?");
-    // Move the contents of the basic block into the current one
-    llvm::BasicBlock::InstListType& IL = lblk->getInstList();
-    for (llvm::BasicBlock::iterator I = BB1->begin(), E = BB1->end();
-         I != E; )  {
-      // be careful with iterator invalidation
-      llvm::Instruction* one2move = &(*I);
-      ++I;
-      // move the instruction from one block to the other
-      one2move->removeFromParent();
-      IL.push_back(one2move);
-    }
-    op1 = results[BB1];
-    results.erase(BB1);
-    BB1->eraseFromParent();
-  }
-
-  if (llvm::isa<llvm::BasicBlock>(op2)) {
-    // Both op2 and op3 are blocks, so we must emit a branch instruction for 
-    // the select.  That will terminate the current block so we need to set up
-    // another block to receive the result of the selection.  We also need to 
-    // make sure that the two operand blocks are properly terminated.
-    llvm::BasicBlock* BB2 = llvm::cast<llvm::BasicBlock>(op2);
-    llvm::BasicBlock* BB3 = llvm::cast<llvm::BasicBlock>(op3);
-
-    // Neither block should have a terminator, they are expression blocks
-    hlvmAssert(!BB2->getTerminator() && !BB3->getTerminator());
-    llvm::AllocaInst* select_result = getBlockResult(BB2,"select_result");
-
-    // Set up the branch to terminate the current block
-    new llvm::BranchInst(BB2,BB3,op1,lblk);
-
-    // Create the exit block
-    llvm::BasicBlock* exit = new llvm::BasicBlock("select_exit",lfunc);
-
-    // Make the exit block the current block
-    lblk = exit;
-
-    // Branch to the exit block
-    BB2->setName("select_true");
-    new llvm::BranchInst(exit,BB2);
-
-    // Store the result of the "false" case into the autovar, if we should
-    if (select_result)
-      new llvm::StoreInst(results[BB3],select_result,BB3);
-
-    // Branch to the exit block
-    BB3->setName("select_false");
-    new llvm::BranchInst(exit,BB3);
-
-    // Load the result and put it on the operand stack
-    if (select_result)
-      saveOperand(new llvm::LoadInst(select_result,"select",exit),op);
-  } else { 
-    // A this point, we can only be left with a first class type since all HLVM
-    // operators translate to a first class type. Since the select operator
-    // requires first class types, its okay to just use it here.
+  // If none of the operands are blocks then we can use LLVM's select
+  // instruction to just switch out the result
+  if (!llvm::isa<Block>(op->getOperand(0)) &&
+    !llvm::isa<Block>(op->getOperand(1)) &&
+    !llvm::isa<Block>(op->getOperand(2)))
+  {
+    // Since HLVM only places on the operand stack things that are of LLVM
+    // first class type, we are safe to use select operator here.
+    llvm::Value* op1 = popOperand(op->getOperand(0)); 
+    llvm::Value* op2 = popOperand(op->getOperand(1)); 
+    llvm::Value* op3 = popOperand(op->getOperand(2)); 
+    hlvmAssert(op1->getType() == llvm::Type::BoolTy);
     hlvmAssert(op2->getType()->isFirstClassType());
     hlvmAssert(op3->getType()->isFirstClassType());
-    saveOperand(new llvm::SelectInst(op1,op2,op3,"select",lblk),op);
+    pushOperand(new llvm::SelectInst(op1,op2,op3,"select",lblk),op);
+    return;
   }
+
+  // Using the LLVM SelectInst won't work.  We must get each operand as a block 
+  // and use a branch instruction instead.
+
+  // Get the result of the select operator
+  llvm::AllocaInst* select_result = getOperatorResult(op,"select_result");
+
+  // Get the condition block
+  llvm::BasicBlock* cond_entry, *cond_exit;
+  llvm::Value* op1 = 
+  popOperandAsCondition(op->getOperand(0),"select",cond_entry,cond_exit);
+
+  // Branch the current block into the condition block
+  new llvm::BranchInst(cond_entry,lblk);
+
+  // Get the true case
+  llvm::BasicBlock *true_entry, *true_exit;
+  llvm::Value* op2 = 
+    popOperandAsBlock(op->getOperand(1),"select_true",true_entry,true_exit); 
+
+  if (select_result && op2)
+    new llvm::StoreInst(op2,select_result,true_exit);
+
+  // Get the false case
+  llvm::BasicBlock *false_entry, *false_exit;
+  llvm::Value* op3 = 
+    popOperandAsBlock(op->getOperand(2),"select_false",false_entry,false_exit); 
+
+  if (select_result && op3)
+    new llvm::StoreInst(op3,select_result,false_exit);
+
+  // Create the exit block
+  llvm::BasicBlock* select_exit = newBlock("select_exit");
+
+  // Branch the the true and false cases to the exit
+  branchIfNotTerminated(select_exit,true_exit);
+  branchIfNotTerminated(select_exit,false_exit);
+
+  // Finally, install the conditional branch
+  new llvm::BranchInst(true_entry,false_entry,op1,cond_exit);
+
+  if (select_result)
+    pushOperand(new llvm::LoadInst(select_result,"select_result",select_exit),op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(SwitchOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for SwitchOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
-
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
 }
 
 template<> void
 LLVMGeneratorPass::gen(WhileOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for WhileOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  // Get the result of this while block, if there should be one
+  llvm::AllocaInst* while_result = getOperatorResult(op,"while_result");
 
-  // Get the body of the while loop
-  llvm::BasicBlock* B2 = getBodyBlock(op2,"while_body"); 
+  // Get the condition block
+  llvm::BasicBlock* cond_entry, *cond_exit;
+  llvm::Value* op1 = 
+    popOperandAsCondition(op->getOperand(0),"while",cond_entry,cond_exit);
 
-  // If there's a result in the while body, get it now
-  llvm::AllocaInst* while_result = getBlockResult(B2,"while_result");
+  // Branch the current block into the condition block
+  new llvm::BranchInst(cond_entry,lblk);
 
-  // Extract the condition value and make sure its in a block
-  llvm::Value* cond = 0;
-  llvm::BasicBlock* B1 = getExpressionBlock(op1,cond,"while_cond");
+  // Get the while loop's body
+  llvm::BasicBlock *body_entry, *body_exit;
+  llvm::Value* op2 = 
+    popOperandAsBlock(op->getOperand(1),"while_body",body_entry,body_exit); 
 
-  // Terminate the current block with a branch to the condition block
-  new llvm::BranchInst(B1,lblk);
+  // Save the result of the while body, if there should be one
+  if (while_result && op2)
+    new llvm::StoreInst(op2,while_result,body_exit);
 
-  // Terminate the body with a branch back to the condition block
-  new llvm::BranchInst(B1,B2);
+  // Create the exit block
+  llvm::BasicBlock* while_exit = newBlock("while_exit");
 
-  // Create a new block for the exit from the while loop
-  lblk = new llvm::BasicBlock("while_exit",lfunc);
+  // Branch the the body block back to the condition branch
+  branchIfNotTerminated(cond_entry,body_exit);
 
-  // Create a conditional branch to either exit or repeat the loop.
-  new llvm::BranchInst(B2,lblk,cond,B1);
+  // Finally, install the conditional branch into the branch block
+  new llvm::BranchInst(body_entry,while_exit,op1,cond_exit);
 
-  // Deal with the result of the while loop, if it has one
-  if (while_result) {
-    lops.push_back(new llvm::LoadInst(while_result,"while_result",lblk));
-  }
+  // If there's a result, push it now
+  if (while_result)
+    pushOperand(new llvm::LoadInst(while_result,"while_result",while_exit),op);
+
+  // Fix up any break or continue operators
+  resolveBranches(breaks,while_exit);
+  resolveBranches(continues,cond_entry);
 }
 
 template<> void
 LLVMGeneratorPass::gen(UnlessOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for UnlessOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  // Get the result of this unless block, if there should be one
+  llvm::AllocaInst* unless_result = getOperatorResult(op,"unless_result");
 
-  // Get the body block from the 2nd operand
-  llvm::BasicBlock* B2 = getBodyBlock(op2,"unless_body");
+  // Get the condition block
+  llvm::BasicBlock* cond_entry, *cond_exit;
+  llvm::Value* op1 = 
+    popOperandAsCondition(op->getOperand(0),"unless",cond_entry,cond_exit);
 
-  // If there's a result in the unless body, get it now
-  llvm::AllocaInst* unless_result = getBlockResult(B2,"unless_result");
+  // Branch the current block into the condition block
+  new llvm::BranchInst(cond_entry,lblk);
 
-  // Get the condition expression
-  llvm::Value* cond = 0;
-  llvm::BasicBlock* B1 = getExpressionBlock(op1,cond,"unless_cond");
+  // Get the unless block's body
+  llvm::BasicBlock *body_entry, *body_exit;
+  llvm::Value* op2 = 
+    popOperandAsBlock(op->getOperand(1),"unless_body",body_entry,body_exit); 
 
-  // Terminate the current block with a branch to the condition block
-  new llvm::BranchInst(B1,lblk);
+  // Save the result of the unless body, if there should be one
+  if (unless_result && op2)
+    new llvm::StoreInst(op2,unless_result,body_exit);
 
-  // Terminate the unless body with a branch back to the condition block
-  new llvm::BranchInst(B1,B2);
+  // Create the exit block
+  llvm::BasicBlock* unless_exit = newBlock("unless_exit");
 
-  // Create a new block for the exit from the while loop
-  lblk = new llvm::BasicBlock("unless_exit",lfunc);
+  // Branch the the body block back to the condition branch
+  branchIfNotTerminated(cond_entry,body_exit);
 
-  // Create a conditional branch to either exit or repeat the loop.
-  new llvm::BranchInst(lblk,B2,cond,B1);
+  // Finally, install the conditional branch into the branch block
+  new llvm::BranchInst(unless_exit,body_entry,op1,cond_exit);
 
-  // Deal with the result of the unless loop, if it has one
-  if (unless_result) {
-    lops.push_back(new llvm::LoadInst(unless_result,"unless_result",lblk));
-  }
+  // If there's a result, push it now
+  if (unless_result)
+    pushOperand(
+      new llvm::LoadInst(unless_result,"unless_result",unless_exit),op);
+
+  // Fix up any break or continue operators
+  resolveBranches(breaks,unless_exit);
+  resolveBranches(continues,cond_entry);
 }
 
 template<> void
 LLVMGeneratorPass::gen(UntilOp* op)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for UntilOp");
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  // Get the result of this until block, if there should be one
+  llvm::AllocaInst* until_result = getOperatorResult(op,"until_result");
 
-  // Get the body of the block
-  llvm::BasicBlock* B1 = getBodyBlock(op1,"until_body");
+  // Get the condition block
+  llvm::BasicBlock* cond_entry, *cond_exit;
+  llvm::Value* op2 = 
+    popOperandAsCondition(op->getOperand(1),"until",cond_entry,cond_exit);
 
-  // If there's a result in the until body, get it now
-  llvm::AllocaInst* until_result = getBlockResult(B1,"until_result");
+  // Get the until block's body
+  llvm::BasicBlock *body_entry, *body_exit;
+  llvm::Value* op1 = 
+    popOperandAsBlock(op->getOperand(0),"until_body",body_entry,body_exit); 
 
-  // Get the condition expression
-  llvm::Value* cond = 0;
-  llvm::BasicBlock* B2 = getExpressionBlock(op2,cond,"until_cond");
+  // Save the result of the until body, if there should be one
+  if (until_result && op1)
+    new llvm::StoreInst(op1,until_result,body_exit);
 
-  // Branch the current block into the body of the loop
-  new llvm::BranchInst(B1,lblk);
+  // Branch the current block into the body block
+  new llvm::BranchInst(body_entry,lblk);
 
-  // Terminate the body with a branch forward to the condition block
-  new llvm::BranchInst(B2,B1);
+  // Branch the body block to the condition block
+  branchIfNotTerminated(cond_entry,body_exit);
 
-  // Create a new block for the exit from the loop
-  lblk = new llvm::BasicBlock("until_exit",lfunc);
+  // Create the exit block
+  llvm::BasicBlock* until_exit = newBlock("until_exit");
 
-  // Create a conditional branch to either exit or repeat the loop.
-  new llvm::BranchInst(B1,lblk,cond,B2);
+  // Finally, install the conditional branch into condition block
+  new llvm::BranchInst(until_exit,body_entry,op2,cond_exit);
 
-  // Deal with the result of the until loop, if it has one
-  if (until_result) {
-    lops.push_back(new llvm::LoadInst(until_result,"until_result",lblk));
-  }
+  // If there's a result, push it now
+  if (until_result)
+    pushOperand(new llvm::LoadInst(until_result,"until_result",until_exit),op);
+
+  // Fix up any break or continue operators
+  resolveBranches(breaks,until_exit);
+  resolveBranches(continues,cond_entry);
 }
 
 template<> void
 LLVMGeneratorPass::gen(LoopOp* op)
 {
-  hlvmAssert(lops.size() >= 3 && "Too few operands for LoopOp");
-  llvm::Value* op3 = lops.back(); lops.pop_back();
-  llvm::Value* op2 = lops.back(); lops.pop_back();
-  llvm::Value* op1 = lops.back(); lops.pop_back();
+  // Get the result of this loop block, if there should be one
+  llvm::AllocaInst* loop_result = getOperatorResult(op,"loop_result");
 
-  // Get the body of the loop
-  llvm::BasicBlock* B2 = getBodyBlock(op2,"loop_body");
+  // Get the start condition block
+  llvm::BasicBlock* start_cond_entry, *start_cond_exit;
+  llvm::Value* op1 = 
+    popOperandAsCondition(op->getOperand(0),"loop_start",
+      start_cond_entry,start_cond_exit);
 
-  // If there's a result in the loop body, get it now
-  llvm::AllocaInst* loop_result = getBlockResult(B2,"loop_result");
+  // Branch the current block into the start condition block
+  new llvm::BranchInst(start_cond_entry,lblk);
 
-  // Extract the loop start condition expression 
-  llvm::Value* start_cond = 0;
-  llvm::BasicBlock* B1 = getExpressionBlock(op1,start_cond,"loop_start_cond");
+  // Get the loop body
+  llvm::BasicBlock *body_entry, *body_exit;
+  llvm::Value* op2 = 
+    popOperandAsBlock(op->getOperand(1),"loop_body",body_entry,body_exit); 
 
-  // Extract the loop end condition expression
-  llvm::Value* end_cond = 0;
-  llvm::BasicBlock* B3 = getExpressionBlock(op3,end_cond,"loop_end_cond");
+  // Save the result of the loop body, if there should be one
+  if (loop_result && op2)
+    new llvm::StoreInst(op2,loop_result,body_exit);
 
-  // Terminate the current block with a branch to the start condition block
-  new llvm::BranchInst(B1,lblk);
+  // Get the end condition block
+  llvm::BasicBlock* end_cond_entry, *end_cond_exit;
+  llvm::Value* op3 = 
+    popOperandAsCondition(op->getOperand(2),"loop_end",
+      end_cond_entry,end_cond_exit);
 
-  // Terminate the body with a branch to the end_condition block
-  new llvm::BranchInst(B3,B2);
+  // Branch the loop body to the end condition block
+  branchIfNotTerminated(end_cond_entry,body_exit);
 
-  // Create a new block for the exit from the while loop
-  lblk = new llvm::BasicBlock("loop_exit",lfunc);
+  // Create the exit block
+  llvm::BasicBlock* loop_exit = newBlock("loop_exit");
 
-  // Terminate the start condition with a conditional branch
-  new llvm::BranchInst(B2,lblk,start_cond,B1);
+  // Install the conditional branches for start and end condition blocks
+  new llvm::BranchInst(body_entry,loop_exit,op1,start_cond_exit);
+  new llvm::BranchInst(start_cond_entry,loop_exit,op3,end_cond_exit);
 
-  // Terminate the end condition with a conditional branch
-  new llvm::BranchInst(B1,lblk,end_cond,B3);
+  // If there's a result, push it now
+  if (loop_result)
+    pushOperand(new llvm::LoadInst(loop_result,"loop_result",loop_exit),op);
 
-  // Deal with the result of the loop, if it has one
-  if (loop_result) {
-    lops.push_back(new llvm::LoadInst(loop_result,"loop_result",lblk));
-  }
+  // Fix up any break or continue operators
+  resolveBranches(breaks,loop_exit);
+  resolveBranches(continues,end_cond_entry);
 }
 
 template<> void
 LLVMGeneratorPass::gen(BreakOp* op)
 {
+  // Make sure the block result is stored
+  Block* B = llvm::cast<Block>(op->getParent());
+  getBlockResult(B);
+
+  // Just push a place-holder branch onto the breaks list so it can
+  // be fixed up later once we know the destination
+  breaks.push_back(new llvm::BranchInst(lblk,lblk));
 }
 
 template<> void
 LLVMGeneratorPass::gen(ContinueOp* op)
 {
+  // Make sure the block result is stored
+  Block* B = llvm::cast<Block>(op->getParent());
+  getBlockResult(B);
+
+  // Just push a place-holder branch onto the continues list so it can
+  // be fixed up later once we know the destination
+  continues.push_back(new llvm::BranchInst(lblk,lblk));
 }
 
 template<> void
 LLVMGeneratorPass::gen(ResultOp* r)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for ResultOp");
-  llvm::Value* result = lops.back(); lops.pop_back();
-  // Save the result value for use in other blocks or as the result of the
-  // function
-  results[lblk] = result;
+  // Get the result operand
+  llvm::Value* result = popOperand(r->getOperand(0));
+  // Get the block this result applies to
+  hlvm::Block* B = llvm::cast<hlvm::Block>(r->getParent());
+  // Generate a store into the location set up by the block for its result
+  new llvm::StoreInst(result,operands[B],lblk);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ReturnOp* r)
 {
-  // If this function returns a result then we need a return value
+  // Initialize the result value. A null Value* indicates no result.
   llvm::Value* result = 0;
+
+  // If this function returns a result then we need a return value
   if (lfunc->getReturnType() != llvm::Type::VoidTy) {
-    hlvmAssert(!results.empty() && "No result for function");
-    result = results[lblk];
+    result = operands[function->getBlock()];
     const llvm::Type* resultTy = result->getType();
-    if (resultTy != lfunc->getReturnType()) {
-      result = new llvm::CastInst(result,lfunc->getReturnType(),"result",lblk);
+    if (const llvm::PointerType* PTy = 
+        llvm::dyn_cast<llvm::PointerType>(resultTy)) {
+      hlvmAssert(PTy->getElementType() == lfunc->getReturnType());
+      result = new llvm::LoadInst(result,lblk->getName()+"_result",lblk);
+    } else if (resultTy != lfunc->getReturnType()) {
+      result = new llvm::CastInst(result,lfunc->getReturnType(),
+        lblk->getName()+"_result",lblk);
     }
     hlvmAssert(result && "No result for function");
   }
 
   // RetInst is never the operand of another instruction because it is
   // a terminator and cannot return a value. Consequently, we don't push it
-  // on the lops stack.
+  // on the operand stack.
   new llvm::ReturnInst(result,lblk);
 }
 
@@ -1530,37 +1629,50 @@ LLVMGeneratorPass::gen(CallOp* co)
 {
   hlvm::Function* hFunc = co->getCalledFunction();
   const SignatureType* sigTy = hFunc->getSignature();
+  // Set up the loop
   std::vector<llvm::Value*> args;
-  hlvmAssert(lops.size() >= sigTy->size()+1 && "Too few operands for CallOp");
-  const llvm::Value* arg = lops.back(); lops.pop_back();
-  while (!lops.empty() && !llvm::isa<llvm::Function>(arg)) {
-    args.push_back(const_cast<llvm::Value*>(arg));
-    arg = lops.back(); 
-    lops.pop_back();
+  CallOp::iterator I = co->begin();
+  CallOp::iterator E = co->end();
+
+  // Get the function (first operand)
+  llvm::Value* funcToCall = popOperand(*I++);
+  hlvmAssert(funcToCall && "No function to call?");
+  hlvmAssert(llvm::isa<llvm::Function>(funcToCall));
+
+  // Get the function call operands
+  for ( ; I != E; ++I ) {
+    llvm::Value* arg = popOperand(*I);
+    hlvmAssert(arg && "No argument for CallOp?");
+    args.push_back(arg);
   }
-  hlvmAssert(sigTy->isVarArgs() || lops.size() == sigTy->size());
-  hlvmAssert(!sigTy->isVarArgs() || lops.size() >= sigTy->size());
-  hlvmAssert(llvm::isa<llvm::Function>(arg));
+
+  // Make sure we have sanity with varargs functions
+  hlvmAssert(sigTy->isVarArgs() || args.size() == sigTy->size());
+  hlvmAssert(!sigTy->isVarArgs() || args.size() >= sigTy->size());
+
+  // convert to function type
   llvm::Function* F = const_cast<llvm::Function*>(
-      llvm::cast<llvm::Function>(arg));
-  saveOperand(new llvm::CallInst(F,args,"call_" + hFunc->getName(),lblk),co);
+    llvm::cast<llvm::Function>(funcToCall));
+
+  // Make the call
+  pushOperand(new llvm::CallInst(F,args,"call_" + hFunc->getName(),lblk),co);
 }
 
 template<> void
 LLVMGeneratorPass::gen(StoreOp* s)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for StoreOp");
-  llvm::Value* value =    lops.back(); lops.pop_back();
-  llvm::Value* location = lops.back(); lops.pop_back();
-  saveOperand(new llvm::StoreInst(value,location,lblk),s);
+  llvm::Value* location = popOperand(s->getOperand(0));
+  llvm::Value* value =    popOperand(s->getOperand(1));
+  // We don't push the StoreInst as an operand because it has no value and
+  // therefore cannot be an operand.
+  new llvm::StoreInst(value,location,lblk);
 }
 
 template<> void
 LLVMGeneratorPass::gen(LoadOp* l)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for LoadOp");
-  llvm::Value* location = lops.back(); lops.pop_back();
-  saveOperand(new llvm::LoadInst(location,"",lblk),l);
+  llvm::Value* location = popOperand(l->getOperand(0));
+  pushOperand(new llvm::LoadInst(location,location->getName(),lblk),l);
 }
 
 template<> void
@@ -1568,115 +1680,107 @@ LLVMGeneratorPass::gen(ReferenceOp* r)
 {
   hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
   llvm::Value* v = 0;
-  if (llvm::isa<AutoVarOp>(referent)) 
-  {
-    AutoVarDictionary::const_iterator I = 
+  if (llvm::isa<AutoVarOp>(referent)) {
+    AutoVarMap::const_iterator I = 
       lvars.find(llvm::cast<AutoVarOp>(referent));
     hlvmAssert(I != lvars.end());
     v = I->second;
-  }
-  else if (llvm::isa<ConstantValue>(referent))
-  {
+  } else if (llvm::isa<ConstantValue>(referent)) {
     const hlvm::ConstantValue* cval = llvm::cast<ConstantValue>(referent);
     llvm::Constant* C = getConstant(cval);
     hlvmAssert(C && "Can't generate constant?");
     v = C;
-  }
-  else if (llvm::isa<Variable>(referent)) 
-  {
+  } else if (llvm::isa<Variable>(referent)) {
     llvm::Value* V = getVariable(llvm::cast<hlvm::Variable>(referent));
     hlvmAssert(V && "Variable not found?");
     v = V;
-  } 
-  else if (llvm::isa<Function>(referent)) 
-  {
+  } else if (llvm::isa<Function>(referent)) {
     llvm::Function* F = getFunction(llvm::cast<hlvm::Function>(referent));
     hlvmAssert(F && "Function not found?");
     v = F;
-  }
-  else
+  } else
     hlvmDeadCode("Referent not a linkable or autovar?");
-  saveOperand(v,r);
+  pushOperand(v,r);
 }
 
 template<> void
 LLVMGeneratorPass::gen(IndexOp* r)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for IndexOp");
 }
 
 template<> void
 LLVMGeneratorPass::gen(OpenOp* o)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for OpenOp");
-  llvm::Value* strm = lops.back(); lops.pop_back();
+  llvm::Value* strm = popOperand(o->getOperand(0));
   std::vector<llvm::Value*> args;
   if (const llvm::PointerType* PT = 
       llvm::dyn_cast<llvm::PointerType>(strm->getType())) {
-    const llvm::Type* Ty = PT->getElementType();
-    if (Ty == llvm::Type::SByteTy) {
-      args.push_back(strm);
-    } else if (llvm::isa<llvm::ArrayType>(Ty) && 
-               llvm::cast<llvm::ArrayType>(Ty)->getElementType() == 
-               llvm::Type::SByteTy) {
-      std::vector<llvm::Value*> indices;
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
-      llvm::GetElementPtrInst* gep = 
-        new llvm::GetElementPtrInst(strm,indices,"",lblk);
-      args.push_back(gep);
-    } else
-      hlvmAssert(!"Array element type is not SByteTy");
+  const llvm::Type* Ty = PT->getElementType();
+  if (Ty == llvm::Type::SByteTy) {
+    args.push_back(strm);
+  } else if (llvm::isa<llvm::ArrayType>(Ty) && 
+             llvm::cast<llvm::ArrayType>(Ty)->getElementType() == 
+             llvm::Type::SByteTy) {
+    std::vector<llvm::Value*> indices;
+    indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+    indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+    llvm::GetElementPtrInst* gep = 
+      new llvm::GetElementPtrInst(strm,indices,"",lblk);
+    args.push_back(gep);
+  } else
+    hlvmAssert(!"Array element type is not SByteTy");
   } else
     hlvmAssert(!"OpenOp parameter is not a pointer");
   llvm::CallInst* ci = new 
-    llvm::CallInst(get_hlvm_stream_open(), args, "", lblk);
-  saveOperand(ci,o);
+  llvm::CallInst(get_hlvm_stream_open(), args, "open", lblk);
+  pushOperand(ci,o);
 }
 
 template<> void
 LLVMGeneratorPass::gen(WriteOp* o)
 {
-  hlvmAssert(lops.size() >= 2 && "Too few operands for WriteOp");
-  llvm::Value* arg2 = lops.back(); lops.pop_back();
-  llvm::Value* strm = lops.back(); lops.pop_back();
+  llvm::Value* strm = popOperand(o->getOperand(0));
+  llvm::Value* arg2 = popOperand(o->getOperand(1));
   std::vector<llvm::Value*> args;
   args.push_back(strm);
   args.push_back(arg2);
   if (llvm::isa<llvm::PointerType>(arg2->getType()))
-    if (llvm::cast<llvm::PointerType>(arg2->getType())->getElementType() ==
-        llvm::Type::SByteTy)
-      saveOperand(
-        new llvm::CallInst(get_hlvm_stream_write_string(), args, "", lblk),o);
+  if (llvm::cast<llvm::PointerType>(arg2->getType())->getElementType() ==
+      llvm::Type::SByteTy)
+    pushOperand(
+      new llvm::CallInst(get_hlvm_stream_write_string(), args, "", lblk),o);
   if (arg2->getType() == get_hlvm_text())
-    saveOperand(
+    pushOperand(
       new llvm::CallInst(get_hlvm_stream_write_text(), args, "", lblk),o);
   else if (arg2->getType() == get_hlvm_buffer())
-    saveOperand(
-      new llvm::CallInst(get_hlvm_stream_write_buffer(), args, "",lblk),o);
+    pushOperand(
+      new llvm::CallInst(get_hlvm_stream_write_buffer(), args, "write",lblk),o);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ReadOp* o)
 {
-  hlvmAssert(lops.size() >= 3 && "Too few operands for ReadOp");
+  llvm::Value* strm = popOperand(o->getOperand(0));
+  llvm::Value* arg2 = popOperand(o->getOperand(1));
+  llvm::Value* arg3 = popOperand(o->getOperand(2));
   std::vector<llvm::Value*> args;
-  args.insert(args.end(),lops.end()-3,lops.end());
-  lops.erase(lops.end()-3,lops.end());
+  args.push_back(strm);
+  args.push_back(arg2);
+  args.push_back(arg3);
   llvm::CallInst* ci = 
-    new llvm::CallInst(get_hlvm_stream_read(), args, "", lblk);
-  saveOperand(ci,o);
+    new llvm::CallInst(get_hlvm_stream_read(), args, "read", lblk);
+  pushOperand(ci,o);
 }
 
 template<> void
 LLVMGeneratorPass::gen(CloseOp* o)
 {
-  hlvmAssert(lops.size() >= 1 && "Too few operands for CloseOp");
+  llvm::Value* strm = popOperand(o->getOperand(0));
   std::vector<llvm::Value*> args;
-  args.push_back(lops.back()); lops.pop_back();
+  args.push_back(strm);
   llvm::CallInst* ci = 
     new llvm::CallInst(get_hlvm_stream_close(), args, "", lblk);
-  saveOperand(ci,o);
+  pushOperand(ci,o);
 }
 
 void 
@@ -1701,7 +1805,7 @@ LLVMGeneratorPass::genProgramLinkage()
   std::vector<llvm::Constant*> entry_points_items;
 
   for (std::vector<llvm::Function*>::iterator I = progs.begin(), 
-       E = progs.end(); I != E; ++I )
+     E = progs.end(); I != E; ++I )
   {
     const std::string& funcName = (*I)->getName();
     // Get a constant for the name of the entry point (char array)
@@ -1786,27 +1890,22 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case FunctionID:
       {
         // Get/Create the function
-        lfunc = getFunction(llvm::cast<Function>(n));
-        // Clear the LLVM vars
-        lvars.clear();
-        blocks.clear();
-        lops.clear();
-        results.clear();
+        function = llvm::cast<hlvm::Function>(n);
+        lfunc = getFunction(function);
+        startNewFunction();
         break;
       }
       case ProgramID:
       {
         // Create a new function for the program based on the signature
+        function = llvm::cast<hlvm::Program>(n);
         lfunc = new llvm::Function(
             /*Type=*/ get_hlvm_program_signature(),
             /*Linkage=*/llvm::GlobalValue::InternalLinkage,
-            /*Name=*/ getLinkageName(llvm::cast<Program>(n)),
+            /*Name=*/ getLinkageName(function),
             /*Module=*/ lmod
         );
-        // Clear LLVM vars
-        lvars.clear();
-        blocks.clear();
-        lops.clear();
+        startNewFunction();
         // Save the program so it can be generated into the list of program 
         // entry points.
         progs.push_back(lfunc);
@@ -1815,8 +1914,21 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BlockID:
       {
         Block* B = llvm::cast<Block>(n);
-        lblk = new llvm::BasicBlock(B->getLabel(),lfunc,0);
-        blocks.push_back(lblk);
+        std::string name = B->getLabel().empty() ?
+            (blocks.empty()? "entry" : "block") : B->getLabel();
+        enters[B] = pushBlock(name);
+        if (B->getResult()) {
+          const llvm::Type* Ty = getType(B->getType());
+          llvm::AllocaInst* result = new llvm::AllocaInst(
+            /*Ty=*/ Ty,
+            /*ArraySize=*/ llvm::ConstantUInt::get(llvm::Type::UIntTy,1),
+            /*Name=*/ name,
+            /*InsertAtEnd=*/ lblk
+          ); 
+          // Initialize the autovar to null
+          new llvm::StoreInst(llvm::Constant::getNullValue(Ty),result,lblk);
+          pushOperand(result,B); 
+        }
         break;
       }
       default:
@@ -1842,7 +1954,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case EnumerationTypeID:
       case RealTypeID:
       case OctetTypeID:
-      case VoidTypeID:
       case PointerTypeID:
       case ArrayTypeID:
       case VectorTypeID:
@@ -1869,7 +1980,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case BOrOpID:                 gen(llvm::cast<BOrOp>(n)); break;
       case BXorOpID:                gen(llvm::cast<BXorOp>(n)); break;
       case BNorOpID:                gen(llvm::cast<BNorOp>(n)); break;
-      case NullOpID:                gen(llvm::cast<NullOp>(n)); break;
       case NotOpID:                 gen(llvm::cast<NotOp>(n)); break;
       case AndOpID:                 gen(llvm::cast<AndOp>(n)); break;
       case OrOpID:                  gen(llvm::cast<OrOp>(n)); break;
@@ -1906,23 +2016,29 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         lmod = 0;
         break;
       case ConstantBooleanID:       
+        /* FALL THROUGH */
       case ConstantIntegerID:      
+        /* FALL THROUGH */
       case ConstantRealID:        
+        /* FALL THROUGH */
       case ConstantStringID:     
+        /* FALL THROUGH */
       case VariableID: 
         break;
       case ProgramID:
+        /* FALL THROUGH */
       case FunctionID:
+        function = 0;
         lfunc = 0;
         break;
       case BlockID:
-        lops.push_back(lblk);
-        blocks.pop_back();
-        if (blocks.empty())
-          lblk = 0;
-        else
-          lblk = blocks.back();
+      {
+        Block* B = llvm::cast<Block>(n);
+        exits[B] = lblk;
+        getBlockResult(B);
+        popBlock(lblk);
         break;
+      }
 
       // everything else is an error
       default:
@@ -1951,7 +2067,7 @@ LLVMGeneratorPass::linkModules()
 
 }
 
-void
+bool
 hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
@@ -1960,13 +2076,16 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
   PM->runOn(tree);
   delete PM;
   llvm::Module* mod = genPass.linkModules();
+  bool result = false;
   if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
     llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
+    result = true;
   }
   delete mod;
+  return result;
 }
 
-void
+bool
 hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
@@ -1975,10 +2094,13 @@ hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
   PM->runOn(tree);
   delete PM;
   llvm::Module* mod = genPass.linkModules();
+  bool result = false;
   if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
     llvm::PassManager Passes;
     Passes.add(new llvm::PrintModulePass(&output));
     Passes.run(*mod);
+    result = true;
   }
   delete mod;
+  return result;
 }

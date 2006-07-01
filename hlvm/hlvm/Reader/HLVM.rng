@@ -659,7 +659,6 @@
   <define name="Operators.pat">
     <choice>
       <ref name="block.elem"/>
-      <ref name="noop.elem"/>
       <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
@@ -673,7 +672,6 @@
     <ref name="Documentation.pat"/>
     <ref name="Operators.pat"/>
   </define>
-
 
   <define name="BinaryOperator.pat">
     <ref name="Documentation.pat"/>
@@ -701,14 +699,18 @@
         <attribute name="label"><ref name="Identifier.type"/></attribute>
       </optional>
       <oneOrMore>
-        <ref name="Operators.pat"/>
+        <choice>
+          <ref name="Operators.pat"/>
+          <ref name="result.elem"/>
+        </choice>
       </oneOrMore>
     </element>
   </define>
 
-  <define name="noop.elem">
-    <element name="noop">
-      <empty/>
+  <define name="result.elem">
+    <element name="result">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 
@@ -1056,7 +1058,6 @@
       <ref name="break.elem"/>
       <ref name="continue.elem"/>
       <ref name="ret.elem"/>
-      <ref name="result.elem"/>
       <ref name="call.elem"/>
     </choice>
   </define>
@@ -1140,13 +1141,6 @@
   <define name="ret.elem">
     <element name="ret">
       <ref name="Documentation.pat"/>
-    </element>
-  </define>
-
-  <define name="result.elem">
-    <element name="result">
-      <ref name="Documentation.pat"/>
-      <ref name="Operators.pat"/>
     </element>
   </define>
 

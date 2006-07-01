@@ -54,7 +54,6 @@ class Type : public Documentable
   /// @{
   public:
     const std::string& getName() const { return name; }
-    bool isSized() const { return id != VoidTypeID; }
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
 
@@ -213,30 +212,6 @@ class OctetType : public Type
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const OctetType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(OctetTypeID); }
-  /// @}
-  friend class AST;
-};
-
-/// This class provides an Abstract Syntax Tree node that represents the void
-/// type.  The void type represents a Value that has no value. It is zero bits
-/// long. Consequently, its utility is limited. 
-/// @brief AST Void Type
-class VoidType : public Type
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    VoidType() : Type(VoidTypeID) {}
-    virtual ~VoidType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    virtual const char* getPrimitiveName() const;
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const VoidType*) { return true; }
-    static inline bool classof(const Node* T) { return T->is(VoidTypeID); }
   /// @}
   friend class AST;
 };

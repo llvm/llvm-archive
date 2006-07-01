@@ -317,12 +317,6 @@ ValidateImpl::checkResult(const Operator* op)
 }
 
 template<> inline void
-ValidateImpl::validate(VoidType* n)
-{
-  checkType(n,VoidTypeID);
-}
-
-template<> inline void
 ValidateImpl::validate(AnyType* n)
 {
   checkType(n,AnyTypeID); 
@@ -630,7 +624,7 @@ ValidateImpl::validate(Block* n)
         if (llvm::isa<ReturnOp>(terminator)) {
           if (!result) {
             Function* F= n->getContainingFunction();
-            if (F->getResultType() != ast->getPrimitiveType(VoidTypeID))
+            if (F->getResultType())
               error(terminator,"Missing result in return from function");
           }
         } else if (result) {
@@ -644,42 +638,36 @@ ValidateImpl::validate(Block* n)
 }
 
 template<> inline void
-ValidateImpl::validate(NullOp* n)
-{
-  checkOperator(n,NullOpID,0);
-}
-
-
-template<> inline void
 ValidateImpl::validate(ResultOp* n)
 {
   if (checkOperator(n,ResultOpID,1)) {
-    if (!isa<Block>(n->getParent())) {
-      error(n, "ResultOp not in a Block");
-      return;
-    }
-    const Function* F = n->getContainingFunction();
-    if (!F)
-      error(n,"ResultOp not in Function!");
-    else {
-      const Block* B = n->getContainingBlock();
-      if (!B)
-        error(n,"ResultOp not in a Block");
-      else if (F->getBlock() == B) {
-        const SignatureType* SigTy = F->getSignature();
-        Operator* res = n->getOperand(0);
-        if (res) {
-          if (res->getType()) {
-            if (res->getType() != SigTy->getResultType())
-              error(n,"Result does not agree in type with Function result");
-          } else if (SigTy->getResultType() != 
-              ast->getPrimitiveType(VoidTypeID)) {
-            error(n,"Void function result for non-void function");
+    if (Block* B = dyn_cast<Block>(n->getParent())) {
+      if (Operator* res = n->getOperand(0)) {
+        if (const Operator* existing_result = B->getResult()) {
+          if (existing_result->getType() != res->getType()) {
+            error(n,"ResultOp does not match block result type");
           }
         } else {
-          error(n,"Result operator with no operand");
+          error(n,"Block has no result type, but has ResultOp");
         }
+        if (Function* F = n->getContainingFunction()) {
+          if (F->getBlock() == B) {
+            const SignatureType* SigTy = F->getSignature();
+            if (res->getType()) {
+              if (res->getType() != SigTy->getResultType())
+                error(n,"ResultOp does not agree in type with Function result");
+            } else if (SigTy->getResultType()) {
+              error(n,"Void function result for non-void function");
+            }
+          }
+        } else {
+          error(n,"ResultOP not in function?");
+        }
+      } else {
+          error(n,"ResultOp with no operand");
       }
+    } else {
+      error(n, "ResultOp not in a Block");
     }
   }
 }
@@ -716,8 +704,9 @@ ValidateImpl::validate(SelectOp* n)
     checkBooleanExpression(n->getOperand(0));
     if (checkResult(n->getOperand(1)))
       if (checkResult(n->getOperand(2)))
-        if (n->getOperand(1)->getType() != n->getOperand(2)->getType())
-          error(n,"Second and third operands for SelectOp must have same type");
+        if (!isa<Block>(n->getParent()))
+          if (n->getOperand(1)->getType() != n->getOperand(2)->getType())
+            error(n,"SelectOp operands must have same type");
   }
 }
 
@@ -807,11 +796,7 @@ ValidateImpl::validate(AllocateOp* n)
   {
     if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) 
     {
-      if (const Type* Ty = PT->getElementType()) 
-      {
-        if (!Ty->isSized())
-          error(n,"Can't allocate an unsized type");
-      } else 
+      if (!PT->getElementType()) 
         error(n,"AllocateOp's pointer type has no element type!");
     } else
       error(n,"AllocateOp's type must be a pointer type");
@@ -825,10 +810,7 @@ ValidateImpl::validate(DeallocateOp* n)
 {
   if (checkOperator(n,DeallocateOpID,1)) {
     if (const PointerType* PT = llvm::dyn_cast<PointerType>(n->getType())) {
-      if (const Type* Ty = PT->getElementType()) {
-        if (!Ty->isSized())
-          error(n,"Can't deallocate an unsized type");
-      } else 
+      if (!PT->getElementType())
         error(n,"DeallocateOp's pointer type has no element type!");
     } else
       error(n,"DeallocateOp expects its first operand to be a pointer type");
@@ -1415,7 +1397,6 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case NoTypeID:
       hlvmDeadCode("Invalid Node Kind");
       break;
-    case VoidTypeID:             validate(cast<VoidType>(n)); break;
     case AnyTypeID:              validate(cast<AnyType>(n)); break;
     case BooleanTypeID:          validate(cast<BooleanType>(n)); break;
     case CharacterTypeID:        validate(cast<CharacterType>(n)); break;
@@ -1452,7 +1433,6 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case CreateContOpID:         /*validate(cast<CreateContOp>(n));*/ break;
     case CallWithContOpID:       /*validate(cast<CallWithContOp>(n));*/ break;
     case ThrowOpID:              /*validate(cast<ThrowOp>(n));*/ break;
-    case NullOpID:               validate(cast<NullOp>(n)); break;
     case ReturnOpID:             validate(cast<ReturnOp>(n)); break;
     case ResultOpID:             validate(cast<ResultOp>(n)); break;
     case ContinueOpID:           validate(cast<ContinueOp>(n)); break;

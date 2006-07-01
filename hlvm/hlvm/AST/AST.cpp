@@ -57,7 +57,7 @@ class ASTImpl : public AST
     ASTImpl()
       : types(), unresolvedTypes(), 
         AnyTypeSingleton(0), StringTypeSingleton(0),
-        VoidSingleton(0), BooleanSingleton(), CharacterSingleton(0), 
+        BooleanSingleton(), CharacterSingleton(0), 
         OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
         UInt32Singleton(0), UInt64Singleton(0), UInt128Singleton(0),
         SInt8Singleton(0), SInt16Singleton(0), SInt32Singleton(0),
@@ -81,7 +81,6 @@ class ASTImpl : public AST
     SymbolTable<Type>    unresolvedTypes;
     AnyType*       AnyTypeSingleton;
     StringType*    StringTypeSingleton;
-    VoidType*      VoidSingleton;
     BooleanType*   BooleanSingleton;
     CharacterType* CharacterSingleton;
     OctetType*     OctetSingleton;
@@ -424,16 +423,6 @@ AST::new_OctetType(const std::string& id, const Locator* loc)
   return result;
 }
 
-VoidType* 
-AST::new_VoidType(const std::string& id, const Locator* loc)
-{
-  VoidType* result = new VoidType();
-  result->setLocator(loc);
-  result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
-  return result;
-}
-
 PointerType* 
 AST::new_PointerType(
   const std::string& id,
@@ -607,7 +596,7 @@ AST::new_Function(
        I != E; ++I ) 
   {
     const Type* Ty = (*I)->getElementType();
-    assert(!Ty->is(VoidTypeID) && "Arguments can't be void type");
+    assert(Ty && "Arguments can't be void type");
     Argument* arg = new Argument();
     arg->setType(Ty);
     arg->setName((*I)->getName());
@@ -631,7 +620,7 @@ AST::new_Program(const std::string& id, const Locator* loc)
        I != E; ++I ) 
   {
     const Type* Ty = (*I)->getElementType();
-    assert(!Ty->is(VoidTypeID) && "Arguments can't be void type");
+    assert(Ty && "Arguments can't be void type");
     Argument* arg = new Argument();
     arg->setType(Ty);
     arg->setName((*I)->getName());
@@ -689,7 +678,6 @@ AST::new_NilaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  hlvmAssert(Ty != 0 && "Need a type to instantiate a NilaryOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
   result->setType(Ty);
@@ -701,7 +689,7 @@ AST::new_NilaryOp(
   const Locator* loc ///< The source locator
 )
 {
-  return new_NilaryOp<OpClass>(getPrimitiveType(VoidTypeID),loc);
+  return new_NilaryOp<OpClass>(0,loc);
 }
 
 /// Provide a template function for creating a unary operator
@@ -1013,11 +1001,6 @@ AST::new_MultiOp<Block>(
 template Block* 
 AST::new_MultiOp<Block>(const std::vector<Operator*>& ops, const Locator*loc);
 
-template NullOp* 
-AST::new_NilaryOp<NullOp>(const Type* Ty, const Locator*loc);
-template NullOp* 
-AST::new_NilaryOp<NullOp>(const Locator*loc);
-
 template SelectOp*
 AST::new_TernaryOp<SelectOp>(
     const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
@@ -1049,8 +1032,8 @@ template<> LoopOp*
 AST::new_TernaryOp<LoopOp>(Operator*op1,Operator*op2,Operator*op3,const Locator* loc)
 {
   const Type* Ty = op2->getType();
-  if (llvm::isa<Block>(Ty))
-    Ty = llvm::cast<Block>(op2)->getResultType();
+  if (Ty && llvm::isa<Block>(Ty))
+    Ty = llvm::cast<Block>(op2)->getType();
   return new_TernaryOp<LoopOp>(Ty,op1,op2,op3,loc);
 }
 
@@ -1062,8 +1045,8 @@ AST::new_MultiOp<SwitchOp>(const std::vector<Operator*>& ops, const Locator* loc
 {
   hlvmAssert(ops.size() >= 2 && "Too few operands for SwitchOp");
   const Type* Ty = ops[1]->getType();
-  if (llvm::isa<Block>(Ty))
-    Ty = llvm::cast<Block>(ops[1])->getResultType();
+  if (Ty && llvm::isa<Block>(Ty))
+    Ty = llvm::cast<Block>(ops[1])->getType();
   return new_MultiOp<SwitchOp>(Ty, ops, loc);
 }
 
@@ -1098,7 +1081,7 @@ AST::new_BinaryOp<StoreOp>(const Type*, Operator*op1,Operator*op2,const Locator*
 template<> StoreOp*  
 AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,const Locator*loc)
 {
-  return new_BinaryOp<StoreOp>(getPrimitiveType(VoidTypeID),op1,op2,loc);
+  return new_BinaryOp<StoreOp>(0,op1,op2,loc);
 }
 
 template LoadOp*   
@@ -1135,7 +1118,7 @@ AST::new_UnaryOp<CloseOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> CloseOp* 
 AST::new_UnaryOp<CloseOp>(Operator*op1,const Locator*loc)
 {
-  return new_UnaryOp<CloseOp>(getPrimitiveType(VoidTypeID),op1,loc);
+  return new_UnaryOp<CloseOp>(0,op1,loc);
 }
 
 Type* 
@@ -1156,12 +1139,6 @@ AST::getPrimitiveType(NodeIDs pid)
         ast->StringTypeSingleton->setName("string");
       }
       return ast->StringTypeSingleton;
-    case VoidTypeID:
-      if (!ast->VoidSingleton) {
-        ast->VoidSingleton = new VoidType();
-        ast->VoidSingleton->setName("void");
-      }
-      return ast->VoidSingleton;
     case BooleanTypeID:
       if (!ast->BooleanSingleton) {
         ast->BooleanSingleton = new BooleanType();

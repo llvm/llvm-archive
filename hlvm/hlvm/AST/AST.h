@@ -278,14 +278,6 @@ class AST : public Node
       const std::string& id,  ///< The name of the type
       const Locator*loc = 0   ///< The source locator
     );
-    /// Create a new VoidType node. A VoidType represents a zero-length entity
-    /// that has no address. In other words, its nothing, zilch, nada, empty,
-    /// vacuum, etc. As you there's lots of ways to name the concept of 
-    /// nothing and that's why this method exists.
-    VoidType* new_VoidType(
-      const std::string& id,  ///< The name of the type
-      const Locator* loc =0   ///< The source locator     
-    );
     /// Create a new PointerType node. A PointerType just refers to a location
     /// of some other type.
     PointerType* new_PointerType(

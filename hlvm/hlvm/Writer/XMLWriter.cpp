@@ -303,17 +303,6 @@ XMLWriterImpl::WriterPass::put(OctetType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(VoidType* t)
-{
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
-  startElement("intrinsic");
-  writeAttribute("is","void");
-  endElement();
-}
-
-template<> void
 XMLWriterImpl::WriterPass::put(OpaqueType* op)
 {
   startElement("opaque");
@@ -671,13 +660,6 @@ XMLWriterImpl::WriterPass::put(GreaterEqualOp* op)
   putDoc(op);
 }
 
-
-template<> void
-XMLWriterImpl::WriterPass::put(NullOp* op)
-{
-  startElement("noop");
-}
-
 template<> void
 XMLWriterImpl::WriterPass::put(SelectOp* op)
 {
@@ -833,7 +815,6 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case EnumerationTypeID:    put(cast<EnumerationType>(n)); break;
       case RealTypeID:           put(cast<RealType>(n)); break;
       case OctetTypeID:          put(cast<OctetType>(n)); break;
-      case VoidTypeID:           put(cast<VoidType>(n)); break;
       case OpaqueTypeID:         put(cast<OpaqueType>(n)); break;
       case PointerTypeID:        put(cast<PointerType>(n)); break;
       case ArrayTypeID:          put(cast<ArrayType>(n)); break;
@@ -875,7 +856,6 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case GreaterThanOpID:      put(cast<GreaterThanOp>(n)); break;
       case LessEqualOpID:        put(cast<LessEqualOp>(n)); break;
       case GreaterEqualOpID:     put(cast<GreaterEqualOp>(n)); break;
-      case NullOpID:             put(cast<NullOp>(n)); break;
       case SelectOpID:           put(cast<SelectOp>(n)); break;
       case SwitchOpID:           put(cast<SwitchOp>(n)); break;
       case WhileOpID:            put(cast<WhileOp>(n)); break;

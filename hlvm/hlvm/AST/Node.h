@@ -62,10 +62,9 @@ FirstDocumentableID = DocumentableID,
 
   // SUBCLASSES OF TYPE
   // Primitive Types (inherently supported by HLVM)
-  VoidTypeID,              ///< The Void Type (The Null Type)
-FirstTypeID          = VoidTypeID,
-FirstPrimitiveTypeID = VoidTypeID,
   BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
+FirstTypeID          = BooleanTypeID,
+FirstPrimitiveTypeID = BooleanTypeID,
   CharacterTypeID,         ///< The Character Type (UTF-16 encoded character)
   OctetTypeID,             ///< The Octet Type (8 bits uninterpreted)
   UInt8TypeID,             ///< Unsigned 8-bit integer quantity
@@ -167,9 +166,8 @@ FirstNilaryOperatorID = BreakOpID,
 LastNilaryOperatorID = ReferenceOpID,
 
   // Control Flow Unary Operators
-  NullOpID,                ///< The "do nothing" NullOp (no-op) Operator
-FirstUnaryOperatorID = NullOpID,
   ResultOpID,              ///< Specify the result of a block or function
+FirstUnaryOperatorID = ResultOpID,
   ThrowOpID,               ///< Throw an exception out of the function
 
   // Integer Arithmetic Unary Operators
@@ -387,6 +385,10 @@ class Node
 
     inline bool isTerminator() const {
       return (id >= BreakOpID && id <= ReturnOpID) || (id == ThrowOpID); }
+
+    inline bool isLoop() const {
+      return id == LoopOpID || (id >= WhileOpID && id <= UntilOpID);
+    }
 
     inline bool isNilaryOperator() const {
       return id >= FirstNilaryOperatorID && id <= LastNilaryOperatorID; }

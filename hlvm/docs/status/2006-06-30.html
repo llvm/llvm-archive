@@ -1,0 +1,91 @@
+<!--#set var="title" value="Status As Of June 30, 2006" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>Status As Of June 30, 2006</h1>
+<p>HLVM has made much significant progress in the last month. Here is the
+status of HLVM as of Subversion revision #358.</p>
+<h2>General Update</h2>
+<ul>
+  <li>The first release was made on June 13th, 2006. This release provided the
+  "Hello World" functionality. For details, please see the 
+  <a href="/releases/0.1/docs/ReleaseNotes.html">Release Notes</a>.</li>
+  <li>Since the release we've been working on making HLVM "Turing Complete"
+  (using the usual loose definition).</li>
+  <li>We are now about mid way through the 0.2 functionality set.</li>
+</ul>
+<h2>Functionality Changes</h2>
+<ul>
+  <li>A full set of arithmetic operators for both integer and floating point 
+  arithmetic was implemented.</li>
+  <li>Constant values for simple types are implemented, but not yet for
+  container types.</li>
+  <li>A full set of Boolean operators for comparisons and other logic was
+  implemented.</li>
+  <li>There are now four types of loop operators, a select (if) operator,
+  automatic variables and function call.</li>
+  <li>Nested blocks and loops are correctly handled including the use of the
+  <tt>break</tt> and <tt>continue</tt> operators.</li>
+  <li>The "void" type was removed in favor of just using a null type pointer as
+  necessary. This gets around issues with "type has no size" problems. Without
+  void, all types have a size.</li>
+  <li>The HLVM run-time is now only dependent on APR. Previously it depended on
+  LLVM as well but this turned out to be problematic for linking.</li>
+  <li>A new <tt>hlvm-config</tt> program was written as the beginnings for a
+  standard <tt>*-config</tt> program. Currently it can dump out the Node IDs
+  (useful for debugging) and a few of the configured variables.</li>
+  <li>The validation pass is now much more discerning with significant
+  improvements in the checking it does.</li>
+</ul>
+<h2>Test Case Changes</h2>
+<ul>
+  <li>There are now 138 node types in the AST. Most of these are the new
+  arithmetic and Boolean operators.</li>
+  <li>There is a new test suite named "invalid" which tests to make sure that
+  HLVM tools will generate appropriate error messages on invalid input and not
+  let invalid trees be used. There are 21 test cases in this new suite.</li>
+  <li>The number of xml2xml test cases increased to 29 in order to test the 
+  construction of the new AST nodes for arithmetic and looping.</li>
+  <li>The number of "return0" test cases increased to 16 to test code generation
+  for more situations.</li>
+  <li>There is now a new "suites" option available to scons and "SUITES" for the
+  Makefile. This controls which test suites you want to run. For example, the
+  command <tt>make check SUITES=return0</tt> will run just the <tt>return0</tt>
+  test suite. Similarly for the scons invocation except with "suites".</li>
+</ul>
+<h2>Documentation Changes</h2>
+<ul>
+  <li>Saem is working on an XSLT program for translating Relax/NG grammars 
+  with annotations into XHTML. This will be how we document that AST in the
+  future.</li>
+  <li>Much of the documentation that was on the public web site has now been
+  incorporated into the <tt>docs</tt> directory of the HLVM source repository.
+  This makes it auto-update, keeps it included in releases, and removes the need
+  to use frames in the main web site.</li>
+  <li>The build system was significantly enhanced and documented. The
+  <a href="../../DevelopersGuide.html">Developers Guide</a> now contains a
+  complete list of commands used to build a "sane" development environment
+  including all the dependent software packages.</li>
+  <li>Doxygen generation was implemented using SCons.</li>
+  <li>A new FAQ was started to describe the differences between HLVM and other
+  virtual machines. It sill has some significant holes in it. Suggests would be
+  welcome.</li>
+</ul>
+<h2>Platform Support Changes</h2>
+<ul>
+  <li>Several new developers got HLVM building on Mac OS/X.</li>
+  <li>Reid got HLVM to build on Fedora Core 5.</li>
+</ul>
+<h2>Other Changes and News</h2>
+<ul>
+  <li>David started working on a Lisp -&gt; AST program to explore ideas about
+  how to create the front end lexical and grammatical analysis portions of
+  HLVM.</li>
+  <li>The source directory structure was flattened out so that there is only
+  one level of directories under the <tt>hlvm</tt> source directory.</li>
+  <li>HLVM is now built with the GCC -pedantic flag ensuring the code can be
+  compiled on many compilers.</li>
+  <li>The build system now places all object files in the build directory. This
+  keeps the source directory nice and clean and makes it possible to get rid of
+  all generated output by removing the build directory.</li>
+</ul>
+<p><a href="/status/index.html">Back To Status Index</a></p>
+<!--#include virtual="/incl/footer.incl" -->

@@ -186,6 +186,16 @@ static const char* NodeIDStrs[] =
   "CallWithContOp",
   "IndexOp",
   "SwitchOp",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
+  "**INVALID**",
 };
 
 void showNodeIds()
@@ -259,7 +269,7 @@ void showNodeIds()
   std::cout << "MultiOperators: " 
             << FirstMultiOperatorID << " -> "
             << LastMultiOperatorID << "\n";
-  if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs)
+  if (sizeof(NodeIDStrs)/sizeof(NodeIDStrs[0]) != NumNodeIDs+10)
     std::cout << "\n**##!! NodeIDStrs Out Of Date !!##**\n\n";
 }
 

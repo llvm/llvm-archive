@@ -47,8 +47,8 @@ namespace hlvm
 class Bundle;   
 class Documentation;
 class Block;
-class Function; 
 class Argument;
+class Function; 
 class Program; 
 class Import;
 class Locator; 
@@ -173,17 +173,16 @@ class AST : public Node
       const std::string& id,  ///< The name of the import
       const Locator* loc = 0 ///< 
     );
+    /// Create a new
+    Argument* new_Argument(
+      const std::string& name, /// The argument name
+      const Type* Ty,          /// The type of the argument
+      const Locator* loc = 0   /// The source locator
+    ); 
     /// Create a new Function node. 
     Function* new_Function(
       const std::string& id, ///< The name of the function
       const SignatureType* type,   ///< The type of the function
-      const Locator* loc = 0 ///< The source locator
-    );
-    /// Create a new Argument node. Arguments are used as the formal argument
-    /// value to a function.
-    Argument* new_Argument(
-      const std::string& id, ///< The name of the function argument
-      const Type* ty,        ///< The type of the function argument 
       const Locator* loc = 0 ///< The source locator
     );
     /// Create a new Program node. Programs are like functions except that their
@@ -299,15 +298,28 @@ class AST : public Node
       uint64_t size,          ///< The number of elements in the vector
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new AliasType node. An AliasType node is simply a way of giving
-    /// a new name to another type. Since type naming equates to type
-    /// equivalence in HLVM, this node allows two different types to be
-    /// equivalent without having the same name.
-    AliasType* new_AliasType(
-      const std::string& id,  ///< The name of the alias
-      Type* referrant,        ///< The type for which this type is an alias
-      const Locator* loc = 0  ///< The source locator
+    /// Create a new NamedType node. A NamedType is used as the field of a
+    /// structure or the parameter of a signature. It associates a type with
+    /// a name.
+    NamedType* new_NamedType(
+      const std::string& name, /// The field/parameter name
+      const Type* type,        /// The type of the field/parameter
+      const Locator* loc = 0   /// The source locator
     );
+    inline Parameter* new_Parameter(
+      const std::string& name, /// The parameter name
+      const Type* type,        /// The type of the parameter
+      const Locator* loc = 0   /// The source locator
+    ) {
+      return new_NamedType(name,type,loc);
+    }
+    inline Field* new_Field(
+      const std::string& name, /// The field name
+      const Type* type,        /// The type of the field
+      const Locator* loc = 0   /// The source locator
+    ) {
+      return new_NamedType(name,type,loc);
+    }
     /// Create a new StructureType node. A StructureType is a type that is an
     /// ordered sequential arrangement of memory locations of various but 
     /// definite types.

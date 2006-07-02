@@ -222,10 +222,19 @@ ValidateImpl::checkDisparateContainer(DisparateContainerType* n, NodeIDs id)
   else if (n->size() == 0 && !llvm::isa<SignatureType>(n)) {
     error(n,"DisparateContainerType without elements");
     result = false;
-  } else
+  } else {
     for (DisparateContainerType::iterator I = n->begin(), E = n->end(); 
-         I != E; ++I)
-      result &= checkUniformContainer(*I, AliasTypeID);
+         I != E; ++I) {
+      if (!(*I)->getType()) {
+        error(n,std::string("Null type not permited in DisparateContainerType")
+            + " for '" + (*I)->getName() + "'");
+        result = false;
+      } else if ((*I)->getName().empty()) {
+        error((*I)->getType(),"Type has no field name");
+        result = false;
+      }
+    }
+  }
   return result;
 }
 
@@ -405,12 +414,6 @@ template<> inline void
 ValidateImpl::validate(BufferType* n)
 {
   checkType(n,BufferTypeID);
-}
-
-template<> inline void
-ValidateImpl::validate(AliasType* n)
-{
-  checkUniformContainer(n, AliasTypeID);
 }
 
 template<> inline void
@@ -807,7 +810,7 @@ ValidateImpl::validate(CallOp* op)
       unsigned opNum = 1;
       for (SignatureType::const_iterator I = sig->begin(), E = sig->end(); 
            I != E; ++I)
-        if ((*I)->getElementType() != op->getOperand(opNum++)->getType())
+        if ((*I)->getType() != op->getOperand(opNum++)->getType())
           error(op,std::string("Argument #") + utostr(opNum-1) +
               " has wrong type for function");
     }
@@ -892,8 +895,42 @@ ValidateImpl::validate(AutoVarOp* n)
 template<> inline void
 ValidateImpl::validate(ReferenceOp* op)
 {
-  checkOperator(op,ReferenceOpID,0,true);
-  /// FIXME: check referent out
+  if (checkOperator(op,ReferenceOpID,0,true)) {
+    const Value* referent = op->getReferent();
+    Block* blk = op->getContainingBlock();
+    if (!blk)
+      error(op,"ReferenceOp not in a block?");
+    else if (const AutoVarOp* ref = dyn_cast<AutoVarOp>(referent)) {
+      while (blk != 0) {
+        if (AutoVarOp* av = blk->getAutoVar(ref->getName())) 
+          if (av == ref)
+            break;
+        blk = blk->getContainingBlock();
+      }
+      if (blk == 0)
+        error(op,"Referent does not match name in scope");
+    } else if (const Argument* ref = dyn_cast<Argument>(referent)) {
+      Function* F = op->getContainingFunction();
+      if (!F)
+        error(op,"ReferenceOp not in a function?");
+      else if (F->getArgument(ref->getName()) != ref)
+        error(op,"Referent does not match function argument");
+    } else if (const ConstantValue* cval = dyn_cast<ConstantValue>(referent)) {
+      Bundle* B = op->getContainingBundle();
+      if (!B)
+        error(op,"ReferenceOp not in a bundle?");
+      else if (B->find_cval(cval->getName()) != cval)
+        error(op,"Referent does not match constant value");
+    } else if (const Linkable* var = dyn_cast<Linkable>(referent)) {
+      Bundle* B = op->getContainingBundle();
+      if (!B)
+        error(op,"ReferenceOp not in a bundle?");
+      else if (B->find_cval(cval->getName()) != cval)
+        error(op,"Referent does not match linkable by name");
+    } else {
+      error(op,"Referent of unknown kind");
+    }
+  }
 }
 
 template<> inline void
@@ -1434,7 +1471,6 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case TextTypeID:             validate(cast<TextType>(n)); break;
     case StreamTypeID:           validate(cast<StreamType>(n)); break;
     case BufferTypeID:           validate(cast<BufferType>(n)); break;
-    case AliasTypeID:            validate(cast<AliasType>(n)); break;
     case PointerTypeID:          validate(cast<PointerType>(n)); break;
     case ArrayTypeID:            validate(cast<ArrayType>(n)); break;
     case VectorTypeID:           validate(cast<VectorType>(n)); break;

@@ -55,8 +55,8 @@ enum NodeIDs
   TreeTopID,               ///< The AST node which is always root of the tree
 FirstNodeID = TreeTopID,
   DocumentationID,         ///< XHTML Documentation Node
-  DocumentableID,          ///< A node that can have a Documentation Node
-FirstDocumentableID = DocumentableID,
+  NamedTypeID,             ///< An association of a name with a type
+FirstDocumentableID = NamedTypeID,
   BundleID,                ///< The Bundle Node (a group of other declarations)
   ImportID,                ///< A bundle's Import declaration
 
@@ -97,10 +97,9 @@ FirstSimpleTypeID    = AnyTypeID,
 LastSimpleTypeID     = OpaqueTypeID,  
 
   // Uniform Container Types
-  AliasTypeID,             ///< A new name for an existing type
-FirstContainerTypeID = AliasTypeID,
-FirstUniformContainerTypeID = AliasTypeID,
   PointerTypeID,           ///< The Pointer Type (Pointer To object of Type)
+FirstContainerTypeID = PointerTypeID,
+FirstUniformContainerTypeID = PointerTypeID,
   ArrayTypeID,             ///< The Array Type (Linear array of some type)
   VectorTypeID,            ///< The Vector Type (Packed Fixed Size Vector)
 LastUniformContainerTypeID = VectorTypeID,
@@ -570,6 +569,7 @@ class Value : public Documentable
   public:
     // Get the type of the value
     virtual const Type* getType() const { return type; }
+    const Type* getConcreteType() const;
 
     static inline bool classof(const Value*) { return true; }
     static inline bool classof(const Node* N) { return N->isValue(); }
@@ -588,7 +588,6 @@ class Value : public Documentable
   /// @}
   friend class AST;
 };
-
 
 } // end hlvm namespace
 #endif

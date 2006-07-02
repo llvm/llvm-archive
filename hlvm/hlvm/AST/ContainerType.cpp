@@ -46,49 +46,12 @@ UniformContainerType::getPrimitiveName() const
   return 0;
 }
 
-void 
-UniformContainerType::insertChild(Node* n)
-{
-  hlvmAssert(isa<Type>(n) && "Can't insert those here");
-  if (type)
-    const_cast<Type*>(type)->setParent(0);
-  type = cast<Type>(n);
-}
+PointerType::~PointerType() { }
+ArrayType::~ArrayType() { }
+VectorType::~VectorType() { }
+NamedType::~NamedType() {}
 
-void 
-UniformContainerType::removeChild(Node* n)
-{
-  hlvmAssert(isa<Type>(n) && "Can't remove those here");
-  hlvmAssert(n->getParent() == this && "Node isn't my kid!");
-  hlvmAssert(type == n && "Node isn't mine");
-  type = 0;
-}
-
-PointerType::~PointerType()
-{
-}
-
-ArrayType::~ArrayType()
-{
-}
-
-VectorType::~VectorType()
-{
-}
-
-AliasType::~AliasType()
-{
-}
-
-const char*
-AliasType::getPrimitiveName() const
-{
-  return type->getPrimitiveName();
-}
-
-DisparateContainerType::~DisparateContainerType()
-{
-}
+DisparateContainerType::~DisparateContainerType() { }
 
 const char* 
 DisparateContainerType::getPrimitiveName() const
@@ -97,35 +60,7 @@ DisparateContainerType::getPrimitiveName() const
   return 0;
 }
 
-void 
-DisparateContainerType::insertChild(Node* n)
-{
-  hlvmAssert(isa<AliasType>(n) && "Can't insert those here");
-#ifdef HLVM_ASSERT
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
-    hlvmAssert((*I) != n);
-#endif
-  contents.push_back(cast<AliasType>(n));
-}
-
-void 
-DisparateContainerType::removeChild(Node* n)
-{
-  hlvmAssert(isa<Type>(n) && "Can't remove those here");
-  // This is sucky slow, but we probably won't be removing nodes that much.
-  for (iterator I = begin(), E = end(); I != E; ++I ) {
-    if (*I == n) { contents.erase(I); break; }
-  }
-  hlvmAssert(!"That node isn't my child");
-}
-
 StructureType::~StructureType() { }
-
-void
-StructureType::setFields(const std::vector<FieldType*>& flds)
-{
-  contents.insert(contents.end(), flds.begin(),flds.end());
-}
 
 SignatureType::~SignatureType() { }
 

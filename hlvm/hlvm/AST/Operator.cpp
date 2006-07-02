@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Operator.h>
 #include <hlvm/AST/Linkables.h>
+#include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ControlFlow.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
@@ -39,6 +40,16 @@ namespace hlvm {
 
 Operator::~Operator()
 {
+}
+
+Bundle*
+Operator::getContainingBundle()
+{
+  Node* p = getParent();
+  while (p && !p->is(BundleID)) p = p->getParent();
+  if (!p)
+    return 0;
+  return cast<Bundle>(p);
 }
 
 Function* 

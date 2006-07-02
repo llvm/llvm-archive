@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Node.h>
 #include <hlvm/AST/AST.h>
+#include <hlvm/AST/ContainerType.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 

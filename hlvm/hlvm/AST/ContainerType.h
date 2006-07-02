@@ -38,22 +38,22 @@ namespace hlvm
 /// This class provides an Abstract Syntax Tree node that represents a uniform
 /// container type.  Uniform container types are those types that reference 
 /// another type. They may have multiple elements but all elements are of the
-/// same type, hence they are uniform.  This is true of types such as AliasType
-/// (a simple renaming of another type), PointerType, ArrayType, and VectorTYpe.
+/// same type, hence they are uniform.  This is true of types such as 
+/// PointerType, ArrayType, and VectorTYpe.
 /// @brief AST Abstract Uniform Container Type Node
 class UniformContainerType : public Type
 {
   /// @name Constructors
   /// @{
   protected:
-    UniformContainerType(NodeIDs id) : Type(id), type(0) {}
+    UniformContainerType(NodeIDs id) : Type(id), elemType(0) {}
     virtual ~UniformContainerType();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    const Type* getElementType() const { return type; }
+    const Type* getElementType() const { return elemType; }
     virtual const char* getPrimitiveName() const; // asserting override
     /// Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const UniformContainerType*) { return true; }
@@ -65,17 +65,13 @@ class UniformContainerType : public Type
   /// @name Mutators
   /// @{
   public:
-    void setElementType(const Type* t) { type = t; }
-
-  protected:
-    virtual void insertChild(Node* n);
-    virtual void removeChild(Node* n);
+    void setElementType(const Type* t) { elemType = t; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    const Type* type; ///< The contained types
+    const Type* elemType; ///< The contained types
   /// @}
 };
 
@@ -195,36 +191,48 @@ class VectorType : public UniformContainerType
   friend class AST;
 };
 
-/// This class provides an Abstract Syntax Tree node that is simply a renaming
-/// of another type.  It adopts the characteristics of the referrent type. This
-/// construct is necessary in HLVM because type equivalence is done by name, 
-/// not by semantics.  To dissociate two types of equivalent semantics, say
-/// an integer type, one uses an AliasType to provide a new type name with the
-/// same semantics. AliasType is a UniformContainerType because it refers to
-/// another type of uniform type. AliasTypes are also used in the definition of
-/// a Function's formal arguments and a Structure's fields. In these situations
-/// the name provided by the AliasType forms the name of the argument or 
-/// structure field.
-/// @see Function
-/// @see Structure
-/// @brief AST Alias Type Node
-class AliasType : public UniformContainerType
+/// This typedef is used to associate a name with a type. Although types have 
+/// names, this provides another name such as used in the fields of a structure
+/// or the formal parameters of a function.
+/// @see Type
+/// @see StructureType
+/// @see SignatureType
+/// @see DisparateContainerType
+/// @brief A Named Type
+class NamedType : public Documentable
 {
   /// @name Constructors
   /// @{
   protected:
-    AliasType() : UniformContainerType(AliasTypeID) {}
-    virtual ~AliasType();
+    NamedType() : Documentable(NamedTypeID), name(), type(0) {}
+    virtual ~NamedType();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    virtual const char* getPrimitiveName() const;
-    /// Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const AliasType*) { return true; }
-    static inline bool classof(const Node* T) { return T->is(AliasTypeID); }
+    /// Get the maximum size the array can grow to.
+    const std::string& getName()  const { return name; }
+    const Type* getType() const { return type; }
 
+    /// Methods to support type inquiry via is, cast, dyn_cast
+    static inline bool classof(const NamedType*) { return true; }
+    static inline bool classof(const Node* T) { return T->is(NamedTypeID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    /// Set the size of the vector.
+    void setName(const std::string& N) { name = N; }
+    void setType(const Type* Ty) { type = Ty; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    std::string name;
+    const Type* type;
   /// @}
   friend class AST;
 };
@@ -240,7 +248,7 @@ class DisparateContainerType : public Type
   /// @name Types
   /// @{
   public:
-    typedef std::vector<AliasType*> ContentsList;
+    typedef std::vector<NamedType*> ContentsList;
     typedef ContentsList::iterator iterator;
     typedef ContentsList::const_iterator const_iterator;
 
@@ -265,8 +273,9 @@ class DisparateContainerType : public Type
   /// @name Mutators
   /// @{
   protected:
-    virtual void insertChild(Node* n);
-    virtual void removeChild(Node* n);
+    void setTypes(const std::vector<NamedType*>& Types) { contents = Types; }
+    void addType(NamedType* NT )
+      { contents.push_back(NT); }
 
   /// @}
   /// @name Iterators
@@ -278,22 +287,21 @@ class DisparateContainerType : public Type
     const_iterator   end  () const { return contents.end(); }
     size_t           size () const { return contents.size(); }
     bool             empty() const { return contents.empty(); }
-    AliasType*       front()       { return contents.front(); }
-    const AliasType* front() const { return contents.front(); }
-    AliasType*       back()        { return contents.back(); }
-    const AliasType* back()  const { return contents.back(); }
+    NamedType*       front()       { return contents.front(); }
+    const NamedType* front() const { return contents.front(); }
+    NamedType*       back()        { return contents.back(); }
+    const NamedType* back()  const { return contents.back(); }
 
   /// @}
   /// @name Data
   /// @{
-  protected:
+  private:
     ContentsList contents; ///< The contained types
   /// @}
 };
 
-/// This typedef just uses a more common name when accessing the fields of a
-/// structure.
-typedef AliasType FieldType;
+/// A convenience typedef so we can call NamedTypes as "Fields"
+typedef NamedType Field;
 
 /// This class provides an Abstract Syntax Tree node that represents an 
 /// sequence type. A sequence type is a type that lays out its elements in 
@@ -321,9 +329,9 @@ class StructureType : public DisparateContainerType
   /// @}
   /// @name Mutators
   /// @{
-  protected:
-    void setFields(const std::vector<FieldType*>& fields);
-    void addField(FieldType* field) { contents.push_back(field); }
+  public:
+    void setFields(const std::vector<Field*>& fields) { setTypes(fields); }
+    void addField(Field* Fld ) { addType(Fld); }
 
   /// @}
   /// @name Data
@@ -362,9 +370,8 @@ class ContinuationType : public StructureType
   friend class AST;
 };
 
-/// This typedef just provides a more common name for accessing the types of
-/// the arguments of a signature.
-typedef AliasType ArgumentType;
+/// A convenience typedef so we can call NamedTypes as Parameters
+typedef NamedType Parameter;
 
 /// This class provides an Abstract Syntax Tree node that represents the call
 /// signature of an HLVM function. A SignatureType encapsulates the
@@ -398,7 +405,8 @@ class SignatureType : public DisparateContainerType
   public:
     void setResultType(const Type* ty) { result = ty; }
     void setIsVarArgs(bool is) { flags = is ? 1 : 0; }
-    void addArgument(ArgumentType* arg) { contents.push_back(arg); }
+    void setParameters(const std::vector<Parameter*>& param) { setTypes(param);}
+    void addParameter(Parameter* param) { addType(param); }
 
   /// @}
   /// @name Data

@@ -154,13 +154,6 @@ genType()
       result = ast->new_RealType(name,randRange(1,52),randRange(1,11),loc);
       break;
     }
-    case AliasTypeID:
-    {
-      Locator* loc = getLocator();
-      std::string name = "alias_" + utostr(line);
-      result = ast->new_AliasType(name,genType(),loc);
-      break;
-    }
     case PointerTypeID:
     {
       Locator* loc = getLocator();
@@ -191,9 +184,8 @@ genType()
       std::string name = "struct_" + utostr(line);
       StructureType* S = ast->new_StructureType(name,loc);
       for (unsigned i = 0; i < Complexity; ++i) {
-        FieldType* fld = 
-          ast->new_AliasType(name+"_"+utostr(i),genType(),getLocator());
-        fld->setParent(S);
+        Field* fld = ast->new_Field(name+"_"+utostr(i),genType(),getLocator());
+        S->addField(fld);
       }
       result = S;
       break;
@@ -385,12 +377,6 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
         std::string("cf32_")+utostr(line),val_str,Ty,loc);
       break;
     }
-    case AliasTypeID:
-    {
-      C = cast<ConstantValue>(
-            genValue(llvm::cast<AliasType>(Ty)->getElementType(),true));
-      break;
-    }
     case PointerTypeID:
     {
       const PointerType* PT = llvm::cast<PointerType>(Ty);
@@ -430,15 +416,15 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
       /* FALL THROUGH (not implemented) */
     case StructureTypeID:
     {
-      const StructureType* VT = llvm::cast<StructureType>(Ty);
+      const StructureType* ST = llvm::cast<StructureType>(Ty);
       std::vector<ConstantValue*> elems;
-      for (StructureType::const_iterator I = VT->begin(), E = VT->end(); 
+      for (StructureType::const_iterator I = ST->begin(), E = ST->end(); 
            I != E; ++I) {
-        Value* V = genValue((*I)->getElementType(),true);
+        Value* V = genValue((*I)->getType(),true);
         elems.push_back(cast<ConstantValue>(V));
       }
       C = ast->new_ConstantStructure(std::string("cstruct_") + utostr(line),
-          elems, VT, loc);
+          elems, ST, loc);
       break;
     }
     default:
@@ -455,9 +441,6 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     result = var;
   }
 
-  // Give the thing a place to live
-  result->setParent(bundle);
-
   // Memoize the result
   values[result->getType()].push_back(result);
   return result;
@@ -473,7 +456,7 @@ genCallTo(Function* F)
   for (SignatureType::const_iterator I = sig->begin(), E = sig->end(); 
        I != E; ++I)
   {
-    Value* V = genValue((*I)->getElementType());
+    Value* V = genValue((*I)->getType());
     hlvmAssert(isa<ConstantValue>(V) || isa<Linkable>(V)) ;
     Operator* O = ast->new_ReferenceOp(V,getLocator());
     args.push_back(O);
@@ -503,8 +486,8 @@ genFunction(Type* resultType, unsigned numArgs)
   for (unsigned i = 0; i < numArgs; ++i )
   {
     std::string name = "arg_" + utostr(i+1);
-    AliasType* alias = ast->new_AliasType(name,genType(),loc);
-    alias->setParent(sig);
+    Parameter* param = ast->new_Parameter(name,genType(),loc);
+    sig->addParameter(param);
   }
 
   // Create the function and set its linkage

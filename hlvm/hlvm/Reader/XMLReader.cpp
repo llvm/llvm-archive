@@ -529,18 +529,6 @@ XMLReaderImpl::checkDoc(xmlNodePtr cur, Documentable* node)
   return child;
 }
 
-template<> AliasType*
-XMLReaderImpl::parse<AliasType>(xmlNodePtr& cur)
-{
-  hlvmAssert(getToken(cur->name)==TKN_alias);
-  std::string id = getAttribute(cur,"id");
-  std::string renames = getAttribute(cur,"renames");
-  AliasType* alias = 
-    ast->new_AliasType(id,getType(renames),getLocator(cur));
-  checkDoc(cur,alias);
-  return alias;
-}
-
 template<> EnumerationType*
 XMLReaderImpl::parse<EnumerationType>(xmlNodePtr& cur)
 {
@@ -613,9 +601,10 @@ XMLReaderImpl::parse<StructureType>(xmlNodePtr& cur)
                "Structure only has fields");
     std::string name = getAttribute(child,"id");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(name,getType(type),loc);
-    alias->setParent(struc);
-    checkDoc(child,alias);
+    Locator* fldLoc = getLocator(child);
+    Field* fld = ast->new_Field(name,getType(type),fldLoc);
+    struc->addField(fld);
+    checkDoc(child,fld);
     child = child->next;
   }
   return struc;
@@ -638,9 +627,10 @@ XMLReaderImpl::parse<SignatureType>(xmlNodePtr& cur)
     hlvmAssert(getToken(child->name) == TKN_arg && "Signature only has args");
     std::string name = getAttribute(child,"id");
     std::string type = getAttribute(child,"type");
-    AliasType* alias = ast->new_AliasType(name,getType(type),loc);
-    alias->setParent(sig);
-    checkDoc(child,alias);
+    Locator* paramLoc = getLocator(child);
+    Parameter* param = ast->new_Parameter(name,getType(type),paramLoc);
+    sig->addParameter(param);
+    checkDoc(child,param);
     child = child->next;
   }
   return sig;
@@ -955,7 +945,6 @@ XMLReaderImpl::parse<Bundle>(xmlNodePtr& cur)
       }
       case TKN_import      : { n = parse<Import>(child); break; }
       case TKN_bundle      : { n = parse<Bundle>(child); break; }
-      case TKN_alias       : { n = parse<AliasType>(child); break; }
       case TKN_atom        : { n = parseAtom(child); break; }
       case TKN_enumeration : { n = parse<EnumerationType>(child); break; }
       case TKN_pointer     : { n = parse<PointerType>(child); break; }

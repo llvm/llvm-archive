@@ -36,6 +36,7 @@ namespace hlvm
 {
 
 class Type; 
+class Bundle;
 class Function;
 class Block;
 class LoopOp;
@@ -79,6 +80,10 @@ class Operator : public Value
     /// any of the loop constructs (Loop, While, Unless, etc.) so its result
     /// type is Operator*.
     Operator* getContainingLoop();
+
+    /// Return the bundle that contains the function that contains the block
+    /// that contains this operator.
+    Bundle* getContainingBundle();
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }

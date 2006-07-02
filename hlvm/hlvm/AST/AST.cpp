@@ -204,16 +204,12 @@ AST::getProgramType()
     ast->ProgramTypeSingleton->setName("ProgramType");
     Type* intType = ast->getPrimitiveType(SInt32TypeID);
     ast->ProgramTypeSingleton->setResultType(intType);
-    ArgumentType* argc = new ArgumentType();
-    argc->setName("argc");
-    argc->setElementType(intType);
-    ast->ProgramTypeSingleton->addArgument(argc);
+    Parameter* argc = new_Parameter("argc",intType);
+    ast->ProgramTypeSingleton->addParameter(argc);
     const PointerType* argv_type = getPointerTo(getPointerTo(
       ast->getPrimitiveType(StringTypeID)));
-    ArgumentType* argv = new ArgumentType();
-    argv->setName("argv");
-    argv->setElementType(argv);
-    ast->ProgramTypeSingleton->addArgument(argv);
+    Parameter* argv = new_Parameter("argv",argv_type);
+    ast->ProgramTypeSingleton->addParameter(argv);
   }
   return ast->ProgramTypeSingleton;
 }
@@ -469,14 +465,17 @@ AST::new_VectorType(
   return result;
 }
 
-AliasType* 
-AST::new_AliasType(const std::string& id, Type* referrant, const Locator* loc)
+NamedType* 
+AST::new_NamedType(
+  const std::string& name, 
+  const Type* type,
+  const Locator* loc
+)
 {
-  AliasType* result = new AliasType();
+  NamedType* result = new NamedType();
   result->setLocator(loc);
-  result->setName(id);
-  result->setElementType(referrant);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setName(name);
+  result->setType(type);
   return result;
 }
 
@@ -695,12 +694,13 @@ AST::new_ConstantStructure(
   ConstantStructure* result = new ConstantStructure();
   result->setLocator(loc);
   result->setName(name);
+  hlvmAssert(ST->size() == vals.size());
   StructureType::const_iterator STI = ST->begin();
   for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
        E = vals.end(); I != E; ++I ) 
   {
     hlvmAssert(STI != ST->end());
-    hlvmAssert((*I)->getType() == (*STI)->getElementType());
+    hlvmAssert((*I)->getType() == (*STI)->getType());
     result->addConstant(*I);
     ++STI;
   }
@@ -712,19 +712,20 @@ Variable*
 AST::new_Variable(const std::string& id, const Type* Ty, const Locator* loc)
 {
   Variable* result = new Variable();
-  result->setLocator(loc);
-  result->setType(Ty);
   result->setName(id);
+  result->setType(Ty);
+  result->setLocator(loc);
   return result;
 }
 
 Argument*
-AST::new_Argument(const std::string& id, const Type* ty , const Locator* loc)
+AST::new_Argument(
+  const std::string& name, const Type* Ty, const Locator* loc)
 {
   Argument* result = new Argument();
+  result->setName(name);
+  result->setType(Ty);
   result->setLocator(loc);
-  result->setName(id);
-  result->setType(ty);
   return result;
 }
 
@@ -739,9 +740,9 @@ AST::new_Function(
   for (SignatureType::const_iterator I = ty->begin(), E = ty->end(); 
        I != E; ++I ) 
   {
-    const Type* Ty = (*I)->getElementType();
+    const Type* Ty = (*I)->getType();
     assert(Ty && "Arguments can't be void type");
-    Argument* arg = new_Argument((*I)->getName(),Ty,loc);
+    Argument* arg = new_Argument((*I)->getName(),0,loc);
     result->addArgument(arg);
   }
   return result;
@@ -761,11 +762,9 @@ AST::new_Program(const std::string& id, const Locator* loc)
   for (SignatureType::const_iterator I = ty->begin(), E = ty->end(); 
        I != E; ++I ) 
   {
-    const Type* Ty = (*I)->getElementType();
+    const Type* Ty = (*I)->getType();
     assert(Ty && "Arguments can't be void type");
-    Argument* arg = new Argument();
-    arg->setType(Ty);
-    arg->setName((*I)->getName());
+    Argument* arg = new_Argument((*I)->getName(),Ty,loc);
     result->addArgument(arg);
   }
   return result;

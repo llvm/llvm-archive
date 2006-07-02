@@ -175,15 +175,6 @@ XMLWriterImpl::WriterPass::putDoc(Documentable* node)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(AliasType* t)
-{
-  startElement("alias");
-  writeAttribute("id",t->getName());
-  writeAttribute("renames",t->getElementType());
-  putDoc(t);
-}
-
-template<> void 
 XMLWriterImpl::WriterPass::put(AnyType* t)
 {
   startElement("atom");
@@ -347,10 +338,10 @@ XMLWriterImpl::WriterPass::put(StructureType* t)
   putDoc(t);
   for (StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("field");
-    AliasType* alias = cast<AliasType>(*I);
-    writeAttribute("id",alias->getName());
-    writeAttribute("type",alias->getElementType());
-    putDoc(alias);
+    Field* field = cast<Field>(*I);
+    writeAttribute("id",field->getName());
+    writeAttribute("type",field->getType());
+    putDoc(field);
     endElement();
   }
 }
@@ -366,10 +357,10 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   putDoc(t);
   for (SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
     startElement("arg");
-    AliasType* alias = cast<AliasType>(*I);
-    writeAttribute("id",alias->getName());
-    writeAttribute("type",alias->getElementType());
-    putDoc(alias);
+    Parameter* param = cast<Parameter>(*I);
+    writeAttribute("id",param->getName());
+    writeAttribute("type",param->getType());
+    putDoc(param);
     endElement();
   }
 }
@@ -804,7 +795,6 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
   if (mode & Pass::PreOrderTraversal) {
     switch (n->getID()) 
     {
-      case AliasTypeID:          put(cast<AliasType>(n)); break;
       case AnyTypeID:            put(cast<AnyType>(n)); break;
       case StringTypeID:         put(cast<StringType>(n)); break;
       case BooleanTypeID:        put(cast<BooleanType>(n)); break;

@@ -511,9 +511,6 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
     case BufferTypeID: 
       result = get_hlvm_buffer();
       break;
-    case AliasTypeID:
-      result = getType(llvm::cast<AliasType>(ty)->getElementType());
-      break;
     case PointerTypeID: 
     {
       const hlvm::Type* hElemType = 
@@ -547,7 +544,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       std::vector<const llvm::Type*> Fields;
       for (StructureType::const_iterator I = ST->begin(), E = ST->end(); 
            I != E; ++I)
-        Fields.push_back(getType((*I)->getElementType()));
+        Fields.push_back(getType((*I)->getType()));
       result = llvm::StructType::get(Fields);
       break;
     }
@@ -557,7 +554,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       const SignatureType* st = llvm::cast<SignatureType>(ty);
       for (SignatureType::const_iterator I = st->begin(), E = st->end(); 
            I != E; ++I)
-        params.push_back(getType(*I));
+        params.push_back(getType((*I)->getType()));
       result = llvm::FunctionType::get(
         getType(st->getResultType()),params,st->isVarArgs());
       break;
@@ -1686,7 +1683,6 @@ LLVMGeneratorPass::gen(CallOp* co)
   hlvm::Function* hFunc = co->getCalledFunction();
   const SignatureType* sigTy = hFunc->getSignature();
   // Set up the loop
-  std::vector<llvm::Value*> args;
   CallOp::iterator I = co->begin();
   CallOp::iterator E = co->end();
 
@@ -1695,7 +1691,8 @@ LLVMGeneratorPass::gen(CallOp* co)
   hlvmAssert(funcToCall && "No function to call?");
   hlvmAssert(llvm::isa<llvm::Function>(funcToCall));
 
-  // Get the function call operands
+  // Get the function call arguments
+  std::vector<llvm::Value*> args;
   for ( ; I != E; ++I ) {
     llvm::Value* arg = popOperand(*I);
     hlvmAssert(arg && "No argument for CallOp?");
@@ -1973,12 +1970,6 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     // post-order because we want their operands to be constructed first.
     switch (n->getID()) 
     {
-      case AliasTypeID:
-      {
-        AliasType* t = llvm::cast<AliasType>(n);
-        lmod->addTypeName(t->getName(), getType(t->getElementType()));
-        break;
-      }
       case AnyTypeID:
       case StringTypeID:
       case BooleanTypeID:

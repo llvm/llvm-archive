@@ -87,6 +87,7 @@ class Type : public Documentable
   friend class AST;
 };
 
+
 /// This class provides an Abstract Syntax Tree node for describing a type that
 /// can accept any type of Value. The AnyType can be used to represent
 /// dynamically typed variables and it, essentially, bypasses the HLVM type 

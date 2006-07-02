@@ -1,4 +1,4 @@
-#===-- Build Script For tools/hlvm-xml2xml --------------------*- Python -*-===#
+#===-- Build Script For tools/hlvm-gentestcase ----------------*- Python -*-===#
 #
 #                      High Level Virtual Machine (HLVM)
 #
@@ -20,31 +20,16 @@
 # MA 02110-1301 USA
 #
 #===----------------------------------------------------------------------===#
-from os.path import join as pjoin
 from build import hlvm
 Import('env')
-prog = env.Program('hlvm-compiler', hlvm.GetAllCXXFiles(env),
+prog = env.Program('hlvm-gentestcase', hlvm.GetAllCXXFiles(env),
  LIBS=[
-   'HLVMCodeGen',
-   'HLVMReader',
    'HLVMWriter',
    'HLVMPass',
    'HLVMAST',
    'HLVMBase',
    'xml2',
-   'LLVMLinker',
-   'LLVMBCReader',
-   'LLVMBCWriter',
-   'LLVMTransforms',
-   'LLVMipo',
-   'LLVMipa',
-   'LLVMScalarOpts',
-   'LLVMAnalysis',
-   'LLVMTarget',
-   'LLVMTransformUtils',
-   'LLVMCore',
    'LLVMSupport',
-   'LLVMbzip2',
    'LLVMSystem',
    'aprutil-1',
    'apr-1',

@@ -91,7 +91,11 @@ static const char* NodeIDStrs[] =
   "ConstantInteger",
   "ConstantReal",
   "ConstantString",
-  "ConstantAggregate",
+  "ConstantPointer",
+  "ConstantArray",
+  "ConstantVector",
+  "ConstantStructure",
+  "ConstantContinuation",
   "ConstantExpression",
   "Variable",
   "Function",
@@ -227,6 +231,9 @@ void showNodeIds()
   std::cout << "ConstantValues: " 
             << FirstConstantValueID << " -> "
             << LastConstantValueID << "\n";
+  std::cout << "ConstantAggregates: " 
+            << FirstConstantAggregateID << " -> "
+            << LastConstantAggregateID << "\n";
   std::cout << "Linkables: " 
             << FirstLinkableID << " -> "
             << LastLinkableID << "\n";

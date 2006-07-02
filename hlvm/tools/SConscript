@@ -22,4 +22,10 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-hlvm.Dirs(env,['hlvm-config','hlvm-xml2xml','hlvm-compiler','hlvm'])
+hlvm.Dirs(env,[
+  'hlvm-config',
+  'hlvm-xml2xml',
+  'hlvm-compiler',
+  'hlvm-gentestcase',
+  'hlvm'
+])

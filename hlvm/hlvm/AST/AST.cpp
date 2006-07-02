@@ -481,7 +481,9 @@ AST::new_AliasType(const std::string& id, Type* referrant, const Locator* loc)
 }
 
 StructureType*
-AST::new_StructureType(const std::string& id, const Locator* loc)
+AST::new_StructureType(
+  const std::string& id, 
+  const Locator* loc)
 {
   StructureType* result = new StructureType();
   result->setLocator(loc);
@@ -513,12 +515,84 @@ AST::new_OpaqueType(const std::string& id, const Locator* loc)
   return result;
 }
 
+ConstantAny* 
+AST::new_ConstantAny(
+  const std::string& name,
+  ConstantValue* val,
+  const Locator* loc)
+{
+  ConstantAny* result = new ConstantAny(val);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType(getPrimitiveType(AnyTypeID));
+  return result;
+}
+
+ConstantBoolean* 
+AST::new_ConstantBoolean(
+  const std::string& name,
+  bool t_or_f, 
+  const Locator* loc)
+{
+  ConstantBoolean* result = new ConstantBoolean(t_or_f);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType(getPrimitiveType(BooleanTypeID));
+  return result;
+}
+
+ConstantCharacter* 
+AST::new_ConstantCharacter(
+  const std::string& name,
+  const std::string& val,
+  const Locator* loc)
+{
+  ConstantCharacter* result = new ConstantCharacter(val);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType( getPrimitiveType(CharacterTypeID) );
+  return result;
+}
+
+ConstantEnumerator* 
+AST::new_ConstantEnumerator(
+  const std::string& name,///< The name of the constant
+  const std::string& val, ///< The value for the constant
+  const Type* Ty,         ///< The type of the enumerator
+  const Locator* loc      ///< The source locator
+)
+{
+  ConstantEnumerator* result = new ConstantEnumerator(val);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType(Ty);
+  return result;
+}
+
+ConstantOctet* 
+AST::new_ConstantOctet(
+  const std::string& name,
+  unsigned char val,
+  const Locator* loc)
+{
+  ConstantOctet* result = new ConstantOctet(val);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType( getPrimitiveType(OctetTypeID) );
+  return result;
+}
+
 ConstantInteger*
 AST::new_ConstantInteger(
-  const std::string&  v, uint16_t base, const Type* Ty, const Locator* loc)
+  const std::string& name,
+  const std::string&  v, 
+  uint16_t base, 
+  const Type* Ty, 
+  const Locator* loc)
 {
   ConstantInteger* result = new ConstantInteger(base);
   result->setLocator(loc);
+  result->setName(name);
   result->setValue(v);
   result->setBase(base);
   result->setType(Ty);
@@ -526,42 +600,112 @@ AST::new_ConstantInteger(
 }
 
 ConstantReal*
-AST::new_ConstantReal(const std::string& v, const Type* Ty, const Locator* loc)
+AST::new_ConstantReal(
+  const std::string& name,
+  const std::string& v, 
+  const Type* Ty, 
+  const Locator* loc)
 {
   ConstantReal* result = new ConstantReal();
   result->setLocator(loc);
+  result->setName(name);
   result->setValue(v);
   result->setType(Ty);
   return result;
 }
 
 ConstantString*
-AST::new_ConstantString(const std::string& v, const Locator* loc)
+AST::new_ConstantString(
+  const std::string& name,
+  const std::string& v, 
+  const Locator* loc)
 {
   ConstantString* result = new ConstantString();
   result->setLocator(loc);
+  result->setName(name);
   result->setValue(v);
   result->setType( getPrimitiveType(StringTypeID) );
   return result;
 }
 
-ConstantBoolean* 
-AST::new_ConstantBoolean(bool t_or_f, const Locator* loc)
+ConstantPointer* 
+AST::new_ConstantPointer(
+  const std::string& name,
+  ConstantValue* referent,
+  const Locator* loc
+)
 {
-  ASTImpl* ast = static_cast<ASTImpl*>(this);
-  if (t_or_f) {
-    if (!ast->BooleanTrueSingleton) {
-      ast->BooleanTrueSingleton = new ConstantBoolean(true);
-      ast->BooleanTrueSingleton->setType(getPrimitiveType(BooleanTypeID));
-    }
-    return ast->BooleanTrueSingleton;
-  } else {
-    if (!ast->BooleanFalseSingleton) {
-      ast->BooleanFalseSingleton = new ConstantBoolean(false);
-      ast->BooleanFalseSingleton->setType(getPrimitiveType(BooleanTypeID));
-    }
-    return ast->BooleanFalseSingleton;
+  ConstantPointer* result = new ConstantPointer(referent);
+  result->setLocator(loc);
+  result->setName(name);
+  result->setType( getPointerTo(referent->getType()) );
+  return result;
+}
+
+ConstantArray* 
+AST::new_ConstantArray(
+  const std::string& name,
+  const std::vector<ConstantValue*>& vals,
+  const ArrayType* VT,
+  const Locator* loc
+)
+{
+  ConstantArray* result = new ConstantArray();
+  result->setLocator(loc);
+  result->setName(name);
+  for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
+       E = vals.end(); I != E; ++I ) 
+  {
+    hlvmAssert((*I)->getType() == VT->getElementType());
+    result->addConstant(*I);
   }
+  result->setType(VT);
+  return result;
+}
+
+ConstantVector* 
+AST::new_ConstantVector(
+  const std::string& name,
+  const std::vector<ConstantValue*>& vals,
+  const VectorType* AT,
+  const Locator* loc
+)
+{
+  ConstantVector* result = new ConstantVector();
+  result->setLocator(loc);
+  result->setName(name);
+  for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
+       E = vals.end(); I != E; ++I ) 
+  {
+    hlvmAssert((*I)->getType() == AT->getElementType());
+    result->addConstant(*I);
+  }
+  result->setType(AT);
+  return result;
+}
+
+ConstantStructure* 
+AST::new_ConstantStructure(
+  const std::string& name,
+  const std::vector<ConstantValue*>& vals,
+  const StructureType* ST,
+  const Locator* loc
+)
+{
+  ConstantStructure* result = new ConstantStructure();
+  result->setLocator(loc);
+  result->setName(name);
+  StructureType::const_iterator STI = ST->begin();
+  for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
+       E = vals.end(); I != E; ++I ) 
+  {
+    hlvmAssert(STI != ST->end());
+    hlvmAssert((*I)->getType() == (*STI)->getElementType());
+    result->addConstant(*I);
+    ++STI;
+  }
+  result->setType(ST);
+  return result;
 }
 
 Variable*
@@ -574,8 +718,8 @@ AST::new_Variable(const std::string& id, const Type* Ty, const Locator* loc)
   return result;
 }
 
-Argument* 
-AST::new_Argument(const std::string& id, Type* ty , const Locator* loc)
+Argument*
+AST::new_Argument(const std::string& id, const Type* ty , const Locator* loc)
 {
   Argument* result = new Argument();
   result->setLocator(loc);
@@ -597,9 +741,7 @@ AST::new_Function(
   {
     const Type* Ty = (*I)->getElementType();
     assert(Ty && "Arguments can't be void type");
-    Argument* arg = new Argument();
-    arg->setType(Ty);
-    arg->setName((*I)->getName());
+    Argument* arg = new_Argument((*I)->getName(),Ty,loc);
     result->addArgument(arg);
   }
   return result;
@@ -800,6 +942,7 @@ AST::new_MultiOp(
   const Locator* loc
 )
 {
+  hlvmAssert(!oprnds.empty() && "No operands?");
   return new_MultiOp<OpClass>(oprnds[0]->getType(),oprnds,loc);
 }
 

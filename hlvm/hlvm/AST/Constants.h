@@ -106,6 +106,36 @@ class ConstantValue: public Constant
 };
 
 /// This class provides an Abstract Syntax Tree node that yields a 
+/// constant any value. 
+/// @brief AST Constant Any Value Node
+class ConstantAny: public ConstantValue
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantAny(ConstantValue* val) : ConstantValue(ConstantAnyID) {
+      value = val; }
+    virtual ~ConstantAny();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    ConstantValue* getValue() const { return value; }
+    static inline bool classof(const ConstantAny*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantAnyID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  private:
+    ConstantValue* value;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a 
 /// constant boolean value. 
 /// @brief AST Constant Boolean Node
 class ConstantBoolean: public ConstantValue
@@ -126,6 +156,96 @@ class ConstantBoolean: public ConstantValue
     static inline bool classof(const Node* N) 
       { return N->is(ConstantBooleanID); }
 
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a 
+/// constant character value. 
+/// @brief AST Constant Character Node
+class ConstantCharacter: public ConstantValue
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantCharacter(const std::string& val) 
+      : ConstantValue(ConstantCharacterID) { value = val; }
+    virtual ~ConstantCharacter();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getValue() const { return value; }
+    static inline bool classof(const ConstantCharacter*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantCharacterID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    std::string value;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a 
+/// constant octet value. 
+/// @brief AST Constant Octet Node
+class ConstantOctet: public ConstantValue
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantOctet(unsigned char val) : ConstantValue(ConstantOctetID) { 
+      value = val; }
+    virtual ~ConstantOctet();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    unsigned char getValue() const { return value; }
+    static inline bool classof(const ConstantOctet*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantOctetID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    unsigned char value;
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a 
+/// constant octet value. 
+/// @brief AST Constant Octet Node
+class ConstantEnumerator: public ConstantValue
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantEnumerator(const std::string& val) 
+      : ConstantValue(ConstantEnumeratorID) { value = val; }
+    virtual ~ConstantEnumerator();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const std::string& getValue() const { return value; }
+    static inline bool classof(const ConstantEnumerator*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantEnumeratorID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    std::string value;
   /// @}
   friend class AST;
 };
@@ -242,6 +362,36 @@ class ConstantString : public ConstantValue
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// pointer value. 
+/// @brief AST Constant Pointer Node
+class ConstantPointer : public ConstantValue
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantPointer(const ConstantValue* cv) 
+      : ConstantValue(ConstantPointerID)  { value = cv; }
+    virtual ~ConstantPointer();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    const ConstantValue* getValue() const { return value; }
+    static inline bool classof(const ConstantPointer*) { return true; }
+    static inline bool classof(const Node* N) 
+      { return N->is(ConstantPointerID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    const ConstantValue* value;
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that yields a constant
 /// aggregate. This can be used to specify constant values of aggregate types
 /// such as arrays, vectors, structures and continuations. It simply contains 
@@ -252,7 +402,7 @@ class ConstantAggregate : public ConstantValue
   /// @name Types
   /// @{
   public:
-    typedef std::vector<ConstantValue*> ElementsList;
+    typedef std::vector<const ConstantValue*> ElementsList;
     typedef ElementsList::iterator iterator;
     typedef ElementsList::const_iterator const_iterator;
 
@@ -260,7 +410,7 @@ class ConstantAggregate : public ConstantValue
   /// @name Constructors
   /// @{
   protected:
-    ConstantAggregate() : ConstantValue(ConstantAggregateID), elems()  {}
+    ConstantAggregate(NodeIDs id) : ConstantValue(id), elems()  {}
     virtual ~ConstantAggregate();
 
   /// @}
@@ -269,11 +419,14 @@ class ConstantAggregate : public ConstantValue
   public:
     static inline bool classof(const ConstantAggregate*) { return true; }
     static inline bool classof(const Node* N) 
-      { return N->is(ConstantAggregateID); }
+      { return N->isConstantAggregate(); }
 
   /// @}
   /// @name Mutators
   /// @{
+  public:
+    void addConstant(const ConstantValue* val) { elems.push_back(val); }
+
   protected:
     virtual void insertChild(Node* n);
     virtual void removeChild(Node* n);
@@ -288,9 +441,7 @@ class ConstantAggregate : public ConstantValue
     const_iterator       end  () const { return elems.end(); }
     size_t               size () const { return elems.size(); }
     bool                 empty() const { return elems.empty(); }
-    ConstantValue*       front()       { return elems.front(); }
     const ConstantValue* front() const { return elems.front(); }
-    ConstantValue*       back()        { return elems.back(); }
     const ConstantValue* back()  const { return elems.back(); }
 
   /// @}
@@ -300,6 +451,98 @@ class ConstantAggregate : public ConstantValue
     ElementsList elems; ///< The contained types
   /// @}
 
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// array value. 
+/// @brief AST Constant Array Node
+class ConstantArray : public ConstantAggregate
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantArray() : ConstantAggregate(ConstantArrayID) {}
+    virtual ~ConstantArray();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantArray*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ConstantArrayID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// array value. 
+/// @brief AST Constant Vector Node
+class ConstantVector : public ConstantAggregate
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantVector() : ConstantAggregate(ConstantVectorID) {}
+    virtual ~ConstantVector();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantVector*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ConstantVectorID);}
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// array value. 
+/// @brief AST Constant Vector Node
+class ConstantStructure : public ConstantAggregate
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantStructure() : ConstantAggregate(ConstantStructureID) {}
+    virtual ~ConstantStructure();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantStructure*) { return true; }
+    static inline bool classof(const Node* N) { 
+      return N->is(ConstantStructureID);
+    }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that yields a constant 
+/// continuation value. 
+/// @brief AST Constant Vector Node
+class ConstantContinuation : public ConstantAggregate
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConstantContinuation() : ConstantAggregate(ConstantContinuationID) {}
+    virtual ~ConstantContinuation();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConstantContinuation*) { return true; }
+    static inline bool classof(const Node* N) { 
+      return N->is(ConstantContinuationID);
+    }
+
+  /// @}
   friend class AST;
 };
 

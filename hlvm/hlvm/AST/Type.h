@@ -313,10 +313,10 @@ class RangeType: public Type
   public:
     virtual const char* getPrimitiveName() const;
     /// Get min value of range
-    int64_t getMin() { return min; }
+    int64_t getMin() const { return min; }
 
     /// Get max value of range
-    int64_t getMax() { return max; }
+    int64_t getMax() const { return max; }
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RangeType*) { return true; }

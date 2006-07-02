@@ -410,20 +410,14 @@ XMLReaderImpl::parseLiteralConstant(
   switch (token) {
     case TKN_false:   
     {
-      C = ast->new_ConstantBoolean(false, getLocator(cur)); 
-      if (actualName.empty())
-        C->setName("bool_false");
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? "bool_false" : actualName;
+      C = ast->new_ConstantBoolean(name, false, getLocator(cur)); 
       break;
     }
     case TKN_true:
     {
-      C = ast->new_ConstantBoolean(true, getLocator(cur));
-      if (actualName.empty())
-        C->setName("bool_true");
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? "bool_true" : actualName;
+      C = ast->new_ConstantBoolean(name,true, getLocator(cur));
       break;
     }
     case TKN_bool:
@@ -433,11 +427,9 @@ XMLReaderImpl::parseLiteralConstant(
       xmlNodePtr child = cur->children;
       getTextContent(child,buffer);
       bool value = recognize_boolean( buffer.c_str() );
-      C = ast->new_ConstantBoolean(value, getLocator(cur));
-      if (actualName.empty())
-        C->setName(std::string("bool_") + (value?"true":"false"));
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? std::string("bool_") + 
+        (value?"true_":"false") : actualName;
+      C = ast->new_ConstantBoolean(name, value, getLocator(cur));
       break;
     }
     case TKN_bin:
@@ -451,11 +443,9 @@ XMLReaderImpl::parseLiteralConstant(
       getTextContent(child,value);
       uint16_t base = (token == TKN_dec ? 10 : (token == TKN_hex ? 16 : 
                       (token == TKN_oct ? 8 : (token == TKN_bin ? 2 : 10))));
-      C = ast->new_ConstantInteger(value, base, Ty, getLocator(cur));
-      if (actualName.empty())
-        C->setName(std::string("int_") + value);
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? 
+        std::string("int_") + value : actualName;
+      C = ast->new_ConstantInteger(name, value, base, Ty, getLocator(cur));
       break;
     }
     case TKN_flt:
@@ -466,11 +456,9 @@ XMLReaderImpl::parseLiteralConstant(
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      C = ast->new_ConstantReal(value, Ty, getLocator(cur));
-      if (actualName.empty())
-        C->setName(std::string("real_") + value);
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? std::string("real_") + value :
+          actualName;
+      C = ast->new_ConstantReal(name,value, Ty, getLocator(cur));
       break;
     }
     case TKN_string:
@@ -479,11 +467,9 @@ XMLReaderImpl::parseLiteralConstant(
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      C =  ast->new_ConstantString(value,getLocator(cur));
-      if (actualName.empty())
-        C->setName(std::string("str_") + value);
-      else
-        C->setName(actualName);
+      std::string name = actualName.empty() ? std::string("str_") + value :
+          actualName;
+      C =  ast->new_ConstantString(name,value,getLocator(cur));
       break;
     }
     default:

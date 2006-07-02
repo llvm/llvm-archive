@@ -119,12 +119,14 @@ DisparateContainerType::removeChild(Node* n)
   hlvmAssert(!"That node isn't my child");
 }
 
-StructureType::~StructureType()
+StructureType::~StructureType() { }
+
+void
+StructureType::setFields(const std::vector<FieldType*>& flds)
 {
+  contents.insert(contents.end(), flds.begin(),flds.end());
 }
 
-SignatureType::~SignatureType()
-{
-}
+SignatureType::~SignatureType() { }
 
 }

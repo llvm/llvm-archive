@@ -46,7 +46,7 @@ Function::getArgument(const std::string& name) const
 {
   for (const_iterator I = begin(), E = end(); I != E ; ++I )
     if ((*I)->getName() == name)
-      return *I;
+      return (*I);
   return 0;
 }
 

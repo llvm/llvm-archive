@@ -545,9 +545,37 @@ ValidateImpl::validate(ConstantString* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantAggregate* n)
+ValidateImpl::validate(ConstantPointer* n)
 {
-  checkConstant(n,ConstantAggregateID);
+  checkConstant(n,ConstantPointerID);
+  // FIXME: validate fields vs. type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantArray* n)
+{
+  checkConstant(n,ConstantArrayID);
+  // FIXME: validate fields vs. type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantVector* n)
+{
+  checkConstant(n,ConstantVectorID);
+  // FIXME: validate fields vs. type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantStructure* n)
+{
+  checkConstant(n,ConstantStructureID);
+  // FIXME: validate fields vs. type
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantContinuation* n)
+{
+  checkConstant(n,ConstantContinuationID);
   // FIXME: validate fields vs. type
 }
 
@@ -1503,7 +1531,11 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
     case ConstantStringID:       validate(cast<ConstantString>(n)); break;
-    case ConstantAggregateID:    validate(cast<ConstantAggregate>(n)); break;
+    case ConstantPointerID:      validate(cast<ConstantPointer>(n)); break;
+    case ConstantArrayID:        validate(cast<ConstantArray>(n)); break;
+    case ConstantVectorID:       validate(cast<ConstantVector>(n)); break;
+    case ConstantStructureID:    validate(cast<ConstantStructure>(n)); break;
+    case ConstantContinuationID: validate(cast<ConstantContinuation>(n)); break;
     case ConstantExpressionID:   validate(cast<ConstantExpression>(n)); break;
       break; // Not implemented yet
     case DocumentationID:

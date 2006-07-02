@@ -43,20 +43,24 @@
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/Module.h>
+#include <llvm/PassManager.h>
 #include <llvm/BasicBlock.h>
-#include <llvm/Function.h>
-#include <llvm/GlobalVariable.h>
 #include <llvm/Instructions.h>
 #include <llvm/DerivedTypes.h>
 #include <llvm/TypeSymbolTable.h>
-#include <llvm/ValueSymbolTable.h>
 #include <llvm/Constants.h>
 #include <llvm/CallingConv.h>
 #include <llvm/Linker.h>
-#include <llvm/Bytecode/Writer.h>
-#include <llvm/PassManager.h>
-#include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Analysis/LoadValueNumbering.h>
 #include <llvm/Analysis/Verifier.h>
+#include <llvm/Assembly/Parser.h>
+#include <llvm/Bytecode/Writer.h>
+#include <llvm/Target/TargetData.h>
+#include <llvm/Transforms/IPO.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/Analysis/Dominators.h>
+#include <llvm/Assembly/PrintModulePass.h>
+#include <llvm/Support/CommandLine.h>
 
 namespace llvm {
   void dump(llvm::Value* V) {
@@ -2099,6 +2103,69 @@ LLVMGeneratorPass::linkModules()
   return linker.releaseModule();
 }
 
+
+llvm::cl::opt<bool>
+  NoInline("no-inlining", 
+    llvm::cl::desc("Do not run the LLVM inliner pass"));
+
+llvm::cl::opt<bool>
+  NoOptimizations("no-optimization",
+    llvm::cl::desc("Do not run any LLVM optimization passes"));
+
+void 
+getCleanupPasses(llvm::PassManager& PM)
+{
+  
+  PM.add(llvm::createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
+  PM.add(llvm::createFunctionResolvingPass());    // Resolve (...) functions
+  if (NoOptimizations)
+    return;
+
+  PM.add(llvm::createRaiseAllocationsPass());     // call %malloc -> malloc inst
+  PM.add(llvm::createCFGSimplificationPass());    // Clean up disgusting code
+  PM.add(llvm::createPromoteMemoryToRegisterPass());// Kill useless allocas
+  PM.add(llvm::createGlobalOptimizerPass());      // Optimize out global vars
+  PM.add(llvm::createGlobalDCEPass());            // Remove unused fns and globs
+  PM.add(llvm::createIPConstantPropagationPass());// IP Constant Propagation
+  PM.add(llvm::createDeadArgEliminationPass());   // Dead argument elimination
+  PM.add(llvm::createInstructionCombiningPass()); // Clean up after IPCP & DAE
+  PM.add(llvm::createCFGSimplificationPass());    // Clean up after IPCP & DAE
+  PM.add(llvm::createPruneEHPass());              // Remove dead EH info
+  if (!NoInline)
+    PM.add(llvm::createFunctionInliningPass());   // Inline small functions
+  PM.add(llvm::createSimplifyLibCallsPass());     // Library Call Optimizations
+  PM.add(llvm::createArgumentPromotionPass());    // Scalarize uninlined fn args
+  PM.add(llvm::createRaisePointerReferencesPass());// Recover type information
+  PM.add(llvm::createTailDuplicationPass());      // Simplify cfg by copying 
+  PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
+  PM.add(llvm::createScalarReplAggregatesPass()); // Break up aggregate allocas
+  PM.add(llvm::createInstructionCombiningPass()); // Combine silly seq's
+  PM.add(llvm::createCondPropagationPass());      // Propagate conditionals
+  PM.add(llvm::createTailCallEliminationPass());  // Eliminate tail calls
+  PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
+  PM.add(llvm::createReassociatePass());          // Reassociate expressions
+  PM.add(llvm::createLICMPass());                 // Hoist loop invariants
+  PM.add(llvm::createLoopUnswitchPass());         // Unswitch loops.
+  PM.add(llvm::createInstructionCombiningPass()); // Clean up after LICM/reassoc
+  PM.add(llvm::createIndVarSimplifyPass());       // Canonicalize indvars
+  PM.add(llvm::createLoopUnrollPass());           // Unroll small loops
+  PM.add(llvm::createInstructionCombiningPass()); // Clean up after the unroller
+  PM.add(llvm::createLoadValueNumberingPass());   // GVN for load instructions
+  PM.add(llvm::createGCSEPass());                 // Remove common subexprs
+  PM.add(llvm::createSCCPPass());                 // Constant prop with SCCP
+
+  // Run instcombine after redundancy elimination to exploit opportunities
+  // opened up by them.
+  PM.add(llvm::createInstructionCombiningPass());
+  PM.add(llvm::createCondPropagationPass());      // Propagate conditionals
+
+  PM.add(llvm::createDeadStoreEliminationPass()); // Delete dead stores
+  PM.add(llvm::createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+  PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
+  PM.add(llvm::createDeadTypeEliminationPass());  // Eliminate dead types
+  PM.add(llvm::createConstantMergePass());        // Merge dup global constants
+}
+
 }
 
 bool
@@ -2111,10 +2178,16 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
   delete PM;
   llvm::Module* mod = genPass.linkModules();
   bool result = false;
-  if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
-    llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
-    result = true;
-  }
+  llvm::PassManager Passes;
+  Passes.add(new llvm::TargetData(mod));
+  if (verify)
+    Passes.add(llvm::createVerifierPass());
+  getCleanupPasses(Passes);
+  if (verify)
+    Passes.add(llvm::createVerifierPass());
+  Passes.run(*mod);
+  llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
+  result = true;
   delete mod;
   return result;
 }
@@ -2129,12 +2202,37 @@ hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
   delete PM;
   llvm::Module* mod = genPass.linkModules();
   bool result = false;
-  if (!llvm::verifyModule(*mod, llvm::PrintMessageAction)) {
-    llvm::PassManager Passes;
-    Passes.add(new llvm::PrintModulePass(&output));
-    Passes.run(*mod);
-    result = true;
-  }
+  llvm::PassManager lPM;
+  lPM.add(new llvm::TargetData(mod));
+  if (verify)
+    lPM.add(llvm::createVerifierPass());
+  getCleanupPasses(lPM);
+  if (verify)
+    lPM.add(llvm::createVerifierPass());
+  lPM.add(new llvm::PrintModulePass(&output));
+  lPM.run(*mod);
+  result = true;
   delete mod;
   return result;
 }
+
+llvm::Module* 
+hlvm::generateModule(AST* tree, bool verify)
+{
+  hlvm::PassManager* PM = hlvm::PassManager::create();
+  LLVMGeneratorPass genPass(tree);
+  PM->addPass(&genPass);
+  PM->runOn(tree);
+  delete PM;
+  llvm::Module* mod = genPass.linkModules();
+  llvm::PassManager lPM;
+  lPM.add(new llvm::TargetData(mod));
+  if (verify)
+    lPM.add(llvm::createVerifierPass());
+  getCleanupPasses(lPM);
+  if (verify)
+    lPM.add(llvm::createVerifierPass());
+  lPM.run(*mod);
+  return mod;
+}
+

@@ -132,13 +132,23 @@ LastTypeID = TextTypeID,
 FirstValueID = ArgumentID,
 
   // Constants
+  ConstantAnyID,           ///< A constant any value
+FirstConstantID = ConstantAnyID,
+FirstConstantValueID = ConstantAnyID,
   ConstantBooleanID,       ///< A constant boolean value
-FirstConstantID = ConstantBooleanID,
-FirstConstantValueID = ConstantBooleanID,
+  ConstantCharacterID,     ///< A constant UTF-8 character value
+  ConstantOctetID,         ///< A constant 8-bit value
+  ConstantEnumeratorID,    ///< A constant enumeration value
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
   ConstantStringID,        ///< A constant string value
-  ConstantAggregateID,     ///< A constant aggregate for arrays, structures, etc
+  ConstantPointerID,       ///< A constant pointer value
+  ConstantArrayID,         ///< A constant array value
+FirstConstantAggregateID = ConstantArrayID,
+  ConstantVectorID,        ///< A constant vector value
+  ConstantStructureID,     ///< A constant structure value
+  ConstantContinuationID,  ///< A constant continuation value
+LastConstantAggregateID = ConstantContinuationID,
   ConstantExpressionID,    ///< A constant expression
 LastConstantValueID = ConstantExpressionID,
 
@@ -374,6 +384,10 @@ class Node
     /// Determine if the node is one of the Constant values.
     inline bool isConstantValue() const {
       return id >= FirstConstantValueID && id <= LastConstantValueID; }
+
+    /// Determine if the node is one of the ConstantAggregate values.
+    inline bool isConstantAggregate() const {
+      return id >= FirstConstantAggregateID && id <= LastConstantAggregateID; }
 
     /// Determine if the node is a Linkable
     inline bool isLinkable() const {

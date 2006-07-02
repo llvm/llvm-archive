@@ -29,14 +29,46 @@
 
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/Type.h>
+#include <hlvm/Base/Assert.h>
+#include <llvm/Support/Casting.h>
 
 namespace hlvm {
 
 Constant::~Constant() { }
 ConstantValue::~ConstantValue() { }
+ConstantAny::~ConstantAny() { }
 ConstantBoolean::~ConstantBoolean() { }
+ConstantCharacter::~ConstantCharacter() { }
+ConstantEnumerator::~ConstantEnumerator() { }
+ConstantOctet::~ConstantOctet() { }
 ConstantInteger::~ConstantInteger() { }
 ConstantReal::~ConstantReal() { }
 ConstantString::~ConstantString() { }
+ConstantPointer::~ConstantPointer() { }
+ConstantAggregate::~ConstantAggregate() { }
+void 
+ConstantAggregate::insertChild(Node* n)
+{
+  hlvmAssert(llvm::isa<ConstantValue>(n));
+  ConstantValue* CV = llvm::cast<ConstantValue>(n);
+  elems.push_back(CV);
+}
+
+void 
+ConstantAggregate::removeChild(Node* n)
+{
+  hlvmAssert(llvm::isa<ConstantValue>(n));
+  ConstantValue* CV = llvm::cast<ConstantValue>(n);
+  for (ElementsList::iterator I = elems.begin(), E = elems.end(); I != E; ++I)
+    if (*I == CV) {
+      elems.erase(I);
+      break;
+    }
+}
+
+ConstantArray::~ConstantArray() { }
+ConstantVector::~ConstantVector() { }
+ConstantStructure::~ConstantStructure() { }
+ConstantContinuation::~ConstantContinuation() { }
 
 }

@@ -322,6 +322,7 @@ class StructureType : public DisparateContainerType
   /// @name Mutators
   /// @{
   protected:
+    void setFields(const std::vector<FieldType*>& fields);
     void addField(FieldType* field) { contents.push_back(field); }
 
   /// @}

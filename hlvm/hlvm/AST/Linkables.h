@@ -148,7 +148,7 @@ class Argument : public Value
   /// @name Constructors
   /// @{
   protected:
-    Argument() : Value(ArgumentID) {}
+    Argument() : Value(ArgumentID), name() {}
     virtual ~Argument();
 
   /// @}
@@ -163,7 +163,8 @@ class Argument : public Value
   /// @name Mutators
   /// @{
   public:
-    void setName(const std::string& N) { name = N; }
+    void setName(const std::string& nm) { name = nm; }
+
   /// @}
   /// @name Data
   /// @{

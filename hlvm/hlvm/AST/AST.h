@@ -53,10 +53,6 @@ class Program;
 class Import;
 class Locator; 
 class Variable; 
-class ConstantBoolean;
-class ConstantInteger;
-class ConstantReal;
-class ConstantString;
 class Pool;
 class Operator;
 class AutoVarOp;
@@ -187,7 +183,7 @@ class AST : public Node
     /// value to a function.
     Argument* new_Argument(
       const std::string& id, ///< The name of the function argument
-      Type* ty,              ///< The type of the function argument 
+      const Type* ty,        ///< The type of the function argument 
       const Locator* loc = 0 ///< The source locator
     );
     /// Create a new Program node. Programs are like functions except that their
@@ -420,27 +416,90 @@ class AST : public Node
       const Type* ty,         ///< The type of the variable
       const Locator* loc = 0  ///< The source locator
     );
+    /// Createa new ConstantAny node
+    ConstantAny* new_ConstantAny(
+      const std::string& name,///< The name of the constant
+      ConstantValue* val,     ///< The value for the constant
+      const Locator* loc = 0  ///< The source locator
+    );
     /// Createa new ConstantBoolean node
     ConstantBoolean* new_ConstantBoolean(
+      const std::string& name,///< The name of the constant
       bool t_or_f,            ///< The value for the constant
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Createa new ConstantCharacter node
+    ConstantCharacter* new_ConstantCharacter(
+      const std::string& name,///< The name of the constant
+      const std::string& val, ///< The value for the constant
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Createa new ConstantEnumerator node
+    ConstantEnumerator* new_ConstantEnumerator(
+      const std::string& name,///< The name of the constant
+      const std::string& val, ///< The value for the constant
+      const Type* Ty,         ///< The type of the enumerator
+      const Locator* loc = 0  ///< The source locator
+    );
+    /// Createa new ConstantOctet node
+    ConstantOctet* new_ConstantOctet(
+      const std::string& name,///< The name of the constant
+      unsigned char val,      ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantInteger node.
     ConstantInteger* new_ConstantInteger(
+      const std::string& name,///< The name of the constant
       const std::string& val, ///< The value of the ConstantInteger
       uint16_t base,          ///< The numeric base the value is encoded in
       const Type* Ty,         ///< The type of the integer
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new ConstantInteger node.
+    /// Create a new ConstantReal node.
     ConstantReal* new_ConstantReal(
+      const std::string& name,///< The name of the constant
       const std::string& val, ///< The value of the ConstantReal
       const Type* Ty,         ///< The type of the real
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new ConstantText node.
+    /// Create a new ConstantString node.
     ConstantString* new_ConstantString(
+      const std::string& name,///< The name of the constant
       const std::string& value, ///< The value of the ConstantText
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantPointer node.
+    ConstantPointer* new_ConstantPointer(
+      const std::string& name,  ///< The name of the constant
+      ConstantValue* referent,          ///< The value pointed to
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantArray node.
+    ConstantArray* new_ConstantArray(
+      const std::string& name,  ///< The name of the constant
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      const ArrayType* Ty,      ///< The type of the array
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantVector node.
+    ConstantVector* new_ConstantVector(
+      const std::string& name,  ///< The name of the constant
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      const VectorType* Ty,     ///< The type of the array
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantStructure node.
+    ConstantStructure* new_ConstantStructure(
+      const std::string& name,  ///< The name of the constant
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      const StructureType* Ty,  ///< The type of the array
+      const Locator* loc = 0    ///< The source locator
+    );
+    /// Create a new ConstantContinuation node.
+    ConstantContinuation* new_ConstantContinuation(
+      const std::string& name,  ///< The name of the constant
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      const ContinuationType* Ty,  ///< The type of the array
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a unary ConstantExpression Node.

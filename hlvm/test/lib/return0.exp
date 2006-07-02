@@ -53,7 +53,6 @@ proc hlvm-ret-zero-test { pat } {
     set testlinked    [file join $outdir ${test}.linked ]
     set testlinkedbc  [file join $outdir ${test}.linked.bc ]
     set tests         [file join $outdir ${test}.s ]
-    set execout ""
     set retval [ catch { exec $compiler $testsrc -llvmbc -o $testbc } msg ] 
     if { $retval != 0 } {
       fail "$test: hlvm-compiler returned $retval:\n$msg"
@@ -71,7 +70,7 @@ proc hlvm-ret-zero-test { pat } {
             fail "$test: gxx returned $retval:\n$msg"
           } else {
             set retval [ catch {exec $testexe $testname } msg ]
-            if {$retval == 1} {
+            if {$retval != 0} {
               fail "$test: $testexe returned $retval:\n$msg"
             } else {
               pass "$test"

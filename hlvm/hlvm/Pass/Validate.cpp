@@ -486,27 +486,35 @@ template<> inline void
 ValidateImpl::validate(ConstantInteger* CI)
 {
   if (checkConstant(CI,ConstantIntegerID)) {
-    const IntegerType* Ty = cast<IntegerType>(CI->getType());
-    // Check that it can be converted to binary
     const char* startp = CI->getValue().c_str();
     char* endp = 0;
     int64_t val = strtoll(startp,&endp,CI->getBase());
+    // Check that it can be converted to binary
     if (!endp || startp == endp || *endp != '\0')
       error(CI,"Invalid integer constant. Conversion failed.");
-    else if (val < 0 && !Ty->isSigned()) {
-      error(CI,"Invalid integer constant. " 
-               "Signed value not accepted by unsigned type");
+    else if (llvm::itostr(val) != CI->getValue())
+      error(CI,"Invalid integer constant, not losslessly convertible");
+    else if (const IntegerType* Ty = dyn_cast<IntegerType>(CI->getType())) {
+      if (val < 0 && !Ty->isSigned()) {
+        error(CI,"Invalid integer constant. " 
+                 "Signed value not accepted by unsigned type");
+      } else {
+        // It converted to binary okay, check that it is in range
+        uint64_t uval = (val < 0) ? -val : val;
+        unsigned leading_zeros = llvm::CountLeadingZeros_64(uval);
+        unsigned bits_required = (sizeof(uint64_t)*8 - leading_zeros) + 
+                                 unsigned(Ty->isSigned());
+        unsigned bits_allowed  = Ty->getBits();
+        if (bits_required > bits_allowed)
+          error(CI, "Invalid integer constant. Value requires " + 
+                utostr(bits_required) + " bits, but type only holds " +
+                utostr(bits_allowed) + " bits.");
+      }
+    } else if (const RangeType* Ty = dyn_cast<RangeType>(CI->getType())) {
+      if (val < Ty->getMin() || val > Ty->getMax())
+        error(CI, "Integer constant out of range of RangeType");
     } else {
-      // It converted to binary okay, check that it is in range
-      uint64_t uval = (val < 0) ? -val : val;
-      unsigned leading_zeros = llvm::CountLeadingZeros_64(uval);
-      unsigned bits_required = (sizeof(uint64_t)*8 - leading_zeros) + 
-                               unsigned(Ty->isSigned());
-      unsigned bits_allowed  = Ty->getBits();
-      if (bits_required > bits_allowed)
-        error(CI, "Invalid integer constant. Value requires " + 
-              utostr(bits_required) + " bits, but type only holds " +
-              utostr(bits_allowed) + " bits.");
+      error(CI,"Unknown integer constant type");
     }
   }
 }
@@ -539,26 +547,23 @@ ValidateImpl::validate(ConstantReal* CR)
           error(CR,"Invalid floating point type");
           return;
       }
-      bool isValid = false;
       if (numBits <= sizeof(float)*8) {
         float x = val;
         long double x2 = x;
-        isValid = (val <= FLT_MAX && val >= FLT_MIN && val == x2);
+        if (val != x2)
+          error(CR,"Real constant out of range for real requiring " +
+            utostr(numBits) + " bits");
       } 
       else if (numBits <= sizeof(double)*8)
       {
         double x = val;
         long double x2 = x;
-        isValid = (val <= DBL_MAX && val >= DBL_MIN && val == x2);
+        if (val != x2)
+          error(CR,"Real constant out of range for real requiring " +
+            utostr(numBits) + " bits");
       }
       else if (numBits > sizeof(long double)*8)
-      {
         warning(CR,"Don't know how to check range of real type > 128 bits");
-        isValid = true;
-      }
-      if (!isValid)
-        error(CR,"Real constant out of range for real requiring " +
-          utostr(numBits) + " bits");
     }
   }
 }

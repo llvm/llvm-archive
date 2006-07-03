@@ -78,13 +78,23 @@ getLocator()
 inline 
 int64_t randRange(int64_t low, int64_t high)
 {
-  return int64_t(random()) % (high-low) + low;
+  if (high > low)
+    return int64_t(random()) % (high-low) + low;
+  else if (low > high)
+    return int64_t(random()) % (low-high) + high;
+  else
+    return 1;
 }
 
 inline
 uint64_t randRange(uint64_t low, uint64_t high, bool discriminate)
 {
-  return uint64_t(random()) % (high-low) + low;
+  if (high > low)
+    return uint64_t(random()) % (high-low) + low;
+  else if (low > high)
+    return uint64_t(random()) % (low-high) + high;
+  else
+    return 1;
 }
 
 hlvm::Type*
@@ -112,8 +122,9 @@ genTypeLimited(unsigned limit)
     case Float44TypeID:
     case Float64TypeID:
     case Float80TypeID:
-    case Float128TypeID:
       return ast->getPrimitiveType(id);
+    case Float128TypeID:
+      return ast->getPrimitiveType(Float64TypeID);
 
     case AnyTypeID:
     case StringTypeID:
@@ -160,9 +171,7 @@ genTypeLimited(unsigned limit)
     }
     case PointerTypeID:
     {
-      Locator* loc = getLocator();
-      std::string name = "ptr_" + utostr(line);
-      result = ast->new_PointerType(name,genTypeLimited(limit),loc);
+      result = ast->getPointerTo(genTypeLimited(limit));
       break;
     }
     case ArrayTypeID:
@@ -284,7 +293,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     case SInt8TypeID:
     {
       int8_t val = int8_t(randRange(-128,127));
-      std::string val_str(utostr(val));
+      std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs8_")+utostr(line),val_str,10,Ty,loc);
       break;
@@ -292,7 +301,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     case SInt16TypeID:
     {
       int16_t val = int16_t(randRange(-32768,32767));
-      std::string val_str(utostr(val));
+      std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs16_")+utostr(line),val_str,10,Ty,loc);
       break;
@@ -300,7 +309,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     case SInt32TypeID:
     {
       int32_t val = int32_t(randRange(-2000000000,2000000000));
-      std::string val_str(utostr(val));
+      std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs32_")+utostr(line),val_str,10,Ty,loc);
       break;
@@ -310,7 +319,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     case SInt64TypeID:
     {
       int64_t val = int64_t(randRange(-2000000000,2000000000));
-      std::string val_str(utostr(val));
+      std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs64_")+utostr(line),val_str,10,Ty,loc);
       break;
@@ -321,7 +330,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     case Float80TypeID:
     case Float128TypeID:
     {
-      double val = double(randRange(-2000000000,2000000000));
+      double val = double(randRange(-10000000,10000000));
       std::string val_str(ftostr(val));
       C = ast->new_ConstantReal(
         std::string("cf32_")+utostr(line),val_str,Ty,loc);
@@ -386,7 +395,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     }
     case RealTypeID:
     {
-      double val = double(randRange(-2000000000,2000000000));
+      double val = double(randRange(-10000000,10000000));
       std::string val_str(ftostr(val));
       C = ast->new_ConstantReal(
         std::string("cf32_")+utostr(line),val_str,Ty,loc);
@@ -562,5 +571,15 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
     call->setParent(blk);
   }
 
+  // Get the function result and return instruction
+  Value* V = genValue(program->getResultType());
+  Operator* O = ast->new_ReferenceOp(V,getLocator());
+  if (isa<Linkable>(V))
+    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
+  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
+  rslt->setParent(blk);
+
+  ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(getLocator());
+  ret->setParent(blk);
   return ast;
 }

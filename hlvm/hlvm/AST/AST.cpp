@@ -700,7 +700,6 @@ AST::new_ConstantStructure(
        E = vals.end(); I != E; ++I ) 
   {
     hlvmAssert(STI != ST->end());
-    hlvmAssert((*I)->getType() == (*STI)->getType());
     result->addConstant(*I);
     ++STI;
   }

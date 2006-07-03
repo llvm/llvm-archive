@@ -274,7 +274,7 @@ class IntegerType : public Type
 
     /// @brief Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
-    static inline bool classof(const Node* T) { return T->isIntegralType(); }
+    static inline bool classof(const Node* T) { return T->isIntegerType(); }
 
   /// @}
   /// @name Mutators

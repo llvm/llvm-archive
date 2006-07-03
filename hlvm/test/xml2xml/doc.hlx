@@ -84,9 +84,6 @@
     <vector id="aVector" of="f32" length="128">
       <doc>Vector doc</doc>
     </vector>
-    <alias id="anAlias" renames="someType">
-      <doc><p>Alias Doc</p></doc>
-    </alias>
     <array id="anArray" of="someType" length="128">
       <doc><p>Array Doc</p></doc>
     </array>

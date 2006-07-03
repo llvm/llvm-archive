@@ -453,9 +453,33 @@ ValidateImpl::validate(SignatureType* n)
 }
 
 template<> inline void
+ValidateImpl::validate(ConstantAny* n)
+{
+  checkConstant(n,ConstantAnyID);
+}
+
+template<> inline void
 ValidateImpl::validate(ConstantBoolean* n)
 {
   checkConstant(n,ConstantBooleanID);
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantCharacter* n)
+{
+  checkConstant(n,ConstantCharacterID);
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantEnumerator* n)
+{
+  checkConstant(n,ConstantEnumeratorID);
+}
+
+template<> inline void
+ValidateImpl::validate(ConstantOctet* n)
+{
+  checkConstant(n,ConstantOctetID);
 }
 
 template<> inline void
@@ -909,11 +933,11 @@ ValidateImpl::validate(ReferenceOp* op)
       }
       if (blk == 0)
         error(op,"Referent does not match name in scope");
-    } else if (const Argument* ref = dyn_cast<Argument>(referent)) {
+    } else if (const Argument* arg = dyn_cast<Argument>(referent)) {
       Function* F = op->getContainingFunction();
       if (!F)
         error(op,"ReferenceOp not in a function?");
-      else if (F->getArgument(ref->getName()) != ref)
+      else if (F->getArgument(arg->getName()) != arg)
         error(op,"Referent does not match function argument");
     } else if (const ConstantValue* cval = dyn_cast<ConstantValue>(referent)) {
       Bundle* B = op->getContainingBundle();
@@ -921,11 +945,11 @@ ValidateImpl::validate(ReferenceOp* op)
         error(op,"ReferenceOp not in a bundle?");
       else if (B->find_cval(cval->getName()) != cval)
         error(op,"Referent does not match constant value");
-    } else if (const Linkable* var = dyn_cast<Linkable>(referent)) {
+    } else if (const Linkable* lnkbl = dyn_cast<Linkable>(referent)) {
       Bundle* B = op->getContainingBundle();
       if (!B)
         error(op,"ReferenceOp not in a bundle?");
-      else if (B->find_cval(cval->getName()) != cval)
+      else if (B->find_linkable(lnkbl->getName()) != lnkbl)
         error(op,"Referent does not match linkable by name");
     } else {
       error(op,"Referent of unknown kind");
@@ -1563,7 +1587,11 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case PInfOpID:               /*validate(cast<PInfOp>(n)); */ break;
     case NInfOpID:               /*validate(cast<NInfoOp>(n)); */ break;
     case NaNOpID:                /*validate(cast<NaNOp>(n)); */ break;
+    case ConstantAnyID:          validate(cast<ConstantAny>(n)); break;
     case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
+    case ConstantCharacterID:    validate(cast<ConstantCharacter>(n)); break;
+    case ConstantEnumeratorID:   validate(cast<ConstantEnumerator>(n)); break;
+    case ConstantOctetID:        validate(cast<ConstantOctet>(n)); break;
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
     case ConstantStringID:       validate(cast<ConstantString>(n)); break;

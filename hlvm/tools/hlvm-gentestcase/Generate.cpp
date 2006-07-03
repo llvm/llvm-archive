@@ -88,10 +88,12 @@ uint64_t randRange(uint64_t low, uint64_t high, bool discriminate)
 }
 
 hlvm::Type*
-genType()
+genTypeLimited(unsigned limit)
 {
   Type* result = 0;
   NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
+  if (--limit == 0)
+    id = BooleanTypeID;
   switch (id) {
     case BooleanTypeID:
     case CharacterTypeID:
@@ -111,6 +113,8 @@ genType()
     case Float64TypeID:
     case Float80TypeID:
     case Float128TypeID:
+      return ast->getPrimitiveType(id);
+
     case AnyTypeID:
     case StringTypeID:
     case BufferTypeID:
@@ -126,7 +130,7 @@ genType()
       Locator* loc = getLocator();
       std::string name = "int_" + utostr(line);
       result = ast->new_IntegerType(
-        name,randRange(1,64,true),randRange(0,1,true),loc);
+        name,randRange(1,64,true),bool(randRange(0,1,true)),loc);
       break;
     }
     case RangeTypeID:
@@ -158,21 +162,23 @@ genType()
     {
       Locator* loc = getLocator();
       std::string name = "ptr_" + utostr(line);
-      result = ast->new_PointerType(name,genType(),loc);
+      result = ast->new_PointerType(name,genTypeLimited(limit),loc);
       break;
     }
     case ArrayTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "array_" + utostr(line);
-      result = ast->new_ArrayType(name,genType(),randRange(1,Complexity),loc);
+      result = ast->new_ArrayType(name,
+          genTypeLimited(limit),randRange(1,Complexity),loc);
       break;
     }
     case VectorTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "vector_" + utostr(line);
-      result = ast->new_VectorType(name,genType(),randRange(1,Complexity),loc);
+      result = ast->new_VectorType(
+          name,genTypeLimited(limit),randRange(1,Complexity),loc);
       break;
     }
     case OpaqueTypeID:
@@ -184,7 +190,8 @@ genType()
       std::string name = "struct_" + utostr(line);
       StructureType* S = ast->new_StructureType(name,loc);
       for (unsigned i = 0; i < Complexity; ++i) {
-        Field* fld = ast->new_Field(name+"_"+utostr(i),genType(),getLocator());
+        Field* fld = ast->new_Field(name+"_"+utostr(i),
+            genTypeLimited(limit),getLocator());
         S->addField(fld);
       }
       result = S;
@@ -196,6 +203,12 @@ genType()
   hlvmAssert(result && "No type defined?");
   result->setParent(bundle);
   return result;
+}
+
+hlvm::Type*
+genType()
+{
+  return genTypeLimited(Complexity);
 }
 
 hlvm::Value*
@@ -344,7 +357,9 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
       std::string name = "cint_" + utostr(line);
       const IntegerType* IntTy = llvm::cast<IntegerType>(Ty);
       int64_t max = 1 << (IntTy->getBits() < 63 ? IntTy->getBits() : 63);
-      int64_t val = randRange(int64_t(-max),int64_t(max-1));
+      int64_t val = IntTy->isSigned() ?
+        randRange(int64_t(-max),int64_t(max-1)) :
+        randRange(int64_t(0),int64_t(max));
       std::string val_str( itostr(val) );
       C = ast->new_ConstantInteger(name,val_str,10,Ty,loc);
       break;
@@ -441,6 +456,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     result = var;
   }
 
+  result->setParent(bundle);
   // Memoize the result
   values[result->getType()].push_back(result);
   return result;
@@ -459,7 +475,10 @@ genCallTo(Function* F)
     Value* V = genValue((*I)->getType());
     hlvmAssert(isa<ConstantValue>(V) || isa<Linkable>(V)) ;
     Operator* O = ast->new_ReferenceOp(V,getLocator());
-    args.push_back(O);
+    if (isa<ConstantValue>(V))
+      args.push_back(O);
+    else
+      args.push_back(ast->new_UnaryOp<LoadOp>(O,getLocator()));
   }
   return ast->new_MultiOp<CallOp>(args,getLocator());
 }
@@ -502,7 +521,10 @@ genFunction(Type* resultType, unsigned numArgs)
   B->setParent(F);
 
   // Get the function result and return instruction
-  Operator* O = ast->new_ReferenceOp(genValue(F->getResultType()),getLocator());
+  Value* V = genValue(F->getResultType());
+  Operator* O = ast->new_ReferenceOp(V,getLocator());
+  if (isa<Linkable>(V))
+    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
   ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
   rslt->setParent(B);
 

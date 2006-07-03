@@ -60,11 +60,11 @@ Bundle::insertChild(Node* kid)
 void
 Bundle::removeChild(Node* kid)
 {
-  hlvmAssert(isa<Constant>(kid) && "Can't remove that here");
-  // This is sucky slow, but we probably won't be removing nodes that much.
+  hlvmAssert(kid && "Null child!");
   if (isa<Type>(kid))
     types.erase(cast<Type>(kid)->getName());
   else if (isa<Value>(kid)) {
+    // This is sucky slow, but we probably won't be removing nodes that much.
     for (value_iterator I = value_begin(), E = value_end(); I != E; ++I )
       if (*I == kid) { values.erase(I); break; }
     if (isa<ConstantValue>(kid))

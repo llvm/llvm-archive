@@ -365,6 +365,15 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   }
 }
 
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantAny* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
 template<> void 
 XMLWriterImpl::WriterPass::put(ConstantBoolean* i)
 {
@@ -376,6 +385,30 @@ XMLWriterImpl::WriterPass::put(ConstantBoolean* i)
   else
     startElement("false");
   endElement();
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantCharacter* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantEnumerator* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantOctet* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
 }
 
 template<> void 
@@ -417,6 +450,46 @@ XMLWriterImpl::WriterPass::put(ConstantString* t)
 }
 
 template<> void
+XMLWriterImpl::WriterPass::put(ConstantPointer* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantArray* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantVector* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantStructure* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(ConstantContinuation* i)
+{
+  startElement("constant");
+  writeAttribute("id",i->getName());
+  writeAttribute("type",i->getType()->getName());
+}
+
+template<> void
 XMLWriterImpl::WriterPass::put(Variable* v)
 {
   startElement("variable");
@@ -424,7 +497,7 @@ XMLWriterImpl::WriterPass::put(Variable* v)
   writeAttribute("type",v->getType()->getName());
   if (v->hasInitializer()) {
     Constant* C = llvm::cast<Constant>(v->getInitializer());
-    writeAttribute("id",C->getName());
+    writeAttribute("init",C->getName());
   }
   putDoc(v);
 }
@@ -795,74 +868,83 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
   if (mode & Pass::PreOrderTraversal) {
     switch (n->getID()) 
     {
-      case AnyTypeID:            put(cast<AnyType>(n)); break;
-      case StringTypeID:         put(cast<StringType>(n)); break;
-      case BooleanTypeID:        put(cast<BooleanType>(n)); break;
-      case BundleID:             put(cast<Bundle>(n)); break;
-      case CharacterTypeID:      put(cast<CharacterType>(n)); break;
-      case IntegerTypeID:        put(cast<IntegerType>(n)); break;
-      case RangeTypeID:          put(cast<RangeType>(n)); break;
-      case EnumerationTypeID:    put(cast<EnumerationType>(n)); break;
-      case RealTypeID:           put(cast<RealType>(n)); break;
-      case OctetTypeID:          put(cast<OctetType>(n)); break;
-      case OpaqueTypeID:         put(cast<OpaqueType>(n)); break;
-      case PointerTypeID:        put(cast<PointerType>(n)); break;
-      case ArrayTypeID:          put(cast<ArrayType>(n)); break;
-      case VectorTypeID:         put(cast<VectorType>(n)); break;
-      case StructureTypeID:      put(cast<StructureType>(n)); break;
-      case SignatureTypeID:      put(cast<SignatureType>(n)); break;
-      case ConstantBooleanID:    put(cast<ConstantBoolean>(n)); break;
-      case ConstantIntegerID:    put(cast<ConstantInteger>(n)); break;
-      case ConstantRealID:       put(cast<ConstantReal>(n)); break;
-      case ConstantStringID:     put(cast<ConstantString>(n)); break;
-      case VariableID:           put(cast<Variable>(n)); break;
-      case FunctionID:           put(cast<Function>(n)); break;
-      case ProgramID:            put(cast<Program>(n)); break;
-      case BlockID:              put(cast<Block>(n)); break;
-      case AutoVarOpID:          put(cast<AutoVarOp>(n)); break;
-      case NegateOpID:           put(cast<NegateOp>(n)); break;
-      case ComplementOpID:       put(cast<ComplementOp>(n)); break;
-      case PreIncrOpID:          put(cast<PreIncrOp>(n)); break;
-      case PreDecrOpID:          put(cast<PreDecrOp>(n)); break;
-      case PostIncrOpID:         put(cast<PostIncrOp>(n)); break;
-      case PostDecrOpID:         put(cast<PostDecrOp>(n)); break;
-      case AddOpID:              put(cast<AddOp>(n)); break;
-      case SubtractOpID:         put(cast<SubtractOp>(n)); break;
-      case MultiplyOpID:         put(cast<MultiplyOp>(n)); break;
-      case DivideOpID:           put(cast<DivideOp>(n)); break;
-      case ModuloOpID:           put(cast<ModuloOp>(n)); break;
-      case BAndOpID:             put(cast<BAndOp>(n)); break;
-      case BOrOpID:              put(cast<BOrOp>(n)); break;
-      case BXorOpID:             put(cast<BXorOp>(n)); break;
-      case BNorOpID:             put(cast<BNorOp>(n)); break;
-      case NotOpID:              put(cast<NotOp>(n)); break;
-      case AndOpID:              put(cast<AndOp>(n)); break;
-      case OrOpID:               put(cast<OrOp>(n)); break;
-      case XorOpID:              put(cast<XorOp>(n)); break;
-      case NorOpID:              put(cast<NorOp>(n)); break;
-      case EqualityOpID:         put(cast<EqualityOp>(n)); break;
-      case InequalityOpID:       put(cast<InequalityOp>(n)); break;
-      case LessThanOpID:         put(cast<LessThanOp>(n)); break;
-      case GreaterThanOpID:      put(cast<GreaterThanOp>(n)); break;
-      case LessEqualOpID:        put(cast<LessEqualOp>(n)); break;
-      case GreaterEqualOpID:     put(cast<GreaterEqualOp>(n)); break;
-      case SelectOpID:           put(cast<SelectOp>(n)); break;
-      case SwitchOpID:           put(cast<SwitchOp>(n)); break;
-      case WhileOpID:            put(cast<WhileOp>(n)); break;
-      case UnlessOpID:           put(cast<UnlessOp>(n)); break;
-      case UntilOpID:            put(cast<UntilOp>(n)); break;
-      case LoopOpID:             put(cast<LoopOp>(n)); break;
-      case BreakOpID:            put(cast<BreakOp>(n)); break;
-      case ContinueOpID:         put(cast<ContinueOp>(n)); break;
-      case ReturnOpID:           put(cast<ReturnOp>(n)); break;
-      case ResultOpID:           put(cast<ResultOp>(n)); break;
-      case CallOpID:             put(cast<CallOp>(n)); break;
-      case StoreOpID:            put(cast<StoreOp>(n)); break;
-      case LoadOpID:             put(cast<LoadOp>(n)); break;
-      case ReferenceOpID:        put(cast<ReferenceOp>(n)); break;
-      case OpenOpID:             put(cast<OpenOp>(n)); break;
-      case CloseOpID:            put(cast<CloseOp>(n)); break;
-      case WriteOpID:            put(cast<WriteOp>(n)); break;
+      case AnyTypeID:              put(cast<AnyType>(n)); break;
+      case StringTypeID:           put(cast<StringType>(n)); break;
+      case BooleanTypeID:          put(cast<BooleanType>(n)); break;
+      case BundleID:               put(cast<Bundle>(n)); break;
+      case CharacterTypeID:        put(cast<CharacterType>(n)); break;
+      case IntegerTypeID:          put(cast<IntegerType>(n)); break;
+      case RangeTypeID:            put(cast<RangeType>(n)); break;
+      case EnumerationTypeID:      put(cast<EnumerationType>(n)); break;
+      case RealTypeID:             put(cast<RealType>(n)); break;
+      case OctetTypeID:            put(cast<OctetType>(n)); break;
+      case OpaqueTypeID:           put(cast<OpaqueType>(n)); break;
+      case PointerTypeID:          put(cast<PointerType>(n)); break;
+      case ArrayTypeID:            put(cast<ArrayType>(n)); break;
+      case VectorTypeID:           put(cast<VectorType>(n)); break;
+      case StructureTypeID:        put(cast<StructureType>(n)); break;
+      case SignatureTypeID:        put(cast<SignatureType>(n)); break;
+      case ConstantAnyID:          put(cast<ConstantAny>(n)); break;
+      case ConstantBooleanID:      put(cast<ConstantBoolean>(n)); break;
+      case ConstantCharacterID:    put(cast<ConstantCharacter>(n)); break;
+      case ConstantEnumeratorID:   put(cast<ConstantEnumerator>(n)); break;
+      case ConstantOctetID:        put(cast<ConstantOctet>(n)); break;
+      case ConstantIntegerID:      put(cast<ConstantInteger>(n)); break;
+      case ConstantRealID:         put(cast<ConstantReal>(n)); break;
+      case ConstantStringID:       put(cast<ConstantString>(n)); break;
+      case ConstantPointerID:      put(cast<ConstantPointer>(n)); break;
+      case ConstantArrayID:        put(cast<ConstantArray>(n)); break;
+      case ConstantVectorID:       put(cast<ConstantVector>(n)); break;
+      case ConstantStructureID:    put(cast<ConstantStructure>(n)); break;
+      case ConstantContinuationID: put(cast<ConstantContinuation>(n)); break;
+      case VariableID:             put(cast<Variable>(n)); break;
+      case FunctionID:             put(cast<Function>(n)); break;
+      case ProgramID:              put(cast<Program>(n)); break;
+      case BlockID:                put(cast<Block>(n)); break;
+      case AutoVarOpID:            put(cast<AutoVarOp>(n)); break;
+      case NegateOpID:             put(cast<NegateOp>(n)); break;
+      case ComplementOpID:         put(cast<ComplementOp>(n)); break;
+      case PreIncrOpID:            put(cast<PreIncrOp>(n)); break;
+      case PreDecrOpID:            put(cast<PreDecrOp>(n)); break;
+      case PostIncrOpID:           put(cast<PostIncrOp>(n)); break;
+      case PostDecrOpID:           put(cast<PostDecrOp>(n)); break;
+      case AddOpID:                put(cast<AddOp>(n)); break;
+      case SubtractOpID:           put(cast<SubtractOp>(n)); break;
+      case MultiplyOpID:           put(cast<MultiplyOp>(n)); break;
+      case DivideOpID:             put(cast<DivideOp>(n)); break;
+      case ModuloOpID:             put(cast<ModuloOp>(n)); break;
+      case BAndOpID:               put(cast<BAndOp>(n)); break;
+      case BOrOpID:                put(cast<BOrOp>(n)); break;
+      case BXorOpID:               put(cast<BXorOp>(n)); break;
+      case BNorOpID:               put(cast<BNorOp>(n)); break;
+      case NotOpID:                put(cast<NotOp>(n)); break;
+      case AndOpID:                put(cast<AndOp>(n)); break;
+      case OrOpID:                 put(cast<OrOp>(n)); break;
+      case XorOpID:                put(cast<XorOp>(n)); break;
+      case NorOpID:                put(cast<NorOp>(n)); break;
+      case EqualityOpID:           put(cast<EqualityOp>(n)); break;
+      case InequalityOpID:         put(cast<InequalityOp>(n)); break;
+      case LessThanOpID:           put(cast<LessThanOp>(n)); break;
+      case GreaterThanOpID:        put(cast<GreaterThanOp>(n)); break;
+      case LessEqualOpID:          put(cast<LessEqualOp>(n)); break;
+      case GreaterEqualOpID:       put(cast<GreaterEqualOp>(n)); break;
+      case SelectOpID:             put(cast<SelectOp>(n)); break;
+      case SwitchOpID:             put(cast<SwitchOp>(n)); break;
+      case WhileOpID:              put(cast<WhileOp>(n)); break;
+      case UnlessOpID:             put(cast<UnlessOp>(n)); break;
+      case UntilOpID:              put(cast<UntilOp>(n)); break;
+      case LoopOpID:               put(cast<LoopOp>(n)); break;
+      case BreakOpID:              put(cast<BreakOp>(n)); break;
+      case ContinueOpID:           put(cast<ContinueOp>(n)); break;
+      case ReturnOpID:             put(cast<ReturnOp>(n)); break;
+      case ResultOpID:             put(cast<ResultOp>(n)); break;
+      case CallOpID:               put(cast<CallOp>(n)); break;
+      case StoreOpID:              put(cast<StoreOp>(n)); break;
+      case LoadOpID:               put(cast<LoadOp>(n)); break;
+      case ReferenceOpID:          put(cast<ReferenceOp>(n)); break;
+      case OpenOpID:               put(cast<OpenOp>(n)); break;
+      case CloseOpID:              put(cast<CloseOp>(n)); break;
+      case WriteOpID:              put(cast<WriteOp>(n)); break;
       default:
         hlvmDeadCode("Unknown Type");
         break;

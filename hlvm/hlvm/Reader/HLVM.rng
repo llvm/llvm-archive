@@ -234,7 +234,7 @@
       <zeroOrMore>
         <ref name="import.elem"/>
       </zeroOrMore>
-      <zeroOrMore>
+      <oneOrMore>
         <choice>
           <ref name="array.elem"/>
           <ref name="constant.elem"/>
@@ -253,7 +253,7 @@
           <ref name="variable.elem"/>
           <ref name="vector.elem"/>
         </choice>
-      </zeroOrMore>
+      </oneOrMore>
     </element>
   </define>
 
@@ -446,7 +446,6 @@
   <define name="Literal.pat">
     <choice>
       <ref name="Boolean_Literal.pat"/>
-      <ref name="char.elem"/>
       <ref name="Integer_Literal.pat"/>
       <ref name="Real_Literal.pat"/>
       <ref name="char.elem"/>
@@ -610,7 +609,7 @@
         </attribute>
       </optional>
       <optional>
-        <attribute name="initializer">
+        <attribute name="init">
           <ref name="Identifier.type"/>
         </attribute>
       </optional>

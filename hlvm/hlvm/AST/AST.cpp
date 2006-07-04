@@ -630,7 +630,7 @@ AST::new_ConstantString(
 ConstantPointer* 
 AST::new_ConstantPointer(
   const std::string& name,
-  ConstantValue* referent,
+  Constant* referent,
   const Locator* loc
 )
 {
@@ -645,7 +645,7 @@ ConstantArray*
 AST::new_ConstantArray(
   const std::string& name,
   const std::vector<ConstantValue*>& vals,
-  const ArrayType* VT,
+  const ArrayType* AT,
   const Locator* loc
 )
 {
@@ -655,10 +655,9 @@ AST::new_ConstantArray(
   for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
        E = vals.end(); I != E; ++I ) 
   {
-    hlvmAssert((*I)->getType() == VT->getElementType());
     result->addConstant(*I);
   }
-  result->setType(VT);
+  result->setType(AT);
   return result;
 }
 
@@ -676,7 +675,6 @@ AST::new_ConstantVector(
   for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
        E = vals.end(); I != E; ++I ) 
   {
-    hlvmAssert((*I)->getType() == AT->getElementType());
     result->addConstant(*I);
   }
   result->setType(AT);
@@ -696,6 +694,30 @@ AST::new_ConstantStructure(
   result->setName(name);
   hlvmAssert(ST->size() == vals.size());
   StructureType::const_iterator STI = ST->begin();
+  for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
+       E = vals.end(); I != E; ++I ) 
+  {
+    hlvmAssert(STI != ST->end());
+    result->addConstant(*I);
+    ++STI;
+  }
+  result->setType(ST);
+  return result;
+}
+
+ConstantContinuation* 
+AST::new_ConstantContinuation(
+  const std::string& name,
+  const std::vector<ConstantValue*>& vals,
+  const ContinuationType* ST,
+  const Locator* loc
+)
+{
+  ConstantContinuation* result = new ConstantContinuation();
+  result->setLocator(loc);
+  result->setName(name);
+  hlvmAssert(ST->size() == vals.size());
+  ContinuationType::const_iterator STI = ST->begin();
   for (std::vector<ConstantValue*>::const_iterator I = vals.begin(),
        E = vals.end(); I != E; ++I ) 
   {

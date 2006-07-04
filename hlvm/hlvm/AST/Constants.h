@@ -370,7 +370,7 @@ class ConstantPointer : public ConstantValue
   /// @name Constructors
   /// @{
   protected:
-    ConstantPointer(const ConstantValue* cv) 
+    ConstantPointer(const Constant* cv) 
       : ConstantValue(ConstantPointerID)  { value = cv; }
     virtual ~ConstantPointer();
 
@@ -378,7 +378,7 @@ class ConstantPointer : public ConstantValue
   /// @name Accessors
   /// @{
   public:
-    const ConstantValue* getValue() const { return value; }
+    const Constant* getValue() const { return value; }
     static inline bool classof(const ConstantPointer*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(ConstantPointerID); }
@@ -387,7 +387,7 @@ class ConstantPointer : public ConstantValue
   /// @name Data
   /// @{
   public:
-    const ConstantValue* value;
+    const Constant* value;
   /// @}
   friend class AST;
 };

@@ -144,6 +144,7 @@ class Bundle : public Documentable
   protected:
     std::string  name;      ///< The name for this bundle
     TypeList     types;     ///< The list of types
+    TypeList     unresolvedTypes; ///< The list of forward referenced types
     ValueList    values;    ///< The list of values in insertion order
     CValList     cvals;     ///< The list of constant values
     LinkableList linkables; ///< The list of linkables

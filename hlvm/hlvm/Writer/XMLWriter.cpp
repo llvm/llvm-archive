@@ -98,10 +98,15 @@ private:
 
     inline void putHeader();
     inline void putFooter();
-    inline void putDoc(Documentable* node);
+    inline void putDoc(const Documentable* node);
+
+    void putConstantValue(const ConstantValue* CV,bool nested);
 
     template<class NodeClass>
-    inline void put(NodeClass* nc);
+    inline void put(const NodeClass* nc);
+
+    template<class NodeClass>
+    inline void put(const NodeClass* nc, bool nested);
 
     virtual void handle(Node* n,Pass::TraversalKinds mode);
 
@@ -156,7 +161,7 @@ XMLWriterImpl::WriterPass::putFooter()
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(Documentation* b)
+XMLWriterImpl::WriterPass::put(const Documentation* b)
 {
   startElement("doc");
   const std::string& data = b->getDoc();
@@ -166,7 +171,7 @@ XMLWriterImpl::WriterPass::put(Documentation* b)
 }
 
 inline void
-XMLWriterImpl::WriterPass::putDoc(Documentable* node)
+XMLWriterImpl::WriterPass::putDoc(const Documentable* node)
 {
   Documentation* theDoc = node->getDoc();
   if (theDoc) {
@@ -175,81 +180,72 @@ XMLWriterImpl::WriterPass::putDoc(Documentable* node)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(AnyType* t)
+XMLWriterImpl::WriterPass::put(const AnyType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   startElement("intrinsic");
+  writeAttribute("id",t->getName());
   writeAttribute("is","any");
-  endElement();
+  putDoc(t);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(StringType* t)
+XMLWriterImpl::WriterPass::put(const StringType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   startElement("intrinsic");
+  writeAttribute("id",t->getName());
   writeAttribute("is","string");
-  endElement();
+  putDoc(t);
 }
 
 template<>void
-XMLWriterImpl::WriterPass::put(BooleanType* t)
+XMLWriterImpl::WriterPass::put(const BooleanType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   startElement("intrinsic");
+  writeAttribute("id",t->getName());
   writeAttribute("is","bool");
-  endElement();
+  putDoc(t);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(CharacterType* t)
+XMLWriterImpl::WriterPass::put(const CharacterType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   startElement("intrinsic");
+  writeAttribute("id",t->getName());
   writeAttribute("is","char");
-  endElement();
+  putDoc(t);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(IntegerType* t)
+XMLWriterImpl::WriterPass::put(const IntegerType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
     startElement("intrinsic");
+    writeAttribute("id",t->getName());
     writeAttribute("is",primName);
   } else if (t->isSigned()) {
     startElement("signed");
+    writeAttribute("id",t->getName());
     writeAttribute("bits", llvm::utostr(t->getBits()));
   } else {
     startElement("unsigned");
+    writeAttribute("id",t->getName());
     writeAttribute("bits", llvm::utostr(t->getBits()));
   }
-  endElement();
+  putDoc(t);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(RangeType* t)
+XMLWriterImpl::WriterPass::put(const RangeType* t)
 {
   startElement("range");
   writeAttribute("id",t->getName());
   writeAttribute("min",t->getMin());
   writeAttribute("max",t->getMax());
-  putDoc(t);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(EnumerationType* t)
+XMLWriterImpl::WriterPass::put(const EnumerationType* t)
 {
   startElement("enumeration");
   writeAttribute("id",t->getName());
@@ -264,37 +260,33 @@ XMLWriterImpl::WriterPass::put(EnumerationType* t)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(RealType* t)
+XMLWriterImpl::WriterPass::put(const RealType* t)
 {
-  startElement("atom");
-  writeAttribute("id",t->getName());
-  putDoc(t);
   const char* primName = t->getPrimitiveName();
   if (primName) {
     startElement("intrinsic");
+    writeAttribute("id",t->getName());
     writeAttribute("is",primName);
-    endElement();
   } else {
     startElement("real");
+    writeAttribute("id",t->getName());
     writeAttribute("mantissa", llvm::utostr(t->getMantissa()));
     writeAttribute("exponent", llvm::utostr(t->getExponent()));
-    endElement();
   }
-}
-
-template<> void
-XMLWriterImpl::WriterPass::put(OctetType* t)
-{
-  startElement("atom");
-  writeAttribute("id",t->getName());
   putDoc(t);
-  startElement("intrinsic");
-  writeAttribute("is","octet");
-  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(OpaqueType* op)
+XMLWriterImpl::WriterPass::put(const OctetType* t)
+{
+  startElement("intrinsic");
+  writeAttribute("id",t->getName());
+  writeAttribute("is","octet");
+  putDoc(t);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const OpaqueType* op)
 {
   startElement("opaque");
   writeAttribute("id",op->getName());
@@ -302,7 +294,7 @@ XMLWriterImpl::WriterPass::put(OpaqueType* op)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(PointerType* t)
+XMLWriterImpl::WriterPass::put(const PointerType* t)
 {
   startElement("pointer");
   writeAttribute("id", t->getName());
@@ -311,7 +303,7 @@ XMLWriterImpl::WriterPass::put(PointerType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ArrayType* t)
+XMLWriterImpl::WriterPass::put(const ArrayType* t)
 {
   startElement("array");
   writeAttribute("id", t->getName());
@@ -321,7 +313,7 @@ XMLWriterImpl::WriterPass::put(ArrayType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(VectorType* t)
+XMLWriterImpl::WriterPass::put(const VectorType* t)
 {
   startElement("vector");
   writeAttribute("id", t->getName());
@@ -331,12 +323,13 @@ XMLWriterImpl::WriterPass::put(VectorType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(StructureType* t)
+XMLWriterImpl::WriterPass::put(const StructureType* t)
 {
   startElement("structure");
   writeAttribute("id",t->getName());
   putDoc(t);
-  for (StructureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+  for (StructureType::const_iterator I = t->begin(), E = t->end(); 
+       I != E; ++I) {
     startElement("field");
     Field* field = cast<Field>(*I);
     writeAttribute("id",field->getName());
@@ -347,7 +340,7 @@ XMLWriterImpl::WriterPass::put(StructureType* t)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(SignatureType* t)
+XMLWriterImpl::WriterPass::put(const SignatureType* t)
 {
   startElement("signature");
   writeAttribute("id",t->getName());
@@ -355,7 +348,8 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   if (t->isVarArgs())
     writeAttribute("varargs","true");
   putDoc(t);
-  for (SignatureType::iterator I = t->begin(), E = t->end(); I != E; ++I) {
+  for (SignatureType::const_iterator I = t->begin(), E = t->end(); I != E; ++I)
+  {
     startElement("arg");
     Parameter* param = cast<Parameter>(*I);
     writeAttribute("id",param->getName());
@@ -365,9 +359,8 @@ XMLWriterImpl::WriterPass::put(SignatureType* t)
   }
 }
 
-
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantAny* i)
+XMLWriterImpl::WriterPass::put<ConstantAny>(const ConstantAny* i, bool nested)
 {
   startElement("constant");
   writeAttribute("id",i->getName());
@@ -375,11 +368,13 @@ XMLWriterImpl::WriterPass::put(ConstantAny* i)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ConstantBoolean* i)
+XMLWriterImpl::WriterPass::put(const ConstantBoolean* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
   if (i->getValue())
     startElement("true");
   else
@@ -388,35 +383,53 @@ XMLWriterImpl::WriterPass::put(ConstantBoolean* i)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantCharacter* i)
+XMLWriterImpl::WriterPass::put(const ConstantCharacter* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("char");
+  writeString(i->getValue());
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantEnumerator* i)
+XMLWriterImpl::WriterPass::put(const ConstantEnumerator* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("enum");
+  writeString(i->getValue());
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantOctet* i)
+XMLWriterImpl::WriterPass::put(const ConstantOctet* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("octet");
+  unsigned char val = i->getValue();
+  writeString(llvm::utostr(val));
+  endElement();
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ConstantInteger* i)
+XMLWriterImpl::WriterPass::put(const ConstantInteger* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
   switch (i->getBase()) {
     case 2: startElement("bin"); break;
     case 8: startElement("oct"); break;
@@ -428,69 +441,126 @@ XMLWriterImpl::WriterPass::put(ConstantInteger* i)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantReal* r)
+XMLWriterImpl::WriterPass::put(const ConstantReal* r, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",r->getName());
-  writeAttribute("type",r->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",r->getName());
+    writeAttribute("type",r->getType()->getName());
+  }
   startElement("dbl");
   writeString(r->getValue());
   endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantString* t)
+XMLWriterImpl::WriterPass::put(const ConstantString* t, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",t->getName());
-  writeAttribute("type",t->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",t->getName());
+    writeAttribute("type",t->getType()->getName());
+  }
   startElement("string");
   writeString(t->getValue());
   endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantPointer* i)
+XMLWriterImpl::WriterPass::put(const ConstantPointer* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("ptr");
+  writeAttribute("to",i->getValue()->getName());
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantArray* i)
+XMLWriterImpl::WriterPass::put(const ConstantArray* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("arr");
+  for (ConstantArray::const_iterator I = i->begin(), E = i->end(); I != E; ++I)
+    putConstantValue(*I,true);
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantVector* i)
+XMLWriterImpl::WriterPass::put(const ConstantVector* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("vect");
+  for (ConstantArray::const_iterator I = i->begin(), E = i->end(); I != E; ++I)
+    putConstantValue(*I,true);
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantStructure* i)
+XMLWriterImpl::WriterPass::put(const ConstantStructure* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("struct");
+  for (ConstantStructure::const_iterator I = i->begin(), E = i->end(); 
+       I != E; ++I)
+    putConstantValue(*I,true);
+  endElement();
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ConstantContinuation* i)
+XMLWriterImpl::WriterPass::put(const ConstantContinuation* i, bool nested)
 {
-  startElement("constant");
-  writeAttribute("id",i->getName());
-  writeAttribute("type",i->getType()->getName());
+  if (!nested) {
+    startElement("constant");
+    writeAttribute("id",i->getName());
+    writeAttribute("type",i->getType()->getName());
+  }
+  startElement("cont");
+  for (ConstantContinuation::const_iterator I = i->begin(), E = i->end(); 
+       I != E; ++I)
+    putConstantValue(*I,true);
+  endElement();
+}
+
+inline void
+XMLWriterImpl::WriterPass::putConstantValue(const ConstantValue* V, bool nstd)
+{
+  switch (V->getID()) {
+    case ConstantAnyID:          put(cast<ConstantAny>(V),nstd); break;
+    case ConstantBooleanID:      put(cast<ConstantBoolean>(V),nstd); break;
+    case ConstantCharacterID:    put(cast<ConstantCharacter>(V),nstd); break;
+    case ConstantEnumeratorID:   put(cast<ConstantEnumerator>(V),nstd); break;
+    case ConstantOctetID:        put(cast<ConstantOctet>(V),nstd); break;
+    case ConstantIntegerID:      put(cast<ConstantInteger>(V),nstd); break;
+    case ConstantRealID:         put(cast<ConstantReal>(V),nstd); break;
+    case ConstantStringID:       put(cast<ConstantString>(V),nstd); break;
+    case ConstantPointerID:      put(cast<ConstantPointer>(V),nstd); break;
+    case ConstantArrayID:        put(cast<ConstantArray>(V),nstd); break;
+    case ConstantVectorID:       put(cast<ConstantVector>(V),nstd); break;
+    case ConstantStructureID:    put(cast<ConstantStructure>(V),nstd); break;
+    case ConstantContinuationID: put(cast<ConstantContinuation>(V),nstd); break;
+    default:
+      hlvmAssert(!"Invalid ConstantValue kind");
+  }
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(Variable* v)
+XMLWriterImpl::WriterPass::put(const Variable* v)
 {
   startElement("variable");
   writeAttribute("id",v->getName());
@@ -503,7 +573,7 @@ XMLWriterImpl::WriterPass::put(Variable* v)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(Function* f)
+XMLWriterImpl::WriterPass::put(const Function* f)
 {
   startElement("function");
   writeAttribute("id",f->getName());
@@ -513,7 +583,7 @@ XMLWriterImpl::WriterPass::put(Function* f)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(Program* p)
+XMLWriterImpl::WriterPass::put(const Program* p)
 {
   startElement("program");
   writeAttribute("id",p->getName());
@@ -521,7 +591,7 @@ XMLWriterImpl::WriterPass::put(Program* p)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(Block* b)
+XMLWriterImpl::WriterPass::put(const Block* b)
 {
   startElement("block");
   if (!b->getLabel().empty())
@@ -530,7 +600,7 @@ XMLWriterImpl::WriterPass::put(Block* b)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(AutoVarOp* av)
+XMLWriterImpl::WriterPass::put(const AutoVarOp* av)
 {
   startElement("autovar");
   writeAttribute("id",av->getName());
@@ -543,280 +613,280 @@ XMLWriterImpl::WriterPass::put(AutoVarOp* av)
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(NegateOp* op)
+XMLWriterImpl::WriterPass::put(const NegateOp* op)
 {
   startElement("neg");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ComplementOp* op)
+XMLWriterImpl::WriterPass::put(const ComplementOp* op)
 {
   startElement("cmpl");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(PreIncrOp* op)
+XMLWriterImpl::WriterPass::put(const PreIncrOp* op)
 {
   startElement("preinc");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(PreDecrOp* op)
+XMLWriterImpl::WriterPass::put(const PreDecrOp* op)
 {
   startElement("predec");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(PostIncrOp* op)
+XMLWriterImpl::WriterPass::put(const PostIncrOp* op)
 {
   startElement("postinc");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(PostDecrOp* op)
+XMLWriterImpl::WriterPass::put(const PostDecrOp* op)
 {
   startElement("postdec");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(AddOp* op)
+XMLWriterImpl::WriterPass::put(const AddOp* op)
 {
   startElement("add");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(SubtractOp* op)
+XMLWriterImpl::WriterPass::put(const SubtractOp* op)
 {
   startElement("sub");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(MultiplyOp* op)
+XMLWriterImpl::WriterPass::put(const MultiplyOp* op)
 {
   startElement("mul");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(DivideOp* op)
+XMLWriterImpl::WriterPass::put(const DivideOp* op)
 {
   startElement("div");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ModuloOp* op)
+XMLWriterImpl::WriterPass::put(const ModuloOp* op)
 {
   startElement("mod");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(BAndOp* op)
+XMLWriterImpl::WriterPass::put(const BAndOp* op)
 {
   startElement("band");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(BOrOp* op)
+XMLWriterImpl::WriterPass::put(const BOrOp* op)
 {
   startElement("bor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(BXorOp* op)
+XMLWriterImpl::WriterPass::put(const BXorOp* op)
 {
   startElement("bxor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(BNorOp* op)
+XMLWriterImpl::WriterPass::put(const BNorOp* op)
 {
   startElement("bnor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(NotOp* op)
+XMLWriterImpl::WriterPass::put(const NotOp* op)
 {
   startElement("not");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(AndOp* op)
+XMLWriterImpl::WriterPass::put(const AndOp* op)
 {
   startElement("and");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(OrOp* op)
+XMLWriterImpl::WriterPass::put(const OrOp* op)
 {
   startElement("or");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(XorOp* op)
+XMLWriterImpl::WriterPass::put(const XorOp* op)
 {
   startElement("xor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(NorOp* op)
+XMLWriterImpl::WriterPass::put(const NorOp* op)
 {
   startElement("nor");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(EqualityOp* op)
+XMLWriterImpl::WriterPass::put(const EqualityOp* op)
 {
   startElement("eq");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(InequalityOp* op)
+XMLWriterImpl::WriterPass::put(const InequalityOp* op)
 {
   startElement("ne");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(LessThanOp* op)
+XMLWriterImpl::WriterPass::put(const LessThanOp* op)
 {
   startElement("lt");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(GreaterThanOp* op)
+XMLWriterImpl::WriterPass::put(const GreaterThanOp* op)
 {
   startElement("gt");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(LessEqualOp* op)
+XMLWriterImpl::WriterPass::put(const LessEqualOp* op)
 {
   startElement("le");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(GreaterEqualOp* op)
+XMLWriterImpl::WriterPass::put(const GreaterEqualOp* op)
 {
   startElement("ge");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(SelectOp* op)
+XMLWriterImpl::WriterPass::put(const SelectOp* op)
 {
   startElement("select");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(SwitchOp* op) 
+XMLWriterImpl::WriterPass::put(const SwitchOp* op) 
 {
   startElement("switch");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(WhileOp* op) 
+XMLWriterImpl::WriterPass::put(const WhileOp* op) 
 {
   startElement("while");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(UnlessOp* op) 
+XMLWriterImpl::WriterPass::put(const UnlessOp* op) 
 {
   startElement("unless");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(UntilOp* op) 
+XMLWriterImpl::WriterPass::put(const UntilOp* op) 
 {
   startElement("until");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(LoopOp* op) 
+XMLWriterImpl::WriterPass::put(const LoopOp* op) 
 {
   startElement("loop");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(BreakOp* op)
+XMLWriterImpl::WriterPass::put(const BreakOp* op)
 {
   startElement("break");
   putDoc(op);
 }
 
 template<> void
-XMLWriterImpl::WriterPass::put(ContinueOp* op)
+XMLWriterImpl::WriterPass::put(const ContinueOp* op)
 {
   startElement("continue");
   putDoc(op);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ReturnOp* r)
+XMLWriterImpl::WriterPass::put(const ReturnOp* r)
 {
   startElement("ret");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ResultOp* r)
+XMLWriterImpl::WriterPass::put(const ResultOp* r)
 {
   startElement("result");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(CallOp* r)
+XMLWriterImpl::WriterPass::put(const CallOp* r)
 {
   startElement("call");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(StoreOp* r)
+XMLWriterImpl::WriterPass::put(const StoreOp* r)
 {
   startElement("store");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(LoadOp* r)
+XMLWriterImpl::WriterPass::put(const LoadOp* r)
 {
   startElement("load");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(ReferenceOp* r)
+XMLWriterImpl::WriterPass::put(const ReferenceOp* r)
 {
   startElement("ref");
   const Value* ref = r->getReferent();
@@ -834,28 +904,28 @@ XMLWriterImpl::WriterPass::put(ReferenceOp* r)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(OpenOp* r)
+XMLWriterImpl::WriterPass::put(const OpenOp* r)
 {
   startElement("open");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(WriteOp* r)
+XMLWriterImpl::WriterPass::put(const WriteOp* r)
 {
   startElement("write");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(CloseOp* r)
+XMLWriterImpl::WriterPass::put(const CloseOp* r)
 {
   startElement("close");
   putDoc(r);
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(Bundle* b)
+XMLWriterImpl::WriterPass::put(const Bundle* b)
 {
   startElement("bundle");
   writeAttribute("id",b->getName());
@@ -884,19 +954,20 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case VectorTypeID:           put(cast<VectorType>(n)); break;
       case StructureTypeID:        put(cast<StructureType>(n)); break;
       case SignatureTypeID:        put(cast<SignatureType>(n)); break;
-      case ConstantAnyID:          put(cast<ConstantAny>(n)); break;
-      case ConstantBooleanID:      put(cast<ConstantBoolean>(n)); break;
-      case ConstantCharacterID:    put(cast<ConstantCharacter>(n)); break;
-      case ConstantEnumeratorID:   put(cast<ConstantEnumerator>(n)); break;
-      case ConstantOctetID:        put(cast<ConstantOctet>(n)); break;
-      case ConstantIntegerID:      put(cast<ConstantInteger>(n)); break;
-      case ConstantRealID:         put(cast<ConstantReal>(n)); break;
-      case ConstantStringID:       put(cast<ConstantString>(n)); break;
-      case ConstantPointerID:      put(cast<ConstantPointer>(n)); break;
-      case ConstantArrayID:        put(cast<ConstantArray>(n)); break;
-      case ConstantVectorID:       put(cast<ConstantVector>(n)); break;
-      case ConstantStructureID:    put(cast<ConstantStructure>(n)); break;
-      case ConstantContinuationID: put(cast<ConstantContinuation>(n)); break;
+      case ConstantAnyID:          
+      case ConstantBooleanID:      
+      case ConstantCharacterID:    
+      case ConstantEnumeratorID:   
+      case ConstantOctetID:        
+      case ConstantIntegerID:      
+      case ConstantRealID:         
+      case ConstantStringID:       
+      case ConstantPointerID:      
+      case ConstantArrayID:        
+      case ConstantVectorID:       
+      case ConstantStructureID:    
+      case ConstantContinuationID: 
+        putConstantValue(cast<ConstantValue>(n),false); break;
       case VariableID:             put(cast<Variable>(n)); break;
       case FunctionID:             put(cast<Function>(n)); break;
       case ProgramID:              put(cast<Program>(n)); break;

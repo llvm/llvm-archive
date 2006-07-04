@@ -53,6 +53,10 @@ cl::opt<unsigned>
       cl::value_desc("num"));
 
 cl::opt<unsigned>
+  TypeComplexity("type-complexity", cl::desc("Specify complexity of types"),
+      cl::value_desc("0-20"), cl::init(10));
+
+cl::opt<unsigned>
   Seed("seed", cl::desc("Specify random number generator seed"),
       cl::value_desc("num"));
 
@@ -68,6 +72,8 @@ unsigned line = 0;
 typedef std::vector<hlvm::Value*> ValueList;
 typedef std::map<const hlvm::Type*,ValueList> TypeValueMap;
 TypeValueMap values;
+typedef std::vector<hlvm::Type*> TypeList;
+TypeList types;
 
 inline hlvm::Locator* 
 getLocator()
@@ -83,7 +89,7 @@ int64_t randRange(int64_t low, int64_t high)
   else if (low > high)
     return int64_t(random()) % (low-high) + high;
   else
-    return 1;
+    return low;
 }
 
 inline
@@ -94,7 +100,7 @@ uint64_t randRange(uint64_t low, uint64_t high, bool discriminate)
   else if (low > high)
     return uint64_t(random()) % (low-high) + high;
   else
-    return 1;
+    return low;
 }
 
 hlvm::Type*
@@ -112,12 +118,16 @@ genTypeLimited(unsigned limit)
     case UInt16TypeID:
     case UInt32TypeID:
     case UInt64TypeID:
+      return ast->getPrimitiveType(id);
     case UInt128TypeID:
+      return ast->getPrimitiveType(UInt64TypeID);
     case SInt8TypeID:
     case SInt16TypeID:
     case SInt32TypeID:
     case SInt64TypeID:
+      return ast->getPrimitiveType(id);
     case SInt128TypeID:
+      return ast->getPrimitiveType(UInt64TypeID);
     case Float32TypeID:
     case Float44TypeID:
     case Float64TypeID:
@@ -148,8 +158,8 @@ genTypeLimited(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "range_" + utostr(line);
-      uint64_t limit = randRange(0,5000000000LL);
-      result = ast->new_RangeType(name,-int64_t(limit),int64_t(limit),loc);
+      int64_t limit = randRange(0LL,5000000000LL);
+      result = ast->new_RangeType(name,-limit,limit,loc);
       break;
     }
     case EnumerationTypeID:
@@ -179,7 +189,7 @@ genTypeLimited(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "array_" + utostr(line);
       result = ast->new_ArrayType(name,
-          genTypeLimited(limit),randRange(1,Complexity),loc);
+          genTypeLimited(limit),randRange(1,Size),loc);
       break;
     }
     case VectorTypeID:
@@ -187,7 +197,7 @@ genTypeLimited(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "vector_" + utostr(line);
       result = ast->new_VectorType(
-          name,genTypeLimited(limit),randRange(1,Complexity),loc);
+          name,genTypeLimited(limit),randRange(1,Size),loc);
       break;
     }
     case OpaqueTypeID:
@@ -198,7 +208,8 @@ genTypeLimited(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "struct_" + utostr(line);
       StructureType* S = ast->new_StructureType(name,loc);
-      for (unsigned i = 0; i < Complexity; ++i) {
+      unsigned numFields = randRange(1,Size,true);
+      for (unsigned i = 0; i < numFields; ++i) {
         Field* fld = ast->new_Field(name+"_"+utostr(i),
             genTypeLimited(limit),getLocator());
         S->addField(fld);
@@ -214,13 +225,19 @@ genTypeLimited(unsigned limit)
   return result;
 }
 
-hlvm::Type*
+Type*
 genType()
 {
-  return genTypeLimited(Complexity);
+  bool shouldGenNewType = randRange(0,20) < TypeComplexity;
+  if (types.empty() || shouldGenNewType) {
+    Type* Ty = genTypeLimited(Complexity);
+    types.push_back(Ty);
+    return Ty;
+  }
+  return types[ randRange(0,types.size()-1) ];
 }
 
-hlvm::Value*
+Value*
 genValue(const hlvm::Type* Ty, bool is_constant = false)
 {
   if (!is_constant && randRange(0,Complexity) < Complexity/2) {
@@ -228,7 +245,10 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     TypeValueMap::iterator VI = values.find(Ty);
     if (VI != values.end()) {
       ValueList& VL = VI->second;
-      return VL[ randRange(0,VL.size()-1) ];
+      unsigned index = randRange(0,VL.size()-1,true);
+      Value* result = VL[index];
+      hlvmAssert(result->getType() == Ty);
+      return result;
     }
   }
 
@@ -245,8 +265,10 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
     }
     case CharacterTypeID:
     {
+      std::string val;
+      val += char(randRange(35,126));
       C = ast->new_ConstantCharacter(
-        std::string("cchar_") + utostr(line), "a", loc);
+        std::string("cchar_") + utostr(line), val, loc);
       break;
     }
     case OctetTypeID:
@@ -459,6 +481,7 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
   if (is_constant || (randRange(0,Complexity*Size) < (Complexity*Size)/2))
     result = C;
   else {
+    C->setParent(bundle);
     Variable* var = ast->new_Variable(C->getName()+"_var",C->getType(),loc);
     var->setIsConstant(false);
     var->setInitializer(C);
@@ -541,7 +564,7 @@ genFunction(Type* resultType, unsigned numArgs)
   ret->setParent(B);
   
   // Install the function in the value map
-  values[resultType].push_back(F);
+  values[sig].push_back(F);
 
   return F;
 }

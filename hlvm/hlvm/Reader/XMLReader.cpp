@@ -114,12 +114,13 @@ public:
 
   inline xmlNodePtr   checkDoc(xmlNodePtr cur, Documentable* node);
 
-  Constant*      parseLiteralConstant(xmlNodePtr& cur, const std::string& name,
+  ConstantValue* parseLiteralConstant(xmlNodePtr& cur, const std::string& name,
     const Type* Ty);
   Constant*      parseConstant      (xmlNodePtr& cur);
   Operator*      parseOperator      (xmlNodePtr& cur);
   void           parseTree          ();
-  Type*          parseAtom          (xmlNodePtr& cur);
+  Type*          parseIntrinsic     (xmlNodePtr& cur);
+  Type*          parseInteger       (xmlNodePtr& cur, bool isSigned);
 
   template<class OpClass>
   OpClass*       parse(xmlNodePtr& cur);
@@ -388,7 +389,7 @@ XMLReaderImpl::getType(const std::string& name )
   return Ty;
 }
 
-Constant*
+ConstantValue*
 XMLReaderImpl::parseLiteralConstant(
     xmlNodePtr& cur, 
     const std::string& name,
@@ -403,7 +404,7 @@ XMLReaderImpl::parseLiteralConstant(
   // skip over blank text to find next element
   skipBlanks(cur);
 
-  Constant* C = 0;
+  ConstantValue* C = 0;
   const char* prefix = 0;
   std::string actualName(name);
   int token = getToken(cur->name);
@@ -430,6 +431,17 @@ XMLReaderImpl::parseLiteralConstant(
       std::string name = actualName.empty() ? std::string("bool_") + 
         (value?"true_":"false") : actualName;
       C = ast->new_ConstantBoolean(name, value, getLocator(cur));
+      break;
+    }
+    case TKN_char:
+    {
+      hlvmAssert(Ty->is(CharacterTypeID));
+      std::string buffer;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,buffer);
+      std::string name= actualName.empty() ? 
+        std::string("char_") + buffer : actualName;
+      C = ast->new_ConstantCharacter(name, buffer, getLocator(cur));
       break;
     }
     case TKN_bin:
@@ -470,6 +482,80 @@ XMLReaderImpl::parseLiteralConstant(
       std::string name = actualName.empty() ? std::string("str_") + value :
           actualName;
       C =  ast->new_ConstantString(name,value,getLocator(cur));
+      break;
+    }
+    case TKN_ptr:
+    {
+      std::string id = getAttribute(cur,"id");
+      std::string name = actualName.empty() ? std::string("ptr_") + id :
+          actualName;
+      Constant* referent =  bundle->find_cval(id);
+      // Didn't find a constant? Try a linkable
+      if (!referent)
+        referent = bundle->find_linkable(id);
+      C = ast->new_ConstantPointer(name,referent,loc);
+      break;
+    }
+    case TKN_arr:
+    {
+      const ArrayType* AT = llvm::cast<ArrayType>(Ty);
+      const Type* ElemType = AT->getElementType();
+      xmlNodePtr child = cur->children;
+      std::vector<ConstantValue*> elems;
+      while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+        ConstantValue* elem = parseLiteralConstant(child,"",ElemType);
+        elems.push_back(elem);
+        child = child->next;
+      }
+      std::string name = actualName.empty() ? std::string("arr") : actualName;
+      C = ast->new_ConstantArray(name,elems,AT,getLocator(cur));
+      break;
+    }
+    case TKN_vect:
+    {
+      const VectorType* VT = llvm::cast<VectorType>(Ty);
+      const Type* ElemType = VT->getElementType();
+      xmlNodePtr child = cur->children;
+      std::vector<ConstantValue*> elems;
+      while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+        ConstantValue* elem = parseLiteralConstant(child,"",ElemType);
+        elems.push_back(elem);
+        child = child->next;
+      }
+      std::string name = actualName.empty() ? std::string("vec") : actualName;
+      C = ast->new_ConstantVector(name,elems,VT,getLocator(cur));
+      break;
+    }
+    case TKN_struct:
+    {
+      const StructureType* ST = llvm::cast<StructureType>(Ty);
+      xmlNodePtr child = cur->children;
+      std::vector<ConstantValue*> fields;
+      StructureType::const_iterator I = ST->begin();
+      while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+        ConstantValue* field = parseLiteralConstant(child,"",(*I)->getType());
+        fields.push_back(field);
+        child = child->next;
+        ++I;
+      }
+      std::string name = actualName.empty() ? std::string("struct") :actualName;
+      C = ast->new_ConstantStructure(name,fields,ST,getLocator(cur));
+      break;
+    }
+    case TKN_cont:
+    {
+      const ContinuationType* CT = llvm::cast<ContinuationType>(Ty);
+      xmlNodePtr child = cur->children;
+      std::vector<ConstantValue*> fields;
+      ContinuationType::const_iterator I = CT->begin();
+      while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+        ConstantValue* field = parseLiteralConstant(child,"",(*I)->getType());
+        fields.push_back(field);
+        child = child->next;
+        ++I;
+      }
+      std::string name = actualName.empty() ? std::string("struct") :actualName;
+      C = ast->new_ConstantContinuation(name,fields,CT,getLocator(cur));
       break;
     }
     default:
@@ -527,6 +613,84 @@ XMLReaderImpl::checkDoc(xmlNodePtr cur, Documentable* node)
     return child->next;
   }
   return child;
+}
+
+Type*     
+XMLReaderImpl::parseIntrinsic(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  const char* is = getAttribute(cur,"is");
+  xmlNodePtr child = cur->children;
+  Documentation* theDoc = parse<Documentation>(child);
+  Type* result = create_builtin_type(ast,is,name,loc);
+  if (result) {
+    if (theDoc)
+      result->setDoc(theDoc);
+  } else
+    error(loc,"Invalid intrinsic kind");
+  return result;
+}
+
+Type*
+XMLReaderImpl::parseInteger(xmlNodePtr& cur, bool isSigned)
+{
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  const char* bits = getAttribute(cur,"bits");
+  xmlNodePtr child = cur->children;
+  Documentation* theDoc = parse<Documentation>(child);
+  if (bits) {
+    uint64_t numBits = recognize_nonNegativeInteger(bits);
+    IntegerType* result = ast->new_IntegerType(name,numBits,isSigned,loc);
+    if (theDoc)
+      result->setDoc(theDoc);
+    return result;
+  }
+  error(loc,"Invalid integer specificaiton");
+  return 0;
+}
+
+template<> RangeType*
+XMLReaderImpl::parse<RangeType>(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  const char* min = getAttribute(cur, "min");
+  const char* max = getAttribute(cur, "max");
+  xmlNodePtr child = cur->children;
+  Documentation* theDoc = parse<Documentation>(child);
+  if (min && max) {
+    int64_t minVal = recognize_Integer(min);
+    int64_t maxVal = recognize_Integer(max);
+    RangeType* result = ast->new_RangeType(name,minVal,maxVal,loc);
+    if (theDoc)
+      result->setDoc(theDoc);
+    return result;
+  }
+  error(loc,"Invalid min/max specification");
+  return 0;
+}
+
+template<> RealType*
+XMLReaderImpl::parse<RealType>(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  const char* mantissa = getAttribute(cur, "mantissa");
+  const char* exponent = getAttribute(cur, "exponent");
+  xmlNodePtr child = cur->children;
+  Documentation* theDoc = parse<Documentation>(child);
+  if (mantissa && exponent) {
+    int32_t mantVal = recognize_nonNegativeInteger(mantissa);
+    int32_t expoVal = recognize_nonNegativeInteger(exponent);
+    RealType* result = ast->new_RealType(name,mantVal,expoVal,loc);
+    if (theDoc)
+      result->setDoc(theDoc);
+    return result;
+  }
+  error(loc,"Invalid mantissa/exponent specification");
+  return 0;
 }
 
 template<> EnumerationType*
@@ -944,19 +1108,22 @@ XMLReaderImpl::parse<Bundle>(xmlNodePtr& cur)
         break;
       }
       case TKN_import      : { n = parse<Import>(child); break; }
-      case TKN_bundle      : { n = parse<Bundle>(child); break; }
-      case TKN_atom        : { n = parseAtom(child); break; }
-      case TKN_enumeration : { n = parse<EnumerationType>(child); break; }
-      case TKN_pointer     : { n = parse<PointerType>(child); break; }
       case TKN_array       : { n = parse<ArrayType>(child); break; }
-      case TKN_vector      : { n = parse<VectorType>(child); break; }
-      case TKN_structure   : { n = parse<StructureType>(child); break; }
-      case TKN_signature   : { n = parse<SignatureType>(child); break; }
-      case TKN_opaque      : { n = parse<OpaqueType>(child); break; }
       case TKN_constant    : { n = parseConstant(child); break; }
-      case TKN_variable    : { n = parse<Variable>(child); break; }
-      case TKN_program     : { n = parse<Program>(child); break; }
+      case TKN_enumeration : { n = parse<EnumerationType>(child); break; }
       case TKN_function    : { n = parse<Function>(child); break; }
+      case TKN_intrinsic   : { n = parseIntrinsic(child); break; }
+      case TKN_opaque      : { n = parse<OpaqueType>(child); break; }
+      case TKN_pointer     : { n = parse<PointerType>(child); break; }
+      case TKN_program     : { n = parse<Program>(child); break; }
+      case TKN_range       : { n = parse<RangeType>(child); break; }
+      case TKN_real        : { n = parse<RealType>(child); break; }
+      case TKN_signature   : { n = parse<SignatureType>(child); break; }
+      case TKN_signed      : { n = parseInteger(child,true); break; }
+      case TKN_structure   : { n = parse<StructureType>(child); break; }
+      case TKN_unsigned    : { n = parseInteger(child,false); break; }
+      case TKN_variable    : { n = parse<Variable>(child); break; }
+      case TKN_vector      : { n = parse<VectorType>(child); break; }
       default:
       {
         hlvmDeadCode("Invalid content for bundle");
@@ -968,76 +1135,6 @@ XMLReaderImpl::parse<Bundle>(xmlNodePtr& cur)
     child = child->next;
   }
   return bundle;
-}
-
-Type*     
-XMLReaderImpl::parseAtom(xmlNodePtr& cur)
-{
-  hlvmAssert(getToken(cur->name)==TKN_atom);
-  Locator* loc = getLocator(cur);
-  std::string name = getAttribute(cur,"id");
-  xmlNodePtr child = cur->children;
-  Documentation* theDoc = parse<Documentation>(child);
-  child = (theDoc==0 ? child : child->next );
-  Type* result = 0;
-  if (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
-    int tkn = getToken(child->name);
-    switch (tkn) {
-      case TKN_intrinsic: {
-        const char* is = getAttribute(child,"is");
-        result = create_builtin_type(ast,is,name,loc);
-        if (!result)
-          error(loc,"Invalid intrinsic kind");
-        break;
-      }
-      case TKN_signed: {
-        const char* bits = getAttribute(child,"bits");
-        if (bits) {
-          uint64_t numBits = recognize_nonNegativeInteger(bits);
-          result = ast->new_IntegerType(name,numBits,/*signed=*/true,loc);
-        }
-        break;
-      }
-      case TKN_unsigned: {
-        const char* bits = getAttribute(child,"bits");
-        if (bits) {
-          uint64_t numBits = recognize_nonNegativeInteger(bits);
-          result = ast->new_IntegerType(name,numBits,/*signed=*/false,loc);
-        }
-        break;
-      }      
-      case TKN_range: {
-        const char* min = getAttribute(child, "min");
-        const char* max = getAttribute(child, "max");
-        if (min && max) {
-          int64_t minVal = recognize_Integer(min);
-          int64_t maxVal = recognize_Integer(max);
-          result = ast->new_RangeType(name,minVal,maxVal,loc);
-        }
-        break;
-      }
-      case TKN_real: {
-        const char* mantissa = getAttribute(child, "mantissa");
-        const char* exponent = getAttribute(child, "exponent");
-        if (mantissa && exponent) {
-          int32_t mantVal = recognize_nonNegativeInteger(mantissa);
-          int32_t expoVal = recognize_nonNegativeInteger(exponent);
-          result = ast->new_RealType(name,mantVal,expoVal,loc);
-        }
-        break;
-      }
-      default:
-        error(loc, "Invalid content for atom");
-        break;
-    }
-    if (result) {
-      if (theDoc)
-        result->setDoc(theDoc);
-      return result;
-    }
-  }
-  error(loc,"Atom definition element expected");
-  return 0;
 }
 
 Operator*

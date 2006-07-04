@@ -527,7 +527,8 @@ class Documentable : public Node
   /// @{
   public:
     /// Get the name of the node
-    inline Documentation* getDoc() { return doc; }
+    inline Documentation* getDoc() const { 
+      return const_cast<Documentation*>(doc); }
 
     static inline bool classof(const Documentable*) { return true; }
     static inline bool classof(const Node* N) { return N->isDocumentable(); }

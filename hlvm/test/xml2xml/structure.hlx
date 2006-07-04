@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
-    <atom id="someType">
-      <intrinsic is="any"/>
-    </atom>
+    <intrinsic id="someType" is="any"/>
     <structure id="struct1">
       <field id="field1" type="someType"/>
     </structure>

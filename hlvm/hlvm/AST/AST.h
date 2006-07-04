@@ -483,7 +483,7 @@ class AST : public Node
     /// Create a new ConstantPointer node.
     ConstantPointer* new_ConstantPointer(
       const std::string& name,  ///< The name of the constant
-      ConstantValue* referent,          ///< The value pointed to
+      Constant* referent,       ///< The value pointed to
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a new ConstantArray node.

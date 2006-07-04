@@ -4,12 +4,10 @@
     <signature id="sig1" result="someType">
       <arg id="arg1" type="someType"/>
     </signature>
-    <atom id="someType">
-      <intrinsic is="any"/>
-    </atom>
-    <signature id="struct2" result="someType" varargs="true">
+    <signature id="sig2" result="someType" varargs="true">
       <arg id="arg1" type="someType"/>
       <arg id="arg1" type="someType"/>
     </signature>
+    <intrinsic id="someType" is="any"/>
   </bundle>
 </hlvm>

@@ -492,8 +492,6 @@ ValidateImpl::validate(ConstantInteger* CI)
     // Check that it can be converted to binary
     if (!endp || startp == endp || *endp != '\0')
       error(CI,"Invalid integer constant. Conversion failed.");
-    else if (llvm::itostr(val) != CI->getValue())
-      error(CI,"Invalid integer constant, not losslessly convertible");
     else if (const IntegerType* Ty = dyn_cast<IntegerType>(CI->getType())) {
       if (val < 0 && !Ty->isSigned()) {
         error(CI,"Invalid integer constant. " 

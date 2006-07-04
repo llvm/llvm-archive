@@ -49,6 +49,10 @@ static cl::opt<std::string>
 BundleName("bundle", cl::desc("Specify bundle name"),
     cl::value_desc("name"));
 
+static cl::opt<bool>
+NoValidate("no-validate",cl::desc("Disable validation of generated code"),
+    cl::init(false));
+
 extern AST* GenerateTestCase(const std::string& id, const std::string& bname);
 
 int main(int argc, char**argv) 
@@ -82,9 +86,10 @@ int main(int argc, char**argv)
     }
 
     AST* tree = GenerateTestCase(URL,BundleName);
-    if (!validate(tree)) {
-      std::cerr << argv[0] << ": Generated test case did not validate.\n";
-      return 1;
+    if (!NoValidate) {
+      if (!validate(tree)) {
+        std::cerr << argv[0] << ": Generated test case did not validate.\n";
+      }
     }
     XMLWriter* wrtr = XMLWriter::create(OutputFilename.c_str());
     wrtr->write(tree);

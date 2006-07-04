@@ -105,7 +105,8 @@ genType(unsigned limit)
   Type* result = 0;
   NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
   if (--limit == 0)
-    id = BooleanTypeID;
+    return ast->getPrimitiveType(BooleanTypeID);
+
   switch (id) {
     case BooleanTypeID:
     case CharacterTypeID:
@@ -128,12 +129,11 @@ genType(unsigned limit)
     case Float44TypeID:
     case Float64TypeID:
     case Float80TypeID:
+    case StringTypeID:
       return ast->getPrimitiveType(id);
     case Float128TypeID:
       return ast->getPrimitiveType(Float64TypeID);
-
     case AnyTypeID:
-    case StringTypeID:
     case BufferTypeID:
     case StreamTypeID:
     case TextTypeID:
@@ -163,7 +163,8 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "enum_" + utostr(line);
       EnumerationType* E = ast->new_EnumerationType(name,loc);
-      for (unsigned i = 0; i < Complexity; i++)
+      unsigned numEnums = randRange(1,Complexity,true);
+      for (unsigned i = 0; i < numEnums; i++)
         E->addEnumerator(name + "_" + utostr(i));
       result = E;
       break;
@@ -355,21 +356,17 @@ genValue(const Type* Ty, bool is_constant = false)
         std::string("cf32_")+utostr(line),val_str,Ty,loc);
       break;
     }
-    case AnyTypeID:
-    {
-      C = ast->new_ConstantAny(
-        std::string("cany_")+utostr(line),
-          cast<ConstantValue>(genValue(genType(),true)),loc);
-      break;
-    }
     case StringTypeID:
     {
       std::string val;
-      for (unsigned i = 0 ; i < Complexity*Size; i++)
+      unsigned numChars = randRange(1,Size+Complexity,true);
+      for (unsigned i = 0 ; i < numChars; i++)
         val += char(randRange(35,126));
       C = ast->new_ConstantString(
         std::string("cstr_")+utostr(line),val,loc);
+      break;
     }
+    case AnyTypeID:
     case BufferTypeID:
     case StreamTypeID:
     case TextTypeID:
@@ -592,7 +589,6 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
   uri = ast->new_URI(pubid);
   bundle = ast->new_Bundle(bundleName,getLocator());
   program = ast->new_Program(bundleName,getLocator());
-  program->setParent(bundle);
   Block* blk = ast->new_Block(getLocator());
   blk->setParent(program);
   for (unsigned i = 0; i < Size; i++) {
@@ -612,5 +608,6 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
 
   ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(getLocator());
   ret->setParent(blk);
+  program->setParent(bundle);
   return ast;
 }

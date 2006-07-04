@@ -147,7 +147,7 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "int_" + utostr(line);
       bool isSigned = randRange(0,Complexity+2,true) < (Complexity+2)/2;
-      result = ast->new_IntegerType(name,randRange(2,64,true),isSigned,loc);
+      result = ast->new_IntegerType(name,randRange(4,64,true),isSigned,loc);
       break;
     }
     case RangeTypeID:
@@ -311,7 +311,7 @@ genValue(const Type* Ty, bool is_constant = false)
     }
     case SInt8TypeID:
     {
-      int8_t val = int8_t(randRange(-128,127));
+      int8_t val = int8_t(randRange(-127,127));
       std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs8_")+utostr(line),val_str,10,Ty,loc);
@@ -319,7 +319,7 @@ genValue(const Type* Ty, bool is_constant = false)
     }
     case SInt16TypeID:
     {
-      int16_t val = int16_t(randRange(-32768,32767));
+      int16_t val = int16_t(randRange(-32767,32767));
       std::string val_str(itostr(val));
       C = ast->new_ConstantInteger(
         std::string("cs16_")+utostr(line),val_str,10,Ty,loc);
@@ -384,14 +384,14 @@ genValue(const Type* Ty, bool is_constant = false)
       Locator* loc = getLocator();
       std::string name = "cint_" + utostr(line);
       const IntegerType* IntTy = llvm::cast<IntegerType>(Ty);
-      unsigned bits = (IntTy->getBits() < 63 ? IntTy->getBits() : 63) - 1;
+      unsigned bits = (IntTy->getBits() < 63 ? IntTy->getBits() : 63) - 2;
       int64_t max = 1 << bits;
       std::string val_str;
       if (IntTy->isSigned()) {
         int64_t val = randRange(int64_t(-max),int64_t(max-1));
         val_str = itostr(val);
       } else {
-        uint64_t val = randRange(int64_t(0),int64_t(max),true);
+        uint64_t val = randRange(uint64_t(0),uint64_t(max),true);
         val_str = utostr(val);
       }
       C = ast->new_ConstantInteger(name,val_str,10,Ty,loc);
@@ -518,8 +518,13 @@ genCallTo(Function* F)
   args.push_back(O);
   const SignatureType* sig = F->getSignature();
   for (SignatureType::const_iterator I = sig->begin(), E = sig->end(); 
-       I != E; ++I)
-    args.push_back(genValueOperator((*I)->getType()));
+       I != E; ++I) 
+  {
+    const Type* argTy = (*I)->getType();
+    Operator* O = genValueOperator(argTy);
+    hlvmAssert(argTy == O->getType());
+    args.push_back(O);
+  }
   return ast->new_MultiOp<CallOp>(args,getLocator());
 }
 

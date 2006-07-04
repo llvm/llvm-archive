@@ -45,13 +45,13 @@ Bundle::insertChild(Node* kid)
   hlvmAssert(kid && "Null child!");
   if (isa<Type>(kid))
     types.insert(cast<Type>(kid)->getName(), cast<Type>(kid));
-  else if (isa<Value>(kid)) {
-    values.push_back(cast<Value>(kid));
+  else if (Constant* C = dyn_cast<Constant>(kid)) {
+    const std::string& name = C->getName();
+    values.push_back(C);
     if (isa<ConstantValue>(kid)) {
-      cvals.insert(cast<ConstantValue>(kid)->getName(), 
-                   cast<ConstantValue>(kid));
+      cvals.insert(name, cast<ConstantValue>(kid));
     } else if (isa<Linkable>(kid)) {
-      linkables.insert(cast<Linkable>(kid)->getName(), cast<Linkable>(kid));
+      linkables.insert(name, cast<Linkable>(kid));
     }
   } else
     hlvmAssert("Don't know how to insert that in a Bundle");

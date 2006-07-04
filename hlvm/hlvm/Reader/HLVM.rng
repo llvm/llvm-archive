@@ -155,6 +155,10 @@
     </choice>
   </define>
 
+  <define name="Octet.type">
+    <data type="unsignedByte"/>
+  </define>
+
   <!-- DOCUMENTATION OF HLVM AST PROGRAMS -->
 
   <define name="Documentation.pat">
@@ -227,7 +231,6 @@
   <define name="bundle.elem">
     <element name="bundle">
       <ref name="Named_Element.pat"/>
-      <ref name="Documentation.pat"/>
       <zeroOrMore>
         <ref name="import.elem"/>
       </zeroOrMore>
@@ -270,57 +273,52 @@
 
   <define name="signed.elem">
     <element name="signed">
-      <ref name="Named_Element.pat"/>
       <attribute name="bits">
         <ref name="Integer.type"/>
       </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="unsigned.elem">
     <element name="unsigned">
-      <ref name="Named_Element.pat"/>
       <attribute name="bits">
         <ref name="Integer.type"/>
       </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="range.elem">
     <element name="range">
-      <ref name="Named_Element.pat"/>
       <attribute name="min">
         <ref name="Integer.type"/>
       </attribute>
       <attribute name="max">
         <ref name="Integer.type"/>
       </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="real.elem">
     <element name="real">
-      <ref name="Named_Element.pat"/>
       <attribute name="mantissa">
         <ref name="Integer.type"/>
       </attribute>
       <attribute name="exponent">
         <ref name="Integer.type"/>
       </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="intrinsic.elem">
     <element name="intrinsic">
-      <ref name="Named_Element.pat"/>
       <attribute name="is">
         <ref name="Intrinsic_Atoms.type"/>
       </attribute>
-      <ref name="Documentation.pat"/>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
@@ -368,26 +366,28 @@
 
   <define name="pointer.elem">
     <element name="pointer">
-      <ref name="Named_Element.pat"/>
       <attribute name="to"><ref name="Identifier.type"/></attribute>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="vector.elem">
     <element name="vector">
-      <ref name="Named_Element.pat"/>
       <attribute name="of">
         <ref name="Intrinsic_Atoms.type"/>
       </attribute>
-      <attribute name="length"><data type="nonNegativeInteger"/></attribute>
+      <attribute name="length">
+        <data type="nonNegativeInteger"/>
+      </attribute>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
   <define name="array.elem">
     <element name="array">
-      <ref name="Named_Element.pat"/>
       <attribute name="length"><data type="nonNegativeInteger"/></attribute>
       <attribute name="of"><ref name="Identifier.type"/></attribute>
+      <ref name="Named_Element.pat"/>
     </element>
   </define>
 
@@ -404,11 +404,11 @@
 
   <define name="signature.elem">
     <element name="signature">
-      <ref name="Named_Element.pat"/>
       <attribute name="result"><ref name="Identifier.type"/></attribute>
       <optional>
         <attribute name="varargs"><ref name="Boolean.type"/></attribute>
       </optional>
+      <ref name="Named_Element.pat"/>
       <zeroOrMore>
         <element name="arg">
           <ref name="Named_Typed_Element.pat"/>
@@ -450,6 +450,8 @@
       <ref name="Integer_Literal.pat"/>
       <ref name="Real_Literal.pat"/>
       <ref name="char.elem"/>
+      <ref name="octet.elem"/>
+      <ref name="enum.elem"/>
       <ref name="string.elem"/>
       <ref name="null.elem"/>
       <ref name="ptr.elem"/>
@@ -475,11 +477,6 @@
     </choice>
   </define>
 
-  <define name="Character_Literal.pat">
-    <element name="char">
-      <ref name="Character.type"/>
-    </element>
-  </define>
 
   <define name="Integer_Literal.pat">
     <choice>
@@ -521,6 +518,20 @@
     <element name="char">
       <ref name="Typed_Literal.pat"/>
       <ref name="Character.type"/>
+    </element>
+  </define>
+
+  <define name="octet.elem">
+    <element name="octet">
+      <ref name="Typed_Literal.pat"/>
+      <ref name="Octet.type"/>
+    </element>
+  </define>
+
+  <define name="enum.elem">
+    <element name="enum">
+      <ref name="Typed_Literal.pat"/>
+      <ref name="Identifier.type"/>
     </element>
   </define>
 
@@ -589,11 +600,17 @@
     <element name="variable">
       <ref name="Named_Typed_Element.pat"/>
       <optional>
-        <attribute name="const"><data type="boolean"/></attribute>
+        <attribute name="const">
+          <data type="boolean"/>
+        </attribute>
+      </optional>
+      <optional>
         <attribute name="linkage">
           <ref name="Linkage.type"/>
         </attribute>
-        <attribute name="init">
+      </optional>
+      <optional>
+        <attribute name="initializer">
           <ref name="Identifier.type"/>
         </attribute>
       </optional>
@@ -629,10 +646,10 @@
 
   <define name="program.elem">
     <element name="program">
-      <ref name="Named_Element.pat"/>
       <optional>
         <attribute name="linkage"><ref name="Linkage.type"/></attribute>
       </optional>
+      <ref name="Named_Element.pat"/>
       <zeroOrMore>
         <ref name="block.elem"/>
       </zeroOrMore>

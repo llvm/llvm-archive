@@ -53,10 +53,6 @@ cl::opt<unsigned>
       cl::value_desc("num"));
 
 cl::opt<unsigned>
-  TypeComplexity("type-complexity", cl::desc("Specify complexity of types"),
-      cl::value_desc("0-20"), cl::init(10));
-
-cl::opt<unsigned>
   Seed("seed", cl::desc("Specify random number generator seed"),
       cl::value_desc("num"));
 
@@ -64,18 +60,18 @@ cl::opt<unsigned>
   Size("size",cl::desc("Specify size of generated code"),
       cl::value_desc("num"));
 
-hlvm::AST* ast = 0;
-hlvm::URI* uri = 0;
-hlvm::Bundle* bundle = 0;
-hlvm::Program* program = 0;
+AST* ast = 0;
+URI* uri = 0;
+Bundle* bundle = 0;
+Program* program = 0;
 unsigned line = 0;
-typedef std::vector<hlvm::Value*> ValueList;
-typedef std::map<const hlvm::Type*,ValueList> TypeValueMap;
+typedef std::vector<Value*> ValueList;
+typedef std::map<const Type*,ValueList> TypeValueMap;
 TypeValueMap values;
-typedef std::vector<hlvm::Type*> TypeList;
+typedef std::vector<Type*> TypeList;
 TypeList types;
 
-inline hlvm::Locator* 
+inline Locator* 
 getLocator()
 {
   return ast->new_Locator(uri,++line);
@@ -103,8 +99,8 @@ uint64_t randRange(uint64_t low, uint64_t high, bool discriminate)
     return low;
 }
 
-hlvm::Type*
-genTypeLimited(unsigned limit)
+Type*
+genType(unsigned limit)
 {
   Type* result = 0;
   NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
@@ -150,15 +146,15 @@ genTypeLimited(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "int_" + utostr(line);
-      result = ast->new_IntegerType(
-        name,randRange(1,64,true),bool(randRange(0,1,true)),loc);
+      bool isSigned = randRange(0,Complexity+2,true) < (Complexity+2)/2;
+      result = ast->new_IntegerType(name,randRange(2,64,true),isSigned,loc);
       break;
     }
     case RangeTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "range_" + utostr(line);
-      int64_t limit = randRange(0LL,5000000000LL);
+      int64_t limit = randRange(0,8000000);
       result = ast->new_RangeType(name,-limit,limit,loc);
       break;
     }
@@ -181,7 +177,7 @@ genTypeLimited(unsigned limit)
     }
     case PointerTypeID:
     {
-      result = ast->getPointerTo(genTypeLimited(limit));
+      result = ast->getPointerTo(genType(limit));
       break;
     }
     case ArrayTypeID:
@@ -189,7 +185,7 @@ genTypeLimited(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "array_" + utostr(line);
       result = ast->new_ArrayType(name,
-          genTypeLimited(limit),randRange(1,Size),loc);
+          genType(limit),randRange(1,Size),loc);
       break;
     }
     case VectorTypeID:
@@ -197,7 +193,7 @@ genTypeLimited(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "vector_" + utostr(line);
       result = ast->new_VectorType(
-          name,genTypeLimited(limit),randRange(1,Size),loc);
+          name,genType(limit),randRange(1,Size),loc);
       break;
     }
     case OpaqueTypeID:
@@ -211,7 +207,7 @@ genTypeLimited(unsigned limit)
       unsigned numFields = randRange(1,Size,true);
       for (unsigned i = 0; i < numFields; ++i) {
         Field* fld = ast->new_Field(name+"_"+utostr(i),
-            genTypeLimited(limit),getLocator());
+            genType(limit),getLocator());
         S->addField(fld);
       }
       result = S;
@@ -228,9 +224,9 @@ genTypeLimited(unsigned limit)
 Type*
 genType()
 {
-  bool shouldGenNewType = randRange(0,20) < TypeComplexity;
+  bool shouldGenNewType = randRange(0,20) < Complexity;
   if (types.empty() || shouldGenNewType) {
-    Type* Ty = genTypeLimited(Complexity);
+    Type* Ty = genType(Complexity);
     types.push_back(Ty);
     return Ty;
   }
@@ -238,7 +234,7 @@ genType()
 }
 
 Value*
-genValue(const hlvm::Type* Ty, bool is_constant = false)
+genValue(const Type* Ty, bool is_constant = false)
 {
   if (!is_constant && randRange(0,Complexity) < Complexity/2) {
     // First look up an existing value in the map
@@ -259,8 +255,9 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
   switch (id) {
     case BooleanTypeID:
     {
+      bool val = randRange(0,Complexity+2) < (Complexity+2)/2;
       C = ast->new_ConstantBoolean(
-          std::string("cbool_") + utostr(line), bool(randRange(0,1)), loc);
+          std::string("cbool_") + utostr(line), val, loc);
       break;
     }
     case CharacterTypeID:
@@ -387,11 +384,16 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
       Locator* loc = getLocator();
       std::string name = "cint_" + utostr(line);
       const IntegerType* IntTy = llvm::cast<IntegerType>(Ty);
-      int64_t max = 1 << (IntTy->getBits() < 63 ? IntTy->getBits() : 63);
-      int64_t val = IntTy->isSigned() ?
-        randRange(int64_t(-max),int64_t(max-1)) :
-        randRange(int64_t(0),int64_t(max));
-      std::string val_str( itostr(val) );
+      unsigned bits = (IntTy->getBits() < 63 ? IntTy->getBits() : 63) - 1;
+      int64_t max = 1 << bits;
+      std::string val_str;
+      if (IntTy->isSigned()) {
+        int64_t val = randRange(int64_t(-max),int64_t(max-1));
+        val_str = itostr(val);
+      } else {
+        uint64_t val = randRange(int64_t(0),int64_t(max),true);
+        val_str = utostr(val);
+      }
       C = ast->new_ConstantInteger(name,val_str,10,Ty,loc);
       break;
     }
@@ -477,22 +479,36 @@ genValue(const hlvm::Type* Ty, bool is_constant = false)
       hlvmAssert(!"Invalid Type?");
   }
 
+  // Give the constant a home
+  C->setParent(bundle);
+
+  // Make it either an initialized variable or just the constant itself.
   Value* result = 0;
-  if (is_constant || (randRange(0,Complexity*Size) < (Complexity*Size)/2))
+  if (is_constant || (randRange(0,Complexity+2) < (Complexity+2)/2))
     result = C;
   else {
-    C->setParent(bundle);
     Variable* var = ast->new_Variable(C->getName()+"_var",C->getType(),loc);
     var->setIsConstant(false);
     var->setInitializer(C);
+    var->setParent(bundle);
     result = var;
   }
 
-  result->setParent(bundle);
   // Memoize the result
   values[result->getType()].push_back(result);
   return result;
 }
+
+inline Operator*
+genValueOperator(const Type *Ty, bool is_constant = false)
+{
+  Value* V = genValue(Ty,is_constant);
+  Operator* O = ast->new_ReferenceOp(V,getLocator());
+  if (isa<Linkable>(V))
+    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
+  return O;
+}
+
 
 CallOp*
 genCallTo(Function* F)
@@ -503,26 +519,18 @@ genCallTo(Function* F)
   const SignatureType* sig = F->getSignature();
   for (SignatureType::const_iterator I = sig->begin(), E = sig->end(); 
        I != E; ++I)
-  {
-    Value* V = genValue((*I)->getType());
-    hlvmAssert(isa<ConstantValue>(V) || isa<Linkable>(V)) ;
-    Operator* O = ast->new_ReferenceOp(V,getLocator());
-    if (isa<ConstantValue>(V))
-      args.push_back(O);
-    else
-      args.push_back(ast->new_UnaryOp<LoadOp>(O,getLocator()));
-  }
+    args.push_back(genValueOperator((*I)->getType()));
   return ast->new_MultiOp<CallOp>(args,getLocator());
 }
 
-hlvm::Block*
+Block*
 genBlock()
 {
   Block* B = ast->new_Block(getLocator());
   return B;
 }
 
-hlvm::Function*
+Function*
 genFunction(Type* resultType, unsigned numArgs)
 {
   // Get the function name
@@ -532,7 +540,7 @@ genFunction(Type* resultType, unsigned numArgs)
   // Get the signature
   std::string sigName = name + "_type";
   SignatureType* sig = ast->new_SignatureType(sigName,resultType,loc);
-  if (randRange(0,Complexity) <= int(Complexity/2))
+  if (randRange(0,Complexity) <= int(Complexity/4))
     sig->setIsVarArgs(true);
   for (unsigned i = 0; i < numArgs; ++i )
   {
@@ -540,6 +548,7 @@ genFunction(Type* resultType, unsigned numArgs)
     Parameter* param = ast->new_Parameter(name,genType(),loc);
     sig->addParameter(param);
   }
+  sig->setParent(bundle);
 
   // Create the function and set its linkage
   LinkageKinds LK = LinkageKinds(randRange(ExternalLinkage,InternalLinkage));
@@ -553,10 +562,7 @@ genFunction(Type* resultType, unsigned numArgs)
   B->setParent(F);
 
   // Get the function result and return instruction
-  Value* V = genValue(F->getResultType());
-  Operator* O = ast->new_ReferenceOp(V,getLocator());
-  if (isa<Linkable>(V))
-    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
+  Operator* O = genValueOperator(F->getResultType());
   ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
   rslt->setParent(B);
 
@@ -587,7 +593,7 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
   for (unsigned i = 0; i < Size; i++) {
     Type* result = genType();
     Type* argTy  = genType();
-    unsigned numArgs = int(randRange(0,int(Complexity/5)));
+    unsigned numArgs = int(randRange(0,int(Complexity)));
     Function* F = genFunction(result,numArgs);
     F->setParent(bundle);
     CallOp* call = genCallTo(F);
@@ -595,10 +601,7 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
   }
 
   // Get the function result and return instruction
-  Value* V = genValue(program->getResultType());
-  Operator* O = ast->new_ReferenceOp(V,getLocator());
-  if (isa<Linkable>(V))
-    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
+  Operator* O = genValueOperator(program->getResultType());
   ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
   rslt->setParent(blk);
 

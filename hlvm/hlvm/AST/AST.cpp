@@ -229,7 +229,7 @@ AST::getPointerTo(const Type* Ty)
   PT->setElementType(Ty);
   PT->setName(ptr_name);
   PT->setParent(Ty->getContainingBundle());
-  ast->types.insert(ptr_name,Ty);
+  ast->types.insert(ptr_name,PT);
   return PT;
 }
 

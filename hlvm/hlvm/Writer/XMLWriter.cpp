@@ -90,6 +90,8 @@ private:
       { writeAttribute(name, t->getName()); }
     inline void writeAttribute(const char* name, uint64_t val)
       { writeAttribute(name, llvm::utostr(val)); }
+    inline void writeAttribute(const char* name, int64_t val)
+      { writeAttribute(name, llvm::itostr(val)); }
     inline void writeElement(const char* elem, const char* body)
       { xmlTextWriterWriteElement(writer,
           reinterpret_cast<const xmlChar*>(elem),

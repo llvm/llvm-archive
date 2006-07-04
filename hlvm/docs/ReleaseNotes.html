@@ -40,15 +40,26 @@
 <div class="text">
   <p>This is the second public release of the High Level Virtual Machine. This 
   is a very early pre-release, version 0.2. That is, HLVM is not complete yet 
-  and it doesn't do very much.  The main goal for this release is to get HLVM 
-  to be "Turing Complete".</p>
+  and it doesn't do very much yet.  The main goal for this release is to get 
+  HLVM to be "Turing Complete".</p>
   <h2><a name="features">New Features In HLVM 0.2</a></h2>
   <p>Here are the main things accomplished in this release:</p>
   <ol>
-    <li>Nothing yet</li>
+    <li><em>hlvm-gentestcase</em>. This new tool will automatically generate XML
+    test cases for HLVM. This tool is incorporated into the test suite and will
+    randomly select 100 test cases of varying complexity and size.</li>
   </ol>
   <h2><a name="changes">Significant Changes in HLVM 0.2</a></h2>
-  <p>There have been no changes since the last release.</p>
+  <p>
+  <p>Here are things that have changed since the last release:</p>
+  <ol>
+    <li><em>Aliases Removed</em>. The original intent behind aliases was to
+    support some kind of "typedef" feature and provide alternate names for
+    types. However, since every type in HLVM is required to have an explicit
+    name and type identification is done by name, the alias feature was
+    redundant and not well aligned with the other types. Consequently it has
+    been removed.</li>
+  </ol>
   <h2><a name="platforms">Platform Support</a></h2>
   <p>HLVM is known to work on the following platforms:</p>
   <ol>

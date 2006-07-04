@@ -47,65 +47,54 @@ WARNING: This document is <em>always</em> a work in progress.
 
 <h2><a name="releases"></a>Release Index</h2>
 <div class="text">
-  <p>The table below provides an index into the information for all
-  releases.</p>
-</div>
-
-<h3><a name="upcoming">Upcoming Releases</a></h3>
-<div class="text">
-  <p>The table below provides an overview of the planned upcoming releases.</p>
   <table>
     <tr>
       <th style="width:15%">Release</th>
-      <th style="width:70%">Description</th>
-      <th style="width:15%">Links</th>
-    </tr>
-    <tr>
-      <td>0.2</td>
-      <td>Turing Complete, JIT Execution</td>
-      <td><a href="#f0_2">Features</a>&nbsp;<a href="#current">Status</a></td>
-    </tr>
-    <tr>
-      <td>0.3</td>
-      <td>Front End Library, Interpreted Execution</td>
-      <td><a href="#f0_3">Features</a></td>
-    </tr>
-    <tr>
-      <td>0.4</td>
-      <td>Ruby Front End</td>
-      <td><a href="#f0_4">Features</a></td>
-    </tr>
-    <tr>
-      <td>0.5</td>
-      <td>Scheme Front End</td>
-      <td><a href="#f0_5">Features</a></td>
-    </tr>
-    <tr>
-      <td>0.6</td>
-      <td>Python Front End</td>
-      <td><a href="#f0_6">Features</a></td>
-    </tr>
-    <tr>
-      <td>0.9</td>
-      <td>Quality Enhancements, Pre-Beta Touchups</td>
-      <td><a href="#f0_9">Features</a></td>
-    </tr>
-  </table>
-</div>
-
-<h3><a name="completed">Completed Releases</a></h3>
-<div class="text">
-  <p>The table below provides a list of the releases already completed.</p>
-  <table>
-    <tr>
-      <th style="width:15%">Release</th>
-      <th style="width:70%">Description</th>
+      <th style="width:60%">Description</th>
+      <th style="width:10%">Status</th>
       <th style="width:15%">Links</th>
     </tr>
     <tr>
       <td>0.1</td>
       <td>Hello World, AST Construction, Build System</td>
+      <td>100%</td>
       <td><a href="#f0_1">Features</a>&nbsp;<a href="#s0_1">Status</a></td>
+    </tr>
+    <tr>
+      <td>0.2</td>
+      <td>Turing Complete, JIT Execution</td>
+      <td>55%</td>
+      <td><a href="#f0_2">Features</a>&nbsp;<a href="#current">Status</a></td>
+    </tr>
+    <tr>
+      <td>0.3</td>
+      <td>Front End Library, Interpreted Execution</td>
+      <td>1%</td>
+      <td><a href="#f0_3">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.4</td>
+      <td>Ruby Front End</td>
+      <td>0%</td>
+      <td><a href="#f0_4">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.5</td>
+      <td>Scheme Front End</td>
+      <td>0%</td>
+      <td><a href="#f0_5">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.6</td>
+      <td>Python Front End</td>
+      <td>0%</td>
+      <td><a href="#f0_6">Features</a></td>
+    </tr>
+    <tr>
+      <td>0.9</td>
+      <td>Quality Enhancements, Pre-Beta Touchups</td>
+      <td>0%</td>
+      <td><a href="#f0_9">Features</a></td>
     </tr>
   </table>
 </div>
@@ -122,15 +111,23 @@ WARNING: This document is <em>always</em> a work in progress.
   <table>
     <tr><th>Feature</th><th>Feature</th><th>Feature</th></tr>
     <tr>
-      <td><a href="#arithmetic">Arithmetic Operators</a><br/>Done.</td>
-      <td><a href="#controlflow">Control Flow Operators</a><br/>CallOp is done.
-        Select, Loop, and Switch are syntactically implemented but no code gen
-        yet.</td>
-      <td><a href="#booleanops">Boolean Operators</a><br/>Done.</td>
+      <td><a href="#integer">Integer Arithmetic Operators</a><br/>Done.</td>
+      <td><a href="#boolean">Boolean Arithmetic Operators</a><br/>Done.</td>
+      <td><a href="#floating">Floating POint Arithmetic Operators</a><br/>
+        Done with the exception of math library calls.</td>
     </tr><tr>
-      <td><a href="#textops">Text Operators</a><br/>Not Started</td>
-      <td><a href="#args">Program Arguments</a><br/>Not Started</td>
-      <td><a href="#jit">JIT Compilation</a><br/>Not Started</td>
+      <td><a href="#controlflow">Control Flow Operators</a><br/>Done.</td>
+      <td><a href="#blocknest">Block Nesting</a><br/>Done.</td>
+      <td><a href="#aggrconst">Aggregate Constants</a><br/>Done.</td>
+    </tr><tr>
+      <td><a href="#textops">Text Operators</a><br/>Not Started.</td>
+      <td><a href="#args">Program Arguments</a><br/>Changed to argc/argv.</td>
+      <td><a href="#jit">JIT Compilation</a><br/>Not Started.</td>
+    </tr><tr>
+      <td><a href="#tcgen">Test Case Generator</a><br/>
+        80% A few bugs remain.</td>
+      <td></td>
+      <td></td>
     </tr>
   </table>
 </div>
@@ -232,16 +229,31 @@ WARNING: This document is <em>always</em> a work in progress.
 <h3><a name="f0_2">Release 0.2 Features (Turing Complete)</a></h3>
 <div class="text">
   <ol>
-    <li><a name="arithmetic"><em>Arithmetic Operators</em></a>. Extend the AST
-    library to support all the arithmetic operators for integer and floating
-    point arithmetic. Provide LLVM code generation support for these
+    <li><a name="integer"><em>Integer Operators</em></a>. Extend the AST
+    library to support all the integer arithmetic operators 
+    such as add, subtract, multiply, divide, modulo, increment, decrement, 
+    bitwise operations, etc. Provide LLVM code generation support for these
     operators.</li>
+    <li><a name="boolean"><em>Boolean Operators</em></a>. Extend the AST
+    library to support all the boolean operators such as and, or, not, and
+    the six comparison operators. Provide LLVM code generation support for these
+    operators.</li>
+    <li><a name="floating"><em>Floating Point Operators</em></a>. Extend the AST
+    library to support all the floating point arithmetic operators such as add,
+    subtract, multiply, divide, etc. Also include the operators that imply
+    library functions or LLVM intrinsics such as sqrt, power, etc.  Provide LLVM
+    code generation support for these operators.</li>
     <li><a name="controlflow"><em>Control Flow Operators</em></a>. Extend the
     AST library to support a set of control flow operators (if,while,for,switch)
     and provide LLVM code generation for them.</li>
-    <li><a name="booleanops"><em>Boolean Operators</em></a>. Extend the AST
-    library to provide boolean comparison operators and LLVM code generation for
-    them.</li>
+    <li><a name="#blocknest"><em>Block Nesting</em></a><br/>Implement correct
+    code generation for nested blocks, block results, function results, return
+    operator, control flow operators with nested blocks, etc.</li>
+    <li><a name="#aggrconst"><em>Aggregate Constants</em></a><br/>Complete the
+    implementation of literal constants to include the aggregate constants for
+    pointers, arrays, vectors, structures and continuations. Also implement 
+    literal constants for the missing simple types: enumerator, any, range, 
+    octet, character, etc.</li>
     <li><a name="textops"><em>Text Operators</em></a>. Extend the AST
     library to provide a complete set of operators for manipulating strings of
     text and the LLVM code generation for them.</li>
@@ -251,6 +263,11 @@ WARNING: This document is <em>always</em> a work in progress.
     <li><a name="args"><em>Program Arguments</em></a>. Extend the Runtime
     library to correctly pass an HLVM program's arguments as an HLVM array of
     text.</li>
+    <li><a name="tcgen"><em>Test Case Generator</em></a>. Write a test case
+    generator program that randomly generates test cases based on specifications
+    of operator complexity, type complexity, and size. Integrate this generator
+    with the dejagnu test framework to check a few random cases on each run of
+    the "check" target.</li>
     <li><a name="jit"><em>JIT Compilation</em></a>. Extend the Runtime library
     to support just-in-time compilation and execution via LLVM's JIT 
     facilities.</li>

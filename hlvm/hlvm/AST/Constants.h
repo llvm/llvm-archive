@@ -98,8 +98,7 @@ class ConstantValue: public Constant
   /// @{
   public:
     static inline bool classof(const ConstantValue*) { return true; }
-    static inline bool classof(const Node* N) 
-      { return N->isConstantValue(); }
+    static inline bool classof(const Node* N) { return N->isConstantValue(); }
 
   /// @}
   friend class AST;

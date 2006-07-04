@@ -42,18 +42,8 @@ Operator::~Operator()
 {
 }
 
-Bundle*
-Operator::getContainingBundle()
-{
-  Node* p = getParent();
-  while (p && !p->is(BundleID)) p = p->getParent();
-  if (!p)
-    return 0;
-  return cast<Bundle>(p);
-}
-
 Function* 
-Operator::getContainingFunction()
+Operator::getContainingFunction() const
 {
   Node* p = getParent();
   while (p && !p->isFunction()) p = p->getParent();
@@ -63,7 +53,7 @@ Operator::getContainingFunction()
 }
 
 Block*
-Operator::getContainingBlock()
+Operator::getContainingBlock() const
 {
   Node* p = getParent();
   while (p && !isa<Block>(p)) p = p->getParent();
@@ -73,7 +63,7 @@ Operator::getContainingBlock()
 }
 
 Operator*
-Operator::getContainingLoop()
+Operator::getContainingLoop() const
 {
   Node* p = getParent();
   while (p && !p->isLoop()) p = p->getParent();

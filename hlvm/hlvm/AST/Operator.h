@@ -71,19 +71,15 @@ class Operator : public Value
     virtual Operator* getOperand(unsigned opnum) const = 0;
 
     /// Return the function containing this operator
-    Function* getContainingFunction();
+    Function* getContainingFunction() const;
 
     /// Return the block containing this operator
-    Block* getContainingBlock();
+    Block* getContainingBlock() const;
 
     /// Return the loop operator containing this operator. This can return
     /// any of the loop constructs (Loop, While, Unless, etc.) so its result
     /// type is Operator*.
-    Operator* getContainingLoop();
-
-    /// Return the bundle that contains the function that contains the block
-    /// that contains this operator.
-    Bundle* getContainingBundle();
+    Operator* getContainingLoop() const;
 
     /// Determine if this is a classof some other type.
     static inline bool classof(const Operator*) { return true; }

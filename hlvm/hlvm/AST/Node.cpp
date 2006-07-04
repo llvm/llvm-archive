@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Node.h>
 #include <hlvm/AST/AST.h>
+#include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
@@ -48,6 +49,16 @@ Node::getRoot()
     p = p->parent; 
   }
   return llvm::cast<AST>(last);
+}
+
+Bundle*
+Node::getContainingBundle() const
+{
+  Node* p = getParent();
+  while (p && !p->is(BundleID)) p = p->getParent();
+  if (!p)
+    return 0;
+  return llvm::cast<Bundle>(p);
 }
 
 void 

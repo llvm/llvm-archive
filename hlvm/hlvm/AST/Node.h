@@ -39,6 +39,7 @@ namespace hlvm
 
 class Type;
 class AST;
+class Bundle;
 
 /// This enumeration is used to identify the various kinds of Abstract Syntax
 /// Tre nodes. Its organization is very specific and dependent on the class 
@@ -310,7 +311,11 @@ class Node
   /// @name Accessors
   /// @{
   public:
+    /// Get the AST root node that this Node is part of.
     inline AST* getRoot(); 
+
+    /// Return the bundle that contains this Node.
+    Bundle* getContainingBundle() const;
 
     /// Get the type of node
     inline NodeIDs getID() const { return NodeIDs(id); }

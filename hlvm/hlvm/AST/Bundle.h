@@ -54,27 +54,23 @@ class Bundle : public Documentable
   /// @name Types
   /// @{
   public:
-    typedef SymbolTable<Type> TypeList;
-    typedef TypeList::iterator type_iterator;
-    typedef TypeList::const_iterator type_const_iterator;
+    typedef SymbolTable<Type> TypeTable;
+    typedef TypeTable::iterator type_iterator;
+    typedef TypeTable::const_iterator type_const_iterator;
 
-    typedef std::vector<Value*> ValueList;
-    typedef ValueList::iterator value_iterator;
-    typedef ValueList::const_iterator value_const_iterator;
+    typedef std::vector<Constant*> ConstantList;
+    typedef ConstantList::iterator clist_iterator;
+    typedef ConstantList::const_iterator clist_const_iterator;
 
-    typedef SymbolTable<ConstantValue> CValList;
-    typedef CValList::iterator cval_iterator;
-    typedef CValList::const_iterator cval_const_iterator;
-
-    typedef SymbolTable<Linkable> LinkableList;
-    typedef LinkableList::iterator linkable_iterator;
-    typedef LinkableList::const_iterator linkable_const_iterator;
+    typedef SymbolTable<Constant> ConstantTable;
+    typedef ConstantTable::iterator ctable_iterator;
+    typedef ConstantTable::const_iterator ctable_const_iterator;
 
   /// @}
   /// @name Constructors
   /// @{
   protected:
-    Bundle() : Documentable(BundleID), name(), types(), linkables() {}
+    Bundle() : Documentable(BundleID), name(), types(), clist(), ctable() {}
     virtual ~Bundle();
 
   /// @}
@@ -97,9 +93,8 @@ class Bundle : public Documentable
   /// @name Finders
   /// @{
   public:
-    Type*              find_type(const std::string& n) const;
-    ConstantValue*     find_cval(const std::string& n) const;
-    Linkable*          find_linkable(const std::string& n) const;
+    Type*      find_type(const std::string& n) const;
+    Constant*  find_const(const std::string& n) const;
 
   /// @}
   /// @name Iterators
@@ -115,39 +110,30 @@ class Bundle : public Documentable
 
     /// Value Insertion Order Iteration
     //
-    value_iterator          value_begin()       { return values.begin(); }
-    value_const_iterator    value_begin() const { return values.begin(); }
-    value_iterator          value_end  ()       { return values.end(); }
-    value_const_iterator    value_end  () const { return values.end(); }
-    size_t                  value_size () const { return values.size(); }
-    bool                    value_empty() const { return values.empty(); }
+    clist_iterator          clist_begin()       { return clist.begin(); }
+    clist_const_iterator    clist_begin() const { return clist.begin(); }
+    clist_iterator          clist_end  ()       { return clist.end(); }
+    clist_const_iterator    clist_end  () const { return clist.end(); }
+    size_t                  clist_size () const { return clist.size(); }
+    bool                    clist_empty() const { return clist.empty(); }
 
     /// ConstantValue Symbol Table iteration
-    cval_iterator           cval_begin()       { return cvals.begin(); }
-    cval_const_iterator     cval_begin() const { return cvals.begin(); }
-    cval_iterator           cval_end  ()       { return cvals.end(); }
-    cval_const_iterator     cval_end  () const { return cvals.end(); }
-    size_t                  cval_size () const { return cvals.size(); }
-    bool                    cval_empty() const { return cvals.empty(); }
-
-    /// Linkable Symbol Table iteration
-    linkable_iterator       linkable_begin()       { return linkables.begin(); }
-    linkable_const_iterator linkable_begin() const { return linkables.begin(); }
-    linkable_iterator       linkable_end  ()       { return linkables.end(); }
-    linkable_const_iterator linkable_end  () const { return linkables.end(); }
-    size_t                  linkable_size () const { return linkables.size(); }
-    bool                    linkable_empty() const { return linkables.empty(); }
+    ctable_iterator         ctable_begin()       { return ctable.begin(); }
+    ctable_const_iterator   ctable_begin() const { return ctable.begin(); }
+    ctable_iterator         ctable_end  ()       { return ctable.end(); }
+    ctable_const_iterator   ctable_end  () const { return ctable.end(); }
+    size_t                  ctable_size () const { return ctable.size(); }
+    bool                    ctable_empty() const { return ctable.empty(); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    std::string  name;      ///< The name for this bundle
-    TypeList     types;     ///< The list of types
-    TypeList     unresolvedTypes; ///< The list of forward referenced types
-    ValueList    values;    ///< The list of values in insertion order
-    CValList     cvals;     ///< The list of constant values
-    LinkableList linkables; ///< The list of linkables
+    std::string   name;      ///< The name for this bundle
+    TypeTable     types;     ///< The list of types
+    TypeTable     unresolvedTypes; ///< The list of forward referenced types
+    ConstantList  clist;    ///< The list of values in insertion order
+    ConstantTable ctable;
 
   /// @}
   friend class AST;

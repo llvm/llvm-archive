@@ -37,9 +37,6 @@
 namespace hlvm 
 {
 
-class Type; // Forward declare
-class Constant;
-
 /// This enumeration is used to specify the kinds of linkage that are
 /// permitted for a Linkable.
 /// @brief Enumeration of ways to link bundles
@@ -115,7 +112,7 @@ class Variable : public Linkable
   /// @{
   public:
     bool isConstant() const { return flags & 0x0008; }
-    ConstantValue* getInitializer() const { return init; }
+    Constant* getInitializer() const { return init; }
     bool hasInitializer() const { return init != 0; }
     bool isZeroInitialized() const { return init == 0; }
     static inline bool classof(const Variable*) { return true; }
@@ -126,13 +123,13 @@ class Variable : public Linkable
   /// @{
   public:
     void setIsConstant(bool v) { flags |= 0x0008; }
-    void setInitializer(ConstantValue* C) { init = C; }
+    void setInitializer(Constant* C) { init = C; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    ConstantValue* init;
+    Constant* init;
   /// @}
   friend class AST;
 };

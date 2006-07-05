@@ -158,13 +158,13 @@ PassManagerImpl::runOn(Bundle* b)
     runPreOrder(const_cast<Type*>(TI->second));
     runPostOrder(const_cast<Type*>(TI->second));
   }
-  for (Bundle::value_iterator CI = b->value_begin(), CE = b->value_end(); 
+  for (Bundle::clist_iterator CI = b->clist_begin(), CE = b->clist_end(); 
        CI != CE; ++CI) {
-    runPreOrder(const_cast<Value*>(*CI));
+    runPreOrder(const_cast<Constant*>(*CI));
     if (Function* F = dyn_cast<Function>(*CI))
       if (Block* B = F->getBlock())
         runOn(B);
-    runPostOrder(const_cast<Value*>(*CI));
+    runPostOrder(const_cast<Constant*>(*CI));
   }
   runPostOrder(b);
 }

@@ -188,7 +188,7 @@ class AutoVarOp : public NilaryOperator
   public:
     const std::string& getName() const { return name; }
     bool hasInitializer() const { return initializer != 0; }
-    ConstantValue* getInitializer() const { return initializer; }
+    Constant* getInitializer() const { return initializer; }
     bool isZeroInitialized() const { return initializer == 0; }
     static inline bool classof(const AutoVarOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(AutoVarOpID); }
@@ -198,14 +198,14 @@ class AutoVarOp : public NilaryOperator
   /// @{
   public:
     void setName(const std::string& n) { name = n; }
-    void setInitializer(ConstantValue* C) { initializer = C; }
+    void setInitializer(Constant* C) { initializer = C; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
     std::string name;
-    ConstantValue* initializer;
+    Constant* initializer;
   /// @}
   friend class AST;
 };

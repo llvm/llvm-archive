@@ -87,7 +87,7 @@ class LLVMGeneratorPass : public hlvm::Pass
   typedef std::map<const hlvm::Block*,llvm::Instruction*> ResultsMap;
   typedef std::map<const hlvm::Variable*,llvm::Value*> VariableMap;
   typedef std::map<const hlvm::AutoVarOp*,llvm::Value*> AutoVarMap;
-  typedef std::map<const hlvm::ConstantValue*,llvm::Constant*> ConstantMap;
+  typedef std::map<const hlvm::Constant*,llvm::Constant*> ConstantMap;
   typedef std::map<const hlvm::Function*,llvm::Function*> FunctionMap;
   ModuleList modules;           ///< The list of modules we construct
   llvm::Module*     lmod;       ///< The current module we're generation 
@@ -147,7 +147,7 @@ class LLVMGeneratorPass : public hlvm::Pass
 
   /// Conversion functions
   const llvm::Type* getType(const hlvm::Type* ty);
-  llvm::Constant* getConstant(const hlvm::ConstantValue* C);
+  llvm::Constant* getConstant(const hlvm::Constant* C);
   llvm::Value* getVariable(const hlvm::Variable* V);
   llvm::Function* getFunction(const hlvm::Function* F);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
@@ -573,14 +573,14 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 }
 
 llvm::Constant*
-LLVMGeneratorPass::getConstant(const hlvm::ConstantValue* C)
+LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
 {
   hlvmAssert(C!=0);
   hlvmAssert(C->isConstantValue());
 
   // First, lets see if its cached already
   ConstantMap::iterator I = 
-    consts.find(const_cast<hlvm::ConstantValue*>(C));
+    consts.find(const_cast<hlvm::Constant*>(C));
   if (I != consts.end())
     return I->second;
 
@@ -628,7 +628,7 @@ LLVMGeneratorPass::getConstant(const hlvm::ConstantValue* C)
       break;
   }
   if (result)
-    consts[const_cast<hlvm::ConstantValue*>(C)] = result;
+    consts[const_cast<hlvm::Constant*>(C)] = result;
   else
     hlvmDeadCode("Didn't find constant");
   return result;

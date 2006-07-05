@@ -61,6 +61,7 @@ DisparateContainerType::getPrimitiveName() const
 }
 
 StructureType::~StructureType() { }
+ContinuationType::~ContinuationType() { }
 
 SignatureType::~SignatureType() { }
 

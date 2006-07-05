@@ -145,7 +145,7 @@ ASTImpl::resolveType(const std::string& name)
   if (n)
     return llvm::cast<OpaqueType>(n);
   OpaqueType* ot = this->new_OpaqueType(name);
-  unresolvedTypes.insert(ot->getName(), ot);
+  unresolvedTypes.insert(ot);
   return ot;
 }
 
@@ -158,7 +158,7 @@ ASTImpl::addType(Type* ty)
     // FIXME: Replace all uses of "ot" with "ty"
     unresolvedTypes.erase(ot);
   }
-  types.insert(ty->getName(),ty);
+  types.insert(ty);
 }
 
 void
@@ -229,7 +229,7 @@ AST::getPointerTo(const Type* Ty)
   PT->setElementType(Ty);
   PT->setName(ptr_name);
   PT->setParent(Ty->getContainingBundle());
-  ast->types.insert(ptr_name,PT);
+  ast->types.insert(PT);
   return PT;
 }
 
@@ -486,6 +486,18 @@ AST::new_StructureType(
   const Locator* loc)
 {
   StructureType* result = new StructureType();
+  result->setLocator(loc);
+  result->setName(id);
+  static_cast<ASTImpl*>(this)->addType(result);
+  return result;
+}
+
+ContinuationType*
+AST::new_ContinuationType(
+  const std::string& id, 
+  const Locator* loc)
+{
+  ContinuationType* result = new ContinuationType();
   result->setLocator(loc);
   result->setName(id);
   static_cast<ASTImpl*>(this)->addType(result);
@@ -805,14 +817,14 @@ AutoVarOp*
 AST::new_AutoVarOp(
     const std::string& name, 
     const Type* Ty, 
-    ConstantValue* op1,
+    Constant* init,
     const Locator* loc)
 {
   hlvmAssert(Ty != 0 && "AutoVarOp must have a Type!");
   AutoVarOp* result = new AutoVarOp();
   result->setType(Ty);
   result->setLocator(loc);
-  result->setInitializer(op1);
+  result->setInitializer(init);
   result->setName(name);
   return result;
 }

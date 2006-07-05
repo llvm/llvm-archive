@@ -1032,18 +1032,12 @@ ValidateImpl::validate(ReferenceOp* op)
         error(op,"ReferenceOp not in a function?");
       else if (F->getArgument(arg->getName()) != arg)
         error(F,"Referent does not match function argument");
-    } else if (const ConstantValue* cval = dyn_cast<ConstantValue>(referent)) {
+    } else if (const Constant* cval = dyn_cast<Constant>(referent)) {
       Bundle* B = op->getContainingBundle();
       if (!B)
         error(op,"ReferenceOp not in a bundle?");
-      else if (B->find_cval(cval->getName()) != cval)
-        error(cval,"Referent does not match constant value");
-    } else if (const Linkable* lnkbl = dyn_cast<Linkable>(referent)) {
-      Bundle* B = op->getContainingBundle();
-      if (!B)
-        error(op,"ReferenceOp not in a bundle?");
-      else if (B->find_linkable(lnkbl->getName()) != lnkbl)
-        error(lnkbl,"Referent does not match linkable by name");
+      else if (B->find_const(cval->getName()) != cval)
+        error(cval,"Referent does not value found in Bundle");
     } else {
       error(op,"Referent of unknown kind");
     }

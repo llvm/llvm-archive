@@ -395,7 +395,7 @@ XMLReaderImpl::parseLiteralConstant(
     const std::string& name,
     const Type* Ty)
 {
-  if (!name.empty() && bundle->find_linkable(name) != 0) {
+  if (!name.empty() && bundle->find_const(name) != 0) {
     error(getLocator(cur),std::string("Constant '") + name 
           + "' already exists.");
     return 0;
@@ -489,10 +489,9 @@ XMLReaderImpl::parseLiteralConstant(
       std::string id = getAttribute(cur,"id");
       std::string name = actualName.empty() ? std::string("ptr_") + id :
           actualName;
-      Constant* referent =  bundle->find_cval(id);
-      // Didn't find a constant? Try a linkable
+      Constant* referent = bundle->find_const(id);
       if (!referent)
-        referent = bundle->find_linkable(id);
+        error(loc,"Unkown referent for constant pointer");
       C = ast->new_ConstantPointer(name,Ty,referent,loc);
       break;
     }
@@ -620,6 +619,8 @@ XMLReaderImpl::parseIntrinsic(xmlNodePtr& cur)
 {
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   const char* is = getAttribute(cur,"is");
   xmlNodePtr child = cur->children;
   Documentation* theDoc = parse<Documentation>(child);
@@ -637,6 +638,8 @@ XMLReaderImpl::parseInteger(xmlNodePtr& cur, bool isSigned)
 {
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   const char* bits = getAttribute(cur,"bits");
   xmlNodePtr child = cur->children;
   Documentation* theDoc = parse<Documentation>(child);
@@ -656,6 +659,8 @@ XMLReaderImpl::parse<RangeType>(xmlNodePtr& cur)
 {
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   const char* min = getAttribute(cur, "min");
   const char* max = getAttribute(cur, "max");
   xmlNodePtr child = cur->children;
@@ -677,6 +682,8 @@ XMLReaderImpl::parse<RealType>(xmlNodePtr& cur)
 {
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   const char* mantissa = getAttribute(cur, "mantissa");
   const char* exponent = getAttribute(cur, "exponent");
   xmlNodePtr child = cur->children;
@@ -699,6 +706,8 @@ XMLReaderImpl::parse<EnumerationType>(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name)==TKN_enumeration);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   EnumerationType* en = ast->new_EnumerationType(name,loc);
   xmlNodePtr child = checkDoc(cur,en);
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
@@ -716,6 +725,8 @@ XMLReaderImpl::parse<PointerType>(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name)==TKN_pointer);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   std::string type = getAttribute(cur,"to");
   PointerType* result = 
     ast->new_PointerType(name,getType(type),loc);
@@ -729,6 +740,8 @@ XMLReaderImpl::parse<ArrayType>(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name)==TKN_array);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   std::string type = getAttribute(cur,"of");
   const char* len = getAttribute(cur,"length");
   ArrayType* result = ast->new_ArrayType(
@@ -743,6 +756,8 @@ XMLReaderImpl::parse<VectorType>(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name)==TKN_vector);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   std::string type = getAttribute(cur,"of");
   const char* len  = getAttribute(cur,"length");
   VectorType* result =
@@ -758,6 +773,8 @@ XMLReaderImpl::parse<StructureType>(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name)==TKN_structure);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   StructureType* struc = ast->new_StructureType(name,loc);
   xmlNodePtr child = checkDoc(cur,struc); 
   while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
@@ -774,12 +791,38 @@ XMLReaderImpl::parse<StructureType>(xmlNodePtr& cur)
   return struc;
 }
 
+template<> ContinuationType*
+XMLReaderImpl::parse<ContinuationType>(xmlNodePtr& cur)
+{
+  hlvmAssert(getToken(cur->name)==TKN_structure);
+  Locator* loc = getLocator(cur);
+  std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
+  ContinuationType* cont = ast->new_ContinuationType(name,loc);
+  xmlNodePtr child = checkDoc(cur,cont); 
+  while (child && skipBlanks(child) && child->type == XML_ELEMENT_NODE) {
+    hlvmAssert(getToken(child->name) == TKN_field && 
+               "Continuation only has fields");
+    std::string name = getAttribute(child,"id");
+    std::string type = getAttribute(child,"type");
+    Locator* fldLoc = getLocator(child);
+    Field* fld = ast->new_Field(name,getType(type),fldLoc);
+    cont->addField(fld);
+    checkDoc(child,fld);
+    child = child->next;
+  }
+  return cont;
+}
+
 template<> SignatureType*
 XMLReaderImpl::parse<SignatureType>(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_signature);
   Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
   std::string result = getAttribute(cur,"result");
   const char* varargs = getAttribute(cur,"varargs",false);
   SignatureType* sig = 
@@ -804,8 +847,10 @@ template<> OpaqueType*
 XMLReaderImpl::parse<OpaqueType>(xmlNodePtr& cur)
 {
   hlvmAssert(getToken(cur->name)==TKN_opaque);
-  Locator* loc = getLocator(cur);
   std::string name = getAttribute(cur,"id");
+  if (bundle->find_type(name))
+    error(loc,"Type '" + name + "' was already defined");
+  Locator* loc = getLocator(cur);
   OpaqueType* result = ast->new_OpaqueType(name,loc);
   checkDoc(cur,result);
   return result;
@@ -818,6 +863,8 @@ XMLReaderImpl::parse<Variable>(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
+  if (Constant* lkbl = bundle->find_const(name)) 
+    error(loc, "Name '" + name + "' is already in use");
   const char* cnst = getAttribute(cur, "const", false);
   const char* lnkg = getAttribute(cur, "linkage", false);
   const char* init = getAttribute(cur, "init", false);
@@ -828,7 +875,7 @@ XMLReaderImpl::parse<Variable>(xmlNodePtr& cur)
   if (lnkg)
     var->setLinkageKind(recognize_LinkageKinds(lnkg));
   if (init) {
-    ConstantValue* initializer = bundle->find_cval(init);
+    Constant* initializer = bundle->find_const(init);
     if (initializer)
       var->setInitializer(initializer);
     else 
@@ -847,12 +894,11 @@ XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
   getNameType(cur, name, type);
   const Type* Ty = getType(type);
   const char* init = getAttribute(cur,"init",false);
-  ConstantValue *initializer = 0;
+  Constant*initializer = 0;
   if (init) {
-    initializer = bundle->find_cval(init);
+    initializer = bundle->find_const(init);
     if (!initializer)
-      error(loc,std::string("Constant '") + init + 
-            "' not found in initializer.");
+      error(loc,std::string("Initializer '") + init + "' not found .");
   }
   AutoVarOp* autovar = ast->AST::new_AutoVarOp(name,Ty,initializer,loc);
   checkDoc(cur,autovar);
@@ -884,12 +930,8 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
 
   // Didn't find an autovar? Try a constant value.
   if (!referent)
-    referent= bundle->find_cval(id);
+    referent= bundle->find_const(id);
     
-  // Didn't find an constant? Try a linkable
-  if (!referent)
-    referent = bundle->find_linkable(id);
-
   // Didn't find a linkable? Try an error message for size
   if (!referent)
       error(loc,std::string("Referent '") + id + "' not found");
@@ -1027,7 +1069,7 @@ XMLReaderImpl::parse<Function>(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
   std::string name, type;
   getNameType(cur, name, type);
-  Linkable* lkbl = bundle->find_linkable(name);
+  Constant* lkbl = bundle->find_const(name);
   if (lkbl) {
     if (llvm::isa<Function>(lkbl)) {
       func = llvm::cast<Function>(lkbl);

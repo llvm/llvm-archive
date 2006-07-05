@@ -327,6 +327,13 @@ class AST : public Node
       const std::string& id,  ///< The name of the structure type
       const Locator* loc = 0  ///< The source locator
     );
+    /// Create a new ContinuationType node. A ContinuationType is a type that 
+    /// is an ordered sequential arrangement of memory locations of various but 
+    /// definite types combined with the data necessary to make a continuation.
+    ContinuationType* new_ContinuationType(
+      const std::string& id,  ///< The name of the structure type
+      const Locator* loc = 0  ///< The source locator
+    );
     /// Create a new SignatureType node. A SignatureType specifies the type of
     /// a Function. It identifies the names and types of the arguments of a
     /// function and the type of its result value.
@@ -541,7 +548,7 @@ class AST : public Node
     AutoVarOp* new_AutoVarOp(
       const std::string& name, ///< Name of the autovar in its scope
       const Type* Ty,          ///< Type of the autovar
-      ConstantValue* op1,      ///< Initializer for the autovar
+      Constant* init,          ///< Initializer for the autovar
       const Locator* loc       ///< The source locator
     );
 

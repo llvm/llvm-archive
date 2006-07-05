@@ -31,6 +31,7 @@
 #define HLVM_AST_SYMBOLTABLE_H
 
 #include <map>
+#include <string>
 
 namespace hlvm 
 {
@@ -43,8 +44,15 @@ class SymbolTable
 /// @name Types
 /// @{
 public:
+  struct StringPointerLess {
+    bool operator()(const std::string* A, const std::string* B) const {
+      return *A < *B;
+    }
+  };
+
   /// @brief A mapping of names to nodes.
-  typedef typename std::map<const std::string, const ElemType*> NodeMap;
+  typedef typename 
+    std::map<const std::string*, ElemType*, StringPointerLess> NodeMap;
 
   /// @brief An iterator over the NodeMap.
   typedef typename NodeMap::iterator iterator;
@@ -108,7 +116,7 @@ public:
   /// be a many-to-one mapping between names and nodes. This method allows a 
   /// node with an existing entry in the symbol table to get a new name.
   /// @brief Insert a node under a new name.
-  void insert(const std::string &Name, const ElemType *N);
+  void insert(ElemType *N);
 
   /// Remove a node at the specified position in the symbol table.
   /// @returns the removed ElemType.
@@ -116,7 +124,7 @@ public:
   ElemType* erase(iterator TI);
 
   /// Remove a node using a specific key
-  bool erase(const std::string& name) { return map_.erase(name) > 0; }
+  bool erase(const std::string& name) { return map_.erase(&name) > 0; }
 
   /// Remove a specific ElemType from the symbol table. This isn't fast, linear
   /// search, O(n), algorithm.
@@ -132,7 +140,8 @@ public:
 /// @{
 private:
   NodeMap map_; ///< This is the mapping of names to types.
-  mutable unsigned long last_unique_; ///< Counter for tracking unique names
+  mutable uint64_t order_;  
+  mutable uint64_t last_unique_; ///< Counter for tracking unique names
 /// @}
 };
 

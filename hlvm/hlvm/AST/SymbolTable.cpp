@@ -45,7 +45,7 @@ SymbolTable<ElemType>::getUniqueName(const std::string &base_name) const {
 
   // See if the name exists. Loop until we find a free name in the symbol table
   // by incrementing the last_unique_ counter.
-  while (map_.find(try_name) != end)
+  while (map_.find(&try_name) != end)
     try_name = base_name + 
       llvm::utostr(++last_unique_);
   return try_name;
@@ -54,7 +54,7 @@ SymbolTable<ElemType>::getUniqueName(const std::string &base_name) const {
 // lookup a node by name - returns null on failure
 template<class ElemType>
 ElemType* SymbolTable<ElemType>::lookup(const std::string& name) const {
-  const_iterator TI = map_.find(name);
+  const_iterator TI = map_.find(&name);
   if (TI != map_.end())
     return const_cast<ElemType*>(TI->second);
   return 0;
@@ -83,16 +83,15 @@ ElemType* SymbolTable<ElemType>::erase(iterator Entry) {
 
 // insert - Insert a node into the symbol table with the specified name...
 template<class ElemType>
-void SymbolTable<ElemType>::insert(const std::string& Name, const ElemType* N) {
+void SymbolTable<ElemType>::insert(ElemType* N) {
   hlvmAssert(N && "Can't insert null node into symbol table!");
 
   // Check to see if there is a naming conflict.  If so, rename this type!
-  std::string unique_name = Name;
-  if (lookup(Name))
-    unique_name = getUniqueName(Name);
+  if (lookup(N->getName()))
+    N->setName(getUniqueName(N->getName()));
 
   // Insert the map entry
-  map_.insert(make_pair(unique_name, N));
+  map_.insert(make_pair(&N->getName(), N));
 }
 
 /// rename - Given a value with a non-empty name, remove its existing entry
@@ -102,21 +101,18 @@ void SymbolTable<ElemType>::insert(const std::string& Name, const ElemType* N) {
 /// symtab with that name (which could invalidate iterators to that plane).
 template<class ElemType>
 bool SymbolTable<ElemType>::rename(ElemType *N, const std::string &name) {
-  for (iterator NI = map_.begin(), NE = map_.end(); NI != NE; ++NI) {
-    if (NI->second == N) {
-      // Remove the old entry.
-      map_.erase(NI);
-      // Add the new entry.
-      this->insert(name,N);
-      return true;
-    }
+  iterator TI = map_.find(&name);
+  if (TI != map_.end()) {
+    map_.erase(TI);
+    N->setName(name);
+    this->insert(N);
+    return true;
   }
   return false;
 }
 
 // instantiate for Types and Linkabes
 template class SymbolTable<Type>;
-template class SymbolTable<ConstantValue>;
-template class SymbolTable<Linkable>;
+template class SymbolTable<Constant>;
 
 }

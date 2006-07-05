@@ -43,16 +43,11 @@ void
 Bundle::insertChild(Node* kid)
 {
   hlvmAssert(kid && "Null child!");
-  if (const Type* Ty = dyn_cast<Type>(kid))
-    types.insert(Ty->getName(), Ty);
+  if (Type* Ty = dyn_cast<Type>(kid))
+    types.insert(Ty);
   else if (Constant* C = dyn_cast<Constant>(kid)) {
-    const std::string& name = C->getName();
-    values.push_back(C);
-    if (isa<ConstantValue>(C)) {
-      cvals.insert(name, cast<ConstantValue>(kid));
-    } else if (isa<Linkable>(C)) {
-      linkables.insert(name, cast<Linkable>(kid));
-    }
+    clist.push_back(C);
+    ctable.insert(C);
   } else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }
@@ -65,12 +60,9 @@ Bundle::removeChild(Node* kid)
     types.erase(Ty->getName());
   else if (Constant* C = dyn_cast<Constant>(kid)) {
     // This is sucky slow, but we probably won't be removing nodes that much.
-    for (value_iterator I = value_begin(), E = value_end(); I != E; ++I )
-      if (*I == C) { values.erase(I); break; }
-    if (isa<ConstantValue>(C))
-      cvals.erase(cast<ConstantValue>(C)->getName());
-    else if (isa<Linkable>(C))
-      linkables.erase(cast<Linkable>(C)->getName());
+    for (clist_iterator I = clist_begin(), E = clist_end(); I != E; ++I )
+      if (*I == C) { clist.erase(I); break; }
+    ctable.erase(C->getName());
   } else 
     hlvmAssert(!"That node isn't my child");
 }
@@ -83,19 +75,11 @@ Bundle::find_type(const std::string& name) const
   return 0;
 }
 
-ConstantValue*  
-Bundle::find_cval(const std::string& name) const
+Constant*  
+Bundle::find_const(const std::string& name) const
 {
-  if (Node* result = cvals.lookup(name))
-    return llvm::cast<ConstantValue>(result);
-  return 0;
-}
-
-Linkable*  
-Bundle::find_linkable(const std::string& name) const
-{
-  if (Node* result = linkables.lookup(name))
-    return llvm::cast<Linkable>(result);
+  if (Constant* result = ctable.lookup(name))
+    return llvm::cast<Constant>(result);
   return 0;
 }
 

@@ -118,11 +118,12 @@ else if($machine!=-1 && $night !=-1){
 	
 	$next_query = getNightsResource($machine,$mysql_link);
 	print "<form method=GET action=\"test.php\">\n";
-        print "<input type=hidden name=machine value=\"$machine\">\n";
+        print "<input type=hidden name=\"machine\" value=\"$machine\">\n";
 	print "<select name=night>\n";
-	while ($row = mysql_fetch_array($next_query)){
-		print "<option value={$row['id']}>{$row['added']}\n";
+	while ($next = mysql_fetch_array($next_query)){
+		print "<option value={$next['id']}>{$next['added']}\n";
 	}
+	
 	print "</select><br>\n";
 	print "<input type=submit value=\"Jump to Date\">\n";
 	print "</form>\n";
@@ -157,8 +158,8 @@ elseif($machine != -1 && $night == -1){
         print "<form method=GET action=\"test.php\">\n";
         print "<input type=hidden name=machine value=\"$machine\">\n";
         print "<select name=night>\n";
-        while ($row = mysql_fetch_array($next_query)){
-                print "<option value={$row['id']}>{$row['added']}\n";
+        while ($next = mysql_fetch_array($next_query)){
+                print "<option value={$next['id']}>{$next['added']}\n";
         }
         print "</select><br>\n";
         print "<input type=submit value=\"Jump to Date\">\n";

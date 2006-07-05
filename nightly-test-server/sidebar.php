@@ -88,7 +88,7 @@ else if($machine!=-1 && $night !=-1){
 	/********************** Creating list to future and past tests **********************/
 	
 	$next_stack = array();
-	$next_query = getNightsResource($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01", ASC);
+	$next_query = getNightsResource($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01","ASC");
 	$next = mysql_fetch_array($next_query);
 	$x=0;
 	while($x<7 && $x<mysql_affected_rows()-1 && $next = mysql_fetch_array($next_query)){
@@ -115,6 +115,19 @@ else if($machine!=-1 && $night !=-1){
 	}
 	print "</ul>\n";
 	mysql_free_result($previous_query);
+	
+	$next_query = getNightsResource($machine,$mysql_link);
+	print "<form method=GET action=\"test.php\">\n";
+        print "<input type=hidden name=machine value=\"$machine\">\n";
+	print "<select name=night>\n";
+	while ($row = mysql_fetch_array($next_query)){
+		print "<option value={$row['id']}>{$row['added']}\n";
+	}
+	print "</select><br>\n";
+	print "<input type=submit value=\"Jump to Date\">\n";
+	print "</form>\n";
+	mysql_free_result($next_query);
+
 }
 
 
@@ -139,6 +152,18 @@ elseif($machine != -1 && $night == -1){
 	}	
 	print "</ul>\n";
 	mysql_free_result($machine_nights);	
+
+	$next_query = getNightsResource($machine,$mysql_link);
+        print "<form method=GET action=\"test.php\">\n";
+        print "<input type=hidden name=machine value=\"$machine\">\n";
+        print "<select name=night>\n";
+        while ($row = mysql_fetch_array($next_query)){
+                print "<option value={$row['id']}>{$row['added']}\n";
+        }
+        print "</select><br>\n";
+        print "<input type=submit value=\"Jump to Date\">\n";
+        print "</form>\n";
+        mysql_free_result($next_query);
 }
 
 

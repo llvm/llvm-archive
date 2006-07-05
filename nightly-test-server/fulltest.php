@@ -148,7 +148,7 @@ print "</table>\n<br>\n";
  ******************************************************/
 $previous_query = mysql_query("SELECT * FROM night WHERE \"$cur_date\" > added and machine=$machine_id ORDER BY added DESC") or die (mysql_error());
 
-if(strpos($today_row['buildstatus'], "OK")!=FALSE){
+if(strpos($today_row['buildstatus'], "OK")===FALSE){
 	$disp="";
 	$sign="(+)";
 }
@@ -173,10 +173,10 @@ $removed_tests=preg_replace("/\n/","<br>\n",$today_row['removed_tests']);
 $newly_passing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_passing_tests']);
 $newly_failing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_failing_tests']);
 
-if((strpos($new_tests, "none")!=FALSE &&
-   strpos($removed_tests, "none")!=FALSE &&
-   strpos($newly_passing_tests, "none")!=FALSE &&
-   strpos($newly_failing_tests, "none")!=FALSE ) ||
+if((strpos($new_tests, "none")!==FALSE &&
+   strpos($removed_tests, "none")!==FALSE &&
+   strpos($newly_passing_tests, "none")!==FALSE &&
+   strpos($newly_failing_tests, "none")!==FALSE ) ||
    (strcmp($new_tests, "")==0 &&
    strcmp($removed_tests, "")==0 &&
    strcmp($newly_passing_tests, "")==0 &&
@@ -544,7 +544,7 @@ print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
-	if($index<10){
+	if($index<10 && isset($percent_difference)){
 		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
 	}
 	else{
@@ -605,7 +605,7 @@ print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
-	if($index<10){
+	if($index<10 && isset($percent_difference)){
 		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
 	}
 	else{
@@ -666,7 +666,7 @@ print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
-	if($index<10){
+	if($index<10 && isset($percent_difference)){
 		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
 	}
 	else{

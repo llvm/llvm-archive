@@ -41,6 +41,7 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/ADT/StringExtras.h>
 #include <stdlib.h>
+#include <time.h>
 
 using namespace llvm;
 using namespace hlvm;
@@ -49,12 +50,22 @@ namespace
 {
 
 cl::opt<unsigned>
-  Complexity("complexity", cl::desc("Specify complexity of generated code"),
-      cl::value_desc("num"));
+  Complexity("complexity", 
+    cl::init(5),
+    cl::desc("Specify complexity of generated code"), 
+    cl::value_desc("num"));
 
 cl::opt<unsigned>
-  Seed("seed", cl::desc("Specify random number generator seed"),
-      cl::value_desc("num"));
+  TypeComplexity("type-complexity", 
+    cl::init(4),
+    cl::desc("Specify type complexity of generated code"), 
+    cl::value_desc("num"));
+
+cl::opt<unsigned>
+  Seed("seed", 
+    cl::init(unsigned(time(0))), 
+    cl::desc("Specify random number generator seed"), 
+    cl::value_desc("num"));
 
 cl::opt<unsigned>
   Size("size",cl::desc("Specify size of generated code"),
@@ -105,7 +116,7 @@ genType(unsigned limit)
   Type* result = 0;
   NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
   if (--limit == 0)
-    return ast->getPrimitiveType(BooleanTypeID);
+    id = NodeIDs(randRange(FirstPrimitiveTypeID,LastPrimitiveTypeID));
 
   switch (id) {
     case BooleanTypeID:
@@ -146,7 +157,7 @@ genType(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "int_" + utostr(line);
-      bool isSigned = randRange(0,Complexity+2,true) < (Complexity+2)/2;
+      bool isSigned = randRange(0,TypeComplexity+2,true) < (TypeComplexity+2)/2;
       result = ast->new_IntegerType(name,randRange(4,64,true),isSigned,loc);
       break;
     }
@@ -163,7 +174,7 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "enum_" + utostr(line);
       EnumerationType* E = ast->new_EnumerationType(name,loc);
-      unsigned numEnums = randRange(1,Complexity,true);
+      unsigned numEnums = randRange(1,TypeComplexity,true);
       for (unsigned i = 0; i < numEnums; i++)
         E->addEnumerator(name + "_" + utostr(i));
       result = E;
@@ -178,7 +189,9 @@ genType(unsigned limit)
     }
     case PointerTypeID:
     {
-      result = ast->getPointerTo(genType(limit));
+      Locator* loc = getLocator();
+      std::string name = "ptr_" + utostr(line);
+      result = ast->new_PointerType(name,genType(limit),loc);
       break;
     }
     case ArrayTypeID:
@@ -225,9 +238,9 @@ genType(unsigned limit)
 Type*
 genType()
 {
-  bool shouldGenNewType = randRange(0,20) < Complexity;
+  bool shouldGenNewType = randRange(0,5) < TypeComplexity;
   if (types.empty() || shouldGenNewType) {
-    Type* Ty = genType(Complexity);
+    Type* Ty = genType(TypeComplexity);
     types.push_back(Ty);
     return Ty;
   }
@@ -378,7 +391,6 @@ genValue(const Type* Ty, bool is_constant = false)
       /* FALL THROUGH (unimplemented) */
     case IntegerTypeID:
     {
-      Locator* loc = getLocator();
       std::string name = "cint_" + utostr(line);
       const IntegerType* IntTy = llvm::cast<IntegerType>(Ty);
       unsigned bits = (IntTy->getBits() < 63 ? IntTy->getBits() : 63) - 2;
@@ -396,7 +408,6 @@ genValue(const Type* Ty, bool is_constant = false)
     }
     case RangeTypeID:
     {
-      Locator* loc = getLocator();
       std::string name = "crange_" + utostr(line);
       const RangeType* RngTy = llvm::cast<RangeType>(Ty);
       int64_t val = randRange(RngTy->getMin(),RngTy->getMax());
@@ -406,7 +417,6 @@ genValue(const Type* Ty, bool is_constant = false)
     }
     case EnumerationTypeID:
     {
-      Locator* loc = getLocator();
       std::string name = "cenum_" + utostr(line);
       const EnumerationType* ETy = llvm::cast<EnumerationType>(Ty);
       unsigned val = randRange(0,ETy->size()-1);
@@ -425,10 +435,10 @@ genValue(const Type* Ty, bool is_constant = false)
     case PointerTypeID:
     {
       const PointerType* PT = llvm::cast<PointerType>(Ty);
-      const Type* referent = PT->getElementType();
-      C = ast->new_ConstantPointer(
-          std::string("cptr_") + utostr(line), referent,
-          cast<ConstantValue>(genValue(referent,true)),loc);
+      const Type* refType = PT->getElementType();
+      std::string name = std::string("cptr_") + utostr(line);
+      Value* refValue = genValue(refType,true);
+      C = ast->new_ConstantPointer(name, PT, cast<ConstantValue>(refValue),loc);
       break;
     }
     case ArrayTypeID:
@@ -437,10 +447,10 @@ genValue(const Type* Ty, bool is_constant = false)
       const Type* elemTy = AT->getElementType();
       unsigned nElems = randRange(1,AT->getMaxSize(),true);
       std::vector<ConstantValue*> elems;
+      std::string name = "cptr_" + utostr(line);
       for (unsigned i = 0; i < nElems; i++)
         elems.push_back(cast<ConstantValue>(genValue(elemTy,true)));
-      C = ast->new_ConstantArray(std::string("carray_") + utostr(line),
-          elems, AT, loc);
+      C = ast->new_ConstantArray(name, elems, AT, loc);
       break;
     }
     case VectorTypeID:
@@ -448,11 +458,11 @@ genValue(const Type* Ty, bool is_constant = false)
       const VectorType* VT = llvm::cast<VectorType>(Ty);
       const Type* elemTy = VT->getElementType();
       uint64_t nElems = VT->getSize();
+      std::string name = "cvect_" + utostr(line);
       std::vector<ConstantValue*> elems;
       for (unsigned i = 0; i < nElems; i++)
         elems.push_back(cast<ConstantValue>(genValue(elemTy,true)));
-      C = ast->new_ConstantVector(std::string("cvect_") + utostr(line),
-          elems, VT, loc);
+      C = ast->new_ConstantVector(name, elems, VT, loc);
       break;
     }
     case OpaqueTypeID:
@@ -462,14 +472,15 @@ genValue(const Type* Ty, bool is_constant = false)
     case StructureTypeID:
     {
       const StructureType* ST = llvm::cast<StructureType>(Ty);
+      std::string name = "cstruct_" + utostr(line);
       std::vector<ConstantValue*> elems;
       for (StructureType::const_iterator I = ST->begin(), E = ST->end(); 
            I != E; ++I) {
-        Value* V = genValue((*I)->getType(),true);
+        const Type* Ty = (*I)->getType();
+        Value* V = genValue(Ty,true);
         elems.push_back(cast<ConstantValue>(V));
       }
-      C = ast->new_ConstantStructure(std::string("cstruct_") + utostr(line),
-          elems, ST, loc);
+      C = ast->new_ConstantStructure(name, elems, ST, loc);
       break;
     }
     default:
@@ -542,7 +553,7 @@ genFunction(Type* resultType, unsigned numArgs)
   // Get the signature
   std::string sigName = name + "_type";
   SignatureType* sig = ast->new_SignatureType(sigName,resultType,loc);
-  if (randRange(0,Complexity) <= int(Complexity/4))
+  if (randRange(0,Complexity) > int(Complexity/3))
     sig->setIsVarArgs(true);
   for (unsigned i = 0; i < numArgs; ++i )
   {

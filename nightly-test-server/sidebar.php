@@ -88,10 +88,11 @@ else if($machine!=-1 && $night !=-1){
 	/********************** Creating list to future and past tests **********************/
 	
 	$next_stack = array();
-	$next_query = getNightsResource($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01");
+	$next_query = getNightsResource($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01", ASC);
+	$next = mysql_fetch_array($next_query);
 	$x=0;
 	while($x<7 && $x<mysql_affected_rows()-1 && $next = mysql_fetch_array($next_query)){
-		array_push($next_stack, $next);
+		array_unshift($next_stack, $next);
 		$x++;
 	}
 	foreach ($next_stack as $x){

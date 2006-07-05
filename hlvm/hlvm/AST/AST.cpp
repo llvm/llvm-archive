@@ -631,6 +631,7 @@ AST::new_ConstantString(
 ConstantPointer* 
 AST::new_ConstantPointer(
   const std::string& name,
+  const Type* Ty,
   Constant* referent,
   const Locator* loc
 )
@@ -638,7 +639,7 @@ AST::new_ConstantPointer(
   ConstantPointer* result = new ConstantPointer(referent);
   result->setLocator(loc);
   result->setName(name);
-  result->setType( getPointerTo(referent->getType()) );
+  result->setType(Ty);
   return result;
 }
 
@@ -822,11 +823,9 @@ AST::new_ReferenceOp(const Value* V, const Locator*loc)
   hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
   ReferenceOp* result = new ReferenceOp();
   const Type* refType = V->getType();
-  if (llvm::isa<ConstantValue>(V) || llvm::isa<Argument>(V)) {
+  if (llvm::isa<Constant>(V) || llvm::isa<Argument>(V) ||
+      llvm::isa<AutoVarOp>(V)) {
     result->setType(refType);
-  } else if (llvm::isa<AutoVarOp>(V) || llvm::isa<Constant>(V)) {
-    PointerType* PT = getPointerTo(refType);
-    result->setType(PT);
   } else {
     hlvmAssert(!"Invalid referent type");
   }
@@ -1242,22 +1241,13 @@ AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, const Locator* loc);
 // Memory Operators
 template StoreOp*  
 AST::new_BinaryOp<StoreOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
-template<> StoreOp*  
-AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,const Locator*loc)
-{
-  return new_BinaryOp<StoreOp>(0,op1,op2,loc);
-}
+template StoreOp*  
+AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,const Locator*loc);
 
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
-template<> LoadOp*   
-AST::new_UnaryOp<LoadOp>(Operator*op1,const Locator*loc)
-{
-  hlvmAssert(llvm::isa<PointerType>(op1->getType()) && 
-      "LoadOp Requires PointerType operand");
-  const Type* Ty = llvm::cast<PointerType>(op1->getType())->getElementType();
-  return new_UnaryOp<LoadOp>(Ty, op1, loc);
-}
+template LoadOp*   
+AST::new_UnaryOp<LoadOp>(Operator*op1,const Locator*loc);
 
 // Input/Output Operators
 template OpenOp* 

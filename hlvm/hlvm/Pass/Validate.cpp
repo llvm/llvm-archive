@@ -425,25 +425,37 @@ ValidateImpl::validate(PointerType* n)
 template<> inline void
 ValidateImpl::validate(ArrayType* n)
 {
-  checkUniformContainer(n, ArrayTypeID);
+  if (checkUniformContainer(n, ArrayTypeID)) {
+    if (n->getMaxSize() == 0)
+      error(n,"Array of 0 elements not permited");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(VectorType* n)
 {
-  checkUniformContainer(n, VectorTypeID);
+  if (checkUniformContainer(n, VectorTypeID)) {
+    if (n->getSize() == 0)
+      error(n,"Vector of 0 elements not permited");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(StructureType* n)
 {
-  checkDisparateContainer(n, StructureTypeID);
+  if (checkDisparateContainer(n, StructureTypeID)) {
+    if (n->size() == 0)
+      error(n,"Structure of 0 fields not permited");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ContinuationType* n)
 {
-  checkDisparateContainer(n, ContinuationTypeID);
+  if (checkDisparateContainer(n, ContinuationTypeID)) {
+    if (n->size() == 0)
+      error(n,"Continuation of 0 fields not permited");
+  }
 }
 
 template<> inline void
@@ -577,36 +589,101 @@ ValidateImpl::validate(ConstantString* n)
 template<> inline void
 ValidateImpl::validate(ConstantPointer* n)
 {
-  checkConstant(n,ConstantPointerID);
-  // FIXME: validate fields vs. type
+  if (checkConstant(n,ConstantPointerID)) {
+    if (const PointerType* PT = dyn_cast<PointerType>(n->getType()))
+      if (PT->getElementType() != n->getValue()->getType())
+        error(n,"ConstantPointer referent does not match pointer type");
+    else 
+      error(n,"ConstantPointer must have pointer type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ConstantArray* n)
 {
-  checkConstant(n,ConstantArrayID);
-  // FIXME: validate fields vs. type
+  if (checkConstant(n,ConstantArrayID)) {
+    if (const ArrayType* AT = dyn_cast<ArrayType>(n->getType())) {
+      if (n->size() > AT->getMaxSize())
+        error(n,"Too many elements (" + utostr(n->size()) + ") for array "
+                "of size " + utostr(AT->getMaxSize()));
+      else if (n->size() == 0)
+        error(n,"Zero sized ConstantArray is not permited");
+      for (ConstantArray::iterator I = n->begin(), E = n->end(); I != E; ++I)
+        if ((*I)->getType() != AT->getElementType())
+          error(n,"Element #" + utostr(I-n->begin()) + "of type '" + 
+                   (*I)->getType()->getName() + "' does not conform to array "+
+                   "element type (" + AT->getElementType()->getName() + ")");
+    } else
+      error(n,"ConstantArray must have array type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ConstantVector* n)
 {
-  checkConstant(n,ConstantVectorID);
-  // FIXME: validate fields vs. type
+  if (checkConstant(n,ConstantVectorID)) {
+    if (const VectorType* VT = dyn_cast<VectorType>(n->getType())) {
+      if (n->size() != VT->getSize())
+        error(n,"Too " + 
+          (n->size() < VT->getSize() ? std::string("few") :
+           std::string("many")) + " elements (" + utostr(n->size()) + 
+            ") for array of size " + utostr(VT->getSize()));
+      for (ConstantArray::iterator I = n->begin(), E = n->end(); I != E; ++I)
+        if ((*I)->getType() != VT->getElementType())
+          error(n,"Element #" + utostr(I-n->begin()) + "of type '" + 
+                   (*I)->getType()->getName() + "' does not conform to vector "+
+                   "element type (" + VT->getElementType()->getName() + ")");
+    } else
+      error(n,"ConstantVector must have vector type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ConstantStructure* n)
 {
-  checkConstant(n,ConstantStructureID);
-  // FIXME: validate fields vs. type
+  if (checkConstant(n,ConstantStructureID)) {
+    if (const StructureType* ST = dyn_cast<StructureType>(n->getType())) {
+      if (n->size() != ST->size())
+        error(n,"Too " + 
+          (n->size() < ST->size() ? std::string("few") :
+          std::string("many")) + " elements (" + utostr(n->size()) + 
+          ") for structure with " + utostr(ST->size()) + " fields");
+      StructureType::const_iterator STI = ST->begin();
+      for (ConstantStructure::iterator I = n->begin(), E = n->end(); 
+           I != E; ++I) {
+        if ((*I)->getType() != (*STI)->getType())
+          error(n,"Field #" + utostr(I-n->begin()) + " of type '" 
+              + (*I)->getType()->getName() + 
+              "' does not conform to type of structure field (" + 
+              (*STI)->getName() + ") of type '" + (*STI)->getType()->getName());
+      }
+    } else
+      error(n,"ConstantStructure must have structure type");
+  }
 }
 
 template<> inline void
 ValidateImpl::validate(ConstantContinuation* n)
 {
-  checkConstant(n,ConstantContinuationID);
-  // FIXME: validate fields vs. type
+  if (checkConstant(n,ConstantContinuationID)) {
+    if (const ContinuationType* CT = dyn_cast<ContinuationType>(n->getType())) {
+      if (n->size() != CT->size())
+        error(n,"Too " + 
+          (n->size() < CT->size() ? std::string("few") :
+          std::string("many")) + " elements (" + utostr(n->size()) + 
+          ") for continuation with " + utostr(CT->size()) + " fields");
+      ContinuationType::const_iterator CTI = CT->begin();
+      for (ConstantContinuation::iterator I = n->begin(), E = n->end(); 
+           I != E; ++I) {
+        if ((*I)->getType() != (*CTI)->getType())
+          error(n,"Field #" + utostr(I-n->begin()) + "of type '" 
+              + (*I)->getType()->getName() + 
+              "' does not conform to type of continuation field (" + 
+              (*CTI)->getName() + ") of type '" + (*CTI)->getType()->getName());
+      }
+    } else
+      error(n,"ConstantContinuation must have continuation type");
+  }
 }
 
 template<> inline void
@@ -876,10 +953,9 @@ template<> inline void
 ValidateImpl::validate(LoadOp* n)
 {
   if (checkOperator(n,LoadOpID,1)) {
-    const Type* Ty = n->getOperand(0)->getType();
-    if (!isa<PointerType>(Ty))
-      error(n,"LoadOp expects a pointer type operand");
-    else if (n->getType() != cast<PointerType>(Ty)->getElementType())
+    const Type* Ty1 = n->getOperand(0)->getType();
+    const Type* Ty2 = n->getType();
+    if (Ty1 != Ty2)
       error(n,"LoadOp type and operand type do not agree");
   }
 }
@@ -890,9 +966,7 @@ ValidateImpl::validate(StoreOp* n)
   if (checkOperator(n,StoreOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!isa<PointerType>(Ty1))
-      error(n,"StoreOp expects first operand to be pointer type");
-    else if (cast<PointerType>(Ty1)->getElementType() != Ty2) {
+    if (Ty1 != Ty2) {
       error(n,"StoreOp operands do not agree in type");
     } else if (const ReferenceOp* ref = 
                dyn_cast<ReferenceOp>(n->getOperand(0))) {

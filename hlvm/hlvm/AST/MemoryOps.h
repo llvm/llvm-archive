@@ -94,6 +94,7 @@ class DeallocateOp : public UnaryOperator
   /// @}
   friend class AST;
 };
+
 /// This class provides an Abstract Syntax Tree node that represents an operator
 /// for loading a value from a memory location. This operator takes a single
 /// operand which must resolve to the address of a memory location, either 
@@ -129,10 +130,10 @@ class LoadOp : public UnaryOperator
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
-/// for storing a a value into a memory location. The first operand 
+/// for storing a value into a memory location. The first operand 
 /// resolves to the storage location into which the value is stored. The second
-/// operand provides the value to store. The operator returns a void value.
-/// @brief AST Memory Store Operator
+/// operand provides the value to store. The operator returns the value stored.
+/// @brief AST Memory Set Operator
 class StoreOp : public BinaryOperator
 {
   /// @name Constructors

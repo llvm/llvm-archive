@@ -43,14 +43,14 @@ void
 Bundle::insertChild(Node* kid)
 {
   hlvmAssert(kid && "Null child!");
-  if (isa<Type>(kid))
-    types.insert(cast<Type>(kid)->getName(), cast<Type>(kid));
+  if (const Type* Ty = dyn_cast<Type>(kid))
+    types.insert(Ty->getName(), Ty);
   else if (Constant* C = dyn_cast<Constant>(kid)) {
     const std::string& name = C->getName();
     values.push_back(C);
-    if (isa<ConstantValue>(kid)) {
+    if (isa<ConstantValue>(C)) {
       cvals.insert(name, cast<ConstantValue>(kid));
-    } else if (isa<Linkable>(kid)) {
+    } else if (isa<Linkable>(C)) {
       linkables.insert(name, cast<Linkable>(kid));
     }
   } else
@@ -61,16 +61,16 @@ void
 Bundle::removeChild(Node* kid)
 {
   hlvmAssert(kid && "Null child!");
-  if (isa<Type>(kid))
-    types.erase(cast<Type>(kid)->getName());
-  else if (isa<Value>(kid)) {
+  if (const Type* Ty = dyn_cast<Type>(kid))
+    types.erase(Ty->getName());
+  else if (Constant* C = dyn_cast<Constant>(kid)) {
     // This is sucky slow, but we probably won't be removing nodes that much.
     for (value_iterator I = value_begin(), E = value_end(); I != E; ++I )
-      if (*I == kid) { values.erase(I); break; }
-    if (isa<ConstantValue>(kid))
-      cvals.erase(cast<ConstantValue>(kid)->getName());
-    else if (isa<Linkable>(kid))
-      linkables.erase(cast<Linkable>(kid)->getName());
+      if (*I == C) { values.erase(I); break; }
+    if (isa<ConstantValue>(C))
+      cvals.erase(cast<ConstantValue>(C)->getName());
+    else if (isa<Linkable>(C))
+      linkables.erase(cast<Linkable>(C)->getName());
   } else 
     hlvmAssert(!"That node isn't my child");
 }

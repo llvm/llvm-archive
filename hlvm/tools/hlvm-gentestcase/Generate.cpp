@@ -427,7 +427,7 @@ genValue(const Type* Ty, bool is_constant = false)
       const PointerType* PT = llvm::cast<PointerType>(Ty);
       const Type* referent = PT->getElementType();
       C = ast->new_ConstantPointer(
-          std::string("cptr_") + utostr(line),
+          std::string("cptr_") + utostr(line), referent,
           cast<ConstantValue>(genValue(referent,true)),loc);
       break;
     }

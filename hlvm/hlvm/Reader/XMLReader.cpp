@@ -493,8 +493,7 @@ XMLReaderImpl::parseLiteralConstant(
       // Didn't find a constant? Try a linkable
       if (!referent)
         referent = bundle->find_linkable(id);
-      C = ast->new_ConstantPointer(
-        name,ast->getPointerTo(referent->getType()),referent,loc);
+      C = ast->new_ConstantPointer(name,Ty,referent,loc);
       break;
     }
     case TKN_arr:

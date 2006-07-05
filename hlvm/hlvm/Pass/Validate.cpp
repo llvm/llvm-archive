@@ -104,6 +104,15 @@ ValidateImpl::error(const Node* n, const std::string& msg)
     } else
       std::cerr << "Unknown Location: ";
   }
+  if (const ConstantValue* CV = dyn_cast<ConstantValue>(n)) {
+    std::cerr << CV->getName() << ": ";
+  } else if (const Linkable *L = dyn_cast<Linkable>(n)) {
+    std::cerr << L->getName() << ": ";
+  } else if (const Type* Ty = dyn_cast<Type>(n)) {
+    std::cerr << Ty->getName() << ": ";
+  } else if (const NamedType* Ty = dyn_cast<NamedType>(n)) {
+    std::cerr << Ty->getName() << ": ";
+  }
   std::cerr << msg << "\n";
   passed_ = false;
 }
@@ -590,11 +599,14 @@ template<> inline void
 ValidateImpl::validate(ConstantPointer* n)
 {
   if (checkConstant(n,ConstantPointerID)) {
-    if (const PointerType* PT = dyn_cast<PointerType>(n->getType()))
-      if (PT->getElementType() != n->getValue()->getType())
+    if (const PointerType* PT = dyn_cast<PointerType>(n->getType())) {
+      if (PT->getElementType() != n->getValue()->getType()) {
         error(n,"ConstantPointer referent does not match pointer type");
-    else 
-      error(n,"ConstantPointer must have pointer type");
+      }
+    } else  {
+      error(n,"Constant pointer of type '" + 
+          n->getType()->getName() + "' must have pointer type");
+    }
   }
 }
 
@@ -655,7 +667,9 @@ ValidateImpl::validate(ConstantStructure* n)
           error(n,"Field #" + utostr(I-n->begin()) + " of type '" 
               + (*I)->getType()->getName() + 
               "' does not conform to type of structure field (" + 
-              (*STI)->getName() + ") of type '" + (*STI)->getType()->getName());
+              (*STI)->getName() + ") of type '" + (*STI)->getType()->getName() +
+              "'");
+        ++STI;
       }
     } else
       error(n,"ConstantStructure must have structure type");
@@ -679,7 +693,9 @@ ValidateImpl::validate(ConstantContinuation* n)
           error(n,"Field #" + utostr(I-n->begin()) + "of type '" 
               + (*I)->getType()->getName() + 
               "' does not conform to type of continuation field (" + 
-              (*CTI)->getName() + ") of type '" + (*CTI)->getType()->getName());
+              (*CTI)->getName() + ") of type '" + (*CTI)->getType()->getName() +
+              "'");
+        ++CTI;
       }
     } else
       error(n,"ConstantContinuation must have continuation type");
@@ -1009,25 +1025,25 @@ ValidateImpl::validate(ReferenceOp* op)
         blk = blk->getContainingBlock();
       }
       if (blk == 0)
-        error(op,"Referent does not match name in scope");
+        error(ref,"Referent does not match name in scope");
     } else if (const Argument* arg = dyn_cast<Argument>(referent)) {
       Function* F = op->getContainingFunction();
       if (!F)
         error(op,"ReferenceOp not in a function?");
       else if (F->getArgument(arg->getName()) != arg)
-        error(op,"Referent does not match function argument");
+        error(F,"Referent does not match function argument");
     } else if (const ConstantValue* cval = dyn_cast<ConstantValue>(referent)) {
       Bundle* B = op->getContainingBundle();
       if (!B)
         error(op,"ReferenceOp not in a bundle?");
       else if (B->find_cval(cval->getName()) != cval)
-        error(op,"Referent does not match constant value");
+        error(cval,"Referent does not match constant value");
     } else if (const Linkable* lnkbl = dyn_cast<Linkable>(referent)) {
       Bundle* B = op->getContainingBundle();
       if (!B)
         error(op,"ReferenceOp not in a bundle?");
       else if (B->find_linkable(lnkbl->getName()) != lnkbl)
-        error(op,"Referent does not match linkable by name");
+        error(lnkbl,"Referent does not match linkable by name");
     } else {
       error(op,"Referent of unknown kind");
     }

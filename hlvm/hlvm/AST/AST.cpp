@@ -823,12 +823,12 @@ AST::new_ReferenceOp(const Value* V, const Locator*loc)
   hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
   ReferenceOp* result = new ReferenceOp();
   const Type* refType = V->getType();
-  if (llvm::isa<Constant>(V) || llvm::isa<Argument>(V) ||
-      llvm::isa<AutoVarOp>(V)) {
+  if (llvm::isa<AutoVarOp>(V) || 
+      llvm::isa<Argument>(V) ||
+      llvm::isa<Constant>(V))
     result->setType(refType);
-  } else {
+  else
     hlvmAssert(!"Invalid referent type");
-  }
   result->setLocator(loc);
   result->setReferent(V);
   return result;

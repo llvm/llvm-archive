@@ -183,8 +183,8 @@ elseif($machine != -1 && $night == -1){
 else{ /*if($machine ==-1 && night ==-1)*/
 
 	print "<a href=\"index.php\">Homepage</a><br><br>\n";
-	$list_o_machines = getMachineResource($mysql_link);
-	print "<a href='testers.php'>Test machines:</a><br>\n<ul>\n";
+	$list_o_machines = getRecentMachineResource($mysql_link);
+	print "Test Machines With Recent Submissions:<br>\n<ul>\n";
 	while($temp_row = mysql_fetch_array($list_o_machines)){
 		if(strcmp($temp_row['nickname'],"")==0){
 			print "<li><a href=\"machine.php?machine={$temp_row['id']}\">{$temp_row['name']}</a>\n";
@@ -194,8 +194,20 @@ else{ /*if($machine ==-1 && night ==-1)*/
 		}
 	}
 	print "</ul>\n";	
-
 	mysql_free_result($list_o_machines);
+
+	print "<a href='testers.php'>All Test Machines:</a><br>\n<ul>\n";
+	$list_o_machines = getMachineResource($mysql_link);
+        while($temp_row = mysql_fetch_array($list_o_machines)){
+                if(strcmp($temp_row['nickname'],"")==0){
+                        print "<li><a href=\"machine.php?machine={$temp_row['id']}\">{$temp_row['name']}</a>\n";
+                }
+                else{
+                        print "<li><a href=\"machine.php?machine={$temp_row['id']}\">{$temp_row['nickname']}</a>\n";
+                }
+        }
+        print "</ul>\n";
+        mysql_free_result($list_o_machines);
 }
 
 

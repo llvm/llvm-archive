@@ -108,10 +108,13 @@ sub AddMachine{ #(uname, hardware, os, name, nickname, gcc_version,directory)
 #
 # Returns the id number of the machine with the passed in uname
 #
+# $machine_id = GetMachineId $uname. $hardware, $os, $name, $nickname, $gcc_version;
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub GetMachineId{ #uname
+sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
     $_[0] = "" unless $_[0];
-    my $d = $dbh->prepare("select * from machine where uname = \"$_[0]\"");
+    my $d = $dbh->prepare("select * from machine where uname = \"$_[0]\" and hardware=\"$_[1]\"."
+			  and os=\"$_[2]\" and name=\"$_[3]\" and nickname=\"$_[4]\" and gcc=\"$_[5]\"");
     $d->execute;
     @row = $d->fetchrow_array;
     if(@row){
@@ -439,7 +442,7 @@ print "content-type: text/text\r\n\r\n";
 if (!DoesMachineExist $uname,$hardware,$os,$name,$nickname,$gcc_version){
   AddMachine $uname,$hardware,$os,$name,$nickname,$gcc_version,"test";
 }
-$machine_id = GetMachineId $uname;
+$machine_id = GetMachineId $uname. $hardware, $os, $name, $nickname, $gcc_version;
 
 $db_date = $date." ".$time;
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 

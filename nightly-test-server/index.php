@@ -60,7 +60,11 @@ while($row = mysql_fetch_array($result)){
 	else{$machine_name = $cur_machine_row['name'];}
         
 
-	if($line % 2 == 0){
+	if(strpos($row['buildstatus'],"OK")===FALSE){
+                print "\t<tr bgcolor=#FFCC33>\n";
+                $build_ok=0;
+        }
+	else if($line % 2 == 0){
 		print "\t<tr bgcolor=#DDDDDD>";		
 	}
 	else{

@@ -40,12 +40,12 @@ ConstantAny::~ConstantAny() { }
 ConstantBoolean::~ConstantBoolean() { }
 ConstantCharacter::~ConstantCharacter() { }
 ConstantEnumerator::~ConstantEnumerator() { }
-ConstantOctet::~ConstantOctet() { }
 ConstantInteger::~ConstantInteger() { }
 ConstantReal::~ConstantReal() { }
 ConstantString::~ConstantString() { }
 ConstantPointer::~ConstantPointer() { }
 ConstantAggregate::~ConstantAggregate() { }
+
 void 
 ConstantAggregate::insertChild(Node* n)
 {

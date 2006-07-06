@@ -8,6 +8,6 @@
       <arg id="arg1" type="someType"/>
       <arg id="arg1" type="someType"/>
     </signature>
-    <intrinsic id="someType" is="any"/>
+    <any id="someType"/>
   </bundle>
 </hlvm>

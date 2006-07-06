@@ -152,6 +152,14 @@ UnaryOperator::removeChild(Node* child)
     hlvmAssert(!"Can't remove child from UnaryOperator");
 }
 
+void 
+UnaryOperator::resolveTypeTo(const Type* from, const Type* to)
+{
+  Operator::resolveTypeTo(from,to);
+  if(op1)
+    op1->resolveTypeTo(from,to);
+}
+
 BinaryOperator::~BinaryOperator()
 {
 }
@@ -199,6 +207,17 @@ BinaryOperator::removeChild(Node* child)
     ops[1] = 0;
   else
     hlvmAssert(!"Can't remove child from BinaryOperator");
+}
+
+void 
+BinaryOperator::resolveTypeTo(const Type* from, const Type* to)
+{
+  Operator::resolveTypeTo(from,to);
+  if(ops[0])
+    ops[0]->resolveTypeTo(from,to);
+  if(ops[1])
+    ops[1]->resolveTypeTo(from,to);
+
 }
 
 TernaryOperator::~TernaryOperator()
@@ -255,6 +274,19 @@ TernaryOperator::removeChild(Node* child)
     hlvmAssert(!"Can't remove child from TernaryOperator!");
 }
 
+void 
+TernaryOperator::resolveTypeTo(const Type* from, const Type* to)
+{
+  Operator::resolveTypeTo(from,to);
+  if(ops[0])
+    ops[0]->resolveTypeTo(from,to);
+  if(ops[1])
+    ops[1]->resolveTypeTo(from,to);
+  if(ops[2])
+    ops[2]->resolveTypeTo(from,to);
+
+}
+
 MultiOperator::~MultiOperator()
 {
 }
@@ -308,6 +340,14 @@ MultiOperator::removeChild(Node* child)
   for (iterator I = begin(), E = end(); I != E; ++I ) {
       if (*I == child) { ops.erase(I); return; }
   }
+}
+
+void 
+MultiOperator::resolveTypeTo(const Type* from, const Type* to)
+{
+  Operator::resolveTypeTo(from,to);
+  for (iterator I = begin(), E = end(); I != E; ++I )
+    (*I)->resolveTypeTo(from,to);
 }
 
 }

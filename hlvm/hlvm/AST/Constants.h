@@ -192,36 +192,6 @@ class ConstantCharacter: public ConstantValue
 /// This class provides an Abstract Syntax Tree node that yields a 
 /// constant octet value. 
 /// @brief AST Constant Octet Node
-class ConstantOctet: public ConstantValue
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    ConstantOctet(unsigned char val) : ConstantValue(ConstantOctetID) { 
-      value = val; }
-    virtual ~ConstantOctet();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    unsigned char getValue() const { return value; }
-    static inline bool classof(const ConstantOctet*) { return true; }
-    static inline bool classof(const Node* N) 
-      { return N->is(ConstantOctetID); }
-
-  /// @}
-  /// @name Data
-  /// @{
-  public:
-    unsigned char value;
-  /// @}
-  friend class AST;
-};
-
-/// This class provides an Abstract Syntax Tree node that yields a 
-/// constant octet value. 
-/// @brief AST Constant Octet Node
 class ConstantEnumerator: public ConstantValue
 {
   /// @name Constructors

@@ -3,10 +3,10 @@
       pubid="http://hlvm.org/src/hlvm/test/return0/helloworld.hlx">
   <bundle id="helloworld">
     <constant id="hw" type="string">
-      <string>Hello, World&#10;</string>
+      <str>Hello, World&#10;</str>
     </constant>
     <constant id="stdout" type="string">
-      <string>hlvm:std:out</string>
+      <str>hlvm:std:out</str>
     </constant>
     <constant id="zero" type="s32">
       <dec>0</dec>

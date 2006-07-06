@@ -153,10 +153,10 @@ PassManagerImpl::runOn(Bundle* b)
 {
   hlvmAssert(b && "Null bundle?");
   runPreOrder(b);
-  for (Bundle::type_iterator TI = b->type_begin(), TE = b->type_end(); 
+  for (Bundle::tlist_iterator TI = b->tlist_begin(), TE = b->tlist_end(); 
        TI != TE; ++TI) {
-    runPreOrder(const_cast<Type*>(TI->second));
-    runPostOrder(const_cast<Type*>(TI->second));
+    runPreOrder(const_cast<Type*>(*TI));
+    runPostOrder(const_cast<Type*>(*TI));
   }
   for (Bundle::clist_iterator CI = b->clist_begin(), CE = b->clist_end(); 
        CI != CE; ++CI) {

@@ -48,77 +48,21 @@
 
 using namespace hlvm;
 
-namespace 
+namespace hlvm 
 {
 
-class ASTImpl : public AST
+AST::AST() 
+  : Node(TreeTopID), sysid(), pubid(), bundles(), pool(0)
 {
-  public:
-    ASTImpl()
-      : types(), unresolvedTypes(), 
-        AnyTypeSingleton(0), StringTypeSingleton(0),
-        BooleanSingleton(), CharacterSingleton(0), 
-        OctetSingleton(0), UInt8Singleton(0), UInt16Singleton(0), 
-        UInt32Singleton(0), UInt64Singleton(0), UInt128Singleton(0),
-        SInt8Singleton(0), SInt16Singleton(0), SInt32Singleton(0),
-        SInt64Singleton(0), SInt128Singleton(0),  Float32Singleton(0),
-        Float44Singleton(0), Float64Singleton(0), Float80Singleton(0),
-        Float128Singleton(0), TextTypeSingleton(0), StreamTypeSingleton(0),
-        BufferTypeSingleton(0), ProgramTypeSingleton(0),
-        BooleanTrueSingleton(0), BooleanFalseSingleton(0)
-      {
-        pool = Pool::create("ASTPool",0,false,1024,4,0);
-      }
-    ~ASTImpl();
+  pool = Pool::create("ASTPool",0,false,1024,4,0);
+}
 
-  protected:
-    virtual void insertChild(Node* child);
-    virtual void removeChild(Node* child);
-
-  private:
-    // Pool pool;
-    SymbolTable<Type>    types;
-    SymbolTable<Type>    unresolvedTypes;
-    AnyType*       AnyTypeSingleton;
-    StringType*    StringTypeSingleton;
-    BooleanType*   BooleanSingleton;
-    CharacterType* CharacterSingleton;
-    OctetType*     OctetSingleton;
-    IntegerType*   UInt8Singleton;
-    IntegerType*   UInt16Singleton;
-    IntegerType*   UInt32Singleton;
-    IntegerType*   UInt64Singleton;
-    IntegerType*   UInt128Singleton;
-    IntegerType*   SInt8Singleton;
-    IntegerType*   SInt16Singleton;
-    IntegerType*   SInt32Singleton;
-    IntegerType*   SInt64Singleton;
-    IntegerType*   SInt128Singleton;  
-    RealType*      Float32Singleton;
-    RealType*      Float44Singleton;
-    RealType*      Float64Singleton;
-    RealType*      Float80Singleton;
-    RealType*      Float128Singleton;
-    TextType*      TextTypeSingleton;
-    StreamType*    StreamTypeSingleton;
-    BufferType*    BufferTypeSingleton;
-    SignatureType* ProgramTypeSingleton;
-    ConstantBoolean* BooleanTrueSingleton;
-    ConstantBoolean* BooleanFalseSingleton;
-
-  public:
-    Type* resolveType(const std::string& name);
-    void addType(Type*);
-    virtual void setParent(Node* parent);
-    friend class AST;
-};
-
-ASTImpl::~ASTImpl()
+AST::~AST()
 {
 }
 
 void 
-ASTImpl::insertChild(Node* child)
+AST::insertChild(Node* child)
 {
   hlvmAssert(llvm::isa<Bundle>(child) && "Can't insert that here");
 #ifdef HLVM_ASSERT
@@ -129,108 +73,28 @@ ASTImpl::insertChild(Node* child)
 }
 
 void 
-ASTImpl::removeChild(Node* child)
+AST::removeChild(Node* child)
 {
   hlvmAssert(llvm::isa<Bundle>(child) && "Can't remove that here");
   //FIXME: bundles.erase(llvm::cast<Bundle>(child));
 }
 
-Type*
-ASTImpl::resolveType(const std::string& name)
-{
-  Node* n = types.lookup(name);
-  if (n)
-    return llvm::cast<Type>(n);
-  n = unresolvedTypes.lookup(name);
-  if (n)
-    return llvm::cast<OpaqueType>(n);
-  OpaqueType* ot = this->new_OpaqueType(name);
-  unresolvedTypes.insert(ot);
-  return ot;
-}
-
 void
-ASTImpl::addType(Type* ty)
+AST::setParent(Node* n)
 {
-  Node* n = unresolvedTypes.lookup(ty->getName());
-  if (n) {
-    OpaqueType* ot = llvm::cast<OpaqueType>(n);
-    // FIXME: Replace all uses of "ot" with "ty"
-    unresolvedTypes.erase(ot);
-  }
-  types.insert(ty);
+  hlvmAssert(!"Can't set parent of root node (AST)!");
 }
-
-void
-ASTImpl::setParent(Node* n)
-{
-  hlvmAssert(!"Can't set parent of root node (AST)");
-}
-
-}
-
-namespace hlvm 
-{
 
 AST* 
 AST::create()
 {
-  return new ASTImpl();
+  return new AST();
 }
 
 void
 AST::destroy(AST* ast)
 {
-  delete static_cast<ASTImpl*>(ast);
-}
-
-AST::~AST()
-{
-}
-
-Type* 
-AST::resolveType(const std::string& name)
-{
-  return static_cast<const ASTImpl*>(this)->resolveType(name);
-}
-
-SignatureType* 
-AST::getProgramType()
-{
-  ASTImpl* ast = const_cast<ASTImpl*>(static_cast<const ASTImpl*>(this));
-  if (!ast->ProgramTypeSingleton) {
-    ast->ProgramTypeSingleton = new SignatureType();
-    ast->ProgramTypeSingleton->setLocator(loc);
-    ast->ProgramTypeSingleton->setName("ProgramType");
-    Type* intType = ast->getPrimitiveType(SInt32TypeID);
-    ast->ProgramTypeSingleton->setResultType(intType);
-    Parameter* argc = new_Parameter("argc",intType);
-    ast->ProgramTypeSingleton->addParameter(argc);
-    const PointerType* argv_type = getPointerTo(getPointerTo(
-      ast->getPrimitiveType(StringTypeID)));
-    Parameter* argv = new_Parameter("argv",argv_type);
-    ast->ProgramTypeSingleton->addParameter(argv);
-  }
-  return ast->ProgramTypeSingleton;
-}
-
-PointerType* 
-AST::getPointerTo(const Type* Ty)
-{
-  hlvmAssert(Ty != 0);
-  ASTImpl* ast = const_cast<ASTImpl*>(static_cast<const ASTImpl*>(this));
-  std::string ptr_name = Ty->getName() + "*";
-  Node* n = ast->types.lookup(ptr_name);
-  if (n && llvm::isa<PointerType>(n))
-    return llvm::cast<PointerType>(n);
-
-  // Okay, type doesn't exist already, create it a new
-  PointerType* PT = new PointerType();
-  PT->setElementType(Ty);
-  PT->setName(ptr_name);
-  PT->setParent(Ty->getContainingBundle());
-  ast->types.insert(PT);
-  return PT;
+  delete ast;
 }
 
 URI* 
@@ -289,44 +153,48 @@ AST::new_Import(const std::string& pfx, const Locator* loc)
 IntegerType* 
 AST::new_IntegerType(
   const std::string& id, 
+  Bundle* bundle,
   uint16_t bits, 
   bool isSigned,
   const Locator* loc)
 {
-  IntegerType* result = new IntegerType(IntegerTypeID,bits,isSigned);
+  IntegerType* result = new IntegerType(bits,isSigned);
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 RangeType* 
-AST::new_RangeType(const std::string& id, int64_t min, int64_t max, const Locator* loc)
+AST::new_RangeType(
+  const std::string& id, 
+  Bundle* bundle,
+  int64_t min, int64_t max, const Locator* loc)
 {
-  RangeType* result = new RangeType();
+  RangeType* result = new RangeType(min,max);
   result->setLocator(loc);
   result->setName(id);
-  result->setMin(min);
-  result->setMax(max);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 EnumerationType* 
 AST::new_EnumerationType(
   const std::string& id,
+  Bundle* bundle,
   const Locator* loc)
 {
   EnumerationType* result = new EnumerationType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 RealType* 
 AST::new_RealType(
   const std::string& id,  
+  Bundle* bundle,
   uint32_t mantissa, 
   uint32_t exponent,
   const Locator* loc)
@@ -336,107 +204,122 @@ AST::new_RealType(
   result->setExponent(exponent);
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 AnyType* 
-AST::new_AnyType(const std::string& id, const Locator* loc)
+AST::new_AnyType(
+  const std::string& id, 
+  Bundle* bundle,
+  const Locator* loc)
 {
   AnyType* result = new AnyType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 StringType* 
-AST::new_StringType(const std::string& id, const Locator* loc)
+AST::new_StringType(
+  const std::string& id, 
+  Bundle* bundle,
+  const std::string& encoding,
+  const Locator* loc)
 {
-  StringType* result = new StringType();
+  StringType* result = new StringType(encoding);
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 BooleanType* 
-AST::new_BooleanType(const std::string& id, const Locator* loc)
+AST::new_BooleanType(
+  const std::string& id, 
+  Bundle* bundle,
+  const Locator* loc)
 {
   BooleanType* result = new BooleanType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 BufferType* 
-AST::new_BufferType(const std::string& id, const Locator* loc)
+AST::new_BufferType(
+  const std::string& id, 
+  Bundle* bundle,
+  const Locator* loc)
 {
   BufferType* result = new BufferType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 TextType* 
-AST::new_TextType( const std::string& id, const Locator* loc)
+AST::new_TextType(
+  const std::string& id, 
+  Bundle* bundle,
+  const Locator* loc)
 {
   TextType* result = new TextType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 StreamType* 
-AST::new_StreamType(const std::string& id,  const Locator* loc)
+AST::new_StreamType(
+  const std::string& id,  
+  Bundle* bundle,
+  const Locator* loc)
 {
   StreamType* result = new StreamType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 CharacterType* 
-AST::new_CharacterType(const std::string& id, const Locator* loc)
+AST::new_CharacterType(
+  const std::string& id, 
+  Bundle* bundle,
+  const std::string& encoding,
+  const Locator* loc)
 {
-  CharacterType* result = new CharacterType();
+  CharacterType* result = new CharacterType(encoding);
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
-  return result;
-}
-
-OctetType* 
-AST::new_OctetType(const std::string& id, const Locator* loc)
-{
-  OctetType* result = new OctetType();
-  result->setLocator(loc);
-  result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 PointerType* 
 AST::new_PointerType(
   const std::string& id,
-  Type* target,
+  Bundle* bundle,
+  const Type* target,
   const Locator* loc)
 {
   PointerType* result = new PointerType();
   result->setLocator(loc);
   result->setName(id);
   result->setElementType(target);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 ArrayType* 
 AST::new_ArrayType(
   const std::string& id,
+  Bundle* bundle,
   Type* elemType,
   uint64_t maxSize,
   const Locator* loc)
@@ -446,13 +329,14 @@ AST::new_ArrayType(
   result->setName(id);
   result->setElementType(elemType);
   result->setMaxSize(maxSize);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 VectorType* 
 AST::new_VectorType(
   const std::string& id,
+  Bundle* bundle,
   Type* elemType,
   uint64_t size,
   const Locator* loc)
@@ -462,7 +346,7 @@ AST::new_VectorType(
   result->setName(id);
   result->setElementType(elemType);
   result->setSize(size);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
@@ -483,30 +367,33 @@ AST::new_NamedType(
 StructureType*
 AST::new_StructureType(
   const std::string& id, 
+  Bundle* bundle,
   const Locator* loc)
 {
   StructureType* result = new StructureType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 ContinuationType*
 AST::new_ContinuationType(
   const std::string& id, 
+  Bundle* bundle,
   const Locator* loc)
 {
   ContinuationType* result = new ContinuationType();
   result->setLocator(loc);
   result->setName(id);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 SignatureType*
 AST::new_SignatureType(
   const std::string& id, 
+  Bundle* bundle,
   const Type* ty, 
   bool isVarArgs,
   const Locator* loc)
@@ -515,62 +402,82 @@ AST::new_SignatureType(
   result->setLocator(loc);
   result->setName(id);
   result->setResultType(ty);
-  static_cast<ASTImpl*>(this)->addType(result);
+  result->setParent(bundle);
   return result;
 }
 
 OpaqueType*
-AST::new_OpaqueType(const std::string& id, const Locator* loc)
+AST::new_OpaqueType(
+  const std::string& id, 
+  bool is_unresolved,
+  Bundle* bundle,
+  const Locator* loc)
 {
   OpaqueType* result = new OpaqueType(id);
   result->setLocator(loc);
+  if (is_unresolved)
+    result->setIsUnresolved(true);
+  else {
+    result->setIsUnresolved(false);
+    result->setParent(bundle);
+  }
   return result;
 }
 
 ConstantAny* 
 AST::new_ConstantAny(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   ConstantValue* val,
   const Locator* loc)
 {
   ConstantAny* result = new ConstantAny(val);
   result->setLocator(loc);
   result->setName(name);
-  result->setType(getPrimitiveType(AnyTypeID));
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantBoolean* 
 AST::new_ConstantBoolean(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   bool t_or_f, 
   const Locator* loc)
 {
   ConstantBoolean* result = new ConstantBoolean(t_or_f);
   result->setLocator(loc);
   result->setName(name);
-  result->setType(getPrimitiveType(BooleanTypeID));
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantCharacter* 
 AST::new_ConstantCharacter(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   const std::string& val,
   const Locator* loc)
 {
   ConstantCharacter* result = new ConstantCharacter(val);
   result->setLocator(loc);
   result->setName(name);
-  result->setType( getPrimitiveType(CharacterTypeID) );
+  result->setType( type );
+  result->setParent(bundle);
   return result;
 }
 
 ConstantEnumerator* 
 AST::new_ConstantEnumerator(
   const std::string& name,///< The name of the constant
-  const std::string& val, ///< The value for the constant
+  Bundle* bundle,
   const Type* Ty,         ///< The type of the enumerator
+  const std::string& val, ///< The value for the constant
   const Locator* loc      ///< The source locator
 )
 {
@@ -578,28 +485,17 @@ AST::new_ConstantEnumerator(
   result->setLocator(loc);
   result->setName(name);
   result->setType(Ty);
-  return result;
-}
-
-ConstantOctet* 
-AST::new_ConstantOctet(
-  const std::string& name,
-  unsigned char val,
-  const Locator* loc)
-{
-  ConstantOctet* result = new ConstantOctet(val);
-  result->setLocator(loc);
-  result->setName(name);
-  result->setType( getPrimitiveType(OctetTypeID) );
+  result->setParent(bundle);
   return result;
 }
 
 ConstantInteger*
 AST::new_ConstantInteger(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   const std::string&  v, 
   uint16_t base, 
-  const Type* Ty, 
   const Locator* loc)
 {
   ConstantInteger* result = new ConstantInteger(base);
@@ -607,28 +503,33 @@ AST::new_ConstantInteger(
   result->setName(name);
   result->setValue(v);
   result->setBase(base);
-  result->setType(Ty);
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantReal*
 AST::new_ConstantReal(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   const std::string& v, 
-  const Type* Ty, 
   const Locator* loc)
 {
   ConstantReal* result = new ConstantReal();
   result->setLocator(loc);
   result->setName(name);
   result->setValue(v);
-  result->setType(Ty);
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantString*
 AST::new_ConstantString(
   const std::string& name,
+  Bundle* bundle,
+  const Type* type,
   const std::string& v, 
   const Locator* loc)
 {
@@ -636,14 +537,16 @@ AST::new_ConstantString(
   result->setLocator(loc);
   result->setName(name);
   result->setValue(v);
-  result->setType( getPrimitiveType(StringTypeID) );
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantPointer* 
 AST::new_ConstantPointer(
   const std::string& name,
-  const Type* Ty,
+  Bundle* bundle,
+  const Type* type,
   Constant* referent,
   const Locator* loc
 )
@@ -651,15 +554,17 @@ AST::new_ConstantPointer(
   ConstantPointer* result = new ConstantPointer(referent);
   result->setLocator(loc);
   result->setName(name);
-  result->setType(Ty);
+  result->setType(type);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantArray* 
 AST::new_ConstantArray(
   const std::string& name,
-  const std::vector<ConstantValue*>& vals,
+  Bundle* bundle,
   const ArrayType* AT,
+  const std::vector<ConstantValue*>& vals,
   const Locator* loc
 )
 {
@@ -672,14 +577,16 @@ AST::new_ConstantArray(
     result->addConstant(*I);
   }
   result->setType(AT);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantVector* 
 AST::new_ConstantVector(
   const std::string& name,
+  Bundle* bundle,
+  const VectorType* VT,
   const std::vector<ConstantValue*>& vals,
-  const VectorType* AT,
   const Locator* loc
 )
 {
@@ -691,15 +598,17 @@ AST::new_ConstantVector(
   {
     result->addConstant(*I);
   }
-  result->setType(AT);
+  result->setType(VT);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantStructure* 
 AST::new_ConstantStructure(
   const std::string& name,
-  const std::vector<ConstantValue*>& vals,
+  Bundle* bundle,
   const StructureType* ST,
+  const std::vector<ConstantValue*>& vals,
   const Locator* loc
 )
 {
@@ -716,14 +625,16 @@ AST::new_ConstantStructure(
     ++STI;
   }
   result->setType(ST);
+  result->setParent(bundle);
   return result;
 }
 
 ConstantContinuation* 
 AST::new_ConstantContinuation(
   const std::string& name,
-  const std::vector<ConstantValue*>& vals,
+  Bundle* bundle,
   const ContinuationType* ST,
+  const std::vector<ConstantValue*>& vals,
   const Locator* loc
 )
 {
@@ -740,16 +651,22 @@ AST::new_ConstantContinuation(
     ++STI;
   }
   result->setType(ST);
+  result->setParent(bundle);
   return result;
 }
 
 Variable*
-AST::new_Variable(const std::string& id, const Type* Ty, const Locator* loc)
+AST::new_Variable(
+  const std::string& id, 
+  Bundle* B,
+  const Type* Ty, 
+  const Locator* loc)
 {
   Variable* result = new Variable();
   result->setName(id);
   result->setType(Ty);
   result->setLocator(loc);
+  result->setParent(B);
   return result;
 }
 
@@ -766,7 +683,10 @@ AST::new_Argument(
 
 Function*
 AST::new_Function(
-  const std::string& id, const SignatureType* ty, const Locator* loc)
+  const std::string& id, 
+  Bundle* B,
+  const SignatureType* ty, 
+  const Locator* loc)
 {
   Function* result = new Function();
   result->setLocator(loc);
@@ -780,15 +700,17 @@ AST::new_Function(
     Argument* arg = new_Argument((*I)->getName(),0,loc);
     result->addArgument(arg);
   }
+  result->setParent(B);
   return result;
 }
 
 Program*
-AST::new_Program(const std::string& id, const Locator* loc)
+AST::new_Program(
+  const std::string& id, 
+  Bundle* B,
+  const Locator* loc)
 {
-  SignatureType* ty = getProgramType();
-  ASTImpl* ast = static_cast<ASTImpl*>(this);
-
+  SignatureType* ty = B->getProgramType();
   Program* result = new Program();
   result->setLocator(loc);
   result->setName(id);
@@ -802,6 +724,7 @@ AST::new_Program(const std::string& id, const Locator* loc)
     Argument* arg = new_Argument((*I)->getName(),Ty,loc);
     result->addArgument(arg);
   }
+  result->setParent(B);
   return result;
 }
 
@@ -860,17 +783,18 @@ AST::new_NilaryOp(
 
 template<class OpClass> OpClass* 
 AST::new_NilaryOp(
+  Bundle* bundle,    ///< Bundle, for type resolution
   const Locator* loc ///< The source locator
 )
 {
-  return new_NilaryOp<OpClass>(0,loc);
+  return new_NilaryOp<OpClass>(static_cast<Type*>(0),loc);
 }
 
 /// Provide a template function for creating a unary operator
 template<class OpClass> OpClass* 
 AST::new_UnaryOp(
   const Type* Ty,    ///< Result type of the operator
-  Operator* oprnd1,     ///< The first operand
+  Operator* oprnd1,  ///< The first operand
   const Locator* loc ///< The source locator
 )
 {
@@ -885,6 +809,7 @@ AST::new_UnaryOp(
 template<class OpClass> OpClass* 
 AST::new_UnaryOp(
   Operator* oprnd1,     ///< The first operand
+  Bundle* B,         ///< The bundle, for type lookup
   const Locator* loc ///< The source locator
 )
 {
@@ -895,8 +820,8 @@ AST::new_UnaryOp(
 template<class OpClass> OpClass* 
 AST::new_BinaryOp(
   const Type* Ty,    ///< Result type of the operator
-  Operator* oprnd1,     ///< The first operand
-  Operator* oprnd2,     ///< The second operand
+  Operator* oprnd1,  ///< The first operand
+  Operator* oprnd2,  ///< The second operand
   const Locator* loc ///< The source locator
 )
 {
@@ -913,8 +838,9 @@ AST::new_BinaryOp(
 /// Provide a template function for creating a binary operator
 template<class OpClass> OpClass* 
 AST::new_BinaryOp(
-  Operator* oprnd1,     ///< The first operand
-  Operator* oprnd2,     ///< The second operand
+  Operator* oprnd1,  ///< The first operand
+  Operator* oprnd2,  ///< The second operand
+  Bundle* B,         ///< The bundle, for type lookup
   const Locator* loc ///< The source locator
 )
 {
@@ -948,6 +874,7 @@ AST::new_TernaryOp(
   Operator* oprnd1,     ///< The first operand
   Operator* oprnd2,     ///< The second operand
   Operator* oprnd3,     ///< The third operand
+  Bundle* B,
   const Locator* loc ///< The source locator
 )
 {
@@ -971,6 +898,7 @@ AST::new_MultiOp(
 template<class OpClass> OpClass* 
 AST::new_MultiOp(
   const std::vector<Operator*>& oprnds,
+  Bundle* B,
   const Locator* loc
 )
 {
@@ -983,228 +911,244 @@ template NegateOp*
 AST::new_UnaryOp<NegateOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template NegateOp*
-AST::new_UnaryOp<NegateOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<NegateOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template ComplementOp*
 AST::new_UnaryOp<ComplementOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template ComplementOp*
-AST::new_UnaryOp<ComplementOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<ComplementOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PreIncrOp*
 AST::new_UnaryOp<PreIncrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template PreIncrOp*
-AST::new_UnaryOp<PreIncrOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PreIncrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PreDecrOp*
 AST::new_UnaryOp<PreDecrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template PreDecrOp*
-AST::new_UnaryOp<PreDecrOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PreDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PostIncrOp*
 AST::new_UnaryOp<PostIncrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template PostIncrOp*
-AST::new_UnaryOp<PostIncrOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PostIncrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PostDecrOp*
 AST::new_UnaryOp<PostDecrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
 template PostDecrOp*
-AST::new_UnaryOp<PostDecrOp>(Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PostDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template AddOp*
 AST::new_BinaryOp<AddOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template AddOp*
-AST::new_BinaryOp<AddOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<AddOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template SubtractOp*
 AST::new_BinaryOp<SubtractOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template SubtractOp*
-AST::new_BinaryOp<SubtractOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<SubtractOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template MultiplyOp*
 AST::new_BinaryOp<MultiplyOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template MultiplyOp*
-AST::new_BinaryOp<MultiplyOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<MultiplyOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template DivideOp*
 AST::new_BinaryOp<DivideOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template DivideOp*
-AST::new_BinaryOp<DivideOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<DivideOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template ModuloOp*
 AST::new_BinaryOp<ModuloOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template ModuloOp*
-AST::new_BinaryOp<ModuloOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<ModuloOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template BAndOp*
 AST::new_BinaryOp<BAndOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BAndOp*
-AST::new_BinaryOp<BAndOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<BAndOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template BOrOp*
 AST::new_BinaryOp<BOrOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BOrOp*
-AST::new_BinaryOp<BOrOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<BOrOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template BXorOp*
 AST::new_BinaryOp<BXorOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BXorOp*
-AST::new_BinaryOp<BXorOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<BXorOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 template BNorOp*
 AST::new_BinaryOp<BNorOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BNorOp*
-AST::new_BinaryOp<BNorOp>(Operator* op1, Operator* op2, const Locator* loc);
+AST::new_BinaryOp<BNorOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 // Boolean Operators
 template NotOp*
 AST::new_UnaryOp<NotOp>(const Type* Ty, Operator* op1, const Locator* loc);
 template<> NotOp*
-AST::new_UnaryOp<NotOp>(Operator* op1, const Locator* loc)
+AST::new_UnaryOp<NotOp>(Operator* op1, Bundle* B, const Locator* loc)
 {
-  return AST::new_UnaryOp<NotOp>(getPrimitiveType(BooleanTypeID),op1,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_UnaryOp<NotOp>(Ty,op1,loc);
 }
 
 template AndOp*
 AST::new_BinaryOp<AndOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> AndOp*
-AST::new_BinaryOp<AndOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<AndOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<AndOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<AndOp>(Ty,op1,op2,loc);
 }
 
 template OrOp*
 AST::new_BinaryOp<OrOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> OrOp*
-AST::new_BinaryOp<OrOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<OrOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<OrOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<OrOp>(Ty,op1,op2,loc);
 }
 
 template NorOp*
 AST::new_BinaryOp<NorOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> NorOp*
-AST::new_BinaryOp<NorOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<NorOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<NorOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<NorOp>(Ty,op1,op2,loc);
 }
 
 template XorOp*
 AST::new_BinaryOp<XorOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> XorOp*
-AST::new_BinaryOp<XorOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<XorOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<XorOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<XorOp>(Ty,op1,op2,loc);
 }
 
 template LessThanOp*
 AST::new_BinaryOp<LessThanOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> LessThanOp*
-AST::new_BinaryOp<LessThanOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<LessThanOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<LessThanOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<LessThanOp>(Ty,op1,op2,loc);
 }
 
 template GreaterThanOp* 
 AST::new_BinaryOp<GreaterThanOp>(
     const Type* Ty, Operator* op1, Operator* op2,const Locator* loc);
 template<> GreaterThanOp* 
-AST::new_BinaryOp<GreaterThanOp>(Operator* op1, Operator* op2,const Locator* loc)
+AST::new_BinaryOp<GreaterThanOp>(Operator* op1, Operator* op2,Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<GreaterThanOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<GreaterThanOp>(Ty,op1,op2,loc);
 }
 
 template LessEqualOp* 
 AST::new_BinaryOp<LessEqualOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> LessEqualOp* 
-AST::new_BinaryOp<LessEqualOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<LessEqualOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<LessEqualOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<LessEqualOp>(Ty,op1,op2,loc);
 }
 
 template GreaterEqualOp* 
 AST::new_BinaryOp<GreaterEqualOp>(
     const Type* Ty, Operator* op1,Operator* op2, const Locator* loc);
 template<> GreaterEqualOp* 
-AST::new_BinaryOp<GreaterEqualOp>(Operator* op1,Operator* op2, const Locator* loc)
+AST::new_BinaryOp<GreaterEqualOp>(Operator* op1,Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<GreaterEqualOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<GreaterEqualOp>(Ty,op1,op2,loc);
 }
 
 template EqualityOp*
 AST::new_BinaryOp<EqualityOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template<> EqualityOp*
-AST::new_BinaryOp<EqualityOp>(Operator* op1, Operator* op2, const Locator* loc)
+AST::new_BinaryOp<EqualityOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<EqualityOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<EqualityOp>(Ty,op1,op2,loc);
 }
 
 template InequalityOp*
 AST::new_BinaryOp<InequalityOp>(
     const Type* Ty, Operator* op1,Operator* op2,const Locator* loc);
 template<> InequalityOp*
-AST::new_BinaryOp<InequalityOp>(Operator* op1,Operator* op2,const Locator* loc)
+AST::new_BinaryOp<InequalityOp>(Operator* op1,Operator* op2,Bundle* B, const Locator* loc)
 {
-  return AST::new_BinaryOp<InequalityOp>(getPrimitiveType(BooleanTypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(boolTy);
+  return AST::new_BinaryOp<InequalityOp>(Ty,op1,op2,loc);
 }
-
 
 // Control Flow Operators
 template Block* 
 AST::new_MultiOp<Block>(
     const Type* Ty, const std::vector<Operator*>& ops, const Locator*loc);
 template Block* 
-AST::new_MultiOp<Block>(const std::vector<Operator*>& ops, const Locator*loc);
+AST::new_MultiOp<Block>(const std::vector<Operator*>& ops, Bundle* B, const Locator*loc);
 
 template SelectOp*
 AST::new_TernaryOp<SelectOp>(
     const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
 template<> SelectOp*
-AST::new_TernaryOp<SelectOp>(Operator*op1,Operator*op2,Operator*op3,const Locator* loc)
+AST::new_TernaryOp<SelectOp>(Operator*op1,Operator*op2,Operator*op3,Bundle* B,const Locator* loc)
 {
   return new_TernaryOp<SelectOp>(op2->getType(),op1,op2,op3,loc);
 }
 
 template WhileOp*
 AST::new_BinaryOp<WhileOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
-template WhileOp*
-AST::new_BinaryOp<WhileOp>(Operator* op1, Operator* op2,const Locator* loc);
+template<> WhileOp*
+AST::new_BinaryOp<WhileOp>(Operator* op1, Operator* op2,Bundle* B, const Locator* loc)
+{
+  return new_BinaryOp<WhileOp>(op2->getType(),op1,op2,loc);
+}
 
 template UnlessOp*
 AST::new_BinaryOp<UnlessOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
-template UnlessOp*
-AST::new_BinaryOp<UnlessOp>(Operator* op1, Operator* op2,const Locator* loc);
+template<> UnlessOp*
+AST::new_BinaryOp<UnlessOp>(Operator* op1, Operator* op2,Bundle* B, const Locator* loc)
+{
+  return new_BinaryOp<UnlessOp>(op2->getType(),op1,op2,loc);
+}
 
 template UntilOp*
 AST::new_BinaryOp<UntilOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template UntilOp*
-AST::new_BinaryOp<UntilOp>(Operator* op1, Operator* op2,const Locator* loc);
+AST::new_BinaryOp<UntilOp>(Operator* op1, Operator* op2,Bundle* B, const Locator* loc);
 
 template LoopOp*
 AST::new_TernaryOp<LoopOp>(const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
 
 template<> LoopOp*
-AST::new_TernaryOp<LoopOp>(Operator*op1,Operator*op2,Operator*op3,const Locator* loc)
+AST::new_TernaryOp<LoopOp>(Operator*op1,Operator*op2,Operator*op3,Bundle* B,const Locator* loc)
 {
   const Type* Ty = op2->getType();
   if (Ty && llvm::isa<Block>(Ty))
@@ -1216,7 +1160,7 @@ template SwitchOp*
 AST::new_MultiOp<SwitchOp>(
     const Type* Ty, const std::vector<Operator*>& ops, const Locator* loc);
 template<> SwitchOp*
-AST::new_MultiOp<SwitchOp>(const std::vector<Operator*>& ops, const Locator* loc)
+AST::new_MultiOp<SwitchOp>(const std::vector<Operator*>& ops, Bundle* B,const Locator* loc)
 {
   hlvmAssert(ops.size() >= 2 && "Too few operands for SwitchOp");
   const Type* Ty = ops[1]->getType();
@@ -1228,214 +1172,124 @@ AST::new_MultiOp<SwitchOp>(const std::vector<Operator*>& ops, const Locator* loc
 template BreakOp* 
 AST::new_NilaryOp<BreakOp>(const Type*Ty, const Locator*loc);
 template BreakOp* 
-AST::new_NilaryOp<BreakOp>(const Locator*loc);
+AST::new_NilaryOp<BreakOp>(Bundle* B, const Locator*loc);
 
 template ContinueOp* 
 AST::new_NilaryOp<ContinueOp>(const Type* Ty, const Locator*loc);
 template ContinueOp* 
-AST::new_NilaryOp<ContinueOp>(const Locator*loc);
+AST::new_NilaryOp<ContinueOp>(Bundle* B, const Locator*loc);
 
 template ReturnOp* 
 AST::new_NilaryOp<ReturnOp>(const Type*Ty, const Locator*loc);
 template ReturnOp* 
-AST::new_NilaryOp<ReturnOp>(const Locator*loc);
+AST::new_NilaryOp<ReturnOp>(Bundle* B, const Locator*loc);
 
 template ResultOp* 
 AST::new_UnaryOp<ResultOp>(const Type*Ty, Operator*op1,const Locator*loc);
 template ResultOp* 
-AST::new_UnaryOp<ResultOp>(Operator*op1,const Locator*loc);
+AST::new_UnaryOp<ResultOp>(Operator*op1,Bundle* B, const Locator*loc);
 
 template CallOp* 
 AST::new_MultiOp<CallOp>(const Type*Ty, const std::vector<Operator*>& ops, const Locator*loc);
 template CallOp* 
-AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, const Locator* loc);
+AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, Bundle* B,const Locator* loc);
 
 // Memory Operators
 template StoreOp*  
 AST::new_BinaryOp<StoreOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
 template StoreOp*  
-AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,const Locator*loc);
+AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc);
 
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template LoadOp*   
-AST::new_UnaryOp<LoadOp>(Operator*op1,const Locator*loc);
+AST::new_UnaryOp<LoadOp>(Operator*op1,Bundle* B, const Locator*loc);
 
 // Input/Output Operators
 template OpenOp* 
 AST::new_UnaryOp<OpenOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> OpenOp* 
-AST::new_UnaryOp<OpenOp>(Operator*op1,const Locator*loc)
+AST::new_UnaryOp<OpenOp>(Operator*op1,Bundle* B, const Locator*loc)
 {
-  return new_UnaryOp<OpenOp>(getPrimitiveType(StreamTypeID),op1,loc);
+  Type* Ty = B->getIntrinsicType(streamTy);
+  return new_UnaryOp<OpenOp>(Ty,op1,loc);
 }
 
 template WriteOp* 
 AST::new_BinaryOp<WriteOp>(
   const Type* Ty, Operator*op1,Operator*op2, const Locator*loc);
 template<> WriteOp* 
-AST::new_BinaryOp<WriteOp>(Operator*op1,Operator*op2,const Locator*loc)
+AST::new_BinaryOp<WriteOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc)
 {
-  return new_BinaryOp<WriteOp>(getPrimitiveType(UInt64TypeID),op1,op2,loc);
+  Type* Ty = B->getIntrinsicType(u64Ty);
+  return new_BinaryOp<WriteOp>(Ty,op1,op2,loc);
 }
 
 template CloseOp* 
 AST::new_UnaryOp<CloseOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template<> CloseOp* 
-AST::new_UnaryOp<CloseOp>(Operator*op1,const Locator*loc)
+AST::new_UnaryOp<CloseOp>(Operator*op1,Bundle* B, const Locator*loc)
 {
   return new_UnaryOp<CloseOp>(0,op1,loc);
 }
 
 Type* 
-AST::getPrimitiveType(NodeIDs pid)
+AST::new_IntrinsicType(
+ const std::string& id,  ///< The name for the new type
+ Bundle* bundle,         ///< The bundle to put the new type into
+ IntrinsicTypes it,      ///< The type of intrinsic to create
+ const Locator* loc      ///< The source locator
+) 
 {
-  ASTImpl* ast = static_cast<ASTImpl*>(this);
-  switch (pid) 
+  Type* result = 0;
+  switch (it) 
   {
-    case AnyTypeID:
-      if (!ast->AnyTypeSingleton) {
-        ast->AnyTypeSingleton = new AnyType();
-        ast->AnyTypeSingleton->setName("any");
-      }
-      return ast->AnyTypeSingleton;
-    case StringTypeID:
-      if (!ast->StringTypeSingleton) {
-        ast->StringTypeSingleton = new StringType();
-        ast->StringTypeSingleton->setName("string");
-      }
-      return ast->StringTypeSingleton;
-    case BooleanTypeID:
-      if (!ast->BooleanSingleton) {
-        ast->BooleanSingleton = new BooleanType();
-        ast->BooleanSingleton->setName("bool");
-      }
-      return ast->BooleanSingleton;
-    case CharacterTypeID:
-      if (!ast->CharacterSingleton) {
-        ast->CharacterSingleton = new CharacterType();
-        ast->CharacterSingleton->setName("char");
-      }
-      return ast->CharacterSingleton;
-    case OctetTypeID:
-      if (!ast->OctetSingleton) {
-        ast->OctetSingleton = new OctetType();
-        ast->OctetSingleton->setName("octet");
-      }
-      return ast->OctetSingleton;
-    case UInt8TypeID:
-      if (!ast->UInt8Singleton) {
-        ast->UInt8Singleton = new IntegerType(UInt8TypeID,8,false);
-        ast->UInt8Singleton->setName("u8");
-      }
-      return ast->UInt8Singleton;
-    case UInt16TypeID:
-      if (!ast->UInt16Singleton) {
-        ast->UInt16Singleton = new IntegerType(UInt16TypeID,16,false);
-        ast->UInt16Singleton->setName("u16");
-      }
-      return ast->UInt16Singleton;
-    case UInt32TypeID:
-      if (!ast->UInt32Singleton) {
-        ast->UInt32Singleton = new IntegerType(UInt32TypeID,32,false);
-        ast->UInt32Singleton->setName("u32");
-      }
-      return ast->UInt32Singleton;
-    case UInt64TypeID:
-      if (!ast->UInt64Singleton) {
-        ast->UInt64Singleton = new IntegerType(UInt64TypeID,64,false);
-        ast->UInt64Singleton->setName("u64");
-      }
-      return ast->UInt64Singleton;
-    case UInt128TypeID:
-      if (!ast->UInt128Singleton) {
-        ast->UInt128Singleton = new IntegerType(UInt128TypeID,128,false);
-        ast->UInt128Singleton->setName("u128");
-      }
-      return ast->UInt128Singleton;
-    case SInt8TypeID:
-      if (!ast->SInt8Singleton) {
-        ast->SInt8Singleton = new IntegerType(SInt8TypeID,8,true);
-        ast->SInt8Singleton->setName("s8");
-      }
-      return ast->SInt8Singleton;
-    case SInt16TypeID:
-      if (!ast->SInt16Singleton) {
-        ast->SInt16Singleton = new IntegerType(SInt16TypeID,16,true);
-        ast->SInt16Singleton->setName("s16");
-      }
-      return ast->SInt16Singleton;
-    case SInt32TypeID:
-      if (!ast->SInt32Singleton) {
-        ast->SInt32Singleton = new IntegerType(SInt32TypeID,32,true);
-        ast->SInt32Singleton->setName("s32");
-      }
-      return ast->SInt32Singleton;
-    case SInt64TypeID:
-      if (!ast->SInt64Singleton) {
-        ast->SInt64Singleton = new IntegerType(SInt64TypeID,64,true);
-        ast->SInt64Singleton->setName("s64");
-      }
-      return ast->SInt64Singleton;
-    case SInt128TypeID:
-      if (!ast->SInt128Singleton) {
-        ast->SInt128Singleton = new IntegerType(SInt128TypeID,128,true);
-        ast->SInt128Singleton->setName("s128");
-      }
-      return ast->SInt128Singleton;
-    case Float32TypeID:
-      if (!ast->Float32Singleton) {
-        ast->Float32Singleton = new RealType(Float32TypeID,23,8);
-        ast->Float32Singleton->setName("f32");
-      }
-      return ast->Float32Singleton;
-    case Float44TypeID:
-      if (!ast->Float44Singleton) {
-        ast->Float44Singleton = new RealType(Float44TypeID,32,11);
-        ast->Float44Singleton->setName("f44");
-      }
-      return ast->Float44Singleton;
-    case Float64TypeID:
-      if (!ast->Float64Singleton) {
-        ast->Float64Singleton = new RealType(Float64TypeID,52,11);
-        ast->Float64Singleton->setName("f64");
-      }
-      return ast->Float64Singleton;
-    case Float80TypeID:
-      if (!ast->Float80Singleton) {
-        ast->Float80Singleton = new RealType(Float80TypeID,64,15);
-        ast->Float80Singleton->setName("f80");
-      }
-      return ast->Float80Singleton;
-    case Float128TypeID:
-      if (!ast->Float128Singleton) {
-        ast->Float128Singleton = new RealType(Float128TypeID,112,15);
-        ast->Float128Singleton->setName("f128");
-      }
-      return ast->Float128Singleton;
-    case TextTypeID:
-      if (!ast->TextTypeSingleton) {
-        ast->TextTypeSingleton = new TextType();
-        ast->TextTypeSingleton->setName("text");
-      }
-      return ast->TextTypeSingleton;
-    case StreamTypeID:
-      if (!ast->StreamTypeSingleton) {
-        ast->StreamTypeSingleton = new StreamType();
-        ast->StreamTypeSingleton->setName("stream");
-      }
-      return ast->StreamTypeSingleton;
-    case BufferTypeID:
-      if (!ast->BufferTypeSingleton) {
-        ast->BufferTypeSingleton = new BufferType();
-        ast->BufferTypeSingleton->setName("buffer");
-      }
-      return ast->BufferTypeSingleton;
+    case boolTy:   result = new BooleanType(); break;
+    case bufferTy: result = new BufferType(); break;
+    case charTy:   result = new CharacterType("utf-8"); break;
+    case doubleTy: result = new RealType(52,11); break;
+    case f32Ty:    result = new RealType(23,8); break;
+    case f44Ty:    result = new RealType(32,11); break;
+    case f64Ty:    result = new RealType(52,11); break;
+    case f80Ty:    result = new RealType(64,15); break;
+    case f96Ty:    result = new RealType(112,15); break;
+    case f128Ty:   result = new RealType(112,15); break;
+    case floatTy:  result = new RealType(23,8); break;
+    case intTy:    result = new IntegerType(32,true); break;
+    case longTy:   result = new IntegerType(64,true); break;
+    case octetTy:  result = new IntegerType(8,false); break;
+    case r8Ty:     result = new RangeType(INT8_MIN,INT8_MAX); break;
+    case r16Ty:    result = new RangeType(INT16_MIN,INT16_MAX); break;
+    case r32Ty:    result = new RangeType(INT32_MIN,INT32_MAX); break;
+    case r64Ty:    result = new RangeType(INT64_MIN,INT64_MAX); break;
+    case s8Ty:     result = new IntegerType(8,true); break;
+    case s16Ty:    result = new IntegerType(16,true); break;
+    case s32Ty:    result = new IntegerType(32,true); break;
+    case s64Ty:    result = new IntegerType(64,true); break;
+    case s128Ty:   result = new IntegerType(128,true); break;
+    case textTy:   result = new TextType(); break;
+    case shortTy:  result = new IntegerType(16,true); break;
+    case streamTy: result = new StreamType(); break;
+    case stringTy: result = new StringType("utf-8"); break;
+    case u8Ty:     result = new IntegerType(8,false); break;
+    case u16Ty:    result = new IntegerType(16,false); break;
+    case u32Ty:    result = new IntegerType(32,false); break;
+    case u64Ty:    result = new IntegerType(64,false); break;
+    case u128Ty:   result = new IntegerType(128,false); break;
+    case voidTy:   result = new OpaqueType(id); break;
     default:
-      hlvmDeadCode("Invalid Primitive");
+      hlvmDeadCode("Invalid Intrinsic");
       break;
   }
-  return 0;
+  result->setName(id);
+  result->setParent(bundle);
+  return result;
+}
+
+void 
+AST::old(Node* to_be_deleted)
+{
+  delete to_be_deleted;
 }
 
 }

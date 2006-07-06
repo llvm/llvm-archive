@@ -240,6 +240,7 @@ class Function : public Linkable
     virtual void removeChild(Node* kid);
     void setBlock(Block* blk) { blk->setParent(this); }
     void addArgument(Argument* arg) { args.push_back(arg); }
+    virtual void resolveTypeTo(const Type* from, const Type* to);
 
   /// @}
   /// @name Data

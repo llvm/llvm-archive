@@ -99,4 +99,11 @@ Value::~Value()
 {
 }
 
+void 
+Value::resolveTypeTo(const Type* from, const Type* to)
+{
+  if (type == from)
+    type = to;
+}
+
 }

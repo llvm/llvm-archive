@@ -49,6 +49,7 @@ def getSchemaTokens(fname):
   elemPat = re.compile('<element[^>]*name[ ]*=[ ]*"([^"]*)"')
   attrPat = re.compile('<attribute[^>]*name[ ]*=[ ]*"([^"]*)"')
   valuPat = re.compile('<value>\s*([^<\s]*)')
+  subsPat = re.compile('[^A-Za-z0-9_]');
   tokens = []
   for line in fileinput.input(fname):
     tokens += elemPat.findall(line)
@@ -56,7 +57,8 @@ def getSchemaTokens(fname):
     tokens += valuPat.findall(line)
   dict = {}
   for tok in tokens:
-    dict[tok] = 1
+    clean_tok = subsPat.sub('_',tok);
+    dict[clean_tok] = 1
   result = list(dict.keys())
   result.sort()
   return result

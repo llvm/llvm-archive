@@ -72,6 +72,16 @@ Function::removeChild(Node* kid)
   }
 }
 
+void 
+Function::resolveTypeTo(const Type* from, const Type* to)
+{
+  Linkable::resolveTypeTo(from,to);
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    (*I)->resolveTypeTo(from,to);
+  }
+  block->resolveTypeTo(from,to);
+}
+
 Program::~Program() { }
 
 }

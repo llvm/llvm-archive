@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/rename.hlx">
+  <bundle id="rename">
+    <intrinsic id="one" is="u32"/>
+    <intrinsic id="one" is="s32"/>
+    <constant id="two" type="one"><dec>2</dec></constant>
+    <constant id="two" type="one"><dec>3</dec></constant>
+    <variable id="three" type="one" init="two"/>
+    <variable id="three" type="one" init="two"/>
+    <signature id="callee_type" result="s32"/>
+    <function id="four" type="callee_type">
+      <block>
+        <result>
+          <ref id="two"/>
+        </result>
+        <ret/>
+      </block>
+    </function>
+    <function id="four" type="callee_type">
+      <block>
+        <result>
+          <ref id="two"/>
+        </result>
+        <ret/>
+      </block>
+    </function>
+    <program id="rename">
+      <block>
+        <result>
+          <call>
+            <ref id="four"/>
+          </call>
+        </result>
+        <ret/>
+      </block>
+    </program>
+  </bundle>
+</hlvm>

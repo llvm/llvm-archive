@@ -2,7 +2,7 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
     <pointer id="PtrToSomeType" to="SomeType"/>
-    <intrinsic id="SomeType" is="any"/>
+    <any id="SomeType"/>
     <structure id="struct1">
       <field id="field1" type="SomeType"/>
     </structure>

@@ -154,6 +154,7 @@ class UnaryOperator : public Operator
   /// @{
   public:
     virtual void setOperand(unsigned opnum, Operator* oprnd);
+    virtual void resolveTypeTo(const Type* from, const Type* to);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -193,6 +194,7 @@ class BinaryOperator : public Operator
   /// @{
   public:
     virtual void setOperand(unsigned opnum, Operator* oprnd);
+    virtual void resolveTypeTo(const Type* from, const Type* to);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -232,6 +234,7 @@ class TernaryOperator : public Operator
   /// @{
   public:
     virtual void setOperand(unsigned opnum, Operator* oprnd);
+    virtual void resolveTypeTo(const Type* from, const Type* to);
   protected:
     virtual void insertChild(Node* child);
     virtual void removeChild(Node* child);
@@ -297,6 +300,7 @@ class MultiOperator : public Operator
   /// @{
   public:
     virtual void setOperand(unsigned opnum, Operator* oprnd);
+    virtual void resolveTypeTo(const Type* from, const Type* to);
     void addOperand(Operator* v) { v->setParent(this); }
     void addOperands(const OprndList& new_ops); 
   protected:

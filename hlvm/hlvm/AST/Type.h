@@ -35,6 +35,13 @@
 namespace hlvm 
 {
 
+enum TypeFlags {
+  IntrinsicTF    = 0x0001, ///< Set if the type is intrinsic
+  SignedTF       = 0x0002, ///< Set if IntegerType is signed
+  IsVarArgsTF    = 0x0004, ///< Set if Signature is variable argument length
+  UnresolvedTF   = 0x0008  ///< Set if the type is unresolved (OpaqueType)
+};
+
 /// This class provides the Abstract Syntax Tree base class for all Types. A
 /// Type describes the memory layout of a Value. There are many subclasses of
 /// of Type, each with a particular way of describing memory layout. In HLVM,
@@ -53,9 +60,18 @@ class Type : public Documentable
   /// @name Accessors
   /// @{
   public:
+    bool isIntrinsic() const { return flags & IntrinsicTF; }
     const std::string& getName() const { return name; }
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  protected:
+    void setIsIntrinsic(bool is) { 
+      if (is) flags |= IntrinsicTF; else flags &= ~IntrinsicTF; }
+    virtual void resolveTypeTo(const Type* from, const Type* to);
 
   /// @}
   /// @name Type Identification
@@ -85,8 +101,8 @@ class Type : public Documentable
     std::string name;
   /// @}
   friend class AST;
+  friend class Bundle;
 };
-
 
 /// This class provides an Abstract Syntax Tree node for describing a type that
 /// can accept any type of Value. The AnyType can be used to represent
@@ -114,31 +130,6 @@ class AnyType : public Type
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const AnyType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(AnyTypeID); }
-  /// @}
-  friend class AST;
-};
-
-/// This class provides an Abstract Syntax Tree node for describing a character
-/// string type. The StringType value is a sequence of UTF-8 encoded characters
-/// with a null terminator.
-/// @brief AST String Type
-class StringType : public Type
-{
-  /// @name Constructors
-  /// @{
-  protected:
-    StringType() : Type(StringTypeID) {}
-    virtual ~StringType();
-
-  /// @}
-  /// @name Accessors
-  /// @{
-  public:
-    virtual const char* getPrimitiveName() const;
-
-    // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const StringType*) { return true; }
-    static inline bool classof(const Node* T) { return T->is(StringTypeID); }
   /// @}
   friend class AST;
 };
@@ -176,7 +167,7 @@ class CharacterType : public Type
   /// @name Constructors
   /// @{
   protected:
-    CharacterType() : Type(CharacterTypeID) {}
+    CharacterType(const std::string& E) : Type(CharacterTypeID), encoding(E) {}
     virtual ~CharacterType();
 
   /// @}
@@ -184,35 +175,55 @@ class CharacterType : public Type
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
+    const std::string& getEncoding() const { return encoding; }
+
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const CharacterType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(CharacterTypeID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    std::string encoding;
   /// @}
   friend class AST;
 };
 
-/// This class provides an Abstract Syntax Tree node that represents an octet
-/// type. Octets are simply 8 bits of data without interpretation. Octets are
-/// used as the element type of a buffer. Octets cannot be used in arithmetic
-/// computation. They simply hold 8 bits of data.  Octets are commonly used in
-/// stream I/O to represent the raw data flowing on the stream. 
-/// @brief AST Octet Type
-class OctetType : public Type
+/// This class provides an Abstract Syntax Tree node for describing a character
+/// string type. The StringType value is a sequence of unicode characters. Each
+/// String type specifies the encoding to use for the characters. Strings treat
+/// their content as a single unit. It is not possible to manipulate the 
+/// individual characters of which the string is composed. String-typed
+/// locations can be assigned new string-typed values but the strings are
+/// treated as atomic units. To edit sequential characters, use a Text type.
+/// @see Text
+/// @see Character
+/// @brief AST String Type
+class StringType : public Type
 {
   /// @name Constructors
   /// @{
   protected:
-    OctetType() : Type(OctetTypeID) {}
-    virtual ~OctetType();
+    StringType(const std::string& E) : Type(StringTypeID), encoding(E) {}
+    virtual ~StringType();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
+    const std::string& getEncoding() const { return encoding; }
+
     // Methods to support type inquiry via is, cast, dyn_cast
-    static inline bool classof(const OctetType*) { return true; }
-    static inline bool classof(const Node* T) { return T->is(OctetTypeID); }
+    static inline bool classof(const StringType*) { return true; }
+    static inline bool classof(const Node* T) { return T->is(StringTypeID); }
+
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    std::string encoding;
   /// @}
   friend class AST;
 };
@@ -236,27 +247,13 @@ class IntegerType : public Type
   /// @{
   protected:
     IntegerType(
-      NodeIDs id,  ///< The node type identifier, passed on to Node base class
-      int16_t bits = 32, ///< The number of bits in this integer type
+      uint16_t bits = 32, ///< The number of bits in this integer type
       bool sign = true ///< Indicates if this is a signed integer type, or not.
-    ) : Type(id) {
+    ) : Type(IntegerTypeID) {
       setBits(bits);
       setSigned(sign); 
     }
     virtual ~IntegerType();
-
-  /// @}
-  /// @name Constants
-  /// @{
-  public:
-    /// The enum defines various masks and shifts to interpret the bits in
-    /// the Node's flag field.
-    enum FlagsMasks {
-      BitsMask = 0x7FFF, ///< Mask the # of bits, 10 bits
-      SignMask = 0x8000, ///< Mask the sign bit, 1 bit
-      BitsShift = 0,     ///< Bits to shift flags to get # of bits 
-      SignShift = 15     ///< Bits to shift flags to get sign bit
-    };
 
   /// @}
   /// @name Accessors
@@ -267,27 +264,31 @@ class IntegerType : public Type
     virtual const char* getPrimitiveName() const;
 
     /// @brief Return the number of bits in this integer type
-    uint16_t getBits()  const { return uint16_t((flags & BitsMask)>>BitsShift);}
+    uint16_t getBits()  const { return bits; }
 
     /// @brief Return the signedness of this type
-    bool isSigned() const { return flags & SignMask; }
+    bool isSigned() const { return flags & SignedTF; }
 
     /// @brief Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
-    static inline bool classof(const Node* T) { return T->isIntegerType(); }
+    static inline bool classof(const Node* T) { return T->is(IntegerTypeID); }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
     /// @brief Set the number of bits for this integer type
-    void setBits(uint16_t bits) { 
-      flags &= ~BitsMask; flags |= (bits << BitsShift) & BitsMask; }
+    void setBits(uint16_t numBits) { bits = numBits; }
 
     /// @brief Set the signedness of the type
     void setSigned(bool isSigned) { 
-      if (isSigned) flags |= SignMask; else flags &= ~SignMask; }
+      if (isSigned) flags |= SignedTF; else flags &= ~SignedTF; }
 
+  /// @}
+  /// @name Data
+  /// @{
+  public:
+    uint16_t bits;
   /// @}
   friend class AST;
 };
@@ -305,7 +306,7 @@ class RangeType: public Type
   /// @name Constructors
   /// @{
   protected:
-    RangeType() : Type(RangeTypeID), min(0), max(256) {}
+    RangeType(uint64_t n, uint64_t x) : Type(RangeTypeID), min(n), max(x) {}
     virtual ~RangeType();
 
   /// @}
@@ -322,16 +323,6 @@ class RangeType: public Type
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RangeType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(RangeTypeID); }
-
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-    /// Set min value of range
-    void setMin(int64_t val) { min = val; }
-
-    /// Set max value of range
-    void setMax(int64_t val) { max = val; }
 
   /// @}
   /// @name Data
@@ -424,8 +415,8 @@ class RealType : public Type
   /// @name Constructors
   /// @{
   protected:
-    RealType(NodeIDs id, uint32_t m=52, uint32_t x=11) 
-      : Type(id), mantissa(m), exponent(x) {}
+    RealType(uint32_t m=52, uint32_t x=11) 
+      : Type(RealTypeID), mantissa(m), exponent(x) {}
     virtual ~RealType();
 
   /// @}
@@ -438,6 +429,11 @@ class RealType : public Type
 
     /// Get the exponent bits
     uint32_t getExponent() const { return exponent; }
+
+    /// Get the total number of bits
+    uint32_t getBits() const { 
+      return 1 + getMantissa() + getExponent();
+    }
 
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const RealType*) { return true; }
@@ -486,10 +482,17 @@ class OpaqueType : public Type
   /// @name Accessors
   /// @{
   public:
+    bool isUnresolved() { return flags & UnresolvedTF; }
     static inline bool classof(const OpaqueType*) { return true; }
     static inline bool classof(const Node* N) 
       { return N->is(OpaqueTypeID); }
 
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    void setIsUnresolved(bool B) {
+      if (B) flags |= UnresolvedTF; else flags &= ~UnresolvedTF; }
   /// @}
   friend class AST;
 };

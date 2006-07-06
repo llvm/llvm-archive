@@ -2,6 +2,6 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
     <array id="anArray" of="someType" length="128"/>
-    <intrinsic id="someType" is="any"/>
+    <any id="someType"/>
   </bundle>
 </hlvm>

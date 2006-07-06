@@ -37,20 +37,6 @@
 
 namespace hlvm {
 
-template<class ElemType>
-std::string 
-SymbolTable<ElemType>::getUniqueName(const std::string &base_name) const {
-  std::string try_name = base_name;
-  const_iterator end = map_.end();
-
-  // See if the name exists. Loop until we find a free name in the symbol table
-  // by incrementing the last_unique_ counter.
-  while (map_.find(&try_name) != end)
-    try_name = base_name + 
-      llvm::utostr(++last_unique_);
-  return try_name;
-}
-
 // lookup a node by name - returns null on failure
 template<class ElemType>
 ElemType* SymbolTable<ElemType>::lookup(const std::string& name) const {
@@ -86,9 +72,8 @@ template<class ElemType>
 void SymbolTable<ElemType>::insert(ElemType* N) {
   hlvmAssert(N && "Can't insert null node into symbol table!");
 
-  // Check to see if there is a naming conflict.  If so, rename this type!
-  if (lookup(N->getName()))
-    N->setName(getUniqueName(N->getName()));
+  // It is an error to reuse a name
+  hlvmAssert(0 == lookup(N->getName()));
 
   // Insert the map entry
   map_.insert(make_pair(&N->getName(), N));

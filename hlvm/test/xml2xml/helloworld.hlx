@@ -5,10 +5,10 @@
       <dec>0</dec>
     </constant>
     <constant id="hw" type="string">
-      <string>Hello, World</string>
+      <str>Hello, World</str>
     </constant>
     <constant id="stdout" type="string">
-      <string>hlvm:std:out</string>
+      <str>hlvm:std:out</str>
     </constant>
     <program id="helloworld">
       <block>

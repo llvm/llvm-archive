@@ -46,10 +46,26 @@ UniformContainerType::getPrimitiveName() const
   return 0;
 }
 
+void 
+UniformContainerType::resolveTypeTo(const Type* from, const Type* to)
+{
+  hlvmAssert(isa<OpaqueType>(from) && !isa<OpaqueType>(to));
+  if (elemType == from)
+    elemType = to;
+}
+
 PointerType::~PointerType() { }
 ArrayType::~ArrayType() { }
 VectorType::~VectorType() { }
 NamedType::~NamedType() {}
+
+void 
+NamedType::resolveTypeTo(const Type* from, const Type* to)
+{
+  hlvmAssert(isa<OpaqueType>(from) && !isa<OpaqueType>(to));
+  if (type == from)
+    type = to;
+}
 
 DisparateContainerType::~DisparateContainerType() { }
 
@@ -60,9 +76,26 @@ DisparateContainerType::getPrimitiveName() const
   return 0;
 }
 
+void 
+DisparateContainerType::resolveTypeTo(const Type* from, const Type* to)
+{
+  hlvmAssert(isa<OpaqueType>(from) && !isa<OpaqueType>(to));
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if ((*I)->getType() == from) {
+      (*I)->setType(to);
+    }
+}
+
+
 StructureType::~StructureType() { }
 ContinuationType::~ContinuationType() { }
 
 SignatureType::~SignatureType() { }
+void SignatureType::resolveTypeTo(const Type* from, const Type* to)
+{
+  DisparateContainerType::resolveTypeTo(from,to);
+  if (result == from)
+    result = to;
+}
 
 }

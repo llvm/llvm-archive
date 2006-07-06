@@ -65,6 +65,7 @@ class UniformContainerType : public Type
   /// @name Mutators
   /// @{
   public:
+    virtual void resolveTypeTo(const Type* from, const Type* to);
     void setElementType(const Type* t) { elemType = t; }
 
   /// @}
@@ -226,6 +227,7 @@ class NamedType : public Documentable
     /// Set the size of the vector.
     void setName(const std::string& N) { name = N; }
     void setType(const Type* Ty) { type = Ty; }
+    void resolveTypeTo(const Type* from, const Type* to);
 
   /// @}
   /// @name Data
@@ -272,7 +274,8 @@ class DisparateContainerType : public Type
   /// @}
   /// @name Mutators
   /// @{
-  protected:
+  public:
+    virtual void resolveTypeTo(const Type* from, const Type* to);
     void setTypes(const std::vector<NamedType*>& Types) { contents = Types; }
     void addType(NamedType* NT )
       { contents.push_back(NT); }
@@ -392,7 +395,7 @@ class SignatureType : public DisparateContainerType
   /// @{
   public:
     const Type* getResultType() const { return result; }
-    bool  isVarArgs() const { return flags != 0; }
+    bool  isVarArgs() const { return flags & IsVarArgsTF; }
 
     /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const SignatureType*) { return true; }
@@ -404,9 +407,11 @@ class SignatureType : public DisparateContainerType
   /// @{
   public:
     void setResultType(const Type* ty) { result = ty; }
-    void setIsVarArgs(bool is) { flags = is ? 1 : 0; }
+    void setIsVarArgs(bool is) { 
+      if (is) flags |= IsVarArgsTF; else  flags &= ~IsVarArgsTF; }
     void setParameters(const std::vector<Parameter*>& param) { setTypes(param);}
     void addParameter(Parameter* param) { addType(param); }
+    virtual void resolveTypeTo(const Type* from, const Type* to);
 
   /// @}
   /// @name Data

@@ -114,36 +114,33 @@ Type*
 genType(unsigned limit)
 {
   Type* result = 0;
-  NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
+  bool intrinsic_type = randRange(0,TypeComplexity) < TypeComplexity/3;
   if (--limit == 0)
-    id = NodeIDs(randRange(FirstPrimitiveTypeID,LastPrimitiveTypeID));
+    intrinsic_type = true;
 
+  if (intrinsic_type) {
+    IntrinsicTypes theType = IntrinsicTypes(
+        randRange(FirstIntrinsicType,LastIntrinsicType));
+    // FIXME: Don't allow things we can't code gen right now
+    if (theType == u128Ty)
+      theType = u64Ty;
+    else if (theType == s128Ty)
+      theType = s64Ty;
+    else if (theType == f128Ty || theType == f96Ty)
+      theType = f64Ty;
+    else if (theType == bufferTy || theType == streamTy || theType == textTy)
+      theType = s32Ty;
+    return bundle->getIntrinsicType(theType);
+  }
+
+  NodeIDs id = NodeIDs(randRange(FirstTypeID,LastTypeID));
   switch (id) {
-    case BooleanTypeID:
-    case CharacterTypeID:
-    case OctetTypeID:
-    case UInt8TypeID:
-    case UInt16TypeID:
-    case UInt32TypeID:
-    case UInt64TypeID:
-      return ast->getPrimitiveType(id);
-    case UInt128TypeID:
-      return ast->getPrimitiveType(UInt64TypeID);
-    case SInt8TypeID:
-    case SInt16TypeID:
-    case SInt32TypeID:
-    case SInt64TypeID:
-      return ast->getPrimitiveType(id);
-    case SInt128TypeID:
-      return ast->getPrimitiveType(UInt64TypeID);
-    case Float32TypeID:
-    case Float44TypeID:
-    case Float64TypeID:
-    case Float80TypeID:
+    case BooleanTypeID: 
+      result = bundle->getIntrinsicType(boolTy);
+      break;
     case StringTypeID:
-      return ast->getPrimitiveType(id);
-    case Float128TypeID:
-      return ast->getPrimitiveType(Float64TypeID);
+      result = bundle->getIntrinsicType(stringTy);
+      break;
     case AnyTypeID:
     case BufferTypeID:
     case StreamTypeID:
@@ -158,7 +155,8 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "int_" + utostr(line);
       bool isSigned = randRange(0,TypeComplexity+2,true) < (TypeComplexity+2)/2;
-      result = ast->new_IntegerType(name,randRange(4,64,true),isSigned,loc);
+      result = 
+        ast->new_IntegerType(name,bundle,randRange(4,64,true),isSigned,loc);
       break;
     }
     case RangeTypeID:
@@ -166,14 +164,14 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "range_" + utostr(line);
       int64_t limit = randRange(0,8000000);
-      result = ast->new_RangeType(name,-limit,limit,loc);
+      result = ast->new_RangeType(name,bundle,-limit,limit,loc);
       break;
     }
     case EnumerationTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "enum_" + utostr(line);
-      EnumerationType* E = ast->new_EnumerationType(name,loc);
+      EnumerationType* E = ast->new_EnumerationType(name,bundle,loc);
       unsigned numEnums = randRange(1,TypeComplexity,true);
       for (unsigned i = 0; i < numEnums; i++)
         E->addEnumerator(name + "_" + utostr(i));
@@ -184,21 +182,22 @@ genType(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "real_" + utostr(line);
-      result = ast->new_RealType(name,randRange(1,52),randRange(1,11),loc);
+      result = 
+        ast->new_RealType(name,bundle,randRange(1,52),randRange(1,11),loc);
       break;
     }
     case PointerTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "ptr_" + utostr(line);
-      result = ast->new_PointerType(name,genType(limit),loc);
+      result = ast->new_PointerType(name,bundle,genType(limit),loc);
       break;
     }
     case ArrayTypeID:
     {
       Locator* loc = getLocator();
       std::string name = "array_" + utostr(line);
-      result = ast->new_ArrayType(name,
+      result = ast->new_ArrayType(name,bundle,
           genType(limit),randRange(1,Size),loc);
       break;
     }
@@ -206,8 +205,8 @@ genType(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "vector_" + utostr(line);
-      result = ast->new_VectorType(
-          name,genType(limit),randRange(1,Size),loc);
+      result = ast->new_VectorType(name,bundle,
+          genType(limit),randRange(1,Size),loc);
       break;
     }
     case OpaqueTypeID:
@@ -217,7 +216,7 @@ genType(unsigned limit)
     {
       Locator* loc = getLocator();
       std::string name = "struct_" + utostr(line);
-      StructureType* S = ast->new_StructureType(name,loc);
+      StructureType* S = ast->new_StructureType(name,bundle,loc);
       unsigned numFields = randRange(1,Size,true);
       for (unsigned i = 0; i < numFields; ++i) {
         Field* fld = ast->new_Field(name+"_"+utostr(i),
@@ -231,7 +230,6 @@ genType(unsigned limit)
       hlvmAssert(!"Invalid Type?");
   }
   hlvmAssert(result && "No type defined?");
-  result->setParent(bundle);
   return result;
 }
 
@@ -271,7 +269,7 @@ genValue(const Type* Ty, bool is_constant = false)
     {
       bool val = randRange(0,Complexity+2) < (Complexity+2)/2;
       C = ast->new_ConstantBoolean(
-          std::string("cbool_") + utostr(line), val, loc);
+          std::string("cbool_") + utostr(line), bundle,Ty, val, loc);
       break;
     }
     case CharacterTypeID:
@@ -279,94 +277,7 @@ genValue(const Type* Ty, bool is_constant = false)
       std::string val;
       val += char(randRange(35,126));
       C = ast->new_ConstantCharacter(
-        std::string("cchar_") + utostr(line), val, loc);
-      break;
-    }
-    case OctetTypeID:
-    {
-      C = ast->new_ConstantOctet(
-        std::string("coctet_") + utostr(line), 
-          static_cast<unsigned char>(randRange(0,255)), loc);
-      break;
-    }
-    case UInt8TypeID:
-    {
-      uint8_t val = uint8_t(randRange(0,255));
-      std::string val_str(utostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cu8_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case UInt16TypeID:
-    {
-      uint16_t val = uint16_t(randRange(0,65535));
-      std::string val_str(utostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cu16_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case UInt32TypeID:
-    {
-      uint32_t val = randRange(0,4000000000U);
-      std::string val_str(utostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cu32_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case UInt128TypeID:
-      /* FALL THROUGH (not implemented) */
-    case UInt64TypeID:
-    {
-      uint64_t val = randRange(0,4000000000U);
-      std::string val_str(utostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cu64_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case SInt8TypeID:
-    {
-      int8_t val = int8_t(randRange(-127,127));
-      std::string val_str(itostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cs8_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case SInt16TypeID:
-    {
-      int16_t val = int16_t(randRange(-32767,32767));
-      std::string val_str(itostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cs16_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case SInt32TypeID:
-    {
-      int32_t val = int32_t(randRange(-2000000000,2000000000));
-      std::string val_str(itostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cs32_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case SInt128TypeID:
-      /* FALL THROUGH (not implemented) */
-    case SInt64TypeID:
-    {
-      int64_t val = int64_t(randRange(-2000000000,2000000000));
-      std::string val_str(itostr(val));
-      C = ast->new_ConstantInteger(
-        std::string("cs64_")+utostr(line),val_str,10,Ty,loc);
-      break;
-    }
-    case Float32TypeID:
-    case Float44TypeID:
-    case Float64TypeID:
-    case Float80TypeID:
-    case Float128TypeID:
-    {
-      double val = double(randRange(-10000000,10000000));
-      std::string val_str(ftostr(val));
-      C = ast->new_ConstantReal(
-        std::string("cf32_")+utostr(line),val_str,Ty,loc);
+        std::string("cchar_") + utostr(line), bundle,Ty, val, loc);
       break;
     }
     case StringTypeID:
@@ -376,13 +287,13 @@ genValue(const Type* Ty, bool is_constant = false)
       for (unsigned i = 0 ; i < numChars; i++)
         val += char(randRange(35,126));
       C = ast->new_ConstantString(
-        std::string("cstr_")+utostr(line),val,loc);
+        std::string("cstr_")+utostr(line),bundle,Ty,val,loc);
       break;
     }
-    case AnyTypeID:
     case BufferTypeID:
     case StreamTypeID:
     case TextTypeID:
+    case AnyTypeID:
       // hlvmAssert("Can't get constant for these types");
       /* FALL THROUGH (unimplemented) */
     case SignatureTypeID:
@@ -403,7 +314,7 @@ genValue(const Type* Ty, bool is_constant = false)
         uint64_t val = randRange(uint64_t(0),uint64_t(max),true);
         val_str = utostr(val);
       }
-      C = ast->new_ConstantInteger(name,val_str,10,Ty,loc);
+      C = ast->new_ConstantInteger(name,bundle,Ty,val_str,10,loc);
       break;
     }
     case RangeTypeID:
@@ -412,7 +323,7 @@ genValue(const Type* Ty, bool is_constant = false)
       const RangeType* RngTy = llvm::cast<RangeType>(Ty);
       int64_t val = randRange(RngTy->getMin(),RngTy->getMax());
       std::string val_str( itostr(val) );
-      C = ast->new_ConstantInteger(name,val_str,10,RngTy,loc);
+      C = ast->new_ConstantInteger(name,bundle,RngTy,val_str,10,loc);
       break;
     }
     case EnumerationTypeID:
@@ -421,7 +332,7 @@ genValue(const Type* Ty, bool is_constant = false)
       const EnumerationType* ETy = llvm::cast<EnumerationType>(Ty);
       unsigned val = randRange(0,ETy->size()-1);
       EnumerationType::const_iterator I = ETy->begin() + val;
-      C = ast->new_ConstantEnumerator(name,*I,ETy,loc);
+      C = ast->new_ConstantEnumerator(name,bundle,ETy,*I,loc);
       break;
     }
     case RealTypeID:
@@ -429,7 +340,7 @@ genValue(const Type* Ty, bool is_constant = false)
       double val = double(randRange(-10000000,10000000));
       std::string val_str(ftostr(val));
       C = ast->new_ConstantReal(
-        std::string("cf32_")+utostr(line),val_str,Ty,loc);
+        std::string("cf32_")+utostr(line),bundle,Ty,val_str,loc);
       break;
     }
     case PointerTypeID:
@@ -438,7 +349,8 @@ genValue(const Type* Ty, bool is_constant = false)
       const Type* refType = PT->getElementType();
       std::string name = std::string("cptr_") + utostr(line);
       Value* refValue = genValue(refType,true);
-      C = ast->new_ConstantPointer(name, PT, cast<ConstantValue>(refValue),loc);
+      C = ast->new_ConstantPointer(name, bundle,PT, 
+        cast<ConstantValue>(refValue),loc);
       break;
     }
     case ArrayTypeID:
@@ -450,7 +362,7 @@ genValue(const Type* Ty, bool is_constant = false)
       std::string name = "cptr_" + utostr(line);
       for (unsigned i = 0; i < nElems; i++)
         elems.push_back(cast<ConstantValue>(genValue(elemTy,true)));
-      C = ast->new_ConstantArray(name, elems, AT, loc);
+      C = ast->new_ConstantArray(name, bundle,AT,elems, loc);
       break;
     }
     case VectorTypeID:
@@ -462,7 +374,7 @@ genValue(const Type* Ty, bool is_constant = false)
       std::vector<ConstantValue*> elems;
       for (unsigned i = 0; i < nElems; i++)
         elems.push_back(cast<ConstantValue>(genValue(elemTy,true)));
-      C = ast->new_ConstantVector(name, elems, VT, loc);
+      C = ast->new_ConstantVector(name, bundle, VT, elems, loc);
       break;
     }
     case OpaqueTypeID:
@@ -480,7 +392,7 @@ genValue(const Type* Ty, bool is_constant = false)
         Value* V = genValue(Ty,true);
         elems.push_back(cast<ConstantValue>(V));
       }
-      C = ast->new_ConstantStructure(name, elems, ST, loc);
+      C = ast->new_ConstantStructure(name, bundle, ST, elems, loc);
       break;
     }
     default:
@@ -495,7 +407,8 @@ genValue(const Type* Ty, bool is_constant = false)
   if (is_constant || (randRange(0,Complexity+2) < (Complexity+2)/2))
     result = C;
   else {
-    Variable* var = ast->new_Variable(C->getName()+"_var",C->getType(),loc);
+    Variable* var = 
+      ast->new_Variable(C->getName()+"_var",bundle,C->getType(),loc);
     var->setIsConstant(false);
     var->setInitializer(C);
     var->setParent(bundle);
@@ -513,7 +426,7 @@ genValueOperator(const Type *Ty, bool is_constant = false)
   Value* V = genValue(Ty,is_constant);
   Operator* O = ast->new_ReferenceOp(V,getLocator());
   if (isa<Linkable>(V))
-    O = ast->new_UnaryOp<LoadOp>(O,getLocator());
+    O = ast->new_UnaryOp<LoadOp>(O,bundle,getLocator());
   return O;
 }
 
@@ -533,7 +446,7 @@ genCallTo(Function* F)
     hlvmAssert(argTy == O->getType());
     args.push_back(O);
   }
-  return ast->new_MultiOp<CallOp>(args,getLocator());
+  return ast->new_MultiOp<CallOp>(args,bundle,getLocator());
 }
 
 Block*
@@ -552,7 +465,7 @@ genFunction(Type* resultType, unsigned numArgs)
 
   // Get the signature
   std::string sigName = name + "_type";
-  SignatureType* sig = ast->new_SignatureType(sigName,resultType,loc);
+  SignatureType* sig = ast->new_SignatureType(sigName,bundle,resultType,loc);
   if (randRange(0,Complexity) > int(Complexity/3))
     sig->setIsVarArgs(true);
   for (unsigned i = 0; i < numArgs; ++i )
@@ -567,7 +480,7 @@ genFunction(Type* resultType, unsigned numArgs)
   LinkageKinds LK = LinkageKinds(randRange(ExternalLinkage,InternalLinkage));
   if (LK == AppendingLinkage)
     LK = InternalLinkage;
-  Function* F = ast->new_Function(name,sig,loc);
+  Function* F = ast->new_Function(name,bundle,sig,loc);
   F->setLinkageKind(LK);
 
   // Create a block and set its parent
@@ -576,10 +489,10 @@ genFunction(Type* resultType, unsigned numArgs)
 
   // Get the function result and return instruction
   Operator* O = genValueOperator(F->getResultType());
-  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
+  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,bundle,getLocator());
   rslt->setParent(B);
 
-  ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(getLocator());
+  ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(bundle,getLocator());
   ret->setParent(B);
   
   // Install the function in the value map
@@ -599,7 +512,7 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
   ast->setSystemID(bundleName);
   uri = ast->new_URI(pubid);
   bundle = ast->new_Bundle(bundleName,getLocator());
-  program = ast->new_Program(bundleName,getLocator());
+  program = ast->new_Program(bundleName,bundle,getLocator());
   Block* blk = ast->new_Block(getLocator());
   blk->setParent(program);
   for (unsigned i = 0; i < Size; i++) {
@@ -614,10 +527,10 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
 
   // Get the function result and return instruction
   Operator* O = genValueOperator(program->getResultType());
-  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,getLocator());
+  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(O,bundle,getLocator());
   rslt->setParent(blk);
 
-  ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(getLocator());
+  ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(bundle,getLocator());
   ret->setParent(blk);
   program->setParent(bundle);
   return ast;

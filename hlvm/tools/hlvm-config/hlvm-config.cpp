@@ -46,32 +46,16 @@ static const char* NodeIDStrs[] =
   "NamedType",
   "Bundle",
   "Import",
+  "AnyType",
   "BooleanType",
   "CharacterType",
-  "OctetType",
-  "UInt8Type",
-  "UInt16Type",
-  "UInt32Type",
-  "UInt64Type",
-  "UInt128Type",
-  "SInt8Type",
-  "SInt16Type",
-  "SInt32Type",
-  "SInt64Type",
-  "SInt128Type",
-  "Float32Type",
-  "Float44Type",
-  "Float64Type",
-  "Float80Type",
-  "Float128Type",
-  "AnyType",
-  "StringType",
-  "IntegerType",
-  "RangeType",
   "EnumerationType",
+  "IntegerType",
+  "OpaqueType",
+  "RangeType",
   "RealType",
   "RationalType",
-  "OpaqueType",
+  "StringType",
   "PointerType",
   "ArrayType",
   "VectorType",
@@ -89,7 +73,6 @@ static const char* NodeIDStrs[] =
   "ConstantAny",
   "ConstantBoolean",
   "ConstantCharacter",
-  "ConstantOctet",
   "ConstantEnumerator",
   "ConstantInteger",
   "ConstantReal",
@@ -217,12 +200,6 @@ void showNodeIds()
   std::cout << "Types:" 
             << FirstTypeID << " -> " 
             << LastTypeID << "\n";
-  std::cout << "PrimitiveTypes: " 
-            << FirstPrimitiveTypeID << " -> " 
-            << LastPrimitiveTypeID << "\n";
-  std::cout << "SimpleTypeID: " 
-            << FirstSimpleTypeID << " -> " 
-            << LastSimpleTypeID << "\n";
   std::cout << "ContainerTypes: " 
             << FirstContainerTypeID << " -> "
             << LastContainerTypeID << "\n";

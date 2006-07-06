@@ -469,28 +469,6 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
   switch (ty->getID()) {
     case BooleanTypeID:            result = llvm::Type::BoolTy; break;
     case CharacterTypeID:          result = llvm::Type::UShortTy; break;
-    case OctetTypeID:              result = llvm::Type::SByteTy; break;
-    case UInt8TypeID:              result = llvm::Type::UByteTy; break;
-    case UInt16TypeID:             result = llvm::Type::UShortTy; break;
-    case UInt32TypeID:             result = llvm::Type::UIntTy; break;
-    case UInt64TypeID:             result = llvm::Type::ULongTy; break;
-    case UInt128TypeID: 
-      hlvmNotImplemented("128 bit primitive integer");
-      break;
-    case SInt8TypeID:              result = llvm::Type::SByteTy; break;
-    case SInt16TypeID:             result = llvm::Type::ShortTy; break;
-    case SInt32TypeID:             result = llvm::Type::IntTy; break;
-    case SInt64TypeID:             result = llvm::Type::LongTy; break;
-    case SInt128TypeID: 
-      hlvmNotImplemented("128 bit primitive integer");
-      break;
-    case Float32TypeID:             result = llvm::Type::FloatTy; break;
-    case Float64TypeID:             result = llvm::Type::DoubleTy; break;
-    case Float44TypeID: 
-    case Float80TypeID: 
-    case Float128TypeID: 
-      hlvmNotImplemented("extended and quad floating point");
-      break;
     case AnyTypeID:
       hlvmNotImplemented("Any Type");
       break;
@@ -498,10 +476,35 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       result = llvm::PointerType::get(llvm::Type::SByteTy);
       break;
     case IntegerTypeID:
-      hlvmNotImplemented("arbitrary precision integer");
+    {
+      const IntegerType* IT = llvm::cast<hlvm::IntegerType>(ty);
+      uint16_t bits = IT->getBits();
+      if (bits <= 8)
+        result = (IT->isSigned() ? llvm::Type::SByteTy : llvm::Type::UByteTy);
+      else if (bits <= 16)
+        result = (IT->isSigned() ? llvm::Type::ShortTy : llvm::Type::UShortTy);
+      else if (bits <= 32)
+        result = (IT->isSigned() ? llvm::Type::IntTy : llvm::Type::UIntTy);
+      else if (bits <= 64)
+        result = (IT->isSigned() ? llvm::Type::LongTy : llvm::Type::ULongTy);
+      else if (bits <= 128)
+        hlvmNotImplemented("128-bit integer");
+      else
+        hlvmNotImplemented("arbitrary precision integer");
       break;
+    }
     case RealTypeID:
-      hlvmNotImplemented("arbitrary precision real");
+    {
+      const RealType *RT = llvm::cast<hlvm::RealType>(ty);
+      uint16_t bits = RT->getBits();
+      if (bits <= 32)
+        result = llvm::Type::FloatTy;
+      else if (bits <= 64)
+        result = llvm::Type::DoubleTy;
+      else
+        hlvmNotImplemented("arbitrary precision real");
+      break;
+    }
     case TextTypeID:
       result = get_hlvm_text();
       break;
@@ -1916,6 +1919,14 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case ConstantStringID:        
         getConstant(llvm::cast<ConstantString>(n));
         break;
+      case ConstantAnyID:
+      case ConstantStructureID:
+      case ConstantArrayID:
+      case ConstantVectorID:
+      case ConstantContinuationID:
+      case ConstantPointerID:
+        hlvmAssert(!"Not implemented yet");
+        break;
       case VariableID:              
         getVariable(llvm::cast<Variable>(n)); 
         break;
@@ -1971,20 +1982,22 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
     switch (n->getID()) 
     {
       case AnyTypeID:
-      case StringTypeID:
-      case BooleanTypeID:
-      case CharacterTypeID:
-      case IntegerTypeID:
-      case RangeTypeID:
-      case EnumerationTypeID:
-      case RealTypeID:
-      case OctetTypeID:
-      case PointerTypeID:
       case ArrayTypeID:
-      case VectorTypeID:
+      case BooleanTypeID:
+      case BufferTypeID:
+      case CharacterTypeID:
+      case EnumerationTypeID:
+      case IntegerTypeID:
+      case OpaqueTypeID:
+      case PointerTypeID:
+      case RangeTypeID:
+      case RationalTypeID:
+      case RealTypeID:
+      case StreamTypeID:
+      case StringTypeID:
       case StructureTypeID:
       case SignatureTypeID:
-      case OpaqueTypeID:
+      case VectorTypeID:
       {
         Type* t = llvm::cast<Type>(n);
         lmod->addTypeName(t->getName(), getType(t));

@@ -71,12 +71,6 @@ public:
 /// @name Accessors
 /// @{
 public:
-  /// Generates a unique name for a node based on the \p BaseName by
-  /// incrementing an integer and appending it to the name, if necessary
-  /// @returns the unique name
-  /// @brief Get a unique name for a node
-  std::string getUniqueName(const std::string &BaseName) const;
-
   /// This method finds the node with the given \p name in the node map
   /// and returns it.
   /// @returns null if the name is not found, otherwise the ElemType
@@ -140,8 +134,6 @@ public:
 /// @{
 private:
   NodeMap map_; ///< This is the mapping of names to types.
-  mutable uint64_t order_;  
-  mutable uint64_t last_unique_; ///< Counter for tracking unique names
 /// @}
 };
 

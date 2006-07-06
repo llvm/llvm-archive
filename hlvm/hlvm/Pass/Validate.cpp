@@ -350,19 +350,13 @@ ValidateImpl::validate(CharacterType* n)
 }
 
 template<> inline void
-ValidateImpl::validate(OctetType* n)
-{
-  checkType(n,OctetTypeID);
-}
-
-template<> inline void
 ValidateImpl::validate(IntegerType* n)
 {
   if (checkNode(n))
-    if (!n->isIntegerType())
+    if (!n->is(IntegerTypeID))
       error(n,"Bad ID for IntegerType");
     else if (n->getBits() == 0)
-      error(n,"Invalid number of bits");
+      error(n,"Integer type cannot have zero bits");
 }
 
 template<> inline void
@@ -392,7 +386,7 @@ template<> inline void
 ValidateImpl::validate(RealType* n)
 {
   if (checkNode(n))
-    if (!n->isRealType())
+    if (!n->is(RealTypeID))
       error(n,"Bad ID for RealType");
     else {
       uint64_t bits = n->getMantissa() + n->getExponent();
@@ -498,12 +492,6 @@ ValidateImpl::validate(ConstantEnumerator* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ConstantOctet* n)
-{
-  checkConstant(n,ConstantOctetID);
-}
-
-template<> inline void
 ValidateImpl::validate(ConstantInteger* CI)
 {
   if (checkConstant(CI,ConstantIntegerID)) {
@@ -549,23 +537,8 @@ ValidateImpl::validate(ConstantReal* CR)
       error(CR,"Invalid real constant. Conversion failed.");
     else {
       // It converted to a double okay, check that it is in range
-      unsigned numBits = 0;
-      switch (CR->getType()->getID()) {
-        case Float32TypeID: numBits = 32; break;
-        case Float44TypeID: numBits = 44; break;
-        case Float64TypeID: numBits = 64; break;
-        case Float80TypeID: numBits = 80; break;
-        case Float128TypeID: numBits = 128; break;
-        case RealTypeID: 
-        {
-          const RealType* Ty = llvm::cast<RealType>(CR->getType());
-          numBits = Ty->getMantissa() + Ty->getExponent() + 1; 
-          break;
-        }
-        default:
-          error(CR,"Invalid floating point type");
-          return;
-      }
+      const RealType* Ty = llvm::cast<RealType>(CR->getType());
+      unsigned numBits = Ty->getMantissa() + Ty->getExponent() + 1; 
       if (numBits <= sizeof(float)*8) {
         float x = val;
         long double x2 = x;
@@ -739,7 +712,7 @@ ValidateImpl::validate(Program* P)
       error(P,"Program without signature");
     else if (P->getSignature()->getID() != SignatureTypeID)
       error(P,"Program does not have SignatureType signature");
-    else if (P->getSignature() != ast->getProgramType())
+    else if (P->getSignature() != P->getContainingBundle()->getProgramType())
       error(P,"Program has wrong signature");
     if (P->getLinkageKind() != ExternalLinkage && P->getBlock() == 0)
       error(P,"Non-external Program without defining block");
@@ -1036,7 +1009,7 @@ ValidateImpl::validate(ReferenceOp* op)
       Bundle* B = op->getContainingBundle();
       if (!B)
         error(op,"ReferenceOp not in a bundle?");
-      else if (B->find_const(cval->getName()) != cval)
+      else if (B->getConst(cval->getName()) != cval)
         error(cval,"Referent does not value found in Bundle");
     } else {
       error(op,"Referent of unknown kind");
@@ -1189,7 +1162,7 @@ ValidateImpl::validate(BAndOp* n)
   if (checkOperator(n,BAndOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+    if (!Ty1->is(IntegerTypeID) || !Ty2->is(IntegerTypeID))
       error(n,"You can only bitwise and objects of integer type");
   }
 }
@@ -1200,7 +1173,7 @@ ValidateImpl::validate(BOrOp* n)
   if (checkOperator(n,BOrOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+    if (!Ty1->is(IntegerTypeID) || !Ty2->is(IntegerTypeID))
       error(n,"You can only bitwise or objects of integer type");
   }
 }
@@ -1211,7 +1184,7 @@ ValidateImpl::validate(BXorOp* n)
   if (checkOperator(n,BXorOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+    if (!Ty1->is(IntegerTypeID) || !Ty2->is(IntegerTypeID))
       error(n,"You can only bitwise xor objects of integer type");
   }
 }
@@ -1222,7 +1195,7 @@ ValidateImpl::validate(BNorOp* n)
   if (checkOperator(n,BNorOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isIntegerType() || !Ty2->isIntegerType())
+    if (!Ty1->is(IntegerTypeID) || !Ty2->is(IntegerTypeID))
       error(n,"You can only bitwise nor objects of integer type");
   }
 }
@@ -1328,7 +1301,7 @@ ValidateImpl::validate(IsPInfOp* n)
 {
   if (checkOperator(n,IsPInfOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"IsPInfoOp requires real number operand");
   }
 }
@@ -1338,7 +1311,7 @@ ValidateImpl::validate(IsNInfOp* n)
 {
   if (checkOperator(n,IsNInfOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"IsPInfoOp requires real number operand");
   }
 }
@@ -1348,7 +1321,7 @@ ValidateImpl::validate(IsNanOp* n)
 {
   if (checkOperator(n,IsNanOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"IsNanOp requires real number operand");
   }
 }
@@ -1358,7 +1331,7 @@ ValidateImpl::validate(TruncOp* n)
 {
   if (checkOperator(n,TruncOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"TruncOp requires real number operand");
   }
 }
@@ -1368,7 +1341,7 @@ ValidateImpl::validate(RoundOp* n)
 {
   if (checkOperator(n,RoundOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"RoundOp requires real number operand");
   }
 }
@@ -1378,7 +1351,7 @@ ValidateImpl::validate(FloorOp* n)
 {
   if (checkOperator(n,FloorOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"FloorOp requires real number operand");
   }
 }
@@ -1388,7 +1361,7 @@ ValidateImpl::validate(CeilingOp* n)
 {
   if (checkOperator(n,CeilingOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"CeilingOp requires real number operand");
   }
 }
@@ -1398,7 +1371,7 @@ ValidateImpl::validate(LogEOp* n)
 {
   if (checkOperator(n,LogEOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"LogEOpID requires real number operand");
   }
 }
@@ -1408,7 +1381,7 @@ ValidateImpl::validate(Log2Op* n)
 {
   if (checkOperator(n,Log2OpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"Log2OpID requires real number operand");
   }
 }
@@ -1418,7 +1391,7 @@ ValidateImpl::validate(Log10Op* n)
 {
   if (checkOperator(n,Log10OpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"Log10OpID requires real number operand");
   }
 }
@@ -1428,7 +1401,7 @@ ValidateImpl::validate(SquareRootOp* n)
 {
   if (checkOperator(n,SquareRootOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"SquareRootOp requires real number operand");
   }
 }
@@ -1438,7 +1411,7 @@ ValidateImpl::validate(CubeRootOp* n)
 {
   if (checkOperator(n,CubeRootOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"CubeRootOpID requires real number operand");
   }
 }
@@ -1448,7 +1421,7 @@ ValidateImpl::validate(FactorialOp* n)
 {
   if (checkOperator(n,FactorialOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
-    if (!Ty1->isRealType())
+    if (!Ty1->is(RealTypeID))
       error(n,"FactorialOp requires real number operand");
   }
 }
@@ -1459,7 +1432,7 @@ ValidateImpl::validate(PowerOp* n)
   if (checkOperator(n,PowerOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isRealType() || !Ty2->isRealType())
+    if (!Ty1->is(RealTypeID) || !Ty2->is(RealTypeID))
       error(n,"LogEOpID requires two real number operands");
   }
 }
@@ -1470,7 +1443,7 @@ ValidateImpl::validate(RootOp* n)
   if (checkOperator(n,RootOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isRealType() || !Ty2->isRealType())
+    if (!Ty1->is(RealTypeID) || !Ty2->is(RealTypeID))
       error(n,"RootOp requires two real number operands");
   }
 }
@@ -1481,7 +1454,7 @@ ValidateImpl::validate(GCDOp* n)
   if (checkOperator(n,GCDOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isRealType() || !Ty2->isRealType())
+    if (!Ty1->is(RealTypeID) || !Ty2->is(RealTypeID))
       error(n,"GCDOp requires two real number operands");
   }
 }
@@ -1492,7 +1465,7 @@ ValidateImpl::validate(LCMOp* n)
   if (checkOperator(n,LCMOpID,2)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     const Type* Ty2 = n->getOperand(1)->getType();
-    if (!Ty1->isRealType() || !Ty2->isRealType())
+    if (!Ty1->is(RealTypeID) || !Ty2->is(RealTypeID))
       error(n,"LCMOp requires two real number operands");
   }
 }
@@ -1567,19 +1540,19 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
 {
   switch (n->getID())
   {
-    case NoTypeID:
+    case NoNodeID:
       hlvmDeadCode("Invalid Node Kind");
       break;
     case AnyTypeID:              validate(cast<AnyType>(n)); break;
     case BooleanTypeID:          validate(cast<BooleanType>(n)); break;
     case CharacterTypeID:        validate(cast<CharacterType>(n)); break;
-    case OctetTypeID:            validate(cast<OctetType>(n)); break;
     case IntegerTypeID:          validate(cast<IntegerType>(n)); break;
     case RangeTypeID:            validate(cast<RangeType>(n)); break;
     case EnumerationTypeID:      validate(cast<EnumerationType>(n)); break;
     case RealTypeID:             validate(cast<RealType>(n)); break;
     case RationalTypeID:         /*validate(cast<RationalType>(n));*/ break;
     case TextTypeID:             validate(cast<TextType>(n)); break;
+    case StringTypeID:           validate(cast<StringType>(n)); break;
     case StreamTypeID:           validate(cast<StreamType>(n)); break;
     case BufferTypeID:           validate(cast<BufferType>(n)); break;
     case PointerTypeID:          validate(cast<PointerType>(n)); break;
@@ -1678,7 +1651,6 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
     case ConstantCharacterID:    validate(cast<ConstantCharacter>(n)); break;
     case ConstantEnumeratorID:   validate(cast<ConstantEnumerator>(n)); break;
-    case ConstantOctetID:        validate(cast<ConstantOctet>(n)); break;
     case ConstantIntegerID:      validate(cast<ConstantInteger>(n)); break;
     case ConstantRealID:         validate(cast<ConstantReal>(n)); break;
     case ConstantStringID:       validate(cast<ConstantString>(n)); break;

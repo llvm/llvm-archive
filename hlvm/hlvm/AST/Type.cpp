@@ -48,6 +48,12 @@ Type::getPrimitiveName() const
   return 0;
 }
 
+void 
+Type::resolveTypeTo(const Type* from, const Type* to)
+{
+  // Do nothing, no nested types
+}
+
 AnyType::~AnyType()
 {
 }
@@ -123,16 +129,6 @@ IntegerType::getPrimitiveName() const
       return "u8";
   }
   hlvmDeadCode("Primitive Name");
-}
-
-OctetType::~OctetType()
-{
-}
-
-const char* 
-OctetType::getPrimitiveName() const
-{
-  return "octet";
 }
 
 RangeType::~RangeType()

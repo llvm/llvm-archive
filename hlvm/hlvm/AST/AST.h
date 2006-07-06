@@ -35,6 +35,7 @@
 #include <hlvm/AST/ContainerType.h>
 #include <hlvm/AST/RuntimeType.h>
 #include <hlvm/AST/Constants.h>
+#include <hlvm/AST/Bundle.h>
 #include <string>
 #include <vector>
 
@@ -44,13 +45,11 @@
 namespace hlvm
 {
 
-class Bundle;   
 class Documentation;
 class Block;
 class Argument;
 class Function; 
 class Program; 
-class Import;
 class Locator; 
 class Variable; 
 class Pool;
@@ -83,7 +82,7 @@ class AST : public Node
     static void destroy(AST* ast);
 
   protected:
-    AST() : Node(TreeTopID), sysid(), pubid(), bundles(), pool(0) {}
+    AST(); 
     ~AST();
 
   /// @}
@@ -93,7 +92,6 @@ class AST : public Node
     const std::string& getSystemID() const { return sysid; }
     const std::string& getPublicID() const { return pubid; }
     Pool* getPool() const { return pool; }
-    SignatureType* getProgramType();
 
   /// @}
   /// @name Mutators
@@ -102,19 +100,10 @@ class AST : public Node
     void setSystemID(const std::string& id) { sysid = id; }
     void setPublicID(const std::string& id) { pubid = id; }
     void addBundle(Bundle* b) { bundles.push_back(b); }
-
-  /// @}
-  /// @name Lookup
-  /// @{
-  public:
-    /// Get one of the primitive types directly by its identifier
-    Type* getPrimitiveType(NodeIDs kind);
-
-    /// Resolve a type name into a Type and allow for forward referencing.
-    Type* resolveType(const std::string& name);
-
-    /// Get a standard pointer type to the element type Ty.
-    PointerType* getPointerTo(const Type* Ty);
+    virtual void setParent(Node* parent);
+  protected:
+    virtual void insertChild(Node* child);
+    virtual void removeChild(Node* child);
 
   /// @}
   /// @name Iterators
@@ -182,6 +171,7 @@ class AST : public Node
     /// Create a new Function node. 
     Function* new_Function(
       const std::string& id, ///< The name of the function
+      Bundle* B,             ///< The bundle this function goes in
       const SignatureType* type,   ///< The type of the function
       const Locator* loc = 0 ///< The source locator
     );
@@ -191,20 +181,29 @@ class AST : public Node
     /// (entry points) in the same compilation unit.
     Program* new_Program(
       const std::string& id, ///< The name of the program
+      Bundle* B,             ///< The bundle this program goes in
       const Locator* loc = 0 ///< The source locator
+    );
+    Type* new_IntrinsicType(
+      const std::string& id,  ///< The name for the new type
+      Bundle* bundle,         ///< The bundle to put the new type into
+      IntrinsicTypes it,      ///< The node ID for the primitive to create
+      const Locator* loc = 0  ///< The source locator
     );
     /// Create a new IntegerType node. This is a general interface for creating
     /// integer types. By default it creates a signed 32-bit integer.
     IntegerType* new_IntegerType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       uint16_t bits = 32,     ///< The number of bits
       bool isSigned = true,   ///< The signedness
-      const Locator* loc = 0  ///< The locator of the declaration
+      const Locator* loc = 0  ///< The source locator
     );
     /// Create a new RangeType node. RangeType nodes are integer nodes that
     /// perform range checking to ensure the assigned values are kept in range
     RangeType* new_RangeType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       int64_t min,            ///< The minimum value accepted in range
       int64_t max,            ///< The maximum value accepted in range
       const Locator*loc = 0   ///< The locator of the declaration
@@ -214,6 +213,7 @@ class AST : public Node
     /// enumeration.
     EnumerationType* new_EnumerationType(
       const std::string& id,   ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator*loc = 0    ///< The locator of the declaration
     );
     /// Create a new RealType node. This is the generalized interface for 
@@ -221,6 +221,7 @@ class AST : public Node
     /// precision floating point type.
     RealType* new_RealType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       uint32_t mantissa = 52, ///< The bits in the mantissa (fraction)
       uint32_t exponent = 11, ///< The bits in the exponent
       const Locator* loc = 0   ///< The locator 
@@ -229,55 +230,59 @@ class AST : public Node
     /// value of any other HLVM type. 
     AnyType* new_AnyType(
       const std::string& id, ///< The name of the type
-      const Locator* loc = 0  ///< The source locator 
-    );
-    /// Create a new StringType node. A StringType node is a type that holds a
-    /// sequence of UTF-8 encoded characters.
-    StringType* new_StringType(
-      const std::string& id, ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator 
     );
     /// Create a new BooleanType node. A BooleanType has a simple binary value,
     /// true or false.
     BooleanType* new_BooleanType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new BufferType node. A BufferType is a runtime type that is
     /// used to buffer input and output.
     BufferType* new_BufferType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new TextType node. A TextType is a runtime type that is
     /// used to represent unicode strings of text.
     TextType* new_TextType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new StreamType node. A StreamType is a runtime type that is
     /// used as a handle for input/output streams.
     StreamType* new_StreamType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new CharacterType node. A CharacterType represents a single 
     /// textual character in UTF-16 encoding.
     CharacterType* new_CharacterType(
       const std::string& id,  ///< The name of the type
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const std::string& enc, ///< The name of the encoding for the character
       const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new OctetType node. An OctetType represents an 8-bit 
-    /// non-numerical quantity. You can't do arithmetic with octets.
-    OctetType* new_OctetType(
+    /// Create a new StringType node. A StringType node is a type that holds a
+    /// sequence of UTF-8 encoded characters.
+    StringType* new_StringType(
       const std::string& id,  ///< The name of the type
-      const Locator*loc = 0   ///< The source locator
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const std::string& enc, ///< The name of the encoding for the string
+      const Locator* loc = 0  ///< The source locator 
     );
     /// Create a new PointerType node. A PointerType just refers to a location
     /// of some other type.
     PointerType* new_PointerType(
       const std::string& id,  ///< The name of the pointer type
-      Type* target,           ///< The referent type
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* target,     ///< The referent type
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ArrayType node. An ArrayType is a sequential arrangement of
@@ -285,6 +290,7 @@ class AST : public Node
     /// or shrunk, but not beyond the maxSize parameter. 
     ArrayType* new_ArrayType(
       const std::string& id,  ///< The name of the array type
+      Bundle* bundle,         ///< The bundle to insert the type into
       Type* elemType,         ///< The element type
       uint64_t maxSize,       ///< The maximum number of elements in the array
       const Locator* loc = 0  ///< The source locator
@@ -294,6 +300,7 @@ class AST : public Node
     /// a vector's size is always constant.
     VectorType* new_VectorType(
       const std::string& id,  ///< The name of the vector type
+      Bundle* bundle,         ///< The bundle to insert the type into
       Type* elemType,         ///< The element type
       uint64_t size,          ///< The number of elements in the vector
       const Locator* loc = 0  ///< The source locator
@@ -325,6 +332,7 @@ class AST : public Node
     /// definite types.
     StructureType* new_StructureType(
       const std::string& id,  ///< The name of the structure type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ContinuationType node. A ContinuationType is a type that 
@@ -332,6 +340,7 @@ class AST : public Node
     /// definite types combined with the data necessary to make a continuation.
     ContinuationType* new_ContinuationType(
       const std::string& id,  ///< The name of the structure type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new SignatureType node. A SignatureType specifies the type of
@@ -339,6 +348,7 @@ class AST : public Node
     /// function and the type of its result value.
     SignatureType* new_SignatureType(
       const std::string& id,  ///< The name of the function signature type
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Type *resultType, ///< The result type of the function
       bool isVarArgs = false, ///< Indicates variable number of arguments
       const Locator* loc = 0  ///< The source locator
@@ -348,148 +358,82 @@ class AST : public Node
     /// be exposed. You cannot create an object of OpaqueType but you can 
     /// obtain its location.
     OpaqueType* new_OpaqueType(
-      const std::string& id, ///< The name of the opaque type
-      const Locator* loc = 0 ///< The source locator
+      const std::string& id,  ///< The name of the opaque type
+      bool is_unresolved,     ///< Indicates whether this is an unresolved type
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Locator* loc = 0  ///< The source locator
     );
-    /// Create a new 128 bit primitive floating point type.
-    RealType* new_f128(
-      const std::string& id,  ///< The name of the 128-bit floating point type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_RealType(id,112,15,loc); }
-    /// Create a new 80 bit primitive floating point type.
-    RealType* new_f80(
-      const std::string& id,  ///< The name of the 80-bit floating point type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_RealType(id,64,15,loc); }
-    /// Create a new 64 bit primitive floating point type.
-    RealType* new_f64(
-      const std::string& id,  ///< The name of the 64-bit floating point type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_RealType(id,52,11,loc); }
-    /// Create a new 44 bit primitive floating point type.
-    RealType* new_f44(
-      const std::string& id,  ///< The name of the 44-bit floating point type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_RealType(id,32,11,loc); }
-    /// Create a new 32 bit primitive floating point type.
-    RealType* new_f32(
-      const std::string& id,  ///< The name of teh 32-bit floating point type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_RealType(id,23,8,loc); }
-    /// Create a new 128 bit primitive signed integer point type.
-    IntegerType* new_s128(
-      const std::string& id,  ///< The name of the 128-bit signed integer type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_IntegerType(id,128,true,loc); }
-    /// Create a new 64 bit primitive signed integer point type.
-    IntegerType* new_s64(
-      const std::string& id,  ///< The name of the 64-bit signed integer type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_IntegerType(id,64,true,loc); }
-    /// Create a new 32 bit primitive signed integer point type.
-    IntegerType* new_s32(
-      const std::string& id,  ///< The name of teh 32-bit signed integer type
-      const Locator* loc = 0  ///< The source locator
-    ) { return new_IntegerType(id,32,true,loc); }
-    /// Create a new 16 bit primitive signed integer point type.
-    IntegerType* new_s16(
-      const std::string& id,  ///< The name of the 16-bit signed integer type
-      const Locator* loc = 0  ///< THe source locator
-    ) { return new_IntegerType(id,16,true,loc); }
-    /// Create a new 8 bit primitive signed integer point type.
-    IntegerType* new_s8(
-      const std::string& id,  ///< The name of the 8-bit signed integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,8,true,loc); }
-    /// Create a new 128 bit primitive unsigned integer point type.
-    IntegerType* new_u128(
-      const std::string& id,  ///< The name of the 128-bit unsigned integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,128,false,loc); }
-    /// Create a new 64 bit primitive unsigned integer point type.
-    IntegerType* new_u64(
-      const std::string& id,  ///< The name of the 64-bit unsigned integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,64,false,loc); }
-    /// Create a new 32 bit primitive unsigned integer point type.
-    IntegerType* new_u32(
-      const std::string& id,  ///< The name of the 32-bit unsigned integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,32,false,loc); }
-    /// Create a new 16 bit primitive unsigned integer point type.
-    IntegerType* new_u16(
-      const std::string& id,  ///< The name of the 16-bit unsigned integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,16,false,loc); }
-    /// Create a new 8 bit primitive unsigned integer point type.
-    IntegerType* new_u8(
-      const std::string& id,  ///< The name of the 8-bit unsigned integer type
-      const Locator* l = 0    ///< The source locator
-    ) { return new_IntegerType(id,8,false,loc); }
     /// Create a new Variable node. A Variable node represents a storage
     /// location. Variables can be declared in Bundles, Functions and Blocks.
     /// Their life span is the lifespan of the container in which they are
     /// declared.
     Variable* new_Variable(
       const std::string& id,  ///< The name of the variable
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Type* ty,         ///< The type of the variable
       const Locator* loc = 0  ///< The source locator
     );
     /// Createa new ConstantAny node
     ConstantAny* new_ConstantAny(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       ConstantValue* val,     ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
     /// Createa new ConstantBoolean node
     ConstantBoolean* new_ConstantBoolean(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       bool t_or_f,            ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
     /// Createa new ConstantCharacter node
     ConstantCharacter* new_ConstantCharacter(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       const std::string& val, ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
     /// Createa new ConstantEnumerator node
     ConstantEnumerator* new_ConstantEnumerator(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       const std::string& val, ///< The value for the constant
-      const Type* Ty,         ///< The type of the enumerator
-      const Locator* loc = 0  ///< The source locator
-    );
-    /// Createa new ConstantOctet node
-    ConstantOctet* new_ConstantOctet(
-      const std::string& name,///< The name of the constant
-      unsigned char val,      ///< The value for the constant
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantInteger node.
     ConstantInteger* new_ConstantInteger(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       const std::string& val, ///< The value of the ConstantInteger
       uint16_t base,          ///< The numeric base the value is encoded in
-      const Type* Ty,         ///< The type of the integer
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantReal node.
     ConstantReal* new_ConstantReal(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       const std::string& val, ///< The value of the ConstantReal
-      const Type* Ty,         ///< The type of the real
       const Locator* loc = 0  ///< The source locator
     );
     /// Create a new ConstantString node.
     ConstantString* new_ConstantString(
       const std::string& name,///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
+      const Type* Ty,         ///< The type for this constant
       const std::string& value, ///< The value of the ConstantText
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a new ConstantPointer node.
     ConstantPointer* new_ConstantPointer(
       const std::string& name,  ///< The name of the constant
+      Bundle* bundle,         ///< The bundle to insert the type into
       const Type* type,         ///< The type of the constant pointer
       Constant* referent,       ///< The value pointed to
       const Locator* loc = 0    ///< The source locator
@@ -497,29 +441,33 @@ class AST : public Node
     /// Create a new ConstantArray node.
     ConstantArray* new_ConstantArray(
       const std::string& name,  ///< The name of the constant
-      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      Bundle* bundle,         ///< The bundle to insert the type into
       const ArrayType* Ty,      ///< The type of the array
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a new ConstantVector node.
     ConstantVector* new_ConstantVector(
       const std::string& name,  ///< The name of the constant
-      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      Bundle* bundle,         ///< The bundle to insert the type into
       const VectorType* Ty,     ///< The type of the array
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a new ConstantStructure node.
     ConstantStructure* new_ConstantStructure(
       const std::string& name,  ///< The name of the constant
-      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      Bundle* bundle,         ///< The bundle to insert the type into
       const StructureType* Ty,  ///< The type of the array
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a new ConstantContinuation node.
     ConstantContinuation* new_ConstantContinuation(
       const std::string& name,  ///< The name of the constant
-      const std::vector<ConstantValue*>& elems, ///< The elements of the array
+      Bundle* bundle,         ///< The bundle to insert the type into
       const ContinuationType* Ty,  ///< The type of the array
+      const std::vector<ConstantValue*>& elems, ///< The elements of the array
       const Locator* loc = 0    ///< The source locator
     );
     /// Create a unary ConstantExpression Node.
@@ -561,6 +509,7 @@ class AST : public Node
     /// Provide a template function for creating standard nilary operators
     template<class OpClass>
     OpClass* new_NilaryOp(
+      Bundle* bundle,        ///< The bundle, for type lookup
       const Locator* loc = 0 ///< The source locator
     );
 
@@ -568,6 +517,7 @@ class AST : public Node
     template<class OpClass>
     OpClass* new_UnaryOp(
       Operator* oprnd1,         ///< The first operand
+      Bundle* bundle,        ///< The bundle, for type lookup
       const Locator* loc = 0 ///< The source locator
     );
 
@@ -576,6 +526,7 @@ class AST : public Node
     OpClass* new_BinaryOp(
       Operator* oprnd1,         ///< The first operand
       Operator* oprnd2,         ///< The second operand
+      Bundle* bundle,        ///< The bundle, for type lookup
       const Locator* loc = 0 ///< The source locator
     );
 
@@ -585,6 +536,7 @@ class AST : public Node
       Operator* oprnd1,         ///< The first operand
       Operator* oprnd2,         ///< The second operand
       Operator* oprnd3,         ///< The third operand
+      Bundle* bundle,        ///< The bundle, for type lookup
       const Locator* loc = 0 ///< The source locator
     );
 
@@ -593,8 +545,13 @@ class AST : public Node
     template<class OpClass>
     OpClass* new_MultiOp(
       const std::vector<Operator*>& o, ///< The list of operands
-      const Locator* loc = 0
+      Bundle* bundle,        ///< The bundle, for type lookup
+      const Locator* loc = 0 ///< The source locator
     );
+
+    /// A function to remove an old node. The to_be_deleted node will no longer
+    /// be available after this call.
+    void old(Node* to_be_deleted);
 
   protected:
     template<class OpClass>

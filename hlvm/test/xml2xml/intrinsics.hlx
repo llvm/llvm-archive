@@ -1,24 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
-    <intrinsic id="1" is="any"/>
-    <intrinsic id="10" is="s64"/>
-    <intrinsic id="11" is="s32"/>
-    <intrinsic id="12" is="s16"/>
-    <intrinsic id="13" is="s8"/>
-    <intrinsic id="14" is="octet"/>
-    <intrinsic id="15" is="u128"/>
-    <intrinsic id="16" is="u64"/>
-    <intrinsic id="17" is="u32"/>
-    <intrinsic id="18" is="u16"/>
-    <intrinsic id="19" is="u8"/>
-    <intrinsic id="2" is="bool"/>
-    <intrinsic id="3" is="char"/>
-    <intrinsic id="4" is="f128"/>
-    <intrinsic id="5" is="f80"/>
-    <intrinsic id="6" is="f64"/>
-    <intrinsic id="7" is="f44"/>
-    <intrinsic id="8" is="f32"/>
-    <intrinsic id="9" is="s128"/>
+    <alias id="2" is="bool"/>
+    <alias id="3" is="buffer"/>
+    <alias id="4" is="char"/>
+    <alias id="5" is="double"/>
+    <alias id="6" is="f32"/>
+    <alias id="7" is="f44"/>
+    <alias id="8" is="f64"/>
+    <alias id="9" is="f80"/>
+    <alias id="10" is="f128"/>
+    <alias id="11" is="float"/>
+    <alias id="12" is="int"/>
+    <alias id="13" is="long"/>
+    <alias id="14" is="octet"/>
+    <alias id="15" is="r8"/>
+    <alias id="16" is="r16"/>
+    <alias id="17" is="r32"/>
+    <alias id="18" is="r64"/>
+    <alias id="20" is="s8"/>
+    <alias id="21" is="s16"/>
+    <alias id="22" is="s32"/>
+    <alias id="23" is="s64"/>
+    <alias id="24" is="s128"/>
+    <alias id="25" is="short"/>
+    <alias id="26" is="stream"/>
+    <alias id="27" is="string"/>
+    <alias id="28" is="text"/>
+    <alias id="29" is="u8"/>
+    <alias id="30" is="u16"/>
+    <alias id="31" is="u32"/>
+    <alias id="32" is="u64"/>
+    <alias id="33" is="u128"/>
+    <alias id="34" is="void"/>
   </bundle>
 </hlvm>

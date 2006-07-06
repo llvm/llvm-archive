@@ -2,6 +2,6 @@
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
     <pointer id="aPointerType" to="someType"/>
-    <intrinsic id="someType" is="any"/>
+    <any id="someType"/>
   </bundle>
 </hlvm>

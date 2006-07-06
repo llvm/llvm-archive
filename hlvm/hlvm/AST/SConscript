@@ -22,6 +22,10 @@
 #===----------------------------------------------------------------------===#
 from build import hlvm
 Import('env')
-lib = env.StaticLibrary('HLVMAST',hlvm.GetAllCXXFiles(env))
+hlvm.GetRNGTokenizer(env)
+env.RNGTokenizer('IntrinsicTypesTokenizer.cpp','IntrinsicTypes.rng')
+env.Depends('Bundle.o','IntrinsicTypesTokenizer.cpp')
+lib = env.StaticLibrary('HLVMAST',
+  hlvm.GetAllCXXFiles(env)+['IntrinsicTypesTokenizer.cpp'])
 hlvm.InstallLibrary(env,lib)
 hlvm.InstallHeader(env,hlvm.GetFiles(env,'*.h'))

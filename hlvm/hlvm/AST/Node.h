@@ -50,7 +50,7 @@ class Bundle;
 /// @brief Identifiers of th AST Node Types.
 enum NodeIDs 
 {
-  NoTypeID = 0,            ///< Use this for an invalid type ID.
+  NoNodeID = 0,            ///< Use this for an invalid node ID.
 
   // SUBCLASSES OF NODE
   TreeTopID,               ///< The AST node which is always root of the tree
@@ -62,40 +62,18 @@ FirstDocumentableID = NamedTypeID,
   ImportID,                ///< A bundle's Import declaration
 
   // SUBCLASSES OF TYPE
-  // Primitive Types (inherently supported by HLVM)
-  BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
-FirstTypeID          = BooleanTypeID,
-FirstPrimitiveTypeID = BooleanTypeID,
-  CharacterTypeID,         ///< The Character Type (UTF-16 encoded character)
-  OctetTypeID,             ///< The Octet Type (8 bits uninterpreted)
-  UInt8TypeID,             ///< Unsigned 8-bit integer quantity
-  UInt16TypeID,            ///< Unsigned 16-bit integer quantity
-  UInt32TypeID,            ///< Unsigned 32-bit integer quantity
-  UInt64TypeID,            ///< Unsigned 64-bit integer quantity
-  UInt128TypeID,           ///< Unsigned 128-bit integer quantity
-  SInt8TypeID,             ///< Signed 8-bit integer quantity
-  SInt16TypeID,            ///< Signed 16-bit integer quantity
-  SInt32TypeID,            ///< Signed 32-bit integer quantity
-  SInt64TypeID,            ///< Signed 64-bit integer quantity
-  SInt128TypeID,           ///< Signed 128-bit integer quantity
-  Float32TypeID,           ///< 32-bit IEEE single precision 
-  Float44TypeID,           ///< 43-bit IEEE extended single precision 
-  Float64TypeID,           ///< 64-bit IEEE double precision
-  Float80TypeID,           ///< 80-bit IEEE extended double precision
-  Float128TypeID,          ///< 128-bit IEEE quad precision
-LastPrimitiveTypeID  = Float128TypeID, 
-
-  // Simple Types (no nested classes)
+  // Basic Types 
   AnyTypeID,               ///< The Any Type (Union of any type)
-FirstSimpleTypeID    = AnyTypeID,
-  StringTypeID,            ///< A string of characters type
-  IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
-  RangeTypeID,             ///< The Range Type (A Range of Integer Values)
+FirstTypeID          = AnyTypeID,
+  BooleanTypeID,           ///< The Boolean Type (A simple on/off boolean value)
+  CharacterTypeID,         ///< The Character Type (UTF-8 encoded character)
   EnumerationTypeID,       ///< The Enumeration Type (set of enumerated ids)
+  IntegerTypeID,           ///< The Integer Type (A # of bits of integer data)
+  OpaqueTypeID,            ///< A placeholder for unresolved types
+  RangeTypeID,             ///< The Range Type (A Range of Integer Values)
   RealTypeID,              ///< The Real Number Type (Any Real Number)
   RationalTypeID,          ///< The Rational Number Type (p/q type number)
-  OpaqueTypeID,            ///< A placeholder for unresolved types
-LastSimpleTypeID     = OpaqueTypeID,  
+  StringTypeID,            ///< A string of characters type
 
   // Uniform Container Types
   PointerTypeID,           ///< The Pointer Type (Pointer To object of Type)
@@ -137,7 +115,6 @@ FirstConstantID = ConstantAnyID,
 FirstConstantValueID = ConstantAnyID,
   ConstantBooleanID,       ///< A constant boolean value
   ConstantCharacterID,     ///< A constant UTF-8 character value
-  ConstantOctetID,         ///< A constant 8-bit value
   ConstantEnumeratorID,    ///< A constant enumeration value
   ConstantIntegerID,       ///< A constant integer value
   ConstantRealID,          ///< A constant real value
@@ -312,115 +289,97 @@ class Node
   /// @{
   public:
     /// Get the AST root node that this Node is part of.
-    inline AST* getRoot(); 
+    AST* getRoot(); 
 
     /// Return the bundle that contains this Node.
     Bundle* getContainingBundle() const;
 
     /// Get the type of node
-    inline NodeIDs getID() const { return NodeIDs(id); }
+    NodeIDs getID() const { return NodeIDs(id); }
 
     /// Get the parent node
-    inline Node* getParent() const { return parent; }
+    Node* getParent() const { return parent; }
 
     /// Get the flags
-    inline unsigned getFlags() const { return flags; }
+    unsigned getFlags() const { return flags; }
 
     /// Get the Locator
-    inline const Locator* getLocator() const { return loc; }
+    const Locator* getLocator() const { return loc; }
 
     /// Determine if the node is a specific kind
-    inline bool is(NodeIDs kind) const { return id == unsigned(kind); }
+    bool is(NodeIDs kind) const { return id == unsigned(kind); }
 
     /// Determine if the node is a Type
-    inline bool isType() const {
+    bool isType() const {
       return id >= FirstTypeID && 
              id <= LastTypeID; }
 
-    inline bool isIntegerType() const {
-      return (id >= UInt8TypeID && id <= SInt128TypeID) || id == IntegerTypeID;}
-
-    inline bool isIntegralType()  const { 
-      return isIntegerType() || (id == RangeTypeID) || 
+    bool isIntegralType()  const { 
+      return (id == IntegerTypeID) || (id == RangeTypeID) || 
         (id == EnumerationTypeID) || (id == BooleanTypeID);  }
 
-    inline bool isRealType() const {
-      return (id >= Float32TypeID && id <= Float128TypeID) ||
-             (id == RealTypeID); }
-
-    inline bool isNumericType() const {
-      return isIntegralType() || isRealType() || id == RangeTypeID; }
-
-    /// Determine if the node is a primitive type
-    inline bool isPrimitiveType() const {
-      return id >= FirstPrimitiveTypeID && 
-             id <= LastPrimitiveTypeID; }
-
-    /// Determine if the node is a simple type
-    inline bool isSimpleType() const {
-      return id >= FirstSimpleTypeID && 
-             id <= LastSimpleTypeID;
-    }
+    bool isNumericType() const {
+      return isIntegralType() || id == RealTypeID; }
 
     /// Determine if the node is a uniform container type
-    inline bool isUniformContainerType() const {
+    bool isUniformContainerType() const {
       return id >= FirstUniformContainerTypeID && 
              id <= LastUniformContainerTypeID;
     }
+
     /// Determine if the node is a disparate container type
-    inline bool isDisparateContainerType() const {
+    bool isDisparateContainerType() const {
       return id >= FirstDisparateContainerTypeID && 
              id <= LastDisparateContainerTypeID; }
 
     /// Determine if the node is a runtime type
-    inline bool isRuntimeType() const {
+    bool isRuntimeType() const {
       return id >= FirstRuntimeTypeID &&
              id <= LastRuntimeTypeID; }
 
     /// Determine if the node is a container type
-    inline bool isContainerType() const {
+    bool isContainerType() const {
       return id >= FirstContainerTypeID && id <= LastContainerTypeID;
     }
     /// Determine if the node is one of the Constant values.
-    inline bool isConstant() const {
+    bool isConstant() const {
       return id >= FirstConstantID && id <= LastConstantID; }
 
     /// Determine if the node is one of the Constant values.
-    inline bool isConstantValue() const {
+    bool isConstantValue() const {
       return id >= FirstConstantValueID && id <= LastConstantValueID; }
 
     /// Determine if the node is one of the ConstantAggregate values.
-    inline bool isConstantAggregate() const {
+    bool isConstantAggregate() const {
       return id >= FirstConstantAggregateID && id <= LastConstantAggregateID; }
 
     /// Determine if the node is a Linkable
-    inline bool isLinkable() const {
+    bool isLinkable() const {
       return id >= FirstLinkableID && id <= LastLinkableID; }
 
     /// Determine if the node is any of the Operators
-    inline bool isOperator() const { 
+    bool isOperator() const { 
       return id >= FirstOperatorID && id <= LastOperatorID; }
 
-    inline bool isTerminator() const {
+    bool isTerminator() const {
       return (id >= BreakOpID && id <= ReturnOpID) || (id == ThrowOpID); }
 
-    inline bool isLoop() const {
-      return id == LoopOpID || (id >= WhileOpID && id <= UntilOpID);
-    }
+    bool isLoop() const {
+      return id == LoopOpID || (id >= WhileOpID && id <= UntilOpID); }
 
-    inline bool isNilaryOperator() const {
+    bool isNilaryOperator() const {
       return id >= FirstNilaryOperatorID && id <= LastNilaryOperatorID; }
 
-    inline bool isUnaryOperator() const {
+    bool isUnaryOperator() const {
       return id >= FirstUnaryOperatorID && id <= LastUnaryOperatorID; }
 
-    inline bool isBinaryOperator() const {
+    bool isBinaryOperator() const {
       return id >= FirstBinaryOperatorID && id <= LastBinaryOperatorID; }
 
-    inline bool isTernaryOperator() const {
+    bool isTernaryOperator() const {
       return id >= FirstTernaryOperatorID && id <= LastTernaryOperatorID; }
 
-    inline bool isMultiOperator() const {
+    bool isMultiOperator() const {
       return id >= FirstMultiOperatorID && id <= LastMultiOperatorID; }
 
     /// Determine if the node is a Documentable Node
@@ -431,7 +390,7 @@ class Node
     bool isValue() const { 
       return id >= FirstValueID && id <= LastValueID; }
 
-    inline bool isFunction() const 
+    bool isFunction() const 
       { return id == FunctionID || id == ProgramID; }
 
     /// Provide support for isa<X> and friends
@@ -585,6 +544,7 @@ class Value : public Documentable
   /// @{
   public:
     void setType(const Type* t) { type = t; }
+    virtual void resolveTypeTo(const Type* from, const Type* to);
 
   /// @}
   /// @name Data

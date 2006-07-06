@@ -40,6 +40,49 @@ namespace hlvm
 class Type;
 class Linkable;
 
+/// This type enumerates the intrinsic types. Intrinsic types are those which
+/// are intrinsic to HLVM. They are well known, have immutable names, and are
+/// generally fundamental in character.
+/// @brief AST Intrinsic Types Enum
+enum IntrinsicTypes {
+  NoIntrinsicType, ///< This is used for errors, etc.
+  boolTy,     ///< The boolean type
+  FirstIntrinsicType = boolTy,
+  bufferTy,   ///< The memory buffer type
+  charTy,     ///< The UTF-8 character type
+  doubleTy,   ///< 64-bit IEEE 754 double precision
+  f32Ty,      ///< 32-bit IEEE 754 single precision 
+  f44Ty,      ///< 43-bit IEEE 754 extended single precision 
+  f64Ty,      ///< 64-bit IEEE 754 double precision
+  f80Ty,      ///< 80-bit IEEE 754 extended double precision
+  f96Ty,      ///< 96-bit IEEE 754 long extended double precision
+  f128Ty,     ///< 128-bit IEEE 754 quad precision
+  floatTy,    ///< 32-bit IEEE 754 single precision
+  intTy,      ///< Signed 32-bit integer quantity
+  longTy,     ///< Signed 64-bit integer quantity
+  octetTy,    ///< Unsigned 8-bit integer quantity, not computable
+  r8Ty,       ///< Range checked signed 8-bit integer quantity
+  r16Ty,      ///< Range checked signed 16-bit integer quantity
+  r32Ty,      ///< Range checked signed 32-bit integer quantity
+  r64Ty,      ///< Range checked signed 64-bit integer quantity
+  s8Ty,       ///< Signed 8-bit integer quantity
+  s16Ty,      ///< Signed 16-bit integer quantity
+  s32Ty,      ///< Signed 32-bit integer quantity
+  s64Ty,      ///< Signed 64-bit integer quantity
+  s128Ty,     ///< Signed 128-bit integer quantity
+  shortTy,    ///< Signed 16-bit integer quantity
+  streamTy,   ///< The I/O stream type
+  stringTy,   ///< The UTF-8 string type
+  textTy,     ///< The UTF-8 text type
+  u8Ty,       ///< Unsigned 8-bit integer quantity
+  u16Ty,      ///< Unsigned 16-bit integer quantity
+  u32Ty,      ///< Unsigned 32-bit integer quantity
+  u64Ty,      ///< Unsigned 64-bit integer quantity
+  u128Ty,     ///< Unsigned 128-bit integer quantity
+  voidTy,     ///< OpaqueType, 0-bits, non-readable, non-writable
+  LastIntrinsicType = u128Ty
+};
+
 /// This class is simply a collection of definitions. Things that can be 
 /// defined in a bundle include types, global variables, functions, classes,
 /// etc. A bundle is the unit of linking and loading. A given compilation unit 
@@ -54,9 +97,13 @@ class Bundle : public Documentable
   /// @name Types
   /// @{
   public:
+    typedef std::vector<Type*> TypeList;
+    typedef TypeList::iterator tlist_iterator;
+    typedef TypeList::const_iterator tlist_const_iterator;
+
     typedef SymbolTable<Type> TypeTable;
-    typedef TypeTable::iterator type_iterator;
-    typedef TypeTable::const_iterator type_const_iterator;
+    typedef TypeTable::iterator ttable_iterator;
+    typedef TypeTable::const_iterator ttable_const_iterator;
 
     typedef std::vector<Constant*> ConstantList;
     typedef ConstantList::iterator clist_iterator;
@@ -70,7 +117,8 @@ class Bundle : public Documentable
   /// @name Constructors
   /// @{
   protected:
-    Bundle() : Documentable(BundleID), name(), types(), clist(), ctable() {}
+    Bundle() 
+      : Documentable(BundleID), name(), tlist(), ttable(), clist(), ctable() {}
     virtual ~Bundle();
 
   /// @}
@@ -90,26 +138,57 @@ class Bundle : public Documentable
     virtual void removeChild(Node* kid);
 
   /// @}
-  /// @name Finders
+  /// @name Type Management
   /// @{
   public:
-    Type*      find_type(const std::string& n) const;
-    Constant*  find_const(const std::string& n) const;
+    /// Return the type of a program, named ProgramType
+    SignatureType* getProgramType();
+
+    /// Get the Intrinsic Id from the intrinsic's name
+    IntrinsicTypes getIntrinsicTypesValue(const std::string& name);
+
+    /// Get the standard name of one of the primitive types
+    void getIntrinsicName(IntrinsicTypes ty, std::string& name);
+
+    /// Get one of the intrinsic types directly by its identifier
+    Type* getIntrinsicType(IntrinsicTypes ty);
+
+    /// Get one of the intrinsic types by its name
+    Type* getIntrinsicType(const std::string& name);
+
+    /// Get a standard pointer type to the element type Ty.
+    PointerType* getPointerTo(const Type* Ty);
+
+    /// Resolve a type name into a Type and allow for forward referencing.
+    Type* getOrCreateType(const std::string& name);
+
+    /// Get an existing type by name or 0 if there is no such type
+    Type*      getType(const std::string& n);
+
+    /// Get an existing constant by name or 0 if there is no such constant
+    Constant*  getConst(const std::string& n) const;
 
   /// @}
   /// @name Iterators
   /// @{
   public:
-    /// Type iteration
-    type_iterator           type_begin()       { return types.begin(); }
-    type_const_iterator     type_begin() const { return types.begin(); }
-    type_iterator           type_end  ()       { return types.end(); }
-    type_const_iterator     type_end  () const { return types.end(); }
-    size_t                  type_size () const { return types.size(); }
-    bool                    type_empty() const { return types.empty(); }
+    // Type Insertion Order Iteration
+    tlist_iterator          tlist_begin()       { return tlist.begin(); }
+    tlist_const_iterator    tlist_begin() const { return tlist.begin(); }
+    tlist_iterator          tlist_end  ()       { return tlist.end(); }
+    tlist_const_iterator    tlist_end  () const { return tlist.end(); }
+    size_t                  tlist_size () const { return tlist.size(); }
+    bool                    tlist_empty() const { return tlist.empty(); }
+
+    /// Type Symbol Table Iteration
+    ttable_iterator         ttable_begin()       { return ttable.begin(); }
+    ttable_const_iterator   ttable_begin() const { return ttable.begin(); }
+    ttable_iterator         ttable_end  ()       { return ttable.end(); }
+    ttable_const_iterator   ttable_end  () const { return ttable.end(); }
+    size_t                  ttable_size () const { return ttable.size(); }
+    bool                    ttable_empty() const { return ttable.empty(); }
 
     /// Value Insertion Order Iteration
-    //
     clist_iterator          clist_begin()       { return clist.begin(); }
     clist_const_iterator    clist_begin() const { return clist.begin(); }
     clist_iterator          clist_end  ()       { return clist.end(); }
@@ -117,7 +196,7 @@ class Bundle : public Documentable
     size_t                  clist_size () const { return clist.size(); }
     bool                    clist_empty() const { return clist.empty(); }
 
-    /// ConstantValue Symbol Table iteration
+    /// Value Symbol Table Iteration
     ctable_iterator         ctable_begin()       { return ctable.begin(); }
     ctable_const_iterator   ctable_begin() const { return ctable.begin(); }
     ctable_iterator         ctable_end  ()       { return ctable.end(); }
@@ -130,7 +209,8 @@ class Bundle : public Documentable
   /// @{
   protected:
     std::string   name;      ///< The name for this bundle
-    TypeTable     types;     ///< The list of types
+    TypeList      tlist;     ///< The list of types
+    TypeTable     ttable;    ///< The list of types
     TypeTable     unresolvedTypes; ///< The list of forward referenced types
     ConstantList  clist;    ///< The list of values in insertion order
     ConstantTable ctable;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="name">
-    <intrinsic id="nada" is="u32"/>
+    <unsigned id="nada" bits="32"/>
   </bundle>
 </hlvm>

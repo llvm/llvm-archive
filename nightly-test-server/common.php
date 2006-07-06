@@ -26,8 +26,7 @@ else if (strcmp($params, "")!=0){
         }
         else{
 		$query="INSERT INTO tinyurl (url) values (\"$this_url\")";
-		$resource = mysql_query($query);
-		mysql_free_result($resource);
+		$add_url = mysql_query($query);
 		$query="SELECT * FROM tinyurl WHERE url=\"$this_url\"";
 	        $resource = mysql_query($query);
 	
@@ -38,7 +37,8 @@ else if (strcmp($params, "")!=0){
 	        else{
 	                print "Error, could not create page!!\n";
 	        }
-	        mysql_free_result($resource);
+	        mysql_free_result($add_url);
+		mysql_free_result($resource);
 	}
 	mysql_free_result($result);
 }

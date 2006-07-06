@@ -1,5 +1,8 @@
 <?php
 
+$this_url = $this_url = $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
+print "<h5><a href=\"common.php?$this_url\">Link to this page</a></h5><br>\n";
+
 /*****************************************************
  *
  * Prints out a sidebar for results graph page

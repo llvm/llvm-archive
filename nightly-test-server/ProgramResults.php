@@ -20,6 +20,10 @@ $medium_decrease="#CCFFCC";
 $large_decrease="#90FF90";
 $crazy_decrease="#20FF20";
 
+$category_match=array("GCCAS","Bytecode","LLC\<br\>compile",
+		      "LLC-BETA\<br\>compile","JIT\<br\>codegen","GCC",
+		      "CBE","LLC","LLC-BETA","JIT","GCC\/\<br\>CBE",
+		      "GCC\/\<br\>LLC","GCC\/\<br\>LLC-BETA");
 $category_array=array("GCCAS","Bytecode","LLC compile","LLC\-BETA compile",
                  "JIT codegen","GCC","CBE","LLC",
                  "LLC\-BETA","JIT","GCC\/\s*CBE", "GCC\/\s*LLC",
@@ -49,9 +53,10 @@ function GetDayResults($night_id, $array_of_measures, $mysql_link){
 		array_push($result["{$row['program']}"], "{$row['type']}");
 		$index=0;
 		$data = $row['result'];
+		$data = str_replace("<br>", " ", $data);
 		foreach ($array_of_measures as $x){
 			$value=array();
-                	$reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?])/";
+                	$reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?],)/";
                 	preg_match($reg_exp, $data, $value);
 			if(isset($value[1])){
 				array_push($result["{$row['program']}"], $value[1]);

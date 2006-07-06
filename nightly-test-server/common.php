@@ -16,7 +16,7 @@ if(is_numeric($params)){
 	}
 	mysql_free_result($resource);
 }
-else{
+else if (strcmp($params, "")!=0){
 	$this_url = $params;	
 	$query="SELECT * FROM tinyurl WHERE url=\"$this_url\"";
         $result = mysql_query($query);
@@ -41,6 +41,9 @@ else{
 	        mysql_free_result($resource);
 	}
 	mysql_free_result($result);
+}
+else{
+	print "No such page!\n";
 }
 
 

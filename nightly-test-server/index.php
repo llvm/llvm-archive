@@ -1,4 +1,4 @@
-BLAH<?php
+<?php
 
 include("NightlyTester.php");
 $mysql_link=mysql_connect("127.0.0.1","llvm","ll2002vm");

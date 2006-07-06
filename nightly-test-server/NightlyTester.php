@@ -39,6 +39,53 @@ function getMachineResource($mysql_link){
 	return $machine_query;
 }
 
+/*****************************************************
+ *
+ * Purpose: Get information about machines that have 
+ *          submitted a test in the last month
+ * Returns: A mysql query resource of machine table
+ *          rows.
+ *
+ *****************************************************/
+function getRecentMachineResource($mysql_link){
+	$night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 1 MONTH) <= added") or die (mysql_error());
+	$machines="where id=0";
+	$machine_arr = array();
+	while($row = mysql_fetch_array($night_query)){
+		if(!isset($machine_arr["{$row['machine']}"])){
+			$machine_arr["{$row['machine']}"]=1;
+			$machines.=" or id={$row['machine']}";
+		}
+	}
+	mysql_free_result($night_query);
+	$machine_query = mysql_query("SELECT * FROM machine $machines ORDER BY nickname ASC") or die (mysql_error());
+
+	return $machine_query;
+}
+
+/*****************************************************
+ *
+ * Purpose: Get information about machines that have not 
+ *          submitted a test in the last month
+ * Returns: A mysql query resource of machine table
+ *          rows.
+ *
+ *****************************************************/
+function getOldMachineResource($mysql_link){
+	$night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 1 MONTH) > added") or die (mysql_error());
+	$machines="where id=0";
+	$machine_arr = array();
+	while($row = mysql_fetch_array($night_query)){
+		if(!isset($machine_arr["{$row['machine']}"])){
+			$machine_arr["{$row['machine']}"]=1;
+			$machines.=" or id={$row['machine']}";
+		}
+	}
+	mysql_free_result($night_query);
+	$machine_query = mysql_query("SELECT * FROM machine $machines ORDER BY nickname ASC") or die (mysql_error());
+
+	return $machine_query;
+}
 
 /*****************************************************
  *

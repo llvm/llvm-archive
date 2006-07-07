@@ -45,6 +45,16 @@ ElemType* SymbolTable<ElemType>::lookup(const std::string& name) const {
     return const_cast<ElemType*>(TI->second);
   return 0;
 }
+ 
+template<class ElemType> bool 
+SymbolTable<ElemType>::erase(const std::string& name) 
+{
+  iterator I = map_.find(&name);
+  if (I == map_.end())
+    return false;
+  map_.erase(I);
+  return true;
+}
 
 // Erase a specific type from the symbol table
 template<class ElemType>

@@ -118,7 +118,7 @@ public:
   ElemType* erase(iterator TI);
 
   /// Remove a node using a specific key
-  bool erase(const std::string& name) { return map_.erase(&name) > 0; }
+  bool erase(const std::string& name);
 
   /// Remove a specific ElemType from the symbol table. This isn't fast, linear
   /// search, O(n), algorithm.

@@ -235,11 +235,11 @@ sub AddProgram{ #$program, $result, $type, $night
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub UpdateCodeInfo{ #date, loc, files, dirs
 
-    my $d = $dbh->prepare("select * from code where loc = $_[1] and files = $_[2] and dirs = $_[3]");
+    my $d = $dbh->prepare("select * from code ORDER BY added DESC");
     $d->execute;
     @row = $d->fetchrow_array;
-    if(!@row){
-	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\". $_[1]. $_[2]. $_[3])");
+    if(!@row or ($row[1] != $_[1] && $row[2] != $_[2] && $row[3] != $_[3])){
+	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", $_[1], $_[2], $_[3])");
 	$e->execute;
     }
 
@@ -436,7 +436,7 @@ foreach $x(keys %external_processed){
     AddProgram $x, $external_processed{$x}, "external", $night_id; 
 }
 
-#UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
+UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
 
 print "received $ENV{CONTENT_LENGTH} bytes\n";
          

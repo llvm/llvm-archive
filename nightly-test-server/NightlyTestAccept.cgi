@@ -115,6 +115,7 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
     $_[0] = "" unless $_[0];
     my $d = $dbh->prepare("select * from machine where uname = \"$_[0]\" and hardware=\"$_[1]\" ".
                           "and os=\"$_[2]\" and name=\"$_[3]\" and gcc=\"$_[5]\"");
+    print "select * from machine where uname = \"$_[0]\" and hardware=\"$_[1]\" and os=\"$_[2]\" and name=\"$_[3]\" and gcc=\"$_[5]\"";
     $d->execute;
     @row = $d->fetchrow_array;
     if(@row){

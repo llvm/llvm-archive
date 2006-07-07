@@ -126,7 +126,7 @@ genType(unsigned limit)
       theType = u64Ty;
     else if (theType == s128Ty)
       theType = s64Ty;
-    else if (theType == f128Ty || theType == f96Ty)
+    else if (theType == f128Ty || theType == f96Ty || theType == f80Ty)
       theType = f64Ty;
     else if (theType == bufferTy || theType == streamTy || theType == textTy)
       theType = s32Ty;

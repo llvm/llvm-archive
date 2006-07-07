@@ -443,7 +443,7 @@ print "content-type: text/text\r\n\r\n";
 #if (!DoesMachineExist $uname,$hardware,$os,$name,$nickname,$gcc_version){
 #  AddMachine $uname,$hardware,$os,$name,$nickname,$gcc_version,"test";
 #}
-$machine_id = GetMachineId $uname. $hardware, $os, $name, $nickname, $gcc_version;
+$machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_version;
 
 # $db_date = $date." ".$time;
 # $night_id= CreateNight $machine_id, $db_date, $buildstatus, 

@@ -120,7 +120,6 @@ public:
   Constant*      parseConstant      (xmlNodePtr& cur);
   Operator*      parseOperator      (xmlNodePtr& cur);
   void           parseTree          ();
-  Type*          parseAlias         (xmlNodePtr& cur);
   Type*          parseInteger       (xmlNodePtr& cur, bool isSigned);
 
   template<class OpClass>
@@ -140,7 +139,8 @@ public:
   inline const char* 
   getAttribute(xmlNodePtr cur,const char*name,bool required = true);
   inline void getTextContent(xmlNodePtr cur, std::string& buffer);
-  inline void getNameType(xmlNodePtr& cur, std::string& name,std::string& type);
+  inline bool getNameType(
+    xmlNodePtr& cur, std::string& name,std::string& type, bool required = true);
   inline Type* createIntrinsicType(
     const std::string& tname, const std::string& name, Locator* loc);
 
@@ -291,11 +291,22 @@ XMLReaderImpl::getTextContent(xmlNodePtr cur, std::string& buffer)
   if (cur) skipBlanks(cur);
 }
 
-inline void 
-XMLReaderImpl::getNameType(xmlNodePtr& cur, std::string& name,std::string& type)
+inline bool 
+XMLReaderImpl::getNameType(
+  xmlNodePtr& cur, 
+  std::string& name,
+  std::string& type,
+  bool required)
 {
-  name = getAttribute(cur,"id");
-  type = getAttribute(cur,"type");
+  name.clear();
+  type.clear();
+  const char* nm = getAttribute(cur,"id",required);
+  if (nm)
+    name = nm;
+  const char* ty = getAttribute(cur,"type",required);
+  if (ty)
+    type = ty;
+  return !required || (nm && ty);
 }
 
 inline void
@@ -388,42 +399,47 @@ XMLReaderImpl::parseLiteralConstant(
 
   ConstantValue* C = 0;
   const char* prefix = 0;
-  std::string actualName(name);
   int token = getToken(cur->name);
   switch (token) {
     case TKN_false:   
     {
-      std::string name = actualName.empty() ? "bool_false" : actualName;
-      C = ast->new_ConstantBoolean(name, bundle,Ty,false, getLocator(cur)); 
+      std::string nm = name.empty() ? "bool_false" : name;
+      C = ast->new_ConstantBoolean(nm, bundle,Ty,false, getLocator(cur)); 
       break;
     }
     case TKN_true:
     {
-      std::string name = actualName.empty() ? "bool_true" : actualName;
-      C = ast->new_ConstantBoolean(name,bundle,Ty,true, getLocator(cur));
+      std::string nm = name.empty() ? "bool_true" : name;
+      C = ast->new_ConstantBoolean(nm,bundle,Ty,true, getLocator(cur));
       break;
     }
     case TKN_bool:
     {
-      hlvmAssert(Ty->is(BooleanTypeID));
       std::string buffer;
       xmlNodePtr child = cur->children;
       getTextContent(child,buffer);
       bool value = recognize_boolean( buffer.c_str() );
-      std::string name = actualName.empty() ? std::string("bool_") + 
-        (value?"true_":"false") : actualName;
-      C = ast->new_ConstantBoolean(name, bundle,Ty,value, getLocator(cur));
+      std::string nm = name.empty() ? std::string("bool_") + 
+        (value?"true_":"false") : name;
+      C = ast->new_ConstantBoolean(nm, bundle,Ty,value, getLocator(cur));
       break;
     }
     case TKN_char:
     {
-      hlvmAssert(Ty->is(CharacterTypeID));
       std::string buffer;
       xmlNodePtr child = cur->children;
       getTextContent(child,buffer);
-      std::string name= actualName.empty() ? 
-        std::string("char_") + buffer : actualName;
-      C = ast->new_ConstantCharacter(name, bundle,Ty,buffer, getLocator(cur));
+      std::string nm = name.empty() ?  std::string("char_") + buffer : name;
+      C = ast->new_ConstantCharacter(nm, bundle,Ty,buffer, getLocator(cur));
+      break;
+    }
+    case TKN_enum:
+    {
+      std::string value;
+      xmlNodePtr child = cur->children;
+      getTextContent(child,value);
+      std::string nm = name.empty() ? std::string("enum_") + value : name;
+      C = ast->new_ConstantEnumerator(nm,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_bin:
@@ -431,50 +447,43 @@ XMLReaderImpl::parseLiteralConstant(
     case TKN_dec:
     case TKN_hex:
     {
-      hlvmAssert(Ty->is(IntegerTypeID));
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
       uint16_t base = (token == TKN_dec ? 10 : (token == TKN_hex ? 16 : 
                       (token == TKN_oct ? 8 : (token == TKN_bin ? 2 : 10))));
-      std::string name = actualName.empty() ? 
-        std::string("int_") + value : actualName;
-      C = ast->new_ConstantInteger(name,bundle,Ty,value,base,getLocator(cur));
+      std::string nm = name.empty() ?  std::string("int_") + value : name;
+      C = ast->new_ConstantInteger(nm,bundle,Ty,value,base,getLocator(cur));
       break;
     }
     case TKN_flt:
     case TKN_dbl:
     case TKN_real:
     {
-      hlvmAssert(Ty->is(RealTypeID));
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      std::string name = actualName.empty() ? std::string("real_") + value :
-          actualName;
-      C = ast->new_ConstantReal(name,bundle,Ty,value,getLocator(cur));
+      std::string nm = name.empty() ? std::string("real_") + value : name;
+      C = ast->new_ConstantReal(nm,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_str:
     {
-      hlvmAssert(Ty->is(StringTypeID));
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      std::string name = actualName.empty() ? std::string("str_") + value :
-          actualName;
-      C =  ast->new_ConstantString(name,bundle,Ty,value,getLocator(cur));
+      std::string nm = name.empty() ? std::string("str_") + value : name;
+      C =  ast->new_ConstantString(nm,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_ptr:
     {
       std::string id = getAttribute(cur,"id");
-      std::string name = actualName.empty() ? std::string("ptr_") + id :
-          actualName;
+      std::string nm = name.empty() ? std::string("ptr_") + id : name;
       Constant* referent = bundle->getConst(id);
       if (!referent)
         error(loc,"Unkown referent for constant pointer");
-      C = ast->new_ConstantPointer(name,bundle,Ty,referent,loc);
+      C = ast->new_ConstantPointer(nm,bundle,Ty,referent,loc);
       break;
     }
     case TKN_arr:
@@ -488,8 +497,8 @@ XMLReaderImpl::parseLiteralConstant(
         elems.push_back(elem);
         child = child->next;
       }
-      std::string name = actualName.empty() ? std::string("arr") : actualName;
-      C = ast->new_ConstantArray(name,bundle,AT,elems,getLocator(cur));
+      std::string nm = name.empty() ? std::string("arr") : name;
+      C = ast->new_ConstantArray(nm,bundle,AT,elems,getLocator(cur));
       break;
     }
     case TKN_vect:
@@ -503,8 +512,8 @@ XMLReaderImpl::parseLiteralConstant(
         elems.push_back(elem);
         child = child->next;
       }
-      std::string name = actualName.empty() ? std::string("vec") : actualName;
-      C = ast->new_ConstantVector(name,bundle,VT,elems,getLocator(cur));
+      std::string nm = name.empty() ? std::string("vec") : name;
+      C = ast->new_ConstantVector(nm,bundle,VT,elems,getLocator(cur));
       break;
     }
     case TKN_struct:
@@ -519,8 +528,8 @@ XMLReaderImpl::parseLiteralConstant(
         child = child->next;
         ++I;
       }
-      std::string name = actualName.empty() ? std::string("struct") :actualName;
-      C = ast->new_ConstantStructure(name,bundle,ST,fields,getLocator(cur));
+      std::string nm = name.empty() ? std::string("struct") :name;
+      C = ast->new_ConstantStructure(nm,bundle,ST,fields,getLocator(cur));
       break;
     }
     case TKN_cont:
@@ -535,8 +544,8 @@ XMLReaderImpl::parseLiteralConstant(
         child = child->next;
         ++I;
       }
-      std::string name = actualName.empty() ? std::string("struct") :actualName;
-      C = ast->new_ConstantContinuation(name,bundle,CT,fields,getLocator(cur));
+      std::string nm = name.empty() ? std::string("struct") :name;
+      C = ast->new_ConstantContinuation(nm,bundle,CT,fields,getLocator(cur));
       break;
     }
     default:
@@ -555,40 +564,16 @@ XMLReaderImpl::parseConstant(xmlNodePtr& cur)
   hlvmAssert(getToken(cur->name) == TKN_constant);
   std::string name;
   std::string type;
-  getNameType(cur,name,type);
-  Type* Ty = getType(type);
-  xmlNodePtr child = cur->children;
-  Documentation* theDoc = parse<Documentation>(child);
-  Constant* C = parseLiteralConstant(child,name,Ty);
-  if (theDoc)
-    C->setDoc(theDoc);
-  return C;
-}
-Type*     
-XMLReaderImpl::parseAlias(xmlNodePtr& cur)
-{
-  Locator* loc = getLocator(cur);
-  std::string name = getAttribute(cur,"id");
-  if (NoIntrinsicType != bundle->getIntrinsicTypesValue(name))
-    error(loc,"Attempt to redefine intrinsic type '" + name + "'");
-  if (bundle->getType(name))
-    error(loc,"Type '" + name + "' was already defined");
-  const char* is = getAttribute(cur,"is",true);
-  xmlNodePtr child = cur->children;
-  Documentation* theDoc = parse<Documentation>(child);
-  Type* result = 0;
-  if (is) {
-    IntrinsicTypes it = bundle->getIntrinsicTypesValue(is);
-    if (it != NoIntrinsicType) {
-      result = ast->new_IntrinsicType(name,bundle,it,loc);
-    } else if (Type* Ty = bundle->getType(is)) {
-      error(loc,"Not implemented yet: type cloning");
-    } else 
-      error(loc,std::string("Type '") + is + "' does not exist.");
+  if (getNameType(cur,name,type)) {
+    Type* Ty = getType(type);
+    xmlNodePtr child = cur->children;
+    Documentation* theDoc = parse<Documentation>(child);
+    Constant* C = parseLiteralConstant(child,name,Ty);
     if (theDoc)
-      result->setDoc(theDoc);
+      C->setDoc(theDoc);
+    return C;
   }
-  return result;
+  return 0;
 }
 
 template<> AnyType*
@@ -1242,7 +1227,6 @@ XMLReaderImpl::parse<Bundle>(xmlNodePtr& cur)
     int tkn = getToken(child->name);
     Node* n = 0;
     switch (tkn) {
-      case TKN_alias       : { n = parseAlias(child); break; }
       case TKN_array       : { n = parse<ArrayType>(child); break; }
       case TKN_any         : { n = parse<AnyType>(child); break; }
       case TKN_boolean     : { n = parse<BooleanType>(child); break; }

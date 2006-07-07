@@ -242,7 +242,6 @@
       </zeroOrMore>
       <oneOrMore>
         <choice>
-          <ref name="alias.elem"/>
           <ref name="any.elem"/>
           <ref name="array.elem"/>
           <ref name="boolean.elem"/>
@@ -283,16 +282,6 @@
   </define>
 
   <!--PATTERNS FOR DEFINING TYPES -->
-
-  <define name="alias.elem">
-    <element name="alias">
-      <ref name="Named_Element.pat"/>
-      <attribute name="is">
-        <ref name="Identifier.type"/>
-      </attribute>
-      <ref name="Documentation.pat"/>
-    </element>
-  </define>
 
   <define name="any.elem">
     <element name="any">

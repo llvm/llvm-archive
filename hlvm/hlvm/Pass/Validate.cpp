@@ -44,6 +44,7 @@
 #include <llvm/ADT/StringExtras.h>
 #include <iostream>
 #include <cfloat>
+#include <cmath>
 
 using namespace hlvm;
 using namespace llvm;
@@ -521,7 +522,7 @@ ValidateImpl::validate(ConstantInteger* CI)
       if (val < Ty->getMin() || val > Ty->getMax())
         error(CI, "Integer constant out of range of RangeType");
     } else {
-      error(CI,"Unknown integer constant type");
+      error(CI,"Integer constant applied to non-integer type");
     }
   }
 }
@@ -537,7 +538,19 @@ ValidateImpl::validate(ConstantReal* CR)
       error(CR,"Invalid real constant. Conversion failed.");
     else {
       // It converted to a double okay, check that it is in range
+      // But, first make sure its not one of the special values
+      if (__fpclassify(val) != FP_NORMAL)
+        return;
+      int exp = ilogbl(val);
+      uint64_t val_exp = (exp < 0 ? uint64_t(-exp) : uint64_t(exp));
+      unsigned leading_zeros = llvm::CountLeadingZeros_64(val_exp);
+      unsigned exp_bits_required = (sizeof(uint64_t)*8 - leading_zeros);
       const RealType* Ty = llvm::cast<RealType>(CR->getType());
+      if (Ty->getExponent() < exp_bits_required) {
+        error(CR,"Real constant requires too many exponent bits for type '" +
+            Ty->getName() + "'");
+        return;
+      }
       unsigned numBits = Ty->getMantissa() + Ty->getExponent() + 1; 
       if (numBits <= sizeof(float)*8) {
         float x = val;

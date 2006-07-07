@@ -1,37 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
   <bundle id="bundle">
-    <alias id="2" is="bool"/>
-    <alias id="3" is="buffer"/>
-    <alias id="4" is="char"/>
-    <alias id="5" is="double"/>
-    <alias id="6" is="f32"/>
-    <alias id="7" is="f44"/>
-    <alias id="8" is="f64"/>
-    <alias id="9" is="f80"/>
-    <alias id="10" is="f128"/>
-    <alias id="11" is="float"/>
-    <alias id="12" is="int"/>
-    <alias id="13" is="long"/>
-    <alias id="14" is="octet"/>
-    <alias id="15" is="r8"/>
-    <alias id="16" is="r16"/>
-    <alias id="17" is="r32"/>
-    <alias id="18" is="r64"/>
-    <alias id="20" is="s8"/>
-    <alias id="21" is="s16"/>
-    <alias id="22" is="s32"/>
-    <alias id="23" is="s64"/>
-    <alias id="24" is="s128"/>
-    <alias id="25" is="short"/>
-    <alias id="26" is="stream"/>
-    <alias id="27" is="string"/>
-    <alias id="28" is="text"/>
-    <alias id="29" is="u8"/>
-    <alias id="30" is="u16"/>
-    <alias id="31" is="u32"/>
-    <alias id="32" is="u64"/>
-    <alias id="33" is="u128"/>
-    <alias id="34" is="void"/>
+    <constant id="1" type="bool">
+      <true/>
+    </constant>
+    <constant id="2" type="bool">
+      <false/>
+    </constant>
+    <constant id="5" type="char">
+      <char>a</char>
+    </constant>
+    <constant id="6" type="char">
+      <char>&gt;</char>
+    </constant>
+    <constant id="7" type="char">
+      <char>#0064</char>
+    </constant>
+    <constant id="8" type="double">
+      <dbl>42.</dbl>
+    </constant>
+    <constant id="9" type="double">
+      <dbl>42.</dbl>
+    </constant>
+    <constant id="10" type="f32">
+      <flt>42.</flt>
+    </constant>
+    <constant id="11" type="f44">
+      <dbl>42.</dbl>
+    </constant>
+    <constant id="12" type="f64">
+      <dbl>42.</dbl>
+    </constant>
+    <constant id="13" type="f80">
+      <dbl>42.</dbl>
+    </constant>
+    <constant id="15" type="float">
+      <flt>42.</flt>
+    </constant>
+    <constant id="16" type="int">
+      <oct>52</oct>
+    </constant>
+    <constant id="17" type="long">
+      <dec>42</dec>
+    </constant>
+    <constant id="18" type="octet">
+      <hex>2A</hex>
+    </constant>
+    <constant id="19" type="r8">
+      <bin>00101010</bin>
+    </constant>
+    <constant id="20" type="r16">
+      <hex>7FFF</hex>
+    </constant>
+    <constant id="21" type="r32">
+      <dec>0</dec>
+    </constant>
+    <constant id="22" type="r64">
+      <dec>0</dec>
+    </constant>
+    <constant id="23" type="s8">
+      <dec>-42</dec>
+    </constant>
+    <constant id="24" type="s16">
+      <dec>-42</dec>
+    </constant>
+    <constant id="25" type="s32">
+      <dec>-42</dec>
+    </constant>
+    <constant id="26" type="s64">
+      <dec>-42</dec>
+    </constant>
+    <constant id="27" type="short">
+      <dec>-42</dec>
+    </constant>
+    <constant id="28" type="string">
+      <str>The quick brown fox jumped over the lazy dog.</str>
+    </constant>
+    <constant id="29" type="text">
+      <str>Nothin' says lovin' like something from the oven.</str>
+    </constant>
+    <constant id="30" type="u8">
+      <hex>FF</hex>
+    </constant>
+    <constant id="31" type="u16">
+      <dec>42</dec>
+    </constant>
+    <constant id="32" type="u32">
+      <dec>42</dec>
+    </constant>
+    <constant id="33" type="u64">
+      <dec>42</dec>
+    </constant>
+    <constant id="34" type="u128">
+      <dec>42</dec>
+    </constant>
   </bundle>
 </hlvm>

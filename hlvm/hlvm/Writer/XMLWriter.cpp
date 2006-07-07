@@ -528,7 +528,11 @@ XMLWriterImpl::WriterPass::put(const ConstantReal* r, bool nested)
     writeAttribute("type",r->getType()->getName());
     putDoc(r);
   }
-  startElement("dbl");
+  const RealType* RT = cast<RealType>(r->getType());
+  if (RT->getBits() <= 32)
+    startElement("flt");
+  else
+    startElement("dbl");
   writeString(r->getValue());
   endElement();
 }

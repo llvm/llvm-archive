@@ -478,9 +478,9 @@ XMLReaderImpl::parseLiteralConstant(
     }
     case TKN_ptr:
     {
-      std::string id = getAttribute(cur,"id");
-      std::string nm = name.empty() ? std::string("ptr_") + id : name;
-      Constant* referent = bundle->getConst(id);
+      std::string to = getAttribute(cur,"to");
+      std::string nm = name.empty() ? std::string("ptr_") + to : name;
+      Constant* referent = bundle->getConst(to);
       if (!referent)
         error(loc,"Unkown referent for constant pointer");
       C = ast->new_ConstantPointer(nm,bundle,Ty,referent,loc);

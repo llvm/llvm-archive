@@ -86,74 +86,68 @@ extern "C" {
 int hlvm_runtime_main(int argc, char**argv)
 {
   int result = 0;
-  try {
-    // Initialize APR and HLVM
-    _hlvm_initialize();
+  // Initialize APR and HLVM
+  _hlvm_initialize();
 
-    // Process the options
-    apr_getopt_t* options = 0;
-    if (APR_SUCCESS != apr_getopt_init(&options, _hlvm_pool, argc, argv))
-      hlvm_panic("Can't initialize apr_getopt");
-    options->interleave = 0;
-    options->errfn = print_error;
-    options->errarg = _hlvm_stderr;
-    int ch;
-    const char* arg;
-    hlvm_program_type entry_func = 0;
-    apr_status_t stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
-    while (stat != APR_EOF) {
-      switch (stat) {
-        case APR_SUCCESS:
-        {
-          switch (ch) {
-            case 'h': print_help(); break;
-            case 'v': print_version(); break;
-            default:
-              break;
-          }
-          break;
+  // Process the options
+  apr_getopt_t* options = 0;
+  if (APR_SUCCESS != apr_getopt_init(&options, _hlvm_pool, argc, argv))
+    hlvm_panic("Can't initialize apr_getopt");
+  options->interleave = 0;
+  options->errfn = print_error;
+  options->errarg = _hlvm_stderr;
+  int ch;
+  const char* arg;
+  hlvm_program_type entry_func = 0;
+  apr_status_t stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
+  while (stat != APR_EOF) {
+    switch (stat) {
+      case APR_SUCCESS:
+      {
+        switch (ch) {
+          case 'h': print_help(); break;
+          case 'v': print_version(); break;
+          default:
+            break;
         }
-        case APR_BADCH:
-        {
-          char option[3];
-          option[0] = ch;
-          option[1] = 0;
-          hlvm_error(E_BAD_OPTION,option);
-          return E_BAD_OPTION;
-        }
-        case APR_BADARG:
-        {
-          hlvm_error(E_MISSING_ARGUMENT);
-          return E_MISSING_ARGUMENT;
-        }
-        case APR_EOF:
-        default:
-        {
-          hlvm_panic("Unknown response from apr_getopt_long");
-          break;
-        }
+        break;
       }
-      stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
+      case APR_BADCH:
+      {
+        char option[3];
+        option[0] = ch;
+        option[1] = 0;
+        hlvm_error(E_BAD_OPTION,option);
+        return E_BAD_OPTION;
+      }
+      case APR_BADARG:
+      {
+        hlvm_error(E_MISSING_ARGUMENT);
+        return E_MISSING_ARGUMENT;
+      }
+      case APR_EOF:
+      default:
+      {
+        hlvm_panic("Unknown response from apr_getopt_long");
+        break;
+      }
     }
+    stat = apr_getopt_long(options, hlvm_options, &ch, &arg); 
+  }
 
-    const char* prog_name = argv[options->ind];
-    if (prog_name) {
-      entry_func = hlvm_find_program(prog_name);
-      // If we didn't get a start function ..
-      if (!entry_func) {
-        // Give an error
-        hlvm_error(E_PROGRAM_NOT_FOUND,prog_name);
-        return E_PROGRAM_NOT_FOUND;
-      }
-      result = (*entry_func)(options->argc, options->argv);
-    } else {
-      hlvm_error(E_NO_PROGRAM_NAME,0);
-      return E_NO_PROGRAM_NAME;
+  const char* prog_name = argv[options->ind];
+  if (prog_name) {
+    entry_func = hlvm_find_program(prog_name);
+    // If we didn't get a start function ..
+    if (!entry_func) {
+      // Give an error
+      hlvm_error(E_PROGRAM_NOT_FOUND,prog_name);
+      return E_PROGRAM_NOT_FOUND;
     }
-  } 
-  catch (...) 
-  {
-    hlvm_error(E_UNHANDLED_EXCEPTION);
+    result = (*entry_func)(options->argc, options->argv);
+  } else {
+    hlvm_error(E_NO_PROGRAM_NAME,0);
+    return E_NO_PROGRAM_NAME;
   }
   return result;
 }

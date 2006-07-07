@@ -1,0 +1,14 @@
+load_lib generate.exp
+
+hlvm-generate-test 1 1 1 0
+
+set seed [ clock seconds ]
+
+for { set complexity 1 } { $complexity < 5 } { incr complexity } {
+  for { set typecmplxt 1 } { $typecmplxt < 5 } { incr typecmplxt } {
+    for { set size 1 } { $size < 5 } { incr size } {
+      hlvm-generate-test $complexity $typecmplxt $size $seed
+    }
+  }
+}
+

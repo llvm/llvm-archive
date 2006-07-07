@@ -25,7 +25,7 @@ Import('env')
 if 'check' in COMMAND_LINE_TARGETS:
   from build import check
   if env['suites'] == 'all':
-    check.Check(env,['xml2xml','invalid','return0'])
+    check.Check(env,['xml2xml','invalid','return0','generate'])
   else:
     suites = env['suites'].split(' ')
     print "Suites To Run=",suites

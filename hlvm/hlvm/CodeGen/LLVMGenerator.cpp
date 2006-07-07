@@ -468,12 +468,15 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
     case BooleanTypeID:            result = llvm::Type::BoolTy; break;
-    case CharacterTypeID:          result = llvm::Type::UShortTy; break;
+    case CharacterTypeID:          result = llvm::Type::IntTy; break;
     case AnyTypeID:
       hlvmNotImplemented("Any Type");
       break;
     case StringTypeID:              
       result = llvm::PointerType::get(llvm::Type::SByteTy);
+      break;
+    case EnumerationTypeID:
+      result = llvm::Type::UIntTy;
       break;
     case IntegerTypeID:
     {
@@ -493,6 +496,28 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
         hlvmNotImplemented("arbitrary precision integer");
       break;
     }
+    case RangeTypeID:
+    {
+      const RangeType* RT = llvm::cast<hlvm::RangeType>(ty);
+      if (RT->getMin() < 0) {
+        if (RT->getMin() >= SHRT_MIN && RT->getMax() <= SHRT_MAX)
+          return llvm::Type::ShortTy;
+        else if (RT->getMin() >= INT_MIN && RT->getMax() <= INT_MAX)
+          return llvm::Type::IntTy;
+        else
+          return llvm::Type::LongTy;
+      } else {
+        if (RT->getMax() <= USHRT_MAX)
+          return llvm::Type::UShortTy;
+        else if (RT->getMax() <= UINT_MAX)
+          return llvm::Type::UIntTy;
+        else
+          return llvm::Type::ULongTy;
+      }
+    }
+    case RationalTypeID:
+      hlvmNotImplemented("RationalType");
+      break;
     case RealTypeID:
     {
       const RealType *RT = llvm::cast<hlvm::RealType>(ty);

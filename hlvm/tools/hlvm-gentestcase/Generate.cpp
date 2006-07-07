@@ -138,6 +138,9 @@ genType(unsigned limit)
     case BooleanTypeID: 
       result = bundle->getIntrinsicType(boolTy);
       break;
+    case CharacterTypeID:
+      result = bundle->getIntrinsicType(charTy);
+      break;
     case StringTypeID:
       result = bundle->getIntrinsicType(stringTy);
       break;

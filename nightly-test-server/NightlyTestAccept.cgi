@@ -17,14 +17,6 @@ my $DATABASE="nightlytestresults";
 my $LOGINNAME="llvm";
 my $PASSWORD="ll2002vm";
 
-
-my $build_file = "Build-Log.txt";
-my $dejagnu_testrun_log_file = "Dejagnu-testrun.log";
-my $dejagnu_testrun_sum_file = "Dejagnu-testrun.sum";
-my $dejagnu_tests_file = "DejagnuTests-Log.txt";
-my $warnings_file = "Warnings.txt";
-
-
 ######################################################################################################
 #
 # Connecting to the database
@@ -37,6 +29,14 @@ my $dbh = DBI->connect("DBI:mysql:$DATABASE",$LOGINNAME,$PASSWORD);
 # Some methods to help the process
 #
 ######################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub ChangeDir { # directory, logical name
+    my ($dir,$name) = @_;
+    chomp($dir);
+    chdir($dir) || die "Cannot change directory to: $name ($dir) ";
+}
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Opens a file handle to the specified filename, then writes the contents out,
@@ -400,39 +400,6 @@ for($x=1; $x<@EXTERNAL_TESTS; $x++){
     $external_processed{$temp_outcome[0]}=$outcome;
 }
 
-
-######################################################################################################
-#
-# writing logs to directory
-#
-######################################################################################################
-#if(! -d $base){
-#    mkdir $base, 0777 or die("couldnt create directory $base");
-#}
-#if(! -d $results_dir){
-#    mkdir $results_dir, 0777 or die("couldnt create directory $results_dir because $!");
-#}
-
-#my $this_machines_logs = "$results_dir/$name";
-#if(! -d $this_machines_logs){
-#    mkdir $this_machines_logs or die("couldnt create directory $this_machines_logs because $1");
-#}
-#my $this_days_logs="$this_machines_logs/$date";
-#mkdir $this_days_logs, 0777 or die("couldnt create directory $this_days_logs");
-
-#my $build_file = "Build-Log.txt";
-#my $dejagnu_testrun_log_file = "Dejagnu-testrun.log";
-#my $dejagnu_testrun_sum_file = "Dejagnu-testrun.sum";
-#my $dejagnu_tests_file = "DejagnuTests-Log.txt";
-#my $warnings_fie = "Warnings.txt";
-
-
-#WriteFile "$this_days_logs/$build_file", $build_log;
-#WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
-#WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
-#WriteFile "$this_days_logs/$warnings_file",$buildwarnings;
-
-
 ######################################################################################################
 #
 # creating the response
@@ -477,3 +444,32 @@ print "received $ENV{CONTENT_LENGTH} bytes\n";
 $length = @nights;
 print "DB date : $db_date\n";
 print "Machine $machine_id now has ids [@nights]{$length} associated with it in the database\n";
+
+
+######################################################################################################
+#
+# writing logs to directory
+#
+######################################################################################################
+if(! -d "machines"){
+    mkdir "machines", 0777 or print("couldnt create directory $base");
+}
+ChangeDir("machines", "Moving into machines directory");
+if(! -d "$machine_id"){
+    mkdir "$machine_id", 0777 or print("couldnt create directory $machine_id because $!");
+}
+ChangeDir("$machine_id", "Moving into machine $machine_id 's directory");
+
+
+$db_date =~ s/ /\_/g;
+my $build_file = "$db_date-Build-Log.txt";
+#my $dejagnu_testrun_log_file = "Dejagnu-testrun.log";
+#my $dejagnu_testrun_sum_file = "Dejagnu-testrun.sum";
+#my $dejagnu_tests_file = "DejagnuTests-Log.txt";
+#my $warnings_fie = "Warnings.txt";
+
+
+WriteFile "$build_file", $build_log;
+#WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
+#WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
+#WriteFile "$this_days_logs/$warnings_file",$buildwarnings;

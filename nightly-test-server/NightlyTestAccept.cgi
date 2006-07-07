@@ -115,7 +115,7 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
     $_[0] = "" unless $_[0];
     my $d = $dbh->prepare("select * from machine where uname = \"$_[0]\" and hardware=\"$_[1]\" ".
                           "and os=\"$_[2]\" and name=\"$_[3]\" and gcc=\"$_[5]\"");
-    print "select * from machine where uname = \"$_[0]\" and hardware=\"$_[1]\" and os=\"$_[2]\" and name=\"$_[3]\" and gcc=\"$_[5]\"";
+    
     $d->execute;
     @row = $d->fetchrow_array;
     if(@row){
@@ -440,36 +440,36 @@ for($x=1; $x<@EXTERNAL_TESTS; $x++){
 ######################################################################################################
 print "content-type: text/text\r\n\r\n";
 
-#if (!DoesMachineExist $uname,$hardware,$os,$name,$nickname,$gcc_version){
-#  AddMachine $uname,$hardware,$os,$name,$nickname,$gcc_version,"test";
-#}
+if (!DoesMachineExist $uname,$hardware,$os,$name,$nickname,$gcc_version){
+  AddMachine $uname,$hardware,$os,$name,$nickname,$gcc_version,"test";
+}
 $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_version;
 
-# $db_date = $date." ".$time;
-# $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
-#             $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
-#             $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
-#             $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
-#             $warnings_added, $warnings_removed,
-#             $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures, #expected pass, unexp fails, exp fails
-#             $unexpfail_tests, $newly_passing_tests, $newly_failing_tests,
-#             $new_tests, $removed_tests,
-#             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-#             $cvsusercommitlist, $cvsuserupdatelist;
+$db_date = $date." ".$time;
+$night_id= CreateNight $machine_id, $db_date, $buildstatus, 
+            $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
+            $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
+            $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
+            $warnings_added, $warnings_removed,
+            $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures, #expected pass, unexp fails, exp fails
+            $unexpfail_tests, $newly_passing_tests, $newly_failing_tests,
+            $new_tests, $removed_tests,
+            $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
+            $cvsusercommitlist, $cvsuserupdatelist;
 
-# foreach $x(keys %singlesource_processed){
-#     AddProgram $x, $singlesource_processed{$x}, "singlesource", $night_id; 
-# }
+foreach $x(keys %singlesource_processed){
+    AddProgram $x, $singlesource_processed{$x}, "singlesource", $night_id; 
+}
 
-# foreach $x(keys %multisource_processed){
-#     AddProgram $x, $multisource_processed{$x}, "multisource", $night_id; 
-# }
+foreach $x(keys %multisource_processed){
+    AddProgram $x, $multisource_processed{$x}, "multisource", $night_id; 
+}
 
-# foreach $x(keys %external_processed){
-#     AddProgram $x, $external_processed{$x}, "external", $night_id; 
-# }
+foreach $x(keys %external_processed){
+    AddProgram $x, $external_processed{$x}, "external", $night_id; 
+}
 
-# #UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
+#UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
 
 print "received $ENV{CONTENT_LENGTH} bytes\n";
          

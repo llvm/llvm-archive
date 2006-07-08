@@ -53,57 +53,8 @@ mysql_free_result($today_query);
   @import url(style.css);
 -->
 </STYLE>
-
-
 <script type="text/javascript" src="sorttable.js"></script>
-<script language="javascript">
-function toggleLayer(whichLayer)
-{
-if (document.getElementById)
-{
-// this is the way the standards work
-var style2 = document.getElementById(whichLayer).style;
-style2.display = style2.display? "":"none";
-var link  = document.getElementById(whichLayer+"_").innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.getElementById(whichLayer+"_").innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.getElementById(whichLayer+"_").innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}//end if
-else if (document.all)
-{
-// this is the way old msie versions work
-var style2 = document.all[whichLayer].style;
-style2.display = style2.display? "":"none";
-var link  = document.all[wwhichLayer+"_"].innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.all[whichLayer+"_"].innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.all[whichLayer+"_"].innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}
-else if (document.layers)
-{
-// this is the way nn4 works
-var style2 = document.layers[whichLayer].style;
-style2.display = style2.display? "":"none";
-var link  = document.layers[whichLayer+"_"].innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.layers[whichLayer+"_"].innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.layers[whichLayer+"_"].innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}
-
-}//end function
-</script>
+<script type="text/javascript" src="popup.js"></script>
 </head>
 <body>
 
@@ -582,7 +533,12 @@ for($y=0; $y<sizeof($category_print_array_ordered); $y++){
 
 	print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('{$category_print_array_ordered[$y]}');\", id=\"{$category_print_array_ordered[$y]}_\">$sign $num_changes Tests Signifigantly Changed for {$category_print_array_ordered[$y]}</a></font>\n";
 	print "<div id=\"{$category_print_array_ordered[$y]}\" style=\"display: $disp;\" class=\"hideable\">\n";
-	print"<b>Signifigant Changes for {$category_print_array_ordered[$y]}</b><br>\n";
+	print "<b>Signifigant Changes for {$category_print_array_ordered[$y]}</b>";
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"$y\" class=\"popup2\">\n";
+	print "<pre>$category_print_array_ordered_description[$y]</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('$y');\">?</a></span>\n";
+	print "<br>\n";
 	print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black borde
 	print "<table class=\"sortable\" id=\"multisource_tests\" border='1' cellspacing='0' cellpadding='0'>\n";
 	print "\t<tr bgcolor=#FFCC99>\n";

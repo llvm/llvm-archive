@@ -39,54 +39,7 @@ mysql_free_result($today_query);
 </STYLE>
 
 <script type="text/javascript" src="sorttable.js"></script>
-<script language="javascript">
-function toggleLayer(whichLayer)
-{
-if (document.getElementById)
-{
-// this is the way the standards work
-var style2 = document.getElementById(whichLayer).style;
-style2.display = style2.display? "":"none";
-var link  = document.getElementById(whichLayer+"_").innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.getElementById(whichLayer+"_").innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.getElementById(whichLayer+"_").innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}//end if
-else if (document.all)
-{
-// this is the way old msie versions work
-var style2 = document.all[whichLayer].style;
-style2.display = style2.display? "":"none";
-var link  = document.all[wwhichLayer+"_"].innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.all[whichLayer+"_"].innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.all[whichLayer+"_"].innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}
-else if (document.layers)
-{
-// this is the way nn4 works
-var style2 = document.layers[whichLayer].style;
-style2.display = style2.display? "":"none";
-var link  = document.layers[whichLayer+"_"].innerHTML;
-if(link.indexOf("(+)") >= 0){
-      document.layers[whichLayer+"_"].innerHTML="(-)"+link.substring(3,link.length);
-}
-else{
-      document.layers[whichLayer+"_"].innerHTML="(+)"+link.substring(3,link.length);
-}
-
-}
-
-}//end function
-</script>
+<script type="text/javascript" src="popup.js"></script>
 
 </head>
 <body>
@@ -545,11 +498,17 @@ print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
 	if($index<10 && isset($percent_difference)){
-		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=2;
 	}
 	else{
-		print "\t\t<td colspan=\"1\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=1;
 	}
+	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"external_$index\" class=\"popup2\">\n";
+	print "<pre>{$category_print_array_description[$index]}</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('external_$index');\">?</a></span>\n";
+	print "</td>\n";
 	$index++;
 }
 print "\t</tr>\n";	
@@ -606,11 +565,17 @@ print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
 	if($index<10 && isset($percent_difference)){
-		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=2;
 	}
 	else{
-		print "\t\t<td colspan=\"1\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=1;
 	}
+	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"single_$index\" class=\"popup2\">\n";
+	print "<pre>{$category_print_array_description[$index]}</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('single_$index');\">?</a></span>\n";
+	print "</td>\n";
 	$index++;
 }
 print "\t</tr>\n";	
@@ -667,11 +632,17 @@ print "\t\t<td></td>\n";
 $index=0;	
 foreach ($category_print_array as $x){
 	if($index<10 && isset($percent_difference)){
-		print "\t\t<td colspan=\"2\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=2;
 	}
 	else{
-		print "\t\t<td colspan=\"1\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\"></td>\n";
+		$col_width=1;
 	}
+	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"multi_$index\" class=\"popup2\">\n";
+	print "<pre>{$category_print_array_description[$index]}</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('multi_$index');\">?</a></span>\n";
+	print "</td>\n";
 	$index++;
 }
 print "\t</tr>\n";	

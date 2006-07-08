@@ -28,7 +28,15 @@ if(strcmp($row['nickname'],"")!=0){
 ?>
 
 <html>
-<head><title>LLVM Machine Test Results For <?php print $machine_name ?></title></head>
+<head>
+<title>LLVM Machine Test Results For <?php print $machine_name ?></title>
+<script type="text/javascript" src="popup.js"></script>
+<STYLE TYPE="text/css">
+<!--
+  @import url(style.css);
+-->
+</STYLE>
+</head>
 <body>
 
 <center><font size=+3 face=Verdana><b>LLVM Machine Test Results For <?php print $machine_name ?></b></font></center><br>
@@ -94,11 +102,22 @@ if(is_numeric($recent_id) && is_numeric($old_id)){
 	$percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results);
 
 	/* note: $medium_change, $large_change, and $crazy_change are defined in ProgramResult.php */
+	print "<table border=0><tr><td>\n";
+	
 	print "<table border=0>\n";
 	Print "<tr><td>$medium_change % differences from yesterday:</td><td> $medium_number</td></tr>\n";
 	Print "<tr><td>$large_change % differences from yesterday:</td><td> $large_number</td></tr>\n";
 	Print "<tr><td>$crazy_change % differences from yesterday:</td><td> $crazy_number</td></tr>\n";
 	print "</table>\n";
+	
+	print "</td><td valign=top>";
+
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"differences\" class=\"popup\">\n";
+	print "<pre>The number of measurements that signifigantly<br>changed from the previous test.</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('differences');\">?</a></span>\n";
+
+	print "</td></tr></table>\n";
 }
 
 print "<form method=GET action=\"machinegraph.php\">\n";
@@ -411,6 +430,10 @@ echo "</table>";
 
 print "<input type=submit name=action value=\"Graph Column\"> | ";
 print "<input type=reset>\n";
+print "<span style=\"position:relative;\">\n";
+print "<span id=\"graph\" class=\"popup2\">\n";
+print "<pre>Produces a graph of the selected columns over<br>time.</pre>\n";
+print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('graph');\">?</a></span>\n";
 print "</form>\n";
 
 mysql_close($mysql_link);

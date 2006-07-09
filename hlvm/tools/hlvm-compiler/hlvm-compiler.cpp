@@ -56,6 +56,7 @@ static cl::opt<bool> NoVerify("no-verify", cl::init(false),
 enum GenerationOptions {
   GenLLVMBytecode,
   GenLLVMAssembly,
+  GenHLVMXML,
   GenNativeExecutable,
   GenLoadableModule
 };
@@ -124,11 +125,33 @@ int main(int argc, char**argv)
       if (!validate(node))
         exit(3);
     }
-    if (WhatToGenerate == GenLLVMBytecode) {
-      if (!generateBytecode(node,*Out, !NoVerify))
+    switch (WhatToGenerate) {
+      case GenLLVMBytecode:
+        if (!generateBytecode(node,*Out, !NoVerify))
+          exit(4);
+        break;
+      case GenLLVMAssembly: 
+        if (!generateAssembly(node,*Out, !NoVerify))
+          exit(4);
+        break;
+      case GenHLVMXML:
+      {
+        XMLWriter* wrtr = XMLWriter::create(OutputFilename.c_str());
+        wrtr->write(node);
+        delete wrtr;
+        break;
+      }
+      case GenNativeExecutable:
+        std::cerr << argv[0] << 
+          ": Generating native executables is not supported yet\n";
         exit(4);
-    } else if (WhatToGenerate == GenLLVMAssembly) {
-      if (!generateAssembly(node,*Out, !NoVerify))
+      case GenLoadableModule:
+        std::cerr << argv[0] << 
+          ": Generating native executables is not supported yet\n";
+        exit(4);
+      default:
+        std::cerr << argv[0] << 
+          ": Unknown generation request.\n";
         exit(4);
     }
     delete rdr;

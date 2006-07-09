@@ -44,6 +44,7 @@
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Support/Casting.h>
 #include <libxml/xmlwriter.h>
 #include <iostream>
 
@@ -57,13 +58,23 @@ public:
   XMLWriterImpl(const char* fname) : pass(fname) { }
   virtual ~XMLWriterImpl() { }
   virtual void write(AST* node);
+#ifdef HLVM_DEBUG
+  void writeNode(Node* node);
+#endif
 
 private:
   class WriterPass : public Pass
   {
     public:
-      WriterPass(const char* fname) : Pass(0,Pass::PreAndPostOrderTraversal) {
-        writer = xmlNewTextWriterFilename(fname,0);
+      WriterPass(const char* fname) : 
+        Pass(0,Pass::PreAndPostOrderTraversal), writer(0), buffer(0)
+      {
+        if (fname == 0) {
+          buffer = xmlOutputBufferCreateFd(2,0);
+          writer = xmlNewTextWriter(buffer);
+        } else {
+          writer = xmlNewTextWriterFilename(fname,0);
+        }
         hlvmAssert(writer && "Can't allocate writer");
         xmlTextWriterSetIndent(writer,1);
         xmlTextWriterSetIndentString(writer,
@@ -98,7 +109,7 @@ private:
           reinterpret_cast<const xmlChar*>(body)); }
     inline void writeString(const std::string& str) ;
 
-    inline void putHeader();
+    inline void putHeader(AST* ast);
     inline void putFooter();
     inline void putDoc(const Documentable* node);
 
@@ -114,7 +125,7 @@ private:
 
   private:
     xmlTextWriterPtr writer;
-    AST* node;
+    xmlOutputBufferPtr buffer;
     friend class XMLWriterImpl;
   };
 private:
@@ -147,12 +158,12 @@ XMLWriterImpl::WriterPass::writeString(const std::string& str)
 }
 
 void
-XMLWriterImpl::WriterPass::putHeader() 
+XMLWriterImpl::WriterPass::putHeader(AST* ast) 
 {
   xmlTextWriterStartDocument(writer,0,"UTF-8",0);
   startElement("hlvm");
   writeAttribute("xmlns","http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng");
-  writeAttribute("pubid",node->getPublicID());
+  writeAttribute("pubid",ast->getPublicID());
 }
 
 void
@@ -1151,25 +1162,41 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
 void
 XMLWriterImpl::write(AST* ast) 
 {
-  pass.node = ast;
-  pass.putHeader();
+  pass.putHeader(ast);
   PassManager* PM = PassManager::create();
   PM->addPass(&pass);
   PM->runOn(ast);
   pass.putFooter();
 }
 
+#ifdef HLVM_DEBUG
+void
+XMLWriterImpl::writeNode(Node* node)
+{
+  if (!node)
+    return;
+  pass.handle(node,Pass::PreOrderTraversal);
+  pass.handle(node,Pass::PostOrderTraversal);
+}
+#endif
+
 }
 
+namespace hlvm {
+
 XMLWriter* 
-hlvm::XMLWriter::create(const char* fname)
+XMLWriter::create(const char* fname)
 {
   return new XMLWriterImpl(fname);
 }
 
 #ifdef HLVM_DEBUG
 void 
-hlvm::dump(Node*)
+dump(Node* n)
 {
+  XMLWriterImpl writer(0);
+  writer.writeNode(n);
 }
 #endif
+
+}

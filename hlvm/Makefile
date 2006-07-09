@@ -20,7 +20,7 @@ MYPREFIX := /proj/install/hlvm
 
 SCONSOPTS := -Q -j 2
 
-SUITES := all
+SUITES := normal
 
 .PHONY: all debug Debug optimized Optimized release Release check clean \
 	install hlvm tools

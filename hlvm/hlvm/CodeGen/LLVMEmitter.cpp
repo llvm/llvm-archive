@@ -97,12 +97,16 @@ LLVMEmitter::StartFunction(Function* F)
         "entry_point", TheEntryBlock);
 
   // Create a new block for the return node, but don't insert it yet.
-  TheExitBlock = new BasicBlock("exit");
+  // TheExitBlock = new BasicBlock("exit");
 }
 
 void
 LLVMEmitter::FinishFunction()
 {
+  // The entry block was created to hold the automatic variables. We now
+  // need to terminate the block by branching it to the first active block
+  // in the function.
+  new llvm::BranchInst(TheFunction->front().getNext(),&TheFunction->front());
   hlvmAssert(blocks.empty());
   hlvmAssert(breaks.empty());
   hlvmAssert(continues.empty());

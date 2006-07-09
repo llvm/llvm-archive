@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--=========================================================================-->
+<!-- Copyright (C) 2006 Reid Spencer. All Rights Reserved.                   -->
+<!--                                                                         -->
+<!-- This software is free software; you can redistribute it and/or modify it-->
+<!-- under the terms of the GNU Lesser General Public License as published by-->
+<!-- the Free Software Foundation; either version 2.1 of the License, or (at -->
+<!-- your option) any later version.                                         -->
+<!--                                                                         -->
+<!-- This software is distributed in the hope that it will be useful, but    -->
+<!-- WITHOUT ANY WARRANTY; without even the implied warranty of              -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser-->
+<!-- General Public License for more details.                                -->
+<!--                                                                         -->
+<!-- You should have received a copy of the GNU Lesser General Public License-->
+<!-- along with this library in the file named LICENSE.txt; if not, write to -->
+<!-- the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,    -->
+<!-- Boston, MA 02110-1301 USA                                               -->
+<!--                                                                         -->
+<!--=========================================================================-->
+<!-- @file hlvm/AST/IntrinsicsTypes.rng                                      -->
+<!-- @author Reid Spencer <rspencer@reidspencer.com> (original author)       -->
+<!-- @date 2006/05/13                                                        -->
+<!-- @since 0.1.0                                                            -->
+<!-- @brief Defines the HLVM Intrinsic Type names                            -->
+<!--=========================================================================-->
+<!-- HLVM Intrinsic Types                                                    -->
+<!--                                                                         -->
+<!-- This file contains a Relax/NG schema that simply defines the HLVM       -->
+<!-- Intrinsic type names. These types are, essentially, pre-defined in HLVM.-->
+<!-- They can be used in HLVM XML programs without defining them. This file  -->
+<!-- is provided here instead of with the Reader because the AST Bundle class-->
+<!-- needs to use the Tokenizer based on this file to quickly identify the   -->
+<!-- names.                                                                  -->
+<!--                                                                         -->
+<!--=========================================================================-->
+
+<grammar 
+  datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
+  xmlns ="http://relaxng.org/ns/structure/1.0"
+  xmlns:a="http://relaxng.org/ns/annotation/1.0"
+  ns="http://hlvm.org/src/hlvm/AST/IntrinsicTypes.rng">
+
+  <define name="IntrinsicTypes.type">
+    <choice>
+      <value>any</value>
+      <value>bool</value>
+      <value>buffer</value>
+      <value>char</value>
+      <value>double</value>
+      <value>f32</value>
+      <value>f44</value>
+      <value>f64</value>
+      <value>f80</value>
+      <value>f96</value>
+      <value>f128</value>
+      <value>float</value>
+      <value>int</value>
+      <value>long</value>
+      <value>octet</value>
+      <value>r8</value>
+      <value>r16</value>
+      <value>r32</value>
+      <value>r64</value>
+      <value>r128</value>
+      <value>s8</value>
+      <value>s16</value>
+      <value>s32</value>
+      <value>s64</value>
+      <value>s128</value>
+      <value>short</value>
+      <value>stream</value>
+      <value>string</value>
+      <value>text</value>
+      <value>u8</value>
+      <value>u16</value>
+      <value>u32</value>
+      <value>u64</value>
+      <value>u128</value>
+      <value>void</value>
+    </choice>
+  </define>
+</grammar>

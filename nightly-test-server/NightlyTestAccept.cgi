@@ -451,15 +451,17 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 # writing logs to directory
 #
 ######################################################################################################
-if(! -d "machines"){
-    mkdir "machines", 0777 or print("couldnt create directory $base");
-}
-ChangeDir("machines", "Moving into machines directory");
-if(! -d "$machine_id"){
-    mkdir "$machine_id", 0777 or print("couldnt create directory $machine_id because $!");
-}
-ChangeDir("$machine_id", "Moving into machine $machine_id 's directory");
+$curr=`pwd`;
+chomp($curr);
 
+if(! -d "machines"){
+    mkdir "$curr/machines", 0777 or print("couldnt create directory $base");
+  }
+ChangeDir("$curr/machines", "Moving into machines directory");
+if(! -d "$machine_id"){
+    mkdir "$curr/machines/$machine_id", 0777 or print("couldnt create directory $machine_id because $!");
+  }
+ChangeDir("$curr/machines/$machine_id", "Moving into machine $machine_id 's directory");
 
 $db_date =~ s/ /\_/g;
 my $build_file = "$db_date-Build-Log.txt";

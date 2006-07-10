@@ -138,7 +138,7 @@ echo "<tr bgcolor=#FFCC99>";
 	echo "</td>";
 	echo "<td align=center>";
 		echo "Configure time cpu";
-		print "<br><input type=checkbox name=\"measure[]\" value=\"getcvstime_cpu\">\n";
+		print "<br><input type=checkbox name=\"measure[]\" value=\"configuretime_cpu\">\n";
 	echo "</td>";
 	echo "<td align=center>";
 		echo "Configure time wall";

@@ -94,6 +94,5 @@ mysql_close($mysql_link);
                 </td>
         </tr>
 </table>
-
 </body>
 </html>

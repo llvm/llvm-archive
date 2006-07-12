@@ -45,6 +45,7 @@
 #include <iostream>
 #include <cfloat>
 #include <cmath>
+#include <cerrno>
 
 using namespace hlvm;
 using namespace llvm;
@@ -483,7 +484,25 @@ ValidateImpl::validate(ConstantBoolean* n)
 template<> inline void
 ValidateImpl::validate(ConstantCharacter* n)
 {
-  checkConstant(n,ConstantCharacterID);
+  if (checkConstant(n,ConstantCharacterID)) {
+    if (const CharacterType* CT = dyn_cast<CharacterType>(n->getType())) {
+      const std::string& cVal = n->getValue();
+      if (cVal.empty()) {
+        error(n,"Constant character of zero length not permitted");
+      } else if (cVal[0] == '#') {
+        const char* startptr = &cVal.c_str()[1];
+        char* endptr;
+        uint32_t val = strtoul(startptr, &endptr, 16);
+        if (endptr == startptr || (val == ULONG_MAX && errno != 0))
+          error(n,"Invalid numeric constant character '" + cVal + "'");
+        else if (val == 0)
+          error(n,"Zero valued character constant not permitted");
+      } else if (cVal.size() > 1) {
+        error(n,"Too many characters (" + utostr(cVal.size()) + 
+                ") for character constant");
+      }
+    }
+  }
 }
 
 template<> inline void

@@ -174,7 +174,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
     case BooleanTypeID:            result = llvm::Type::BoolTy; break;
-    case CharacterTypeID:          result = llvm::Type::IntTy; break;
+    case CharacterTypeID:          result = llvm::Type::UIntTy; break;
     case AnyTypeID:
       hlvmNotImplemented("Any Type");
       break;
@@ -339,6 +339,23 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     {
       const ConstantBoolean* CI = llvm::cast<const ConstantBoolean>(C);
       result = llvm::ConstantBool::get(CI->getValue());
+      break;
+    }
+    case ConstantCharacterID:
+    {
+      const ConstantCharacter* CE = llvm::cast<ConstantCharacter>(C);
+      const std::string& cVal = CE->getValue();
+      hlvmAssert(!cVal.empty() && "Empty constant character?");
+      uint32_t val = 0;
+      if (cVal[0] == '#') {
+        const char* startptr = &cVal.c_str()[1];
+        char* endptr = 0;
+        val = strtoul(startptr,&endptr,16);
+        hlvmAssert(startptr != endptr);
+      } else {
+        val = cVal[0];
+      }
+      result = em.getUVal(llvm::Type::UIntTy,val);
       break;
     }
     case ConstantEnumeratorID:
@@ -1559,6 +1576,12 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case ConstantBooleanID:       
         getConstant(llvm::cast<ConstantBoolean>(n));
         break;
+      case ConstantCharacterID:
+        getConstant(llvm::cast<ConstantCharacter>(n));
+        break;
+      case ConstantEnumeratorID:
+        getConstant(llvm::cast<ConstantEnumerator>(n));
+        break;
       case ConstantIntegerID:       
         getConstant(llvm::cast<ConstantInteger>(n));
         break;
@@ -1706,6 +1729,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         modules.push_back(em.FinishModule());
         break;
       case ConstantBooleanID:       
+      case ConstantCharacterID:
       case ConstantEnumeratorID:
       case ConstantIntegerID:      
       case ConstantRealID:        

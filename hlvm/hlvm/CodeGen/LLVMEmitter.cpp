@@ -500,7 +500,17 @@ LLVMEmitter::emitCall(llvm::Function* F, const ArgList& args)
   // The result must be a first class type at this point, ensure it
   hlvmAssert(F->getReturnType()->isFirstClassType());
 
-  return new llvm::CallInst(F, args, F->getName() + "_result", TheBlock);
+  // Copy the other arguments
+  ArgList newArgs;
+  for (ArgList::const_iterator I = args.begin(), E = args.end(); 
+       I != E; ++I)
+    if (isa<Constant>(*I) && !isa<GlobalValue>(*I) && 
+        !(*I)->getType()->isFirstClassType())
+      newArgs.push_back(NewGConst((*I)->getType(), 
+        cast<Constant>(*I), (*I)->getName()));
+    else
+      newArgs.push_back(*I);
+  return new llvm::CallInst(F, newArgs, F->getName() + "_result", TheBlock);
 }
 
 void 

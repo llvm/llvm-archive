@@ -186,7 +186,7 @@ genType(unsigned limit)
       Locator* loc = getLocator();
       std::string name = "real_" + utostr(line);
       result = 
-        ast->new_RealType(name,bundle,randRange(1,52),randRange(1,11),loc);
+        ast->new_RealType(name,bundle,randRange(8,52),randRange(8,11),loc);
       break;
     }
     case PointerTypeID:

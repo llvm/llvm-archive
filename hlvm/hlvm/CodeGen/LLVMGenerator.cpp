@@ -284,13 +284,16 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
     }
     case SignatureTypeID:
     {
-      std::vector<const llvm::Type*> params;
+      TypeList params;
       const SignatureType* st = llvm::cast<SignatureType>(ty);
+      // Now, push the arguments onto the argument list
       for (SignatureType::const_iterator I = st->begin(), E = st->end(); 
            I != E; ++I)
-        params.push_back(getFirstClassType((*I)->getType()));
-      result = llvm::FunctionType::get(
-        getFirstClassType(st->getResultType()),params,st->isVarArgs());
+        params.push_back(getType((*I)->getType()));
+      // Get the Result Type
+      const llvm::Type* resultTy = getType(st->getResultType());
+      result = 
+        em.getFunctionType(st->getName(), resultTy, params, st->isVarArgs());
       break;
     }
     case OpaqueTypeID: {
@@ -338,17 +341,31 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
       result = llvm::ConstantBool::get(CI->getValue());
       break;
     }
+    case ConstantEnumeratorID:
+    {
+      const ConstantEnumerator* CE = llvm::cast<ConstantEnumerator>(C);
+      const EnumerationType* eType = llvm::cast<EnumerationType>(C->getType());
+      uint64_t val = 0;
+      bool gotEnumValue = eType->getEnumValue( CE->getValue(), val );
+      hlvmAssert(gotEnumValue && "Enumerator not valid for type");
+      result = em.getUVal(lType,val);
+      break;
+    }
     case ConstantIntegerID:
     {
       const ConstantInteger* CI = llvm::cast<const ConstantInteger>(C);
-      const IntegerType* iType = llvm::cast<IntegerType>(hType);
-      if (iType->isSigned()) {
+      if (const IntegerType* iType = llvm::dyn_cast<IntegerType>(hType)) {
+        if (iType->isSigned()) {
+          int64_t val = strtoll(CI->getValue().c_str(),0,CI->getBase());
+          result = em.getSVal(lType,val);
+        }
+        else {
+          uint64_t val = strtoull(CI->getValue().c_str(),0,CI->getBase());
+          result = em.getUVal(lType,val);
+        }
+      } else if (const RangeType* rType = llvm::dyn_cast<RangeType>(hType)) {
         int64_t val = strtoll(CI->getValue().c_str(),0,CI->getBase());
-        result = llvm::ConstantSInt::get(lType,val);
-      }
-      else {
-        uint64_t val = strtoull(CI->getValue().c_str(),0,CI->getBase());
-        result = llvm::ConstantUInt::get(lType,val);
+        result = em.getSVal(lType,val);
       }
       break;
     }
@@ -382,13 +399,21 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     case ConstantArrayID:
     {
       const ConstantArray* hCA = llvm::cast<ConstantArray>(C);
-      const llvm::ArrayType* Ty = 
-        llvm::cast<llvm::ArrayType>(getType(hCA->getType()));
+      const llvm::Type* elemType = getType(hCA->getElementType());
+      const llvm::ArrayType* lAT = llvm::ArrayType::get(elemType,hCA->size());
       std::vector<llvm::Constant*> elems;
       for (ConstantArray::const_iterator I = hCA->begin(), E = hCA->end();
            I != E; ++I )
         elems.push_back(getConstant(*I));
-      result = llvm::ConstantArray::get(Ty,elems);
+      llvm::Constant* lCA = llvm::ConstantArray::get(lAT,elems);
+      llvm::GlobalVariable* lGV = em.NewGConst(lAT,lCA,hCA->getName()+"_init");
+      llvm::Constant* lCE = em.getFirstElement(lGV);
+      const llvm::StructType* Ty = 
+        llvm::cast<llvm::StructType>(getType(hCA->getType()));
+      elems.clear();
+      elems.push_back(em.getUVal(llvm::Type::UIntTy,hCA->size()));
+      elems.push_back(lCE);
+      result = llvm::ConstantStruct::get(Ty,elems);
       break;
     }
     case ConstantVectorID:
@@ -641,7 +666,7 @@ LLVMGeneratorPass::getOperatorResult(Operator* op, const std::string& name)
   if (!llvm::isa<Block>(op->getParent())) {
     const llvm::Type* Ty = getType(op->getType());
     result = em.NewAutoVar(Ty, name + "_var");
-    em.emitStore(em.getNullValue(Ty),result);
+    em.emitAssign(result,em.getNullValue(Ty));
   }
   return result;
 }
@@ -694,35 +719,7 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
     C = getConstant(av->getInitializer());
   else
     C = em.getNullValue(elemType);
-
-  if (C) {
-    const llvm::Type* CType = C->getType();
-    if (CType != elemType) {
-      if (llvm::isa<llvm::PointerType>(CType) && 
-          llvm::isa<llvm::PointerType>(elemType)) {
-        const llvm::Type* CElemType = 
-          llvm::cast<llvm::PointerType>(CType)->getElementType();
-        const llvm::Type* avElemType = 
-            llvm::cast<llvm::PointerType>(elemType)->getElementType();
-        if (CElemType != avElemType)
-        {
-          // We have pointers to different element types. This *can* be okay if
-          // we apply conversions.
-          if (CElemType == llvm::Type::SByteTy) {
-            // The initializer is an sbyte*, which we can convert to either a
-            // hlvm_text or an hlvm_buffer.
-            if (elemType == em.get_hlvm_buffer()) {
-              // Assign the constant string to the buffer
-            } else if (elemType == em.get_hlvm_text()) {
-            }
-          }
-        }
-      }
-      hlvmAssert(CType->isLosslesslyConvertibleTo(elemType));
-      C = llvm::ConstantExpr::getCast(C,elemType);
-    }
-    llvm::Value* store = em.emitStore(C,alloca);
-  }
+  em.emitAssign(alloca,C);
   pushOperand(alloca,av);
   lvars[av] = alloca;
 }
@@ -1314,62 +1311,29 @@ template<> void
 LLVMGeneratorPass::gen(ResultOp* r)
 {
   // Get the result operand
-  llvm::Value* result = popOperand(r->getOperand(0));
+  llvm::Value* src = popOperand(r->getOperand(0));
   // Get the block this result applies to
   hlvm::Block* B = llvm::cast<hlvm::Block>(r->getParent());
   // Get the location into which we will store the result
-  llvm::Value* instr = operands[B];
+  llvm::Value* dest = operands[B];
 
-  // If the value to be stored is not first class
-  if (const llvm::PointerType* PT = 
-      llvm::dyn_cast<llvm::PointerType>(instr->getType()))  {
-    if (!PT->getElementType()->isFirstClassType()) {
-      // We have to treat non-first class values specially because LLVM won't
-      // store anything other than first-class values. If the number of stores
-      // required is <= 8 then we emit them individually, otherwise we call
-      // the llvm intrinsic llvm_memcpy_i32.
-      const llvm::Type* Ty = PT->getElementType();
-      if (const llvm::StructType* ST = llvm::dyn_cast<llvm::StructType>(Ty)) {
-        if (ST->getNumElements() > 8) {
-          // Use the intrinsic
-        } else {
-          // sequence of stores
-        }
-      } else if (const llvm::ArrayType* AT = 
-                 llvm::dyn_cast<llvm::ArrayType>(AT)) {
-      }
-    }
-  }
-  // Generate a store into the location set up by the block for its result
-  if (llvm::isa<llvm::LoadInst>(instr))
-    instr = llvm::cast<llvm::LoadInst>(instr)->getOperand(0);
-  em.emitStore(result,instr);
+  // Assign the source to the destination
+  em.emitAssign(dest, src);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ReturnOp* r)
 {
-  // Initialize the result value. A null Value* indicates no result.
-  llvm::Value* result = 0;
-
-  // If this function returns a result then we need a return value
-  if (em.getReturnType() != llvm::Type::VoidTy) {
-    result = operands[function->getBlock()];
-    const llvm::Type* resultTy = result->getType();
-    if (const llvm::PointerType* PTy = 
-        llvm::dyn_cast<llvm::PointerType>(resultTy)) {
-      hlvmAssert(PTy->getElementType() == em.getReturnType());
-      result = em.emitLoad(result,em.getBlockName()+ "_result");
-    } else if (resultTy != em.getReturnType()) {
-      result = em.emitCast(result, em.getReturnType(), 
-        em.getBlockName()+"_result");
-    }
-    hlvmAssert(result && "No result for function");
+  // First, if this function returns nothing (void) then just issue a void
+  // return instruction.
+  const Type* resTy = function->getResultType();
+  if (resTy == 0) {
+    em.emitReturn(0);
+    return;
   }
 
-  // RetInst is never the operand of another instruction because it is
-  // a terminator and cannot return a value. Consequently, we don't push it
-  // on the operand stack.
+  // If we get here then the function has a result. 
+  llvm::Value* result = operands[function->getBlock()];
   em.emitReturn(result);
 }
 
@@ -1414,7 +1378,7 @@ LLVMGeneratorPass::gen(StoreOp* s)
   llvm::Value* value =    popOperand(s->getOperand(1));
   // We don't push the StoreInst as an operand because it has no value and
   // therefore cannot be an operand.
-  em.emitStore(value,location);
+  em.emitAssign(location,value);
 }
 
 template<> void
@@ -1656,7 +1620,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
           const llvm::Type* Ty = getType(B->getType());
           llvm::AllocaInst* result = em.NewAutoVar(Ty, name+"_var");
           // Initialize the autovar to null
-          em.emitStore(em.getNullValue(Ty),result);
+          em.emitAssign(result,em.getNullValue(Ty));
           pushOperand(result,B); 
         }
         break;
@@ -1742,6 +1706,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         modules.push_back(em.FinishModule());
         break;
       case ConstantBooleanID:       
+      case ConstantEnumeratorID:
       case ConstantIntegerID:      
       case ConstantRealID:        
       case ConstantStringID:     
@@ -1798,18 +1763,21 @@ LLVMGeneratorPass::linkModules()
 }
 
 
-llvm::cl::opt<bool>
-  NoInline("no-inlining", 
-    llvm::cl::desc("Do not run the LLVM inliner pass"));
+llvm::cl::opt<bool> NoVerify("no-verify", 
+  llvm::cl::init(false),
+  llvm::cl::desc("Don't verify generated LLVM module"));
 
-llvm::cl::opt<bool>
-  NoOptimizations("no-optimization",
-    llvm::cl::desc("Do not run any LLVM optimization passes"));
+llvm::cl::opt<bool> NoInline("no-inlining", 
+  llvm::cl::init(false),
+ llvm::cl::desc("Do not run the LLVM inliner pass"));
 
-void 
+llvm::cl::opt<bool> NoOptimizations("no-optimization",
+  llvm::cl::init(false),
+  llvm::cl::desc("Do not run any LLVM optimization passes"));
+
+static void 
 getCleanupPasses(llvm::PassManager& PM)
 {
-  
   PM.add(llvm::createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
   PM.add(llvm::createFunctionResolvingPass());    // Resolve (...) functions
   if (NoOptimizations)
@@ -1860,10 +1828,26 @@ getCleanupPasses(llvm::PassManager& PM)
   PM.add(llvm::createConstantMergePass());        // Merge dup global constants
 }
 
+static bool
+optimizeModule(llvm::Module* mod, std::string& ErrMsg)
+{
+  llvm::PassManager Passes;
+  Passes.add(new llvm::TargetData(mod));
+  if (!NoVerify)
+    if (llvm::verifyModule(*mod,llvm::ReturnStatusAction,&ErrMsg))
+      return false;
+  getCleanupPasses(Passes);
+  Passes.run(*mod);
+  if (!NoVerify)
+    if (llvm::verifyModule(*mod,llvm::ReturnStatusAction,&ErrMsg))
+      return false;
+  return true;
+}
+
 }
 
 bool
-hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
+hlvm::generateBytecode(AST* tree, std::ostream& output, std::string& ErrMsg)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -1871,23 +1855,15 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, bool verify)
   PM->runOn(tree);
   delete PM;
   llvm::Module* mod = genPass.linkModules();
-  bool result = false;
-  llvm::PassManager Passes;
-  Passes.add(new llvm::TargetData(mod));
-  if (verify)
-    Passes.add(llvm::createVerifierPass());
-  getCleanupPasses(Passes);
-  if (verify)
-    Passes.add(llvm::createVerifierPass());
-  Passes.run(*mod);
-  llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
-  result = true;
+  bool result = optimizeModule(mod,ErrMsg);
+  if (result)
+    llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
   delete mod;
   return result;
 }
 
 bool
-hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
+hlvm::generateAssembly(AST* tree, std::ostream& output, std::string& ErrMsg)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -1895,23 +1871,18 @@ hlvm::generateAssembly(AST* tree, std::ostream& output, bool verify)
   PM->runOn(tree);
   delete PM;
   llvm::Module* mod = genPass.linkModules();
-  bool result = false;
-  llvm::PassManager lPM;
-  lPM.add(new llvm::TargetData(mod));
-  if (verify)
-    lPM.add(llvm::createVerifierPass());
-  getCleanupPasses(lPM);
-  if (verify)
-    lPM.add(llvm::createVerifierPass());
-  lPM.add(new llvm::PrintModulePass(&output));
-  lPM.run(*mod);
-  result = true;
+  bool result = optimizeModule(mod,ErrMsg);
+  if (result) {
+    llvm::PassManager Passes;
+    Passes.add(new llvm::PrintModulePass(&output));
+    Passes.run(*mod);
+  }
   delete mod;
   return result;
 }
 
 llvm::Module* 
-hlvm::generateModule(AST* tree, bool verify)
+hlvm::generateModule(AST* tree, std::string& ErrMsg)
 {
   hlvm::PassManager* PM = hlvm::PassManager::create();
   LLVMGeneratorPass genPass(tree);
@@ -1919,14 +1890,10 @@ hlvm::generateModule(AST* tree, bool verify)
   PM->runOn(tree);
   delete PM;
   llvm::Module* mod = genPass.linkModules();
-  llvm::PassManager lPM;
-  lPM.add(new llvm::TargetData(mod));
-  if (verify)
-    lPM.add(llvm::createVerifierPass());
-  getCleanupPasses(lPM);
-  if (verify)
-    lPM.add(llvm::createVerifierPass());
-  lPM.run(*mod);
+  if (!optimizeModule(mod,ErrMsg)) {
+    delete mod;
+    return 0;
+  }
   return mod;
 }
 

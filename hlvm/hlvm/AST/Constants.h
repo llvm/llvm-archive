@@ -62,6 +62,7 @@ class Constant : public Value
   public:
     /// Get the name of the Constant
     const std::string& getName() const { return name; }
+    bool hasName() const { return !name.empty(); }
     static inline bool classof(const Constant*) { return true; }
     static inline bool classof(const Node* N) { return N->isConstant(); }
 
@@ -438,6 +439,7 @@ class ConstantArray : public ConstantAggregate
   /// @name Accessors
   /// @{
   public:
+    const Type* getElementType() const;
     static inline bool classof(const ConstantArray*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ConstantArrayID); }
 

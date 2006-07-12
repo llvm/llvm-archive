@@ -144,7 +144,7 @@ ValidateImpl::checkType(Type* t,NodeIDs id)
     error(t,"Bad ID for a Type");
     result = false;
   }
-  if (t->getName().empty()) {
+  if (!t->hasName()) {
     error(t, "Empty type name");
     result = false;
   }
@@ -169,8 +169,8 @@ bool
 ValidateImpl::checkConstant(Constant* C,NodeIDs id)
 {
   if (checkValue(C,id)) {
-    if (C->getName().empty()) {
-      error(C,"Constants must not have empty name");
+    if (!C->hasName() && llvm::isa<Linkable>(C)) {
+      error(C,"Linkables must not have an empty name");
       return false;
     }
   }
@@ -239,7 +239,7 @@ ValidateImpl::checkDisparateContainer(DisparateContainerType* n, NodeIDs id)
         error(n,std::string("Null type not permited in DisparateContainerType")
             + " for '" + (*I)->getName() + "'");
         result = false;
-      } else if ((*I)->getName().empty()) {
+      } else if (!(*I)->hasName()) {
         error((*I)->getType(),"Type has no field name");
         result = false;
       }
@@ -489,7 +489,16 @@ ValidateImpl::validate(ConstantCharacter* n)
 template<> inline void
 ValidateImpl::validate(ConstantEnumerator* n)
 {
-  checkConstant(n,ConstantEnumeratorID);
+  if (checkConstant(n,ConstantEnumeratorID)) {
+    uint64_t val;
+    if (const EnumerationType* ET = dyn_cast<EnumerationType>(n->getType())) {
+      if (!ET->getEnumValue( n->getValue(), val))
+        error(n, "Enumerator '" + n->getValue() + "' not valid for type '" +
+          ET->getName());
+    } else {
+      error(n,"Type for ConstantEnumerator is not EnumerationType");
+    }
+  }
 }
 
 template<> inline void
@@ -547,7 +556,8 @@ ValidateImpl::validate(ConstantReal* CR)
       unsigned exp_bits_required = (sizeof(uint64_t)*8 - leading_zeros);
       const RealType* Ty = llvm::cast<RealType>(CR->getType());
       if (Ty->getExponent() < exp_bits_required) {
-        error(CR,"Real constant requires too many exponent bits for type '" +
+        error(CR,"Real constant requires too many exponent bits (" +
+            llvm::utostr(exp_bits_required) + ") for type '" +
             Ty->getName() + "'");
         return;
       }

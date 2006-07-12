@@ -62,7 +62,9 @@ Bundle::insertChild(Node* kid)
     ttable.insert(ty);
   } else if (Constant* C = dyn_cast<Constant>(kid)) {
     clist.push_back(C);
-    ctable.insert(C);
+    // Constants without names are permitted, but not Linkables
+    if (isa<Linkable>(C) || C->hasName())
+      ctable.insert(C);
   } else
     hlvmAssert("Don't know how to insert that in a Bundle");
 }

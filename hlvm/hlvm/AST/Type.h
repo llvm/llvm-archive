@@ -62,6 +62,7 @@ class Type : public Documentable
   public:
     bool isIntrinsic() const { return flags & IntrinsicTF; }
     const std::string& getName() const { return name; }
+    bool hasName() const { return !name.empty(); }
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
 
@@ -306,7 +307,7 @@ class RangeType: public Type
   /// @name Constructors
   /// @{
   protected:
-    RangeType(uint64_t n, uint64_t x) : Type(RangeTypeID), min(n), max(x) {}
+    RangeType(int64_t n, int64_t x) : Type(RangeTypeID), min(n), max(x) {}
     virtual ~RangeType();
 
   /// @}
@@ -366,6 +367,7 @@ class EnumerationType : public Type
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
+    bool getEnumValue(const std::string& enum_name, uint64_t& val) const;
     // Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const EnumerationType*) { return true; }
     static inline bool classof(const Node* T) 

@@ -500,6 +500,7 @@
       <ref name="vect.elem"/>
       <ref name="struct.elem"/>
       <ref name="cont.elem"/>
+      <ref name="cref.elem"/>
     </choice>
   </define>
 
@@ -632,6 +633,13 @@
       <oneOrMore>
         <ref name="Literal.pat"/>
       </oneOrMore>
+    </element>
+  </define>
+
+  <define name="cref.elem">
+    <element name="ref">
+      <ref name="Named_Element.pat"/>
+      <ref name="Documentation.pat"/>
     </element>
   </define>
 

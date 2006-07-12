@@ -214,6 +214,7 @@ class NamedType : public Documentable
   public:
     /// Get the maximum size the array can grow to.
     const std::string& getName()  const { return name; }
+    bool hasName() const { return !name.empty(); }
     const Type* getType() const { return type; }
 
     /// Methods to support type inquiry via is, cast, dyn_cast

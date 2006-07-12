@@ -59,6 +59,9 @@ typedef std::vector<llvm::BasicBlock*> BlockStack;
 /// A list of LLVM Values, used for argument lists
 typedef std::vector<llvm::Value*> ArgList;
 
+/// A list of LLVM types, used for function types
+typedef std::vector<const llvm::Type*> TypeList;
+
 /// This class provides utility functions for emitting LLVM code. It has no
 /// concept of how to translate HLVM into LLVM, that logic is in LLVMGenerator
 /// class. This class just keeps track of things in the LLVM world and provides
@@ -174,6 +177,14 @@ class LLVMEmitter
       return TheFunction->getReturnType();
     }
 
+    /// Return the total number of elements in the Type, examining recursively,
+    /// any nested aggregate types.
+    unsigned getNumElements(const llvm::Type *Ty);
+
+    /// Return a constant expression for indexing into the first element of
+    /// a constant global variable.
+    llvm::Constant* getFirstElement(llvm::GlobalVariable* GV);
+
     /// If V is a PointerType then load its value unless the referent type is
     /// not first class type
     llvm::Value* Pointer2Value(llvm::Value* V) const;
@@ -203,54 +214,24 @@ class LLVMEmitter
       indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
     }
 
-  /// @}
-  /// @name Accessors for interface to HLVM Runtime Library
-  /// @{
-  public:
-    /// Buffer manipulation methods
-    llvm::PointerType*  get_hlvm_buffer();
-    llvm::Function*     get_hlvm_buffer_create();
-    llvm::CallInst*     call_hlvm_buffer_create(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_buffer_delete();
-    llvm::CallInst*     call_hlvm_buffer_delete(const ArgList& args);
+    /// Convert a non-first-class type into a first-class type by constructing
+    /// a pointer to the original type.
+    const llvm::Type* getFirstClassType(const llvm::Type* Ty) {
+      if (!Ty->isFirstClassType())
+        return llvm::PointerType::get(Ty);
+      return Ty;
+    }
 
-    /// Get the signature for an HLVM program
-    llvm::FunctionType* get_hlvm_program_signature();
-
-    /// Get the LLVM type for an HLVM "size" type
-    llvm::Type*         get_hlvm_size();
-
-    /// Stream manipulation methods
-    llvm::PointerType*  get_hlvm_stream();
-    llvm::Function*     get_hlvm_stream_open();
-    llvm::CallInst*     call_hlvm_stream_open(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_read();
-    llvm::CallInst*     call_hlvm_stream_read(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_buffer();
-    llvm::CallInst*     call_hlvm_stream_write_buffer(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_text();
-    llvm::CallInst*     call_hlvm_stream_write_text(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_string();
-    llvm::CallInst*     call_hlvm_stream_write_string(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_close();
-    llvm::CallInst*     call_hlvm_stream_close(const ArgList& args);
-
-    /// Text manipulation methods.
-    llvm::PointerType*  get_hlvm_text();
-    llvm::Function*     get_hlvm_text_create();
-    llvm::CallInst*     call_hlvm_text_create(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_text_delete();
-    llvm::CallInst*     call_hlvm_text_delete(const ArgList& args);
-    llvm::Function*     get_hlvm_text_to_buffer();
-    llvm::CallInst*     call_hlvm_text_to_buffer(
-        const ArgList& args, const char* name = 0);
+    /// Get an LLVM FunctionType for the corresponding arguments. This handles
+    /// the details of converting non-first-class arguments and results into
+    /// the appropriate pointers to those types and making the first function
+    /// argument a pointer to the result storage, if necessary.
+    llvm::FunctionType* getFunctionType(
+      const std::string& name,       ///< The name to give the function type
+      const llvm::Type* resultTy,    ///< The type of the function's result
+      const TypeList& args,          ///< The list of the function's arguments
+      bool varargs                   ///< Whether its a varargs function or not
+    );
 
   /// @}
   /// @name Simple Value getters
@@ -274,13 +255,19 @@ class LLVMEmitter
       return llvm::ConstantFP::get(Ty,1.0);
     }
     llvm::Constant* getSOne() const {
-      return llvm::ConstantInt::get(llvm::Type::IntTy,1);
+      return llvm::ConstantSInt::get(llvm::Type::IntTy,1);
     }
     llvm::Constant* getUOne() const {
       return llvm::ConstantUInt::get(llvm::Type::UIntTy,1);
     }
     llvm::Constant* getIOne(const llvm::Type* Ty) const {
       return llvm::ConstantInt::get(Ty,1);
+    }
+    llvm::Constant* getSVal(const llvm::Type* Ty, int64_t val) const {
+      return llvm::ConstantSInt::get(Ty,val);
+    }
+    llvm::Constant* getUVal(const llvm::Type* Ty, uint64_t val) const {
+      return llvm::ConstantUInt::get(Ty,val);
     }
     llvm::Constant* getNullValue(const llvm::Type* Ty) const { 
       return llvm::Constant::getNullValue(Ty);
@@ -409,15 +396,50 @@ class LLVMEmitter
       continues.push_back(brnch);
       return brnch;
     }
-    llvm::ReturnInst* emitReturn(llvm::Value* V) {
-      return new llvm::ReturnInst(V,TheBlock);
-    }
-    llvm::CallInst* emitCall(llvm::Function* F, const ArgList& args) {
-      return new llvm::CallInst(F,args,"call_" + F->getName(),TheBlock);
-    }
+
+    llvm::ReturnInst* emitReturn(llvm::Value* V);
+
+    llvm::CallInst* emitCall(llvm::Function* F, const ArgList& args); 
+
     llvm::GetElementPtrInst* emitGEP(llvm::Value* V, const ArgList& indices) {
       return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
     }
+
+    /// This method implements an assignment of a src value to a pointer to a
+    /// destination value. It handles all cases from a simple store instruction
+    /// for first class types, to construction of temporary global variables 
+    /// for assignment of constant aggregates to variables.
+    void emitAssign(llvm::Value* dest, llvm::Value* src);
+
+    /// Copy one aggregate to another. This method will use individual load and
+    /// store instructions for small aggregates or the llvm.memcpy intrinsic for
+    /// larger ones.
+    void emitAggregateCopy(
+      llvm::Value *DestPtr,  ///< Pointer to destination aggregate
+      llvm::Value *SrcPtr    ///< Pointer to source aggregate
+    );
+
+    /// Emit an llvm.memcpy.i64 intrinsic
+    void emitMemCpy(
+      llvm::Value *dest,  ///< A Pointer type value to receive the data
+      llvm::Value *src,   ///< A Pointer type value that is the data source
+      llvm::Value *size   ///< A ULong Type value to specify # of bytes to copy
+    );
+
+    /// Emit an llvm.memmove.i64 intrinsic
+    void emitMemMove(
+      llvm::Value *dest,  ///< A Pointer type value to receive the data
+      llvm::Value *src,   ///< A Pointer type value that is the data source
+      llvm::Value *size   ///< A ULong Type value to specify # of bytes to move
+    );
+
+    /// Emit an llvm.memset.i64 intrinsic
+    void emitMemSet(
+      llvm::Value *dest,  ///< A Pointer type value to receive the data
+      llvm::Value *val,   ///< An integer type that specifies the byte to set
+      llvm::Value *size   ///< A ULong Type value to specif # of bytes to set
+    );
+
   /// @}
   /// @name Other miscellaneous functions
   /// @{
@@ -431,38 +453,9 @@ class LLVMEmitter
     /// goto block.
     llvm::BasicBlock *getIndirectGotoBlock();
     
-    /// Copy the elements from SrcPtr to DestPtr, using the
-    /// GCC type specified by GCCType to know which elements to copy.
-    void EmitAggregateCopy(
-      llvm::Value *DestPtr, llvm::Value *SrcPtr, bool isVolatile);
-
     /// Zero the elements of DestPtr.
     void EmitAggregateZero(llvm::Value *DestPtr);
                            
-    /// Emit an llvm.memcpy.i32 or llvm.memcpy.i64 intrinsic
-    void EmitMemCpy(
-      llvm::Value *DestPtr, 
-      llvm::Value *SrcPtr, 
-      llvm::Value *Size, 
-      unsigned Align
-    );
-
-    /// Emit an llvm.memmove.i32 or llvm.memmove.i64 intrinsic
-    void EmitMemMove(
-      llvm::Value *DestPtr,
-      llvm::Value *SrcPtr, 
-      llvm::Value *Size, 
-      unsigned Align
-    );
-
-    /// Emit an llvm.memset.i32 or llvm.memset.i64 intrinsic
-    void EmitMemSet(
-      llvm::Value *DestPtr, 
-      llvm::Value *SrcVal, 
-      llvm::Value *Size, 
-      unsigned Align
-    );
-
     /// Emit an unconditional branch to the specified basic block, running 
     /// cleanups if the branch exits scopes.  The argument specify
     /// how to handle these cleanups.
@@ -472,6 +465,63 @@ class LLVMEmitter
     /// outermost exception scope, merging it if there is already a fixup that 
     /// works.
     void AddBranchFixup(llvm::BranchInst *BI, bool isExceptionEdge);
+
+  /// @}
+  /// @name Accessors for interface to HLVM Runtime Library
+  /// @{
+  public:
+    /// Buffer manipulation methods
+    llvm::PointerType*  get_hlvm_buffer();
+    llvm::Function*     get_hlvm_buffer_create();
+    llvm::CallInst*     call_hlvm_buffer_create(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_buffer_delete();
+    llvm::CallInst*     call_hlvm_buffer_delete(const ArgList& args);
+
+    /// Get the signature for an HLVM program
+    llvm::FunctionType* get_hlvm_program_signature();
+
+    /// Get the LLVM type for an HLVM "size" type
+    llvm::Type*         get_hlvm_size();
+
+    /// Stream manipulation methods
+    llvm::PointerType*  get_hlvm_stream();
+    llvm::Function*     get_hlvm_stream_open();
+    llvm::CallInst*     call_hlvm_stream_open(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_stream_read();
+    llvm::CallInst*     call_hlvm_stream_read(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_stream_write_buffer();
+    llvm::CallInst*     call_hlvm_stream_write_buffer(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_stream_write_text();
+    llvm::CallInst*     call_hlvm_stream_write_text(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_stream_write_string();
+    llvm::CallInst*     call_hlvm_stream_write_string(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_stream_close();
+    llvm::CallInst*     call_hlvm_stream_close(const ArgList& args);
+
+    /// Text manipulation methods.
+    llvm::PointerType*  get_hlvm_text();
+    llvm::Function*     get_hlvm_text_create();
+    llvm::CallInst*     call_hlvm_text_create(
+        const ArgList& args, const char* name = 0);
+    llvm::Function*     get_hlvm_text_delete();
+    llvm::CallInst*     call_hlvm_text_delete(const ArgList& args);
+    llvm::Function*     get_hlvm_text_to_buffer();
+    llvm::CallInst*     call_hlvm_text_to_buffer(
+        const ArgList& args, const char* name = 0);
+
+  /// @}
+  /// @name Accessors for LLVM intrinsics
+  /// @{
+  public:
+    llvm::Function* get_llvm_memcpy();
+    llvm::Function* get_llvm_memmove();
+    llvm::Function* get_llvm_memset();
 
   /// @}
   /// @name Data Members
@@ -486,7 +536,6 @@ class LLVMEmitter
     llvm::BasicBlock* TheExitBlock; ///< The function's exit (return) block
     llvm::Instruction* EntryInsertionPoint; ///< Insertion point for entry stuff
     llvm::BasicBlock* TheBlock;     ///< The current block we're building
-    //llvm::TargetMachine *TheTarget; /// The current target being compiled for.
 
     // Caches of things to interface with the HLVM Runtime Library
     llvm::PointerType*  hlvm_text;          ///< Opaque type for text objects
@@ -504,6 +553,12 @@ class LLVMEmitter
     llvm::Function*     hlvm_stream_write_string; ///< Write string to stream
     llvm::Function*     hlvm_stream_close;  ///< Function for stream_close
     llvm::FunctionType* hlvm_program_signature; ///< The llvm type for programs
+
+    // Caches of LLVM Intrinsic functions
+    llvm::Function*     llvm_memcpy;         ///< llvm.memcpy.i64
+    llvm::Function*     llvm_memmove;        ///< llvm.memmove.i64
+    llvm::Function*     llvm_memset;         ///< llvm.memset.i64
+
   /// @}
 };
 

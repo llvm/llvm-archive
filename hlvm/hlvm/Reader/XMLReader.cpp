@@ -403,14 +403,12 @@ XMLReaderImpl::parseLiteralConstant(
   switch (token) {
     case TKN_false:   
     {
-      std::string nm = name.empty() ? "bool_false" : name;
-      C = ast->new_ConstantBoolean(nm, bundle,Ty,false, getLocator(cur)); 
+      C = ast->new_ConstantBoolean(name, bundle,Ty,false, getLocator(cur)); 
       break;
     }
     case TKN_true:
     {
-      std::string nm = name.empty() ? "bool_true" : name;
-      C = ast->new_ConstantBoolean(nm,bundle,Ty,true, getLocator(cur));
+      C = ast->new_ConstantBoolean(name,bundle,Ty,true, getLocator(cur));
       break;
     }
     case TKN_bool:
@@ -419,9 +417,7 @@ XMLReaderImpl::parseLiteralConstant(
       xmlNodePtr child = cur->children;
       getTextContent(child,buffer);
       bool value = recognize_boolean( buffer.c_str() );
-      std::string nm = name.empty() ? std::string("bool_") + 
-        (value?"true_":"false") : name;
-      C = ast->new_ConstantBoolean(nm, bundle,Ty,value, getLocator(cur));
+      C = ast->new_ConstantBoolean(name, bundle,Ty,value, getLocator(cur));
       break;
     }
     case TKN_char:
@@ -429,8 +425,7 @@ XMLReaderImpl::parseLiteralConstant(
       std::string buffer;
       xmlNodePtr child = cur->children;
       getTextContent(child,buffer);
-      std::string nm = name.empty() ?  std::string("char_") + buffer : name;
-      C = ast->new_ConstantCharacter(nm, bundle,Ty,buffer, getLocator(cur));
+      C = ast->new_ConstantCharacter(name, bundle,Ty,buffer, getLocator(cur));
       break;
     }
     case TKN_enum:
@@ -438,8 +433,7 @@ XMLReaderImpl::parseLiteralConstant(
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      std::string nm = name.empty() ? std::string("enum_") + value : name;
-      C = ast->new_ConstantEnumerator(nm,bundle,Ty,value,getLocator(cur));
+      C = ast->new_ConstantEnumerator(name,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_bin:
@@ -452,8 +446,7 @@ XMLReaderImpl::parseLiteralConstant(
       getTextContent(child,value);
       uint16_t base = (token == TKN_dec ? 10 : (token == TKN_hex ? 16 : 
                       (token == TKN_oct ? 8 : (token == TKN_bin ? 2 : 10))));
-      std::string nm = name.empty() ?  std::string("int_") + value : name;
-      C = ast->new_ConstantInteger(nm,bundle,Ty,value,base,getLocator(cur));
+      C = ast->new_ConstantInteger(name,bundle,Ty,value,base,getLocator(cur));
       break;
     }
     case TKN_flt:
@@ -463,8 +456,7 @@ XMLReaderImpl::parseLiteralConstant(
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      std::string nm = name.empty() ? std::string("real_") + value : name;
-      C = ast->new_ConstantReal(nm,bundle,Ty,value,getLocator(cur));
+      C = ast->new_ConstantReal(name,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_str:
@@ -472,18 +464,16 @@ XMLReaderImpl::parseLiteralConstant(
       std::string value;
       xmlNodePtr child = cur->children;
       getTextContent(child,value);
-      std::string nm = name.empty() ? std::string("str_") + value : name;
-      C =  ast->new_ConstantString(nm,bundle,Ty,value,getLocator(cur));
+      C =  ast->new_ConstantString(name,bundle,Ty,value,getLocator(cur));
       break;
     }
     case TKN_ptr:
     {
       std::string to = getAttribute(cur,"to");
-      std::string nm = name.empty() ? std::string("ptr_") + to : name;
       Constant* referent = bundle->getConst(to);
       if (!referent)
         error(loc,"Unkown referent for constant pointer");
-      C = ast->new_ConstantPointer(nm,bundle,Ty,referent,loc);
+      C = ast->new_ConstantPointer(name,bundle,Ty,referent,loc);
       break;
     }
     case TKN_arr:
@@ -497,8 +487,7 @@ XMLReaderImpl::parseLiteralConstant(
         elems.push_back(elem);
         child = child->next;
       }
-      std::string nm = name.empty() ? std::string("arr") : name;
-      C = ast->new_ConstantArray(nm,bundle,AT,elems,getLocator(cur));
+      C = ast->new_ConstantArray(name,bundle,AT,elems,getLocator(cur));
       break;
     }
     case TKN_vect:
@@ -512,8 +501,7 @@ XMLReaderImpl::parseLiteralConstant(
         elems.push_back(elem);
         child = child->next;
       }
-      std::string nm = name.empty() ? std::string("vec") : name;
-      C = ast->new_ConstantVector(nm,bundle,VT,elems,getLocator(cur));
+      C = ast->new_ConstantVector(name,bundle,VT,elems,getLocator(cur));
       break;
     }
     case TKN_struct:
@@ -528,8 +516,7 @@ XMLReaderImpl::parseLiteralConstant(
         child = child->next;
         ++I;
       }
-      std::string nm = name.empty() ? std::string("struct") :name;
-      C = ast->new_ConstantStructure(nm,bundle,ST,fields,getLocator(cur));
+      C = ast->new_ConstantStructure(name,bundle,ST,fields,getLocator(cur));
       break;
     }
     case TKN_cont:
@@ -544,8 +531,7 @@ XMLReaderImpl::parseLiteralConstant(
         child = child->next;
         ++I;
       }
-      std::string nm = name.empty() ? std::string("struct") :name;
-      C = ast->new_ConstantContinuation(nm,bundle,CT,fields,getLocator(cur));
+      C = ast->new_ConstantContinuation(name,bundle,CT,fields,getLocator(cur));
       break;
     }
     default:

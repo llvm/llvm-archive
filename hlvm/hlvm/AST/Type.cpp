@@ -170,6 +170,19 @@ EnumerationType::~EnumerationType()
 {
 }
 
+bool 
+EnumerationType::getEnumValue(const std::string& name, uint64_t& val) const
+{
+  val = 0;
+  for (const_iterator I = begin(), E = end(); I != E; ++I ) { 
+    if (*I == name)
+      return true;
+    val++;
+  }
+  val = 0;
+  return false;
+}
+
 const char* 
 EnumerationType::getPrimitiveName() const
 {

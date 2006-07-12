@@ -29,6 +29,7 @@
 
 #include <hlvm/AST/Constants.h>
 #include <hlvm/AST/Type.h>
+#include <hlvm/AST/ContainerType.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 
@@ -67,6 +68,14 @@ ConstantAggregate::removeChild(Node* n)
 }
 
 ConstantArray::~ConstantArray() { }
+
+const Type* 
+ConstantArray::getElementType() const
+{
+  const ArrayType* AT = llvm::cast<ArrayType>(this->getType());
+  return AT->getElementType();
+}
+
 ConstantVector::~ConstantVector() { }
 ConstantStructure::~ConstantStructure() { }
 ConstantContinuation::~ConstantContinuation() { }

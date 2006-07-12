@@ -36,14 +36,15 @@ namespace hlvm {
 
 LLVMEmitter::LLVMEmitter()
   : TheModule(0), TheFunction(0), TheEntryBlock(0), TheExitBlock(0), 
-    EntryInsertionPoint(0), TheBlock(0), // TheTarget(0),
+    EntryInsertionPoint(0), TheBlock(0),
     hlvm_text(0), hlvm_text_create(0), hlvm_text_delete(0),
     hlvm_text_to_buffer(0), 
     hlvm_buffer(0), hlvm_buffer_create(0), hlvm_buffer_delete(0),
     hlvm_stream(0), hlvm_stream_open(0), hlvm_stream_read(0),
     hlvm_stream_write_buffer(0), hlvm_stream_write_text(0), 
     hlvm_stream_write_string(0), hlvm_stream_close(0), 
-    hlvm_program_signature(0)
+    hlvm_program_signature(0),
+    llvm_memcpy(0), llvm_memmove(0), llvm_memset(0)
 { 
 }
 
@@ -237,6 +238,321 @@ LLVMEmitter::ResolveContinues(llvm::BasicBlock* entry)
   continues.clear();
 }
 
+/// Return the number of elements in the specified type that will need to be 
+/// loaded/stored if we copy this one element at a time.
+unsigned 
+LLVMEmitter::getNumElements(const Type *Ty) 
+{
+  if (Ty->isFirstClassType()) return 1;
+
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    unsigned NumElts = 0;
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+      NumElts += getNumElements(STy->getElementType(i));
+    return NumElts;
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    return ATy->getNumElements() * getNumElements(ATy->getElementType());
+  } else if (const PackedType* PTy = dyn_cast<PackedType>(Ty)) {
+    return PTy->getNumElements() * getNumElements(PTy->getElementType());
+  } else
+    hlvmAssert(!"Don't know how to count elements of this type");
+  return 0;
+}
+
+Constant*
+LLVMEmitter::getFirstElement(GlobalVariable* GV)
+{
+  ArgList indices;
+  TwoZeroIndices(indices);
+  return ConstantExpr::getGetElementPtr(GV,indices);
+}
+
+FunctionType*
+LLVMEmitter::getFunctionType(
+  const std::string& name, const Type* resultTy, 
+  const TypeList& args, bool varargs)
+{
+  // The args might contain non-first-class typed arguments. We build a
+  // new argument list the contains the argument types after conversion.
+  TypeList Params;
+
+  // We can't have results that are not first class so we use the
+  // first argument to point to where the result should be stored and
+  // switch the result type to VoidTy.
+  if (!resultTy->isFirstClassType()) {
+    Params.push_back(getFirstClassType(resultTy));
+    resultTy = Type::VoidTy;
+  }
+
+  for (TypeList::const_iterator I = args.begin(), E = args.end(); I != E; ++I ) 
+  {
+    if ((*I)->isFirstClassType())
+      Params.push_back(*I);
+    else 
+      Params.push_back(getFirstClassType(*I));
+  }
+
+  FunctionType* result = FunctionType::get(resultTy, Params, varargs);
+  if (!name.empty())
+    TheModule->addTypeName(name,result);
+  return result;
+}
+
+void
+LLVMEmitter::emitAssign(Value* dest, Value* src)
+{
+  // If the destination is a load instruction then its the result of a previous
+  // nested block so just get the first operand as the real destination.
+  if (isa<LoadInst>(dest))
+    dest = cast<LoadInst>(dest)->getOperand(0);
+
+  // The destination must be a pointer type
+  hlvmAssert(isa<PointerType>(dest->getType()));
+
+  // Get the type of the destination and source
+  const Type* destTy = cast<PointerType>(dest->getType())->getElementType();
+  const Type* srcTy = src->getType();
+
+  if (destTy->isFirstClassType()) {
+    // Can't store an aggregate to a first class type
+    hlvmAssert(srcTy->isFirstClassType());
+    if (destTy == srcTy) {
+      // simple case, the types match and they are both first class types, 
+      // just emit a store instruction
+      emitStore(src,dest);
+    } else if (const PointerType* srcPT = dyn_cast<PointerType>(srcTy)) {
+      // The source is a pointer to the value to return so just get a
+      // pointer to its first element and store it since its pointing to
+      // a first class type. Assert that this is true.
+      hlvmAssert( srcPT->getElementType() == destTy );
+      ArgList idx;
+      TwoZeroIndices(idx);
+      GetElementPtrInst* GEP = new GetElementPtrInst(src, idx, "",TheBlock);
+      emitStore(GEP,dest);
+    } else {
+      // they are both first class types and the source is not a pointer, so 
+      // just cast them
+      CastInst* CI = emitCast(src,destTy,src->getName());
+      emitStore(CI,dest);
+    }
+  } 
+  else if (const PointerType* srcPT = dyn_cast<PointerType>(srcTy)) 
+  {
+    // We have an aggregate to copy
+    emitAggregateCopy(dest,src);
+  } 
+  else if (Constant* srcC = dyn_cast<Constant>(src)) 
+  {
+    // We have a constant aggregate to move into an aggregate gvar. We must
+    // create a temporary gvar based on the constant in order to copy it.
+    GlobalVariable* GVar = NewGConst(srcTy, srcC, srcC->getName());
+    // Now we can aggregate copy it
+    emitAggregateCopy(dest, GVar);
+  }
+}
+
+/// Recursively traverse the potientially aggregate src/dest ptrs, copying all 
+/// of the elements from src to dest.
+static void 
+CopyAggregate(
+  Value *DestPtr, 
+  bool DestVolatile, 
+  Value *SrcPtr, 
+  bool SrcVolatile,
+  BasicBlock *BB) 
+{
+  assert(DestPtr->getType() == SrcPtr->getType() &&
+         "Cannot copy between two pointers of different type!");
+  const Type *ElTy = cast<PointerType>(DestPtr->getType())->getElementType();
+  if (ElTy->isFirstClassType()) {
+    Value *V = new LoadInst(SrcPtr, "tmp", SrcVolatile, BB);
+    new StoreInst(V, DestPtr, DestVolatile, BB);
+  } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+    Constant *Zero = ConstantUInt::get(Type::UIntTy, 0);
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      Constant *Idx = ConstantUInt::get(Type::UIntTy, i);
+      Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", BB);
+      Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", BB);
+      CopyAggregate(DElPtr, DestVolatile, SElPtr, SrcVolatile, BB);
+    }
+  } else {
+    const ArrayType *ATy = cast<ArrayType>(ElTy);
+    Constant *Zero = ConstantUInt::get(Type::UIntTy, 0);
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+      Constant *Idx = ConstantUInt::get(Type::UIntTy, i);
+      Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", BB);
+      Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", BB);
+      CopyAggregate(DElPtr, DestVolatile, SElPtr, SrcVolatile, BB);
+    }
+  }
+}
+
+/// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
+/// GCC type specified by GCCType to know which elements to copy.
+void 
+LLVMEmitter::emitAggregateCopy(
+  Value *DestPtr,
+  Value *SrcPtr )
+{
+  // Make sure we're not mixing apples and oranges
+  hlvmAssert(DestPtr->getType() == SrcPtr->getType());
+
+  // Degenerate case, same pointer
+  if (DestPtr == SrcPtr)
+    return;  // noop copy.
+
+  // If the type has just a few elements, then copy the elements directly 
+  // using load/store. Otherwise use the llvm.memcpy.i64 intrinsic. This just
+  // saves a function call for really small structures and arrays. 
+  const Type* Ty = SrcPtr->getType();
+  if (getNumElements(Ty) <= 8) 
+    CopyAggregate(DestPtr, false, SrcPtr, false, TheBlock);
+  else 
+    emitMemCpy(DestPtr, SrcPtr, llvm::ConstantExpr::getSizeOf(Ty));
+}
+
+ReturnInst*
+LLVMEmitter::emitReturn(Value* retVal)
+{
+  // First deal with the degenerate case, a void return
+  if (retVal == 0) {
+    hlvmAssert(getReturnType() == Type::VoidTy);
+    return new llvm::ReturnInst(0,TheBlock);
+  }
+
+  // Now, deal with first class result types. Becasue of the way function
+  // types are generated, a void type at this point indicates an aggregate
+  // result. If we don't have a void type, then it must be a first class result.
+  const Type* resultTy = retVal->getType();
+  if (getReturnType() != llvm::Type::VoidTy) {
+    Value* result = 0;
+    if (const PointerType* PTy = dyn_cast<PointerType>(resultTy)) {
+      // must be an autovar or global var, just load the value
+      hlvmAssert(PTy->getElementType() == getReturnType());
+      result = emitLoad(retVal,getBlockName() + "_result");
+    } else if (resultTy != getReturnType()) {
+      hlvmAssert(resultTy->isFirstClassType());
+      result = emitCast(retVal, getReturnType(), getBlockName()+"_result");
+    } else {
+      hlvmAssert(resultTy->isFirstClassType());
+      result = retVal;
+    }
+    hlvmAssert(result && "No result for function");
+    return new llvm::ReturnInst(result,TheBlock);
+  }
+
+  // Now, deal with the aggregate result case. At this point the function return
+  // type must be void and the first argument must be a pointer to the storage
+  // area for the result.
+  hlvmAssert(getReturnType() == Type::VoidTy);
+
+  // Get the first argument.
+  hlvmAssert(!TheFunction->arg_empty());
+  Argument* result_arg = TheFunction->arg_begin();
+
+  // Both the first argument and the result should have the same type which
+  // both should be pointer to the aggregate
+  hlvmAssert(result_arg->getType() == resultTy);
+
+  // Copy the aggregate result
+  emitAggregateCopy(result_arg, retVal);
+
+  // Emit the void return
+  return new llvm::ReturnInst(0, TheBlock);
+}
+
+llvm::CallInst* 
+LLVMEmitter::emitCall(llvm::Function* F, const ArgList& args) 
+{
+  // Detect the aggregate result case
+  if ((F->getReturnType() == Type::VoidTy) &&
+      (args.size() == F->arg_size() - 1)) {
+    const Type* arg1Ty = F->arg_begin()->getType();
+    if (const PointerType* PTy = dyn_cast<PointerType>(arg1Ty))
+    {
+      // This is the case where the result is a temporary variable that
+      // holds the aggregate and is passed as the first argument
+      const Type* elemTy = PTy->getElementType();
+      hlvmAssert(!elemTy->isFirstClassType());
+
+      // Get a temporary for the result
+      AllocaInst* result = NewAutoVar(elemTy, F->getName() + "_result");
+
+      // Install the temporary result area into a new arg list
+      ArgList newArgs;
+      newArgs.push_back(result);
+
+      // Copy the other arguments
+      for (ArgList::const_iterator I = args.begin(), E = args.end(); 
+           I != E; ++I)
+        if (isa<Constant>(*I) && !isa<GlobalValue>(*I) && 
+            !(*I)->getType()->isFirstClassType())
+          newArgs.push_back(NewGConst((*I)->getType(), 
+            cast<Constant>(*I), (*I)->getName()));
+        else
+          newArgs.push_back(*I);
+
+      // Generate the call
+      return new llvm::CallInst(F, newArgs, "", TheBlock);
+    }
+  }
+
+  // The result must be a first class type at this point, ensure it
+  hlvmAssert(F->getReturnType()->isFirstClassType());
+
+  return new llvm::CallInst(F, args, F->getName() + "_result", TheBlock);
+}
+
+void 
+LLVMEmitter::emitMemCpy(
+  llvm::Value *dest, 
+  llvm::Value *src, 
+  llvm::Value *size
+)
+{
+  const Type *SBP = PointerType::get(Type::SByteTy);
+  ArgList args;
+  args.push_back(CastToType(dest, SBP));
+  args.push_back(CastToType(src, SBP));
+  args.push_back(size);
+  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  new CallInst(get_llvm_memcpy(), args, "", TheBlock);
+}
+
+/// Emit an llvm.memmove.i64 intrinsic
+void 
+LLVMEmitter::emitMemMove(
+  llvm::Value *dest,
+  llvm::Value *src, 
+  llvm::Value *size
+)
+{
+  const Type *SBP = PointerType::get(Type::SByteTy);
+  ArgList args;
+  args.push_back(CastToType(dest, SBP));
+  args.push_back(CastToType(src, SBP));
+  args.push_back(size);
+  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  new CallInst(get_llvm_memmove(), args, "", TheBlock);
+}
+
+/// Emit an llvm.memset.i64 intrinsic
+void 
+LLVMEmitter::emitMemSet(
+  llvm::Value *dest, 
+  llvm::Value *val, 
+  llvm::Value *size 
+)
+{
+  const Type *SBP = PointerType::get(Type::SByteTy);
+  ArgList args;
+  args.push_back(CastToType(dest, SBP));
+  args.push_back(CastToType(val, Type::UByteTy));
+  args.push_back(size);
+  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  new CallInst(get_llvm_memset(), args, "", TheBlock);
+}
+
 llvm::Type*
 LLVMEmitter::get_hlvm_size()
 {
@@ -247,6 +563,11 @@ llvm::PointerType*
 LLVMEmitter::get_hlvm_text()
 {
   if (! hlvm_text) {
+    // An hlvm_text is a variable length array of signed bytes preceded by
+    // an
+    // Arglist args;
+    // args.push_back(Type::UIntTy);
+    // args.push_back(ArrayType::Get(Type::SByteTy,0));
     llvm::OpaqueType* opq = llvm::OpaqueType::get();
     TheModule->addTypeName("hlvm_text_obj", opq);
     hlvm_text = llvm::PointerType::get(opq);
@@ -551,6 +872,43 @@ LLVMEmitter::get_hlvm_program_signature()
     TheModule->addTypeName("hlvm_program_signature",hlvm_program_signature);
   }
   return hlvm_program_signature;
+}
+
+llvm::Function* 
+LLVMEmitter::get_llvm_memcpy()
+{
+  if (!llvm_memcpy) {
+    const Type *SBP = PointerType::get(Type::SByteTy);
+    llvm_memcpy = TheModule->getOrInsertFunction(
+      "llvm.memcpy.i64", Type::VoidTy, SBP, SBP, Type::ULongTy, Type::UIntTy, 
+      NULL);
+  }
+  return llvm_memcpy;
+}
+
+llvm::Function* 
+LLVMEmitter::get_llvm_memmove()
+{
+  if (!llvm_memmove) {
+    const Type *SBP = PointerType::get(Type::SByteTy);
+    llvm_memmove = TheModule->getOrInsertFunction(
+      "llvm.memmove.i64", Type::VoidTy, SBP, SBP, Type::ULongTy, Type::UIntTy, 
+      NULL);
+  }
+
+  return llvm_memmove;
+}
+
+llvm::Function* 
+LLVMEmitter::get_llvm_memset()
+{
+  if (!llvm_memset) {
+    const Type *SBP = PointerType::get(Type::SByteTy);
+    llvm_memset = TheModule->getOrInsertFunction(
+      "llvm.memset.i64", Type::VoidTy, SBP, Type::UByteTy, Type::ULongTy, 
+      Type::UIntTy, NULL);
+  }
+  return llvm_memset;
 }
 
 }

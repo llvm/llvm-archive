@@ -28,6 +28,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/Base/Memory.h>
+#include <hlvm/Base/Assert.h>
 #include <hlvm/Reader/XMLReader.h>
 #include <hlvm/Writer/XMLWriter.h>
 #include <hlvm/Pass/Pass.h>
@@ -49,9 +50,6 @@ OutputFilename("o", cl::desc("Override output filename"),
 
 static cl::opt<bool> NoValidate("no-validate", cl::init(false),
   cl::desc("Don't validate input before generating code"));
-
-static cl::opt<bool> NoVerify("no-verify", cl::init(false),
-  cl::desc("Don't verify generated LLVM module"));
 
 enum GenerationOptions {
   GenLLVMBytecode,
@@ -125,18 +123,24 @@ int main(int argc, char**argv)
       if (!validate(node))
         exit(3);
     }
+    std::string ErrMsg;
     switch (WhatToGenerate) {
       case GenLLVMBytecode:
-        if (!generateBytecode(node,*Out, !NoVerify))
+        if (!generateBytecode(node,*Out, ErrMsg)) {
+          std::cerr << argv[0] << ": Code generation error:\n" << ErrMsg;
           exit(4);
+        }
         break;
       case GenLLVMAssembly: 
-        if (!generateAssembly(node,*Out, !NoVerify))
+        if (!generateAssembly(node,*Out, ErrMsg)) {
+          std::cerr << argv[0] << ": Code generation error:\n" << ErrMsg;
           exit(4);
+        }
         break;
       case GenHLVMXML:
       {
         XMLWriter* wrtr = XMLWriter::create(OutputFilename.c_str());
+        hlvmAssert(wrtr && "Can't create XMLWriter?");
         wrtr->write(node);
         delete wrtr;
         break;

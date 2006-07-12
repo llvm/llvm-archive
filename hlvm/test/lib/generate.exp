@@ -68,7 +68,7 @@ proc hlvm-generate-test { complexity typecomplexity size seed } {
                 fail "$test: $testexe return $status\n$msg"
               } 
             } else {
-              fail "$test: $testexe return $retval\n$msg"
+              pass $test;
             }
           }
         }

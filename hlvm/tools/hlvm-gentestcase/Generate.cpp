@@ -278,7 +278,17 @@ genValue(const Type* Ty, bool is_constant = false)
     case CharacterTypeID:
     {
       std::string val;
-      val += char(randRange(35,126));
+      if ( randRange(0,20) < Complexity )  {
+        static char hexDigits[16] = { 
+          '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+        val = '#';
+        val += hexDigits[ randRange(0,15) ];
+        val += hexDigits[ randRange(0,15) ];
+        val += hexDigits[ randRange(0,15) ];
+        val += hexDigits[ randRange(0,15) ];
+      } else {
+        val += char(randRange(36,126));
+      }
       C = ast->new_ConstantCharacter(
         std::string("cchar_") + utostr(line), bundle,Ty, val, loc);
       break;

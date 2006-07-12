@@ -1,13 +1,17 @@
 load_lib generate.exp
 
 hlvm-generate-test 1 1 1 0
+hlvm-generate-test 1 4 3 1152485648
+hlvm-generate-test 2 2 3 1152485648
 
-set seed [ clock seconds ]
+proc random {{range 100}} {
+      return [expr {int(rand()*$range)}]
+}
 
-for { set complexity 1 } { $complexity < 5 } { incr complexity } {
-  for { set typecmplxt 1 } { $typecmplxt < 5 } { incr typecmplxt } {
-    for { set size 1 } { $size < 5 } { incr size } {
-      hlvm-generate-test $complexity $typecmplxt $size $seed
+for { set complexity 1 } { $complexity < 10 } { incr complexity } {
+  for { set typecmplxt 1 } { $typecmplxt < 6 } { incr typecmplxt } {
+    for { set size 1 } { $size < 10 } { incr size } {
+      hlvm-generate-test $complexity $typecmplxt $size [random [clock second] ]
     }
   }
 }

@@ -20,7 +20,7 @@
 #  MA 02110-1301 USA
 # 
 #===------------------------------------------------------------------------===#
-proc hlvm-ret-zero-test { pat } {
+proc hlvm-ret-zero-test { pat forceret0 } {
   global srcdir subdir objdir tmpdir objrootdir llc gccld gxx APR_lib
   set outdir [file join $objdir $subdir]
   set compiler [file join $objrootdir tools hlvm-compiler hlvm-compiler ]
@@ -71,7 +71,11 @@ proc hlvm-ret-zero-test { pat } {
           } else {
             set retval [ catch {exec $testexe $testname } msg ]
             if {$retval != 0} {
-              fail "$test: $testexe returned $retval:\n$msg"
+              if { ! $forceret0 } {
+                pass "$test"
+              } else {
+                fail "$test: $testexe returned $retval:\n$msg"
+              }
             } else {
               pass "$test"
             }

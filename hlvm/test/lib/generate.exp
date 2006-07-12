@@ -65,7 +65,7 @@ proc hlvm-generate-test { complexity typecomplexity size seed } {
                 set status [lindex $::errorCode 2]
                 pass "$test: $testexe returned $status"
               } else {
-                fail "$test: $testexe return $::errorCode\n$msg"
+                fail "$test: $testexe return $status\n$msg"
               } 
             } else {
               fail "$test: $testexe return $retval\n$msg"

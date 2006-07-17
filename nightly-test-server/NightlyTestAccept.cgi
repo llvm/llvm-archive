@@ -445,6 +445,18 @@ $length = @nights;
 print "DB date : $db_date\n";
 print "Machine $machine_id now has ids [@nights]{$length} associated with it in the database\n";
 
+######################################################################################################
+#
+# Sending email to nightly test email archive
+#
+######################################################################################################
+
+$email = "$machine_data\n\n$dejagnutests_log\n\ncvs user commit list:\n$cvsusercommitlist\n\ncvs user ".
+          "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
+WriteFile "email.txt", $email;
+$email_addr = "llvm-testresults\@cs.uiuc.edu";
+`mail -s '$nickname $hardware nightly tester results' $email_addr < email.txt`;
+`rm -f email.txt;`
 
 ######################################################################################################
 #
@@ -475,16 +487,3 @@ WriteFile "$build_file", $build_log;
 #WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
 #WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
 #WriteFile "$this_days_logs/$warnings_file",$buildwarnings;
-
-######################################################################################################
-#
-# Sending email to nightly test email archive
-#
-######################################################################################################
-
-$email = "$machine_data\n\n$dejagnutests_log\n\ncvs user commit list:\n$cvsusercommitlist\n\ncvs user ".
-          "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
-WriteFile "email.txt", $email;
-$email_addr = "llvm-testresults\@cs.uiuc.edu";
-`mail -s '$nickname $hardware nightly tester results' $email_addr < email.txt`;
-`rm -f email.txt;`

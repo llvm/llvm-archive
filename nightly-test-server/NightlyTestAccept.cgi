@@ -1,4 +1,4 @@
-7#!/usr/bin/perl -w
+#!/usr/bin/perl -w
 #
 # Background: Written on June 1st 2006 by Patrick Jenkins <pjenkins@apple.com> to accept test results 
 #             from the llvm NightlyTest.pl script. It is just a CGI script that takes input by the

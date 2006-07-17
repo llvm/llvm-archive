@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+7#!/usr/bin/perl -w
 #
 # Background: Written on June 1st 2006 by Patrick Jenkins <pjenkins@apple.com> to accept test results 
 #             from the llvm NightlyTest.pl script. It is just a CGI script that takes input by the
@@ -484,5 +484,7 @@ WriteFile "$build_file", $build_log;
 
 $email = "$machine_data\n\n$dejagnutests_log\n\ncvs user commit list:\n$cvsusercommitlist\n\ncvs user ".
           "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
+WriteFile "email.txt", $email;
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
-`mail -s '$nickname $hardware nightly tester results' $email_addr < $email`;
+`mail -s '$nickname $hardware nightly tester results' $email_addr < email.txt`;
+`rm -f email.txt;`

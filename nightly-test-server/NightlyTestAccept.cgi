@@ -456,7 +456,7 @@ $email = "$machine_data\n\n$dejagnutests_log\n\ncvs user commit list:\n$cvsuserc
 WriteFile "email.txt", $email;
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
 `mail -s '$nickname $hardware nightly tester results' $email_addr < email.txt`;
-`rm -f email.txt;`
+`rm -f email.txt`;
 
 ######################################################################################################
 #

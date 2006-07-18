@@ -451,12 +451,11 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 #
 ######################################################################################################
 
-$email = "$machine_data\n\n$dejagnutests_log\n\ncvs user commit list:\n$cvsusercommitlist\n\ncvs user ".
-          "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
-WriteFile "email.txt", $email;
+$email = "$machine_data\n\nBuild Status: $buildstatus\n\ncvs user commit list:\n".
+         "$cvsusercommitlist\n\ncvs user ".
+         "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
-`mail -s '$nickname $hardware nightly tester results' $email_addr < email.txt`;
-`rm -f email.txt`;
+`echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
 
 ######################################################################################################
 #

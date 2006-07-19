@@ -543,74 +543,6 @@ foreach(array_keys($today_results) as $program){
 print "</table>\n";
 print "</td></tr></table><br><br>\n"; #ending black border around table
 
-
-/********************** Singlesource table **********************/
-
-print"<b>Singlesource tests:</b><br>\n";
-print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black border around the table 
-print "<table class=\"sortable\" id=\"singlesource_tests\" border='1' cellspacing='0' cellpadding='0'>\n";
-print "\t<tr bgcolor=#FFCC99>\n";	
-print "\t\t<th>Program</th>\n";	
-$index=0; //here to ensure we dont print %diff for GCC comparisons
-foreach ($category_print_array as $x){
-	print "\t\t<th>Today's $x</th>\n";
-	if($index<10 && isset($percent_difference)){
-		print "\t\t<th>% change in $x</th>\n";
-	}
-	$index++;
-}
-print "\t</tr>\n";	
-print "\t<tr bgcolor=#FFCC99>\n";
-print "\t\t<td></td>\n";
-$index=0;	
-foreach ($category_print_array as $x){
-	if($index<10 && isset($percent_difference)){
-		$col_width=2;
-	}
-	else{
-		$col_width=1;
-	}
-	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
-	print "<span style=\"position:relative;\">\n";
-	print "<span id=\"single_$index\" class=\"popup2\">\n";
-	print "<pre>{$category_print_array_description[$index]}</pre>\n";
-	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('single_$index');\">?</a></span>\n";
-	print "</td>\n";
-	$index++;
-}
-print "\t</tr>\n";	
-$row_color=1;
-$count=0;
-foreach(array_keys($today_results) as $program){
-	if(strcmp($today_results["$program"][0],"singlesource")==0){
-		if($row_color % 2 == 0){
-			$def_color="white";
-		}
-		else{
-			$def_color="#DDDDDD";
-		}	
-		print "\t<tr bgcolor='$def_color'>\n";		
-		print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
-		for($y=1; $y<sizeof($today_results["$program"]); $y++){
-			print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
-			if($y<11 && isset($percent_difference)){
-				$delta=round($percent_difference["$program"][$y-1], 2);
-				$color=DetermineColor($delta, $def_color);
-				print "\t\t<td bgcolor=\"$color\">$delta</td>\n";	
-			}
-		} 
-		print "\t</tr>\n";	
-		$row_color++;
-		if($row_color > 4){
-			$row_color=1;
-		}
-		$count++;
-	}//end if strcmp
-}//end foreach
-print "</table>\n";
-print "</td></tr></table><br><br>\n"; #ending black border around table
-
-
 /********************** Multisource table **********************/
 
 print"<b>Multisource tests:</b><br>\n";
@@ -680,6 +612,73 @@ print "</td></tr></table><br><br>\n"; #ending black border around table
 print "<input type=submit name=action value=\"Compare values\"> | ";
 print "<input type=reset>\n";
 print "</form>\n";
+
+/********************** Singlesource table **********************/
+
+print"<b>Singlesource tests:</b><br>\n";
+print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black border around the table 
+print "<table class=\"sortable\" id=\"singlesource_tests\" border='1' cellspacing='0' cellpadding='0'>\n";
+print "\t<tr bgcolor=#FFCC99>\n";	
+print "\t\t<th>Program</th>\n";	
+$index=0; //here to ensure we dont print %diff for GCC comparisons
+foreach ($category_print_array as $x){
+	print "\t\t<th>Today's $x</th>\n";
+	if($index<10 && isset($percent_difference)){
+		print "\t\t<th>% change in $x</th>\n";
+	}
+	$index++;
+}
+print "\t</tr>\n";	
+print "\t<tr bgcolor=#FFCC99>\n";
+print "\t\t<td></td>\n";
+$index=0;	
+foreach ($category_print_array as $x){
+	if($index<10 && isset($percent_difference)){
+		$col_width=2;
+	}
+	else{
+		$col_width=1;
+	}
+	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+	print "<span style=\"position:relative;\">\n";
+	print "<span id=\"single_$index\" class=\"popup2\">\n";
+	print "<pre>{$category_print_array_description[$index]}</pre>\n";
+	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('single_$index');\">?</a></span>\n";
+	print "</td>\n";
+	$index++;
+}
+print "\t</tr>\n";	
+$row_color=1;
+$count=0;
+foreach(array_keys($today_results) as $program){
+	if(strcmp($today_results["$program"][0],"singlesource")==0){
+		if($row_color % 2 == 0){
+			$def_color="white";
+		}
+		else{
+			$def_color="#DDDDDD";
+		}	
+		print "\t<tr bgcolor='$def_color'>\n";		
+		print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
+		for($y=1; $y<sizeof($today_results["$program"]); $y++){
+			print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
+			if($y<11 && isset($percent_difference)){
+				$delta=round($percent_difference["$program"][$y-1], 2);
+				$color=DetermineColor($delta, $def_color);
+				print "\t\t<td bgcolor=\"$color\">$delta</td>\n";	
+			}
+		} 
+		print "\t</tr>\n";	
+		$row_color++;
+		if($row_color > 4){
+			$row_color=1;
+		}
+		$count++;
+	}//end if strcmp
+}//end foreach
+print "</table>\n";
+print "</td></tr></table><br><br>\n"; #ending black border around table
+
 
 
 mysql_close($mysql_link);

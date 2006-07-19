@@ -95,6 +95,22 @@ sub DoesMachineExist{ #(uname,hardware,os,name,nickname,gcc)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
+# mysql> describe machine;
+# +-----------+----------+------+-----+---------+----------------+
+# | Field     | Type     | Null | Key | Default | Extra          |
+# +-----------+----------+------+-----+---------+----------------+
+# | id        | int(11)  |      | PRI | NULL    | auto_increment |
+# | uname     | text     |      |     |         |                |
+# | hardware  | text     |      |     |         |                |
+# | os        | text     |      |     |         |                |
+# | name      | text     |      |     |         |                |
+# | nickname  | tinytext | YES  |     | NULL    |                |
+# | gcc       | text     | YES  |     | NULL    |                |
+# | directory | text     | YES  |     | NULL    |                |
+# +-----------+----------+------+-----+---------+----------------+
+# 8 rows in set (0.00 sec)
+#
+#
 # Creates an entry in the machine table in the database
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,38 +145,41 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #Since this is ugly, iv included an example call and a view of the table.
 #
-#+---------------------+------------+------+-----+---------+----------------+
-#| Field               | Type       | Null | Key | Default | Extra          |
-#+---------------------+------------+------+-----+---------+----------------+
-#| id                  | int(11)    | NO   | PRI | NULL    | auto_increment |
-#| machine             | int(11)    | NO   |     |         |                |
-#| added               | datetime   | YES  |     | NULL    |                |
-#| buildstatus         | tinytext   | YES  |     | NULL    |                |
-#| configuretime_cpu   | double     | YES  |     | NULL    |                |
-#| configuretime_wall  | double     | YES  |     | NULL    |                |
-#| getcvstime_cpu      | double     | YES  |     | NULL    |                |
-#| getcvstime_wall     | double     | YES  |     | NULL    |                |
-#| buildtime_cpu       | double     | YES  |     | NULL    |                |
-#| buildtime_wall      | double     | YES  |     | NULL    |                |
-#| dejagnutime_cpu     | double     | YES  |     | NULL    |                |
-#| dejagnutime_wall    | double     | YES  |     | NULL    |                |
-#| warnings            | mediumtext | YES  |     | NULL    |                |
-#| warnings_added      | text       | YES  |     | NULL    |                |
-#| warnings_removed    | text       | YES  |     | NULL    |                |
-#| teststats_exppass   | int(11)    | YES  |     | NULL    |                |
-#| teststats_unexpfail | int(11)    | YES  |     | NULL    |                |
-#| teststats_expfail   | int(11)    | YES  |     | NULL    |                |
-#| unexpfail_tests     | text       | YES  |     | NULL    |                |
-#| newly_passing_tests | text       | YES  |     | NULL    |                |
-#| newly_failing_tests | text       | YES  |     | NULL    |                |
-#| new_tests           | text       | YES  |     | NULL    |                |
-#| removed_tests       | text       | YES  |     | NULL    |                |
-#| cvs_added           | text       | YES  |     | NULL    |                |
-#| cvs_removed         | text       | YES  |     | NULL    |                |
-#| cvs_modified        | text       | YES  |     | NULL    |                |
-#| cvs_usersadd        | text       | YES  |     | NULL    |                |
-#| cvs_usersco         | text       | YES  |     | NULL    |                |
-#+---------------------+------------+------+-----+---------+----------------+
+# +---------------------+------------+------+-----+---------+----------------+
+# | Field               | Type       | Null | Key | Default | Extra          |
+# +---------------------+------------+------+-----+---------+----------------+
+# | id                  | int(11)    |      | PRI | NULL    | auto_increment |
+# | machine             | text       |      |     |         |                |
+# | added               | datetime   | YES  |     | NULL    |                |
+# | buildstatus         | tinytext   | YES  |     | NULL    |                |
+# | getcvstime_cpu      | double     | YES  |     | NULL    |                |
+# | getcvstime_wall     | double     | YES  |     | NULL    |                |
+# | configuretime_cpu   | double     | YES  |     | NULL    |                |
+# | configuretime_wall  | double     | YES  |     | NULL    |                |
+# | buildtime_cpu       | double     | YES  |     | NULL    |                |
+# | buildtime_wall      | double     | YES  |     | NULL    |                |
+# | dejagnutime_cpu     | double     | YES  |     | NULL    |                |
+# | dejagnutime_wall    | double     | YES  |     | NULL    |                |
+# | warnings            | mediumtext | YES  |     | NULL    |                |
+# | warnings_added      | text       | YES  |     | NULL    |                |
+# | warnings_removed    | text       | YES  |     | NULL    |                |
+# | teststats_exppass   | int(11)    | YES  |     | NULL    |                |
+# | teststats_unexpfail | int(11)    | YES  |     | NULL    |                |
+# | teststats_expfail   | int(11)    | YES  |     | NULL    |                |
+# | all_tests           | text       | YES  |     | NULL    |                |
+# | passing_tests       | text       | YES  |     | NULL    |                |
+# | unexpfail_tests     | text       | YES  |     | NULL    |                |
+# | expfail_tests       | text       | YES  |     | NULL    |                |
+# | newly_passing_tests | text       | YES  |     | NULL    |                |
+# | newly_failing_tests | text       | YES  |     | NULL    |                |
+# | new_tests           | text       | YES  |     | NULL    |                |
+# | removed_tests       | text       | YES  |     | NULL    |                |
+# | cvs_added           | text       | YES  |     | NULL    |                |
+# | cvs_removed         | text       | YES  |     | NULL    |                |
+# | cvs_modified        | text       | YES  |     | NULL    |                |
+# | cvs_usersadd        | text       | YES  |     | NULL    |                |
+# | cvs_usersco         | text       | YES  |     | NULL    |                |
+# +---------------------+------------+------+-----+---------+----------------+
 #
 #
 #CreateNight $machine_id, $db_date, $buildstatus, 
@@ -220,6 +239,18 @@ sub GetMachineNights{ #machine_id
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# mysql> describe program;
+# +---------+---------+------+-----+---------+-------+
+# | Field   | Type    | Null | Key | Default | Extra |
+# +---------+---------+------+-----+---------+-------+
+# | program | text    |      |     |         |       |
+# | result  | text    | YES  |     | NULL    |       |
+# | type    | text    | YES  |     | NULL    |       |
+# | night   | int(11) |      |     | 0       |       |
+# +---------+---------+------+-----+---------+-------+
+# 4 rows in set (0.00 sec)
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub AddProgram{ #$program, $result, $type, $night
     my $d = $dbh->prepare("INSERT INTO program (program, result, type, night) VALUES (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])");
@@ -227,6 +258,17 @@ sub AddProgram{ #$program, $result, $type, $night
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# mysql> describe code;
+# +-------+----------+------+-----+---------------------+-------+
+# | Field | Type     | Null | Key | Default             | Extra |
+# +-------+----------+------+-----+---------------------+-------+
+# | added | datetime |      |     | 0000-00-00 00:00:00 |       |
+# | loc   | int(11)  |      |     | 0                   |       |
+# | files | int(11)  |      |     | 0                   |       |
+# | dirs  | int(11)  |      |     | 0                   |       |
+# +-------+----------+------+-----+---------------------+-------+
+# 4 rows in set (0.00 sec)
 #
 # This function checks to see if the last entered values in the database
 # about code information are the same as our current information. If they
@@ -308,10 +350,12 @@ my $cvsmodifiedfiles=param('cvsmodifiedfiles');
 my $cvsusercommitlist=param('cvsusercommitlist');
 my $cvsuserupdatelist=param('cvsuserupdatelist');
 my $buildstatus=param('buildstatus');
-
 my $warnings_added=param('warnings_removed');
 my $warnings_removed=param('warnings_added');
+my $all_tests=param('all_tests');
 my $unexpfail_tests=param('unexpfail_tests');
+my $passing_tests = param('passing_tests');
+my $expfail_tests = param('expfail_tests');
 my $newly_passing_tests=param('newly_passing_tests');
 my $newly_failing_tests=param('newly_failing_tests');
 my $new_tests=param('new_tests');
@@ -320,7 +364,7 @@ my $gcc_version = param('gcc_version');
 my $warnings = param('warnings');            
 my $lines_of_code = param('lines_of_code');            
 my $cvs_dir_count = param('cvs_file_count');            
-my $cvs_file_count = param('cvs_dir_count');            
+my $cvs_file_count = param('cvs_dir_count');      
 
 
 ######################################################################################################
@@ -451,9 +495,13 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 #
 ######################################################################################################
 
-$email = "$machine_data\n\nBuild Status: $buildstatus\n\ncvs user commit list:\n".
-         "$cvsusercommitlist\n\ncvs user ".
-         "update list:\n$cvsuserupdatelist\n\ncvs changed files:\n$cvsmodifiedfiles\n";
+$link_to_page="http://llvm.org/nightlytest/machine.php?machine=$machine_id";
+$email  = "$link_to_page";
+$email .= "Name: $name\n";
+$email .= "Nickname: $nickname\n";
+$email .= "Buildstatus: $buildstatus\n";
+$email .= "\nUnexpected Failures:\n$unexpfail_tests\n";
+
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
 

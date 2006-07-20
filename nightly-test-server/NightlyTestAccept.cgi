@@ -297,7 +297,7 @@ $y++;
 			  " buildtime_wall, dejagnutime_cpu, dejagnutime_wall, warnings,".
 			  " warnings_added, warnings_removed, teststats_exppass,".
 			  " teststats_unexpfail, teststats_expfail, all_tests,".
-              " passing_tests, unexpfail_tests, expfail_tests".
+              " passing_tests, unexpfail_tests, expfail_tests,".
 			  " newly_passing_tests, newly_failing_tests, new_tests,".
 			  " removed_tests, cvs_added, cvs_removed, cvs_modified,".
 			  " cvs_usersadd, cvs_usersco) values (".
@@ -381,8 +381,8 @@ sub UpdateCodeInfo{ #date, loc, files, dirs
 
     my $d = $dbh->prepare("select * from code ORDER BY added DESC");
     $d->execute;
-    @row = $d->fetchrow_hashref;
-    if(!@row || ($row->{'loc'} != $_[1] || $row->{'files'} != $_[2] || $row->{'dirs'} != $_[3])){
+    $row = $d->fetchrow_hashref;
+    if(!$row || ($row->{'loc'} != $_[1] || $row->{'files'} != $_[2] || $row->{'dirs'} != $_[3])){
 		my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", $_[1], $_[2], $_[3])");
 		$e->execute;
     }

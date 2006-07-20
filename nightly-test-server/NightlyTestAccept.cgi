@@ -4,31 +4,31 @@
 #             from the llvm NightlyTest.pl script. It is just a CGI script that takes input by the
 #             POST method. After this it parses the information and places it into the database.
 #
-######################################################################################################
+################################################################################
 use CGI qw(:standard);
 use DBI;
 
-######################################################################################################
+################################################################################
 #
 # Important variables
 #
-######################################################################################################
+################################################################################
 my $DATABASE="nightlytestresults";
 my $LOGINNAME="llvm";
 my $PASSWORD="ll2002vm";
 
-######################################################################################################
+################################################################################
 #
 # Connecting to the database
 #
-######################################################################################################
+################################################################################
 my $dbh = DBI->connect("DBI:mysql:$DATABASE",$LOGINNAME,$PASSWORD);
 
-######################################################################################################
+################################################################################
 #
 # Some methods to help the process
 #
-######################################################################################################
+################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub ChangeDir { # directory, logical name
@@ -93,6 +93,34 @@ sub DoesMachineExist{ #(uname,hardware,os,name,nickname,gcc)
   }
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Difference: returns a list of lines that are in the first value but not
+# in the second
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub Difference{ 
+	$one = $_[0];
+	$two = $_[1];
+	
+	@ONE = split "\n", $one;
+	@TWO = split "\n", $two;
+	
+	my %hash_of_diff=();
+	foreach $x (@TWO){
+		$hash_of_diff{$x}=1;
+	}
+	
+	$result="";
+	foreach $x (@ONE){
+		if($hash_of_diff{$x}!=1){
+			$result.="$x\n";
+		}
+	}
+	
+	chomp $result;
+	return $result;
+}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # mysql> describe machine;
@@ -196,21 +224,95 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
 
 sub CreateNight{
 
-    for($x=0; $x<20; $x++){
+    for($x=0; $x<@_; $x++){
 	$_[$x]="" unless $_[$x];
     }
-		
+
+$y=0;
+$machine_id=$_[$y];
+$y++;
+$db_date=$_[$y];
+$y++;
+$buildstatus=$_[$y];
+$y++;
+$configtime_cpu=$_[$y];
+$y++;
+$configtime_wall=$_[$y];
+$y++;
+$cvscheckouttime_cpu=$_[$y];
+$y++;
+$cvscheckouttime_wall=$_[$y];
+$y++;
+$buildtime_cpu=$_[$y];
+$y++;
+$buildtime_wall=$_[$y];
+$y++;
+$dejagnutime_cpu=$_[$y];
+$y++;
+$dejagnutime_wall=$_[$y];
+$y++;
+$warnings=$_[$y];
+$y++;
+$warnings_added=$_[$y];
+$y++;
+$warnings_removed=$_[$y];
+$y++;
+$dejagnu_exp_passes=$_[$y];
+$y++;
+$dejagnu_unexp_failures=$_[$y];
+$y++;
+$dejagnu_exp_failures=$_[$y];
+$y++;
+$all_tests=$_[$y];
+$y++;
+$passing_tests=$_[$y];
+$y++;
+$unexpfail_tests=$_[$y];
+$y++;
+$expfail_tests=$_[$y];
+$y++;
+$newly_passing_tests=$_[$y];
+$y++;
+$newly_failing_tests=$_[$y];
+$y++;
+$new_tests=$_[$y];
+$y++;
+$removed_tests=$_[$y];
+$y++;
+$cvsaddedfiles=$_[$y];
+$y++;
+$cvsremovedfiles=$_[$y];
+$y++;
+$cvsmodifiedfiles=$_[$y];
+$y++;
+$cvsusercommitlist=$_[$y];
+$y++;
+$cvsuserupdatelist=$_[$y];
+$y++;
+	
+
+	
     my $d = $dbh->prepare("insert into night (machine, added, buildstatus, configuretime_cpu, configuretime_wall,".
 			  " getcvstime_cpu, getcvstime_wall, buildtime_cpu,".
 			  " buildtime_wall, dejagnutime_cpu, dejagnutime_wall, warnings,".
 			  " warnings_added, warnings_removed, teststats_exppass,".
-			  " teststats_unexpfail, teststats_expfail, unexpfail_tests,".
+			  " teststats_unexpfail, teststats_expfail, all_tests,".
+              " passing_tests, unexpfail_tests, expfail_tests".
 			  " newly_passing_tests, newly_failing_tests, new_tests,".
 			  " removed_tests, cvs_added, cvs_removed, cvs_modified,".
-			  " cvs_usersadd, cvs_usersco) values (\"$_[0]\",\"$_[1]\",\"$_[2]\",\"$_[3]\",\"$_[4]\"".
-			  ",\"$_[5]\",\"$_[6]\",\"$_[7]\",\"$_[8]\",\"$_[9]\",\"$_[10]\",\"$_[11]\",\"$_[12]\",\"$_[13]\"".
-			  ",\"$_[14]\",\"$_[15]\",\"$_[16]\",\"$_[17]\",\"$_[18]\",\"$_[19]\",\"$_[20]\",\"$_[21]\",\"$_[22]\"".
-			  ",\"$_[23]\",\"$_[24]\",\"$_[25]\",\"$_[26]\")");
+			  " cvs_usersadd, cvs_usersco) values (".
+			  "\"$machine_id\", \"$db_date\", \"$buildstatus\",".
+			  "\"$configtime_cpu\", \"$configtime_wall\", \"$cvscheckouttime_cpu\",".
+			  "\"$cvscheckouttime_wall\", \"$buildtime_cpu\", \"$buildtime_wall\",".
+			  "\"$dejagnutime_cpu\", \"$dejagnutime_wall\", \"$warnings\",".
+			  "\"$warnings_added\", \"$warnings_removed\",".
+			  "\"$dejagnu_exp_passes\", \"$dejagnu_unexp_failures\", \"$dejagnu_exp_failures\",".
+			  "\"$all_tests\", \"$passing_tests\", \"$unexpfail_tests\",". 
+              "\"$expfail_tests\", \"$newly_passing_tests\", \"$newly_failing_tests\",".
+			  "\"$new_tests\", \"$removed_tests\",".
+			  "\"$cvsaddedfiles\", \"$cvsremovedfiles\", \"$cvsmodifiedfiles\",".
+			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\")");
+
     $d->execute;
 
     my $e = $dbh->prepare("SELECT id FROM night where machine=$_[0] and added=\"$_[1]\"");
@@ -287,11 +389,11 @@ sub UpdateCodeInfo{ #date, loc, files, dirs
 
 }
 
-######################################################################################################
+################################################################################
 #
 # Setting up variables
 #
-######################################################################################################
+################################################################################
 my $spliton ="\n";
 
 my $machine_data=param('machine_data');
@@ -367,11 +469,11 @@ my $cvs_dir_count = param('cvs_file_count');
 my $cvs_file_count = param('cvs_dir_count');      
 
 
-######################################################################################################
+################################################################################
 #
 # Extracting the machine information
 #
-######################################################################################################
+################################################################################
 if($MACHINE_DATA[0]){ $MACHINE_DATA[0] =~ m/uname\:\s*(.+)/; $uname = $1; chomp($uname)}
 if($MACHINE_DATA[1]){ $MACHINE_DATA[1] =~ m/hardware\:\s*(.+)/; $hardware=$1; chomp($hardware)}
 if($MACHINE_DATA[2]){ $MACHINE_DATA[2] =~ m/os\:\s*(.+)/; $os=$1; chomp($os)}
@@ -379,18 +481,17 @@ if($MACHINE_DATA[3]){ $MACHINE_DATA[3] =~ m/name\:\s*(.+)/; $name=$1; chomp($nam
 if($MACHINE_DATA[4]){ $MACHINE_DATA[4] =~ m/date\:\s*(.+)/; $date=$1; chomp($date)}
 if($MACHINE_DATA[5]){ $MACHINE_DATA[5] =~ m/time\:\s*(.+)/; $time=$1; chomp($time)}
 
-######################################################################################################
+################################################################################
 #
 # Adding lines of code
 #
-######################################################################################################
+################################################################################
 
-
-######################################################################################################
+################################################################################
 #
 # Extracting the dejagnu test numbers
 #
-######################################################################################################
+################################################################################
 print "content-type: text/text\r\n\r\n";
 
 $dejagnutests_log =~ m/\# of expected passes\s*([0-9]+)/;
@@ -400,11 +501,11 @@ $dejagnu_unexp_failures=$1;
 $dejagnutests_log =~ m/\# of expected failures\s*([0-9]+)/;
 $dejagnu_exp_failures=$1;
 
-######################################################################################################
+################################################################################
 #
 # Processing Program Test Table Logs
 #
-######################################################################################################
+################################################################################
 $linebreak="OA<br>";
 $seperator=",";
 
@@ -444,17 +545,36 @@ for($x=1; $x<@EXTERNAL_TESTS; $x++){
     $external_processed{$temp_outcome[0]}=$outcome;
 }
 
-######################################################################################################
+################################################################################
 #
 # creating the response
 #
-######################################################################################################
+################################################################################
 print "content-type: text/text\r\n\r\n";
 
 if (!DoesMachineExist $uname,$hardware,$os,$name,$nickname,$gcc_version){
   AddMachine $uname,$hardware,$os,$name,$nickname,$gcc_version,"test";
 }
 $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_version;
+
+################################################################################
+#
+# Creating test lists
+#
+################################################################################
+$machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_version;
+my $d = $dbh->prepare("select * from night where machine = $machine_id ORDER BY added DESC");
+$d->execute;
+my $row=$d->fetchrow_hashref;
+$yesterdays_tests = $row->{'all_tests'};
+$yesterdays_passes = $row->{'passing_tests'};
+$yesterdays_fails = $row->{'unexpfail_tests'};
+$yesterdays_xfails = $row->{'expfail_tests'};
+$newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
+$newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
+								  $yesterdays_xfails."\n".$yesterdays_fails;
+$new_tests = Difference $all_tests, $yesterdays_tests;
+$removed_tests = Difference $yesterdays_tests, $all_tests;
 
 $db_date = $date." ".$time;
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
@@ -463,7 +583,8 @@ $night_id= CreateNight $machine_id, $db_date, $buildstatus,
             $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
             $warnings_added, $warnings_removed,
             $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures, #expected pass, unexp fails, exp fails
-            $unexpfail_tests, $newly_passing_tests, $newly_failing_tests,
+            $all_tests, $passing_tests, $unexpfail_tests, 
+            $expfail_tests, $newly_passing_tests, $newly_failing_tests,
             $new_tests, $removed_tests,
             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
             $cvsusercommitlist, $cvsuserupdatelist;
@@ -489,27 +610,30 @@ $length = @nights;
 print "DB date : $db_date\n";
 print "Machine $machine_id now has ids [@nights]{$length} associated with it in the database\n";
 
-######################################################################################################
+################################################################################
 #
 # Sending email to nightly test email archive
 #
-######################################################################################################
+################################################################################
 
 $link_to_page="http://llvm.org/nightlytest/machine.php?machine=$machine_id";
-$email  = "$link_to_page";
+$email  = "$link_to_page\n";
 $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
-$email .= "\nUnexpected Failures:\n$unexpfail_tests\n";
+$email .= "\nNew Test Passes:\n$newly_passing_tests\n";
+$email .= "\nNew Test Failures:\n$newly_failing_tests\n";
+$email .= "\nAdded Tests:\n$new_tests\n";
+$email .= "\nRemoved Tests\n$removed_tests\n";
 
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
 
-######################################################################################################
+################################################################################
 #
 # writing logs to directory
 #
-######################################################################################################
+################################################################################
 $curr=`pwd`;
 chomp($curr);
 

@@ -381,10 +381,10 @@ sub UpdateCodeInfo{ #date, loc, files, dirs
 
     my $d = $dbh->prepare("select * from code ORDER BY added DESC");
     $d->execute;
-    @row = $d->fetchrow_array;
-    if(!@row or ($row[1] != $_[1] && $row[2] != $_[2] && $row[3] != $_[3])){
-	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", $_[1], $_[2], $_[3])");
-	$e->execute;
+    @row = $d->fetchrow_hashref;
+    if(!@row || ($row->{'loc'} != $_[1] || $row->{'files'} != $_[2] || $row->{'dirs'} != $_[3])){
+		my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", $_[1], $_[2], $_[3])");
+		$e->execute;
     }
 
 }

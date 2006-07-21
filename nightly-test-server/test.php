@@ -123,10 +123,17 @@ else{
 	$sign="(-)";
 }
 $buildfile=str_replace(" ", "_", $cur_date);	
-print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
+print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer".
+	  "('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
 print "<div id=\"buildStatus\" style=\"display: $disp;\" class=\"hideable\">\n";
 print "<h3><u>Build Status </u></h3></p>";
-print "<a href=\"machines/$machine_id/$buildfile-Build-Log.txt\"><font color=red>{$today_row['buildstatus']}</font></a><br>\n";
+if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
+	print "<a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
+		  "<font color=red>{$today_row['buildstatus']}</font></a><br>\n";
+}
+else{
+	print "<font color=red>{$today_row['buildstatus']}</font><br>\n";
+}
 print "</div><br><br>\n";
 
 /*****************************************************

@@ -125,7 +125,7 @@ else{
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
 print "<div id=\"buildStatus\" style=\"display: $disp;\" class=\"hideable\">\n";
 print "<h3><u>Build Status </u></h3></p>";
-print "<font color=red>{$today_row['buildstatus']}</font><br>\n";
+print "<a href=\"machines/$machine_id/$cur_date-Build.txt\"><font color=red>{$today_row['buildstatus']}</font></a><br>\n";
 print "</div><br><br>\n";
 
 /*****************************************************

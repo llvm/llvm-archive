@@ -584,7 +584,8 @@ $newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
 $new_tests = Difference $all_tests, $yesterdays_tests;
 $removed_tests = Difference $yesterdays_tests, $all_tests;
 
-$db_date = $date." ".$time;
+#$db_date = $date." ".$time;
+$db_date = `date "+20%y-%m-%d %H:%M:%S"`;
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
             $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
             $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,

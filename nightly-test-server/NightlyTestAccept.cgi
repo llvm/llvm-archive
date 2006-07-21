@@ -64,6 +64,7 @@ sub CheckCodeBase{ #(added, lines of code, files, directories)
 		 $row->{'dirs'} != $_[3])){
 	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) ".
 			      "values (\"$_[0]\", $_[1], $_[2], $_[3])");
+    $e->execute;
     }
 }
 

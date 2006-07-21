@@ -30,6 +30,11 @@ my $dbh = DBI->connect("DBI:mysql:$DATABASE",$LOGINNAME,$PASSWORD);
 #
 ################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Changes directory to specified directory, the second 
+# paramater used to be printed out if verbose was turned on. PJ
+# found that annoying so he deleted it.
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub ChangeDir { # directory, logical name
     my ($dir,$name) = @_;
@@ -468,6 +473,8 @@ my $warnings = param('warnings');
 my $lines_of_code = param('lines_of_code');            
 my $cvs_dir_count = param('cvs_file_count');            
 my $cvs_file_count = param('cvs_dir_count');      
+my $o_file_sizes = param('o_file_sizes'); 
+my $a_file_sizes = param('a_file_sizes'); 
 
 
 ################################################################################
@@ -639,16 +646,20 @@ $curr=`pwd`;
 chomp($curr);
 
 if(! -d "machines"){
-    mkdir "$curr/machines", 0777 or print("couldnt create directory $base");
-  }
+    `mkdir machines -m 777`;
+    #mkdir "$curr/machines", 0777 or print("couldnt create directory $base");
+}
 ChangeDir("$curr/machines", "Moving into machines directory");
 if(! -d "$machine_id"){
-    mkdir "$curr/machines/$machine_id", 0777 or print("couldnt create directory $machine_id because $!");
-  }
+    `mkdir $machine_id -m 777`;
+    #mkdir "$curr/machines/$machine_id", 777 or print("couldnt create directory $machine_id because $!");
+}
 ChangeDir("$curr/machines/$machine_id", "Moving into machine $machine_id 's directory");
 
 $db_date =~ s/ /\_/g;
 my $build_file = "$db_date-Build-Log.txt";
+my $o_file= "$db_date-O-files.txt";
+my $a_file= "$db_date-A-files.txt";
 #my $dejagnu_testrun_log_file = "Dejagnu-testrun.log";
 #my $dejagnu_testrun_sum_file = "Dejagnu-testrun.sum";
 #my $dejagnu_tests_file = "DejagnuTests-Log.txt";
@@ -656,6 +667,8 @@ my $build_file = "$db_date-Build-Log.txt";
 
 
 WriteFile "$build_file", $build_log;
+WriteFile "$o_file", $o_file_sizes;
+WriteFile "$a_file", $a_file_sizes;
 #WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
 #WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
 #WriteFile "$this_days_logs/$warnings_file",$buildwarnings;

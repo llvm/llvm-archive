@@ -421,9 +421,9 @@ my $olden_tests=param('olden_tests');
    $olden_tests="" unless $olden_tests;
 my @OLDEN_TESTS = split $spliton, $singlesource_tests;
 
-my $filesincvs = param('filesincvs');
-my $dirsincvs = param('dirsindvs');
-my $loc = param('loc');
+my $filesincvs = param('cvs_dir_count');
+my $dirsincvs = param('cvs_file_count');
+my $loc = param('lines_of_code');
 my $nickname = param('nickname');
 my $cvscheckouttime_cpu=param('cvscheckouttime_cpu');
 my $cvscheckouttime_wall=param('cvscheckouttime_wall');
@@ -458,7 +458,6 @@ my $cvs_file_count = param('cvs_dir_count');
 my $o_file_sizes = param('o_file_sizes'); 
 my $a_file_sizes = param('a_file_sizes'); 
 
-
 ################################################################################
 #
 # Extracting the machine information
@@ -470,12 +469,6 @@ if($MACHINE_DATA[2]){ $MACHINE_DATA[2] =~ m/os\:\s*(.+)/; $os=$1; chomp($os)}
 if($MACHINE_DATA[3]){ $MACHINE_DATA[3] =~ m/name\:\s*(.+)/; $name=$1; chomp($name)}
 if($MACHINE_DATA[4]){ $MACHINE_DATA[4] =~ m/date\:\s*(.+)/; $date=$1; chomp($date)}
 if($MACHINE_DATA[5]){ $MACHINE_DATA[5] =~ m/time\:\s*(.+)/; $time=$1; chomp($time)}
-
-################################################################################
-#
-# Adding lines of code
-#
-################################################################################
 
 ################################################################################
 #
@@ -568,7 +561,7 @@ $removed_tests = Difference $yesterdays_tests, $all_tests;
 
 #$db_date = $date." ".$time;
 $db_date = `date "+20%y-%m-%d %H:%M:%S"`;
-chomp(+$db_date);
+chomp($db_date);
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
             $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
             $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
@@ -593,6 +586,11 @@ foreach $x(keys %external_processed){
     AddProgram $x, $external_processed{$x}, "external", $night_id; 
 }
 
+################################################################################
+#
+# Adding lines of code
+#
+################################################################################
 UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
 
 print "received $ENV{CONTENT_LENGTH} bytes\n";

@@ -545,7 +545,6 @@ $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_versio
 # Creating test lists
 #
 ################################################################################
-$machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_version;
 my $d = $dbh->prepare("select * from night where machine = $machine_id ORDER BY added DESC");
 $d->execute;
 my $row=$d->fetchrow_hashref;

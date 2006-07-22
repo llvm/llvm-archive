@@ -56,25 +56,6 @@ sub WriteFile {  # (filename, contents)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# Checks to see if our information about the llvm code base is different
-# from the last update and if so, adds the information to the database
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub CheckCodeBase{ #(added, lines of code, files, directories)
-    my $d = $dbh->prepare("SELECT * FROM code ORDER BY added DESC");
-    $d->execute;
-    $row=$d->fetchrow_hashref;
-    if(%$row && ($row->{'loc'} != $_[1] ||
-		 $row->{'files'} != $_[2] ||
-		 $row->{'dirs'} != $_[3])){
-	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) ".
-			      "values (\"$_[0]\", $_[1], $_[2], $_[3])");
-    $e->execute;
-    }
-}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
 # Queries database to see if there is a machine with the same uname as
 # the value passed in
 #
@@ -384,15 +365,16 @@ sub AddProgram{ #$program, $result, $type, $night
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub UpdateCodeInfo{ #date, loc, files, dirs
-
-    my $d = $dbh->prepare("select * from code ORDER BY added DESC");
+    my $d = $dbh->prepare("SELECT * FROM code ORDER BY added DESC");
     $d->execute;
-    $row = $d->fetchrow_hashref;
-    if(!$row || ($row->{'loc'} != $_[1] || $row->{'files'} != $_[2] || $row->{'dirs'} != $_[3])){
-		my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", $_[1], $_[2], $_[3])");
-		$e->execute;
+    $row=$d->fetchrow_hashref;
+    if(%$row && ($row->{'loc'} != $_[1] ||
+		 $row->{'files'} != $_[2] ||
+		 $row->{'dirs'} != $_[3])){
+	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) ".
+			      "values (\"$_[0]\", $_[1], $_[2], $_[3])");
+    $e->execute;
     }
-
 }
 
 ################################################################################
@@ -586,6 +568,7 @@ $removed_tests = Difference $yesterdays_tests, $all_tests;
 
 #$db_date = $date." ".$time;
 $db_date = `date "+20%y-%m-%d %H:%M:%S"`;
+chomp(+$db_date);
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
             $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
             $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,

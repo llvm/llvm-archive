@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 #
-# Background: Written on June 1st 2006 by Patrick Jenkins <pjenkins@apple.com> to accept test results 
-#             from the llvm NightlyTest.pl script. It is just a CGI script that takes input by the
-#             POST method. After this it parses the information and places it into the database.
+# Background: Written on June 1st 2006 by Patrick Jenkins <pjenkins@apple.com>
+# to accept test results  from the llvm NightlyTest.pl script. It is just a CGI
+# script that takes input by the POST method. After this it parses the 
+# information and places it into the database.
 #
 ################################################################################
 use CGI qw(:standard);
@@ -108,6 +109,7 @@ sub Difference{
 	chomp $result;
 	return $result;
 }
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # mysql> describe machine;
@@ -194,88 +196,95 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
 # | cvs_modified        | text       | YES  |     | NULL    |                |
 # | cvs_usersadd        | text       | YES  |     | NULL    |                |
 # | cvs_usersco         | text       | YES  |     | NULL    |                |
+# | a_file_size         | text       | YES  |     | NULL    |                |
+# | o_file_size         | text       | YES  |     | NULL    |                |
 # +---------------------+------------+------+-----+---------+----------------+
 #
-#
-#CreateNight $machine_id, $db_date, $buildstatus, 
+#$night_id= CreateNight $machine_id, $db_date, $buildstatus, 
 #            $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
 #            $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
 #            $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
 #            $warnings_added, $warnings_removed,
 #            $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures, #expected pass, unexp fails, exp fails
-#            $unexpfail_tests, $newly_passing_tests, $newly_failing_tests,
+#            $all_tests, $passing_tests, $unexpfail_tests, 
+#            $expfail_tests, $newly_passing_tests, $newly_failing_tests,
 #            $new_tests, $removed_tests,
 #            $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-#            $cvsusercommitlist, $cvsuserupdatelist;
+#            $cvsusercommitlist, $cvsuserupdatelist, 
+#			 $a_file_size, $o_file_size;
+#
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub CreateNight{
 
     for($x=0; $x<@_; $x++){
-	$_[$x]="" unless $_[$x];
+		$_[$x]="" unless $_[$x];
     }
 
-$y=0;
-$machine_id=$_[$y];
-$y++;
-$db_date=$_[$y];
-$y++;
-$buildstatus=$_[$y];
-$y++;
-$configtime_cpu=$_[$y];
-$y++;
-$configtime_wall=$_[$y];
-$y++;
-$cvscheckouttime_cpu=$_[$y];
-$y++;
-$cvscheckouttime_wall=$_[$y];
-$y++;
-$buildtime_cpu=$_[$y];
-$y++;
-$buildtime_wall=$_[$y];
-$y++;
-$dejagnutime_cpu=$_[$y];
-$y++;
-$dejagnutime_wall=$_[$y];
-$y++;
-$warnings=$_[$y];
-$y++;
-$warnings_added=$_[$y];
-$y++;
-$warnings_removed=$_[$y];
-$y++;
-$dejagnu_exp_passes=$_[$y];
-$y++;
-$dejagnu_unexp_failures=$_[$y];
-$y++;
-$dejagnu_exp_failures=$_[$y];
-$y++;
-$all_tests=$_[$y];
-$y++;
-$passing_tests=$_[$y];
-$y++;
-$unexpfail_tests=$_[$y];
-$y++;
-$expfail_tests=$_[$y];
-$y++;
-$newly_passing_tests=$_[$y];
-$y++;
-$newly_failing_tests=$_[$y];
-$y++;
-$new_tests=$_[$y];
-$y++;
-$removed_tests=$_[$y];
-$y++;
-$cvsaddedfiles=$_[$y];
-$y++;
-$cvsremovedfiles=$_[$y];
-$y++;
-$cvsmodifiedfiles=$_[$y];
-$y++;
-$cvsusercommitlist=$_[$y];
-$y++;
-$cvsuserupdatelist=$_[$y];
-$y++;
+	$y=0;
+	$machine_id=$_[$y];
+	$y++;
+	$db_date=$_[$y];
+	$y++;
+	$buildstatus=$_[$y];
+	$y++;
+	$configtime_cpu=$_[$y];
+	$y++;
+	$configtime_wall=$_[$y];
+	$y++;
+	$cvscheckouttime_cpu=$_[$y];
+	$y++;
+	$cvscheckouttime_wall=$_[$y];
+	$y++;
+	$buildtime_cpu=$_[$y];
+	$y++;
+	$buildtime_wall=$_[$y];
+	$y++;
+	$dejagnutime_cpu=$_[$y];
+	$y++;
+	$dejagnutime_wall=$_[$y];
+	$y++;
+	$warnings=$_[$y];
+	$y++;
+	$warnings_added=$_[$y];
+	$y++;
+	$warnings_removed=$_[$y];
+	$y++;
+	$dejagnu_exp_passes=$_[$y];
+	$y++;
+	$dejagnu_unexp_failures=$_[$y];
+	$y++;
+	$dejagnu_exp_failures=$_[$y];
+	$y++;
+	$all_tests=$_[$y];
+	$y++;
+	$passing_tests=$_[$y];
+	$y++;
+	$unexpfail_tests=$_[$y];
+	$y++;
+	$expfail_tests=$_[$y];
+	$y++;
+	$newly_passing_tests=$_[$y];
+	$y++;
+	$newly_failing_tests=$_[$y];
+	$y++;
+	$new_tests=$_[$y];
+	$y++;
+	$removed_tests=$_[$y];
+	$y++;
+	$cvsaddedfiles=$_[$y];
+	$y++;
+	$cvsremovedfiles=$_[$y];
+	$y++;
+	$cvsmodifiedfiles=$_[$y];
+	$y++;
+	$cvsusercommitlist=$_[$y];
+	$y++;
+	$cvsuserupdatelist=$_[$y];
+	$y++;
+    $a_file_size=$_[$y];
+    $y++;
+    $o_file_size=$_[$y];
 	
 
 	
@@ -287,7 +296,7 @@ $y++;
               " passing_tests, unexpfail_tests, expfail_tests,".
 			  " newly_passing_tests, newly_failing_tests, new_tests,".
 			  " removed_tests, cvs_added, cvs_removed, cvs_modified,".
-			  " cvs_usersadd, cvs_usersco) values (".
+			  " cvs_usersadd, cvs_usersco, a_file_size, o_file_size) values (".
 			  "\"$machine_id\", \"$db_date\", \"$buildstatus\",".
 			  "\"$configtime_cpu\", \"$configtime_wall\", \"$cvscheckouttime_cpu\",".
 			  "\"$cvscheckouttime_wall\", \"$buildtime_cpu\", \"$buildtime_wall\",".
@@ -298,7 +307,8 @@ $y++;
               "\"$expfail_tests\", \"$newly_passing_tests\", \"$newly_failing_tests\",".
 			  "\"$new_tests\", \"$removed_tests\",".
 			  "\"$cvsaddedfiles\", \"$cvsremovedfiles\", \"$cvsmodifiedfiles\",".
-			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\")");
+			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\",".
+			  "\"$a_file_size\", \"$o_file_size\")");
 
     $d->execute;
 
@@ -421,8 +431,8 @@ my $olden_tests=param('olden_tests');
    $olden_tests="" unless $olden_tests;
 my @OLDEN_TESTS = split $spliton, $singlesource_tests;
 
-my $filesincvs = param('cvs_dir_count');
-my $dirsincvs = param('cvs_file_count');
+my $filesincvs = param('cvs_files_count');
+my $dirsincvs = param('cvs_dir_count');
 my $loc = param('lines_of_code');
 my $nickname = param('nickname');
 my $cvscheckouttime_cpu=param('cvscheckouttime_cpu');
@@ -452,11 +462,9 @@ my $new_tests=param('new_tests');
 my $removed_tests=param('removed_tests');
 my $gcc_version = param('gcc_version');            
 my $warnings = param('warnings');            
-my $lines_of_code = param('lines_of_code');            
-my $cvs_dir_count = param('cvs_file_count');            
-my $cvs_file_count = param('cvs_dir_count');      
-my $o_file_sizes = param('o_file_sizes'); 
-my $a_file_sizes = param('a_file_sizes'); 
+my $lines_of_code = param('lines_of_code');                 
+my $o_file_size = param('o_file_sizes'); 
+my $a_file_size = param('a_file_sizes'); 
 
 ################################################################################
 #
@@ -571,7 +579,8 @@ $night_id= CreateNight $machine_id, $db_date, $buildstatus,
             $expfail_tests, $newly_passing_tests, $newly_failing_tests,
             $new_tests, $removed_tests,
             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-            $cvsusercommitlist, $cvsuserupdatelist;
+            $cvsusercommitlist, $cvsuserupdatelist, $a_file_size,
+            $o_file_size;
 
 foreach $x(keys %singlesource_processed){
     AddProgram $x, $singlesource_processed{$x}, "singlesource", $night_id; 
@@ -648,8 +657,8 @@ my $a_file= "$db_date-A-files.txt";
 
 
 WriteFile "$build_file", $build_log;
-WriteFile "$o_file", $o_file_sizes;
-WriteFile "$a_file", $a_file_sizes;
+WriteFile "$o_file", $o_file_size;
+WriteFile "$a_file", $a_file_size;
 #WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
 #WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
 #WriteFile "$this_days_logs/$warnings_file",$buildwarnings;

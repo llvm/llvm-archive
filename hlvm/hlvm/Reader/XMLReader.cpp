@@ -1294,6 +1294,8 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_call:         op = parseMultiOp<CallOp>(cur); break;
       case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
       case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
+      case TKN_getidx:       op = parseBinaryOp<GetIndexOp>(cur); break;
+      case TKN_getfld:       op = parseBinaryOp<GetFieldOp>(cur); break;
       case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
       case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
       case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;

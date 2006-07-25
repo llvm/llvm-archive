@@ -1205,6 +1205,16 @@ AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(Operator*op1,Bundle* B, const Locator*loc);
 
+template GetFieldOp*  
+AST::new_BinaryOp<GetFieldOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
+template GetFieldOp*  
+AST::new_BinaryOp<GetFieldOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc);
+
+template GetIndexOp*  
+AST::new_BinaryOp<GetIndexOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
+template GetIndexOp*  
+AST::new_BinaryOp<GetIndexOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc);
+
 // Input/Output Operators
 template OpenOp* 
 AST::new_UnaryOp<OpenOp>(const Type* Ty, Operator*op1,const Locator*loc);

@@ -229,6 +229,8 @@ FirstBinaryOperatorID = AddOpID,
   // Memory Binary Operators
   ReallocateOpID,          ///< The Reallocate Memory Operator 
   StoreOpID,               ///< The Store Operator (store a value to a location)
+  GetIndexOpID,            ///< The GetIndex Operator for indexing an array
+  GetFieldOpID,            ///< The GetField Operator for indexing an structure
 
   // Binary Control Flow Operators
   WhileOpID,               ///< While expression is true loop
@@ -258,7 +260,6 @@ FirstMultiOperatorID = CallOpID,
   InvokeOpID,              ///< The Invoke Operator (n operands)
   DispatchOpID,            ///< The Object Method Dispatch Operator (n operands)
   CallWithContOpID,        ///< The Call with Continuation Operator (n operands)
-  IndexOpID,               ///< The Index Operator for indexing an array
   SwitchOpID,              ///< The Switch Operator (n operands)
 LastMultiOperatorID = SwitchOpID,
 LastOperatorID = SwitchOpID,
@@ -534,6 +535,8 @@ class Value : public Documentable
   public:
     // Get the type of the value
     virtual const Type* getType() const { return type; }
+    template<class C>
+    bool typeis() const { return llvm::isa<C>(type); }
     const Type* getConcreteType() const;
 
     static inline bool classof(const Value*) { return true; }

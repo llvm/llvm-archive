@@ -979,6 +979,20 @@ XMLWriterImpl::WriterPass::put(const StoreOp* r)
 }
 
 template<> void 
+XMLWriterImpl::WriterPass::put(const GetFieldOp* r)
+{
+  startElement("getfld");
+  putDoc(r);
+}
+
+template<> void 
+XMLWriterImpl::WriterPass::put(const GetIndexOp* r)
+{
+  startElement("getidx");
+  putDoc(r);
+}
+
+template<> void 
 XMLWriterImpl::WriterPass::put(const LoadOp* r)
 {
   startElement("load");
@@ -1118,6 +1132,8 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case ResultOpID:             put(cast<ResultOp>(n)); break;
       case CallOpID:               put(cast<CallOp>(n)); break;
       case StoreOpID:              put(cast<StoreOp>(n)); break;
+      case GetFieldOpID:           put(cast<GetFieldOp>(n)); break;
+      case GetIndexOpID:           put(cast<GetIndexOp>(n)); break;
       case LoadOpID:               put(cast<LoadOp>(n)); break;
       case ReferenceOpID:          put(cast<ReferenceOp>(n)); break;
       case OpenOpID:               put(cast<OpenOp>(n)); break;

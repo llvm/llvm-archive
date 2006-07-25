@@ -253,32 +253,64 @@ class ReferenceOp : public NilaryOperator
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
-/// for indexing into a ContainerType.  The Index operator can have many
-/// operands but in all cases requires at least two.  The first operand must
-/// resolve to the address of a memory location, such as returned by the
-/// ReferenceOp. The second and subsequent operands must all be of integer type.
-/// They specify which elements of the memory object should be indexed. This
-/// operator is the means by which the elements of memory objects of type 
-/// PointerType, ArrayType, VectorType, StructureType, and ContinuationType can
-/// be accessed. The resulting value of the operator is the address of the
-/// corresponding memory location. In the case of StructureType and 
-/// ContinuationType elements, the corresponding index indicates the field, in
-/// declaration order, that is accessed. Field numbering begins at zero.
-/// @brief AST Index Operator
-class IndexOp : public MultiOperator
+/// for getting the address of a field of a StructureType value. The GetFieldOp
+/// takes two operands, a pointer to a memory location that must be of
+/// StructureType type and a string that names the field of the structure. The
+/// second operand does not have to be a constant value, but if it is not, a 
+/// performance penalty is incurred to look up the field.  The GetFieldOp can
+/// be used against a value of any StructureType subclass.  The resulting value
+/// of the operator is the address of the memory location corresponding to the
+/// named field of the structure value.
+/// @brief AST GetFieldOp Operator
+class GetFieldOp : public MultiOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    IndexOp() : MultiOperator(IndexOpID) {}
-    virtual ~IndexOp();
+    GetFieldOp() : MultiOperator(GetFieldOpID) {}
+    virtual ~GetFieldOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    static inline bool classof(const IndexOp*) { return true; }
-    static inline bool classof(const Node* N) { return N->is(IndexOpID); }
+    static inline bool classof(const GetFieldOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(GetFieldOpID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents an operator
+/// for getting the address of a field of an ArrayType or VectorType value. 
+/// The GetIndexOp takes two operands, a pointer to a memory location that 
+/// must be of ArrayType or VectorType and an integer value that indexes into 
+/// the array or vector.  The resulting value of the operator is the address of
+/// the indexed memory location. 
+/// @brief AST GetIndexOp Operator
+class GetIndexOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    GetIndexOp() : BinaryOperator(GetIndexOpID) {}
+    virtual ~GetIndexOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const GetIndexOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(GetIndexOpID); }
 
   /// @}
   /// @name Mutators

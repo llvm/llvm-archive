@@ -1421,8 +1421,17 @@ LLVMGeneratorPass::gen(ReferenceOp* r)
 }
 
 template<> void
-LLVMGeneratorPass::gen(IndexOp* r)
+LLVMGeneratorPass::gen(GetFieldOp* i)
 {
+  llvm::Value* location = popOperand(i->getOperand(0));
+  llvm::Value* fld = popOperand(i->getOperand(1));
+}
+
+template<> void
+LLVMGeneratorPass::gen(GetIndexOp* i)
+{
+  llvm::Value* location = popOperand(i->getOperand(0));
+  llvm::Value* index = popOperand(i->getOperand(1));
 }
 
 template<> void
@@ -1723,6 +1732,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;
       case WriteOpID:               gen(llvm::cast<WriteOp>(n)); break;
       case ReadOpID:                gen(llvm::cast<ReadOp>(n)); break;
+      case GetIndexOpID:            gen(llvm::cast<GetIndexOp>(n)); break;
+      case GetFieldOpID:            gen(llvm::cast<GetFieldOp>(n)); break;
 
       case BundleID:
         genProgramLinkage();

@@ -296,7 +296,7 @@ bool
 ValidateImpl::checkBooleanExpression(const Operator* op)
 {
   if (checkExpression(op))
-    if (!isa<BooleanType>(op->getType())) {
+    if (!op->typeis<BooleanType>()) {
       error(op,std::string("Expecting boolean expression but type '") +
         op->getType()->getName() + "' was found");
       return false;
@@ -963,7 +963,7 @@ ValidateImpl::validate(AllocateOp* n)
         error(n,"AllocateOp's pointer type has no element type!");
     } else
       error(n,"AllocateOp's type must be a pointer type");
-    if (!llvm::isa<IntegerType>(n->getType())) 
+    if (!n->typeis<IntegerType>()) 
       error(n,"AllocateOp's operand must be of integer type");
   }
 }
@@ -1006,9 +1006,28 @@ ValidateImpl::validate(StoreOp* n)
         error(n,"Can't store to constant variable");
       else if (isa<AutoVarOp>(R) && cast<AutoVarOp>(R)->isConstant())
         error(n,"Can't store to constant automatic variable");
-    } else if (const IndexOp* ref = dyn_cast<IndexOp>(n)) {
+    } else if (const GetIndexOp* ref = dyn_cast<GetIndexOp>(n)) {
+      /// FIXME: Implement this
+    } else if (const GetFieldOp* ref = dyn_cast<GetFieldOp>(n)) {
       /// FIXME: Implement this
     }
+  }
+}
+
+template<> inline void
+ValidateImpl::validate(GetIndexOp* n)
+{
+  if (checkOperator(n,GetIndexOpID,2)) {
+    // FIXME: Implement check for reference on first operand
+    // FIXME: Implement check for integer type on second operand
+  }
+}
+template<> inline void
+ValidateImpl::validate(GetFieldOp* n)
+{
+  if (checkOperator(n,GetFieldOpID,2)) {
+    // FIXME: Implement check for reference on first operand
+    // FIXME: Implement check for string type on second operand
   }
 }
 
@@ -1632,6 +1651,8 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case SwitchOpID:             validate(cast<SwitchOp>(n)); break;
     case LoadOpID:               validate(cast<LoadOp>(n)); break;
     case StoreOpID:              validate(cast<StoreOp>(n)); break;
+    case GetIndexOpID:           validate(cast<GetIndexOp>(n)); break;
+    case GetFieldOpID:           validate(cast<GetFieldOp>(n)); break;
     case AllocateOpID:           validate(cast<AllocateOp>(n)); break;
     case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
     case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;

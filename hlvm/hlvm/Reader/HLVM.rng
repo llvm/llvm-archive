@@ -711,7 +711,8 @@
 
   <define name="ConstantExpression.pat">
     <choice>
-      <ref name="index.elem"/>
+      <ref name="getfld.elem"/>
+      <ref name="getidx.elem"/>
       <ref name="cast.elem"/>
       <ref name="select.elem"/>
       <ref name="sizeof.elem"/>
@@ -760,7 +761,8 @@
   <define name="Location.pat">
     <choice>
       <ref name="ref.elem"/>
-      <ref name="index.elem"/>
+      <ref name="getfld.elem"/>
+      <ref name="getidx.elem"/>
     </choice>
   </define>
 
@@ -816,7 +818,8 @@
     <choice>
       <ref name="load.elem"/>
       <ref name="store.elem"/>
-      <ref name="index.elem"/>
+      <ref name="getfld.elem"/>
+      <ref name="getidx.elem"/>
       <ref name="length.elem"/>
       <ref name="autovar.elem"/>
       <ref name="ref.elem"/>
@@ -845,13 +848,19 @@
     </element>
   </define>
 
-  <define name="index.elem">
-    <element name="index">
+  <define name="getfld.elem">
+    <element name="getfld">
       <ref name="Documentation.pat"/>
+      <ref name="Location.pat"/>
       <ref name="Operators.pat"/>
-      <oneOrMore>
-        <ref name="Operators.pat"/>
-      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="getidx.elem">
+    <element name="getidx">
+      <ref name="Documentation.pat"/>
+      <ref name="Location.pat"/>
+      <ref name="Operators.pat"/>
     </element>
   </define>
 

@@ -267,6 +267,7 @@ class DisparateContainerType : public Type
   /// @{
   public:
     virtual const char* getPrimitiveName() const;
+    const NamedType* getField(unsigned index) const { return contents[index]; }
     /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const DisparateContainerType*) { return true; }
     static inline bool classof(const Node* N) { 

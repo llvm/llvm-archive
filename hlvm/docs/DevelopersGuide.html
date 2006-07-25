@@ -496,9 +496,13 @@ contributions will be handled.</p>
   mkdir build install
   cd build
   ../cfe/configure --prefix=/proj/llvm-gcc4/cfe/install \
-    --enable-llvm=/proj/llvm/build --enable-languages=c,c++
+    --enable-llvm=/proj/llvm/build --enable-languages=c,c++ --disable-threads
   make
   make install</pre>
+  <p>Note that the <tt>--disable-threads</tt> option is a temporary workaround
+  until LLVM's PR822 (supporting weak-external linkage) is implemented. This
+  should be fixed by September, 2006 at which time --disable-threads won't be
+  needed any more.</p>
   <p><em class="warning">IMPORTANT: </em>You <em>MUST</em> install llvm-gcc4
   into its own installation area. Do <em>NOT</em> be tempted to install it into
   <tt>/proj/install</tt>. If you do, it will overwrite your gcc 3.4.6

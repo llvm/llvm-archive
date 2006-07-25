@@ -18,6 +18,9 @@ MYPATH := /proj/install:/proj/llvm/cfe/install
 # Specify where you want HLVM to be installed
 MYPREFIX := /proj/install/hlvm
 
+# Specify where the llvm-gcc tools are located
+MYLLVMGCC := /proj/llvm/cfe/install/bin
+
 SCONSOPTS := -Q -j 2
 
 SUITES := normal
@@ -30,19 +33,27 @@ all:
 
 debug Debug:
 	scons $(SCONSOPTS)  mode=Debug debug=1 assertions=1 optimized=0 \
-	inline=0 small=0 confpath=$(MYPATH) prefix=$(MYPREFIX)
+	inline=0 small=0 \
+	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 optimized Optimized:
 	scons $(SCONSOPTS)  mode=Optimized debug=0 assertions=1 optimized=1 \
-	inline=1 small=0 strip=0 confpath=$(MYPATH) prefix=$(MYPREFIX)
+	inline=1 small=0 strip=0 \
+	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 release Release:
 	scons $(SCONSOPTS) mode=Release debug=0 assertions=0 optimized=1 \
-	inline=1 small=1 strip=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
+	inline=1 small=1 strip=1 \
+	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 profile Profile:
 	scons $(SCONSOPTS) mode=Profile debug=0 assertions=0 optimized=1  \
-	inline=1 small=0 strip=0 profile=1 confpath=$(MYPATH) prefix=$(MYPREFIX)
+	inline=1 small=0 strip=0 profile=1 \
+	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 check: 
 	scons -Q check mode=$(MYMODE) suites=$(SUITES)

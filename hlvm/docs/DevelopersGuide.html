@@ -496,7 +496,8 @@ contributions will be handled.</p>
   mkdir build install
   cd build
   ../cfe/configure --prefix=/proj/llvm-gcc4/cfe/install \
-    --enable-llvm=/proj/llvm/build --enable-languages=c,c++ --disable-threads
+    --enable-llvm=/proj/llvm/build --enable-languages=c,c++ --disable-threads \
+    --program-prefix=llvm-
   make
   make install</pre>
   <p>Note that the <tt>--disable-threads</tt> option is a temporary workaround
@@ -532,8 +533,8 @@ contributions will be handled.</p>
   cd /proj/hlvm
   svn co svn://hlvm.org/hlvm hlvm
   cd hlvm
-  make MYMODE=Debug MYPATH=/proj/llvm/cfe/install:/proj/install \
-    MYPREFIX=/proj/install</pre>
+  make debug MYMODE=Debug MYPREFIX=/proj/install MYPATH=/proj/install \
+    MYLLVMGCC=/proj/llvm/cfe/install/bin</pre>
 </div>
 
 <h2><a name="style">Coding Style</a></h2>

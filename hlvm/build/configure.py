@@ -17,7 +17,7 @@ def AskForDir(env,pkg):
     return AskForDir(env,pkg)
   return response
 
-def FindPackage(ctxt,pkgname,hdr,libs,code='main(argc,argv);',paths=[],
+def FindPackage(ctxt,pkgname,varname,hdr,libs,code='main(argc,argv);',paths=[],
                 objs=[],hdrpfx='',progs=[]):
   ctxt.Message('Checking for Package ' + pkgname + '...')
   ctxt.env[pkgname + '_bin'] = ''
@@ -38,7 +38,9 @@ int main(int argc, char **argv) {
   ctxt.env.AppendUnique(LIBS = libs)
   if len(ctxt.env['confpath']) > 0:
     paths = ctxt.env['confpath'].split(':') + paths
-  paths += [ '/opt/local','/opt/','/sw/local','/sw','/usr/local','/usr','/' ]
+  if len(ctxt.env[varname]) > 0:
+    paths = [ctxt.env[varname]] + paths
+  paths += [ '/opt/local','/opt/','/sw/local','/sw','/usr/local','/usr']
   # Check each path
   for p in paths:
     # Clear old settings from previous iterations
@@ -146,6 +148,7 @@ int main(int argc, char **argv) {
     # set up the the packages environment variables.
 
     ctxt.env.Replace(LIBS=lastLIBS, LINKFLAGS=lastLINKFLAGS)
+    ctxt.env[varname] = p
     ctxt.env[pkgname + '_bin'] = bindir
     ctxt.env[pkgname + '_lib'] = libdir
     ctxt.env[pkgname + '_inc'] = hdrdir
@@ -158,27 +161,27 @@ int main(int argc, char **argv) {
   # We didn't find it. Lets ask for a directory name and call ourselves 
   # again using that directory name
   dir = AskForDir(ctxt.env,pkgname)
-  return FindPackage(ctxt,pkgname,hdr,libs,code,[dir],objs,hdrpfx,progs)
+  return FindPackage(ctxt,pkgname,varname,hdr,libs,code,[dir],objs,hdrpfx,progs)
 
 def FindLLVM(conf):
   code = 'new llvm::Module("Name");'
-  conf.FindPackage('LLVM','llvm/Module.h',['LLVMCore','LLVMSystem'],code,
-    [conf.env['with_llvm']],[],'',['llvm2cpp','llvm-as','llc'] )
+  conf.FindPackage('LLVM','with_llvm','llvm/Module.h',['LLVMCore','LLVMSystem'],
+    code,[],[],'',['llvm2cpp','llvm-as','llc'] )
 
 def FindAPR(conf):
   code = 'apr_initialize();'
-  return conf.FindPackage('APR',pjoin('apr-1','apr_general.h'),['apr-1'],code,
-      [conf.env['with_apr']])
+  return conf.FindPackage('APR','with_apr',pjoin('apr-1','apr_general.h'),
+    ['apr-1'],code,[])
 
 def FindAPRU(conf):
   code = 'apu_version_string();'
-  return conf.FindPackage('APRU',pjoin('apr-1','apu_version.h'),['aprutil-1'],
-      code,[conf.env['with_apru']])
+  return conf.FindPackage('APRU','with_apru',pjoin('apr-1','apu_version.h'),
+    ['aprutil-1'],code,[])
 
 def FindLibXML2(conf):
   code = 'xmlNewParserCtxt();'
-  return conf.FindPackage('LIBXML2',pjoin('libxml','parser.h'),['xml2'],code,
-    [conf.env['with_libxml2']],[],'libxml2',['xmllint'])
+  return conf.FindPackage('LIBXML2','with_libxml2',pjoin('libxml','parser.h'),
+    ['xml2'],code,[],[],'libxml2',['xmllint'])
 
 def CheckProgram(ctxt,progname,varname,moredirs=[],critical=1):
   ctxt.Message("Checking for Program " + progname + "...")

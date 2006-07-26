@@ -113,6 +113,12 @@ print "</table>\n<br>\n";
  * Printing the times table
  *
  ******************************************************/
+print"<h3><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h3><br>\n";
+
+if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
+	print "<h3><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
+		  "View Build Log</a></h3><br>\n";
+}
 
 if(strpos($today_row['buildstatus'], "OK")===FALSE){
 	$disp="";
@@ -127,13 +133,7 @@ print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer".
 	  "('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
 print "<div id=\"buildStatus\" style=\"display: $disp;\" class=\"hideable\">\n";
 print "<h3><u>Build Status </u></h3></p>";
-if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
-	print "<a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
-		  "<font color=red>{$today_row['buildstatus']}</font></a><br>\n";
-}
-else{
-	print "<font color=red>{$today_row['buildstatus']}</font><br>\n";
-}
+print "<font color=red>{$today_row['buildstatus']}</font><br>\n";
 print "</div><br><br>\n";
 
 /*****************************************************
@@ -483,7 +483,6 @@ print "</td></tr></table>\n";
  * Finding big changes in results table
  *
  ******************************************************/
-print"<h3><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h3>\n";
 
 $today_results = GetDayResults($today_row['id'], $category_array, $mysql_link);
 if(isset($yesterday_row['id'])){

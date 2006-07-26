@@ -561,11 +561,23 @@ $yesterdays_tests = $row->{'all_tests'};
 $yesterdays_passes = $row->{'passing_tests'};
 $yesterdays_fails = $row->{'unexpfail_tests'};
 $yesterdays_xfails = $row->{'expfail_tests'};
-$newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
-$newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
+if($yesterdays_passes ne ""){
+	$newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
+}
+else{ $newly_passing_tests=""; }
+if($yesterdays_xfails ne "" and $yesterdays_fails ne ""){
+	$newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
 								  $yesterdays_xfails."\n".$yesterdays_fails;
-$new_tests = Difference $all_tests, $yesterdays_tests;
-$removed_tests = Difference $yesterdays_tests, $all_tests;
+}
+else{ $newly_failing_tests=""; }
+if($yesterdays_tests ne ""){
+	$new_tests = Difference $all_tests, $yesterdays_tests;
+}
+else{ $new_tests=""; }
+if($all_tests ne ""){
+	$removed_tests = Difference $yesterdays_tests, $all_tests;
+}
+else{ $removed_tests=""; }
 
 #$db_date = $date." ".$time;
 $db_date = `date "+20%y-%m-%d %H:%M:%S"`;

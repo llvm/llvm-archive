@@ -94,14 +94,16 @@ sub Difference{
 	@ONE = split "\n", $one;
 	@TWO = split "\n", $two;
 	
+	$value=1;
+	
 	my %hash_of_diff=();
 	foreach $x (@TWO){
-		$hash_of_diff{$x}=1;
+		$hash_of_diff{$x}=$value;
 	}
 	
 	$result="";
 	foreach $x (@ONE){
-		if($hash_of_diff{$x}!=1){
+		if($hash_of_diff{$x}!=$value){
 			$result.="$x\n";
 		}
 	}
@@ -381,8 +383,7 @@ sub UpdateCodeInfo{ #date, loc, files, dirs
     if(%$row && ($row->{'loc'} != $_[1] ||
 		 $row->{'files'} != $_[2] ||
 		 $row->{'dirs'} != $_[3])){
-	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) ".
-			      "values (\"$_[0]\", $_[1], $_[2], $_[3])");
+	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", \"$_[1]\", \"$_[2]\", \"$_[3]\")");
     $e->execute;
     }
 }
@@ -431,7 +432,7 @@ my $olden_tests=param('olden_tests');
    $olden_tests="" unless $olden_tests;
 my @OLDEN_TESTS = split $spliton, $singlesource_tests;
 
-my $filesincvs = param('cvs_files_count');
+my $filesincvs = param('cvs_file_count');
 my $dirsincvs = param('cvs_dir_count');
 my $loc = param('lines_of_code');
 my $nickname = param('nickname');

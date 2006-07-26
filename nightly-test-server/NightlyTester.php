@@ -156,12 +156,13 @@ function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE(
  *****************************************************/
 function get_a_files($mysql_link, $night_id){
 	$result = mysql_query("select a_file_size from night WHERE id=$night_id") or die (mysql_error());
-	$result=array();
 	$files = array();
 	$files = explode("\n", $result['a_file_size']);
+	$result = array();
 	foreach ($files as $f){
-		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches)
-		$result["{$matches[0]"] = array( "{$matches[1]", "{$matches[2]" );
+    $matches = array();
+		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
+		$result["$matches[1]"] = array("$matches[2]", "$matches[3]");
 	}
 	return $result;
 }
@@ -181,8 +182,8 @@ function get_o_files($mysql_link, $night_id){
 	$files = array();
 	$files = explode("\n", $result['o_file_size']);
 	foreach ($files as $f){
-		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches)
-		$result["{$matches[0]"] = array( "{$matches[1]", "{$matches[2]" );
+		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
+		$result["$matches[0]"] = array( "$matches[1]", "$matches[2]" );
 	}
 	return $result;
 }

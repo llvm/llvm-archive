@@ -115,6 +115,7 @@ print "</table>\n<br>\n";
  ******************************************************/
 print"<h3><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h3><br>\n";
 
+$buildfile=str_replace(" ", "_", $cur_date);
 if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
 	print "<h3><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
 		  "View Build Log</a></h3><br>\n";
@@ -128,7 +129,7 @@ else{
 	$disp="none";
 	$sign="(-)";
 }
-$buildfile=str_replace(" ", "_", $cur_date);	
+
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer".
 	  "('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
 print "<div id=\"buildStatus\" style=\"display: $disp;\" class=\"hideable\">\n";

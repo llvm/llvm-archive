@@ -552,6 +552,10 @@ $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_versio
 ################################################################################
 #
 # Creating test lists
+# 		All of these if-else statements are to ensure that if the previous
+#			night's test had a build failure and reported all tests as not passing,
+#			all failing, etc, etc then we dont report all the tests as newly passing
+#     or their equivalent.
 #
 ################################################################################
 my $d = $dbh->prepare("select * from night where machine = $machine_id ORDER BY added DESC");
@@ -579,6 +583,11 @@ if($all_tests ne ""){
 }
 else{ $removed_tests=""; }
 
+################################################################################
+#
+# Submitting information to database
+#
+################################################################################
 #$db_date = $date." ".$time;
 $db_date = `date "+20%y-%m-%d %H:%M:%S"`;
 chomp($db_date);

@@ -148,64 +148,50 @@ function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE(
 
 /*****************************************************
  *
- * Purpose: get all the .a file sizes for a specific test
- * Returns: An array with the name of the file being
- * the index and the value being an array with the first
- * element containing code size and the second element
- * containing [debug|release]
+ * Purpose: get file size for a specific file
+ * Returns: An array with the first element being the
+ * name of the file, then the file size, then night id,
+ * then build type.
  *
  *****************************************************/
-function get_a_files($mysql_link, $night_id){
-	$query = mysql_query("select a_file_size from night WHERE id=$night_id") or die (mysql_error());
-	$result = mysql_fetch_array($query);
-	$files = explode("\n", trim($result['a_file_size']));
-	$result = array();
-	foreach ($files as $f){
-	        $matches = array();
-		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
-		$result["$matches[2]"] = array("$matches[1]", "$matches[3]");
-	}
+function get_file($mysql_link, $file, $night_id){
+	$query = mysql_query("select * from file WHERE $file=\"$file\" and night=$night_id") or die (mysql_error());
+	$file = mysql_fetch_array($query);
+	$result = array("{$file['file']}","{$file['size']}","{$file['night']}","{$file['type']}");
+	mysql_free_result($query);
 	return $result;
 }
 
 /*****************************************************
  *
- * Purpose: get all the .o file sizes for a specific test
- * Returns: An array with the name of the file being
- * the index and the value being an array with the first
- * element containing code size and the second element
- * containing [debug|release]
+ * Purpose: Get a list of all sizes measured on a 
+ * particular machine for a specific file
+ * Returns: an array with the key being the date and
+ * the value being an array containing file name, size
+ * night, and build type
  *
  *****************************************************/
-function get_o_files($mysql_link, $night_id){
-        $query = mysql_query("select o_file_size from night WHERE id=$night_id") or die (mysql_error());
-	$result = mysql_fetch_array($query);
-	$files = explode("\n", trim($result['o_file_size']));
+function get_file_history($mysql_link, $machine_id, $file_name){
+        $nights_select = "select id, added from night WHERE machine=$machine_id ".
+	                 "order by added desc";
+	$nights_query = mysql_query($nights_select) 
+  				 or die (mysql_error());
 	$result = array();
-	foreach ($files as $f){
-	        $matches = array();
-		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
-		$result["$matches[2]"] = array("$matches[1]", "$matches[3]");
-	}
+	while($row = mysql_fetch_array($nights_query)){
+		$file_select = "select * from file where night={$row['id']} and ".
+								   "file=\"$file_name\"";
+		$file_query = mysql_query($file_select);
+		$file_array = mysql_fetch_array($file_query);
+		if(isset($file_array['file'])){
+			$value=get_file($mysql_link, $file_name, "{$row['id']}");
+			array_unshift($value, "{$row['added']}");
+			array_push($result, $value);
+		}//end if
+		mysql_free_result($file_query);
+	}//end while
+	mysql_free_result($nights_query);
 	return $result;
 }
-
-/*****************************************************
- *
- * Purpose: Get a combined list of .a and .o file sizes
- * Returns: 
- *
- *****************************************************/
-function get_file_sizes($mysql_link, $night_id){
-  $arr1 = get_a_files($mysql_link, $night_id);
-  $arr2 = get_o_files($mysql_link, $night_id);     
-  foreach (array_keys($arr1) as $f){
-    $arr2["$f"] = $arr1["$f"];
-  }
-  return $arr2;
-}
-
-
 
 /*****************************************************
  *
@@ -215,9 +201,10 @@ function get_file_sizes($mysql_link, $night_id){
 /*$mysql_link = mysql_connect("127.0.0.1","llvm","ll2002vm");
 mysql_select_db("nightlytestresults");
 
-$night_id = 534;
+$machine_id = 8;
+$file="./test/Regression/Archive/xpg4.a";
 
-$files = get_file_sizes($mysql_link, $night_id);
+$files = get_file_history($mysql_link, $machine_id, $file);
 
 foreach (array_keys($files) as $f){
 	print "$f = > {$files["$f"][0]}<br>\n";

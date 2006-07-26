@@ -12,6 +12,7 @@ $meaningfull_names = array('getcvstime_wall' => 'CVS Checkout Wall Time',
                         'teststats_unexpfail' => 'Unexpected Test Failures',
                         'teststats_expfail' => 'Expected Test Failurs');
 
+
 /*****************************************************
  *
  * Purpose: Get information about a certain machine
@@ -155,14 +156,14 @@ function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE(
  *
  *****************************************************/
 function get_a_files($mysql_link, $night_id){
-	$result = mysql_query("select a_file_size from night WHERE id=$night_id") or die (mysql_error());
-	$files = array();
-	$files = explode("\n", $result['a_file_size']);
+	$query = mysql_query("select a_file_size from night WHERE id=$night_id") or die (mysql_error());
+	$result = mysql_fetch_array($query);
+	$files = explode("\n", trim($result['a_file_size']));
 	$result = array();
 	foreach ($files as $f){
-    $matches = array();
+	        $matches = array();
 		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
-		$result["$matches[1]"] = array("$matches[2]", "$matches[3]");
+		$result["$matches[2]"] = array("$matches[1]", "$matches[3]");
 	}
 	return $result;
 }
@@ -177,13 +178,14 @@ function get_a_files($mysql_link, $night_id){
  *
  *****************************************************/
 function get_o_files($mysql_link, $night_id){
-	$result = mysql_query("select o_file_size from night WHERE id=$night_id") or die (mysql_error());
-	$result=array();
-	$files = array();
-	$files = explode("\n", $result['o_file_size']);
+        $query = mysql_query("select o_file_size from night WHERE id=$night_id") or die (mysql_error());
+	$result = mysql_fetch_array($query);
+	$files = explode("\n", trim($result['o_file_size']));
+	$result = array();
 	foreach ($files as $f){
+	        $matches = array();
 		preg_match("/(.+)\s+(.+)\s+(.+)/", $f, $matches);
-		$result["$matches[0]"] = array( "$matches[1]", "$matches[2]" );
+		$result["$matches[2]"] = array("$matches[1]", "$matches[3]");
 	}
 	return $result;
 }
@@ -195,9 +197,12 @@ function get_o_files($mysql_link, $night_id){
  *
  *****************************************************/
 function get_file_sizes($mysql_link, $night_id){
-	$result = array();
-	$result = merge(get_a_files($mysql_link, $night_id), get_o_files($mysql_link, $night_id));
-	return $result;
+  $arr1 = get_a_files($mysql_link, $night_id);
+  $arr2 = get_o_files($mysql_link, $night_id);     
+  foreach (array_keys($arr1) as $f){
+    $arr2["$f"] = $arr1["$f"];
+  }
+  return $arr2;
 }
 
 
@@ -207,18 +212,18 @@ function get_file_sizes($mysql_link, $night_id){
  * Example uses of each function
  *
  *****************************************************/
-$mysql_link = mysql_connect("127.0.0.1","llvm","ll2002vm");
+/*$mysql_link = mysql_connect("127.0.0.1","llvm","ll2002vm");
 mysql_select_db("nightlytestresults");
 
 $night_id = 534;
 
-$files = get_a_files($mysql_link, $night_id);
+$files = get_file_sizes($mysql_link, $night_id);
 
 foreach (array_keys($files) as $f){
-	print "$f = > {$files['$f'][0]}<br>\n";
+	print "$f = > {$files["$f"][0]}<br>\n";
 }
 
-/*$machine_info = getMachineInfo(21, $mysql_link);
+$machine_info = getMachineInfo(21, $mysql_link);
 foreach (array_keys($machine_info) as $key){
 	print "$key => {$machine_info["$key"]}<br>\n";
 }

@@ -113,12 +113,12 @@ print "</table>\n<br>\n";
  * Printing the times table
  *
  ******************************************************/
-print"<h3><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h3><br>\n";
+print"<h4><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h4>\n";
 
 $buildfile=str_replace(" ", "_", $cur_date);
 if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
-	print "<h3><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
-		  "View Build Log</a></h3><br>\n";
+	print "<h4><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
+		  "View Build Log</a></h4>\n";
 }
 
 if(strpos($today_row['buildstatus'], "OK")===FALSE){

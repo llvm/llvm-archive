@@ -29,7 +29,7 @@ print "<p align=right><a href='locgraph.php?xsize=900&ysize=600'><img src='locgr
 print "Tests submitted in last 24 hours:<br>";
 print "<table border=1 cellpadding=0 cellspacing=0>\n";
 print "\t<tr bgcolor=#FFCC99>";
-        print "\t\t<td>Date added</td>\n";
+        print "\t\t<td>Time submitted</td>\n";
         print "\t\t<td>Machine name</td>\n";
         print "\t\t<td>Build status</td>\n";
 	print "\t\t<td># of expected test passes</td>\n";

@@ -360,7 +360,12 @@ $num_warnings = preg_match_all('/warning/', $warnings, $match);
 			print "<a href=\"test.php?machine=$machine&night={$row['id']}\">View details</a>\n";
 		echo "</td>";
 	echo "</tr>";
-	$row = $prev_row;
+	
+	#this is to ensure we dont compare a test's statistics against
+	#a test that failed and has bogus statistics
+	if($build_ok){
+		$row = $prev_row;
+	}
 	$x++;
 } #end while
 

@@ -373,7 +373,7 @@ sub AddProgram{ #$program, $result, $type, $night
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub AddFile{ #$file, $size, $night, $type
 		$query = "INSERT INTO file (file, size, night, type) VALUES (\"$_[0]\", ".
-						 "\"$_[1]\", \"$_[2]\", $_[3])";
+						 "\"$_[1]\", \"$_[2]\", \"$_[3]\")";
     my $d = $dbh->prepare($query);
     $d->execute;
 }
@@ -447,10 +447,6 @@ my @MULTISOURCE_TESTS = split $spliton, $multisource_tests;
 my $external_tests = param('externalsource_programstable');
 $external_tests = "" unless $external_tests;
 my @EXTERNAL_TESTS = split $spliton, $external_tests;
-
-my $olden_tests=param('olden_tests');
-   $olden_tests="" unless $olden_tests;
-my @OLDEN_TESTS = split $spliton, $singlesource_tests;
 
 my $o_file_size = param('o_file_sizes'); 
 	 $o_file_size="" unless $o_file_size;
@@ -643,12 +639,12 @@ foreach $x(keys %external_processed){
 }
 
 foreach $x (@O_FILE_SIZE){
-	$x =~ m/(.+)\s+(.+)\s+(.+)/gi;
+	$x =~ m/(.+)\s+(.+)\s+(.+)/;
 	AddFile $2, $1, $night_id, $3;
 }
 
 foreach $x (@A_FILE_SIZE){
-	$x =~ m/(.+)\s+(.+)\s+(.+)/gi;
+	$x =~ m/(.+)\s+(.+)\s+(.+)/;
 	AddFile $2, $1, $night_id, $3;
 }
 

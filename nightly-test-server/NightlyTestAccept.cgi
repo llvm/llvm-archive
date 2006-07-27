@@ -677,14 +677,23 @@ $email  = "$link_to_page\n";
 $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
-$newly_passing_tests="None" unless $newly_passing_tests ne "";
-$email .= "\nNew Test Passes:\n$newly_passing_tests\n";
-$newly_failing_tests="None" unless $newly_failing_tests ne "";
-$email .= "\nNew Test Failures:\n$newly_failing_tests\n";
-$newtests="None" unless $new_tests ne "";
-$email .= "\nAdded Tests:\n$new_tests\n";
-$removed_tests="None" unless $removed_tests ne "";
-$email .= "\nRemoved Tests:\n$removed_tests\n";
+
+if($buildstatus eq "OK"){
+ 	$newly_passing_tests="None" unless $newly_passing_tests ne "";
+	$email .= "\nNew Test Passes:\n$newly_passing_tests\n";
+	$newly_failing_tests="None" unless $newly_failing_tests ne "";
+	$email .= "\nNew Test Failures:\n$newly_failing_tests\n";
+	$new_tests="None" unless $new_tests ne "";
+	$email .= "\nAdded Tests:\n$new_tests\n";
+	$removed_tests="None" unless $removed_tests ne "";
+	$email .= "\nRemoved Tests:\n$removed_tests\n";
+}
+else{
+	$temp_date = $db_date;
+	$temp_date =~s/ /\_/g;
+	$email .= "\nBuildlog available at http://llvm.org/nightlytest/".
+	          "machines/$machine_id/$temp_date-Build-Log.txt";
+}
 
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;

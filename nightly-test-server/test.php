@@ -110,7 +110,7 @@ print "</table>\n<br>\n";
 
 /*****************************************************
  *
- * Printing the times table
+ * Printing link to build log
  *
  ******************************************************/
 print"<h4><a href=\"fulltest.php?machine=$machine_id&night=$night_id\">See Full Test Results</a></h4>\n";
@@ -121,6 +121,11 @@ if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
 		  "View Build Log</a></h4>\n";
 }
 
+/*****************************************************
+ *
+ * Printing the times table
+ *
+ ******************************************************/
 if(strpos($today_row['buildstatus'], "OK")===FALSE){
 	$disp="";
 	$sign="(+)";

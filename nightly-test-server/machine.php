@@ -183,17 +183,15 @@ $result = getNightsResource($machine,$mysql_link);
 $line=1;
 $row = mysql_fetch_array($result);
 $x=0;
+
+
 while($x<10 && $prev_row = mysql_fetch_array($result)){
+	$warnings ="";
+	if(strcmp($row['warnings'],"")!=0){
+		$warnings=$row['warnings'];
+	}
+	$num_warnings = preg_match_all('/warning/', $warnings, $match);	
 
-
-$warnings ="";
-if(strcmp($row['warnings'],"")!=0){
-	$warnings=$row['warnings'];
-}
-
-$num_warnings = preg_match_all('/warning/', $warnings, $match);	
-	
-	
 	if(strpos($row['buildstatus'],"OK")===FALSE){
 		print "\t<tr bgcolor=#FFCC33>\n";
 		$build_ok=0;
@@ -207,165 +205,171 @@ $num_warnings = preg_match_all('/warning/', $warnings, $match);
 		$build_ok=1;
 	}	
 	$line++;
-
-		/*~~~~~~~~~~~~ Date of test ~~~~~~~~~~~~*/
-
-		echo "<td>";
-			$date = preg_replace("/\s\d\d:\d\d:\d\d/","",$row['added']);
-			echo "$date";
-		echo "</td>";
-
-		/*~~~~~~~~~~~~ Get CVS Wall Time ~~~~~~~~~~~~*/
-
 	
-		echo "<td>";
-			echo $row['getcvstime_wall'];
-		echo "</td>";
+	#this test is to test whether the test that precedes this failed,
+	#thus the test would have bogus data and we shouldnt color based on its
+	#results
+	if(strpos($prev_row['buildstatus'],"OK")===false){
+		$prev_build_ok=0;
+	}
+	else{
+		$prev_build_ok=1;
+	}
 
-		/*~~~~~~~~~~~~ Configure Time CPU ~~~~~~~~~~~~*/
-		if($prev_row['configuretime_cpu']!=0 && $build_ok){
-			$delta = round(( ($prev_row['configuretime_cpu'] - $row['configuretime_cpu']) / $prev_row['configuretime_cpu'] ) * 100,2);
-		        if ($delta > 20){
-				print "<td bgcolor=#CCFFCC>{$row['configuretime_cpu']}</td>";
-			}
-			else if ($delta < -20){
-				print "<td bgcolor=#FFAAAA>{$row['configuretime_cpu']}</td>";
-			}
-			else{
-				print "<td>{$row['configuretime_cpu']}</td>";
-			}
+	/*~~~~~~~~~~~~ Date of test ~~~~~~~~~~~~*/
+
+	echo "<td>";
+		$date = preg_replace("/\s\d\d:\d\d:\d\d/","",$row['added']);
+		echo "$date";
+	echo "</td>";
+
+	/*~~~~~~~~~~~~ Get CVS Wall Time ~~~~~~~~~~~~*/
+
+
+	echo "<td>";
+		echo $row['getcvstime_wall'];
+	echo "</td>";
+
+	/*~~~~~~~~~~~~ Configure Time CPU ~~~~~~~~~~~~*/
+	if($prev_row['configuretime_cpu']!=0 && $build_ok && $prev_build_ok){
+		$delta = round(( ($prev_row['configuretime_cpu'] - $row['configuretime_cpu']) / $prev_row['configuretime_cpu'] ) * 100,2);
+		if ($delta > 20){
+			print "<td bgcolor=#CCFFCC>{$row['configuretime_cpu']}</td>";
+		}
+		else if ($delta < -20){
+			print "<td bgcolor=#FFAAAA>{$row['configuretime_cpu']}</td>";
 		}
 		else{
 			print "<td>{$row['configuretime_cpu']}</td>";
 		}
+	}
+	else{
+		print "<td>{$row['configuretime_cpu']}</td>";
+	}
 
-		/*~~~~~~~~~~~~ Configure Time Wall ~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~ Configure Time Wall ~~~~~~~~~~~~*/
 
-		echo "<td>";
-			echo $row['configuretime_wall'];
-		echo "</td>";
+	echo "<td>";
+		echo $row['configuretime_wall'];
+	echo "</td>";
 
-		/*~~~~~~~~~~~~ Build Time CPU ~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~ Build Time CPU ~~~~~~~~~~~~*/
 
-		if($prev_row['buildtime_cpu']!=0 && $build_ok){
-			$delta = round(( ($prev_row['buildtime_cpu'] - $row['buildtime_cpu']) / $prev_row['buildtime_cpu'] ) * 100,2);
-		        if ($delta > 10){
-				print "<td bgcolor=#CCFFCC>{$row['buildtime_cpu']}</td>";
-			}
-			else if ($delta < -10){
-				print "<td bgcolor=#FFAAAA>{$row['buildtime_cpu']}</td>";
-			}
-			else{
-				print "<td>{$row['buildtime_cpu']}</td>";
-			}
+	if($prev_row['buildtime_cpu']!=0 && $build_ok && $prev_build_ok){
+		$delta = round(( ($prev_row['buildtime_cpu'] - $row['buildtime_cpu']) / $prev_row['buildtime_cpu'] ) * 100,2);
+		if ($delta > 10){
+			print "<td bgcolor=#CCFFCC>{$row['buildtime_cpu']}</td>";
+		}
+		else if ($delta < -10){
+			print "<td bgcolor=#FFAAAA>{$row['buildtime_cpu']}</td>";
 		}
 		else{
 			print "<td>{$row['buildtime_cpu']}</td>";
 		}
+	}
+	else{
+		print "<td>{$row['buildtime_cpu']}</td>";
+	}
 
-		/*~~~~~~~~~~~~ Build Time Wall ~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~ Build Time Wall ~~~~~~~~~~~~*/
 
-		echo "<td>";
-			echo $row['buildtime_wall'];
-		echo "</td>";
-	
-		/*~~~~~~~~~~~~ Dejagnu Time CPU ~~~~~~~~~~~~*/
+	echo "<td>";
+		echo $row['buildtime_wall'];
+	echo "</td>";
 
-		if($prev_row['dejagnutime_cpu']!=0 && $build_ok){
-			$delta = round( ( ($prev_row['dejagnutime_cpu'] - $row['dejagnutime_cpu']) / $prev_row['dejagnutime_cpu'] ) * 100,2);
-		        if ($delta > 10){
-				print "<td bgcolor=#CCFFCC>{$row['dejagnutime_cpu']}</td>";
-			}
-			else if ($delta < -10){
-				print "<td bgcolor=#FFAAAA>{$row['dejagnutime_cpu']}</td>";
-			}
-			else{
-				print "<td>{$row['dejagnutime_cpu']}</td>";
-			}
+	/*~~~~~~~~~~~~ Dejagnu Time CPU ~~~~~~~~~~~~*/
+
+	if($prev_row['dejagnutime_cpu']!=0 && $build_ok && $prev_build_ok){
+		$delta = round( ( ($prev_row['dejagnutime_cpu'] - $row['dejagnutime_cpu']) / $prev_row['dejagnutime_cpu'] ) * 100,2);
+		if ($delta > 10){
+			print "<td bgcolor=#CCFFCC>{$row['dejagnutime_cpu']}</td>";
+		}
+		else if ($delta < -10){
+			print "<td bgcolor=#FFAAAA>{$row['dejagnutime_cpu']}</td>";
 		}
 		else{
 			print "<td>{$row['dejagnutime_cpu']}</td>";
 		}
-		
-
-		/*~~~~~~~~~~~~ Dejagnu Time Wall ~~~~~~~~~~~~*/
-
-		echo "<td>";
-			echo $row['dejagnutime_wall'];
-		echo "</td>";
-
-		/*~~~~~~~~~~~~ # of expected passes ~~~~~~~~~~~~*/
-
-	        if ($row['teststats_exppass'] > $prev_row['teststats_exppass'] && $build_ok){
-			$color="#CCFFCC";
-		}
-		else if ($row['teststats_exppass'] < $prev_row['teststats_exppass'] && $build_ok){
-			$color="#FFAAAA";	
-		}
-		else{
-			$color="white";
-		}
-		if(!$build_ok){
-			print "<td>{$row['teststats_exppass']}</td>";		
-		}
-		else{
-			print "<td bgcolor=$color>{$row['teststats_exppass']}</td>";		
-		}
-		/*~~~~~~~~~~~~ # of unexpected failures ~~~~~~~~~~~~*/
-
-	        if ($row['teststats_unexpfail'] < $prev_row['teststats_unexpfail'] && $build_ok){
-			$color="#CCFFCC";
-		}
-		else if ($row['teststats_unexpfail'] > $prev_row['teststats_unexpfail'] && $build_ok){
-			$color="#FFAAAA";	
-		}
-		else{
-			$color="white";
-		}
-
-		if(!$build_ok){
-                        print "<td>{$row['teststats_unexpfail']}</td>";
-                }
-		else if($row['teststats_exppass']!=0){
-			print "<td bgcolor=$color><a href=\"test.php?machine=$machine&night={$row['id']}#unexpfail_tests\">{$row['teststats_unexpfail']}</a></td>";
-		}
-		else{
-			print "<td bgcolor=$color>{$row['teststats_unexpfail']}</td>";		
-		}
-
-		/*~~~~~~~~~~~~ # of expected failures ~~~~~~~~~~~~*/
-
-	        if ($row['teststats_expfail'] < $prev_row['teststats_expfail'] && $build_ok){
-			print "<td bgcolor=#CCFFCC>{$row['teststats_expfail']}</td>";
-		}
-		else if ($row['teststats_expfail'] > $prev_row['teststats_expfail'] && $build_ok){
-			print "<td bgcolor=#FFAAAA>{$row['teststats_expfail']}</td>";
-		}
-		else{
-			print "<td>{$row['teststats_expfail']}</td>";
-		}
-
-		/*~~~~~~~~~~~~ Number Of Warnings ~~~~~~~~~~~~*/
+	}
+	else{
+		print "<td>{$row['dejagnutime_cpu']}</td>";
+	}
 	
-		if($num_warnings>0){
-			print "\t<td><a href=\"test.php?machine=$machine&night={$row['id']}#warnings\">$num_warnings</a></td>\n";
-		}	
-		else{
-			print "\t<td>$num_warnings</td>\n";
-		}
 
-		/*~~~~~~~~~~~~ Link to test page ~~~~~~~~~~~~*/
-	
-		echo "<td>";
-			print "<a href=\"test.php?machine=$machine&night={$row['id']}\">View details</a>\n";
-		echo "</td>";
+	/*~~~~~~~~~~~~ Dejagnu Time Wall ~~~~~~~~~~~~*/
+
+	echo "<td>";
+		echo $row['dejagnutime_wall'];
+	echo "</td>";
+
+	/*~~~~~~~~~~~~ # of expected passes ~~~~~~~~~~~~*/
+
+	if ($row['teststats_exppass'] > $prev_row['teststats_exppass'] && $build_ok && $prev_build_ok){
+		$color="#CCFFCC";
+	}
+	else if ($row['teststats_exppass'] < $prev_row['teststats_exppass'] && $build_ok  && $prev_build_ok){
+		$color="#FFAAAA";	
+	}
+	else{
+		$color="white";
+	}
+	if(!$build_ok){
+		print "<td>{$row['teststats_exppass']}</td>";		
+	}
+	else{
+		print "<td bgcolor=$color>{$row['teststats_exppass']}</td>";		
+	}
+	/*~~~~~~~~~~~~ # of unexpected failures ~~~~~~~~~~~~*/
+
+	if ($row['teststats_unexpfail'] < $prev_row['teststats_unexpfail'] && $build_ok && $prev_build_ok){
+		$color="#CCFFCC";
+	}
+	else if ($row['teststats_unexpfail'] > $prev_row['teststats_unexpfail'] && $build_ok && $prev_build_ok){
+		$color="#FFAAAA";	
+	}
+	else{
+		$color="white";
+	}
+
+	if(!$build_ok){
+		print "<td>{$row['teststats_unexpfail']}</td>";
+	}
+	else if($row['teststats_exppass']!=0){
+		print "<td bgcolor=$color><a href=\"test.php?machine=$machine&night={$row['id']}#unexpfail_tests\">{$row['teststats_unexpfail']}</a></td>";
+	}
+	else{
+		print "<td bgcolor=$color>{$row['teststats_unexpfail']}</td>";		
+	}
+
+	/*~~~~~~~~~~~~ # of expected failures ~~~~~~~~~~~~*/
+
+				if ($row['teststats_expfail'] < $prev_row['teststats_expfail'] && $build_ok && $prev_build_ok){
+		print "<td bgcolor=#CCFFCC>{$row['teststats_expfail']}</td>";
+	}
+	else if ($row['teststats_expfail'] > $prev_row['teststats_expfail'] && $build_ok && $prev_build_ok){
+		print "<td bgcolor=#FFAAAA>{$row['teststats_expfail']}</td>";
+	}
+	else{
+		print "<td>{$row['teststats_expfail']}</td>";
+	}
+
+	/*~~~~~~~~~~~~ Number Of Warnings ~~~~~~~~~~~~*/
+
+	if($num_warnings>0){
+		print "\t<td><a href=\"test.php?machine=$machine&night={$row['id']}#warnings\">$num_warnings</a></td>\n";
+	}	
+	else{
+		print "\t<td>$num_warnings</td>\n";
+	}
+
+	/*~~~~~~~~~~~~ Link to test page ~~~~~~~~~~~~*/
+
+	echo "<td>";
+		print "<a href=\"test.php?machine=$machine&night={$row['id']}\">View details</a>\n";
+	echo "</td>";
 	echo "</tr>";
 	
-	#this is to ensure we dont compare a test's statistics against
-	#a test that failed and has bogus statistics
-	if($build_ok){
-		$row = $prev_row;
-	}
+	$row = $prev_row;
 	$x++;
 } #end while
 

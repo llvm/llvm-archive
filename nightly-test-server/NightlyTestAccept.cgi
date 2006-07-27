@@ -284,9 +284,7 @@ sub CreateNight{
 	$y++;
 	$cvsuserupdatelist=$_[$y];
 	$y++;
-    $a_file_size=$_[$y];
-    $y++;
-    $o_file_size=$_[$y];
+
 	
 
 	
@@ -298,7 +296,7 @@ sub CreateNight{
               " passing_tests, unexpfail_tests, expfail_tests,".
 			  " newly_passing_tests, newly_failing_tests, new_tests,".
 			  " removed_tests, cvs_added, cvs_removed, cvs_modified,".
-			  " cvs_usersadd, cvs_usersco, a_file_size, o_file_size) values (".
+			  " cvs_usersadd, cvs_usersco) values (".
 			  "\"$machine_id\", \"$db_date\", \"$buildstatus\",".
 			  "\"$configtime_cpu\", \"$configtime_wall\", \"$cvscheckouttime_cpu\",".
 			  "\"$cvscheckouttime_wall\", \"$buildtime_cpu\", \"$buildtime_wall\",".
@@ -309,8 +307,7 @@ sub CreateNight{
               "\"$expfail_tests\", \"$newly_passing_tests\", \"$newly_failing_tests\",".
 			  "\"$new_tests\", \"$removed_tests\",".
 			  "\"$cvsaddedfiles\", \"$cvsremovedfiles\", \"$cvsmodifiedfiles\",".
-			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\",".
-			  "\"$a_file_size\", \"$o_file_size\")");
+			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\")");
 
     $d->execute;
 
@@ -354,7 +351,30 @@ sub GetMachineNights{ #machine_id
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub AddProgram{ #$program, $result, $type, $night
-    my $d = $dbh->prepare("INSERT INTO program (program, result, type, night) VALUES (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])");
+		$query = "INSERT INTO program (program, result, type, night) VALUES".
+						 " (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])";
+    my $d = $dbh->prepare($query);
+    $d->execute;
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# mysql> describe file;
+# +-------+---------+------+-----+---------+-------+
+# | Field | Type    | Null | Key | Default | Extra |
+# +-------+---------+------+-----+---------+-------+
+# | file  | text    |      |     |         |       |
+# | size  | int(11) |      |     | 0       |       |
+# | night | int(11) |      |     | 0       |       |
+# | type  | text    | YES  |     | NULL    |       |
+# +-------+---------+------+-----+---------+-------+
+# 4 rows in set (0.00 sec)
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub AddFile{ #$file, $size, $night, $type
+		$query = "INSERT INTO file (file, size, night, type) VALUES (\"$_[0]\", ".
+						 "\"$_[1]\", \"$_[2]\", $_[3])";
+    my $d = $dbh->prepare($query);
     $d->execute;
 }
 
@@ -432,6 +452,15 @@ my $olden_tests=param('olden_tests');
    $olden_tests="" unless $olden_tests;
 my @OLDEN_TESTS = split $spliton, $singlesource_tests;
 
+my $o_file_size = param('o_file_sizes'); 
+	 $o_file_size="" unless $o_file_size;
+	 chomp($o_file_size);
+my @O_FILE_SIZE = split $spliton, $o_file_size;
+my $a_file_size = param('a_file_sizes'); 
+   $a_file_size="" unless $o_file_size;
+   chomp($a_file_size);
+my @A_FILE_SIZE = split $spliton, $a_file_size;
+
 my $filesincvs = param('cvs_file_count');
 my $dirsincvs = param('cvs_dir_count');
 my $loc = param('lines_of_code');
@@ -463,9 +492,7 @@ my $new_tests=param('new_tests');
 my $removed_tests=param('removed_tests');
 my $gcc_version = param('gcc_version');            
 my $warnings = param('warnings');            
-my $lines_of_code = param('lines_of_code');                 
-my $o_file_size = param('o_file_sizes'); 
-my $a_file_size = param('a_file_sizes'); 
+my $lines_of_code = param('lines_of_code');
 
 ################################################################################
 #
@@ -601,8 +628,7 @@ $night_id= CreateNight $machine_id, $db_date, $buildstatus,
             $expfail_tests, $newly_passing_tests, $newly_failing_tests,
             $new_tests, $removed_tests,
             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-            $cvsusercommitlist, $cvsuserupdatelist, $a_file_size,
-            $o_file_size;
+            $cvsusercommitlist, $cvsuserupdatelist;
 
 foreach $x(keys %singlesource_processed){
     AddProgram $x, $singlesource_processed{$x}, "singlesource", $night_id; 
@@ -615,6 +641,17 @@ foreach $x(keys %multisource_processed){
 foreach $x(keys %external_processed){
     AddProgram $x, $external_processed{$x}, "external", $night_id; 
 }
+
+foreach $x (@O_FILE_SIZE){
+	$x =~ m/(.+)\s+(.+)\s+(.+)/gi;
+	AddFile $2, $1, $night_id, $3;
+}
+
+foreach $x (@A_FILE_SIZE){
+	$x =~ m/(.+)\s+(.+)\s+(.+)/gi;
+	AddFile $2, $1, $night_id, $3;
+}
+
 
 ################################################################################
 #
@@ -635,16 +672,19 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 # Sending email to nightly test email archive
 #
 ################################################################################
-
 $link_to_page="http://llvm.org/nightlytest/machine.php?machine=$machine_id";
 $email  = "$link_to_page\n";
 $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
+$newly_passing_tests="None" unless $newly_passing_tests ne "";
 $email .= "\nNew Test Passes:\n$newly_passing_tests\n";
+$newly_failing_tests="None" unless $newly_failing_tests ne "";
 $email .= "\nNew Test Failures:\n$newly_failing_tests\n";
+$newtests="None" unless $new_tests ne "";
 $email .= "\nAdded Tests:\n$new_tests\n";
-$email .= "\nRemoved Tests\n$removed_tests\n";
+$removed_tests="None" unless $removed_tests ne "";
+$email .= "\nRemoved Tests:\n$removed_tests\n";
 
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;

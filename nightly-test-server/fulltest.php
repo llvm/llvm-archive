@@ -96,6 +96,17 @@ print "</table>\n<br>\n";
 
 /*****************************************************
  *
+ * Printing link to build log
+ *
+ ******************************************************/
+$buildfile=str_replace(" ", "_", $cur_date);
+if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
+	print "<h4><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
+		  "View Build Log</a></h4>\n";
+}
+
+/*****************************************************
+ *
  * Printing the times table
  *
  ******************************************************/
@@ -452,6 +463,19 @@ else{
 	print "No removed files<br><br>\n";
 }
 print "</div><br><br>\n";
+
+/*****************************************************
+ *
+ * Printing file size information
+ *
+ ******************************************************/
+print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('CVSInformation');\", id=\"CVSInformation_\">(-) CVS information</a></font>\n";
+print "<div id=\"CVSInformation\" style=\"display: none;\" class=\"hideable\">\n";
+
+print"<h3><u>File Size information:</u></h3><br>\n";
+
+print "</div><br><br>\n";
+
 
 /*****************************************************
  *

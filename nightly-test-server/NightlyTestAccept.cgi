@@ -511,7 +511,7 @@ print "content-type: text/text\r\n\r\n";
 
 $dejagnutests_log =~ m/\# of expected passes\s*([0-9]+)/;
 $dejagnu_exp_passes=$1;
-$dejagnutests_log =~ m/\# of unexpected failures\s*([0-9]+)/;
+$dejagnutests_log =~ m/unexpected failures\s*([0-9]+)/;
 $dejagnu_unexp_failures=$1;
 $dejagnutests_log =~ m/\# of expected failures\s*([0-9]+)/;
 $dejagnu_exp_failures=$1;
@@ -638,16 +638,21 @@ foreach $x(keys %external_processed){
     AddProgram $x, $external_processed{$x}, "external", $night_id; 
 }
 
-foreach $x (@O_FILE_SIZE){
-	$x =~ m/(.+)\s+(.+)\s+(.+)/;
-	AddFile $2, $1, $night_id, $3;
+$len=@AOFILE_SIZE;
+if($len>1){
+	foreach $x (@O_FILE_SIZE){
+		$x =~ m/(.+)\s+(.+)\s+(.+)/;
+		AddFile $2, $1, $night_id, $3;
+	}
 }
 
-foreach $x (@A_FILE_SIZE){
-	$x =~ m/(.+)\s+(.+)\s+(.+)/;
-	AddFile $2, $1, $night_id, $3;
+$len=@A_FILE_SIZE;
+if($len>1){
+	foreach $x (@A_FILE_SIZE){
+		$x =~ m/(.+)\s+(.+)\s+(.+)/;
+		AddFile $2, $1, $night_id, $3;
+	}
 }
-
 
 ################################################################################
 #

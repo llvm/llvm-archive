@@ -638,7 +638,7 @@ foreach $x(keys %external_processed){
     AddProgram $x, $external_processed{$x}, "external", $night_id; 
 }
 
-$len=@AOFILE_SIZE;
+$len=@O_FILE_SIZE;
 if($len>1){
 	foreach $x (@O_FILE_SIZE){
 		$x =~ m/(.+)\s+(.+)\s+(.+)/;

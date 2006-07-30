@@ -679,15 +679,31 @@ $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
 
-if($buildstatus eq "OK"){
- 	$newly_passing_tests="None" unless $newly_passing_tests ne "";
-	$email .= "\nNew Test Passes:\n$newly_passing_tests\n";
-	$newly_failing_tests="None" unless $newly_failing_tests ne "";
-	$email .= "\nNew Test Failures:\n$newly_failing_tests\n";
-	$new_tests="None" unless $new_tests ne "";
-	$email .= "\nAdded Tests:\n$new_tests\n";
-	$removed_tests="None" unless $removed_tests ne "";
-	$email .= "\nRemoved Tests:\n$removed_tests\n";
+if($buildstatus eq "OK") {
+	if ($newly_passing_tests ne "") {
+		$newly_passing_tests = "\n$newly_passing_tests\n";
+	} else {
+		$newly_passing_tests = "None";
+	}
+	$email .= "\nNew Test Passes: $newly_passing_tests";
+	if ($newly_failing_tests ne "") {
+		$newly_failing_tests = "\n$newly_failing_tests\n";
+	} else {
+		$newly_failing_tests = "None";
+	}
+	$email .= "\nNew Test Failures: $newly_failing_tests";
+	if ($new_tests ne "") {
+		$new_tests = "\n$new_tests\n";
+	} else {
+		$new_tests = "None";
+	}
+	$email .= "\nAdded Tests: $new_tests";
+	if ($removed_tests ne "") {
+		$removed_tests = "\n$removed_tests\n";
+	} else {
+		$removed_tests = "None";
+	}
+	$email .= "\nRemoved Tests: $removed_tests\n";
 }
 else{
 	$temp_date = $db_date;

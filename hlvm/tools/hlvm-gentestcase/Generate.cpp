@@ -37,6 +37,7 @@
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/InputOutput.h>
 #include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/StringOps.h>
 #include <hlvm/AST/Bundle.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/ADT/StringExtras.h>
@@ -534,6 +535,10 @@ genIndex(Operator* V)
   return 0;
 }
 
+static Operator* genExpression(Operator* Val, unsigned depth);
+static Operator* genUnaryExpression(Operator* Val);
+static Operator* genBinaryExpression(Operator* V1, Operator*V2);
+
 static Operator*
 genBooleanUnary(Operator* V1) 
 {
@@ -635,8 +640,8 @@ genIntegerUnary(Operator* V1)
 static Operator*
 genIntegerBinary(Operator* V1, Operator* V2)
 {
-  hlvmAssert(V1->getType()->getID() == IntegerTypeID);
-  hlvmAssert(V2->getType()->getID() == IntegerTypeID);
+  hlvmAssert(V1->getType()->isIntegralType());
+  hlvmAssert(V2->getType()->isIntegralType());
   Operator* result = 0;
   NodeIDs id = NodeIDs(randRange(AddOpID, BNorOpID));
   switch (id) {
@@ -748,148 +753,260 @@ genRealBinary(Operator* V1, Operator* V2)
 static Operator*
 genStringUnary(Operator* V1)
 {
-  hlvmAssert(V1->getType()->getID() == RealTypeID);
-  return 0;
+  hlvmAssert(isa<StringType>(V1));
+  Operator* str = genValueAsOperator(bundle->getIntrinsicType(stringTy));
+  return ast->new_BinaryOp<StrConcatOp>(V1,str,bundle,getLocator());
 }
 
 static Operator*
 genStringBinary(Operator* V1, Operator* V2)
 {
-  return 0;
-}
-
-static Operator*
-genPointerUnary(Operator* V1)
-{
-  hlvmAssert(V1->getType()->getID() == RealTypeID);
-  return 0;
-}
-
-static Operator*
-genPointerBinary(Operator* V1, Operator* V2)
-{
-  return 0;
+  hlvmAssert(isa<StringType>(V1));
+  hlvmAssert(isa<StringType>(V2));
+  ConstantInteger* CI = getConstantInteger(0);
+  GetOp* get = ast->new_GetOp(CI,getLocator());
+  return ast->new_BinaryOp<StrConcatOp>(V1,V2,bundle,getLocator());
 }
 
 static Operator*
 genArrayUnary(Operator* V1)
 {
-  hlvmAssert(V1->getType()->getID() == RealTypeID);
+  hlvmAssert(isa<ArrayType>(V1));
+  const ArrayType* Ty = cast<ArrayType>(V1->getType());
   return 0;
 }
 
 static Operator*
 genArrayBinary(Operator* V1, Operator* V2)
 {
+  hlvmAssert(isa<ArrayType>(V1));
+  hlvmAssert(isa<ArrayType>(V2));
+  hlvmAssert(V1->getType() == V2->getType());
+  const ArrayType* Ty = cast<ArrayType>(V1->getType());
   return 0;
 }
 
 static Operator*
 genVectorUnary(Operator* V1)
 {
-  hlvmAssert(V1->getType()->getID() == RealTypeID);
-  return 0;
+  hlvmAssert(isa<VectorType>(V1));
+  const VectorType* Ty = cast<VectorType>(V1->getType());
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  for (unsigned i = 0; i < Ty->getSize(); ++i) {
+    ConstantInteger* cst = getConstantInteger(i);
+    GetOp* index = ast->new_GetOp(cst,getLocator());
+    GetIndexOp* elem = 
+      ast->new_BinaryOp<GetIndexOp>(V1,index,bundle,getLocator());
+    LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem,bundle,getLocator());
+    Operator* expr = genUnaryExpression(load1);
+    GetOp* get = ast->new_GetOp(autovar,getLocator());
+    GetIndexOp* elem2 =
+      ast->new_BinaryOp<GetIndexOp>(get,index,bundle,getLocator());
+    StoreOp* store = 
+      ast->new_BinaryOp<StoreOp>(elem2,expr,bundle,getLocator());
+    blk->addOperand(store);
+  }
+  GetOp* get = ast->new_GetOp(autovar,getLocator());
+  ResultOp* result = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(result);
+  return blk;
 }
 
 static Operator*
 genVectorBinary(Operator* V1, Operator* V2)
 {
-  return 0;
+  hlvmAssert(isa<StructureType>(V1));
+  hlvmAssert(isa<StructureType>(V2));
+  hlvmAssert(V1->getType() == V2->getType());
+  const VectorType* Ty = llvm::cast<VectorType>(V1->getType());
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  for (unsigned i = 0; i < Ty->getSize(); ++i)
+  {
+    ConstantInteger* cst = getConstantInteger(i);
+    GetOp* index = ast->new_GetOp(cst,getLocator());
+    GetFieldOp* elem1 = 
+      ast->new_BinaryOp<GetFieldOp>(V1,index,bundle,getLocator());
+    LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem1,bundle,getLocator());
+    GetFieldOp* elem2 = 
+      ast->new_BinaryOp<GetFieldOp>(V2,index,bundle,getLocator());
+    LoadOp* load2 = ast->new_UnaryOp<LoadOp>(elem1,bundle,getLocator());
+    Operator* expr = genBinaryExpression(load1,load2);
+    GetOp* get = ast->new_GetOp(autovar,getLocator());
+    GetFieldOp* elem3 = 
+      ast->new_BinaryOp<GetFieldOp>(get,index,bundle,getLocator());
+    StoreOp* store = 
+      ast->new_BinaryOp<StoreOp>(elem3,expr,bundle,getLocator());
+    blk->addOperand(store);
+  }
+  GetOp* get = ast->new_GetOp(autovar,getLocator());
+  ResultOp* result = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(result);
+  return blk;
 }
 
 static Operator*
 genStructureUnary(Operator* V1)
 {
-  hlvmAssert(V1->getType()->getID() == RealTypeID);
-  return 0;
+  hlvmAssert(V1->getType()->getID() == StructureTypeID);
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",V1->getType(),getLocator());
+  const StructureType* Ty = llvm::cast<StructureType>(V1->getType());
+  for (StructureType::const_iterator I = Ty->begin(), E = Ty->end(); 
+       I != E; ++I)
+  {
+    ConstantString* cst = getConstantString((*I)->getName());
+    GetOp* fldName = ast->new_GetOp(cst,getLocator());
+    GetFieldOp* getField1 = 
+      ast->new_BinaryOp<GetFieldOp>(V1,fldName,bundle,getLocator());
+    LoadOp* load1 = ast->new_UnaryOp<LoadOp>(getField1,bundle,getLocator());
+    Operator* expr = genUnaryExpression(load1);
+    GetOp* get = ast->new_GetOp(autovar,getLocator());
+    GetFieldOp* getField3 =
+      ast->new_BinaryOp<GetFieldOp>(get,fldName,bundle,getLocator());
+    StoreOp* store = 
+      ast->new_BinaryOp<StoreOp>(getField3,expr,bundle,getLocator());
+    blk->addOperand(store);
+  }
+  GetOp* get = ast->new_GetOp(autovar,getLocator());
+  ResultOp* result = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(result);
+  return blk;
 }
 
 static Operator*
 genStructureBinary(Operator* V1, Operator* V2)
 {
-  return 0;
+  hlvmAssert(V1->getType()->getID() == StructureTypeID);
+  hlvmAssert(V2->getType()->getID() == StructureTypeID);
+  hlvmAssert(V1->getType() == V2->getType());
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",V1->getType(),getLocator());
+  const StructureType* Ty = llvm::cast<StructureType>(V1->getType());
+  for (StructureType::const_iterator I = Ty->begin(), E = Ty->end(); 
+       I != E; ++I)
+  {
+    ConstantString* cst = getConstantString((*I)->getName());
+    GetOp* fldName = ast->new_GetOp(cst,getLocator());
+    GetFieldOp* getField1 = 
+      ast->new_BinaryOp<GetFieldOp>(V1,fldName,bundle,getLocator());
+    LoadOp* load1 = ast->new_UnaryOp<LoadOp>(getField1,bundle,getLocator());
+    GetFieldOp* getField2 = 
+      ast->new_BinaryOp<GetFieldOp>(V2,fldName,bundle,getLocator());
+    LoadOp* load2 = ast->new_UnaryOp<LoadOp>(getField2,bundle,getLocator());
+    Operator* expr = genBinaryExpression(load1,load2);
+    GetOp* get = ast->new_GetOp(autovar,getLocator());
+    GetFieldOp* getField3 = 
+      ast->new_BinaryOp<GetFieldOp>(get,fldName,bundle,getLocator());
+    StoreOp* store = 
+      ast->new_BinaryOp<StoreOp>(getField3,expr,bundle,getLocator());
+    blk->addOperand(store);
+  }
+  GetOp* get = ast->new_GetOp(autovar,getLocator());
+  ResultOp* result = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(result);
+  return blk;
+}
+
+static Operator*
+genPointerUnary(Operator* V1)
+{
+  hlvmAssert(V1->getType()->getID() == PointerTypeID);
+  LoadOp* load = ast->new_UnaryOp<LoadOp>(V1,bundle,getLocator());
+  return genUnaryExpression(load);
+}
+
+static Operator*
+genPointerBinary(Operator* V1, Operator* V2)
+{
+  hlvmAssert(V1->getType()->getID() == PointerTypeID);
+  hlvmAssert(V2->getType()->getID() == PointerTypeID);
+  hlvmAssert(V1->getType() == V2->getType());
+  LoadOp* load1 = ast->new_UnaryOp<LoadOp>(V1,bundle,getLocator());
+  LoadOp* load2 = ast->new_UnaryOp<LoadOp>(V2,bundle,getLocator());
+  return genBinaryExpression(load1,load2);
+}
+
+static Operator*
+genUnaryExpression(Operator* Val)
+{
+  switch(Val->getType()->getID()) {
+    case BooleanTypeID:      return genBooleanUnary(Val); break;
+    case CharacterTypeID:    return genCharacterUnary(Val); break;
+    case AnyTypeID:         
+    case BufferTypeID:
+    case StreamTypeID:
+    case TextTypeID:
+    case SignatureTypeID:
+    case RationalTypeID:
+      // FALL THROUGH: Not Implemented
+    case RangeTypeID:
+    case IntegerTypeID:
+    case EnumerationTypeID:  return genIntegerUnary(Val); break;
+    case RealTypeID:         return genRealUnary(Val); break;
+    case StringTypeID:       return genStringUnary(Val); break;
+    case PointerTypeID:      return genPointerUnary(Val); break;
+    case ArrayTypeID:        return genArrayUnary(Val); break;
+    case VectorTypeID:       return genVectorUnary(Val); break;
+    case OpaqueTypeID:
+    case ContinuationTypeID:
+    case StructureTypeID:    return genStructureUnary(Val); break;
+    default:
+      hlvmDeadCode("Invalid type?");
+      return 0;
+      break;
+  }
+}
+
+static Operator*
+genBinaryExpression(Operator* V1, Operator*V2)
+{
+  switch (V1->getType()->getID()) {
+    case BooleanTypeID:     return genBooleanBinary(V1,V2); break;
+    case CharacterTypeID:   return genCharacterBinary(V1,V2); break;
+    case AnyTypeID:         
+    case BufferTypeID:
+    case StreamTypeID:
+    case TextTypeID:
+    case SignatureTypeID:
+    case RationalTypeID:
+      // FALL THROUGH: Not Implemented
+    case RangeTypeID:
+    case IntegerTypeID:
+    case EnumerationTypeID: return genIntegerBinary(V1,V2);break;
+    case RealTypeID:        return genRealBinary(V1,V2); break;
+    case StringTypeID:      return  genStringBinary(V1,V2); break;
+    case PointerTypeID:     return  genPointerBinary(V1,V2); break;
+    case ArrayTypeID:       return  genArrayBinary(V1,V2); break;
+    case VectorTypeID:      return  genVectorBinary(V1,V2); break;
+    case OpaqueTypeID:
+    case ContinuationTypeID:
+    case StructureTypeID:   return  genStructureBinary(V1,V2);break;
+    default:                hlvmDeadCode("Invalid Type");
+                            return 0;
+  }
 }
 
 // Forward declare
 static Function* genFunction(const Type* resultType, unsigned depth);
 
 static Operator*
-genExpression(Operator* Val, const Type* Ty, unsigned depth)
+genExpression(Operator* Val, unsigned depth)
 {
-  hlvmAssert(Val->getType() == Ty);
   if (depth > 0) {
     // Generate a function
-    Function* F = genFunction(Ty, depth-1);
+    Function* F = genFunction(Val->getType(), depth-1);
     // Generate a call to that function
     return genCallTo(F);
   }
 
-  Operator* result = 0;
+  // 50% Randomly generate a unary expression
+  if (5 <= randRange(1,10))
+    return genUnaryExpression(Val);
 
-  // Determine whether to generate a binary or unary expression
-  if (5 <= randRange(1,10)) {
-    switch (Ty->getID()) {
-      case BooleanTypeID: result = genBooleanUnary(Val); break;
-      case CharacterTypeID: result = genCharacterUnary(Val); break;
-      case AnyTypeID:         
-      case BufferTypeID:
-      case StreamTypeID:
-      case TextTypeID:
-      case SignatureTypeID:
-      case RationalTypeID:
-        // FALL THROUGH: Not Implemented
-      case RangeTypeID:
-      case IntegerTypeID:
-      case EnumerationTypeID: result = genIntegerUnary(Val); break;
-      case RealTypeID: result = genRealUnary(Val); break;
-      case StringTypeID: result = genStringUnary(Val); break;
-      case PointerTypeID: result = genPointerUnary(Val); break;
-      case ArrayTypeID: result = genArrayUnary(Val); break;
-      case VectorTypeID: result = genVectorUnary(Val); break;
-      case OpaqueTypeID:
-      case ContinuationTypeID:
-      case StructureTypeID: result = genStructureUnary(Val); break;
-      default:
-        hlvmAssert(!"Invalid type?");
-        break;
-    }
-  } else {
-    switch (Ty->getID()) {
-      case BooleanTypeID: 
-        result = genBooleanBinary(Val,genValueAsOperator(Ty)); break;
-      case CharacterTypeID:
-        result = genCharacterBinary(Val,genValueAsOperator(Ty)); break;
-      case AnyTypeID:         
-      case BufferTypeID:
-      case StreamTypeID:
-      case TextTypeID:
-      case SignatureTypeID:
-      case RationalTypeID:
-        // FALL THROUGH: Not Implemented
-      case RangeTypeID:
-      case IntegerTypeID:
-      case EnumerationTypeID: 
-        result = genIntegerBinary(Val,genValueAsOperator(Ty));break;
-      case RealTypeID: 
-        result = genRealBinary(Val,genValueAsOperator(Ty)); break;
-      case StringTypeID: 
-        result = genStringBinary(Val,genValueAsOperator(Ty)); break;
-      case PointerTypeID: 
-        result = genPointerBinary(Val,genValueAsOperator(Ty)); break;
-      case ArrayTypeID: 
-        result = genArrayBinary(Val,genValueAsOperator(Ty)); break;
-      case VectorTypeID: 
-        result = genVectorBinary(Val,genValueAsOperator(Ty)); break;
-      case OpaqueTypeID:
-      case ContinuationTypeID:
-      case StructureTypeID: 
-        result = genStructureBinary(Val,genValueAsOperator(Ty));break;
-      default:
-        hlvmAssert(!"Invalid type?");
-        break;
-    }
-  }
-  return result;
+  // Otherwise generate a binary expression
+  return genBinaryExpression(Val,genValueAsOperator(Val->getType()));
 }
 
 static void
@@ -963,7 +1080,7 @@ genFunctionBody(Function* F, unsigned depth)
     }
 
     // Generate the expression
-    Operator* expr = genExpression(theValue,F->getResultType(),depth-1);
+    Operator* expr = genExpression(theValue,depth-1);
 
     // Merge the current value of the autovar result with the generated
     // expression.
@@ -1071,10 +1188,8 @@ GenerateTestCase(const std::string& pubid, const std::string& bundleName)
     // Coalesce the result of the random function into the autovar we
     // created for the result of this block.
     if (Ty->isNumericType()) {
-      Operator* get = 
-        ast->new_GetOp(program->getResultType(),getLocator());
       Operator* cvt = 
-        ast->new_BinaryOp<ConvertOp>(call,get,bundle,getLocator());
+        ast->new_ConvertOp(call,program->getResultType(),getLocator());
       genMergeExpression(result,cvt,B);
     }
   }

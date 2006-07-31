@@ -58,6 +58,14 @@
       <value>int</value>
       <value>long</value>
       <value>octet</value>
+      <value>qs16</value>
+      <value>qs32</value>
+      <value>qs64</value>
+      <value>qs128</value>
+      <value>qu16</value>
+      <value>qu32</value>
+      <value>qu64</value>
+      <value>qu128</value>
       <value>r8</value>
       <value>r16</value>
       <value>r32</value>

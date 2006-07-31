@@ -35,7 +35,10 @@
 namespace hlvm
 {
 
-/// Represents the String insert operator.
+/// Represents an Abstract Syntax Tree node for a string insert operator. This
+/// operator provides editing on a string value. It takes three arguments that
+/// specify the string to be modified, the location of the insertion, and the
+/// string to insert.
 /// @brief HLVM AST String Insert Node
 class StrInsertOp : public TernaryOperator
 {
@@ -53,20 +56,79 @@ class StrInsertOp : public TernaryOperator
     static inline bool classof(const Node* N) { return N->is(StrInsertOpID); }
 
   /// @}
-  /// @name Mutators
-  /// @{
-  public:
+  friend class AST;
+};
 
-  /// @}
-  /// @name Data
+/// Represents an Abstract Syntax Tree node for a string insert operator. This
+/// operator provides editing on a string value. It takes three arguments that
+/// specify the string to be modified, the location of the insertion, and the
+/// string to insert.
+/// @brief HLVM AST String Insert Node
+class StrEraseOp : public TernaryOperator
+{
+  /// @name Constructors
   /// @{
   protected:
+    StrEraseOp() : TernaryOperator(StrEraseOpID) {}
+    virtual ~StrEraseOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const StrEraseOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(StrEraseOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// Represents an Abstract Syntax Tree node for a string insert operator. This
+/// operator provides editing on a string value. It takes four arguments that
+/// specify the string to be modified, the location of the replacement, and the
+/// replacement string.
+/// @brief HLVM AST String Replace Node
+class StrReplaceOp : public MultiOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    StrReplaceOp() : MultiOperator(StrReplaceOpID) {}
+    virtual ~StrReplaceOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const StrReplaceOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(StrReplaceOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// Represents an Abstract Syntax Tree node for a string concatentation 
+/// operator. This operator creates a new string that is the concatenation of
+/// its two operand strings. 
+/// @brief HLVM AST String Concatenation Node
+class StrConcatOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    StrConcatOp() : BinaryOperator(StrConcatOpID) {}
+    virtual ~StrConcatOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const StrConcatOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(StrConcatOpID); }
+
   /// @}
   friend class AST;
 };
 
 } // hlvm
 #endif
-namespace hlvm {
-
-}

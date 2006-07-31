@@ -31,5 +31,9 @@
 
 namespace hlvm {
 
+StrInsertOp::~StrInsertOp() {}
+StrEraseOp::~StrEraseOp() {}
+StrReplaceOp::~StrReplaceOp() {}
+StrConcatOp::~StrConcatOp() {}
 
 }

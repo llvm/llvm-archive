@@ -37,6 +37,7 @@
 #include <hlvm/AST/Arithmetic.h>
 #include <hlvm/AST/RealMath.h>
 #include <hlvm/AST/BooleanOps.h>
+#include <hlvm/AST/StringOps.h>
 #include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Constants.h>
 #include <llvm/Support/Casting.h>
@@ -395,6 +396,14 @@ ValidateImpl::validate(RealType* n)
       if (bits > UINT32_MAX)
         error(n,"Too many bits in RealType");
     }
+}
+
+template<> inline void
+ValidateImpl::validate(RationalType* n)
+{
+  if (checkNode(n))
+    if (!n->is(RationalTypeID))
+      error(n,"Bad ID for RationalType");
 }
 
 template<> inline void
@@ -1175,7 +1184,14 @@ ValidateImpl::validate(PostDecrOp* n)
 template<> inline void
 ValidateImpl::validate(SizeOfOp* n)
 {
-  if (checkOperator(n,SizeOfOpID,2))
+  if (checkOperator(n,SizeOfOpID,1))
+    ;
+}
+
+template<> inline void
+ValidateImpl::validate(LengthOp* n)
+{
+  if (checkOperator(n,LengthOpID,1))
     ;
 }
 
@@ -1184,12 +1200,7 @@ ValidateImpl::validate(ConvertOp* n)
 {
   if (checkOperator(n,ConvertOpID,2)) {
     const Operator* Oprnd1 = n->getOperand(0);
-    const Operator* Oprnd2 = n->getOperand(1);
-    if (const GetOp* RO = dyn_cast<GetOp>(Oprnd2)) {
-      if (!isa<Type>(RO->getReferent()))
-        error(n,"Second operand must be a reference to atype");
-    } else
-      error(n,"Second operand must be a GetOp");
+    /// FIXME: assure type of Oprnd1 is convertible to n->getType();
   }
 }
 
@@ -1404,7 +1415,7 @@ ValidateImpl::validate(IsNInfOp* n)
   if (checkOperator(n,IsNInfOpID,1)) {
     const Type* Ty1 = n->getOperand(0)->getType();
     if (!Ty1->is(RealTypeID))
-      error(n,"IsPInfoOp requires real number operand");
+      error(n,"IsNInfoOp requires real number operand");
   }
 }
 
@@ -1563,6 +1574,34 @@ ValidateImpl::validate(LCMOp* n)
 }
 
 template<> inline void
+ValidateImpl::validate(StrInsertOp* n)
+{
+  if (checkOperator(n,StrInsertOpID,3))
+    ;
+}
+
+template<> inline void
+ValidateImpl::validate(StrEraseOp* n)
+{
+  if (checkOperator(n,StrEraseOpID,3))
+    ;
+}
+
+template<> inline void
+ValidateImpl::validate(StrReplaceOp* n)
+{
+  if (checkOperator(n,StrReplaceOpID,4))
+    ;
+}
+
+template<> inline void
+ValidateImpl::validate(StrConcatOp* n)
+{
+  if (checkOperator(n,StrConcatOpID,2))
+    ;
+}
+
+template<> inline void
 ValidateImpl::validate(OpenOp* n)
 {
   if (checkOperator(n,OpenOpID,1)) {
@@ -1642,7 +1681,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case RangeTypeID:            validate(cast<RangeType>(n)); break;
     case EnumerationTypeID:      validate(cast<EnumerationType>(n)); break;
     case RealTypeID:             validate(cast<RealType>(n)); break;
-    case RationalTypeID:         /*validate(cast<RationalType>(n));*/ break;
+    case RationalTypeID:         validate(cast<RationalType>(n)); break;
     case TextTypeID:             validate(cast<TextType>(n)); break;
     case StringTypeID:           validate(cast<StringType>(n)); break;
     case StreamTypeID:           validate(cast<StreamType>(n)); break;
@@ -1734,15 +1773,16 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case RootOpID:               validate(cast<RootOp>(n)); break;
     case GCDOpID:                validate(cast<GCDOp>(n)); break;
     case LCMOpID:                validate(cast<LCMOp>(n)); break;
-    case LengthOpID:             /*validate(cast<LengthOp>(n)); */ break;
+    case StrInsertOpID:          validate(cast<StrInsertOp>(n)); break;
+    case StrEraseOpID:           validate(cast<StrEraseOp>(n)); break;
+    case StrReplaceOpID:         validate(cast<StrReplaceOp>(n)); break;
+    case StrConcatOpID:          validate(cast<StrConcatOp>(n)); break;
+    case LengthOpID:             validate(cast<LengthOp>(n)); break;
     case OpenOpID:               validate(cast<OpenOp>(n)); break;
     case CloseOpID:              validate(cast<CloseOp>(n)); break;
     case ReadOpID:               validate(cast<ReadOp>(n)); break;
     case WriteOpID:              validate(cast<WriteOp>(n)); break;
     case PositionOpID:           /*validate(cast<PositionOp>(n));*/ break;
-    case PInfOpID:               /*validate(cast<PInfOp>(n)); */ break;
-    case NInfOpID:               /*validate(cast<NInfoOp>(n)); */ break;
-    case NaNOpID:                /*validate(cast<NaNOp>(n)); */ break;
     case ConstantAnyID:          validate(cast<ConstantAny>(n)); break;
     case ConstantBooleanID:      validate(cast<ConstantBoolean>(n)); break;
     case ConstantCharacterID:    validate(cast<ConstantCharacter>(n)); break;

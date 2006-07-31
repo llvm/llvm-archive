@@ -41,6 +41,7 @@
 #include <hlvm/AST/Arithmetic.h>
 #include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/StringOps.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Pass/Pass.h>
 #include <llvm/ADT/StringExtras.h>
@@ -1159,8 +1160,38 @@ template<> void
 XMLWriterImpl::WriterPass::put(const ConvertOp* r)
 {
   startElement("convert");
+  writeAttribute("type",r->getType()->getName());
   putDoc(r);
 }
+
+template<> void
+XMLWriterImpl::WriterPass::put(const StrInsertOp* r)
+{
+  startElement("sinsert");
+  putDoc(r);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const StrEraseOp* r) 
+{
+  startElement("serase");
+  putDoc(r);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const StrReplaceOp* r) 
+{
+  startElement("sreplace");
+  putDoc(r);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const StrConcatOp* r) 
+{
+  startElement("sconcat");
+  putDoc(r);
+}
+
 
 template<> void 
 XMLWriterImpl::WriterPass::put(const Bundle* b)
@@ -1264,6 +1295,10 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case CloseOpID:              put(cast<CloseOp>(n)); break;
       case WriteOpID:              put(cast<WriteOp>(n)); break;
       case ConvertOpID:            put(cast<ConvertOp>(n)); break;
+      case StrInsertOpID:          put(cast<StrInsertOp>(n)); break;
+      case StrEraseOpID:           put(cast<StrEraseOp>(n)); break;
+      case StrReplaceOpID:         put(cast<StrReplaceOp>(n)); break;
+      case StrConcatOpID:          put(cast<StrConcatOp>(n)); break;
       case IsPInfOpID:             put(cast<IsPInfOp>(n)); break;
       case IsNInfOpID:             put(cast<IsNInfOp>(n)); break;
       case IsNanOpID:              put(cast<IsNanOp>(n)); break;

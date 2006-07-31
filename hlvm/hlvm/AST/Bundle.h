@@ -61,6 +61,14 @@ enum IntrinsicTypes {
   intTy,      ///< Signed 32-bit integer quantity
   longTy,     ///< Signed 64-bit integer quantity
   octetTy,    ///< Unsigned 8-bit integer quantity, not computable
+  qs16Ty,     ///< Signed 16-bit rational quantity
+  qs32Ty,     ///< Signed 32-bit rational quantity
+  qs64Ty,     ///< Signed 64-bit rational quantity
+  qs128Ty,    ///< Signed 8-bit rational quantity
+  qu16Ty,     ///< Unsigned 16-bit rational quantity
+  qu32Ty,     ///< Unsigned 32-bit rational quantity
+  qu64Ty,     ///< Unsigned 64-bit rational quantity
+  qu128Ty,    ///< Unsigned 8-bit rational quantity
   r8Ty,       ///< Range checked signed 8-bit integer quantity
   r16Ty,      ///< Range checked signed 16-bit integer quantity
   r32Ty,      ///< Range checked signed 32-bit integer quantity

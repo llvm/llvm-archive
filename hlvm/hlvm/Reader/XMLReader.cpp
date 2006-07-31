@@ -43,6 +43,7 @@
 #include <hlvm/AST/Arithmetic.h>
 #include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/StringOps.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/ADT/StringExtras.h>
 #include <libxml/parser.h>
@@ -957,7 +958,7 @@ XMLReaderImpl::parse<GetOp>(xmlNodePtr& cur)
   Locator* loc = getLocator(cur);
 
   // Find the referrent variable in a block
-  Documentable* referent = 0;
+  Value* referent = 0;
   for (BlockStack::reverse_iterator I = blocks.rbegin(), E = blocks.rend(); 
        I != E; ++I )
   {
@@ -977,17 +978,32 @@ XMLReaderImpl::parse<GetOp>(xmlNodePtr& cur)
   if (!referent)
     referent= bundle->getConst(id);
     
-  // Didn't find a linkable? Try a type.
-  if (!referent)
-    referent = bundle->getType(id);
-  
-  // Didn't find a type? Try an error message for size
+  // Didn't find an constant? Try an error message for size
   if (!referent)
       error(loc,std::string("Referent '") + id + "' not found");
 
   GetOp* refop = ast->AST::new_GetOp(referent, loc);
   checkDoc(cur,refop);
   return refop;
+}
+
+template<> ConvertOp*
+XMLReaderImpl::parse<ConvertOp>(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  std::string typeName (getAttribute(cur,"type",true));
+  Type* Ty = getType(typeName);
+  xmlNodePtr child = cur->children;
+  Documentation* doc = parse<Documentation>(child); 
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    ConvertOp* cnvrt = ast->new_ConvertOp(oprnd1,Ty,loc);
+    if (doc)
+      cnvrt->setDoc(doc);
+    return cnvrt;
+  }
+  hlvmDeadCode("Invalid ConvertOp");
+  return 0;
 }
 
 template<class OpClass>
@@ -1299,7 +1315,10 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_root:         op = parseBinaryOp<RootOp>(cur); break;
       case TKN_GCD:          op = parseBinaryOp<GCDOp>(cur); break;
       case TKN_LCM:          op = parseBinaryOp<LCMOp>(cur); break;
-      case TKN_convert:      op = parseBinaryOp<ConvertOp>(cur); break;
+      case TKN_sinsert:      op = parseTernaryOp<StrInsertOp>(cur); break;
+      case TKN_serase:       op = parseTernaryOp<StrEraseOp>(cur); break;
+      case TKN_sreplace:     op = parseMultiOp<StrReplaceOp>(cur); break;
+      case TKN_sconcat:      op = parseBinaryOp<StrConcatOp>(cur); break;
       case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
       case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
       case TKN_while:        op = parseBinaryOp<WhileOp>(cur); break;
@@ -1319,6 +1338,7 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
       case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
       case TKN_get:          op = parse<GetOp>(cur); break;
+      case TKN_convert:      op = parse<ConvertOp>(cur); break;
       case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
       case TKN_block:        op = parse<Block>(cur); break;
       default:

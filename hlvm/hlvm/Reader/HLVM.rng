@@ -1044,8 +1044,9 @@
 
   <define name="convert.elem">
     <element name="convert">
+      <ref name="Typed_Element.pat"/>
+      <ref name="Documentation.pat"/>
       <ref name="Operators.pat"/>
-      <ref name="Location.pat"/>
     </element>
   </define>
 
@@ -1263,6 +1264,54 @@
       <ref name="BinaryOperator.pat"/>
     </element>
   </define>
+
+  <!-- String Operators -->
+  <define name="StringOperators.pat">
+    <choice>
+      <ref name="sinsert.elem"/>
+      <ref name="serase.elem"/>
+      <ref name="sreplace.elem"/>
+      <ref name="sconcat.elem"/>
+    </choice>
+  </define>
+
+  <define name="sinsert.elem">
+    <element name="sinsert">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+    </element>
+  </define>
+
+  <define name="serase.elem">
+    <element name="serase">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+    </element>
+  </define>
+
+  <define name="sreplace.elem">
+    <element name="sreplace">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+    </element>
+  </define>
+
+  <define name="sconcat.elem">
+    <element name="sconcat">
+      <ref name="Documentation.pat"/>
+      <ref name="Operators.pat"/>
+      <ref name="Operators.pat"/>
+    </element>
+  </define>
+
+  <!-- Control Flow Operators -->
 
   <define name="ControlFlowOps.pat">
     <choice>

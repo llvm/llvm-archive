@@ -225,6 +225,37 @@ RealType::getPrimitiveName() const
   return 0;
 }
 
+RationalType::~RationalType()
+{
+}
+
+const char* 
+RationalType::getPrimitiveName() const
+{
+  if (numer_bits == 32 && denom_bits == 32) {
+    if (isSigned())
+      return "qs64";
+    else
+      return "qu64";
+  } else if (numer_bits == 16 && denom_bits == 16) {
+    if (isSigned())
+      return "qs32";
+    else
+      return "qu32";
+  } else if (numer_bits == 8 && denom_bits == 8) {
+    if (isSigned())
+      return "qs16";
+    else
+      return "qu16";
+  } else if (numer_bits == 64 && denom_bits == 64) {
+    if (isSigned())
+      return "qs128";
+    else
+      return "qu128";
+  }
+  return 0;
+}
+
 OpaqueType::~OpaqueType()
 {
 }

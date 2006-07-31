@@ -42,6 +42,7 @@ PostIncrOp::~PostIncrOp() {}
 PreDecrOp::~PreDecrOp() {}
 PostDecrOp::~PostDecrOp() {}
 SizeOfOp::~SizeOfOp() {}
+LengthOp::~LengthOp() {}
 ConvertOp::~ConvertOp() {}
 AddOp::~AddOp() {}
 SubtractOp::~SubtractOp() {}

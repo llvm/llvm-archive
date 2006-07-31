@@ -134,6 +134,14 @@ Bundle::getIntrinsicTypesValue(const std::string& name)
     case HLVM_AST::TKN_int:             return intTy; break;
     case HLVM_AST::TKN_long:            return longTy; break;
     case HLVM_AST::TKN_octet:           return octetTy; break;
+    case HLVM_AST::TKN_qs16:            return qs16Ty; break;
+    case HLVM_AST::TKN_qs32:            return qs32Ty; break;
+    case HLVM_AST::TKN_qs64:            return qs64Ty; break;
+    case HLVM_AST::TKN_qs128:           return qs128Ty; break;
+    case HLVM_AST::TKN_qu16:            return qu16Ty; break;
+    case HLVM_AST::TKN_qu32:            return qu32Ty; break;
+    case HLVM_AST::TKN_qu64:            return qu64Ty; break;
+    case HLVM_AST::TKN_qu128:           return qu128Ty; break;
     case HLVM_AST::TKN_r8:              return r8Ty; break;
     case HLVM_AST::TKN_r16:             return r16Ty; break;
     case HLVM_AST::TKN_r32:             return r32Ty; break;

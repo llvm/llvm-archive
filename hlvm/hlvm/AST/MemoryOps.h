@@ -230,7 +230,7 @@ class GetOp : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
-    const Documentable* getReferent() const { return referent; }
+    const Value* getReferent() const { return referent; }
     static inline bool classof(const GetOp*) { return true; }
     static inline bool classof(const Node* N) { 
       return N->is(GetOpID); 
@@ -240,13 +240,13 @@ class GetOp : public NilaryOperator
   /// @name Mutators
   /// @{
   public:
-    void setReferent(const Documentable* ref) { referent = ref; }
+    void setReferent(const Value* ref) { referent = ref; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    const Documentable* referent;
+    const Value* referent;
   /// @}
   friend class AST;
 };

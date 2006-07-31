@@ -564,7 +564,7 @@ LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 llvm::Value* 
 LLVMGeneratorPass::getReferent(hlvm::GetOp* r)
 {
-  const hlvm::Documentable* referent = r->getReferent();
+  const hlvm::Value* referent = r->getReferent();
   llvm::Value* v = 0;
   if (llvm::isa<AutoVarOp>(referent)) {
     AutoVarMap::const_iterator I = 
@@ -893,9 +893,7 @@ LLVMGeneratorPass::gen(ConvertOp* op)
   llvm::Value* v1 = popOperand(op1);
   
   // Get the target type
-  hlvm::GetOp* op2 = llvm::cast<GetOp>(op->getOperand(1));
-  const hlvm::Type* tgtTy = llvm::cast<const hlvm::Type>(op2->getReferent());
-  llvm::Value* v2 = popOperand(op2);
+  const hlvm::Type* tgtTy = op->getType();
 
   // Get the source and target types as an llvm type
   const llvm::Type* lsrcTy = getType(srcTy);
@@ -1115,6 +1113,113 @@ LLVMGeneratorPass::gen(LessEqualOp* op)
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
   pushOperand(em.emitLE(op1,op2),op);
+}
+
+template<> void
+LLVMGeneratorPass::gen(IsPInfOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(IsNInfOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(IsNanOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(TruncOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(RoundOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(FloorOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(CeilingOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(LogEOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(Log2Op* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(Log10Op* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(SquareRootOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(CubeRootOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(FactorialOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(PowerOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(RootOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(GCDOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
+}
+
+template<> void
+LLVMGeneratorPass::gen(LCMOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0)); 
+  llvm::Value* op2 = popOperand(op->getOperand(1)); 
 }
 
 template<> void
@@ -1393,6 +1498,9 @@ LLVMGeneratorPass::gen(ResultOp* r)
 {
   // Get the result operand
   llvm::Value* src = popOperand(r->getOperand(0));
+  if (llvm::isa<llvm::AllocaInst>(src))
+    src = em.emitLoad(src,src->getName() + "_load");
+
   // Get the block this result applies to
   hlvm::Block* B = llvm::cast<hlvm::Block>(r->getParent());
   // Get the location into which we will store the result
@@ -1490,7 +1598,7 @@ LLVMGeneratorPass::gen(GetFieldOp* i)
   hlvm::Operator* loc = i->getOperand(0);
   hlvm::Operator* field = i->getOperand(1);
   if (hlvm::GetOp* Ref = llvm::dyn_cast<GetOp>(field)) 
-    if (const hlvm::Documentable* referent = Ref->getReferent())
+    if (const hlvm::Value* referent = Ref->getReferent())
       if (const hlvm::ConstantString* CS = 
            llvm::dyn_cast<ConstantString>(referent)) {
         const std::string& fldName = CS->getValue();
@@ -1799,6 +1907,23 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case GreaterThanOpID:         gen(llvm::cast<GreaterThanOp>(n)); break;
       case GreaterEqualOpID:        gen(llvm::cast<GreaterEqualOp>(n)); break;
       case LessEqualOpID:           gen(llvm::cast<LessEqualOp>(n)); break;
+      case IsPInfOpID:              gen(llvm::cast<IsPInfOp>(n)); break;
+      case IsNInfOpID:              gen(llvm::cast<IsNInfOp>(n)); break;
+      case IsNanOpID:               gen(llvm::cast<IsNanOp>(n)); break;
+      case TruncOpID:               gen(llvm::cast<TruncOp>(n)); break;
+      case RoundOpID:               gen(llvm::cast<RoundOp>(n)); break;
+      case FloorOpID:               gen(llvm::cast<FloorOp>(n)); break;
+      case CeilingOpID:             gen(llvm::cast<CeilingOp>(n)); break;
+      case LogEOpID:                gen(llvm::cast<LogEOp>(n)); break;
+      case Log2OpID:                gen(llvm::cast<Log2Op>(n)); break;
+      case Log10OpID:               gen(llvm::cast<Log10Op>(n)); break;
+      case SquareRootOpID:          gen(llvm::cast<SquareRootOp>(n)); break;
+      case CubeRootOpID:            gen(llvm::cast<CubeRootOp>(n)); break;
+      case FactorialOpID:           gen(llvm::cast<FactorialOp>(n)); break;
+      case PowerOpID:               gen(llvm::cast<PowerOp>(n)); break;
+      case RootOpID:                gen(llvm::cast<RootOp>(n)); break;
+      case GCDOpID:                 gen(llvm::cast<GCDOp>(n)); break;
+      case LCMOpID:                 gen(llvm::cast<LCMOp>(n)); break;
       case SelectOpID:              gen(llvm::cast<SelectOp>(n)); break;
       case SwitchOpID:              gen(llvm::cast<SwitchOp>(n)); break;
       case WhileOpID:               gen(llvm::cast<WhileOp>(n)); break;

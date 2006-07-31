@@ -41,6 +41,7 @@
 #include <hlvm/AST/Arithmetic.h>
 #include <hlvm/AST/BooleanOps.h>
 #include <hlvm/AST/RealMath.h>
+#include <hlvm/AST/StringOps.h>
 #include <hlvm/AST/SymbolTable.h>
 #include <hlvm/Base/Assert.h>
 #include <hlvm/Base/Pool.h>
@@ -751,20 +752,30 @@ AST::new_AutoVarOp(
 }
 
 GetOp* 
-AST::new_GetOp(const Documentable* D, const Locator*loc)
+AST::new_GetOp(const Value* V, const Locator*loc)
 {
-  hlvmAssert(D != 0 && "GetOp must have a Value to reference");
+  hlvmAssert(V != 0 && "GetOp must have a Value to reference");
   GetOp* result = new GetOp();
-  if (llvm::isa<AutoVarOp>(D) || 
-      llvm::isa<Argument>(D) ||
-      llvm::isa<Constant>(D)) {
-    result->setType(llvm::cast<Value>(D)->getType());
-  } else if (llvm::isa<Type>(D)) {
-    result->setType(llvm::cast<Type>(D));
+  if (llvm::isa<AutoVarOp>(V) || 
+      llvm::isa<Argument>(V) ||
+      llvm::isa<Constant>(V)) {
+    result->setType(llvm::cast<Value>(V)->getType());
   } else
     hlvmAssert(!"Invalid referent type");
   result->setLocator(loc);
-  result->setReferent(D);
+  result->setReferent(V);
+  return result;
+}
+
+ConvertOp*
+AST::new_ConvertOp(Operator* V, const Type* Ty, const Locator* loc)
+{
+  hlvmAssert(V != 0 && "ConvertOp must have a Value to convert");
+  hlvmAssert(Ty != 0 && "ConvertOp must have a type to convert the value");
+  ConvertOp* result = new ConvertOp();
+  result->setType(Ty);
+  result->setOperand(V);
+  result->setLocator(loc);
   return result;
 }
 
@@ -945,22 +956,10 @@ AST::new_UnaryOp<SizeOfOp>(const Type* Ty, Operator* op1, const Locator* loc);
 template SizeOfOp*
 AST::new_UnaryOp<SizeOfOp>(Operator* op1, Bundle* B, const Locator* loc);
 
-template ConvertOp*
-AST::new_BinaryOp<ConvertOp>(
-    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
-
-template<> ConvertOp*
-AST::new_BinaryOp(
-  Operator* oprnd1,  ///< The first operand
-  Operator* oprnd2,  ///< The second operand
-  Bundle* B,         ///< The bundle, for type lookup
-  const Locator* loc ///< The source locator
-)
-{
-  GetOp* get = llvm::cast<GetOp>(oprnd2);
-  const Type*  Ty = llvm::cast<Type>(get->getReferent());
-  return new_BinaryOp<ConvertOp>(Ty,oprnd1,oprnd2,loc);
-}
+template LengthOp*
+AST::new_UnaryOp<LengthOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template LengthOp*
+AST::new_UnaryOp<LengthOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template AddOp*
 AST::new_BinaryOp<AddOp>(
@@ -1212,6 +1211,28 @@ AST::new_BinaryOp<InequalityOp>(Operator* op1,Operator* op2,Bundle* B, const Loc
   return AST::new_BinaryOp<InequalityOp>(Ty,op1,op2,loc);
 }
 
+// String Operators
+template StrInsertOp*
+AST::new_TernaryOp<StrInsertOp>(const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
+template StrInsertOp*
+AST::new_TernaryOp<StrInsertOp>(Operator*op1,Operator*op2,Operator*op3,Bundle* B,const Locator* loc);
+
+template StrEraseOp*
+AST::new_TernaryOp<StrEraseOp>(const Type* Ty, Operator*op1,Operator*op2,Operator*op3,const Locator* loc);
+template StrEraseOp*
+AST::new_TernaryOp<StrEraseOp>(Operator*op1,Operator*op2,Operator*op3,Bundle* B,const Locator* loc);
+
+template StrReplaceOp* 
+AST::new_MultiOp<StrReplaceOp>(
+    const Type* Ty, const std::vector<Operator*>& ops, const Locator*loc);
+template StrReplaceOp* 
+AST::new_MultiOp<StrReplaceOp>(const std::vector<Operator*>& ops, Bundle* B, const Locator*loc);
+
+template StrConcatOp*
+AST::new_BinaryOp<StrConcatOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template StrConcatOp*
+AST::new_BinaryOp<StrConcatOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
+
 // Control Flow Operators
 template Block* 
 AST::new_MultiOp<Block>(
@@ -1373,6 +1394,14 @@ AST::new_IntrinsicType(
     case intTy:    result = new IntegerType(32,true); break;
     case longTy:   result = new IntegerType(64,true); break;
     case octetTy:  result = new IntegerType(8,false); break;
+    case qs16Ty:   result = new RationalType(true,8,8); break;
+    case qs32Ty:   result = new RationalType(true,16,16); break;
+    case qs64Ty:   result = new RationalType(true,32,32); break;
+    case qs128Ty:  result = new RationalType(true,64,64); break;
+    case qu16Ty:   result = new RationalType(false,8,8); break;
+    case qu32Ty:   result = new RationalType(false,16,16); break;
+    case qu64Ty:   result = new RationalType(false,32,32); break;
+    case qu128Ty:  result = new RationalType(false,64,64); break;
     case r8Ty:     result = new RangeType(INT8_MIN,INT8_MAX); break;
     case r16Ty:    result = new RangeType(INT16_MIN,INT16_MAX); break;
     case r32Ty:    result = new RangeType(INT32_MIN,INT32_MAX); break;

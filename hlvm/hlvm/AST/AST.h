@@ -56,6 +56,7 @@ class Pool;
 class Operator;
 class AutoVarOp;
 class GetOp;
+class ConvertOp;
 class URI;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It forms the
@@ -504,8 +505,15 @@ class AST : public Node
 
     /// Create a new GetOp.
     GetOp* new_GetOp(
-      const Documentable* D,///< The value or type being referenced
+      const Value* V,       ///< The value being referenced
       const Locator*loc = 0 ///< The source locator
+    );
+
+    /// Create a new ConvertOp.
+    ConvertOp* new_ConvertOp(
+      Operator* oprnd,    ///< The operand to be converted
+      const Type* Ty,     ///< The Type to convert \p V to
+      const Locator* loc  ///< THe source locator
     );
 
     /// Provide a template function for creating standard nilary operators

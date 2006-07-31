@@ -177,7 +177,7 @@ class PostDecrOp : public UnaryOperator
 
 /// This class provides an Abstract Syntax Tree node that represents a 
 /// SizeOf operator. The SizeOfOp is a unary operator that returns the size, in
-/// bytes, of its operand. The value returned is a constant.
+/// bytes, of its operand. The value returned is a constant s32
 /// @brief AST SizeOf Operator Node   
 class SizeOfOp : public UnaryOperator
 {
@@ -199,16 +199,42 @@ class SizeOfOp : public UnaryOperator
 };
 
 /// This class provides an Abstract Syntax Tree node that represents a 
-/// conversion operator. The ConvertOp is a binary operator that converts its
-/// first operand to the type provided in its second operand (which must be
-/// a reference operator to the type).
-/// @brief AST Conversion Operator Node   
-class ConvertOp : public BinaryOperator
+/// length operator. The LengthOp is a unary operator that returns the logical
+/// length of its operand. The value returned is a u64. This operator may be
+/// applied to any type of object. For most types, it returns 1. For arrays,
+/// it returns the actual (dynamic) size of the array. Same for Text and String
+/// type objects. For Structures it returns the number of fields.
+/// @brief AST SizeOf Operator Node   
+class LengthOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    ConvertOp() : BinaryOperator(ConvertOpID)  {}
+    LengthOp() : UnaryOperator(LengthOpID)  {}
+    virtual ~LengthOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const LengthOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(LengthOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents a 
+/// conversion operator. The ConvertOp is a binary operator that converts its
+/// first operand to the type provided in its second operand (which must be
+/// a reference operator to the type).
+/// @brief AST Conversion Operator Node   
+class ConvertOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConvertOp() : UnaryOperator(ConvertOpID)  {}
     virtual ~ConvertOp();
 
   /// @}

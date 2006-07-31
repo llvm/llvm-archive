@@ -146,9 +146,6 @@ FirstOperatorID = BlockID,
 FirstNilaryOperatorID = BreakOpID,
   ContinueOpID,            ///< Continue from start of enclosing loop
   ReturnOpID,              ///< Return to the function's caller
-  PInfOpID,                ///< Constant Positive Infinity Real Value
-  NInfOpID,                ///< Constant Negative Infinity Real Value
-  NaNOpID,                 ///< Constant Not-A-Number Real Value
   GetOpID,                 ///< Obtain value of Variable/Function/Constant
 LastNilaryOperatorID = GetOpID,
 
@@ -248,9 +245,10 @@ LastBinaryOperatorID = CreateContOpID,
   // Ternary Operators
   SelectOpID,                  ///< The select an alternate operator
 FirstTernaryOperatorID = SelectOpID,
-  StrInsertOpID,           ///< Insert(str,where,what)
+  StrInsertOpID,           ///< Insert(str1,where,str2)
   StrEraseOpID,            ///< Erase(str,at,len)
   StrReplaceOpID,          ///< Replace(str,at,len,what)
+  StrConcatOpID,           ///< str3 = Concat(str1,str2)
   PositionOpID,            ///< Position a stream (stream,where,relative-to)
   LoopOpID,                ///< The General Purpose Loop Operator
 LastTernaryOperatorID = LoopOpID,

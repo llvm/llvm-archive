@@ -461,6 +461,73 @@ class RealType : public Type
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a rational
+/// number. All rational numbers are represented by a pair of integers, one for
+/// the numerator and one for the denominator. All integer arithmetic operations
+/// are available on rational numbers. This provides an alternate (and perhaps
+/// more accurate) form of dealing with the subset of real numbers that are
+/// rational.
+/// @brief AST Rational Number Type
+class RationalType : public Type
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    RationalType(bool isSigned = true, uint16_t numer=32, uint16_t denom=32) 
+      : Type(RationalTypeID), numer_bits(numer), denom_bits(denom) 
+    {
+      setSigned(isSigned);
+    }
+    virtual ~RationalType();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    virtual const char* getPrimitiveName() const;
+
+    /// @brief Return the signedness of this type
+    bool isSigned() const { return flags & SignedTF; }
+
+    /// Get the number of numerator bits
+    uint16_t getNumeratorBits() const { return numer_bits; }
+
+    /// Get the number of denominator bits
+    uint16_t getDenominatorBits() const { return denom_bits; }
+
+    /// Get the total number of bits
+    uint32_t getBits() const { 
+      return getNumeratorBits() + getDenominatorBits();
+    }
+
+    // Methods to support type inquiry via is, cast, dyn_cast
+    static inline bool classof(const RationalType*) { return true; }
+    static inline bool classof(const Node* T) { return T->is(RationalTypeID); }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
+    /// @brief Set the signedness of the type
+    void setSigned(bool isSigned) { 
+      if (isSigned) flags |= SignedTF; else flags &= ~SignedTF; }
+
+    /// Set the mantissa bits
+    void setNumeratorBits(uint16_t bits) { numer_bits = bits; }
+
+    /// Set the exponent bits
+    void setDenominatorBits(uint16_t bits) { denom_bits = bits; }
+
+  /// @}
+  /// @name Data
+  /// @{
+  protected:
+    uint16_t numer_bits; ///< Number of bits in numerator
+    uint16_t denom_bits; ///< Number of bits in denominator
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that represents an opaque
 /// type. Opaque types are those whose definition is not known. Opaque types are
 /// used to handle forward type references and recursion within container types.

@@ -6,7 +6,7 @@
     <constant id="10" type="s32"><dec>10</dec></constant>
     <program id="continue">
       <block>
-        <autovar id="count" type="s32" init="10"/>
+        <autovar id="count" type="s32"><get id="10"/></autovar>
         <result>
           <while>
             <ne><get id="1"/><get id="0"/></ne>

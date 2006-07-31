@@ -83,7 +83,7 @@
             <doc>
               <b>This just references the intval constant as the result</b>
             </doc>
-          </ref>
+          </get>
         </result>
         <ret/>
       </block>
@@ -99,7 +99,7 @@
             <doc>
               <b>This just references the intval constant as the result</b>
             </doc>
-          </ref>
+          </get>
         </result>
         <ret/>
       </block>

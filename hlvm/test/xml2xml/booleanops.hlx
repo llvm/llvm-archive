@@ -12,8 +12,12 @@
     </constant>
     <program id="booleanops">
       <block>
-        <autovar id="v1" type="bool" init="true"/>
-        <autovar id="v2" type="bool" init="false"/>
+        <autovar id="v1" type="bool">
+          <get id="true"/>
+        </autovar>
+        <autovar id="v2" type="bool">
+          <get id="false"/>
+        </autovar>
         <not>
           <load>
             <get id="v1"/>

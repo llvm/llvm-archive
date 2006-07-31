@@ -45,7 +45,7 @@ public:
   PassManagerImpl() : PassManager(), pre(), post() {}
   void addPass(Pass* p);
   virtual void runOn(AST* tree);
-  virtual void runOn(AST* tree, Node* startAt);
+  virtual void runOnNode(Node* startAt);
 
   inline void runIfInterested(Pass* p, Node* n, Pass::TraversalKinds m);
   inline void runPreOrder(Node* n);
@@ -190,16 +190,14 @@ void PassManagerImpl::runOn(AST* tree)
 }
 
 void 
-PassManagerImpl::runOn(AST* tree, Node* startAt)
+PassManagerImpl::runOnNode(Node* startAt)
 {
   // Check to make sure startAt is in tree
-  hlvmAssert(tree != 0 && "Can't run passes on null tree");
   hlvmAssert(startAt != 0 && "Can't run passes from null start");
-  Node* parent = startAt;
-  while (parent->getParent() != 0) parent = parent->getParent();
-  hlvmAssert(parent == tree && "Can't run passes on node that isn't in tree");
 
-  if (isa<Bundle>(startAt))
+  if (isa<AST>(startAt))
+    runOn(cast<AST>(startAt));
+  else if (isa<Bundle>(startAt))
     runOn(cast<Bundle>(startAt));
   else if (isa<Block>(startAt))
     runOn(cast<Block>(startAt));
@@ -207,6 +205,8 @@ PassManagerImpl::runOn(AST* tree, Node* startAt)
     runOn(cast<Linkable>(startAt));
   else if (isa<ConstantValue>(startAt))
     runOn(cast<ConstantValue>(startAt));
+  else if (isa<Operator>(startAt))
+    runOn(cast<Operator>(startAt));
   else
     hlvmAssert(!"startAt type not supported");
 }

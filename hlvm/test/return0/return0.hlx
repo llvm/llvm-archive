@@ -5,7 +5,7 @@
     <program id="return0">
       <block>
         <result>
-          <ref id="zero"/>
+          <get id="zero"/>
         </result>
         <ret/>
       </block>

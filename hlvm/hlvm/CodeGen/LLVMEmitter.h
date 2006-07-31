@@ -320,6 +320,12 @@ class LLVMEmitter
       return llvm::BinaryOperator::create(llvm::Instruction::Xor,
         V, getAllOnes(V->getType()), "cmpl", TheBlock);
     }
+    llvm::Constant* emitSizeOf(llvm::Value* V1) {
+      return llvm::ConstantExpr::getSizeOf(V1->getType());
+    }
+    llvm::Constant* emitSizeof(llvm::Type* Ty) {
+      return llvm::ConstantExpr::getSizeOf(Ty);
+    }
     llvm::BinaryOperator* emitAdd(llvm::Value* V1, llvm::Value* V2) {
       return llvm::BinaryOperator::create(llvm::Instruction::Add, 
         V1, V2, "add", TheBlock);
@@ -402,6 +408,13 @@ class LLVMEmitter
     llvm::CallInst* emitCall(llvm::Function* F, const ArgList& args); 
 
     llvm::GetElementPtrInst* emitGEP(llvm::Value* V, const ArgList& indices) {
+      return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
+    }
+
+    llvm::GetElementPtrInst* emitGEP(llvm::Value* V, llvm::Value* index) {
+      ArgList indices;
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      indices.push_back(index);
       return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
     }
 

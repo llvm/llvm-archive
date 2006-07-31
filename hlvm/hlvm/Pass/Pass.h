@@ -126,7 +126,7 @@ class PassManager
     static  PassManager* create();
     virtual void addPass(Pass* p) = 0;
     virtual void runOn(AST* tree) = 0;
-    virtual void runOn(AST* tree, Node* startAt) = 0;
+    virtual void runOnNode(Node* startAt) = 0;
 };
 
 bool validate(AST* tree);

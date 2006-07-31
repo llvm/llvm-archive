@@ -4,7 +4,7 @@
     <program id="progargs">
       <block>
         <result>
-          <ref id="argc"/>
+          <get id="argc"/>
         </result>
         <ret/>
       </block>

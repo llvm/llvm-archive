@@ -16,91 +16,91 @@
         <autovar id="v2" type="bool" init="false"/>
         <not>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
         </not>
         <and>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </and>
         <or>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </or>
         <nor>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </nor>
         <xor>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </xor>
         <eq>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </eq>
         <ne>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </ne>
         <gt>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </gt>
         <lt>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </lt>
         <ge>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </ge>
         <le>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </le>
         <result>
-          <ref id="result"/>
+          <get id="result"/>
         </result>
         <ret/>
       </block>

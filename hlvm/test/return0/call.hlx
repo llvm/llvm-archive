@@ -6,7 +6,7 @@
     <function id="getResult" type="zero_func">
       <block>
         <result>
-          <ref id="zero"/>
+          <get id="zero"/>
         </result>
         <ret/>
       </block>
@@ -16,7 +16,7 @@
       <block>
         <result>
           <call>
-            <ref id="getResult"/>
+            <get id="getResult"/>
           </call>
         </result>
         <ret/>

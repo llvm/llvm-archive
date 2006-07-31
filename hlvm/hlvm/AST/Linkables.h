@@ -153,6 +153,9 @@ class Argument : public Value
   /// @{
   public:
     const std::string& getName() const { return name; }
+    /// Return the 1-based index of this in this function it belongs to. 
+    /// If this is not an argument of any function, returns 0;
+    unsigned getArgNum() const;
     static inline bool classof(const Argument*) { return true; }
     static inline bool classof(const Node* N) { return N->is(ArgumentID); }
 
@@ -212,13 +215,18 @@ class Function : public Linkable
       { return static_cast<const SignatureType*>(type); }
     const Type* getResultType() const 
       { return getSignature()->getResultType();}
-    Value* getArgument(const std::string& name) const;
+    Argument* getArgument(const std::string& name) const;
+    Argument* getArgument(unsigned argnum) const;
+
+    /// Return the 1-based index of the \p arg in this function. If \p arg
+    /// is not an argument of this function, returns 0;
+    unsigned getArgNum(const Argument* arg) const;
 
     static inline bool classof(const Function*) { return true; }
     static inline bool classof(const Node* N) { return N->isFunction(); }
 
   /// @}
-  /// @name Iterators
+  /// @name Argument Iteration
   /// @{
   public:
     iterator         begin()       { return args.begin(); }

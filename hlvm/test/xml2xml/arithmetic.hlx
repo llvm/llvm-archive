@@ -12,97 +12,97 @@
         <autovar id="v1" type="u32"/>
         <autovar id="v2" type="u32"/>
         <preinc>
-          <ref id="v1"/>
+          <get id="v1"/>
         </preinc>
         <postinc>
-          <ref id="v1"/>
+          <get id="v1"/>
         </postinc>
         <postdec>
-          <ref id="v2"/>
+          <get id="v2"/>
         </postdec>
         <predec>
-          <ref id="v2"/>
+          <get id="v2"/>
         </predec>
         <neg>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
         </neg>
         <cmpl>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </cmpl>
         <add>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
-          <ref id="one"/>
+          <get id="one"/>
         </add>
         <sub>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
-          <ref id="one"/>
+          <get id="one"/>
         </sub>
         <mul>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </mul>
         <div>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </div>
         <mod>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </mod>
         <band>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </band>
         <bor>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </bor>
         <bxor>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </bxor>
         <bnor>
           <load>
-            <ref id="v1"/>
+            <get id="v1"/>
           </load>
           <load>
-            <ref id="v2"/>
+            <get id="v2"/>
           </load>
         </bnor>
         <result>
-          <ref id="result"/>
+          <get id="result"/>
         </result>
         <ret/>
       </block>

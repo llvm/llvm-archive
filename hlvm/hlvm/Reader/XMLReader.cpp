@@ -941,26 +941,23 @@ XMLReaderImpl::parse<AutoVarOp>(xmlNodePtr& cur)
   std::string name, type;
   getNameType(cur, name, type);
   const Type* Ty = getType(type);
-  const char* init = getAttribute(cur,"init",false);
-  Constant*initializer = 0;
-  if (init) {
-    initializer = bundle->getConst(init);
-    if (!initializer)
-      error(loc,std::string("Initializer '") + init + "' not found .");
+  AutoVarOp* result = ast->AST::new_AutoVarOp(name,Ty,loc);
+  xmlNodePtr child = checkDoc(cur,result);
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    oprnd1->setParent(result);
   }
-  AutoVarOp* autovar = ast->AST::new_AutoVarOp(name,Ty,initializer,loc);
-  checkDoc(cur,autovar);
-  return autovar;
+  return result;
 }
 
-template<> ReferenceOp*
-XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
+template<> GetOp*
+XMLReaderImpl::parse<GetOp>(xmlNodePtr& cur)
 {
   std::string id = getAttribute(cur,"id");
   Locator* loc = getLocator(cur);
 
   // Find the referrent variable in a block
-  Value* referent = 0;
+  Documentable* referent = 0;
   for (BlockStack::reverse_iterator I = blocks.rbegin(), E = blocks.rend(); 
        I != E; ++I )
   {
@@ -980,11 +977,15 @@ XMLReaderImpl::parse<ReferenceOp>(xmlNodePtr& cur)
   if (!referent)
     referent= bundle->getConst(id);
     
-  // Didn't find a linkable? Try an error message for size
+  // Didn't find a linkable? Try a type.
+  if (!referent)
+    referent = bundle->getType(id);
+  
+  // Didn't find a type? Try an error message for size
   if (!referent)
       error(loc,std::string("Referent '") + id + "' not found");
 
-  ReferenceOp* refop = ast->AST::new_ReferenceOp(referent, loc);
+  GetOp* refop = ast->AST::new_GetOp(referent, loc);
   checkDoc(cur,refop);
   return refop;
 }
@@ -1281,6 +1282,24 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_gt:           op = parseBinaryOp<GreaterThanOp>(cur); break;
       case TKN_ge:           op = parseBinaryOp<GreaterEqualOp>(cur); break;
       case TKN_le:           op = parseBinaryOp<LessEqualOp>(cur); break;
+      case TKN_ispinf:       op = parseUnaryOp<IsPInfOp>(cur); break;
+      case TKN_isninf:       op = parseUnaryOp<IsNInfOp>(cur); break;
+      case TKN_isnan:        op = parseUnaryOp<IsNanOp>(cur); break;
+      case TKN_trunc:        op = parseUnaryOp<TruncOp>(cur); break;
+      case TKN_round:        op = parseUnaryOp<RoundOp>(cur); break;
+      case TKN_floor:        op = parseUnaryOp<FloorOp>(cur); break;
+      case TKN_ceiling:      op = parseUnaryOp<CeilingOp>(cur); break;
+      case TKN_logE:         op = parseUnaryOp<LogEOp>(cur); break;
+      case TKN_log2:         op = parseUnaryOp<Log2Op>(cur); break;
+      case TKN_log10:        op = parseUnaryOp<Log10Op>(cur); break;
+      case TKN_squareroot:   op = parseUnaryOp<SquareRootOp>(cur); break;
+      case TKN_cuberoot:     op = parseUnaryOp<CubeRootOp>(cur); break;
+      case TKN_factorial:    op = parseUnaryOp<FactorialOp>(cur); break;
+      case TKN_power:        op = parseBinaryOp<PowerOp>(cur); break;
+      case TKN_root:         op = parseBinaryOp<RootOp>(cur); break;
+      case TKN_GCD:          op = parseBinaryOp<GCDOp>(cur); break;
+      case TKN_LCM:          op = parseBinaryOp<LCMOp>(cur); break;
+      case TKN_convert:      op = parseBinaryOp<ConvertOp>(cur); break;
       case TKN_select:       op = parseTernaryOp<SelectOp>(cur); break;
       case TKN_switch:       op = parseMultiOp<SwitchOp>(cur); break;
       case TKN_while:        op = parseBinaryOp<WhileOp>(cur); break;
@@ -1299,7 +1318,7 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
       case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
       case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
-      case TKN_ref:          op = parse<ReferenceOp>(cur); break;
+      case TKN_get:          op = parse<GetOp>(cur); break;
       case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
       case TKN_block:        op = parse<Block>(cur); break;
       default:

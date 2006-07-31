@@ -39,14 +39,42 @@ namespace hlvm {
 Linkable::~Linkable() { }
 Variable::~Variable() { }
 Argument::~Argument() { }
+unsigned 
+Argument::getArgNum() const
+{
+  Node* P = getParent();
+  if (!P || !isa<Function>(P))
+    return 0;
+  return cast<Function>(P)->getArgNum(this);
+}
+
 Function::~Function() { }
 
-Value* 
+Argument* 
 Function::getArgument(const std::string& name) const
 {
   for (const_iterator I = begin(), E = end(); I != E ; ++I )
     if ((*I)->getName() == name)
       return (*I);
+  return 0;
+}
+
+Argument* 
+Function::getArgument(unsigned argNum ) const
+{
+  hlvmAssert(argNum < size());
+  return args[argNum];
+}
+
+unsigned
+Function::getArgNum(const Argument* arg) const
+{
+  unsigned num = 1;
+  for (const_iterator I = begin(), E = end(); I != E ; ++I )
+    if ((*I) == arg)
+      return num;
+    else
+      num++;
   return 0;
 }
 

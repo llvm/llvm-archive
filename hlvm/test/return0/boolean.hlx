@@ -13,17 +13,17 @@
               <nor>
                 <or>
                   <xor>
-                    <ref id="true"/>
-                    <ref id="false"/>
+                    <get id="true"/>
+                    <get id="false"/>
                   </xor>
-                  <ref id="false"/>
+                  <get id="false"/>
                 </or>
-                <ref id="true"/>
+                <get id="true"/>
               </nor>
-              <ref id="false"/>
+              <get id="false"/>
             </and>
-            <ref id="one"/>
-            <ref id="zero"/>
+            <get id="one"/>
+            <get id="zero"/>
           </select>
         </result>
         <ret/>

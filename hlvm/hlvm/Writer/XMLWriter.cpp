@@ -705,10 +705,6 @@ XMLWriterImpl::WriterPass::put(const AutoVarOp* av)
   startElement("autovar");
   writeAttribute("id",av->getName());
   writeAttribute("type",av->getType()->getName());
-  if (av->hasInitializer()) {
-    Constant* C = llvm::cast<Constant>(av->getInitializer());
-    writeAttribute("init",C->getName());
-  }
   putDoc(av);
 }
 
@@ -895,6 +891,125 @@ XMLWriterImpl::WriterPass::put(const GreaterEqualOp* op)
 }
 
 template<> void
+XMLWriterImpl::WriterPass::put(const IsPInfOp* op)
+{
+  startElement("ispinf");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const IsNInfOp* op)
+{
+  startElement("isninf");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const IsNanOp* op)
+{
+  startElement("isnan");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const TruncOp* op)
+{
+  startElement("trunc");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const RoundOp* op)
+{
+  startElement("round");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const FloorOp* op)
+{
+  startElement("floor");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const CeilingOp* op)
+{
+  startElement("ceiling");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const LogEOp* op)
+{
+  startElement("loge");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const Log2Op* op)
+{
+  startElement("log2");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const Log10Op* op)
+{
+  startElement("log10");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const SquareRootOp* op)
+{
+  startElement("squareroot");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const CubeRootOp* op)
+{
+  startElement("cuberoot");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const FactorialOp* op)
+{
+  startElement("factorial");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const PowerOp* op)
+{
+  startElement("power");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const RootOp* op)
+{
+  startElement("root");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const GCDOp* op)
+{
+  startElement("GCD");
+  putDoc(op);
+}
+
+template<> void
+XMLWriterImpl::WriterPass::put(const LCMOp* op)
+{
+  startElement("LCM");
+  putDoc(op);
+}
+
+template<> void
 XMLWriterImpl::WriterPass::put(const SelectOp* op)
 {
   startElement("select");
@@ -1000,10 +1115,10 @@ XMLWriterImpl::WriterPass::put(const LoadOp* r)
 }
 
 template<> void 
-XMLWriterImpl::WriterPass::put(const ReferenceOp* r)
+XMLWriterImpl::WriterPass::put(const GetOp* r)
 {
-  startElement("ref");
-  const Value* ref = r->getReferent();
+  startElement("get");
+  const Documentable* ref = r->getReferent();
   std::string name;
   if (isa<AutoVarOp>(ref))
     name = cast<AutoVarOp>(ref)->getName();
@@ -1011,6 +1126,8 @@ XMLWriterImpl::WriterPass::put(const ReferenceOp* r)
     name = cast<Argument>(ref)->getName();
   else if (isa<Constant>(ref))
     name = cast<Constant>(ref)->getName();
+  else if (isa<Type>(ref))
+    name = cast<Type>(ref)->getName();
   else
     name = "oops";
   writeAttribute("id",name);
@@ -1035,6 +1152,13 @@ template<> void
 XMLWriterImpl::WriterPass::put(const CloseOp* r)
 {
   startElement("close");
+  putDoc(r);
+}
+
+template<> void 
+XMLWriterImpl::WriterPass::put(const ConvertOp* r)
+{
+  startElement("convert");
   putDoc(r);
 }
 
@@ -1135,10 +1259,28 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case GetFieldOpID:           put(cast<GetFieldOp>(n)); break;
       case GetIndexOpID:           put(cast<GetIndexOp>(n)); break;
       case LoadOpID:               put(cast<LoadOp>(n)); break;
-      case ReferenceOpID:          put(cast<ReferenceOp>(n)); break;
+      case GetOpID:                put(cast<GetOp>(n)); break;
       case OpenOpID:               put(cast<OpenOp>(n)); break;
       case CloseOpID:              put(cast<CloseOp>(n)); break;
       case WriteOpID:              put(cast<WriteOp>(n)); break;
+      case ConvertOpID:            put(cast<ConvertOp>(n)); break;
+      case IsPInfOpID:             put(cast<IsPInfOp>(n)); break;
+      case IsNInfOpID:             put(cast<IsNInfOp>(n)); break;
+      case IsNanOpID:              put(cast<IsNanOp>(n)); break;
+      case TruncOpID:              put(cast<TruncOp>(n)); break;
+      case RoundOpID:              put(cast<RoundOp>(n)); break;
+      case FloorOpID:              put(cast<FloorOp>(n)); break;
+      case CeilingOpID:            put(cast<CeilingOp>(n)); break;
+      case LogEOpID:               put(cast<LogEOp>(n)); break;
+      case Log2OpID:               put(cast<Log2Op>(n)); break;
+      case Log10OpID:              put(cast<Log10Op>(n)); break;
+      case SquareRootOpID:         put(cast<SquareRootOp>(n)); break;
+      case CubeRootOpID:           put(cast<CubeRootOp>(n)); break;
+      case FactorialOpID:          put(cast<FactorialOp>(n)); break;
+      case PowerOpID:              put(cast<PowerOp>(n)); break;
+      case RootOpID:               put(cast<RootOp>(n)); break;
+      case GCDOpID:                put(cast<GCDOp>(n)); break;
+      case LCMOpID:                put(cast<LCMOp>(n)); break;
       default:
         hlvmDeadCode("Unknown Type");
         break;
@@ -1191,8 +1333,9 @@ XMLWriterImpl::writeNode(Node* node)
 {
   if (!node)
     return;
-  pass.handle(node,Pass::PreOrderTraversal);
-  pass.handle(node,Pass::PostOrderTraversal);
+  PassManager* PM = PassManager::create();
+  PM->addPass(&pass);
+  PM->runOnNode(node);
 }
 #endif
 

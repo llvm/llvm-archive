@@ -995,13 +995,17 @@ template<> inline void
 ValidateImpl::validate(StoreOp* n)
 {
   if (checkOperator(n,StoreOpID,2)) {
-    const Type* Ty1 = n->getOperand(0)->getType();
-    const Type* Ty2 = n->getOperand(1)->getType();
+    Operator* op1 = n->getOperand(0);
+    Operator* op2 = n->getOperand(1);
+    const Type* Ty1 = op1->getType();
+    const Type* Ty2 = op2->getType();
     if (Ty1 != Ty2) {
       error(n,"StoreOp operands do not agree in type");
-    } else if (const ReferenceOp* ref = 
-               dyn_cast<ReferenceOp>(n->getOperand(0))) {
-      const Value* R = ref->getReferent();
+    } else if (isa<AutoVarOp>(op1)) {
+      if (cast<AutoVarOp>(op1)->isConstant()) 
+        error(n,"Can't store to constant automatic variable");
+    } else if (const GetOp* ref = dyn_cast<GetOp>(n->getOperand(0))) {
+      const Documentable* R = ref->getReferent();
       if (isa<Variable>(R) && cast<Variable>(R)->isConstant())
         error(n,"Can't store to constant variable");
       else if (isa<AutoVarOp>(R) && cast<AutoVarOp>(R)->isConstant())
@@ -1044,13 +1048,13 @@ ValidateImpl::validate(AutoVarOp* n)
 }
 
 template<> inline void
-ValidateImpl::validate(ReferenceOp* op)
+ValidateImpl::validate(GetOp* op)
 {
-  if (checkOperator(op,ReferenceOpID,0,true)) {
-    const Value* referent = op->getReferent();
+  if (checkOperator(op,GetOpID,0,true)) {
+    const Documentable* referent = op->getReferent();
     Block* blk = op->getContainingBlock();
     if (!blk)
-      error(op,"ReferenceOp not in a block?");
+      error(op,"GetOp not in a block?");
     else if (const AutoVarOp* ref = dyn_cast<AutoVarOp>(referent)) {
       while (blk != 0) {
         if (AutoVarOp* av = blk->getAutoVar(ref->getName())) 
@@ -1063,15 +1067,21 @@ ValidateImpl::validate(ReferenceOp* op)
     } else if (const Argument* arg = dyn_cast<Argument>(referent)) {
       Function* F = op->getContainingFunction();
       if (!F)
-        error(op,"ReferenceOp not in a function?");
+        error(op,"GetOp not in a function?");
       else if (F->getArgument(arg->getName()) != arg)
         error(F,"Referent does not match function argument");
     } else if (const Constant* cval = dyn_cast<Constant>(referent)) {
       Bundle* B = op->getContainingBundle();
       if (!B)
-        error(op,"ReferenceOp not in a bundle?");
+        error(op,"GetOp not in a bundle?");
       else if (B->getConst(cval->getName()) != cval)
-        error(cval,"Referent does not value found in Bundle");
+        error(cval,"Constant not found in Bundle");
+    } else if (const Type* Ty = dyn_cast<Type>(referent)) {
+      Bundle* B = op->getContainingBundle();
+      if (!B)
+        error(op,"GetOp not in bundle?");
+      else if (B->getType(Ty->getName()) != Ty)
+        error(Ty,"Type not found in Bundle");
     } else {
       error(op,"Referent of unknown kind");
     }
@@ -1102,15 +1112,15 @@ template<> inline void
 ValidateImpl::validate(PreIncrOp* n)
 {
   if (checkOperator(n,PreIncrOpID,1)) {
-    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
-      const Value* V = oprnd->getReferent();
+    if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
+      const Documentable* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
-        if (!V->getType()->isNumericType())
+        if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostIncrOp is not numeric type");
       } else
         ; // Handled elsewhere
     } else 
-      error(n,"Operand of PostIncrOp must be a ReferenceOp");
+      error(n,"Operand of PostIncrOp must be a GetOp");
   }
 }
 
@@ -1118,15 +1128,15 @@ template<> inline void
 ValidateImpl::validate(PostIncrOp* n)
 {
   if (checkOperator(n,PostIncrOpID,1)) {
-    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
-      const Value* V = oprnd->getReferent();
+    if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
+      const Documentable* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
-        if (!V->getType()->isNumericType())
+        if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostIncrOp is not numeric type");
       } else
         ; // Handled elsewhere
     } else 
-      error(n,"Operand of PostIncrOp must be a ReferenceOp");
+      error(n,"Operand of PostIncrOp must be a GetOp");
   }
 }
 
@@ -1134,15 +1144,15 @@ template<> inline void
 ValidateImpl::validate(PreDecrOp* n)
 {
   if (checkOperator(n,PreDecrOpID,1)){
-    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
-      const Value* V = oprnd->getReferent();
+    if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
+      const Documentable* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
-        if (!V->getType()->isNumericType())
+        if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PreDecrOp is not numeric type");
       } else
         ; // Handled elsewhere
     } else 
-      error(n,"Operand of PreDecrOp must be a ReferenceOp");
+      error(n,"Operand of PreDecrOp must be a GetOp");
   }
 }
 
@@ -1150,15 +1160,36 @@ template<> inline void
 ValidateImpl::validate(PostDecrOp* n)
 {
   if (checkOperator(n,PostDecrOpID,1)) {
-    if (ReferenceOp* oprnd = llvm::dyn_cast<ReferenceOp>(n->getOperand(0))) {
-      const Value* V = oprnd->getReferent();
+    if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
+      const Documentable* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
-        if (!V->getType()->isNumericType())
+        if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostDecrOp is not numeric type");
       } else
         ; // Handled elsewhere
     } else 
-      error(n,"Operand of PostDecrOp must be a ReferenceOp");
+      error(n,"Operand of PostDecrOp must be a GetOp");
+  }
+}
+
+template<> inline void
+ValidateImpl::validate(SizeOfOp* n)
+{
+  if (checkOperator(n,SizeOfOpID,2))
+    ;
+}
+
+template<> inline void
+ValidateImpl::validate(ConvertOp* n)
+{
+  if (checkOperator(n,ConvertOpID,2)) {
+    const Operator* Oprnd1 = n->getOperand(0);
+    const Operator* Oprnd2 = n->getOperand(1);
+    if (const GetOp* RO = dyn_cast<GetOp>(Oprnd2)) {
+      if (!isa<Type>(RO->getReferent()))
+        error(n,"Second operand must be a reference to atype");
+    } else
+      error(n,"Second operand must be a GetOp");
   }
 }
 
@@ -1656,7 +1687,7 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case AllocateOpID:           validate(cast<AllocateOp>(n)); break;
     case DeallocateOpID:         validate(cast<DeallocateOp>(n)); break;
     case ReallocateOpID:         /*validate(cast<ReallocateOp>(n));*/ break;
-    case ReferenceOpID:          validate(cast<ReferenceOp>(n)); break;
+    case GetOpID:                validate(cast<GetOp>(n)); break;
     case AutoVarOpID:            validate(cast<AutoVarOp>(n)); break;
     case NegateOpID:             validate(cast<NegateOp>(n)); break;
     case ComplementOpID:         validate(cast<ComplementOp>(n)); break;
@@ -1664,6 +1695,8 @@ ValidateImpl::handle(Node* n,Pass::TraversalKinds k)
     case PostIncrOpID:           validate(cast<PostIncrOp>(n)); break;
     case PreDecrOpID:            validate(cast<PreDecrOp>(n)); break;
     case PostDecrOpID:           validate(cast<PostDecrOp>(n)); break;
+    case SizeOfOpID:             validate(cast<SizeOfOp>(n)); break;
+    case ConvertOpID:            validate(cast<ConvertOp>(n)); break;
     case AddOpID:                validate(cast<AddOp>(n)); break;
     case SubtractOpID:           validate(cast<SubtractOp>(n)); break;
     case MultiplyOpID:           validate(cast<MultiplyOp>(n)); break;

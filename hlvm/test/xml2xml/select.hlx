@@ -15,11 +15,11 @@
         <result>
           <select>
             <ne>
-              <ref id="0"/>
-              <ref id="21"/>
+              <get id="0"/>
+              <get id="21"/>
             </ne>
-            <ref id="42"/>
-            <ref id="21"/>
+            <get id="42"/>
+            <get id="21"/>
           </select>
         </result>
         <ret/>

@@ -175,6 +175,53 @@ class PostDecrOp : public UnaryOperator
   friend class AST;
 };
 
+/// This class provides an Abstract Syntax Tree node that represents a 
+/// SizeOf operator. The SizeOfOp is a unary operator that returns the size, in
+/// bytes, of its operand. The value returned is a constant.
+/// @brief AST SizeOf Operator Node   
+class SizeOfOp : public UnaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    SizeOfOp() : UnaryOperator(SizeOfOpID)  {}
+    virtual ~SizeOfOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const SizeOfOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(SizeOfOpID); }
+
+  /// @}
+  friend class AST;
+};
+
+/// This class provides an Abstract Syntax Tree node that represents a 
+/// conversion operator. The ConvertOp is a binary operator that converts its
+/// first operand to the type provided in its second operand (which must be
+/// a reference operator to the type).
+/// @brief AST Conversion Operator Node   
+class ConvertOp : public BinaryOperator
+{
+  /// @name Constructors
+  /// @{
+  protected:
+    ConvertOp() : BinaryOperator(ConvertOpID)  {}
+    virtual ~ConvertOp();
+
+  /// @}
+  /// @name Accessors
+  /// @{
+  public:
+    static inline bool classof(const ConvertOp*) { return true; }
+    static inline bool classof(const Node* N) { return N->is(ConvertOpID); }
+
+  /// @}
+  friend class AST;
+};
+
 /// This class provides an Abstract Syntax Tree node that represents an operator
 /// to add two quantities. The AddOp is a binary operator that
 /// computes the sum of its two operands and returns that value.

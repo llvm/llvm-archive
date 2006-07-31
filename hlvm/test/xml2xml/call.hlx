@@ -9,10 +9,10 @@
     <program id="return">
       <block>
         <call>
-          <ref id="callee"/>
+          <get id="callee"/>
         </call>
         <result>
-          <ref id="result"/>
+          <get id="result"/>
         </result>
         <ret/>
       </block>

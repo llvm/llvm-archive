@@ -34,7 +34,7 @@ namespace hlvm {
 LoadOp::~LoadOp() {}
 StoreOp::~StoreOp() {}
 AutoVarOp::~AutoVarOp() {}
-ReferenceOp::~ReferenceOp() {}
+GetOp::~GetOp() {}
 GetIndexOp::~GetIndexOp() {}
 GetFieldOp::~GetFieldOp() {}
 

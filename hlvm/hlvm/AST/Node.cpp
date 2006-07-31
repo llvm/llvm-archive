@@ -34,6 +34,8 @@
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 
+using namespace llvm;
+
 namespace hlvm {
 
 Node::~Node()
@@ -48,7 +50,9 @@ Node::getRoot()
     last = p; 
     p = p->parent; 
   }
-  return llvm::cast<AST>(last);
+  if (isa<AST>(last))
+    return cast<AST>(last);
+  return 0;
 }
 
 Bundle*
@@ -58,7 +62,7 @@ Node::getContainingBundle() const
   while (p && !p->is(BundleID)) p = p->getParent();
   if (!p)
     return 0;
-  return llvm::cast<Bundle>(p);
+  return cast<Bundle>(p);
 }
 
 void 

@@ -79,7 +79,7 @@
       <block>
         <doc><i>This block just returns a constant result</i></doc>
         <result>
-          <ref id="s32val">
+          <get id="s32val">
             <doc>
               <b>This just references the intval constant as the result</b>
             </doc>
@@ -95,7 +95,7 @@
       <block>
         <doc>Again, doesn't do much but return a result</doc>
         <result>
-          <ref id="intval">
+          <get id="intval">
             <doc>
               <b>This just references the intval constant as the result</b>
             </doc>

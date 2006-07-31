@@ -13,14 +13,14 @@
             <add>
               <mul>
                 <div>
-                  <ref id="42"/>
-                  <ref id="7"/>
+                  <get id="42"/>
+                  <get id="7"/>
                 </div>
-                <ref id="1"/>
+                <get id="1"/>
               </mul>
-              <ref id="2"/>
+              <get id="2"/>
             </add>
-            <ref id="8"/>
+            <get id="8"/>
           </sub>
         </result>
         <ret/>

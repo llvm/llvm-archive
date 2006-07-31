@@ -55,8 +55,7 @@ class Variable;
 class Pool;
 class Operator;
 class AutoVarOp;
-class ReferenceOp;
-class ConstantReferenceOp;
+class GetOp;
 class URI;
 
 /// This class is used to hold or contain an Abstract Syntax Tree. It forms the
@@ -92,6 +91,10 @@ class AST : public Node
     const std::string& getSystemID() const { return sysid; }
     const std::string& getPublicID() const { return pubid; }
     Pool* getPool() const { return pool; }
+    /// Provide support for isa<X> and friends
+    static inline bool classof(const AST*) { return true; }
+    static inline bool classof(const Node* N) 
+    { return N->is(TreeTopID); }
 
   /// @}
   /// @name Mutators
@@ -433,7 +436,7 @@ class AST : public Node
     /// Create a new ConstantPointer node.
     ConstantPointer* new_ConstantPointer(
       const std::string& name,  ///< The name of the constant
-      Bundle* bundle,         ///< The bundle to insert the type into
+      Bundle* bundle,           ///< The bundle to insert the type into
       const Type* type,         ///< The type of the constant pointer
       Constant* referent,       ///< The value pointed to
       const Locator* loc = 0    ///< The source locator
@@ -496,13 +499,12 @@ class AST : public Node
     AutoVarOp* new_AutoVarOp(
       const std::string& name, ///< Name of the autovar in its scope
       const Type* Ty,          ///< Type of the autovar
-      Constant* init,          ///< Initializer for the autovar
       const Locator* loc       ///< The source locator
     );
 
-    /// Create a new ReferenceOp.
-    ReferenceOp* new_ReferenceOp(
-      const Value* V,       ///< The value being referenced
+    /// Create a new GetOp.
+    GetOp* new_GetOp(
+      const Documentable* D,///< The value or type being referenced
       const Locator*loc = 0 ///< The source locator
     );
 

@@ -26,25 +26,25 @@
     <program id="argscall">
       <block>
         <call>
-          <ref id="none"/>
+          <get id="none"/>
         </call>
         <call>
-          <ref id="one"/>
-          <ref id="answer"/>
+          <get id="one"/>
+          <get id="answer"/>
         </call>
         <call>
-          <ref id="two"/>
-          <ref id="answer"/>
-          <ref id="answer"/>
+          <get id="two"/>
+          <get id="answer"/>
+          <get id="answer"/>
         </call>
         <call>
-          <ref id="va"/>
-          <ref id="answer"/>
-          <ref id="answer"/>
-          <ref id="answer"/>
+          <get id="va"/>
+          <get id="answer"/>
+          <get id="answer"/>
+          <get id="answer"/>
         </call>
         <result>
-          <ref id="result"/>
+          <get id="result"/>
         </result>
         <ret/>
       </block>

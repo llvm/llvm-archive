@@ -12,14 +12,14 @@
             <bnor>
               <bor>
                 <bxor>
-                  <ref id="0f0f0f0f"/>
-                  <ref id="08080808"/>
+                  <get id="0f0f0f0f"/>
+                  <get id="08080808"/>
                 </bxor>
-                <ref id="04040404"/>
+                <get id="04040404"/>
               </bor>
-              <ref id="0f0f0f0f"/>
+              <get id="0f0f0f0f"/>
             </bnor>
-            <ref id="00000000"/>
+            <get id="00000000"/>
           </band>
         </result>
         <ret/>

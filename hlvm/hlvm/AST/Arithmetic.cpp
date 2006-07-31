@@ -28,6 +28,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/Arithmetic.h>
+#include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/Type.h>
+#include <llvm/Support/Casting.h>
 
 namespace hlvm 
 {
@@ -38,6 +41,8 @@ PreIncrOp::~PreIncrOp() {}
 PostIncrOp::~PostIncrOp() {}
 PreDecrOp::~PreDecrOp() {}
 PostDecrOp::~PostDecrOp() {}
+SizeOfOp::~SizeOfOp() {}
+ConvertOp::~ConvertOp() {}
 AddOp::~AddOp() {}
 SubtractOp::~SubtractOp() {}
 MultiplyOp::~MultiplyOp() {}

@@ -149,8 +149,8 @@ FirstNilaryOperatorID = BreakOpID,
   PInfOpID,                ///< Constant Positive Infinity Real Value
   NInfOpID,                ///< Constant Negative Infinity Real Value
   NaNOpID,                 ///< Constant Not-A-Number Real Value
-  ReferenceOpID,           ///< Obtain value of Variable/Function/Constant
-LastNilaryOperatorID = ReferenceOpID,
+  GetOpID,                 ///< Obtain value of Variable/Function/Constant
+LastNilaryOperatorID = GetOpID,
 
   // Control Flow Unary Operators
   ResultOpID,              ///< Specify the result of a block or function
@@ -165,7 +165,8 @@ FirstUnaryOperatorID = ResultOpID,
   PostIncrOpID,            ///< Post-Increment Unary Integer Operator
   PreDecrOpID,             ///< Pre-Decrement Unary Integer Operator
   PostDecrOpID,            ///< Post-Decrement Unary Integer Operator
-  SizeOfID,                ///< Size of a constant
+  SizeOfOpID,              ///< Size of a constant
+  ConvertOpID,             ///< Convert one type to another
 
   // Real Arithmetic Unary Operators
   IsPInfOpID,              ///< Real Number Positive Infinity Test Operator
@@ -317,7 +318,8 @@ class Node
 
     bool isIntegralType()  const { 
       return (id == IntegerTypeID) || (id == RangeTypeID) || 
-        (id == EnumerationTypeID) || (id == BooleanTypeID);  }
+        (id == EnumerationTypeID) || (id == BooleanTypeID) ||
+        (id == CharacterTypeID); }
 
     bool isNumericType() const {
       return isIntegralType() || id == RealTypeID; }

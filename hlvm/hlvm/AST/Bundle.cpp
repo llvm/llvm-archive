@@ -58,8 +58,10 @@ Bundle::insertChild(Node* kid)
       unresolvedTypes.erase(ot);
       // getRoot()->old(ot);
     }
-    tlist.push_back(ty);
-    ttable.insert(ty);
+    if (!ttable.lookup(ty->getName())) {
+      tlist.push_back(ty);
+      ttable.insert(ty);
+    }
   } else if (Constant* C = dyn_cast<Constant>(kid)) {
     clist.push_back(C);
     // Constants without names are permitted, but not Linkables

@@ -174,12 +174,12 @@ class StoreOp : public BinaryOperator
 /// variables may be declared to be constant in which case they must have an
 /// initializer and their value is immutable.
 /// @brief AST Automatic Variable Operator
-class AutoVarOp : public NilaryOperator
+class AutoVarOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    AutoVarOp() : NilaryOperator(AutoVarOpID), name(), initializer(0) {}
+    AutoVarOp() : UnaryOperator(AutoVarOpID), name() {}
     virtual ~AutoVarOp();
 
   /// @}
@@ -187,9 +187,9 @@ class AutoVarOp : public NilaryOperator
   /// @{
   public:
     const std::string& getName() const { return name; }
-    bool hasInitializer() const { return initializer != 0; }
-    Constant* getInitializer() const { return initializer; }
-    bool isZeroInitialized() const { return initializer == 0; }
+    bool hasInitializer() const { return getOperand(0) != 0; }
+    Operator* getInitializer() const { return getOperand(0); }
+    bool isZeroInitialized() const { return getOperand(0) == 0; }
     static inline bool classof(const AutoVarOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(AutoVarOpID); }
 
@@ -198,56 +198,55 @@ class AutoVarOp : public NilaryOperator
   /// @{
   public:
     void setName(const std::string& n) { name = n; }
-    void setInitializer(Constant* C) { initializer = C; }
+    void setInitializer(Operator* init) { setOperand(0,init); }
 
   /// @}
   /// @name Data
   /// @{
   protected:
     std::string name;
-    Constant* initializer;
   /// @}
   friend class AST;
 };
 
 /// This class provides an Abstract Syntax Tree node that represents an operator
-/// for obtaining a value. The operator has no operands but has a property 
-/// that is the Value to be referenced. The Value must be an AutoVarOp or one
-/// of the Linkable (Variable, Constant, Function).  This operator
-/// bridges between non-operator Values and Operators. The result of this
-/// operator is the address of the memory object.  Typically this operator is
+/// for getting a value. The operator has no operands but has a property 
+/// that is the Documentable to be retrieved. The retrieved object must be a
+/// Type, or Linkable (Variable, Constant, Function). This operator bridges
+/// bridges between non-operator Documentables and Operators. The result of this
+/// operator is the address of the object.  Typically this operator is
 /// used as the operand of a LoadOp or StoreOp.
 /// @see Variable AutoVarOp Operator Value Linkable LoadOp StoreOp
 /// @brief AST Reference Operator
-class ReferenceOp : public NilaryOperator
+class GetOp : public NilaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    ReferenceOp() : NilaryOperator(ReferenceOpID) {}
-    virtual ~ReferenceOp();
+    GetOp() : NilaryOperator(GetOpID) {}
+    virtual ~GetOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
-    const Value* getReferent() const { return referent; }
-    static inline bool classof(const ReferenceOp*) { return true; }
+    const Documentable* getReferent() const { return referent; }
+    static inline bool classof(const GetOp*) { return true; }
     static inline bool classof(const Node* N) { 
-      return N->is(ReferenceOpID); 
+      return N->is(GetOpID); 
     }
 
   /// @}
   /// @name Mutators
   /// @{
   public:
-    void setReferent(const Value* ref) { referent = ref; }
+    void setReferent(const Documentable* ref) { referent = ref; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
-    const Value* referent;
+    const Documentable* referent;
   /// @}
   friend class AST;
 };

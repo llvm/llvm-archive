@@ -76,6 +76,15 @@ DisparateContainerType::getPrimitiveName() const
   return 0;
 }
 
+unsigned 
+DisparateContainerType::getFieldIndex(const std::string& fldname) const
+{
+  for (const_iterator I = begin(), E = end(); I != E; ++I )
+    if ((*I)->getName() == fldname)
+      return I - begin() + 1;
+  return 0;
+}
+
 void 
 DisparateContainerType::resolveTypeTo(const Type* from, const Type* to)
 {

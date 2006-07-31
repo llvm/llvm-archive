@@ -9,17 +9,17 @@
         <autovar id="count" type="s32" init="10"/>
         <result>
           <while>
-            <ne><ref id="1"/><ref id="0"/></ne>
+            <ne><get id="1"/><get id="0"/></ne>
             <block>
               <select>
-                <gt><load><ref id="count"/></load><ref id="0"/></gt>
+                <gt><load><get id="count"/></load><get id="0"/></gt>
                 <block>
-                  <postdec><ref id="count"/></postdec>
+                  <postdec><get id="count"/></postdec>
                   <continue/>
                 </block>
                 <break/>
               </select>
-              <result><ref id="1"/></result>
+              <result><get id="1"/></result>
             </block>
           </while>
         </result>

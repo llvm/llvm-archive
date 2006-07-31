@@ -114,11 +114,10 @@ class LLVMGeneratorPass : public hlvm::Pass
   llvm::Constant* getConstant(const hlvm::Constant* C);
   llvm::Value* getVariable(const hlvm::Variable* V);
   llvm::Function* getFunction(const hlvm::Function* F);
+  llvm::Argument* getArgument(const hlvm::Argument* arg);
   inline llvm::GlobalValue::LinkageTypes getLinkageTypes(LinkageKinds lk);
   inline std::string getLinkageName(const Linkable* li);
-  inline llvm::Value* getBoolean(llvm::Value* op);
-  inline llvm::Value* getInteger(llvm::Value* op);
-  inline llvm::Value* getReferent(hlvm::ReferenceOp* r);
+  inline llvm::Value* getReferent(hlvm::GetOp* r);
   inline llvm::Value* toBoolean(llvm::Value* op);
   inline llvm::Value* ptr2Value(llvm::Value* op);
   inline llvm::Value* coerce(llvm::Value* op);
@@ -481,7 +480,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
 }
 
 llvm::Value*
-LLVMGeneratorPass::getVariable(const Variable* V) 
+LLVMGeneratorPass::getVariable(const hlvm::Variable* V) 
 {
   hlvmAssert(V != 0);
   hlvmAssert(V->is(VariableID));
@@ -527,6 +526,26 @@ LLVMGeneratorPass::getFunction(const hlvm::Function* F)
   );
 }
 
+llvm::Argument*
+LLVMGeneratorPass::getArgument(const hlvm::Argument* arg)
+{
+  unsigned argNum = arg->getArgNum();
+  hlvmAssert(argNum != 0);
+  argNum--;
+  hlvm::Function* hF = llvm::cast<hlvm::Function>(arg->getParent());
+  llvm::Function* lF = getFunction(hF);
+  llvm::Function::ArgumentListType& arglist = lF->getArgumentList();
+  // Bump the argument number to accommodate the first argument being
+  // a pointer to the result, if the type of the result is not first-class.
+  if (!getType(hF->getResultType())->isFirstClassType())
+    argNum++;
+  llvm::Function::arg_iterator I = lF->arg_begin(), E = lF->arg_end();
+  for (; I != E && argNum; ++I, --argNum)
+    ;
+  hlvmAssert(I != E);
+  return I;
+}
+
 llvm::GlobalValue::LinkageTypes
 LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 {
@@ -543,9 +562,9 @@ LLVMGeneratorPass::getLinkageTypes(LinkageKinds lk)
 }
 
 llvm::Value* 
-LLVMGeneratorPass::getReferent(hlvm::ReferenceOp* r)
+LLVMGeneratorPass::getReferent(hlvm::GetOp* r)
 {
-  hlvm::Value* referent = const_cast<hlvm::Value*>(r->getReferent());
+  const hlvm::Documentable* referent = r->getReferent();
   llvm::Value* v = 0;
   if (llvm::isa<AutoVarOp>(referent)) {
     AutoVarMap::const_iterator I = 
@@ -566,7 +585,9 @@ LLVMGeneratorPass::getReferent(hlvm::ReferenceOp* r)
     hlvmAssert(F && "Function not found?");
     v = F;
   } else if (llvm::isa<Argument>(referent)) {
-    ;
+    llvm::Argument* arg = getArgument(llvm::cast<hlvm::Argument>(referent));
+    hlvmAssert(arg && "Argument not found?");
+    v = arg;
   } else
     hlvmDeadCode("Referent not a linkable or autovar?");
   return v;
@@ -731,12 +752,12 @@ LLVMGeneratorPass::gen(AutoVarOp* av)
   // alloca is in a block that is in a loop.
   const llvm::Type* elemType = getType(av->getType());
   llvm::Value* alloca = em.NewAutoVar(elemType,av->getName()); 
-  llvm::Constant* C = 0;
+  llvm::Value* init = 0;
   if (av->hasInitializer())
-    C = getConstant(av->getInitializer());
+    init = popOperand(av->getInitializer());
   else
-    C = em.getNullValue(elemType);
-  em.emitAssign(alloca,C);
+    init = em.getNullValue(elemType);
+  em.emitAssign(alloca,init);
   pushOperand(alloca,av);
   lvars[av] = alloca;
 }
@@ -851,6 +872,49 @@ LLVMGeneratorPass::gen(PostDecrOp* op)
     pushOperand(load,op);
   } else {
     hlvmAssert(!"PostDecrOp on non-numeric");
+  }
+}
+
+template<> void
+LLVMGeneratorPass::gen(SizeOfOp* op)
+{
+  llvm::Value* op1 = popOperand(op->getOperand(0));
+  pushOperand(em.emitSizeOf(op1),op);
+}
+
+template<> void
+LLVMGeneratorPass::gen(ConvertOp* op)
+{
+  // Get the value to be converted
+  hlvm::Operator* op1 = op->getOperand(0);
+  // Get the type of the value to be converted
+  const hlvm::Type* srcTy = op1->getType();
+  // Get the llvm Value for the value to be converted
+  llvm::Value* v1 = popOperand(op1);
+  
+  // Get the target type
+  hlvm::GetOp* op2 = llvm::cast<GetOp>(op->getOperand(1));
+  const hlvm::Type* tgtTy = llvm::cast<const hlvm::Type>(op2->getReferent());
+  llvm::Value* v2 = popOperand(op2);
+
+  // Get the source and target types as an llvm type
+  const llvm::Type* lsrcTy = getType(srcTy);
+  const llvm::Type* ltgtTy = getType(tgtTy);
+
+  // First, deal with the easy case of conversion of first class types. This
+  // can just be done with the LLVM cast operator
+  if (lsrcTy->isFirstClassType() && ltgtTy->isFirstClassType()) {
+    pushOperand(em.emitCast(v1,ltgtTy,v1->getName() + "_converted"),op);
+    return;
+  }
+
+  // Okay, this isn't going to be pretty. HLVM gaurantees that an object of
+  // any type is coercible to any other type. The following code makes this
+  // happen.
+  switch (srcTy->getID()) 
+  {
+    default: // FIXME!!
+      hlvmNotImplemented("Conversion of non-first-class types");
   }
 }
 
@@ -1414,7 +1478,7 @@ LLVMGeneratorPass::gen(LoadOp* l)
 }
 
 template<> void
-LLVMGeneratorPass::gen(ReferenceOp* r)
+LLVMGeneratorPass::gen(GetOp* r)
 {
   llvm::Value* referent = getReferent(r);
   pushOperand(referent,r);
@@ -1423,8 +1487,27 @@ LLVMGeneratorPass::gen(ReferenceOp* r)
 template<> void
 LLVMGeneratorPass::gen(GetFieldOp* i)
 {
-  llvm::Value* location = popOperand(i->getOperand(0));
-  llvm::Value* fld = popOperand(i->getOperand(1));
+  hlvm::Operator* loc = i->getOperand(0);
+  hlvm::Operator* field = i->getOperand(1);
+  if (hlvm::GetOp* Ref = llvm::dyn_cast<GetOp>(field)) 
+    if (const hlvm::Documentable* referent = Ref->getReferent())
+      if (const hlvm::ConstantString* CS = 
+           llvm::dyn_cast<ConstantString>(referent)) {
+        const std::string& fldName = CS->getValue();
+        const DisparateContainerType* DCT = 
+          llvm::cast<DisparateContainerType>(loc->getType());
+        unsigned index = DCT->getFieldIndex(fldName);
+        hlvmAssert(index != 0 && "Invalid field name");
+        llvm::Constant* idx = llvm::ConstantUInt::get(llvm::Type::UIntTy,index);
+        llvm::Value* location = popOperand(loc);
+        pushOperand(em.emitGEP(location,idx),i);
+        return;
+      }
+
+  // The operand is not a constant string. We must look the field up at runtime
+  hlvmNotImplemented("Lookup of field at runtime");
+  llvm::Value* location = popOperand(loc);
+  llvm::Value* fld = popOperand(field);
 }
 
 template<> void
@@ -1432,6 +1515,7 @@ LLVMGeneratorPass::gen(GetIndexOp* i)
 {
   llvm::Value* location = popOperand(i->getOperand(0));
   llvm::Value* index = popOperand(i->getOperand(1));
+  pushOperand(em.emitGEP(location,index),i);
 }
 
 template<> void
@@ -1693,6 +1777,8 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case PreDecrOpID:             gen(llvm::cast<PreDecrOp>(n)); break;
       case PostIncrOpID:            gen(llvm::cast<PostIncrOp>(n)); break;
       case PostDecrOpID:            gen(llvm::cast<PostDecrOp>(n)); break;
+      case SizeOfOpID:              gen(llvm::cast<SizeOfOp>(n)); break;
+      case ConvertOpID:             gen(llvm::cast<ConvertOp>(n)); break;
       case AddOpID:                 gen(llvm::cast<AddOp>(n)); break;
       case SubtractOpID:            gen(llvm::cast<SubtractOp>(n)); break;
       case MultiplyOpID:            gen(llvm::cast<MultiplyOp>(n)); break;
@@ -1726,7 +1812,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case CallOpID:                gen(llvm::cast<CallOp>(n)); break;
       case LoadOpID:                gen(llvm::cast<LoadOp>(n)); break;
       case StoreOpID:               gen(llvm::cast<StoreOp>(n)); break;
-      case ReferenceOpID:           gen(llvm::cast<ReferenceOp>(n)); break;
+      case GetOpID:                 gen(llvm::cast<GetOp>(n)); break;
       case AutoVarOpID:             gen(llvm::cast<AutoVarOp>(n)); break;
       case OpenOpID:                gen(llvm::cast<OpenOp>(n)); break;
       case CloseOpID:               gen(llvm::cast<CloseOp>(n)); break;

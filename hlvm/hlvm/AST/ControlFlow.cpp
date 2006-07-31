@@ -84,9 +84,9 @@ CallOp::~CallOp() {}
 Function* 
 CallOp::getCalledFunction() const
 {
-  hlvmAssert(isa<ReferenceOp>(getOperand(0)));
-  ReferenceOp* refop = cast<ReferenceOp>(getOperand(0));
-  const Value* referent = refop->getReferent();
+  hlvmAssert(isa<GetOp>(getOperand(0)));
+  GetOp* refop = cast<GetOp>(getOperand(0));
+  const Documentable* referent = refop->getReferent();
   hlvmAssert(isa<Function>(referent));
   return const_cast<Function*>(cast<Function>(referent));
 }

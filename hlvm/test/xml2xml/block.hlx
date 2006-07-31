@@ -17,19 +17,19 @@
             <block>
               <result>
                 <ne>
-                  <ref id="0"/>
-                  <ref id="21"/>
+                  <get id="0"/>
+                  <get id="21"/>
                 </ne>
               </result>
             </block>
             <block>
               <result>
-                <ref id="42"/>
+                <get id="42"/>
               </result>
             </block>
             <block>
               <result>
-                <ref id="21"/>
+                <get id="21"/>
               </result>
             </block>
           </select>

@@ -13,17 +13,17 @@
             <block>
               <result>
                 <select>
-                  <ne><ref id="42"/><ref id="21"/></ne>
-                  <ref id="true"/>
-                  <ref id="false"/>
+                  <ne><get id="42"/><get id="21"/></ne>
+                  <get id="true"/>
+                  <get id="false"/>
                 </select>
               </result>
             </block>
             <block>
-              <result><ref id="0"/></result>
+              <result><get id="0"/></result>
             </block>
             <block>
-              <result><ref id="42"/></result>
+              <result><get id="42"/></result>
             </block>
           </select>
         </result>

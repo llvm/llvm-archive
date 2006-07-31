@@ -29,20 +29,20 @@
       <block>
         <result>
           <switch>
-            <ref id="42"/>
-            <ref id="42"/>
-            <ref id="1"/>
-            <ref id="1"/>
-            <ref id="2"/>
-            <ref id="2"/>
-            <ref id="3"/>
-            <ref id="3"/>
-            <ref id="4"/>
-            <ref id="4"/>
-            <ref id="5"/>
-            <ref id="5"/>
-            <ref id="42"/>
-            <ref id="21"/>
+            <get id="42"/>
+            <get id="42"/>
+            <get id="1"/>
+            <get id="1"/>
+            <get id="2"/>
+            <get id="2"/>
+            <get id="3"/>
+            <get id="3"/>
+            <get id="4"/>
+            <get id="4"/>
+            <get id="5"/>
+            <get id="5"/>
+            <get id="42"/>
+            <get id="21"/>
           </switch>
         </result>
         <ret/>

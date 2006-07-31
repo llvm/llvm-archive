@@ -740,32 +740,31 @@ AutoVarOp*
 AST::new_AutoVarOp(
     const std::string& name, 
     const Type* Ty, 
-    Constant* init,
     const Locator* loc)
 {
   hlvmAssert(Ty != 0 && "AutoVarOp must have a Type!");
   AutoVarOp* result = new AutoVarOp();
   result->setType(Ty);
   result->setLocator(loc);
-  result->setInitializer(init);
   result->setName(name);
   return result;
 }
 
-ReferenceOp* 
-AST::new_ReferenceOp(const Value* V, const Locator*loc)
+GetOp* 
+AST::new_GetOp(const Documentable* D, const Locator*loc)
 {
-  hlvmAssert(V != 0 && "ReferenceOp must have a Value to reference");
-  ReferenceOp* result = new ReferenceOp();
-  const Type* refType = V->getType();
-  if (llvm::isa<AutoVarOp>(V) || 
-      llvm::isa<Argument>(V) ||
-      llvm::isa<Constant>(V))
-    result->setType(refType);
-  else
+  hlvmAssert(D != 0 && "GetOp must have a Value to reference");
+  GetOp* result = new GetOp();
+  if (llvm::isa<AutoVarOp>(D) || 
+      llvm::isa<Argument>(D) ||
+      llvm::isa<Constant>(D)) {
+    result->setType(llvm::cast<Value>(D)->getType());
+  } else if (llvm::isa<Type>(D)) {
+    result->setType(llvm::cast<Type>(D));
+  } else
     hlvmAssert(!"Invalid referent type");
   result->setLocator(loc);
-  result->setReferent(V);
+  result->setReferent(D);
   return result;
 }
 
@@ -826,7 +825,7 @@ AST::new_BinaryOp(
 )
 {
   hlvmAssert(oprnd1 != 0 && "Invalid Operand for BinaryOp");
-  hlvmAssert(oprnd2 != 0 && "Invalid Operand for BinUnaryOp");
+  hlvmAssert(oprnd2 != 0 && "Invalid Operand for BinaryOp");
   OpClass* result = new OpClass();
   result->setLocator(loc);
   result->setType(Ty);
@@ -932,16 +931,36 @@ template PreDecrOp*
 AST::new_UnaryOp<PreDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PostIncrOp*
-AST::new_UnaryOp<PostIncrOp>(
-    const Type* Ty, Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PostIncrOp>(const Type* Ty, Operator* op1, const Locator* loc);
 template PostIncrOp*
 AST::new_UnaryOp<PostIncrOp>(Operator* op1, Bundle* B, const Locator* loc);
 
 template PostDecrOp*
-AST::new_UnaryOp<PostDecrOp>(
-    const Type* Ty, Operator* op1, const Locator* loc);
+AST::new_UnaryOp<PostDecrOp>(const Type* Ty, Operator* op1, const Locator* loc);
 template PostDecrOp*
 AST::new_UnaryOp<PostDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template SizeOfOp*
+AST::new_UnaryOp<SizeOfOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template SizeOfOp*
+AST::new_UnaryOp<SizeOfOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template ConvertOp*
+AST::new_BinaryOp<ConvertOp>(
+    const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+
+template<> ConvertOp*
+AST::new_BinaryOp(
+  Operator* oprnd1,  ///< The first operand
+  Operator* oprnd2,  ///< The second operand
+  Bundle* B,         ///< The bundle, for type lookup
+  const Locator* loc ///< The source locator
+)
+{
+  GetOp* get = llvm::cast<GetOp>(oprnd2);
+  const Type*  Ty = llvm::cast<Type>(get->getReferent());
+  return new_BinaryOp<ConvertOp>(Ty,oprnd1,oprnd2,loc);
+}
 
 template AddOp*
 AST::new_BinaryOp<AddOp>(
@@ -996,6 +1015,92 @@ AST::new_BinaryOp<BNorOp>(
     const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
 template BNorOp*
 AST::new_BinaryOp<BNorOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
+
+// Real Operators
+template IsPInfOp*
+AST::new_UnaryOp<IsPInfOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template IsPInfOp*
+AST::new_UnaryOp<IsPInfOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template IsNInfOp*
+AST::new_UnaryOp<IsNInfOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template IsNInfOp*
+AST::new_UnaryOp<IsNInfOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template IsNanOp*
+AST::new_UnaryOp<IsNanOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template IsNanOp*
+AST::new_UnaryOp<IsNanOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template TruncOp*
+AST::new_UnaryOp<TruncOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template TruncOp*
+AST::new_UnaryOp<TruncOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template RoundOp*
+AST::new_UnaryOp<RoundOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template RoundOp*
+AST::new_UnaryOp<RoundOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template FloorOp*
+AST::new_UnaryOp<FloorOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template FloorOp*
+AST::new_UnaryOp<FloorOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template CeilingOp*
+AST::new_UnaryOp<CeilingOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template CeilingOp*
+AST::new_UnaryOp<CeilingOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template LogEOp*
+AST::new_UnaryOp<LogEOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template LogEOp*
+AST::new_UnaryOp<LogEOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template Log2Op*
+AST::new_UnaryOp<Log2Op>(const Type* Ty, Operator* op1, const Locator* loc);
+template Log2Op*
+AST::new_UnaryOp<Log2Op>(Operator* op1, Bundle* B, const Locator* loc);
+
+template Log10Op*
+AST::new_UnaryOp<Log10Op>(const Type* Ty, Operator* op1, const Locator* loc);
+template Log10Op*
+AST::new_UnaryOp<Log10Op>(Operator* op1, Bundle* B, const Locator* loc);
+
+template SquareRootOp*
+AST::new_UnaryOp<SquareRootOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template SquareRootOp*
+AST::new_UnaryOp<SquareRootOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template CubeRootOp*
+AST::new_UnaryOp<CubeRootOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template CubeRootOp*
+AST::new_UnaryOp<CubeRootOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template FactorialOp*
+AST::new_UnaryOp<FactorialOp>(const Type* Ty, Operator* op1, const Locator* loc);
+template FactorialOp*
+AST::new_UnaryOp<FactorialOp>(Operator* op1, Bundle* B, const Locator* loc);
+
+template PowerOp*
+AST::new_BinaryOp<PowerOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template PowerOp*
+AST::new_BinaryOp<PowerOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
+
+template RootOp*
+AST::new_BinaryOp<RootOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template RootOp*
+AST::new_BinaryOp<RootOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
+
+template GCDOp*
+AST::new_BinaryOp<GCDOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template GCDOp*
+AST::new_BinaryOp<GCDOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
+
+template LCMOp*
+AST::new_BinaryOp<LCMOp>(const Type* Ty, Operator* op1, Operator* op2, const Locator* loc);
+template LCMOp*
+AST::new_BinaryOp<LCMOp>(Operator* op1, Operator* op2, Bundle* B, const Locator* loc);
 
 // Boolean Operators
 template NotOp*

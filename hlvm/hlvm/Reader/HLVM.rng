@@ -500,7 +500,7 @@
       <ref name="vect.elem"/>
       <ref name="struct.elem"/>
       <ref name="cont.elem"/>
-      <ref name="cref.elem"/>
+      <ref name="get.elem"/>
     </choice>
   </define>
 
@@ -636,13 +636,6 @@
     </element>
   </define>
 
-  <define name="cref.elem">
-    <element name="ref">
-      <ref name="Named_Element.pat"/>
-      <ref name="Documentation.pat"/>
-    </element>
-  </define>
-
   <!-- PATTERNS FOR VARIABLES-->
 
   <define name="variable.elem">
@@ -723,6 +716,8 @@
       <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
+      <ref name="UnaryRealMathOperators.pat"/>
+      <ref name="BinaryRealMathOperators.pat"/>
     </choice>
   </define>
 
@@ -734,6 +729,8 @@
       <ref name="BooleanOperators.pat"/>
       <ref name="UnaryArithmeticOperators.pat"/>
       <ref name="BinaryArithmeticOperators.pat"/>
+      <ref name="UnaryRealMathOperators.pat"/>
+      <ref name="BinaryRealMathOperators.pat"/>
       <ref name="MemoryOps.pat"/>
       <ref name="InputOutputOps.pat"/>
       <ref name="ControlFlowOps.pat"/>
@@ -760,7 +757,7 @@
 
   <define name="Location.pat">
     <choice>
-      <ref name="ref.elem"/>
+      <ref name="get.elem"/>
       <ref name="getfld.elem"/>
       <ref name="getidx.elem"/>
     </choice>
@@ -822,12 +819,12 @@
       <ref name="getidx.elem"/>
       <ref name="length.elem"/>
       <ref name="autovar.elem"/>
-      <ref name="ref.elem"/>
+      <ref name="get.elem"/>
     </choice>
   </define>
 
-  <define name="ref.elem">
-    <element name="ref">
+  <define name="get.elem">
+    <element name="get">
       <ref name="Named_Element.pat"/>
       <ref name="Documentation.pat"/>
     </element>
@@ -874,12 +871,10 @@
   <define name="autovar.elem">
     <element name="autovar">
       <ref name="Named_Typed_Element.pat"/>
-      <optional>
-        <attribute name="init">
-          <ref name="Identifier.type"/>
-        </attribute>
-      </optional>
       <ref name="Documentation.pat"/>
+      <optional>
+        <ref name="Operators.pat"/>
+      </optional>
     </element>
   </define>
 
@@ -954,25 +949,25 @@
 
   <define name="preinc.elem">
     <element name="preinc">
-      <ref name="ref.elem"/>
+      <ref name="Location.pat"/>
     </element>
   </define>
 
   <define name="predec.elem">
     <element name="predec">
-      <ref name="ref.elem"/>
+      <ref name="Location.pat"/>
     </element>
   </define>
 
   <define name="postinc.elem">
     <element name="postinc">
-      <ref name="ref.elem"/>
+      <ref name="Location.pat"/>
     </element>
   </define>
 
   <define name="postdec.elem">
     <element name="postdec">
-      <ref name="ref.elem"/>
+      <ref name="Location.pat"/>
     </element>
   </define>
 
@@ -989,6 +984,7 @@
       <ref name="bor.elem"/>
       <ref name="bxor.elem"/>
       <ref name="bnor.elem"/>
+      <ref name="convert.elem"/>
     </choice>
   </define>
 
@@ -1042,6 +1038,144 @@
 
   <define name="bnor.elem">
     <element name="bnor">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="convert.elem">
+    <element name="convert">
+      <ref name="Operators.pat"/>
+      <ref name="Location.pat"/>
+    </element>
+  </define>
+
+  <!-- Unary Real Math Operators -->
+  <define name="UnaryRealMathOperators.pat">
+    <choice>
+      <ref name="ispinf.elem"/>
+      <ref name="isninf.elem"/>
+      <ref name="isnan.elem"/>
+      <ref name="trunc.elem"/>
+      <ref name="round.elem"/>
+      <ref name="floor.elem"/>
+      <ref name="ceiling.elem"/>
+      <ref name="logE.elem"/>
+      <ref name="log2.elem"/>
+      <ref name="log10.elem"/>
+      <ref name="squareroot.elem"/>
+      <ref name="cuberoot.elem"/>
+      <ref name="factorial.elem"/>
+    </choice>
+  </define>
+
+  <define name="ispinf.elem">
+    <element name="ispinf">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="isninf.elem">
+    <element name="isninf">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="isnan.elem">
+    <element name="isnan">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="trunc.elem">
+    <element name="trunc">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="round.elem">
+    <element name="round">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="floor.elem">
+    <element name="floor">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="ceiling.elem">
+    <element name="ceiling">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="logE.elem">
+    <element name="logE">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="log2.elem">
+    <element name="log2">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="log10.elem">
+    <element name="log10">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="squareroot.elem">
+    <element name="squareroot">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="cuberoot.elem">
+    <element name="cuberoot">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="factorial.elem">
+    <element name="factorial">
+      <ref name="UnaryOperator.pat"/>
+    </element>
+  </define>
+
+  <!-- Binary Real Math Operators -->
+  <define name="BinaryRealMathOperators.pat">
+    <choice>
+      <ref name="power.elem"/>
+      <ref name="root.elem"/>
+      <ref name="GCD.elem"/>
+      <ref name="LCM.elem"/>
+    </choice>
+  </define>
+
+  <define name="power.elem">
+    <element name="power">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="root.elem">
+    <element name="root">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="GCD.elem">
+    <element name="GCD">
+      <ref name="BinaryOperator.pat"/>
+    </element>
+  </define>
+
+  <define name="LCM.elem">
+    <element name="LCM">
       <ref name="BinaryOperator.pat"/>
     </element>
   </define>

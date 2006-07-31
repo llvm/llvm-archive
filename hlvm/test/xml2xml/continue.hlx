@@ -10,14 +10,14 @@
     <program id="return">
       <block>
         <loop>
-          <ref id="true"/>
+          <get id="true"/>
           <block>
             <continue/>
           </block>
-          <ref id="true"/>
+          <get id="true"/>
         </loop>
         <result>
-          <ref id="result"/>
+          <get id="result"/>
         </result>
         <ret/>
       </block>

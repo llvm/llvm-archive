@@ -14,24 +14,24 @@
       <block>
         <autovar id="out" type="stream"/>
         <store>
-          <ref id="out"/>
+          <get id="out"/>
           <open>
-            <ref id="stdout"/>
+            <get id="stdout"/>
           </open>
         </store>
         <write>
           <load>
-            <ref id="out"/>
+            <get id="out"/>
           </load>
-          <ref id="hw"/>
+          <get id="hw"/>
         </write>
         <close>
           <load>
-            <ref id="out"/>
+            <get id="out"/>
           </load>
         </close>
         <result>
-          <ref id="0"/>
+          <get id="0"/>
         </result>
         <ret/>
       </block>

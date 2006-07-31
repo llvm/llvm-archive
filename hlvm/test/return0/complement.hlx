@@ -8,7 +8,7 @@
           <cmpl>
             <cmpl>
               <load>
-                <ref id="v"/>
+                <get id="v"/>
               </load>
             </cmpl>
           </cmpl>

@@ -15,18 +15,18 @@
       <block>
         <autovar id="out" type="stream"></autovar>
         <store>
-          <ref id="out"/>
-          <open><ref id="stdout"/></open>
+          <get id="out"/>
+          <open><get id="stdout"/></open>
         </store>
         <write>
-          <load><ref id="out"/></load>
-          <ref id="hw"/>
+          <load><get id="out"/></load>
+          <get id="hw"/>
         </write>
         <close>
-          <load><ref id="out"/></load>
+          <load><get id="out"/></load>
         </close>
         <result>
-          <ref id="zero"/>
+          <get id="zero"/>
         </result>
         <ret/>
       </block>

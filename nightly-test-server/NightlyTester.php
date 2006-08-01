@@ -183,6 +183,7 @@ function get_file_history($mysql_link, $machine_id, $file_name){
 		$file_query = mysql_query($file_select);
 		$file_array = mysql_fetch_array($file_query);
 		if(isset($file_array['file'])){
+          $file_array['size']=array();
 		  array_unshift($file_array['size'], "{$row['added']}");
 		  array_push($result, $file_array['size']);
 		}//end if

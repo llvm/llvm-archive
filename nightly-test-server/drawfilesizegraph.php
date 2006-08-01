@@ -3,7 +3,7 @@ include("jpgraph/jpgraph.php");
 include("jpgraph/jpgraph_line.php");
 include("jpgraph/jpgraph_utils.inc");
 include("jpgraph/jpgraph_date.php");
-include("ProgramResults.php");
+include("NightlyTester2.php");
 
 $DEBUG=0;
 
@@ -41,7 +41,7 @@ function printErrorMsg( $error_string , $DEBUG ){
  *
  ********************************/
 
-$resultsgraphlink=mysql_connect("localhost","llvm","ll2002vm");
+$mysql_link=mysql_connect("localhost","llvm","ll2002vm");
 mysql_select_db("nightlytestresults");
 
 /********************************
@@ -57,7 +57,7 @@ $error_msg="";
 if(isset($HTTP_GET_VARS['files'])){
 	$files=$HTTP_GET_VARS['files'];
 }
-else{$URL_ERROR=1;$error_msg="no value for program";}
+else{$URL_ERROR=1;$error_msg="no value for files";}
 
 if(isset($HTTP_GET_VARS['xsize'])){
 	$xsize=$HTTP_GET_VARS['xsize'];
@@ -185,39 +185,54 @@ $RELEVANT_DATA=0;
 $index=0;
 foreach ($files as $file){
 
-	$data = get_file_history($mysql_link, $machine_id, $file)
+  $data = get_file_history($mysql_link, $machine_id, $file);
 
-	$xdata=array();
-	$values=array();
-	$data_max=-1;
+  if($DEBUG){
+    print "get_file_history($mysql_link, $machine_id, $file) returned...<br>\n";
+    foreach (array_keys($data) as $x){
+      print "$x {$data["$x"][0]} {$data["$x"][1]} {$data["$x"][2]}<br>\n";
+    }
+  }
 
-	foreach ($data as $d){
-		push_array($xdata, $d[0]);
-		if($d[2] > $data_max){ $data_max=$d[2]; }
-		push_array($values, $d[2]);
-	}
-
-	if($NORMALIZE){
-		for($i=0; $i<sizeof($values); $i++){
-			if(is_numeric($values[$i])){
-				$values[$i]=$values[$i]/$data_max;
-			}#end if
-		}#end for
-	}#end if
+  $xdata=array();
+  $values=array();
+  $data_max=-1;
 	
+  foreach (array_keys($data) as $d){
+    if($data["$d"][1]>0){
+      preg_match("/(\d\d\d\d)\-(\d\d)\-(\d\d)\s(\d\d)\:(\d\d)\:(\d\d)/", $d, $pjs);
+      $seconds = mktime($pjs[4], $pjs[5], $pjs[6], $pjs[2], $pjs[3],$pjs[1]);
+      array_push($xdata, $seconds);
+      if($data["$d"][1] > $data_max){ $data_max=$data["$d"][1]; }
+      if($DEBUG){
+        print "adding $seconds => {$data["$d"][1]}<br>\n";
+      }
+      array_push($values, $data["$d"][1]);
+      $RELEVANT_DATA++;
+    }
+  }
+ 
+  if($NORMALIZE){
+    for($i=0; $i<sizeof($values); $i++){
+      if(is_numeric($values[$i])){
+	$values[$i] = $values[$i] / $data_max;
+      }#end if
+}#end for
+}#end if
 
-	$line_arr[$index] = new LinePlot($values, $xdata);
-	$line_arr[$index]->SetLegend("$file");
-	if($SHOWDATA==1){
-		$line_arr[$index]->value->Show();
-	}
-	if($SHOWPOINTS==1){
-		$line_arr[$index]->mark->SetType(MARK_UTRIANGLE);
-	}
-	$color_index=$index % sizeof($color_arr);
-	$line_arr[$index]->SetColor($color_arr[$color_index]);
-	$graph->Add($line_arr[$index]);
-	$index++;
+			
+  $line_arr[$index] = new LinePlot($values, $xdata);
+  $line_arr[$index]->SetLegend("$file");
+  if($SHOWDATA==1){
+    $line_arr[$index]->value->Show();
+  }
+  if($SHOWPOINTS==1){
+    $line_arr[$index]->mark->SetType(MARK_UTRIANGLE);
+  }
+  $color_index=$index % sizeof($color_arr);
+  $line_arr[$index]->SetColor($color_arr[$color_index]);
+  $graph->Add($line_arr[$index]);
+  $index++;
 }#end foreach
 
 if($RELEVANT_DATA==0){

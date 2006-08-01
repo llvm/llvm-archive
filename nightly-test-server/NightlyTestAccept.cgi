@@ -453,7 +453,7 @@ my $o_file_size = param('o_file_sizes');
 	 chomp($o_file_size);
 my @O_FILE_SIZE = split $spliton, $o_file_size;
 my $a_file_size = param('a_file_sizes'); 
-   $a_file_size="" unless $o_file_size;
+   $a_file_size="" unless $a_file_size;
    chomp($a_file_size);
 my @A_FILE_SIZE = split $spliton, $a_file_size;
 

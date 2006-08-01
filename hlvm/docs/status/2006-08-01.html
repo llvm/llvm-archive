@@ -2,14 +2,15 @@
 <!--#include virtual="/incl/header.incl" -->
 <h1>Status As Of August 1, 2006</h1>
 <p>HLVM is steadily progressing towards release 0.2. Here is the 
-status of HLVM as of between revisions #359 and #438.</p>
+status of HLVM between revisions #359 and #438.</p>
 <h2>General Update</h2>
 <ul>
-  <li>Work is steadily progressing towards the 0.2 release. Most of the
-  milestones have already been accomplished. What remains is to finish up the
-  real number arithmetic operators, finish the test case generator, and
-  implement JIT execution.
-  <li>We are now about three quarters through the 0.2 functionality set.</li>
+  <li>Work is steadily progressing towards the 0.2 release. We are now about
+  75% done for the 0.2 release.</li>
+  <li>Most of the 0.2 milestones have already been accomplished. What remains 
+  is to finish up the real number arithmetic operators, finish the test case 
+  generator (and any bugs it turns up), and implement JIT execution via
+  LLVM.</li>
   <li>Lines Of Code in HLVM: 31044</li>
   <li>Lines Of Doc  in HLVM: 3282</li>
   <li>Code Productivity: 443 loc/day</li>
@@ -30,24 +31,29 @@ status of HLVM as of between revisions #359 and #438.</p>
   supports.</li>
   <li>Resolved confusion about Arguments, Parameters, NamedTypes, NamedValues,
   etc.</li>
-  <li>Removed the Alias type, it wasn't useful. Each type definition is an
+  <li>Removed the Alias type as it wasn't useful. Each type definition is an
   alias for a type.</li>
   <li>Removed the "atom" element from the XML syntax. It was redundant as we
   now just use "intrinsic" directly.</li>
-  <li>Octet types and literal constants are now implemented.</li>
+  <li>Octet types and their literal constants are now implemented.</li>
   <li>Bundles may no longer have empty content.</li>
-  <li>Significant improvements in validation of the AST tree.</li>
+  <li>Significant improvements were made to the validation of AST trees.</li>
+  <li>The LLVMGenerator.cpp file got simplified by splitting out the LLVMEmitter
+  class which handles the LLVM instantiation and code generation state.</li>
   <li>Linkables are now Constants because the address of a linkable (variable
   or function) is constant (after linking).</li>
-  <li>Type resolution was implemented properly. It now handles recursive 
-  types properly and somewhat transparently.</li>
+  <li>Type resolution was re-implemented. It now handles recursive types
+  properly and is somewhat transparent.</li>
   <li>The node dumper was vastly improved. It now uses new interfaces in the
-  PassManager to dump individual types, variables, etc. You can access it from
-  the debugger via <tt>hlvm::dump(Node*)</tt> function.</li>
+  PassManager to allow dumping of individual nodes (types, variables, functions,
+  operators, etc). You can access it from the debugger via 
+  <tt>hlvm::dump(Node*)</tt> function.</li>
   <li>The IndexOp operator was broken into a two operators: GetIndexOp and 
   GetFieldOp. The former for UniformContainerTypes, the latter for 
   DisparateContainerTypes. This simplifies the whole business of indexing the
   container types.</li>
+  <li>The ReferenceOp was renamed to GetOp since it is so frequently and the
+  word "get" more accurately describes its function.</li>
   <li>Function argument handling is now implemented.</li>
   <li>There is a new ConvertOp for type conversion of first-class values. It is
   akin to the LLVM CastInst. Code generation for non-first-class values has not

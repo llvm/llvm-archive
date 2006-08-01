@@ -168,7 +168,7 @@ function get_file($mysql_link, $file, $night_id){
  * particular machine for a specific file
  * Returns: an array with the key being the date and
  * the value being an array containing file name, size
- * night, and build type
+ * and build type
  *
  *****************************************************/
 function get_file_history($mysql_link, $machine_id, $file_name){
@@ -183,9 +183,9 @@ function get_file_history($mysql_link, $machine_id, $file_name){
 		$file_query = mysql_query($file_select);
 		$file_array = mysql_fetch_array($file_query);
 		if(isset($file_array['file'])){
-          $file_array['size']=array();
-		  array_unshift($file_array['size'], "{$row['added']}");
-		  array_push($result, $file_array['size']);
+		  $result["{$file_array['night']}"]=array("{$file_array[['file']}",
+		  										  "{$file_array[['size']}",
+		  										  "{$file_array[['type']}"));
 		}//end if
 		mysql_free_result($file_query);
 	}//end while

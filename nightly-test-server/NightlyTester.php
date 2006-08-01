@@ -155,7 +155,7 @@ function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE(
  *
  *****************************************************/
 function get_file($mysql_link, $file, $night_id){
-	$query = mysql_query("select * from file WHERE $file=\"$file\" and night=$night_id") or die (mysql_error());
+	$query = mysql_query("select * from file WHERE file=\"$file\" and night=$night_id") or die (mysql_error());
 	$file = mysql_fetch_array($query);
 	$result = array("{$file['file']}","{$file['size']}","{$file['night']}","{$file['type']}");
 	mysql_free_result($query);
@@ -179,13 +179,12 @@ function get_file_history($mysql_link, $machine_id, $file_name){
 	$result = array();
 	while($row = mysql_fetch_array($nights_query)){
 		$file_select = "select * from file where night={$row['id']} and ".
-								   "file=\"$file_name\"";
+			       "file=\"$file_name\"";
 		$file_query = mysql_query($file_select);
 		$file_array = mysql_fetch_array($file_query);
 		if(isset($file_array['file'])){
-			$value=get_file($mysql_link, $file_name, "{$row['id']}");
-			array_unshift($value, "{$row['added']}");
-			array_push($result, $value);
+		  array_unshift($file_array['size'], "{$row['added']}");
+		  array_push($result, $file_array['size']);
 		}//end if
 		mysql_free_result($file_query);
 	}//end while

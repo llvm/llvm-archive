@@ -231,7 +231,7 @@ foreach ($program as $prog){
 
 	$data_max=-1;
 
-	
+	$regexp = "/$preg_measure:\s*([0-9\.]+|\?)/";
 	while($row=mysql_fetch_array($night_table_query)){
 		$night_id = $row['night'];
 		$query = mysql_query("select added from night where id=$night_id") or die(mysql_error());
@@ -241,7 +241,10 @@ foreach ($program as $prog){
 		
 		$seconds = mktime($pjs[4], $pjs[5], $pjs[6], $pjs[2], $pjs[3],$pjs[1]);
 		
-		$regexp = "/$preg_measure:\s*([0-9\.]+|\?)/";
+		if($DEBUG){
+		  print "searching for $regexp <br>\n";
+		}
+		$row['result']=str_replace("<br>", " ", "{$row['result']}");
 		preg_match($regexp, "{$row['result']}", $ans);	
 		
 		if(isset($ans[1])){

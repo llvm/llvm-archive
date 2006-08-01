@@ -56,6 +56,8 @@ class Pool;
 class Operator;
 class AutoVarOp;
 class GetOp;
+class GetFieldOp;
+class GetIndexOp;
 class ConvertOp;
 class URI;
 
@@ -505,8 +507,20 @@ class AST : public Node
 
     /// Create a new GetOp.
     GetOp* new_GetOp(
-      const Value* V,       ///< The value being referenced
-      const Locator*loc = 0 ///< The source locator
+      const Value* V,          ///< The value being referenced
+      const Locator*loc = 0    ///< The source locator
+    );
+
+    GetFieldOp* new_GetFieldOp(
+      Operator* op,            ///< The thing to be indexed
+      const std::string& nm,   ///< The name of the field to index
+      const Locator* loc = 0   ///< The source locator
+    );
+
+    GetIndexOp* new_GetIndexOp(
+      Operator* op1,           ///< The thing to be indexed
+      Operator* op2,           ///< The index
+      const Locator* loc = 0   ///< The source locator
     );
 
     /// Create a new ConvertOp.

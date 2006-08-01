@@ -272,6 +272,7 @@ class DisparateContainerType : public Type
     /// Return the index of a named field starting at 1. If the field is not
     /// found, returns 0.
     unsigned getFieldIndex(const std::string& fldname) const;
+    const Type* getFieldType(const std::string& fldname) const;
     /// Methods to support type inquiry via is, cast, dyn_cast
     static inline bool classof(const DisparateContainerType*) { return true; }
     static inline bool classof(const Node* N) { 

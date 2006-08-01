@@ -261,18 +261,20 @@ class GetOp : public NilaryOperator
 /// of the operator is the address of the memory location corresponding to the
 /// named field of the structure value.
 /// @brief AST GetFieldOp Operator
-class GetFieldOp : public MultiOperator
+class GetFieldOp : public UnaryOperator
 {
   /// @name Constructors
   /// @{
   protected:
-    GetFieldOp() : MultiOperator(GetFieldOpID) {}
+    GetFieldOp() : UnaryOperator(GetFieldOpID), fieldName() {}
     virtual ~GetFieldOp();
 
   /// @}
   /// @name Accessors
   /// @{
   public:
+    const std::string& getFieldName() const { return fieldName; }
+    const Type* getFieldType() const;
     static inline bool classof(const GetFieldOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(GetFieldOpID); }
 
@@ -280,11 +282,13 @@ class GetFieldOp : public MultiOperator
   /// @name Mutators
   /// @{
   public:
+    void setFieldName(const std::string& nm) { fieldName = nm; }
 
   /// @}
   /// @name Data
   /// @{
   protected:
+    std::string fieldName;
   /// @}
   friend class AST;
 };
@@ -308,18 +312,10 @@ class GetIndexOp : public BinaryOperator
   /// @name Accessors
   /// @{
   public:
+    const Type* getIndexedType() const;
     static inline bool classof(const GetIndexOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(GetIndexOpID); }
 
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
   /// @}
   friend class AST;
 };

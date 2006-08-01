@@ -148,16 +148,22 @@ PassManagerImpl::runOn(Linkable* l)
   runPostOrder(l);
 }
 
+template<> inline void
+PassManagerImpl::runOn(Type* Ty)
+{
+  runPreOrder(Ty);
+  runPostOrder(Ty);
+}
+
 template<> inline void 
 PassManagerImpl::runOn(Bundle* b)
 {
   hlvmAssert(b && "Null bundle?");
   runPreOrder(b);
   for (Bundle::tlist_iterator TI = b->tlist_begin(), TE = b->tlist_end(); 
-       TI != TE; ++TI) {
-    runPreOrder(const_cast<Type*>(*TI));
-    runPostOrder(const_cast<Type*>(*TI));
-  }
+       TI != TE; ++TI)
+    runOn(const_cast<Type*>(*TI));
+
   for (Bundle::clist_iterator CI = b->clist_begin(), CE = b->clist_end(); 
        CI != CE; ++CI) {
     runPreOrder(const_cast<Constant*>(*CI));
@@ -207,6 +213,8 @@ PassManagerImpl::runOnNode(Node* startAt)
     runOn(cast<ConstantValue>(startAt));
   else if (isa<Operator>(startAt))
     runOn(cast<Operator>(startAt));
+  else if (isa<Type>(startAt))
+    runOn(cast<Type>(startAt));
   else
     hlvmAssert(!"startAt type not supported");
 }

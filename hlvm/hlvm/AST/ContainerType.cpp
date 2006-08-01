@@ -35,9 +35,7 @@ using namespace llvm;
 
 namespace hlvm {
 
-UniformContainerType::~UniformContainerType()
-{
-}
+UniformContainerType::~UniformContainerType() { }
 
 const char* 
 UniformContainerType::getPrimitiveName() const
@@ -76,30 +74,37 @@ DisparateContainerType::getPrimitiveName() const
   return 0;
 }
 
-unsigned 
-DisparateContainerType::getFieldIndex(const std::string& fldname) const
-{
-  for (const_iterator I = begin(), E = end(); I != E; ++I )
-    if ((*I)->getName() == fldname)
-      return I - begin() + 1;
-  return 0;
-}
-
-void 
+void
 DisparateContainerType::resolveTypeTo(const Type* from, const Type* to)
 {
   hlvmAssert(isa<OpaqueType>(from) && !isa<OpaqueType>(to));
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if ((*I)->getType() == from) {
+    if ((*I)->getType() == from)
       (*I)->setType(to);
-    }
 }
 
+unsigned 
+DisparateContainerType::getFieldIndex(const std::string& fldname) const
+{
+for (const_iterator I = begin(), E = end(); I != E; ++I )
+  if ((*I)->getName() == fldname)
+    return I - begin() + 1;
+return 0;
+}
 
-StructureType::~StructureType() { }
-ContinuationType::~ContinuationType() { }
+const Type*
+DisparateContainerType::getFieldType(const std::string& fldname) const
+{
+for (const_iterator I = begin(), E = end(); I != E; ++I )
+  if ((*I)->getName() == fldname)
+    return (*I)->getType();
+return 0;
+}
 
-SignatureType::~SignatureType() { }
+StructureType::~StructureType() {}
+ContinuationType::~ContinuationType() {}
+SignatureType::~SignatureType() {}
+
 void SignatureType::resolveTypeTo(const Type* from, const Type* to)
 {
   DisparateContainerType::resolveTypeTo(from,to);

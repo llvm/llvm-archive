@@ -312,6 +312,19 @@ XMLWriterImpl::WriterPass::put(const RealType* t)
 }
 
 template<> void
+XMLWriterImpl::WriterPass::put(const RationalType* t)
+{
+  if (t->isIntrinsic())
+    return;
+  startElement("rational");
+  writeAttribute("id",t->getName());
+  writeAttribute("numerator", llvm::utostr(t->getNumeratorBits()));
+  writeAttribute("denominator", llvm::utostr(t->getDenominatorBits()));
+  putDoc(t);
+  endElement();
+}
+
+template<> void
 XMLWriterImpl::WriterPass::put(const OpaqueType* op)
 {
   if (op->isIntrinsic())
@@ -1222,6 +1235,7 @@ XMLWriterImpl::WriterPass::handle(Node* n,Pass::TraversalKinds mode)
       case PointerTypeID:          put(cast<PointerType>(n)); break;
       case RangeTypeID:            put(cast<RangeType>(n)); break;
       case RealTypeID:             put(cast<RealType>(n)); break;
+      case RationalTypeID:         put(cast<RationalType>(n)); break;
       case SignatureTypeID:        put(cast<SignatureType>(n)); break;
       case StreamTypeID:           put(cast<StreamType>(n)); break;
       case StringTypeID:           put(cast<StringType>(n)); break;

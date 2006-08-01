@@ -184,6 +184,14 @@ Bundle::getIntrinsicName(IntrinsicTypes id, std::string& name)
     case intTy:             name = "int"; break;
     case longTy:            name = "long"; break;
     case octetTy:           name = "octet"; break;
+    case qs16Ty:            name = "qs16"; break;
+    case qs32Ty:            name = "qs32"; break;
+    case qs64Ty:            name = "qs64"; break;
+    case qs128Ty:           name = "qs128"; break;
+    case qu16Ty:            name = "qs16"; break;
+    case qu32Ty:            name = "qu32"; break;
+    case qu64Ty:            name = "qu64"; break;
+    case qu128Ty:           name = "qs128"; break;
     case r8Ty:              name = "r8"; break;
     case r16Ty:             name = "r16"; break;
     case r32Ty:             name = "r32"; break;

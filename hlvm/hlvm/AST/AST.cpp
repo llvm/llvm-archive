@@ -698,7 +698,7 @@ AST::new_Function(
   {
     const Type* Ty = (*I)->getType();
     assert(Ty && "Arguments can't be void type");
-    Argument* arg = new_Argument((*I)->getName(),0,loc);
+    Argument* arg = new_Argument((*I)->getName(),Ty,loc);
     result->addArgument(arg);
   }
   result->setParent(B);
@@ -764,6 +764,37 @@ AST::new_GetOp(const Value* V, const Locator*loc)
     hlvmAssert(!"Invalid referent type");
   result->setLocator(loc);
   result->setReferent(V);
+  result->setType(V->getType());
+  return result;
+}
+
+GetFieldOp* 
+AST::new_GetFieldOp(
+  Operator* op,
+  const std::string& name,
+  const Locator* loc
+)
+{
+  GetFieldOp* result = new GetFieldOp();
+  result->setLocator(loc);
+  result->setOperand(0,op);
+  result->setFieldName(name);
+  result->setType(result->getFieldType());
+  return result;
+}
+
+GetIndexOp* 
+AST::new_GetIndexOp(
+  Operator* op1,
+  Operator* op2,
+  const Locator* loc
+)
+{
+  GetIndexOp* result = new GetIndexOp();
+  result->setLocator(loc);
+  result->setOperand(0,op1);
+  result->setOperand(1,op2);
+  result->setType(result->getIndexedType());
   return result;
 }
 
@@ -774,7 +805,7 @@ AST::new_ConvertOp(Operator* V, const Type* Ty, const Locator* loc)
   hlvmAssert(Ty != 0 && "ConvertOp must have a type to convert the value");
   ConvertOp* result = new ConvertOp();
   result->setType(Ty);
-  result->setOperand(V);
+  result->setOperand(0,V);
   result->setLocator(loc);
   return result;
 }
@@ -1330,16 +1361,6 @@ template LoadOp*
 AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(Operator*op1,Bundle* B, const Locator*loc);
-
-template GetFieldOp*  
-AST::new_BinaryOp<GetFieldOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
-template GetFieldOp*  
-AST::new_BinaryOp<GetFieldOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc);
-
-template GetIndexOp*  
-AST::new_BinaryOp<GetIndexOp>(const Type*, Operator*op1,Operator*op2,const Locator*loc);
-template GetIndexOp*  
-AST::new_BinaryOp<GetIndexOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*loc);
 
 // Input/Output Operators
 template OpenOp* 

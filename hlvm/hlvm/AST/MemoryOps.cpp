@@ -28,6 +28,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <hlvm/AST/MemoryOps.h>
+#include <hlvm/AST/ContainerType.h>
+#include <llvm/Support/Casting.h>
 
 namespace hlvm {
 
@@ -35,7 +37,24 @@ LoadOp::~LoadOp() {}
 StoreOp::~StoreOp() {}
 AutoVarOp::~AutoVarOp() {}
 GetOp::~GetOp() {}
-GetIndexOp::~GetIndexOp() {}
 GetFieldOp::~GetFieldOp() {}
+const Type* 
+GetFieldOp::getFieldType() const
+{
+  if (const DisparateContainerType* DCTy = 
+      llvm::dyn_cast<DisparateContainerType>(op1->getType()))
+    return DCTy->getFieldType(fieldName);
+  return 0;
+}
+
+GetIndexOp::~GetIndexOp() {}
+const Type* 
+GetIndexOp::getIndexedType() const
+{
+  if (const UniformContainerType* UCTy =
+      llvm::dyn_cast<UniformContainerType>(ops[0]->getType()))
+    return UCTy->getElementType();
+  return 0;
+}
 
 }

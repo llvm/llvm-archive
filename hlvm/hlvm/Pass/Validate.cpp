@@ -1014,7 +1014,7 @@ ValidateImpl::validate(StoreOp* n)
       if (cast<AutoVarOp>(op1)->isConstant()) 
         error(n,"Can't store to constant automatic variable");
     } else if (const GetOp* ref = dyn_cast<GetOp>(n->getOperand(0))) {
-      const Documentable* R = ref->getReferent();
+      const Value* R = ref->getReferent();
       if (isa<Variable>(R) && cast<Variable>(R)->isConstant())
         error(n,"Can't store to constant variable");
       else if (isa<AutoVarOp>(R) && cast<AutoVarOp>(R)->isConstant())
@@ -1060,7 +1060,7 @@ template<> inline void
 ValidateImpl::validate(GetOp* op)
 {
   if (checkOperator(op,GetOpID,0,true)) {
-    const Documentable* referent = op->getReferent();
+    const Value* referent = op->getReferent();
     Block* blk = op->getContainingBlock();
     if (!blk)
       error(op,"GetOp not in a block?");
@@ -1122,7 +1122,7 @@ ValidateImpl::validate(PreIncrOp* n)
 {
   if (checkOperator(n,PreIncrOpID,1)) {
     if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
-      const Documentable* V = oprnd->getReferent();
+      const Value* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
         if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostIncrOp is not numeric type");
@@ -1138,7 +1138,7 @@ ValidateImpl::validate(PostIncrOp* n)
 {
   if (checkOperator(n,PostIncrOpID,1)) {
     if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
-      const Documentable* V = oprnd->getReferent();
+      const Value* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
         if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostIncrOp is not numeric type");
@@ -1154,7 +1154,7 @@ ValidateImpl::validate(PreDecrOp* n)
 {
   if (checkOperator(n,PreDecrOpID,1)){
     if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
-      const Documentable* V = oprnd->getReferent();
+      const Value* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
         if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PreDecrOp is not numeric type");
@@ -1170,7 +1170,7 @@ ValidateImpl::validate(PostDecrOp* n)
 {
   if (checkOperator(n,PostDecrOpID,1)) {
     if (GetOp* oprnd = llvm::dyn_cast<GetOp>(n->getOperand(0))) {
-      const Documentable* V = oprnd->getReferent();
+      const Value* V = oprnd->getReferent();
       if (V && (isa<AutoVarOp>(V) || isa<Variable>(V))) {
         if (!llvm::cast<Value>(V)->getType()->isNumericType())
           error(n,"Target of PostDecrOp is not numeric type");
@@ -1198,7 +1198,7 @@ ValidateImpl::validate(LengthOp* n)
 template<> inline void
 ValidateImpl::validate(ConvertOp* n)
 {
-  if (checkOperator(n,ConvertOpID,2)) {
+  if (checkOperator(n,ConvertOpID,1)) {
     const Operator* Oprnd1 = n->getOperand(0);
     /// FIXME: assure type of Oprnd1 is convertible to n->getType();
   }

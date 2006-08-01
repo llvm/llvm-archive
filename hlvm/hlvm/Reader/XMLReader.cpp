@@ -987,6 +987,53 @@ XMLReaderImpl::parse<GetOp>(xmlNodePtr& cur)
   return refop;
 }
 
+template<> GetFieldOp*
+XMLReaderImpl::parse<GetFieldOp>(xmlNodePtr& cur)
+{
+  std::string fieldName = getAttribute(cur,"field");
+  Locator* loc = getLocator(cur);
+  xmlNodePtr child = cur->children;
+  Documentation* doc = parse<Documentation>(child); 
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    GetFieldOp* gfo = ast->AST::new_GetFieldOp(oprnd1,fieldName,loc);
+    if (doc)
+      gfo->setDoc(doc);
+    return gfo;
+  } else {
+    error(loc,std::string("Operator '") + 
+          reinterpret_cast<const char*>(cur->name) + "' requires an operand.");
+  }
+  return 0;
+}
+
+template<> GetIndexOp*
+XMLReaderImpl::parse<GetIndexOp>(xmlNodePtr& cur)
+{
+  Locator* loc = getLocator(cur);
+  xmlNodePtr child = cur->children;
+  Documentation* doc = parse<Documentation>(child); 
+  if (child && skipBlanks(child)) {
+    Operator* oprnd1 = parseOperator(child);
+    child = child->next;
+    if (child && skipBlanks(child)) {
+      Operator* oprnd2 = parseOperator(child);
+      GetIndexOp* gio = ast->AST::new_GetIndexOp(oprnd1,oprnd2,loc);
+      if (doc)
+        gio->setDoc(doc);
+      return gio;
+    } else {
+      error(loc,std::string("Operator '") + 
+            reinterpret_cast<const char*>(cur->name) + 
+            "' needs a second operand.");
+    }
+  } else {
+    error(loc,std::string("Operator '") + 
+          reinterpret_cast<const char*>(cur->name) + "' requires 2 operands.");
+  }
+  return 0;
+}
+
 template<> ConvertOp*
 XMLReaderImpl::parse<ConvertOp>(xmlNodePtr& cur)
 {
@@ -1001,8 +1048,10 @@ XMLReaderImpl::parse<ConvertOp>(xmlNodePtr& cur)
     if (doc)
       cnvrt->setDoc(doc);
     return cnvrt;
+  } else {
+    error(loc,std::string("Operator '") + 
+          reinterpret_cast<const char*>(cur->name) + "' requires an operand.");
   }
-  hlvmDeadCode("Invalid ConvertOp");
   return 0;
 }
 
@@ -1034,7 +1083,7 @@ XMLReaderImpl::parseUnaryOp(xmlNodePtr& cur)
     return result;
   } else
     error(loc,std::string("Operator '") + 
-      reinterpret_cast<const char*>(cur->name) + "' requires one operand.");
+      reinterpret_cast<const char*>(cur->name) + "' requires an operand.");
   return 0;
 }
 
@@ -1332,12 +1381,12 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_call:         op = parseMultiOp<CallOp>(cur); break;
       case TKN_store:        op = parseBinaryOp<StoreOp>(cur); break;
       case TKN_load:         op = parseUnaryOp<LoadOp>(cur); break;
-      case TKN_getidx:       op = parseBinaryOp<GetIndexOp>(cur); break;
-      case TKN_getfld:       op = parseBinaryOp<GetFieldOp>(cur); break;
       case TKN_open:         op = parseUnaryOp<OpenOp>(cur); break;
       case TKN_write:        op = parseBinaryOp<WriteOp>(cur); break;
       case TKN_close:        op = parseUnaryOp<CloseOp>(cur); break;
       case TKN_get:          op = parse<GetOp>(cur); break;
+      case TKN_getidx:       op = parse<GetIndexOp>(cur); break;
+      case TKN_getfld:       op = parse<GetFieldOp>(cur); break;
       case TKN_convert:      op = parse<ConvertOp>(cur); break;
       case TKN_autovar:      op = parse<AutoVarOp>(cur); break;
       case TKN_block:        op = parse<Block>(cur); break;

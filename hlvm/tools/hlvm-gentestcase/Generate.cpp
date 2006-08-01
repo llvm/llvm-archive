@@ -129,6 +129,8 @@ genType(unsigned limit)
       theType = f64Ty;
     else if (theType == bufferTy || theType == streamTy || theType == textTy)
       theType = s32Ty;
+    else if (theType >= qs16Ty && theType <= qu128Ty)
+      theType = u32Ty;
     return bundle->getIntrinsicType(theType);
   }
 
@@ -507,35 +509,33 @@ genIndex(Operator* V)
   if (V->typeis<StructureType>()) {
     const StructureType* Ty = cast<StructureType>(V->getType());
     const NamedType* fldname = Ty->getField(randRange(0,Ty->size()-1));
-    Constant* cfield = getConstantString(fldname->getName());
-    GetOp* field  = getReference(cfield);
-    return ast->new_BinaryOp<GetFieldOp>(V,field,bundle,getLocator());
+    return ast->new_GetFieldOp(V,fldname->getName(),getLocator());
   } else if (V->typeis<ArrayType>()) {
     const ArrayType* Ty = cast<ArrayType>(V->getType());
     Constant* cindex = getConstantInteger(0); //FIXME: gen rand at runtime
     GetOp* index = getReference(cindex);
-    return ast->new_BinaryOp<GetIndexOp>(V,index,bundle,getLocator());
+    return ast->new_GetIndexOp(V,index,getLocator());
   } else if (V->typeis<VectorType>()) {
     const VectorType* Ty = cast<VectorType>(V->getType());
     int64_t idx = randRange(0,Ty->getSize()-1);
     Constant* cindex = getConstantInteger(idx);
     GetOp* index = getReference(cindex);
-    return ast->new_BinaryOp<GetIndexOp>(V,index,bundle,getLocator());
+    return ast->new_GetIndexOp(V,index,getLocator());
   } else if (V->typeis<StringType>()) {
     const StringType* Ty = cast<StringType>(V->getType());
     Constant* cindex = getConstantInteger(0); //FIXME: gen rand at runtime
     GetOp* index = getReference(cindex);
-    return ast->new_BinaryOp<GetIndexOp>(V,index,bundle,getLocator());
+    return ast->new_GetIndexOp(V,index,getLocator());
   } else if (V->typeis<PointerType>()) {
     Constant* cindex = getConstantInteger(0);
     GetOp* index = getReference(cindex);
-    return ast->new_BinaryOp<GetIndexOp>(V,index,bundle,getLocator());
+    return ast->new_GetIndexOp(V,index,getLocator());
   } else
     hlvmAssert(!"Can't index this type!");
   return 0;
 }
 
-static Operator* genExpression(Operator* Val, unsigned depth);
+static Operator* genExpression(Operator* Val, int depth);
 static Operator* genUnaryExpression(Operator* Val);
 static Operator* genBinaryExpression(Operator* V1, Operator*V2);
 
@@ -608,27 +608,19 @@ genCharacterBinary(Operator* V1, Operator* V2)
 static Operator*
 genIntegerUnary(Operator* V1)
 {
-  hlvmAssert(V1->getType()->getID() == IntegerTypeID);
+  hlvmAssert(V1->getType()->isIntegralType());
   Operator* result = 0;
   NodeIDs id = NodeIDs(randRange(NegateOpID, PostDecrOpID));
   switch (id) {
+    case PreIncrOpID:
+    case PostIncrOpID:
+    case PreDecrOpID:
+    case PostDecrOpID:
     case NegateOpID:
       result = ast->new_UnaryOp<NegateOp>(V1,bundle,getLocator());
       break;
     case ComplementOpID:
       result = ast->new_UnaryOp<ComplementOp>(V1,bundle,getLocator());
-      break;
-    case PreIncrOpID:
-      result = ast->new_UnaryOp<PreIncrOp>(V1,bundle,getLocator());
-      break;
-    case PostIncrOpID:
-      result = ast->new_UnaryOp<PostIncrOp>(V1,bundle,getLocator());
-      break;
-    case PreDecrOpID:
-      result = ast->new_UnaryOp<PreDecrOp>(V1,bundle,getLocator());
-      break;
-    case PostDecrOpID:
-      result = ast->new_UnaryOp<NegateOp>(V1,bundle,getLocator());
       break;
     default:
       hlvmAssert(!"Invalid unary op id for integer");
@@ -773,7 +765,72 @@ genArrayUnary(Operator* V1)
 {
   hlvmAssert(isa<ArrayType>(V1));
   const ArrayType* Ty = cast<ArrayType>(V1->getType());
-  return 0;
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
+  AutoVarOp* result = ast->new_AutoVarOp("result",Ty,getLocator());
+  blk->addOperand(result);
+  Type* ptr_type = bundle->getPointerTo(Ty->getElementType());
+  ConstantInteger* null = getConstantInteger(0);
+  GetOp* getNull1 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr1 = ast->new_AutoVarOp("ptr1",ptr_type,getLocator());
+  blk->addOperand(ptr1);
+  GetIndexOp* idx1 = 
+    ast->new_GetIndexOp(val1,getNull1,getLocator());
+  idx1->setParent(ptr1);
+  GetOp* getNull2 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr2 = ast->new_AutoVarOp("ptr2",ptr_type,getLocator());
+  blk->addOperand(ptr2);
+  Value* val2 = genValue(Ty);
+  GetOp* getVal2 = ast->new_GetOp(val2,getLocator());
+  GetIndexOp* idx2 = 
+    ast->new_GetIndexOp(getVal2,getNull2,getLocator());
+  idx2->setParent(ptr2);
+  GetOp* getNull3 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr3 = ast->new_AutoVarOp("ptr3",ptr_type,getLocator());
+  blk->addOperand(ptr3);
+  GetIndexOp* idx3 = 
+    ast->new_GetIndexOp(result,getNull3,getLocator());
+  idx3->setParent(ptr3);
+  AutoVarOp* end = ast->new_AutoVarOp("end",ptr_type,getLocator());
+  blk->addOperand(end);
+  GetOp* get1 = ast->new_GetOp(val1,getLocator());
+  LengthOp* len1 = ast->new_UnaryOp<LengthOp>(get1,bundle,getLocator());
+  GetOp* get2 = ast->new_GetOp(val2,getLocator());
+  LengthOp* len2 = ast->new_UnaryOp<LengthOp>(get2,bundle,getLocator());
+  LessThanOp* le = ast->new_BinaryOp<LessThanOp>(len1,len2,bundle,getLocator());
+  GetOp* get3 = ast->new_GetOp(val1,getLocator());
+  LengthOp* len3 = ast->new_UnaryOp<LengthOp>(get3,bundle,getLocator());
+  GetOp* get4 = ast->new_GetOp(val2,getLocator());
+  LengthOp* len4 = ast->new_UnaryOp<LengthOp>(get4,bundle,getLocator());
+  SelectOp* sel = 
+    ast->new_TernaryOp<SelectOp>(le,len3,len4,bundle,getLocator());
+  GetIndexOp* endIndex = 
+    ast->new_GetIndexOp(val1,endIndex,getLocator());
+  endIndex->setParent(end);
+
+  LessThanOp* cond = 
+    ast->new_BinaryOp<LessThanOp>(ptr1,end,bundle,getLocator());
+  Block* whileBlock = ast->new_Block(getLocator());
+  GetOp* get5 = ast->new_GetOp(ptr1,getLocator());
+  PostIncrOp* incr1 = ast->new_UnaryOp<PostIncrOp>(get5,bundle,getLocator());
+  LoadOp* load1 = ast->new_UnaryOp<LoadOp>(incr1,bundle,getLocator());
+  GetOp* get6 = ast->new_GetOp(ptr2,getLocator());
+  PostIncrOp* incr2 = ast->new_UnaryOp<PostIncrOp>(get6,bundle,getLocator());
+  LoadOp* load2 = ast->new_UnaryOp<LoadOp>(incr2,bundle,getLocator());
+  Operator* expr = genBinaryExpression(load1,load2);
+  GetOp* get7 = ast->new_GetOp(ptr3,getLocator());
+  PostIncrOp* incr3 = ast->new_UnaryOp<PostIncrOp>(get7,bundle,getLocator());
+  StoreOp* store = ast->new_BinaryOp<StoreOp>(incr3,expr,bundle,getLocator());
+  whileBlock->addOperand(store);
+
+  WhileOp* whilst = 
+    ast->new_BinaryOp<WhileOp>(cond,whileBlock,bundle,getLocator());
+  blk->addOperand(whilst);
+  GetOp* get = ast->new_GetOp(result,getLocator());
+  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(rslt);
+  return blk;
 }
 
 static Operator*
@@ -783,7 +840,72 @@ genArrayBinary(Operator* V1, Operator* V2)
   hlvmAssert(isa<ArrayType>(V2));
   hlvmAssert(V1->getType() == V2->getType());
   const ArrayType* Ty = cast<ArrayType>(V1->getType());
-  return 0;
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
+  AutoVarOp* val2 = ast->new_AutoVarOp("val2",Ty,getLocator());
+  V2->setParent(val2);
+  AutoVarOp* result = ast->new_AutoVarOp("result",Ty,getLocator());
+  blk->addOperand(result);
+  Type* ptr_type = bundle->getPointerTo(Ty->getElementType());
+  ConstantInteger* null = getConstantInteger(0);
+  GetOp* getNull1 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr1 = ast->new_AutoVarOp("ptr1",ptr_type,getLocator());
+  blk->addOperand(ptr1);
+  GetIndexOp* idx1 = 
+    ast->new_GetIndexOp(val1,getNull1,getLocator());
+  idx1->setParent(ptr1);
+  GetOp* getNull2 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr2 = ast->new_AutoVarOp("ptr2",ptr_type,getLocator());
+  blk->addOperand(ptr2);
+  GetIndexOp* idx2 = 
+    ast->new_GetIndexOp(val2,getNull2,getLocator());
+  idx2->setParent(ptr2);
+  GetOp* getNull3 = ast->new_GetOp(null,getLocator());
+  AutoVarOp* ptr3 = ast->new_AutoVarOp("ptr3",ptr_type,getLocator());
+  blk->addOperand(ptr3);
+  GetIndexOp* idx3 = 
+    ast->new_GetIndexOp(result,getNull3,getLocator());
+  idx3->setParent(ptr3);
+  AutoVarOp* end = ast->new_AutoVarOp("end",ptr_type,getLocator());
+  blk->addOperand(end);
+  GetOp* get1 = ast->new_GetOp(val1,getLocator());
+  LengthOp* len1 = ast->new_UnaryOp<LengthOp>(get1,bundle,getLocator());
+  GetOp* get2 = ast->new_GetOp(val2,getLocator());
+  LengthOp* len2 = ast->new_UnaryOp<LengthOp>(val2,bundle,getLocator());
+  LessThanOp* le = ast->new_BinaryOp<LessThanOp>(len1,len2,bundle,getLocator());
+  GetOp* get3 = ast->new_GetOp(val1,getLocator());
+  LengthOp* len3 = ast->new_UnaryOp<LengthOp>(get3,bundle,getLocator());
+  GetOp* get4 = ast->new_GetOp(val2,getLocator());
+  LengthOp* len4 = ast->new_UnaryOp<LengthOp>(get4,bundle,getLocator());
+  SelectOp* sel = 
+    ast->new_TernaryOp<SelectOp>(le,len3,len4,bundle,getLocator());
+  GetIndexOp* endIndex = 
+    ast->new_GetIndexOp(val1,endIndex,getLocator());
+  endIndex->setParent(end);
+
+  LessThanOp* cond = 
+    ast->new_BinaryOp<LessThanOp>(ptr1,end,bundle,getLocator());
+  Block* whileBlock = ast->new_Block(getLocator());
+  GetOp* get5 = ast->new_GetOp(ptr1,getLocator());
+  PostIncrOp* incr1 = ast->new_UnaryOp<PostIncrOp>(get5,bundle,getLocator());
+  LoadOp* load1 = ast->new_UnaryOp<LoadOp>(incr1,bundle,getLocator());
+  GetOp* get6 = ast->new_GetOp(ptr2,getLocator());
+  PostIncrOp* incr2 = ast->new_UnaryOp<PostIncrOp>(get6,bundle,getLocator());
+  LoadOp* load2 = ast->new_UnaryOp<LoadOp>(incr2,bundle,getLocator());
+  Operator* expr = genBinaryExpression(load1,load2);
+  GetOp* get7 = ast->new_GetOp(ptr3,getLocator());
+  PostIncrOp* incr3 = ast->new_UnaryOp<PostIncrOp>(get7,bundle,getLocator());
+  StoreOp* store = ast->new_BinaryOp<StoreOp>(incr3,expr,bundle,getLocator());
+  whileBlock->addOperand(store);
+
+  WhileOp* whilst = 
+    ast->new_BinaryOp<WhileOp>(cond,whileBlock,bundle,getLocator());
+  blk->addOperand(whilst);
+  GetOp* get = ast->new_GetOp(result,getLocator());
+  ResultOp* rslt = ast->new_UnaryOp<ResultOp>(get,bundle,getLocator());
+  blk->addOperand(rslt);
+  return blk;
 }
 
 static Operator*
@@ -793,16 +915,19 @@ genVectorUnary(Operator* V1)
   const VectorType* Ty = cast<VectorType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
   AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  autovar->setParent(blk);
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
   for (unsigned i = 0; i < Ty->getSize(); ++i) {
     ConstantInteger* cst = getConstantInteger(i);
     GetOp* index = ast->new_GetOp(cst,getLocator());
     GetIndexOp* elem = 
-      ast->new_BinaryOp<GetIndexOp>(V1,index,bundle,getLocator());
+      ast->new_GetIndexOp(val1,index,getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem,bundle,getLocator());
     Operator* expr = genUnaryExpression(load1);
     GetOp* get = ast->new_GetOp(autovar,getLocator());
     GetIndexOp* elem2 =
-      ast->new_BinaryOp<GetIndexOp>(get,index,bundle,getLocator());
+      ast->new_GetIndexOp(get,index,getLocator());
     StoreOp* store = 
       ast->new_BinaryOp<StoreOp>(elem2,expr,bundle,getLocator());
     blk->addOperand(store);
@@ -822,20 +947,25 @@ genVectorBinary(Operator* V1, Operator* V2)
   const VectorType* Ty = llvm::cast<VectorType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
   AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  autovar->setParent(blk);
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
+  AutoVarOp* val2 = ast->new_AutoVarOp("val2",Ty,getLocator());
+  V2->setParent(val2);
   for (unsigned i = 0; i < Ty->getSize(); ++i)
   {
     ConstantInteger* cst = getConstantInteger(i);
     GetOp* index = ast->new_GetOp(cst,getLocator());
-    GetFieldOp* elem1 = 
-      ast->new_BinaryOp<GetFieldOp>(V1,index,bundle,getLocator());
+    GetIndexOp* elem1 = 
+      ast->new_GetIndexOp(val1,index,getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem1,bundle,getLocator());
-    GetFieldOp* elem2 = 
-      ast->new_BinaryOp<GetFieldOp>(V2,index,bundle,getLocator());
+    GetIndexOp* elem2 = 
+      ast->new_GetIndexOp(val2,index,getLocator());
     LoadOp* load2 = ast->new_UnaryOp<LoadOp>(elem1,bundle,getLocator());
     Operator* expr = genBinaryExpression(load1,load2);
     GetOp* get = ast->new_GetOp(autovar,getLocator());
-    GetFieldOp* elem3 = 
-      ast->new_BinaryOp<GetFieldOp>(get,index,bundle,getLocator());
+    GetIndexOp* elem3 = 
+      ast->new_GetIndexOp(get,index,getLocator());
     StoreOp* store = 
       ast->new_BinaryOp<StoreOp>(elem3,expr,bundle,getLocator());
     blk->addOperand(store);
@@ -850,21 +980,23 @@ static Operator*
 genStructureUnary(Operator* V1)
 {
   hlvmAssert(V1->getType()->getID() == StructureTypeID);
-  Block* blk = ast->new_Block(getLocator());
-  AutoVarOp* autovar = ast->new_AutoVarOp("result",V1->getType(),getLocator());
   const StructureType* Ty = llvm::cast<StructureType>(V1->getType());
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  autovar->setParent(blk);
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
   for (StructureType::const_iterator I = Ty->begin(), E = Ty->end(); 
        I != E; ++I)
   {
-    ConstantString* cst = getConstantString((*I)->getName());
-    GetOp* fldName = ast->new_GetOp(cst,getLocator());
+    const std::string& fldName = (*I)->getName();
     GetFieldOp* getField1 = 
-      ast->new_BinaryOp<GetFieldOp>(V1,fldName,bundle,getLocator());
+      ast->new_GetFieldOp(val1,fldName,getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(getField1,bundle,getLocator());
     Operator* expr = genUnaryExpression(load1);
     GetOp* get = ast->new_GetOp(autovar,getLocator());
     GetFieldOp* getField3 =
-      ast->new_BinaryOp<GetFieldOp>(get,fldName,bundle,getLocator());
+      ast->new_GetFieldOp(get,fldName,getLocator());
     StoreOp* store = 
       ast->new_BinaryOp<StoreOp>(getField3,expr,bundle,getLocator());
     blk->addOperand(store);
@@ -881,24 +1013,27 @@ genStructureBinary(Operator* V1, Operator* V2)
   hlvmAssert(V1->getType()->getID() == StructureTypeID);
   hlvmAssert(V2->getType()->getID() == StructureTypeID);
   hlvmAssert(V1->getType() == V2->getType());
-  Block* blk = ast->new_Block(getLocator());
-  AutoVarOp* autovar = ast->new_AutoVarOp("result",V1->getType(),getLocator());
   const StructureType* Ty = llvm::cast<StructureType>(V1->getType());
+  Block* blk = ast->new_Block(getLocator());
+  AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
+  autovar->setParent(blk);
+  AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
+  V1->setParent(val1);
+  AutoVarOp* val2 = ast->new_AutoVarOp("val2",Ty,getLocator());
+  V2->setParent(val2);
   for (StructureType::const_iterator I = Ty->begin(), E = Ty->end(); 
        I != E; ++I)
   {
-    ConstantString* cst = getConstantString((*I)->getName());
-    GetOp* fldName = ast->new_GetOp(cst,getLocator());
     GetFieldOp* getField1 = 
-      ast->new_BinaryOp<GetFieldOp>(V1,fldName,bundle,getLocator());
+      ast->new_GetFieldOp(val1,(*I)->getName(),getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(getField1,bundle,getLocator());
     GetFieldOp* getField2 = 
-      ast->new_BinaryOp<GetFieldOp>(V2,fldName,bundle,getLocator());
+      ast->new_GetFieldOp(val2,(*I)->getName(),getLocator());
     LoadOp* load2 = ast->new_UnaryOp<LoadOp>(getField2,bundle,getLocator());
     Operator* expr = genBinaryExpression(load1,load2);
     GetOp* get = ast->new_GetOp(autovar,getLocator());
     GetFieldOp* getField3 = 
-      ast->new_BinaryOp<GetFieldOp>(get,fldName,bundle,getLocator());
+      ast->new_GetFieldOp(get,(*I)->getName(),getLocator());
     StoreOp* store = 
       ast->new_BinaryOp<StoreOp>(getField3,expr,bundle,getLocator());
     blk->addOperand(store);
@@ -989,10 +1124,10 @@ genBinaryExpression(Operator* V1, Operator*V2)
 }
 
 // Forward declare
-static Function* genFunction(const Type* resultType, unsigned depth);
+static Function* genFunction(const Type* resultType, int depth);
 
 static Operator*
-genExpression(Operator* Val, unsigned depth)
+genExpression(Operator* Val, int depth)
 {
   if (depth > 0) {
     // Generate a function
@@ -1017,7 +1152,6 @@ genMergeExpression(AutoVarOp* op1, Operator* op2, Block* B)
 
   // Get the type of the thing to be merged
   const Type* Ty = op2->getType();
-
 
   // If its just a numeric type, simply add the merged value into the autovar
   if (Ty->isNumericType()) {
@@ -1053,7 +1187,7 @@ genMergeExpression(AutoVarOp* op1, Operator* op2, Block* B)
 }
 
 static Block*
-genFunctionBody(Function* F, unsigned depth)
+genFunctionBody(Function* F, int depth)
 {
   // Create the function body block and initialize it
   Block* B = ast->new_Block(getLocator());
@@ -1080,7 +1214,7 @@ genFunctionBody(Function* F, unsigned depth)
     }
 
     // Generate the expression
-    Operator* expr = genExpression(theValue,depth-1);
+    Operator* expr = genExpression(theValue,depth);
 
     // Merge the current value of the autovar result with the generated
     // expression.
@@ -1097,7 +1231,7 @@ genFunctionBody(Function* F, unsigned depth)
 }
 
 static Function*
-genFunction(const Type* resultType, unsigned depth)
+genFunction(const Type* resultType, int depth)
 {
   // Get the function name
   Locator* loc = getLocator();
@@ -1129,7 +1263,7 @@ genFunction(const Type* resultType, unsigned depth)
   F->setLinkageKind(LK);
 
   // Create the body of the function
-  Block* blk = genFunctionBody(F,depth);
+  Block* blk = genFunctionBody(F,depth-1);
 
   // Insert the return operator
   ReturnOp* ret = ast->new_NilaryOp<ReturnOp>(bundle,getLocator());

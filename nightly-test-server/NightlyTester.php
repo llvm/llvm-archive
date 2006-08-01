@@ -12,7 +12,6 @@ $meaningfull_names = array('getcvstime_wall' => 'CVS Checkout Wall Time',
                         'teststats_unexpfail' => 'Unexpected Test Failures',
                         'teststats_expfail' => 'Expected Test Failurs');
 
-
 /*****************************************************
  *
  * Purpose: Get information about a certain machine

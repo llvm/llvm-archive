@@ -11,7 +11,7 @@ if(!(include "jpgraph_utils.inc")){
 if(!(include "jpgraph_date.php")){
         die("Error: could not load necessary files!\n");
 }*/
-if(!(include "NightlyTester2.php")){
+if(!(include "NightlyTester.php")){
         die("Error: could not load necessary files!\n");
 }
 

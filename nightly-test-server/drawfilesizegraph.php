@@ -3,7 +3,7 @@ include("jpgraph/jpgraph.php");
 include("jpgraph/jpgraph_line.php");
 include("jpgraph/jpgraph_utils.inc");
 include("jpgraph/jpgraph_date.php");
-include("NightlyTester2.php");
+include("NightlyTester.php");
 
 $DEBUG=0;
 

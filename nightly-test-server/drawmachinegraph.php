@@ -212,7 +212,6 @@ $night_table_query = mysql_query($night_table_statement) or die(mysql_error());
 
 
 while($row = mysql_fetch_array($night_table_query)){
-	$night_id_arr= array();
 	preg_match("/(\d\d\d\d)\-(\d\d)\-(\d\d)\s(\d\d)\:(\d\d)\:(\d\d)/", $row['added'], $pjs);
         $seconds = mktime($pjs[4], $pjs[5], $pjs[6], $pjs[2], $pjs[3],$pjs[1]);
 	array_push($xdata, $seconds);	

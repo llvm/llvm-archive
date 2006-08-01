@@ -469,8 +469,8 @@ print "</div><br><br>\n";
  * Printing file size information
  *
  ******************************************************/
-print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('CVSInformation');\", id=\"CVSInformation_\">(-) CVS information</a></font>\n";
-print "<div id=\"CVSInformation\" style=\"display: none;\" class=\"hideable\">\n";
+print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('FileSizeInformation');\", id=\"FileSizeInformation_\">(-) File Size information</a></font>\n";
+print "<div id=\"FileSizeInformation\" style=\"display: none;\" class=\"hideable\">\n";
 
 print"<h3><u>File Size information:</u></h3><br>\n";
 

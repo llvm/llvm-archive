@@ -61,11 +61,11 @@ proc hlvm-generate-test { complexity typecomplexity size seed } {
           } else {
             set retval [ catch {exec $testexe $testname } msg ]
             if { $retval != 0 } {
+              set status [lindex $::errorCode 2]
               if {[lindex $::errorCode 0] eq "CHILDSTATUS"} {
-                set status [lindex $::errorCode 2]
                 pass "$test: $testexe returned $status"
               } else {
-                fail "$test: $testexe return $status\n$msg"
+                fail "$test: $testexe returned $status\n$msg"
               } 
             } else {
               pass $test;

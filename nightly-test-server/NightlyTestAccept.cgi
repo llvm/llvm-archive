@@ -509,12 +509,20 @@ if($MACHINE_DATA[5]){ $MACHINE_DATA[5] =~ m/time\:\s*(.+)/; $time=$1; chomp($tim
 ################################################################################
 print "content-type: text/text\r\n\r\n";
 
-$dejagnutests_log =~ m/\# of expected passes\s*([0-9]+)/;
-$dejagnu_exp_passes=$1;
-$dejagnutests_log =~ m/unexpected failures\s*([0-9]+)/;
-$dejagnu_unexp_failures=$1;
-$dejagnutests_log =~ m/\# of expected failures\s*([0-9]+)/;
-$dejagnu_exp_failures=$1;
+my $dejagnu_exp_passes=0;
+if( ($dejagnutests_log =~ m/\# of expected passes\s*([0-9]+)/) ){
+  $dejagnu_exp_passes=$1;
+}
+
+my $dejagnu_unexp_failures=0;
+if( ($dejagnutests_log =~ m/unexpected failures\s*([0-9]+)/) ){
+  $dejagnu_unexp_failures=$1;
+}
+
+my $dejagnu_exp_failures=0;
+if( ($dejagnutests_log =~ m/\# of expected failures\s*([0-9]+)/) ){
+  $dejagnu_exp_failures=$1;
+}
 
 ################################################################################
 #

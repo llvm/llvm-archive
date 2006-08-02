@@ -474,6 +474,49 @@ print "<div id=\"FileSizeInformation\" style=\"display: none;\" class=\"hideable
 
 print"<h3><u>File Size information:</u></h3><br>\n";
 
+print "<form method=GET action=\"individualfilesizegraph.php\">\n";
+print "<input type=hidden name=machine value=\"$machine_id\">\n";
+print "<input type=hidden name=night value=\"$night_id\">\n";
+print "<input type=hidden name=end value=\"$cur_date\">\n";
+
+$all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
+
+print "<b>Total size</b>: {$all_data['Total Sum'][0]}<br>\n";
+print "<b>Difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
+print "<b>Difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
+
+print "<table class=\"sortable\" id=\"file_sizes\" border=1 cellspacing=0 cellpadding=6>\n";
+print "\t<tr>\n";
+print "\t\t<td>File</td>\n";
+print "\t\t<td>File Size in Bytes</td>\n";
+print "\t\t<td>% difference from previous test</td>\n";
+print "\t\t<td>% difference from five tests ago</td>\n";
+print "\t</tr>\n";
+
+print "\t<tr>\n";
+print "\t</tr>\n";
+
+foreach (array_keys($all_data) as $d){
+  print "\t<tr>\n";
+  if(strcmp($d, "Total Sum")!=0){
+    print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
+  }
+  else{
+    print "\t\t<td>\n";
+  }
+  print "\t\t$d</td>\n";
+  print "\t\t<td>{$all_data["$d"][0]}</td>\n";
+  print "\t\t<td>{$all_data["$d"][1]}</td>\n";
+  print "\t\t<td>{$all_data["$d"][2]}</td>\n";
+  
+  print "\t</tr>\n";
+}
+
+print "</table>\n";
+print "<input type=submit name=action value=\"Compare values\"> | ";
+print "<input type=reset>\n";
+print "</form>\n";
+
 print "</div><br><br>\n";
 
 

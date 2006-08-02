@@ -544,7 +544,7 @@ for($y=0; $y<sizeof($category_print_array_ordered); $y++){
 		$sign="(+)";
 	}
 
-	print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('{$category_print_array_ordered[$y]}');\", id=\"{$category_print_array_ordered[$y]}_\">$sign $num_changes Tests Signifigantly Changed for {$category_print_array_ordered[$y]}</a></font>\n";
+	print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('{$category_print_array_ordered[$y]}');\", id=\"{$category_print_array_ordered[$y]}_\">$sign $num_changes Tests Significantly Changed for {$category_print_array_ordered[$y]}</a></font>\n";
 	print "<div id=\"{$category_print_array_ordered[$y]}\" style=\"display: $disp;\" class=\"hideable\">\n";
 	print "<b>Signifigant Changes for {$category_print_array_ordered[$y]}</b>";
 	print "<span style=\"position:relative;\">\n";

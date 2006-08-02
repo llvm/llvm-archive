@@ -234,12 +234,11 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   $prev_sum=0;
   $old_sum=0;
 
-#$delta = round($today_results["$x"][$y] - $yesterday_results["$x"][$y],2);
-
   foreach (array_keys($cur_data) as $file){
     $cur_sum+=$cur_data["$file"];
     
     if(isset($prev_night["$file"]) && isset($cur_night["$file"])) {
+      $prev_delta= ( $cur_data["$file"] - $prev_data["$file"] );
       $prev_diff = (($cur_data["$file"] - $prev_data["$file"]) / $prev_data["$file"] ) * 100;
       $prev_sum+=$prev_data["$file"];
     } else {
@@ -247,28 +246,31 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
     }
 
     if(isset($old_night["$file"]) && isset($cur_data["$file"])){
+      $old_delta= ( $cur_data["$file"] - $old_data["$file"] );
       $old_diff = (($cur_data["$file"] - $old_data["$file"]) / $old_data["$file"] ) * 100;
       $old_sum+=$old_data["$file"];
     } else {
       $old_diff = "-";
     } 
-    $result["$file"]=array($cur_data["$file"], round($prev_diff,2), round($old_diff,2));
+    $result["$file"]=array($cur_data["$file"], round($prev_diff,2), $prev_delta, round($old_diff,2), $old_delta);
   }
 
   
   if($old_sum>0){
+    $old_delta = ($cur_sum - $old_sum);
     $old_diff = (($cur_sum - $old_sum) / $old_sum ) * 100;
   } else{
     $old_diff="-";
   }
 
   if($prev_sum>0){
+    $prev_delta = ($cur_sum - $prev_sum);
     $prev_diff = (($cur_sum - $prev_sum) / $prev_sum ) * 100;
   } else{
     $prev_diff="-";
   }
 
-  $result["Total Sum"] = array($cur_sum, round($prev_diff,2), round($old_diff,2));
+  $result["Total Sum"] = array($cur_sum, round($prev_diff,2), $prev_delta, round($old_diff,2), $old_delta);
 
   return $result;
 }

@@ -413,7 +413,6 @@ foreach (array_keys($all_data[0]) as $d){
 	}	
 	print "\t</tr>\n";
 }
-mysql_free_result($night_table_query);
 
 print "</table></div>\n";
 

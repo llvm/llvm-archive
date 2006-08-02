@@ -497,19 +497,34 @@ print "\t<tr>\n";
 print "\t</tr>\n";
 
 foreach (array_keys($all_data) as $d){
-  print "\t<tr>\n";
-  if(strcmp($d, "Total Sum")!=0){
-    print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
+  if($all_data["$d"][1]!=0 || $all_data["$d"][2]!=0){
+    print "\t<tr>\n";
+    if(strcmp($d, "Total Sum")!=0){
+      print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
+    }
+    else{
+      print "\t\t<td>\n";
+    }
+    print "\t\t$d</td>\n";
+    print "\t\t<td>{$all_data["$d"][0]}</td>\n";
+
+    if($all_data["$d"][1]!=0){
+      $color="color:".DetermineColor($all_data["$d"][1], "white");
+    }
+    else{
+      $color="";
+    }
+    print "\t\t<td $color>{$all_data["$d"][1]}</td>\n";
+    
+    if($all_data["$d"][2]!=0){
+      $color="color:"+DetermineColor($all_data["$d"][2], "white");
+    }
+    else{
+      $color="";
+    }print "\t\t<td $color>{$all_data["$d"][2]}</td>\n";
+    
+    print "\t</tr>\n";
   }
-  else{
-    print "\t\t<td>\n";
-  }
-  print "\t\t$d</td>\n";
-  print "\t\t<td>{$all_data["$d"][0]}</td>\n";
-  print "\t\t<td>{$all_data["$d"][1]}</td>\n";
-  print "\t\t<td>{$all_data["$d"][2]}</td>\n";
-  
-  print "\t</tr>\n";
 }
 
 print "</table>\n";

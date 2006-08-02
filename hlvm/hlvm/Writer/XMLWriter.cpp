@@ -1111,6 +1111,7 @@ template<> void
 XMLWriterImpl::WriterPass::put(const GetFieldOp* r)
 {
   startElement("getfld");
+  writeAttribute("field",r->getFieldName());
   putDoc(r);
 }
 

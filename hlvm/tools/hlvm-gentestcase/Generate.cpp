@@ -745,7 +745,7 @@ genRealBinary(Operator* V1, Operator* V2)
 static Operator*
 genStringUnary(Operator* V1)
 {
-  hlvmAssert(isa<StringType>(V1));
+  hlvmAssert(isa<StringType>(V1->getType()));
   Operator* str = genValueAsOperator(bundle->getIntrinsicType(stringTy));
   return ast->new_BinaryOp<StrConcatOp>(V1,str,bundle,getLocator());
 }
@@ -753,8 +753,8 @@ genStringUnary(Operator* V1)
 static Operator*
 genStringBinary(Operator* V1, Operator* V2)
 {
-  hlvmAssert(isa<StringType>(V1));
-  hlvmAssert(isa<StringType>(V2));
+  hlvmAssert(isa<StringType>(V1->getType()));
+  hlvmAssert(isa<StringType>(V2->getType()));
   ConstantInteger* CI = getConstantInteger(0);
   GetOp* get = ast->new_GetOp(CI,getLocator());
   return ast->new_BinaryOp<StrConcatOp>(V1,V2,bundle,getLocator());
@@ -763,7 +763,7 @@ genStringBinary(Operator* V1, Operator* V2)
 static Operator*
 genArrayUnary(Operator* V1)
 {
-  hlvmAssert(isa<ArrayType>(V1));
+  hlvmAssert(isa<ArrayType>(V1->getType()));
   const ArrayType* Ty = cast<ArrayType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
   AutoVarOp* val1 = ast->new_AutoVarOp("val1",Ty,getLocator());
@@ -806,7 +806,7 @@ genArrayUnary(Operator* V1)
   SelectOp* sel = 
     ast->new_TernaryOp<SelectOp>(le,len3,len4,bundle,getLocator());
   GetIndexOp* endIndex = 
-    ast->new_GetIndexOp(val1,endIndex,getLocator());
+    ast->new_GetIndexOp(val1,sel,getLocator());
   endIndex->setParent(end);
 
   LessThanOp* cond = 
@@ -836,8 +836,8 @@ genArrayUnary(Operator* V1)
 static Operator*
 genArrayBinary(Operator* V1, Operator* V2)
 {
-  hlvmAssert(isa<ArrayType>(V1));
-  hlvmAssert(isa<ArrayType>(V2));
+  hlvmAssert(isa<ArrayType>(V1->getType()));
+  hlvmAssert(isa<ArrayType>(V2->getType()));
   hlvmAssert(V1->getType() == V2->getType());
   const ArrayType* Ty = cast<ArrayType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
@@ -852,14 +852,16 @@ genArrayBinary(Operator* V1, Operator* V2)
   GetOp* getNull1 = ast->new_GetOp(null,getLocator());
   AutoVarOp* ptr1 = ast->new_AutoVarOp("ptr1",ptr_type,getLocator());
   blk->addOperand(ptr1);
+  GetOp* val1get = ast->new_GetOp(val1,getLocator());
   GetIndexOp* idx1 = 
-    ast->new_GetIndexOp(val1,getNull1,getLocator());
+    ast->new_GetIndexOp(val1get,getNull1,getLocator());
   idx1->setParent(ptr1);
   GetOp* getNull2 = ast->new_GetOp(null,getLocator());
   AutoVarOp* ptr2 = ast->new_AutoVarOp("ptr2",ptr_type,getLocator());
   blk->addOperand(ptr2);
+  GetOp* val2get = ast->new_GetOp(val2,getLocator());
   GetIndexOp* idx2 = 
-    ast->new_GetIndexOp(val2,getNull2,getLocator());
+    ast->new_GetIndexOp(val2get,getNull2,getLocator());
   idx2->setParent(ptr2);
   GetOp* getNull3 = ast->new_GetOp(null,getLocator());
   AutoVarOp* ptr3 = ast->new_AutoVarOp("ptr3",ptr_type,getLocator());
@@ -881,7 +883,7 @@ genArrayBinary(Operator* V1, Operator* V2)
   SelectOp* sel = 
     ast->new_TernaryOp<SelectOp>(le,len3,len4,bundle,getLocator());
   GetIndexOp* endIndex = 
-    ast->new_GetIndexOp(val1,endIndex,getLocator());
+    ast->new_GetIndexOp(ast->new_GetOp(val1,getLocator()),sel,getLocator());
   endIndex->setParent(end);
 
   LessThanOp* cond = 
@@ -911,7 +913,7 @@ genArrayBinary(Operator* V1, Operator* V2)
 static Operator*
 genVectorUnary(Operator* V1)
 {
-  hlvmAssert(isa<VectorType>(V1));
+  hlvmAssert(isa<VectorType>(V1->getType()));
   const VectorType* Ty = cast<VectorType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
   AutoVarOp* autovar = ast->new_AutoVarOp("result",Ty,getLocator());
@@ -922,7 +924,7 @@ genVectorUnary(Operator* V1)
     ConstantInteger* cst = getConstantInteger(i);
     GetOp* index = ast->new_GetOp(cst,getLocator());
     GetIndexOp* elem = 
-      ast->new_GetIndexOp(val1,index,getLocator());
+      ast->new_GetIndexOp(ast->new_GetOp(val1,getLocator()),index,getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem,bundle,getLocator());
     Operator* expr = genUnaryExpression(load1);
     GetOp* get = ast->new_GetOp(autovar,getLocator());
@@ -941,8 +943,8 @@ genVectorUnary(Operator* V1)
 static Operator*
 genVectorBinary(Operator* V1, Operator* V2)
 {
-  hlvmAssert(isa<StructureType>(V1));
-  hlvmAssert(isa<StructureType>(V2));
+  hlvmAssert(isa<VectorType>(V1->getType()));
+  hlvmAssert(isa<VectorType>(V2->getType()));
   hlvmAssert(V1->getType() == V2->getType());
   const VectorType* Ty = llvm::cast<VectorType>(V1->getType());
   Block* blk = ast->new_Block(getLocator());
@@ -957,7 +959,7 @@ genVectorBinary(Operator* V1, Operator* V2)
     ConstantInteger* cst = getConstantInteger(i);
     GetOp* index = ast->new_GetOp(cst,getLocator());
     GetIndexOp* elem1 = 
-      ast->new_GetIndexOp(val1,index,getLocator());
+      ast->new_GetIndexOp(ast->new_GetOp(val1,getLocator()),index,getLocator());
     LoadOp* load1 = ast->new_UnaryOp<LoadOp>(elem1,bundle,getLocator());
     GetIndexOp* elem2 = 
       ast->new_GetIndexOp(val2,index,getLocator());

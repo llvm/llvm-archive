@@ -71,7 +71,7 @@ class LLVMEmitter
 {
   /// @name Constructors
   /// @{
-  public:
+  protected:
     LLVMEmitter();
 
   /// @}
@@ -233,6 +233,11 @@ class LLVMEmitter
       bool varargs                   ///< Whether its a varargs function or not
     );
 
+    llvm::Type* getTextType();
+    llvm::Type* getStreamType();
+    llvm::Type* getBufferType();
+    llvm::FunctionType* getProgramType();
+
   /// @}
   /// @name Simple Value getters
   /// @{
@@ -308,7 +313,7 @@ class LLVMEmitter
       return new llvm::CastInst(V1,Ty,name,TheBlock);
     }
     llvm::LoadInst* emitLoad(llvm::Value* V, const std::string& name) const {
-      return  new llvm::LoadInst(V,name,TheBlock);
+      return new llvm::LoadInst(V,name,TheBlock);
     }
     llvm::StoreInst* emitStore(llvm::Value* from, llvm::Value* to) const {
       return new llvm::StoreInst(from,to,TheBlock);
@@ -454,6 +459,37 @@ class LLVMEmitter
     );
 
   /// @}
+  /// @name Emitters for Stream Operations
+  /// @{
+  public:
+    llvm::CallInst* emitOpen(llvm::Value* strm);
+    llvm::CallInst* emitClose(llvm::Value* strm);
+    llvm::CallInst* emitRead(llvm::Value* strm,llvm::Value* V2,llvm::Value* V3);
+    llvm::CallInst* emitWrite(llvm::Value* strm,llvm::Value*V2);
+
+  /// @}
+  /// @name Emitters for Math functions
+  /// @{
+  public:
+    llvm::CallInst* emitIsPInf(llvm::Value* V);
+    llvm::CallInst* emitIsNInf(llvm::Value* V);
+    llvm::CallInst* emitIsNan(llvm::Value* V);
+    llvm::CallInst* emitTrunc(llvm::Value* V);
+    llvm::CallInst* emitRound(llvm::Value* V);
+    llvm::CallInst* emitFloor(llvm::Value* V);
+    llvm::CallInst* emitCeiling(llvm::Value* V);
+    llvm::CallInst* emitLogE(llvm::Value* V);
+    llvm::CallInst* emitLog2(llvm::Value* V);
+    llvm::CallInst* emitLog10(llvm::Value* V);
+    llvm::CallInst* emitSquareRoot(llvm::Value* V);
+    llvm::CallInst* emitCubeRoot(llvm::Value* V);
+    llvm::CallInst* emitFactorial(llvm::Value* V);
+    llvm::CallInst* emitPower(llvm::Value* V1,llvm::Value*V2);
+    llvm::CallInst* emitRoot(llvm::Value* V1,llvm::Value*V2);
+    llvm::CallInst* emitGCD(llvm::Value* V1,llvm::Value*V2);
+    llvm::CallInst* emitLCM(llvm::Value* V1,llvm::Value*V2);
+
+  /// @}
   /// @name Other miscellaneous functions
   /// @{
   public:
@@ -480,66 +516,9 @@ class LLVMEmitter
     void AddBranchFixup(llvm::BranchInst *BI, bool isExceptionEdge);
 
   /// @}
-  /// @name Accessors for interface to HLVM Runtime Library
-  /// @{
-  public:
-    /// Buffer manipulation methods
-    llvm::PointerType*  get_hlvm_buffer();
-    llvm::Function*     get_hlvm_buffer_create();
-    llvm::CallInst*     call_hlvm_buffer_create(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_buffer_delete();
-    llvm::CallInst*     call_hlvm_buffer_delete(const ArgList& args);
-
-    /// Get the signature for an HLVM program
-    llvm::FunctionType* get_hlvm_program_signature();
-
-    /// Get the LLVM type for an HLVM "size" type
-    llvm::Type*         get_hlvm_size();
-
-    /// Stream manipulation methods
-    llvm::PointerType*  get_hlvm_stream();
-    llvm::Function*     get_hlvm_stream_open();
-    llvm::CallInst*     call_hlvm_stream_open(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_read();
-    llvm::CallInst*     call_hlvm_stream_read(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_buffer();
-    llvm::CallInst*     call_hlvm_stream_write_buffer(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_text();
-    llvm::CallInst*     call_hlvm_stream_write_text(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_write_string();
-    llvm::CallInst*     call_hlvm_stream_write_string(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_stream_close();
-    llvm::CallInst*     call_hlvm_stream_close(const ArgList& args);
-
-    /// Text manipulation methods.
-    llvm::PointerType*  get_hlvm_text();
-    llvm::Function*     get_hlvm_text_create();
-    llvm::CallInst*     call_hlvm_text_create(
-        const ArgList& args, const char* name = 0);
-    llvm::Function*     get_hlvm_text_delete();
-    llvm::CallInst*     call_hlvm_text_delete(const ArgList& args);
-    llvm::Function*     get_hlvm_text_to_buffer();
-    llvm::CallInst*     call_hlvm_text_to_buffer(
-        const ArgList& args, const char* name = 0);
-
-  /// @}
-  /// @name Accessors for LLVM intrinsics
-  /// @{
-  public:
-    llvm::Function* get_llvm_memcpy();
-    llvm::Function* get_llvm_memmove();
-    llvm::Function* get_llvm_memset();
-
-  /// @}
   /// @name Data Members
   /// @{
-  private:
+  protected:
     BlockStack blocks;              ///< The stack of nested blocks 
     BranchList breaks;              ///< The list of breaks to fix up later
     BranchList continues;           ///< The list of continues to fix up later
@@ -549,31 +528,10 @@ class LLVMEmitter
     llvm::BasicBlock* TheExitBlock; ///< The function's exit (return) block
     llvm::Instruction* EntryInsertionPoint; ///< Insertion point for entry stuff
     llvm::BasicBlock* TheBlock;     ///< The current block we're building
-
-    // Caches of things to interface with the HLVM Runtime Library
-    llvm::PointerType*  hlvm_text;          ///< Opaque type for text objects
-    llvm::Function*     hlvm_text_create;   ///< Create a new text object
-    llvm::Function*     hlvm_text_delete;   ///< Delete a text object
-    llvm::Function*     hlvm_text_to_buffer;///< Convert text to a buffer
-    llvm::PointerType*  hlvm_buffer;        ///< Pointer To octet
-    llvm::Function*     hlvm_buffer_create; ///< Create a new buffer object
-    llvm::Function*     hlvm_buffer_delete; ///< Delete a buffer
-    llvm::PointerType*  hlvm_stream;        ///< Pointer to stream type
-    llvm::Function*     hlvm_stream_open;   ///< Function for stream_open
-    llvm::Function*     hlvm_stream_read;   ///< Function for stream_read
-    llvm::Function*     hlvm_stream_write_buffer; ///< Write buffer to stream
-    llvm::Function*     hlvm_stream_write_text;   ///< Write text to stream
-    llvm::Function*     hlvm_stream_write_string; ///< Write string to stream
-    llvm::Function*     hlvm_stream_close;  ///< Function for stream_close
-    llvm::FunctionType* hlvm_program_signature; ///< The llvm type for programs
-
-    // Caches of LLVM Intrinsic functions
-    llvm::Function*     llvm_memcpy;         ///< llvm.memcpy.i64
-    llvm::Function*     llvm_memmove;        ///< llvm.memmove.i64
-    llvm::Function*     llvm_memset;         ///< llvm.memset.i64
-
   /// @}
 };
+
+extern LLVMEmitter* new_LLVMEmitter();
 
 } // end hlvm namespace
 

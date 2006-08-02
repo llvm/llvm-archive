@@ -1354,7 +1354,7 @@ XMLReaderImpl::parseOperator(xmlNodePtr& cur)
       case TKN_round:        op = parseUnaryOp<RoundOp>(cur); break;
       case TKN_floor:        op = parseUnaryOp<FloorOp>(cur); break;
       case TKN_ceiling:      op = parseUnaryOp<CeilingOp>(cur); break;
-      case TKN_logE:         op = parseUnaryOp<LogEOp>(cur); break;
+      case TKN_loge:         op = parseUnaryOp<LogEOp>(cur); break;
       case TKN_log2:         op = parseUnaryOp<Log2Op>(cur); break;
       case TKN_log10:        op = parseUnaryOp<Log10Op>(cur); break;
       case TKN_squareroot:   op = parseUnaryOp<SquareRootOp>(cur); break;

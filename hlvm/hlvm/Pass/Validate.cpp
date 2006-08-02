@@ -1038,7 +1038,7 @@ ValidateImpl::validate(GetIndexOp* n)
 template<> inline void
 ValidateImpl::validate(GetFieldOp* n)
 {
-  if (checkOperator(n,GetFieldOpID,2)) {
+  if (checkOperator(n,GetFieldOpID,1)) {
     // FIXME: Implement check for reference on first operand
     // FIXME: Implement check for string type on second operand
   }

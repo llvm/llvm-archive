@@ -733,6 +733,7 @@
       <ref name="BinaryRealMathOperators.pat"/>
       <ref name="MemoryOps.pat"/>
       <ref name="InputOutputOps.pat"/>
+      <ref name="StringOperators.pat"/>
       <ref name="ControlFlowOps.pat"/>
     </choice>
   </define>
@@ -847,9 +848,11 @@
 
   <define name="getfld.elem">
     <element name="getfld">
+      <attribute name="field">
+        <ref name="Identifier.type"/>
+      </attribute>
       <ref name="Documentation.pat"/>
       <ref name="Location.pat"/>
-      <ref name="Operators.pat"/>
     </element>
   </define>
 
@@ -1060,7 +1063,7 @@
       <ref name="round.elem"/>
       <ref name="floor.elem"/>
       <ref name="ceiling.elem"/>
-      <ref name="logE.elem"/>
+      <ref name="loge.elem"/>
       <ref name="log2.elem"/>
       <ref name="log10.elem"/>
       <ref name="squareroot.elem"/>
@@ -1111,8 +1114,8 @@
     </element>
   </define>
 
-  <define name="logE.elem">
-    <element name="logE">
+  <define name="loge.elem">
+    <element name="loge">
       <ref name="UnaryOperator.pat"/>
     </element>
   </define>

@@ -481,7 +481,7 @@ print "<input type=hidden name=end value=\"$cur_date\">\n";
 
 $all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
 
-print "<b>Total size</b>: {$all_data['Total Sum'][0]}<br>\n";
+print "<b>Total size</b>: {$all_data['Total Sum'][0]} bytes<br>\n";
 print "<b>Difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
 print "<b>Difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
 
@@ -490,10 +490,17 @@ print "\t<tr>\n";
 print "\t\t<td>File</td>\n";
 print "\t\t<td>File Size in Bytes</td>\n";
 print "\t\t<td>% difference from previous test</td>\n";
+print "\t\t<td>Byte difference from previous test</td>\n";
 print "\t\t<td>% difference from five tests ago</td>\n";
+print "\t\t<td>Byte difference from five tests ago</td>\n";
 print "\t</tr>\n";
 
 print "\t<tr>\n";
+print "<td></td>\n";
+print "<td></td>\n";
+print "<td></td>\n";
+print "<td></td>\n";
+print "<td></td>\n";
 print "\t</tr>\n";
 
 foreach (array_keys($all_data) as $d){
@@ -509,20 +516,25 @@ foreach (array_keys($all_data) as $d){
     print "\t\t<td>{$all_data["$d"][0]}</td>\n";
 
     if($all_data["$d"][1]!=0){
-      $color="color:".DetermineColor($all_data["$d"][1], "white");
+      $color="bgcolor=";
+      $color.=DetermineColor($all_data["$d"][1], "\"\"");
     }
     else{
       $color="";
     }
     print "\t\t<td $color>{$all_data["$d"][1]}</td>\n";
-    
-    if($all_data["$d"][2]!=0){
-      $color="color:"+DetermineColor($all_data["$d"][2], "white");
+    print "\t\t<td $color>{$all_data["$d"][2]}</td>\n";
+
+    if($all_data["$d"][3]!=0){
+      $color="bgolor=";
+      $color.=DetermineColor($all_data["$d"][3], "white");
     }
     else{
       $color="";
-    }print "\t\t<td $color>{$all_data["$d"][2]}</td>\n";
-    
+    }
+    print "\t\t<td $color>{$all_data["$d"][3]}</td>\n";
+    print "\t\t<td $color>{$all_data["$d"][4]}</td>\n";
+
     print "\t</tr>\n";
   }
 }

@@ -505,7 +505,7 @@ print "<td></td>\n";
 print "\t</tr>\n";
 
 foreach (array_keys($all_data) as $d){
-  if($all_data["$d"][1]!=0 || $all_data["$d"][3]!=0){
+  //if($all_data["$d"][1]!=0 || $all_data["$d"][3]!=0){
     print "\t<tr>\n";
     if(strcmp($d, "Total Sum")!=0){
       print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
@@ -537,7 +537,7 @@ foreach (array_keys($all_data) as $d){
     print "\t\t<td $color>{$all_data["$d"][4]}</td>\n";
 
     print "\t</tr>\n";
-  }
+    //}
 }
 
 print "</table>\n";

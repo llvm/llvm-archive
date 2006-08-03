@@ -53,6 +53,28 @@ projects to add to this page.</p>
     to do with emitting LLVM code to do range checking for RangeType
     variables. RangeType's are currently treated like integers without range
     checking.</li>
+    <li><em>Use Google hashmaps</em>. We would like to convert HLVM away from
+    the slow and bulky STL maps currently being used to google's open source
+    maps such as <tt>dense_hash_map</tt> and <tt>sparse_hash_map</tt>. However,
+    to do this, several things need to be resolved: 
+    <ol>
+      <li>Do we incorporate the code into HLVM, or build it separately and
+      reference it when configuring HLVM? Its just a few header files, so the
+      former approach seems okay, but this needs to be investigated.</li>
+      <li>The google code exposes its "config.h" which will conflict with 
+      ours. It defines several macros from the config.h info and uses them
+      in <tt>sparsetable</tt> as well as other places.</li>
+      <li>Deciding whether to use sparse or dense versions of the hash maps
+      needs to be decided on a case-by-case basis. In general, where the map is
+      not expected to be large (like MultiOperator), dense should give us good
+      performance. In cases where the content could be large (like SymbolTable),
+      it might be wiser to use the sparse version. Same for the various maps
+      used in LLVMGenerator.cpp and LLVMEmitter.cpp.</li>
+      <li>Consider writing wrappers for these classes. Since we're going to
+      compile HLVM with LLVM (eventually), the wrappers would get discarded by
+      LLVM's inliner so the performance loss wouldn't be great.</li>
+    </ol>
+    </li>
   </ol>
 </div>
 

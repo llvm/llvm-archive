@@ -494,9 +494,10 @@ print "<input type=hidden name=end value=\"$cur_date\">\n";
 
 $all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
 
-print "<b>Total size</b>: {$all_data['Total Sum'][0]} bytes<br>\n";
-print "<b>Difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
-print "<b>Difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
+$unformatted_num=number_format($all_data['Total Sum'][0],0,".",",");
+print "<b>Total size</b>: $unformatted_num bytes<br>\n";
+print "<b>Percent difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
+print "<b>Percent difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
 
 print "<table class=\"sortable\" id=\"file_sizes\" border=1 cellspacing=0 cellpadding=6>\n";
 print "\t<tr>\n";
@@ -517,7 +518,7 @@ print "<td></td>\n";
 print "\t</tr>\n";
 
 foreach (array_keys($all_data) as $d){
-  if($all_data["$d"][1]!=0 || $all_data["$d"][2]!=0){
+  if($all_data["$d"][1]!=0 || $all_data["$d"][3]!=0){
     print "\t<tr>\n";
     if(strcmp($d, "Total Sum")!=0){
       print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
@@ -528,23 +529,11 @@ foreach (array_keys($all_data) as $d){
     print "\t\t$d</td>\n";
     print "\t\t<td>{$all_data["$d"][0]}</td>\n";
 
-    if($all_data["$d"][1]!=0){
-      $color="bgcolor=";
-      $color.=DetermineColor($all_data["$d"][1], "\"\"");
-    }
-    else{
-      $color="";
-    }
+    $color="bgcolor=\"".DetermineColor($all_data["$d"][1], "")."\"";
     print "\t\t<td $color>{$all_data["$d"][1]}</td>\n";
     print "\t\t<td $color>{$all_data["$d"][2]}</td>\n";
 
-    if($all_data["$d"][3]!=0){
-      $color="bgolor=";
-      $color.=DetermineColor($all_data["$d"][3], "white");
-    }
-    else{
-      $color="";
-    }
+    $color="bgcolor=\"".DetermineColor($all_data["$d"][3], "")."\"";
     print "\t\t<td $color>{$all_data["$d"][3]}</td>\n";
     print "\t\t<td $color>{$all_data["$d"][4]}</td>\n";
 

@@ -481,9 +481,10 @@ print "<input type=hidden name=end value=\"$cur_date\">\n";
 
 $all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
 
-print "<b>Total size</b>: {$all_data['Total Sum'][0]} bytes<br>\n";
-print "<b>Difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
-print "<b>Difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
+$formatted_num=number_format($all_data['Total Sum'][0],0,".",",");
+print "<b>Total size</b>: $formatted_num bytes<br>\n";
+print "<b>Percent difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
+print "<b>Percent difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
 
 print "<table class=\"sortable\" id=\"file_sizes\" border=1 cellspacing=0 cellpadding=6>\n";
 print "\t<tr>\n";
@@ -504,7 +505,7 @@ print "<td></td>\n";
 print "\t</tr>\n";
 
 foreach (array_keys($all_data) as $d){
-  if($all_data["$d"][1]!=0 || $all_data["$d"][2]!=0){
+  if($all_data["$d"][1]!=0 || $all_data["$d"][3]!=0){
     print "\t<tr>\n";
     if(strcmp($d, "Total Sum")!=0){
       print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";

@@ -681,7 +681,7 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 # Sending email to nightly test email archive
 #
 ################################################################################
-$link_to_page="http://llvm.org/nightlytest/machine.php?machine=$machine_id";
+$link_to_page="http://llvm.org/nightlytest/test.php?machine=$machine_id&night=$night_id";
 $email  = "$link_to_page\n";
 $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";

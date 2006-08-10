@@ -281,8 +281,8 @@ print "</div><br><br>\n";
  *
  ******************************************************/
 
-print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('executionTimes');\", id=\"executionTimes_\">(+) Execution Times</a></font>\n";
-print "<div id=\"executionTimes\" style=\"display:;\" class=\"hideable\">\n";
+print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('executionTimes');\", id=\"executionTimes_\">(-) Execution Times</a></font>\n";
+print "<div id=\"executionTimes\" style=\"display: none;\" class=\"hideable\">\n";
 print"<h3><u>Execution times in seconds:</u></h3><br>\n";
 print "<table border=1 cellpadding=0 cellspacing=0>\n";
 

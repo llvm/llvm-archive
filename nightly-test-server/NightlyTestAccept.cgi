@@ -789,11 +789,11 @@ if($buildstatus eq "OK") {
 	}
 	$email .= "\nRemoved Tests: $removed_tests\n";
 
-	print "\nSignificant changes in test results:\n";
+	$email .= "\nSignificant changes in test results:\n";
 	foreach my $meas(keys(%output_big_changes)){
-	    print "$meas:\n";
+	    $email.= "$meas:\n";
 	    foreach my $x(@{ $output_big_changes{$meas} } ){
-		print "--- $x";
+		$email.= "--- $x";
 	    }
 	}
 }

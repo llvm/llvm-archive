@@ -664,7 +664,7 @@ if($len>1){
 
 ################################################################################
 #
-# Adding lines of code
+# Adding lines of code to the database
 #
 ################################################################################
 UpdateCodeInfo $db_date, $loc, $filesincvs, $dirsincvs;
@@ -675,6 +675,82 @@ print "received $ENV{CONTENT_LENGTH} bytes\n";
 $length = @nights;
 print "DB date : $db_date\n";
 print "Machine $machine_id now has ids [@nights]{$length} associated with it in the database\n";
+
+################################################################################
+#
+# building hash of arrays of signifigant changes to place into the nightly
+# test results email. This is ugly code and is somewhat of a hack. However, it
+# adds very useful information to the nightly test email.
+#
+################################################################################
+$query = "select id from night where id<$night_id and machine=$machine_id order by id desc";
+my $g = $dbh->prepare($query);
+$g->execute;
+$row = $g->fetchrow_hashref;
+$prev_night=$row->{'id'};
+
+$query = "select * from program where night=$night_id";
+my $e = $dbh->prepare($query);
+$e->execute;
+%prog_hash_new=();
+while ($row=$e->fetchrow_hashref){
+    $prog_hash_new{"$row->{'program'}"}=$row->{'result'};
+}
+
+$query = "select * from program where night=$prev_night";
+my $f = $dbh->prepare($query);
+$f->execute;
+%prog_hash_old=();
+while ($row=$f->fetchrow_hashref){
+    $prog_hash_old{"$row->{'program'}"}=$row->{'result'};
+}
+
+%output_big_changes=();
+foreach my $prog(keys(%prog_hash_new)){
+    #get data from server
+    my @vals_new = split(",", $prog_hash_new{"$prog"});
+    my @vals_old = split(",", $prog_hash_old{'$prog'});
+
+    #get list of values measured from newest test
+    my @measures={};
+    foreach my $x(@vals_new){
+        $x =~ s/\,//g;
+        $x =~ s/\.//g;
+        $x =~ s/\://g;
+        $x =~ s/\d//g;
+        $x =~ s/\-//g;
+        $x =~ s/ //g;
+        if($x !~ m/\//){
+            push @measures, $x;
+        }
+    }
+
+    #put measures into hash of arrays
+    foreach my $x(@measures){
+        $prog_hash_new{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
+        my $value_new = $1;
+        $value_old=0;
+	if(exists $prog_hash_old{"$prog"}){
+            $prog_hash_old{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
+            $value_old = $1;
+        }
+        my $diff = ($value_old - $value_new);
+        my $perc=0;
+        if( $value_old!=0 && ($diff > .2 || $diff < -.2) ){
+            $perc=($diff/$value_old) * 100;
+        }
+        if($perc > 5 || $perc < -5){
+            if( ! exists $output_big_changes{"$x"} ){
+                my $rounded_perc = sprintf("%1.2f", $perc);
+                $output_big_changes{"$x"}[0]="$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n";
+            }
+            else{
+                my $rounded_perc = sprintf("%1.2f", $perc);
+                push(@{ $output_big_changes{"$x"} },"$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n");
+            } #end else
+        }# end if $perc is acceptable
+    }# end foreach measure taken
+} #end for each program we have measurements for
 
 ################################################################################
 #
@@ -712,6 +788,14 @@ if($buildstatus eq "OK") {
 		$removed_tests = "None";
 	}
 	$email .= "\nRemoved Tests: $removed_tests\n";
+
+	print "\nSignificant changes in test results:\n";
+	foreach my $meas(keys(%output_big_changes)){
+	    print "$meas:\n";
+	    foreach my $x(@{ $output_big_changes{$meas} } ){
+		print "--- $x";
+	    }
+	}
 }
 else{
 	$temp_date = $db_date;

@@ -742,7 +742,7 @@ foreach my $prog(keys(%prog_hash_new)){
         if($perc > 5 || $perc < -5){
             if( ! exists $output_big_changes{"$x"} ){
                 my $rounded_perc = sprintf("%1.2f", $perc);
-                $output_big_changes{"$x"}[0]="$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n";
+                $output_big_changes{"$x"}[0]="$prog: $rounded_perc\% ($value_old => $value_new)\n";
             }
             else{
                 my $rounded_perc = sprintf("%1.2f", $perc);
@@ -793,7 +793,7 @@ if($buildstatus eq "OK") {
 	foreach my $meas(keys(%output_big_changes)){
 	    $email.= "$meas:\n";
 	    foreach my $x(@{ $output_big_changes{$meas} } ){
-		$email.= "--- $x";
+		$email.= " $x";
 	    }
 	}
 }

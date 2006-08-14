@@ -612,13 +612,13 @@ else{ $newly_failing_tests=""; }
 # the corresponding entry from the previous day. Therefore, we create a
 # different list that does not contain these words. 
 $temp_test_list_today = $all_tests;
-$temp_test_list_today =~ s/PASS//g;
-$temp_test_list_today =~ s/FAIL//g;
-$temp_test_list_today =~ s/XFAIL//g;
+$temp_test_list_today =~ s/PASS\://g;
+$temp_test_list_today =~ s/XFAIL\://g;
+$temp_test_list_today =~ s/FAIL\://g;
 $temp_test_list_yesterday = $yesterdays_tests;
-$temp_test_list_yesterday = s/PASS//g;
-$temp_test_list_yesterday = s/FAIL//g;
-$temp_test_list_yesterday = s/XFAIL//g;
+$temp_test_list_yesterday = s/PASS\://g;
+$temp_test_list_yesterday = s/XFAIL\://g;
+$temp_test_list_yesterday = s/FAIL\://g;
 if($yesterdays_tests ne ""){
   $new_tests = Difference $temp_test_list_today, $temp_test_list_yesterday;
 }

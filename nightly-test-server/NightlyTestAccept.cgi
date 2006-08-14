@@ -597,20 +597,34 @@ $yesterdays_passes = $row->{'passing_tests'};
 $yesterdays_fails = $row->{'unexpfail_tests'};
 $yesterdays_xfails = $row->{'expfail_tests'};
 if($yesterdays_passes ne ""){
-	$newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
+  $newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
 }
 else{ $newly_passing_tests=""; }
 if($yesterdays_xfails ne "" and $yesterdays_fails ne ""){
-	$newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
-								  $yesterdays_xfails."\n".$yesterdays_fails;
+  $newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
+                                    $yesterdays_xfails."\n".$yesterdays_fails;
 }
 else{ $newly_failing_tests=""; }
+# The tests are stored in the database as a string with each test being
+# seperated by a newline. Each test is prefixed with either "PASS",
+# "FAIL", and "XFAIL". If a test changes from pass to fail, this will
+# cause us to think its a new test because its entry no longer matches
+# the corresponding entry from the previous day. Therefore, we create a
+# different list that does not contain these words. 
+$temp_test_list_today = $all_tests;
+$temp_test_list_today =~ s/PASS//g;
+$temp_test_list_today =~ s/FAIL//g;
+$temp_test_list_today =~ s/XFAIL//g;
+$temp_test_list_yesterday = $yesterdays_tests;
+$temp_test_list_yesterday = s/PASS//g;
+$temp_test_list_yesterday = s/FAIL//g;
+$temp_test_list_yesterday = s/XFAIL//g;
 if($yesterdays_tests ne ""){
-	$new_tests = Difference $all_tests, $yesterdays_tests;
+  $new_tests = Difference $temp_test_list_today, $temp_test_list_yesterday;
 }
 else{ $new_tests=""; }
 if($all_tests ne ""){
-	$removed_tests = Difference $yesterdays_tests, $all_tests;
+  $removed_tests = Difference $temp_test_list_yesterday, $temp_test_list_today;
 }
 else{ $removed_tests=""; }
 

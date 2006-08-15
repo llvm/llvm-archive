@@ -589,7 +589,8 @@ $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_versio
 #     or their equivalent.
 #
 ################################################################################
-my $d = $dbh->prepare("select * from night where machine = $machine_id ORDER BY added DESC");
+my $d = $dbh->prepare("select * from night where machine = $machine_id ".
+                      "and buildstatus=\"OK\" ORDER BY added DESC");
 $d->execute;
 my $row=$d->fetchrow_hashref;
 $yesterdays_tests = $row->{'all_tests'};
@@ -697,7 +698,7 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 # adds very useful information to the nightly test email.
 #
 ################################################################################
-$query = "select id from night where id<$night_id and machine=$machine_id order by id desc";
+$query = "select id from night where id<$night_id and machine=$machine_id and buildstatus=\"OK\" order by id desc";
 my $g = $dbh->prepare($query);
 $g->execute;
 $row = $g->fetchrow_hashref;

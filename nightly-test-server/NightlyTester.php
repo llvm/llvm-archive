@@ -48,7 +48,7 @@ function getMachineResource($mysql_link){
  *
  *****************************************************/
 function getRecentMachineResource($mysql_link){
-  $night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 1 MONTH) <= added") or die (mysql_error());
+  $night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 14 DAY) <= added") or die (mysql_error());
   $machines="where id=0";
   $machine_arr = array();
   while($row = mysql_fetch_array($night_query)){
@@ -104,7 +104,8 @@ function getNightInfo($night_id, $mysql_link){
 
 /*****************************************************
  *
- * Purpose: Get the nights associated with a specific machine
+ * Purpose: Get the nights associated with a specific machine for
+ *          which buildstatus is "OK"
  * Returns: A mysql query resource. Basically something you cal
  *          mysql_fetch_array on.
  *
@@ -113,6 +114,21 @@ function getNightsResource($machine_id, $mysql_link, $start="2000-01-01 01:01:01
  $query = mysql_query("SELECT * FROM night WHERE machine=$machine_id and added<=\"$end\" and added>=\"$start\" order by added $order") or die (mysql_error());
  return $query;
 }
+
+/*****************************************************
+ *
+ * Purpose: Get the history of nights given a night and 
+ *          specific machine 
+ * Returns: A mysql query resource. Basically something you cal
+ *          mysql_fetch_array on.
+ *
+ *****************************************************/
+function getSuccessfulNightsHistory($machine_id, $mysql_link, $night_id, $order="DESC"){
+  $query="SELECT * FROM night WHERE machine=$machine_id and id<=$night_id and buildstatus=\"OK\" order by added $order";
+  $query = mysql_query($query) or die (mysql_error());
+  return $query;
+}
+
 
 /*****************************************************
  *

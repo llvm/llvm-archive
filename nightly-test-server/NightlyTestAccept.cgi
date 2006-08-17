@@ -88,28 +88,28 @@ sub DoesMachineExist{ #(uname,hardware,os,name,nickname,gcc)
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub Difference{ 
-	$one = $_[0];
-	$two = $_[1];
-	
-	@ONE = split "\n", $one;
-	@TWO = split "\n", $two;
-	
-	$value=1;
-	
-	my %hash_of_diff=();
-	foreach $x (@TWO){
-		$hash_of_diff{$x}=$value;
-	}
-	
-	$result="";
-	foreach $x (@ONE){
-		if($hash_of_diff{$x}!=$value){
-			$result.="$x\n";
-		}
-	}
-	
-	chomp $result;
-	return $result;
+  $one = $_[0];
+  $two = $_[1];
+  
+  @ONE = split "\n", $one;
+  @TWO = split "\n", $two;
+  
+  $value=1;
+  
+  my %hash_of_diff=();
+  foreach $x (@TWO){
+    $hash_of_diff{$x}=$value;
+  }
+  
+  $result="";
+  foreach $x (@ONE){
+    if($hash_of_diff{$x}!=$value){
+      $result.="$x\n";
+    }
+  }
+  
+  chomp $result;
+  return $result;
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,101 +213,100 @@ sub GetMachineId{ #uname, hardware, os, name, nickname, gcc
 #            $new_tests, $removed_tests,
 #            $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
 #            $cvsusercommitlist, $cvsuserupdatelist, 
-#			 $a_file_size, $o_file_size;
+#       $a_file_size, $o_file_size;
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub CreateNight{
+  for($x=0; $x<@_; $x++){
+    $_[$x]="" unless $_[$x];
+  }
 
-    for($x=0; $x<@_; $x++){
-		$_[$x]="" unless $_[$x];
-    }
+  $y=0;
+  $machine_id=$_[$y];
+  $y++;
+  $db_date=$_[$y];
+  $y++;
+  $buildstatus=$_[$y];
+  $y++;
+  $configtime_cpu=$_[$y];
+  $y++;
+  $configtime_wall=$_[$y];
+  $y++;
+  $cvscheckouttime_cpu=$_[$y];
+  $y++;
+  $cvscheckouttime_wall=$_[$y];
+  $y++;
+  $buildtime_cpu=$_[$y];
+  $y++;
+  $buildtime_wall=$_[$y];
+  $y++;
+  $dejagnutime_cpu=$_[$y];
+  $y++;
+  $dejagnutime_wall=$_[$y];
+  $y++;
+  $warnings=$_[$y];
+  $y++;
+  $warnings_added=$_[$y];
+  $y++;
+  $warnings_removed=$_[$y];
+  $y++;
+  $dejagnu_exp_passes=$_[$y];
+  $y++;
+  $dejagnu_unexp_failures=$_[$y];
+  $y++;
+  $dejagnu_exp_failures=$_[$y];
+  $y++;
+  $all_tests=$_[$y];
+  $y++;
+  $passing_tests=$_[$y];
+  $y++;
+  $unexpfail_tests=$_[$y];
+  $y++;
+  $expfail_tests=$_[$y];
+  $y++;
+  $newly_passing_tests=$_[$y];
+  $y++;
+  $newly_failing_tests=$_[$y];
+  $y++;
+  $new_tests=$_[$y];
+  $y++;
+  $removed_tests=$_[$y];
+  $y++;
+  $cvsaddedfiles=$_[$y];
+  $y++;
+  $cvsremovedfiles=$_[$y];
+  $y++;
+  $cvsmodifiedfiles=$_[$y];
+  $y++;
+  $cvsusercommitlist=$_[$y];
+  $y++;
+  $cvsuserupdatelist=$_[$y];
+  $y++;
 
-	$y=0;
-	$machine_id=$_[$y];
-	$y++;
-	$db_date=$_[$y];
-	$y++;
-	$buildstatus=$_[$y];
-	$y++;
-	$configtime_cpu=$_[$y];
-	$y++;
-	$configtime_wall=$_[$y];
-	$y++;
-	$cvscheckouttime_cpu=$_[$y];
-	$y++;
-	$cvscheckouttime_wall=$_[$y];
-	$y++;
-	$buildtime_cpu=$_[$y];
-	$y++;
-	$buildtime_wall=$_[$y];
-	$y++;
-	$dejagnutime_cpu=$_[$y];
-	$y++;
-	$dejagnutime_wall=$_[$y];
-	$y++;
-	$warnings=$_[$y];
-	$y++;
-	$warnings_added=$_[$y];
-	$y++;
-	$warnings_removed=$_[$y];
-	$y++;
-	$dejagnu_exp_passes=$_[$y];
-	$y++;
-	$dejagnu_unexp_failures=$_[$y];
-	$y++;
-	$dejagnu_exp_failures=$_[$y];
-	$y++;
-	$all_tests=$_[$y];
-	$y++;
-	$passing_tests=$_[$y];
-	$y++;
-	$unexpfail_tests=$_[$y];
-	$y++;
-	$expfail_tests=$_[$y];
-	$y++;
-	$newly_passing_tests=$_[$y];
-	$y++;
-	$newly_failing_tests=$_[$y];
-	$y++;
-	$new_tests=$_[$y];
-	$y++;
-	$removed_tests=$_[$y];
-	$y++;
-	$cvsaddedfiles=$_[$y];
-	$y++;
-	$cvsremovedfiles=$_[$y];
-	$y++;
-	$cvsmodifiedfiles=$_[$y];
-	$y++;
-	$cvsusercommitlist=$_[$y];
-	$y++;
-	$cvsuserupdatelist=$_[$y];
-	$y++;
+  
 
-	
-
-	
+  
     my $d = $dbh->prepare("insert into night (machine, added, buildstatus, configuretime_cpu, configuretime_wall,".
-			  " getcvstime_cpu, getcvstime_wall, buildtime_cpu,".
-			  " buildtime_wall, dejagnutime_cpu, dejagnutime_wall, warnings,".
-			  " warnings_added, warnings_removed, teststats_exppass,".
-			  " teststats_unexpfail, teststats_expfail, all_tests,".
+        " getcvstime_cpu, getcvstime_wall, buildtime_cpu,".
+        " buildtime_wall, dejagnutime_cpu, dejagnutime_wall, warnings,".
+        " warnings_added, warnings_removed, teststats_exppass,".
+        " teststats_unexpfail, teststats_expfail, all_tests,".
               " passing_tests, unexpfail_tests, expfail_tests,".
-			  " newly_passing_tests, newly_failing_tests, new_tests,".
-			  " removed_tests, cvs_added, cvs_removed, cvs_modified,".
-			  " cvs_usersadd, cvs_usersco) values (".
-			  "\"$machine_id\", \"$db_date\", \"$buildstatus\",".
-			  "\"$configtime_cpu\", \"$configtime_wall\", \"$cvscheckouttime_cpu\",".
-			  "\"$cvscheckouttime_wall\", \"$buildtime_cpu\", \"$buildtime_wall\",".
-			  "\"$dejagnutime_cpu\", \"$dejagnutime_wall\", \"$warnings\",".
-			  "\"$warnings_added\", \"$warnings_removed\",".
-			  "\"$dejagnu_exp_passes\", \"$dejagnu_unexp_failures\", \"$dejagnu_exp_failures\",".
-			  "\"$all_tests\", \"$passing_tests\", \"$unexpfail_tests\",". 
+        " newly_passing_tests, newly_failing_tests, new_tests,".
+        " removed_tests, cvs_added, cvs_removed, cvs_modified,".
+        " cvs_usersadd, cvs_usersco) values (".
+        "\"$machine_id\", \"$db_date\", \"$buildstatus\",".
+        "\"$configtime_cpu\", \"$configtime_wall\", \"$cvscheckouttime_cpu\",".
+        "\"$cvscheckouttime_wall\", \"$buildtime_cpu\", \"$buildtime_wall\",".
+        "\"$dejagnutime_cpu\", \"$dejagnutime_wall\", \"$warnings\",".
+        "\"$warnings_added\", \"$warnings_removed\",".
+        "\"$dejagnu_exp_passes\", \"$dejagnu_unexp_failures\", \"$dejagnu_exp_failures\",".
+        "\"$all_tests\", \"$passing_tests\", \"$unexpfail_tests\",". 
               "\"$expfail_tests\", \"$newly_passing_tests\", \"$newly_failing_tests\",".
-			  "\"$new_tests\", \"$removed_tests\",".
-			  "\"$cvsaddedfiles\", \"$cvsremovedfiles\", \"$cvsmodifiedfiles\",".
-			  "\"$cvsusercommitlist\", \"$cvsuserupdatelist\")");
+        "\"$new_tests\", \"$removed_tests\",".
+        "\"$cvsaddedfiles\", \"$cvsremovedfiles\", \"$cvsmodifiedfiles\",".
+        "\"$cvsusercommitlist\", \"$cvsuserupdatelist\")");
 
     $d->execute;
 
@@ -315,10 +314,10 @@ sub CreateNight{
     $e->execute;
     @row=$e->fetchrow_array;
     if(@row){
-	return $row[0];
+  return $row[0];
     }
     else{
-	return -1;
+  return -1;
     }
 }
 
@@ -329,7 +328,7 @@ sub GetMachineNights{ #machine_id
     my $d = $dbh->prepare("select * from night where machine = \"$_[0]\"");
     $d->execute;
     while (@row = $d->fetchrow_array){
-	push(@result, $row[0]);
+  push(@result, $row[0]);
     }
     $result[0]="" unless $result[0];
     return @result;
@@ -351,11 +350,33 @@ sub GetMachineNights{ #machine_id
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub AddProgram{ #$program, $result, $type, $night
-		$query = "INSERT INTO program (program, result, type, night) VALUES".
-						 " (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])";
+    $query = "INSERT INTO program (program, result, type, night) VALUES".
+             " (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])";
     my $d = $dbh->prepare($query);
     $d->execute;
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# mysql> describe tests;
+# +---------+-----------------------------+------+-----+---------+-------+
+# | Field   | Type                        | Null | Key | Default | Extra |
+# +---------+-----------------------------+------+-----+---------+-------+
+# | program | tinytext                    |      |     |         |       |
+# | result  | enum('PASS','FAIL','XFAIL') |      |     | PASS    |       |
+# | measure | tinytext                    | YES  |     | NULL    |       |
+# | night   | int(11)                     | YES  |     | NULL    |       |
+# +---------+-----------------------------+------+-----+---------+-------+
+# 4 rows in set (0.00 sec)#
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sub AddTests{ #$program, $result, $measure, $night
+    $query = "INSERT INTO program (program, result, measure, night) VALUES".
+             " (\"$_[0]\", \"$_[1]\", \"$_[2]\", $_[3])";
+    my $d = $dbh->prepare($query);
+    $d->execute;
+}
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -372,8 +393,8 @@ sub AddProgram{ #$program, $result, $type, $night
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub AddFile{ #$file, $size, $night, $type
-		$query = "INSERT INTO file (file, size, night, type) VALUES (\"$_[0]\", ".
-						 "\"$_[1]\", \"$_[2]\", \"$_[3]\")";
+    $query = "INSERT INTO file (file, size, night, type) VALUES (\"$_[0]\", ".
+             "\"$_[1]\", \"$_[2]\", \"$_[3]\")";
     my $d = $dbh->prepare($query);
     $d->execute;
 }
@@ -401,9 +422,9 @@ sub UpdateCodeInfo{ #date, loc, files, dirs
     $d->execute;
     $row=$d->fetchrow_hashref;
     if(%$row && ($row->{'loc'} != $_[1] ||
-		 $row->{'files'} != $_[2] ||
-		 $row->{'dirs'} != $_[3])){
-	my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", \"$_[1]\", \"$_[2]\", \"$_[3]\")");
+     $row->{'files'} != $_[2] ||
+     $row->{'dirs'} != $_[3])){
+  my $e = $dbh->prepare("insert into code (added, loc, files, dirs) values (\"$_[0]\", \"$_[1]\", \"$_[2]\", \"$_[3]\")");
     $e->execute;
     }
 }
@@ -449,8 +470,8 @@ $external_tests = "" unless $external_tests;
 my @EXTERNAL_TESTS = split $spliton, $external_tests;
 
 my $o_file_size = param('o_file_sizes'); 
-	 $o_file_size="" unless $o_file_size;
-	 chomp($o_file_size);
+   $o_file_size="" unless $o_file_size;
+   chomp($o_file_size);
 my @O_FILE_SIZE = split $spliton, $o_file_size;
 my $a_file_size = param('a_file_sizes'); 
    $a_file_size="" unless $a_file_size;
@@ -507,7 +528,6 @@ if($MACHINE_DATA[5]){ $MACHINE_DATA[5] =~ m/time\:\s*(.+)/; $time=$1; chomp($tim
 # Extracting the dejagnu test numbers
 #
 ################################################################################
-print "content-type: text/text\r\n\r\n";
 
 my $dejagnu_exp_passes=0;
 if( ($dejagnutests_log =~ m/\# of expected passes\s*([0-9]+)/) ){
@@ -539,7 +559,7 @@ for($x=1; $x<@SINGLESOURCE_TESTS; $x++){
     my @temp_outcome=split $seperator,$SINGLESOURCE_TESTS[$x];
     my $outcome = "";
     for($y=1; $y<@singlesource_headings; $y++){
-	$outcome.="$singlesource_headings[$y]: $temp_outcome[$y], ";
+  $outcome.="$singlesource_headings[$y]: $temp_outcome[$y], ";
     }
     $singlesource_processed{$temp_outcome[0]}=$outcome;   
 }
@@ -551,7 +571,7 @@ for($x=1; $x<@MULTISOURCE_TESTS; $x++){
     my @temp_outcome=split $seperator,$MULTISOURCE_TESTS[$x];
     my $outcome = "";
     for($y=1; $y<@multisource_headings; $y++){
-	$outcome.="$multisource_headings[$y]: $temp_outcome[$y], ";
+  $outcome.="$multisource_headings[$y]: $temp_outcome[$y], ";
     }
     $multisource_processed{$temp_outcome[0]}=$outcome;
 }
@@ -563,7 +583,7 @@ for($x=1; $x<@EXTERNAL_TESTS; $x++){
     my @temp_outcome=split $seperator,$EXTERNAL_TESTS[$x];
     my $outcome = "";
     for($y=1; $y<@external_headings; $y++){
-	$outcome.="$external_headings[$y]: $temp_outcome[$y], ";
+      $outcome.="$external_headings[$y]: $temp_outcome[$y], ";
     }
     $external_processed{$temp_outcome[0]}=$outcome;
 }
@@ -582,70 +602,22 @@ $machine_id = GetMachineId $uname, $hardware, $os, $name, $nickname, $gcc_versio
 
 ################################################################################
 #
-# Creating test lists
-# 		All of these if-else statements are to ensure that if the previous
-#			night's test had a build failure and reported all tests as not passing,
-#			all failing, etc, etc then we dont report all the tests as newly passing
-#     or their equivalent.
-#
-################################################################################
-my $d = $dbh->prepare("select * from night where machine = $machine_id ".
-                      "and buildstatus=\"OK\" ORDER BY added DESC");
-$d->execute;
-my $row=$d->fetchrow_hashref;
-$yesterdays_tests = $row->{'all_tests'};
-$yesterdays_passes = $row->{'passing_tests'};
-$yesterdays_fails = $row->{'unexpfail_tests'};
-$yesterdays_xfails = $row->{'expfail_tests'};
-if($yesterdays_passes ne ""){
-  $newly_passing_tests = Difference $passing_tests, $yesterdays_passes;
-}
-else{ $newly_passing_tests=""; }
-if($yesterdays_xfails ne "" and $yesterdays_fails ne ""){
-  $newly_failing_tests = Difference $expfail_tests."\n".$unexpfail_tests,
-                                    $yesterdays_xfails."\n".$yesterdays_fails;
-}
-else{ $newly_failing_tests=""; }
-# The tests are stored in the database as a string with each test being
-# seperated by a newline. Each test is prefixed with either "PASS",
-# "FAIL", and "XFAIL". If a test changes from pass to fail, this will
-# cause us to think its a new test because its entry no longer matches
-# the corresponding entry from the previous day. Therefore, we create a
-# different list that does not contain these words. 
-$temp_test_list_today = $all_tests;
-$temp_test_list_today =~ s/PASS\://g;
-$temp_test_list_today =~ s/XFAIL\://g;
-$temp_test_list_today =~ s/FAIL\://g;
-$temp_test_list_yesterday = $yesterdays_tests;
-$temp_test_list_yesterday = s/PASS\://g;
-$temp_test_list_yesterday = s/XFAIL\://g;
-$temp_test_list_yesterday = s/FAIL\://g;
-if($yesterdays_tests ne ""){
-  $new_tests = Difference $temp_test_list_today, $temp_test_list_yesterday;
-}
-else{ $new_tests=""; }
-if($all_tests ne ""){
-  $removed_tests = Difference $temp_test_list_yesterday, $temp_test_list_today;
-}
-else{ $removed_tests=""; }
-
-################################################################################
-#
 # Submitting information to database
 #
 ################################################################################
 #$db_date = $date." ".$time;
 $db_date = `date "+20%y-%m-%d %H:%M:%S"`;
 chomp($db_date);
+$blank="";
 $night_id= CreateNight $machine_id, $db_date, $buildstatus, 
             $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
             $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
             $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
             $warnings_added, $warnings_removed,
             $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures, #expected pass, unexp fails, exp fails
-            $all_tests, $passing_tests, $unexpfail_tests, 
-            $expfail_tests, $newly_passing_tests, $newly_failing_tests,
-            $new_tests, $removed_tests,
+            $blank, $blank, $blank,       #$all_tests, $passing_tests, $unexpfail_tests, 
+            $blank, $blank, $blank,       #$expfail_tests, $TestsFixed, $TestsBroken,
+            $blank, $blank,           #$TestsAdded, $TestsRemoved,
             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
             $cvsusercommitlist, $cvsuserupdatelist;
 
@@ -663,19 +635,37 @@ foreach $x(keys %external_processed){
 
 $len=@O_FILE_SIZE;
 if($len>1){
-	foreach $x (@O_FILE_SIZE){
-		$x =~ m/(.+)\s+(.+)\s+(.+)/;
-		AddFile $2, $1, $night_id, $3;
-	}
+  foreach $x (@O_FILE_SIZE){
+    $x =~ m/(.+)\s+(.+)\s+(.+)/;
+    AddFile $2, $1, $night_id, $3;
+  }
 }
 
 $len=@A_FILE_SIZE;
 if($len>1){
-	foreach $x (@A_FILE_SIZE){
-		$x =~ m/(.+)\s+(.+)\s+(.+)/;
-		AddFile $2, $1, $night_id, $3;
-	}
+  foreach $x (@A_FILE_SIZE){
+    $x =~ m/(.+)\s+(.+)\s+(.+)/;
+    AddFile $2, $1, $night_id, $3;
+  }
 }
+
+################################################################################
+#
+# Adding test results pass/fail/xfail status to database
+#
+################################################################################
+@ALL_TESTS= split "\n", $all_tests;
+foreach $x (@ALL_TESTS){
+  if($x =~ m/(TEST-)?(PASS|XFAIL|FAIL):\s(.+?)\s(.+)/){
+    $query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$4\", \'$2\', \"$3\", $night_id)";
+    my $d = $dbh->prepare($query);
+    $d->execute;
+  }
+  else{
+    print "Unrecognized test: $x\n";
+  }
+}
+
 
 ################################################################################
 #
@@ -722,50 +712,101 @@ while ($row=$f->fetchrow_hashref){
 
 %output_big_changes=();
 foreach my $prog(keys(%prog_hash_new)){
-    #get data from server
-    my @vals_new = split(",", $prog_hash_new{"$prog"});
-    my @vals_old = split(",", $prog_hash_old{'$prog'});
+  #get data from server
+  my @vals_new = split(",", $prog_hash_new{"$prog"});
+  my @vals_old = split(",", $prog_hash_old{'$prog'});
+  #get list of values measured from newest test
+  my @measures={};
+  foreach my $x(@vals_new){
+    $x =~ s/\,//g;
+    $x =~ s/\.//g;
+    $x =~ s/\://g;
+    $x =~ s/\d//g;
+    $x =~ s/\-//g;
+    $x =~ s/ //g;
+    if($x !~ m/\//){
+     push @measures, $x;
+     }
+  }
+  #put measures into hash of arrays
+  foreach my $x(@measures){
+    $prog_hash_new{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
+    my $value_new = $1;
+    $value_old=0;
+    if(exists $prog_hash_old{"$prog"}){
+      $prog_hash_old{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
+      $value_old = $1;
+    }
+    my $diff = ($value_old - $value_new);
+    my $perc=0;
+    if( $value_old!=0 && ($diff > .2 || $diff < -.2) ){
+      $perc=($diff/$value_old) * 100;
+    }
+    if($perc > 5 || $perc < -5){
+      if( ! exists $output_big_changes{"$x"} ){
+        my $rounded_perc = sprintf("%1.2f", $perc);
+        $output_big_changes{"$x"}[0]="$prog: $rounded_perc\% ($value_old => $value_new)\n";
+      }
+      else{
+        my $rounded_perc = sprintf("%1.2f", $perc);
+        push(@{ $output_big_changes{"$x"} },"$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n");
+      } #end else
+    }# end if $perc is acceptable
+  }# end foreach measure taken
+} #end for each program we have measurements for
 
-    #get list of values measured from newest test
-    my @measures={};
-    foreach my $x(@vals_new){
-        $x =~ s/\,//g;
-        $x =~ s/\.//g;
-        $x =~ s/\://g;
-        $x =~ s/\d//g;
-        $x =~ s/\-//g;
-        $x =~ s/ //g;
-        if($x !~ m/\//){
-            push @measures, $x;
-        }
+################################################################################
+#
+# Determining changes in new tests and old tests
+#
+################################################################################
+my $d = $dbh->prepare("SELECT id FROM night WHERE machine=38 and buildstatus=\"OK\" order by added desc");
+$d->execute;
+my @row=$d->fetchrow_array;
+$cur_night=$row[0];
+@row=$d->fetchrow_array;
+$prev_night=$row[0];
+
+my $c = $dbh->prepare("SELECT program, measure, result FROM tests WHERE night=$cur_night");
+$c->execute;
+
+%result_hash=();
+%program_hash=();
+while(my @row=$c->fetchrow_array){
+    my $key = $row[1]." - ".$row[0];
+    $result_hash{$key}=$row[2];
+    $program_hash{$key}=1;
+}
+
+my ($num_removed, $num_added, $num_new_passing, $num_new_failing)=0;
+my ($removed, $added, $passing, $failing) = "";
+my $j = $dbh->prepare("SELECT program, measure, result FROM tests WHERE night=$prev_night");
+$j->execute;
+while(my @row=$j->fetchrow_array){
+    my $key = $row[1]." - ".$row[0];
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and $row[2] eq "PASS"){
+	$failing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
+	$num_new_failing++;
+    }
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and $result_hash{$key} eq "PASS" ){
+        $passing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
+        $num_new_passing++;
     }
 
-    #put measures into hash of arrays
-    foreach my $x(@measures){
-        $prog_hash_new{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
-        my $value_new = $1;
-        $value_old=0;
-	if(exists $prog_hash_old{"$prog"}){
-            $prog_hash_old{"$prog"} =~ m/$x:.*?(\d*\.*\d+)/;
-            $value_old = $1;
-        }
-        my $diff = ($value_old - $value_new);
-        my $perc=0;
-        if( $value_old!=0 && ($diff > .2 || $diff < -.2) ){
-            $perc=($diff/$value_old) * 100;
-        }
-        if($perc > 5 || $perc < -5){
-            if( ! exists $output_big_changes{"$x"} ){
-                my $rounded_perc = sprintf("%1.2f", $perc);
-                $output_big_changes{"$x"}[0]="$prog: $rounded_perc\% ($value_old => $value_new)\n";
-            }
-            else{
-                my $rounded_perc = sprintf("%1.2f", $perc);
-                push(@{ $output_big_changes{"$x"} },"$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n");
-            } #end else
-        }# end if $perc is acceptable
-    }# end foreach measure taken
-} #end for each program we have measurements for
+    if(!$program_hash{$key}){
+        $removed .= "REMOVED: $key\n";
+        $num_removed++;
+    }
+    else{
+        $program_hash{$key}++;
+    }
+}
+foreach $x(keys(%program_hash)){
+    if($program_hash{$x}==1){
+        $added .= "ADDED: $x\n";
+        $num_added++;
+    }
+}
 
 ################################################################################
 #
@@ -779,44 +820,40 @@ $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
 
 if($buildstatus eq "OK") {
-	if ($newly_passing_tests ne "") {
-		$newly_passing_tests = "\n$newly_passing_tests\n";
-	} else {
-		$newly_passing_tests = "None";
-	}
-	$email .= "\nNew Test Passes: $newly_passing_tests";
-	if ($newly_failing_tests ne "") {
-		$newly_failing_tests = "\n$newly_failing_tests\n";
-	} else {
-		$newly_failing_tests = "None";
-	}
-	$email .= "\nNew Test Failures: $newly_failing_tests";
-	if ($new_tests ne "") {
-		$new_tests = "\n$new_tests\n";
-	} else {
-		$new_tests = "None";
-	}
-	$email .= "\nAdded Tests: $new_tests";
-	if ($removed_tests ne "") {
-		$removed_tests = "\n$removed_tests\n";
-	} else {
-		$removed_tests = "None";
-	}
-	$email .= "\nRemoved Tests: $removed_tests\n";
+  if ($TestsFixed ne "") {
+    $TestsFixed= "\n$newly_passing_tests\n";
+  } else {
+    $TestsFixed = "None";
+  }
+  $email .= "\nNew Test Passes: $TestsFixed";
+  if ($TestsBroken ne "") {
+    $TestsBroken = "\n$newly_failing_tests\n";
+  } else {
+    $TestsBroken = "None";
+  }
+  $email .= "\nNew Test Failures: $TestsBroken";
+  if ($added eq "") {
+    $added = "None";
+  } 
+  $email .= "\nAdded Tests: $added";
+  if ($removed eq "") {
+    $removed= "None";
+  } 
+  $email .= "\nRemoved Tests: $removed\n";
 
-	$email .= "\nSignificant changes in test results:\n";
-	foreach my $meas(keys(%output_big_changes)){
-	    $email.= "$meas:\n";
-	    foreach my $x(@{ $output_big_changes{$meas} } ){
-		$email.= " $x";
-	    }
-	}
+  $email .= "\nSignificant changes in test results:\n";
+  foreach my $meas(keys(%output_big_changes)){
+    $email.= "$meas:\n";
+    foreach my $x(@{ $output_big_changes{$meas} } ){
+      $email.= " $x";
+    }
+  }
 }
 else{
-	$temp_date = $db_date;
-	$temp_date =~s/ /\_/g;
-	$email .= "\nBuildlog available at http://llvm.org/nightlytest/".
-	          "machines/$machine_id/$temp_date-Build-Log.txt";
+  $temp_date = $db_date;
+  $temp_date =~s/ /\_/g;
+  $email .= "\nBuildlog available at http://llvm.org/nightlytest/".
+            "machines/$machine_id/$temp_date-Build-Log.txt";
 }
 
 $email_addr = "llvm-testresults\@cs.uiuc.edu";
@@ -837,9 +874,10 @@ if(! -d "machines"){
 ChangeDir("$curr/machines", "Moving into machines directory");
 if(! -d "$machine_id"){
     `mkdir $machine_id -m 777`;
-    #mkdir "$curr/machines/$machine_id", 777 or print("couldnt create directory $machine_id because $!");
+    
 }
-ChangeDir("$curr/machines/$machine_id", "Moving into machine $machine_id 's directory");
+ChangeDir("$curr/machines/$machine_id", 
+          "Moving into machine $machine_id 's directory");
 
 $db_date =~ s/ /\_/g;
 my $build_file = "$db_date-Build-Log.txt";

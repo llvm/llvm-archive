@@ -566,7 +566,7 @@ print"<h3><u>Program tests:</u></h3><br>\n";
 
 $today_results = GetDayResults($today_row['id'], $category_array, $mysql_link);
 if(isset($yesterday_row['id'])){
-  $yesterday_results = GetDayResults($yesterday_row['id'], $category_print_array, $mysql_link);
+  $yesterday_results = GetDayResults($yesterday_row['id'], $category_array, $mysql_link);
   $percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results,.2);  
 }
 /********************** external table **********************/

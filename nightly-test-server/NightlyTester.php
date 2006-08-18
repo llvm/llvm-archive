@@ -262,11 +262,15 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   $cur_sum=0;
   $prev_sum=0;
   $old_sum=0;
+  $prev_diff=0;
+  $prev_delta=0;
+  $old_diff=0;
+  $old_delta=0;
 
   foreach (array_keys($cur_data) as $file){
     $cur_sum+=$cur_data["$file"];
     
-    if(isset($prev_night["$file"]) && isset($cur_night["$file"])) {
+    if(isset($prev_data["$file"]) && isset($cur_data["$file"])) {
       $prev_delta= ( $cur_data["$file"] - $prev_data["$file"] );
       $prev_diff = (($cur_data["$file"] - $prev_data["$file"]) / $prev_data["$file"] ) * 100;
       $prev_sum+=$prev_data["$file"];
@@ -274,7 +278,7 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
       $prev_diff="-";
     }
 
-    if(isset($old_night["$file"]) && isset($cur_data["$file"])){
+    if(isset($old_data["$file"]) && isset($cur_data["$file"])){
       $old_delta= ( $cur_data["$file"] - $old_data["$file"] );
       $old_diff = (($cur_data["$file"] - $old_data["$file"]) / $old_data["$file"] ) * 100;
       $old_sum+=$old_data["$file"];

@@ -666,7 +666,7 @@ foreach my $x (@ALL_TESTS){
 }
 
 foreach my $x (@DEJAGNUTESTS_RESULTS){
-  if($x =~ m/^(PASS|XFAIL|FAIL):\s(.+?)/){
+  if($x =~ m/^(PASS|XFAIL|FAIL):\s(.+)/){
   	$query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$2\", \'$1\', \"dejagnu\", $night_id)";
     my $d = $dbh->prepare($query);
     $d->execute;

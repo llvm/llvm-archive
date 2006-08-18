@@ -448,14 +448,13 @@ my $build_log=param('build_data');
    $build_log="" unless $build_log;
 my @BUILD_LOG = split $spliton, $build_log;
 
+my $dejagnutests_results=param('dejagnutests_results');
+   $dejagnutests_results="" unless $dejagnutests_results;
+my @DEJAGNUTESTS_RESULTS = split $spliton, $dejagnutests_results;
+
 my $dejagnutests_log=param('dejagnutests_log');
    $dejagnutests_log="" unless $dejagnutests_log;
 my @DEJAGNUTESTS_LOG = split $spliton, $dejagnutests_log;
-
-
-my $dejagnutests_sum=param('dejagnutests_sum');
-   $dejagnutests_sum="" unless $dejagnutests_sum;
-my @DEJAGNUTESTS_SUM = split $spliton, $dejagnutests_sum;
 
 my $singlesource_tests = param('singlesource_programstable');
 $singlesource_tests="" unless $singlesource_tests;
@@ -655,7 +654,7 @@ if($len>1){
 #
 ################################################################################
 @ALL_TESTS= split "\n", $all_tests;
-foreach $x (@ALL_TESTS){
+foreach my $x (@ALL_TESTS){
   if($x =~ m/(TEST-)?(PASS|XFAIL|FAIL):\s(.+?)\s(.+)/){
     $query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$4\", \'$2\', \"$3\", $night_id)";
     my $d = $dbh->prepare($query);
@@ -666,6 +665,13 @@ foreach $x (@ALL_TESTS){
   }
 }
 
+foreach my $x (@DEJAGNUTESTS_RESULTS){
+  if($x =~ m/^(PASS|XFAIL|FAIL):\s(.+?)/){
+  	$query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$2\", \'$1\', \"dejagnu\", $night_id)";
+    my $d = $dbh->prepare($query);
+    $d->execute;
+  }
+}
 
 ################################################################################
 #
@@ -883,15 +889,6 @@ $db_date =~ s/ /\_/g;
 my $build_file = "$db_date-Build-Log.txt";
 my $o_file= "$db_date-O-files.txt";
 my $a_file= "$db_date-A-files.txt";
-#my $dejagnu_testrun_log_file = "Dejagnu-testrun.log";
-#my $dejagnu_testrun_sum_file = "Dejagnu-testrun.sum";
-#my $dejagnu_tests_file = "DejagnuTests-Log.txt";
-#my $warnings_fie = "Warnings.txt";
-
-
 WriteFile "$build_file", $build_log;
 WriteFile "$o_file", $o_file_size;
 WriteFile "$a_file", $a_file_size;
-#WriteFile "$this_days_logs/$dejagnu_testrun_log_file",$dejagnutests_log;
-#WriteFile "$this_days_logs/$dejagnu_testrun_sum_file",$dejagnutests_sum;
-#WriteFile "$this_days_logs/$warnings_file",$buildwarnings;

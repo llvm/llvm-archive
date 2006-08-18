@@ -402,7 +402,7 @@ function getUnexpectedFailures($night_id, $mysql_link){
     mysql_free_result($program_query);
   }
   else{
-    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" AND measure=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $result.="{$row['measure']} - {$row['program']}<br>\n";
@@ -419,25 +419,29 @@ function getUnexpectedFailures($night_id, $mysql_link){
  * in their own table as oppoesd in the night table.
  */
 function getNewTests($cur_id, $prev_id, $mysql_link){
+  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+    return "";
+  }
+
   $result="";
   if($cur_id<684){
     $query = "SELECT new_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['unexpfail_tests'];
+    $result= $row['new_tests'];
     $result=preg_replace("/\n/","<br>\n",$result);
     mysql_free_result($program_query);
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
@@ -456,25 +460,29 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
  * in their own table as oppoesd in the night table.
  */
 function getRemovedTests($cur_id, $prev_id, $mysql_link){
+  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+    return "";
+  }
+
   $result="";
   if($cur_id<684){
     $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['unexpfail_tests'];
+    $result= $row['removed_tests'];
     $result=preg_replace("/\n/","<br>\n",$result);
     mysql_free_result($program_query);
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id  and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
@@ -493,18 +501,22 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
  * in their own table as oppoesd in the night table.
  */
 function getFixedTests($cur_id, $prev_id, $mysql_link){
+  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+    return "";
+  }
+  
   $result="";
   if($cur_id<684){
-    $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
+    $query = "SELECT newly_passing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['unexpfail_tests'];
+    $result= $row['newly_passing_tests'];
     $result=preg_replace("/\n/","<br>\n",$result);
     mysql_free_result($program_query);
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if(strcmp("{$row['result']}", "PASS")===0){
@@ -513,7 +525,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( isset($test_hash["{$row['measure']} - {$row['program']}"]) && 
@@ -533,18 +545,22 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
  * in their own table as oppoesd in the night table.
  */
 function getBrokenTests($cur_id, $prev_id, $mysql_link){
+  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+    return "";
+  }
+
   $result="";
   if($cur_id<684){
-    $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
+    $query = "SELECT newly_failing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['unexpfail_tests'];
+    $result= $row['newly_failing_tests'];
     $result=preg_replace("/\n/","<br>\n",$result);
     mysql_free_result($program_query);
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if(strcmp("{$row['result']}", "PASS")===0){
@@ -553,7 +569,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( isset($test_hash["{$row['measure']} - {$row['program']}"]) &&

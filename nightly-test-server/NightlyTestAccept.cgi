@@ -900,4 +900,4 @@ foreach my $x (@param_names){
 	$sentdata.="$x  =>  $value}\n";
 }
 my $sent_file = "$db_date-senddata.txt";
-WriteFile "$sentdata", $sent_file;
+WriteFile $sent_file, $sentdata;

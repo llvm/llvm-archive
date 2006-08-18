@@ -892,3 +892,12 @@ my $a_file= "$db_date-A-files.txt";
 WriteFile "$build_file", $build_log;
 WriteFile "$o_file", $o_file_size;
 WriteFile "$a_file", $a_file_size;
+
+$sentdata="";
+@param_names = param();
+foreach my $x (@param_names){
+	my $value=param($x);
+	$sentdata.="$x  =>  $value}\n";
+}
+my $sent_file = "$db_date-senddata.txt";
+WriteFile "$sentdata", $sent_file;

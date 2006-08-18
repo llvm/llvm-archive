@@ -50,12 +50,12 @@ mysql_select_db("nightlytestresults");
 
 if(isset($HTTP_GET_VARS['measure'])){
         $measure_arr=$HTTP_GET_VARS["measure"];
-	$measure=$measure_arr[0];
+  $measure=$measure_arr[0];
 }
 else{$URL_ERROR=1;$error_msg="no value for measure";}
 
 if(isset($HTTP_GET_VARS['program'])){
-	$program_arr=$HTTP_GET_VARS['program'];
+  $program_arr=$HTTP_GET_VARS['program'];
         $program=$HTTP_GET_VARS['program'];
 }
 else{$URL_ERROR=1;$error_msg="no value for program";}
@@ -80,7 +80,7 @@ if(isset($HTTP_GET_VARS['machine'])){
 else{$URL_ERROR=1;$error_msg="no value for machine";}
 
 if(isset($HTTP_GET_VARS['start'])){
-    	if(preg_match("/\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d/", "{$HTTP_GET_VARS['start']}")>0){
+      if(preg_match("/\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d/", "{$HTTP_GET_VARS['start']}")>0){
                 $start = $HTTP_GET_VARS['start'];
                 $start_query = "and added >= \"$start\"";
                 $start_url = "&start=$start";
@@ -91,14 +91,14 @@ if(isset($HTTP_GET_VARS['start'])){
         }
 }
 else{
-	$start_url="";
+  $start_url="";
         $start = "";
         $start_query = " ";
 }
 
 if(isset($HTTP_GET_VARS['end'])){
         if(preg_match("/\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d/", $HTTP_GET_VARS['end'])>0){
-		$end = $HTTP_GET_VARS['end'];
+    $end = $HTTP_GET_VARS['end'];
                 $end_url="&end=$end";
                 $end_query = "and added <= \"$end\"";
         }
@@ -108,7 +108,7 @@ if(isset($HTTP_GET_VARS['end'])){
         }
 }
 else{
-	$end_url="";
+  $end_url="";
         $end = "";
         $end_query = " ";
 }
@@ -116,26 +116,26 @@ else{
 if(isset($HTTP_GET_VARS['normalize'])){
         if(strcmp($HTTP_GET_VARS['normalize'],"true")==0){
                 $NORMALIZE=1;
-        	$normalize_url = "&normalize=true";
-		$def_normalize="CHECKED";
-		$def_unnormalize="";
-	}
+          $normalize_url = "&normalize=true";
+    $def_normalize="CHECKED";
+    $def_unnormalize="";
+  }
         else{
-		$normalize_url="";
+    $normalize_url="";
                 $NORMALIZE=0;
-		$def_normalize="";
-		$def_unnormalize="CHECKED";
+    $def_normalize="";
+    $def_unnormalize="CHECKED";
         }
 }
 else{
         $NORMALIZE=0;
-	$normalize_url="";
-	$def_normalize="";
-	$def_unnormalize="CHECKED";
+  $normalize_url="";
+  $def_normalize="";
+  $def_unnormalize="CHECKED";
 }
 if(isset($HTTP_GET_VARS['showdata'])){
         if(strcmp($HTTP_GET_VARS['showdata'],"true")==0){
-		$SHOWDATA=1;
+    $SHOWDATA=1;
                 $showdata="&showdata=true";
         }
         else{
@@ -144,22 +144,22 @@ if(isset($HTTP_GET_VARS['showdata'])){
         }
 }
 else{
-	$SHOWDATA=0;
+  $SHOWDATA=0;
         $showdata="";
 }
 
 if(isset($HTTP_GET_VARS['showpoints'])){
         if(strcmp($HTTP_GET_VARS['showpoints'],"true")==0){
                 $SHOWPOINTS=1;
-		$showpoints="&showpoints=true";
+    $showpoints="&showpoints=true";
         }
         else{
-		$SHOWPOINTS=0;
+    $SHOWPOINTS=0;
                 $showpoints="";
         }
 }
 else{
-	$SHOWPOINTS=0;
+  $SHOWPOINTS=0;
         $showpoints="";
 }
 
@@ -253,7 +253,7 @@ ter><br>
 
 $list_of_programs="";
 foreach($program as $prog){
-	$list_of_programs.="&program[]=$prog";
+  $list_of_programs.="&program[]=$prog";
 }
 print "\t<img src=\"drawresultsgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine_id&measure=$measure$list_of_programs$normalize_url$end_url$start_url$showdata$showpoints\" alt=\"$measure\" height=$ysize width=$xsize><br>\n";
 
@@ -320,66 +320,66 @@ $one_week = $row[0];
 $all=0;
 if(strcmp($start, $all_tests)==0 && strcmp($end, $last_date)==0){$all=1; print "Time: <b>All</b> |";}
 else{ 
-	print "Time: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$last_date&$normalize_url$showpoints$showdata&start=$all_tests\">All</a> |\n";
+  print "Time: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$last_date&$normalize_url$showpoints$showdata&start=$all_tests\">All</a> |\n";
 }
 
 if($all==0 && strcmp($start, $all_tests)==0){
-	print "<b>From first measurement</b> |";
+  print "<b>From first measurement</b> |";
 }
 else{
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&$normalize_url$showpoints$showdata&start=$all_tests\">From first measurement</a> |\n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&$normalize_url$showpoints$showdata&start=$all_tests\">From first measurement</a> |\n";
 }
 
 if(strcmp($start, $one_year)!=0){
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_year\">1 year</a> | \n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_year\">1 year</a> | \n";
 }
 else { print " <b>1 year</b> |";}
 
 if(strcmp($start, $six_month)!=0){
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$six_month\">6 months</a> | \n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$six_month\">6 months</a> | \n";
 } 
 else { print " <b>6 months</b> |";}
 
 if(strcmp($start, $three_month)!=0){
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$three_month\">3 months</a> | \n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$three_month\">3 months</a> | \n";
 }
 else { print " <b>3 months</b> |";}
 
 if(strcmp($start, $one_month)!=0){
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_month&showdata=true&showpoints=true\">1 month</a> | \n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_month&showdata=true&showpoints=true\">1 month</a> | \n";
 }
 else { print " <b>1 month</b> |";}
 
 if(strcmp($start, $one_week)!=0){
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_week&showdata=true&showpoints=true\">1 week</a><br> \n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$showpoints$showdata&start=$one_week&showdata=true&showpoints=true\">1 week</a><br> \n";
 }
 else { print " <b>1 week</b><br>";}
 
 if($NORMALIZE==1){
-	print "Data normalization: <b>On</b> |\n";
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&normalize=false&$start_url$showdata$showpoints\">Off</a><br>\n";
+  print "Data normalization: <b>On</b> |\n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&normalize=false&$start_url$showdata$showpoints\">Off</a><br>\n";
 }
 else{
-	print "Data normalization: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&normalize=true$start_url\">On</a> |\n";
-	print "<b>Off</b><br>\n";
+  print "Data normalization: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end&normalize=true$start_url\">On</a> |\n";
+  print "<b>Off</b><br>\n";
 }
 
 if($SHOWDATA==1){
-	print "Show data on graph: <b>On</b> |\n";
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showpoints\">Off</a><br>\n";
+  print "Show data on graph: <b>On</b> |\n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showpoints\">Off</a><br>\n";
 }
 else{
-	print "Show data on graph: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showpoints&showdata=true\">On</a> |\n";
-	print "<b>Off</b><br>\n";
+  print "Show data on graph: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showpoints&showdata=true\">On</a> |\n";
+  print "<b>Off</b><br>\n";
 }
 
 if($SHOWPOINTS==1){
-	print "Show points on graph: <b>On</b> |\n";
-	print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showdata\">Off</a><br>\n";
+  print "Show points on graph: <b>On</b> |\n";
+  print "<a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url$showdata\">Off</a><br>\n";
 }
 else{
-	print "Show points on graph: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url&$showdata&showpoints=true\">On</a> |\n";
-	print "<b>Off</b><br>\n";
+  print "Show points on graph: <a href=\"individualgraph.php?name=$measure&xsize=$xsize&ysize=$ysize&machine=$machine&night=$night&measure[]=$measure$list_of_programs&end=$end$normalize_url$start_url&$showdata&showpoints=true\">On</a> |\n";
+  print "<b>Off</b><br>\n";
 }
 
 
@@ -392,36 +392,36 @@ print "<br><font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('dat
 print "<div id=\"dataTable\" style=\"display: none;\">\n";
 
 if(strcmp($start,"")!=0 && strcmp($end,"")!=0){
-	$history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start,$end);
+    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start,$end);
 }
 else if(strcmp($start,"")!=0){
-	$history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start);
+    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start);
 }
 else{
-	$history = buildResultsHistory($machine_id, $program,$measure,$mysql_link);
+    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link);
 }
 
 print "<table border=1 cellspacing=0 cellpadding=6>\n";
 print "\t<tr>\n";
 print "\t\t<td>Date</td>\n";
-foreach ($program as $prog){	
-	print "\t\t<td>$prog</td>\n";
+foreach ($program as $prog){  
+  print "\t\t<td>$prog</td>\n";
 }
 print "\t</tr>\n";
 foreach (array_keys($history) as $date){
-	if(sizeof($history["$date"])>1){
-		print "\t<tr>\n";
-		print "\t\t<td>$date</td>\n";
-		for($x=1; $x<sizeof($history["$date"]); $x++){
-			if(isset($history["$date"][$x])){
-				print "\t\t<td align=center>{$history["$date"][$x]}</td>\n";
-			}	
-			else{
-				print "\t\t<td align=center>-</td>\n";
-			}
-		}
-		print "\t</tr>\n";
-	}
+  if(sizeof($history["$date"])>1){
+    print "\t<tr>\n";
+    print "\t\t<td>$date</td>\n";
+    for($x=1; $x<sizeof($history["$date"]); $x++){
+      if(isset($history["$date"][$x])){
+        print "\t\t<td align=center>{$history["$date"][$x]}</td>\n";
+      }  
+      else{
+        print "\t\t<td align=center>-</td>\n";
+      }
+    }
+    print "\t</tr>\n";
+  }
 }
 print "</table></div>\n";
 

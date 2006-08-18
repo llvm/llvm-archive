@@ -6,8 +6,8 @@ $machine_id = $HTTP_GET_VARS['machine'];
 $night_id = $HTTP_GET_VARS['night'];
 
 if(!$machine_id || !$night_id){
-	print "Error, incorrect URL for test.php!\n";
-	die();
+  print "Error, incorrect URL for test.php!\n";
+  die();
 }
 
 
@@ -17,15 +17,15 @@ mysql_select_db("nightlytestresults");
 $machine_query = mysql_query("SELECT * FROM machine WHERE id=$machine_id") or die (mysql_error());
 $row = mysql_fetch_array($machine_query);
 mysql_free_result($machine_query);
-$today_query = mysql_query("SELECT * FROM night WHERE id=$night_id") or die (mysql_error());
+
+$today_query = getSuccessfulNightsHistory($machine_id, $mysql_link, $night_id);
 $today_row = mysql_fetch_array($today_query);
+$yesterday_row = mysql_fetch_array($today_query);
+$oldday_row = mysql_fetch_array($today_query);
 mysql_free_result($today_query);
 $cur_date=$today_row['added'];
 
-$today_query = mysql_query("SELECT * FROM night WHERE machine=$machine_id and added<\"$cur_date\" order by added desc") or die (mysql_error());
-$yesterday_row = mysql_fetch_array($today_query);
-mysql_free_result($today_query);
-
+$previous_succesful_id = getPreviousWorkingNight($night_id, $mysql_link);
 
 ?>
 
@@ -47,15 +47,15 @@ mysql_free_result($today_query);
 <center><font size=+3 face=Verdana><b>LLVM Nightly Test Results For <?php print $cur_date; ?></b></font></center><br>
 
 <table cellspacing=0 cellpadding=0 border=0>
-	<tr>
-		<td valign=top>
-			<? 
-			$machine = $HTTP_GET_VARS['machine'];
-			$night = $HTTP_GET_VARS['night'];
-			include 'sidebar.php'; 
-			?>			
-		</td>
-		<td>
+  <tr>
+    <td valign=top>
+      <? 
+      $machine = $HTTP_GET_VARS['machine'];
+      $night = $HTTP_GET_VARS['night'];
+      include 'sidebar.php'; 
+      ?>      
+    </td>
+    <td>
 <?php
 
 /*****************************************************
@@ -101,8 +101,8 @@ print "</table>\n<br>\n";
  ******************************************************/
 $buildfile=str_replace(" ", "_", $cur_date);
 if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
-	print "<h4><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
-		  "View Build Log</a></h4>\n";
+  print "<h4><a href=\"machines/$machine_id/$buildfile-Build-Log.txt\">".
+      "View Build Log</a></h4>\n";
 }
 
 /*****************************************************
@@ -113,12 +113,12 @@ if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
 $previous_query = mysql_query("SELECT * FROM night WHERE \"$cur_date\" > added and machine=$machine_id ORDER BY added DESC") or die (mysql_error());
 
 if(strpos($today_row['buildstatus'], "OK")===FALSE){
-	$disp="";
-	$sign="(+)";
+  $disp="";
+  $sign="(+)";
 }
 else{
-	$disp="none";
-	$sign="(-)";
+  $disp="none";
+  $sign="(-)";
 }
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('buildStatus');\", id=\"buildStatus_\">$sign Build Status</a></font>\n";
 print "<div id=\"buildStatus\" style=\"display: $disp;\" class=\"hideable\">\n";
@@ -132,10 +132,10 @@ print "</div><br><br>\n";
  * Printing changes in test suite
  *
  ******************************************************/
-$new_tests=preg_replace("/\n/","<br>\n",$today_row['new_tests']);
-$removed_tests=preg_replace("/\n/","<br>\n",$today_row['removed_tests']);
-$newly_passing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_passing_tests']);
-$newly_failing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_failing_tests']);
+$new_tests=getNewTests($night_id, $previous_succesful_id, $mysql_link);
+$removed_tests=getRemovedTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_passing_tests=getFixedTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_failing_tests=getBrokenTests($night_id, $previous_succesful_id, $mysql_link);
 
 if((strpos($new_tests, "none")!==FALSE &&
    strpos($removed_tests, "none")!==FALSE &&
@@ -149,8 +149,8 @@ if((strpos($new_tests, "none")!==FALSE &&
         $sign="(-)";
 }
 else{
-	$disp="";
-	$sign="(+)";
+  $disp="";
+  $sign="(+)";
 }
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('testSuite');\", id=\"testSuite_\">$sign Test Suite Changes</a></font>\n";
 print "<div id=\"testSuite\" style=\"display: $disp;\" class=\"hideable\">\n";
@@ -173,8 +173,10 @@ print "</div><br><br>\n";
 $delta_exppass = $today_row['teststats_exppass']-$yesterday_row['teststats_exppass'];
 $delta_expfail = $today_row['teststats_expfail']-$yesterday_row['teststats_expfail'];
 $delta_unexpfail = $today_row['teststats_unexpfail']-$yesterday_row['teststats_unexpfail'];
+$unexpected_failures = getUnexpectedFailures($night_id, $mysql_link);
 
-if($delta_exppass==0 && $delta_expfail==0 && $delta_unexpfail==0){
+if($delta_exppass==0 && $delta_expfail==0 && 
+   $delta_unexpfail==0 && strcmp($unexpected_failures, "")===0){
         $disp="none";
         $sign="(-)";
 }
@@ -227,8 +229,7 @@ print "\t</tr>\n";
 print "</table><br><br>\n";
 
 print"<a name=\"unexpfail_tests\"><b>Unexpected test failures:</b></a><br>\n";
-$unexpfail_tests=preg_replace("/\n/","<br>\n",$today_row['unexpfail_tests']);
-print "$unexpfail_tests<br><br>\n";
+print "$unexpected_failures<br><br>\n";
 
 print "</div><br><br>\n";
 
@@ -245,8 +246,8 @@ if((strpos($today_row['warnings_added'], "none")==FALSE &&
         $sign="(+)";
 }
 else{
-	$disp="none";
-	$sign="(-)";
+  $disp="none";
+  $sign="(-)";
 }
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('warningsChanges');\", id=\"warningsChanges_\">$sign Warning Information</a></font>\n";
 print "<div id=\"warningsChanges\" style=\"display: $disp;\" class=\"hideable\">\n";
@@ -295,99 +296,99 @@ print "\t\t<td>{$today_row['dejagnutime_wall']}</td>\n";
 print "\t</tr>\n";
 
 if( $previous_row = mysql_fetch_array($previous_query) ){
-	print "\t<tr>\n";
-	print "\t\t<td>Previous nightly test ({$previous_row['added']})</td>\n";
-	print "\t\t<td>{$previous_row['getcvstime_cpu']}</td>\n";
-	print "\t\t<td>{$previous_row['getcvstime_wall']}</td>\n";
-	print "\t\t<td>{$previous_row['configuretime_cpu']}</td>\n";
-	print "\t\t<td>{$previous_row['configuretime_wall']}</td>\n";
-	print "\t\t<td>{$previous_row['buildtime_cpu']}</td>\n";
-	print "\t\t<td>{$previous_row['buildtime_wall']}</td>\n";
-	print "\t\t<td>{$previous_row['dejagnutime_cpu']}</td>\n";
-	print "\t\t<td>{$previous_row['dejagnutime_wall']}</td>\n";
-	print "\t</tr>\n";
+  print "\t<tr>\n";
+  print "\t\t<td>Previous nightly test ({$previous_row['added']})</td>\n";
+  print "\t\t<td>{$previous_row['getcvstime_cpu']}</td>\n";
+  print "\t\t<td>{$previous_row['getcvstime_wall']}</td>\n";
+  print "\t\t<td>{$previous_row['configuretime_cpu']}</td>\n";
+  print "\t\t<td>{$previous_row['configuretime_wall']}</td>\n";
+  print "\t\t<td>{$previous_row['buildtime_cpu']}</td>\n";
+  print "\t\t<td>{$previous_row['buildtime_wall']}</td>\n";
+  print "\t\t<td>{$previous_row['dejagnutime_cpu']}</td>\n";
+  print "\t\t<td>{$previous_row['dejagnutime_wall']}</td>\n";
+  print "\t</tr>\n";
 
 
-	print "\t<tr>\n";
-	print "\t\t<td>% change</td>\n";
-	
-	if($previous_row['getcvstime_cpu']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['getcvstime_cpu'] - $previous_row['getcvstime_cpu'])/$previous_row['getcvstime_cpu']) * 100,2);	
-		$color=DetermineColor($delta, "white");
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}	
+  print "\t<tr>\n";
+  print "\t\t<td>% change</td>\n";
+  
+  if($previous_row['getcvstime_cpu']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['getcvstime_cpu'] - $previous_row['getcvstime_cpu'])/$previous_row['getcvstime_cpu']) * 100,2);  
+    $color=DetermineColor($delta, "white");
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }  
 
-	$color="white";
-	if($previous_row['getcvstime_wall']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['getcvstime_wall'] - $previous_row['getcvstime_wall'])/$previous_row['getcvstime_wall']) * 100,2);
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
-	
-	$color="white";
-	if($previous_row['configuretime_cpu']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['configuretime_cpu'] - $previous_row['configuretime_cpu'])/$previous_row['configuretime_cpu']) * 100,2);
-        	$color=DetermineColor($delta, "white");
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
-	
-	$color="white";
+  $color="white";
+  if($previous_row['getcvstime_wall']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['getcvstime_wall'] - $previous_row['getcvstime_wall'])/$previous_row['getcvstime_wall']) * 100,2);
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
+  
+  $color="white";
+  if($previous_row['configuretime_cpu']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['configuretime_cpu'] - $previous_row['configuretime_cpu'])/$previous_row['configuretime_cpu']) * 100,2);
+          $color=DetermineColor($delta, "white");
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
+  
+  $color="white";
 
-	if($previous_row['configuretime_wall']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['configuretime_wall'] - $previous_row['configuretime_wall'])/$previous_row['configuretime_wall']) * 100,2);
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
+  if($previous_row['configuretime_wall']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['configuretime_wall'] - $previous_row['configuretime_wall'])/$previous_row['configuretime_wall']) * 100,2);
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
 
-	$color="white";
-	if($previous_row['buildtime_cpu']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['buildtime_cpu'] - $previous_row['buildtime_cpu'])/$previous_row['buildtime_cpu']) * 100,2);
-	        $color=DetermineColor($delta, "white");
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
+  $color="white";
+  if($previous_row['buildtime_cpu']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['buildtime_cpu'] - $previous_row['buildtime_cpu'])/$previous_row['buildtime_cpu']) * 100,2);
+          $color=DetermineColor($delta, "white");
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
 
-	$color="white";
-	if($previous_row['buildtime_wall']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['buildtime_wall'] - $previous_row['buildtime_wall'])/$previous_row['buildtime_wall']) * 100,2);
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
-	
-	$color="white";
-	if($previous_row['dejagnutime_cpu']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['dejagnutime_cpu'] - $previous_row['dejagnutime_cpu'])/$previous_row['dejagnutime_cpu']) * 100,2);
-		$color=DetermineColor($delta, "white");
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
+  $color="white";
+  if($previous_row['buildtime_wall']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['buildtime_wall'] - $previous_row['buildtime_wall'])/$previous_row['buildtime_wall']) * 100,2);
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
+  
+  $color="white";
+  if($previous_row['dejagnutime_cpu']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['dejagnutime_cpu'] - $previous_row['dejagnutime_cpu'])/$previous_row['dejagnutime_cpu']) * 100,2);
+    $color=DetermineColor($delta, "white");
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
 
-	$color="white";
-	if($previous_row['dejagnutime_wall']==0){
-		print "\t\t<td>-</td>\n";
-	}
-	else{
-		$delta = round((($today_row['dejagnutime_wall'] - $previous_row['dejagnutime_wall'])/$previous_row['dejagnutime_wall']) * 100,2);
-		print "\t\t<td bgcolor=$color>$delta</td>\n";
-	}
-	
-	print "\t</tr>\n";
+  $color="white";
+  if($previous_row['dejagnutime_wall']==0){
+    print "\t\t<td>-</td>\n";
+  }
+  else{
+    $delta = round((($today_row['dejagnutime_wall'] - $previous_row['dejagnutime_wall'])/$previous_row['dejagnutime_wall']) * 100,2);
+    print "\t\t<td bgcolor=$color>$delta</td>\n";
+  }
+  
+  print "\t</tr>\n";
 }
 mysql_free_result($previous_query);
 
@@ -424,43 +425,43 @@ print "</table><br><br>\n";
 print"<b>Added files:</b><br>\n";
 $added_files  = $row['cvs_added'];
 if(strcmp($added_files,"")!=0){
-	$added_files = str_replace("\n","<br>",$added_files);
-	print "<table>\n";
-	print "\t<tr>\n";
-	print "\t\t<td>$added_files</td>\n";
-	print "\t</tr>\n";
-	print "</table><br><br>\n";
+  $added_files = str_replace("\n","<br>",$added_files);
+  print "<table>\n";
+  print "\t<tr>\n";
+  print "\t\t<td>$added_files</td>\n";
+  print "\t</tr>\n";
+  print "</table><br><br>\n";
 }
 else{
-	print "No removed files<br><br>\n";
+  print "No removed files<br><br>\n";
 }
 
 print"<b>Removed files:</b><br>\n";
 $removed_files  = $row['cvs_removed'];
 if(strcmp($removed_files,"")!=0){
-	$removed_files = str_replace("\n","<br>",$removed_files);
-	print "<table>\n";
-	print "\t<tr>\n";
-	print "\t\t<td>$removed_files</td>\n";
-	print "\t</tr>\n";
-	print "</table><br><br>\n";
+  $removed_files = str_replace("\n","<br>",$removed_files);
+  print "<table>\n";
+  print "\t<tr>\n";
+  print "\t\t<td>$removed_files</td>\n";
+  print "\t</tr>\n";
+  print "</table><br><br>\n";
 }
 else{
-	print "No removed files<br><br>\n";
+  print "No removed files<br><br>\n";
 }
 
 print"<b>Modified files:</b><br>\n";
 $modified_files  = $row['cvs_modified'];
 if(strcmp($modified_files,"")!=0){
-	$modified_files = str_replace("\n","<br>",$modified_files);
-	print "<table>\n";
-	print "\t<tr>\n";
-	print "\t\t<td>$modified_files</td>\n";
-	print "\t</tr>\n";
-	print "</table><br><br>\n";
+  $modified_files = str_replace("\n","<br>",$modified_files);
+  print "<table>\n";
+  print "\t<tr>\n";
+  print "\t\t<td>$modified_files</td>\n";
+  print "\t</tr>\n";
+  print "</table><br><br>\n";
 }
 else{
-	print "No removed files<br><br>\n";
+  print "No removed files<br><br>\n";
 }
 print "</div><br><br>\n";
 
@@ -565,8 +566,8 @@ print"<h3><u>Program tests:</u></h3><br>\n";
 
 $today_results = GetDayResults($today_row['id'], $category_array, $mysql_link);
 if(isset($yesterday_row['id'])){
-	$yesterday_results = GetDayResults($yesterday_row['id'], $category_array, $mysql_link);
-	$percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results,.2);	
+  $yesterday_results = GetDayResults($yesterday_row['id'], $category_print_array, $mysql_link);
+  $percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results,.2);  
 }
 /********************** external table **********************/
 print "<form method=GET action=\"resultsgraph.php\">\n";
@@ -577,63 +578,63 @@ print "<input type=hidden name=end value=\"$cur_date\">\n";
 print"<b>External tests:</b><br>\n";
 print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black border around the table 
 print "<table class=\"sortable\" id=\"external_tests_\" border='1' cellspacing='0' cellpadding='0'>\n";
-print "\t<tr bgcolor=#FFCC99>\n";	
-print "\t\t<th>Program</th>\n";	
+print "\t<tr bgcolor=#FFCC99>\n";  
+print "\t\t<th>Program</th>\n";  
 $index=0; //here to ensure we dont print %diff for GCC comparisons
 foreach ($category_print_array as $x){
-	print "\t\t<th>Today's $x</th>\n";
-	if($index<10 && isset($percent_difference)){
-		print "\t\t<th>% change in $x</th>\n";
-	}
-	$index++;
+  print "\t\t<th>Today's $x</th>\n";
+  if($index<10 && isset($percent_difference)){
+    print "\t\t<th>% change in $x</th>\n";
+  }
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
-$index=0;	
+$index=0;  
 foreach ($category_print_array as $x){
-	if($index<10 && isset($percent_difference)){
-		$col_width=2;
-	}
-	else{
-		$col_width=1;
-	}
-	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
-	print "<span style=\"position:relative;\">\n";
-	print "<span id=\"external_$index\" class=\"popup2\">\n";
-	print "<pre>{$category_print_array_description[$index]}</pre>\n";
-	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('external_$index');\">?</a></span>\n";
-	print "</td>\n";
-	$index++;
+  if($index<10 && isset($percent_difference)){
+    $col_width=2;
+  }
+  else{
+    $col_width=1;
+  }
+  print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+  print "<span style=\"position:relative;\">\n";
+  print "<span id=\"external_$index\" class=\"popup2\">\n";
+  print "<pre>{$category_print_array_description[$index]}</pre>\n";
+  print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('external_$index');\">?</a></span>\n";
+  print "</td>\n";
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 $row_color=1;
 $count=0;
 foreach(array_keys($today_results) as $program){
-	if(strcmp($today_results["$program"][0],"external")==0){
-		if($row_color % 2 == 0){
-			$def_color="white";
-		}
-		else{
-			$def_color="#DDDDDD";
-		}	
-		print "\t<tr bgcolor='$def_color'>\n";		
-		print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
-		for($y=1; $y<sizeof($today_results["$program"]); $y++){
-			print "\t\t<td>{$today_results["$program"][$y]}</td>\n";		
-			if($y<11 && isset($percent_difference)){
-				$delta=round($percent_difference["$program"][$y-1], 2);
-				$color=DetermineColor($delta, $def_color);
-				print "\t\t<td bgcolor=\"$color\">$delta</td>\n";	
-			}
-		} 
-		print "\t</tr>\n";	
-		$row_color++;
-		if($row_color > 4){
-			$row_color=1;
-		}
-		$count++;
-	}//end if strcmp
+  if(strcmp($today_results["$program"][0],"external")==0){
+    if($row_color % 2 == 0){
+      $def_color="white";
+    }
+    else{
+      $def_color="#DDDDDD";
+    }  
+    print "\t<tr bgcolor='$def_color'>\n";    
+    print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
+    for($y=1; $y<sizeof($today_results["$program"]); $y++){
+      print "\t\t<td>{$today_results["$program"][$y]}</td>\n";    
+      if($y<11 && isset($percent_difference)){
+        $delta=round($percent_difference["$program"][$y-1], 2);
+        $color=DetermineColor($delta, $def_color);
+        print "\t\t<td bgcolor=\"$color\">$delta</td>\n";  
+      }
+    } 
+    print "\t</tr>\n";  
+    $row_color++;
+    if($row_color > 4){
+      $row_color=1;
+    }
+    $count++;
+  }//end if strcmp
 }//end foreach
 print "</table>\n";
 print "</td></tr></table><br><br>\n"; #ending black border around table
@@ -643,63 +644,63 @@ print "</td></tr></table><br><br>\n"; #ending black border around table
 print"<b>Multisource tests:</b><br>\n";
 print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black border around the table 
 print "<table class=\"sortable\" id=\"multisource_tests\" border='1' cellspacing='0' cellpadding='0'>\n";
-print "\t<tr bgcolor=#FFCC99>\n";	
-print "\t\t<th>Program</th>\n";	
+print "\t<tr bgcolor=#FFCC99>\n";  
+print "\t\t<th>Program</th>\n";  
 $index=0; //here to ensure we dont print %diff for GCC comparisons
 foreach ($category_print_array as $x){
-	print "\t\t<th>Today's $x</th>\n";
-	if($index<10 && isset($percent_difference)){
-		print "\t\t<th>% change in $x</th>\n";
-	}
-	$index++;
+  print "\t\t<th>Today's $x</th>\n";
+  if($index<10 && isset($percent_difference)){
+    print "\t\t<th>% change in $x</th>\n";
+  }
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
-$index=0;	
+$index=0;  
 foreach ($category_print_array as $x){
-	if($index<10 && isset($percent_difference)){
-		$col_width=2;
-	}
-	else{
-		$col_width=1;
-	}
-	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
-	print "<span style=\"position:relative;\">\n";
-	print "<span id=\"multi_$index\" class=\"popup2\">\n";
-	print "<pre>{$category_print_array_description[$index]}</pre>\n";
-	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('multi_$index');\">?</a></span>\n";
-	print "</td>\n";
-	$index++;
+  if($index<10 && isset($percent_difference)){
+    $col_width=2;
+  }
+  else{
+    $col_width=1;
+  }
+  print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+  print "<span style=\"position:relative;\">\n";
+  print "<span id=\"multi_$index\" class=\"popup2\">\n";
+  print "<pre>{$category_print_array_description[$index]}</pre>\n";
+  print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('multi_$index');\">?</a></span>\n";
+  print "</td>\n";
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 $row_color=1;
 $count=0;
 foreach(array_keys($today_results) as $program){
-	if(strcmp($today_results["$program"][0],"multisource")==0){
-		if($row_color % 2 == 0){
-			$def_color="white";
-		}
-		else{
-			$def_color="#DDDDDD";
-		}	
-		print "\t<tr bgcolor='$def_color'>\n";		
-		print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
-		for($y=1; $y<sizeof($today_results["$program"]); $y++){
-			print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
-			if($y<11 && isset($percent_difference)){
-				$delta=round($percent_difference["$program"][$y-1], 2);
-				$color=DetermineColor($delta, $def_color);
-				print "\t\t<td bgcolor=\"$color\">$delta</td>\n";	
-			}
-		} 
-		print "\t</tr>\n";	
-		$row_color++;
-		if($row_color > 4){
-			$row_color=1;
-		}
-		$count++;
-	}//end if strcmp
+  if(strcmp($today_results["$program"][0],"multisource")==0){
+    if($row_color % 2 == 0){
+      $def_color="white";
+    }
+    else{
+      $def_color="#DDDDDD";
+    }  
+    print "\t<tr bgcolor='$def_color'>\n";    
+    print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
+    for($y=1; $y<sizeof($today_results["$program"]); $y++){
+      print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
+      if($y<11 && isset($percent_difference)){
+        $delta=round($percent_difference["$program"][$y-1], 2);
+        $color=DetermineColor($delta, $def_color);
+        print "\t\t<td bgcolor=\"$color\">$delta</td>\n";  
+      }
+    } 
+    print "\t</tr>\n";  
+    $row_color++;
+    if($row_color > 4){
+      $row_color=1;
+    }
+    $count++;
+  }//end if strcmp
 }//end foreach
 print "</table>\n";
 print "</td></tr></table><br><br>\n"; #ending black border around table
@@ -713,63 +714,63 @@ print "</form>\n";
 print"<b>Singlesource tests:</b><br>\n";
 print "<table border='0' cellspacing='0' cellpadding='2'><tr><td bgcolor=#000000>\n"; #creating the black border around the table 
 print "<table class=\"sortable\" id=\"singlesource_tests\" border='1' cellspacing='0' cellpadding='0'>\n";
-print "\t<tr bgcolor=#FFCC99>\n";	
-print "\t\t<th>Program</th>\n";	
+print "\t<tr bgcolor=#FFCC99>\n";  
+print "\t\t<th>Program</th>\n";  
 $index=0; //here to ensure we dont print %diff for GCC comparisons
 foreach ($category_print_array as $x){
-	print "\t\t<th>Today's $x</th>\n";
-	if($index<10 && isset($percent_difference)){
-		print "\t\t<th>% change in $x</th>\n";
-	}
-	$index++;
+  print "\t\t<th>Today's $x</th>\n";
+  if($index<10 && isset($percent_difference)){
+    print "\t\t<th>% change in $x</th>\n";
+  }
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 print "\t<tr bgcolor=#FFCC99>\n";
 print "\t\t<td></td>\n";
-$index=0;	
+$index=0;  
 foreach ($category_print_array as $x){
-	if($index<10 && isset($percent_difference)){
-		$col_width=2;
-	}
-	else{
-		$col_width=1;
-	}
-	print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
-	print "<span style=\"position:relative;\">\n";
-	print "<span id=\"single_$index\" class=\"popup2\">\n";
-	print "<pre>{$category_print_array_description[$index]}</pre>\n";
-	print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('single_$index');\">?</a></span>\n";
-	print "</td>\n";
-	$index++;
+  if($index<10 && isset($percent_difference)){
+    $col_width=2;
+  }
+  else{
+    $col_width=1;
+  }
+  print "\t\t<td colspan=\"$col_width\" align=center><input type=checkbox name=\"measure[]\" multiple=\"multiple\" value=\"$x\">\n";
+  print "<span style=\"position:relative;\">\n";
+  print "<span id=\"single_$index\" class=\"popup2\">\n";
+  print "<pre>{$category_print_array_description[$index]}</pre>\n";
+  print "</span><a href=\"javascript:void(0);\" onClick=\"TogglePop('single_$index');\">?</a></span>\n";
+  print "</td>\n";
+  $index++;
 }
-print "\t</tr>\n";	
+print "\t</tr>\n";  
 $row_color=1;
 $count=0;
 foreach(array_keys($today_results) as $program){
-	if(strcmp($today_results["$program"][0],"singlesource")==0){
-		if($row_color % 2 == 0){
-			$def_color="white";
-		}
-		else{
-			$def_color="#DDDDDD";
-		}	
-		print "\t<tr bgcolor='$def_color'>\n";		
-		print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
-		for($y=1; $y<sizeof($today_results["$program"]); $y++){
-			print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
-			if($y<11 && isset($percent_difference)){
-				$delta=round($percent_difference["$program"][$y-1], 2);
-				$color=DetermineColor($delta, $def_color);
-				print "\t\t<td bgcolor=\"$color\">$delta</td>\n";	
-			}
-		} 
-		print "\t</tr>\n";	
-		$row_color++;
-		if($row_color > 4){
-			$row_color=1;
-		}
-		$count++;
-	}//end if strcmp
+  if(strcmp($today_results["$program"][0],"singlesource")==0){
+    if($row_color % 2 == 0){
+      $def_color="white";
+    }
+    else{
+      $def_color="#DDDDDD";
+    }  
+    print "\t<tr bgcolor='$def_color'>\n";    
+    print "\t\t<td><input type=checkbox name=program[] multiple=\"multiple\" value=\"$program\">$program</td>\n";
+    for($y=1; $y<sizeof($today_results["$program"]); $y++){
+      print "\t\t<td>{$today_results["$program"][$y]}</td>\n";
+      if($y<11 && isset($percent_difference)){
+        $delta=round($percent_difference["$program"][$y-1], 2);
+        $color=DetermineColor($delta, $def_color);
+        print "\t\t<td bgcolor=\"$color\">$delta</td>\n";  
+      }
+    } 
+    print "\t</tr>\n";  
+    $row_color++;
+    if($row_color > 4){
+      $row_color=1;
+    }
+    $count++;
+  }//end if strcmp
 }//end foreach
 print "</table>\n";
 print "</td></tr></table><br><br>\n"; #ending black border around table

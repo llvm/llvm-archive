@@ -117,6 +117,19 @@ function getNightsResource($machine_id, $mysql_link, $start="2000-01-01 01:01:01
 
 /*****************************************************
  *
+ * Purpose: Get night ids and date added associated 
+ *          with a specific machine for
+ *          which buildstatus is "OK"
+ * Returns: A mysql result
+ *
+ *****************************************************/
+function getNightsIDs($machine_id, $mysql_link, $start="2000-01-01 01:01:01", $end="2020-12-30 01:01:01", $order="DESC"){
+ $query = mysql_query("SELECT id, added FROM night WHERE machine=$machine_id and added<=\"$end\" and added>=\"$start\" ORDER BY added $order") or die (mysql_error());
+ return $query;
+}
+
+/*****************************************************
+ *
  * Purpose: Get the history of nights given a night and 
  *          specific machine 
  * Returns: A mysql query resource. Basically something you cal

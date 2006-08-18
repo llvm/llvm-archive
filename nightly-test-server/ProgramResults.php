@@ -7,6 +7,15 @@ if($DEBUG){
   mysql_select_db("nightlytestresults");
 }
 
+/*
+ * This variable is used to determine file size cutoffs for displaying
+ */
+$byte_threshold=1000;
+
+/*
+ * These variables are used in determining
+ * how to color table cells;
+ */
 $medium_number=0;
 $medium_change=5;
 $large_number=0;
@@ -135,7 +144,7 @@ function GetDayResults($night_id, $array_of_measures, $mysql_link){
     foreach ($array_of_measures as $x){
       $value=array();
       $reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?],)/";
-      //print "running preg_match($reg_exp, $data, $value)<br>\n";
+      #print "{$row['program']} => running preg_match($reg_exp, $data, $value)<br>\n";
       preg_match($reg_exp, $data, $value);
       if(isset($value[1])){
         array_push($result["{$row['program']}"], $value[1]);
@@ -375,6 +384,211 @@ function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $sta
     return array();
   }
 }
+
+/*
+ * Get Unexpected failing tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test 
+ * in their own table as oppoesd in the night table.
+ */
+function getUnexpectedFailures($night_id, $mysql_link){
+  $result="";
+  if($night_id<684){
+    $query = "SELECT unexpfail_tests FROM night WHERE id = $night_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    $row = mysql_fetch_array($program_query);
+    $result= $row['unexpfail_tests'];
+    $result=preg_replace("/\n/","<br>\n",$result);
+    mysql_free_result($program_query);
+  }
+  else{
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $result.="{$row['measure']} - {$row['program']}<br>\n";
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
+ * Get New Tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test 
+ * in their own table as oppoesd in the night table.
+ */
+function getNewTests($cur_id, $prev_id, $mysql_link){
+  $result="";
+  if($cur_id<684){
+    $query = "SELECT new_tests FROM night WHERE id = $cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    $row = mysql_fetch_array($program_query);
+    $result= $row['unexpfail_tests'];
+    $result=preg_replace("/\n/","<br>\n",$result);
+    mysql_free_result($program_query);
+  }
+  else{
+    $test_hash=array();
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_hash["{$row['measure']} - {$row['program']}"]=1;
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
+	$result = "{$row['measure']} - {$row['program']}<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
+ * Get Removed Tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test 
+ * in their own table as oppoesd in the night table.
+ */
+function getRemovedTests($cur_id, $prev_id, $mysql_link){
+  $result="";
+  if($cur_id<684){
+    $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    $row = mysql_fetch_array($program_query);
+    $result= $row['unexpfail_tests'];
+    $result=preg_replace("/\n/","<br>\n",$result);
+    mysql_free_result($program_query);
+  }
+  else{
+    $test_hash=array();
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_hash["{$row['measure']} - {$row['program']}"]=1;
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
+	$result = "{$row['measure']} - {$row['program']}<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
+ * Get Fixed Tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test 
+ * in their own table as oppoesd in the night table.
+ */
+function getFixedTests($cur_id, $prev_id, $mysql_link){
+  $result="";
+  if($cur_id<684){
+    $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    $row = mysql_fetch_array($program_query);
+    $result= $row['unexpfail_tests'];
+    $result=preg_replace("/\n/","<br>\n",$result);
+    mysql_free_result($program_query);
+  }
+  else{
+    $test_hash=array();
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if(strcmp("{$row['result']}", "PASS")===0){
+        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
+      }    
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if( isset($test_hash["{$row['measure']} - {$row['program']}"]) && 
+          strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
+	$result = "{$row['measure']} - {$row['program']}<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
+ * Get Broken Tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test
+ * in their own table as oppoesd in the night table.
+ */
+function getBrokenTests($cur_id, $prev_id, $mysql_link){
+  $result="";
+  if($cur_id<684){
+    $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    $row = mysql_fetch_array($program_query);
+    $result= $row['unexpfail_tests'];
+    $result=preg_replace("/\n/","<br>\n",$result);
+    mysql_free_result($program_query);
+  }
+  else{
+    $test_hash=array();
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if(strcmp("{$row['result']}", "PASS")===0){
+        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
+      }
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      if( isset($test_hash["{$row['measure']} - {$row['program']}"]) &&
+          strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
+        $result = "{$row['measure']} - {$row['program']}<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
+ * Get previous working night
+ *
+ * Returns the night id for the machine of the night passed in
+ * where build status = OK
+ */
+function getPreviousWorkingNight($night_id, $mysql_link){
+  $query = "SELECT machine FROM night WHERE id=$night_id";
+  $program_query = mysql_query($query) or die (mysql_error());
+  $row = mysql_fetch_array($program_query);
+  $this_machine_id=$row['machine'];
+  mysql_free_result($program_query);
+  
+  $query = "SELECT id FROM night WHERE machine=$this_machine_id ".
+           "and id<$night_id and buildstatus=\"OK\" order by added desc";
+  $program_query = mysql_query($query) or die (mysql_error());
+  $row = mysql_fetch_array($program_query);
+  $prev_id=$row['id'];
+  mysql_free_result($program_query);
+
+  return $prev_id;
+}
+
 
 
 /*$programs=array("Benchmarks/CoyoteBench/huffbench","Benchmarks/CoyoteBench/lpbench");

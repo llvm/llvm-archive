@@ -36,12 +36,13 @@ $row = getMachineInfo($machine_id,$mysql_link);
 $today_row = getNightInfo($night_id,$mysql_link);
 $cur_date=$today_row['added'];
 
-$today_query = getNightsResource($machine_id,$mysql_link,"2000-01-01 01:01:01",$cur_date);
+$today_query = getSuccessfulNightsHistory($machine_id,$mysql_link,$night_id);
 $today_row = mysql_fetch_array($today_query);
 $yesterday_row = mysql_fetch_array($today_query);
 $oldday_row = mysql_fetch_array($today_query);
 mysql_free_result($today_query);
 
+$previous_succesful_id = getPreviousWorkingNight($night_id, $mysql_link);
 
 ?>
 
@@ -147,10 +148,10 @@ print "</div><br><br>\n";
  * Printing changes in test suite
  *
  ******************************************************/
-$new_tests=preg_replace("/\n/","<br>\n",$today_row['new_tests']);
-$removed_tests=preg_replace("/\n/","<br>\n",$today_row['removed_tests']);
-$newly_passing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_passing_tests']);
-$newly_failing_tests=preg_replace("/\n/","<br>\n",$today_row['newly_failing_tests']);
+$new_tests=getNewTests($night_id, $previous_succesful_id, $mysql_link);
+$removed_tests=getRemovedTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_passing_tests=getFixedTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_failing_tests=getBrokenTests($night_id, $previous_succesful_id, $mysql_link);
 
 if((strpos($new_tests, "none")!==FALSE &&
    strpos($removed_tests, "none")!==FALSE &&
@@ -172,7 +173,7 @@ print "<div id=\"testSuite\" style=\"display: $disp;\" class=\"hideable\">\n";
 print"<h3><u>Test suite changes:</u></h3>\n";
 print"<b>New tests:</b><br>\n";
 print "$new_tests<br><br>\n";
-print"<b>Removed tests</b><br>\n";
+print"<b>Removed tests:</b><br>\n";
 print "$removed_tests<br><br>\n";
 print"<b>Newly passing tests:</b><br>\n";
 print "$newly_passing_tests<br><br>\n";
@@ -188,14 +189,16 @@ print "</div><br><br>\n";
 $delta_exppass = $today_row['teststats_exppass']-$yesterday_row['teststats_exppass'];
 $delta_expfail = $today_row['teststats_expfail']-$yesterday_row['teststats_expfail'];
 $delta_unexpfail = $today_row['teststats_unexpfail']-$yesterday_row['teststats_unexpfail'];
+$unexpected_failures = getUnexpectedFailures($night_id, $mysql_link);
 
-if($delta_exppass==0 && $delta_expfail==0 && $delta_unexpfail==0){
+if($delta_exppass==0 && $delta_expfail==0 && 
+   $delta_unexpfail==0 && strcmp($unexpected_failures,"")===0){
   $disp="none";
         $sign="(-)";
 }
 else{
   $disp="";
-        $sign="(+)";
+  $sign="(+)";
 }
 
 
@@ -242,8 +245,7 @@ print "\t</tr>\n";
 print "</table><br><br>\n";
 
 print"<a name=\"unexpfail_tests\"><b>Unexpected test failures:</b></a><br>\n";
-$unexpfail_tests=preg_replace("/\n/","<br>\n",$today_row['unexpfail_tests']);
-print "$unexpfail_tests<br><br>\n";
+print "$unexpected_failures<br><br>\n";
 
 print "</div><br><br>\n";
 

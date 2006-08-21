@@ -27,10 +27,8 @@ if(!(include"ProgramResults.php")){
         die();
 }
 
-
 $mysql_link=mysql_connect("127.0.0.1","llvm","ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
-
 
 $row = getMachineInfo($machine_id,$mysql_link);
 $today_row = getNightInfo($night_id,$mysql_link);
@@ -41,9 +39,7 @@ $today_row = mysql_fetch_array($today_query);
 $yesterday_row = mysql_fetch_array($today_query);
 $oldday_row = mysql_fetch_array($today_query);
 mysql_free_result($today_query);
-
-$previous_succesful_id = getPreviousWorkingNight($night_id, $mysql_link);
-
+$previous_succesful_id = $yesterday_row['id'];
 ?>
 
 <html>
@@ -124,7 +120,7 @@ if(file_exists("machines/$machine_id/$buildfile-Build-Log.txt")){
 
 /*****************************************************
  *
- * Printing the times table
+ * Printing the build status
  *
  ******************************************************/
 if(strpos($today_row['buildstatus'], "OK")===FALSE){
@@ -176,6 +172,7 @@ else{
   $disp="";
   $sign="(+)";
 }
+
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('testSuite');\", id=\"testSuite_\">$sign Test Suite Changes</a></font>\n";
 print "<div id=\"testSuite\" style=\"display: $disp;\" class=\"hideable\">\n";
 print"<h3><u>Test suite changes:</u></h3>\n";
@@ -582,7 +579,7 @@ foreach (array_keys($all_data) as $d){
 
     print "\t<tr bgcolor=\"$def_color\">\n";
     if(strcmp($d, "Total Sum")!=0){
-      print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\">\n";
+      print "\t\t<td><input type=checkbox name=files[] multiple=\"multiple\" value=\"$d\" >\n";
     }
     else{
       print "\t\t<td>\n";
@@ -605,6 +602,7 @@ foreach (array_keys($all_data) as $d){
 print "</table>\n";
 print "</td></tr></table><br>\n"; #ending black border around table  
 print "<input type=submit name=action value=\"Compare values\"> | ";
+print "<input type=button value=\"Check all\" onClick=\"this.value=check(this.form.elements)\"> | \n"; 
 print "<input type=reset>\n";
 print "</form>\n";
 print "</div><br><br>\n";
@@ -719,6 +717,7 @@ for($y=0; $y<sizeof($category_print_array_ordered); $y++){
   print "</table>\n";
   print "</td></tr></table><br>\n"; #ending black border around table  
   print "<input type=submit name=action value=\"Examine Longterm Results\"> | ";
+  print "<input type=button value=\"Check all\" onClick=\"this.value=check(this.form.elements)\"> | \n"; 
   print "<input type=reset>\n";
   print "</form>\n";
   print "</div><br><br>\n";

@@ -111,3 +111,23 @@ function toggleLayer(whichLayer)
 		}
 	}
 }//end function
+
+var checkflag="false";
+function check(field) {
+  if (checkflag == "false") {
+    for (i = 0; i < field.length; i++) {
+      field[i].checked = true;
+    }
+    checkflag = "true";
+    return "Uncheck all"; 
+  }  
+  else {
+    for (i = 0; i < field.length; i++) {
+      if(field[i].type == 'checkbox'){
+        field[i].checked = false; 
+      }
+    }
+    checkflag = "false";
+    return "Check all"; 
+  }
+}

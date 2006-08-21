@@ -244,7 +244,8 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   $result=array();
 
   //setting up the night ids
-  $select = "select id from night WHERE id<$night_id and machine=$machine_id order by added desc";
+  $select = "select id from night WHERE id<$night_id and machine=$machine_id ".
+            "and buildstatus=\"OK\" order by added desc";
   $query = mysql_query($select) or die (mysql_error());
   $row=mysql_fetch_array($query);
   
@@ -254,7 +255,6 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   $old_night=$row['id'];
   mysql_free_result($query);
   
- 
   if($cur_night>0) { $cur_data=getAllFileSizes($mysql_link, $cur_night); }
   if($prev_night>0) { $prev_data=getAllFileSizes($mysql_link, $prev_night); }
   if($old_night>0) { $old_data=getAllFileSizes($mysql_link, $old_night); }
@@ -270,7 +270,7 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   foreach (array_keys($cur_data) as $file){
     $cur_sum+=$cur_data["$file"];
     
-    if(isset($prev_data["$file"]) && isset($cur_data["$file"])) {
+    if(isset($prev_data[$file]) && isset($cur_data["$file"])) {
       $prev_delta= ( $cur_data["$file"] - $prev_data["$file"] );
       $prev_diff = (($cur_data["$file"] - $prev_data["$file"]) / $prev_data["$file"] ) * 100;
       $prev_sum+=$prev_data["$file"];

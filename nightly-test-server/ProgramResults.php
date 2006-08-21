@@ -386,6 +386,25 @@ function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $sta
 }
 
 /*
+ * Get failing tests
+ *
+ * This is somewhat of a hack because from night 684 forward we now store the test 
+ * in their own table as oppoesd in the night table.
+ */
+function getFailures($night_id, $mysql_link){
+  $result="";
+  if($night_id>=684){
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" AND measure!=\"dejagnu\"";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $result.="{$row['measure']} - {$row['program']}<br>\n";
+    }
+    mysql_free_result($program_query);
+  }
+  return $result;
+}
+
+/*
  * Get Unexpected failing tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 

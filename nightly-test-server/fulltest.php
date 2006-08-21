@@ -133,25 +133,34 @@ print "</div><br><br>\n";
  *
  ******************************************************/
 $new_tests=getNewTests($night_id, $previous_succesful_id, $mysql_link);
+if(strcmp($new_tests,"")===0){
+  $new_tests="None";
+}
 $removed_tests=getRemovedTests($night_id, $previous_succesful_id, $mysql_link);
+if(strcmp($removed_tests,"")===0){
+  $removed_tests="None";
+}
 $newly_passing_tests=getFixedTests($night_id, $previous_succesful_id, $mysql_link);
+if(strcmp($newly_passing_tests,"")===0){
+  $newly_passing_tests="None";
+}
 $newly_failing_tests=getBrokenTests($night_id, $previous_succesful_id, $mysql_link);
+if(strcmp($newly_failing_tests,"")===0){
+  $newly_failing_tests="None";
+}
 
-if((strpos($new_tests, "none")!==FALSE &&
-   strpos($removed_tests, "none")!==FALSE &&
-   strpos($newly_passing_tests, "none")!==FALSE &&
-   strpos($newly_failing_tests, "none")!==FALSE ) ||
-   (strcmp($new_tests, "")==0 &&
-   strcmp($removed_tests, "")==0 &&
-   strcmp($newly_passing_tests, "")==0 &&
-   strcmp($newly_failing_tests, "")==0)){
-        $disp="none";
-        $sign="(-)";
+if(strpos($new_tests, "None")!==FALSE &&
+   strpos($removed_tests, "None")!==FALSE &&
+   strpos($newly_passing_tests, "None")!==FALSE &&
+   strpos($newly_failing_tests, "None")!==FALSE ){
+  $disp="none";
+  $sign="(-)";
 }
 else{
   $disp="";
   $sign="(+)";
 }
+
 print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('testSuite');\", id=\"testSuite_\">$sign Test Suite Changes</a></font>\n";
 print "<div id=\"testSuite\" style=\"display: $disp;\" class=\"hideable\">\n";
 print"<h3><u>Test suite changes:</u></h3>\n";
@@ -163,6 +172,24 @@ print"<b>Newly passing tests:</b><br>\n";
 print "$newly_passing_tests<br><br>\n";
 print"<b>Newly failing tests:</b><br>\n";
 print "$newly_failing_tests<br><br>\n";
+print "</div><br><br>\n";
+
+/*****************************************************
+ *
+ * Printing failures in test suite
+ *
+ ******************************************************/
+$failing_tests=getFailures($night_id, $previous_succesful_id, $mysql_link);
+if(strcmp($failing_tests,"")===0){
+  $newly_failing_tests="None";
+}
+$disp="none";
+$sign="(-)";
+print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('testSuiteFailures');\", id=\"testSuite_\">$sign Test Suite Failures</a></font>\n";
+print "<div id=\"testSuiteFailures\" style=\"display: $disp;\" class=\"hideable\">\n";
+print"<h3><u>Test suite failures:</u></h3>\n";
+print"<b>Failing tests:</b><br>\n";
+print "$failing_tests<br><br>\n";
 print "</div><br><br>\n";
 
 /*****************************************************
@@ -485,7 +512,7 @@ $all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
 $formatted_num=number_format($all_data['Total Sum'][0],0,".",",");
 print "<b>Total size</b>: $formatted_num bytes<br>\n";
 print "<b>Percent difference from previous test</b>: {$all_data['Total Sum'][1]}<br>\n";
-print "<b>Percent difference from five tests ago</b>: {$all_data['Total Sum'][2]}<br><br>\n";
+print "<b>Percent difference from five tests ago</b>: {$all_data['Total Sum'][3]}<br><br>\n";
 
 print "<table class=\"sortable\" id=\"file_sizes\" border=1 cellspacing=0 cellpadding=6>\n";
 print "\t<tr>\n";

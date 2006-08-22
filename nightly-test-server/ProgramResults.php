@@ -453,18 +453,18 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
-	$result = "{$row['measure']} - {$row['program']}<br>\n";
+	$result .= "{$row['measure']} - {$row['program']}<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -494,18 +494,18 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id  and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
-	$result = "{$row['measure']} - {$row['program']}<br>\n";
+	$result .= "{$row['measure']} - {$row['program']}<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -535,7 +535,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if(strcmp("{$row['result']}", "PASS")===0){
@@ -544,12 +544,12 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( isset($test_hash["{$row['measure']} - {$row['program']}"]) && 
           strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
-	$result = "{$row['measure']} - {$row['program']}<br>\n";
+	$result .= "{$row['measure']} - {$row['program']}<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -579,7 +579,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if(strcmp("{$row['result']}", "PASS")===0){
@@ -588,12 +588,12 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$cur_id and measure!=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       if( isset($test_hash["{$row['measure']} - {$row['program']}"]) &&
           strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
-        $result = "{$row['measure']} - {$row['program']}<br>\n";
+        $result .= "{$row['measure']} - {$row['program']}<br>\n";
       }
     }
     mysql_free_result($program_query);

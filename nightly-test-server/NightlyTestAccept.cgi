@@ -655,8 +655,9 @@ if($len>1){
 ################################################################################
 @ALL_TESTS= split "\n", $all_tests;
 foreach my $x (@ALL_TESTS){
-  if($x =~ m/(TEST-)?(PASS|XFAIL|FAIL):\s(.+?)\s(.+)/){
-    $query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$4\", \'$2\', \"$3\", $night_id)";
+  if($x =~ m/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/){
+    $query="INSERT INTO tests ( program, result, measure, night) ".
+           "VALUES(\"$4\", \'$2\', \"$3\", $night_id)";
     my $d = $dbh->prepare($query);
     $d->execute;
   }
@@ -666,8 +667,9 @@ foreach my $x (@ALL_TESTS){
 }
 
 foreach my $x (@DEJAGNUTESTS_RESULTS){
-  if($x =~ m/^(PASS|XFAIL|FAIL):\s(.+)/){
-  	$query="INSERT INTO tests ( program, result, measure, night) VALUES(\"$2\", \'$1\', \"dejagnu\", $night_id)";
+  if($x =~ m/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/){
+  	$query="INSERT INTO tests ( program, result, measure, night) ".
+  	       "VALUES(\"$2\", \'$1\', \"dejagnu\", $night_id)";
     my $d = $dbh->prepare($query);
     $d->execute;
   }
@@ -685,7 +687,8 @@ print "received $ENV{CONTENT_LENGTH} bytes\n";
 @nights = GetMachineNights $machine_id;
 $length = @nights;
 print "DB date : $db_date\n";
-print "Machine $machine_id now has ids [@nights]{$length} associated with it in the database\n";
+print "Machine $machine_id now has ids [@nights]{$length} ".
+      "associated with it in the database\n";
 
 ################################################################################
 #
@@ -694,7 +697,8 @@ print "Machine $machine_id now has ids [@nights]{$length} associated with it in 
 # adds very useful information to the nightly test email.
 #
 ################################################################################
-$query = "select id from night where id<$night_id and machine=$machine_id and buildstatus=\"OK\" order by id desc";
+$query = "select id from night where id<$night_id and machine=$machine_id and ".
+         "buildstatus=\"OK\" order by id desc";
 my $g = $dbh->prepare($query);
 $g->execute;
 $row = $g->fetchrow_hashref;
@@ -751,11 +755,13 @@ foreach my $prog(keys(%prog_hash_new)){
     if($perc > 5 || $perc < -5){
       if( ! exists $output_big_changes{"$x"} ){
         my $rounded_perc = sprintf("%1.2f", $perc);
-        $output_big_changes{"$x"}[0]="$prog: $rounded_perc\% ($value_old => $value_new)\n";
+        $output_big_changes{"$x"}[0]=
+          "$prog: $rounded_perc\% ($value_old => $value_new)\n";
       }
       else{
         my $rounded_perc = sprintf("%1.2f", $perc);
-        push(@{ $output_big_changes{"$x"} },"$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n");
+        push(@{ $output_big_changes{"$x"} },
+             "$prog ($x) changed \%$rounded_perc ($value_old => $value_new)\n");
       } #end else
     }# end if $perc is acceptable
   }# end foreach measure taken
@@ -766,14 +772,16 @@ foreach my $prog(keys(%prog_hash_new)){
 # Determining changes in new tests and old tests
 #
 ################################################################################
-my $d = $dbh->prepare("SELECT id FROM night WHERE machine=38 and buildstatus=\"OK\" order by added desc");
+my $d = $dbh->prepare("SELECT id FROM night WHERE machine=38 and ".
+                      "buildstatus=\"OK\" order by added desc");
 $d->execute;
 my @row=$d->fetchrow_array;
 $cur_night=$row[0];
 @row=$d->fetchrow_array;
 $prev_night=$row[0];
 
-my $c = $dbh->prepare("SELECT program, measure, result FROM tests WHERE night=$cur_night");
+my $c = $dbh->prepare("SELECT program, measure, result FROM tests WHERE ".
+                      "night=$cur_night");
 $c->execute;
 
 %result_hash=();
@@ -786,15 +794,18 @@ while(my @row=$c->fetchrow_array){
 
 my ($num_removed, $num_added, $num_new_passing, $num_new_failing)=0;
 my ($removed, $added, $passing, $failing) = "";
-my $j = $dbh->prepare("SELECT program, measure, result FROM tests WHERE night=$prev_night");
+my $j = $dbh->prepare("SELECT program, measure, result FROM tests WHERE ".
+                      "night=$prev_night");
 $j->execute;
 while(my @row=$j->fetchrow_array){
     my $key = $row[1]." - ".$row[0];
-    if($result_hash{$key} and $result_hash{$key} ne $row[2] and $row[2] eq "PASS"){
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and
+       $row[2] eq "PASS"){
 	$failing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
 	$num_new_failing++;
     }
-    if($result_hash{$key} and $result_hash{$key} ne $row[2] and $result_hash{$key} eq "PASS" ){
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and 
+       $result_hash{$key} eq "PASS" ){
         $passing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
         $num_new_passing++;
     }
@@ -819,29 +830,26 @@ foreach $x(keys(%program_hash)){
 # Sending email to nightly test email archive
 #
 ################################################################################
-$link_to_page="http://llvm.org/nightlytest/test.php?machine=$machine_id&night=$night_id";
+$link_to_page="http://llvm.org/nightlytest/test.php?machine=$machine_id&".
+              "night=$night_id";
 $email  = "$link_to_page\n";
 $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
 
 if($buildstatus eq "OK") {
-  if ($TestsFixed ne "") {
-    $TestsFixed= "\n$newly_passing_tests\n";
-  } else {
-    $TestsFixed = "None";
-  }
-  $email .= "\nNew Test Passes: $TestsFixed";
-  if ($TestsBroken ne "") {
-    $TestsBroken = "\n$newly_failing_tests\n";
-  } else {
-    $TestsBroken = "None";
-  }
-  $email .= "\nNew Test Failures: $TestsBroken";
+  if ($passing eq "") {
+    $pasing = "None";
+  } 
+  $email .= "\nNew Test Passes: $passing\n";
+  if ($failing eq "") {
+    $failing = "None";
+  } 
+  $email .= "\nNew Test Failures: $failing\n";
   if ($added eq "") {
     $added = "None";
   } 
-  $email .= "\nAdded Tests: $added";
+  $email .= "\nAdded Tests: $added\n";
   if ($removed eq "") {
     $removed= "None";
   } 

@@ -10,7 +10,7 @@ $meaningfull_names = array('getcvstime_wall' => 'CVS Checkout Wall Time',
                         'dejagnutime_cpu' => 'Dejagnu CPU Time',
                         'teststats_exppass' => 'Expected Test Passes',
                         'teststats_unexpfail' => 'Unexpected Test Failures',
-                        'teststats_expfail' => 'Expected Test Failurs');
+                        'teststats_expfail' => 'Expected Test Failures');
 
 /*****************************************************
  *

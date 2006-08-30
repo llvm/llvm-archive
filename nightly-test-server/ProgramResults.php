@@ -469,6 +469,24 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
       }
     }
     mysql_free_result($program_query);
+
+    $test_hash=array();
+    $query = "SELECT * FROM program WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_hash[$row['program']]=1;
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM program WHERE night=$cur_id ORDER BY program ASC";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_key = $row['program'];
+      if(!isset($test_hash[$test_key])){
+        $result .= $test_key . "<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
   }
   return $result;
 }
@@ -506,6 +524,24 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['measure']} - {$row['program']}";
+      if(!isset($test_hash[$test_key])){
+        $result .= $test_key . "<br>\n";
+      }
+    }
+    mysql_free_result($program_query);
+
+    $test_hash=array();
+    $query = "SELECT * FROM program WHERE night=$cur_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_hash[$row['program']]=1;
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM program WHERE night=$prev_id ORDER BY program ASC";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_key = $row['program'];
       if(!isset($test_hash[$test_key])){
         $result .= $test_key . "<br>\n";
       }

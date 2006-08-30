@@ -561,7 +561,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT * FROM program WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")!==0){
+      if("{$row['result']}" !~ \\*\){
         $test_hash["{$row['program']}"]=$row['result'];
       }    
     }
@@ -571,10 +571,8 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['program']}";
-      if(isset($test_hash[$test_key]) && 
-         strcmp($test_hash[$test_key], $row['result'])!==0){
-        // $result .= $test_key . "<br>\n";
-        $result .= $row['result'] . ":" . $test_key . "<br>\n";
+      if(isset($test_hash[$test_key]) && "{$row['result']}" =~ \\*\){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -628,8 +626,8 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT * FROM program WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")!==0){
-        $test_hash["{$row['program']}"]=$row['result'];
+      if("{$row['result']}" =~ \\*\){
+        $test_hash["{$row['program']}"]=1;
       }    
     }
     mysql_free_result($program_query);
@@ -638,10 +636,8 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['program']}";
-      if(isset($test_hash[$test_key]) && 
-         strcmp($test_hash[$test_key], $row['result'])!==0){
-        // $result .= $test_key . "<br>\n";
-        $result .= $row['result'] . ":" . $test_key . "<br>\n";
+      if(isset($test_hash[$test_key]) && "{$row['result']}" !~ \\*\){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);

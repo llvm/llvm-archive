@@ -507,7 +507,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['measure']} - {$row['program']}";
       if(!isset($test_hash[$test_key])){
-        $result .= $test_key . "<br>\n";
+        $result .= "{$row['result']}" . ":" . $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -572,7 +572,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['program']}";
       if(isset($test_hash[$test_key]) && strpos("{$row['result']}", "*") === false){
-        $result .= $test_key . "<br>\n";
+        $result .= "{$row['result']}" . ":" . $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);

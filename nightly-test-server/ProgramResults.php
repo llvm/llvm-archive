@@ -552,8 +552,9 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
       $test_key = "{$row['measure']} - {$row['program']}";
       if(isset($test_hash[$test_key]) && 
          strcmp($test_hash[$test_key], $row['result'])!==0){
-        $result .= $test_key . "<br>\n";
+//        $result .= $test_key . "<br>\n";
       }
+      $result .= $test_key . "<br>\n";
     }
     mysql_free_result($program_query);
   }
@@ -597,8 +598,9 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
       $test_key = "{$row['measure']} - {$row['program']}";
       if(isset($test_hash[$test_key]) && 
          strcmp($test_hash[$test_key], $row['result'])!==0){
-        $result .= $test_key . "<br>\n";
+//        $result .= $test_key . "<br>\n";
       }
+      $result .= $test_key . "<br>\n";
     }
     mysql_free_result($program_query);
   }

@@ -561,7 +561,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT * FROM program WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if(strpos("{$row['result']}", "*") !== false) {
+      if(!(strpos("{$row['result']}", "*") === false)) {
         $test_hash["{$row['program']}"]=$row['result'];
       }    
     }
@@ -636,7 +636,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['program']}";
-      if(isset($test_hash[$test_key]) && strpos("{$row['result']}", "*") !== false){
+      if(isset($test_hash[$test_key]) && !(strpos("{$row['result']}", "*") === false)){
         $result .= $test_key . "<br>\n";
       }
     }

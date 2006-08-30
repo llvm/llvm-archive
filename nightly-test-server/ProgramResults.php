@@ -435,7 +435,7 @@ function getUnexpectedFailures($night_id, $mysql_link){
  * Get New Tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getNewTests($cur_id, $prev_id, $mysql_link){
   if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
@@ -463,8 +463,9 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
-	$result .= "{$row['measure']} - {$row['program']}<br>\n";
+      $test_key = "{$row['measure']} - {$row['program']}";
+      if(!isset($test_hash[$test_key])){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -476,7 +477,7 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
  * Get Removed Tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getRemovedTests($cur_id, $prev_id, $mysql_link){
   if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
@@ -494,18 +495,19 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if( !isset($test_hash["{$row['measure']} - {$row['program']}"])){
-	$result .= "{$row['measure']} - {$row['program']}<br>\n";
+      $test_key = "{$row['measure']} - {$row['program']}";
+      if(!isset($test_hash[$test_key])){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -517,7 +519,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
  * Get Fixed Tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getFixedTests($cur_id, $prev_id, $mysql_link){
   if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
@@ -535,21 +537,22 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")===0){
+      if(strcmp("{$row['result']}", "PASS")!==0){
         $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
       }    
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if( isset($test_hash["{$row['measure']} - {$row['program']}"]) && 
-          strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
-	$result .= "{$row['measure']} - {$row['program']}<br>\n";
+      $test_key = "{$row['measure']} - {$row['program']}";
+      if(isset($test_hash[$test_key]) && 
+         strcmp($test_hash[$test_key], $row['result'])!==0){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -579,21 +582,22 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")===0){
-        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
-      }
-    }
-    mysql_free_result($program_query);
-
     $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      if( isset($test_hash["{$row['measure']} - {$row['program']}"]) &&
-          strcmp($test_hash["{$row['measure']} - {$row['program']}"], $row['result'])!==0){
-        $result .= "{$row['measure']} - {$row['program']}<br>\n";
+      if(strcmp("{$row['result']}", "PASS")!==0){
+        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
+      }    
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)){
+      $test_key = "{$row['measure']} - {$row['program']}";
+      if(isset($test_hash[$test_key]) && 
+         strcmp($test_hash[$test_key], $row['result'])!==0){
+        $result .= $test_key . "<br>\n";
       }
     }
     mysql_free_result($program_query);

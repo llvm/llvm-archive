@@ -495,14 +495,14 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
   }
   else{
     $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
+    $query = "SELECT * FROM tests WHERE night=$cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_hash["{$row['measure']} - {$row['program']}"]=1;
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
+    $query = "SELECT * FROM tests WHERE night=$prev_id";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $test_key = "{$row['measure']} - {$row['program']}";

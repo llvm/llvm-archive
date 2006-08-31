@@ -393,13 +393,22 @@ function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $sta
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as oppoesd in the night table.
  */
-function getFailures($night_id, $mysql_link){
+function getFailures($night_id) {
   $result="";
-  if($night_id>=$new_schema_id){
-    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" AND measure!=\"dejagnu\"";
+  if ($night_id >= $new_schema_id) {
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      $result.="{$row['measure']} - {$row['program']}<br>\n";
+    while($row = mysql_fetch_array($program_query)) {
+      $result .= $row['program'] . "<br>\n";
+    }
+    mysql_free_result($program_query);
+
+    $query = "SELECT * FROM program WHERE night=$night_id ";
+    $program_query = mysql_query($query) or die (mysql_error());
+    while($row = mysql_fetch_array($program_query)) {
+      if (!isTestPass($row['result'])) {
+        $result .= $row['program'] . "<br>\n";
+      }
     }
     mysql_free_result($program_query);
   }
@@ -423,10 +432,10 @@ function getUnexpectedFailures($night_id, $mysql_link){
     mysql_free_result($program_query);
   }
   else{
-    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" AND measure=\"dejagnu\"";
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      $result.="{$row['measure']} - {$row['program']}<br>\n";
+      $result .= $row['program'] . "<br>\n";
     }
     mysql_free_result($program_query);
   }

@@ -407,7 +407,7 @@ function getFailures($night_id) {
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       if (!isTestPass($row['result'])) {
-        $result .= $row['program'] . "<br>\n";
+        $result .= "{$row['program']} [{$row['result']}]<br>\n";
       }
     }
     mysql_free_result($program_query);

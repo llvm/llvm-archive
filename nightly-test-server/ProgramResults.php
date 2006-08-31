@@ -434,7 +434,7 @@ function getUnexpectedFailures($night_id, $mysql_link){
 }
 
 /*
- * Get set Of tests
+ * Get set of tests
  *
  * Returns a hash of tests for a given night.
  */
@@ -452,7 +452,8 @@ function getTestSet($id, $table){
 /*
  * Get list of excluded tests
  *
- * Returns a hash of tests for a given night.
+ * Returns a list of tests for a given night that were excluded from the
+ * hash.
  */
 function getExcludedTests($id, $table, $test_hash){
   $result = "";
@@ -478,14 +479,14 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
   if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
-
+  
   $result="";
   if($cur_id<$new_schema_id){
     $query = "SELECT new_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['new_tests'];
-    $result=preg_replace("/\n/","<br>\n",$result);
+    $result = $row['new_tests'];
+    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestSet($prev_id, "tests");
@@ -504,17 +505,17 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
  * in their own table as opposed in the night table.
  */
 function getRemovedTests($cur_id, $prev_id, $mysql_link){
-  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
-
+  
   $result="";
   if($cur_id<$new_schema_id){
     $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['removed_tests'];
-    $result=preg_replace("/\n/","<br>\n",$result);
+    $result = $row['removed_tests'];
+    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestSet($cur_id, "tests");
@@ -527,13 +528,61 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
 }
 
 /*
+ * Does the test pass
+ *
+ * Return true if the test result indicates a pass.
+ */
+function isTestPass($test_result) {
+  return strcmp($test_result, "PASS") === 0 ||
+         strpos($test_result, "*") === false;
+}
+
+/*
+ * Get set of tests that fail
+ *
+ * Returns a hash of tests that fail for a given night.
+ */
+function getTestFailSet($id, $table){
+  $test_hash = array();
+  $query = "SELECT * FROM $table WHERE night=$id";
+  $program_query = mysql_query($query) or die (mysql_error());
+  while ($row = mysql_fetch_array($program_query)) {
+    if (!isTestPass($row['result']) {
+      $test_hash[$row['program']]=1;
+    }
+  }
+  mysql_free_result($program_query);
+  return $test_hash;
+}
+
+/*
+ * Get list of newly passing tests
+ *
+ * Returns a list of tests for a given night that were excluded from the
+ * hash and now pass.
+ */
+function getPassingTests($id, $table, $test_hash){
+  $result = "";
+  $query = "SELECT * FROM $table WHERE night=$id ORDER BY program ASC";
+  $program_query = mysql_query($query) or die (mysql_error());
+  while ($row = mysql_fetch_array($program_query)) {
+    $test_key = $row['program'];
+    if (isset($test_hash[$test_key]) && isTestPass($row['result']) {
+      $result .= $test_key . "<br>\n";
+    }
+  }
+  mysql_free_result($program_query);
+  return $result;
+}
+
+/*
  * Get Fixed Tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as opposed in the night table.
  */
 function getFixedTests($cur_id, $prev_id, $mysql_link){
-  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
   
@@ -542,51 +591,15 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT newly_passing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['newly_passing_tests'];
-    $result=preg_replace("/\n/","<br>\n",$result);
+    $result = $row['newly_passing_tests'];
+    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
-  }
-  else{
-    $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$prev_id";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")!==0){
-        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
-      }    
-    }
-    mysql_free_result($program_query);
-
-    $query = "SELECT * FROM tests WHERE night=$cur_id ORDER BY program ASC" ;
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      $test_key = "{$row['measure']} - {$row['program']}";
-      if(isset($test_hash[$test_key]) && 
-         strcmp($test_hash[$test_key], $row['result'])!==0){
-        $result .= $test_key . "<br>\n";
-      }
-    }
-    mysql_free_result($program_query);
-    
-    $test_hash=array();
-    $query = "SELECT * FROM program WHERE night=$prev_id";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      if(!(strpos($row['result'], "*") === false)) {
-        $test_hash[$row['program']]=$row['result'];
-      }    
-    }
-    mysql_free_result($program_query);
-
-    $query = "SELECT * FROM program WHERE night=$cur_id ORDER BY program ASC";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      $test_key = $row['program'];
-      if(isset($test_hash[$test_key]) && strpos($row['result'], "*") === false){
-        $result .= $test_key . "<br>\n";
-      }
-    }
-    mysql_free_result($program_query);
+  } else {
+    $test_hash = getTestFailSet($prev_id, "tests");
+    $result .= getPassingTests($cur_id, "tests", $test_hash);
+  
+    $test_hash = getTestFailSet($prev_id, "program");
+    $result .= getPassingTests($cur_id, "program", $test_hash);
   }
   return $result;
 }
@@ -598,7 +611,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
  * in their own table as oppoesd in the night table.
  */
 function getBrokenTests($cur_id, $prev_id, $mysql_link){
-  if(strcmp($prev_id, "")===0 || strcmp($cur_id, "")===0){
+  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
 
@@ -607,51 +620,16 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $query = "SELECT newly_failing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
-    $result= $row['newly_failing_tests'];
-    $result=preg_replace("/\n/","<br>\n",$result);
+    $result = $row['newly_failing_tests'];
+    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   }
   else{
-    $test_hash=array();
-    $query = "SELECT * FROM tests WHERE night=$cur_id";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      if(strcmp("{$row['result']}", "PASS")!==0){
-        $test_hash["{$row['measure']} - {$row['program']}"]=$row['result'];
-      }    
-    }
-    mysql_free_result($program_query);
-
-    $query = "SELECT * FROM tests WHERE night=$prev_id ORDER BY program ASC";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      $test_key = "{$row['measure']} - {$row['program']}";
-      if(isset($test_hash[$test_key]) && 
-         strcmp($test_hash[$test_key], $row['result'])!==0){
-        $result .= $test_key . "<br>\n";
-      }
-    }
-    mysql_free_result($program_query);
-
-    $test_hash=array();
-    $query = "SELECT * FROM program WHERE night=$cur_id";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      if(!(strpos($row['result'], "*") === false)) {
-        $test_hash[$row['program']]=1;
-      }    
-    }
-    mysql_free_result($program_query);
-
-    $query = "SELECT * FROM program WHERE night=$prev_id ORDER BY program ASC";
-    $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
-      $test_key = $row['program'];
-      if(isset($test_hash[$test_key]) && strpos($row['result'], "*") === false){
-        $result .= $test_key . "<br>\n";
-      }
-    }
-    mysql_free_result($program_query);
+    $test_hash = getTestFailSet($cur_id, "tests");
+    $result .= getPassingTests($prev_id, "tests", $test_hash);
+  
+    $test_hash = getTestFailSet($cur_id, "program");
+    $result .= getPassingTests($prev_id, "program", $test_hash);
   }
   return $result;
 }

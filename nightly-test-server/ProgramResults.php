@@ -406,8 +406,23 @@ function getFailures($night_id) {
     $query = "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
-      if (!isTestPass($row['result'])) {
-        $result .= "{$row['program']} [{$row['result']}]<br>\n";
+      $test_result = $row['result'];
+      if (!isTestPass($test_result)) {
+        $failing_tools = "";
+        $phases = split(", ", $test_result);
+        
+        for ($i = 0; $i < count($phases); $i++) {
+          $phase = $phases[$i];
+          if (!isTestPass($phase)) {
+            list($tool, $tool_result) = split(": ", $phase);
+            if (strcmp($failing_tools, "") == 0) {
+              $failing_tools .= ", ";
+            }
+            $failing_tools .= $tool;
+          }
+        }
+        
+        $result .= "{$row['program']} [{$failing_tools}]<br>\n";
       }
     }
     mysql_free_result($program_query);

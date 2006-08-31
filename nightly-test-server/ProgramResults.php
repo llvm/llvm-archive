@@ -396,14 +396,14 @@ function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $sta
 function getFailures($night_id) {
   $result="";
   if ($night_id >= $new_schema_id) {
-    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $result .= $row['program'] . "<br>\n";
     }
     mysql_free_result($program_query);
 
-    $query = "SELECT * FROM program WHERE night=$night_id ";
+    $query = "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       if (!isTestPass($row['result'])) {

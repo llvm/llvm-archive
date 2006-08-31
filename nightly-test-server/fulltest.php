@@ -179,7 +179,7 @@ print "</div><br><br>\n";
  * Printing failures in test suite
  *
  ******************************************************/
-$failing_tests=getFailures($night_id, $previous_succesful_id, $mysql_link);
+$failing_tests=getFailures($night_id);
 if(strcmp($failing_tests,"")===0){
   $newly_failing_tests="None";
 }

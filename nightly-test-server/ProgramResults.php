@@ -415,7 +415,7 @@ function getFailures($night_id) {
           $phase = $phases[$i];
           if (!isTestPass($phase)) {
             list($tool, $tool_result) = split(": ", $phase);
-            if (strcmp($failing_tools, "") == 0) {
+            if (strcmp($failing_tools, "") != 0) {
               $failing_tools .= ", ";
             }
             $failing_tools .= $tool;

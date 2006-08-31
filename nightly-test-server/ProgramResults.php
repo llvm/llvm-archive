@@ -547,7 +547,7 @@ function getTestFailSet($id, $table){
   $query = "SELECT * FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
-    if (!isTestPass($row['result']) {
+    if (!isTestPass($row['result'])) {
       $test_hash[$row['program']]=1;
     }
   }
@@ -567,7 +567,7 @@ function getPassingTests($id, $table, $test_hash){
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
     $test_key = $row['program'];
-    if (isset($test_hash[$test_key]) && isTestPass($row['result']) {
+    if (isset($test_hash[$test_key]) && isTestPass($row['result'])) {
       $result .= $test_key . "<br>\n";
     }
   }
@@ -623,8 +623,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $result = $row['newly_failing_tests'];
     $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
-  }
-  else{
+  } else {
     $test_hash = getTestFailSet($cur_id, "tests");
     $result .= getPassingTests($prev_id, "tests", $test_hash);
   

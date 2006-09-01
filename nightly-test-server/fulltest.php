@@ -200,7 +200,7 @@ print "</div><br><br>\n";
 $delta_exppass = $today_row['teststats_exppass']-$yesterday_row['teststats_exppass'];
 $delta_expfail = $today_row['teststats_expfail']-$yesterday_row['teststats_expfail'];
 $delta_unexpfail = $today_row['teststats_unexpfail']-$yesterday_row['teststats_unexpfail'];
-$unexpected_failures = getUnexpectedFailures($night_id, $mysql_link);
+$unexpected_failures = getUnexpectedFailures($night_id);
 
 if($delta_exppass==0 && $delta_expfail==0 && 
    $delta_unexpfail==0 && strcmp($unexpected_failures, "")===0){

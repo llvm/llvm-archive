@@ -191,7 +191,7 @@ print "</div><br><br>\n";
  * Printing failures in test suite
  *
  ******************************************************/
-$failing_tests=getFailures($night_id, $previous_succesful_id, $mysql_link);
+$failing_tests=getFailures($night_id);
 if(strcmp($failing_tests,"")===0){
   $newly_failing_tests="None";
 }
@@ -212,7 +212,7 @@ print "</div><br><br>\n";
 $delta_exppass = $today_row['teststats_exppass']-$yesterday_row['teststats_exppass'];
 $delta_expfail = $today_row['teststats_expfail']-$yesterday_row['teststats_expfail'];
 $delta_unexpfail = $today_row['teststats_unexpfail']-$yesterday_row['teststats_unexpfail'];
-$unexpected_failures = getUnexpectedFailures($night_id, $mysql_link);
+$unexpected_failures = getUnexpectedFailures($night_id);
 
 if($delta_exppass==0 && $delta_expfail==0 && 
    $delta_unexpfail==0 && strcmp($unexpected_failures,"")===0){

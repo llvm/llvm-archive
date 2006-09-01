@@ -436,7 +436,7 @@ function getFailures($night_id) {
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as oppoesd in the night table.
  */
-function getUnexpectedFailures($night_id, $mysql_link){
+function getUnexpectedFailures($night_id){
   $result="";
   if($night_id<$new_schema_id){
     $query = "SELECT unexpfail_tests FROM night WHERE id = $night_id";
@@ -554,10 +554,12 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
 /*
  * Does the test pass
  *
- * Return true if the test result indicates a pass.
+ * Return true if the test result indicates a pass.  For "tests" the possible
+ * conditions are "PASS", "FAIL" and "XFAIL" (expected to fail.)  For programs
+ * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return strcmp($test_result, "PASS") === 0 ||
+  return strcmp($test_result, "FAIL") != 0 ||
          strpos($test_result, "*") === false;
 }
 

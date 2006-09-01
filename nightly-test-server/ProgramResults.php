@@ -559,7 +559,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
  * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return strcmp($test_result, "FAIL") != 0 ||
+  return strcmp($test_result, "PASS") == 0 ||
          strpos($test_result, "*") === false;
 }
 

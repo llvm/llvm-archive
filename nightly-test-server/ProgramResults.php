@@ -560,6 +560,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
  */
 function isTestPass($test_result) {
   return strcmp($test_result, "PASS") == 0 ||
+         strcmp($test_result, "XFAIL") == 0 ||
          strpos($test_result, "*") === false;
 }
 

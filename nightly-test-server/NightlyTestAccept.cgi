@@ -867,7 +867,7 @@ else{
   $temp_date = $db_date;
   $temp_date =~s/ /\_/g;
   $email .= "\nBuildlog available at http://llvm.org/nightlytest/".
-            "machines/$machine_id/$temp_date-Build-Log.txt";
+            "machines/$machine_id/$temp_date-Build-Log.txt\n";
 }
 
 $email_addr = "llvm-testresults\@cs.uiuc.edu";

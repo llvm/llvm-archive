@@ -19,9 +19,9 @@ $meaningfull_names = array('getcvstime_wall' => 'CVS Checkout Wall Time',
  *          being the column names 
  *
  *****************************************************/
-function getMachineInfo($machine_id, $mysql_link){
+function getMachineInfo($machine_id){
   $query="SELECT * FROM machine WHERE id=$machine_id";
-  $machine_query = mysql_query($query, $mysql_link) or die ("$night failed! " . mysql_error());
+  $machine_query = mysql_query($query) or die ("$night failed! " . mysql_error());
   $row = mysql_fetch_array($machine_query);
   mysql_free_result($machine_query);
   return $row;
@@ -34,7 +34,7 @@ function getMachineInfo($machine_id, $mysql_link){
  *          rows.
  *
  *****************************************************/
-function getMachineResource($mysql_link){
+function getMachineResource(){
   $machine_query = mysql_query("SELECT * FROM machine ORDER BY nickname ASC") or die (mysql_error());
   return $machine_query;
 }
@@ -47,7 +47,7 @@ function getMachineResource($mysql_link){
  *          rows.
  *
  *****************************************************/
-function getRecentMachineResource($mysql_link){
+function getRecentMachineResource(){
   $night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 14 DAY) <= added") or die (mysql_error());
   $machines="where id=0";
   $machine_arr = array();
@@ -71,7 +71,7 @@ function getRecentMachineResource($mysql_link){
  *          rows.
  *
  *****************************************************/
-function getOldMachineResource($mysql_link){
+function getOldMachineResource(){
   $night_query = mysql_query("SELECT machine FROM night where DATE_SUB(NOW(), INTERVAL 1 MONTH) > added") or die (mysql_error());
   $machines="where id=0";
   $machine_arr = array();
@@ -94,7 +94,7 @@ function getOldMachineResource($mysql_link){
  *          being the column names 
  *
  *****************************************************/
-function getNightInfo($night_id, $mysql_link){
+function getNightInfo($night_id){
  $query="SELECT * FROM night WHERE id=$night_id";
  $today_query = mysql_query("SELECT * FROM night WHERE id=$night_id") or die ("$query failed! " . mysql_error());
  $today_row = mysql_fetch_array($today_query);
@@ -110,7 +110,7 @@ function getNightInfo($night_id, $mysql_link){
  *          mysql_fetch_array on.
  *
  *****************************************************/
-function getNightsResource($machine_id, $mysql_link, $start="2000-01-01 01:01:01", $end="2020-12-30 01:01:01", $order="DESC"){
+function getNightsResource($machine_id, $start="2000-01-01 01:01:01", $end="2020-12-30 01:01:01", $order="DESC"){
  $query = mysql_query("SELECT * FROM night WHERE machine=$machine_id and added<=\"$end\" and added>=\"$start\" order by added $order") or die (mysql_error());
  return $query;
 }
@@ -123,7 +123,7 @@ function getNightsResource($machine_id, $mysql_link, $start="2000-01-01 01:01:01
  * Returns: A mysql result
  *
  *****************************************************/
-function getNightsIDs($machine_id, $mysql_link, $start="2000-01-01 01:01:01", $end="2020-12-30 01:01:01", $order="DESC"){
+function getNightsIDs($machine_id, $start="2000-01-01 01:01:01", $end="2020-12-30 01:01:01", $order="DESC"){
  $query = mysql_query("SELECT id, added FROM night WHERE machine=$machine_id and added<=\"$end\" and added>=\"$start\" ORDER BY added $order") or die (mysql_error());
  return $query;
 }
@@ -136,7 +136,7 @@ function getNightsIDs($machine_id, $mysql_link, $start="2000-01-01 01:01:01", $e
  *          mysql_fetch_array on.
  *
  *****************************************************/
-function getSuccessfulNightsHistory($machine_id, $mysql_link, $night_id, $order="DESC"){
+function getSuccessfulNightsHistory($machine_id, $night_id, $order="DESC"){
   $query="SELECT * FROM night WHERE machine=$machine_id and id<=$night_id and buildstatus=\"OK\" order by added $order";
   $query = mysql_query($query) or die (mysql_error());
   return $query;
@@ -149,7 +149,7 @@ function getSuccessfulNightsHistory($machine_id, $mysql_link, $night_id, $order=
  * Returns: A mysql query resource.
  *
  *****************************************************/
-function getRecentTests($hours="24", $mysql_link){
+function getRecentTests($hours="24"){
  $result = mysql_query("select * from night where DATE_SUB(NOW(),INTERVAL $hours HOUR)<=added ORDER BY added DESC") or die (mysql_error());
  return $result;
 }
@@ -161,7 +161,7 @@ function getRecentTests($hours="24", $mysql_link){
  * Returns: A string formatted as "Year-month-day H:M:S" 
  *
  *****************************************************/
-function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE()"){
+function calculateDate($time_frame="1 YEAR", $origin_date="CURDATE()"){
  if(strpos($origin_date, "CURDATE")===false){
   $query=mysql_query("SELECT \"$origin_date\" - INTERVAL $time_frame") or die(mysql_error());
  }
@@ -182,7 +182,7 @@ function calculateDate($mysql_link, $time_frame="1 YEAR", $origin_date="CURDATE(
  * file and the value being the size of the file.
  *
  *****************************************************/
-function getAllFileSizes($mysql_link, $night_id){
+function getAllFileSizes($night_id){
   $select = "select * from file WHERE night=$night_id";
   $query = mysql_query($select) or die (mysql_error());
   $result=array();
@@ -202,7 +202,7 @@ function getAllFileSizes($mysql_link, $night_id){
  * night, and build type
  *
  *****************************************************/
-function get_file_history($mysql_link, $machine_id, $file_name){
+function get_file_history($machine_id, $file_name){
   $nights_select = "select id, added from night WHERE machine=$machine_id ".
                    "order by added desc";
   $nights_query = mysql_query($nights_select) 
@@ -240,7 +240,7 @@ function get_file_history($mysql_link, $machine_id, $file_name){
  * not available the array will contain -.
  *
  *****************************************************/
-function buildFileSizeTable($mysql_link, $machine_id, $night_id){
+function buildFileSizeTable($machine_id, $night_id){
   $result=array();
 
   //setting up the night ids
@@ -255,9 +255,9 @@ function buildFileSizeTable($mysql_link, $machine_id, $night_id){
   $old_night=$row['id'];
   mysql_free_result($query);
   
-  if($cur_night>0) { $cur_data=getAllFileSizes($mysql_link, $cur_night); }
-  if($prev_night>0) { $prev_data=getAllFileSizes($mysql_link, $prev_night); }
-  if($old_night>0) { $old_data=getAllFileSizes($mysql_link, $old_night); }
+  if($cur_night>0) { $cur_data=getAllFileSizes($cur_night); }
+  if($prev_night>0) { $prev_data=getAllFileSizes($prev_night); }
+  if($old_night>0) { $old_data=getAllFileSizes($old_night); }
 
   $cur_sum=0;
   $prev_sum=0;
@@ -319,20 +319,20 @@ mysql_select_db("nightlytestresults");
 $machine_id = 8;
 $file="./test/Regression/Archive/xpg4.a";
 
-$files = get_file_history($mysql_link, $machine_id, $file);
+$files = get_file_history($machine_id, $file);
 
 foreach (array_keys($files) as $f){
  print "$f = > {$files["$f"][0]}<br>\n";
 }
 
-$machine_info = getMachineInfo(21, $mysql_link);
+$machine_info = getMachineInfo(21);
 foreach (array_keys($machine_info) as $key){
  print "$key => {$machine_info["$key"]}<br>\n";
 }
 print "<br><br><br>\n";
 
 $night_id=-1;
-$night_resource = getNightsResource($machine_info['id'], $mysql_link);
+$night_resource = getNightsResource($machine_info['id']);
  while($row = mysql_fetch_array($night_resource)){
  print "added => {$row['added']}<br>\n";
  $night_id=$row['id'];
@@ -341,11 +341,11 @@ mysql_free_result($night_resource);
 print "<br><br><br>\n";
 
 
-$night_info = getNightInfo($night_id, $mysql_link);
+$night_info = getNightInfo($night_id);
 print "buildstatus => {$night_info['buildstatus']}<br>\n";
 print "<br><br><br>\n";
 
-$recent_resource = getRecentTests($machine_info['id'], $mysql_link);
+$recent_resource = getRecentTests($machine_info['id']);
  while($row = mysql_fetch_array($recent_resource)){
  print "added => {$row['added']}<br>\n";
  $night_id=$row['id'];
@@ -353,7 +353,7 @@ $recent_resource = getRecentTests($machine_info['id'], $mysql_link);
 mysql_free_result($recent_resource);
 print "<br><br><br>\n";
 
-$my_day = calculateDate($mysql_link,"30 WEEK");
+$my_day = calculateDate("30 WEEK");
 print "today's date - 30 weeks = $my_day<br>\n";
 print "<br><br><br>\n";
 */

@@ -185,10 +185,10 @@ $RELEVANT_DATA=0;
 $index=0;
 foreach ($files as $file){
 
-  $data = get_file_history($mysql_link, $machine_id, $file);
+  $data = get_file_history($machine_id, $file);
 
   if($DEBUG){
-    print "get_file_history($mysql_link, $machine_id, $file) returned...<br>\n";
+    print "get_file_history($machine_id, $file) returned...<br>\n";
     foreach (array_keys($data) as $x){
       print "$x {$data["$x"][0]} {$data["$x"][1]} {$data["$x"][2]}<br>\n";
     }

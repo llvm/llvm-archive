@@ -18,14 +18,14 @@ $machine_query = mysql_query("SELECT * FROM machine WHERE id=$machine_id") or di
 $row = mysql_fetch_array($machine_query);
 mysql_free_result($machine_query);
 
-$today_query = getSuccessfulNightsHistory($machine_id, $mysql_link, $night_id);
+$today_query = getSuccessfulNightsHistory($machine_id, $night_id);
 $today_row = mysql_fetch_array($today_query);
 $yesterday_row = mysql_fetch_array($today_query);
 $oldday_row = mysql_fetch_array($today_query);
 mysql_free_result($today_query);
 $cur_date=$today_row['added'];
 
-$previous_succesful_id = getPreviousWorkingNight($night_id, $mysql_link);
+$previous_succesful_id = getPreviousWorkingNight($night_id);
 
 ?>
 
@@ -507,7 +507,7 @@ print "<input type=hidden name=machine value=\"$machine_id\">\n";
 print "<input type=hidden name=night value=\"$night_id\">\n";
 print "<input type=hidden name=end value=\"$cur_date\">\n";
 
-$all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
+$all_data=buildFileSizeTable($machine_id, $night_id);
 
 $formatted_num=number_format($all_data['Total Sum'][0],0,".",",");
 print "<b>Total size</b>: $formatted_num bytes<br>\n";
@@ -591,9 +591,9 @@ print "</td></tr></table>\n";
  ******************************************************/
 print"<h3><u>Program tests:</u></h3><br>\n";
 
-$today_results = GetDayResults($today_row['id'], $category_array, $mysql_link);
+$today_results = GetDayResults($today_row['id'], $category_array);
 if(isset($yesterday_row['id'])){
-  $yesterday_results = GetDayResults($yesterday_row['id'], $category_array, $mysql_link);
+  $yesterday_results = GetDayResults($yesterday_row['id'], $category_array);
   $percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results,.2);  
 }
 /********************** external table **********************/

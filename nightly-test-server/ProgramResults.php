@@ -133,7 +133,7 @@ $category_print_array_ordered_description=array("CBE - The time taken to execute
  * "extenal." 
  *
  */
-function GetDayResults($night_id, $array_of_measures, $mysql_link){
+function GetDayResults($night_id, $array_of_measures ){
   $result=array();
   #print "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC<br>\n";
   $program_query = mysql_query("SELECT * FROM program WHERE night=$night_id ORDER BY program ASC") or die (mysql_error());
@@ -337,12 +337,12 @@ function sortSignifigantChangeArray($changes, $index){
  * being an array containing (date in seconds since epoch, program[0], program[1], ... , 
  * program[n]) for all the data between the two dates
  */
-function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $start="2000-01-01 01:01:01", $end="2020-01-01 01:01:01"){
+function buildResultsHistory($machine_id, $programs, $measure , $start="2000-01-01 01:01:01", $end="2020-01-01 01:01:01"){
   $preg_measure = str_replace("/","\/", $measure);
   $results_arr=array();
   $night_table_statement = "SELECT id, added FROM night WHERE machine=$machine_id ". 
   "AND added >= \"$start\" AND added <= \"$end\" ORDER BY added DESC";
-  $night_table_query = mysql_query($night_table_statement, $mysql_link) or die(mysql_error());
+  $night_table_query = mysql_query($night_table_statement ) or die(mysql_error());
   $night_arr=array();
   $night_query="(";
   while($row = mysql_fetch_array($night_table_query)){
@@ -687,7 +687,7 @@ function getBrokenTests($cur_id, $prev_id){
  * Returns the night id for the machine of the night passed in
  * where build status = OK
  */
-function getPreviousWorkingNight($night_id, $mysql_link){
+function getPreviousWorkingNight($night_id ){
   $query = "SELECT machine FROM night WHERE id=$night_id";
   $program_query = mysql_query($query) or die (mysql_error());
   $row = mysql_fetch_array($program_query);
@@ -737,7 +737,7 @@ function getEmailReport($cur_id, $prev_id) {
 
 
 /*$programs=array("Benchmarks/CoyoteBench/huffbench","Benchmarks/CoyoteBench/lpbench");
-$history = buildResultsHistory(18, $programs,"GCCAS",$mysql_link);
+$history = buildResultsHistory(18, $programs,"GCCAS" );
 foreach (array_keys($history) as $date){
   print "$date => ";
   foreach($history["$date"] as $data){
@@ -747,9 +747,9 @@ foreach (array_keys($history) as $date){
 }*/
 
 if($DEBUG){
-  $today_results = GetDayResults(565, $category_array, $mysql_link);
-  $yesterday_results = GetDayResults(564, $category_array, $mysql_link);
-  $oldday_results = GetDayResults(563, $category_array, $mysql_link);
+  $today_results = GetDayResults(565, $category_array );
+  $yesterday_results = GetDayResults(564, $category_array );
+  $oldday_results = GetDayResults(563, $category_array );
   $percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results, .2);
   $twoday_difference = CalculateChangeBetweenDays($oldday_results, $today_results, .01);
   $count = CountSignifigantDifferences($percent_difference, 1, 25);

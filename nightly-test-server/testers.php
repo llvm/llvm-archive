@@ -42,10 +42,10 @@ print "\t<tr bgcolor=#FFCC99>\n";
         print "\t\t<td>Build status of last test</td>\n";
 print "\t</tr>\n";
 
-$result = getMachineResource($mysql_link);
+$result = getMachineResource();
 $line=1;
 while($row = mysql_fetch_array($result)){
-	$query = getNightsResource($row['id'],$mysql_link);
+	$query = getNightsResource($row['id']);
 	$latest_test = mysql_fetch_array($query);
 	mysql_free_result($query);      
 

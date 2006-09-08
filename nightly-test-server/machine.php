@@ -18,7 +18,7 @@ if(!(include "NightlyTester.php")){
 $mysql_link=mysql_connect("127.0.0.1","llvm","ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$row = getMachineInfo($machine,$mysql_link);
+$row = getMachineInfo($machine);
 $machine_name = $row['name'];
 if(strcmp($row['nickname'],"")!=0){
 	$machine_name=$row['nickname'];
@@ -87,7 +87,7 @@ print "</tr>\n";
 print "</table>\n<br>\n";
 
 
-$result = getNightsResource($machine,$mysql_link);
+$result = getNightsResource($machine);
 $recent=mysql_fetch_array($result);
 $recent_id=$recent['id'];
 $cur_date = $recent['added'];
@@ -97,8 +97,8 @@ mysql_free_result($result);
 
 include("ProgramResults.php");
 if(is_numeric($recent_id) && is_numeric($old_id)){
-	$today_results = GetDayResults($recent_id, $category_array, $mysql_link);
-	$yesterday_results = GetDayResults($old_id, $category_array, $mysql_link);
+	$today_results = GetDayResults($recent_id, $category_array);
+	$yesterday_results = GetDayResults($old_id, $category_array);
 	$percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results);
 
 	/* note: $medium_change, $large_change, and $crazy_change are defined in ProgramResult.php */
@@ -179,7 +179,7 @@ echo "<tr bgcolor=#FFCC99>";
 	echo "</td>";
 echo "</tr>";
 
-$result = getNightsResource($machine,$mysql_link);
+$result = getNightsResource($machine);
 $line=1;
 $row = mysql_fetch_array($result);
 $x=0;

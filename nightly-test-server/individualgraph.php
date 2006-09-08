@@ -392,13 +392,13 @@ print "<br><font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('dat
 print "<div id=\"dataTable\" style=\"display: none;\">\n";
 
 if(strcmp($start,"")!=0 && strcmp($end,"")!=0){
-    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start,$end);
+    $history = buildResultsHistory($machine_id, $program,$measure,$start,$end);
 }
 else if(strcmp($start,"")!=0){
-    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link,$start);
+    $history = buildResultsHistory($machine_id, $program,$measure,$start);
 }
 else{
-    $history = buildResultsHistory($machine_id, $program,$measure,$mysql_link);
+    $history = buildResultsHistory($machine_id, $program,$measure);
 }
 
 print "<table border=1 cellspacing=0 cellpadding=6>\n";

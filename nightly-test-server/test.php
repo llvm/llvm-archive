@@ -30,11 +30,11 @@ if(!(include"ProgramResults.php")){
 $mysql_link=mysql_connect("127.0.0.1","llvm","ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$row = getMachineInfo($machine_id,$mysql_link);
-$today_row = getNightInfo($night_id,$mysql_link);
+$row = getMachineInfo($machine_id);
+$today_row = getNightInfo($night_id);
 $cur_date=$today_row['added'];
 
-$today_query = getSuccessfulNightsHistory($machine_id,$mysql_link,$night_id);
+$today_query = getSuccessfulNightsHistory($machine_id,$night_id);
 $today_row = mysql_fetch_array($today_query);
 $yesterday_row = mysql_fetch_array($today_query);
 $oldday_row = mysql_fetch_array($today_query);
@@ -445,7 +445,7 @@ print "<div id=\"CVSInformation\" style=\"display: none;\" class=\"hideable\">\n
 
 print"<h3><u>CVS information:</u></h3><br>\n";
 
-$row = getNightInfo($night_id,$mysql_link);
+$row = getNightInfo($night_id);
 $com_users = $row['cvs_usersadd'];
 $co_users  = $row['cvs_usersco'];
 $com_users = str_replace("\n","<br>",$com_users);
@@ -514,7 +514,7 @@ print "</td></tr></table>\n";
  * Printing file size information
  *
  ******************************************************/
-$all_data=buildFileSizeTable($mysql_link, $machine_id, $night_id);
+$all_data=buildFileSizeTable($machine_id, $night_id);
 
 $num_sig_changes=0;
 foreach (array_keys($all_data) as $d){
@@ -613,13 +613,13 @@ print "</div><br><br>\n";
  *
  ******************************************************/
 
-$today_results = GetDayResults($today_row['id'], $category_array, $mysql_link);
+$today_results = GetDayResults($today_row['id'], $category_array);
 if(isset($yesterday_row['id'])){
-  $yesterday_results = GetDayResults($yesterday_row['id'], $category_array, $mysql_link);
+  $yesterday_results = GetDayResults($yesterday_row['id'], $category_array);
   $percent_difference = CalculateChangeBetweenDays($yesterday_results, $today_results, .2);
 }
 if(isset($oldday_row['id'])){
-  $oldday_results = GetDayResults($oldday_row['id'], $category_array, $mysql_link);
+  $oldday_results = GetDayResults($oldday_row['id'], $category_array);
   $twoday_difference = CalculateChangeBetweenDays($oldday_results, $today_results, .01);
 }
 

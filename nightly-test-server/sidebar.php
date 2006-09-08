@@ -6,8 +6,8 @@
  *
  ******************************************************/
 if(isset($measure_arr) && isset($program_arr)){
-	$machine_row=getMachineInfo($machine,$mysql_link);
-	$today_row = getNightInfo($night,$mysql_link);
+	$machine_row=getMachineInfo($machine);
+	$today_row = getNightInfo($night);
 	$cur_date = $today_row['added'];
 
 	print "<a href=\"index.php\">Homepage</a><br><br>\n";
@@ -32,7 +32,7 @@ if(isset($measure_arr) && isset($program_arr)){
 	/********************** Creating list to future and past tests **********************/
 	
 	$next_stack = array();
-	$next_query = getNightsResource($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01");
+	$next_query = getNightsResource($machine,$cur_date,"2020-12-30 01:01:01");
 	$x=0;
 	while($x<7 && $x<mysql_affected_rows()-1 && $next = mysql_fetch_array($next_query)){
 		array_push($next_stack, $next);
@@ -48,7 +48,7 @@ if(isset($measure_arr) && isset($program_arr)){
 	$date = preg_replace("/\s\d\d:\d\d:\d\d/","",$today_row['added']);
 	print "\t<li><h3><a href=\"test.php?machine=$machine&night=$night\">$date</a></h3>\n"; 
 	
-	$previous_query = getNightsResource($machine,$mysql_link,"2000-01-01 01:01:01","$cur_date");
+	$previous_query = getNightsResource($machine,"2000-01-01 01:01:01","$cur_date");
 	$x=0;
 	$prev=mysql_fetch_array($previous_query); //eliminates current date
 	while($x<7 && $prev=mysql_fetch_array($previous_query)){
@@ -71,8 +71,8 @@ if(isset($measure_arr) && isset($program_arr)){
  *
  ******************************************************/
 else if($machine!=-1 && $night !=-1){
-	$machine_row=getMachineInfo($machine,$mysql_link);
-	$today_row = getNightInfo($night,$mysql_link);
+	$machine_row=getMachineInfo($machine);
+	$today_row = getNightInfo($night);
 	$cur_date = $today_row['added'];
 
 	print "<a href=\"index.php\">Homepage</a><br><br>\n";
@@ -88,7 +88,7 @@ else if($machine!=-1 && $night !=-1){
 	/********************** Creating list to future and past tests **********************/
 	
 	$next_stack = array();
-	$next_query = getNightsIDs($machine,$mysql_link,$cur_date,"2020-12-30 01:01:01","ASC");
+	$next_query = getNightsIDs($machine,$cur_date,"2020-12-30 01:01:01","ASC");
 	$next = mysql_fetch_array($next_query);
 	$x=0;
 	while($x<7 && $x<mysql_affected_rows()-1 && $next = mysql_fetch_array($next_query)){
@@ -105,7 +105,7 @@ else if($machine!=-1 && $night !=-1){
 	$date = preg_replace("/\s\d\d:\d\d:\d\d/","",$today_row['added']);
 	print "\t<li><h3><a href=\"test.php?machine=$machine&night=$night\">$date</a></h3>\n"; 
 	
-	$previous_query = getNightsIDs($machine,$mysql_link,"2000-01-01 01:01:01","$cur_date");
+	$previous_query = getNightsIDs($machine,"2000-01-01 01:01:01","$cur_date");
 	$x=0;
 	$prev=mysql_fetch_array($previous_query); //eliminates current date
 	while($x<7 && $prev=mysql_fetch_array($previous_query)){
@@ -116,7 +116,7 @@ else if($machine!=-1 && $night !=-1){
 	print "</ul>\n";
 	mysql_free_result($previous_query);
        
-	$next_query = getNightsIDs($machine,$mysql_link);
+	$next_query = getNightsIDs($machine);
 	print "<form method=GET action=\"test.php\">\n";
         print "<input type=hidden name=\"machine\" value=\"$machine\">\n";
 	print "<select name=night>\n";
@@ -146,7 +146,7 @@ elseif($machine != -1 && $night == -1){
 	print "<a href=\"index.php\">Homepage</a><br><br>\n";
 	print "Test dates:<br>\n<ul>\n";
 	$x=0;
-	$machine_nights = getNightsResource($machine, $mysql_link); 
+	$machine_nights = getNightsResource($machine); 
 	while($x<20 && $temp_row=mysql_fetch_array($machine_nights)){
 		$date = preg_replace("/\s\d\d:\d\d:\d\d/","",$temp_row['added']);
 		print "<li><a href=\"test.php?machine=$machine&night={$temp_row['id']}\">$date</a>\n";
@@ -155,7 +155,7 @@ elseif($machine != -1 && $night == -1){
 	print "</ul>\n";
 	mysql_free_result($machine_nights);	
 
-	$next_query = getNightsResource($machine,$mysql_link);
+	$next_query = getNightsResource($machine);
         print "<form method=GET action=\"test.php\">\n";
         print "<input type=hidden name=machine value=\"$machine\">\n";
         print "<select name=night>\n";
@@ -181,7 +181,7 @@ elseif($machine != -1 && $night == -1){
 else{ /*if($machine ==-1 && night ==-1)*/
 
 	print "<a href=\"index.php\">Homepage</a><br><br>\n";
-	$list_o_machines = getRecentMachineResource($mysql_link);
+	$list_o_machines = getRecentMachineResource();
 	print "Test Machines With<br> Recent Submissions:<br>\n<ul>\n";
 	while($temp_row = mysql_fetch_array($list_o_machines)){
 		if(strcmp($temp_row['nickname'],"")==0){
@@ -195,7 +195,7 @@ else{ /*if($machine ==-1 && night ==-1)*/
 	mysql_free_result($list_o_machines);
 
 	print "<a href='testers.php'>All Test Machines:</a><br>\n<ul>\n";
-	$list_o_machines = getMachineResource($mysql_link);
+	$list_o_machines = getMachineResource();
         while($temp_row = mysql_fetch_array($list_o_machines)){
                 if(strcmp($temp_row['nickname'],"")==0){
                         print "<li><a href=\"machine.php?machine={$temp_row['id']}\">{$temp_row['name']}</a>\n";

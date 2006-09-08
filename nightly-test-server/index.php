@@ -38,7 +38,7 @@ print "\t<tr bgcolor=#FFCC99>";
 	print "\t\t<td></td>\n";
 print "\t</tr>";
 
-$result = getRecentTests("24",$mysql_link);
+$result = getRecentTests("24");
 $line=1;
 if(mysql_num_rows($result)==0){
 	print "\t<tr bgcolor='white'>";
@@ -55,7 +55,7 @@ if(mysql_num_rows($result)==0){
 while($row = mysql_fetch_array($result)){
 	$cur_machine_id = $row['machine'];
 	$cur_night_id   = $row['id'];
-	$cur_machine_row = getMachineInfo($cur_machine_id,$mysql_link);
+	$cur_machine_row = getMachineInfo($cur_machine_id);
 	if(strcmp($cur_machine_row['nickname'], "")!=0){$machine_name = $cur_machine_row['nickname'];}
 	else{$machine_name = $cur_machine_row['name'];}
         

@@ -400,7 +400,7 @@ print "\t<tr>\n";
 print "\t\t<td>Date</td>\n";
 foreach ($files_arr as $m){	
   print "\t\t<td>$m</td>\n";
-  $file_data=get_file_history($mysql_link, $machine_id, $m);
+  $file_data=get_file_history($machine_id, $m);
   array_push($all_data, $file_data);
 }
 print "\t</tr>\n";

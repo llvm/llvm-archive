@@ -55,8 +55,8 @@ if(!(include"ProgramResults.php")){
 $mysql_link=mysql_connect("127.0.0.1","llvm","ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$row = getMachineInfo($machine_id,$mysql_link);
-$today_row = getNightInfo($night_id,$mysql_link);
+$row = getMachineInfo($machine_id);
+$today_row = getNightInfo($night_id);
 $cur_date=$today_row['added'];
 
 ?>

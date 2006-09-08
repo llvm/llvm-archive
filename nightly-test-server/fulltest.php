@@ -132,19 +132,19 @@ print "</div><br><br>\n";
  * Printing changes in test suite
  *
  ******************************************************/
-$new_tests=htmlifyTestResults(getNewTests($night_id, $previous_succesful_id, $mysql_link));
+$new_tests=htmlifyTestResults(getNewTests($night_id, $previous_succesful_id));
 if(strcmp($new_tests,"")===0){
   $new_tests="None";
 }
-$removed_tests=htmlifyTestResults(getRemovedTests($night_id, $previous_succesful_id, $mysql_link));
+$removed_tests=htmlifyTestResults(getRemovedTests($night_id, $previous_succesful_id));
 if(strcmp($removed_tests,"")===0){
   $removed_tests="None";
 }
-$newly_passing_tests=htmlifyTestResults(getFixedTests($night_id, $previous_succesful_id, $mysql_link));
+$newly_passing_tests=htmlifyTestResults(getFixedTests($night_id, $previous_succesful_id));
 if(strcmp($newly_passing_tests,"")===0){
   $newly_passing_tests="None";
 }
-$newly_failing_tests=htmlifyTestResults(getBrokenTests($night_id, $previous_succesful_id, $mysql_link));
+$newly_failing_tests=htmlifyTestResults(getBrokenTests($night_id, $previous_succesful_id));
 if(strcmp($newly_failing_tests,"")===0){
   $newly_failing_tests="None";
 }

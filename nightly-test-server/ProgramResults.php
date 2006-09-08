@@ -523,7 +523,7 @@ function getExcludedTests($id, $table, $test_hash){
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as opposed in the night table.
  */
-function getNewTests($cur_id, $prev_id, $mysql_link){
+function getNewTests($cur_id, $prev_id){
   if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
@@ -551,7 +551,7 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as opposed in the night table.
  */
-function getRemovedTests($cur_id, $prev_id, $mysql_link){
+function getRemovedTests($cur_id, $prev_id){
   if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
@@ -631,7 +631,7 @@ function getPassingTests($id, $table, $test_hash){
  * This is somewhat of a hack because from night 684 forward we now store the test 
  * in their own table as opposed in the night table.
  */
-function getFixedTests($cur_id, $prev_id, $mysql_link){
+function getFixedTests($cur_id, $prev_id){
   if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
@@ -659,7 +659,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
  * This is somewhat of a hack because from night 684 forward we now store the test
  * in their own table as oppoesd in the night table.
  */
-function getBrokenTests($cur_id, $prev_id, $mysql_link){
+function getBrokenTests($cur_id, $prev_id){
   if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
     return "";
   }
@@ -704,6 +704,36 @@ function getPreviousWorkingNight($night_id, $mysql_link){
   return $prev_id;
 }
 
+/*
+ * Email report.
+ *
+ */
+function getEmailReport($cur_id, $prev_id) {
+  $added = getNewTests($cur_id, $prev_id);
+  $removed = getRemovedTests($cur_id, $prev_id);
+  $passing = getFixedTests($cur_id, $prev_id);
+  $failing = getBrokenTests($cur_id, $prev_id);
+  
+  $email = "";
+  if (strcmp($passing, "") == 0) {
+    $passing = "None";
+  } 
+  $email .= "\nNew Test Passes:\n$passing\n";
+  if (strcmp($failing, "") == 0) {
+    $failing = "None";
+  } 
+  $email .= "\nNew Test Failures:\n$failing\n";
+  if (strcmp($added, "") == 0) {
+    $added = "None";
+  } 
+  $email .= "\nAdded Tests:\n$added\n";
+  if (strcmp($removed, "") == 0) {
+    $removed = "None";
+  } 
+  $email .= "\nRemoved Tests:\n$removed\n";
+  
+  return $email;
+}
 
 
 /*$programs=array("Benchmarks/CoyoteBench/huffbench","Benchmarks/CoyoteBench/lpbench");

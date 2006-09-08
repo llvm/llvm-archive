@@ -599,7 +599,7 @@ function getTestFailSet($id, $table){
 /*
  * Get list of newly passing tests
  *
- * Returns a list of tests for a given night that were excluded from the
+ * Returns a list of tests for a given night that were included in the
  * hash and now pass.
  */
 function getPassingTests($id, $table, $test_hash){
@@ -609,7 +609,8 @@ function getPassingTests($id, $table, $test_hash){
   while ($row = mysql_fetch_array($program_query)) {
     $test_key = $row['program'];
     if (isset($test_hash[$test_key]) && isTestPass($row['result'])) {
-      $result .= $test_key . "<br>\n";
+      $reasons = getFailReasons($test_hash[$test_key]);
+      $result .= "{$test_key}{$reasons)<br>\n";
     }
   }
   mysql_free_result($program_query);

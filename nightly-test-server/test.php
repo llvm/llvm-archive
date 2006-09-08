@@ -189,22 +189,6 @@ print "</div><br><br>\n";
 
 /*****************************************************
  *
- * Testing email report.
- *
- ******************************************************/
-$email = htmlifyTestResults(getEmailReport($night_id, $previous_succesful_id));
-$disp="";
-$sign="(+)";
-
-print "<font size=\"-1\"><a href=\"javascript://\"onclick=\"toggleLayer('testEmail');\", id=\"testEmail_\">$sign Test Email</a></font>\n";
-print "<div id=\"testEmail\" style=\"display: $disp;\" class=\"hideable\">\n";
-print"<h3><u>Test Email:</u></h3>\n";
-print"$email\n";
-print "</div><br><br>\n";
-
-
-/*****************************************************
- *
  * Printing failures in test suite
  *
  ******************************************************/

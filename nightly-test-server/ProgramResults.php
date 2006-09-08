@@ -610,7 +610,7 @@ function getPassingTests($id, $table, $test_hash){
     $test_key = $row['program'];
     if (isset($test_hash[$test_key]) && isTestPass($row['result'])) {
       $reasons = getFailReasons($test_hash[$test_key]);
-      $result .= "{$test_key}{$reasons)<br>\n";
+      $result .= "{$test_key}{$reasons}<br>\n";
     }
   }
   mysql_free_result($program_query);

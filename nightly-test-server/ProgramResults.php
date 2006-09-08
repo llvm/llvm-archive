@@ -387,6 +387,33 @@ function buildResultsHistory($machine_id, $programs, $measure, $mysql_link, $sta
   }
 }
 
+
+/*
+ * Return reason why a llvm test failed.
+ */
+function getFailReasons($test_result) {
+  $result = "";
+  $phases = split(", ", $test_result);
+  
+  for ($i = 0; $i < count($phases); $i++) {
+    $phase = $phases[$i];
+    if (strpos($phase, "*") !== false) {
+      list($tool, $tool_result) = split(": ", $phase);
+      if (strcmp($result, "") != 0) {
+        $result .= ", ";
+      }
+      $result .= $tool;
+    }
+  }
+  
+  if (strcmp($result, "") != 0) {
+    $result = " [" . $result . "]";
+  }
+  
+  return $result;
+}
+ 
+ 
 /*
  * Get failing tests
  *
@@ -408,21 +435,8 @@ function getFailures($night_id) {
     while($row = mysql_fetch_array($program_query)) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
-        $failing_tools = "";
-        $phases = split(", ", $test_result);
-        
-        for ($i = 0; $i < count($phases); $i++) {
-          $phase = $phases[$i];
-          if (!isTestPass($phase)) {
-            list($tool, $tool_result) = split(": ", $phase);
-            if (strcmp($failing_tools, "") != 0) {
-              $failing_tools .= ", ";
-            }
-            $failing_tools .= $tool;
-          }
-        }
-        
-        $result .= "{$row['program']} [{$failing_tools}]<br>\n";
+        $reasons = getFailReasons($test_result);        
+        $result .= "{$row['program']}{$reasons}<br>\n";
       }
     }
     mysql_free_result($program_query);
@@ -467,7 +481,7 @@ function getTestSet($id, $table){
   $query = "SELECT * FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
-    $test_hash[$row['program']]=1;
+    $test_hash[$row['program']] = $row['result'];
   }
   mysql_free_result($program_query);
   return $test_hash;
@@ -575,7 +589,7 @@ function getTestFailSet($id, $table){
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
     if (!isTestPass($row['result'])) {
-      $test_hash[$row['program']]=1;
+      $test_hash[$row['program']] = $row['result'];
     }
   }
   mysql_free_result($program_query);

@@ -1,24 +1,29 @@
 <?php
 
-$machine_id = $argv[0];
-if(!isset($machine_id) || !is_numeric($machine_id)){
+if ($argc != 3) {
+  print "Not enough arguments\n";
+  die();
+}
+
+$machine_id = $argv[1];
+if(!is_numeric($machine_id)) {
   print "Incorrect machine id\n";
   die();
 }
 
-$night_id = $argv[1];
-if(!isset($night_id) || !is_numeric($night_id)){
+$night_id = $argv[2];
+if(!is_numeric($night_id)) {
   print "Incorrect night id\n";
   die();
 }
 
 
-if(!(include "NightlyTester.php")){
+if(!(include "NightlyTester.php")) {
   print "Error: could not load necessary files!\n";
   die();
 }
 
-if(!(include"ProgramResults.php")){
+if(!(include"ProgramResults.php")) {
   print "Error: could not load necessary files!\n";
   die();
 }

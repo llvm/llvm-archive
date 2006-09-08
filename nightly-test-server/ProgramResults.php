@@ -426,7 +426,7 @@ function getFailures($night_id) {
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
-      $result .= $row['program'] . "<br>\n";
+      $result .= $row['program'] . "\n";
     }
     mysql_free_result($program_query);
 
@@ -436,11 +436,12 @@ function getFailures($night_id) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
         $reasons = getFailReasons($test_result);        
-        $result .= "{$row['program']}{$reasons}<br>\n";
+        $result .= "{$row['program']}{$reasons}\n";
       }
     }
     mysql_free_result($program_query);
   }
+  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -457,17 +458,17 @@ function getUnexpectedFailures($night_id){
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
     $result= $row['unexpfail_tests'];
-    $result=preg_replace("/\n/","<br>\n",$result);
     mysql_free_result($program_query);
   }
   else{
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      $result .= $row['program'] . "<br>\n";
+      $result .= $row['program'] . "\n";
     }
     mysql_free_result($program_query);
   }
+  $result = htmlifyTestResults($result);
   return $result;
 }
 

@@ -839,7 +839,7 @@ $email .= "Buildstatus: $buildstatus\n";
 
 if($buildstatus eq "OK") {
   if ($passing eq "") {
-    $pasing = "None";
+    $passing = "None";
   } 
   $email .= "\nNew Test Passes: $passing\n";
   if ($failing eq "") {

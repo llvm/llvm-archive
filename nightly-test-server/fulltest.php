@@ -132,19 +132,19 @@ print "</div><br><br>\n";
  * Printing changes in test suite
  *
  ******************************************************/
-$new_tests=getNewTests($night_id, $previous_succesful_id, $mysql_link);
+$new_tests=htmlifyTestResults(getNewTests($night_id, $previous_succesful_id, $mysql_link));
 if(strcmp($new_tests,"")===0){
   $new_tests="None";
 }
-$removed_tests=getRemovedTests($night_id, $previous_succesful_id, $mysql_link);
+$removed_tests=htmlifyTestResults(getRemovedTests($night_id, $previous_succesful_id, $mysql_link));
 if(strcmp($removed_tests,"")===0){
   $removed_tests="None";
 }
-$newly_passing_tests=getFixedTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_passing_tests=htmlifyTestResults(getFixedTests($night_id, $previous_succesful_id, $mysql_link));
 if(strcmp($newly_passing_tests,"")===0){
   $newly_passing_tests="None";
 }
-$newly_failing_tests=getBrokenTests($night_id, $previous_succesful_id, $mysql_link);
+$newly_failing_tests=htmlifyTestResults(getBrokenTests($night_id, $previous_succesful_id, $mysql_link));
 if(strcmp($newly_failing_tests,"")===0){
   $newly_failing_tests="None";
 }
@@ -179,7 +179,7 @@ print "</div><br><br>\n";
  * Printing failures in test suite
  *
  ******************************************************/
-$failing_tests=getFailures($night_id);
+$failing_tests=htmlifyTestResults(getFailures($night_id));
 if(strcmp($failing_tests,"")===0){
   $newly_failing_tests="None";
 }
@@ -200,7 +200,7 @@ print "</div><br><br>\n";
 $delta_exppass = $today_row['teststats_exppass']-$yesterday_row['teststats_exppass'];
 $delta_expfail = $today_row['teststats_expfail']-$yesterday_row['teststats_expfail'];
 $delta_unexpfail = $today_row['teststats_unexpfail']-$yesterday_row['teststats_unexpfail'];
-$unexpected_failures = getUnexpectedFailures($night_id);
+$unexpected_failures = htmlifyTestResults(getUnexpectedFailures($night_id));
 
 if($delta_exppass==0 && $delta_expfail==0 && 
    $delta_unexpfail==0 && strcmp($unexpected_failures, "")===0){

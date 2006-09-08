@@ -441,7 +441,6 @@ function getFailures($night_id) {
     }
     mysql_free_result($program_query);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -468,7 +467,6 @@ function getUnexpectedFailures($night_id){
     }
     mysql_free_result($program_query);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -544,7 +542,6 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($prev_id, "program");
     $result .= getExcludedTests($cur_id, "program", $test_hash);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -573,7 +570,6 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($cur_id, "program");
     $result .= getExcludedTests($prev_id, "program", $test_hash);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -654,7 +650,6 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($prev_id, "program");
     $result .= getPassingTests($cur_id, "program", $test_hash);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -683,7 +678,6 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($cur_id, "program");
     $result .= getPassingTests($prev_id, "program", $test_hash);
   }
-  $result = htmlifyTestResults($result);
   return $result;
 }
 

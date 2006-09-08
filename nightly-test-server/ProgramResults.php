@@ -407,7 +407,7 @@ function getFailReasons($test_result) {
   }
   
   if (strcmp($result, "") != 0) {
-    $result = " <i>[" . $result . "]</i>";
+    $result = " <font color=\"grey\">[" . $result . "]</font>";
   }
   
   return $result;

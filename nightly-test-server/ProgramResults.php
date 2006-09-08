@@ -407,7 +407,7 @@ function getFailReasons($test_result) {
   }
   
   if (strcmp($result, "") != 0) {
-    $result = " [" . $result . "]";
+    $result = " <i>[" . $result . "]</i>";
   }
   
   return $result;

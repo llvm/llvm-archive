@@ -191,7 +191,7 @@ print "</div><br><br>\n";
  * Printing failures in test suite
  *
  ******************************************************/
-$failing_tests=htmlifyTestResultsgetFailures($night_id));
+$failing_tests=htmlifyTestResults(getFailures($night_id));
 if(strcmp($failing_tests,"")===0){
   $newly_failing_tests="None";
 }

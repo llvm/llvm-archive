@@ -407,7 +407,7 @@ function getFailReasons($test_result) {
   }
   
   if (strcmp($result, "") != 0) {
-    $result = " <font color=\"grey\">[" . $result . "]</font>";
+    $result = " [" . $result . "]";
   }
   
   return $result;
@@ -472,6 +472,17 @@ function getUnexpectedFailures($night_id){
 }
 
 /*
+ * HTMLify test results
+ *
+ */
+function htmlifyTestResults($result) {
+  $result = preg_replace("/\n/", "<br>\n", $result);
+  $result = preg_replace("/\[/", "<font color=\"grey\">[", $result);
+  $result = preg_replace("/\]/", "]</font>", $result);
+  return $result;
+ }
+
+/*
  * Get set of tests
  *
  * Returns a hash of tests for a given night.
@@ -532,7 +543,7 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($prev_id, "program");
     $result .= getExcludedTests($cur_id, "program", $test_hash);
   }
-  $result = preg_replace("/\n/","<br>\n", $result);
+  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -561,7 +572,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($cur_id, "program");
     $result .= getExcludedTests($prev_id, "program", $test_hash);
   }
-  $result = preg_replace("/\n/","<br>\n", $result);
+  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -642,7 +653,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($prev_id, "program");
     $result .= getPassingTests($cur_id, "program", $test_hash);
   }
-  $result = preg_replace("/\n/","<br>\n", $result);
+  $result = htmlifyTestResults($result);
   return $result;
 }
 
@@ -671,7 +682,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($cur_id, "program");
     $result .= getPassingTests($prev_id, "program", $test_hash);
   }
-  $result = preg_replace("/\n/","<br>\n", $result);
+  $result = htmlifyTestResults($result);
   return $result;
 }
 

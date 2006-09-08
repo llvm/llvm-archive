@@ -500,7 +500,7 @@ function getExcludedTests($id, $table, $test_hash){
   while ($row = mysql_fetch_array($program_query)) {
     $test_key = $row['program'];
     if (!isset($test_hash[$test_key])) {
-      $result .= $test_key . "<br>\n";
+      $result .= $test_key . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -524,7 +524,6 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
     $result = $row['new_tests'];
-    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestSet($prev_id, "tests");
@@ -533,6 +532,7 @@ function getNewTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($prev_id, "program");
     $result .= getExcludedTests($cur_id, "program", $test_hash);
   }
+  $result = preg_replace("/\n/","<br>\n", $result);
   return $result;
 }
 
@@ -553,7 +553,6 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
     $result = $row['removed_tests'];
-    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestSet($cur_id, "tests");
@@ -562,6 +561,7 @@ function getRemovedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestSet($cur_id, "program");
     $result .= getExcludedTests($prev_id, "program", $test_hash);
   }
+  $result = preg_replace("/\n/","<br>\n", $result);
   return $result;
 }
 
@@ -610,7 +610,7 @@ function getPassingTests($id, $table, $test_hash){
     $test_key = $row['program'];
     if (isset($test_hash[$test_key]) && isTestPass($row['result'])) {
       $reasons = getFailReasons($test_hash[$test_key]);
-      $result .= "{$test_key}{$reasons}<br>\n";
+      $result .= "{$test_key}{$reasons}\n";
     }
   }
   mysql_free_result($program_query);
@@ -634,7 +634,6 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
     $result = $row['newly_passing_tests'];
-    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestFailSet($prev_id, "tests");
@@ -643,6 +642,7 @@ function getFixedTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($prev_id, "program");
     $result .= getPassingTests($cur_id, "program", $test_hash);
   }
+  $result = preg_replace("/\n/","<br>\n", $result);
   return $result;
 }
 
@@ -663,7 +663,6 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
     $result = $row['newly_failing_tests'];
-    $result = preg_replace("/\n/","<br>\n", $result);
     mysql_free_result($program_query);
   } else {
     $test_hash = getTestFailSet($cur_id, "tests");
@@ -672,6 +671,7 @@ function getBrokenTests($cur_id, $prev_id, $mysql_link){
     $test_hash = getTestFailSet($cur_id, "program");
     $result .= getPassingTests($prev_id, "program", $test_hash);
   }
+  $result = preg_replace("/\n/","<br>\n", $result);
   return $result;
 }
 

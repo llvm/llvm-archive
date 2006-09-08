@@ -218,7 +218,7 @@ $unexpected_failures = htmlifyTestResults(getUnexpectedFailures($night_id));
 if($delta_exppass==0 && $delta_expfail==0 && 
    $delta_unexpfail==0 && strcmp($unexpected_failures,"")===0){
   $disp="none";
-        $sign="(-)";
+  $sign="(-)";
 }
 else{
   $disp="";

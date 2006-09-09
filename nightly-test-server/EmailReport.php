@@ -41,6 +41,8 @@ $yesterday_row = mysql_fetch_array($today_query);
 mysql_free_result($today_query);
 $previous_succesful_id = $yesterday_row['id'];
 
+$new_schema_id = 684;
+
 $email = getEmailReport($night_id, $previous_succesful_id);
 
 print $email;

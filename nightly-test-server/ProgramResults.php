@@ -29,8 +29,6 @@ $medium_decrease="#CCFFCC";
 $large_decrease="#90FF90";
 $crazy_decrease="#20FF20";
 
-$new_schema_id = 684;
-
 $category_match=array("GCCAS","Bytecode","LLC\<br\>compile",
           "LLC-BETA\<br\>compile","JIT\<br\>codegen","GCC",
           "CBE","LLC","LLC-BETA","JIT","GCC\/\<br\>CBE",
@@ -422,7 +420,7 @@ function getFailReasons($test_result) {
  */
 function getFailures($night_id) {
   $result="";
-  if ($night_id >= $new_schema_id) {
+  if ($night_id >= 684) {
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
@@ -452,7 +450,7 @@ function getFailures($night_id) {
  */
 function getUnexpectedFailures($night_id){
   $result="";
-  if($night_id<$new_schema_id){
+  if($night_id<684){
     $query = "SELECT unexpfail_tests FROM night WHERE id = $night_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
@@ -529,7 +527,7 @@ function getNewTests($cur_id, $prev_id){
   }
   
   $result="";
-  if($cur_id<$new_schema_id){
+  if($cur_id<684){
     $query = "SELECT new_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
@@ -557,7 +555,7 @@ function getRemovedTests($cur_id, $prev_id){
   }
   
   $result="";
-  if($cur_id<$new_schema_id){
+  if($cur_id<684){
     $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
@@ -637,7 +635,7 @@ function getFixedTests($cur_id, $prev_id){
   }
   
   $result="";
-  if($cur_id<$new_schema_id){
+  if($cur_id<684){
     $query = "SELECT newly_passing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);
@@ -665,7 +663,7 @@ function getBrokenTests($cur_id, $prev_id){
   }
 
   $result="";
-  if($cur_id<$new_schema_id){
+  if($cur_id<684){
     $query = "SELECT newly_failing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
     $row = mysql_fetch_array($program_query);

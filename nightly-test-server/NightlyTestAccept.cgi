@@ -792,6 +792,39 @@ while(my @row=$c->fetchrow_array){
     $program_hash{$key}=1;
 }
 
+my ($num_removed, $num_added, $num_new_passing, $num_new_failing)=0;
+my ($removed, $added, $passing, $failing) = "";
+my $j = $dbh->prepare("SELECT program, measure, result FROM tests WHERE ".
+                      "night=$prev_night");
+$j->execute;
+while(my @row=$j->fetchrow_array){
+    my $key = $row[1]." - ".$row[0];
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and
+       $row[2] eq "PASS"){
+	$failing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
+	$num_new_failing++;
+    }
+    if($result_hash{$key} and $result_hash{$key} ne $row[2] and 
+       $result_hash{$key} eq "PASS" ){
+        $passing .= "changed: from $row[2] to $result_hash{$key} - $key\n";
+        $num_new_passing++;
+    }
+
+    if(!$program_hash{$key}){
+        $removed .= "REMOVED: $key\n";
+        $num_removed++;
+    }
+    else{
+        $program_hash{$key}++;
+    }
+}
+foreach $x(keys(%program_hash)){
+    if($program_hash{$x}==1){
+        $added .= "ADDED: $x\n";
+        $num_added++;
+    }
+}
+
 ################################################################################
 #
 # Sending email to nightly test email archive
@@ -804,9 +837,23 @@ $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
 
-
 if($buildstatus eq "OK") {
-  $email .= `php -q Emailreport.php $machine_id $night_id`;
+  if ($passing eq "") {
+    $passing = "None";
+  } 
+  $email .= "\nNew Test Passes: $passing\n";
+  if ($failing eq "") {
+    $failing = "None";
+  } 
+  $email .= "\nNew Test Failures: $failing\n";
+  if ($added eq "") {
+    $added = "None";
+  } 
+  $email .= "\nAdded Tests: $added\n";
+  if ($removed eq "") {
+    $removed= "None";
+  } 
+  $email .= "\nRemoved Tests: $removed\n";
 
   $email .= "\nSignificant changes in test results:\n";
   foreach my $meas(keys(%output_big_changes)){

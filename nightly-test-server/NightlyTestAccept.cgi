@@ -806,7 +806,7 @@ $email .= "Buildstatus: $buildstatus\n";
 
 
 if($buildstatus eq "OK") {
-  $email .= `php Emailreport.php $machine_id $night_id`;
+  $email .= `php -q Emailreport.php $machine_id $night_id`;
 
   $email .= "\nSignificant changes in test results:\n";
   foreach my $meas(keys(%output_big_changes)){

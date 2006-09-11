@@ -411,13 +411,25 @@ function getFailReasons($test_result) {
   
   return $result;
 }
+
+
+/*
+ * Trim test path to exclude redundant info.
+ */
+function trimTestPath($program) {
+  list($head, $tail) = split("/llvm/test/", $program);
+  if (isset($tail)) {
+    $program = $tail;
+  }
+  return $program;
+}
  
  
 /*
  * Get failing tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getFailures($night_id) {
   $result="";
@@ -426,7 +438,7 @@ function getFailures($night_id) {
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $program = rtrim($row['program'], ": ");
-      $result .= $program . "\n";
+      $result .= trimTestPath($program) . "\n";
     }
     mysql_free_result($program_query);
 
@@ -449,7 +461,7 @@ function getFailures($night_id) {
  * Get Unexpected failing tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test 
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getUnexpectedFailures($night_id){
   $result="";
@@ -465,7 +477,7 @@ function getUnexpectedFailures($night_id){
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
       $program = rtrim($row['program'], ": ");
-      $result .= $program . "\n";
+      $result .= trimTestPath($program) . "\n";
     }
     mysql_free_result($program_query);
   }
@@ -513,7 +525,7 @@ function getExcludedTests($id, $table, $test_hash){
   while ($row = mysql_fetch_array($program_query)) {
     $program = rtrim($row['program'], ": ");
     if (!isset($test_hash[$program])) {
-      $result .= $program . "\n";
+      $result .= trimTestPath($program) . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -527,7 +539,7 @@ function getExcludedTests($id, $table, $test_hash){
  * in their own table as opposed in the night table.
  */
 function getNewTests($cur_id, $prev_id){
-  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
+  if (strlen($prev_id) === 0 || strlen($cur_id) === 0) {
     return "";
   }
   
@@ -555,7 +567,7 @@ function getNewTests($cur_id, $prev_id){
  * in their own table as opposed in the night table.
  */
 function getRemovedTests($cur_id, $prev_id){
-  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
+  if (strlen($prev_id) === 0 || strlen($cur_id) === 0) {
     return "";
   }
   
@@ -622,7 +634,7 @@ function getPassingTests($id, $table, $test_hash){
     $ispassing = isTestPass($row['result']);
     if ($wasfailing && $ispassing) {
       $reasons = getFailReasons($test_hash[$program]);
-      $result .= $program . $reasons . "\n";
+      $result .= trimTestPath($program) . $reasons . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -636,7 +648,7 @@ function getPassingTests($id, $table, $test_hash){
  * in their own table as opposed in the night table.
  */
 function getFixedTests($cur_id, $prev_id){
-  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
+  if (strlen($prev_id) === 0 || strlen($cur_id) === 0) {
     return "";
   }
   
@@ -661,10 +673,10 @@ function getFixedTests($cur_id, $prev_id){
  * Get Broken Tests
  *
  * This is somewhat of a hack because from night 684 forward we now store the test
- * in their own table as oppoesd in the night table.
+ * in their own table as opposed in the night table.
  */
 function getBrokenTests($cur_id, $prev_id){
-  if (strcmp($prev_id, "") === 0 || strcmp($cur_id, "") === 0) {
+  if (strlen($prev_id) === 0 || strlen($cur_id) === 0) {
     return "";
   }
 

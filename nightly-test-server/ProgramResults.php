@@ -584,9 +584,7 @@ function getRemovedTests($cur_id, $prev_id){
  * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return strcmp($test_result, "PASS") == 0 ||
-         strcmp($test_result, "XFAIL") == 0 ||
-         strpos($test_result, "*") === false;
+  return !(strcmp($test_result, "FAIL") == 0 || strpos($test_result, "*") !== false);
 }
 
 /*
@@ -622,12 +620,6 @@ function getPassingTests($id, $table, $test_hash){
     $program = rtrim($row['program'], ": ");
     $wasfailing = isset($test_hash[$program]);
     $ispassing = isTestPass($row['result']);
-    
-    if (strcmp($program, "/Volumes/Muggles/LLVM/nightlytest/build/llvm/test/Regression/Transforms/TailDup/MergeTest.ll") == 0) {
-      $result = "MergeTest.ll (" . $test_hash[$program] . ") (" . $row['result'] . ") " . 
-                ($wasfailing ? "was failing " : "was passing") . ($ispassing ? "is passing\n" : "is failing\n");
-    }
-    
     if ($wasfailing && $ispassing) {
       $reasons = getFailReasons($test_hash[$program]);
       $result .= $program . $reasons . "\n";

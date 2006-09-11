@@ -426,7 +426,7 @@ function getFailures($night_id) {
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $program = rtrim($row['program'], ": ");
-      $result .= $program . "[" . $row['result'] . "]" . "\n";
+      $result .= $program . "\n";
     }
     mysql_free_result($program_query);
 

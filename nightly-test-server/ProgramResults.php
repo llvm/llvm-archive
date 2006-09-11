@@ -422,8 +422,7 @@ function getFailReasons($test_result) {
 function getFailures($night_id) {
   $result="";
   if ($night_id >= 684) {
-//    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
-    $query = "SELECT * FROM tests WHERE night=$night_id ORDER BY program ASC";
+    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $program = rtrim($row['program'], ": ");
@@ -621,7 +620,15 @@ function getPassingTests($id, $table, $test_hash){
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
     $program = rtrim($row['program'], ": ");
-    if (isset($test_hash[$program]) && isTestPass($row['result'])) {
+    $wasfailing = isset($test_hash[$program]);
+    $ispassing = isTestPass($row['result']);
+    
+    if (strcmp($program, "/Volumes/Muggles/LLVM/nightlytest/build/llvm/test/Regression/Transforms/TailDup/MergeTest.ll") == 0) {
+      $result = "MergeTest.ll " . $test_hash[$program] . " " . $row['result'] . " " . 
+                ($wasfailing ? "was failing " : " ") . ($ispassing ? "is passing\n" : "\n");
+    }
+    
+    if ($wasfailing && $ispassing) {
       $reasons = getFailReasons($test_hash[$program]);
       $result .= $program . $reasons . "\n";
     }

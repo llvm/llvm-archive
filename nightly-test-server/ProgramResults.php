@@ -422,7 +422,8 @@ function getFailReasons($test_result) {
 function getFailures($night_id) {
   $result="";
   if ($night_id >= 684) {
-    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
+//    $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
+    $query = "SELECT * FROM tests WHERE night=$night_id ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $program = rtrim($row['program'], ": ");

@@ -136,21 +136,22 @@ function GetDayResults($night_id, $array_of_measures ){
   #print "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC<br>\n";
   $program_query = mysql_query("SELECT * FROM program WHERE night=$night_id ORDER BY program ASC") or die (mysql_error());
   while($row = mysql_fetch_array($program_query)){
-    $result["{$row['program']}"]=array();
-    array_push($result["{$row['program']}"], "{$row['type']}");
+    $program = rtrim($row['program'], ":");
+    $result[$program] = array();
+    array_push($result[$program], "{$row['type']}");
     $index=0;
     $data = $row['result'];
     $data = str_replace("<br>", " ", $data);
     foreach ($array_of_measures as $x){
       $value=array();
       $reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?],)/";
-      #print "{$row['program']} => running preg_match($reg_exp, $data, $value)<br>\n";
+      #print "{$program} => running preg_match($reg_exp, $data, $value)<br>\n";
       preg_match($reg_exp, $data, $value);
       if(isset($value[1])){
-        array_push($result["{$row['program']}"], $value[1]);
+        array_push($result[$program], $value[1]);
       }
       else{
-        array_push($result["{$row['program']}"], "-");  
+        array_push($result[$program], "-");  
       }
       $index++;
     }//end foreach
@@ -424,7 +425,8 @@ function getFailures($night_id) {
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
-      $result .= $row['program'] . "\n";
+      $program = rtrim($row['program'], ":");
+      $result .= $program . "\n";
     }
     mysql_free_result($program_query);
 
@@ -433,8 +435,9 @@ function getFailures($night_id) {
     while($row = mysql_fetch_array($program_query)) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
+        $program = rtrim($row['program'], ":");
         $reasons = getFailReasons($test_result);        
-        $result .= "{$row['program']}{$reasons}\n";
+        $result .= $program . $reasons . "\n";
       }
     }
     mysql_free_result($program_query);
@@ -461,7 +464,8 @@ function getUnexpectedFailures($night_id){
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)){
-      $result .= $row['program'] . "\n";
+      $program = rtrim($row['program'], ":");
+      $result .= $program . "\n";
     }
     mysql_free_result($program_query);
   }
@@ -489,7 +493,8 @@ function getTestSet($id, $table){
   $query = "SELECT * FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
-    $test_hash[$row['program']] = $row['result'];
+    $program = rtrim($row['program'], ":");
+    $test_hash[$program] = $row['result'];
   }
   mysql_free_result($program_query);
   return $test_hash;
@@ -506,9 +511,9 @@ function getExcludedTests($id, $table, $test_hash){
   $query = "SELECT * FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
-    $test_key = $row['program'];
-    if (!isset($test_hash[$test_key])) {
-      $result .= $test_key . "\n";
+    $program = rtrim($row['program'], ":");
+    if (!isset($test_hash[$program])) {
+      $result .= $program . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -595,7 +600,8 @@ function getTestFailSet($id, $table){
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
     if (!isTestPass($row['result'])) {
-      $test_hash[$row['program']] = $row['result'];
+      $program = rtrim($row['program'], ":");
+      $test_hash[$program] = $row['result'];
     }
   }
   mysql_free_result($program_query);
@@ -613,10 +619,10 @@ function getPassingTests($id, $table, $test_hash){
   $query = "SELECT * FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_array($program_query)) {
-    $test_key = $row['program'];
-    if (isset($test_hash[$test_key]) && isTestPass($row['result'])) {
-      $reasons = getFailReasons($test_hash[$test_key]);
-      $result .= "{$test_key}{$reasons}\n";
+    $program = rtrim($row['program'], ":");
+    if (isset($test_hash[$program]) && isTestPass($row['result'])) {
+      $reasons = getFailReasons($test_hash[$program]);
+      $result .= $program . $reasons . "\n";
     }
   }
   mysql_free_result($program_query);

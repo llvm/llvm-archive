@@ -419,7 +419,7 @@ function getFailReasons($test_result) {
 function trimTestPath($program) {
   list($head, $tail) = split("/llvm/test/", $program);
   if (isset($tail)) {
-    $program = $tail;
+    $program = "test/" . $tail;
   }
   return $program;
 }

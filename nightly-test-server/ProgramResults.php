@@ -624,8 +624,8 @@ function getPassingTests($id, $table, $test_hash){
     $ispassing = isTestPass($row['result']);
     
     if (strcmp($program, "/Volumes/Muggles/LLVM/nightlytest/build/llvm/test/Regression/Transforms/TailDup/MergeTest.ll") == 0) {
-      $result = "MergeTest.ll " . $test_hash[$program] . " " . $row['result'] . " " . 
-                ($wasfailing ? "was failing " : " ") . ($ispassing ? "is passing\n" : "\n");
+      $result = "MergeTest.ll (" . $test_hash[$program] . ") (" . $row['result'] . ") " . 
+                ($wasfailing ? "was failing " : "was passing") . ($ispassing ? "is passing\n" : "is failing\n");
     }
     
     if ($wasfailing && $ispassing) {

@@ -396,12 +396,7 @@ function getFailReasons($test_result) {
   
   for ($i = 0; $i < count($phases); $i++) {
     $phase = $phases[$i];
-    if (strcmp($phase, "PASS") == 0 ||
-        strcmp($phase, "FAIL") == 0 ||
-        strcmp($phase, "XFAIL") == 0) {
-      $result = $phase;
-      break;
-    } else if (strpos($phase, "*") !== false) {
+    if (strpos($phase, "*") !== false) {
       list($tool, $tool_result) = split(": ", $phase);
       if (strcmp($result, "") != 0) {
         $result .= ", ";
@@ -431,7 +426,7 @@ function getFailures($night_id) {
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_array($program_query)) {
       $program = rtrim($row['program'], ": ");
-      $result .= $program . "\n";
+      $result .= $program . "[" . $row['result'] . "]" . "\n";
     }
     mysql_free_result($program_query);
 

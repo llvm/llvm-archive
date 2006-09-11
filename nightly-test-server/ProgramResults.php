@@ -396,7 +396,12 @@ function getFailReasons($test_result) {
   
   for ($i = 0; $i < count($phases); $i++) {
     $phase = $phases[$i];
-    if (strpos($phase, "*") !== false) {
+    if (strcmp($phase, "PASS") == 0 ||
+        strcmp($phase, "FAIL") == 0 ||
+        strcmp($phase, "XFAIL") == 0) {
+      $result = $phase;
+      break;
+    } else if (strpos($phase, "*") !== false) {
       list($tool, $tool_result) = split(": ", $phase);
       if (strcmp($result, "") != 0) {
         $result .= ", ";

@@ -182,7 +182,7 @@ if($URL_ERROR==1){
 
 <html>
 <head>
-<title>LLVM Nightly Test Results Custum Graphs For <?php print $measure; ?></title>
+<title>LLVM Nightly Test Results Custom Graphs For <?php print $measure; ?></title>
 <script language="javascript">
 function toggleLayer(whichLayer)
 {

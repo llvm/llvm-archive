@@ -143,6 +143,8 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
   $machine_query = mysql_query($query) or die(mysql_error());
   $row = mysql_fetch_array($machine_query) or die(mysql_error());
   mysql_free_result($machine_query);
+  
+  print "DoesMachineExist query done\n";
     
   if($row &&
      StringEqual($row['uname'], $uname) &&
@@ -150,8 +152,10 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
      StringEqual($row['os'], $os) &&
      StringEqual($row['nickname'], $nickname) &&
      StringEqual($row['gcc'], $gcc_version)) {
+  print "DoesMachineExist found\n";
     return true;
   }
+  print "DoesMachineExist not found\n";
 
   return false;
 }

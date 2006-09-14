@@ -15,8 +15,13 @@
  *******************************************************************************/
 print "content-type: text/text\r\n\r\n";
 
-$print_env = 0;
 $print_debug = 1;
+$print_env = 0;
+
+
+if ($print_debug) {
+  print "Debug Printing On\n";
+}
 
 if ($print_env) {
   foreach ($_ENV as $key => $value) {
@@ -65,6 +70,10 @@ if(!(include"ProgramResults.php")){
   die();
 }
 
+if ($print_debug) {
+  print "Support Included\n";
+}
+
 /*******************************************************************************
  *
  * Important variables
@@ -81,6 +90,10 @@ $password = "ll2002vm";
  *******************************************************************************/
 $mysql_link = mysql_connect("127.0.0.1", $loginname, $password) or die("Error: could not connect to database!");
 mysql_select_db($database);
+
+if ($print_debug) {
+  print "Database connected\n";
+}
 
 /*******************************************************************************
  *
@@ -451,6 +464,10 @@ function ProcessProgramLogs($tests) {
  * Setting up variables
  *
  *******************************************************************************/
+if ($print_debug) {
+  print "Reading _POST Variables\n";
+}
+
 $spliton ="\n";
 
 $machine_data = $_POST['machine_data'];
@@ -547,6 +564,10 @@ $removed_tests = $_POST['removed_tests'];
 $gcc_version = $_POST['gcc_version'];            
 $warnings = $_POST['warnings'];            
 $lines_of_code = $_POST['lines_of_code'];
+
+if ($print_debug) {
+  print "Finished Reading _POST Variables\n";
+}
 
 /*******************************************************************************
  *

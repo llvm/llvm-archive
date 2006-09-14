@@ -140,8 +140,11 @@ function WriteFile($filename, $contents) {
 function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
 
+  print "Before Query\n";
   $machine_query = mysql_query($query) or die(mysql_error());
+  print "Before Fetch\n";
   $row = mysql_fetch_array($machine_query) or die(mysql_error());
+  print "Before Free\n";
   mysql_free_result($machine_query);
   
   print "DoesMachineExist query done\n";

@@ -596,9 +596,9 @@ $multisource_processed = ProcessProgramLogs($MULTISOURCE_TESTS);
 $external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
 
 if ($print_debug) {
-  print "singlesource_processed#: ${count(singlesource_processed)}\n";
-  print "multisource_processed#: ${count(multisource_processed)}\n";
-  print "external_processed#: ${count(external_processed)}\n";
+  print "singlesource_processed#: ${count($singlesource_processed)}\n";
+  print "multisource_processed#: ${count($multisource_processed)}\n";
+  print "external_processed#: ${count($external_processed)}\n";
 }
 
 /*******************************************************************************

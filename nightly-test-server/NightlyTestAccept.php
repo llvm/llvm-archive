@@ -13,10 +13,10 @@
  * Start response early for debugging purposes
  *
  *******************************************************************************/
-print "content-type: text/text\r\n\r\n";
+print "content-type: text/text\n\n";
 
 $print_debug = 1;
-$print_env = 0;
+$print_env = 1;
 
 
 if ($print_debug) {
@@ -25,23 +25,23 @@ if ($print_debug) {
 
 if ($print_env) {
   foreach ($_ENV as $key => $value) {
-  print "_ENV $key => $value<br>\n";
+    print "_ENV $key => $value<br>\n";
   }
   
   foreach ($_SERVER as $key => $value) {
-  print "_SERVER $key => $value<br>\n";
+    print "_SERVER $key => $value<br>\n";
   }
   
   foreach ($_GET as $key => $value) {
-  print "_GET $key => $value<br>\n";
+    print "_GET $key => $value<br>\n";
   }
   
   foreach ($_POST as $key => $value) {
-  print "_POST $key => $value<br>\n";
+    print "_POST $key => $value<br>\n";
   }
   
   foreach ($_COOKIE as $key => $value) {
-  print "_COOKIE $key => $value<br>\n";
+    print "_COOKIE $key => $value<br>\n";
   }
   
   foreach ($_FILES as $key => $value) {
@@ -50,7 +50,7 @@ if ($print_env) {
   
   // Same as _POST
   foreach ($_REQUEST as $key => $value) {
-  print "_REQUEST $key => $value<br>\n";
+    print "_REQUEST $key => $value<br>\n";
   }
 }
 

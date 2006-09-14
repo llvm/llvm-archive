@@ -15,7 +15,7 @@
  *******************************************************************************/
 print "content-type: text/text\r\n\r\n";
 
-$print_env = 1;
+$print_env = 0;
 
 if ($print_env) {
   foreach ($_ENV as $key => $value) {
@@ -42,6 +42,7 @@ if ($print_env) {
   print "_FILES $key => $value<br>\n";
   }
   
+  // Same as _POST
   foreach ($_REQUEST as $key => $value) {
   print "_REQUEST $key => $value<br>\n";
   }
@@ -546,6 +547,8 @@ $gcc_version = $_POST['gcc_version'];
 $warnings = $_POST['warnings'];            
 $lines_of_code = $_POST['lines_of_code'];
 
+print "HERE I AM\n";
+
 /*******************************************************************************
  *
  * Extracting the machine information
@@ -667,8 +670,7 @@ foreach ($DEJAGNUTESTS_RESULTS as $info) {
  *******************************************************************************/
 UpdateCodeInfo($db_date, $loc, $filesincvs, $dirsincvs);
 
-// print "received ${_POST['CONTENT_LENGTH']} bytes\n";
-print "received 0 bytes\n";
+print "received ${_SERVER['CONTENT_LENGTH']} bytes\n";
          
 $nights = GetMachineNights($machine_id);
 $length = count($nights);

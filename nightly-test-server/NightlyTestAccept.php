@@ -15,7 +15,7 @@
  *******************************************************************************/
 print "content-type: text/text\n\n";
 
-$print_debug = 0;
+$print_debug = 1;
 $print_env = 0;
 
 

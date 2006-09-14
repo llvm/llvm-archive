@@ -300,11 +300,8 @@ function CreateNight($machine_id,
   mysql_free_result($insert_query);
   
   $query = "SELECT id FROM night WHERE machine=$machine_id AND added=\"$added\"";
-  print "select query: $query\n";
   $machine_query = mysql_query($query) or die(mysql_error());
-  print "select query worked\n";
   $row = mysql_fetch_array($machine_query);
-  print "select query result: $row\n";
   mysql_free_result($machine_query);
   
   if($row) {
@@ -791,6 +788,10 @@ if (isset($prev_night)) {
 }
 mysql_free_result($night_query);
 
+if ($print_debug) {
+  print "prev_night: $prev_night\n";
+}
+
 $query = "SELECT * FROM program WHERE night=$night_id";
 $program_query = mysql_query($query) or die(mysql_error());
 
@@ -802,6 +803,10 @@ while ($row = mysql_fetch_array($program_query)) {
 }
 mysql_free_result($program_query);
 
+if ($print_debug) {
+  print "Gathered all tonight\'s programs\n";
+}
+
 $query = "SELECT * FROM program WHERE night=$prev_night";
 $prog_hash_old = array();
 while ($row = mysql_fetch_array($program_query)) {
@@ -810,6 +815,10 @@ while ($row = mysql_fetch_array($program_query)) {
   $prog_hash_old[$program] = $result;
 }
 mysql_free_result($program_query);
+
+if ($print_debug) {
+  print "Gathered all previous night\'s programs\n";
+}
 
 $output_big_changes = array();
 foreach ($prog_hash_new as $prog) {
@@ -854,6 +863,10 @@ foreach ($prog_hash_new as $prog) {
   }
 }
 
+if ($print_debug) {
+  print "Determined measures\n";
+}
+
 /*******************************************************************************
  *
  * Determining changes in new tests and old tests
@@ -865,6 +878,9 @@ $added = getNewTests($night_id, $prev_night);
 $passing = getFixedTests($night_id, $prev_night);
 $failing = getBrokenTests($night_id, $prev_night);
 
+if ($print_debug) {
+  print "Determined changes in new tests and old tests\n";
+}
 
 /*******************************************************************************
  *

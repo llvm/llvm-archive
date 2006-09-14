@@ -89,7 +89,7 @@ $password = "ll2002vm";
  *
  *******************************************************************************/
 $mysql_link = mysql_connect("127.0.0.1", $loginname, $password) or die("Error: could not connect to database!");
-mysql_select_db($database);
+mysql_select_db($database) or die("Error: could not find \"$database\" database!");
 
 if ($print_debug) {
   print "Database connected\n";
@@ -124,13 +124,17 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
 print "query: $query\n";
 
 $machine_query = mysql_query($query);
-if (!$machine_query) {
+if ($machine_query) {
+  print "machine query okay\n";
+} else {
   $error = mysql_error();
   print "mysql_error: $error\n";
   die;
 }
 $row = mysql_fetch_array($machine_query) or die(mysql_error());
-if (!$row) {
+if ($row) {
+  print "row read okay\n";
+} else {
   $error = mysql_error();
   print "mysql_error: $error\n";
   die;

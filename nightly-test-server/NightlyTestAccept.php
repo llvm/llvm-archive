@@ -808,6 +808,8 @@ if ($print_debug) {
 }
 
 $query = "SELECT * FROM program WHERE night=$prev_night";
+$program_query = mysql_query($query) or die(mysql_error());
+
 $prog_hash_old = array();
 while ($row = mysql_fetch_assoc($program_query)) {
   $program = $row['program'];

@@ -822,20 +822,6 @@ if ($print_debug) {
   print "Gathered all previous night\'s programs\n";
 }
 
-print "NEW HASH ITEMS\n";
-foreach ($prog_hash_new as $key => $value) {
-  print "$key => $value\n";
-}
-print "\n";
-
-print "OLD HASH ITEMS\n";
-foreach ($prog_hash_old as $key => $value) {
-  print "$key => $value\n";
-}
-print "\n";
-
-die;
-
 $output_big_changes = array();
 foreach ($prog_hash_new as $prog) {
   $prog_new = $prog_hash_new[$prog];
@@ -873,6 +859,7 @@ foreach ($prog_hash_new as $prog) {
       }
       
       $rounded_perc = sprintf("%1.2f", $perc);
+print "$prog: $measure: $rounded_perc\% ($value_old => $value_new)\n";
       array_push($changes, "$prog: $rounded_perc\% ($value_old => $value_new)\n");
       $output_big_changes[$measure] = $changes;
     }
@@ -882,6 +869,8 @@ foreach ($prog_hash_new as $prog) {
 if ($print_debug) {
   print "Determined measures\n";
 }
+
+die;
 
 /*******************************************************************************
  *

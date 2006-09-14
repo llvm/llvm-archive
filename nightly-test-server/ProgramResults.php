@@ -134,7 +134,7 @@ function GetDayResults($night_id, $array_of_measures ){
   $result=array();
   #print "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC<br>\n";
   $program_query = mysql_query("SELECT * FROM program WHERE night=$night_id ORDER BY program ASC") or die (mysql_error());
-  while($row = mysql_fetch_array($program_query)){
+  while($row = mysql_fetch_assoc($program_query)){
     $program = rtrim($row['program'], ": ");
     $result[$program] = array();
     array_push($result[$program], "{$row['type']}");
@@ -343,7 +343,7 @@ function buildResultsHistory($machine_id, $programs, $measure , $start="2000-01-
   $night_table_query = mysql_query($night_table_statement ) or die(mysql_error());
   $night_arr=array();
   $night_query="(";
-  while($row = mysql_fetch_array($night_table_query)){
+  while($row = mysql_fetch_assoc($night_table_query)){
           $night_arr["{$row['id']}"]=$row['added'];
     $results_arr["{$row['added']}"]=array();
     preg_match("/(\d\d\d\d)\-(\d\d)\-(\d\d)\s(\d\d)\:(\d\d)\:(\d\d)/", "{$row['added']}", $pjs);
@@ -361,7 +361,7 @@ function buildResultsHistory($machine_id, $programs, $measure , $start="2000-01-
     $program_table_statement="SELECT * FROM program WHERE program=\"$prog\" ".
     "and $night_query order by night asc";
     $night_table_query=mysql_query($program_table_statement) or die(mysql_error());
-    while($row=mysql_fetch_array($night_table_query)){
+    while($row=mysql_fetch_assoc($night_table_query)){
       $row['result'] = str_replace("<br>", " ", "{$row['result']}");
       $night_id=$row['night'];
       $data="-";
@@ -435,7 +435,7 @@ function getFailures($night_id) {
   if ($night_id >= 684) {
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)) {
+    while($row = mysql_fetch_assoc($program_query)) {
       $program = rtrim($row['program'], ": ");
       $result .= trimTestPath($program) . "\n";
     }
@@ -443,7 +443,7 @@ function getFailures($night_id) {
 
     $query = "SELECT * FROM program WHERE night=$night_id ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)) {
+    while($row = mysql_fetch_assoc($program_query)) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
         $program = rtrim($row['program'], ": ");
@@ -467,14 +467,14 @@ function getUnexpectedFailures($night_id){
   if($night_id<684){
     $query = "SELECT unexpfail_tests FROM night WHERE id = $night_id";
     $program_query = mysql_query($query) or die (mysql_error());
-    $row = mysql_fetch_array($program_query);
+    $row = mysql_fetch_assoc($program_query);
     $result= $row['unexpfail_tests'];
     mysql_free_result($program_query);
   }
   else{
     $query = "SELECT * FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
-    while($row = mysql_fetch_array($program_query)){
+    while($row = mysql_fetch_assoc($program_query)){
       $program = rtrim($row['program'], ": ");
       $result .= trimTestPath($program) . "\n";
     }
@@ -503,7 +503,7 @@ function getTestSet($id, $table){
   $test_hash = array();
   $query = "SELECT * FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
-  while ($row = mysql_fetch_array($program_query)) {
+  while ($row = mysql_fetch_assoc($program_query)) {
     $program = rtrim($row['program'], ": ");
     $test_hash[$program] = $row['result'];
   }
@@ -521,7 +521,7 @@ function getExcludedTests($id, $table, $test_hash){
   $result = "";
   $query = "SELECT * FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
-  while ($row = mysql_fetch_array($program_query)) {
+  while ($row = mysql_fetch_assoc($program_query)) {
     $program = rtrim($row['program'], ": ");
     if (!isset($test_hash[$program])) {
       $result .= trimTestPath($program) . "\n";
@@ -546,7 +546,7 @@ function getNewTests($cur_id, $prev_id){
   if($cur_id<684){
     $query = "SELECT new_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
-    $row = mysql_fetch_array($program_query);
+    $row = mysql_fetch_assoc($program_query);
     $result = $row['new_tests'];
     mysql_free_result($program_query);
   } else {
@@ -574,7 +574,7 @@ function getRemovedTests($cur_id, $prev_id){
   if($cur_id<684){
     $query = "SELECT removed_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
-    $row = mysql_fetch_array($program_query);
+    $row = mysql_fetch_assoc($program_query);
     $result = $row['removed_tests'];
     mysql_free_result($program_query);
   } else {
@@ -607,7 +607,7 @@ function getTestFailSet($id, $table){
   $test_hash = array();
   $query = "SELECT * FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
-  while ($row = mysql_fetch_array($program_query)) {
+  while ($row = mysql_fetch_assoc($program_query)) {
     if (!isTestPass($row['result'])) {
       $program = rtrim($row['program'], ": ");
       $test_hash[$program] = $row['result'];
@@ -627,7 +627,7 @@ function getPassingTests($id, $table, $test_hash){
   $result = "";
   $query = "SELECT * FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
-  while ($row = mysql_fetch_array($program_query)) {
+  while ($row = mysql_fetch_assoc($program_query)) {
     $program = rtrim($row['program'], ": ");
     $wasfailing = isset($test_hash[$program]);
     $ispassing = isTestPass($row['result']);
@@ -655,7 +655,7 @@ function getFixedTests($cur_id, $prev_id){
   if($cur_id<684){
     $query = "SELECT newly_passing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
-    $row = mysql_fetch_array($program_query);
+    $row = mysql_fetch_assoc($program_query);
     $result = $row['newly_passing_tests'];
     mysql_free_result($program_query);
   } else {
@@ -683,7 +683,7 @@ function getBrokenTests($cur_id, $prev_id){
   if($cur_id<684){
     $query = "SELECT newly_failing_tests FROM night WHERE id = $cur_id";
     $program_query = mysql_query($query) or die (mysql_error());
-    $row = mysql_fetch_array($program_query);
+    $row = mysql_fetch_assoc($program_query);
     $result = $row['newly_failing_tests'];
     mysql_free_result($program_query);
   } else {
@@ -705,14 +705,14 @@ function getBrokenTests($cur_id, $prev_id){
 function getPreviousWorkingNight($night_id ){
   $query = "SELECT machine FROM night WHERE id=$night_id";
   $program_query = mysql_query($query) or die (mysql_error());
-  $row = mysql_fetch_array($program_query);
+  $row = mysql_fetch_assoc($program_query);
   $this_machine_id=$row['machine'];
   mysql_free_result($program_query);
   
   $query = "SELECT id FROM night WHERE machine=$this_machine_id ".
            "and id<$night_id and buildstatus=\"OK\" order by added desc";
   $program_query = mysql_query($query) or die (mysql_error());
-  $row = mysql_fetch_array($program_query);
+  $row = mysql_fetch_assoc($program_query);
   $prev_id=$row['id'];
   mysql_free_result($program_query);
 

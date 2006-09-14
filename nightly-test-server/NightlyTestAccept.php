@@ -850,7 +850,7 @@ foreach ($prog_hash_new as $prog => $prog_new) {
       $perc = ($diff / $value_old) * 100;
     }
     
-    if (true || $perc > 5 || $perc < -5) {
+    if ($perc > 5 || $perc < -5) {
       $changes = $output_big_changes[$measure];
       
       if (!isset($changes)) {
@@ -878,8 +878,6 @@ $removed = getRemovedTests($night_id, $prev_night);
 $added = getNewTests($night_id, $prev_night);
 $passing = getFixedTests($night_id, $prev_night);
 $failing = getBrokenTests($night_id, $prev_night);
-
-die;
 
 if ($print_debug) {
   print "Determined changes in new tests and old tests\n";
@@ -953,8 +951,7 @@ if (!file_exists('machines')) {
 chdir("$curr/machines");
 
 if (!file_exists("$machine_id")) {
-    mkdir("$machine_id", 777);
-    
+  mkdir("$machine_id", 777);
 }
 chdir("$curr/machines/$machine_id");
 

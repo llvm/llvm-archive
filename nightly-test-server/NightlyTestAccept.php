@@ -748,8 +748,9 @@ foreach ($DEJAGNUTESTS_RESULTS as $info) {
   $subpatterns = array();
   if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
     list($ignore, $result, $program) = $subpatterns;
-  	$query="INSERT INTO tests (program, result, measure, night) ".
-  	       "VALUES(\"$result\", \'$program\', \"dejagnu\", $night_id)";
+  	$query = "INSERT INTO tests (program, result, measure, night) ".
+  	         "VALUES(\"$result\", \'$program\', \"dejagnu\", $night_id)";
+  	print "$query\n";
     $test_query = mysql_query($query) or die(mysql_error());
     mysql_free_result($test_query);
   }

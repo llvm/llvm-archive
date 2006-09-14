@@ -7,6 +7,51 @@
  * ProgramResults.php
  *
  *******************************************************************************/
+ 
+/*******************************************************************************
+ *
+ * Start response early for debugging purposes
+ *
+ *******************************************************************************/
+print "content-type: text/text\r\n\r\n";
+
+$print_env = 1;
+
+if ($print_env) {
+  foreach ($_ENV as $key => $value) {
+  print "_ENV $key => $value<br>\n";
+  }
+  
+  foreach ($_SERVER as $key => $value) {
+  print "_SERVER $key => $value<br>\n";
+  }
+  
+  foreach ($_GET as $key => $value) {
+  print "_GET $key => $value<br>\n";
+  }
+  
+  foreach ($_POST as $key => $value) {
+  print "_POST $key => $value<br>\n";
+  }
+  
+  foreach ($_COOKIE as $key => $value) {
+  print "_COOKIE $key => $value<br>\n";
+  }
+  
+  foreach ($_FILES as $key => $value) {
+  print "_FILES $key => $value<br>\n";
+  }
+  
+  foreach ($_REQUEST as $key => $value) {
+  print "_REQUEST $key => $value<br>\n";
+  }
+}
+
+/*******************************************************************************
+ *
+ * Include support code
+ *
+ *******************************************************************************/
 
 if(!(include "NightlyTester.php")){
   print "Error: could not load necessary files!\n";
@@ -538,8 +583,6 @@ $external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
  * creating the response
  *
  *******************************************************************************/
-print "content-type: text/text\r\n\r\n";
-
 if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
 }

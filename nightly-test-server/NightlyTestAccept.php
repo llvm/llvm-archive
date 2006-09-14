@@ -826,8 +826,6 @@ $output_big_changes = array();
 foreach ($prog_hash_new as $prog => $prog_new) {
   $prog_old = $prog_hash_old[$prog];
     
-print "$prog\n    $prog_new\n    $prog_old\n";
-
   // get data from server
   $vals_new = split(",", $prog_new);
   $vals_old = split(",", $prog_old);

@@ -16,7 +16,7 @@
 print "content-type: text/text\n\n";
 
 $print_debug = 1;
-$print_env = 1;
+$print_env = 0;
 
 
 if ($print_debug) {
@@ -617,9 +617,12 @@ $multisource_processed = ProcessProgramLogs($MULTISOURCE_TESTS);
 $external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
 
 if ($print_debug) {
-  print "singlesource_processed#: ${count($singlesource_processed)}\n";
-  print "multisource_processed#: ${count($multisource_processed)}\n";
-  print "external_processed#: ${count($external_processed)}\n";
+  $singlesource_processed_count = count($singlesource_processed);
+  $multisource_processed_count = count($multisource_processed);
+  $external_processed_count = count($external_processed);
+  print "singlesource_processed#: $singlesource_processed_count\n";
+  print "multisource_processed#: $multisource_processed_count\n";
+  print "external_processed#: $external_processed_count\n";
 }
 
 /*******************************************************************************
@@ -682,7 +685,8 @@ foreach ($O_FILE_SIZE as $info) {
 }
 
 if ($print_debug) {
-  print "o file sizes#: ${count($O_FILE_SIZE)}\n";
+  $O_FILE_SIZE_COUNT = count($O_FILE_SIZE);
+  print "o file sizes#: $O_FILE_SIZE_COUNT\n";
 }
 
 foreach ($A_FILE_SIZE as $info) {
@@ -691,7 +695,8 @@ foreach ($A_FILE_SIZE as $info) {
 }
 
 if ($print_debug) {
-  print "a file sizes#: ${count($A_FILE_SIZE)}\n";
+  $A_FILE_SIZE_COUNT = count($A_FILE_SIZE);
+  print "a file sizes#: $A_FILE_SIZE_COUNT\n";
 }
 
 /*******************************************************************************

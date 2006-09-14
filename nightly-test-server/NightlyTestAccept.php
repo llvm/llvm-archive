@@ -15,8 +15,8 @@
  *******************************************************************************/
 print "content-type: text/text\n\n";
 
-$print_debug = 1;
-$print_env = 1;
+$print_debug = 0;
+$print_env = 0;
 
 
 if ($print_debug) {
@@ -934,8 +934,7 @@ else{
             "machines/$machine_id/$db_date-Build-Log.txt\n";
 }
 
-$email_addr = "jlaskey\@apple.com";
-//$email_addr = "llvm-testresults\@cs.uiuc.edu";
+$email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
 
 /*******************************************************************************

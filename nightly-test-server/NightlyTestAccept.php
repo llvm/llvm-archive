@@ -16,7 +16,7 @@
 print "content-type: text/text\n\n";
 
 $print_debug = 1;
-$print_env = 0;
+$print_env = 1;
 
 
 if ($print_debug) {
@@ -297,6 +297,7 @@ function CreateNight($machine_id,
       "\"$cvs_removed\", \"$cvs_modified\", \"$cvs_usersadd\", \"$cvs_usersco\"" .
       ")";
   print "insert query: $query\n";
+die;
   $insert_query = mysql_query($query) or die(mysql_error());
   mysql_free_result($insert_query) or die(mysql_error());
   

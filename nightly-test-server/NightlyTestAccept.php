@@ -121,29 +121,10 @@ function WriteFile($filename, $contents) {
  *******************************************************************************/
 function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
-print "query: $query\n";
 
-$machine_query = mysql_query($query);
-if ($machine_query) {
-  print "machine query okay\n";
-} else {
-  $error = mysql_error();
-  print "mysql_error: $error\n";
-  die;
-}
-$row = mysql_fetch_array($machine_query) or die(mysql_error());
-if ($row) {
-  print "row read okay\n";
-} else {
-  $error = mysql_error();
-  print "mysql_error: $error\n";
-  die;
-}
-mysql_free_result($machine_query);
- 
-//  $machine_query = mysql_query($query) or die(mysql_error());
-//  $row = mysql_fetch_array($machine_query) or die(mysql_error());
-//  mysql_free_result($machine_query);
+  $machine_query = mysql_query($query) or die(mysql_error());
+  $row = mysql_fetch_array($machine_query) or die(mysql_error());
+  mysql_free_result($machine_query);
     
   if($row &&
      strcmp($row['uname'], $uname) == 0 &&
@@ -182,6 +163,7 @@ function AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, $dir
   $query = "INSERT INTO machine (uname, hardware, os, name, nickname, gcc, directory) " .
            "VALUES (\"$uname\",\"$hardware\",\"$os\",\"$name\",\"$nickname\",\"$gcc_version\",\"$directory\")";
   $insert_query = mysql_query($query) or die(mysql_error());
+  print "AddMachine: $insert_query\n";
   mysql_free_result($insert_query);
 }
 

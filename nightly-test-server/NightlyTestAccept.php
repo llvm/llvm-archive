@@ -792,6 +792,8 @@ if ($print_debug) {
   print "prev_night: $prev_night\n";
 }
 
+die;
+
 $query = "SELECT * FROM program WHERE night=$night_id";
 $program_query = mysql_query($query) or die(mysql_error());
 

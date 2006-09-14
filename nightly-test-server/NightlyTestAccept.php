@@ -121,23 +121,21 @@ function WriteFile($filename, $contents) {
  *******************************************************************************/
 function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
-if ($print_debug) {
-  print "query: $query\n";
-}
+print "query: $query\n";
 
-  $machine_query = mysql_query($query);
-  if (!$machine_query) {
-    $error = mysql_error();
-    print "mysql_error: $error\n";
-    die;
-  }
-  $row = mysql_fetch_array($machine_query) or die(mysql_error());
-  if (!$row) {
-    $error = mysql_error();
-    print "mysql_error: $error\n";
-    die;
-  }
-  mysql_free_result($machine_query);
+$machine_query = mysql_query($query);
+if (!$machine_query) {
+  $error = mysql_error();
+  print "mysql_error: $error\n";
+  die;
+}
+$row = mysql_fetch_array($machine_query) or die(mysql_error());
+if (!$row) {
+  $error = mysql_error();
+  print "mysql_error: $error\n";
+  die;
+}
+mysql_free_result($machine_query);
  
 //  $machine_query = mysql_query($query) or die(mysql_error());
 //  $row = mysql_fetch_array($machine_query) or die(mysql_error());
@@ -648,6 +646,10 @@ if ($print_debug) {
  * creating the response
  *
  *******************************************************************************/
+if ($print_debug) {
+  print "About To DoesMachineExist\n";
+}
+
 if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
 }

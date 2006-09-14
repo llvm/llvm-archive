@@ -296,12 +296,16 @@ function CreateNight($machine_id,
       "\"$newly_failing_tests\", \"$new_tests\", \"$removed_tests\", \"$cvs_added\"," .
       "\"$cvs_removed\", \"$cvs_modified\", \"$cvs_usersadd\", \"$cvs_usersco\"" .
       ")";
+  print "insert query: $query\n";
   $insert_query = mysql_query($query) or die(mysql_error());
   mysql_free_result($insert_query) or die(mysql_error());
   
   $query = "SELECT id FROM night WHERE machine=$machine_id AND added=\"$added\"";
+  print "select query: $query\n";
   $machine_query = mysql_query($query) or die(mysql_error());
+  print "select query worked\n";
   $row = mysql_fetch_array($machine_query);
+  print "select query result: $row\n";
   mysql_free_result($machine_query);
   
   if($row) {

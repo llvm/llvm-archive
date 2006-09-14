@@ -9,7 +9,7 @@ $query = $_POST["Query"];
 $query = preg_replace("/\n/", " ", $query);
 $my_query = mysql_query($query) or die (mysql_error());
 
-while ($row = mysql_fetch_array($my_query)) {
+while ($row = mysql_fetch_assoc($my_query)) {
   foreach ($row as $key => $value) {
     print "$key => $value, ";
   }

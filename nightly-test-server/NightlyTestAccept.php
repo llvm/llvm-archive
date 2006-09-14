@@ -100,6 +100,24 @@ if ($print_debug) {
  * Some methods to help the process
  *
  *******************************************************************************/
+ 
+/*******************************************************************************
+ *
+ * Test if two values are equal as strings
+ *
+ *******************************************************************************/
+function StringEqual($value1, $value2) {
+  return strcmp("$value1", "$value2") == 0;
+}
+
+/*******************************************************************************
+ *
+ * Test if a value is equal to null string
+ *
+ *******************************************************************************/
+function StringIsNull($value) {
+  return strlen("$value") == 0;
+}
 
 /*******************************************************************************
  *
@@ -127,11 +145,11 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
   mysql_free_result($machine_query);
     
   if($row &&
-     strcmp($row['uname'], $uname) == 0 &&
-     strcmp($row['hardware'], $hardware) == 0 &&
-     strcmp($row['os'], $os) == 0 &&
-     strcmp($row['nickname'], $nickname) == 0 &&
-     strcmp($row['gcc'], $gcc_version) == 0) {
+     StringEqual($row['uname'], $uname) &&
+     StringEqual($row['hardware'], $hardware) &&
+     StringEqual($row['os'], $os) &&
+     StringEqual($row['nickname'], $nickname) &&
+     StringEqual($row['gcc'], $gcc_version)) {
     return true;
   }
 
@@ -631,17 +649,14 @@ if ($print_debug) {
  * creating the response
  *
  *******************************************************************************/
-print "Before DoesMachineExist\n";
 if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
-  print "Before AddMachine\n";
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
-  print "After AddMachine\n";
 }
-print "Before GetMachineId\n";
 $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
-print "After GetMachineId\n";
 
-print "machine_id: $machine_id\n";
+if ($print_debug) {
+  print "machine_id: $machine_id\n";
+}
 
 /*******************************************************************************
  *
@@ -865,20 +880,20 @@ $email .= "Name: $name\n";
 $email .= "Nickname: $nickname\n";
 $email .= "Buildstatus: $buildstatus\n";
 
-if(strcmp($buildstatus, "OK") == 0) {
-  if (strlen($passing) == 0) {
+if(StringEqual($buildstatus, "OK")) {
+  if (StringIsNull($passing)) {
     $passing = "None";
   } 
   $email .= "\nNew Test Passes: $passing\n";
-  if (strlen($failing) == 0) {
+  if (StringIsNull($failing)) {
     $failing = "None";
   } 
   $email .= "\nNew Test Failures: $failing\n";
-  if (strlen($added) == 0) {
+  if (StringIsNull($added)) {
     $added = "None";
   } 
   $email .= "\nAdded Tests: $added\n";
-  if (strlen($removed) == 0) {
+  if (StringIsNull($removed)) {
     $removed= "None";
   } 
   $email .= "\nRemoved Tests: $removed\n";

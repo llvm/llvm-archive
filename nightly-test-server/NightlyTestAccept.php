@@ -850,7 +850,7 @@ foreach ($prog_hash_new as $prog => $prog_new) {
       $perc = ($diff / $value_old) * 100;
     }
     
-    if ($perc > 5 || $perc < -5) {
+    if (true || $perc > 5 || $perc < -5) {
       $changes = $output_big_changes[$measure];
       
       if (!isset($changes)) {

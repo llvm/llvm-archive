@@ -631,10 +631,11 @@ if ($print_debug) {
  * creating the response
  *
  *******************************************************************************/
+print "Before DoesMachineExist\n";
 if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
-print "Before AddMachine\n";
+  print "Before AddMachine\n";
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
-print "After AddMachine\n";
+  print "After AddMachine\n";
 }
 print "Before GetMachineId\n";
 $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);

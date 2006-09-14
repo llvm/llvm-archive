@@ -141,7 +141,7 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
 
   $machine_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($machine_query);
+  $row = mysql_fetch_assoc($machine_query);
   mysql_free_result($machine_query);
     
   if($row &&
@@ -193,7 +193,7 @@ function GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" ".
            "AND os=\"$os\" AND name=\"$name\" AND gcc=\"$gcc_version\"";
   $machine_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($machine_query);
+  $row = mysql_fetch_assoc($machine_query);
   mysql_free_result($machine_query);
 
   if($row) {
@@ -301,7 +301,7 @@ function CreateNight($machine_id,
   
   $query = "SELECT id FROM night WHERE machine=$machine_id AND added=\"$added\"";
   $machine_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($machine_query);
+  $row = mysql_fetch_assoc($machine_query);
   mysql_free_result($machine_query);
   
   if($row) {
@@ -317,7 +317,7 @@ function GetMachineNights($machine_id) {
   $result = array();
   $query = "SELECT * FROM night WHERE machine = \"$machine_id\"";
   $night_query = mysql_query($query) or die(mysql_error());
-  while ($row = mysql_fetch_array($night_query)) {
+  while ($row = mysql_fetch_assoc($night_query)) {
     array_push($result, $row['id']);
   }
   mysql_free_result($night_query);
@@ -409,7 +409,7 @@ function AddFile($file, $size, $night, $type) {
 function UpdateCodeInfo($date, $loc, $files, $dirs) {
   $query = "SELECT * FROM code ORDER BY added DESC";
   $code_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($code_query);
+  $row = mysql_fetch_assoc($code_query);
   mysql_free_result($code_query);
   if ($row &&
       ($row['loc'] != $loc ||
@@ -781,7 +781,7 @@ print "Machine $machine_id now has ids [$nights]{$length} ".
 $query = "SELECT id FROM night WHERE id<$night_id AND machine=$machine_id AND ".
          "buildstatus=\"OK\" ORDER BY id DESC";
 $night_query = mysql_query($query) or die(mysql_error());
-$row = mysql_fetch_array($night_query);
+$row = mysql_fetch_assoc($night_query);
 $prev_night = $row['id'];
 if (!isset($prev_night)) {
   $prev_night = $night_id;
@@ -792,13 +792,11 @@ if ($print_debug) {
   print "prev_night: $prev_night\n";
 }
 
-die;
-
 $query = "SELECT * FROM program WHERE night=$night_id";
 $program_query = mysql_query($query) or die(mysql_error());
 
 $prog_hash_new = array();
-while ($row = mysql_fetch_array($program_query)) {
+while ($row = mysql_fetch_assoc($program_query)) {
   $program = $row['program'];
   $result = $row['result'];
   $prog_hash_new[$program] = $result;
@@ -811,7 +809,7 @@ if ($print_debug) {
 
 $query = "SELECT * FROM program WHERE night=$prev_night";
 $prog_hash_old = array();
-while ($row = mysql_fetch_array($program_query)) {
+while ($row = mysql_fetch_assoc($program_query)) {
   $program = $row['program'];
   $result = $row['result'];
   $prog_hash_old[$program] = $result;
@@ -821,6 +819,20 @@ mysql_free_result($program_query);
 if ($print_debug) {
   print "Gathered all previous night\'s programs\n";
 }
+
+print "NEW HASH ITEMS\n";
+foreach ($prog_hash_new as $key => $value) {
+  print "$key => $value\n";
+}
+print "\n";
+
+print "OLD HASH ITEMS\n";
+foreach ($prog_hash_old as $key => $value) {
+  print "$key => $value\n";
+}
+print "\n";
+
+die;
 
 $output_big_changes = array();
 foreach ($prog_hash_new as $prog) {

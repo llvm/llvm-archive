@@ -140,14 +140,9 @@ function WriteFile($filename, $contents) {
 function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
 
-  print "Before Query\n";
   $machine_query = mysql_query($query) or die(mysql_error());
-  print "Before Fetch\n";
-  $row = mysql_fetch_array($machine_query) or die(mysql_error());
-  print "Before Free\n";
+  $row = mysql_fetch_array($machine_query);
   mysql_free_result($machine_query);
-  
-  print "DoesMachineExist query done\n";
     
   if($row &&
      StringEqual($row['uname'], $uname) &&
@@ -155,10 +150,8 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
      StringEqual($row['os'], $os) &&
      StringEqual($row['nickname'], $nickname) &&
      StringEqual($row['gcc'], $gcc_version)) {
-  print "DoesMachineExist found\n";
     return true;
   }
-  print "DoesMachineExist not found\n";
 
   return false;
 }
@@ -200,7 +193,7 @@ function GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" ".
            "AND os=\"$os\" AND name=\"$name\" AND gcc=\"$gcc_version\"";
   $machine_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($machine_query) or die(mysql_error());
+  $row = mysql_fetch_array($machine_query);
   mysql_free_result($machine_query);
 
   if($row) {
@@ -308,7 +301,7 @@ function CreateNight($machine_id,
   
   $query = "SELECT id FROM night WHERE machine=$machine_id AND added=\"$added\"";
   $machine_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($machine_query) or die(mysql_error());
+  $row = mysql_fetch_array($machine_query);
   mysql_free_result($machine_query);
   
   if($row) {
@@ -324,7 +317,7 @@ function GetMachineNights($machine_id) {
   $result = array();
   $query = "SELECT * FROM night WHERE machine = \"$machine_id\"";
   $night_query = mysql_query($query) or die(mysql_error());
-  while ($row = mysql_fetch_array($night_query) or die(mysql_error())) {
+  while ($row = mysql_fetch_array($night_query)) {
     array_push($result, $row['id']);
   }
   mysql_free_result($night_query);
@@ -416,7 +409,7 @@ function AddFile($file, $size, $night, $type) {
 function UpdateCodeInfo($date, $loc, $files, $dirs) {
   $query = "SELECT * FROM code ORDER BY added DESC";
   $code_query = mysql_query($query) or die(mysql_error());
-  $row = mysql_fetch_array($code_query) or die(mysql_error());
+  $row = mysql_fetch_array($code_query);
   mysql_free_result($code_query);
   if ($row &&
       ($row['loc'] != $loc ||
@@ -788,8 +781,8 @@ print "Machine $machine_id now has ids [$nights]{$length} ".
 $query = "SELECT id FROM night WHERE id<$night_id AND machine=$machine_id AND ".
          "buildstatus=\"OK\" ORDER BY id DESC";
 $night_query = mysql_query($query) or die(mysql_error());
-$row = mysql_fetch_array($night_query) or die(mysql_error());
-$prev_night = $row['id'];
+$row = mysql_fetch_array($night_query);
+$prev_night = $row['id'] or $night_query;
 mysql_free_result($night_query);
 
 $query = "SELECT * FROM program WHERE night=$night_id";

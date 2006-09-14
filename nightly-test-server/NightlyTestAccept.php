@@ -858,7 +858,6 @@ foreach ($prog_hash_new as $prog => $prog_new) {
       }
       
       $rounded_perc = sprintf("%1.2f", $perc);
-print "$prog: $measure: $rounded_perc\% ($value_old => $value_new)\n";
       array_push($changes, "$prog: $rounded_perc\% ($value_old => $value_new)\n");
       $output_big_changes[$measure] = $changes;
     }
@@ -868,8 +867,6 @@ print "$prog: $measure: $rounded_perc\% ($value_old => $value_new)\n";
 if ($print_debug) {
   print "Determined measures\n";
 }
-
-die;
 
 /*******************************************************************************
  *
@@ -881,6 +878,8 @@ $removed = getRemovedTests($night_id, $prev_night);
 $added = getNewTests($night_id, $prev_night);
 $passing = getFixedTests($night_id, $prev_night);
 $failing = getBrokenTests($night_id, $prev_night);
+
+die;
 
 if ($print_debug) {
   print "Determined changes in new tests and old tests\n";

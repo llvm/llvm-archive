@@ -782,7 +782,10 @@ $query = "SELECT id FROM night WHERE id<$night_id AND machine=$machine_id AND ".
          "buildstatus=\"OK\" ORDER BY id DESC";
 $night_query = mysql_query($query) or die(mysql_error());
 $row = mysql_fetch_array($night_query);
-$prev_night = $row['id'] or $night_query;
+$prev_night = $row['id'];
+if (isset($prev_night)) {
+  $prev_night = $night_query;
+}
 mysql_free_result($night_query);
 
 $query = "SELECT * FROM program WHERE night=$night_id";

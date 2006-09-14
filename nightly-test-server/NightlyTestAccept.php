@@ -16,6 +16,7 @@
 print "content-type: text/text\r\n\r\n";
 
 $print_env = 0;
+$print_debug = 1;
 
 if ($print_env) {
   foreach ($_ENV as $key => $value) {
@@ -547,8 +548,6 @@ $gcc_version = $_POST['gcc_version'];
 $warnings = $_POST['warnings'];            
 $lines_of_code = $_POST['lines_of_code'];
 
-print "HERE I AM\n";
-
 /*******************************************************************************
  *
  * Extracting the machine information
@@ -561,6 +560,15 @@ $name     = MatchOne("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
 $date     = MatchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
 $time     = MatchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
 
+if ($print_debug) {
+  print "uname: $uname\n";
+  print "hardware: $hardware\n";
+  print "os: $os\n";
+  print "name: $name\n";
+  print "date: $date\n";
+  print "time: $time\n";
+}
+
 /*******************************************************************************
  *
  * Extracting the dejagnu test numbers
@@ -570,6 +578,12 @@ $time     = MatchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
 $dejagnu_exp_passes     = MatchOne("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
 $dejagnu_unexp_failures = MatchOne("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
 $dejagnu_exp_failures   = MatchOne("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
+
+if ($print_debug) {
+  print "dejagnu_exp_passes: $dejagnu_exp_passes\n";
+  print "dejagnu_unexp_failures: $dejagnu_unexp_failures\n";
+  print "dejagnu_exp_failures: $dejagnu_exp_failures\n";
+}
 
 /*******************************************************************************
  *
@@ -581,6 +595,12 @@ $singlesource_processed = ProcessProgramLogs($SINGLESOURCE_TESTS);
 $multisource_processed = ProcessProgramLogs($MULTISOURCE_TESTS);
 $external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
 
+if ($print_debug) {
+  print "singlesource_processed#: ${count(singlesource_processed)}\n";
+  print "multisource_processed#: ${count(multisource_processed)}\n";
+  print "external_processed#: ${count(external_processed)}\n";
+}
+
 /*******************************************************************************
  *
  * creating the response
@@ -590,6 +610,10 @@ if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
 }
 $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
+
+if ($print_debug) {
+  print "machine_id: $machine_id\n";
+}
 
 /*******************************************************************************
  *
@@ -610,6 +634,10 @@ $night_id= CreateNight($machine_id, $db_date, $buildstatus,
             $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
             $cvsusercommitlist, $cvsuserupdatelist);
 
+if ($print_debug) {
+  print "db_date: $db_date\n";
+  print "night_id: $night_id\n";
+}
 
 foreach ($singlesource_processed as $key => $value) {
    AddProgram($key, $value, "singlesource", $night_id); 
@@ -623,14 +651,26 @@ foreach ($external_processed as $key => $value) {
    AddProgram($key, $value, "external", $night_id); 
 }
 
+if ($print_debug) {
+  print "Programs Added\n";
+}
+
 foreach ($O_FILE_SIZE as $info) {
   list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
   AddFile($file, $size, $night_id, $type);
 }
 
+if ($print_debug) {
+  print "o file sizes#: ${count($O_FILE_SIZE)}\n";
+}
+
 foreach ($A_FILE_SIZE as $info) {
   list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
   AddFile($file, $size, $night_id, $type);
+}
+
+if ($print_debug) {
+  print "a file sizes#: ${count($A_FILE_SIZE)}\n";
 }
 
 /*******************************************************************************
@@ -652,6 +692,10 @@ foreach ($ALL_TESTS as $info) {
   }
 }
 
+if ($print_debug) {
+  print "Dejagnu Tests Added\n";
+}
+
 foreach ($DEJAGNUTESTS_RESULTS as $info) {
   $subpatterns = array();
   if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
@@ -661,6 +705,10 @@ foreach ($DEJAGNUTESTS_RESULTS as $info) {
     $test_query = mysql_query($query) or die(mysql_error());
     mysql_free_result($test_query);
   }
+}
+
+if ($print_debug) {
+  print "Dejagnu Test Results Added\n";
 }
 
 /*******************************************************************************

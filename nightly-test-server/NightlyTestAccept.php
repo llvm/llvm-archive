@@ -125,6 +125,10 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
   $row = mysql_fetch_array($machine_query) or die(mysql_error());
   mysql_free_result($machine_query);
   
+  if ($print_debug) {
+    print "row: $row\n";
+  }
+  
   if($row &&
      strcmp($row['uname'], $uname) == 0 &&
      strcmp($row['hardware'], $hardware) == 0 &&

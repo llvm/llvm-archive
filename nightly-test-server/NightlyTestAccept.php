@@ -773,7 +773,8 @@ else{
             "machines/$machine_id/$db_date-Build-Log.txt\n";
 }
 
-$email_addr = "llvm-testresults\@cs.uiuc.edu";
+$email_addr = "jlaskey\@apple.com";
+//$email_addr = "llvm-testresults\@cs.uiuc.edu";
 `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
 
 /*******************************************************************************

@@ -132,10 +132,10 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
      strcmp($row['os'], $os) == 0 &&
      strcmp($row['nickname'], $nickname) == 0 &&
      strcmp($row['gcc'], $gcc_version) == 0) {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 /*******************************************************************************
@@ -163,7 +163,6 @@ function AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, $dir
   $query = "INSERT INTO machine (uname, hardware, os, name, nickname, gcc, directory) " .
            "VALUES (\"$uname\",\"$hardware\",\"$os\",\"$name\",\"$nickname\",\"$gcc_version\",\"$directory\")";
   $insert_query = mysql_query($query) or die(mysql_error());
-  print "AddMachine: $insert_query\n";
   mysql_free_result($insert_query);
 }
 
@@ -632,18 +631,16 @@ if ($print_debug) {
  * creating the response
  *
  *******************************************************************************/
-if ($print_debug) {
-  print "About To DoesMachineExist\n";
-}
-
 if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
+print "Before AddMachine\n";
   AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
+print "After AddMachine\n";
 }
+print "Before GetMachineId\n";
 $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
+print "After GetMachineId\n";
 
-if ($print_debug) {
-  print "machine_id: $machine_id\n";
-}
+print "machine_id: $machine_id\n";
 
 /*******************************************************************************
  *

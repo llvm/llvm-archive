@@ -51,7 +51,7 @@ if ($was_query) {
   
   while ($row = mysql_fetch_assoc($my_query)) {
     if (!$heading) {
-      print "  <TR>\n";
+      print "  <TR STYLE=\"font-weight: bold;\">\n";
       foreach ($row as $key => $value) {
         print "    <TD>$key</TD>\n";
       }

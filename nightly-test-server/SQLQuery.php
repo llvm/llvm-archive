@@ -22,7 +22,7 @@ TD
 
 <?php
 print <<<EOD
-<FORM ACTION="http://llvm.org/nightlytest/EmailReport.php" METHOD="post" ID="MyForm">
+<FORM ACTION="http://llvm.org/nightlytest/SQLQuery.php" METHOD="post" ID="MyForm">
 <TABLE>
 	<TR>
 		<TD>User:</TD> <TD><INPUT NAME="User" ID="User" TYPE="text" VALUE="$user" SIZE="30"><BR></TD>

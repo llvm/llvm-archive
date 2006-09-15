@@ -20,6 +20,8 @@ TD
 </HEAD>
 <BODY>
 
+<?php
+print <<<EOD
 <FORM ACTION="http://llvm.org/nightlytest/EmailReport.php" METHOD="post" ID="MyForm">
 <TABLE>
 	<TR>
@@ -34,8 +36,7 @@ TD
 </TABLE>
 <BUTTON TYPE="submit" ID="Send" NAME="Send" VALUE="Send">Query</BUTTON><BR>
 </FORM>
-
-<?php
+EOD;
 
 if ($was_query) {
   $mysql_link = mysql_connect("127.0.0.1", $user, $password) or die("Error: could not connect to database!\n");

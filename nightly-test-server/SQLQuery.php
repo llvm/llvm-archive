@@ -43,7 +43,6 @@ if ($was_query) {
   mysql_select_db("nightlytestresults");
   
   $query = $_POST["Query"];
-  $query = preg_replace("/\n/", " ", $query);
   $my_query = mysql_query($query) or die (mysql_error());
   
   print "<TABLE>\n";

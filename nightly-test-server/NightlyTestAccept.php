@@ -360,7 +360,7 @@ function AddProgram($program, $result, $type, $night) {
  *
  *******************************************************************************/
 function AddTests($program, $result, $measure, $night) {
-  $query = "INSERT INTO program (program, result, measure, night) VALUES".
+  $query = "INSERT INTO tests (program, result, measure, night) VALUES".
            " (\"$program\", \"$result\", \"$measure\", $night)";
   $program_query = mysql_query($query) or die(mysql_error());
   mysql_free_result($program_query);

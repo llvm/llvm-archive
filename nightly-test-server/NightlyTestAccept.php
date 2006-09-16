@@ -958,10 +958,18 @@ WriteFile("$db_date-A-files.txt", $a_file_size);
 
 $sentdata="";
 foreach ($_GET as $key => $value) {
-	$sentdata .= "$key  =>  $value}\n";
+  if(strpos($value, "\n") == 0) {
+	  $sentdata .= "\'$key\'  =>  \"$value\",\n";
+	} else {
+	  $sentdata .= "\'$key\'  =>  <<EOD\n$value\nEOD\n,\n";
+	}
 }
 foreach ($_POST as $key => $value) {
-	$sentdata .= "$key  =>  $value}\n";
+  if(strpos($value, "\n") == 0) {
+	  $sentdata .= "\'$key\'  =>  \"$value\",\n";
+	} else {
+	  $sentdata .= "\'$key\'  =>  <<EOD\n$value\nEOD\n,\n";
+	}
 }
 WriteFile("$db_date-senddata.txt", $sentdata);
 

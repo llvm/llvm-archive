@@ -339,10 +339,12 @@ function GetMachineNights($machine_id) {
  *
  *******************************************************************************/
 function AddProgram($program, $result, $type, $night) {
-  $query = "INSERT INTO program (program, result, type, night) VALUES".
-           " (\"$program\", \"$result\", \"$type\", $night)";
-  $program_query = mysql_query($query) or die(mysql_error());
-  mysql_free_result($program_query);
+  if (!StringIsNull($program)) {
+    $query = "INSERT INTO program (program, result, type, night) VALUES".
+             " (\"$program\", \"$result\", \"$type\", $night)";
+    $program_query = mysql_query($query) or die(mysql_error());
+    mysql_free_result($program_query);
+  }
 }
 
 /*******************************************************************************
@@ -360,10 +362,12 @@ function AddProgram($program, $result, $type, $night) {
  *
  *******************************************************************************/
 function AddTests($program, $result, $measure, $night) {
-  $query = "INSERT INTO tests (program, result, measure, night) VALUES".
-           " (\"$program\", \"$result\", \"$measure\", $night)";
-  $program_query = mysql_query($query) or die(mysql_error());
-  mysql_free_result($program_query);
+  if (!StringIsNull($program)) {
+    $query = "INSERT INTO tests (program, result, measure, night) VALUES".
+             " (\"$program\", \"$result\", \"$measure\", $night)";
+    $program_query = mysql_query($query) or die(mysql_error());
+    mysql_free_result($program_query);
+  }
 }
 
 
@@ -728,10 +732,7 @@ foreach ($ALL_TESTS as $info) {
   $subpatterns = array();
   if (preg_match("/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/", $info, $subpatterns)) {
     list($ignore1, $ignore2, $result, $measure, $program) = $subpatterns;
-    $query = "INSERT INTO tests (program, result, measure, night) ".
-             "VALUES (\"$program\", \"$result\", \"$measure\", $night_id)";
-    $test_query = mysql_query($query) or die(mysql_error());
-    mysql_free_result($test_query);
+    AddTests($program, $result, $measure, $night_id);
   } else {
     print "Unrecognized test: $info\n";
   }
@@ -745,10 +746,7 @@ foreach ($DEJAGNUTESTS_RESULTS as $info) {
   $subpatterns = array();
   if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
     list($ignore, $result, $program) = $subpatterns;
-  	$query = "INSERT INTO tests (program, result, measure, night) ".
-  	         "VALUES(\"$program\", \"$result\", \"dejagnu\", $night_id)";
-    $test_query = mysql_query($query) or die(mysql_error());
-    mysql_free_result($test_query);
+    AddTests($program, $result, "dejagnu", $night_id);
   }
 }
 

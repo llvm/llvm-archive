@@ -732,8 +732,6 @@ foreach ($ALL_TESTS as $info) {
   $subpatterns = array();
   if (preg_match("/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/", $info, $subpatterns)) {
     list($ignore1, $ignore2, $result, $measure, $program) = $subpatterns;
-    print "$ignore1: $ignore2: $result: $measure: $program\n";
-
     AddTests($program, $result, $measure, $night_id);
   } else {
     print "Unrecognized test: $info\n";
@@ -748,7 +746,6 @@ foreach ($DEJAGNUTESTS_RESULTS as $info) {
   $subpatterns = array();
   if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
     list($ignore, $result, $program) = $subpatterns;
-    print "$ignore: $result: $program\n";
     AddTests($program, $result, "dejagnu", $night_id);
   }
 }

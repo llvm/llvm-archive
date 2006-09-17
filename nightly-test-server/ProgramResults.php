@@ -630,14 +630,7 @@ function getTestFailSet($id) {
  * hash and now pass.
  */
 function getPassingTests($id, $test_hash) {
-  $result = "";
-  
-  $result .= "OLD\n";
-  foreach ($test_hash as $key => $value) {
-    $result .= "$key [$value]\n";
-  }
-  $result .= "\n\nNEW\n";
-  
+  $passing = "";
   $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
@@ -645,14 +638,13 @@ function getPassingTests($id, $test_hash) {
       $program = trimTestPath($row['program']);
       $measure = $row['measure'];
       $result = $test_hash[$program];
-//      if (strpos("$result", $measure) !== false) {
-if(1) {
-        $result .= "$program [$measure]\n";
+      if (strpos("$result", $measure) !== false) {
+        $passing .= "$program [$measure]\n";
       }
     }
   }
   mysql_free_result($program_query);
-  return $result;
+  return $passing;
 }
 
 /*

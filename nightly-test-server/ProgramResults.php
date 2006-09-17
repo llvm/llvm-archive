@@ -609,7 +609,7 @@ function getTestFailSet($id) {
   while ($row = mysql_fetch_assoc($program_query)) {
     if (!isTestPass($row['result'])) {
       $program = trimTestPath($row['program']);
-      $measure = $row['measure'];
+      $measure = strtoupper($row['measure']);
       $result = $test_hash[$program];
       if (isset($result)) {
         $result .= ", " . $measure;
@@ -636,7 +636,7 @@ function getPassingTests($id, $test_hash) {
   while ($row = mysql_fetch_assoc($program_query)) {
     if (isTestPass($row['result'])) {
       $program = trimTestPath($row['program']);
-      $measure = $row['measure'];
+      $measure = strtoupper($row['measure']);
       $result = $test_hash[$program];
       if (strpos("$result", $measure) !== false) {
         $passing .= "$program [$measure]\n";

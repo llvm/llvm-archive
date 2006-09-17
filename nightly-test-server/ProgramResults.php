@@ -604,20 +604,18 @@ function isTestPass($test_result) {
  */
 function getTestFailSet($id) {
   $test_hash = array();
-  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
+  $query = "SELECT program, result, measure FROM tests WHERE night=$id AND result=\"FAIL\" ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    if (!isTestPass($row['result'])) {
-      $program = trimTestPath($row['program']);
-      $measure = strtoupper($row['measure']);
-      $result = $test_hash[$program];
-      if (isset($result)) {
-        $result .= ", " . $measure;
-      } else {
-        $result = $measure;
-      }
-      $test_hash[$program] = $result;
+    $program = trimTestPath($row['program']);
+    $measure = strtoupper($row['measure']);
+    $result = $test_hash[$program];
+    if (isset($result)) {
+      $result .= ", " . $measure;
+    } else {
+      $result = $measure;
     }
+    $test_hash[$program] = $result;
   }
   mysql_free_result($program_query);
   return $test_hash;
@@ -631,16 +629,14 @@ function getTestFailSet($id) {
  */
 function getPassingTests($id, $test_hash) {
   $passing = "";
-  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
+  $query = "SELECT program, result, measure FROM tests WHERE night=$id AND result<>\"FAIL\" ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    if (isTestPass($row['result'])) {
-      $program = trimTestPath($row['program']);
-      $measure = strtoupper($row['measure']);
-      $result = $test_hash[$program];
-      if (strpos("$result", $measure) !== false) {
-        $passing .= "$program [$measure]\n";
-      }
+    $program = trimTestPath($row['program']);
+    $measure = strtoupper($row['measure']);
+    $result = $test_hash[$program];
+    if (strpos("$result", $measure) !== false) {
+      $passing .= "$program [$measure]\n";
     }
   }
   mysql_free_result($program_query);

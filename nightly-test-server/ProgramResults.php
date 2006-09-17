@@ -594,7 +594,19 @@ function getRemovedTests($cur_id, $prev_id){
  * conditions are "PASS", "FAIL" and "XFAIL" (expected to fail.)
  */
 function isTestPass($test_result) {
-  return strcmp($test_result, "FAIL") != 0;
+  return !StringEqual($test_result, "FAIL");
+}
+
+/*
+ * Merge program name and measure
+ */
+function MergeNameAndMeasureFromRow($row) {
+  $program = trimTestPath($row['program']);
+  $measure = $row['measure'];
+  if (!StringEqual($measure, "dejagnu")) {
+    $program .= " [$measure]";
+  }
+  return $program;
 }
 
 /*
@@ -609,11 +621,7 @@ function getTestFailSet($id){
   while ($row = mysql_fetch_assoc($program_query)) {
     $result = $row['result'];
     if (!isTestPass($result)) {
-      $program = trimTestPath($row['program']);
-      $measure = $row['measure'];
-      if (!StringEqual($measure, "dejagnu")) {
-        $program .= " [$measure]";
-      }
+      $program = MergeNameAndMeasureFromRow($row);
       $test_hash[$program] = $result;
     }
   }
@@ -632,11 +640,7 @@ function getPassingTests($id, $table, $test_hash){
   $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = trimTestPath($row['program']);
-    $measure = $row['measure'];
-    if (!StringEqual($measure, "dejagnu")) {
-      $program .= " [$measure]";
-    }
+    $program = MergeNameAndMeasureFromRow($row);
     $result = $row['result'];
     $wasfailing = isset($test_hash[$program]);
     $ispassing = isTestPass($result);

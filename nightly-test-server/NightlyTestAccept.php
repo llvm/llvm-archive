@@ -759,7 +759,10 @@ if ($print_debug) {
  * Adding lines of code to the database
  *
  *******************************************************************************/
-UpdateCodeInfo($db_date, $loc, $filesincvs, $dirsincvs);
+if(StringEqual($buildstatus, "OK")) {
+  // only update loc if successful build
+  UpdateCodeInfo($db_date, $loc, $filesincvs, $dirsincvs);
+}
 
 print "received ${_SERVER['CONTENT_LENGTH']} bytes\n";
          

@@ -420,6 +420,7 @@ function trimTestPath($program) {
   if (isset($tail)) {
     $program = "test/" . $tail;
   }
+  return rtrim($program, ": ");;
   return $program;
 }
  

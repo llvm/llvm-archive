@@ -421,7 +421,6 @@ function trimTestPath($program) {
     $program = "test/" . $tail;
   }
   return rtrim($program, ": ");;
-  return $program;
 }
  
  
@@ -596,7 +595,7 @@ function getRemovedTests($cur_id, $prev_id){
  * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return !(strcmp($test_result, "FAIL") == 0 || strpos($test_result, "*") !== false);
+  return !(StringEqual($test_result, "FAIL") || strpos($test_result, "*") !== false);
 }
 
 /*

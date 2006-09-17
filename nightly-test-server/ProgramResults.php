@@ -422,8 +422,21 @@ function trimTestPath($program) {
   }
   return rtrim($program, ": ");;
 }
+
  
- 
+/*
+ * Merge program name and measure
+ */
+function MergeNameAndMeasureFromRow($row) {
+  $program = trimTestPath($row['program']);
+  $measure = $row['measure'];
+  if (!StringEqual($measure, "dejagnu")) {
+    $program .= " [$measure]";
+  }
+  return $program;
+}
+
+
 /*
  * Get failing tests
  *
@@ -436,8 +449,8 @@ function getFailures($night_id) {
     $query = "SELECT program FROM tests WHERE night=$night_id AND result=\"FAIL\" ORDER BY program ASC";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_assoc($program_query)) {
-      $program = trimTestPath($row['program']);
-      $result .= $program . "\n";
+      $program = rtrim($row['program'], ": ");
+      $result .= trimTestPath($program) . "\n";
     }
     mysql_free_result($program_query);
 
@@ -446,7 +459,7 @@ function getFailures($night_id) {
     while($row = mysql_fetch_assoc($program_query)) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
-        $program = trimTestPath($row['program']);
+        $program = rtrim($row['program'], ": ");
         $reasons = getFailReasons($test_result);        
         $result .= $program . $reasons . "\n";
       }
@@ -475,8 +488,8 @@ function getUnexpectedFailures($night_id){
     $query = "SELECT program FROM tests WHERE night=$night_id AND result=\"FAIL\"";
     $program_query = mysql_query($query) or die (mysql_error());
     while($row = mysql_fetch_assoc($program_query)){
-      $program = trimTestPath($row['program']);
-      $result .= $program . "\n";
+      $program = rtrim($row['program'], ": ");
+      $result .= trimTestPath($program) . "\n";
     }
     mysql_free_result($program_query);
   }
@@ -504,7 +517,7 @@ function getTestSet($id, $table){
   $query = "SELECT program, result FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = trimTestPath($row['program']);
+    $program = rtrim($row['program'], ": ");
     $test_hash[$program] = $row['result'];
   }
   mysql_free_result($program_query);
@@ -522,9 +535,9 @@ function getExcludedTests($id, $table, $test_hash){
   $query = "SELECT program FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = trimTestPath($row['program']);
+    $program = rtrim($row['program'], ": ");
     if (!isset($test_hash[$program])) {
-      $result .= $program . "\n";
+      $result .= trimTestPath($program) . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -591,22 +604,11 @@ function getRemovedTests($cur_id, $prev_id){
  * Does the test pass
  *
  * Return true if the test result indicates a pass.  For "tests" the possible
- * conditions are "PASS", "FAIL" and "XFAIL" (expected to fail.)
+ * conditions are "PASS", "FAIL" and "XFAIL" (expected to fail.)  For programs
+ * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return !StringEqual($test_result, "FAIL");
-}
-
-/*
- * Merge program name and measure
- */
-function MergeNameAndMeasureFromRow($row) {
-  $program = trimTestPath($row['program']);
-  $measure = $row['measure'];
-  if (!StringEqual($measure, "dejagnu")) {
-    $program .= " [$measure]";
-  }
-  return $program;
+  return !(StringEqual($test_result, "FAIL") || strpos($test_result, "*") !== false);
 }
 
 /*
@@ -614,14 +616,14 @@ function MergeNameAndMeasureFromRow($row) {
  *
  * Returns a hash of tests that fail for a given night.
  */
-function getTestFailSet($id){
+function getTestFailSet($id, $table){
   $test_hash = array();
-  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
+  $query = "SELECT program, result FROM $table WHERE night=$id";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
     $result = $row['result'];
     if (!isTestPass($result)) {
-      $program = MergeNameAndMeasureFromRow($row);
+      $program = rtrim($row['program'], ": ");
       $test_hash[$program] = $result;
     }
   }
@@ -637,15 +639,15 @@ function getTestFailSet($id){
  */
 function getPassingTests($id, $table, $test_hash){
   $result = "";
-  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
+  $query = "SELECT program, result FROM $table WHERE night=$id ORDER BY program ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = MergeNameAndMeasureFromRow($row);
-    $result = $row['result'];
+    $program = rtrim($row['program'], ": ");
     $wasfailing = isset($test_hash[$program]);
-    $ispassing = isTestPass($result);
+    $ispassing = isTestPass($row['result']);
     if ($wasfailing && $ispassing) {
-      $result .= $program . "\n";
+      $reasons = getFailReasons($test_hash[$program]);
+      $result .= trimTestPath($program) . $reasons . "\n";
     }
   }
   mysql_free_result($program_query);
@@ -671,8 +673,11 @@ function getFixedTests($cur_id, $prev_id){
     $result = $row['newly_passing_tests'];
     mysql_free_result($program_query);
   } else {
-    $test_hash = getTestFailSet($prev_id);
-    $result .= getPassingTests($cur_id, $test_hash);
+    $test_hash = getTestFailSet($prev_id, "tests");
+    $result .= getPassingTests($cur_id, "tests", $test_hash);
+  
+    $test_hash = getTestFailSet($prev_id, "program");
+    $result .= getPassingTests($cur_id, "program", $test_hash);
   }
   return $result;
 }
@@ -696,8 +701,11 @@ function getBrokenTests($cur_id, $prev_id){
     $result = $row['newly_failing_tests'];
     mysql_free_result($program_query);
   } else {
-    $test_hash = getTestFailSet($cur_id);
-    $result .= getPassingTests($prev_id, $test_hash);
+    $test_hash = getTestFailSet($cur_id, "tests");
+    $result .= getPassingTests($prev_id, "tests", $test_hash);
+  
+    $test_hash = getTestFailSet($cur_id, "program");
+    $result .= getPassingTests($prev_id, "program", $test_hash);
   }
   return $result;
 }

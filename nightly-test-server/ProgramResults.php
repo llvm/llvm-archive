@@ -598,30 +598,22 @@ function isTestPass($test_result) {
 }
 
 /*
- * Merge program name and measure
- */
-function MergeNameAndMeasureFromRow($row) {
-  $program = trimTestPath($row['program']);
-  $measure = $row['measure'];
-  if (strcmp($measure, "dejagnu") != 0) {
-    $program .= " [$measure]";
-  }
-  return $program;
-}
-
-/*
  * Get set of tests that fail
  *
  * Returns a hash of tests that fail for a given night.
  */
-function getTestFailSet($id){
+function getTestFailSet($id) {
   $test_hash = array();
   $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $result = $row['result'];
-    if (!isTestPass($result)) {
-      $program = MergeNameAndMeasureFromRow($row);
+    if (!isTestPass($row['result'])) {
+      $program = trimTestPath($row['program']);
+      $result = $test_hash[$program];
+      if ($isset($result)) {
+        $result .= ", ";
+      }
+      $result .= $row['measure'];
       $test_hash[$program] = $result;
     }
   }
@@ -635,17 +627,18 @@ function getTestFailSet($id){
  * Returns a list of tests for a given night that were included in the
  * hash and now pass.
  */
-function getPassingTests($id, $table, $test_hash){
+function getPassingTests($id, $test_hash) {
   $result = "";
   $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = MergeNameAndMeasureFromRow($row);
-    $result = $row['result'];
-    $wasfailing = isset($test_hash[$program]);
-    $ispassing = isTestPass($result);
-    if ($wasfailing && $ispassing) {
-      $result .= $program . "\n";
+    if (isTestPass($row['result'])) {
+      $program = trimTestPath($row['program']);
+      $measure = $row['measure'];
+      $result = $test_hash[$program];
+      if (strpos($result, $measure) !== false) {
+        $result .= "$program [$measure]\n";
+      }
     }
   }
   mysql_free_result($program_query);

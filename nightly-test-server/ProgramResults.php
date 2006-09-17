@@ -611,9 +611,10 @@ function getTestFailSet($id) {
       $program = trimTestPath($row['program']);
       $result = $test_hash[$program];
       if ($isset($result)) {
-        $result .= ", ";
+        $result .= ", " . $row['measure'];
+      } else {
+        $result = $row['measure'];
       }
-      $result .= $row['measure'];
       $test_hash[$program] = $result;
     }
   }
@@ -636,7 +637,7 @@ function getPassingTests($id, $test_hash) {
       $program = trimTestPath($row['program']);
       $measure = $row['measure'];
       $result = $test_hash[$program];
-      if (strpos($result, $measure) !== false) {
+      if (strpos("$result", $measure) !== false) {
         $result .= "$program [$measure]\n";
       }
     }

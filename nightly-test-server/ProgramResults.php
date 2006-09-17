@@ -604,6 +604,7 @@ function isTestPass($test_result) {
  */
 function getTestFailSet($id) {
   $test_hash = array();
+  return $test_hash;
   $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {

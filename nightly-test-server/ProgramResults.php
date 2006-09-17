@@ -620,7 +620,6 @@ function getTestFailSet($id) {
     }
   }
   mysql_free_result($program_query);
-  return  array();
   return $test_hash;
 }
 

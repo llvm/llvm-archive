@@ -420,23 +420,10 @@ function trimTestPath($program) {
   if (isset($tail)) {
     $program = "test/" . $tail;
   }
-  return rtrim($program, ": ");;
-}
-
- 
-/*
- * Merge program name and measure
- */
-function MergeNameAndMeasureFromRow($row) {
-  $program = trimTestPath($row['program']);
-  $measure = $row['measure'];
-  if (!StringEqual($measure, "dejagnu")) {
-    $program .= " [$measure]";
-  }
   return $program;
 }
-
-
+ 
+ 
 /*
  * Get failing tests
  *
@@ -608,7 +595,7 @@ function getRemovedTests($cur_id, $prev_id){
  * an asterix appears by each tool that has failed.
  */
 function isTestPass($test_result) {
-  return !(StringEqual($test_result, "FAIL") || strpos($test_result, "*") !== false);
+  return !(strcmp($test_result, "FAIL") == 0 || strpos($test_result, "*") !== false);
 }
 
 /*

@@ -614,14 +614,14 @@ function MergeNameAndMeasureFromRow($row) {
  *
  * Returns a hash of tests that fail for a given night.
  */
-function getTestFailSet($id, $table){
+function getTestFailSet($id){
   $test_hash = array();
-  $query = "SELECT program, result FROM $table WHERE night=$id";
+  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
     $result = $row['result'];
     if (!isTestPass($result)) {
-      $program = rtrim($row['program'], ": ");
+      $program = MergeNameAndMeasureFromRow($row);
       $test_hash[$program] = $result;
     }
   }
@@ -637,15 +637,15 @@ function getTestFailSet($id, $table){
  */
 function getPassingTests($id, $table, $test_hash){
   $result = "";
-  $query = "SELECT program, result FROM $table WHERE night=$id ORDER BY program ASC";
+  $query = "SELECT program, result, measure FROM tests WHERE night=$id ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
-    $program = rtrim($row['program'], ": ");
+    $program = MergeNameAndMeasureFromRow($row);
+    $result = $row['result'];
     $wasfailing = isset($test_hash[$program]);
-    $ispassing = isTestPass($row['result']);
+    $ispassing = isTestPass($result);
     if ($wasfailing && $ispassing) {
-      $reasons = getFailReasons($test_hash[$program]);
-      $result .= trimTestPath($program) . $reasons . "\n";
+      $result .= $program . "\n";
     }
   }
   mysql_free_result($program_query);

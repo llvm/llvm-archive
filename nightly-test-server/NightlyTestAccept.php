@@ -859,7 +859,7 @@ foreach ($prog_hash_new as $prog => $prog_new) {
       }
       
       $rounded_perc = sprintf("%1.2f", $perc);
-      array_push($changes, "$prog: $rounded_perc\% ($value_old => $value_new)\n");
+      array_push($changes, "$prog: $rounded_perc% ($value_old => $value_new)\n");
       $output_big_changes[$measure] = $changes;
     }
   }
@@ -908,19 +908,19 @@ if(StringEqual($buildstatus, "OK")) {
   if (StringIsNull($passing)) {
     $passing = "None";
   } 
-  $email .= "\nNew Test Passes: $passing\n";
+  $email .= "\nNew Test Passes:\n$passing\n";
   if (StringIsNull($failing)) {
     $failing = "None";
   } 
-  $email .= "\nNew Test Failures: $failing\n";
+  $email .= "\nNew Test Failures:\n$failing\n";
   if (StringIsNull($added)) {
     $added = "None";
   } 
-  $email .= "\nAdded Tests: $added\n";
+  $email .= "\nAdded Tests:\n$added\n";
   if (StringIsNull($removed)) {
     $removed= "None";
   } 
-  $email .= "\nRemoved Tests: $removed\n";
+  $email .= "\nRemoved Tests:\n$removed\n";
 
   $email .= "\nSignificant changes in test results:\n";
   foreach ($output_big_changes as $measure => $values) {

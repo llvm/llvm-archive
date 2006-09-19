@@ -829,8 +829,8 @@ foreach ($prog_hash_new as $prog => $prog_new) {
   $prog_old = $prog_hash_old[$prog];
     
   // get data from server
-  $vals_new = split(",", $prog_new);
-  $vals_old = split(",", $prog_old);
+  $vals_new = split(", ", $prog_new);
+  $vals_old = split(", ", $prog_old);
   
   // get list of values measured from newest test
   $new_measures = array();

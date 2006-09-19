@@ -31,7 +31,7 @@ print <<<EOD
 		<TD>Password:</TD> <TD><INPUT NAME="Password" ID="Password" TYPE="password" VALUE="$password" SIZE="30"><BR></TD>
 	</TR>
 	<TR>
-		<TD>Query:</TD> <TD><TEXTAREA ID="Queries" NAME="Queries" ROWS="10" COLS="100"></TEXTAREA><BR></TD>
+		<TD>Query:</TD> <TD><TEXTAREA ID="Queries" NAME="Queries" ROWS="10" COLS="100">$queries</TEXTAREA><BR></TD>
 	</TR>
 </TABLE>
 <BUTTON TYPE="submit" ID="Send" NAME="Send" VALUE="Send">Query</BUTTON><BR>

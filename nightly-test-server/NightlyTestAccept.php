@@ -798,7 +798,7 @@ $program_query = mysql_query($query) or die(mysql_error());
 
 $prog_hash_new = array();
 while ($row = mysql_fetch_assoc($program_query)) {
-  $program = $row['program'];
+  $program = $row['type']."/".$row['program'];
   $result = $row['result'];
   $prog_hash_new[$program] = $result;
 }
@@ -813,7 +813,7 @@ $program_query = mysql_query($query) or die(mysql_error());
 
 $prog_hash_old = array();
 while ($row = mysql_fetch_assoc($program_query)) {
-  $program = $row['program'];
+  $program = $row['type']."/".$row['program'];
   $result = $row['result'];
   $prog_hash_old[$program] = $result;
 }

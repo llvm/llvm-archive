@@ -823,6 +823,7 @@ if ($print_debug) {
   print "Gathered all previous night\'s programs\n";
 }
 
+$monitoring = array("Bytecode", "CBE", "GCCAS", "JIT", "LLC", "LLC-BETA", "LLC compile", "LLC-BETA compile");
 $output_big_changes = array();
 foreach ($prog_hash_new as $prog => $prog_new) {
   $prog_old = $prog_hash_old[$prog];
@@ -832,18 +833,26 @@ foreach ($prog_hash_new as $prog => $prog_new) {
   $vals_old = split(",", $prog_old);
   
   // get list of values measured from newest test
-  $measures = array();
+  $new_measures = array();
   foreach ($vals_new as $measure) {
-    $measure = preg_replace("/[ \,\.\:\-0-9]*/", "", $measure);
-    if(strpos($measure, "/") == 0) {
-      array_push($measures, $measure);
-    }
+    list($measure, $value) = split(": ", $measure);
+    $new_measures[$measure] = $value;
   }
   
+  // get list of values measured from older test
+  $old_measures = array();
+  foreach ($vals_old as $measure) {
+    list($measure, $value) = split(": ", $measure);
+    $old_measures[$measure] = $value;
+  }
+
   // put measures into hash of arrays
-  foreach ($measures as $measure) {
-    $value_new = MatchOne("/$measure:.*?(\d*\.*\d+)/", $prog_new, "0");
-    $value_old = MatchOne("/$measure:.*?(\d*\.*\d+)/", $prog_old, "0");
+  foreach ($monitoring as $measure) {
+    $value_new = MatchOne("/(\d+\.?\d*)/", $new_measures[$measure], "");
+    $value_old = MatchOne("/(\d+\.?\d*)/", $old_measures[$measure], "");
+    
+    if (StringIsNull($value_new) || StringIsNull($value_old)) continue;
+    
     $diff = ($value_old - $value_new);
     $perc = 0;
     

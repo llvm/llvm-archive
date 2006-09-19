@@ -74,7 +74,7 @@ if ($was_query) {
       mysql_free_result($my_query);
     } else {
       $error = mysql_error();
-      print "<B>$error<\B><BR><BR><BR>\n";
+      print "<B>$error</B><BR><BR><BR>\n";
     }
   }
   

@@ -41,7 +41,7 @@ EOD;
 if ($was_query) {
   $queries = split("\n", $queries);
 
-  $mysql_link = mysql_connect("127.0.0.1", $user, $password) or die("Error: could not connect to database!\n");
+  $mysql_link = mysql_connect("127.0.0.1", $user, $password, false, CLIENT_MULTI_STATEMENTS) or die("Error: could not connect to database!\n");
   mysql_select_db("nightlytestresults");
   
   foreach ($queries as $query) {

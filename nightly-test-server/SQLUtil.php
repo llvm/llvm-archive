@@ -17,6 +17,7 @@ mysql_select_db("nightlytestresults");
 
 $query = "SELECT * FROM tests WHERE measure=\"dejagnu\"";
 if ($get_query = mysql_query($query)) {
+  $count = 1;
   while ($row = mysql_fetch_assoc($get_query)) {
     $old = $row['program'];
     $subpatterns = array();
@@ -29,6 +30,8 @@ if ($get_query = mysql_query($query)) {
       $set_query = mysql_query($query);
       mysql_free_result($set_query);
     }
+    if (($count % 1000) == 0) print "Count = $count<BR>\n";
+    $count++;
   }
 
   mysql_free_result($get_query);

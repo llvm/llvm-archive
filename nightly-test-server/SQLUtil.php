@@ -22,7 +22,6 @@ if ($get_query = mysql_query($query)) {
     $old = $row['program'];
     $subpatterns = explode("/llvm/test/", $old, 2);
     $after = $subpatterns[1];
-    print "$count: $after<BR>\n";
     if (isset($after)) {
       $new = "test/".$after;
       $result = $row['result'];

@@ -28,12 +28,11 @@ if ($get_query = mysql_query($query)) {
       $result = $row['result'];
       $night =  $row['night'];
       $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"dejagnu\"";
-      print "$query<BR>\n";
-#      $set_query = mysql_query($query);
-#      mysql_free_result($set_query);
+      $set_query = mysql_query($query);
+      mysql_free_result($set_query);
     }
     $count = $count + 1;
-    if (($count % 100) == 0) break;
+    if (($count % 1000) == 0) break;
   }
 
   mysql_free_result($get_query);

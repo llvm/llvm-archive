@@ -15,20 +15,20 @@ BODY
 $mysql_link = mysql_connect("127.0.0.1", "llvm", "ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$query = "SELECT * FROM tests WHERE measure=\"dejagnu\" AND program LIKE \"%%\"";
+$query = "SELECT * FROM tests WHERE measure=\"dejagnu\" AND program LIKE \"%/llvm/test/%\"";
 if ($get_query = mysql_query($query)) {
   $count = 1;
   while ($row = mysql_fetch_assoc($get_query)) {
     $old = $row['program'];
     $subpatterns = explode("/llvm/test/", $old, 2);
     $after = $subpatterns[1];
-    print "$count: $new\n";
+    print "$count: $new<BR>\n";
     if (isset($new)) {
       $new = "test/".$after;
       $result = $row['result'];
       $night =  $row['night'];
       $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"dejagnu\"";
-      print "$query\n";
+      print "$query<BR>\n";
 #      $set_query = mysql_query($query);
 #      mysql_free_result($set_query);
     }

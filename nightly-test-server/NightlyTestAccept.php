@@ -138,18 +138,13 @@ function WriteFile($filename, $contents) {
  *
  *******************************************************************************/
 function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version) {
-  $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
+  $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" AND os=\"$os\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
 
   $machine_query = mysql_query($query) or die(mysql_error());
   $row = mysql_fetch_assoc($machine_query);
   mysql_free_result($machine_query);
     
-  if($row &&
-     StringEqual($row['uname'], $uname) &&
-     StringEqual($row['hardware'], $hardware) &&
-     StringEqual($row['os'], $os) &&
-     StringEqual($row['nickname'], $nickname) &&
-     StringEqual($row['gcc'], $gcc_version)) {
+  if ($row) {
     return true;
   }
 
@@ -190,8 +185,7 @@ function AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, $dir
  *
  *******************************************************************************/
 function GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version) {
-  $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" ".
-           "AND os=\"$os\" AND name=\"$name\" AND gcc=\"$gcc_version\"";
+  $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" AND os=\"$os\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
   $machine_query = mysql_query($query) or die(mysql_error());
   $row = mysql_fetch_assoc($machine_query);
   mysql_free_result($machine_query);

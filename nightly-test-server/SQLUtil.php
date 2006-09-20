@@ -15,7 +15,7 @@ BODY
 $mysql_link = mysql_connect("127.0.0.1", "llvm", "ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$query = "SELECT * FROM tests WHERE measure=\"dejagnu\"";
+$query = "SELECT * FROM tests WHERE measure=\"dejagnu\" AND program LIKE \"%/llvm/test/%\"";
 if ($get_query = mysql_query($query)) {
   $count = 1;
   while ($row = mysql_fetch_assoc($get_query)) {

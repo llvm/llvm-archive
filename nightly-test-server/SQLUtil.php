@@ -20,18 +20,19 @@ if ($get_query = mysql_query($query)) {
   $count = 1;
   while ($row = mysql_fetch_assoc($get_query)) {
     $old = $row['program'];
-    $subpatterns = array();
-    if (preg_match("/(.*)\/llvm\/test\/(.*)/", $old, $subpatterns)) {
-      list($ignore, $before, $after) = $subpatterns;
+    $subpatterns = explode("/llvm/test/", $old, 2);
+    $new = $subpatterns[1];
+    if (isset($new)) {
       $new = "test/".$after;
       $result = $row['result'];
       $night =  $row['night'];
       $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"dejagnu\"";
-      $set_query = mysql_query($query);
-      mysql_free_result($set_query);
+      print "$query\n";
+#      $set_query = mysql_query($query);
+#      mysql_free_result($set_query);
+      $count = $count + 1;
+      if (($count % 100) == 0) break;
     }
-    if (($count % 1000) == 0) print "Count = $count<BR>\n";
-    $count++;
   }
 
   mysql_free_result($get_query);

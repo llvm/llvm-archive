@@ -22,6 +22,7 @@ if ($get_query = mysql_query($query)) {
     $old = $row['program'];
     $subpatterns = explode("/llvm/test/", $old, 2);
     $new = $subpatterns[1];
+    print "$count: $new\n";
     if (isset($new)) {
       $new = "test/".$after;
       $result = $row['result'];
@@ -30,9 +31,9 @@ if ($get_query = mysql_query($query)) {
       print "$query\n";
 #      $set_query = mysql_query($query);
 #      mysql_free_result($set_query);
-      $count = $count + 1;
-      if (($count % 100) == 0) break;
     }
+    $count = $count + 1;
+    if (($count % 100) == 0) break;
   }
 
   mysql_free_result($get_query);

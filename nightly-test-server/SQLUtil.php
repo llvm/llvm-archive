@@ -15,7 +15,7 @@ BODY
 $mysql_link = mysql_connect("127.0.0.1", "llvm", "ll2002vm") or die("Error: could not connect to database!\n");
 mysql_select_db("nightlytestresults");
 
-$query = "SELECT * FROM tests";
+$query = "SELECT * FROM tests WHERE measure=\"dejagnu\"";
 if ($get_query = mysql_query($query)) {
   while ($row = mysql_fetch_assoc($get_query)) {
     $old = $row['program'];
@@ -24,9 +24,8 @@ if ($get_query = mysql_query($query)) {
       list($ignore, $before, $after) = $subpatterns;
       $new = "test/".$after;
       $result = $row['result'];
-      $measure = $row['measure'];
       $night =  $row['night'];
-      $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"$measure\"";
+      $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"dejagnu\"";
       $set_query = mysql_query($query);
       mysql_free_result($set_query);
     }

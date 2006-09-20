@@ -24,8 +24,11 @@ if ($get_query = mysql_query($query)) {
     if (preg_match("/(.*)\/llvm\/test\/(.*)/", $old, $subpatterns)) {
       list($ignore, $before, $after) = $subpatterns;
       $new = "test/".$after;
-      print "OLD: $old<BR>\n";
-      print "NEW: $new<BR><BR>\n";
+      $result = $row['result'];
+      $measure = $row['measure'];
+      $night =  $row['night'];
+      $set_query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"$measure\"";
+      print "$set_query<BR>\n";
       $count =  $count + 1;
       if ($count > 100) {
         break;

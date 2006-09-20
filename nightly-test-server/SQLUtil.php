@@ -17,7 +17,6 @@ mysql_select_db("nightlytestresults");
 
 $query = "SELECT * FROM tests";
 if ($get_query = mysql_query($query)) {
-  $count = 0;
   while ($row = mysql_fetch_assoc($get_query)) {
     $old = $row['program'];
     $subpatterns = array();
@@ -27,12 +26,9 @@ if ($get_query = mysql_query($query)) {
       $result = $row['result'];
       $measure = $row['measure'];
       $night =  $row['night'];
-      $set_query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"$measure\"";
-      print "$set_query<BR>\n";
-      $count =  $count + 1;
-      if ($count > 100) {
-        break;
-      }
+      $query = "UPDATE tests SET program=\"$new\" WHERE night=$night AND program=\"$old\" AND result=\"$result\" AND measure=\"$measure\"";
+      $set_query = mysql_query($query);
+      mysql_free_result($set_query);
     }
   }
 
@@ -41,6 +37,7 @@ if ($get_query = mysql_query($query)) {
   $error = mysql_error();
   print "<B>$error</B><BR>\n";
 }
+  print "<B>DONE</B><BR>\n";
 
 mysql_close($mysql_link);
 

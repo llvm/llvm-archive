@@ -727,19 +727,19 @@ if ($print_debug) {
  * Adding test results pass/fail/xfail status to database
  *
  *******************************************************************************/
+print "$all_tests<BR><BR>\n";
 $ALL_TESTS = split("\n", $all_tests);
 foreach ($ALL_TESTS as $info) {
   $subpatterns = array();
   if (preg_match("/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/", $info, $subpatterns)) {
     list($ignore1, $ignore2, $result, $measure, $program) = $subpatterns;
+    print "$program, $result, $measure, $night_id<BR>\n";
     AddTests($program, $result, $measure, $night_id);
-  } else {
-    print "Unrecognized test: $info\n";
   }
 }
 
 if ($print_debug) {
-  print "Dejagnu Tests Added\n";
+  print "Program Tests Added\n";
 }
 
 foreach ($DEJAGNUTESTS_RESULTS as $info) {
@@ -965,8 +965,8 @@ if (!file_exists("$machine_id")) {
 chdir("$cwd/machines/$machine_id");
 
 WriteFile("$db_date-Build-Log.txt", $build_log);
-WriteFile("$db_date-O-files.txt", $o_file_size);
-WriteFile("$db_date-A-files.txt", $a_file_size);
+// WriteFile("$db_date-O-files.txt", $o_file_size);
+// WriteFile("$db_date-A-files.txt", $a_file_size);
 
 $sentdata="";
 foreach ($_GET as $key => $value) {

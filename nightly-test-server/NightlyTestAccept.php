@@ -957,8 +957,6 @@ if (!file_exists("$machine_id")) {
 chdir("$cwd/machines/$machine_id");
 
 WriteFile("$db_date-Build-Log.txt", $build_log);
-// WriteFile("$db_date-O-files.txt", $o_file_size);
-// WriteFile("$db_date-A-files.txt", $a_file_size);
 
 $sentdata="";
 foreach ($_GET as $key => $value) {

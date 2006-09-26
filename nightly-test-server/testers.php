@@ -36,8 +36,9 @@ print "\t<tr bgcolor=#FFCC99>\n";
         print "\t\t<td>ID</td>\n";
         print "\t\t<td>Nickname</td>\n";
         print "\t\t<td>Machine name</td>\n";
-        print "\t\t<td>Operating System</td>\n";
+        print "\t\t<td>Operating system</td>\n";
         print "\t\t<td>Hardware</td>\n";
+        print "\t\t<td>GCC version</td>\n";
         print "\t\t<td>Time of last test</td>\n";
         print "\t\t<td>Build status of last test</td>\n";
 print "\t</tr>\n";
@@ -61,6 +62,7 @@ while($row = mysql_fetch_array($result)){
 	print "\t\t<td><a href=\"machine.php?machine={$row['id']}\">{$row['name']}</a></td>\n";
         print "\t\t<td>{$row['os']}</td>\n";
         print "\t\t<td>{$row['hardware']}</td>\n";
+        print "\t\t<td>{$row['gcc']}</td>\n";
         print "\t\t<td>{$latest_test['added']}</td>\n";
         print "\t\t<td>{$latest_test['buildstatus']}</td>\n";
         print "\t</tr>\n";

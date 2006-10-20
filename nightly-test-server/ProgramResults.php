@@ -676,6 +676,8 @@ function getPassingTests($id, $test_hash) {
     print "<BR>";
     print "Diff reasons: " . FailReasonsAsString($diff_reasons);
     print "<BR>";
+    print  count($diff_reasons);
+    print "<BR>";
     print "<BR>";
 
     if (count($diff_reasons) > 0) {

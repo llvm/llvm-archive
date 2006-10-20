@@ -387,30 +387,41 @@ function buildResultsHistory($machine_id, $programs, $measure , $start="2000-01-
 
 
 /*
- * Return reason why a llvm test failed.
+ * Return reasons why a llvm test failed as an array.
  */
-function getFailReasons($test_result) {
-  $result = "";
+function getFailReasonsAsList($test_result) {
+  $result = array();
   $phases = split(", ", $test_result);
   
   for ($i = 0; $i < count($phases); $i++) {
     $phase = $phases[$i];
     if (strpos($phase, "*") !== false) {
       list($tool, $tool_result) = split(": ", $phase);
-      if (strcmp($result, "") != 0) {
-        $result .= ", ";
-      }
-      $result .= $tool;
+      array_push($result, $tool);
     }
-  }
-  
-  if (strcmp($result, "") != 0) {
-    $result = " [" . $result . "]";
   }
   
   return $result;
 }
 
+/*
+ * Return reasons why a llvm test failed as a string.
+ */
+function FailReasonsAsString($reasons) {
+  if (count($reasons) != 0) {
+    $result = " [";
+    for ($i = 0; $i < count($reasons); $i++) {
+      if ($i != 0) {
+        $result .= ", ";
+      }
+      $result .= $reasons[$i];
+    }
+    
+    $result .= "] ";
+  }
+  
+  return $result;
+}
 
 /*
  * Trim test path to exclude redundant info.
@@ -447,7 +458,7 @@ function getFailures($night_id) {
       $test_result = $row['result'];
       if (!isTestPass($test_result)) {
         $program = trimTestPath($row['program']);
-        $reasons = getFailReasons($test_result);        
+        $reasons = FailReasonsAsString(getFailReasonsAsList($test_result));        
         $result .= $program . $reasons . "\n";
       }
     }
@@ -604,6 +615,7 @@ function isTestPass($test_result) {
  */
 function getTestFailSet($id) {
   $test_hash = array();
+  
   $query = "SELECT program, result, measure FROM tests WHERE night=$id AND result=\"FAIL\" ORDER BY program ASC, measure ASC";
   $program_query = mysql_query($query) or die (mysql_error());
   while ($row = mysql_fetch_assoc($program_query)) {
@@ -613,8 +625,24 @@ function getTestFailSet($id) {
     $test_hash[$key] = true;
   }
   mysql_free_result($program_query);
+  
+  $query = "SELECT program, result FROM program WHERE night=$night_id ORDER BY program ASC";
+  $program_query = mysql_query($query) or die (mysql_error());
+  while($row = mysql_fetch_assoc($program_query)) {
+    $program = trimTestPath($row['program']);
+    $test_result = $row['result'];
+    $reasons = getFailReasonsAsList($test_result);
+    
+    if (count($reasons) != 0) {
+      $test_hash[$program] = $reasons;
+    }
+  }
+  mysql_free_result($program_query);
+  
+  
   return $test_hash;
 }
+
 
 /*
  * Get list of newly passing tests
@@ -635,6 +663,23 @@ function getPassingTests($id, $test_hash) {
     }
   }
   mysql_free_result($program_query);
+  
+  $query = "SELECT program, result FROM program WHERE night=$night_id ORDER BY program ASC";
+  $program_query = mysql_query($query) or die (mysql_error());
+  while($row = mysql_fetch_assoc($program_query)) {
+    $program = trimTestPath($row['program']);
+    $test_result = $row['result'];
+    $new_reasons = getFailReasonsAsList($test_result);
+    $old_reasons = isset($test_hash[$program]) ? $test_hash[$program] : array();
+    $diff_reasons = array_diff($old_reasons, $new_reasons);
+    $now_passing_reasons = array_intersect($diff_reasons, $old_reasons);
+
+    if (count($now_passing_reasons) > 0) {
+      $reasons .= $program . FailReasonsAsString($now_passing_reasons) . "\n";   
+    }
+  }
+  mysql_free_result($program_query);
+  
   return $passing;
 }
 
@@ -716,10 +761,10 @@ function getPreviousWorkingNight($night_id ){
  *
  */
 function getEmailReport($cur_id, $prev_id) {
-  $added = getNewTests($cur_id, $prev_id);
-  $removed = getRemovedTests($cur_id, $prev_id);
   $passing = getFixedTests($cur_id, $prev_id);
   $failing = getBrokenTests($cur_id, $prev_id);
+  $added = getNewTests($cur_id, $prev_id);
+  $removed = getRemovedTests($cur_id, $prev_id);
   
   $email = "";
   if (strcmp($passing, "") == 0) {

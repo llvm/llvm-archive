@@ -670,11 +670,11 @@ function getPassingTests($id, $test_hash) {
     $old_reasons = isset($test_hash[$program]) ? $test_hash[$program] : array();
     $diff_reasons = array_diff($old_reasons, $new_reasons);
     
-    print FailReasonsAsString($new_reasons);
+    print "New reasons: " . FailReasonsAsString($new_reasons);
     print "<BR>";
-    print FailReasonsAsString($old_reasons);
+    print "Old reasons: " . FailReasonsAsString($old_reasons);
     print "<BR>";
-    print FailReasonsAsString($diff_reasons);
+    print "Diff reasons: " . FailReasonsAsString($diff_reasons);
     print "<BR>";
     print "<BR>";
 

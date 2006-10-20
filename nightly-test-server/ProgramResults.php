@@ -668,10 +668,9 @@ function getPassingTests($id, $test_hash) {
     $test_result = $row['result'];
     $new_reasons = getFailReasonsAsList($test_result);
     $diff_reasons = array_diff($old_reasons, $new_reasons);
-    $now_passing_reasons = array_intersect($diff_reasons, $old_reasons);
 
     if (count($now_passing_reasons) > 0) {
-      $reasons .= $program . FailReasonsAsString($now_passing_reasons) . "\n";   
+      $reasons .= $program . FailReasonsAsString($diff_reasons) . "\n";   
     }
   }
   mysql_free_result($program_query);

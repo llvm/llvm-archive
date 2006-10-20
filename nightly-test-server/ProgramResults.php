@@ -668,7 +668,7 @@ function getPassingTests($id, $test_hash) {
     $test_result = $row['result'];
     $new_reasons = getFailReasonsAsList($test_result);
     $old_reasons = isset($test_hash[$program]) ? $test_hash[$program] : array();
-    $diff_reasons = array_diff($new_reasons, $old_reasons);
+    $diff_reasons = array_diff($old_reasons, $new_reasons);
 
     if (count($diff_reasons) > 0) {
       $passing .= $program . FailReasonsAsString($diff_reasons) . "\n";   

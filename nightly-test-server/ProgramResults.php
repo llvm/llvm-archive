@@ -396,7 +396,9 @@ function getFailReasonsAsList($test_result) {
     $phase = $phases[$i];
     if (strpos($phase, "*") !== false) {
       list($tool, $tool_result) = split(": ", $phase);
-      array_push($result, $tool);
+      if (strlen($tool) != 0) {
+        array_push($result, $tool);
+      }
     }
   }
   

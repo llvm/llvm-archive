@@ -143,8 +143,8 @@ function GetDayResults($night_id, $array_of_measures ){
     $data = str_replace("<br>", " ", $data);
     foreach ($array_of_measures as $x){
       $value=array();
-      $reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?])/";
-      #print "{$program} => running preg_match($reg_exp, $data, $value)<br>\n";
+      $reg_exp="/$x:\s*([[0-9\.]+|\*|\-|n\/a|\?],)/";
+      print "{$program} => running preg_match($reg_exp, $data, $value)<br>\n";
       preg_match($reg_exp, $data, $value);
       if(isset($value[1])){
         array_push($result[$program], $value[1]);

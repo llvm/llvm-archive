@@ -36,7 +36,7 @@ $category_match=array("GCCAS","Bytecode","LLC\<br\>compile",
 $category_array=array("GCCAS","Bytecode","LLC compile","LLC\-BETA compile",
                  "JIT codegen","GCC","CBE","LLC",
                  "LLC\-BETA","JIT","GCC\/\s*CBE", "GCC\/\s*LLC",
-                 "GCC\/\s*LLC\-BETA","LLC\/ LLC\-BETA");
+                 "GCC\/\s*LLC\-BETA","LLC\/\s*LLC\-BETA");
 $category_print_array=array("GCCAS","Bytecode","LLC compile","LLC-BETA compile",
                  "JIT codegen","GCC","CBE","LLC",
                  "LLC-BETA","JIT","GCC/ CBE", "GCC/ LLC",

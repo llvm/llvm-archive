@@ -426,9 +426,14 @@ function FailReasonsAsString($reasons) {
  * Trim test path to exclude redundant info.
  */
 function trimTestPath($program) {
-  list($head, $tail) = split("/llvm/test/", $program);
-  if (isset($tail)) {
-    $program = "test/" . $tail;
+  $parts = split("llvm/test/", $program);
+  if ($parts != FALSE) {
+    if (count($parts) >= 2) {
+      $tail = $x[1];
+      if (isset($tail)) {
+        $program = "test/" . $tail;
+      }
+    }
   }
   return rtrim($program, ": ");;
 }

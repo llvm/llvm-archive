@@ -21,7 +21,6 @@
 #include <list>
 #include <map>
 #include <iostream>
-#define LLVA_KERNEL 1
 namespace llvm {
 
   //typedef map<const DSNode *, Value*> PoolDescriptorMapType;

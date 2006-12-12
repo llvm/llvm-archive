@@ -37,8 +37,6 @@ typedef std::map<const DSNode *, Value*> PoolDescriptorMapType;
 FunctionPass *createDataStructureStatsPass();
 FunctionPass *createDataStructureGraphCheckerPass();
 
-#define LLVA_KERNEL 1
-
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
   /// isPointerType - Return true if this first class type is big enough to hold

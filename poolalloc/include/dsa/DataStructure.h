@@ -21,6 +21,8 @@
 #include "llvm/ADT/hash_set"
 #include "llvm/ADT/EquivalenceClasses.h"
 
+
+
 namespace llvm {
 
 class Type;
@@ -30,10 +32,12 @@ class DSGraph;
 class DSCallSite;
 class DSNode;
 class DSNodeHandle;
+typedef std::map<const DSNode *, Value*> PoolDescriptorMapType;
 
 FunctionPass *createDataStructureStatsPass();
 FunctionPass *createDataStructureGraphCheckerPass();
 
+#define LLVA_KERNEL 1
 
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
@@ -42,7 +46,6 @@ namespace DataStructureAnalysis {
   ///
   bool isPointerType(const Type *Ty);
 }
-
 
 // LocalDataStructures - The analysis that computes the local data structure
 // graphs for all of the functions in the program.
@@ -54,6 +57,10 @@ class LocalDataStructures : public ModulePass {
   // DSInfo, one graph for each function
   hash_map<Function*, DSGraph*> DSInfo;
   DSGraph *GlobalsGraph;
+
+#ifdef LLVA_KERNEL
+  Function *AddPoolDescToMetaPool;
+#endif  
 
   /// GlobalECs - The equivalence classes for each global value that is merged
   /// with other global values in the DSGraphs.

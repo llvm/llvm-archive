@@ -15,7 +15,7 @@
 #ifndef LLVM_ANALYSIS_DSGRAPH_H
 #define LLVM_ANALYSIS_DSGRAPH_H
 
-#include "llvm/Analysis/DataStructure/DSNode.h"
+#include "dsa/DSNode.h"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include <list>

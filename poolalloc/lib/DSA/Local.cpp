@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define LLVA_KERNEL 1
 #include "llvm/ADT/Statistic.h"
 #include "dsa/DataStructure.h"
 #include "dsa/DSGraph.h"
@@ -384,6 +383,7 @@ void GraphBuilder::visitSetCondInst(SetCondInst &SCI) {
 
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
+#ifdef LLVA_KERNEL
 #if 1
   int debug = 0;
   if (isa<Instruction>(GEP)) {
@@ -399,6 +399,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 #endif
     }
   }
+#endif
 #endif
 
   DSNodeHandle Value = getValueDest(*GEP.getOperand(0));
@@ -436,7 +437,6 @@ if (debug) std::cerr << "LLVA: GEP: All Zeros\n";
     // If the node had to be folded... exit quickly
     setDestTo(GEP, Value);  // GEP result points to folded node
 
-if (debug) std::cerr << "LLVA: GEP: Funny Return\n";
     return;
   }
 
@@ -551,7 +551,6 @@ if (debug) std::cerr << "LLVA: GEP: Funny Return\n";
   }
 #endif
 
-if (debug) std::cerr << "LLVA: GEP: Normal Return\n";
 }
 
 void GraphBuilder::visitLoadInst(LoadInst &LI) {
@@ -587,6 +586,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   // Avoid adding edges from null, or processing non-"pointer" stores
   if (isPointerType(StoredTy))
     Dest.addEdgeTo(getValueDest(*SI.getOperand(0)));
+#ifdef LLVA_KERNEL
 #if 1
   {
     if (SI.getParent()->getParent()->getName() == "alloc_vfsmnt") {
@@ -596,6 +596,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
           std::cerr << "LLVA: Store: Pool for " << SI.getName() << " is " << G.getPoolDescriptorsMap()[N]->getName() << "\n";
     }
   }
+#endif
 #endif
 }
 

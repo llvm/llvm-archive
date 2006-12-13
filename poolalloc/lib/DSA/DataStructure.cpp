@@ -35,7 +35,6 @@
 using namespace llvm;
 
 #define COLLAPSE_ARRAYS_AGGRESSIVELY 0
-#define LLVA_KERNEL 1
 namespace {
   Statistic<> NumFolds          ("dsa", "Number of nodes completely folded");
   Statistic<> NumCallNodesMerged("dsa", "Number of call nodes merged");

@@ -1315,8 +1315,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-LLVM_SRC_ROOT="`(cd ../..; pwd)`"
+LLVM_SRC_ROOT="`(cd $srcdir/../..; pwd)`"
 LLVM_OBJ_ROOT="`(cd ../..; pwd)`"
+
 ac_aux_dir=
 for ac_dir in $LLVM_SRC_ROOT/autoconf $srcdir/$LLVM_SRC_ROOT/autoconf; do
   if test -f $ac_dir/install-sh; then

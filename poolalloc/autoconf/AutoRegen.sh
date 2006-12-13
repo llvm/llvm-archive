@@ -41,8 +41,8 @@ else
 fi
 # Patch the LLVM_ROOT in configure.ac, if it needs it
 cp configure.ac configure.bak
-sed -e "s#^LLVM_SRC_ROOT=.*#LLVM_SRC_ROOT=\"$llvm_src_root\"#" \
-    -e "s#^LLVM_OBJ_ROOT=.*#LLVM_OBJ_ROOT=\"$llvm_obj_root\"#" configure.bak > configure.ac
+#sed -e "s#^LLVM_SRC_ROOT=.*#LLVM_SRC_ROOT=\"$llvm_src_root\"#" \
+#    -e "s#^LLVM_OBJ_ROOT=.*#LLVM_OBJ_ROOT=\"$llvm_obj_root\"#" configure.bak > configure.ac
 echo "Regenerating aclocal.m4 with aclocal"
 rm -f aclocal.m4
 aclocal -I $llvm_m4 -I "$llvm_m4/.." || die "aclocal failed"

@@ -4,8 +4,9 @@ dnl **************************************************************************
 AC_INIT([[[Pool Allocation]]],[[[1.0]]],[llvmbugs@cs.uiuc.edu])
 
 dnl Identify where LLVM source tree is
-LLVM_SRC_ROOT="`(cd ../..; pwd)`"
+LLVM_SRC_ROOT="`(cd $srcdir/../..; pwd)`"
 LLVM_OBJ_ROOT="`(cd ../..; pwd)`"
+
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
 AC_CONFIG_AUX_DIR($LLVM_SRC_ROOT/autoconf)

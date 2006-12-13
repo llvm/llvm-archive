@@ -15,11 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "ECGraphs"
-#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "dsa/DataStructure.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/DataStructure/DSGraph.h"
+#include "dsa/DSGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -213,7 +213,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
   // Now that all of the equivalences have been built, merge the graphs for
   // each equivalence class.
   //
-  DOUT << "\nIndirect Function Equivalence Sets:\n";
+  DEBUG(std::cerr << "\nIndirect Function Equivalence Sets:\n");
   for (EquivalenceClasses<Function*>::iterator EQSI = FuncECs.begin(), E =
          FuncECs.end(); EQSI != E; ++EQSI) {
     if (!EQSI->isLeader()) continue;
@@ -229,10 +229,10 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     Function* LF = *SI;
 
 #ifndef NDEBUG
-    DOUT <<"  Equivalence set for leader " << LF->getName() <<" = ";
+    DEBUG(std::cerr <<"  Equivalence set for leader " << LF->getName() <<" = ");
     for (SN = SI; SN != FuncECs.member_end(); ++SN)
-      DOUT << " " << (*SN)->getName() << "," ;
-    DOUT << "\n";
+      DEBUG(std::cerr << " " << (*SN)->getName() << "," );
+    DEBUG(std::cerr << "\n");
 #endif
 
     // This equiv class has multiple functions: merge their graphs.  First,
@@ -286,7 +286,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
       DEBUG(MergedG.AssertGraphOK());
     }
   }
-  DOUT << "\n";
+  DEBUG(std::cerr << "\n");
 }
 
 
@@ -322,7 +322,8 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
   if (It != ValMap.end() && It->first == &FG)
     return It->second;
 
-  DOUT << "    ProcessSCC for function " << FG.getFunctionNames() << "\n";
+  DEBUG(std::cerr << "    ProcessSCC for function " << FG.getFunctionNames()
+                  << "\n");
 
   unsigned Min = NextID++, MyID = Min;
   ValMap[&FG] = Min;
@@ -385,7 +386,8 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
 /// processGraph - Process the CBU graphs for the program in bottom-up order on
 /// the SCC of the __ACTUAL__ call graph.  This builds final folded CBU graphs.
 void EquivClassGraphs::processGraph(DSGraph &G) {
-  DOUT << "    ProcessGraph for function " << G.getFunctionNames() << "\n";
+  DEBUG(std::cerr << "    ProcessGraph for function "
+                  << G.getFunctionNames() << "\n");
 
   hash_set<Instruction*> calls;
 
@@ -432,15 +434,15 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
                        DSGraph::StripAllocaBit |
                        DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
-        DOUT << "    Inlining graph [" << i << "/"
-             << G.getFunctionCalls().size()-1
-             << ":" << TNum << "/" << Num-1 << "] for "
-             << CalleeFunc->getName() << "["
-             << CalleeGraph->getGraphSize() << "+"
-             << CalleeGraph->getAuxFunctionCalls().size()
-             << "] into '" /*<< G.getFunctionNames()*/ << "' ["
-             << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
-             << "]\n";
+        DEBUG(std::cerr << "    Inlining graph [" << i << "/"
+              << G.getFunctionCalls().size()-1
+              << ":" << TNum << "/" << Num-1 << "] for "
+              << CalleeFunc->getName() << "["
+              << CalleeGraph->getGraphSize() << "+"
+              << CalleeGraph->getAuxFunctionCalls().size()
+              << "] into '" /*<< G.getFunctionNames()*/ << "' ["
+              << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+              << "]\n");
       }
     }
 
@@ -474,5 +476,6 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
          E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
-  DOUT << "  -- DONE ProcessGraph for function " << G.getFunctionNames() <<"\n";
+  DEBUG(std::cerr << "  -- DONE ProcessGraph for function "
+                  << G.getFunctionNames() << "\n");
 }

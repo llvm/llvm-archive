@@ -20,8 +20,7 @@
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/hash_set"
 #include "llvm/ADT/EquivalenceClasses.h"
-
-
+#include "poolalloc/Config/config.h"
 
 namespace llvm {
 

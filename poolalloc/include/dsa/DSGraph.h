@@ -18,6 +18,8 @@
 #include "dsa/DSNode.h"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "poolalloc/Config/config.h"
+
 #include <list>
 #include <map>
 #include <iostream>

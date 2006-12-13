@@ -16,6 +16,7 @@
 
 #include "dsa/DataStructure.h"
 #include "dsa/DSGraph.h"
+#include "dsa/CallTargets.h"
 #include "poolalloc/PoolAllocate.h"
 #include "Heuristic.h"
 #include "llvm/Constants.h"
@@ -27,7 +28,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "dsa/CallTargets.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"

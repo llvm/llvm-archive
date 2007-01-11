@@ -91,7 +91,8 @@ dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 
 dnl Location of SAFECode
-AC_ARG_WITH(safecodesrc,AS_HELP_STRING(--with-safecode,Location of SAFECode Source Code),AC_SUBST(SAFECODESRC,[$withval]),AC_SUBST(SAFECODESRC,[`cd ../safecode; pwd`]))
+AC_ARG_WITH(safecodesrc,AS_HELP_STRING(--with-safecode,Location of SAFECode Source Code),AC_SUBST(SAFECODESRC,[$withval]),AC_SUBST(SAFECODESRC,[`cd $LLVM_SRC_ROOT/projects/safecode; pwd`]))
+AC_ARG_WITH(safecodeobj,AS_HELP_STRING(--with-safecode,Location of SAFECode Object Code),AC_SUBST(SAFECODEOBJ,[$withval]),AC_SUBST(SAFECODEOBJ,[`cd $LLVM_OBJ_ROOT/projects/safecode; pwd`]))
 
 dnl **************************************************************************
 dnl * Create the output files

@@ -1,5 +1,8 @@
 /* include/llvm/Config/config.h.in.  Generated from autoconf/configure.ac by autoheader.  */
 
+/* Define to 1 if you have the 'posix_memalign' function. */
+#undef HAVE_POSIX_MEMALIGN
+
 /* Define if dlopen(0) will open the symbols of the program */
 #undef CAN_DLOPEN_SELF
 

@@ -18,7 +18,7 @@ mysql_select_db("nightlytestresults");
                         include "sidebar.php";
                         ?>
                 </td>
-                <td>
+                <td valign=top>
 
 <?
 print "<p align=right><a href='locgraph.php?xsize=900&ysize=600'><img src='locgraph.php'  border=0 align=center height=250 width=400 alt='Lines of code graph'></a></p>\n";

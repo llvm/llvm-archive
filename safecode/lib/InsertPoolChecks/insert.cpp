@@ -451,7 +451,7 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
           args.push_back(CastSourcePointer);
           args.push_back(CastCI);
           new CallInst(PoolCheckArray,args,"", InsertPt);
-#if 0
+#if 1
         } else if (Fop->getName() == "memset") {
           Value *PH = getPoolHandle(CI->getOperand(1), F); 
           Instruction *InsertPt = CI->getNext();
@@ -604,7 +604,8 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
         PointerOperand = cExpr->getOperand(0);
     }
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
-      if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+      const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
+      if (AT && (AT->getNumElements())) {
         // we need to insert an actual check
         // It could be a select instruction
         // First get the size
@@ -652,7 +653,6 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
       }
     }
 
-#if 0
     //No checks for incomplete nodes 
     if (!EnableIncompleteChecks) {
       if (Node->isIncomplete()) {
@@ -660,7 +660,6 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
         continue;
       }
     }
-#endif
 
     //
     // We cannot insert an exactcheck().  Insert a pool check.
@@ -669,11 +668,7 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
     //  Currently, we cannot register stack or global memory with pools.  If
     //  the node is from alloc() or is a global, do not insert a poolcheck.
     // 
-#if 0
     if ((!PH) || (Node->isAllocaNode()) || (Node->isGlobalNode())) {
-#else
-    if (!PH) {
-#endif
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
 #if 0

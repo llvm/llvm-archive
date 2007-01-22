@@ -1232,6 +1232,18 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     if (DSNode *N = RetNH.getNode())
       N->setModifiedMarker()->setReadMarker();
     return true;
+#if 0
+  } else if (F->getName() == "llva_save_stackp") {
+      // Create a new DSNode for the memory returned by llva_save_stackp()
+      DSNode *N = createNode();
+      N->setAllocaNodeMarker();
+
+      //
+      // TODO:
+      //  For now, don't worry about creating a meta-pool.  Stack locations
+      //  are ignored by our analysis.
+      //
+#endif
   } else if (F->getName() == "__generic_copy_from_user") {
     if (CS.getCaller()->getName() == "kmem_cache_alloc")
         return false;

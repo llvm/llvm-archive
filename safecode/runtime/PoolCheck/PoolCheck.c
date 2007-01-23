@@ -19,6 +19,17 @@
 #endif
 #define DEBUG(x) 
 
+#if 1
+/*
+ * These are symbols exported by the kernel so that we can figure out where
+ * various sections are.
+ */
+extern char _etext;
+extern char _edata;
+extern char __bss_start;
+extern char _end;
+#endif
+
 /*===----------------------------------------------------------------------===*/
 extern unsigned PageSize;
 
@@ -72,24 +83,62 @@ void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
 }
 
 
+/*
+ * Function: poolcheckoptim()
+ *
+ * Description:
+ *  Determine whether the pointer is within the pool.
+ *
+ * Return value:
+ *  true  - The pointer is within the pool.
+ *  false - The pointer is not within the pool.
+ */
 unsigned char poolcheckoptim(void *Pool, void *Node) {
   Splay *psplay;
   Splay *ref;
-  /* PageSize needs to be modified accordingly */
 #if 0
-  void *PS = (void *)((unsigned)Node & ~(PageSize-1));
-#else
-  /* Slab Size in bytes */
+  /*
+   * Determine if this is a global variable in the data section.
+   */
+  if (((Node) >= &_etext) && ((Node) <= &_edata))
+  {
+    return;
+  }
+                                                                                
+  /*
+   * Determine if this is a global variable in the BSS section.
+   */
+  if ((((Node)) >= &__bss_start) && (((Node)) <= &_end))
+  {
+    return;
+  }
+#endif
+
+  /*
+   * Determine the size of the slabs used in this pool.
+   * Then, assuming this is the pool in which this node lives, determine
+   * the slab to which the node would belong.
+   */
   unsigned int SlabSize = poolcheckslabsize (Pool);
   void *PS = (void *)((unsigned)Node & ~(SlabSize-1));
-#endif
+  poolcheckinfo ("Slab Size is ", SlabSize);
+  poolcheckinfo ("Looking for slab", PS);
+
+  /*
+   * Scan through the list of slabs belonging to the pool and determine
+   * whether this node is in one of those slabs.
+   */
   PoolCheckSlab * PCS = poolcheckslab(Pool);
   while (PCS) {
+    poolcheckinfo ("Checking slab", PCS->Slab);
     if (PCS->Slab == PS) return true;
     /* we can optimize by moving it to the front of the list */
     PCS = PCS->nextSlab;
   }
-  /* here we check for the splay tree */
+
+  /*
+   * Here we check for the splay tree
+   */
   psplay = poolchecksplay(Pool);
   ref = splay_find_ptr(psplay, (unsigned long) Node);
   if (ref) {
@@ -108,6 +157,15 @@ inline unsigned char refcheck(Splay *splay, void *Node) {
 }
 
 
+/*
+ * Function: poolcheckarrayoptim()
+ *
+ * Description:
+ *  This function determines:
+ *    1) Whether the source node of a GEP is in the correct pool, and
+ *    2) Whether the result of the GEP expression is in the same pool as the
+ *       source.
+ */
 unsigned char poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeResult) {
   Splay *psplay = poolchecksplay(Pool);
   Splay *ref = splay_find_ptr(psplay, (unsigned long)NodeSrc);
@@ -117,6 +175,13 @@ unsigned char poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeRes
   return false;
 }
 
+/*
+ * Function: poolcheckarray()
+ *
+ * Description:
+ *  This function performs the same check as poolcheckarrayoptim(), but
+ *  checks all the pools associated with a meta-pool.
+ */
 void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   MetaPoolTy *MetaPool = *MP;
   if (!MetaPool) {
@@ -131,9 +196,16 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
     if (poolcheckarrayoptim(Pool, NodeSrc, NodeResult)) return ;
     MetaPool = MetaPool->next;
   }
-  poolcheckfail ("poolcheck failure: Result \n", NodeResult);
+  poolcheckfail ("poolcheckarray failure: Result \n", NodeResult);
 }
 
+/*
+ * Function: poolcheck()
+ *
+ * Description:
+ *  Verify whether a node is located within one of the pools associated with
+ *  the MetaPool.
+ */
 void poolcheck(MetaPoolTy **MP, void *Node) {
   MetaPoolTy *MetaPool = *MP;
   if (!MetaPool) {
@@ -143,9 +215,13 @@ void poolcheck(MetaPoolTy **MP, void *Node) {
    * iteratively search through the list
    * Check if there are other efficient data structures.
   */
-  
+  poolcheckinfo ("Poolcheck: Called from ", __builtin_return_address(0));
+  poolcheckinfo ("Checking metapool ", MetaPool);
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
+#if 0
+    printpoolinfo (Pool);
+#endif
     if (poolcheckoptim(Pool, Node))   return;
     MetaPool = MetaPool->next;
   }
@@ -177,7 +253,7 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
 
   void exactcheck(int a, int b) {
     if ((0 > a) || (a >= b)) {
-      poolcheckfail ("exact check failed\n", a);
+      poolcheckfail ("exact check failed\n",  (a << 16) & (b));
     }
   }
 

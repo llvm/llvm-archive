@@ -204,7 +204,10 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
 std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
 #endif
     // FIXME: We cannot handle checks to global or stack positions right now.
-    if ((!PH) || (Node->isAllocaNode()) || (Node->isGlobalNode())) {
+    if ((!PH) || (Node->isIncomplete()) ||
+                 (Node->isAllocaNode()) ||
+                 (Node->isGlobalNode()) ||
+                 (!(Node->isHeapNode()))) {
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
       if (Node->isAllocaNode()) ++MissedStackChecks;
@@ -679,7 +682,13 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
     //  Currently, we cannot register stack or global memory with pools.  If
     //  the node is from alloc() or is a global, do not insert a poolcheck.
     // 
-    if ((!PH) || (Node->isAllocaNode()) || (Node->isGlobalNode())) {
+#if 0
+    if ((!PH) || (Node->isAllocaNode()) ||
+                 (Node->isGlobalNode()) ||
+                 (!(Node->isHeapNode()))) {
+#else
+    if (!PH) {
+#endif
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
 #if 0
@@ -749,11 +758,12 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
     Instruction *CastedPH = new CastInst(PH,
                                          PointerType::get(Type::SByteTy),
                                          "ph",InsertPt);
-    if (Node->isIncomplete()) {
+    if ((Node->isIncomplete()) || (Node->isAllocaNode()) ||
+        (Node->isGlobalNode()) || (!(Node->isHeapNode()))) {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(CastedPointerOperand);
       args.push_back(Casted);
-      CallInst * newCI = new CallInst(PoolCheckArray,args, "",InsertPt);
+      CallInst * newCI = new CallInst(PoolCheckIArray,args, "",InsertPt);
     } else {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(Casted);
@@ -785,6 +795,13 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
     FunctionType::get(Type::VoidTy,Arg2, false);
   PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
   
+  std::vector<const Type *> Arg3(1, VoidPtrType);
+  Arg3.push_back(VoidPtrType);
+  Arg3.push_back(VoidPtrType);
+  FunctionType *PoolCheckIArrayTy =
+    FunctionType::get(Type::VoidTy,Arg3, false);
+  PoolCheckIArray = M.getOrInsertFunction("poolcheckiarray", PoolCheckIArrayTy);
+
   std::vector<const Type *> FArg2(1, Type::UIntTy);
   FArg2.push_back(Type::IntTy);
   FunctionType *ExactCheckTy = FunctionType::get(Type::VoidTy, FArg2, false);

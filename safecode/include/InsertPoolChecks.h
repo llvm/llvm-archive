@@ -45,6 +45,7 @@ struct InsertPoolChecks : public ModulePass {
 #endif  
   Function *PoolCheck;
   Function *PoolCheckArray;
+  Function *PoolCheckIArray;
   Function *ExactCheck;
   Function *FunctionCheck;
   void addPoolCheckProto(Module &M);

@@ -165,6 +165,10 @@ inline unsigned char refcheck(Splay *splay, void *Node) {
  *    1) Whether the source node of a GEP is in the correct pool, and
  *    2) Whether the result of the GEP expression is in the same pool as the
  *       source.
+ *
+ * Return value:
+ *  true  - The source and destination were found in the pool.
+ *  false - Either the source or the destination were not found in the pool.
  */
 unsigned char poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeResult) {
   Splay *psplay = poolchecksplay(Pool);
@@ -197,6 +201,36 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
     MetaPool = MetaPool->next;
   }
   poolcheckfail ("poolcheckarray failure: Result \n", NodeResult);
+}
+
+/*
+ * Function: poolcheckiarray ()
+ *
+ * Description:
+ *  This function performs the same check as poolcheckarray() but
+ *  allows the check to succeed if the source node is not found.
+ */
+void poolcheckiarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  MetaPoolTy *MetaPool = *MP;
+  if (!MetaPool) {
+    poolcheckfail ("Empty meta pool? Src \n", NodeSrc);
+  }
+
+  /*
+   * iteratively search through the list
+   * Check if there are other efficient data structures.
+   */
+  while (MetaPool) {
+    void *Pool = MetaPool->Pool;
+    if (poolcheckoptim (Pool, NodeSrc))
+      if (poolcheckoptim (Pool, NodeResult))
+        return;
+      else
+        poolcheckfail ("poolcheckiarray failure: Result \n", NodeResult);
+    MetaPool = MetaPool->next;
+  }
+
+  return;
 }
 
 /*

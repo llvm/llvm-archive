@@ -40,6 +40,7 @@ extern "C" {
   void poolcheckregister(Splay *splay, void * allocaptr, unsigned NumBytes);
   void AddPoolDescToMetaPool(MetaPoolTy **MetaPool, void *PoolDesc);
   void poolcheckarray(MetaPoolTy **Pool, void *Node, void * Node1);
+  void poolcheckiarray(MetaPoolTy **Pool, void *Node, void * Node1);
   unsigned char  poolcheckarrayoptim(MetaPoolTy *Pool, void *Node, void * Node1);
   void poolcheckAddSlab(PoolCheckSlab **PoolCheckSlabPtr, void *Slab);
   void poolcheckinit(void *Pool, unsigned NodeSize);

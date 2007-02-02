@@ -8,11 +8,13 @@
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-
 using namespace llvm;
 extern Value *getRepresentativeMetaPD(Value *);
 RegisterPass<InsertPoolChecks> ipc("safecode", "insert runtime checks");
 
+cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",cl::Hidden, cl::init(false),
+                                          cl::desc("insert pool checks instead of exact bounds checks"));
+  
 // Options for Enabling/Disabling the Insertion of Various Checks
 cl::opt<bool> EnableIncompleteChecks  ("enable-incompletechecks", cl::Hidden,
                                 cl::init(false),
@@ -51,7 +53,6 @@ static Statistic<> MissChecks ("safecode",
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 static Statistic<> BoundChecks("safecode",
                                "Bounds checks inserted");
-
 static Statistic<> MissedIncompleteChecks ("safecode",
                                "Poolchecks missed because of incompleteness");
 static Statistic<> MissedMultDimArrayChecks ("safecode",
@@ -70,6 +71,7 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   efPass = &getAnalysis<EmbeCFreeRemoval>();
   TD  = &getAnalysis<TargetData>();
 #else
+  TD  = &getAnalysis<TargetData>();
   TDPass = &getAnalysis<TDDataStructures>();
 #endif
 
@@ -174,9 +176,660 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 #endif
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
-  if (!DisableGEPChecks) addGetElementPtrChecks(M);
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
+      if (!I->isExternal()) TransformFunction(*I);
   if (!DisableLSChecks)  addLoadStoreChecks(M);
+  //  if (!DisableGEPChecks) addGetElementPtrChecks(M);
 }
+
+void InsertPoolChecks::handleCallInst(CallInst *CI) {
+  if (CI && (!DisableIntrinsicChecks)) {
+    Value *Fop = CI->getOperand(0);
+    Function *F = CI->getParent()->getParent();
+#ifdef LLVA_KERNEL    
+    if (Fop->getName() == "llva_memcpy") {
+      Value *PH = getPoolHandle(CI->getOperand(1), F); 
+      Instruction *InsertPt = CI;
+      if (!PH) {
+        ++NullChecks;
+        ++MissedNullChecks;
+        
+        // Don't bother to insert the NULL check unless the user asked
+        if (!EnableNullChecks)
+          return;
+        PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+      }
+      CastInst *CastCIUint = 
+        new CastInst(CI->getOperand(1), Type::UIntTy, "node.lscasted", InsertPt);
+      CastInst *CastCIOp3 = 
+        new CastInst(CI->getOperand(3), Type::UIntTy, "node.lscasted", InsertPt);
+      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
+                                                CastCIOp3, "memcpyadd",InsertPt);
+      
+      // Create instructions to cast the checked pointer and the checked pool
+      // into sbyte pointers.
+      CastInst *CastSourcePointer = 
+        new CastInst(CI->getOperand(1), 
+                     PointerType::get(Type::SByteTy), "memcpy.1.casted", InsertPt);
+      CastInst *CastCI = 
+        new CastInst(Bop, 
+                     PointerType::get(Type::SByteTy), "mempcy.2.casted", InsertPt);
+      CastInst *CastPHI = 
+        new CastInst(PH, 
+                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPt);
+      
+      // Create the call to poolcheck
+      std::vector<Value *> args(1,CastPHI);
+      args.push_back(CastSourcePointer);
+      args.push_back(CastCI);
+      new CallInst(PoolCheckArray,args,"", InsertPt);
+#if 0
+    } else if (Fop->getName() == "memset") {
+      Value *PH = getPoolHandle(CI->getOperand(1), F); 
+      Instruction *InsertPt = CI->getNext();
+      if (!PH) {
+        NullChecks++;
+        // Don't bother to insert the NULL check unless the user asked
+        if (!EnableNullChecks)
+          return;
+        PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+      }
+      CastInst *CastCIUint = 
+        new CastInst(CI, Type::UIntTy, "node.lscasted", InsertPt);
+      CastInst *CastCIOp3 = 
+        new CastInst(CI->getOperand(3), Type::UIntTy, "node.lscasted", InsertPt);
+      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
+                                                CastCIOp3, "memsetadd",InsertPt);
+      
+      // Create instructions to cast the checked pointer and the checked pool
+      // into sbyte pointers.
+      CastInst *CastSourcePointer = 
+        new CastInst(CI->getOperand(1), 
+                     PointerType::get(Type::SByteTy), "memset.1.casted", InsertPt);
+      CastInst *CastCI = 
+        new CastInst(Bop, 
+                     PointerType::get(Type::SByteTy), "memset.2.casted", InsertPt);
+      CastInst *CastPHI = 
+        new CastInst(PH, 
+                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPt);
+      
+      // Create the call to poolcheck
+      std::vector<Value *> args(1,CastPHI);
+      args.push_back(CastSourcePointer);
+      args.push_back(CastCI);
+      new CallInst(PoolCheckArray,args,"", InsertPt);
+#endif
+    }
+#endif    
+  }
+}
+
+void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
+  std::vector<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
+  std::vector<Instruction *>::const_iterator iCurrent = std::find(UnsafeGetElemPtrs.begin(), UnsafeGetElemPtrs.end(),MAI);
+  if (iCurrent == UnsafeGetElemPtrs.end()) {
+    DEBUG(std::cerr << "statically proved safe : Not inserting checks " << MAI << "\n");
+    return;
+  }
+  if (InsertPoolChecksForArrays) {
+    Function *F = MAI->getParent()->getParent();
+    GetElementPtrInst *GEP = MAI;
+    // Now we need to decide if we need to pass in the alignmnet
+    //for the poolcheck
+    //    if (getDSNodeOffset(GEP->getPointerOperand(), F)) {
+    //          std::cerr << " we don't handle middle of structs yet\n";
+    //assert(!getDSNodeOffset(GEP->getPointerOperand(), F) && " we don't handle middle of structs yet\n");
+    //       ++MissChecks;
+    //       continue;
+    //     }
+
+#ifndef LLVA_KERNEL
+    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
+    Instruction *Casted = GEP;
+    if (!FI->ValueMap.empty()) {
+      assert(FI->ValueMap.count(GEP) && "Instruction not in the value map \n");
+      Instruction *temp = dyn_cast<Instruction>(FI->ValueMap[GEP]);
+      assert(temp && " Instruction  not there in the Value map");
+      Casted  = temp;
+    }
+    if (GetElementPtrInst *GEPNew = dyn_cast<GetElementPtrInst>(Casted)) {
+      Value *PH = getPoolHandle(GEP, F, *FI);
+      if (PH && isa<ConstantPointerNull>(PH)) return;
+      if (!PH) {
+        Value *PointerOperand = GEPNew->getPointerOperand();
+        if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(PointerOperand)) {
+          if (cExpr->getOpcode() == Instruction::Cast)
+            PointerOperand = cExpr->getOperand(0);
+        }
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+            // We need to insert an actual check.  It could be a select
+            // instruction.
+            // First get the size.
+            // This only works for one or two dimensional arrays.
+            if (GEPNew->getNumOperands() == 2) {
+              Value *secOp = GEPNew->getOperand(1);
+              if (secOp->getType() != Type::UIntTy) {
+                secOp = new CastInst(secOp, Type::UIntTy,
+                                     secOp->getName()+".ec.casted", Casted);
+              }
+
+              const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+              std::vector<Value *> args(1,secOp);
+              args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+              new CallInst(ExactCheck,args,"", Casted);
+              DEBUG(std::cerr << "Inserted exact check call Instruction \n");
+              return;
+            } else if (GEPNew->getNumOperands() == 3) {
+              if (ConstantInt *COP = dyn_cast<ConstantInt>(GEPNew->getOperand(1))) {
+                // FIXME: assuming that the first array index is 0
+                assert((COP->getZExtValue() == 0) && "non zero array index\n");
+                Value * secOp = GEPNew->getOperand(2);
+                if (secOp->getType() != Type::UIntTy) {
+                  secOp = new CastInst(secOp, Type::UIntTy,
+                                       secOp->getName()+".ec2.casted", Casted);
+                }
+                std::vector<Value *> args(1,secOp);
+                const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+                args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+                new CallInst(ExactCheck, args, "", Casted->getNext());
+                return;
+              } else {
+                // Handle non constant index two dimensional arrays later
+                abort();
+              }
+            } else {
+              // Handle Multi dimensional cases later
+              DEBUG(std::cerr << "WARNING: Handle multi dimensional globals later\n");
+              (*iCurrent)->dump();
+            }
+          }
+          DEBUG(std::cerr << " Global variable ok \n");
+        }
+
+        //      These must be real unknowns and they will be handled anyway
+        //      std::cerr << " WARNING, DID NOT HANDLE   \n";
+        //      (*iCurrent)->dump();
+        return;
+      } else {
+        if (Casted->getType() != PointerType::get(Type::SByteTy)) {
+          Casted = new CastInst(Casted,PointerType::get(Type::SByteTy),
+                                (Casted)->getName()+".pc.casted",
+                                (Casted)->getNext());
+        }
+        std::vector<Value *> args(1, PH);
+        args.push_back(Casted);
+        // Insert it
+        new CallInst(PoolCheck,args, "",Casted->getNext());
+        DEBUG(std::cerr << "inserted instrcution \n");
+      }
+    }
+#else
+    //
+    // Get the pool handle associated with the pointer operand.
+    //
+    Value *PH = getPoolHandle(GEP->getPointerOperand(), F);
+    GetElementPtrInst *GEPNew = GEP;
+    Instruction *Casted = GEP;
+
+    DSGraph & TDG = TDPass->getDSGraph(*F);
+    DSNode * Node = TDG.getNodeForValue(GEP).getNode();
+
+    DEBUG(std::cerr << "LLVA: addGEPChecks: Pool " << PH << " Node ");
+    DEBUG(std::cerr << Node << std::endl);
+
+    Value *PointerOperand = GEPNew->getPointerOperand();
+    if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(PointerOperand)) {
+      if (cExpr->getOpcode() == Instruction::Cast)
+        PointerOperand = cExpr->getOperand(0);
+    }
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+      if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+        // we need to insert an actual check
+        // It could be a select instruction
+        // First get the size
+        // This only works for one or two dimensional arrays
+        if (GEPNew->getNumOperands() == 2) {
+          Value *secOp = GEPNew->getOperand(1);
+          if (secOp->getType() != Type::UIntTy) {
+            secOp = new CastInst(secOp, Type::UIntTy,
+                                 secOp->getName()+".ec3.casted", Casted);
+          }
+          
+          std::vector<Value *> args(1,secOp);
+          const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+          args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+          CallInst *newCI = new CallInst(ExactCheck,args,"", Casted);
+          ++BoundChecks;
+          //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
+          return;
+        } else if (GEPNew->getNumOperands() == 3) {
+          if (ConstantInt *COP = dyn_cast<ConstantInt>(GEPNew->getOperand(1))) {
+            //FIXME assuming that the first array index is 0
+            assert((COP->getZExtValue() == 0) && "non zero array index\n");
+            Value * secOp = GEPNew->getOperand(2);
+            if (secOp->getType() != Type::UIntTy) {
+              secOp = new CastInst(secOp, Type::UIntTy,
+                                   secOp->getName()+".ec4.casted", Casted);
+            }
+            std::vector<Value *> args(1,secOp);
+            const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+            args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+            CallInst *newCI = new CallInst(ExactCheck,args,"", Casted->getNext());
+            ++BoundChecks;
+            return;
+          } else {
+            //Handle non constant index two dimensional arrays later
+            abort();
+          }
+        } else {
+          //Handle Multi dimensional cases later
+          std::cerr << "WARNING: Handle multi dimensional globals later\n";
+          (*iCurrent)->dump();
+          ++MissedMultDimArrayChecks;
+        }
+        DEBUG(std::cerr << " Global variable ok \n");
+      }
+    }
+
+#if 0
+    //No checks for incomplete nodes 
+    if (!EnableIncompleteChecks) {
+      if (Node->isIncomplete()) {
+        ++MissedNullChecks;
+        return;
+      }
+    }
+#endif
+
+    //
+    // We cannot insert an exactcheck().  Insert a pool check.
+    //
+    // 
+    if (!PH) {
+      ++NullChecks;
+      if (!PH) ++MissedNullChecks;
+      // Don't bother to insert the NULL check unless the user asked
+      if (!EnableNullChecks)
+        return;
+      PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+      DEBUG(std::cerr << "missing a GEP check for" << GEP << "alloca case?\n");
+    } else {
+      //
+      // Determine whether the pool handle dominates the pool check.
+      // If not, then don't insert it.
+      //
+
+      //
+      // FIXME:
+      //  This domination check is too restrictive; it eliminates pools that do
+      //  dominate but are outside of the current basic block.
+      //
+      // Only add the pool check if the pool is a global value or it belongs
+      // to the same basic block.
+      //
+      if (isa<GlobalValue>(PH)) {
+        ++FullChecks;
+      } else if (isa<Instruction>(PH)) {
+        Instruction * IPH = (Instruction *)(PH);
+        if (IPH->getParent() == Casted->getParent()) {
+          //
+          // If the instructions belong to the same basic block, ensure that
+          // the pool dominates the load/store.
+          //
+          Instruction * IP = IPH;
+          for (IP=IPH; (IP->isTerminator()) || (IP==Casted); IP=IP->getNext()) {
+            ;
+          }
+          if (IP == Casted)
+            ++FullChecks;
+          else {
+            ++MissChecks;
+            return;
+          }
+        } else {
+          ++MissChecks;
+          return;
+        }
+      } else {
+        ++MissChecks;
+        return;
+      }
+    }
+
+    //
+    // If this is a complete node, insert a poolcheck.
+    // If this is an icomplete node, insert a poolcheckarray.
+    //
+    Instruction *InsertPt = Casted->getNext();
+    if (Casted->getType() != PointerType::get(Type::SByteTy)) {
+      Casted = new CastInst(Casted,PointerType::get(Type::SByteTy),
+                            (Casted)->getName()+".pc2.casted",InsertPt);
+    }
+    Instruction *CastedPointerOperand = new CastInst(PointerOperand,
+                                                     PointerType::get(Type::SByteTy),
+                                                     PointerOperand->getName()+".casted",InsertPt);
+    Instruction *CastedPH = new CastInst(PH,
+                                         PointerType::get(Type::SByteTy),
+                                         "ph",InsertPt);
+    if (Node->isIncomplete()) {
+      std::vector<Value *> args(1, CastedPH);
+      args.push_back(CastedPointerOperand);
+      args.push_back(Casted);
+      CallInst * newCI = new CallInst(PoolCheckArray,args, "",InsertPt);
+    } else {
+      std::vector<Value *> args(1, CastedPH);
+      args.push_back(Casted);
+      CallInst * newCI = new CallInst(PoolCheck,args, "",InsertPt);
+    }
+#endif
+  } else {
+    //Exact poolchecks
+    if (const PointerType *PT = dyn_cast<PointerType>(MAI->getPointerOperand()->getType())) {
+      if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {
+        //It is a struct type with pointers
+        //for each pointer with struct typ
+        //we need to watchg out for arrays inside structs 
+        if (ConstantInt *COP = dyn_cast<ConstantInt>(MAI->getOperand(1))) {
+          //FIXME assuming that the first index is safe
+          //assert((COP->getRawValue() == 0) && "non zero array index\n");
+          bool allconstant = true;
+          for (unsigned i = 2; i < MAI->getNumOperands(); ++i) {
+            if (!isa<Constant>(MAI->getOperand(i))) {
+              allconstant = false;
+              break;
+            }
+          }
+          if (!allconstant) {
+            if (MAI->getNumOperands() == 4) {
+              if (ConstantInt *COPi = dyn_cast<ConstantInt>(MAI->getOperand(2))) {
+                const Type *stel = ST->getElementType(COPi->getZExtValue());
+                if (const ArrayType *elAT = dyn_cast<ArrayType>(stel)) {
+                  //Need to factor this in to separate method!!!
+                  Value * secOp = MAI->getOperand(3);
+                  Value *indexTypeSize = ConstantInt::get(Type::UIntTy, TD->getTypeSize(secOp->getType())); 
+                  if (secOp->getType() != Type::UIntTy) {
+                    secOp = new CastInst(secOp, Type::UIntTy,
+                                         secOp->getName()+".casted",  MAI);
+                  }
+                  //                      secOp = BinaryOperator::create(Instruction::Mul, indexTypeSize, secOp,"indextmp", MAI);
+                  std::vector<Value *> args(1,secOp);
+                  Value *AllocSize =
+                    ConstantInt::get(Type::UIntTy, TD->getTypeSize(elAT));
+                  /*
+                    if (AI->isArrayAllocation())
+                    AllocSize = BinaryOperator::create(Instruction::Mul,
+                    AllocSize,
+                    AI->getOperand(0), "sizetmp", MAI);
+                  */
+                  //		      args.push_back(ConstantInt::get(csiType,elAT->getNumElements()));
+                  args.push_back(AllocSize);
+                  CallInst *newCI = new CallInst(ExactCheck,args,"",MAI);
+			
+                } else {
+                  //non array, non constant value
+                  abort();
+                }
+              } else {
+                // non-constant value, not possible
+                abort();
+              }
+            } else {
+              //FIXME this is a less precise check than possible
+              //		  std::cerr << "WARNING : did not handle array within a struct precisely, num operands != 4\n";
+              Instruction *InsertPt = MAI->getNext();
+              Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+              Value *MAIPSbyte =  new CastInst(MAI->getPointerOperand(),
+                                               VoidPtrType, 
+                                               MAI->getPointerOperand()->getName()+".casted",InsertPt);
+                  
+              Value *MAISbyte =  new CastInst(MAI,
+                                              VoidPtrType, 
+                                              MAI->getName()+".casted",InsertPt);
+                  
+              std::vector<Value *> args(1,MAIPSbyte);
+              args.push_back(MAISbyte);
+              Value *AllocSize =
+                ConstantInt::get(Type::UIntTy, TD->getTypeSize(ST));
+              args.push_back(AllocSize);
+              CallInst *newCI = new CallInst(ExactCheck2,args,"",InsertPt);
+            }
+          }
+        } else {
+          goto HandleThisLikeArray;
+	      
+        }
+      } else {
+      HandleThisLikeArray:	      
+        if (AllocaInst *AI = dyn_cast<AllocaInst>(MAI->getPointerOperand())) {
+          //we can put an exact check here
+          if (1 || (MAI->getNumOperands() == 3)) {
+            if (ConstantInt *COP = dyn_cast<ConstantInt>(MAI->getOperand(1))) {
+              //FIXME assuming that the first array index is 0
+              assert((COP->getZExtValue() == 0) && "non zero array index\n");
+              Value * secOp = MAI->getOperand(2);
+              Value *indexTypeSize = ConstantInt::get(Type::UIntTy, TD->getTypeSize(secOp->getType())); 
+              //Convert everything to bytes
+              if (secOp->getType() != Type::UIntTy) {
+                secOp = new CastInst(secOp, Type::UIntTy, secOp->getName()+".casted",
+                                     MAI);
+              }
+              //		  secOp = BinaryOperator::create(Instruction::Mul, indexTypeSize, secOp,"indextmp",MAI);
+              //		  }
+              std::vector<Value *> args(1,secOp);
+              Value *AllocSize =
+                ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
+		  
+              if (AI->isArrayAllocation())
+                AllocSize = BinaryOperator::create(Instruction::Mul,
+                                                   AllocSize,
+                                                   AI->getOperand(0), "sizetmp", MAI);
+		  
+              args.push_back(AllocSize);
+              CallInst *newCI = new CallInst(ExactCheck,args,"", MAI);
+            }
+          } else {
+            std::cerr << " num operands != 3 \n";
+            abort();
+          }
+        } else {
+          Instruction *MAInew = MAI;
+          Function *F = MAI->getParent()->getParent();
+#ifndef LLVA_KERNEL    
+          if (!equivPass->ContainsDSGraphFor(*F)) {
+            //some times the ECGraphs doesnt contain F
+            //for newly created cloned functions
+            PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
+            Value *temp = FI->MapValueToOriginal(MAI);
+            MAInew = dyn_cast<Instruction>(temp);
+            assert(MAInew && " Instruction not in value map (clone)\n");
+          }
+#endif          
+          Function *Fnew = MAInew->getParent()->getParent();
+          Value *PH = getPoolHandle(MAInew, Fnew);
+          if (!PH)
+            PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
+          //deal with it at runtime	      assert(PH && " PH is null \n");
+          if (1) {
+            //we need to create a call instruction
+            //with poolhandle, original value and the new value
+            Instruction *nextInstruction = MAI->getNext();
+            CastInst *CastBack = new CastInst(MAI, MAI->getType(), MAI->getName()+".castback",nextInstruction);
+            MAI->replaceAllUsesWith(CastBack);
+		
+            Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+            Value *PHVptr =  new CastInst(PH, VoidPtrType,
+                                          PH->getName()+".casted",  CastBack);
+            Value *Refferent = MAI->getPointerOperand(); 
+            Value *RefferentVptr = new CastInst(Refferent, VoidPtrType,
+                                                Refferent->getName()+".casted",  CastBack);
+            Value *checkVptr = new CastInst(MAI, VoidPtrType,
+                                            MAI->getName()+".casted",  CastBack);
+		
+            std::vector<Value *> args = make_vector(PHVptr, RefferentVptr, checkVptr,0);
+            CallInst *CI = new CallInst(BoundsCheck, args,"",CastBack);
+            CastBack->setOperand(0, CI);
+          }
+        }
+      }
+    } else {
+      std::cerr << " getelement ptr does not have pointer type arg\n";
+      abort();
+    }
+
+  }
+}
+
+  void InsertPoolChecks::addGetActualValue(SetCondInst *SCI, unsigned operand) {
+    //we know that the operand is a pointer type 
+    Value *op = SCI->getOperand(operand);
+    Function *F = SCI->getParent()->getParent();
+#ifndef LLVA_KERNEL    
+    if (!equivPass->ContainsDSGraphFor(*F)) {
+      //some times the ECGraphs doesnt contain F
+      //for newly created cloned functions
+      PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
+      op = FI->MapValueToOriginal(op);
+      if (!op) return; //abort();
+    }
+#endif    
+    Function *Fnew = F;
+    Value *PH = 0;
+    if (Argument *arg = dyn_cast<Argument>(op)) {
+      Fnew = arg->getParent();
+      PH = getPoolHandle(op, Fnew);
+    } else if (Instruction *Inst = dyn_cast<Instruction>(op)) {
+      Fnew = Inst->getParent()->getParent();
+      PH = getPoolHandle(op, Fnew);
+    } else if (isa<Constant>(op)) {
+      return;
+      //      abort();
+    } else if (!isa<ConstantPointerNull>(op)) {
+      //has to be a global
+      abort();
+    }
+    op = SCI->getOperand(operand);
+    if (!isa<ConstantPointerNull>(op)) {
+      if (PH) {
+	if (1) { //HACK fixed
+	  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+	  Value *PHVptr =  new CastInst(PH, VoidPtrType,
+					PH->getName()+".casted",  SCI);
+	  Value *OpVptr = op;
+	  if (op->getType() != VoidPtrType)
+	    OpVptr = new CastInst(op, VoidPtrType,
+				  op->getName()+".casted",  SCI);
+	  
+	  std::vector<Value *> args = make_vector(PHVptr, OpVptr,0);
+	  CallInst *CI = new CallInst(GetActualValue, args,"getval", SCI);
+	  CastInst *CastBack = new CastInst(CI, op->getType(), op->getName()+".castback",SCI);
+	  SCI->setOperand(operand, CastBack);
+	}
+      } else {
+	//It shouldn't work if PH is not null
+      }
+    }
+  }
+
+void InsertPoolChecks::TransformFunction(Function &F) {
+#ifndef LLVA_KERNEL  
+  PA::FuncInfo * PAFI = paPass->getFuncInfoOrClone(F);
+  if (PAFI->Clone && PAFI->Clone != &F) {
+    //no need to transform
+    return;
+  }
+#endif  
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    Instruction *iLocal = &*I;
+    if (SetCondInst *SCI = dyn_cast<SetCondInst>(iLocal)) {
+      //If it is neq, eq,
+      if ((SCI->getOpcode() == BinaryOperator::SetEQ) || (SCI->getOpcode() == BinaryOperator::SetNE)) {
+        //for all the pointer operands replace them by the getactualvalue
+        assert((SCI->getNumOperands() == 2) && "nmber of operands for SCI different from 2 ");
+        if (isa<PointerType>(SCI->getOperand(0)->getType())) {
+          //we need to insert a call to getactualvalue
+          //First get the poolhandle for the pointer
+          if ((!isa<ConstantPointerNull>(SCI->getOperand(0))) && (!isa<ConstantPointerNull>(SCI->getOperand(1)))) {
+            addGetActualValue(SCI, 0);
+            addGetActualValue(SCI, 1);
+          }
+        }
+      }
+    } else if (isa<CastInst>(iLocal)) {
+      //Some times the getelementptr is an argument of cast instruction
+      // and we don't want to miss a run-time check there
+      if (isa<GetElementPtrInst>(iLocal->getOperand(0))) {
+        iLocal = cast<Instruction>(iLocal->getOperand(0));
+      }
+    } //
+
+    // we need to handle
+    // alloca instructions
+    // getelement ptrs
+    // load store checks 
+    if (isa<GetElementPtrInst>(iLocal)) {
+      GetElementPtrInst *MAI = cast<GetElementPtrInst>(iLocal);
+      handleGetElementPtr(MAI);
+    } else if (AllocaInst *AI = dyn_cast<AllocaInst>(iLocal)) {
+      AllocaInst * AIOrig = AI;
+#ifndef LLVA_KERNEL      
+      if (!equivPass->ContainsDSGraphFor(F)) {
+        //some times the ECGraphs doesnt contain F
+        //for newly created cloned functions
+        PA::FuncInfo *FI = paPass->getFuncInfoOrClone(F);
+        Value *temp = FI->MapValueToOriginal(AI);
+        if (temp)
+          AIOrig = dyn_cast<AllocaInst>(temp);
+        else
+          continue;
+        assert(AIOrig && " Instruction not in value map (clone)\n");
+      }
+#endif       
+      registerAllocaInst(AI, AIOrig);
+    } else if (CallInst *CI = dyn_cast<CallInst>(iLocal)) {
+      handleCallInst(CI);
+    }
+  } 
+}
+
+
+void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
+  // Get the pool handle for the node that this contributes to...
+  Function *FOrig  = AIOrig->getParent()->getParent();
+  DSNode *Node = getDSNode(AIOrig, FOrig);
+  if (!Node) return;
+  if (Node->isArray()) {
+    Value *PH = getPoolHandle(AIOrig, FOrig);
+    if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
+    Value *AllocSize =
+      ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
+    
+    if (AI->isArrayAllocation())
+      AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
+                                         AI->getOperand(0), "sizetmp", AI);
+    
+    //Insert poolregister at the end of allocas and all poolinits
+    //FIXME assuming that there is a load before a call??
+    BasicBlock::iterator InsertPt = AI->getParent()->getParent()->getEntryBlock().begin();
+    while ((isa<CallInst>(InsertPt)) || isa<CastInst>(InsertPt) || isa<AllocaInst>(InsertPt) || isa<BinaryOperator>(InsertPt)) {
+      /*
+        if (CallInst *PI = dyn_cast<CallInst>(InsertPt)) {
+        if (PI->getName() != "poolinit") break;
+        }*/
+      ++InsertPt;
+    }
+    Instruction *iptI = InsertPt;
+    if (AI->getParent() != iptI->getParent()) {
+      iptI = AI->getNext();
+    }
+    Instruction *Casted = new CastInst(AI, PointerType::get(Type::SByteTy),
+                                       AI->getName()+".casted", iptI);
+    Instruction *V = new CallInst(PoolRegister,
+                                  make_vector(PH, Casted, AllocSize, 0), "", iptI);
+  }
+}
+
+
 
 
 #ifdef LLVA_KERNEL
@@ -315,7 +968,11 @@ void InsertPoolChecks::addLSChecks(Value *Vnew, const Value *V, Instruction *I, 
 	  for (; flI != flE ; ++flI) {
 	    Function *func = *flI;
 	    CastInst *CastfuncI = 
+<<<<<<< insert.cpp
+	      new CastInst (func, 
+=======
 	      new CastInst(func, 
+>>>>>>> 1.37.2.4
 			   PointerType::get(Type::SByteTy), "casted", I);
 	    args.push_back(CastfuncI);
 	  }
@@ -325,10 +982,18 @@ void InsertPoolChecks::addLSChecks(Value *Vnew, const Value *V, Instruction *I, 
 
 
 	CastInst *CastVI = 
+<<<<<<< insert.cpp
+	  new CastInst (Vnew, 
+=======
 	  new CastInst(Vnew, 
+>>>>>>> 1.37.2.4
 		       PointerType::get(Type::SByteTy), "casted", I);
 	CastInst *CastPHI = 
+<<<<<<< insert.cpp
+	  new CastInst (PH, 
+=======
 	  new CastInst(PH, 
+>>>>>>> 1.37.2.4
 		       PointerType::get(Type::SByteTy), "casted", I);
 	std::vector<Value *> args(1,CastPHI);
 	args.push_back(CastVI);
@@ -794,12 +1459,23 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *PoolCheckArrayTy =
     FunctionType::get(Type::VoidTy,Arg2, false);
   PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
-  
+
   std::vector<const Type *> Arg3(1, VoidPtrType);
-  Arg3.push_back(VoidPtrType);
-  Arg3.push_back(VoidPtrType);
+  Arg3.push_back(VoidPtrType); //for output
+  Arg3.push_back(VoidPtrType); //for referent 
+  FunctionType *BoundsCheckTy =
+    FunctionType::get(VoidPtrType,Arg3, false);
+  BoundsCheck = M.getOrInsertFunction("boundscheck", BoundsCheckTy);
+
+  //Get the poolregister function
+  PoolRegister = M.getOrInsertFunction("poolregister", Type::VoidTy,
+                                   VoidPtrType, Type::UIntTy, VoidPtrType, NULL);
+  
+  std::vector<const Type *> Arg4(1, VoidPtrType);
+  Arg4.push_back(VoidPtrType);
+  Arg4.push_back(VoidPtrType);
   FunctionType *PoolCheckIArrayTy =
-    FunctionType::get(Type::VoidTy,Arg3, false);
+    FunctionType::get(Type::VoidTy,Arg4, false);
   PoolCheckIArray = M.getOrInsertFunction("poolcheckiarray", PoolCheckIArrayTy);
 
   std::vector<const Type *> FArg2(1, Type::UIntTy);
@@ -812,6 +1488,18 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FArg3.push_back(VoidPtrType);
   FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
   FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
+
+  std::vector<const Type*> FArg5(1, VoidPtrType);
+  FArg5.push_back(VoidPtrType);
+  FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
+  GetActualValue = M.getOrInsertFunction("getactualvalue", GetActualValueTy);
+  
+  std::vector<const Type*> FArg4(1, VoidPtrType); //base
+  FArg4.push_back(VoidPtrType); //result
+  FArg4.push_back(Type::UIntTy); //size
+  FunctionType *ExactCheck2Ty = FunctionType::get(Type::VoidTy, FArg4, false);
+  ExactCheck2 = M.getOrInsertFunction("exactcheck2", ExactCheck2Ty);
+  
   
 }
 

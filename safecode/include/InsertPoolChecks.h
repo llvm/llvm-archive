@@ -30,16 +30,17 @@ struct InsertPoolChecks : public ModulePass {
       AU.addRequired<TargetData>();
 #else 
       AU.addRequired<TDDataStructures>();
+      AU.addRequired<TargetData>();
 #endif
       
     };
     private :
-      CUA::ConvertUnsafeAllocas * cuaPass;
+    CUA::ConvertUnsafeAllocas * cuaPass;
+  TargetData * TD;
 #ifndef  LLVA_KERNEL
   PoolAllocate * paPass;
   EquivClassGraphs *equivPass;
   EmbeCFreeRemoval *efPass;
-  TargetData * TD;
 #else
   TDDataStructures * TDPass;
 #endif  
@@ -48,12 +49,22 @@ struct InsertPoolChecks : public ModulePass {
   Function *PoolCheckIArray;
   Function *ExactCheck;
   Function *FunctionCheck;
+  Function *BoundsCheck;
+  Function *ExactCheck2;
+  Function *GetActualValue;
+  Function *PoolRegister;
   void addPoolCheckProto(Module &M);
   void addPoolChecks(Module &M);
   void addGetElementPtrChecks(Module &M);
   DSNode* getDSNode(const Value *V, Function *F);
   unsigned getDSNodeOffset(const Value *V, Function *F);
   void addLoadStoreChecks(Module &M);
+  void TransformFunction(Function &F);
+  void handleCallInst(CallInst *CI);
+  void handleGetElementPtr(GetElementPtrInst *MAI);
+  void addGetActualValue(SetCondInst *SCI, unsigned operand);
+  void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
+  
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);

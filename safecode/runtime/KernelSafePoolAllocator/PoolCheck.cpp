@@ -80,23 +80,13 @@ bool poolcheckoptim(void *Pool, void *Node) {
 }
 
 
-inline bool refcheck(Splay *splay, void *Node) {
-  unsigned long base = (unsigned long) (splay->key);
-  unsigned long length = (unsigned long) (splay->val);
-  unsigned long result = (unsigned long) Node;
-  if ((result >= base) && (result < (base + length))) return true;
-  return false;
-                                                        
-}
-
-
-bool poolcheckarrayoptim(void *Pool, void *NodeSrc, void *NodeResult) {
+int poolcheckarrayoptim(void *Pool, void *NodeSrc, void *NodeResult) {
   Splay *psplay = poolchecksplay(Pool);
   splay *ref = splay_find_ptr(psplay, (unsigned long)NodeSrc);
   if (ref) {
     return refcheck(ref, NodeResult);
   } 
-  return false;
+  return 0;
 }
 
 void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
@@ -109,6 +99,51 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
     if (poolcheckarrayoptim(Pool, NodeSrc, NodeResult)) return ;
+    MetaPool = MetaPool->next;
+  }
+  poolcheckfail ("poolcheck failure \n");
+}
+
+inline int refcheck(Splay *splay, void *Node) {
+  unsigned long base = (unsigned long) (splay->key);
+  unsigned long length = (unsigned long) (splay->val);
+  unsigned long result = (unsigned long) Node;
+  if ((result >= base) && (result < (base + length))) return 1;
+  return -1;
+                                                        
+}
+
+
+inline signed char * getactualvalue(signed char *Pool, signed char *val) {
+  if ((unsigned long) val != 0x00000001) {
+    return val;
+  } else {
+    poolcheckfail("Bounds check failure : value in the first page \n");
+  }
+}
+
+inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
+  if (result >= base + size ) {
+    poolcheckfail("Array bounds violation detected \n");
+  }
+}
+
+
+
+void* boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  MetaPoolTy *MetaPool = *MP;
+  if (!MetaPool) {
+    poolcheckfail ("Empty meta pool? \n");
+  }
+  //iteratively search through the list
+  //Check if there are other efficient data structures.
+  while (MetaPool) {
+    void *Pool = MetaPool->Pool;
+    int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
+    if (ret) {
+      if (ret == -1) return 0x00000001;
+      return NodeResult;
+    }
     MetaPool = MetaPool->next;
   }
   poolcheckfail ("poolcheck failure \n");

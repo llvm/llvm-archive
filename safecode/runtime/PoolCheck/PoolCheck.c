@@ -33,6 +33,9 @@ extern char _end;
 /*===----------------------------------------------------------------------===*/
 extern unsigned PageSize;
 
+/* Flag whether we are ready to perform pool operations */
+static int ready = 0;
+
 /*
  * Function: poolcheckinit()
  *
@@ -42,6 +45,7 @@ extern unsigned PageSize;
  */
 void
 poolcheckinit(void *Pool, unsigned NodeSize) {
+  ready = 1;
   return;
 }
 
@@ -57,29 +61,43 @@ poolcheckdestroy(void *Pool) {
 #if 0
   free_splay(Pool->splay);
 #endif
+  ready = 0;
   return;
 }
 
 
 void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
+  if (!ready) return;
   MetaPoolTy  *MetaPoolPrev = *MP;
   MetaPoolTy *MetaPool = *MP;
   if (MetaPool) {
     MetaPool = MetaPool->next;
   } else {
-    *MP = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy));
-    (*MP)->Pool = P;
-    (*MP)->next = 0;
+    if (*MP = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy)))
+    {
+      (*MP)->Pool = P;
+      (*MP)->next = 0;
+    }
     return;
   }
+
+  /*
+   * Scan for the end of the list.  If we run across the pool already in the
+   * meta-pool list, then don't bother adding it again.
+   */
   while (MetaPool) {
+    if (MetaPool->Pool == P) {
+      return;
+    }
     MetaPoolPrev = MetaPool;
     MetaPool = MetaPool->next;
   }
   /* MetaPool is null; */
-  MetaPoolPrev->next = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy));
-  MetaPoolPrev->next->Pool = P;
-  MetaPoolPrev->next->next = 0;
+  if (MetaPoolPrev->next = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy)))
+  {
+    MetaPoolPrev->next->Pool = P;
+    MetaPoolPrev->next->next = 0;
+  }
 }
 
 
@@ -187,6 +205,7 @@ unsigned char poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeRes
  *  checks all the pools associated with a meta-pool.
  */
 void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  if (!ready) return;
   MetaPoolTy *MetaPool = *MP;
   if (!MetaPool) {
     poolcheckfail ("Empty meta pool? Src \n", NodeSrc);
@@ -211,6 +230,7 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
  *  allows the check to succeed if the source node is not found.
  */
 void poolcheckiarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  if (!ready) return;
   MetaPoolTy *MetaPool = *MP;
   if (!MetaPool) {
     poolcheckfail ("Empty meta pool? Src \n", NodeSrc);
@@ -241,6 +261,7 @@ void poolcheckiarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
  *  the MetaPool.
  */
 void poolcheck(MetaPoolTy **MP, void *Node) {
+  if (!ready) return;
   MetaPoolTy *MetaPool = *MP;
   if (!MetaPool) {
     poolcheckfail ("Empty meta pool? \n", Node);
@@ -253,7 +274,7 @@ void poolcheck(MetaPoolTy **MP, void *Node) {
   poolcheckinfo ("Checking metapool ", MetaPool);
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
-#if 0
+#if 1
     printpoolinfo (Pool);
 #endif
     if (poolcheckoptim(Pool, Node))   return;
@@ -266,12 +287,15 @@ void poolcheck(MetaPoolTy **MP, void *Node) {
 void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
   PoolCheckSlab  *PCSPrev = *PCSPtr;
   PoolCheckSlab *PCS = *PCSPtr;
+  if (!ready) return;
   if (PCS) {
     PCS = PCS->nextSlab;
   } else {
-    *PCSPtr = (PoolCheckSlab *) poolcheckmalloc (sizeof(PoolCheckSlab));
-    (*PCSPtr)->Slab = Slab;
-    (*PCSPtr)->nextSlab = 0;
+    if (*PCSPtr = (PoolCheckSlab *) poolcheckmalloc (sizeof(PoolCheckSlab)))
+    {
+      (*PCSPtr)->Slab = Slab;
+      (*PCSPtr)->nextSlab = 0;
+    }
     return;
   }
   while (PCS) {
@@ -279,9 +303,11 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
     PCS = PCS->nextSlab;
   }
   /* PCS is null; */
-  PCSPrev->nextSlab = (PoolCheckSlab *) poolcheckmalloc (sizeof(PoolCheckSlab));
-  PCSPrev->nextSlab->Slab = Slab;
-  PCSPrev->nextSlab->nextSlab = 0;
+  if (PCSPrev->nextSlab = (PoolCheckSlab *) poolcheckmalloc (sizeof(PoolCheckSlab)))
+  {
+    PCSPrev->nextSlab->Slab = Slab;
+    PCSPrev->nextSlab->nextSlab = 0;
+  }
 }
 
 
@@ -313,5 +339,6 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
 #endif
 
   void poolcheckregister(Splay *splay, void * allocaptr, unsigned NumBytes) {
+    if (!ready) return;
     splay_insert_ptr(splay, (unsigned long)(allocaptr), NumBytes);
   }

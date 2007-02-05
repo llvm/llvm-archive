@@ -79,6 +79,14 @@ bool poolcheckoptim(void *Pool, void *Node) {
   return false;
 }
 
+inline int refcheck(Splay *splay, void *Node) {
+  unsigned long base = (unsigned long) (splay->key);
+  unsigned long length = (unsigned long) (splay->val);
+  unsigned long result = (unsigned long) Node;
+  if ((result >= base) && (result < (base + length))) return 1;
+  return -1;
+                                                        
+}
 
 int poolcheckarrayoptim(void *Pool, void *NodeSrc, void *NodeResult) {
   Splay *psplay = poolchecksplay(Pool);
@@ -103,16 +111,6 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   }
   poolcheckfail ("poolcheck failure \n");
 }
-
-inline int refcheck(Splay *splay, void *Node) {
-  unsigned long base = (unsigned long) (splay->key);
-  unsigned long length = (unsigned long) (splay->val);
-  unsigned long result = (unsigned long) Node;
-  if ((result >= base) && (result < (base + length))) return 1;
-  return -1;
-                                                        
-}
-
 
 inline signed char * getactualvalue(signed char *Pool, signed char *val) {
   if ((unsigned long) val != 0x00000001) {
@@ -141,7 +139,7 @@ void* boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
     void *Pool = MetaPool->Pool;
     int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
     if (ret) {
-      if (ret == -1) return 0x00000001;
+      if (ret == -1) return ((void *)(0x00000001));
       return NodeResult;
     }
     MetaPool = MetaPool->next;

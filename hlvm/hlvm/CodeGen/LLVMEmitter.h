@@ -202,16 +202,14 @@ class LLVMEmitter
     static bool IsNoopCast(llvm::Value *V, const llvm::Type *Ty);
 
     /// Cast the \p V  to \p Ty if it is not already that type.
-    llvm::Value *CastToType(llvm::Value *V, const llvm::Type *Ty);
-
-    /// Insert a cast of \p V to \p Ty if needed.  This checks that
-    /// the cast doesn't change any of the values bits.
-    llvm::Value *NoopCastToType(llvm::Value *V, const llvm::Type *Ty); 
+    llvm::Value *CastToType(llvm::Value *V, bool isSigned, 
+                            const llvm::Type *Ty, bool isSigned,
+                            const std::string& newName);
 
     static void TwoZeroIndices(ArgList& indices) {
       indices.clear();
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      indices.push_back(llvm::ConstantInt::getNullValue(llvm::Type::Int32Ty));
+      indices.push_back(llvm::ConstantInt::getNullValue(llvm::Type::Int32Ty));
     }
 
     /// Convert a non-first-class type into a first-class type by constructing
@@ -242,13 +240,10 @@ class LLVMEmitter
   /// @name Simple Value getters
   /// @{
   public:
-    llvm::Constant* getTrue() const { return llvm::ConstantBool::get(true); }
-    llvm::Constant* getFalse() const { return llvm::ConstantBool::get(false); }
-    llvm::Constant* getSZero() const { 
-      return llvm::Constant::getNullValue(llvm::Type::IntTy);
-    }
-    llvm::Constant* getUZero() const { 
-      return llvm::Constant::getNullValue(llvm::Type::UIntTy);
+    llvm::Constant* getTrue() const  { return llvm::ConstantInt::getTrue(); }
+    llvm::Constant* getFalse() const { return llvm::ConstantInt::getFalse(); }
+    llvm::Constant* getZero() const { 
+      return llvm::ConstantInt::getNullValue(llvm::Type::Int32Ty);
     }
     llvm::Constant* getFOne() const { 
       return llvm::ConstantFP::get(llvm::Type::FloatTy,1.0);
@@ -259,64 +254,37 @@ class LLVMEmitter
     llvm::Constant* getFPOne(const llvm::Type* Ty) const {
       return llvm::ConstantFP::get(Ty,1.0);
     }
-    llvm::Constant* getSOne() const {
-      return llvm::ConstantSInt::get(llvm::Type::IntTy,1);
-    }
-    llvm::Constant* getUOne() const {
-      return llvm::ConstantUInt::get(llvm::Type::UIntTy,1);
-    }
-    llvm::Constant* getIOne(const llvm::Type* Ty) const {
+    llvm::Constant* getOne(const llvm::Type* Ty) const {
       return llvm::ConstantInt::get(Ty,1);
     }
     llvm::Constant* getSVal(const llvm::Type* Ty, int64_t val) const {
-      return llvm::ConstantSInt::get(Ty,val);
+      return llvm::ConstantInt::get(Ty,val);
     }
     llvm::Constant* getUVal(const llvm::Type* Ty, uint64_t val) const {
-      return llvm::ConstantUInt::get(Ty,val);
+      return llvm::ConstantInt::get(Ty,val);
     }
     llvm::Constant* getNullValue(const llvm::Type* Ty) const { 
       return llvm::Constant::getNullValue(Ty);
     }
     llvm::Constant* getAllOnes(const llvm::Type* Ty) const {
-      return llvm::ConstantIntegral::getAllOnesValue(Ty);
+      return llvm::ConstantInt::getAllOnesValue(Ty);
     }
   /// @}
   /// @name Simple emitters
   /// @{
   public:
-    llvm::SetCondInst* emitNE(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetNE, 
-        V1, V2, "ne", TheBlock);
-    }
-    llvm::SetCondInst* emitEQ(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetEQ, 
-        V1,V2,"eq",TheBlock);
-    }
-    llvm::SetCondInst* emitLT(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetLT, 
-        V1,V2,"lt",TheBlock);
-    }
-    llvm::SetCondInst* emitGT(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetGT, 
-        V1,V2,"gt",TheBlock);
-    }
-    llvm::SetCondInst* emitLE(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetLE, 
-        V1,V2,"le",TheBlock);
-    }
-    llvm::SetCondInst* emitGE(llvm::Value* V1, llvm::Value* V2) {
-      return new llvm::SetCondInst(llvm::Instruction::SetGE, 
-        V1,V2,"ge",TheBlock);
-    }
-    llvm::CastInst* emitCast(llvm::Value* V1, const llvm::Type* Ty, 
-                             const std::string& name) {
-      return new llvm::CastInst(V1,Ty,name,TheBlock);
-    }
+    llvm::CmpInst* emitNE(llvm::Value* V1, llvm::Value* V2);
+    llvm::CmpInst* emitEQ(llvm::Value* V1, llvm::Value* V2);
+    llvm::CmpInst* emitLT(llvm::Value* V1, llvm::Value* V2, bool sign = false);
+    llvm::CmpInst* emitGT(llvm::Value* V1, llvm::Value* V2, bool sign = false);
+    llvm::CmpInst* emitLE(llvm::Value* V1, llvm::Value* V2, bool sign = false);
+    llvm::CmpInst* emitGE(llvm::Value* V1, llvm::Value* V2, bool sign = false);
+
     llvm::LoadInst* emitLoad(llvm::Value* V, const std::string& name) const {
-      return new llvm::LoadInst(V,name,TheBlock);
+      return new llvm::LoadInst(V, name, TheBlock);
     }
     llvm::StoreInst* emitStore(llvm::Value* from, llvm::Value* to) const {
-      return new llvm::StoreInst(from,to,TheBlock);
+      return new llvm::StoreInst(from, to, TheBlock);
     }
     llvm::BinaryOperator* emitNeg(llvm::Value* V) const {
       return llvm::BinaryOperator::createNeg(V,"neg",TheBlock);
@@ -332,45 +300,43 @@ class LLVMEmitter
       return llvm::ConstantExpr::getSizeOf(Ty);
     }
     llvm::BinaryOperator* emitAdd(llvm::Value* V1, llvm::Value* V2) {
-      return llvm::BinaryOperator::create(llvm::Instruction::Add, 
-        V1, V2, "add", TheBlock);
+      return llvm::BinaryOperator::createAdd(V1, V2, "add", TheBlock);
     }
     llvm::BinaryOperator* emitSub(llvm::Value* V1, llvm::Value* V2) {
-      return llvm::BinaryOperator::create(llvm::Instruction::Sub, 
-        V1, V2, "sub", TheBlock);
+      return llvm::BinaryOperator::createSub(V1, V2, "sub", TheBlock);
     }
     llvm::BinaryOperator* emitMul(llvm::Value* V1, llvm::Value* V2) {
-      return llvm::BinaryOperator::create(llvm::Instruction::Mul, 
-        V1, V2, "mul", TheBlock);
+      return llvm::BinaryOperator::createMul(V1, V2, "mul", TheBlock);
     }
-    llvm::BinaryOperator* emitDiv(llvm::Value* V1, llvm::Value* V2) const {
-      return llvm::BinaryOperator::create(llvm::Instruction::Div, 
-        V1, V2, "div", TheBlock);
+    llvm::BinaryOperator* emitSDiv(llvm::Value* V1, llvm::Value* V2) const {
+      return llvm::BinaryOperator::createSDiv(V1, V2, "div", TheBlock);
     }
-    llvm::BinaryOperator* emitMod(llvm::Value* V1, llvm::Value* V2) const {
-      return llvm::BinaryOperator::create(llvm::Instruction::Rem, 
-        V1, V2, "mod", TheBlock);
+    llvm::BinaryOperator* emitUDiv(llvm::Value* V1, llvm::Value* V2) const {
+      return llvm::BinaryOperator::createUDiv(V1, V2, "div", TheBlock);
+    }
+    llvm::BinaryOperator* emitSRem(llvm::Value* V1, llvm::Value* V2) const {
+      return llvm::BinaryOperator::createSRem(V1, V2, "mod", TheBlock);
+    }
+    llvm::BinaryOperator* emitURem(llvm::Value* V1, llvm::Value* V2) const {
+      return llvm::BinaryOperator::createURem(V1, V2, "mod", TheBlock);
     }
     llvm::BinaryOperator* emitBAnd(llvm::Value*V1, llvm::Value* V2) const {
-      return llvm::BinaryOperator::create(llvm::Instruction::And, 
-        V1, V2, "band", TheBlock);
+      return llvm::BinaryOperator::createAnd(V1, V2, "band", TheBlock);
     }
     llvm::BinaryOperator* emitBOr(llvm::Value*V1, llvm::Value* V2) const {
-      return llvm::BinaryOperator::create(llvm::Instruction::Or, 
-        V1, V2, "bor", TheBlock);
+      return llvm::BinaryOperator::createOr(V1, V2, "bor", TheBlock);
     }
     llvm::BinaryOperator* emitBXor(llvm::Value*V1, llvm::Value* V2) const {
-      return llvm::BinaryOperator::create(llvm::Instruction::Xor, 
-        V1, V2, "bxor", TheBlock);
+      return llvm::BinaryOperator::createXor(V1, V2, "bxor", TheBlock);
     }
     llvm::BinaryOperator* emitBNor(llvm::Value* V1, llvm::Value* V2) const {
-      llvm::BinaryOperator* bor = llvm::BinaryOperator::create(
-        llvm::Instruction::Or, V1, V2, "bnor", TheBlock);
+      llvm::BinaryOperator* bor = 
+        llvm::BinaryOperator::createOr(V1, V2, "bnor", TheBlock);
       return llvm::BinaryOperator::createNot(bor,"bnor",TheBlock);
     }
     llvm::BinaryOperator* emitNot(llvm::Value* V1) const {
       return llvm::BinaryOperator::createNot(
-          ConvertToBoolean(V1),"not",TheBlock);
+        ConvertToBoolean(V1),"not",TheBlock);
     }
     llvm::BinaryOperator* emitAnd(llvm::Value* V1, llvm::Value* V2) const {
       return llvm::BinaryOperator::create(llvm::Instruction::And, 
@@ -418,7 +384,7 @@ class LLVMEmitter
 
     llvm::GetElementPtrInst* emitGEP(llvm::Value* V, llvm::Value* index) {
       ArgList indices;
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
       indices.push_back(index);
       return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
     }

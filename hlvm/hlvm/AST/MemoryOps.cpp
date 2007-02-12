@@ -29,6 +29,8 @@
 
 #include <hlvm/AST/MemoryOps.h>
 #include <hlvm/AST/ContainerType.h>
+#include <hlvm/AST/Linkables.h>
+#include <hlvm/AST/Constants.h>
 #include <llvm/Support/Casting.h>
 
 namespace hlvm {
@@ -36,8 +38,26 @@ namespace hlvm {
 LoadOp::~LoadOp() {}
 StoreOp::~StoreOp() {}
 AutoVarOp::~AutoVarOp() {}
+
 GetOp::~GetOp() {}
+
+const Type*
+GetOp::getReferentType() const
+{
+  const Value* ref = getReferent();
+  if (const AutoVarOp* avo = llvm::dyn_cast<AutoVarOp>(ref))
+    return avo->getType();
+  else if (const Variable* var = llvm::dyn_cast<Variable>(ref))
+    return var->getType();
+  else if (const Function* func = llvm::dyn_cast<Function>(ref))
+    return func->getResultType();
+  else if (const Constant* cnst = llvm::dyn_cast<Constant>(ref))
+    return cnst->getType();
+  return ref->getType();
+}
+
 GetFieldOp::~GetFieldOp() {}
+
 const Type* 
 GetFieldOp::getFieldType() const
 {
@@ -48,6 +68,7 @@ GetFieldOp::getFieldType() const
 }
 
 GetIndexOp::~GetIndexOp() {}
+
 const Type* 
 GetIndexOp::getIndexedType() const
 {

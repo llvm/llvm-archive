@@ -174,29 +174,29 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
 
   // Okay, we haven't seen this type before so let's construct it
   switch (ty->getID()) {
-    case BooleanTypeID:            result = llvm::Type::BoolTy; break;
-    case CharacterTypeID:          result = llvm::Type::UIntTy; break;
+    case BooleanTypeID:            result = llvm::Type::Int1Ty; break;
+    case CharacterTypeID:          result = llvm::Type::Int32Ty; break;
     case AnyTypeID:
       hlvmNotImplemented("Any Type");
       break;
     case StringTypeID:              
-      result = llvm::PointerType::get(llvm::Type::SByteTy);
+      result = llvm::PointerType::get(llvm::Type::Int8Ty);
       break;
     case EnumerationTypeID:
-      result = llvm::Type::UIntTy;
+      result = llvm::Type::Int32Ty;
       break;
     case IntegerTypeID:
     {
       const IntegerType* IT = llvm::cast<hlvm::IntegerType>(ty);
       uint16_t bits = IT->getBits();
       if (bits <= 8)
-        result = (IT->isSigned() ? llvm::Type::SByteTy : llvm::Type::UByteTy);
+        result = (IT->isSigned() ? llvm::Type::Int8Ty : llvm::Type::Int8Ty);
       else if (bits <= 16)
-        result = (IT->isSigned() ? llvm::Type::ShortTy : llvm::Type::UShortTy);
+        result = (IT->isSigned() ? llvm::Type::Int16Ty : llvm::Type::Int16Ty);
       else if (bits <= 32)
-        result = (IT->isSigned() ? llvm::Type::IntTy : llvm::Type::UIntTy);
+        result = (IT->isSigned() ? llvm::Type::Int32Ty : llvm::Type::Int32Ty);
       else if (bits <= 64)
-        result = (IT->isSigned() ? llvm::Type::LongTy : llvm::Type::ULongTy);
+        result = (IT->isSigned() ? llvm::Type::Int64Ty : llvm::Type::Int64Ty);
       else if (bits <= 128)
         hlvmNotImplemented("128-bit integer");
       else
@@ -208,18 +208,18 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       const RangeType* RT = llvm::cast<hlvm::RangeType>(ty);
       if (RT->getMin() < 0) {
         if (RT->getMin() >= SHRT_MIN && RT->getMax() <= SHRT_MAX)
-          return llvm::Type::ShortTy;
+          return llvm::Type::Int16Ty;
         else if (RT->getMin() >= INT_MIN && RT->getMax() <= INT_MAX)
-          return llvm::Type::IntTy;
+          return llvm::Type::Int32Ty;
         else
-          return llvm::Type::LongTy;
+          return llvm::Type::Int64Ty;
       } else {
         if (RT->getMax() <= USHRT_MAX)
-          return llvm::Type::UShortTy;
+          return llvm::Type::Int16Ty;
         else if (RT->getMax() <= UINT_MAX)
-          return llvm::Type::UIntTy;
+          return llvm::Type::Int32Ty;
         else
-          return llvm::Type::ULongTy;
+          return llvm::Type::Int64Ty;
       }
     }
     case RationalTypeID:
@@ -269,7 +269,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       const hlvm::ArrayType* AT = llvm::cast<hlvm::ArrayType>(ty);
       const llvm::Type* elemType = getType(AT->getElementType());
       std::vector<const llvm::Type*> Fields;
-      Fields.push_back(llvm::Type::UIntTy);
+      Fields.push_back(llvm::Type::Int32Ty);
       Fields.push_back(llvm::PointerType::get(elemType));
       result = llvm::StructType::get(Fields);
       break;
@@ -339,7 +339,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     case ConstantBooleanID:
     {
       const ConstantBoolean* CI = llvm::cast<const ConstantBoolean>(C);
-      result = llvm::ConstantBool::get(CI->getValue());
+      result = llvm::ConstantInt::get(llvm::Type::Int1Ty, CI->getValue());
       break;
     }
     case ConstantCharacterID:
@@ -356,7 +356,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
       } else {
         val = cVal[0];
       }
-      result = em->getUVal(llvm::Type::UIntTy,val);
+      result = em->getUVal(llvm::Type::Int32Ty,val);
       break;
     }
     case ConstantEnumeratorID:
@@ -400,8 +400,8 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
       llvm::Constant* CA = llvm::ConstantArray::get(CT->getValue(), true);
       llvm::GlobalVariable* GV  = em->NewGConst(CA->getType(), CA, C->getName());
       std::vector<llvm::Constant*> indices;
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::UIntTy));
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
+      indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
       result = llvm::ConstantExpr::getGetElementPtr(GV,indices);
       break;
     }
@@ -429,7 +429,7 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
       const llvm::StructType* Ty = 
         llvm::cast<llvm::StructType>(getType(hCA->getType()));
       elems.clear();
-      elems.push_back(em->getUVal(llvm::Type::UIntTy,hCA->size()));
+      elems.push_back(em->getUVal(llvm::Type::Int32Ty,hCA->size()));
       elems.push_back(lCE);
       result = llvm::ConstantStruct::get(Ty,elems);
       break;
@@ -599,7 +599,7 @@ llvm::Value*
 LLVMGeneratorPass::toBoolean(llvm::Value* V)
 {
   const llvm::Type* Ty = V->getType();
-  if (Ty == llvm::Type::BoolTy)
+  if (Ty == llvm::Type::Int1Ty)
     return V;
 
   if (Ty->isInteger() || Ty->isFloatingPoint()) {
@@ -677,7 +677,7 @@ LLVMGeneratorPass::popOperandAsBlock(
       // Its just a value or a constant or something, just cast it to itself
       // so we can get its value
       result = 
-        new llvm::CastInst(V,V->getType(),"",entry_block);
+        new llvm::BitCastInst(V, V->getType(), "", entry_block);
     }
   }
 
@@ -694,7 +694,7 @@ LLVMGeneratorPass::popOperandAsCondition(
   llvm::Value* result = 
     popOperandAsBlock(op,name+"_cond",entry_block,exit_block);
   hlvmAssert(result);
-  hlvmAssert(result->getType() == llvm::Type::BoolTy);
+  hlvmAssert(result->getType() == llvm::Type::Int1Ty);
 
   return result;
 }
@@ -799,7 +799,7 @@ LLVMGeneratorPass::gen(PreIncrOp* op)
     llvm::BinaryOperator* add = em->emitAdd(load,one); 
     pushOperand(em->emitStore(add,operand),op);
   } else if (lType->isInteger()) {
-    llvm::Constant* one = em->getIOne(lType);
+    llvm::Constant* one = em->getOne(lType);
     llvm::BinaryOperator* add = em->emitAdd(load,one); 
     pushOperand(em->emitStore(add,operand),op);
   } else {
@@ -821,7 +821,7 @@ LLVMGeneratorPass::gen(PreDecrOp* op)
     llvm::BinaryOperator* sub = em->emitSub(load,one);
     pushOperand(em->emitStore(sub,operand),op);
   } else if (lType->isInteger()) {
-    llvm::Constant* one = em->getIOne(lType);
+    llvm::Constant* one = em->getOne(lType);
     llvm::BinaryOperator* sub = em->emitSub(load, one);
     pushOperand(em->emitStore(sub,operand),op);
   } else {
@@ -844,7 +844,7 @@ LLVMGeneratorPass::gen(PostIncrOp* op)
     em->emitStore(add,operand);
     pushOperand(load,op);
   } else if (lType->isInteger()) {
-    llvm::Constant* one = em->getIOne(lType);
+    llvm::Constant* one = em->getOne(lType);
     llvm::BinaryOperator* add = em->emitAdd(load,one); 
     em->emitStore(add,operand);
     pushOperand(load,op);
@@ -868,7 +868,7 @@ LLVMGeneratorPass::gen(PostDecrOp* op)
     em->emitStore(sub,operand);
     pushOperand(load,op);
   } else if (lType->isInteger()) {
-    llvm::Constant* one = em->getIOne(lType);
+    llvm::Constant* one = em->getOne(lType);
     llvm::BinaryOperator* sub = em->emitSub(load, one);
     em->emitStore(sub,operand);
     pushOperand(load,op);
@@ -904,7 +904,8 @@ LLVMGeneratorPass::gen(ConvertOp* op)
   // First, deal with the easy case of conversion of first class types. This
   // can just be done with the LLVM cast operator
   if (lsrcTy->isFirstClassType() && ltgtTy->isFirstClassType()) {
-    pushOperand(em->emitCast(v1,ltgtTy,v1->getName() + "_converted"),op);
+    pushOperand(em->CastToType(v1, srcTy->isSigned(), ltgtTy, tgtTy->isSigned(),
+                               v1->getName() + "_converted"),op);
     return;
   }
 
@@ -951,21 +952,33 @@ LLVMGeneratorPass::gen(MultiplyOp* op)
 template<> void
 LLVMGeneratorPass::gen(DivideOp* op)
 {
+  bool isSigned = 
+    op->getOperand(0)->getType()->isSigned() || 
+    op->getOperand(1)->getType()->isSigned();
   llvm::Value* op1 = popOperand(op->getOperand(0)); 
   llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
-  pushOperand(em->emitDiv(op1,op2),op);
+  if (isSigned)
+    pushOperand(em->emitSDiv(op1,op2),op);
+  else
+    pushOperand(em->emitUDiv(op1,op2),op);
 }
 
 template<> void
 LLVMGeneratorPass::gen(ModuloOp* op)
 {
+  bool isSigned = 
+    op->getOperand(0)->getType()->isSigned() || 
+    op->getOperand(1)->getType()->isSigned();
   llvm::Value* op1 = popOperand(op->getOperand(0)); 
   llvm::Value* op2 = popOperand(op->getOperand(1)); 
   op1 = ptr2Value(op1);
   op2 = ptr2Value(op2);
-  pushOperand(em->emitMod(op1,op2),op);
+  if (isSigned)
+    pushOperand(em->emitSRem(op1,op2),op);
+  else
+    pushOperand(em->emitURem(op1,op2),op);
 }
 
 template<> void
@@ -1254,7 +1267,7 @@ LLVMGeneratorPass::gen(SelectOp* op)
     llvm::Value* op1 = popOperand(op->getOperand(0)); 
     llvm::Value* op2 = popOperand(op->getOperand(1)); 
     llvm::Value* op3 = popOperand(op->getOperand(2)); 
-    hlvmAssert(op1->getType() == llvm::Type::BoolTy);
+    hlvmAssert(op1->getType() == llvm::Type::Int1Ty);
     hlvmAssert(op2->getType()->isFirstClassType());
     hlvmAssert(op3->getType()->isFirstClassType());
     pushOperand(em->emitSelect(op1,op2,op3,"select"),op);
@@ -1624,7 +1637,7 @@ LLVMGeneratorPass::gen(GetFieldOp* i)
           llvm::cast<DisparateContainerType>(loc->getType());
         unsigned index = DCT->getFieldIndex(fldName);
         hlvmAssert(index != 0 && "Invalid field name");
-        llvm::Constant* idx = llvm::ConstantUInt::get(llvm::Type::UIntTy,index);
+        llvm::Constant* idx = llvm::ConstantInt::get(llvm::Type::Int32Ty,index);
         llvm::Value* location = popOperand(loc);
         pushOperand(em->emitGEP(location,idx),i);
         return;
@@ -1685,7 +1698,7 @@ LLVMGeneratorPass::genProgramLinkage()
   // Define the type of the array elements (a structure with a pointer to
   // a string and a pointer to the function).
   std::vector<const llvm::Type*> Fields;
-  Fields.push_back(llvm::PointerType::get(llvm::Type::SByteTy));
+  Fields.push_back(llvm::PointerType::get(llvm::Type::Int8Ty));
   Fields.push_back(llvm::PointerType::get(em->getProgramType()));
   llvm::StructType* entry_elem_type = llvm::StructType::get(Fields);
 
@@ -2011,7 +2024,6 @@ static void
 getCleanupPasses(llvm::PassManager& PM)
 {
   PM.add(llvm::createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
-  PM.add(llvm::createFunctionResolvingPass());    // Resolve (...) functions
   if (NoOptimizations)
     return;
 
@@ -2029,7 +2041,6 @@ getCleanupPasses(llvm::PassManager& PM)
     PM.add(llvm::createFunctionInliningPass());   // Inline small functions
   PM.add(llvm::createSimplifyLibCallsPass());     // Library Call Optimizations
   PM.add(llvm::createArgumentPromotionPass());    // Scalarize uninlined fn args
-  PM.add(llvm::createRaisePointerReferencesPass());// Recover type information
   PM.add(llvm::createTailDuplicationPass());      // Simplify cfg by copying 
   PM.add(llvm::createCFGSimplificationPass());    // Merge & remove BBs
   PM.add(llvm::createScalarReplAggregatesPass()); // Break up aggregate allocas
@@ -2088,8 +2099,10 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, std::string& ErrMsg)
   delete PM;
   llvm::Module* mod = genPass.linkModules();
   bool result = optimizeModule(mod,ErrMsg);
-  if (result)
-    llvm::WriteBytecodeToFile(mod, output, /*compress= */ true);
+  if (result) {
+    llvm::OStream strm(output);
+    llvm::WriteBytecodeToFile(mod, strm, /*compress= */ true);
+  }
   delete mod;
   return result;
 }
@@ -2106,7 +2119,8 @@ hlvm::generateAssembly(AST* tree, std::ostream& output, std::string& ErrMsg)
   bool result = optimizeModule(mod,ErrMsg);
   if (result) {
     llvm::PassManager Passes;
-    Passes.add(new llvm::PrintModulePass(&output));
+    llvm::OStream strm(output);
+    Passes.add(new llvm::PrintModulePass(&strm));
     Passes.run(*mod);
   }
   delete mod;

@@ -66,6 +66,9 @@ class Type : public Documentable
     virtual const char* getPrimitiveName() const;
     bool isPrimitive() const { return getPrimitiveName() != 0; }
 
+    /// @brief Return the signedness of this type (integers)
+    bool isSigned() const { return flags & SignedTF; }
+
   /// @}
   /// @name Mutators
   /// @{
@@ -267,9 +270,6 @@ class IntegerType : public Type
     /// @brief Return the number of bits in this integer type
     uint16_t getBits()  const { return bits; }
 
-    /// @brief Return the signedness of this type
-    bool isSigned() const { return flags & SignedTF; }
-
     /// @brief Methods to support type inquiry via isa, cast, dyn_cast
     static inline bool classof(const IntegerType*) { return true; }
     static inline bool classof(const Node* T) { return T->is(IntegerTypeID); }
@@ -289,7 +289,7 @@ class IntegerType : public Type
   /// @name Data
   /// @{
   public:
-    uint16_t bits;
+    uint32_t bits;
   /// @}
   friend class AST;
 };

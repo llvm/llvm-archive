@@ -40,18 +40,18 @@
 ; This is the type for the elements of the hlvm_programs array. Each element
 ; contains a pointer to a string for the name of the program and a pointer to
 ; the entry function.
-%hlvm_programs_element = type { sbyte*, int (int, sbyte**)* }
+%hlvm_programs_element = type { i8*, i32 (i32, i8**)* }
 
 ; This is the appending constant array with 1 element here that is zero
 ; initialized. This forms the zero-terminator in the array. This module MUST
 ; be linked LAST in order for this to work.
-%hlvm_programs = appending constant [1 x %hlvm_programs_element] zeroinitializer
+@hlvm_programs = appending constant [1 x %hlvm_programs_element] zeroinitializer
 
 ; End of declarations, start the implementation
 implementation
 
 ; This is a very simple function to get the address of %hlvm_programs.
-%hlvm_programs_element* %hlvm_get_programs() {
+define %hlvm_programs_element* @hlvm_get_programs() {
 entry:
-  ret %hlvm_programs_element* getelementptr([1 x %hlvm_programs_element]* %hlvm_programs, int 0, int 0)
+  ret %hlvm_programs_element* getelementptr([1 x %hlvm_programs_element]* @hlvm_programs, i32 0, i32 0)
 }

@@ -31,6 +31,7 @@
 #include <hlvm/AST/Linkables.h>
 #include <hlvm/AST/Bundle.h>
 #include <hlvm/AST/ControlFlow.h>
+#include <hlvm/AST/MemoryOps.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/Support/Casting.h>
 

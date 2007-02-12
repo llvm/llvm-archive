@@ -117,15 +117,6 @@ class LoadOp : public UnaryOperator
     static inline bool classof(const Node* N) { return N->is(LoadOpID); }
 
   /// @}
-  /// @name Mutators
-  /// @{
-  public:
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
-  /// @}
   friend class AST;
 };
 
@@ -149,15 +140,6 @@ class StoreOp : public BinaryOperator
     static inline bool classof(const StoreOp*) { return true; }
     static inline bool classof(const Node* N) { return N->is(StoreOpID); }
 
-  /// @}
-  /// @name Mutators
-  /// @{
-  public:
-
-  /// @}
-  /// @name Data
-  /// @{
-  protected:
   /// @}
   friend class AST;
 };
@@ -230,6 +212,7 @@ class GetOp : public NilaryOperator
   /// @name Accessors
   /// @{
   public:
+    const Type* getReferentType() const;
     const Value* getReferent() const { return referent; }
     static inline bool classof(const GetOp*) { return true; }
     static inline bool classof(const Node* N) { 

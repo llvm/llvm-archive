@@ -127,7 +127,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
   /// @name Methods
   /// @{
   public:
-    Type* get_hlvm_size() { return Type::ULongTy; }
+    const Type* get_hlvm_size() { return Type::Int64Ty; }
 
     PointerType* get_hlvm_text()
     {
@@ -135,8 +135,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
         // An hlvm_text is a variable length array of signed bytes preceded by
         // an
         // Arglist args;
-        // args.push_back(Type::UIntTy);
-        // args.push_back(ArrayType::Get(Type::SByteTy,0));
+        // args.push_back(Type::Int32Ty);
+        // args.push_back(ArrayType::Get(Type::Int8Ty,0));
         OpaqueType* opq = OpaqueType::get();
         TheModule->addTypeName("hlvm_text_obj", opq);
         hlvm_text = PointerType::get(opq);
@@ -150,7 +150,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
       if (! hlvm_text_create) {
         Type* result = get_hlvm_text();
         std::vector<const Type*> arg_types;
-        arg_types.push_back(PointerType::get(Type::SByteTy));
+        arg_types.push_back(PointerType::get(Type::Int8Ty));
         FunctionType* FT = 
           FunctionType::get(result,arg_types,false);
         TheModule->addTypeName("hlvm_text_create",FT);
@@ -279,7 +279,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
       if (!hlvm_stream_open) {
         Type* result = get_hlvm_stream();
         std::vector<const Type*> arg_types;
-        arg_types.push_back(PointerType::get(Type::SByteTy));
+        arg_types.push_back(PointerType::get(Type::Int8Ty));
         FunctionType* FT = FunctionType::get(result,arg_types,false);
         TheModule->addTypeName("hlvm_stream_open_signature",FT);
         hlvm_stream_open = 
@@ -298,7 +298,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_hlvm_stream_read()
     {
       if (!hlvm_stream_read) {
-        Type* result = get_hlvm_size();
+        const Type* result = get_hlvm_size();
         std::vector<const Type*> arg_types;
         arg_types.push_back(get_hlvm_stream());
         arg_types.push_back(get_hlvm_buffer());
@@ -321,7 +321,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_hlvm_stream_write_buffer()
     {
       if (!hlvm_stream_write_buffer) {
-        Type* result = get_hlvm_size();
+        const Type* result = get_hlvm_size();
         std::vector<const Type*> arg_types;
         arg_types.push_back(get_hlvm_stream());
         arg_types.push_back(get_hlvm_buffer());
@@ -343,10 +343,10 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_hlvm_stream_write_string()
     {
       if (!hlvm_stream_write_string) {
-        Type* result = get_hlvm_size();
+        const Type* result = get_hlvm_size();
         std::vector<const Type*> arg_types;
         arg_types.push_back(get_hlvm_stream());
-        arg_types.push_back(PointerType::get(Type::SByteTy));
+        arg_types.push_back(PointerType::get(Type::Int8Ty));
         FunctionType* FT = FunctionType::get(result,arg_types,false);
         TheModule->addTypeName("hlvm_stream_write_string_signature",FT);
         hlvm_stream_write_string = 
@@ -365,7 +365,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_hlvm_stream_write_text()
     {
       if (!hlvm_stream_write_text) {
-        Type* result = get_hlvm_size();
+        const Type* result = get_hlvm_size();
         std::vector<const Type*> arg_types;
         arg_types.push_back(get_hlvm_stream());
         arg_types.push_back(get_hlvm_text());
@@ -387,7 +387,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_hlvm_stream_close()
     {
       if (!hlvm_stream_close) {
-        Type* result = Type::VoidTy;
+        const Type* result = Type::VoidTy;
         std::vector<const Type*> arg_types;
         arg_types.push_back(get_hlvm_stream());
         FunctionType* FT = FunctionType::get(result,arg_types,false);
@@ -410,11 +410,11 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
       if (!hlvm_program_signature) {
         // Get the type of function that all entry points must have
         std::vector<const Type*> arg_types;
-        arg_types.push_back(Type::IntTy);
+        arg_types.push_back(Type::Int32Ty);
         arg_types.push_back(
-          PointerType::get(PointerType::get(Type::SByteTy)));
+          PointerType::get(PointerType::get(Type::Int8Ty)));
         hlvm_program_signature = 
-          FunctionType::get(Type::IntTy,arg_types,false);
+          FunctionType::get(Type::Int32Ty,arg_types,false);
         TheModule->addTypeName("hlvm_program_signature",hlvm_program_signature);
       }
       return hlvm_program_signature;
@@ -423,10 +423,10 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_llvm_memcpy()
     {
       if (!llvm_memcpy) {
-        const Type *SBP = PointerType::get(Type::SByteTy);
-        llvm_memcpy = TheModule->getOrInsertFunction(
-          "llvm.memcpy.i64", Type::VoidTy, SBP, SBP, Type::ULongTy,
-          Type::UIntTy, NULL);
+        const Type *SBP = PointerType::get(Type::Int8Ty);
+        llvm_memcpy = cast<Function>(TheModule->getOrInsertFunction(
+          "llvm.memcpy.i64", Type::VoidTy, SBP, SBP, Type::Int64Ty,
+          Type::Int32Ty, NULL));
       }
       return llvm_memcpy;
     }
@@ -434,10 +434,10 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_llvm_memmove()
     {
       if (!llvm_memmove) {
-        const Type *SBP = PointerType::get(Type::SByteTy);
-        llvm_memmove = TheModule->getOrInsertFunction(
-          "llvm.memmove.i64", Type::VoidTy, SBP, SBP, Type::ULongTy, 
-          Type::UIntTy, NULL);
+        const Type *SBP = PointerType::get(Type::Int8Ty);
+        llvm_memmove = cast<Function>(TheModule->getOrInsertFunction(
+          "llvm.memmove.i64", Type::VoidTy, SBP, SBP, Type::Int64Ty, 
+          Type::Int32Ty, NULL));
       }
       return llvm_memmove;
     }
@@ -445,10 +445,10 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     Function* get_llvm_memset()
     {
       if (!llvm_memset) {
-        const Type *SBP = PointerType::get(Type::SByteTy);
-        llvm_memset = TheModule->getOrInsertFunction(
-          "llvm.memset.i64", Type::VoidTy, SBP, Type::UByteTy, Type::ULongTy, 
-          Type::UIntTy, NULL);
+        const Type *SBP = PointerType::get(Type::Int8Ty);
+        llvm_memset = cast<Function>(TheModule->getOrInsertFunction(
+          "llvm.memset.i64", Type::VoidTy, SBP, Type::Int8Ty, Type::Int64Ty, 
+          Type::Int32Ty, NULL));
       }
       return llvm_memset;
     }
@@ -1172,7 +1172,7 @@ LLVMEmitter::StartFunction(Function* F)
   // terminate the entry block as usual while still retaining a point for 
   // insertion in the entry block that retains declaration order.
   EntryInsertionPoint = 
-    new CastInst(Constant::getNullValue(Type::IntTy),Type::IntTy,
+    new BitCastInst(Constant::getNullValue(Type::Int32Ty),Type::Int32Ty,
         "entry_point", TheEntryBlock);
 
   // Create a new block for the return node, but don't insert it yet.
@@ -1224,19 +1224,18 @@ Value*
 LLVMEmitter::ConvertToBoolean(Value* V) const
 {
   const Type* Ty = V->getType();
-  if (Ty == Type::BoolTy)
+  if (Ty == Type::Int1Ty)
     return V;
 
   if (Ty->isInteger() || Ty->isFloatingPoint()) {
     Constant* CI = Constant::getNullValue(V->getType());
-    return new SetCondInst(Instruction::SetNE, V, CI, "i2b", 
-        TheBlock);
+    return new ICmpInst(ICmpInst::ICMP_NE, V, CI, "i2b", TheBlock);
   } else if (isa<GlobalValue>(V)) {
     // GlobalValues always have non-zero constant address values, so always true
-    return ConstantBool::get(true);
+    return ConstantInt::getTrue();
   }
   hlvmAssert(!"Don't know how to convert V into bool");
-  return ConstantBool::get(true);
+  return ConstantInt::getTrue();
 }
 
 Value* 
@@ -1245,10 +1244,10 @@ LLVMEmitter::Pointer2Value(Value* V) const
   if (!isa<PointerType>(V->getType()))
     return V;
 
- // GetElementPtrInst* GEP = new GetElementPtrIns(V,
-  //    ConstantInt::get(Type::UIntTy,0),
-   //   ConstantInt::get(Type::UIntTy,0),
-    //  "ptr2Value", TheBlock);
+  // GetElementPtrInst* GEP = new GetElementPtrIns(V,
+  //    ConstantInt::get(Type::Int32Ty,0),
+  //    ConstantInt::get(Type::Int32Ty,0),
+  //    "ptr2Value", TheBlock);
   return new LoadInst(V,"ptr2Value", TheBlock);
 }
 
@@ -1257,10 +1256,12 @@ LLVMEmitter::IsNoopCast(Value* V, const Type* Ty)
 {
   // check signed to unsigned
   const Type *VTy = V->getType();
-  if (VTy->isLosslesslyConvertibleTo(Ty)) return true;
+  if (VTy->canLosslesslyBitCastTo(Ty)) 
+    return true;
   
   // Constant int to anything, to work around stuff like: "xor short X, int 1".
-  if (isa<ConstantInt>(V)) return true;
+  if (isa<ConstantInt>(V)) 
+    return true;
   
   return false;
 }
@@ -1268,33 +1269,32 @@ LLVMEmitter::IsNoopCast(Value* V, const Type* Ty)
 /// CastToType - Cast the specified value to the specified type if it is
 /// not already that type.
 Value *
-LLVMEmitter::CastToType(Value *V, const Type *Ty) 
+LLVMEmitter::CastToType(Value *V, bool srcIsSigned, const Type *Ty, 
+                        bool destIsSigned, const std::string& newName) 
 {
   // If they are the same type, no cast needed
   if (V->getType() == Ty) 
     return V;
 
+  // Get the opcode necessary for the cast.
+  Instruction::CastOps Opcode = 
+    CastInst::getCastOpcode(V, srcIsSigned, Ty, destIsSigned);
+
   // If its a constant then we want a constant cast
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(C, Ty);
+    return ConstantExpr::getCast(Opcode, C, Ty);
   
   // If its a cast instruction and we're casting back to the original type, 
   // which is bool, then just get the operand of the cast instead of emitting 
   // duplicate cast instructions. This is just an optimization of a frequently
   // occurring case.
   if (CastInst *CI = dyn_cast<CastInst>(V))
-    if (Ty == Type::BoolTy && CI->getOperand(0)->getType() == Type::BoolTy)
+    if (Ty == Type::Int1Ty && CI->getOperand(0)->getType() == Type::Int1Ty)
       return CI->getOperand(0);
 
   // Otherwise, just issue the cast
-  return new CastInst(V, Ty, V->getName(), TheBlock);
-}
-
-Value *
-LLVMEmitter::NoopCastToType(Value *V, const Type *Ty)
-{
-  hlvmAssert(IsNoopCast(V, Ty) && "Invalid Noop Cast!");
-  return CastToType(V, Ty);
+  return CastInst::create(Opcode, V, Ty, 
+                          (newName.empty() ? V->getName() : newName), TheBlock);
 }
 
 void 
@@ -1400,6 +1400,56 @@ LLVMEmitter::getProgramType()
   return static_cast<LLVMEmitterImpl*>(this)->get_hlvm_program_signature();
 }
 
+llvm::CmpInst* LLVMEmitter::emitNE(llvm::Value* V1, llvm::Value* V2){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_ONE, V1, V2, "ne",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_NE,  V1, V2, "ne",TheBlock);
+}
+
+llvm::CmpInst* LLVMEmitter::emitEQ(llvm::Value* V1, llvm::Value* V2){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_OEQ, V1, V2, "eq",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_EQ,  V1, V2, "eq",TheBlock);
+}
+
+llvm::CmpInst* LLVMEmitter::emitLT(llvm::Value* V1, llvm::Value* V2, bool sign){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_OLT, V1, V2,"olt",TheBlock);
+  else if (sign)
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_ULT, V1, V2,"ult",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_SLT, V1, V2,"slt",TheBlock);
+}
+
+llvm::CmpInst* LLVMEmitter::emitGT(llvm::Value* V1, llvm::Value* V2, bool sign){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_OGT, V1, V2,"ogt",TheBlock);
+  else if (sign)
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_SGT, V1, V2,"sgt",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_UGT, V1, V2,"ugt",TheBlock);
+}
+
+llvm::CmpInst* LLVMEmitter::emitLE(llvm::Value* V1, llvm::Value* V2, bool sign){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_OLE, V1, V2,"ole",TheBlock);
+  else if (sign)
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_ULE, V1, V2,"ule",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_SLE, V1, V2,"sle",TheBlock);
+}
+
+llvm::CmpInst* LLVMEmitter::emitGE(llvm::Value* V1, llvm::Value* V2, bool sign){
+  if (V1->getType()->isFloatingPoint())
+    return new llvm::FCmpInst(llvm::FCmpInst::FCMP_OGE, V1, V2,"oge",TheBlock);
+  else if (sign)
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_SGE, V1, V2,"sge",TheBlock);
+  else
+    return new llvm::ICmpInst(llvm::ICmpInst::ICMP_UGE, V1, V2,"uge",TheBlock);
+}
+
 void
 LLVMEmitter::emitAssign(Value* dest, Value* src)
 {
@@ -1433,9 +1483,9 @@ LLVMEmitter::emitAssign(Value* dest, Value* src)
       emitStore(GEP,dest);
     } else {
       // they are both first class types and the source is not a pointer, so 
-      // just cast them
-      CastInst* CI = emitCast(src,destTy,src->getName());
-      emitStore(CI,dest);
+      // just cast them. FIXME: signedness
+      Value* V = CastToType(src, false, destTy, false, src->getName());
+      emitStore(V, dest);
     }
   } 
   else if (const PointerType* srcPT = dyn_cast<PointerType>(srcTy)) 
@@ -1470,18 +1520,18 @@ CopyAggregate(
     Value *V = new LoadInst(SrcPtr, "tmp", SrcVolatile, BB);
     new StoreInst(V, DestPtr, DestVolatile, BB);
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-    Constant *Zero = ConstantUInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantUInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", BB);
       Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", BB);
       CopyAggregate(DElPtr, DestVolatile, SElPtr, SrcVolatile, BB);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
-    Constant *Zero = ConstantUInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantUInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", BB);
       Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", BB);
       CopyAggregate(DElPtr, DestVolatile, SElPtr, SrcVolatile, BB);
@@ -1534,7 +1584,9 @@ LLVMEmitter::emitReturn(Value* retVal)
       result = emitLoad(retVal,getBlockName() + "_result");
     } else if (resultTy != getReturnType()) {
       hlvmAssert(resultTy->isFirstClassType());
-      result = emitCast(retVal, getReturnType(), getBlockName()+"_result");
+      // FIXME: signedness
+      result = CastToType(retVal, false, getReturnType(), false, 
+                          getBlockName()+"_result");
     } else {
       hlvmAssert(resultTy->isFirstClassType());
       result = retVal;
@@ -1622,12 +1674,12 @@ LLVMEmitter::emitMemCpy(
   Value *size
 )
 {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   ArgList args;
-  args.push_back(CastToType(dest, SBP));
-  args.push_back(CastToType(src, SBP));
+  args.push_back(CastToType(dest, false, SBP, false, ""));
+  args.push_back(CastToType(src, false, SBP, false, ""));
   args.push_back(size);
-  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
   new CallInst(emimp->get_llvm_memcpy(), args, "", TheBlock);
 }
@@ -1640,12 +1692,12 @@ LLVMEmitter::emitMemMove(
   Value *size
 )
 {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   ArgList args;
-  args.push_back(CastToType(dest, SBP));
-  args.push_back(CastToType(src, SBP));
+  args.push_back(CastToType(dest, false, SBP, false, ""));
+  args.push_back(CastToType(src, false, SBP, false, ""));
   args.push_back(size);
-  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
   new CallInst(emimp->get_llvm_memmove(), args, "", TheBlock);
 }
@@ -1658,12 +1710,12 @@ LLVMEmitter::emitMemSet(
   Value *size 
 )
 {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   ArgList args;
-  args.push_back(CastToType(dest, SBP));
-  args.push_back(CastToType(val, Type::UByteTy));
+  args.push_back(CastToType(dest, false, SBP, false, ""));
+  args.push_back(CastToType(val, false, Type::Int8Ty, false, ""));
   args.push_back(size);
-  args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
   new CallInst(emimp->get_llvm_memset(), args, "", TheBlock);
 }
@@ -1676,15 +1728,15 @@ LLVMEmitter::emitOpen(llvm::Value* strm)
       llvm::dyn_cast<llvm::PointerType>(strm->getType())) 
   {
     const llvm::Type* Ty = PT->getElementType();
-    if (Ty == llvm::Type::SByteTy) {
+    if (Ty == llvm::Type::Int8Ty) {
       args.push_back(strm);
     } else if (llvm::isa<ArrayType>(Ty) && 
-             cast<ArrayType>(Ty)->getElementType() == Type::SByteTy) {
+             cast<ArrayType>(Ty)->getElementType() == Type::Int8Ty) {
       ArgList indices;
       this->TwoZeroIndices(indices);
       args.push_back(this->emitGEP(strm,indices));
     } else
-      hlvmAssert(!"Array element type is not SByteTy");
+      hlvmAssert(!"Array element type is not Int8Ty");
   } else
     hlvmAssert(!"OpenOp parameter is not a pointer");
 
@@ -1722,7 +1774,7 @@ LLVMEmitter::emitWrite(llvm::Value* strm,llvm::Value* arg2)
   CallInst* result = 0;
   if (llvm::isa<llvm::PointerType>(arg2->getType()))
     if (llvm::cast<llvm::PointerType>(arg2->getType())->getElementType() ==
-        llvm::Type::SByteTy)
+        llvm::Type::Int8Ty)
       result = emimp->call_hlvm_stream_write_string(args,"write");
   if (arg2->getType() == emimp->get_hlvm_text())
     result = emimp->call_hlvm_stream_write_text(args,"write");

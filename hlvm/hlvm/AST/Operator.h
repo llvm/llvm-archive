@@ -66,8 +66,10 @@ class Operator : public Value
   /// @name Accessors
   /// @{
   public:
-    /// Get a specific operand of this operator.
+    /// Get the number of operands in this operator
     virtual size_t  getNumOperands() const = 0;
+
+    /// Get a specific operand of this operator.
     virtual Operator* getOperand(unsigned opnum) const = 0;
 
     /// Return the function containing this operator

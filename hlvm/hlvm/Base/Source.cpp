@@ -191,7 +191,8 @@ public:
     , mf_(0)
     , mfs_(0)
   {
-    mf_ = new llvm::sys::MappedFile(llvm::sys::Path(uri_->resolveToFile()));
+    mf_ = new llvm::sys::MappedFile();
+    mf_->open(llvm::sys::Path(uri_->resolveToFile()));
     mfs_ = new MappedFileSource(*mf_);
   }
   virtual ~URISource() {}

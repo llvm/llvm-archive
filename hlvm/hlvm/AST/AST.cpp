@@ -200,7 +200,7 @@ AST::new_RealType(
   uint32_t exponent,
   const Locator* loc)
 {
-  RealType* result = new RealType(RealTypeID);
+  RealType* result = new RealType();
   result->setMantissa(mantissa);
   result->setExponent(exponent);
   result->setLocator(loc);
@@ -963,24 +963,40 @@ AST::new_UnaryOp<ComplementOp>(Operator* op1, Bundle* B, const Locator* loc);
 template PreIncrOp*
 AST::new_UnaryOp<PreIncrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
-template PreIncrOp*
-AST::new_UnaryOp<PreIncrOp>(Operator* op1, Bundle* B, const Locator* loc);
+template<> PreIncrOp*
+AST::new_UnaryOp<PreIncrOp>(Operator* op1, Bundle* B, const Locator* loc)
+{
+  const Type* Ty = llvm::cast<GetOp>(op1)->getReferentType();
+  return new_UnaryOp<PreIncrOp>(Ty,op1,loc);
+}
 
 template PreDecrOp*
 AST::new_UnaryOp<PreDecrOp>(
     const Type* Ty, Operator* op1, const Locator* loc);
-template PreDecrOp*
-AST::new_UnaryOp<PreDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
+template<> PreDecrOp*
+AST::new_UnaryOp<PreDecrOp>(Operator* op1, Bundle* B, const Locator* loc)
+{
+  const Type* Ty = llvm::cast<GetOp>(op1)->getReferentType();
+  return new_UnaryOp<PreDecrOp>(Ty,op1,loc);
+}
 
 template PostIncrOp*
 AST::new_UnaryOp<PostIncrOp>(const Type* Ty, Operator* op1, const Locator* loc);
-template PostIncrOp*
-AST::new_UnaryOp<PostIncrOp>(Operator* op1, Bundle* B, const Locator* loc);
+template<> PostIncrOp*
+AST::new_UnaryOp<PostIncrOp>(Operator* op1, Bundle* B, const Locator* loc)
+{
+  const Type* Ty = llvm::cast<GetOp>(op1)->getReferentType();
+  return new_UnaryOp<PostIncrOp>(Ty,op1,loc);
+}
 
 template PostDecrOp*
 AST::new_UnaryOp<PostDecrOp>(const Type* Ty, Operator* op1, const Locator* loc);
-template PostDecrOp*
-AST::new_UnaryOp<PostDecrOp>(Operator* op1, Bundle* B, const Locator* loc);
+template<> PostDecrOp*
+AST::new_UnaryOp<PostDecrOp>(Operator* op1, Bundle* B, const Locator* loc)
+{
+  const Type* Ty = llvm::cast<GetOp>(op1)->getReferentType();
+  return new_UnaryOp<PostDecrOp>(Ty,op1,loc);
+}
 
 template SizeOfOp*
 AST::new_UnaryOp<SizeOfOp>(const Type* Ty, Operator* op1, const Locator* loc);
@@ -1348,8 +1364,13 @@ AST::new_UnaryOp<ResultOp>(Operator*op1,Bundle* B, const Locator*loc);
 
 template CallOp* 
 AST::new_MultiOp<CallOp>(const Type*Ty, const std::vector<Operator*>& ops, const Locator*loc);
-template CallOp* 
-AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, Bundle* B,const Locator* loc);
+template<> CallOp* 
+AST::new_MultiOp<CallOp>(const std::vector<Operator*>& ops, Bundle* B,const Locator* loc)
+{
+  GetOp* get = llvm::cast<GetOp>(ops[0]);
+  const Function* F = llvm::cast<Function>(get->getReferent());
+  return new_MultiOp<CallOp>(F->getResultType(),ops,loc);
+}
 
 // Memory Operators
 template StoreOp*  
@@ -1359,8 +1380,12 @@ AST::new_BinaryOp<StoreOp>(Operator*op1,Operator*op2,Bundle* B, const Locator*lo
 
 template LoadOp*   
 AST::new_UnaryOp<LoadOp>(const Type* Ty, Operator*op1,const Locator*loc);
-template LoadOp*   
-AST::new_UnaryOp<LoadOp>(Operator*op1,Bundle* B, const Locator*loc);
+template<> LoadOp*   
+AST::new_UnaryOp<LoadOp>(Operator*op1,Bundle* B, const Locator*loc)
+{
+  const PointerType* PT = llvm::cast<PointerType>(op1->getType());
+  return new_UnaryOp<LoadOp>(PT->getElementType(),op1,loc);
+}
 
 // Input/Output Operators
 template OpenOp* 

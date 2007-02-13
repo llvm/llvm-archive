@@ -768,16 +768,16 @@ ABCExprTree *ArrayBoundsCheck::getArgumentConstraints(Function & F) {
       MemAccessInstListType MemAccessInstList = fMap[&F]->getMemAccessInstList();
       MemAccessInstListIt maI = MemAccessInstList.begin(), maE = MemAccessInstList.end();
       for (; maI != maE; ++maI) {
-	ABCExprTree *root = fMap[&F]->getSafetyConstraint(maI->first);
-	ABCExprTree * argConstraints = 0;
-	if (maI->second) {
-	  argConstraints = getArgumentConstraints(F);
-	}
-	if (argConstraints) {
-	  root = new ABCExprTree(root,argConstraints,"&&");
-	}
-	//omega stuff should go in here.
-	Omega(maI->first,root);
+        ABCExprTree *root = fMap[&F]->getSafetyConstraint(maI->first);
+        ABCExprTree * argConstraints = 0;
+        if (maI->second) {
+          argConstraints = getArgumentConstraints(F);
+        }
+        if (argConstraints) {
+          root = new ABCExprTree(root,argConstraints,"&&");
+        }
+        //omega stuff should go in here.
+        Omega(maI->first,root);
       }
     }
   }

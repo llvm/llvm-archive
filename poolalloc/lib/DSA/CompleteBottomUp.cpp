@@ -14,13 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "cbudatastructure"
-#include "llvm/Analysis/DataStructure/DataStructure.h"
+#include "dsa/DataStructure.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/DataStructure/DSGraph.h"
+#include "dsa/DSGraph.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -51,14 +52,14 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
     if (!MainFunc->isExternal())
       calculateSCCGraphs(getOrCreateGraph(*MainFunc), Stack, NextID, ValMap);
   } else {
-    DOUT << "CBU-DSA: No 'main' function found!\n";
+    DEBUG(std::cerr << "CBU-DSA: No 'main' function found!\n");
   }
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && !DSInfo.count(I)) {
       if (MainFunc) {
-        DOUT << "*** CBU: Function unreachable from main: "
-             << I->getName() << "\n";
+        DEBUG(std::cerr << "*** CBU: Function unreachable from main: "
+              << I->getName() << "\n");
       }
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
     }
@@ -217,14 +218,14 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
         G.mergeInGraph(CS, *CalleeFunc, GI,
                        DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
-        DOUT << "    Inlining graph [" << i << "/"
-             << G.getFunctionCalls().size()-1
-             << ":" << TNum << "/" << Num-1 << "] for "
-             << CalleeFunc->getName() << "["
-             << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()
-             << "] into '" /*<< G.getFunctionNames()*/ << "' ["
-             << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
-             << "]\n";
+        DEBUG(std::cerr << "    Inlining graph [" << i << "/"
+              << G.getFunctionCalls().size()-1
+              << ":" << TNum << "/" << Num-1 << "] for "
+              << CalleeFunc->getName() << "["
+              << GI.getGraphSize() << "+" << GI.getAuxFunctionCalls().size()
+              << "] into '" /*<< G.getFunctionNames()*/ << "' ["
+              << G.getGraphSize() << "+" << G.getAuxFunctionCalls().size()
+              << "]\n");
       }
     }
   }

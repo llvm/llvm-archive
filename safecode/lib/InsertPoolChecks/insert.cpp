@@ -33,6 +33,10 @@ cl::opt<bool> DisableGEPChecks ("disable-gepchecks", cl::Hidden,
                                 cl::init(false),
                                 cl::desc("Disable GetElementPtr(GEP) Checks"));
 
+cl::opt<bool> DisableStackChecks ("disable-stackchecks", cl::Hidden,
+                                  cl::init(false),
+                                  cl::desc("Disable Stack Checks"));
+
 cl::opt<bool> DisableIntrinsicChecks ("disable-intrinchecks", cl::Hidden,
                                       cl::init(false),
                                       cl::desc("Disable Intrinsic Checks"));
@@ -131,48 +135,53 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
     }
     
   }
+
   //Now iterate over globals and register all the arrays
-    Module::global_iterator GI = M.global_begin(), GE = M.global_end();
-    for ( ; GI != GE; ++GI) {
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
-	Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-	Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
-	Type *PoolDescPtrTy = PointerType::get(PoolDescType);
-	if (GV->getType() != PoolDescPtrTy) {
-	  DSGraph &G = equivPass->getGlobalsGraph();
-	  DSNode *DSN  = G.getNodeForValue(GV).getNode();
-	  if ((isa<ArrayType>(GV->getType()->getElementType())) || DSN->isNodeCompletelyFolded()) {
-	    Value * AllocSize;
-	    const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
-	    if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
-	      //std::cerr << "found global \n";
-	      AllocSize = ConstantInt::get(csiType,
- 					    (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
-	    } else {
-	      AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
-	    }
-	    Function *PoolRegister = paPass->PoolRegister;
-	    BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-	    //skip the calls to poolinit
-	    while ((isa<CallInst>(InsertPt)) || isa<CastInst>(InsertPt) || isa<AllocaInst>(InsertPt) || isa<BinaryOperator>(InsertPt)) ++InsertPt;
-	    
-	    std::map<const DSNode *, Value *>::iterator I = paPass->GlobalNodes.find(DSN);
-	    if (I != paPass->GlobalNodes.end()) {
-	      Value *PH = I->second;
-	      Instruction *GVCasted = new CastInst(GV,
-						   VoidPtrType, GV->getName()+"casted",InsertPt);
-	      new CallInst(PoolRegister,
-					  make_vector(PH, AllocSize, GVCasted, 0),
-					  "", InsertPt); 
-	    } else {
-	      std::cerr << "pool descriptor not present \n ";
-	      abort();
-	    }
-	  }
-	}
+  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
+  for ( ; GI != GE; ++GI) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
+      Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+      Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+      Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+      if (GV->getType() != PoolDescPtrTy) {
+        DSGraph &G = equivPass->getGlobalsGraph();
+        DSNode *DSN  = G.getNodeForValue(GV).getNode();
+        if ((isa<ArrayType>(GV->getType()->getElementType())) ||
+            DSN->isNodeCompletelyFolded()) {
+          Value * AllocSize;
+          const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+            //std::cerr << "found global" << *GI << std::endl;
+            AllocSize = ConstantInt::get(csiType,
+                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
+          } else {
+            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
+          }
+          Function *PoolRegister = paPass->PoolRegister;
+          BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
+          //skip the calls to poolinit
+          while ((isa<CallInst>(InsertPt))  ||
+                  isa<CastInst>(InsertPt)   ||
+                  isa<AllocaInst>(InsertPt) ||
+                  isa<BinaryOperator>(InsertPt)) ++InsertPt;
+      
+          std::map<const DSNode *, Value *>::iterator I = paPass->GlobalNodes.find(DSN);
+          if (I != paPass->GlobalNodes.end()) {
+            Value *PH = I->second;
+            Instruction *GVCasted = new CastInst(GV,
+                   VoidPtrType, GV->getName()+"casted",InsertPt);
+            new CallInst(PoolRegister,
+                make_vector(PH, AllocSize, GVCasted, 0),
+                "", InsertPt); 
+          } else {
+            std::cerr << "pool descriptor not present \n ";
+            abort();
+          }
+        }
       }
     }
   }
+}
 #endif
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
@@ -575,6 +584,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                 abort();
               }
             } else {
+#if 1
               //FIXME this is a less precise check than possible
               //		  std::cerr << "WARNING : did not handle array within a struct precisely, num operands != 4\n";
               Instruction *InsertPt = MAI->getNext();
@@ -593,6 +603,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                 ConstantInt::get(Type::UIntTy, TD->getTypeSize(ST));
               args.push_back(AllocSize);
               CallInst *newCI = new CallInst(ExactCheck2,args,"",InsertPt);
+#endif
             }
           }
         } else {
@@ -606,19 +617,23 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           if (1 || (MAI->getNumOperands() == 3)) {
             if (ConstantInt *COP = dyn_cast<ConstantInt>(MAI->getOperand(1))) {
               //FIXME assuming that the first array index is 0
+#if 0
               assert((COP->getZExtValue() == 0) && "non zero array index\n");
+#else
+              if (COP->getZExtValue() == 0) {
+#endif
               Value * secOp = MAI->getOperand(2);
               Value *indexTypeSize = ConstantInt::get(Type::UIntTy, TD->getTypeSize(secOp->getType())); 
               //Convert everything to bytes
-              if (secOp->getType() != Type::UIntTy) {
-                secOp = new CastInst(secOp, Type::UIntTy, secOp->getName()+".casted",
+              if (secOp->getType() != Type::IntTy) {
+                secOp = new CastInst(secOp, Type::IntTy, secOp->getName()+".casted",
                                      MAI);
               }
               //		  secOp = BinaryOperator::create(Instruction::Mul, indexTypeSize, secOp,"indextmp",MAI);
               //		  }
               std::vector<Value *> args(1,secOp);
               Value *AllocSize =
-                ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
+                ConstantInt::get(Type::IntTy, TD->getTypeSize(AI->getAllocatedType()));
 		  
               if (AI->isArrayAllocation())
                 AllocSize = BinaryOperator::create(Instruction::Mul,
@@ -627,6 +642,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 		  
               args.push_back(AllocSize);
               CallInst *newCI = new CallInst(ExactCheck,args,"", MAI);
+              }
             }
           } else {
             std::cerr << " num operands != 3 \n";
@@ -772,20 +788,22 @@ void InsertPoolChecks::TransformFunction(Function &F) {
       handleGetElementPtr(MAI);
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(iLocal)) {
       AllocaInst * AIOrig = AI;
+      if (!DisableStackChecks) {
 #ifndef LLVA_KERNEL      
-      if (!equivPass->ContainsDSGraphFor(F)) {
-        //some times the ECGraphs doesnt contain F
-        //for newly created cloned functions
-        PA::FuncInfo *FI = paPass->getFuncInfoOrClone(F);
-        Value *temp = FI->MapValueToOriginal(AI);
-        if (temp)
-          AIOrig = dyn_cast<AllocaInst>(temp);
-        else
-          continue;
-        assert(AIOrig && " Instruction not in value map (clone)\n");
-      }
+        if (!equivPass->ContainsDSGraphFor(F)) {
+          //some times the ECGraphs doesnt contain F
+          //for newly created cloned functions
+          PA::FuncInfo *FI = paPass->getFuncInfoOrClone(F);
+          Value *temp = FI->MapValueToOriginal(AI);
+          if (temp)
+            AIOrig = dyn_cast<AllocaInst>(temp);
+          else
+            continue;
+          assert(AIOrig && " Instruction not in value map (clone)\n");
+        }
 #endif       
-      registerAllocaInst(AI, AIOrig);
+        registerAllocaInst(AI, AIOrig);
+      }
     } else if (CallInst *CI = dyn_cast<CallInst>(iLocal)) {
       handleCallInst(CI);
     }
@@ -824,8 +842,12 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
     }
     Instruction *Casted = new CastInst(AI, PointerType::get(Type::SByteTy),
                                        AI->getName()+".casted", iptI);
+    Value *CastedPH = new CastInst(PH,
+                                   PointerType::get(Type::SByteTy),
+                                   "ph",Casted);
     Instruction *V = new CallInst(PoolRegister,
-                                  make_vector(PH, Casted, AllocSize, 0), "", iptI);
+                                  make_vector(CastedPH, Casted, AllocSize, 0),
+                                  "", iptI);
   }
 }
 
@@ -1478,7 +1500,7 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
     FunctionType::get(Type::VoidTy,Arg4, false);
   PoolCheckIArray = M.getOrInsertFunction("poolcheckiarray", PoolCheckIArrayTy);
 
-  std::vector<const Type *> FArg2(1, Type::UIntTy);
+  std::vector<const Type *> FArg2(1, Type::IntTy);
   FArg2.push_back(Type::IntTy);
   FunctionType *ExactCheckTy = FunctionType::get(Type::VoidTy, FArg2, false);
   ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);

@@ -10,7 +10,6 @@ def CPP2LLVMCPPAction(target,source,env):
   theAction = env.Action(
     "PATH='" + env['LLVM_bin'] + "' " + env['with_llvmgxx'] + env['CXXFLAGS'] +
       " -c -emit-llvm -x c++ " + src + " -o - | " + 
-    env['with_llvmdis'] + " -o - | " + 
     env['with_llvm2cpp'] + " " + env['LLVM2CPPFLAGS'] + " -o " + tgt
   )
   env.Depends(tgt,env['with_llvm2cpp'])

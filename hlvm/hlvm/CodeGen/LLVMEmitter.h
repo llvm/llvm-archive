@@ -165,7 +165,7 @@ class LLVMEmitter
     llvm::BasicBlock* getBlock() const { return TheBlock; }
 
     /// Get the name of the current block we're inserting into
-    const std::string& getBlockName() const { 
+    std::string getBlockName() const { 
       return TheBlock->getName(); 
     }
     // Get the terminating instruction of the current block
@@ -379,14 +379,15 @@ class LLVMEmitter
     llvm::CallInst* emitCall(llvm::Function* F, const ArgList& args); 
 
     llvm::GetElementPtrInst* emitGEP(llvm::Value* V, const ArgList& indices) {
-      return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
+      return new llvm::GetElementPtrInst(V, &indices[0], indices.size(), "",
+                                         TheBlock);
     }
 
     llvm::GetElementPtrInst* emitGEP(llvm::Value* V, llvm::Value* index) {
-      ArgList indices;
-      indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
-      indices.push_back(index);
-      return new llvm::GetElementPtrInst(V,indices,"",TheBlock);
+      llvm::Value* indices[2];
+      indices[0] = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+      indices[1] = index;
+      return new llvm::GetElementPtrInst(V, indices, 2, "",TheBlock);
     }
 
     /// This method implements an assignment of a src value to a pointer to a

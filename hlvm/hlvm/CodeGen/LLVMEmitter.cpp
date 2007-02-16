@@ -272,7 +272,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
       if (! hlvm_stream) {
         OpaqueType* opq = OpaqueType::get();
         TheModule->addTypeName("hlvm_stream_obj", opq);
-        hlvm_stream= PointerType::get(opq);
+        hlvm_stream = PointerType::get(opq);
         TheModule->addTypeName("hlvm_stream", hlvm_stream);
       }
       return hlvm_stream;

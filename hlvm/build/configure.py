@@ -244,7 +244,7 @@ def CheckForPrograms(conf):
   conf.CheckProgram('llvm-as','with_llvmas',[conf.env['LLVM_bin']])
   conf.CheckProgram('llvm2cpp','with_llvm2cpp',[conf.env['LLVM_bin']])
   conf.CheckProgram('llvm-ar','with_llvmar',[conf.env['LLVM_bin']])
-  conf.CheckProgram('gccld','with_gccld',[conf.env['LLVM_bin']])
+  conf.CheckProgram('llvm-ld','with_llvm_ld',[conf.env['LLVM_bin']])
   conf.CheckProgram('llvm-gcc','with_llvmgcc')
   conf.CheckProgram('llvm-g++','with_llvmgxx')
   conf.CheckProgram('gperf','with_gperf')

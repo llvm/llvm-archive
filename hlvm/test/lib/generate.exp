@@ -21,7 +21,7 @@
 # 
 #===------------------------------------------------------------------------===#
 proc hlvm-generate-test { complexity typecomplexity size seed } {
-  global srcdir subdir objdir tmpdir objrootdir llc gccld gxx APR_lib
+  global srcdir subdir objdir tmpdir objrootdir llc llvm_ld gxx APR_lib
   set outdir [file join $objdir $subdir]
   set gentc [ file join $objrootdir tools hlvm-gentestcase hlvm-gentestcase ]
   set compiler [file join $objrootdir tools hlvm-compiler hlvm-compiler ]
@@ -47,9 +47,9 @@ proc hlvm-generate-test { complexity typecomplexity size seed } {
     if { $retval != 0 } {
       fail "$test: hlvm-compiler returned $retval:\n$msg"
     } else {
-      set retval [ catch { exec $gccld -o $testlinked $testbc $vmmain $rtlib } msg ]
+      set retval [ catch { exec $llvm_ld -o $testlinked $testbc $vmmain $rtlib } msg ]
       if { $retval != 0 } {
-        fail "$test: gccld returned $retval:\n$msg"
+        fail "$test: llvm-ld returned $retval:\n$msg"
       } else {
         set retval [ catch { exec $llc -fast -f -o $tests $testlinkedbc } msg ]
         if { $retval != 0 } {

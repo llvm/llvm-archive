@@ -151,8 +151,8 @@ def GetBuildEnvironment(targets,arguments):
            '/usr/local/bin/g++')
   opts.Add('with_llc','Specify where the LLVM compiler is located',
            '/usr/local/bin/llc')
-  opts.Add('with_gccld','Specify where the LLVM GCC Linker is located',
-           '/usr/local/bin/gccld')
+  opts.Add('with_llvm_ld','Specify where the LLVM GCC Linker is located',
+           '/usr/local/bin/llvm-ld')
   opts.Add('with_llvmdis','Specify where the LLVM disassembler is located',
            '/usr/local/bin/llvm-dis')
   opts.Add('with_llvmas','Specify where the LLVM assembler is located',

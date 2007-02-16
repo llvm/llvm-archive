@@ -7,9 +7,7 @@
         <result>
           <cmpl>
             <cmpl>
-              <load>
-                <get id="v"/>
-              </load>
+              <get id="v"/>
             </cmpl>
           </cmpl>
         </result>

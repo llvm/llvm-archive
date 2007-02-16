@@ -24,82 +24,46 @@
           <get id="v2"/>
         </predec>
         <neg>
-          <load>
-            <get id="v1"/>
-          </load>
+          <get id="v1"/>
         </neg>
         <cmpl>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v2"/>
         </cmpl>
         <add>
-          <load>
-            <get id="v1"/>
-          </load>
+          <get id="v1"/>
           <get id="one"/>
         </add>
         <sub>
-          <load>
-            <get id="v1"/>
-          </load>
+          <get id="v1"/>
           <get id="one"/>
         </sub>
         <mul>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </mul>
         <div>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </div>
         <mod>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </mod>
         <band>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </band>
         <bor>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </bor>
         <bxor>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </bxor>
         <bnor>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </bnor>
         <result>
           <get id="result"/>

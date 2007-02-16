@@ -5,9 +5,7 @@
       <block>
         <autovar id="v1" type="s32"/>
         <result>
-          <load>
-            <get id="v1"/>
-          </load>
+          <get id="v1"/>
         </result>
         <ret/>
       </block>

@@ -19,89 +19,47 @@
           <get id="false"/>
         </autovar>
         <not>
-          <load>
-            <get id="v1"/>
-          </load>
+          <get id="v1"/>
         </not>
         <and>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </and>
         <or>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </or>
         <nor>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </nor>
         <xor>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </xor>
         <eq>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </eq>
         <ne>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </ne>
         <gt>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </gt>
         <lt>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </lt>
         <ge>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </ge>
         <le>
-          <load>
-            <get id="v1"/>
-          </load>
-          <load>
-            <get id="v2"/>
-          </load>
+          <get id="v1"/>
+          <get id="v2"/>
         </le>
         <result>
           <get id="result"/>

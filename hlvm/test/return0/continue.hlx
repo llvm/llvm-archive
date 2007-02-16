@@ -12,7 +12,10 @@
             <ne><get id="1"/><get id="0"/></ne>
             <block>
               <select>
-                <gt><load><get id="count"/></load><get id="0"/></gt>
+                <gt>
+                  <get id="count"/>
+                  <get id="0"/>
+                </gt>
                 <block>
                   <postdec><get id="count"/></postdec>
                   <continue/>

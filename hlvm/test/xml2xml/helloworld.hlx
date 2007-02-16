@@ -20,15 +20,11 @@
           </open>
         </store>
         <write>
-          <load>
-            <get id="out"/>
-          </load>
+          <get id="out"/>
           <get id="hw"/>
         </write>
         <close>
-          <load>
-            <get id="out"/>
-          </load>
+          <get id="out"/>
         </close>
         <result>
           <get id="0"/>

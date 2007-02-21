@@ -43,6 +43,7 @@ namespace {
     void Finalize(Module& M) {
       //try to be semi clever
       //find homes for values
+      BasicBlock* SomeBB;
       std::map<std::pair<BasicBlock*, Value*>, std::set<Value*> > homes;
       for (std::map<Value*, Value*>::iterator ii = stuff.begin(),
              ee = stuff.end(); ii != ee; ++ii) {
@@ -51,6 +52,7 @@ namespace {
           homes[std::make_pair((BasicBlock*)0, ii->second)].insert(V);
         } else if (isa<Instruction>(V)) {
           homes[std::make_pair(cast<Instruction>(V)->getParent(), ii->second)].insert(V);
+          SomeBB = cast<Instruction>(V)->getParent()
         } else {
           V->dump();
           assert(0 && "Not supported");
@@ -66,13 +68,12 @@ namespace {
       //insert at end of BBs
       for (std::map<std::pair<BasicBlock*, Value*>, std::set<Value*> >::iterator
              ii = homes.begin(), ee = homes.end(); ii != ee; ++ii) {
+        BasicBlock* BB = ii->first.first ? ii->first.first : SomeBB;
         std::vector<Value*> Args;
         Args.push_back(ii->first.second);
         std::copy(ii->second.begin(), ii->second.end(), std::back_insert_iterator<std::vector<Value*> > (Args));
-        new CallInst(F, Args, "", ii->first.first->getTerminator());
+        new CallInst(F, Args, "", BB->getTerminator());
       }
-
     }
-
   };
 }

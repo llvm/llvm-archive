@@ -28,4 +28,4 @@ bool ProofStrip::runOnModule(Module& M) {
   return false;
 }
 
-ProofPlace p;
+//ProofPlace p;

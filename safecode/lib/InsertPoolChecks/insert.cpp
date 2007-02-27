@@ -83,7 +83,9 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   addPoolCheckProto(M);
 
   //register global arrays and collapsed nodes with global pools
+#ifndef LLVA_KERNEL
   registerGlobalArraysWithGlobalPools(M);
+#endif
 
   //Replace old poolcheck with the new one 
   addPoolChecks(M);
@@ -103,7 +105,8 @@ static void AddCallToRegFunc(Function* F, GlobalVariable* GV, Function* PR, Valu
 
   BasicBlock::iterator InsertPt = F->getEntryBlock().begin();
   Instruction *GVCasted = new CastInst(GV, VoidPtrType, GV->getName()+"casted",InsertPt);
-  new CallInst(PR, make_vector(PH, AllocSize, GVCasted, 0), "", InsertPt); 
+  Value *PHCasted = new CastInst(PH, VoidPtrType, PH->getName()+"casted",InsertPt);
+  new CallInst(PR, make_vector(PHCasted, AllocSize, GVCasted, 0), "", InsertPt);
 }
 
 void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
@@ -144,7 +147,8 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
           Value* PH = 0;
           if ((G.getPoolDescriptorsMap()).count(DSN)) 
             PH = (G.getPoolDescriptorsMap()[DSN]->getMetaPoolValue());
-          AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
+          if (PH)
+            AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
         }
       }
     }
@@ -716,9 +720,33 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 #endif          
           Function *Fnew = MAInew->getParent()->getParent();
           Value *PH = getPoolHandle(MAInew, Fnew);
+#if 0
           if (!PH)
             PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
+#else
+          if (!PH)
+            return;
+#endif
           //deal with it at runtime	      assert(PH && " PH is null \n");
+
+          //
+          // Do not add a run-time check if this is an incomplete or unknown
+          // node.
+          //
+          DSGraph & TDG = TDPass->getDSGraph(*F);
+          DSNode * Node = TDG.getNodeForValue(MAI).getNode();
+          if ((!PH) || (Node->isIncomplete()) ||
+                       (Node->isAllocaNode()) ||
+                       (Node->isGlobalNode()) ||
+                       (Node->isUnknownNode()) ||
+                       (!(Node->isHeapNode()))) {
+            ++MissedIncompleteChecks;
+            if (!PH) ++MissedNullChecks;
+            if (Node->isAllocaNode()) ++MissedStackChecks;
+            if (Node->isGlobalNode()) ++MissedGlobalChecks;
+            return;
+          }
+
           if (1) {
             //we need to create a call instruction
             //with poolhandle, original value and the new value
@@ -935,6 +963,7 @@ std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
     if ((!PH) || (Node->isIncomplete()) ||
                  (Node->isAllocaNode()) ||
                  (Node->isGlobalNode()) ||
+                 (Node->isUnknownNode()) ||
                  (!(Node->isHeapNode()))) {
       ++NullChecks;
       if (!PH) ++MissedNullChecks;

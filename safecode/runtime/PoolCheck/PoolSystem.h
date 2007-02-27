@@ -19,6 +19,7 @@ extern "C" {
 #endif
   /* Functions that need to be provided by the pool allocation run-time */
   void poolcheckfail (const char * msg, int);
+  void poolcheckfatal (const char * msg, int);
   void poolcheckinfo (const char * msg, int);
   void * poolcheckmalloc (unsigned int size);
   void printpoolinfo (void *Pool);

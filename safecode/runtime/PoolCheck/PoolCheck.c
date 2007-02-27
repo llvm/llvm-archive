@@ -19,6 +19,9 @@
 #endif
 #define DEBUG(x) 
 
+/* This defines the value of an invalid pointer address */
+static const unsigned char * invalidptr = 0x00000004;
+
 #if 1
 /*
  * These are symbols exported by the kernel so that we can figure out where
@@ -67,9 +70,9 @@ poolcheckdestroy(void *Pool) {
 
 
 void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
-  if (!ready) return;
   MetaPoolTy  *MetaPoolPrev = *MP;
   MetaPoolTy *MetaPool = *MP;
+  if (!ready) return;
   if (MetaPool) {
     MetaPool = MetaPool->next;
   } else {
@@ -108,8 +111,8 @@ void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
  *  Determine whether the pointer is within the pool.
  *
  * Return value:
- *  true  - The pointer is within the pool.
- *  false - The pointer is not within the pool.
+ *  1  - The pointer is within the pool.
+ *  0 - The pointer is not within the pool.
  */
 unsigned char poolcheckoptim(void *Pool, void *Node) {
   Splay *psplay;
@@ -139,8 +142,6 @@ unsigned char poolcheckoptim(void *Pool, void *Node) {
    */
   unsigned int SlabSize = poolcheckslabsize (Pool);
   void *PS = (void *)((unsigned)Node & ~(SlabSize-1));
-  poolcheckinfo ("Slab Size is ", SlabSize);
-  poolcheckinfo ("Looking for slab", PS);
 
   /*
    * Scan through the list of slabs belonging to the pool and determine
@@ -148,8 +149,7 @@ unsigned char poolcheckoptim(void *Pool, void *Node) {
    */
   PoolCheckSlab * PCS = poolcheckslab(Pool);
   while (PCS) {
-    poolcheckinfo ("Checking slab", PCS->Slab);
-    if (PCS->Slab == PS) return true;
+    if (PCS->Slab == PS) return 1;
     /* we can optimize by moving it to the front of the list */
     PCS = PCS->nextSlab;
   }
@@ -160,20 +160,10 @@ unsigned char poolcheckoptim(void *Pool, void *Node) {
   psplay = poolchecksplay(Pool);
   ref = splay_find_ptr(psplay, (unsigned long) Node);
   if (ref) {
-    return true;
+    return 1;
   }
-  return false;
+  return 0;
 }
-
-
-inline unsigned char refcheck(Splay *splay, void *Node) {
-  unsigned long base = (unsigned long) (splay->key);
-  unsigned long length = (unsigned long) (splay->val);
-  unsigned long result = (unsigned long) Node;
-  if ((result >= base) && (result < (base + length))) return true;
-  return false;
-}
-
 
 /*
  * Function: poolcheckarrayoptim()
@@ -185,16 +175,18 @@ inline unsigned char refcheck(Splay *splay, void *Node) {
  *       source.
  *
  * Return value:
- *  true  - The source and destination were found in the pool.
- *  false - Either the source or the destination were not found in the pool.
+ *  1 - The source and destination were found in the pool.
+ *  0 - The source was not found in the pool
+ * -1 - The source was found in the pool, but the result is outside of the pool.
  */
-unsigned char poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeResult) {
+char
+poolcheckarrayoptim(MetaPoolTy *Pool, void *NodeSrc, void *NodeResult) {
   Splay *psplay = poolchecksplay(Pool);
   Splay *ref = splay_find_ptr(psplay, (unsigned long)NodeSrc);
   if (ref) {
     return refcheck(ref, NodeResult);
   } 
-  return false;
+  return 0;
 }
 
 /*
@@ -253,6 +245,62 @@ void poolcheckiarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   return;
 }
 
+inline int refcheck(Splay *splay, void *Node) {
+  unsigned long base = (unsigned long) (splay->key);
+  unsigned long length = (unsigned long) (splay->val);
+  unsigned long result = (unsigned long) Node;
+  if ((result >= base) && (result < (base + length))) return 1;
+  return -1;
+                                                        
+}
+
+inline signed char * getactualvalue(signed char *Pool, signed char *val) {
+  if (!ready) return val;
+  if ((unsigned long) val != invalidptr) {
+    return val;
+  } else {
+    poolcheckfail("Bounds check failure : value in the first page \n", val);
+  }
+}
+
+inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
+  if (result >= base + size ) {
+    poolcheckfail("Array bounds violation detected \n", base);
+  }
+}
+
+/*
+ * Function: boundscheck()
+ *
+ * Description:
+ *  Perform a precise array bounds check on source and result.  If the result
+ *  is out of range for the array, return 0x1 so that getactualvalue() will
+ *  know that the pointer is bad and should not be dereferenced.
+ */
+void *
+boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  MetaPoolTy *MetaPool = *MP;
+  void *Pool;
+  if (!ready) return NodeResult;
+  if (!MetaPool) {
+    poolcheckfail ("Empty meta pool? \n", 0);
+  }
+  //iteratively search through the list
+  //Check if there are other efficient data structures.
+  while (MetaPool) {
+    Pool = MetaPool->Pool;
+    int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
+    if (ret) {
+      if (ret == -1) return invalidptr;
+      return NodeResult;
+    }
+    MetaPool = MetaPool->next;
+  }
+  poolcheckfail ("boundscheck failure 1\n", NodeSrc);
+  return NodeResult;
+}
+
+
 /*
  * Function: poolcheck()
  *
@@ -270,13 +318,8 @@ void poolcheck(MetaPoolTy **MP, void *Node) {
    * iteratively search through the list
    * Check if there are other efficient data structures.
   */
-  poolcheckinfo ("Poolcheck: Called from ", __builtin_return_address(0));
-  poolcheckinfo ("Checking metapool ", MetaPool);
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
-#if 1
-    printpoolinfo (Pool);
-#endif
     if (poolcheckoptim(Pool, Node))   return;
     MetaPool = MetaPool->next;
   }
@@ -338,7 +381,14 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
   }
 #endif
 
-  void poolcheckregister(Splay *splay, void * allocaptr, unsigned NumBytes) {
-    if (!ready) return;
-    splay_insert_ptr(splay, (unsigned long)(allocaptr), NumBytes);
-  }
+//
+// Function: poolcheckregister()
+//
+// Description:
+//  This function registers a range of memory as belonging to the splay.  It is
+//  currently used to register arrays, stack nodes, and global nodes.
+//
+void poolcheckregister(Splay *splay, void * allocaptr, unsigned NumBytes) {
+  if (!ready) return;
+  splay_insert_ptr(splay, (unsigned long)(allocaptr), NumBytes);
+}

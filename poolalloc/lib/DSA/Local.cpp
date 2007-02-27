@@ -1232,11 +1232,13 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     if (DSNode *N = RetNH.getNode())
       N->setModifiedMarker()->setReadMarker();
     return true;
-#if 0
+#if 1
   } else if (F->getName() == "llva_save_stackp") {
       // Create a new DSNode for the memory returned by llva_save_stackp()
       DSNode *N = createNode();
       N->setAllocaNodeMarker();
+      N->setUnknownNodeMarker();
+      N->setIncompleteMarker();
 
       //
       // TODO:

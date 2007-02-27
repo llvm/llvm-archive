@@ -64,11 +64,11 @@ struct InsertPoolChecks : public ModulePass {
   void handleGetElementPtr(GetElementPtrInst *MAI);
   void addGetActualValue(SetCondInst *SCI, unsigned operand);
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
+  void registerGlobalArraysWithGlobalPools(Module &M);
   
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);
-  void registerGlobalArraysWithGlobalPools(Module &M);
 #else
   void addLSChecks(Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F);

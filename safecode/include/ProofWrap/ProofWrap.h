@@ -52,7 +52,7 @@ namespace {
           homes[std::make_pair((BasicBlock*)0, ii->second)].insert(V);
         } else if (isa<Instruction>(V)) {
           homes[std::make_pair(cast<Instruction>(V)->getParent(), ii->second)].insert(V);
-          SomeBB = cast<Instruction>(V)->getParent()
+          SomeBB = cast<Instruction>(V)->getParent();
         } else {
           V->dump();
           assert(0 && "Not supported");

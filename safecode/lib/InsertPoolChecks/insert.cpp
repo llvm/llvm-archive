@@ -81,10 +81,10 @@ bool InsertPoolChecks::runOnModule(Module &M) {
 
   //add the new poolcheck prototype 
   addPoolCheckProto(M);
-#ifndef LLVA_KERNEL  
+
   //register global arrays and collapsed nodes with global pools
   registerGlobalArraysWithGlobalPools(M);
-#endif  
+
   //Replace old poolcheck with the new one 
   addPoolChecks(M);
 
@@ -96,8 +96,61 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   return true;
 }
 
-#ifndef LLVA_KERNEL
+static void AddCallToRegFunc(Function* F, GlobalVariable* GV, Function* PR, Value* PH, Value* AllocSize) {
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+
+  assert(PH && "No PoolHandle for Global!");
+
+  BasicBlock::iterator InsertPt = F->getEntryBlock().begin();
+  Instruction *GVCasted = new CastInst(GV, VoidPtrType, GV->getName()+"casted",InsertPt);
+  new CallInst(PR, make_vector(PH, AllocSize, GVCasted, 0), "", InsertPt); 
+}
+
 void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
+
+#ifdef LLVA_KERNEL
+
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  const Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+  const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+
+  //Get the registration function
+  std::vector<const Type*> Vt;
+  const FunctionType* RFT = FunctionType::get(Type::VoidTy, Vt, false);
+  Function* RegFunc = M.getOrInsertFunction("__setup_param_regGlobals", RFT);
+  if (RegFunc->empty()) {
+    BasicBlock* BB = new BasicBlock("reg", RegFunc);
+    new ReturnInst(BB);
+  }
+
+  //Now iterate over globals and register all the arrays
+  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
+  for ( ; GI != GE; ++GI) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
+      if (GV->getType() != PoolDescPtrTy) {
+        DSGraph &G = TDPass->getGlobalsGraph();
+        DSNode *DSN  = G.getNodeForValue(GV).getNode();
+        if ((isa<ArrayType>(GV->getType()->getElementType())) ||
+            DSN->isNodeCompletelyFolded()) {
+          Value * AllocSize;
+          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+            //std::cerr << "found global" << *GI << std::endl;
+            AllocSize = ConstantInt::get(csiType,
+                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
+          } else {
+            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
+          }
+          Value* PH = 0;
+          if ((G.getPoolDescriptorsMap()).count(DSN)) 
+            PH = (G.getPoolDescriptorsMap()[DSN]->getMetaPoolValue());
+          AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
+        }
+      }
+    }
+  }
+
+#else
   Function *MainFunc = M.getMainFunction();
   if (MainFunc == 0 || MainFunc->isExternal()) {
     std::cerr << "Cannot do array bounds check for this program"
@@ -181,8 +234,8 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
       }
     }
   }
-}
 #endif
+}
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 

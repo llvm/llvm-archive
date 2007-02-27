@@ -17,9 +17,6 @@
 #include "PoolSystem.h"
 #include "splay.h"
 
-static const unsigned char true = 1;
-static const unsigned char false = 0;
-
 typedef struct PoolCheckSlab {
   void *Slab;
   struct PoolCheckSlab *nextSlab;
@@ -41,7 +38,7 @@ extern "C" {
   void AddPoolDescToMetaPool(MetaPoolTy **MetaPool, void *PoolDesc);
   void poolcheckarray(MetaPoolTy **Pool, void *Node, void * Node1);
   void poolcheckiarray(MetaPoolTy **Pool, void *Node, void * Node1);
-  unsigned char  poolcheckarrayoptim(MetaPoolTy *Pool, void *Node, void * Node1);
+  char poolcheckarrayoptim(MetaPoolTy *Pool, void *Node, void * Node1);
   void poolcheckAddSlab(PoolCheckSlab **PoolCheckSlabPtr, void *Slab);
   void poolcheckinit(void *Pool, unsigned NodeSize);
   void poolcheckdestroy(void *Pool);

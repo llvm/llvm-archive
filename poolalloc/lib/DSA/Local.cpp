@@ -247,6 +247,8 @@ DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
 
   markIncompleteNodes(DSGraph::MarkFormalArgs);
 
+  markUnknownNodes();
+
   // Remove any nodes made dead due to merging...
   removeDeadNodes(DSGraph::KeepUnreachableGlobals);
 }

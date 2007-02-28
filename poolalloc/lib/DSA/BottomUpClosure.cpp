@@ -672,6 +672,8 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   Graph.maskIncompleteMarkers();
   Graph.markIncompleteNodes(DSGraph::MarkFormalArgs);
 
+  Graph.markUnknownNodes();
+
   // Delete dead nodes.  Treat globals that are unreachable but that can
   // reach live nodes as live.
   Graph.removeDeadNodes(DSGraph::KeepUnreachableGlobals);

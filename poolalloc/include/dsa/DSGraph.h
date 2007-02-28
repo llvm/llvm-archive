@@ -506,6 +506,8 @@ public:
   };
   void markIncompleteNodes(unsigned Flags);
 
+  void markUnknownNodes();
+
   // removeDeadNodes - Use a reachability analysis to eliminate subgraphs that
   // are unreachable.  This often occurs because the data structure doesn't
   // "escape" into it's caller, and thus should be eliminated from the caller's

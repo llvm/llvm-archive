@@ -43,6 +43,7 @@ namespace {
   Statistic<> NumDNE            ("dsa", "Number of nodes removed by reachability");
   Statistic<> NumTrivialDNE     ("dsa", "Number of nodes trivially removed");
   Statistic<> NumTrivialGlobalDNE("dsa", "Number of globals trivially removed");
+  Statistic<> NumRecUnknown("dsa", "Number of Unknown nodes marked recursively");
 #ifdef LLVA_KERNEL
   Statistic<> LostPools         ("dsa", "Number of pools lost to DSNode Merge");
 #endif
@@ -50,6 +51,9 @@ namespace {
   DSAFieldLimit("dsa-field-limit", cl::Hidden,
                 cl::desc("Number of fields to track before collapsing a node"),
                 cl::init(256));
+  static cl::opt<bool>
+  DSAMarkU("dsa-mark-U-rec", cl::Hidden,
+                cl::desc("Recursively mark unknown nodes"));
 }
 
 #if 0
@@ -1993,6 +1997,38 @@ void DSGraph::markIncompleteNodes(unsigned Flags) {
       if (!GV->hasInitializer() ||    // Always mark external globals incomp.
           (!GV->isConstant() && (Flags & DSGraph::IgnoreGlobals) == 0))
         markIncompleteNode(ScalarMap[GV].getNode());
+}
+
+//mark any node reached by an unknown node as unknown
+void DSGraph::markUnknownNodes() {
+  if (!DSAMarkU)
+    return;
+  std::vector<DSNodeHandle> WorkList;
+  for (DSScalarMap::iterator I = ScalarMap.begin(),
+         E = ScalarMap.end(); I != E; ++I) {
+    if (I->second.getNode()->isUnknownNode()) {
+      for(DSNode::edge_iterator EI = I->second.getNode()->edge_begin(),
+            EE = I->second.getNode()->edge_end(); EI != EE; ++EI) {
+        if (EI->getNode() && !EI->getNode()->isUnknownNode()) {
+          EI->getNode()->setUnknownNodeMarker();
+          WorkList.push_back(*EI);
+          ++NumRecUnknown;
+        }
+      }
+    }
+  }
+  while (WorkList.size()) {
+    DSNodeHandle DH = WorkList.back();
+    WorkList.pop_back();
+    for(DSNode::edge_iterator EI = DH.getNode()->edge_begin(),
+            EE = DH.getNode()->edge_end(); EI != EE; ++EI) {
+      if (EI->getNode() && !EI->getNode()->isUnknownNode()) {
+        EI->getNode()->setUnknownNodeMarker();
+        WorkList.push_back(*EI);
+        ++NumRecUnknown;
+      }
+    }
+  }
 }
 
 static inline void killIfUselessEdge(DSNodeHandle &Edge) {

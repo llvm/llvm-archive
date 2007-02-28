@@ -300,6 +300,8 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
     = HasIncompleteArgs ? DSGraph::MarkFormalArgs : DSGraph::IgnoreFormalArgs;
   DSG.markIncompleteNodes(Flags | DSGraph::IgnoreGlobals);
 
+  DSG.markUnknownNodes();
+
   // Delete dead nodes.  Treat globals that are unreachable as dead also.
   DSG.removeDeadNodes(DSGraph::RemoveUnreachableGlobals);
 

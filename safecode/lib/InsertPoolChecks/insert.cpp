@@ -331,12 +331,16 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 }
 
 void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
+  // Get the set of unsafe GEP instructions from the array bounds check pass
+  // If this instruction is not within that set, then the result of the GEP
+  // instruction has been proven safe, and there is no need to insert a check.
   std::vector<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
   std::vector<Instruction *>::const_iterator iCurrent = std::find(UnsafeGetElemPtrs.begin(), UnsafeGetElemPtrs.end(),MAI);
   if (iCurrent == UnsafeGetElemPtrs.end()) {
     DEBUG(std::cerr << "statically proved safe : Not inserting checks " << MAI << "\n");
     return;
   }
+
   if (InsertPoolChecksForArrays) {
     Function *F = MAI->getParent()->getParent();
     GetElementPtrInst *GEP = MAI;
@@ -590,6 +594,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     }
 #endif
   } else {
+    // Insert accurate bounds checks for arrays (as opposed to poolchecks)
+
     //Exact poolchecks
     if (const PointerType *PT = dyn_cast<PointerType>(MAI->getPointerOperand()->getType())) {
       if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {

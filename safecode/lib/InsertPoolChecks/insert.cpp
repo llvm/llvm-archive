@@ -83,9 +83,7 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   addPoolCheckProto(M);
 
   //register global arrays and collapsed nodes with global pools
-#ifndef LLVA_KERNEL
   registerGlobalArraysWithGlobalPools(M);
-#endif
 
   //Replace old poolcheck with the new one 
   addPoolChecks(M);
@@ -121,7 +119,7 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
   //Get the registration function
   std::vector<const Type*> Vt;
   const FunctionType* RFT = FunctionType::get(Type::VoidTy, Vt, false);
-  Function* RegFunc = M.getOrInsertFunction("__setup_param_regGlobals", RFT);
+  Function* RegFunc = M.getOrInsertFunction("poolcheckglobals", RFT);
   if (RegFunc->empty()) {
     BasicBlock* BB = new BasicBlock("reg", RegFunc);
     new ReturnInst(BB);
@@ -133,9 +131,14 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
       if (GV->getType() != PoolDescPtrTy) {
         DSGraph &G = TDPass->getGlobalsGraph();
+#if 0
         DSNode *DSN  = G.getNodeForValue(GV).getNode();
+#else
+        GlobalValue * GVLeader = G.getScalarMap().getLeaderForGlobal(GV);
+        DSNode *DSN  = G.getNodeForValue(GVLeader).getNode();
+#endif
         if ((isa<ArrayType>(GV->getType()->getElementType())) ||
-            DSN->isNodeCompletelyFolded()) {
+            (DSN && DSN->isNodeCompletelyFolded())) {
           Value * AllocSize;
           if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
             //std::cerr << "found global" << *GI << std::endl;

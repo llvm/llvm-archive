@@ -741,10 +741,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           //
           DSGraph & TDG = TDPass->getDSGraph(*F);
           DSNode * Node = TDG.getNodeForValue(MAI).getNode();
-          if ((!PH) || (Node->isIncomplete()) ||
-                       (Node->isAllocaNode()) ||
+          if ((!PH) || (Node->isAllocaNode()) ||
                        (Node->isGlobalNode()) ||
-                       (Node->isUnknownNode()) ||
                        (!(Node->isHeapNode()))) {
             ++MissedIncompleteChecks;
             if (!PH) ++MissedNullChecks;
@@ -770,7 +768,11 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                                             MAI->getName()+".casted",  CastBack);
 		
             std::vector<Value *> args = make_vector(PHVptr, RefferentVptr, checkVptr,0);
-            CallInst *CI = new CallInst(BoundsCheck, args,"",CastBack);
+            CallInst * CI;
+            if ((Node->isIncomplete()) || (Node->isUnknownNode()))
+              CI = new CallInst(UIBoundsCheck, args,"",CastBack);
+            else
+              CI = new CallInst(BoundsCheck, args,"",CastBack);
             CastBack->setOperand(0, CI);
           }
         }
@@ -1573,9 +1575,9 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   std::vector<const Type *> Arg3(1, VoidPtrType);
   Arg3.push_back(VoidPtrType); //for output
   Arg3.push_back(VoidPtrType); //for referent 
-  FunctionType *BoundsCheckTy =
-    FunctionType::get(VoidPtrType,Arg3, false);
-  BoundsCheck = M.getOrInsertFunction("boundscheck", BoundsCheckTy);
+  FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
+  BoundsCheck   = M.getOrInsertFunction("boundscheck", BoundsCheckTy);
+  UIBoundsCheck = M.getOrInsertFunction("uiboundscheck", BoundsCheckTy);
 
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("poolregister", Type::VoidTy,

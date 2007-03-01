@@ -300,6 +300,54 @@ boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   return NodeResult;
 }
 
+/*
+ * Function: uiboundscheck()
+ *
+ * Description:
+ *  Perform a precise array bounds check on source and result.  If the result
+ *  is out of range for the array, return a sentinel so that getactualvalue()
+ *  will know that the pointer is bad and should not be dereferenced.
+ *
+ *  This version differs from boundscheck() in that it does not generate a
+ *  poolcheck failure if the source node cannot be found within the MetaPool.
+ */
+void *
+uiboundscheck (MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
+  MetaPoolTy *MetaPool = *MP;
+  void *Pool;
+
+  /* Don't do a check if the kernel is not ready */
+  if (!ready) return NodeResult;
+
+  /* It is an error if there is no MetaPool */
+  if (!MetaPool) {
+    poolcheckfail ("Empty meta pool? \n", 0);
+  }
+
+  /*
+   * iteratively search through the list
+   * Check if there are other efficient data structures.
+   */
+  while (MetaPool) {
+    Pool = MetaPool->Pool;
+    int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
+    switch (ret) {
+      case -1:
+        return invalidptr;
+        break;
+      case 1:
+        return NodeResult;
+        break;
+      case 0:
+        break;
+    }
+    MetaPool = MetaPool->next;
+  }
+
+  return NodeResult;
+}
+
+
 
 /*
  * Function: poolcheck()

@@ -50,6 +50,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *ExactCheck;
   Function *FunctionCheck;
   Function *BoundsCheck;
+  Function *UIBoundsCheck;
   Function *ExactCheck2;
   Function *GetActualValue;
   Function *PoolRegister;

@@ -23,7 +23,13 @@ typedef struct PoolCheckSlab {
 } PoolCheckSlab;
 
 typedef struct MetaPoolTy {
+  // Pointer to the OS pool that this MetaPool node describes
   void * Pool;
+
+  // A splay for registering stack and global values
+  Splay * Splay;
+
+  // A pointer to the next pool in the list
   struct MetaPoolTy *next;
 } MetaPoolTy;
 

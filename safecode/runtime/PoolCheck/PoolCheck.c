@@ -21,6 +21,7 @@
 
 /* This defines the value of an invalid pointer address */
 static const unsigned char * invalidptr = 0x00000004;
+volatile unsigned char dosplays = 1;
 
 #if 1
 /*
@@ -111,7 +112,7 @@ void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
   if (MetaPoolPrev->next = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy)))
   {
     MetaPoolPrev->next->Pool = P;
-    MetaPoolPrev->next->Splay = P;
+    MetaPoolPrev->next->Splay = 0;
     MetaPoolPrev->next->next = 0;
   }
 }
@@ -299,7 +300,7 @@ boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   int ret;
 
   if (!ready) return NodeResult;
-#if 1
+#if 0
   if (!MetaPool) {
     poolcheckfail ("Empty meta pool? \n", __builtin_return_address(0));
   }
@@ -319,33 +320,19 @@ boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
       }
     }
 
-    if (MetaPool->Splay) {
+    if ((MetaPool->Splay)) {
       ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
       if (ref)
         if ((refcheck (ref, NodeResult)) == 1)
           return NodeResult;
-        else
-          return invalidptr;
+        else {
+          poolcheckfail ("boundscheck: global", NodeResult);
+          return NodeResult;
+        }
     }
 
     MetaPool = MetaPool->next;
   }
-
-  /*
-   * Search the Meta Pool's splay; the pointer might be a global or stack
-   * value.
-   */
-#if 0
-  MetaPool = *MP;
-  if (MetaPool->Splay) {
-    ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
-    if (ref)
-      if ((refcheck (ref, NodeResult)) == 1)
-        return NodeResult;
-      else
-        return invalidptr;
-  }
-#endif
 
   /*
    * The node is not found or is not within bounds; fail!
@@ -400,25 +387,27 @@ uiboundscheck (MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
           break;
       }
     }
+
+    /*
+     * Search the Meta Pool's splay; the pointer might be a global or stack
+     * value.
+     */
+    if ((dosplays) && (MetaPool->Splay)) {
+      ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
+      if (ref)
+        if ((refcheck (ref, NodeResult)) == 1)
+          return NodeResult;
+        else
+          return invalidptr;
+    }
+
     MetaPool = MetaPool->next;
   }
 
   /*
-   * Search the Meta Pool's splay; the pointer might be a global or stack
-   * value.
+   * We did not find the source node at all.  For incomplete and unknown
+   * pointers, this means we just silently pass.
    */
-  MetaPool = *MP;
-#if 1
-  if (MetaPool->Splay) {
-    ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
-    if (ref)
-      if ((refcheck (ref, NodeResult)) == 1)
-        return NodeResult;
-      else
-        return invalidptr;
-#endif
-  }
-
   return NodeResult;
 }
 

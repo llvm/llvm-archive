@@ -744,9 +744,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           //
           DSGraph & TDG = TDPass->getDSGraph(*F);
           DSNode * Node = TDG.getNodeForValue(MAI).getNode();
+          assert (Node && "boundscheck: DSNode is NULL!");
           if ((!PH) || (Node->isAllocaNode()) ||
-                       (Node->isGlobalNode()) ||
-                       (!(Node->isHeapNode()))) {
+                       (!((Node->isHeapNode()) || (Node->isGlobalNode())))) {
             ++MissedIncompleteChecks;
             if (!PH) ++MissedNullChecks;
             if (Node->isAllocaNode()) ++MissedStackChecks;

@@ -23,6 +23,7 @@ extern "C" {
   void poolcheckinfo (const char * msg, int);
   void * poolcheckmalloc (unsigned int size);
   void printpoolinfo (void *Pool);
+  void poolcheckglobals ();
 #ifdef __cplusplus
 }
 #endif

@@ -44,10 +44,21 @@ static int ready = 0;
  *
  * Description:
  *  Initialization function to be called when the memory allocator run-time
- *  intializes itself.  For now, this does nothing.
+ *  intializes itself.
+ *
+ * Preconditions:
+ *  1) The OS kernel is able to handle callbacks from the Execution Engine.
  */
 void
 poolcheckinit(void *Pool, unsigned NodeSize) {
+  /*
+   * Register all of the global variables in their respective meta pools.
+   */
+  poolcheckglobals();
+
+  /*
+   * Flag that we're ready to rumble!
+   */
   ready = 1;
   return;
 }
@@ -79,6 +90,7 @@ void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
     if (*MP = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy)))
     {
       (*MP)->Pool = P;
+      (*MP)->Splay = 0;
       (*MP)->next = 0;
     }
     return;
@@ -99,6 +111,7 @@ void AddPoolDescToMetaPool(MetaPoolTy **MP, void *P) {
   if (MetaPoolPrev->next = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy)))
   {
     MetaPoolPrev->next->Pool = P;
+    MetaPoolPrev->next->Splay = P;
     MetaPoolPrev->next->next = 0;
   }
 }
@@ -208,7 +221,7 @@ void poolcheckarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
    */
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
-    if (poolcheckarrayoptim(Pool, NodeSrc, NodeResult)) return ;
+    if ((Pool) && (poolcheckarrayoptim(Pool, NodeSrc, NodeResult))) return ;
     MetaPool = MetaPool->next;
   }
   poolcheckfail ("poolcheckarray failure: Result \n", NodeResult);
@@ -234,11 +247,12 @@ void poolcheckiarray(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
    */
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
-    if (poolcheckoptim (Pool, NodeSrc))
-      if (poolcheckoptim (Pool, NodeResult))
-        return;
-      else
-        poolcheckfail ("poolcheckiarray failure: Result \n", NodeResult);
+    if (Pool)
+      if (poolcheckoptim (Pool, NodeSrc))
+        if (poolcheckoptim (Pool, NodeResult))
+          return;
+        else
+          poolcheckfail ("poolcheckiarray failure: Result \n", NodeResult);
     MetaPool = MetaPool->next;
   }
 
@@ -280,22 +294,62 @@ inline  void exactcheck2(signed char *base, signed char *result, unsigned size) 
 void *
 boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   MetaPoolTy *MetaPool = *MP;
+  Splay *ref;
   void *Pool;
+  int ret;
+
   if (!ready) return NodeResult;
+#if 1
   if (!MetaPool) {
-    poolcheckfail ("Empty meta pool? \n", 0);
+    poolcheckfail ("Empty meta pool? \n", __builtin_return_address(0));
   }
-  //iteratively search through the list
-  //Check if there are other efficient data structures.
+#endif
+
+  /*
+   * Iteratively search through the list;
+   * Check if there are other efficient data structures.
+   */
   while (MetaPool) {
     Pool = MetaPool->Pool;
-    int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
-    if (ret) {
-      if (ret == -1) return invalidptr;
-      return NodeResult;
+    if (Pool) {
+      ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
+      if (ret) {
+        if (ret == -1) return invalidptr;
+        return NodeResult;
+      }
     }
+
+    if (MetaPool->Splay) {
+      ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
+      if (ref)
+        if ((refcheck (ref, NodeResult)) == 1)
+          return NodeResult;
+        else
+          return invalidptr;
+    }
+
     MetaPool = MetaPool->next;
   }
+
+  /*
+   * Search the Meta Pool's splay; the pointer might be a global or stack
+   * value.
+   */
+#if 0
+  MetaPool = *MP;
+  if (MetaPool->Splay) {
+    ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
+    if (ref)
+      if ((refcheck (ref, NodeResult)) == 1)
+        return NodeResult;
+      else
+        return invalidptr;
+  }
+#endif
+
+  /*
+   * The node is not found or is not within bounds; fail!
+   */
   poolcheckfail ("boundscheck failure 1\n", NodeSrc);
   return NodeResult;
 }
@@ -314,8 +368,11 @@ boundscheck(MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
 void *
 uiboundscheck (MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
   MetaPoolTy *MetaPool = *MP;
+  Splay *ref;
   void *Pool;
+  int ret;
 
+  return NodeResult;
   /* Don't do a check if the kernel is not ready */
   if (!ready) return NodeResult;
 
@@ -330,18 +387,36 @@ uiboundscheck (MetaPoolTy **MP, void *NodeSrc, void *NodeResult) {
    */
   while (MetaPool) {
     Pool = MetaPool->Pool;
-    int ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
-    switch (ret) {
-      case -1:
-        return invalidptr;
-        break;
-      case 1:
-        return NodeResult;
-        break;
-      case 0:
-        break;
+    if (Pool) {
+      ret = poolcheckarrayoptim(Pool, NodeSrc, NodeResult);
+      switch (ret) {
+        case -1:
+          return invalidptr;
+          break;
+        case 1:
+          return NodeResult;
+          break;
+        case 0:
+          break;
+      }
     }
     MetaPool = MetaPool->next;
+  }
+
+  /*
+   * Search the Meta Pool's splay; the pointer might be a global or stack
+   * value.
+   */
+  MetaPool = *MP;
+#if 1
+  if (MetaPool->Splay) {
+    ref = splay_find_ptr (MetaPool->Splay, (unsigned long) NodeSrc);
+    if (ref)
+      if ((refcheck (ref, NodeResult)) == 1)
+        return NodeResult;
+      else
+        return invalidptr;
+#endif
   }
 
   return NodeResult;
@@ -368,7 +443,7 @@ void poolcheck(MetaPoolTy **MP, void *Node) {
   */
   while (MetaPool) {
     void *Pool = MetaPool->Pool;
-    if (poolcheckoptim(Pool, Node))   return;
+    if ((Pool) && (poolcheckoptim(Pool, Node))) return;
     MetaPool = MetaPool->next;
   }
   poolcheckfail ("poolcheck failure \n", Node);
@@ -429,13 +504,52 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
   }
 #endif
 
-//
-// Function: poolcheckregister()
-//
-// Description:
-//  This function registers a range of memory as belonging to the splay.  It is
-//  currently used to register arrays, stack nodes, and global nodes.
-//
+/*
+ * Function: poolregister()
+ *
+ * Description:
+ *  Associate a memory range with a given MetaPool.
+ *
+ * Preconditions:
+ *  For now, we assume that this function is only called by poolcheckglobals()
+ *  which is called by poolcheckinit().
+ */
+void
+poolregister (MetaPoolTy ** MP, unsigned NumBytes, void * ptr)
+{
+  MetaPoolTy *MetaPool = *MP;
+
+  /*
+   * Allocate a MetaPool node if one does not already exist.
+   */
+  if (!MetaPool) {
+    if (MetaPool = *MP = (MetaPoolTy *) poolcheckmalloc (sizeof(MetaPoolTy))) {
+      (*MP)->Pool = 0;
+      (*MP)->Splay = 0;
+      (*MP)->next = 0;
+    } else {
+      poolcheckfatal ("poolregister: Cannot allocate memory", 0);
+    }
+  }
+
+  /* Allocate a new splay for this node if needed */
+  if (!(MetaPool->Splay))
+    if (!(MetaPool->Splay = new_splay()))
+      poolcheckfatal ("poolregister: Cannot allocate splay\n", 0);
+
+  /*
+   * Register the memory range with the MetaPool's splay.
+   */
+  splay_insert_ptr(MetaPool->Splay, (unsigned long)(ptr), NumBytes);
+}
+
+/*
+ * Function: poolcheckregister()
+ *
+ * Description:
+ *  This function registers a range of memory as belonging to the splay.  It is
+ *  currently used to register arrays, stack nodes, and global nodes.
+ */
 void poolcheckregister(Splay *splay, void * allocaptr, unsigned NumBytes) {
   if (!ready) return;
   splay_insert_ptr(splay, (unsigned long)(allocaptr), NumBytes);

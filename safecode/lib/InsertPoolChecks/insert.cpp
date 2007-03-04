@@ -333,6 +333,102 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
   }
 }
 
+//
+// Function: insertExactCheck()
+//
+// Description:
+//  Attepts to insert an efficient, accurate array bounds check for the given
+//  GEP instruction; this check will not use Pools are MetaPools.
+//
+// Return value:
+//  true  - An exactcheck() was successfully added.
+//  false - An exactcheck() could not be added; a more extensive check will be
+//          needed.
+//
+bool
+InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
+  // The GEP instruction casted to the correct type
+  Instruction *Casted = GEP;
+
+  // The pointer operand of the GEP expression
+  Value * PointerOperand = GEP->getPointerOperand();
+
+  //
+  // Sometimes the pointer operand to a GEP is a cast; get the pointer that is
+  // being casted.
+  //
+  if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(PointerOperand)) {
+    if (cExpr->getOpcode() == Instruction::Cast)
+      PointerOperand = cExpr->getOperand(0);
+  }
+
+    //
+    // Attempt to use a call to exactcheck() to check this value if it is a
+    // global array with a non-zero size.  We do not check zero length arrays
+    // because in C they are often used to declare an external array of unknown
+    // size as follows:
+    //        extern struct foo the_array[];
+    //
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+    const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
+    if (AT && (AT->getNumElements())) {
+      // we need to insert an actual check
+      // It could be a select instruction
+      // First get the size
+      // This only works for one or two dimensional arrays
+      if (GEP->getNumOperands() == 2) {
+        Value *secOp = GEP->getOperand(1);
+        if (secOp->getType() != Type::IntTy) {
+          secOp = new CastInst(secOp, Type::IntTy,
+                               secOp->getName()+".ec3.casted", Casted);
+        }
+        
+        std::vector<Value *> args(1,secOp);
+        const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+        args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+        CallInst *newCI = new CallInst(ExactCheck,args,"", Casted);
+        ++BoundChecks;
+        //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
+        return true;
+      } else if (GEP->getNumOperands() == 3) {
+        if (ConstantInt *COP = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
+          //FIXME assuming that the first array index is 0
+          assert((COP->getZExtValue() == 0) && "non zero array index\n");
+          Value * secOp = GEP->getOperand(2);
+          if (secOp->getType() != Type::IntTy) {
+            secOp = new CastInst(secOp, Type::IntTy,
+                                 secOp->getName()+".ec4.casted", Casted);
+          }
+          std::vector<Value *> args(1,secOp);
+          const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+          args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
+          CallInst *newCI = new CallInst(ExactCheck,args,"", Casted->getNext());
+          ++BoundChecks;
+          return true;
+        } else {
+          //Handle non constant index two dimensional arrays later
+          abort();
+        }
+      } else {
+        //Handle Multi dimensional cases later
+        std::cerr << "WARNING: Handle multi dimensional globals later\n";
+#if 0
+        (*iCurrent)->dump();
+#else
+        GEP->dump();
+#endif
+        ++MissedMultDimArrayChecks;
+      }
+      DEBUG(std::cerr << " Global variable ok \n");
+    }
+  }
+
+  /*
+   * We were not able to insert a call to exactcheck().
+   */
+  return false;
+}
+
 void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
   // Get the set of unsafe GEP instructions from the array bounds check pass
   // If this instruction is not within that set, then the result of the GEP
@@ -597,6 +693,12 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     }
 #endif
   } else {
+    //
+    // Attempt to insert a standard exactcheck() call for the GEP.
+    //
+    if (InsertPoolChecks::insertExactCheck (MAI))
+      return;
+
     // Insert accurate bounds checks for arrays (as opposed to poolchecks)
 
     //Exact poolchecks
@@ -917,7 +1019,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
     if (AI->isArrayAllocation())
       AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
                                          AI->getOperand(0), "sizetmp", AI);
-    
+
     //Insert poolregister at the end of allocas and all poolinits
     //FIXME assuming that there is a load before a call??
     BasicBlock::iterator InsertPt = AI->getParent()->getParent()->getEntryBlock().begin();
@@ -938,7 +1040,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
                                    PointerType::get(Type::SByteTy),
                                    "ph",Casted);
     Instruction *V = new CallInst(PoolRegister,
-                                  make_vector(CastedPH, Casted, AllocSize, 0),
+                                  make_vector(CastedPH, AllocSize, Casted, 0),
                                   "", iptI);
   }
 }

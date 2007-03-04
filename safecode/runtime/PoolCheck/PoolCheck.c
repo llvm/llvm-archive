@@ -468,7 +468,8 @@ void poolcheckAddSlab(PoolCheckSlab **PCSPtr, void *Slab) {
 
   void exactcheck(int a, int b) {
     if ((0 > a) || (a >= b)) {
-      poolcheckfail ("exact check failed\n",  (a << 16) & (b));
+      poolcheckfail ("exact check failed\n", (a));
+      poolcheckfail ("exact check failed\n", (b));
     }
   }
 

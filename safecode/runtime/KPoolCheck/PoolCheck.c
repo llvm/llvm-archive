@@ -167,27 +167,11 @@ inline  void exactcheck2(signed char *base, signed char *result, unsigned size) 
  *  know that the pointer is bad and should not be dereferenced.
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
-  /* try slabs first */
+  /* try objs */
   void* S = src;
   void* D = dest;
-  int fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  int fd = adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  if (S == D)
-    return dest;
-  else if (fs) {
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
-    ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1))
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0);
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
-  }
-
-  /* try objs */
-  S = src;
-  D = dest;
-  fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
+  int fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return dest;
   else if (fs) {
@@ -218,27 +202,11 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  *  poolcheck failure if the source node cannot be found within the MetaPool.
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
-  /* try slabs first */
+  /* try objs */
   void* S = src;
   void* D = dest;
-  int fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  int fd = adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  if (S == D)
-    return dest;
-  else if (fs) {
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
-    ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1))
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0);
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
-  }
-
-  /* try objs */
-  S = src;
-  D = dest;
-  fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
+  int fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return dest;
   else if (fs) {

@@ -1402,10 +1402,12 @@ void DSCallSite::InitNH(DSNodeHandle &NH, const DSNodeHandle &Src,
      Value *dest = getMetaPoolValue();
      Value *curr = other->getMetaPoolValue();
      if (dest != curr) {
+#if 0
        std::cerr << "LLVA: Merging metapools: " << this->Creator->getParent()->getParent()->getName() << " : " << other->Creator->getParent()->getParent()->getName() << "\n"
                  << "LLVA:   " << *(this->Creator) << "\n"
                  << "LLVA:   " << *(other->Creator) << "\n";
        curr->replaceAllUsesWith(dest);
+#endif
      }
    
      //merge the hash sets in to other

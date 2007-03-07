@@ -1072,7 +1072,7 @@ std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
     if ((!PH) || (Node->isIncomplete()) ||
                  (Node->isAllocaNode()) ||
                  (Node->isUnknownNode()) ||
-                 (!(Node->isHeapNode()))) {
+                 (!((Node->isHeapNode()) && (Node->isGlobalNode())))) {
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
       if (Node->isAllocaNode()) ++MissedStackChecks;
@@ -1080,7 +1080,7 @@ std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
       // Don't bother to insert the NULL check unless the user asked
       if (!EnableNullChecks)
         return;
-      PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+      if (!PH) PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
     } else {
       //
       // Only add the pool check if the pool is a global value or it

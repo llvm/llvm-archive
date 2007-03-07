@@ -386,7 +386,7 @@ void GraphBuilder::visitSetCondInst(SetCondInst &SCI) {
 void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
 #ifdef LLVA_KERNEL
-#if 1
+#if 0
   int debug = 0;
   if (isa<Instruction>(GEP)) {
     Instruction * IGEP = (Instruction *)(&GEP);
@@ -589,7 +589,7 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   if (isPointerType(StoredTy))
     Dest.addEdgeTo(getValueDest(*SI.getOperand(0)));
 #ifdef LLVA_KERNEL
-#if 1
+#if 0
   {
     if (SI.getParent()->getParent()->getName() == "alloc_vfsmnt") {
       DSNode * N = getValueDest(*SI.getOperand(1)).getNode();
@@ -1120,7 +1120,9 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     } else {
       Value *actualPD = *(CS.arg_begin());
       if (!isa<GlobalValue>(actualPD)) {
+#if 0
         std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
+#endif
       } else {
         ++GlobalPools;
       }
@@ -1183,7 +1185,9 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     } else {
       Value *actualPD = *(CS.arg_begin());
       if (!isa<GlobalValue>(actualPD)) {
+#if 0
         std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
+#endif
       } else {
         ++GlobalPools;
       }
@@ -1241,6 +1245,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
       N->setAllocaNodeMarker();
       N->setUnknownNodeMarker();
       N->setIncompleteMarker();
+      N->foldNodeCompletely();
 
       //
       // TODO:
@@ -1248,6 +1253,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
       //  are ignored by our analysis.
       //
 #endif
+#if 0
   } else if (F->getName() == "__generic_copy_from_user") {
     if (CS.getCaller()->getName() == "kmem_cache_alloc")
         return false;
@@ -1260,6 +1266,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     return true;
 #endif
   }
+#endif
 
   return false;
 }
@@ -1291,7 +1298,9 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       } else {
         Value *actualPD = *(CS.arg_begin());
         if (!isa<GlobalValue>(actualPD)) {
+#if 0
           std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
+#endif
         } else {
           ++GlobalPools;
         }
@@ -1377,7 +1386,9 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       } else {
         Value *actualPD = *(CS.arg_begin());
         if (!isa<GlobalValue>(actualPD)) {
+#if 0
           std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
+#endif
         } else {
           ++GlobalPools;
         }
@@ -1701,6 +1712,49 @@ bool LocalDataStructures::runOnModule(Module &M) {
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
   DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
   ECGlobals.clear();
+
+#ifdef LLVA_KERNEL
+  //
+  // Scan through all the globals; if they have a DSNode but no MetaPool, give
+  // them a MetaPool.
+  //
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    // Skip functions and externally declared variables
+    if (!isa<GlobalVariable>(I)) continue;
+    if (I->isExternal()) continue;
+
+    GlobalValue * GV = I;
+    GlobalValue * GVL = GlobalsGraph->getScalarMap().getLeaderForGlobal(I);
+    DSNode *Node  = GlobalsGraph->getNodeForValue(GVL).getNode();
+
+    // If this global happens to be a MetaPool, it will have no DSNode.
+    // In that case, do not assign a MetaPool.
+    if (!Node) continue;
+
+    //
+    // Add the MetaPool for the DSNode if it does not already have one.
+    //
+    if (GlobalsGraph->getPoolDescriptorsMap().count(Node) == 0) {
+      Value * TheMetaPool = 0;
+      TheMetaPool = new GlobalVariable(
+                                       /*type=*/ VoidPtrType,
+                                       /*isConstant=*/ false,
+                                       /*Linkage=*/ GlobalValue::InternalLinkage,
+                                       /*initializer=*/ Constant::getNullValue(VoidPtrType),
+                                       /*name=*/ "_metaPool_",
+                                       /*parent=*/ &M );
+
+      //
+      // Create the internal data structure for the MetaPool and associate the
+      // DSNode with it.
+      //
+      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool), NULL);
+      GlobalsGraph->getPoolDescriptorsMap()[Node] = tmpvh;
+    }
+  }
+#endif
 
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)

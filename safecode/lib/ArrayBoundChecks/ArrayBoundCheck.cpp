@@ -888,7 +888,9 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
   initialize(M);
   /* printing preliminaries */
   includeOut.open (OmegaFilename.c_str());
+#if 0
   outputDeclsForOmega(M);
+#endif
   includeOut.close();
   //  out << "outputting decls for Omega done" <<endl;
   

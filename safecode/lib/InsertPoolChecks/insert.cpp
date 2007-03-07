@@ -1071,13 +1071,11 @@ std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
     // FIXME: We cannot handle checks to global or stack positions right now.
     if ((!PH) || (Node->isIncomplete()) ||
                  (Node->isAllocaNode()) ||
-                 (Node->isGlobalNode()) ||
                  (Node->isUnknownNode()) ||
                  (!(Node->isHeapNode()))) {
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
       if (Node->isAllocaNode()) ++MissedStackChecks;
-      if (Node->isGlobalNode()) ++MissedGlobalChecks;
 
       // Don't bother to insert the NULL check unless the user asked
       if (!EnableNullChecks)

@@ -126,17 +126,13 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
   }
 
   //Now iterate over globals and register all the arrays
+  DSGraph &G = TDPass->getGlobalsGraph();
   Module::global_iterator GI = M.global_begin(), GE = M.global_end();
   for ( ; GI != GE; ++GI) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
       if (GV->getType() != PoolDescPtrTy) {
-        DSGraph &G = TDPass->getGlobalsGraph();
-#if 0
-        DSNode *DSN  = G.getNodeForValue(GV).getNode();
-#else
         GlobalValue * GVLeader = G.getScalarMap().getLeaderForGlobal(GV);
         DSNode *DSN  = G.getNodeForValue(GVLeader).getNode();
-#endif
         if ((isa<ArrayType>(GV->getType()->getElementType())) ||
             (DSN && DSN->isNodeCompletelyFolded())) {
           Value * AllocSize;

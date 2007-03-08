@@ -53,22 +53,26 @@ void pchk_init(void) {
 
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
+  if (!MP) return;
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
 }
 
 /* Remove a slab */
 void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
+  if (!MP) return;
   /* TODO: check that slab's tag is == PoolID */
   adl_splay_delete(&MP->Slabs, addr);
 }
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
+  if (!MP) return;
   adl_splay_insert(&MP->Objs, addr, len, 0);
 }
 
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
+  if (!MP) return;
   adl_splay_delete(&MP->Objs, addr);
 }
 
@@ -77,23 +81,27 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
 /* the pool PoolID is in at. */
 /* MP is the actual metapool. */
 void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc) {
+  if(!MP) return;
   *(void**)MPLoc = (void*) MP;
 }
 
 /* A pool is deleted.  free it's resources (necessary for correctness of checks) */
 void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
+  if(!MP) return;
   adl_splay_delete_tag(&MP->Slabs, PoolID);
 }
 
 /* check that addr exists in pool MP */
-void pchk_exists(MetaPoolTy* MP, void* addr) {
+void poolcheck(MetaPoolTy* MP, void* addr) {
+  if (!ready || !MP) return;
   if (adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr))
     return;
-  poolcheckfail ("poolcheck failure: \n", (unsigned)addr);
+  poolcheckfail ("poolcheck failure: \n", (unsigned)addr, (void*)__builtin_return_address(0));
 }
 
 /* check that src and dest are same obj or slab */
-void pchk_same(MetaPoolTy* MP, void* src, void* dest) {
+void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
+  if (!ready || !MP) return;
   /* try slabs first */
   void* S = src;
   void* D = dest;
@@ -108,12 +116,13 @@ void pchk_same(MetaPoolTy* MP, void* src, void* dest) {
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return;
-  poolcheckfail ("poolcheck failure: \n", (unsigned)src);
+  poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
 }
 
 /* check that src and dest are same obj or slab */
 /* if src and dest do not exist in the pool, pass */
-void pchk_same_i(MetaPoolTy* MP, void* src, void* dest) {
+void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
+  if (!ready || !MP) return;
   /* try slabs first */
   void* S = src;
   void* D = dest;
@@ -121,8 +130,10 @@ void pchk_same_i(MetaPoolTy* MP, void* src, void* dest) {
   int fd = adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
   if (S == D)
     return;
-  if (fs || fd) /*fail if we found one but not the other*/
-    poolcheckfail ("poolcheck failure: \n", (unsigned)src);
+  if (fs || fd) { /*fail if we found one but not the other*/ 
+    poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
+    return;
+  }
   /* try objs */
   S = src;
   D = dest;
@@ -130,31 +141,34 @@ void pchk_same_i(MetaPoolTy* MP, void* src, void* dest) {
   fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return;
-  if (fs || fd) /*fail if we found one but not the other*/
-    poolcheckfail ("poolcheck failure: \n", (unsigned)src);
+  if (fs || fd) { /*fail if we found one but not the other*/
+    poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
+    return;
+  }
   return; /*default is to pass*/
 }
 
 const unsigned InvalidUpper = 4096;
+const unsigned InvalidLower = 0x03;
+
 
 /* if src is an out of object pointer, get the original value */
 void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
+  if (!ready || !MP) return src;
+  if ((unsigned)src <= InvalidLower) return src;
   void* tag = 0;
   /* outside rewrite zone */
   if ((unsigned)src & ~(InvalidUpper - 1)) return src;
   if (adl_splay_retrieve(&MP->OOB, &src, 0, &tag))
     return tag;
-  poolcheckfail("poolcheck failure: \n", (unsigned) src);
+  poolcheckfail("GetActualValue failure: \n", (unsigned) src, (void*)__builtin_return_address(0));
   return tag;
 }
 
 
-
-
-
 inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
   if (result >= base + size ) {
-    poolcheckfail("Array bounds violation detected \n", (unsigned)base);
+    poolcheckfail("Array bounds violation detected \n", (unsigned)base, (void*)__builtin_return_address(0));
   }
 }
 
@@ -167,18 +181,21 @@ inline  void exactcheck2(signed char *base, signed char *result, unsigned size) 
  *  know that the pointer is bad and should not be dereferenced.
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
-  /* try objs */
+  if (!ready || !MP) return dest;
+    /* try objs */
   void* S = src;
   void* D = dest;
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  int fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return dest;
   else if (fs) {
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
+    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1))
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0);
+    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      return dest;
+    }
     adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
     return MP->invalidptr;
   }
@@ -186,7 +203,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   /*
    * The node is not found or is not within bounds; fail!
    */
-  poolcheckfail ("boundscheck failure 1\n", (unsigned)src);
+  poolcheckfail ("boundscheck failure 1\n", (unsigned)src, (void*)__builtin_return_address(0));
   return dest;
 }
 
@@ -202,18 +219,21 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  *  poolcheck failure if the source node cannot be found within the MetaPool.
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
+  if (!ready || !MP) return dest;
   /* try objs */
   void* S = src;
   void* D = dest;
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  int fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   if (S == D)
     return dest;
   else if (fs) {
     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1))
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0);
+    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      return dest;
+    }
     adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
     return MP->invalidptr;
   }
@@ -224,3 +244,9 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   return dest;
 }
 
+void exactcheck(int a, int b) {
+  if ((0 > a) || (a >= b)) {
+    poolcheckfail ("exact check failed\n", (a), (void*)__builtin_return_address(0));
+    poolcheckfail ("exact check failed\n", (b), (void*)__builtin_return_address(0));
+  }
+}

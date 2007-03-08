@@ -33,7 +33,7 @@ typedef struct MetaPoolTy {
 extern "C" {
 #endif
   /* initialize library */
-  void pchk_init();
+  void pchk_init(void);
 
   /* Registration functions                                                   */
   /* These are written such that a weaker version (without MP) can be         */
@@ -47,22 +47,23 @@ extern "C" {
   void pchk_drop_pool(MetaPoolTy* MP, void* PoolID);
   
   /* check that addr exists in pool MP */
-  void pchk_exists(MetaPoolTy* MP, void* addr);
+  void poolcheck(MetaPoolTy* MP, void* addr);
 
   /* check that src and dest are same obj or slab */
-  void pchk_same(MetaPoolTy* MP, void* src, void* dest);
+  void poolcheckarray(MetaPoolTy* MP, void* src, void* dest);
 
   /* check that src and dest are same obj or slab */
   /* if src and dest do not exist in the pool, pass */
-  void pchk_same_i(MetaPoolTy* MP, void* src, void* dest);
+  void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest);
 
   /* if src is an out of object pointer, get the original value */
   void* pchk_getActualValue(MetaPoolTy* MP, void* src);
 
-  /* check bounds and return result ptr, which may be rewritten */
+  /* check bounds and return result ptr, which may have been rewritten */
   void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest);
   void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest);
 
+  void exactcheck(int a, int b);
 #ifdef __cpluscplus
 }
 #endif

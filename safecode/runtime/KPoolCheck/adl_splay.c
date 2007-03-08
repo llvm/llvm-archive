@@ -14,12 +14,17 @@ struct tree_node {
 static Tree* freelist = 0;
 static void* (*ext_alloc)(unsigned) = 0;
 
+static Tree initmem[1024];
+static int use = 0;
 
 static inline Tree* tmalloc() {
   if(freelist) {
     Tree* t = freelist;
     freelist = freelist->left;
     return t;
+  } else if(use < 1024) {
+    ++use;
+    return &initmem[use-1];
   } else
     return (Tree*) ext_alloc(sizeof(Tree));
 }

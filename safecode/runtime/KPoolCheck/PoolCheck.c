@@ -24,6 +24,8 @@
 /* Flag whether we are ready to perform pool operations */
 static int ready = 0;
 
+static const int use_oob = 0;
+
 /*
  * Function: pchk_init()
  *
@@ -182,7 +184,7 @@ inline  void exactcheck2(signed char *base, signed char *result, unsigned size) 
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
-    /* try objs */
+  /* try objs */
   void* S = src;
   void* D = dest;
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
@@ -190,12 +192,34 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (S == D)
     return dest;
   else if (fs) {
+    if (!use_oob) return dest;
     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
     ++MP->invalidptr;
     if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
       return dest;
     }
+    poolcheckinfo("Returning oob pointer of ", (int)MP->invalidptr);
+    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
+    return MP->invalidptr;
+  }
+
+  /* try slabs */
+  S = src;
+  D = dest;
+  fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
+  adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  if (S == D)
+    return dest;
+  else if (fs) {
+    if (!use_oob) return dest;
+    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
+    ++MP->invalidptr;
+    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      return dest;
+    }
+    poolcheckinfo("Returning oob pointer of ", (int)MP->invalidptr);
     adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
     return MP->invalidptr;
   }
@@ -228,7 +252,27 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (S == D)
     return dest;
   else if (fs) {
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
+    if (!use_oob) return dest;
+     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
+    ++MP->invalidptr;
+    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      return dest;
+    }
+    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
+    return MP->invalidptr;
+  }
+
+  /* try slabs */
+  S = src;
+  D = dest;
+  fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
+  adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  if (S == D)
+    return dest;
+  else if (fs) {
+    if (!use_oob) return dest;
+     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;
     if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));

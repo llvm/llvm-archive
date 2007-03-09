@@ -156,7 +156,7 @@ const unsigned InvalidLower = 0x03;
 
 /* if src is an out of object pointer, get the original value */
 void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP) return src;
+  if (!ready || !MP || !use_oob) return src;
   if ((unsigned)src <= InvalidLower) return src;
   void* tag = 0;
   /* outside rewrite zone */

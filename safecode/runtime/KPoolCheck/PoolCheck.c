@@ -53,7 +53,7 @@ void pchk_init(void) {
 
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
-  if (!MP) return;
+  if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr); return; }
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
 }
 
@@ -66,7 +66,7 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
-  if (!MP) return;
+  if (!MP) { poolcheckinfo("reg obj on null pool", (int)addr); return; }
   adl_splay_insert(&MP->Objs, addr, len, 0);
 }
 

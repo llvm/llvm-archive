@@ -214,9 +214,9 @@ int  adl_splay_find(void** tree, void* key) {
 }
 
 int adl_splay_retrieve(void** tree, void** key, unsigned* len, void** tag) {
-  Tree* t = splay(*(Tree**)tree, (char*)key);
+  Tree* t = splay(*(Tree**)tree, (char*)*key);
   *(Tree**)tree = t;
-  if (t && !key_lt((char*)key, t) && !key_gt((char*)key, t)) {
+  if (t && !key_lt((char*)*key, t) && !key_gt((char*)*key, t)) {
     *key = t->key;
     if (len) *len = t->len;
     if (tag) *tag = t->tag;

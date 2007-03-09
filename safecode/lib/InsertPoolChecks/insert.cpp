@@ -66,6 +66,53 @@ static Statistic<> MissedStackChecks  ("safecode", "Missed stack checks");
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
+//Kernel support rutines
+static GlobalVariable* makeMetaPool(Module* M) {
+  //Here we insert a global meta pool
+  //Now create a meta pool for this value, DSN Node
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+  std::vector<const Type*> MPTV;
+  for (int x = 0; x < 4; ++x)
+    MPTV.push_back(VoidPtrType);
+
+  const StructType* MPT = StructType::get(MPTV);
+
+  return new GlobalVariable(
+                            /*type=*/ MPT,
+                            /*isConstant=*/ false,
+                            /*Linkage=*/ GlobalValue::InternalLinkage,
+                            /*initializer=*/ Constant::getNullValue(MPT),
+                            /*name=*/ "_metaPool_",
+                            /*parent=*/ M );
+}
+
+void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP) {
+  if (!MP || MP->getMetaPoolValue()) return;
+  MP->setMetaPoolValue(makeMetaPool(&M));  
+  Value* MPV = MP->getMetaPoolValue();
+  //added registers in front of every allocation
+  for(std::list<CallSite>::iterator i = MP->allocs.begin(),
+        e = MP->allocs.end(); i != e; ++i) {
+    std::string name = i->getCalledFunction()->getName();
+    if (name == "kmem_cache_alloc") {
+      //insert a register before
+      Value* VP = new CastInst(i->getArgument(0), PointerType::get(Type::SByteTy), "", i->getInstruction());
+      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "", i->getInstruction());
+      Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
+      new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
+    } else if (name == "kmalloc" ||
+               name == "__vmalloc") {
+      //inser obj register after
+      Instruction* IP = i->getInstruction()->getNext();
+      Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
+      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "", IP);
+      Value* len = new CastInst(i->getArgument(0), Type::UIntTy, "", IP);
+      new CallInst(PoolRegister, make_vector(VMP, VP, len, 0), "", IP);
+    } else
+      assert(0 && "unknown alloc");
+  }
+}
+
 bool InsertPoolChecks::runOnModule(Module &M) {
   cuaPass = &getAnalysis<ConvertUnsafeAllocas>();
   //  budsPass = &getAnalysis<CompleteBUDataStructures>();
@@ -104,7 +151,7 @@ static void AddCallToRegFunc(Function* F, GlobalVariable* GV, Function* PR, Valu
   BasicBlock::iterator InsertPt = F->getEntryBlock().begin();
   Instruction *GVCasted = new CastInst(GV, VoidPtrType, GV->getName()+"casted",InsertPt);
   Value *PHCasted = new CastInst(PH, VoidPtrType, PH->getName()+"casted",InsertPt);
-  new CallInst(PR, make_vector(PHCasted, AllocSize, GVCasted, 0), "", InsertPt);
+  new CallInst(PR, make_vector(PHCasted, GVCasted, AllocSize, 0), "", InsertPt);
 }
 
 void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
@@ -143,9 +190,7 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
           } else {
             AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
           }
-          Value* PH = 0;
-          if ((G.getPoolDescriptorsMap()).count(DSN)) 
-            PH = (G.getPoolDescriptorsMap()[DSN]->getMetaPoolValue());
+          Value* PH = getPD(DSN, M);
           if (PH)
             AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
         }
@@ -382,7 +427,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
         std::vector<Value *> args(1,secOp);
         const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
         args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-        CallInst *newCI = new CallInst(ExactCheck,args,"", Casted);
+        new CallInst(ExactCheck,args,"", Casted);
         ++BoundChecks;
         //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
         return true;
@@ -398,7 +443,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
           std::vector<Value *> args(1,secOp);
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
           args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-          CallInst *newCI = new CallInst(ExactCheck,args,"", Casted->getNext());
+          new CallInst(ExactCheck,args,"", Casted->getNext());
           ++BoundChecks;
           return true;
         } else {
@@ -564,7 +609,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           std::vector<Value *> args(1,secOp);
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
           args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-          CallInst *newCI = new CallInst(ExactCheck,args,"", Casted);
+          new CallInst(ExactCheck,args,"", Casted);
           ++BoundChecks;
           //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
           return;
@@ -580,7 +625,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             std::vector<Value *> args(1,secOp);
             const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
             args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-            CallInst *newCI = new CallInst(ExactCheck,args,"", Casted->getNext());
+            new CallInst(ExactCheck,args,"", Casted->getNext());
             ++BoundChecks;
             return;
           } else {
@@ -681,11 +726,11 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(CastedPointerOperand);
       args.push_back(Casted);
-      CallInst * newCI = new CallInst(PoolCheckArray,args, "",InsertPt);
+      CallInst(PoolCheckArray,args, "",InsertPt);
     } else {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(Casted);
-      CallInst * newCI = new CallInst(PoolCheck,args, "",InsertPt);
+      new CallInst(PoolCheck,args, "",InsertPt);
     }
 #endif
   } else {
@@ -737,7 +782,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                   */
                   //		      args.push_back(ConstantInt::get(csiType,elAT->getNumElements()));
                   args.push_back(AllocSize);
-                  CallInst *newCI = new CallInst(ExactCheck,args,"",MAI);
+                  new CallInst(ExactCheck,args,"",MAI);
 			
                 } else {
                   //non array, non constant value
@@ -766,7 +811,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
               Value *AllocSize =
                 ConstantInt::get(Type::UIntTy, TD->getTypeSize(ST));
               args.push_back(AllocSize);
-              CallInst *newCI = new CallInst(ExactCheck2,args,"",InsertPt);
+              new CallInst(ExactCheck2,args,"",InsertPt);
 #endif
             }
           }
@@ -1035,9 +1080,9 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
     Value *CastedPH = new CastInst(PH,
                                    PointerType::get(Type::SByteTy),
                                    "ph",Casted);
-    Instruction *V = new CallInst(PoolRegister,
-                                  make_vector(CastedPH, AllocSize, Casted, 0),
-                                  "", iptI);
+    new CallInst(PoolRegister,
+                 make_vector(CastedPH, Casted, AllocSize,0),
+                 "", iptI);
   }
 }
 
@@ -1179,11 +1224,7 @@ void InsertPoolChecks::addLSChecks(Value *Vnew, const Value *V, Instruction *I, 
 	  for (; flI != flE ; ++flI) {
 	    Function *func = *flI;
 	    CastInst *CastfuncI = 
-<<<<<<< insert.cpp
-	      new CastInst (func, 
-=======
 	      new CastInst(func, 
->>>>>>> 1.37.2.4
 			   PointerType::get(Type::SByteTy), "casted", I);
 	    args.push_back(CastfuncI);
 	  }
@@ -1193,18 +1234,10 @@ void InsertPoolChecks::addLSChecks(Value *Vnew, const Value *V, Instruction *I, 
 
 
 	CastInst *CastVI = 
-<<<<<<< insert.cpp
-	  new CastInst (Vnew, 
-=======
 	  new CastInst(Vnew, 
->>>>>>> 1.37.2.4
 		       PointerType::get(Type::SByteTy), "casted", I);
 	CastInst *CastPHI = 
-<<<<<<< insert.cpp
-	  new CastInst (PH, 
-=======
 	  new CastInst(PH, 
->>>>>>> 1.37.2.4
 		       PointerType::get(Type::SByteTy), "casted", I);
 	std::vector<Value *> args(1,CastPHI);
 	args.push_back(CastVI);
@@ -1510,7 +1543,7 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
           std::vector<Value *> args(1,secOp);
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
           args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-          CallInst *newCI = new CallInst(ExactCheck,args,"", Casted);
+          new CallInst(ExactCheck,args,"", Casted);
           ++BoundChecks;
           //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
           continue;
@@ -1526,7 +1559,7 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
             std::vector<Value *> args(1,secOp);
             const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
             args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-            CallInst *newCI = new CallInst(ExactCheck,args,"", Casted->getNext());
+            new CallInst(ExactCheck,args,"", Casted->getNext());
             ++BoundChecks;
             continue;
           } else {
@@ -1639,11 +1672,11 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(CastedPointerOperand);
       args.push_back(Casted);
-      CallInst * newCI = new CallInst(PoolCheckIArray,args, "",InsertPt);
+      new CallInst(PoolCheckIArray,args, "",InsertPt);
     } else {
       std::vector<Value *> args(1, CastedPH);
       args.push_back(Casted);
-      CallInst * newCI = new CallInst(PoolCheck,args, "",InsertPt);
+      new CallInst(PoolCheck,args, "",InsertPt);
     }
 #endif    
   }
@@ -1670,24 +1703,22 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *PoolCheckArrayTy =
     FunctionType::get(Type::VoidTy,Arg2, false);
   PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
+  PoolCheckIArray = M.getOrInsertFunction("poolcheckarray_i", PoolCheckArrayTy);
+
 
   std::vector<const Type *> Arg3(1, VoidPtrType);
   Arg3.push_back(VoidPtrType); //for output
   Arg3.push_back(VoidPtrType); //for referent 
   FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
-  BoundsCheck   = M.getOrInsertFunction("boundscheck", BoundsCheckTy);
-  UIBoundsCheck = M.getOrInsertFunction("uiboundscheck", BoundsCheckTy);
+  BoundsCheck   = M.getOrInsertFunction("pchk_bounds", BoundsCheckTy);
+  UIBoundsCheck = M.getOrInsertFunction("pchk_bounds_i", BoundsCheckTy);
 
   //Get the poolregister function
-  PoolRegister = M.getOrInsertFunction("poolregister", Type::VoidTy,
-                                   VoidPtrType, Type::UIntTy, VoidPtrType, NULL);
+  PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
+                                   VoidPtrType, Type::UIntTy, NULL);
   
-  std::vector<const Type *> Arg4(1, VoidPtrType);
-  Arg4.push_back(VoidPtrType);
-  Arg4.push_back(VoidPtrType);
-  FunctionType *PoolCheckIArrayTy =
-    FunctionType::get(Type::VoidTy,Arg4, false);
-  PoolCheckIArray = M.getOrInsertFunction("poolcheckiarray", PoolCheckIArrayTy);
+  PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
+  PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
 
   std::vector<const Type *> FArg2(1, Type::IntTy);
   FArg2.push_back(Type::IntTy);
@@ -1703,7 +1734,7 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   std::vector<const Type*> FArg5(1, VoidPtrType);
   FArg5.push_back(VoidPtrType);
   FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
-  GetActualValue = M.getOrInsertFunction("getactualvalue", GetActualValueTy);
+  GetActualValue = M.getOrInsertFunction("pchk_getActualValue", GetActualValueTy);
   
   std::vector<const Type*> FArg4(1, VoidPtrType); //base
   FArg4.push_back(VoidPtrType); //result
@@ -1778,14 +1809,12 @@ Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo
 #else
 Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
   DSGraph &TDG =  TDPass->getDSGraph(*F);
-  const DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
+  DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
   // Get the pool handle for this DSNode...
   //  assert(!Node->isUnknownNode() && "Unknown node \n");
   //  if (Node->isUnknownNode()) {
   //    return 0;
   //  }
-  if ((TDG.getPoolDescriptorsMap()).count(Node)) 
-    return (TDG.getPoolDescriptorsMap()[Node]->getMetaPoolValue());
-  return 0;
+  return getPD(Node, *F->getParent());
 }
 #endif

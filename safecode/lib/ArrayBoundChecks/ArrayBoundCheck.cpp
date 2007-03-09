@@ -887,11 +887,13 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
   
   initialize(M);
   /* printing preliminaries */
+#ifndef LLVA_KERNEL
   includeOut.open (OmegaFilename.c_str());
 #if 0
   outputDeclsForOmega(M);
 #endif
   includeOut.close();
+#endif
   //  out << "outputting decls for Omega done" <<endl;
   
   

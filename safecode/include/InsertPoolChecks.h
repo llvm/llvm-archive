@@ -54,6 +54,9 @@ struct InsertPoolChecks : public ModulePass {
   Function *ExactCheck2;
   Function *GetActualValue;
   Function *PoolRegister;
+  Function *PoolRegMP;
+  Function *PoolFindMP;
+  void addMetaPools(Module& M, MetaPool* MP);
   void addPoolCheckProto(Module &M);
   void addPoolChecks(Module &M);
   void addGetElementPtrChecks(Module &M);
@@ -66,11 +69,20 @@ struct InsertPoolChecks : public ModulePass {
   void addGetActualValue(SetCondInst *SCI, unsigned operand);
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
   void registerGlobalArraysWithGlobalPools(Module &M);
-  
+  bool insertExactCheck (GetElementPtrInst * GEP);
+
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);
 #else
+  Value* getPD(DSNode* N, Module& M) { 
+    if (!N) return 0;
+    addMetaPools(M, N->getMP());
+    if (N->getMP())
+      return N->getMP()->getMetaPoolValue();
+    else
+      return 0;
+  }
   void addLSChecks(Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F);
 #endif  

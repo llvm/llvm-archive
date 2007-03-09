@@ -16,12 +16,69 @@
 
 #include "dsa/DSSupport.h"
 #include "llvm/ADT/hash_map"
+#include <list>
 
 namespace llvm {
 
 template<typename BaseType>
 class DSNodeIterator;          // Data structure graph traversal iterator
 class TargetData;
+
+#if 1
+  class MetaPool {
+  protected:
+    Value *MPD;
+    MetaPool* fw;
+
+  public:
+    std::list<CallSite> allocs;
+    std::list<GlobalValue*> GVs;
+    MetaPool(CallSite& C) : MPD(0), fw(0) {
+      allocs.push_back(C);
+    }
+    MetaPool(GlobalValue* GV) : MPD(0),fw(0) {
+      GVs.push_back(GV);
+    }
+
+    MetaPool() : MPD(0),fw(0) {}
+    MetaPool(const MetaPool& M) :MPD(0), fw(const_cast<MetaPool*>(&M)) {}
+
+    Value * getMetaPoolValue() {
+      return MPD;
+    }
+    void setMetaPoolValue(Value *V) {
+      MPD = V;
+    }
+    void merge(MetaPool* M) {
+      if(!M || M == this) return;
+      allocs.splice(allocs.begin(), M->allocs);
+      GVs.splice(GVs.begin(), M->GVs);
+      M->fw = this;
+    }
+    MetaPool* getFW() { return fw; }
+  };
+  class MetaPoolHandle {
+    MetaPool* MP;
+
+  public:
+    MetaPoolHandle(MetaPool* P) :MP(P) {}
+    //    MetaPoolHandle() : MP(0) {}
+    MetaPool* getPool() {
+      while(MP && MP->getFW())
+        MP = MP->getFW();
+      return MP;
+    }
+    MetaPool* getPool() const{
+      MetaPool* RP = MP;
+      while(RP && RP->getFW())
+        RP = RP->getFW();
+      return RP;
+    }
+    void set(MetaPool* P) { MP = P; }
+  };
+#endif
+
+
 
 //===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
@@ -105,8 +162,16 @@ public:
   ///
 private:
   unsigned short NodeType;
-public:
 
+#if 1
+protected:
+  MetaPoolHandle MP;
+public:
+  MetaPool* getMP() { return MP.getPool(); }
+  MetaPool* getMP() const { return MP.getPool(); }
+  void setMP(MetaPool* P) { MP.set(P); }
+#endif
+    public:
   /// DSNode ctor - Create a node of the specified type, inserting it into the
   /// specified graph.
   ///

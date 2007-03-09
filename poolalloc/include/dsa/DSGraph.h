@@ -23,6 +23,8 @@
 #include <list>
 #include <map>
 #include <iostream>
+#include <vector>
+
 namespace llvm {
 
   //typedef map<const DSNode *, Value*> PoolDescriptorMapType;
@@ -174,63 +176,6 @@ private:
   DSNodeHandle &AddGlobal(GlobalValue *GV);
 };
 
-
-#ifdef LLVA_KERNEL
-class MetaPool;
-class MetaPoolHandle {
-  MetaPool *Rep;
-  Instruction * Creator;
-public:
-  MetaPoolHandle(MetaPool *mp, Instruction * Maker = 0);
-  
-  MetaPool *getMetaPool() {
-    return Rep;
-  }
-  void setMetaPool(MetaPool *v) {
-    Rep = v;
-  }
-  ~MetaPoolHandle() {
-    //do nothing for now
-  }
-  const std::string &getName();
-  Value *getMetaPoolValue();
-  void merge(MetaPoolHandle *other);
-};
-
-  class MetaPool {
-    Value *MPD;
-    hash_set<MetaPoolHandle *> HandleSet;
-    
-  public:
-    MetaPool(Value *mpd) : MPD(mpd) {
-    }
-    void addMetaPoolHandles(hash_set<MetaPoolHandle *> & mpHS) {
-      HandleSet.insert(mpHS.begin(), mpHS.end());
-    }
-    hash_set<MetaPoolHandle *>& getHandleSet() {
-      return HandleSet;
-    }
-    Value * getMetaPoolValue() {
-      return MPD;
-    }
-    void setMetaPoolValue(Value *V) {
-      MPD = V;
-    }
-    void insert(MetaPoolHandle *mph) {
-      HandleSet.insert(mph);
-    }
-    const std::string& getName() {
-      return MPD->getName();
-    }
-    ~MetaPool() {
-      HandleSet.clear();
-    }
-  };
-
-#endif
-  
-
-  
 //===----------------------------------------------------------------------===//
 /// DSGraph - The graph that represents a function.
 ///
@@ -280,12 +225,6 @@ private:
   /// constructed for.
   const TargetData &TD;
 
-#ifdef LLVA_KERNEL
-  hash_map<const DSNode*, MetaPoolHandle*> PoolDescriptors;
-#endif  
-
-  
-
   void operator=(const DSGraph &); // DO NOT IMPLEMENT
   DSGraph(const DSGraph&);         // DO NOT IMPLEMENT
 public:
@@ -310,31 +249,6 @@ public:
 
   DSGraph *getGlobalsGraph() const { return GlobalsGraph; }
   void setGlobalsGraph(DSGraph *G) { GlobalsGraph = G; }
-
-#ifdef LLVA_KERNEL
-#if 1
-  hash_map<const DSNode *, MetaPoolHandle*>& getPoolDescriptorsMap() {
-    return PoolDescriptors;
-  }
-  MetaPoolHandle *getPoolForNode(const DSNode *N) {
-    if (PoolDescriptors.count(N) > 0) {
-      return PoolDescriptors[N];
-    }
-    return 0;
-  }
-#else
-  hash_map<const DSNodeHandle *, MetaPoolHandle*>& getPoolDescriptorsMap() {
-    return PoolDescriptors;
-  }
-  MetaPoolHandle *getPoolForNode(const DSNodeHandle *N) {
-    if (PoolDescriptors.count(N) > 0) {
-      return PoolDescriptors[N];
-    }
-    return 0;
-  }
-#endif
-
-#endif  
 
   /// getGlobalECs - Return the set of equivalence classes that the global
   /// variables in the program form.
@@ -615,6 +529,7 @@ public:
   /// removeDeadNodes.
   ///
   void removeTriviallyDeadNodes();
+
 };
 
 

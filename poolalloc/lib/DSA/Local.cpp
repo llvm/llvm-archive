@@ -593,9 +593,8 @@ void GraphBuilder::visitStoreInst(StoreInst &SI) {
   {
     if (SI.getParent()->getParent()->getName() == "alloc_vfsmnt") {
       DSNode * N = getValueDest(*SI.getOperand(1)).getNode();
-      if (G.getPoolDescriptorsMap().count(N) != 0)
-        if (G.getPoolDescriptorsMap()[N])
-          std::cerr << "LLVA: Store: Pool for " << SI.getName() << " is " << G.getPoolDescriptorsMap()[N]->getName() << "\n";
+      if (N->getMP())
+        std::cerr << "LLVA: Store: Pool for " << SI.getName() << " is " << N->getMP() << "\n";
     }
   }
 #endif
@@ -1098,135 +1097,6 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
             N->setReadMarker();
     return true;
-#ifdef LLVA_KERNEL_0
-  } else if (F->getName() == "kmem_cache_alloc") {
-    DEBUG(std::cerr << "LLVA: kmem_cache_alloc" << std::endl);
-    // Update the statistics count
-    ++CacheAllocs;
-
-    // Create a new DSNode for this memory allocation
-    DSNode *N = createNode();
-    N->setHeapNodeMarker();
-    setDestTo(*CS.getInstruction(), N);
-
-    // Get the pool handle
-    if (CS.arg_begin() == CS.arg_end()) {
-      abort(); //Hanlde this later
-      // Treat it as  a kmalloc
-      N->foldNodeCompletely();
-      //This becomes a kmalloc pool
-      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(KMallocPool));
-      G.getPoolDescriptorsMap()[N] = tmpvh;
-    } else {
-      Value *actualPD = *(CS.arg_begin());
-      if (!isa<GlobalValue>(actualPD)) {
-#if 0
-        std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
-#endif
-      } else {
-        ++GlobalPools;
-      }
-      Value *TheMetaPool = actualPD;
-      if (G.getPoolDescriptorsMap().count(N)== 0) {
-        //Here we insert a global meta pool
-        //Get the Module first
-        Module * M = F->getParent();
-        //Now create a meta pool for this value, DSN Node
-        const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
-        TheMetaPool = new GlobalVariable(
-                                 /*type=*/ VoidPtrType,
-                                 /*isConstant=*/ false,
-                                 /*Linkage=*/ GlobalValue::InternalLinkage,
-                                 /*initializer=*/ Constant::getNullValue(VoidPtrType),
-                                 /*name=*/ "_metaPool_",
-                                 /*parent=*/ M );
-        //Inserted a global meta pool 
-      }
-      //Now insert a function call that takes care of adding this pool to the global pool
-      
-      //First get the Insert point
-      Instruction *InsertPoint = CS.getInstruction();
-      
-      //Assumes AddPoolDescToMetaPool is in the module
-      CastInst *CastMetaPool = 
-        new CastInst(TheMetaPool, 
-                     PointerType::get(Type::SByteTy), "metapool.casted", InsertPoint);
-      CastInst *CastActualPD = 
-        new CastInst(actualPD, 
-                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPoint);
-      
-      // Create the call to AddPoolDescToMetaPool 
-      std::vector<Value *> args(1,CastMetaPool);
-      args.push_back(CastActualPD);
-      new CallInst(AddPoolDescToMetaPool,args,"", InsertPoint);
-      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool));
-      G.getPoolDescriptorsMap()[N] = tmpvh;
-    }
-  } else if (F->getName() == "poolalloc") {
-    if (CS.getCaller()->getName() == "kmem_cache_alloc")
-      return;
-    // Update the statistics
-    ++KMallocs;
-
-    // Create a DSNode for the memory allocated by this function call
-    DSNode *N = createNode();
-    N->setHeapNodeMarker();
-    setDestTo(*CS.getInstruction(), N);
-
-    // Get the pool handle, if possible
-    if (CS.arg_begin() == CS.arg_end()) {
-      abort(); //handle later
-      // Treat it as kmalloc
-      N->foldNodeCompletely();
-      //This becomes a kmalloc pool
-      //So get the kmalloc pool
-      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(KMallocPool));
-      G.getPoolDescriptorsMap()[N] = tmpvh;
-    } else {
-      Value *actualPD = *(CS.arg_begin());
-      if (!isa<GlobalValue>(actualPD)) {
-#if 0
-        std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
-#endif
-      } else {
-        ++GlobalPools;
-      }
-      Value *TheMetaPool = actualPD;
-      if (G.getPoolDescriptorsMap().count(N)== 0) {
-        //Here we insert a global meta pool
-        //Get the Module first
-        Module * M = F->getParent();
-        //Now create a meta pool for this value, DSN Node
-        const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
-        TheMetaPool = new GlobalVariable(
-                                 /*type=*/ VoidPtrType,
-                                 /*isConstant=*/ false,
-                                 /*Linkage=*/ GlobalValue::InternalLinkage,
-                                 /*initializer=*/ Constant::getNullValue(VoidPtrType),
-                                 /*name=*/ "_metaPool_",
-                                 /*parent=*/ M );
-        //Inserted a global meta pool 
-      }
-      //Now insert a function call that takes care of adding this pool to the global pool
-      //First get the Insert point
-      Instruction *InsertPoint = CS.getInstruction();
-
-      //Assumes AddPoolDescToMetaPool is in the module
-      CastInst *CastMetaPool = 
-        new CastInst(TheMetaPool, 
-                     PointerType::get(Type::SByteTy), "metapool.casted", InsertPoint);
-      CastInst *CastActualPD = 
-        new CastInst(actualPD, 
-                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPoint);
-      
-      // Create the call to AddPoolDescToMetaPool 
-      std::vector<Value *> args(1,CastMetaPool);
-      args.push_back(CastActualPD);
-      new CallInst(AddPoolDescToMetaPool,args,"", InsertPoint);
-      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool));
-      G.getPoolDescriptorsMap()[N] = tmpvh;
-    }
-#endif
 #ifdef LLVA_KERNEL
   } else if (F->getName() == "llva_memcpy") {
     if (CS.getCaller()->getName() == "kmem_cache_alloc")
@@ -1274,172 +1144,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
 void GraphBuilder::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
 
-  // Special case handling of certain libc allocation functions here.
   if (Function *F = dyn_cast<Function>(Callee)) {
-#ifdef LLVA_KERNEL    
-    if (F->getName() == "kmem_cache_alloc") {
-      DEBUG(std::cerr << "LLVA: kmem_cache_alloc" << std::endl);
-      // Update the statistics count
-      ++CacheAllocs;
-      
-      // Create a new DSNode for this memory allocation
-      DSNode *N = createNode();
-      N->setHeapNodeMarker();
-      setDestTo(*CS.getInstruction(), N);
-
-      // Get the pool handle
-      if (CS.arg_begin() == CS.arg_end()) {
-        abort(); //Handle this later
-        // Treat it as  a kmalloc
-        N->foldNodeCompletely();
-        //This becomes a kmalloc pool
-        MetaPoolHandle* mpvh = new MetaPoolHandle(new MetaPool(KMallocPool));
-        G.getPoolDescriptorsMap()[N] = mpvh;
-      } else {
-        Value *actualPD = *(CS.arg_begin());
-        if (!isa<GlobalValue>(actualPD)) {
-#if 0
-          std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
-#endif
-        } else {
-          ++GlobalPools;
-        }
-        Value *TheMetaPool = actualPD;
-        //Get the Module first
-        Module * M = F->getParent();
-        if (G.getPoolDescriptorsMap().count(N)== 0) {
-          //Here we insert a global meta pool
-          //Now create a meta pool for this value, DSN Node
-          const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
-          TheMetaPool = new GlobalVariable(
-                                           /*type=*/ VoidPtrType,
-                                           /*isConstant=*/ false,
-                                           /*Linkage=*/ GlobalValue::InternalLinkage,
-                                           /*initializer=*/ Constant::getNullValue(VoidPtrType),
-                                           /*name=*/ "_metaPool_",
-                                           /*parent=*/ M );
-          //Inserted a global meta pool 
-        }
-#if 1
-        else {
-          // Lookup the meta pool
-          TheMetaPool = G.getPoolForNode(N)->getMetaPoolValue();
-        }
-#endif
-        //Now insert a function call that takes care of adding this pool to the global pool
-        
-        //First get the Insert point
-        Instruction *InsertPoint = CS.getInstruction();
-        
-        //Assumes AddPoolDescToMetaPool is in the module
-        const Type * VoidPtrType = PointerType::get(Type::SByteTy);
-        const Type * VoidPtrPtrType = PointerType::get(VoidPtrType);
-        CastInst *CastMetaPool = 
-          new CastInst(TheMetaPool, 
-                       VoidPtrPtrType, "metapool.casted", InsertPoint);
-        CastInst *CastActualPD = 
-          new CastInst(actualPD, 
-                       PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPoint);
-        
-        // Create the call to AddPoolDescToMetaPool 
-        std::vector<Value *> args(1,CastMetaPool);
-        args.push_back(CastActualPD);
-
-        //Get the AddPoolDescToMetaPool function from the module
-        //FIXME optimize it by getting it once per module 
-        std::vector<const Type *> Arg(1, VoidPtrPtrType);
-        Arg.push_back(VoidPtrType);
-        FunctionType *AddPoolDescToMetaPoolTy =
-          FunctionType::get(Type::VoidTy,Arg, false);
-        Function *AddPoolDescToMetaPool = M->getOrInsertFunction("AddPoolDescToMetaPool", AddPoolDescToMetaPoolTy);
-
-        
-        new CallInst(AddPoolDescToMetaPool,args,"", InsertPoint);
-#if 0
-        MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool));
-#else
-        MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool), CS.getInstruction());
-#endif
-        G.getPoolDescriptorsMap()[N] = tmpvh;
-      }
-      return;
-    } else if (F->getName() == "poolalloc") {
-      if (CS.getCaller()->getName() == "kmem_cache_alloc")
-        return;
-      // Update the statistics
-      ++KMallocs;
-      
-      // Create a DSNode for the memory allocated by this function call
-      DSNode *N = createNode();
-      N->setHeapNodeMarker();
-      setDestTo(*CS.getInstruction(), N);
-      
-      // Get the pool handle, if possible
-      if (CS.arg_begin() == CS.arg_end()) {
-        abort() ; //Handle this later
-        // Treat it as kmalloc
-        N->foldNodeCompletely();
-        //This becomes a kmalloc pool
-        //So get the kmalloc pool
-        MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(KMallocPool));
-        G.getPoolDescriptorsMap()[N] = tmpvh;
-      } else {
-        Value *actualPD = *(CS.arg_begin());
-        if (!isa<GlobalValue>(actualPD)) {
-#if 0
-          std::cerr << "WARNING: Pool is not global.  Function = " << CS.getCaller()->getName() << "\n";
-#endif
-        } else {
-          ++GlobalPools;
-        }
-        Value *TheMetaPool = actualPD;
-        Module * M = F->getParent();
-        if (G.getPoolDescriptorsMap().count(N)== 0) {
-          //Here we insert a global meta pool
-          //Get the Module first
-          //Now create a meta pool for this value, DSN Node
-          const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
-          TheMetaPool = new GlobalVariable(
-                                           /*type=*/ VoidPtrType,
-                                           /*isConstant=*/ false,
-                                           /*Linkage=*/ GlobalValue::InternalLinkage,
-                                           /*initializer=*/ Constant::getNullValue(VoidPtrType),
-                                           /*name=*/ "_metaPool_",
-                                           /*parent=*/ M );
-          //Inserted a global meta pool 
-        }
-        //Now insert a function call that takes care of adding this pool to the global pool
-        //First get the Insert point
-        Instruction *InsertPoint = CS.getInstruction();
-        
-        //Assumes AddPoolDescToMetaPool is in the module
-        const Type * VoidPtrType = PointerType::get(Type::SByteTy);
-        const Type * VoidPtrPtrType = PointerType::get(VoidPtrType);
-        CastInst *CastMetaPool = 
-          new CastInst(TheMetaPool, 
-                       VoidPtrPtrType, "metapool.casted", InsertPoint);
-        CastInst *CastActualPD = 
-          new CastInst(actualPD, 
-                       PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPoint);
-        
-        // Create the call to AddPoolDescToMetaPool 
-        std::vector<Value *> args(1,CastMetaPool);
-        args.push_back(CastActualPD);
-
-        //FIXME optimize it by getting it once per module 
-        std::vector<const Type *> Arg(1, VoidPtrPtrType);
-        Arg.push_back(VoidPtrType);
-        FunctionType *AddPoolDescToMetaPoolTy =
-          FunctionType::get(Type::VoidTy,Arg, false);
-        Function *AddPoolDescToMetaPool = M->getOrInsertFunction("AddPoolDescToMetaPool", AddPoolDescToMetaPoolTy);
-        
-        new CallInst(AddPoolDescToMetaPool,args,"", InsertPoint);
-        MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool));
-        G.getPoolDescriptorsMap()[N] = tmpvh;
-      }
-      return;
-    }
-#endif
     if (F->isExternal())
       if (F->isIntrinsic() && visitIntrinsic(CS, F))
         return;
@@ -1447,8 +1152,10 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         // Determine if the called function is one of the specified heap
         // allocation functions
         if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
-          setDestTo(*CS.getInstruction(),
-                    createNode()->setHeapNodeMarker()->setModifiedMarker());
+          DSNode* N = createNode()->setHeapNodeMarker()->setModifiedMarker();
+          setDestTo(*CS.getInstruction(), N);
+          MetaPool* MP = new MetaPool(CS);
+          N->setMP(MP);
           return;
         }
 
@@ -1606,6 +1313,10 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
   // Get a node handle to the global node and merge the initializer into it.
   DSNodeHandle NH = getValueDest(*GV);
   MergeConstantInitIntoNode(NH, GV->getInitializer());
+  MetaPool* MP = new MetaPool(GV);
+  if (NH.getNode()->getMP())
+    MP->merge(NH.getNode()->getMP());
+  NH.getNode()->setMP(MP);
 }
 
 
@@ -1692,6 +1403,13 @@ static void EliminateUsesOfECGlobals(DSGraph &G,
 }
 
 bool LocalDataStructures::runOnModule(Module &M) {
+
+#ifdef LLVA_KERNEL
+  AllocList.push_back("kmalloc");
+  AllocList.push_back("__vmalloc");
+  AllocList.push_back("kmem_cache_alloc");
+#endif
+
   const TargetData &TD = getAnalysis<TargetData>();
 
   // First step, build the globals graph.
@@ -1712,49 +1430,6 @@ bool LocalDataStructures::runOnModule(Module &M) {
   BuildGlobalECs(*GlobalsGraph, ECGlobals);
   DEBUG(std::cerr << "Eliminating " << ECGlobals.size() << " EC Globals!\n");
   ECGlobals.clear();
-
-#ifdef LLVA_KERNEL
-  //
-  // Scan through all the globals; if they have a DSNode but no MetaPool, give
-  // them a MetaPool.
-  //
-  const Type * VoidPtrType = PointerType::get(Type::SByteTy);              
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    // Skip functions and externally declared variables
-    if (!isa<GlobalVariable>(I)) continue;
-    if (I->isExternal()) continue;
-
-    GlobalValue * GV = I;
-    GlobalValue * GVL = GlobalsGraph->getScalarMap().getLeaderForGlobal(I);
-    DSNode *Node  = GlobalsGraph->getNodeForValue(GVL).getNode();
-
-    // If this global happens to be a MetaPool, it will have no DSNode.
-    // In that case, do not assign a MetaPool.
-    if (!Node) continue;
-
-    //
-    // Add the MetaPool for the DSNode if it does not already have one.
-    //
-    if (GlobalsGraph->getPoolDescriptorsMap().count(Node) == 0) {
-      Value * TheMetaPool = 0;
-      TheMetaPool = new GlobalVariable(
-                                       /*type=*/ VoidPtrType,
-                                       /*isConstant=*/ false,
-                                       /*Linkage=*/ GlobalValue::InternalLinkage,
-                                       /*initializer=*/ Constant::getNullValue(VoidPtrType),
-                                       /*name=*/ "_metaPool_",
-                                       /*parent=*/ &M );
-
-      //
-      // Create the internal data structure for the MetaPool and associate the
-      // DSNode with it.
-      //
-      MetaPoolHandle* tmpvh = new MetaPoolHandle(new MetaPool(TheMetaPool), NULL);
-      GlobalsGraph->getPoolDescriptorsMap()[Node] = tmpvh;
-    }
-  }
-#endif
 
   // Calculate all of the graphs...
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)

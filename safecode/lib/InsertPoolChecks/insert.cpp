@@ -66,6 +66,8 @@ static Statistic<> MissedStackChecks  ("safecode", "Missed stack checks");
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
+static Statistic<> ConstExactChecks  ("safecode", "Exactchecks with constant arguments");
+
 //Kernel support rutines
 static GlobalVariable* makeMetaPool(Module* M) {
   //Here we insert a global meta pool
@@ -419,11 +421,26 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       // This only works for one or two dimensional arrays
       if (GEP->getNumOperands() == 2) {
         Value *secOp = GEP->getOperand(1);
+
+#ifdef LLVA_KERNEL
+        //
+        // Determine whether the exactcheck() will have constant integer
+        // arguments.  If so, then we can evaluate them statically and avoid
+        // inserting the run-time check.
+        //
+        if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+          int index = Index->getSExtValue();
+          assert ((index < 0) && "exactcheck will fail at runtime");
+          if (index < AT->getNumElements())
+            return true;
+          assert (0 && "exactcheck out of range");
+        }
+#endif
         if (secOp->getType() != Type::IntTy) {
           secOp = new CastInst(secOp, Type::IntTy,
                                secOp->getName()+".ec3.casted", Casted);
         }
-        
+
         std::vector<Value *> args(1,secOp);
         const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
         args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
@@ -436,6 +453,20 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
           //FIXME assuming that the first array index is 0
           assert((COP->getZExtValue() == 0) && "non zero array index\n");
           Value * secOp = GEP->getOperand(2);
+#ifdef LLVA_KERNEL
+          //
+          // Determine whether the exactcheck() will have constant integer
+          // arguments.  If so, then we can evaluate them statically and avoid
+          // inserting the run-time check.
+          //
+          if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+            int index = Index->getSExtValue();
+            assert ((index < 0) && "exactcheck will fail at runtime");
+            if (index < AT->getNumElements())
+              return true;
+            assert (0 && "exactcheck out of range");
+          }
+#endif
           if (secOp->getType() != Type::IntTy) {
             secOp = new CastInst(secOp, Type::IntTy,
                                  secOp->getName()+".ec4.casted", Casted);
@@ -601,6 +632,20 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
         // This only works for one or two dimensional arrays
         if (GEPNew->getNumOperands() == 2) {
           Value *secOp = GEPNew->getOperand(1);
+#ifdef LLVA_KERNEL
+          //
+          // Determine whether the exactcheck() will have constant integer
+          // arguments.  If so, then we can evaluate them statically and avoid
+          // inserting the run-time check.
+          //
+          if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+            int index = Index->getSExtValue();
+            assert ((index < 0) && "exactcheck will fail at runtime");
+            if (index < AT->getNumElements())
+              return;
+            assert (0 && "exactcheck out of range");
+          }
+#endif
           if (secOp->getType() != Type::UIntTy) {
             secOp = new CastInst(secOp, Type::UIntTy,
                                  secOp->getName()+".ec3.casted", Casted);
@@ -618,6 +663,20 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             //FIXME assuming that the first array index is 0
             assert((COP->getZExtValue() == 0) && "non zero array index\n");
             Value * secOp = GEPNew->getOperand(2);
+#ifdef LLVA_KERNEL
+            //
+            // Determine whether the exactcheck() will have constant integer
+            // arguments.  If so, then we can evaluate them statically and avoid
+            // inserting the run-time check.
+            //
+            if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+              int index = Index->getSExtValue();
+              assert ((index < 0) && "exactcheck will fail at runtime");
+              if (index < AT->getNumElements())
+                return;
+              assert (0 && "exactcheck out of range");
+            }
+#endif
             if (secOp->getType() != Type::UIntTy) {
               secOp = new CastInst(secOp, Type::UIntTy,
                                    secOp->getName()+".ec4.casted", Casted);
@@ -766,6 +825,20 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                   //Need to factor this in to separate method!!!
                   Value * secOp = MAI->getOperand(3);
                   Value *indexTypeSize = ConstantInt::get(Type::UIntTy, TD->getTypeSize(secOp->getType())); 
+#ifdef LLVA_KERNEL
+                  //
+                  // Determine whether the exactcheck() will have constant integer
+                  // arguments.  If so, then we can evaluate them statically and avoid
+                  // inserting the run-time check.
+                  //
+                  if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+                    int index = Index->getSExtValue();
+                    assert ((index < 0) && "exactcheck will fail at runtime");
+                    if (index < TD->getTypeSize(elAT))
+                      return;
+                    assert (0 && "exactcheck out of range");
+                  }
+#endif
                   if (secOp->getType() != Type::UIntTy) {
                     secOp = new CastInst(secOp, Type::UIntTy,
                                          secOp->getName()+".casted",  MAI);
@@ -833,6 +906,19 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 #endif
               Value * secOp = MAI->getOperand(2);
               Value *indexTypeSize = ConstantInt::get(Type::UIntTy, TD->getTypeSize(secOp->getType())); 
+#ifdef LLVA_KERNEL
+              //
+              // Determine whether the exactcheck() will have constant integer
+              // arguments.  If so, then we can evaluate them statically and avoid
+              // inserting the run-time check.
+              //
+              if (!(AI->isArrayAllocation()))
+                if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
+                  int index = Index->getSExtValue();
+                  if ((index > 0) && (index < TD->getTypeSize(AI->getAllocatedType())))
+                    return;
+                }
+#endif
               //Convert everything to bytes
               if (secOp->getType() != Type::IntTy) {
                 secOp = new CastInst(secOp, Type::IntTy, secOp->getName()+".casted",

@@ -25,8 +25,12 @@ static inline Tree* tmalloc() {
   } else if(use < 1024) {
     ++use;
     return &initmem[use-1];
-  } else
-    return (Tree*) ext_alloc(sizeof(Tree));
+  } else {
+    Tree * tmp = ext_alloc(sizeof(Tree));
+    if (!tmp)
+      poolcheckfatal ("LLVA: tmalloc: Failed to allocate\n");
+    return (Tree*) tmp;
+  }
 }
 
 static inline void tfree(Tree* t) {

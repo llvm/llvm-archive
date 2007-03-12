@@ -54,8 +54,11 @@ struct InsertPoolChecks : public ModulePass {
   Function *ExactCheck2;
   Function *GetActualValue;
   Function *PoolRegister;
+  Function *ObjFree;
   Function *PoolRegMP;
   Function *PoolFindMP;
+
+  void addObjFrees(Module& M);
   void addMetaPools(Module& M, MetaPool* MP);
   void addPoolCheckProto(Module &M);
   void addPoolChecks(Module &M);

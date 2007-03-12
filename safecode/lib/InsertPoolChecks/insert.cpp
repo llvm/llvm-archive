@@ -99,7 +99,7 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP) {
     if (name == "kmem_cache_alloc") {
       //insert a register before
       Value* VP = new CastInst(i->getArgument(0), PointerType::get(Type::SByteTy), "", i->getInstruction());
-      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "", i->getInstruction());
+      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", i->getInstruction());
       Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
       new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
     } else if (name == "kmalloc" ||
@@ -107,12 +107,40 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP) {
       //inser obj register after
       Instruction* IP = i->getInstruction()->getNext();
       Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
-      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "", IP);
-      Value* len = new CastInst(i->getArgument(0), Type::UIntTy, "", IP);
+      Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", IP);
+      Value* len = new CastInst(i->getArgument(0), Type::UIntTy, "len", IP);
       new CallInst(PoolRegister, make_vector(VMP, VP, len, 0), "", IP);
     } else
       assert(0 && "unknown alloc");
   }
+}
+
+void InsertPoolChecks::addObjFrees(Module& M) {
+#ifdef LLVA_KERNEL
+  Function* KMF = M.getNamedFunction("kfree");
+  Function* VMF = M.getNamedFunction("vfree");
+  std::list<Function*> L;
+  if (KMF) L.push_back(KMF);
+  if (VMF) L.push_back(VMF);
+  for (std::list<Function*>::iterator ii = L.begin(), ee = L.end();
+       ii != ee; ++ii) {
+    Function* F = *ii;
+    for (Value::use_iterator ii = F->use_begin(), ee = F->use_end();
+         ii != ee; ++ii) {
+      if (CallInst* CI = dyn_cast<CallInst>(*ii)) {
+        if (CI->getCalledFunction() == F) {
+          Value* Ptr = CI->getOperand(1);
+          Value* MP = getPD(getDSNode(Ptr, CI->getParent()->getParent()), M);
+          if (MP) {
+            MP = new CastInst(MP, PointerType::get(Type::SByteTy), "MP", CI);
+            Ptr = new CastInst(Ptr, PointerType::get(Type::SByteTy), "ADDR", CI);
+            new CallInst(ObjFree, make_vector(MP, Ptr, 0), "", CI);
+          }
+        }
+      }
+    }
+  }
+#endif
 }
 
 bool InsertPoolChecks::runOnModule(Module &M) {
@@ -136,6 +164,9 @@ bool InsertPoolChecks::runOnModule(Module &M) {
 
   //Replace old poolcheck with the new one 
   addPoolChecks(M);
+
+  //Add obj drops
+  addObjFrees(M);
 
   //
   // Update the statistics.
@@ -1771,7 +1802,9 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
 
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
-                                   VoidPtrType, Type::UIntTy, NULL);
+                                       VoidPtrType, Type::UIntTy, NULL);
+  ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
   
   PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
   PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);

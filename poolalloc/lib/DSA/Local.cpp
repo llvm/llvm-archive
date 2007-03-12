@@ -1408,6 +1408,8 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("kmalloc");
   AllocList.push_back("__vmalloc");
   AllocList.push_back("kmem_cache_alloc");
+  FreeList.push_back("kfree");
+  FreeList.push_back("vfree");
 #endif
 
   const TargetData &TD = getAnalysis<TargetData>();

@@ -1451,6 +1451,33 @@ bool LocalDataStructures::runOnModule(Module &M) {
       EliminateUsesOfECGlobals(*I->second, ECGlobals);
   }
 
+#ifdef LLVA_KERNEL
+
+  // Ugly hack.  kmem_cache_allocs are in the same pool also if the kmem_cache_t's are the same
+  // this only works on global kmem_cache_ts
+  Function* KMA = M.getNamedFunction("kmem_cache_alloc");
+  if (KMA) {
+    for (Value::use_iterator ii = KMA->use_begin(), ee = KMA->use_end();
+         ii != ee; ++ii) {
+      std::map<Value*, MetaPool*> locs;
+      if (CallInst* CI = dyn_cast<CallInst>(*ii)) {
+        if (CI->getCalledFunction() == KMA && isa<GlobalValue>(CI->getOperand(1))) {
+          Value* V = CI->getOperand(1); //the kmem_cache_alloc
+          DSNodeHandle DSH = DSInfo[CI->getParent()->getParent()]->getNodeForValue(CI);
+          MetaPoolHandle L(locs[V]), N(DSH.getNode()->getMP());
+          if (L.getPool() != N.getPool()) {
+            std::cerr << "kmem_cache_alloc recovered merge\n";
+            MetaPoolHandle L(locs[V]), N(DSH.getNode()->getMP());
+            locs[V]->merge(DSH.getNode()->getMP());
+          }
+          locs[V] = DSH.getNode()->getMP();
+        }
+      }
+    }
+  }
+
+#endif
+
   return false;
 }
 

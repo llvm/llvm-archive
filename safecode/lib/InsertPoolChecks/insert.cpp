@@ -508,7 +508,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
   std::vector<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
   std::vector<Instruction *>::const_iterator iCurrent = std::find(UnsafeGetElemPtrs.begin(), UnsafeGetElemPtrs.end(),MAI);
   if (iCurrent == UnsafeGetElemPtrs.end()) {
-    DEBUG(std::cerr << "statically proved safe : Not inserting checks " << MAI << "\n");
+#if 0
+    std::cerr << "statically proved safe : Not inserting checks " << *MAI << "\n";
+#endif
     return;
   }
 
@@ -550,8 +552,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             // This only works for one or two dimensional arrays.
             if (GEPNew->getNumOperands() == 2) {
               Value *secOp = GEPNew->getOperand(1);
-              if (secOp->getType() != Type::UIntTy) {
-                secOp = new CastInst(secOp, Type::UIntTy,
+              if (secOp->getType() != Type::IntTy) {
+                secOp = new CastInst(secOp, Type::IntTy,
                                      secOp->getName()+".ec.casted", Casted);
               }
 
@@ -566,8 +568,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                 // FIXME: assuming that the first array index is 0
                 assert((COP->getZExtValue() == 0) && "non zero array index\n");
                 Value * secOp = GEPNew->getOperand(2);
-                if (secOp->getType() != Type::UIntTy) {
-                  secOp = new CastInst(secOp, Type::UIntTy,
+                if (secOp->getType() != Type::IntTy) {
+                  secOp = new CastInst(secOp, Type::IntTy,
                                        secOp->getName()+".ec2.casted", Casted);
                 }
                 std::vector<Value *> args(1,secOp);
@@ -646,8 +648,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             assert (0 && "exactcheck out of range");
           }
 #endif
-          if (secOp->getType() != Type::UIntTy) {
-            secOp = new CastInst(secOp, Type::UIntTy,
+          if (secOp->getType() != Type::IntTy) {
+            secOp = new CastInst(secOp, Type::IntTy,
                                  secOp->getName()+".ec3.casted", Casted);
           }
           
@@ -677,8 +679,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
               assert (0 && "exactcheck out of range");
             }
 #endif
-            if (secOp->getType() != Type::UIntTy) {
-              secOp = new CastInst(secOp, Type::UIntTy,
+            if (secOp->getType() != Type::IntTy) {
+              secOp = new CastInst(secOp, Type::IntTy,
                                    secOp->getName()+".ec4.casted", Casted);
             }
             std::vector<Value *> args(1,secOp);
@@ -800,14 +802,14 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                     assert (0 && "exactcheck out of range");
                   }
 #endif
-                  if (secOp->getType() != Type::UIntTy) {
-                    secOp = new CastInst(secOp, Type::UIntTy,
+                  if (secOp->getType() != Type::IntTy) {
+                    secOp = new CastInst(secOp, Type::IntTy,
                                          secOp->getName()+".casted",  MAI);
                   }
                   //                      secOp = BinaryOperator::create(Instruction::Mul, indexTypeSize, secOp,"indextmp", MAI);
                   std::vector<Value *> args(1,secOp);
                   Value *AllocSize =
-                    ConstantInt::get(Type::UIntTy, TD->getTypeSize(elAT));
+                    ConstantInt::get(Type::IntTy, TD->getTypeSize(elAT));
                   /*
                     if (AI->isArrayAllocation())
                     AllocSize = BinaryOperator::create(Instruction::Mul,
@@ -848,10 +850,12 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
               new CallInst(ExactCheck2,args,"",InsertPt);
 #endif
             }
+          } else {
+            std::cerr << "Not all args constant: " << *MAI << std::endl;
           }
         } else {
+          std::cerr << "HandleLikeArray: " << *MAI << std::endl;
           goto HandleThisLikeArray;
-	      
         }
       } else {
       HandleThisLikeArray:	      
@@ -886,7 +890,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                                      MAI);
               }
               //		  secOp = BinaryOperator::create(Instruction::Mul, indexTypeSize, secOp,"indextmp",MAI);
-              //		  }
               std::vector<Value *> args(1,secOp);
               Value *AllocSize =
                 ConstantInt::get(Type::IntTy, TD->getTypeSize(AI->getAllocatedType()));
@@ -898,10 +901,14 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 		  
               args.push_back(AllocSize);
               CallInst *newCI = new CallInst(ExactCheck,args,"", MAI);
+              } else {
+                std::cerr << "COP not zero: " << *MAI << std::endl;
               }
+            } else {
+              std::cerr << "Bad COP: " << *MAI << std::endl;
             }
           } else {
-            std::cerr << " num operands != 3 \n";
+            std::cerr << " num operands != 3: " << *MAI << std::endl;
             abort();
           }
         } else {
@@ -923,11 +930,10 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           if (!PH)
             PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
 #else
-          if (!PH)
-{
-      std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
+          if (!PH) {
+            std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
             return;
-}
+          }
 #endif
           //deal with it at runtime	      assert(PH && " PH is null \n");
 
@@ -974,7 +980,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
         }
       }
     } else {
-      std::cerr << " getelement ptr does not have pointer type arg\n";
+      std::cerr << "GEP does not have pointer type arg" << *MAI << std::endl;
       abort();
     }
 
@@ -1491,8 +1497,8 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
             // This only works for one or two dimensional arrays.
             if (GEPNew->getNumOperands() == 2) {
               Value *secOp = GEPNew->getOperand(1);
-              if (secOp->getType() != Type::UIntTy) {
-                secOp = new CastInst(secOp, Type::UIntTy,
+              if (secOp->getType() != Type::IntTy) {
+                secOp = new CastInst(secOp, Type::IntTy,
                                      secOp->getName()+".ec.casted", Casted);
               }
 
@@ -1507,8 +1513,8 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
                 // FIXME: assuming that the first array index is 0
                 assert((COP->getZExtValue() == 0) && "non zero array index\n");
                 Value * secOp = GEPNew->getOperand(2);
-                if (secOp->getType() != Type::UIntTy) {
-                  secOp = new CastInst(secOp, Type::UIntTy,
+                if (secOp->getType() != Type::IntTy) {
+                  secOp = new CastInst(secOp, Type::IntTy,
                                        secOp->getName()+".ec2.casted", Casted);
                 }
                 std::vector<Value *> args(1,secOp);
@@ -1585,8 +1591,8 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
         // This only works for one or two dimensional arrays
         if (GEPNew->getNumOperands() == 2) {
           Value *secOp = GEPNew->getOperand(1);
-          if (secOp->getType() != Type::UIntTy) {
-            secOp = new CastInst(secOp, Type::UIntTy,
+          if (secOp->getType() != Type::IntTy) {
+            secOp = new CastInst(secOp, Type::IntTy,
                                  secOp->getName()+".ec3.casted", Casted);
           }
           
@@ -1602,8 +1608,8 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
             //FIXME assuming that the first array index is 0
             assert((COP->getZExtValue() == 0) && "non zero array index\n");
             Value * secOp = GEPNew->getOperand(2);
-            if (secOp->getType() != Type::UIntTy) {
-              secOp = new CastInst(secOp, Type::UIntTy,
+            if (secOp->getType() != Type::IntTy) {
+              secOp = new CastInst(secOp, Type::IntTy,
                                    secOp->getName()+".ec4.casted", Casted);
             }
             std::vector<Value *> args(1,secOp);

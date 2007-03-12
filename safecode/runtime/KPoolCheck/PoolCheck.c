@@ -26,6 +26,29 @@ static int ready = 0;
 
 static const int use_oob = 0;
 
+extern void llva_load_lif (unsigned int enable);
+extern unsigned int llva_save_lif (void);
+
+
+static unsigned
+disable_irqs ()
+{
+  unsigned int is_set;
+  is_set = llva_save_lif ();
+  llva_load_lif (0);
+  return is_set;
+}
+
+static void
+enable_irqs (int is_set)
+{
+  llva_load_lif (is_set);
+}
+
+#define PCLOCK() int pc_i = disable_irqs();
+#define PCLOCK2() pc_i = disable_irqs();
+#define PCUNLOCK() enable_irqs(pc_i);
+
 /*
  * Function: pchk_init()
  *
@@ -56,26 +79,34 @@ void pchk_init(void) {
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
   if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr); return; }
+  PCLOCK();
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
+  PCUNLOCK();
 }
 
 /* Remove a slab */
 void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
   if (!MP) return;
   /* TODO: check that slab's tag is == PoolID */
+  PCLOCK();
   adl_splay_delete(&MP->Slabs, addr);
+  PCUNLOCK();
 }
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   if (!MP) { poolcheckinfo("reg obj on null pool", (int)addr); return; }
+  PCLOCK();
   adl_splay_insert(&MP->Objs, addr, len, 0);
+  PCUNLOCK();
 }
 
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
   if (!MP) return;
+  PCLOCK();
   adl_splay_delete(&MP->Objs, addr);
+  PCUNLOCK();
 }
 
 /* Register a pool */
@@ -94,13 +125,18 @@ void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc) {
 /* A pool is deleted.  free it's resources (necessary for correctness of checks) */
 void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
   if(!MP) return;
+  PCLOCK();
   adl_splay_delete_tag(&MP->Slabs, PoolID);
+  PCUNLOCK();
 }
 
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
-  if (adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr))
+  PCLOCK();
+  int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
+  PCUNLOCK();
+  if (t)
     return;
   poolcheckfail ("poolcheck failure: \n", (unsigned)addr, (void*)__builtin_return_address(0));
 }
@@ -111,15 +147,19 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   /* try slabs first */
   void* S = src;
   void* D = dest;
+  PCLOCK();
   adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
   adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return;
   /* try objs */
   S = src;
   D = dest;
+  PCLOCK2();
   adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return;
   poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
@@ -132,8 +172,10 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   /* try slabs first */
   void* S = src;
   void* D = dest;
+  PCLOCK();
   int fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
   int fd = adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return;
   if (fs || fd) { /*fail if we found one but not the other*/ 
@@ -143,8 +185,10 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   /* try objs */
   S = src;
   D = dest;
+  PCLOCK2();
   fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return;
   if (fs || fd) { /*fail if we found one but not the other*/
@@ -165,8 +209,12 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
   void* tag = 0;
   /* outside rewrite zone */
   if ((unsigned)src & ~(InvalidUpper - 1)) return src;
-  if (adl_splay_retrieve(&MP->OOB, &src, 0, &tag))
+  PCLOCK();
+  if (adl_splay_retrieve(&MP->OOB, &src, 0, &tag)) {
+    PCUNLOCK();
     return tag;
+  }
+  PCUNLOCK();
   poolcheckfail("GetActualValue failure: \n", (unsigned) src, (void*)__builtin_return_address(0));
   return tag;
 }
@@ -191,41 +239,55 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   /* try objs */
   void* S = src;
   void* D = dest;
+  PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return dest;
   else if (fs) {
     if (!use_oob) return dest;
+    PCLOCK2();
     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+    void* P = MP->invalidptr;
+    PCUNLOCK();
+    if ((unsigned)P & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    poolcheckinfo("Returning oob pointer of ", (int)MP->invalidptr);
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
+    poolcheckinfo("Returning oob pointer of ", (int)P);
+    PCLOCK2();
+    adl_splay_insert(&MP->OOB, P, 1, dest);
+    PCUNLOCK()
+    return P;
   }
 
   /* try slabs */
   S = src;
   D = dest;
+  PCLOCK2();
   fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
   adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return dest;
   else if (fs) {
     if (!use_oob) return dest;
+    PCLOCK2();
     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+    void* P = MP->invalidptr;
+    PCUNLOCK();
+    if ((unsigned)P & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    poolcheckinfo("Returning oob pointer of ", (int)MP->invalidptr);
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
+    poolcheckinfo("Returning oob pointer of ", (int)P);
+    PCLOCK2();
+    adl_splay_insert(&MP->OOB, P, 1, dest);
+    PCUNLOCK();
+    return P;
   }
 
   /*
@@ -251,39 +313,53 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   /* try objs */
   void* S = src;
   void* D = dest;
+  PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return dest;
   else if (fs) {
     if (!use_oob) return dest;
+    PCLOCK2();
      if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+    void* P = MP->invalidptr;
+    PCUNLOCK();
+    if ((unsigned)P & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
+    PCLOCK2();
+    adl_splay_insert(&MP->OOB, P, 1, dest);
+    PCUNLOCK();
+    return P;
   }
 
   /* try slabs */
   S = src;
   D = dest;
+  PCLOCK2();
   fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
   adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
+  PCUNLOCK();
   if (S == D)
     return dest;
   else if (fs) {
     if (!use_oob) return dest;
+    PCLOCK2();
      if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;
-    if ((unsigned)MP->invalidptr & ~(InvalidUpper - 1)) {
+    void* P = MP->invalidptr;
+    PCUNLOCK();
+    if ((unsigned)P & ~(InvalidUpper - 1)) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    adl_splay_insert(&MP->OOB, MP->invalidptr, 1, dest);
-    return MP->invalidptr;
+    PCLOCK2();
+    adl_splay_insert(&MP->OOB, P, 1, dest);
+    PCUNLOCK();
+    return P;
   }
 
   /*

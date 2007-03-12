@@ -920,61 +920,62 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
       
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     Instruction *iLocal = &*I;
+
     if (isa<CastInst>(iLocal)) {
       //Some times 
       if (isa<GetElementPtrInst>(iLocal->getOperand(0))) {
-	iLocal = cast<Instruction>(iLocal->getOperand(0));
+        iLocal = cast<Instruction>(iLocal->getOperand(0));
       }
     }
+
     if (isa<GetElementPtrInst>(iLocal)) {
       GetElementPtrInst *MAI = cast<GetElementPtrInst>(iLocal);
 
       if (const PointerType *PT = dyn_cast<PointerType>(MAI->getPointerOperand()->getType())) {
-	if (!isa<StructType>(PT->getElementType())) {
-	  User::op_iterator mI = MAI->op_begin(), mE = MAI->op_end();
-	  if (mI == mE) {
-	    continue;
-	  }
+        if (!isa<StructType>(PT->getElementType())) {
+          User::op_iterator mI = MAI->op_begin(), mE = MAI->op_end();
+          if (mI == mE) {
+            continue;
+          }
 #ifdef NO_STATIC_CHECK
-      	UnsafeGetElemPtrs.push_back(MAI);
-	continue;
+          UnsafeGetElemPtrs.push_back(MAI);
+          continue;
 #endif      
-	  mI++;
-	  ABCExprTree *root;
-	  string varName = getValueName(MAI->getPointerOperand());
-	  LinearExpr *le = new LinearExpr(*mI,Mang);
-	  Constraint* c1 = new Constraint(varName,le,"<="); // length < index
-	  ABCExprTree* abctemp1 = new ABCExprTree(c1);
-	  Constraint* c2 = new Constraint("0",le,">",true); // 0 > index
-	  ABCExprTree* abctemp2 = new ABCExprTree(c2);
-	  root = new ABCExprTree(abctemp1, abctemp2, "||");
-	  mI++;
-	  for (; mI != mE; ++mI) {
-	    LinearExpr *le = new LinearExpr(*mI,Mang);
-	    varName = varName+"_i" ;
-	    Constraint* c1 = new Constraint(varName,le,"<="); // length < index
-	    ABCExprTree* abctemp1 = new ABCExprTree(c1);
-	    Constraint* c2 = new Constraint("0",le,">",true); // 0 > index
-	    ABCExprTree* abctemp2 = new ABCExprTree(c2);
-	    ABCExprTree*abctempor = new ABCExprTree(abctemp1,abctemp2,"||"); // abctemp1 || abctemp2
-	    root = new ABCExprTree(root, abctempor, "||");
-	    //	      }
-	  }
-	  //reinitialize mI , now getting the constraints on the indices
-	  //We need to clear DoneList since we are getting constraints for a
-	  //new access. (DoneList is the list of basic blocks that are in the
-	  //post dominance frontier of this accesses basic block
-	  DoneList.clear();
-	  reqArgs = false;
-	  addControlDependentConditions(MAI->getParent(), &root);
-	  mI = MAI->idx_begin();
-	  for (; mI != mE; ++mI) {
-	    getConstraints(*mI,&root);
-	  }
-	  getConstraints(MAI->getPointerOperand(),&root);
-	  fMap[&F]->addSafetyConstraint(MAI,root);
-	  fMap[&F]->addMemAccessInst(MAI, reqArgs);
-	}
+          mI++;
+          ABCExprTree *root;
+          string varName = getValueName(MAI->getPointerOperand());
+          LinearExpr *le = new LinearExpr(*mI,Mang);
+          Constraint* c1 = new Constraint(varName,le,"<="); // length < index
+          ABCExprTree* abctemp1 = new ABCExprTree(c1);
+          Constraint* c2 = new Constraint("0",le,">",true); // 0 > index
+          ABCExprTree* abctemp2 = new ABCExprTree(c2);
+          root = new ABCExprTree(abctemp1, abctemp2, "||");
+          mI++;
+          for (; mI != mE; ++mI) {
+            LinearExpr *le = new LinearExpr(*mI,Mang);
+            varName = varName+"_i" ;
+            Constraint* c1 = new Constraint(varName,le,"<="); // length < index
+            ABCExprTree* abctemp1 = new ABCExprTree(c1);
+            Constraint* c2 = new Constraint("0",le,">",true); // 0 > index
+            ABCExprTree* abctemp2 = new ABCExprTree(c2);
+            ABCExprTree*abctempor = new ABCExprTree(abctemp1,abctemp2,"||"); // abctemp1 || abctemp2
+            root = new ABCExprTree(root, abctempor, "||");
+          }
+          //reinitialize mI , now getting the constraints on the indices
+          //We need to clear DoneList since we are getting constraints for a
+          //new access. (DoneList is the list of basic blocks that are in the
+          //post dominance frontier of this accesses basic block
+          DoneList.clear();
+          reqArgs = false;
+          addControlDependentConditions(MAI->getParent(), &root);
+          mI = MAI->idx_begin();
+          for (; mI != mE; ++mI) {
+            getConstraints(*mI,&root);
+          }
+          getConstraints(MAI->getPointerOperand(),&root);
+          fMap[&F]->addSafetyConstraint(MAI,root);
+          fMap[&F]->addMemAccessInst(MAI, reqArgs);
+        }
       }
     } else if (CallInst *CI = dyn_cast<CallInst>(iLocal)) {
       //Now we need to collect and add the constraints for trusted lib

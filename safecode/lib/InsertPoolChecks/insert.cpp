@@ -716,54 +716,15 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     //
     // 
     if (!PH) {
+      std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
       // Don't bother to insert the NULL check unless the user asked
       if (!EnableNullChecks)
         return;
       PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
-      DEBUG(std::cerr << "missing a GEP check for" << GEP << "alloca case?\n");
     } else {
-      //
-      // Determine whether the pool handle dominates the pool check.
-      // If not, then don't insert it.
-      //
-
-      //
-      // FIXME:
-      //  This domination check is too restrictive; it eliminates pools that do
-      //  dominate but are outside of the current basic block.
-      //
-      // Only add the pool check if the pool is a global value or it belongs
-      // to the same basic block.
-      //
-      if (isa<GlobalValue>(PH)) {
-        ++FullChecks;
-      } else if (isa<Instruction>(PH)) {
-        Instruction * IPH = (Instruction *)(PH);
-        if (IPH->getParent() == Casted->getParent()) {
-          //
-          // If the instructions belong to the same basic block, ensure that
-          // the pool dominates the load/store.
-          //
-          Instruction * IP = IPH;
-          for (IP=IPH; (IP->isTerminator()) || (IP==Casted); IP=IP->getNext()) {
-            ;
-          }
-          if (IP == Casted)
-            ++FullChecks;
-          else {
-            ++MissChecks;
-            return;
-          }
-        } else {
-          ++MissChecks;
-          return;
-        }
-      } else {
-        ++MissChecks;
-        return;
-      }
+      assert ((isa<GlobalValue>(PH)) && "MetaPool Handle is not a global!");
     }
 
     //
@@ -963,7 +924,10 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
 #else
           if (!PH)
+{
+      std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
             return;
+}
 #endif
           //deal with it at runtime	      assert(PH && " PH is null \n");
 

@@ -428,6 +428,21 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   Value * PointerOperand = GEP->getPointerOperand();
 
   //
+  // Get the DSNode for the instruction
+  //
+  Function *F   = GEP->getParent()->getParent();
+  DSGraph & TDG = TDPass->getDSGraph(*F);
+  DSNode * Node = TDG.getNodeForValue(GEP).getNode();
+  assert (Node && "boundscheck: DSNode is NULL!");
+
+  //
+  // If this node is incomplete or unknown, then do not use an exactcheck()
+  // for it.
+  //
+  if (Node->isIncomplete() || Node->isUnknownNode())
+    return false;
+
+  //
   // Sometimes the pointer operand to a GEP is a cast; get the pointer that is
   // being casted.
   //
@@ -787,17 +802,22 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     }
 #endif
   } else {
+    // Insert accurate bounds checks for arrays (as opposed to poolchecks)
+
     //
     // Attempt to insert a standard exactcheck() call for the GEP.
     //
-    if (InsertPoolChecks::insertExactCheck (MAI))
+    if (insertExactCheck (MAI))
       return;
-
-    // Insert accurate bounds checks for arrays (as opposed to poolchecks)
 
     //Exact poolchecks
     if (const PointerType *PT = dyn_cast<PointerType>(MAI->getPointerOperand()->getType())) {
+#if 0
       if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {
+#else
+      const StructType *ST = dyn_cast<StructType>(PT->getElementType());
+      if (0) {
+#endif
         //It is a struct type with pointers
         //for each pointer with struct typ
         //we need to watchg out for arrays inside structs 

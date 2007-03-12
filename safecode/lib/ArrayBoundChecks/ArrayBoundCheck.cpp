@@ -20,6 +20,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CommandLine.h"
+#include "safecode/Config/config.h"
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
@@ -975,7 +976,15 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           getConstraints(MAI->getPointerOperand(),&root);
           fMap[&F]->addSafetyConstraint(MAI,root);
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
+        } else {
+#ifdef NO_STATIC_CHECK
+          // Assume structures are unsafe.
+          UnsafeGetElemPtrs.push_back(MAI);
+          continue;
         }
+#endif      
+      } else {
+        std::cerr << "GEP to non-pointer: " << *iLocal << std::endl;
       }
     } else if (CallInst *CI = dyn_cast<CallInst>(iLocal)) {
       //Now we need to collect and add the constraints for trusted lib

@@ -84,6 +84,10 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
 /* MP is the actual metapool. */
 void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc) {
   if(!MP) return;
+  if(*(void**)MPLoc && *(void**)MPLoc != MP) 
+      poolcheckfail("reg_pool: Pool in 2 MP (inference bug): ", (unsigned)*(void**)MPLoc, 
+                    (void*)__builtin_return_address(0));
+
   *(void**)MPLoc = (void*) MP;
 }
 

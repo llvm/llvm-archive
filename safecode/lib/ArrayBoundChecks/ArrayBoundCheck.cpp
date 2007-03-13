@@ -12,6 +12,7 @@
 #include "ArrayBoundsCheck.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/InstIterator.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Constants.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -32,6 +33,10 @@
 using namespace llvm;
 using namespace ABC;
 
+static Statistic<> SafeStructs ("safestructs",
+                                "structures in GEPs that are deemed safe");
+static Statistic<> TotalStructs ("totalstructs",
+                                "total structures used in GEPs");
 namespace {
   cl::opt<string> OmegaFilename("omegafile",
                                 cl::desc("Specify omega include filename"),
@@ -881,6 +886,41 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
   }
 }
 
+//
+// Description:
+//  Determine whether we need to consider checks on this structure
+//  type.
+//
+// Return value:
+//  true - There is no need to do static or run-time checks on this struct.
+//  false - We need to do either static or run-time checks on this struct.
+//
+// TODO:
+//  The test used in this function is extremely conservative.
+//
+static bool
+isStructTypeSafe (const StructType * ST) {
+  const StructType::element_iterator TI = ST->element_begin();
+
+  //
+  // For now, we consider any of the following types unsafe.
+  //  ArrayType
+  //  PointerType
+  //  VectorType
+  //  StructType
+  //
+  ++TotalStructs;
+  while (TI != ST->element_end()) {
+    Type * T = *TI;
+    if (isa<StructType>(T) || isa<PointerType>(T) || isa<ArrayType>(T))
+      return false;
+  }
+
+  // Keep some statistics on how many we prove safe
+  ++SafeStructs;
+  return true;
+}
+
 bool ArrayBoundsCheck::runOnModule(Module &M) {
   cbudsPass = &getAnalysis<CompleteBUDataStructures>();
   buCG = &getAnalysis<BottomUpCallGraph>();
@@ -922,8 +962,11 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     Instruction *iLocal = &*I;
 
+    //
+    // Sometimes a GetElementPtr instruction is hidden within a cast
+    // instruction.  Go fetch it out.
+    //
     if (isa<CastInst>(iLocal)) {
-      //Some times 
       if (isa<GetElementPtrInst>(iLocal->getOperand(0))) {
         iLocal = cast<Instruction>(iLocal->getOperand(0));
       }
@@ -978,8 +1021,31 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
         } else {
 #ifdef NO_STATIC_CHECK
-          // Assume structures are unsafe.
-          UnsafeGetElemPtrs.push_back(MAI);
+          //
+          // Perform a quick check to see if a struct type is safe.
+          //
+#if 0
+          if (const StructType * ST = dyn_cast<StructType>(PT->getElementType()))
+            if (!(isStructTypeSafe (ST)))
+              UnsafeGetElemPtrs.push_back(MAI);
+#else
+          //
+          // If the GEP has constant indices, we assume it is okay.
+          // TODO: This is a hack.
+          //
+          bool safe = true;
+          for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
+            if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
+              safe = false;
+              UnsafeGetElemPtrs.push_back(MAI);
+              break;
+            }
+          }
+
+          // Update the stats
+          ++TotalStructs;
+          if (safe) ++SafeStructs;
+#endif
           continue;
         }
 #endif      

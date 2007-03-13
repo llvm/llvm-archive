@@ -263,6 +263,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
     return P;
   }
 
+#if 0
   /* try slabs */
   S = src;
   D = dest;
@@ -289,6 +290,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
     PCUNLOCK();
     return P;
   }
+#endif
 
   /*
    * The node is not found or is not within bounds; fail!
@@ -336,6 +338,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
     return P;
   }
 
+#if 0
   /* try slabs */
   S = src;
   D = dest;
@@ -361,6 +364,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
     PCUNLOCK();
     return P;
   }
+#endif
 
   /*
    * The node is not found or is not within bounds; pass!

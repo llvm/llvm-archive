@@ -350,6 +350,10 @@ void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
 ///
 void GraphBuilder::handleAlloc(AllocationInst &AI, bool isHeap) {
   DSNode *N = createNode();
+#ifdef LLVA_KERNEL
+  MetaPool* MP = new MetaPool();
+  N->setMP(MP);
+#endif
   if (isHeap)
     N->setHeapNodeMarker();
   else

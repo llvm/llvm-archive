@@ -138,7 +138,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
   PCUNLOCK();
   if (t)
     return;
-  poolcheckfail ("poolcheck failure: \n", (unsigned)addr, (void*)__builtin_return_address(0));
+  poolcheckfail ("poolcheck failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
 }
 
 /* check that src and dest are same obj or slab */
@@ -162,7 +162,7 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   PCUNLOCK();
   if (S == D)
     return;
-  poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
+  poolcheckfail ("poolcheck failure: ", (unsigned)src, (void*)__builtin_return_address(0));
 }
 
 /* check that src and dest are same obj or slab */
@@ -179,7 +179,7 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (S == D)
     return;
   if (fs || fd) { /*fail if we found one but not the other*/ 
-    poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
+    poolcheckfail ("poolcheck failure: ", (unsigned)src, (void*)__builtin_return_address(0));
     return;
   }
   /* try objs */
@@ -192,7 +192,7 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (S == D)
     return;
   if (fs || fd) { /*fail if we found one but not the other*/
-    poolcheckfail ("poolcheck failure: \n", (unsigned)src, (void*)__builtin_return_address(0));
+    poolcheckfail ("poolcheck failure: ", (unsigned)src, (void*)__builtin_return_address(0));
     return;
   }
   return; /*default is to pass*/
@@ -215,14 +215,14 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
     return tag;
   }
   PCUNLOCK();
-  poolcheckfail("GetActualValue failure: \n", (unsigned) src, (void*)__builtin_return_address(0));
+  poolcheckfail("GetActualValue failure: ", (unsigned) src, (void*)__builtin_return_address(0));
   return tag;
 }
 
 
 inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
   if (result >= base + size ) {
-    poolcheckfail("Array bounds violation detected \n", (unsigned)base, (void*)__builtin_return_address(0));
+    poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
   }
 }
 
@@ -253,7 +253,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
     void* P = MP->invalidptr;
     PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
     poolcheckinfo("Returning oob pointer of ", (int)P);
@@ -281,7 +281,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
     void* P = MP->invalidptr;
     PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
     poolcheckinfo("Returning oob pointer of ", (int)P);
@@ -295,7 +295,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   /*
    * The node is not found or is not within bounds; fail!
    */
-  poolcheckfail ("boundscheck failure 1\n", (unsigned)src, (void*)__builtin_return_address(0));
+  poolcheckfail ("boundscheck failure 1", (unsigned)src, (void*)__builtin_return_address(0));
   return dest;
 }
 
@@ -329,7 +329,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
     void* P = MP->invalidptr;
     PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
     PCLOCK2();
@@ -356,7 +356,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
     void* P = MP->invalidptr;
     PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs\n", 0, (void*)__builtin_return_address(0));
+      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
     PCLOCK2();
@@ -374,7 +374,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
 
 void exactcheck(int a, int b) {
   if ((0 > a) || (a >= b)) {
-    poolcheckfail ("exact check failed\n", (a), (void*)__builtin_return_address(0));
-    poolcheckfail ("exact check failed\n", (b), (void*)__builtin_return_address(0));
+    poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
+    poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));
   }
 }

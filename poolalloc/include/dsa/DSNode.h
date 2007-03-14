@@ -33,10 +33,14 @@ class TargetData;
   public:
     std::list<CallSite> allocs;
     std::list<GlobalValue*> GVs;
-    MetaPool(CallSite& C) : MPD(0), fw(0) {
+
+    void addCallSite(CallSite& C) {
+      assert(!fw);
       allocs.push_back(C);
     }
-    MetaPool(GlobalValue* GV) : MPD(0),fw(0) {
+
+    void addGlobal(GlobalValue* GV) {
+      assert(!fw);
       GVs.push_back(GV);
     }
 
@@ -62,7 +66,7 @@ class TargetData;
 
   public:
     MetaPoolHandle(MetaPool* P) :MP(P) {}
-    //    MetaPoolHandle() : MP(0) {}
+    MetaPoolHandle() : MP(new MetaPool()) {}
     MetaPool* getPool() {
       while(MP && MP->getFW())
         MP = MP->getFW();
@@ -74,7 +78,6 @@ class TargetData;
         RP = RP->getFW();
       return RP;
     }
-    void set(MetaPool* P) { MP = P; }
   };
 #endif
 
@@ -169,7 +172,6 @@ protected:
 public:
   MetaPool* getMP() { return MP.getPool(); }
   MetaPool* getMP() const { return MP.getPool(); }
-  void setMP(MetaPool* P) { MP.set(P); }
 #endif
     public:
   /// DSNode ctor - Create a node of the specified type, inserting it into the

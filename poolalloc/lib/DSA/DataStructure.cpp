@@ -128,7 +128,7 @@ DSNodeHandle &DSScalarMap::AddGlobal(GlobalValue *GV) {
 DSNode::DSNode(const Type *T, DSGraph *G)
   : NumReferrers(0), Size(0), ParentGraph(G), Ty(Type::VoidTy), NodeType(0)
 #ifdef LLVA_KERNEL
-  , MP(0)
+  , MP()
 #endif
  {
   // Add the type entry if it is specified...
@@ -198,11 +198,7 @@ void DSNode::forwardNode(DSNode *To, unsigned Offset) {
   Size = 0;
   Ty = Type::VoidTy;
 #ifdef LLVA_KERNEL
-  MetaPool* MP = new MetaPool();
-  MP->merge(getMP());
-  MP->merge(To->getMP());
-  setMP(MP);
-  To->setMP(MP);
+  To->getMP()->merge(getMP());
 #endif
 
   // Remove this node from the parent graph's Nodes list.
@@ -265,7 +261,7 @@ void DSNode::foldNodeCompletely() {
     DestNode->Size = 1;
     DestNode->Globals.swap(Globals);
 #ifdef LLVA_KERNEL
-    DestNode->setMP(getMP());
+    DestNode->getMP()->merge(getMP());
 #endif
     
 #if JTC
@@ -866,11 +862,7 @@ void DSNode::MergeNodes(DSNodeHandle& CurNodeH, DSNodeHandle& NH) {
 #endif
   }
 #ifdef LLVA_KERNEL
-  MetaPool* MP = new MetaPool();
-  MP->merge(CurNodeH.getNode()->getMP());
-  MP->merge(NH.getNode()->getMP());
-  CurNodeH.getNode()->setMP(MP);
-  NH.getNode()->setMP(MP);
+  NH.getNode()->getMP()->merge(CurNodeH.getNode()->getMP());
 #endif  
   // Merge the type entries of the two nodes together...
   if (NH.getNode()->Ty != Type::VoidTy)
@@ -1193,11 +1185,7 @@ void ReachabilityCloner::merge(const DSNodeHandle &NH,
 
 
 #ifdef LLVA_KERNEL
-  MetaPool* MP = new MetaPool();
-  MP->merge(NH.getNode()->getMP());
-  MP->merge(SrcNH.getNode()->getMP());
-  NH.getNode()->setMP(MP);
-  SrcNH.getNode()->setMP(MP);
+  SrcNH.getNode()->getMP()->merge(NH.getNode()->getMP());
 #endif  
 
   // Next, recursively merge all outgoing links as necessary.  Note that

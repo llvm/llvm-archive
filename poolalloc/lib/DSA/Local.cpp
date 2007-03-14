@@ -350,10 +350,6 @@ void GraphBuilder::setDestTo(Value &V, const DSNodeHandle &NH) {
 ///
 void GraphBuilder::handleAlloc(AllocationInst &AI, bool isHeap) {
   DSNode *N = createNode();
-#ifdef LLVA_KERNEL
-  MetaPool* MP = new MetaPool();
-  N->setMP(MP);
-#endif
   if (isHeap)
     N->setHeapNodeMarker();
   else
@@ -1158,8 +1154,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
           DSNode* N = createNode()->setHeapNodeMarker()->setModifiedMarker();
           setDestTo(*CS.getInstruction(), N);
-          MetaPool* MP = new MetaPool(CS);
-          N->setMP(MP);
+          N->getMP()->addCallSite(CS);
           return;
         }
 
@@ -1317,10 +1312,7 @@ void GraphBuilder::mergeInGlobalInitializer(GlobalVariable *GV) {
   // Get a node handle to the global node and merge the initializer into it.
   DSNodeHandle NH = getValueDest(*GV);
   MergeConstantInitIntoNode(NH, GV->getInitializer());
-  MetaPool* MP = new MetaPool(GV);
-  if (NH.getNode()->getMP())
-    MP->merge(NH.getNode()->getMP());
-  NH.getNode()->setMP(MP);
+  NH.getNode()->getMP()->addGlobal(GV);
 }
 
 

@@ -96,7 +96,9 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
       Name += "F";
   }
   Name += "_";
-  Name += x;
+  char c[100];
+  snprintf(c, sizeof(c), "%d", x);
+  Name += c;
   Name += "_";
   ++x;
 

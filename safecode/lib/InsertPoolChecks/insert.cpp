@@ -221,7 +221,7 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
             AllocSize = ConstantInt::get(csiType,
                   (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
           } else {
-            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
+            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()->getElementType()));
           }
           Value* PH = getPD(DSN, M);
           if (PH)

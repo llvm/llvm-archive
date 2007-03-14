@@ -1217,9 +1217,7 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
     // Get the pool handle associated with this pointer.  If there is no pool
     // handle, use a NULL pointer value and let the runtime deal with it.
     Value *PH = getPoolHandle(V, F);
-#ifdef DEBUG
-std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
-#endif
+
     // FIXME: We cannot handle checks to global or stack positions right now.
     if ((!PH) || (Node->isIncomplete()) ||
                  (Node->isAllocaNode()) ||

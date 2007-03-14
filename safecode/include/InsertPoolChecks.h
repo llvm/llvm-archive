@@ -59,7 +59,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *PoolFindMP;
 
   void addObjFrees(Module& M);
-  void addMetaPools(Module& M, MetaPool* MP);
+  void addMetaPools(Module& M, MetaPool* MP, DSNode* N);
   void addPoolCheckProto(Module &M);
   void addPoolChecks(Module &M);
   void addGetElementPtrChecks(Module &M);
@@ -80,7 +80,7 @@ struct InsertPoolChecks : public ModulePass {
 #else
   Value* getPD(DSNode* N, Module& M) { 
     if (!N) return 0;
-    addMetaPools(M, N->getMP());
+    addMetaPools(M, N->getMP(), N);
     if (N->getMP())
       return N->getMP()->getMetaPoolValue();
     else

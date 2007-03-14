@@ -67,9 +67,9 @@ static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
 static Statistic<> ConstExactChecks  ("safecode", "Exactchecks with constant arguments");
-
+ 
 //Kernel support rutines
-static GlobalVariable* makeMetaPool(Module* M) {
+static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
   //Here we insert a global meta pool
   //Now create a meta pool for this value, DSN Node
   const Type * VoidPtrType = PointerType::get(Type::SByteTy);
@@ -79,18 +79,39 @@ static GlobalVariable* makeMetaPool(Module* M) {
 
   const StructType* MPT = StructType::get(MPTV);
 
+  static int x = 0;
+  std::string Name = "_metaPool_";
+  if (N) {
+    if(N->isUnknownNode())
+      Name += "U";
+    if(N->isIncomplete())
+      Name += "I";
+    if(N->isAllocaNode())
+      Name += "A";
+    if(N->isGlobalNode())
+      Name += "G";
+    if(N->isHeapNode())
+      Name += "H";
+    if(N->isNodeCompletelyFolded())
+      Name += "F";
+  }
+  Name += "_";
+  Name += x;
+  Name += "_";
+  ++x;
+
   return new GlobalVariable(
                             /*type=*/ MPT,
                             /*isConstant=*/ false,
                             /*Linkage=*/ GlobalValue::InternalLinkage,
                             /*initializer=*/ Constant::getNullValue(MPT),
-                            /*name=*/ "_metaPool_",
+                            /*name=*/ Name,
                             /*parent=*/ M );
 }
 
-void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP) {
+void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
   if (!MP || MP->getMetaPoolValue()) return;
-  MP->setMetaPoolValue(makeMetaPool(&M));  
+  MP->setMetaPoolValue(makeMetaPool(&M, N));  
   Value* MPV = MP->getMetaPoolValue();
   //added registers in front of every allocation
   for(std::list<CallSite>::iterator i = MP->allocs.begin(),

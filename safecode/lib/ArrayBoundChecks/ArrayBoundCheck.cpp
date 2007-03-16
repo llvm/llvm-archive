@@ -859,12 +859,12 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
       if (result == 1) {
         std::cerr << "proved safe \n";
         std::cerr << maI;
-        //        UnsafeGetElemPtrs.push_back(maI);        
+        //        UnsafeGetElemPtrs.insert(maI);        
         //Omega proved SAFE 
       } else {
         std::cerr << "cannot prove safe " << countA;
         std::cerr << maI;
-        UnsafeGetElemPtrs.push_back(maI);
+        UnsafeGetElemPtrs.insert(maI);
       }
     }
   } else if (pid < 0) {
@@ -982,7 +982,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
             continue;
           }
 #ifdef NO_STATIC_CHECK
-          UnsafeGetElemPtrs.push_back(MAI);
+          UnsafeGetElemPtrs.insert(MAI);
           continue;
 #endif      
           mI++;
@@ -1027,7 +1027,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
 #if 0
           if (const StructType * ST = dyn_cast<StructType>(PT->getElementType()))
             if (!(isStructTypeSafe (ST)))
-              UnsafeGetElemPtrs.push_back(MAI);
+              UnsafeGetElemPtrs.insert(MAI);
 #else
           //
           // If the GEP has constant indices, we assume it is okay.
@@ -1037,7 +1037,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
             if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
               safe = false;
-              UnsafeGetElemPtrs.push_back(MAI);
+              UnsafeGetElemPtrs.insert(MAI);
               break;
             }
           }
@@ -1061,7 +1061,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
         DEBUG(std::cerr << "Adding constraints for " << funcName << "\n");
         reqArgs = false;
 #ifdef NO_STATIC_CHECK
-        UnsafeGetElemPtrs.push_back(CI);
+        UnsafeCalls.insert(CI);
         continue;
 #endif              
         if (funcName == "read") {

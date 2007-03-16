@@ -25,6 +25,10 @@ cl::opt<bool> EnableNullChecks  ("enable-nullchecks", cl::Hidden,
                                 cl::desc("Enable Checks on NULL Pools"));
 
 
+cl::opt<bool> DisableRegisterGlobals ("disable-regglobals", cl::Hidden,
+                                cl::init(false),
+                                cl::desc("Do not register globals"));
+
 cl::opt<bool> DisableLSChecks  ("disable-lschecks", cl::Hidden,
                                 cl::init(false),
                                 cl::desc("Disable Load/Store Checks"));
@@ -183,7 +187,8 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   addPoolCheckProto(M);
 
   //register global arrays and collapsed nodes with global pools
-  registerGlobalArraysWithGlobalPools(M);
+  if (!DisableRegisterGlobals)
+    registerGlobalArraysWithGlobalPools(M);
 
   //Replace old poolcheck with the new one 
   addPoolChecks(M);
@@ -342,8 +347,12 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 }
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
-      if (!I->isExternal()) TransformFunction(*I);
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
+    std::string Name = I->getName();
+    if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
+      continue;
+    if (!I->isExternal()) TransformFunction(*I);
+  }
   if (!DisableLSChecks)  addLoadStoreChecks(M);
   //  if (!DisableGEPChecks) addGetElementPtrChecks(M);
 }
@@ -352,8 +361,55 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
   if (CI && (!DisableIntrinsicChecks)) {
     Value *Fop = CI->getOperand(0);
     Function *F = CI->getParent()->getParent();
+    std::string Name = F->getName();
+    if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
+      return;
 #ifdef LLVA_KERNEL    
-    if (Fop->getName() == "llva_memcpy") {
+    if (Fop->getName() == "llvm.memcpy.i32") {
+      //
+      // Get the pool handle and record the instruction before which we will
+      // insert our check.
+      //
+      Value *PH = getPoolHandle(CI->getOperand(1), F); 
+      Instruction *InsertPt = CI;
+      if (!PH) {
+        ++NullChecks;
+        ++MissedNullChecks;
+        
+        // Don't bother to insert the NULL check unless the user asked
+        if (!EnableNullChecks)
+          return;
+        PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+      }
+
+      //
+      // Create a call to an accurate bounds check.
+      //
+      CastInst *CastCIUint = 
+        new CastInst(CI->getOperand(1), Type::UIntTy, "node.lscasted", InsertPt);
+      CastInst *CastCIOp3 = 
+        new CastInst(CI->getOperand(3), Type::UIntTy, "node.lscasted", InsertPt);
+      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
+                                                CastCIOp3, "memcpyadd",InsertPt);
+      
+      // Create instructions to cast the checked pointer and the checked pool
+      // into sbyte pointers.
+      CastInst *CastSourcePointer = 
+        new CastInst(CI->getOperand(1), 
+                     PointerType::get(Type::SByteTy), "memcpy.1.casted", InsertPt);
+      CastInst *CastCI = 
+        new CastInst(Bop, 
+                     PointerType::get(Type::SByteTy), "mempcy.2.casted", InsertPt);
+      CastInst *CastPHI = 
+        new CastInst(PH, 
+                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPt);
+      
+      // Create the call to poolcheck
+      std::vector<Value *> args(1,CastPHI);
+      args.push_back(CastSourcePointer);
+      args.push_back(CastCI);
+      new CallInst(PoolCheckArray,args,"", InsertPt);
+    } else if (Fop->getName() == "llva_memcpy") {
       Value *PH = getPoolHandle(CI->getOperand(1), F); 
       Instruction *InsertPt = CI;
       if (!PH) {
@@ -385,10 +441,18 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
                      PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPt);
       
       // Create the call to poolcheck
+      DSGraph & TDG = TDPass->getDSGraph(*(CI->getParent()->getParent()));
+      DSNode * Node = TDG.getNodeForValue(CI).getNode();
       std::vector<Value *> args(1,CastPHI);
       args.push_back(CastSourcePointer);
       args.push_back(CastCI);
-      new CallInst(PoolCheckArray,args,"", InsertPt);
+      if ((Node == 0) || (Node->isAllocaNode()) || (Node->isIncomplete()) || (Node->isUnknownNode()))
+        CI = new CallInst(UIBoundsCheck, args,"uibc",InsertPt);
+      else
+        CI = new CallInst(BoundsCheck, args,"bc",InsertPt);
+#if 0
+      CastBack->setOperand(0, CI);
+#endif
 #if 0
     } else if (Fop->getName() == "memset") {
       Value *PH = getPoolHandle(CI->getOperand(1), F); 
@@ -530,7 +594,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
           //
           if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
             int index = Index->getSExtValue();
-            assert ((index < 0) && "exactcheck will fail at runtime");
+            assert ((index >= 0) && "exactcheck will fail at runtime");
             if (index < AT->getNumElements())
               return true;
             assert (0 && "exactcheck out of range");
@@ -574,8 +638,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
   // Get the set of unsafe GEP instructions from the array bounds check pass
   // If this instruction is not within that set, then the result of the GEP
   // instruction has been proven safe, and there is no need to insert a check.
-  std::vector<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
-  std::vector<Instruction *>::const_iterator iCurrent = std::find(UnsafeGetElemPtrs.begin(), UnsafeGetElemPtrs.end(),MAI);
+  std::set<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
+  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.find(MAI);
   if (iCurrent == UnsafeGetElemPtrs.end()) {
 #if 0
     std::cerr << "statically proved safe : Not inserting checks " << *MAI << "\n";
@@ -772,6 +836,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
       }
     }
 
+    std::string Name = MAI->getParent()->getParent()->getName();
+    if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
+      return;
 #if 0
     //No checks for incomplete nodes 
     if (!EnableIncompleteChecks) {
@@ -787,7 +854,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     //
     // 
     if (!PH) {
+#if 0
       std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
+#endif
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
       // Don't bother to insert the NULL check unless the user asked
@@ -1003,11 +1072,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 #if 0
           if (!PH)
             PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
-#else
-          if (!PH) {
-            std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
-            return;
-          }
 #endif
           //deal with it at runtime	      assert(PH && " PH is null \n");
 
@@ -1015,11 +1079,15 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // Do not add a run-time check if this is an incomplete or unknown
           // node.
           //
+          std::string Name = MAI->getParent()->getParent()->getName();
+          if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
+            return;
+
           DSGraph & TDG = TDPass->getDSGraph(*F);
           DSNode * Node = TDG.getNodeForValue(MAI).getNode();
           assert (Node && "boundscheck: DSNode is NULL!");
-          if ((!PH) || (Node->isAllocaNode()) ||
-                       (!((Node->isHeapNode()) || (Node->isGlobalNode())))) {
+          if ((!PH) || (!((Node->isHeapNode()) || (Node->isGlobalNode())))) {
+            std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
             ++MissedIncompleteChecks;
             if (!PH) ++MissedNullChecks;
             if (Node->isAllocaNode()) ++MissedStackChecks;
@@ -1045,10 +1113,10 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 		
             std::vector<Value *> args = make_vector(PHVptr, RefferentVptr, checkVptr,0);
             CallInst * CI;
-            if ((Node->isIncomplete()) || (Node->isUnknownNode()))
-              CI = new CallInst(UIBoundsCheck, args,"",CastBack);
+            if ((Node->isAllocaNode()) || (Node->isIncomplete()) || (Node->isUnknownNode()))
+              CI = new CallInst(UIBoundsCheck, args,"uibc",CastBack);
             else
-              CI = new CallInst(BoundsCheck, args,"",CastBack);
+              CI = new CallInst(BoundsCheck, args,"bc",CastBack);
             CastBack->setOperand(0, CI);
           }
         }
@@ -1057,7 +1125,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
       std::cerr << "GEP does not have pointer type arg" << *MAI << std::endl;
       abort();
     }
-
   }
 }
 
@@ -1440,6 +1507,7 @@ void InsertPoolChecks::addLoadStoreChecks(Module &M){
 
 #endif
 
+#if 0
 void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
   std::vector<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
   std::vector<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.begin(), iEnd = UnsafeGetElemPtrs.end();
@@ -1809,6 +1877,7 @@ void InsertPoolChecks::addGetElementPtrChecks(Module &M) {
 #endif    
   }
 }
+#endif
 
 void InsertPoolChecks::addPoolCheckProto(Module &M) {
   const Type * VoidPtrType = PointerType::get(Type::SByteTy);

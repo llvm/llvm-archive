@@ -7,6 +7,8 @@
 #include "llvm/Target/TargetData.h"
 #include "safecode/Config/config.h"
 
+#include <set>
+
 namespace llvm {
 
 
@@ -52,7 +54,7 @@ struct ConvertUnsafeAllocas : public ModulePass {
   DSNode * getDSNode(const Value *I, Function *F);
   DSNode * getTDDSNode(const Value *I, Function *F);
 
-  std::vector<Instruction *>  & getUnsafeGetElementPtrsFromABC() {
+  std::set<Instruction *>  & getUnsafeGetElementPtrsFromABC() {
     assert(abcPass != 0 && "First run the array bounds pass correctly");
     return abcPass->UnsafeGetElemPtrs;
   }  
@@ -70,6 +72,7 @@ struct ConvertUnsafeAllocas : public ModulePass {
   
 #ifdef LLVA_KERNEL
 Function *kmalloc;
+Function *StackPromote;
 #endif
     std::list<DSNode *> unsafeAllocaNodes;
     std::set<DSNode *> reachableAllocaNodes; 

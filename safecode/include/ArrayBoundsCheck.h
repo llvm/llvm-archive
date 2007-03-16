@@ -8,6 +8,8 @@
 #include "AffineExpressions.h"
 #include "BottomUpCallGraph.h"
 
+#include<set>
+
 namespace llvm {
 
 ModulePass *createArrayBoundsCheckPass();
@@ -19,7 +21,8 @@ struct ArrayBoundsCheck : public ModulePass {
   public :
     const char *getPassName() const { return "Array Bounds Check"; }
     virtual bool runOnModule(Module &M);
-    std::vector<Instruction*> UnsafeGetElemPtrs;
+    std::set<Instruction*> UnsafeGetElemPtrs;
+    std::set<Instruction*> UnsafeCalls;
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
       AU.addRequired<CompleteBUDataStructures>();

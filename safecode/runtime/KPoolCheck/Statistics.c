@@ -26,6 +26,7 @@ stackpromote()
 int
 getstackpromotes()
 {
+  poolcheckinfo ("LLVA: getstackpromotes", stack_promotes);
   return stack_promotes;
 }
 

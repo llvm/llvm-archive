@@ -49,8 +49,6 @@ enable_irqs (int is_set)
 #define PCLOCK2() pc_i = disable_irqs();
 #define PCUNLOCK() enable_irqs(pc_i);
 
-void __attribute__((weak)) poolcheckglobals() {}
-
 /*
  * Function: pchk_init()
  *
@@ -245,10 +243,13 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   PCUNLOCK();
-  if (S == D)
+  if ((fs) && (S == D))
     return dest;
   else if (fs) {
-    if (!use_oob) return dest;
+    if (!use_oob) {
+      poolcheckfail ("boundscheck failure 1", (unsigned)src, (void*)__builtin_return_address(0));
+      return dest;
+    }
     PCLOCK2();
     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
     ++MP->invalidptr;
@@ -297,7 +298,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   /*
    * The node is not found or is not within bounds; fail!
    */
-  poolcheckfail ("boundscheck failure 1", (unsigned)src, (void*)__builtin_return_address(0));
+  poolcheckfail ("boundscheck failure 2", (unsigned)src, (void*)__builtin_return_address(0));
   return dest;
 }
 
@@ -321,10 +322,14 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   PCUNLOCK();
-  if (S == D)
+  if ((fs) && (S == D))
     return dest;
   else if (fs) {
-    if (!use_oob) return dest;
+    if (!use_oob) {
+      poolcheckfail ("uiboundscheck failure 1", (unsigned)src, (void*)__builtin_return_address(0));
+      poolcheckfail ("uiboundscheck failure 2", (unsigned)dest, (void*)__builtin_return_address(0));
+      return dest;
+    }
     PCLOCK2();
      if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;

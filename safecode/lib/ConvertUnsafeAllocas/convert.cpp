@@ -51,7 +51,11 @@ bool ConvertUnsafeAllocas::runOnModule(Module &M) {
   std::vector<const Type *> Arg(1, Type::UIntTy);
   Arg.push_back(Type::IntTy);
   FunctionType *kmallocTy = FunctionType::get(PointerType::get(Type::SByteTy), Arg, false);
-  kmalloc = M.getOrInsertFunction("kmalloc", kmallocTy);
+  kmalloc = M.getOrInsertFunction("heapkmalloc", kmallocTy);
+
+  std::vector<const Type *> SPArg;
+  FunctionType *StackPromoteTy = FunctionType::get(PointerType::get(Type::SByteTy), SPArg, false);
+  StackPromote = M.getOrInsertFunction("stackpromote", StackPromoteTy);
 
   //
   // If we fail to get the kmalloc function, generate an error.
@@ -61,9 +65,11 @@ bool ConvertUnsafeAllocas::runOnModule(Module &M) {
 
   unsafeAllocaNodes.clear();
   getUnsafeAllocsFromABC();
-  //  TransformCSSAllocasToMallocs(cssPass->AllocaNodes);
-  //  TransformAllocasToMallocs(unsafeAllocaNodes);
-  //  TransformCollapsedAllocas(M);
+  TransformCSSAllocasToMallocs(cssPass->AllocaNodes);
+#ifndef LLVA_KERNEL
+  TransformAllocasToMallocs(unsafeAllocaNodes);
+  TransformCollapsedAllocas(M);
+#endif
   return true;
 }
 
@@ -242,6 +248,16 @@ void ConvertUnsafeAllocas::TransformCSSAllocasToMallocs(std::vector<DSNode *> & 
         if (AllocaInst *AI = dyn_cast<AllocaInst>(SMI->first)) {
           // Create a new malloc instruction
           if (AI->getParent() != 0) { //This check for both stack and array
+#ifdef LLVA_KERNEL
+          //
+          // For now, just insert a call to the runtime to say that we would
+          // have promoted it.
+          //
+          CallInst *SPCI = new CallInst (StackPromote, "", AI);
+          ++SMI;
+          continue;
+#endif
+
 #ifndef LLVA_KERNEL 	    
             MI = new MallocInst(AI->getType()->getElementType(),
                                 AI->getArraySize(), AI->getName(), AI);
@@ -345,8 +361,8 @@ void ConvertUnsafeAllocas::TransformCollapsedAllocas(Module &M) {
 }
 
 void ConvertUnsafeAllocas::getUnsafeAllocsFromABC() {
-  std::vector<Instruction *> & UnsafeGetElemPtrs = abcPass->UnsafeGetElemPtrs;
-  std::vector<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.begin(), iEnd = UnsafeGetElemPtrs.end();
+  std::set<Instruction *> & UnsafeGetElemPtrs = abcPass->UnsafeGetElemPtrs;
+  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.begin(), iEnd = UnsafeGetElemPtrs.end();
   for (; iCurrent != iEnd; ++iCurrent) {
     if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*iCurrent)) {
       Value *pointerOperand = GEP->getPointerOperand();

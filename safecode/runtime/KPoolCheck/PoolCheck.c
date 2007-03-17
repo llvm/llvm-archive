@@ -49,8 +49,6 @@ enable_irqs (int is_set)
 #define PCLOCK2() pc_i = disable_irqs();
 #define PCUNLOCK() enable_irqs(pc_i);
 
-void __attribute__((weak)) poolcheckglobals() {}
-
 /*
  * Function: pchk_init()
  *

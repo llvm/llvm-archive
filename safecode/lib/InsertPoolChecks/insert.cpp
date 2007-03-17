@@ -573,7 +573,8 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 #ifdef LLVA_KERNEL    
     if (Fop->getName() == "llvm.memcpy.i32") {
       //
-      // Create a call to an accurate bounds check.
+      // Create a call to an accurate bounds check that will check that the
+      // memory to which memcpy is copying data is valid.
       //
       Instruction *InsertPt = CI;
       CastInst *CastCIUint = 
@@ -583,17 +584,11 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
                                                 CastCIOp3, "memcpyadd",InsertPt);
 
-      // Create instructions to cast the checked pointer and the checked pool
-      // into sbyte pointers.
-      CastInst *CastSourcePointer = 
-        new CastInst(CI->getOperand(1), 
-                     PointerType::get(Type::SByteTy), "memcpy.1.casted", InsertPt);
-      CastInst *CastCI = 
-        new CastInst(Bop, 
-                     PointerType::get(Type::SByteTy), "mempcy.2.casted", InsertPt);
+      Instruction *Finalp = BinaryOperator::create(Instruction::Sub, Bop,
+                                                ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
 
       // Create the call to do an accurate bounds check
-      insertBoundsCheck (CI, CI->getOperand(1), Bop, InsertPt);
+      insertBoundsCheck (CI, CI->getOperand(1), Finalp, InsertPt);
     } else if (Fop->getName() == "llva_memcpy") {
       //
       // Create a call to an accurate bounds check.
@@ -606,17 +601,32 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
                                                 CastCIOp3, "memcpyadd",InsertPt);
 
-      // Create instructions to cast the checked pointer and the checked pool
-      // into sbyte pointers.
-      CastInst *CastSourcePointer = 
-        new CastInst(CI->getOperand(1), 
-                     PointerType::get(Type::SByteTy), "memcpy.1.casted", InsertPt);
-      CastInst *CastCI = 
-        new CastInst(Bop, 
-                     PointerType::get(Type::SByteTy), "mempcy.2.casted", InsertPt);
-
       // Create the call to do an accurate bounds check
       insertBoundsCheck (CI, CI->getOperand(1), Bop, InsertPt);
+    } else if (Fop->getName() == "memcmp") {
+      //
+      // Create a call to an accurate bounds check for each string parameter.
+      //
+      Instruction *InsertPt = CI;
+      CastInst *CastPointer1 = 
+        new CastInst(CI->getOperand(1), Type::UIntTy, "memcmpcast1", InsertPt);
+      CastInst *CastPointer2 = 
+        new CastInst(CI->getOperand(2), Type::UIntTy, "memcmpcast2", InsertPt);
+      CastInst *CastCIOp3 = 
+        new CastInst(CI->getOperand(3), Type::UIntTy, "memcmp.len", InsertPt);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastCIOp3, "memcpyadd",InsertPt);
+      Instruction *Bop2 = BinaryOperator::create(Instruction::Add, CastPointer2,
+                                                 CastCIOp3, "memcpyadd",InsertPt);
+      Instruction *Finalp1 = BinaryOperator::create(Instruction::Sub, Bop1,
+                                                 ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
+      Instruction *Finalp2 = BinaryOperator::create(Instruction::Sub, Bop2,
+                                                 ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
+
+      // Create the call to do an accurate bounds check
+      insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+      insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
 #if 0
     } else if (Fop->getName() == "memset") {
       Value *PH = getPoolHandle(CI->getOperand(1), F); 

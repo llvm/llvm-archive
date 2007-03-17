@@ -73,6 +73,7 @@ struct InsertPoolChecks : public ModulePass {
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
   void registerGlobalArraysWithGlobalPools(Module &M);
   bool insertExactCheck (GetElementPtrInst * GEP);
+  Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
 
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);

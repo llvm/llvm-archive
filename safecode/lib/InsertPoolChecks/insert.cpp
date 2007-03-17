@@ -414,6 +414,16 @@ bool InsertPoolChecks::runOnModule(Module &M) {
 }
 
 static void AddCallToRegFunc(Function* F, GlobalVariable* GV, Function* PR, Value* PH, Value* AllocSize) {
+  //
+  // First, make sure that we're not registering an external zero-sized global.
+  // These are caused by the following C construct and should never be checked:
+  //  extern variable[];
+  //
+  ConstantInt * C;
+  if (GV->isExternal())
+    if ((C = dyn_cast<ConstantInt>(AllocSize)) && (!(C->getZExtValue())))
+      return;
+
   const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
 
   assert(PH && "No PoolHandle for Global!");
@@ -557,8 +567,10 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
+#if 1
     std::string Name = I->getName();
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
+#endif
       continue;
     if (!I->isExternal()) TransformFunction(*I);
   }
@@ -870,9 +882,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
       }
     }
 
-    std::string Name = MAI->getParent()->getParent()->getName();
-    if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
-      return;
 #if 0
     //No checks for incomplete nodes 
     if (!EnableIncompleteChecks) {
@@ -1113,10 +1122,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // Do not add a run-time check if this is an incomplete or unknown
           // node.
           //
-          std::string Name = MAI->getParent()->getParent()->getName();
-          if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
-            return;
-
           DSGraph & TDG = TDPass->getDSGraph(*F);
           DSNode * Node = TDG.getNodeForValue(MAI).getNode();
           assert (Node && "boundscheck: DSNode is NULL!");

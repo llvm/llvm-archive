@@ -5,7 +5,7 @@ struct tree_node {
   Tree* left;
   Tree* right;
   char* key;
-  unsigned len;
+  char* end;
   void* tag;
 };
 
@@ -39,13 +39,10 @@ static inline void tfree(Tree* t) {
 }
 
 
-static int key_lt(char* key, Tree* t) {
-  return (key < t->key);
-}
+#define key_lt(_key, _t) (((char*)_key < (char*)_t->key))
 
-static int key_gt(char* key, Tree* t) {
-  return (key >= t->key + t->len);
-}
+#define key_gt(_key, _t) (((char*)_key > (char*)_t->end))
+
 
 static inline Tree* rotate_right(Tree* p) {
   Tree* x = p->left;
@@ -138,7 +135,7 @@ static inline Tree* insert(Tree* t, char* key, unsigned len, void* tag) {
   if (t && !key_lt(key, t) && !key_gt(key, t)) return t; /* already in */
   n = tmalloc();
   n->key = key;
-  n->len = len;
+  n->end = key + (len - 1);
   n->tag = tag;
   n->right = n->left = 0;
   if (t) {
@@ -214,15 +211,20 @@ void adl_splay_delete_tag(void** tree, void* tag) {
 int  adl_splay_find(void** tree, void* key) {
   Tree* t = splay(*(Tree**)tree, (char*)key);
   *(Tree**)tree = t;
-  return (t && !key_lt((char*)key, t) && !key_gt((char*)key, t));
+  return (t && 
+          !key_lt(key, t) && 
+          !key_gt(key, t));
 }
 
 int adl_splay_retrieve(void** tree, void** key, unsigned* len, void** tag) {
-  Tree* t = splay(*(Tree**)tree, (char*)*key);
+  void* k = *key;
+  Tree* t = splay(*(Tree**)tree, (char*)k);
   *(Tree**)tree = t;
-  if (t && !key_lt((char*)*key, t) && !key_gt((char*)*key, t)) {
+  if (t && 
+      !key_lt(k, t) && 
+      !key_gt(k, t)) {
     *key = t->key;
-    if (len) *len = t->len;
+    if (len) *len = (t->end - t->key) + 1;
     if (tag) *tag = t->tag;
     return 1;
   }

@@ -27,6 +27,12 @@ typedef struct MetaPoolTy {
   /* Next invalid Ptr for rewriting */
   unsigned char * invalidptr;
 
+  /*cache space */
+  void* cache0;
+  void* cache1;
+  void* cache2;
+  void* cache3;
+
 } MetaPoolTy;
 
 #ifdef __cpluscplus

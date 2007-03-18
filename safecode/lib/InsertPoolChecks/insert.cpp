@@ -79,7 +79,7 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
   //Now create a meta pool for this value, DSN Node
   const Type * VoidPtrType = PointerType::get(Type::SByteTy);
   std::vector<const Type*> MPTV;
-  for (int x = 0; x < 4; ++x)
+  for (int x = 0; x < 8; ++x)
     MPTV.push_back(VoidPtrType);
 
   const StructType* MPT = StructType::get(MPTV);

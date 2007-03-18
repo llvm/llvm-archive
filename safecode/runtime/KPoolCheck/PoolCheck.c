@@ -49,6 +49,67 @@ enable_irqs (int is_set)
 #define PCLOCK2() pc_i = disable_irqs();
 #define PCUNLOCK() enable_irqs(pc_i);
 
+#define maskaddr(_a) ((void*) ((unsigned)_a & ~(4096 - 1)))
+
+static int isInCache(MetaPoolTy*  MP, void* addr) {
+  addr = maskaddr(addr);
+  if (!addr) return 0;
+  if (MP->cache0 == addr)
+    return 1;
+  if (MP->cache1 == addr)
+    return 2;
+  if (MP->cache2 == addr)
+    return 3;
+  if (MP->cache3 == addr)
+    return 4;
+  return 0;
+}
+
+static void mtfCache(MetaPoolTy* MP, int ent) {
+  void* z = MP->cache0;
+  switch (ent) {
+  case 2:
+    MP->cache0 = MP->cache1;
+    MP->cache1 = z;
+    break;
+  case 3:
+    MP->cache0 = MP->cache1;
+    MP->cache1 = MP->cache2;
+    MP->cache2 = z;
+    break;
+  case 4:
+    MP->cache0 = MP->cache1;
+    MP->cache1 = MP->cache2;
+    MP->cache2 = MP->cache3;
+    MP->cache3 = z;
+    break;
+  default:
+    break;
+  }
+  return;
+}
+
+static int insertCache(MetaPoolTy* MP, void* addr) {
+  addr = maskaddr(addr);
+  if (!addr) return;
+  if (!MP->cache0) {
+    MP->cache0 = addr;
+    return 1;
+  }
+  else if (!MP->cache1) {
+    MP->cache1 = addr;
+    return 2;
+  }
+  else if (!MP->cache2) {
+    MP->cache2 = addr;
+    return 3;
+  }
+  else {
+    MP->cache3 = addr;
+    return 4;
+  }
+}
+
 /*
  * Function: pchk_init()
  *
@@ -240,12 +301,11 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
   /* try objs */
   void* S = src;
-  void* D = dest;
+  unsigned len = 0;
   PCLOCK();
-  int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
-  if ((fs) && (S == D))
+  if ((fs) && S <= dest && ((char*)S + len) > (char*)dest )
     return dest;
   else if (fs) {
     if (!use_oob) {
@@ -288,31 +348,37 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+  /* try fail cache */
+  PCLOCK();
+  int i = isInCache(MP, src);
+  if (i) {
+    mtfCache(MP, i);
+    PCUNLOCK();
+    return dest;
+  }
   /* try objs */
   void* S = src;
-  void* D = dest;
-  PCLOCK();
-  int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  adl_splay_retrieve(&MP->Objs, &D, 0, 0);
-  PCUNLOCK();
-  if ((fs) && (S == D))
+  unsigned len = 0;
+  int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  if ((fs) && S <= dest && ((char*)S + len) > (char*)dest ) {
+    PCUNLOCK();
     return dest;
+  }
   else if (fs) {
     if (!use_oob) {
+      PCUNLOCK();
       poolcheckfail ("uiboundscheck failure 1", (unsigned)src, (void*)__builtin_return_address(0));
       poolcheckfail ("uiboundscheck failure 2", (unsigned)dest, (void*)__builtin_return_address(0));
       return dest;
     }
-    PCLOCK2();
      if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
     ++MP->invalidptr;
     void* P = MP->invalidptr;
-    PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
+      PCUNLOCK();
       poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    PCLOCK2();
     adl_splay_insert(&MP->OOB, P, 1, dest);
     PCUNLOCK();
     return P;
@@ -321,6 +387,9 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   /*
    * The node is not found or is not within bounds; pass!
    */
+  int nn = insertCache(MP, src);
+  mtfCache(MP, nn);
+  PCUNLOCK();
   return dest;
 }
 

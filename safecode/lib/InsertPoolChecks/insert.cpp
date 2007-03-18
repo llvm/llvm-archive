@@ -70,6 +70,7 @@ static Statistic<> MissedStackChecks  ("safecode", "Missed stack checks");
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
+static Statistic<> ExactChecks        ("safecode", "Exactchecks inserted");
 static Statistic<> ConstExactChecks  ("safecode", "Exactchecks with constant arguments");
  
 //Kernel support rutines
@@ -239,6 +240,111 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
 }
 
 //
+// Function: addExactCheck2()
+//
+// Description:
+//  Utility routine that inserts a call to exactcheck2().
+//
+// Inputs:
+//  GEP    - The GEP for which the check will be done.
+//  Bounds - An LLVM Value representing the bounds of the check.
+//
+void
+InsertPoolChecks::addExactCheck2 (GetElementPtrInst * GEP,
+                                  Value * Bounds) {
+  // The LLVM type for a void *
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+
+  //
+  // Determine the insertion point.
+  //
+  Instruction * InsertPt = GEP->getNext();
+
+  //
+  // Cast the operands to the correct type.
+  //
+  Value * BasePointer = GEP->getPointerOperand();
+  if (BasePointer->getType() != VoidPtrType)
+    BasePointer = new CastInst(GEP->getPointerOperand(), VoidPtrType,
+                              GEP->getPointerOperand()->getName()+".ec2.casted",
+                              InsertPt);
+
+  Value * ResultPointer = GEP;
+  if (ResultPointer->getType() != VoidPtrType)
+    ResultPointer = new CastInst(GEP, VoidPtrType,
+                                 GEP->getName()+".ec2.casted",
+                                 InsertPt);
+
+  Value * CastBounds = Bounds;
+  if (Bounds->getType() != Type::UIntTy)
+    CastBounds = new CastInst(Bounds, Type::UIntTy,
+                              Bounds->getName()+".ec.casted", InsertPt);
+
+  std::vector<Value *> args(1, BasePointer);
+  args.push_back(ResultPointer);
+  args.push_back(CastBounds);
+  new CallInst(ExactCheck2, args, "", InsertPt);
+
+  // Update statistics
+  ++ExactChecks;
+  return;
+}
+
+//
+// Function: addExactCheck()
+//
+// Description:
+//  Utility routine that inserts a call to exactcheck().  This function can
+//  perform some optimization be determining if the arguments are constant.
+//  If they are, we can forego inserting the call.
+//
+// Inputs:
+//  GEP - The GEP for which the check will be done.
+//  Index - An LLVM Value representing the index of the access.
+//  Bounds - An LLVM Value representing the bounds of the check.
+//
+void
+InsertPoolChecks::addExactCheck (Instruction * GEP,
+                                 Value * Index, Value * Bounds) {
+  //
+  // First, determine whether we need to perform a check at all.
+  //
+  ConstantInt * CIndex  = dyn_cast<ConstantInt>(Index);
+  ConstantInt * CBounds = dyn_cast<ConstantInt>(Bounds);
+  if (CIndex && CBounds) {
+    int index  = CIndex->getSExtValue();
+    int bounds = CBounds->getSExtValue();
+    assert ((index >= 0) && "exactcheck: const negative index");
+    assert ((index < bounds) && "exactcheck: const out of range");
+
+    // Update stats and return
+    ++ConstExactChecks;
+    return;
+  }
+
+  //
+  // Second, cast the operands to the correct type.
+  //
+  Value * CastIndex = Index;
+  if (Index->getType() != Type::IntTy)
+    CastIndex = new CastInst(Index, Type::IntTy,
+                             Index->getName()+".ec.casted", GEP);
+
+  Value * CastBounds = Bounds;
+  if (Bounds->getType() != Type::IntTy)
+    CastBounds = new CastInst(Bounds, Type::IntTy,
+                              Bounds->getName()+".ec.casted", GEP);
+
+  std::vector<Value *> args(1, CastIndex);
+  args.push_back(CastBounds);
+  new CallInst(ExactCheck, args, "", GEP);
+
+  // Update statistics
+  ++ExactChecks;
+  return;
+}
+
+//
 // Function: insertExactCheck()
 //
 // Description:
@@ -267,13 +373,6 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   assert (Node && "boundscheck: DSNode is NULL!");
 
   //
-  // If this node is incomplete or unknown, then do not use an exactcheck()
-  // for it.
-  //
-  if (Node->isIncomplete() || Node->isUnknownNode())
-    return false;
-
-  //
   // Sometimes the pointer operand to a GEP is a cast; get the pointer that is
   // being casted.
   //
@@ -283,6 +382,11 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   }
 
   //
+  // Make sure the pointer operand really is a pointer.
+  if (!isa<PointerType>(PointerOperand->getType()))
+    return false;
+
+  //
   // Attempt to use a call to exactcheck() to check this value if it is a
   // global array with a non-zero size.  We do not check zero length arrays
   // because in C they are often used to declare an external array of unknown
@@ -290,6 +394,13 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   //        extern struct foo the_array[];
   //
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+    //
+    // If this node is incomplete or unknown, then do not use an exactcheck()
+    // for it.
+    //
+    if (Node->isIncomplete() || Node->isUnknownNode())
+      return false;
+
     const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
     if (AT && (AT->getNumElements())) {
       // we need to insert an actual check
@@ -299,60 +410,19 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       if (GEP->getNumOperands() == 2) {
         Value *secOp = GEP->getOperand(1);
 
-#ifdef LLVA_KERNEL
-        //
-        // Determine whether the exactcheck() will have constant integer
-        // arguments.  If so, then we can evaluate them statically and avoid
-        // inserting the run-time check.
-        //
-        if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
-          int index = Index->getSExtValue();
-          assert ((index < 0) && "exactcheck will fail at runtime");
-          if (index < AT->getNumElements())
-            return true;
-          assert (0 && "exactcheck out of range");
-        }
-#endif
-        if (secOp->getType() != Type::IntTy) {
-          secOp = new CastInst(secOp, Type::IntTy,
-                               secOp->getName()+".ec3.casted", Casted);
-        }
-
-        std::vector<Value *> args(1,secOp);
         const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-        args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-        new CallInst(ExactCheck,args,"", Casted);
-        ++BoundChecks;
-        //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
+        ConstantInt * Bounds = ConstantInt::get(csiType,AT->getNumElements());
+        addExactCheck (GEP, secOp, Bounds);
         return true;
       } else if (GEP->getNumOperands() == 3) {
         if (ConstantInt *COP = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
           //FIXME assuming that the first array index is 0
           assert((COP->getZExtValue() == 0) && "non zero array index\n");
+
           Value * secOp = GEP->getOperand(2);
-#ifdef LLVA_KERNEL
-          //
-          // Determine whether the exactcheck() will have constant integer
-          // arguments.  If so, then we can evaluate them statically and avoid
-          // inserting the run-time check.
-          //
-          if (ConstantInt * Index = dyn_cast<ConstantInt>(secOp)) {
-            int index = Index->getSExtValue();
-            assert ((index >= 0) && "exactcheck will fail at runtime");
-            if (index < AT->getNumElements())
-              return true;
-            assert (0 && "exactcheck out of range");
-          }
-#endif
-          if (secOp->getType() != Type::IntTy) {
-            secOp = new CastInst(secOp, Type::IntTy,
-                                 secOp->getName()+".ec4.casted", Casted);
-          }
-          std::vector<Value *> args(1,secOp);
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-          args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
-          new CallInst(ExactCheck,args,"", Casted->getNext());
-          ++BoundChecks;
+          ConstantInt * Bounds = ConstantInt::get(csiType,AT->getNumElements());
+          addExactCheck (GEP, secOp, Bounds);
           return true;
         } else {
           //Handle non constant index two dimensional arrays later
@@ -371,6 +441,57 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       DEBUG(std::cerr << " Global variable ok \n");
     }
   }
+
+  //
+  // If the pointer was generated by a dominating alloca instruction, we can
+  // do an exactcheck on it, too.
+  //
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(GEP->getPointerOperand())) {
+    const Type * AllocaType = AI->getAllocatedType();
+    Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
+
+    if (AI->isArrayAllocation())
+      AllocSize = BinaryOperator::create(Instruction::Mul,
+                                         AllocSize,
+                                         AI->getOperand(0), "sizetmp", GEP);
+
+    addExactCheck2 (GEP, AllocSize);
+    return true;
+  }
+
+  //
+  // If the pointer is to a structure, we may be able to perform a simple
+  // exactcheck on it, too, unless the array is at the end of the structure.
+  // Then, we assume it's a variable length array and must be full checked.
+  //
+#if 0
+  if (const PointerType * PT = dyn_cast<PointerType>(PointerOperand->getType()))
+    if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {
+      unsigned index = 1;
+      Type * CurrentType = ST;
+      while ((index < GEP->getNumOperands() - 1) &&
+             (ConstantInt * C = dyn_cast<ConstantInt>(GEP->getOperand(index)))) {
+        if (const StructType * ST2 = dyn_cast<StructType>(CurrentType)) {
+          CurrentType = ST2->getElementType(C->getZExtValue());
+          ++index;
+          continue;
+        }
+
+        if (const ArrayType * AT = dyn_cast<ArrayType>(CurrentType)) {
+          CurrentType = AT->getElementType();
+          ++index;
+          continue;
+        }
+
+        /* I don't know how to handle this contained type, so skip it. */
+        return false;
+      }
+
+      if (isa<ArrayType>(CurrentType)) {
+std::cerr << "LLVA: Found array\n";
+      }
+  }
+#endif
 
   /*
    * We were not able to insert a call to exactcheck().
@@ -567,11 +688,11 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
-#if 1
+#if 0
     std::string Name = I->getName();
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
-#endif
       continue;
+#endif
     if (!I->isExternal()) TransformFunction(*I);
   }
   if (!DisableLSChecks)  addLoadStoreChecks(M);
@@ -1015,7 +1136,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                 abort();
               }
             } else {
-#if 1
+#if 0
               //FIXME this is a less precise check than possible
               //		  std::cerr << "WARNING : did not handle array within a struct precisely, num operands != 4\n";
               Instruction *InsertPt = MAI->getNext();

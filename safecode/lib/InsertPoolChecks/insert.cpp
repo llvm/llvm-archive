@@ -1126,7 +1126,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           DSNode * Node = TDG.getNodeForValue(MAI).getNode();
           assert (Node && "boundscheck: DSNode is NULL!");
           if ((!PH) || (!((Node->isHeapNode()) || (Node->isGlobalNode())))) {
+#if 0
             std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
+#endif
             ++MissedIncompleteChecks;
             if (!PH) ++MissedNullChecks;
             if (Node->isAllocaNode()) ++MissedStackChecks;

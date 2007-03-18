@@ -72,6 +72,8 @@ struct InsertPoolChecks : public ModulePass {
   void addGetActualValue(SetCondInst *SCI, unsigned operand);
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
   void registerGlobalArraysWithGlobalPools(Module &M);
+  void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
+  void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);
   bool insertExactCheck (GetElementPtrInst * GEP);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
 

@@ -282,13 +282,13 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       PointerOperand = cExpr->getOperand(0);
   }
 
-    //
-    // Attempt to use a call to exactcheck() to check this value if it is a
-    // global array with a non-zero size.  We do not check zero length arrays
-    // because in C they are often used to declare an external array of unknown
-    // size as follows:
-    //        extern struct foo the_array[];
-    //
+  //
+  // Attempt to use a call to exactcheck() to check this value if it is a
+  // global array with a non-zero size.  We do not check zero length arrays
+  // because in C they are often used to declare an external array of unknown
+  // size as follows:
+  //        extern struct foo the_array[];
+  //
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
     const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
     if (AT && (AT->getNumElements())) {

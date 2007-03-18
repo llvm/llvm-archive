@@ -268,35 +268,6 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
     return P;
   }
 
-#if 0
-  /* try slabs */
-  S = src;
-  D = dest;
-  PCLOCK2();
-  fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  PCUNLOCK();
-  if (S == D)
-    return dest;
-  else if (fs) {
-    if (!use_oob) return dest;
-    PCLOCK2();
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
-    ++MP->invalidptr;
-    void* P = MP->invalidptr;
-    PCUNLOCK();
-    if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
-      return dest;
-    }
-    poolcheckinfo("Returning oob pointer of ", (int)P);
-    PCLOCK2();
-    adl_splay_insert(&MP->OOB, P, 1, dest);
-    PCUNLOCK();
-    return P;
-  }
-#endif
-
   /*
    * The node is not found or is not within bounds; fail!
    */
@@ -346,34 +317,6 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
     PCUNLOCK();
     return P;
   }
-
-#if 0
-  /* try slabs */
-  S = src;
-  D = dest;
-  PCLOCK2();
-  fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  PCUNLOCK();
-  if (S == D)
-    return dest;
-  else if (fs) {
-    if (!use_oob) return dest;
-    PCLOCK2();
-     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
-    ++MP->invalidptr;
-    void* P = MP->invalidptr;
-    PCUNLOCK();
-    if ((unsigned)P & ~(InvalidUpper - 1)) {
-      poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
-      return dest;
-    }
-    PCLOCK2();
-    adl_splay_insert(&MP->OOB, P, 1, dest);
-    PCUNLOCK();
-    return P;
-  }
-#endif
 
   /*
    * The node is not found or is not within bounds; pass!

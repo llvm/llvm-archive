@@ -26,6 +26,15 @@ static int ready = 0;
 
 static const int use_oob = 0;
 
+/* Statistic counters */
+int stat_poolcheck=0;
+int stat_poolcheckarray=0;
+int stat_poolcheckarray_i=0;
+int stat_boundscheck=0;
+int stat_boundscheck_i=0;
+int stat_exactcheck=0;
+int stat_exactcheck2=0;
+
 extern void llva_load_lif (unsigned int enable);
 extern unsigned int llva_save_lif (void);
 
@@ -196,6 +205,7 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
+  ++stat_poolcheck;
   PCLOCK();
   int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
@@ -207,6 +217,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+  ++stat_poolcheckarray;
   /* try slabs first */
   void* S = src;
   void* D = dest;
@@ -232,6 +243,7 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
 /* if src and dest do not exist in the pool, pass */
 void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+  ++stat_poolcheckarray_i;
   /* try slabs first */
   void* S = src;
   void* D = dest;
@@ -284,6 +296,7 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
 
 
 inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
+  ++stat_exactcheck2;
   if (result >= base + size ) {
     poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
   }
@@ -299,6 +312,7 @@ inline  void exactcheck2(signed char *base, signed char *result, unsigned size) 
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+  ++stat_boundscheck;
   /* try objs */
   void* S = src;
   unsigned len = 0;
@@ -348,6 +362,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+  ++stat_boundscheck_i;
   /* try fail cache */
   PCLOCK();
   int i = isInCache(MP, src);
@@ -394,6 +409,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
 }
 
 void exactcheck(int a, int b) {
+  ++stat_exactcheck;
   if ((0 > a) || (a >= b)) {
     poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
     poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));

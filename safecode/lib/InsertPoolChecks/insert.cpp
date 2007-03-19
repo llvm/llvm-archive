@@ -394,13 +394,6 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   //        extern struct foo the_array[];
   //
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
-    //
-    // If this node is incomplete or unknown, then do not use an exactcheck()
-    // for it.
-    //
-    if (Node->isIncomplete() || Node->isUnknownNode())
-      return false;
-
     const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
     if (AT && (AT->getNumElements())) {
       // we need to insert an actual check

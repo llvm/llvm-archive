@@ -464,34 +464,42 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // exactcheck on it, too, unless the array is at the end of the structure.
   // Then, we assume it's a variable length array and must be full checked.
   //
-#if 0
   if (const PointerType * PT = dyn_cast<PointerType>(PointerOperand->getType()))
     if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {
-      unsigned index = 1;
-      Type * CurrentType = ST;
-      while ((index < GEP->getNumOperands() - 1) &&
-             (ConstantInt * C = dyn_cast<ConstantInt>(GEP->getOperand(index)))) {
-        if (const StructType * ST2 = dyn_cast<StructType>(CurrentType)) {
-          CurrentType = ST2->getElementType(C->getZExtValue());
-          ++index;
-          continue;
+      const Type * CurrentType = ST;
+      ConstantInt * C;
+      for (unsigned index = 2; index < GEP->getNumOperands() - 1; ++index) {
+        //
+        // If this GEP operand is a constant, index down into the next type.
+        //
+        if (C = dyn_cast<ConstantInt>(GEP->getOperand(index))) {
+          if (const StructType * ST2 = dyn_cast<StructType>(CurrentType)) {
+            CurrentType = ST2->getElementType(C->getZExtValue());
+            continue;
+          }
+
+          if (const ArrayType * AT = dyn_cast<ArrayType>(CurrentType)) {
+            CurrentType = AT->getElementType();
+            continue;
+          }
+
+          // We don't know how to handle this type of element
+          break;
         }
 
-        if (const ArrayType * AT = dyn_cast<ArrayType>(CurrentType)) {
-          CurrentType = AT->getElementType();
-          ++index;
-          continue;
+        //
+        // If the GEP operand is not constant and points to an array type,
+        // then try to insert an exactcheck().
+        //
+        const ArrayType * AT;
+        if ((AT = dyn_cast<ArrayType>(CurrentType)) && (AT->getNumElements())) {
+          const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+          ConstantInt * Bounds = ConstantInt::get(csiType,AT->getNumElements());
+          addExactCheck (GEP, GEP->getOperand (index), Bounds);
+          return true;
         }
-
-        /* I don't know how to handle this contained type, so skip it. */
-        return false;
       }
-
-      if (isa<ArrayType>(CurrentType)) {
-std::cerr << "LLVA: Found array\n";
-      }
-  }
-#endif
+    }
 
   /*
    * We were not able to insert a call to exactcheck().
@@ -688,11 +696,9 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
-#if 0
     std::string Name = I->getName();
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
       continue;
-#endif
     if (!I->isExternal()) TransformFunction(*I);
   }
   if (!DisableLSChecks)  addLoadStoreChecks(M);

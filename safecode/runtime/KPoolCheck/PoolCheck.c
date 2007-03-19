@@ -295,7 +295,7 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
 }
 
 
-inline  void exactcheck2(signed char *base, signed char *result, unsigned size) {
+void exactcheck2(signed char *base, signed char *result, unsigned size) {
   ++stat_exactcheck2;
   if (result >= base + size ) {
     poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));

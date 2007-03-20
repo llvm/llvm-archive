@@ -423,7 +423,11 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
         }
       } else {
         //Handle Multi dimensional cases later
-        std::cerr << "WARNING: Handle multi dimensional globals later\n";
+        //std::cerr << "WARNING: Handle multi dimensional globals later\n";
+        Value* AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()->getElementType()));
+        //std::cerr << "MDG: " << GV->getType(); std::cerr << " size: " << TD->getTypeSize(GV->getType()->getElementType()) << "\n";
+        addExactCheck2 (GEP, AllocSize);
+        return true;
 #if 0
         (*iCurrent)->dump();
 #else
@@ -450,6 +454,19 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
 
     addExactCheck2 (GEP, AllocSize);
     return true;
+  }
+
+  //
+  // If the pointer was an allocation, we should be able to do exact checks
+  //
+  if(CallInst* CI = dyn_cast<CallInst>(GEP->getPointerOperand())) {
+    if (CI->getCalledFunction() && (
+                              CI->getCalledFunction()->getName() == "__vmalloc" || 
+                              CI->getCalledFunction()->getName() == "kmalloc")) {
+      Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
+      addExactCheck2(GEP, Cast);
+      return true;
+    }
   }
 
   //
@@ -688,6 +705,7 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 }
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
+  simplifyGEPList();
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
     std::string Name = I->getName();
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
@@ -799,6 +817,36 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 #endif    
   }
 }
+
+void InsertPoolChecks::simplifyGEPList() {
+  std::set<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
+  std::map< std::pair<Value*, Function*>, std::set<Instruction*> > m;
+  for (std::set<Instruction *>::iterator ii = UnsafeGetElemPtrs.begin(), ee = UnsafeGetElemPtrs.end();
+       ii != ee; ++ii) {
+    GetElementPtrInst* GEP = cast<GetElementPtrInst>(*ii);
+    m[std::make_pair(GEP->getOperand(0), GEP->getParent()->getParent())].insert(GEP);
+  }
+
+  unsigned singletons;
+  unsigned multi;
+  for (std::map< std::pair<Value*,Function*>, std::set<Instruction*> >::iterator ii = m.begin(), ee = m.end();
+       ii != ee; ++ii) {
+    if (ii->second.size() > 1) {
+      std::cerr << "##############\n";
+      for (std::set<Instruction *>::iterator i = ii->second.begin(), e = ii->second.end();
+       i != e; ++i) {
+        (*i)->dump();
+      }
+      std::cerr << "##############\n";
+      ++multi;
+    } else
+      ++singletons;
+  }
+
+  std::cerr << "Singletons: " << singletons << " Multitons: " << multi << "\n";
+
+}
+
 
 void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
   // Get the set of unsafe GEP instructions from the array bounds check pass

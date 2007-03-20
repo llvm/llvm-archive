@@ -58,6 +58,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *PoolRegMP;
   Function *PoolFindMP;
 
+  void simplifyGEPList();
   void addObjFrees(Module& M);
   void addMetaPools(Module& M, MetaPool* MP, DSNode* N);
   void addPoolCheckProto(Module &M);

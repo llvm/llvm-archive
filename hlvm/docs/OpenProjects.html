@@ -29,6 +29,13 @@ projects to add to this page.</p>
 <div class="text">
   <p>Projects in the list below are related to working on software code</p>
   <ol>
+    <li><em>ANTLR Front End</em>. We need to investigate the use of
+    <a href="http://www.antlr.org/">ANTLR</a> (ANother Tool for Language
+    Recognition) as a possible front end lexer/parser for HLVM. Ideally I would
+    like to see a set of C++ constructs to make mapping from a source language
+    to the HLVM AST very simple. For example, a simple set of macros or
+    functions that build an HLVM AST could be used as the semantic actions for a
+    grammar. This task is to analyze the suitability of ANTLR for HLVM.</li>
     <li><em>RNG->XHTML XSLT Stylesheet</em>. We will use the Relax/NG grammar
     for the XML version of the AST to document the AST. However, the Relax/NG
     specification is not particularly user friendly. What we need is a way to
@@ -42,8 +49,6 @@ projects to add to this page.</p>
     simple C++ classes that take care of the book keeping such as deleting APR
     objects at the right time.  Abstracts we need to wrap, currently, are Pool
     and File. These should go in HLVM's "base" library.</li>
-    <li><em>Code Generation</em>. If you know or would like to learn LLVM,
-    we could use help with conversion of HLVM's AST into LLVM's IR. </li>
     <li><em>Yaml Reader/Writer</em>. We intend to support a reader and
     writer of the AST in Yaml syntax. Some people just don't like XML and having
     an alternate way to build the AST from a nicer-to-read source would be

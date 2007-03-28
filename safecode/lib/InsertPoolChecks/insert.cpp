@@ -1,19 +1,37 @@
+//===-- insert.cpp - Insert SAFECode Run-time Checks ----------------------===//
+//
+//                     SAFECode
+//
+// This file was developed by the LLVM research group and is distributed under
+// the University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements the insertion of SAFECode's run-time checks.
+//
+//===----------------------------------------------------------------------===//
+
 #include "safecode/Config/config.h"
 #include "InsertPoolChecks.h"
 #include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InstIterator.h"
-#include <iostream>
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+
+#include <iostream>
+
 using namespace llvm;
+
 extern Value *getRepresentativeMetaPD(Value *);
+
 RegisterPass<InsertPoolChecks> ipc("safecode", "insert runtime checks");
 
-cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",cl::Hidden, cl::init(false),
-                                          cl::desc("insert pool checks instead of exact bounds checks"));
+cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
+                cl::Hidden, cl::init(false),
+                cl::desc("Insert pool checks instead of exact bounds checks"));
   
 // Options for Enabling/Disabling the Insertion of Various Checks
 cl::opt<bool> EnableIncompleteChecks  ("enable-incompletechecks", cl::Hidden,
@@ -1049,16 +1067,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
         DEBUG(std::cerr << " Global variable ok \n");
       }
     }
-
-#if 0
-    //No checks for incomplete nodes 
-    if (!EnableIncompleteChecks) {
-      if (Node->isIncomplete()) {
-        ++MissedNullChecks;
-        return;
-      }
-    }
-#endif
 
     //
     // We cannot insert an exactcheck().  Insert a pool check.

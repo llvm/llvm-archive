@@ -1306,30 +1306,17 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             return;
           }
 
-          if (1) {
-            //we need to create a call instruction
-            //with poolhandle, original value and the new value
-            Instruction *nextInstruction = MAI->getNext();
-            CastInst *CastBack = new CastInst(MAI, MAI->getType(), MAI->getName()+".castback",nextInstruction);
-            MAI->replaceAllUsesWith(CastBack);
-		
-            Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-            Value *PHVptr =  new CastInst(PH, VoidPtrType,
-                                          PH->getName()+".casted",  CastBack);
-            Value *Refferent = MAI->getPointerOperand(); 
-            Value *RefferentVptr = new CastInst(Refferent, VoidPtrType,
-                                                Refferent->getName()+".casted",  CastBack);
-            Value *checkVptr = new CastInst(MAI, VoidPtrType,
-                                            MAI->getName()+".casted",  CastBack);
-		
-            std::vector<Value *> args = make_vector(PHVptr, RefferentVptr, checkVptr,0);
-            CallInst * CI;
-            if ((Node->isAllocaNode()) || (Node->isIncomplete()) || (Node->isUnknownNode()))
-              CI = new CallInst(UIBoundsCheck, args,"uibc",CastBack);
-            else
-              CI = new CallInst(BoundsCheck, args,"bc",CastBack);
-            CastBack->setOperand(0, CI);
-          }
+          //
+          // Insert a bounds check and use its return value in all subsequent
+          // uses.
+          //
+          Instruction *nextIns = MAI->getNext();
+          CastInst *CastBack = new CastInst(MAI, MAI->getType(), MAI->getName()+".castback",nextIns);
+          MAI->replaceAllUsesWith(CastBack);
+  
+          Value * V;
+          V = insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, CastBack);
+          CastBack->setOperand(0, V);
         }
       }
     } else {

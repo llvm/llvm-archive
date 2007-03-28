@@ -201,12 +201,27 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
                                      Value * Dest,
                                      Instruction * InsertPt) {
   // Enclosing function
-  Function * F = I->getParent()->getParent();
+  Function * F   = I->getParent()->getParent();
+  Function *Fnew = F;
+
+  // Source node on which we will look up the pool handle
+  Value *newSrc = Src;
+
+#ifndef LLVA_KERNEL    
+  // Some times the ECGraphs doesnt contain F for newly created cloned
+  // functions
+  if (!equivPass->ContainsDSGraphFor(*F)) {
+    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
+    newSrc = FI->MapValueToOriginal(MAI);
+    assert(newSrc && " Instruction not in value map (clone)\n");
+  }
+  Function *Fnew = newSrc->getParent()->getParent();
+#endif          
 
   //
   // Get the pool handle for the source pointer.
   //
-  Value *PH = getPoolHandle(Src, F); 
+  Value *PH = getPoolHandle(newSrc, Fnew); 
   if (!PH) {
     // Update statistics
     ++NullChecks;
@@ -223,6 +238,17 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   //
   DSGraph & TDG = TDPass->getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
+
+  //
+  // Do not bother to insert checks for nodes that do not have the any of the
+  // stack, heap, or global flags set.
+  //
+  if (Node && !((Node->isAllocaNode()) ||
+                (Node->isHeapNode())   ||
+                (Node->isGlobalNode())))
+  {
+    return Dest;
+  }
 
   //
   // Cast the pool handle, source and destination pointers into the correct
@@ -717,7 +743,9 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 }
 
 void InsertPoolChecks::addPoolChecks(Module &M) {
+#if 0
   simplifyGEPList();
+#endif
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
     std::string Name = I->getName();
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
@@ -1268,44 +1296,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             abort();
           }
         } else {
-          Instruction *MAInew = MAI;
-          Function *F = MAI->getParent()->getParent();
-#ifndef LLVA_KERNEL    
-          if (!equivPass->ContainsDSGraphFor(*F)) {
-            //some times the ECGraphs doesnt contain F
-            //for newly created cloned functions
-            PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-            Value *temp = FI->MapValueToOriginal(MAI);
-            MAInew = dyn_cast<Instruction>(temp);
-            assert(MAInew && " Instruction not in value map (clone)\n");
-          }
-#endif          
-          Function *Fnew = MAInew->getParent()->getParent();
-          Value *PH = getPoolHandle(MAInew, Fnew);
-#if 0
-          if (!PH)
-            PH = Constant::getNullValue(PointerType::get(Type::SByteTy));	      
-#endif
-          //deal with it at runtime	      assert(PH && " PH is null \n");
-
-          //
-          // Do not add a run-time check if this is an incomplete or unknown
-          // node.
-          //
-          DSGraph & TDG = TDPass->getDSGraph(*F);
-          DSNode * Node = TDG.getNodeForValue(MAI).getNode();
-          assert (Node && "boundscheck: DSNode is NULL!");
-          if ((!PH) || (!((Node->isHeapNode()) || (Node->isGlobalNode())))) {
-#if 0
-            std::cerr << "missing a GEP check for" << *MAI << "alloca case?\n";
-#endif
-            ++MissedIncompleteChecks;
-            if (!PH) ++MissedNullChecks;
-            if (Node->isAllocaNode()) ++MissedStackChecks;
-            if (Node->isGlobalNode()) ++MissedGlobalChecks;
-            return;
-          }
-
           //
           // Insert a bounds check and use its return value in all subsequent
           // uses.

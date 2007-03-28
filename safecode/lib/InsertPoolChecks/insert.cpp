@@ -77,8 +77,22 @@ static Statistic<> FullChecks ("safecode",
 static Statistic<> MissChecks ("safecode",
                                "Poolchecks omitted due to bad pool descriptor");
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
-static Statistic<> BoundChecks("safecode",
-                               "Bounds checks inserted");
+
+// Bounds Check Statistics
+static Statistic<> BoundsChecks     ("safecode",
+                                     "Total bounds checks inserted");
+static Statistic<> IBoundsChecks    ("safecode",
+                                     "Bounds checks with incomplete DSNode");
+static Statistic<> UBoundsChecks    ("safecode",
+                                     "Bounds checks with unknown DSNode");
+static Statistic<> ABoundsChecks    ("safecode",
+                                     "Bounds checks with stack DSNode");
+static Statistic<> NullBoundsChecks ("safecode",
+                                     "Missed bounds checks - NULL pool handle");
+static Statistic<> NoSHGBoundsChecks ("safecode",
+                                      "Missed bounds checks - no SHG DSNode");
+
+
 static Statistic<> MissedIncompleteChecks ("safecode",
                                "Poolchecks missed because of incompleteness");
 static Statistic<> MissedMultDimArrayChecks ("safecode",
@@ -88,8 +102,9 @@ static Statistic<> MissedStackChecks  ("safecode", "Missed stack checks");
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
+// Exact Check Statistics
 static Statistic<> ExactChecks        ("safecode", "Exactchecks inserted");
-static Statistic<> ConstExactChecks  ("safecode", "Exactchecks with constant arguments");
+static Statistic<> ConstExactChecks   ("safecode", "Omitted Exactchecks with constant arguments");
  
 //Kernel support rutines
 static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
@@ -224,12 +239,8 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   Value *PH = getPoolHandle(newSrc, Fnew); 
   if (!PH) {
     // Update statistics
-    ++NullChecks;
-        
-    // Don't bother to insert the NULL check unless the user asked
-    if (!EnableNullChecks)
-      return Dest;
-    PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+    ++NullBoundsChecks;
+    return Dest;
   }
 
   //
@@ -243,12 +254,22 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // Do not bother to insert checks for nodes that do not have the any of the
   // stack, heap, or global flags set.
   //
-  if (Node && !((Node->isAllocaNode()) ||
-                (Node->isHeapNode())   ||
-                (Node->isGlobalNode())))
+  if (!Node || !((Node->isAllocaNode()) ||
+                 (Node->isHeapNode())   ||
+                 (Node->isGlobalNode())))
   {
+    ++NoSHGBoundsChecks;
     return Dest;
   }
+
+  // Record statistics on the incomplete checks we do.  Note that a node may
+  // be counted more than once.
+  if (Node->isIncomplete())
+    ++IBoundsChecks;
+  if (Node->isUnknownNode())
+    ++UBoundsChecks;
+  if (Node->isAllocaNode())
+    ++ABoundsChecks;
 
   //
   // Cast the pool handle, source and destination pointers into the correct
@@ -280,6 +301,9 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     CI = new CallInst(UIBoundsCheck, args, "uibc",InsertPt);
   else
     CI = new CallInst(BoundsCheck, args, "bc", InsertPt);
+
+  // Update statistics
+  ++BoundsChecks;
   return CI;
 }
 
@@ -1044,7 +1068,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
           args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
           new CallInst(ExactCheck,args,"", Casted);
-          ++BoundChecks;
           //	    DEBUG(std::cerr << "Inserted exact check call Instruction \n");
           return;
         } else if (GEPNew->getNumOperands() == 3) {
@@ -1074,7 +1097,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
             args.push_back(ConstantInt::get(csiType,AT->getNumElements()));
             new CallInst(ExactCheck,args,"", Casted->getNext());
-            ++BoundChecks;
             return;
           } else {
             //Handle non constant index two dimensional arrays later

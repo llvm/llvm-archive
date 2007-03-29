@@ -884,16 +884,16 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 
 void InsertPoolChecks::simplifyGEPList() {
   std::set<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
-  std::map< std::pair<Value*, Function*>, std::set<Instruction*> > m;
+  std::map< std::pair<Value*, BasicBlock*>, std::set<Instruction*> > m;
   for (std::set<Instruction *>::iterator ii = UnsafeGetElemPtrs.begin(), ee = UnsafeGetElemPtrs.end();
        ii != ee; ++ii) {
     GetElementPtrInst* GEP = cast<GetElementPtrInst>(*ii);
-    m[std::make_pair(GEP->getOperand(0), GEP->getParent()->getParent())].insert(GEP);
+    m[std::make_pair(GEP->getOperand(0), GEP->getParent())].insert(GEP);
   }
 
   unsigned singletons;
   unsigned multi;
-  for (std::map< std::pair<Value*,Function*>, std::set<Instruction*> >::iterator ii = m.begin(), ee = m.end();
+  for (std::map< std::pair<Value*,BasicBlock*>, std::set<Instruction*> >::iterator ii = m.begin(), ee = m.end();
        ii != ee; ++ii) {
     if (ii->second.size() > 1) {
       std::cerr << "##############\n";

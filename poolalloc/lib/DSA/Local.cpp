@@ -1466,7 +1466,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
           if (L.getPool() != N.getPool()) {
             std::cerr << "kmem_cache_alloc recovered merge\n";
             MetaPoolHandle L(locs[V]), N(DSH.getNode()->getMP());
-            locs[V]->merge(DSH.getNode()->getMP());
+            DSH.getNode()->getMP()->merge(locs[V]);
           }
           locs[V] = DSH.getNode()->getMP();
         }

@@ -1470,7 +1470,11 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   Function *FOrig  = AIOrig->getParent()->getParent();
   DSNode *Node = getDSNode(AIOrig, FOrig);
   if (!Node) return;
+#if 0
   if (Node->isArray()) {
+#else
+  if (1) {
+#endif
     Value *PH = getPoolHandle(AIOrig, FOrig);
     if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
     Value *AllocSize =
@@ -1480,20 +1484,34 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
       AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
                                          AI->getOperand(0), "sizetmp", AI);
 
-    //Insert poolregister at the end of allocas and all poolinits
-    //FIXME assuming that there is a load before a call??
-    BasicBlock::iterator InsertPt = AI->getParent()->getParent()->getEntryBlock().begin();
-    while ((isa<CallInst>(InsertPt)) || isa<CastInst>(InsertPt) || isa<AllocaInst>(InsertPt) || isa<BinaryOperator>(InsertPt)) {
-      /*
+    // Insert poolregister at the end of allocas and all poolinits
+    // FIXME assuming that there is a load before a call??
+    Instruction *iptI;
+#if 0
+    if (AI->getParent() == AI->getParent()->getParent()->getEntryBlock()) {
+#else
+    if (0) {
+#endif
+      BasicBlock::iterator InsertPt = AI->getParent()->getParent()->getEntryBlock().begin();
+      while ((isa<CallInst>(InsertPt)) ||
+              isa<CastInst>(InsertPt)  ||
+              isa<AllocaInst>(InsertPt) ||
+              isa<BinaryOperator>(InsertPt)) {
+#if 0
         if (CallInst *PI = dyn_cast<CallInst>(InsertPt)) {
-        if (PI->getName() != "poolinit") break;
-        }*/
-      ++InsertPt;
-    }
-    Instruction *iptI = InsertPt;
-    if (AI->getParent() != iptI->getParent()) {
+          if (PI->getName() != "poolinit") break;
+        }
+#endif
+        ++InsertPt;
+      }
+      iptI = InsertPt;
+    } else {
       iptI = AI->getNext();
     }
+
+    //
+    // Insert a call to register the object.
+    //
     Instruction *Casted = new CastInst(AI, PointerType::get(Type::SByteTy),
                                        AI->getName()+".casted", iptI);
     Value *CastedPH = new CastInst(PH,
@@ -1502,6 +1520,19 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
     new CallInst(PoolRegister,
                  make_vector(CastedPH, Casted, AllocSize,0),
                  "", iptI);
+
+    //
+    // Insert a call to unregister the object whenever the function can exit.
+    //
+    for (Function::iterator BB = AI->getParent()->getParent()->begin();
+                            BB != AI->getParent()->getParent()->end();
+                            ++BB) {
+      iptI = BB->getTerminator();
+      if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
+        new CallInst(ObjFree,
+                     make_vector(CastedPH, Casted, 0),
+                     "", iptI);
+    }
   }
 }
 

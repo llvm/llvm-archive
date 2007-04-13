@@ -481,500 +481,504 @@ function ProcessProgramLogs($tests) {
  * Setting up variables
  *
  *******************************************************************************/
-if ($print_debug) {
-  print "Reading _POST Variables\n";
-}
-
-$spliton ="\n";
-
-$machine_data = $_POST['machine_data'];
-if (!isset($machine_data)) {
-  $machine_data = "";
-}
-$MACHINE_DATA = split($spliton, $machine_data);
-
-$cvs_log = $_POST['cvs_data'];
-if (!isset($cvs_log)) {
-  $cvs_log = "";
-}
-$CVS_LOG = split($spliton, $cvs_log);
-
-$build_log = $_POST['build_data'];
-if (!isset($build_log)) {
-  $build_log = "";
-}
-$BUILD_LOG = split($spliton, $build_log);
-
-$dejagnutests_results = $_POST['dejagnutests_results'];
-if (!isset($dejagnutests_results)) {
-  $dejagnutests_results = "";
-}
-$DEJAGNUTESTS_RESULTS = split($spliton, $dejagnutests_results);
-
-$dejagnutests_log = $_POST['dejagnutests_log'];
-if (!isset($dejagnutests_log)) {
-  $dejagnutests_log = "";
-}
-$DEJAGNUTESTS_LOG = split($spliton, $dejagnutests_log);
-
-$singlesource_tests = $_POST['singlesource_programstable'];
-if (!isset($singlesource_tests)) {
-  $singlesource_tests = "";
-}
-$SINGLESOURCE_TESTS = split($spliton, $singlesource_tests);
-
-$multisource_tests = $_POST['multisource_programstable'];
-if (!isset($multisource_tests)) {
-  $multisource_tests = "";
-}
-$MULTISOURCE_TESTS = split($spliton, $multisource_tests);
-
-$external_tests = $_POST['externalsource_programstable'];
-if (!isset($external_tests)) {
-  $external_tests = "";
-}
-$EXTERNAL_TESTS = split($spliton, $external_tests);
-
-$o_file_size = $_POST['o_file_sizes']; 
-if (!isset($o_file_size)) {
-  $o_file_size = "";
-}
-$o_file_size = rtrim($o_file_size);
-$O_FILE_SIZE = split($spliton, $o_file_size);
-
-$a_file_size = $_POST['a_file_sizes']; 
-if (!isset($a_file_size)) {
-  $a_file_size = "";
-}
-$a_file_size = rtrim($a_file_size);
-$A_FILE_SIZE = split($spliton, $a_file_size);
-
-$filesincvs = $_POST['cvs_file_count'];
-$dirsincvs = $_POST['cvs_dir_count'];
-$loc = $_POST['lines_of_code'];
-$nickname = $_POST['nickname'];
-$cvscheckouttime_cpu = $_POST['cvscheckouttime_cpu'];
-$cvscheckouttime_wall = $_POST['cvscheckouttime_wall'];
-$configtime_wall = $_POST['configtime_wall'];
-$configtime_cpu = $_POST['configtime_cpu'];
-$buildtime_cpu = $_POST['buildtime_cpu'];
-$buildtime_wall = $_POST['buildtime_wall'];
-$dejagnutime_cpu = $_POST['dejagnutime_cpu'];
-$dejagnutime_wall = $_POST['dejagnutime_wall'];
-$buildwarnings = $_POST['warnings'];
-$cvsaddedfiles = $_POST['cvsaddedfiles'];
-$cvsremovedfiles = $_POST['cvsremovedfiles'];
-$cvsmodifiedfiles = $_POST['cvsmodifiedfiles'];
-$cvsusercommitlist = $_POST['cvsusercommitlist'];
-$cvsuserupdatelist = $_POST['cvsuserupdatelist'];
-$buildstatus = $_POST['buildstatus'];
-$warnings_added = $_POST['warnings_removed'];
-$warnings_removed = $_POST['warnings_added'];
-$all_tests = $_POST['all_tests'];
-$unexpfail_tests = $_POST['unexpfail_tests'];
-$passing_tests = $_POST['passing_tests'];
-$expfail_tests = $_POST['expfail_tests'];
-$newly_passing_tests = $_POST['newly_passing_tests'];
-$newly_failing_tests = $_POST['newly_failing_tests'];
-$new_tests = $_POST['new_tests'];
-$removed_tests = $_POST['removed_tests'];
-$gcc_version = $_POST['gcc_version'];            
-$warnings = $_POST['warnings'];            
-$lines_of_code = $_POST['lines_of_code'];
-
-if ($print_debug) {
-  print "Finished Reading _POST Variables\n";
-}
-
-/*******************************************************************************
- *
- * Extracting the machine information
- *
- *******************************************************************************/
-$uname    = MatchOne("/uname\:\s*(.+)/",    $MACHINE_DATA[0], "");
-$hardware = MatchOne("/hardware\:\s*(.+)/", $MACHINE_DATA[1], "");
-$os       = MatchOne("/os\:\s*(.+)/",       $MACHINE_DATA[2], "");
-$name     = MatchOne("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
-$date     = MatchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
-$time     = MatchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
-
-if ($print_debug) {
-  print "uname: $uname\n";
-  print "hardware: $hardware\n";
-  print "os: $os\n";
-  print "name: $name\n";
-  print "date: $date\n";
-  print "time: $time\n";
-}
-
-/*******************************************************************************
- *
- * Extracting the dejagnu test numbers
- *
- *******************************************************************************/
-
-$dejagnu_exp_passes     = MatchOne("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
-$dejagnu_unexp_failures = MatchOne("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
-$dejagnu_exp_failures   = MatchOne("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
-
-if ($print_debug) {
-  print "dejagnu_exp_passes: $dejagnu_exp_passes\n";
-  print "dejagnu_unexp_failures: $dejagnu_unexp_failures\n";
-  print "dejagnu_exp_failures: $dejagnu_exp_failures\n";
-}
-
-/*******************************************************************************
- *
- * Processing Program Test Table Logs
- *
- *******************************************************************************/
- 
-$singlesource_processed = ProcessProgramLogs($SINGLESOURCE_TESTS);
-$multisource_processed = ProcessProgramLogs($MULTISOURCE_TESTS);
-$external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
-
-if ($print_debug) {
-  $singlesource_processed_count = count($singlesource_processed);
-  $multisource_processed_count = count($multisource_processed);
-  $external_processed_count = count($external_processed);
-  print "singlesource_processed#: $singlesource_processed_count\n";
-  print "multisource_processed#: $multisource_processed_count\n";
-  print "external_processed#: $external_processed_count\n";
-}
-
-/*******************************************************************************
- *
- * creating the response
- *
- *******************************************************************************/
-if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
-  AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
-}
-$machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
-
-if ($print_debug) {
-  print "machine_id: $machine_id\n";
-}
-
-/*******************************************************************************
- *
- * Submitting information to database
- *
- *******************************************************************************/
-$db_date = date("Y-m-d H:i:s");
-$blank="";
-$night_id= CreateNight($machine_id, $db_date, $buildstatus, 
-            $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
-            $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
-            $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
-            $warnings_added, $warnings_removed,
-            $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures,
-            $blank, $blank, $blank,       // $all_tests, $passing_tests, $unexpfail_tests, 
-            $blank, $blank, $blank,       // $expfail_tests, $TestsFixed, $TestsBroken,
-            $blank, $blank,               // $TestsAdded, $TestsRemoved,
-            $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-            $cvsusercommitlist, $cvsuserupdatelist);
-
-if ($print_debug) {
-  print "db_date: $db_date\n";
-  print "night_id: $night_id\n";
-}
-
-foreach ($singlesource_processed as $key => $value) {
-   AddProgram($key, $value, "singlesource", $night_id); 
-}
-
-foreach ($multisource_processed as $key => $value) {
-   AddProgram($key, $value, "multisource", $night_id); 
-}
-
-foreach ($external_processed as $key => $value) {
-   AddProgram($key, $value, "external", $night_id); 
-}
-
-if ($print_debug) {
-  print "Programs Added\n";
-}
-
-foreach ($O_FILE_SIZE as $info) {
-  list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
-  AddFile($file, $size, $night_id, $type);
-}
-
-if ($print_debug) {
-  $O_FILE_SIZE_COUNT = count($O_FILE_SIZE);
-  print "o file sizes#: $O_FILE_SIZE_COUNT\n";
-}
-
-foreach ($A_FILE_SIZE as $info) {
-  list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
-  AddFile($file, $size, $night_id, $type);
-}
-
-if ($print_debug) {
-  $A_FILE_SIZE_COUNT = count($A_FILE_SIZE);
-  print "a file sizes#: $A_FILE_SIZE_COUNT\n";
-}
-
-/*******************************************************************************
- *
- * Adding test results pass/fail/xfail status to database
- *
- *******************************************************************************/
-$ALL_TESTS = split("\n", $all_tests);
-foreach ($ALL_TESTS as $info) {
-  $subpatterns = array();
-  if (preg_match("/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/", $info, $subpatterns)) {
-    list($ignore1, $ignore2, $result, $measure, $program) = $subpatterns;
-    AddTests($program, $result, $measure, $night_id);
-  }
-}
-
-if ($print_debug) {
-  print "Program Tests Added\n";
-}
-
-foreach ($DEJAGNUTESTS_RESULTS as $info) {
-  $subpatterns = array();
-  if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
-    list($ignore, $result, $program) = $subpatterns;
-    AddTests($program, $result, "dejagnu", $night_id);
-  }
-}
-
-if ($print_debug) {
-  print "Dejagnu Test Results Added\n";
-}
-
-/*******************************************************************************
- *
- * Adding lines of code to the database
- *
- *******************************************************************************/
-if(StringEqual($buildstatus, "OK")) {
-  // only update loc if successful build
-  UpdateCodeInfo($db_date, $loc, $filesincvs, $dirsincvs);
-}
-
-print "received ${_SERVER['CONTENT_LENGTH']} bytes\n";
-         
-$nights = GetMachineNights($machine_id);
-$length = count($nights);
-print "DB date : $db_date\n";
-print "Machine $machine_id now has ids [$nights]{$length} ".
-      "associated with it in the database\n";
-
-/*******************************************************************************
- *
- * building hash of arrays of signifigant changes to place into the nightly
- * test results email. This is ugly code and is somewhat of a hack. However, it
- * adds very useful information to the nightly test email.
- *
- *******************************************************************************/
-$query = "SELECT id FROM night WHERE id<$night_id AND machine=$machine_id AND ".
-         "buildstatus=\"OK\" ORDER BY id DESC";
-$night_query = mysql_query($query) or die(mysql_error());
-$row = mysql_fetch_assoc($night_query);
-$prev_night = $row['id'];
-if (!isset($prev_night)) {
-  $prev_night = $night_id;
-}
-mysql_free_result($night_query);
-
-if ($print_debug) {
-  print "prev_night: $prev_night\n";
-}
-
-$query = "SELECT * FROM program WHERE night=$night_id";
-$program_query = mysql_query($query) or die(mysql_error());
-
-$prog_hash_new = array();
-while ($row = mysql_fetch_assoc($program_query)) {
-  $program = $row['type']."/".$row['program'];
-  $result = $row['result'];
-  $prog_hash_new[$program] = $result;
-}
-mysql_free_result($program_query);
-
-if ($print_debug) {
-  print "Gathered all tonight\'s programs\n";
-}
-
-$query = "SELECT * FROM program WHERE night=$prev_night";
-$program_query = mysql_query($query) or die(mysql_error());
-
-$prog_hash_old = array();
-while ($row = mysql_fetch_assoc($program_query)) {
-  $program = $row['type']."/".$row['program'];
-  $result = $row['result'];
-  $prog_hash_old[$program] = $result;
-}
-mysql_free_result($program_query);
-
-if ($print_debug) {
-  print "Gathered all previous night\'s programs\n";
-}
-
-$monitoring = array("Bytecode", "CBE", "GCCAS", "JIT", "LLC", "LLC-BETA", "LLC compile", "LLC-BETA compile");
-$output_big_changes = array();
-foreach ($prog_hash_new as $prog => $prog_new) {
-  $prog_old = $prog_hash_old[$prog];
-    
-  // get data from server
-  $vals_new = split(", ", $prog_new);
-  $vals_old = split(", ", $prog_old);
-  
-  // get list of values measured from newest test
-  $new_measures = array();
-  foreach ($vals_new as $measure) {
-    list($measure, $value) = split(": ", $measure);
-    $new_measures[$measure] = $value;
-  }
-  
-  // get list of values measured from older test
-  $old_measures = array();
-  foreach ($vals_old as $measure) {
-    list($measure, $value) = split(": ", $measure);
-    $old_measures[$measure] = $value;
+function acceptTest() {
+  if ($print_debug) {
+    print "Reading _POST Variables\n";
   }
 
-  // put measures into hash of arrays
-  foreach ($monitoring as $measure) {
-    $value_new = MatchOne("/(\d+\.?\d*)/", $new_measures[$measure], "");
-    $value_old = MatchOne("/(\d+\.?\d*)/", $old_measures[$measure], "");
+  $spliton ="\n";
+
+  $machine_data = $_POST['machine_data'];
+  if (!isset($machine_data)) {
+    $machine_data = "";
+  }
+  $MACHINE_DATA = split($spliton, $machine_data);
+
+  $cvs_log = $_POST['cvs_data'];
+  if (!isset($cvs_log)) {
+    $cvs_log = "";
+  }
+  $CVS_LOG = split($spliton, $cvs_log);
+
+  $build_log = $_POST['build_data'];
+  if (!isset($build_log)) {
+    $build_log = "";
+  }
+  $BUILD_LOG = split($spliton, $build_log);
+
+  $dejagnutests_results = $_POST['dejagnutests_results'];
+  if (!isset($dejagnutests_results)) {
+    $dejagnutests_results = "";
+  }
+  $DEJAGNUTESTS_RESULTS = split($spliton, $dejagnutests_results);
+
+  $dejagnutests_log = $_POST['dejagnutests_log'];
+  if (!isset($dejagnutests_log)) {
+    $dejagnutests_log = "";
+  }
+  $DEJAGNUTESTS_LOG = split($spliton, $dejagnutests_log);
+
+  $singlesource_tests = $_POST['singlesource_programstable'];
+  if (!isset($singlesource_tests)) {
+    $singlesource_tests = "";
+  }
+  $SINGLESOURCE_TESTS = split($spliton, $singlesource_tests);
+
+  $multisource_tests = $_POST['multisource_programstable'];
+  if (!isset($multisource_tests)) {
+    $multisource_tests = "";
+  }
+  $MULTISOURCE_TESTS = split($spliton, $multisource_tests);
+
+  $external_tests = $_POST['externalsource_programstable'];
+  if (!isset($external_tests)) {
+    $external_tests = "";
+  }
+  $EXTERNAL_TESTS = split($spliton, $external_tests);
+
+  $o_file_size = $_POST['o_file_sizes']; 
+  if (!isset($o_file_size)) {
+    $o_file_size = "";
+  }
+  $o_file_size = rtrim($o_file_size);
+  $O_FILE_SIZE = split($spliton, $o_file_size);
+
+  $a_file_size = $_POST['a_file_sizes']; 
+  if (!isset($a_file_size)) {
+    $a_file_size = "";
+  }
+  $a_file_size = rtrim($a_file_size);
+  $A_FILE_SIZE = split($spliton, $a_file_size);
+
+  $filesincvs = $_POST['cvs_file_count'];
+  $dirsincvs = $_POST['cvs_dir_count'];
+  $loc = $_POST['lines_of_code'];
+  $nickname = $_POST['nickname'];
+  $cvscheckouttime_cpu = $_POST['cvscheckouttime_cpu'];
+  $cvscheckouttime_wall = $_POST['cvscheckouttime_wall'];
+  $configtime_wall = $_POST['configtime_wall'];
+  $configtime_cpu = $_POST['configtime_cpu'];
+  $buildtime_cpu = $_POST['buildtime_cpu'];
+  $buildtime_wall = $_POST['buildtime_wall'];
+  $dejagnutime_cpu = $_POST['dejagnutime_cpu'];
+  $dejagnutime_wall = $_POST['dejagnutime_wall'];
+  $buildwarnings = $_POST['warnings'];
+  $cvsaddedfiles = $_POST['cvsaddedfiles'];
+  $cvsremovedfiles = $_POST['cvsremovedfiles'];
+  $cvsmodifiedfiles = $_POST['cvsmodifiedfiles'];
+  $cvsusercommitlist = $_POST['cvsusercommitlist'];
+  $cvsuserupdatelist = $_POST['cvsuserupdatelist'];
+  $buildstatus = $_POST['buildstatus'];
+  $warnings_added = $_POST['warnings_removed'];
+  $warnings_removed = $_POST['warnings_added'];
+  $all_tests = $_POST['all_tests'];
+  $unexpfail_tests = $_POST['unexpfail_tests'];
+  $passing_tests = $_POST['passing_tests'];
+  $expfail_tests = $_POST['expfail_tests'];
+  $newly_passing_tests = $_POST['newly_passing_tests'];
+  $newly_failing_tests = $_POST['newly_failing_tests'];
+  $new_tests = $_POST['new_tests'];
+  $removed_tests = $_POST['removed_tests'];
+  $gcc_version = $_POST['gcc_version'];            
+  $warnings = $_POST['warnings'];            
+  $lines_of_code = $_POST['lines_of_code'];
+
+  if ($print_debug) {
+    print "Finished Reading _POST Variables\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Extracting the machine information
+   *
+   *******************************************************************************/
+  $uname    = MatchOne("/uname\:\s*(.+)/",    $MACHINE_DATA[0], "");
+  $hardware = MatchOne("/hardware\:\s*(.+)/", $MACHINE_DATA[1], "");
+  $os       = MatchOne("/os\:\s*(.+)/",       $MACHINE_DATA[2], "");
+  $name     = MatchOne("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
+  $date     = MatchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
+  $time     = MatchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
+
+  if ($print_debug) {
+    print "uname: $uname\n";
+    print "hardware: $hardware\n";
+    print "os: $os\n";
+    print "name: $name\n";
+    print "date: $date\n";
+    print "time: $time\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Extracting the dejagnu test numbers
+   *
+   *******************************************************************************/
+
+  $dejagnu_exp_passes     = MatchOne("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
+  $dejagnu_unexp_failures = MatchOne("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
+  $dejagnu_exp_failures   = MatchOne("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
+
+  if ($print_debug) {
+    print "dejagnu_exp_passes: $dejagnu_exp_passes\n";
+    print "dejagnu_unexp_failures: $dejagnu_unexp_failures\n";
+    print "dejagnu_exp_failures: $dejagnu_exp_failures\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Processing Program Test Table Logs
+   *
+   *******************************************************************************/
+   
+  $singlesource_processed = ProcessProgramLogs($SINGLESOURCE_TESTS);
+  $multisource_processed = ProcessProgramLogs($MULTISOURCE_TESTS);
+  $external_processed = ProcessProgramLogs($EXTERNAL_TESTS);
+
+  if ($print_debug) {
+    $singlesource_processed_count = count($singlesource_processed);
+    $multisource_processed_count = count($multisource_processed);
+    $external_processed_count = count($external_processed);
+    print "singlesource_processed#: $singlesource_processed_count\n";
+    print "multisource_processed#: $multisource_processed_count\n";
+    print "external_processed#: $external_processed_count\n";
+  }
+
+  /*******************************************************************************
+   *
+   * creating the response
+   *
+   *******************************************************************************/
+  if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
+    AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
+  }
+  $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
+
+  if ($print_debug) {
+    print "machine_id: $machine_id\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Submitting information to database
+   *
+   *******************************************************************************/
+  $db_date = date("Y-m-d H:i:s");
+  $blank="";
+  $night_id= CreateNight($machine_id, $db_date, $buildstatus, 
+              $configtime_cpu, $configtime_wall, $cvscheckouttime_cpu,
+              $cvscheckouttime_wall, $buildtime_cpu, $buildtime_wall,
+              $dejagnutime_cpu, $dejagnutime_wall, $warnings, 
+              $warnings_added, $warnings_removed,
+              $dejagnu_exp_passes, $dejagnu_unexp_failures, $dejagnu_exp_failures,
+              $blank, $blank, $blank,       // $all_tests, $passing_tests, $unexpfail_tests, 
+              $blank, $blank, $blank,       // $expfail_tests, $TestsFixed, $TestsBroken,
+              $blank, $blank,               // $TestsAdded, $TestsRemoved,
+              $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
+              $cvsusercommitlist, $cvsuserupdatelist);
+
+  if ($print_debug) {
+    print "db_date: $db_date\n";
+    print "night_id: $night_id\n";
+  }
+
+  foreach ($singlesource_processed as $key => $value) {
+     AddProgram($key, $value, "singlesource", $night_id); 
+  }
+
+  foreach ($multisource_processed as $key => $value) {
+     AddProgram($key, $value, "multisource", $night_id); 
+  }
+
+  foreach ($external_processed as $key => $value) {
+     AddProgram($key, $value, "external", $night_id); 
+  }
+
+  if ($print_debug) {
+    print "Programs Added\n";
+  }
+
+  foreach ($O_FILE_SIZE as $info) {
+    list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
+    AddFile($file, $size, $night_id, $type);
+  }
+
+  if ($print_debug) {
+    $O_FILE_SIZE_COUNT = count($O_FILE_SIZE);
+    print "o file sizes#: $O_FILE_SIZE_COUNT\n";
+  }
+
+  foreach ($A_FILE_SIZE as $info) {
+    list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
+    AddFile($file, $size, $night_id, $type);
+  }
+
+  if ($print_debug) {
+    $A_FILE_SIZE_COUNT = count($A_FILE_SIZE);
+    print "a file sizes#: $A_FILE_SIZE_COUNT\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Adding test results pass/fail/xfail status to database
+   *
+   *******************************************************************************/
+  $ALL_TESTS = split("\n", $all_tests);
+  foreach ($ALL_TESTS as $info) {
+    $subpatterns = array();
+    if (preg_match("/(TEST-)?(XPASS|PASS|XFAIL|FAIL):\s(.+?)\s(.+)/", $info, $subpatterns)) {
+      list($ignore1, $ignore2, $result, $measure, $program) = $subpatterns;
+      AddTests($program, $result, $measure, $night_id);
+    }
+  }
+
+  if ($print_debug) {
+    print "Program Tests Added\n";
+  }
+
+  foreach ($DEJAGNUTESTS_RESULTS as $info) {
+    $subpatterns = array();
+    if (preg_match("/^(XPASS|PASS|XFAIL|FAIL):\s(.+):?/", $info, $subpatterns)) {
+      list($ignore, $result, $program) = $subpatterns;
+      AddTests($program, $result, "dejagnu", $night_id);
+    }
+  }
+
+  if ($print_debug) {
+    print "Dejagnu Test Results Added\n";
+  }
+
+  /*******************************************************************************
+   *
+   * Adding lines of code to the database
+   *
+   *******************************************************************************/
+  if(StringEqual($buildstatus, "OK")) {
+    // only update loc if successful build
+    UpdateCodeInfo($db_date, $loc, $filesincvs, $dirsincvs);
+  }
+
+  print "received ${_SERVER['CONTENT_LENGTH']} bytes\n";
+           
+  $nights = GetMachineNights($machine_id);
+  $length = count($nights);
+  print "DB date : $db_date\n";
+  print "Machine $machine_id now has ids [$nights]{$length} ".
+        "associated with it in the database\n";
+
+  /*******************************************************************************
+   *
+   * building hash of arrays of signifigant changes to place into the nightly
+   * test results email. This is ugly code and is somewhat of a hack. However, it
+   * adds very useful information to the nightly test email.
+   *
+   *******************************************************************************/
+  $query = "SELECT id FROM night WHERE id<$night_id AND machine=$machine_id AND ".
+           "buildstatus=\"OK\" ORDER BY id DESC";
+  $night_query = mysql_query($query) or die(mysql_error());
+  $row = mysql_fetch_assoc($night_query);
+  $prev_night = $row['id'];
+  if (!isset($prev_night)) {
+    $prev_night = $night_id;
+  }
+  mysql_free_result($night_query);
+
+  if ($print_debug) {
+    print "prev_night: $prev_night\n";
+  }
+
+  $query = "SELECT * FROM program WHERE night=$night_id";
+  $program_query = mysql_query($query) or die(mysql_error());
+
+  $prog_hash_new = array();
+  while ($row = mysql_fetch_assoc($program_query)) {
+    $program = $row['type']."/".$row['program'];
+    $result = $row['result'];
+    $prog_hash_new[$program] = $result;
+  }
+  mysql_free_result($program_query);
+
+  if ($print_debug) {
+    print "Gathered all tonight\'s programs\n";
+  }
+
+  $query = "SELECT * FROM program WHERE night=$prev_night";
+  $program_query = mysql_query($query) or die(mysql_error());
+
+  $prog_hash_old = array();
+  while ($row = mysql_fetch_assoc($program_query)) {
+    $program = $row['type']."/".$row['program'];
+    $result = $row['result'];
+    $prog_hash_old[$program] = $result;
+  }
+  mysql_free_result($program_query);
+
+  if ($print_debug) {
+    print "Gathered all previous night\'s programs\n";
+  }
+
+  $monitoring = array("Bytecode", "CBE", "GCCAS", "JIT", "LLC", "LLC-BETA", "LLC compile", "LLC-BETA compile");
+  $output_big_changes = array();
+  foreach ($prog_hash_new as $prog => $prog_new) {
+    $prog_old = $prog_hash_old[$prog];
+      
+    // get data from server
+    $vals_new = split(", ", $prog_new);
+    $vals_old = split(", ", $prog_old);
     
-    if (StringIsNull($value_new) || StringIsNull($value_old)) continue;
-    
-    $diff = ($value_old - $value_new);
-    $perc = 0;
-    
-    if ($value_old != 0 && ($diff > 0.2 || $diff < -0.2) ) {
-      $perc = ($diff / $value_old) * 100;
+    // get list of values measured from newest test
+    $new_measures = array();
+    foreach ($vals_new as $measure) {
+      list($measure, $value) = split(": ", $measure);
+      $new_measures[$measure] = $value;
     }
     
-    if ($perc > 5 || $perc < -5) {
-      $changes = $output_big_changes[$measure];
+    // get list of values measured from older test
+    $old_measures = array();
+    foreach ($vals_old as $measure) {
+      list($measure, $value) = split(": ", $measure);
+      $old_measures[$measure] = $value;
+    }
+
+    // put measures into hash of arrays
+    foreach ($monitoring as $measure) {
+      $value_new = MatchOne("/(\d+\.?\d*)/", $new_measures[$measure], "");
+      $value_old = MatchOne("/(\d+\.?\d*)/", $old_measures[$measure], "");
       
-      if (!isset($changes)) {
-        $changes = array();
+      if (StringIsNull($value_new) || StringIsNull($value_old)) continue;
+      
+      $diff = ($value_old - $value_new);
+      $perc = 0;
+      
+      if ($value_old != 0 && ($diff > 0.2 || $diff < -0.2) ) {
+        $perc = ($diff / $value_old) * 100;
       }
       
-      $rounded_perc = sprintf("%1.2f", $perc);
-      array_push($changes, "$prog: $rounded_perc% ($value_old => $value_new)\n");
-      $output_big_changes[$measure] = $changes;
+      if ($perc > 5 || $perc < -5) {
+        $changes = $output_big_changes[$measure];
+        
+        if (!isset($changes)) {
+          $changes = array();
+        }
+        
+        $rounded_perc = sprintf("%1.2f", $perc);
+        array_push($changes, "$prog: $rounded_perc% ($value_old => $value_new)\n");
+        $output_big_changes[$measure] = $changes;
+      }
     }
   }
-}
 
-if ($print_debug) {
-  print "Determined measures\n";
-}
+  if ($print_debug) {
+    print "Determined measures\n";
+  }
 
-/*******************************************************************************
- *
- * Determining changes in new tests and old tests
- *
- *******************************************************************************/
- 
-$removed = getRemovedTests($night_id, $prev_night);
-$added = getNewTests($night_id, $prev_night);
-$passing = getFixedTests($night_id, $prev_night);
-$failing = getBrokenTests($night_id, $prev_night);
+  /*******************************************************************************
+   *
+   * Determining changes in new tests and old tests
+   *
+   *******************************************************************************/
+   
+  $removed = getRemovedTests($night_id, $prev_night);
+  $added = getNewTests($night_id, $prev_night);
+  $passing = getFixedTests($night_id, $prev_night);
+  $failing = getBrokenTests($night_id, $prev_night);
 
-if ($print_debug) {
-  print "Determined changes in new tests and old tests\n";
-}
+  if ($print_debug) {
+    print "Determined changes in new tests and old tests\n";
+  }
 
-/*******************************************************************************
- *
- * Encode date for file name use
- *
- *******************************************************************************/
- 
-$db_date = preg_replace("/ /", "_", $db_date);
+  /*******************************************************************************
+   *
+   * Encode date for file name use
+   *
+   *******************************************************************************/
+   
+  $db_date = preg_replace("/ /", "_", $db_date);
 
-/*******************************************************************************
- *
- * Sending email to nightly test email archive
- *
- *******************************************************************************/
-$link_to_page="http://llvm.org/nightlytest/test.php?machine=$machine_id&".
-              "night=$night_id";
-$email  = "$link_to_page\n";
-$email .= "Name: $name\n";
-$email .= "Nickname: $nickname\n";
-$email .= "Buildstatus: $buildstatus\n";
+  /*******************************************************************************
+   *
+   * Sending email to nightly test email archive
+   *
+   *******************************************************************************/
+  $link_to_page="http://llvm.org/nightlytest/test.php?machine=$machine_id&".
+                "night=$night_id";
+  $email  = "$link_to_page\n";
+  $email .= "Name: $name\n";
+  $email .= "Nickname: $nickname\n";
+  $email .= "Buildstatus: $buildstatus\n";
 
-if(StringEqual($buildstatus, "OK")) {
-  if (StringIsNull($passing)) {
-    $passing = "None";
-  } 
-  $email .= "\nNew Test Passes:\n$passing\n";
-  if (StringIsNull($failing)) {
-    $failing = "None";
-  } 
-  $email .= "\nNew Test Failures:\n$failing\n";
-  if (StringIsNull($added)) {
-    $added = "None";
-  } 
-  $email .= "\nAdded Tests:\n$added\n";
-  if (StringIsNull($removed)) {
-    $removed= "None";
-  } 
-  $email .= "\nRemoved Tests:\n$removed\n";
+  if(StringEqual($buildstatus, "OK")) {
+    if (StringIsNull($passing)) {
+      $passing = "None";
+    } 
+    $email .= "\nNew Test Passes:\n$passing\n";
+    if (StringIsNull($failing)) {
+      $failing = "None";
+    } 
+    $email .= "\nNew Test Failures:\n$failing\n";
+    if (StringIsNull($added)) {
+      $added = "None";
+    } 
+    $email .= "\nAdded Tests:\n$added\n";
+    if (StringIsNull($removed)) {
+      $removed= "None";
+    } 
+    $email .= "\nRemoved Tests:\n$removed\n";
 
-  $email .= "\nSignificant changes in test results:\n";
-  foreach ($output_big_changes as $measure => $values) {
-    $email.= "$measure:\n";
-    foreach ($values as $value) {
-      $email.= " $value";
+    $email .= "\nSignificant changes in test results:\n";
+    foreach ($output_big_changes as $measure => $values) {
+      $email.= "$measure:\n";
+      foreach ($values as $value) {
+        $email.= " $value";
+      }
     }
   }
+  else{
+    $email .= "\nBuildlog available at http://llvm.org/nightlytest/".
+              "machines/$db_date-Build-Log.txt\n";
+  }
+
+  $email_addr = "llvm-testresults\@cs.uiuc.edu";
+  `echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
+
+  /*******************************************************************************
+   *
+   * writing logs to directory
+   *
+   *******************************************************************************/
+  $cwd = getcwd();
+
+  if (!file_exists('machines')) {
+    mkdir('machines', 777);
+  }
+  chdir("$cwd/machines");
+
+  if (!file_exists("$machine_id")) {
+    mkdir("$machine_id", 777);
+  }
+  chdir("$cwd/machines/$machine_id");
+
+  WriteFile("$db_date-Build-Log.txt", $build_log);
+
+  $sentdata="";
+  foreach ($_GET as $key => $value) {
+    if(strpos($value, "\n") == 0) {
+      $sentdata .= "'$key'  =>  \"$value\",\n";
+    } else {
+      $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+    }
+  }
+  foreach ($_POST as $key => $value) {
+    if(strpos($value, "\n") == 0) {
+      $sentdata .= "'$key'  =>  \"$value\",\n";
+    } else {
+      $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+    }
+  }
+  WriteFile("$db_date-senddata.txt", $sentdata);
+
+
+  mysql_close($mysql_link);
 }
-else{
-  $email .= "\nBuildlog available at http://llvm.org/nightlytest/".
-            "machines/$db_date-Build-Log.txt\n";
-}
 
-$email_addr = "llvm-testresults\@cs.uiuc.edu";
-`echo "$email" | mail -s '$nickname $hardware nightly tester results' $email_addr`;
-
-/*******************************************************************************
- *
- * writing logs to directory
- *
- *******************************************************************************/
-$cwd = getcwd();
-
-if (!file_exists('machines')) {
-  mkdir('machines', 777);
-}
-chdir("$cwd/machines");
-
-if (!file_exists("$machine_id")) {
-  mkdir("$machine_id", 777);
-}
-chdir("$cwd/machines/$machine_id");
-
-WriteFile("$db_date-Build-Log.txt", $build_log);
-
-$sentdata="";
-foreach ($_GET as $key => $value) {
-  if(strpos($value, "\n") == 0) {
-	  $sentdata .= "'$key'  =>  \"$value\",\n";
-	} else {
-	  $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
-	}
-}
-foreach ($_POST as $key => $value) {
-  if(strpos($value, "\n") == 0) {
-	  $sentdata .= "'$key'  =>  \"$value\",\n";
-	} else {
-	  $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
-	}
-}
-WriteFile("$db_date-senddata.txt", $sentdata);
-
-
-mysql_close($mysql_link);
+acceptTest();
 ?>

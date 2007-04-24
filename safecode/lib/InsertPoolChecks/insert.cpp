@@ -266,8 +266,15 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // be counted more than once.
   if (Node->isIncomplete())
     ++IBoundsChecks;
+#if 0
   if (Node->isUnknownNode())
     ++UBoundsChecks;
+#else
+  if (Node->isUnknownNode()) {
+    ++UBoundsChecks;
+    return Dest;
+  }
+#endif
   if (Node->isAllocaNode())
     ++ABoundsChecks;
 

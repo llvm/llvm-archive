@@ -26,8 +26,12 @@
 #include <iostream>
 #include <stdio.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
+#ifdef LLVA_KERNEL
 #define NO_STATIC_CHECK
+#endif
+
 #define OMEGA_TMP_INCLUDE_FILE "omega_include.ip"
 
 using namespace llvm;
@@ -796,7 +800,7 @@ ABCExprTree *ArrayBoundsCheck::getArgumentConstraints(Function & F) {
 void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
   int p2cdes[2];
   int c2pdes[2];
-  pid_t pid;
+  pid_t pid, perlpid;
   pipe(p2cdes);
   pipe(c2pdes);
 
@@ -837,7 +841,7 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
     close(parentW);
     int perl2parent[2];
     pipe(perl2parent);
-    if (!fork()){
+    if (!(perlpid = fork())){
       //child
       close(perl2parent[0]); //perl doesn't read anything from parent
       close(fileno(stdout));
@@ -884,6 +888,12 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
       exit(-1);
     }
   }
+
+  /*
+   * Wait for child processes.
+   */
+  waitpid (pid, NULL, 0);
+  waitpid (perlpid, NULL, 0);
 }
 
 //
@@ -928,11 +938,9 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
   
   initialize(M);
   /* printing preliminaries */
-#ifndef LLVA_KERNEL
+#ifndef NO_STATIC_CHECK
   includeOut.open (OmegaFilename.c_str());
-#if 0
   outputDeclsForOmega(M);
-#endif
   includeOut.close();
 #endif
   //  out << "outputting decls for Omega done" <<endl;
@@ -1019,8 +1027,10 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           getConstraints(MAI->getPointerOperand(),&root);
           fMap[&F]->addSafetyConstraint(MAI,root);
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
+#ifndef NO_STATIC_CHECK
+        }
+#else
         } else {
-#ifdef NO_STATIC_CHECK
           //
           // Perform a quick check to see if a struct type is safe.
           //

@@ -28,10 +28,6 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 
-#ifdef LLVA_KERNEL
-#define NO_STATIC_CHECK
-#endif
-
 #define OMEGA_TMP_INCLUDE_FILE "omega_include.ip"
 
 using namespace llvm;
@@ -42,6 +38,10 @@ static Statistic<> SafeStructs ("safestructs",
 static Statistic<> TotalStructs ("totalstructs",
                                 "total structures used in GEPs");
 namespace {
+  cl::opt<bool> NoStaticChecks ("disable-staticchecks", cl::Hidden,
+                                cl::init(false),
+                                cl::desc("Disable Static Array Bounds Checks"));
+
   cl::opt<string> OmegaFilename("omegafile",
                                 cl::desc("Specify omega include filename"),
                                 cl::init(OMEGA_TMP_INCLUDE_FILE),
@@ -938,11 +938,11 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
   
   initialize(M);
   /* printing preliminaries */
-#ifndef NO_STATIC_CHECK
-  includeOut.open (OmegaFilename.c_str());
-  outputDeclsForOmega(M);
-  includeOut.close();
-#endif
+  if (!NoStaticChecks) {
+    includeOut.open (OmegaFilename.c_str());
+    outputDeclsForOmega(M);
+    includeOut.close();
+  }
   //  out << "outputting decls for Omega done" <<endl;
   
   
@@ -951,13 +951,13 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
     Function &F = *I;
     if (!(F.hasName()) || (KnownFuncDB.find(F.getName()) == KnownFuncDB.end()))
       collectSafetyConstraints(F);
-    }
-#ifndef NO_STATIC_CHECK  
-  //  out << " Now checking the constraints  \n ";
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!(provenSafe.count(I) != 0)) checkSafety(*I);
   }
-#endif  
+
+  //  out << " Now checking the constraints  \n ";
+  if (!NoStaticChecks)
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+      if (!(provenSafe.count(I) != 0)) checkSafety(*I);
+    }
   return false;
 }
 
@@ -989,10 +989,12 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           if (mI == mE) {
             continue;
           }
-#ifdef NO_STATIC_CHECK
-          UnsafeGetElemPtrs.insert(MAI);
-          continue;
-#endif      
+
+          if (NoStaticChecks) {
+            UnsafeGetElemPtrs.insert(MAI);
+            continue;
+          }
+
           mI++;
           ABCExprTree *root;
           string varName = getValueName(MAI->getPointerOperand());
@@ -1027,38 +1029,31 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           getConstraints(MAI->getPointerOperand(),&root);
           fMap[&F]->addSafetyConstraint(MAI,root);
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
-#ifndef NO_STATIC_CHECK
-        }
-#else
         } else {
-          //
-          // Perform a quick check to see if a struct type is safe.
-          //
-#if 0
-          if (const StructType * ST = dyn_cast<StructType>(PT->getElementType()))
-            if (!(isStructTypeSafe (ST)))
-              UnsafeGetElemPtrs.insert(MAI);
-#else
-          //
-          // If the GEP has constant indices, we assume it is okay.
-          // TODO: This is a hack.
-          //
-          bool safe = true;
-          for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
-            if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
-              safe = false;
-              UnsafeGetElemPtrs.insert(MAI);
-              break;
-            }
-          }
+          if (NoStaticChecks) {
+            //
+            // Perform a quick check to see if a struct type is safe.
+            //
 
-          // Update the stats
-          ++TotalStructs;
-          if (safe) ++SafeStructs;
-#endif
-          continue;
+            //
+            // If the GEP has constant indices, we assume it is okay.
+            // TODO: This is a hack.
+            //
+            bool safe = true;
+            for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
+              if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
+                safe = false;
+                UnsafeGetElemPtrs.insert(MAI);
+                break;
+              }
+            }
+
+            // Update the stats
+            ++TotalStructs;
+            if (safe) ++SafeStructs;
+            continue;
+          }
         }
-#endif      
       } else {
         std::cerr << "GEP to non-pointer: " << *iLocal << std::endl;
       }
@@ -1070,10 +1065,12 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
         string funcName = FCI->getName();
         DEBUG(std::cerr << "Adding constraints for " << funcName << "\n");
         reqArgs = false;
-#ifdef NO_STATIC_CHECK
-        UnsafeCalls.insert(CI);
-        continue;
-#endif              
+
+        if (NoStaticChecks) {
+          UnsafeCalls.insert(CI);
+          continue;
+        }
+
         if (funcName == "read") {
           LinearExpr *le = new LinearExpr(CI->getOperand(3),Mang);
           string varName = getValueName(CI->getOperand(2));

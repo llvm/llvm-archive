@@ -979,5 +979,5 @@ function acceptTest() {
 }
 
 acceptTest();
-//acceptTestResults();
+acceptTestResults();
 ?>

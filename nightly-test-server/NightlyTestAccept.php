@@ -70,29 +70,13 @@ if(!(include"ProgramResults.php")){
   die();
 }
 
-if ($print_debug) {
-  print "Support Included\n";
+if(!(include"AcceptTestResults.php")){
+  print "Error: could not load necessary files!\n";
+  die();
 }
 
-/*******************************************************************************
- *
- * Important variables
- *
- *******************************************************************************/
-$database = "nightlytestresults";
-$loginname = "llvm";
-$password = "ll2002vm";
-
-/*******************************************************************************
- *
- * Connecting to the database
- *
- *******************************************************************************/
-$mysql_link = mysql_connect("127.0.0.1", $loginname, $password) or die("Error: could not connect to database!");
-mysql_select_db($database) or die("Error: could not find \"$database\" database!");
-
 if ($print_debug) {
-  print "Database connected\n";
+  print "Support Included\n";
 }
 
 /*******************************************************************************
@@ -482,6 +466,20 @@ function ProcessProgramLogs($tests) {
  *
  *******************************************************************************/
 function acceptTest() {
+  
+  $database = "nightlytestresults";
+  $loginname = "llvm";
+  $password = "ll2002vm";
+  
+  // connect to database
+  $mysql_link = mysql_connect("127.0.0.1", $loginname, $password) or die("Error: could not connect to database!");
+  mysql_select_db($database) or die("Error: could not find \"$database\" database!");
+  
+  if ($print_debug) {
+    print "Database connected\n";
+  }
+  
+  
   if ($print_debug) {
     print "Reading _POST Variables\n";
   }

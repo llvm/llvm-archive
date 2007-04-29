@@ -168,7 +168,7 @@ function AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, $dir
  * Returns the id number of the machine with the passed in uname
  *
  *******************************************************************************/
-function GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version) {
+function GetMachineIdNum($uname, $hardware, $os, $name, $nickname, $gcc_version) {
   $query = "SELECT * FROM machine WHERE uname=\"$uname\" AND hardware=\"$hardware\" AND nickname=\"$nickname\" AND gcc=\"$gcc_version\"";
   $machine_query = mysql_query($query) or die(mysql_error());
   $row = mysql_fetch_assoc($machine_query);
@@ -408,7 +408,7 @@ function UpdateCodeInfo($date, $loc, $files, $dirs) {
  * Match one substring and return string result.
  *
  *******************************************************************************/
-function MatchOne($pattern, $string, $default) {
+function MatchOnePattern($pattern, $string, $default) {
   $subpatterns = array();
   if (isset($string) && preg_match($pattern, $string, $subpatterns)) {
     return rtrim($subpatterns[1]);
@@ -422,7 +422,7 @@ function MatchOne($pattern, $string, $default) {
  * Match all substrings and return array result.
  *
  *******************************************************************************/
-function Match($pattern, $string) {
+function MatchPattern($pattern, $string) {
   $subpatterns = array();
   if (isset($string) && preg_match($pattern, $string, $subpatterns)) {
     return $subpatterns;
@@ -590,12 +590,12 @@ function acceptTest() {
    * Extracting the machine information
    *
    *******************************************************************************/
-  $uname    = MatchOne("/uname\:\s*(.+)/",    $MACHINE_DATA[0], "");
-  $hardware = MatchOne("/hardware\:\s*(.+)/", $MACHINE_DATA[1], "");
-  $os       = MatchOne("/os\:\s*(.+)/",       $MACHINE_DATA[2], "");
-  $name     = MatchOne("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
-  $date     = MatchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
-  $time     = MatchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
+  $uname    = MatchOnePattern("/uname\:\s*(.+)/",    $MACHINE_DATA[0], "");
+  $hardware = MatchOnePattern("/hardware\:\s*(.+)/", $MACHINE_DATA[1], "");
+  $os       = MatchOnePattern("/os\:\s*(.+)/",       $MACHINE_DATA[2], "");
+  $name     = MatchOnePattern("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
+  $date     = MatchOnePattern("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
+  $time     = MatchOnePattern("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
 
   if ($print_debug) {
     print "uname: $uname\n";
@@ -612,9 +612,9 @@ function acceptTest() {
    *
    *******************************************************************************/
 
-  $dejagnu_exp_passes     = MatchOne("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
-  $dejagnu_unexp_failures = MatchOne("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
-  $dejagnu_exp_failures   = MatchOne("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
+  $dejagnu_exp_passes     = MatchOnePattern("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
+  $dejagnu_unexp_failures = MatchOnePattern("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
+  $dejagnu_exp_failures   = MatchOnePattern("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
 
   if ($print_debug) {
     print "dejagnu_exp_passes: $dejagnu_exp_passes\n";
@@ -649,7 +649,7 @@ function acceptTest() {
   if (!DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version)) {
     AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, "test");
   }
-  $machine_id = GetMachineId($uname, $hardware, $os, $name, $nickname, $gcc_version);
+  $machine_id = GetMachineIdNum($uname, $hardware, $os, $name, $nickname, $gcc_version);
 
   if ($print_debug) {
     print "machine_id: $machine_id\n";
@@ -696,7 +696,7 @@ function acceptTest() {
   }
 
   foreach ($O_FILE_SIZE as $info) {
-    list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
+    list($ignore, $size, $file, $type) = MatchPattern("/(.+)\s+(.+)\s+(.+)/", $info);
     AddFile($file, $size, $night_id, $type);
   }
 
@@ -706,7 +706,7 @@ function acceptTest() {
   }
 
   foreach ($A_FILE_SIZE as $info) {
-    list($ignore, $size, $file, $type) = Match("/(.+)\s+(.+)\s+(.+)/", $info);
+    list($ignore, $size, $file, $type) = MatchPattern("/(.+)\s+(.+)\s+(.+)/", $info);
     AddFile($file, $size, $night_id, $type);
   }
 
@@ -839,8 +839,8 @@ function acceptTest() {
 
     // put measures into hash of arrays
     foreach ($monitoring as $measure) {
-      $value_new = MatchOne("/(\d+\.?\d*)/", $new_measures[$measure], "");
-      $value_old = MatchOne("/(\d+\.?\d*)/", $old_measures[$measure], "");
+      $value_new = MatchOnePattern("/(\d+\.?\d*)/", $new_measures[$measure], "");
+      $value_old = MatchOnePattern("/(\d+\.?\d*)/", $old_measures[$measure], "");
       
       if (StringIsNull($value_new) || StringIsNull($value_old)) continue;
       
@@ -979,4 +979,5 @@ function acceptTest() {
 }
 
 acceptTest();
+//acceptTestResults();
 ?>

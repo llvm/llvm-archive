@@ -379,10 +379,6 @@ $date     = matchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
 $time     = matchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
 $nickname = $_POST['nickname'];
 
-if(!isset($_POST['target_triple'])) {
-  shutdown($mysql_link);
-}
-
 $targetTriple = $_POST['target_triple'];
 
 //Get machine id or add new machine

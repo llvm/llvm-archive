@@ -548,5 +548,4 @@ if(strcmp($buildstatus, "OK") ==  0) {
 shutdown($mysql_link);
 }
 
-acceptTestResults();
 ?>

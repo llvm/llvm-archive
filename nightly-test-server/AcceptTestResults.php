@@ -367,7 +367,7 @@ function acceptTestResults() {
 $machine_data = $_POST['machine_data'];
 
 if (!isset($_POST['machine_data'])) {
-  shutdown();
+  shutdown($mysql_link);
 }
 
 $MACHINE_DATA = split("\n", $machine_data);
@@ -378,6 +378,12 @@ $hostname = matchOne("/name\:\s*(.+)/",     $MACHINE_DATA[3], "");
 $date     = matchOne("/date\:\s*(.+)/",     $MACHINE_DATA[4], "");
 $time     = matchOne("/time\:\s*(.+)/",     $MACHINE_DATA[5], "");
 $nickname = $_POST['nickname'];
+
+if(!isset($_POST['target_triple'])) {
+  shutdown($mysql_link);
+}
+
+$targetTriple = $_POST['target_triple'];
 
 //Get machine id or add new machine
 $machineId = getMachineID($targetTriple, $hostname, $nickname);

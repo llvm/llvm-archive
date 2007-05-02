@@ -466,7 +466,12 @@ function ProcessProgramLogs($tests) {
  *
  *******************************************************************************/
 function acceptTest() {
-  
+ 
+  // If no nickname is set, die here
+  if (!isset($_POST['nickname'])) {
+    return;
+  }
+ 
   $database = "nightlytestresults";
   $loginname = "llvm";
   $password = "ll2002vm";

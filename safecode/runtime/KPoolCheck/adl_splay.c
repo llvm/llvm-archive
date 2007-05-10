@@ -13,11 +13,48 @@ struct tree_node {
 
 static Tree* freelist = 0;
 static void* (*ext_alloc)(unsigned) = 0;
+unsigned int externallocs = 0;
+unsigned int allallocs = 0;
 
 static Tree initmem[1024];
 static int use = 0;
 
+static void *
+internal_malloc (unsigned int size)
+{
+  static unsigned char * page = 0;
+  static unsigned char * loc = 0;
+  unsigned char * retvalue;
+
+  if (size > 4096)
+    poolcheckfatal ("LLVA: internal_malloc: Size", size);
+
+  /*
+   * Allocate a new page if we've never had a page or there isn't any room
+   * in the current page.
+   */
+  if (!page)
+  {
+    loc = page = ext_alloc (0);
+    ++externallocs;
+  }
+
+  if ((loc+size) > (page + 4096))
+  {
+    loc = page = ext_alloc (0);
+    ++externallocs;
+  }
+
+  /*
+   * Allocate the space and return a pointer to it.
+   */
+  retvalue = loc;
+  loc += size;
+  return retvalue;
+}
+
 static inline Tree* tmalloc() {
+  ++allallocs;
   if(freelist) {
     Tree* t = freelist;
     freelist = freelist->left;
@@ -26,7 +63,7 @@ static inline Tree* tmalloc() {
     ++use;
     return &initmem[use-1];
   } else {
-    Tree * tmp = ext_alloc(sizeof(Tree));
+    Tree * tmp = internal_malloc(sizeof(Tree));
     if (!tmp)
       poolcheckfatal ("LLVA: tmalloc: Failed to allocate\n");
     return (Tree*) tmp;

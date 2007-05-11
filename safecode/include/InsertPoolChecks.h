@@ -77,6 +77,7 @@ struct InsertPoolChecks : public ModulePass {
   void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);
   bool insertExactCheck (GetElementPtrInst * GEP);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
+  bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
 
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);

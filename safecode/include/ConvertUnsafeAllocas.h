@@ -54,9 +54,14 @@ struct ConvertUnsafeAllocas : public ModulePass {
   DSNode * getDSNode(const Value *I, Function *F);
   DSNode * getTDDSNode(const Value *I, Function *F);
 
-  std::set<Instruction *>  & getUnsafeGetElementPtrsFromABC() {
+  std::map<BasicBlock*,std::set<Instruction *>*> & getUnsafeGetElementPtrsFromABC() {
     assert(abcPass != 0 && "First run the array bounds pass correctly");
     return abcPass->UnsafeGetElemPtrs;
+  }  
+
+  std::set<Instruction *> * getUnsafeGetElementPtrsFromABC(BasicBlock * BB) {
+    assert(abcPass != 0 && "First run the array bounds pass correctly");
+    return abcPass->getUnsafeGEPs (BB);
   }  
 
   // The set of Malloc Instructions that are a result of conversion from

@@ -8,7 +8,8 @@
 #include "AffineExpressions.h"
 #include "BottomUpCallGraph.h"
 
-#include<set>
+#include <map>
+#include <set>
 
 namespace llvm {
 
@@ -21,7 +22,7 @@ struct ArrayBoundsCheck : public ModulePass {
   public :
     const char *getPassName() const { return "Array Bounds Check"; }
     virtual bool runOnModule(Module &M);
-    std::set<Instruction*> UnsafeGetElemPtrs;
+    std::map<BasicBlock *,std::set<Instruction*>*> UnsafeGetElemPtrs;
     std::set<Instruction*> UnsafeCalls;
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -29,6 +30,11 @@ struct ArrayBoundsCheck : public ModulePass {
       AU.addRequired<BottomUpCallGraph>();
       AU.setPreservesAll();
     }
+
+    std::set<Instruction*> * getUnsafeGEPs (BasicBlock * BB) {
+      return UnsafeGetElemPtrs[BB];
+    }
+
   private :
   CompleteBUDataStructures *cbudsPass;
   BottomUpCallGraph *buCG;
@@ -67,6 +73,17 @@ struct ArrayBoundsCheck : public ModulePass {
   //This method adds constraints for known trusted functions
   ABCExprTree* addConstraintsForKnownFunctions(Function *kf, CallInst *CI);
     
+    // Mark an instruction as an unsafe GEP instruction
+    void MarkGEPUnsafe (Instruction * GEP) {
+      // Pointer to set of unsafe GEPs
+      std::set<Instruction*> * UnsafeGEPs;
+
+      if (!(UnsafeGetElemPtrs[GEP->getParent()]))
+        UnsafeGetElemPtrs[GEP->getParent()] = new std::set<Instruction*>;
+      UnsafeGEPs = UnsafeGetElemPtrs[GEP->getParent()];
+      UnsafeGEPs->insert(GEP);
+    }
+
     //Interface for getting constraints for a particular value
     void getConstraintsInternal( Value *v, ABCExprTree **rootp);
     void getConstraints( Value *v, ABCExprTree **rootp);

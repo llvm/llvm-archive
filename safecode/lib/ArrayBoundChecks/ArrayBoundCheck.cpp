@@ -863,12 +863,12 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
       if (result == 1) {
         std::cerr << "proved safe \n";
         std::cerr << maI;
-        //        UnsafeGetElemPtrs.insert(maI);        
+        //        MarkGEPUnsafe(maI);        
         //Omega proved SAFE 
       } else {
         std::cerr << "cannot prove safe " << countA;
         std::cerr << maI;
-        UnsafeGetElemPtrs.insert(maI);
+        MarkGEPUnsafe(maI);
       }
     }
   } else if (pid < 0) {
@@ -991,7 +991,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           }
 
           if (NoStaticChecks) {
-            UnsafeGetElemPtrs.insert(MAI);
+            MarkGEPUnsafe (MAI);
             continue;
           }
 
@@ -1043,7 +1043,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
             for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
               if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
                 safe = false;
-                UnsafeGetElemPtrs.insert(MAI);
+                MarkGEPUnsafe (MAI);
                 break;
               }
             }

@@ -543,6 +543,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // exactcheck on it, too, unless the array is at the end of the structure.
   // Then, we assume it's a variable length array and must be full checked.
   //
+#if 0
   if (const PointerType * PT = dyn_cast<PointerType>(PointerOperand->getType()))
     if (const StructType *ST = dyn_cast<StructType>(PT->getElementType())) {
       const Type * CurrentType = ST;
@@ -579,6 +580,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
         }
       }
     }
+#endif
 
   /*
    * We were not able to insert a call to exactcheck().
@@ -890,6 +892,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 }
 
 void InsertPoolChecks::simplifyGEPList() {
+#if 0
   std::set<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
   std::map< std::pair<Value*, BasicBlock*>, std::set<Instruction*> > m;
   for (std::set<Instruction *>::iterator ii = UnsafeGetElemPtrs.begin(), ee = UnsafeGetElemPtrs.end();
@@ -916,21 +919,154 @@ void InsertPoolChecks::simplifyGEPList() {
 
   std::cerr << "Singletons: " << singletons << " Multitons: " << multi << "\n";
 
+#endif
 }
 
+//
+// Function: compatibleGEPs()
+//
+// Description:
+//  Determine whether two GEPs address the same memory and have the (save the
+//  for last) same arguments.
+//
+// Return value:
+//  true  - All arguments (except possibly the last) are identical.
+//  false - One or more arguments besides the last argument are different.
+//
+static inline bool
+identicalGEPs (GetElementPtrInst * GEP1, GetElementPtrInst * GEP2) {
+  if (GEP1->getPointerOperand() != GEP2->getPointerOperand()) return false;
+  if (GEP1->getNumOperands()    != GEP2->getNumOperands())    return false;
+  for (unsigned index = 0; index < GEP1->getNumOperands() - 1; ++index) {
+    if (GEP1->getOperand(index) != GEP2->getOperand(index)) {
+      return false;
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool
+InsertPoolChecks::AggregateGEPs (GetElementPtrInst * MAI,
+                                 std::set<Instruction *> & RelatedGEPs) {
+  // Get the set of unsafe GEPs for this instruction's basic block
+  std::set<Instruction *> * UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC(MAI->getParent());
+  if (!UnsafeGetElemPtrs) {
+    RelatedGEPs.insert (MAI);
+    return true;
+  }
+
+  // If this GEP has already been deemed safe, then return;
+  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs->find(MAI);
+  if (iCurrent == UnsafeGetElemPtrs->end()) {
+    return true;
+  }
+
+  // Determine whether the GEP has a constant as its last index.
+  // If so, search for all other GEPs that have, save for the last index,
+  // identical operands.  Then select the two with the higest and lowest
+  // indices; we will perform our run-time checks on these.
+  std::set<Instruction *>::iterator UGI = UnsafeGetElemPtrs->begin(),
+                                    UGE = UnsafeGetElemPtrs->end();
+  Instruction * MinGEP = MAI;
+  Instruction * MaxGEP = MAI;
+  if (isa<ConstantInt>(MAI->getOperand((MAI->getNumOperands() - 1)))) {
+
+    for (;UGI != UGE; ++UGI) {
+      Instruction * I = *UGI;
+      GetElementPtrInst * GEP = dyn_cast<GetElementPtrInst>(I);
+      if (!GEP) continue;
+      if (!(isa<ConstantInt>(GEP->getOperand((GEP->getNumOperands() - 1))))) continue;
+      if (identicalGEPs (GEP, MAI)) {
+        ConstantInt * GEPLastIndex;
+        ConstantInt * MinLastIndex;
+        ConstantInt * MaxLastIndex;
+        GEPLastIndex = dyn_cast<ConstantInt>(GEP->getOperand(GEP->getNumOperands() - 1));
+        MinLastIndex = dyn_cast<ConstantInt>(MinGEP->getOperand(MinGEP->getNumOperands() - 1));
+        MaxLastIndex = dyn_cast<ConstantInt>(MaxGEP->getOperand(MaxGEP->getNumOperands() - 1));
+        if (GEPLastIndex->getSExtValue() < MinLastIndex->getSExtValue()) {
+          UnsafeGetElemPtrs->erase (MinGEP);
+          MinGEP = GEP;
+        }
+        if (GEPLastIndex->getSExtValue() > MaxLastIndex->getSExtValue()) {
+          UnsafeGetElemPtrs->erase (MaxGEP);
+          MaxGEP = GEP;
+        }
+      }
+    }
+
+    //
+    // Find the first compatible GEP in the basic block.
+    //
+    Instruction * Ins = MAI->getParent()->getFirstNonPHI();
+    GetElementPtrInst * FirstGEP = 0;
+    while (!(Ins->isTerminator())) {
+      if (FirstGEP = dyn_cast<GetElementPtrInst>(Ins)) {
+        if (identicalGEPs (MAI, FirstGEP))
+          break;
+      }
+      Ins = Ins->getNext();
+    }
+
+    //
+    // Move the minimum and maximum GEPs to before the first identical GEP.
+    //
+    if (FirstGEP != MinGEP) {
+      MinGEP->moveBefore (FirstGEP);
+    }
+    if (FirstGEP != MaxGEP) {
+      MaxGEP->moveBefore (FirstGEP);
+    }
+  }
+
+  RelatedGEPs.insert (MinGEP);
+  if (MinGEP != MaxGEP) RelatedGEPs.insert (MaxGEP);
+
+  return true;
+}
 
 void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
   // Get the set of unsafe GEP instructions from the array bounds check pass
   // If this instruction is not within that set, then the result of the GEP
   // instruction has been proven safe, and there is no need to insert a check.
-  std::set<Instruction *> & UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC();
-  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.find(MAI);
-  if (iCurrent == UnsafeGetElemPtrs.end()) {
+  std::set<Instruction *> * UnsafeGetElemPtrs = cuaPass->getUnsafeGetElementPtrsFromABC(MAI->getParent());
+  if (!UnsafeGetElemPtrs) return;
+  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs->find(MAI);
+  if (iCurrent == UnsafeGetElemPtrs->end()) {
 #if 0
     std::cerr << "statically proved safe : Not inserting checks " << *MAI << "\n";
 #endif
     return;
   }
+
+#if 0
+  // Find all unsafe GEPs within the basic block that are identical save for
+  // their last index
+  std::set<Instruction *> RelatedGEPs;
+  std::set<Instruction *>::iterator UGI = UnsafeGetElemPtrs->begin(),
+                                    UGE = UnsafeGetElemPtrs->end();
+  if (isa<ConstantInt>(MAI->getOperand((MAI->getNumOperands() - 1))))
+    for (;UGI != UGE; ++UGI) {
+      Instruction * I = *UGI;
+      GetElementPtrInst * GEP = dyn_cast<GetElementPtrInst>(I);
+      if (!GEP) continue;
+      if (GEP->getPointerOperand() != MAI->getPointerOperand()) continue;
+      if (GEP->getNumOperands() != MAI->getNumOperands()) continue;
+      if (!(isa<ConstantInt>(GEP->getOperand((GEP->getNumOperands() - 1))))) continue;
+      bool identical = true;
+      for (unsigned index = 0; index < GEP->getNumOperands() - 1; ++index) {
+        if (GEP->getOperand(index) != MAI->getOperand(index)) {
+          identical = false;
+          break;
+        }
+      }
+      if (identical)
+        RelatedGEPs.insert (GEP);
+    }
+
+  std::cerr << "LLVA: RelatedGEP: " << RelatedGEPs.size() << std::endl;
+#endif
 
   if (InsertPoolChecksForArrays) {
     Function *F = MAI->getParent()->getParent();
@@ -1436,7 +1572,14 @@ void InsertPoolChecks::TransformFunction(Function &F) {
     if (isa<GetElementPtrInst>(iLocal)) {
       GetElementPtrInst *MAI = cast<GetElementPtrInst>(iLocal);
       ++I;
-      handleGetElementPtr(MAI);
+      std::set<Instruction *> CheckSet;
+      AggregateGEPs (MAI, CheckSet);
+      for (std::set<Instruction *>::iterator GEP = CheckSet.begin();
+           GEP != CheckSet.end(); ++GEP) {
+        Instruction * I = *GEP;
+        GetElementPtrInst * GEPI = dyn_cast<GetElementPtrInst>(I);
+        handleGetElementPtr(GEPI);
+      }
       continue;
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(iLocal)) {
       AllocaInst * AIOrig = AI;

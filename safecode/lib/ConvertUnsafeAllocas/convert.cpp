@@ -361,21 +361,25 @@ void ConvertUnsafeAllocas::TransformCollapsedAllocas(Module &M) {
 }
 
 void ConvertUnsafeAllocas::getUnsafeAllocsFromABC() {
-  std::set<Instruction *> & UnsafeGetElemPtrs = abcPass->UnsafeGetElemPtrs;
-  std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs.begin(), iEnd = UnsafeGetElemPtrs.end();
-  for (; iCurrent != iEnd; ++iCurrent) {
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*iCurrent)) {
-      Value *pointerOperand = GEP->getPointerOperand();
-      DSGraph &TDG = budsPass->getDSGraph(*(GEP->getParent()->getParent()));
-      DSNode *DSN = TDG.getNodeForValue(pointerOperand).getNode();
-      //FIXME DO we really need this ?	    markReachableAllocas(DSN);
-      if (DSN && DSN->isAllocaNode() && !DSN->isNodeCompletelyFolded()) {
-        unsafeAllocaNodes.push_back(DSN);
+  std::map<BasicBlock *,std::set<Instruction*>*> UnsafeGEPMap= abcPass->UnsafeGetElemPtrs;
+  std::map<BasicBlock *,std::set<Instruction*>*>::const_iterator bCurrent = UnsafeGEPMap.begin(), bEnd = UnsafeGEPMap.end();
+  for (; bCurrent != bEnd; ++bCurrent) {
+    std::set<Instruction *> * UnsafeGetElemPtrs = bCurrent->second;
+    std::set<Instruction *>::const_iterator iCurrent = UnsafeGetElemPtrs->begin(), iEnd = UnsafeGetElemPtrs->end();
+    for (; iCurrent != iEnd; ++iCurrent) {
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*iCurrent)) {
+        Value *pointerOperand = GEP->getPointerOperand();
+        DSGraph &TDG = budsPass->getDSGraph(*(GEP->getParent()->getParent()));
+        DSNode *DSN = TDG.getNodeForValue(pointerOperand).getNode();
+        //FIXME DO we really need this ?	    markReachableAllocas(DSN);
+        if (DSN && DSN->isAllocaNode() && !DSN->isNodeCompletelyFolded()) {
+          unsafeAllocaNodes.push_back(DSN);
+        }
+      } else {
+        
+        //call instruction add the corresponding 	  *iCurrent->dump();
+        //FIXME 	  abort();
       }
-    } else {
-      
-      //call instruction add the corresponding 	  *iCurrent->dump();
-      //FIXME 	  abort();
     }
   }
 }

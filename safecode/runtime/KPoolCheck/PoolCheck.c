@@ -23,6 +23,9 @@
 
 /* Flag whether we are ready to perform pool operations */
 static int ready = 0;
+/* Flag whether to do profiling */
+/* profiling only works if this library is compiled to a .o file, not llvm */
+static const int do_profile = 1;
 
 static const int use_oob = 0;
 
@@ -100,7 +103,7 @@ static void mtfCache(MetaPoolTy* MP, int ent) {
 
 static int insertCache(MetaPoolTy* MP, void* addr) {
   addr = maskaddr(addr);
-  if (!addr) return;
+  if (!addr) return 0;
   if (!MP->cache0) {
     MP->cache0 = addr;
     return 1;
@@ -148,7 +151,7 @@ void pchk_init(void) {
 
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
-  if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr, (0)); return; }
+  if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr); return; }
   PCLOCK();
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
   PCUNLOCK();
@@ -165,15 +168,15 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
-  if (!MP) { poolcheckinfo("reg obj on null pool", addr, (int)(0)); return; }
-  if (ready) poolcheckinfo ("pchk_reg_obj", addr, len);
+  if (!MP) { poolcheckinfo("reg obj on null pool", addr); return; }
+  if (ready) poolcheckinfo2 ("pchk_reg_obj", addr, len);
   PCLOCK();
 #if 1
   {
   void * S = addr;
   unsigned len, tag = 0;
   if ((ready) && (adl_splay_retrieve(&MP->Objs, &S, &len, &tag)))
-    poolcheckinfo ("regobj: Object exists", __builtin_return_address(0), tag);
+    poolcheckinfo2 ("regobj: Object exists", __builtin_return_address(0), tag);
   }
 #endif
 
@@ -223,6 +226,7 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_poolcheck;
   PCLOCK();
   int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
@@ -235,6 +239,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_poolcheckarray;
   /* try slabs first */
   void* S = src;
@@ -261,6 +266,7 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
 /* if src and dest do not exist in the pool, pass */
 void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_poolcheckarray_i;
   /* try slabs first */
   void* S = src;
@@ -330,6 +336,7 @@ void exactcheck2(signed char *base, signed char *result, unsigned size) {
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -353,7 +360,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
       poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
       return dest;
     }
-    poolcheckinfo("Returning oob pointer of ", (int)P, __builtin_return_address(0));
+    poolcheckinfo2("Returning oob pointer of ", (int)P, __builtin_return_address(0));
     PCLOCK2();
     adl_splay_insert(&MP->OOB, P, 1, dest);
     PCUNLOCK()
@@ -380,6 +387,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck_i;
   /* try fail cache */
   PCLOCK();
@@ -436,4 +444,97 @@ void exactcheck(int a, int b) {
     poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
     poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));
   }
+}
+
+
+/* Profiling support */
+
+struct pr {
+  void* pc;
+  unsigned count;
+};
+
+#define profile_count 4096
+
+static struct pr profile_data[profile_count]; /* 2 pages */
+
+static void profile_print();
+
+static void pchk_resize() {
+  /* lacking a better time, print out the stats when resizing */
+  profile_print();
+
+  /* walk the profile_data and halve everything
+     anything with a zero count then gets removed */
+  int x;
+  for (x = 0; x < profile_count; ++x) {
+    profile_data[x].count /= 2;
+    if (!profile_data[x].count)
+      profile_data[x].pc = 0;
+  }
+}
+
+void pchk_profile(void* pc) {
+  int last_empty = -1;
+  int x;
+  for (x = 0; x < profile_count; ++x) {
+    if (profile_data[x].pc == pc) {
+      ++profile_data[x].count;
+      /* prevent overflow */
+      if (~profile_data[x].count == 0)
+        pchk_resize();
+      return;
+    } else if (profile_data[x].pc == 0)
+      last_empty = x;
+  }
+  if (last_empty != -1) {
+    profile_data[x].pc = pc;
+    profile_data[x].count = 1;
+    return;
+  }
+  /* full? shrink everything and try again */
+  pchk_resize();
+  pchk_profile(pc);
+}
+
+/* print the top 10 sites */
+static void profile_print() {
+  struct pr top[10];
+  int minval = 0;
+  int minat = 0;
+  int x,y;
+  for (x = 0; x < profile_count; ++x) {
+    if (profile_data[x].count > minval) {
+      top[minat].pc = profile_data[x].pc;
+      top[minat].count = profile_data[x].count;
+      minat = 0;
+      minval = top[0].count;
+      for (y = 0; y < 10; ++y) {
+        if (top[y].count < minval) {
+          minat = y;
+          minval = top[y].count;
+        }
+      }
+    }
+  }
+  poolcheckinfo("LLVA: profile 0 at ",   (int)top[0].pc);
+  poolcheckinfo("LLVA: profile 0 count", (int)top[0].count);
+  poolcheckinfo("LLVA: profile 1 at ",   (int)top[1].pc);
+  poolcheckinfo("LLVA: profile 1 count", (int)top[1].count);
+  poolcheckinfo("LLVA: profile 2 at ",   (int)top[2].pc);
+  poolcheckinfo("LLVA: profile 2 count", (int)top[2].count);
+  poolcheckinfo("LLVA: profile 3 at ",   (int)top[3].pc);
+  poolcheckinfo("LLVA: profile 3 count", (int)top[3].count);
+  poolcheckinfo("LLVA: profile 4 at ",   (int)top[4].pc);
+  poolcheckinfo("LLVA: profile 4 count", (int)top[4].count);
+  poolcheckinfo("LLVA: profile 5 at ",   (int)top[5].pc);
+  poolcheckinfo("LLVA: profile 5 count", (int)top[5].count);
+  poolcheckinfo("LLVA: profile 6 at ",   (int)top[6].pc);
+  poolcheckinfo("LLVA: profile 6 count", (int)top[6].count);
+  poolcheckinfo("LLVA: profile 7 at ",   (int)top[7].pc);
+  poolcheckinfo("LLVA: profile 7 count", (int)top[7].count);
+  poolcheckinfo("LLVA: profile 8 at ",   (int)top[8].pc);
+  poolcheckinfo("LLVA: profile 8 count", (int)top[8].count);
+  poolcheckinfo("LLVA: profile 9 at ",   (int)top[9].pc);
+  poolcheckinfo("LLVA: profile 9 count", (int)top[9].count);
 }

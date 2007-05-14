@@ -38,6 +38,10 @@ cl::opt<bool> EnableIncompleteChecks  ("enable-incompletechecks", cl::Hidden,
                                 cl::init(false),
                                 cl::desc("Enable Checks on Incomplete Nodes"));
 
+cl::opt<bool> EnableUnknownChecks ("enable-unknownchecks", cl::Hidden,
+                                   cl::init(false),
+                                   cl::desc("Enable Checks on Unknown Nodes"));
+
 cl::opt<bool> EnableNullChecks  ("enable-nullchecks", cl::Hidden,
                                 cl::init(false),
                                 cl::desc("Enable Checks on NULL Pools"));
@@ -266,15 +270,11 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // be counted more than once.
   if (Node->isIncomplete())
     ++IBoundsChecks;
-#if 0
-  if (Node->isUnknownNode())
-    ++UBoundsChecks;
-#else
   if (Node->isUnknownNode()) {
     ++UBoundsChecks;
-    return Dest;
+    if (!EnableUnknownChecks)
+      return Dest;
   }
-#endif
   if (Node->isAllocaNode())
     ++ABoundsChecks;
 

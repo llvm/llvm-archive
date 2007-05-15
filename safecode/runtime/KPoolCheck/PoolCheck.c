@@ -327,6 +327,52 @@ void exactcheck2(signed char *base, signed char *result, unsigned size) {
 }
 
 /*
+ * Function: getBounds()
+ *
+ * Description:
+ *  Get the bounds associated with this object in the specified metapool.
+ *
+ * Return value:
+ *  If the node is found in the pool, it returns the bounds.
+ *  If the node is not found in the pool, it returns 0x00000000.
+ *  If the pool is not yet ready, it returns 0xffffffff
+ */
+void* getBounds(MetaPoolTy* MP, void* src) {
+  if (!ready || !MP) return 0xffffffff;
+  ++stat_boundscheck;
+  /* try objs */
+  void* S = src;
+  unsigned len = 0;
+  PCLOCK();
+  int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  PCUNLOCK();
+  return ((fs) ? len : 0);
+}
+
+/*
+ * Function: getBounds_i()
+ *
+ * Description:
+ *  Get the bounds associated with this object in the specified metapool.
+ *
+ * Return value:
+ *  If the node is found in the pool, it returns the bounds.
+ *  If the node is not found in the pool, it returns 0xffffffff.
+ *  If the pool is not yet ready, it returns 0xffffffff
+ */
+void* getBounds_i(MetaPoolTy* MP, void* src) {
+  if (!ready || !MP) return 0xffffffff;
+  ++stat_boundscheck;
+  /* try objs */
+  void* S = src;
+  unsigned len = 0;
+  PCLOCK();
+  int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  PCUNLOCK();
+  return ((fs) ? len : 0xffffffff);
+}
+
+/*
  * Function: boundscheck()
  *
  * Description:

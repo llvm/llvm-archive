@@ -297,6 +297,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   //
   // Insert the bounds check.
   //
+#if 0
   std::vector<Value *> args(1, PH);
   args.push_back (SrcCast);
   args.push_back (DestCast);
@@ -308,10 +309,27 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     CI = new CallInst(UIBoundsCheck, args, "uibc",InsertPt);
   else
     CI = new CallInst(BoundsCheck, args, "bc", InsertPt);
+#else
+  std::vector<Value *> args(1, PH);
+  args.push_back (SrcCast);
+  Instruction * CI;
+  if ((Node == 0) ||
+      (Node->isAllocaNode()) ||
+      (Node->isIncomplete()) ||
+      (Node->isUnknownNode()))
+    CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
+  else
+    CI = new CallInst(getBounds, args, "bc", InsertPt);
+  addExactCheck2 (SrcCast, DestCast, CI, CI->getNext());
+#endif
 
   // Update statistics
   ++BoundsChecks;
+#if 0
   return CI;
+#else
+  return Dest;
+#endif
 }
 
 //
@@ -364,6 +382,55 @@ InsertPoolChecks::addExactCheck2 (GetElementPtrInst * GEP,
   ++ExactChecks;
   return;
 }
+
+//
+// Function: addExactCheck2()
+//
+// Description:
+//  Utility routine that inserts a call to exactcheck2().
+//
+// Inputs:
+//  GEP    - The GEP for which the check will be done.
+//  Bounds - An LLVM Value representing the bounds of the check.
+//
+void
+InsertPoolChecks::addExactCheck2 (Value * Source,
+                                  Value * Result,
+                                  Value * Bounds,
+                                  Instruction * InsertPt) {
+  // The LLVM type for a void *
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+
+  //
+  // Cast the operands to the correct type.
+  //
+  Value * BasePointer = Source;
+  if (BasePointer->getType() != VoidPtrType)
+    BasePointer = new CastInst(BasePointer, VoidPtrType,
+                               BasePointer->getName()+".ec2.casted",
+                               InsertPt);
+
+  Value * ResultPointer = Result;
+  if (ResultPointer->getType() != VoidPtrType)
+    ResultPointer = new CastInst(Result, VoidPtrType,
+                                 Result->getName()+".ec2.casted",
+                                 InsertPt);
+
+  Value * CastBounds = Bounds;
+  if (Bounds->getType() != Type::UIntTy)
+    CastBounds = new CastInst(Bounds, Type::UIntTy,
+                              Bounds->getName()+".ec.casted", InsertPt);
+
+  std::vector<Value *> args(1, BasePointer);
+  args.push_back(ResultPointer);
+  args.push_back(CastBounds);
+  new CallInst(ExactCheck2, args, "", InsertPt);
+
+  // Update statistics
+  ++ExactChecks;
+  return;
+}
+
 
 //
 // Function: addExactCheck()
@@ -1940,6 +2007,12 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
   BoundsCheck   = M.getOrInsertFunction("pchk_bounds", BoundsCheckTy);
   UIBoundsCheck = M.getOrInsertFunction("pchk_bounds_i", BoundsCheckTy);
+
+  std::vector<const Type *> Arg4(1, VoidPtrType);
+  Arg4.push_back(VoidPtrType);
+  FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
+  getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
+  UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
 
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,

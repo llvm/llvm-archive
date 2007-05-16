@@ -37,6 +37,7 @@ int stat_boundscheck=0;
 int stat_boundscheck_i=0;
 int stat_exactcheck=0;
 int stat_exactcheck2=0;
+int stat_exactcheck3=0;
 
 extern void llva_load_lif (unsigned int enable);
 extern unsigned int llva_save_lif (void);
@@ -151,7 +152,11 @@ void pchk_init(void) {
 
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
+#if 0
   if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr); return; }
+#else
+  if (!MP) { return; }
+#endif
   PCLOCK();
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
   PCUNLOCK();
@@ -168,10 +173,16 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
+#if 0
   if (!MP) { poolcheckinfo("reg obj on null pool", addr); return; }
+#else
+  if (!MP) { return; }
+#endif
+#if 0
   if (ready) poolcheckinfo2 ("pchk_reg_obj", addr, len);
+#endif
   PCLOCK();
-#if 1
+#if 0
   {
   void * S = addr;
   unsigned len, tag = 0;
@@ -326,6 +337,13 @@ void exactcheck2(signed char *base, signed char *result, unsigned size) {
   }
 }
 
+void exactcheck3(signed char *base, signed char *result, signed char * end) {
+  ++stat_exactcheck3;
+  if ((result < base) || (result > end )) {
+    poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
+  }
+}
+
 /*
  * Function: getBounds()
  *
@@ -333,12 +351,32 @@ void exactcheck2(signed char *base, signed char *result, unsigned size) {
  *  Get the bounds associated with this object in the specified metapool.
  *
  * Return value:
- *  If the node is found in the pool, it returns the bounds.
+ *  If the node is found in the pool, it returns the bounds relative to
+ *  *src* (NOT the beginning of the object).
  *  If the node is not found in the pool, it returns 0x00000000.
  *  If the pool is not yet ready, it returns 0xffffffff
  */
+struct node {
+  void* left;
+  void* right;
+  char* key;
+  char* end;
+  void* tag;
+};
+
+struct node not_found = {0, 0, 0, (char *)0x00000000, 0};
+struct node found =     {0, 0, 0, (char *)0xffffffff, 0};
+
+void * getBegin (void * node) {
+  return ((struct node *)(node))->key;
+}
+
+void * getEnd (void * node) {
+  return ((struct node *)(node))->end;
+}
+
 void* getBounds(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP) return 0xffffffff;
+  if (!ready || !MP) return &found;
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -346,7 +384,10 @@ void* getBounds(MetaPoolTy* MP, void* src) {
   PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
-  return ((fs) ? len : 0);
+  if (fs) {
+    return (MP->Objs);
+  }
+  return &not_found;
 }
 
 /*
@@ -361,7 +402,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  *  If the pool is not yet ready, it returns 0xffffffff
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP) return 0xffffffff;
+  if (!ready || !MP) return &found;
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -369,7 +410,10 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
-  return ((fs) ? len : 0xffffffff);
+  if (fs) {
+    return MP->Objs;
+  }
+  return &found;
 }
 
 /*
@@ -505,6 +549,11 @@ struct pr {
 static struct pr profile_data[profile_count]; /* 2 pages */
 
 static void profile_print();
+
+void llva_profile_print ()
+{
+  profile_print();
+}
 
 static void pchk_resize() {
   /* lacking a better time, print out the stats when resizing */

@@ -558,6 +558,8 @@ void llva_profile_print ()
   profile_print();
 }
 
+int profile_pause = 0;
+
 static void pchk_resize() {
   /* lacking a better time, print out the stats when resizing */
   profile_print();
@@ -573,6 +575,8 @@ static void pchk_resize() {
 }
 
 void pchk_profile(void* pc) {
+  if (profile_pause) return;
+
   int last_empty = -1;
   int x;
   for (x = 0; x < profile_count; ++x) {
@@ -597,10 +601,12 @@ void pchk_profile(void* pc) {
 
 /* print the top 10 sites */
 static void profile_print() {
+  profile_pause = 1;
   int x;
   for (x = 0; x < profile_count; ++x) {
     if (profile_data[x].count > 3000)
       poolcheckinfo2("LLVA: profile ", (int)profile_data[x].pc, 
                      (int) profile_data[x].count);
   }
+  profile_pause = 0;
 }

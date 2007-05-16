@@ -407,10 +407,18 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
   if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck;
+  //Try fail cache first
+  PCLOCK();
+  int i = isInCache(MP, src);
+  if (i) {
+    mtfCache(MP, i);
+    PCUNLOCK();
+    return &found;
+  }
   /* try objs */
   void* S = src;
   unsigned len = 0;
-  PCLOCK();
+  PCLOCK2();
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
   if (fs) {

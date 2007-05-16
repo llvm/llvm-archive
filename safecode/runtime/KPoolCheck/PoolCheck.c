@@ -579,7 +579,7 @@ void pchk_profile(void* pc) {
     if (profile_data[x].pc == pc) {
       ++profile_data[x].count;
       /* prevent overflow */
-      if (~profile_data[x].count == 0)
+      if (profile_data[x].count > 10000)
         pchk_resize();
       return;
     } else if (profile_data[x].pc == 0)
@@ -597,42 +597,10 @@ void pchk_profile(void* pc) {
 
 /* print the top 10 sites */
 static void profile_print() {
-  struct pr top[10];
-  int minval = 0;
-  int minat = 0;
-  int x,y;
+  int x;
   for (x = 0; x < profile_count; ++x) {
-    if (profile_data[x].count > minval) {
-      top[minat].pc = profile_data[x].pc;
-      top[minat].count = profile_data[x].count;
-      minat = 0;
-      minval = top[0].count;
-      for (y = 0; y < 10; ++y) {
-        if (top[y].count < minval) {
-          minat = y;
-          minval = top[y].count;
-        }
-      }
-    }
+    if (profile_data[x].count > 3000)
+      poolcheckinfo2("LLVA: profile ", (int)profile_data[x].pc, 
+                     (int) profile_data[x].count);
   }
-  poolcheckinfo("LLVA: profile 0 at ",   (int)top[0].pc);
-  poolcheckinfo("LLVA: profile 0 count", (int)top[0].count);
-  poolcheckinfo("LLVA: profile 1 at ",   (int)top[1].pc);
-  poolcheckinfo("LLVA: profile 1 count", (int)top[1].count);
-  poolcheckinfo("LLVA: profile 2 at ",   (int)top[2].pc);
-  poolcheckinfo("LLVA: profile 2 count", (int)top[2].count);
-  poolcheckinfo("LLVA: profile 3 at ",   (int)top[3].pc);
-  poolcheckinfo("LLVA: profile 3 count", (int)top[3].count);
-  poolcheckinfo("LLVA: profile 4 at ",   (int)top[4].pc);
-  poolcheckinfo("LLVA: profile 4 count", (int)top[4].count);
-  poolcheckinfo("LLVA: profile 5 at ",   (int)top[5].pc);
-  poolcheckinfo("LLVA: profile 5 count", (int)top[5].count);
-  poolcheckinfo("LLVA: profile 6 at ",   (int)top[6].pc);
-  poolcheckinfo("LLVA: profile 6 count", (int)top[6].count);
-  poolcheckinfo("LLVA: profile 7 at ",   (int)top[7].pc);
-  poolcheckinfo("LLVA: profile 7 count", (int)top[7].count);
-  poolcheckinfo("LLVA: profile 8 at ",   (int)top[8].pc);
-  poolcheckinfo("LLVA: profile 8 count", (int)top[8].count);
-  poolcheckinfo("LLVA: profile 9 at ",   (int)top[9].pc);
-  poolcheckinfo("LLVA: profile 9 count", (int)top[9].count);
 }

@@ -23,6 +23,7 @@ extern int stat_boundscheck;
 extern int stat_boundscheck_i;
 extern int stat_exactcheck;
 extern int stat_exactcheck2;
+extern int stat_exactcheck3;
 extern unsigned int externallocs;
 extern unsigned int allallocs;
 
@@ -39,6 +40,7 @@ getstackpromotes()
   poolcheckinfo ("LLVA: getstackpromotes", stack_promotes);
   poolcheckinfo ("LLVA: stat_exactcheck", stat_exactcheck);
   poolcheckinfo ("LLVA: stat_exactcheck2", stat_exactcheck2);
+  poolcheckinfo ("LLVA: stat_exactcheck3", stat_exactcheck3);
   poolcheckinfo ("LLVA: stat_poolcheck", stat_poolcheck);
   poolcheckinfo ("LLVA: stat_poolcheckarray", stat_poolcheckarray);
   poolcheckinfo ("LLVA: stat_poolcheckarray_i", stat_poolcheckarray_i);

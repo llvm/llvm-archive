@@ -320,7 +320,10 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
   else
     CI = new CallInst(getBounds, args, "bc", InsertPt);
-  addExactCheck2 (SrcCast, DestCast, CI, CI->getNext());
+  std::vector<Value *> boundsargs(1, CI);
+  Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
+  Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
+  addExactCheck3 (LowerBound, DestCast, UpperBound, InsertPt);
 #endif
 
   // Update statistics
@@ -384,17 +387,19 @@ InsertPoolChecks::addExactCheck2 (GetElementPtrInst * GEP,
 }
 
 //
-// Function: addExactCheck2()
+// Function: addExactCheck3()
 //
 // Description:
-//  Utility routine that inserts a call to exactcheck2().
+//  Utility routine that inserts a call to exactcheck3().
 //
 // Inputs:
-//  GEP    - The GEP for which the check will be done.
-//  Bounds - An LLVM Value representing the bounds of the check.
+//  Source   - The pointer that is the lower bound of the array.
+//  Result   - The pointer that we wish to check.
+//  Bounds   - The length of the array in bytes.
+//  InsertPt - The instruction before which to insert the check.
 //
 void
-InsertPoolChecks::addExactCheck2 (Value * Source,
+InsertPoolChecks::addExactCheck3 (Value * Source,
                                   Value * Result,
                                   Value * Bounds,
                                   Instruction * InsertPt) {
@@ -417,14 +422,14 @@ InsertPoolChecks::addExactCheck2 (Value * Source,
                                  InsertPt);
 
   Value * CastBounds = Bounds;
-  if (Bounds->getType() != Type::UIntTy)
-    CastBounds = new CastInst(Bounds, Type::UIntTy,
+  if (Bounds->getType() != VoidPtrType)
+    CastBounds = new CastInst(Bounds, VoidPtrType,
                               Bounds->getName()+".ec.casted", InsertPt);
 
   std::vector<Value *> args(1, BasePointer);
   args.push_back(ResultPointer);
   args.push_back(CastBounds);
-  new CallInst(ExactCheck2, args, "", InsertPt);
+  new CallInst(ExactCheck3, args, "", InsertPt);
 
   // Update statistics
   ++ExactChecks;
@@ -2044,8 +2049,17 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FArg4.push_back(Type::UIntTy); //size
   FunctionType *ExactCheck2Ty = FunctionType::get(Type::VoidTy, FArg4, false);
   ExactCheck2 = M.getOrInsertFunction("exactcheck2", ExactCheck2Ty);
-  
-  
+
+  std::vector<const Type*> FArg7(1, VoidPtrType); //base
+  FArg7.push_back(VoidPtrType); //result
+  FArg7.push_back(VoidPtrType); //end
+  FunctionType *ExactCheck3Ty = FunctionType::get(Type::VoidTy, FArg7, false);
+  ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
+
+  std::vector<const Type*> FArg6(1, VoidPtrType); //base
+  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg6, false);
+  getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
+  getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
 }
 
 DSNode* InsertPoolChecks::getDSNode(const Value *V, Function *F) {

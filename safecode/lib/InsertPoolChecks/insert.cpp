@@ -29,6 +29,10 @@ extern Value *getRepresentativeMetaPD(Value *);
 
 RegisterPass<InsertPoolChecks> ipc("safecode", "insert runtime checks");
 
+cl::opt<bool> EnableSplitChecks  ("enable-splitchecks", cl::Hidden,
+                                  cl::init(false),
+                                  cl::desc("Split lookup and checks"));
+
 cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::Hidden, cl::init(false),
                 cl::desc("Insert pool checks instead of exact bounds checks"));
@@ -297,42 +301,48 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   //
   // Insert the bounds check.
   //
-#if 0
-  std::vector<Value *> args(1, PH);
-  args.push_back (SrcCast);
-  args.push_back (DestCast);
-  Instruction * CI;
-  if ((Node == 0) ||
-      (Node->isAllocaNode()) ||
-      (Node->isIncomplete()) ||
-      (Node->isUnknownNode()))
-    CI = new CallInst(UIBoundsCheck, args, "uibc",InsertPt);
-  else
-    CI = new CallInst(BoundsCheck, args, "bc", InsertPt);
-#else
-  std::vector<Value *> args(1, PH);
-  args.push_back (SrcCast);
-  Instruction * CI;
-  if ((Node == 0) ||
-      (Node->isAllocaNode()) ||
-      (Node->isIncomplete()) ||
-      (Node->isUnknownNode()))
-    CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
-  else
-    CI = new CallInst(getBounds, args, "bc", InsertPt);
-  std::vector<Value *> boundsargs(1, CI);
-  Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
-  Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
-  addExactCheck3 (LowerBound, DestCast, UpperBound, InsertPt);
-#endif
+  Value * CI;
+  if (EnableSplitChecks) {
+    std::vector<Value *> args(1, PH);
+    args.push_back (SrcCast);
+    if ((Node == 0) ||
+        (Node->isAllocaNode()) ||
+        (Node->isIncomplete()) ||
+        (Node->isUnknownNode()))
+      CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
+    else
+      CI = new CallInst(getBounds, args, "bc", InsertPt);
+    std::vector<Value *> boundsargs(1, CI);
+    Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
+    Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
+    Value * EC3 = addExactCheck3 (LowerBound, DestCast, UpperBound, InsertPt);
+    if (EC3->getType() != Dest->getType())
+      EC3 = new CastInst(EC3, Dest->getType(), EC3->getName(), InsertPt);
+
+    // Replace all uses of the original pointer with the result of the exactcheck.
+    // This ensures that the check will not get dead code eliminated.
+    Value::use_iterator UI = Dest->use_begin();
+    for (; UI != Dest->use_end(); ++UI) {
+      if (((*UI) != EC3) && ((*UI) != DestCast))
+        UI->replaceUsesOfWith (Dest,EC3);
+    }
+    CI = EC3;
+  } else {
+    std::vector<Value *> args(1, PH);
+    args.push_back (SrcCast);
+    args.push_back (DestCast);
+    if ((Node == 0) ||
+        (Node->isAllocaNode()) ||
+        (Node->isIncomplete()) ||
+        (Node->isUnknownNode()))
+      CI = new CallInst(UIBoundsCheck, args, "uibc",InsertPt);
+    else
+      CI = new CallInst(BoundsCheck, args, "bc", InsertPt);
+  }
 
   // Update statistics
   ++BoundsChecks;
-#if 0
   return CI;
-#else
-  return Dest;
-#endif
 }
 
 //
@@ -398,7 +408,7 @@ InsertPoolChecks::addExactCheck2 (GetElementPtrInst * GEP,
 //  Bounds   - The length of the array in bytes.
 //  InsertPt - The instruction before which to insert the check.
 //
-void
+Value *
 InsertPoolChecks::addExactCheck3 (Value * Source,
                                   Value * Result,
                                   Value * Bounds,
@@ -406,34 +416,34 @@ InsertPoolChecks::addExactCheck3 (Value * Source,
   // The LLVM type for a void *
   Type *VoidPtrType = PointerType::get(Type::SByteTy); 
 
+  // Update statistics
+  ++ExactChecks;
+
   //
   // Cast the operands to the correct type.
   //
   Value * BasePointer = Source;
   if (BasePointer->getType() != VoidPtrType)
     BasePointer = new CastInst(BasePointer, VoidPtrType,
-                               BasePointer->getName()+".ec2.casted",
+                               BasePointer->getName()+".ec3.base.casted",
                                InsertPt);
 
   Value * ResultPointer = Result;
   if (ResultPointer->getType() != VoidPtrType)
     ResultPointer = new CastInst(Result, VoidPtrType,
-                                 Result->getName()+".ec2.casted",
+                                 Result->getName()+".ec3.result.casted",
                                  InsertPt);
 
   Value * CastBounds = Bounds;
   if (Bounds->getType() != VoidPtrType)
     CastBounds = new CastInst(Bounds, VoidPtrType,
-                              Bounds->getName()+".ec.casted", InsertPt);
+                              Bounds->getName()+".ec3.end.casted", InsertPt);
 
   std::vector<Value *> args(1, BasePointer);
   args.push_back(ResultPointer);
   args.push_back(CastBounds);
-  new CallInst(ExactCheck3, args, "", InsertPt);
 
-  // Update statistics
-  ++ExactChecks;
-  return;
+  return new CallInst(ExactCheck3, args, "ec3", InsertPt);
 }
 
 
@@ -2053,7 +2063,7 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   std::vector<const Type*> FArg7(1, VoidPtrType); //base
   FArg7.push_back(VoidPtrType); //result
   FArg7.push_back(VoidPtrType); //end
-  FunctionType *ExactCheck3Ty = FunctionType::get(Type::VoidTy, FArg7, false);
+  FunctionType *ExactCheck3Ty = FunctionType::get(VoidPtrType, FArg7, false);
   ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
 
   std::vector<const Type*> FArg6(1, VoidPtrType); //base

@@ -377,6 +377,7 @@ void * getEnd (void * node) {
 
 void* getBounds(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -403,6 +404,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
+  if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck;
   /* try objs */
   void* S = src;

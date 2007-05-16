@@ -54,11 +54,14 @@ struct InsertPoolChecks : public ModulePass {
   Function *getBounds;
   Function *UIgetBounds;
   Function *ExactCheck2;
+  Function *ExactCheck3;
   Function *GetActualValue;
   Function *PoolRegister;
   Function *ObjFree;
   Function *PoolRegMP;
   Function *PoolFindMP;
+  Function *getBegin;
+  Function *getEnd;
 
   void simplifyGEPList();
   void addObjFrees(Module& M);
@@ -77,7 +80,7 @@ struct InsertPoolChecks : public ModulePass {
   void registerGlobalArraysWithGlobalPools(Module &M);
   void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
   void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);
-  void addExactCheck2 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
+  void addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
   bool insertExactCheck (GetElementPtrInst * GEP);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);

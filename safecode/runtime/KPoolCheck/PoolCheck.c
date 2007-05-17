@@ -414,16 +414,20 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   ++stat_boundscheck;
   //Try fail cache first
   PCLOCK();
+#if 0
   int i = isInCache(MP, src);
   if (i) {
     mtfCache(MP, i);
     PCUNLOCK();
     return &found;
   }
+#endif
   /* try objs */
   void* S = src;
   unsigned len = 0;
+#if 0
   PCLOCK2();
+#endif
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
   if (fs) {
@@ -544,13 +548,13 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   return dest;
 }
 
-int exactcheck(int a, int b) {
+void * exactcheck(int a, int b, void * result) {
   ++stat_exactcheck;
   if ((0 > a) || (a >= b)) {
     if(do_fail) poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
     if(do_fail) poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));
   }
-  return a;
+  return result;
 }
 
 

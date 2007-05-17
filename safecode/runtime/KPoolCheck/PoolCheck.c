@@ -330,11 +330,12 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
 }
 
 
-void exactcheck2(signed char *base, signed char *result, unsigned size) {
+void * exactcheck2(signed char *base, signed char *result, unsigned size) {
   ++stat_exactcheck2;
   if (result >= base + size ) {
     poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
   }
+  return result;
 }
 
 void * exactcheck3(signed char *base, signed char *result, signed char * end) {
@@ -539,12 +540,13 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   return dest;
 }
 
-void exactcheck(int a, int b) {
+int exactcheck(int a, int b) {
   ++stat_exactcheck;
   if ((0 > a) || (a >= b)) {
     poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
     poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));
   }
+  return a;
 }
 
 

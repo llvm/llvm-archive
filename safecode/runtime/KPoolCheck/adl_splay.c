@@ -1,5 +1,9 @@
 #include "adl_splay.h"
 
+#ifndef USE_RB
+
+#include "PoolSystem.h"
+
 typedef struct tree_node Tree;
 struct tree_node {
   Tree* left;
@@ -65,7 +69,7 @@ static inline Tree* tmalloc() {
   } else {
     Tree * tmp = internal_malloc(sizeof(Tree));
     if (!tmp)
-      poolcheckfatal ("LLVA: tmalloc: Failed to allocate\n");
+      poolcheckfatal ("LLVA: tmalloc: Failed to allocate\n", 0);
     return (Tree*) tmp;
   }
 }
@@ -291,7 +295,7 @@ void adl_splay_libfini(void (nodefree)(void*) ) {
 }
 
 
-#if 0
+#ifdef TEST_TREE
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -321,5 +325,12 @@ int main() {
   printf("Size should be 0: %d\n", adl_splay_size(&t));
   return 0;
 }
+
+void poolcheckfatal (const char * msg, int x) {
+  printf("%s %d\n", msg, x);
+}
+
+
+#endif
 
 #endif

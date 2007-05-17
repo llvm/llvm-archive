@@ -25,7 +25,7 @@
 static int ready = 0;
 /* Flag whether to do profiling */
 /* profiling only works if this library is compiled to a .o file, not llvm */
-static const int do_profile = 1;
+static const int do_profile = 0;
 
 static const int use_oob = 0;
 

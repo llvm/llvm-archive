@@ -495,35 +495,42 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
   //
   // Second, cast the operands to the correct type.
   //
+  Instruction * InsertPt = GEP->getNext();
+
   Value * CastIndex = Index;
   if (Index->getType() != Type::IntTy)
     CastIndex = new CastInst(Index, Type::IntTy,
-                             Index->getName()+".ec.casted", GEP);
+                             Index->getName()+".ec.casted", InsertPt);
 
   Value * CastBounds = Bounds;
   if (Bounds->getType() != Type::IntTy)
     CastBounds = new CastInst(Bounds, Type::IntTy,
-                              Bounds->getName()+".ec.casted", GEP);
+                              Bounds->getName()+".ec.casted", InsertPt);
+
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  Value * CastResult = GEP;
+  if (CastResult->getType() != VoidPtrType)
+    CastResult = new CastInst(CastResult, VoidPtrType,
+                              CastResult->getName()+".ec.casted", InsertPt);
 
   std::vector<Value *> args(1, CastIndex);
   args.push_back(CastBounds);
-  Instruction * CI = new CallInst(ExactCheck, args, "ec", GEP);
+  args.push_back(CastResult);
+  Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
 
-#if 0
   //
   // Replace the old index with the return value of exactcheck(); this
   // prevents GCC from removing it completely.
   //
   Value * CastCI = CI;
-  if (CI->getType() != Index->getType())
-    CastCI = new CastInst (CI, Index->getType(), Index->getName(), GEP);
+  if (CI->getType() != GEP->getType())
+    CastCI = new CastInst (CI, GEP->getType(), GEP->getName(), InsertPt);
 
-  Value::use_iterator UI = Index->use_begin();
-  for (; UI != Index->use_end(); ++UI) {
-    if (((*UI) != CI) && ((*UI) != CastIndex))
-      UI->replaceUsesOfWith (Index, CastCI);
+  Value::use_iterator UI = GEP->use_begin();
+  for (; UI != GEP->use_end(); ++UI) {
+    if (((*UI) != CI) && ((*UI) != CastResult))
+      UI->replaceUsesOfWith (GEP, CastCI);
   }
-#endif
 
   // Update statistics
   ++ExactChecks;
@@ -2069,7 +2076,8 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
 
   std::vector<const Type *> FArg2(1, Type::IntTy);
   FArg2.push_back(Type::IntTy);
-  FunctionType *ExactCheckTy = FunctionType::get(Type::IntTy, FArg2, false);
+  FArg2.push_back(VoidPtrType);
+  FunctionType *ExactCheckTy = FunctionType::get(VoidPtrType, FArg2, false);
   ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);
 
   std::vector<const Type *> FArg3(1, Type::UIntTy);

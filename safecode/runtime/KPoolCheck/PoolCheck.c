@@ -27,8 +27,10 @@ static int ready = 0;
 /* profiling only works if this library is compiled to a .o file, not llvm */
 static const int do_profile = 0;
 
+/* Flag whether to support out of bounds pointer rewriting */
 static const int use_oob = 0;
 
+/* Flag whether to print error messages on bounds violations */
 static const int do_fail = 0;
 
 /* Statistic counters */

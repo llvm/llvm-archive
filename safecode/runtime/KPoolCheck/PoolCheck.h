@@ -69,7 +69,7 @@ extern "C" {
   void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest);
   void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest);
 
-  int exactcheck(int a, int b);
+  void * exactcheck(int a, int b, void * result);
 
   void pchk_profile(void* pc);
 

@@ -80,7 +80,7 @@ struct InsertPoolChecks : public ModulePass {
   void registerGlobalArraysWithGlobalPools(Module &M);
   void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
   void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);
-  void addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
+  Value* addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
   bool insertExactCheck (GetElementPtrInst * GEP);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);

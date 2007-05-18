@@ -13,8 +13,6 @@
 
 using namespace llvm;
 
-namespace
-{
 
   // Create the command line option for the pass
   //  RegisterOpt<MallocPass> X ("malloc", "Alloca to Malloc Pass");
@@ -67,7 +65,7 @@ namespace
     Function *memsetF = 
       theM->getOrInsertFunction("memset", Type::VoidTy, 
 				PointerType::get(Type::SByteTy), Type::IntTy , 
-				Type::UIntTy, 0);
+				Type::UIntTy, NULL);
     for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
       {
 	for (BasicBlock::iterator IAddrBegin=I->begin(), IAddrEnd = I->end();
@@ -117,6 +115,7 @@ namespace
     return modified;
   }
 
+namespace {
   RegisterPass<MallocPass> Z("convallocai", "converts unsafe allocas to mallocs");
 } // end of namespace
 

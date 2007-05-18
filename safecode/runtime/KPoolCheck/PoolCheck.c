@@ -350,9 +350,11 @@ struct node {
   void* tag;
 };
 
+#define USERSPACE 0xC0000000
+
 struct node not_found = {0, 0, 0, (char *)0x00000000, 0};
 struct node found =     {0, 0, 0, (char *)0xffffffff, 0};
-struct node userspace = {0, 0, 0, (char* )0xC0000000, 0};
+struct node userspace = {0, 0, 0, (char* )USERSPACE, 0};
 
 void * getBegin (void * node) {
   return ((struct node *)(node))->key;
@@ -367,7 +369,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
   if (do_profile) pchk_profile(__builtin_return_address(0));
   ++stat_boundscheck;
   /* first check for user space */
-  if (src < userspace.end)
+  if (src < USERSPACE)
     return &userspace;
 
   /* try objs */

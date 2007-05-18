@@ -16,14 +16,15 @@
 /* The number of stack to heap promotions executed dynamically */
 static int stack_promotes = 0;
 
+int stat_exactcheck  = 0;
+int stat_exactcheck2 = 0;
+int stat_exactcheck3 = 0;
+
 extern int stat_poolcheck;
 extern int stat_poolcheckarray;
 extern int stat_poolcheckarray_i;
 extern int stat_boundscheck;
 extern int stat_boundscheck_i;
-extern int stat_exactcheck;
-extern int stat_exactcheck2;
-extern int stat_exactcheck3;
 extern unsigned int externallocs;
 extern unsigned int allallocs;
 

@@ -69,7 +69,13 @@ extern "C" {
   void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest);
   void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest);
 
-  void * exactcheck(int a, int b, void * result);
+  void * exactcheck(int a, int b, void * result) __attribute__ ((weak));
+  void * exactcheck2(signed char *base, signed char *result, unsigned size) __attribute__ ((weak));
+  void * exactcheck2a(signed char *base, signed char *result, unsigned size) __attribute__ ((weak));
+  void * exactcheck3(signed char *base, signed char *result, signed char * end)__attribute__ ((weak));
+
+  void * getBegin (void * node) __attribute__ ((weak));
+  void * getEnd (void * node) __attribute__ ((weak));
 
   void pchk_profile(void* pc);
 

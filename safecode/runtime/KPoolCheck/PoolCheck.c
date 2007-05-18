@@ -39,9 +39,6 @@ int stat_poolcheckarray=0;
 int stat_poolcheckarray_i=0;
 int stat_boundscheck=0;
 int stat_boundscheck_i=0;
-int stat_exactcheck=0;
-int stat_exactcheck2=0;
-int stat_exactcheck3=0;
 
 extern void llva_load_lif (unsigned int enable);
 extern unsigned int llva_save_lif (void);
@@ -333,23 +330,6 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
   return tag;
 }
 
-
-void * exactcheck2(signed char *base, signed char *result, unsigned size) {
-  ++stat_exactcheck2;
-  if (result >= base + size ) {
-    if(do_fail) poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
-  }
-  return result;
-}
-
-void * exactcheck3(signed char *base, signed char *result, signed char * end) {
-  ++stat_exactcheck3;
-  if ((result < base) || (result > end )) {
-    if(do_fail) poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
-  }
-  return result;
-}
-
 /*
  * Function: getBounds()
  *
@@ -370,16 +350,8 @@ struct node {
   void* tag;
 };
 
-struct node not_found = {0, 0, 0, (char *)0x00000000, 0};
-struct node found =     {0, 0, 0, (char *)0xffffffff, 0};
-
-void * getBegin (void * node) {
-  return ((struct node *)(node))->key;
-}
-
-void * getEnd (void * node) {
-  return ((struct node *)(node))->end;
-}
+static struct node not_found = {0, 0, 0, (char *)0x00000000, 0};
+static struct node found =     {0, 0, 0, (char *)0xffffffff, 0};
 
 void* getBounds(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
@@ -546,15 +518,6 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   mtfCache(MP, nn);
   PCUNLOCK();
   return dest;
-}
-
-void * exactcheck(int a, int b, void * result) {
-  ++stat_exactcheck;
-  if ((0 > a) || (a >= b)) {
-    if(do_fail) poolcheckfail ("exact check failed", (a), (void*)__builtin_return_address(0));
-    if(do_fail) poolcheckfail ("exact check failed", (b), (void*)__builtin_return_address(0));
-  }
-  return result;
 }
 
 

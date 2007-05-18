@@ -6,7 +6,6 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-
 LEVEL = ../..
 SHARED_LIBRARY=1
 LOADABLE_MODULE = 1

@@ -12,6 +12,7 @@
 // external interface to this file is the DSGraph constructor.
 //
 //===----------------------------------------------------------------------===//
+
 #include "llvm/ADT/Statistic.h"
 #include "dsa/DataStructure.h"
 #include "dsa/DSGraph.h"
@@ -649,21 +650,12 @@ bool GraphBuilder::visitIntrinsic(CallSite CS, Function *F) {
   case Intrinsic::memcpy_i64:
   case Intrinsic::memmove_i32:
   case Intrinsic::memmove_i64: {
-    DSNodeHandle destNH = getValueDest(**CS.arg_begin());
-    DSNodeHandle srcNH = getValueDest(**(CS.arg_begin()+1));
-    if (!destNH.getNode()) {
-      setDestTo(**CS.arg_begin(), createNode());
-      destNH = getValueDest(**CS.arg_begin());
-    }
-    if (!srcNH.getNode()) {
-      setDestTo(**(CS.arg_begin() + 1), createNode());
-      srcNH = getValueDest(**(CS.arg_begin() + 1));
-    }
-    destNH.getNode()->foldNodeCompletely();
-    srcNH.getNode()->foldNodeCompletely();
-    getLink(destNH.getNode()).mergeWith(getLink(srcNH.getNode()));
-    destNH.getNode()->setModifiedMarker();
-    srcNH.getNode()->setReadMarker();
+    // Merge the first & second arguments, and mark the memory read and
+    // modified.
+    DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+    RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+    if (DSNode *N = RetNH.getNode())
+      N->setModifiedMarker()->setReadMarker();
     return true;
   }
   case Intrinsic::memset_i32:
@@ -796,7 +788,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
       N->setModifiedMarker()->setUnknownNodeMarker();
       const Type *RetTy = F->getFunctionType()->getReturnType();
       if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-        N->mergeTypeInfo(PTy->getElementType(), Result.getOffset());
+              N->mergeTypeInfo(PTy->getElementType(), Result.getOffset());
     }
     
     // If this is freopen, merge the file descriptor passed in with the
@@ -1109,21 +1101,12 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
   } else if (F->getName() == "llva_memcpy") {
     if (CS.getCaller()->getName() == "kmem_cache_alloc")
         return false;
-    DSNodeHandle destNH = getValueDest(**CS.arg_begin());
-    DSNodeHandle srcNH = getValueDest(**(CS.arg_begin()+1));
-    if (!destNH.getNode()) {
-      setDestTo(**CS.arg_begin(), createNode());
-      destNH = getValueDest(**CS.arg_begin());
-    }
-    if (!srcNH.getNode()) {
-      setDestTo(**(CS.arg_begin() + 1), createNode());
-      srcNH = getValueDest(**(CS.arg_begin() + 1));
-    }
-    destNH.getNode()->foldNodeCompletely();
-    srcNH.getNode()->foldNodeCompletely();
-    getLink(destNH.getNode()).mergeWith(getLink(srcNH.getNode()));
-    destNH.getNode()->setModifiedMarker();
-    srcNH.getNode()->setReadMarker();
+    // Merge the first & second arguments, and mark the memory read and
+    // modified.
+    DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+    RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+    if (DSNode *N = RetNH.getNode())
+      N->setModifiedMarker()->setReadMarker();
     return true;
 #if 1
   } else if (F->getName() == "llva_save_stackp") {
@@ -1154,7 +1137,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
 #endif
   }
 #endif
-  
+
   return false;
 }
 
@@ -1162,16 +1145,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
 
   if (Function *F = dyn_cast<Function>(Callee)) {
-//     if (F->getName() == "printk") {
-//       CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
-//       for (; AI != E; ++AI) {
-//         // printf reads all pointer arguments.
-//         if (isPointerType((*AI)->getType()))
-//           if (DSNode *N = getValueDest(**AI).getNode())
-//             N->setReadMarker();
-//       }
-//       return;
-//     }
     if (F->isExternal())
       if (F->isIntrinsic() && visitIntrinsic(CS, F))
         return;
@@ -1197,34 +1170,6 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
         if (visitExternal(CS,F))
           return;
-
-
-        if (F->getName() == "llva_invoke") {
-          Value* FF = *(CS.arg_begin() + 1);
-          if (isa<CastInst>(FF)) {
-            FF = cast<CastInst>(FF)->getOperand(0);
-          }
-          if (isa<ConstantExpr>(FF) && cast<ConstantExpr>(FF)->getOpcode() == Instruction::Cast) {
-            FF = cast<ConstantExpr>(FF)->getOperand(0);
-          }
-          //std::cerr << "invoke special for: "; FF->dump(); std::cerr << "\n";
-          std::vector<DSNodeHandle> Args;
-            // Calculate the arguments vector...
-          for (CallSite::arg_iterator I = CS.arg_begin() + 2, E = CS.arg_end(); I != E; ++I) {
-            Value* AA = *I;
-            if (isa<CastInst>(AA)) {
-              AA = cast<CastInst>(AA)->getOperand(0);
-            }
-            if (isPointerType(AA->getType()))
-              Args.push_back(getValueDest(*AA));
-          }
-          // Add a new function call entry...
-          if (isa<Function>(FF))
-            FunctionCalls->push_back(DSCallSite(CS, DSNodeHandle(), cast<Function>(FF), Args));
-          else
-            FunctionCalls->push_back(DSCallSite(CS, DSNodeHandle(), getValueDest(*FF).getNode(), Args));
-          return;
-        }
 
         // Unknown function, warn if it returns a pointer type or takes a
         // pointer argument.

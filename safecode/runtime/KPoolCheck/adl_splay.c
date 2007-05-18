@@ -223,8 +223,8 @@ static Tree* find_tag(Tree* t, void* tag) {
     if (t->tag == tag) return t;
     if ((n = find_tag(t->left, tag))) return n;
     if ((n = find_tag(t->right, tag))) return n;
-    return 0;
   }
+  return 0;
 }
 
 /* interface */

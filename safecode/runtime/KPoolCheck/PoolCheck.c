@@ -523,7 +523,7 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
       if(do_fail) poolcheckfail ("uiboundscheck failure 1", (unsigned)S, len);
       if(do_fail) poolcheckfail ("uiboundscheck failure 2", (unsigned)S, tag);
 #endif
-      poolcheckfail ("uiboundscheck failure 3", (unsigned)dest, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("uiboundscheck failure 3", (unsigned)dest, (void*)__builtin_return_address(0));
       return dest;
     }
      if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;

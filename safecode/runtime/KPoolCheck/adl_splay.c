@@ -173,7 +173,14 @@ static Tree* my_splay(Tree* t, char* key) {
 static inline Tree* insert(Tree* t, char* key, unsigned len, void* tag) {
   Tree* n = 0;
   t = splay(t, key);
-  if (t && !key_lt(key, t) && !key_gt(key, t)) return t; /* already in */
+  if (t && !key_lt(key, t) && !key_gt(key, t)) {
+    /* already in, so update the record.  This could break
+       the tree */
+    t->key =  key;
+    t->end = t->key + (len - 1);
+    t->tag = tag;
+    return t;
+  }
   n = tmalloc();
   n->key = key;
   n->end = key + (len - 1);
@@ -291,6 +298,15 @@ void adl_splay_libfini(void (nodefree)(void*) ) {
     Tree* n = freelist->left;
     nodefree(freelist);
     freelist = n;
+  }
+}
+
+void adl_splay_foreach(void** tree, void (f)(void*, unsigned, void*)) {
+  Tree* T = *(Tree**)tree;
+  if (T) {
+    f(T->key, (T->end - T->key) + 1, T->tag);
+    adl_splay_foreach(&T->left, f);
+    adl_splay_foreach(&T->right, f);
   }
 }
 

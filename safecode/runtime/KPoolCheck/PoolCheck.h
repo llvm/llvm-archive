@@ -25,7 +25,7 @@ typedef struct MetaPoolTy {
   void* OOB;
 
   /* Next invalid Ptr for rewriting */
-  unsigned char * invalidptr;
+  void* profile;
 
   /*cache space */
   void* cache0;
@@ -77,7 +77,7 @@ extern "C" {
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));
 
-  void pchk_profile(void* pc);
+  void pchk_profile(MetaPoolTy* MP, void* pc);
 
 #ifdef __cpluscplus
 }

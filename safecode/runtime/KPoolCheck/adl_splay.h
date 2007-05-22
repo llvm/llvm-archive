@@ -13,6 +13,7 @@ extern "C" {
   extern void adl_splay_libinit(void* (nodealloc)(unsigned) );
   extern void adl_splay_libfini(void (nodefree)(void*) );
 
+  extern void adl_splay_foreach(void** tree, void (f)(void*, unsigned, void*));
 
 #ifdef __cpluscplus
 }

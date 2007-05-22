@@ -238,7 +238,7 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_poolcheck;
   PCLOCK();
   int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
@@ -251,7 +251,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_poolcheckarray;
   /* try slabs first */
   void* S = src;
@@ -278,7 +278,7 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
 /* if src and dest do not exist in the pool, pass */
 void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_poolcheckarray_i;
   /* try slabs first */
   void* S = src;
@@ -366,7 +366,7 @@ void * getEnd (void * node) {
 
 void* getBounds(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_boundscheck;
   /* first check for user space */
   if (src < USERSPACE)
@@ -397,9 +397,9 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_boundscheck;
-  //Try fail cache first
+  /* Try fail cache first */
   PCLOCK();
 #if 0
   int i = isInCache(MP, src);
@@ -423,6 +423,8 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   return &found;
 }
 
+char* invalidptr = 0;
+
 /*
  * Function: boundscheck()
  *
@@ -433,7 +435,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -449,9 +451,9 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
       return dest;
     }
     PCLOCK2();
-    if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)InvalidLower;
-    ++MP->invalidptr;
-    void* P = MP->invalidptr;
+    if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
+    ++invalidptr;
+    void* P = invalidptr;
     PCUNLOCK();
     if ((unsigned)P & ~(InvalidUpper - 1)) {
       if(do_fail) poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
@@ -484,7 +486,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
-  if (do_profile) pchk_profile(__builtin_return_address(0));
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_boundscheck_i;
   /* try fail cache */
   PCLOCK();
@@ -513,9 +515,9 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
       if (do_fail) poolcheckfail ("uiboundscheck failure 3", (unsigned)dest, (void*)__builtin_return_address(0));
       return dest;
     }
-     if (MP->invalidptr == 0) MP->invalidptr = (unsigned char*)0x03;
-    ++MP->invalidptr;
-    void* P = MP->invalidptr;
+     if (invalidptr == 0) invalidptr = (unsigned char*)0x03;
+    ++invalidptr;
+    void* P = invalidptr;
     if ((unsigned)P & ~(InvalidUpper - 1)) {
       PCUNLOCK();
       if(do_fail) poolcheckfail("poolcheck failure: out of rewrite ptrs", 0, (void*)__builtin_return_address(0));
@@ -535,74 +537,3 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   return dest;
 }
 
-
-/* Profiling support */
-
-struct pr {
-  void* pc;
-  unsigned count;
-};
-
-#define profile_count 4096
-
-static struct pr profile_data[profile_count]; /* 2 pages */
-
-static void profile_print();
-
-void llva_profile_print ()
-{
-  profile_print();
-}
-
-int profile_pause = 0;
-
-static void pchk_resize() {
-  /* lacking a better time, print out the stats when resizing */
-  profile_print();
-
-  /* walk the profile_data and halve everything
-     anything with a zero count then gets removed */
-  int x;
-  for (x = 0; x < profile_count; ++x) {
-    profile_data[x].count /= 2;
-    if (!profile_data[x].count)
-      profile_data[x].pc = 0;
-  }
-}
-
-void pchk_profile(void* pc) {
-  if (profile_pause) return;
-
-  int last_empty = -1;
-  int x;
-  for (x = 0; x < profile_count; ++x) {
-    if (profile_data[x].pc == pc) {
-      ++profile_data[x].count;
-      /* prevent overflow */
-      if (profile_data[x].count > 10000)
-        pchk_resize();
-      return;
-    } else if (profile_data[x].pc == 0)
-      last_empty = x;
-  }
-  if (last_empty != -1) {
-    profile_data[x].pc = pc;
-    profile_data[x].count = 1;
-    return;
-  }
-  /* full? shrink everything and try again */
-  pchk_resize();
-  pchk_profile(pc);
-}
-
-/* print the top 10 sites */
-static void profile_print() {
-  profile_pause = 1;
-  int x;
-  for (x = 0; x < profile_count; ++x) {
-    if (profile_data[x].count > 3000)
-      poolcheckinfo2("LLVA: profile ", (int)profile_data[x].pc, 
-                     (int) profile_data[x].count);
-  }
-  profile_pause = 0;
-}

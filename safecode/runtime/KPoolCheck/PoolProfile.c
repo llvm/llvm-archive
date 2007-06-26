@@ -11,38 +11,45 @@
 extern int printk(const char *fmt, ...);
 
 static void* allmp = 0;
-static int profile_pause = 0;
+int profile_pause = 1;
 
-void pchk_profile(MetaPoolTy* MP, void* pc) {
+void pchk_profile(MetaPoolTy* MP, void* pc, long time) {
   if (profile_pause) return;
   if (!MP) return;
 
-  adl_splay_insert(&allmp, MP, 0, 0);
-  if (!adl_splay_find(&MP->profile, pc))
-    adl_splay_insert(&MP->profile, pc, 1, 0);
+  if (!adl_splay_retrieve (&allmp, MP, 0, 0))
+    adl_splay_insert(&allmp, MP, 1, 0);
 
   void* key = pc;
-  unsigned tag;
+  unsigned tag=0;
+  unsigned len=0;
   
-  adl_splay_retrieve(&MP->profile, &key, 0, (void**)&tag);
-  adl_splay_insert(&MP->profile, key, 1, (void*)tag);
+  if (adl_splay_retrieve(&MP->profile, &key, &len, &tag)) {
+    tag += time;
+    adl_splay_insert(&MP->profile, key, len, tag);
+  } else {
+    adl_splay_insert(&MP->profile, key, 1, tag);
+  }
 }
 
+static void * thepool;
+
 void print_item(void* p, unsigned l, void* t) {
-  printk("(0x%x, %d) ", p, (unsigned) t);
+  printk("(0x%x, 0x%x, %d)\n", thepool, p, (unsigned) t);
 }
 
 void print_pool(void* p, unsigned l, void* t) {
-  printk("[0x%x ", p);
+  thepool = p;
   adl_splay_foreach(&(((MetaPoolTy*)p)->profile), print_item);
-  printk("]\n");
 }
 
 void pchk_profile_print() {
+  int old = profile_pause;
   profile_pause = 1;
   
+printk ("LLVA:Printing Profile:\n");
   adl_splay_foreach(&allmp, print_pool);
   
-  profile_pause = 0;  
+  profile_pause = old;  
 }
 

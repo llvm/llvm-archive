@@ -33,6 +33,13 @@ typedef struct MetaPoolTy {
   void* cache2;
   void* cache3;
 
+#if 1
+  unsigned int cindex;
+  unsigned int start[4];
+  unsigned int length[4];
+  void * cache[4];
+#endif
+
 } MetaPoolTy;
 
 #ifdef __cpluscplus
@@ -77,7 +84,7 @@ extern "C" {
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));
 
-  void pchk_profile(MetaPoolTy* MP, void* pc);
+  void pchk_profile(MetaPoolTy* MP, void* pc, long time);
 
 #ifdef __cpluscplus
 }

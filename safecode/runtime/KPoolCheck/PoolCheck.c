@@ -174,6 +174,7 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
 
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
+  unsigned int index;
 #if 0
   if (!MP) { poolcheckinfo("reg obj on null pool", addr); return; }
 #else
@@ -193,11 +194,25 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
 #endif
 
   adl_splay_insert(&MP->Objs, addr, len, __builtin_return_address(0));
+#if 1
+  /*
+   * Look for an entry in the cache that matches.  If it does, just erase it.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((MP->start[index] <= addr) &&
+       (MP->start[index]+MP->length[index] >= addr)) {
+      MP->start[index] = 0;
+      MP->length[index] = 0;
+      MP->cache[index] = 0;
+    }
+  }
+#endif
   PCUNLOCK();
 }
 
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
+  unsigned int index;
   if (!MP) return;
   PCLOCK();
   adl_splay_delete(&MP->Objs, addr);
@@ -209,6 +224,17 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
     poolcheckinfo ("drop_obj: Failed to remove: 1", addr, tag);
   }
 #endif
+  /*
+   * See if the object is within the cache.  If so, remove it from the cache.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((MP->start[index] <= addr) &&
+       (MP->start[index]+MP->length[index] >= addr)) {
+      MP->start[index] = 0;
+      MP->length[index] = 0;
+      MP->cache[index] = 0;
+    }
+  }
   PCUNLOCK();
 }
 
@@ -238,7 +264,9 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_poolcheck;
   PCLOCK();
   int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
@@ -251,7 +279,9 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_poolcheckarray;
   /* try slabs first */
   void* S = src;
@@ -278,7 +308,9 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
 /* if src and dest do not exist in the pool, pass */
 void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_poolcheckarray_i;
   /* try slabs first */
   void* S = src;
@@ -366,7 +398,9 @@ void * getEnd (void * node) {
 
 void* getBounds(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_boundscheck;
   /* first check for user space */
   if (src < USERSPACE)
@@ -397,7 +431,6 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
   if (!ready || !MP) return &found;
-  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
   ++stat_boundscheck;
   /* Try fail cache first */
   PCLOCK();
@@ -409,15 +442,43 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
     return &found;
   }
 #endif
+#if 1
+  {
+    unsigned int index  = MP->cindex;
+    unsigned int cindex = MP->cindex;
+    do
+    {
+      if ((MP->start[index] <= src) &&
+         (MP->start[index]+MP->length[index] >= src))
+        return MP->cache[index];
+      index = (index + 1) & 3;
+    } while (index != cindex);
+  }
+#endif
   /* try objs */
   void* S = src;
   unsigned len = 0;
 #if 0
   PCLOCK2();
 #endif
+#if 1
+  long long tsc1, tsc2;
+  if (do_profile) tsc1 = llva_save_tsc();
+#endif
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+#if 1
+  if (do_profile) tsc2 = llva_save_tsc();
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0), (long)(tsc2 - tsc1));
+#endif
   PCUNLOCK();
   if (fs) {
+#if 1
+    unsigned int index = MP->cindex;
+    MP->start[index] = S;
+    MP->length[index] = len;
+    MP->cache[index] = MP->Objs;
+    MP->cindex = (index+1) & 3u;
+#endif
     return MP->Objs;
   }
   return &found;
@@ -435,7 +496,9 @@ char* invalidptr = 0;
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_boundscheck;
   /* try objs */
   void* S = src;
@@ -486,7 +549,9 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   if (!ready || !MP) return dest;
+#if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
   ++stat_boundscheck_i;
   /* try fail cache */
   PCLOCK();

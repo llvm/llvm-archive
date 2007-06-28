@@ -122,6 +122,11 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
   std::vector<const Type*> MPTV;
   for (int x = 0; x < 8; ++x)
     MPTV.push_back(VoidPtrType);
+  // Add the types for the hit cache
+  MPTV.push_back(Type::UIntTy);
+  MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
+  MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
+  MPTV.push_back(ArrayType::get (VoidPtrType, 4));
 
   const StructType* MPT = StructType::get(MPTV);
 
@@ -171,8 +176,8 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
       Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", i->getInstruction());
       Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
       new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
-    } else if (name == "kmalloc" ||
-               name == "__vmalloc") {
+    } else if ((name == "kmalloc") ||
+               (name == "__vmalloc")) {
       //inser obj register after
       Instruction* IP = i->getInstruction()->getNext();
       Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
@@ -226,6 +231,61 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // Enclosing function
   Function * F   = I->getParent()->getParent();
   Function *Fnew = F;
+#if 0
+  if ( (F->getName().find("fcheck") == 0)) return Dest;
+  if (
+      (F->getName().find("d_lookup") == 0) ||
+      (F->getName().find("d_hash") == 0) ||
+#if 0
+      (F->getName().find("set_bh_page") == 0) ||
+      (F->getName().find("do_sigaction") == 0) ||
+      (F->getName().find("locate_hd_struct") == 0) ||
+      (F->getName().find("skb_copy_datagram_iovec") == 0) ||
+      (F->getName().find("__make_request") == 0) ||
+      (F->getName().find("sigismember") == 0) ||
+      (F->getName().find("sys_close") == 0) ||
+      (F->getName().find("poll_freewait") == 0) ||
+      (F->getName().find("clear_bit") == 0) ||
+      (F->getName().find("set_bit") == 0) ||
+#endif
+#if 0
+      (F->getName().find("test_and_set_bit") == 0) ||
+      (F->getName().find("test_and_clear_bit") == 0) ||
+      (F->getName().find("constant_test_bit") == 0) ||
+      (F->getName().find("ext3_do_update_inode") == 0) ||
+      (F->getName().find("ext3_get_inode_loc") == 0) ||
+      (F->getName().find("ext3_find_entry") == 0) ||
+      (F->getName().find("find_revoke_record") == 0) ||
+      (F->getName().find("journal_write_revoke_records") == 0) ||
+      (F->getName().find("journal_write_metadata_buffer") == 0) ||
+      (F->getName().find("sd_find_queue") == 0) ||
+      (F->getName().find("fget") == 0) ||
+      (F->getName().find("fcheck") == 0) ||
+      (F->getName().find("get_file") == 0) ||
+      (F->getName().find("get_hash_table") == 0) ||
+      (F->getName().find("copy_files") == 0) ||
+      (F->getName().find("__wakeup_common") == 0) ||
+      (F->getName().find("schedule") == 0) ||
+      (F->getName().find("generic_make_request") == 0) ||
+      (F->getName().find("BusLogic_ProcessCompletedCCBs") == 0) ||
+      (F->getName().find("__make_request") == 0) ||
+      (F->getName().find("BusLogic_WriteOutgoingMailbox") == 0) ||
+      (F->getName().find("sd_init_command") == 0) ||
+      (F->getName().find("alloc_skb") == 0) ||
+      (F->getName().find("memcpy_fromiovec") == 0) ||
+      (F->getName().find("skb_put") == 0) ||
+      (F->getName().find("__init_io") == 0) ||
+      (F->getName().find("do_readv_writev") == 0) ||
+      (F->getName().find("scsi_free") == 0) ||
+      (F->getName().find("BusLogic_IncrementSizeBucket") == 0) ||
+      (F->getName().find("ext3_get_branch") == 0) ||
+      (F->getName().find("update_one_process") == 0)) {
+#else
+    (0)) {
+#endif
+    return Dest;
+  }
+#endif
 
   // Source node on which we will look up the pool handle
   Value *newSrc = Src;
@@ -262,12 +322,21 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // Do not bother to insert checks for nodes that do not have the any of the
   // stack, heap, or global flags set.
   //
-  if (!Node || !((Node->isAllocaNode()) ||
-                 (Node->isHeapNode())   ||
-                 (Node->isGlobalNode())))
-  {
-    ++NoSHGBoundsChecks;
-    return Dest;
+  if (DisableStackChecks) {
+    if (!Node || !((Node->isHeapNode())   ||
+                   (Node->isGlobalNode())))
+    {
+      ++NoSHGBoundsChecks;
+      return Dest;
+    }
+  } else {
+    if (!Node || !((Node->isAllocaNode()) ||
+                   (Node->isHeapNode())   ||
+                   (Node->isGlobalNode())))
+    {
+      ++NoSHGBoundsChecks;
+      return Dest;
+    }
   }
 
   // Record statistics on the incomplete checks we do.  Note that a node may
@@ -389,7 +458,8 @@ InsertPoolChecks::addExactCheck2 (GetElementPtrInst * GEP,
   std::vector<Value *> args(1, BasePointer);
   args.push_back(ResultPointer);
   args.push_back(CastBounds);
-  Instruction * CI = new CallInst(ExactCheck2, args, "", InsertPt);
+  Instruction * CI;
+  CI = new CallInst(ExactCheck2, args, "", InsertPt);
 
   //
   // Replace the old pointer with the return value of exactcheck2(); this
@@ -457,6 +527,85 @@ InsertPoolChecks::addExactCheck3 (Value * Source,
   args.push_back(CastBounds);
 
   return new CallInst(ExactCheck3, args, "ec3", InsertPt);
+}
+
+//
+// Function: addExactCheck()
+//
+// Description:
+//  Utility routine that inserts a call to exactcheck().  This function can
+//  perform some optimization be determining if the arguments are constant.
+//  If they are, we can forego inserting the call.
+//
+// Inputs:
+//  Index - An LLVM Value representing the index of the access.
+//  Bounds - An LLVM Value representing the bounds of the check.
+//
+void
+InsertPoolChecks::addExactCheck (Value * Pointer,
+                                 Value * Index, Value * Bounds,
+                                 Instruction * InsertPt) {
+  //
+  // First, determine whether we need to perform a check at all.
+  //
+  ConstantInt * CIndex  = dyn_cast<ConstantInt>(Index);
+  ConstantInt * CBounds = dyn_cast<ConstantInt>(Bounds);
+#if 0
+  if (CIndex && CBounds) {
+    int index  = CIndex->getSExtValue();
+    int bounds = CBounds->getSExtValue();
+    assert ((index >= 0) && "exactcheck: const negative index");
+    assert ((index < bounds) && "exactcheck: const out of range");
+
+    // Update stats and return
+    ++ConstExactChecks;
+    return;
+  }
+#endif
+
+  //
+  // Second, cast the operands to the correct type.
+  //
+  Value * CastIndex = Index;
+  if (Index->getType() != Type::IntTy)
+    CastIndex = new CastInst(Index, Type::IntTy,
+                             Index->getName()+".ec.casted", InsertPt);
+
+  Value * CastBounds = Bounds;
+  if (Bounds->getType() != Type::IntTy)
+    CastBounds = new CastInst(Bounds, Type::IntTy,
+                              Bounds->getName()+".ec.casted", InsertPt);
+
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  Value * CastResult = Pointer;
+  if (CastResult->getType() != VoidPtrType)
+    CastResult = new CastInst(CastResult, VoidPtrType,
+                              CastResult->getName()+".ec.casted", InsertPt);
+
+  std::vector<Value *> args(1, CastIndex);
+  args.push_back(CastBounds);
+  args.push_back(CastResult);
+  Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
+
+#if 0
+  //
+  // Replace the old index with the return value of exactcheck(); this
+  // prevents GCC from removing it completely.
+  //
+  Value * CastCI = CI;
+  if (CI->getType() != GEP->getType())
+    CastCI = new CastInst (CI, GEP->getType(), GEP->getName(), InsertPt);
+
+  Value::use_iterator UI = GEP->use_begin();
+  for (; UI != GEP->use_end(); ++UI) {
+    if (((*UI) != CI) && ((*UI) != CastResult))
+      UI->replaceUsesOfWith (GEP, CastCI);
+  }
+#endif
+
+  // Update statistics
+  ++ExactChecks;
+  return;
 }
 
 
@@ -623,6 +772,10 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
         ++MissedMultDimArrayChecks;
       }
       DEBUG(std::cerr << " Global variable ok \n");
+    } else {
+      Value* Size=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()));
+      addExactCheck2 (GEP, Size);
+      return true;
     }
   }
 
@@ -630,7 +783,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // If the pointer was generated by a dominating alloca instruction, we can
   // do an exactcheck on it, too.
   //
-  if (AllocaInst *AI = dyn_cast<AllocaInst>(GEP->getPointerOperand())) {
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(PointerOperand)) {
     const Type * AllocaType = AI->getAllocatedType();
     Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
 
@@ -646,10 +799,10 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   //
   // If the pointer was an allocation, we should be able to do exact checks
   //
-  if(CallInst* CI = dyn_cast<CallInst>(GEP->getPointerOperand())) {
-    if (CI->getCalledFunction() && (
-                              CI->getCalledFunction()->getName() == "__vmalloc" || 
-                              CI->getCalledFunction()->getName() == "kmalloc")) {
+  if(CallInst* CI = dyn_cast<CallInst>(PointerOperand)) {
+    if (CI->getCalledFunction() &&
+        (CI->getCalledFunction()->getName() == "__vmalloc" || 
+         CI->getCalledFunction()->getName() == "kmalloc")) {
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
       addExactCheck2(GEP, Cast);
       return true;
@@ -703,6 +856,121 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   /*
    * We were not able to insert a call to exactcheck().
    */
+  return false;
+}
+
+//
+// Function: insertExactCheck()
+//
+// Description:
+//  Attepts to insert an efficient, accurate array bounds check for the given
+//  GEP instruction; this check will not use Pools are MetaPools.
+//
+// Return value:
+//  true  - An exactcheck() was successfully added.
+//  false - An exactcheck() could not be added; a more extensive check will be
+//          needed.
+//
+bool
+InsertPoolChecks::insertExactCheck (Instruction * I,
+                                    Value * Src,
+                                    Value * Size,
+                                    Instruction * InsertPt) {
+  // The pointer operand of the GEP expression
+  Value * PointerOperand = Src;
+
+  //
+  // Get the DSNode for the instruction
+  //
+#if 0
+  Function *F   = I->getParent()->getParent();
+  DSGraph & TDG = TDPass->getDSGraph(*F);
+  DSNode * Node = TDG.getNodeForValue(I).getNode();
+  if (!Node)
+    return false;
+#endif
+
+  //
+  // Sometimes the pointer operand to a GEP is a cast; get the pointer that is
+  // being casted.
+  //
+  if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(PointerOperand)) {
+    if (cExpr->getOpcode() == Instruction::Cast)
+      PointerOperand = cExpr->getOperand(0);
+  }
+
+  //
+  // Make sure the pointer operand really is a pointer.
+  if (!isa<PointerType>(PointerOperand->getType()))
+  {
+std::cerr << "LLVA: memcpy not a pointer\n";
+    return false;
+  }
+
+  //
+  // Attempt to use a call to exactcheck() to check this value if it is a
+  // global array with a non-zero size.  We do not check zero length arrays
+  // because in C they are often used to declare an external array of unknown
+  // size as follows:
+  //        extern struct foo the_array[];
+  //
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+    const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
+    if (AT && (AT->getNumElements())) {
+      // we need to insert an actual check
+      // It could be a select instruction
+      // First get the size
+      // This only works for one or two dimensional arrays
+      const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+      unsigned int arraysize = TD->getTypeSize(AT);
+      ConstantInt * Bounds = ConstantInt::get(csiType, arraysize);
+      addExactCheck (Src, Size, Bounds, InsertPt);
+std::cerr << "LLVA: memcpy is a global\n";
+      return true;
+    } else {
+#if 0
+      Value* Size=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()));
+      addExactCheck2 (Src, Size);
+      return true;
+#endif
+    }
+  }
+
+  //
+  // If the pointer was generated by a dominating alloca instruction, we can
+  // do an exactcheck on it, too.
+  //
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(PointerOperand)) {
+    const Type * AllocaType = AI->getAllocatedType();
+    Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
+
+    if (AI->isArrayAllocation())
+      AllocSize = BinaryOperator::create(Instruction::Mul,
+                                         AllocSize,
+                                         AI->getOperand(0), "allocsize", InsertPt);
+
+    addExactCheck (Src, Size, AllocSize, InsertPt);
+std::cerr << "LLVA: memcpy is an alloca\n";
+    return true;
+  }
+
+  //
+  // If the pointer was an allocation, we should be able to do exact checks
+  //
+  if(CallInst* CI = dyn_cast<CallInst>(PointerOperand)) {
+    if (CI->getCalledFunction() && (
+                              CI->getCalledFunction()->getName() == "__vmalloc" || 
+                              CI->getCalledFunction()->getName() == "kmalloc")) {
+      Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "allocsize", InsertPt);
+      addExactCheck (Src, Size, Cast, InsertPt);
+std::cerr << "LLVA: memcpy is a heap allocation:" << InsertPt->getParent()->getParent()->getName() << "\n";
+      return true;
+    }
+  }
+
+  //
+  // We were not able to insert a call to exactcheck().
+  //
   return false;
 }
 
@@ -928,8 +1196,12 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       Instruction *Finalp = BinaryOperator::create(Instruction::Sub, Bop,
                                                 ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
 
+      Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
+                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
+
       // Create the call to do an accurate bounds check
-      insertBoundsCheck (CI, CI->getOperand(1), Finalp, InsertPt);
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Finalp, InsertPt);
     } else if (Fop->getName() == "llva_memcpy") {
       //
       // Create a call to an accurate bounds check.
@@ -942,8 +1214,11 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
                                                 CastCIOp3, "memcpyadd",InsertPt);
 
+      Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
+                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
       // Create the call to do an accurate bounds check
-      insertBoundsCheck (CI, CI->getOperand(1), Bop, InsertPt);
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop, InsertPt);
     } else if (Fop->getName() == "memcmp") {
       //
       // Create a call to an accurate bounds check for each string parameter.
@@ -965,9 +1240,13 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       Instruction *Finalp2 = BinaryOperator::create(Instruction::Sub, Bop2,
                                                  ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
 
+      Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
+                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
       // Create the call to do an accurate bounds check
-      insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
-      insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+      if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
 #if 0
     } else if (Fop->getName() == "memset") {
       Value *PH = getPoolHandle(CI->getOperand(1), F); 
@@ -1669,10 +1948,14 @@ void InsertPoolChecks::TransformFunction(Function &F) {
         if (isa<PointerType>(SCI->getOperand(0)->getType())) {
           //we need to insert a call to getactualvalue
           //First get the poolhandle for the pointer
+          // TODO: We don't have a working getactualvalue(), so don't waste
+          // time calling it.
+#if 0
           if ((!isa<ConstantPointerNull>(SCI->getOperand(0))) && (!isa<ConstantPointerNull>(SCI->getOperand(1)))) {
             addGetActualValue(SCI, 0);
             addGetActualValue(SCI, 1);
           }
+#endif
         }
       }
     } else if (isa<CastInst>(iLocal)) {
@@ -2095,7 +2378,7 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FArg4.push_back(VoidPtrType); //result
   FArg4.push_back(Type::UIntTy); //size
   FunctionType *ExactCheck2Ty = FunctionType::get(VoidPtrType, FArg4, false);
-  ExactCheck2 = M.getOrInsertFunction("exactcheck2", ExactCheck2Ty);
+  ExactCheck2  = M.getOrInsertFunction("exactcheck2",  ExactCheck2Ty);
 
   std::vector<const Type*> FArg7(1, VoidPtrType); //base
   FArg7.push_back(VoidPtrType); //result

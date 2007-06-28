@@ -42,6 +42,23 @@ static Statistic<> KMallocs    ("dsa", "Number of kmalloc calls");
 static Statistic<> GlobalPools ("dsa", "Number of global pools");
 #endif
 
+Statistic<> stat_unknown ("dsa", "Number of markunknowns");
+static cl::opt<bool>
+Crash("dsa-crash", cl::Hidden,
+         cl::desc("Crash on unknowns"));
+static cl::opt<int>
+CrashAt("dsa-crashat", cl::Hidden,
+         cl::desc("Crash on unknowns"));
+static int CrashCur = 0;
+DSNode *DSNode::setUnknownNodeMarker() { 
+  if (Crash && CrashCur == CrashAt) assert(0); 
+  ++CrashCur;
+  ++stat_unknown; 
+  NodeType |= UnknownNode; 
+  return this;
+}
+
+
 static RegisterPass<LocalDataStructures>
 X("datastructure", "Local Data Structure Analysis");
 
@@ -116,7 +133,7 @@ namespace {
       Value::use_iterator U;
       for (U=f.use_begin(); U != f.use_end(); ++U) {
         if (isa<GlobalValue>(U)) {
-          std::cerr << "LLVA: isa: " << f.getName() << " " << *U << std::endl;
+          //          std::cerr << "LLVA: isa: " << f.getName() << " " << *U << std::endl;
           escapes = true;
           break;
         }
@@ -283,7 +300,15 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
         if (isa<PointerType>(CE->getOperand(0)->getType()))
           NH = getValueDest(*CE->getOperand(0));
         else
-          NH = createNode()->setUnknownNodeMarker();
+          if (CE->getOpcode() == Instruction::Cast &&
+              isa<ConstantInt>(CE->getOperand(0)) && 
+              (
+               cast<ConstantInt>(CE->getOperand(0))->equalsInt(1) ||
+               cast<ConstantInt>(CE->getOperand(0))->getZExtValue() == 0xFFFFFFFF
+               ))
+            NH = createNode();
+          else
+            NH = createNode()->setUnknownNodeMarker();
       } else if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
         DSScalarMap::iterator I = ScalarMap.find(CE);
@@ -1114,7 +1139,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
       DSNode *N = createNode();
       N->setAllocaNodeMarker();
       N->setUnknownNodeMarker();
-      N->setIncompleteMarker();
+      CS.getInstruction()->dump();
       N->foldNodeCompletely();
 
       //
@@ -1239,6 +1264,7 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
       // to track the fact that the node points to SOMETHING, just something we
       // don't know about.  Make an "Unknown" node.
       //
+      CI.dump();
       setDestTo(CI, createNode()->setUnknownNodeMarker());
     }
 }
@@ -1255,8 +1281,10 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
     if (isPointerType((*I)->getType()))
       CurNode.mergeWith(getValueDest(**I));
 
-  if (DSNode *N = CurNode.getNode())
+  if (DSNode *N = CurNode.getNode()) {
+    Inst.dump();
     N->setUnknownNodeMarker();
+  }
 }
 
 

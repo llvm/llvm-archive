@@ -14,5 +14,3 @@
 * Implement monitorenter/monitorexit opcods.
 
 * Implement jsr/ret opcodes.
-
-* Throw a party.

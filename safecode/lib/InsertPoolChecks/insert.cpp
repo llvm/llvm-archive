@@ -67,6 +67,10 @@ cl::opt<bool> DisableStackChecks ("disable-stackchecks", cl::Hidden,
                                   cl::init(false),
                                   cl::desc("Disable Stack Checks"));
 
+cl::opt<bool> DisableFuncChecks ("disable-funcchecks", cl::Hidden,
+                                  cl::init(false),
+                                  cl::desc("Disable Function Call Checks"));
+
 cl::opt<bool> DisableIntrinsicChecks ("disable-intrinchecks", cl::Hidden,
                                       cl::init(false),
                                       cl::desc("Disable Intrinsic Checks"));
@@ -415,6 +419,95 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
 }
 
 //
+// Method: insertFunctionCheck()
+//
+// Description:
+//  Insert a run-time check on the argument to an indirect call instruction.
+//
+void
+InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
+  if (DisableFuncChecks)
+    return;
+
+  // Get the containing function and the function pointer.
+  Function * F = CI->getParent()->getParent();
+  Value * FuncPointer = CI->getCalledValue();
+
+  //
+  // Get the DSNode and Pool handle for the call instruction.
+  //
+  Value *PH = getPoolHandle (FuncPointer, F);
+  if (!PH) {
+    // Update statistics
+    ++NullBoundsChecks;
+    return;
+  }
+  DSNode* Node = getDSNode(FuncPointer, F);
+
+	// Get the globals list corresponding to the node
+	std::vector<Function *> FuncList;
+	Node->addFullFunctionList(FuncList);
+	unsigned num = FuncList.size();
+
+  //
+  // Insert a call to one of the function check functions, depending upon
+  // the number of functions we must check against.
+  //
+  if (num == 0)
+    return;
+
+  std::vector<Function *>::iterator flI= FuncList.begin(), flE = FuncList.end();
+  const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+  Value *NumArg = ConstantInt::get(csiType, num);	
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+           
+  if (num < 4) {
+    const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+    Value *NumArg = ConstantInt::get(csiType, num);	
+           
+    CastInst *CastVI = 
+      new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
+  
+    std::vector<Value *> args(1, NumArg);
+    args.push_back(CastVI);
+    for (; flI != flE ; ++flI) {
+      Function *func = *flI;
+      CastInst *CastfuncI = 
+        new CastInst(func, VoidPtrType, "casted", (Instruction *)(CI));
+      args.push_back(CastfuncI);
+    }
+    for (unsigned index = num; index < 4; ++index)
+      args.push_back (ConstantPointerNull::get (PointerType::get (Type::SByteTy)));
+    new CallInst(FunctionCheck, args,"", (Instruction *)(CI));
+  } else {
+    // Create the first two arguments for the function check call
+    std::vector<Value *> args(1, NumArg);
+    CastInst *CastVI = 
+      new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
+    args.push_back(CastVI);
+
+    // Create a global array of void pointers containing the list of possible
+    // function targets.
+    std::vector<Constant *> Targets;
+    for (; flI != flE ; ++flI) {
+      Function *func = *flI;
+      Constant *CastfuncI = ConstantExpr::getCast (func, VoidPtrType);
+      Targets.push_back(CastfuncI);
+    }
+    ArrayType * TableType = ArrayType::get (VoidPtrType, num);
+    Constant * TableInit = ConstantArray::get (TableType, Targets);
+    GlobalVariable * Table = new GlobalVariable (TableType, true, GlobalValue::InternalLinkage, TableInit, "functargets", F->getParent());
+
+    CastInst *CastTable = 
+      new CastInst(Table, 
+       PointerType::get(VoidPtrType), "casted", (Instruction *)(CI));
+  
+    args.push_back(CastTable);
+    new CallInst(FunctionCheckG, args,"", (Instruction *)(CI));
+  }
+}
+
+//
 // Function: addExactCheck2()
 //
 // Description:
@@ -714,14 +807,37 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   DSNode * Node = TDG.getNodeForValue(GEP).getNode();
   assert (Node && "boundscheck: DSNode is NULL!");
 
+#if 0
+  // Debugging: See if we're missing exactcheck opportunities
+  if (isa<SelectInst>(PointerOperand))
+    std::cerr << "LLVA: EC: Select Inst\n";
+
+  if (isa<GetElementPtrInst>(PointerOperand))
+    std::cerr << "LLVA: EC: GEP: In " << F->getName() << "\n";
+
+  CallInst * CI1;
+  if ((CI1 = dyn_cast<CallInst>(PointerOperand)) &&
+      (CI1->getCalledFunction()) &&
+      (CI1->getCalledFunction()->getName() == "exactcheck3"))
+    std::cerr << "LLVA: EC: GEP: Hidden by ec3: In " << F->getName() << "\n";
+
+  PHINode * PN = 0;
+  if (PN = dyn_cast<PHINode>(PointerOperand)) {
+    std::cerr << "LLVA: EC: PHI\n";
+    for (unsigned index = 0; index < PN->getNumIncomingValues(); ++index) {
+      std::cerr << "LLVA: " << *(PN->getIncomingValue(index)) << std::endl;
+    }
+  }
+#endif
+
   //
   // Sometimes the pointer operand to a GEP is a cast; get the pointer that is
   // being casted.
   //
-  if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(PointerOperand)) {
-    if (cExpr->getOpcode() == Instruction::Cast)
+  ConstantExpr *cExpr;
+  while ((cExpr = dyn_cast<ConstantExpr>(PointerOperand)) &&
+         (cExpr->getOpcode() == Instruction::Cast))
       PointerOperand = cExpr->getOperand(0);
-  }
 
   //
   // Make sure the pointer operand really is a pointer.
@@ -1176,6 +1292,16 @@ void InsertPoolChecks::addPoolChecks(Module &M) {
 }
 
 void InsertPoolChecks::handleCallInst(CallInst *CI) {
+  //
+  // Determine if this is an indirect call.  If so, insert a run-time check for
+  // it.
+  //
+  if (!(CI->getCalledFunction()))
+    insertFunctionCheck (CI);
+
+  //
+  // Check for intrinsic functions and add checks as necessary.
+  //
   if (CI && (!DisableIntrinsicChecks)) {
     Value *Fop = CI->getOperand(0);
     Function *F = CI->getParent()->getParent();
@@ -1863,12 +1989,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // uses.
           //
           Instruction *nextIns = MAI->getNext();
-          CastInst *CastBack = new CastInst(MAI, MAI->getType(), MAI->getName()+".castback",nextIns);
-          MAI->replaceAllUsesWith(CastBack);
-  
-          Value * V;
-          V = insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, CastBack);
-          CastBack->setOperand(0, V);
+          insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, nextIns);
         }
       }
     } else {
@@ -2019,15 +2140,27 @@ void InsertPoolChecks::TransformFunction(Function &F) {
 void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   // Get the pool handle for the node that this contributes to...
   Function *FOrig  = AIOrig->getParent()->getParent();
-  DSNode *Node = getDSNode(AIOrig, FOrig);
-  if (!Node) return;
 #if 0
-  if (Node->isArray()) {
+  DSNode *Node = getDSNode(AIOrig, FOrig);
 #else
-  if (1) {
+  DSGraph & TDG = TDPass->getDSGraph(*FOrig);
+  DSNode * Node = TDG.getNodeForValue(AIOrig).getNode();
 #endif
+  if (!Node) return;
+  if (!(Node->isAllocaNode()))
+    std::cerr << "LLVA: Not a stack node\n";
+
+  //
+  // Only register the stack allocation if it may be the subject of a run-time
+  // check.  This can only occur when the object is used like an array because:
+  //  1) GEP checks are only done when accessing arrays.
+  //  2) Load/Store checks are only done on collapsed nodes (which appear to be
+  //     used like arrays).
+  //
+  if (Node->isArray()) {
     Value *PH = getPoolHandle(AIOrig, FOrig);
     if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
+    std::cerr << "LLVA: Alloc " << PH->getName() << "\n";
     Value *AllocSize =
       ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
     
@@ -2067,7 +2200,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
                                        AI->getName()+".casted", iptI);
     Value *CastedPH = new CastInst(PH,
                                    PointerType::get(Type::SByteTy),
-                                   "ph",Casted);
+                                   "allocph",Casted);
     new CallInst(PoolRegister,
                  make_vector(CastedPH, Casted, AllocSize,0),
                  "", iptI);
@@ -2369,6 +2502,12 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
   FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
 
+  std::vector<const Type *> FArg6(1, Type::UIntTy);
+  FArg6.push_back(VoidPtrType);
+  FArg6.push_back(PointerType::get(VoidPtrType));
+  FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
+  FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
+
   std::vector<const Type*> FArg5(1, VoidPtrType);
   FArg5.push_back(VoidPtrType);
   FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
@@ -2386,8 +2525,8 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *ExactCheck3Ty = FunctionType::get(VoidPtrType, FArg7, false);
   ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
 
-  std::vector<const Type*> FArg6(1, VoidPtrType); //base
-  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg6, false);
+  std::vector<const Type*> FArg8(1, VoidPtrType); //base
+  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg8, false);
   getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
   getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
 }

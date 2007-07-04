@@ -2147,8 +2147,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   DSNode * Node = TDG.getNodeForValue(AIOrig).getNode();
 #endif
   if (!Node) return;
-  if (!(Node->isAllocaNode()))
-    std::cerr << "LLVA: Not a stack node\n";
+  assert ((Node->isAllocaNode()) && "DSNode for alloca is missing stack flag!");
 
   //
   // Only register the stack allocation if it may be the subject of a run-time
@@ -2160,7 +2159,6 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   if (Node->isArray()) {
     Value *PH = getPoolHandle(AIOrig, FOrig);
     if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
-    std::cerr << "LLVA: Alloc " << PH->getName() << "\n";
     Value *AllocSize =
       ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
     
@@ -2168,29 +2166,15 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
       AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
                                          AI->getOperand(0), "sizetmp", AI);
 
-    // Insert poolregister at the end of allocas and all poolinits
-    // FIXME assuming that there is a load before a call??
-    Instruction *iptI;
-#if 0
-    if (AI->getParent() == AI->getParent()->getParent()->getEntryBlock()) {
-#else
-    if (0) {
-#endif
-      BasicBlock::iterator InsertPt = AI->getParent()->getParent()->getEntryBlock().begin();
-      while ((isa<CallInst>(InsertPt)) ||
-              isa<CastInst>(InsertPt)  ||
-              isa<AllocaInst>(InsertPt) ||
-              isa<BinaryOperator>(InsertPt)) {
-#if 0
-        if (CallInst *PI = dyn_cast<CallInst>(InsertPt)) {
-          if (PI->getName() != "poolinit") break;
-        }
-#endif
+    // Insert object registration at the end of allocas.
+    Instruction *iptI = AI->getNext();
+    if (AI->getParent() == (&(AI->getParent()->getParent()->getEntryBlock()))) {
+      BasicBlock::iterator InsertPt = AI->getParent()->begin();
+      while (&(*(InsertPt)) != AI)
         ++InsertPt;
-      }
+      while (isa<AllocaInst>(InsertPt))
+        ++InsertPt;
       iptI = InsertPt;
-    } else {
-      iptI = AI->getNext();
     }
 
     //

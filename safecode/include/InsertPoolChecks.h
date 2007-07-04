@@ -49,6 +49,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *PoolCheckIArray;
   Function *ExactCheck;
   Function *FunctionCheck;
+  Function *FunctionCheckG;
   Function *BoundsCheck;
   Function *UIBoundsCheck;
   Function *getBounds;
@@ -84,6 +85,7 @@ struct InsertPoolChecks : public ModulePass {
   Value * addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
   bool insertExactCheck (GetElementPtrInst * GEP);
   bool insertExactCheck (Instruction * , Value *, Value *, Instruction *);
+  void insertFunctionCheck(CallInst* CI);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
 

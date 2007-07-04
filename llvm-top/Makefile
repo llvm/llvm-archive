@@ -23,16 +23,20 @@ llvm:
 	@$(SVN) co $(SVNROOT)/llvm/trunk llvm
 
 get-test-suite: test-suite
+test-suite:
 	@$(SVN) co $(SVNROOT)/test-suite/trunk test-suite
 
 get-stacker: stacker
+stacker:
 	@$(SVN) co $(SVNROOT)/stacker/trunk stacker
 
 get-hlvm: hlvm
+hlvm:
 	@echo hlvm: Not implemented yet.
 	#@$(SVN) co $(SVNROOT)/hlvm/trunk hlvm
 
 get-llvm-gcc: llvm-gcc
+llvm-gcc:
 	@echo llvm-gcc: Not implemented yet.
 	#@$(SVN) co $(SVNROOT)/llvm-gcc/trunk llvm-gcc
 

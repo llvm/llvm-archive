@@ -60,23 +60,24 @@ void * exactcheck3(signed char *base, signed char *result, signed char * end) {
   return result;
 }
 
-#ifdef LLVA_KERNEL
-void funccheck (unsigned num, void *f, void *g, ...) {
-  va_list ap;
-  unsigned i = 0;
-  if (f == g) return;
-  i++;
-  va_start(ap, g);
-  for ( ; i != num; ++i) {
-    void *h = va_arg(ap, void *);
-    if (f == h) {
-      return;
-    }
-  }
-  if (do_fail) poolcheckfail ("funccheck failed", h, (void*)__builtin_return_address(0));
+void funccheck (unsigned num, void *f, void *t1, void *t2,
+                                       void *t3, void *t4) {
+  if ((t1) && (f == t1)) return;
+  if ((t2) && (f == t2)) return;
+  if ((t3) && (f == t3)) return;
+  if ((t4) && (f == t4)) return;
+  if (do_fail) poolcheckfail ("funccheck failed", f, (void*)__builtin_return_address(0));
   return;
 }
-#endif
+
+void funccheck_g (unsigned num, void * f, void ** table) {
+  unsigned int index;
+  for (index = 0; index < num; ++index) {
+    if (f == table[index])
+      return;
+  }
+  if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
+}
 
 struct node {
   void* left;

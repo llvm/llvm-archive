@@ -81,6 +81,8 @@ extern "C" {
   void * exactcheck2a(signed char *base, signed char *result, unsigned size) __attribute__ ((weak));
   void * exactcheck3(signed char *base, signed char *result, signed char * end)__attribute__ ((weak));
 
+  void funccheck (unsigned num, void *f, void *t1, void *t2, void *t3, void *t4) __attribute__ ((weak));
+  void funccheck_g (unsigned num, void * f, void ** table) __attribute__ ((weak));
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));
 

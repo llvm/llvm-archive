@@ -40,3 +40,8 @@ llvm-gcc:
 	@echo llvm-gcc: Not implemented yet.
 	#@$(SVN) co $(SVNROOT)/llvm-gcc/trunk llvm-gcc
 
+build-llvm: llvm
+	@root=`pwd` ; cd llvm ; \
+	  ./configure --prefix="$$root/install" \
+	    --with-llvm-gcc="$$root/llvm-gcc" ; \
+	  make tools-only ; 

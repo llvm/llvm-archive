@@ -14,6 +14,8 @@
 # etc.
 #
 SVN = svn
+
+# Figure out the root of the SVN repository by asking for it from 'svn info'
 SVNROOT = $(shell $(SVN) info . | grep 'Repository Root:' | \
                    sed -e 's/^Repository Root: //')
 

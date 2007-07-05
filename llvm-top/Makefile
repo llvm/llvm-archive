@@ -13,8 +13,8 @@
 # development environment, including checking out other software, configuration,
 # etc.
 #
-SVN = svn
-SVNROOT = http://llvm.org/svn/llvm-project
+SVN = $(shell which svn)
+SVNROOT = $(shell $(SVN) info . | grep 'Repository Root:' | sed -e 's/^Repository Root: //')
 
 .PHONY: get-llvm get-hlvm get-stacker get-test-suite get-llvm-gcc
 

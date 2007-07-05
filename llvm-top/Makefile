@@ -13,32 +13,21 @@
 # development environment, including checking out other software, configuration,
 # etc.
 #
-SVN = $(shell which svn)
-SVNROOT = $(shell $(SVN) info . | grep 'Repository Root:' | sed -e 's/^Repository Root: //')
+SVN = svn
+SVNROOT := $(shell $(SVN) info . | grep 'Repository Root:' | \
+                   sed -e 's/^Repository Root: //')
 
-.PHONY: get-llvm get-hlvm get-stacker get-test-suite get-llvm-gcc
+.PHONY: checkout
+
+checkout:
+	$(SVN) co $(SVNROOT)/$(MODULE)/trunk $(MODULE)
+
+
+
 
 get-llvm: llvm
 llvm:
 	@$(SVN) co $(SVNROOT)/llvm/trunk llvm
-
-get-test-suite: test-suite
-test-suite:
-	@$(SVN) co $(SVNROOT)/test-suite/trunk test-suite
-
-get-stacker: stacker
-stacker:
-	@$(SVN) co $(SVNROOT)/stacker/trunk stacker
-
-get-hlvm: hlvm
-hlvm:
-	@echo hlvm: Not implemented yet.
-	#@$(SVN) co $(SVNROOT)/hlvm/trunk hlvm
-
-get-llvm-gcc: llvm-gcc
-llvm-gcc:
-	@echo llvm-gcc: Not implemented yet.
-	#@$(SVN) co $(SVNROOT)/llvm-gcc/trunk llvm-gcc
 
 build-llvm: llvm
 	@root=`pwd` ; cd llvm ; \

@@ -13,11 +13,11 @@ You should check this module out with the following subversion command:
 Once you've done that, you can then use the following "make" targets to check
 out the various modules of the project:
 
-get-llvm:         Checks out the llvm (core) module
-get-test-suite:   Checks out the llvm test suite
-get-stacker:      Checks out the stacker front end
-get-hlvm:         Checks out the High Level Virtual Machine
-get-llvm-gcc:     Checks out the GCC based C/C++/Obj-C compiler
+make checkout MODULE=llvm       - Checks out the llvm (core) module
+make checkout MODULE=llvm-gcc   - Checks out the GCC based C/C++/Obj-C compiler
+make checkout MODULE=test-suite - Checks out the llvm test suite
+make checkout MODULE=stacker    - Checks out the stacker front end
+make checkout MODULE=hlvm       - Checks out the High Level Virtual Machine
 
 Some Other Useful URLS
 ======================

@@ -14,14 +14,36 @@
 # etc.
 #
 SVN = svn
-SVNROOT := $(shell $(SVN) info . | grep 'Repository Root:' | \
+SVNROOT = $(shell $(SVN) info . | grep 'Repository Root:' | \
                    sed -e 's/^Repository Root: //')
+
+
+# Rule to get the modules that $(MODULE) depends on.
+MODULEINFO = $(MODULE)/ModuleInfo.txt
+DEPMODULES = grep -i DepModule: $(MODULEINFO) | \
+                sed 's/DepModule: //g'
+
 
 .PHONY: checkout
 
+ifndef MODULE
+checkout:
+	@echo ERROR: you must specify a MODULE value to 'make checkout'.
+	@echo ERROR: for example, use: 'make checkout MODULE=llvm'.
+
+else
+
+# Check out a module and all its dependencies.
 checkout:
 	$(SVN) co $(SVNROOT)/$(MODULE)/trunk $(MODULE)
+	@if test -f $(MODULEINFO); then \
+	  for mod in `$(DEPMODULES)`; do \
+            echo "NOTE: $(MODULE) module depends on $$mod, checking it out."; \
+            $(MAKE) checkout MODULE=$$mod; \
+          done; \
+        fi
 
+endif
 
 
 

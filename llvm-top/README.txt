@@ -10,14 +10,27 @@ You should check this module out with the following subversion command:
 
    svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
 
-Once you've done that, you can then use the following "make" targets to check
-out the various modules of the project:
+Once you've done that, you can then check out a module (and all its
+dependencies) with the 'make checkout MODULE=modulename' command.  For example:
 
-make checkout MODULE=llvm       - Checks out the llvm (core) module
-make checkout MODULE=llvm-gcc   - Checks out the GCC based C/C++/Obj-C compiler
-make checkout MODULE=test-suite - Checks out the llvm test suite
-make checkout MODULE=stacker    - Checks out the stacker front end
-make checkout MODULE=hlvm       - Checks out the High Level Virtual Machine
+  make checkout MODULE=llvm-gcc-4.0
+
+Checks out llvm-gcc (the llvm C/C++/ObjC compiler built with the GCC 4.0
+front-end) and all the things it depends on.  Other modules available
+are:
+
+  test-suite - The llvm test suite
+  stacker    - The stacker front end (a 'Forth-like' language)
+  hlvm       - High Level Virtual Machine
+
+You can check out any number of modules.
+
+
+Once you check out the modules, use the "make" command to automatically
+configure and build the projects you checked out.
+
+...
+
 
 Some Other Useful URLS
 ======================

@@ -15,9 +15,8 @@ dependencies) with the 'make checkout MODULE=modulename' command.  For example:
 
   make checkout MODULE=llvm-gcc-4.0
 
-Checks out llvm-gcc (the llvm C/C++/ObjC compiler built with the GCC 4.0
-front-end) and all the things it depends on.  Other modules available
-are:
+Checks out llvm-gcc-4.0 (the llvm C/C++/ObjC compiler built with the GCC 4.0
+front-end) and all the things it depends on.  Other modules available are:
 
   test-suite - The llvm test suite
   stacker    - The stacker front end (a 'Forth-like' language)

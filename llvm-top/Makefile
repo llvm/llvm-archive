@@ -35,7 +35,10 @@ checkout:
 
 else
 
-# Check out a module and all its dependencies.
+# Check out a module and all its dependencies. Note that this arrangement
+# depends on each module having a file named ModuleInfo.txt that explicitly
+# indicates the other LLVM modules it depends on. See one of those files for
+# examples.
 checkout:
 	$(SVN) co $(SVNROOT)/$(MODULE)/trunk $(MODULE)
 	@if test -f $(MODULEINFO); then \

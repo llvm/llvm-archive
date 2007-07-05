@@ -60,22 +60,52 @@ void * exactcheck3(signed char *base, signed char *result, signed char * end) {
   return result;
 }
 
-void funccheck (unsigned num, void *f, void *t1, void *t2,
-                                       void *t3, void *t4) {
+void funccheck (unsigned num, void *f, void *t1, void *t2, void *t3,
+                                       void *t4, void *t5, void *t6) {
   if ((t1) && (f == t1)) return;
   if ((t2) && (f == t2)) return;
   if ((t3) && (f == t3)) return;
   if ((t4) && (f == t4)) return;
+  if ((t5) && (f == t5)) return;
+  if ((t6) && (f == t6)) return;
   if (do_fail) poolcheckfail ("funccheck failed", f, (void*)__builtin_return_address(0));
   return;
 }
 
-void funccheck_g (unsigned num, void * f, void ** table) {
-  unsigned int index;
-  for (index = 0; index < num; ++index) {
-    if (f == table[index])
+void funccheck_g (unsigned num, void * f, void * cachep, void ** table) {
+  funccache * fcache = cachep;
+  unsigned int index, findex;
+  extern int profile_pause;
+
+#if 0
+  /*
+   * First, look for the pointer in the cache.
+   */
+  for (index = 0; index < 16; ++index) {
+    if (fcache->cache[index] == f) {
+      if (!profile_pause)
+        printk ("LLVA: fc: Cache: %x\n", __builtin_return_address(0));
       return;
+    }
   }
+#endif
+
+  /*
+   * Second, look for the pointer in the big table
+   */
+  for (index = 0; index < num; ++index) {
+    if (f == table[index]) {
+#if 0
+      findex = fcache->index;
+      fcache->cache[findex] = f;
+      fcache->index = (++findex) & 0x0000000f;
+      if (!profile_pause)
+        printk ("LLVA: fc: Table: %x\n", __builtin_return_address(0));
+#endif
+      return;
+    }
+  }
+
   if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
 }
 

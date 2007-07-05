@@ -2158,23 +2158,6 @@ void InsertPoolChecks::TransformFunction(Function &F) {
 
 
 void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
-#if 1
-  //
-  // If the only uses of the alloca are in GEP expressions, then do not bother
-  // to register it, for it can be checked using only exactchecks.
-  //
-  bool skip=true;
-  Value::use_iterator UI = AI->use_begin();
-  for (; UI != AI->use_end(); ++UI) {
-    if (!isa<GetElementPtrInst>(UI)) {
-      skip = false;
-      break;
-    }
-  }
-
-  if (skip) return;
-#endif
-
   // Get the pool handle for the node that this contributes to...
   Function *FOrig  = AIOrig->getParent()->getParent();
 #if 0

@@ -460,8 +460,15 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
   Value *NumArg = ConstantInt::get(csiType, num);	
   Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-           
-  if (num < 4) {
+
+#if 0
+  std::cerr << "LLVA: funcp: " << *FuncPointer << "\n";
+  if (LoadInst * LI = dyn_cast<LoadInst>(FuncPointer)) {
+    std::cerr << "LLVA: funcload: " << *(LI->getPointerOperand()) << "\n";
+  }
+#endif
+
+  if (num < 7) {
     const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
     Value *NumArg = ConstantInt::get(csiType, num);	
            
@@ -476,15 +483,28 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
         new CastInst(func, VoidPtrType, "casted", (Instruction *)(CI));
       args.push_back(CastfuncI);
     }
-    for (unsigned index = num; index < 4; ++index)
+    for (unsigned index = num; index < 7; ++index)
       args.push_back (ConstantPointerNull::get (PointerType::get (Type::SByteTy)));
     new CallInst(FunctionCheck, args,"", (Instruction *)(CI));
   } else {
+    // Create a global variable to hold the cache for this function lookup
+    std::vector<const Type *> CacheStructElements;
+    CacheStructElements.push_back (Type::UIntTy);
+    CacheStructElements.push_back (ArrayType::get(VoidPtrType, 16));
+    StructType * CacheType = StructType::get (CacheStructElements);
+    Value * Cache;
+    Constant * CacheInit = Constant::getNullValue(CacheType);
+    Cache = new GlobalVariable (CacheType, false, GlobalValue::ExternalLinkage,
+                                CacheInit, "funccache", F->getParent());
+
+    Cache = new CastInst(Cache, VoidPtrType, "fccast", (Instruction *)(CI));
+
     // Create the first two arguments for the function check call
     std::vector<Value *> args(1, NumArg);
     CastInst *CastVI = 
       new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
     args.push_back(CastVI);
+    args.push_back(Cache);
 
     // Create a global array of void pointers containing the list of possible
     // function targets.
@@ -2138,6 +2158,23 @@ void InsertPoolChecks::TransformFunction(Function &F) {
 
 
 void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
+#if 1
+  //
+  // If the only uses of the alloca are in GEP expressions, then do not bother
+  // to register it, for it can be checked using only exactchecks.
+  //
+  bool skip=true;
+  Value::use_iterator UI = AI->use_begin();
+  for (; UI != AI->use_end(); ++UI) {
+    if (!isa<GetElementPtrInst>(UI)) {
+      skip = false;
+      break;
+    }
+  }
+
+  if (skip) return;
+#endif
+
   // Get the pool handle for the node that this contributes to...
   Function *FOrig  = AIOrig->getParent()->getParent();
 #if 0
@@ -2159,6 +2196,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   if (Node->isArray()) {
     Value *PH = getPoolHandle(AIOrig, FOrig);
     if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
+
     Value *AllocSize =
       ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
     
@@ -2302,7 +2340,7 @@ void InsertPoolChecks::addLoadStoreChecks(Module &M){
       } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
         Value *P = SI->getPointerOperand();
         addLSChecks(P, SI, F);
-      } 
+      }
     }
   }
 }
@@ -2487,6 +2525,7 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
 
   std::vector<const Type *> FArg6(1, Type::UIntTy);
+  FArg6.push_back(VoidPtrType);
   FArg6.push_back(VoidPtrType);
   FArg6.push_back(PointerType::get(VoidPtrType));
   FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);

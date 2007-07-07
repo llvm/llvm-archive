@@ -2,8 +2,8 @@
 #define INSERT_BOUNDS_H
 
 #include "safecode/Config/config.h"
-#include "llvm/Pass.h"
 #include "ConvertUnsafeAllocas.h"
+#include "llvm/Pass.h"
 
 #ifndef LLVA_KERNEL
 #include "SafeDynMemAlloc.h"
@@ -49,6 +49,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *PoolCheckIArray;
   Function *ExactCheck;
   Function *FunctionCheck;
+  Function *FunctionCheckT;
   Function *FunctionCheckG;
   Function *BoundsCheck;
   Function *UIBoundsCheck;

@@ -22,8 +22,8 @@ SVNROOT = $(shell $(SVN) info . | grep 'Repository Root:' | \
 
 # Rule to get the modules that $(MODULE) depends on.
 MODULEINFO = $(MODULE)/ModuleInfo.txt
-DEPMODULES = grep -i DepModule: $(MODULEINFO) | \
-                sed 's/DepModule: //g'
+DEPMODULES = grep -i DepModule: $(MODULEINFO) | sed 's/DepModule: *//g'
+BUILDTARGET = grep -i BuildTarget: $(MODULEINFO) | sed 's/BuildTarget: *//g'
 
 
 .PHONY: checkout
@@ -33,31 +33,48 @@ checkout:
 	@echo ERROR: you must specify a MODULE value to 'make checkout'.
 	@echo ERROR: for example, use: 'make checkout MODULE=llvm'.
 
+build:
+	@echo ERROR: you must specify a MODULE value to 'make build'.
+	@echo ERROR: for example, use: 'make build MODULE=llvm'.
 else
 
 # Check out a module and all its dependencies. Note that this arrangement
 # depends on each module having a file named ModuleInfo.txt that explicitly
 # indicates the other LLVM modules it depends on. See one of those files for
 # examples.
-checkout:
+checkout: $(MODULE)
+
+$(MODULE):
 	$(SVN) co $(SVNROOT)/$(MODULE)/trunk $(MODULE)
 	@if test -f $(MODULEINFO); then \
 	  for mod in `$(DEPMODULES)`; do \
-            echo "NOTE: $(MODULE) module depends on $$mod, checking it out."; \
-            $(MAKE) checkout MODULE=$$mod; \
+	    echo -n "NOTE: $(MODULE) module depends on $$mod" ; \
+	    if test -d $$mod ; then \
+	      echo ", but its already checked out." ; \
+	    else \
+	      echo ", checking it out." ; \
+	      $(MAKE) checkout MODULE=$$mod ; \
+	    fi ; \
           done; \
         fi
 
+build: $(MODULE) install
+	@if test -f $(MODULEINFO); then \
+	  BuildTarget=`$(BUILDTARGET)` ; \
+	  for mod in `$(DEPMODULES)`; do \
+	    echo -n "NOTE: $(MODULE) module depends on $$mod" ; \
+	    if test -d $$mod ; then \
+	      echo ", building it first." ; \
+	    else \
+	      echo ", checking it out now." ; \
+	      $(MAKE) checkout MODULE=$$mod ; \
+	    fi ; \
+	    $(MAKE) build MODULE=$$mod ; \
+          done; \
+        fi ; \
+	echo "Building MODULE $(MODULE)" ; \
+	root=`pwd` ; cd $(MODULE) ; $(MAKE) $$BuildTarget LLVM_TOP=$$root
 endif
 
-
-
-get-llvm: llvm
-llvm:
-	@$(SVN) co $(SVNROOT)/llvm/trunk llvm
-
-build-llvm: llvm
-	@root=`pwd` ; cd llvm ; \
-	  ./configure --prefix="$$root/install" \
-	    --with-llvm-gcc="$$root/llvm-gcc" ; \
-	  make tools-only ; 
+install:
+	@mkdir install

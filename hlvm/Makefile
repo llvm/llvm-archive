@@ -94,3 +94,9 @@ exclusions: Makefile
 	echo hlvm-0.1-tar.bz2 >> exclusions
 	echo '*.swp' >> exclusions
 	echo 'config.log' >> exclusions
+
+build-for-llvm-top:
+	scons $(SCONSOPTS)  mode=Debug debug=1 assertions=1 optimized=0 \
+	inline=0 small=0 confpath=$(LLVM_TOP)/install prefix=$(LLVM_TOP)/install \
+	with_llvmgcc=$(LLVM_TOP)/install/bin/llvm-gcc \
+	with_llvmgxx=$(LLVM_TOP)/install/bin/llvm-g++

@@ -1,1 +1,2 @@
 DepModule: llvm
+BuildTarget: build-for-llvm-top

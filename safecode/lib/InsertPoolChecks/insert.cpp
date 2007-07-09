@@ -22,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace llvm;
 
@@ -90,6 +91,8 @@ static Statistic<> MissChecks ("safecode",
                                "Poolchecks omitted due to bad pool descriptor");
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 
+static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
+
 // Bounds Check Statistics
 static Statistic<> BoundsChecks     ("safecode",
                                      "Total bounds checks inserted");
@@ -117,14 +120,18 @@ static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 // Exact Check Statistics
 static Statistic<> ExactChecks        ("safecode", "Exactchecks inserted");
 static Statistic<> ConstExactChecks   ("safecode", "Omitted Exactchecks with constant arguments");
+static Statistic<> ZeroFuncChecks     ("safecode", "Indirect Call Checks with Zero Targets");
  
+// Object registration statistics
+static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations saved");
+
 //Kernel support rutines
 static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
   //Here we insert a global meta pool
   //Now create a meta pool for this value, DSN Node
   const Type * VoidPtrType = PointerType::get(Type::SByteTy);
   std::vector<const Type*> MPTV;
-  for (int x = 0; x < 8; ++x)
+  for (int x = 0; x < 9; ++x)
     MPTV.push_back(VoidPtrType);
   // Add the types for the hit cache
   MPTV.push_back(Type::UIntTy);
@@ -433,6 +440,22 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   Function * F = CI->getParent()->getParent();
   Value * FuncPointer = CI->getCalledValue();
 
+  // Try to remove any encapsulating casts to get to the original instruction
+  ConstantExpr *cExpr;
+  while ((cExpr = dyn_cast<ConstantExpr>(FuncPointer)) &&
+         (cExpr->getOpcode() == Instruction::Cast))
+      FuncPointer = cExpr->getOperand(0);
+
+  //
+  // Determine if the function pointer came from a load instruction that loaded
+  // its value from a type known pool.  If it is, it does not need a check.
+  //
+  if (LoadInst * LI = dyn_cast<LoadInst>(FuncPointer)) {
+    DSNode * LoadNode = getDSNode (LI->getPointerOperand(), F);
+    if ((LoadNode) && (!(LoadNode->isNodeCompletelyFolded())))
+      return;
+  }
+
   //
   // Get the DSNode and Pool handle for the call instruction.
   //
@@ -453,8 +476,13 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   // Insert a call to one of the function check functions, depending upon
   // the number of functions we must check against.
   //
-  if (num == 0)
+  if (num == 0) {
+    ++ZeroFuncChecks;
     return;
+  }
+
+  // Update statistics on the number of indirect call checks.
+  ++FuncChecks;
 
   std::vector<Function *>::iterator flI= FuncList.begin(), flE = FuncList.end();
   const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
@@ -486,6 +514,31 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
     for (unsigned index = num; index < 7; ++index)
       args.push_back (ConstantPointerNull::get (PointerType::get (Type::SByteTy)));
     new CallInst(FunctionCheck, args,"", (Instruction *)(CI));
+  } else if (num < 21) {
+    // Create the first two arguments for the function check call
+    std::vector<Value *> args(1, NumArg);
+    CastInst *CastVI = 
+      new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
+    args.push_back(CastVI);
+
+    // Create a global array of void pointers containing the list of possible
+    // function targets.
+    std::vector<Constant *> Targets;
+    for (; flI != flE ; ++flI) {
+      Function *func = *flI;
+      Constant *CastfuncI = ConstantExpr::getCast (func, VoidPtrType);
+      Targets.push_back(CastfuncI);
+    }
+    ArrayType * TableType = ArrayType::get (VoidPtrType, num);
+    Constant * TableInit = ConstantArray::get (TableType, Targets);
+    GlobalVariable * Table = new GlobalVariable (TableType, true, GlobalValue::InternalLinkage, TableInit, "functargets", F->getParent());
+
+    CastInst *CastTable = 
+      new CastInst(Table, 
+       PointerType::get(VoidPtrType), "casted", (Instruction *)(CI));
+  
+    args.push_back(CastTable);
+    new CallInst(FunctionCheckT, args, "", (Instruction *)(CI));
   } else {
     // Create a global variable to hold the cache for this function lookup
     std::vector<const Type *> CacheStructElements;
@@ -855,12 +908,44 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // being casted.
   //
   ConstantExpr *cExpr;
-  while ((cExpr = dyn_cast<ConstantExpr>(PointerOperand)) &&
-         (cExpr->getOpcode() == Instruction::Cast))
-      PointerOperand = cExpr->getOperand(0);
+  Value * SourcePointer = PointerOperand;
+  while (!isa<AllocaInst>(SourcePointer)) {
+    if ((cExpr = dyn_cast<ConstantExpr>(SourcePointer)) &&
+        (cExpr->getOpcode() == Instruction::Cast)) {
+      SourcePointer = cExpr->getOperand(0);
+      continue;
+    }
+
+    if (GetElementPtrInst * G = dyn_cast<GetElementPtrInst>(SourcePointer)) {
+      SourcePointer = G->getPointerOperand();
+      continue;
+    }
+
+    if (CastInst * CastI = dyn_cast<CastInst>(SourcePointer)) {
+      if (isa<PointerType>(CastI->getOperand(0)->getType())) {
+        SourcePointer = CastI->getOperand(0);
+        continue;
+      }
+    }
+
+    CallInst * CI1;
+    if ((CI1 = dyn_cast<CallInst>(PointerOperand)) &&
+        (CI1->getCalledFunction()) &&
+        (CI1->getCalledFunction()->getName() == "exactcheck3")) {
+      SourcePointer = CI1->getOperand (2);
+      continue;
+    }
+
+    // We can't scan through any more instructions; give up
+    break;
+  }
+
+  if (isa<AllocaInst>(SourcePointer))
+    PointerOperand = SourcePointer;
 
   //
-  // Make sure the pointer operand really is a pointer.
+  // Ensure the pointer operand really is a pointer.
+  //
   if (!isa<PointerType>(PointerOperand->getType()))
     return false;
 
@@ -2158,14 +2243,11 @@ void InsertPoolChecks::TransformFunction(Function &F) {
 
 
 void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
+  //
   // Get the pool handle for the node that this contributes to...
+  //
   Function *FOrig  = AIOrig->getParent()->getParent();
-#if 0
   DSNode *Node = getDSNode(AIOrig, FOrig);
-#else
-  DSGraph & TDG = TDPass->getDSGraph(*FOrig);
-  DSNode * Node = TDG.getNodeForValue(AIOrig).getNode();
-#endif
   if (!Node) return;
   assert ((Node->isAllocaNode()) && "DSNode for alloca is missing stack flag!");
 
@@ -2176,52 +2258,131 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   //  2) Load/Store checks are only done on collapsed nodes (which appear to be
   //     used like arrays).
   //
-  if (Node->isArray()) {
-    Value *PH = getPoolHandle(AIOrig, FOrig);
-    if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
+  if (!(Node->isArray()))
+    return;
 
-    Value *AllocSize =
-      ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
-    
-    if (AI->isArrayAllocation())
-      AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
-                                         AI->getOperand(0), "sizetmp", AI);
+  //
+  // Determine if any use (direct or indirect) escapes this function.  If not,
+  // then none of the checks will consult the MetaPool, and we can forego
+  // registering the alloca.
+  //
+  bool MustRegisterAlloca = false;
+  std::vector<Value *> AllocaWorkList;
+  AllocaWorkList.push_back (AI);
+  while ((!MustRegisterAlloca) && (AllocaWorkList.size())) {
+    Value * V = AllocaWorkList.back();
+    AllocaWorkList.pop_back();
+    Value::use_iterator UI = V->use_begin();
+    for (; UI != V->use_end(); ++UI) {
+      // We cannot handle PHI nodes or Select instructions
+      if (isa<PHINode>(UI) || isa<SelectInst>(UI)) {
+        MustRegisterAlloca = true;
+        continue;
+      }
 
-    // Insert object registration at the end of allocas.
-    Instruction *iptI = AI->getNext();
-    if (AI->getParent() == (&(AI->getParent()->getParent()->getEntryBlock()))) {
-      BasicBlock::iterator InsertPt = AI->getParent()->begin();
-      while (&(*(InsertPt)) != AI)
-        ++InsertPt;
-      while (isa<AllocaInst>(InsertPt))
-        ++InsertPt;
-      iptI = InsertPt;
+      // The pointer escapes if it's stored to memory somewhere.
+      StoreInst * SI;
+      if ((SI = dyn_cast<StoreInst>(UI)) && (SI->getOperand(0) == V)) {
+        MustRegisterAlloca = true;
+        continue;
+      }
+
+      // GEP instructions are okay, but need to be added to the worklist
+      if (isa<GetElementPtrInst>(UI)) {
+        AllocaWorkList.push_back (*UI);
+        continue;
+      }
+
+      // Cast instructions are okay as long as they cast to another pointer
+      // type
+      if (CastInst * CI = dyn_cast<CastInst>(UI)) {
+        if (isa<PointerType>(CI->getType())) {
+          AllocaWorkList.push_back (*UI);
+          continue;
+        } else {
+          MustRegisterAlloca = true;
+          continue;
+        }
+      }
+
+      if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(UI)) {
+        if (cExpr->getOpcode() == Instruction::Cast) {
+          AllocaWorkList.push_back (*UI);
+          continue;
+        } else {
+          MustRegisterAlloca = true;
+          continue;
+        }
+      }
+
+      CallInst * CI1;
+      if (CI1 = dyn_cast<CallInst>(UI)) {
+        if (!(CI1->getCalledFunction())) {
+          MustRegisterAlloca = true;
+          continue;
+        } else if (CI1->getCalledFunction()->getName() == "exactcheck3") {
+          AllocaWorkList.push_back (*UI);
+          continue;
+        } else {
+          MustRegisterAlloca = true;
+          continue;
+        }
+      }
     }
+  }
 
-    //
-    // Insert a call to register the object.
-    //
-    Instruction *Casted = new CastInst(AI, PointerType::get(Type::SByteTy),
-                                       AI->getName()+".casted", iptI);
-    Value *CastedPH = new CastInst(PH,
-                                   PointerType::get(Type::SByteTy),
-                                   "allocph",Casted);
-    new CallInst(PoolRegister,
-                 make_vector(CastedPH, Casted, AllocSize,0),
-                 "", iptI);
+  if (!MustRegisterAlloca) {
+    ++SavedRegAllocs;
+    return;
+  }
 
-    //
-    // Insert a call to unregister the object whenever the function can exit.
-    //
-    for (Function::iterator BB = AI->getParent()->getParent()->begin();
-                            BB != AI->getParent()->getParent()->end();
-                            ++BB) {
-      iptI = BB->getTerminator();
-      if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
-        new CallInst(ObjFree,
-                     make_vector(CastedPH, Casted, 0),
-                     "", iptI);
-    }
+  //
+  // Insert the alloca registration.
+  //
+  Value *PH = getPoolHandle(AIOrig, FOrig);
+  if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
+
+  Value *AllocSize =
+    ConstantInt::get(Type::UIntTy, TD->getTypeSize(AI->getAllocatedType()));
+  
+  if (AI->isArrayAllocation())
+    AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
+                                       AI->getOperand(0), "sizetmp", AI);
+
+  // Insert object registration at the end of allocas.
+  Instruction *iptI = AI->getNext();
+  if (AI->getParent() == (&(AI->getParent()->getParent()->getEntryBlock()))) {
+    BasicBlock::iterator InsertPt = AI->getParent()->begin();
+    while (&(*(InsertPt)) != AI)
+      ++InsertPt;
+    while (isa<AllocaInst>(InsertPt))
+      ++InsertPt;
+    iptI = InsertPt;
+  }
+
+  //
+  // Insert a call to register the object.
+  //
+  Instruction *Casted = new CastInst(AI, PointerType::get(Type::SByteTy),
+                                     AI->getName()+".casted", iptI);
+  Value *CastedPH = new CastInst(PH,
+                                 PointerType::get(Type::SByteTy),
+                                 "allocph",Casted);
+  new CallInst(PoolRegister,
+               make_vector(CastedPH, Casted, AllocSize,0),
+               "", iptI);
+
+  //
+  // Insert a call to unregister the object whenever the function can exit.
+  //
+  for (Function::iterator BB = AI->getParent()->getParent()->begin();
+                          BB != AI->getParent()->getParent()->end();
+                          ++BB) {
+    iptI = BB->getTerminator();
+    if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
+      new CallInst(ObjFree,
+                   make_vector(CastedPH, Casted, 0),
+                   "", iptI);
   }
 }
 
@@ -2514,11 +2675,17 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
   FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
 
+  std::vector<const Type *> FArg9(1, Type::UIntTy);
+  FArg9.push_back(VoidPtrType);
+  FArg9.push_back(PointerType::get(VoidPtrType));
+  FunctionType *FunctionCheckTTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  FunctionCheckT = M.getOrInsertFunction("funccheck_t", FunctionCheckTTy);
+
   std::vector<const Type*> FArg5(1, VoidPtrType);
   FArg5.push_back(VoidPtrType);
   FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
   GetActualValue = M.getOrInsertFunction("pchk_getActualValue", GetActualValueTy);
-  
+
   std::vector<const Type*> FArg4(1, VoidPtrType); //base
   FArg4.push_back(VoidPtrType); //result
   FArg4.push_back(Type::UIntTy); //size

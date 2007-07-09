@@ -21,6 +21,9 @@ typedef struct MetaPoolTy {
   /* A splay for registering stack and global values */
   void* Objs;
 
+  /* A splay for registering function pointers */
+  void * Functions;
+
   /* A splay of rewritten Obj Pointers */
   void* OOB;
 
@@ -87,6 +90,7 @@ extern "C" {
   void * exactcheck3(signed char *base, signed char *result, signed char * end)__attribute__ ((weak));
 
   void funccheck (unsigned num, void *f, void *t1, void *t2, void *t3, void *t4, void * t5, void * t6) __attribute__ ((weak));
+  void funccheck_t (unsigned num, void * f, void ** table) __attribute__ ((weak));
   void funccheck_g (unsigned num, void * f, void * cache, void ** table) __attribute__ ((weak));
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));

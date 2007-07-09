@@ -238,6 +238,21 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
   PCUNLOCK();
 }
 
+/*
+ * Function: pchk_reg_func()
+ *
+ * Description:
+ *  Register a set of function pointers with a MetaPool.
+ */
+void
+pchk_reg_func (MetaPoolTy * MP, unsigned int num, void ** functable) {
+  unsigned int index;
+
+  for (index=0; index < num; ++index) {
+    adl_splay_insert(&MP->Functions, functable[index], 1, 0);
+  }
+}
+
 /* Register a pool */
 /* The MPLoc is the location the pool wishes to store the metapool tag for */
 /* the pool PoolID is in at. */

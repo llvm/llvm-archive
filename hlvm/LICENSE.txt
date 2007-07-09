@@ -1,19 +1,16 @@
 ==============================================================================
-LLVM Release License
+HLVM Release License
 ==============================================================================
-University of Illinois/NCSA
-Open Source License
+University of Illinois/NCSA Open Source License
 
-Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign.
+Copyright (c) 2007 University of Illinois at Urbana-Champaign.
 All rights reserved.
 
 Developed by:
 
-    LLVM Team
+    Reid Spencer
 
-    University of Illinois at Urbana-Champaign
-
-    http://llvm.org
+    http://hlvm.org/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal with
@@ -52,18 +49,9 @@ to that code.
 
 The disclaimer of warranty in the University of Illinois Open Source License
 applies to all code in the LLVM Distribution, and nothing in any of the
-other licenses gives permission to use the names of the LLVM Team or the
+other licenses gives permission to use the names of the developers or the
 University of Illinois to endorse or promote products derived from this
 Software.
 
 The following pieces of software have additional or alternate copyrights,
 licenses, and/or restrictions:
-
-Program             Directory
--------             ---------
-System Library      llvm/lib/System
-Compiler Driver     llvm/tools/llvmc
-Autoconf            llvm/autoconf
-                    llvm/projects/ModuleMaker/autoconf
-                    llvm/projects/sample/autoconf
-GNU Libc            llvm/runtime/GCCLibraries/libc

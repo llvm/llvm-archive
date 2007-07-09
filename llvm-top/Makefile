@@ -59,7 +59,7 @@ $(MODULE):
         fi
 
 build: $(MODULE) install
-	@if test -f $(MODULEINFO); then \
+	@if test -f $(MODULEINFO) ; then \
 	  BuildTarget=`$(BUILDTARGET)` ; \
 	  for mod in `$(DEPMODULES)`; do \
 	    echo -n "NOTE: $(MODULE) module depends on $$mod" ; \
@@ -68,12 +68,14 @@ build: $(MODULE) install
 	    else \
 	      echo ", checking it out now." ; \
 	      $(MAKE) checkout MODULE=$$mod ; \
+	      if test "$$?" -ne 0 ; then exit 1 ; fi \
 	    fi ; \
 	    $(MAKE) build MODULE=$$mod ; \
+	    if test "$$?" -ne 0 ; then exit 1 ; fi \
           done; \
         fi ; \
 	echo "Building MODULE $(MODULE)" ; \
-	root=`pwd` ; cd $(MODULE) ; $(MAKE) $$BuildTarget LLVM_TOP=$$root
+	root=`pwd` ; cd $(MODULE) ; $(MAKE) $$BuildTarget LLVM_TOP=$$root 
 endif
 
 install:

@@ -143,6 +143,21 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
 
   static int x = 0;
   std::string Name = "_metaPool_";
+  /*
+  unsigned Flags = N ? N->getMP()->getFlags() : 0;
+  if(Flags & DSNode::Incomplete)
+    Name += "I";
+  if(Flags & DSNode::UnknownNode)
+    Name += "U";
+  if(Flags & DSNode::AllocaNode)
+    Name += "A";
+  if(Flags & DSNode::GlobalNode)
+    Name += "G";
+  if(Flags & DSNode::HeapNode)
+    Name += "H";
+  if( N && N->isNodeCompletelyFolded())
+    Name += "F";
+  */
   if (N) {
     if(N->isUnknownNode())
       Name += "U";
@@ -188,7 +203,8 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
       Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
       new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
     } else if ((name == "kmalloc") ||
-               (name == "__vmalloc")) {
+               (name == "__vmalloc") ||
+               (name == "__alloc_bootmem")) {
       //inser obj register after
       Instruction* IP = i->getInstruction()->getNext();
       Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
@@ -1277,8 +1293,11 @@ void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
       if (GV->getType() != PoolDescPtrTy) {
         GlobalValue * GVLeader = G.getScalarMap().getLeaderForGlobal(GV);
         DSNode *DSN  = G.getNodeForValue(GVLeader).getNode();
-        if ((isa<ArrayType>(GV->getType()->getElementType())) ||
-            (DSN && DSN->isNodeCompletelyFolded())) {
+        if (((isa<ArrayType>(GV->getType()->getElementType())) ||
+            (DSN && DSN->isNodeCompletelyFolded()))
+            && !isa<OpaqueType>(GV->getType())
+            && !(isa<PointerType>(GV->getType()) && 
+                 isa<OpaqueType>(cast<PointerType>(GV->getType())->getElementType()))) {
           Value * AllocSize;
           if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
             //std::cerr << "found global" << *GI << std::endl;

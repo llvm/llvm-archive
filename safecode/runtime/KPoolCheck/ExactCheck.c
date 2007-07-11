@@ -86,48 +86,6 @@ void funccheck_t (unsigned num, void * f, void ** table) {
   if (do_fail) poolcheckfail ("funccheck_t failed", f, (void*)__builtin_return_address(0));
 }
 
-void funccheck_g (unsigned num, void * f, void * cachep, void ** table) {
-  funccache * fcache = cachep;
-  unsigned int index;
-  unsigned int findex = 0;
-  extern int profile_pause;
-
-#if 0
-  /*
-   * First, look for the pointer in the cache.
-   */
-  for (index = 0; index < 16; ++index) {
-    if (fcache->cache[index] == f) {
-#if 0
-      if (!profile_pause)
-        printk ("LLVA: fc: Cache: %x\n", __builtin_return_address(0));
-#endif
-      return;
-    }
-  }
-#endif
-
-  /*
-   * Second, look for the pointer in the big table
-   */
-  for (index = 0; index < num; ++index) {
-    if (f == table[index]) {
-#if 0
-      findex = fcache->index;
-      fcache->cache[findex] = f;
-      fcache->index = (++findex) & 0x0000000f;
-#if 0
-      if (!profile_pause)
-        printk ("LLVA: fc: Table: %x\n", __builtin_return_address(0));
-#endif
-#endif
-      return;
-    }
-  }
-
-  if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
-}
-
 struct node {
   void* left;
   void* right;

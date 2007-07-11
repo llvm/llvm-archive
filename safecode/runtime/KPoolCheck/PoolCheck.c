@@ -247,9 +247,10 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
 void
 pchk_reg_func (MetaPoolTy * MP, unsigned int num, void ** functable) {
   unsigned int index;
+  unsigned int tag=0;
 
   for (index=0; index < num; ++index) {
-    adl_splay_insert(&MP->Functions, functable[index], 1, 0);
+    adl_splay_insert(&MP->Functions, functable[index], 1, &tag);
   }
 }
 
@@ -616,4 +617,18 @@ void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
   PCUNLOCK();
   return dest;
 }
+
+void funccheck_g (MetaPoolTy * MP, void * f) {
+  void* S = f;
+  unsigned len = 0;
+
+  PCLOCK();
+  int fs = adl_splay_retrieve(&MP->Functions, &S, &len, 0);
+  PCUNLOCK();
+  if (fs)
+    return;
+
+  if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
+}
+
 

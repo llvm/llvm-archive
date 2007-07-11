@@ -67,10 +67,12 @@ get_dependencies() {
     mi="$module/ModuleInfo.txt"
     dep_modules=""
     if test -f "$mi" ; then
-      dep_modules=`grep -i DepModule: $mi | sed 's/DepModule: *//g'`
+      dep_modules=`grep -i DepModule: $mi | sed -e 's/DepModule: *//g'`
       if test "$?" -ne 0 ; then 
         die $? "Searching file '$mi' failed."
       fi
+    else
+      msg 0 "Module $module has not ModuleInfo.txt file"
     fi
     if test ! -z "$dep_modules" ; then
       msg 1 "Module '$module' depends on $dep_modules"
@@ -88,4 +90,39 @@ get_dependencies() {
     fi
   done
   return 0
+}
+
+configure_module() {
+  module="$1"
+  config_opts="$2"
+  if test ! -d "$module" ; then
+    die 1 "Module $module did not get checked out!"
+  fi
+  LLVM_TOP=`pwd`
+  MODULE_INFO="$LLVM_TOP/$module/ModuleInfo.txt"
+  INSTALL_PREFIX="$LLVM_TOP/install"
+  if test -f "$MODULE_INFO" ; then
+    config_command=`grep -i ConfigCmd: $MODULE_INFO | sed -e 's/ConfigCmd: //'`
+    config_file=`grep -i ConfigFile: $mi | sed -e 's/ConfigFile: //'`
+  fi
+  if test -z "$config_command" ; then
+    msg 0 "Module $module has no ConfigCmd entry so it won't be configured"
+    return 0
+  fi
+  cd $module
+  if test -e "$config_file" ; then
+    msg 0 "Module $module is already configured"
+  else
+    config_command=`echo $config_command $config_opts | sed \
+      -e "s#@LLVM_TOP@#$LLVM_TOP#g" \
+      -e "s#@INSTALL_PREFIX@#$INSTALL_PREFIX#g" \
+      -e "s#@CONFIG_OPTS@#$config_opts#g"`
+    if test "$?" -ne 0 ; then 
+      die $? "Failed to generate configure command"
+    fi
+    msg 0 "Configuring Module $module with this command:"
+    msg 0 "  $config_command"
+    $config_command || die $? "Can't configure $module"
+  fi
+  cd $LLVM_TOP
 }

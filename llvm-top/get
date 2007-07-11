@@ -1,0 +1,18 @@
+#!/bin/sh
+#                               get script
+# 
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+
+# This script allows easier checkout of LLVM modules. Just specify the names
+# of the modules on the command line.
+. ./library.sh
+
+# Getting the module dependencies also causes them to be checked out.
+MODULE_DEPENDENCIES=""
+get_dependencies "$@"
+
+# Report what happened.
+echo Modules checked out:"$MODULE_DEPENDENCIES".

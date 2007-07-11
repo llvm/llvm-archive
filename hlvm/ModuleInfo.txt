@@ -1,2 +1,3 @@
-DepModule: llvm
-BuildTarget: build-for-llvm-top
+DepModule: llvm 
+# NOT IN REPOSITORY: llvm-gcc
+BuildCmd: make build-for-llvm-top LLVM_TOP=@LLVM_TOP@

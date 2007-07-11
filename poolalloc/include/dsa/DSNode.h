@@ -29,6 +29,7 @@ class TargetData;
   protected:
     Value *MPD;
     MetaPool* fw;
+    unsigned Flags;
 
   public:
     std::list<CallSite> allocs;
@@ -44,9 +45,15 @@ class TargetData;
       GVs.push_back(GV);
     }
 
-    MetaPool() : MPD(0),fw(0) {}
-    MetaPool(const MetaPool& M) :MPD(0), fw(const_cast<MetaPool*>(&M)) {}
+    MetaPool() : MPD(0),fw(0),Flags(0) {}
+    MetaPool(const MetaPool& M) :MPD(0), fw(const_cast<MetaPool*>(&M)), Flags(0) {}
 
+    void addFlags(unsigned f) {
+      Flags |= f;
+    }
+    unsigned getFlags() const {
+      return Flags;
+    }
     Value * getMetaPoolValue() {
       return MPD;
     }
@@ -58,6 +65,7 @@ class TargetData;
       allocs.splice(allocs.begin(), M->allocs);
       GVs.splice(GVs.begin(), M->GVs);
       M->fw = this;
+      addFlags(M->Flags);
     }
     MetaPool* getFW() { return fw; }
   };
@@ -80,8 +88,6 @@ class TargetData;
     }
   };
 #endif
-
-
 
 //===----------------------------------------------------------------------===//
 /// DSNode - Data structure node class
@@ -414,16 +420,16 @@ public:
   bool isDeadNode() const   { return NodeType & DEAD; }
   bool isExternalNode() const { return NodeType & External; }
 
-  DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
-  DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }
-  DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  return this; }
-  DSNode *setUnknownNodeMarker() { NodeType |= UnknownNode; return this; }
+  DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  getMP()->addFlags(NodeType); return this; }
+  DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    getMP()->addFlags(NodeType); return this; }
+  DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  getMP()->addFlags(NodeType); return this; }
+  DSNode *setUnknownNodeMarker(); // { ++stat_unknown; NodeType |= UnknownNode; return this; }
 
-  DSNode *setExternalMarker() { NodeType |= External; return this; }
-  DSNode *setIncompleteMarker() { NodeType |= Incomplete; return this; }
-  DSNode *setModifiedMarker()   { NodeType |= Modified;   return this; }
-  DSNode *setReadMarker()       { NodeType |= Read;       return this; }
-  DSNode *setArrayMarker()      { NodeType |= Array; return this; }
+  DSNode *setExternalMarker() { NodeType |= External; getMP()->addFlags(NodeType); return this; }
+  DSNode *setIncompleteMarker() { NodeType |= Incomplete; getMP()->addFlags(NodeType); return this; }
+  DSNode *setModifiedMarker()   { NodeType |= Modified;   getMP()->addFlags(NodeType); return this; }
+  DSNode *setReadMarker()       { NodeType |= Read;       getMP()->addFlags(NodeType); return this; }
+  DSNode *setArrayMarker()      { NodeType |= Array; getMP()->addFlags(NodeType); return this; }
 
   void makeNodeDead() {
     Globals.clear();

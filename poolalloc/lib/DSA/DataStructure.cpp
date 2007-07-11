@@ -218,10 +218,9 @@ void DSNode::addGlobal(GlobalValue *GV) {
   std::vector<GlobalValue*>::iterator I =
     std::lower_bound(Globals.begin(), Globals.end(), GV);
 
-  if (I == Globals.end() || *I != GV) {
+  if (I == Globals.end() || *I != GV)
     Globals.insert(I, GV);
-    NodeType |= GlobalNode;
-  }
+  NodeType |= GlobalNode;
 }
 
 // removeGlobal - Remove the specified global that is explicitly in the globals
@@ -823,6 +822,8 @@ static void MergeSortedVectors(std::vector<GlobalValue*> &Dest,
 
 void DSNode::mergeGlobals(const std::vector<GlobalValue*> &RHS) {
   MergeSortedVectors(Globals, RHS);
+  if (Globals.size())
+    setGlobalNodeMarker();
 }
 
 // MergeNodes - Helper function for DSNode::mergeWith().

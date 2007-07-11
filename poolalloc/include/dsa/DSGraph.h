@@ -143,7 +143,7 @@ public:
     if (I != ValueMap.end())
       return I->second;   // Return value if already exists.
 
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(V))
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V))      
       return AddGlobal(GV);
 
     return ValueMap.insert(std::make_pair(V, DSNodeHandle())).first->second;

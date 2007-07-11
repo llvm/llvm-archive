@@ -40,6 +40,7 @@ using namespace llvm;
 static Statistic<> CacheAllocs ("dsa", "Number of kmem_cache_alloc calls");
 static Statistic<> KMallocs    ("dsa", "Number of kmalloc calls");
 static Statistic<> GlobalPools ("dsa", "Number of global pools");
+std::map<Value*, Function*> syscalls;
 #endif
 
 Statistic<> stat_unknown ("dsa", "Number of markunknowns");
@@ -55,6 +56,7 @@ DSNode *DSNode::setUnknownNodeMarker() {
   ++CrashCur;
   ++stat_unknown; 
   NodeType |= UnknownNode; 
+  getMP()->addFlags(NodeType); 
   return this;
 }
 
@@ -151,7 +153,7 @@ namespace {
       }
 
       visit(f);  // Single pass over the function
-#if JTC
+#if 0
 std::cerr << "LLVA: Function " << f.getName() << "\n";
       for (DSScalarMap::iterator I = ScalarMap.begin(), E=ScalarMap.end();
            I != E;
@@ -388,7 +390,7 @@ void GraphBuilder::handleAlloc(AllocationInst &AI, bool isHeap) {
 void GraphBuilder::visitPHINode(PHINode &PN) {
   if (!isPointerType(PN.getType())) return; // Only pointer PHIs
 
-  DSNodeHandle &PNDest = ScalarMap[&PN];
+  DSNodeHandle PNDest = getValueDest(PN);
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
     PNDest.mergeWith(getValueDest(*PN.getIncomingValue(i)));
 }
@@ -396,7 +398,7 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
 void GraphBuilder::visitSelectInst(SelectInst &SI) {
   if (!isPointerType(SI.getType())) return; // Only pointer Selects
 
-  DSNodeHandle &Dest = ScalarMap[&SI];
+  DSNodeHandle Dest = getValueDest(SI);
   Dest.mergeWith(getValueDest(*SI.getOperand(1)));
   Dest.mergeWith(getValueDest(*SI.getOperand(2)));
 }
@@ -404,7 +406,7 @@ void GraphBuilder::visitSelectInst(SelectInst &SI) {
 void GraphBuilder::visitSetCondInst(SetCondInst &SCI) {
   if (!isPointerType(SCI.getOperand(0)->getType()) ||
       isa<ConstantPointerNull>(SCI.getOperand(1))) return; // Only pointers
-  ScalarMap[SCI.getOperand(0)].mergeWith(getValueDest(*SCI.getOperand(1)));
+  getValueDest(*SCI.getOperand(0)).mergeWith(getValueDest(*SCI.getOperand(1)));
 }
 
 
@@ -1123,9 +1125,157 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
             N->setReadMarker();
     return true;
 #ifdef LLVA_KERNEL
+    //TODO: 
+    //state.c:
+    //llva_ipush_function0,1,3 llva_push_function1 llva_push_syscall
+    //llva_set_integer_stackp, llva_load_integer 
+    //llva_load_stackp
+    //llva_load_invoke llva_save_invoke llva_icontext_save_retvalue
+    //llva_get_icontext_stackp llva_set_icontext_stackp
+    //llva_iset_privileged
+  } else if (F->getName() == "llva_icontext_save_retvalue") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_icontext_load_retvalue" ||
+             F->getName() == "llva_icontext_lif") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_invokestrnlen") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_unwind") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_set_integer_stackp") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_strcpy" ||
+             F->getName() == "llva_strncpy" ||
+             F->getName() == "llva_invokestrncpy") {
+    //This might be making unsafe assumptions about usage
+    //Merge return and first arg
+    DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+    RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+    if (DSNode *N = RetNH.getNode())
+      N->setHeapNodeMarker()->setModifiedMarker();
+    //and read second pointer
+    if (DSNode *N = getValueDest(**(CS.arg_begin() + 1)).getNode())
+            N->setReadMarker();
+    return true;
+  } else if (F->getName() == "pchk_drop_slab" ||
+             F->getName() == "pchk_drop_obj" ||
+             F->getName() == "pchk_drop_pool" ||
+             F->getName() == "pchk_reg_obj" ||
+             F->getName() == "pchk_reg_slab" ||
+             F->getName() == "llva_assert_match_sig") {
+    return true;
+  } else if (F->getName() == "llva_save_fp" ||
+             F->getName() == "llva_save_integer") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    Ptr.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_load_fp" ||
+             F->getName() == "llva_load_integer" ||
+             F->getName() == "llva_get_eip") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    Ptr.getNode()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_save_icontext") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    Ptr.getNode()->setReadMarker();
+    Ptr = getValueDest(**(CS.arg_begin() + 1));
+    Ptr.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_load_icontext") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    Ptr.getNode()->setModifiedMarker();
+    Ptr = getValueDest(**(CS.arg_begin() + 1));
+    Ptr.getNode()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_register_syscall" ||
+             F->getName() == "llva_register_interrupt") {
+    //FIXME: track functions and clear Incomplete flags on them
+    //       or set userspace flag on pointers
+    return true;
+  } else if (F->getName() == "llva_readiob" ||
+             F->getName() == "llva_readioh" ||
+             F->getName() == "llva_readiow") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    if (Ptr.isNull()) Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Type* T;
+    if (F->getName() == "llva_readiob") T = Type::SByteTy;
+    if (F->getName() == "llva_readioh") T = Type::ShortTy;
+    if (F->getName() == "llva_readiow") T = Type::IntTy;
+    Ptr.getNode()->mergeTypeInfo(T, Ptr.getOffset(), false);
+    return true;
+  } else if (F->getName() == "llva_writeiob" ||
+             F->getName() == "llva_writeioh" ||
+             F->getName() == "llva_writeiow") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    if (Ptr.isNull()) Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Type* T;
+    if (F->getName() == "llva_writeiob") T = Type::SByteTy;
+    if (F->getName() == "llva_writeioh") T = Type::ShortTy;
+    if (F->getName() == "llva_writeiow") T = Type::IntTy;
+    Ptr.getNode()->mergeTypeInfo(T, Ptr.getOffset(), false);
+    return true;
+  } else if (F->getName() == "llva_atomic_compare_and_swap" ||
+             F->getName() == "llva_atomic_cas_lw" ||
+             F->getName() == "llva_atomic_cas_h" ||
+             F->getName() == "llva_atomic_cas_b" ||
+             F->getName() == "llva_atomic_fetch_add_store" ||
+             F->getName() == "llva_atomic_and" ||
+             F->getName() == "llva_atomic_or") {
+    DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
+    if (Ptr.isNull()) Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Type* T = Type::IntTy;
+    if (F->getName() == "llva_atomic_cas_b") T = Type::SByteTy;
+    if (F->getName() == "llva_atomic_cas_h") T = Type::ShortTy;
+    Ptr.getNode()->mergeTypeInfo(T, Ptr.getOffset(), false);
+    return true;
+  } else if (F->getName() == "llva_save_tsc" || F->getName() == "llva_load_tsc") {
+    return true;
+  } else if (F->getName() == "llva_ialloca") {
+    DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+    RetNH.mergeWith(getValueDest(**CS.arg_begin()));
+    RetNH.getNode()->setModifiedMarker()->setReadMarker()->foldNodeCompletely();
+    return true;
+  } else if (F->getName() == "llva_ipop_function0") {
+    // Mark the memory modified.
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setModifiedMarker()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_init_icontext") {
+    DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+    RetNH.mergeWith(getValueDest(**(CS.arg_begin() + 1)));
+    RetNH.getNode()->setModifiedMarker()->foldNodeCompletely();
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_was_privileged") {
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_clear_icontext") {
+    // Mark the memory modified.
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_memset" ||
+             F->getName() == "llva_invokememset") {
+    // Mark the memory modified.
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setModifiedMarker();
+    return true;
   } else if (F->getName() == "llva_memcpy") {
-    if (CS.getCaller()->getName() == "kmem_cache_alloc")
-        return false;
     // Merge the first & second arguments, and mark the memory read and
     // modified.
     DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
@@ -1133,21 +1283,94 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     if (DSNode *N = RetNH.getNode())
       N->setModifiedMarker()->setReadMarker();
     return true;
-#if 1
-  } else if (F->getName() == "llva_save_stackp") {
-      // Create a new DSNode for the memory returned by llva_save_stackp()
-      DSNode *N = createNode();
-      N->setAllocaNodeMarker();
-      N->setUnknownNodeMarker();
-      CS.getInstruction()->dump();
-      N->foldNodeCompletely();
+  } else if (F->getName() == "llva_invokememcpy") {
+    //Find types
+    const Type* T1 = CS.getInstruction()->getOperand(1)->getType();
+    const Type* T2 = CS.getInstruction()->getOperand(2)->getType();
+    if (CastInst* CI1 = dyn_cast<CastInst>(CS.getInstruction()->getOperand(1)))
+      T1 = CI1->getOperand(0)->getType();
+    if (CastInst* CI2 = dyn_cast<CastInst>(CS.getInstruction()->getOperand(2)))
+      T2 = CI2->getOperand(0)->getType();
+    if (const PointerType* P1 = dyn_cast<PointerType>(T1))
+      T1 = P1->getElementType();
+    if (const PointerType* P2 = dyn_cast<PointerType>(T2))
+      T2 = P2->getElementType();
 
-      //
-      // TODO:
-      //  For now, don't worry about creating a meta-pool.  Stack locations
-      //  are ignored by our analysis.
-      //
+    uint64_t len = 0;
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(CS.getInstruction()->getOperand(3)))
+      len = CI->getZExtValue();
+
+    DSNodeHandle NH1 = getValueDest(**CS.arg_begin());
+    DSNodeHandle NH2 = getValueDest(**(CS.arg_begin()+1));
+
+    const TargetData &TD = NH1.getNode()->getTargetData();
+    const Type* TTU = T1;
+    bool isArray = false;
+    if (isa<StructType>(T1) && TD.getTypeSize(T1) >= TD.getTypeSize(T2))
+      TTU = T1;
+    else if (isa<StructType>(T2))
+      TTU = T2;
+    else
+      isArray = true;
+
+    if (TD.getTypeSize(TTU) < len)
+      isArray = true;
+
+    if (NH1.getNode()->getType() == Type::VoidTy)
+      NH1.getNode()->mergeTypeInfo(TTU, NH1.getOffset(), false);
+    if (NH2.getNode()->getType() == Type::VoidTy)
+      NH2.getNode()->mergeTypeInfo(TTU, NH2.getOffset(), false);
+    
+    if (isArray) {
+      NH1.getNode()->setArrayMarker();
+      NH2.getNode()->setArrayMarker();
+    }
+
+    NH1.getNode()->mergeTypeInfo(TTU, NH1.getOffset(), false);
+    NH2.getNode()->mergeTypeInfo(TTU, NH2.getOffset(), false);
+    
+    NH1.getNode()->setModifiedMarker();
+    NH2.getNode()->setReadMarker();
+
+    for (unsigned i = 0; i < len / 4; ++i) {
+      int x = NH1.getNode()->isArray() ? 0 : (NH1.getOffset() / 4 + i);
+      int y = NH2.getNode()->isArray() ? 0 : (NH2.getOffset() / 4 + i);
+      NH1.getNode()->getLink(x*4).mergeWith(NH2.getNode()->getLink(y*4));
+    }
+#if 0
+    // Merge the first & second arguments, and mark the memory read and
+    // modified.
+    DSNodeHandle RetNH = getValueDest(**CS.arg_begin());
+    RetNH.mergeWith(getValueDest(**(CS.arg_begin()+1)));
+    if (DSNode *N = RetNH.getNode())
+      N->setModifiedMarker()->setReadMarker();
 #endif
+    return true;
+  } else if (F->getName() == "llva_save_stackp" ||
+             F->getName() == "llvm.returnaddress") {
+      // Create a new DSNode for the memory returned by llva_save_stackp()
+    DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+    RetNH.getNode()->setAllocaNodeMarker();
+    RetNH.getNode()->setUnknownNodeMarker();
+    RetNH.getNode()->foldNodeCompletely();
+    return true;
+  } else if (F->getName() == "llva_get_icontext_stackp") {
+    // Create a new DSNode for the memory returned by llva_save_stackp()
+    DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+    RetNH.getNode()->setAllocaNodeMarker();
+    RetNH.getNode()->setUnknownNodeMarker();
+    RetNH.getNode()->foldNodeCompletely();
+    if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
+      N->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_set_icontext_stackp") {
+    DSNodeHandle Dest = getValueDest(**CS.arg_begin());
+    // Mark that the node is written to...
+    Dest.getNode()->setModifiedMarker();
+    Dest.getNode()->foldNodeCompletely();
+    getLink(Dest).mergeWith(getValueDest(**(CS.arg_begin() + 1)));
+    return true;
+
 #if 0
   } else if (F->getName() == "__generic_copy_from_user") {
     if (CS.getCaller()->getName() == "kmem_cache_alloc")
@@ -1168,34 +1391,39 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
 
 void GraphBuilder::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
+  bool isSyscall6 = false;
 
   if (Function *F = dyn_cast<Function>(Callee)) {
-    if (F->isExternal())
+    // Determine if the called function is one of the specified heap
+    // allocation functions
+    if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
+      DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+      RetNH.getNode()->setHeapNodeMarker()->setModifiedMarker();
+      RetNH.getNode()->getMP()->addCallSite(CS);
+      return;
+    }
+    
+    // Determine if the called function is one of the specified heap
+    // free functions
+    if (FreeList.end() != std::find(FreeList.begin(), FreeList.end(),
+                                    F->getName())) {
+      // Mark that the node is written to...
+      if (DSNode *N = getValueDest(*(CS.getArgument(0))).getNode())
+        N->setModifiedMarker()->setHeapNodeMarker();
+      return;
+    }
+
+    if (F->getName() == "llva_syscall6") 
+      isSyscall6 = true;
+
+    if (F->isExternal()) {
       if (F->isIntrinsic() && visitIntrinsic(CS, F))
         return;
-      else {
-        // Determine if the called function is one of the specified heap
-        // allocation functions
-        if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
-          DSNode* N = createNode()->setHeapNodeMarker()->setModifiedMarker();
-          setDestTo(*CS.getInstruction(), N);
-          N->getMP()->addCallSite(CS);
-          return;
-        }
+      
+      if (visitExternal(CS,F))
+        return;
 
-        // Determine if the called function is one of the specified heap
-        // free functions
-        if (FreeList.end() != std::find(FreeList.begin(), FreeList.end(),
-                                        F->getName())) {
-          // Mark that the node is written to...
-          if (DSNode *N = getValueDest(*(CS.getArgument(0))).getNode())
-            N->setModifiedMarker()->setHeapNodeMarker();
-          return;
-        }
-
-        if (visitExternal(CS,F))
-          return;
-
+      if (!isSyscall6) {
         // Unknown function, warn if it returns a pointer type or takes a
         // pointer argument.
         bool Warn = isPointerType(CS.getInstruction()->getType());
@@ -1207,10 +1435,16 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               break;
             }
         if (Warn) {
-          DEBUG(std::cerr << "WARNING: Call to unknown external function '"
-                << F->getName() << "' will cause pessimistic results!\n");
+          std::cerr << "WARNING: Call to unknown external function '"
+                    << F->getName() << "' will cause pessimistic results!\n";
         }
       }
+    }
+  }
+
+  if (isSyscall6) {
+    assert (syscalls[CS.getArgument(0)] && "No registered syscall by that number");
+    Callee = syscalls[CS.getArgument(0)];
   }
 
   // Set up the return value...
@@ -1230,7 +1464,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
 
   std::vector<DSNodeHandle> Args;
   Args.reserve(CS.arg_end()-CS.arg_begin());
-
+    
   // Calculate the arguments vector...
   for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
     if (isPointerType((*I)->getType()))
@@ -1432,8 +1666,24 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("kmalloc");
   AllocList.push_back("__vmalloc");
   AllocList.push_back("kmem_cache_alloc");
+  AllocList.push_back("__alloc_bootmem");
   FreeList.push_back("kfree");
   FreeList.push_back("vfree");
+
+  //figure out all system call numbers
+  Function* lrs = M.getNamedFunction("llva_register_syscall");
+  if (lrs) 
+    for (Value::use_iterator ii = lrs->use_begin(), ee = lrs->use_end(); ii != ee; ++ii) 
+      if (CallInst* CI = dyn_cast<CallInst>(*ii))
+        if (CI->getCalledFunction() == lrs) {
+          Value* num = CI->getOperand(1);
+          Value* fun = CI->getOperand(2);
+          if (ConstantExpr* CE = dyn_cast<ConstantExpr>(fun))
+            if (CE->getOpcode() == Instruction::Cast)
+              fun = CE->getOperand(0);
+          if (Function* F = dyn_cast<Function>(fun))
+              syscalls[num] = F;
+        }
 #endif
 
   const TargetData &TD = getAnalysis<TargetData>();

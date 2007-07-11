@@ -442,6 +442,77 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
 }
 
 //
+// Method: getOrCreateFunctionTable()
+//
+// Description:
+//  Given a DSNode, return a global variable containing an array of the
+//  function pointers within that DSNode.  If this global variable does not
+//  exist, create it and modify poolcheckglobals() to register it with its
+//  MetaPool.
+//
+GlobalVariable *
+InsertPoolChecks::getOrCreateFunctionTable (DSNode * Node, Value * PH,
+                                            Module * M) {
+  // Determine if we have already created such a global.
+  if (FuncListMap.count (PH)) {
+    return FuncListMap[PH];
+  }
+
+	// Get the globals list corresponding to the node
+	std::vector<Function *> FuncList;
+	Node->addFullFunctionList(FuncList);
+	unsigned num = FuncList.size();
+
+  // Create a global array of void pointers containing the list of possible
+  // function targets.
+  std::vector<Function *>::iterator flI= FuncList.begin(), flE = FuncList.end();
+  const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+  Value *NumArg = ConstantInt::get(csiType, num);	
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  std::vector<Constant *> Targets;
+
+  for (; flI != flE ; ++flI) {
+    Function *func = *flI;
+    Constant *CastfuncI = ConstantExpr::getCast (func, VoidPtrType);
+    Targets.push_back(CastfuncI);
+  }
+
+  ArrayType * TableType = ArrayType::get (VoidPtrType, num);
+  Constant * TableInit = ConstantArray::get (TableType, Targets);
+  GlobalVariable * Table = new GlobalVariable (TableType, true, GlobalValue::InternalLinkage, TableInit, "functargets", M);
+  Value * TableCast = ConstantExpr::getCast (Table, PointerType::get(VoidPtrType));
+
+  //
+  // Add an instruction to poolcheckglobals() to register this table of
+  // functions with the MetaPool.
+  //
+  std::vector<const Type*> Vt;
+  const FunctionType* RFT = FunctionType::get(Type::VoidTy, Vt, false);
+  Function * RegFunc = M->getOrInsertFunction("poolcheckglobals", RFT);
+  BasicBlock* BB;
+  if (RegFunc->empty()) {
+    BasicBlock* BB = new BasicBlock("reg", RegFunc);
+    new ReturnInst(BB);
+  } else {
+    BB = &(RegFunc->getEntryBlock());
+  }
+
+  Instruction * InsertPt = BB->getTerminator();
+  Value * CastPH = new CastInst(PH, VoidPtrType, "casted", InsertPt);
+  std::vector<Value *> args;
+  args.push_back (CastPH);
+  args.push_back (NumArg);
+  args.push_back (TableCast);
+  new CallInst(FuncRegister, args, "", InsertPt); 
+
+  //
+  // Insert the DSNode and Table into the map.
+  //
+  FuncListMap.insert (make_pair(PH,Table));
+  return Table;
+}
+
+//
 // Method: insertFunctionCheck()
 //
 // Description:
@@ -505,13 +576,6 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   Value *NumArg = ConstantInt::get(csiType, num);	
   Type *VoidPtrType = PointerType::get(Type::SByteTy); 
 
-#if 0
-  std::cerr << "LLVA: funcp: " << *FuncPointer << "\n";
-  if (LoadInst * LI = dyn_cast<LoadInst>(FuncPointer)) {
-    std::cerr << "LLVA: funcload: " << *(LI->getPointerOperand()) << "\n";
-  }
-#endif
-
   if (num < 7) {
     const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
     Value *NumArg = ConstantInt::get(csiType, num);	
@@ -539,15 +603,7 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
 
     // Create a global array of void pointers containing the list of possible
     // function targets.
-    std::vector<Constant *> Targets;
-    for (; flI != flE ; ++flI) {
-      Function *func = *flI;
-      Constant *CastfuncI = ConstantExpr::getCast (func, VoidPtrType);
-      Targets.push_back(CastfuncI);
-    }
-    ArrayType * TableType = ArrayType::get (VoidPtrType, num);
-    Constant * TableInit = ConstantArray::get (TableType, Targets);
-    GlobalVariable * Table = new GlobalVariable (TableType, true, GlobalValue::InternalLinkage, TableInit, "functargets", F->getParent());
+    GlobalVariable * Table = getOrCreateFunctionTable (Node, PH, F->getParent());
 
     CastInst *CastTable = 
       new CastInst(Table, 
@@ -556,42 +612,17 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
     args.push_back(CastTable);
     new CallInst(FunctionCheckT, args, "", (Instruction *)(CI));
   } else {
-    // Create a global variable to hold the cache for this function lookup
-    std::vector<const Type *> CacheStructElements;
-    CacheStructElements.push_back (Type::UIntTy);
-    CacheStructElements.push_back (ArrayType::get(VoidPtrType, 16));
-    StructType * CacheType = StructType::get (CacheStructElements);
-    Value * Cache;
-    Constant * CacheInit = Constant::getNullValue(CacheType);
-    Cache = new GlobalVariable (CacheType, false, GlobalValue::ExternalLinkage,
-                                CacheInit, "funccache", F->getParent());
-
-    Cache = new CastInst(Cache, VoidPtrType, "fccast", (Instruction *)(CI));
-
-    // Create the first two arguments for the function check call
-    std::vector<Value *> args(1, NumArg);
-    CastInst *CastVI = 
-      new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
-    args.push_back(CastVI);
-    args.push_back(Cache);
-
     // Create a global array of void pointers containing the list of possible
     // function targets.
-    std::vector<Constant *> Targets;
-    for (; flI != flE ; ++flI) {
-      Function *func = *flI;
-      Constant *CastfuncI = ConstantExpr::getCast (func, VoidPtrType);
-      Targets.push_back(CastfuncI);
-    }
-    ArrayType * TableType = ArrayType::get (VoidPtrType, num);
-    Constant * TableInit = ConstantArray::get (TableType, Targets);
-    GlobalVariable * Table = new GlobalVariable (TableType, true, GlobalValue::InternalLinkage, TableInit, "functargets", F->getParent());
+    getOrCreateFunctionTable (Node, PH, F->getParent());
 
-    CastInst *CastTable = 
-      new CastInst(Table, 
-       PointerType::get(VoidPtrType), "casted", (Instruction *)(CI));
-  
-    args.push_back(CastTable);
+    // Create the first two arguments for the function check call
+    PH = new CastInst (PH, VoidPtrType, "casted", (Instruction *)(CI));
+    CastInst *CastVI = 
+      new CastInst(FuncPointer, VoidPtrType, "casted", (Instruction *)(CI));
+    std::vector<Value *> args(1, PH);
+    args.push_back(CastVI);
+
     new CallInst(FunctionCheckG, args,"", (Instruction *)(CI));
   }
 }
@@ -2672,6 +2703,8 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
                                   VoidPtrType, NULL);
   
+  FuncRegister = M.getOrInsertFunction("pchk_reg_func", Type::VoidTy, VoidPtrType, Type::UIntTy, PointerType::get(VoidPtrType), NULL);
+
   PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
   PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
 
@@ -2687,10 +2720,8 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
   FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
 
-  std::vector<const Type *> FArg6(1, Type::UIntTy);
+  std::vector<const Type *> FArg6(1, VoidPtrType);
   FArg6.push_back(VoidPtrType);
-  FArg6.push_back(VoidPtrType);
-  FArg6.push_back(PointerType::get(VoidPtrType));
   FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
   FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
 

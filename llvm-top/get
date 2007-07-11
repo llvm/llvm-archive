@@ -15,4 +15,4 @@ MODULE_DEPENDENCIES=""
 get_dependencies "$@"
 
 # Report what happened.
-echo Modules checked out:"$MODULE_DEPENDENCIES".
+msg 0 Modules checked out:"$MODULE_DEPENDENCIES".

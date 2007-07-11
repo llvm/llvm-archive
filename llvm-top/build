@@ -1,20 +1,22 @@
 #!/bin/sh
-#                               configure script
+#                                  build script
 # 
 # This file was developed by Reid Spencer and is distributed under the
 # University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 #===------------------------------------------------------------------------===#
-# This script allows LLVM modules to be configured including processing 
-# dependencies and optional configuration parameters. Use it like this:
+# This script allows LLVM modules to be checked out, configured and built all in
+# one step.  Use it like this:
 #
 #    cd llvm-top
-#    ./configure {module_names} {configure_options}
+#    ./build {module_names} {configure_options} {build_options}
 #
 # where:
 #    {module_names} is a list of modules you want to configure (e.g. llvm, hlvm)
-#    {configure_options} is any options you want to pass to *all* the modules
-#      when they run their configure commands
+#    {configure_options} start with -- and are passed to the configure tool
+#      of *all* the modules you are building that need configuration.
+#    {build_options} contain an = and are passed to the build tool of *all*
+#      the modules you are building.
 #
 # Note that the script will checkout and configure any dependent modules as well
 # as the ones specified in {module_names} so it is only necessary to specify the
@@ -28,8 +30,11 @@
 # in appropriate variables for later use.
 for arg in "$@" ; do 
   case "$arg" in
-    -*)
+    --*)
       CONFIGURE_ARGS="$CONFIGURE_ARGS $arg"
+      ;;
+    *=*)
+      BUILD_ARGS="$BUILD_ARGS $arg"
       ;;
     *)
       MODULE_NAMES="$MODULE_NAMES $arg"
@@ -42,11 +47,40 @@ done
 MODULE_DEPENDENCIES=""
 get_dependencies $MODULE_NAMES
 
+build_module() {
+  module="$1"
+  build_opts="$2"
+  if test ! -d "$module" ; then
+    die 1 "Module $module did not get checked out!"
+  fi
+  LLVM_TOP=`pwd`
+  MODULE_INFO="$LLVM_TOP/$module/ModuleInfo.txt"
+  if test -f "$MODULE_INFO" ; then
+    build_command=`grep -i BuildCmd: $MODULE_INFO | sed -e 's/BuildCmd: //'`
+  fi
+  if test -z "$build_command" ; then
+    msg 0 "Module $module has no BuildCmd entry so it won't be built."
+    return 0
+  fi
+  cd $module
+  build_command=`echo $build_command $build_opts | sed \
+      -e "s#@LLVM_TOP@#$LLVM_TOP#g" \
+      -e "s#@BUILD_OPTS@#$build_opts#g"`
+  if test "$?" -ne 0 ; then 
+    die $? "Failed to generate build command"
+  fi
+  msg 0 "Building Module $module with this command:"
+  msg 0 "  $build_command"
+  $build_command || die $? "Can't build $module"
+  cd $LLVM_TOP
+}
 # Now that we have a list of dependent modules, we must configure each of them
 # according to the specifications of the module.
 for mod in $MODULE_DEPENDENCIES ; do
   configure_module "$mod" "$CONFIGURE_ARGS"
+  build_module "$mod" "$BUILD_ARGS"
 done
 
 # Just indicate what modules we configured
-msg 0 Modules configured:"$MODULE_DEPENDENCIES".
+msg 0 Modules built:"$MODULE_DEPENDENCIES".
+

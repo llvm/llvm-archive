@@ -1,3 +1,4 @@
+# Module information for llvm-top usage
 DepModule: llvm
 ConfigCmd: ./configure --prefix=@INSTALL_PREFIX@ --with-llvmsrc=@LLVM_TOP@/llvm --with-llvmobj=@LLVM_TOP@/llvm
 ConfigFile: ./config.status

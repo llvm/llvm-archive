@@ -1696,7 +1696,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
     // Add initializers for all of the globals to the globals graph.
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
-      if (!I->isExternal())
+      if (!I->isExternal() && I->getName() != "llvm.used")
         GGB.mergeInGlobalInitializer(I);
   }
 

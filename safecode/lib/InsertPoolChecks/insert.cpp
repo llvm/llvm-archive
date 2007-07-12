@@ -113,7 +113,6 @@ static Statistic<> MissedIncompleteChecks ("safecode",
 static Statistic<> MissedMultDimArrayChecks ("safecode",
                                              "Multi-dimensional array checks");
 
-static Statistic<> MissedStackChecks  ("safecode", "Missed stack checks");
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
@@ -763,7 +762,6 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
   //
   ConstantInt * CIndex  = dyn_cast<ConstantInt>(Index);
   ConstantInt * CBounds = dyn_cast<ConstantInt>(Bounds);
-#if 0
   if (CIndex && CBounds) {
     int index  = CIndex->getSExtValue();
     int bounds = CBounds->getSExtValue();
@@ -774,7 +772,6 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
     ++ConstExactChecks;
     return;
   }
-#endif
 
   //
   // Second, cast the operands to the correct type.
@@ -955,10 +952,21 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // being casted.
   //
   ConstantExpr *cExpr;
+  while ((cExpr = dyn_cast<ConstantExpr>(PointerOperand)) &&
+         (cExpr->getOpcode() == Instruction::Cast) &&
+         (isa<PointerType>(cExpr->getOperand(0)->getType()))) {
+    PointerOperand = cExpr->getOperand(0);
+  }
+
+  //
+  // Attempt to look for the originally allocated object by scanning the data
+  // flow up.
+  //
   Value * SourcePointer = PointerOperand;
   while (!isa<AllocaInst>(SourcePointer)) {
     if ((cExpr = dyn_cast<ConstantExpr>(SourcePointer)) &&
-        (cExpr->getOpcode() == Instruction::Cast)) {
+        (cExpr->getOpcode() == Instruction::Cast) &&
+        (isa<PointerType>(cExpr->getOperand(0)->getType()))) {
       SourcePointer = cExpr->getOperand(0);
       continue;
     }
@@ -1193,7 +1201,6 @@ std::cerr << "LLVA: memcpy not a pointer\n";
       unsigned int arraysize = TD->getTypeSize(AT);
       ConstantInt * Bounds = ConstantInt::get(csiType, arraysize);
       addExactCheck (Src, Size, Bounds, InsertPt);
-std::cerr << "LLVA: memcpy is a global\n";
       return true;
     } else {
 #if 0
@@ -2418,7 +2425,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   Value *CastedPH = new CastInst(PH,
                                  PointerType::get(Type::SByteTy),
                                  "allocph",Casted);
-  new CallInst(PoolRegister,
+  new CallInst(StackRegister,
                make_vector(CastedPH, Casted, AllocSize,0),
                "", iptI);
 
@@ -2430,7 +2437,7 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
                           ++BB) {
     iptI = BB->getTerminator();
     if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
-      new CallInst(ObjFree,
+      new CallInst(StackFree,
                    make_vector(CastedPH, Casted, 0),
                    "", iptI);
   }
@@ -2463,12 +2470,12 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
 
     // FIXME: We cannot handle checks to global or stack positions right now.
     if ((!PH) || (Node->isIncomplete()) ||
-                 (Node->isAllocaNode()) ||
                  (Node->isUnknownNode()) ||
-                 (!((Node->isHeapNode()) && (Node->isGlobalNode())))) {
+                 (!((Node->isHeapNode()) ||
+                    (Node->isGlobalNode()) ||
+                    (Node->isAllocaNode())))) {
       ++NullChecks;
       if (!PH) ++MissedNullChecks;
-      if (Node->isAllocaNode()) ++MissedStackChecks;
 
       // Don't bother to insert the NULL check unless the user asked
       if (!EnableNullChecks)
@@ -2507,6 +2514,7 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
         return;
       }
     }      
+
     // Create instructions to cast the checked pointer and the checked pool
     // into sbyte pointers.
     CastInst *CastVI = 
@@ -2700,7 +2708,11 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
+  StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
+  StackFree = M.getOrInsertFunction("pchk_drop_stack", Type::VoidTy, VoidPtrType,
                                   VoidPtrType, NULL);
   
   FuncRegister = M.getOrInsertFunction("pchk_reg_func", Type::VoidTy, VoidPtrType, Type::UIntTy, PointerType::get(VoidPtrType), NULL);

@@ -10,6 +10,8 @@
 #include "poolalloc/PoolAllocate.h"
 #endif
 
+#include <map>
+
 namespace llvm {
 
 ModulePass *creatInsertPoolChecks();
@@ -59,11 +61,17 @@ struct InsertPoolChecks : public ModulePass {
   Function *ExactCheck3;
   Function *GetActualValue;
   Function *PoolRegister;
+  Function *StackRegister;
   Function *ObjFree;
+  Function *StackFree;
+  Function *FuncRegister;
   Function *PoolRegMP;
   Function *PoolFindMP;
   Function *getBegin;
   Function *getEnd;
+
+  // Map of DSNode to Function List Global Variables
+  std::map<Value *, GlobalVariable *> FuncListMap;
 
   void simplifyGEPList();
   void addObjFrees(Module& M);
@@ -80,6 +88,7 @@ struct InsertPoolChecks : public ModulePass {
   void addGetActualValue(SetCondInst *SCI, unsigned operand);
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
   void registerGlobalArraysWithGlobalPools(Module &M);
+  GlobalVariable * getOrCreateFunctionTable (DSNode * Node, Value * PH, Module * M);
   void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
   void addExactCheck  (Value * Pointer, Value * Index, Value * Bound, Instruction * InsertPt);
   void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);

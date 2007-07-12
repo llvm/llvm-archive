@@ -1142,6 +1142,12 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
 //  Attepts to insert an efficient, accurate array bounds check for the given
 //  GEP instruction; this check will not use Pools are MetaPools.
 //
+// Inputs:
+//  I        - The instruction for which we are adding the check.
+//  Src      - The pointer that needs to be checked.
+//  Size     - The size, in bytes, that will be read/written by instruction I.
+//  InsertPt - The instruction before which the check should be inserted.
+//
 // Return value:
 //  true  - An exactcheck() was successfully added.
 //  false - An exactcheck() could not be added; a more extensive check will be
@@ -1179,7 +1185,6 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   // Make sure the pointer operand really is a pointer.
   if (!isa<PointerType>(PointerOperand->getType()))
   {
-std::cerr << "LLVA: memcpy not a pointer\n";
     return false;
   }
 
@@ -1191,24 +1196,11 @@ std::cerr << "LLVA: memcpy not a pointer\n";
   //        extern struct foo the_array[];
   //
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
-    const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
-    if (AT && (AT->getNumElements())) {
-      // we need to insert an actual check
-      // It could be a select instruction
-      // First get the size
-      // This only works for one or two dimensional arrays
-      const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-      unsigned int arraysize = TD->getTypeSize(AT);
-      ConstantInt * Bounds = ConstantInt::get(csiType, arraysize);
-      addExactCheck (Src, Size, Bounds, InsertPt);
-      return true;
-    } else {
-#if 0
-      Value* Size=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()));
-      addExactCheck2 (Src, Size);
-      return true;
-#endif
-    }
+    const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
+    unsigned int arraysize = TD->getTypeSize(GV->getType()->getElementType());
+    ConstantInt * Bounds = ConstantInt::get(csiType, arraysize);
+    addExactCheck (Src, Size, Bounds, InsertPt);
+    return true;
   }
 
   //
@@ -1225,7 +1217,6 @@ std::cerr << "LLVA: memcpy not a pointer\n";
                                          AI->getOperand(0), "allocsize", InsertPt);
 
     addExactCheck (Src, Size, AllocSize, InsertPt);
-std::cerr << "LLVA: memcpy is an alloca\n";
     return true;
   }
 
@@ -1238,7 +1229,6 @@ std::cerr << "LLVA: memcpy is an alloca\n";
                               CI->getCalledFunction()->getName() == "kmalloc")) {
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "allocsize", InsertPt);
       addExactCheck (Src, Size, Cast, InsertPt);
-std::cerr << "LLVA: memcpy is a heap allocation:" << InsertPt->getParent()->getParent()->getName() << "\n";
       return true;
     }
   }

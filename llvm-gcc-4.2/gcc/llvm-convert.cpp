@@ -63,7 +63,7 @@ extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 }
 
-//#define ITANIUM_STYLE_EXCEPTIONS
+#define ITANIUM_STYLE_EXCEPTIONS
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees

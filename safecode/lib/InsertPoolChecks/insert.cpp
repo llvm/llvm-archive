@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 
 using namespace llvm;
 
@@ -124,6 +125,9 @@ static Statistic<> ZeroFuncChecks     ("safecode", "Indirect Call Checks with Ze
 // Object registration statistics
 static Statistic<> StackRegisters     ("safecode", "Stack registrations");
 static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided");
+
+// The set of values that already have run-time checks
+static std::set<Value *> CheckedValues;
 
 //
 // Function: castTo()
@@ -464,6 +468,12 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
       CI = new CallInst(BoundsCheck, args, "bc", InsertPt);
   }
 
+  //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (Dest);
+  CheckedValues.insert (CI);
+
   // Update statistics
   ++BoundsChecks;
   return CI;
@@ -663,15 +673,17 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
 //
 // Inputs:
 //  BasePointer   - An LLVM Value representing the base of the object to check.
-//  ResultPointer - An LLVM Value representing the pointer to check.
+//  Result        - An LLVM Value representing the pointer to check.
 //  Bounds        - An LLVM Value representing the bounds of the check.
 //  InsertPt      - The instruction before which to insert the check.
 //
 void
 InsertPoolChecks::addExactCheck2 (Value * BasePointer,
-                                  Value * ResultPointer,
+                                  Value * Result,
                                   Value * Bounds,
                                   Instruction * InsertPt) {
+  Value * ResultPointer = Result;
+
   // The LLVM type for a void *
   Type *VoidPtrType = PointerType::get(Type::SByteTy); 
 
@@ -701,6 +713,11 @@ InsertPoolChecks::addExactCheck2 (Value * BasePointer,
   args.push_back(CastBounds);
   Instruction * CI;
   CI = new CallInst(ExactCheck2, args, "", InsertPt);
+
+  //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (Result);
 
 #if 0
   //
@@ -769,6 +786,10 @@ InsertPoolChecks::addExactCheck3 (Value * Source,
   args.push_back(ResultPointer);
   args.push_back(CastBounds);
 
+  //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (Result);
   return new CallInst(ExactCheck3, args, "ec3", InsertPt);
 }
 
@@ -828,6 +849,10 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
   args.push_back(CastResult);
   Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
 
+  //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (Pointer);
 #if 0
   //
   // Replace the old index with the return value of exactcheck(); this
@@ -909,9 +934,15 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
   Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
 
   //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (GEP);
+
+  //
   // Replace the old index with the return value of exactcheck(); this
   // prevents GCC from removing it completely.
   //
+#if 0
   Value * CastCI = CI;
   if (CI->getType() != GEP->getType())
     CastCI = new CastInst (CI, GEP->getType(), GEP->getName(), InsertPt);
@@ -921,6 +952,7 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
     if (((*UI) != CI) && ((*UI) != CastResult))
       UI->replaceUsesOfWith (GEP, CastCI);
   }
+#endif
 
   // Update statistics
   ++ExactChecks;
@@ -948,6 +980,45 @@ isEligableForExactCheck (Value * Pointer) {
   }
 
   return false;
+}
+
+//
+// Function: findCheckedPointer()
+//
+// Description:
+//  Given a pointer value, attempt to determine whether the pointer or all of
+//  the instructions that created it have been checked.
+//
+static bool
+findCheckedPointer (Value * PointerOperand) {
+  Value * SourcePointer = PointerOperand;
+
+  while (CheckedValues.find (SourcePointer) == CheckedValues.end()) {
+    // Check for cast constant expressions and instructions
+    if (ConstantExpr * cExpr = dyn_cast<ConstantExpr>(SourcePointer)) {
+      if (cExpr->getOpcode() == Instruction::Cast) {
+        if (isa<PointerType>(cExpr->getOperand(0)->getType())) {
+          SourcePointer = cExpr->getOperand(0);
+          continue;
+        }
+      }
+      // We cannot handle this expression; break out of the loop
+      break;
+    }
+
+    if (CastInst * CastI = dyn_cast<CastInst>(SourcePointer)) {
+      if (isa<PointerType>(CastI->getOperand(0)->getType())) {
+        SourcePointer = CastI->getOperand(0);
+        continue;
+      }
+      break;
+    }
+
+    // We can't scan through any more instructions; give up
+    break;
+  }
+
+  return (CheckedValues.find (SourcePointer) != CheckedValues.end());
 }
 
 //
@@ -2472,81 +2543,59 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
 //  Insert a poolcheck() into the code for a load or store instruction.
 //
 void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
-  DSGraph & TDG = TDPass->getDSGraph(*F);
-  DSNode * Node = TDG.getNodeForValue(V).getNode();
-  
-  if (Node && Node->isNodeCompletelyFolded()) {
-    if (!EnableIncompleteChecks) {
-      if (Node->isIncomplete()) {
-        ++MissedIncompleteChecks;
-        return;
-      }
-    }
-    // Get the pool handle associated with this pointer.  If there is no pool
-    // handle, use a NULL pointer value and let the runtime deal with it.
-    Value *PH = getPoolHandle(V, F);
+  // Get the DSNode for the pointer to check
+  DSNode * Node = getDSNode (V,F);
 
-    // FIXME: We cannot handle checks to global or stack positions right now.
-    if ((!PH) || (Node->isIncomplete()) ||
-                 (Node->isUnknownNode()) ||
-                 (!((Node->isHeapNode()) ||
-                    (Node->isGlobalNode()) ||
-                    (Node->isAllocaNode())))) {
-      ++NullChecks;
-      if (!PH) ++MissedNullChecks;
+  //
+  // Do not perform any checks if there is no DSNode, if the node is not folded,
+  // or if the node is incomplete.
+  //
+  if (!(Node && Node->isNodeCompletelyFolded()))
+    return;
 
-      // Don't bother to insert the NULL check unless the user asked
-      if (!EnableNullChecks)
-        return;
-      if (!PH) PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
-    } else {
-      //
-      // Only add the pool check if the pool is a global value or it
-      // belongs to the same basic block.
-      //
-      if (isa<GlobalValue>(PH)) {
-        ++FullChecks;
-      } else if (isa<Instruction>(PH)) {
-        Instruction * IPH = (Instruction *)(PH);
-        if (IPH->getParent() == I->getParent()) {
-          //
-          // If the instructions belong to the same basic block, ensure that
-          // the pool dominates the load/store.
-          //
-          Instruction * IP = IPH;
-          for (IP=IPH; (IP->isTerminator()) || (IP == I); IP=IP->getNext()) {
-            ;
-          }
-          if (IP == I)
-            ++FullChecks;
-          else {
-            ++MissChecks;
-            return;
-          }
-        } else {
-          ++MissChecks;
-          return;
-        }
-      } else {
-        ++MissChecks;
-        return;
-      }
-    }      
+  //  
+  // Do not perform a load/store check if the pointer used for this operation
+  // has already been checked.
+  //
+  if (findCheckedPointer(V))
+    return;
 
-    // Create instructions to cast the checked pointer and the checked pool
-    // into sbyte pointers.
-    CastInst *CastVI = 
-      new CastInst(V, 
-		   PointerType::get(Type::SByteTy), "node.lscasted", I);
-    CastInst *CastPHI = 
-      new CastInst(PH, 
-		   PointerType::get(Type::SByteTy), "poolhandle.lscasted", I);
+  // Get the pool handle associated with this pointer.  If there is no pool
+  // handle, use a NULL pointer value and let the runtime deal with it.
+  Value *PH = getPoolHandle(V, F);
 
-    // Create the call to poolcheck
-    std::vector<Value *> args(1,CastPHI);
-    args.push_back(CastVI);
-    new CallInst(PoolCheck,args,"", I);
+  if ((!PH) || (Node->isIncomplete()) ||
+               (Node->isUnknownNode()) ||
+               (!((Node->isHeapNode()) ||
+                  (Node->isGlobalNode()) ||
+                  (Node->isAllocaNode())))) {
+    // Update the number of poolchecks that won't do anything
+    ++NullChecks;
+
+    // Update the stats on why there will be no check
+    if ((Node->isUnknownNode()) || (Node->isIncomplete()))
+      ++MissedIncompleteChecks;
+    if (!PH) ++MissedNullChecks;
+
+    // Don't bother to insert the NULL check unless the user requested it
+    if (!EnableNullChecks)
+      return;
+    if (!PH) PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+  } else {
+    // This will be a full check; update the stats.
+    assert (isa<GlobalValue>(PH));
+    ++FullChecks;
   }
+
+  // Create instructions to cast the checked pointer and the checked pool
+  // into sbyte pointers.
+  Value *CastVI  = castTo (V, PointerType::get(Type::SByteTy), I);
+  Value *CastPHI = castTo (PH, PointerType::get(Type::SByteTy), I);
+
+  // Create the call to poolcheck
+  std::vector<Value *> args(1,CastPHI);
+  args.push_back(CastVI);
+  new CallInst(PoolCheck,args, "", I);
 }
 
 void InsertPoolChecks::addLoadStoreChecks(Module &M){
@@ -2560,6 +2609,19 @@ void InsertPoolChecks::addLoadStoreChecks(Module &M){
       } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
         Value *P = SI->getPointerOperand();
         addLSChecks(P, SI, F);
+      } else if (CallInst * CI = dyn_cast<CallInst>(&*I)) {
+        if (Function * CalledFunc = CI->getCalledFunction()) {
+          if ((CalledFunc->getName() == "llva_atomic_compare_and_swap") ||
+              (CalledFunc->getName() == "llva_atomic_cas_lw") ||
+              (CalledFunc->getName() == "llva_atomic_cas_h") ||
+              (CalledFunc->getName() == "llva_atomic_cas_b") ||
+              (CalledFunc->getName() == "llva_atomic_fetch_add_store") ||
+              (CalledFunc->getName() == "llva_atomic_and") ||
+              (CalledFunc->getName() == "llva_atomic_or")) {
+            Value * P = CI->getOperand(1);
+            addLSChecks (P, CI, F);
+          }
+        }
       }
     }
   }

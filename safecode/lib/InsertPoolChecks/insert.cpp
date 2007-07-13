@@ -906,12 +906,9 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
 //  true  - This value is eligable for an exactcheck.
 //  false - This value is not eligable for an exactcheck.
 //
-static bool
+static inline bool
 isEligableForExactCheck (Value * Pointer) {
-  if (isa<AllocaInst>(Pointer))
-    return true;
-
-  if (isa<GlobalVariable>(Pointer))
+  if ((isa<AllocaInst>(Pointer)) || (isa<GlobalVariable>(Pointer)))
     return true;
 
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
@@ -944,27 +941,24 @@ findSourcePointer (Value * PointerOperand, bool & indexed) {
   //
   indexed = false;
   Value * SourcePointer = PointerOperand;
+  Value * OldSourcePointer = 0;
   while (!isEligableForExactCheck (SourcePointer)) {
-    if (ConstantExpr * cExpr = dyn_cast<ConstantExpr>(SourcePointer))
-      switch (cExpr->getOpcode()) {
-        case Instruction::Cast:
-          if (isa<PointerType>(cExpr->getOperand(0)->getType())) {
-            SourcePointer = cExpr->getOperand(0);
-            continue;
-          }
-          break;
-
-        case Instruction::GetElementPtr:
-          if (isa<PointerType>(cExpr->getOperand(0)->getType())) {
-            SourcePointer = cExpr->getOperand(0);
-            continue;
-          }
-          break;
-
-        default:
-          break;
+    assert (OldSourcePointer != SourcePointer);
+    OldSourcePointer = SourcePointer;
+    // Check for GEP and cast constant expressions
+    if (ConstantExpr * cExpr = dyn_cast<ConstantExpr>(SourcePointer)) {
+      if ((cExpr->getOpcode() == Instruction::Cast) ||
+          (cExpr->getOpcode() == Instruction::GetElementPtr)) {
+        if (isa<PointerType>(cExpr->getOperand(0)->getType())) {
+          SourcePointer = cExpr->getOperand(0);
+          continue;
+        }
       }
+      // We cannot handle this expression; break out of the loop
+      break;
+    }
 
+    // Check for GEP and cast instructions
     if (GetElementPtrInst * G = dyn_cast<GetElementPtrInst>(SourcePointer)) {
       SourcePointer = G->getPointerOperand();
       indexed = true;
@@ -976,10 +970,12 @@ findSourcePointer (Value * PointerOperand, bool & indexed) {
         SourcePointer = CastI->getOperand(0);
         continue;
       }
+      break;
     }
 
+    // Check for call instructions to exact checks
     CallInst * CI1;
-    if ((CI1 = dyn_cast<CallInst>(PointerOperand)) &&
+    if ((CI1 = dyn_cast<CallInst>(SourcePointer)) &&
         (CI1->getCalledFunction()) &&
         (CI1->getCalledFunction()->getName() == "exactcheck3")) {
       SourcePointer = CI1->getOperand (2);

@@ -350,7 +350,6 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   ExceptionSelectorValue = 0;
   FuncEHException = 0;
   FuncEHSelector = 0;
-  FuncEHFilter = 0;
   FuncEHGetTypeID = 0;
   FuncCPPPersonality = 0;
   FuncUnwindResume = 0; 
@@ -1965,16 +1964,18 @@ static void StripLLVMTranslation(tree code) {
 /// GatherTypeInfo - Walk through the expression gathering all the
 /// typeinfos that are used.
 void TreeToLLVM::GatherTypeInfo(tree exp,
-                                std::vector<Value *> &TypeInfos) {
+                                std::vector<Constant *> &TypeInfos) {
   if (TREE_CODE(exp) == CATCH_EXPR || TREE_CODE(exp) == EH_FILTER_EXPR) {
     tree Types = TREE_CODE(exp) == CATCH_EXPR ? CATCH_TYPES(exp)
                                               : EH_FILTER_TYPES(exp);
 
     if (!Types) {
-      // Catch all.
-      TypeInfos.push_back(
-        Constant::getNullValue(PointerType::get(Type::Int8Ty))
-      );
+      // Catch all or empty filter.
+      if (TREE_CODE(exp) == CATCH_EXPR)
+        // Catch all.
+        TypeInfos.push_back(
+          Constant::getNullValue(PointerType::get(Type::Int8Ty))
+        );
     } else if (TREE_CODE(Types) != TREE_LIST) {
       // Construct typeinfo object.  Each call will produce a new expression
       // even if duplicate.
@@ -1982,7 +1983,7 @@ void TreeToLLVM::GatherTypeInfo(tree exp,
       // Produce value.  Duplicate typeinfo get folded here.
       Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
       // Capture typeinfo.
-      TypeInfos.push_back(TypeInfo);
+      TypeInfos.push_back(cast<Constant>(TypeInfo));
     } else {
       for (; Types; Types = TREE_CHAIN (Types)) {
         // Construct typeinfo object.  Each call will produce a new expression
@@ -1991,7 +1992,7 @@ void TreeToLLVM::GatherTypeInfo(tree exp,
         // Produce value.  Duplicate typeinfo get folded here.
         Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
         // Capture typeinfo.
-        TypeInfos.push_back(TypeInfo);
+        TypeInfos.push_back(cast<Constant>(TypeInfo));
       }
     }
   } else if (TREE_CODE(exp) == STATEMENT_LIST) {
@@ -2007,47 +2008,53 @@ void TreeToLLVM::GatherTypeInfo(tree exp,
 /// AddLandingPad - Insert code to fetch and save the exception and exception
 /// selector.
 void TreeToLLVM::AddLandingPad() {
-  tree TryCatch = 0;
-  for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
-                                              E = CurrentEHScopes.rend();
-       I != E; ++I) {
-    if (TREE_CODE(I->TryExpr) == TRY_CATCH_EXPR) {
-      TryCatch = I->TryExpr;
-      break;
-    }
-  }
-
   CreateExceptionValues();
 
   // Fetch and store the exception.
   Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
   Builder.CreateStore(Ex, ExceptionValue);
 
-  if (!TryCatch) return;
-  
-  // Gather the typeinfo.
-  std::vector<Value *> TypeInfos;
-  tree Catches = TREE_OPERAND(TryCatch, 1);
-  GatherTypeInfo(Catches, TypeInfos);
-  
-  // Choose type of landing pad type.
-  Function *F = FuncEHSelector;
-  
-  if (TREE_CODE(Catches) == STATEMENT_LIST &&
-      !tsi_end_p(tsi_start(Catches)) &&
-      TREE_CODE(tsi_stmt(tsi_start(Catches))) == EH_FILTER_EXPR) {
-    F = FuncEHFilter;
-  }
-  
-  // Fetch and store exception handler.
+  // Fetch and store the exception selector.
   std::vector<Value*> Args;
-  Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-  Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
-                            PointerType::get(Type::Int8Ty)));
-  for (unsigned i = 0, N = TypeInfos.size(); i < N; ++i)
-    Args.push_back(TypeInfos[i]);
-  Value *Select = Builder.CreateCall(F, &Args[0], Args.size(), "eh_select");
-  Builder.CreateStore(Select, ExceptionSelectorValue);
+
+  for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
+       E = CurrentEHScopes.rend(); I != E; ++I) {
+    if (TREE_CODE(I->TryExpr) == TRY_CATCH_EXPR) {
+      if (I->InfosType == Unknown) {
+         // Gather the type info and determine the catch type.
+         tree Catches = TREE_OPERAND(I->TryExpr, 1);
+         GatherTypeInfo(Catches, I->TypeInfos);
+         I->InfosType = (TREE_CODE(Catches) == STATEMENT_LIST &&
+                         !tsi_end_p(tsi_start(Catches)) &&
+                         TREE_CODE(tsi_stmt(tsi_start(Catches))) ==
+                         EH_FILTER_EXPR) ? FilterExpr : CatchList;
+      }
+
+      if (I->InfosType == CatchList && !I->TypeInfos.size())
+        continue;
+
+      // Lazily add the exception and the personality function.
+      if (!Args.size()) {
+        Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
+        Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
+                                  PointerType::get(Type::Int8Ty)));
+      }
+
+      if (I->InfosType == FilterExpr)
+        // Filter - note the size.
+        Args.push_back(ConstantInt::get(Type::Int32Ty, I->TypeInfos.size()));
+
+      Args.reserve(Args.size() + I->TypeInfos.size());
+      for (unsigned j = 0, N = I->TypeInfos.size(); j < N; ++j)
+        Args.push_back(I->TypeInfos[j]);
+    }
+  }
+
+  if (Args.size()) {
+    Value *Select = Builder.CreateCall(FuncEHSelector, &Args[0], Args.size(),
+                                       "eh_select");
+    Builder.CreateStore(Select, ExceptionSelectorValue);
+  }
 }
 
 
@@ -2067,10 +2074,6 @@ void TreeToLLVM::CreateExceptionValues() {
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_selector);
-#if 0 /* FIXME FIXME */
-  FuncEHFilter    = Intrinsic::getDeclaration(TheModule,
-                                              Intrinsic::eh_filter);
-#endif
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_typeid_for);
                                                       

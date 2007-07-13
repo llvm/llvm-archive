@@ -91,7 +91,7 @@ struct InsertPoolChecks : public ModulePass {
   GlobalVariable * getOrCreateFunctionTable (DSNode * Node, Value * PH, Module * M);
   void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
   void addExactCheck  (Value * Pointer, Value * Index, Value * Bound, Instruction * InsertPt);
-  void addExactCheck2 (GetElementPtrInst * GEP, Value * Bound);
+  void addExactCheck2 (Value * Base, Value * Result, Value * Bound, Instruction * InsertPt);
   Value * addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
   bool insertExactCheck (GetElementPtrInst * GEP);
   bool insertExactCheck (Instruction * , Value *, Value *, Instruction *);

@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
@@ -6045,5 +6045,5 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   return FieldPtr;
 }
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */
 

@@ -60,7 +60,7 @@ OBJC_OBJS = objc/objc-lang.o objc/objc-act.o
 
 # APPLE LOCAL begin order files  --ilr
 cc1obj-dummy$(exeext): $(OBJC_OBJS) $(C_AND_OBJC_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
-	# APPLE LOCAL LLVM
+	# LLVM LOCAL
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 	      $(OBJC_OBJS) $(C_AND_OBJC_OBJS) dummy-checksum.o \
 	      $(BACKEND) $(LIBS) $(CC1OBJ_ORDER_FLAGS)
@@ -71,7 +71,7 @@ cc1obj-checksum.c : cc1obj-dummy$(exeext) build/genchecksum$(build_exeext)
 cc1obj-checksum.o : cc1obj-checksum.c
 
 cc1obj$(exeext): $(OBJC_OBJS) $(C_AND_OBJC_OBJS) cc1obj-checksum.o $(BACKEND) $(LIBDEPS)
-	# APPLE LOCAL LLVM
+	# LLVM LOCAL
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 	      $(OBJC_OBJS) $(C_AND_OBJC_OBJS) cc1obj-checksum.o \
 	      $(BACKEND) $(LIBS) $(CC1OBJ_ORDER_FLAGS)

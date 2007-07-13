@@ -2007,9 +2007,9 @@ extern int ia64_final_schedule;
 
 #define TARGET_UNWIND_TABLES_DEFAULT true
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define TARGET_UNWIND_TABLES_DEFAULT true
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #define EH_RETURN_DATA_REGNO(N) ((N) < 4 ? (N) + 15 : INVALID_REGNUM)
 

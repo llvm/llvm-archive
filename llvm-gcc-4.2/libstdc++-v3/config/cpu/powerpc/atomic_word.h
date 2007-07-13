@@ -31,7 +31,7 @@
 #define _GLIBCXX_ATOMIC_WORD_H	1
 
 typedef int _Atomic_word;
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef __llvm__   /* FIXME: implement inline asm */
 #define _GLIBCXX_READ_MEM_BARRIER __asm __volatile ("isync":::"memory")
 #ifdef __NO_LWSYNC__
@@ -40,5 +40,5 @@ typedef int _Atomic_word;
 #define _GLIBCXX_WRITE_MEM_BARRIER __asm __volatile ("lwsync":::"memory")
 #endif
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #endif 

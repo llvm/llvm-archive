@@ -4903,7 +4903,7 @@ arm_slowmul_rtx_costs (rtx x, int code, int outer_code, int *total)
     }
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* Values which must be returned in the most-significant end of the return
    register.  */
 
@@ -4915,7 +4915,7 @@ arm_return_in_msb (tree valtype)
           && (AGGREGATE_TYPE_P (valtype)
               || TREE_CODE (valtype) == COMPLEX_TYPE));
 }
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* RTX cost for cores with a fast multiply unit (M variants).  */
 
@@ -6235,7 +6235,7 @@ emit_stm_seq (rtx *operands, int nops)
   return "";
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* Return true if a type must be passed in memory. For AAPCS, small aggregates
    (padded to the size of a word) should be passed in a register.  */
 
@@ -6286,7 +6286,7 @@ arm_pad_reg_upward (enum machine_mode mode ATTRIBUTE_UNUSED,
   /* Otherwise, use default padding.  */
   return !BYTES_BIG_ENDIAN;
 }
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 
 /* Routines for use in generating RTL.  */
@@ -13042,7 +13042,7 @@ thumb_pushpop (FILE *f, unsigned long mask, int push, int *cfa_offset,
       fprintf (f, "}\n");
     }
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   if (ARM_EABI_UNWIND_TABLES && push)
     {
       fprintf (f, "\t.save\t{");
@@ -13057,7 +13057,7 @@ thumb_pushpop (FILE *f, unsigned long mask, int push, int *cfa_offset,
 	}
       fprintf (f, "}\n");
     }
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   fprintf (f, "\t%s\t{", push ? "push" : "pop");
 
@@ -14111,10 +14111,10 @@ thumb_output_function_prologue (FILE *f, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
       if (ARM_EABI_UNWIND_TABLES)
 	asm_fprintf (f, "\t.pad #16\n");
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       if (ARM_EABI_UNWIND_TABLES)
 	asm_fprintf (f, "\t.pad #16\n");
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
       asm_fprintf
 	(f, "\tsub\t%r, %r, #16\t%@ Create stack backtrace structure\n",
@@ -15145,9 +15145,9 @@ arm_default_short_enums (void)
 static bool
 arm_align_anon_bitfield (void)
 {
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   return TARGET_AAPCS_BASED && arm_abi != ARM_ABI_AAPCS_LINUX;
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 }
 
 
@@ -15246,13 +15246,13 @@ arm_cxx_use_aeabi_atexit (void)
 }
 
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 static bool
 arm_cxx_use_aeabi_atexit (void)
 {
   return TARGET_AAPCS_BASED;
 }
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 void
 arm_set_return_address (rtx source, rtx scratch)

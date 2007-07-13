@@ -2079,7 +2079,7 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
   /* If OLDDECL had its DECL_RTL instantiated, re-invoke make_decl_rtl
     so that encode_section_info has a chance to look at the new decl
     flags and attributes.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   if (DECL_RTL_SET_P (olddecl)
       && (TREE_CODE (olddecl) == FUNCTION_DECL

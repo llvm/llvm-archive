@@ -84,11 +84,11 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define TARGET_ASM_TTYPE hook_bool_rtx_false
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef TARGET_ARM_TTYPE
 #define TARGET_ASM_TTYPE hook_bool_rtx_false
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #ifndef TARGET_ASM_ASSEMBLE_VISIBILITY
 #define TARGET_ASM_ASSEMBLE_VISIBILITY default_assemble_visibility
@@ -510,9 +510,9 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #endif
 /* APPLE LOCAL end mainline 2005-10-12 */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define TARGET_ARM_EABI_UNWINDER false
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_false
 #define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_false
@@ -589,11 +589,11 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define TARGET_SECONDARY_RELOAD default_secondary_reload
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef TARGET_UNWIND_TABLES_DEFAULT
 #define TARGET_UNWIND_TABLES_DEFAULT false
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* C++ specific.  */
 #ifndef TARGET_CXX_GUARD_TYPE

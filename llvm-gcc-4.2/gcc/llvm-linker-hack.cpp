@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* LLVM Library Link Hack  
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
@@ -82,4 +82,4 @@ void dummy_function() {
   llvm::createStripDeadPrototypesPass();
 }
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */

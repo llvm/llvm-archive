@@ -3901,11 +3901,11 @@ prepare_function_start (tree fndecl)
     cfun = DECL_STRUCT_FUNCTION (fndecl);
   else
     allocate_struct_function (fndecl);
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   init_emit ();
   init_varasm_status (cfun);
   init_expr ();
@@ -3953,9 +3953,9 @@ init_function_start (tree subr)
       cfun->iasm_noreturn = DECL_IASM_NORETURN (subr);
       cfun->iasm_frame_size = DECL_IASM_FRAME_SIZE (subr);
     }
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   /* APPLE LOCAL end CW asm blocks */
   /* Prevent ever trying to delete the first instruction of a
      function.  Also tell final how to output a linenum before the
@@ -3968,9 +3968,9 @@ init_function_start (tree subr)
      This makes sure the first insn will never be deleted.
      Also, final expects a note to appear there.  */
   emit_note (NOTE_INSN_DELETED);
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   /* Warn if this value is an aggregate type,
      regardless of which calling convention we are using for it.  */
   if (AGGREGATE_TYPE_P (TREE_TYPE (DECL_RESULT (subr))))

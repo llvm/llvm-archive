@@ -71,7 +71,7 @@ tree built_in_decls[(int) END_BUILTINS];
    required to implement the function call in all cases).  */
 tree implicit_built_in_decls[(int) END_BUILTINS];
 
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 int get_pointer_alignment (tree, unsigned int);
 static const char *c_getstr (tree);
 static rtx c_readstr (const char *, enum machine_mode);
@@ -140,9 +140,9 @@ static tree fold_builtin_classify_type (tree);
 static tree fold_builtin_strlen (tree);
 static tree fold_builtin_inf (tree, int);
 static tree fold_builtin_nan (tree, tree, int);
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 int validate_arglist (tree, ...);
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 static bool integer_valued_real_p (tree);
 static tree fold_trunc_transparent_mathfn (tree, tree);
 static bool readonly_data_expr (tree);
@@ -230,7 +230,7 @@ static bool called_as_built_in (tree node)
    Otherwise, look at the expression to see if we can do better, i.e., if the
    expression is actually pointing at an object whose alignment is tighter.  */
 
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 int
 get_pointer_alignment (tree exp, unsigned int max_align)
 {
@@ -5681,11 +5681,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
   enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
   enum machine_mode target_mode = TYPE_MODE (TREE_TYPE (exp));
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_MD)
     return targetm.expand_builtin (exp, target, subtarget, mode, ignore);
@@ -9339,9 +9339,9 @@ build_function_call_expr (tree fn, tree arglist)
    of tree_codes.  If the last specifier is a 0, that represents an
    ellipses, otherwise the last specifier must be a VOID_TYPE.  */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 int    /* export this for LLVM to use*/
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 validate_arglist (tree arglist, ...)
 {
   enum tree_code code;

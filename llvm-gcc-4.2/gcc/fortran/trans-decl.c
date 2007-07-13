@@ -1551,13 +1551,13 @@ trans_function_start (gfc_symbol * sym)
     }
 
   /* Create RTL for function definition.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   make_decl_rtl (fndecl);
 #else
   make_decl_llvm (fndecl);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   init_function_start (fndecl);
 
@@ -3317,13 +3317,13 @@ gfc_generate_constructors (void)
 
   rest_of_decl_compilation (fndecl, 1, 0);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   make_decl_rtl (fndecl);
 #else
   make_decl_llvm (fndecl);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   init_function_start (fndecl);
 

@@ -3637,7 +3637,7 @@ create_field_decl (tree type, const char *name)
 static tree
 start_var_decl (tree type, const char *name)
 {
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   tree var = NULL_TREE;
 #ifdef ENABLE_LLVM
   /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
@@ -3656,7 +3656,7 @@ start_var_decl (tree type, const char *name)
     /* Fall through. Build using 'name' */
 #endif
   var = build_decl (VAR_DECL, get_identifier (name), type);
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   objc_set_global_decl_fields (var);
 
   return var;
@@ -4124,7 +4124,7 @@ synth_module_prologue (void)
       /* APPLE LOCAL begin radar 4590221 */
       if (OFFS_MSGSEND_FAST)
 	{
-          /* APPLE LOCAL begin LLVM */
+          /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
           tree umsg_fast_decl;
           umsg_fast_decl = build_int_cst (NULL_TREE, OFFS_MSGSEND_FAST);
@@ -4142,7 +4142,7 @@ synth_module_prologue (void)
 		         build_int_cst (NULL_TREE, OFFS_MSGSEND_FAST),
 		         NULL_TREE);
 #endif
-          /* APPLE LOCAL end LLVM */
+          /* LLVM LOCAL end */
 	}
       /* APPLE LOCAL end radar 4590221 */
 
@@ -5854,7 +5854,7 @@ build_objc_string_decl (enum string_section section)
   else if (section == prop_names_attr)
     sprintf (buf, "_OBJC_PROP_NAME_ATTR_%d", property_name_attr_idx++);
   /* APPLE LOCAL end C* property metadata (Radar 4498373) */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   {
   /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
@@ -5867,7 +5867,7 @@ build_objc_string_decl (enum string_section section)
 #else
   ident = get_identifier (buf);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
 
   decl = build_decl (VAR_DECL, ident, build_array_type (char_type_node, 0));
@@ -5881,7 +5881,7 @@ build_objc_string_decl (enum string_section section)
   DECL_THIS_STATIC (decl) = 1; /* squash redeclaration errors */
 #endif
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   make_decl_rtl (decl);
 #else
@@ -5892,7 +5892,7 @@ build_objc_string_decl (enum string_section section)
   DECL_PRESERVE_P (decl) = 1;
   make_decl_llvm (decl);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   pushdecl_top_level (decl);
 
   return decl;
@@ -8007,7 +8007,7 @@ build_next_objc_exception_stuff (void)
   /* APPLE LOCAL begin radar 4590221 */
   if (OFFS_ASSIGNIVAR_FAST)
     {
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       tree objc_assign_ivar_fast_decl;
       objc_assign_ivar_decl
@@ -8029,7 +8029,7 @@ build_next_objc_exception_stuff (void)
 		     build_int_cst (NULL_TREE, OFFS_ASSIGNIVAR_FAST),
 		     NULL_TREE);
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
     }
   else
     {
@@ -8930,11 +8930,11 @@ generate_protocols (void)
 					     /* APPLE LOCAL radar 4695109 */
 					     UOBJC_PROTOCOL_EXT_decl, NULL_TREE);
       /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       /* Force 4 byte alignment for protocols */
       DECL_ALIGN(decl) = 32;
       DECL_USER_ALIGN(decl) = 1;
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       finish_var_decl (decl, initlist);
     }
 }
@@ -17529,7 +17529,7 @@ finish_objc (void)
     }
 
   warn_missing_braces = save_warn_missing_braces;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   {
     int i;
@@ -17539,7 +17539,7 @@ finish_objc (void)
         DECL_PRESERVE_P (objc_global_trees[i]) = 1;
   }
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 }
 
 /* Subroutines of finish_objc.  */
@@ -17569,11 +17569,11 @@ handle_class_ref (tree chain)
   tree decl;
   tree exp;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 #undef ASM_DECLARE_UNRESOLVED_REFERENCE
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   sprintf (string, "%sobjc_class_name_%s",
 	   (flag_next_runtime ? "." : "__"), name);
@@ -17590,7 +17590,7 @@ handle_class_ref (tree chain)
   decl = build_decl (VAR_DECL, get_identifier (string), char_type_node);
   DECL_EXTERNAL (decl) = 1;
   TREE_PUBLIC (decl) = 1;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* This decl's name is special. Ask llvm to not add leading underscore by 
      setting it as a user supplied asm name.  */
@@ -17598,7 +17598,7 @@ handle_class_ref (tree chain)
   /* Let optimizer know that this decl is not removable.  */
   DECL_PRESERVE_P (decl) = 1;
 #endif ENABLE_LLVM
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   pushdecl (decl);
   rest_of_decl_compilation (decl, 0, 0);
@@ -17611,13 +17611,13 @@ handle_class_ref (tree chain)
   DECL_INITIAL (decl) = exp;
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* This decl's name is special. Ask llvm to not add leading underscore by 
      setting it as a user supplied asm name.  */
   set_user_assembler_name(decl, string);
 #endif ENABLE_LLVM
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   /* Force the output of the decl as this forces the reference of the class.  */
   mark_decl_referenced (decl);
 
@@ -17656,7 +17656,7 @@ handle_impent (struct imp_entry *impent)
       /* Do the same for categories.  Even though no references to
          these symbols are generated automatically by the compiler, it
          gives you a handle to pull them into an archive by hand.  */
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* The * is a sentinel for gcc's back end, but is not wanted by llvm. */
       sprintf (string, "%sobjc_category_name_%s_%s",
@@ -17665,16 +17665,16 @@ handle_impent (struct imp_entry *impent)
       sprintf (string, "*%sobjc_category_name_%s_%s",
                (flag_next_runtime ? "." : "__"), class_name, class_super_name);
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
     }
   else
     return;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 #undef ASM_DECLARE_CLASS_REFERENCE
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
 #ifdef ASM_DECLARE_CLASS_REFERENCE
   if (flag_next_runtime)
@@ -17695,13 +17695,13 @@ handle_impent (struct imp_entry *impent)
       TREE_CONSTANT (decl) = 1;
       DECL_CONTEXT (decl) = 0;
       DECL_ARTIFICIAL (decl) = 1;
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       set_user_assembler_name(decl, string);
       /* Let optimizer know that this decl is not removable.  */
       DECL_PRESERVE_P (decl) = 1;
 #endif ENABLE_LLVM
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       DECL_INITIAL (decl) = init;
       assemble_variable (decl, 1, 0, 0);
     }

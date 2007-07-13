@@ -383,7 +383,7 @@ extern void abort (void);
 #undef TRUE
 #undef FALSE
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 /* For LLVM, we really do want to use the system bool.  Because parts of the
  * compiler are written in C++ and parts are written in C, the two conceptions
@@ -396,7 +396,7 @@ extern void abort (void);
 #else
 # define bool unsigned char
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #define true 1
 #define false 0
 

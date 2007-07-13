@@ -82,7 +82,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "tree-flow.h"
 #include "tree-pass.h"
 #include "tree-dump.h"
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #include "llvm.h"
 
 #ifdef ENABLE_LLVM
@@ -90,7 +90,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
    in.  */
 #undef INSN_SCHEDULING
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 
 
@@ -149,13 +149,13 @@ rest_of_decl_compilation (tree decl,
   /* Can't defer this, because it needs to happen before any
      later function definitions are processed.  */
   if (DECL_ASSEMBLER_NAME_SET_P (decl) && DECL_REGISTER (decl))
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
     make_decl_rtl (decl);
 #else
     make_decl_llvm (decl);
 #endif
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
 
   /* Forward declarations for nested functions are not "external",
      but we need to treat them as if they were.  */
@@ -196,7 +196,7 @@ rest_of_decl_compilation (tree decl,
 	      information machinery when there are errors.  */
 	   && !(sorrycount || errorcount))
     {
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
     timevar_push (TV_SYMOUT);
     debug_hooks->type_decl (decl, !top_level);
@@ -204,7 +204,7 @@ rest_of_decl_compilation (tree decl,
 #else
     llvm_emit_typedef (decl);
 #endif
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
     }
 
   /* Let cgraph know about the existence of variables.  */
@@ -222,7 +222,7 @@ rest_of_type_compilation (tree type, int toplev)
   if (errorcount != 0 || sorrycount != 0)
     return;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   timevar_push (TV_SYMOUT);
   debug_hooks->type_decl (TYPE_STUB_DECL (type), !toplev);
@@ -231,7 +231,7 @@ rest_of_type_compilation (tree type, int toplev)
   llvm_emit_typedef (TYPE_STUB_DECL (type));
   toplev = toplev;  /* avoid unused var warning */
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 }
 
 
@@ -243,11 +243,11 @@ finish_optimization_passes (void)
   struct dump_file_info *dfi;
   char *name;
   
-  /* APPLE LOCAL begin LLVM Dead code strip cc1. */
+  /* LLVM LOCAL begin Dead code strip cc1. */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM Dead code strip cc1. */
+  /* LLVM LOCAL end Dead code strip cc1. */
 
   timevar_push (TV_DUMP);
   if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)

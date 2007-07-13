@@ -83,9 +83,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "alloc-pool.h"
 #include "tree-mudflap.h"
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #include "llvm.h"
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #if defined (DWARF2_UNWIND_INFO) || defined (DWARF2_DEBUGGING_INFO)
 #include "dwarf2out.h"
@@ -258,12 +258,12 @@ int flag_signed_char;
 
 int flag_short_enums;
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 
 /* Options to pass directly into the LLVM backend. */
 const char *llvm_optns = 0;
 
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL begin -fast */
 /* Nonzero if we should perform SPEC oriented optimizations.  */
@@ -1196,14 +1196,14 @@ compile_file (void)
   /* This must be at the end.  Some target ports emit end of file directives
      into the assembly file here, and hence we can not output anything to the
      assembly file after this point.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   targetm.asm_out.file_end ();
 #else
   if (!flag_pch_file)
     llvm_asm_file_end();
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 }
 
 /* Parse a -d... command line switch.  */
@@ -1463,7 +1463,7 @@ init_asm_output (const char *name)
 
   if (!flag_syntax_only)
     {
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       targetm.asm_out.file_start ();
 #else
@@ -1472,7 +1472,7 @@ init_asm_output (const char *name)
       else
         llvm_asm_file_start();
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
 #ifdef ASM_COMMENT_START
       if (flag_verbose_asm)
@@ -1913,11 +1913,11 @@ process_options (void)
     default_debug_hooks = &vmsdbg_debug_hooks;
 #endif
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   write_symbols = NO_DEBUG;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   if (write_symbols == NO_DEBUG)
     ;
 #if defined(DBX_DEBUGGING_INFO)
@@ -2075,13 +2075,13 @@ backend_init (void)
 #endif
 		    || flag_test_coverage);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* note: we need init_emit_once above to initialize ptr_mode and friends. */
   llvm_initialize_backend();
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   init_rtlanal ();
   init_regs ();
@@ -2124,12 +2124,12 @@ lang_dependent_init (const char *name)
 
   init_asm_output (name);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_lang_dependent_init(name);
   return 1; /* don't initialize the RTL backend */
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   /* These create various _DECL nodes, so need to be called after the
      front end is initialized.  */

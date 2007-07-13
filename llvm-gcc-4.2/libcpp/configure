@@ -8263,7 +8263,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # Check whether --enable-llvm or --disable-llvm was given.
 if test "${enable_llvm+set}" = set; then
   enableval="$enable_llvm"
@@ -8301,7 +8301,7 @@ else
   LLVMBASEPATH=""
 fi;
 
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 
 # Output.

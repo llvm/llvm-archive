@@ -77,14 +77,14 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "cgraph.h"
 #include "coverage.h"
 
-/* APPLE LOCAL begin LLVM - Remove insn-attrtab.o. */
+/* LLVM LOCAL begin - Remove insn-attrtab.o. */
 #ifdef ENABLE_LLVM
 #undef HAVE_ATTR_length
 int insn_current_reference_address (rtx branch) {
   return branch == 0;
 }
 #endif
-/* APPLE LOCAL end LLVM - Remove insn-attrtab.o. */
+/* LLVM LOCAL end - Remove insn-attrtab.o. */
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"		/* Needed for external data

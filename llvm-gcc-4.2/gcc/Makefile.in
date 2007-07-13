@@ -55,9 +55,9 @@ MAKEOVERRIDES =
 .SUFFIXES:
 .SUFFIXES: .c .o .po .pox .gmo
 
-# APPLE LOCAL begin llvm
+# LLVM LOCAL begin
 .SUFFIXES: .cpp
-# APPLE LOCAL end llvm
+# LLVM LOCAL end
 
 # -------------------------------
 # Standard autoconf-set variables
@@ -227,7 +227,7 @@ reload1.o-warn = -Wno-error
 # $(GCC_WARN_CFLAGS), or nothing.
 WARN_CFLAGS = @warn_cflags@
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 @checkingenabled_flag@
 LLVMOBJDIR = @LLVMBASEPATH@
 ifeq ($(LLVMOBJDIR),)
@@ -254,7 +254,7 @@ LLVMBINPATH = $(LLVMOBJDIR)/$(BUILDMODE)/bin
 # srcdir != objdir builds.
 LLVMSRCDIR := $(shell $(LLVMBINPATH)/llvm-config --src-root)
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # These exists to be overridden by the x-* and t-* files, respectively.
 X_CFLAGS =
@@ -459,10 +459,10 @@ TARGET_SYSTEM_ROOT = @TARGET_SYSTEM_ROOT@
 xmake_file=@xmake_file@
 tmake_file=@tmake_file@
 out_file=$(srcdir)/config/@out_file@
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 out_cxx_file=@out_cxx_file@
 out_object_file=@out_object_file@
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 out_cxx_object_file=@out_cxx_object_file@
 md_file=$(srcdir)/config/@md_file@
 tm_file_list=@tm_file_list@
@@ -920,7 +920,7 @@ INCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 	   -I$(srcdir)/../include @INCINTL@ \
 	   $(CPPINC) $(GMPINC) $(DECNUMINC)
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
 INCLUDES += -I$(LLVMSRCDIR)/include
 
@@ -930,11 +930,11 @@ ifneq (($LLVMOBJDIR),$(LLVMSRCDIR))
 INCLUDES += -I$(LLVMOBJDIR)/include
 endif
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $< $(OUTPUT_OPTION)
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # Disable C-only warning flags if they are present.
 ALL_CXXFLAGS = $(filter-out -Wstrict-prototypes -Wmissing-prototypes \
                             -Wold-style-definition, $(ALL_CFLAGS)) -Wno-unused
@@ -947,7 +947,7 @@ endif
 
 .cpp.o:
 	$(CXX) -c $(ALL_CXXFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $< $(OUTPUT_OPTION)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 #
 # Support for additional languages (other than C).
@@ -1097,20 +1097,20 @@ OBJS-common = \
 
 
 OBJS-md = $(out_object_file)
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(out_cxx_file),)
 ifneq ($(LLVMOBJDIR),)
 OBJC-md += $(out_cxx_object_file)
 endif
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 OBJS-archive = $(EXTRA_OBJS) $(host_hook_obj) tree-inline.o		   \
   cgraph.o cgraphunit.o tree-nomudflap.o ipa.o ipa-inline.o                \
   ipa-utils.o ipa-reference.o ipa-pure-const.o ipa-type-escape.o           \
   ipa-prop.o ipa-cp.o
 
 OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
 OBJS-common += llvm-backend.o llvm-convert.o llvm-types.o llvm-debug.o
 endif
@@ -1161,12 +1161,12 @@ ifndef BUILD_LLVM_INTO_A_DYLIB
 LIBDEPS          += $(LLVMLIBFILES)
 LLVMBACKENDFILES := $(LLVMLIBFILES)
 
-# APPLE LOCAL begin LLVM - set DYLD path
+# LLVM LOCAL begin - set DYLD path
 SET_DYLIB_PATH=0
 
 # Set up library path if needed.
 ##@set_gcc_lib_path@
-# APPLE LOCAL end LLVM - set DYLD path
+# LLVM LOCAL end - set DYLD path
 else
 
 # Remove scheduler files.
@@ -1177,12 +1177,12 @@ OBJS-common := $(filter-out sched-deps.o sched-ebb.o sched-rgn.o sched-vis.o \
 OBJS-common := $(filter-out bt-load.o caller-save.o combine.o cse.o ifcvt.o \
                             simplify-rtx.o, $(OBJS-common))
 
-# APPLE LOCAL begin LLVM - Remove gcse.o
+# LLVM LOCAL begin - Remove gcse.o
 # Remove RTL optimization that requires a function we don't link in.
 ifdef BUILD_LLVM_INTO_A_DYLIB
 OBJS-common := $(filter-out gcse.o, $(OBJS-common))
 endif
-# APPLE LOCAL end LLVM - Remove gcse.o
+# LLVM LOCAL end - Remove gcse.o
 
 # Remove generated files.
 OBJS-common := $(filter-out insn-attrtab.o insn-recog.o insn-extract.o, \
@@ -1206,31 +1206,31 @@ LLVMBACKENDFILES := libllvmgcc$(LLVM_STAGE).dylib
 # Make sure that 'make install' knows about the dylib.
 EXTRA_PROGRAMS += libllvmgcc$(LLVM_STAGE).dylib
 
-# APPLE LOCAL begin LLVM - set DYLD path
+# LLVM LOCAL begin - set DYLD path
 SET_DYLIB_PATH=1
-# APPLE LOCAL end LLVM - set DYLD path
+# LLVM LOCAL end - set DYLD path
 
 endif
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(out_cxx_file),)
 ifneq ($(LLVMOBJDIR),)
 OBJS += $(out_cxx_object_file)
 endif
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 OBJS-onestep = libbackend.o $(OBJS-archive)
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
 MAIN_OBJ = llvm-main.o
 else
 MAIN_OBJ = main.o
 endif
 BACKEND = $(MAIN_OBJ) @TREEBROWSER@ libbackend.a $(CPPLIB) $(LLVMBACKENDFILES)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # Files to be copied after each stage in building.
 STAGECOPYSTUFF = insn-flags.h insn-config.h insn-codes.h \
@@ -1504,7 +1504,7 @@ libbackend.a: $(OBJS@onestep@)
 	$(AR) $(AR_FLAGS) libbackend.a $(OBJS@onestep@)
 	-$(RANLIB) $(RANLIB_FLAGS) libbackend.a
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
 # Link with the C++ compiler, not the C compiler.
 LINKCC := $(CXX)
@@ -1520,7 +1520,7 @@ endif
 else
 LINKCC := $(CC)
 endif
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # We call this executable `xgcc' rather than `gcc'
 # to avoid confusion if the current directory is in the path
@@ -1823,10 +1823,10 @@ c-lang.o : c-lang.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) \
     c-objc-common.h $(C_PRAGMA_H) c-common.def $(TREE_INLINE_H)
 stub-objc.o : stub-objc.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TREE_H) \
     $(C_COMMON_H)
-# APPLE LOCAL begin llvm
+# LLVM LOCAL begin
 stub-c.o : stub-c.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TREE_H) \
     $(GGC_H) $(C_COMMON_H)
-# APPLE LOCAL end llvm
+# LLVM LOCAL end
 c-lex.o : c-lex.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) \
     $(RTL_H) debug.h $(C_TREE_H) $(C_COMMON_H) $(REAL_H) $(SPLAY_TREE_H) \
     $(C_PRAGMA_H) input.h intl.h $(FLAGS_H) toplev.h output.h \
@@ -1858,7 +1858,7 @@ COLLECT2_OBJS = collect2.o tlink.o intl.o version.o
 COLLECT2_LIBS = @COLLECT2_LIBS@
 collect2$(exeext): $(COLLECT2_OBJS) $(LIBDEPS)
 # Don't try modifying collect2 (aka ld) in place--it might be linking this.
-	# APPLE LOCAL LLVM
+	# LLVM LOCAL
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o T$@ \
 		$(COLLECT2_OBJS) $(LIBS) $(COLLECT2_LIBS)
 	mv -f T$@ $@
@@ -2898,7 +2898,7 @@ pretty-print.o: $(CONFIG_H) $(SYSTEM_H) coretypes.h intl.h $(PRETTY_PRINT_H) \
    $(TREE_H)
 errors.o : errors.c $(CONFIG_H) $(SYSTEM_H) errors.h $(BCONFIG_H)
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 llvm-main.o : llvm-main.cpp $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) toplev.h
 llvm-symbol-stubs.o : llvm-symbol-stubs.cpp
 LLVM_HEADERS := $(wildcard $(LLVMSRCDIR)/include/llvm/*) \
@@ -2912,7 +2912,7 @@ llvm-convert.o : llvm-convert.cpp $(ALL_HEADERS) \
                  $(LLVMSRCDIR)/include/llvm/Intrinsics.gen
 llvm-types.o : llvm-types.cpp $(ALL_HEADERS)
 llvm-debug.o : llvm-debug.cpp $(ALL_HEADERS)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 $(out_object_file): $(out_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h insn-config.h conditions.h \
@@ -2921,7 +2921,7 @@ $(out_object_file): $(out_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) \
    langhooks.h $(GGC_H) $(OPTABS_H) $(REAL_H) tm-constrs.h
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) \
 		$(out_file) $(OUTPUT_OPTION)
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 ifneq ($(out_cxx_file),)
 $(out_cxx_object_file): $(srcdir)/config/$(out_cxx_file) $(ALL_HEADERS) $(TREE_H) $(GGC_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h real.h insn-config.h conditions.h \
@@ -2931,7 +2931,7 @@ $(out_cxx_object_file): $(srcdir)/config/$(out_cxx_file) $(ALL_HEADERS) $(TREE_H
 	$(CXX) -c $(ALL_CXXFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/$(out_cxx_file) $(OUTPUT_OPTION)
 endif
-# APPLE LOCAL end  LLVM
+# LLVM LOCAL end
 
 # Build auxiliary files that support ecoff format.
 mips-tfile: mips-tfile.o version.o $(LIBDEPS)
@@ -2946,11 +2946,11 @@ mips-tdump: mips-tdump.o version.o $(LIBDEPS)
 mips-tdump.o : mips-tdump.c $(CONFIG_H) $(RTL_H) $(SYSTEM_H) coretypes.h \
    $(TM_H) version.h $(srcdir)/../include/getopt.h stab.def
 
-# APPLE LOCAL LLVM - Disable rule, which expects OBJS-common to only have C Files. 
+# LLVM LOCAL - Disable rule, which expects OBJS-common to only have C Files. 
 ifeq ($(LLVMOBJDIR),)
 
 # FIXME: writing proper dependencies for this is a *LOT* of work.
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 libbackend.o : $(OBJS-common:.o=.c) $(out_file) $(out_cxx_file) \
   insn-config.h insn-flags.h insn-codes.h insn-constants.h \
   insn-attr.h  $(DATESTAMP) $(BASEVER) $(DEVPHASE)
@@ -2961,7 +2961,7 @@ libbackend.o : $(OBJS-common:.o=.c) $(out_file) $(out_cxx_file) \
 	  -DBASEVER=$(BASEVER_s) -DDATESTAMP=$(DATESTAMP_s) \
 	  -DDEVPHASE=$(DEVPHASE_s) -combine
 
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 endif
 
 #
@@ -3170,11 +3170,11 @@ GTFILES = $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/targhooks.c $(srcdir)/cgraphunit.c $(out_file) \
   @all_gtfiles@
 
-# APPLE LOCAL begin LLVM - Remove gcse.c
+# LLVM LOCAL begin - Remove gcse.c
 ifdef BUILD_LLVM_INTO_A_DYLIB
 GTFILES := $(filter-out $(srcdir)/gcse.c, $(GTFILES))
 endif
-# APPLE LOCAL end LLVM - Remove gcse.c
+# LLVM LOCAL end - Remove gcse.c
 
 GTFILES_FILES_LANGS = @all_gtfiles_files_langs@
 GTFILES_FILES_FILES = @all_gtfiles_files_files@
@@ -3388,11 +3388,11 @@ proto: config.status protoize$(exeext) unprotoize$(exeext) SYSCALLS.c.X
 PROTO_OBJS = intl.o version.o cppdefault.o errors.o
 
 protoize$(exeext): protoize.o $(PROTO_OBJS) $(LIBDEPS)
-	# APPLE LOCAL LLVM
+	# LLVM LOCAL
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ protoize.o $(PROTO_OBJS) $(LIBS)
 
 unprotoize$(exeext): unprotoize.o $(PROTO_OBJS) $(LIBDEPS)
-	# APPLE LOCAL LLVM
+	# LLVM LOCAL
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ unprotoize.o $(PROTO_OBJS) $(LIBS)
 
 protoize.o: protoize.c $(srcdir)/../include/getopt.h $(CONFIG_H) $(SYSTEM_H) \

@@ -135,7 +135,7 @@ jvspec.o-warn = -Wno-error
 java/parse-scan.o-warn = -Wno-error
 java/parse.o-warn = -Wno-error
 
-# APPLE LOCAL begin llvm
+# LLVM LOCAL begin
 # Language-independent object files.
 JAVA_BACKEND = $(BACKEND) attribs.o stub-objc.o stub-c.o
 
@@ -143,7 +143,7 @@ jc1$(exeext): $(JAVA_OBJS) $(JAVA_BACKEND) $(LIBDEPS)
 	rm -f $@
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 		$(JAVA_OBJS) $(JAVA_BACKEND) $(ZLIB) $(LIBICONV) $(LIBS)
-# APPLE LOCAL end llvm
+# LLVM LOCAL end
 
 gcjh$(exeext): $(GCJH_OBJS) $(LIBDEPS)
 	rm -f $@

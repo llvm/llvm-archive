@@ -172,14 +172,14 @@ static char direct_store[NUM_MACHINE_MODES];
 
 static bool float_extend_from_mem[NUM_MACHINE_MODES][NUM_MACHINE_MODES];
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 /* LLVM always emits moves with memcpy, which allows us to make smart decisions
    later.  This affects CONSTRUCTOR lowering in the gimplifier.  */
 #undef MOVE_BY_PIECES_P
 #define MOVE_BY_PIECES_P(SIZE, ALIGN) (0*(SIZE)*(ALIGN))
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* This macro is used to determine whether move_by_pieces should be called
    to perform a structure copy.  */
@@ -5771,7 +5771,7 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	case ARRAY_RANGE_REF:
 	  {
 	    tree index = TREE_OPERAND (exp, 1);
-            /* APPLE LOCAL begin LLVM */
+            /* LLVM LOCAL begin */
 	    tree low_bound, unit_size;
 #if ENABLE_LLVM
             /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
@@ -5780,7 +5780,7 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 #endif
 	    low_bound = array_ref_low_bound (exp);
 	    unit_size = array_ref_element_size (exp);
-            /* APPLE LOCAL end LLVM */
+            /* LLVM LOCAL end */
 
 	    /* We assume all arrays have sizes that are a multiple of a byte.
 	       First subtract the lower bound, if any, in the type of the
@@ -5956,14 +5956,14 @@ handled_component_p (tree t)
     case VIEW_CONVERT_EXPR:
     case REALPART_EXPR:
     case IMAGPART_EXPR:
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* Support the "array ref with pointer base" extension. */
       if (TREE_CODE (t) == ARRAY_REF &&
           TREE_CODE (TREE_TYPE (TREE_OPERAND(t, 0))) != ARRAY_TYPE)
         return 0;
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       return 1;
 
     default:
@@ -6732,11 +6732,11 @@ expand_expr_real (tree exp, rtx target, enum machine_mode tmode,
   int rn = -1;
   rtx ret, last = NULL;
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* Handle ERROR_MARK before anybody tries to access its type.  */
   if (TREE_CODE (exp) == ERROR_MARK

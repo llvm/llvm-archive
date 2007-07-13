@@ -35,17 +35,17 @@ ___enable_execute_stack
 ___ffsdi2
 ___fixdfdi
 ___fixsfdi
-# APPLE LOCAL LLVM FIXME!
+# LLVM LOCAL FIXME!
 #___fixtfdi
 ___fixunsdfdi
 ___fixunsdfsi
 ___fixunssfdi
 ___fixunssfsi
-# APPLE LOCAL LLVM FIXME!
+# LLVM LOCAL FIXME!
 #___fixunstfdi
 ___floatdidf
 ___floatdisf
-# APPLE LOCAL LLVM FIXME!
+# LLVM LOCAL FIXME!
 #___floatditf
 ___gcc_personality_v0
 ___gcc_qadd

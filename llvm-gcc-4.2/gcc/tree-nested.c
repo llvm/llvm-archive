@@ -1053,7 +1053,7 @@ convert_nonlocal_reference (tree *tp, int *walk_subtrees, void *data)
 	 of whether a NOP_EXPR or VIEW_CONVERT_EXPR needs a simple value.  */
       wi->val_only = true;
       wi->is_lhs = false;
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* Support the "array ref with pointer base" extension. */
       for (; handled_component_p (t) || TREE_CODE(t) == ARRAY_REF;
@@ -1061,7 +1061,7 @@ convert_nonlocal_reference (tree *tp, int *walk_subtrees, void *data)
 #else
       for (; handled_component_p (t); tp = &TREE_OPERAND (t, 0), t = *tp)
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 	{
 	  if (TREE_CODE (t) == COMPONENT_REF)
 	    walk_tree (&TREE_OPERAND (t, 2), convert_nonlocal_reference, wi,
@@ -1347,7 +1347,7 @@ convert_local_reference (tree *tp, int *walk_subtrees, void *data)
       wi->val_only = true;
       wi->is_lhs = false;
       
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* Support the "array ref with pointer base" extension. */
       for (; handled_component_p (t) || TREE_CODE(t) == ARRAY_REF;
@@ -1355,7 +1355,7 @@ convert_local_reference (tree *tp, int *walk_subtrees, void *data)
 #else
       for (; handled_component_p (t); tp = &TREE_OPERAND (t, 0), t = *tp)
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 	{
 	  if (TREE_CODE (t) == COMPONENT_REF)
 	    walk_tree (&TREE_OPERAND (t, 2), convert_local_reference, wi,

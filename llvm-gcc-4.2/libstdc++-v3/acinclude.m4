@@ -2105,13 +2105,13 @@ EOF
         enable_sjlj_exceptions=no
       elif grep __cxa_end_cleanup conftest.s >/dev/null 2>&1 ; then
         enable_sjlj_exceptions=no
-      #APPLE LOCAL begin LLVM
+      #LLVM LOCAL begin
       elif grep __cxa_end_cleanup conftest.s >/dev/null 2>&1 ; then
         enable_sjlj_exceptions=no
-      #APPLE LOCAL end LLVM
+      #LLVM LOCAL end
       fi
     fi
-    # APPLE LOCAL LLVM HACK!
+    # LLVM LOCAL HACK!
     enable_sjlj_exceptions=no
     CXXFLAGS="$old_CXXFLAGS"
     rm -f conftest*

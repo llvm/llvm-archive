@@ -2148,11 +2148,11 @@ struct tree_type GTY(())
     int GTY ((tag ("0"))) address;
     char * GTY ((tag ("1"))) pointer;
     struct die_struct * GTY ((tag ("2"))) die;
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
     unsigned GTY ((tag ("3"))) llvm;   /* Really an LLVM Type vector (LTypes) index */
   } GTY ((desc ("LLVM_IS_ENABLED ? 3 : debug_hooks == &sdb_debug_hooks ? 1 : debug_hooks == &dwarf2_debug_hooks ? 2 : 0"),
 	  descbits ("2"))) symtab;
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   tree name;
   tree minval;
   tree maxval;
@@ -2687,9 +2687,9 @@ struct tree_decl_with_rtl GTY(())
 {
   struct tree_decl_common common;
   rtx rtl;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   unsigned llvm;      /* LLVM representation for object. */
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 };
 
 /* In a FIELD_DECL, this is the field position, counting in bytes, of the
@@ -2791,7 +2791,7 @@ struct tree_const_decl GTY(())
    which may be different from the type seen in the program.  */
 #define DECL_ARG_TYPE(NODE) (PARM_DECL_CHECK (NODE)->decl_common.initial)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 #define LLVM_IS_ENABLED 0
 #else
@@ -2853,7 +2853,7 @@ extern void *llvm_get_type(unsigned);
 #endif
 
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* For PARM_DECL, holds an RTL for the stack slot or register
    where the data was actually passed.  */
@@ -4444,9 +4444,9 @@ extern bool tree_expr_nonzero_p (tree);
 extern bool tree_expr_nonzero_warnv_p (tree, bool *);
 
 /* In builtins.c */
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 extern int validate_arglist (tree, ...);
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 extern tree fold_builtin (tree, tree, bool);
 extern tree fold_builtin_fputs (tree, bool, bool, tree);
 extern tree fold_builtin_strcpy (tree, tree, tree);

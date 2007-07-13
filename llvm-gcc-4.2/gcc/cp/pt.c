@@ -5365,13 +5365,13 @@ tsubst_friend_function (tree decl, tree args)
      later if we need it.  */
   if (TREE_CODE (new_friend) != TEMPLATE_DECL)
     {
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       SET_DECL_RTL (new_friend, NULL_RTX);
 #else
       SET_DECL_LLVM (new_friend, 0);
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       SET_DECL_ASSEMBLER_NAME (new_friend, NULL_TREE);
     }
 
@@ -6681,13 +6681,13 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	TREE_TYPE (r) = type;
 	/* Clear out the mangled name and RTL for the instantiation.  */
 	SET_DECL_ASSEMBLER_NAME (r, NULL_TREE);
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
         SET_DECL_RTL (r, NULL_RTX);
 #else
         SET_DECL_LLVM (r, 0);
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	DECL_INITIAL (r) = NULL_TREE;
 	DECL_CONTEXT (r) = ctx;
 
@@ -7002,21 +7002,21 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	cp_apply_type_quals_to_decl (cp_type_quals (type), r);
 	DECL_CONTEXT (r) = ctx;
 	/* Clear out the mangled name and RTL for the instantiation.  */
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
         SET_DECL_RTL (r, NULL_RTX);
 #else
         SET_DECL_LLVM (r, 0);
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	if (CODE_CONTAINS_STRUCT (TREE_CODE (t), TS_DECL_WRTL))
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
         SET_DECL_RTL (r, NULL_RTX);
 #else
         SET_DECL_LLVM (r, 0);
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	/* The initializer must not be expanded until it is required;
 	   see [temp.inst].  */
 	DECL_INITIAL (r) = NULL_TREE;
@@ -12320,13 +12320,13 @@ instantiate_decl (tree d, int defer_ok,
 
       /* Clear out DECL_RTL; whatever was there before may not be right
 	 since we've reset the type of the declaration.  */
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       SET_DECL_RTL (d, NULL_RTX);
 #else
       SET_DECL_LLVM (d, 0);
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       DECL_IN_AGGR_P (d) = 0;
 
       /* The initializer is placed in DECL_INITIAL by

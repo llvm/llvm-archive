@@ -21590,12 +21590,12 @@ c_parse_file (void)
   /* Bad parse errors.  Just forget about it.  */
   if (! global_bindings_p () || current_class_type || decl_namespace_list)
     return;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   if (pch_file) {
     c_common_write_pch ();
     return;
   }
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   /* APPLE LOCAL end radar 4874613 */
 }
 

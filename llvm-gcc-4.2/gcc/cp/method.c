@@ -354,14 +354,14 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   if (!emit_p)
     return;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   /* PR843 */
 #ifndef ENABLE_LLVM
   if (TARGET_USE_LOCAL_THUNK_ALIAS_P (function))
 #else
   if (0 && TARGET_USE_LOCAL_THUNK_ALIAS_P (function))
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
    alias = make_alias_for_thunk (function);
   else
    alias = function;
@@ -401,12 +401,12 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   push_to_top_level ();
 
   if (TARGET_USE_LOCAL_THUNK_ALIAS_P (function)
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       /* PR1085 */
 #ifdef ENABLE_LLVM
       && 0
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       && targetm.have_named_sections)
     {
       resolve_unique_section (function, 0, flag_function_sections);
@@ -428,13 +428,13 @@ use_thunk (tree thunk_fndecl, bool emit_p)
       tree x = copy_node (a);
       TREE_CHAIN (x) = t;
       DECL_CONTEXT (x) = thunk_fndecl;
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       SET_DECL_RTL (x, NULL_RTX);
 #else
       SET_DECL_LLVM (x, 0);
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       DECL_HAS_VALUE_EXPR_P (x) = 0;
       t = x;
     }
@@ -442,11 +442,11 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   DECL_ARGUMENTS (thunk_fndecl) = a;
 
   if (this_adjusting
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       && 0   /* FIXME: Always use a thunk function */
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       && targetm.asm_out.can_output_mi_thunk (thunk_fndecl, fixed_offset,
 					      virtual_value, alias))
     {

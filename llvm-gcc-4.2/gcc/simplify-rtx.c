@@ -4838,11 +4838,11 @@ simplify_rtx (rtx x)
   enum rtx_code code = GET_CODE (x);
   enum machine_mode mode = GET_MODE (x);
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   switch (GET_RTX_CLASS (code))
     {

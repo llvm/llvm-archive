@@ -3691,11 +3691,11 @@ fold_rtx (rtx x, rtx insn)
      extends.  */
   enum machine_mode mode_arg0;
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (x == 0)
     return x;

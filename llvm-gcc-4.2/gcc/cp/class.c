@@ -3879,13 +3879,13 @@ build_clone (tree fn, tree name)
     }
 
   /* Create the RTL for this function.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   SET_DECL_RTL (clone, NULL_RTX);
 #else
   SET_DECL_LLVM (clone, 0);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   rest_of_decl_compilation (clone, /*top_level=*/1, at_eof);
 
   /* Make it easy to find the CLONE given the FN.  */

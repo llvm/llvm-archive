@@ -51,7 +51,7 @@ Boston, MA 02110-1301, USA.  */
 #include "c-pragma.h"
 #include "tree-dump.h"
 #include "intl.h"
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #include "llvm.h"
 extern cpp_reader *parse_in;
 
@@ -2396,12 +2396,12 @@ finish_objects (int method_type, int initp, tree body)
   if (flag_syntax_only)
     return;
   
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_emit_ctor_dtor (fn, initp, method_type == 'I');
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (targetm.have_ctors_dtors)
     {

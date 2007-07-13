@@ -1815,12 +1815,12 @@ NAME (TYPE x, int m)
 extern void *compile_type_assert[sizeof(INFINITY) == sizeof(MTYPE) ? 1 : -1];
 
 /* Ensure that we've lost any extra precision.  */
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #if defined(__llvm__)
 #undef NOTRUNC
 #define NOTRUNC 1
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #if NOTRUNC
 # define TRUNC(x)
 #else

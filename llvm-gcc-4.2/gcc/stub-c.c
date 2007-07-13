@@ -1,4 +1,4 @@
-/* APPLE LOCAL file llvm */
+/* LLVM LOCAL file */
 /* Stub functions for C language routines that are referenced
    from the back-end.
    Copyright (C) 2007 Free Software Foundation, Inc.

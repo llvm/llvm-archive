@@ -2520,7 +2520,7 @@ fix = {
 };
 
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* We need to fix complex.h not to include inline FP assembly.
  * This is needed to workaround PR879
  */
@@ -2534,7 +2534,7 @@ fix = {
     test_text = '  __asm__  ("fpatan;"'
                 '	   : "=t" (res) : "0" (__real__ _Z), "u" (__imag__ _Z) : "st(1)");';
 };
-/* APPLE local end LLVM */
+/* LLVM local end */
  
 /*
  *  nested comment

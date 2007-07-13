@@ -520,11 +520,11 @@ void set_flags_from_O (unsigned int cmdline)
           /* PRE tends to generate bigger code.  */
           flag_tree_pre = 1;
 	}
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       /* Enable loop unrolling at -O2 if -f[no-]unroll-loops is not used.  */
       if (!flag_unroll_loops_set && !optimize_size)
         flag_unroll_loops = 1;
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
     }
 
   if (optimize >= 3)
@@ -894,11 +894,11 @@ common_handle_option (size_t scode, const char *arg, int value,
       aux_base_name = arg;
       break;
       
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
     case OPT_mllvm:
       llvm_optns = arg;
       break;
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
     case OPT_auxbase_strip:
       {

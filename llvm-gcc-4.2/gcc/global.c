@@ -435,11 +435,11 @@ global_alloc (void)
   size_t i;
   rtx x;
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   make_accurate_live_analysis ();
 
@@ -1451,11 +1451,11 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 			  : reg_preferred_class (allocno[num].reg));
   enum machine_mode mode = PSEUDO_REGNO_MODE (allocno[num].reg);
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (accept_call_clobbered)
     COPY_HARD_REG_SET (used1, call_fixed_reg_set);
@@ -1852,11 +1852,11 @@ retry_global_alloc (int regno, HARD_REG_SET forbidden_regs)
 {
 
   int alloc_no = reg_allocno[regno];
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   if (alloc_no >= 0)
     {
       /* If we have more than one register class,

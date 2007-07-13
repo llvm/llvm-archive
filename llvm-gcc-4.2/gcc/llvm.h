@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* LLVM interface to GCC
    Copyright (C) 2005 Free Software Foundation, Inc.
    Contributed by Chris Lattner (sabre@nondot.org)
@@ -104,4 +104,4 @@ void llvm_asm_file_end(void);
 #endif /* ENABLE_LLVM */
 
 #endif
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */

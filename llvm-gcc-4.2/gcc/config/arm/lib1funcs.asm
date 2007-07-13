@@ -1306,7 +1306,7 @@ LSYM(Lchange_\register):
 #include "ieee754-df.S"
 #include "ieee754-sf.S"
 #include "bpabi.S"
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #include "libunwind.S"
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #endif /* __symbian__ */

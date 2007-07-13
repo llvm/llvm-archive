@@ -34,7 +34,7 @@ Boston, MA 02110-1301, USA.  */
 #include "langhooks.h"
 #include "hosthooks.h"
 #include "target.h"
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #include "llvm.h"
 
 /* This is a list of flag variables that must match exactly, and their
@@ -181,11 +181,11 @@ c_common_write_pch (void)
   long written;
   struct c_pch_header h;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_asm_file_end();
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   (*debug_hooks->handle_pch) (1);
 
   cpp_write_pch_deps (parse_in, pch_outfile);
@@ -393,7 +393,7 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
 
   if (!flag_preprocess_only)
     {
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       unsigned char *buf = xmalloc (h.asm_size);
       if (fread (buf, h.asm_size, 1, f) != 1)
@@ -414,7 +414,7 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
 	  written += size;
 	}
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       free (buf);
     }
   else

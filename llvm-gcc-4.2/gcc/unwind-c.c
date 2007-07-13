@@ -95,7 +95,7 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
 #define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef __ARM_EABI_UNWINDER__
 /* ARM EABI personality routines must also unwind the stack.  */
 #define CONTINUE_UNWINDING \
@@ -109,7 +109,7 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
 #else
 #define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #ifdef __USING_SJLJ_EXCEPTIONS__
 #define PERSONALITY_FUNCTION    __gcc_personality_sj0

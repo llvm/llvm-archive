@@ -215,9 +215,9 @@ enum processor_type
    PROCESSOR_POWER5
 };
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 extern const char *rs6000_cpu_target;
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 extern enum processor_type rs6000_cpu;
 
@@ -3419,7 +3419,7 @@ enum rs6000_builtins
 
 /* APPLE LOCAL end CW asm blocks */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define LLVM_TARGET_INTRINSIC_PREFIX "ppc"
 
 /* Turn -march=xx into a CPU type.
@@ -3455,7 +3455,7 @@ enum rs6000_builtins
                                     DESTTY, OPS)                 \
         TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 enum rs6000_builtin_type_index
 {

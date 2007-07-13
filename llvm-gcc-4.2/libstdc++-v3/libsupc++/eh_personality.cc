@@ -38,11 +38,11 @@ using namespace __cxxabiv1;
 #define NO_SIZE_OF_ENCODED_VALUE
 #endif
 
-// APPLE LOCAL begin LLVM
+// LLVM LOCAL begin
 #ifdef __ARM_EABI_UNWINDER__
 #define NO_SIZE_OF_ENCODED_VALUE
 #endif
-// APPLE LOCAL end LLVM
+// LLVM LOCAL end
 
 #include "unwind-pe.h"
 
@@ -204,7 +204,7 @@ typedef const std::type_info _throw_typet;
 
 // Return an element from a type table.
 
-// APPLE LOCAL begin LLVM
+// LLVM LOCAL begin
 #ifdef __ARM_EABI_UNWINDER__
 
 // Return an element from a type table.
@@ -311,7 +311,7 @@ restore_caught_exception(struct _Unwind_Exception* ue_header,
   while (0)
 
 #else
-// APPLE LOCAL end LLVM
+// LLVM LOCAL end
 typedef const std::type_info _throw_typet;
 
 
@@ -434,7 +434,7 @@ restore_caught_exception(struct _Unwind_Exception* ue_header,
 #endif // !__ARM_EABI_UNWINDER__
 
 
-// APPLE LOCAL begin LLVM
+// LLVM LOCAL begin
 // Save stage1 handler information in the exception object
 
 static inline void
@@ -477,7 +477,7 @@ restore_caught_exception(struct _Unwind_Exception* ue_header,
 #define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
 
 #endif // !__ARM_EABI_UNWINDER__
-// APPLE LOCAL end LLVM
+// LLVM LOCAL end
 
 // Return true if the filter spec is empty, ie throw().
 

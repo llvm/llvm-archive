@@ -174,10 +174,10 @@ DEFTIMEVAR (TV_VAR_TRACKING          , "variable tracking")
 /* Everything else in rest_of_compilation not included above.  */
 DEFTIMEVAR (TV_REST_OF_COMPILATION   , "rest of compilation")
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 DEFTIMEVAR (TV_LLVM_INIT             , "llvm backend init")
 DEFTIMEVAR (TV_LLVM_FUNCS            , "llvm backend functions")
 DEFTIMEVAR (TV_LLVM_GLOBALS          , "llvm backend globals")
 DEFTIMEVAR (TV_LLVM_PERFILE          , "llvm backend per file")
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 

@@ -379,11 +379,11 @@ extern void ix86_darwin_init_expanders (void);
    used in Mach-O.  */
 #undef MACHO_SYMBOL_FLAG_VARIABLE
 #define MACHO_SYMBOL_FLAG_VARIABLE ((SYMBOL_FLAG_MACH_DEP) << 3)
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 
 /* Add general target specific stuff */
 #include "llvm-i386-target.h"
 
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #endif

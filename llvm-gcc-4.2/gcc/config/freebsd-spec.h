@@ -48,7 +48,7 @@ Boston, MA 02110-1301, USA.  */
    || !strcmp ((STR), "soname") || !strcmp ((STR), "defsym") 		\
    || !strcmp ((STR), "assert") || !strcmp ((STR), "dynamic-linker"))
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 #define FBSD_TARGET_OS_CPP_BUILTINS()					\
   do									\
@@ -87,7 +87,7 @@ Boston, MA 02110-1301, USA.  */
     }									\
   while (0)
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Define the default FreeBSD-specific per-CPU hook code.  */
 #define FBSD_TARGET_CPU_CPP_BUILTINS() do {} while (0)

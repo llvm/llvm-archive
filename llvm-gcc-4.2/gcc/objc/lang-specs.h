@@ -30,15 +30,15 @@ Boston, MA 02110-1301, USA.  */
 	%{traditional|ftraditional|traditional-cpp:\
 %eGNU Objective C no longer supports traditional compilation}\
 	%{save-temps|no-integrated-cpp:cc1obj -E %(cpp_options) -o %{save-temps:%b.mi} %{!save-temps:%g.mi} \n\
-        "/* APPLE LOCAL LLVM */" \
+        "/* LLVM LOCAL */" \
 	    cc1obj -fpreprocessed %{save-temps:%b.mi} %{!save-temps:%g.mi} %(llvm_options) %(cc1_options) %{print-objc-runtime-info} %{gen-decls}}\
 	%{!save-temps:%{!no-integrated-cpp:\
-        "/* APPLE LOCAL LLVM */" \
+        "/* LLVM LOCAL */" \
 	    cc1obj %(cpp_unique_options) %(llvm_options) %(cc1_options) %{print-objc-runtime-info} %{gen-decls}}}\
         %{!fsyntax-only:%(invoke_as)}}}}", 0, 0, 0},
   {".mi", "@objc-cpp-output", 0, 0, 0},
   {"@objc-cpp-output",
-      /* APPLE LOCAL LLVM */
+      /* LLVM LOCAL */
      "%{!M:%{!MM:%{!E:cc1obj -fpreprocessed %i %(llvm_options) %(cc1_options) %{print-objc-runtime-info} %{gen-decls}\
 			     %{!fsyntax-only:%(invoke_as)}}}}", 0, 0, 0},
   {"@objective-c-header",

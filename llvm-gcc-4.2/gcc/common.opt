@@ -214,7 +214,7 @@ dumpbase
 Common Separate
 -dumpbase <file>	Set the file basename to be used for dumps
 
-; APPLE LOCAL begin LLVM
+; LLVM LOCAL begin
 ; Emit LLVM assembly to the .s file instead of native code.
 emit-llvm
 Common Report Var(emit_llvm)
@@ -224,7 +224,7 @@ Emit LLVM code to the .s file instead of native machine code.
 emit-llvm-bc
 Common Report Var(emit_llvm_bc)
 Emit LLVM IR to the output file instead of native machine code.
-; APPLE LOCAL end LLVM
+; LLVM LOCAL end
 
 ; The version of the C++ ABI in use.  The following values are allowed:
 ;
@@ -1312,11 +1312,11 @@ gxcoff+
 Common JoinedOrMissing Negative(gcoff)
 Generate debug information in extended XCOFF format
 
-; APPLE LOCAL begin LLVM
+; LLVM LOCAL begin
 mllvm
 Common Separate Report
 Specify options directly to the LLVM backend
-; APPLE LOCAL end LLVM
+; LLVM LOCAL end
 
 o
 Common Joined Separate

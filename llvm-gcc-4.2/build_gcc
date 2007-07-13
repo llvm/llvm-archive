@@ -22,7 +22,7 @@ HOSTS=`echo $1 | $TRANSLATE_ARCH `
 # installed.
 TARGETS=`echo $2 | $TRANSLATE_ARCH`
 
-#APPLE LOCAL begin LLVM
+#LLVM LOCAL begin
 # LLVM does not require host name translation. 
 LLVM_HOSTS=$1
 # LLVM target list is comma separated list. 
@@ -30,7 +30,7 @@ LLVM_HOSTS=$1
 #    -e s/x86_64// -e s/powerpc64// -e s/ppc64//`
 #FIXME : Hard code targets. See LLVMTARGETOBJ comment in gcc/Makefile.in
 LLVM_TARGETS="x86,powerpc"
-#APPLE LOCAL end LLVM
+#LLVM LOCAL end
 
 # The GNU makefile target ('bootstrap' by default).
 BOOTSTRAP=${BOOTSTRAP-bootstrap}
@@ -67,7 +67,7 @@ DEST_DIR="$5"
 # the resulting compiler.
 SYM_DIR="$6"
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # The seventh parameter is true/false indicating whether LLVM should be enabled
 # or not.
 ENABLE_LLVM="$7"
@@ -92,7 +92,7 @@ if [ "x$LLVM_ARCHS" == "x" ]; then
     LLVM_ARCHS="ppc i386 ppc64 x86_64"
 fi
 
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # The current working directory is where the build will happen.
 # It may already contain a partial result of an interrupted build,
@@ -111,12 +111,12 @@ fi
 # to be built.  It's VERS but only up to the second '.' (if there is one).
 MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then
   # Add suffix.
   MAJ_VERS="${MAJ_VERS}-llvm"
 fi
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.0.0
 
@@ -138,7 +138,7 @@ mkdir $SRC_DIR || exit 1
 ln -s $ORIG_SRC_DIR/* $SRC_DIR/ || exit 1
 rm -rf $SRC_DIR/tcl $SRC_DIR/expect $SRC_DIR/dejagnu || exit 1
 
-# APPLE LOCAL begin LLVM Must build libstdc++ to install in /usr/local.
+# LLVM LOCAL begin Must build libstdc++ to install in /usr/local.
 LIBSTDCXX_CONFIG_OPTION=
 # Also remove libstdc++ since it is built from a separate project.
 rm -rf $SRC_DIR/libstdc++-v3 || exit 1
@@ -148,10 +148,10 @@ if [ "$ENABLE_LLVM" == false ]; then
   # Clean out old specs files
   rm -f /usr/lib/gcc/*/4.0.0/specs
 fi
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # These are the configure and build flags that are used.
-# APPLE LOCAL begin LLVM  Support for non /usr $DEST_ROOT, use libstdc++
+# LLVM LOCAL begin  Support for non /usr $DEST_ROOT, use libstdc++
 
 CONFIGFLAGS="--disable-checking --enable-werror \
   --prefix=$DEST_ROOT \
@@ -161,9 +161,9 @@ CONFIGFLAGS="--disable-checking --enable-werror \
   $LIBSTDCXX_CONFIG_OPTION \
   --with-slibdir=/usr/lib \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then
   CONFIGFLAGS="$CONFIGFLAGS --enable-llvm=$DIR/obj-llvm"
 
@@ -196,7 +196,7 @@ if [ "$ENABLE_LLVM" == true ]; then
       exit 1
   fi 
 fi
-# APPLE LOCAL LLVM end
+# LLVM LOCAL end
 
 # Figure out how many make processes to run.
 SYSCTL=`sysctl -n hw.activecpu`
@@ -216,7 +216,7 @@ fi
 # The $LOCAL_MAKEFLAGS variable can be used to override $MAKEFLAGS.
 MAKEFLAGS=${LOCAL_MAKEFLAGS-"-j $SYSCTL"}
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then
   # Build llvm-gcc in 'dylib mode'.
   MAKEFLAGS="$MAKEFLAGS BUILD_LLVM_INTO_A_DYLIB=1"
@@ -226,7 +226,7 @@ if [ "$ENABLE_LLVM" == true ]; then
     MAKEFLAGS="$MAKEFLAGS DISABLE_LLVMASSERTIONS=1"
   fi
 fi
-# APPLE LOCAL LLVM end
+# LLVM LOCAL end
 
 # Build the native GCC.  Do this even if the user didn't ask for it
 # because it'll be needed for the bootstrap.
@@ -244,11 +244,11 @@ make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 
 # Add the compiler we just built to the path, giving it appropriate names.
-# APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
+# LLVM LOCAL  Support for non /usr $DEST_ROOT
 D=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin
 ln -f $D/gcc-$MAJ_VERS $D/gcc || exit 1
 ln -f $D/gcc $D/$BUILD-apple-darwin$DARWIN_VERS-gcc || exit 1
-# APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
+# LLVM LOCAL  Support for non /usr $DEST_ROOT
 PATH=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin:$PATH
 
 # The cross-tools' build process expects to find certain programs
@@ -290,7 +290,7 @@ for t in $TARGETS ; do
    make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$t install-gcc install-target \
      CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
     # Add the compiler we just built to the path.
-# APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
+# LLVM LOCAL  Support for non /usr $DEST_ROOT
    PATH=$DIR/dst-$BUILD-$t/$DEST_ROOT/bin:$PATH
  fi
 done
@@ -298,7 +298,7 @@ done
 # Rearrange various libraries, for no really good reason.
 for t in $TARGETS ; do
   DT=$DIR/dst-$BUILD-$t
-# APPLE LOCAL begin LLVM  Support for non /usr $DEST_ROOT
+# LLVM LOCAL begin  Support for non /usr $DEST_ROOT
   D=`echo $DT/$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS`
   mv $D/static/libgcc.a $D/libgcc_static.a || exit 1
   mv $D/kext/libgcc.a $D/libcc_kext.a || exit 1
@@ -344,7 +344,7 @@ cd $DEST_DIR || exit 1
 # Clean out DEST_DIR in case -noclean was passed to buildit.
 rm -rf * || exit 1
 
-# APPLE LOCAL LLVM Don't install HTML docs.
+# LLVM LOCAL Don't install HTML docs.
 if [ "$ENABLE_LLVM" == false ]; then
 # HTML documentation
 HTMLDIR="/Developer/Documentation/DocSets/com.apple.ADC_Reference_Library.DeveloperTools.docset/Contents/Resources/Documents/documentation/DeveloperTools"
@@ -353,7 +353,7 @@ cp -Rp $DIR/obj-$BUILD-$BUILD/gcc/HTML/* ".$HTMLDIR/" || exit 1
 
 # Manual pages
 mkdir -p .$DEST_ROOT/share || exit 1
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
 cp -Rp $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/share/man .$DEST_ROOT/share/ \
   || exit 1
 # exclude fsf-funding.7 gfdl.7 gpl.7 as they are currently built in
@@ -361,7 +361,7 @@ cp -Rp $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/share/man .$DEST_ROOT/share/ \
 rm -rf .$DEST_ROOT/share/man/man7
 
 # libexec
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
 cd $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS \
   || exit 1
 LIBEXEC_FILES=`find . -type f -print || exit 1`
@@ -369,18 +369,18 @@ LIBEXEC_DIRS=`find . -type d -print || exit 1`
 cd $DEST_DIR || exit 1
 for t in $TARGETS ; do
   DL=$DEST_ROOT/libexec/gcc/$t-apple-darwin$DARWIN_VERS/$VERS
-  # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+  # LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
   SL=/$DEST_ROOT/libexec/gcc/$t-apple-darwin$DARWIN_VERS/$VERS
   for d in $LIBEXEC_DIRS ; do
     mkdir -p .$DL/$d || exit 1
   done
   for f in $LIBEXEC_FILES ; do
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT, allow dynamically linked shared libs.
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT, allow dynamically linked shared libs.
     if file $DIR/dst-*-$t$SL/$f | grep -q -E 'Mach-O (executable|dynamically linked shared library)' ; then
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
       lipo -output .$DL/$f -create $DIR/dst-*-$t$SL/$f || exit 1
     else
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
       cp -p $DIR/dst-$BUILD-$t$SL/$f .$DL/$f || exit 1
     fi
   done
@@ -394,21 +394,21 @@ BIN_FILES=`ls $DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin | grep '^[^-]*-[0-9.]*$' \
   | grep -v gccbug | grep -v gcov || exit 1`
 mkdir .$DEST_ROOT/bin
 for f in $BIN_FILES ; do 
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$f -create $DIR/dst-*/$DEST_ROOT/bin/$f || exit 1
 done
 # gcov, which is special only because it gets built multiple times and lipo
 # will complain if we try to add two architectures into the same output.
 TARG0=`echo $TARGETS | cut -d ' ' -f 1`
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
 lipo -output .$DEST_ROOT/bin/gcov-$MAJ_VERS -create \
   $DIR/dst-*-$TARG0/$DEST_ROOT/bin/*gcov* || exit 1
 # The fully-named drivers, which have the same target on every host.
 for t in $TARGETS ; do
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc-$VERS -create \
     $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc-$VERS || exit 1
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++-$VERS -create \
     $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++* || exit 1
   done
@@ -416,7 +416,7 @@ for t in $TARGETS ; do
 # lib
 mkdir -p .$DEST_ROOT/lib/gcc || exit 1
 for t in $TARGETS ; do
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
+# LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
   cp -Rp $DIR/dst-$BUILD-$t/$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS \
     .$DEST_ROOT/lib/gcc || exit 1
 done
@@ -448,7 +448,7 @@ for t in $TARGETS ; do
   cp -p /usr/lib/libstdc++.6.dylib \
     .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \
     || exit 1
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 #  strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
 done
 
@@ -547,15 +547,15 @@ find obj-* -name \*.\[chy\] -print | cpio -pdml $SYM_DIR/src || exit 1
 find $DEST_DIR -perm -0111 \! -name \*.dylib \! -name fixinc.sh \
     \! -name mkheaders \! -name libstdc++.dylib -type f -print \
   | xargs strip || exit 1
-# APPLE LOCAL begin LLVM - Strip with -Sx instead of -SX
+# LLVM LOCAL begin - Strip with -Sx instead of -SX
 find $DEST_DIR \( -name \*.a -or -name \*.dylib \) \
     \! -name libgcc_s.10.*.dylib -type f -print \
   | xargs strip -SX || exit 1
-# APPLE LOCAL end LLVM - Strip with -Sx instead of -SX
+# LLVM LOCAL end - Strip with -Sx instead of -SX
 find $DEST_DIR -name \*.a -type f -print \
   | xargs ranlib || exit 1
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # Install LLVM libraries/headers/tools.
 if [ "$ENABLE_LLVM" == true ]; then
   cd $DIR/obj-llvm || exit 1
@@ -623,7 +623,7 @@ fi
     ln -s ../../libllvmgcc.dylib
   done
 fi
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 chgrp -h -R wheel $DEST_DIR

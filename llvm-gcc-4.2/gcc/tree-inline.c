@@ -1262,7 +1262,7 @@ declare_return_variable (copy_body_data *id, tree return_slot_addr,
 	  var = modify_dest;
 	  use = NULL;
     
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
     /* The return node can suddenly become multiple assignment.  Because of this
      * conservatively don't consider this thing for SSA form anymore.
@@ -1270,7 +1270,7 @@ declare_return_variable (copy_body_data *id, tree return_slot_addr,
     if (DECL_P (var))
       DECL_GIMPLE_FORMAL_TEMP_P (var) = 0;
 #endif
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
 	  goto done;
 	}
     }

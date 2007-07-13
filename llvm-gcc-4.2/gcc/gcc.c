@@ -822,7 +822,7 @@ static const char *cpp_options =
    output will be used by another program.  */
 static const char *cpp_debug_options = "%{d*}";
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 static const char *llvm_options =
 #ifdef ENABLE_LLVM
 "%{O4|emit-llvm:%{S:-emit-llvm} \
@@ -833,7 +833,7 @@ static const char *llvm_options =
   "%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"
 #endif
   ;
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
 /* APPLE LOCAL begin -fast */
@@ -842,7 +842,7 @@ static const char *cc1_options =
  %{fastcp:-O3}"
 /* APPLE LOCAL end -fast */
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
-"/* APPLE LOCAL llvm */"\
+"/* LLVM LOCAL */"\
  %1 %{!Q:-quiet} -dumpbase %B %{d*} %{Zmllvm*: -mllvm %*} %{m*} %{a*}\
  %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*&ansi&trigraphs}\
@@ -859,10 +859,10 @@ static const char *asm_options =
 
 static const char *invoke_as =
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 "%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %|.s %A }}}";
 #else
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 "%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %m.s %A }}}";
 #endif
 
@@ -1009,17 +1009,17 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-                "/* APPLE LOCAL LLVM */"\
+                "/* LLVM LOCAL */"\
 		cc1 %(cpp_unique_options) %(llvm_options) %(cc1_options)}}\
                 %{!fsyntax-only:%(invoke_as)}};:\
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 "/* APPLE LOCAL predictive compilation */"\
 		    cc1 -fpreprocessed %<fpredictive-compilation* %{save-temps:%b.i} %{!save-temps:%g.i} \
-                        "/* APPLE LOCAL LLVM */"\
+                        "/* LLVM LOCAL */"\
 			%(llvm_options) %(cc1_options)}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-                "/* APPLE LOCAL LLVM */"\
+                "/* LLVM LOCAL */"\
 		cc1 %(cpp_unique_options) %(llvm_options) %(cc1_options)}}}\
           %{!fsyntax-only:%(invoke_as)}}}}}", 0, 1, 1},
    /* APPLE LOCAL end treat -fast same as -combine --dbj */
@@ -1046,7 +1046,7 @@ static const struct compiler default_compilers[] =
   {".i", "@cpp-output", 0, 1, 0},
   {"@cpp-output",
    /* APPLE LOCAL predictive compilation */
-    /* APPLE LOCAL llvm */
+    /* LLVM LOCAL */
    "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(llvm_options) %(cc1_options) %<fpredictive-compilation* %{!fsyntax-only:%(invoke_as)}}}}", 0, 1, 0},
   /* APPLE LOCAL begin preprocess .s files 2001-07-24 --sts */
   /* This is kind of lame; the purpose of having .s and .S be treated
@@ -1145,7 +1145,7 @@ static const struct option_map option_map[] =
    {"--dependencies", "-M", 0},
    {"--dump", "-d", "a"},
    {"--dumpbase", "-dumpbase", "a"},
-   /* APPLE LOCAL LLVM */
+   /* LLVM LOCAL */
    {"--emit-llvm", "-emit-llvm", 0 },
    {"--encoding", "-fencoding=", "aj"},
    {"--entry", "-e", 0},
@@ -1636,7 +1636,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("multilib_options",		&multilib_options),
   INIT_STATIC_SPEC ("linker",			&linker_name_spec),
   INIT_STATIC_SPEC ("link_libgcc",		&link_libgcc_spec),
-  /* APPLE LOCAL LLVM */
+  /* LLVM LOCAL */
   INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
   INIT_STATIC_SPEC ("md_exec_prefix",		&md_exec_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix",	&md_startfile_prefix),
@@ -4667,7 +4667,7 @@ check_basename_derived_file (const char *string)
     struct base_temp_name *next;
   } *t, *base_temp_names = NULL;
 
-  /* APPLE LOCAL LLVM: apple local portability problem */
+  /* LLVM LOCAL: apple local portability problem */
 #ifndef HOST_LACKS_INODE_NUMBERS
   if (strcmp (string, input_filename) != 0)
     {
@@ -4691,13 +4691,13 @@ check_basename_derived_file (const char *string)
 	  return string;
 	}
     }
-  /* APPLE LOCAL begin LLVM: apple local portability problem */
+  /* LLVM LOCAL begin: apple local portability problem */
 #else
   /* This should be fixed sometimes for normal operation */
   this_is_basename_derived_file = 0;
   return string;
 #endif
-  /* APPLE LOCAL end LLVM: apple local portability problem */
+  /* LLVM LOCAL end: apple local portability problem */
     
   string_length = strlen (string);
   suffix_length = string_length - basename_length;

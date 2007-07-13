@@ -15041,9 +15041,9 @@ x86_initialize_trampoline (rtx tramp, rtx fnaddr, rtx cxt)
 #endif
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* Move ix86_builtins to i386.h */
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #define def_builtin(MASK, NAME, TYPE, CODE)				\
 do {									\
   if ((MASK) & target_flags						\

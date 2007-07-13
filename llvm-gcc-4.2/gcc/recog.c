@@ -2027,11 +2027,11 @@ extract_insn (rtx insn)
   int noperands;
   rtx body = PATTERN (insn);
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   recog_data.insn = NULL;
   recog_data.n_operands = 0;

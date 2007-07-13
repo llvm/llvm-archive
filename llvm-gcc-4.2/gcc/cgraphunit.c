@@ -166,7 +166,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "tree-gimple.h"
 #include "tree-pass.h"
 #include "output.h"
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #include "llvm.h"
 
 static void cgraph_expand_all_functions (void);
@@ -1793,12 +1793,12 @@ cgraph_build_static_cdtor (char which, tree body, int priority)
   else
     cgraph_finalize_function (decl, 0);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_emit_ctor_dtor (decl, priority, which == 'I');
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (targetm.have_ctors_dtors)
     {

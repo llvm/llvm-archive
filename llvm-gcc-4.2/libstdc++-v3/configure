@@ -5385,7 +5385,7 @@ EOF
         enable_sjlj_exceptions=no
       fi
     fi
-    # APPLE LOCAL LLVM HACK!
+    # LLVM LOCAL HACK!
     enable_sjlj_exceptions=no
     CXXFLAGS="$old_CXXFLAGS"
     rm -f conftest*

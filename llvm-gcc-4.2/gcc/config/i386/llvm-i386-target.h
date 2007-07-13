@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* Some target-specific hooks for gcc->llvm conversion
 Copyright (C) 2007 Free Software Foundation, Inc.
 Contributed by Anton Korobeynikov (asl@math.spbu.ru)
@@ -60,5 +60,5 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
     }                                                           \
   }
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */
 

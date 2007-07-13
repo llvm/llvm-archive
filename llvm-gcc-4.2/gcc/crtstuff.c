@@ -178,25 +178,25 @@ CTOR_LIST_BEGIN;
 static func_ptr force_to_data[1] __attribute__ ((__unused__)) = { };
 asm (CTORS_SECTION_ASM_OP);
 STATIC func_ptr __CTOR_LIST__[1]
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef __llvm__
 /* FIXME: Remove when external weak linkage will be alive. */
   __attribute__ ((__used__, aligned(sizeof(func_ptr))))
 #else  
   __attribute__ ((__unused__, aligned(sizeof(func_ptr))))
 #endif  
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   = { (func_ptr) (-1) };
 #else
 STATIC func_ptr __CTOR_LIST__[1]
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef __llvm__
 /* FIXME: Remove when external weak linkage will be alive. */
   __attribute__ ((__used__, section(".ctors"), aligned(sizeof(func_ptr))))
 #else  
   __attribute__ ((__unused__, section(".ctors"), aligned(sizeof(func_ptr))))  
 #endif  
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   = { (func_ptr) (-1) };
 #endif /* __CTOR_LIST__ alternatives */
 
@@ -486,25 +486,25 @@ DTOR_LIST_END;
 #elif defined(DTORS_SECTION_ASM_OP)
 asm (DTORS_SECTION_ASM_OP);
 STATIC func_ptr __DTOR_END__[1]
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef __llvm__
 /* FIXME: Remove when external weak linkage will be alive. */
 __attribute__ ((__used__, aligned(sizeof(func_ptr))))
 #else  
   __attribute__ ((unused, aligned(sizeof(func_ptr))))
 #endif    
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   = { (func_ptr) 0 };
 #else
 STATIC func_ptr __DTOR_END__[1]
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef __llvm__
 /* FIXME: Remove when external weak linkage will be alive. */
   __attribute__((__used__, section(".dtors"), aligned(sizeof(func_ptr))))
 #else  
   __attribute__((unused, section(".dtors"), aligned(sizeof(func_ptr))))  
 #endif  
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   = { (func_ptr) 0 };
 #endif
 

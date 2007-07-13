@@ -155,7 +155,7 @@ extern GTY(()) int darwin_ms_struct;
   { "-image_base", "-Zimage_base" },  \
   { "-init", "-Zinit" },  \
   { "-install_name", "-Zinstall_name" },  \
-  /* APPLE LOCAL llvm */ \
+  /* LLVM LOCAL */ \
   { "-mllvm", "-Zmllvm" },  \
   { "-mkernel", "-mkernel -static -Wa,-static" }, \
   { "-multiply_defined_unused", "-Zmultiplydefinedunused" },  \
@@ -233,7 +233,7 @@ do {					\
    !strcmp (STR, "Zimage_base") ? 1 :           \
    !strcmp (STR, "Zinit") ? 1 :                 \
    !strcmp (STR, "Zinstall_name") ? 1 :         \
-  /* APPLE LOCAL llvm */ \
+  /* LLVM LOCAL */ \
    !strcmp (STR, "Zmllvm") ? 1 :                \
    !strcmp (STR, "Zmultiplydefinedunused") ? 1 : \
    !strcmp (STR, "Zmultiply_defined") ? 1 :     \
@@ -290,7 +290,7 @@ do {					\
 #define CC1PLUS_SPEC "-D__private_extern__=extern"
 /* APPLE LOCAL end private extern */
 
-/* APPLE LOCAL begin llvm */
+/* LLVM LOCAL begin */
 #ifdef HAVE_DSYMUTIL
 #define DARWIN_DSYMUTIL_SPEC  "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
                                  %{.c|.cc|.C|.cpp|.c++|.CPP|.m|.mm: \
@@ -298,7 +298,7 @@ do {					\
 #else
 #define DARWIN_DSYMUTIL_SPEC ""
 #endif
-/* APPLE LOCAL end llvm */
+/* LLVM LOCAL end */
 /* This is mostly a clone of the standard LINK_COMMAND_SPEC, plus
    precomp, libtool, and fat build additions.  Also we
    don't specify a second %G after %L because libSystem is
@@ -321,9 +321,9 @@ do {					\
     %{fnested-functions: -allow_stack_execute} \
     %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %G %L}} \
 "/* APPLE LOCAL begin mainline 4.3 2006-10-31 4370146 */"\
-"/* APPLE LOCAL begin llvm */"\
+"/* LLVM LOCAL begin */"\
     %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}} \n %(darwin_dsymutil) "
-/* APPLE LOCAL end llvm */
+/* LLVM LOCAL end */
 /* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */
 /* APPLE LOCAL end mainline */
 
@@ -485,7 +485,7 @@ do {					\
 #define DARWIN_EXTRA_SPECS						\
   { "darwin_crt1", DARWIN_CRT1_SPEC },					\
   { "darwin_dylib1", DARWIN_DYLIB1_SPEC },				\
-  /* APPLE LOCAL LLVM */                                                \
+  /* LLVM LOCAL */                                                \
   { "darwin_dsymutil", DARWIN_DSYMUTIL_SPEC },                          \
   { "darwin_minversion", DARWIN_MINVERSION_SPEC },
 
@@ -509,7 +509,7 @@ do {					\
 
 #define DBX_DEBUGGING_INFO 1
 
-/* APPLE LOCAL begin llvm */
+/* LLVM LOCAL begin */
 /* Prefer DWARF only if appropriate dsymutil is available.  */
   #define DWARF2_DEBUGGING_INFO
 #ifdef HAVE_DSYMUTIL
@@ -517,7 +517,7 @@ do {					\
 #else
   #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 #endif
-/* APPLE LOCAL end llvm */
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL end mainline 4.3 2006-10-31 4370143 */
 #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"
@@ -583,7 +583,7 @@ do {					\
     fputc ('\n', FILE);							\
   } while (0)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* weak_import, a Darwin special, does not make function definitions weak. */
 #define TARGET_ADJUST_LLVM_LINKAGE(FN, DECL)                            \
   do {                                                                  \
@@ -598,7 +598,7 @@ do {					\
       (FN)->setLinkage(Function::ExternalLinkage);                      \
     }                                                                   \
   } while (0)
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Darwin has the pthread routines in libSystem, which every program
    links to, so there's no need for weak-ness for that.  */
@@ -1217,7 +1217,7 @@ void add_framework_path (char *);
 /* APPLE LOCAL end iframework for 4.3 4094959 */
 
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 /* LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION - Given a VAR_DECL for a global
  * variable, return a "const char*" that indicates which section to put it in if
@@ -1242,7 +1242,7 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
     argvec.push_back ("--relocation-model=static")
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL begin isysroot 5083137 */
 /* Allow -sysroot to select a target system SDK.  */

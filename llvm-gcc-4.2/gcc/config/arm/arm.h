@@ -519,11 +519,11 @@ extern int arm_structure_size_boundary;
 #define PTRDIFF_TYPE (TARGET_AAPCS_BASED ? "int" : "long int")
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifndef PTRDIFF_TYPE
 #define PTRDIFF_TYPE (TARGET_AAPCS_BASED ? "int" : "long int")
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* AAPCS requires that structure alignment is affected by bitfields.  */
 #ifndef PCC_BITFIELD_TYPE_MATTERS
@@ -882,9 +882,9 @@ extern int arm_structure_size_boundary;
 
 #define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Value should be nonzero if functions must have frame pointers.
    Zero means the frame pointer need not be set up (and parms may be accessed
@@ -1482,7 +1482,7 @@ typedef struct
 #define PAD_VARARGS_DOWN \
   ((TARGET_AAPCS_BASED) ? 0 : BYTES_BIG_ENDIAN)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define FUNCTION_ARG_PADDING(MODE, TYPE) \
   (arm_pad_arg_upward (MODE, TYPE) ? upward : downward)
 
@@ -1493,7 +1493,7 @@ typedef struct
  * mimic the default.  */
 #define PAD_VARARGS_DOWN \
   ((TARGET_AAPCS_BASED) ? 0 : BYTES_BIG_ENDIAN)
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
@@ -1918,7 +1918,7 @@ typedef struct
 #define ARM_EABI_UNWIND_TABLES 0
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define ARM_OUTPUT_FN_UNWIND(F, PROLOGUE) arm_output_fn_unwind (F, PROLOGUE)
 
 #ifdef TARGET_UNWIND_INFO
@@ -1927,7 +1927,7 @@ typedef struct
 #else
 #define ARM_EABI_UNWIND_TABLES 0
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.
@@ -2630,7 +2630,7 @@ enum arm_builtins
   ARM_BUILTIN_MAX
 };
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define LLVM_TARGET_INTRINSIC_PREFIX "arm"
 
 /* Turn -march=xx into a CPU type.
@@ -2685,6 +2685,6 @@ enum arm_builtins
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4
-/* APPLE LOCAL end llvm */
+/* LLVM LOCAL end */
 
 #endif /* ! GCC_ARM_H */

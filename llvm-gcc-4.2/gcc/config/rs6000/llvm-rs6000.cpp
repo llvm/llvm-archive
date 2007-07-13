@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2007 Free Software Foundation, Inc.
 Contributed by Jim Laskey (jlaskey@apple.com)
@@ -331,5 +331,5 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   return false;
 }
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */
 

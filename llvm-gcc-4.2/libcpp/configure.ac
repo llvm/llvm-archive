@@ -144,7 +144,7 @@ AC_DEFINE_UNQUOTED(HOST_WIDE_INT, $host_wide_int,
 [Define to the widest efficient host integer type at least
    as wide as the target's size_t type.])
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 AC_ARG_ENABLE(llvm,
 [  --enable-llvm=DIR       enable the LLVM backend, use DIR as LLVM root],
 [case "${enableval}" in
@@ -173,7 +173,7 @@ AC_ARG_ENABLE(llvm,
 ],
 [LLVMBASEPATH=""])
 AC_SUBST(LLVMBASEPATH)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 
 # Output.

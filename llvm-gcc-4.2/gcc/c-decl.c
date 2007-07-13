@@ -61,7 +61,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "except.h"
 #include "langhooks-def.h"
 #include "pointer-set.h"
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #include "llvm.h"
 
 /* In grokdeclarator, distinguish syntactic contexts of declarators.  */
@@ -2000,7 +2000,7 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
   /* If OLDDECL had its DECL_RTL instantiated, re-invoke make_decl_rtl
      so that encode_section_info has a chance to look at the new decl
      flags and attributes.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   if (DECL_RTL_SET_P (olddecl)
       && (TREE_CODE (olddecl) == FUNCTION_DECL
@@ -7130,7 +7130,7 @@ c_expand_body (tree fndecl)
 
   tree_rest_of_compilation (fndecl);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   if (DECL_STATIC_CONSTRUCTOR (fndecl))
     llvm_emit_ctor_dtor (fndecl, DEFAULT_INIT_PRIORITY, 1);
@@ -7138,7 +7138,7 @@ c_expand_body (tree fndecl)
     llvm_emit_ctor_dtor (fndecl, DEFAULT_INIT_PRIORITY, 0);
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   if (DECL_STATIC_CONSTRUCTOR (fndecl)
       && targetm.have_ctors_dtors)

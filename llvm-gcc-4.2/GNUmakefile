@@ -34,7 +34,7 @@ PREFIX = /usr
 
 #######################################################################
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # LLVM defaults to enabled.
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
@@ -65,7 +65,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) \
 	    $(LLVM_ASSERTIONS)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # installhdrs does nothing, because the headers aren't useful until
 # the compiler is installed.
@@ -83,7 +83,7 @@ installsrc:
 	if [ $(SRCROOT) != . ]; then \
 	  $(PAX) -rw . $(SRCROOT); \
 	fi
-	# APPLE LOCAL begin LLVM: Avoid verification error due to binaries in libjava.
+	# LLVM LOCAL begin: Avoid verification error due to binaries in libjava.
 	rm -rf "$(SRCROOT)/libjava/"
 	find -d "$(SRCROOT)" \( -type d -a -name CVS -o \
 	                        -type f -a -name .DS_Store -o \

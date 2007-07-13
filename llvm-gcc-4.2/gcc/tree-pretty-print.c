@@ -913,13 +913,13 @@ dump_generic_node (pretty_printer *buffer, tree node, int spc, int flags,
 	pp_string (buffer, " ...");
       pp_character (buffer, ']');
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* Support the "pointers in ARRAY_REF" extension */
       if (TREE_CODE (TREE_TYPE (op0)) != ARRAY_TYPE)
         break;
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       
       op0 = array_ref_low_bound (node);
       op1 = array_ref_element_size (node);

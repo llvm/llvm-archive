@@ -506,9 +506,9 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 	  builtin_define ("__core2__");				\
 	}							\
       /* APPLE LOCAL end mainline */				\
-      /* APPLE LOCAL begin LLVM PR879 workaround */             \
+      /* LLVM LOCAL begin PR879 workaround */             \
       builtin_define("__NO_MATH_INLINES");                      \
-     /* APPLE LOCAL end LLVM PR879 workaround */                \
+     /* LLVM LOCAL end PR879 workaround */                \
     }								\
   while (0)
 
@@ -565,13 +565,13 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 
 /* target machine storage layout */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #if defined(ENABLE_LLVM) || defined(__llvm__)
 #define LONG_DOUBLE_TYPE_SIZE 64
 #else
 #define LONG_DOUBLE_TYPE_SIZE 80
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Set the value of FLT_EVAL_METHOD in float.h.  When using only the
    FPU, assume that the fpcw is set to extended precision; when using
@@ -3216,7 +3216,7 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
 #define SYMBOL_REF_FAR_ADDR_P(X)	\
 	((SYMBOL_REF_FLAGS (X) & SYMBOL_FLAG_FAR_ADDR) != 0)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 
 /* Codes for all the SSE/MMX builtins.  */
 enum ix86_builtins
@@ -3737,7 +3737,7 @@ enum ix86_builtins
 #define LLVM_TARGET_INTRINSIC_LOWER(EXP, BUILTIN_CODE, DESTLOC, RESULT,       \
                                     DESTTY, OPS)                              \
         TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /*
 Local variables:

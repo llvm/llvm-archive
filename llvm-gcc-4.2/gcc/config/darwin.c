@@ -1464,7 +1464,7 @@ machopic_select_section (tree exp, int reloc,
   /* APPLE LOCAL end darwin_set_section_for_var_p  */
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   const char *name;
@@ -1540,7 +1540,7 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
     return 0;
 }
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* This can be called with address expressions as "rtx".
    They must go in "const".  */

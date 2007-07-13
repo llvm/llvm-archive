@@ -313,11 +313,11 @@ layout_decl (tree decl, unsigned int known_align)
   gcc_assert (code == VAR_DECL || code == PARM_DECL || code == RESULT_DECL
 	      || code == TYPE_DECL ||code == FIELD_DECL);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   rtl = DECL_RTL_IF_SET (decl);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (type == error_mark_node)
     type = void_type_node;
@@ -513,13 +513,13 @@ relayout_decl (tree decl)
   DECL_MODE (decl) = VOIDmode;
   if (!DECL_USER_ALIGN (decl))
     DECL_ALIGN (decl) = 0;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   SET_DECL_RTL (decl, 0);
 #else
   SET_DECL_LLVM (decl, 0);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   layout_decl (decl, 0);
 }
 

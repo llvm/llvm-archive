@@ -5218,11 +5218,11 @@ fold_truthop (enum tree_code code, tree truth_type, tree lhs, tree rhs)
 	return 0;
     }
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   return 0; /* disable creation of BIT_FIELD_REF, which pessimizes code. */
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   /* After this point all optimizations will generate bit-field
      references, which we might not want.  */
@@ -10789,11 +10789,11 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 
       /* If this is a comparison of a field, we may be able to simplify it.  */
       if (((TREE_CODE (arg0) == COMPONENT_REF
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
             && 0/* disable creation of BIT_FIELD_REF, which pessimizes code. */
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	    && lang_hooks.can_use_bit_fields_p ())
 	   || TREE_CODE (arg0) == BIT_FIELD_REF)
 	  /* Handle the constant case even without -O

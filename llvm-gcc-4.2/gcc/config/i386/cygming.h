@@ -414,7 +414,7 @@ extern int i386_pe_dllimport_p (tree);
 # undef FILE
 #endif
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 
 /* LLVM specific stuff for supporting dllimport & dllexport linkage output */
@@ -431,7 +431,7 @@ extern int i386_pe_dllimport_p (tree);
 /* Add general target specific stuff */
 #include "llvm-i386-target.h"
 
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #endif
                                                           

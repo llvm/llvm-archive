@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* Internal interfaces between the LLVM backend components
 Copyright (C) 2006 Free Software Foundation, Inc.
 Contributed by Jim Laskey  (jlaskey@apple.com)
@@ -129,4 +129,4 @@ public:
 } // end namespace llvm
 
 #endif
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */

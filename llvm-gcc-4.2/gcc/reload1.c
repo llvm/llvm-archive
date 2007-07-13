@@ -659,11 +659,11 @@ reload (rtx first, int global)
   struct elim_table *ep;
   basic_block bb;
   
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return 0;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* APPLE LOCAL begin 4321079 */
   from_global = global;

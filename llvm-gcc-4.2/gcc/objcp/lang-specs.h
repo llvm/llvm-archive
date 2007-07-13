@@ -47,18 +47,18 @@ Boston, MA 02110-1301, USA.  */
 		%(cpp_options) %2 -o %{save-temps:%b.mii} %{!save-temps:%g.mii} \n}\
       cc1objplus %{save-temps|no-integrated-cpp:-fpreprocessed %{save-temps:%b.mii} %{!save-temps:%g.mii}}\
 	      %{!save-temps:%{!no-integrated-cpp:%(cpp_unique_options)}}\
-        "/* APPLE LOCAL LLVM */" \
+        "/* LLVM LOCAL */" \
 	%(llvm_options) %(cc1_options) %2 %{+e1*}\
        %{!fsyntax-only:%(invoke_as)}}}}",
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {".mii", "@objective-c++-cpp-output", 0, 0, 0},
   {"@objective-c++-cpp-output",
    "%{!M:%{!MM:%{!E:\
-    "/* APPLE LOCAL LLVM */" \
+    "/* LLVM LOCAL */" \
     cc1objplus -fpreprocessed %i %(llvm_options) %(cc1_options) %2 %{+e*}\
     %{!fsyntax-only:%(invoke_as)}}}}", 0, 0, 0},
   {"@objc++-cpp-output",
    "%{!M:%{!MM:%{!E:\
-    "/* APPLE LOCAL LLVM */" \
+    "/* LLVM LOCAL */" \
     cc1objplus -fpreprocessed %i %(llvm_options) %(cc1_options) %2 %{+e*}\
     %{!fsyntax-only:%(invoke_as)}}}}", 0, 0, 0},

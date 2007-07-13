@@ -233,9 +233,9 @@ hmap_load_header_map (const char *filepath)
 	  /* If it is a regular file and if it is large enough to be a header-
 	     map, see if it really is one. */
 	  if (fstat (fileno (f), &f_info) == 0 && S_ISREG(f_info.st_mode)
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 	    && (unsigned) f_info.st_size >= sizeof(struct hmap_header_map))
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 	    {
 	      unsigned   headermap_size = f_info.st_size;
 

@@ -622,11 +622,11 @@ static tree handle_warn_unused_result_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 static tree handle_annotate_attribute (tree*, tree, tree, int, bool *);
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 static void check_function_nonnull (tree, tree);
 static void check_nonnull_arg (void *, tree, unsigned HOST_WIDE_INT);
@@ -729,12 +729,12 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_warn_unused_result_attribute },
   { "sentinel",               0, 1, false, true, true,
 			      handle_sentinel_attribute },
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   #ifdef ENABLE_LLVM
   { "annotate",                0, -1, true, false, false,
                               handle_annotate_attribute },
   #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   { NULL,                     0, 0, false, false, false, NULL }
 };
 
@@ -2489,7 +2489,7 @@ tree
 pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 {
   tree size_exp, ret;
-  /* APPLE LOCAL LLVM */
+  /* LLVM LOCAL */
   bool size_set = 0;
 
   /* The result is a pointer of the same type that is being added.  */
@@ -2514,7 +2514,7 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 	pedwarn ("pointer to member function used in arithmetic");
       size_exp = integer_one_node;
     }
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   else {
     size_set = 1;
     size_exp = size_in_bytes (TREE_TYPE (result_type));
@@ -2548,7 +2548,7 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
     return folded;
   }
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* We are manipulating pointer values, so we don't need to warn
      about relying on undefined signed overflow.  We disable the
@@ -2765,7 +2765,7 @@ c_common_truthvalue_conversion (tree expr)
 	    && DECL_EXTERNAL (inner))
 	  break;
 
-/* APPLE LOCAL begin llvm */
+/* LLVM LOCAL begin */
 #if ENABLE_LLVM
         /* LLVM extends ARRAY_REF to allow pointers to be the base value.  It is not
            valid to assume ADDR of this is nonzero, because it could be derived from
@@ -2775,7 +2775,7 @@ c_common_truthvalue_conversion (tree expr)
                 != ARRAY_TYPE)
           break;
 #endif
-/* APPLE LOCAL end llvm */
+/* LLVM LOCAL end */
 
 	if (TREE_SIDE_EFFECTS (inner))
 	  return build2 (COMPOUND_EXPR, truthvalue_type_node,
@@ -6033,7 +6033,7 @@ handle_sentinel_attribute (tree *node, tree name, tree args,
   return NULL_TREE;
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 /* Handle "annotate" attribute */
 static tree
@@ -6064,7 +6064,7 @@ handle_annotate_attribute (tree *node, tree name, tree args,
   return NULL_TREE;
 }
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Check for valid arguments being passed to a function.  */
 void
@@ -6922,9 +6922,9 @@ struct iasm_op_constraint
 /* Default value of the constraint table.  */
 /* ??? This should be in defaults.h or a CW asm specific header.  */
 #ifndef TARGET_IASM_OP_CONSTRAINT
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #define TARGET_IASM_OP_CONSTRAINT
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #endif
 
 /* Comparison function for bsearch to find an opcode/argument number
@@ -7004,9 +7004,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   /* This table must be sorted.  */
   const struct iasm_op_constraint db[] = {
     TARGET_IASM_OP_CONSTRAINT
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
     { "", 0, "" }
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
   };
   struct iasm_op_constraint key;
   struct iasm_op_constraint *r;
@@ -7018,9 +7018,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
     {
       size_t i;
       once = 1;
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       for (i=0; i < sizeof (db) / sizeof(db[0]) - 2; ++i)
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 	gcc_assert (iasm_op_comp (&db[i+1], &db[i]) >= 0);
     }
 #endif
@@ -7030,9 +7030,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   
   TARGET_IASM_REORDER_ARG(opcode, key.argnum, num_args, argnum);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   r = bsearch (&key, db, sizeof (db) / sizeof (db[0]) - 1, sizeof (db[0]), iasm_op_comp);
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   IASM_SYNTH_CONSTRAINTS(r, argnum, num_args, db);
 
@@ -7088,13 +7088,13 @@ iasm_process_arg (const char *opcodename, int op_num,
 		  tree *outputsp, tree *inputsp, tree *uses, unsigned num_args,
 		  iasm_md_extra_info *e)
 {
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   const char *s = NULL;
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   bool was_output = true;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   tree str = NULL, one;
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   tree var = e->dat[op_num].var;
   unsigned argnum = e->dat[op_num].argnum;
   /* must_be_reg is true, iff we know the operand must be a register.  */

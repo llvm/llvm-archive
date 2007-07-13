@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
@@ -1195,4 +1195,4 @@ void print_llvm_type(FILE *file, void *LLVM) {
   WriteTypeSymbolic(FS, (const Type*)LLVM, TheModule);
 }
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */

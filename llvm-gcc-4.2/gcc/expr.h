@@ -65,13 +65,13 @@ enum expand_modifier {EXPAND_NORMAL = 0, EXPAND_STACK_PARM, EXPAND_SUM,
 /* If a memory-to-memory move would take MOVE_RATIO or more simple
    move-instruction sequences, we will do a movmem or libcall instead.  */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* Disable target-specific hooks for move/clear ratios. */
 #ifdef ENABLE_LLVM
 #undef MOVE_RATIO
 #undef CLEAR_RATIO
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 #ifndef MOVE_RATIO
 #if defined (HAVE_movmemqi) || defined (HAVE_movmemhi) || defined (HAVE_movmemsi) || defined (HAVE_movmemdi) || defined (HAVE_movmemti)

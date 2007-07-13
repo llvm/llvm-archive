@@ -2072,7 +2072,7 @@ build_array_ref (tree array, tree index)
       gcc_assert (TREE_CODE (TREE_TYPE (ar)) == POINTER_TYPE);
       gcc_assert (TREE_CODE (TREE_TYPE (TREE_TYPE (ar))) != FUNCTION_TYPE);
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* Do not create explicit pointer arithmetic for pointer subscripts,
        * instead, generate an array ref, even though the first argument is a
@@ -2086,7 +2086,7 @@ build_array_ref (tree array, tree index)
         return build4 (ARRAY_REF, ty, ar, index, NULL_TREE, NULL_TREE);
       }
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       
       return build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
 				 "array indexing");
@@ -3183,7 +3183,7 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 	  return TREE_OPERAND (arg, 0);
 	}
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
       /* LLVM wants &x[y] to be kept as an &x[y] for better optimization. */
 #ifndef ENABLE_LLVM
       /* For &x[y], return x+y */
@@ -3199,7 +3199,7 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 				  TREE_OPERAND (arg, 1), 1);
 	}
 #endif 
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
       /* Anything not already handled and not a true memory reference
 	 or a non-lvalue array is an error.  */
@@ -3375,13 +3375,13 @@ c_mark_addressable (tree exp)
       case ARRAY_REF:
       case REALPART_EXPR:
       case IMAGPART_EXPR:
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
         if (TREE_CODE (x) == ARRAY_REF &&
             TREE_CODE (TREE_TYPE (TREE_OPERAND (x, 0))) != ARRAY_TYPE)
           return true;    /* Ignore pointer base of array ref extension. */
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	x = TREE_OPERAND (x, 0);
 	break;
 
@@ -7464,7 +7464,7 @@ c_finish_return (tree retval)
 	    case ADDR_EXPR:
 	      inner = TREE_OPERAND (inner, 0);
 
-               /* APPLE LOCAL begin LLVM */
+               /* LLVM LOCAL begin */
   	      while (REFERENCE_CLASS_P (inner)
  	             && TREE_CODE (inner) != INDIRECT_REF) {
 #ifdef ENABLE_LLVM
@@ -7475,7 +7475,7 @@ c_finish_return (tree retval)
 #endif
                  inner = TREE_OPERAND (inner, 0);
                }
-              /* APPLE LOCAL end LLVM */
+              /* LLVM LOCAL end */
  
 	      if (DECL_P (inner)
 		  && !DECL_EXTERNAL (inner)

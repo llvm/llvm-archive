@@ -549,7 +549,7 @@ followed by a newline.
 #ifndef HAVE_PSIGNAL
 
 void
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 psignal (int signo, const char *message)
 {
   if (signal_names == NULL)

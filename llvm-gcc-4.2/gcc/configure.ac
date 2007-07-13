@@ -509,7 +509,7 @@ done
 IFS="$ac_save_IFS"
 
 nocommon_flag=""
-# APPLE LOCAL llvm
+# LLVM LOCAL
 # Expose a flag in the makefile so we can tell when ENABLE_CHECKING is set.
 checkingenabled_flag=""
 if test x$ac_checking != x ; then
@@ -517,10 +517,10 @@ if test x$ac_checking != x ; then
 [Define if you want more run-time sanity checks.  This one gets a grab
    bag of miscellaneous but relatively cheap checks.])
   nocommon_flag=-fno-common
-  # APPLE LOCAL llvm
+  # LLVM LOCAL
   checkingenabled_flag=CHECKING_ENABLED=1
 fi
-# APPLE LOCAL llvm
+# LLVM LOCAL
 AC_SUBST(checkingenabled_flag)
 AC_SUBST(nocommon_flag)
 if test x$ac_assert_checking != x ; then
@@ -814,7 +814,7 @@ esac],
 [onestep=""])
 AC_SUBST(onestep)
 
-# APPLE LOCAL begin LLVM
+# LLVM LOCAL begin
 # See if dsymutil has been installed and is modern enough
 # that we can use DWARF.
 gcc_AC_CHECK_PROG_VER(DSYMUTIL, dsymutil, --version,
@@ -865,7 +865,7 @@ AC_ARG_ENABLE(llvm,
 ],
 [LLVMBASEPATH=""])
 AC_SUBST(LLVMBASEPATH)
-# APPLE LOCAL end LLVM
+# LLVM LOCAL end
 
 # Sanity check enable_languages in case someone does not run the toplevel
 # configure # script.
@@ -1333,7 +1333,7 @@ fi
 
 # Say what files are being used for the output code and MD file.
 echo "Using \`$srcdir/config/$out_file' for machine-specific logic."
-# APPLE LOCAL llvm
+# LLVM LOCAL
 echo "Using \`$srcdir/config/$out_cxx_file' for machine-specific C++ logic."
 echo "Using \`$srcdir/config/$md_file' as machine description file."
 
@@ -1709,7 +1709,7 @@ host_cc_for_libada=${CC}
 AC_SUBST(host_cc_for_libada)
 
 out_object_file=`basename $out_file .c`.o
-# APPLE LOCAL LLVM
+# LLVM LOCAL
 out_cxx_object_file=`basename $out_cxx_file .cpp`.o
 
 tm_file_list="options.h"
@@ -3718,10 +3718,10 @@ AC_SUBST(local_prefix)
 AC_SUBST(md_file)
 AC_SUBST(objc_boehm_gc)
 AC_SUBST(out_file)
-# APPLE LOCAL llvm
+# LLVM LOCAL
 AC_SUBST(out_cxx_file)
 AC_SUBST(out_object_file)
-# APPLE LOCAL llvm
+# LLVM LOCAL
 AC_SUBST(out_cxx_object_file)
 AC_SUBST(stage_prefix_set_by_configure)
 AC_SUBST(quoted_stage_prefix_set_by_configure)

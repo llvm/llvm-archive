@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Evan Cheng (evan.cheng@apple.com)

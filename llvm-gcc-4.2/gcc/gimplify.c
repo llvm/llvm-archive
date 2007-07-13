@@ -176,7 +176,7 @@ pop_gimplify_context (tree body)
   gcc_assert (c && !c->current_bind_expr);
   gimplify_ctxp = c->prev_context;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   /* LLVM wants to know about gimple formal temps. */
   for (t = gimplify_ctxp->temps; t ; t = TREE_CHAIN (t)) 
@@ -184,7 +184,7 @@ pop_gimplify_context (tree body)
 #else
   t = 0; 
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (body)
     declare_vars (c->temps, body, false);
@@ -546,13 +546,13 @@ lookup_tmp_var (tree val, bool is_formal)
      block, which means it will go into memory, causing much extra
      work in reload and final and poorer code generation, outweighing
      the extra memory allocation here.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   if (1)   /* LLVM wants temporaries created in SSA form, never reuse one. */
 #else
   if (!optimize || !is_formal || TREE_SIDE_EFFECTS (val))
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
     ret = create_tmp_from_val (val);
   else
     {
@@ -1809,11 +1809,11 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 	  /* Gimplify the low bound and element type size and put them into
 	     the ARRAY_REF.  If these values are set, they have already been
 	     gimplified.  */
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
         /* Handle the LLVM extension that allows: (ARRAY_REF ptr, idx) */
 	  if (!TREE_OPERAND (t, 2) && 
               TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	    {
 	      tree low = unshare_expr (array_ref_low_bound (t));
 	      if (!is_gimple_min_invariant (low))
@@ -1825,11 +1825,11 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 		}
 	    }
 
-          /* APPLE LOCAL begin LLVM */
+          /* LLVM LOCAL begin */
           /* Handle the LLVM extension that allows: (ARRAY_REF ptr, idx) */
           if (!TREE_OPERAND (t, 3) &&
               TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
-            /* APPLE LOCAL end LLVM */
+            /* LLVM LOCAL end */
 	    {
 	      tree elmt_type = TREE_TYPE (TREE_TYPE (TREE_OPERAND (t, 0)));
 	      tree elmt_size = unshare_expr (array_ref_element_size (t));
@@ -5518,14 +5518,14 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	  break;
 
 	case ARRAY_REF:
-          /* APPLE LOCAL begin LLVM */
+          /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
           /* Handle the LLVM "ARRAY_REF with pointer base" extension by treating
              pointer-based ARRAY_REFs as binary expressions. */
           if (TREE_CODE (TREE_TYPE (TREE_OPERAND (*expr_p, 0))) != ARRAY_TYPE)
             goto expr_2;
 #endif
-          /* APPLE LOCAL end LLVM */
+          /* LLVM LOCAL end */
           
 	case ARRAY_RANGE_REF:
 	case REALPART_EXPR:

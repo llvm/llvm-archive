@@ -53,7 +53,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "cgraph.h"
 #include "cfglayout.h"
 #include "basic-block.h"
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #include "llvm.h"
 
 #ifdef XCOFF_DEBUGGING_INFO
@@ -753,7 +753,7 @@ void
 set_user_assembler_name (tree decl, const char *name)
 {
   char *starred = alloca (strlen (name) + 2);
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   starred[0] = '*';
   strcpy (starred + 1, name);
@@ -771,15 +771,15 @@ set_user_assembler_name (tree decl, const char *name)
     strcpy (starred, name);
   }
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   change_decl_assembler_name (decl, get_identifier (starred));
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   SET_DECL_RTL (decl, NULL_RTX);
 #else
   SET_DECL_LLVM (decl, NULL_RTX);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 }
 
 /* Decode an `asm' spec for a declaration as a register name.
@@ -1198,12 +1198,12 @@ make_decl_rtl (tree decl)
 void
 assemble_asm (tree string)
 {
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_emit_file_scope_asm(string);
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   app_enable ();
 
@@ -1343,14 +1343,14 @@ notice_global_symbol (tree decl)
 	      || (DECL_COMMON (decl)
 		  && (DECL_INITIAL (decl) == 0
 		      || DECL_INITIAL (decl) == error_mark_node))))
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       || !MEM_P (DECL_RTL (decl))
 #else
       || (DECL_LLVM (decl), 0)
 #endif
       )
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
     return;
 
   /* We win when global object is found, but it is useful to know about weak
@@ -1363,7 +1363,7 @@ notice_global_symbol (tree decl)
       const char *p;
       const char *name;
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       rtx decl_rtl = DECL_RTL (decl);
       name = (char*)XSTR (XEXP (decl_rtl, 0), 0);
@@ -1372,7 +1372,7 @@ notice_global_symbol (tree decl)
       name = (char*)llvm_get_decl_name(decl_llvm);
 #endif
       p = targetm.strip_name_encoding (name);
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
       name = ggc_strdup (p);
 
       *type = name;
@@ -1772,11 +1772,11 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   const char *name;
   rtx decl_rtl, symbol;
   section *sect;
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   void *decl_llvm;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   if (lang_hooks.decls.prepare_assemble_variable)
     lang_hooks.decls.prepare_assemble_variable (decl);
@@ -1796,7 +1796,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   if (TREE_CODE (decl) == FUNCTION_DECL)
     return;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM   /* register globals are not supported */
   /* Do nothing for global register variables.  */
   if (DECL_RTL_SET_P (decl) && REG_P (DECL_RTL (decl)))
@@ -1805,7 +1805,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 #endif
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 
   /* If type was incomplete when the variable was declared,
      see if it is complete now.  */
@@ -1833,13 +1833,13 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
 
   /* Make sure targetm.encode_section_info is invoked before we set
      ASM_WRITTEN.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM   /* register globals are not supported */
   decl_rtl = DECL_RTL (decl);
 #else
   decl_llvm = DECL_LLVM (decl);
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   TREE_ASM_WRITTEN (decl) = 1;
 
@@ -1863,7 +1863,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
 
   gcc_assert (MEM_P (decl_rtl));
   gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM   /* register globals are not supported */
   symbol = XEXP (decl_rtl, 0);
   name = XSTR (symbol, 0);
@@ -2046,7 +2046,7 @@ assemble_external (tree decl ATTRIBUTE_UNUSED)
      open.  If it's not, we should not be calling this function.  */
   gcc_assert (asm_out_file);
 
-  /* APPLE LOCAL llvm */
+  /* LLVM LOCAL */
 #if defined(ASM_OUTPUT_EXTERNAL) && !defined(ENABLE_LLVM)
   if (!DECL_P (decl) || !DECL_EXTERNAL (decl) || !TREE_PUBLIC (decl))
     return;
@@ -4695,7 +4695,7 @@ mark_weak (tree decl)
 {
   DECL_WEAK (decl) = 1;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   if (DECL_LLVM_SET_P (decl))
     llvm_mark_decl_weak(decl);
@@ -4906,11 +4906,11 @@ weak_finish (void)
       }
     }
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   return; /* llvm-gcc doesn't need this. */
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   for (t = weak_decls; t; t = TREE_CHAIN (t))
     {
@@ -5031,7 +5031,7 @@ find_decl_and_mark_needed (tree decl, tree target)
    or ASM_OUTPUT_DEF_FROM_DECLS.  The function defines the symbol whose
    tree node is DECL to have the value of the tree node TARGET.  */
 
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #ifndef ENABLE_LLVM  
 static void
 do_assemble_alias (tree decl, tree target)
@@ -5111,7 +5111,7 @@ do_assemble_alias (tree decl, tree target)
   }
 #endif
 }
-/* APPLE LCOAL LLVM */
+/* LLVM LCOAL */
 #endif
 
 /* First pass of completing pending aliases.  Make sure that cgraph knows
@@ -5152,7 +5152,7 @@ finish_aliases_2 (void)
   alias_pair *p;
 
   for (i = 0; VEC_iterate (alias_pair, alias_pairs, i, p); i++)
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
     {
       tree target_decl;
@@ -5162,7 +5162,7 @@ finish_aliases_2 (void)
 #else  
     do_assemble_alias (p->decl, p->target);
 #endif    
-/*APPLE LOCAL end LLVM */
+/*LLVM LOCAL end */
 
   VEC_truncate (alias_pair, alias_pairs, 0);
 }
@@ -5214,13 +5214,13 @@ assemble_alias (tree decl, tree target)
 
   /* We must force creation of DECL_RTL for debug info generation, even though
      we don't use it here.  */
-/* APPLE LOCAL begin LLVM */  
+/* LLVM LOCAL begin */  
 #ifndef ENABLE_LLVM  
   make_decl_rtl (decl);
 #else
   make_decl_llvm (decl);
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   TREE_USED (decl) = 1;
 
   /* A quirk of the initial implementation of aliases required that the user

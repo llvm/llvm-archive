@@ -126,7 +126,7 @@ Boston, MA 02110-1301, USA.  */
    is present in the runtime library.  */
 #define TARGET_C99_FUNCTIONS (OPTION_GLIBC)
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 
 /* Yes, we're supporting PIC codegen for linux targets! */
@@ -137,5 +137,5 @@ Boston, MA 02110-1301, USA.  */
     argvec.push_back ("--relocation-model=static");
 
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #define TARGET_POSIX_IO

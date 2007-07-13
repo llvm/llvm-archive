@@ -2539,7 +2539,7 @@ build_array_ref (tree array, tree idx)
 	return error_mark_node;
       }
 
-    /* APPLE LOCAL begin LLVM */
+    /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
     /* Do not create explicit pointer arithmetic for pointer subscripts,
       * instead, generate an array ref, even though the first argument is a
@@ -2549,7 +2549,7 @@ build_array_ref (tree array, tree idx)
     return build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ar)), ar, ind,
                    NULL_TREE, NULL_TREE);
 #endif
-    /* APPLE LOCAL end LLVM */
+    /* LLVM LOCAL end */
     return build_indirect_ref (cp_build_binary_op (PLUS_EXPR, ar, ind),
 			       "array indexing");
   }
@@ -4686,13 +4686,13 @@ cxx_mark_addressable (tree exp)
       case ARRAY_REF:
       case REALPART_EXPR:
       case IMAGPART_EXPR:
-        /* APPLE LOCAL begin LLVM */
+        /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
         if (TREE_CODE (x) == ARRAY_REF &&
             TREE_CODE (TREE_TYPE (TREE_OPERAND (x, 0))) != ARRAY_TYPE)
           return true;    /* Ignore pointer base of array ref extension. */
 #endif
-        /* APPLE LOCAL end LLVM */
+        /* LLVM LOCAL end */
 	x = TREE_OPERAND (x, 0);
 	break;
 

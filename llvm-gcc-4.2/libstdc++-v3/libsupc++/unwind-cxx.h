@@ -226,7 +226,7 @@ __is_gxx_exception_class(_Unwind_Exception_Class c)
 
 #define __GXX_INIT_EXCEPTION_CLASS(c) c = __gxx_exception_class
 
-// APPLE LOCAL begin LLVM
+// LLVM LOCAL begin
 static inline bool
 __is_gxx_exception_class(_Unwind_Exception_Class c)
 {
@@ -234,7 +234,7 @@ __is_gxx_exception_class(_Unwind_Exception_Class c)
 }
 
 #define __GXX_INIT_EXCEPTION_CLASS(c) c = __gxx_exception_class
-// APPLE LOCAL end LLVM
+// LLVM LOCAL end
 
 // GNU C++ personality routine, Version 0.
 extern "C" _Unwind_Reason_Code __gxx_personality_v0

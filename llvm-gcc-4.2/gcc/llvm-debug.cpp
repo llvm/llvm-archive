@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Jim Laskey (jlaskey@apple.com)
@@ -880,5 +880,5 @@ CompileUnitDesc *DebugInfo::getOrCreateCompileUnit(const std::string &FullPath){
 }
 
 
-/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL end (ENTIRE FILE!)  */
 

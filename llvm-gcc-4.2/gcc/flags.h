@@ -388,7 +388,7 @@ enum warn_strict_overflow_code
 /* Whether to emit an overflow warning whose code is C.  */
 #define issue_strict_overflow_warning(c) (warn_strict_overflow >= (int) (c))
 
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 extern int flag_llvm_pch_read;
 
 #endif /* ! GCC_FLAGS_H */

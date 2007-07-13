@@ -2000,7 +2000,7 @@ staticp (tree arg)
 
     case ARRAY_REF:
     case ARRAY_RANGE_REF:
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
       if (TREE_CODE (TYPE_SIZE (TREE_TYPE (arg))) == INTEGER_CST
 	  && TREE_CODE (TREE_OPERAND (arg, 1)) == INTEGER_CST) {
 
@@ -2022,7 +2022,7 @@ staticp (tree arg)
 #endif
 	return staticp (TREE_OPERAND (arg, 0));
       } else
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 	return false;
 
     default:

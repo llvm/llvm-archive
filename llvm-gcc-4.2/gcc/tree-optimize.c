@@ -49,7 +49,7 @@ Boston, MA 02110-1301, USA.  */
 #include "graph.h"
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 #include "opts.h"
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #include "llvm.h"
 #include "cfgloop.h"
 #include "except.h"
@@ -470,13 +470,13 @@ tree_rest_of_compilation (tree fndecl)
   
   tree_register_cfg_hooks ();
   /* Perform all tree transforms and optimizations.  */
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_emit_code_for_current_function(fndecl);
 #else
   execute_pass_list (all_passes);
 #endif
-  /* APPLE LOCAL end LLVM */  
+  /* LLVM LOCAL end */  
   bitmap_obstack_release (&reg_obstack);
 
   /* Release the default bitmap obstack.  */

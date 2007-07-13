@@ -370,7 +370,7 @@ define__GNUC__ (void)
 
   gcc_assert (!*v || *v == ' ' || *v == '-');
 
-  /* APPLE LOCAL LLVM no version number */
+  /* LLVM LOCAL no version number */
 #ifndef LLVM_VERSION_INFO
 
   /* APPLE LOCAL begin Apple version */
@@ -401,7 +401,7 @@ define__GNUC__ (void)
 #endif
   /* APPLE LOCAL end Apple version */
 
-  /* APPLE LOCAL begin LLVM version number */
+  /* LLVM LOCAL begin version number */
 #else
 #ifdef CONFIG_DARWIN_H
   /* This chunk of code defines __APPLE_CC__ from the version
@@ -445,7 +445,7 @@ define__GNUC__ (void)
   }
 #endif /*CONFIG_DARWIN_H*/
 #endif /*LLVM_VERSION_INFO*/
-  /* APPLE LOCAL end LLVM version number */
+  /* LLVM LOCAL end version number */
 }
 
 /* Define macros used by <stdint.h>.  Currently only defines limits
@@ -475,11 +475,11 @@ c_cpp_builtins (cpp_reader *pfile)
 
   define__GNUC__ ();
   
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   cpp_define (pfile, "__llvm__");
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* For stddef.h.  They require macros defined in c-common.c.  */
   c_stddef_cpp_builtins ();

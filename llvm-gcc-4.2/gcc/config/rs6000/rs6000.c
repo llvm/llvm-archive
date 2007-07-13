@@ -52,11 +52,11 @@
 #include "langhooks.h"
 #include "reload.h"
 #include "cfglayout.h"
-/* APPLE LOCAL begin LLVM - Don't link in scheduler. */
+/* LLVM LOCAL begin - Don't link in scheduler. */
 #ifndef ENABLE_LLVM
 #include "sched-int.h"
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 #include "tree-gimple.h"
 /* APPLE LOCAL 3893112 */
 #include "params.h"
@@ -151,9 +151,9 @@ typedef struct machine_function GTY(())
 
 /* Target cpu type */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 const char *rs6000_cpu_target = "ppc";
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 enum processor_type rs6000_cpu;
 struct rs6000_cpu_select rs6000_select[3] =
@@ -676,10 +676,10 @@ static void rs6000_xcoff_file_end (void);
 static bool rs6000_reverse_bitfields_p (tree);
 #endif
 /* APPLE LOCAL end pragma reverse_bitfield */
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #ifndef ENABLE_LLVM
 static int rs6000_variable_issue (FILE *, int, rtx, int);
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #endif
 static bool rs6000_rtx_costs (rtx, int, int, int *);
 static int rs6000_adjust_cost (rtx, rtx, rtx, int);
@@ -687,7 +687,7 @@ static bool is_microcoded_insn (rtx);
 static int is_dispatch_slot_restricted (rtx);
 static bool is_cracked_insn (rtx);
 static bool is_branch_slot_insn (rtx);
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #ifndef ENABLE_LLVM
 static int rs6000_adjust_priority (rtx, int);
 static int rs6000_issue_rate (void);
@@ -701,7 +701,7 @@ static int pad_groups (FILE *, int, rtx, rtx);
 static void rs6000_sched_finish (FILE *, int);
 
 static int rs6000_use_sched_lookahead (void);
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #endif
 static tree rs6000_builtin_mask_for_load (void);
 
@@ -952,7 +952,7 @@ static const char alt_reg_names[][8] =
 #undef TARGET_ASM_FUNCTION_EPILOGUE
 #define TARGET_ASM_FUNCTION_EPILOGUE rs6000_output_function_epilogue
 
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #ifndef ENABLE_LLVM
 #undef  TARGET_SCHED_VARIABLE_ISSUE
 #define TARGET_SCHED_VARIABLE_ISSUE rs6000_variable_issue
@@ -969,7 +969,7 @@ static const char alt_reg_names[][8] =
 #define TARGET_SCHED_FINISH rs6000_sched_finish
 #undef TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD
 #define TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD rs6000_use_sched_lookahead
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #endif
 
 #undef TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD
@@ -1402,9 +1402,9 @@ rs6000_override_options (const char *default_cpu)
   rs6000_select[0].string = default_cpu;
   rs6000_cpu = TARGET_POWERPC64 ? PROCESSOR_DEFAULT64 : PROCESSOR_DEFAULT;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
   rs6000_cpu_target = TARGET_POWERPC64 ? "ppc64" : "ppc";
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* APPLE LOCAL begin -fast */
   if (flag_fast || flag_fastf || flag_fastcp)
@@ -1438,9 +1438,9 @@ rs6000_override_options (const char *default_cpu)
 		    mcpu_cpu = processor_target_table[j].processor;
 		    /* APPLE LOCAL end -fast */
         
-		    /* APPLE LOCAL begin LLVM */
+		    /* LLVM LOCAL begin */
         rs6000_cpu_target = processor_target_table[j].name;
-		    /* APPLE LOCAL end LLVM */
+		    /* LLVM LOCAL end */
 		  }
 		break;
 	      }
@@ -9076,7 +9076,7 @@ rs6000_init_builtins (void)
   unsigned_V8HI_type_node = build_vector_type (unsigned_intHI_type_node, 8);
   unsigned_V4SI_type_node = build_vector_type (unsigned_intSI_type_node, 4);
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
     all of these types BLKmode.  This interferes with rs6000.c-specific
@@ -9090,7 +9090,7 @@ rs6000_init_builtins (void)
   TYPE_MODE (unsigned_V8HI_type_node) = V8HImode;
   TYPE_MODE (unsigned_V16QI_type_node) = V16QImode;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
   
   opaque_V2SF_type_node = build_opaque_vector_type (float_type_node, 2);
   opaque_V2SI_type_node = build_opaque_vector_type (intSI_type_node, 2);
@@ -18761,7 +18761,7 @@ output_function_profiler (FILE *file, int labelno)
       break;
     }
 }
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #ifndef ENABLE_LLVM
 
 
@@ -19676,7 +19676,7 @@ rs6000_sched_finish (FILE *dump, int sched_verbose)
     }
 }
 
-/* APPLE LOCAL LLVM - Disable scheduler. */
+/* LLVM LOCAL - Disable scheduler. */
 #endif ENABLE_LLVM
 /* Length in units of the trampoline for entering a nested function.  */
 

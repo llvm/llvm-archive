@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* Definition of the oFILEstream class
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)

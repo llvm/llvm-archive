@@ -156,7 +156,7 @@ is_gimple_condexpr (tree t)
   return (is_gimple_val (t) || COMPARISON_CLASS_P (t));
 }
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 static inline bool
 llvm_is_array_arrayref_extension(tree t)
 {
@@ -170,7 +170,7 @@ llvm_is_array_arrayref_extension(tree t)
 #endif
   return false;
 }
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /*  Return true if T is something whose address can be taken.  */
 
@@ -178,7 +178,7 @@ bool
 is_gimple_addressable (tree t)
 {
   return (is_gimple_id (t) || handled_component_p (t)
-          /* APPLE LOCAL LLVM */
+          /* LLVM LOCAL */
           || llvm_is_array_arrayref_extension (t)
 	  || INDIRECT_REF_P (t));
 }

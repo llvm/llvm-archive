@@ -130,9 +130,9 @@ extern int flag_keep_static_consts;
 extern int time_report;
 /* APPLE LOCAL end optimization pragmas 3124235/3420242 */
 
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 extern const char *llvm_optns;
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Things to do with target switches.  */
 extern void print_version (FILE *, const char *);

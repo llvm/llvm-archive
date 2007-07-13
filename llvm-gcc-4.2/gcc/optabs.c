@@ -3415,11 +3415,11 @@ emit_libcall_block (rtx insns, rtx target, rtx result, rtx equiv)
   rtx final_dest = target;
   rtx prev, next, first, last, insn;
 
-  /* APPLE LOCAL begin LLVM - cc1 code size. */
+  /* LLVM LOCAL begin - cc1 code size. */
 #ifdef ENABLE_LLVM
   return;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* If this is a reg with REG_USERVAR_P set, then it could possibly turn
      into a MEM later.  Protect the libcall block from this change.  */
@@ -5144,13 +5144,13 @@ init_one_libfunc (const char *name)
      a function.  Pretend this is "int foo()".  */
   tree decl;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   return NULL_RTX;
 #endif
   decl = build_decl (FUNCTION_DECL, get_identifier (name),
                      build_function_type (integer_type_node, NULL_TREE));
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   DECL_ARTIFICIAL (decl) = 1;
   DECL_EXTERNAL (decl) = 1;

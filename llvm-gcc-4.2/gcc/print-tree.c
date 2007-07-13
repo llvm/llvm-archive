@@ -29,9 +29,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "ggc.h"
 #include "langhooks.h"
 #include "tree-iterator.h"
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #include "llvm.h"
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 
 /* Define the hash table of nodes already seen.
    Such nodes are not repeated; brief cross-references are used.  */
@@ -508,7 +508,7 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 
       lang_hooks.print_decl (file, node, indent);
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       if (DECL_LLVM_SET_P (node))
 	{
@@ -522,7 +522,7 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 	  print_rtl (file, DECL_RTL (node));
 	}
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
       if (TREE_CODE (node) == PARM_DECL)
 	{
@@ -664,7 +664,7 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 
       lang_hooks.print_type (file, node, indent);
 
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       if (GET_TYPE_LLVM (node))
 	{
@@ -672,7 +672,7 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 	  print_llvm_type (file, GET_TYPE_LLVM (node));
 	}
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
 
       if (TYPE_POINTER_TO (node) || TREE_CHAIN (node))
 	indent_to (file, indent + 3);

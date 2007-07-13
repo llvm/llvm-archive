@@ -1504,11 +1504,11 @@ static unsigned int
 rest_of_handle_branch_target_load_optimize (void)
 {
   static int warned = 0;
-/* APPLE LOCAL begin LLVM - reduce cc1 size.  */
+/* LLVM LOCAL begin - reduce cc1 size.  */
 #ifdef ENABLE_LLVM
   return;
 #endif
-/* APPLE LOCAL end LLVM.  */
+/* LLVM LOCAL end.  */
   /* Leave this a warning for now so that it is possible to experiment
      with running this pass twice.  In 3.6, we should either make this
      an error, or use separate dump files.  */

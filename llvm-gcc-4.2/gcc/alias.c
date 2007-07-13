@@ -580,7 +580,7 @@ get_alias_set (tree t)
       /* If we've already determined the alias set for a decl, just return
 	 it.  This is necessary for C++ anonymous unions, whose component
 	 variables don't look like union members (boo!).  */
-      /* APPLE LOCAL begin LLVM */
+      /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
       if (TREE_CODE (t) == VAR_DECL
 	  && DECL_RTL_SET_P (t) && MEM_P (DECL_RTL (t)))
@@ -590,7 +590,7 @@ get_alias_set (tree t)
           && DECL_LLVM_SET_P (t))
         return 0;
 #endif
-      /* APPLE LOCAL end LLVM */
+      /* LLVM LOCAL end */
         
       /* Now all we care about is the type.  */
       t = TREE_TYPE (t);

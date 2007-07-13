@@ -40,7 +40,7 @@ using namespace llvm;
 static Statistic<> CacheAllocs ("dsa", "Number of kmem_cache_alloc calls");
 static Statistic<> KMallocs    ("dsa", "Number of kmalloc calls");
 static Statistic<> GlobalPools ("dsa", "Number of global pools");
-std::map<Value*, Function*> syscalls;
+std::map<unsigned int, Function*> syscalls;
 #endif
 
 Statistic<> stat_unknown ("dsa", "Number of markunknowns");
@@ -1443,8 +1443,9 @@ void GraphBuilder::visitCallSite(CallSite CS) {
   }
 
   if (isSyscall6) {
-    assert (syscalls[CS.getArgument(0)] && "No registered syscall by that number");
-    Callee = syscalls[CS.getArgument(0)];
+    assert (isa<ConstantInt>(CS.getArgument(0)) && "llva_syscall6 called with non-const argument");
+    ConstantInt * C = dyn_cast<ConstantInt>(CS.getArgument(0));
+    Callee = syscalls[C->getSExtValue()];
   }
 
   // Set up the return value...
@@ -1675,8 +1676,9 @@ bool LocalDataStructures::runOnModule(Module &M) {
   if (lrs) 
     for (Value::use_iterator ii = lrs->use_begin(), ee = lrs->use_end(); ii != ee; ++ii) 
       if (CallInst* CI = dyn_cast<CallInst>(*ii))
-        if (CI->getCalledFunction() == lrs) {
-          Value* num = CI->getOperand(1);
+        if ((CI->getCalledFunction() == lrs) && (isa<ConstantInt>(CI->getOperand(1)))) {
+          ConstantInt * CNum = dyn_cast<ConstantInt>(CI->getOperand(1));
+          unsigned int num = CNum->getSExtValue();
           Value* fun = CI->getOperand(2);
           if (ConstantExpr* CE = dyn_cast<ConstantExpr>(fun))
             if (CE->getOpcode() == Instruction::Cast)

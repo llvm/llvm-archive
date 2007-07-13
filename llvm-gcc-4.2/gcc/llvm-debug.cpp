@@ -484,9 +484,9 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
   if (!Ty) {
     // Work out details of type.
     switch (TREE_CODE(type)) {
-    case TRANSLATION_UNIT_DECL: //    case FILE_TYPE:
     case ERROR_MARK:
     case LANG_TYPE:
+    case TRANSLATION_UNIT_DECL:
     default: {
       DEBUGASSERT(0 && "Unsupported type");
       return NULL;
@@ -547,12 +547,10 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
     case VECTOR_TYPE:
     case ARRAY_TYPE: {
       // type[n][m]...[p]
-#if 0 /* FIXME FIXME */      
-      if (TYPE_STRING_FLAG(type) && TREE_CODE(TREE_TYPE(type)) == CHAR_TYPE) {
+      if (TYPE_STRING_FLAG(type) && TREE_CODE(TREE_TYPE(type)) == INTEGER_TYPE){
         DEBUGASSERT(0 && "Don't support pascal strings");
         return NULL;
       }
-#endif
       
       CompositeTypeDesc *ArrayTy;
       
@@ -757,7 +755,6 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
     }
 
     case INTEGER_TYPE:
-    // FIXME FIXME case CHAR_TYPE:
     case REAL_TYPE:   
     case COMPLEX_TYPE:
     case BOOLEAN_TYPE: {
@@ -771,18 +768,16 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
 
       switch (TREE_CODE(type)) {
       case INTEGER_TYPE:
-        // Unless is smells like a char use integer,
-        if (!(TYPE_PRECISION(type) == CHAR_TYPE_SIZE && 
-             (type == char_type_node ||
-              !strcmp (TypeName, "signed char") ||
-              !strcmp (TypeName, "unsigned char")))) {
-          Encoding = TYPE_UNSIGNED(type) ? DW_ATE_unsigned : DW_ATE_signed;
-          break;
+        if (TYPE_STRING_FLAG (type)) {
+          if (TYPE_UNSIGNED (type))
+            Encoding = DW_ATE_unsigned_char;
+          else
+            Encoding = DW_ATE_signed_char;
         }
-        // fall through
-      // FIXME FIXME case CHAR_TYPE:
-        Encoding = TYPE_UNSIGNED(type) ? DW_ATE_unsigned_char :
-                                         DW_ATE_signed_char;
+        else if (TYPE_UNSIGNED (type))
+          Encoding = DW_ATE_unsigned;
+        else
+          Encoding = DW_ATE_signed;
         break;
       case REAL_TYPE:
         Encoding = DW_ATE_float;

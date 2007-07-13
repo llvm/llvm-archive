@@ -46,6 +46,7 @@ extern "C" {
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "tm_p.h"
 #include "tree.h"
 #include "c-tree.h"  // FIXME: eliminate.
 #include "tree-iterator.h"
@@ -3675,11 +3676,9 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
     if (ConstraintChar == 'r')
       // REG_CLASS_FROM_CONSTRAINT doesn't support 'r' for some reason.
       RegClass = GENERAL_REGS;
-#if 0 /* FIXME FIXME */
     else 
-      /* REG_CLASS_FROM_LETTER is now history.... find replacement... */
       RegClass = REG_CLASS_FROM_CONSTRAINT(Constraint[-1], Constraint-1);
-#endif  
+
     if (RegClass == NO_REGS) {  // not a reg class.
       Result += ConstraintChar;
       continue;
@@ -3902,7 +3901,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // Process clobbers.
 
   // Some targets automatically clobber registers across an asm.
-  tree Clobbers = targetm.md_asm_clobbers(ASM_OUTPUTS(exp), ASM_INPUTS(exp), ASM_CLOBBERS(exp));
+  tree Clobbers = targetm.md_asm_clobbers(ASM_OUTPUTS(exp), ASM_INPUTS(exp),
+                                          ASM_CLOBBERS(exp));
   for (; Clobbers; Clobbers = TREE_CHAIN(Clobbers)) {
     const char *RegName = TREE_STRING_POINTER(TREE_VALUE(Clobbers));
     int RegCode = decode_reg_name(RegName);
@@ -5151,15 +5151,19 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, Value *DestLoc) {
     // Store each element of the constructor into the corresponding field of
     // DEST.
     if (!elt) return 0;  // no elements
-    assert(VEC_length(constructor_elt, elt) == 0 &&"Union CONSTRUCTOR should have one element!");
-    if (!VEC_index(constructor_elt, elt, 0)->value) return 0;  // Not actually initialized?
-      
-    if (!ConvertType(TREE_TYPE(VEC_index(constructor_elt, elt, 0)->index))->isFirstClassType()) {
-      Value *V = Emit(VEC_index(constructor_elt, elt, 0)->index, DestLoc);
+    assert(VEC_length(constructor_elt, elt) == 1
+           && "Union CONSTRUCTOR should have one element!");
+    tree tree_purpose = VEC_index(constructor_elt, elt, 0)->index;
+    tree tree_value   = VEC_index(constructor_elt, elt, 0)->value;
+    if (!tree_purpose)
+      return 0;  // Not actually initialized?
+
+    if (!ConvertType(TREE_TYPE(tree_purpose))->isFirstClassType()) {
+      Value *V = Emit(tree_value, DestLoc);
       assert(V == 0 && "Aggregate value returned in a register?");
     } else {
       // Scalar value.  Evaluate to a register, then do the store.
-      Value *V = Emit(VEC_index(constructor_elt, elt, 0)->value, 0);
+      Value *V = Emit(tree_value, 0);
       DestLoc = CastToType(Instruction::BitCast, DestLoc, 
                            PointerType::get(V->getType()));
       Builder.CreateStore(V, DestLoc);
@@ -5421,16 +5425,16 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   }
 
   unsigned NextFieldToFill = 0;
-  unsigned HOST_WIDE_INT elt_idx;
-  tree elt_purpose, elt_value;
-  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), elt_idx, elt_purpose, elt_value) {
+  unsigned HOST_WIDE_INT ix;
+  tree elt_index, elt_value;
+  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, elt_index, elt_value) {
     // Find and decode the constructor's value.
     Constant *Val = Convert(elt_value);
     SomeVal = Val;
     
     // Get the index position of the element within the array.  Note that this
     // can be NULL_TREE, which means that it belongs in the next available slot.
-    tree index = elt_purpose;
+    tree index = elt_index;
     
     // The first and last field to fill in, inclusive.
     unsigned FieldOffset, FieldLastOffset;
@@ -5740,10 +5744,10 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   ResultElts.resize(STy->getNumElements());
 
   tree NextField = TYPE_FIELDS(TREE_TYPE(exp));
-  unsigned HOST_WIDE_INT elt_idx;
-  tree elt_purpose, elt_value;
-  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), elt_idx, elt_purpose, elt_value) {
-    tree Field = elt_purpose;    // The fielddecl for the field.
+  unsigned HOST_WIDE_INT ix;
+  tree elt_value;
+  tree Field; // The fielddecl for the field.
+  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, Field, elt_value) {
     unsigned FieldNo;
     if (Field == 0) {           // If an explicit field is specified, use it.
       Field = NextField;
@@ -5804,17 +5808,16 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
+  assert(!VEC_empty(constructor_elt, CONSTRUCTOR_ELTS(exp))
+         && "Union CONSTRUCTOR has no elements? Zero?");
 
-#if 0 /* FIXME FIXME */
-
-  assert(VEC_length(constructor_elt, CONSTRUCTOR_ELTS(exp)) != 0  && "Union CONSTRUCTOR has no elements? Zero?");
-  
-  tree elt = CONSTRUCTOR_ELTS(exp);
-  assert(TREE_CHAIN(elt) == 0 && "Union CONSTRUCTOR with multiple elements?");
+  VEC(constructor_elt, gc) *elt = CONSTRUCTOR_ELTS(exp);
+  assert(VEC_length(constructor_elt, elt) == 1
+         && "Union CONSTRUCTOR with multiple elements?");
 
   std::vector<Constant*> Elts;
   // Convert the constant itself.
-  Elts.push_back(Convert(TREE_VALUE(elt)));
+  Elts.push_back(Convert(VEC_index(constructor_elt, elt, 0)->value));
 
   // If the union has a fixed size, and if the value we converted isn't large
   // enough to fill all the bits, add a zero initialized array at the end to pad
@@ -5834,8 +5837,6 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
     }
   }
   return ConstantStruct::get(Elts, false);
-#endif
-  return NULL;
 }
 
 //===----------------------------------------------------------------------===//

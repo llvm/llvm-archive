@@ -155,7 +155,7 @@ fi
 
 CONFIGFLAGS="--disable-checking --enable-werror \
   --prefix=$DEST_ROOT \
-  --mandir=$DEST_ROOT/share/man \
+  --mandir=$LLVM_INSTALL_PREFIX/share/man \
   --enable-languages=c,objc,c++,obj-c++ \
   --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
   $LIBSTDCXX_CONFIG_OPTION \
@@ -352,9 +352,9 @@ mkdir -p ".$HTMLDIR" || exit 1
 cp -Rp $DIR/obj-$BUILD-$BUILD/gcc/HTML/* ".$HTMLDIR/" || exit 1
 
 # Manual pages
-mkdir -p .$DEST_ROOT/share || exit 1
+mkdir -p .$LLVM_INSTALL_PREFIX/share || exit 1
 # LLVM LOCAL build_gcc bug with non-/usr $DEST_ROOT
-cp -Rp $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/share/man .$DEST_ROOT/share/ \
+cp -Rp $DIR/dst-$BUILD-$BUILD$LLVM_INSTALL_PREFIX/share/man .$LLVM_INSTALL_PREFIX/share/ \
   || exit 1
 # exclude fsf-funding.7 gfdl.7 gpl.7 as they are currently built in
 # the gcc project
@@ -477,7 +477,7 @@ for h in `echo *.h` ; do
 done
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
-MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
+MDIR=$DEST_DIR$LLVM_INSTALL_PREFIX/share/man/man1
 ln -f $MDIR/g++-$MAJ_VERS.1 $MDIR/c++-$MAJ_VERS.1 || exit 1
 for t in $TARGETS ; do
   ln -f $MDIR/gcc-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-gcc-$VERS.1 \

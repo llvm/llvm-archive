@@ -2009,6 +2009,11 @@ void TreeToLLVM::AddLandingPad() {
   // Fetch and store the exception selector.
   std::vector<Value*> Args;
 
+  // The exception and the personality function.
+  Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
+  Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
+                            PointerType::get(Type::Int8Ty)));
+
   for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
        E = CurrentEHScopes.rend(); I != E; ++I) {
     if (TREE_CODE(I->TryExpr) == TRY_CATCH_EXPR) {
@@ -2022,16 +2027,6 @@ void TreeToLLVM::AddLandingPad() {
                          EH_FILTER_EXPR) ? FilterExpr : CatchList;
       }
 
-      if (I->InfosType == CatchList && !I->TypeInfos.size())
-        continue;
-
-      // Lazily add the exception and the personality function.
-      if (!Args.size()) {
-        Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-        Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
-                                  PointerType::get(Type::Int8Ty)));
-      }
-
       if (I->InfosType == FilterExpr)
         // Filter - note the size.
         Args.push_back(ConstantInt::get(Type::Int32Ty, I->TypeInfos.size()));
@@ -2042,11 +2037,9 @@ void TreeToLLVM::AddLandingPad() {
     }
   }
 
-  if (Args.size()) {
-    Value *Select = Builder.CreateCall(FuncEHSelector, &Args[0], Args.size(),
-                                       "eh_select");
-    Builder.CreateStore(Select, ExceptionSelectorValue);
-  }
+  Value *Select = Builder.CreateCall(FuncEHSelector, &Args[0], Args.size(),
+                                     "eh_select");
+  Builder.CreateStore(Select, ExceptionSelectorValue);
 }
 
 

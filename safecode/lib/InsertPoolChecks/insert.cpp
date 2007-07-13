@@ -973,7 +973,7 @@ findSourcePointer (Value * PointerOperand, bool & indexed) {
       break;
     }
 
-    // Check for call instructions to exact checks
+    // Check for call instructions to exact checks.
     CallInst * CI1;
     if ((CI1 = dyn_cast<CallInst>(SourcePointer)) &&
         (CI1->getCalledFunction()) &&

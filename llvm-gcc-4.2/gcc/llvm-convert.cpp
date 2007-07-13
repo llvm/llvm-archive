@@ -1320,21 +1320,14 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
 /// exception edge (as indicated by IsExceptionEdge) these are expanded,
 /// otherwise not.
 ///
-/// Note that it is illegal for inserted cleanups to throw any exceptions,
-/// as indicated by isExceptionEdge.  This is an important case for
-/// exception handling: when unwinding the stack due to an active exception, any
-/// destructors which propagate exceptions should cause terminate to be called.
-/// Thus, if a cleanup does throw an exception, its exception destination must
-/// go to a designated terminate block.
-///
 /// Note that all calling code should emit a new basic block after this, so that
 /// future code does not fall after the terminator.
 ///
 void TreeToLLVM::EmitBranchInternal(BasicBlock *Dest, bool IsExceptionEdge) {
   // Insert the branch.
   BranchInst *BI = Builder.CreateBr(Dest);
-  
-  // If there are no current exception scopes, this edge *couldn't* need 
+
+  // If there are no current exception scopes, this edge *couldn't* need
   // cleanups.  It is not possible to jump into a scope that requires a cleanup.
   // This keeps the C case fast.
   if (CurrentEHScopes.empty()) return;
@@ -1344,11 +1337,10 @@ void TreeToLLVM::EmitBranchInternal(BasicBlock *Dest, bool IsExceptionEdge) {
   if (Dest->getParent()) {
     // This is a forward reference to a block.  Since we know that we can't jump
     // INTO a region that has cleanups, we can only be branching out.
-    //
     std::map<BasicBlock*, unsigned>::iterator I = BlockEHScope.find(Dest);
-    if (I != BlockEHScope.end() && I->second == CurrentEHScopes.size())
+    if (I != BlockEHScope.end() && I->second == CurrentEHScopes.size() - 1)
       return;  // Branch within the same EH scope.
-    
+
     assert((I == BlockEHScope.end() || I->second < CurrentEHScopes.size()) &&
            "Invalid branch into EH region");
   }
@@ -1361,12 +1353,12 @@ void TreeToLLVM::EmitBranchInternal(BasicBlock *Dest, bool IsExceptionEdge) {
 /// that works.
 void TreeToLLVM::AddBranchFixup(BranchInst *BI, bool isExceptionEdge) {
   BasicBlock *Dest = BI->getSuccessor(0);
-  
+
   // Check to see if we already have a fixup for this destination.
   std::vector<BranchFixup> &BranchFixups = CurrentEHScopes.back().BranchFixups;
   for (unsigned i = 0, e = BranchFixups.size(); i != e; ++i)
     if (BranchFixups[i].SrcBranch->getSuccessor(0) == Dest &&
-        BranchFixups[i].isExceptionEdge) {
+        BranchFixups[i].isExceptionEdge == isExceptionEdge) {
       BranchFixup &Fixup = BranchFixups[i];
       // We found a fixup for this destination already.  Recycle it.
       if (&Fixup.SrcBranch->getParent()->front() == Fixup.SrcBranch) {
@@ -2212,11 +2204,11 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
     FinallyStack.pop_back();
 
     // Because we can emit the same cleanup in more than one context, we must
-    // strip off LLVM information from the decls in the code.  Otherwise, the
-    // we will try to insert the same label into multiple places in the code.
+    // strip off LLVM information from the decls in the code.  Otherwise, we
+    // will try to insert the same label into multiple places in the code.
     StripLLVMTranslation(CleanupCode);
-     
-    
+
+
     // Catches will supply own terminator.
     if (!Builder.GetInsertBlock()->getTerminator()) {
       // Emit a branch to the new target.
@@ -2284,6 +2276,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
     tree TypeInfoNopExpr = (*lang_eh_runtime_type)(Types);
     // Produce value.  Duplicate typeinfo get folded here.
     Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+    TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
 
     // Call get eh type id.
     Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &TypeInfo, 1,

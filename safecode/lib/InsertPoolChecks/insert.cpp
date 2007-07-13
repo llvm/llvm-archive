@@ -125,6 +125,34 @@ static Statistic<> ZeroFuncChecks     ("safecode", "Indirect Call Checks with Ze
 static Statistic<> StackRegisters     ("safecode", "Stack registrations");
 static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided");
 
+//
+// Function: castTo()
+//
+// Description:
+//  Given an LLVM value, insert a cast instruction to make it a given type.
+//
+static inline Value *
+castTo (Value * V, const Type * Ty, Instruction * InsertPt) {
+  //
+  // Don't bother creating a cast if it's already the correct type.
+  //
+  if (V->getType() == Ty)
+    return V;
+
+  //
+  // If it's a constant, just create a constant expression.
+  //
+  if (Constant * C = dyn_cast<Constant>(V)) {
+    Constant * CE = ConstantExpr::getCast (C, Ty);
+    return CE;
+  }
+
+  //
+  // Otherwise, insert a cast instruction.
+  //
+  return new CastInst(V, Ty, "cast", InsertPt);
+}
+
 //Kernel support rutines
 static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
   //Here we insert a global meta pool
@@ -1501,8 +1529,10 @@ void InsertPoolChecks::addPoolChecks(Module &M) {
 #endif
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
     std::string Name = I->getName();
+#if 0
     if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
       continue;
+#endif
     if (!I->isExternal()) TransformFunction(*I);
   }
   if (!DisableLSChecks)  addLoadStoreChecks(M);
@@ -1524,109 +1554,38 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
     Value *Fop = CI->getOperand(0);
     Function *F = CI->getParent()->getParent();
 #ifdef LLVA_KERNEL    
-    if (Fop->getName() == "llvm.memcpy.i32") {
-      //
-      // Create a call to an accurate bounds check that will check that the
-      // memory to which memcpy is copying data is valid.
-      //
-      Instruction *InsertPt = CI;
-      CastInst *CastCIUint = 
-        new CastInst(CI->getOperand(1), Type::UIntTy, "node.mccasted", InsertPt);
-      CastInst *CastCIOp3 = 
-        new CastInst(CI->getOperand(3), Type::UIntTy, "node.mccasted", InsertPt);
-      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
-                                                CastCIOp3, "memcpyadd",InsertPt);
-
-      Instruction *Finalp = BinaryOperator::create(Instruction::Sub, Bop,
-                                                ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
-
-      Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
-                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
-
-      // Create the call to do an accurate bounds check
-      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
-        insertBoundsCheck (CI, CI->getOperand(1), Finalp, InsertPt);
-    } else if (Fop->getName() == "llva_memcpy") {
-      //
-      // Create a call to an accurate bounds check.
-      //
-      Instruction *InsertPt = CI;
-      CastInst *CastCIUint = 
-        new CastInst(CI->getOperand(1), Type::UIntTy, "node.mccasted", InsertPt);
-      CastInst *CastCIOp3 = 
-        new CastInst(CI->getOperand(3), Type::UIntTy, "node.mccasted", InsertPt);
-      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
-                                                CastCIOp3, "memcpyadd",InsertPt);
-
-      Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
-                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
-      // Create the call to do an accurate bounds check
-      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
-        insertBoundsCheck (CI, CI->getOperand(1), Bop, InsertPt);
-    } else if (Fop->getName() == "memcmp") {
+    if ((Fop->getName() == "llvm.memcpy.i32")  || 
+        (Fop->getName() == "llvm.memcpy.i64")  ||
+        (Fop->getName() == "llvm.memset.i32")  ||
+        (Fop->getName() == "llvm.memset.i64")  ||
+        (Fop->getName() == "llvm.memmove.i32") ||
+        (Fop->getName() == "llvm.memmove.i64") ||
+        (Fop->getName() == "llva_memcpy")      ||
+        (Fop->getName() == "memcmp")) {
       //
       // Create a call to an accurate bounds check for each string parameter.
       //
       Instruction *InsertPt = CI;
-      CastInst *CastPointer1 = 
-        new CastInst(CI->getOperand(1), Type::UIntTy, "memcmpcast1", InsertPt);
-      CastInst *CastPointer2 = 
-        new CastInst(CI->getOperand(2), Type::UIntTy, "memcmpcast2", InsertPt);
-      CastInst *CastCIOp3 = 
-        new CastInst(CI->getOperand(3), Type::UIntTy, "memcmp.len", InsertPt);
+      Value * CastPointer1 = castTo (CI->getOperand(1), Type::UIntTy, InsertPt);
+      Value * CastPointer2 = castTo (CI->getOperand(2), Type::UIntTy, InsertPt);
+      Value * CastCIOp3    = castTo (CI->getOperand(3), Type::UIntTy, InsertPt);
 
       Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
-                                                 CastCIOp3, "memcpyadd",InsertPt);
+                                                 CastCIOp3, "mcadd",InsertPt);
       Instruction *Bop2 = BinaryOperator::create(Instruction::Add, CastPointer2,
-                                                 CastCIOp3, "memcpyadd",InsertPt);
+                                                 CastCIOp3, "mcadd",InsertPt);
       Instruction *Finalp1 = BinaryOperator::create(Instruction::Sub, Bop1,
-                                                 ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
+                                                 ConstantInt::get (Type::UIntTy, 1), "mcsub",InsertPt);
       Instruction *Finalp2 = BinaryOperator::create(Instruction::Sub, Bop2,
-                                                 ConstantInt::get (Type::UIntTy, 1), "memcpysub",InsertPt);
+                                                 ConstantInt::get (Type::UIntTy, 1), "mcsub",InsertPt);
 
       Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
-                                                ConstantInt::get (Type::UIntTy, 1), "memcpylen",InsertPt);
+                                                ConstantInt::get (Type::UIntTy, 1), "mclen",InsertPt);
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
       if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
-#if 0
-    } else if (Fop->getName() == "memset") {
-      Value *PH = getPoolHandle(CI->getOperand(1), F); 
-      Instruction *InsertPt = CI->getNext();
-      if (!PH) {
-        NullChecks++;
-        // Don't bother to insert the NULL check unless the user asked
-        if (!EnableNullChecks)
-          return;
-        PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
-      }
-      CastInst *CastCIUint = 
-        new CastInst(CI, Type::UIntTy, "node.lscasted", InsertPt);
-      CastInst *CastCIOp3 = 
-        new CastInst(CI->getOperand(3), Type::UIntTy, "node.lscasted", InsertPt);
-      Instruction *Bop = BinaryOperator::create(Instruction::Add, CastCIUint,
-                                                CastCIOp3, "memsetadd",InsertPt);
-      
-      // Create instructions to cast the checked pointer and the checked pool
-      // into sbyte pointers.
-      CastInst *CastSourcePointer = 
-        new CastInst(CI->getOperand(1), 
-                     PointerType::get(Type::SByteTy), "memset.1.casted", InsertPt);
-      CastInst *CastCI = 
-        new CastInst(Bop, 
-                     PointerType::get(Type::SByteTy), "memset.2.casted", InsertPt);
-      CastInst *CastPHI = 
-        new CastInst(PH, 
-                     PointerType::get(Type::SByteTy), "poolhandle.lscasted", InsertPt);
-      
-      // Create the call to poolcheck
-      std::vector<Value *> args(1,CastPHI);
-      args.push_back(CastSourcePointer);
-      args.push_back(CastCI);
-      new CallInst(PoolCheckArray,args,"", InsertPt);
-#endif
     }
 #endif    
   }

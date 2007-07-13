@@ -35,6 +35,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    `inreg` parameter attribute */
 #define LLVM_TARGET_ENABLE_REGPARM
 
+extern int ix86_regparm;
+
 #define LLVM_TARGET_INIT_REGPARM(local_regparm, type)           \
   {                                                             \
     tree attr;                                                  \

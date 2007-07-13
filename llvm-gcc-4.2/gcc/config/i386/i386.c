@@ -1123,7 +1123,8 @@ enum processor_type ix86_arch;
 int x86_prefetch_sse;
 
 /* ix86_regparm_string as a number */
-static int ix86_regparm;
+/* LLVM local */
+int ix86_regparm;
 
 /* -mstackrealign option */
 extern int ix86_force_align_arg_pointer;

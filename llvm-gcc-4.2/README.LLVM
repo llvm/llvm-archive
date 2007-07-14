@@ -10,20 +10,22 @@ problems, please ask for help or file a bug.
 Please follow these instructions carefully.  In particular, the target-specific
 configure instructions should be followed to ensure correct builds.
 
+Please also note, that this branch is still in early development phase and can
+be not usable at all.
 
 //===----------------------------------------------------------------------===//
                            First Step: Build LLVM
 //===----------------------------------------------------------------------===//
 
-First, check out LLVM from CVS, then build it in optimized mode (a Release
-build, as opposed to a Debug one)):
+First, check out LLVM from Subversion, then build it in optimized mode (a 
+Release build, as opposed to a Debug one)):
 
   make ENABLE_OPTIMIZED=1
 
 If you use a Debug instead of a Release build of LLVM, make sure you add
 --enable-checking to the configure flags below or llvm-gcc-4.2 will not build!
 
-Below we assume the LLVM OBJDIR is $LLVMOBJDIR.  
+Below we assume the LLVM OBJ_ROOT is $LLVMOBJDIR.
 
 
 //===----------------------------------------------------------------------===//

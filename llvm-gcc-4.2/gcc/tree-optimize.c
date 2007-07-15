@@ -49,8 +49,9 @@ Boston, MA 02110-1301, USA.  */
 #include "graph.h"
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 #include "opts.h"
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #include "llvm.h"
+/* LLVM LOCAL end */
 #include "cfgloop.h"
 #include "except.h"
 

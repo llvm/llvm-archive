@@ -66,6 +66,7 @@ extern "C" {
 #include "function.h"
 #include "tree-inline.h"
 #include "langhooks.h"
+#include "cgraph.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -556,10 +557,12 @@ void llvm_emit_code_for_current_function(tree fndecl) {
 
     // Set up parameters and prepare for return, for the function.
     Emitter.StartFunctionBody();
-    
-    // Emit the body of the function.
-    Emitter.Emit(DECL_SAVED_TREE(fndecl), 0);
-  
+
+    // Emit the body of the function iterating over all BBs
+    basic_block bb;    
+    FOR_EACH_BB_FN (bb, DECL_STRUCT_FUNCTION (fndecl))
+      Emitter.Emit(bb->stmt_list, 0);
+        
     // Wrap things up.
     Fn = Emitter.FinishFunctionBody();
   }

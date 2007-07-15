@@ -473,12 +473,6 @@ init_optimization_passes (void)
 {
   struct tree_opt_pass **p;
 
-/* LLVM LOCAL begin - Reduce cc1 size with dead code stripping.  */
-#ifdef ENABLE_LLVM
-  return;
-#endif
-/* LLVM LOCAL end */
-
 #define NEXT_PASS(PASS)  (p = next_pass_1 (p, &PASS))
   /* Interprocedural optimization passes.  */
   p = &all_ipa_passes;

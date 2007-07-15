@@ -2831,8 +2831,9 @@ extern void *llvm_get_decl(tree);
 #endif
 
 #define SET_DECL_LLVM(NODE, LLVM) (llvm_set_decl (NODE,LLVM))
-#define SET_DECL_LLVM_INDEX(NODE, INDEX) ((NODE)->decl_with_rtl.llvm = INDEX)
-#define GET_DECL_LLVM_INDEX(NODE) ((NODE)->decl_with_rtl.llvm)
+#define SET_DECL_LLVM_INDEX(NODE, INDEX)  \
+  (DECL_WRTL_CHECK(NODE)->decl_with_rtl.llvm = INDEX)
+#define GET_DECL_LLVM_INDEX(NODE) (DECL_WRTL_CHECK(NODE)->decl_with_rtl.llvm)
 
 /* Returns nonzero if the DECL_LLVM for NODE has already been set.  */
 extern bool llvm_set_decl_p(tree);
@@ -2840,7 +2841,8 @@ extern bool llvm_set_decl_p(tree);
 /* Copy the LLVM from NODE1 to NODE2.  If the LLVM was not set for
    NODE1, it will not be set for NODE2; this is a lazy copy.  */
 #define COPY_DECL_LLVM(NODE1, NODE2)  \
-  ((NODE2)->decl_with_rtl.llvm = (NODE1)->decl_with_rtl.llvm)
+  (DECL_WRTL_CHECK(NODE2)->decl_with_rtl.llvm =  \
+   DECL_WRTL_CHECK(NODE1)->decl_with_rtl.llvm)
 /* The DECL_LLVM for NODE, if it is set, or NULL, if it is not set.  */
 #define DECL_LLVM_IF_SET(NODE) \
   (DECL_LLVM_SET_P (NODE) ? DECL_LLVM (NODE) : NULL)

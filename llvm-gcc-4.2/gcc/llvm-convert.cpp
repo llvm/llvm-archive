@@ -4928,15 +4928,15 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    assert(DECL_LLVM_SET_P(FieldDecl) && "Struct not laid out for LLVM?");
-    ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
-    uint32_t MemberIndex = CI->getZExtValue();
+    unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
+    assert(MemberIndex != ~0U && "Struct not laid out for LLVM?");
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
     FieldPtr = Builder.CreateGEP(StructAddrLV.Ptr,
-                                 Constant::getNullValue(Type::Int32Ty), CI,
+                                 Constant::getNullValue(Type::Int32Ty),
+                                 ConstantInt::get(Type::Int32Ty, MemberIndex),
                                  "tmp");
-    
+
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.
     if (MemberIndex) {
@@ -5630,7 +5630,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
   // that contains bits from the bitfield overlayed with the declared type of
   // the bitfield.  This bitfield value may be spread across multiple fields, or
   // it may be just this field, or it may just be a small part of this field.
-  unsigned FieldNo = cast<ConstantInt>(DECL_LLVM(Field))->getZExtValue();
+  unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
   assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
   
   // Get the offset and size of the LLVM field.
@@ -5768,8 +5768,8 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       ProcessBitFieldInitialization(Field, Val, STy, ResultElts);
     } else {
       // If not, things are much simpler.
-      assert(DECL_LLVM_SET_P(Field) && "Struct not laid out for LLVM?");
-      unsigned FieldNo = cast<ConstantInt>(DECL_LLVM(Field))->getZExtValue();
+      unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
+      assert(FieldNo != ~0U && "Struct not laid out for LLVM?");
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
@@ -6002,13 +6002,12 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    assert(DECL_LLVM_SET_P(FieldDecl) && "Struct not laid out for LLVM?");
-    ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
-    uint64_t MemberIndex = CI->getZExtValue();
+    unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
+    assert(MemberIndex != ~0U && "Struct not laid out for LLVM?");
     
     std::vector<Value*> Idxs;
     Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
-    Idxs.push_back(CI);
+    Idxs.push_back(ConstantInt::get(Type::Int32Ty, MemberIndex));
     FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, &Idxs[0],
                                               Idxs.size());
     

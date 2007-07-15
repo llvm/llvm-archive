@@ -124,11 +124,20 @@ class TypeConverter {
   /// POINTER_TYPE to this list.
   ///
   std::vector<tree_node*> PointersToReresolve;
+
+  /// FieldIndexMap - Holds the mapping from a FIELD_DECL to the index of the
+  /// corresponding LLVM field.
+  std::map<tree_node *, unsigned int> FieldIndexMap;
 public:
   TypeConverter() : ConvertingStruct(false) {}
   
   const Type *ConvertType(tree_node *type);
-  
+
+  /// GetFieldIndex - Returns the index of the LLVM field corresponding to
+  /// this FIELD_DECL, or ~0U if the type the field belongs to has not yet
+  /// been converted.
+  unsigned int GetFieldIndex(tree_node *field_decl);
+
   /// GCCTypeOverlapsWithLLVMTypePadding - Return true if the specified GCC type
   /// has any data that overlaps with structure padding in the specified LLVM
   /// type.
@@ -153,6 +162,7 @@ public:
 private:
   const Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
   const Type *ConvertUNION(tree_node *type, tree_node *orig_type);
+  void SetFieldIndex(tree_node *field_decl, unsigned int Index);
   void DecodeStructFields(tree_node *Field, StructTypeConversionInfo &Info);
   void DecodeStructBitField(tree_node *Field, StructTypeConversionInfo &Info);
 };

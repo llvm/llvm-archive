@@ -602,6 +602,25 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   }
 }
 
+/// GetFieldIndex - Returns the index of the LLVM field corresponding to
+/// this FIELD_DECL, or ~0U if the type the field belongs to has not yet
+/// been converted.
+unsigned int TypeConverter::GetFieldIndex(tree_node *field_decl) {
+  assert(TREE_CODE(field_decl) == FIELD_DECL && "Not a FIELD_DECL!");
+  std::map<tree, unsigned int>::iterator I = FieldIndexMap.find(field_decl);
+  if (I != FieldIndexMap.end())
+    return I->second;
+  else
+    return ~0U;
+}
+
+/// SetFieldIndex - Set the index of the LLVM field corresponding to
+/// this FIELD_DECL.
+void TypeConverter::SetFieldIndex(tree_node *field_decl, unsigned int Index) {
+  assert(TREE_CODE(field_decl) == FIELD_DECL && "Not a FIELD_DECL!");
+  FieldIndexMap[field_decl] = Index;
+}
+
 bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type, 
                                                        const Type *Ty) {
   
@@ -1255,8 +1274,8 @@ struct StructTypeConversionInfo {
     return getFieldEndOffsetInBytes(ElementOffsetInBytes.size()-1);
   }
 
-  /// getLLVMFieldFor - When we are assigning DECL_LLVM indexes to FieldDecls,
-  /// this method determines which struct element to use.  Since the offset of
+  /// getLLVMFieldFor - When we are assigning indices to FieldDecls, this
+  /// method determines which struct element to use.  Since the offset of
   /// the fields cannot go backwards, CurFieldNo retains the last element we
   /// looked at, to keep this a nice fast linear process.  If isZeroSizeField
   /// is true, this should return some zero sized field that starts at the
@@ -1657,8 +1676,8 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   }
   
   // Now that the LLVM struct is finalized, figure out a safe place to index to
-  // and set the DECL_LLVM values for each FieldDecl that doesn't start at a
-  // variable offset.
+  // and set index values for each FieldDecl that doesn't start at a variable
+  // offset.
   unsigned CurFieldNo = 0;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
     if (TREE_CODE(Field) == FIELD_DECL &&
@@ -1685,7 +1704,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
       unsigned FieldNo = 
         Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
-      SET_DECL_LLVM(Field, ConstantInt::get(Type::Int32Ty, FieldNo));
+      SetFieldIndex(Field, FieldNo);
     }
   
   const Type *ResultTy = Info->getLLVMType();
@@ -1767,14 +1786,13 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
   unsigned MaxSize = 0, MaxAlign = 0;
-  Value *Idx = Constant::getNullValue(Type::Int32Ty);
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
     assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
 
     // Set the field idx to zero for all fields.
-    SET_DECL_LLVM(Field, Idx);
-    
+    SetFieldIndex(Field, 0);
+
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     unsigned Size     = TD.getTypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);

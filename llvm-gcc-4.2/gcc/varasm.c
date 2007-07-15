@@ -53,8 +53,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "cgraph.h"
 #include "cfglayout.h"
 #include "basic-block.h"
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #include "llvm.h"
+/* LLVM LOCAL end */
 
 #ifdef XCOFF_DEBUGGING_INFO
 #include "xcoffout.h"		/* Needed for external data
@@ -3705,7 +3706,11 @@ output_constant_pool (const char *fnname ATTRIBUTE_UNUSED,
 void
 output_shared_constant_pool (void)
 {
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   output_constant_pool_contents (shared_constant_pool);
+#endif
+  /* LLVM LOCAL end */
 }
 
 /* Determine what kind of relocations EXP may need.  */
@@ -6455,7 +6460,11 @@ output_object_block_htab (void **slot, void *data ATTRIBUTE_UNUSED)
 void
 output_object_blocks (void)
 {
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   htab_traverse (object_block_htab, output_object_block_htab, NULL);
+#endif
+  /* LLVM LOCAL end */
 }
 
 #include "gt-varasm.h"

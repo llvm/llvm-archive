@@ -64,6 +64,7 @@ extern "C" {
 #include "timevar.h"
 #include "tm.h"
 #include "function.h"
+#include "tree-flow.h"
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
@@ -561,7 +562,9 @@ void llvm_emit_code_for_current_function(tree fndecl) {
     // Emit the body of the function iterating over all BBs
     basic_block bb;    
     FOR_EACH_BB_FN (bb, DECL_STRUCT_FUNCTION (fndecl))
-      Emitter.Emit(bb->stmt_list, 0);
+      for (block_stmt_iterator bsi = bsi_start (bb);
+           !bsi_end_p (bsi); bsi_next (&bsi))
+        Emitter.Emit(bsi_stmt (bsi), 0);
         
     // Wrap things up.
     Fn = Emitter.FinishFunctionBody();

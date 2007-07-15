@@ -1861,10 +1861,10 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       return;
     }
 
-  gcc_assert (MEM_P (decl_rtl));
-  gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
   /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM   /* register globals are not supported */
+  gcc_assert (MEM_P (decl_rtl));
+  gcc_assert (GET_CODE (XEXP (decl_rtl, 0)) == SYMBOL_REF);
   symbol = XEXP (decl_rtl, 0);
   name = XSTR (symbol, 0);
 #else
@@ -1876,6 +1876,16 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   /* Compute the alignment of this data.  */
 
   align_variable (decl, dont_output_data);
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  if (dont_output_data) {
+    fprintf(stderr, "LLVM must emit the data!");
+    abort();
+  }
+  emit_global_to_llvm(decl);
+  return;
+#endif
+  /* LLVM LOCAL end */
   set_mem_align (decl_rtl, DECL_ALIGN (decl));
 
   if (TREE_PUBLIC (decl))
@@ -5111,7 +5121,7 @@ do_assemble_alias (tree decl, tree target)
   }
 #endif
 }
-/* LLVM LCOAL */
+/* LLVM LOCAL */
 #endif
 
 /* First pass of completing pending aliases.  Make sure that cgraph knows

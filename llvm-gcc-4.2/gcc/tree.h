@@ -2837,7 +2837,7 @@ extern void *llvm_get_decl(tree);
 
 /* Returns nonzero if the DECL_LLVM for NODE has already been set.  */
 extern bool llvm_set_decl_p(tree);
-#define DECL_LLVM_SET_P(NODE) (llvm_set_decl_p(NODE))
+#define DECL_LLVM_SET_P(NODE) (HAS_RTL_P (NODE) && llvm_set_decl_p(NODE))
 /* Copy the LLVM from NODE1 to NODE2.  If the LLVM was not set for
    NODE1, it will not be set for NODE2; this is a lazy copy.  */
 #define COPY_DECL_LLVM(NODE1, NODE2)  \

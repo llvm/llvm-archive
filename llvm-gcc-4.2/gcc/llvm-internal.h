@@ -521,6 +521,7 @@ private:
   Value *EmitABS_EXPR(tree_node *exp);
   Value *EmitBIT_NOT_EXPR(tree_node *exp);
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
+  Value *EmitEXACT_DIV_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                      unsigned FPOpc);
   Value *EmitBinOp(tree_node *exp, Value *DestLoc, unsigned Opc);

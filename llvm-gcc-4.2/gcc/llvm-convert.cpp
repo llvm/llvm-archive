@@ -864,8 +864,8 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case PLUS_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
   case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
   case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
+  case EXACT_DIV_EXPR: Result = EmitEXACT_DIV_EXPR(exp, DestLoc); break;
   case TRUNC_DIV_EXPR: 
-  case EXACT_DIV_EXPR:   // TODO: Optimize EXACT_DIV_EXPR.
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
       Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
     else 
@@ -3313,6 +3313,29 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
                               TREE_CODE(exp) == MAX_EXPR ? "max" : "min");
 }
 
+Value *TreeToLLVM::EmitEXACT_DIV_EXPR(tree exp, Value *DestLoc) {
+  // Unsigned EXACT_DIV_EXPR -> normal udiv.
+  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+    return EmitBinOp(exp, DestLoc, Instruction::UDiv);
+  
+  // If this is a signed EXACT_DIV_EXPR by a constant, and we know that
+  // the RHS is a multiple of two, we strength reduce the result to use
+  // a signed SHR here.  We have no way in LLVM to represent EXACT_DIV_EXPR
+  // precisely, so this transform can't currently be performed at the LLVM
+  // level.  This is commonly used for pointer subtraction. 
+  if (TREE_CODE(TREE_OPERAND(exp, 1)) == INTEGER_CST) {
+    uint64_t IntValue = getINTEGER_CSTVal(TREE_OPERAND(exp, 1));
+    if (isPowerOf2_64(IntValue)) {
+      // Create an ashr instruction, by the log of the division amount.
+      Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+      return Builder.CreateAShr(LHS, ConstantInt::get(LHS->getType(),
+                                                      Log2_64(IntValue)),"tmp");
+    }
+  }
+  
+  // Otherwise, emit this as a normal signed divide.
+  return EmitBinOp(exp, DestLoc, Instruction::SDiv);
+}
 
 Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, Value *DestLoc) {
   // Notation: FLOOR_MOD_EXPR <-> Mod, TRUNC_MOD_EXPR <-> Rem.

@@ -5171,6 +5171,11 @@ finish_aliases_2 (void)
 #ifdef ENABLE_LLVM
     {
       tree target_decl;
+      if (lookup_attribute ("weakref", DECL_ATTRIBUTES (p->decl)))
+        {
+          ultimate_transparent_alias_target (&p->target);
+        }
+              
       target_decl = find_decl_and_mark_needed (p->decl, p->target);
       emit_alias_to_llvm(p->decl, p->target, target_decl);
     }

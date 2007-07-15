@@ -7067,6 +7067,14 @@ in_array_bounds_p (tree ref)
   if (TREE_CODE (idx) != INTEGER_CST)
     return false;
 
+  /* LLVM LOCAL begin */      
+#if ENABLE_LLVM
+    /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
+  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (ref, 0))) != ARRAY_TYPE)
+    return false;
+#endif
+  /* LLVM LOCAL end */
+
   min = array_ref_low_bound (ref);
   max = array_ref_up_bound (ref);
   if (!min
@@ -7089,6 +7097,15 @@ in_array_bounds_p (tree ref)
 bool
 range_in_array_bounds_p (tree ref)
 {
+  /* LLVM LOCAL begin */      
+#if ENABLE_LLVM
+    /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
+  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (ref, 0))) != ARRAY_TYPE)
+    return false;
+  else {
+#endif
+  /* LLVM LOCAL end */
+    
   tree domain_type = TYPE_DOMAIN (TREE_TYPE (ref));
   tree range_min, range_max, min, max;
 
@@ -7113,6 +7130,11 @@ range_in_array_bounds_p (tree ref)
     return false;
 
   return true;
+  /* LLVM LOCAL begin */
+#if ENABLE_LLVM
+  }
+#endif  
+  /* LLVM LOCAL end */
 }
 
 /* Return true if T (assumed to be a DECL) is a global variable.  */

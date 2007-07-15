@@ -12935,7 +12935,14 @@ fold_read_from_constant_string (tree exp)
 {
   if ((TREE_CODE (exp) == INDIRECT_REF
        || TREE_CODE (exp) == ARRAY_REF)
-      && TREE_CODE (TREE_TYPE (exp)) == INTEGER_TYPE)
+      && TREE_CODE (TREE_TYPE (exp)) == INTEGER_TYPE &&
+/* LLVM LOCAL begin */      
+#if ENABLE_LLVM
+    /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
+      (TREE_CODE (TREE_TYPE (TREE_OPERAND (exp, 0))) == ARRAY_TYPE)
+#endif
+/* LLVM LOCAL end */      
+    )
     {
       tree exp1 = TREE_OPERAND (exp, 0);
       tree index;

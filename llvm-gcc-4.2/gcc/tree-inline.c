@@ -2633,7 +2633,13 @@ copy_decl_for_dup_finish (copy_body_data *id, tree decl, tree copy)
   /* The new variable/label has no RTL, yet.  */
   if (CODE_CONTAINS_STRUCT (TREE_CODE (copy), TS_DECL_WRTL)
       && !TREE_STATIC (copy) && !DECL_EXTERNAL (copy))
-    SET_DECL_RTL (copy, NULL_RTX);
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+    SET_DECL_LLVM (copy, 0);
+#else
+    SET_DECL_RTL (copy, NULL_RTX); 
+#endif
+  /* LLVM_LOCAL end */
   
   /* These args would always appear unused, if not for this.  */
   TREE_USED (copy) = 1;
@@ -2823,6 +2829,8 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
   /* Generate a new name for the new version. */
   if (!update_clones)
     DECL_NAME (new_decl) = create_tmp_var_name (NULL);
+  /* LLVM LOCAL begin */
+  #ifndef ENABLE_LLVM
   /* Create a new SYMBOL_REF rtx for the new name. */
   if (DECL_RTL (old_decl) != NULL)
     {
@@ -2831,7 +2839,9 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
 	gen_rtx_SYMBOL_REF (GET_MODE (XEXP (DECL_RTL (old_decl), 0)),
 			    IDENTIFIER_POINTER (DECL_NAME (new_decl)));
     }
-
+  #endif
+  /* LLVM LOCAL end */
+    
   /* Prepare the data structures for the tree copy.  */
   memset (&id, 0, sizeof (id));
   

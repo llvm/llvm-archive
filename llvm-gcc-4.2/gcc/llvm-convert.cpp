@@ -676,8 +676,8 @@ void TreeToLLVM::StartFunctionBody() {
   // As it turns out, not all temporaries are associated with blocks.  For those
   // that aren't, emit them now.
   for (tree t = cfun->unexpanded_var_list; t; t = TREE_CHAIN(t)) {
-    assert(!DECL_LLVM_SET_P(TREE_VALUE(t)) && "var already emitted?");
-    EmitAutomaticVariableDecl(TREE_VALUE(t));
+    if (!DECL_LLVM_SET_P(TREE_VALUE(t)))
+      EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
   
   // Create a new block for the return node, but don't insert it yet.

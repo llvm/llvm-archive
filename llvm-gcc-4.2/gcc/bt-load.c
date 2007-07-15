@@ -1506,7 +1506,7 @@ rest_of_handle_branch_target_load_optimize (void)
   static int warned = 0;
 /* LLVM LOCAL begin - reduce cc1 size.  */
 #ifdef ENABLE_LLVM
-  return;
+  return 0;
 #endif
 /* LLVM LOCAL end.  */
   /* Leave this a warning for now so that it is possible to experiment

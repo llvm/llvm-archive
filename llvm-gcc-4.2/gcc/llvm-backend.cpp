@@ -619,8 +619,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     }
     
     if (!Aliasee) {
-      error ("%J%qD aliased to undefined symbol %qE",
-             decl, decl, target);
+      error ("%J%qD aliased to undefined symbol %qs", decl, decl, AliaseeName);
       timevar_pop(TV_LLVM_GLOBALS);
       return;
     }

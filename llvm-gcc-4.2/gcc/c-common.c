@@ -6057,7 +6057,7 @@ handle_annotate_attribute (tree *node, tree name, tree args,
   }
   else
   {
-    warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+    warning (0, "%qs attribute ignored", IDENTIFIER_POINTER (name));
     *no_add_attrs = true;
   }
   

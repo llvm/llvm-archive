@@ -1,0 +1,2 @@
+DepModule: support
+BuildCmd: echo "Support module doesn't build yet"

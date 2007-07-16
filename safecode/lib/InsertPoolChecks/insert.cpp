@@ -1625,13 +1625,18 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
     Value *Fop = CI->getOperand(0);
     Function *F = CI->getParent()->getParent();
 #ifdef LLVA_KERNEL    
-    if ((Fop->getName() == "llvm.memcpy.i32")  || 
-        (Fop->getName() == "llvm.memcpy.i64")  ||
-        (Fop->getName() == "llvm.memset.i32")  ||
-        (Fop->getName() == "llvm.memset.i64")  ||
-        (Fop->getName() == "llvm.memmove.i32") ||
-        (Fop->getName() == "llvm.memmove.i64") ||
-        (Fop->getName() == "llva_memcpy")      ||
+    if ((Fop->getName() == "llvm.memcpy.i32")    || 
+        (Fop->getName() == "llvm.memcpy.i64")    ||
+        (Fop->getName() == "llvm.memset.i32")    ||
+        (Fop->getName() == "llvm.memset.i64")    ||
+        (Fop->getName() == "llvm.memmove.i32")   ||
+        (Fop->getName() == "llvm.memmove.i64")   ||
+        (Fop->getName() == "llva_memcpy")        ||
+        (Fop->getName() == "llva_memset")        ||
+        (Fop->getName() == "llva_strncpy")       ||
+        (Fop->getName() == "llva_invokememcpy")  ||
+        (Fop->getName() == "llva_invokestrncpy") ||
+        (Fop->getName() == "llva_invokememset")  ||
         (Fop->getName() == "memcmp")) {
       //
       // Create a call to an accurate bounds check for each string parameter.

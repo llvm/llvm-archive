@@ -6829,7 +6829,14 @@ try_move_mult_to_index (enum tree_code code, tree addr, tree op1)
 
   for (;; ref = TREE_OPERAND (ref, 0))
     {
-      if (TREE_CODE (ref) == ARRAY_REF)
+      if (TREE_CODE (ref) == ARRAY_REF
+          /* LLVM LOCAL begin */      
+#if ENABLE_LLVM
+          /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
+          && (TREE_CODE (TREE_TYPE (TREE_OPERAND (ref, 0))) == ARRAY_TYPE)
+#endif
+          /* LLVM LOCAL end */
+         )
 	{
 	  itype = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (ref, 0)));
 	  if (! itype)

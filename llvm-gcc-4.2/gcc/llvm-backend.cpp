@@ -559,13 +559,16 @@ void llvm_emit_code_for_current_function(tree fndecl) {
     // Set up parameters and prepare for return, for the function.
     Emitter.StartFunctionBody();
 
+    // Drop all fallthru edges, make explicit jumps
+    disband_implicit_edges();
+    
     // Emit the body of the function iterating over all BBs
-    basic_block bb;    
-    FOR_EACH_BB_FN (bb, DECL_STRUCT_FUNCTION (fndecl))
+    basic_block bb;
+    FOR_EACH_BB (bb)
       for (block_stmt_iterator bsi = bsi_start (bb);
            !bsi_end_p (bsi); bsi_next (&bsi))
         Emitter.Emit(bsi_stmt (bsi), 0);
-        
+    
     // Wrap things up.
     Fn = Emitter.FinishFunctionBody();
   }
@@ -625,9 +628,26 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     }
     
     if (!Aliasee) {
-      error ("%J%qD aliased to undefined symbol %qs", decl, decl, AliaseeName);
-      timevar_pop(TV_LLVM_GLOBALS);
-      return;
+      if (lookup_attribute ("weakref", DECL_ATTRIBUTES (decl))) {
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+          Aliasee = new GlobalVariable(GV->getType(),
+                                       GV->isConstant(),
+                                       GlobalVariable::ExternalLinkage,
+                                       NULL,
+                                       AliaseeName,
+                                       TheModule);
+        else if (Function *F = dyn_cast<Function>(V))
+          Aliasee = new Function(F->getFunctionType(),
+                                 Function::ExternalLinkage,
+                                 AliaseeName,
+                                 TheModule);
+        else
+          assert(0 && "Unsuported global value");
+      } else {
+        error ("%J%qD aliased to undefined symbol %qs", decl, decl, AliaseeName);
+        timevar_pop(TV_LLVM_GLOBALS);
+        return;
+      } 
     }
   }
   

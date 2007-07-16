@@ -12,7 +12,7 @@
 
 # Getting the module dependencies also causes them to be checked out.
 MODULE_DEPENDENCIES=""
-get_dependencies "$@"
+get_module_dependencies "$@"
 
 # Report what happened.
 msg 0 Modules checked out:"$MODULE_DEPENDENCIES".

@@ -11,25 +11,36 @@ You should check this module out with the following subversion command:
    svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
 
 Once you've done that, you can then check out a module (and all its
-dependencies) with the 'make checkout MODULE=modulename' command.  For example:
+dependencies) with the get script located here. For example:
 
-  make checkout MODULE=llvm-gcc-4.0
+  ./get llvm-gcc-4-0
 
-Checks out llvm-gcc-4.0 (the llvm C/C++/ObjC compiler built with the GCC 4.0
-front-end) and all the things it depends on.  Other modules available are:
+which will check out both llvm and llvm-gcc-4-0 because the latter depends on
+the former.
 
-  test-suite - The llvm test suite
-  stacker    - The stacker front end (a 'Forth-like' language)
-  hlvm       - High Level Virtual Machine
+Similarly you can build any module just by using the build script located
+here. For example:
 
-You can check out any number of modules.
+  ./build llvm-gcc-4-0 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
 
+As you might guess, this will check out both llvm and llvm-gcc-4-0 if they
+haven't been and then configure and build them according to the arguments 
+that you specified. 
 
-Once you check out the modules, use the "make" command to automatically
-configure and build the projects you checked out.
+The modules available are:
 
-...
+  llvm-top     - This directory
+  llvm         - The core llvm software
+  llvm-gcc-4-0 - The C/C++/Obj-C front end for llvm, based on GCC 4.0
+  llvm-gcc-4-2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
+  test-suite   - The llvm test suite
+  stacker      - The stacker front end (a 'Forth-like' language)
+  hlvm         - High Level Virtual Machine (nascent)
+  java         - Java Front End (unfinished, out of date)
 
+You can check out any number of modules using the "get" script.
+
+-----------------------------------------------------------------------------
 
 Some Other Useful URLS
 ======================

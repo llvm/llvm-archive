@@ -4952,7 +4952,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
-    assert(MemberIndex != ~0U && "Struct not laid out for LLVM?");
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
     FieldPtr = Builder.CreateGEP(StructAddrLV.Ptr,
@@ -5655,7 +5654,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
   // it may be just this field, or it may just be a small part of this field.
   unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
   assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
-  
+
   // Get the offset and size of the LLVM field.
   uint64_t STyFieldBitOffs = STyLayout->getElementOffset(FieldNo)*8;
   
@@ -5792,7 +5791,6 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     } else {
       // If not, things are much simpler.
       unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
-      assert(FieldNo != ~0U && "Struct not laid out for LLVM?");
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
@@ -6026,8 +6024,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
-    assert(MemberIndex != ~0U && "Struct not laid out for LLVM?");
-    
+
     std::vector<Value*> Idxs;
     Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
     Idxs.push_back(ConstantInt::get(Type::Int32Ty, MemberIndex));

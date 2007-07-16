@@ -608,10 +608,12 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
 unsigned int TypeConverter::GetFieldIndex(tree_node *field_decl) {
   assert(TREE_CODE(field_decl) == FIELD_DECL && "Not a FIELD_DECL!");
   std::map<tree, unsigned int>::iterator I = FieldIndexMap.find(field_decl);
-  if (I != FieldIndexMap.end())
+  if (I != FieldIndexMap.end()) {
     return I->second;
-  else
+  } else {
+    assert(false && "Type not laid out for LLVM?");
     return ~0U;
+  }
 }
 
 /// SetFieldIndex - Set the index of the LLVM field corresponding to

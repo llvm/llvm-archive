@@ -134,8 +134,7 @@ public:
   const Type *ConvertType(tree_node *type);
 
   /// GetFieldIndex - Returns the index of the LLVM field corresponding to
-  /// this FIELD_DECL, or ~0U if the type the field belongs to has not yet
-  /// been converted.
+  /// this FIELD_DECL.
   unsigned int GetFieldIndex(tree_node *field_decl);
 
   /// GCCTypeOverlapsWithLLVMTypePadding - Return true if the specified GCC type

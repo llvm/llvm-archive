@@ -18,7 +18,7 @@ typedef struct MetaPoolTy {
   /* A splay of Pools, useful for registration tracking */
   void* Slabs;
 
-  /* A splay for registering stack and global values */
+  /* A splay for registering global objects and heap objects */
   void* Objs;
 
   /* A splay for registering function pointers */

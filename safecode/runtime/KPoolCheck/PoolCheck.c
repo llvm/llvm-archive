@@ -210,6 +210,27 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   PCUNLOCK();
 }
 
+void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
+  unsigned int index;
+  if (!MP) { return; }
+  PCLOCK();
+
+  adl_splay_insert(&MP->Objs, addr, len, __builtin_return_address(0));
+#if 1
+  /*
+   * Look for an entry in the cache that matches.  If it does, just erase it.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((MP->start[index] <= addr) &&
+       (MP->start[index]+MP->length[index] >= addr)) {
+      MP->start[index] = 0;
+      MP->length[index] = 0;
+      MP->cache[index] = 0;
+    }
+  }
+#endif
+  PCUNLOCK();
+}
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
   unsigned int index;
@@ -224,6 +245,26 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
     poolcheckinfo ("drop_obj: Failed to remove: 1", addr, tag);
   }
 #endif
+  /*
+   * See if the object is within the cache.  If so, remove it from the cache.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((MP->start[index] <= addr) &&
+       (MP->start[index]+MP->length[index] >= addr)) {
+      MP->start[index] = 0;
+      MP->length[index] = 0;
+      MP->cache[index] = 0;
+    }
+  }
+  PCUNLOCK();
+}
+
+void pchk_drop_stack (MetaPoolTy* MP, void* addr) {
+  unsigned int index;
+  if (!MP) return;
+  PCLOCK();
+  adl_splay_delete(&MP->Objs, addr);
+
   /*
    * See if the object is within the cache.  If so, remove it from the cache.
    */
@@ -427,10 +468,13 @@ void* getBounds(MetaPoolTy* MP, void* src) {
   unsigned len = 0;
   PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
-  PCUNLOCK();
   if (fs) {
+    PCUNLOCK();
     return (MP->Objs);
   }
+
+  /* Return that the object was not found */
+  PCUNLOCK();
   return &not_found;
 }
 
@@ -477,16 +521,11 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
 #if 0
   PCLOCK2();
 #endif
-#if 1
   long long tsc1, tsc2;
   if (do_profile) tsc1 = llva_save_tsc();
-#endif
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
-#if 1
   if (do_profile) tsc2 = llva_save_tsc();
   if (do_profile) pchk_profile(MP, __builtin_return_address(0), (long)(tsc2 - tsc1));
-#endif
-  PCUNLOCK();
   if (fs) {
 #if 1
     unsigned int index = MP->cindex;
@@ -495,8 +534,11 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
     MP->cache[index] = MP->Objs;
     MP->cindex = (index+1) & 3u;
 #endif
+    PCUNLOCK();
     return MP->Objs;
   }
+
+  PCUNLOCK();
   return &found;
 }
 

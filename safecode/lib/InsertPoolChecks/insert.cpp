@@ -93,6 +93,7 @@ static Statistic<> MissChecks ("safecode",
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 
 static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
+static Statistic<> SavedPoolChecks ("safecode", "Pool Checks Performed on Checked Pointers");
 
 // Bounds Check Statistics
 static Statistic<> BoundsChecks     ("safecode",
@@ -1625,19 +1626,20 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
     Value *Fop = CI->getOperand(0);
     Function *F = CI->getParent()->getParent();
 #ifdef LLVA_KERNEL    
-    if ((Fop->getName() == "llvm.memcpy.i32")    || 
-        (Fop->getName() == "llvm.memcpy.i64")    ||
-        (Fop->getName() == "llvm.memset.i32")    ||
-        (Fop->getName() == "llvm.memset.i64")    ||
-        (Fop->getName() == "llvm.memmove.i32")   ||
-        (Fop->getName() == "llvm.memmove.i64")   ||
-        (Fop->getName() == "llva_memcpy")        ||
-        (Fop->getName() == "llva_memset")        ||
-        (Fop->getName() == "llva_strncpy")       ||
-        (Fop->getName() == "llva_invokememcpy")  ||
-        (Fop->getName() == "llva_invokestrncpy") ||
-        (Fop->getName() == "llva_invokememset")  ||
-        (Fop->getName() == "memcmp")) {
+    std::string FuncName = Fop->getName();
+    if ((FuncName == "llvm.memcpy.i32")    || 
+        (FuncName == "llvm.memcpy.i64")    ||
+        (FuncName == "llvm.memset.i32")    ||
+        (FuncName == "llvm.memset.i64")    ||
+        (FuncName == "llvm.memmove.i32")   ||
+        (FuncName == "llvm.memmove.i64")   ||
+        (FuncName == "llva_memcpy")        ||
+        (FuncName == "llva_memset")        ||
+        (FuncName == "llva_strncpy")       ||
+        (FuncName == "llva_invokememcpy")  ||
+        (FuncName == "llva_invokestrncpy") ||
+        (FuncName == "llva_invokememset")  ||
+        (FuncName == "memcmp")) {
       //
       // Create a call to an accurate bounds check for each string parameter.
       //
@@ -1662,6 +1664,70 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
       if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
+    } else if ((FuncName == "llva_load_integer") ||
+               (FuncName == "llva_save_integer") ||
+               (FuncName == "llva_load_integer_stackp") ||
+               (FuncName == "llva_save_integer_stackp") ||
+               (FuncName == "llva_push_function1")) {
+      //
+      // Create a call to an accurate bounds check for the integer state
+      // pointer.
+      //
+      Instruction *InsertPt = CI;
+      Value * CastPointer1 = castTo (CI->getOperand(1), Type::UIntTy, InsertPt);
+      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_INTEGERSTATE_SIZE);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastLength, "mcadd",InsertPt);
+      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_INTEGERSTATE_SIZE - 1);
+
+      // Create the call to do an accurate bounds check
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+    } else if ((FuncName == "llva_load_fp") || (FuncName == "llva_load_fp")) {
+      //
+      // Create a call to an accurate bounds check for the FP state
+      // pointer.
+      //
+      Instruction *InsertPt = CI;
+      Value * CastPointer1 = castTo (CI->getOperand(1), Type::UIntTy, InsertPt);
+      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_FPSTATE_SIZE);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastLength, "mcadd",InsertPt);
+      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_FPSTATE_SIZE - 1);
+
+      // Create the call to do an accurate bounds check
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+    } else if ((FuncName == "llva_init_icontext") ||
+               (FuncName == "llva_clear_icontext") ||
+               (FuncName == "llva_was_privileged") ||
+               (FuncName == "llva_ipop_function0") ||
+               (FuncName == "llva_ipush_function0") ||
+               (FuncName == "llva_ipush_function1") ||
+               (FuncName == "llva_ipush_function3") ||
+               (FuncName == "llva_ialloca") ||
+               (FuncName == "llva_icontext_load_retvalue") ||
+               (FuncName == "llva_icontext_save_retvalue") ||
+               (FuncName == "llva_get_icontext_stackp") ||
+               (FuncName == "llva_set_icontext_stackp") ||
+               (FuncName == "llva_iset_privileged")) {
+      //
+      // Create a call to an accurate bounds check for the interrupt context
+      // pointer.
+      //
+      Instruction *InsertPt = CI;
+      Value * CastPointer1 = castTo (CI->getOperand(1), Type::UIntTy, InsertPt);
+      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastLength, "mcadd",InsertPt);
+      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE - 1);
+
+      // Create the call to do an accurate bounds check
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
     }
 #endif    
   }
@@ -2562,8 +2628,10 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // Do not perform a load/store check if the pointer used for this operation
   // has already been checked.
   //
-  if (findCheckedPointer(V))
+  if (findCheckedPointer(V)) {
+    ++SavedPoolChecks;
     return;
+  }
 
   // Get the pool handle associated with this pointer.  If there is no pool
   // handle, use a NULL pointer value and let the runtime deal with it.

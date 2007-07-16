@@ -268,7 +268,8 @@ EXTRA_GNAT1_OBJS = prefix.o
 EXTRA_GNATBIND_OBJS = prefix.o version.o
 
 # Language-independent object files.
-ADA_BACKEND = $(BACKEND) attribs.o
+# LLVM LOCAL
+ADA_BACKEND = $(BACKEND) attribs.o stub-objc.o stub-c.o
 
 # List of target dependent sources, overridden below as necessary
 TARGET_ADA_SRCS =
@@ -277,8 +278,10 @@ TARGET_ADA_SRCS =
 # Since the RTL should be built with the latest compiler, remove the
 #  stamp target in the parent directory whenever gnat1 is rebuilt
 gnat1$(exeext): $(TARGET_ADA_SRCS) $(GNAT1_OBJS) $(ADA_BACKEND) $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(GNAT1_OBJS) $(ADA_BACKEND) $(LIBS) \
-		$(SYSLIBS)
+# LLVM LOCAL begin
+	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(GNAT1_OBJS) $(ADA_BACKEND) \
+		$(LIBS) $(SYSLIBS)
+# LLVM LOCAL end
 	$(RM) stamp-gnatlib2 stamp-tools
 
 gnatbind$(exeext): ada/b_gnatb.o $(CONFIG_H) $(GNATBIND_OBJS)

@@ -31,6 +31,7 @@ The modules available are:
 
   llvm-top     - This directory
   llvm         - The core llvm software
+  cfe          - The new C/C++/Obj-C front end for llvm
   llvm-gcc-4-0 - The C/C++/Obj-C front end for llvm, based on GCC 4.0
   llvm-gcc-4-2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
   test-suite   - The llvm test suite

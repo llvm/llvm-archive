@@ -60,7 +60,7 @@ build_a_module() {
   fi
   build_command="$MODULE_INFO_VALUE"
   build_command="$build_command $BUILD_OPTS"
-  build_command="$build_command LLVM_TOP='$LLVM_TOP' PREFIX='$INSTALL_PREFIX'" 
+  build_command="$build_command LLVM_TOP=$LLVM_TOP PREFIX=$INSTALL_PREFIX" 
   build_command="$build_command $BUILD_PARAMS"
   msg 1 "Building Module $module with this command:"
   msg 1 "  $build_command"

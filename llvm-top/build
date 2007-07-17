@@ -37,7 +37,7 @@ for arg in "$@" ; do
       BUILD_OPTS="$BUILD_ARGS $arg"
       ;;
     *=*)
-      BUILD_PARMS="$BUILD_PARAMS $arg"
+      BUILD_PARAMS="$BUILD_PARAMS $arg"
       ;;
     *)
       MODULE_NAMES="$MODULE_NAMES $arg"
@@ -60,8 +60,8 @@ build_a_module() {
   fi
   build_command="$MODULE_INFO_VALUE"
   build_command="$build_command $BUILD_OPTS"
-  build_command="$build_command LLVM_TOP=$LLVM_TOP PREFIX=$INSTALL_PREFIX" 
-  build_command="$build_command $BUILD_PARAMS"
+  build_command="$build_command MODULE="$module" LLVM_TOP=$LLVM_TOP "
+  build_command="$build_command PREFIX=$INSTALL_PREFIX $BUILD_PARAMS" 
   msg 1 "Building Module $module with this command:"
   msg 1 "  $build_command"
   cd $module

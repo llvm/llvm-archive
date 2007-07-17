@@ -237,7 +237,12 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
 
 void pchk_reg_ic (int sysnum, int a, int b, int c, int d, int e, int f, void* addr) {
   PCLOCK();
+  adl_splay_insert(&ICSplay, addr, (28*4), 0);
+  PCUNLOCK();
+}
 
+void pchk_reg_ic_memtrap (void * p, void* addr) {
+  PCLOCK();
   adl_splay_insert(&ICSplay, addr, (28*4), 0);
   PCUNLOCK();
 }
@@ -291,6 +296,32 @@ void pchk_drop_stack (MetaPoolTy* MP, void* addr) {
 }
 
 void pchk_drop_ic (void* addr) {
+  PCLOCK();
+  adl_splay_delete(&ICSplay, addr);
+  PCUNLOCK();
+}
+
+/*
+ * Function: pchk_drop_ic_interrupt()
+ *
+ * Description:
+ *  Identical to pchk_drop_ic but takes an additional argument to make the
+ *  assembly dispatching code easier and faster.
+ */
+void pchk_drop_ic_interrupt (int intnum, void* addr) {
+  PCLOCK();
+  adl_splay_delete(&ICSplay, addr);
+  PCUNLOCK();
+}
+
+/*
+ * Function: pchk_drop_ic_memtrap()
+ *
+ * Description:
+ *  Identical to pchk_drop_ic but takes an additional argument to make the
+ *  assembly dispatching code easier and faster.
+ */
+void pchk_drop_ic_memtrap (void * p, void* addr) {
   PCLOCK();
   adl_splay_delete(&ICSplay, addr);
   PCUNLOCK();

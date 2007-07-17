@@ -278,6 +278,20 @@ void InsertPoolChecks::addObjFrees(Module& M) {
 }
 
 //
+// Method: insertICCheck()
+//
+// Description:
+//  Perform a run-time check to ensure that this pointer points to the
+//  beginning of an interrupt context.
+//
+void
+InsertPoolChecks::insertICCheck (Value * IC, Instruction * InsertPt) {
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+  Value * CastPointer = castTo (IC, VoidPtrType, InsertPt);
+  new CallInst (ICCheck, CastPointer, "", InsertPt);
+}
+
+//
 // Return value:
 //  Returns the inserted boundscheck call instruction.  This can be used to
 //  replace the destination instruction if desired.
@@ -1684,7 +1698,28 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
-    } else if ((FuncName == "llva_load_fp") || (FuncName == "llva_load_fp")) {
+    } else if ((FuncName == "llva_load_icontext") ||
+               (FuncName == "llva_save_icontext")) {
+      //
+      // Perform a check on the interrupt context.
+      //
+      Instruction *InsertPt = CI;
+      insertICCheck (CI->getOperand(1), InsertPt);
+
+      //
+      // Create a call to an accurate bounds check for the integer state.
+      //
+      Value * CastPointer1 = castTo (CI->getOperand(2), Type::UIntTy, InsertPt);
+      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastLength, "mcadd",InsertPt);
+      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE - 1);
+
+      // Create the call to do an accurate bounds check
+      if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+    } else if ((FuncName == "llva_load_fp") || (FuncName == "llva_save_fp")) {
       //
       // Create a call to an accurate bounds check for the FP state
       // pointer.
@@ -1700,14 +1735,32 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+    } else if (FuncName == "llva_push_syscall") {
+      //
+      // Create a call to an accurate bounds check for the interrupt context
+      // pointer.
+      //
+      Instruction *InsertPt = CI;
+      Value * CastPointer1 = castTo (CI->getOperand(2), Type::UIntTy, InsertPt);
+      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE);
+
+      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
+                                                 CastLength, "mcadd",InsertPt);
+      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE - 1);
+
+      // Create the call to do an accurate bounds check
+      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
+        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
     } else if ((FuncName == "llva_init_icontext") ||
                (FuncName == "llva_clear_icontext") ||
                (FuncName == "llva_was_privileged") ||
+               (FuncName == "llva_icontext_lif") ||
                (FuncName == "llva_ipop_function0") ||
                (FuncName == "llva_ipush_function0") ||
                (FuncName == "llva_ipush_function1") ||
                (FuncName == "llva_ipush_function3") ||
                (FuncName == "llva_ialloca") ||
+               (FuncName == "llva_unwind") ||
                (FuncName == "llva_icontext_load_retvalue") ||
                (FuncName == "llva_icontext_save_retvalue") ||
                (FuncName == "llva_get_icontext_stackp") ||
@@ -1718,16 +1771,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // pointer.
       //
       Instruction *InsertPt = CI;
-      Value * CastPointer1 = castTo (CI->getOperand(1), Type::UIntTy, InsertPt);
-      Value * CastLength   = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE);
-
-      Instruction *Bop1 = BinaryOperator::create(Instruction::Add, CastPointer1,
-                                                 CastLength, "mcadd",InsertPt);
-      Value *Length = ConstantInt::get (Type::UIntTy, LLVA_ICONTEXT_SIZE - 1);
-
-      // Create the call to do an accurate bounds check
-      if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
-        insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+      insertICCheck (CI->getOperand(1), InsertPt);
     }
 #endif    
   }
@@ -2895,6 +2939,11 @@ void InsertPoolChecks::addPoolCheckProto(Module &M) {
   FArg9.push_back(PointerType::get(VoidPtrType));
   FunctionType *FunctionCheckTTy = FunctionType::get(Type::VoidTy, FArg9, true);
   FunctionCheckT = M.getOrInsertFunction("funccheck_t", FunctionCheckTTy);
+
+  FArg9.clear();
+  FArg9.push_back(VoidPtrType);
+  FunctionType *ICCheckTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  ICCheck = M.getOrInsertFunction("pchk_iccheck", ICCheckTy);
 
   std::vector<const Type*> FArg5(1, VoidPtrType);
   FArg5.push_back(VoidPtrType);

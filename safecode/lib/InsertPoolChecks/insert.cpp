@@ -1344,12 +1344,8 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   // Attempt to find the original object for which this check applies.
   // This involves unpeeling casts, GEPs, etc.
   //
-#if 1
   bool WasIndexed = true;
   PointerOperand = findSourcePointer (PointerOperand, WasIndexed);
-#else
-  bool WasIndexed = false;
-#endif
 
   //
   // Ensure the pointer operand really is a pointer.
@@ -1371,7 +1367,7 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
     unsigned int arraysize = TD->getTypeSize(GV->getType()->getElementType());
     ConstantInt * Bounds = ConstantInt::get(csiType, arraysize);
     if (WasIndexed)
-        addExactCheck2 (PointerOperand, Src, Bounds, InsertPt);
+      addExactCheck2 (PointerOperand, Src, Bounds, InsertPt);
     else
       addExactCheck (Src, Size, Bounds, InsertPt);
     return true;
@@ -2578,9 +2574,26 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
         if (!(CI1->getCalledFunction())) {
           MustRegisterAlloca = true;
           continue;
-        } else if (CI1->getCalledFunction()->getName() == "exactcheck3") {
+        }
+
+        std::string FuncName = CI1->getCalledFunction()->getName();
+        if (FuncName == "exactcheck3") {
           AllocaWorkList.push_back (*UI);
           continue;
+        } else if ((FuncName == "llvm.memcpy.i32")    || 
+                   (FuncName == "llvm.memcpy.i64")    ||
+                   (FuncName == "llvm.memset.i32")    ||
+                   (FuncName == "llvm.memset.i64")    ||
+                   (FuncName == "llvm.memmove.i32")   ||
+                   (FuncName == "llvm.memmove.i64")   ||
+                   (FuncName == "llva_memcpy")        ||
+                   (FuncName == "llva_memset")        ||
+                   (FuncName == "llva_strncpy")       ||
+                   (FuncName == "llva_invokememcpy")  ||
+                   (FuncName == "llva_invokestrncpy") ||
+                   (FuncName == "llva_invokememset")  ||
+                   (FuncName == "memcmp")) {
+           continue;
         } else {
           MustRegisterAlloca = true;
           continue;

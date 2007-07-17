@@ -43,6 +43,9 @@ int stat_boundscheck_i=0;
 /* Global splay for holding the interrupt context */
 void * ICSplay;
 
+/* Global splay for holding the integer states */
+MetaPoolTy IntegerStatePool;
+
 extern void llva_load_lif (unsigned int enable);
 extern unsigned int llva_save_lif (void);
 
@@ -244,6 +247,27 @@ void pchk_reg_ic (int sysnum, int a, int b, int c, int d, int e, int f, void* ad
 void pchk_reg_ic_memtrap (void * p, void* addr) {
   PCLOCK();
   adl_splay_insert(&ICSplay, addr, (28*4), 0);
+  PCUNLOCK();
+}
+
+void pchk_reg_int (void* addr) {
+  unsigned int index;
+  if (!ready) return;
+  PCLOCK();
+  adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, __builtin_return_address(0));
+#if 1
+  /*
+   * Look for an entry in the cache that matches.  If it does, just erase it.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((IntegerStatePool.start[index] <= addr) &&
+       (IntegerStatePool.start[index]+IntegerStatePool.length[index] >= addr)) {
+      IntegerStatePool.start[index] = 0;
+      IntegerStatePool.length[index] = 0;
+      IntegerStatePool.cache[index] = 0;
+    }
+  }
+#endif
   PCUNLOCK();
 }
 

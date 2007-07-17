@@ -1,13 +1,15 @@
 dnl === configure.ac --------------------------------------------------------===
-dnl                     The LLVM Compiler Infrastructure
+dnl                     LLVM Support Module Configuration
 dnl
 dnl This file was developed by the LLVM research group and is distributed under
 dnl the University of Illinois Open Source License. See LICENSE.TXT for details.
 dnl 
 dnl===-----------------------------------------------------------------------===
-dnl This is the LLVM configuration script. It is processed by the autoconf
-dnl program to produce a script named configure. This script contains the 
-dnl configuration checks that LLVM needs in order to support multiple platforms.
+dnl This is the support module configuration script. It is processed by the 
+dnl autoconf program to produce a script named configure. This script contains 
+dnl the configuration checks that the support module needs in order to support 
+dnl multiple platforms.
+dnl
 dnl This file is composed of 10 sections per the recommended organization of
 dnl autoconf input defined in the autoconf documentation. As this file evolves,
 dnl please keep the various types of checks within their sections. The sections
@@ -31,7 +33,7 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl email address for reporting bugs.
-AC_INIT([[llvm]],[[2.1svn]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[support]],[[2.1svn]],[llvmbugs@cs.uiuc.edu])
 
 dnl Provide a copyright substitution and ensure the copyright notice is included
 dnl in the output of --version option of the generated configure script.
@@ -40,11 +42,11 @@ AC_COPYRIGHT([Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign
 
 dnl Indicate that we require autoconf 2.59 or later. Ths is needed because we
 dnl use some autoconf macros only available in 2.59.
-AC_PREREQ(2.59)
+AC_PREREQ(2.60)
 
 dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
-AC_CONFIG_SRCDIR([lib/VMCore/Module.cpp])
+AC_CONFIG_SRCDIR([lib/System/Path.cpp])
 
 dnl Place all of the extra autoconf files into the config subdirectory. Tell 
 dnl various tools where the m4 autoconf macros are. 
@@ -57,32 +59,6 @@ if test ${srcdir} != "." ; then
     AC_MSG_ERROR([Already configured in ${srcdir}])
   fi
 fi
-
-dnl Configure all of the projects present in our source tree. While we could
-dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a
-dnl configure script, that usage of the AC_CONFIG_SUBDIRS macro is deprecated.
-dnl Instead we match on the known projects.
-for i in `ls ${srcdir}/projects`
-do
-  if test -d ${srcdir}/projects/${i} ; then
-    case ${i} in
-      CVS) ;;
-      sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
-      privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
-      llvm-stacker) AC_CONFIG_SUBDIRS([projects/llvm-stacker]) ;;
-      llvm-test)    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
-      llvm-reopt)   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
-      llvm-gcc)     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
-      llvm-java)    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
-      llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
-      llvm-poolalloc) AC_CONFIG_SUBDIRS([projects/llvm-poolalloc]) ;;
-      llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
-      *)              
-        AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
-        ;;
-    esac
-  fi
-done
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -256,6 +232,19 @@ dnl=== SECTION 3: Command line arguments for the configure script.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
+LLVM_TOP=`cd .. ; pwd`
+dnl Allow configuration of the llvm-top directory from which all llvm software
+dnl can be found. Usually this corresponds to .., but weird things can happen
+dnl in build environments
+AC_ARG_WITH(llvm-top,
+  AS_HELP_STRING([--with-llvm-top],
+                 [Specify where the llvm-top directory is]),,withval=default)
+case "$withval" in
+  default)  ;;
+  *) LLVM_TOP=$withval ;;
+esac
+AC_SUBST(LLVM_TOP,$LLVM_TOP)
+
 dnl --enable-optimized : check whether they want to do an optimized build:
 AC_ARG_ENABLE(optimized, AS_HELP_STRING(
  [--enable-optimized,Compile with optimizations enabled (default is NO)]),,enableval=$optimize)
@@ -292,27 +281,6 @@ if test ${enableval} = "no" ; then
   AC_SUBST(DEBUG_RUNTIME,[[]])
 else
   AC_SUBST(DEBUG_RUNTIME,[[DEBUG_RUNTIME=1]])
-fi
-
-dnl --enable-jit: check whether they want to enable the jit
-AC_ARG_ENABLE(jit,
-  AS_HELP_STRING(--enable-jit,
-                 [Enable Just In Time Compiling (default is YES)]),,
-  enableval=default)
-if test ${enableval} = "no"
-then
-  AC_SUBST(JIT,[[]])
-else
-  case "$llvm_cv_target_arch" in
-    x86)     AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Sparc)   AC_SUBST(TARGET_HAS_JIT,0) ;;
-    PowerPC) AC_SUBST(TARGET_HAS_JIT,1) ;;
-    x86_64)  AC_SUBST(TARGET_HAS_JIT,1) ;;
-    Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
-    IA64)    AC_SUBST(TARGET_HAS_JIT,0) ;;
-    ARM)     AC_SUBST(TARGET_HAS_JIT,0) ;;
-    *)       AC_SUBST(TARGET_HAS_JIT,0) ;;
-  esac
 fi
 
 dnl Allow enablement of doxygen generated documentation
@@ -370,6 +338,7 @@ case "$enableval" in
       Alpha)   TARGETS_TO_BUILD="Alpha" ;;
       IA64)    TARGETS_TO_BUILD="IA64" ;;
       ARM)     TARGETS_TO_BUILD="ARM" ;;
+      MIPS)    TARGETS_TO_BUILD="MIPS" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
     esac 
     ;;
@@ -382,6 +351,7 @@ case "$enableval" in
         alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
         arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
+        mips)    TARGETS_TO_BUILD="MIPS $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done 
@@ -389,32 +359,6 @@ case "$enableval" in
 esac
 TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
-
-dnl Prevent the CBackend from using printf("%a") for floating point so older
-dnl C compilers that cannot deal with the 0x0p+0 hex floating point format
-dnl can still compile the CBE's output
-AC_ARG_ENABLE([cbe-printf-a],AS_HELP_STRING([--enable-cbe-printf-a],
-  [Enable C Backend output with hex floating point via %a  (default is YES)]),,
-  enableval=default)
-case "$enableval" in
-  yes) AC_SUBST(ENABLE_CBE_PRINTF_A,[1]) ;;
-  no)  AC_SUBST(ENABLE_CBE_PRINTF_A,[0]) ;;
-  default)  AC_SUBST(ENABLE_CBE_PRINTF_A,[1]) ;;
-  *) AC_MSG_ERROR([Invalid setting for --enable-cbe-printf-a. Use "yes" or "no"]) ;;
-esac
-AC_DEFINE_UNQUOTED([ENABLE_CBE_PRINTF_A],$ENABLE_CBE_PRINTF_A,
-                   [Define if CBE is enabled for printf %a output])
-
-dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
-AC_ARG_WITH(llvmgccdir,
-  AS_HELP_STRING([--with-llvmgccdir],
-    [Specify location of llvm-gcc install dir (default searches PATH)]),,
-    withval=default)
-case "$withval" in
-  default) WITH_LLVMGCCDIR=default ;;
-  /* | [[A-Za-z]]:[[\\/]]*)      WITH_LLVMGCCDIR=$withval ;;
-  *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
-esac
 
 dnl Specify extra build options
 AC_ARG_WITH(extra-options,
@@ -765,39 +709,6 @@ dnl=== SECTION 9: Additional checks, variables, etc.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl See if the llvm-gcc executable can compile to LLVM assembly
-AC_CACHE_CHECK([whether llvm-gcc is sane],[llvm_cv_llvmgcc_sanity],
-[llvm_cv_llvmgcc_sanity="no"
-if test -x "$LLVMGCC" ; then
-  cp /dev/null conftest.c
-  "$LLVMGCC" -emit-llvm -S -o - conftest.c | \
-      grep 'target datalayout =' > /dev/null 2>&1
-  if test $? -eq 0 ; then
-    llvm_cv_llvmgcc_sanity="yes"
-  fi
-  rm conftest.c
-fi])
-
-dnl Since we have a sane llvm-gcc, identify it and its sub-tools 
-if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
-  AC_MSG_CHECKING([llvm-gcc component support])
-  llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
-  AC_SUBST(LLVMCC1,$llvmcc1path)
-  llvmcc1pluspath=`"$LLVMGCC" --print-prog-name=cc1plus`
-  AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
-  llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
-  AC_SUBST(LLVMGCCDIR,$llvmgccdir)
-  llvmgcclibexec=`echo "$llvmcc1path" | sed 's,/cc1,,'`
-  AC_SUBST(LLVMGCCLIBEXEC,$llvmgcclibexec)
-  llvmgccversion=[`"$LLVMGCC" -dumpversion 2>&1 | sed 's/^\([0-9.]*\).*/\1/'`]
-  llvmgccmajvers=[`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`]
-  AC_SUBST(LLVMGCC_VERSION,$llvmgccversion)
-  AC_SUBST(LLVMGCC_MAJVERS,$llvmgccmajvers)
-  llvmgcclangs=[`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ -]*\).*/\1/'`]
-  AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
-  AC_MSG_RESULT([ok])
-fi
-
 dnl Propagate the shared library extension that the libltdl checks did to 
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
@@ -872,27 +783,10 @@ AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 dnl Configure the makefile's configuration data
 AC_CONFIG_FILES([Makefile.config])
 
-dnl Configure the RPM spec file for LLVM
-AC_CONFIG_FILES([llvm.spec])
-
-dnl Configure doxygen's configuration file
-AC_CONFIG_FILES([docs/doxygen.cfg])
-
-dnl Do the first stage of configuration for llvm-config.in.
-AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])
-
 dnl Do special configuration of Makefiles
-AC_CONFIG_COMMANDS([setup],,[llvm_src="${srcdir}"])
 AC_CONFIG_MAKEFILE(Makefile)
 AC_CONFIG_MAKEFILE(Makefile.common)
-AC_CONFIG_MAKEFILE(examples/Makefile)
 AC_CONFIG_MAKEFILE(lib/Makefile)
-AC_CONFIG_MAKEFILE(runtime/Makefile)
-AC_CONFIG_MAKEFILE(test/Makefile)
-AC_CONFIG_MAKEFILE(test/Makefile.tests)
-AC_CONFIG_MAKEFILE(tools/Makefile)
-AC_CONFIG_MAKEFILE(utils/Makefile)
-AC_CONFIG_MAKEFILE(projects/Makefile)
 
 dnl Finally, crank out the output
 AC_OUTPUT

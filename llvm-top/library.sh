@@ -114,3 +114,17 @@ get_module_dependencies() {
   done
   return 0
 }
+
+process_builder_args() {
+  for arg in "$@" ; do
+    case "$arg" in
+      LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
+        PREFIX=*) PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
+        MODULE=*) PREFIX=`echo "$arg" | sed -e 's/MODULE=//'` ;;
+             --*) OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
+              -*) OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
+             *=*) OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
+               *) die 1 "Unrecognized option: $arg" ;;
+    esac
+  done
+}

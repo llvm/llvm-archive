@@ -92,6 +92,9 @@ extern "C" {
   void funccheck (unsigned num, void *f, void *t1, void *t2, void *t3, void *t4, void * t5, void * t6) __attribute__ ((weak));
   void funccheck_t (unsigned num, void * f, void ** table) __attribute__ ((weak));
   void funccheck_g (MetaPoolTy * MP, void * f) __attribute__ ((weak));
+  void pchk_reg_ic (int s, int a, int b, int c, int d, int e, int f, void* ad);
+  void pchk_drop_ic (void* addr);
+  void pchk_iccheck (void * addr);
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));
 

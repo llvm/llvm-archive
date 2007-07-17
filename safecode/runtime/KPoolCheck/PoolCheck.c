@@ -40,6 +40,9 @@ int stat_poolcheckarray_i=0;
 int stat_boundscheck=0;
 int stat_boundscheck_i=0;
 
+/* Global splay for holding the interrupt context */
+void * ICSplay;
+
 extern void llva_load_lif (unsigned int enable);
 extern unsigned int llva_save_lif (void);
 
@@ -231,6 +234,14 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
 #endif
   PCUNLOCK();
 }
+
+void pchk_reg_ic (int sysnum, int a, int b, int c, int d, int e, int f, void* addr) {
+  PCLOCK();
+
+  adl_splay_insert(&ICSplay, addr, (28*4), 0);
+  PCUNLOCK();
+}
+
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
   unsigned int index;
@@ -276,6 +287,12 @@ void pchk_drop_stack (MetaPoolTy* MP, void* addr) {
       MP->cache[index] = 0;
     }
   }
+  PCUNLOCK();
+}
+
+void pchk_drop_ic (void* addr) {
+  PCLOCK();
+  adl_splay_delete(&ICSplay, addr);
   PCUNLOCK();
 }
 
@@ -396,6 +413,24 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
     return;
   }
   return; /*default is to pass*/
+}
+
+void
+pchk_iccheck (void * addr) {
+  if (!ready) return;
+
+  /* try objs */
+  void* S = addr;
+  unsigned len = 0;
+  PCLOCK();
+  int fs = adl_splay_retrieve(&ICSplay, &S, &len, 0);
+  PCUNLOCK();
+  if (fs && (S == addr)) {
+    return;
+  }
+
+  if (do_fail) poolcheckfail("iccheck failure: ", (unsigned) addr, (void*)__builtin_return_address(0));
+  return;
 }
 
 const unsigned InvalidUpper = 4096;

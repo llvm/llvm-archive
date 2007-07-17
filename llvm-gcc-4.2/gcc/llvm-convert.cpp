@@ -347,6 +347,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
 
   AllocaInsertionPoint = 0;
   
+  CleanupFilter = NULL_TREE;
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
   FuncEHException = 0;
@@ -1908,7 +1909,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
 void TreeToLLVM::dumpEHScopes() const {
   std::cerr << CurrentEHScopes.size() << " EH Scopes:\n";
   for (unsigned i = 0, e = CurrentEHScopes.size(); i != e; ++i) {
-    std::cerr << "  " << i << ". tree=" << (void*)CurrentEHScopes[i].TryExpr
+    std::cerr << "  " << i << ". catch=" << (void*)CurrentEHScopes[i].CatchExpr
               << " #blocks=" << CurrentEHScopes[i].Blocks.size()
               << " #fixups=" << CurrentEHScopes[i].BranchFixups.size() << "\n";
     for (unsigned f = 0, e = CurrentEHScopes[i].BranchFixups.size(); f != e;++f)
@@ -2017,14 +2018,13 @@ void TreeToLLVM::AddLandingPad() {
 
   for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
        E = CurrentEHScopes.rend(); I != E; ++I) {
-    if (TREE_CODE(I->TryExpr) == TRY_CATCH_EXPR) {
+    if (I->CatchExpr) {
       if (I->InfosType == Unknown) {
          // Gather the type info and determine the catch type.
-         tree Catches = TREE_OPERAND(I->TryExpr, 1);
-         GatherTypeInfo(Catches, I->TypeInfos);
-         I->InfosType = (TREE_CODE(Catches) == STATEMENT_LIST &&
-                         !tsi_end_p(tsi_start(Catches)) &&
-                         TREE_CODE(tsi_stmt(tsi_start(Catches))) ==
+         GatherTypeInfo(I->CatchExpr, I->TypeInfos);
+         I->InfosType = (TREE_CODE(I->CatchExpr) == STATEMENT_LIST &&
+                         !tsi_end_p(tsi_start(I->CatchExpr)) &&
+                         TREE_CODE(tsi_stmt(tsi_start(I->CatchExpr))) ==
                          EH_FILTER_EXPR) ? FilterExpr : CatchList;
       }
 
@@ -2077,28 +2077,61 @@ void TreeToLLVM::CreateExceptionValues() {
 }
 
 
+/// EmitProtectedCleanups - Wrap cleanups in a TRY_FILTER_EXPR that executes the
+/// code specified by lang_protect_cleanup_actions if an exception is thrown.
+void TreeToLLVM::EmitProtectedCleanups(tree cleanups) {
+  if (!lang_protect_cleanup_actions) {
+    Emit(cleanups, 0);
+    return;
+  }
+
+  if (CleanupFilter == NULL_TREE) {
+    // Create a catch-all filter that routes exceptions to the code specified
+    // by the lang_protect_cleanup_actions langhook.
+    // FIXME: the handler is supposed to be a "nothrow region".  Support for
+    // this is blocked on support for nothrow functions.
+    tree filter = build (EH_FILTER_EXPR, void_type_node, NULL, NULL);
+    append_to_statement_list (lang_protect_cleanup_actions(),
+                              &EH_FILTER_FAILURE (filter));
+    // CleanupFilter is the filter wrapped in a STATEMENT_LIST.
+    append_to_statement_list (filter, &CleanupFilter);
+  }
+
+  EmitTryInternal(cleanups, CleanupFilter, true);
+}
+
+
 /// EmitTRY_EXPR - Handle TRY_FINALLY_EXPR and TRY_CATCH_EXPR.
 Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
+  return EmitTryInternal(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                         TREE_CODE(exp) == TRY_CATCH_EXPR);
+}
+
+
+/// EmitTryInternal - Handle TRY_FINALLY_EXPR and TRY_CATCH_EXPR given only the
+/// expression operands.  Done to avoid having EmitProtectedCleanups build a new
+/// TRY_CATCH_EXPR for every cleanup block it wraps.
+Value *TreeToLLVM::EmitTryInternal(tree inner, tree handler, bool isCatch) {
   // The C++ front-end produces a lot of TRY_FINALLY_EXPR nodes that have empty
   // try blocks.  When these are seen, just emit the finally block directly for
   // a small compile time speedup.
-  if (TREE_CODE(TREE_OPERAND(exp, 0)) == STATEMENT_LIST &&
-      tsi_end_p(tsi_start(TREE_OPERAND(exp, 0)))) {
-    if (TREE_CODE(exp) == TRY_CATCH_EXPR)
+  if (TREE_CODE(inner) == STATEMENT_LIST && tsi_end_p(tsi_start(inner))) {
+    if (isCatch)
       return 0;   // TRY_CATCH_EXPR with empty try block: nothing thrown.
 
     // TRY_FINALLY_EXPR - Just run the finally block.
-    assert(TREE_CODE(exp) == TRY_FINALLY_EXPR);
-    Emit(TREE_OPERAND(exp, 1), 0);
+    assert(!isCatch);
+    EmitProtectedCleanups(handler);
     return 0;
   }  
 
   // Remember that we are in this scope.
-  CurrentEHScopes.push_back(exp);
+  CurrentEHScopes.push_back(isCatch ? handler : NULL);
   
-  Emit(TREE_OPERAND(exp, 0), 0);
+  Emit(inner, 0);
   
-  assert(CurrentEHScopes.back().TryExpr == exp && "Scope imbalance!");
+  assert(!isCatch || CurrentEHScopes.back().CatchExpr == handler
+         && "Scope imbalance!");
 
   // Emit a new block for the fall-through of the finally block.
   BasicBlock *FinallyBlock = new BasicBlock("finally");
@@ -2160,7 +2193,7 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
     
     // If this is a TRY_CATCH expression and the fixup isn't for an exception
     // edge, punt the fixup up to the parent scope.
-    if (TREE_CODE(exp) == TRY_CATCH_EXPR && !BranchFixups[i].isExceptionEdge) {
+    if (isCatch && !BranchFixups[i].isExceptionEdge) {
       // Add the fixup to the parent cleanup scope if there is one.
       if (!CurrentEHScopes.empty())
         AddBranchFixup(BranchFixups[i].SrcBranch, false);
@@ -2182,17 +2215,29 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
     // Okay, the destination is in a parent to this scope, which means that the
     // branch fixup corresponds to an exit from this region.  Expand the cleanup
     // code then patch it into the code sequence.
-    tree CleanupCode = TREE_OPERAND(exp, 1);
-    
+
     // Add a basic block to emit the code into.
     BasicBlock *CleanupBB = new BasicBlock("cleanup");
     EmitBlock(CleanupBB);
     
     // Provide exit point for cleanup code.
     FinallyStack.push_back(FinallyBlock);
-    
+
     // Emit the code.
-    Emit(CleanupCode, 0);
+    if (isCatch)
+      switch (TREE_CODE (tsi_stmt (tsi_start (handler)))) {
+      case CATCH_EXPR:
+      case EH_FILTER_EXPR:
+        Emit(handler, 0);
+        break;
+      default:
+        // Wrap the handler in a filter, like for TRY_FINALLY_EXPR, since this
+        // is what tree-eh.c does.
+        EmitProtectedCleanups(handler);
+        break;
+      }
+    else
+      EmitProtectedCleanups(handler);
 
     // Clear exit point for cleanup code.
     FinallyStack.pop_back();
@@ -2200,7 +2245,7 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
     // Because we can emit the same cleanup in more than one context, we must
     // strip off LLVM information from the decls in the code.  Otherwise, we
     // will try to insert the same label into multiple places in the code.
-    StripLLVMTranslation(CleanupCode);
+    StripLLVMTranslation(handler);
 
 
     // Catches will supply own terminator.

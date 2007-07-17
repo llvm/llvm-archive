@@ -273,8 +273,9 @@ class TreeToLLVM {
   /// EHScope - One of these scopes is maintained for each TRY_CATCH_EXPR and
   /// TRY_FINALLY_EXPR blocks that we are currently in.
   struct EHScope {
-    /// TryExpr - This is the actual TRY_CATCH_EXPR or TRY_FINALLY_EXPR.
-    tree_node *TryExpr;
+    /// CatchExpr - Contains the cleanup code for a TRY_CATCH_EXPR, and NULL for
+    /// a TRY_FINALLY_EXPR.
+    tree_node *CatchExpr;
 
     /// UnwindBlock - A basic block in this scope that branches to the unwind
     /// destination.  This is lazily created by the first invoke in this scope.
@@ -287,18 +288,18 @@ class TreeToLLVM {
     /// or in a parent scope.
     std::vector<BranchFixup> BranchFixups;
 
-    /// InfosType - The nature of the type infos TryExpr contains: a list of
+    /// InfosType - The nature of the type infos CatchExpr contains: a list of
     /// CATCH_EXPR (-> CatchList) or an EH_FILTER_EXPR (-> FilterExpr).  Equal
     /// to Unknown if type info information has not yet been gathered.
     CatchTypes InfosType;
 
     /// TypeInfos - The type infos corresponding to the catches or filter in
-    /// TryExpr.  If InfosType is Unknown then this information has not yet
+    /// CatchExpr.  If InfosType is Unknown then this information has not yet
     /// been gathered.
     std::vector<Constant *> TypeInfos;
 
     EHScope(tree_node *expr) :
-        TryExpr(expr), UnwindBlock(0), InfosType(Unknown) {}
+        CatchExpr(expr), UnwindBlock(0), InfosType(Unknown) {}
   };
   
   /// CurrentEHScopes - The current stack of exception scopes we are
@@ -310,7 +311,13 @@ class TreeToLLVM {
   /// list of blocks maintained by the scope and the scope number is added to
   /// this map.
   std::map<BasicBlock*, unsigned> BlockEHScope;
-  
+
+  /// CleanupFilter - Lazily created EH_FILTER_EXPR wrapped in a STATEMENT_LIST
+  /// used to catch exceptions thrown by the finally part of a TRY_FINALLY_EXPR.
+  /// The handler code is specified by the lang_protect_cleanup_actions langhook
+  /// (which returns a call to "terminate" in the case of C++).
+  tree_node *CleanupFilter;
+
   /// ExceptionValue - Is the local to receive the current exception.
   /// 
   Value *ExceptionValue;
@@ -491,7 +498,11 @@ private:
   // Basic lists and binding scopes.
   Value *EmitBIND_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitSTATEMENT_LIST(tree_node *exp, Value *DestLoc);
-  
+
+  // Helpers for exception handling.
+  void   EmitProtectedCleanups(tree_node *cleanups);
+  Value *EmitTryInternal(tree_node *inner, tree_node *handler, bool isCatch);
+
   // Control flow.
   Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);
@@ -502,7 +513,7 @@ private:
   Value *EmitCATCH_EXPR(tree_node *exp);
   Value *EmitEXC_PTR_EXPR(tree_node *exp);
   Value *EmitEH_FILTER_EXPR(tree_node *exp);
-  
+
   // Expressions.
   void   EmitINTEGER_CST_Aggregate(tree_node *exp, Value *DestLoc);
   Value *EmitLoadOfLValue(tree_node *exp, Value *DestLoc);

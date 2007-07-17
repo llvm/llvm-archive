@@ -55,7 +55,7 @@ checkout_a_module() {
     return 0
   fi
   msg 1 "Checking out module $module"
-  if test "$module" == "llvm-gcc-4-0" ; then
+  if test "$module" == "llvm-gcc-4.0" ; then
     $SVN checkout svn://anonsvn.opensource.apple.com/svn/llvm/trunk $module ||
       die $? "Checkout of module $module failed."
   else

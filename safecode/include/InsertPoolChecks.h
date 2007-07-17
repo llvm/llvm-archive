@@ -12,6 +12,11 @@
 
 #include <map>
 
+#ifdef LLVA_KERNEL
+#define LLVA_ICONTEXT_SIZE     (18*4)
+#define LLVA_INTEGERSTATE_SIZE (18*4)
+#define LLVA_FPSTATE_SIZE      (27*4)
+#endif
 namespace llvm {
 
 ModulePass *creatInsertPoolChecks();
@@ -53,6 +58,7 @@ struct InsertPoolChecks : public ModulePass {
   Function *FunctionCheck;
   Function *FunctionCheckT;
   Function *FunctionCheckG;
+  Function *ICCheck;
   Function *BoundsCheck;
   Function *UIBoundsCheck;
   Function *getBounds;
@@ -96,6 +102,7 @@ struct InsertPoolChecks : public ModulePass {
   bool insertExactCheck (GetElementPtrInst * GEP);
   bool insertExactCheck (Instruction * , Value *, Value *, Instruction *);
   void insertFunctionCheck(CallInst* CI);
+  void insertICCheck (Value * Pointer, Instruction * InsertPt);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
 

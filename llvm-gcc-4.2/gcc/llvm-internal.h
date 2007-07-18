@@ -583,6 +583,12 @@ private:
   bool EmitBuiltinFrobReturnAddr(tree_node *exp, Value *&Result);
   bool EmitBuiltinStackSave(tree_node *exp, Value *&Result);
   bool EmitBuiltinStackRestore(tree_node *exp);
+  bool EmitBuiltinDwarfCFA(tree_node *exp, Value *&Result);
+  bool EmitBuiltinDwarfSPColumn(tree_node *exp, Value *&Result);
+  bool EmitBuiltinEHReturnDataRegno(tree_node *exp, Value *&Result);
+  bool EmitBuiltinEHReturn(tree_node *exp, Value *&Result);
+  bool EmitBuiltinInitDwarfRegSizes(tree_node *exp, Value *&Result);
+  bool EmitBuiltinUnwindInit(tree_node *exp, Value *&Result);
 
   // Complex Math Expressions.
   void EmitLoadFromComplex(Value *&Real, Value *&Imag, Value *SrcComplex,

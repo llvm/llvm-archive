@@ -105,6 +105,7 @@ struct InsertPoolChecks : public ModulePass {
   void insertICCheck (Value * Pointer, Instruction * InsertPt);
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
+  bool findCheckedPointer (Value * PointerOperand);
 
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);

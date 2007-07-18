@@ -2097,8 +2097,15 @@ java_mark_decl_local (tree decl)
      moment we force flag_unit_at_a_time off due to excessive memory
      consumption when compiling large jar files.  Which probably means
      that we need to re-order how we process jar files...  */
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if (DECL_RTL_SET_P (decl))
     make_decl_rtl (decl);
+#else
+  if (DECL_LLVM_SET_P (decl))
+    make_decl_llvm (decl);
+#endif
+/* LLVM LOCAL end */
 }
 
 /* Given appropriate target support, G++ will emit hidden aliases for native

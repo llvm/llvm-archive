@@ -1736,7 +1736,13 @@ begin_subprog_body (tree subprog_decl)
        param_decl = TREE_CHAIN (param_decl))
     DECL_CONTEXT (param_decl) = subprog_decl;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   make_decl_rtl (subprog_decl);
+#else
+  make_decl_llvm (subprog_decl);
+#endif
+/* LLVM LOCAL end */
 
   /* We handle pending sizes via the elaboration of types, so we don't need to
      save them.  This causes them to be marked as part of the outer function

@@ -2198,7 +2198,13 @@ build_java_class_ref (tree type)
       DECL_ARTIFICIAL (class_decl) = 1;
       DECL_IGNORED_P (class_decl) = 1;
       pushdecl_top_level (class_decl);
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
       make_decl_rtl (class_decl);
+#else
+      make_decl_llvm (class_decl);
+#endif
+/* LLVM LOCAL end */
     }
   return class_decl;
 }

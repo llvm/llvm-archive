@@ -8589,8 +8589,15 @@ c_parser_omp_threadprivate (c_parser *parser)
 	      /* If rtl has been already set for this var, call
 		 make_decl_rtl once again, so that encode_section_info
 		 has a chance to look at the new decl flags.  */
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 	      if (DECL_RTL_SET_P (v))
 		make_decl_rtl (v);
+#else
+	      if (DECL_LLVM_SET_P (v))
+		make_decl_llvm (v);
+#endif
+/* LLVM LOCAL end */
 	    }
 	  C_DECL_THREADPRIVATE_P (v) = 1;
 	}

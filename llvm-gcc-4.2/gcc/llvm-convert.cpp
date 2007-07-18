@@ -2633,13 +2633,8 @@ namespace {
       // Make sure this call is marked as 'struct return'.
       isStructRet = true;
       
-      // If the front-end has already made the argument explicit, don't do it
-      // again.
-      if (CALL_EXPR_RETURN_SLOT_OPT(CallExpression))
-        return;
-      
-      // Otherwise, we need to pass a buffer to return into.  If the caller uses
-      // the result, DestLoc will be set.  If it ignores it, it could be unset,
+      // We need to pass a buffer to return into.  If the caller uses the
+      // result, DestLoc will be set.  If it ignores it, it could be unset,
       // in which case we need to create a dummy buffer.
       if (DestLoc == 0)
         DestLoc = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());

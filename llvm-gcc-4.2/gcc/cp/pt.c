@@ -7002,26 +7002,26 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	cp_apply_type_quals_to_decl (cp_type_quals (type), r);
 	DECL_CONTEXT (r) = ctx;
 	/* Clear out the mangled name and RTL for the instantiation.  */
-        /* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
-        SET_DECL_RTL (r, NULL_RTX);
-#else
-        SET_DECL_LLVM (r, 0);
-#endif
-        /* LLVM LOCAL end */
+        SET_DECL_ASSEMBLER_NAME (r, NULL_TREE);
 	if (CODE_CONTAINS_STRUCT (TREE_CODE (t), TS_DECL_WRTL))
         /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
-        SET_DECL_RTL (r, NULL_RTX);
+	  SET_DECL_RTL (r, NULL_RTX);
 #else
-        SET_DECL_LLVM (r, 0);
+	  SET_DECL_LLVM (r, 0);
 #endif
         /* LLVM LOCAL end */
 	/* The initializer must not be expanded until it is required;
 	   see [temp.inst].  */
 	DECL_INITIAL (r) = NULL_TREE;
 	if (CODE_CONTAINS_STRUCT (TREE_CODE (t), TS_DECL_WRTL))
+        /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 	  SET_DECL_RTL (r, NULL_RTX);
+#else
+	  SET_DECL_LLVM (r, 0);
+#endif
+        /* LLVM LOCAL end */
 	DECL_SIZE (r) = DECL_SIZE_UNIT (r) = 0;
 	if (TREE_CODE (r) == VAR_DECL)
 	  {

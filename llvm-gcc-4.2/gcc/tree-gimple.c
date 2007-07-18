@@ -469,7 +469,14 @@ get_call_expr_in (tree t)
 tree
 get_base_address (tree t)
 {
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   while (handled_component_p (t))
+#else
+  /* Support the "array ref with pointer base" extension. */
+  while (handled_component_p (t) || TREE_CODE(t) == ARRAY_REF)
+#endif
+  /* LLVM LOCAL end */
     t = TREE_OPERAND (t, 0);
   
   if (SSA_VAR_P (t)

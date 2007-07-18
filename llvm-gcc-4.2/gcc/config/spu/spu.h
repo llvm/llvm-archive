@@ -280,6 +280,9 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 
 /* Frame Registers, and other registers */
 
+#define LR_REGNUM 0
+#define DWARF_FRAME_RETURN_COLUMN       DWARF_FRAME_REGNUM (LR_REGNUM)
+
 #define STACK_POINTER_REGNUM 1
 
 /* Will be eliminated. */

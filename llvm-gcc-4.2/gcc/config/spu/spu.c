@@ -83,8 +83,8 @@ char regs_ever_allocated[FIRST_PSEUDO_REGISTER];
 
 /*  Prototypes and external defs.  */
 static void spu_init_builtins (void);
-static unsigned char spu_scalar_mode_supported_p (enum machine_mode mode);
-static unsigned char spu_vector_mode_supported_p (enum machine_mode mode);
+static bool spu_scalar_mode_supported_p (enum machine_mode mode);
+static bool spu_vector_mode_supported_p (enum machine_mode mode);
 static rtx adjust_operand (rtx op, HOST_WIDE_INT * start);
 static rtx get_pic_reg (void);
 static int need_to_save_reg (int regno, int saving);
@@ -108,13 +108,13 @@ static int spu_sched_adjust_priority (rtx insn, int pri);
 static int spu_sched_adjust_cost (rtx insn, rtx link, rtx dep_insn, int cost);
 static tree spu_handle_fndecl_attribute (tree * node, tree name, tree args,
 					 int flags,
-					 unsigned char *no_add_attrs);
+					 bool *no_add_attrs);
 static tree spu_handle_vector_attribute (tree * node, tree name, tree args,
 					 int flags,
-					 unsigned char *no_add_attrs);
+					 bool *no_add_attrs);
 static int spu_naked_function_p (tree func);
-static unsigned char spu_pass_by_reference (int *cum, enum machine_mode mode,
-					    tree type, unsigned char named);
+static bool spu_pass_by_reference (int *cum, enum machine_mode mode,
+				   tree type, bool named);
 static tree spu_build_builtin_va_list (void);
 static tree spu_gimplify_va_arg_expr (tree valist, tree type, tree * pre_p,
 				      tree * post_p);
@@ -124,9 +124,8 @@ static int reg_align (rtx reg);
 static int mem_is_padded_component_ref (rtx x);
 static bool spu_assemble_integer (rtx x, unsigned int size, int aligned_p);
 static void spu_asm_globalize_label (FILE * file, const char *name);
-static unsigned char spu_rtx_costs (rtx x, int code, int outer_code,
-				    int *total);
-static unsigned char spu_function_ok_for_sibcall (tree decl, tree exp);
+static bool spu_rtx_costs (rtx x, int code, int outer_code, int *total);
+static bool spu_function_ok_for_sibcall (tree decl, tree exp);
 static void spu_init_libfuncs (void);
 static bool spu_return_in_memory (tree type, tree fntype);
 static void fix_range (const char *);
@@ -5007,7 +5006,6 @@ spu_expand_builtin (tree exp,
 static tree
 spu_builtin_mul_widen_even (tree type)
 {
-  struct spu_builtin_description *d;
   switch (TYPE_MODE (type))
     {
     case V8HImode:

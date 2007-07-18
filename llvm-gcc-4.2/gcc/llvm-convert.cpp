@@ -2090,7 +2090,7 @@ void TreeToLLVM::EmitProtectedCleanups(tree cleanups) {
     // by the lang_protect_cleanup_actions langhook.
     // FIXME: the handler is supposed to be a "nothrow region".  Support for
     // this is blocked on support for nothrow functions.
-    tree filter = build (EH_FILTER_EXPR, void_type_node, NULL, NULL);
+    tree filter = build2 (EH_FILTER_EXPR, void_type_node, NULL, NULL);
     append_to_statement_list (lang_protect_cleanup_actions(),
                               &EH_FILTER_FAILURE (filter));
     // CleanupFilter is the filter wrapped in a STATEMENT_LIST.

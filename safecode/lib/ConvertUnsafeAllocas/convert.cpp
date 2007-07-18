@@ -6,9 +6,10 @@
 #include "safecode/Config/config.h"
 #include "ConvertUnsafeAllocas.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <iostream>
 
@@ -24,6 +25,14 @@ static bool dominates(BasicBlock *bb1, BasicBlock *bb2) {
   assert((dsmtI != dsmt.end()) && " basic block not found in dominator set");
   return (dsmtI->second.count(bb2) != 0);
 }
+
+//
+// Command line options
+//
+cl::opt<bool> DisableStackPromote ("disable-stackpromote", cl::Hidden,
+                                   cl::init(false),
+                                   cl::desc("Do not promote stack allocations"));
+                                                                                
 
 //
 // Statistics
@@ -45,17 +54,13 @@ bool ConvertUnsafeAllocas::runOnModule(Module &M) {
   TD = &getAnalysis<TargetData>();
 #ifdef LLVA_KERNEL
   //
-  // Get a reference to the kmalloc() function (the Linux kernel's general
-  // memory allocator function).
+  // Get a reference to the sp_malloc() function (a function in the kernel used
+  // for allocating promoted stack allocations).
   //
   std::vector<const Type *> Arg(1, Type::UIntTy);
-  Arg.push_back(Type::IntTy);
-  FunctionType *kmallocTy = FunctionType::get(PointerType::get(Type::SByteTy), Arg, false);
-  kmalloc = M.getOrInsertFunction("heapkmalloc", kmallocTy);
-
-  std::vector<const Type *> SPArg;
-  FunctionType *StackPromoteTy = FunctionType::get(PointerType::get(Type::SByteTy), SPArg, false);
-  StackPromote = M.getOrInsertFunction("stackpromote", StackPromoteTy);
+  FunctionType *kmallocTy = FunctionType::get(PointerType::get(Type::SByteTy),
+                                              Arg, false);
+  kmalloc = M.getOrInsertFunction("sp_malloc", kmallocTy);
 
   //
   // If we fail to get the kmalloc function, generate an error.
@@ -65,7 +70,7 @@ bool ConvertUnsafeAllocas::runOnModule(Module &M) {
 
   unsafeAllocaNodes.clear();
   getUnsafeAllocsFromABC();
-  TransformCSSAllocasToMallocs(cssPass->AllocaNodes);
+  if (!DisableStackPromote) TransformCSSAllocasToMallocs(cssPass->AllocaNodes);
 #ifndef LLVA_KERNEL
   TransformAllocasToMallocs(unsafeAllocaNodes);
   TransformCollapsedAllocas(M);
@@ -186,9 +191,6 @@ void ConvertUnsafeAllocas::TransformAllocasToMallocs(std::list<DSNode *>
                                                  AI->getOperand(0), "sizetmp",
                                                  AI);	    
             std::vector<Value *> args(1, AllocSize);
-            const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-            ConstantInt * signedzero = ConstantInt::get(csiType,32);
-            args.push_back(signedzero);
             CallInst *CI = new CallInst(kmalloc, args, "", AI);
             MI = new CastInst(CI, AI->getType(), "",AI);
 #endif	    
@@ -248,16 +250,6 @@ void ConvertUnsafeAllocas::TransformCSSAllocasToMallocs(std::vector<DSNode *> & 
         if (AllocaInst *AI = dyn_cast<AllocaInst>(SMI->first)) {
           // Create a new malloc instruction
           if (AI->getParent() != 0) { //This check for both stack and array
-#ifdef LLVA_KERNEL
-          //
-          // For now, just insert a call to the runtime to say that we would
-          // have promoted it.
-          //
-          CallInst *SPCI = new CallInst (StackPromote, "", AI);
-          ++SMI;
-          continue;
-#endif
-
 #ifndef LLVA_KERNEL 	    
             MI = new MallocInst(AI->getType()->getElementType(),
                                 AI->getArraySize(), AI->getName(), AI);
@@ -272,9 +264,6 @@ void ConvertUnsafeAllocas::TransformCSSAllocasToMallocs(std::vector<DSNode *> & 
                                                  AI->getOperand(0), "sizetmp",
                                                  AI);	    
             std::vector<Value *> args(1, AllocSize);
-            const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-            ConstantInt * signedzero = ConstantInt::get(csiType,32);
-            args.push_back(signedzero);
             CallInst *CI = new CallInst(kmalloc, args, "", AI);
             MI = new CastInst(CI, AI->getType(), "",AI);
 #endif	    
@@ -338,9 +327,6 @@ void ConvertUnsafeAllocas::TransformCollapsedAllocas(Module &M) {
                                                  AI);	    
 
             std::vector<Value *> args(1, AllocSize);
-            const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
-            ConstantInt * signedzero = ConstantInt::get(csiType,32);
-            args.push_back(signedzero);
             CallInst *CI = new CallInst(kmalloc, args, "", AI);
             CastInst * MI = new CastInst(CI, AI->getType(), "",AI);
 #endif

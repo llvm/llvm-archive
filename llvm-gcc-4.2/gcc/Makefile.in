@@ -1123,7 +1123,7 @@ LLVMTARGETCOMPONENT := \
     powerpc*-*-*) echo powerpc;; \
     sparc-*-*) echo sparc;; \
     sparcv9-*-*) echo sparc;; \
-    spu-*-*) echo spu;; \
+    spu-*-*) echo cellspu;; \
    esac
 LLVMTARGETOBJ := $(shell $(LLVMTARGETCOMPONENT))
 

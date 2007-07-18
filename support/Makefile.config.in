@@ -13,7 +13,7 @@
 #===------------------------------------------------------------------------===#
 
 # Define LLVM specific info and directories based on the autoconf variables
-LLVMPackageName   := @PACKAGE_NAME@
+LLVMPackageName   := @LLVM_MODULE_NAME@
 LLVMVersion       := @PACKAGE_VERSION@
 LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 

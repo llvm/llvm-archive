@@ -33,7 +33,8 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl email address for reporting bugs.
-AC_INIT([[support]],[[2.1svn]],[llvmbugs@cs.uiuc.edu])
+AC_INIT([[Support Module]],[[2.1svn]],[http://llvm.org/bugs],[llvm-support])
+THIS_IS_LLVM_MODULE([support])
 
 dnl Provide a copyright substitution and ensure the copyright notice is included
 dnl in the output of --version option of the generated configure script.
@@ -780,13 +781,9 @@ AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 
-dnl Configure the makefile's configuration data
-AC_CONFIG_FILES([Makefile.config])
-
 dnl Do special configuration of Makefiles
-AC_CONFIG_MAKEFILE(Makefile)
-AC_CONFIG_MAKEFILE(Makefile.common)
-AC_CONFIG_MAKEFILE(lib/Makefile)
+CONFIG_LLVM_MAKEFILE(Makefile)
+CONFIG_LLVM_MAKEFILE(lib/Makefile)
 
 dnl Finally, crank out the output
 AC_OUTPUT

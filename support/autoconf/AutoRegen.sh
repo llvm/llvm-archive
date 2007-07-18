@@ -38,11 +38,23 @@ echo "### present. You should get just three 'Regenerating..' lines."
 echo "######################################################################"
 echo ""
 echo "Regenerating aclocal.m4 with aclocal 1.9.6"
+aclocal_opts="--force -I $LLVM_TOP/support/autoconf/m4"
 cwd=`pwd`
-aclocal --force -I $cwd/m4 || die "aclocal failed"
+if test -d $cwd/m4 ; then
+  aclocal_opts="$aclocal_opts -I $cwd/m4"
+fi
+echo "command: aclocal $aclocal_opts"
+aclocal $aclocal_opts || die "aclocal failed"
 echo "Regenerating configure with autoconf $want_autoconf_version_clean"
 autoconf --force --warnings=all -o ../$outfile $configfile || die "autoconf failed"
-cd ..
-echo "Regenerating config.h.in with autoheader $want_autoheader_version_clean"
-autoheader --warnings=all -I autoconf -I autoconf/m4 autoconf/$configfile || die "autoheader failed"
+NUM_CONFIG_HEADERS=`grep AC_CONFIG_HEADERS $configfile | wc -l`
+if test "$NUM_CONFIG_HEADERS" -gt 0 ; then
+  cd ..
+  echo "Regenerating config.h.in with autoheader $want_autoheader_version_clean"
+  autoheader_opts="--warnings=all -I autoconf -I $LLVM_TOP/support/autoconf/m4"
+  if test -d $cwd/m4 ; then
+    autoheader_opts="$autoheader_opts -I $cwd/m4 autoconf/$configfile"
+  fi
+  autoheader $autoheader_opts || die "autoheader failed"
+fi
 exit 0

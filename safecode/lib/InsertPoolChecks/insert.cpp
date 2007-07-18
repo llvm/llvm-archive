@@ -1004,8 +1004,8 @@ isEligableForExactCheck (Value * Pointer) {
 //  Given a pointer value, attempt to determine whether the pointer or all of
 //  the instructions that created it have been checked.
 //
-static bool
-findCheckedPointer (Value * PointerOperand) {
+bool
+InsertPoolChecks::findCheckedPointer (Value * PointerOperand) {
   Value * SourcePointer = PointerOperand;
 
   while (CheckedValues.find (SourcePointer) == CheckedValues.end()) {
@@ -1033,6 +1033,16 @@ findCheckedPointer (Value * PointerOperand) {
     break;
   }
 
+  //
+  // If the pointer is a GEP, then as long as it has a DSNode, it has been
+  // checked or proven safe.
+  //
+  Instruction * I;
+  if ((I = dyn_cast<GetElementPtrInst>(SourcePointer)) &&
+     (getDSNode (I, I->getParent()->getParent())) &&
+     (getPoolHandle(I, I->getParent()->getParent()))) {
+    return true;
+  }
   return (CheckedValues.find (SourcePointer) != CheckedValues.end());
 }
 

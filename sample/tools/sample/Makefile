@@ -1,23 +1,19 @@
-##===- projects/sample/tools/sample/Makefile ---------------*- Makefile -*-===##
+##===- sample/tools/sample/Makefile ------------------------*- Makefile -*-===##
 
-#
 # Indicate where we are relative to the top of the source tree.
-#
-LEVEL=../..
+LEVEL   := ../..
 
-#
 # Give the name of the tool.
-#
-TOOLNAME=Sample
+TOOLNAME := Sample
 
-#
 # List libraries that we'll need
 # We use LIBS because sample is a dynamic library.
-#
-USEDLIBS = sample.a
+USEDLIBS := sample.a
+
+# The goal for this directory is to link a tool.
+GOAL     := tool
 
 #
 # Include Makefile.common so we know what to do.
 #
-include $(LEVEL)/Makefile.common
-
+include $(LEVEL)/Makefile.config

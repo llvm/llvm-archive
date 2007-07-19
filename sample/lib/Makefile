@@ -1,13 +1,13 @@
-##===- projects/sample/lib/Makefile ------------------------*- Makefile -*-===##
+##===- sample/lib/Makefile ---------------------------------*- Makefile -*-===##
 
-#
 # Relative path to the top of the source tree.
-#
-LEVEL=..
+LEVEL := ..
 
-#
+# Goal of this directory is just descend to the DIRS
+GOAL := common
+
 # List all of the subdirectories that we will compile.
-#
-DIRS=sample
+DIRS := sample
 
-include $(LEVEL)/Makefile.common
+# Get all the rules to build things.
+include $(LEVEL)/Makefile.config

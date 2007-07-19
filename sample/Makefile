@@ -7,12 +7,12 @@
 #
 # Indicates our relative path to the top of the project's root directory.
 #
-LEVEL = .
-DIRS = lib tools
-EXTRA_DIST = include
+LEVEL      := .
+DIRS       := lib tools
+EXTRA_DIST := include
+GOAL       := common
 
 #
 # Include the Master Makefile that knows how to build all.
 #
-include $(LEVEL)/Makefile.common
-
+include $(LEVEL)/Makefile.config

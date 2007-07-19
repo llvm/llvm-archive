@@ -1763,29 +1763,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     TheModule->addTypeName(GetTypeName("union.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
-  
-  // If this is a union with the transparent_union attribute set, it is
-  // treated as if it were just the same as its first type.
-  if (TYPE_TRANSPARENT_UNION(type)) {
-    tree Field = TYPE_FIELDS(type);
-    assert(Field && "Transparent union must have some elements!");
-    tree FirstFieldDecl = NULL_TREE;
-    while (Field) {
-      if (TREE_CODE(Field) == FIELD_DECL) {
-        if (FirstFieldDecl == NULL_TREE)
-          FirstFieldDecl = Field;
-        // Set the field idx to zero for all fields.
-        SetFieldIndex(Field, 0);
-      }
 
-      Field = TREE_CHAIN(Field);
-    }
-    assert(FirstFieldDecl != NULL_TREE
-           && "Transparent union must have some elements!");
-
-    return TypeDB.setType(type, ConvertType(TREE_TYPE(FirstFieldDecl)));
-  }
-  
   // Note that we are compiling a struct now.
   bool OldConvertingStruct = ConvertingStruct;
   ConvertingStruct = true;

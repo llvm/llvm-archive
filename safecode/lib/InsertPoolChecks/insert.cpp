@@ -1709,6 +1709,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+#if 0
     } else if ((FuncName == "llva_load_icontext") ||
                (FuncName == "llva_save_icontext")) {
       //
@@ -1730,6 +1731,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+#endif
     } else if ((FuncName == "llva_load_fp") || (FuncName == "llva_save_fp")) {
       //
       // Create a call to an accurate bounds check for the FP state
@@ -1762,6 +1764,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
+#if 0
     } else if ((FuncName == "llva_init_icontext") ||
                (FuncName == "llva_clear_icontext") ||
                (FuncName == "llva_was_privileged") ||
@@ -1783,6 +1786,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       //
       Instruction *InsertPt = CI;
       insertICCheck (CI->getOperand(1), InsertPt);
+#endif
     }
 #endif    
   }

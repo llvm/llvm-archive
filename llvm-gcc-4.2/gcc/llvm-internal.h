@@ -174,6 +174,12 @@ inline const Type *ConvertType(tree_node *type) {
   return TheTypeConverter->ConvertType(type);
 }
 
+/// GetFieldIndex - Given FIELD_DECL obtain its index.
+///
+inline unsigned int GetFieldIndex(tree_node *field_decl) {
+  return TheTypeConverter->GetFieldIndex(field_decl);
+}
+
 /// isInt64 - Return true if t is an INTEGER_CST that fits in a 64 bit integer.
 /// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
 /// true, returns whether the value is non-negative and fits in a uint64_t.

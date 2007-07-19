@@ -33,25 +33,12 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl email address for reporting bugs.
-AC_INIT([[Support Module]],[[2.1svn]],[http://llvm.org/bugs],[llvm-support])
+AC_INIT([[Support Module]],[[2.1svn]],[http://llvm.org/bugs],[support])
 THIS_IS_LLVM_MODULE([support])
-
-dnl Provide a copyright substitution and ensure the copyright notice is included
-dnl in the output of --version option of the generated configure script.
-AC_SUBST(LLVM_COPYRIGHT,["Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign."])
-AC_COPYRIGHT([Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign.])
-
-dnl Indicate that we require autoconf 2.59 or later. Ths is needed because we
-dnl use some autoconf macros only available in 2.59.
-AC_PREREQ(2.60)
 
 dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
 AC_CONFIG_SRCDIR([lib/System/Path.cpp])
-
-dnl Place all of the extra autoconf files into the config subdirectory. Tell 
-dnl various tools where the m4 autoconf macros are. 
-AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Quit if the source directory has already been configured.
 dnl NOTE: This relies upon undocumented autoconf behavior.
@@ -729,7 +716,6 @@ eval LLVM_ETCDIR="${prefix}/etc/llvm";
 eval LLVM_INCLUDEDIR="${prefix}/include";
 eval LLVM_INFODIR="${prefix}/info";
 eval LLVM_MANDIR="${prefix}/man";
-LLVM_CONFIGTIME=`date`
 AC_SUBST(LLVM_PREFIX)
 AC_SUBST(LLVM_BINDIR)
 AC_SUBST(LLVM_LIBDIR)
@@ -739,7 +725,6 @@ AC_SUBST(LLVM_ETCDIR)
 AC_SUBST(LLVM_INCLUDEDIR)
 AC_SUBST(LLVM_INFODIR)
 AC_SUBST(LLVM_MANDIR)
-AC_SUBST(LLVM_CONFIGTIME)
 
 # Place the various directores into the config.h file as #defines so that we
 # can know about the installation paths within LLVM.

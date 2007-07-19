@@ -1043,7 +1043,12 @@ InsertPoolChecks::findCheckedPointer (Value * PointerOperand) {
      (getPoolHandle(I, I->getParent()->getParent()))) {
     return true;
   }
+#if 0
   return (CheckedValues.find (SourcePointer) != CheckedValues.end());
+#else
+  // Return false; check must dominate load/store.
+  return false;
+#endif
 }
 
 //

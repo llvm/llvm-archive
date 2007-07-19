@@ -9,11 +9,11 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMSystem
-BUILD_ARCHIVE = 1
+GOAL := archive
 
 EXTRA_DIST = Unix Win32 README.txt
 
-include $(LEVEL)/Makefile.common
+include $(LEVEL)/Makefile.config
 
 CompileCommonOpts := $(filter-out -pedantic,$(CompileCommonOpts))
 CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))

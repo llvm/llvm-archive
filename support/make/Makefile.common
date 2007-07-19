@@ -1,0 +1,707 @@
+#===-- Makefile.common - Common rules for LLVM Builds ------*- Makefile -*--===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer group and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+#
+# This file is included by all of the LLVM makefiles or it could be used as 
+# the GOAL name for a directory that only needs to pass building to subdirs.
+#
+#===-----------------------------------------------------------------------====#
+
+################################################################################
+# TARGETS: Define standard targets that can be invoked
+################################################################################
+
+#--------------------------------------------------------------------
+# Define the various target sets
+#--------------------------------------------------------------------
+RecursiveTargets := all clean clean-all install uninstall install-bytecode
+LocalTargets     := all-local clean-local clean-all-local check-local \
+                    install-local printvars uninstall-local \
+		    install-bytecode-local
+TopLevelTargets  := check dist dist-check dist-clean tags dist-gzip dist-bzip2 \
+                    dist-zip
+UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
+InternalTargets  := preconditions distdir dist-hook
+
+################################################################################
+# INITIALIZATION: Basic things the makefile needs
+################################################################################
+
+#--------------------------------------------------------------------
+# Set the VPATH so that we can find source files.
+#--------------------------------------------------------------------
+VPATH=$(PROJ_SRC_DIR)
+
+#--------------------------------------------------------------------
+# Reset the list of suffixes we know how to build.
+#--------------------------------------------------------------------
+.SUFFIXES:
+.SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot .ll
+.SUFFIXES: $(SHLIBEXT) $(SUFFIXES)
+
+#--------------------------------------------------------------------
+# Mark all of these targets as phony to avoid implicit rule search
+#--------------------------------------------------------------------
+.PHONY: $(UserTargets) $(InternalTargets)
+
+#--------------------------------------------------------------------
+# Make sure all the user-target rules are double colon rules and 
+# they are defined first.
+#--------------------------------------------------------------------
+
+$(UserTargets)::
+
+################################################################################
+# PRECONDITIONS: that which must be built/checked first
+################################################################################
+
+SrcMakefiles       := $(filter %Makefile %Makefile.tests,\
+                      $(wildcard $(SRC_DIR)/Makefile*))
+ObjMakefiles       := $(subst $(SRC_DIR),$(OBJ_DIR),$(SrcMakefiles))
+ConfigureScript    := $(SRC_ROOT)/configure
+ConfigStatusScript := $(OBJ_ROOT)/config.status
+MakefileConfigIn   := $(strip $(wildcard $(SRC_ROOT)/Makefile.config.in))
+MakefileCommonIn   := $(strip $(wildcard $(SRC_ROOT)/Makefile.common.in))
+MakefileConfig     := $(OBJ_ROOT)/Makefile.config
+MakefileCommon     := $(OBJ_ROOT)/Makefile.common
+PreConditions      := $(ConfigStatusScript) $(ObjMakefiles)
+ifneq ($(MakefileCommonIn),)
+PreConditions      += $(MakefileCommon)
+endif
+
+ifneq ($(MakefileConfigIn),)
+PreConditions      += $(MakefileConfig)
+endif
+
+preconditions: $(PreConditions)
+
+#------------------------------------------------------------------------
+# Make sure the BUILT_SOURCES are built first
+#------------------------------------------------------------------------
+$(filter-out clean clean-local,$(UserTargets)):: $(BUILT_SOURCES)
+
+clean-all-local::
+ifneq ($(strip $(BUILT_SOURCES)),)
+	-$(Verb) $(RM) -f $(BUILT_SOURCES)
+endif
+
+ifneq ($(OBJ_ROOT),$(SRC_ROOT))
+spotless:
+	$(Verb) if test -x config.status ; then \
+	  $(EchoCmd) Wiping out $(OBJ_ROOT) ; \
+	  $(MKDIR) .spotless.save ; \
+	  $(MV) config.status .spotless.save ; \
+	  $(MV) mklib  .spotless.save ; \
+	  $(MV) projects  .spotless.save ; \
+	  $(RM) -rf * ; \
+	  $(MV) .spotless.save/config.status . ; \
+	  $(MV) .spotless.save/mklib . ; \
+	  $(MV) .spotless.save/projects . ; \
+	  $(RM) -rf .spotless.save ; \
+	  $(EchoCmd) Rebuilding configuration of $(OBJ_ROOT) ; \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript) ; \
+	else \
+	  $(EchoCmd) "make spotless" can only be run from $(OBJ_ROOT); \
+	fi
+else
+spotless:
+	$(EchoCmd) "spotless target not supported for objdir == srcdir"
+endif
+
+$(BUILT_SOURCES) : $(ObjMakefiles)
+
+#------------------------------------------------------------------------
+# Make sure we're not using a stale configuration
+#------------------------------------------------------------------------
+reconfigure:
+	$(Echo) Reconfiguring $(OBJ_ROOT)
+	$(Verb) cd $(OBJ_ROOT) && \
+	  if test -w $(OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(OBJ_ROOT)/config.cache ; \
+	  fi ; \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript)
+
+.PRECIOUS: $(ConfigStatusScript)
+$(ConfigStatusScript): $(ConfigureScript)
+	$(Echo) Reconfiguring with $<
+	$(Verb) cd $(OBJ_ROOT) && \
+	  if test -w $(OBJ_ROOT)/config.cache ; then \
+	    $(RM) $(OBJ_ROOT)/config.cache ; \
+	  fi ; \
+	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
+	  $(ConfigStatusScript)
+
+#------------------------------------------------------------------------
+# Make sure the configuration makefile is up to date
+#------------------------------------------------------------------------
+ifneq ($(MakefileConfigIn),)
+$(MakefileConfig): $(MakefileConfigIn) $(ConfigStatusScript)
+	$(Echo) Regenerating $@
+	$(Verb) cd $(OBJ_ROOT) ; $(ConfigStatusScript) Makefile.config
+endif
+
+ifneq ($(MakefileCommonIn),)
+$(MakefileCommon): $(MakefileCommonIn) $(ConfigStatusScript)
+	$(Echo) Regenerating $@
+	$(Verb) cd $(OBJ_ROOT) ; $(ConfigStatusScript) Makefile.common
+endif
+
+#------------------------------------------------------------------------
+# If the Makefile in the source tree has been updated, copy it over into the
+# build tree. But, only do this if the source and object makefiles differ
+#------------------------------------------------------------------------
+ifneq ($(OBJ_DIR),$(SRC_DIR))
+
+Makefile: $(SRC_DIR)/Makefile
+	$(Echo) "Updating Makefile"
+	$(Verb) $(MKDIR) $(@D)
+	$(Verb) $(CP) -f $< $@
+
+# Copy the Makefile.* files unless we're in the root directory which avoids
+# the copying of Makefile.config.in or other things that should be explicitly
+# taken care of.
+$(OBJ_DIR)/Makefile% : $(SRC_DIR)/Makefile%
+	@case '$?' in \
+          *Makefile.rules) ;; \
+          *.in) ;; \
+          *) $(Echo) "Updating $(@F)" ; \
+	     $(MKDIR) $(@D) ; \
+	     $(CP) -f $< $@ ;; \
+	esac
+         
+endif
+
+#------------------------------------------------------------------------
+# Set up the basic dependencies
+#------------------------------------------------------------------------
+$(UserTargets):: $(PreConditions)
+
+all:: all-local
+clean:: clean-local 
+clean-all:: clean-local clean-all-local
+install:: install-local
+uninstall:: uninstall-local
+install-local:: all-local 
+install-bytecode:: install-bytecode-local
+
+###############################################################################
+# VARIABLES: Set up various variables based on configuration data
+###############################################################################
+
+#--------------------------------------------------------------------
+# Variables derived from configuration we are building
+#--------------------------------------------------------------------
+
+CPP.Defines :=
+# OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
+# this can be overridden on the make command line.
+ifneq ($(OS),MingW)
+  OPTIMIZE_OPTION := -O3
+else
+  OPTIMIZE_OPTION := -O2
+endif
+
+ifdef ENABLE_PROFILING
+  BuildMode := Profile
+  CXX.Flags := $(OPTIMIZE_OPTION) -pg -g
+  C.Flags   := $(OPTIMIZE_OPTION) -pg -g
+  LD.Flags  := $(OPTIMIZE_OPTION) -pg -g
+  KEEP_SYMBOLS := 1
+else
+  ifeq ($(ENABLE_OPTIMIZED),1)
+    BuildMode := Release
+    # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
+    ifneq ($(OS),FreeBSD)
+    ifneq ($(OS),Darwin)
+      OmitFramePointer := -fomit-frame-pointer
+    endif
+    endif
+
+    # Darwin requires -fstrict-aliasing to be explicitly enabled.
+    ifeq ($(OS),Darwin)
+      EXTRA_OPTIONS += -fstrict-aliasing
+    endif
+
+    CXX.Flags := $(OPTIMIZE_OPTION) $(OmitFramePointer)
+    C.Flags   := $(OPTIMIZE_OPTION) $(OmitFramePointer)
+    LD.Flags  := $(OPTIMIZE_OPTION)
+  else
+    BuildMode := Debug
+    CXX.Flags := -g
+    C.Flags   := -g
+    LD.Flags  := -g
+    KEEP_SYMBOLS := 1
+  endif
+endif
+
+# IF REQUIRES_EH=1 is specified then don't disable exceptions
+ifndef REQUIRES_EH
+  CXX.Flags += -fno-exceptions
+endif
+
+# IF REQUIRES_RTTI=1 is specified then don't disable run-time type id
+ifndef REQUIRES_RTTI
+#  CXX.Flags += -fno-rtti
+endif
+
+# If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
+# then disable assertions by defining the appropriate preprocessor symbols.
+ifdef DISABLE_ASSERTIONS
+  BuildMode := $(BuildMode)-Asserts
+  CPP.Defines += -DNDEBUG
+else
+  CPP.Defines += -D_DEBUG
+endif
+
+# If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or 
+# configured), then enable expensive checks by defining the 
+# appropriate preprocessor symbols.
+ifdef ENABLE_EXPENSIVE_CHECKS
+  BuildMode := $(BuildMode)+Checks
+  CPP.Defines += -D_GLIBCXX_DEBUG
+endif
+
+ifeq ($(ENABLE_PIC),1)
+  CXX.Flags += -fPIC
+  C.Flags   += -fPIC
+endif
+
+CXX.Flags     += $(CXXFLAGS) -Woverloaded-virtual
+C.Flags       += $(CFLAGS)
+CPP.Defines   += $(CPPFLAGS)
+CPP.BaseFlags += $(CPP.Defines)
+LD.Flags      += $(LDFLAGS)
+AR.Flags      := cru
+LibTool.Flags := --tag=CXX
+
+# Make Floating point IEEE compliant on Alpha.
+ifeq ($(ARCH),Alpha)
+  CXX.Flags     += -mieee
+  CPP.BaseFlags += -mieee
+ifeq ($(ENABLE_PIC),0)
+  CXX.Flags     += -fPIC
+  CPP.BaseFlags += -fPIC
+endif
+endif
+
+ifeq ($(ARCH),Alpha)
+  LD.Flags += -Wl,--no-relax
+endif
+
+#--------------------------------------------------------------------
+# Directory locations
+#--------------------------------------------------------------------
+ObjDir      := $(OBJ_DIR)/$(BuildMode)
+LibDir      := $(OBJ_ROOT)/$(BuildMode)/lib
+ToolDir     := $(OBJ_ROOT)/$(BuildMode)/bin
+ExmplDir    := $(OBJ_ROOT)/$(BuildMode)/examples
+LLVMLibDir  := $(LLVM_TOP)/llvm/$(BuildMode)/lib
+LLVMToolDir := $(LLVM_TOP)/llvm/$(BuildMode)/bin
+LLVMExmplDir:= $(LLVM_TOP)/llvm/$(BuildMode)/examples
+CFERuntimeLibDir := $(LLVMGCCDIR)/lib
+
+#--------------------------------------------------------------------
+# Full Paths To Compiled Tools and Utilities
+#--------------------------------------------------------------------
+EchoCmd  = $(ECHO) llvm[$(MAKELEVEL)]:
+Echo     = @$(EchoCmd)
+ifndef LIBTOOL
+LIBTOOL  := $(LLVM_TOP)/support/mklib
+endif
+ifndef LLVMAS
+LLVMAS   := $(LLVMToolDir)/llvm-as$(EXEEXT)
+endif
+ifndef TBLGEN
+  ifeq ($(LLVM_CROSS_COMPILING),1)
+    TBLGEN   := $(LLVMToolDir)/tblgen$(BUILD_EXEEXT)
+  else
+    TBLGEN   := $(LLVMToolDir)/tblgen$(EXEEXT)
+  endif
+endif
+LLVM_CONFIG := $(LLVMToolDir)/llvm-config 
+ifndef LLVMLD
+LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)
+endif
+ifndef LLVMDIS
+LLVMDIS  := $(LLVMToolDir)/llvm-dis$(EXEEXT)
+endif
+ifndef LOPT
+LOPT     := $(LLVMToolDir)/opt$(EXEEXT)
+endif
+ifndef LUPGRADE
+LUPGRADE := $(LLVMToolDir)/llvm-upgrade$(EXEEXT)
+endif
+ifeq ($(LLVMGCC_MAJVERS),3)
+UPGRADE_MSG = $(Echo) "Upgrading $(1) assembly to latest."
+UPGRADE_LL  = $(Verb)$(LUPGRADE) $(1) -o $(1).up.tmp -f ; $(MV) $(1).up.tmp $(1)
+LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
+LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
+else
+UPGRADE_MSG =
+UPGRADE_LL  =
+LLVMGCCWITHPATH  := $(LLVMGCC)
+LLVMGXXWITHPATH  := $(LLVMGXX)
+endif
+
+#--------------------------------------------------------------------
+# Adjust to user's request
+#--------------------------------------------------------------------
+
+# Adjust LD.Flags and Libtool.Flags depending on the kind of library that is
+# to be built. Note that if LOADABLE_MODULE is specified then the resulting
+# shared library can be opened with dlopen. Also, LOADABLE_MODULE implies 
+# several other things so we force them to be defined/on.
+ifdef LOADABLE_MODULE
+  SHARED_LIBRARY := 1
+  DONT_BUILD_RELINKED := 1
+  LINK_LIBS_IN_SHARED := 1
+  LD.Flags += -module
+endif
+
+ifdef SHARED_LIBRARY
+  LD.Flags += -rpath $(LibDir)
+else
+  LibTool.Flags += --tag=disable-shared
+endif
+
+ifdef TOOL_VERBOSE
+  C.Flags += -v
+  CXX.Flags += -v
+  LD.Flags += -v
+  VERBOSE := 1
+endif
+
+# Adjust settings for verbose mode
+ifndef VERBOSE
+  Verb := @
+  LibTool.Flags += --silent
+  AR.Flags += >/dev/null 2>/dev/null
+  ConfigureScriptFLAGS += >$(OBJ_DIR)/configure.out 2>&1
+else
+  ConfigureScriptFLAGS := 
+endif
+
+# By default, strip symbol information from executable
+ifndef KEEP_SYMBOLS
+  Strip := $(PLATFORMSTRIPOPTS)
+  StripWarnMsg := "(without symbols)"
+  Install.StripFlag += -s
+endif
+
+# Adjust linker flags for building an executable
+ifdef TOOLNAME
+ifdef EXAMPLE_TOOL
+  LD.Flags += -rpath $(ExmplDir) -export-dynamic
+else
+  LD.Flags += -rpath $(ToolDir) -export-dynamic
+endif
+endif
+
+#----------------------------------------------------------
+# Options To Invoke Tools
+#----------------------------------------------------------
+
+CompileCommonOpts := -pedantic -Wall -W -Wwrite-strings -Wno-long-long \
+                     -Wunused -Wno-unused-parameter $(EXTRA_OPTIONS)
+
+ifeq ($(OS),HP-UX)
+  CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
+endif
+
+# If we are building a universal binary on Mac OS/X, pass extra options.  This
+# is useful to people that want to link the LLVM libraries into their universal
+# apps.
+#
+# The following can be optionally specified:
+#   UNIVERSAL_SDK_PATH variable can be specified as a path to the SDK to use.
+#      For Mac OS/X 10.4 Intel machines, the traditional one is:
+#      UNIVERSAL_SDK_PATH=/Developer/SDKs/MacOSX10.4u.sdk/
+#   UNIVERSAL_ARCH can be optionally specified to be a list of architectures
+#      to build for, e.g. UNIVERSAL_ARCH="i386 ppc ppc64".  This defaults to
+#      i386/ppc only.
+ifdef UNIVERSAL
+  ifndef UNIVERSAL_ARCH
+    UNIVERSAL_ARCH := i386 ppc
+  endif
+  UNIVERSAL_ARCH_OPTIONS := $(UNIVERSAL_ARCH:%=-arch %)
+  CompileCommonOpts += $(UNIVERSAL_ARCH_OPTIONS)
+  Relink.Flags := $(UNIVERSAL_ARCH_OPTIONS:%=-XCClinker %)
+  ifdef UNIVERSAL_SDK_PATH
+    CompileCommonOpts += -isysroot $(UNIVERSAL_SDK_PATH)
+    Relink.Flags      += -XCClinker -isysroot -XCClinker $(UNIVERSAL_SDK_PATH)
+  endif
+
+  # Building universal cannot compute dependencies automatically.
+  DISABLE_AUTO_DEPENDENCIES=1
+endif
+
+LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
+CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
+# All -I flags should go here, so that they don't confuse llvm-config.
+CPP.Flags     += -I$(OBJ_DIR) -I$(SRC_DIR) \
+	         -I$(OBJ_ROOT)/include \
+	         -I$(SRC_ROOT)/include \
+		 $(CPP.BaseFlags)
+
+Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c
+LTCompile.C   = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.C)
+BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts)
+Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -E
+
+Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c
+LTCompile.CXX = $(LIBTOOL) $(LibTool.Flags) --mode=compile $(Compile.CXX)
+BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) \
+                $(CompileCommonOpts)
+
+Preprocess.CXX= $(CXX) $(CPP.Flags) $(CompileCommonOpts) $(CXX.Flags) -E
+Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
+		$(LD.Flags) $(Strip)
+LTLink        = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Link)
+Relink        = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) \
+		$(Relink.Flags)
+LTRelink      = $(LIBTOOL) $(LibTool.Flags) --mode=link $(Relink)
+LTInstall     = $(LIBTOOL) $(LibTool.Flags) --mode=install $(INSTALL) \
+		$(Install.Flags)
+ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755 
+ScriptInstall = $(INSTALL) -m 0755 
+DataInstall   = $(INSTALL) -m 0644
+TableGen      = $(TBLGEN) -I $(SRC_DIR) -I$(SRC_ROOT)/include \
+                -I $(SRC_ROOT)/lib/Target      
+Archive       = $(AR) $(AR.Flags)
+LArchive      = $(LLVMToolDir)/llvm-ar rcsf
+ifdef RANLIB
+Ranlib        = $(RANLIB)
+else
+Ranlib        = ranlib
+endif
+
+#----------------------------------------------------------
+# Get the list of source files and compute object file 
+# names from them. 
+#----------------------------------------------------------
+
+ifndef SOURCES
+  Sources := $(notdir $(wildcard $(SRC_DIR)/*.cpp \
+             $(SRC_DIR)/*.cc $(SRC_DIR)/*.c $(SRC_DIR)/*.y \
+             $(SRC_DIR)/*.l))
+else
+  Sources := $(SOURCES)
+endif 
+
+ifdef BUILT_SOURCES
+Sources += $(filter %.cpp %.c %.cc %.y %.l,$(BUILT_SOURCES))
+endif
+
+BaseNameSources := $(sort $(basename $(Sources)))
+
+ObjectsO  := $(BaseNameSources:%=$(ObjDir)/%.o)
+ObjectsLO := $(BaseNameSources:%=$(ObjDir)/%.lo)
+ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
+
+###############################################################################
+# DIRECTORIES: Handle recursive descent of directory structure
+###############################################################################
+
+#---------------------------------------------------------
+# Provide rules to make install dirs. This must be early
+# in the file so they get built before dependencies
+#---------------------------------------------------------
+
+$(LLVM_bindir): $(LLVM_bindir)/.dir
+$(LLVM_libdir): $(LLVM_libdir)/.dir
+$(LLVM_includedir): $(LLVM_includedir)/.dir
+$(LLVM_etcdir): $(LLVM_etcdir)/.dir
+
+# To create other directories, as needed, and timestamp their creation
+%/.dir:
+	$(Verb) $(MKDIR) $* > /dev/null
+	$(Verb) $(DATE) > $@
+
+.PRECIOUS: $(ObjDir)/.dir $(LibDir)/.dir $(ToolDir)/.dir $(ExmplDir)/.dir
+.PRECIOUS: $(LLVMLibDir)/.dir $(LLVMToolDir)/.dir $(LLVMExmplDir)/.dir
+
+#---------------------------------------------------------
+# Handle the DIRS options for sequential construction
+#---------------------------------------------------------
+
+SubDirs := 
+ifdef DIRS
+SubDirs += $(DIRS)
+
+ifneq ($(SRC_ROOT),$(OBJ_ROOT))
+$(RecursiveTargets)::
+	$(Verb) for dir in $(DIRS); do \
+	  if [ ! -f $$dir/Makefile ]; then \
+	    $(MKDIR) $$dir; \
+	    $(CP) $(SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	  fi; \
+	  ($(MAKE) -C $$dir $@ ) || exit 1; \
+	done
+else
+$(RecursiveTargets)::
+	$(Verb) for dir in $(DIRS); do \
+	  ($(MAKE) -C $$dir $@ ) || exit 1; \
+	done
+endif
+
+endif
+
+#---------------------------------------------------------
+# Handle the EXPERIMENTAL_DIRS options ensuring success
+# after each directory is built.
+#---------------------------------------------------------
+ifdef EXPERIMENTAL_DIRS
+$(RecursiveTargets)::
+	$(Verb) for dir in $(EXPERIMENTAL_DIRS); do \
+	  if [ ! -f $$dir/Makefile ]; then \
+	    $(MKDIR) $$dir; \
+	    $(CP) $(SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	  fi; \
+	  ($(MAKE) -C $$dir $@ ) || exit 0; \
+	done
+endif
+
+#-----------------------------------------------------------
+# Handle the PARALLEL_DIRS options for parallel construction
+#-----------------------------------------------------------
+ifdef PARALLEL_DIRS
+
+SubDirs += $(PARALLEL_DIRS)
+
+# Unfortunately, this list must be maintained if new recursive targets are added
+all      :: $(addsuffix /.makeall      ,$(PARALLEL_DIRS))
+clean    :: $(addsuffix /.makeclean    ,$(PARALLEL_DIRS))
+clean-all:: $(addsuffix /.makeclean-all,$(PARALLEL_DIRS))
+install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
+uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
+install-bytecode  :: $(addsuffix /.makeinstall-bytecode,$(PARALLEL_DIRS))
+
+ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
+
+$(ParallelTargets) :
+	$(Verb) if [ ! -f $(@D)/Makefile ]; then \
+	  $(MKDIR) $(@D); \
+	  $(CP) $(SRC_DIR)/$(@D)/Makefile $(@D)/Makefile; \
+	fi; \
+	$(MAKE) -C $(@D) $(subst $(@D)/.make,,$@)
+endif
+
+#---------------------------------------------------------
+# Handle the OPTIONAL_DIRS options for directores that may
+# or may not exist.
+#---------------------------------------------------------
+ifdef OPTIONAL_DIRS
+
+SubDirs += $(OPTIONAL_DIRS)
+
+ifneq ($(SRC_ROOT),$(OBJ_ROOT))
+$(RecursiveTargets)::
+	$(Verb) for dir in $(OPTIONAL_DIRS); do \
+	  if [ -d $(SRC_DIR)/$$dir ]; then\
+	    if [ ! -f $$dir/Makefile ]; then \
+	      $(MKDIR) $$dir; \
+	      $(CP) $(SRC_DIR)/$$dir/Makefile $$dir/Makefile; \
+	    fi; \
+	    ($(MAKE) -C$$dir $@ ) || exit 1; \
+	  fi \
+	done
+else
+$(RecursiveTargets)::
+	$(Verb) for dir in $(OPTIONAL_DIRS); do \
+	  ($(MAKE) -C$$dir $@ ) || exit 1; \
+	done
+endif
+endif
+
+#---------------------------------------------------------
+# Handle the CONFIG_FILES options
+#---------------------------------------------------------
+ifdef CONFIG_FILES
+
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) UnInstall circumvented with NO_INSTALL
+else
+install-local:: $(LLVM_etcdir) $(CONFIG_FILES)
+	$(Echo) Installing Configuration Files To $(LLVM_etcdir)
+	$(Verb)for file in $(CONFIG_FILES); do \
+          if test -f $(OBJ_DIR)/$${file} ; then \
+            $(DataInstall) $(OBJ_DIR)/$${file} $(LLVM_etcdir) ; \
+          elif test -f $(SRC_DIR)/$${file} ; then \
+            $(DataInstall) $(SRC_DIR)/$${file} $(LLVM_etcdir) ; \
+          else \
+            $(ECHO) Error: cannot find config file $${file}. ; \
+          fi \
+	done
+
+uninstall-local::
+	$(Echo) Uninstalling Configuration Files From $(LLVM_etcdir)
+	$(Verb)for file in $(CONFIG_FILES); do \
+	  $(RM) -f $(LLVM_etcdir)/$${file} ; \
+	done
+endif
+
+endif
+
+#------------------------------------------------------------------------
+# Utilitye targets
+#------------------------------------------------------------------------
+check-line-length:
+	@egrep -n '.{81}' $(Sources)
+
+check-for-tabs:
+	@egrep -n '	' $(Sources)
+check-footprint:
+	@ls -l $(LibDir) | awk '\
+	  BEGIN { sum = 0; } \
+	        { sum += $$5; } \
+	  END   { printf("Libraries: %6.3f MBytes\n", sum/(1024.0*1024.0)); }'
+	@ls -l $(ToolDir) | awk '\
+	  BEGIN { sum = 0; } \
+	        { sum += $$5; } \
+	  END   { printf("Programs:  %6.3f MBytes\n", sum/(1024.0*1024.0)); }'
+
+printvars::
+	$(Echo) "BuildMode    : " '$(BuildMode)'
+	$(Echo) "SRC_ROOT     : " '$(SRC_ROOT)'
+	$(Echo) "OBJ_ROOT     : " '$(OBJ_ROOT)'
+	$(Echo) "SRC_DIR      : " '$(SRC_DIR)'
+	$(Echo) "OBJ_DIR      : " '$(OBJ_DIR)'
+	$(Echo) "LLVM_prefix  : " '$(PROJ_prefix)'
+	$(Echo) "LLVM_bindir  : " '$(PROJ_bindir)'
+	$(Echo) "LLVM_libdir  : " '$(PROJ_libdir)'
+	$(Echo) "LLVM_etcdir  : " '$(PROJ_etcdir)'
+	$(Echo) "LLVM_includedir  : " '$(PROJ_includedir)'
+	$(Echo) "UserTargets  : " '$(UserTargets)'
+	$(Echo) "ObjMakefiles : " '$(ObjMakefiles)'
+	$(Echo) "SrcMakefiles : " '$(SrcMakefiles)'
+	$(Echo) "ObjDir       : " '$(ObjDir)'
+	$(Echo) "LibDir       : " '$(LibDir)'
+	$(Echo) "ToolDir      : " '$(ToolDir)'
+	$(Echo) "ExmplDir     : " '$(ExmplDir)'
+	$(Echo) "Sources      : " '$(Sources)'
+	$(Echo) "TDFiles      : " '$(TDFiles)'
+	$(Echo) "INCFiles     : " '$(INCFiles)'
+	$(Echo) "INCTMPFiles  : " '$(INCTMPFiles)'
+	$(Echo) "PreConditions: " '$(PreConditions)'
+	$(Echo) "Compile.CXX  : " '$(Compile.CXX)'
+	$(Echo) "Compile.C    : " '$(Compile.C)'
+	$(Echo) "Archive      : " '$(Archive)'
+	$(Echo) "YaccFiles    : " '$(YaccFiles)'
+	$(Echo) "LexFiles     : " '$(LexFiles)'
+	$(Echo) "Module       : " '$(Module)'
+	$(Echo) "FilesToConfig: " '$(FilesToConfigPATH)'
+	$(Echo) "SubDirs      : " '$(SubDirs)'
+	$(Echo) "ProjLibsPaths: " '$(ProjLibsPaths)'
+	$(Echo) "ProjLibsOptions: " '$(ProjLibsOptions)'
+	$(Echo) "ConfigScript : " '$(ConfigureScript)'
+	$(Echo) "ConfigStatus : " '$(ConfigStatusScript)'

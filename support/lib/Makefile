@@ -6,9 +6,9 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-LEVEL = ..
+LEVEL := ..
+GOAL  := common
+PARALLEL_DIRS := System Support
 
-PARALLEL_DIRS = System Support
-
-include $(LEVEL)/Makefile.common
+include $(LEVEL)/Makefile.config
 

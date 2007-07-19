@@ -1,0 +1,55 @@
+#===-- Makefile.archive - Rules for building archives ------*- Makefile -*--===#
+#
+#                     The LLVM Compiler Infrastructure
+#
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+#
+# This file defines rules for building archive libraries.
+#
+#===-----------------------------------------------------------------------====#
+
+include $(LLVM_TOP)/support/make/Makefile.compile
+
+#---------------------------------------------------------
+# Archive Library Targets:
+#   If the user wanted a regular archive library built, 
+#   then we provide targets for building them.
+#---------------------------------------------------------
+LIBRARYNAME := $(strip $(LIBRARYNAME))
+LibName.A  := $(LibDir)/lib$(LIBRARYNAME).a
+
+all-local:: $(LibName.A)
+
+$(LibName.A): $(ObjectsO) $(LibDir)/.dir
+	$(Echo) Building $(BuildMode) Archive Library $(notdir $@)
+	-$(Verb) $(RM) -f $@
+	$(Verb) $(Archive) $@ $(ObjectsO)
+	$(Verb) $(Ranlib) $@
+
+clean-local::
+ifneq ($(strip $(LibName.A)),)
+	-$(Verb) $(RM) -f $(LibName.A)
+endif
+
+ifdef NO_INSTALL
+install-local::
+	$(Echo) Install circumvented with NO_INSTALL
+uninstall-local::
+	$(Echo) Uninstall circumvented with NO_INSTALL
+else
+DestArchiveLib := $(PROJ_libdir)/lib$(LIBRARYNAME).a
+
+install-local:: $(DestArchiveLib)
+
+$(DestArchiveLib): $(PROJ_libdir) $(LibName.A)
+	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
+	$(Verb) $(MKDIR) $(PROJ_libdir)
+	$(Verb) $(LTInstall) $(LibName.A) $(DestArchiveLib)
+
+uninstall-local::
+	$(Echo) Uninstalling $(BuildMode) Archive Library $(DestArchiveLib)
+	-$(Verb) $(RM) -f $(DestArchiveLib)
+endif

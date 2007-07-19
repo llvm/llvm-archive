@@ -9,6 +9,6 @@
 
 LEVEL = ../..
 LIBRARYNAME = LLVMSupport
-BUILD_ARCHIVE = 1
+GOAL := archive
 
-include $(LEVEL)/Makefile.common
+include $(LEVEL)/Makefile.config

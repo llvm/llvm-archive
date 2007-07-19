@@ -33,10 +33,10 @@
 using namespace llvm;
 using namespace ABC;
 
-static Statistic<> SafeStructs ("safestructs",
-                                "structures in GEPs that are deemed safe");
-static Statistic<> TotalStructs ("totalstructs",
-                                "total structures used in GEPs");
+static Statistic<> SafeStructs ("safecode",
+                                "Structures in GEPs that are deemed safe");
+static Statistic<> TotalStructs ("safecode",
+                                "Total structures used in GEPs");
 namespace {
   cl::opt<bool> NoStaticChecks ("disable-staticchecks", cl::Hidden,
                                 cl::init(false),
@@ -933,7 +933,8 @@ isStructTypeSafe (const StructType * ST) {
 
 bool ArrayBoundsCheck::runOnModule(Module &M) {
   cbudsPass = &getAnalysis<CompleteBUDataStructures>();
-  buCG = &getAnalysis<BottomUpCallGraph>();
+  buCG      = &getAnalysis<BottomUpCallGraph>();
+
   Mang = new Mangler(M);
   
   initialize(M);
@@ -1031,26 +1032,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
         } else {
           if (NoStaticChecks) {
-            //
-            // Perform a quick check to see if a struct type is safe.
-            //
-
-            //
-            // If the GEP has constant indices, we assume it is okay.
-            // TODO: This is a hack.
-            //
-            bool safe = true;
-            for (unsigned index = 1; index < MAI->getNumOperands(); ++index) {
-              if (!(isa<ConstantInt>(MAI->getOperand(index)))) {
-                safe = false;
-                MarkGEPUnsafe (MAI);
-                break;
-              }
-            }
-
-            // Update the stats
-            ++TotalStructs;
-            if (safe) ++SafeStructs;
+            MarkGEPUnsafe (MAI);
             continue;
           }
         }

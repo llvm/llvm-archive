@@ -5170,7 +5170,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
+    unsigned int MemberIndex = GetFieldIndex(FieldDecl);
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
     FieldPtr = Builder.CreateGEP(StructAddrLV.Ptr,
@@ -5871,7 +5871,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
   // that contains bits from the bitfield overlayed with the declared type of
   // the bitfield.  This bitfield value may be spread across multiple fields, or
   // it may be just this field, or it may just be a small part of this field.
-  unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
+  unsigned int FieldNo = GetFieldIndex(Field);
   assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
   // Get the offset and size of the LLVM field.
@@ -6009,7 +6009,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       ProcessBitFieldInitialization(Field, Val, STy, ResultElts);
     } else {
       // If not, things are much simpler.
-      unsigned int FieldNo = TheTypeConverter->GetFieldIndex(Field);
+      unsigned int FieldNo = GetFieldIndex(Field);
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
@@ -6242,7 +6242,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    unsigned int MemberIndex = TheTypeConverter->GetFieldIndex(FieldDecl);
+    unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
     std::vector<Value*> Idxs;
     Idxs.push_back(Constant::getNullValue(Type::Int32Ty));

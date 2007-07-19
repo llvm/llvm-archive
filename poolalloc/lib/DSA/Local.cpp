@@ -56,7 +56,6 @@ DSNode *DSNode::setUnknownNodeMarker() {
   ++CrashCur;
   ++stat_unknown; 
   NodeType |= UnknownNode; 
-  getMP()->addFlags(NodeType); 
   return this;
 }
 
@@ -1668,8 +1667,11 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("__vmalloc");
   AllocList.push_back("kmem_cache_alloc");
   AllocList.push_back("__alloc_bootmem");
+  AllocList.push_back(" __get_free_pages");
+
   FreeList.push_back("kfree");
   FreeList.push_back("vfree");
+  FreeList.push_back("free_pages");
 
   //figure out all system call numbers
   Function* lrs = M.getNamedFunction("llva_register_syscall");

@@ -420,16 +420,16 @@ public:
   bool isDeadNode() const   { return NodeType & DEAD; }
   bool isExternalNode() const { return NodeType & External; }
 
-  DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  getMP()->addFlags(NodeType); return this; }
-  DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    getMP()->addFlags(NodeType); return this; }
-  DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  getMP()->addFlags(NodeType); return this; }
+  DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
+  DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }
+  DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  return this; }
   DSNode *setUnknownNodeMarker(); // { ++stat_unknown; NodeType |= UnknownNode; return this; }
 
-  DSNode *setExternalMarker() { NodeType |= External; getMP()->addFlags(NodeType); return this; }
-  DSNode *setIncompleteMarker() { NodeType |= Incomplete; getMP()->addFlags(NodeType); return this; }
-  DSNode *setModifiedMarker()   { NodeType |= Modified;   getMP()->addFlags(NodeType); return this; }
-  DSNode *setReadMarker()       { NodeType |= Read;       getMP()->addFlags(NodeType); return this; }
-  DSNode *setArrayMarker()      { NodeType |= Array; getMP()->addFlags(NodeType); return this; }
+  DSNode *setExternalMarker()   { NodeType |= External;   return this; }
+  DSNode *setIncompleteMarker() { NodeType |= Incomplete; return this; }
+  DSNode *setModifiedMarker()   { NodeType |= Modified;   return this; }
+  DSNode *setReadMarker()       { NodeType |= Read;       return this; }
+  DSNode *setArrayMarker()      { NodeType |= Array;      return this; }
 
   void makeNodeDead() {
     Globals.clear();

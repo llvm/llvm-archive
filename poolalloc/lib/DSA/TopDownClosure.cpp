@@ -141,6 +141,15 @@ bool TDDataStructures::runOnModule(Module &M) {
   ArgsRemainIncomplete.clear();
   GlobalsGraph->removeTriviallyDeadNodes();
 
+
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal()) {
+      DSGraph& G = getOrCreateDSGraph(*I);
+      for (DSGraph::node_iterator ii = G.node_begin(), ee = G.node_end();
+	   ii != ee; ++ii)
+	ii->getMP()->addFlags(ii->getNodeFlags());
+    }
+      
   return false;
 }
 

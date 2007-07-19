@@ -380,24 +380,13 @@ public:
   /// being compiled.
   tree_node *getFUNCTION_DECL() const { return FnDecl; }
   
-  /// StartFunctionBody - Start the emission of 'fndecl', outputing all
-  /// declarations for parameters and setting things up.
-  void StartFunctionBody();
-  
-  /// Emit - Convert the specified tree node to LLVM code.  If the node is an
-  /// expression that fits into an LLVM scalar value, the result is returned. If
-  /// the result is an aggregate, it is stored into the location specified by
-  /// DestLoc.
-  Value *Emit(tree_node *exp, Value *DestLoc);
+  /// EmitFunction - Convert 'fndecl' to LLVM code.
+  Function *EmitFunction();
   
   /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
   /// the address of the result.
   LValue EmitLV(tree_node *exp);
 
-  /// FinishFunctionBody - Once the body of the function has been emitted, this
-  /// cleans up and returns the result function.
-  Function *FinishFunctionBody();
-  
   /// getIndirectGotoBlockNumber - Return the unique ID of the specified basic
   /// block for uses that take the address of it.
   Constant *getIndirectGotoBlockNumber(BasicBlock *BB);
@@ -444,6 +433,23 @@ public:
   AllocaInst *CreateTemporary(const Type *Ty);
   
 private: // Helper functions.
+
+  /// StartFunctionBody - Start the emission of 'fndecl', outputing all
+  /// declarations for parameters and setting things up.
+  void StartFunctionBody();
+  
+  /// FinishFunctionBody - Once the body of the function has been emitted, this
+  /// cleans up and returns the result function.
+  Function *FinishFunctionBody();
+  
+  /// Emit - Convert the specified tree node to LLVM code.  If the node is an
+  /// expression that fits into an LLVM scalar value, the result is returned. If
+  /// the result is an aggregate, it is stored into the location specified by
+  /// DestLoc.
+  Value *Emit(tree_node *exp, Value *DestLoc);
+
+  /// EmitStatement - Convert the specified statement to LLVM code.
+  void EmitStatement(tree_node *stmt);
 
   /// EmitBlock - Add the specified basic block to the end of the function.  If
   /// the previous block falls through into it, add an explicit branch.  Also,
@@ -498,7 +504,7 @@ private:
   ///
   void CreateExceptionValues();
 
-  // Emit* - These are delgates from Emit, and have the same parameter
+  // Emit* - These are delegates from Emit, and have the same parameter
   // characteristics.
     
   // Basic lists and binding scopes.

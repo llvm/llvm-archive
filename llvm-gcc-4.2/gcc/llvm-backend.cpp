@@ -64,7 +64,6 @@ extern "C" {
 #include "timevar.h"
 #include "tm.h"
 #include "function.h"
-#include "tree-flow.h"
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
@@ -556,21 +555,7 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   {
     TreeToLLVM Emitter(fndecl);
 
-    // Set up parameters and prepare for return, for the function.
-    Emitter.StartFunctionBody();
-
-    // Drop all fallthru edges, make explicit jumps
-    disband_implicit_edges();
-    
-    // Emit the body of the function iterating over all BBs
-    basic_block bb;
-    FOR_EACH_BB (bb)
-      for (block_stmt_iterator bsi = bsi_start (bb);
-           !bsi_end_p (bsi); bsi_next (&bsi))
-        Emitter.Emit(bsi_stmt (bsi), 0);
-    
-    // Wrap things up.
-    Fn = Emitter.FinishFunctionBody();
+    Fn = Emitter.EmitFunction();
   }
 
 #if 0

@@ -61,6 +61,7 @@ extern "C" {
 #include "hard-reg-set.h"
 #include "except.h"
 #include "rtl.h"
+#include "tree-flow.h"
 extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
@@ -752,6 +753,23 @@ Function *TreeToLLVM::FinishFunctionBody() {
   return Fn;
 }
 
+Function *TreeToLLVM::EmitFunction() {
+  // Set up parameters and prepare for return, for the function.
+  StartFunctionBody();
+
+  // Drop all fallthru edges, make explicit jumps
+  disband_implicit_edges();
+ 
+  // Emit the body of the function iterating over all BBs
+  basic_block bb;
+  FOR_EACH_BB (bb)
+    for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
+         bsi_next (&bsi))
+      EmitStatement(bsi_stmt (bsi));
+ 
+  // Wrap things up.
+  return FinishFunctionBody();
+}
 
 Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
@@ -1613,22 +1631,25 @@ Value *TreeToLLVM::EmitBIND_EXPR(tree exp, Value *DestLoc) {
   return Result;
 }
 
+void TreeToLLVM::EmitStatement(tree stmt) {
+  Value *DestLoc = 0;
+  
+  // If this stmt returns an aggregate value (e.g. a call whose result is
+  // ignored), create a temporary to receive the value.  Note that we don't
+  // do this for MODIFY_EXPRs as an efficiency hack.
+  if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
+    DestLoc = CreateTemporary(ConvertType(TREE_TYPE(stmt)));
+
+  Emit(stmt, DestLoc);
+}
+
 Value *TreeToLLVM::EmitSTATEMENT_LIST(tree exp, Value *DestLoc) {
   assert(DestLoc == 0 && "Does not return a value!");
 
   // Convert each statement.
-  for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I)) {
-    tree stmt = tsi_stmt(I);
-    Value *DestLoc = 0;
-    
-    // If this stmt returns an aggregate value (e.g. a call whose result is
-    // ignored), create a temporary to receive the value.  Note that we don't
-    // do this for MODIFY_EXPRs as an efficiency hack.
-    if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
-      DestLoc = CreateTemporary(ConvertType(TREE_TYPE(stmt)));
+  for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I))
+    EmitStatement(tsi_stmt(I));
 
-    Emit(stmt, DestLoc);
-  }
   return 0;
 }
 

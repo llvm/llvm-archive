@@ -714,7 +714,7 @@ SHELL=${CONFIG_SHELL-/bin/sh}
 
 # Identity of this package.
 PACKAGE_NAME='Support Module'
-PACKAGE_TARNAME='llvm-support'
+PACKAGE_TARNAME='support'
 PACKAGE_VERSION='2.1svn'
 PACKAGE_STRING='Support Module 2.1svn'
 PACKAGE_BUGREPORT='http://llvm.org/bugs'
@@ -795,15 +795,13 @@ build_alias
 host_alias
 target_alias
 LLVM_TOP
+LLVM_COPYRIGHT
 LLVM_MODULE_NAME
 LLVM_MODULE_FULLNAME
 LLVM_MODULE_TARNAME
 LLVM_MODULE_VERSION
 LLVM_MODULE_BUGREPORT
 LLVM_MODULE_DEPENDS_ON
-LLVM_SRC
-LLVM_OBJ
-LLVM_COPYRIGHT
 build
 build_cpu
 build_vendor
@@ -1490,7 +1488,7 @@ Fine tuning of the installation directories:
   --infodir=DIR          info documentation [DATAROOTDIR/info]
   --localedir=DIR        locale-dependent data [DATAROOTDIR/locale]
   --mandir=DIR           man documentation [DATAROOTDIR/man]
-  --docdir=DIR           documentation root [DATAROOTDIR/doc/llvm-support]
+  --docdir=DIR           documentation root [DATAROOTDIR/doc/support]
   --htmldir=DIR          html documentation [DOCDIR]
   --dvidir=DIR           dvi documentation [DOCDIR]
   --pdfdir=DIR           pdf documentation [DOCDIR]
@@ -1539,8 +1537,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-llvmsrc          Location of LLVM Source Code
-  --with-llvmobj          Location of LLVM Object Code
   --with-llvm-top         Specify where the llvm-top directory is
   --with-extra-options    Specify addtional options to compile LLVM with
   --with-tclinclude       directory where tcl headers are
@@ -2003,71 +1999,35 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-  LLVM_MODULE_NAME="support"
-  LLVM_MODULE_FULLNAME="Support Module"
-  LLVM_MODULE_TARNAME="llvm-support"
-  LLVM_MODULE_VERSION="2.1svn"
-  LLVM_MODULE_BUGREPORT="http://llvm.org/bugs"
+
   LLVM_TOP=`cd .. ; pwd`
-  LLVM_MODULE_DEPENDS_ON=`grep DepModules: ModuleInfo.txt | \
-    sed 's/DepModules: *//'`
 
-  if test -r Makefile.config.in ; then
-    ac_config_files="$ac_config_files Makefile.config"
+# Check whether --with-llvm-top was given.
+if test "${with_llvm_top+set}" = set; then
+  withval=$with_llvm_top;
+else
+  withval=default
+fi
 
-  fi
-  if test -r Makefile.common.in ; then
-    ac_config_files="$ac_config_files Makefile.common"
-
+  case "$withval" in
+    default)  ;;     *) LLVM_TOP=$withval ;;
+  esac
+  if test ! -d "$LLVM_TOP" ; then
+    { { echo "$as_me:$LINENO: error: \"The LLVM_TOP directory ($LLVM_TOP) is not a directory!\"" >&5
+echo "$as_me: error: \"The LLVM_TOP directory ($LLVM_TOP) is not a directory!\"" >&2;}
+   { (exit 1); exit 1; }; }
   fi
   LLVM_TOP=$LLVM_TOP
 
-  LLVM_MODULE_NAME="support"
 
-  LLVM_MODULE_FULLNAME="Support Module"
+  if test ! -d "$LLVM_TOP/support/autoconf" ; then
+    { { echo "$as_me:$LINENO: error: \"Your llvm-top directory needs to have the support module checked out\"" >&5
+echo "$as_me: error: \"Your llvm-top directory needs to have the support module checked out\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 
-  LLVM_MODULE_TARNAME="llvm-support"
-
-  LLVM_MODULE_VERSION="2.1svn"
-
-  LLVM_MODULE_BUGREPORT="http://llvm.org/bugs"
-
-  LLVM_MODULE_DEPENDS_ON="$LLVM_MODULE_DEPENDS_ON"
-
-
-# Check whether --with-llvmsrc was given.
-if test "${with_llvmsrc+set}" = set; then
-  withval=$with_llvmsrc; llvm_src="$withval"
-else
-  llvm_src="support"
-fi
-
-  LLVM_SRC=$llvm_src
-
-
-# Check whether --with-llvmobj was given.
-if test "${with_llvmobj+set}" = set; then
-  withval=$with_llvmobj; llvm_obj="$withval"
-else
-  llvm_obj=""
-fi
-
-  LLVM_OBJ=$llvm_obj
-
-  ac_config_commands="$ac_config_commands setup"
-
-
-
-LLVM_COPYRIGHT="Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign."
-
-
-
-
-
-
-
-ac_aux_dir=
-for ac_dir in autoconf "$srcdir"/autoconf; do
+  ac_aux_dir=
+for ac_dir in $LLVM_TOP/support/autoconf "$srcdir"/$LLVM_TOP/support/autoconf; do
   if test -f "$ac_dir/install-sh"; then
     ac_aux_dir=$ac_dir
     ac_install_sh="$ac_aux_dir/install-sh -c"
@@ -2083,8 +2043,8 @@ for ac_dir in autoconf "$srcdir"/autoconf; do
   fi
 done
 if test -z "$ac_aux_dir"; then
-  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in autoconf \"$srcdir\"/autoconf" >&5
-echo "$as_me: error: cannot find install-sh or install.sh in autoconf \"$srcdir\"/autoconf" >&2;}
+  { { echo "$as_me:$LINENO: error: cannot find install-sh or install.sh in $LLVM_TOP/support/autoconf \"$srcdir\"/$LLVM_TOP/support/autoconf" >&5
+echo "$as_me: error: cannot find install-sh or install.sh in $LLVM_TOP/support/autoconf \"$srcdir\"/$LLVM_TOP/support/autoconf" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -2095,6 +2055,69 @@ fi
 ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
 ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
 ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
+
+
+
+
+
+  LLVM_COPYRIGHT="Copyright (c) 2003-2007 University of Illinois at Urbana-Champaign."
+
+
+
+
+  LLVM_MODULE_NAME="support"
+  cwd=`pwd`
+  if test `basename $cwd` != "support" ; then
+    { { echo "$as_me:$LINENO: error: Module support is checked out to $cwd which is not allowed" >&5
+echo "$as_me: error: Module support is checked out to $cwd which is not allowed" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  LLVM_MODULE_NAME="support"
+
+
+  LLVM_MODULE_FULLNAME="Support Module"
+  LLVM_MODULE_TARNAME="support"
+  LLVM_MODULE_VERSION="2.1svn"
+  LLVM_MODULE_BUGREPORT="http://llvm.org/bugs"
+  LLVM_MODULE_FULLNAME="Support Module"
+
+  LLVM_MODULE_TARNAME="support"
+
+  LLVM_MODULE_VERSION="2.1svn"
+
+  LLVM_MODULE_BUGREPORT="http://llvm.org/bugs"
+
+
+  LLVM_MODULE_DEPENDS_ON=`grep DepModules: ModuleInfo.txt | \
+    sed 's/DepModules: *//'`
+  for x in $LLVM_MODULE_DEPENDS_ON ; do
+    { echo "$as_me:$LINENO: support depends on $x" >&5
+echo "$as_me: support depends on $x" >&6;}
+          done
+  LLVM_MODULE_DEPENDS_ON="$LLVM_MODULE_DEPENDS_ON"
+
+
+
+  has_configured_makefile=0
+  if test -r Makefile.config.in ; then
+    ac_config_files="$ac_config_files Makefile.config"
+
+    has_configured_makefile=1
+  fi
+  if test -r Makefile.common.in ; then
+    ac_config_files="$ac_config_files Makefile.common"
+
+    has_configured_makefile=1
+  fi
+  if test "$has_configured_makefile" -eq 0 ; then
+    { { echo "$as_me:$LINENO: error: \"Your module is lacking a Makefile.common.in or Makefile.config.in file to hold configured variables\"" >&5
+echo "$as_me: error: \"Your module is lacking a Makefile.common.in or Makefile.config.in file to hold configured variables\"" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  ac_config_commands="$ac_config_commands setup"
+
+
 
 
 
@@ -10322,7 +10345,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10325 "configure"
+#line 10348 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12466,7 +12489,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 12469 "configure"' > conftest.$ac_ext
+  echo '#line 12492 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -14184,11 +14207,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14187: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14210: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14191: \$? = $ac_status" >&5
+   echo "$as_me:14214: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14452,11 +14475,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14455: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14478: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14459: \$? = $ac_status" >&5
+   echo "$as_me:14482: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14556,11 +14579,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14559: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14582: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14563: \$? = $ac_status" >&5
+   echo "$as_me:14586: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17008,7 +17031,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17011 "configure"
+#line 17034 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17108,7 +17131,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17111 "configure"
+#line 17134 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19476,11 +19499,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19479: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19502: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:19483: \$? = $ac_status" >&5
+   echo "$as_me:19506: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -19580,11 +19603,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:19583: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:19606: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:19587: \$? = $ac_status" >&5
+   echo "$as_me:19610: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21150,11 +21173,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21153: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21176: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:21157: \$? = $ac_status" >&5
+   echo "$as_me:21180: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -21254,11 +21277,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:21257: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:21280: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:21261: \$? = $ac_status" >&5
+   echo "$as_me:21284: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -23489,11 +23512,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23492: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23515: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23496: \$? = $ac_status" >&5
+   echo "$as_me:23519: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23757,11 +23780,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23760: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23783: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:23764: \$? = $ac_status" >&5
+   echo "$as_me:23787: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -23861,11 +23884,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:23864: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:23887: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:23868: \$? = $ac_status" >&5
+   echo "$as_me:23891: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -34303,15 +34326,13 @@ build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
 LLVM_TOP!$LLVM_TOP$ac_delim
+LLVM_COPYRIGHT!$LLVM_COPYRIGHT$ac_delim
 LLVM_MODULE_NAME!$LLVM_MODULE_NAME$ac_delim
 LLVM_MODULE_FULLNAME!$LLVM_MODULE_FULLNAME$ac_delim
 LLVM_MODULE_TARNAME!$LLVM_MODULE_TARNAME$ac_delim
 LLVM_MODULE_VERSION!$LLVM_MODULE_VERSION$ac_delim
 LLVM_MODULE_BUGREPORT!$LLVM_MODULE_BUGREPORT$ac_delim
 LLVM_MODULE_DEPENDS_ON!$LLVM_MODULE_DEPENDS_ON$ac_delim
-LLVM_SRC!$LLVM_SRC$ac_delim
-LLVM_OBJ!$LLVM_OBJ$ac_delim
-LLVM_COPYRIGHT!$LLVM_COPYRIGHT$ac_delim
 build!$build$ac_delim
 build_cpu!$build_cpu$ac_delim
 build_vendor!$build_vendor$ac_delim
@@ -34362,6 +34383,8 @@ LEX!$LEX$ac_delim
 LEXLIB!$LEXLIB$ac_delim
 LEX_OUTPUT_ROOT!$LEX_OUTPUT_ROOT$ac_delim
 FLEX!$FLEX$ac_delim
+YACC!$YACC$ac_delim
+YFLAGS!$YFLAGS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -34403,8 +34426,6 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
-YACC!$YACC$ac_delim
-YFLAGS!$YFLAGS$ac_delim
 BISON!$BISON$ac_delim
 NM!$NM$ac_delim
 ifGNUmake!$ifGNUmake$ac_delim
@@ -34474,7 +34495,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 69; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 67; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

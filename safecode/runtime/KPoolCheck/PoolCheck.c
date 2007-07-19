@@ -550,8 +550,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
 #endif
   ++stat_boundscheck;
   /* first check for user space */
-  if (src < USERSPACE)
-    return &userspace;
+  if (src < USERSPACE) return &userspace;
 
   /* try objs */
   void* S = src;

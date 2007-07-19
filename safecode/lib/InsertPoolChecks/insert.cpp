@@ -176,7 +176,7 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
 
   static int x = 0;
   std::string Name = "_metaPool_";
-  /*
+ 
   unsigned Flags = N ? N->getMP()->getFlags() : 0;
   if(Flags & DSNode::Incomplete)
     Name += "I";
@@ -190,21 +190,6 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
     Name += "H";
   if( N && N->isNodeCompletelyFolded())
     Name += "F";
-  */
-  if (N) {
-    if(N->isUnknownNode())
-      Name += "U";
-    if(N->isIncomplete())
-      Name += "I";
-    if(N->isAllocaNode())
-      Name += "A";
-    if(N->isGlobalNode())
-      Name += "G";
-    if(N->isHeapNode())
-      Name += "H";
-    if(N->isNodeCompletelyFolded())
-      Name += "F";
-  }
   Name += "_";
   char c[100];
   snprintf(c, sizeof(c), "%d", x);

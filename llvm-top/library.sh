@@ -28,7 +28,7 @@ VERBOSE=0
 
 # Generate an informative message to the user based on the verbosity level
 msg() {
-  level=$1
+  local level=$1
   shift
   if test "$level" -le "$VERBOSE" ; then
     echo "TOP-$level: $*"
@@ -37,13 +37,15 @@ msg() {
 
 # Die with an error message
 die() {
-  EXIT_CODE=$1
+  local code=$1
   shift
-  echo "TOP-$EXIT_CODE: Error: $*"
-  exit $EXIT_CODE
+  echo "TOP-$code: Error: $*"
+  exit $code
 }
 
 process_arguments() {
+  msg 2 "Processing arguments"
+  local arg=""
   for arg in "$@" ; do
     case "$arg" in
       LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
@@ -63,6 +65,7 @@ process_arguments() {
   # now if we didn't get any modules on the command line.
   if test -z "$MODULES" ; then
     MODULES=""
+    local modinfo=""
     for modinfo in */ModuleInfo.txt ; do
       mod=`dirname $modinfo`
       mod=`basename $modinfo`
@@ -73,22 +76,27 @@ process_arguments() {
 
 # Check out a single module. 
 checkout_a_module() {
-  module=$1
+  local module=$1
+  msg 1 "Checking out module '$module'"
   if test -d "$module" ; then
-    msg 0 "Module $module is already checked out."
+    msg 2 "Module '$module' is already checked out."
     return 0
   fi
   if test -e "$module" ; then
-    msg 0 "Module $module is not a directory! Checkout skipped."
+    die 2 "Module '$module' is not a directory!"
     return 0
   fi
-  msg 1 "Checking out module $module"
+  local quiet=""
+  if test "$VERBOSE" -le 1 ; then
+    quiet="-q"
+  fi
+  msg 3 "Running svn checkout for '$module'"
   if test "$module" = "llvm-gcc-4.0" ; then
-    $SVN checkout svn://anonsvn.opensource.apple.com/svn/llvm/trunk $module ||
-      die $? "Checkout of module $module failed."
+    $SVN checkout $quiet svn://anonsvn.opensource.apple.com/svn/llvm/trunk \
+      $module || die $? "Checkout of module $module failed."
   else
-    $SVN checkout $SVNROOT/$module/trunk $module || \
-      die $? "Checkout of module $module failed."
+    $SVN checkout $quiet $SVNROOT/$module/trunk $module || \
+      die $? "Checkout of module '$module' failed."
   fi
   return 0
 }
@@ -97,20 +105,21 @@ checkout_a_module() {
 # the module isn't already checked out, then it gets checked out. The value
 # of the info item is returned in the MODULE_INFO_VALUE variable.
 get_module_info() {
-  module="$1"
-  item_name="$2"
+  local module="$1"
+  local item_name="$2"
+  msg 2 "Getting '$item_name' module info for '$module'"
   if test ! -d "$module" ; then
     checkout_a_module "$module" || die $? "Checkout failed."
   fi
-  module_info="$module/ModuleInfo.txt"
+  local module_info="$module/ModuleInfo.txt"
   if test -f "$module_info" ; then
-    item_value=`grep -i "$item_name:" $module_info | \
+    local item_value=`grep -i "$item_name:" $module_info | \
                 sed -e "s/$item_name: *//g"`
     if test "$?" -ne 0 ; then 
       die $? "Searching file '$module_info for $item_name' failed."
     fi
   else
-    msg 0 "Module $module has no ModuleInfo.txt file (ignored)."
+    msg 1 "Module $module has no ModuleInfo.txt file (ignored)."
   fi
   MODULE_INFO_VALUE="$item_value"
 }
@@ -121,41 +130,68 @@ get_module_info() {
 # have been satisfied. Upon exit the MODULE_DEPENDENCIES variable contains
 # the list of module names from least dependent to most dependent in the
 # correct configure/build order.
-get_module_dependencies() {
-  for module in $* ; do
-    get_module_info $module DepModule
-    if test ! -z "$MODULE_INFO_VALUE" ; then
-      msg 1 "Module '$module' depends on $MODULE_INFO_VALUE"
-      deps=`get_module_dependencies $MODULE_INFO_VALUE` || \
-         die $? "get_module_dependencies failed"
-      for dep in $MODULE_INFO_VALUE ; do
-        matching=`echo "$MODULE_DEPENDENCIES" | grep "$dep"`
-        if test -z "$matching" ; then
-          MODULE_DEPENDENCIES="$MODULE_DEPENDENCIES $dep"
-        fi
-      done
+add_module_if_not_duplicate() {
+  local mod_to_add="$1"
+  local mod=""
+  for mod in $MODULE_DEPENDENCIES ; do
+    local has_mod=`echo "$mod" | grep "$mod_to_add"`
+    if test ! -z "$has_mod" ; then
+      return 0
     fi
-    matching=`echo "$MODULE_DEPENDENCIES" | grep "$module"`
-    if test -z "$matching" ; then
-      MODULE_DEPENDENCIES="$MODULE_DEPENDENCIES $module"
-    fi
+    msg 3 "Looping in add_module_if_not_duplicate"
   done
-  return 0
+  msg 2 "Adding module '$mod_to_add' to list"
+  MODULE_DEPENDENCIES="$MODULE_DEPENDENCIES $mod_to_add"
+}
+
+get_a_modules_dependencies() {
+  if test "$RECURSION_DEPTH" -gt 10 ; then
+    die 2 "Recursing too deeply on module dependencies"
+  fi
+  let RECURSION_DEPTH="$RECURSION_DEPTH + 1"
+  local module="$1"
+  msg 2 "Getting dependencies for module '$module'"
+  get_module_info $module DepModule
+  if test ! -z "$MODULE_INFO_VALUE" ; then
+    local my_deps="$MODULE_INFO_VALUE"
+    msg 2 "Module '$module' depends on '$my_deps'"
+    local has_me=`echo "$my_deps" | grep "$module"`
+    if test -z "$has_me" ; then
+      local dep=""
+      for dep in $my_deps ; do
+        get_a_modules_dependencies "$dep"
+        msg 3 "Looping in get_a_modules_dependencies"
+      done
+    else
+      die 1 "Module '$module' has a dependency on itself!"
+    fi
+  fi
+  add_module_if_not_duplicate "$1"
+}
+
+get_module_dependencies() {
+  msg 2 "Getting module dependencies: $*"
+  local module=""
+  for module in "$@" ; do
+    RECURSION_DEPTH=0
+    get_a_modules_dependencies $module
+    msg 3 "Looping in get_module_dependencies"
+  done
 }
 
 build_a_module() {
-  module="$1"
-  msg 2 "Getting module info for $module"
+  local module="$1"
+  msg 1 "Building module '$module'"   
   get_module_info $module BuildCmd
   if test -z "$MODULE_INFO_VALUE" ; then
-    msg 0 "Module $module has no BuildCmd entry so it will not be built."
+    msg 2 "Module $module has no BuildCmd entry so it will not be built."
     return 0
   fi
-  build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
-  msg 1 "Building Module $module with this command:"
-  msg 1 "  $build_cmd"
+  local build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
+  msg 1 "Building Module '$module'"
+  msg 2 "Build Command: $build_cmd"
   cd $module
-  $build_cmd || die $? "Build of $module failed."
+  $build_cmd || die $? "Build of module '$module' failed."
   cd $LLVM_TOP
 }
 

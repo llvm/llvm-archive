@@ -21,10 +21,13 @@ get_module_dependencies $MODULES
 for mod in $MODULE_DEPENDENCIES ; do
   get_module_info $mod CleanCmd
   if test ! -z "$MODULE_INFO_VALUE" ; then
-    msg 0 Cleaning module $mod
+    msg 1 Cleaning module $mod
     cd $mod
     $MODULE_INFO_VALUE || die $? "Clean of module $mod failed."
   else
-    msg 0 Module $mod has no CleanCmd in the ModuleInfo.txt
+    msg 2 Module $mod has no CleanCmd in the ModuleInfo.txt
   fi
 done
+
+# Report what happened.
+msg 1 Modules cleaned: "$MODULE_DEPENDENCIES".

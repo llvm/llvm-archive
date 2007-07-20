@@ -28,13 +28,11 @@
 # Process the arguments so that anything starting with - is passed down to the
 # configure scripts while anything else is a module name. Collect the arguments
 # in appropriate variables for later use.
-msg 2 "Checking out dependencies"
 process_arguments "$@"
 
 # Get (and possibly check out) the set of modules and their dependencies. This
 # sets the MODULE_DEPENDENCIES variable to the set of module names that should
 # be configured, in the correct order (least dependent first, no duplicates).
-msg 1 "Checking out dependencies"
 get_module_dependencies $MODULES
 
 # Build a list of the static build options we'll pass to the modules
@@ -44,7 +42,6 @@ build_args="$build_args $OPTIONS_DASH $OPTIONS_DASH_DASH $OPTIONS_ASSIGN"
 # Now that we have a list of dependent modules, we must configure each of them
 # according to the specifications of the module.
 for mod in $MODULE_DEPENDENCIES ; do
-  msg 1 "Building module $mod" 
   build_a_module "$mod"
 done
 

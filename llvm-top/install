@@ -23,11 +23,14 @@ get_module_dependencies $MODULES
 for mod in $MODULE_DEPENDENCIES ; do
   get_module_info $mod InstallCmd
   if test ! -z "$MODULE_INFO_VALUE" ; then
-    msg 0 Installing module $mod
+    msg 1 Installing module $mod
     cd $mod
     $MODULE_INFO_VALUE || die $? "Install of module $mod failed."
     cd $LLVM_TOP
   else
-    msg 0 Module $mod has no InstallCmd in the ModuleInfo.txt
+    msg 2 Module $mod has no InstallCmd in the ModuleInfo.txt
   fi
 done
+
+# Report what happened.
+msg 1 Modules installed: "$MODULE_DEPENDENCIES".

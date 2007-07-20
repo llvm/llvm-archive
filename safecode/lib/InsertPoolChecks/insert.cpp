@@ -130,6 +130,9 @@ static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided"
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
 
+//Do not replace these with check results
+static std::set<Value*> AddedValues;
+
 //
 // Function: castTo()
 //
@@ -426,6 +429,8 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     PH = new CastInst (PH, PointerType::get(Type::SByteTy),
                             "castph", InsertPt);
 
+  AddedValues.insert(DestCast);
+
   //
   // Insert the bounds check.
   //
@@ -444,14 +449,15 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
     Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
     Value * EC3 = addExactCheck3 (LowerBound, DestCast, UpperBound, InsertPt);
+    AddedValues.insert(EC3);
     if (EC3->getType() != Dest->getType())
       EC3 = new CastInst(EC3, Dest->getType(), EC3->getName(), InsertPt);
-
+    AddedValues.insert(EC3);
     // Replace all uses of the original pointer with the result of the exactcheck.
     // This ensures that the check will not get dead code eliminated.
     Value::use_iterator UI = Dest->use_begin();
     for (; UI != Dest->use_end(); ++UI) {
-      if (((*UI) != EC3) && ((*UI) != DestCast))
+      if (AddedValues.find(*UI) == AddedValues.end())
         UI->replaceUsesOfWith (Dest,EC3);
     }
     CI = EC3;
@@ -1669,6 +1675,15 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
 
       Instruction *Length = BinaryOperator::create(Instruction::Sub, CastCIOp3,
                                                 ConstantInt::get (Type::UIntTy, 1), "mclen",InsertPt);
+      AddedValues.insert(CastPointer1);
+      AddedValues.insert(CastPointer2);
+      AddedValues.insert(CastCIOp3);
+      AddedValues.insert(Bop1);
+      AddedValues.insert(Bop2);
+      AddedValues.insert(Finalp1);
+      AddedValues.insert(Finalp2);
+      AddedValues.insert(Length);
+
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);

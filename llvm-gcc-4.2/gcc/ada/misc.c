@@ -83,7 +83,11 @@ extern FILE *asm_out_file;
 
 /* The largest alignment, in bits, that is needed for using the widest
    move instruction.  */
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 unsigned int largest_move_alignment;
+#endif
+/* LLVM LOCAL end */
 
 static bool gnat_init			(void);
 static void gnat_finish_incomplete_decl	(tree);
@@ -474,6 +478,8 @@ gnat_finish_incomplete_decl (tree dont_care ATTRIBUTE_UNUSED)
 void
 gnat_compute_largest_alignment (void)
 {
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
   enum machine_mode mode;
 
   for (mode = GET_CLASS_NARROWEST_MODE (MODE_INT); mode != VOIDmode;
@@ -482,6 +488,8 @@ gnat_compute_largest_alignment (void)
       largest_move_alignment = MIN (BIGGEST_ALIGNMENT,
 				    MAX (largest_move_alignment,
 					 GET_MODE_ALIGNMENT (mode)));
+/* LLVM LOCAL */
+#endif
 }
 
 /* If we are using the GCC mechanism to process exception handling, we
@@ -867,6 +875,8 @@ must_pass_by_ref (tree gnu_type)
 void
 enumerate_modes (void (*f) (int, int, int, int, int, int, unsigned int))
 {
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
   enum machine_mode i;
 
   for (i = 0; i < NUM_MACHINE_MODES; i++)
@@ -928,6 +938,8 @@ enumerate_modes (void (*f) (int, int, int, int, int, int, unsigned int))
 	      GET_MODE_BITSIZE (i), mantissa,
 	      GET_MODE_SIZE (i) * BITS_PER_UNIT, GET_MODE_ALIGNMENT (i));
     }
+/* LLVM LOCAL */
+#endif
 }
 
 int

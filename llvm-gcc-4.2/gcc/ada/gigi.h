@@ -34,7 +34,11 @@
 
 /* The largest alignment, in bits, that is needed for using the widest
    move instruction.  */
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 extern unsigned int largest_move_alignment;
+#endif
+/* LLVM LOCAL end */
 
 /* Compute the alignment of the largest mode that can be used for copying
    objects.  */

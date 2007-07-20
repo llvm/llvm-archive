@@ -3,10 +3,10 @@
 # This includes the Bourne shell library from llvm-top. Since this file is
 # generally only used when building from llvm-top, it is safe to assume that
 # llvm is checked out into llvm-top in which case .. just works.
-. $LLVM_TOP/library.sh
+. ../library.sh
 
 # Call the library function to process the arguments
-process_builder_args "$@"
+process_arguments "$@"
 
 # See if we have previously been configured by sensing the presense
 # of the config.status scripts

@@ -34,7 +34,7 @@
 /*  extension for object and executable files. It is used by the compiler,  */
 /*  binder and tools.                                                       */
 
-/* LLVM local config.h needed by Apple's modified options.h, included by tm.h */
+/* LLVM LOCAL config.h needed by Apple's modified options.h, included by tm.h */
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

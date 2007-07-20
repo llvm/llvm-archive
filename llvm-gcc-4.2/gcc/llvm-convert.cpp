@@ -4318,7 +4318,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_NEXT_ARG:
     case BUILT_IN_CLASSIFY_TYPE:
     case BUILT_IN_AGGREGATE_INCOMING_ADDRESS:
-    case BUILT_IN_SETJMP:
+    case BUILT_IN_SETJMP_SETUP:
+    case BUILT_IN_SETJMP_DISPATCHER:
+    case BUILT_IN_SETJMP_RECEIVER:
     case BUILT_IN_LONGJMP:
     case BUILT_IN_UPDATE_SETJMP_BUF:
     case BUILT_IN_TRAP:

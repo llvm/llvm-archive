@@ -71,8 +71,8 @@ dnl to the AC_INIT macro.
 dnl We need to know which modules depend on this one. Fortunately, every module
 dnl is required to document that in the ModuleInfo.txt file so we just extract
 dnl it.
-  LLVM_MODULE_DEPENDS_ON=`grep DepModules: ModuleInfo.txt | \
-    sed 's/DepModules: *//'`
+  LLVM_MODULE_DEPENDS_ON=`grep -i "DepModule:" ModuleInfo.txt | \
+    sed -e 's/DepModule: *//g'`
   for x in $LLVM_MODULE_DEPENDS_ON ; do
     AC_MSG_NOTICE([$1 depends on $x])
     dnl we should probably validate the module names, but that would require

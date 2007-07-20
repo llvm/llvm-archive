@@ -29,7 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define ATTRIBUTE_WEAK	__attribute__ ((__weak__))
 
 enum iasm_states iasm_state ATTRIBUTE_WEAK;
-int iasm_in_operands ATTRIBUTE_WEAK;
+bool iasm_in_operands ATTRIBUTE_WEAK;
 int flag_iasm_blocks ATTRIBUTE_WEAK;
 
 
@@ -131,10 +131,9 @@ tree build_stmt (enum tree_code code ATTRIBUTE_UNUSED, ...)
 }
 
 
-tree lookup_name_two (tree, int) ATTRIBUTE_WEAK;
+tree lookup_name (tree) ATTRIBUTE_WEAK;
 
-tree lookup_name_two (tree name ATTRIBUTE_UNUSED,
-		      int prefer_type ATTRIBUTE_UNUSED)
+tree lookup_name (tree name ATTRIBUTE_UNUSED)
 {
   gcc_assert(0);
 }

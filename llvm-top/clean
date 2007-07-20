@@ -1,0 +1,39 @@
+#!/bin/sh
+#                               clean script
+# 
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+
+# This script allows easier cleaning of LLVM modules. Just specify the names
+# of the modules on the command line and they and their dependencies will be
+# cleaned.
+
+. ./library.sh
+
+# Get the list of modules. Either everything checked out or the list passed in.
+if test -z "$*" ; then
+  MODULES=""
+  for modinfo in */ModuleInfo.txt ; do
+    mod=`dirname $modinfo`
+    mod=`basename $modinfo`
+    MODULES="$mod $MODULES"
+  done
+else
+  MODULES="$*"
+fi
+
+get_module_dependencies $MODULES
+
+for mod in $MODULE_DEPENDENCIES ; do
+  get_module_info $mod CleanCmd
+  if test ! -z "$MODULE_INFO_VALUE" ; then
+    msg 0 Cleaning module $mod
+    cd $mod
+    $MODULE_INFO_VALUE
+    cd ..
+  else
+    msg 0 Module $mod has no CleanCmd
+  fi
+done

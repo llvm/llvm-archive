@@ -12,18 +12,10 @@
 
 . ./library.sh
 
-# Get the list of modules. Either everything checked out or the list passed in.
-if test -z "$*" ; then
-  MODULES=""
-  for modinfo in */ModuleInfo.txt ; do
-    mod=`dirname $modinfo`
-    mod=`basename $modinfo`
-    MODULES="$mod $MODULES"
-  done
-else
-  MODULES="$*"
-fi
+# Get the list of modules.
+process_arguments "$@"
 
+# Get the 
 get_module_dependencies $MODULES
 
 for mod in $MODULE_DEPENDENCIES ; do
@@ -31,9 +23,8 @@ for mod in $MODULE_DEPENDENCIES ; do
   if test ! -z "$MODULE_INFO_VALUE" ; then
     msg 0 Cleaning module $mod
     cd $mod
-    $MODULE_INFO_VALUE
-    cd ..
+    $MODULE_INFO_VALUE || die $? "Clean of module $mod failed."
   else
-    msg 0 Module $mod has no CleanCmd
+    msg 0 Module $mod has no CleanCmd in the ModuleInfo.txt
   fi
 done

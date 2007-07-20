@@ -28,49 +28,23 @@
 # Process the arguments so that anything starting with - is passed down to the
 # configure scripts while anything else is a module name. Collect the arguments
 # in appropriate variables for later use.
-for arg in "$@" ; do 
-  case "$arg" in
-    VERBOSE=*)
-      VERBOSE=`echo "$VERBOSE" | sed -e 's/VERBOSE=//'`
-      ;;
-    -*)
-      BUILD_OPTS="$BUILD_ARGS $arg"
-      ;;
-    *=*)
-      BUILD_PARAMS="$BUILD_PARAMS $arg"
-      ;;
-    *)
-      MODULE_NAMES="$MODULE_NAMES $arg"
-  esac
-done
+msg 2 "Checking out dependencies"
+process_arguments "$@"
 
 # Get (and possibly check out) the set of modules and their dependencies. This
 # sets the MODULE_DEPENDENCIES variable to the set of module names that should
 # be configured, in the correct order (least dependent first, no duplicates).
 msg 1 "Checking out dependencies"
-MODULE_DEPENDENCIES=""
-get_module_dependencies $MODULE_NAMES
+get_module_dependencies $MODULES
 
-build_a_module() {
-  module="$1"
-  get_module_info $module BuildCmd
-  if test -z "$MODULE_INFO_VALUE" ; then
-    msg 0 "Module $module has no BuildCmd entry so it will not be built."
-    return 0
-  fi
-  build_command="$MODULE_INFO_VALUE"
-  build_command="$build_command $BUILD_OPTS"
-  build_command="$build_command MODULE="$module" LLVM_TOP=$LLVM_TOP "
-  build_command="$build_command PREFIX=$INSTALL_PREFIX $BUILD_PARAMS" 
-  msg 1 "Building Module $module with this command:"
-  msg 1 "  $build_command"
-  cd $module
-  $build_command || die $? "Can't build $module"
-  cd $LLVM_TOP
-}
+# Build a list of the static build options we'll pass to the modules
+build_args="LLVM_TOP=$LLVM_TOP PREFIX=$PREFIX DESTDIR=$DESTDIR VERBOSE=$VERBOSE"
+build_args="$build_args $OPTIONS_DASH $OPTIONS_DASH_DASH $OPTIONS_ASSIGN"
+
 # Now that we have a list of dependent modules, we must configure each of them
 # according to the specifications of the module.
 for mod in $MODULE_DEPENDENCIES ; do
+  msg 1 "Building module $mod" 
   build_a_module "$mod"
 done
 

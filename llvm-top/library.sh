@@ -15,14 +15,15 @@ SVN=`which svn`
 
 # Get the llvm-top directory before anyone has a chance to cd out of it
 LLVM_TOP=`pwd`
-INSTALL_PREFIX="$LLVM_TOP/install"
+PREFIX="$LLVM_TOP/installed"
+DESTDIR=
 
 # A command to figure out the root of the SVN repository by asking for it from
 # the 'svn info' command. To use, execute it in a script with something like
-SVNROOT=`$SVN info . | grep 'pository Root:' | sed -e 's/^Repository Root: //'`
+SVNROOT=`$SVN info . | grep 'Repository Root:' |sed -e 's/^Repository Root: //'`
 
-# Set this to true (after sourcing this library) if you want verbose
-# output from the library
+# Set this to non-zero (after sourcing this library) if you want verbose
+# output from the library. The higher the value, the more output you get
 VERBOSE=0
 
 # Generate an informative message to the user based on the verbosity level
@@ -30,7 +31,7 @@ msg() {
   level=$1
   shift
   if test "$level" -le "$VERBOSE" ; then
-    echo "INFO-$level: $*"
+    echo "TOP-$level: $*"
   fi
 }
 
@@ -38,10 +39,37 @@ msg() {
 die() {
   EXIT_CODE=$1
   shift
-  echo "ERROR-$EXIT_CODE: $*"
+  echo "TOP-$EXIT_CODE: Error: $*"
   exit $EXIT_CODE
 }
 
+process_arguments() {
+  for arg in "$@" ; do
+    case "$arg" in
+      LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
+      PREFIX=*)   PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
+      DESTDIR=*)  DESTDIR=`echo "$arg" | sed -e 's/DESTDIR=//'` ;;
+      MODULE=*)   MODULE=`echo "$arg" | sed -e 's/MODULE=//'` ;;
+      VERBOSE=*)  VERBOSE=`echo "$arg" | sed -e 's/VERBOSE=//'` ;;
+      --*)        OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
+       -*)        OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
+      *=*)        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
+      [a-zA-Z]*)  MODULES="$MODULES $arg" ;;
+        *)        die 1 "Unrecognized option: $arg" ;;
+    esac
+  done
+
+  # An empty modules list means "the checked out modules" so gather that list
+  # now if we didn't get any modules on the command line.
+  if test -z "$MODULES" ; then
+    MODULES=""
+    for modinfo in */ModuleInfo.txt ; do
+      mod=`dirname $modinfo`
+      mod=`basename $modinfo`
+      MODULES="$mod $MODULES"
+    done
+  fi
+}
 
 # Check out a single module. 
 checkout_a_module() {
@@ -55,7 +83,7 @@ checkout_a_module() {
     return 0
   fi
   msg 1 "Checking out module $module"
-  if test "$module" == "llvm-gcc-4.0" ; then
+  if test "$module" = "llvm-gcc-4.0" ; then
     $SVN checkout svn://anonsvn.opensource.apple.com/svn/llvm/trunk $module ||
       die $? "Checkout of module $module failed."
   else
@@ -99,7 +127,7 @@ get_module_dependencies() {
     if test ! -z "$MODULE_INFO_VALUE" ; then
       msg 1 "Module '$module' depends on $MODULE_INFO_VALUE"
       deps=`get_module_dependencies $MODULE_INFO_VALUE` || \
-         die $? "get_dependencies failed"
+         die $? "get_module_dependencies failed"
       for dep in $MODULE_INFO_VALUE ; do
         matching=`echo "$MODULE_DEPENDENCIES" | grep "$dep"`
         if test -z "$matching" ; then
@@ -115,32 +143,19 @@ get_module_dependencies() {
   return 0
 }
 
-process_builder_args() {
-  for arg in "$@" ; do
-    case "$arg" in
-      LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
-      PREFIX=*)   PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
-      MODULE=*)   MODULE=`echo "$arg" | sed -e 's/MODULE=//'` ;;
-      ENABLE_PIC=*) 
-        ENABLE_PIC=`echo "$arg" | sed -e 's/ENABLE_PIC=//'`
-        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
-        ;;
-      ENABLE_OPTIMIZED=*) 
-        ENABLE_OPTIMIZED=`echo "$arg" | sed -e 's/ENABLE_OPTIMIZED=//'`
-        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
-        ;;
-      ENABLE_PROFILING=*) 
-        ENABLE_PROFILING=`echo "$arg" | sed -e 's/ENABLE_PROFILING=//'`
-        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
-        ;;
-      ENABLE_EXPENSIVE_CHECKS=*) 
-        ENABLE_EXPENSIVE_CHECKS=`echo "$arg" | sed -e 's/ENABLE_EXPENSIVE_CHECKS=//'`
-        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
-        ;;
-      --*) OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
-       -*) OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
-      *=*) OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
-        *) die 1 "Unrecognized option: $arg" ;;
-    esac
-  done
+build_a_module() {
+  module="$1"
+  msg 2 "Getting module info for $module"
+  get_module_info $module BuildCmd
+  if test -z "$MODULE_INFO_VALUE" ; then
+    msg 0 "Module $module has no BuildCmd entry so it will not be built."
+    return 0
+  fi
+  build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
+  msg 1 "Building Module $module with this command:"
+  msg 1 "  $build_cmd"
+  cd $module
+  $build_cmd || die $? "Build of $module failed."
+  cd $LLVM_TOP
 }
+

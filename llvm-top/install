@@ -1,0 +1,33 @@
+#!/bin/sh
+#                               install script
+# 
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+
+# This script allows easier installing of LLVM modules. Just specify the names
+# of the modules on the command line and they and their dependencies will be
+# checked out, built and installed. Use INSTALL_PREFIX= to process
+
+. ./library.sh
+
+# Get the list of modules to install.
+process_arguments "$@"
+
+# Now find out what those modules depend on
+get_module_dependencies $MODULES
+
+# Now go run the install command for each of those modules, which are nicely
+# sorted in dependence order by get_module_dependencies
+for mod in $MODULE_DEPENDENCIES ; do
+  get_module_info $mod InstallCmd
+  if test ! -z "$MODULE_INFO_VALUE" ; then
+    msg 0 Installing module $mod
+    cd $mod
+    $MODULE_INFO_VALUE || die $? "Install of module $mod failed."
+    cd $LLVM_TOP
+  else
+    msg 0 Module $mod has no InstallCmd in the ModuleInfo.txt
+  fi
+done

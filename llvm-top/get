@@ -10,9 +10,11 @@
 # of the modules on the command line.
 . ./library.sh
 
+# Get the list of modules
+process_arguments "$@"
+
 # Getting the module dependencies also causes them to be checked out.
-MODULE_DEPENDENCIES=""
-get_module_dependencies "$@"
+get_module_dependencies $MODULES
 
 # Report what happened.
-msg 0 Modules checked out:"$MODULE_DEPENDENCIES".
+msg 0 Got: "$MODULE_DEPENDENCIES".

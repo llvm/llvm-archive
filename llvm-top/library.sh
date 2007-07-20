@@ -119,12 +119,28 @@ process_builder_args() {
   for arg in "$@" ; do
     case "$arg" in
       LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
-        PREFIX=*) PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
-        MODULE=*) PREFIX=`echo "$arg" | sed -e 's/MODULE=//'` ;;
-             --*) OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
-              -*) OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
-             *=*) OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
-               *) die 1 "Unrecognized option: $arg" ;;
+      PREFIX=*)   PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
+      MODULE=*)   MODULE=`echo "$arg" | sed -e 's/MODULE=//'` ;;
+      ENABLE_PIC=*) 
+        ENABLE_PIC=`echo "$arg" | sed -e 's/ENABLE_PIC=//'`
+        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
+        ;;
+      ENABLE_OPTIMIZED=*) 
+        ENABLE_OPTIMIZED=`echo "$arg" | sed -e 's/ENABLE_OPTIMIZED=//'`
+        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
+        ;;
+      ENABLE_PROFILING=*) 
+        ENABLE_PROFILING=`echo "$arg" | sed -e 's/ENABLE_PROFILING=//'`
+        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
+        ;;
+      ENABLE_EXPENSIVE_CHECKS=*) 
+        ENABLE_EXPENSIVE_CHECKS=`echo "$arg" | sed -e 's/ENABLE_EXPENSIVE_CHECKS=//'`
+        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" 
+        ;;
+      --*) OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
+       -*) OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
+      *=*) OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
+        *) die 1 "Unrecognized option: $arg" ;;
     esac
   done
 }

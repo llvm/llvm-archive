@@ -1,0 +1,4 @@
+DepModule:  llvm
+BuildCmd:   echo llvm-gcc-4.0 isn't in the repository yet (cannot build)
+CleanCmd:   echo llvm-gcc-4.0 isn't in the repository yet (cannot clean)
+InstallCmd: echo llvm-gcc-4.0 isn't in the repository yet (cannot install)

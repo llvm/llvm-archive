@@ -29,7 +29,8 @@ using namespace llvm;
 
 extern Value *getRepresentativeMetaPD(Value *);
 
-RegisterPass<InsertPoolChecks> ipc("safecode", "insert runtime checks");
+RegisterPass<PreInsertPoolChecks> pipc ("presafecode", "prepare for SAFECode");
+RegisterPass<InsertPoolChecks>     ipc ("safecode",    "insert runtime checks");
 
 cl::opt<bool> EnableSplitChecks  ("enable-splitchecks", cl::Hidden,
                                   cl::init(false),
@@ -130,6 +131,10 @@ static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided"
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
 
+////////////////////////////////////////////////////////////////////////////
+// Static Functions
+////////////////////////////////////////////////////////////////////////////
+
 //Do not replace these with check results
 static std::set<Value*> AddedValues;
 
@@ -161,8 +166,8 @@ castTo (Value * V, const Type * Ty, Instruction * InsertPt) {
   return new CastInst(V, Ty, "cast", InsertPt);
 }
 
-//Kernel support rutines
-static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
+static GlobalVariable*
+makeMetaPool(Module* M, DSNode* N) {
   //Here we insert a global meta pool
   //Now create a meta pool for this value, DSN Node
   const Type * VoidPtrType = PointerType::get(Type::SByteTy);
@@ -207,6 +212,504 @@ static GlobalVariable* makeMetaPool(Module* M, DSNode* N) {
                             /*initializer=*/ Constant::getNullValue(MPT),
                             /*name=*/ Name,
                             /*parent=*/ M );
+}
+
+Value *
+PreInsertPoolChecks::createPoolHandle (Module & M, DSNode * Node) {
+  // If there is no node, return NULL.
+  if (!Node) return 0;
+
+  // Get the DSNode's MetaPool.  If it doesn't have one, return NULL.
+  MetaPool * MP = Node->getMP();
+  if (!MP) return 0;
+
+  // If the MetaPool global variable has already been created, then simply
+  // return it.  Otherwise, create one.
+  if (!(MP->getMetaPoolValue()))
+    MP->setMetaPoolValue (makeMetaPool (&M, Node));  
+  return (MP->getMetaPoolValue());
+}
+
+
+Value *
+PreInsertPoolChecks::createPoolHandle (const Value * V, Function * F) {
+  //
+  // Get the DSNode from the Top Down DSGraph.
+  //
+  DSGraph &TDG =  TDPass->getDSGraph(*F);
+  DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
+
+  // If there is no node, return NULL.
+  if (!Node) return 0;
+
+  // Get the DSNode's MetaPool.  If it doesn't have one, return NULL.
+  MetaPool * MP = Node->getMP();
+  if (!MP) return 0;
+
+  // If the MetaPool global variable has already been created, then simply
+  // return it.  Otherwise, create one.
+  if (!(MP->getMetaPoolValue()))
+    MP->setMetaPoolValue (makeMetaPool (F->getParent(), Node));  
+  return (MP->getMetaPoolValue());
+}
+
+static void
+AddCallToRegFunc (Function* F, GlobalVariable* GV, Function* PR, Value* PH,
+                  Value* AllocSize) {
+  //
+  // First, make sure that we're not registering an external zero-sized global.
+  // These are caused by the following C construct and should never be checked:
+  //  extern variable[];
+  //
+  ConstantInt * C;
+  if (GV->isExternal())
+    if ((C = dyn_cast<ConstantInt>(AllocSize)) && (!(C->getZExtValue())))
+      return;
+
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+
+  assert(PH && "No PoolHandle for Global!");
+
+  BasicBlock::iterator InsertPt = F->getEntryBlock().begin();
+  Instruction *GVCasted = new CastInst(GV, VoidPtrType, GV->getName()+"casted",InsertPt);
+  Value *PHCasted = new CastInst(PH, VoidPtrType, PH->getName()+"casted",InsertPt);
+  AllocSize = castTo (AllocSize, Type::UIntTy, InsertPt);
+  std::vector<Value *> args (1, PHCasted);
+  args.push_back (GVCasted);
+  args.push_back (AllocSize);
+  new CallInst(PR, args, "", InsertPt);
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Class: PreInsertPoolChecks
+////////////////////////////////////////////////////////////////////////////
+
+//
+// Method: runOnModule()
+//
+// Description:
+//  This method is called by the pass manager.  The job of this class is to
+//  create any global variables and inter-procedural changes that cannot be
+//  done in the doInitialization() method of the InsertPoolChecks class.
+//
+bool
+PreInsertPoolChecks::runOnModule (Module & M) {
+  // Retrieve the analysis results from other passes
+  cuaPass = &getAnalysis<ConvertUnsafeAllocas>();
+  TDPass  = &getAnalysis<TDDataStructures>();
+  TD      = &getAnalysis<TargetData>();
+
+  // Add prototypes for the run-time checks to the module
+  addPoolCheckProto (M);
+
+  // Register global arrays and collapsed nodes with global pools
+  if (!DisableRegisterGlobals) registerGlobalArraysWithGlobalPools(M);
+
+  //
+  // Create a MetaPool global variable for every DSNode that we might
+  // encounter.
+  //
+  Module::iterator mI = M.begin(), mE = M.end();
+  for ( ; mI != mE; ++mI) {
+    Function *F = mI;
+
+    // Skip functions that are external
+    if (F->isExternal()) continue;
+
+    // Skip the poolcheckglobals() function because it won't have a DSGraph
+    if (F->getName() == "poolcheckglobals") continue;
+
+    // Create a MetaPool variable for each DSNode in the DSGraph.
+    DSGraph & TDG = TDPass->getDSGraph(*F);
+    DSGraph::node_iterator NI = TDG.node_begin(), NE = TDG.node_end();
+    while (NI != NE) {
+      createPoolHandle (M, NI);
+      ++NI;
+    }
+  }
+}
+
+void
+PreInsertPoolChecks::addPoolCheckProto(Module &M) {
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+#if 0
+  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  //	StructType::get(make_vector<const Type*>(VoidPtrType, VoidPtrType,
+  //                                               Type::UIntTy, Type::UIntTy, 0));
+  const Type * PoolDescTypePtr = PointerType::get(PoolDescType);
+#endif
+
+  std::vector<const Type *> Arg(1, VoidPtrType);
+  Arg.push_back(VoidPtrType);
+  FunctionType *PoolCheckTy =
+    FunctionType::get(Type::VoidTy,Arg, false);
+  PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
+
+  std::vector<const Type *> Arg2(1, VoidPtrType);
+  Arg2.push_back(VoidPtrType);
+  Arg2.push_back(VoidPtrType);
+  FunctionType *PoolCheckArrayTy =
+    FunctionType::get(Type::VoidTy,Arg2, false);
+  PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
+  PoolCheckIArray = M.getOrInsertFunction("poolcheckarray_i", PoolCheckArrayTy);
+
+
+  std::vector<const Type *> Arg3(1, VoidPtrType);
+  Arg3.push_back(VoidPtrType); //for output
+  Arg3.push_back(VoidPtrType); //for referent 
+  FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
+  BoundsCheck   = M.getOrInsertFunction("pchk_bounds", BoundsCheckTy);
+  UIBoundsCheck = M.getOrInsertFunction("pchk_bounds_i", BoundsCheckTy);
+
+  std::vector<const Type *> Arg4(1, VoidPtrType);
+  Arg4.push_back(VoidPtrType);
+  FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
+  getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
+  UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
+
+  //Get the poolregister function
+  PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
+  StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
+  ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
+  StackFree = M.getOrInsertFunction("pchk_drop_stack", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
+  
+  FuncRegister = M.getOrInsertFunction("pchk_reg_func", Type::VoidTy, VoidPtrType, Type::UIntTy, PointerType::get(VoidPtrType), NULL);
+
+  PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
+  PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
+
+  std::vector<const Type *> FArg2(1, Type::IntTy);
+  FArg2.push_back(Type::IntTy);
+  FArg2.push_back(VoidPtrType);
+  FunctionType *ExactCheckTy = FunctionType::get(VoidPtrType, FArg2, false);
+  ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);
+
+  std::vector<const Type *> FArg3(1, Type::UIntTy);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
+  FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
+  FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
+
+  std::vector<const Type *> FArg6(1, VoidPtrType);
+  FArg6.push_back(VoidPtrType);
+  FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
+  FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
+
+  std::vector<const Type *> FArg9(1, Type::UIntTy);
+  FArg9.push_back(VoidPtrType);
+  FArg9.push_back(PointerType::get(VoidPtrType));
+  FunctionType *FunctionCheckTTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  FunctionCheckT = M.getOrInsertFunction("funccheck_t", FunctionCheckTTy);
+
+  FArg9.clear();
+  FArg9.push_back(VoidPtrType);
+  FunctionType *ICCheckTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  ICCheck = M.getOrInsertFunction("pchk_iccheck", ICCheckTy);
+
+  std::vector<const Type*> FArg5(1, VoidPtrType);
+  FArg5.push_back(VoidPtrType);
+  FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
+  GetActualValue = M.getOrInsertFunction("pchk_getActualValue", GetActualValueTy);
+
+  std::vector<const Type*> FArg4(1, VoidPtrType); //base
+  FArg4.push_back(VoidPtrType); //result
+  FArg4.push_back(Type::UIntTy); //size
+  FunctionType *ExactCheck2Ty = FunctionType::get(VoidPtrType, FArg4, false);
+  ExactCheck2  = M.getOrInsertFunction("exactcheck2",  ExactCheck2Ty);
+
+  std::vector<const Type*> FArg7(1, VoidPtrType); //base
+  FArg7.push_back(VoidPtrType); //result
+  FArg7.push_back(VoidPtrType); //end
+  FunctionType *ExactCheck3Ty = FunctionType::get(VoidPtrType, FArg7, false);
+  ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
+
+  std::vector<const Type*> FArg8(1, VoidPtrType); //base
+  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg8, false);
+  getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
+  getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
+}
+
+void
+PreInsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
+#ifdef LLVA_KERNEL
+
+  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  const Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+  const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+
+  //Get the registration function
+  std::vector<const Type*> Vt;
+  const FunctionType* RFT = FunctionType::get(Type::VoidTy, Vt, false);
+  Function* RegFunc = M.getOrInsertFunction("poolcheckglobals", RFT);
+  if (RegFunc->empty()) {
+    BasicBlock* BB = new BasicBlock("reg", RegFunc);
+    new ReturnInst(BB);
+  }
+
+  //Now iterate over globals and register all the arrays
+  DSGraph &G = TDPass->getGlobalsGraph();
+  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
+  for ( ; GI != GE; ++GI) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
+      if (GV->getType() != PoolDescPtrTy) {
+        GlobalValue * GVLeader = G.getScalarMap().getLeaderForGlobal(GV);
+        DSNode *DSN  = G.getNodeForValue(GVLeader).getNode();
+        if (((isa<ArrayType>(GV->getType()->getElementType())) ||
+            (DSN && DSN->isNodeCompletelyFolded()))
+            && !isa<OpaqueType>(GV->getType())
+            && !(isa<PointerType>(GV->getType()) && 
+                 isa<OpaqueType>(cast<PointerType>(GV->getType())->getElementType()))) {
+          Value * AllocSize;
+          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+            //std::cerr << "found global" << *GI << std::endl;
+            AllocSize = ConstantInt::get(csiType,
+                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
+          } else {
+            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()->getElementType()));
+          }
+          Value* PH = getPD(DSN, M);
+          if (PH)
+            AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
+        }
+      }
+    }
+  }
+#else
+  Function *MainFunc = M.getMainFunction();
+  if (MainFunc == 0 || MainFunc->isExternal()) {
+    std::cerr << "Cannot do array bounds check for this program"
+	      << "no 'main' function yet!\n";
+    abort();
+  }
+  //First register, argc and argv
+  Function::arg_iterator AI = MainFunc->arg_begin(), AE = MainFunc->arg_end();
+  if (AI != AE) {
+    //There is argc and argv
+    Value *Argc = AI;
+    AI++;
+    Value *Argv = AI;
+    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*MainFunc);
+    Value *PH= getPoolHandle(Argv, MainFunc, *FI);
+    Function *PoolRegister = paPass->PoolRegister;
+    BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
+    while ((isa<CallInst>(InsertPt)) || isa<CastInst>(InsertPt) || isa<AllocaInst>(InsertPt) || isa<BinaryOperator>(InsertPt)) ++InsertPt;
+    if (PH) {
+      Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+      Instruction *GVCasted = new CastInst(Argv,
+					   VoidPtrType, Argv->getName()+"casted",InsertPt);
+      const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+      Value *AllocSize = new CastInst(Argc,
+				      csiType, Argc->getName()+"casted",InsertPt);
+      AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
+					 ConstantInt::get(csiType, 4), "sizetmp", InsertPt);
+      new CallInst(PoolRegister,
+				  make_vector(PH, AllocSize, GVCasted, 0),
+				  "", InsertPt); 
+      
+    } else {
+      std::cerr << "argv's pool descriptor is not present. \n";
+      //	abort();
+    }
+    
+  }
+
+  //Now iterate over globals and register all the arrays
+  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
+  for ( ; GI != GE; ++GI) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
+      Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+      Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+      Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+      if (GV->getType() != PoolDescPtrTy) {
+        DSGraph &G = equivPass->getGlobalsGraph();
+        DSNode *DSN  = G.getNodeForValue(GV).getNode();
+        if ((isa<ArrayType>(GV->getType()->getElementType())) ||
+            DSN->isNodeCompletelyFolded()) {
+          Value * AllocSize;
+          const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
+          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
+            //std::cerr << "found global" << *GI << std::endl;
+            AllocSize = ConstantInt::get(csiType,
+                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
+          } else {
+            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
+          }
+          Function *PoolRegister = paPass->PoolRegister;
+          BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
+          //skip the calls to poolinit
+          while ((isa<CallInst>(InsertPt))  ||
+                  isa<CastInst>(InsertPt)   ||
+                  isa<AllocaInst>(InsertPt) ||
+                  isa<BinaryOperator>(InsertPt)) ++InsertPt;
+      
+          std::map<const DSNode *, Value *>::iterator I = paPass->GlobalNodes.find(DSN);
+          if (I != paPass->GlobalNodes.end()) {
+            Value *PH = I->second;
+            Instruction *GVCasted = new CastInst(GV,
+                   VoidPtrType, GV->getName()+"casted",InsertPt);
+            new CallInst(PoolRegister,
+                make_vector(PH, AllocSize, GVCasted, 0),
+                "", InsertPt); 
+          } else {
+            std::cerr << "pool descriptor not present \n ";
+            abort();
+          }
+        }
+      }
+    }
+  }
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Class: InsertPoolChecks
+////////////////////////////////////////////////////////////////////////////
+
+void
+InsertPoolChecks::addPoolCheckProto(Module &M) {
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+#if 0
+  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  //	StructType::get(make_vector<const Type*>(VoidPtrType, VoidPtrType,
+  //                                               Type::UIntTy, Type::UIntTy, 0));
+  const Type * PoolDescTypePtr = PointerType::get(PoolDescType);
+#endif
+
+  std::vector<const Type *> Arg(1, VoidPtrType);
+  Arg.push_back(VoidPtrType);
+  FunctionType *PoolCheckTy =
+    FunctionType::get(Type::VoidTy,Arg, false);
+  PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
+
+  std::vector<const Type *> Arg2(1, VoidPtrType);
+  Arg2.push_back(VoidPtrType);
+  Arg2.push_back(VoidPtrType);
+  FunctionType *PoolCheckArrayTy =
+    FunctionType::get(Type::VoidTy,Arg2, false);
+  PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
+  PoolCheckIArray = M.getOrInsertFunction("poolcheckarray_i", PoolCheckArrayTy);
+
+
+  std::vector<const Type *> Arg3(1, VoidPtrType);
+  Arg3.push_back(VoidPtrType); //for output
+  Arg3.push_back(VoidPtrType); //for referent 
+  FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
+  BoundsCheck   = M.getOrInsertFunction("pchk_bounds", BoundsCheckTy);
+  UIBoundsCheck = M.getOrInsertFunction("pchk_bounds_i", BoundsCheckTy);
+
+  std::vector<const Type *> Arg4(1, VoidPtrType);
+  Arg4.push_back(VoidPtrType);
+  FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
+  getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
+  UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
+
+  //Get the poolregister function
+  PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
+  StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
+  ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
+  StackFree = M.getOrInsertFunction("pchk_drop_stack", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
+  
+  FuncRegister = M.getOrInsertFunction("pchk_reg_func", Type::VoidTy, VoidPtrType, Type::UIntTy, PointerType::get(VoidPtrType), NULL);
+
+  PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
+  PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
+
+  std::vector<const Type *> FArg2(1, Type::IntTy);
+  FArg2.push_back(Type::IntTy);
+  FArg2.push_back(VoidPtrType);
+  FunctionType *ExactCheckTy = FunctionType::get(VoidPtrType, FArg2, false);
+  ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);
+
+  std::vector<const Type *> FArg3(1, Type::UIntTy);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
+  FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
+  FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
+
+  std::vector<const Type *> FArg6(1, VoidPtrType);
+  FArg6.push_back(VoidPtrType);
+  FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
+  FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
+
+  std::vector<const Type *> FArg9(1, Type::UIntTy);
+  FArg9.push_back(VoidPtrType);
+  FArg9.push_back(PointerType::get(VoidPtrType));
+  FunctionType *FunctionCheckTTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  FunctionCheckT = M.getOrInsertFunction("funccheck_t", FunctionCheckTTy);
+
+  FArg9.clear();
+  FArg9.push_back(VoidPtrType);
+  FunctionType *ICCheckTy = FunctionType::get(Type::VoidTy, FArg9, true);
+  ICCheck = M.getOrInsertFunction("pchk_iccheck", ICCheckTy);
+
+  std::vector<const Type*> FArg5(1, VoidPtrType);
+  FArg5.push_back(VoidPtrType);
+  FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
+  GetActualValue = M.getOrInsertFunction("pchk_getActualValue", GetActualValueTy);
+
+  std::vector<const Type*> FArg4(1, VoidPtrType); //base
+  FArg4.push_back(VoidPtrType); //result
+  FArg4.push_back(Type::UIntTy); //size
+  FunctionType *ExactCheck2Ty = FunctionType::get(VoidPtrType, FArg4, false);
+  ExactCheck2  = M.getOrInsertFunction("exactcheck2",  ExactCheck2Ty);
+
+  std::vector<const Type*> FArg7(1, VoidPtrType); //base
+  FArg7.push_back(VoidPtrType); //result
+  FArg7.push_back(VoidPtrType); //end
+  FunctionType *ExactCheck3Ty = FunctionType::get(VoidPtrType, FArg7, false);
+  ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
+
+  std::vector<const Type*> FArg8(1, VoidPtrType); //base
+  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg8, false);
+  getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
+  getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
+}
+
+
+void
+InsertPoolChecks::addHeapRegs (Module & M) {
+  DSNode * Node;
+  MetaPool * MP;
+
+  while (PHNeeded.size()) {
+    Node = PHNeeded.back();
+    PHNeeded.pop_back();
+    MP = Node->getMP();
+    Value* MPV = MP->getMetaPoolValue();
+
+    // Add registers in front of every allocation
+    for (std::list<CallSite>::iterator i = MP->allocs.begin(),
+          e = MP->allocs.end(); i != e; ++i) {
+      std::string name = i->getCalledFunction()->getName();
+      if (name == "kmem_cache_alloc") {
+        //insert a register before
+        Value* VP = new CastInst(i->getArgument(0), PointerType::get(Type::SByteTy), "", i->getInstruction());
+        Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", i->getInstruction());
+        Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
+        new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
+      } else if ((name == "kmalloc") ||
+                 (name == "__vmalloc") ||
+                 (name == "__alloc_bootmem")) {
+        //inser obj register after
+        Instruction* IP = i->getInstruction()->getNext();
+        Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
+        Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", IP);
+        Value* len = new CastInst(i->getArgument(0), Type::UIntTy, "len", IP);
+        new CallInst(PoolRegister, make_vector(VMP, VP, len, 0), "", IP);
+      } else
+        assert(0 && "unknown alloc");
+    }
+
+  }
 }
 
 void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
@@ -1421,32 +1924,49 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   return false;
 }
 
+bool
+InsertPoolChecks::doInitialization (Module & M) {
+  // Add the new poolcheck prototype 
+  addPoolCheckProto (M);
 
-bool InsertPoolChecks::runOnModule(Module &M) {
+  return true;
+}
+
+bool
+InsertPoolChecks::doFinalization (Module & M) {
+  // Insert code to register heap allocations with the correct MetaPool
+  // and to register kernel pools with the correct MetaPool
+  addHeapRegs (M);
+
+  // Insert code to drop objects from MetaPools when they are freed by the
+  // kernel allocators
+  addObjFrees (M);
+
+  return true;
+}
+
+bool
+InsertPoolChecks::runOnFunction (Function & F) {
+  //
+  // Retrieve references to all of the passes from which we will gather
+  // information.
+  //
   cuaPass = &getAnalysis<ConvertUnsafeAllocas>();
-  //  budsPass = &getAnalysis<CompleteBUDataStructures>();
-#ifndef LLVA_KERNEL  
-  paPass = &getAnalysis<PoolAllocate>();
-  equivPass = &(paPass->getECGraphs());
-  efPass = &getAnalysis<EmbeCFreeRemoval>();
-  TD  = &getAnalysis<TargetData>();
+  TD      = &getAnalysis<TargetData>();
+#ifdef LLVA_KERNEL  
+  TDPass  = &getAnalysis<TDDataStructures>();
 #else
-  TD  = &getAnalysis<TargetData>();
-  TDPass = &getAnalysis<TDDataStructures>();
+  paPass    = &getAnalysis<PoolAllocate>();
+  equivPass = &(paPass->getECGraphs());
+  efPass    = &getAnalysis<EmbeCFreeRemoval>();
+  TD        = &getAnalysis<TargetData>();
 #endif
 
-  //add the new poolcheck prototype 
-  addPoolCheckProto(M);
-
-  //register global arrays and collapsed nodes with global pools
-  if (!DisableRegisterGlobals)
-    registerGlobalArraysWithGlobalPools(M);
-
-  //Replace old poolcheck with the new one 
-  addPoolChecks(M);
-
-  //Add obj drops
-  addObjFrees(M);
+#if 0
+  // Transform the function
+  if (!(F.isExternal())) TransformFunction (F);
+  if (!DisableLSChecks)  addLoadStoreChecks(F);
+#endif
 
   //
   // Update the statistics.
@@ -1454,177 +1974,6 @@ bool InsertPoolChecks::runOnModule(Module &M) {
   PoolChecks = NullChecks + FullChecks;
   
   return true;
-}
-
-static void AddCallToRegFunc(Function* F, GlobalVariable* GV, Function* PR, Value* PH, Value* AllocSize) {
-  //
-  // First, make sure that we're not registering an external zero-sized global.
-  // These are caused by the following C construct and should never be checked:
-  //  extern variable[];
-  //
-  ConstantInt * C;
-  if (GV->isExternal())
-    if ((C = dyn_cast<ConstantInt>(AllocSize)) && (!(C->getZExtValue())))
-      return;
-
-  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-
-  assert(PH && "No PoolHandle for Global!");
-
-  BasicBlock::iterator InsertPt = F->getEntryBlock().begin();
-  Instruction *GVCasted = new CastInst(GV, VoidPtrType, GV->getName()+"casted",InsertPt);
-  Value *PHCasted = new CastInst(PH, VoidPtrType, PH->getName()+"casted",InsertPt);
-  new CallInst(PR, make_vector(PHCasted, GVCasted, AllocSize, 0), "", InsertPt);
-}
-
-void InsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
-
-#ifdef LLVA_KERNEL
-
-  const Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
-  const Type *PoolDescPtrTy = PointerType::get(PoolDescType);
-  const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
-
-  //Get the registration function
-  std::vector<const Type*> Vt;
-  const FunctionType* RFT = FunctionType::get(Type::VoidTy, Vt, false);
-  Function* RegFunc = M.getOrInsertFunction("poolcheckglobals", RFT);
-  if (RegFunc->empty()) {
-    BasicBlock* BB = new BasicBlock("reg", RegFunc);
-    new ReturnInst(BB);
-  }
-
-  //Now iterate over globals and register all the arrays
-  DSGraph &G = TDPass->getGlobalsGraph();
-  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
-  for ( ; GI != GE; ++GI) {
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
-      if (GV->getType() != PoolDescPtrTy) {
-        GlobalValue * GVLeader = G.getScalarMap().getLeaderForGlobal(GV);
-        DSNode *DSN  = G.getNodeForValue(GVLeader).getNode();
-        if (((isa<ArrayType>(GV->getType()->getElementType())) ||
-            (DSN && DSN->isNodeCompletelyFolded()))
-            && !isa<OpaqueType>(GV->getType())
-            && !(isa<PointerType>(GV->getType()) && 
-                 isa<OpaqueType>(cast<PointerType>(GV->getType())->getElementType()))) {
-          Value * AllocSize;
-          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
-            //std::cerr << "found global" << *GI << std::endl;
-            AllocSize = ConstantInt::get(csiType,
-                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
-          } else {
-            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()->getElementType()));
-          }
-          Value* PH = getPD(DSN, M);
-          if (PH)
-            AddCallToRegFunc(RegFunc, GV, PoolRegister, PH, AllocSize);
-        }
-      }
-    }
-  }
-
-#else
-  Function *MainFunc = M.getMainFunction();
-  if (MainFunc == 0 || MainFunc->isExternal()) {
-    std::cerr << "Cannot do array bounds check for this program"
-	      << "no 'main' function yet!\n";
-    abort();
-  }
-  //First register, argc and argv
-  Function::arg_iterator AI = MainFunc->arg_begin(), AE = MainFunc->arg_end();
-  if (AI != AE) {
-    //There is argc and argv
-    Value *Argc = AI;
-    AI++;
-    Value *Argv = AI;
-    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*MainFunc);
-    Value *PH= getPoolHandle(Argv, MainFunc, *FI);
-    Function *PoolRegister = paPass->PoolRegister;
-    BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-    while ((isa<CallInst>(InsertPt)) || isa<CastInst>(InsertPt) || isa<AllocaInst>(InsertPt) || isa<BinaryOperator>(InsertPt)) ++InsertPt;
-    if (PH) {
-      Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-      Instruction *GVCasted = new CastInst(Argv,
-					   VoidPtrType, Argv->getName()+"casted",InsertPt);
-      const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
-      Value *AllocSize = new CastInst(Argc,
-				      csiType, Argc->getName()+"casted",InsertPt);
-      AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
-					 ConstantInt::get(csiType, 4), "sizetmp", InsertPt);
-      new CallInst(PoolRegister,
-				  make_vector(PH, AllocSize, GVCasted, 0),
-				  "", InsertPt); 
-      
-    } else {
-      std::cerr << "argv's pool descriptor is not present. \n";
-      //	abort();
-    }
-    
-  }
-
-  //Now iterate over globals and register all the arrays
-  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
-  for ( ; GI != GE; ++GI) {
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
-      Type *VoidPtrType = PointerType::get(Type::SByteTy); 
-      Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
-      Type *PoolDescPtrTy = PointerType::get(PoolDescType);
-      if (GV->getType() != PoolDescPtrTy) {
-        DSGraph &G = equivPass->getGlobalsGraph();
-        DSNode *DSN  = G.getNodeForValue(GV).getNode();
-        if ((isa<ArrayType>(GV->getType()->getElementType())) ||
-            DSN->isNodeCompletelyFolded()) {
-          Value * AllocSize;
-          const Type* csiType = Type::getPrimitiveType(Type::UIntTyID);
-          if (const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType())) {
-            //std::cerr << "found global" << *GI << std::endl;
-            AllocSize = ConstantInt::get(csiType,
-                  (AT->getNumElements() * TD->getTypeSize(AT->getElementType())));
-          } else {
-            AllocSize = ConstantInt::get(csiType, TD->getTypeSize(GV->getType()));
-          }
-          Function *PoolRegister = paPass->PoolRegister;
-          BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-          //skip the calls to poolinit
-          while ((isa<CallInst>(InsertPt))  ||
-                  isa<CastInst>(InsertPt)   ||
-                  isa<AllocaInst>(InsertPt) ||
-                  isa<BinaryOperator>(InsertPt)) ++InsertPt;
-      
-          std::map<const DSNode *, Value *>::iterator I = paPass->GlobalNodes.find(DSN);
-          if (I != paPass->GlobalNodes.end()) {
-            Value *PH = I->second;
-            Instruction *GVCasted = new CastInst(GV,
-                   VoidPtrType, GV->getName()+"casted",InsertPt);
-            new CallInst(PoolRegister,
-                make_vector(PH, AllocSize, GVCasted, 0),
-                "", InsertPt); 
-          } else {
-            std::cerr << "pool descriptor not present \n ";
-            abort();
-          }
-        }
-      }
-    }
-  }
-#endif
-}
-
-void InsertPoolChecks::addPoolChecks(Module &M) {
-#if 0
-  simplifyGEPList();
-#endif
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)  {
-    std::string Name = I->getName();
-#if 0
-    if ((Name == "load_llva_binary") || (Name == "do_open") || (Name == "ide_build_dmatable"))
-      continue;
-#endif
-    if (!I->isExternal()) TransformFunction(*I);
-  }
-  if (!DisableLSChecks)  addLoadStoreChecks(M);
-  //  if (!DisableGEPChecks) addGetElementPtrChecks(M);
 }
 
 void InsertPoolChecks::handleCallInst(CallInst *CI) {
@@ -1689,6 +2038,7 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
       if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(2), Bop2, InsertPt);
+#if 0
     } else if ((FuncName == "llva_load_integer") ||
                (FuncName == "llva_save_integer") ||
                (FuncName == "llva_load_integer_stackp") ||
@@ -1709,7 +2059,6 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
-#if 0
     } else if ((FuncName == "llva_load_icontext") ||
                (FuncName == "llva_save_icontext")) {
       //
@@ -2428,7 +2777,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     }
   }
 
-void InsertPoolChecks::TransformFunction(Function &F) {
+void InsertPoolChecks::TransformFunction (Function & F) {
 #ifndef LLVA_KERNEL  
   PA::FuncInfo * PAFI = paPass->getFuncInfoOrClone(F);
   if (PAFI->Clone && PAFI->Clone != &F) {
@@ -2747,29 +3096,26 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   new CallInst(PoolCheck,args, "", I);
 }
 
-void InsertPoolChecks::addLoadStoreChecks(Module &M){
-  Module::iterator mI = M.begin(), mE = M.end();
-  for ( ; mI != mE; ++mI) {
-    Function *F = mI;
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-      if (LoadInst *LI = dyn_cast<LoadInst>(&*I)) {
-        Value *P = LI->getPointerOperand();
-        addLSChecks(P, LI, F);
-      } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
-        Value *P = SI->getPointerOperand();
-        addLSChecks(P, SI, F);
-      } else if (CallInst * CI = dyn_cast<CallInst>(&*I)) {
-        if (Function * CalledFunc = CI->getCalledFunction()) {
-          if ((CalledFunc->getName() == "llva_atomic_compare_and_swap") ||
-              (CalledFunc->getName() == "llva_atomic_cas_lw") ||
-              (CalledFunc->getName() == "llva_atomic_cas_h") ||
-              (CalledFunc->getName() == "llva_atomic_cas_b") ||
-              (CalledFunc->getName() == "llva_atomic_fetch_add_store") ||
-              (CalledFunc->getName() == "llva_atomic_and") ||
-              (CalledFunc->getName() == "llva_atomic_or")) {
-            Value * P = CI->getOperand(1);
-            addLSChecks (P, CI, F);
-          }
+void InsertPoolChecks::addLoadStoreChecks (Function & FR) {
+  Function *F = &FR;
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(&*I)) {
+      Value *P = LI->getPointerOperand();
+      addLSChecks(P, LI, F);
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
+      Value *P = SI->getPointerOperand();
+      addLSChecks(P, SI, F);
+    } else if (CallInst * CI = dyn_cast<CallInst>(&*I)) {
+      if (Function * CalledFunc = CI->getCalledFunction()) {
+        if ((CalledFunc->getName() == "llva_atomic_compare_and_swap") ||
+            (CalledFunc->getName() == "llva_atomic_cas_lw") ||
+            (CalledFunc->getName() == "llva_atomic_cas_h") ||
+            (CalledFunc->getName() == "llva_atomic_cas_b") ||
+            (CalledFunc->getName() == "llva_atomic_fetch_add_store") ||
+            (CalledFunc->getName() == "llva_atomic_and") ||
+            (CalledFunc->getName() == "llva_atomic_or")) {
+          Value * P = CI->getOperand(1);
+          addLSChecks (P, CI, F);
         }
       }
     }
@@ -2897,109 +3243,6 @@ void InsertPoolChecks::addLoadStoreChecks(Module &M){
 
 #endif
 
-void InsertPoolChecks::addPoolCheckProto(Module &M) {
-  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
-  /*
-  const Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
-  //	StructType::get(make_vector<const Type*>(VoidPtrType, VoidPtrType,
-  //                                               Type::UIntTy, Type::UIntTy, 0));
-  const Type * PoolDescTypePtr = PointerType::get(PoolDescType);
-  */  
-
-  std::vector<const Type *> Arg(1, VoidPtrType);
-  Arg.push_back(VoidPtrType);
-  FunctionType *PoolCheckTy =
-    FunctionType::get(Type::VoidTy,Arg, false);
-  PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
-
-  std::vector<const Type *> Arg2(1, VoidPtrType);
-  Arg2.push_back(VoidPtrType);
-  Arg2.push_back(VoidPtrType);
-  FunctionType *PoolCheckArrayTy =
-    FunctionType::get(Type::VoidTy,Arg2, false);
-  PoolCheckArray = M.getOrInsertFunction("poolcheckarray", PoolCheckArrayTy);
-  PoolCheckIArray = M.getOrInsertFunction("poolcheckarray_i", PoolCheckArrayTy);
-
-
-  std::vector<const Type *> Arg3(1, VoidPtrType);
-  Arg3.push_back(VoidPtrType); //for output
-  Arg3.push_back(VoidPtrType); //for referent 
-  FunctionType *BoundsCheckTy = FunctionType::get(VoidPtrType,Arg3, false);
-  BoundsCheck   = M.getOrInsertFunction("pchk_bounds", BoundsCheckTy);
-  UIBoundsCheck = M.getOrInsertFunction("pchk_bounds_i", BoundsCheckTy);
-
-  std::vector<const Type *> Arg4(1, VoidPtrType);
-  Arg4.push_back(VoidPtrType);
-  FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
-  getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
-  UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
-
-  //Get the poolregister function
-  PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
-                                       VoidPtrType, Type::UIntTy, NULL);
-  StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
-                                       VoidPtrType, Type::UIntTy, NULL);
-  ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
-                                  VoidPtrType, NULL);
-  StackFree = M.getOrInsertFunction("pchk_drop_stack", Type::VoidTy, VoidPtrType,
-                                  VoidPtrType, NULL);
-  
-  FuncRegister = M.getOrInsertFunction("pchk_reg_func", Type::VoidTy, VoidPtrType, Type::UIntTy, PointerType::get(VoidPtrType), NULL);
-
-  PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
-  PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
-
-  std::vector<const Type *> FArg2(1, Type::IntTy);
-  FArg2.push_back(Type::IntTy);
-  FArg2.push_back(VoidPtrType);
-  FunctionType *ExactCheckTy = FunctionType::get(VoidPtrType, FArg2, false);
-  ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);
-
-  std::vector<const Type *> FArg3(1, Type::UIntTy);
-  FArg3.push_back(VoidPtrType);
-  FArg3.push_back(VoidPtrType);
-  FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
-  FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
-
-  std::vector<const Type *> FArg6(1, VoidPtrType);
-  FArg6.push_back(VoidPtrType);
-  FunctionType *FunctionCheckGTy = FunctionType::get(Type::VoidTy, FArg6, true);
-  FunctionCheckG = M.getOrInsertFunction("funccheck_g", FunctionCheckGTy);
-
-  std::vector<const Type *> FArg9(1, Type::UIntTy);
-  FArg9.push_back(VoidPtrType);
-  FArg9.push_back(PointerType::get(VoidPtrType));
-  FunctionType *FunctionCheckTTy = FunctionType::get(Type::VoidTy, FArg9, true);
-  FunctionCheckT = M.getOrInsertFunction("funccheck_t", FunctionCheckTTy);
-
-  FArg9.clear();
-  FArg9.push_back(VoidPtrType);
-  FunctionType *ICCheckTy = FunctionType::get(Type::VoidTy, FArg9, true);
-  ICCheck = M.getOrInsertFunction("pchk_iccheck", ICCheckTy);
-
-  std::vector<const Type*> FArg5(1, VoidPtrType);
-  FArg5.push_back(VoidPtrType);
-  FunctionType *GetActualValueTy = FunctionType::get(VoidPtrType, FArg5, false);
-  GetActualValue = M.getOrInsertFunction("pchk_getActualValue", GetActualValueTy);
-
-  std::vector<const Type*> FArg4(1, VoidPtrType); //base
-  FArg4.push_back(VoidPtrType); //result
-  FArg4.push_back(Type::UIntTy); //size
-  FunctionType *ExactCheck2Ty = FunctionType::get(VoidPtrType, FArg4, false);
-  ExactCheck2  = M.getOrInsertFunction("exactcheck2",  ExactCheck2Ty);
-
-  std::vector<const Type*> FArg7(1, VoidPtrType); //base
-  FArg7.push_back(VoidPtrType); //result
-  FArg7.push_back(VoidPtrType); //end
-  FunctionType *ExactCheck3Ty = FunctionType::get(VoidPtrType, FArg7, false);
-  ExactCheck3 = M.getOrInsertFunction("exactcheck3", ExactCheck3Ty);
-
-  std::vector<const Type*> FArg8(1, VoidPtrType); //base
-  FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg8, false);
-  getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
-  getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
-}
-
 DSNode* InsertPoolChecks::getDSNode(const Value *V, Function *F) {
 #ifndef LLVA_KERNEL
   DSGraph &TDG = equivPass->getDSGraph(*F);
@@ -3062,14 +3305,19 @@ Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo
   return 0;
 }
 #else
-Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
+Value *
+InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
   DSGraph &TDG =  TDPass->getDSGraph(*F);
   DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
+
+  // Register that we will need allocations with this DSNode registered.
+  PHNeeded.push_back (Node);
+
   // Get the pool handle for this DSNode...
   //  assert(!Node->isUnknownNode() && "Unknown node \n");
   //  if (Node->isUnknownNode()) {
   //    return 0;
   //  }
-  return getPD(Node, *F->getParent());
+  return getPD (Node, *F->getParent());
 }
 #endif

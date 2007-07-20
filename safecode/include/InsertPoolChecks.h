@@ -22,11 +22,74 @@ namespace llvm {
 ModulePass *creatInsertPoolChecks();
 using namespace CUA;
 
-struct InsertPoolChecks : public ModulePass {
+struct PreInsertPoolChecks : public ModulePass {
+  public:
+    virtual bool runOnModule (Module & M);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      // Required passes
+      AU.addRequired<ConvertUnsafeAllocas>();
+      AU.addRequired<TDDataStructures>();
+      AU.addRequired<TargetData>();
+
+      // Preserved passes
+      AU.addPreserved<ConvertUnsafeAllocas>();
+      AU.addPreserved<TDDataStructures>();
+    }
+  private:
+    // Private variables
+    CUA::ConvertUnsafeAllocas * cuaPass;
+    TDDataStructures * TDPass;
+    TargetData * TD;
+
+    // External functions in the SAFECode run-time library
+    Function *PoolCheck;
+    Function *PoolCheckArray;
+    Function *PoolCheckIArray;
+    Function *ExactCheck;
+    Function *FunctionCheck;
+    Function *FunctionCheckT;
+    Function *FunctionCheckG;
+    Function *ICCheck;
+    Function *BoundsCheck;
+    Function *UIBoundsCheck;
+    Function *getBounds;
+    Function *UIgetBounds;
+    Function *ExactCheck2;
+    Function *ExactCheck3;
+    Function *GetActualValue;
+    Function *PoolRegister;
+    Function *StackRegister;
+    Function *ObjFree;
+    Function *StackFree;
+    Function *FuncRegister;
+    Function *PoolRegMP;
+    Function *PoolFindMP;
+    Function *getBegin;
+    Function *getEnd;
+
+    // Private methods
+    void addPoolCheckProto(Module &M);
+    void registerGlobalArraysWithGlobalPools(Module &M);
+    Value * createPoolHandle (const Value * V, Function * F);
+    Value * createPoolHandle (Module & M, DSNode * Node);
+    Value* getPD(DSNode* N, Module& M) { 
+      if (!N) return 0;
+      createPoolHandle (M, N);
+      if (N->getMP())
+        return N->getMP()->getMetaPoolValue();
+      else
+        return 0;
+    }
+};
+
+struct InsertPoolChecks : public FunctionPass {
     public :
     const char *getPassName() const { return "Inserting pool checks for array bounds "; }
-    virtual bool runOnModule(Module &M);
+    virtual bool doInitialization (Module &M);
+    virtual bool doFinalization   (Module &M);
+    virtual bool runOnFunction (Function & F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<PreInsertPoolChecks>();
       AU.addRequired<ConvertUnsafeAllocas>();
 //      AU.addRequired<CompleteBUDataStructures>();
 //      AU.addRequired<TDDataStructures>();
@@ -79,6 +142,9 @@ struct InsertPoolChecks : public ModulePass {
   // Map of DSNode to Function List Global Variables
   std::map<Value *, GlobalVariable *> FuncListMap;
 
+  // Set of DSNodes for which we do full bounds checks
+  std::vector<DSNode *> PHNeeded;
+
   void simplifyGEPList();
   void addObjFrees(Module& M);
   void addMetaPools(Module& M, MetaPool* MP, DSNode* N);
@@ -87,13 +153,12 @@ struct InsertPoolChecks : public ModulePass {
   void addGetElementPtrChecks(Module &M);
   DSNode* getDSNode(const Value *V, Function *F);
   unsigned getDSNodeOffset(const Value *V, Function *F);
-  void addLoadStoreChecks(Module &M);
+  void addLoadStoreChecks (Function & F);
   void TransformFunction(Function &F);
   void handleCallInst(CallInst *CI);
   void handleGetElementPtr(GetElementPtrInst *MAI);
   void addGetActualValue(SetCondInst *SCI, unsigned operand);
   void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig);
-  void registerGlobalArraysWithGlobalPools(Module &M);
   GlobalVariable * getOrCreateFunctionTable (DSNode * Node, Value * PH, Module * M);
   void addExactCheck  (Instruction * GEP, Value * Index, Value * Bound);
   void addExactCheck  (Value * Pointer, Value * Index, Value * Bound, Instruction * InsertPt);
@@ -106,6 +171,7 @@ struct InsertPoolChecks : public ModulePass {
   Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
   bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
   bool findCheckedPointer (Value * PointerOperand);
+  void addHeapRegs (Module & M);
 
 #ifndef LLVA_KERNEL  
   void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);

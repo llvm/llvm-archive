@@ -1,13 +1,15 @@
-#------------------------------------------------------------------------------
-# Makefile.hlvm - Make -> scons conversion
+#===- ./Makefile -------------------------------------------*- Makefile -*--===#
+# 
+#                     The High Level Virtual Machine
 #
-# Copyright (C) 2006 Reid Spencer. All Rights Reserved
-#
-#------------------------------------------------------------------------------
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
 # This makefile simply converts standard make targets into the equivalent 
 # scons invocation in order to retain compatibility for those who wish to use
 # make.
-#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------#
 
 # Select the name of the build mode you want to build by default.
 MYMODE := Debug
@@ -96,7 +98,6 @@ exclusions: Makefile
 	echo 'config.log' >> exclusions
 
 build-for-llvm-top:
-	scons $(SCONSOPTS)  mode=Debug debug=1 assertions=1 optimized=0 \
-	inline=0 small=0 confpath=$(LLVM_TOP)/install prefix=$(LLVM_TOP)/install \
-	with_llvmgcc=$(LLVM_TOP)/install/bin/llvm-gcc \
-	with_llvmgxx=$(LLVM_TOP)/install/bin/llvm-g++
+	scons $(SCONSOPTS) mode=Debug debug=1 assertions=1 optimized=0 \
+	inline=0 small=0 confpath=$(LLVM_TOP)/install:$$PATH \
+	prefix=$(LLVM_TOP)/install \

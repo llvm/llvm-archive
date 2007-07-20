@@ -1,3 +1,4 @@
-DepModule: llvm 
-# NOT IN REPOSITORY: llvm-gcc
-BuildCmd: make build-for-llvm-top LLVM_TOP=@LLVM_TOP@ INSTALL_PREFIX=@INSTALL_PREFIX@  BUILD_OPTIONS=@BUILD_OPTS@
+DepModule: llvm llvm-gcc-4.0
+BuildCmd: make build-for-llvm-top 
+CleanCmd: make clean
+InstallCmd: make install

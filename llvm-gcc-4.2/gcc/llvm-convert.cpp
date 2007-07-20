@@ -5381,16 +5381,18 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, Value *DestLoc) {
     // Insert zero initializers for any uninitialized values.
     Constant *Zero = Constant::getNullValue(PTy->getElementType());
     BuildVecOps.resize(cast<VectorType>(Ty)->getNumElements(), Zero);
-    
+
     // Insert all of the elements here.
-    for (tree Ops = TREE_OPERAND(exp, 0); Ops; Ops = TREE_CHAIN(Ops)) {
-      if (!TREE_PURPOSE(Ops)) continue;  // Not actually initialized?
+    unsigned HOST_WIDE_INT ix;
+    tree purpose, value;
+    FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, purpose, value) {
+      if (!purpose) continue;  // Not actually initialized?
       
-      unsigned FieldNo = TREE_INT_CST_LOW(TREE_PURPOSE(Ops));
+      unsigned FieldNo = TREE_INT_CST_LOW(purpose);
 
       // Update the element.
       if (FieldNo < BuildVecOps.size())
-        BuildVecOps[FieldNo] = Emit(TREE_VALUE(Ops), 0);
+        BuildVecOps[FieldNo] = Emit(value, 0);
     }
     
     return BuildVector(BuildVecOps);

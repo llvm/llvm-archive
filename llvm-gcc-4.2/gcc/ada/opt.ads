@@ -768,8 +768,10 @@ package Opt is
    --  compiler options. This is identical to Operating_Mode except that
    --  this is not affected by errors.
 
-   Optimization_Level : Int;
-   pragma Import (C, Optimization_Level, "optimize");
+--  LLVM local begin
+   function Optimization_Level return Int;
+   pragma Import (C, Optimization_Level, "optimization_level");
+--  LLVM local end
    --  This constant reflects the optimization level (0,1,2 for -O0,-O1,-O2)
 
    Output_File_Name_Present : Boolean := False;

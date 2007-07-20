@@ -224,6 +224,11 @@ extern void __gnat_install_SEH_handler  (void *);
 extern void adainit		        (void);
 extern void _ada_gnat1drv	        (void);
 
+/* LLVM local begin */
+/* Export the optimization level (a macro in Apple's tree) */
+int optimization_level(void);
+/* LLVM local end */
+
 /* The parser for the language.  For us, we process the GNAT tree.  */
 
 static void
@@ -950,3 +955,11 @@ fp_size_to_prec (int size)
 
   abort ();
 }
+
+/* LLVM local begin */
+int
+optimization_level(void)
+{
+  return optimize;
+}
+/* LLVM local end */

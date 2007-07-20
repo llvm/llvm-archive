@@ -6453,12 +6453,16 @@ output_object_block (struct object_block *block)
 /* A htab_traverse callback used to call output_object_block for
    each member of object_block_htab.  */
 
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
 static int
 output_object_block_htab (void **slot, void *data ATTRIBUTE_UNUSED)
 {
   output_object_block ((struct object_block *) (*slot));
   return 1;
 }
+/* LLVM LOCAL */
+#endif
 
 /* Output the definitions of all object_blocks.  */
 

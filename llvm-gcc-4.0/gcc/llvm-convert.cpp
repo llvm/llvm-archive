@@ -3719,28 +3719,22 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     
     // If we can simplify the constraint into something else, do so now.  This
     // avoids LLVM having to know about all the (redundant) GCC constraints.
-    std::string SimplifiedConstraint = '='+CanonicalizeConstraint(Constraint+1);
+    std::string SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
     
     LValue Dest = EmitLV(Operand);
     const Type *DestValTy =
       cast<PointerType>(Dest.Ptr->getType())->getElementType();
-    if (!DestValTy->isFirstClassType()) {
-      // If this is a pointer to a structure or a union, convert this to be a
-      // pointer to a same-sized integer.  GCC allows destinations of structs
-      // and unions if they are the same size as a register.
-      DestValTy = IntegerType::get(TD.getTypeSizeInBits(DestValTy));
-      Dest.Ptr = new BitCastInst(Dest.Ptr, PointerType::get(DestValTy), "tmp",
-                                 CurBB);
-    }
+    
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
-    if (ConstraintStr.empty() && !AllowsMem) {  // Reg dest and no output yet?
+    if (ConstraintStr.empty() && !AllowsMem &&  // Reg dest and no output yet?
+        DestValTy->isFirstClassType()) {
       assert(StoreCallResultAddr == 0 && "Already have a result val?");
       StoreCallResultAddr = Dest.Ptr;
-      ConstraintStr += ",";
+      ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;
       CallResultType = DestValTy;
     } else {
-      ConstraintStr += ",=";
+      ConstraintStr += ",=*";
       ConstraintStr += SimplifiedConstraint;
       CallOps.push_back(Dest.Ptr);
       CallArgTypes.push_back(Dest.Ptr->getType());
@@ -3764,38 +3758,54 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
                                 Constraints, &AllowsMem, &AllowsReg))
       return 0;
     
+    bool isIndirect = false;
     if (AllowsReg || !AllowsMem) {    // Register operand.
       const Type *LLVMTy = ConvertType(type);
-      Value *Op;
-      if (!LLVMTy->isFirstClassType()) {
+
+      Value *Op = 0;
+      if (LLVMTy->isFirstClassType()) {
+        Op = Emit(Val, 0);
+      } else {
+        LValue LV = EmitLV(Val);
+        assert(!LV.isBitfield() && "Inline asm can't have bitfield operand");
+        
         // Structs and unions are permitted here, as long as they're the
         // same size as a register.
-        LValue LV = EmitLV(Val);
-        assert(!LV.isBitfield());
-        LLVMTy = IntegerType::get(TD.getTypeSizeInBits(LLVMTy));
-        Op = new LoadInst(CastToType(Instruction::BitCast, LV.Ptr,
-                          PointerType::get(LLVMTy)), "tmp", CurBB);
-      } else {
-        Op = Emit(Val, 0);
+        uint64_t TySize = TD.getTypeSizeInBits(LLVMTy);
+        if (TySize == 1 || TySize == 8 || TySize == 16 ||
+            TySize == 32 || TySize == 64) {
+          LLVMTy = IntegerType::get(TySize);
+          Op = new LoadInst(CastToType(Instruction::BitCast, LV.Ptr,
+                                       PointerType::get(LLVMTy)), "tmp", CurBB);
+        } else {
+          // Otherwise, emit our value as a lvalue and let the codegen deal with
+          // it.
+          isIndirect = true;
+          Op = LV.Ptr;
+        }
       }
+      
       CallOps.push_back(Op);
       CallArgTypes.push_back(Op->getType());
     } else {                          // Memory operand.
       lang_hooks.mark_addressable(TREE_VALUE(Input));
+      isIndirect = true;
       LValue Src = EmitLV(Val);
       assert(!Src.isBitfield() && "Cannot read from a bitfield!");
       CallOps.push_back(Src.Ptr);
       CallArgTypes.push_back(Src.Ptr->getType());
     }
     
-    ConstraintStr += ",";
+    ConstraintStr += ',';
+    if (isIndirect)
+      ConstraintStr += '*';
     
     // If this output register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
     int RegNum;
     if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val) &&
         (RegNum = 
-         decode_reg_name(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Val)))) >= 0){
+         decode_reg_name(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Val)))) >= 0) {
       ConstraintStr += '{';
       ConstraintStr += reg_names[RegNum];
       ConstraintStr += '}';

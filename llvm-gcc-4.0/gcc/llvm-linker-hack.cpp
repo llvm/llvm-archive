@@ -74,7 +74,6 @@ void dummy_function() {
   llvm::createTailCallEliminationPass();
   llvm::createDeadStoreEliminationPass();
   llvm::createIPConstantPropagationPass();
-  llvm::createRaisePointerReferencesPass();
 }
 
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */

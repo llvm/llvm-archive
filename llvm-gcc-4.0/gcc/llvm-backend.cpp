@@ -267,8 +267,6 @@ void llvm_asm_file_start(void) {
 
       if (optimize > 2)
     	PM->add(createArgumentPromotionPass());  // Scalarize uninlined fn args
-      
-      PM->add(createRaisePointerReferencesPass());// Recover type information
     }
     
     PM->add(createTailDuplicationPass());      // Simplify cfg by copying code

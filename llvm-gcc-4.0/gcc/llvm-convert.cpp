@@ -648,6 +648,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case BIT_FIELD_REF: return EmitLV_BIT_FIELD_REF(exp);
   case REALPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 0);
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
+  case VIEW_CONVERT_EXPR:
+    // The address of a VIEW_CONVERT_EXPR is the address of its operand.
+    return EmitLV(TREE_OPERAND(exp, 0));
   }
 }
 

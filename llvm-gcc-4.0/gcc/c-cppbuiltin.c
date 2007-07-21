@@ -295,6 +295,9 @@ define__GNUC__ (void)
 
   gcc_assert (!*v || *v == ' ' || *v == '-');
 
+  /* APPLE LOCAL LLVM no version number */
+#ifndef LLVM_VERSION_INFO
+
   /* APPLE LOCAL begin Apple version */
   {
     /* This chunk of code defines __APPLE_CC__ from the version
@@ -320,6 +323,9 @@ define__GNUC__ (void)
     builtin_define_with_value_n ("__APPLE_CC__", vt, q - vt);
   }
   /* APPLE LOCAL end Apple version */
+
+  /* APPLE LOCAL LLVM no version number */
+#endif LLVM_VERSION_INFO
 }
 
 /* Define macros used by <stdint.h>.  Currently only defines limits

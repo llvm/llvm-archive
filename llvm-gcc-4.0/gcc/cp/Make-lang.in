@@ -109,8 +109,10 @@ cc1plus-dummy$(exeext): $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
 	      $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBS) \
 	      $(CC1PLUS_ORDER_FLAGS)
 
-cc1plus-checksum.c : cc1plus-dummy$(exeext) build/genchecksum$(exeext)
-	build/genchecksum$(exeext) cc1plus-dummy$(exeext) > $@
+# APPLE LOCAL begin mingw portability: FIXME: 4660353
+cc1plus-checksum.c : cc1plus-dummy$(exeext) build/genchecksum$(build_exeext)
+	build/genchecksum$(build_exeext) cc1plus-dummy$(exeext) > $@
+# APPLE LOCAL end mingw portability: FIXME: 4660353
 
 cc1plus-checksum.o : cc1plus-checksum.c
 

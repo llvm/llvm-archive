@@ -32,15 +32,16 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include <cassert>
-
 extern "C" {
 #include "config.h"
 #include "system.h"
@@ -89,8 +90,6 @@ void llvm_initialize_backend(void) {
   
   if (time_report)
     Args.push_back("--time-passes");
-  if (optimize == 0)
-    Args.push_back("--regalloc=local");
   if (fast_math_flags_set_p())
     Args.push_back("--enable-unsafe-fp-math");
     
@@ -152,6 +151,22 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 #endif
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
+
+  if (optimize) {
+    TargetLowering &TLI = *TheTarget->getTargetLowering();
+    
+    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency) {
+      RegisterScheduler::setDefault(createTDListDAGScheduler);
+    } else {
+      RegisterScheduler::setDefault(createBURRListDAGScheduler);
+    }
+  } else {
+    // FIXME(RC859) - BFS Scheduler is broken. 
+    // RegisterScheduler::setDefault(createBFS_DAGScheduler);
+    RegisterScheduler::setDefault(createTDListDAGScheduler);
+  }
+  
+  RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
  
   if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);

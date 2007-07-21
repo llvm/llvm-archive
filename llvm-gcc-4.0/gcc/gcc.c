@@ -91,7 +91,8 @@ compilation is specified by a string called a "spec".  */
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
-#if defined (HAVE_DECL_GETRUSAGE) && !HAVE_DECL_GETRUSAGE
+/* APPLE LOCAL mainline: mingw compatibility */
+#if defined (HAVE_DECL_GETRUSAGE) && !HAVE_DECL_GETRUSAGE && HAVE_RUSAGE
 extern int getrusage (int, struct rusage *);
 #endif
 
@@ -4525,6 +4526,8 @@ check_basename_derived_file (const char *string)
     struct base_temp_name *next;
   } *t, *base_temp_names = NULL;
 
+  /* APPLE LOCAL LLVM: apple local portability problem */
+#ifndef HOST_LACKS_INODE_NUMBERS
   if (strcmp (string, input_filename) != 0)
     {
       struct stat st_temp;
@@ -4547,7 +4550,14 @@ check_basename_derived_file (const char *string)
 	  return string;
 	}
     }
-
+  /* APPLE LOCAL begin LLVM: apple local portability problem */
+#else
+  /* This should be fixed sometimes for normal operation */
+  this_is_basename_derived_file = 0;
+  return string;
+#endif
+  /* APPLE LOCAL end LLVM: apple local portability problem */
+    
   string_length = strlen (string);
   suffix_length = string_length - basename_length;
   suffix = string + string_length - suffix_length;

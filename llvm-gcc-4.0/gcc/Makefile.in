@@ -1056,7 +1056,8 @@ endif
 # target, optimizations analyses and the bcwriter.
 LLVMCOMPONENTS := $(LLVMTARGETOBJ) scalaropts transformutils analysis bcwriter
 LLVMLIBFILES := $(shell $(LLVMBINPATH)/llvm-config --libfiles $(LLVMCOMPONENTS))
-
+LLVMLDFLAGS := $(shell $(LLVMBINPATH)/llvm-config --ldflags)
+LIBS += $(LLVMLDFLAGS)
 
 # We support two different modes of building LLVM.  The first mode statically
 # links all of the LLVM libraries into cc1*.  This is simple and portable.
@@ -1390,8 +1391,10 @@ cc1-dummy$(exeext): $(C_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) dummy-checksum.o \
 	  $(BACKEND) $(LIBS) $(CC1_ORDER_FLAGS)
 
-cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(exeext)
-	build/genchecksum$(exeext) cc1-dummy$(exeext) > $@
+# APPLE LOCAL begin mingw portability: FIXME: 4660353
+cc1-checksum.c : cc1-dummy$(exeext) build/genchecksum$(build_exeext)
+	build/genchecksum$(build_exeext) cc1-dummy$(exeext) > $@
+# APPLE LOCAL end mingw portability: FIXME: 4660353
 
 cc1-checksum.o : cc1-checksum.c
 

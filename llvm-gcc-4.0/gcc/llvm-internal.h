@@ -470,6 +470,7 @@ public:
   static Constant *ConvertSTRING_CST(tree_node *exp);
   static Constant *ConvertCOMPLEX_CST(tree_node *exp);
   static Constant *ConvertNOP_EXPR(tree_node *exp);
+  static Constant *ConvertCONVERT_EXPR(tree_node *exp);
   static Constant *ConvertBinOp_CST(tree_node *exp);
   static Constant *ConvertCONSTRUCTOR(tree_node *exp);
   static Constant *ConvertArrayCONSTRUCTOR(tree_node *exp);

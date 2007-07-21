@@ -1789,8 +1789,12 @@ general_init (const char *argv0)
   /* Handle compilation interrupts.  */
   if (signal (SIGINT, SIG_IGN) != SIG_IGN)
     signal (SIGINT, interrupt_signal);
+/* APPLE LOCAL begin MINGW compatibility, FIXME see 4660333 */
+#ifdef SIGKILL
   if (signal (SIGKILL, SIG_IGN) != SIG_IGN)
-    signal (SIGINT, interrupt_signal);
+    signal (SIGKILL, interrupt_signal);
+#endif
+  /* APPLE LOCAL end MINGW compatibility, FIXME see 4660333 */
   if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
     signal (SIGTERM, interrupt_signal);
   /* APPLE LOCAL end interrupt signal handler */

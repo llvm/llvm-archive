@@ -1575,7 +1575,8 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
   if (isGCC_SSA_Temporary(exp)) {
     assert(DECL_LLVM_SET_P(exp) && "Definition not found before use!");
     return DECL_LLVM(exp);
-  } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp)) {
+  } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
+             TREE_STATIC(exp)) {
     // If this is a register variable, EmitLV can't handle it (there is no
     // l-value of a register variable).  Emit an inline asm node that copies the
     // value out of the specified register.
@@ -1951,7 +1952,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
     SET_DECL_LLVM(TREE_OPERAND(exp, 0), RHS);
     return RHS;
   } else if (TREE_CODE(TREE_OPERAND(exp, 0)) == VAR_DECL &&
-             DECL_REGISTER(TREE_OPERAND(exp, 0))) {
+             DECL_REGISTER(TREE_OPERAND(exp, 0)) &&
+             TREE_STATIC(TREE_OPERAND(exp, 0))) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node
     // that copies the value into the specified register.
@@ -2299,6 +2301,7 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned CmpOpc) {
 //===----------------------------------------------------------------------===//
 //               ... Inline Assembly and Register Variables ...
 //===----------------------------------------------------------------------===//
+
 
 /// Reads from register variables are handled by emitting an inline asm node
 /// that copies the value out of the specified register.
@@ -3849,6 +3852,7 @@ Constant *TreeConstantToLLVM::Convert(tree exp) {
   case STRING_CST:    return ConvertSTRING_CST(exp);
   case COMPLEX_CST:   return ConvertCOMPLEX_CST(exp);
   case NOP_EXPR:      return ConvertNOP_EXPR(exp);
+  case CONVERT_EXPR:  return ConvertCONVERT_EXPR(exp);
   case PLUS_EXPR:
   case MINUS_EXPR:    return ConvertBinOp_CST(exp);
   case CONSTRUCTOR:   return ConvertCONSTRUCTOR(exp);
@@ -3979,6 +3983,11 @@ Constant *TreeConstantToLLVM::ConvertCOMPLEX_CST(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertNOP_EXPR(tree exp) {
+  Constant *Elt = Convert(TREE_OPERAND(exp, 0));
+  return ConstantExpr::getCast(Elt, ConvertType(TREE_TYPE(exp)));
+}
+
+Constant *TreeConstantToLLVM::ConvertCONVERT_EXPR(tree exp) {
   Constant *Elt = Convert(TREE_OPERAND(exp, 0));
   return ConstantExpr::getCast(Elt, ConvertType(TREE_TYPE(exp)));
 }

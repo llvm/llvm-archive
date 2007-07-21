@@ -7937,9 +7937,18 @@ fold_builtin_1 (tree exp, bool ignore)
 {
   tree fndecl = get_callee_fndecl (exp);
   tree arglist = TREE_OPERAND (exp, 1);
-  tree type = TREE_TYPE (TREE_TYPE (fndecl));
+  /* APPLE LOCAL begin radar 4629695 */
+  tree type;
+  /* APPLE LOCAL end radar 4629695 */
   enum built_in_function fcode;
 
+  /* APPLE LOCAL begin radar 4629695 */
+  /* If there is a type cast when calling a builtin function, it is possible that
+     its callee declaration is not available. */
+  if (fndecl == 0)
+    return NULL_TREE;
+  type = TREE_TYPE (TREE_TYPE (fndecl));
+  /* APPLE LOCAL end radar 4629695 */
   if (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_MD)
     return targetm.fold_builtin (exp, ignore);
 

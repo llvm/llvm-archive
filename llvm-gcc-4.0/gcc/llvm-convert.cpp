@@ -4558,24 +4558,28 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   // If this is an index into an array, codegen as a GEP.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
+    Value *Ptr;
+
     // Check for variable sized array reference.
     tree length = arrayLength(TREE_TYPE(Array));
     if (length && !host_integerp(length, 1)) {
       // Make sure that ArrayAddr is of type ElementTy*, then do a 2-index gep.
-      tree ElTy = TREE_TYPE(TREE_TYPE(Array));
       ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
-      Value *Scale = Emit(TYPE_SIZE_UNIT(ElTy), 0);
+      Value *Scale = Emit(array_ref_element_size(exp), 0);
       if (Scale->getType() != IntPtrTy)
         Scale = CastToUIntType(Scale, IntPtrTy);
 
       IndexVal = BinaryOperator::createMul(IndexVal, Scale, "tmp", CurBB);
-      Value *Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
-      return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
+      Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+    } else {
+      // Otherwise, this is not a variable-sized array, use a GEP to index.
+      Ptr = new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::Int32Ty, 0),
+                                  IndexVal, "tmp", CurBB);
     }
 
-    // Otherwise, this is not a variable-sized array, use a GEP to index.
-    return new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::Int32Ty, 0),
-                                 IndexVal, "tmp", CurBB);
+    // The result type is an ElementTy* in the case of an ARRAY_REF, an array
+    // of ElementTy in the case of ARRAY_RANGE_REF.  Return the correct type.
+    return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
   }
 
   // Otherwise, this is an index off a pointer, codegen as a 2-idx GEP.
@@ -4595,7 +4599,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   //   float foo(int w, float A[][w], int g) { return A[g][0]; }
   
   ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
-  Value *TypeSize = Emit(TYPE_SIZE_UNIT(IndexedType), 0);
+  Value *TypeSize = Emit(array_ref_element_size(exp), 0);
 
   if (TypeSize->getType() != IntPtrTy)
     TypeSize = CastToUIntType(TypeSize, IntPtrTy);
@@ -4661,12 +4665,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     assert(DECL_LLVM_SET_P(FieldDecl) && "Struct not laid out for LLVM?");
     ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
     uint32_t MemberIndex = CI->getZExtValue();
-    if (MemberIndex == ~0U) {
-      assert(isStructWithVarSizeArrayAtEnd(StructTy) &&
-             "Isn't var sized array access!");
-      CI = ConstantInt::get(Type::Int32Ty, StructTy->getNumContainedTypes()-1);
-      MemberIndex = CI->getZExtValue();
-    }
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
     FieldPtr = new GetElementPtrInst(StructAddrLV.Ptr,
@@ -5477,35 +5475,32 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       // If not, things are much simpler.
       assert(DECL_LLVM_SET_P(Field) && "Struct not laid out for LLVM?");
       unsigned FieldNo = cast<ConstantInt>(DECL_LLVM(Field))->getZExtValue();
-      
+      assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
+
+      // Example: struct X { int A; char C[]; } x = { 4, "foo" };
+      assert(TYPE_SIZE(TREE_TYPE(Field)) ||
+             (FieldNo == ResultElts.size()-1 &&
+              isStructWithVarSizeArrayAtEnd(STy))
+             && "field with no size is not array at end of struct!");
+
       // If this is an initialization of a global that ends with a variable
       // sized array at its end, and the initializer has a non-zero number of
-      // elements, we must handle this case now.  In this case, FieldNo is ~0U
-      // and Val contains the actual type for the array.  
-      if (FieldNo == ~0U) {
-        // Handle: struct X { int A; char C[]; } x = { 4, "foo" };
-        assert(isStructWithVarSizeArrayAtEnd(STy) &&
-               "Struct doesn't end with variable sized array!");
-        FieldNo = STy->getNumElements()-1;
-        ResultElts[FieldNo] = Val;
-      } else {
-        assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
-
-        // Otherwise, we know that the initializer has to match the element type
-        // of the LLVM structure field.  If not, then there is something that is
-        // not straight-forward going on.  For example, we could be initializing
-        // an unaligned integer field (e.g. due to attribute packed) with an 
-        // integer.  The struct field will have type [4 x ubyte] instead of
-        // "int" for example.  If we ignored this, we would lay out the
-        // initializer wrong.
-        if (Val->getType() != STy->getElementType(FieldNo))
-          Val = ConvertStructFieldInitializerToType(Val, 
+      // elements, then Val contains the actual type for the array.  Otherwise,
+      // we know that the initializer has to match the element type of the LLVM
+      // structure field.  If not, then there is something that is not
+      // straight-forward going on.  For example, we could be initializing an
+      // unaligned integer field (e.g. due to attribute packed) with an
+      // integer.  The struct field will have type [4 x ubyte] instead of
+      // "int" for example.  If we ignored this, we would lay out the
+      // initializer wrong.
+      if (TYPE_SIZE(TREE_TYPE(Field)) &&
+          Val->getType() != STy->getElementType(FieldNo))
+        Val = ConvertStructFieldInitializerToType(Val,
                                                   STy->getElementType(FieldNo));
 
-        ResultElts[FieldNo] = Val;
-      }
+      ResultElts[FieldNo] = Val;
     }
-    
+
     NextField = TREE_CHAIN(Field);
   }
   
@@ -5717,31 +5712,18 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
     uint64_t MemberIndex = CI->getZExtValue();
     
-    if (MemberIndex  != ~0U) {
-      std::vector<Value*> Idxs;
-      Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
-      Idxs.push_back(CI);
-      FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, &Idxs[0], 
-                                                Idxs.size());
-      
-      // Now that we did an offset from the start of the struct, subtract off
-      // the offset from BitStart.
-      if (MemberIndex) {
-        const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
-        BitStart -= SL->getElementOffset(MemberIndex) * 8;
-      }
-    } else {
-      // We were unable to make a nice offset, emit an ugly one.
-      Constant *Offset = Convert(field_offset);
-      FieldPtr = ConstantExpr::getPtrToInt(StructAddrLV, Offset->getType());
-      FieldPtr = ConstantExpr::getAdd(FieldPtr, Offset);
-      FieldPtr = ConstantExpr::getIntToPtr(FieldPtr, PointerType::get(FieldTy));
-      
-      // Do horrible pointer arithmetic to get the address of the field.
-      unsigned ByteOffset = TREE_INT_CST_LOW(field_offset);
-      BitStart -= ByteOffset * 8;
-    }
+    std::vector<Value*> Idxs;
+    Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
+    Idxs.push_back(CI);
+    FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, &Idxs[0],
+                                              Idxs.size());
     
+    // Now that we did an offset from the start of the struct, subtract off
+    // the offset from BitStart.
+    if (MemberIndex) {
+      const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
+      BitStart -= SL->getElementOffset(MemberIndex) * 8;
+    }
   } else {
     Constant *Offset = Convert(field_offset);
     Constant *Ptr = ConstantExpr::getPtrToInt(StructAddrLV, Offset->getType());

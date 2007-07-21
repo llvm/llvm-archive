@@ -962,8 +962,11 @@ struct StructTypeConversionInfo {
       while (CurFieldNo < ElementOffsetInBytes.size() &&
              getFieldEndOffsetInBytes(CurFieldNo)*8 <= FieldOffsetInBits)
         ++CurFieldNo;
-      if (CurFieldNo >= ElementOffsetInBytes.size()) return ~0U;
-      return CurFieldNo;
+      if (CurFieldNo < ElementOffsetInBytes.size())
+        return CurFieldNo;
+      // Otherwise, we couldn't find the field!
+      assert(0 && "Could not find field!");
+      return ~0U;
     }
 
     // Handle zero sized fields now.  If the next field is zero sized, return
@@ -1009,28 +1012,15 @@ static unsigned getFieldOffsetInBits(tree Field) {
   return Result;
 }
 
-/// isNotLastField - Return true if this is not the last field in its record.
-///
-static bool isNotLastField(tree Field) {
-  for (Field = TREE_CHAIN(Field); Field; Field = TREE_CHAIN(Field))
-    if (TREE_CODE(Field) == FIELD_DECL)
-      return true;
-  return false;
-}
-
-
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
 /// reflect it.  
 void TypeConverter::DecodeStructFields(tree Field,
                                        StructTypeConversionInfo &Info) {
   if (TREE_CODE(Field) != FIELD_DECL ||
-      // Don't include variable sized fields, doing so would break anything
-      // after them... unless this is the last field.
-      ((TYPE_SIZE(TREE_TYPE(Field)) == 0 ||
-        TREE_CODE(TYPE_SIZE(TREE_TYPE(Field))) != INTEGER_CST) &&
-       isNotLastField(Field))) return;
-  
+      TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
+    return;
+
   // Handle bit-fields specially.
   if (DECL_BIT_FIELD_TYPE(Field)) {
     DecodeStructBitField(Field, Info);
@@ -1218,12 +1208,8 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   // variable offset.
   unsigned CurFieldNo = 0;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
-    if (TREE_CODE(Field) == FIELD_DECL) {
-      // If this field comes after a variable sized element, stop trying to
-      // assign DECL_LLVM's.
-      if (TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
-        break;
-      
+    if (TREE_CODE(Field) == FIELD_DECL &&
+        TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
       unsigned FieldOffsetInBits = getFieldOffsetInBits(Field);
       tree FieldType = TREE_TYPE(Field);
       
@@ -1241,10 +1227,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       
       // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
       // not include variable sized fields here.
-      bool isZeroSizeField = 
-        TYPE_SIZE(FieldType) && TREE_CODE(TYPE_SIZE(FieldType)) == INTEGER_CST&&
-        TREE_INT_CST_LOW(TYPE_SIZE(FieldType)) == 0;
-        
+      bool isZeroSizeField = !TYPE_SIZE(FieldType) ||
+        integer_zerop(TYPE_SIZE(FieldType));
+
       unsigned FieldNo = 
         Info.getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
       SET_DECL_LLVM(Field, ConstantInt::get(Type::Int32Ty, FieldNo));

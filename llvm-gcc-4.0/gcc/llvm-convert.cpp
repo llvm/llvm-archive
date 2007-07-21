@@ -5345,7 +5345,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE)
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx.push_back(IndexVal);
-  return ConstantExpr::getGetElementPtr(ArrayAddr, Idx);
+  return ConstantExpr::getGetElementPtr(ArrayAddr, &Idx[0], Idx.size());
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
@@ -5378,7 +5378,8 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       std::vector<Value*> Idxs;
       Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
       Idxs.push_back(CI);
-      FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, Idxs);
+      FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, &Idxs[0], 
+                                                Idxs.size());
       
       // Now that we did an offset from the start of the struct, subtract off
       // the offset from BitStart.

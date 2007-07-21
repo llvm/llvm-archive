@@ -212,7 +212,8 @@ void writeLLVMTypesStringTable() {
 bool isPassedByInvisibleReference(tree Type) {
   // FIXME: Search for TREE_ADDRESSABLE in calls.c, and see if there are other
   // cases that make arguments automatically passed in by reference.
-  return TREE_ADDRESSABLE(Type) || TREE_CODE(TYPE_SIZE(Type)) != INTEGER_CST;
+  return TREE_ADDRESSABLE(Type) || TYPE_SIZE(Type) == 0 ||
+         TREE_CODE(TYPE_SIZE(Type)) != INTEGER_CST;
 }
 
 /// GetTypeName - Return a fully qualified (with namespace prefixes) name for

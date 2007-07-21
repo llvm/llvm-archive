@@ -1098,6 +1098,13 @@ OBJS-common := $(filter-out sched-deps.o sched-ebb.o sched-rgn.o sched-vis.o \
 OBJS-common := $(filter-out bt-load.o caller-save.o combine.o cse.o ifcvt.o \
                             simplify-rtx.o, $(OBJS-common))
 
+# APPLE LOCAL begin LLVM - Remove gcse.o
+# Remove RTL optimization that requires a function we don't link in.
+ifdef BUILD_LLVM_INTO_A_DYLIB
+OBJS-common := $(filter-out gcse.o, $(OBJS-common))
+endif
+# APPLE LOCAL end LLVM - Remove gcse.o
+
 # Remove generated files.
 OBJS-common := $(filter-out insn-attrtab.o insn-recog.o insn-extract.o, \
                             $(OBJS-common))
@@ -2761,6 +2768,12 @@ GTFILES = $(srcdir)/input.h $(srcdir)/coretypes.h \
   $(srcdir)/tree-profile.c $(srcdir)/rtl-profile.c $(srcdir)/tree-nested.c \
   $(out_file) \
   @all_gtfiles@
+
+# APPLE LOCAL begin LLVM - Remove gcse.c
+ifdef BUILD_LLVM_INTO_A_DYLIB
+GTFILES := $(filter-out $(srcdir)/gcse.c, $(GTFILES))
+endif
+# APPLE LOCAL end LLVM - Remove gcse.c
 
 GTFILES_FILES_LANGS = @all_gtfiles_files_langs@
 GTFILES_FILES_FILES = @all_gtfiles_files_files@

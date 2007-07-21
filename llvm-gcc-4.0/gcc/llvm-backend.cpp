@@ -34,6 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
@@ -182,6 +183,26 @@ void llvm_lang_dependent_init(const char *Name) {
 }
 
 oFILEstream *AsmOutStream = 0;
+
+// Initialize PCH writing. 
+void llvm_pch_write_init(void) {
+  timevar_push(TV_LLVM_INIT);
+  AsmOutStream = new oFILEstream(asm_out_file);
+  AsmOutFile = new OStream(*AsmOutStream);
+
+  PerModulePasses = new PassManager();
+  PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
+
+  // Emit an LLVM .bc file to the output.  This is used when passed
+  // -emit-llvm -c to the GCC driver.
+  PerModulePasses->add(new WriteBytecodePass(AsmOutFile));
+  
+  // Disable emission of .ident into the output file... which is completely
+  // wrong for llvm/.bc emission cases.
+  flag_no_ident = 1;
+
+  timevar_pop(TV_LLVM_INIT);
+}
 
 // llvm_asm_file_start - Start the .s file.
 void llvm_asm_file_start(void) {

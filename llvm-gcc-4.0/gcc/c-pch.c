@@ -34,6 +34,8 @@ Boston, MA 02111-1307, USA.  */
 #include "langhooks.h"
 #include "hosthooks.h"
 #include "target.h"
+/* APPLE LOCAL begin LLVM */
+#include "llvm.h"
 
 /* This is a list of flag variables that must match exactly, and their
    names for the error message.  The possible values for *flag_var must
@@ -193,6 +195,11 @@ c_common_write_pch (void)
   long written;
   struct c_pch_header h;
 
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  llvm_asm_file_end();
+#endif
+  /* APPLE LOCAL end LLVM */
   (*debug_hooks->handle_pch) (1);
 
   cpp_write_pch_deps (parse_in, pch_outfile);

@@ -2846,8 +2846,12 @@ cp_finish_file (void)
   if (! global_bindings_p () || current_class_type || decl_namespace_list)
     return;
 
-  if (pch_file)
+  /* APPLE LOCAL begin LLVM */
+  if (pch_file) {
     c_common_write_pch ();
+    return;
+  }
+  /* APPLE LOCAL end LLVM */
 
 #ifdef USE_MAPPED_LOCATION
   /* FIXME - huh? */

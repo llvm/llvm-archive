@@ -80,6 +80,9 @@ void llvm_emit_typedef(union tree_node*);
  */
 void print_llvm(FILE *file, void *LLVM);
 
+/* Init pch writing. */
+void llvm_pch_write_init(void);
+
 /* llvm_asm_file_start - Start the .s file. */
 void llvm_asm_file_start(void);
 

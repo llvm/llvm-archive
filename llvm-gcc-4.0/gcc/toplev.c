@@ -1163,7 +1163,8 @@ compile_file (void)
 #ifndef ENABLE_LLVM
   targetm.asm_out.file_end ();
 #else
-  llvm_asm_file_end();
+  if (!flag_pch_file)
+    llvm_asm_file_end();
 #endif
   /* APPLE LOCAL end LLVM */
 }
@@ -1563,7 +1564,10 @@ init_asm_output (const char *name)
 #ifndef ENABLE_LLVM
       targetm.asm_out.file_start ();
 #else
-      llvm_asm_file_start();
+      if (flag_pch_file)
+        llvm_pch_write_init();
+      else
+        llvm_asm_file_start();
 #endif
       /* APPLE LOCAL end LLVM */
 

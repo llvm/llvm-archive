@@ -128,7 +128,8 @@ Value *llvm_get_decl(tree Tr) {
     // If there was an error, we may have disabled creating LLVM values.
     if (Index == 0) return 0;
   }
-  assert ((Index - 1) < LLVMValues.size() && "Invalid LLVM Value index");
+  assert ((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
+  assert (LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
 
   return LLVMValues[Index - 1];
 }
@@ -153,7 +154,8 @@ void changeLLVMValue(Value *Old, Value *New) {
   
   // Insert the new value into the value map.  We know that it can't already
   // exist in the mapping.
-  LLVMValuesMap[New] = Idx+1;
+  if (New)
+    LLVMValuesMap[New] = Idx+1;
 }
 
 // Read LLVM Types string table
@@ -198,7 +200,7 @@ void writeLLVMValues() {
 
   for (std::vector<Value *>::iterator I = LLVMValues.begin(),
          E = LLVMValues.end(); I != E; ++I)  {
-    if (Constant *C = dyn_cast<Constant>(*I))
+    if (Constant *C = dyn_cast_or_null<Constant>(*I))
       ValuesForPCH.push_back(C);
     else
       // Non constant values, e.g. arguments, are not at global scope.
@@ -214,6 +216,36 @@ void writeLLVMValues() {
                      GlobalValue::ExternalLinkage, 
                      LLVMValuesTable,
                      "llvm.pch.values", TheModule);
+}
+
+/// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
+void eraseLocalLLVMValues() {
+  // Try to reduce the size of LLVMValues by removing local values from the end.
+  std::vector<Value *>::reverse_iterator I, E;
+
+  for (I = LLVMValues.rbegin(), E = LLVMValues.rend(); I != E; ++I) {
+    if (Value *V = *I) {
+      if (isa<Constant>(V))
+        break;
+      else
+        LLVMValuesMap.erase(V);
+    }
+  }
+
+  LLVMValues.erase(I.base(), LLVMValues.end()); // Drop erased values
+
+  // Iterate over LLVMValuesMap since it may be much smaller than LLVMValues.
+  for (LLVMValuesMapTy::iterator I = LLVMValuesMap.begin(),
+       E = LLVMValuesMap.end(); I != E; ++I) {
+    assert(I->first && "Values map contains NULL!");
+    if (!isa<Constant>(I->first)) {
+      unsigned Index = I->second - 1;
+      assert(Index < LLVMValues.size() && LLVMValues[Index] == I->first &&
+             "Inconsistent value map!");
+      LLVMValues[Index] = NULL;
+      LLVMValuesMap.erase(I);
+    }
+  }
 }
 
 /// isGCC_SSA_Temporary - Return true if this is an SSA temporary that we can
@@ -689,7 +721,11 @@ Function *TreeToLLVM::FinishFunctionBody() {
     if (SI->getNumSuccessors() > 1)
       SI->setSuccessor(0, SI->getSuccessor(1));
   }
-  
+
+  // Remove any cached LLVM values that are local to this function.  Such values
+  // may be deleted when the optimizers run, so would be dangerous to keep.
+  eraseLocalLLVMValues();
+
   return Fn;
 }
 

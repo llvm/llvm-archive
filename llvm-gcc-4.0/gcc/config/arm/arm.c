@@ -171,14 +171,6 @@ static bool arm_pass_by_reference (CUMULATIVE_ARGS *,
 static bool arm_promote_prototypes (tree);
 static bool arm_default_short_enums (void);
 static bool arm_align_anon_bitfield (void);
-/* APPLE LOCAL begin LLVM */
-static bool arm_return_in_msb (tree);
-static bool arm_must_pass_in_stack (enum machine_mode, tree);
-#ifdef TARGET_UNWIND_INFO
-static void arm_unwind_emit (FILE *, rtx);
-static bool arm_output_ttype (rtx);
-#endif
-/* APPLE LOCAL end LLVM */
 
 static tree arm_cxx_guard_type (void);
 static bool arm_cxx_guard_mask_bit (void);
@@ -186,11 +178,7 @@ static tree arm_get_cookie_size (tree);
 static bool arm_cookie_has_size (void);
 static bool arm_cxx_cdtor_returns_this (void);
 static bool arm_cxx_key_method_may_be_inline (void);
-/* APPLE LOCAL begin LLVM */
-static void arm_cxx_determine_class_data_visibility (tree);
-static bool arm_cxx_class_data_always_comdat (void);
-static bool arm_cxx_use_aeabi_atexit (void);
-/* APPLE LOCAL end LLVM */
+static bool arm_cxx_export_class_data (void);
 static void arm_init_libfuncs (void);
 static unsigned HOST_WIDE_INT arm_shift_truncation_mask (enum machine_mode);
 
@@ -325,35 +313,8 @@ static unsigned HOST_WIDE_INT arm_shift_truncation_mask (enum machine_mode);
 #undef TARGET_CXX_KEY_METHOD_MAY_BE_INLINE
 #define TARGET_CXX_KEY_METHOD_MAY_BE_INLINE arm_cxx_key_method_may_be_inline
 
-/* APPLE LOCAL begin LLVM */
-#undef TARGET_CXX_USE_AEABI_ATEXIT
-#define TARGET_CXX_USE_AEABI_ATEXIT arm_cxx_use_aeabi_atexit
-
-#undef TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY
-#define TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY \
-  arm_cxx_determine_class_data_visibility
-
-#undef TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT
-#define TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT arm_cxx_class_data_always_comdat
-
-#undef TARGET_RETURN_IN_MSB
-#define TARGET_RETURN_IN_MSB arm_return_in_msb
-
-#undef TARGET_MUST_PASS_IN_STACK
-#define TARGET_MUST_PASS_IN_STACK arm_must_pass_in_stack
-
-#ifdef TARGET_UNWIND_INFO
-#undef TARGET_UNWIND_EMIT
-#define TARGET_UNWIND_EMIT arm_unwind_emit
-
-/* EABI unwinding tables use a different format for the typeinfo tables.  */
-#undef TARGET_ASM_TTYPE
-#define TARGET_ASM_TTYPE arm_output_ttype
-
-#undef TARGET_ARM_EABI_UNWINDER
-#define TARGET_ARM_EABI_UNWINDER true
-#endif /* TARGET_UNWIND_INFO */
-/* APPLE LOCAL end LLVM */
+#undef TARGET_CXX_EXPORT_CLASS_DATA
+#define TARGET_CXX_EXPORT_CLASS_DATA arm_cxx_export_class_data
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -2346,25 +2307,11 @@ arm_function_value(tree type, tree func ATTRIBUTE_UNUSED)
   int unsignedp ATTRIBUTE_UNUSED;
   rtx r ATTRIBUTE_UNUSED;
 
+
   mode = TYPE_MODE (type);
   /* Promote integer types.  */
   if (INTEGRAL_TYPE_P (type))
     PROMOTE_FUNCTION_MODE (mode, unsignedp, type);
-
-  /* APPLE LOCAL begin LLVM */
-  /* Promotes small structs returned in a register to full-word size
-     for big-endian AAPCS.  */
-  if (arm_return_in_msb (type))
-    {
-      HOST_WIDE_INT size = int_size_in_bytes (type);
-      if (size % UNITS_PER_WORD != 0)
-	{
-	  size += UNITS_PER_WORD - size % UNITS_PER_WORD;
-	  mode = mode_for_size (size * BITS_PER_UNIT, MODE_INT, 0);
-	}
-    }
-  /* APPLE LOCAL end LLVM */
-
   return LIBCALL_VALUE(mode);
 }
 
@@ -4930,19 +4877,6 @@ vfp_secondary_reload_class (enum machine_mode mode, rtx x)
   return GENERAL_REGS;
 }
 
-/* APPLE LOCAL begin LLVM */
-/* Values which must be returned in the most-significant end of the return
-   register.  */
-
-static bool
-arm_return_in_msb (tree valtype)
-{
-  return (TARGET_AAPCS_BASED
-          && BYTES_BIG_ENDIAN
-          && (AGGREGATE_TYPE_P (valtype)
-              || TREE_CODE (valtype) == COMPLEX_TYPE));
-}
-/* APPLE LOCAL end LLVM */
 
 /* Returns TRUE if INSN is an "LDR REG, ADDR" instruction.
    Use by the Cirrus Maverick code which has to workaround
@@ -6519,60 +6453,6 @@ arm_reload_out_hi (rtx *operands)
 			    gen_lowpart (QImode, scratch)));
     }
 }
-
-/* APPLE LOCAL begin LLVM */
-/* Return true if a type must be passed in memory. For AAPCS, small aggregates
-   (padded to the size of a word) should be passed in a register.  */
-
-static bool
-arm_must_pass_in_stack (enum machine_mode mode, tree type)
-{
-  if (TARGET_AAPCS_BASED)
-    return must_pass_in_stack_var_size (mode, type);
-  else
-    return must_pass_in_stack_var_size_or_pad (mode, type);
-}
-
-
-/* For use by FUNCTION_ARG_PADDING (MODE, TYPE).
-   Return true if an argument passed on the stack should be padded upwards,
-   i.e. if the least-significant byte has useful data.  */
-
-bool
-arm_pad_arg_upward (enum machine_mode mode, tree type)
-{
-  if (!TARGET_AAPCS_BASED)
-    return DEFAULT_FUNCTION_ARG_PADDING(mode, type);
-
-  if (type && BYTES_BIG_ENDIAN && INTEGRAL_TYPE_P (type))
-    return false;
-
-  return true;
-}
-
-
-/* Similarly, for use by BLOCK_REG_PADDING (MODE, TYPE, FIRST).
-   For non-AAPCS, return !BYTES_BIG_ENDIAN if the least significant
-   byte of the register has useful data, and return the opposite if the
-   most significant byte does.
-   For AAPCS, small aggregates and small complex types are always padded
-   upwards.  */
-
-bool
-arm_pad_reg_upward (enum machine_mode mode ATTRIBUTE_UNUSED,
-                    tree type, int first ATTRIBUTE_UNUSED)
-{
-  if (TARGET_AAPCS_BASED
-      && BYTES_BIG_ENDIAN
-      && (AGGREGATE_TYPE_P (type) || TREE_CODE (type) == COMPLEX_TYPE)
-      && int_size_in_bytes (type) <= 4)
-    return true;
-
-  /* Otherwise, use default padding.  */
-  return !BYTES_BIG_ENDIAN;
-}
-/* APPLE LOCAL end LLVM */
-
 
 /* Print a symbolic form of X to the debug file, F.  */
 static void
@@ -12801,23 +12681,6 @@ thumb_pushpop (FILE *f, int mask, int push, int *cfa_offset, int real_regs)
       return;
     }
 
-  /* APPLE LOCAL begin LLVM */
-  if (ARM_EABI_UNWIND_TABLES && push)
-    {
-      fprintf (f, "\t.save\t{");
-      for (regno = 0; regno < 15; regno++)
-	{
-	  if (real_regs & (1 << regno))
-	    {
-	      if (real_regs & ((1 << regno) -1))
-		fprintf (f, ", ");
-	      asm_fprintf (f, "%r", regno);
-	    }
-	}
-      fprintf (f, "}\n");
-    }
-  /* APPLE LOCAL end LLVM */
-
   fprintf (f, "\t%s\t{", push ? "push" : "pop");
 
   /* Look at the low registers first.  */
@@ -13502,13 +13365,6 @@ thumb_output_function_prologue (FILE *f, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
 
   if (current_function_pretend_args_size)
     {
-      /* APPLE LOCAL begin LLVM */
-      /* Output unwind directive for the stack adjustment.  */
-      if (ARM_EABI_UNWIND_TABLES)
-	fprintf (f, "\t.pad #%d\n",
-		 current_function_pretend_args_size);
-      /* APPLE LOCAL end LLVM */
-
       if (cfun->machine->uses_anonymous_args)
 	{
 	  int num_pushes;
@@ -13569,11 +13425,6 @@ thumb_output_function_prologue (FILE *f, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
         22     mov   FP, R7          Put this value into the frame pointer.  */
 
       work_register = thumb_find_work_register (live_regs_mask);
-
-      /* APPLE LOCAL begin LLVM */
-      if (ARM_EABI_UNWIND_TABLES)
-	asm_fprintf (f, "\t.pad #16\n");
-      /* APPLE LOCAL end LLVM */
 
       asm_fprintf
 	(f, "\tsub\t%r, %r, #16\t%@ Create stack backtrace structure\n",
@@ -14621,41 +14472,16 @@ arm_cxx_key_method_may_be_inline (void)
   return !TARGET_AAPCS_BASED;
 }
 
-/* APPLE LOCAL begin LLVM */
-static void
-arm_cxx_determine_class_data_visibility (tree decl)
-{
-  if (!TARGET_AAPCS_BASED)
-    return;
-
-  /* In general, \S 3.2.5.5 of the ARM EABI requires that class data
-     is exported.  However, on systems without dynamic vague linkage,
-     \S 3.2.5.6 says that COMDAT class data has hidden linkage.  */
-  if (!TARGET_ARM_DYNAMIC_VAGUE_LINKAGE_P && DECL_COMDAT (decl))
-    DECL_VISIBILITY (decl) = VISIBILITY_HIDDEN;
-  else
-    DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
-  DECL_VISIBILITY_SPECIFIED (decl) = 1;
-}
-  
-static bool
-arm_cxx_class_data_always_comdat (void)
-{
-  /* \S 3.2.5.4 of the ARM C++ ABI says that class data only have
-     vague linkage if the class has no key function.  */
-  return !TARGET_AAPCS_BASED;
-}
-
-
-/* The EABI says __aeabi_atexit should be used to register static
-   destructors.  */
+/* The EABI says that the virtual table, etc., for a class must be
+   exported if it has a key method.  The EABI does not specific the
+   behavior if there is no key method, but there is no harm in
+   exporting the class data in that case too.  */
 
 static bool
-arm_cxx_use_aeabi_atexit (void)
+arm_cxx_export_class_data (void)
 {
   return TARGET_AAPCS_BASED;
 }
-/* APPLE LOCAL end LLVM */
 
 void
 arm_set_return_address (rtx source, rtx scratch)
@@ -14770,290 +14596,3 @@ arm_shift_truncation_mask (enum machine_mode mode)
 {
   return mode == SImode ? 255 : 0;
 }
-
-
-/* APPLE LOCAL begin LLVM */
-/* Map internal gcc register numbers to DWARF2 register numbers.  */
-
-unsigned int
-arm_dbx_register_number (unsigned int regno)
-{
-  if (regno < 16)
-    return regno;
-
-  /* TODO: Legacy targets output FPA regs as registers 16-23 for backwards
-     compatibility.  The EABI defines them as registers 96-103.  */
-  if (IS_FPA_REGNUM (regno))
-    return (TARGET_AAPCS_BASED ? 96 : 16) + regno - FIRST_FPA_REGNUM;
-
-  if (IS_VFP_REGNUM (regno))
-    return 64 + regno - FIRST_VFP_REGNUM;
-
-  if (IS_IWMMXT_GR_REGNUM (regno))
-    return 104 + regno - FIRST_IWMMXT_GR_REGNUM;
-
-  if (IS_IWMMXT_REGNUM (regno))
-    return 112 + regno - FIRST_IWMMXT_REGNUM;
-
-  abort ();
-}
-
-
-#ifdef TARGET_UNWIND_INFO
-/* Emit unwind directives for a store-multiple instruction.  This should
-   only ever be generated by the function prologue code, so we expect it
-   to have a particular form.  */
-
-static void
-arm_unwind_emit_stm (FILE * asm_out_file, rtx p)
-{
-  int i;
-  HOST_WIDE_INT offset;
-  HOST_WIDE_INT nregs;
-  int reg_size;
-  unsigned reg;
-  unsigned lastreg;
-  rtx e;
-
-  /* First insn will adjust the stack pointer.  */
-  e = XVECEXP (p, 0, 0);
-  if (GET_CODE (e) != SET
-      || GET_CODE (XEXP (e, 0)) != REG
-      || REGNO (XEXP (e, 0)) != SP_REGNUM
-      || GET_CODE (XEXP (e, 1)) != PLUS)
-    abort ();
-
-  offset = -INTVAL (XEXP (XEXP (e, 1), 1));
-  nregs = XVECLEN (p, 0) - 1;
-
-  reg = REGNO (XEXP (XVECEXP (p, 0, 1), 1));
-  if (reg < 16)
-    {
-      /* The function prologue may also push pc, but not annotate it as it is
-	 never restored.  We turn this into an stack pointer adjustment.  */
-      if (nregs * 4 == offset - 4)
-	{
-	  fprintf (asm_out_file, "\t.pad #4\n");
-	  offset -= 4;
-	}
-      reg_size = 4;
-    }
-  else if (IS_VFP_REGNUM (reg))
-    {
-      /* FPA register saves use an additional word.  */
-      offset -= 4;
-      reg_size = 8;
-    }
-  else if (reg >= FIRST_FPA_REGNUM && reg <= LAST_FPA_REGNUM)
-    {
-      /* FPA registers are done differently.  */
-      asm_fprintf (asm_out_file, "\t.save %r, %lld\n", reg, nregs);
-      return;
-    }
-  else
-    /* Unknown register type.  */
-    abort ();
-
-  /* If the stack increment doesn't match the size of the saved registers,
-     something has gone horribly wrong.  */
-  if (offset != nregs * reg_size)
-    abort ();
-
-  fprintf (asm_out_file, "\t.save {");
-
-  offset = 0;
-  lastreg = 0;
-  /* The remaining insns will describe the stores.  */
-  for (i = 1; i <= nregs; i++)
-    {
-      /* Expect (set (mem <addr>) (reg)).
-         Where <addr> is (reg:SP) or (plus (reg:SP) (const_int)).  */
-      e = XVECEXP (p, 0, i);
-      if (GET_CODE (e) != SET
-	  || GET_CODE (XEXP (e, 0)) != MEM
-	  || GET_CODE (XEXP (e, 1)) != REG)
-	abort ();
-      
-      reg = REGNO (XEXP (e, 1));
-      if (reg < lastreg)
-	abort ();
-	  
-      if (i != 1)
-	fprintf (asm_out_file, ", ");
-      /* We can't use %r for vfp because we need to use the
-	 double precision register names.  */
-      if (IS_VFP_REGNUM (reg))
-	asm_fprintf (asm_out_file, "d%d", (reg - FIRST_VFP_REGNUM) / 2);
-      else
-	asm_fprintf (asm_out_file, "%r", reg);
-
-#ifdef ENABLE_CHECKING
-      /* Check that the addresses are consecutive.  */
-      e = XEXP (XEXP (e, 0), 0);
-      if (GET_CODE (e) == PLUS)
-	{
-	  offset += reg_size;
-	  if (GET_CODE (XEXP (e, 0)) != REG
-	      || REGNO (XEXP (e, 0)) != SP_REGNUM
-	      || GET_CODE (XEXP (e, 1)) != CONST_INT
-	      || offset != INTVAL (XEXP (e, 1)))
-	    abort ();
-	}
-      else if (i != 1
-	       || GET_CODE (e) != REG
-	       || REGNO (e) != SP_REGNUM)
-	abort ();
-#endif
-    }
-  fprintf (asm_out_file, "}\n");
-}
-
-/*  Emit unwind directives for a SET.  */
-
-static void
-arm_unwind_emit_set (FILE * asm_out_file, rtx p)
-{
-  rtx e0;
-  rtx e1;
-
-  e0 = XEXP (p, 0);
-  e1 = XEXP (p, 1);
-  switch (GET_CODE (e0))
-    {
-    case MEM:
-      /* Pushing a single register.  */
-      if (GET_CODE (XEXP (e0, 0)) != PRE_DEC
-	  || GET_CODE (XEXP (XEXP (e0, 0), 0)) != REG
-	  || REGNO (XEXP (XEXP (e0, 0), 0)) != SP_REGNUM)
-	abort ();
-
-      asm_fprintf (asm_out_file, "\t.save ");
-      if (IS_VFP_REGNUM (REGNO (e1)))
-	asm_fprintf(asm_out_file, "{d%d}\n",
-		    (REGNO (e1) - FIRST_VFP_REGNUM) / 2);
-      else
-	asm_fprintf(asm_out_file, "{%r}\n", REGNO (e1));
-      break;
-
-    case REG:
-      if (REGNO (e0) == SP_REGNUM)
-	{
-	  /* A stack increment.  */
-	  if (GET_CODE (e1) != PLUS
-	      || GET_CODE (XEXP (e1, 0)) != REG
-	      || REGNO (XEXP (e1, 0)) != SP_REGNUM
-	      || GET_CODE (XEXP (e1, 1)) != CONST_INT)
-	    abort ();
-
-	  asm_fprintf (asm_out_file, "\t.pad #%lld\n",
-		       -INTVAL (XEXP (e1, 1)));
-	}
-      else if (REGNO (e0) == HARD_FRAME_POINTER_REGNUM)
-	{
-	  HOST_WIDE_INT offset;
-	  unsigned reg;
-	  
-	  if (GET_CODE (e1) == PLUS)
-	    {
-	      if (GET_CODE (XEXP (e1, 0)) != REG
-		  || GET_CODE (XEXP (e1, 1)) != CONST_INT)
-		abort ();
-	      reg = REGNO (XEXP (e1, 0));
-	      offset = INTVAL (XEXP (e1, 1));
-	      asm_fprintf (asm_out_file, "\t.setfp %r, %r, #%lld\n",
-			   HARD_FRAME_POINTER_REGNUM, reg,
-			   INTVAL (XEXP (e1, 1)));
-	    }
-	  else if (GET_CODE (e1) == REG)
-	    {
-	      reg = REGNO (e1);
-	      asm_fprintf (asm_out_file, "\t.setfp %r, %r\n",
-			   HARD_FRAME_POINTER_REGNUM, reg);
-	    }
-	  else
-	    abort ();
-	}
-      else if (GET_CODE (e1) == REG && REGNO (e1) == SP_REGNUM)
-	{
-	  /* Move from sp to reg.  */
-	  asm_fprintf (asm_out_file, "\t.movsp %r\n", REGNO (e0));
-	}
-      else
-	abort ();
-      break;
-
-    default:
-      abort ();
-    }
-}
-
-
-/* Emit unwind directives for the given insn.  */
-
-static void
-arm_unwind_emit (FILE * asm_out_file, rtx insn)
-{
-  rtx pat;
-
-  if (!ARM_EABI_UNWIND_TABLES)
-    return;
-
-  if (GET_CODE (insn) == NOTE || !RTX_FRAME_RELATED_P (insn))
-    return;
-
-  pat = find_reg_note (insn, REG_FRAME_RELATED_EXPR, NULL_RTX);
-  if (pat)
-    pat = XEXP (pat, 0);
-  else
-    pat = PATTERN (insn);
-
-  switch (GET_CODE (pat))
-    {
-    case SET:
-      arm_unwind_emit_set (asm_out_file, pat);
-      break;
-
-    case SEQUENCE:
-      /* Store multiple.  */
-      arm_unwind_emit_stm (asm_out_file, pat);
-      break;
-
-    default:
-      abort();
-    }
-}
-
-
-/* Output a reference from a function exception table to the type_info
-   object X.  The EABI specifies that the symbol should be relocated by
-   an R_ARM_TARGET2 relocation.  */
-
-static bool
-arm_output_ttype (rtx x)
-{
-  fputs ("\t.word\t", asm_out_file);
-  output_addr_const (asm_out_file, x);
-  /* Use special relocations for symbol references.  */
-  if (GET_CODE (x) != CONST_INT)
-    fputs ("(TARGET2)", asm_out_file);
-  fputc ('\n', asm_out_file);
-
-  return TRUE;
-}
-#endif /* TARGET_UNWIND_INFO */
-
-
-/* Output unwind directives for the start/end of a function.  */
-
-void
-arm_output_fn_unwind (FILE * f, bool prologue)
-{
-  if (!ARM_EABI_UNWIND_TABLES)
-    return;
-
-  if (prologue)
-    fputs ("\t.fnstart\n", f);
-  else
-    fputs ("\t.fnend\n", f);
-}
-/* APPLE LOCAL end LLVM */

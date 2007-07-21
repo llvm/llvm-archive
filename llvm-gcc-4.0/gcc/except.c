@@ -235,9 +235,7 @@ struct eh_status GTY(())
   int built_landing_pads;
   int last_region_number;
 
-/* APPLE LOCAL begin LLVM */
-  VEC(tree) *ttype_data;
-/* APPLE LOCAL end LLVM */
+  varray_type ttype_data;
   varray_type ehspec_data;
   varray_type action_record_data;
 
@@ -969,14 +967,10 @@ add_ttypes_entry (htab_t ttypes_hash, tree type)
 
       n = xmalloc (sizeof (*n));
       n->t = type;
-/* APPLE LOCAL begin LLVM */
-      n->filter = VEC_length (tree, cfun->eh->ttype_data) + 1;
-/* APPLE LOCAL end LLVM */
+      n->filter = VARRAY_ACTIVE_SIZE (cfun->eh->ttype_data) + 1;
       *slot = n;
 
-/* APPLE LOCAL begin LLVM */
-      VEC_safe_push (tree, cfun->eh->ttype_data, type);
-/* APPLE LOCAL end LLVM */
+      VARRAY_PUSH_TREE (cfun->eh->ttype_data, type);
     }
 
   return n->filter;
@@ -1004,25 +998,12 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
       n->filter = -(VARRAY_ACTIVE_SIZE (cfun->eh->ehspec_data) + 1);
       *slot = n;
 
-/* APPLE LOCAL begin LLVM */
-      /* Generate a 0 terminated list of filter values.  */
+      /* Look up each type in the list and encode its filter
+	 value as a uleb128.  Terminate the list with 0.  */
       for (; list ; list = TREE_CHAIN (list))
-	{
-	  if (targetm.arm_eabi_unwinder)
-	    VARRAY_PUSH_TREE (cfun->eh->ehspec_data, TREE_VALUE (list));
-	  else
-	    {
-	      /* Look up each type in the list and encode its filter
-		 value as a uleb128.  */
-	      push_uleb128 (&cfun->eh->ehspec_data,
-		  add_ttypes_entry (ttypes_hash, TREE_VALUE (list)));
-	    }
-	}
-      if (targetm.arm_eabi_unwinder)
-	VARRAY_PUSH_TREE (cfun->eh->ehspec_data, NULL_TREE);
-      else
-	VARRAY_PUSH_UCHAR (cfun->eh->ehspec_data, 0);
-/* APPLE LOCAL end LLVM */
+	push_uleb128 (&cfun->eh->ehspec_data,
+		      add_ttypes_entry (ttypes_hash, TREE_VALUE (list)));
+      VARRAY_PUSH_UCHAR (cfun->eh->ehspec_data, 0);
     }
 
   return n->filter;
@@ -1039,13 +1020,8 @@ assign_filter_values (void)
   int i;
   htab_t ttypes, ehspec;
 
-/* APPLE LOCAL begin LLVM */
-  cfun->eh->ttype_data = VEC_alloc (tree, 16);
-  if (targetm.arm_eabi_unwinder)
-    VARRAY_TREE_INIT (cfun->eh->ehspec_data, 64, "ehspec_data");
-  else
-    VARRAY_UCHAR_INIT (cfun->eh->ehspec_data, 64, "ehspec_data");
-/* APPLE LOCAL end LLVM */
+  VARRAY_TREE_INIT (cfun->eh->ttype_data, 16, "ttype_data");
+  VARRAY_UCHAR_INIT (cfun->eh->ehspec_data, 64, "ehspec_data");
 
   ttypes = htab_create (31, ttypes_filter_hash, ttypes_filter_eq, free);
   ehspec = htab_create (31, ehspec_filter_hash, ehspec_filter_eq, free);
@@ -3252,56 +3228,6 @@ default_exception_section (void)
     readonly_data_section ();
 }
 
-
-/* APPLE LOCAL begin LLVM */
-/* Output a reference from an exception table to the type_info object TYPE.
-   TT_FORMAT and TT_FORMAT_SIZE descibe the DWARF encoding method used for
-   the value.  */
-
-static void
-output_ttype (tree type, int tt_format, int tt_format_size)
-{
-  rtx value;
-
-  if (type == NULL_TREE)
-    value = const0_rtx;
-  else
-    {
-      struct cgraph_varpool_node *node;
-
-      type = lookup_type_for_runtime (type);
-      value = expand_expr (type, NULL_RTX, VOIDmode, EXPAND_INITIALIZER);
-
-      /* Let cgraph know that the rtti decl is used.  Not all of the
-	 paths below go through assemble_integer, which would take
-	 care of this for us.  */
-      STRIP_NOPS (type);
-      if (TREE_CODE (type) == ADDR_EXPR)
-	{
-	  type = TREE_OPERAND (type, 0);
-	  if (TREE_CODE (type) == VAR_DECL)
-	    {
-	      node = cgraph_varpool_node (type);
-	      if (node)
-		cgraph_varpool_mark_needed_node (node);
-	    }
-	}
-      else if (TREE_CODE (type) != INTEGER_CST)
-	abort ();
-    }
-
-  /* Allow the target to override the type table entry format.  */
-  if (targetm.asm_out.ttype (value))
-    return;
-
-  if (tt_format == DW_EH_PE_absptr || tt_format == DW_EH_PE_aligned)
-    assemble_integer (value, tt_format_size,
-		      tt_format_size * BITS_PER_UNIT, 1);
-  else
-    dw2_asm_output_encoded_addr_rtx (tt_format, value, NULL);
-}
-/* APPLE LOCAL end LLVM */
-
 void
 output_function_exception_table (void)
 {
@@ -3337,10 +3263,8 @@ output_function_exception_table (void)
   targetm.asm_out.except_table_label (asm_out_file);
 
   /* APPLE LOCAL end mainline */
-/*   APPLE LOCAL begin LLVM */
-  have_tt_data = (VEC_length (tree, cfun->eh->ttype_data) > 0
+  have_tt_data = (VARRAY_ACTIVE_SIZE (cfun->eh->ttype_data) > 0
 		  || VARRAY_ACTIVE_SIZE (cfun->eh->ehspec_data) > 0);
-/* APPLE LOCAL end LLVM */
 
   /* Indicate the format of the @TType entries.  */
   if (! have_tt_data)
@@ -3402,9 +3326,7 @@ output_function_exception_table (void)
       after_disp = (1 + size_of_uleb128 (call_site_len)
 		    + call_site_len
 		    + VARRAY_ACTIVE_SIZE (cfun->eh->action_record_data)
-/* APPLE LOCAL begin LLVM */
-		    + (VEC_length (tree, cfun->eh->ttype_data)
-/* APPLE LOCAL end LLVM */
+		    + (VARRAY_ACTIVE_SIZE (cfun->eh->ttype_data)
 		       * tt_format_size));
 
       disp = after_disp;
@@ -3466,15 +3388,44 @@ output_function_exception_table (void)
   if (have_tt_data)
     assemble_align (tt_format_size * BITS_PER_UNIT);
 
-/* APPLE LOCAL begin LLVM */
-  i = VEC_length (tree, cfun->eh->ttype_data);
-/* APPLE LOCAL end LLVM */
+  i = VARRAY_ACTIVE_SIZE (cfun->eh->ttype_data);
   while (i-- > 0)
     {
-/* APPLE LOCAL begin LLVM */
-      tree type = VEC_index (tree, cfun->eh->ttype_data, i);
-      output_ttype (type, tt_format, tt_format_size);
-/* APPLE LOCAL end LLVM */
+      tree type = VARRAY_TREE (cfun->eh->ttype_data, i);
+      rtx value;
+
+      if (type == NULL_TREE)
+	value = const0_rtx;
+      else
+	{
+	  struct cgraph_varpool_node *node;
+
+	  type = lookup_type_for_runtime (type);
+	  value = expand_expr (type, NULL_RTX, VOIDmode, EXPAND_INITIALIZER);
+
+	  /* Let cgraph know that the rtti decl is used.  Not all of the
+	     paths below go through assemble_integer, which would take
+	     care of this for us.  */
+	  STRIP_NOPS (type);
+	  if (TREE_CODE (type) == ADDR_EXPR)
+	    {
+	      type = TREE_OPERAND (type, 0);
+	      if (TREE_CODE (type) == VAR_DECL)
+		{
+	          node = cgraph_varpool_node (type);
+	          if (node)
+		    cgraph_varpool_mark_needed_node (node);
+		}
+	    }
+	  else
+	    gcc_assert (TREE_CODE (type) == INTEGER_CST);
+	}
+
+      if (tt_format == DW_EH_PE_absptr || tt_format == DW_EH_PE_aligned)
+	assemble_integer (value, tt_format_size,
+			  tt_format_size * BITS_PER_UNIT, 1);
+      else
+	dw2_asm_output_encoded_addr_rtx (tt_format, value, NULL);
     }
 
 #ifdef HAVE_AS_LEB128
@@ -3485,35 +3436,10 @@ output_function_exception_table (void)
   /* ??? Decode and interpret the data for flag_debug_asm.  */
   n = VARRAY_ACTIVE_SIZE (cfun->eh->ehspec_data);
   for (i = 0; i < n; ++i)
-/* APPLE LOCAL begin LLVM */
-    {
-      if (targetm.arm_eabi_unwinder)
-	{
-	  tree type = VARRAY_TREE (cfun->eh->ehspec_data, i);
-	  output_ttype (type, tt_format, tt_format_size);
-	}
-      else
-	dw2_asm_output_data (1, VARRAY_UCHAR (cfun->eh->ehspec_data, i),
-			     (i ? NULL : "Exception specification table"));
-    }
-/* APPLE LOCAL end LLVM */
+    dw2_asm_output_data (1, VARRAY_UCHAR (cfun->eh->ehspec_data, i),
+			 (i ? NULL : "Exception specification table"));
 
   function_section (current_function_decl);
 }
-
-
-
-/* APPLE LOCAL begin LLVM */
-/* Initialize unwind_resume_libfunc.  */
-
-void
-default_init_unwind_resume_libfunc (void)
-{
-  /* The default c++ routines aren't actually c++ specific, so use those.  */
-  unwind_resume_libfunc =
-    init_one_libfunc ( USING_SJLJ_EXCEPTIONS ? "_Unwind_SjLj_Resume"
-					     : "_Unwind_Resume");
-}
-/* APPLE LOCAL end LLVM */
 
 #include "gt-except.h"

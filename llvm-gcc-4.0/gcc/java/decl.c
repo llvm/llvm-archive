@@ -1185,9 +1185,6 @@ java_init_decl_processing (void)
   eh_personality_libfunc = init_one_libfunc (USING_SJLJ_EXCEPTIONS
                                              ? "__gcj_personality_sj0"
                                              : "__gcj_personality_v0");
-  /* APPLE LOCAL begin LLVM */
-  default_init_unwind_resume_libfunc ();
-  /* APPLE LOCAL end LLVM */
 
   lang_eh_runtime_type = do_nothing;
 

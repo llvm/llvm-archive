@@ -63,9 +63,7 @@ __cxxabiv1::__cxa_throw (void *obj, std::type_info *tinfo,
   header->exceptionDestructor = dest;
   header->unexpectedHandler = __unexpected_handler;
   header->terminateHandler = __terminate_handler;
-// APPLE LOCAL begin LLVM
-  __GXX_INIT_EXCEPTION_CLASS(header->unwindHeader.exception_class);
-// APPLE LOCAL end LLVM
+  header->unwindHeader.exception_class = __gxx_exception_class;
   header->unwindHeader.exception_cleanup = __gxx_exception_cleanup;
 
 #ifdef _GLIBCXX_SJLJ_EXCEPTIONS
@@ -91,9 +89,7 @@ __cxxabiv1::__cxa_rethrow ()
   if (header)
     {
       // Tell __cxa_end_catch this is a rethrow.
-// APPLE LOCAL begin LLVM
-      if (!__is_gxx_exception_class(header->unwindHeader.exception_class))
-// APPLE LOCAL end LLVM
+      if (header->unwindHeader.exception_class != __gxx_exception_class)
 	globals->caughtExceptions = 0;
       else
 	header->handlerCount = -header->handlerCount;
@@ -101,9 +97,7 @@ __cxxabiv1::__cxa_rethrow ()
 #ifdef _GLIBCXX_SJLJ_EXCEPTIONS
       _Unwind_SjLj_Resume_or_Rethrow (&header->unwindHeader);
 #else
-// APPLE LOCAL begin LLVM
-#if defined(_LIBUNWIND_STD_ABI) || defined (__ARM_EABI_UNWINDER__)
-// APPLE LOCAL end LLVM
+#ifdef _LIBUNWIND_STD_ABI
       _Unwind_RaiseException (&header->unwindHeader);
 #else
       _Unwind_Resume_or_Rethrow (&header->unwindHeader);

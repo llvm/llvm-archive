@@ -45,13 +45,7 @@ sources = \
 	del_opv.cc \
 	del_opvnt.cc \
 	eh_alloc.cc \
-#APPLE LOCAL begin LLVM \
-	eh_arm.cc \
-#APPLE LOCAL end LLVM \
 	eh_aux_runtime.cc \
-#APPLE LOCAL begin LLVM \
-	eh_call.cc \
-#APPLE LOCAL end LLVM \
 	eh_catch.cc \
 	eh_exception.cc \
 	eh_globals.cc \

@@ -1675,10 +1675,6 @@ EOF
         enable_sjlj_exceptions=yes
       elif grep _Unwind_Resume conftest.s >/dev/null 2>&1 ; then
         enable_sjlj_exceptions=no
-      #APPLE LOCAL begin LLVM
-      elif grep __cxa_end_cleanup conftest.s >/dev/null 2>&1 ; then
-        enable_sjlj_exceptions=no
-      #APPLE LOCAL end LLVM
       fi
     fi
     # APPLE LOCAL LLVM HACK!

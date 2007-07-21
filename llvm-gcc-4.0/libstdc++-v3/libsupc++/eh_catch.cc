@@ -38,10 +38,9 @@ __cxxabiv1::__cxa_get_exception_ptr(void *exc_obj_in) throw()
 {
   _Unwind_Exception *exceptionObject
     = reinterpret_cast <_Unwind_Exception *>(exc_obj_in);
+  __cxa_exception *header = __get_exception_header_from_ue (exceptionObject);
 
-// APPLE LOCAL begin LLVM
-  return __gxx_caught_object(exceptionObject);
-// APPLE LOCAL end LLVM
+  return header->adjustedPtr;
 }
 
 extern "C" void *
@@ -52,17 +51,12 @@ __cxxabiv1::__cxa_begin_catch (void *exc_obj_in) throw()
   __cxa_eh_globals *globals = __cxa_get_globals ();
   __cxa_exception *prev = globals->caughtExceptions;
   __cxa_exception *header = __get_exception_header_from_ue (exceptionObject);
-// APPLE LOCAL begin LLVM
-  void* objectp;
-// APPLE LOCAL end LLVM
 
   // Foreign exceptions can't be stacked here.  If the exception stack is
   // empty, then fine.  Otherwise we really have no choice but to terminate.
   // Note that this use of "header" is a lie.  It's fine so long as we only
   // examine header->unwindHeader though.
-// APPLE LOCAL begin LLVM
-  if (!__is_gxx_exception_class(header->unwindHeader.exception_class))
-// APPLE LOCAL end LLVM
+  if (header->unwindHeader.exception_class != __gxx_exception_class)
     {
       if (prev != 0)
 	std::terminate ();
@@ -91,13 +85,7 @@ __cxxabiv1::__cxa_begin_catch (void *exc_obj_in) throw()
       globals->caughtExceptions = header;
     }
 
-// APPLE LOCAL begin LLVM
-  objectp = __gxx_caught_object(exceptionObject);
-#ifdef __ARM_EABI_UNWINDER__
-  _Unwind_Complete(exceptionObject);
-#endif
-  return objectp;
-// APPLE LOCAL end LLVM
+  return header->adjustedPtr;
 }
 
 
@@ -114,9 +102,7 @@ __cxxabiv1::__cxa_end_catch ()
 
   // A foreign exception couldn't have been stacked (see above),
   // so by definition processing must be complete.
-// APPLE LOCAL begin LLVM
-  if (!__is_gxx_exception_class(header->unwindHeader.exception_class))
-// APPLE LOCAL end LLVM
+  if (header->unwindHeader.exception_class != __gxx_exception_class)
     {
       globals->caughtExceptions = 0;
       _Unwind_DeleteException (&header->unwindHeader);

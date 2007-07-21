@@ -696,10 +696,11 @@ decode_options (unsigned int argc, const char **argv)
   target_flags = 0;
   set_target_switch ("");
 
-/* APPLE LOCAL begin LLVM */
-  /* Some tagets have ABI-specified unwind tables.  */
-  flag_unwind_tables = targetm.unwind_tables_default;
-/* APPLE LOCAL end LLVM */
+  /* Unwind tables are always present when a target has ABI-specified unwind
+     tables, so the default should be ON.  */
+#ifdef TARGET_UNWIND_INFO
+  flag_unwind_tables = TARGET_UNWIND_INFO;
+#endif
 
 #ifdef OPTIMIZATION_OPTIONS
   /* Allow default optimizations to be specified on a per-machine basis.  */

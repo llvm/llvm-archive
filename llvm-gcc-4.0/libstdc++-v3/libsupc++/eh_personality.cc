@@ -35,12 +35,6 @@
 
 using namespace __cxxabiv1;
 
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-#define NO_SIZE_OF_ENCODED_VALUE
-#endif
-// APPLE LOCAL end LLVM
-
 #include "unwind-pe.h"
 
 
@@ -90,119 +84,6 @@ parse_lsda_header (_Unwind_Context *context, const unsigned char *p,
   return p;
 }
 
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-
-// Return an element from a type table.
-
-static const std::type_info*
-get_ttype_entry(lsda_header_info* info, _Unwind_Word i)
-{
-  _Unwind_Ptr ptr;
-
-  ptr = (_Unwind_Ptr) (info->TType - (i * 4));
-  ptr = _Unwind_decode_target2(ptr);
-  
-  return reinterpret_cast<const std::type_info *>(ptr);
-}
-
-// The ABI provides a routine for matching exception object types.
-typedef _Unwind_Control_Block _throw_typet;
-#define get_adjusted_ptr(catch_type, throw_type, thrown_ptr_p) \
-  (__cxa_type_match (throw_type, catch_type, false, thrown_ptr_p) \
-   != ctm_failed)
-
-// Return true if THROW_TYPE matches one if the filter types.
-
-static bool
-check_exception_spec(lsda_header_info* info, _throw_typet* throw_type,
-		     void* thrown_ptr, _Unwind_Sword filter_value)
-{
-  const _Unwind_Word* e = ((const _Unwind_Word*) info->TType)
-			  - filter_value - 1;
-
-  while (1)
-    {
-      const std::type_info* catch_type;
-      _Unwind_Word tmp;
-
-      tmp = *e;
-      
-      // Zero signals the end of the list.  If we've not found
-      // a match by now, then we've failed the specification.
-      if (tmp == 0)
-        return false;
-
-      tmp = _Unwind_decode_target2((_Unwind_Word) e);
-
-      // Match a ttype entry.
-      catch_type = reinterpret_cast<const std::type_info*>(tmp);
-
-      // ??? There is currently no way to ask the RTTI code about the
-      // relationship between two types without reference to a specific
-      // object.  There should be; then we wouldn't need to mess with
-      // thrown_ptr here.
-      if (get_adjusted_ptr(catch_type, throw_type, &thrown_ptr))
-	return true;
-
-      // Advance to the next entry.
-      e++;
-    }
-}
-
-
-// Save stage1 handler information in the exception object
-
-static inline void
-save_caught_exception(struct _Unwind_Exception* ue_header,
-		      struct _Unwind_Context* context,
-		      void* thrown_ptr,
-		      int handler_switch_value,
-		      const unsigned char* language_specific_data,
-		      _Unwind_Ptr landing_pad,
-		      const unsigned char* action_record
-			__attribute__((__unused__)))
-{
-    ue_header->barrier_cache.sp = _Unwind_GetGR(context, 13);
-    ue_header->barrier_cache.bitpattern[0] = (_uw) thrown_ptr;
-    ue_header->barrier_cache.bitpattern[1]
-      = (_uw) handler_switch_value;
-    ue_header->barrier_cache.bitpattern[2]
-      = (_uw) language_specific_data;
-    ue_header->barrier_cache.bitpattern[3] = (_uw) landing_pad;
-}
-
-
-// Restore the catch handler data saved during phase1.
-
-static inline void
-restore_caught_exception(struct _Unwind_Exception* ue_header,
-			 int& handler_switch_value,
-			 const unsigned char*& language_specific_data,
-			 _Unwind_Ptr& landing_pad)
-{
-  handler_switch_value = (int) ue_header->barrier_cache.bitpattern[1];
-  language_specific_data =
-    (const unsigned char*) ue_header->barrier_cache.bitpattern[2];
-  landing_pad = (_Unwind_Ptr) ue_header->barrier_cache.bitpattern[3];
-}
-
-#define CONTINUE_UNWINDING \
-  do								\
-    {								\
-      if (__gnu_unwind_frame(ue_header, context) != _URC_OK)	\
-	return _URC_FAILURE;					\
-      return _URC_CONTINUE_UNWIND;				\
-    }								\
-  while (0)
-
-#else
-// APPLE LOCAL end LLVM
-typedef const std::type_info _throw_typet;
-
-
-// Return an element from a type table.
-
 static const std::type_info *
 get_ttype_entry (lsda_header_info *info, _Unwind_Word i)
 {
@@ -246,10 +127,8 @@ get_adjusted_ptr (const std::type_info *catch_type,
 // Return true if THROW_TYPE matches one if the filter types.
 
 static bool
-// APPLE LOCAL begin LLVM
-check_exception_spec(lsda_header_info* info, _throw_typet* throw_type,
-		      void* thrown_ptr, _Unwind_Sword filter_value)
-// APPLE LOCAL end LLVM
+check_exception_spec (lsda_header_info *info, const std::type_info *throw_type,
+		      void *thrown_ptr, _Unwind_Sword filter_value)
 {
   const unsigned char *e = info->TType - filter_value - 1;
 
@@ -277,52 +156,6 @@ check_exception_spec(lsda_header_info* info, _throw_typet* throw_type,
     }
 }
 
-
-// APPLE LOCAL begin LLVM
-// Save stage1 handler information in the exception object
-
-static inline void
-save_caught_exception(struct _Unwind_Exception* ue_header,
-		      struct _Unwind_Context* context
-			__attribute__((__unused__)),
-		      void* thrown_ptr,
-		      int handler_switch_value,
-		      const unsigned char* language_specific_data,
-		      _Unwind_Ptr landing_pad __attribute__((__unused__)),
-		      const unsigned char* action_record)
-{
-  __cxa_exception* xh = __get_exception_header_from_ue(ue_header);
-
-  xh->handlerSwitchValue = handler_switch_value;
-  xh->actionRecord = action_record;
-  xh->languageSpecificData = language_specific_data;
-  xh->adjustedPtr = thrown_ptr;
-
-  // ??? Completely unknown what this field is supposed to be for.
-  // ??? Need to cache TType encoding base for call_unexpected.
-  xh->catchTemp = landing_pad;
-}
-
-
-// Restore the catch handler information saved during phase1.
-
-static inline void
-restore_caught_exception(struct _Unwind_Exception* ue_header,
-			 int& handler_switch_value,
-			 const unsigned char*& language_specific_data,
-			 _Unwind_Ptr& landing_pad)
-{
-  __cxa_exception* xh = __get_exception_header_from_ue(ue_header);
-  handler_switch_value = xh->handlerSwitchValue;
-  language_specific_data = xh->languageSpecificData;
-  landing_pad = (_Unwind_Ptr) xh->catchTemp;
-}
-
-#define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
-
-#endif // !__ARM_EABI_UNWINDER__
-// APPLE LOCAL end LLVM
-
 // Return true if the filter spec is empty, ie throw().
 
 static bool
@@ -345,20 +178,14 @@ empty_exception_spec (lsda_header_info *info, _Unwind_Sword filter_value)
 #endif
 
 extern "C" _Unwind_Reason_Code
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-PERSONALITY_FUNCTION (_Unwind_State state,
-		      struct _Unwind_Exception* ue_header,
-		      struct _Unwind_Context* context)
-#else
-// APPLE LOCAL end LLVM
 PERSONALITY_FUNCTION (int version,
 		      _Unwind_Action actions,
 		      _Unwind_Exception_Class exception_class,
 		      struct _Unwind_Exception *ue_header,
 		      struct _Unwind_Context *context)
-#endif
 {
+  __cxa_exception *xh = __get_exception_header_from_ue (ue_header);
+
   enum found_handler_type
   {
     found_nothing,
@@ -373,66 +200,19 @@ PERSONALITY_FUNCTION (int version,
   const unsigned char *p;
   _Unwind_Ptr landing_pad, ip;
   int handler_switch_value;
-// APPLE LOCAL begin LLVM
-  void* thrown_ptr = ue_header + 1;
-  bool foreign_exception;
-
-#ifdef __ARM_EABI_UNWINDER__
-  _Unwind_Action actions;
-
-  switch (state)
-    {
-    case _US_VIRTUAL_UNWIND_FRAME:
-      actions = _UA_SEARCH_PHASE;
-      break;
-
-    case _US_UNWIND_FRAME_STARTING:
-      actions = _UA_CLEANUP_PHASE;
-      if (ue_header->barrier_cache.sp == _Unwind_GetGR(context, 13))
-	actions |= _UA_HANDLER_FRAME;
-      break;
-
-    case _US_UNWIND_FRAME_RESUME:
-      CONTINUE_UNWINDING;
-      break;
-
-    default:
-      abort();
-    }
-
-  // We don't know which runtime we're working with, so can't check this.
-  // However the ABI routines hide this from us, and we don't actually need
-  // to know.
-  foreign_exception = false;
-
-  // The dwarf unwinder assumes the context structure holds things like the
-  // function and LSDA pointers.  The ARM implementation caches these in
-  // the exception header (UCB).  To avoid rewriting everything we make the
-  // virtual IP register point at the UCB.
-  ip = (_Unwind_Ptr) ue_header;
-  _Unwind_SetGR(context, 12, ip);
-#else
-  __cxa_exception* xh = __get_exception_header_from_ue(ue_header);
-// APPLE LOCAL end LLVM
+  void *thrown_ptr = xh + 1;
 
   // Interface version check.
   if (version != 1)
     return _URC_FATAL_PHASE1_ERROR;
-// APPLE LOCAL begin LLVM
-  foreign_exception = !__is_gxx_exception_class(exception_class);
-#endif
-// APPLE LOCAL end LLVM
 
   // Shortcut for phase 2 found handler for domestic exception.
-// APPLE LOCAL begin LLVM
   if (actions == (_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME)
-      && !foreign_exception)
-// APPLE LOCAL end LLVM
+      && exception_class == __gxx_exception_class)
     {
-// APPLE LOCAL begin LLVM
-      restore_caught_exception(ue_header, handler_switch_value,
-			       language_specific_data, landing_pad);
-// APPLE LOCAL end LLVM
+      handler_switch_value = xh->handlerSwitchValue;
+      language_specific_data = xh->languageSpecificData;
+      landing_pad = (_Unwind_Ptr) xh->catchTemp;
       found_type = (landing_pad == 0 ? found_terminate : found_handler);
       goto install_context;
     }
@@ -442,15 +222,11 @@ PERSONALITY_FUNCTION (int version,
 
   // If no LSDA, then there are no handlers or cleanups.
   if (! language_specific_data)
-// APPLE LOCAL begin LLVM
-    CONTINUE_UNWINDING;
-// APPLE LOCAL end LLVM
+    return _URC_CONTINUE_UNWIND;
 
   // Parse the LSDA header.
   p = parse_lsda_header (context, language_specific_data, &info);
-// APPLE LOCAL begin LLVM
-  info.ttype_base = 0;
-// APPLE LOCAL end LLVM
+  info.ttype_base = base_of_encoded_value (info.ttype_encoding, context);
   ip = _Unwind_GetIP (context) - 1;
   landing_pad = 0;
   action_record = 0;
@@ -536,10 +312,7 @@ PERSONALITY_FUNCTION (int version,
       // Otherwise we have a catch handler or exception specification.
 
       _Unwind_Sword ar_filter, ar_disp;
-// APPLE LOCAL begin LLVM
-      const std::type_info* catch_type;
-      _throw_typet* throw_type;
-// APPLE LOCAL end LLVM
+      const std::type_info *throw_type, *catch_type;
       bool saw_cleanup = false;
       bool saw_handler = false;
 
@@ -547,21 +320,11 @@ PERSONALITY_FUNCTION (int version,
       // exception class, there's no exception type.
       // ??? What to do about GNU Java and GNU Ada exceptions.
 
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-      throw_type = ue_header;
-#else
-// APPLE LOCAL end LLVM
       if ((actions & _UA_FORCE_UNWIND)
-// APPLE LOCAL begin LLVM
-	  || foreign_exception)
-// APPLE LOCAL end LLVM
+	  || exception_class != __gxx_exception_class)
 	throw_type = 0;
       else
 	throw_type = xh->exceptionType;
-// APPLE LOCAL begin LLVM
-#endif
-// APPLE LOCAL end LLVM
 
       while (1)
 	{
@@ -624,41 +387,34 @@ PERSONALITY_FUNCTION (int version,
 
  do_something:
    if (found_type == found_nothing)
-// APPLE LOCAL begin LLVM
-     CONTINUE_UNWINDING;
-// APPLE LOCAL end LLVM
+     return _URC_CONTINUE_UNWIND;
 
   if (actions & _UA_SEARCH_PHASE)
     {
       if (found_type == found_cleanup)
-// APPLE LOCAL begin LLVM
-	CONTINUE_UNWINDING;
-// APPLE LOCAL end LLVM
+	return _URC_CONTINUE_UNWIND;
 
       // For domestic exceptions, we cache data from phase 1 for phase 2.
-// APPLE LOCAL begin LLVM
-      if (!foreign_exception)
+      if (exception_class == __gxx_exception_class)
         {
-	  save_caught_exception(ue_header, context, thrown_ptr,
-				handler_switch_value, language_specific_data,
-				landing_pad, action_record);
+          xh->handlerSwitchValue = handler_switch_value;
+          xh->actionRecord = action_record;
+          xh->languageSpecificData = language_specific_data;
+          xh->adjustedPtr = thrown_ptr;
+
+          // ??? Completely unknown what this field is supposed to be for.
+          // ??? Need to cache TType encoding base for call_unexpected.
+          xh->catchTemp = landing_pad;
 	}
-//APPLE LOCAL end LLVM
       return _URC_HANDLER_FOUND;
     }
 
  install_context:
-  
-// APPLE LOCAL begin LLVM
-#ifndef __ARM_EABI_UNWINDER__
-// APPLE LOCAL end LLVM
   // We can't use any of the cxa routines with foreign exceptions,
   // because they all expect ue_header to be a struct __cxa_exception.
   // So in that case, call terminate or unexpected directly.
   if ((actions & _UA_FORCE_UNWIND)
-// APPLE LOCAL begin LLVM
-      || foreign_exception)
-// APPLE LOCAL end LLVM
+      || exception_class != __gxx_exception_class)
     {
       if (found_type == found_terminate)
 	std::terminate ();
@@ -671,74 +427,32 @@ PERSONALITY_FUNCTION (int version,
 	}
     }
   else
-// APPLE LOCAL begin LLVM
-#endif
-// APPLE LOCAL end LLVM
     {
       if (found_type == found_terminate)
-// APPLE LOCAL begin LLVM
-	__cxa_call_terminate(ue_header);
-// APPLE LOCAL end LLVM
+	{
+	  __cxa_begin_catch (&xh->unwindHeader);
+	  __terminate (xh->terminateHandler);
+	}
 
       // Cache the TType base value for __cxa_call_unexpected, as we won't
       // have an _Unwind_Context then.
       if (handler_switch_value < 0)
 	{
 	  parse_lsda_header (context, language_specific_data, &info);
-
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-	  const _Unwind_Word* e;
-	  _Unwind_Word n;
-	  
-	  e = ((const _Unwind_Word*) info.TType) - handler_switch_value - 1;
-	  // Count the number of rtti objects.
-	  n = 0;
-	  while (e[n] != 0)
-	    n++;
-
-	  // Count.
-	  ue_header->barrier_cache.bitpattern[1] = n;
-	  // Base (obsolete)
-	  ue_header->barrier_cache.bitpattern[2] = 0;
-	  // Stride.
-	  ue_header->barrier_cache.bitpattern[3] = 4;
-	  // List head.
-	  ue_header->barrier_cache.bitpattern[4] = (_Unwind_Word) e;
-#else
-// APPLE LOCAL end LLVM
 	  xh->catchTemp = base_of_encoded_value (info.ttype_encoding, context);
-// APPLE LOCAL begin LLVM
-#endif
-// APPLE LOCAL end LLVM
 	}
     }
 
   /* For targets with pointers smaller than the word size, we must extend the
      pointer, and this extension is target dependent.  */
   _Unwind_SetGR (context, __builtin_eh_return_data_regno (0),
-// APPLE LOCAL begin LLVM
-		 __builtin_extend_pointer (ue_header));
-// APPLE LOCAL end LLVM
+		 __builtin_extend_pointer (&xh->unwindHeader));
   _Unwind_SetGR (context, __builtin_eh_return_data_regno (1),
 		 handler_switch_value);
   _Unwind_SetIP (context, landing_pad);
-// APPLE LOCAL begin LLVM
-#ifdef __ARM_EABI_UNWINDER__
-  if (found_type == found_cleanup)
-    __cxa_begin_cleanup(ue_header);
-#endif
-// APPLE LOCAL end LLVM
   return _URC_INSTALL_CONTEXT;
 }
 
-// APPLE LOCAL begin LLVM
-/* The ARM EABI implementation of __cxa_call_unexpected is in a different
-   file so that the personality routine san be used standalone.  The generic
-   routine sahred datastructures with the PR so it is most convenient to
-   implement it here.  */
-#ifndef __ARM_EABI_UNWINDER__
-// APPLE LOCAL end LLVM
 extern "C" void
 __cxa_call_unexpected (void *exc_obj_in)
 {
@@ -793,12 +507,9 @@ __cxa_call_unexpected (void *exc_obj_in)
       const std::type_info &bad_exc = typeid (std::bad_exception);
       if (check_exception_spec (&info, &bad_exc, 0, xh_switch_value))
 	throw std::bad_exception();
-// APPLE LOCAL begin LLVM
 #endif   
-// APPLE LOCAL end LLVM
 
       // Otherwise, die.
       __terminate (xh_terminate_handler);
     }
 }
-#endif

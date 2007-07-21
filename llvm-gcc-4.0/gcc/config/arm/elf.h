@@ -77,9 +77,6 @@
       ASM_OUTPUT_TYPE_DIRECTIVE (FILE, NAME, "function");	\
       ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));		\
       ASM_OUTPUT_LABEL(FILE, NAME);				\
-/* APPLE LOCAL begin LLVM */ \
-      ARM_OUTPUT_FN_UNWIND (FILE, TRUE);			\
-/* APPLE LOCAL end LLVM */ \
     }								\
   while (0)
 
@@ -88,9 +85,6 @@
 #define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)		\
   do								\
     {								\
-/* APPLE LOCAL begin LLVM */ \
-      ARM_OUTPUT_FN_UNWIND (FILE, FALSE);			\
-/* APPLE LOCAL end LLVM */ \
       ARM_DECLARE_FUNCTION_SIZE (FILE, FNAME, DECL);		\
       if (!flag_inhibit_size_directive)				\
 	ASM_OUTPUT_MEASURED_SIZE (FILE, FNAME);			\

@@ -474,11 +474,10 @@ namespace {
     const Type *&RetTy;
     std::vector<const Type*> &ArgTypes;
     unsigned &CallingConv;
-    bool KNRPromotion;
   public:
     FunctionTypeConversion(const Type *&retty, std::vector<const Type*> &AT,
-                           unsigned &CC, bool KNR)
-      : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR) {
+                           unsigned &CC)
+      : RetTy(retty), ArgTypes(AT), CallingConv(CC) {
       CallingConv = CallingConv::C;
     }
     
@@ -513,16 +512,6 @@ namespace {
     }
     
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
-      if (KNRPromotion) {
-        if (LLVMTy == Type::FloatTy) {
-          ArgTypes.push_back(Type::DoubleTy);
-          return;
-        } else if (LLVMTy == Type::Int16Ty || LLVMTy == Type::Int8Ty ||
-                   LLVMTy == Type::BoolTy) {
-          ArgTypes.push_back(Type::Int32Ty);
-          return;
-        }
-      }        
       ArgTypes.push_back(LLVMTy);
     }
   };
@@ -539,7 +528,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, unsigned &CallingConv) {
   std::vector<const Type*> ArgTys;
   const Type *RetTy;
   
-  FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
+  FunctionTypeConversion Client(RetTy, ArgTys, CallingConv);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
   
   ABIConverter.HandleReturnType(ReturnType);
@@ -553,7 +542,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   const Type *RetTy = 0;
   std::vector<const Type*> ArgTypes;
   bool isVarArg = false;
-  FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, true /*not K&R*/);
+  FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
   
   ABIConverter.HandleReturnType(TREE_TYPE(type));

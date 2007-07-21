@@ -211,15 +211,12 @@ namespace {
       if (ArgVal->getType() != LLVMTy) {
         // If this is just a mismatch between integer types, this could be due
         // to K&R prototypes, where the forward proto defines the arg as int and
-        // the actual impls is a short or char.  Likewise for double -> float.
-        assert(ArgVal->getType()->isIntegral() == LLVMTy->isIntegral() &&
-               (ArgVal->getType() == Type::Int32Ty ||
-                ArgVal->getType() == Type::DoubleTy) &&
+        // the actual impls is a short or char.
+        assert(ArgVal->getType()->isIntegral() && LLVMTy->isIntegral() &&
                "Lowerings don't match?");
-        if (ArgVal->getType() == Type::Int32Ty)
-          ArgVal = new TruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
-        else
-          ArgVal = new FPTruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
+        bool isSigned = type == 0 ? true : !TYPE_UNSIGNED(type);
+        ArgVal = CastInst::createIntegerCast(ArgVal, LLVMTy, isSigned,
+                                             NameStack.back(), CurBB);
       }
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();

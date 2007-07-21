@@ -516,12 +516,20 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   type = TYPE_MAIN_VARIANT(type);
 
   // If the type does not overlap, don't bother checking below.
-  if (TYPE_SIZE(type) == 0 ||
-      PadStartBits >= int(TREE_INT_CST_LOW(TYPE_SIZE(type))) ||
+
+  if (!TYPE_SIZE(type))
+    return false;
+
+  if (!isInt64(TYPE_SIZE(type), false))
+    // Variable sized or huge - be conservative.
+    return true;
+
+  if (!getInt64(TYPE_SIZE(type), false) ||
+      PadStartBits >= (int64_t)getInt64(TYPE_SIZE(type), false) ||
       PadStartBits+PadSizeBits <= 0)
     return false;
 
-  
+
   switch (TREE_CODE(type)) {
   default:
     fprintf(stderr, "Unknown type to compare:\n");
@@ -564,7 +572,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
       return GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
                                         PadStartBits, PadSizeBits);
     }
-    
+
     // See if any elements overlap.
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
       if (TREE_CODE(Field) != FIELD_DECL) continue;
@@ -577,16 +585,16 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
 
     return false;
   }
-    
-  case RECORD_TYPE: 
+
+  case RECORD_TYPE:
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
       if (TREE_CODE(Field) != FIELD_DECL) continue;
-      
+
       if (TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
         return true;
-      
+
       unsigned FieldBitOffset = getFieldOffsetInBits(Field);
-      if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field), 
+      if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
                                      PadStartBits-FieldBitOffset, PadSizeBits))
         return true;
     }

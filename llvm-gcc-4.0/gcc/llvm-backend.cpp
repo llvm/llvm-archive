@@ -94,6 +94,8 @@ void llvm_initialize_backend(void) {
     Args.push_back("--time-passes");
   if (fast_math_flags_set_p())
     Args.push_back("--enable-unsafe-fp-math");
+  if (!flag_omit_frame_pointer)
+    Args.push_back("--disable-fp-elim");
     
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
@@ -226,7 +228,7 @@ void llvm_asm_file_start(void) {
       PM->add(createPruneEHPass());              // Remove dead EH info
 
     if (optimize > 1) {
-      if (flag_inline_trees)   // respect -fno-inline-functions
+      if (flag_inline_trees > 1)   // respect -fno-inline-functions
         PM->add(createFunctionInliningPass());   // Inline small functions
       if (flag_unit_at_a_time)
         PM->add(createSimplifyLibCallsPass());   // Library Call Optimizations

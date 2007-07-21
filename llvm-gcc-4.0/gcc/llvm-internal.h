@@ -524,6 +524,8 @@ private:
   bool EmitBuiltinBZero(tree_node *exp, Value *&Result);
   bool EmitBuiltinPrefetch(tree_node *exp);
   bool EmitBuiltinReturnAddr(tree_node *exp, Value *&Result, bool isFrame);
+  bool EmitBuiltinExtractReturnAddr(tree_node *exp, Value *&Result);
+  bool EmitBuiltinFrobReturnAddr(tree_node *exp, Value *&Result);
   bool EmitBuiltinStackSave(tree_node *exp, Value *&Result);
   bool EmitBuiltinStackRestore(tree_node *exp);
 

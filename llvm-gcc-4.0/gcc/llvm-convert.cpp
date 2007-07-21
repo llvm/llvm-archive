@@ -1868,11 +1868,12 @@ void TreeToLLVM::GatherTypeInfo(tree exp,
         TypeInfos.push_back(TypeInfo);
       }
     }
-  } else {
-    assert(TREE_CODE(exp) == STATEMENT_LIST && "Need an exp with typeinfo");
-    // Each statement in the statement list will be a catch.
+  } else if (TREE_CODE(exp) == STATEMENT_LIST) {
+    // Each statement in the statement list will be a catch, or none will.
     for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I))
       GatherTypeInfo(tsi_stmt(I), TypeInfos);
+  } else {
+    assert(TypeInfos.empty() && "Need an exp with typeinfo");
   }
 }
 
@@ -4071,6 +4072,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_RETURN_ADDRESS: return EmitBuiltinReturnAddr(exp, Result,false);
   case BUILT_IN_STACK_SAVE:     return EmitBuiltinStackSave(exp, Result);
   case BUILT_IN_STACK_RESTORE:  return EmitBuiltinStackRestore(exp);
+  case BUILT_IN_EXTRACT_RETURN_ADDR:
+   return EmitBuiltinExtractReturnAddr(exp, Result);
+  case BUILT_IN_FROB_RETURN_ADDR:
+   return EmitBuiltinFrobReturnAddr(exp, Result);
     
 #define HANDLE_UNARY_FP(F32, F64, V) \
         Result = EmitBuiltinUnaryFPOp(V, Intrinsic::F32, Intrinsic::F64)
@@ -4162,8 +4167,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_DWARF_SP_COLUMN:
     case BUILT_IN_INIT_DWARF_REG_SIZES:
 #endif
-    case BUILT_IN_FROB_RETURN_ADDR:
-    case BUILT_IN_EXTRACT_RETURN_ADDR:
     case BUILT_IN_EH_RETURN:
 #ifdef EH_RETURN_DATA_REGNO
     case BUILT_IN_EH_RETURN_DATA_REGNO:
@@ -4401,6 +4404,39 @@ bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
                                                   Intrinsic::frameaddress),
                         Level, "tmp", CurBB);
   Result = CastToType(Instruction::BitCast, Result, TREE_TYPE(exp));
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinExtractReturnAddr(tree exp, Value *&Result) {
+  tree arglist = TREE_OPERAND(exp, 1);
+
+  Value *Ptr = Emit(TREE_VALUE(arglist), 0);
+
+  // FIXME: Actually we should do something like this:
+  //
+  // Result = (Ptr & MASK_RETURN_ADDR) + RETURN_ADDR_OFFSET, if mask and
+  // offset are defined. This seems to be needed for: ARM, MIPS, Sparc.
+  // Unfortunately, these constants are defined as RTL expressions and
+  // should be handled separately.
+  
+  Result = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinFrobReturnAddr(tree exp, Value *&Result) {
+  tree arglist = TREE_OPERAND(exp, 1);
+
+  Value *Ptr = Emit(TREE_VALUE(arglist), 0);
+
+  // FIXME: Actually we should do something like this:
+  //
+  // Result = Ptr - RETURN_ADDR_OFFSET, if offset is defined. This seems to be
+  // needed for: MIPS, Sparc.  Unfortunately, these constants are defined
+  // as RTL expressions and should be handled separately.
+  
+  Result = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
+
   return true;
 }
 

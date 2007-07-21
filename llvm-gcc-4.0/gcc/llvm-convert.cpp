@@ -253,6 +253,35 @@ static uint64_t getINTEGER_CSTVal(tree exp) {
   }
 }
 
+/// isInt64 - Return true if t is an INTEGER_CST that fits in a 64 bit integer.
+/// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
+/// true, returns whether the value is non-negative and fits in a uint64_t.
+/// Always returns false for overflowed constants.
+bool isInt64(tree_node *t, bool Unsigned) {
+  if (HOST_BITS_PER_WIDE_INT == 64)
+    return host_integerp(t, Unsigned);
+  else {
+    assert(HOST_BITS_PER_WIDE_INT == 32 &&
+           "Only 32- and 64-bit hosts supported!");
+    return
+      (TREE_CODE (t) == INTEGER_CST && !TREE_OVERFLOW (t))
+      && ((TYPE_UNSIGNED(TREE_TYPE(t)) == Unsigned) ||
+          // If the constant is signed and we want an unsigned result, check
+          // that the value is non-negative.  If the constant is unsigned and
+          // we want a signed result, check it fits in 63 bits.
+          (HOST_WIDE_INT)TREE_INT_CST_HIGH(t) >= 0);
+  }
+}
+
+/// getInt64 - Extract the value of an INTEGER_CST as a 64 bit integer.  If
+/// Unsigned is false, the value must fit in a int64_t.  If Unsigned is true,
+/// the value must be non-negative and fit in a uint64_t.  Must not be used on
+/// overflowed constants.  These conditions can be checked by calling isInt64.
+uint64_t getInt64(tree_node *t, bool Unsigned) {
+  assert(isInt64(t, Unsigned) && "invalid constant!");
+  return getINTEGER_CSTVal(t);
+}
+
 //===----------------------------------------------------------------------===//
 //                         ... High-Level Methods ...
 //===----------------------------------------------------------------------===//
@@ -1374,16 +1403,18 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     tree length;
 
     // Dynamic-size object: must push space on the stack.
-    if (TREE_CODE(type) == ARRAY_TYPE && (length = arrayLength(type))) {
+    if (TREE_CODE(type) == ARRAY_TYPE &&
+        isSequentialCompatible(type) &&
+        (length = arrayLength(type))) {
       Ty = ConvertType(TREE_TYPE(type));  // Get array element type.
       // Compute the number of elements in the array.
       Size = Emit(length, 0);
-      Size = CastToUIntType(Size, Size->getType());
     } else {
       // Compute the variable's size in bytes.
-      Size = CastToUIntType(Emit(DECL_SIZE_UNIT(decl), 0), Type::Int32Ty);
+      Size = Emit(DECL_SIZE_UNIT(decl), 0);
       Ty = Type::Int8Ty;
     }
+    Size = CastToUIntType(Size, Type::Int32Ty);
   }
   
   const char *Name;      // Name of variable
@@ -3213,7 +3244,7 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = ConstantInt::get(Ty, -1);
+  Constant *MinusOne = ConstantInt::get(Ty, -1U);
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
@@ -4645,94 +4676,71 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
 }
 
 LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
+  // The result type is an ElementTy* in the case of an ARRAY_REF, an array
+  // of ElementTy in the case of ARRAY_RANGE_REF.
+
   tree Array = TREE_OPERAND(exp, 0);
+  tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
-  assert((TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE ||
-          TREE_CODE (TREE_TYPE(Array)) == POINTER_TYPE ||
-          TREE_CODE (TREE_TYPE(Array)) == REFERENCE_TYPE) &&
+  tree IndexType = TREE_TYPE(Index);
+  tree ElementType = TREE_TYPE(ArrayType);
+
+  assert((TREE_CODE (ArrayType) == ARRAY_TYPE ||
+          TREE_CODE (ArrayType) == POINTER_TYPE ||
+          TREE_CODE (ArrayType) == REFERENCE_TYPE) &&
          "Unknown ARRAY_REF!");
-  
+
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
   // operand.  This construct maps directly to a getelementptr instruction.
   Value *ArrayAddr;
-  
-  if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
+
+  if (TREE_CODE(ArrayType) == ARRAY_TYPE) {
     // First subtract the lower bound, if any, in the type of the index.
     tree LowerBound = array_ref_low_bound(exp);
     if (!integer_zerop(LowerBound))
-      Index = fold(build2(MINUS_EXPR, TREE_TYPE(Index), Index, LowerBound));
-    
+      Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
+
     LValue ArrayAddrLV = EmitLV(Array);
     assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
     ArrayAddr = ArrayAddrLV.Ptr;
   } else {
     ArrayAddr = Emit(Array, 0);
   }
-  
+
   Value *IndexVal = Emit(Index, 0);
 
-  // FIXME: If UnitSize is a variable, or if it disagrees with the LLVM array
-  // element type, insert explicit pointer arithmetic here.
-  //tree ElementSizeInBytes = array_ref_element_size(exp);
-  
   const Type *IntPtrTy = getTargetData().getIntPtrType();
-  if (IndexVal->getType() != IntPtrTy) {
-    if (TYPE_UNSIGNED(TREE_TYPE(Index))) // if the index is unsigned
-      // ZExt it to retain its value in the larger type
-      IndexVal = CastToUIntType(IndexVal, IntPtrTy);
-    else
-      // SExt it to retain its value in the larger type
-      IndexVal = CastToSIntType(IndexVal, IntPtrTy);
-  }
+  if (TYPE_UNSIGNED(IndexType)) // if the index is unsigned
+    // ZExt it to retain its value in the larger type
+    IndexVal = CastToUIntType(IndexVal, IntPtrTy);
+  else
+    // SExt it to retain its value in the larger type
+    IndexVal = CastToSIntType(IndexVal, IntPtrTy);
 
-  // If this is an index into an array, codegen as a GEP.
-  if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
-    Value *Ptr;
-
-    // Check for variable sized array reference.
-    tree length = arrayLength(TREE_TYPE(Array));
-    if (length && !host_integerp(length, 1)) {
-      // Make sure that ArrayAddr is of type ElementTy*, then do a 2-index gep.
-      ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
-      Value *Scale = Emit(array_ref_element_size(exp), 0);
-      if (Scale->getType() != IntPtrTy)
-        Scale = CastToUIntType(Scale, IntPtrTy);
-
-      IndexVal = BinaryOperator::createMul(IndexVal, Scale, "tmp", CurBB);
-      Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
-    } else {
-      // Otherwise, this is not a variable-sized array, use a GEP to index.
-      Ptr = new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::Int32Ty, 0),
-                                  IndexVal, "tmp", CurBB);
-    }
-
-    // The result type is an ElementTy* in the case of an ARRAY_REF, an array
-    // of ElementTy in the case of ARRAY_RANGE_REF.  Return the correct type.
+  // If this is an index into an LLVM array, codegen as a GEP.
+  if (isArrayCompatible(ArrayType)) {
+    Value *Ptr = new GetElementPtrInst(ArrayAddr,
+                                       ConstantInt::get(Type::Int32Ty, 0),
+                                       IndexVal, "tmp", CurBB);
     return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
   }
 
-  // Otherwise, this is an index off a pointer, codegen as a 2-idx GEP.
-  assert(TREE_CODE(TREE_TYPE(Array)) == POINTER_TYPE ||
-         TREE_CODE(TREE_TYPE(Array)) == REFERENCE_TYPE);
-  tree IndexedType = TREE_TYPE(TREE_TYPE(Array));
-  
   // If we are indexing over a fixed-size type, just use a GEP.
-  if (TREE_CODE(TYPE_SIZE(IndexedType)) == INTEGER_CST) {
-    const Type *PtrIndexedTy = PointerType::get(ConvertType(IndexedType));
-    ArrayAddr = BitCastToType(ArrayAddr, PtrIndexedTy);
-    return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+  if (isSequentialCompatible(ArrayType)) {
+    const Type *PtrElementTy = PointerType::get(ConvertType(ElementType));
+    ArrayAddr = BitCastToType(ArrayAddr, PtrElementTy);
+    Value *Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+    return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
   }
-  
+
   // Otherwise, just do raw, low-level pointer arithmetic.  FIXME: this could be
   // much nicer in cases like:
   //   float foo(int w, float A[][w], int g) { return A[g][0]; }
-  
+
   ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
   Value *TypeSize = Emit(array_ref_element_size(exp), 0);
+  TypeSize = CastToUIntType(TypeSize, IntPtrTy);
 
-  if (TypeSize->getType() != IntPtrTy)
-    TypeSize = CastToUIntType(TypeSize, IntPtrTy);
-  
   IndexVal = BinaryOperator::createMul(IndexVal, TypeSize, "tmp", CurBB);
   Value *Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
 
@@ -5790,44 +5798,41 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree Array = TREE_OPERAND(exp, 0);
+  tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
-  assert((TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE ||
-          TREE_CODE (TREE_TYPE(Array)) == POINTER_TYPE ||
-          TREE_CODE (TREE_TYPE(Array)) == REFERENCE_TYPE) &&
+  tree IndexType = TREE_TYPE(Index);
+  assert((TREE_CODE (ArrayType) == ARRAY_TYPE ||
+          TREE_CODE (ArrayType) == POINTER_TYPE ||
+          TREE_CODE (ArrayType) == REFERENCE_TYPE) &&
          "Unknown ARRAY_REF!");
-  
+
+  // Check for variable sized reference.
+  // FIXME: add support for array types where the size doesn't fit into 64 bits
+  assert(isArrayCompatible(ArrayType) || isSequentialCompatible(ArrayType)
+         && "Cannot have globals with variable size!");
+
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
   // operand.  This construct maps directly to a getelementptr instruction.
   Constant *ArrayAddr;
-  if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE) {
+  if (TREE_CODE (ArrayType) == ARRAY_TYPE) {
     // First subtract the lower bound, if any, in the type of the index.
     tree LowerBound = array_ref_low_bound(exp);
     if (!integer_zerop(LowerBound))
-      Index = fold(build2(MINUS_EXPR, TREE_TYPE(Index), Index, LowerBound));
+      Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
     ArrayAddr = EmitLV(Array);
   } else {
     ArrayAddr = Convert(Array);
   }
   
   Constant *IndexVal = Convert(Index);
-  
-  // FIXME: If UnitSize is a variable, or if it disagrees with the LLVM array
-  // element type, insert explicit pointer arithmetic here.
-  //tree ElementSizeInBytes = array_ref_element_size(exp);
-  
-  if (IndexVal->getType() != Type::Int32Ty &&
-      IndexVal->getType() != Type::Int64Ty)
-    IndexVal = ConstantExpr::getSExtOrBitCast(IndexVal, Type::Int64Ty);
-  
-  // Check for variable sized array reference.
-  if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
-    tree length = arrayLength(TREE_TYPE(Array));
-    assert(!length || host_integerp(length, 1) &&
-           "Cannot have globals with variable size!");
-  }
+
+  const Type *IntPtrTy = getTargetData().getIntPtrType();
+  if (IndexVal->getType() != IntPtrTy)
+    IndexVal = ConstantExpr::getIntegerCast(IndexVal, IntPtrTy,
+                                            !TYPE_UNSIGNED(IndexType));
 
   std::vector<Value*> Idx;
-  if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE)
+  if (isArrayCompatible(ArrayType))
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx.push_back(IndexVal);
   return ConstantExpr::getGetElementPtr(ArrayAddr, &Idx[0], Idx.size());

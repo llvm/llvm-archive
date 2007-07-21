@@ -144,10 +144,31 @@ inline const Type *ConvertType(tree_node *type) {
   return TheTypeConverter->ConvertType(type);
 }
 
+/// isInt64 - Return true if t is an INTEGER_CST that fits in a 64 bit integer.
+/// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
+/// true, returns whether the value is non-negative and fits in a uint64_t.
+/// Always returns false for overflowed constants.
+bool isInt64(tree_node *t, bool Unsigned);
+
+/// getInt64 - Extract the value of an INTEGER_CST as a 64 bit integer.  If
+/// Unsigned is false, the value must fit in a int64_t.  If Unsigned is true,
+/// the value must be non-negative and fit in a uint64_t.  Must not be used on
+/// overflowed constants.  These conditions can be checked by calling isInt64.
+uint64_t getInt64(tree_node *t, bool Unsigned);
+
 /// isPassedByInvisibleReference - Return true if the specified type should be
 /// passed by 'invisible reference'. In other words, instead of passing the
 /// thing by value, pass the address of a temporary.
 bool isPassedByInvisibleReference(tree_node *type);
+
+/// isSequentialCompatible - Return true if the specified gcc array or pointer
+/// type and the corresponding LLVM SequentialType lay out their components
+/// identically in memory.
+bool isSequentialCompatible(tree_node *type);
+
+/// isArrayCompatible - Return true if the specified gcc array or pointer type
+/// corresponds to an LLVM array type.
+bool isArrayCompatible(tree_node *type);
 
 /// arrayLength - Return a tree expressing the number of elements in an array
 /// of the specified type, or NULL if the type does not specify the length.

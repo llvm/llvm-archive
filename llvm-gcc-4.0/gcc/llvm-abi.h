@@ -110,7 +110,7 @@ static tree isSingleElementStructOrArray(tree type) {
       }
     return FoundField ? isSingleElementStructOrArray(FoundField) : 0;
   case ARRAY_TYPE:
-    if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
+    if (!isArrayCompatible(type))
       return 0;
     tree length = arrayLength(type);
     if (!length || !integer_onep(length))

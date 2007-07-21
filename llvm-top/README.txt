@@ -20,14 +20,29 @@ dependencies) with the "get" script located here. For example:
   ./get llvm-gcc-4-0
 
 which will check out both llvm and llvm-gcc-4-0 because the latter depends on
-the former.
+the former. 
 
-In addition to checking out software, there are scripts to build, install, 
-clean and update the modules. They have the obvious names. These scripts do 
+
+In addition to checking out software, there are several more scripts in 
+llvm-top.  In all the scripts, the dependency checking behavior is the same as
+for the get script. That is, the script operates on the modules you ask for as
+well as all the modules they depend on.
+
+The scripts available are:
+
+  get      - check out modules and their dependencies from subversion
+  info     - get subversion information about one or more modules
+  update   - update one or more modules
+
+  build    - configure, compile and link one or more modules
+  install  - install one or more modules (presumes build already done)
+  clean    - clean (remove build products) one or more modules
+
+The first three scripts just work with subversion.  The last three scripts do 
 not dictate how to build, install or clean the modules; that is up to the 
-modules themselves. The update and get scripts just work with subversion. The 
-only thing these scripts depend on is a file named ModuleInfo.txt located in
-each module's top directory. This module can have the following definitions:
+modules themselves.  The only thing these scripts depend on is a file named 
+ModuleInfo.txt located in each module's top directory. This file can contain 
+the following definitions:
 
   DepModule:  - the list of modules this module depends on 
   BuildCmd:   - a command to build (and configure) the module
@@ -76,6 +91,11 @@ are recognized by the scripts:
      Any options matching these patterns are collected and passed down to the
      build, install or clean commands.
 
+  all
+     This is equivalent to specify all modules in the LLVM subversion 
+     repository. Careful! All the scripts will check out EVERYTHING in the
+     repository. 
+
   [a-zA-Z]*
      Any option not matching something above and starting with a letter 
      specifies a module name to work on.
@@ -83,21 +103,38 @@ are recognized by the scripts:
   *
      Anything else is an error.
 
+All the scripts need some (minimal) set of modules to work on. You have three
+choices on the command line:
+
+  1. Don't specify any modules - the script will work with the currently
+     checked out set of modules.
+
+  2. Specify the modules you want, by name - generally you only have to 
+     specify the one or two at the top of the dependency graph.
+
+  3. Specify "all" - all modules will be checked out (careful!)
+
 So, for example:
 
-  ./build llvm-gcc-4-0 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
+  ./build llvm-gcc-4.0 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
 
-As you might guess, this will check out both llvm and llvm-gcc-4-0 if they
-haven't been and then configure and build optimized versions of each. They
-will be configured to install to /my/install/dir and there will be some
-minimal confirmation of the steps taken.
+As you might guess, this will do the following:
+
+  1. Check out the llvm-gcc-4.0 module
+  2. Check out the core module because llvm-gcc-4.0 depends on core
+  3. Check out the support module because core depends on support
+  4. Build the support module in optimized mode and configured to install
+     into /my/install/dir
+  5. Build the core module the same way.
+  6. Build the llvm-gcc-4.0 module the same way.
+  7. Do all of the above with some simple progress messages.
 
 The modules available are:
 
   llvm-top     - This directory
   sample       - A sample module you can use as a template for your own
   support      - The support libraries, makefile system, etc.
-  llvm         - The core llvm software
+  core         - The core llvm software (currently "llvm")
   llvm-gcc-4.0 - The C/C++/Obj-C front end for llvm, based on GCC 4.0
   llvm-gcc-4.2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
   cfe          - The new C/C++/Obj-C front end for llvm

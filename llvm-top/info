@@ -17,10 +17,8 @@ process_arguments "$@"
 get_module_dependencies $MODULES
 
 for mod in $MODULE_DEPENDENCIES ; do
-  msg 1 "Updating module '$mod'"
-  cd $mod
-  svn update
-  cd $LLVM_TOP
+  msg 0 "Information for module '$mod'"
+  svn info $mod | sed -e '/^Repository/d' -e '/^Node/d' -e '/^Sched/d'
 done
 
 # Report what happened.

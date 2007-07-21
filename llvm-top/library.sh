@@ -56,6 +56,7 @@ process_arguments() {
       --*)        OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
        -*)        OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
       *=*)        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
+      all)        MODULES=`svn list $SVNROOT | grep '/$' | sed -e 's#/##'` ;;
       [a-zA-Z]*)  MODULES="$MODULES $arg" ;;
         *)        die 1 "Unrecognized option: $arg" ;;
     esac

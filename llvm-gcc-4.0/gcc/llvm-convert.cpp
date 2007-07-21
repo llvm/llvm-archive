@@ -74,7 +74,7 @@ static bool isAggregateType(tree type) {
 /// "gimple_formal_tmp_var".
 static bool isGCC_SSA_Temporary(tree decl) {
   return TREE_CODE(decl) == VAR_DECL &&
-         DECL_GIMPLE_FORMAL_TEMP_P(decl) &&
+         DECL_GIMPLE_FORMAL_TEMP_P(decl) && !TREE_ADDRESSABLE(decl) &&
          !isAggregateType(TREE_TYPE(decl));
 }
 

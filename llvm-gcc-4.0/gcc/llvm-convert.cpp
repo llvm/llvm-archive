@@ -703,9 +703,8 @@ Function *TreeToLLVM::FinishFunctionBody() {
 #ifdef ITANIUM_STYLE_EXCEPTIONS
     if (ExceptionValue) {
       // Fetch and store exception handler.
-      std::vector<Value*> Args;
-      Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-      Builder.CreateCall(FuncUnwindResume, &Args[0], Args.size());
+      Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
+      Builder.CreateCall(FuncUnwindResume, &Arg, 1);
       Builder.CreateUnreachable();
     } else {
       new UnwindInst(UnwindBB);
@@ -1899,7 +1898,9 @@ void TreeToLLVM::GatherTypeInfo(tree exp,
 
     if (!Types) {
       // Catch all.
-      TypeInfos.push_back(Constant::getNullValue(Type::Int32Ty));
+      TypeInfos.push_back(
+        Constant::getNullValue(PointerType::get(Type::Int8Ty))
+      );
     } else if (TREE_CODE(Types) != TREE_LIST) {
       // Construct typeinfo object.  Each call will produce a new expression
       // even if duplicate.
@@ -2206,9 +2207,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
     Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
 
     // Call get eh type id.
-    std::vector<Value*> Args;
-    Args.push_back(TypeInfo);
-    Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &Args[0], Args.size(),
+    Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &TypeInfo, 1,
                                        "eh_typeid");
     Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 
@@ -2233,9 +2232,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
       TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
 
       // Call get eh type id.
-      std::vector<Value*> Args;
-      Args.push_back(TypeInfo);
-      Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &Args[0], Args.size(),
+      Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &TypeInfo, 1,
                                          "eh_typeid");
       Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 

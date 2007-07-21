@@ -9270,6 +9270,11 @@ generate_protocols (void)
 					     /* APPLE LOCAL radar 4695109 */
 					     UOBJC_PROTOCOL_EXT_decl, NULL_TREE);
       /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
+      /* APPLE LOCAL begin LLVM */
+      /* Force 4 byte alignment for protocols */
+      DECL_ALIGN(decl) = 32;
+      DECL_USER_ALIGN(decl) = 1;
+      /* APPLE LOCAL end LLVM */
       finish_var_decl (decl, initlist);
     }
 }

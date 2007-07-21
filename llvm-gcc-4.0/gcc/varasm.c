@@ -4675,6 +4675,14 @@ find_decl_and_mark_needed (tree decl, tree target)
 static void
 do_assemble_alias (tree decl, tree target)
 {
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM  
+  if (emit_alias_to_llvm(decl, target, 1) == -1)
+    error ("%J%qD aliased to undefined symbol %qE",
+           decl, decl, target);
+  return;
+#endif
+/* APPLE LOCAL end LLVM */
   if (TREE_ASM_WRITTEN (decl))
     return;
 
@@ -4725,6 +4733,11 @@ do_assemble_alias (tree decl, tree target)
 void
 finish_aliases_1 (void)
 {
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  return;
+#endif
+/* APPLE LOCAL end LLVM */
   unsigned i;
   alias_pair p;
 
@@ -4764,8 +4777,12 @@ finish_aliases_2 (void)
 void
 assemble_alias (tree decl, tree target)
 {
+/* APPLE LOCAL begin LLVM */
+#ifndef ENABLE_LLVM
   tree target_decl;
-
+#endif  
+/* APPLE LOCAL end LLVM */
+  
 #if !defined (ASM_OUTPUT_DEF)
 # if !defined(ASM_OUTPUT_WEAK_ALIAS) && !defined (ASM_WEAKEN_DECL)
   error ("%Jalias definitions not supported in this configuration", decl);
@@ -4779,18 +4796,17 @@ assemble_alias (tree decl, tree target)
 # endif
 #endif
   
-  /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-  inform ("%JLLVM does not support aliases yet", decl);
-  return;
-#endif
-  /* APPLE LOCAL end LLVM */
-
   /* We must force creation of DECL_RTL for debug info generation, even though
      we don't use it here.  */
+/* APPLE LOCAL begin LLVM */  
+#ifndef ENABLE_LLVM  
   make_decl_rtl (decl);
+#else
+  make_decl_llvm (decl);
+#endif
+/* APPLE LOCAL end LLVM */
   TREE_USED (decl) = 1;
-
+  
   /* A quirk of the initial implementation of aliases required that the user
      add "extern" to all of them.  Which is silly, but now historical.  Do
      note that the symbol is in fact locally defined.  */
@@ -4802,12 +4818,20 @@ assemble_alias (tree decl, tree target)
   else
     cgraph_varpool_node (decl)->alias = true;
 
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* Can we emit alias right now (usually true for C functions)? If yes - do it,
+   * otherwise save for late processing */
+  if (emit_alias_to_llvm(decl, target, 0) == -1)
+#else  
   /* If the target has already been emitted, we don't have to queue the
      alias.  This saves a tad o memory.  */
   target_decl = find_decl_and_mark_needed (decl, target);
   if (target_decl && TREE_ASM_WRITTEN (target_decl))
     do_assemble_alias (decl, target);
   else
+#endif
+/* APPLE LOCAL end LLVM */    
     {
       alias_pair p;
 

@@ -49,6 +49,10 @@ void make_decl_llvm(union tree_node*);
  */
 void emit_global_to_llvm(union tree_node*);
 
+/* emit_global_to_llvm - Emit the specified alias to LLVM
+ */
+int emit_alias_to_llvm(union tree_node*, union tree_node*, unsigned);
+
 /* llvm_get_decl_name - Used by varasm.c, returns the specified declaration's
  * name.
  */

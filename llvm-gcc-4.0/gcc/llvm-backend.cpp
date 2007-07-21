@@ -28,6 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
+#include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
@@ -57,6 +58,7 @@ extern "C" {
 #include "coretypes.h"
 #include "flags.h"
 #include "tree.h"
+#include "c-tree.h" // For aliases
 #include "diagnostic.h"
 #include "output.h"
 #include "toplev.h"
@@ -532,6 +534,89 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   timevar_pop(TV_LLVM_FUNCS);
 }
 
+// emit_alias_to_llvm - Given decl and target emit alias to target. gcc is
+// little bit insane, it can ask us for alias emission in many places. Such
+// places are divided into two stages: it's allowed to have unresolved target at
+// stage 0 (hence result code -1), but not on stage 1 (error). Zero is returned
+// if alias was emitted.
+int emit_alias_to_llvm(tree decl, tree target, unsigned stage) {
+  if (errorcount || sorrycount) return -2;
+    
+  timevar_push(TV_LLVM_GLOBALS);
+
+  // Get or create LLVM global for our alias.
+  GlobalValue *V = cast<GlobalValue>(DECL_LLVM(decl));
+  
+  // Try to grab decl from IDENTIFIER_NODE
+  GlobalValue *Aliasee = 0;
+  if (tree c_decl = lookup_name(target))
+    Aliasee = cast<GlobalValue>(DECL_LLVM(c_decl));
+
+  // Query SymTab for aliasee
+  const char* AliaseeName = IDENTIFIER_POINTER(target);
+  if (!Aliasee) {
+    Aliasee =
+      dyn_cast_or_null<GlobalValue>(TheModule->
+                                    getValueSymbolTable().lookup(AliaseeName));
+  }
+
+  // Last resort. Query for name set via __asm__
+  if (!Aliasee) {
+    std::string starred = std::string("\001") + AliaseeName;
+    Aliasee =
+      dyn_cast_or_null<GlobalValue>(TheModule->
+                                    getValueSymbolTable().lookup(starred));
+  }
+  
+  if (!Aliasee) {
+    if (stage)
+      error ("%J%qD aliased to undefined symbol %qE",
+             decl, decl, target);
+    timevar_pop(TV_LLVM_GLOBALS);
+    return -1;
+  }  
+    
+  GlobalValue::LinkageTypes Linkage;
+  GlobalValue::VisibilityTypes Visibility;
+
+  // Check for external weak linkage
+  if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
+    Linkage = GlobalValue::WeakLinkage;
+  else if (!TREE_PUBLIC(decl))
+    Linkage = GlobalValue::InternalLinkage;
+  else
+    Linkage = GlobalValue::ExternalLinkage;
+
+  GlobalAlias* GA = new GlobalAlias(Aliasee->getType(), Linkage, "",
+                                    Aliasee, TheModule);
+  // Handle visibility style
+  if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+    GA->setVisibility(GlobalValue::HiddenVisibility);
+
+  if (V->getType() == GA->getType())
+    V->replaceAllUsesWith(GA);
+  else if (!V->use_empty()) {
+    error ("%J Alias %qD used with invalid type!", decl, decl);
+    timevar_pop(TV_LLVM_GLOBALS);
+    return -1;
+  }
+    
+  changeLLVMValue(V, GA);
+  GA->takeName(V);
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    GV->eraseFromParent();
+  else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
+    GA->eraseFromParent();
+  else if (Function *F = dyn_cast<Function>(V))
+    F->eraseFromParent();
+  else
+    assert(0 && "Unsuported global value");
+  
+  timevar_pop(TV_LLVM_GLOBALS);
+  return 0;
+}
+
+  
 /// emit_global_to_llvm - Emit the specified VAR_DECL or aggregate CONST_DECL to
 /// LLVM as a global variable.  This function implements the end of
 /// assemble_variable.
@@ -845,12 +930,12 @@ void make_decl_llvm(tree decl) {
           
           // Update the decl that points to F.
           changeLLVMValue(F, FInNewType);
+
+          // Now we can give GV the proper name.
+          GV->takeName(F);
           
           // F is now dead, nuke it.
           F->eraseFromParent();
-          
-          // Now we can give GV the proper name.
-          GV->setName(Name);
         }
         
       } else {

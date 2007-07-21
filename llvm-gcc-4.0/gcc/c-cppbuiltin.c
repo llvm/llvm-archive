@@ -324,8 +324,29 @@ define__GNUC__ (void)
   }
   /* APPLE LOCAL end Apple version */
 
-  /* APPLE LOCAL LLVM no version number */
-#endif LLVM_VERSION_INFO
+  /* APPLE LOCAL begin LLVM version number */
+#else
+  /* LLVM builds multiple different ways.  For example, for official releases,
+     the version number is something like "1.8".  We don't want to disable
+     __APPLE_CC__ entirely, as this breaks system headers.  If the build number
+     is not a 4-digit code, just define __APPLE_CC__ to 1.
+   */
+  {
+    char Version[] = LLVM_VERSION_INFO;
+    if (! ISDIGIT (Version[0])
+        || ! ISDIGIT (Version[1])
+        || ! ISDIGIT (Version[2])
+        || ! ISDIGIT (Version[3])
+        || Version[4] != 0) {
+      Version[0] = '1';
+      Version[1] = '\0';
+      builtin_define_with_value_n ("__APPLE_CC__", Version, 1);
+    } else {
+      builtin_define_with_value_n ("__APPLE_CC__", Version, 4);
+    }
+  }
+#endif /*LLVM_VERSION_INFO*/
+  /* APPLE LOCAL end LLVM version number */
 }
 
 /* Define macros used by <stdint.h>.  Currently only defines limits

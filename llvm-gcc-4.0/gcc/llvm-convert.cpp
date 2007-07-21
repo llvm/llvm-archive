@@ -2415,17 +2415,47 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
   }
 }
 
-/// GetSingleRegisterInRegClass - If the constraint is a register class, and if
-/// that register class contains a single register, return the name of the
-/// register, otherwise return a null pointer.
-static const char *GetSingleRegisterInRegClass(const char *Constraint) {
+/// CanonicalizeConstraint - If we can canonicalize the constraint into
+/// something simpler, do so now.  This turns register classes with a single
+/// register into the register itself, expands builtin constraints to multiple
+/// alternatives, etc.  If the constraint cannot be simplified, this returns an
+/// empty string.
+static std::string CanonicalizeConstraint(const char *Constraint) {
+  std::string Result;
   unsigned RegClass;
+  
+  // Skip over modifier characters.
+  bool DoneModifiers = false;
+  while (!DoneModifiers) {
+    switch (*Constraint) {
+    default: DoneModifiers = true; break;
+    case '=': assert(0 && "Should be after '='s");
+    case '+': assert(0 && "'+' should already be expanded");
+    case '&':
+    case '%':
+    case '*':
+    case '?':
+    case '!':
+      ++Constraint;
+      break;
+    case '#':  // No constraint letters left.
+      return "";
+    }
+  }
+  
+  
   if (*Constraint == 'r')      // r is a special case for some reason.
     RegClass = GENERAL_REGS;
+  else if (*Constraint == 'g')
+    // FIXME: 'imr' is the appropriate constraint to use here, as it allows
+    // maximum generality.  However, we accept just "r" for now because LLVM
+    // doesn't support multiple alternatives yet.
+    //return "imr"; 
+    return "r";
   else 
     RegClass = REG_CLASS_FROM_CONSTRAINT(*Constraint, Constraint);
   
-  if (RegClass == NO_REGS) return 0;  // not a reg class.
+  if (RegClass == NO_REGS) return Result;  // not a reg class.
 
   // Look to see if the specified regclass has exactly one member, and if so,
   // what it is.  Cache this information in AnalyzedRegClasses once computed.
@@ -2453,7 +2483,14 @@ static const char *GetSingleRegisterInRegClass(const char *Constraint) {
     AnalyzedRegClasses.insert(I, std::make_pair(RegClass, RegMember));
   }
 
-  return RegMember == -1 ? 0 : reg_names[RegMember];
+  // If we found a single register register class, return the register.
+  if (RegMember != -1) {
+    Result = '{';
+    Result += reg_names[RegMember];
+    Result += '}';
+  }
+  
+  return Result;
 }
 
 
@@ -2524,18 +2561,14 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       }
     }
     
-    // If the constraint is a register class, and if that register class
-    // contains a single register, set the constraint to specify the specific
-    // register instead of the class.  This way, the LLVM code doesn't need to
-    // know about single register regclasses.
-    if (const char *Reg = GetSingleRegisterInRegClass(Constraint+1)) {
-      unsigned RegNameLen = strlen(Reg);
-      char *NewConstraint = (char*)alloca(RegNameLen+4);
+    // If we can simplify the constraint into something else, do so now.  This
+    // avoids LLVM having to know about all the (redundant) GCC constraints.
+    std::string Simplified = CanonicalizeConstraint(Constraint+1);
+    if (!Simplified.empty()) {
+      char *NewConstraint = (char*)alloca(Simplified.size()+2);
       NewConstraint[0] = '=';
-      NewConstraint[1] = '{';
-      memcpy(NewConstraint+2, Reg, RegNameLen);
-      NewConstraint[RegNameLen+2] = '}';
-      NewConstraint[RegNameLen+3] = 0;
+      memcpy(NewConstraint+1, &Simplified[0], Simplified.size());
+      NewConstraint[Simplified.size()+1] = 0;
       Constraint = NewConstraint;
     }
     
@@ -2596,14 +2629,10 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += reg_names[RegNum];
       ConstraintStr += '}';
     } else {
-      // If the constraint is a register class, and if that register class
-      // contains a single register, set the constraint to specify the specific
-      // register instead of the class.  This way, the LLVM code doesn't need to
-      // know about single register regclasses.
-      if (const char *Reg = GetSingleRegisterInRegClass(Constraint)) {
-        ConstraintStr += '{';
-        ConstraintStr += Reg;
-        ConstraintStr += '}';
+      // If there is a simpler form for the register constraint, use it.
+      std::string Simplified = CanonicalizeConstraint(Constraint);
+      if (!Simplified.empty()) {
+        ConstraintStr += Simplified;
       } else {
         // Otherwise, just add the constraint!
         ConstraintStr += Constraint;

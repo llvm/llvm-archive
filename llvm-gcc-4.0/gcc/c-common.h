@@ -798,6 +798,8 @@ extern HOST_WIDE_INT c_common_to_target_charset (HOST_WIDE_INT);
 /* APPLE LOCAL begin IMA built-in decl merging fix (radar 3645899) */
 extern bool builtin_function_disabled_p (const char *);
 /* APPLE LOCAL end */
+/* APPLE LOCAL define this sensibly in all languages */
+extern bool c_flag_no_builtin (void);
 
 /* This is the basic parsing function.  */
 extern void c_parse_file (void);

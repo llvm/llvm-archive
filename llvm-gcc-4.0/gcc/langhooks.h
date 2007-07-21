@@ -434,6 +434,9 @@ struct lang_hooks
 			    enum built_in_class bt_class,
 			    const char *library_name, tree attrs);
 
+  /* APPLE LOCAL define this sensibly for all languages */
+  bool (*flag_no_builtin)(void);
+
   /* Whenever you add entries here, make sure you adjust langhooks-def.h
      and langhooks.c accordingly.  */
 };

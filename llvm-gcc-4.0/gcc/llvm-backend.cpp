@@ -64,6 +64,7 @@ extern "C" {
 #include "tm.h"
 #include "function.h"
 #include "tree-inline.h"
+#include "langhooks.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -298,7 +299,7 @@ void llvm_asm_file_start(void) {
     if (optimize > 1) {
       if (flag_inline_trees > 1)                // respect -fno-inline-functions
         PM->add(createFunctionInliningPass());  // Inline small functions
-      if (flag_unit_at_a_time)
+      if (flag_unit_at_a_time && !lang_hooks.flag_no_builtin())
         PM->add(createSimplifyLibCallsPass());  // Library Call Optimizations
 
       if (optimize > 2)

@@ -779,6 +779,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
       Result = EmitBinOp(exp, DestLoc, Instruction::SDiv);
     break;
   case RDIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::FDiv); break;
+  case CEIL_DIV_EXPR: Result = EmitCEIL_DIV_EXPR(exp); break;
   case ROUND_DIV_EXPR: Result = EmitROUND_DIV_EXPR(exp); break;
   case TRUNC_MOD_EXPR: 
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
@@ -3200,6 +3201,82 @@ Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, Value *DestLoc) {
   return new SelectInst(SameAsRem, Rem, RemPlusRHS, "mod", CurBB);
 }
 
+Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
+  // Notation: CEIL_DIV_EXPR <-> CDiv, TRUNC_DIV_EXPR <-> Div.
+
+  // CDiv calculates LHS/RHS by rounding up to the nearest integer.  In terms
+  // of Div this means if the values of LHS and RHS have opposite signs or if
+  // LHS is zero, then CDiv necessarily equals Div; and
+  //   LHS CDiv RHS = (LHS - Sign(RHS)) Div RHS + 1
+  // otherwise.
+
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  Constant *Zero = ConstantInt::get(Ty, 0);
+  Constant *One = ConstantInt::get(Ty, 1);
+  Constant *MinusOne = ConstantInt::get(Ty, -1);
+
+  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+
+  if (!TYPE_UNSIGNED(TREE_TYPE(exp))) {
+    // In the case of signed arithmetic, we calculate CDiv as follows:
+    //   LHS CDiv RHS = (LHS - Sign(RHS) * Offset) Div RHS + Offset,
+    // where Offset is 1 if LHS and RHS have the same sign and LHS is
+    // not zero, and 0 otherwise.
+
+    // On some machines INT_MIN Div -1 traps.  You might expect a trap for
+    // INT_MIN CDiv -1 too, but this implementation will not generate one.
+    // Quick quiz question: what value is returned for INT_MIN CDiv -1?
+
+    // Determine the signs of LHS and RHS, and whether they have the same sign.
+    Value *LHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, LHS, Zero, "tmp",
+                                        CurBB);
+    Value *RHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, RHS, Zero, "tmp",
+                                        CurBB);
+    Value *HaveSameSign = new ICmpInst(ICmpInst::ICMP_EQ, LHSIsPositive,
+                                       RHSIsPositive, "tmp", CurBB);
+
+    // Offset equals 1 if LHS and RHS have the same sign and LHS is not zero ...
+    Value *LHSNotZero = new ICmpInst(ICmpInst::ICMP_NE, LHS, Zero, "tmp",
+                                     CurBB);
+    Value *OffsetOne = BinaryOperator::create(Instruction::And, HaveSameSign,
+                                              LHSNotZero, "tmp", CurBB);
+    // ... otherwise it is 0.
+    Value *Offset = new SelectInst(OffsetOne, One, Zero, "tmp", CurBB);
+
+    // Calculate Sign(RHS) ...
+    Value *SignRHS = new SelectInst(RHSIsPositive, One, MinusOne, "tmp", CurBB);
+    // ... and Sign(RHS) * Offset
+    Value *SignedOffset = CastToType(Instruction::SExt, OffsetOne, Ty);
+    SignedOffset = BinaryOperator::create(Instruction::And, SignRHS,
+                                          SignedOffset, "tmp", CurBB);
+
+    // Return CDiv = (LHS - Sign(RHS) * Offset) Div RHS + Offset.
+    Value *CDiv = BinaryOperator::create(Instruction::Sub, LHS, SignedOffset,
+                                         "tmp", CurBB);
+    CDiv = BinaryOperator::create(Instruction::SDiv, CDiv, RHS, "tmp", CurBB);
+    return BinaryOperator::create(Instruction::Add, CDiv, Offset, "cdiv",
+                                  CurBB);
+  } else {
+    // In the case of unsigned arithmetic, LHS and RHS necessarily have the
+    // same sign, so we can use
+    //   LHS CDiv RHS = (LHS - 1) Div RHS + 1
+    // as long as LHS is non-zero.
+
+    // Offset is 1 if LHS is non-zero, 0 otherwise.
+    Value *LHSNotZero = new ICmpInst(ICmpInst::ICMP_NE, LHS, Zero, "tmp",
+                                     CurBB);
+    Value *Offset = new SelectInst(LHSNotZero, One, Zero, "tmp", CurBB);
+
+    // Return CDiv = (LHS - Offset) Div RHS + Offset.
+    Value *CDiv = BinaryOperator::create(Instruction::Sub, LHS, Offset, "tmp",
+                                         CurBB);
+    CDiv = BinaryOperator::create(Instruction::UDiv, CDiv, RHS, "tmp", CurBB);
+    return BinaryOperator::create(Instruction::Add, CDiv, Offset, "cdiv",
+                                  CurBB);
+  }
+}
+
 Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
   // Notation: ROUND_DIV_EXPR <-> RDiv, TRUNC_DIV_EXPR <-> Div.
   
@@ -3643,11 +3720,10 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       if (!LLVMTy->isFirstClassType()) {
         // Structs and unions are permitted here, as long as they're the
         // same size as a register.
-        Value *Target = CreateTemporary(LLVMTy);          
         LValue LV = EmitLV(Val);
-        EmitAggregateCopy(Target, LV.Ptr, type, false, TREE_THIS_VOLATILE (Val));
+        assert(!LV.isBitfield());
         LLVMTy = IntegerType::get(TD.getTypeSizeInBits(LLVMTy));
-        Op = new LoadInst(CastToType(Instruction::BitCast, Target,
+        Op = new LoadInst(CastToType(Instruction::BitCast, LV.Ptr,
                           PointerType::get(LLVMTy)), "tmp", CurBB);
       } else {
         Op = Emit(Val, 0);

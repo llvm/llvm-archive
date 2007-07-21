@@ -8008,4 +8008,10 @@ iasm_entry (tree keyword, tree scspec, tree fn)
 }
 /* APPLE LOCAL end CW asm blocks */
 
+/* APPLE LOCAL begin define this sensibly in all languages */
+bool c_flag_no_builtin(void) {
+  return flag_no_builtin;
+}
+/* APPLE LOCAL end define this sensibly in all languages */
+
 #include "gt-c-common.h"

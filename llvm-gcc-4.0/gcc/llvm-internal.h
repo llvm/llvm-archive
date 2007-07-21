@@ -466,6 +466,7 @@ private:
   Value *EmitMinMaxExpr(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                         unsigned Opc);
   Value *EmitFLOOR_MOD_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitCEIL_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.

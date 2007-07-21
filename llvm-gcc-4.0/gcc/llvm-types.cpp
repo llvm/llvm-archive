@@ -62,26 +62,6 @@ extern "C" {
 //                       Type Conversion Utilities
 //===----------------------------------------------------------------------===//
 
-static inline const Type *getIntegerType(unsigned Bits, bool isUnsigned) {
-  switch (Bits*2+isUnsigned) {
-  default: assert(0 && "Unknown integral type size!");
-  case   8*2+0: return Type::Int8Ty;
-  case   8*2+1: return Type::Int8Ty;
-  case  16*2+0: return Type::Int16Ty;
-  case  16*2+1: return Type::Int16Ty;
-  case  32*2+0: return Type::Int32Ty;
-  case  32*2+1: return Type::Int32Ty;
-  case  64*2+0: return Type::Int64Ty;
-  case  64*2+1: return Type::Int64Ty;
-  case 128*2+0:
-  case 128*2+1:
-    static bool Warned = false;
-    if (!Warned) fprintf(stderr, "WARNING: 128-bit integers not supported!\n");
-    Warned = true;
-    return isUnsigned ? Type::Int64Ty : Type::Int64Ty;
-  }
-}
-
 // isPassedByInvisibleReference - Return true if an argument of the specified
 // type should be passed in by invisible reference.
 //
@@ -286,15 +266,12 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
   case VOID_TYPE:   return SET_TYPE_LLVM(type, Type::VoidTy);
   case RECORD_TYPE: return ConvertRECORD(type, orig_type);
   case UNION_TYPE:  return ConvertUNION(type, orig_type);
-  case BOOLEAN_TYPE:
-    if (TREE_INT_CST_LOW(TYPE_SIZE(type)) <= 8)
-      return SET_TYPE_LLVM(type, Type::Int1Ty);
-    else { // Bools on some platforms take more space than LLVM bool (e.g. PPC).
-      if (const Type *Ty = GET_TYPE_LLVM(type))
-        return Ty;
-      const Type *Ty = getIntegerType(TREE_INT_CST_LOW(TYPE_SIZE(type)), true);
-      return SET_TYPE_LLVM(type, Ty);
-    }
+  case BOOLEAN_TYPE: {
+    if (const Type *Ty = GET_TYPE_LLVM(type))
+      return Ty;
+    return SET_TYPE_LLVM(type,
+                         IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
+  }
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?
     if (TYPE_SIZE(type) == 0) {
@@ -309,8 +286,25 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // FALL THROUGH.
   case INTEGER_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    return SET_TYPE_LLVM(type, getIntegerType(TREE_INT_CST_LOW(TYPE_SIZE(type)),
-                                              TYPE_UNSIGNED(type)));
+
+    // FIXME: eliminate this when 128-bit integer types in LLVM work.
+    switch (TREE_INT_CST_LOW(TYPE_SIZE(type))) {
+    case 1:
+    case 8:
+    case 16:
+    case 32:
+    case 64:
+      break;
+    default:
+      static bool Warned = false;
+      if (!Warned)
+        fprintf(stderr, "WARNING: %d-bit integers not supported!\n",
+                (int)TREE_INT_CST_LOW(TYPE_SIZE(type)));
+      Warned = true;
+      return Type::Int64Ty;
+    }
+    return SET_TYPE_LLVM(type, 
+                         IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
   case REAL_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     switch (TYPE_PRECISION(type)) {
@@ -647,7 +641,7 @@ struct StructTypeConversionInfo {
   /// getTypeAlignment - Return the alignment of the specified type in bytes.
   ///
   unsigned getTypeAlignment(const Type *Ty) const {
-    return TD.getTypeAlignment(Ty);
+    return TD.getTypeAlignmentABI(Ty);
   }
   
   /// getTypeSize - Return the size of the specified type in bytes.
@@ -1123,7 +1117,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     unsigned Size     = TD.getTypeSize(TheTy);
-    unsigned Align = TD.getTypeAlignment(TheTy);
+    unsigned Align = TD.getTypeAlignmentABI(TheTy);
     if (UnionTy == 0 || Size>MaxSize || (Size == MaxSize && Align > MaxAlign)) {
       UnionTy = TheTy;
       MaxSize = Size;

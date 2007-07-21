@@ -1411,6 +1411,12 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
 
   Function *annotateFun = Intrinsic::getDeclaration(TheModule, 
                                                     Intrinsic::var_annotation);
+
+  // Get file and line number
+  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
+  const Type *SBP= PointerType::get(Type::Int8Ty);
+  file = ConstantExpr::getBitCast(file, SBP);
   
   // There may be multiple annotate attributes. Pass return of lookup_attr 
   //  to successive lookups.
@@ -1431,12 +1437,14 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
              "Annotate attribute arg should always be a string");
       const Type *SBP = PointerType::get(Type::Int8Ty);
       Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
-      Value *Ops[2] = {
+      Value *Ops[4] = {
         BitCastToType(V, SBP),
-        BitCastToType(strGV, SBP)
+        BitCastToType(strGV, SBP),
+        file, 
+        lineNo
       };
       
-      Builder.CreateCall(annotateFun, Ops, 2);
+      Builder.CreateCall(annotateFun, Ops, 4);
     }
     
     // Get next annotate attribute.

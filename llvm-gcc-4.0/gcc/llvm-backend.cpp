@@ -81,7 +81,7 @@ llvm::OStream *AsmOutFile = 0;
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<Constant*> AttributeUsedGlobals;
 std::vector<Constant*> AttributeNoinlineFunctions;
-std::vector<std::pair<Constant*, Constant*> > AttributeAnnotateGlobals;
+std::vector<Constant*> AttributeAnnotateGlobals;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
 /// as each is compiled.  In cases where we are not doing IPO, it includes the 
@@ -492,21 +492,16 @@ void llvm_asm_file_end(void) {
   
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
-    std::vector<Constant*> AttrList;
-    
-    for (unsigned i = 0, e = AttributeAnnotateGlobals.size(); i != e; ++i) {
-      Constant *Elts[2] = {AttributeAnnotateGlobals[i].first,
-        AttributeAnnotateGlobals[i].second };
-      AttrList.push_back(ConstantStruct::get(Elts, 2, false));
-    }
     
     Constant *Array =
-      ConstantArray::get(ArrayType::get(AttrList[0]->getType(), AttrList.size()),
-                         AttrList);
+    ConstantArray::get(ArrayType::get(AttributeAnnotateGlobals[0]->getType(), 
+                                      AttributeAnnotateGlobals.size()),
+                       AttributeAnnotateGlobals);
     GlobalValue *gv = new GlobalVariable(Array->getType(), false, 
                                          GlobalValue::AppendingLinkage, Array, 
                                          "llvm.global.annotations", TheModule); 
     gv->setSection("llvm.metadata");
+    AttributeAnnotateGlobals.clear();
   
   }
   
@@ -671,15 +666,39 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   return;
 }
 
+// Convert string to global value. Use existing global if possible.
+Constant* ConvertMetadataStringToGV(const char *str) {
+  
+  Constant *Init = ConstantArray::get(std::string(str));
+
+  // Use cached string if it exists.
+  static std::map<Constant*, GlobalVariable*> StringCSTCache;
+  GlobalVariable *&Slot = StringCSTCache[Init];
+  if (Slot) return Slot;
+  
+  // Create a new string global.
+  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+                                          GlobalVariable::InternalLinkage,
+                                          Init, ".str", TheModule);
+  GV->setSection("llvm.metadata");
+  Slot = GV;
+  return GV;
+  
+}
+
 /// AddAnnotateAttrsToGlobal - Adds decls that have a
 /// annotate attribute to a vector to be emitted later.
 void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   
   // Handle annotate attribute on global.
   tree annotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES (decl));
-  if (!annotateAttr)
-    return;
   
+  // Get file and line number
+ Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+ Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
+ const Type *SBP= PointerType::get(Type::Int8Ty);
+ file = ConstantExpr::getBitCast(file, SBP);
+ 
   // There may be multiple annotate attributes. Pass return of lookup_attr 
   //  to successive lookups.
   while (annotateAttr) {
@@ -698,10 +717,12 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
       assert(TREE_CODE(val) == STRING_CST && 
              "Annotate attribute arg should always be a string");
       Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
-      const Type *SBP= PointerType::get(Type::Int8Ty);
-      AttributeAnnotateGlobals.push_back(
-                      std::make_pair(ConstantExpr::getBitCast(GV,SBP),
-                                     ConstantExpr::getBitCast(strGV,SBP)));
+      Constant *Element[4] = {ConstantExpr::getBitCast(GV,SBP),
+        ConstantExpr::getBitCast(strGV,SBP),
+        file,
+        lineNo};
+ 
+      AttributeAnnotateGlobals.push_back(ConstantStruct::get(Element, 4, false));
     }
       
     // Get next annotate attribute.

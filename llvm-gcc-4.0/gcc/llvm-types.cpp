@@ -941,16 +941,44 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 #ifdef TARGET_ADJUST_LLVM_CC
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
-
+  
+  // Compute whether the result needs to be zext or sext'd, adding an attribute
+  // if so.
+  ParamAttrsVector Attrs;
+  if (isa<IntegerType>(RetTy)) {
+    uint16_t RAttributes = ParamAttr::None;
+    tree ResultTy = TREE_TYPE(type);  
+    if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE) {
+      if (TYPE_UNSIGNED(ResultTy) || TREE_CODE(ResultTy) == BOOLEAN_TYPE)
+        Attrs.push_back(ParamAttrsWithIndex::get(0, ParamAttr::ZExt));
+      else 
+        Attrs.push_back(ParamAttrsWithIndex::get(0, ParamAttr::SExt));
+    }
+  }
+  
+  // If this is a struct-return function, the dest loc is passed in as a
+  // pointer.  Mark that pointer as structret.
+  if (ABIConverter.isStructReturn())
+    Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
+                                             ParamAttr::StructRet));
+    
   if (static_chain)
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
 
+  // If the target has regparam parameters, allow it to inspect the function
+  // type.
+  int local_regparam = 0;
+#ifdef LLVM_TARGET_ENABLE_REGPARM
+  LLVM_TARGET_INIT_REGPARM(local_regparam, type);
+#endif // LLVM_TARGET_ENABLE_REGPARM
+  
   // Loop over all of the arguments, adding them as we go.
   tree Args = TYPE_ARG_TYPES(type);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
-    if (!isPassedByInvisibleReference(TREE_VALUE(Args)) &&
-        isa<OpaqueType>(ConvertType(TREE_VALUE(Args)))) {
+    tree ArgTy = TREE_VALUE(Args);
+    if (!isPassedByInvisibleReference(ArgTy) &&
+        isa<OpaqueType>(ConvertType(ArgTy))) {
       // If we are passing an opaque struct by value, we don't know how many
       // arguments it will turn into.  Because we can't handle this yet,
       // codegen the prototype as (...).
@@ -962,94 +990,40 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
       break;        
     }
     
-    ABIConverter.HandleArgument(TREE_VALUE(Args));
+    ABIConverter.HandleArgument(ArgTy);
+
+    // Determine if there are any attributes for this param.
+    
+    // Compute zext/sext attributes.
+    unsigned Attributes = ParamAttr::None;
+    if (TREE_CODE(ArgTy) == BOOLEAN_TYPE) {
+      if (TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE)
+        Attributes |= ParamAttr::ZExt;
+    } else if (TREE_CODE(ArgTy) == INTEGER_TYPE && 
+               TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE) {
+      if (TYPE_UNSIGNED(ArgTy))
+        Attributes |= ParamAttr::ZExt;
+      else
+        Attributes |= ParamAttr::SExt;
+    }
+    
+#ifdef LLVM_TARGET_ENABLE_REGPARM
+    // Allow the target to mark this as inreg.
+    if (TREE_CODE(ArgTy) == INTEGER_TYPE || TREE_CODE(ArgTy) == POINTER_TYPE)
+      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes,
+                                    TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)),
+                                    local_regparam);
+#endif // LLVM_TARGET_ENABLE_REGPARM
+    
+    if (Attributes != ParamAttr::None)
+      Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(), Attributes));
   }
   
   // If the argument list ends with a void type node, it isn't vararg.
   isVarArg = (Args == 0);
-  
   assert(RetTy && "Return type not specified!");
 
-  // If this is the C Calling Convention then scan the FunctionType's result 
-  // type and argument types looking for integers less than 32-bits and set
-  // the parameter attribute in the FunctionType so any arguments passed to
-  // the function will be correctly sign or zero extended to 32-bits by
-  // the LLVM code gen.
-  ParamAttrsVector Attrs;
-  uint16_t RAttributes = ParamAttr::None;
-  if (CallingConv == CallingConv::C) {
-    tree ResultTy = TREE_TYPE(type);  
-    if (TREE_CODE(ResultTy) == BOOLEAN_TYPE) {
-      if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-        RAttributes |= ParamAttr::ZExt;
-    } else {
-      if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
-          TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-        if (TYPE_UNSIGNED(ResultTy))
-          RAttributes |= ParamAttr::ZExt;
-        else 
-          RAttributes |= ParamAttr::SExt;
-    }
-  }
-  if (RAttributes != ParamAttr::None) {
-    ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = RAttributes;
-    Attrs.push_back(PAWI);
-  }
-  
-  unsigned Idx = 1;
-  bool isFirstArg = true;
-
-  int lparam = 0;
-#ifdef LLVM_TARGET_ENABLE_REGPARM
-  LLVM_TARGET_INIT_REGPARM(lparam, type);
-#endif // LLVM_TARGET_ENABLE_REGPARM
-
-  // The struct return attribute must be associated with the first
-  // parameter but that parameter may have other attributes too so we set up
-  // the first Attributes value here based on struct return. This only works
-  // Handle the structure return calling convention
-  if (ABIConverter.isStructReturn()) {
-    ParamAttrsWithIndex PAWI; 
-    PAWI.index = Idx++; PAWI.attrs = ParamAttr::StructRet;
-    Attrs.push_back(PAWI);
-  }
-
-  if (static_chain)
-    // Skip over the static chain.
-    Idx++;
-
-  for (tree Args = TYPE_ARG_TYPES(type);
-       Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
-    tree Ty = TREE_VALUE(Args);
-    
-    unsigned Attributes = ParamAttr::None;
-    if (CallingConv == CallingConv::C) {
-      if (TREE_CODE(Ty) == BOOLEAN_TYPE) {
-        if (TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
-          Attributes |= ParamAttr::ZExt;
-      } else if (TREE_CODE(Ty) == INTEGER_TYPE && 
-                 TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE) {
-        if (TYPE_UNSIGNED(Ty))
-          Attributes |= ParamAttr::ZExt;
-        else
-          Attributes |= ParamAttr::SExt;
-      }
-    }
-
-#ifdef LLVM_TARGET_ENABLE_REGPARM
-    if (TREE_CODE(Ty) == INTEGER_TYPE || TREE_CODE(Ty) == POINTER_TYPE)
-      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes, TREE_INT_CST_LOW(TYPE_SIZE(Ty)),
-                                    isVarArg, lparam);
-#endif // LLVM_TARGET_ENABLE_REGPARM
-
-    if (Attributes != ParamAttr::None) {
-     ParamAttrsWithIndex PAWI; PAWI.index = Idx; PAWI.attrs = Attributes;
-     Attrs.push_back(PAWI);
-    }
-    Idx++;
-  }
-
-  // Only instantiate the parameter attributes if we got some
+  // Only instantiate the parameter attributes if we got some.
   ParamAttrsList *PAL = 0;
   if (!Attrs.empty())
     PAL = ParamAttrsList::get(Attrs);

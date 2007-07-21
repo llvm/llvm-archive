@@ -92,6 +92,8 @@ extern std::vector<Constant*> AttributeUsedGlobals;
 /// marked attribute(noinline)
 extern std::vector<Constant*> AttributeNoinlineFunctions;
 
+extern Constant* ConvertMetadataStringToGV(const char* str);
+
 /// AddAnnotateAttrsToGlobal - Adds decls that have a
 /// annotate attribute to a vector to be emitted later.
 extern void AddAnnotateAttrsToGlobal(GlobalValue *GV, union tree_node* decl);
@@ -611,6 +613,7 @@ public:
   static Constant *EmitLV_STRING_CST(tree_node *exp);
   static Constant *EmitLV_COMPONENT_REF(tree_node *exp);
   static Constant *EmitLV_ARRAY_REF(tree_node *exp);
+  
 };
 
 #endif

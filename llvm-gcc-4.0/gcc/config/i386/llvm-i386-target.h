@@ -48,9 +48,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
   }
 
 #define LLVM_ADJUST_REGPARM_ATTRIBUTE(Attribute, Size,          \
-                                      isVarArg, local_regparm)  \
+                                      local_regparm)            \
   {                                                             \
-    if (!isVarArg && !TARGET_64BIT) {                           \
+    if (!TARGET_64BIT) {                                        \
       int words = (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
       local_regparm -= words;                                   \
       if (local_regparm>=0) {                                   \
@@ -59,3 +59,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
         local_regparm = 0;                                      \
     }                                                           \
   }
+
+/* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+

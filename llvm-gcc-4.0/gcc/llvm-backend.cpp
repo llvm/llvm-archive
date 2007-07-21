@@ -67,7 +67,7 @@ Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TypeConverter *TheTypeConverter = 0;
-llvm::llvm_ostream *AsmOutFile = 0;
+llvm::OStream *AsmOutFile = 0;
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<GlobalValue*> AttributeUsedGlobals;
@@ -143,7 +143,7 @@ void llvm_initialize_backend(void) {
   const TargetMachineRegistry::Entry *TME = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
-    llvm_cerr << "Did not get a target machine!\n";
+    cerr << "Did not get a target machine!\n";
     exit(1);
   }
   
@@ -181,7 +181,7 @@ oFILEstream *AsmOutStream = 0;
 void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
-  AsmOutFile = new llvm_ostream(*AsmOutStream);
+  AsmOutFile = new OStream(*AsmOutStream);
   
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
@@ -315,7 +315,7 @@ void llvm_asm_file_start(void) {
     if (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream, 
                                        TargetMachine::AssemblyFile,
                                        /*FAST*/optimize == 0)) {
-      llvm_cerr << "Error interfacing to target machine!";
+      cerr << "Error interfacing to target machine!";
       exit(1);
     }
     

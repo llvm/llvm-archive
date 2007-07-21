@@ -33,13 +33,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <map>
 #include <string>
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Streams.h"
 
 extern "C" {
 #include "llvm.h"
 }
 
 namespace llvm {
-  class llvm_ostream;
   class Module;
   class GlobalVariable;
   class Function;
@@ -76,7 +76,7 @@ const TargetData &getTargetData();
 
 /// AsmOutFile - A C++ ostream wrapper around asm_out_file.
 ///
-extern llvm::llvm_ostream *AsmOutFile;
+extern llvm::OStream *AsmOutFile;
 
 /// StaticCtors/StaticDtors - The static constructors and destructors that we
 /// need to emit.

@@ -230,7 +230,7 @@ LLVMBINPATH = $(LLVMOBJDIR)/$(BUILDMODE)/bin
 ifeq ($(LLVMOBJDIR),)
 CPPFLAGS = @CPPFLAGS@
 else
-CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM -D__STDC_LIMIT_MACROS $(shell $(LLVMBINPATH)/llvm-config --cppflags)
+CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppflags)
 
 # Use llvm-config to get the srcdir that LLVM was configured with, to support
 # srcdir != objdir builds.

@@ -752,17 +752,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  ParamAttrsList *PAL = 0;
-
-  if (static_chain) {
-    // Pass the static chain in a register.
-    ParamAttrsVector Attrs;
-    ParamAttrsWithIndex PAWI; PAWI.index = 1; PAWI.attrs = ParamAttr::InReg;
-    Attrs.push_back(PAWI);
-    PAL = ParamAttrsList::get(Attrs);
-  }
-
-  return FunctionType::get(RetTy, ArgTys, false, PAL);
+  return FunctionType::get(RetTy, ArgTys, false, 0);
 }
 
 const FunctionType *TypeConverter::ConvertFunctionType(tree type,
@@ -843,12 +833,6 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   LLVM_TARGET_INIT_REGPARM(lparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
 
-  if (static_chain) {
-    // Pass the static chain in a register.
-    ParamAttrsWithIndex PAWI; PAWI.index = Idx++; PAWI.attrs = ParamAttr::InReg;
-    Attrs.push_back(PAWI);
-  }
-  
   // The struct return attribute must be associated with the first
   // parameter but that parameter may have other attributes too so we set up
   // the first Attributes value here based on struct return. This only works
@@ -909,6 +893,7 @@ struct StructTypeConversionInfo {
   std::vector<const Type*> Elements;
   std::vector<uint64_t> ElementOffsetInBytes;
   std::vector<uint64_t> ElementSizeInBytes;
+  std::vector<bool> PaddingElement; // True if field is used for padding
   const TargetData &TD;
   unsigned GCCStructAlignmentInBytes;
   bool Packed; // True if struct is packed
@@ -1087,10 +1072,12 @@ struct StructTypeConversionInfo {
   
   /// addElement - Add an element to the structure with the specified type,
   /// offset and size.
-  void addElement(const Type *Ty, uint64_t Offset, uint64_t Size) {
+  void addElement(const Type *Ty, uint64_t Offset, uint64_t Size,
+                  bool ExtraPadding = false) {
     Elements.push_back(Ty);
     ElementOffsetInBytes.push_back(Offset);
     ElementSizeInBytes.push_back(Size);
+    PaddingElement.push_back(ExtraPadding);
     lastFieldStartsAtNonByteBoundry(false);
     ExtraBitsAvailable = 0;
   }
@@ -1239,6 +1226,24 @@ void StructTypeConversionInfo::dump() const {
   }
 }
 
+std::map<const Type *, StructTypeConversionInfo *> StructTypeInfoMap;
+
+/// Return true if and only if field no. N from struct type T is a padding
+/// element added to match llvm struct type size and gcc struct type size.
+bool isPaddingElement(const Type *Ty, unsigned index) {
+  
+  StructTypeConversionInfo *Info = StructTypeInfoMap[Ty];
+
+  // If info is not available then be conservative and return false.
+  if (!Info)
+    return false;
+
+  assert ( Info->Elements.size() == Info->PaddingElement.size()
+           && "Invalid StructTypeConversionInfo");
+  assert ( index < Info->PaddingElement.size()  
+           && "Invalid PaddingElement index");
+  return Info->PaddingElement[index];
+}
 
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
 /// structure.
@@ -1390,15 +1395,18 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     } else
       PadBytes = StartOffsetInBits/8-FirstUnallocatedByte;
 
-    const Type *Pad = Type::Int8Ty;
-    if (PadBytes != 1)
-      Pad = ArrayType::get(Pad, PadBytes);
-    Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
+    if (PadBytes) {
+      const Type *Pad = Type::Int8Ty;
+      if (PadBytes != 1)
+        Pad = ArrayType::get(Pad, PadBytes);
+      Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
+    }
+
     FirstUnallocatedByte = StartOffsetInBits/8;
     // This field will use some of the bits from this PadBytes, if
     // starting offset is not at byte boundry.
     if (StartOffsetFromByteBoundry != 0)
-      FieldSizeInBits = PadBits;
+      FieldSizeInBits += PadBits;
   }
 
   // Now, Field starts at FirstUnallocatedByte and everything is aligned.
@@ -1433,29 +1441,46 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       ConvertType(BINFO_TYPE(BINFO_BASE_BINFO(binfo, i)));
   }
   
-  StructTypeConversionInfo Info(*TheTarget, TYPE_ALIGN_UNIT(type), 
-                                TYPE_PACKED(type));
+  StructTypeConversionInfo *Info = 
+    new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type), 
+                             TYPE_PACKED(type));
+                                
   
   // Convert over all of the elements of the struct.
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
-    DecodeStructFields(Field, Info);
+    DecodeStructFields(Field, *Info);
 
-  Info.RemoveExtraBytes();
+  Info->RemoveExtraBytes();
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC struct, insert tail padding now.  This handles, e.g., "{}" in C++.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
-    uint64_t LLVMStructSize = Info.getSizeAsLLVMStruct();
+    uint64_t LLVMStructSize = Info->getSizeAsLLVMStruct();
     uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
     
     if (LLVMStructSize != GCCTypeSize) {
       assert(LLVMStructSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
-      uint64_t LLVMLastElementEnd = Info.getNewElementByteOffset(1);
-      const Type *PadTy = Type::Int8Ty;
-      if (GCCTypeSize-LLVMLastElementEnd != 1)
-        PadTy = ArrayType::get(PadTy, GCCTypeSize-LLVMStructSize);
-      Info.addElement(PadTy, GCCTypeSize-LLVMLastElementEnd, 
-                      GCCTypeSize-LLVMLastElementEnd);
+      uint64_t LLVMLastElementEnd = Info->getNewElementByteOffset(1);
+
+      // If only one byte is needed then insert i8.
+      if (GCCTypeSize-LLVMLastElementEnd == 1) 
+        Info->addElement(Type::Int8Ty, 1, 1);
+      else {
+        if ( ((GCCTypeSize-LLVMStructSize) % 4) == 0) {
+          // insert array of i32
+          unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
+          const Type *PadTy = ArrayType::get(Type::Int32Ty, Int32ArraySize);
+          Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
+                           Int32ArraySize, true /* Padding Element */);
+        } else {
+          const Type *PadTy = 
+            ArrayType::get(Type::Int8Ty, GCCTypeSize-LLVMStructSize);
+          Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd, 
+                           GCCTypeSize - LLVMLastElementEnd, 
+                           true /* Padding Element */);
+          
+        }
+      }
     }
   }
   
@@ -1476,7 +1501,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       if (tree DeclaredType = DECL_BIT_FIELD_TYPE(Field)) {
         // If this is a bitfield, the declared type must be an integral type.
         const Type *DeclFieldTy = ConvertType(DeclaredType);
-        unsigned DeclBitAlignment = Info.getTypeAlignment(DeclFieldTy)*8;
+        unsigned DeclBitAlignment = Info->getTypeAlignment(DeclFieldTy)*8;
         
         FieldOffsetInBits &= ~(DeclBitAlignment-1ULL);
       }
@@ -1487,11 +1512,12 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         integer_zerop(TYPE_SIZE(FieldType));
 
       unsigned FieldNo = 
-        Info.getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
+        Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
       SET_DECL_LLVM(Field, ConstantInt::get(Type::Int32Ty, FieldNo));
     }
   
-  const Type *ResultTy = Info.getLLVMType();
+  const Type *ResultTy = Info->getLLVMType();
+  StructTypeInfoMap[ResultTy] = Info;
   
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);

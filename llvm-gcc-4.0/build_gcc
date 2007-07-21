@@ -160,7 +160,7 @@ fi
 # These are the configure and build flags that are used.
 # APPLE LOCAL begin LLVM  Support for non /usr $DEST_ROOT, use libstdc++
 
-CONFIGFLAGS="--disable-checking -enable-werror \
+CONFIGFLAGS="--disable-checking --enable-werror \
   --prefix=$DEST_ROOT \
   --mandir=$DEST_ROOT/share/man \
   --enable-languages=c,objc,c++,obj-c++ \

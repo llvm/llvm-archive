@@ -203,7 +203,7 @@ void writeLLVMValues() {
     else
       // Non constant values, e.g. arguments, are not at global scope.
       // When PCH is read, only global scope values are used.
-      ValuesForPCH.push_back(NULL);
+      ValuesForPCH.push_back(Constant::getNullValue(Type::Int32Ty));
   }
 
   // Create string table.
@@ -1085,6 +1085,8 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      if (isPaddingElement(STy, i))
+        continue;
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", CurBB);
       Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", CurBB);

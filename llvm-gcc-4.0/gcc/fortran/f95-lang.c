@@ -713,7 +713,13 @@ builtin_function (const char *name,
   TREE_PUBLIC (decl) = 1;
   if (library_name)
     SET_DECL_ASSEMBLER_NAME (decl, get_identifier (library_name));
+  /* APPLE LOCAL begin LLVM */
+#ifndef ENABLE_LLVM
   make_decl_rtl (decl);
+#else
+  make_decl_llvm (decl);
+#endif
+  /* APPLE LOCAL end LLVM */
   pushdecl (decl);
   DECL_BUILT_IN_CLASS (decl) = class;
   DECL_FUNCTION_CODE (decl) = function_code;

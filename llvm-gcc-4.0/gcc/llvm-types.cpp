@@ -708,9 +708,10 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
 
   FunctionType::ParamAttrsList ParamAttrs;
 
+  // Something for the return type.
+  ParamAttrs.push_back(FunctionType::NoAttributeSet);
+
   if (static_chain) {
-    // Something for the return type.
-    ParamAttrs.push_back(FunctionType::NoAttributeSet);
     // Pass the static chain in a register.
     ParamAttrs.push_back(FunctionType::InRegAttribute);
   }
@@ -796,10 +797,13 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   if (static_chain)
     // Pass the static chain in a register.
     ParamAttrs.push_back(FunctionType::InRegAttribute);
-
+  
+  // Handle struct return
+  if (ABIConverter.isStructReturn())
+    ParamAttrs.push_back(FunctionType::StructRetAttribute);
+  
   for (tree Args = TYPE_ARG_TYPES(type);
-       Args && TREE_VALUE(Args) != void_type_node;
-       Args = TREE_CHAIN(Args)) {
+       Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
     unsigned Attributes = FunctionType::NoAttributeSet;
     tree Ty = TREE_VALUE(Args);
     
@@ -814,15 +818,6 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
         else
           Attributes |= FunctionType::SExtAttribute;
       }
-    }
-
-    // Handle struct return
-    if (isFirstArg) {
-      if (ABIConverter.isStructReturn()) {
-        Attributes |= FunctionType::StructRetAttribute;
-        //printf("Struct return!\n");
-      }
-      isFirstArg = false;
     }
 
 #ifdef LLVM_TARGET_ENABLE_REGPARM

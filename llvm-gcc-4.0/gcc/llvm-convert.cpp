@@ -2754,9 +2754,9 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   Value *RetVal = RHS;
   RHS = CastToAnyType(RHS, Op1Signed, OldVal->getType(), Op0Signed);
   if (LV.BitStart)
-    RHS = BinaryOperator::createShl(RHS,
-                        ConstantInt::get(RHS->getType(), LV.BitStart),
-                        "tmp", CurBB);
+    RHS = BinaryOperator::createShl(RHS, ConstantInt::get(RHS->getType(), 
+                                    LV.BitStart), "tmp", CurBB);
+
   // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
   // be set in the result.
   uint64_t MaskVal = ((1ULL << LV.BitSize)-1) << LV.BitStart;
@@ -3915,11 +3915,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_STACK_SAVE:     return EmitBuiltinStackSave(exp, Result);
   case BUILT_IN_STACK_RESTORE:  return EmitBuiltinStackRestore(exp);
     
-#define HANDLE_UNARY_INT(I8, I16, I32, I64, V) \
-      EmitBuiltinUnaryIntOp(V, Result, \
-                            Intrinsic::I8, Intrinsic::I16, \
-                            Intrinsic::I32, Intrinsic::I64)
-
 #define HANDLE_UNARY_FP(F32, F64, V) \
         Result = EmitBuiltinUnaryFPOp(V, Intrinsic::F32, Intrinsic::F64)
 
@@ -3930,24 +3925,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZL:
   case BUILT_IN_CLZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT(ctlz_i8, ctlz_i16,
-                     ctlz_i32, ctlz_i64, Amt);
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctlz); 
     return true;
   }
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT(cttz_i8, cttz_i16,
-                     cttz_i32, cttz_i64, Amt);
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
     return true;
   }
   case BUILT_IN_POPCOUNT:  // These GCC builtins always return int.
   case BUILT_IN_POPCOUNTL:
   case BUILT_IN_POPCOUNTLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT(ctpop_i8, ctpop_i16,
-                     ctpop_i32, ctpop_i64, Amt);
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
     return true;
   }
   case BUILT_IN_SQRT: 
@@ -3972,8 +3964,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The argument and return type of cttz should match the argument type of
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT(cttz_i8, cttz_i16,
-                     cttz_i32, cttz_i64, Amt);
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
     Result = BinaryOperator::createAdd(Result, 
                                        ConstantInt::get(Type::Int32Ty, 1),
                                        "tmp", CurBB);
@@ -3989,7 +3980,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                             Result, "tmp", CurBB);
     return true;
   }
-#undef HANDLE_UNARY_INT
+
+
 #undef HANDLE_UNARY_FP
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
@@ -4032,26 +4024,14 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 }
 
 bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
-                                       Intrinsic::ID I8ID, Intrinsic::ID I16ID,
-                                       Intrinsic::ID I32ID,
-                                       Intrinsic::ID I64ID) {
-  Intrinsic::ID Id = Intrinsic::not_intrinsic;
-  const IntegerType *ITy = cast<IntegerType>(InVal->getType());
-
-  switch (ITy->getBitWidth()) {
-  default: assert(0 && "Unknown Integer type!");
-  case 8 : Id = I8ID;  break;
-  case 16: Id = I16ID; break;
-  case 32: Id = I32ID; break;
-  case 64: Id = I64ID; break;
-  }
+                                       Intrinsic::ID Id) {
+  const Type *Ty = InVal->getType();
   
-  Result = new CallInst(Intrinsic::getDeclaration(TheModule, Id),
+  const Type* Tys[2];
+  Tys[0] = 0;  // Result type is i32, not variable, signal so.
+  Tys[1] = Ty; // Parameter type is iAny so actual type must be specified here
+  Result = new CallInst(Intrinsic::getDeclaration(TheModule, Id, Tys, 2),
                         InVal, "tmp", CurBB);
-  
-  // The LLVM intrinsics for these return the same type as their operands.  The
-  // GCC version of these functions always returns int.  Cast to int for GCC.
-  Result = CastToSIntType(Result, Type::Int32Ty);
   
   return true;
 }

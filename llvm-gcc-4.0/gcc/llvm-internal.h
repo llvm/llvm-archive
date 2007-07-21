@@ -483,9 +483,7 @@ private:
                        Value *DestLoc, Value *&Result);
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
                                        Value *DestLoc, Value *&Result);
-  bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
-                             Intrinsic::ID I8ID, Intrinsic::ID I16ID,
-                             Intrinsic::ID I32ID, Intrinsic::ID I64ID);
+  bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
   Value *EmitBuiltinUnaryFPOp(Value *Amt, Intrinsic::ID F32ID,
                               Intrinsic::ID F64ID);
   Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,

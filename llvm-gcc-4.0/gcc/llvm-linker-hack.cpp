@@ -28,6 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
@@ -40,8 +41,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 void dummy_function() {
   new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
-  llvm::WriteBitcodeToFile(0, llvm::cout);
+  llvm::CreateBitcodeWriterPass(*llvm::cout);
+  llvm::WriteBitcodeToFile(0, *llvm::cout);
   llvm::ParseBitcodeFile(NULL);
+  llvm::MemoryBuffer::getNewMemBuffer(0);
 
   llvm::createInstructionCombiningPass();
   llvm::createScalarReplAggregatesPass();
@@ -74,7 +77,7 @@ void dummy_function() {
   llvm::createDeadArgEliminationPass();
   llvm::createLoadValueNumberingPass();
   llvm::createTailCallEliminationPass();
-  llvm::createDeadStoreEliminationPass();
+  llvm::createFastDeadStoreEliminationPass();
   llvm::createIPConstantPropagationPass();
   llvm::createStripDeadPrototypesPass();
 }

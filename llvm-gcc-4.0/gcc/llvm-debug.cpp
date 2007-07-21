@@ -593,8 +593,10 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           tree MinValue = TYPE_MIN_VALUE(Domain);
           tree MaxValue = TYPE_MAX_VALUE(Domain);
           if (MinValue && MaxValue &&
-            TREE_CODE(MinValue) == INTEGER_CST &&
-            TREE_CODE(MaxValue) == INTEGER_CST) {
+              TREE_CODE(MinValue) == INTEGER_CST &&
+              TREE_CODE(MaxValue) == INTEGER_CST &&
+              host_integerp(MinValue, 0) &&
+              host_integerp(MaxValue, 0)) {
             Subrange->setLo(tree_low_cst(MinValue, 0));
             Subrange->setHi(tree_low_cst(MaxValue, 0));
           }

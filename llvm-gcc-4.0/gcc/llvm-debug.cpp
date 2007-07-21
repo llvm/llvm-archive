@@ -182,18 +182,19 @@ static expanded_location GetNodeLocation(tree Node, bool UseStub = true) {
   return Location;
 }
 
-/// GetGlobalName - Returns the name and mangled name of a global item (function
-/// or global variable.)
-static void GetGlobalName(tree Node, const char *&name, const char *&asmname) {
+/// GetGlobalNames - Sets the names for a global descriptor.
+///
+static void GetGlobalNames(tree Node, GlobalDesc *Global) {
   tree decl_name = DECL_NAME(Node);
   if (decl_name != NULL && IDENTIFIER_POINTER (decl_name) != NULL) {
-      name = lang_hooks.decl_printable_name (Node, 0);
-
-      if (TREE_PUBLIC(Node) &&
-          DECL_ASSEMBLER_NAME(Node) != DECL_NAME(Node) && 
-          !DECL_ABSTRACT(Node)) {
-          asmname = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Node));
-      }
+    Global->setName(lang_hooks.decl_printable_name (Node, 0));
+    Global->setFullName(lang_hooks.decl_printable_name (Node, 1));
+    
+    if (TREE_PUBLIC(Node) &&
+        DECL_ASSEMBLER_NAME(Node) != DECL_NAME(Node) && 
+        !DECL_ABSTRACT(Node)) {
+        Global->setLinkageName(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Node)));
+    }
   }
 }  
 
@@ -255,9 +256,7 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   }
 
   // Get name information.
-  const char *name = "";
-  const char *asmname = "";
-  GetGlobalName(FnDecl, name, asmname);
+  GetGlobalNames(FnDecl, Subprogram);
   
   // Gather location information.
   CompileUnitDesc *Unit = getOrCreateCompileUnit(CurFullPath);
@@ -267,12 +266,6 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
 
   Subprogram->setAnchor(SubprogramAnchor);
   Subprogram->setContext(Unit);
-  if (*asmname != '\0') {
-    Subprogram->setName(asmname);
-    Subprogram->setDisplayName(name);
-  } else {
-    Subprogram->setName(name);
-  }
   Subprogram->setFile(Unit);
   Subprogram->setLine(CurLineNo);
   Subprogram->setType(SPTy);
@@ -411,9 +404,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   }
   
   // Get name information.
-  const char *name = "";
-  const char *asmname = "";
-  GetGlobalName(decl, name, asmname);
+  GetGlobalNames(decl, Global);
 
   // Gather location information.
   expanded_location location = expand_location(DECL_SOURCE_LOCATION(decl));
@@ -424,12 +415,6 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   // Fill in the blanks.
   Global->setAnchor(GlobalVariableAnchor);
   Global->setContext(Unit);
-  if (*asmname != '\0') {
-    Global->setName(asmname);
-    Global->setDisplayName(name);
-  } else {
-    Global->setName(name);
-  }
   Global->setFile(Unit);
   Global->setLine(location.line);
   Global->setType(TyD);
@@ -726,20 +711,12 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           GlobalVariableDesc *Static = new GlobalVariableDesc();
 
           // Get name information.
-          const char *Name = "";
-          const char *ASMName = "";
-          GetGlobalName(Member, Name, ASMName);
+          GetGlobalNames(Member, Static);
 
           TypeDesc *TyD = getOrCreateType(TREE_TYPE(Member), Unit);
           
           // Fill in the blanks.
           Static->setContext(Unit);
-          if (*ASMName != '\0') {
-            Static->setName(ASMName);
-            Static->setDisplayName(Name);
-          } else {
-            Static->setName(Name);
-          }
           Static->setFile(MemFile);
           Static->setLine(MemLoc.line);
           Static->setType(TyD);
@@ -760,9 +737,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
         Subprogram = new SubprogramDesc();
         
         // Get name information.
-        const char *name = "";
-        const char *asmname = "";
-        GetGlobalName(Member, name, asmname);
+        GetGlobalNames(Member, Subprogram);
         
         // Get function type.
         TypeDesc *SPTy = getOrCreateType(TREE_TYPE(Member), Unit);
@@ -774,12 +749,6 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
         }
 
         Subprogram->setContext(Unit);
-        if (*asmname != '\0') {
-          Subprogram->setName(asmname);
-          Subprogram->setDisplayName(name);
-        } else {
-          Subprogram->setName(name);
-        }
         Subprogram->setFile(Unit);
         Subprogram->setLine(CurLineNo);
         Subprogram->setType(SPTy);

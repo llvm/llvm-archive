@@ -66,13 +66,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "tm.h"
 #include "unwind-dw2-fde.h"
 
-/* APPLE LOCAL begin LLVM */
-#ifdef __llvm__
- /* FIXME: Remove when external weak linkage will be alive. */
- #undef JCR_SECTION_NAME
-#endif
-/* APPLE LOCAL end LLVM */
-
 #ifndef FORCE_CODE_SECTION_ALIGN
 # define FORCE_CODE_SECTION_ALIGN
 #endif

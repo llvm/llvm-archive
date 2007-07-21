@@ -681,6 +681,10 @@ void make_decl_llvm(tree decl) {
       FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
 
+      // Check for external weak linkage
+      if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
+        FnEntry->setLinkage(Function::ExternalWeakLinkage);
+      
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
       TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
@@ -701,6 +705,10 @@ void make_decl_llvm(tree decl) {
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
                               Name, TheModule);
 
+      // Check for external weak linkage
+      if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
+        GV->setLinkage(GlobalValue::ExternalWeakLinkage);
+      
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
       TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
@@ -713,6 +721,10 @@ void make_decl_llvm(tree decl) {
         GVE = GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
                                       Name, TheModule);
 
+        // Check for external weak linkage
+        if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
+          GV->setLinkage(GlobalValue::ExternalWeakLinkage);
+        
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
         TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
@@ -743,11 +755,6 @@ void make_decl_llvm(tree decl) {
       }
     }
 
-#if 0
-    // FIXME: When we support external weak globals, this is where we do it.
-    x = gen_rtx_SYMBOL_REF(Pmode, name);
-    SYMBOL_REF_WEAK(x) = DECL_WEAK(decl);
-#endif
     SET_DECL_LLVM(decl, GV);
   }
   timevar_pop(TV_LLVM_GLOBALS);
@@ -760,17 +767,20 @@ const char *llvm_get_decl_name(void *LLVM) {
 }
 
 // llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
-// weak, but it already had an llvm object created for it.  This marks the LLVM
+// weak, but it already had an llvm object created for it. This marks the LLVM
 // object weak as well.
 void llvm_mark_decl_weak(tree decl) {
   assert(DECL_LLVM_SET_P(decl) && DECL_WEAK(decl) &&
          isa<GlobalValue>(DECL_LLVM(decl)) && "Decl isn't marked weak!");
   GlobalValue *GV = cast<GlobalValue>(DECL_LLVM(decl));
 
-  if (!GV->isExternal() &&  // FIXME: Support external weak globals!
-      // Do not mark something that is already known to be linkonce or internal.
-      GV->getLinkage() == GlobalValue::ExternalLinkage)
-    GV->setLinkage(GlobalValue::WeakLinkage);
+  // Do not mark something that is already known to be linkonce or internal.
+  if (GV->hasExternalLinkage()) {
+    if (GV->isExternal())
+      GV->setLinkage(GlobalValue::ExternalWeakLinkage);
+    else
+      GV->setLinkage(GlobalValue::WeakLinkage);
+  }
 }
 
 // llvm_emit_ctor_dtor - Called to emit static ctors/dtors to LLVM code.  fndecl

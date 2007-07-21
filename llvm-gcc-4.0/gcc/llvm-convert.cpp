@@ -4911,13 +4911,6 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     FieldPtr = ConstantExpr::getCast(FieldPtr, PointerType::get(FieldTy));
   }
   
-  // If this is a bitfield reference, return it as such.
-  if (DECL_SIZE(FieldDecl) && TREE_CODE(DECL_SIZE(FieldDecl)) == INTEGER_CST &&
-      TREE_INT_CST_LOW(DECL_SIZE(FieldDecl)) != 8*TD.getTypeSize(FieldTy)) {
-    assert(0 && "Cannot take the address of a bitfield!");
-    abort();
-  }
-  
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");
   return FieldPtr;

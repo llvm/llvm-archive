@@ -42,11 +42,7 @@ $ tar zxvf llvm-gcc4-x.y.source.tar.gz
 //===-----------------------
 Linux-specific Instructions:
 
-Until http://llvm.org/PR821 is fixed, you should configure with
---disable-threads.  This fixes problems linking libgcc.so.1 with
-undefined references to pthread_*.
-
-Until http://llvm.org/PR1006 is fixed, you should configure with
+Until http://llvm.org/PR1017 is fixed, you should configure with
 --disable-shared. This fixes problems when missing symbols in the stdc++ 
 library when trying to link llvm-g++. 
 

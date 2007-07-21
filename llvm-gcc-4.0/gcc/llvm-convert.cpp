@@ -3244,7 +3244,7 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = ConstantInt::get(Ty, -1U);
+  Constant *MinusOne = ConstantInt::getAllOnesValue(Ty);
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);

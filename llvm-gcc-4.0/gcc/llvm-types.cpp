@@ -945,7 +945,7 @@ struct StructTypeConversionInfo {
   /// getLLVMType - Return the LLVM type for the specified object.
   ///
   const Type *getLLVMType() const {
-    return StructType::get(Elements, Packed);
+    return StructType::get(Elements, Packed || AllBitFields);
   }
   
   /// getSizeAsLLVMStruct - Return the size of this struct if it were converted
@@ -1382,8 +1382,10 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
       Pad = ArrayType::get(Pad, PadBytes);
     Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
     FirstUnallocatedByte = StartOffsetInBits/8;
-    // This field will use some of the bits from this PadBytes.
-    FieldSizeInBits = FieldSizeInBits - (PadBytes*8 - PadBits);
+    // This field will use some of the bits from this PadBytes, if
+    // starting offset is not at byte boundry.
+    if (StartOffsetFromByteBoundry != 0)
+      FieldSizeInBits = FieldSizeInBits - (8 - PadBits);
   }
 
   // Now, Field starts at FirstUnallocatedByte and everything is aligned.

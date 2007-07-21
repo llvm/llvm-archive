@@ -713,6 +713,10 @@ void make_decl_llvm(tree decl) {
   // same DECL node.  Don't discard the LLVM already made.
   if (DECL_LLVM_SET_P(decl)) return;
 
+  if (errorcount || sorrycount)
+    return;  // Do not process broken code.
+  
+  
   // Global register variable with asm name, e.g.:
   // register unsigned long esp __asm__("ebp");
   if (TREE_CODE(decl) != FUNCTION_DECL && DECL_REGISTER(decl)) {
@@ -862,6 +866,7 @@ void make_decl_llvm(tree decl) {
 /// llvm_get_decl_name - Used by varasm.c, returns the specified declaration's
 /// name.
 const char *llvm_get_decl_name(void *LLVM) {
+  if (LLVM == 0) return "";
   return ((Value*)LLVM)->getValueName()->getKeyData();
 }
 

@@ -242,6 +242,42 @@ class TreeToLLVM {
   /// this map.
   std::map<BasicBlock*, unsigned> BlockEHScope;
   
+  /// ExceptionValue - Is the local to receive the current exception.
+  /// 
+  Value *ExceptionValue;
+  
+  /// ExceptionSelectorValue - Is the local to receive the current exception
+  /// selector.
+  Value *ExceptionSelectorValue;
+  
+  /// FuncEHException - Function used to receive the exception.
+  ///
+  Function *FuncEHException;
+  
+  /// FuncEHSelector - Function used to receive the exception selector.
+  ///
+  Function *FuncEHSelector;
+  
+  /// FuncEHFilter - Function used to handle the exception filtering.
+  ///
+  Function *FuncEHFilter;
+
+  /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
+  ///
+  Function *FuncEHGetTypeID;
+  
+  /// FuncCPPPersonality - Function handling c++ personality.
+  ///
+  Function *FuncCPPPersonality;
+  
+  /// FuncUnwindResume - Function used to continue exception unwinding.
+  ///
+  Function *FuncUnwindResume;
+  
+  /// FinallyStack - Stack for nested try exit points.
+  ///
+  std::vector<BasicBlock *> FinallyStack;
+  
   /// NumAddressTakenBlocks - Count the number of labels whose addresses are
   /// taken.
   uint64_t NumAddressTakenBlocks;
@@ -305,20 +341,20 @@ public:
   /// of the types involved. This is an inferred cast.
   Value *CastToAnyType (Value *V, bool VSigned, const Type* Ty, bool TySigned);
 
-  /// CastToUIntTYpe - Cast the specified value to the specified type assuming
+  /// CastToUIntType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are integral types. This arbitrates between BitCast,
   /// Trunc and ZExt.
   Value *CastToUIntType(Value *V, const Type* Ty);
 
-  /// CastToSIntTYpe - Cast the specified value to the specified type assuming
+  /// CastToSIntType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are integral types. This arbitrates between BitCast,
   /// Trunc and SExt.
-  Value *CastToSIntType (Value *V, const Type* Ty);
+  Value *CastToSIntType(Value *V, const Type* Ty);
 
-  /// CastToFPTYpe - Cast the specified value to the specified type assuming
+  /// CastToFPType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are floating point types. This arbitrates between
   /// BitCast, FPTrunc and FPExt.
-  Value *CastToFPType  (Value *V, const Type* Ty);
+  Value *CastToFPType(Value *V, const Type* Ty);
 
   /// NOOPCastToType - Insert a BitCast from V to Ty if needed. This is just a
   /// convenience function for CastToType(Instruction::BitCast, V, Ty);
@@ -368,6 +404,18 @@ private:
 
   void HandleMultiplyDefinedGCCTemp(tree_node *var);
 private:
+  /// GatherTypeInfo - Walk through the expression gathering all the
+  /// typeinfos that are used.
+  void GatherTypeInfo(tree_node *exp, std::vector<Value *> &TypeInfos);
+
+  /// AddLandingPad - Insert code to fetch and save the exception and exception
+  /// selector.
+  void AddLandingPad();
+
+  /// CreateExceptionValues - Create values used internally by exception handling.
+  ///
+  void CreateExceptionValues();
+
   // Emit* - These are delgates from Emit, and have the same parameter
   // characteristics.
     
@@ -382,6 +430,9 @@ private:
   Value *EmitCOND_EXPR(tree_node *exp);
   Value *EmitSWITCH_EXPR(tree_node *exp);
   Value *EmitTRY_EXPR(tree_node *exp);
+  Value *EmitCATCH_EXPR(tree_node *exp);
+  Value *EmitEXC_PTR_EXPR(tree_node *exp);
+  Value *EmitEH_FILTER_EXPR(tree_node *exp);
   
   // Expressions.
   void   EmitINTEGER_CST_Aggregate(tree_node *exp, Value *DestLoc);

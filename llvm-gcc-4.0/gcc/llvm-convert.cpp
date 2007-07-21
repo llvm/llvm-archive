@@ -58,9 +58,12 @@ extern "C" {
 #include "flags.h"
 #include "target.h"
 #include "hard-reg-set.h"
+#include "except.h"
 extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 }
+
+#define ITANIUM_STYLE_EXCEPTIONS
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees
@@ -121,6 +124,9 @@ Value *llvm_get_decl(tree Tr) {
   if (Index == 0) {
     make_decl_llvm(Tr);
     Index = GET_DECL_LLVM_INDEX(Tr);
+    
+    // If there was an error, we may have disabled creating LLVM values.
+    if (Index == 0) return 0;
   }
   assert ((Index - 1) < LLVMValues.size() && "Invalid LLVM Value index");
 
@@ -261,6 +267,16 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   }
 
   AllocaInsertionPoint = 0;
+  
+  ExceptionValue = 0;
+  ExceptionSelectorValue = 0;
+  FuncEHException = 0;
+  FuncEHSelector = 0;
+  FuncEHFilter = 0;
+  FuncEHGetTypeID = 0;
+  FuncCPPPersonality = 0;
+  FuncUnwindResume = 0; 
+  
   NumAddressTakenBlocks = 0;
   IndirectGotoBlock = 0;
   CurrentEHScopes.reserve(16);
@@ -596,7 +612,19 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // If this function has exceptions, emit the lazily created unwind block.
   if (UnwindBB) {
     EmitBlock(UnwindBB);
+#ifdef ITANIUM_STYLE_EXCEPTIONS
+    if (ExceptionValue) {
+      // Fetch and store exception handler.
+      std::vector<Value*> Args;
+      Args.push_back(new LoadInst(ExceptionValue, "eh_ptr", CurBB));
+      new CallInst(FuncUnwindResume,
+                   &Args[0], Args.size(), "",
+                   CurBB);
+      new UnreachableInst(CurBB);
+    }
+#else
     new UnwindInst(UnwindBB);
+#endif
   }
   
   // If this function takes the address of a label, emit the indirect goto
@@ -640,15 +668,8 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
     std::cerr << "Unhandled expression!\n";
     debug_tree(exp);
     abort();
-  case EH_FILTER_EXPR:
-  case CATCH_EXPR: {
-    static bool PrintedWarning = false;
-    if (!PrintedWarning) std::cerr << "WARNING: EH not supported yet!\n";
-    PrintedWarning = true;
-    return 0;
-  }
     
-    // Basic lists and binding scopes
+  // Basic lists and binding scopes
   case BIND_EXPR:      Result = EmitBIND_EXPR(exp, DestLoc); break;
   case STATEMENT_LIST: Result = EmitSTATEMENT_LIST(exp, DestLoc); break;
 
@@ -660,6 +681,9 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case SWITCH_EXPR:    Result = EmitSWITCH_EXPR(exp); break;
   case TRY_FINALLY_EXPR:
   case TRY_CATCH_EXPR: Result = EmitTRY_EXPR(exp); break;
+  case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
+  case CATCH_EXPR:     Result = EmitCATCH_EXPR(exp); break;
+  case EH_FILTER_EXPR: Result = EmitEH_FILTER_EXPR(exp); break;
     
   // Expressions
   case VAR_DECL:
@@ -1737,6 +1761,132 @@ static void StripLLVMTranslation(tree code) {
   walk_tree_without_duplicates(&code, StripLLVMTranslationFn, 0);
 }
 
+
+/// GatherTypeInfo - Walk through the expression gathering all the
+/// typeinfos that are used.
+void TreeToLLVM::GatherTypeInfo(tree exp,
+                                std::vector<Value *> &TypeInfos) {
+  if (TREE_CODE(exp) == CATCH_EXPR || TREE_CODE(exp) == EH_FILTER_EXPR) {
+    tree Types = TREE_CODE(exp) == CATCH_EXPR ? CATCH_TYPES(exp)
+                                              : EH_FILTER_TYPES(exp);
+
+    if (!Types) {
+      // Catch all.
+      TypeInfos.push_back(Constant::getNullValue(Type::Int32Ty));
+    } else if (TREE_CODE(Types) != TREE_LIST) {
+      // Construct typeinfo object.  Each call will produce a new expression
+      // even if duplicate.
+      tree TypeInfoNopExpr = (*lang_eh_runtime_type)(Types);
+      // Produce value.  Duplicate typeinfo get folded here.
+      Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+      // Capture typeinfo.
+      TypeInfos.push_back(TypeInfo);
+    } else {
+      for (; Types; Types = TREE_CHAIN (Types)) {
+        // Construct typeinfo object.  Each call will produce a new expression
+        // even if duplicate.
+        tree TypeInfoNopExpr = (*lang_eh_runtime_type)(TREE_VALUE(Types));
+        // Produce value.  Duplicate typeinfo get folded here.
+        Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+        // Capture typeinfo.
+        TypeInfos.push_back(TypeInfo);
+      }
+    }
+  } else {
+    assert(TREE_CODE(exp) == STATEMENT_LIST && "Need an exp with typeinfo");
+    // Each statement in the statement list will be a catch.
+    for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I))
+      GatherTypeInfo(tsi_stmt(I), TypeInfos);
+  }
+}
+
+
+/// AddLandingPad - Insert code to fetch and save the exception and exception
+/// selector.
+void TreeToLLVM::AddLandingPad() {
+  tree TryCatch = 0;
+  for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
+                                              E = CurrentEHScopes.rend();
+       I != E; ++I) {
+    if (TREE_CODE(I->TryExpr) == TRY_CATCH_EXPR) {
+      TryCatch = I->TryExpr;
+      break;
+    }
+  }
+  
+  if (!TryCatch) return;
+  
+  // Gather the typeinfo.
+  std::vector<Value *> TypeInfos;
+  tree Catches = TREE_OPERAND(TryCatch, 1);
+  GatherTypeInfo(Catches, TypeInfos);
+  
+  CreateExceptionValues();
+  
+  // Choose type of landing pad type.
+  Function *F = FuncEHSelector;
+  
+  if (TREE_CODE(Catches) == STATEMENT_LIST &&
+      !tsi_end_p(tsi_start(Catches)) &&
+      TREE_CODE(tsi_stmt(tsi_start(Catches))) == EH_FILTER_EXPR) {
+    F = FuncEHFilter;
+  }
+  
+  // Fetch and store the exception.
+  Value *Ex = new CallInst(FuncEHException, "eh_ptr", CurBB);
+  new StoreInst(Ex, ExceptionValue, CurBB);
+        
+  // Fetch and store exception handler.
+  std::vector<Value*> Args;
+  Args.push_back(new LoadInst(ExceptionValue, "eh_ptr", CurBB));
+  Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
+                            PointerType::get(Type::Int8Ty)));
+  for (unsigned i = 0, N = TypeInfos.size(); i < N; ++i)
+    Args.push_back(TypeInfos[i]);
+  Value *Select = new CallInst(F, &Args[0], Args.size(), "eh_select", CurBB);
+  new StoreInst(Select, ExceptionSelectorValue, CurBB);
+}
+
+
+/// CreateExceptionValues - Create values used internally by exception handling.
+///
+void TreeToLLVM::CreateExceptionValues() {
+  // Check to see if the exception values have been constructed.
+  if (ExceptionValue) return;
+  
+  ExceptionValue = CreateTemporary(PointerType::get(Type::Int8Ty));
+  ExceptionValue->setName("eh_exception");
+  
+  ExceptionSelectorValue = CreateTemporary(Type::Int32Ty);
+  ExceptionSelectorValue->setName("eh_selector");
+  
+  FuncEHException = Intrinsic::getDeclaration(TheModule,
+                                              Intrinsic::eh_exception);
+  FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
+                                              Intrinsic::eh_selector);
+  FuncEHFilter    = Intrinsic::getDeclaration(TheModule,
+                                              Intrinsic::eh_filter);
+  FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
+                                              Intrinsic::eh_typeid_for);
+                                                      
+  FuncCPPPersonality = cast<Function>(
+    TheModule->getOrInsertFunction("__gxx_personality_v0",
+                                   Type::getPrimitiveType(Type::VoidTyID),
+                                   NULL));
+  FuncCPPPersonality->setLinkage(Function::ExternalLinkage);
+  FuncCPPPersonality->setCallingConv(CallingConv::C);
+
+  FuncUnwindResume = cast<Function>(
+    TheModule->getOrInsertFunction("_Unwind_Resume",
+                                   Type::getPrimitiveType(Type::VoidTyID),
+                                   PointerType::get(Type::Int8Ty),
+                                   NULL));
+  FuncUnwindResume->setLinkage(Function::ExternalLinkage);
+  FuncUnwindResume->setCallingConv(CallingConv::C);
+
+}
+
+
 /// EmitTRY_EXPR - Handle TRY_FINALLY_EXPR and TRY_CATCH_EXPR.
 Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
   // The C++ front-end produces a lot of TRY_FINALLY_EXPR nodes that have empty
@@ -1847,32 +1997,40 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
     // Add a basic block to emit the code into.
     BasicBlock *CleanupBB = new BasicBlock("cleanup");
     EmitBlock(CleanupBB);
-
+    
+    // Provide exit point for cleanup code.
+    FinallyStack.push_back(FinallyBlock);
+    
     // Emit the code.
     Emit(CleanupCode, 0);
+
+    // Clear exit point for cleanup code.
+    FinallyStack.pop_back();
 
     // Because we can emit the same cleanup in more than one context, we must
     // strip off LLVM information from the decls in the code.  Otherwise, the
     // we will try to insert the same label into multiple places in the code.
     StripLLVMTranslation(CleanupCode);
+     
     
-    // Because we can emit the same cleanup in more than one context, we must
-    // strip off LLVM information from the decls in the code.  Otherwise, the
-    // we will try to insert the same label into multiple places in the code.
-    //StripLLVMTranslation(CleanupCode);
+    // Catches will supply own terminator.
+    if (!CurBB->getTerminator()) {
+      // Emit a branch to the new target.
+      BranchInst *BI = new BranchInst(FixupBr->getSuccessor(0), CurBB);
     
-    // Emit a branch to the new target.
-    BranchInst *BI = new BranchInst(FixupBr->getSuccessor(0), CurBB);
+      // The old branch now goes to the cleanup block.
+      FixupBr->setSuccessor(0, CleanupBB);
     
-    // The old branch now goes to the cleanup block.
-    FixupBr->setSuccessor(0, CleanupBB);
-    
-    // Fixup this new branch now.
-    FixupBr = BI;
-    
-    // Add the fixup to the next cleanup scope if there is one.
-    if (!CurrentEHScopes.empty())
-      AddBranchFixup(FixupBr, FixupIsExceptionEdge);
+      // Fixup this new branch now.
+      FixupBr = BI;
+      
+      // Add the fixup to the next cleanup scope if there is one.
+      if (!CurrentEHScopes.empty())
+        AddBranchFixup(FixupBr, FixupIsExceptionEdge);
+    } else {
+      // The old branch now goes to the cleanup block.
+      FixupBr->setSuccessor(0, CleanupBB);
+    }
   }
 
   // Move the finally block to the end of the function so we can continue
@@ -1894,6 +2052,138 @@ Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
   return 0;
 }
 
+
+/// EmitCATCH_EXPR - Handle CATCH_EXPR.
+///
+Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
+#ifndef ITANIUM_STYLE_EXCEPTIONS
+  return 0;
+#endif
+
+  // Make sure we have all the exception values in place.
+  CreateExceptionValues();
+
+  // Break out parts of catch.
+  tree Types = CATCH_TYPES(exp);
+  tree Body = CATCH_BODY(exp);
+  
+  // Destinations of the catch entry conditions.
+  BasicBlock *ThenBlock = 0;
+  BasicBlock *ElseBlock = 0;
+  
+  // FiXME - Determine last case so we don't need to emit test.
+  if (!Types) {
+    // Catch all - no testing required.
+  } else if (TREE_CODE(Types) != TREE_LIST) {
+    // Construct typeinfo object.  Each call will produce a new expression
+    // even if duplicate.
+    tree TypeInfoNopExpr = (*lang_eh_runtime_type)(Types);
+    // Produce value.  Duplicate typeinfo get folded here.
+    Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+
+    // Call get eh type id.
+    std::vector<Value*> Args;
+    Args.push_back(TypeInfo);
+    Value *TypeID = new CallInst(cast<Value>(FuncEHGetTypeID),
+                                 &Args[0], Args.size(), "eh_typeid", CurBB);
+    Value *Select = new LoadInst(ExceptionSelectorValue, "tmp", CurBB);
+
+    // Compare with the exception selector.
+    Value *Compare =
+           new ICmpInst(ICmpInst::ICMP_EQ, Select, TypeID, "tmp", CurBB);
+    ThenBlock = new BasicBlock("eh_then");
+    ElseBlock = new BasicBlock("eh_else");
+    
+    // Branch on the compare.
+    new BranchInst(ThenBlock, ElseBlock, Compare, CurBB);
+  } else {
+    ThenBlock = new BasicBlock("eh_then");
+  
+    for (; Types; Types = TREE_CHAIN (Types)) {
+      if (ElseBlock) EmitBlock(ElseBlock);
+    
+      // Construct typeinfo object.  Each call will produce a new expression
+      // even if duplicate.
+      tree TypeInfoNopExpr = (*lang_eh_runtime_type)(TREE_VALUE(Types));
+      // Produce value.  Duplicate typeinfo get folded here.
+      Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+
+      // Call get eh type id.
+      std::vector<Value*> Args;
+      Args.push_back(TypeInfo);
+      Value *TypeID = new CallInst(cast<Value>(FuncEHGetTypeID),
+                                 &Args[0], Args.size(), "eh_typeid", CurBB);
+      Value *Select = new LoadInst(ExceptionSelectorValue, "tmp", CurBB);
+
+      // Compare with the exception selector.
+      Value *Compare =
+             new ICmpInst(ICmpInst::ICMP_EQ, Select, TypeID, "tmp", CurBB);
+      ElseBlock = new BasicBlock("eh_else");
+      
+      // Branch on the compare.
+      new BranchInst(ThenBlock, ElseBlock, Compare, CurBB);
+    }
+  }
+  
+  // Start the then block.
+  if (ThenBlock) EmitBlock(ThenBlock);
+  
+  // Emit the body.
+  Emit(Body, 0);
+
+  // Branch to the try exit.
+  assert(!FinallyStack.empty() && "Need an exit point");
+  if (!CurBB->getTerminator())
+    new BranchInst(FinallyStack.back(), CurBB);
+
+  // Start the else block.
+  if (ElseBlock) EmitBlock(ElseBlock);
+  
+  return 0;
+}
+
+/// EmitEXC_PTR_EXPR - Handle EXC_PTR_EXPR.
+///
+Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
+#ifndef ITANIUM_STYLE_EXCEPTIONS
+  return 0;
+#endif
+
+  // Load exception address.
+  CreateExceptionValues();
+  return new LoadInst(ExceptionValue, "eh_value", CurBB);
+}
+
+/// EmitEH_FILTER_EXPR - Handle EH_FILTER_EXPR.
+///
+Value *TreeToLLVM::EmitEH_FILTER_EXPR(tree exp) {
+#ifndef ITANIUM_STYLE_EXCEPTIONS
+  return 0;
+#endif
+
+  CreateExceptionValues();
+
+  // The result of a filter landing pad will be a negative index if there is
+  // a match.
+  Value *Select = new LoadInst(ExceptionSelectorValue, "tmp", CurBB);
+
+  // Compare with the filter action value.
+  Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Value *Compare =
+         new ICmpInst(ICmpInst::ICMP_SLT, Select, Zero, "tmp", CurBB);
+  
+  // Branch on the compare.
+  BasicBlock *FilterBB = new BasicBlock("filter");
+  BasicBlock *NoFilterBB = new BasicBlock("nofilter");
+  new BranchInst(FilterBB, NoFilterBB, Compare, CurBB);
+
+  EmitBlock(FilterBB);
+  Emit(EH_FILTER_FAILURE(exp), 0);
+  
+  EmitBlock(NoFilterBB);
+  
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                           ... Expressions ...
@@ -2170,13 +2460,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
     if (UnwindBB == 0)
       UnwindBB = new BasicBlock("Unwind");
     UnwindBlock = UnwindBB;
-FIXME: "Call terminate if needed!";
-#if 0
-    if (ThrownExceptionsCallTerminate())
-      UnwindBlock = getTerminateBlock();
-    else
-      UnwindBlock = getInvokeDestination();
-#endif
   }
   
   SmallVector<Value*, 16> CallOperands;
@@ -2264,10 +2547,16 @@ FIXME: "Call terminate if needed!";
     // branch in.
     if (CurrentEHScopes.back().UnwindBlock == 0) {
       EmitBlock(CurrentEHScopes.back().UnwindBlock = new BasicBlock("unwind"));
-      // This branch to the unwind edge should have exception cleanups inserted
-      // onto it.
+      
+#ifdef ITANIUM_STYLE_EXCEPTIONS
+      // Add landing pad entry code.
+      AddLandingPad();
+#endif
+      // This branch to the unwind edge should have exception cleanups
+      // inserted onto it.
       EmitBranchInternal(UnwindBlock, true);
     }
+
     cast<InvokeInst>(Call)->setUnwindDest(CurrentEHScopes.back().UnwindBlock);
     
     EmitBlock(NextBlock);
@@ -2699,11 +2988,11 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
   
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
 
-  const Type *UIntPtrTy = TD.getIntPtrType();
+  const Type *IntPtrTy = TD.getIntPtrType();
   bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  LHS = CastToAnyType(LHS, LHSIsSigned, UIntPtrTy, false);
-  RHS = CastToAnyType(RHS, RHSIsSigned, UIntPtrTy, false);
+  LHS = CastToAnyType(LHS, LHSIsSigned, IntPtrTy, false);
+  RHS = CastToAnyType(RHS, RHSIsSigned, IntPtrTy, false);
   Value *V = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS,
                                     "tmp", CurBB);
   return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
@@ -4215,7 +4504,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // operand.  This construct maps directly to a getelementptr instruction.
   Value *ArrayAddr;
   
-  if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE) {
+  if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
     // First subtract the lower bound, if any, in the type of the index.
     tree LowerBound = array_ref_low_bound(exp);
     if (!integer_zerop(LowerBound))
@@ -4234,17 +4523,19 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // element type, insert explicit pointer arithmetic here.
   //tree ElementSizeInBytes = array_ref_element_size(exp);
   
-  if (IndexVal->getType() != Type::Int32Ty &&
-      IndexVal->getType() != Type::Int64Ty)
+  const Type *IntPtrTy = getTargetData().getIntPtrType();
+  if (IndexVal->getType() != IntPtrTy) {
     if (TYPE_UNSIGNED(TREE_TYPE(Index))) // if the index is unsigned
       // ZExt it to retain its value in the larger type
-      IndexVal = CastToType(Instruction::ZExt, IndexVal, Type::Int64Ty);
+      IndexVal = CastToUIntType(IndexVal, IntPtrTy);
     else
       // SExt it to retain its value in the larger type
-      IndexVal = CastToType(Instruction::SExt, IndexVal, Type::Int64Ty);
+      IndexVal = CastToSIntType(IndexVal, IntPtrTy);
+  }
 
-  // Check for variable sized array reference.
+  // If this is an index into an array, codegen as a GEP.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
+    // Check for variable sized array reference.
     tree Domain = TYPE_DOMAIN(TREE_TYPE(Array));
     if (Domain && TYPE_MAX_VALUE(Domain) &&
         TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST) {
@@ -4255,14 +4546,37 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
           ArrayAddr, PointerType::get(ConvertType(ElTy)), "tmp", CurBB);
       return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
     }
-  }
-  
-  if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE) {
+
+    // Otherwise, this is not a variable-sized array, use a GEP to index.
     return new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::Int32Ty, 0),
                                  IndexVal, "tmp", CurBB);
-  } else {
+  }
+
+  // Otherwise, this is an index off a pointer, codegen as a 2-idx GEP.
+  assert(TREE_CODE(TREE_TYPE(Array)) == POINTER_TYPE);
+  tree IndexedType = TREE_TYPE(TREE_TYPE(Array));
+  
+  // If we are indexing over a fixed-size type, just use a GEP.
+  if (TREE_CODE(TYPE_SIZE(IndexedType)) == INTEGER_CST) {
+    const Type *PtrIndexedTy = PointerType::get(ConvertType(IndexedType));
+    ArrayAddr = BitCastToType(ArrayAddr, PtrIndexedTy);
     return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
   }
+  
+  // Otherwise, just do raw, low-level pointer arithmetic.  FIXME: this could be
+  // much nicer in cases like:
+  //   float foo(int w, float A[][w], int g) { return A[g][0]; }
+  
+  ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
+  Value *TypeSize = Emit(TYPE_SIZE_UNIT(IndexedType), 0);
+
+  if (TypeSize->getType() != IntPtrTy)
+    TypeSize = CastToUIntType(TypeSize, IntPtrTy);
+  
+  IndexVal = BinaryOperator::createMul(IndexVal, TypeSize, "tmp", CurBB);
+  Value *Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+
+  return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
 }
 
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
@@ -4726,11 +5040,11 @@ Constant *TreeConstantToLLVM::ConvertBinOp_CST(tree exp) {
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp,1)));
   Instruction::CastOps opcode;
   if (isa<PointerType>(LHS->getType())) {
-    const Type *UIntPtrTy = getTargetData().getIntPtrType();
-    opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, UIntPtrTy, false);
-    LHS = ConstantExpr::getCast(opcode, LHS, UIntPtrTy);
-    opcode = CastInst::getCastOpcode(RHS, RHSIsSigned, UIntPtrTy, false);
-    RHS = ConstantExpr::getCast(opcode, RHS, UIntPtrTy);
+    const Type *IntPtrTy = getTargetData().getIntPtrType();
+    opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, IntPtrTy, false);
+    LHS = ConstantExpr::getCast(opcode, LHS, IntPtrTy);
+    opcode = CastInst::getCastOpcode(RHS, RHSIsSigned, IntPtrTy, false);
+    RHS = ConstantExpr::getCast(opcode, RHS, IntPtrTy);
   }
 
   Constant *Result;

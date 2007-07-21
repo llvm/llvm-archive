@@ -2095,6 +2095,14 @@ extern bool llvm_set_decl_p(tree);
 /* The DECL_LLVM for NODE, if it is set, or NULL, if it is not set.  */
 #define DECL_LLVM_IF_SET(NODE) \
   (DECL_LLVM_SET_P (NODE) ? DECL_LLVM (NODE) : NULL)
+
+#ifndef __cplusplus
+/* C version, for debugging */
+extern void *llvm_get_type(unsigned);
+#define GET_TYPE_LLVM(NODE) \
+  (void *)llvm_get_type( TYPE_CHECK (NODE)->type.symtab.llvm)
+#endif
+
 #endif
 /* APPLE LOCAL end LLVM */
 

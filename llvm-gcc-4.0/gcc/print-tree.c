@@ -603,6 +603,16 @@ print_node (FILE *file, const char *prefix, tree node, int indent)
 
       lang_hooks.print_type (file, node, indent);
 
+      /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+      if (GET_TYPE_LLVM (node))
+	{
+	  indent_to (file, indent + 4);
+	  print_llvm_type (file, GET_TYPE_LLVM (node));
+	}
+#endif
+      /* APPLE LOCAL end LLVM */
+
       if (TYPE_POINTER_TO (node) || TREE_CHAIN (node))
 	indent_to (file, indent + 3);
 

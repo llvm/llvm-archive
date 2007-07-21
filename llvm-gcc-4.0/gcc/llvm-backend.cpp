@@ -104,8 +104,9 @@ void llvm_initialize_backend(void) {
     Args.push_back("--disable-fp-elim");
   if (!flag_zero_initialized_in_bss)
     Args.push_back("--nozero-initialized-in-bss");
-  if (flag_exceptions)
-    Args.push_back("--enable-eh");
+// Disabled until PR1224 is resolved.
+  //if (flag_exceptions)
+  //  Args.push_back("--enable-eh");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
@@ -917,6 +918,15 @@ void print_llvm(FILE *file, void *LLVM) {
   oFILEstream FS(file);
   FS << "LLVM: ";
   WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
+}
+
+// print_llvm_type - Print the specified LLVM type symbolically, called by
+// print-tree.c for tree dumps.
+//
+void print_llvm_type(FILE *file, void *LLVM) {
+  oFILEstream FS(file);
+  FS << "LLVM: ";
+  WriteTypeSymbolic(FS, (const Type*)LLVM, TheModule);
 }
 
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */

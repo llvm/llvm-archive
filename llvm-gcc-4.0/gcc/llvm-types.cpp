@@ -64,8 +64,7 @@ typedef DenseMap<const Type *, unsigned> LTypesMapTy;
 static LTypesMapTy LTypesMap;
 
 // GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
-// These are lazily computed by ConvertType, accessors available only to C++
-// code.
+// These are lazily computed by ConvertType.
 
 #define SET_TYPE_SYMTAB_LLVM(NODE, index) (TYPE_CHECK (NODE)->type.symtab.llvm = index)
 
@@ -92,7 +91,7 @@ static const Type * llvm_set_type(tree Tr, const Type *Ty) {
 // Get LLVM Type for the GCC tree node based on LTypes vector index.
 // When GCC tree node is initialized, it has 0 as the index value. This is
 // why all recorded indexes are offset by 1. 
-static inline const Type *llvm_get_type(unsigned Index) {
+extern "C" inline const Type *llvm_get_type(unsigned Index) {
 
   if (Index == 0)
     return NULL;

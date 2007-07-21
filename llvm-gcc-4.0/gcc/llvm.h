@@ -80,6 +80,11 @@ void llvm_emit_typedef(union tree_node*);
  */
 void print_llvm(FILE *file, void *LLVM);
 
+/* print_llvm_type - Print the specified LLVM type symbolically, called by
+ * print-tree.c for tree dumps.
+ */
+void print_llvm_type(FILE *file, void *LLVM);
+
 /* Init pch writing. */
 void llvm_pch_write_init(void);
 

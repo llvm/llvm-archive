@@ -2190,7 +2190,7 @@ FIXME: "Call terminate if needed!";
 
   // Pass the static chain, if any, as the first parameter.
   if (TREE_OPERAND(exp, 2))
-    CallOperands.push_back (Emit(TREE_OPERAND(exp, 2), 0));
+    CallOperands.push_back(Emit(TREE_OPERAND(exp, 2), 0));
 
   // Loop over the arguments, expanding them and adding them to the op list.
   const PointerType *PFTy = cast<PointerType>(Callee->getType());
@@ -2226,8 +2226,28 @@ FIXME: "Call terminate if needed!";
     }
   }
   
-  // TODO: Check to see if the arguments and callee types disagree.  If so,
-  // insert a cast of the callee to a type that will work.
+  // Compile stuff like:
+  //   %tmp = call float (...)* bitcast (float ()* @foo to float (...)*)( )
+  // to:
+  //   %tmp = call float @foo( )
+  // This commonly occurs due to C "implicit ..." semantics.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee)) {
+    if (CallOperands.empty() && CE->getOpcode() == Instruction::BitCast) {
+      Constant *RealCallee = CE->getOperand(0);
+      assert(isa<PointerType>(RealCallee->getType()) &&
+             "Bitcast to ptr not from ptr?");
+      const PointerType *RealPT = cast<PointerType>(RealCallee->getType());
+      if (const FunctionType *RealFT =
+          dyn_cast<FunctionType>(RealPT->getElementType())) {
+        const PointerType *ActualPT = cast<PointerType>(Callee->getType());
+        const FunctionType *ActualFT =
+          cast<FunctionType>(ActualPT->getElementType());
+        if (RealFT->getReturnType() == ActualFT->getReturnType() &&
+            ActualFT->getNumParams() == 0)
+          Callee = RealCallee;
+      }
+    }
+  }
   
   Value *Call;
   if (!UnwindBlock) {

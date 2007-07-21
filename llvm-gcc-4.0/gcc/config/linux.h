@@ -104,3 +104,17 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_C99_FUNCTIONS 1
 
 #define TARGET_HAS_F_SETLKW
+
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+
+/* Yes, we're supporting PIC codegen for linux targets! */
+#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+  if (flag_pic)                                      \
+    argvec.push_back ("--relocation-model=pic");     \
+  else                                               \
+    argvec.push_back ("--relocation-model=static");
+
+#endif
+/* APPLE LOCAL end LLVM */
+

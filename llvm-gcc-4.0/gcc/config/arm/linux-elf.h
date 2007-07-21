@@ -149,17 +149,3 @@
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
 #endif
-
-/* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-
-/* PIC codegen for ARM-Linux-ELF target */
-#define LLVM_SET_TARGET_OPTIONS(argvec)              \
-  if (flag_pic)                                      \
-    argvec.push_back ("--relocation-model=pic");     \
-  else                                               \
-    argvec.push_back ("--relocation-model=static");
-
-/* APPLE LOCAL end LLVM */
-
-#endif

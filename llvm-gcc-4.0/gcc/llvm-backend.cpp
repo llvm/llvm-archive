@@ -99,7 +99,9 @@ void llvm_initialize_backend(void) {
     Args.push_back("--enable-unsafe-fp-math");
   if (!flag_omit_frame_pointer)
     Args.push_back("--disable-fp-elim");
-    
+  if (!flag_zero_initialized_in_bss)
+    Args.push_back("--nozero-initialized-in-bss");
+
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
   // purposes, and shouldn't really be for general use.

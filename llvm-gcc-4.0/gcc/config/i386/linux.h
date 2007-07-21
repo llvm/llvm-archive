@@ -195,6 +195,6 @@ Boston, MA 02111-1307, USA.  */
   if (flag_pic)                                      \
     argvec.push_back ("--relocation-model=pic");     \
   else                                               \
-    argvec.push_back ("--relocation-model=static")
+    argvec.push_back ("--relocation-model=static");
 #endif
 /* APPLE LOCAL end LLVM */

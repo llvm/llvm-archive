@@ -299,6 +299,7 @@ define__GNUC__ (void)
 #ifndef LLVM_VERSION_INFO
 
   /* APPLE LOCAL begin Apple version */
+#ifdef CONFIG_DARWIN_H
   {
     /* This chunk of code defines __APPLE_CC__ from the version
        string.  It expects to see a substring of the version string of
@@ -322,10 +323,12 @@ define__GNUC__ (void)
       abort ();
     builtin_define_with_value_n ("__APPLE_CC__", vt, q - vt);
   }
+#endif
   /* APPLE LOCAL end Apple version */
 
   /* APPLE LOCAL begin LLVM version number */
 #else
+#ifdef CONFIG_DARWIN_H
   /* LLVM builds multiple different ways.  For example, for official releases,
      the version number is something like "1.8".  We don't want to disable
      __APPLE_CC__ entirely, as this breaks system headers.  If the build number
@@ -345,6 +348,7 @@ define__GNUC__ (void)
       builtin_define_with_value_n ("__APPLE_CC__", Version, 4);
     }
   }
+#endif /*CONFIG_DARWIN_H*/
 #endif /*LLVM_VERSION_INFO*/
   /* APPLE LOCAL end LLVM version number */
 }

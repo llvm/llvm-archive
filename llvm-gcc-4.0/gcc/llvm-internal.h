@@ -96,6 +96,10 @@ void clearTargetBuiltinCache();
 
 struct StructTypeConversionInfo;
 
+/// Return true if and only if field no. N from struct type T is a padding
+/// element added to match llvm struct type size and gcc struct type size.
+bool isPaddingElement(const Type *T, unsigned N);
+
 /// TypeConverter - Implement the converter from GCC types to LLVM types.
 ///
 class TypeConverter {

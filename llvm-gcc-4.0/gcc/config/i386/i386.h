@@ -4099,117 +4099,117 @@ enum ix86_builtins
     RESULT = BinaryOperator::createMul(OPS[0], OPS[1], "tmp", CURBB);         \
     return true;                                                              \
   case IX86_BUILTIN_PSLLWI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    PackedType *v8i16 = PackedType::get(Type::ShortTy, 8);                    \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
+    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);                    \
     static Function *psllw = 0;                                               \
     if (psllw == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psllw = M->getOrInsertFunction("llvm.x86.sse2.psll.w",                  \
                                      v8i16, v8i16, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllw, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLDI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
     static Function *pslld = 0;                                               \
     if (pslld == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       pslld = M->getOrInsertFunction("llvm.x86.sse2.psll.d",                  \
                                      v4i32, v4i32, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(pslld, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLQI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    PackedType *v2i64 = PackedType::get(Type::LongTy, 2);                     \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
+    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);                     \
     static Function *psllq = 0;                                               \
     if (psllq == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psllq = M->getOrInsertFunction("llvm.x86.sse2.psll.q",                  \
                                      v2i64, v2i64, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllq, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLWI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    PackedType *v8i16 = PackedType::get(Type::ShortTy, 8);                    \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
+    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);                    \
     static Function *psrlw = 0;                                               \
     if (psrlw == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psrlw = M->getOrInsertFunction("llvm.x86.sse2.psrl.w",                  \
                                      v8i16, v8i16, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlw, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLDI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
     static Function *psrld = 0;                                               \
     if (psrld == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psrld = M->getOrInsertFunction("llvm.x86.sse2.psrl.d",                  \
                                      v4i32, v4i32, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrld, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLQI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    PackedType *v2i64 = PackedType::get(Type::LongTy, 2);                     \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
+    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);                     \
     static Function *psrlq = 0;                                               \
     if (psrlq == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psrlq = M->getOrInsertFunction("llvm.x86.sse2.psrl.q",                  \
                                      v2i64, v2i64, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlq, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRAWI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    PackedType *v8i16 = PackedType::get(Type::ShortTy, 8);                    \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
+    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);                    \
     static Function *psraw = 0;                                               \
     if (psraw == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psraw = M->getOrInsertFunction("llvm.x86.sse2.psra.w",                  \
                                      v8i16, v8i16, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psraw, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRADI128: {                                              \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
     static Function *psrad = 0;                                               \
     if (psrad == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       psrad = M->getOrInsertFunction("llvm.x86.sse2.psra.d",                  \
                                      v4i32, v4i32, v4i32, NULL);              \
     }                                                                         \
-    Value *Undef = UndefValue::get(Type::IntTy);                              \
+    Value *Undef = UndefValue::get(Type::Int32Ty);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrad, OPS[0], OPS[1], "tmp", CurBB);               \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
@@ -4236,7 +4236,7 @@ enum ix86_builtins
   case IX86_BUILTIN_ORPS:                                                     \
   case IX86_BUILTIN_XORPS:                                                    \
   case IX86_BUILTIN_ANDNPS: {                                                 \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
     OPS[0] = new BitCastInst(OPS[0], v4i32, "tmp", CurBB);                    \
     OPS[1] = new BitCastInst(OPS[1], v4i32, "tmp", CurBB);                    \
     switch (BUILTIN_CODE) {                                                   \
@@ -4261,7 +4261,7 @@ enum ix86_builtins
   case IX86_BUILTIN_ORPD:                                                     \
   case IX86_BUILTIN_XORPD:                                                    \
   case IX86_BUILTIN_ANDNPD: {                                                 \
-    PackedType *v2i64 = PackedType::get(Type::LongTy, 2);                     \
+    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);                     \
     OPS[0] = new BitCastInst(OPS[0], v2i64, "tmp", CurBB);                    \
     OPS[1] = new BitCastInst(OPS[1], v2i64, "tmp", CurBB);                    \
     switch (BUILTIN_CODE) {                                                   \
@@ -4362,7 +4362,7 @@ enum ix86_builtins
     return true;                                                              \
   case IX86_BUILTIN_LOADQ: {                                                  \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
-    Value *Idx0 = ConstantInt::get(Type::UIntTy, 0);                          \
+    Value *Idx0 = ConstantInt::get(Type::Int32Ty, 0);                          \
     Value *Zero = ConstantFP::get(Type::DoubleTy, 0.0);                       \
     OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
     OPS[0] = new LoadInst(OPS[0], "tmp", false, CurBB);                       \
@@ -4398,7 +4398,7 @@ enum ix86_builtins
     PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);                   \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
     OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
-    Value *Idx = ConstantInt::get(Type::UIntTy, 1);                           \
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 1);                           \
     OPS[1] = new BitCastInst(OPS[1], v2f64, "tmp", CurBB);                    \
     OPS[1] = new ExtractElementInst(OPS[1], Idx, "tmp", CurBB);               \
     RESULT = new StoreInst(OPS[1], OPS[0], false, CurBB);                     \
@@ -4408,7 +4408,7 @@ enum ix86_builtins
     PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);                   \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
     OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
-    Value *Idx = ConstantInt::get(Type::UIntTy, 0);                           \
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);                           \
     OPS[1] = new BitCastInst(OPS[1], v2f64, "tmp", CurBB);                    \
     OPS[1] = new ExtractElementInst(OPS[1], Idx, "tmp", CurBB);               \
     RESULT = new StoreInst(OPS[1], OPS[0], false, CurBB);                     \
@@ -4424,7 +4424,7 @@ enum ix86_builtins
   case IX86_BUILTIN_VEC_EXT_V4SI:                                             \
   case IX86_BUILTIN_VEC_EXT_V4SF:                                             \
   case IX86_BUILTIN_VEC_EXT_V8HI: {                                           \
-    OPS[1] = CastInst::createIntegerCast(OPS[1], Type::UIntTy, false, "tmp",  \
+    OPS[1] = CastInst::createIntegerCast(OPS[1], Type::Int32Ty, false, "tmp",  \
                                          CurBB);                              \
     RESULT = new ExtractElementInst(OPS[0], OPS[1], "tmp", CurBB);            \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
@@ -4432,11 +4432,11 @@ enum ix86_builtins
   }                                                                           \
   case IX86_BUILTIN_VEC_SET_V8HI: {                                           \
     Instruction::CastOps opcode = CastInst::getCastOpcode(OPS[1],             \
-      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 1),  Type::ShortTy, true);            \
-    OPS[1] = CastInst::create(opcode, OPS[1], Type::ShortTy, "tmp", CurBB);   \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 1),  Type::Int16Ty, true);            \
+    OPS[1] = CastInst::create(opcode, OPS[1], Type::Int16Ty, "tmp", CurBB);   \
     opcode = CastInst::getCastOpcode(OPS[2],                                  \
-      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 2), Type::UIntTy, false);             \
-    OPS[2] = CastInst::create(opcode, OPS[2], Type::UIntTy,  "tmp", CurBB);   \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 2), Type::Int32Ty, false);             \
+    OPS[2] = CastInst::create(opcode, OPS[2], Type::Int32Ty,  "tmp", CurBB);   \
     RESULT = new InsertElementInst(OPS[0], OPS[1], OPS[2], "tmp", CurBB);     \
     return true;                                                              \
   }                                                                           \
@@ -4457,50 +4457,50 @@ enum ix86_builtins
     if (cmpps == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       cmpps = M->getOrInsertFunction("llvm.x86.sse.cmp.ps",                   \
-                                    v4f32, v4f32, v4f32, Type::SByteTy, NULL);\
+                                    v4f32, v4f32, v4f32, Type::Int8Ty, NULL);\
     }                                                                         \
     bool flip = false;                                                        \
     Value *Pred;                                                              \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_CMPEQPS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 0);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 0);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLTPS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPGTPS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPLEPS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPGEPS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPUNORDPS:                                           \
-        Pred = ConstantInt::get(Type::SByteTy, 3);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 3);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNEQPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 4);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 4);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLTPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNGTPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPNLEPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNGEPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPORDPS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 7);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 7);                            \
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
@@ -4531,33 +4531,33 @@ enum ix86_builtins
     if (cmpss == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       cmpss = M->getOrInsertFunction("llvm.x86.sse.cmp.ss",                   \
-                                    v4f32, v4f32, v4f32, Type::SByteTy, NULL);\
+                                    v4f32, v4f32, v4f32, Type::Int8Ty, NULL);\
     }                                                                         \
     Value *Pred;                                                              \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_CMPEQSS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 0);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 0);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLTSS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLESS:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPUNORDSS:                                           \
-        Pred = ConstantInt::get(Type::SByteTy, 3);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 3);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNEQSS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 4);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 4);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLTSS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLESS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPORDSS:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 7);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 7);                            \
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
@@ -4585,50 +4585,50 @@ enum ix86_builtins
     if (cmpps == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       cmpps = M->getOrInsertFunction("llvm.x86.sse2.cmp.pd",                  \
-                                    v2f64, v2f64, v2f64, Type::SByteTy, NULL);\
+                                    v2f64, v2f64, v2f64, Type::Int8Ty, NULL);\
     }                                                                         \
     bool flip = false;                                                        \
     Value *Pred;                                                              \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_CMPEQPD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 0);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 0);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLTPD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPGTPD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPLEPD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPGEPD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPUNORDPD:                                           \
-        Pred = ConstantInt::get(Type::SByteTy, 3);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 3);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNEQPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 4);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 4);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLTPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNGTPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPNLEPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNGEPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         flip = true;                                                          \
         break;                                                                \
       case IX86_BUILTIN_CMPORDPD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 7);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 7);                            \
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
@@ -4657,33 +4657,33 @@ enum ix86_builtins
     if (cmpss == 0) {                                                         \
       Module *M = CURBB->getParent()->getParent();                            \
       cmpss = M->getOrInsertFunction("llvm.x86.sse2.cmp.sd",                  \
-                                    v2f64, v2f64, v2f64, Type::SByteTy, NULL);\
+                                    v2f64, v2f64, v2f64, Type::Int8Ty, NULL);\
     }                                                                         \
     Value *Pred;                                                              \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_CMPEQSD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 0);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 0);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLTSD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 1);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 1);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPLESD:                                              \
-        Pred = ConstantInt::get(Type::SByteTy, 2);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 2);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPUNORDSD:                                           \
-        Pred = ConstantInt::get(Type::SByteTy, 3);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 3);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNEQSD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 4);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 4);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLTSD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 5);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 5);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPNLESD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 6);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 6);                            \
         break;                                                                \
       case IX86_BUILTIN_CMPORDSD:                                             \
-        Pred = ConstantInt::get(Type::SByteTy, 7);                            \
+        Pred = ConstantInt::get(Type::Int8Ty, 7);                            \
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
@@ -4695,27 +4695,27 @@ enum ix86_builtins
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LDMXCSR: {                                                \
-    PointerType *u32Ptr = PointerType::get(Type::UIntTy);                     \
+    PointerType *u32Ptr = PointerType::get(Type::Int32Ty);                     \
     static Function *ldmxcsr = 0;                                             \
     if (ldmxcsr == 0) {                                                       \
       Module *M = CURBB->getParent()->getParent();                            \
       ldmxcsr = M->getOrInsertFunction("llvm.x86.sse.ldmxcsr",                \
                                        Type::VoidTy, u32Ptr, NULL);           \
     }                                                                         \
-    Value *Ptr = CreateTemporary(Type::UIntTy);                               \
+    Value *Ptr = CreateTemporary(Type::Int32Ty);                               \
     Value *Store = new StoreInst(OPS[0], Ptr, false, CurBB);                  \
     RESULT = new CallInst(ldmxcsr, Ptr, "", CurBB);                           \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_STMXCSR: {                                                \
-    PointerType *u32Ptr = PointerType::get(Type::UIntTy);                     \
+    PointerType *u32Ptr = PointerType::get(Type::Int32Ty);                     \
     static Function *stmxcsr = 0;                                             \
     if (stmxcsr == 0) {                                                       \
       Module *M = CURBB->getParent()->getParent();                            \
       stmxcsr = M->getOrInsertFunction("llvm.x86.sse.stmxcsr",                \
                                        Type::VoidTy, u32Ptr, NULL);           \
     }                                                                         \
-    Value *Ptr = CreateTemporary(Type::UIntTy);                               \
+    Value *Ptr = CreateTemporary(Type::Int32Ty);                               \
     new CallInst(stmxcsr, Ptr, "", CurBB);                                    \
     RESULT = new LoadInst(Ptr, "tmp", false, CurBB);                          \
     return true;                                                              \

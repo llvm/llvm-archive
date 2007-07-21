@@ -160,13 +160,13 @@ public:
         if (Size == 0)
           C.HandleAggregateResultAsScalar(Type::VoidTy);
         else if (Size == 1)
-          C.HandleAggregateResultAsScalar(Type::UByteTy);
+          C.HandleAggregateResultAsScalar(Type::Int8Ty);
         else if (Size == 2)
-          C.HandleAggregateResultAsScalar(Type::UShortTy);
+          C.HandleAggregateResultAsScalar(Type::Int16Ty);
         else if (Size <= 4)
-          C.HandleAggregateResultAsScalar(Type::UIntTy);
+          C.HandleAggregateResultAsScalar(Type::Int32Ty);
         else if (Size <= 8)
-          C.HandleAggregateResultAsScalar(Type::ULongTy);
+          C.HandleAggregateResultAsScalar(Type::Int64Ty);
         else {
           assert(0 && "Cannot return this aggregate as a scalar!");
           abort();
@@ -271,17 +271,17 @@ public:
     // produce far better LLVM code!
     std::vector<const Type*> Elts;
     for (; Size >= 8; Size -= 8)
-      Elts.push_back(Type::LongTy);
+      Elts.push_back(Type::Int64Ty);
     if (Size >= 4) {
-      Elts.push_back(Type::IntTy);
+      Elts.push_back(Type::Int32Ty);
       Size -= 4;
     }
     if (Size >= 2) {
-      Elts.push_back(Type::ShortTy);
+      Elts.push_back(Type::Int16Ty);
       Size -= 2;
     }
     if (Size >= 1) {
-      Elts.push_back(Type::SByteTy);
+      Elts.push_back(Type::Int8Ty);
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");

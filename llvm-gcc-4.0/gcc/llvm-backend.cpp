@@ -343,7 +343,7 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = ConstantInt::get(Type::IntTy, Tors[i].second);
+    StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
     StructInit[1] = Tors[i].first;
     InitList.push_back(ConstantStruct::get(StructInit, false));
   }
@@ -367,7 +367,7 @@ void llvm_asm_file_end(void) {
   
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant*> GlobalInit;
-    const Type *SBP = PointerType::get(Type::SByteTy);
+    const Type *SBP = PointerType::get(Type::Int8Ty);
     for (unsigned i = 0, e = AttributeUsedGlobals.size(); i != e; ++i)
       GlobalInit.push_back(ConstantExpr::getBitCast(AttributeUsedGlobals[i], 
                                                     SBP));

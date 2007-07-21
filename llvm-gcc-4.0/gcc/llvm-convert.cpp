@@ -234,8 +234,8 @@ namespace {
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       NameStack.push_back(NameStack.back()+"."+utostr(FieldNo));
       
-      Constant *Zero = Constant::getNullValue(Type::UIntTy);
-      Constant *FIdx = ConstantInt::get(Type::UIntTy, FieldNo);
+      Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+      Constant *FIdx = ConstantInt::get(Type::Int32Ty, FieldNo);
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
         // This cast only involves pointers, therefore BitCast
@@ -544,23 +544,37 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case TRUTH_NOT_EXPR: Result = EmitTRUTH_NOT_EXPR(exp); break;
 
   // Binary Operators
-  case LT_EXPR:        Result = EmitCompare(exp, Instruction::SetLT, 0); break;
-  case LE_EXPR:        Result = EmitCompare(exp, Instruction::SetLE, 0); break;
-  case GT_EXPR:        Result = EmitCompare(exp, Instruction::SetGT, 0); break;
-  case GE_EXPR:        Result = EmitCompare(exp, Instruction::SetGE, 0); break;
-  case EQ_EXPR:        Result = EmitCompare(exp, Instruction::SetEQ, 0); break;
-  case NE_EXPR:        Result = EmitCompare(exp, Instruction::SetNE, 0); break;
-  case UNORDERED_EXPR: Result = EmitCompare(exp, 0, 1); break; // not a typo
-  case ORDERED_EXPR:   Result = EmitCompare(exp, 0, 1); break; // not a typo
-  case UNLT_EXPR:      Result = EmitCompare(exp, Instruction::SetLT, 1); break;
-  case UNLE_EXPR:      Result = EmitCompare(exp, Instruction::SetLE, 1); break;
-  case UNGT_EXPR:      Result = EmitCompare(exp, Instruction::SetGT, 1); break;
-  case UNGE_EXPR:      Result = EmitCompare(exp, Instruction::SetGE, 1); break;
-  case UNEQ_EXPR:      Result = EmitCompare(exp, Instruction::SetEQ, 1); break;
-  case LTGT_EXPR:      Result = EmitCompare(exp, Instruction::SetNE, 1); break;
-  case PLUS_EXPR:      Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
-  case MINUS_EXPR:     Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
-  case MULT_EXPR:      Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
+  case LT_EXPR: 
+    Result = EmitCompare(exp, ICmpInst::ICMP_ULT, ICmpInst::ICMP_SLT, 
+                         FCmpInst::FCMP_OLT); break;
+  case LE_EXPR:
+    Result = EmitCompare(exp, ICmpInst::ICMP_ULE, ICmpInst::ICMP_SLE,
+                         FCmpInst::FCMP_OLE); break;
+  case GT_EXPR:
+    Result = EmitCompare(exp, ICmpInst::ICMP_UGT, ICmpInst::ICMP_SGT,
+                         FCmpInst::FCMP_OGT); break;
+  case GE_EXPR:
+    Result = EmitCompare(exp, ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE, 
+                         FCmpInst::FCMP_OGE); break;
+  case EQ_EXPR:
+    Result = EmitCompare(exp, ICmpInst::ICMP_EQ, ICmpInst::ICMP_EQ, 
+                         FCmpInst::FCMP_OEQ); break;
+  case NE_EXPR:
+    Result = EmitCompare(exp, ICmpInst::ICMP_NE, ICmpInst::ICMP_NE, 
+                         FCmpInst::FCMP_UNE); break;
+  case UNORDERED_EXPR: 
+    Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UNO); break;
+  case ORDERED_EXPR: 
+    Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ORD); break;
+  case UNLT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ULT); break;
+  case UNLE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ULE); break;
+  case UNGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGT); break;
+  case UNGE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGE); break;
+  case UNEQ_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UEQ); break;
+  case LTGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UNE); break;
+  case PLUS_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
+  case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
+  case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
   case TRUNC_DIV_EXPR: 
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
       Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
@@ -596,8 +610,14 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case LROTATE_EXPR:
     Result = EmitRotateOp(exp, Instruction::Shl, Instruction::LShr);
     break;
-  case MIN_EXPR:       Result = EmitMinMaxExpr(exp, Instruction::SetLE); break;
-  case MAX_EXPR:       Result = EmitMinMaxExpr(exp, Instruction::SetGE); break;
+  case MIN_EXPR: 
+    Result = EmitMinMaxExpr(exp, ICmpInst::ICMP_ULE, ICmpInst::ICMP_SLE, 
+                            FCmpInst::FCMP_OLE);
+    break;
+  case MAX_EXPR:
+    Result = EmitMinMaxExpr(exp, ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE,
+                            FCmpInst::FCMP_OGE);
+    break;
   case CONSTRUCTOR:    Result = EmitCONSTRUCTOR(exp, DestLoc); break;
     
   // Complex Math Expressions.
@@ -741,7 +761,7 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
     // it is dead.  This allows us to insert allocas in order without having to
     // scan for an insertion point. Use BitCast for int -> int
     AllocaInsertionPoint = CastInst::create(Instruction::BitCast,
-      Constant::getNullValue(Type::IntTy), Type::IntTy, "alloca point");
+      Constant::getNullValue(Type::Int32Ty), Type::Int32Ty, "alloca point");
     // Insert it as the first instruction in the entry block.
     Fn->begin()->getInstList().insert(Fn->begin()->begin(),
                                       AllocaInsertionPoint);
@@ -797,18 +817,18 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
     Value *V = new LoadInst(SrcPtr, "tmp", isSrcVolatile, CurBB);
     new StoreInst(V, DestPtr, isDstVolatile, CurBB);
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-    Constant *Zero = ConstantInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", CurBB);
       Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", CurBB);
       CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, CurBB);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
-    Constant *Zero = ConstantInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", CurBB);
       Value *SElPtr = new GetElementPtrInst(SrcPtr, Zero, Idx, "tmp", CurBB);
       CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, CurBB);
@@ -869,17 +889,17 @@ static void ZeroAggregate(Value *DestPtr, BasicBlock *CurBB) {
   if (ElTy->isFirstClassType()) {
     new StoreInst(Constant::getNullValue(ElTy), DestPtr, CurBB);
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-    Constant *Zero = ConstantInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", CurBB);
       ZeroAggregate(DElPtr, CurBB);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
-    Constant *Zero = ConstantInt::get(Type::UIntTy, 0);
+    Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      Constant *Idx = ConstantInt::get(Type::UIntTy, i);
+      Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = new GetElementPtrInst(DestPtr, Zero, Idx, "tmp", CurBB);
       ZeroAggregate(DElPtr, CurBB);
     }
@@ -904,66 +924,66 @@ void TreeToLLVM::EmitAggregateZero(Value *DestPtr, tree type) {
   }
 
   unsigned Alignment = TYPE_ALIGN_OK(type) ? (TYPE_ALIGN_UNIT(type) & ~0U) : 0;
-  EmitMemSet(DestPtr, ConstantInt::get(Type::UByteTy, 0),
+  EmitMemSet(DestPtr, ConstantInt::get(Type::Int8Ty, 0),
              Emit(TYPE_SIZE_UNIT(type), 0), Alignment);
 }
 
 void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, 
                             unsigned Align) {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   static Function *MemCpy = 0;
   const Type *IntPtr = TD.getIntPtrType();
   if (!MemCpy) {
-    const char *Name = IntPtr == Type::UIntTy ?
+    const char *Name = IntPtr == Type::Int32Ty ?
                        "llvm.memcpy.i32" : "llvm.memcpy.i64";
     MemCpy = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, 
-                                            SBP, IntPtr, Type::UIntTy,
+                                            SBP, IntPtr, Type::Int32Ty,
                                             NULL);
   }
   std::vector<Value*> Ops;
   Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
   Ops.push_back(CastToType(Instruction::BitCast, SrcPtr, SBP));
   Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::UIntTy, Align));
+  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
   new CallInst(MemCpy, Ops, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
                              unsigned Align) {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   static Function *MemMove = 0;
   const Type *IntPtr = TD.getIntPtrType();
   if (!MemMove) {
-    const char *Name = IntPtr == Type::UIntTy ?
+    const char *Name = IntPtr == Type::Int32Ty ?
                        "llvm.memmove.i32" : "llvm.memmove.i64";
     MemMove = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, SBP,
-                                             IntPtr, Type::UIntTy, NULL);
+                                             IntPtr, Type::Int32Ty, NULL);
   }
   std::vector<Value*> Ops;
   Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
   Ops.push_back(CastToType(Instruction::BitCast, SrcPtr, SBP));
   Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::UIntTy, Align));
+  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
   new CallInst(MemMove, Ops, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
                             unsigned Align) {
-  const Type *SBP = PointerType::get(Type::SByteTy);
+  const Type *SBP = PointerType::get(Type::Int8Ty);
   static Function *MemSet = 0;
   const Type *IntPtr = TD.getIntPtrType();
   if (!MemSet) {
-    const char *Name = IntPtr == Type::UIntTy ?
+    const char *Name = IntPtr == Type::Int32Ty ?
                        "llvm.memset.i32" : "llvm.memset.i64";
     MemSet = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, 
-                                            Type::UByteTy, IntPtr,
-                                            Type::UIntTy, NULL);
+                                            Type::Int8Ty, IntPtr,
+                                            Type::Int32Ty, NULL);
   }
   std::vector<Value*> Ops;
   Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
-  Ops.push_back(CastToSIntType(SrcVal, Type::UByteTy));
+  Ops.push_back(CastToSIntType(SrcVal, Type::Int8Ty));
   Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::UIntTy, Align));
+  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
   new CallInst(MemSet, Ops, "", CurBB);
 }
 
@@ -1133,17 +1153,17 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Ty = ConvertType(TREE_TYPE(type));  // Get array element type.
       // Compute the size of the number of elements of the array.
       Size = Emit(TYPE_MAX_VALUE(TYPE_DOMAIN(type)), 0);
-      Size = CastToUIntType(Size, Type::UIntTy);
+      Size = CastToUIntType(Size, Type::Int32Ty);
       
       // Annoyingly, TYPE_MAX_VALUE returns the maximum valid index, NOT the
       // number of elements in the array.  Thus, we must add one to the returned
       // value.  This addition should be optimized out later.
-      Size = BinaryOperator::createAdd(Size, ConstantInt::get(Type::UIntTy, 1),
+      Size = BinaryOperator::createAdd(Size, ConstantInt::get(Type::Int32Ty, 1),
                                        "tmp", CurBB);
     } else {
       // Compute the variable's size in bytes.
-      Size = CastToUIntType(Emit(DECL_SIZE_UNIT(decl), 0), Type::UIntTy);
-      Ty = Type::SByteTy;
+      Size = CastToUIntType(Emit(DECL_SIZE_UNIT(decl), 0), Type::Int32Ty);
+      Ty = Type::Int8Ty;
     }
   }
   
@@ -1353,8 +1373,8 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   Value *Cond = Emit(COND_EXPR_COND(exp), 0);
   // If its not already a bool, insert a comparison against zero to make it so.
   if (Cond->getType() != Type::BoolTy)
-    Cond = new SetCondInst(Instruction::SetNE, Cond, 
-                           Constant::getNullValue(Cond->getType()), "toBool", 
+    Cond = new ICmpInst(ICmpInst::ICMP_NE, Cond, 
+                        Constant::getNullValue(Cond->getType()), "toBool", 
                            CurBB);
   tree Then = COND_EXPR_THEN(exp);
   tree Else = COND_EXPR_ELSE(exp);
@@ -1765,14 +1785,14 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
       LV.BitStart = ValSizeInBits-LV.BitStart-LV.BitSize;
     
     if (LV.BitStart+LV.BitSize != ValSizeInBits) {
-      Value *ShAmt = ConstantInt::get(Type::UByteTy,
+      Value *ShAmt = ConstantInt::get(Type::Int8Ty,
                                        ValSizeInBits-(LV.BitStart+LV.BitSize));
       Val = new ShiftInst(Instruction::Shl, Val, ShAmt, "tmp", CurBB);
     }
     
     // Shift right required?
     if (ValSizeInBits-LV.BitSize) {
-      Value *ShAmt = ConstantInt::get(Type::UByteTy, ValSizeInBits-LV.BitSize);
+      Value *ShAmt = ConstantInt::get(Type::Int8Ty, ValSizeInBits-LV.BitSize);
       Val = new ShiftInst( TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
         Instruction::LShr : Instruction::AShr, Val, ShAmt, "tmp", CurBB);
     }
@@ -1920,8 +1940,8 @@ namespace {
     }
     
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
-      Constant *Zero = Constant::getNullValue(Type::UIntTy);
-      Constant *FIdx = ConstantInt::get(Type::UIntTy, FieldNo);
+      Constant *Zero = Constant::getNullValue(Type::Int32Ty);
+      Constant *FIdx = ConstantInt::get(Type::Int32Ty, FieldNo);
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
         // This always deals with pointer types so BitCast is appropriate
@@ -1980,8 +2000,8 @@ FIXME: "Call terminate if needed!";
     if (CallOperands.size() < FTy->getNumParams())
       ArgTy = FTy->getParamType(CallOperands.size());
     
-    // If we are implicitly passing the address of this thing instead of the
-    // value by value, handle this first.
+    // If we are implicitly passing the address of this argument instead of 
+    // passing it by value, handle this first.
     if (isPassedByInvisibleReference(TREE_TYPE(TREE_VALUE(arg)))) {
       // Get the address of the parameter passed in.
       LValue ArgVal = EmitLV(TREE_VALUE(arg));
@@ -2171,12 +2191,12 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   RHS = CastToAnyType(RHS, Op1Signed, OldVal->getType(), Op0Signed);
   if (LV.BitStart)
     RHS = new ShiftInst(Instruction::Shl, RHS,
-                        ConstantInt::get(Type::UByteTy, LV.BitStart),
+                        ConstantInt::get(Type::Int8Ty, LV.BitStart),
                         "tmp", CurBB);
   // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
   // be set in the result.
   uint64_t MaskVal = ((1ULL << LV.BitSize)-1) << LV.BitStart;
-  Constant *Mask = ConstantInt::get(Type::ULongTy, MaskVal);
+  Constant *Mask = ConstantInt::get(Type::Int64Ty, MaskVal);
   Mask = ConstantExpr::getTruncOrBitCast(Mask, RHS->getType());
   if (LV.BitStart+LV.BitSize != ValSizeInBits)
     RHS = BinaryOperator::createAnd(RHS, Mask, "tmp", CurBB);
@@ -2323,8 +2343,9 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   if (!Op->getType()->isFloatingPoint()) {
     Instruction *OpN = BinaryOperator::createNeg(Op, Op->getName()+"neg",CurBB);
-    Value *Cmp = new SetCondInst(Instruction::SetGE, Op, OpN->getOperand(0),
-                                 "abscond", CurBB);
+    ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp,0))) ?
+      ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
+    Value *Cmp = new ICmpInst(pred, Op, OpN->getOperand(0), "abscond", CurBB);
     return new SelectInst(Cmp, Op, OpN, "abs", CurBB);
   } else {
     // Turn FP abs into fabs/fabsf.
@@ -2341,8 +2362,8 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
   Value *V = Emit(TREE_OPERAND(exp, 0), 0);
   if (V->getType() != Type::BoolTy) 
-    V = new SetCondInst(Instruction::SetNE, V, 
-                        Constant::getNullValue(V->getType()), "toBool", CurBB);
+    V = new ICmpInst(ICmpInst::ICMP_NE, V, 
+                     Constant::getNullValue(V->getType()), "toBool", CurBB);
   V = BinaryOperator::createNot(V, V->getName()+"not", CurBB);
   return CastToUIntType(V, ConvertType(TREE_TYPE(exp)));
 }
@@ -2351,25 +2372,43 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
 /// comparison to use.  isUnord is true if this is a floating point comparison
 /// that should also be true if either operand is a NaN.  Note that Opc can be
 /// set to zero for special cases.
-Value *TreeToLLVM::EmitCompare(tree exp, unsigned Opc, bool isUnord) {
-  if (TREE_CODE(TREE_TYPE(TREE_OPERAND(exp, 0))) == COMPLEX_TYPE)
+Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc, 
+                               unsigned FPPred) {
+  // Get the type of the operands
+  tree Op0Ty = TREE_TYPE(TREE_OPERAND(exp,0));
+
+  // Deal with complex types
+  if (TREE_CODE(Op0Ty) == COMPLEX_TYPE)
     return EmitComplexBinOp(exp, 0);  // Complex ==/!=
-  
-  // Comparison of struct is not allowed, so this is safe.
+
+  // Get the compare operands, in the right type. Comparison of struct is not
+  // allowed, so this is safe as we already handled complex (struct) type.
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
   bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
   RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
-  
   assert(LHS->getType() == RHS->getType() && "Binop type equality failure!");
-  
+
+  // Handle the integer/pointer cases
+  if (!FLOAT_TYPE_P(Op0Ty)) {
+    // Determine which predicate to use based on signedness
+    ICmpInst::Predicate pred = 
+      ICmpInst::Predicate(TYPE_UNSIGNED(Op0Ty) ? UIOpc : SIOpc);
+
+    // Get the compare instructions
+    Value *Result = new ICmpInst(pred, LHS, RHS, "tmp", CurBB);
+    
+    // The GCC type is probably an int, not a bool.
+    return CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
+  }
+
+  // Handle floating point comparisons, if we get here.
   Value *Result = 0;
-  if (Opc)
-    Result = new SetCondInst((Instruction::BinaryOps)Opc, LHS, RHS, "tmp",
-                             CurBB);
+  if (FPPred)
+    Result = new FCmpInst(FCmpInst::Predicate(FPPred), LHS, RHS, "tmp", CurBB);
   
-  if (isUnord) {
+  if (CmpInst::isUnordered(FCmpInst::Predicate(FPPred))) {
     static Function *IsUnordF = 0, *IsUnordD = 0;
     Function *&Callee = LHS->getType() == Type::FloatTy ? IsUnordF : IsUnordD;
     const char *Name  = LHS->getType() == Type::FloatTy ?
@@ -2451,7 +2490,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
         // If this is a subtract, we want to step backwards.
         if (Opc == Instruction::Sub)
           EltOffset = -EltOffset;
-        Constant *C = ConstantInt::get(Type::LongTy, EltOffset);
+        Constant *C = ConstantInt::get(Type::Int64Ty, EltOffset);
         Value *V = new GetElementPtrInst(LHS, C, "tmp", CurBB);
         return CastToType(Instruction::BitCast, V, TREE_TYPE(exp));
       }
@@ -2480,12 +2519,10 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
-  LHS = new SetCondInst(Instruction::SetNE, LHS, 
-                        Constant::getNullValue(LHS->getType()),
-                        "toBool", CurBB);
-  RHS = new SetCondInst(Instruction::SetNE, RHS, 
-                        Constant::getNullValue(RHS->getType()),
-                        "toBool", CurBB);
+  LHS = new ICmpInst(ICmpInst::ICMP_NE, LHS, 
+                     Constant::getNullValue(LHS->getType()), "toBool", CurBB);
+  RHS = new ICmpInst(ICmpInst::ICMP_NE, RHS, 
+                     Constant::getNullValue(RHS->getType()), "toBool", CurBB);
   
   Value *Res = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS,
                                       "tmp", CurBB);
@@ -2500,17 +2537,17 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, Value *DestLoc, unsigned Opc) {
   
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-  RHS = CastToUIntType(RHS, Type::UByteTy);
+  RHS = CastToUIntType(RHS, Type::Int8Ty);
   
   return new ShiftInst((Instruction::OtherOps)Opc, LHS, RHS, "tmp", CurBB);
 }
 
 Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *In  = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *Amt = CastToUIntType(Emit(TREE_OPERAND(exp, 1), 0), Type::UByteTy);
+  Value *Amt = CastToUIntType(Emit(TREE_OPERAND(exp, 1), 0), Type::Int8Ty);
   
   Value *TypeSize =
-    ConstantInt::get(Type::UByteTy, In->getType()->getPrimitiveSizeInBits());
+    ConstantInt::get(Type::Int8Ty, In->getType()->getPrimitiveSizeInBits());
   
   // Do the two shifts.
   Value *V1 = new ShiftInst((Instruction::OtherOps)Opc1, In, Amt, "tmp", CurBB);
@@ -2523,7 +2560,8 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   return CastToUIntType(Merge, ConvertType(TREE_TYPE(exp)));
 }
 
-Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned CmpOpc) {
+Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred, 
+                                  unsigned FPPred) {
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
 
@@ -2541,9 +2579,15 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned CmpOpc) {
   opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToType(opcode, RHS, Ty);
   
-  Value *Pred = new SetCondInst((Instruction::BinaryOps)CmpOpc, LHS, RHS,
-                                "tmp", CurBB);
-  return new SelectInst(Pred, LHS, RHS,
+  Value *Compare;
+  if (LHS->getType()->isFloatingPoint())
+    Compare = new FCmpInst(FCmpInst::Predicate(FPPred), LHS, RHS, "tmp", CurBB);
+  else if TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)))
+    Compare = new ICmpInst(ICmpInst::Predicate(UIPred), LHS, RHS, "tmp", CurBB);
+  else
+    Compare = new ICmpInst(ICmpInst::Predicate(SIPred), LHS, RHS, "tmp", CurBB);
+
+  return new SelectInst(Compare, LHS, RHS,
                         TREE_CODE(exp) == MAX_EXPR ? "max" : "min", CurBB);
 }
 
@@ -3000,7 +3044,7 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
   
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     Result = new InsertElementInst(Result, Ops[i], 
-                                   ConstantInt::get(Type::UIntTy, i),
+                                   ConstantInt::get(Type::Int32Ty, i),
                                    "tmp", CurBB);
   
   return Result;
@@ -3041,10 +3085,10 @@ Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
   for (unsigned i = 0; i != NumElements; ++i) {
     int idx = va_arg(VA, int);
     if (idx == -1)
-      Idxs.push_back(UndefValue::get(Type::UIntTy));
+      Idxs.push_back(UndefValue::get(Type::Int32Ty));
     else {
       assert((unsigned)idx < 2*NumElements && "Element index out of range!");
-      Idxs.push_back(ConstantInt::get(Type::UIntTy, idx));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, idx));
     }
   }
   va_end(VA);
@@ -3224,12 +3268,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     HANDLE_UNARY_INT("llvm.cttz.i8", "llvm.cttz.i16",
                      "llvm.cttz.i32", "llvm.cttz.i64", Amt);
     Result = BinaryOperator::createAdd(Result, 
-                                       ConstantInt::get(Type::IntTy, 1),
+                                       ConstantInt::get(Type::Int32Ty, 1),
                                        "tmp", CurBB);
-    Value *Cond = BinaryOperator::createSetEQ(Amt, 
-                                        Constant::getNullValue(Amt->getType()),
-                                              "tmp", CurBB);
-    Result = new SelectInst(Cond, Constant::getNullValue(Type::IntTy),
+    Value *Cond;
+    if (Amt->getType()->isFloatingPoint())
+      Cond = new FCmpInst(FCmpInst::FCMP_OEQ, Amt,
+                          Constant::getNullValue(Amt->getType()), "tmp", CurBB);
+    else 
+      Cond = new ICmpInst(ICmpInst::ICMP_EQ, Amt, 
+                          Constant::getNullValue(Amt->getType()), "tmp", CurBB);
+
+    Result = new SelectInst(Cond, Constant::getNullValue(Type::Int32Ty),
                             Result, "tmp", CurBB);
     return true;
   }
@@ -3279,21 +3328,14 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
                                        const char *I16Name, Function *&I16Cache,
                                        const char *I32Name, Function *&I32Cache,
                                        const char *I64Name,Function *&I64Cache){
-  // Integer Intrinsics only come in one version for each integer size, and we
-  // have standardized on unsigned operands.  Convert the operand to unsigned
-  // if it is signed.
-  // FIXME: Remove this when signedness goes away.
-  if (InVal->getType()->isSigned())
-    InVal = CastToUIntType(InVal, InVal->getType()->getUnsignedVersion());
-
   const char *Name;
   Function  **FCache;
   switch (InVal->getType()->getTypeID()) {
   default: assert(0 && "Unknown Integer type!");
-  case Type::UByteTyID:  Name = I8Name;  FCache = &I8Cache ; break;
-  case Type::UShortTyID: Name = I16Name; FCache = &I16Cache; break;
-  case Type::UIntTyID:   Name = I32Name; FCache = &I32Cache; break;
-  case Type::ULongTyID:  Name = I64Name; FCache = &I64Cache; break;
+  case Type::Int8TyID:  Name = I8Name;  FCache = &I8Cache ; break;
+  case Type::Int16TyID: Name = I16Name; FCache = &I16Cache; break;
+  case Type::Int32TyID:   Name = I32Name; FCache = &I32Cache; break;
+  case Type::Int64TyID:  Name = I64Name; FCache = &I64Cache; break;
   }
   
   if (*FCache == 0)
@@ -3303,7 +3345,7 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
   
   // The LLVM intrinsics for these return the same type as their operands.  The
   // GCC version of these functions always returns int.  Cast to int for GCC.
-  Result = CastToSIntType(Result, Type::IntTy);
+  Result = CastToSIntType(Result, Type::Int32Ty);
   
   return true;  
 }
@@ -3333,7 +3375,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
   Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
-  Pow = CastToSIntType(Pow, Type::IntTy);
+  Pow = CastToSIntType(Pow, Type::Int32Ty);
 
   static Function *Fn32 = 0, *Fn64 = 0;
   const char *Name;
@@ -3347,7 +3389,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   // First time we used this intrinsic?
   if (*FCache == 0)
     *FCache = TheModule->getOrInsertFunction(Name, Val->getType(),
-                                             Val->getType(), Type::IntTy, NULL);
+                                             Val->getType(), Type::Int32Ty, NULL);
   return new CallInst(*FCache, Val, Pow, "tmp", CurBB);
 }
 
@@ -3427,7 +3469,7 @@ bool TreeToLLVM::EmitBuiltinBZero(tree_node *exp, Value *&Result) {
   if (DstAlign == 0) return false;
   
   Value *DstV = Emit(Dst, 0);
-  Value *Val = Constant::getNullValue(Type::IntTy);
+  Value *Val = Constant::getNullValue(Type::Int32Ty);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
   EmitMemSet(DstV, Val, Len, DstAlign/8);
   return true;
@@ -3453,7 +3495,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
       ReadWrite = 0;
     } else {
       ReadWrite = ConstantExpr::getIntegerCast(cast<Constant>(ReadWrite),
-                                               Type::UIntTy, false);
+                                               Type::Int32Ty, false);
     }
     
     if (TREE_CHAIN(TREE_CHAIN(arglist))) {
@@ -3466,25 +3508,25 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
         Locality = 0;
       } else {
         Locality = ConstantExpr::getIntegerCast(cast<Constant>(Locality),
-                                                Type::UIntTy, false);
+                                                Type::Int32Ty, false);
       }
     }
   }
   
   // Default to highly local read.
   if (ReadWrite == 0)
-    ReadWrite = Constant::getNullValue(Type::UIntTy);
+    ReadWrite = Constant::getNullValue(Type::Int32Ty);
   if (Locality == 0)
-    Locality = ConstantInt::get(Type::UIntTy, 3);
+    Locality = ConstantInt::get(Type::Int32Ty, 3);
   
-  Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::SByteTy));
+  Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
   
   static Function *llvm_prefetch_fn = 0;
   if (!llvm_prefetch_fn)
     llvm_prefetch_fn = 
       TheModule->getOrInsertFunction("llvm.prefetch", Type::VoidTy,
-                                     Ptr->getType(), Type::UIntTy, Type::UIntTy,
-                                     NULL);
+                                     Ptr->getType(), Type::Int32Ty, 
+                                     Type::Int32Ty, NULL);
 
   std::vector<Value*> Ops;
   Ops.push_back(Ptr);
@@ -3516,15 +3558,15 @@ bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
     if (!llvm_retaddr)
       llvm_retaddr = 
         TheModule->getOrInsertFunction("llvm.returnaddress",
-                                       PointerType::get(Type::SByteTy),
-                                       Type::UIntTy, NULL);
+                                       PointerType::get(Type::Int8Ty),
+                                       Type::Int32Ty, NULL);
     Fn = llvm_retaddr;
   } else {
     if (!llvm_frameaddr)
       llvm_frameaddr = 
         TheModule->getOrInsertFunction("llvm.frameaddress",
-                                       PointerType::get(Type::SByteTy),
-                                       Type::UIntTy, NULL);
+                                       PointerType::get(Type::Int8Ty),
+                                       Type::Int32Ty, NULL);
     Fn = llvm_frameaddr;
   }
   
@@ -3541,7 +3583,7 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
   static Function *Fn = 0;
   if (!Fn)
     Fn = TheModule->getOrInsertFunction("llvm.stacksave",
-                                       PointerType::get(Type::SByteTy), NULL);
+                                       PointerType::get(Type::Int8Ty), NULL);
   Result = new CallInst(Fn, "tmp", CurBB);
   return true;
 }
@@ -3554,9 +3596,9 @@ bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
   static Function *Fn = 0;
   if (!Fn)
     Fn = TheModule->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
-                                        PointerType::get(Type::SByteTy), NULL);
+                                        PointerType::get(Type::Int8Ty), NULL);
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
-  Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::SByteTy));
+  Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
 
   new CallInst(Fn, Ptr, "", CurBB);
   return true;
@@ -3568,8 +3610,8 @@ bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
-  Amt = CastToSIntType(Amt, Type::UIntTy);
-  Result = new AllocaInst(Type::SByteTy, Amt, "tmp", CurBB);
+  Amt = CastToSIntType(Amt, Type::Int32Ty);
+  Result = new AllocaInst(Type::Int8Ty, Amt, "tmp", CurBB);
   return true;
 }
 
@@ -3687,8 +3729,8 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
 
 void TreeToLLVM::EmitLoadFromComplex(Value *&Real, Value *&Imag,
                                      Value *SrcComplex, bool isVolatile) {
-  Value *I0 = ConstantInt::get(Type::UIntTy, 0);
-  Value *I1 = ConstantInt::get(Type::UIntTy, 1);
+  Value *I0 = ConstantInt::get(Type::Int32Ty, 0);
+  Value *I1 = ConstantInt::get(Type::Int32Ty, 1);
   
   Value *RealPtr = new GetElementPtrInst(SrcComplex, I0, I0, "real", CurBB);
   Real = new LoadInst(RealPtr, "real", isVolatile, CurBB);
@@ -3699,8 +3741,8 @@ void TreeToLLVM::EmitLoadFromComplex(Value *&Real, Value *&Imag,
 
 void TreeToLLVM::EmitStoreToComplex(Value *DestComplex, Value *Real,
                                     Value *Imag, bool isVolatile) {
-  Value *I0 = ConstantInt::get(Type::UIntTy, 0);
-  Value *I1 = ConstantInt::get(Type::UIntTy, 1);
+  Value *I0 = ConstantInt::get(Type::Int32Ty, 0);
+  Value *I1 = ConstantInt::get(Type::Int32Ty, 1);
   
   Value *RealPtr = new GetElementPtrInst(DestComplex, I0, I0, "real", CurBB);
   new StoreInst(Real, RealPtr, isVolatile, CurBB);
@@ -3777,12 +3819,12 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, Value *DestLoc) {
     break;
   }
   case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)
-    DSTr = BinaryOperator::createSetEQ(LHSr, RHSr, "tmpr", CurBB);
-    DSTi = BinaryOperator::createSetEQ(LHSi, RHSi, "tmpi", CurBB);
+    DSTr = new FCmpInst(FCmpInst::FCMP_OEQ, LHSr, RHSr, "tmpr", CurBB);
+    DSTi = new FCmpInst(FCmpInst::FCMP_OEQ, LHSi, RHSi, "tmpi", CurBB);
     return BinaryOperator::createAnd(DSTr, DSTi, "tmp", CurBB);
   case NE_EXPR:   // (a+ib) != (c+id) = (a != c) | (b != d) 
-    DSTr = BinaryOperator::createSetNE(LHSr, RHSr, "tmpr", CurBB);
-    DSTi = BinaryOperator::createSetNE(LHSi, RHSi, "tmpi", CurBB);
+    DSTr = new FCmpInst(FCmpInst::FCMP_ONE, LHSr, RHSr, "tmpr", CurBB);
+    DSTi = new FCmpInst(FCmpInst::FCMP_ONE, LHSi, RHSi, "tmpi", CurBB);
     return BinaryOperator::createOr(DSTr, DSTi, "tmp", CurBB);
   }
   
@@ -3903,16 +3945,16 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // element type, insert explicit pointer arithmetic here.
   //tree ElementSizeInBytes = array_ref_element_size(exp);
   
-  if (IndexVal->getType() != Type::IntTy &&
-      IndexVal->getType() != Type::UIntTy && 
-      IndexVal->getType() != Type::LongTy && 
-      IndexVal->getType() != Type::ULongTy)
+  if (IndexVal->getType() != Type::Int32Ty &&
+      IndexVal->getType() != Type::Int32Ty && 
+      IndexVal->getType() != Type::Int64Ty && 
+      IndexVal->getType() != Type::Int64Ty)
     if (TYPE_UNSIGNED(TREE_TYPE(Index))) // if the index is unsigned
       // ZExt it to retain its value in the larger type
-      IndexVal = CastToType(Instruction::ZExt, IndexVal, Type::LongTy);
+      IndexVal = CastToType(Instruction::ZExt, IndexVal, Type::Int64Ty);
     else
       // SExt it to retain its value in the larger type
-      IndexVal = CastToType(Instruction::SExt, IndexVal, Type::LongTy);
+      IndexVal = CastToType(Instruction::SExt, IndexVal, Type::Int64Ty);
 
   // Check for variable sized array reference.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
@@ -3929,7 +3971,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   }
   
   if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE) {
-    return new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::IntTy, 0),
+    return new GetElementPtrInst(ArrayAddr, ConstantInt::get(Type::Int32Ty, 0),
                                  IndexVal, "tmp", CurBB);
   } else {
     return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
@@ -3979,13 +4021,13 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     if (MemberIndex == ~0U) {
       assert(isStructWithVarSizeArrayAtEnd(StructTy) &&
              "Isn't var sized array access!");
-      CI = ConstantInt::get(Type::UIntTy, StructTy->getNumContainedTypes()-1);
+      CI = ConstantInt::get(Type::Int32Ty, StructTy->getNumContainedTypes()-1);
       MemberIndex = CI->getZExtValue();
     }
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
     FieldPtr = new GetElementPtrInst(StructAddrLV.Ptr,
-                                     Constant::getNullValue(Type::IntTy), CI,
+                                     Constant::getNullValue(Type::Int32Ty), CI,
                                      "tmp", CurBB);
     
     // Now that we did an offset from the start of the struct, subtract off
@@ -4014,7 +4056,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // possible to access all bits of a memory object with a bool (only the low
     // bit) but it is possible to access them with a byte.
     if (FieldTy == Type::BoolTy)
-      FieldTy = Type::UByteTy;
+      FieldTy = Type::Int8Ty;
     assert(FieldTy->isInteger() && "Invalid bitfield");
 
     // If the LLVM notion of the field type is larger than the actual field type
@@ -4033,8 +4075,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // a store to B.  In this case, without this conversion, you'd have a 
     // store through an int*, followed by a load from a uint*.  Forcing them
     // both to uint* allows the store to be forwarded to the load.
-    // FIXME: Remove this when signedness goes away
-    FieldTy = FieldTy->getUnsignedVersion();
     
     // If this is a bitfield, the field may span multiple fields in the LLVM
     // type.  As such, cast the pointer to be a pointer to the declared type.
@@ -4118,7 +4158,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
     Ptr.Ptr = CastToType(Instruction::BitCast, Ptr.Ptr, 
                          PointerType::get(ValTy));
     Ptr.Ptr = new GetElementPtrInst(Ptr.Ptr,
-                                    ConstantInt::get(Type::UIntTy, UnitOffset),
+                                    ConstantInt::get(Type::Int32Ty, UnitOffset),
                                     "tmp", CurBB);
     BitStart -= UnitOffset*ValueSizeInBits;
   }
@@ -4136,8 +4176,8 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
 
   return LValue(new GetElementPtrInst(Ptr.Ptr, 
-                                      ConstantInt::get(Type::UIntTy, 0),
-                                      ConstantInt::get(Type::UIntTy, Idx),
+                                      ConstantInt::get(Type::Int32Ty, 0),
+                                      ConstantInt::get(Type::Int32Ty, Idx),
                                       "tmp", CurBB));
 }
 
@@ -4247,7 +4287,7 @@ Constant *TreeConstantToLLVM::ConvertINTEGER_CST(tree exp) {
   // Build the value as a ulong constant, then constant fold it to the right
   // type.  This handles overflow and other things appropriately.
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  ConstantInt *C = ConstantInt::get(Type::ULongTy, IntValue);
+  ConstantInt *C = ConstantInt::get(Type::Int64Ty, IntValue);
   // The destination type can be a pointer, integer or floating point 
   // so we need a generalized cast here
   Instruction::CastOps opcode = CastInst::getCastOpcode(C, false, Ty,
@@ -4304,31 +4344,31 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   unsigned Len = (unsigned)TREE_STRING_LENGTH(exp);
   
   std::vector<Constant*> Elts;
-  if (ElTy == Type::SByteTy) {
+  if (ElTy == Type::Int8Ty) {
     const signed char *InStr = (const signed char *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::SByteTy, InStr[i]));
-  } else if (ElTy == Type::UByteTy) {
+      Elts.push_back(ConstantInt::get(Type::Int8Ty, InStr[i]));
+  } else if (ElTy == Type::Int8Ty) {
     const unsigned char *InStr =(const unsigned char *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::UByteTy, InStr[i]));
-  } else if (ElTy == Type::ShortTy) {
+      Elts.push_back(ConstantInt::get(Type::Int8Ty, InStr[i]));
+  } else if (ElTy == Type::Int16Ty) {
     const signed short *InStr = (const signed short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::ShortTy, InStr[i]));
-  } else if (ElTy == Type::UShortTy) {
+      Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
+  } else if (ElTy == Type::Int16Ty) {
     const unsigned short *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::UShortTy, InStr[i]));
-  } else if (ElTy == Type::IntTy) {
+      Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
+  } else if (ElTy == Type::Int32Ty) {
     const signed *InStr = (const signed *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::IntTy, InStr[i]));
-  } else if (ElTy == Type::UIntTy) {
+      Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
+  } else if (ElTy == Type::Int32Ty) {
     const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::UIntTy, InStr[i]));
+      Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
   } else {
     assert(0 && "Unknown character type!");
   }
@@ -4552,13 +4592,13 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
 
     // Insert the new value into the field and return it.
     uint64_t NewVal = (ExistingVal & ~FieldMask) | ValToInsert;
-    return ConstantExpr::getTruncOrBitCast(ConstantInt::get(Type::ULongTy, 
+    return ConstantExpr::getTruncOrBitCast(ConstantInt::get(Type::Int64Ty, 
                                                             NewVal), FieldTy);
   } else {
     // Otherwise, this is initializing part of an array of bytes.  Recursively
     // insert each byte.
     assert(isa<ArrayType>(FieldTy) && 
-           cast<ArrayType>(FieldTy)->getElementType() == Type::UByteTy &&
+           cast<ArrayType>(FieldTy)->getElementType() == Type::Int8Ty &&
            "Not an array of bytes?");
     // Expand the already parsed initializer into its elements if it is a 
     // ConstantArray or ConstantAggregateZero.
@@ -4571,7 +4611,7 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
           Elts[i] = CA->getOperand(i);
       } else {
         assert(isa<ConstantAggregateZero>(Val) && "Unexpected initializer!");
-        Constant *Elt = Constant::getNullValue(Type::UByteTy);
+        Constant *Elt = Constant::getNullValue(Type::Int8Ty);
         for (unsigned i = 0, e = Elts.size(); i != e; ++i)
           Elts[i] = Elt;
       }
@@ -4605,7 +4645,7 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
 
       Elts[i] = InsertBitFieldValue(EltValToInsert, NumEltBitsToInsert,
                                     OffsetToBitFieldStart, 8, Elts[i], 
-                                    Type::UByteTy);
+                                    Type::Int8Ty);
       
       // Advance for next element.
       OffsetToBitFieldStart = 0;
@@ -4721,7 +4761,7 @@ static Constant *ConvertStructFieldInitializerToType(Constant *Val,
   // into pieces.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     if (const ArrayType *ATy = dyn_cast<ArrayType>(FieldTy))
-      if (ATy->getElementType() == Type::UByteTy) {
+      if (ATy->getElementType() == Type::Int8Ty) {
         std::vector<Constant*> ArrayElts;
         uint64_t Val = CI->getZExtValue();
         for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
@@ -4733,7 +4773,7 @@ static Constant *ConvertStructFieldInitializerToType(Constant *Val,
             EltVal = (Val >> 8*(e-i-1)) & 0xFF;
           }
           
-          ArrayElts.push_back(ConstantInt::get(Type::UByteTy, EltVal));
+          ArrayElts.push_back(ConstantInt::get(Type::Int8Ty, EltVal));
         }
 
         return ConstantArray::get(ATy, ArrayElts);
@@ -4838,9 +4878,9 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
       const Type *FillTy;
       assert(UnionSize > InitSize && "Init shouldn't be larger than union!");
       if (UnionSize - InitSize == 1)
-        FillTy = Type::UByteTy;
+        FillTy = Type::Int8Ty;
       else
-        FillTy = ArrayType::get(Type::UByteTy, UnionSize - InitSize);
+        FillTy = ArrayType::get(Type::Int8Ty, UnionSize - InitSize);
       Elts.push_back(Constant::getNullValue(FillTy));
     }
   }
@@ -4912,7 +4952,7 @@ Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
   
   BasicBlock *BB = getLabelDeclBlock(exp);
   Constant *C = TheTreeToLLVM->getIndirectGotoBlockNumber(BB);
-  return ConstantExpr::getIntToPtr(C, PointerType::get(Type::SByteTy));
+  return ConstantExpr::getIntToPtr(C, PointerType::get(Type::Int8Ty));
 }
 
 Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
@@ -4957,11 +4997,9 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // element type, insert explicit pointer arithmetic here.
   //tree ElementSizeInBytes = array_ref_element_size(exp);
   
-  if (IndexVal->getType() != Type::IntTy &&
-      IndexVal->getType() != Type::UIntTy && 
-      IndexVal->getType() != Type::LongTy && 
-      IndexVal->getType() != Type::ULongTy)
-    IndexVal = ConstantExpr::getSExtOrBitCast(IndexVal, Type::LongTy);
+  if (IndexVal->getType() != Type::Int32Ty &&
+      IndexVal->getType() != Type::Int64Ty)
+    IndexVal = ConstantExpr::getSExtOrBitCast(IndexVal, Type::Int64Ty);
   
   // Check for variable sized array reference.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
@@ -4974,7 +5012,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   std::vector<Value*> Idx;
   if (TREE_CODE (TREE_TYPE(Array)) == ARRAY_TYPE)
-    Idx.push_back(ConstantInt::get(Type::IntTy, 0));
+    Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx.push_back(IndexVal);
   return ConstantExpr::getGetElementPtr(ArrayAddr, Idx);
 }
@@ -5007,7 +5045,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     
     if (MemberIndex  != ~0U) {
       std::vector<Value*> Idxs;
-      Idxs.push_back(Constant::getNullValue(Type::IntTy));
+      Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
       Idxs.push_back(CI);
       FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, Idxs);
       

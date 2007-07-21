@@ -65,20 +65,20 @@ extern "C" {
 static inline const Type *getIntegerType(unsigned Bits, bool isUnsigned) {
   switch (Bits*2+isUnsigned) {
   default: assert(0 && "Unknown integral type size!");
-  case   8*2+0: return Type::SByteTy;
-  case   8*2+1: return Type::UByteTy;
-  case  16*2+0: return Type::ShortTy;
-  case  16*2+1: return Type::UShortTy;
-  case  32*2+0: return Type::IntTy;
-  case  32*2+1: return Type::UIntTy;
-  case  64*2+0: return Type::LongTy;
-  case  64*2+1: return Type::ULongTy;
+  case   8*2+0: return Type::Int8Ty;
+  case   8*2+1: return Type::Int8Ty;
+  case  16*2+0: return Type::Int16Ty;
+  case  16*2+1: return Type::Int16Ty;
+  case  32*2+0: return Type::Int32Ty;
+  case  32*2+1: return Type::Int32Ty;
+  case  64*2+0: return Type::Int64Ty;
+  case  64*2+1: return Type::Int64Ty;
   case 128*2+0:
   case 128*2+1:
     static bool Warned = false;
     if (!Warned) fprintf(stderr, "WARNING: 128-bit integers not supported!\n");
     Warned = true;
-    return isUnsigned ? Type::ULongTy : Type::LongTy;
+    return isUnsigned ? Type::Int64Ty : Type::Int64Ty;
   }
 }
 
@@ -273,7 +273,7 @@ void TypeRefinementDatabase::dump() const {
 //===----------------------------------------------------------------------===//
 
 const Type *TypeConverter::ConvertType(tree orig_type) {
-  if (orig_type == error_mark_node) return Type::IntTy;
+  if (orig_type == error_mark_node) return Type::Int32Ty;
   
   // LLVM doesn't care about variants such as const, volatile, or restrict.
   tree type = TYPE_MAIN_VARIANT(orig_type);
@@ -378,7 +378,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       ConvertingStruct = false;
       
       if (Actual->getTypeID() == Type::VoidTyID) 
-        Actual = Type::SByteTy;  // void* -> sbyte*
+        Actual = Type::Int8Ty;  // void* -> sbyte*
       
       // Update the type, potentially updating TYPE_LLVM(type).
       const OpaqueType *OT = cast<OpaqueType>(Ty->getElementType());
@@ -412,7 +412,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       }
     
       if (Ty->getTypeID() == Type::VoidTyID) 
-        Ty = Type::SByteTy;  // void* -> sbyte*
+        Ty = Type::Int8Ty;  // void* -> sbyte*
       return TypeDB.setType(type, PointerType::get(Ty));
     }
    
@@ -459,8 +459,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // integer directly.
     switch (getTargetData().getPointerSize()) {
     default: assert(0 && "Unknown pointer size!");
-    case 4: return Type::IntTy;
-    case 8: return Type::LongTy;
+    case 4: return Type::Int32Ty;
+    case 8: return Type::Int64Ty;
     }
   }
 }
@@ -575,7 +575,38 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   isVarArg = (Args == 0);
   
   assert(RetTy && "Return type not specified!");
-  return FunctionType::get(RetTy, ArgTypes, isVarArg);
+
+  // If this is the C Calling Convention then scan the FunctionType's result 
+  // type and argument types looking for integers less than 32-bits and set
+  // the parameter attribute in the FunctionType so any arguments passed to
+  // the function will be correctly sign or zero extended to 32-bits by
+  // the LLVM code gen.
+  FunctionType::ParamAttrsList ParamAttrs;
+  if (CallingConv == CallingConv::C || CallingConv == CallingConv::CSRet) {
+    tree ResultTy = TREE_TYPE(type);  
+    if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
+        TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < 32)
+      if (TYPE_UNSIGNED(ResultTy))
+        ParamAttrs.push_back(FunctionType::ZExtAttribute);
+      else 
+        ParamAttrs.push_back(FunctionType::SExtAttribute);
+    else
+      ParamAttrs.push_back(FunctionType::NoAttributeSet);
+    tree Args = TYPE_ARG_TYPES(type);
+    unsigned Idx = 1;
+    for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
+      tree Ty = TREE_VALUE(Args);
+      if (TREE_CODE(Ty) == INTEGER_TYPE && TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < 32)
+        if (TYPE_UNSIGNED(Ty))
+          ParamAttrs.push_back(FunctionType::ZExtAttribute);
+        else 
+          ParamAttrs.push_back(FunctionType::SExtAttribute);
+      else
+        ParamAttrs.push_back(FunctionType::NoAttributeSet);
+      Idx++;
+    }
+  }
+  return FunctionType::get(RetTy, ArgTypes, isVarArg, ParamAttrs);
 }
 
 //===----------------------------------------------------------------------===//
@@ -798,7 +829,7 @@ void TypeConverter::DecodeStructFields(tree Field,
     // If the LLVM type is aligned more than the GCC type, we cannot use this
     // LLVM type for the field.  Instead, insert the field as an array of bytes,
     // which we know will have the least alignment possible.
-    Ty = ArrayType::get(Type::UByteTy, Info.getTypeSize(Ty));
+    Ty = ArrayType::get(Type::Int8Ty, Info.getTypeSize(Ty));
     ByteAlignment = 1;
     NextByteOffset = Info.getNewElementByteOffset(ByteAlignment);
   }
@@ -807,7 +838,7 @@ void TypeConverter::DecodeStructFields(tree Field,
   // padding.
   if (NextByteOffset < StartOffsetInBytes) {
     unsigned CurOffset = Info.getNewElementByteOffset(1);
-    const Type *Pad = Type::UByteTy;
+    const Type *Pad = Type::Int8Ty;
     if (StartOffsetInBytes-CurOffset != 1)
       Pad = ArrayType::get(Pad, StartOffsetInBytes-CurOffset);
     Info.addElement(Pad, CurOffset, StartOffsetInBytes-CurOffset);
@@ -870,7 +901,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     assert((StartOffsetInBits & 7) == 0 &&
            "Next field starts on a non-byte boundary!");
     unsigned PadBytes = StartOffsetInBits/8-FirstUnallocatedByte;
-    const Type *Pad = Type::UByteTy;
+    const Type *Pad = Type::Int8Ty;
     if (PadBytes != 1)
       Pad = ArrayType::get(Pad, PadBytes);
     Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
@@ -880,21 +911,21 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
   // Figure out the LLVM type that we will use for the new field.
   const Type *NewFieldTy;
   if (NumBitsToAdd <= 8)
-    NewFieldTy = Type::UByteTy;
+    NewFieldTy = Type::Int8Ty;
   else if (NumBitsToAdd <= 16)
-    NewFieldTy = Type::UShortTy;
+    NewFieldTy = Type::Int16Ty;
   else if (NumBitsToAdd <= 32)
-    NewFieldTy = Type::UIntTy;
+    NewFieldTy = Type::Int32Ty;
   else {
     assert(NumBitsToAdd <= 64 && "Bitfield too large!");
-    NewFieldTy = Type::ULongTy;
+    NewFieldTy = Type::Int64Ty;
   }
 
   // Check that the alignment of NewFieldTy won't cause a gap in the structure!
   unsigned ByteAlignment = Info.getTypeAlignment(NewFieldTy);
   if (FirstUnallocatedByte & (ByteAlignment-1)) {
     // Instead of inserting a nice whole field, insert a small array of ubytes.
-    NewFieldTy = ArrayType::get(Type::UByteTy, (NumBitsToAdd+7)/8);
+    NewFieldTy = ArrayType::get(Type::Int8Ty, (NumBitsToAdd+7)/8);
   }
   
   // Finally, add the new field.
@@ -946,7 +977,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       assert(LLVMStructSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
       uint64_t LLVMLastElementEnd = Info.getNewElementByteOffset(1);
-      const Type *PadTy = Type::UByteTy;
+      const Type *PadTy = Type::Int8Ty;
       if (GCCTypeSize-LLVMLastElementEnd != 1)
         PadTy = ArrayType::get(PadTy, GCCTypeSize-LLVMStructSize);
       Info.addElement(PadTy, GCCTypeSize-LLVMLastElementEnd, 
@@ -988,7 +1019,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         
       unsigned FieldNo = 
         Info.getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
-      SET_DECL_LLVM(Field, ConstantInt::get(Type::UIntTy, FieldNo));
+      SET_DECL_LLVM(Field, ConstantInt::get(Type::Int32Ty, FieldNo));
     }
   
   const Type *ResultTy = Info.getLLVMType();
@@ -1067,7 +1098,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
   unsigned MaxSize = 0, MaxAlign = 0;
-  Value *Idx = Constant::getNullValue(Type::UIntTy);
+  Value *Idx = Constant::getNullValue(Type::Int32Ty);
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
     assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
@@ -1102,7 +1133,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     if (UnionSize != GCCTypeSize) {
       assert(UnionSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
-      const Type *PadTy = Type::UByteTy;
+      const Type *PadTy = Type::Int8Ty;
       if (GCCTypeSize-UnionSize != 1)
         PadTy = ArrayType::get(PadTy, GCCTypeSize-UnionSize);
       UnionElts.push_back(PadTy);
@@ -1112,7 +1143,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // If this is an empty union, but there is tail padding, make a filler.
   if (UnionTy == 0) {
     unsigned Size = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
-    UnionTy = Type::UByteTy;
+    UnionTy = Type::Int8Ty;
     if (Size != 1) UnionTy = ArrayType::get(UnionTy, Size);
   }
   

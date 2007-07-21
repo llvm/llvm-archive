@@ -398,13 +398,15 @@ private:
   Value *EmitABS_EXPR(tree_node *exp);
   Value *EmitBIT_NOT_EXPR(tree_node *exp);
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
-  Value *EmitCompare(tree_node *exp, unsigned Opc, bool isUnordered);
+  Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
+                     unsigned FPOpc);
   Value *EmitBinOp(tree_node *exp, Value *DestLoc, unsigned Opc);
   Value *EmitPtrBinOp(tree_node *exp, unsigned Opc);
   Value *EmitTruthOp(tree_node *exp, unsigned Opc);
   Value *EmitShiftOp(tree_node *exp, Value *DestLoc, unsigned Opc);
   Value *EmitRotateOp(tree_node *exp, unsigned Opc1, unsigned Opc2);
-  Value *EmitMinMaxExpr(tree_node *exp, unsigned Opc);
+  Value *EmitMinMaxExpr(tree_node *exp, unsigned UIPred, unsigned SIPred, 
+                        unsigned Opc);
 
   // Inline Assembly and Register Variables.
   Value *EmitASM_EXPR(tree_node *exp);

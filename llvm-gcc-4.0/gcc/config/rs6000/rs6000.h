@@ -3643,7 +3643,7 @@ enum rs6000_builtins
  */
 #define MERGE_INT_PTR_OPERAND(OPNUM, NAME, DESTTY, OPS, CURBB, RESULT)        \
   { static Function *Cache = 0;                                               \
-    const Type *VoidPtrTy = PointerType::get(Type::SByteTy);                  \
+    const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);                  \
     if (Cache == 0) {                                                         \
       std::vector<const Type*> ArgTys;                                        \
       for (unsigned i = 0, e = OPS.size(); i != e; ++i)                       \
@@ -3671,18 +3671,18 @@ enum rs6000_builtins
  * the type in the range 0-3.
  */
 #define GET_ALTIVEC_TYPENUM_FROM_TYPE(TY)               \
-         ((TY == Type::IntTy) ? 0 :                     \
-          ((TY == Type::ShortTy) ? 1 :                  \
-           ((TY == Type::SByteTy) ? 2 :                 \
+         ((TY == Type::Int32Ty) ? 0 :                     \
+          ((TY == Type::Int16Ty) ? 1 :                  \
+           ((TY == Type::Int8Ty) ? 2 :                 \
             ((TY == Type::FloatTy) ? 3 : -1))))
 
 /* GET_ALTIVEC_LETTER_FROM_TYPE - Given an LLVM type, return the altivec letter
  * for the type, e.g. int -> w.
  */
 #define GET_ALTIVEC_LETTER_FROM_TYPE(TY)                \
-         ((TY == Type::IntTy) ? 'w' :                   \
-          ((TY == Type::ShortTy) ? 'h' :                \
-           ((TY == Type::SByteTy) ? 'b' :               \
+         ((TY == Type::Int32Ty) ? 'w' :                   \
+          ((TY == Type::Int16Ty) ? 'h' :                \
+           ((TY == Type::Int8Ty) ? 'b' :               \
             ((TY == Type::FloatTy) ? 'f' : 'x'))))
                   
 /* LLVM_TARGET_INTRINSIC_CAST_RESULT - This macro just provides a frequently
@@ -3797,7 +3797,7 @@ enum rs6000_builtins
     return true;                                                              \
   case ALTIVEC_BUILTIN_VSPLTISB:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::SByteTy, true);           \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int8Ty, true);           \
       RESULT = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,           \
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);    \
       return true;                                                            \
@@ -3805,14 +3805,14 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTISH:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::ShortTy, true);           \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int16Ty, true);           \
       RESULT = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);    \
       return true;                                                            \
     }                                                                         \
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTISW:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::IntTy, true);             \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int32Ty, true);             \
       RESULT = BuildVector(Elt, Elt, Elt, Elt, NULL);                         \
       return true;                                                            \
     }                                                                         \
@@ -3848,14 +3848,14 @@ enum rs6000_builtins
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[2])) {                   \
       /* Map all of these to a shuffle. */                                    \
       unsigned Amt = Elt->getZExtValue() & 15;                                \
-      PackedType *v16i8 = PackedType::get(Type::SByteTy, 16);                 \
+      PackedType *v16i8 = PackedType::get(Type::Int8Ty, 16);                  \
       Value *Op0 = OPS[0];                                                    \
       Instruction::CastOps opc = CastInst::getCastOpcode(Op0,                 \
-        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,0), DESTTY, DESTTY->isSigned());     \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,0), DESTTY, false);                  \
       OPS[0] = CastToType(opc, Op0, v16i8);                                   \
       Value *Op1 = OPS[1];                                                    \
       opc = CastInst::getCastOpcode(Op1,                                      \
-        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,1), DESTTY, DESTTY->isSigned());     \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,1), DESTTY, false);                  \
       OPS[1] = CastToType(opc, Op1, v16i8);                                   \
       RESULT = BuildVectorShuffle(OPS[0], OPS[1],                             \
                                   Amt, Amt+1, Amt+2, Amt+3,                   \
@@ -3914,9 +3914,9 @@ enum rs6000_builtins
     return true;                                                              \
   case ALTIVEC_BUILTIN_ABS_V4SF: {                                            \
     /* and out sign bits */                                                   \
-    PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
+    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);                      \
     OPS[0] = new BitCastInst(OPS[0], v4i32, OPS[0]->getName(),CurBB);         \
-    Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                  \
+    Constant *C = ConstantInt::get(Type::Int32Ty, 0x7FFFFFFF);                  \
     C = ConstantPacked::get(std::vector<Constant*>(4, C));                    \
     RESULT = BinaryOperator::createAnd(OPS[0], C, "tmp", CurBB);              \
     LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \

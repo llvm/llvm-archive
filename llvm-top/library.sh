@@ -106,13 +106,8 @@ checkout_a_module() {
     quiet="-q"
   fi
   msg 3 "Running svn checkout for '$module'"
-  if test "$module" = "llvm-gcc-4.0" ; then
-    $SVN checkout $quiet svn://anonsvn.opensource.apple.com/svn/llvm/trunk \
-      $module || die $? "Checkout of module $module failed."
-  else
-    $SVN checkout $quiet $SVNROOT/$module/trunk $module || \
-      die $? "Checkout of module '$module' failed."
-  fi
+  $SVN checkout $quiet $SVNROOT/$module/trunk $module || \
+    die $? "Checkout of module '$module' failed."
   return 0
 }
 

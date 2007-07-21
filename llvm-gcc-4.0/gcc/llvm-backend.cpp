@@ -57,6 +57,7 @@ extern "C" {
 #include "timevar.h"
 #include "tm.h"
 #include "function.h"
+#include "tree-inline.h"
 }
 
 // Global state for the LLVM backend.
@@ -219,7 +220,8 @@ void llvm_asm_file_start(void) {
     PM->add(createPruneEHPass());              // Remove dead EH info
 
     if (optimize > 1) {
-      PM->add(createFunctionInliningPass());   // Inline small functions
+      if (flag_inline_trees)   // respect -fno-inline-functions
+        PM->add(createFunctionInliningPass());   // Inline small functions
       PM->add(createSimplifyLibCallsPass());   // Library Call Optimizations
 
       if (optimize > 2)

@@ -59,8 +59,10 @@ extern "C" {
 #include "target.h"
 #include "hard-reg-set.h"
 #include "except.h"
+#include "rtl.h"
 extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
+extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
 
 #define ITANIUM_STYLE_EXCEPTIONS
@@ -863,8 +865,8 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case PLUS_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
   case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
   case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
+  case EXACT_DIV_EXPR: Result = EmitEXACT_DIV_EXPR(exp, DestLoc); break;
   case TRUNC_DIV_EXPR: 
-  case EXACT_DIV_EXPR:   // TODO: Optimize EXACT_DIV_EXPR.
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
       Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
     else 
@@ -3312,6 +3314,29 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
                               TREE_CODE(exp) == MAX_EXPR ? "max" : "min");
 }
 
+Value *TreeToLLVM::EmitEXACT_DIV_EXPR(tree exp, Value *DestLoc) {
+  // Unsigned EXACT_DIV_EXPR -> normal udiv.
+  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+    return EmitBinOp(exp, DestLoc, Instruction::UDiv);
+  
+  // If this is a signed EXACT_DIV_EXPR by a constant, and we know that
+  // the RHS is a multiple of two, we strength reduce the result to use
+  // a signed SHR here.  We have no way in LLVM to represent EXACT_DIV_EXPR
+  // precisely, so this transform can't currently be performed at the LLVM
+  // level.  This is commonly used for pointer subtraction. 
+  if (TREE_CODE(TREE_OPERAND(exp, 1)) == INTEGER_CST) {
+    uint64_t IntValue = getINTEGER_CSTVal(TREE_OPERAND(exp, 1));
+    if (isPowerOf2_64(IntValue)) {
+      // Create an ashr instruction, by the log of the division amount.
+      Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+      return Builder.CreateAShr(LHS, ConstantInt::get(LHS->getType(),
+                                                      Log2_64(IntValue)),"tmp");
+    }
+  }
+  
+  // Otherwise, emit this as a normal signed divide.
+  return EmitBinOp(exp, DestLoc, Instruction::SDiv);
+}
 
 Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, Value *DestLoc) {
   // Notation: FLOOR_MOD_EXPR <-> Mod, TRUNC_MOD_EXPR <-> Rem.
@@ -4140,7 +4165,25 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
    return EmitBuiltinExtractReturnAddr(exp, Result);
   case BUILT_IN_FROB_RETURN_ADDR:
    return EmitBuiltinFrobReturnAddr(exp, Result);
-    
+
+  // Builtins used by the exception handling runtime.
+  case BUILT_IN_DWARF_CFA:
+    return EmitBuiltinDwarfCFA(exp, Result);
+#ifdef DWARF2_UNWIND_INFO
+  case BUILT_IN_DWARF_SP_COLUMN:
+    return EmitBuiltinDwarfSPColumn(exp, Result);
+  case BUILT_IN_INIT_DWARF_REG_SIZES:
+    return EmitBuiltinInitDwarfRegSizes(exp, Result);
+#endif
+  case BUILT_IN_EH_RETURN:
+    return EmitBuiltinEHReturn(exp, Result);
+#ifdef EH_RETURN_DATA_REGNO
+  case BUILT_IN_EH_RETURN_DATA_REGNO:
+    return EmitBuiltinEHReturnDataRegno(exp, Result);
+#endif
+  case BUILT_IN_UNWIND_INIT:
+    return EmitBuiltinUnwindInit(exp, Result);
+
 #define HANDLE_UNARY_FP(F32, F64, V) \
         Result = EmitBuiltinUnaryFPOp(V, Intrinsic::F32, Intrinsic::F64)
 
@@ -4216,19 +4259,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_LONGJMP:
     case BUILT_IN_UPDATE_SETJMP_BUF:
     case BUILT_IN_TRAP:
-      
-      // Various hooks for the DWARF 2 __throw routine.
-    case BUILT_IN_UNWIND_INIT:
-    case BUILT_IN_DWARF_CFA:
-#ifdef DWARF2_UNWIND_INFO
-    case BUILT_IN_DWARF_SP_COLUMN:
-    case BUILT_IN_INIT_DWARF_REG_SIZES:
-#endif
-    case BUILT_IN_EH_RETURN:
-#ifdef EH_RETURN_DATA_REGNO
-    case BUILT_IN_EH_RETURN_DATA_REGNO:
-#endif
-      // FIXME: HACK: Just ignore these.
+
+    // FIXME: HACK: Just ignore these.
     {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
       if (Ty != Type::VoidTy)
@@ -4506,6 +4538,171 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                         Intrinsic::stacksave),
                               "tmp");
+  return true;
+}
+
+
+// Builtins used by the exception handling runtime.
+
+// On most machines, the CFA coincides with the first incoming parm.
+#ifndef ARG_POINTER_CFA_OFFSET
+#define ARG_POINTER_CFA_OFFSET(FNDECL) FIRST_PARM_OFFSET (FNDECL)
+#endif
+
+// The mapping from gcc register number to DWARF 2 CFA column number.  By
+// default, we just provide columns for all registers.
+#ifndef DWARF_FRAME_REGNUM
+#define DWARF_FRAME_REGNUM(REG) DBX_REGISTER_NUMBER (REG)
+#endif
+
+// Map register numbers held in the call frame info that gcc has
+// collected using DWARF_FRAME_REGNUM to those that should be output in
+// .debug_frame and .eh_frame.
+#ifndef DWARF2_FRAME_REG_OUT
+#define DWARF2_FRAME_REG_OUT(REGNO, FOR_EH) (REGNO)
+#endif
+
+/* Registers that get partially clobbered by a call in a given mode.
+   These must not be call used registers.  */
+#ifndef HARD_REGNO_CALL_PART_CLOBBERED
+#define HARD_REGNO_CALL_PART_CLOBBERED(REGNO, MODE) 0
+#endif
+
+bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
+  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+    return false;
+
+  int cfa_offset = ARG_POINTER_CFA_OFFSET(0);
+
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                                      Intrinsic::eh_dwarf_cfa),
+                              ConstantInt::get(Type::Int32Ty, cfa_offset));
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinDwarfSPColumn(tree exp, Value *&Result) {
+  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+    return false;
+
+  unsigned int dwarf_regnum = DWARF_FRAME_REGNUM(STACK_POINTER_REGNUM);
+  Result = ConstantInt::get(ConvertType(TREE_TYPE(exp)), dwarf_regnum);
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
+  tree arglist = TREE_OPERAND(exp, 1);
+
+  if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+    return false;
+
+  tree which = TREE_VALUE (arglist);
+  unsigned HOST_WIDE_INT iwhich;
+
+  if (TREE_CODE (which) != INTEGER_CST) {
+    error ("argument of %<__builtin_eh_return_regno%> must be constant");
+    return false;
+  }
+
+  iwhich = tree_low_cst (which, 1);
+  iwhich = EH_RETURN_DATA_REGNO (iwhich);
+  if (iwhich == INVALID_REGNUM)
+    return false;
+
+  iwhich = DWARF_FRAME_REGNUM (iwhich);
+
+  Result = ConstantInt::get(ConvertType(TREE_TYPE(exp)), iwhich);
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
+  tree arglist = TREE_OPERAND(exp, 1);
+
+  if (!validate_arglist(arglist, INTEGER_TYPE, POINTER_TYPE, VOID_TYPE))
+    return false;
+
+  Value *Offset = Emit(TREE_VALUE(arglist), 0);
+  Value *Handler = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
+  Offset = Builder.CreateIntCast(Offset, Type::Int32Ty, true, "tmp");
+  Handler = CastToType(Instruction::BitCast, Handler,
+                       PointerType::get(Type::Int8Ty));
+
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                               Intrinsic::eh_return),
+                     Offset, Handler);
+  Result = Builder.CreateUnreachable();
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
+  unsigned int i;
+  bool wrote_return_column = false;
+  static bool reg_modes_initialized = false;
+
+  tree arglist = TREE_OPERAND(exp, 1);
+  if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
+    return false;
+
+  if (!reg_modes_initialized) {
+    init_reg_modes_once();
+    reg_modes_initialized = true;
+  }
+
+  Value *Addr = BitCastToType(Emit(TREE_VALUE(arglist), 0),
+                              PointerType::get(Type::Int8Ty));
+  Constant *Size, *Idx;
+
+  for (i = 0; i < FIRST_PSEUDO_REGISTER; i++) {
+    int rnum = DWARF2_FRAME_REG_OUT (DWARF_FRAME_REGNUM (i), 1);
+
+    if (rnum < DWARF_FRAME_REGISTERS) {
+      enum machine_mode save_mode = reg_raw_mode[i];
+      HOST_WIDE_INT size;
+
+      if (HARD_REGNO_CALL_PART_CLOBBERED (i, save_mode))
+        save_mode = choose_hard_reg_mode (i, 1, true);
+      if (DWARF_FRAME_REGNUM (i) == DWARF_FRAME_RETURN_COLUMN) {
+        if (save_mode == VOIDmode)
+          continue;
+        wrote_return_column = true;
+      }
+      size = GET_MODE_SIZE (save_mode);
+      if (rnum < 0)
+        continue;
+
+      Size = ConstantInt::get(Type::Int8Ty, size);
+      Idx  = ConstantInt::get(Type::Int32Ty, rnum);
+      Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+    }
+  }
+
+  if (!wrote_return_column) {
+    Size = ConstantInt::get(Type::Int8Ty, GET_MODE_SIZE (Pmode));
+    Idx  = ConstantInt::get(Type::Int32Ty, DWARF_FRAME_RETURN_COLUMN);
+    Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+  }
+
+#ifdef DWARF_ALT_FRAME_RETURN_COLUMN
+  Size = ConstantInt::get(Type::Int8Ty, GET_MODE_SIZE (Pmode));
+  Idx  = ConstantInt::get(Type::Int32Ty, DWARF_ALT_FRAME_RETURN_COLUMN);
+  Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+#endif
+
+  // TODO: the RS6000 target needs extra initialization [gcc changeset 122468].
+
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinUnwindInit(tree exp, Value *&Result) {
+  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+    return false;
+
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                                    Intrinsic::eh_unwind_init));
+
   return true;
 }
 

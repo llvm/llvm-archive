@@ -315,6 +315,7 @@ void llvm_asm_file_start(void) {
     PM->add(createTailCallEliminationPass());   // Eliminate tail calls
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createReassociatePass());           // Reassociate expressions
+    PM->add(createLoopRotatePass());            // Rotate Loop
     PM->add(createLICMPass());                  // Hoist loop invariants
     PM->add(createLoopUnswitchPass());          // Unswitch loops.
     PM->add(createInstructionCombiningPass());  // Clean up after LICM/reassoc

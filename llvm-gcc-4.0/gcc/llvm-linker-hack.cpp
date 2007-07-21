@@ -53,6 +53,7 @@ void dummy_function() {
   llvm::createLinearScanRegisterAllocator();
 
   llvm::createGCSEPass();
+  llvm::createLoopRotatePass();
   llvm::createLICMPass();
   llvm::createSCCPPass();
   llvm::createPruneEHPass();

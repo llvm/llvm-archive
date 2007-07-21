@@ -1403,19 +1403,19 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
   
   if (!strncmp (name, "CLASS_METHODS_", 14))
-    return "__OBJC,__cls_meth, regular, no_dead_strip";
+    return "__OBJC,__cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "INSTANCE_METHODS_", 17))
-    return "__OBJC,__inst_meth, regular, no_dead_strip";
+    return "__OBJC,__inst_meth,regular,no_dead_strip";
   else if (!strncmp (name, "CATEGORY_CLASS_METHODS_", 23))
-    return "__OBJC,__cat_cls_meth, regular, no_dead_strip";
+    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "CATEGORY_INSTANCE_METHODS_", 26))
-    return "__OBJC,__cat_inst_meth, regular, no_dead_strip";
+    return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
   else if (!strncmp (name, "CLASS_VARIABLES_", 16))
-    return "__OBJC,__class_vars, regular, no_dead_strip";
+    return "__OBJC,__class_vars,regular,no_dead_strip";
   else if (!strncmp (name, "INSTANCE_VARIABLES_", 19))
-    return "__OBJC,__instance_vars, regular, no_dead_strip";
+    return "__OBJC,__instance_vars,regular,no_dead_strip";
   else if (!strncmp (name, "CLASS_PROTOCOLS_", 16))
-    return "__OBJC,__cls_meth, regular, no_dead_strip";
+    return "__OBJC,__cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "CLASS_NAME_", 11))
     return "__TEXT,__cstring,cstring_literals";
   else if (!strncmp (name, "METH_VAR_NAME_", 14))
@@ -1425,29 +1425,29 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "CLASS_REFERENCES", 16))
     return "__OBJC,__cls_refs,literal_pointers,no_dead_strip";
   else if (!strncmp (name, "CLASS_", 6))
-    return "__OBJC,__class, regular, no_dead_strip";
+    return "__OBJC,__class,regular,no_dead_strip";
   else if (!strncmp (name, "METACLASS_", 10))
-    return "__OBJC,__meta_class, regular, no_dead_strip";
+    return "__OBJC,__meta_class,regular,no_dead_strip";
   else if (!strncmp (name, "CATEGORY_", 9))
-    return "__OBJC,__category, regular, no_dead_strip";
+    return "__OBJC,__category,regular,no_dead_strip";
   else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
     return "__OBJC,__message_refs,literal_pointers,no_dead_strip";
   else if (!strncmp (name, "SELECTOR_FIXUP", 14))
     return "__OBJC,__sel_fixup,regular";/*,no_dead_strip";*/
   else if (!strncmp (name, "SYMBOLS", 7))
-    return "__OBJC,__symbols, regular, no_dead_strip";
+    return "__OBJC,__symbols,regular,no_dead_strip";
   else if (!strncmp (name, "MODULES", 7))
-    return "__OBJC,__module_info, regular, no_dead_strip";
+    return "__OBJC,__module_info,regular,no_dead_strip";
   else if (!strncmp (name, "IMAGE_INFO", 10))
     return "__OBJC,__image_info,regular";/*,no_dead_strip";*/
   else if (!strncmp (name, "PROTOCOL_INSTANCE_METHODS_", 26))
-    return "__OBJC,__cat_inst_meth, regular, no_dead_strip";
+    return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
   else if (!strncmp (name, "PROTOCOL_CLASS_METHODS_", 23))
-    return "__OBJC,__cat_cls_meth, regular, no_dead_strip";
+    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "PROTOCOL_REFS_", 14))
-    return "__OBJC,__cat_cls_meth, regular, no_dead_strip";
+    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "PROTOCOL_", 9))
-    return "__OBJC,__protocol, regular, no_dead_strip";
+    return "__OBJC,__protocol,regular,no_dead_strip";
   else
     return 0;
 }

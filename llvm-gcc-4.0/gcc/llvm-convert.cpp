@@ -1,6 +1,6 @@
 /* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
-Copyright (C) 2005 Free Software Foundation, Inc.
+Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
 
 This file is part of GCC.

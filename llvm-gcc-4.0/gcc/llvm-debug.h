@@ -121,7 +121,7 @@ public:
 
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
-  TypeDesc *getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit);
+  TypeDesc *getOrCreateType(tree_node *type, CompileUnitDesc *Unit);
 
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.

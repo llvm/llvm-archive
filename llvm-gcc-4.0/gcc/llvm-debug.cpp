@@ -451,13 +451,10 @@ static TypeDesc *AddTypeQualifiers(tree_node *type, CompileUnitDesc *Unit,
 /// getOrCreateType - Get the type from the cache or create a new type if
 /// necessary.
 /// FIXME - I hate jumbo methods - split up.
-TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
-{
-  DEBUGASSERT(origtype != NULL_TREE && origtype != error_mark_node &&
+TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
+  DEBUGASSERT(type != NULL_TREE && type != error_mark_node &&
               "Not a type.");
-  if (origtype == NULL_TREE || origtype == error_mark_node) return NULL;
-  
-  tree type = TYPE_MAIN_VARIANT(origtype);
+  if (type == NULL_TREE || type == error_mark_node) return NULL;
   
   // Should only be void if a pointer/reference/return type.  Returning NULL
   // allows the caller to produce a non-derived type.
@@ -515,7 +512,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
       Ty = DerivedTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(origtype, Unit, DerivedTy);
+      Slot = AddTypeQualifiers(type, Unit, DerivedTy);
       // Handle the derived type.
       TypeDesc *FromTy = getOrCreateType(TREE_TYPE(type), Unit);
       DerivedTy->setFromType(FromTy);
@@ -537,7 +534,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
       Ty = SubrTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(origtype, Unit, SubrTy);
+      Slot = AddTypeQualifiers(type, Unit, SubrTy);
       
       // Prepare to add the arguments for the subroutine.
       std::vector<DebugInfoDesc *> &Elements = SubrTy->getElements();
@@ -572,14 +569,14 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
         Ty = ArrayTy = new CompositeTypeDesc(DW_TAG_vector_type);
         // Set the slot early to prevent recursion difficulties.
         // Any other use of the type should include the qualifiers.
-        Slot = AddTypeQualifiers(origtype, Unit, ArrayTy);
+        Slot = AddTypeQualifiers(type, Unit, ArrayTy);
         // Use the element type of the from this point.
         type = TREE_TYPE(TYPE_FIELDS(TYPE_DEBUG_REPRESENTATION_TYPE(type)));
       } else {
         Ty = ArrayTy = new CompositeTypeDesc(DW_TAG_array_type);
         // Set the slot early to prevent recursion difficulties.
         // Any other use of the type should include the qualifiers.
-        Slot = AddTypeQualifiers(origtype, Unit, ArrayTy);
+        Slot = AddTypeQualifiers(type, Unit, ArrayTy);
       }
 
       // Prepare to add the dimensions of the array.
@@ -616,7 +613,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
       CompositeTypeDesc *Enum = new CompositeTypeDesc(DW_TAG_enumeration_type);
       Ty = Enum;
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(origtype, Unit, Enum);
+      Slot = AddTypeQualifiers(type, Unit, Enum);
       // Prepare to add the enumeration values.
       std::vector<DebugInfoDesc *> &Elements = Enum->getElements();
 
@@ -647,7 +644,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
       Ty = StructTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(origtype, Unit, StructTy);
+      Slot = AddTypeQualifiers(type, Unit, StructTy);
       // Prepare to add the fields.
       std::vector<DebugInfoDesc *> &Elements = StructTy->getElements();
       
@@ -772,7 +769,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *origtype, CompileUnitDesc *Unit)
       BasicTypeDesc *BTy = new BasicTypeDesc();
       Ty = BTy;
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(origtype, Unit, BTy);
+      Slot = AddTypeQualifiers(type, Unit, BTy);
       // The encoding specific to the type.
       unsigned Encoding = 0;
 

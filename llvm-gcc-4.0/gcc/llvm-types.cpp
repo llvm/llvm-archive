@@ -1070,6 +1070,8 @@ struct StructTypeConversionInfo {
 
   void allFieldsAreNotBitFields() {
     AllBitFields = false;
+    // Next field is not a bitfield.
+    LastFieldStartsAtNonByteBoundry = false;
   }
 
   unsigned getGCCStructAlignmentInBytes() const {

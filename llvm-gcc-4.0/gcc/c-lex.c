@@ -818,6 +818,36 @@ narrowest_signed_type (unsigned HOST_WIDE_INT low,
   return itk_none;
 }
 
+/* APPLE LOCAL begin llvm hack for PR1521 */
+#define PART_PRECISION (sizeof (cpp_num_part) * CHAR_BIT)
+/* Sign extend a number, with PRECISION significant bits and all
+   others assumed clear, to fill out a cpp_num structure.  */
+static cpp_num
+my_cpp_num_sign_extend (cpp_num num, size_t precision)
+{
+  if (num.high)
+    printf("%lu\n", num.high);
+  if (!num.unsignedp)
+    {
+      if (precision > PART_PRECISION)
+	{
+	  precision -= PART_PRECISION;
+	  if (precision < PART_PRECISION
+	      && (num.high & (cpp_num_part) 1 << (precision - 1)))
+	    num.high |= ~(~(cpp_num_part) 0 >> (PART_PRECISION - precision));
+	}
+      else if (num.low & (cpp_num_part) 1 << (precision - 1))
+	{
+	  if (precision < PART_PRECISION)
+	    num.low |= ~(~(cpp_num_part) 0 >> (PART_PRECISION - precision));
+	  num.high = ~(cpp_num_part) 0;
+	}
+    }
+
+  return num;
+}
+/* APPLE LOCAL llvm end */
+
 /* Interpret TOKEN, an integer with FLAGS as classified by cpplib.  */
 static tree
 interpret_integer (const cpp_token *token, unsigned int flags)
@@ -828,7 +858,8 @@ interpret_integer (const cpp_token *token, unsigned int flags)
   cpp_options *options = cpp_get_options (parse_in);
 
   integer = cpp_interpret_integer (parse_in, token, flags);
-  integer = cpp_num_sign_extend (integer, options->precision);
+  /* APPLE LOCAL llvm hack for PR1521 */
+  integer = my_cpp_num_sign_extend (integer, options->precision);
 
   /* The type of a constant with a U suffix is straightforward.  */
   if (flags & CPP_N_UNSIGNED)

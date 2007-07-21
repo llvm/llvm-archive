@@ -311,16 +311,18 @@ void TreeToLLVM::StartFunctionBody() {
   // Compute the linkage that the function should get.
   if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
     Fn->setLinkage(Function::InternalLinkage);
-  } else if (DECL_COMDAT(FnDecl)) {
-    Fn->setLinkage(Function::LinkOnceLinkage);
   } else if (DECL_DECLARED_INLINE_P(FnDecl)) {
-    if (DECL_EXTERNAL(FnDecl) || DECL_ONE_ONLY(FnDecl))
+    if (DECL_EXTERNAL(FnDecl)) {
       Fn->setLinkage(Function::LinkOnceLinkage);
-    else
+    } else {
       Fn->setLinkage(Function::WeakLinkage);
+    }
   } else if (DECL_WEAK(FnDecl) || DECL_ONE_ONLY(FnDecl)) {
     Fn->setLinkage(Function::WeakLinkage);
+  } else if (DECL_COMDAT(FnDecl)) {
+    Fn->setLinkage(Function::LinkOnceLinkage);
   }
+  
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
   TARGET_ADJUST_LLVM_LINKAGE(Fn,FnDecl);

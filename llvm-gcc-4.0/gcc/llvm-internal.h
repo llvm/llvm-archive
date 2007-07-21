@@ -87,11 +87,12 @@ extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern std::vector<GlobalValue*> AttributeUsedGlobals;
 
-extern void readLLVMTypesStringTable();
-extern void writeLLVMTypesStringTable();
-extern void readLLVMValuesStringTable();
-extern void writeLLVMValuesStringTable();
-extern void clearTargetBuiltinCache();
+void changeLLVMValue(Value *Old, Value *New);
+void readLLVMTypesStringTable();
+void writeLLVMTypesStringTable();
+void readLLVMValuesStringTable();
+void writeLLVMValuesStringTable();
+void clearTargetBuiltinCache();
 
 struct StructTypeConversionInfo;
 
@@ -521,6 +522,7 @@ private:
   LValue EmitLV_COMPONENT_REF(tree_node *exp);
   LValue EmitLV_BIT_FIELD_REF(tree_node *exp);
   LValue EmitLV_XXXXPART_EXPR(tree_node *exp, unsigned Idx);
+  LValue EmitLV_VIEW_CONVERT_EXPR(tree_node *exp);
 
   // Constant Expressions.
   Value *EmitINTEGER_CST(tree_node *exp);

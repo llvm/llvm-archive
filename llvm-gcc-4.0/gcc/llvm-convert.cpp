@@ -133,6 +133,29 @@ Value *llvm_get_decl(tree Tr) {
   return LLVMValues[Index - 1];
 }
 
+/// changeLLVMValue - If Old exists in the LLVMValues map, rewrite it to New.
+/// At this point we know that New is not in the map.
+void changeLLVMValue(Value *Old, Value *New) {
+  assert(!LLVMValuesMap.count(New) && "New cannot be in the map!");
+  
+  // Find Old in the table.
+  LLVMValuesMapTy::iterator I = LLVMValuesMap.find(Old);
+  if (I == LLVMValuesMap.end()) return;
+  
+  unsigned Idx = I->second-1;
+  assert(Idx < LLVMValues.size() && "Out of range index!");
+  assert(LLVMValues[Idx] == Old && "Inconsistent LLVMValues mapping!");
+  
+  LLVMValues[Idx] = New;
+  
+  // Remove the old value from the value map.
+  LLVMValuesMap.erase(I);
+  
+  // Insert the new value into the value map.  We know that it can't already
+  // exist in the mapping.
+  LLVMValuesMap[New] = Idx+1;
+}
+
 // Read LLVM Types string table
 void readLLVMValuesStringTable() {
 
@@ -850,14 +873,17 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case BIT_FIELD_REF: return EmitLV_BIT_FIELD_REF(exp);
   case REALPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 0);
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
+
   // Constants.
   case LABEL_DECL:    return TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
   case STRING_CST:    return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
 
+  // Type Conversion.
+  case VIEW_CONVERT_EXPR: return EmitLV_VIEW_CONVERT_EXPR(exp);
+
   // Trivial Cases.
-  case VIEW_CONVERT_EXPR:
   case WITH_SIZE_EXPR:
-    // The address of a these is the address of their operand.
+    // The address is the address of the operand.
     return EmitLV(TREE_OPERAND(exp, 0));
   case INDIRECT_REF:
     // The lvalue is just the address.
@@ -4848,6 +4874,15 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
                                       ConstantInt::get(Type::Int32Ty, 0),
                                       ConstantInt::get(Type::Int32Ty, Idx),
                                       "tmp", CurBB));
+}
+
+LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
+  // The address is the address of the operand.
+  LValue LV = EmitLV(TREE_OPERAND(exp, 0));
+  // The type is the type of the expression.
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
+  return LV;
 }
 
 //===----------------------------------------------------------------------===//

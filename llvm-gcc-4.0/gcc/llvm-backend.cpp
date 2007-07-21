@@ -789,11 +789,12 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy) Ty = StructType::get(std::vector<const Type*>(),
-                                                 false);
+    if (Ty == Type::VoidTy) 
+      Ty = StructType::get(std::vector<const Type*>(), false);
+    
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
-                              Name, TheModule);
+                              "", TheModule);
 
       // Check for external weak linkage
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
@@ -826,6 +827,28 @@ void make_decl_llvm(tree decl) {
         // Handle visibility style
         if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
           GV->setVisibility(Function::HiddenVisibility);
+        
+        // If GV got renamed, then there is already an object with this name in
+        // the symbol table.  If this happens, the old one must be a forward
+        // decl, just replace it with a cast of the new one.
+        if (GV->getName() != Name) {
+          Function *F = TheModule->getFunction(Name);
+          assert(F && F->isDeclaration() && "A function turned into a global?");
+          
+          // Replace any uses of "F" with uses of GV.
+          Value *FInNewType = ConstantExpr::getBitCast(GV, F->getType());
+          F->replaceAllUsesWith(FInNewType);
+          
+          // Update the decl that points to F.
+          changeLLVMValue(F, FInNewType);
+          
+          // F is now dead, nuke it.
+          F->eraseFromParent();
+          
+          // Now we can give GV the proper name.
+          GV->setName(Name);
+        }
+        
       } else {
         GV = GVE;  // Global already created, reuse it.
       }

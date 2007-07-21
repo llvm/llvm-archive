@@ -660,6 +660,12 @@ static tree handle_warn_unused_result_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
 
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+static tree handle_annotate_attribute (tree*, tree, tree, int, bool *);
+#endif
+/* APPLE LOCAL end LLVM */
+
 static void check_function_nonnull (tree, tree);
 static void check_nonnull_arg (void *, tree, unsigned HOST_WIDE_INT);
 static bool nonnull_check_p (tree, unsigned HOST_WIDE_INT);
@@ -747,6 +753,12 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_warn_unused_result_attribute },
   { "sentinel",               0, 1, false, true, true,
 			      handle_sentinel_attribute },
+  /* APPLE LOCAL begin LLVM */
+  #ifdef ENABLE_LLVM
+  { "annotate",                0, -1, true, false, false,
+                              handle_annotate_attribute },
+  #endif
+  /* APPLE LOCAL end LLVM */
   { NULL,                     0, 0, false, false, false, NULL }
 };
 
@@ -5758,6 +5770,39 @@ handle_sentinel_attribute (tree *node, tree name, tree args,
   return NULL_TREE;
 }
 
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+/* Handle "annotate" attribute */
+static tree
+handle_annotate_attribute (tree *node, tree name, tree args,
+			   int ARG_UNUSED (flags), bool *no_add_attrs)
+{
+  tree id;
+  id = TREE_VALUE (args);
+
+  if (TREE_CODE (*node) == FUNCTION_DECL ||
+      TREE_CODE (*node) == VAR_DECL || TREE_CODE (*node) == PARM_DECL)  
+  {
+  
+    /* Arg must be a string and node must be a var or function decl */
+    if (TREE_CODE (id) != STRING_CST) 
+    {
+      error ("%qs attribute arg is required to be a string", 
+               IDENTIFIER_POINTER (name));
+      *no_add_attrs = true;
+    }
+  }
+  else
+  {
+    warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+    *no_add_attrs = true;
+  }
+  
+  return NULL_TREE;
+}
+#endif
+/* APPLE LOCAL end LLVM */
+
 /* Check for valid arguments being passed to a function.  */
 void
 check_function_arguments (tree attrs, tree params)

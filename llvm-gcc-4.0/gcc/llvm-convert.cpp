@@ -600,6 +600,10 @@ void TreeToLLVM::StartFunctionBody() {
     AttributeNoinlineFunctions.push_back(ConstantExpr::getBitCast(Fn,SBP));
   }
   
+  // Handle annotate attributes
+  if (DECL_ATTRIBUTES(FnDecl))
+    AddAnnotateAttrsToGlobal(Fn, FnDecl);
+  
   // Create a new basic block for the function.
   Builder.SetInsertPoint(new BasicBlock("entry", Fn));
   
@@ -645,6 +649,10 @@ void TreeToLLVM::StartFunctionBody() {
                                   Builder.GetInsertBlock());
       }
 
+      // Emit annotate intrinsic if arg has annotate attr
+      if (DECL_ATTRIBUTES(Args))
+        EmitAnnotateIntrinsic(Tmp, Args);
+      
       Client.setName(Name);
       Client.setLocation(Tmp);
       ABIConverter.HandleArgument(TREE_TYPE(Args));
@@ -1392,6 +1400,52 @@ void TreeToLLVM::AddBranchFixup(BranchInst *BI, bool isExceptionEdge) {
   BranchFixups.push_back(BranchFixup(BI, isExceptionEdge));
 }
 
+// Emits annotate intrinsic if the decl has the annotate attribute set.
+void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
+  
+  // Handle annotate attribute on global.
+  tree annotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES (decl));
+  
+  if (!annotateAttr)
+    return;
+
+  Function *annotateFun = Intrinsic::getDeclaration(TheModule, 
+                                                    Intrinsic::var_annotation);
+  
+  // There may be multiple annotate attributes. Pass return of lookup_attr 
+  //  to successive lookups.
+  while (annotateAttr) {
+    
+    // Each annotate attribute is a tree list.
+    // Get value of list which is our linked list of args.
+    tree args = TREE_VALUE(annotateAttr);
+    
+    // Each annotate attribute may have multiple args.
+    // Treat each arg as if it were a separate annotate attribute.
+    for (tree a = args; a; a = TREE_CHAIN(a)) {
+      // Each element of the arg list is a tree list, so get value
+      tree val = TREE_VALUE(a);
+      
+      // Assert its a string, and then get that string.
+      assert(TREE_CODE(val) == STRING_CST &&
+             "Annotate attribute arg should always be a string");
+      const Type *SBP = PointerType::get(Type::Int8Ty);
+      Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
+      Value *Ops[2] = {
+        BitCastToType(V, SBP),
+        BitCastToType(strGV, SBP)
+      };
+      
+      Builder.CreateCall(annotateFun, Ops, 2);
+    }
+    
+    // Get next annotate attribute.
+    annotateAttr = TREE_CHAIN(annotateAttr);
+    if (annotateAttr)
+      annotateAttr = lookup_attribute("annotate", annotateAttr);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                  ... Basic Lists and Binding Scopes ...
 //===----------------------------------------------------------------------===//
@@ -1493,8 +1547,12 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   }
   
   AI->setAlignment(Alignment);
-  
+    
   SET_DECL_LLVM(decl, AI);
+  
+  // Handle annotate attributes
+  if (DECL_ATTRIBUTES(decl))
+    EmitAnnotateIntrinsic(AI, decl);
   
   if (TheDebugInfo) {
     if (DECL_NAME(decl)) {

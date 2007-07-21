@@ -92,6 +92,10 @@ extern std::vector<Constant*> AttributeUsedGlobals;
 /// marked attribute(noinline)
 extern std::vector<Constant*> AttributeNoinlineFunctions;
 
+/// AddAnnotateAttrsToGlobal - Adds decls that have a
+/// annotate attribute to a vector to be emitted later.
+extern void AddAnnotateAttrsToGlobal(GlobalValue *GV, union tree_node* decl);
+
 void changeLLVMValue(Value *Old, Value *New);
 void readLLVMTypesStringTable();
 void writeLLVMTypesStringTable();
@@ -444,6 +448,10 @@ private:
   static bool isNoopCast(Value *V, const Type *Ty);
 
   void HandleMultiplyDefinedGCCTemp(tree_node *var);
+  
+  /// EmitAnnotateIntrinsic - Emits call to annotate attr intrinsic
+  void EmitAnnotateIntrinsic(Value *V, tree_node *decl);
+  
 private:
   /// GatherTypeInfo - Walk through the expression gathering all the
   /// typeinfos that are used.

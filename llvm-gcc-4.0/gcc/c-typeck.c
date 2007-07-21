@@ -1896,8 +1896,12 @@ build_array_ref (tree array, tree index)
        * pointer, not an array.  The LLVM backend supports this use of ARRAY_REF
        * and it provides it with more information for optimization.
        */
-      return build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ar)), ar, index,
-                     NULL_TREE, NULL_TREE);
+      {
+        tree ty = TREE_TYPE(TREE_TYPE(ar));
+        if (TREE_CODE(ty) != ARRAY_TYPE)
+          ty = TYPE_MAIN_VARIANT (ty);
+        return build4 (ARRAY_REF, ty, ar, index, NULL_TREE, NULL_TREE);
+      }
 #endif
       /* APPLE LOCAL end LLVM */
       

@@ -3928,6 +3928,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_AGGREGATE_INCOMING_ADDRESS:
     case BUILT_IN_SETJMP:
     case BUILT_IN_LONGJMP:
+    case BUILT_IN_UPDATE_SETJMP_BUF:
     case BUILT_IN_TRAP:
       
       // Various hooks for the DWARF 2 __throw routine.

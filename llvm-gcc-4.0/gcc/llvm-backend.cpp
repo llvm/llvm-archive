@@ -538,8 +538,6 @@ void emit_global_to_llvm(tree decl) {
 
   // FIXME: Support alignment on globals: DECL_ALIGN.
   // FIXME: DECL_PRESERVE_P indicates the var is marked with attribute 'used'.
-  if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL(decl))
-    sorry("thread-local data not supported by LLVM yet!");
 
   // Global register variables don't turn into LLVM GlobalVariables.
   if (TREE_CODE(decl) == VAR_DECL && DECL_REGISTER(decl))
@@ -589,7 +587,11 @@ void emit_global_to_llvm(tree decl) {
  
   // Set the initializer.
   GV->setInitializer(Init);
-  
+
+  // Set thread local (TLS)
+  if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL(decl))
+    GV->setThreadLocal(true);
+
   // Set the linkage.
   if (!TREE_PUBLIC(decl)) {
     GV->setLinkage(GlobalValue::InternalLinkage);
@@ -875,6 +877,10 @@ void make_decl_llvm(tree decl) {
           GV->setConstant(true);
       }
     }
+
+    // Set thread local (TLS)
+    if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL(decl))
+      GV->setThreadLocal(true);
 
     SET_DECL_LLVM(decl, GV);
   }

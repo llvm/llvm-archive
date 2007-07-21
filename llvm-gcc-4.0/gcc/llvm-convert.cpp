@@ -4201,12 +4201,15 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
 bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
                                        Intrinsic::ID Id) {
-  const Type *Ty = InVal->getType();
-  
-  const Type* Tys[2];
-  Tys[0] = 0;  // Result type is i32, not variable, signal so.
-  Tys[1] = Ty; // Parameter type is iAny so actual type must be specified here
-  Result = new CallInst(Intrinsic::getDeclaration(TheModule, Id, Tys, 2),
+  // The intrinsic might be overloaded in which case the argument is of
+  // varying type. Make sure that we specify the actual type for "iAny" 
+  // by passing it as the 3rd and 4th parameters. This isn't needed for
+  // most intrinsics, but is needed for ctpop, cttz, ctlz.
+  const Type* Tys[] = {
+    InVal->getType()
+  };
+  Result = new CallInst(Intrinsic::getDeclaration(TheModule, Id, Tys, 
+                                                  sizeof(Tys)/sizeof(Tys[0])),
                         InVal, "tmp", CurBB);
   
   return true;

@@ -234,6 +234,7 @@ void llvm_asm_file_start(void) {
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs
     PM->add(createScalarReplAggregatesPass()); // Break up aggregate allocas
     PM->add(createInstructionCombiningPass()); // Combine silly seq's
+    PM->add(createPredicateSimplifierPass());  // Canonicalize registers
     PM->add(createCondPropagationPass());      // Propagate conditionals
     PM->add(createTailCallEliminationPass());  // Eliminate tail calls
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs
@@ -242,7 +243,8 @@ void llvm_asm_file_start(void) {
     PM->add(createLoopUnswitchPass());         // Unswitch loops.
     PM->add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
     PM->add(createIndVarSimplifyPass());       // Canonicalize indvars
-    PM->add(createLoopUnrollPass());           // Unroll small loops
+    if (flag_unroll_loops)
+      PM->add(createLoopUnrollPass());           // Unroll small loops
     PM->add(createInstructionCombiningPass()); // Clean up after the unroller
     
     if (optimize > 2)

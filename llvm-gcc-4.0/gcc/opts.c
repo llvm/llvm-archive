@@ -548,6 +548,11 @@ void set_flags_from_O (unsigned int cmdline)
           /* PRE tends to generate bigger code.  */
           flag_tree_pre = 1;
 	}
+      /* APPLE LOCAL begin LLVM */
+      /* Enable loop unrolling at -O2 if -f[no-]unroll-loops is not used.  */
+      if (!flag_unroll_loops_set)
+        flag_unroll_loops = 1;
+      /* APPLE LOCAL end LLVM */
     }
 
   if (optimize >= 3)

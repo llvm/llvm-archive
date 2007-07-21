@@ -56,6 +56,7 @@ extern "C" {
 #include "toplev.h"
 #include "timevar.h"
 #include "tm.h"
+#include "function.h"
 }
 
 // Global state for the LLVM backend.
@@ -387,6 +388,9 @@ void llvm_asm_file_end(void) {
 // llvm_emit_code_for_current_function - Top level interface for emitting a
 // function to the .s file.
 void llvm_emit_code_for_current_function(tree fndecl) {
+  if (cfun->static_chain_decl || cfun->nonlocal_goto_save_area)
+    sorry("%Jnested functions not supported by LLVM", fndecl);
+  
   if (errorcount || sorrycount) {
     TREE_ASM_WRITTEN(fndecl) = 1;
     return;  // Do not process broken code.
@@ -400,7 +404,7 @@ void llvm_emit_code_for_current_function(tree fndecl) {
 
     // Set up parameters and prepare for return, for the function.
     Emitter.StartFunctionBody();
-      
+    
     // Emit the body of the function.
     Emitter.Emit(DECL_SAVED_TREE(fndecl), 0);
   

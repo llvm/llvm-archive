@@ -386,6 +386,12 @@ void TreeToLLVM::StartFunctionBody() {
       !DECL_LLVM_SET_P(DECL_RESULT(FnDecl)))
     EmitAutomaticVariableDecl(DECL_RESULT(FnDecl));
 
+  // If this function has nested functions, we should handle the static chain,
+  // and handle a potential nonlocal_goto_save_area.
+  if (cfun->static_chain_decl || cfun->nonlocal_goto_save_area) {
+    // Not supported yet.
+  }
+  
   // As it turns out, not all temporaries are associated with blocks.  For those
   // that aren't, emit them now.
   for (tree t = cfun->unexpanded_var_list; t; t = TREE_CHAIN(t)) {
@@ -2443,6 +2449,20 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
   tree str = ASM_STRING(exp);
   if (TREE_CODE(str) == ADDR_EXPR) str = TREE_OPERAND(str, 0);
 
+  // ASM_INPUT_P - This flag is set if this is a non-extended ASM, which means
+  // that the asm string should not be interpreted, other than to escape $'s.
+  if (ASM_INPUT_P(exp)) {
+    const char *InStr = TREE_STRING_POINTER(str);
+    std::string Result;
+    while (1) {
+      switch (*InStr++) {
+      case 0: return Result;                 // End of string.
+      default: Result += InStr[-1]; break;   // Normal character.
+      case '$': Result += "$$"; break;       // Escape '$' characters.
+      }
+    }
+  }
+  
   // Expand [name] symbolic operand names.
   str = resolve_asm_operand_names(str, ASM_OUTPUTS(exp), ASM_INPUTS(exp));
 

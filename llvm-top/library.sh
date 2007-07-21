@@ -10,21 +10,35 @@
 # the scripts in the llvm-top module.
 
 # The arguments to all scripts are
+
+# Get the options. If there is no options file, default the values.
+options="./.options"
+if test -r "$options" -a -f "$options" ; then
+  . "$options"
+else
+  LLVM_TOP=`pwd`
+  PREFIX="$LLVM_TOP/installed"
+  DESTDIR=
+  VERBOSE=0
+  TOOL_VERBOSE=0
+  SHAREDLIBS=0
+  ARCHIVELIBS=1
+  OPTIMIZED=0
+  DEBUG=1
+  ASSERT=1
+  EXPENSIVE=0
+  PROFILING=0
+  USEOBJDIR=0
+  STRIP=0
+  OPTFORSIZE=0
+fi
+
 # Define where subversion is. We assume by default its in the path.
 SVN=`which svn`
-
-# Get the llvm-top directory before anyone has a chance to cd out of it
-LLVM_TOP=`pwd`
-PREFIX="$LLVM_TOP/installed"
-DESTDIR=
 
 # A command to figure out the root of the SVN repository by asking for it from
 # the 'svn info' command. To use, execute it in a script with something like
 SVNROOT=`$SVN info . | grep 'Repository Root:' |sed -e 's/^Repository Root: //'`
-
-# Set this to non-zero (after sourcing this library) if you want verbose
-# output from the library. The higher the value, the more output you get
-VERBOSE=0
 
 # Generate an informative message to the user based on the verbosity level
 msg() {

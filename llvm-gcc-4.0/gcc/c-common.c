@@ -7184,6 +7184,8 @@ iasm_stmt (tree expr, tree args, int lineno)
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
 
   clobbers = uses;
+  /* APPLE LOCAL LLVM portability to other platforms! */
+#ifdef TARGET_MACHO
   if (iasm_memory_clobber (opcodename))
     {
       /* To not clobber all of memory, we would need to know what
@@ -7192,6 +7194,8 @@ iasm_stmt (tree expr, tree args, int lineno)
 			    build_string (6, "memory"),
 			    clobbers);
     }
+  /* APPLE LOCAL LLVM portability to other platforms! */
+#endif
 
   /* Perform default conversions on function inputs.
      Don't do this for other types as it would screw up operands

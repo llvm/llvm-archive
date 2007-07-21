@@ -2474,6 +2474,12 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
     case 0: return Result;                 // End of string.
     default: Result += InStr[-1]; break;   // Normal character.
     case '$': Result += "$$"; break;       // Escape '$' characters.
+#ifdef ASSEMBLER_DIALECT
+    // Note that we can't escape to ${, because that is the syntax for vars.
+    case '{': Result += "$("; break;       // Escape '{' character.
+    case '}': Result += "$)"; break;       // Escape '}' character.
+    case '|': Result += "$|"; break;       // Escape '|' character.
+#endif
     case '%':                              // GCC escape character.
       char EscapedChar = *InStr++;
       if (EscapedChar == '%') {            // Escaped '%' character

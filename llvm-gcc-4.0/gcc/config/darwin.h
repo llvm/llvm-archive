@@ -44,6 +44,11 @@ Boston, MA 02111-1307, USA.  */
 extern int machopic_symbol_defined_p (rtx);
 /* APPLE LOCAL end dynamic-no-pic */
 
+/* APPLE LOCAL begin 3334812 */
+/* Don't assume anything about the header files.  */
+#define NO_IMPLICIT_EXTERN_C
+/* APPLE LOCAL end 3334812 */
+
 /* Suppress g++ attempt to link in the math library automatically. */
 #define MATH_LIBRARY ""
 
@@ -270,6 +275,13 @@ do {									\
   /* APPLE LOCAL end kexts */                                           \
 } while(0)
 
+/* APPLE LOCAL begin kexts */
+#define SUBTARGET_C_COMMON_OVERRIDE_OPTIONS do {	\
+  if (flag_apple_kext && flag_use_cxa_atexit == 2)	\
+    flag_use_cxa_atexit = 0;				\
+} while (0)
+/* APPLE LOCAL end kexts */
+
 #define SUBTARGET_INIT_BUILTINS		\
 do {					\
   darwin_init_cfstring_builtins ();	\
@@ -360,7 +372,8 @@ do {					\
     %l %X %{d} %{s} %{t} %{Z} \
     %{!Zdynamiclib:%{A} %{e*} %{m} %{N} %{n} %{r} %{u*} %{x} %{z}} \
     %{@:-o %f%u.out}%{!@:%{o*}%{!o:-o a.out}} \
-    %{!Zdynamiclib:%{!A:%{!nostdlib:%{!nostartfiles:%S}}}} \
+"/* APPLE LOCAL mainline 2006-04-01 4495520 */"\
+    %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
 "/* APPLE LOCAL add fcreate-profile */"\
     %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate|fcreate-profile:-lgcov} \
 "/* APPLE LOCAL nested functions 4357979  */"\
@@ -420,9 +433,16 @@ do {					\
    %{Zinit*:-init %*} \
 "/* APPLE LOCAL mainline 2005-09-01 3449986 */"\
    %{mmacosx-version-min=*:-macosx_version_min %*} \
+"/* APPLE LOCAL mainline 2006-03-15 3992198 */"\
+   %{!mmacosx-version-min=*:%{shared-libgcc:-macosx_version_min 10.3}} \
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \
+"/* APPLE LOCAL begin mainline 2006-03-15 3992198 */"\
+   %{!Zmultiply_defined*:%{shared-libgcc: \
+     %:version-compare(< 10.5 mmacosx-version-min= -multiply_defined) \
+     %:version-compare(< 10.5 mmacosx-version-min= suppress)}} \
+"/* APPLE LOCAL end mainline 2006-03-15 3992198 */"\
    %{Zmultiplydefinedunused*:-multiply_defined_unused %*} \
    %{prebind} %{noprebind} %{nofixprebinding} %{prebind_all_twolevel_modules} \
    %{read_only_relocs} \
@@ -486,8 +506,13 @@ do {					\
        -lgcc}"
 
 /* APPLE LOCAL end mainline 2005-11-15 4276161 */
-/* We specify crt0.o as -lcrt0.o so that ld will search the library path.  */
-/* APPLE LOCAL begin mainline 2005-11-15 4271575 */
+/* APPLE LOCAL begin 4484188 */
+/* We specify crt0.o as -lcrt0.o so that ld will search the library path.
+
+   crt3.o provides __cxa_atexit on systems that don't have it.  Since
+   it's only used with C++, which requires passing -shared-libgcc, key
+   off that to avoid unnecessarily adding a destructor to every
+   powerpc program built.  */
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC  \
@@ -499,9 +524,10 @@ do {					\
                 %{!pg:%{static:-lcrt0.o} \
                       %{!static:%{object:-lcrt0.o} \
                                 %{!object:%{preload:-lcrt0.o} \
-                                  %{!preload:-lcrt1.o %(darwin_crt2)}}}}}}"
-/* APPLE LOCAL end mainline 2005-11-15 4271575 */
+                                  %{!preload:-lcrt1.o %(darwin_crt2)}}}}}}  \
+  %{shared-libgcc:%:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}"
 
+/* APPLE LOCAL end 4484188 */
 /* The native Darwin linker doesn't necessarily place files in the order
    that they're specified on the link line.  Thus, it is pointless
    to put anything in ENDFILE_SPEC.  */
@@ -513,16 +539,17 @@ do {					\
   %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL} \
   %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}}"
 /* APPLE LOCAL end radar 4161346 */
-
-/* We use Dbx symbol format.  */
-
+/* APPLE LOCAL begin mainline */
+/* We use Dbx symbol format on 32 bit systems  */
 #define DBX_DEBUGGING_INFO 1
 
 /* Also enable Dwarf 2 as an option.  */
 #define DWARF2_DEBUGGING_INFO
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
-/* APPLE LOCAL begin dwarf2 section flags */
+/* Default to stabs */
+#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+/* APPLE LOCAL end mainline */
+/* APPLE LOCAL begin mainline 2006-03-16 dwarf2 section flags */
 #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"
 #define DEBUG_INFO_SECTION	"__DWARF,__debug_info,regular,debug"
 #define DEBUG_ABBREV_SECTION	"__DWARF,__debug_abbrev,regular,debug"
@@ -533,7 +560,7 @@ do {					\
 #define DEBUG_PUBNAMES_SECTION	"__DWARF,__debug_pubnames,regular,debug"
 #define DEBUG_STR_SECTION	"__DWARF,__debug_str,regular,debug"
 #define DEBUG_RANGES_SECTION	"__DWARF,__debug_ranges,regular,debug"
-/* APPLE LOCAL end dwarf2 section flags */
+/* APPLE LOCAL end mainline 2006-03-16 dwarf2 section flags */
 
 /* APPLE LOCAL begin gdb only used symbols */
 /* Support option to generate stabs for only used symbols. */
@@ -613,7 +640,7 @@ do {					\
 /* We need to use a nonlocal label for the start of an EH frame: the
    Darwin linker requires that a coalesced section start with a label. */
 #undef FRAME_BEGIN_LABEL
-/* APPLE LOCAL dwarf2 4392520 */
+/* APPLE LOCAL mainline 2006-03-16 dwarf2 4392520 */
 #define FRAME_BEGIN_LABEL (for_eh ? "EH_frame" : "Lframe")
 
 /* Emit a label for the FDE corresponding to DECL.  EMPTY means 
@@ -827,6 +854,8 @@ FUNCTION (void)								\
 #define EXTRA_SECTIONS							\
   in_text_coal, in_text_unlikely, in_text_unlikely_coal,		\
   in_const, in_const_data, in_cstring, in_literal4, in_literal8,	\
+  /* APPLE LOCAL x86_64 */						\
+  in_literal16,								\
   in_const_coal, in_const_data_coal, in_data_coal,			\
   in_constructor, in_destructor, in_mod_init, in_mod_term,		\
   in_objc_class, in_objc_meta_class, in_objc_category,			\
@@ -868,6 +897,17 @@ FUNCTION (void)								\
   in_objc_v2_selector_refs_section,					\
   in_objc_v2_protocol_section,						\
   /* APPLE LOCAL end ObjC new abi  */					\
+  /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */		\
+  in_objc_protocollist_section,						\
+  in_objc_protocolrefs_section,						\
+  /* APPLE LOCAL end radar 4533974 - ObjC new protocol */		\
+  /* APPLE LOCAL radar 4535676 */					\
+  in_objc_super_classrefs_section,					\
+  /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */ 	\
+  in_objc_class_ext_section,						\
+  in_prop_list_section,							\
+  in_objc_protocol_ext_section,						\
+  /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */    	\
   num_sections
 
 /* APPLE LOCAL begin AT&T-style stub 4164563 */
@@ -913,6 +953,11 @@ SECTION_FUNCTION (literal4_section,				\
 SECTION_FUNCTION (literal8_section,				\
 		  in_literal8,					\
 		  ".literal8", 0)				\
+		 /* APPLE LOCAL begin x86_64 */			\
+SECTION_FUNCTION (literal16_section,				\
+		  in_literal16,					\
+		  ".literal16", 0)				\
+		 /* APPLE LOCAL end x86_64 */			\
 SECTION_FUNCTION (constructor_section,				\
 		  in_constructor,				\
 		  ".constructor", 0)				\
@@ -1076,6 +1121,30 @@ SECTION_FUNCTION (objc_v2_protocol_section,					\
 		  in_objc_v2_protocol_section,					\
 		  ".section __OBJC2, __protocol, regular, no_dead_strip", 1) 	\
 /* APPLE LOCAL end ObjC new abi */					\
+/* APPLE LOCAL begin radar 4533974 - abjC new protocol */		\
+SECTION_FUNCTION (objc_protocollist_section,				\
+		  in_objc_protocollist_section,				\
+		  ".section __OBJC2, __protocol_list, regular, no_dead_strip", 1) 	\
+SECTION_FUNCTION (objc_protocolrefs_section,				\
+		  in_objc_protocolrefs_section,				\
+		  ".section __OBJC2, __protocol_refs, regular, no_dead_strip", 1) 	\
+/* APPLE LOCAL end radar 4533974 - ObjC new protocol */			\
+/* APPLE LOCAL begin radar 4535676 */					\
+SECTION_FUNCTION (objc_super_classrefs_section,				\
+		  in_objc_super_classrefs_section,				\
+		  ".section __OBJC2, __super_refs, regular, no_dead_strip", 1) 	\
+/* APPLE LOCAL end radar 4535676 */					\
+/* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */	\
+SECTION_FUNCTION (objc_class_ext_section,				\
+		  in_objc_class_ext_section,				\
+		  ".section __OBJC, __class_ext, regular, no_dead_strip", 1)  \
+SECTION_FUNCTION (objc_prop_list_section,				\
+		  in_prop_list_section,					\
+		  ".section __OBJC, __property, regular, no_dead_strip", 1)  \
+SECTION_FUNCTION (objc_protocol_ext_section,				\
+		  in_objc_protocol_ext_section,				\
+		  ".section __OBJC, __protocol_ext, regular, no_dead_strip", 1)  \
+/* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */	\
 \
 static void					\
 objc_section_init (void)			\
@@ -1107,6 +1176,14 @@ objc_section_init (void)			\
       objc_instance_vars_section ();		\
       objc_module_info_section ();		\
       objc_symbols_section ();			\
+      /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */ \
+      if (flag_objc_abi == 1)			\
+	{					\
+	  objc_protocol_ext_section ();		\
+	  objc_class_ext_section ();		\
+          objc_prop_list_section ();		\
+	}					\
+      /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */ \
       /* APPLE LOCAL begin ObjC abi v2 */	\
       if (flag_objc_abi >= 2)			\
         objc_message_refs_section ();		\
@@ -1120,6 +1197,12 @@ objc_section_init (void)			\
 	  objc_v2_protocol_section ();		\
 	  objc_nonlazy_class_section ();	\
 	  objc_nonlazy_category_section ();	\
+          /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */ \
+          objc_protocollist_section ();		\
+	  objc_protocolrefs_section ();		\
+          /* APPLE LOCAL end radar 4533974 - ObjC new protocol */ \
+	  /* APPLE LOCAL radar 4535676 */	\
+	  objc_super_classrefs_section ();	\
 	}					\
       /* APPLE LOCAL end ObjC abi v2 */		\
     }						\
@@ -1224,20 +1307,17 @@ enum machopic_addr_class {
 /* Macros defining the various PIC cases.  */
 
 #define MACHO_DYNAMIC_NO_PIC_P	(TARGET_DYNAMIC_NO_PIC)
+/* APPLE LOCAL begin mach-o cleanup */
+#undef MACHOPIC_INDIRECT
 #define MACHOPIC_INDIRECT	(flag_pic || MACHO_DYNAMIC_NO_PIC_P)
 #define MACHOPIC_JUST_INDIRECT	(flag_pic == 1 || MACHO_DYNAMIC_NO_PIC_P)
+#undef MACHOPIC_PURE
 #define MACHOPIC_PURE		(flag_pic == 2 && ! MACHO_DYNAMIC_NO_PIC_P)
-
+/* APPLE LOCAL end mach-o cleanup */
 #undef TARGET_ENCODE_SECTION_INFO
 #define TARGET_ENCODE_SECTION_INFO  darwin_encode_section_info
 #undef TARGET_STRIP_NAME_ENCODING
 #define TARGET_STRIP_NAME_ENCODING  default_strip_name_encoding
-
-/* APPLE LOCAL begin what is this for? */
-/* Be conservative and always redo the encoding.  */
-
-#define REDO_SECTION_INFO_P(DECL) (1)
-/* APPLE LOCAL end what is this for? */
 
 #define GEN_BINDER_NAME_FOR_STUB(BUF,STUB,STUB_LENGTH)		\
   do {								\
@@ -1314,16 +1394,11 @@ enum machopic_addr_class {
 #define ASM_OUTPUT_DWARF_DELTA(FILE,SIZE,LABEL1,LABEL2)  \
   darwin_asm_output_dwarf_delta (FILE, SIZE, LABEL1, LABEL2)
 
-/* APPLE LOCAL begin dwarf 4383509 */
+/* APPLE LOCAL begin mainline 2006-03-16 dwarf 4383509 */
 #define ASM_OUTPUT_DWARF_OFFSET(FILE,SIZE,LABEL,BASE)  \
   darwin_asm_output_dwarf_offset (FILE, SIZE, LABEL, BASE)
 
-/* APPLE LOCAL end dwarf 4383509 */
-#define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(ASM_OUT_FILE, ENCODING, SIZE, ADDR, DONE)	\
-      if (ENCODING == ASM_PREFERRED_EH_DATA_FORMAT (2, 1)) {				\
-	darwin_non_lazy_pcrel (ASM_OUT_FILE, ADDR);					\
-	goto DONE;									\
-      }
+/* APPLE LOCAL end mainline 2006-03-16 dwarf 4383509 */
 
 /* Experimentally, putting jump tables in text is faster on SPEC.
    Also this is needed for correctness for coalesced functions.  */
@@ -1358,6 +1433,10 @@ enum machopic_addr_class {
     /* APPLE LOCAL pragma fenv */                               \
     c_register_pragma ("GCC", "fenv", darwin_pragma_fenv);	\
     c_register_pragma (0, "unused", darwin_pragma_unused);	\
+    /* APPLE LOCAL begin mainline */				\
+    c_register_pragma (0, "ms_struct",				\
+			darwin_pragma_ms_struct);		\
+    /* APPLE LOCAL end mainline */				\
     /* APPLE LOCAL begin pragma reverse_bitfields */		\
     c_register_pragma (0, "reverse_bitfields",			\
 			darwin_pragma_reverse_bitfields);	\
@@ -1381,19 +1460,8 @@ enum machopic_addr_class {
 extern void abort_assembly_and_exit (int status) ATTRIBUTE_NORETURN;
 /* APPLE LOCAL end insert assembly ".abort" directive on fatal error   */
 
-/* APPLE LOCAL begin Macintosh alignment 2002-2-13 --ff */
-#ifdef RS6000_VECTOR_ALIGNMENT
-/* When adjusting (lowering) the alignment of fields when in the
-   mac68k alignment mode, the 128-bit alignment of vectors *MUST*
-   be preserved.  */
-#define PEG_ALIGN_FOR_MAC68K(DESIRED)           \
-        ((TARGET_ALTIVEC && (DESIRED) == RS6000_VECTOR_ALIGNMENT) \
-         ? RS6000_VECTOR_ALIGNMENT              \
-         : MIN ((DESIRED), 16))
-#else
+/* APPLE LOCAL Macintosh alignment 2002-2-13 --ff */
 #define PEG_ALIGN_FOR_MAC68K(DESIRED)   MIN ((DESIRED), 16)
-#endif 
-/* APPLE LOCAL end Macintosh alignment 2002-2-13 --ff */
 
 /* APPLE LOCAL begin KEXT double destructor */
 /* Need a mechanism to tell whether a C++ operator delete is empty so

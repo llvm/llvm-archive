@@ -22,4 +22,8 @@ void function0 (char c)		// function that is actually called
   exit_status++;
 }
 
-int main () { function0 ('abcd'); return exit_status; }		// { dg-warning "" } 
+int main ()
+{
+  function0 ('abcd');		// { dg-warning "multi-character character constant" } 
+  return exit_status;
+}

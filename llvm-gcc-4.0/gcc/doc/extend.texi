@@ -2168,6 +2168,22 @@ safe since the loaders there save all registers.  (Lazy binding can be
 disabled with the linker or the loader if desired, to avoid the
 problem.)
 
+@c APPLE LOCAL begin 4356747 stack realign
+@item force_align_arg_pointer
+@cindex @code{force_align_arg_pointer} attribute
+On the Intel x86, the @code{force_align_arg_pointer} attribute may be
+applied to individual function definitions, generating an alternate
+prologue and epilogue that realigns the runtime stack.  This supports
+mixing legacy codes that run with a 4-byte aligned stack with modern
+codes that keep a 16-byte stack for SSE compatibility.  The alternate
+prologue/epilogue is slower and bigger than the regular one, and it
+requires one dedicated register for the life of the function.  This
+also lowers the number of registers available if used in conjunction
+with the @code{regparm} attribute.  The @code{force_align_arg_pointer}
+attribute is incompatible with nested functions; this is considered a
+hard error.
+@c APPLE LOCAL end 4356747 stack realign
+
 @item saveall
 @cindex save all registers on the Blackfin, H8/300, H8/300H, and H8S
 Use this attribute on the Blackfin, H8/300, H8/300H, and H8S to indicate that
@@ -2324,8 +2340,10 @@ inline assembly.
 
 @item visibility ("@var{visibility_type}")
 @cindex @code{visibility} attribute
-The @code{visibility} attribute on ELF targets causes the declaration
-to be emitted with default, hidden, protected or internal visibility.
+@c APPLE LOCAL begin mainline 2006-04-03 4383613
+This attribute affects the linkage of the declaration to which it is attached.
+There are four supported @var{visibility_type} values: default,
+hidden, protected or internal visibility.
 
 @smallexample
 void __attribute__ ((visibility ("protected")))
@@ -2333,41 +2351,77 @@ f () @{ /* @r{Do something.} */; @}
 int i __attribute__ ((visibility ("hidden")));
 @end smallexample
 
-See the ELF gABI for complete details, but the short story is:
+The possible values of @var{visibility_type} correspond to the
+visibility settings in the ELF gABI.
 
 @table @dfn
 @c keep this list of visibilities in alphabetical order.
 
 @item default
-Default visibility is the normal case for ELF@.  This value is
-available for the visibility attribute to override other options
-that may change the assumed visibility of symbols.
+Default visibility is the normal case for the object file format.
+This value is available for the visibility attribute to override other
+options that may change the assumed visibility of entities.
+
+On ELF, default visibility means that the declaration is visible to other
+modules and, in shared libraries, means that the declared entity may be
+overridden.
+
+On Darwin, default visibility means that the declaration is visible to
+other modules.
+
+Default visibility corresponds to ``external linkage'' in the language.
 
 @item hidden
-Hidden visibility indicates that the symbol will not be placed into
-the dynamic symbol table, so no other @dfn{module} (executable or
-shared library) can reference it directly.
+Hidden visibility indicates that the entity declared will have a new
+form of linkage, which we'll call ``hidden linkage''.  Two
+declarations of an object with hidden linkage refer to the same object
+if they are in the same shared object.
 
 @item internal
 Internal visibility is like hidden visibility, but with additional
-processor specific semantics.  Unless otherwise specified by the psABI,
-GCC defines internal visibility to mean that the function is @emph{never}
-called from another module.  Note that hidden symbols, while they cannot
-be referenced directly by other modules, can be referenced indirectly via
-function pointers.  By indicating that a symbol cannot be called from
-outside the module, GCC may for instance omit the load of a PIC register
-since it is known that the calling function loaded the correct value.
+processor specific semantics.  Unless otherwise specified by the
+psABI, GCC defines internal visibility to mean that a function is
+@emph{never} called from another module.  Compare this with hidden
+functions which, while they cannot be referenced directly by other
+modules, can be referenced indirectly via function pointers.  By
+indicating that a function cannot be called from outside the module,
+GCC may for instance omit the load of a PIC register since it is known
+that the calling function loaded the correct value.
 
 @item protected
-Protected visibility indicates that the symbol will be placed in the
-dynamic symbol table, but that references within the defining module
-will bind to the local symbol.  That is, the symbol cannot be overridden
-by another module.
+Protected visibility is like default visibility except that it
+indicates that references within the defining module will bind to the
+definition in that module.  That is, the declared entity cannot be
+overridden by another module.
 
 @end table
 
-Not all ELF targets support this attribute.
+All visibilities are supported on many, but not all, ELF targets
+(supported when the assembler supports the @samp{.visibility}
+pseudo-op).  Default visibility is supported everywhere.  Hidden
+visibility is supported on Darwin targets.
 
+The visibility attribute should be applied only to declarations which
+would otherwise have external linkage.  The attribute should be applied
+consistently, so that the same entity should not be declared with
+different settings of the attribute.
+
+In C++, the visibility attribute applies to types as well as functions
+and objects, because in C++ types have linkage.  There are some bugs
+in the C++ support for this flag, for example a template which has a
+hidden type as a parameter is not properly hidden.
+@c bugzilla 26612
+
+In C++, you can mark member functions and static member variables of a
+class with the visibility attribute.  This is useful if if you know a
+particular method or static member variable should only be used from
+one shared object; then you can mark it hidden while the rest of the
+class has default visibility.  Care must be taken to avoid breaking
+the One Definition Rule; for example, it is not useful to mark a
+method which is defined inside a class definition as hidden without
+marking the whole class as hidden.
+
+@c APPLE LOCAL end mainline 2006-04-03 4383613
 @item warn_unused_result
 @cindex @code{warn_unused_result} attribute
 The @code{warn_unused_result} attribute causes a warning to be emitted
@@ -3543,25 +3597,46 @@ packed))}.
 @cindex open coding
 @cindex macros, inline alternative
 
-By declaring a function @code{inline}, you can direct GCC to
+@c APPLE LOCAL begin for-4_3 4134307
+By declaring a function inline, you can direct GCC to make
+calls to that function faster.  One way GCC can achieve this is to
 integrate that function's code into the code for its callers.  This
 makes execution faster by eliminating the function-call overhead; in
-addition, if any of the actual argument values are constant, their known
-values may permit simplifications at compile time so that not all of the
-inline function's code needs to be included.  The effect on code size is
-less predictable; object code may be larger or smaller with function
-inlining, depending on the particular case.  Inlining of functions is an
-optimization and it really ``works'' only in optimizing compilation.  If
-you don't use @option{-O}, no function is really inline.
+addition, if any of the actual argument values are constant, their
+known values may permit simplifications at compile time so that not
+all of the inline function's code needs to be included.  The effect on
+code size is less predictable; object code may be larger or smaller
+with function inlining, depending on the particular case.  You can
+also direct GCC to try to integrate all ``simple enough'' functions
+into their callers with the option @option{-finline-functions}.
 
-Inline functions are included in the ISO C99 standard, but there are
-currently substantial differences between what GCC implements and what
-the ISO C99 standard requires.
+GCC implements three different semantics of declaring a function
+inline.  One is available with @option{-std=gnu89}, another when
+@option{-std=c99} or @option{-std=gnu99}, and the third is used when
+compiling C++.
 
 To declare a function inline, use the @code{inline} keyword in its
 declaration, like this:
 
 @smallexample
+static inline int
+inc (int *a)
+@{
+  (*a)++;
+@}
+@end smallexample
+
+If you are writing a header file to be included in ISO C89 programs, write
+@code{__inline__} instead of @code{inline}.  @xref{Alternate Keywords}.
+
+The three types of inlining behave similarly in two important cases:
+when the @code{inline} keyword is used on a @code{static} function,
+like the example above, and when a function is first declared without
+using the @code{inline} keyword and then is defined with
+@code{inline}, like this:
+
+@smallexample
+extern int inc (int *a);
 inline int
 inc (int *a)
 @{
@@ -3569,32 +3644,8 @@ inc (int *a)
 @}
 @end smallexample
 
-(If you are writing a header file to be included in ISO C programs, write
-@code{__inline__} instead of @code{inline}.  @xref{Alternate Keywords}.)
-You can also make all ``simple enough'' functions inline with the option
-@option{-finline-functions}.
-
-@opindex Winline
-Note that certain usages in a function definition can make it unsuitable
-for inline substitution.  Among these usages are: use of varargs, use of
-alloca, use of variable sized data types (@pxref{Variable Length}),
-use of computed goto (@pxref{Labels as Values}), use of nonlocal goto,
-and nested functions (@pxref{Nested Functions}).  Using @option{-Winline}
-will warn when a function marked @code{inline} could not be substituted,
-and will give the reason for the failure.
-
-Note that in C and Objective-C, unlike C++, the @code{inline} keyword
-does not affect the linkage of the function.
-
-@cindex automatic @code{inline} for C++ member fns
-@cindex @code{inline} automatic for C++ member fns
-@cindex member fns, automatically @code{inline}
-@cindex C++ member fns, automatically @code{inline}
-@opindex fno-default-inline
-GCC automatically inlines member functions defined within the class
-body of C++ programs even if they are not explicitly declared
-@code{inline}.  (You can override this with @option{-fno-default-inline};
-@pxref{C++ Dialect Options,,Options Controlling C++ Dialect}.)
+In both of these common cases, the program behaves the same as if you
+had not used the @code{inline} keyword, except for its speed.
 
 @cindex inline functions, omission of
 @opindex fkeep-inline-functions
@@ -3609,6 +3660,36 @@ neither can recursive calls within the definition).  If there is a
 nonintegrated call, then the function is compiled to assembler code as
 usual.  The function must also be compiled as usual if the program
 refers to its address, because that can't be inlined.
+
+@opindex Winline
+Note that certain usages in a function definition can make it unsuitable
+for inline substitution.  Among these usages are: use of varargs, use of
+alloca, use of variable sized data types (@pxref{Variable Length}),
+use of computed goto (@pxref{Labels as Values}), use of nonlocal goto,
+and nested functions (@pxref{Nested Functions}).  Using @option{-Winline}
+will warn when a function marked @code{inline} could not be substituted,
+and will give the reason for the failure.
+
+@cindex automatic @code{inline} for C++ member fns
+@cindex @code{inline} automatic for C++ member fns
+@cindex member fns, automatically @code{inline}
+@cindex C++ member fns, automatically @code{inline}
+@opindex fno-default-inline
+As required by ISO C++, GCC considers member functions defined within
+the body of a class to be marked inline even if they are
+not explicitly declared with the @code{inline} keyword.  You can
+override this with @option{-fno-default-inline}; @pxref{C++ Dialect
+Options,,Options Controlling C++ Dialect}.
+
+GCC does not inline any functions when not optimizing unless you specify
+the @samp{always_inline} attribute for the function, like this:
+
+@smallexample
+/* @r{Prototype.}  */
+inline void foo (const char) __attribute__((always_inline));
+@end smallexample
+
+The remainder of this section is specific to GNU C89 inlining.
 
 @cindex non-static inline function
 When an inline function is not @code{static}, then the compiler must assume
@@ -3632,21 +3713,7 @@ The definition in the header file will cause most calls to the function
 to be inlined.  If any uses of the function remain, they will refer to
 the single copy in the library.
 
-Since GCC eventually will implement ISO C99 semantics for
-inline functions, it is best to use @code{static inline} only
-to guarantee compatibility.  (The
-existing semantics will remain available when @option{-std=gnu89} is
-specified, but eventually the default will be @option{-std=gnu99} and
-that will implement the C99 semantics, though it does not do so yet.)
-
-GCC does not inline any functions when not optimizing unless you specify
-the @samp{always_inline} attribute for the function, like this:
-
-@smallexample
-/* @r{Prototype.}  */
-inline void foo (const char) __attribute__((always_inline));
-@end smallexample
-
+@c APPLE LOCAL end for-4_3 4134307
 @node Extended Asm
 @section Assembler Instructions with C Expression Operands
 @cindex extended @code{asm}
@@ -6342,9 +6409,15 @@ All of them generate the machine instruction that is part of the name.
 v8qi __builtin_ia32_paddb (v8qi, v8qi)
 v4hi __builtin_ia32_paddw (v4hi, v4hi)
 v2si __builtin_ia32_paddd (v2si, v2si)
+@c APPLE LOCAL begin radar 4395773
+di __builtin_ia32_paddq (di, di)
+@c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_psubb (v8qi, v8qi)
 v4hi __builtin_ia32_psubw (v4hi, v4hi)
 v2si __builtin_ia32_psubd (v2si, v2si)
+@c APPLE LOCAL begin radar 4395773
+di __builtin_ia32_psubq (di, di)
+@c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_paddsb (v8qi, v8qi)
 v4hi __builtin_ia32_paddsw (v4hi, v4hi)
 v8qi __builtin_ia32_psubsb (v8qi, v8qi)
@@ -6374,6 +6447,23 @@ v2si __builtin_ia32_punpckldq (v2si, v2si)
 v8qi __builtin_ia32_packsswb (v4hi, v4hi)
 v4hi __builtin_ia32_packssdw (v2si, v2si)
 v8qi __builtin_ia32_packuswb (v4hi, v4hi)
+@c APPLE LOCAL begin radar 4395773
+void __builtin_ia32_emms (void)
+v4hi __builtin_ia32_psllw (v4hi, di)
+v2si __builtin_ia32_pslld (v2si, di)
+di __builtin_ia32_psllq (di, di)
+v4hi __builtin_ia32_psrlw (v4hi, di)
+v2si __builtin_ia32_psrld (v2si, di)
+di __builtin_ia32_psrlq (di, di)
+v4hi __builtin_ia32_psraw (v4hi, di)
+v2si __builtin_ia32_psrad (v2si, di)
+v4hi __builtin_ia32_pshufw (v4hi, int)
+v2si __builtin_ia32_pmaddwd (v4hi, v4hi)
+v2si __builtin_ia32_vec_init_v2si (int, int)
+v4hi __builtin_ia32_vec_init_v4hi (short, short, short, short)
+v8qi __builtin_ia32_vec_init_v8qi (char, char, char, char, char, char, char, char)
+int __builtin_ia32_vec_ext_v2si (v2si, int)
+@c APPLE LOCAL end radar 4395773
 @end smallexample
 
 The following built-in functions are made available either with
@@ -6383,6 +6473,9 @@ instruction that is part of the name.
 
 @smallexample
 v4hi __builtin_ia32_pmulhuw (v4hi, v4hi)
+@c APPLE LOCAL begin radar 4395773
+di __builtin_ia32_pmulhuq (di, di)
+@c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_pavgb (v8qi, v8qi)
 v4hi __builtin_ia32_pavgw (v4hi, v4hi)
 v4hi __builtin_ia32_psadbw (v8qi, v8qi)
@@ -6396,6 +6489,10 @@ int __builtin_ia32_pmovmskb (v8qi)
 void __builtin_ia32_maskmovq (v8qi, v8qi, char *)
 void __builtin_ia32_movntq (di *, di)
 void __builtin_ia32_sfence (void)
+@c APPLE LOCAL begin radar 4395773
+int __builtin_ia32_vec_ext_v4hi (v4hi, int)
+v4hi __builtin_ia32_vec_set_v4hi (v4hi, int, int)
+@c APPLE LOCAL end radar 4395773
 @end smallexample
 
 The following built-in functions are available when @option{-msse} is used.
@@ -6470,6 +6567,16 @@ v4sf __builtin_ia32_sqrtss (v4sf)
 v4sf __builtin_ia32_shufps (v4sf, v4sf, int)
 void __builtin_ia32_movntps (float *, v4sf)
 int __builtin_ia32_movmskps (v4sf)
+@c APPLE LOCAL begin radar 4395773
+void __builtin_ia32_ldmxcsr (unsigned)
+unsigned __builtin_ia32_stmxcsr (void)
+v2df __builtin_ia32_vec_ext_v2df (v2df, int)
+v2di __builtin_ia32_vec_ext_v2di (v2di, int)
+v4sf __builtin_ia32_vec_ext_v4sf (v4sf, int)
+v4si __builtin_ia32_vec_ext_v4si (v4si, int)
+v8hi __builtin_ia32_vec_set_v8hi (v8hi, int, int)
+unsigned int __builtin_ia32_vec_ext_v8hi (v8hi, int)
+@c APPLE LOCAL end radar 4395773
 @end smallexample
 
 The following built-in functions are available when @option{-msse} is used.
@@ -6497,6 +6604,180 @@ Generates the @code{movhps} machine instruction as a store to memory.
 Generates the @code{movlps} machine instruction as a store to memory.
 @end table
 
+@c APPLE LOCAL begin radar 4395773
+The following built-in functions are available when @option{-msse2} is used.
+All of them generate the machine instruction that is part of the name.
+
+@smallexample
+v2df __builtin_ia32_addpd (v2df, v2df)
+v2df __builtin_ia32_subpd (v2df, v2df)
+v2df __builtin_ia32_mulpd (v2df, v2df)
+v2df __builtin_ia32_divpd (v2df, v2df)
+v2df __builtin_ia32_addsd (v2df, v2df)
+v2df __builtin_ia32_subsd (v2df, v2df)
+v2df __builtin_ia32_mulsd (v2df, v2df)
+v2df __builtin_ia32_divsd (v2df, v2df)
+v2df __builtin_ia32_cmpeqpd (v2df, v2df)
+v2df __builtin_ia32_cmpltpd (v2df, v2df)
+v2df __builtin_ia32_cmplepd (v2df, v2df)
+v2df __builtin_ia32_cmpgtpd (v2df, v2df)
+v2df __builtin_ia32_cmpgepd (v2df, v2df)
+v2df __builtin_ia32_cmpunordpd (v2df, v2df)
+v2df __builtin_ia32_cmpneqpd (v2df, v2df)
+v2df __builtin_ia32_cmpnltpd (v2df, v2df)
+v2df __builtin_ia32_cmpnlepd (v2df, v2df)
+v2df __builtin_ia32_cmpngtpd (v2df, v2df)
+v2df __builtin_ia32_cmpngepd (v2df, v2df)
+v2df __builtin_ia32_cmpordpd (v2df, v2df)
+v2df __builtin_ia32_cmpeqsd (v2df, v2df)
+v2df __builtin_ia32_cmpltsd (v2df, v2df)
+v2df __builtin_ia32_cmplesd (v2df, v2df)
+v2df __builtin_ia32_cmpunordsd (v2df, v2df)
+v2df __builtin_ia32_cmpneqsd (v2df, v2df)
+v2df __builtin_ia32_cmpnltsd (v2df, v2df)
+v2df __builtin_ia32_cmpnlesd (v2df, v2df)
+v2df __builtin_ia32_cmpordsd (v2df, v2df)
+v2df __builtin_ia32_minpd (v2df, v2df)
+v2df __builtin_ia32_maxpd (v2df, v2df)
+v2df __builtin_ia32_minsd (v2df, v2df)
+v2df __builtin_ia32_maxsd (v2df, v2df)
+v2df __builtin_ia32_andpd (v2df, v2df)
+v2df __builtin_ia32_andnpd (v2df, v2df)
+v2df __builtin_ia32_orpd (v2df, v2df)
+v2df __builtin_ia32_xorpd (v2df, v2df)
+v2df __builtin_ia32_movsd (v2df, v2df)
+v2df __builtin_ia32_unpckhpd (v2df, v2df)
+v2df __builtin_ia32_unpcklpd (v2df, v2df)
+v16qi __builtin_ia32_paddb128 (v16qi, v16qi)
+v8hi __builtin_ia32_paddw128 (v8hi, v8hi)
+v4si __builtin_ia32_paddd128 (v4si, v4si)
+v2di __builtin_ia32_paddq128 (v2di, v2di)
+v16qi __builtin_ia32_psubb128 (v16qi, v16qi)
+v8hi __builtin_ia32_psubw128 (v8hi, v8hi)
+v4si __builtin_ia32_psubd128 (v4si, v4si)
+v2di __builtin_ia32_psubq128 (v2di, v2di)
+v16qi __builtin_ia32_paddsb128 (v16qi, v16qi)
+v8hi __builtin_ia32_paddsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_psubsb128 (v16qi, v16qi)
+v8hi __builtin_ia32_psubsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_paddusb128 (v16qi, v16qi)
+v8hi __builtin_ia32_paddusw128 (v8hi, v8hi)
+v16qi __builtin_ia32_psubusb128 (v16qi, v16qi)
+v8hi __builtin_ia32_psubusw128 (v8hi, v8hi)
+v8hi __builtin_ia32_pmullw128 (v8hi, v8hi)
+v8hi __builtin_ia32_pmulhw128 (v8hi, v8hi)
+v2di __builtin_ia32_pand128 (v2di, v2di)
+v2di __builtin_ia32_pandn128 (v2di, v2di)
+v2di __builtin_ia32_por128 (v2di, v2di)
+v2di __builtin_ia32_pxor128 (v2di, v2di)
+v16qi __builtin_ia32_pavgb128 (v16qi, v16qi)
+v8hi __builtin_ia32_pavgw128 (v8hi, v8hi)
+v16qi __builtin_ia32_pcpmeqb128 (v16qi, v16qi)
+v8hi __builtin_ia32_pcpmeqw128 (v8hi, v8hi)
+v4si __builtin_ia32_pcpmeqd128 (v4si, v4si)
+v16qi __builtin_ia32_pcpmgtb128 (v16qi, v16qi)
+v8hi __builtin_ia32_pcpmgtw128 (v8hi, v8hi)
+v4si __builtin_ia32_pcpmgtd128 (v4si, v4si)
+v16qi __builtin_ia32_pmaxub128 (v16qi, v16qi)
+v8hii __builtin_ia32_pmaxsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_pminub128 (v16qi, v16qi)
+v8hii __builtin_ia32_pminsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_punpckhbw128 (v16qi, v16qi)
+v8hi __builtin_ia32_punpckhwd128 (v8hi, v8hi)
+v4si __builtin_ia32_punpckhdq128 (v4si, v4si)
+v2di __builtin_ia32_punpckhqdq128 (v2di, v2di)
+v16qi __builtin_ia32_punpcklbw128 (v16qi, v16qi)
+v8hi __builtin_ia32_punpcklwd128 (v8hi, v8hi)
+v4si __builtin_ia32_punpckldq128 (v4si, v4si)
+v2di __builtin_ia32_punpcklqdq128 (v2di, v2di)
+v8hi __builtin_ia32_packsswb128 (v8hi, v8hi)
+v4si __builtin_ia32_packssdw128 (v4si, v4si)
+v8hi __builtin_ia32_packuswb128 (v8hi, v8hi)
+v8hi __builtin_ia32_pmulhuw128 (v8hi, v8hi)
+v8hi __builtin_ia32_psllwi128 (v8hi, v8hi)
+v4si __builtin_ia32_pslldi128 (v4si, v4si)
+v2di __builtin_ia32_psllqi128 (v2di, v2di)
+v8hi __builtin_ia32_psrlwi128 (v8hi, v8hi)
+v4si __builtin_ia32_psrldi128 (v4si, v4si)
+v2di __builtin_ia32_psrlqi128 (v2di, v2di)
+v8hi __builtin_ia32_psrawi128 (v8hi, v8hi)
+v4si __builtin_ia32_psradi128 (v4si, v4si)
+v8hi __builtin_ia32_pmaddwd128 (v8hi, v8hi)
+v2di __builtin_ia32_pmovmskb128 (v2di, v2di)
+int __builtin_ia32_movmskpd (v2df)
+v2df __builtin_ia32_sqrtpd (v2df)
+v2df __builtin_ia32_cvtdq2pd (v4si)
+v4sf __builtin_ia32_cvtdq2ps (v4si)
+v2di __builtin_ia32_cvtpd2dq (v2df)
+v2si __builtin_ia32_cvtpd2pi (v2df)
+v2sf __builtin_ia32_cvtpd2ps (v2df)
+v2di __builtin_ia32_cvtpd2dq (v2df)
+v2si __builtin_ia32_cvtpd2pi (v2df)
+v2si __builtin_ia32_cvtsd2si (v2df)
+v2df __builtin_ia32_cvtps2pq (v4sf)
+void __builtin_ia32_maskmovdqu (v16qi, v16qi, char *)
+v2df __builtin_ia32_loadupd (double const *)
+void __builtin_ia32_storeupd (double *, v2df)
+v2df __builtin_ia32_loadhpd (v2df, double const *)
+v2df __builtin_ia32_loadlpd (v2df, double const *)
+void __builtin_ia32_movnti (int *, int)
+void __builtin_ia32_movntpd (double *, v2df)
+void __builtin_ia32_movntpq (v2di *, v2di)
+v4si __builtin_ia32_pshufd (v4si, int)
+v8hi __builtin_ia32_pshuflw (v8hi, int)
+v8hi __builtin_ia32_pshufhw (v8hi, int)
+v2di __builtin_ia32_psadbw128 (v16qi, v16qi)
+v2df __builtin_ia32_sqrtpd (v2df)
+v2df __builtin_ia32_sqrtsd (v2df)
+v2df __builtin_ia32_shufpd (v2df, v2df, int)
+v2df __builtin_ia32_cvtdq2pd (v4si)
+v4sf __builtin_ia32_cvtdq2ps (v4si)
+v4si __builtin_ia32_cvtpd2dq (v2df)
+v2si __builtin_ia32_cvtpd2pi (v2df)
+v4sf __builtin_ia32_cvtpd2ps (v2df)
+v4si __builtin_ia32_cvtbpd2dq (v2df)
+v2si __builtin_ia32_cvttpd2pi (v2df)
+v2df __builtin_ia32_cvtpi2pd (v2si)
+int __builtin_ia32_cvtsd2si (v2df)
+int __builtin_ia32_cvttsd2si (v2df)
+v2di __builtin_ia32_cvtsd2si64 (v2df)
+v2di __builtin_ia32_cvttsd2si64 (v2df)
+v4si __builtin_ia32_cvtps2dq (v4sf)
+v2df __builtin_ia32_cvtps2dq (v4sf)
+v4si __builtin_ia32_cvttps2dq (v4sf)
+v2df __builtin_ia32_cvtsi2sd (v2df, int)
+v2df __builtin_ia32_cvtsi642sd (v2df, v2di)
+v4sf __builtin_ia32_cvtsd2ss (v4sf, v2df)
+v2df __builtin_ia32_cvtss2sd (v2df, v2sf)
+void __builtin_ia32_clflush (void const *)
+void __builtin_ia32_lfence (void)
+void __builtin_ia32_mfence (void)
+v16qi __builtin_ia32_loaddqu (char const *)
+void __builtin_ia32_storedqu (char const *, v16qi)
+di __builtin_ia32_pmuludq (v2si, v2si)
+v2di __builtin_ia32_pmuludq128 (v4si, v4si)
+v8hi __builtin_ia32_psllw128 (v8hi, v2di)
+v4si __builtin_ia32_pslld128 (v4si, v2di)
+v2di __builtin_ia32_psllq128 (v2di, v2di)
+v8hi __builtin_ia32_psrlw128 (v8hi, v2di)
+v4si __builtin_ia32_psrld128 (v4si, v2di)
+v2di __builtin_ia32_psrlq128 (v2di, v2di)
+v8hi __builtin_ia32_psraw128 (v8hi, v2di)
+v4si __builtin_ia32_psrad128 (v4si, v2di)
+v2di __builtin_ia32_pslldqi128 (v2di, int)
+v8hi __builtin_ia32_psllwi128 (v8hi, int)
+v4si __builtin_ia32_pslldi128 (v4si, int)
+v2di __builtin_ia32_psllqi128 (v2di, int)
+v2di __builtin_ia32_psrldqi128 (v2di, int)
+v8hi __builtin_ia32_psrlwi128 (v8hi, int)
+v4si __builtin_ia32_psrldi128 (v4si, int)
+v2di __builtin_ia32_psrlqi128 (v2di, int)
+v8hi __builtin_ia32_psrawi128 (v8hi, int)
+v4si __builtin_ia32_psradi128 (v4si, int)
+v4si __builtin_ia32_pmaddwd128 (v8hi, v8hi)
+@end smallexample
+@c APPLE LOCAL end radar 4395773
+
 The following built-in functions are available when @option{-msse3} is used.
 All of them generate the machine instruction that is part of the name.
 
@@ -6522,6 +6803,53 @@ The following built-in functions are available when @option{-msse3} is used.
 Generates the @code{movddup} machine instruction as a load from memory.
 @end table
 
+@c APPLE LOCAL begin mni 4424835
+The following built-in functions are available when @option{-mmni} is used.
+All of them generate the machine instruction that is part of the name
+with MMX registers.
+
+@smallexample
+v2si __builtin_ia32_phaddd (v2si, v2si)
+v4hi __builtin_ia32_phaddw (v4hi, v4hi)
+v4hi __builtin_ia32_phaddsw (v4hi, v4hi)
+v2si __builtin_ia32_phsubd (v2si, v2si)
+v4hi __builtin_ia32_phsubw (v4hi, v4hi)
+v4hi __builtin_ia32_phsubsw (v4hi, v4hi)
+v8qi __builtin_ia32_pmaddubsw (v8qi, v8qi)
+v4hi __builtin_ia32_pmulhrsw (v4hi, v4hi)
+v8qi __builtin_ia32_pshufb (v8qi, v8qi)
+v8qi __builtin_ia32_psignb (v8qi, v8qi)
+v2si __builtin_ia32_psignd (v2si, v2si)
+v4hi __builtin_ia32_psignw (v4hi, v4hi)
+long long __builtin_ia32_palignr (long long, long long, int)
+v8qi __builtin_ia32_pabsb (v8qi)
+v2si __builtin_ia32_pabsd (v2si)
+v4hi __builtin_ia32_pabsw (v4hi)
+@end smallexample
+
+The following built-in functions are available when @option{-mmni} is used.
+All of them generate the machine instruction that is part of the name
+with SSE registers.
+
+@smallexample
+v4si __builtin_ia32_phaddd128 (v4si, v4si)
+v8hi __builtin_ia32_phaddw128 (v8hi, v8hi)
+v8hi __builtin_ia32_phaddsw128 (v8hi, v8hi)
+v4si __builtin_ia32_phsubd128 (v4si, v4si)
+v8hi __builtin_ia32_phsubw128 (v8hi, v8hi)
+v8hi __builtin_ia32_phsubsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_pmaddubsw128 (v16qi, v16qi)
+v8hi __builtin_ia32_pmulhrsw128 (v8hi, v8hi)
+v16qi __builtin_ia32_pshufb128 (v16qi, v16qi)
+v16qi __builtin_ia32_psignb128 (v16qi, v16qi)
+v4si __builtin_ia32_psignd128 (v4si, v4si)
+v8hi __builtin_ia32_psignw128 (v8hi, v8hi)
+v2di __builtin_ia32_palignr (v2di, v2di, int)
+v16qi __builtin_ia32_pabsb128 (v16qi)
+v4si __builtin_ia32_pabsd128 (v4si)
+v8hi __builtin_ia32_pabsw128 (v8hi)
+@end smallexample
+@c APPLE LOCAL end mni
 The following built-in functions are available when @option{-m3dnow} is used.
 All of them generate the machine instruction that is part of the name.
 
@@ -9056,13 +9384,16 @@ way of knowing that that happened.)
 @node Structure-Packing Pragmas
 @subsection Structure-Packing Pragmas
 
+@c APPLE LOCAL begin radar 4679943
 For compatibility with Win32, GCC supports a set of @code{#pragma}
 directives which change the maximum alignment of members of structures,
 unions, and classes subsequently defined.  The @var{n} value below always
-is required to be a small power of two and specifies the new alignment
-in bytes.
+is required to be a small power of two and specifies the new maximum
+alignment in bytes.
 
 @enumerate
+@c APPLE LOCAL prune man page
+@ignore
 @item @code{#pragma pack(@var{n})} simply sets the new alignment.
 @item @code{#pragma pack()} sets the alignment to the one that was in
 effect when compilation started (see also command line option
@@ -9075,7 +9406,20 @@ Note that @code{#pragma pack([@var{n}])} does not influence this internal
 stack; thus it is possible to have @code{#pragma pack(push)} followed by
 multiple @code{#pragma pack(@var{n})} instances and finalized by a single
 @code{#pragma pack(pop)}.
+@c APPLE LOCAL prune man page
+@end ignore
+
+@item @code{#pragma pack(@var{n})} pushes the current maximum alignment setting
+onto an internal stack and then sets the new maximum alignment. (APPLE ONLY)
+@item @code{#pragma pack()} acts like a @code{#pragma pack(pop)} directive.
+(APPLE ONLY)
+@item @code{#pragma pack(push[,@var{n}])} pushes the current maximum alignment
+setting onto an internal stack and then optionally sets the new maximum
+alignment.
+@item @code{#pragma pack(pop)} restores the maximum alignment setting to the
+one saved at the top of the internal stack (and removes that stack entry).
 @end enumerate
+@c APPLE LOCAL end radar 4679943
 
 @node Weak Pragmas
 @subsection Weak Pragmas

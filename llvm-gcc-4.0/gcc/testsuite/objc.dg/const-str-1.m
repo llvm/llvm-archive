@@ -1,6 +1,7 @@
 /* Test errors for constant strings.  */
 /* { dg-do compile } */
-/* { dg-options "-fgnu-runtime" } */
+/* APPLE LOCAL radar 4674757 */
+/* { dg-options "-fgnu-runtime -fno-constant-cfstrings" } */
 
 #ifdef __cplusplus
 extern void baz(...);

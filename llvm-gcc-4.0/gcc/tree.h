@@ -97,6 +97,13 @@ extern const enum tree_code_class tree_code_type[];
 #define DECL_P(CODE)\
         (TREE_CODE_CLASS (TREE_CODE (CODE)) == tcc_declaration)
 
+/* APPLE LOCAL begin mainline 4.2 2006-05-09 */
+/* Nonzero if DECL represents a VAR_DECL or FUNCTION_DECL.  */
+
+#define VAR_OR_FUNCTION_DECL_P(DECL)\
+  (TREE_CODE (DECL) == VAR_DECL || TREE_CODE (DECL) == FUNCTION_DECL)
+/* APPLE LOCAL end mainline 4.2 2006-05-09 */
+
 /* Nonzero if CODE represents a INDIRECT_REF.  Keep these checks in
    ascending code order.  */
 #define INDIRECT_REF_P(CODE)\
@@ -422,6 +429,8 @@ struct tree_common GTY(())
 
 	TREE_DEPRECATED in
 	   ..._DECL
+	APPLE LOCAL C* property (Radar 4436866)
+	   CALL_EXPR
 
    APPLE LOCAL begin "unavailable" attribute (Radar 2809697)
    unavailable_flag:
@@ -851,6 +860,12 @@ extern void tree_operand_check_failed (int, enum tree_code,
    exit of a function.  Calls for which this is true are candidates for tail
    call optimizations.  */
 #define CALL_EXPR_TAILCALL(NODE) (CALL_EXPR_CHECK(NODE)->common.addressable_flag)
+
+/* APPLE LOCAL begin C* property (Radar 4436866) */
+/* Set on a CALL_EXPR if it is for call to a getter function represented by an
+   objective-c property declaration. */
+#define CALL_EXPR_OBJC_PROPERTY_GETTER(NODE) (CALL_EXPR_CHECK(NODE)->common.deprecated_flag)
+/* APPLE LOCAL end C* property (Radar 4436866) */
 
 /* In a VAR_DECL, nonzero means allocate static storage.
    In a FUNCTION_DECL, nonzero if function has been defined.
@@ -2315,13 +2330,14 @@ namespace llvm { class Value; }
 /* Used to indicate that this DECL has weak linkage.  */
 #define DECL_WEAK(NODE) (DECL_CHECK (NODE)->decl.weak_flag)
 
-/* APPLE LOCAL handling duplicate decls across files */
+/* APPLE LOCAL duplicate decls in multiple files. */
 #define DECL_DUPLICATE_DECL(NODE) (DECL_CHECK (NODE)->decl.duplicate_decl)
 
 /* APPLE LOCAL begin CW asm blocks */
-#define DECL_CW_ASM_FUNCTION(NODE) (DECL_CHECK (NODE)->decl.cw_asm_function_flag)
-#define DECL_CW_ASM_NORETURN(NODE) (DECL_CHECK (NODE)->decl.cw_asm_noreturn_flag)
-#define DECL_CW_ASM_FRAME_SIZE(NODE) (DECL_CHECK (NODE)->decl.cw_asm_frame_size)
+#define DECL_IASM_ASM_FUNCTION(NODE) (DECL_CHECK (NODE)->decl.iasm_asm_function_flag)
+#define DECL_IASM_NORETURN(NODE) (DECL_CHECK (NODE)->decl.iasm_noreturn_flag)
+#define DECL_IASM_DONT_PROMOTE_TO_STATIC(NODE) (DECL_CHECK (NODE)->decl.iasm_dont_promote_to_static)
+#define DECL_IASM_FRAME_SIZE(NODE) (DECL_CHECK (NODE)->decl.iasm_frame_size)
 /* APPLE LOCAL end CW asm blocks */
 
 /* Used in TREE_PUBLIC decls to indicate that copies of this DECL in
@@ -2392,7 +2408,7 @@ namespace llvm { class Value; }
    heuristics regarding optimization.  */
 #define DECL_ESTIMATED_INSNS(NODE) \
   (FUNCTION_DECL_CHECK (NODE)->decl.u1.i)
-/* APPLE LOCAL end */
+/* APPLE LOCAL end DECL_ESTIMATED_INSNS */
 
 /* Nonzero for a decl which is at file scope.  */
 #define DECL_FILE_SCOPE_P(EXP) 					\
@@ -2489,9 +2505,10 @@ struct tree_decl GTY(())
   /* APPLE LOCAL unused bits */
   /* 9 unused bits.  */
   /* APPLE LOCAL begin CW asm blocks */
-  unsigned cw_asm_function_flag : 1;
-  unsigned cw_asm_noreturn_flag : 1;
-  unsigned int cw_asm_frame_size;
+  unsigned iasm_asm_function_flag : 1;
+  unsigned iasm_noreturn_flag : 1;
+  unsigned iasm_dont_promote_to_static : 1;
+  unsigned int iasm_frame_size;
   /* APPLE LOCAL end CW asm blocks */
 
   union tree_decl_u1 {
@@ -3228,11 +3245,6 @@ typedef struct record_layout_info_s
   /* True if we've seen a packed field that didn't have normal
      alignment anyway.  */
   int packed_maybe_necessary;
-  /* APPLE LOCAL begin bitfield reversal */
-  int among_reversed_bitfields;
-  unsigned int reversed_bitfield_type_size;
-  unsigned int reversed_bitfield_bitpos;
-  /* APPLE LOCAL end bitfield reversal */
 } *record_layout_info;
 
 extern void set_lang_adjust_rli (void (*) (record_layout_info));
@@ -3911,6 +3923,12 @@ extern void dwarf2out_return_save (const char *, HOST_WIDE_INT);
 /* Entry point for saving the return address in a register.  */
 
 extern void dwarf2out_return_reg (const char *, unsigned);
+
+/* APPLE LOCAL begin mainline 2006-02-17 4356747 stack realign */
+/* Entry point for saving the first register into the second.  */
+
+extern void dwarf2out_reg_save_reg (const char *, rtx, rtx);
+/* APPLE LOCAL end mainline 2006-02-17 4356747 stack realign */
 
 /* In tree-inline.c  */
 

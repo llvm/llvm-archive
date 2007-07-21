@@ -1,7 +1,7 @@
 /* APPLE LOCAL file mainline */
 /* Test errors for constant strings.  */
 /* { dg-do compile } */
-/* { dg-options "-fgnu-runtime" } */
+/* { dg-options "-fgnu-runtime -fno-constant-cfstrings" } */
 
 #ifdef __cplusplus
 extern void baz(...);

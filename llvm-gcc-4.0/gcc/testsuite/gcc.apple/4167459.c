@@ -1,5 +1,6 @@
 /* APPLE LOCAL begin radar 4167459 */
 /* { dg-do compile { target i?86-*-darwin* } } */
+/* { dg-skip-if "" { i?86-*-darwin* } { "-m64" } { "" } } */
 /* { dg-options "-O -march=pentium4" } */
 extern double foo(double);
 

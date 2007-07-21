@@ -15,12 +15,12 @@ typedef struct __CFDictionary * CFDictionaryRef;
 int GlobalReads;
 
 
-id objc_read_weak(id value) {
+static id objc_read_weak(id *location) {
   ++GlobalReads;
-  return value;
+  return *location;
 }
 
-id objc_assign_weak(id value, id *dest) {
+static id objc_assign_weak(id value, id *dest) {
   return ((__weak id)*dest = value);
 }
 

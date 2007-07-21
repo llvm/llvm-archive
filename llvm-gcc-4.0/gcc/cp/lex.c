@@ -300,10 +300,12 @@ static const struct resword reswords[] =
   { "end",		RID_AT_END,		D_OBJC },
   { "implementation",	RID_AT_IMPLEMENTATION,	D_OBJC },
   { "interface",	RID_AT_INTERFACE,	D_OBJC },
-  /* APPLE LOCAL beginc C* language */
+  /* APPLE LOCAL C* language */
   { "optional",         RID_AT_OPTIONAL,        D_OBJC },
+  /* APPLE LOCAL C* language */
   { "required",         RID_AT_REQUIRED,        D_OBJC },
-  /* APPLE LOCAL end C* language */
+  /* APPLE LOCAL C* property (Radar 4436866) */
+  { "property",		RID_AT_PROPERTY,	D_OBJC },
   { "protocol",		RID_AT_PROTOCOL,	D_OBJC },
   { "selector",		RID_AT_SELECTOR,	D_OBJC },
   { "finally",		RID_AT_FINALLY,		D_OBJC },
@@ -316,6 +318,17 @@ static const struct resword reswords[] =
   { "oneway",		RID_ONEWAY,		D_OBJC },
   { "out",		RID_OUT,		D_OBJC },
   /* APPLE LOCAL end mainline */
+  /* APPLE LOCAL begin C* property (Radar 4436866) */
+  /* These are recognized inside a property attribute list */
+  { "readonly",         RID_READONLY,           D_OBJC },
+  /* APPLE LOCAL Radar 4591909 */
+  { "dynamic",          RID_DYNAMIC,            D_OBJC },
+  { "getter",           RID_GETTER,             D_OBJC },
+  { "setter",           RID_SETTER,             D_OBJC },
+  { "ivar",             RID_IVAR,               D_OBJC },
+  /* APPLE LOCAL radar 4621020 */
+  { "weak",             RID_WEAK,               D_OBJC },
+  /* APPLE LOCAL end C* property (Radar 4436866) */
 };
 
 void
@@ -623,7 +636,10 @@ unqualified_name_lookup_error (tree name)
     }
   else
     {
-      error ("%qD was not declared in this scope", name);
+      /* APPLE LOCAL begin radar 4133425 */
+      if (!objc_diagnose_private_ivar (name))
+        error ("%qD was not declared in this scope", name);
+      /* APPLE LOCAL end radar 4133425 */
       /* Prevent repeated error messages by creating a VAR_DECL with
 	 this NAME in the innermost block scope.  */
       if (current_function_decl)

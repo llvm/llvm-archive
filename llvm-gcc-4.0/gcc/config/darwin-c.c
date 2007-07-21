@@ -48,6 +48,11 @@ Boston, MA 02111-1307, USA.  */
 
 static bool using_frameworks = false;
 
+/* APPLE LOCAL begin mainline */
+/* True if we're setting __attribute__ ((ms_struct)).  */
+static bool darwin_ms_struct = false;
+
+/* APPLE LOCAL end mainline */
 /* APPLE LOCAL begin CALL_ON_LOAD/CALL_ON_UNLOAD pragmas  20020202 --turly  */
 static void directive_with_named_function (const char *, void (*sec_f)(void));
 /* APPLE LOCAL end CALL_ON_LOAD/CALL_ON_UNLOAD pragmas  20020202 --turly  */
@@ -91,6 +96,12 @@ typedef struct align_stack
 static struct align_stack * field_align_stack = NULL;
 
 /* APPLE LOCAL begin Macintosh alignment 2001-12-17 --ff */
+/* APPLE LOCAL begin radar 4679943 */
+/* natural_alignment == 0 means "off"
+   natural_alignment == 1 means "on"
+   natural_alignment == 2 means "unchanged"  */
+/* APPLE LOCAL end radar 4679943 */
+
 static void
 push_field_alignment (int bit_alignment, 
 		      int mac68k_alignment, int natural_alignment)
@@ -108,10 +119,13 @@ push_field_alignment (int bit_alignment,
     rs6000_alignment_flags |= MASK_ALIGN_MAC68K;
   else
     rs6000_alignment_flags &= ~MASK_ALIGN_MAC68K;
-  if (natural_alignment)
+
+  /* APPLE LOCAL begin radar 4679943 */
+  if (natural_alignment == 1)
     rs6000_alignment_flags |= MASK_ALIGN_NATURAL;
-  else
+  else if (natural_alignment == 0)
     rs6000_alignment_flags &= ~MASK_ALIGN_NATURAL;
+  /* APPLE LOCAL end radar 4679943 */
 }
 /* APPLE LOCAL end Macintosh alignment 2001-12-17 --ff */
 
@@ -314,8 +328,10 @@ else
   switch (action)
     {
     case pop:   pop_field_alignment ();		      break;
-    case push:  push_field_alignment (align, 0, 0);   break;
-    case set:   				      break;
+    /* APPLE LOCAL begin radar 4679943 */
+    case push:  push_field_alignment (align, 0, 2);   break;
+    /* APPLE LOCAL end radar 4679943 */
+    case set:                                         break;
     }
 }
 /* APPLE LOCAL end Macintosh alignment 2002-1-22 --ff */
@@ -354,6 +370,41 @@ darwin_pragma_unused (cpp_reader *pfile ATTRIBUTE_UNUSED)
     warning ("junk at end of '#pragma unused'");
 }
 
+/* APPLE LOCAL begin mainline */
+/* Parse the ms_struct pragma.  */
+void
+darwin_pragma_ms_struct (cpp_reader *pfile ATTRIBUTE_UNUSED)
+{
+  const char *arg;
+  tree t;
+
+  if (c_lex (&t) != CPP_NAME)
+    BAD ("malformed '#pragma ms_struct', ignoring");
+  arg = IDENTIFIER_POINTER (t);
+
+  if (!strcmp (arg, "on"))
+    darwin_ms_struct = true;
+  else if (!strcmp (arg, "off") || !strcmp (arg, "reset"))
+    darwin_ms_struct = false;
+  else
+    warning ("malformed '#pragma ms_struct {on|off|reset}', ignoring");
+
+  if (c_lex (&t) != CPP_EOF)
+    warning ("junk at end of '#pragma ms_struct'");
+}
+
+/* Set darwin specific type attributes on TYPE.  */
+void
+darwin_set_default_type_attributes (tree type)
+{
+  /* Handle the ms_struct pragma.  */
+  if (darwin_ms_struct
+      && TREE_CODE (type) == RECORD_TYPE)
+    TYPE_ATTRIBUTES (type) = tree_cons (get_identifier ("ms_struct"),
+                                        NULL_TREE,
+                                        TYPE_ATTRIBUTES (type));
+}
+/* APPLE LOCAL end mainline */
 /* APPLE LOCAL begin pragma reverse_bitfields */
 /* Handle the reverse_bitfields pragma.  */
 
@@ -996,6 +1047,10 @@ darwin_cpp_builtins (cpp_reader *pfile)
       builtin_define ("__weak=");
     }
   /* APPLE LOCAL end ObjC GC */
+  /* APPLE LOCAL begin C* warnings to easy porting to new abi */
+  if (flag_objc_abi >= 2)
+    builtin_define ("__OBJC2__");
+  /* APPLE LOCAL end C* warnings to easy porting to new abi */
   /* APPLE LOCAL begin radar 4224728 */
   if (flag_pic)
     builtin_define ("__PIC__");

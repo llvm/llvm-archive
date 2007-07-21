@@ -21,7 +21,6 @@
 3843157: g++.dg/pascal-strings-2.C  (test for warnings, line 24)
 3843157: g++.dg/pascal-strings-2.C  (test for warnings, line 25)
 3843157: g++.dg/pascal-strings-2.C (test for excess errors)
-4096269: g++.dg/eh/uncaught1.C execution test
 4178461: g++.old-deja/g++.other/string2.C execution test
 4194030: g++.dg/lookup/hidden-class1.C  (test for errors, line 7)
 4194030: g++.dg/lookup/hidden-class5.C  (test for errors, line 9)
@@ -34,7 +33,8 @@
 4194030: g++.dg/lookup/hidden-temp-class4.C  (test for errors, line 9)
 4194030: g++.dg/lookup/hidden-temp-class6.C (test for excess errors)
 4194030: g++.dg/lookup/hidden-temp-class7.C  (test for errors, line 13)
-4285232: g++.dg/4285232.C scan-assembler-not \\$0,
+#4489254: ./debug-1.H -fastcp (test for excess errors)
+4531667: g++.dg/bitreverse-23.C execution test
 #
 # The following tests fail only when the c++ suite is run through Obj-C++.
 3904139: g++.dg/ext/fnname3.C execution test
@@ -50,28 +50,14 @@
 3904173: g++.old-deja/g++.law/ctors10.C (test for excess errors)
 3904173: g++.old-deja/g++.law/shadow1.C (test for excess errors)
 3904184: g++.old-deja/g++.mike/p11144.C (test for excess errors)
-3904186: g++.dg/pch/system-1.C -g assembly comparison
-3904186: g++.dg/pch/system-1.C -O2 -g assembly comparison
-3904186: g++.dg/pch/system-1.C -O2 assembly comparison
-3904186: g++.dg/pch/system-2.C -g assembly comparison
-3904186: g++.dg/pch/system-2.C -O2 -g assembly comparison
-3904186: g++.dg/pch/system-2.C -O2 assembly comparison
-3904186: g++.dg/pch/uninst.C -g assembly comparison
-3904186: g++.dg/pch/uninst.C -O2 -g assembly comparison
-3904186: g++.dg/pch/uninst.C -O2 assembly comparison
 4079018: g++.dg/template/spec19.C (test for excess errors)
 4084977: g++.old-deja/g++.oliva/expr2.C execution test
 4084991: g++.dg/expr/lval2.C (test for excess errors)
-4229905: g++.old-deja/g++.mike/warn5.C (test for excess errors)
-4270237: g++.dg/pch/debug-1.C -g assembly comparison
-4270237: g++.dg/pch/debug-1.C -O2 -g assembly comparison
-4270237: g++.dg/pch/debug-1.C -O2 assembly comparison
 #
 # The following tests fail only when the c++ suite is run with -mcpu=G5
-3719311: g++.dg/template/warn1.C  (test for warnings, line 12)
+#4255172: g++.dg/align-test-1.C (test for excess errors)
 #
 # The following tests fail only when the c++ suite is run with -m64
-3964999: g++.old-deja/g++.pt/const2.C (test for excess errors)
 3965017: g++.dg/template/repo1.C (test for excess errors)
 3965017: g++.dg/template/repo3.C (test for excess errors)
 3965017: g++.old-deja/g++.pt/instantiate4.C (test for excess errors)
@@ -80,69 +66,40 @@
 3965017: g++.old-deja/g++.pt/repo2.C (test for excess errors)
 3965017: g++.old-deja/g++.pt/repo3.C (test for excess errors)
 3965017: g++.old-deja/g++.pt/repo4.C (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-21 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-21 -O2 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-21 -O3 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-21 -fastcp (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-2 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-2 -O2 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-2 -O3 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-2 -fastcp (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-23 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-23 -O2 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-23 -O3 (test for excess errors)
-3941491: g++.dg/debug/const1.C -gdwarf-23 -fastcp (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-21 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-21 -O2 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-21 -O3 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-21 -fastcp (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-2 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-2 -O2 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-2 -O3 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-2 -fastcp (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-23 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-23 -O2 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-23 -O3 (test for excess errors)
-3941491: g++.dg/debug/debug4.C -gdwarf-23 -fastcp (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-21 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-21 -O2 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-21 -O3 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-21 -fastcp (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-2 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-2 -O2 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-2 -O3 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-2 -fastcp (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-23 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-23 -O2 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-23 -O3 (test for excess errors)
-3941491: g++.dg/debug/trivial.C -gdwarf-23 -fastcp (test for excess errors)
+#
+# The following tests fail only when the c++ suite is run on ppc with -m64
 3967626: g++.dg/eh/forced1.C execution test
 3967626: g++.old-deja/g++.eh/terminate2.C execution test
-#4097506: g++.dg/ext/opt-pragma-2.C scan-assembler-times bl "L_printf 4
-#4097506: g++.dg/ext/opt-pragma-3.C scan-assembler-times b "L_printf 4
-#4097506: g++.dg/ext/opt-pragma-4.C scan-assembler-times b "L_printf 2
-#4097506: g++.dg/ext/opt-pragma-4.C scan-assembler-times bl "L_printf 2
-#4099260: g++.old-deja/g++.brendan/new3.C execution test
-4157563: ./debug-1.H -g (test for excess errors)
-4157563: ./debug-1.H -O2 -g (test for excess errors)
-4157563: ./debug-1.H -O2 (test for excess errors)
-4157563: ./debug-1.H -fastcp (test for excess errors)
 4385013: g++.dg/apple-longcall-2.C scan-assembler \tjmp
 4385013: g++.dg/apple-longcall-3.C scan-assembler \tjmp
 4385013: g++.dg/apple-longcall-3.C scan-assembler \tjbsr
 4385013: g++.dg/apple-longcall-3.C scan-assembler-not \tbl[\t ]
-# and these fail only on Leopard
-4385023: g++.dg/compat/eh/unexpected1 cp_compat_x_tst.o-cp_compat_y_tst.o execute
-4385023: g++.dg/eh/unexpected1.C execution test
-4385023: g++.old-deja/g++.eh/spec2.C execution test
-4385023: g++.old-deja/g++.eh/spec3.C execution test
-4385023: g++.old-deja/g++.eh/spec4.C execution test
-4385023: g++.old-deja/g++.mike/eh33.C execution test
-4385023: g++.old-deja/g++.mike/eh50.C execution test
-4385023: g++.old-deja/g++.mike/eh51.C execution test
-4440880: g++.dg/opt/pr17697-1.C execution test
-4440880: g++.dg/opt/pr17697-2.C execution test
-4440880: g++.dg/opt/pr17697-3.C execution test
 #
 # The following tests fail only when the c++ suite is run on x86
-4241732: g++.dg/asm-block-11.C (test for excess errors)
+#4535822: g++.apple/asm-block-13.C (test for excess errors)
+#4535822: g++.apple/asm-block-17.C (test for excess errors)
+#4535822: g++.apple/asm-block-18.C (test for excess errors)
+#4535822: g++.apple/asm-block-21.C (test for excess errors)
+#4535822: g++.apple/asm-block-32.C (test for excess errors)
+#4535822: g++.apple/asm-block-36.C (test for excess errors)
+#4535822: g++.apple/asm-block-50.C (test for excess errors)
+#4535822: g++.apple/asm-block-7.C (test for excess errors)
+#
+# The following tests fail only when the c++ suite is run on x86 with -m64
+4597250: g++.apple/asm-block-13.C (test for excess errors)
+4597250: g++.apple/asm-block-18.C (test for excess errors)
+4597250: g++.apple/asm-block-24.C (test for excess errors)
+4597250: g++.apple/asm-block-25.C (test for excess errors)
+4597250: g++.apple/asm-block-31.C (test for excess errors)
+4597250: g++.apple/asm-block-32.C (test for excess errors)
+4597250: g++.apple/asm-block-33.C (test for excess errors)
+4597250: g++.apple/asm-block-35.C (test for excess errors)
+4597250: g++.apple/asm-block-36.C (test for excess errors)
+4597250: g++.apple/asm-block-50.C (test for excess errors)
+4597254: g++.apple/asm-block-7.C (test for excess errors)
+4597254: g++.apple/asm-block-17.C (test for excess errors)
+4597254: g++.apple/asm-block-41.C (test for excess errors)
+4597254: g++.apple/asm-block-45.C (test for excess errors)
+#4597270: g++.apple/4474655.C scan-assembler maxsd
+#4597288: g++.dg/other/i386-1.C (test for excess errors)
+#4597308: g++.old-deja/g++.abi/align.C (test for excess errors)

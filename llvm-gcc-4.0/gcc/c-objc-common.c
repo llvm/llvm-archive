@@ -285,3 +285,13 @@ c_types_compatible_p (tree x, tree y)
 {
     return comptypes (TYPE_MAIN_VARIANT (x), TYPE_MAIN_VARIANT (y));
 }
+
+/* APPLE LOCAL begin mainline 2006-05-18 4336222 */
+/* Determine if the type is a vla type for the backend.  */
+
+bool
+c_vla_unspec_p (tree x, tree fn ATTRIBUTE_UNUSED)
+{
+  return c_vla_type_p (x);
+}
+/* APPLE LOCAL end mainline 2006-05-18 4336222 */

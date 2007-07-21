@@ -3,6 +3,8 @@
    with -O0, so the sibcall case cannot occur.  */
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* { dg-options "-O0 -fobjc-direct-dispatch" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+
 #include <objc/Object.h>
 
 void foo(void) {

@@ -155,7 +155,19 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 		  if (argv[i][2] != '\0')
 		    arg = argv[i]+2;
 		  else if (argv[i+1] != NULL)
-		    arg = argv[i+1];
+		  /* APPLE LOCAL begin radar 3904247 */
+		    {
+		      arg = argv[i+1];
+		      if (strcmp (arg, "objective-c++") == 0
+			  || strcmp (arg, "objective-c") == 0)
+			{
+			  /* Must skip over '-x's argument; otherwise, driver thinks 
+			     it is file name!!  */
+			  i++;
+			  library = 1;
+			}
+		    }
+		  /* APPLE LOCAL end radar 3904247 */
 		  else  /* Error condition, message will be printed later.  */
 		    arg = "";
 		  if (strcmp (arg, "c++") == 0
@@ -164,6 +176,15 @@ lang_specific_driver (int *in_argc, const char *const **in_argv,
 		}
 	      saw_speclang = 1;
 	    }
+	  /* APPLE LOCAL begin radar 3904247 */
+	  else if (strcmp (argv[i], "-ObjC++") == 0
+		   || strcmp (argv[i], "-ObjC") == 0)
+	    {
+	      if (library == 0)
+		library = 1;
+	      saw_speclang = 1;
+	    }
+	  /* APPLE LOCAL end radar 3904247 */
 	  /* Arguments that go directly to the linker might be .o files,
 	     or something, and so might cause libstdc++ to be needed.  */
 	  else if (strcmp (argv[i], "-Xlinker") == 0)

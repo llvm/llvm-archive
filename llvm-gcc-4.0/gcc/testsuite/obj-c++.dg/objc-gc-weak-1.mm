@@ -14,8 +14,8 @@ typedef const struct __CFDictionary * CFDictionaryRef;
 
 int GlobalAssigns;
 
-id objc_read_weak(id value) {
-  return value;
+id objc_read_weak(id *value) {
+  return *value;
 }
 
 id objc_assign_weak(id value, id *dest) {

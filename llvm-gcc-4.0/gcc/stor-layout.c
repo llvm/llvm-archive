@@ -557,11 +557,6 @@ start_record_layout (tree t)
   rli->prev_field = 0;
   rli->pending_statics = 0;
   rli->packed_maybe_necessary = 0;
-  /* APPLE LOCAL begin bitfield reversal */
-  rli->among_reversed_bitfields = 0;
-  rli->reversed_bitfield_type_size = 0;
-  rli->reversed_bitfield_bitpos = 0;
-  /* APPLE LOCAL end bitfield reversal */
 
   return rli;
 }
@@ -635,6 +630,10 @@ debug_rli (record_layout_info rli)
   fprintf (stderr, "\naligns: rec = %u, unpack = %u, off = %u\n",
 	   rli->record_align, rli->unpacked_align,
 	   rli->offset_align);
+  /* APPLE LOCAL begin mainline */
+  if (rli->remaining_in_alignment)
+    fprintf (stderr, "remaining_in_alignment = %u\n", rli->remaining_in_alignment);
+  /* APPLE LOCAL end mainline */
   if (rli->packed_maybe_necessary)
     fprintf (stderr, "packed may be necessary\n");
 
@@ -716,7 +715,8 @@ update_alignment_for_field (record_layout_info rli, tree field,
   /* Record must have at least as much alignment as any field.
      Otherwise, the alignment of the field within the record is
      meaningless.  */
-  if (is_bitfield && targetm.ms_bitfield_layout_p (rli->t))
+  /* APPLE LOCAL begin mainline */
+  if (targetm.ms_bitfield_layout_p (rli->t))
     {
       /* Here, the alignment of the underlying type of a bitfield can
 	 affect the alignment of a record; even a zero-sized field
@@ -724,11 +724,12 @@ update_alignment_for_field (record_layout_info rli, tree field,
 	 the type, except that for zero-size bitfields this only
 	 applies if there was an immediately prior, nonzero-size
 	 bitfield.  (That's the way it is, experimentally.) */
-      if (! integer_zerop (DECL_SIZE (field))
+      if (!is_bitfield
+	  || (!integer_zerop (DECL_SIZE (field))
 	  ? ! DECL_PACKED (field)
 	  : (rli->prev_field
 	     && DECL_BIT_FIELD_TYPE (rli->prev_field)
-	     && ! integer_zerop (DECL_SIZE (rli->prev_field))))
+		 && !integer_zerop (DECL_SIZE (rli->prev_field)))))
 	{
 	  unsigned int type_align = TYPE_ALIGN (type);
 	  type_align = MAX (type_align, desired_align);
@@ -738,6 +739,7 @@ update_alignment_for_field (record_layout_info rli, tree field,
 	  rli->unpacked_align = MAX (rli->unpacked_align, TYPE_ALIGN (type));
 	}
     }
+  /* APPLE LOCAL end mainline */
 #ifdef PCC_BITFIELD_TYPE_MATTERS
   else if (is_bitfield && PCC_BITFIELD_TYPE_MATTERS)
     {
@@ -835,8 +837,6 @@ excess_unit_span (HOST_WIDE_INT byte_offset, HOST_WIDE_INT bit_offset,
 }
 #endif
 
-/* APPLE LOCAL begin bitfield reversal */
-/* 4401223 4401224 4420068 4317709 4431497 4433004 4430139 4436477 */
 /* RLI contains information about the layout of a RECORD_TYPE.  FIELD
    is a FIELD_DECL to be added after those fields already present in
    T.  (FIELD is not actually added to the TYPE_FIELDS list here;
@@ -867,31 +867,7 @@ place_field (record_layout_info rli, tree field)
 					rli->pending_statics);
       return;
     }
-  /* In C++ the list doesn't necessarily end with the last data member.
-     There always seems to be a TYPE_DECL for the class type in this list
-     which comes after all the data members, so use that to detect the end.
-     In C this operation is done at list end (bottom of this function).  */
-  else if (targetm.reverse_bitfields_p (rli->t) && rli->among_reversed_bitfields
-	   && TREE_CODE (field) == TYPE_DECL && TREE_TYPE(field) == rli->t)
-    {
-      /* If we're at the end of the struct and there are dangling reversed bitfields,
-	 adjust rli->bitpos.  Needed to get sizeof right. */
-      /* Make sure we complete the current allocation unit (e.g. if we've used
-	 16 of 32 bits these will be the ones at the right, we must move up to
-	 a 32 bit boundary).  But, when pragma pack(1) is on, do not use the
-	 full allocation unit size (experiment indicates CW treats pack(1)
-	 different from other pack values, although the reason remains
-	 mysterious.) */
-      unsigned int save_bitpos = rli->reversed_bitfield_bitpos;
-      if (save_bitpos > 0 && rli->reversed_bitfield_type_size > save_bitpos
-	  && maximum_field_alignment != 8)
-	save_bitpos = rli->reversed_bitfield_type_size;
 
-      rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, bitsize_int (save_bitpos));
-      normalize_rli (rli);
-      rli->among_reversed_bitfields = 0;
-      return;
-    }
   /* Enumerators and enum types which are local to this class need not
      be laid out.  Likewise for initialized constant fields.  */
   else if (TREE_CODE (field) != FIELD_DECL)
@@ -905,64 +881,19 @@ place_field (record_layout_info rli, tree field)
       return;
     }
 
-  /* If we're at the non-bitfield terminating a run of reversed bitfields,
-     or a bitfield that won't fit in the current unit of bitfield allocation,
-     or a zero-sized field, adjust rli->bitpos by adding in the accumulated 
-     reversed sizes.  Nonintuitively, it is correct to check DECL_BIT_FIELD here but
-     DECL_BIT_FIELD_TYPE below; the information is moved by 
-     update_alignment_for_field. */
-  if (targetm.reverse_bitfields_p (rli->t) && rli->among_reversed_bitfields
-      && (!DECL_BIT_FIELD (field) || integer_zerop (DECL_SIZE (field))))
-    {
-      rli->among_reversed_bitfields = 0;
-      rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, 
-				bitsize_int (rli->reversed_bitfield_bitpos));
-      normalize_rli (rli);
-    }
-  else if (targetm.reverse_bitfields_p (rli->t) && rli->among_reversed_bitfields
-      && ((rli->reversed_bitfield_bitpos + TREE_INT_CST_LOW (DECL_SIZE (field))
-	      > TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (field))))))
-    {
-      /* In the case where the next bitfield won't fit in the allocation unit,
-	 make sure we complete the current allocation unit (e.g. if we've used
-	 16 of 32 bits these will be the ones at the right, we must move up to
-	 a 32 bit boundary).  Move to the correct boundary for the new allocation
-	 unit, if that's bigger (this boundary may be reduced by packing).  */
-      unsigned int save_bitpos = rli->reversed_bitfield_bitpos;
-      unsigned int save_offset_align = rli->offset_align;
-      unsigned int tsize = TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (field)));
-      if (save_bitpos > 0 && rli->reversed_bitfield_type_size > save_bitpos)
-	save_bitpos = rli->reversed_bitfield_type_size;
-      if (save_bitpos > 0 && tsize > save_bitpos
-	  && (maximum_field_alignment == 0 || maximum_field_alignment >= tsize))
-	save_bitpos = tsize;
-
-      rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, bitsize_int (save_bitpos));
-
-      /* For pack(1) etc. normalize to byte boundary only. */
-      rli->offset_align = TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (field)));
-      if (maximum_field_alignment != 0 && maximum_field_alignment < rli->offset_align)
-	rli->offset_align = maximum_field_alignment;
-      normalize_rli (rli);
-      rli->offset_align = save_offset_align;
-
-      rli->among_reversed_bitfields = 0;
-    }
-
-  /* If we're in the middle of a reversed bitfield run (this field is known to 
-     be another bitfield that will fit in the current allocation unit at this point) 
-     we don't want any alignment padding. */
-  if (rli->among_reversed_bitfields)
-    known_align = BIGGEST_ALIGNMENT;
   /* Work out the known alignment so far.  Note that A & (-A) is the
      value of the least-significant bit in A that is one.  */
-  else if (! integer_zerop (rli->bitpos))
+  /* APPLE LOCAL begin reverse_bitfields */
+  if (! integer_zerop (rli->bitpos))
     {
       int realoffset = tree_low_cst (rli->bitpos, 1);
+
       if (targetm.reverse_bitfields_p (rli->t))
-	realoffset += tree_low_cst (rli->offset, 1) * BITS_PER_UNIT;
+	realoffset += rli->remaining_in_alignment;
+
       known_align = realoffset & -realoffset;
     }
+  /* APPLE LOCAL end reverse_bitfields */
   else if (integer_zerop (rli->offset))
     known_align = BIGGEST_ALIGNMENT;
   else if (host_integerp (rli->offset, 1))
@@ -992,10 +923,14 @@ place_field (record_layout_info rli, tree field)
 	rli->packed_maybe_necessary = 1;
     }
 
+  /* APPLE LOCAL begin mainline */
   /* Does this field automatically have alignment it needs by virtue
-     of the fields that precede it and the record's own alignment?  */
-  if (known_align < desired_align)
+     of the fields that precede it and the record's own alignment?
+     We already align ms_struct fields, so don't re-align them.  */
+  if (known_align < desired_align
+      && !targetm.ms_bitfield_layout_p (rli->t))
     {
+      /* APPLE LOCAL end mainline */
       /* No, we need to skip space before this field.
 	 Bump the cumulative size to multiple of field alignment.  */
 
@@ -1132,10 +1067,8 @@ place_field (record_layout_info rli, tree field)
 
      Note: for compatibility, we use the type size, not the type alignment
      to determine alignment, since that matches the documentation */
-
-  if (targetm.ms_bitfield_layout_p (rli->t)
-       && ((DECL_BIT_FIELD_TYPE (field) && ! DECL_PACKED (field))
-	  || (rli->prev_field && ! DECL_PACKED (rli->prev_field))))
+  /* APPLE LOCAL begin mainline */
+  if (targetm.ms_bitfield_layout_p (rli->t))
     {
       /* At this point, either the prior or current are bitfields,
 	 (possibly both), and we're dealing with MS packing.  */
@@ -1143,7 +1076,7 @@ place_field (record_layout_info rli, tree field)
 
       /* Is the prior field a bitfield?  If so, handle "runs" of same
 	 type size fields.  */
-      if (rli->prev_field /* necessarily a bitfield if it exists.  */)
+      if (rli->prev_field)
 	{
 	  /* If both are bitfields, nonzero, and the same size, this is
 	     the middle of a run.  Zero declared size fields are special
@@ -1162,10 +1095,13 @@ place_field (record_layout_info rli, tree field)
 	      /* We're in the middle of a run of equal type size fields; make
 		 sure we realign if we run out of bits.  (Not decl size,
 		 type size!) */
-	      HOST_WIDE_INT bitsize = tree_low_cst (DECL_SIZE (field), 0);
+	      HOST_WIDE_INT bitsize = tree_low_cst (DECL_SIZE (field), 1);
 
 	      if (rli->remaining_in_alignment < bitsize)
 		{
+		  /* APPLE LOCAL begin reverse_bitfields */
+		  if (!targetm.reverse_bitfields_p (rli->t))
+		    {
 		  /* out of bits; bump up to next 'word'.  */
 		  rli->offset = DECL_FIELD_OFFSET (rli->prev_field);
 		  rli->bitpos
@@ -1173,8 +1109,57 @@ place_field (record_layout_info rli, tree field)
 				  DECL_FIELD_BIT_OFFSET (rli->prev_field));
 		  rli->prev_field = field;
 		  rli->remaining_in_alignment
-		    = tree_low_cst (TYPE_SIZE (type), 0);
+		    = tree_low_cst (TYPE_SIZE (type), 1);
+		    }
+		  else
+		    {
+		      /* "Use up" the remaining bits.  */
+		      rli->bitpos
+			= size_binop (PLUS_EXPR,
+				      rli->bitpos,
+				      size_binop
+				      (MINUS_EXPR,
+				       TYPE_SIZE (type),
+				       bitsize_int (rli->remaining_in_alignment)));
+		      rli->prev_field = field;
+		      rli->remaining_in_alignment
+			= tree_low_cst (TYPE_SIZE (type), 1);
+
+		      /* Move to the top end of the range. We'll add the bitfield
+			 below.  */
+		      rli->bitpos
+			= size_binop (PLUS_EXPR,
+				      rli->bitpos,
+				      TYPE_SIZE (type));
+		    }
 		}
+
+	      /* We handle this here instead of later at the end of
+		 field placement.  */
+	      if (targetm.reverse_bitfields_p (rli->t))
+		{
+		  /* If we normalized within rli->remaining_in_alignment we'll
+		     possibly need to add some bits.  */
+		  while ((tree_low_cst (rli->bitpos, 0) - bitsize) < 0)
+		    {
+		      rli->offset
+			= size_binop (MINUS_EXPR,
+				      rli->offset,
+				      fold_convert (sizetype, bitsize_one_node));
+		      rli->bitpos
+			= size_binop (PLUS_EXPR,
+				      rli->bitpos,
+				      bitsize_int (BITS_PER_UNIT));
+		    }
+
+		  rli->bitpos = size_binop (MINUS_EXPR,
+					    rli->bitpos,
+					    bitsize_int (bitsize));
+
+		  /* Ensure we don't go negative.  */
+		  gcc_assert (tree_low_cst (rli->bitpos, 0) >= 0);
+		}
+	      /* APPLE LOCAL end reverse_bitfields */
 
 	      rli->remaining_in_alignment -= bitsize;
 	    }
@@ -1188,20 +1173,39 @@ place_field (record_layout_info rli, tree field)
 		 type and where we first started working on that type.
 		 Note: since the beginning of the field was aligned then
 		 of course the end will be too.  No round needed.  */
-
-	      if (!integer_zerop (DECL_SIZE (rli->prev_field)))
+	      /* APPLE LOCAL begin reverse_bitfields */
+	      if (!targetm.reverse_bitfields_p (rli->t))
 		{
-		  tree type_size = TYPE_SIZE (TREE_TYPE (rli->prev_field));
-
-		  rli->bitpos
-		    = size_binop (PLUS_EXPR, type_size,
-				  DECL_FIELD_BIT_OFFSET (rli->prev_field));
+		  if (!integer_zerop (DECL_SIZE (rli->prev_field)))
+		    {
+		      rli->bitpos
+			= size_binop (PLUS_EXPR, rli->bitpos,
+				      bitsize_int (rli->remaining_in_alignment));
+		    }
+		  else
+		    prev_saved = NULL;
 		}
 	      else
-		/* We "use up" size zero fields; the code below should behave
-		   as if the prior field was not a bitfield.  */
-		prev_saved = NULL;
+		{
+		  /* Difference from above - even if we don't have anything
+		     left in the alignment we should move up to the top of
+		     the word.  */
+	      if (!integer_zerop (DECL_SIZE (rli->prev_field)))
+		{
+		  rli->bitpos
+			= size_binop
+			(PLUS_EXPR, rli->bitpos,
+			 size_binop (MINUS_EXPR,
+				     TYPE_SIZE (TREE_TYPE (rli->prev_field)),
+				     bitsize_int (rli->remaining_in_alignment)));
 
+		      /* We'll reset this when we have bits to add.  */
+		      rli->remaining_in_alignment = 0;
+		}
+	      else
+		prev_saved = NULL;
+		}
+	      /* APPLE LOCAL end reverse_bitfields */
 	      /* Cause a new bitfield to be captured, either this time (if
 		 currently a bitfield) or next time we see one.  */
 	      if (!DECL_BIT_FIELD_TYPE(field)
@@ -1241,97 +1245,45 @@ place_field (record_layout_info rli, tree field)
 	      && host_integerp (TYPE_SIZE (TREE_TYPE (field)), 0)
 	      && host_integerp (DECL_SIZE (field), 0))
 	    rli->remaining_in_alignment
-	      = tree_low_cst (TYPE_SIZE (TREE_TYPE(field)), 0)
-		- tree_low_cst (DECL_SIZE (field), 0);
+	      = tree_low_cst (TYPE_SIZE (TREE_TYPE(field)), 1)
+	      - tree_low_cst (DECL_SIZE (field), 1);
 
 	  /* Now align (conventionally) for the new type.  */
-	  if (!DECL_PACKED(field))
-	    type_align = MAX(TYPE_ALIGN (type), type_align);
-
-	  if (prev_saved
-	      && DECL_BIT_FIELD_TYPE (prev_saved)
-	      /* If the previous bit-field is zero-sized, we've already
-		 accounted for its alignment needs (or ignored it, if
-		 appropriate) while placing it.  */
-	      && ! integer_zerop (DECL_SIZE (prev_saved)))
-	    type_align = MAX (type_align,
-			      TYPE_ALIGN (TREE_TYPE (prev_saved)));
+	  type_align = TYPE_ALIGN (TREE_TYPE (field));
 
 	  if (maximum_field_alignment != 0)
 	    type_align = MIN (type_align, maximum_field_alignment);
 
 	  rli->bitpos = round_up (rli->bitpos, type_align);
 
+	  /* APPLE LOCAL begin reverse_bitfields */
+	  /* If we're reversing add this to the field starting at the
+	     "right" end of the alignment.  */
+	  if (targetm.reverse_bitfields_p (rli->t)
+	      && DECL_BIT_FIELD_TYPE (field)
+	      && !integer_zerop (DECL_SIZE (field)))
+	    {
+	      rli->bitpos = size_binop (MINUS_EXPR,
+					size_binop (PLUS_EXPR,
+						    rli->bitpos,
+						    TYPE_SIZE (type)),
+					DECL_SIZE (field));
+	    }
+	  /* APPLE LOCAL end reverse_bitfields */
           /* If we really aligned, don't allow subsequent bitfields
 	     to undo that.  */
 	  rli->prev_field = NULL;
 	}
+      /* Nothing we've done should let bitpos be negative.  */
+      gcc_assert (tree_low_cst (rli->bitpos, 0) >= 0);
     }
-
   /* Offset so far becomes the position of this field after normalizing.  */
   normalize_rli (rli);
-  if (targetm.reverse_bitfields_p (rli->t) && DECL_BIT_FIELD_TYPE (field))
-    {
-      tree fsize = DECL_SIZE (field);
-      tree tsize = TYPE_SIZE (TREE_TYPE (field));
-      unsigned int tsize_int = TREE_INT_CST_LOW (tsize);
 
-      if (!rli->among_reversed_bitfields)
-	{
-	  unsigned int save_offset_align = rli->offset_align;
-	  unsigned int bitpos_int;
-	  /* Make sure current bit accumulation isn't too big for this basic type. */
-	  rli->offset_align = tsize_int;
-	  normalize_rli (rli);
-	  rli->offset_align = save_offset_align;
-
-	  /* If this field won't fit in current allocation unit, finish off the
-	     current allocation unit.  Handle :0 here as well.  */
-	  bitpos_int = TREE_INT_CST_LOW (rli->bitpos);
-	  if (tsize_int < (TREE_INT_CST_LOW (fsize) + TREE_INT_CST_LOW (rli->bitpos)))
-	    {
-	      if (bitpos_int > 0 && tsize_int > bitpos_int
-		  && (maximum_field_alignment == 0 || maximum_field_alignment >= tsize_int))
-		rli->bitpos = tsize;
-	      if (TREE_INT_CST_LOW (fsize) == 0)
-		rli->bitpos = tsize;
-	      rli->offset_align = tsize_int;
-	      if (maximum_field_alignment != 0 && maximum_field_alignment < rli->offset_align)
-		rli->offset_align = maximum_field_alignment;
-	    }
-	  else
-	    {
-	      rli->offset_align = tsize_int;
-	      if (maximum_field_alignment != 0 
-		  && maximum_field_alignment < rli->offset_align
-		  && maximum_field_alignment > 8) /* not for pack(1) !! */
-		rli->offset_align = maximum_field_alignment;
-	    }
-	  normalize_rli (rli);
-	  rli->offset_align = save_offset_align;
-
-	  rli->among_reversed_bitfields = 1;
-	  rli->reversed_bitfield_bitpos = TREE_INT_CST_LOW (rli->bitpos);
-	  /* We're going to add the reversed-bitpos back into bitpos before doing
-	     anything with bitpos; set to zero now to get this to come out right. */
-	  rli->bitpos = bitsize_zero_node;
-	}	
-      DECL_FIELD_BIT_OFFSET (field) = size_binop (MINUS_EXPR, 
-	    size_binop (MINUS_EXPR, tsize, fsize),
-	    bitsize_int (rli->reversed_bitfield_bitpos));
-      rli->reversed_bitfield_bitpos += TREE_INT_CST_LOW (fsize);
-      rli->reversed_bitfield_type_size = TREE_INT_CST_LOW (tsize);
-      /* Do not advance rli->bitpos, as we don't want normalize_rli perturbing things.
-	 Its model is that bits are allocated monotonically from one end of the struct
-	 (possibly skipping over holes); things are not like that with reversal. 
-	 Instead, keep a separate total of "bits within the current group of reversed
-	 bitfields", and add that into bitpos when we complete a group. */
-    }
-  else
     DECL_FIELD_BIT_OFFSET (field) = rli->bitpos;
   DECL_FIELD_OFFSET (field) = rli->offset;
   SET_DECL_OFFSET_ALIGN (field, rli->offset_align);
-
+  /* APPLE LOCAL end mainline */
   /* If this field ended up more aligned than we thought it would be (we
      approximate this by seeing if its position changed), lay out the field
      again; perhaps we can use an integral mode for it now.  */
@@ -1376,37 +1328,62 @@ place_field (record_layout_info rli, tree field)
       rli->bitpos = bitsize_zero_node;
       rli->offset_align = MIN (rli->offset_align, desired_align);
     }
-  else if (targetm.reverse_bitfields_p (rli->t) && rli->among_reversed_bitfields)
+  /* APPLE LOCAL begin reverse_bitfields */
+  else if (targetm.ms_bitfield_layout_p (rli->t))
     {
-      /* If we're at the end of the struct and there are dangling reversed bitfields,
-	 adjust rli->bitpos.  Needed to get sizeof right.
-	 C++ doesn't terminate the field list with a null; there always seems to be
-	 a TYPE_DECL==rli->t after all data members, which was detected above.  */
-      if (TREE_CHAIN (field) == NULL_TREE)
-	{
-	  /* Make sure we complete the current allocation unit (e.g. if we've used
-	     16 of 32 bits these will be the ones at the right, we must move up to
-	     a 32 bit boundary).  But, when pragma pack(1) is on, do not use the
-	     full allocation unit size (experiment indicates CW treats pack(1)
-	     different from other pack values, although the reason remains
-	     mysterious.) */
-	  unsigned int save_bitpos = rli->reversed_bitfield_bitpos;
-	  if (save_bitpos > 0 && rli->reversed_bitfield_type_size > save_bitpos
-	      && maximum_field_alignment != 8)
-	    save_bitpos = rli->reversed_bitfield_type_size;
+      if (!targetm.reverse_bitfields_p (rli->t))
+    {
+	  rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, DECL_SIZE (field));
 
-	  rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, bitsize_int (save_bitpos));
-	  normalize_rli (rli);
-	  rli->among_reversed_bitfields = 0;
+	  /* If this is the last element in the struct fill out the rest of
+	     the struct - this is only used when we would have packed a bitfield
+	     into less than the base type size of the field type.  */
+	  if ((TREE_CHAIN (field) == NULL
+	       || TREE_CODE (TREE_CHAIN (field)) != FIELD_DECL)
+	      && DECL_BIT_FIELD_TYPE (field)
+	      && !integer_zerop (DECL_SIZE (field)))
+	    rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos,
+				      bitsize_int (rli->remaining_in_alignment));
 	}
+      else
+	{
+	  unsigned int extension = 0;
+
+	  if (integer_zerop (DECL_SIZE (field))
+	      && rli->remaining_in_alignment
+	      && rli->prev_field
+	      && DECL_BIT_FIELD_TYPE (rli->prev_field)
+	      && !integer_zerop (DECL_SIZE (rli->prev_field)))
+	    extension =
+	      tree_low_cst (TYPE_SIZE (TREE_TYPE (rli->prev_field)), 1)
+	      - rli->remaining_in_alignment;
+	  else if (!integer_zerop (DECL_SIZE (field)))
+	    extension =
+	      tree_low_cst (TYPE_SIZE (TREE_TYPE (field)), 1)
+	      - rli->remaining_in_alignment;
+
+	  /* For bitfields we handled the adding of the type earlier.  */
+	  if (!DECL_BIT_FIELD_TYPE (field))
+	    rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, DECL_SIZE (field));
+
+	  /* For reverse bitfields we need to go back to the end of the type.  */
+	  if (extension
+	      && (TREE_CHAIN (field) == NULL
+		  || TREE_CODE (TREE_CHAIN (field)) != FIELD_DECL)
+	      && DECL_BIT_FIELD_TYPE (field))
+	    rli->bitpos = size_binop (PLUS_EXPR,
+				      rli->bitpos,
+				      bitsize_int (extension));
+	}
+      normalize_rli (rli);
     }
+  /* APPLE LOCAL end reverse_bitfields */
   else
     {
       rli->bitpos = size_binop (PLUS_EXPR, rli->bitpos, DECL_SIZE (field));
       normalize_rli (rli);
     }
 }
-/* APPLE LOCAL end bitfield reversal */
 
 /* Assuming that all the fields have been laid out, this function uses
    RLI to compute the final TYPE_SIZE, TYPE_ALIGN, etc. for the type

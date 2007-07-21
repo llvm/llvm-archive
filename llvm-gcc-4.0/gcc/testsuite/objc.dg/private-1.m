@@ -1,3 +1,4 @@
+/* APPLE LOCAL file radar 4133425 */
 /* Test errors for accessing @private and @protected variables.  */
 /* Author: Nicola Pero <nicola@brainstorm.co.uk>.  */
 /* { dg-do compile } */
@@ -34,8 +35,9 @@
 - (void) test
 {
   /* Private variables simply don't exist in the subclass.  */
-  private = 12;/* { dg-error "undeclared" } */
-  /* { dg-error "function it appears in" "" { target *-*-* } { 37 } } */
+  private = 12;  /* { dg-error "instance variable" } */
+  /* { dg-error "undeclared" "" { target *-*-* } { 38 } } */
+  /* { dg-error "function it appears in" "" { target *-*-* } { 38 } } */
 
   protected = 12; /* Ok  */
   public = 12;    /* Ok  */

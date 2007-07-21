@@ -2069,7 +2069,8 @@ expand_call (tree exp, rtx target, int ignore)
 	    /* For variable-sized objects, we must be called with a target
 	       specified.  If we were to allocate space on the stack here,
 	       we would have no way of knowing when to free it.  */
-	    rtx d = assign_temp (TREE_TYPE (exp), 1, 1, 1);
+	    /* APPLE LOCAL allow reuse of return temps 4658012 */
+	    rtx d = assign_temp (TREE_TYPE (exp), 0, 1, 1);
 
 	    mark_temp_addr_taken (d);
 	    structure_value_addr = XEXP (d, 0);

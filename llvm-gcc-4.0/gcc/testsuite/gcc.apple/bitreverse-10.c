@@ -4,10 +4,10 @@
 extern void abort();
 typedef struct TestStateNorm
 {
-    unsigned int fBlah : 7;     //  
+    unsigned int fBlah : 7;     //
     unsigned int fUnused : 2;                // Currently Unused
     unsigned int : 0;
-    unsigned int fBlah2 : 7;     //  
+    unsigned int fBlah2 : 7;     //
     unsigned int fUnused2: 2;                // Currently Unused
 } TestStateNorm;
 
@@ -19,12 +19,13 @@ union {
 } unorm = { 5, 1, 6, 2 };
 
 #pragma reverse_bitfields on
-typedef struct TestState 
+#pragma ms_struct on
+typedef struct TestState
 {
-    unsigned int fBlah : 7;     //  
+    unsigned int fBlah : 7;     //
     unsigned int fUnused : 2;                // Currently Unused
     unsigned int : 0;
-    unsigned int fBlah2 : 7;     //  
+    unsigned int fBlah2 : 7;     //
     unsigned int fUnused2 : 2;                // Currently Unused
 } TestState;
 

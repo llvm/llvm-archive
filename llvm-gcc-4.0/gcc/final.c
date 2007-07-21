@@ -1268,7 +1268,7 @@ shorten_branches (rtx first ATTRIBUTE_UNUSED)
 		  if (! varying_length[inner_uid])
 		    inner_length = insn_lengths[inner_uid];
 		  else
-                    inner_length = insn_current_length (inner_insn);
+		    inner_length = insn_current_length (inner_insn);
 
 		  if (inner_length != insn_lengths[inner_uid])
 		    {

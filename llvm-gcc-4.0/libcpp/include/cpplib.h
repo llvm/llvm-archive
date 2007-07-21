@@ -137,14 +137,14 @@ struct _cpp_file;
   TK(BOL,		LITERAL) /* asm bol */				\
   TK(EOL,		LITERAL) /* asm eol */				\
   /* APPLE LOCAL end CW asm blocks */					\
-  /* APPLE LOCAL begin 4133801 */                                       \
-  TK(BINCL,             LITERAL) /* File begin */                       \
-  TK(EINCL,             LITERAL) /* File end */                         \
-  /* APPLE LOCAL end 4133801 */                                       \
   TK(COMMENT,		LITERAL) /* Only if output comments.  */	\
 				 /* SPELL_LITERAL happens to DTRT.  */	\
   TK(MACRO_ARG,		NONE)	 /* Macro argument.  */			\
   TK(PRAGMA,		NONE)	 /* Only if deferring pragmas */	\
+  /* APPLE LOCAL begin 4137741 */                                       \
+  TK(BINCL,            NONE)    /* File begin */                        \
+  TK(EINCL,            NONE)    /* File end */                          \
+  /* APPLE LOCAL end 4137741 */                                         \
   TK(PADDING,		NONE)	 /* Whitespace for -E.	*/
 
 #define OP(e, s) CPP_ ## e,
@@ -497,6 +497,12 @@ struct cpp_options
   /* True means return pragmas as tokens rather than processing
      them directly. */
   bool defer_pragmas;
+  /* APPLE LOCAL begin 4137741 */
+
+  /* True means return special CPP_BINCL and CPP_EINCL tokens instead
+     of firing off debug hooks when entering and exiting headers.  */
+  bool defer_file_change_debug_hooks;
+  /* APPLE LOCAL end 4137741 */
 };
 
 /* Callback for header lookup for HEADER, which is the name of a

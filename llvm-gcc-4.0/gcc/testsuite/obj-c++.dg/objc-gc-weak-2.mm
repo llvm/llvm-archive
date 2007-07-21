@@ -15,9 +15,9 @@ typedef struct __CFDictionary * CFDictionaryRef;
 int GlobalReads;
 
 
-id objc_read_weak(id value) {
+id objc_read_weak(id *value) {
   ++GlobalReads;
-  return value;
+  return *value;
 }
 
 id objc_assign_weak(id value, id *dest) {
@@ -77,8 +77,7 @@ int testGlobals() {
   if (staticGlobalObject)
     READTEST(staticGlobalObject,1);
 
-  staticGdict = (__weak CFDictionaryRef)get_id();
-  READTEST(get_id, 1);
+  staticGdict = (CFDictionaryRef)get_id();
   if (staticGlobalId || staticGdictarray[1] || staticGdict)
     {
 	READTEST(staticGlobalId,3);

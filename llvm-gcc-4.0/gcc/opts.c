@@ -607,6 +607,8 @@ decode_options (unsigned int argc, const char **argv)
   unsigned int i, lang_mask;
   /* APPLE LOCAL 4231773 */
   unsigned int optimize_size_z = 0;
+  /* APPLE LOCAL AV 3846092 */
+  int saved_flag_strict_aliasing;
 
   /* Perform language-specific options initialization.  */
   lang_mask = lang_hooks.init_options (argc, argv);
@@ -700,6 +702,13 @@ decode_options (unsigned int argc, const char **argv)
   OPTIMIZATION_OPTIONS (optimize, optimize_size);
 #endif
 
+  /* APPLE LOCAL begin AV 3846092 */
+  /* We have apple local patch to disable -fstrict-aliasing when -O2 is used.
+     However do not disable it when -ftree-vectorize is used. Clobber its value
+     here to catch command line use of strict aliasing option.  */
+  saved_flag_strict_aliasing = flag_strict_aliasing;
+  flag_strict_aliasing = 9;
+  /* APPLE LOCAL end AV 3846092 */
   handle_options (argc, argv, lang_mask);
 
   if (flag_pie)
@@ -764,7 +773,21 @@ decode_options (unsigned int argc, const char **argv)
   /* We have apple local patch to disable -fstrict-aliasing when -O2 is used.
      Do not disable it when -ftree-vectorize is used.  */
   if (optimize >= 2 && flag_tree_vectorize)
-    flag_strict_aliasing = 1;
+    {
+      /* If user explicitly requested to turn off strict aliasing then
+	 ignore user request in this case. However issue warning to
+	 remind user that -ftree-vectorize and -fno-strict-aliasing are
+	 conflicting options. In this situation, -ftree-vectorize wins.  */
+      if (flag_strict_aliasing == 0)
+	warning
+	  ("-ftree-vectorize enables strict aliasing. -fno-strict-aliasing is ignored when Auto Vectorization is used.");
+      flag_strict_aliasing = 1;
+    }
+  else 
+    if (flag_strict_aliasing == 9)
+      /* User did not use any strict aliasing related command line option.
+	 Restore saved value of this flag.  */
+      flag_strict_aliasing = saved_flag_strict_aliasing;
   /* APPLE LOCAL end AV 3846092 */
   /* APPLE LOCAL begin 4224227, 4231773 */
   if (!optimize_size_z)

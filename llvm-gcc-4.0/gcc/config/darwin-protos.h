@@ -70,8 +70,10 @@ extern void machopic_asm_out_destructor (rtx, int);
 
 extern void machopic_define_symbol (rtx);
 extern void darwin_encode_section_info (tree, rtx, int);
+/* APPLE LOCAL mainline */
+extern void darwin_set_default_type_attributes (tree);
 /* APPLE LOCAL CW asm blocks */
-extern tree darwin_cw_asm_special_label (tree);
+extern tree darwin_iasm_special_label (tree);
 
 #endif /* TREE_CODE */
 
@@ -94,6 +96,8 @@ extern void darwin_emit_except_table_label (FILE *);
 extern void darwin_pragma_ignore (struct cpp_reader *);
 extern void darwin_pragma_options (struct cpp_reader *);
 extern void darwin_pragma_unused (struct cpp_reader *);
+/* APPLE LOCAL mainline */
+extern void darwin_pragma_ms_struct (struct cpp_reader *);
 /* APPLE LOCAL pragma fenv */
 extern void darwin_pragma_fenv (struct cpp_reader *);
 /* APPLE LOCAL pragma reverse_bitfields */
@@ -115,7 +119,7 @@ extern void darwin_pragma_call_on_unload (struct cpp_reader *);
 extern int darwin_set_section_for_var_p (tree, int, int);
 /* APPLE LOCAL end darwin_set_section_for_var_p  */
 
-/* APPLE LOCAL  double destructor  */
+/* APPLE LOCAL KEXT double destructor  */
 extern tree darwin_handle_odd_attribute (tree *, tree, tree, int, bool *);
 /* APPLE LOCAL ObjC GC */
 extern tree darwin_handle_objc_gc_attribute (tree *, tree, tree, int, bool *);
@@ -142,6 +146,8 @@ extern void data_coal_section (void);
 extern void cstring_section (void);
 extern void literal4_section (void);
 extern void literal8_section (void);
+/* APPLE LOCAL x86_64 */
+extern void literal16_section (void);
 extern void constructor_section (void);
 extern void mod_init_section (void);
 extern void mod_term_section (void);
@@ -172,6 +178,17 @@ extern void objc_nonlazy_category_section (void);
 extern void objc_v2_selector_refs_section (void);
 extern void objc_v2_protocol_section (void);
 /* APPLE LOCAL end ObjC new abi */
+/* APPLE LOCAL radar 4535676 */
+extern void objc_super_classrefs_section (void);
+/* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
+extern void objc_protocollist_section (void);
+extern void objc_protocolrefs_section (void);
+/* APPLE LOCAL end radar 4533974 - ObjC new protocol */
+/* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
+extern void objc_class_ext_section (void);
+extern void objc_prop_list_section (void);
+extern void objc_protocol_ext_section (void);
+/* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
 extern void objc_string_object_section (void);
 extern void objc_constant_string_object_section (void);
 extern void objc_class_names_section (void);
@@ -212,7 +229,7 @@ extern tree darwin_construct_objc_string (tree);
 /* APPLE LOCAL end constant cfstrings */
 
 /* APPLE LOCAL CW asm blocks */
-#define CW_ASM_SPECIAL_LABEL(ID) darwin_cw_asm_special_label (ID)
+#define IASM_SPECIAL_LABEL(ID) darwin_iasm_special_label (ID)
 
 /* APPLE LOCAL begin KEXT */
 #ifdef TREE_CODE

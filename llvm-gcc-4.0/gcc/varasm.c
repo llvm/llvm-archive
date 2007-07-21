@@ -585,7 +585,17 @@ function_section (tree decl)
       bool unlikely = insns && scan_ahead_for_unlikely_executed_note (insns);
 
 #ifdef USE_SELECT_SECTION_FOR_FUNCTIONS
-      targetm.asm_out.select_section (decl, unlikely, DECL_ALIGN (decl));
+      /* APPLE LOCAL begin mainline 2006-02-13 radar 4373419 */
+      if (DECL_SECTION_NAME (decl))
+	{
+	  if (unlikely)
+	    unlikely_text_section ();
+	  else
+	    named_section (decl, 0, 0);
+	}
+      else
+        targetm.asm_out.select_section (decl, unlikely, DECL_ALIGN (decl));
+      /* APPLE LOCAL end mainline 2006-02-13 radar 4373419 */
 #else
       if (unlikely)
 	unlikely_text_section ();

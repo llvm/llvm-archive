@@ -1588,8 +1588,10 @@ rest_of_compilation (void)
   /* We are now committed to emitting code for this function.  Do any
      preparation, such as emitting abstract debug info for the inline
      before it gets mangled by optimization.  */
+/* APPLE LOCAL begin mainline 2006-05-15 rewrite 4548482  */
   if (cgraph_function_possibly_inlined_p (current_function_decl))
-    (*debug_hooks->outlining_inline_function) (current_function_decl);
+    (*debug_hooks->outlining_inline_function) (current_function_decl, NULL);
+/* APPLE LOCAL end mainline 2006-05-15 rewrite 4548482  */
 
   /* Remove any notes we don't need.  That will make iterating
      over the instruction sequence faster, and allow the garbage

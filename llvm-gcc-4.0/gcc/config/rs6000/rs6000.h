@@ -2559,7 +2559,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
     fprintf (FILE, "\t.align %d\n", (LOG))
 
 /* APPLE LOCAL begin CW asm blocks */
-#define CW_ASM_REGISTER_NAME(STR, BUF) rs6000_cw_asm_register_name (STR, BUF)
+#define IASM_REGISTER_NAME(STR, BUF) rs6000_iasm_register_name (STR, BUF)
 /* APPLE LOCAL end CW asm blocks */
 
 /* Pick up the return address upon entry to a procedure. Used for
@@ -3567,8 +3567,8 @@ enum rs6000_builtins
 
 /* APPLE LOCAL begin CW asm blocks */
 /* Table of instructions that need extra constraints.  */
-#undef TARGET_CW_OP_CONSTRAINT
-#define TARGET_CW_OP_CONSTRAINT \
+#undef TARGET_IASM_OP_CONSTRAINT
+#define TARGET_IASM_OP_CONSTRAINT \
   { "la", 2, "m" },	\
   { "lbz", 2, "m" },	\
   { "lbzu", 2, "m" },	\
@@ -3600,7 +3600,7 @@ enum rs6000_builtins
   { "stw", 2, "m" },	\
   { "stwu", 2, "m" },
 
-#define CW_FUNCTION_MODIFIER "z"
+#define IASM_FUNCTION_MODIFIER "z"
 
 /* APPLE LOCAL end CW asm blocks */
 

@@ -221,6 +221,11 @@ fobjc-nilcheck
 Common Report Var(flag_objc_nilcheck,1)
 ; APPLE LOCAL end ObjC new abi
 
+; APPLE LOCAL begin C* warnings to easy porting to new abi 
+Wobjc2
+Common Report Var(flag_objc2_check)
+; APPLE LOCAL end C* warnings to easy porting to new abi 
+
 falign-functions
 Common Report Var(align_functions,0)
 Align the start of functions
@@ -678,6 +683,11 @@ Common Report Var(flag_optimize_sibling_calls) PerFunc
 Optimize sibling and tail recursive calls
 ; APPLE LOCAL end optimization pragmas 3124235/3420242
 
+; APPLE LOCAL begin opt diary
+fopt-diary
+Common Report Var(flag_opt_diary)
+Enable optimization diary
+; APPLE LOCAL end opt diary
 fpack-struct
 Common Report Var(flag_pack_struct)
 Pack structure members together without holes
@@ -725,12 +735,6 @@ Generate position-independent code if possible (small mode)
 fpie
 Common Report Var(flag_pie,1) VarExists
 Generate position-independent code for executables if possible (small mode)
-
-; APPLE LOCAL begin -ffppc 2001-08-01 --sts
-fppc
-Common Var(flag_fppc) VarExists
-Perform floating-point precision-control pass
-; APPLE LOCAL end -ffppc 2001-08-01 --sts
 
 ; APPLE LOCAL begin optimization pragmas 3124235/3420242
 fprefetch-loop-arrays

@@ -1,4 +1,4 @@
-/* APPLE LOCAL file 4233898.c */
+/* APPLE LOCAL file 4233898 */
 /* When enough of 4.1 has been merged that gcc.dg/tree-ssa/loop-11.c
    passes, this test can be removed. */
 void abort (void);

@@ -686,9 +686,14 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
 	       && !TYPE_PTRMEM_P (from)
 	       && TREE_CODE (TREE_TYPE (from)) != FUNCTION_TYPE)
 	{
+	  /* APPLE LOCAL begin radar 4451818 */
+	  tree nfrom = TREE_TYPE (from);
+	  if (c_dialect_objc ())
+	    nfrom = objc_non_volatilized_type (nfrom);
 	  from = build_pointer_type
 	    (cp_build_qualified_type (void_type_node, 
-				      cp_type_quals (TREE_TYPE (from))));
+			              cp_type_quals (nfrom)));
+	  /* APPLE LOCAL end radar 4451818 */
 	  conv = build_conv (ck_ptr, from, conv);
 	}
       else if (TYPE_PTRMEM_P (from))
@@ -723,9 +728,14 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
 	          access or uniqueness.  */
 	       && DERIVED_FROM_P (TREE_TYPE (to), TREE_TYPE (from)))
 	{
+	  /* APPLE LOCAL begin radar 4668465 */
+	  tree fr = c_dialect_objc () ? 
+		   objc_non_volatilized_type (TREE_TYPE (from)) 
+		   : TREE_TYPE (from);
 	  from = 
 	    cp_build_qualified_type (TREE_TYPE (to),
-				     cp_type_quals (TREE_TYPE (from)));
+				     cp_type_quals (fr));
+	  /* APPLE LOCAL end radar 4668465 */
 	  from = build_pointer_type (from);
 	  conv = build_conv (ck_ptr, from, conv);
 	  conv->base_p = true;
@@ -1250,6 +1260,11 @@ implicit_conversion (tree to, tree from, tree expr, bool c_cast_p,
   if (from == error_mark_node || to == error_mark_node
       || expr == error_mark_node)
     return NULL;
+
+  /* APPLE LOCAL begin radar 4451818 */
+  if (c_dialect_objc ())
+    from = objc_non_volatilized_type (from);
+  /* APPLE LOCAL end radar 4451818 */
 
   if (TREE_CODE (to) == REFERENCE_TYPE)
     conv = reference_binding (to, from, expr, flags);
@@ -4849,6 +4864,14 @@ build_over_call (struct z_candidate *cand, int flags)
       tree type = TREE_VALUE (parm);
 
       conv = convs[i];
+
+      /* APPLE LOCAL begin mainline 4.0.4 08-25-2006 4658012 */
+      /* Don't make a copy here if build_call is going to.  */
+      if (conv->kind == ck_rvalue
+	  && !TREE_ADDRESSABLE (complete_type (type)))
+	conv = conv->u.next;
+      /* APPLE LOCAL end mainline 4.0.4 08-25-2006 4658012 */
+
       val = convert_like_with_context
 	(conv, TREE_VALUE (arg), fn, i - is_method);
 

@@ -113,7 +113,7 @@ do {									\
 	darwin_fix_and_continue = (base[0] != 'n');			\
       }									\
     /* APPLE LOCAL begin longcall */					\
-    if (TARGET_64BIT)							\
+    if (TARGET_64BIT && TARGET_MACHO)					\
       rs6000_longcall_switch = (char *)0;				\
     /* APPLE LOCAL end longcall */					\
   }									\
@@ -122,14 +122,20 @@ do {									\
       target_flags |= MASK_POWERPC64;					\
       warning ("-m64 requires PowerPC64 architecture, enabling");	\
     }									\
-  /* APPLE LOCAL begin 4298879.  */                                     \
-  if (darwin_macosx_version_min                                         \
-      && strverscmp (darwin_macosx_version_min, "10.5") >= 0            \
-      && !(target_flags_explicit & MASK_ALTIVEC)                        \
-      && !(rs6000_select[1].string))                                    \
-    target_flags |= MASK_ALTIVEC;                                       \
-  /* APPLE LOCAL end 4298879.  */                                       \
 } while(0)
+
+/* APPLE LOCAL begin mainline 2006-02-24 4086777 */
+#define C_COMMON_OVERRIDE_OPTIONS do {					\
+  /* On powerpc, __cxa_get_exception_ptr is available starting in the	\
+     10.4.6 libstdc++.dylib.  */					\
+  if ((! darwin_macosx_version_min					\
+       || strverscmp (darwin_macosx_version_min, "10.4.6") < 0)		\
+      && flag_use_cxa_get_exception_ptr == 2)				\
+    flag_use_cxa_get_exception_ptr = 0;					\
+  /* APPLE LOCAL kexts */						\
+  SUBTARGET_C_COMMON_OVERRIDE_OPTIONS;					\
+} while (0)
+/* APPLE LOCAL end mainline 2006-02-24 4086777 */
 
 /* Darwin has 128-bit long double support in libc in 10.4 and later.
    Default to 128-bit long doubles even on earlier platforms for ABI
@@ -391,10 +397,13 @@ do {									\
 
 #define RS6000_MCOUNT "*mcount"
 
-/* Default processor: G4, and G5 for 64-bit.  */
-
+/* APPLE LOCAL begin 4298879.  */
+/* Default processor (for -mtune): G5 when not optimizing for size othwerise G4. 
+   It is G5 by default for 64-bit in all cases.  */
+/* APPLE LOCAL end 4298879.  */
 #undef PROCESSOR_DEFAULT
-#define PROCESSOR_DEFAULT  PROCESSOR_PPC7400
+/* APPLE LOCAL 4298879.  */
+#define PROCESSOR_DEFAULT  (optimize_size ? PROCESSOR_PPC7400 : PROCESSOR_POWER4)
 #undef PROCESSOR_DEFAULT64
 #define PROCESSOR_DEFAULT64  PROCESSOR_POWER4
 
@@ -466,6 +475,14 @@ do {									\
     	    			 : ((FIRST_FIELD_P) ? (COMPUTED) \
     	    			 		    : 32))))))
 
+/* When adjusting (lowering) the alignment of fields when in the
+   mac68k alignment mode, the 128-bit alignment of vectors *MUST*
+   be preserved.  */
+#undef PEG_ALIGN_FOR_MAC68K
+#define PEG_ALIGN_FOR_MAC68K(DESIRED)					\
+        ((DESIRED) == RS6000_VECTOR_ALIGNMENT ? RS6000_VECTOR_ALIGNMENT	\
+         : MIN ((DESIRED), 16))
+
 #undef ROUND_TYPE_ALIGN
 /* Macintosh alignment modes require more complicated handling
    of alignment, so we replace the macro with a call to a
@@ -532,6 +549,24 @@ extern const char *darwin_one_byte_bool;
 /* APPLE LOCAL end mainline to be accessed, 5 nops */
 
 #define TARGET_FIX_AND_CONTINUE (darwin_fix_and_continue)
+/* APPLE LOCAL begin radar 4590221 */
+/* This is reserved to set flag_objc_direct_dispatch for Objective-C. */
+#define HAVE_OFFS_MSGSEND_FAST		\
+    (flag_next_runtime			\
+     && flag_objc_direct_dispatch != 0	\
+     && !TARGET_64BIT			\
+     && ((darwin_macosx_version_min	\
+          && strverscmp (darwin_macosx_version_min, "10.4") >= 0) \
+         || flag_objc_direct_dispatch == 1))
+
+/* This is the reserved direct dispatch address for Objective-C.  */
+#define OFFS_MSGSEND_FAST \
+  (HAVE_OFFS_MSGSEND_FAST ? 0xFFFEFF00 : 0)
+
+/* This is the reserved ivar address Objective-C.  */
+#define OFFS_ASSIGNIVAR_FAST \
+  (HAVE_OFFS_MSGSEND_FAST ? 0xFFFEFEC0 : 0)
+/* APPLE LOCAL end radar 4590221 */
 /* APPLE LOCAL begin mainline 2005-09-01 3449986 */
 
 /* Old versions of Mac OS/Darwin don't have C99 functions available.  */
@@ -541,3 +576,12 @@ extern const char *darwin_one_byte_bool;
    || (darwin_macosx_version_min				\
        && strverscmp (darwin_macosx_version_min, "10.3") >= 0))
 /* APPLE LOCAL end mainline 2005-09-01 3449986 */
+
+/* APPLE LOCAL begin x86_64 */
+#define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(ASM_OUT_FILE, ENCODING, SIZE, ADDR, DONE)	\
+  if (ENCODING == ASM_PREFERRED_EH_DATA_FORMAT (2, 1))       \
+    {				                                         \
+	  darwin_non_lazy_pcrel (ASM_OUT_FILE, ADDR);            \
+	  goto DONE;                                             \
+    }
+/* APPLE LOCAL end x86_64 */

@@ -4,6 +4,7 @@
 
 /* { dg-options "-fconstant-cfstrings" } */
 /* { dg-do compile { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 typedef const struct __CFString * CFStringRef;
 static CFStringRef appKey = (CFStringRef) @"com.apple.soundpref";

@@ -691,7 +691,7 @@ copy_if_shared_r (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
 
   /* Otherwise, mark the tree as visited and keep looking.  */
   else
-    /* APPLE LOCAL begin PR 14498 etc. --dbj */
+    /* APPLE LOCAL begin PR 14498, etc. --dbj */
     /* History is complicated, this was in mainline prior to merge,
        temporarily and erroneously removed at merge snapshot,
        later put back, still later replaced by different mechanism. */
@@ -708,7 +708,7 @@ copy_if_shared_r (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
 		     NULL, NULL);
 	}
     }
-    /* APPLE LOCAL end PR 14498 etc. */
+    /* APPLE LOCAL end PR 14498, etc. */
 
   return NULL_TREE;
 }
@@ -1574,13 +1574,13 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 	}
     }
 
-  /* APPLE LOCAL begin mainline */
+  /* APPLE LOCAL begin mainline LLVM */
   /* Step 2 is to gimplify the base expression.  Make sure lvalue is set
     so as to match the min_lval predicate.  Failure to do so may result
     in the creation of large aggregate temporaries.  */
   tret = gimplify_expr (p, pre_p, post_p, is_gimple_min_lval,
                         fallback | fb_lvalue);
-  /* APPLE LOCAL end mainline */
+  /* APPLE LOCAL end mainline LLVM */
   ret = MIN (ret, tret);
 
   /* And finally, the indices and operands to BIT_FIELD_REF.  During this
@@ -2696,7 +2696,10 @@ gimplify_init_constructor (tree *expr_p, tree *pre_p,
 	if (num_nonconstant_elements == 0
 	    && num_nonzero_elements > 1
 	    && TREE_READONLY (object)
-	    && TREE_CODE (object) == VAR_DECL)
+	    /* APPLE LOCAL begin CW asm blocks */
+	    && TREE_CODE (object) == VAR_DECL
+	    && !DECL_IASM_DONT_PROMOTE_TO_STATIC (object))
+	    /* APPLE LOCAL end CW asm blocks */
 	  {
 	    DECL_INITIAL (object) = ctor;
 	    TREE_STATIC (object) = 1;

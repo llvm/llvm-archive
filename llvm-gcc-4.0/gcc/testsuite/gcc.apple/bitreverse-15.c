@@ -3,6 +3,7 @@
 /* { dg-options "-std=gnu99" } */
 extern void abort();
 #pragma reverse_bitfields on
+#pragma ms_struct on
 #pragma pack(push,2)
 typedef struct _S2
 {

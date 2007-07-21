@@ -103,10 +103,18 @@ enum rid
   RID_AT_INTERFACE,
   /* APPLE LOCAL C* language */
   RID_AT_OPTIONAL, RID_AT_REQUIRED,
+  /* APPLE LOCAL C* property (Radar 4436866) */
+  RID_AT_PROPERTY,
   RID_AT_IMPLEMENTATION,
+  /* APPLE LOCAL C* property (Radar 4436866, 4591909, 4621020) */
+  RID_READONLY, RID_DYNAMIC, RID_GETTER, RID_SETTER, RID_WEAK, RID_IVAR,
 
   RID_MAX,
 
+  /* APPLE LOCAL begin C* property (Radar 4436866) */
+  RID_FIRST_PATTR = RID_READONLY,
+  RID_LAST_PATTR = RID_IVAR,
+  /* APPLE LOCAL end C* property (Radar 4436866) */
   RID_FIRST_MODIFIER = RID_STATIC,
   RID_LAST_MODIFIER = RID_ONEWAY,
 
@@ -115,6 +123,12 @@ enum rid
   RID_FIRST_PQ = RID_IN,
   RID_LAST_PQ = RID_ONEWAY
 };
+
+/* APPLE LOCAL begin C* property (Radar 4436866) */
+#define OBJC_IS_PATTR_KEYWORD(rid) \
+  ((unsigned int) (rid) >= (unsigned int) RID_FIRST_PATTR && \
+  (unsigned int) (rid) <= (unsigned int) RID_LAST_PATTR)
+/* APPLE LOCAL end C* property (Radar 4436866) */
 
 #define OBJC_IS_AT_KEYWORD(rid) \
   ((unsigned int) (rid) >= (unsigned int) RID_FIRST_AT && \
@@ -591,6 +605,13 @@ extern int flag_working_directory;
 
 extern int flag_use_cxa_atexit;
 
+/* APPLE LOCAL begin mainline 2006-02-24 4086777 */
+/* Nonzero to use __cxa_get_exception_ptr in the C++ exception-handling
+   logic.  */
+
+extern int flag_use_cxa_get_exception_ptr;
+
+/* APPLE LOCAL end mainline 2006-02-24 4086777 */
 /* Nonzero means make the default pedwarns warnings instead of errors.
    The value of this flag is ignored if -pedantic is specified.  */
 
@@ -961,7 +982,7 @@ enum lvalue_use {
   lv_asm
 };
 
-/* APPLE LOCAL non-lvalue assign */
+/* APPLE LOCAL non lvalue assign */
 extern int lvalue_or_else (tree *, enum lvalue_use);
 
 extern int complete_array_type (tree *, tree, bool);
@@ -1005,11 +1026,17 @@ extern int objc_is_reserved_word (tree);
 extern tree objc_common_type (tree, tree);
 /* APPLE LOCAL 4330422 */
 extern tree objc_non_volatilized_type (tree);
+/* APPLE LOCAL radar 4697411 */
+extern void objc_volatilize_component_ref (tree, tree);
 /* APPLE LOCAL begin mainline */
 /* Prototype for 'objc_comptypes' removed.  */
 extern bool objc_compare_types (tree, tree, int, tree);
 /* APPLE LOCAL radar 4229905 */
 extern bool objc_have_common_type (tree, tree, int, tree);
+/* APPLE LOCAL radar 4133425 */
+extern bool objc_diagnose_private_ivar (tree);
+/* APPLE LOCAL radar 4507230 */
+bool objc_type_valid_for_messaging (tree);
 extern void objc_volatilize_decl (tree);
 extern bool objc_type_quals_match (tree, tree);
 extern tree objc_rewrite_function_call (tree, tree);
@@ -1035,25 +1062,34 @@ extern tree objc_get_class_ivars (tree);
 extern tree objc_get_interface_ivars (tree);
 extern void objc_detect_field_duplicates (tree);
 /* APPLE LOCAL end radar 4291785 */
-extern void objc_start_class_interface (tree, tree, tree);
+/* APPLE LOCAL radar 4548636 */
+extern void objc_start_class_interface (tree, tree, tree, tree);
 extern void objc_start_category_interface (tree, tree, tree);
 extern void objc_start_protocol (tree, tree);
 extern void objc_continue_interface (void);
 extern void objc_finish_interface (void);
 extern void objc_start_class_implementation (tree, tree);
 extern void objc_start_category_implementation (tree, tree);
+/* APPLE LOCAL radar 4533974 - ObjC new protocol */
+extern void objc_protocol_implementation (tree);
+/* APPLE LOCAL radar 4592503 */
+extern void objc_checkon_weak_attribute (tree);
 extern void objc_continue_implementation (void);
 extern void objc_finish_implementation (void);
 extern void objc_set_visibility (int);
 extern void objc_set_method_type (enum tree_code);
 extern tree objc_build_method_signature (tree, tree, tree);
-extern void objc_add_method_declaration (tree);
-extern void objc_start_method_definition (tree);
+/* APPLE LOCAL begin radar 3803157 - objc attribute */
+extern bool objc_method_decl (enum tree_code);
+extern void objc_add_method_declaration (tree, tree);
+extern void objc_start_method_definition (tree, tree);
+/* APPLE LOCAL end radar 3803157 - objc attribute */
 extern void objc_finish_method_definition (tree);
 extern void objc_add_instance_variable (tree);
 extern tree objc_build_keyword_decl (tree, tree, tree);
 extern tree objc_build_throw_stmt (tree);
 extern void objc_begin_try_stmt (location_t, tree);
+/* APPLE LOCAL LOCAL mainline */
 extern tree objc_finish_try_stmt (void);
 extern void objc_begin_catch_clause (tree);
 extern void objc_finish_catch_clause (void);
@@ -1076,9 +1112,25 @@ tree objc_build_component_ref (tree, tree);
 tree objc_build_foreach_components (tree, tree*, tree*, tree*, 
 				    tree*, tree*, tree*);
 /* APPLE LOCAL end C* language */
+/* APPLE LOCAL begin C* property (Radar 4436866) */
+void objc_set_property_attr (int, tree);
+void objc_add_property_variable (tree);
+tree objc_build_getter_call (tree, tree);
+tree objc_build_setter_call (tree, tree);
+/* APPLE LOCAL end C* property (Radar 4436866) */
+/* APPLE LOCAL radar 4712269 */
+tree objc_build_incr_decr_setter_call (enum tree_code, tree, tree);
 
 /* APPLE LOCAL ObjC new abi */
 extern tree objc_v2_build_ivar_ref (tree datum, tree component);
+
+/* APPLE LOCAL C* warnings to easy porting to new abi */
+void diagnose_selector_cast (tree cast_type, tree sel_exp);
+
+/* APPLE LOCAL begin radar 4441049 */
+tree objc_v2_component_ref_field_offset (tree);
+tree objc_v2_bitfield_ivar_bitpos (tree);
+/* APPLE LOCAL end radar 4441049 */
 
 /* The following are provided by the C and C++ front-ends, and called by
    ObjC/ObjC++.  */

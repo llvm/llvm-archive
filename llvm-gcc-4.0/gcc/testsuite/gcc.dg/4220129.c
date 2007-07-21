@@ -1,6 +1,6 @@
-/* APPLE LOCAL file */
+/* APPLE LOCAL file radar 4220129 */
 /* { dg-do run { target "i?86*-*-darwin*" } } */
-/* { dg-options "-O3" } */
+/* { dg-options "-O3 -msse2" } */
 extern void abort();
 #include <emmintrin.h>
 __m128i foo (char) __attribute__((noinline));

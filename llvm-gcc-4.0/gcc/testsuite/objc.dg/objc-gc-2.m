@@ -23,7 +23,7 @@ id objc_assign_global(id value, __weak id *dest) {
 }
 
 id objc_assign_ivar(id value, id dest, unsigned int offset) {
-  __weak id *slot = (id*) ((char *)dest + offset);
+  id *slot = (id*) ((char *)dest + offset);
 
   ++IvarAssigns;
   return (*slot = value);

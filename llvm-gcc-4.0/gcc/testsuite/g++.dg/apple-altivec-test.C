@@ -1,8 +1,6 @@
 /* APPLE LOCAL file */
 /* { dg-do run { target powerpc*-*-* } } */
-/* { dg-options "-maltivec" } */
-
-#include <altivec.h>
+/* { dg-options "-maltivec -faltivec" } */
 
 extern "C" void abort();
 

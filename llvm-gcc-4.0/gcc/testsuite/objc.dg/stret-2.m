@@ -3,6 +3,8 @@
    points).  */
 /* Contributed by Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile { target *-*-darwin* } } */
+/* APPLE LOCAL radar 4492976 */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 

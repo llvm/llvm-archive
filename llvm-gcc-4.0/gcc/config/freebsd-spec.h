@@ -51,11 +51,7 @@ Boston, MA 02111-1307, USA.  */
 #define FBSD_TARGET_OS_CPP_BUILTINS()					\
   do									\
     {									\
-        /* APPLE LOCAL begin mainline portability */                    \
-	if (FBSD_MAJOR == 7)						\
-	  builtin_define ("__FreeBSD__=7");			       	\
-	else if (FBSD_MAJOR == 6)					\
-        /* APPLE LOCAL end mainline */                                  \
+	if (FBSD_MAJOR == 6)						\
 	  builtin_define ("__FreeBSD__=6");			       	\
 	else if (FBSD_MAJOR == 5)	       				\
 	  builtin_define ("__FreeBSD__=5");			       	\

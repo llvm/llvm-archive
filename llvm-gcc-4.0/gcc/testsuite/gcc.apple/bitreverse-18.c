@@ -9,11 +9,12 @@ typedef unsigned short WORD;
 typedef unsigned int DWORD;
 
 #pragma reverse_bitfields on
+#pragma ms_struct on
 
 #define USE_STRUCT_WRAPPER 0
 
 #pragma pack(push, 2)
-typedef struct 
+typedef struct
 {
 	DWORD	a;
 #if USE_STRUCT_WRAPPER

@@ -50,6 +50,8 @@ struct diagnostic_context;
       BIND_EXPR_TRY_BLOCK (in BIND_EXPR)
       TYPENAME_IS_ENUM_P (in TYPENAME_TYPE)
       REFERENCE_REF_P (in INDIRECT_EXPR)
+//    APPLE LOCAL mainline 2006-09-08 4658012
+      TARGET_EXPR_IMPLICIT_P (in TARGET_EXPR)
    1: IDENTIFIER_VIRTUAL_P (in IDENTIFIER_NODE)
       TI_PENDING_TEMPLATE_FLAG.
       TEMPLATE_PARMS_FOR_INLINE.
@@ -2970,6 +2972,13 @@ struct lang_decl GTY(())
 #define THEN_CLAUSE(NODE)       TREE_OPERAND (IF_STMT_CHECK (NODE), 1)
 #define ELSE_CLAUSE(NODE)       TREE_OPERAND (IF_STMT_CHECK (NODE), 2)
 
+/* APPLE LOCAL begin mainline 2006-09-08 4658012 */
+/* True if this TARGET_EXPR was created by build_cplus_new, and so we can
+   discard it if it isn't useful.  */
+#define TARGET_EXPR_IMPLICIT_P(NODE) \
+  TREE_LANG_FLAG_0 (TARGET_EXPR_CHECK (NODE))
+/* APPLE LOCAL end mainline 2006-09-08 4658012 */
+
 /* An enumeration of the kind of tags that C++ accepts.  */
 enum tag_types {
   none_type = 0, /* Not a tag type.  */
@@ -3543,7 +3552,7 @@ typedef enum cp_decl_spec {
   ds_complex,
   ds_thread,
   /* APPLE LOCAL CW asm blocks. */
-  ds_cw_asm,
+  ds_iasm_asm,
   ds_last
 } cp_decl_spec;
 
@@ -4433,14 +4442,9 @@ extern int cp_gimplify_expr		        (tree *, tree *, tree *);
 extern void cp_genericize			(tree);
 
 /* APPLE LOCAL begin CW asm blocks */
-extern tree cw_asm_cp_build_component_ref	(tree, tree);
+extern tree iasm_cp_build_component_ref		(tree, tree);
 /* APPLE LOCAL end CW asm blocks */
 
-/* APPLE LOCAL begin 4133801 */
-extern void cp_start_source_file (int, const char *);
-extern void cp_end_source_file (int, const char *);
-extern void cp_flush_lexer_file_stack (void);
-/* APPLE LOCAL end 4133801 */
 /* -- end of C++ */
 
 /* In order for the format checking to accept the C++ frontend

@@ -295,6 +295,11 @@ struct gcc_target
        by the vectorizer, and return the decl of the target builtin
        function.  */
     tree (* builtin_mask_for_load) (void);
+    /* APPLE LOCAL begin 4375453 */
+    /* Return true if vector alignment is reachable (by peeling N
+       interations) for the given type.  */
+    bool (* vector_alignment_reachable) (tree, bool);
+    /* APPLE LOCAL end 4375453 */
   } vectorize;
 
   /* Return machine mode for filter value.  */
@@ -576,6 +581,12 @@ struct gcc_target
     const char *(*invalid_arg_for_unprototyped_fn) (tree typelist,
                                                     tree funcdecl, tree val);
     /* APPLE LOCAL end mainline 2005-04-14 */
+
+    /* APPLE LOCAL begin mainline 2006-02-17 4356747 stack realign */
+    /* Return an rtx for the argument pointer incoming to the
+       current function.  */
+    rtx (*internal_arg_pointer) (void);
+    /* APPLE LOCAL end mainline 2006-02-17 4356747 stack realign */
   } calls;
 
   /* Functions specific to the C++ frontend.  */

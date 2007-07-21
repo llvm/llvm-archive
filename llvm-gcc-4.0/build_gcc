@@ -95,7 +95,7 @@ fi
 # APPLE LOCAL end LLVM
 
 # This is the default architecture for i386 configurations.
-I386_CPU="--with-arch=pentium-m --with-tune=prescott"
+I386_CPU="--with-arch=nocona --with-tune=generic"
 
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.0.0
@@ -107,6 +107,9 @@ if [ x"`file /usr/lib/crt1.o | grep 'architecture ppc64'`" == x ]; then
 fi
 
 echo DARWIN_VERS = $DARWIN_VERS
+
+# If the user has CC set in their environment unset it now
+unset CC
 
 ########################################
 # Run the build.
@@ -151,8 +154,10 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   # Build the LLVM tree universal.
   LLVMCONFIGFLAGS="--prefix=$DEST_DIR$LLVM_INSTALL_PREFIX \
-                   --enable-targets=x86,powerpc \
-                   --enable-assertions=$LLVM_ASSERTIONS"
+                   --enable-targets=x86,powerpc "
+  if [ "$LLVM_ASSERTIONS" == yes ]; then
+      LLVMCONFIGFLAGS="$LLVMCONFIGFLAGS --enable-assertions=$LLVM_ASSERTIONS"
+  fi
   mkdir -p $DIR/obj-llvm || exit 1
   cd $DIR/obj-llvm || exit 1
   if [ \! -f Makefile.config ]; then
@@ -162,7 +167,7 @@ if [ "$ENABLE_LLVM" == true ]; then
   # we don't want to make the builders hit swap by firing off too many gcc's at
   # the same time.
   ## FIXME: Remove -O2 when rdar://4560645 is fixed.
-  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="i386 ppc ppc64" \
+  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="i386 ppc x86_64 ppc64" \
        OPTIMIZE_OPTION='-O2' \
        CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_SUBMIT_VERSION\"'"
 fi
@@ -176,8 +181,8 @@ if [ -z "$SYSCTL" ]; then
   SYSCTL=`sysctl -n hw.ncpu`
 fi
 
-# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot. 
-# Builders can default to 2, since even if they are single processor, 
+# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot.
+# Builders can default to 2, since even if they are single processor,
 # nothing else is running on the machine.
 if [ -z "$SYSCTL" ]; then
   SYSCTL=2
@@ -328,7 +333,7 @@ cp -Rp $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/share/man .$DEST_ROOT/share/ \
 # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
 cd $DIR/dst-$BUILD-$BUILD/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS \
   || exit 1
-LIBEXEC_FILES=`find . -type f -print || exit 1` 
+LIBEXEC_FILES=`find . -type f -print || exit 1`
 LIBEXEC_DIRS=`find . -type d -print || exit 1`
 cd $DEST_DIR || exit 1
 for t in $TARGETS ; do
@@ -387,6 +392,11 @@ SHARED_LIBS="libgcc_s.1.dylib libgcc_s.10.4.dylib libgcc_s.10.5.dylib"
 if echo $HOSTS | grep -q powerpc ; then
   SHARED_LIBS="${SHARED_LIBS} libgcc_s_ppc64.1.dylib"
 fi
+# APPLE LOCAL begin x86_64 support */
+if echo $HOSTS | grep -q i686 ; then
+  SHARED_LIBS="${SHARED_LIBS} libgcc_s_x86_64.1.dylib"
+fi
+# APPLE LOCAL end x86_64 support */
 for l in $SHARED_LIBS ; do
   CANDIDATES=()
   for t in $TARGETS ; do
@@ -492,7 +502,7 @@ lipo -output $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS -create \
 
 ln -f $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/c++-$MAJ_VERS || exit 1
 
-rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1 
+rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-g++-$MAJ_VERS || exit 1
 
 
@@ -536,6 +546,7 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   ## Strip local symbols from llvm libraries.
   strip -S $DEST_DIR$LLVM_INSTALL_PREFIX/lib/*.[oa]
+  strip -Sx $DEST_DIR$LLVM_INSTALL_PREFIX/lib/*.so
 
   # Remove .dir files 
   cd $DEST_DIR$LLVM_INSTALL_PREFIX/
@@ -544,6 +555,8 @@ if [ "$ENABLE_LLVM" == true ]; then
   # Remove PPC64 fat slices.
   cd $DEST_DIR$LLVM_INSTALL_PREFIX/bin
   find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
+  cd $DEST_DIR$LLVM_INSTALL_PREFIX
+  lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.so
 
   # Set up the llvm-gcc/llvm-g++ symlinks.
   cd $DEST_DIR$LLVM_INSTALL_PREFIX/bin

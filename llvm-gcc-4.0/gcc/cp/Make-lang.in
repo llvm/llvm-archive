@@ -103,24 +103,22 @@ cp-warn = $(STRICT_WARN)
 
 # APPLE LOCAL begin order files  --ilr
  # APPLE LOCAL begin mainline 4.1 2005-06-17 3988498
+# APPLE LOCAL begin LLVM
 cc1plus-dummy$(exeext): $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBDEPS)
-	# APPLE LOCAL LLVM
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 	      $(CXX_OBJS) dummy-checksum.o $(BACKEND) $(LIBS) \
 	      $(CC1PLUS_ORDER_FLAGS)
-
-# APPLE LOCAL begin mingw portability: FIXME: 4660353
+# APPLE LOCAL end LLVM
 cc1plus-checksum.c : cc1plus-dummy$(exeext) build/genchecksum$(build_exeext)
 	build/genchecksum$(build_exeext) cc1plus-dummy$(exeext) > $@
-# APPLE LOCAL end mingw portability: FIXME: 4660353
 
 cc1plus-checksum.o : cc1plus-checksum.c
-
+# APPLE LOCAL begin LLVM
 cc1plus$(exeext): $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBDEPS)
-	# APPLE LOCAL LLVM
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 	      $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBS) \
 	      $(CC1PLUS_ORDER_FLAGS)
+# APPLE LOCAL end LLVM
  # APPLE LOCAL end mainline 4.1 2005-06-17 3988498
 # APPLE LOCAL end order files  --ilr
   

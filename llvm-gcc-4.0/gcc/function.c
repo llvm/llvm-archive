@@ -2740,6 +2740,17 @@ assign_parm_setup_reg (struct assign_parm_data_all *all, tree parm,
   promoted_nominal_mode
     = promote_mode (data->nominal_type, data->nominal_mode, &unsignedp, 0);
 
+  /* APPLE LOCAL begin CW asm blocks */
+  /* In asm functions with no stack frame, leave it in the register.  */
+  if (cfun->iasm_frame_size == -2
+      && cfun->iasm_noreturn)
+    {
+      parmreg = DECL_INCOMING_RTL (parm);
+      if (promoted_nominal_mode != GET_MODE (parmreg))
+	warning ("wrong mode for arg %qD", parm);
+    }
+  else
+  /* APPLE LOCAL end CW asm blocks */
   parmreg = gen_reg_rtx (promoted_nominal_mode);
 
   if (!DECL_ARTIFICIAL (parm))
@@ -3061,24 +3072,14 @@ assign_parms (tree fndecl)
 {
   struct assign_parm_data_all all;
   tree fnargs, parm;
-  rtx internal_arg_pointer;
+  /* APPLE LOCAL deletion mainline 2006-02-17 4356747 stack realign */
   /* APPLE LOCAL AltiVec */
   int pass, last_pass;
 
-  /* If the reg that the virtual arg pointer will be translated into is
-     not a fixed reg or is the stack pointer, make a copy of the virtual
-     arg pointer, and address parms via the copy.  The frame pointer is
-     considered fixed even though it is not marked as such.
-
-     The second time through, simply use ap to avoid generating rtx.  */
-
-  if ((ARG_POINTER_REGNUM == STACK_POINTER_REGNUM
-       || ! (fixed_regs[ARG_POINTER_REGNUM]
-	     || ARG_POINTER_REGNUM == FRAME_POINTER_REGNUM)))
-    internal_arg_pointer = copy_to_reg (virtual_incoming_args_rtx);
-  else
-    internal_arg_pointer = virtual_incoming_args_rtx;
-  current_function_internal_arg_pointer = internal_arg_pointer;
+  /* APPLE LOCAL begin mainline 2006-02-17 4356747 stack realign */
+  current_function_internal_arg_pointer
+    = targetm.calls.internal_arg_pointer ();
+  /* APPLE LOCAL end mainline 2006-02-17 4356747 stack realign */
 
   assign_parms_initialize_all (&all);
   fnargs = assign_parms_augmented_arg_list (&all);
@@ -4003,7 +4004,6 @@ prepare_function_start (tree fndecl)
     cfun = DECL_STRUCT_FUNCTION (fndecl);
   else
     allocate_struct_function (fndecl);
-  
   /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
   return;
@@ -4050,17 +4050,15 @@ init_function_start (tree subr)
   prepare_function_start (subr);
 
   /* APPLE LOCAL begin CW asm blocks */
-  if (DECL_CW_ASM_FUNCTION (subr))
+  if (DECL_IASM_ASM_FUNCTION (subr))
     {
-      cfun->cw_asm_function = 1;
-      cfun->cw_asm_noreturn = DECL_CW_ASM_NORETURN (subr);
-      cfun->cw_asm_frame_size = DECL_CW_ASM_FRAME_SIZE (subr);
+      cfun->iasm_asm_function = true;
+      cfun->iasm_noreturn = DECL_IASM_NORETURN (subr);
+      cfun->iasm_frame_size = DECL_IASM_FRAME_SIZE (subr);
     }
-
   /* APPLE LOCAL begin LLVM */
 #ifndef ENABLE_LLVM
   /* APPLE LOCAL end LLVM */
-  
   /* APPLE LOCAL end CW asm blocks */
   /* Prevent ever trying to delete the first instruction of a
      function.  Also tell final how to output a linenum before the
@@ -4073,11 +4071,9 @@ init_function_start (tree subr)
      This makes sure the first insn will never be deleted.
      Also, final expects a note to appear there.  */
   emit_note (NOTE_INSN_DELETED);
-
   /* APPLE LOCAL begin LLVM */
 #endif
   /* APPLE LOCAL end LLVM */
-  
   /* Warn if this value is an aggregate type,
      regardless of which calling convention we are using for it.  */
   if (warn_aggregate_return
@@ -4108,42 +4104,9 @@ init_function_for_compilation (void)
 void
 expand_main_function (void)
 {
-#ifdef FORCE_PREFERRED_STACK_BOUNDARY_IN_MAIN
-  if (FORCE_PREFERRED_STACK_BOUNDARY_IN_MAIN)
-    {
-      int align = PREFERRED_STACK_BOUNDARY / BITS_PER_UNIT;
-      rtx tmp, seq;
-
-      start_sequence ();
-      /* Forcibly align the stack.  */
-#ifdef STACK_GROWS_DOWNWARD
-      tmp = expand_simple_binop (Pmode, AND, stack_pointer_rtx, GEN_INT(-align),
-				 stack_pointer_rtx, 1, OPTAB_WIDEN);
-#else
-      tmp = expand_simple_binop (Pmode, PLUS, stack_pointer_rtx,
-				 GEN_INT (align - 1), NULL_RTX, 1, OPTAB_WIDEN);
-      tmp = expand_simple_binop (Pmode, AND, tmp, GEN_INT (-align),
-				 stack_pointer_rtx, 1, OPTAB_WIDEN);
-#endif
-      if (tmp != stack_pointer_rtx)
-	emit_move_insn (stack_pointer_rtx, tmp);
-
-      /* Enlist allocate_dynamic_stack_space to pick up the pieces.  */
-      tmp = force_reg (Pmode, const0_rtx);
-      allocate_dynamic_stack_space (tmp, NULL_RTX, BIGGEST_ALIGNMENT);
-      seq = get_insns ();
-      end_sequence ();
-
-      for (tmp = get_last_insn (); tmp; tmp = PREV_INSN (tmp))
-	if (NOTE_P (tmp) && NOTE_LINE_NUMBER (tmp) == NOTE_INSN_FUNCTION_BEG)
-	  break;
-      if (tmp)
-	emit_insn_before (seq, tmp);
-      else
-	emit_insn (seq);
-    }
-#endif
-
+  /* APPLE LOCAL begin mainline 2006-02-17 4356747 stack realign */
+  /* deletion */
+  /* APPLE LOCAL end mainline 2006-02-17 4356747 stack realign */
 #ifndef HAS_INIT_SECTION
   emit_library_call (init_one_libfunc (NAME__MAIN), LCT_NORMAL, VOIDmode, 0);
 #endif
@@ -4216,7 +4179,7 @@ expand_function_start (tree subr)
     }
   /* APPLE LOCAL begin CW asm blocks */
   else if (DECL_MODE (DECL_RESULT (subr)) == VOIDmode
-	   || cfun->cw_asm_function)
+	   || cfun->iasm_asm_function)
   /* APPLE LOCAL end CW asm blocks */
     /* If return mode is void, this decl rtl should not be used.  */
     SET_DECL_RTL (DECL_RESULT (subr), NULL_RTX);
@@ -4460,7 +4423,7 @@ expand_function_end (void)
   do_pending_stack_adjust ();
 
   /* APPLE LOCAL begin CW asm blocks */
-  if (cfun->cw_asm_function)
+  if (cfun->iasm_asm_function)
     expand_naked_return ();
   /* APPLE LOCAL end CW asm blocks */ 
 

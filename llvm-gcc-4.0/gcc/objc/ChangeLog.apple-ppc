@@ -1,4 +1,961 @@
-006-02-08   Fariborz Jahanian <fjahanian@apple.com>
+2006-09-18  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4667060
+        * objc-act.c (objc_finish_foreach_loop): Add support for
+        setting of foreach loop controlling variable to 'nil' on
+        normal loop exit.
+
+2006-09-15  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4727659
+	* objc-act.c (really_start_method): Copy 'noreturn'
+	attribute flag into FUNCTION_DECL node.
+
+2006-09-14  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4724822
+	* objc-act.c (lookup_property): Check for incomplete
+	class.
+
+2006-09-11  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4727191
+	(objc_build_compound_setter_call): Set DECL_SEEN_IN_BIND_EXPR_P
+	on Dupe'd local temp node.
+
+2006-09-11  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4625843 - part2
+	* objc-act.c (object_setProperty_bycopy): New.
+	(synth_module_prologue): Remove prototype declaration of
+	object_getProperty_bycopy and object_setProperty_bycopy builtins.
+	(objc_build_getter_retval): Check for existance of 
+	umsg_getProperty_bycopy prototype.
+	(objc_synthesize_getter): Build prototype declaration for 
+	umsg_getProperty_bycopy.
+	(objc_build_setter_stmt): Check for existance of 
+	umsg_setProperty_bycopy.
+	(objc_synthesize_setter): Build prototype declaration for 
+	umsg_setProperty_bycopy.	
+
+2006-09-07  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4660569
+	* objc-act.c (objc_synthesize_getter): Look up for accessors in categories
+	before issuing the warning.
+	* (objc_synthesize_setter): Ditto.
+
+2006-09-07  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4719165
+	* objc-act.c (setup_string_decl): In new objc2 abi use
+	NSConstantString metadata in setting up the constant
+	string structure.
+
+2006-09-01  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4712269
+        * objc-act.c (objc_build_compound_incr_decr_setter_call): New.
+        (objc_v2_build_incr_decl_setter_call): New.
+        (objc_build_incr_decr_setter_call): New.
+
+2006-08-31  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4712188
+	* objc-act.c (objc_build_compound_setter_call): Set
+	TREE_NO_WARNING to suppress c++ warning.
+
+2006-08-31  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4697411
+        * objc-act.c (objc_volatilize_component_ref): New function.
+
+2006-08-29  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4705298 
+	* objc-act.c (objc_visibly_hidden_class): New.
+	(ivar_offset_ref): Select function to declare the symbol
+         according to setting of the 'visibility' attribute.
+	(generate_v2_shared_structures): Ditto.
+	(objc_warn_on_class_attributes): Recognize 
+	visibility("hidden") setting attribute on a class.
+	
+2006-08-29  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4705214
+	* objc-act.c (build_v2_class_template): Move 'superclass' from 
+	'class_ro_t' to 'class_t' metadata.
+	Move 'ro' field to last of 'class_t's data member.
+	(build_class_t_initializer): Corresponding changes to initialization 
+	of the fields.
+	(build_class_ro_t_initializer): Corresponding changes to initialization 
+	of the fields.
+	(generate_v2_shared_structures): Caller of build_class_t_initializer
+	and build_class_ro_t_initializer with new argument list.
+
+2006-08-28  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4702359
+	* objc-act.c (generate_v2_shared_structures): instanceStart, instanceSize
+	is now sizeof (struct class_t).
+
+2006-08-25  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4689268
+	* objc-act.c (start_class): On duplicate class implementation
+	error, return the old class for graceful recovery.
+
+2006-08-25  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4699834
+	* objc-act.c (synth_module_prologue): Removed _rtp suffix from 
+	objc_msgSend_fixup_rtp and variants.
+
+2006-08-25  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4698856
+	* objc-act.c (synth_module_prologue): Initialization of UOBJC_V2_CACHE_decl,
+	UOBJC_V2_VTABLE_decl moved.
+	(build_empty_cache_vtable_vars): New routine to declare UOBJC_V2_CACHE_decl
+	and UOBJC_V2_VTABLE_decl.
+	(generate_v2_shared_structures): Call build_empty_cache_vtable_vars.
+
+2006-08-24  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4695101
+	* objc-act.h (PROTOCOL_IMPL_OBJ): Removed.
+	* objc-act.c (build_v2_class_template): weakIvarLayout is the new
+	field.
+	(build_class_ro_t_initializer): Takes weakIvarLayout as new
+	argument and initializes the 'weakIvarLayout' field.
+	(generate_v2_shared_structures): Construct and pass ivarLayout and
+	weakIvarLayout to build_class_ro_t_initializer.
+	(generate_v2_protocols): Construct property table and pass its 
+	pointer to build_protocol_initializer.
+
+2006-08-24  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4695109
+	* objc/objc-tree.def (PROTOCOL_IMPLEMENTATION_TYPE): Removed.
+	* objc-act.c (objc_protocol_implementation): Now just issue error.
+	(build_v2_protocol_template): New fields for optionalInstanceMethods and
+	optionalClassMethods added to protocol_t, First field renamed to 'isa'.
+	(generate_v2_protocol_references): No longer needed code for implementation
+	of protocols is removed.
+	(generate_method_descriptors): optional method list pointers must have
+	unique names.
+	(build_protocol_initializer): Routine modified to accomodate initialization
+	of new and modified fields in 'struct protocl_t'.
+	(generate_v2_method_descriptors): Routine takes a new 'is_optional' argument and
+	uses that to set values for UOBJC_PROTOCOL_OPT_CLS_METHODS_decl and
+	UOBJC_PROTOCOL_OPT_NST_METHODS_decl variables.
+	(generate_v2_category): Remove last argument in call to generate_v2_protocol_list.
+	(objc_add_to_protocol_list_chain): Changed global_protocol_decl to
+	protocol_decl to reflect that it is no longer global.
+	(build_protocollist_translation_table): Pointer to protocol meta-data is now local.
+	(build_v2_protocol_reference): Variable which holds protocol meta-data is now
+	local.
+	(generate_v2_protocols): Remove conditional on variable being extern.
+	Code added for encoding optional methods.
+	(objc_build_protocol_expr): build_v2_protocol_reference takes one less argument.
+
+2006-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4491211
+	* objc-act.c (build_objc_method_call): Method return type
+	must be complete (instantiated) before determining if it is
+	memory bound.
+
+2006-08-17  Fariborz Jahanian
+
+        Radar 4590221
+	* objc-act.c (OFFS_MSGSEND_FAST, OFFS_ASSIGNIVAR_FAST): Moved to
+	darwin.h.
+	(synth_module_prologue): Replace POWERPC64 with check for OFFS_MSGSEND_FAST flag.
+        Move setting of umsg_fpret_decl to the top.
+	Remove setting of flag_objc_direct_dispatch.
+	(objc_build_ivar_assignment): Use objc_assign_ivar_decl unconditionally. 
+	(build_next_objc_exception_stuff): Replace TARGET_POWERPC with check
+	for OFFS_ASSIGNIVAR_FAST flag. Remove setting of objc_assign_ivar_fast_decl
+	in favor of setting of objc_assign_ivar_decl in both branch.
+	(build_objc_method_call): Use umsg_decl unconditionally.
+	* objc-act.h: Remove umsg_fast_decl and objc_assign_ivar_fast_decl decl.
+	
+2006-08-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4660579
+	* objc/objc-act.c (objc_add_property_setter_method): New.
+	(objc_add_property_variable): Resolve conflict between
+	'readonly' interface property and writable implementation
+	property.
+	(is_property): Removed (unrelated to this radar).
+	(finish_class): Call objc_add_property_setter_method instead of
+	inlined code.
+
+2006-08-15  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4668023
+	* objc/objc-act.c (build_property_reference): Removed.
+	(objc_lookup_ivar): Supert for property name access without
+	use of 'self' qualifier is removed.
+
+2006-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4666559
+	* objc/objc-act.c (objc_continue_interface): Postpone outputting
+	debug info. for objective-c classes.
+	(objc_finish_interface): Output debug info. for objective-c classes.
+	(build_private_template): Postpone setting TREE_USED flag until after
+	debug info. is output.
+
+2006-08-04  Mike Stump  <mrs@apple.com>
+
+	Radar 4669052
+	* Make-lang.in (objc-parse.y): Ensure that we don't rebuild.
+
+2006-08-03  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4664707
+	* objc/objc-act.c (objc_create_named_tmp_var): Takes extra argument.
+	(objc_build_compound_setter_call): New.
+	(objc_v2_build_setter_call): Call objc_build_compound_setter_call to
+	generate compound version of call to setter function.
+	(objc_build_setter_call): Ditto.
+	(objc_build_foreach_components): call objc_create_named_tmp_var
+	with prefix argument.
+		
+2006-08-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4660366
+	* objc/objc-act.c (objc_build_setter_stmt): Set flag_objc_gc so
+	objc_assign_weak is generated on 'weak' setter ivar.
+
+2006-08-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4660569
+	* objc/objc-act.c (objc_synthesize_getter): Warn if no synthesized 
+	or user getter.
+	(objc_synthesize_setter): Warn if no synthesized or user setter.
+
+2006-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4653319
+	* objc/objc-act.c (objc_add_property_variable): Issue diagnostic if class has no
+	ivar attribute and implementation does not refer to a specific 'ivar' in the
+	interface.
+	(objc_build_getter_call): Support super.property.
+	(nested_ivar_lookup): New.
+	(objc_gen_one_property_data): Call nested_ivar_lookup to look for ivar
+	in current and base class hierarchy.
+	(objc_build_getter_retval): Ditto.
+	(objc_build_setter_stmt): Ditto.
+	(finish_class): Ditto.
+
+2006-07-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4656712
+	* objc/objc-act.c (objc_build_setter_stmt): Recover when synthesized 
+	argument not found.
+	(finish_class): Issue error when user declared accessor and compiler 
+	is trying to synthesize one.
+
+2006-07-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4649718, 4651088
+	* objc/objc-act.c (objc_add_property_variable): err on bad property
+	declarations.
+
+2006-07-26  Fariborz Jahanian <fjahanian@apple.com>
+    
+        Radar 4653242
+	* objc/objc-act.c (objc_gen_one_property_data): Check for missing 
+	setter/getter in @implementation is removed.
+
+006-07-26  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4649701
+	* objc/objc-act.c (objc_gen_one_property_data): Also look in
+	class's protocol-list for user-declared setter/getter names.
+
+006-07-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4649663
+	* objc/objc-act.c (objc_build_getter_retval): Remove meth_decl argument.
+	Use argument passed after 'self', called '_cmd' to build getter call.
+	(objc_synthesize_getter): Remove method_decl argument in call to
+	objc_build_getter_retval.
+	(objc_build_setter_stmt): Remove meth_decl argument.
+        Use argument passed after 'self', called '_cmd' to build setter call.
+	(objc_synthesize_setter): Remove method_decl argument in call to
+	objc_build_setter_stmt.
+
+006-07-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4590191
+	* objc/objc-act.c (objc_init_exceptions): Issue warning on use of 
+	@try/@catch and for Mac OS X version 10.2 and lower.
+
+006-07-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4638467
+	* objc/objc-act.c (objc_demangle): Changed argument to tree decl.
+	call c++'s cxx_printable_name for demangling c++ names. 
+	(objc_printable_name): Pass tree decl for the name to objc_demangle.
+
+006-07-18  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4592503
+	* objc/objc-act.c (objc_checkon_weak_attribute): New routine to check for
+	__weak attribute use on declarations.
+
+2006-07-17  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4631814
+	* objc-act.c (build_property_reference): Preserve original 'self' tree in
+	generated call to property's 'getter'.
+
+2006-07-17  Fariborz Jahanian <fjahanian@apple.com>
+	Radar 4621020 - small change
+	* objc-act.c (objc_set_property_attr): Supprt 'weak' attribute
+	unconditionally.
+
+2006-07-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4621020
+        * objc-act.c (objc_set_property_attr): Gather 'weak' attribute setting.
+        (objc_add_property_variable): 'weak' attribute setting into property node.
+        Diagnose a variety of mis-use.
+        (objc_v2_encode_prop_attr): Encode 'weak attribute as 'W'.
+	( objc_synthesize_getter): Call to objc_generate_weak_read for possible
+	call to objc_read_weak of a __weak return ivar.
+        (objc_add_internal_ivar): For 'weak' property, declare inserted 'ivar' as
+	__weak.
+	(finish_class): Diagnose if 'weak', 'bycopy' and 'byref' are not mutually
+	exclusive. On an existin 'ivar', make sure that it is declared weak.	
+	
+2006-07-13  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4625843
+	* objc-act.c (objc_add_property_variable): Issue diagnostic if
+	category's 'ivar' attribute does not include an ivar name.
+	(synth_module_prologue): Generate protocol qualified type for
+	object_getProperty_bycopy and object_setProperty_bycopy.
+	(finish_class): For categories, look for 'ivar' name in its
+	class.
+
+2006-07-12  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4625635
+	* objc-act.c (objc_add_property_variable): Make 'byref' the dafault
+	attribute for pointer-to-object properties.
+
+2006-07-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4623423
+	* objc-act.c (objc_type_valid_for_messaging): 'Class' is a valid
+	selector type as well.
+
+2006-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4398221
+	* objc-act.c (lookup_and_install_protocols): Takes a new
+	argument and warns on use of incomplete protocol in a 
+	class definition.
+	(objc_get_protocol_qualified_type, 
+	 start_class, start_protocol): Pass the extra argument 'true' 
+	or 'false' in call to lookup_and_install_protocols.
+
+2006-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4585769
+	* objc-act.h: Variety of new global declarations.
+	* objc-act.c (OBJC_VERSION): Bump version to 7.
+	(ivar_bytepos_cmp): New call back routine for qsort.
+	(objc_build_aggregate_ivar_layout): New routine to compute
+	byte offset position of 'gc' scannable and 'gc' skipped
+	ivar fields.
+	(objc_build_ivar_layout): New routine to build the layout map of
+	'gc' skipped and scanned ivar fields. 
+	(build_objc_protocol_extension_template): New.
+	(generate_objc_protocol_extension): New.
+	(build_objc_class_ext_template): New.
+	(generate_objc_class_ext): New.
+	(synth_module_prologue): Moved build of "struct _prop_list_t*" type
+	uncoditional.
+	(generate_v2_protocol_references): Type of "isa" is now
+	"struct _objc_protocol_extension*".
+	(generate_method_descriptors): takes on a new argument used to
+	generate "optional" method descriptors.
+	(generate_protocol_references): Calls generate_method_descriptors with
+	extra argument.
+	(generate_protocols): Build "objc_protocol_extension" metadata.
+	(build_protocol_initializer): Set the "isa" field of objc_class to
+	"_objc_protocol_extension" metadata.
+	(build_category_template): New fields added to "objc_category". They are
+	objc_category.size and objc_category.instance_properties.
+	(build_v2_class_template): objc_class has two new fields 
+	objc_class.ivar_layout and objc_class.ext	
+	(build_class_template): Accomodate build of these two new
+	fields.
+	(build_category_initializer): Initialize the two new field for
+	"objc_category".
+	(build_shared_structure_initializer): Takes new arguement for the
+	new field objc_class_ext addded to objc_class.
+	Calls objc_build_ivar_layout to get the tree to fill in objc_class.ivar_layout.
+	Initializes objc_class.objc_class_ext.	
+	(generate_category): Pass UOBJC_V2_PROPERTY_decl to build_category_initializer.
+	(generate_shared_structures): Pass extra argument to build_shared_structure_initializer.
+	(generate_v2_protocols): Pass extra argument to build_protocol_initializer.
+	(finish_objc): Generate declaraton for "objc_class_ext" metadata.
+	Call generate_v2_property_tables in default (current) abi.
+		
+2006-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4577849
+	* objc-act.c: (encode_protocol_list): New routine to encode
+	protocol list.
+	(encode_pointer): Call encode_protocol_list.
+
+2006-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4606233
+	* objc-act.c: (really_start_method): Remove check for missing
+	attribute on @implementation methods.
+
+2006-06-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4591909
+	* objc-act.h: New declarations to supprot the new
+	property spec.
+	* objc-act.c: (objc_set_property_attr): Changed to support
+	new attributes and change in the 'ivar' attribute spec.
+	(objc_add_property_variable): Ditto.
+	(objc_add_property_variable): Changed to support the new attribute
+	semantics and issue a variety of errors for their mis-use.
+	(objc_v2_encode_prop_attr): Encoding of attributes had changed.
+	(objc_v2_merge_property): Use to be called objc_v2_merge_dynamic_property.
+	(synth_module_prologue): Added declaration of bycopy and byref objc2
+	library calls.
+	(objc_gen_one_property_data): Removed generation of internal 'ivar'.
+	(objc_build_getter_retval): New.
+	(objc_synthesize_getter): Call objc_build_getter_retval to get the getter's
+	ivar.
+	(objc_build_setter_stmt): New.
+	(objc_synthesize_setter): call objc_build_setter_stmt.
+	(objc_gen_property_data): Do the merge of class's property
+	list into the implementation first.
+	(objc_add_internal_ivar): New.
+	(finish_class): A variety of semantics check for the new
+	and improved property attributes.
+		
+006-06-24 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4591756
+        * objc-act.c (objc_build_weak_read): Pass address of 'id' expr
+        to objc_read_weak.
+        (objc_remove_weak_read): dereference 'exp'.
+        (objc_strip_off_indirection): New.
+        (objc_generate_write_barrier): Strip off tree
+        added in objc_remove_weak_read.
+        (build_next_objc_exception_stuff): Type of objc_read_weak is now
+        objc_read_weak(*id).
+
+2006-06-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4582997
+	* objc-act.c (is_property): Lookup property in the interface,
+	not in its implementation.
+
+2006-06-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4582204
+	* objc-act.c (build_message_ref_translation_table): Initializer tree-list
+	is fixed.
+
+2006-06-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4581680
+	* objc-act.c (objc_start_method_definition): Generate nonlazy section
+	for 'hybrid' abi as well.
+
+2006-06-08 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4359757
+	* objc-act.h: Several declaration of new hash tables.
+	* objc-act.c (hash_ident_lookup, hash_ident_enter): New. 
+	(get_objc_string_decl): Replaces linear search with hash lookup.
+	(add_objc_string): Ditto.
+	(build_next_runtime_selector_reference): New. replaces 
+	build_selector_reference to do hash lookup instead of
+        linear search.
+	(objc_finish_message_expr): Call the new 
+	build_next_runtime_selector_reference.
+	(hash_init): Initialize new hash tables.
+	(class_method_hash_lookup): New routine to do a scope qualified
+	hash lookup.
+	(add_class_method_hash): New to add to methods to hash table.
+	(fast_lookup_method): Replaces lookup_method to do hash look
+	up of methods.
+	(lookup_method_static): Call fast_lookup_method instead of
+	lookup_method.
+	(objc_add_method): Ditto.
+	(check_methods): Ditto. Also LIST argument is removed.
+	(check_protocol): Remove unneeded argument from check_methods
+	calls.
+	(finish_class): Ditto.
+
+2006-06-09 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4292049
+	* objc-act.c (objc_generate_write_barrier): Turn on warning on pointer
+	arithmatic of gc objects.
+
+2006-06-07 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4576123
+	* objc-act.c (build_v2_property_table_initializer): Set/Reset
+	generating_instance_variables.
+
+2006-06-02 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4568791
+	* objc-act.c (objc_method_inherited): New.
+	(check_methods): Warn only if method is not
+	declared in the inheritance hierarchy.
+	(check_protocol, check_protocols): Take interface as
+	new argument and pass it down to check_methods.
+
+2006-05-31 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4563333
+	* objc-act.c (objc_finish_foreach_loop): Set input_location to
+	foreach's location
+
+2006-05-31 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4564386
+	* objc-act.c (objc_merge_proto_properties_in_class): New.
+	(finish_class): Merge properties from protocol(s) of the
+	class into the class.
+
+2006-05-30 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4476365
+	* objc-act.c (encode_type): Encode c++'s reference type.
+
+2006-05-30 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4547918
+	* objc-act.c (objc_finish_message_expr): Issue warning on sending
+	message to a forward class declaration.
+
+2006-05-25 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4561192
+	* objc-act.c (objc_set_alignment_attribute):
+	(build_class_list_address_table, build_category_list_address_table,
+	build_protocol_list_address_table): Set the alignment attribute to
+	align to array's element alignment.
+
+2006-05-24  Mike Stump  <mrs@apple.com>
+
+	* objc-act.c (JBLEN): Update for x86_64.
+
+2006-05-23 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4559114
+	* objc-act.h (PROTOCOL_IMPL_OBJ): New macro for 
+	PROTOCOL_INTERFACE_TYPE nodes.
+	* objc-act.c (generate_v2_property_tables): Takes a new argument to
+	know if generating metadata for protocol's declared properties.
+	(build_v2_protocol_reference): Changed name of last argument.
+	For each protocol implementation, generate its meta-data.
+	(generate_v2_protocols): Use the property meta-data name saved
+	in its PROTOCOL_INTERFACE_TYPE node.
+	
+2006-05-23 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4558088 - revised
+	* objc-act.c (objc_add_property_variable): Diagnose mismatched
+	property declarations by calling comptypes.
+
+2006-05-23 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4558088
+	* objc-act.c (objc_add_property_variable): Diagnose mismatched
+	property declarations.
+
+2006-05-22 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4557598
+	* objc-act.c (objc_add_property_variable): Fix typo.
+	(synth_module_prologue): Declare objc_msgSend_fpret_fixup_rtp
+	function.
+	(objc_finish_message_expr): Use it.
+	* objc-act.h: Declare umsg_fpret_fixup_decl.
+
+2006-05-19 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4550413 (optional protocol)
+	* objc-act.c (lookup_method_in_protocol_list): Also search for methods 
+	in list of optional protocols.
+
+2006-05-18 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4548636 (objc attributes on class)
+	* objc-act.h (CLASS_ATTRIBUTES): New macro to access interface's
+	attribute list.
+	* objc-act.c (objc_warn_on_class_attributes): New.
+	(objc_attach_attrs_to_type): New.
+	(objc_start_class_interface): takes attributes as new argument
+	and sets it to class's CLASS_ATTRIBUTES field.
+	(build_private_template): Updates 'record' of the class with 
+	unavailable/deprecated attributes.
+	(add_category): Warn on use of deprecated class in declaring a new
+	category.
+	(start_class): Warn on use of a deprecated class as a super class.	
+
+2006-05-17 Fariborz Jahanian <fjahanian@apple.com>
+
+	radar 4551602
+	* objc-act.c (continue_class): Use ggc_alloc_cleared to allocate
+	and clear out 'struct imp_entry' objects.
+	Change radar number 5433974 to 4533974 in apple local markers.
+
+2006-05-15 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4529765
+	* objc-act.c (objc_delta_format_args): New.
+	* (objc_any_recognized_attribute): New.
+	* (objc_start_method_definition): Warn on attribute decl.
+	on method implementation.
+	* (objc_decl_method_attributes): Call objc_any_recognized_attribute.
+	
+2006-05-10 Fariborz Jahanian <fjahanian@apple.com>
+
+	radar 4180592
+	* objc-act.c (objc_finish_message_expr): Check for error node.
+
+2006-05-09 Fariborz Jahanian <fjahanian@apple.com>
+
+	radar 4538105
+	* objc-act.c (objc_finish_foreach_loop): Mark element 
+	selector as being used.
+
+2006-05-08 Fariborz Jahanian <fjahanian@apple.com>
+
+	radar 4533107
+	* objc/objc-act.c (lookup_property_in_list): Lookup
+	further in main property list.
+
+2006-05-08 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4540451
+	* objc/objc-act.c (create_ivar_offset_name): Change ivar offset 
+	symbol name.
+
+2006-05-08 Fariborz Jahanian <fjahanian@apple.com>
+
+	radar 4535676
+	* objc/objc-act.c (objc_v2_get_class_super_reference,
+	build_classlist_super_reference_decl,
+	build_classlist_super_translation_table): New.
+	(get_super_receiver): Build classlist_super_ref_chain or
+	metaclasslist_super_ref_chain class list chain.
+	(finish_objc): Build the class list table found in
+	classlist_super_ref_chain/metaclasslist_super_ref_chain
+	chains.
+	* objc-act.h: (classlist_super_ref_chain, metaclasslist_super_ref_chain):
+	New declarations.
+
+2006-05-05 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4533974 - ObjC new protocol
+	* objc/objc-tree.def (PROTOCOL_IMPLEMENTATION_TYPE): New tree node.
+	* objc/objc-act.h: Bunch of new global decls and enums.
+	* objc/objc-act.c (objc_add_to_protocol_list_chain,
+	build_protocol_list_address_table, build_protocollist_translation_table,
+	objc_v2_get_protocol_reference, build_protocollist_reference_decl): New.
+	(objc_protocol_implementation): Top-level routine to implement new
+	protocol meta-data generation syntax.
+	(synth_module_prologue): Remove build of getProtocol_decl function.
+	(build_v2_protocol_template): New 'version' field added to protocol_t
+	table.
+	(generate_v2_protocol_references): Takes a new argument to generate
+	only the first protocol if argument is true.
+	(build_protocol_initializer): Added initialization for 'version'
+	field.
+	(build_category_initializer): Fixed up a initializer type for the
+	'protocol_list_ptr' field initialization which caused c++ to complain.
+	(generate_v2_category): New argument addded to call to
+	generate_v2_protocol_references.
+	(generate_v2_shared_structures): Ditto.
+	(build_v2_protocol_reference): Takes a new argument to generate extern
+	or global variable for protocol meta-data table.	
+	(generate_v2_protocols): Generate extern variables for protocol meta-data
+	indirectly referenced in a generated protocol meta-data. Add generated 
+	protocol meta-data to the list for later generation.
+	(objc_build_protocol_expr): Generate new abi for @protocol(proto)
+	expression.
+	(start_class): For PROTOCOL_IMPLEMENTATION_TYPE install protocols
+	to its list.
+	(continue_class): Add protocol implementation to the to-be-implemented
+	list.	
+	(finish_class): Ignore PROTOCOL_IMPLEMENTATION_TYPE.
+	(finish_objc): Generate meta-data table. Generate content of
+	__protocol_list and __protocol_refs section.
+			   
+2006-05-01 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4531482
+	* objc/objc-act.c (generate_objc_symtab_decl): Generate
+	_OBJC_SYMBOLS metadata for hybrid abi.
+	(finish_objc): Generate MODULE descriptor for hybrid abi.
+
+2006-04-28 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4512786
+	* objc/objc-act.c (objc_init_exceptions): Remove warning.
+
+2006-04-26 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4523837
+	* objc/objc-act.c (objc_build_getter_call): Restore 'receiver' 
+	to its original tree in call tree.
+
+2006-04-26 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3803157 (method attributes)
+	* objc/objc-act.h (METHOD_TYPE_ATTRIBUTES): New macro.
+	* objc/objc-act.c (objc_decl_method_attributes): New.
+	(objc_add_method_declaration): Process method's attribute.
+	(objc_start_method_definition): Ditto.
+	(build_objc_method_call): Inject method attribute into
+	built function type.
+	(build_v2_build_objc_method_call): Ditto.
+	(objc_synthesize_getter): objc_start_method_definition takes
+	an extra argument.
+	(objc_synthesize_setter): Ditto.
+	(really_start_method): Check for consistant attribute
+	declaration on method decl. and method def.
+	(objc_method_decl): New.
+
+2006-04-19 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4517826
+	* objc/objc-act.c (objc_build_getter_call): Check for null tree(s)
+	before accessing their fields.
+
+2006-04-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4506893
+	* objc/objc-act.c (objc_setter_func_call): Set
+	in_objc_property_setter_name_context.
+	(objc_finish_message_expr): Issue proper error 
+	when setter not found and only when property
+	is used to call setter.
+
+2006-04-13 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4512937
+	* objc/objc-act.c (objc_build_foreach_components): Use an existing
+	declaration of 'NSFastEnumerationState' if one is available.
+
+2006-04-10 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4506903
+	* objc/objc-act.c (objc_build_getter_call): Lookup property in
+	id<protocol>.property as well.
+
+2006-04-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4507230
+	* objc-act.c (objc_finish_message_expr): Don't warn on 
+	calling the internal objc runtime routine.
+	(objc_type_valid_for_messaging): New routine to check for valid
+	objc object types.
+	(objc_finish_foreach_loop): Check for invalid objc objects
+	in foreach header.
+
+2006-04-07 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4505126
+	* objc-act.c (lookup_property, lookup_property_in_list,
+	lookup_property_in_protocol_list): New.
+	(objc_build_getter_call): Call lookup_property to find a property.
+	Also fix a minor C* property bug uncovered.
+	
+2006-04-06 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4436866
+        (Missing copies attribute)
+	* objc-act.h (PROPERTY_COPIES): New field in property node.
+	* objc-act.c (objc_set_property_attr): Set property_copies
+	flag.
+	(objc_add_property_variable): Update field PROPERTY_COPIES
+	corresponding to 'copies' attribute.
+	(objc_v2_encode_prop_attr): Ancode 'copies' attribute in
+	attribute field of metadata.
+	(objc_v2_merge_dynamic_property): Merge 'copies' attribute.
+	
+2006-04-04 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4498373
+        (Metadata for objective-c properties)
+	* objc-act.h (objc_v2_property_template, UOBJC_V2_PROPERTY_decl,
+	prop_names_attr_chain, objc_prop_list_ptr): New global 
+	declarations.
+	* objc-act.c (build_v2_property_template, build_v2_property_list_template,
+	generate_v2_property_tables, build_v2_property_table_initializer, 
+	objc_v2_encode_prop_attr, generate_v2_property_list,
+	objc_v2_merge_dynamic_property): New functions for property's
+	meta-data generation.
+	(string_section): prop_names_attr is the new enum for property
+	name/attribute strings section.
+	(objc_add_property_variable): Fix a latentbug to prevent crash on user
+	error.
+	(synth_module_prologue): Define a new type for _prop_list_t*.
+	(build_objc_string_decl): Add property name/attributes to their own
+        list.
+	(add_objc_string): Add support for property name/attribute names. 
+	(get_objc_string_decl): Add list of property name/attributes among
+	those to search for.
+	(generate_strings): Generate the property name/attribute data.
+	(build_v2_protocol_template): Add the new field "properties"
+	to 'struct protocol_t'.
+	(build_protocol_initializer): Add the initializer for "properties"
+	field.
+	(build_v2_category_template): Add the new field "properties"
+	to 'struct category_t'.
+	(build_category_initializer): Add the initializer for "properties"
+	field.
+	(build_v2_class_template): Add the new field "properties"
+	to 'struct class_ro_t'.
+	(build_class_ro_t_initializer): Add the new field "properties"
+	to 'struct class_ro_t'.
+	(generate_v2_shared_structures): Fixed a latent bug.
+	(check_methods): Don't issue error if synthesize declarations
+	found in interface don't have an implementation.
+	(objc_gen_property_data): Merege 'dynamic' properties into 
+	class's implementation.
+	(finish_class): Set the context for synthesized instance methods.
+	(finish_objc): Call to generate_v2_property_tables to generate
+	property metadata.
+
+2006-03-31 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4494634
+	* objc-act.c (objc_build_string_object): Call build1 directly.
+
+2006-03-31 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4494634
+	* objc-act.c (objc_build_string_object): Suppress strict-alias
+	warning when converting to type 'id'.
+
+2006-03-27 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4133425
+	* objc-act.c (objc_diagnose_private_ivar): New.
+
+2006-03-22 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4436866
+	* objc-act.c (objc_gen_one_property_data): New.
+	(objc_gen_property_datae): New.
+	(objc_synthesize_getter): New.
+	(objc_process_getter_setter): New.
+	(objc_synthesize_setter): New.
+	(objc_build_property_ivar_name): New.
+	(objc_build_property_setter_name): New.
+	(objc_v2_build_setter_call): New.
+	(objc_setter_func_call): New.
+	(build_property_reference): New.
+	(match_proto_with_proto): New.
+	(is_property): New.
+	(finish_class): Generate what needed for property in class
+	and category.
+	(comp_proto_with_proto): Bulk of code moved to match_proto_with_proto.
+	(objc_lookup_ivar): Added support to lookup property name.
+	* objc-tree.def (PROPERTY_DECL): New tree node.
+	* objc-act.h: Several new macros to access various @property 
+	fields.
+
+2006-03-22 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4486614
+	* objc/objc-act.c (objc_generate_weak_read): Don't attempt
+	to generate 'weak' barriers in templates.
+
+2005-03-10 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4466530
+	* objc/objc-act.c (synth_module_prologue): -fobjc-direct-dispatch 
+	should be a no-op on ppc64
+
+2005-03-09 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4457381
+	* objc/objc-act.c (objc_finish_message_expr): Look for message in
+	@class's protocol list.
+
+2005-03-08 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4468456
+	* objc/objc-act.c (objc_finish_foreach_loop): 'continue' label belongs 
+	to current (inner) while-do loop.
+
+2005-02-28 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4156731
+	* objc/objc-act.c (gen_type_name_0): Handle Error reporting of
+	nameless types.
+
+2005-02-28 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4441049
+	* objc/objc-act.c (objc_v2_bitfield_ivar_bitpos): New routine to
+	compute ivar bitfield bit position from start of its starting byte.
+	(ivar_offset_ref): ivar bitfield byte position recomputed.
+
+2006-02-15   Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4439126
+        * objc/objc-act.c (objc_finish_file): call cp_finish_file before
+	genertating any meta-data so all instantiation have taken place
+	(some metadata (such as selectors) may go missing otherwise).
+
+2006-02-15   Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4441551
+	* objc/objc-act.c (diagnose_selector_cast): New function definition.
+
+2006-02-14   Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4445586
+	* objc/objc-act.h: PROTOCOL_LANG_SLOT_ELTS has two new slots.
+	(PROTOCOL_OPTIONAL_CLS_METHODS, PROTOCOL_OPTIONAL_NST_METHODS): Renamed to
+	reflect the slot they belong to.
+	* objc/objc-act.c ((PROTOCOL_OPTIONAL_CLS_METHODS, 
+	PROTOCOL_OPTIONAL_NST_METHODS): Ditto.
+	
+2006-02-14   Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4441049
+	* objc/objc-act.h: ivar_offset_hash_list new decl.
+	* objc/objc-act.c (hash_name_enter, hash_name_lookup): New functions.
+	(create_global_decl, create_extern_decl): Use the hash tables for looking
+	up the global/extern variables used to represent various meta-data.
+	(build_classlist_translation_table, generate_v2_category): Create a 
+	new extern variable not global.
+	(objc_generate_weak_read): For C++ template expressions type
+	is NULL. Ignore such expressions.
+	(objc_v2_build_ivar_ref): This routine cannot handle bitfields.
+	(build_v2_ivar_t_template, ivar_offset_ref): Use correct type for
+	field offsets which match that of the middle-end.
+	(hash_init): New hash table initialization.	
+
+2006-02-08   Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 4437670 (new abi stuff)
 	* objc/objc-act.c: Use internale names for pre-defined types
@@ -8,7 +965,7 @@
 	(generate_v2_protocol_list): Use correct protocol list name.
 	(build_v2_protocol_reference): Ue correct protocol reference name.
 	
-006-02-3   Fariborz Jahanian <fjahanian@apple.com>
+2006-02-3   Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 4431864
 	* objc/objc-act.c (objc_set_global_decl_fields): New routine to set 
@@ -17,7 +974,7 @@
 	(create_global_decl): Use the pre-existinig extern declaration, if one 
 	exists, to declare the new global declaration.
 
-006-02-02   Fariborz Jahanian <fjahanian@apple.com>
+2006-02-02   Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 4426814
 	* objc/objc-act.h (objc_assign_weak_decl, objc_read_weak_decl): New globals
@@ -132,14 +1089,6 @@
 	(finish_objc): Generate various new symbol lists. 
 	* objc/objc-act.h: Assortment of new global declarations.
 		
-2006-01-17 Fariborz Jahanian <fjahanian@apple.com>
-
-       Radar 4407151
-       * objc/objc-act.c (objc_is_class_name): template parameter is not
-       an objective class name.
-       (objc_generate_cxx_cdtors): Check for the null 
-	objc_implementation_context.	
-
 2006-01-10 Fariborz Jahanian <fjahanian@apple.com>
 
        Radar 4404766
@@ -269,6 +1218,31 @@
         (build_ivar_reference): For ivar references call objc_v2_build_ivar_ref
         to generate ivar references using ivar offset variable.
 
+2006-05-24  Mike Stump  <mrs@apple.com>
+
+	* objc-act.c (JBLEN): Update for x86_64.
+
+2006-05-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4385273
+	* gcc/objc/objc-act.c (objc_build_synchronized): Update JBLEN
+	for 64-bit.
+
+2006-04-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4399973
+	Radar 4327263
+	* objc/objc-act.c (init_module_descriptor): Remove file name
+	from module descriptors.
+
+2006-03-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4407151
+        * objc/objc-act.c (objc_is_class_name): template parameter is not
+        an objective class name.
+        (objc_generate_cxx_cdtors): Check for the null
+        objc_implementation_context.
+	
 2006-02-07  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 4219590

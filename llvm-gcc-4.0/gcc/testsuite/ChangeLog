@@ -1,3 +1,90 @@
+2005-10-31  Jan Hubicka  <jh@suse.cz>
+
+	Radar 4651177
+	PR target/20928
+	* gcc.c-torture/compile/pr20928.c: New test.
+
+2005-04-20  Joseph S. Myers  <joseph@codesourcery.com>
+
+	Radar 2883585
+	* gcc.dg/Wint-to-pointer-cast-1.c,
+	gcc.dg/Wint-to-pointer-cast-2.c, gcc.dg/Wint-to-pointer-cast-3.c,
+	gcc.dg/Wpointer-to-int-cast-1.c, gcc.dg/Wpointer-to-int-cast-2.c,
+	gcc.dg/Wpointer-to-int-cast-3.c: New tests.
+
+2006-05-16  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4550526
+	* gcc.dg/inline-16.c: New.
+
+2006-05-09  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4134307
+	PR 16622
+	* gcc.dg/inline-10.c (main): Don't declare 'main' inline without
+	defining it.
+	* gcc.dg/inline-13.c: New.
+	* gcc.dg/inline-14.c: New.
+	* gcc.dg/inline-15.c: New.
+
+2006-05-04  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4134307
+	PR 11377
+	* gcc.dg/inline6.c: New.
+	* gcc.dg/inline7.c: New.
+
+2006-10-10  Mark Mitchell  <mark@codesourcery.com>
+
+	Radar 4484060
+	PR c++/24302
+	* g++.dg/warn/Wunused-12.C: New test.
+
+2005-10-28  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR C++/23229
+        * g++.dg/warn/main-2.C: New test.
+
+2006-04-25  Eric Christopher  <echristo@apple.com>
+
+	Radar 4529978
+	* gcc.dg/pragma-ms_struct.c: New.
+
+2006-03-24  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4485597
+	* objc.dg/dwarf-2.m: New.
+	* obj-c++.dg/dwarf-2.mm: New.
+
+2005-12-02  Mark Mitchell  <mark@codesourcery.com>
+
+	Radar 4458276
+	PR c++/24173
+	* g++.dg/template/friend40.C: New test.
+
+2006-03-15  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 3992198
+	* g++.old-deja/g++.other/init18.C: New.
+	* g++.old-deja/g++.other/init5.C: Remove xfail.
+
+2006-03-09  Eric Christopher  <echristo@apple.com>
+
+	Radar 4461050
+        * gcc.c-torture/compile/20060309-1.c: New.
+
+2006-02-24  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4086777
+	* g++.dg/eh/uncaught1.C: Add dg-options for ppc-darwin.
+	* g++.dg/eh/uncaught2.C: New.
+	* g++.dg/eh/uncaught3.C: New.
+
+2006-02-21  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4439051
+	* g++.dg/eh/spbp.C: New.
+
 2006-01-21  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/25895

@@ -3,6 +3,7 @@
 /* Tesst debug info for virtual base class.  */
 /* { dg-do compile }  */
 /* { dg-options "-gfull" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 class A
 {

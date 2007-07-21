@@ -917,7 +917,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
 
       /* APPLE LOCAL begin CW asm blocks. */
       /* Crude way of detecting an entry static label declaration 
-	 (See cw_asm_entry).  Make this a local symbol. */
+	 (See iasm_entry).  Make this a local symbol. */
       if (i == 0 && !TREE_CHAIN (tail) 
 	  && strcmp (TREE_STRING_POINTER (string), "%0:") == 0
 	  && GET_CODE (op) == SYMBOL_REF)
@@ -2968,6 +2968,12 @@ emit_case_nodes (rtx index, case_node_ptr node, rtx default_label,
   int unsignedp = TYPE_UNSIGNED (index_type);
   enum machine_mode mode = GET_MODE (index);
   enum machine_mode imode = TYPE_MODE (index_type);
+
+  /* APPLE LOCAL begin mainline 4561329 */
+  /* Handle indices detected as constant during RTL expansion.  */
+  if (mode == VOIDmode)
+    mode = imode;
+  /* APPLE LOCAL end mainline 4561329 */
 
   /* See if our parents have already tested everything for us.
      If they have, emit an unconditional jump for this node.  */

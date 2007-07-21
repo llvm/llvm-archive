@@ -1208,6 +1208,17 @@ machopic_select_section (tree exp, int reloc,
 	       TREE_INT_CST_LOW (size) == 8 &&
 	       TREE_INT_CST_HIGH (size) == 0)
 	literal8_section ();
+      /* APPLE LOCAL begin x86_64 */
+#ifndef HAVE_GAS_LITERAL16
+#define HAVE_GAS_LITERAL16 0
+#endif
+      else if (HAVE_GAS_LITERAL16
+	       && TARGET_64BIT
+	       && TREE_CODE (size) == INTEGER_CST
+	       && TREE_INT_CST_LOW (size) == 16
+	       && TREE_INT_CST_HIGH (size) == 0)
+	literal16_section ();
+      /* APPLE LOCAL end x86_64 */
       else
 	base_function ();
     }
@@ -1270,13 +1281,26 @@ machopic_select_section (tree exp, int reloc,
       /* APPLE LOCAL begin ObjC new abi */
       else if (!strncmp (name, "_OBJC_CLASSLIST_REFERENCES_", 27))
 	objc_classrefs_section ();
+      /* APPLE LOCAL begin radar 4535676 */
+      else if (!strncmp (name, "_OBJC_CLASSLIST_SUP_REFS_", 25))
+	objc_super_classrefs_section ();
+      /* APPLE LOCAL end radar 4535676 */
       else if (!strncmp (name, "_OBJC_CLASS_RO_$", 16) 
-	       || !strncmp (name, "_OBJC_METACLASS_RO_$", 20))
+      /* APPLE LOCAL begin C* property metadata (Radar 4498373) */
+	       || !strncmp (name, "_OBJC_METACLASS_RO_$", 20)
+	       || !strncmp (name, "_OBJC_PROP_NAME_ATTR_", 21))
+      /* APPLE LOCAL end C* property metadata (Radar 4498373) */
 	objc_data_section ();
       else if (!strncmp (name, "_OBJC_MESSAGE_REF", 17))
 	objc_message_refs_section ();
       else if (!strncmp (name, "_OBJC_LABEL_CLASS_", 18))
         objc_classlist_section ();
+      /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
+      else if (!strncmp (name, "_OBJC_LABEL_PROTOCOL_", 21))
+        objc_protocollist_section ();
+      else if (!strncmp (name, "_OBJC_PROTOCOL_REFERENCE_", 25))
+	objc_protocolrefs_section ();
+      /* APPLE LOCAL end radar 4533974 - ObjC new protocol */
       else if (!strncmp (name, "_OBJC_LABEL_CATEGORY_", 21))
         objc_categorylist_section ();
       else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CLASS_", 26))
@@ -1314,9 +1338,34 @@ machopic_select_section (tree exp, int reloc,
 	objc_cat_cls_meth_section ();
       else if (!strncmp (name, "_OBJC_PROTOCOL_", 15))
 	objc_protocol_section ();
+      /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
+      else if (!strncmp (name, "_OBJC_CLASSEXT_", 15))
+	objc_class_ext_section ();
+      else if (flag_objc_abi == 1
+	       && (!strncmp (name, "_OBJC_$_PROP_LIST", 17)
+		   || !strncmp (name, "_OBJC_$_PROP_PROTO", 18)))
+	objc_prop_list_section ();
+      else if (!strncmp (name, "_OBJC_PROTOCOLEXT", 17))
+        objc_protocol_ext_section ();
+      /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
       else
 	base_function ();
     }
+  /* APPLE LOCAL begin ObjC abi v2 */
+  else if (TREE_CODE (exp) == VAR_DECL &&
+           DECL_NAME (exp) &&
+           TREE_CODE (DECL_NAME (exp)) == IDENTIFIER_NODE &&
+           IDENTIFIER_POINTER (DECL_NAME (exp)) &&
+	   !strncmp (IDENTIFIER_POINTER (DECL_NAME (exp)), "OBJC_", 5))
+    {
+      const char *name = IDENTIFIER_POINTER (DECL_NAME (exp));
+      if (!strncmp (name, "OBJC_CLASS_$", 12)
+	  || !strncmp (name, "OBJC_METACLASS_$", 16))
+	objc_data_section();
+      else
+	base_function ();
+    }
+  /* APPLE LOCAL end ObjC abi v2 */
   /* APPLE LOCAL coalescing */
   /* Removed special handling of '::operator new' and '::operator delete'.  */
   /* APPLE LOCAL begin darwin_set_section_for_var_p  */
@@ -1400,6 +1449,15 @@ machopic_select_rtx_section (enum machine_mode mode, rtx x,
 	   && (GET_CODE (x) == CONST_INT
 	       || GET_CODE (x) == CONST_DOUBLE))
     literal4_section ();
+  /* APPLE LOCAL begin x86_64 */
+  else if (HAVE_GAS_LITERAL16
+	   && TARGET_64BIT
+	   && GET_MODE_SIZE (mode) == 16
+	   && (GET_CODE (x) == CONST_INT
+	       || GET_CODE (x) == CONST_DOUBLE
+	       || GET_CODE (x) == CONST_VECTOR))
+    literal16_section ();
+  /* APPLE LOCAL end x86_64 */
   else if (MACHOPIC_INDIRECT
 	   && (GET_CODE (x) == SYMBOL_REF
 	       || GET_CODE (x) == CONST
@@ -1522,9 +1580,14 @@ darwin_handle_objc_gc_attribute (tree *node,
 
   /* For some reason, build_type_attribute_variant() creates a distinct
      type instead of a true variant!  We make up for this here.  */
-  if (TYPE_MAIN_VARIANT (type) == type)
+  /* APPLE LOCAL begin radar 4600999 */
+  /* The main variant must be preserved no matter what. What ever
+     main variant comes out of the call to build_type_attribute_variant
+     is bogus here. */
+  if (TYPE_MAIN_VARIANT (orig) != TYPE_MAIN_VARIANT (type))
     {
-      TYPE_MAIN_VARIANT (type) = orig;
+      TYPE_MAIN_VARIANT (type) = TYPE_MAIN_VARIANT (orig);
+  /* APPLE LOCAL end radar 4600999 */
       TYPE_NEXT_VARIANT (type) = TYPE_NEXT_VARIANT (orig);
       TYPE_NEXT_VARIANT (orig) = type;
     }
@@ -1599,7 +1662,8 @@ darwin_set_section_for_var_p (tree exp, int reloc, int align)
 	  if (TREE_INT_CST_HIGH (size) != 0)
 	    return 0;
 
-	  /* Put integer and float consts in the literal4|8 sections.  */
+	  /* APPLE LOCAL x86_64 */
+	  /* Put integer and float consts in the literal4|8|16 sections.  */
 
 	  if (TREE_INT_CST_LOW (size) == 4)
 	    {
@@ -1611,6 +1675,15 @@ darwin_set_section_for_var_p (tree exp, int reloc, int align)
 	      literal8_section ();                                
 	      return 1;
 	    }
+	  /* APPLE LOCAL begin x86_64 */
+	  else if (HAVE_GAS_LITERAL16
+		   && TARGET_64BIT
+		   && TREE_INT_CST_LOW (size) == 16)
+	    {
+	      literal16_section ();
+	      return 1;
+	    }
+	  /* APPLE LOCAL end x86_64 */
 	}
     }
   return 0;
@@ -1669,14 +1742,14 @@ darwin_emit_unwind_label (FILE *file, tree decl, int for_eh, int empty)
     ? DECL_ASSEMBLER_NAME (decl)
     : DECL_NAME (decl);
 
-  /* APPLE LOCAL begin mainline */
+  /* APPLE LOCAL begin mainline 2006-03-16 */
   const char *prefix = user_label_prefix;
-  /* APPLE LOCAL end mainline */
+  /* APPLE LOCAL end mainline 2006-03-16 */
 
   const char *base = IDENTIFIER_POINTER (id);
   unsigned int base_len = IDENTIFIER_LENGTH (id);
 
-  /* APPLE LOCAL dwarf2 section flags */
+  /* APPLE LOCAL mainline 2006-03-16 dwarf2 section flags */
   static const char suffix[] = ".eh";
 
   int need_quotes = name_needs_quotes (base);
@@ -1687,10 +1760,10 @@ darwin_emit_unwind_label (FILE *file, tree decl, int for_eh, int empty)
     /* APPLE LOCAL dwarf2 section flags */
     return;
 
-  /* APPLE LOCAL begin mainline */
+  /* APPLE LOCAL begin mainline 2006-03-16 */
   lab = xmalloc (strlen (prefix)
 		 + base_len + strlen (suffix) + quotes_len + 1);
-  /* APPLE LOCAL end mainline */
+  /* APPLE LOCAL end mainline 2006-03-16 */
   lab[0] = '\0';
 
   if (need_quotes)
@@ -1806,7 +1879,7 @@ darwin_asm_output_dwarf_delta (FILE *file, int size,
     fprintf (file, "\n\t%s L$set$%d", directive, darwin_dwarf_label_counter++);
 }
 
-/* APPLE LOCAL begin dwarf 4383509 */
+/* APPLE LOCAL begin mainline 2006-03-16 dwarf 4383509 */
 /* Output labels for the start of the DWARF sections if necessary.  */
 void
 darwin_file_start (void)
@@ -1862,7 +1935,7 @@ darwin_asm_output_dwarf_offset (FILE *file, int size, const char * lab,
   sprintf (sname, "*Lsection%.*s", namelen, base + 8);
   darwin_asm_output_dwarf_delta (file, size, lab, sname);
 }
-/* APPLE LOCAL end dwarf 4383509 */
+/* APPLE LOCAL end mainline 2006-03-16 dwarf 4383509 */
 
 void
 darwin_file_end (void)
@@ -1940,7 +2013,7 @@ darwin_init_cfstring_builtins (void)
        const int *isa;		(will point at
        int flags;		 __CFConstantStringClassReference)
        const char *str;
-       int length;
+       long length;
      };  */
 
   pcint_type_node
@@ -1955,7 +2028,8 @@ darwin_init_cfstring_builtins (void)
   TREE_CHAIN (field) = fields; fields = field;
   field = build_decl (FIELD_DECL, NULL_TREE, pcchar_type_node);
   TREE_CHAIN (field) = fields; fields = field;
-  field = build_decl (FIELD_DECL, NULL_TREE, integer_type_node);
+  /* APPLE LOCAL radar 4493912 */
+  field = build_decl (FIELD_DECL, NULL_TREE, long_integer_type_node);
   TREE_CHAIN (field) = fields; fields = field;
   /* NB: The finish_builtin_struct() routine expects FIELD_DECLs in
      reverse order!  */
@@ -2061,7 +2135,8 @@ darwin_construct_objc_string (tree str)
 
       if (!*loc)
 	{
-	  *loc = ggc_alloc (sizeof (struct cfstring_descriptor));
+	  /* APPLE LOCAL radar 4563012 */
+	  *loc = ggc_alloc_cleared (sizeof (struct cfstring_descriptor));
 	  ((struct cfstring_descriptor *)*loc)->literal = str;
 	}
 
@@ -2163,7 +2238,8 @@ darwin_build_constant_cfstring (tree str)
 			    build1 (ADDR_EXPR, pcchar_type_node,
 				    str), initlist);
       field = TREE_CHAIN (field);
-      initlist = tree_cons (field, build_int_cst (NULL_TREE, length),
+      /* APPLE LOCAL radar 4493912 */
+      initlist = tree_cons (field, build_int_cst (TREE_TYPE (field), length),
 			    initlist);
 
       constructor = build_constructor (ccfstring_type_node,
@@ -2201,7 +2277,7 @@ darwin_build_constant_cfstring (tree str)
    otherwise return NULL signifying that we have no special
    knowledge.  */
 tree
-darwin_cw_asm_special_label (tree id)
+darwin_iasm_special_label (tree id)
 {
   const char *name = IDENTIFIER_POINTER (id);
 

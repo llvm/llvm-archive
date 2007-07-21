@@ -110,10 +110,12 @@ static int dead_or_predicable (basic_block, basic_block, basic_block,
 			       basic_block, int);
 static void noce_emit_move_insn (rtx, rtx);
 static rtx block_has_only_trap (basic_block);
-static void mark_loop_exit_edges (void);
+/* APPLE LOCAL 4538899 mainline */
+void mark_loop_exit_edges (void);
 
 /* Sets EDGE_LOOP_EXIT flag for all loop exits.  */
-static void
+/* APPLE LOCAL 4538899 mainline */
+void
 mark_loop_exit_edges (void)
 {
   struct loops loops;

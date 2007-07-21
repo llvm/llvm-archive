@@ -1635,6 +1635,10 @@ determine_visibility (tree decl)
 	  DECL_VISIBILITY_SPECIFIED (decl) = 1;
 	}
       else if (TREE_CODE (decl) == FUNCTION_DECL
+	       /* APPLE LOCAL begin mainline */
+	       && (! DECL_LANG_SPECIFIC (decl)
+		   || ! DECL_EXPLICIT_INSTANTIATION (decl))
+	       /* APPLE LOCAL end mainline */
 	       && DECL_DECLARED_INLINE_P (decl)
 	       && visibility_options.inlines_hidden)
 	{
@@ -1659,6 +1663,12 @@ determine_visibility (tree decl)
 			  the ABI.  */
 		       && !DECL_CONSTRUCTION_VTABLE_P (decl))))
 	DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
+      /* APPLE LOCAL begin ms tinfo compat 4230099 */
+      else if (TREE_CODE (decl) == VAR_DECL
+	       && flag_visibility_ms_compat
+	       && DECL_TINFO_P (decl))
+	DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
+      /* APPLE LOCAL end ms tinfo compat 4230099 */
       else
 	{
 	  DECL_VISIBILITY (decl) = CLASSTYPE_VISIBILITY (class_type);
@@ -2398,9 +2408,16 @@ start_static_initialization_or_destruction (tree decl, int initp)
      might be initialized in more than one place.  (For example, a
      static data member of a template, when the data member requires
      construction.)  */
+  /* APPLE LOCAL begin Radar 4539933 */
+  /* Need guard variables for explicitly instantiated templated
+     static data (darwin only) */
   if (TREE_PUBLIC (decl) && (DECL_COMMON (decl) 
 			     || DECL_ONE_ONLY (decl)
-			     || DECL_WEAK (decl)))
+			     || DECL_WEAK (decl)
+			     || (TARGET_WEAK_NOT_IN_ARCHIVE_TOC && DECL_LANG_SPECIFIC (decl)
+                                 && (DECL_EXPLICIT_INSTANTIATION (decl)
+                                 ||  DECL_TEMPLATE_SPECIALIZATION (decl)))))
+  /* APPLE LOCAL end Radar 4539933 */
     {
       tree guard_cond;
 
@@ -2774,10 +2791,6 @@ cp_finish_file (void)
   /* Bad parse errors.  Just forget about it.  */
   if (! global_bindings_p () || current_class_type || decl_namespace_list)
     return;
-
-  /* APPLE LOCAL begin 4133801 */
-  cp_flush_lexer_file_stack ();
-  /* APPLE LOCAL end 4133801 */
 
   if (pch_file)
     c_common_write_pch ();

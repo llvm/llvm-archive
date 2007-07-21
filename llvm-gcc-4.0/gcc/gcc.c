@@ -91,8 +91,7 @@ compilation is specified by a string called a "spec".  */
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
-/* APPLE LOCAL mainline: mingw compatibility */
-#if defined (HAVE_DECL_GETRUSAGE) && !HAVE_DECL_GETRUSAGE && HAVE_RUSAGE
+#if defined (HAVE_DECL_GETRUSAGE) && !HAVE_DECL_GETRUSAGE
 extern int getrusage (int, struct rusage *);
 #endif
 
@@ -810,14 +809,20 @@ static const char *cpp_options =
    output will be used by another program.  */
 static const char *cpp_debug_options = "%{d*}";
 
+/* APPLE LOCAL begin LLVM */
+static const char *llvm_options =
+#ifdef ENABLE_LLVM
+"%{O4|emit-llvm:%{S:-emit-llvm} \
+                %{!S:-emit-llvm-bc \
+                  %{c: %W{o*} %{!o*:-o %b%w.o}} \
+                  %{!c:-o %d%w%u%O}}}"
+#else
+  "%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"
+#endif
+  ;
+/* APPLE LOCAL end LLVM */
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
-/* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
- "%{O4|emit-llvm:%{S:-emit-llvm} %{!S:-emit-llvm-bc} %{!S:%W{o*}%{!o*:-o %b.o}}}"
-#else
-"%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"
-#endif
 /* APPLE LOCAL begin -fast */
 "%{fast:-O3}\
  %{fastf:-O3}\
@@ -984,15 +989,18 @@ static const struct compiler default_compilers[] =
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i}}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)}}\
+                "/* APPLE LOCAL LLVM */"\
+		cc1 %(cpp_unique_options) %(llvm_options) %(cc1_options)}}\
                 %{!fsyntax-only:%(invoke_as)}};:\
 	  %{save-temps|traditional-cpp|no-integrated-cpp:%(trad_capable_cpp) \
 		%(cpp_options) -o %{save-temps:%b.i} %{!save-temps:%g.i} \n\
 "/* APPLE LOCAL predictive compilation */"\
 		    cc1 -fpreprocessed %<fpredictive-compilation* %{save-temps:%b.i} %{!save-temps:%g.i} \
-			%(cc1_options)}\
+                        "/* APPLE LOCAL LLVM */"\
+			%(llvm_options) %(cc1_options)}\
 	  %{!save-temps:%{!traditional-cpp:%{!no-integrated-cpp:\
-		cc1 %(cpp_unique_options) %(cc1_options)}}}\
+                "/* APPLE LOCAL LLVM */"\
+		cc1 %(cpp_unique_options) %(llvm_options) %(cc1_options)}}}\
           %{!fsyntax-only:%(invoke_as)}}}}}", 0, 1, 1},
    /* APPLE LOCAL end treat -fast same as -combine --dbj */
   {"-",
@@ -1018,7 +1026,8 @@ static const struct compiler default_compilers[] =
   {".i", "@cpp-output", 0, 1, 0},
   {"@cpp-output",
    /* APPLE LOCAL predictive compilation */
-   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(cc1_options) %<fpredictive-compilation* %{!fsyntax-only:%(invoke_as)}}}}", 0, 1, 0},
+    /* APPLE LOCAL llvm */
+   "%{!M:%{!MM:%{!E:cc1 -fpreprocessed %i %(llvm_options) %(cc1_options) %<fpredictive-compilation* %{!fsyntax-only:%(invoke_as)}}}}", 0, 1, 0},
   /* APPLE LOCAL begin preprocess .s files 2001-07-24 --sts */
   /* This is kind of lame; the purpose of having .s and .S be treated
      differently is so that we can control whether to run the
@@ -1601,6 +1610,8 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("multilib_options",		&multilib_options),
   INIT_STATIC_SPEC ("linker",			&linker_name_spec),
   INIT_STATIC_SPEC ("link_libgcc",		&link_libgcc_spec),
+  /* APPLE LOCAL LLVM */
+  INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
   INIT_STATIC_SPEC ("md_exec_prefix",		&md_exec_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix",	&md_startfile_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix_1",	&md_startfile_prefix_1),
@@ -3041,14 +3052,14 @@ struct infile
 {
   const char *name;
   const char *language;
-  /* APPLE LOCAL begin IMI */
+  /* APPLE LOCAL begin IMA */
   struct compiler *incompiler;
 
   /* Use separate temp file for each input file.  */
   const char *temp_filename;
   bool compiled;
   bool preprocessed;
-  /* APPLE LOCAL end IMI */
+  /* APPLE LOCAL end IMA */
 };
 
 /* Also a vector of input files specified.  */
@@ -3069,7 +3080,7 @@ static int traditional_cpp_flag = 0;
 
 /* True if "-E" appears on commandline.  */
 static int capital_e_flag = 0;
-/* APPLE LOCAL end */
+/* APPLE LOCAL end IMA variables */
 
 /* This counts the number of libraries added by lang_specific_driver, so that
    we can tell if there were any user supplied any files or libraries.  */
@@ -3711,6 +3722,8 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
         }
       /* APPLE LOCAL end IMA */
       /* APPLE LOCAL begin -weak_* (radar 3235250) */
+      else if (strncmp (argv[i], "-weak-l", 7) == 0)
+	n_infiles++;
       else if (strcmp (argv[i], "-weak_library") == 0)
 	{
 	  if (i + 1 == argc)
@@ -6892,7 +6905,7 @@ main (int argc, const char **argv)
 	}
       combine_inputs = save_combine_inputs;
     }
-/* APPLE LOCAL end IMI */
+  /* APPLE LOCAL end IMA */
 
   for (i = 0; (int) i < n_infiles; i++)
     {

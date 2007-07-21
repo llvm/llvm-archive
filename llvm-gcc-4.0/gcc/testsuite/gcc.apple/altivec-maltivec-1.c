@@ -1,13 +1,14 @@
 /* APPLE LOCAL file AltiVec */
 /* { dg-do compile { target powerpc*-*-* } } */
-/* { dg-options "-O3 -finline-limit=9999 -maltivec -Wa,-force_cpusubtype_ALL -fdump-ipa-cgraph -S" } */
+/* For 64-bit we need 64-bit headers.  */
+/* { dg-xfail-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-options "-O3 -finline-limit=9999 -maltivec -Wa,-force_cpusubtype_ALL -fdump-ipa-cgraph -S -faltivec" } */
 /* Inliner should inline AltiVec(tm) functions normally when -maltivec is on.  */
 /* <rdar://problem/3837835> Selective inlining of functions that use Altivec */
 #include	<Carbon/Carbon.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<math.h>
-#include	<altivec.h>
 
 #define	N	400
 #define	N4	((N+3)/4)
@@ -130,6 +131,9 @@ main()
   exit(0);
 }
 
-/* { dg-final { scan-tree-dump-times "callee has AltiVec" 0 "cgraph" } } */
-/* { dg-final { scan-assembler-not "vIntDotProduct" } } */
-/* { dg-final { scan-assembler-not "mainInt" } } */
+/* { dg-final { global compiler_flags; if ![string match "*-m64 *" $compiler_flags]
+   { scan-tree-dump-times "callee has AltiVec" 0 "cgraph" } } } */
+/* { dg-final { global compiler_flags; if ![string match "*-m64 *" $compiler_flags]
+   { scan-assembler-not "vIntDotProduct" } } } */
+/* { dg-final { global compiler_flags; if ![string match "*-m64 *" $compiler_flags]
+   { scan-assembler-not "mainInt" } } } */

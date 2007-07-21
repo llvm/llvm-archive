@@ -177,7 +177,8 @@ remap_decl (tree decl, inline_data *id)
   if (!n)
     {
       /* Make a copy of the variable or label.  */
-      tree t = copy_decl_for_inlining (decl, fn, VARRAY_TREE (id->fns, 0));
+      /* APPLE LOCAL mainline 2006-09-08 4658012 */
+      tree t = copy_decl_for_inlining (decl, fn, VARRAY_TREE (id->fns, 0), false);
 
       /* Remember it, so that if we encounter this local entity again
 	 we can reuse this copy.  Do this early because remap_type may
@@ -727,7 +728,8 @@ setup_one_parameter (inline_data *id, tree p, tree value, tree fn,
   /* Make an equivalent VAR_DECL.  Note that we must NOT remap the type
      here since the type of this decl must be visible to the calling
      function.  */
-  var = copy_decl_for_inlining (p, fn, VARRAY_TREE (id->fns, 0));
+  /* APPLE LOCAL mainline 2006-09-08 4658012 */
+  var = copy_decl_for_inlining (p, fn, VARRAY_TREE (id->fns, 0), false);
 
   /* Register the VAR_DECL as the equivalent for the PARM_DECL;
      that way, when the PARM_DECL is encountered, it will be
@@ -852,9 +854,11 @@ initialize_inlined_parameters (inline_data *id, tree args, tree static_chain,
    function as seen by the callee.  *USE_P is a (possibly null) value that
    holds the result as seen by the caller.  */
 
+/* APPLE LOCAL begin mainline 2006-09-08 4658012 */
 static tree
 declare_return_variable (inline_data *id, tree return_slot_addr,
-			 tree modify_dest, tree *use_p)
+			 tree modify_dest, tree *use_p, tree bind_expr)
+/* APPLE LOCAL end mainline 2006-09-08 4658012 */
 {
   tree callee = VARRAY_TOP_TREE (id->fns);
   tree caller = VARRAY_TREE (id->fns, 0);
@@ -932,7 +936,8 @@ declare_return_variable (inline_data *id, tree return_slot_addr,
 
   gcc_assert (TREE_CODE (TYPE_SIZE_UNIT (callee_type)) == INTEGER_CST);
 
-  var = copy_decl_for_inlining (result, callee, caller);
+  /* APPLE LOCAL mainline 2006-09-08 4658012 */
+  var = copy_decl_for_inlining (result, callee, caller, true);
   DECL_SEEN_IN_BIND_EXPR_P (var) = 1;
   DECL_STRUCT_FUNCTION (caller)->unexpanded_var_list
     = tree_cons (NULL_TREE, var,
@@ -942,11 +947,20 @@ declare_return_variable (inline_data *id, tree return_slot_addr,
      not be visible to the user.  */
   TREE_NO_WARNING (var) = 1;
 
+  /* APPLE LOCAL begin mainline 2006-09-08 4658012 */
+  declare_inline_vars (bind_expr, var);
+  /* APPLE LOCAL end mainline 2006-09-08 4658012 */
+
   /* Build the use expr.  If the return type of the function was
      promoted, convert it back to the expected type.  */
   use = var;
   if (!lang_hooks.types_compatible_p (TREE_TYPE (var), caller_type))
     use = fold_convert (caller_type, var);
+
+  /* APPLE LOCAL begin mainline 2006-09-08 4658012 */
+  if (DECL_BY_REFERENCE (result))
+    var = build_fold_addr_expr (var);
+  /* APPLE LOCAL end mainline 2006-09-08 4658012 */
 
  done:
   /* Register the VAR_DECL as the equivalent for the RESULT_DECL; that
@@ -1123,7 +1137,7 @@ inline_forbidden_p (tree fndecl)
   location_t saved_loc = input_location;
   /* APPLE LOCAL begin CW asm blocks */
   tree ret;
-  if (DECL_CW_ASM_FUNCTION (fndecl)
+  if (DECL_IASM_ASM_FUNCTION (fndecl)
       && ! flag_ms_asms)
     {
       inline_forbidden_reason
@@ -1720,8 +1734,10 @@ expand_call_inline (tree *tp, int *walk_subtrees, void *data)
     modify_dest = NULL;
 
   /* Declare the return variable for the function.  */
+  /* APPLE LOCAL begin mainline 2006-09-08 4658012 */
   decl = declare_return_variable (id, return_slot_addr,
-				  modify_dest, &use_retvar);
+				  modify_dest, &use_retvar, expr);
+  /* APPLE LOCAL end mainline 2006-09-08 4658012 */
 
   /* After we've initialized the parameters, we insert the body of the
      function itself.  */
@@ -1801,7 +1817,9 @@ expand_call_inline (tree *tp, int *walk_subtrees, void *data)
      inlined.  If we don't do this now, we can lose the information about the
      variables in the function when the blocks get blown away as soon as we
      remove the cgraph node.  */
-  (*debug_hooks->outlining_inline_function) (edge->callee->decl);
+  /* APPLE LOCAL begin mainline 2006-05-15 rewrite 4548482  */
+  (*debug_hooks->outlining_inline_function) (edge->callee->decl, &input_location);
+  /* APPLE LOCAL end mainline 2006-05-15 rewrite 4548482  */
 
   /* Update callgraph if needed.  */
   cgraph_remove_node (edge->callee);
@@ -2494,9 +2512,11 @@ mark_local_for_remap_r (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
       tree decl = TREE_OPERAND (*tp, 0);
 
       /* Copy the decl and remember the copy.  */
+      /* APPLE LOCAL begin mainline 2006-09-08 4658012 */
       insert_decl_map (id, decl,
 		       copy_decl_for_inlining (decl, DECL_CONTEXT (decl),
-					       DECL_CONTEXT (decl)));
+					       DECL_CONTEXT (decl), false));
+      /* APPLE LOCAL end mainline 2006-09-08 4658012 */
     }
 
   return NULL_TREE;

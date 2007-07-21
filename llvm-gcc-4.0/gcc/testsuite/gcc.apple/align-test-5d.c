@@ -5,7 +5,7 @@
 /* { dg-options "-malign-natural -DSIZE=12" } */
 
 /* This is for Intel only. */
-/* { dg-xfail-if "" { powerpc*-*-darwin* } { "" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 /*
  * GCC alignment test for command line options for setting alignment modes.
@@ -15,7 +15,7 @@
  * Last modified 2002-2-18.
  *
  */
- 
+
  /* Check whether we are testing GCC 3 or later.  */
 #ifdef __GNUC__
 #if __GNUC__ >= 3
@@ -74,10 +74,10 @@ static void check_option(char *option)
 int main(int argc, char *argv[])
 {
     int i;
-    
+
     for (i = 1; i < argc; i++)
         check_option(argv[i]);
-    
+
     if (bad_option)
         return 1;
 

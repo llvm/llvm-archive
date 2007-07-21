@@ -26,6 +26,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "errors.h"
 #include "ggc.h"
 #include "tree.h"
+/* APPLE LOCAL 4375453 */
+#include "target.h"
 #include "basic-block.h"
 #include "diagnostic.h"
 #include "tree-flow.h"
@@ -1257,6 +1259,31 @@ vect_enhance_data_refs_alignment (loop_vec_info loop_vinfo)
   for (i = 0; i < VARRAY_ACTIVE_SIZE (loop_write_datarefs); i++)
     {
       struct data_reference *dr = VARRAY_GENERIC_PTR (loop_write_datarefs, i);
+      /* APPLE LOCAL begin 4375453 */
+      if (unknown_alignment_for_access_p (dr))
+	{
+	  tree base_type;
+	  tree type = (TREE_TYPE (DR_REF (dr)));
+	  tree ba = DR_BASE_NAME (dr);
+	  bool is_packed = false;
+	  if (ba && TREE_CODE (ba) == COMPONENT_REF)
+	    {
+	      base_type = TREE_TYPE (TREE_OPERAND (ba, 0));
+	      is_packed = TYPE_PACKED (base_type);
+	    }
+	  if (targetm.vectorize.vector_alignment_reachable
+	      && targetm.vectorize.vector_alignment_reachable (type, is_packed))
+	    {
+	      LOOP_VINFO_UNALIGNED_DR (loop_vinfo) = dr;
+	      LOOP_DO_PEELING_FOR_ALIGNMENT (loop_vinfo) = true;
+	    }
+	  else
+	    {
+	      LOOP_DO_PEELING_FOR_ALIGNMENT (loop_vinfo) = false;
+	      break;
+	    }
+	}
+      /* APPLE LOCAL end 4375453 */
       if (!aligned_access_p (dr))
         {
           LOOP_VINFO_UNALIGNED_DR (loop_vinfo) = dr;

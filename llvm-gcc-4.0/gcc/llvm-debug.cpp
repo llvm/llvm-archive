@@ -467,6 +467,8 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
   DEBUGASSERT(type != NULL_TREE && type != error_mark_node && "Not a type.");
   if (type == NULL_TREE || type == error_mark_node) return NULL;
   
+  type = TYPE_MAIN_VARIANT(type);
+  
   // Should only be void if a pointer/reference/return type.  Returning NULL
   // allows the caller to produce a non-derived type.
   if (TREE_CODE(type) == VOID_TYPE) return NULL;
@@ -481,7 +483,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
   // Get the name and location early to assist debugging.
   const char *TypeName = GetNodeName(type);
   expanded_location Loc = GetNodeLocation(type);
-
+  
   // Bit size, align and offset of the type.
   uint64_t Size = NodeSizeInBits(type);
   uint64_t Align = NodeAlignInBits(type);
@@ -541,8 +543,6 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
 
     case FUNCTION_TYPE:
     case METHOD_TYPE: {
-      // gen_type_die(TREE_TYPE(type), context_die);
-      // gen_subroutine_type_die(type, context_die);
       CompositeTypeDesc *SubrTy = new CompositeTypeDesc(DW_TAG_subroutine_type);
       Ty = SubrTy;
       // Set the slot early to prevent recursion difficulties.
@@ -661,9 +661,42 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
       // Prepare to add the fields.
       std::vector<DebugInfoDesc *> &Elements = StructTy->getElements();
       
+      if (tree binfo = TYPE_BINFO(type)) {
+        VEC (tree) *accesses = BINFO_BASE_ACCESSES (binfo);
+        
+        for (unsigned i = 0, e = BINFO_N_BASE_BINFOS(binfo); i != e; ++i) {
+          tree BInfo = BINFO_BASE_BINFO(binfo, i);
+          tree BInfoType = BINFO_TYPE (BInfo);
+          TypeDesc *BaseClass = getOrCreateType(BInfoType, Unit);
+          DerivedTypeDesc *MemberDesc = new DerivedTypeDesc(DW_TAG_inheritance);
+          MemberDesc->setFromType(BaseClass);
+          
+          if (accesses) {
+            tree access = VEC_index(tree, accesses, i);
+            if (access == access_protected_node) {
+              MemberDesc->setIsProtected();
+            } else if (access == access_private_node) {
+              MemberDesc->setIsPrivate();
+            }
+          }
+          
+          MemberDesc->setOffset(tree_low_cst(BINFO_OFFSET(BInfo), 0));
+          Elements.push_back(MemberDesc);
+        }
+      }
+
+      // Now add members of this class.
       for (tree Member = TYPE_FIELDS(type); Member;
                 Member = TREE_CHAIN(Member)) {
-        // FIXME - only concerned with fields at this point.
+        // Should we skip.
+        if (DECL_P(Member) && DECL_IGNORED_P(Member)) continue;
+
+        // Get the location of the member.
+        expanded_location MemLoc = GetNodeLocation(Member, false);
+        CompileUnitDesc *MemFile = MemLoc.line ?
+                                   getOrCreateCompileUnit(MemLoc.file) :
+                                   NULL;
+
         if (TREE_CODE(Member) == FIELD_DECL) {
           DerivedTypeDesc *MemberDesc = new DerivedTypeDesc(DW_TAG_member);
           // Field type is the declared type of the field.
@@ -671,12 +704,6 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           TypeDesc *MemberType = getOrCreateType(FieldNodeType, Unit);
           const char *MemberName = GetNodeName(Member);
           
-          // Get the location of the field.
-          expanded_location MemLoc = GetNodeLocation(Member, false);
-          CompileUnitDesc *MemFile = MemLoc.line ?
-                                     getOrCreateCompileUnit(MemLoc.file) :
-                                     NULL;
-
           MemberDesc->setName(MemberName);
           MemberDesc->setFile(MemFile);
           MemberDesc->setLine(MemLoc.line);
@@ -692,7 +719,71 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           }
 
           Elements.push_back(MemberDesc);
+        } else if (TREE_CODE(Member) == VAR_DECL) {
+          GlobalVariableDesc *Static = new GlobalVariableDesc();
+
+          // Get name information.
+          const char *Name = "";
+          const char *ASMName = "";
+          GetGlobalName(Member, Name, ASMName);
+
+          TypeDesc *TyD = getOrCreateType(TREE_TYPE(Member), Unit);
+          
+          // Fill in the blanks.
+          Static->setContext(Unit);
+          if (*ASMName != '\0') {
+            Static->setName(ASMName);
+            Static->setDisplayName(Name);
+          } else {
+            Static->setName(Name);
+          }
+          Static->setFile(MemFile);
+          Static->setLine(MemLoc.line);
+          Static->setType(TyD);
+          Static->setIsDefinition(false);
+          Static->setIsStatic(true);
+
+          Elements.push_back(Static);
+        } else {
+          // FIXME - ignoring others for the time being.
         }
+      }
+      for (tree Member = TYPE_METHODS(type); Member;
+                Member = TREE_CHAIN(Member)) {
+                
+        if (DECL_ABSTRACT_ORIGIN (Member)) continue;
+                
+        // Create subprogram descriptor.
+        Subprogram = new SubprogramDesc();
+        
+        // Get name information.
+        const char *name = "";
+        const char *asmname = "";
+        GetGlobalName(Member, name, asmname);
+        
+        // Get function type.
+        TypeDesc *SPTy = getOrCreateType(TREE_TYPE(Member), Unit);
+
+        if (TREE_PROTECTED(Member)) {
+          SPTy->setIsProtected();
+        } else if (TREE_PRIVATE(Member)) {
+          SPTy->setIsPrivate();
+        }
+
+        Subprogram->setContext(Unit);
+        if (*asmname != '\0') {
+          Subprogram->setName(asmname);
+          Subprogram->setDisplayName(name);
+        } else {
+          Subprogram->setName(name);
+        }
+        Subprogram->setFile(Unit);
+        Subprogram->setLine(CurLineNo);
+        Subprogram->setType(SPTy);
+        Subprogram->setIsStatic(false);
+        Subprogram->setIsDefinition(false);
+
+        Elements.push_back(Subprogram);
       }
       
       break;

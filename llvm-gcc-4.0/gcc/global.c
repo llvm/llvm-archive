@@ -84,6 +84,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    5. Allocate the variables in that order; each if possible into
    a preferred register, else into another register.  */
 
+/* APPLE LOCAL begin CW asm blocks */
+extern int flag_iasm_blocks;
+/* APPLE LOCAL end CW asm blocks */
+
 /* Number of pseudo-registers which are candidates for allocation.  */
 
 static int max_allocno;
@@ -271,7 +275,7 @@ static int local_reg_n_refs[FIRST_PSEUDO_REGISTER];
    Now it is computed as
    SUM (REG_FREQ(i)/REG_LIVE_LENGTH(i)) over all uses. */
 
-static double local_reg_weight[FIRST_PSEUDO_REGISTER];
+static HOST_WIDE_INT local_reg_weight[FIRST_PSEUDO_REGISTER];
 #else
 /* Frequency of uses of given hard reg.  */
 static int local_reg_freq[FIRST_PSEUDO_REGISTER];
@@ -437,8 +441,13 @@ global_alloc (FILE *file)
 	SET_HARD_REG_BIT (no_global_alloc_regs, HARD_FRAME_POINTER_REGNUM);
     }
   else if (need_fp)
+    /* APPLE LOCAL begin CW asm blocks 4443946 */
+    {
+      if (!flag_iasm_blocks)
     error ("%s cannot be used in asm here",
 	   reg_names[HARD_FRAME_POINTER_REGNUM]);
+    }
+    /* APPLE LOCAL end CW asm blocks 4443946 */
   else
     regs_ever_live[HARD_FRAME_POINTER_REGNUM] = 1;
 #endif
@@ -573,8 +582,8 @@ global_alloc (FILE *file)
 	    /* APPLE LOCAL begin rewrite weight computation */
 #ifdef REWRITE_WEIGHT_COMPUTATION
 	    if ( REG_LIVE_LENGTH (i) > 0 )
-	      local_reg_weight[j] += (double)REG_FREQ (i) 
-				    / (double) REG_LIVE_LENGTH (i);
+	      local_reg_weight[j] += (REG_FREQ (i) * 100)
+				      / REG_LIVE_LENGTH (i);
 #else
 	    local_reg_freq[j] += REG_FREQ (i);
 	    local_reg_live_length[j] += REG_LIVE_LENGTH (i);
@@ -1428,11 +1437,11 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 	    {
 	      /* APPLE LOCAL begin rewrite weight computation */
 #ifdef REWRITE_WEIGHT_COMPUTATION
-	      /* We explicitly evaluate the divide result into a temporary
-		 variable so as to avoid excess precision problems that occur
-		 on an i386-unknown-sysv4.2 (unixware) host.  */
-	      double tmp = ((double) allocno[num].freq
-			    / allocno[num].live_length);
+	      /* The multiplier of 100 is used to help get a couple
+		 of places of difference to mitigate the problem of
+		 having to use integers in the weight calculation.  */
+	      HOST_WIDE_INT tmp = (allocno[num].freq * 100)
+				  / allocno[num].live_length;
 #else
 	    /* APPLE LOCAL end rewrite weight computation */
 	      /* We explicitly evaluate the divide results into temporary

@@ -2216,6 +2216,8 @@ format_type_warning (const char *descr, const char *format_start,
       memset (p + 1, '*', pointer_count);
       p[pointer_count + 1] = 0;
     }
+  /* APPLE LOCAL radar 4529765 */
+  arg_num = objc_message_selector () ? (arg_num-2) : arg_num;
   if (wanted_type_name)
     {
       if (descr)

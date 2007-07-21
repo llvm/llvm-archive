@@ -1,5 +1,5 @@
 /* { dg-do compile { target powerpc*-*-* } } */
-/* { dg-options "-maltivec" } */
+/* { dg-options "-maltivec -faltivec" } */
 
 #define vector __attribute__((vector_size(16)))
 

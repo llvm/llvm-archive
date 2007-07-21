@@ -32,7 +32,11 @@ compilers="cc1obj\$(exeext)"
 
 stagestuff="cc1obj\$(exeext)"
 
-target_libs=target-libobjc
+# APPLE LOCAL begin libobjc
+# We use libobjc4 instead.  To build libobjc anyway, add
+# '--enable-libobjc' to the 'configure' command line.
+# target_libs=target-libobjc
+# APPLE LOCAL end libobjc
 
 # Most of the object files for cc1obj actually come from C.
 lang_requires="c"

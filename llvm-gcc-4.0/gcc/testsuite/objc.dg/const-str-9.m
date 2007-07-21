@@ -4,6 +4,8 @@
 /* { dg-options "-fnext-runtime" } */
 /* APPLE LOCAL constant cfstrings */
 /* { dg-do compile { target powerpc-*-darwin* } } */
+/* APPLE LOCAL radar 4492976 */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 

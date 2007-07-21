@@ -3,6 +3,7 @@ extern void abort();
 /* { dg-do run { target powerpc*-*-darwin* } } */
 /* { dg-options "-std=gnu99" } */
 #pragma reverse_bitfields on
+#pragma ms_struct on
 
 #pragma pack(push,2)
 typedef struct _S5

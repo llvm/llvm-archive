@@ -261,12 +261,6 @@ int flag_fastf = 0;
 int flag_fastcp = 0;
 /* APPLE LOCAL end -fast */
 
-/* APPLE LOCAL begin -ffppc 2001-08-01 --sts */
-/* Nonzero if the floating point precision control pass should
-   be performed. (x86 only really, but we pretend it's generic)  */
-int flag_fppc = 0;
-/* APPLE LOCAL end -ffppc 2001-08-01 --sts */
-
 /* Nonzero if structures and unions should be returned in memory.
 
    This should only be defined if compatibility with another compiler or
@@ -933,7 +927,8 @@ check_global_declarations (tree *vec, int len)
 	  && ! TREE_USED (decl)
 	  /* The TREE_USED bit for file-scope decls is kept in the identifier,
 	     to handle multiple external decls in different scopes.  */
-	  && ! TREE_USED (DECL_NAME (decl))
+	  /* APPLE LOCAL mainline 2005-10-10  */
+	  && ! (DECL_NAME (decl) && TREE_USED (DECL_NAME (decl)))
 	  && ! DECL_EXTERNAL (decl)
 	  && ! TREE_PUBLIC (decl)
 	  /* A volatile variable might be used in some non-obvious way.  */
@@ -1789,12 +1784,6 @@ general_init (const char *argv0)
   /* Handle compilation interrupts.  */
   if (signal (SIGINT, SIG_IGN) != SIG_IGN)
     signal (SIGINT, interrupt_signal);
-/* APPLE LOCAL begin MINGW compatibility, FIXME see 4660333 */
-#ifdef SIGKILL
-  if (signal (SIGKILL, SIG_IGN) != SIG_IGN)
-    signal (SIGKILL, interrupt_signal);
-#endif
-  /* APPLE LOCAL end MINGW compatibility, FIXME see 4660333 */
   if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
     signal (SIGTERM, interrupt_signal);
   /* APPLE LOCAL end interrupt signal handler */

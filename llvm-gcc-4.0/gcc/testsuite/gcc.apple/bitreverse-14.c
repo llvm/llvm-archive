@@ -2,6 +2,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* { dg-options "-std=gnu99" } */
 #pragma reverse_bitfields on
+#pragma ms_struct on
 #pragma pack(push, 1)
 
 typedef struct _kyc

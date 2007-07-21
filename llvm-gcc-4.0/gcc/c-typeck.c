@@ -223,6 +223,19 @@ qualify_type (tree type, tree like)
   return c_build_qualified_type (type,
 				 TYPE_QUALS (type) | TYPE_QUALS (like));
 }
+
+/* APPLE LOCAL begin mainline 2006-05-18 4336222 */
+/* Return true iff the given tree T is a variable length array.  */
+
+bool
+c_vla_type_p (tree t)
+{
+  if (TREE_CODE (t) == ARRAY_TYPE
+      && C_TYPE_VARIABLE_SIZE (t))
+    return true;
+  return false;
+}
+/* APPLE LOCAL end mainline 2006-05-18 4336222 */
 
 /* Return the composite type of two compatible types.
 
@@ -738,6 +751,10 @@ comptypes (tree type1, tree type2)
 	d2_variable = (!d2_zero
 		       && (TREE_CODE (TYPE_MIN_VALUE (d2)) != INTEGER_CST
 			   || TREE_CODE (TYPE_MAX_VALUE (d2)) != INTEGER_CST));
+	/* APPLE LOCAL begin mainline 2006-05-18 4336222 */
+	d1_variable = d1_variable || (d1_zero && c_vla_type_p (t1));
+	d2_variable = d2_variable || (d2_zero && c_vla_type_p (t2));
+	/* APPLE LOCAL end mainline 2006-05-18 4336222 */
 
 	if (d1_variable || d2_variable)
 	  break;
@@ -1026,13 +1043,13 @@ tagged_types_tu_compatible_p (tree t1, tree t2)
     case RECORD_TYPE:
       {
 	struct tagged_tu_seen tts;
-	/* APPLE LOCAL IMA speedup */
+	/* APPLE LOCAL IMA speed up */
 	const struct tagged_tu_seen * tts_i;
 
 	tts.next = tagged_tu_seen_base;
 	tts.t1 = t1;
 	tts.t2 = t2;
-	/* APPLE LOCAL IMA speedup */
+	/* APPLE LOCAL IMA speed up */
 	tts.isEnum = 0;
 	tagged_tu_seen_base = &tts;
 
@@ -1611,6 +1628,11 @@ build_component_ref (tree datum, tree component)
     return ref;
   /* APPLE LOCAL end ObjC new abi */
 
+  /* APPLE LOCAL begin C* property (Radar 4436866) */
+  if ((ref = objc_build_getter_call (datum, component)))
+    return ref;
+  /* APPLE LOCAL end C* property (Radar 4436866) */
+
   /* See if there is a field or component with name COMPONENT.  */
 
   if (code == RECORD_TYPE || code == UNION_TYPE)
@@ -1644,6 +1666,8 @@ build_component_ref (tree datum, tree component)
 
 	  ref = build3 (COMPONENT_REF, TREE_TYPE (subdatum), datum, subdatum,
 			NULL_TREE);
+	  /* APPLE LOCAL radar 4697411 */
+	  objc_volatilize_component_ref (ref, TREE_TYPE (subdatum));
 	  if (TREE_READONLY (datum) || TREE_READONLY (subdatum))
 	    TREE_READONLY (ref) = 1;
 	  if (TREE_THIS_VOLATILE (datum) || TREE_THIS_VOLATILE (subdatum))
@@ -1743,12 +1767,12 @@ build_array_ref (tree array, tree index)
     return error_mark_node;
 
   /* APPLE LOCAL begin CW asm blocks */
-  if (inside_cw_asm_block)
+  if (inside_iasm_block)
     {
       if (TREE_CODE (array) == BRACKET_EXPR
 	  || TREE_CODE (index) == IDENTIFIER_NODE
 	  || TREE_TYPE (index) == NULL_TREE)
-	return cw_build_bracket (array, index);
+	return iasm_build_bracket (array, index);
     }
   /* APPLE LOCAL end CW asm blocks */
 
@@ -1895,7 +1919,7 @@ build_external_ref (tree id, int fun)
      also handy to assume undeclared names as labels, although it
      would be better to have a second pass and complain about names in
      the block that are not labels.  */
-  if (inside_cw_asm_block)
+  if (inside_iasm_block)
     {
       if (decl)
 	{
@@ -1904,7 +1928,7 @@ build_external_ref (tree id, int fun)
 	  /* Locals and parms just need to be left alone for now.  */
 	}
       else
-	return cw_do_id (id);
+	return iasm_do_id (id);
     }
   /* APPLE LOCAL end CW asm blocks */
 
@@ -1969,7 +1993,20 @@ build_external_ref (tree id, int fun)
       if (context != 0 && context != current_function_decl)
 	DECL_NONLOCAL (ref) = 1;
     }
+/* APPLE LOCAL begin for-4_3 4134307 */
+  /* C99 6.7.4p3: An inline definition of a function with external
+     linkage ... shall not contain a reference to an identifier with
+     internal linkage.  */
+  else if (current_function_decl != 0
+	   && DECL_DECLARED_INLINE_P (current_function_decl)
+	   && DECL_EXTERNAL (current_function_decl)
+	   && VAR_OR_FUNCTION_DECL_P (ref)
+	   && (TREE_CODE (ref) != VAR_DECL || TREE_STATIC (ref))
+	   && ! TREE_PUBLIC (ref))
+    pedwarn ("%qD is static but used in inline function %qD "
+	     "which is not static", ref, current_function_decl);
 
+/* APPLE LOCAL end for-4_3 4134307 */
   return ref;
 }
 
@@ -2042,6 +2079,13 @@ c_expr_sizeof_expr (struct c_expr expr)
     {
       ret.value = c_sizeof (TREE_TYPE (expr.value));
       ret.original_code = ERROR_MARK;
+      /* APPLE LOCAL begin mainline 2006-05-18 4336222 */
+      if (c_vla_type_p (TREE_TYPE (expr.value)))
+	{
+	  /* sizeof is evaluated when given a vla (C99 6.5.3.4p2).  */
+	  ret.value = build2 (COMPOUND_EXPR, TREE_TYPE (ret.value), expr.value, ret.value);
+	}
+      /* APPLE LOCAL end mainline 2006-05-18 4336222 */
       pop_maybe_used (C_TYPE_VARIABLE_SIZE (TREE_TYPE (expr.value)));
     }
   return ret;
@@ -2250,7 +2294,10 @@ convert_arguments (tree typelist, tree values, tree function, tree fundecl)
 
       if (type == void_type_node)
 	{
-	  error ("too many arguments to function %qE", function);
+	  /* APPLE LOCAL begin radar 4491608 */
+	  error ("too many arguments to function %qE", selector ? selector 
+								: function);
+	  /* APPLE LOCAL end radar 4491608 */
 	  break;
 	}
 
@@ -2439,7 +2486,7 @@ parser_build_binary_op (enum tree_code code, struct c_expr arg1,
   enum tree_code code2 = arg2.original_code;
 
   /* APPLE LOCAL begin CW asm blocks */
-  if (inside_cw_asm_block)
+  if (inside_iasm_block)
     {
       if (TREE_CODE (arg1.value) == IDENTIFIER_NODE
 	  || TREE_CODE (arg2.value) == IDENTIFIER_NODE
@@ -2817,6 +2864,11 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 	  inc = integer_one_node;
 
 	inc = convert (argtype, inc);
+
+	/* APPLE LOCAL begin radar 4712269 */
+	if ((val = objc_build_incr_decr_setter_call (code, arg, inc)))
+	  return val;
+	/* APPLE LOCAL end radar 4712269 */
 
 	/* Complain about anything else that is not a true lvalue.  */
 	/* APPLE LOCAL begin non lvalue assign */
@@ -3313,6 +3365,8 @@ build_c_cast (tree type, tree expr)
   if (objc_is_object_ptr (type) && objc_is_object_ptr (TREE_TYPE (expr)))
     return build1 (NOP_EXPR, type, expr);
 
+  /* APPLE LOCAL C* warnings to easy porting to new abi */
+  diagnose_selector_cast (type, expr);
   type = TYPE_MAIN_VARIANT (type);
 
   if (TREE_CODE (type) == ARRAY_TYPE)
@@ -3433,7 +3487,10 @@ build_c_cast (tree type, tree expr)
 	  && TYPE_ALIGN (TREE_TYPE (type)) > TYPE_ALIGN (TREE_TYPE (otype)))
 	warning ("cast increases required alignment of target type");
 
-      if (TREE_CODE (type) == INTEGER_TYPE
+      /* APPLE LOCAL begin mainline 2883585 2005-04-20 */
+      if (warn_pointer_to_int_cast
+	  && TREE_CODE (type) == INTEGER_TYPE
+	  /* APPLE LOCAL end mainline 2883585 2005-04-20 */
 	  && TREE_CODE (otype) == POINTER_TYPE
 	  && TYPE_PRECISION (type) != TYPE_PRECISION (otype)
 	  && !TREE_CONSTANT (value))
@@ -3445,7 +3502,10 @@ build_c_cast (tree type, tree expr)
 	warning ("cast from function call of type %qT to non-matching "
 		 "type %qT", otype, type);
 
-      if (TREE_CODE (type) == POINTER_TYPE
+      /* APPLE LOCAL begin mainline 2883585 2005-04-20 */
+      if (warn_int_to_pointer_cast
+	  && TREE_CODE (type) == POINTER_TYPE
+	  /* APPLE LOCAL end mainline 2883585 2005-04-20 */
 	  && TREE_CODE (otype) == INTEGER_TYPE
 	  && TYPE_PRECISION (type) != TYPE_PRECISION (otype)
 	  /* Don't warn about converting any constant.  */
@@ -3592,6 +3652,15 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
       lhs = stabilize_reference (lhs);
       newrhs = build_binary_op (modifycode, lhs, rhs, 1);
     }
+
+  /* APPLE LOCAL begin C* property (Radar 4436866) */
+  if (c_dialect_objc ())
+    {
+      result = objc_build_setter_call (lhs, newrhs);
+      if (result)
+        return result;
+    }
+  /* APPLE LOCAL end C* property (Radar 4436866) */
 
   /* APPLE LOCAL non lvalue assign */
   if (!lvalue_or_else (&lhs, lv_assign))
@@ -3948,8 +4017,13 @@ convert_for_assignment (tree type, tree rhs, enum impl_conv errtype,
   else if ((codel == POINTER_TYPE || codel == REFERENCE_TYPE)
 	   && (coder == codel))
     {
-      tree ttl = TREE_TYPE (type);
-      tree ttr = TREE_TYPE (rhstype);
+      /* APPLE LOCAL begin radar 4193359 */
+      /* Types differing only by the presence of the 'volatile'
+	 qualifier are acceptable if the 'volatile' has been added
+	 in by the Objective-C EH machinery.  */
+      tree ttl = objc_non_volatilized_type (TREE_TYPE (type));
+      tree ttr = objc_non_volatilized_type (TREE_TYPE (rhstype));
+      /* APPLE LOCAL end radar 4193359 */
       tree mvl = ttl;
       tree mvr = ttr;
       bool is_opaque_pointer;
@@ -4000,12 +4074,9 @@ convert_for_assignment (tree type, tree rhs, enum impl_conv errtype,
 	      /* APPLE LOCAL begin 4086969 */
 	      if (TYPE_QUALS (ttr) & ~TYPE_QUALS (ttl))
 		{
-		  /* APPLE LOCAL begin mainline */
-		  /* Types differing only by the presence of the 'volatile'
-		     qualifier are acceptable if the 'volatile' has been added
-		     in by the Objective-C EH machinery.  */
-		  if (warn_discard_qual && !objc_type_quals_match (ttl, ttr))
-		  /* APPLE LOCAL end mainline */
+		  /* APPLE LOCAL begin radar 4193359 */
+		  if (warn_discard_qual)
+		  /* APPLE LOCAL end radar 4193359 */
 		    WARN_FOR_ASSIGNMENT (G_("passing argument %d of %qE discards "
 					    "qualifiers from pointer target type"),
 					 G_("assignment discards qualifiers "
@@ -4585,6 +4656,11 @@ digest_init (tree type, tree init, bool strict_string, int require_constant)
 	      error_init ("invalid use of non-lvalue array");
 	      return error_mark_node;
 	    }
+	  /* APPLE LOCAL begin radar 4293709 */
+          if (c_dialect_objc ())
+	    (void)objc_compare_types (type, TREE_TYPE (inside_init), 
+				      -2/* init */, NULL_TREE);
+	  /* APPLE LOCAL end radar 4293709 */
 	 }
 
       if (code == VECTOR_TYPE)
@@ -6876,15 +6952,15 @@ c_finish_goto_ptr (tree expr)
 }
 
 /* APPLE LOCAL begin CW asm blocks */
-#ifndef CW_SEE_OPCODE
-#define CW_SEE_OPCODE(YYCHAR, T) YYCHAR
+#ifndef IASM_SEE_OPCODE
+#define IASM_SEE_OPCODE(YYCHAR, T) YYCHAR
 #endif
 #define TYPESPEC 1
 #define IDENTIFIER 2
 int
-cw_asm_typename_or_reserved (tree value)
+iasm_typename_or_reserved (tree value)
 {
-  if (CW_SEE_OPCODE (TYPESPEC, value) == IDENTIFIER)
+  if (IASM_SEE_OPCODE (TYPESPEC, value) == IDENTIFIER)
     return 0;
 
   return (C_IS_RESERVED_WORD (value));
@@ -6895,7 +6971,7 @@ cw_asm_typename_or_reserved (tree value)
    through the usual process.  */
 
 tree
-cw_asm_c_build_component_ref (tree typename, tree component)
+iasm_c_build_component_ref (tree typename, tree component)
 {
   tree val, type, fake_datum;
   enum tree_code code;
@@ -6910,6 +6986,13 @@ cw_asm_c_build_component_ref (tree typename, tree component)
   else if (TREE_CODE (typename) == LABEL_DECL)
     typename = DECL_NAME (typename);
 
+  /* We allow [eax].16 to refer to [eax + 16].  */
+  if (TREE_CODE (component) == INTEGER_CST
+      && TREE_CODE (typename) == BRACKET_EXPR)
+    {
+      return iasm_build_bracket (typename, component);
+    }
+
   val = lookup_name (typename);
   if (val)
     {
@@ -6917,12 +7000,6 @@ cw_asm_c_build_component_ref (tree typename, tree component)
     }
   else
     {
-      /* We allow [eax].16 to refer to [eax + 16].  */
-      if (TREE_CODE (component) == INTEGER_CST
-	  && TREE_CODE (typename) == BRACKET_EXPR)
-	{
-	  return cw_build_bracket (typename, component);
-	}
       /* A structure tag will have been assumed to be a label; pick
 	 out the original name.  */
       if (strncmp ("LASM", IDENTIFIER_POINTER (typename), 4) == 0)
@@ -7669,6 +7746,13 @@ c_begin_vm_scope (unsigned int scope)
   struct c_label_list *glist;
 
   gcc_assert (scope > 0);
+
+  /* APPLE LOCAL begin mainline 4430340 */
+  /* At file_scope, we don't have to do any processing.  */
+  if (label_context_stack_vm == NULL)
+    return;
+  /* APPLE LOCAL end mainline 4430340 */
+
   if (c_switch_stack && !c_switch_stack->blocked_vm)
     c_switch_stack->blocked_vm = scope;
   for (glist = label_context_stack_vm->labels_used;

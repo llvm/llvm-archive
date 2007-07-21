@@ -1,9 +1,10 @@
 /* APPLE LOCAL file CW asm blocks */
 /* { dg-do assemble { target i?86*-*-darwin* } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 /* { dg-options { -fasm-blocks -msse3 } } */
 /* Radar 4259442 */
 
-char fooc; short foos; int fooi; float foof; double food; long double foold;
+char fooc; short foos; int fooi; long long fooll; float foof; double food; long double foold;
 asm void bar() { fool:
 	adc	eax, 1
 	adc	fool, 1
@@ -15,18 +16,28 @@ asm void bar() { fool:
 	add	eax, eax
 	add	fool, eax
 	add	eax, fool
+	addps	xmm0, xmm0
+	addps	xmm0, fool
+	addsd	xmm0, xmm0
 	addsd	xmm0, fool
+	addss	xmm0, xmm0
 	addss	xmm0, fool
+	addsubpd	xmm0, xmm0
 	addsubpd	xmm0, fool
+	addsubps	xmm0, xmm0
 	addsubps	xmm0, fool
 	and	eax, 1
 	and	fool, 1
 	and	eax, eax
 	and	fool, eax
 	and	eax, fool
+	andnpd	xmm0, xmm0
 	andnpd	xmm0, fool
+	andnps	xmm0, xmm0
 	andnps	xmm0, fool
+	andpd	xmm0, xmm0
 	andpd	xmm0, fool
+	andps	xmm0, xmm0
 	andps	xmm0, fool
 	arpl	ax, ax
 	arpl	foos, ax
@@ -113,30 +124,121 @@ asm void bar() { fool:
 	cmp	eax, eax
 	cmp	fool, eax
 	cmp	eax, fool
+	cmpeqpd	xmm0, xmm0
+	cmpeqpd	xmm0, fool
+	cmpeqps	xmm0, xmm0
+	cmpeqps	xmm0, fool
+	cmpeqsd	xmm0, xmm0
+	cmpeqsd	xmm0, fool
+	cmpeqss	xmm0, xmm0
+	cmpeqss	xmm0, fool
+	cmplepd	xmm0, xmm0
+	cmplepd	xmm0, fool
+	cmpleps	xmm0, xmm0
+	cmpleps	xmm0, fool
+	cmplesd	xmm0, xmm0
+	cmplesd	xmm0, fool
+	cmpless	xmm0, xmm0
+	cmpless	xmm0, fool
+	cmpltpd	xmm0, xmm0
+	cmpltpd	xmm0, fool
+	cmpltps	xmm0, xmm0
+	cmpltps	xmm0, fool
+	cmpltsd	xmm0, xmm0
+	cmpltsd	xmm0, fool
+	cmpltss	xmm0, xmm0
+	cmpltss	xmm0, fool
+	cmpneqpd	xmm0, xmm0
+	cmpneqpd	xmm0, fool
+	cmpneqps	xmm0, xmm0
+	cmpneqps	xmm0, fool
+	cmpneqsd	xmm0, xmm0
+	cmpneqsd	xmm0, fool
+	cmpneqss	xmm0, xmm0
+	cmpneqss	xmm0, fool
+	cmpnlepd	xmm0, xmm0
+	cmpnlepd	xmm0, fool
+	cmpnleps	xmm0, xmm0
+	cmpnleps	xmm0, fool
+	cmpnlesd	xmm0, xmm0
+	cmpnlesd	xmm0, fool
+	cmpnless	xmm0, xmm0
+	cmpnless	xmm0, fool
+	cmpnltpd	xmm0, xmm0
+	cmpnltpd	xmm0, fool
+	cmpnltps	xmm0, xmm0
+	cmpnltps	xmm0, fool
+	cmpnltsd	xmm0, xmm0
+	cmpnltsd	xmm0, fool
+	cmpnltss	xmm0, xmm0
+	cmpnltss	xmm0, fool
+	cmpordpd	xmm0, xmm0
+	cmpordpd	xmm0, fool
+	cmpordps	xmm0, xmm0
+	cmpordps	xmm0, fool
+	cmpordsd	xmm0, xmm0
+	cmpordsd	xmm0, fool
+	cmpordss	xmm0, xmm0
+	cmpordss	xmm0, fool
+	cmppd	xmm0, xmm0, 4
+	cmppd	xmm0, fool, 4
+	cmpps	xmm0, xmm0, 4
+	cmpps	xmm0, fool, 4
+	cmpsd	xmm0, xmm0, 4
+	cmpsd	xmm0, fool, 4
+	cmpss	xmm0, xmm0, 4
+	cmpss	xmm0, fool, 4
+	cmpunordpd	xmm0, xmm0
+	cmpunordpd	xmm0, fool
+	cmpunordps	xmm0, xmm0
+	cmpunordps	xmm0, fool
+	cmpunordsd	xmm0, xmm0
+	cmpunordsd	xmm0, fool
+	cmpunordss	xmm0, xmm0
+	cmpunordss	xmm0, fool
 	cmpxchg	fool, eax
 	cmpxchg	eax, eax
+	comisd	xmm0, xmm0
 	comisd	xmm0, fool
+	comiss	xmm0, xmm0
 	comiss	xmm0, fool
+	cvtdq2pd	xmm0, xmm0
 	cvtdq2pd	xmm0, fool
+	cvtdq2ps	xmm0, xmm0
 	cvtdq2ps	xmm0, fool
+	cvtpd2dq	xmm0, xmm0
+	cvtpd2dq	xmm0, fool
+	cvtpd2pi	mm0, xmm0
 	cvtpd2pi	mm0, fool
+	cvtpd2ps	xmm0, xmm0
 	cvtpd2ps	xmm0, fool
+	cvtpi2pd	xmm0, mm0
 	cvtpi2pd	xmm0, fool
+	cvtpi2ps	xmm0, mm0
 	cvtpi2ps	xmm0, fool
+	cvtps2dq	xmm0, xmm0
 	cvtps2dq	xmm0, fool
+	cvtps2pd	xmm0, xmm0
 	cvtps2pd	xmm0, fool
+	cvtps2pi	mm0, xmm0
 	cvtps2pi	mm0, fool
 	cvtsd2si	eax, xmm0
 	cvtsd2si	eax, fool
+	cvtsd2ss	xmm0, xmm0
 	cvtsd2ss	xmm0, fool
 	cvtsi2sd	xmm0, fool
 	cvtsi2ss	xmm0, fool
+	cvtss2sd	xmm0, xmm0
 	cvtss2sd	xmm0, fool
 	cvtss2si	eax, xmm0
 	cvtss2si	eax, fool
+	cvttpd2dq	xmm0, xmm0
 	cvttpd2dq	xmm0, fool
+	cvttpd2pi	mm0, xmm0
 	cvttpd2pi	mm0, fool
+	cvttps2dq	xmm0, xmm0
 	cvttps2dq	xmm0, fool
+	cvttps2pi	mm0, xmm0
 	cvttps2pi	mm0, fool
 	cvttsd2si	eax, xmm0
 	cvttsd2si	eax, fool
@@ -154,9 +256,13 @@ asm void bar() { fool:
 	div	foos
 	div	eax
 	div	fooi
+	divpd	xmm0, xmm0
 	divpd	xmm0, fool
+	divps	xmm0, xmm0
 	divps	xmm0, fool
+	divsd	xmm0, xmm0
 	divsd	xmm0, fool
+	divss	xmm0, xmm0
 	divss	xmm0, fool
 	enter	1, 1
 	fadd	st(0), st(2)
@@ -188,7 +294,8 @@ asm void bar() { fool:
 	fdiv	food
 	fdivp	st(2), st(0)
 	fdivr	st(0), st(2)
-	fdivr	fool
+	fdivr	foof
+	fdivr	food
 	fdivrp	st(2), st(0)
 	ffree	st(2)
 	fiadd	foos
@@ -199,21 +306,21 @@ asm void bar() { fool:
 	ficomp	fooi
 	fidiv	foos
 	fidiv	fooi
-	fidivl	fool
 	fidivr	foos
 	fidivr	fooi
-	fidivrl	fool
-	fild	fool
-	fildl	fool
-	fildll	fool
+	fild	foos
+	fild	fooi
+	fild	fooll
 	fimul	foos
 	fimul	fooi
-	fist	fool
-	fistp	fool
-	fistpll	fool
+	fist	foos
+	fist	fooi
+	fistp	foos
+	fistp	fooi
+	fistp	fooll
 	fisttp	foos
 	fisttp	fooi
-	fisttpll	fool
+	fisttp	fooll
 	fisub	foos
 	fisub	fooi
 	fisubr	foos
@@ -227,8 +334,8 @@ asm void bar() { fool:
 	fldt	fool
 	fmul	st(2), st(0)
 	fmul	st(0), st(2)
-	fmul	foos
-	fmul	fooi
+	fmul	foof
+	fmul	food
 	fmulp	st(2), st(0)
 	fnsave	fool
 	fnstcw	fool
@@ -271,9 +378,19 @@ asm void bar() { fool:
 	hsubpd	xmm0, fool
 	hsubps	xmm0, xmm0
 	hsubps	xmm0, fool
+	idiv	ah
+	idiv	fooc
+	idiv	ax
+	idiv	foos
 	idiv	eax
 	idiv	fooi
+	imul	eax, eax, 4
+	imul	eax, fool, 4
 	in	eax, 1
+	inc	ah
+	inc	fooc
+	inc	ax
+	inc	foos
 	inc	eax
 	inc	fooi
 	int	1
@@ -318,13 +435,13 @@ asm void bar() { fool:
 	ldmxcsr	fool
 	lds	eax, fooi
 	lea	eax, fool
-	les	eax, fool
-	lfs	eax, fool
+	les	eax, fooi
+	lfs	eax, fooi
 	lgdt	fool
-	lgs	eax, fool
+	lgs	eax, fooi
 	lidt	fool
-	lldt	eax
-	lldt	fool
+	lldt	ax
+	lldt	foos
 	lmsw	fool
 	loop	.-24
 	loope	.-24
@@ -336,8 +453,8 @@ asm void bar() { fool:
 	lsl	eax, eax
 	lsl	eax, fooi
 	lss	eax, fooi
-	ltr	eax
-	ltr	fool
+	ltr	ax
+	ltr	foos
 	maskmovdqu	xmm0, xmm0
 	maskmovq	mm0, mm0
 	maxpd	xmm0, xmm0
@@ -514,6 +631,7 @@ asm void bar() { fool:
 	paddd	mm0, mm0
 	paddd	mm0, fool
 	paddq	xmm0, xmm0
+	paddq	xmm0, fool
 	paddq	mm0, mm0
 	paddq	mm0, fool
 	paddsb	xmm0, xmm0
@@ -576,6 +694,12 @@ asm void bar() { fool:
 	pcmpgtw	xmm0, fool
 	pcmpgtw	mm0, mm0
 	pcmpgtw	mm0, fool
+	pextrw	eax, xmm0, 4
+	pextrw	eax, mm0, 4
+	pinsrw	xmm0, eax, 4
+	pinsrw	mm0, eax, 4
+	pinsrw	xmm0, fool, 4
+	pinsrw	mm0, fool, 4
 	pmaddwd	xmm0, xmm0
 	pmaddwd	xmm0, fool
 	pmaddwd	mm0, mm0
@@ -628,6 +752,14 @@ asm void bar() { fool:
 	psadbw	xmm0, fool
 	psadbw	mm0, mm0
 	psadbw	mm0, fool
+	pshufd	xmm0, xmm0, 4
+	pshufd	xmm0, fool, 4
+	pshufhw	xmm0, xmm0, 4
+	pshufhw	xmm0, fool, 4
+	pshuflw	xmm0, xmm0, 4
+	pshuflw	xmm0, fool, 4
+	pshufw	mm0, mm0, 4
+	pshufw	mm0, fool, 4
 	pslld	xmm0, xmm0
 	pslld	xmm0, fool
 	pslld	xmm0, 1
@@ -914,6 +1046,10 @@ asm void bar() { fool:
 	shl	foos, cl
 	shl	eax, cl
 	shl	fooi, cl
+	shld	ax, ax, 4
+	shld	foos, ax, 4
+	shld	eax, eax, 4
+	shld	fooi, eax, 4
 	shr	ah, 1
 	shr	fooc, 1
 	shr	ax, 1
@@ -926,6 +1062,14 @@ asm void bar() { fool:
 	shr	foos, cl
 	shr	eax, cl
 	shr	fooi, cl
+	shrd	ax, ax, 4
+	shrd	foos, ax, 4
+	shrd	eax, eax, 4
+	shrd	fooi, eax, 4
+	shufpd	xmm0, xmm0, 4
+	shufpd	xmm0, fool, 4
+	shufps	xmm0, xmm0, 4
+	shufps	xmm0, fool, 4
 	sidt	fool
 	sldt	ax
 	sldt	fool

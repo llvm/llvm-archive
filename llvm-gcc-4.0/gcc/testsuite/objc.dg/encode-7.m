@@ -4,6 +4,7 @@
 
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 #include <stdbool.h>

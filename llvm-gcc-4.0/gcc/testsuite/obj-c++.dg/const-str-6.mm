@@ -2,7 +2,7 @@
 /* Negative test case for constant string layout.  */
 /* Contributed by Ziemowit Laski  <zlaski@apple.com>.  */
 
-/* { dg-options "-fconstant-string-class=MyConstantString" } */
+/* { dg-options "-fno-constant-cfstrings -fconstant-string-class=MyConstantString" } */
 /* { dg-do compile } */
 
 @interface MyBase {

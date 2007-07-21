@@ -1,18 +1,18 @@
 /* APPLE LOCAL file Macintosh alignment */
 /* align-test-5*.c are all the same code but with different options.  */
 
-/* { dg-do run } */
+/* { dg-do run { target powerpc*-*-darwin* } } */
 /* { dg-options "-malign-power -DSIZE=12" } */
 
 /* We have a different test to pick up the warning from 64-bit case.  */
-/* { dg-xfail-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 /*
  * GCC alignment test for command line options for setting alignment modes.
  * Fred Forsman
  * Apple Computer, Inc.
  */
- 
+
  /* Check whether we are testing GCC 3 or later.  */
 #ifdef __GNUC__
 #if __GNUC__ >= 3
@@ -71,10 +71,10 @@ static void check_option(char *option)
 int main(int argc, char *argv[])
 {
     int i;
-    
+
     for (i = 1; i < argc; i++)
         check_option(argv[i]);
-    
+
     if (bad_option)
         return 1;
 

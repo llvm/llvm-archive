@@ -1,3 +1,339 @@
+2006-09-18  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4667060
+	* parser.c (objc_foreach_stmt): Save elem decl. in
+	foreach node.
+
+2006-09-11  Josh Conner  <jconner@apple.com>
+
+	Radar 4658012
+	Backport from mainline:
+	2006-09-06  Jason Merrill  <jason@redhat.com>
+	PR c++/27371
+	* cvt.c (convert_to_void): Strip useless TARGET_EXPR.
+	* cp-tree.h (TARGET_EXPR_IMPLICIT_P): New macro.
+	* tree.c (build_cplus_new): Set it.
+
+2006-09-01  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4712269
+        * typeck.c (build_unary_op): Call objc_build_incr_decr_setter_call
+        for potential ince/decr pre/post expressions involving properties.
+
+2006-08-31  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4697411
+	* typeck.c (build_class_member_access_expr): Call 
+	objc_volatilize_component_ref.
+
+2006-08-30  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4696522
+	* typeck.c (build_c_cast): Code for cast of objective-c
+	pointer moved to:
+	(build_static_cast_1).
+
+2006-08-29  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 4705250
+        * parser.c (cp_parser_member_declaration) : No error on use of @defs 
+	with -fobjc-atdefs
+
+2006-08-25  Josh Conner  <jconner@apple.com>
+
+	* call.c (build_over_call): Add APPLE LOCAL markers for previous
+	patch.
+
+2006-08-25  Josh Conner  <jconner@apple.com>
+
+	Radar 4658012
+	Backport from mainline:
+	2006-08-22  Jason Merrill  <jason@redhat.com>
+	PR c++/23372
+	* call.c (build_over_call): Don't make a copy here if build_call 
+	will make one too.
+
+2006-08-15  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4668465
+	* call.c (standard_conversion): In deciding on validity of
+	"pointer to cv D" to "pointer to cv B", ignore the
+	objective-c volatile type added to local object in presence of
+	sjlj's EH implementation.
+
+2006-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4675792
+	* parser.c (objc_cp_parser_at_property): Accomodate when getter matches 
+	a c++ keyword.
+
+2006-07-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4652027
+	* parser.c (cp_parser_objc_class_ivars): Handle illegal declaration
+         of typdef.
+
+2006-07-26  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4121962
+	* class.c (check_field_decls): Fix APPLE LOCAL markers.
+	* class.c (finish_struct_bits): Fix APPLE LOCAL markers.
+
+2006-07-25  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4121962
+	* class.c (check_field_decls): Remove the extra argument in
+	calling "warning".
+
+2006-07-24  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4121962
+	Backport from mainline:
+	2006-07-05  Jason Merrill  <jason@redhat.com>
+	* class.c (check_field_decls): Check TYPE_PACKED after
+	stripping array types.
+	(finish_struct_bits): Don't copy TYPE_SIZE here.
+
+2006-07-21  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4631818
+	* parser.c (cp_parser_parse_foreach_stmt): New.
+	(cp_parser_iteration_statement): Remove old code.
+	Replace it with call to cp_parser_parse_foreach_stmt.
+	(cp_parser_simple_declaration): Remove old code.
+	(cp_parser_init_declarator): Remove old code.
+	
+2006-07-18  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4592503
+	* class.c (layout_class_type): Check on illegal use of __weak
+	on struct fields.
+	* decl.c (start_decl): Check on illegal use of __weak on
+	variable declarations.
+
+2006-07-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4621020
+	* lex.c (reswords): Added entry for 'weak' attribute keyword.
+	* parser.c (objc_cp_parser_at_property): Recorgnize 'weak'attribute.
+
+2006-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 3904247
+	* g++spec.c (lang_specific_driver): Handle -x objective-c++
+	and -ObjC++ to invoke -cc1objplus. -x objective-c and -ObjC
+	to invoke cc1obj.
+
+2006-06-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4591909
+	* lex.c (reswords): New entry for 'dynamic' attribute.
+	* parser.c (objc_cp_parser_at_property): Change to parse new
+	attribute syntax.
+	
+2006-06-20 Howard Hinnint <hhinnant@apple.com>
+
+	Radar 4539933
+	* decl2.c (start_static_initialization_or_destruction): Create guard
+	variables for explicitly instantiated templated static data members.
+
+2006-06-13 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4360010
+	* parser.c (cp_parser_objc_class_ivars): Issue diagnostic
+	for 'static' ivar.
+
+2006-06-01 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4557092
+	* pt.c (tsubst_copy_and_build): Don't fold address of a const_decl
+	for a cfstring.
+
+2006-05-18 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4548636 (objc attributes on class)
+	* parser.c (objc_attr_follwed_by_at_keyword): New routine to disambiguate
+	attribute before a type and attribute before an @interface declaration..
+	(cp_parser_declaration): Handle case of attribute list which can be
+	followed by an @interface.
+	(cp_parser_objc_class_interface): Parse possible attribute list before
+	parsing @interface.
+	(cp_parser_objc_declaration): Recognize 'attribute' as a valid token which
+	can start an @interface declaration.
+	
+2006-05-16 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4547045
+	* parser.c (objc_foreach_stmt): Fix a thinko.
+
+2006-05-16  Devang Patel  <dpatel@apple.com>
+
+	Radar 4546244
+	* parser.c (cp_lexer_consume_bincl_eincl_token): New.
+	(cp_lexer_peek_token, cp_lexer_consume_token): Use 
+	cp_lexer_consume_bincl_eincl_token.
+
+2006-04-10  Devang Patel  <dpatel@apple.com>
+
+	Radar 4543648
+	* parser.c (cp_parser_enumerator_list, cp_parser_initializer_list); Remove redundant code.
+
+2006-04-09  Devang Patel  <dpatel@apple.com>
+
+	Radar 4531997
+	* parser.c (cp_lexer_handle_pragma_etc): Renamed as ...
+	(cp_lexer_handle_pragma): ... new name. Do not handle CPP_BINCL
+	or CPP_EINCL tokens.
+	(cp_lexer_peek_token): Skip CPP_BINCL and CPP_EINCL tokens.
+	(cp_lexer_peek_nth_token): Same.
+	(cp_lexer_consume_token): Consume CPP_BINCL and CPP_EINCL tokens.
+	(cp_parser_statement): Do not handle CPP_BINCL, CPP_EINCL tokens.
+	(cp_parser_declaration_seq_opt, cp_parser_enumerator_list,
+	cp_parser_initializer_clause, cp_parser_initializer_list,
+	cp_parser_member_specification_opt, 
+	cp_parser_iasm_declaration_seq_opt, cp_parser_iasm_statement,
+	cp_parser_objc_interstitial_code): Same.
+
+2006-05-09 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4538105
+        * parser.c (objc_foreach_stmt): Mark element 
+        selector as being used.
+
+2006-05-09 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4529200
+        * parser.c (cp_parser_init_declarator): Add '[' as another token
+        that can follow 'in'.
+
+2006-05-05 Fariborz Jahanian <fjahanian@apple.com>
+
+        radar 4533974 - ObjC new protocol
+	* parser.c (cp_parser_objc_class_implementation): Support for
+	new '@implementation <protocol> @end' syntax.
+
+2006-04-26 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3803157 (method attributes)
+	* parser.c (cp_parser_objc_maybe_attributes): New.
+	(cp_parser_objc_method_keyword_params): Parse attributes at end
+	of method declaration.
+	(cp_parser_objc_method_tail_params_opt): Parse attributes after
+	'...'.
+	(cp_parser_objc_method_signature): Retreive method attribute for
+	the caller.
+	(cp_parser_objc_method_prototype_list): Pass new arg. to
+	cp_parser_objc_method_signature and pass attributes to 
+	objc_add_method_declaration.
+	(cp_parser_objc_method_definition_list): Pass new arg. to
+	cp_parser_objc_method_signature and pass attributes to
+	objc_start_method_definition.
+	
+2006-04-19 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4516785
+	* parser.c (cp_parser_simple_type_specifier): Don't lookup for objc object types
+	if type is scope qualified.
+
+2006-04-18  Devang Patel  <dpatel@apple.com>
+
+	Radar 4517944
+	* parser.c (cp_parser_enumerator_list): Eat CPP_BINCL and CPP_EINCL
+	tokens.
+
+2006-04-13  Devang Patel  <dpatel@apple.com>
+
+	Radar 4503682
+        * parser.c (cp_lexer_new_main): Eat CPP_BINCL, CPP_EINCL tokens.
+
+2006-04-12 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4507230
+	* parser.c (objc_foreach_stmt): Check for valid objc
+	objects in foreach header.
+
+2006-04-06 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4436866 
+	(Missing copies attribute)
+	* lex.c (reswords): New keyword 'copies' added.
+	* parser.c (objc_cp_parser_at_property): Parse 'copies'
+	attribute.
+
+2006-03-27 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4133425
+	* lex.c (unqualified_name_lookup_error): Issue doagnostic
+	for private 'ivar' access.
+
+2006-03-24  Devang Patel  <dpatel@apple.com>
+
+        Radar 4484026
+        * parser.c (cp_parser_enumerator_list): Eat CPP_BINCL and
+        CPP_EINCL tokens.
+
+2006-03-23  Devang Patel  <dpatel@apple.com>
+
+	Radar 4488417
+	* parser.c (cp_parser_initializer_clause): Check CPP_BINCL/CPP_EINCL
+	tokens before checking CPP_OPEN_BRACE.
+
+2006-03-22 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4436866
+	* typeck.c (finish_class_member_access_expr): Call objc_build_getter_call.
+	(build_modify_expr): Call objc_build_setter_call.
+	* lex.c: Add keyword @property and context sensitive lexical tokens for
+	readonly, getter, setter, ivar attribute names.
+	* parser.c (objc_cp_parse_property_decl): New.
+	(objc_cp_parser_at_property): New.
+	(cp_parser_objc_method_prototype_list): Process @property keyword.
+	(cp_parser_objc_method_definition_list): Ditto.
+
+2006-03-16  Devang Patel  <dpatel@apple.com>
+
+	Radar 4461042
+	* cp/parser.c (cp_parser_initializer_clause): Eat CPP_BINCL/CPP_EINCL
+	tokens.
+	(cp_parser_initializer_list): Same.
+
+2005-03-01 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4451818
+	* call.c (standard_conversion, implicit_conversion): Ignore
+	'volatile' attribute of artificially volatized type in objc when
+	evaluating various conversion weights.
+
+2005-02-28  Devang Patel  <dpatel@apple.com>
+  	    Ziemowit Laski  <zlaski@apple.com>
+
+	Radar 4137741
+        * cp-objcp-common.h: Revert Radar 4133801 changes.
+        * cp-tree.h: Likewise.
+        * decl2.c: Likewise.
+        * parser.c: Likewise.
+        (cp_lexer_handle_pragma): Rename to cp_lexer_handle_pragma_etc();
+        handle CPP_BINCL and CPP_EINCL tokens in addition to CPP_PRAGMA.
+        (cp_lexer_new_main): Set defer_file_change_debug_hooks flag
+        in preprocessor.
+        (cp_parser_statement, cp_parser_declaration_seq_opt,
+        cp_parser_member_specification_opt, cp_parser_cw_asm_declaration_seq_opt,
+        cp_parser_cw_asm_statement, cp_parser_objc_interstitial_code):
+        Call cp_lexer_handle_pragma_etc() for CPP_BINCL and CPP_EINCL tokens
+        also.
+
+2006-02-15   Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4445586
+	* semantics.c (begin_do_stmt): DO_STMT nodes take an
+	extra argument to build.
+
+2006-02-15   Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4441551
+	* parser.c (cp_parser_member_declaration): Warning on @defs as needed.
+	* typeck.c (build_c_cast): Call diagnose_selector_cast.
+
 006-02-13   Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 4442245
@@ -49,6 +385,69 @@
         Radar 4360146
 	* typeck.c (build_class_member_access_expr): Build the new ivar
 	reference tree.
+
+2006-05-18  Mike Stump  <mrs@apple.com>
+
+	Radar 4501833
+	* parser.c (cp_parser_compound_statement): Use iasm_end_block to
+	end inline assmebly blocks.
+	(cp_parser_iasm_compound_statement): Likewise.
+	(cp_parser_iasm_top_statement): Likewise.
+
+2006-04-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4508851
+	* parser.c (cp_parser_objc_interstitial_code): Recognize
+	and parse RID_NAMESPACE keyword.
+
+2006-04-26  Mike Stump  <mrs@apple.com>
+
+	Radar 4505741
+	Rename cw_ to iasm_:
+	See ../ChangeLog.apple-ppc for additional changes.
+	* cp-tree.h: Rename ds_cw_asm to ds_iasm_asm.
+	* decl.c: Likewise.
+	Rename cw_asm_p to iasm_p.
+	* parser.c: Likewise.
+	Rename cp_lexer_cw_bol to cp_lexer_iasm_bol.
+	Rename cp_parser_cw_asm_compound_statement to cp_parser_iasm_compound_statement.
+	Rename cp_parser_cw_asm_top_statement to cp_parser_iasm_top_statement.
+	Rename cp_parser_cw_asm_declaration_seq_opt to cp_parser_iasm_declaration_seq_opt.
+	Rename cp_parser_cw_asm_line_seq_opt to cp_parser_iasm_line_seq_opt.
+	Rename cp_parser_cw_asm_line to cp_parser_iasm_line.
+	Rename cp_parser_cw_skip_to_eol to cp_parser_iasm_skip_to_eol.
+	Rename cp_parser_cw_maybe_skip_comments to cp_parser_iasm_maybe_skip_comments.
+	Rename cp_parser_cw_asm_statement_seq_opt to cp_parser_iasm_statement_seq_opt.
+	Rename cw_build_identifier_string to iasm_build_identifier_string.
+	Rename cp_parser_cw_identifier to cp_parser_iasm_identifier.
+	Rename cp_parser_cw_identifier_or_number to cp_parser_iasm_identifier_or_number.
+	Rename cp_parser_cw_asm_maybe_prefix to cp_parser_iasm_maybe_prefix.
+	Rename cp_parser_cw_asm_statement to cp_parser_iasm_statement.
+	Rename cp_parser_cw_skip_to_next_asm to cp_parser_iasm_skip_to_next_asm.
+	Rename cp_parser_cw_asm_operands to cp_parser_iasm_operands.
+	Rename cp_parser_cw_asm_operand to cp_parser_iasm_operand.
+	Rename cp_parser_cw_asm_relative_branch to cp_parser_iasm_relative_branch.
+	Rename cp_parser_cw_asm_postfix_expression to cp_parser_iasm_postfix_expression.
+	* semantics.c: Likewise.
+	Rename cw_asm_cp_build_component_ref to iasm_cp_build_component_ref.
+
+2006-04-17  Devang Patel  <dpatel@apple.com>
+
+	Radar 4499790
+	* parser.c (cp_parser_string_literal): Enable pascal strings for
+	wchars.
+
+2006-04-12  Mike Stump  <mrs@apple.com>
+
+	Radar 4477426 4466768
+	* parser.c (cw_build_identifier_string): Handle pseudo instructions bettter.
+
+2006-03-13  Mike Stump  <mrs@apple.com>
+
+	Radar 4230099
+	* decl2.c (determine_visibility): Add suppport for
+	-fvisibility-ms-compat.
+	* decl.c (cxx_init_decl_processing): Likewise.
 
 2006-02-08  Mike Stump  <mrs@apple.com>
 

@@ -2,8 +2,9 @@
 /* Test if ObjC constant strings get placed in the correct section.  */
 /* Contributed by Ziemowit Laski <zlaski@apple.com>  */
 
-/* { dg-options "-fnext-runtime" } */
+/* { dg-options "-fnext-runtime -fno-constant-cfstrings" } */
 /* { dg-do compile { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 

@@ -47,10 +47,10 @@ void objc_detect_field_duplicates (tree);
 
 /* Objective-C structures */
 
-/* APPLE LOCAL radar 4291785 */
-#define CLASS_LANG_SLOT_ELTS		7
+/* APPLE LOCAL radar 4291785, 4548636 */
+#define CLASS_LANG_SLOT_ELTS		9
 /* APPLE LOCAL ObjC abi v2 */
-#define PROTOCOL_LANG_SLOT_ELTS		3
+#define PROTOCOL_LANG_SLOT_ELTS		8
 #define OBJC_INFO_SLOT_ELTS		2
 
 /* KEYWORD_DECL */
@@ -63,6 +63,25 @@ void objc_detect_field_duplicates (tree);
 #define METHOD_ADD_ARGS(DECL) ((DECL)->decl.result)
 #define METHOD_DEFINITION(DECL) ((DECL)->decl.initial)
 #define METHOD_ENCODING(DECL) ((DECL)->decl.context)
+/* APPLE LOCAL radar 4359757 */
+#define METHOD_CONTEXT(DECL) ((DECL)->decl.assembler_name)
+/* APPLE LOCAL radar 3803157 */
+#define METHOD_TYPE_ATTRIBUTES(DECL) ((DECL)->decl.abstract_origin)
+/* APPLE LOCAL C* property metadata (Radar 4498373) */
+#define METHOD_PROPERTY_CONTEXT(DECL) ((DECL)->decl.size_unit)
+
+/* APPLE LOCAL begin C* property (Radar 4436866, 4591909) */
+#define PROPERTY_NAME(DECL) ((DECL)->decl.name)
+#define PROPERTY_GETTER_NAME(DECL) ((DECL)->decl.arguments)
+#define PROPERTY_SETTER_NAME(DECL) ((DECL)->decl.result)
+#define PROPERTY_IVAR_NAME(DECL) ((DECL)->decl.initial)
+#define PROPERTY_READONLY(DECL) ((DECL)->decl.context)
+#define PROPERTY_BYCOPY(DECL) ((DECL)->decl.size_unit)
+#define PROPERTY_BYREF(DECL)  ((DECL)->decl.assembler_name)
+#define PROPERTY_DYNAMIC(DECL) ((DECL)->decl.abstract_origin)
+/* APPLE LOCAL radar 4621020 */
+#define PROPERTY_WEAK(DECL) ((DECL)->decl.section_name)
+/* APPLE LOCAL end C* property (Radar 4436866, 4591909) */
 
 /* CLASS_INTERFACE_TYPE, CLASS_IMPLEMENTATION_TYPE,
    CATEGORY_INTERFACE_TYPE, CATEGORY_IMPLEMENTATION_TYPE,
@@ -93,9 +112,21 @@ void objc_detect_field_duplicates (tree);
 #define PROTOCOL_DEFINED(CLASS) TREE_USED (CLASS)
 
 /* APPLE LOCAL begin C* language */
-#define CLASS_OPTIONAL_CLS_METHODS(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 5)
-#define CLASS_OPTIONAL_NST_METHODS(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 6)
+#define PROTOCOL_OPTIONAL_CLS_METHODS(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 3)
+#define PROTOCOL_OPTIONAL_NST_METHODS(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 4)
 /* APPLE LOCAL end C* language */
+/* APPLE LOCAL begin C* property (Radar 4436866) */
+/* For CATEGORY_INTERFACE_TYPE, CLASS_INTERFACE_TYPE or PROTOCOL_INTERFACE_TYPE */
+#define CLASS_PROPERTY_DECL(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 7)
+/* For CLASS_IMPLEMENTATION_TYPE or CATEGORY_IMPLEMENTATION_TYPE. */
+#define IMPL_PROPERTY_DECL(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 7)
+/* APPLE LOCAL end C* property (Radar 4436866) */
+/* APPLE LOCAL begin radar 4548636 */
+/* For CLASS_INTERFACE_TYPE only */
+#define CLASS_ATTRIBUTES(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 8)
+/* APPLE LOCAL end radar 4548636 */
+/* APPLE LOCAL radar 4695101 */
+/* declaration of  PROTOCOL_IMPL_OBJ removed. */
 
 /* ObjC-specific information pertaining to RECORD_TYPEs are stored in
    the LANG_SPECIFIC structures, which may itself need allocating first.  */
@@ -193,11 +224,23 @@ struct hashed_entry GTY(())
 
 extern GTY ((length ("SIZEHASHTABLE"))) hash *nst_method_hash_list;
 extern GTY ((length ("SIZEHASHTABLE"))) hash *cls_method_hash_list;
+/* APPLE LOCAL begin radar 4359757 */
+extern GTY ((length ("SIZEHASHTABLE"))) hash *class_nst_method_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *class_cls_method_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *class_names_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *meth_var_names_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *meth_var_types_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *prop_names_attr_hash_list;
+extern GTY ((length ("SIZEHASHTABLE"))) hash *sel_ref_hash_list;
+/* APPLE LOCAL end radar 4359757 */
 
 /* APPLE LOCAL begin radar 4345837 */
 extern GTY ((length ("SIZEHASHTABLE"))) hash *cls_name_hash_list;
 extern GTY ((length ("SIZEHASHTABLE"))) hash *als_name_hash_list;
 /* APPLE LOCAL end radar 4345837 */
+
+/* APPLE LOCAL radar 4441049 */
+extern GTY ((length ("SIZEHASHTABLE"))) hash *ivar_offset_hash_list;
 
 #define SIZEHASHTABLE		257
 
@@ -239,7 +282,8 @@ enum objc_tree_index
     OCTI_SELF_DECL,
     OCTI_UMSG_DECL,
     /* APPLE LOCAL mainline */
-    OCTI_UMSG_FAST_DECL,
+    /* APPLE LOCAL radar 4590221 */
+    /* code removed */
     OCTI_UMSG_SUPER_DECL,
     OCTI_UMSG_STRET_DECL,
     OCTI_UMSG_SUPER_STRET_DECL,
@@ -338,7 +382,8 @@ enum objc_tree_index
 
     /* APPLE LOCAL begin mainline */
     OCTI_ASSIGN_IVAR_DECL,
-    OCTI_ASSIGN_IVAR_FAST_DECL,
+    /* APPLE LOCAL 4590221 */
+     /* removed OCTI_ASSIGN_IVAR_FAST_DECL */
     OCTI_ASSIGN_GLOBAL_DECL,
     OCTI_ASSIGN_STRONGCAST_DECL,
     /* APPLE LOCAL end mainline */
@@ -358,7 +403,15 @@ enum objc_tree_index
     OCTI_V2_PROTO_TEMPL,
     OCTI_CLASSLIST_REF_CHAIN,
     OCTI_METACLASSLIST_REF_CHAIN,
+    /* APPLE LOCAL begin radar 4535676 */
+    OCTI_CLASSLIST_SUPER_REF_CHAIN,
+    OCTI_METACLASSLIST_SUPER_REF_CHAIN,
+    /* APPLE LOCAL end radar 4535676 */
     OCTI_CLASS_LIST_CHAIN,
+    /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
+    OCTI_PROTOCOL_LIST_CHAIN,
+    OCTI_PROTOCOLLIST_REF_CHAIN,
+    /* APPLE LOCAL end radar 4533974 - ObjC new protocol */
     OCTI_CATEGORY_LIST_CHAIN,
     OCTI_NONLAZY_CLASS_LIST_CHAIN,
     OCTI_NONLAZY_CATEGORY_LIST_CHAIN,
@@ -367,6 +420,8 @@ enum objc_tree_index
     CTI_MESSAGE_SELECTOR_TYPE,
     CTI_SUPER_MESSAGE_SELECTOR_TYPE,
     OCTI_V2_UMSG_FIXUP_DECL,
+    /* APPLE LOCAL radar 4557598 */
+    OCTI_V2_UMSG_FPRET_FIXUP_DECL, 
     OCTI_V2_UMSG_STRET_FIXUP_DECL,
     OCTI_V2_UMSG_ID_FIXUP_DECL,
     OCTI_V2_UMSG_ID_STRET_FIXUP_DECL,
@@ -383,13 +438,35 @@ enum objc_tree_index
     OCTI_V2_CLS_METH_DECL,
     OCTI_V2_IVAR_OFFSET_REF_CHAIN,
     OCTI_V2_CAT_TEMPL,
-    OCTI_V2_GETPROTOCOL_TEMPL,
+    /* APPLE LOCAL radar 4533974 - ObjC new protocol */
+    /* code removed */
     /* APPLE LOCAL end ObjC new abi */
     /* APPLE LOCAL begin C* language */
     OCTI_FAST_ENUM_STATE_TEMP,
     OCTI_ENUM_MUTATION_DECL,
     /* APPLE LOCAL end C* language */
-
+    /* APPLE LOCAL begin C* property metadata (Radar 4498373) */
+    OCTI_V2_PROPERTY_TEMPL,
+    OCTI_V2_PROPERTY_DECL,
+    OCTI_V2_PROP_NAME_ATTR_CHAIN,
+    OCTI_PROP_LIST_TEMPL,
+    /* APPLE LOCAL end C* property metadata (Radar 4498373) */
+    /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
+    OCTI_PROTO_EXT_TEMPL,
+    OCTI_PROPERTY_TEMPL,
+    OCTI_PROPERTY_LIST_TEMPL,
+    OCTI_CLASS_EXT_TEMPL,
+    OCTI_CLASS_EXT_DECL,
+    OCTI_PROTOCOL_EXT_DECL,
+    OCTI_PROTOCOL_OPT_NST_METH_DECL,
+    OCTI_PROTOCOL_OPT_CLS_METH_DECL,
+    /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
+    /* APPLE LOCAL begin Radar 4591909 */
+    OCTI_UMSG_GETPROPERTY_BYCOPY,
+    OCTI_UMSG_GETPROPERTY_BYREF,
+    OCTI_UMSG_SETPROPERTY_BYCOPY,
+    OCTI_UMSG_SETPROPERTY_BYREF,
+    /* APPLE LOCAL end Radar 4591909 */
     OCTI_MAX
 };
 
@@ -410,8 +487,8 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 
 #define self_decl		objc_global_trees[OCTI_SELF_DECL]
 #define umsg_decl		objc_global_trees[OCTI_UMSG_DECL]
-/* APPLE LOCAL mainline */
-#define umsg_fast_decl		objc_global_trees[OCTI_UMSG_FAST_DECL]
+/* APPLE LOCAL radar 4590221 */
+/* code removed */
 #define umsg_super_decl		objc_global_trees[OCTI_UMSG_SUPER_DECL]
 #define umsg_stret_decl		objc_global_trees[OCTI_UMSG_STRET_DECL]
 #define umsg_super_stret_decl	objc_global_trees[OCTI_UMSG_SUPER_STRET_DECL]
@@ -528,8 +605,6 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 
 /* APPLE LOCAL begin mainline */
 #define objc_assign_ivar_decl	objc_global_trees[OCTI_ASSIGN_IVAR_DECL]
-#define objc_assign_ivar_fast_decl		\
-				objc_global_trees[OCTI_ASSIGN_IVAR_FAST_DECL]
 #define objc_assign_global_decl	objc_global_trees[OCTI_ASSIGN_GLOBAL_DECL]
 #define objc_assign_strong_cast_decl		\
 				objc_global_trees[OCTI_ASSIGN_STRONGCAST_DECL]
@@ -588,8 +663,19 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 /* classes referenced.  */
 #define classlist_ref_chain	       objc_global_trees[OCTI_CLASSLIST_REF_CHAIN]
 #define metaclasslist_ref_chain	       objc_global_trees[OCTI_METACLASSLIST_REF_CHAIN]
+/* APPLE LOCAL begin radar 4535676 */
+/* 'super' classes referenced. */
+#define classlist_super_ref_chain	       objc_global_trees[OCTI_CLASSLIST_SUPER_REF_CHAIN]
+#define metaclasslist_super_ref_chain	       objc_global_trees[OCTI_METACLASSLIST_SUPER_REF_CHAIN]
+/* APPLE LOCAL end radar 4535676 */
 /* classes @implemented and whose meta-data address must be added to __class_list section. */
 #define class_list_chain	objc_global_trees[OCTI_CLASS_LIST_CHAIN]
+/* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
+/* list of protocols whose protocol_t meta-data need be generated. */
+#define protocol_list_chain	objc_global_trees[OCTI_PROTOCOL_LIST_CHAIN]
+/* list of protocols in __protocol_refs section reference by a @protocol(MyProto) expression. */
+#define protocollist_ref_chain	       objc_global_trees[OCTI_PROTOCOLLIST_REF_CHAIN]
+/* APPLE LOCAL end radar 4533974 - ObjC new protocol */
 /* categories @implemented and whose meta-data address must be added to __category_list section. */
 #define category_list_chain	objc_global_trees[OCTI_CATEGORY_LIST_CHAIN]
 #define nonlazy_class_list_chain	objc_global_trees[OCTI_NONLAZY_CLASS_LIST_CHAIN]
@@ -602,17 +688,21 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define objc_v2_selector_type      objc_global_trees[CTI_MESSAGE_SELECTOR_TYPE]	
 /* struct super_super_message_ref_t */
 #define objc_v2_super_selector_type      objc_global_trees[CTI_SUPER_MESSAGE_SELECTOR_TYPE]	
-/* objc_msgSend_fixup_rtp */
+/* objc_msgSend_fixup */
 #define umsg_fixup_decl		       objc_global_trees[OCTI_V2_UMSG_FIXUP_DECL]   
-/* objc_msgSend_stret_fixup_rtp */
+/* APPLE LOCAL begin radar 4557598 */
+/* objc_msgSend_fpret_fixup_decl */ 
+#define umsg_fpret_fixup_decl		objc_global_trees[OCTI_V2_UMSG_FPRET_FIXUP_DECL]
+/* APPLE LOCAL end radar 4557598 */
+/* objc_msgSend_stret_fixup */
 #define umsg_stret_fixup_decl	       objc_global_trees[OCTI_V2_UMSG_STRET_FIXUP_DECL]   
-/* objc_msgSendId_fixup_rtp */
+/* objc_msgSendId_fixup */
 #define umsg_id_fixup_decl	       objc_global_trees[OCTI_V2_UMSG_ID_FIXUP_DECL]   
-/* objc_msgSendId_stret_fixup_rtp */
+/* objc_msgSendId_stret_fixup */
 #define umsg_id_stret_fixup_decl       objc_global_trees[OCTI_V2_UMSG_ID_STRET_FIXUP_DECL]   
-/* objc_msgSendSuper2_fixup_rtp */
+/* objc_msgSendSuper2_fixup */
 #define umsg_id_super2_fixup_decl      objc_global_trees[OCTI_V2_UMSG_SUPER2_FIXUP_DECL]
-/* objc_msgSendSuper2_stret_fixup_rtp */
+/* objc_msgSendSuper2_stret_fixup */
 #define umsg_id_super2_stret_fixup_decl objc_global_trees[OCTI_V2_UMSG_SUPER2_STRET_FIXUP_DECL]
 #define objc_v2_imp_type 		objc_global_trees[OCTI_V2_IMP_TYPE]
 #define objc_v2_super_imp_type 	objc_global_trees[OCTI_V2_SUPER_IMP_TYPE]
@@ -620,10 +710,33 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define objc_v2_ivar_list_ptr	objc_global_trees[OCTI_V2_IVAR_LIST_TEMPL]
 #define ivar_offset_ref_chain		objc_global_trees[OCTI_V2_IVAR_OFFSET_REF_CHAIN]
 #define objc_v2_category_template  	objc_global_trees[OCTI_V2_CAT_TEMPL]
-#define objc_v2_getprotocol_decl	objc_global_trees[OCTI_V2_GETPROTOCOL_TEMPL]
+/* APPLE LOCAL radar 4533974 - ObjC new protocol */
+/* code removed */
 /* APPLE LOCAL end ObjC new abi */
 /* APPLE LOCAL begin C* language */
 #define objc_fast_enum_state_type	objc_global_trees[OCTI_FAST_ENUM_STATE_TEMP]
 #define objc_enum_mutation_decl		objc_global_trees[OCTI_ENUM_MUTATION_DECL]
 /* APPLE LOCAL end C* language */
+/* APPLE LOCAL begin C* property metadata (Radar 4498373) */
+#define objc_v2_property_template objc_global_trees[OCTI_V2_PROPERTY_TEMPL]
+#define UOBJC_V2_PROPERTY_decl  objc_global_trees[OCTI_V2_PROPERTY_DECL]
+#define prop_names_attr_chain	objc_global_trees[OCTI_V2_PROP_NAME_ATTR_CHAIN]
+#define objc_prop_list_ptr	objc_global_trees[OCTI_PROP_LIST_TEMPL]
+/* APPLE LOCAL end C* property metadata (Radar 4498373) */
+/* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
+#define objc_protocol_extension_template  objc_global_trees[OCTI_PROTO_EXT_TEMPL]
+#define objc_property_template objc_global_trees[OCTI_PROPERTY_TEMPL]
+#define objc_property_list_template objc_global_trees[OCTI_PROPERTY_LIST_TEMPL]
+#define objc_class_ext_template objc_global_trees[OCTI_CLASS_EXT_TEMPL]
+#define UOBJC_CLASS_EXT_decl objc_global_trees[OCTI_CLASS_EXT_DECL]
+#define UOBJC_PROTOCOL_EXT_decl objc_global_trees[OCTI_PROTOCOL_EXT_DECL]
+#define UOBJC_PROTOCOL_OPT_NST_METHODS_decl objc_global_trees[OCTI_PROTOCOL_OPT_NST_METH_DECL]
+#define UOBJC_PROTOCOL_OPT_CLS_METHODS_decl objc_global_trees[OCTI_PROTOCOL_OPT_CLS_METH_DECL]
+/* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
+/* APPLE LOCAL begin Radar 4591909 */
+#define umsg_getProperty_bycopy		objc_global_trees[OCTI_UMSG_GETPROPERTY_BYCOPY]
+#define umsg_getProperty_byref		objc_global_trees[OCTI_UMSG_GETPROPERTY_BYREF]
+#define umsg_setProperty_bycopy         objc_global_trees[OCTI_UMSG_SETPROPERTY_BYCOPY]
+#define umsg_setProperty_byref         objc_global_trees[OCTI_UMSG_SETPROPERTY_BYREF]
+/* APPLE LOCAL end Radar 4591909 */
 #endif /* GCC_OBJC_ACT_H */

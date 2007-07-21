@@ -1,4 +1,4 @@
-/* APPLE LOCAL begin altivec test */
+/* APPLE LOCAL file Altivec */
 /* { dg-do compile { target powerpc*-*-* } } */
 /* { dg-xfail-if "" { "powerpc*-*-*" } { "-m64" } { "" } } */
 /* { dg-options "-maltivec" } */
@@ -13,4 +13,3 @@ void foo(pvecfunc pvf) {
    vector int v = (vector int){1, 2, 3, 4};
    preansi (4, 4.0, v); /* { dg-error "AltiVec argument passed to unprototyped function" } */
 }
-/* APPLE LOCAL end altivec test */

@@ -5,6 +5,7 @@
 /* { dg-options "-std=gnu99" } */
 
 #pragma reverse_bitfields on
+#pragma ms_struct on
 struct empty {};
 
 struct uc0 { unsigned char content[0]; };
@@ -50,9 +51,9 @@ struct advance3 {
 };
 
 int main() {
-  
+
   if (sizeof(struct empty) !=0 ||
-    sizeof(struct uc0) !=0 
+    sizeof(struct uc0) !=0
     || sizeof(struct uc0_uib2) != 4
     || sizeof(struct nest_nest_uc0_uib3) != 4
     || sizeof(struct nest_empty_uib3) != 4
@@ -69,4 +70,3 @@ int main() {
     return 42;
   return 0;
 }
- 

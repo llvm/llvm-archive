@@ -3520,7 +3520,7 @@ init_elim_table (void)
   /* Does this function require a frame pointer?  */
 
   /* APPLE LOCAL begin CW asm blocks */
-  if (cfun->cw_asm_function)
+  if (cfun->iasm_asm_function)
     frame_pointer_needed = 0;
   else
     frame_pointer_needed = (! flag_omit_frame_pointer

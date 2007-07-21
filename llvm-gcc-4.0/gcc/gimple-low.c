@@ -92,7 +92,7 @@ lower_function_body (void)
   if (block_may_fallthru (*body_p)
       && (data.return_statements == NULL
           || TREE_OPERAND (TREE_VALUE (data.return_statements), 0) != NULL)
-      && ! (cfun->cw_asm_function))
+      && ! (cfun->iasm_asm_function))
   /* APPLE LOCAL end CW asm blocks */
     {
       x = build (RETURN_EXPR, void_type_node, NULL);

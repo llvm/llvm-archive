@@ -41,7 +41,7 @@ struct macro_arg
 /* Macro expansion.  */
 
 /* APPLE LOCAL begin CW asm blocks */
-extern int flag_cw_asm_blocks;
+extern int flag_iasm_blocks;
 static int enter_macro_context (cpp_reader *, cpp_hashnode *, int bol_p);
 /* APPLE LOCAL end CW asm blocks */
 static int builtin_macro (cpp_reader *, cpp_hashnode *);
@@ -1153,7 +1153,7 @@ cpp_get_token (cpp_reader *pfile)
                       && (node = pfile->cb.macro_to_expand (pfile, result))))
               /* APPLE LOCAL end AltiVec */
 	      /* APPLE LOCAL CW asm blocks */
-	      && enter_macro_context (pfile, node, (flag_cw_asm_blocks && result->flags & BOL)))
+	      && enter_macro_context (pfile, node, (flag_iasm_blocks && result->flags & BOL)))
 	    {
 	      if (pfile->state.in_directive)
 		continue;

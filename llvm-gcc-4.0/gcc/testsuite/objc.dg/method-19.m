@@ -9,7 +9,7 @@
 @class NotKnown;
 
 void foo(NotKnown *n) {
-  [NotKnown new];
+  [NotKnown new];	   /* { dg-warning "receiver 'NotKnown' is a forward class" } */
   [n nonexistent_method]; /* { dg-warning "no .\\-nonexistent_method. method found" } */
 }
 

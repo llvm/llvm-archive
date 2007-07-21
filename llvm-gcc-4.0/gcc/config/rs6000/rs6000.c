@@ -665,6 +665,10 @@ static void rs6000_assemble_visibility (tree, int);
 static int rs6000_ra_ever_killed (void);
 static tree rs6000_handle_longcall_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_altivec_attribute (tree *, tree, tree, int, bool *);
+/* APPLE LOCAL begin mainline */
+static bool rs6000_ms_bitfield_layout_p (tree);
+static tree rs6000_handle_struct_attribute (tree *, tree, tree, int, bool *);
+/* APPLE LOCAL end mainline */
 static void rs6000_eliminate_indexed_memrefs (rtx operands[2]);
 static const char *rs6000_mangle_fundamental_type (tree);
 extern const struct attribute_spec rs6000_attribute_table[];
@@ -703,7 +707,7 @@ static void rs6000_xcoff_file_end (void);
 #endif
 #if TARGET_MACHO
 static bool rs6000_binds_local_p (tree);
-/* APPLE LOCAL pragma reverse_bitfield */
+/* APPLE LOCAL pragma reverse_bitfields */
 static bool rs6000_reverse_bitfields_p (tree);
 #endif
 /* APPLE LOCAL LLVM - Disable scheduler. */
@@ -734,7 +738,8 @@ static int rs6000_use_sched_lookahead (void);
 /* APPLE LOCAL LLVM - Disable scheduler. */
 #endif
 static tree rs6000_builtin_mask_for_load (void);
-
+/* APPLE LOCAL 4375453 */
+static bool rs6000_vector_alignment_reachable (tree, bool);
 static void rs6000_init_builtins (void);
 static rtx rs6000_expand_unop_builtin (enum insn_code, tree, rtx);
 static rtx rs6000_expand_binop_builtin (enum insn_code, tree, rtx);
@@ -1004,7 +1009,10 @@ static const char alt_reg_names[][8] =
 
 #undef TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD
 #define TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD rs6000_builtin_mask_for_load
-
+/* APPLE LOCAL begin 4375453 */
+#undef TARGET_VECTOR_ALIGNMENT_REACHABLE
+#define TARGET_VECTOR_ALIGNMENT_REACHABLE rs6000_vector_alignment_reachable
+/* APPLE LOCAL end 4375453 */
 #undef TARGET_INIT_BUILTINS
 #define TARGET_INIT_BUILTINS rs6000_init_builtins
 
@@ -1037,6 +1045,11 @@ static const char alt_reg_names[][8] =
 /* APPLE LOCAL end pragma reverse_bitfields */
 #endif
 
+/* APPLE LOCAL begin mainline */
+#undef TARGET_MS_BITFIELD_LAYOUT_P
+#define TARGET_MS_BITFIELD_LAYOUT_P rs6000_ms_bitfield_layout_p
+
+/* APPLE LOCAL end mainline */
 #undef TARGET_ASM_OUTPUT_MI_THUNK
 #define TARGET_ASM_OUTPUT_MI_THUNK rs6000_output_mi_thunk
 
@@ -1741,7 +1754,7 @@ rs6000_override_options (const char *default_cpu)
 
   /* APPLE LOCAL begin AltiVec */
   /* Enable '(vector signed int)(a, b, c, d)' vector literal notation.  */
-  if (TARGET_ALTIVEC)
+  if (rs6000_altivec_pim)
     targetm.cast_expr_as_vector_init = true;
   /* APPLE LOCAL end AltiVec */
 
@@ -1835,7 +1848,38 @@ rs6000_builtin_mask_for_load (void)
   else
     return 0;
 }
+/* APPLE LOCAL begin 4375453 */
+/* Return true iff, data reference of TYPE can reach vector alignment (16)
+   after applying N number of iterations. This routine does not determine how
+   many iterations are required to reach desired alignment.  */
+static bool
+rs6000_vector_alignment_reachable (tree type, bool is_packed)
+{
+  if (is_packed)
+    return false;
 
+  if (TARGET_MACHO)
+    {
+      if (TARGET_32BIT)
+	{
+	  if (rs6000_alignment_flags == MASK_ALIGN_NATURAL)
+	    return true;
+
+	  if (rs6000_alignment_flags == MASK_ALIGN_POWER)
+	    return true;
+	}
+      return false;
+    }
+
+  /* Assuming that type whose size is > pointer-size are not guaranteed to be
+     naturally aligned.  */
+  if (tree_int_cst_compare (TYPE_SIZE (type), bitsize_int (POINTER_SIZE)) > 0)
+    return false;
+
+  /* Assuming that types whose size is <= pointer-size are naturally aligned.  */
+  return true;
+}
+/* APPLE LOCAL end 4375453 */
 /* Handle generic options of the form -mfoo=yes/no.
    NAME is the option name.
    VALUE is the option value.
@@ -2001,7 +2045,7 @@ optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
 /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
 /* Version of the above for use from #pragma optimization_level.
    Do not reset things unless they're per-function.  */
-
+#if TARGET_MACHO
 void
 reset_optimization_options (int level ATTRIBUTE_UNUSED, 
 			    int size ATTRIBUTE_UNUSED)
@@ -2026,6 +2070,7 @@ reset_optimization_options (int level ATTRIBUTE_UNUSED,
       flag_trapping_math = 0;
     }
 }
+#endif
 /* APPLE LOCAL end optimization pragmas 3124235/3420242 */
 /* APPLE LOCAL end outwit script */
 
@@ -2624,6 +2669,23 @@ easy_fp_constant (rtx op, enum machine_mode mode)
       long k[4];
       REAL_VALUE_TYPE rv;
 
+      /* APPLE LOCAL begin mainline 4506977 */
+      /* Note to merger: The enclosing function "easy_fp_constant" has
+	 been moved out of this file, and into the sibling file
+	 "predicates.md", and after that move, it was updated with
+	 this patch.  When "predicates.md" arrives in a merge, please
+	 delete this entire function from rs6000.c.  HTH.  */
+      /* Force constants to memory before reload to utilize
+	 compress_float_constant.
+	 Avoid this when flag_unsafe_math_optimizations is enabled
+	 because RDIV division to reciprocal optimization is not able
+	 to regenerate the division.  */
+      if (TARGET_E500_DOUBLE
+	  || (!reload_in_progress && !reload_completed
+	      && !flag_unsafe_math_optimizations))
+	return 0;
+      /* APPLE LOCAL end mainline 4506977 */
+
       REAL_VALUE_FROM_CONST_DOUBLE (rv, op);
       REAL_VALUE_TO_TARGET_LONG_DOUBLE (rv, k);
 
@@ -2638,8 +2700,22 @@ easy_fp_constant (rtx op, enum machine_mode mode)
       long k[2];
       REAL_VALUE_TYPE rv;
 
-      if (TARGET_E500_DOUBLE)
+      /* APPLE LOCAL begin mainline 4506977 */
+      /* Note to merger: The enclosing function "easy_fp_constant" has
+	 been moved out of this file, and into the sibling file
+	 "predicates.md", and after that move, it was updated with
+	 this patch.  When "predicates.md" arrives in a merge, please
+	 delete this entire function from rs6000.c.  HTH.  */
+      /* Force constants to memory before reload to utilize
+	 compress_float_constant.
+	 Avoid this when flag_unsafe_math_optimizations is enabled
+	 because RDIV division to reciprocal optimization is not able
+	 to regenerate the division.  */
+      if (TARGET_E500_DOUBLE
+	  || (!reload_in_progress && !reload_completed
+	      && !flag_unsafe_math_optimizations))
 	return 0;
+      /* APPLE LOCAL end mainline 4506977 */
 
       REAL_VALUE_FROM_CONST_DOUBLE (rv, op);
       REAL_VALUE_TO_TARGET_DOUBLE (rv, k);
@@ -2652,6 +2728,25 @@ easy_fp_constant (rtx op, enum machine_mode mode)
     {
       long l;
       REAL_VALUE_TYPE rv;
+
+      /* APPLE LOCAL begin mainline 4506977 */
+      /* Note to merger: The enclosing function "easy_fp_constant" has
+	 been moved out of this file, and into the sibling file
+	 "predicates.md", and after that move, it was updated with
+	 this patch.  When "predicates.md" arrives in a merge, please
+	 delete this entire function from rs6000.c.  HTH.  */
+      /* The constant 0.f is easy.  */
+      if (op == CONST0_RTX (SFmode))
+	return 1;
+      /* Force constants to memory before reload to utilize
+	 compress_float_constant.
+	 Avoid this when flag_unsafe_math_optimizations is enabled
+	 because RDIV division to reciprocal optimization is not able
+	 to regenerate the division.  */
+      if (!reload_in_progress && !reload_completed
+	  && !flag_unsafe_math_optimizations)
+	return 0;
+      /* APPLE LOCAL end mainline 4506977 */
 
       REAL_VALUE_FROM_CONST_DOUBLE (rv, op);
       REAL_VALUE_TO_TARGET_SINGLE (rv, l);
@@ -7270,15 +7365,17 @@ static const struct builtin_description_predicates bdesc_altivec_preds[] =
   { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4sf, "*vcmpeqfp.", "__builtin_altivec_vcmpeqfp_p", ALTIVEC_BUILTIN_VCMPEQFP_P },
   { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4sf, "*vcmpgefp.", "__builtin_altivec_vcmpgefp_p", ALTIVEC_BUILTIN_VCMPGEFP_P },
   { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4sf, "*vcmpgtfp.", "__builtin_altivec_vcmpgtfp_p", ALTIVEC_BUILTIN_VCMPGTFP_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4si, "*vcmpequw.", "__builtin_altivec_vcmpequw_p", ALTIVEC_BUILTIN_VCMPEQUW_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4si, "*vcmpgtsw.", "__builtin_altivec_vcmpgtsw_p", ALTIVEC_BUILTIN_VCMPGTSW_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v4si, "*vcmpgtuw.", "__builtin_altivec_vcmpgtuw_p", ALTIVEC_BUILTIN_VCMPGTUW_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v8hi, "*vcmpgtuh.", "__builtin_altivec_vcmpgtuh_p", ALTIVEC_BUILTIN_VCMPGTUH_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v8hi, "*vcmpgtsh.", "__builtin_altivec_vcmpgtsh_p", ALTIVEC_BUILTIN_VCMPGTSH_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v8hi, "*vcmpequh.", "__builtin_altivec_vcmpequh_p", ALTIVEC_BUILTIN_VCMPEQUH_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v16qi, "*vcmpequb.", "__builtin_altivec_vcmpequb_p", ALTIVEC_BUILTIN_VCMPEQUB_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v16qi, "*vcmpgtsb.", "__builtin_altivec_vcmpgtsb_p", ALTIVEC_BUILTIN_VCMPGTSB_P },
-  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_v16qi, "*vcmpgtub.", "__builtin_altivec_vcmpgtub_p", ALTIVEC_BUILTIN_VCMPGTUB_P }
+/* APPLE LOCAL begin radar 4571747 */
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpequw, "*vcmpequw.", "__builtin_altivec_vcmpequw_p", ALTIVEC_BUILTIN_VCMPEQUW_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtsw, "*vcmpgtsw.", "__builtin_altivec_vcmpgtsw_p", ALTIVEC_BUILTIN_VCMPGTSW_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtuw, "*vcmpgtuw.", "__builtin_altivec_vcmpgtuw_p", ALTIVEC_BUILTIN_VCMPGTUW_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtuh, "*vcmpgtuh.", "__builtin_altivec_vcmpgtuh_p", ALTIVEC_BUILTIN_VCMPGTUH_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtsh, "*vcmpgtsh.", "__builtin_altivec_vcmpgtsh_p", ALTIVEC_BUILTIN_VCMPGTSH_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpequh, "*vcmpequh.", "__builtin_altivec_vcmpequh_p", ALTIVEC_BUILTIN_VCMPEQUH_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpequb, "*vcmpequb.", "__builtin_altivec_vcmpequb_p", ALTIVEC_BUILTIN_VCMPEQUB_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtsb, "*vcmpgtsb.", "__builtin_altivec_vcmpgtsb_p", ALTIVEC_BUILTIN_VCMPGTSB_P },
+  { MASK_ALTIVEC, CODE_FOR_altivec_predicate_vcmpgtub, "*vcmpgtub.", "__builtin_altivec_vcmpgtub_p", ALTIVEC_BUILTIN_VCMPGTUB_P }
+/* APPLE LOCAL end radar 4571747 */
 };
 
 /* SPE predicates.  */
@@ -14848,14 +14945,14 @@ rs6000_stack_info (void)
   /* If we have an assembly function, maybe use an explicit size.  To
      be consistent with CW behavior (and because it's safer), let
      RS6000_ALIGN round the explicit size up if necessary.  */
-  if (cfun->cw_asm_function && cfun->cw_asm_frame_size != -2)
+  if (cfun->iasm_asm_function && cfun->iasm_frame_size != -2)
     {
-      if (cfun->cw_asm_frame_size == -1)
+      if (cfun->iasm_frame_size == -1)
         non_fixed_size = 32;
-      else if (cfun->cw_asm_frame_size < 32)
+      else if (cfun->iasm_frame_size < 32)
         error ("fralloc frame size must be at least 32");
       else
-        non_fixed_size = cfun->cw_asm_frame_size;
+        non_fixed_size = cfun->iasm_frame_size;
       non_fixed_size += 24;
       info_ptr->total_size = RS6000_ALIGN (non_fixed_size, 
 					   ABI_STACK_BOUNDARY / BITS_PER_UNIT);
@@ -14878,7 +14975,7 @@ rs6000_stack_info (void)
      that the debugger can handle stackless frames.  */
 
   /* APPLE LOCAL CW asm blocks */
-  if (info_ptr->calls_p || (cfun->cw_asm_function && cfun->cw_asm_frame_size != -2))
+  if (info_ptr->calls_p || (cfun->iasm_asm_function && cfun->iasm_frame_size != -2))
     info_ptr->push_p = 1;
 
   else if (DEFAULT_ABI == ABI_V4)
@@ -16010,7 +16107,7 @@ rs6000_emit_prologue (void)
   int objc_method_using_pic = 0;
 
   /* APPLE LOCAL begin CW asm block */
-  if (cfun->cw_asm_function && cfun->cw_asm_frame_size == -2)
+  if (cfun->iasm_asm_function && cfun->iasm_frame_size == -2)
     return;
   /* APPLE LOCAL end CW asm block */
   /* APPLE LOCAL begin special ObjC method use of R12 */
@@ -16796,7 +16893,7 @@ rs6000_emit_epilogue (int sibcall)
   int i;
 
   /* APPLE LOCAL begin CW asm block */
-  if (cfun->cw_asm_function && cfun->cw_asm_frame_size == -2)
+  if (cfun->iasm_asm_function && cfun->iasm_frame_size == -2)
     {
       
       rtvec p = rtvec_alloc (2);
@@ -19463,7 +19560,8 @@ rs6000_initialize_trampoline (rtx addr, rtx fnaddr, rtx cxt)
     /* Under V.4/eabi/darwin, __trampoline_setup does the real work.  */
     case ABI_DARWIN:
     case ABI_V4:
-      emit_library_call (gen_rtx_SYMBOL_REF (SImode, "__trampoline_setup"),
+      /* APPLE LOCAL 4505290 */
+      emit_library_call (gen_rtx_SYMBOL_REF (pmode, "__trampoline_setup"),
 			 FALSE, VOIDmode, 4,
 			 addr, pmode,
 			 GEN_INT (rs6000_trampoline_size ()), SImode,
@@ -19484,6 +19582,10 @@ const struct attribute_spec rs6000_attribute_table[] =
   { "altivec",   1, 1, false, true,  false, rs6000_handle_altivec_attribute },
   { "longcall",  0, 0, false, true,  true,  rs6000_handle_longcall_attribute },
   { "shortcall", 0, 0, false, true,  true,  rs6000_handle_longcall_attribute },
+  /* APPLE LOCAL begin mainline */
+  { "ms_struct", 0, 0, false, false, false, rs6000_handle_struct_attribute },
+  { "gcc_struct", 0, 0, false, false, false, rs6000_handle_struct_attribute },
+  /* APPLE LOCAL end mainline */
 #ifdef SUBTARGET_ATTRIBUTE_TABLE
   SUBTARGET_ATTRIBUTE_TABLE,
 #endif
@@ -19640,6 +19742,10 @@ rs6000_handle_longcall_attribute (tree *node, tree name,
 	       IDENTIFIER_POINTER (name));
       *no_add_attrs = true;
     }
+  /* APPLE LOCAL begin longcall */
+  else if (TARGET_64BIT && TARGET_MACHO)
+    *no_add_attrs = true;
+  /* APPLE LOCAL end longcall */
 
   return NULL_TREE;
 }
@@ -19655,6 +19761,11 @@ rs6000_set_default_type_attributes (tree type)
     TYPE_ATTRIBUTES (type) = tree_cons (get_identifier ("longcall"),
 					NULL_TREE,
 					TYPE_ATTRIBUTES (type));
+  /* APPLE LOCAL begin mainline */
+#if TARGET_MACHO
+  darwin_set_default_type_attributes (type);
+#endif
+  /* APPLE LOCAL end mainline */
 }
 
 /* Return a reference suitable for calling a function with the
@@ -19683,6 +19794,55 @@ rs6000_longcall_ref (rtx call_ref)
   return force_reg (Pmode, call_ref);
 }
 
+/* APPLE LOCAL begin mainline */
+#ifndef TARGET_USE_MS_BITFIELD_LAYOUT
+#define TARGET_USE_MS_BITFIELD_LAYOUT 0
+#endif
+
+/* Handle a "ms_struct" or "gcc_struct" attribute; arguments as in
+   struct attribute_spec.handler.  */
+static tree
+rs6000_handle_struct_attribute (tree *node, tree name,
+				tree args ATTRIBUTE_UNUSED,
+				int flags ATTRIBUTE_UNUSED, bool *no_add_attrs)
+{
+  tree *type = NULL;
+  if (DECL_P (*node))
+    {
+      if (TREE_CODE (*node) == TYPE_DECL)
+        type = &TREE_TYPE (*node);
+    }
+  else
+    type = node;
+
+  if (!(type && (TREE_CODE (*type) == RECORD_TYPE
+                 || TREE_CODE (*type) == UNION_TYPE)))
+    {
+      warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+      *no_add_attrs = true;
+    }
+
+  else if ((is_attribute_p ("ms_struct", name)
+            && lookup_attribute ("gcc_struct", TYPE_ATTRIBUTES (*type)))
+           || ((is_attribute_p ("gcc_struct", name)
+                && lookup_attribute ("ms_struct", TYPE_ATTRIBUTES (*type)))))
+    {
+      warning ("%qs incompatible attribute ignored", IDENTIFIER_POINTER (name));
+      *no_add_attrs = true;
+    }
+
+  return NULL_TREE;
+}
+
+static bool
+rs6000_ms_bitfield_layout_p (tree record_type)
+{
+  return (TARGET_USE_MS_BITFIELD_LAYOUT &&
+          !lookup_attribute ("gcc_struct", TYPE_ATTRIBUTES (record_type)))
+    || lookup_attribute ("ms_struct", TYPE_ATTRIBUTES (record_type));
+}
+
+/* APPLE LOCAL end mainline */
 #ifdef USING_ELFOS_H
 
 /* A C statement or statements to switch to the appropriate section
@@ -20109,7 +20269,8 @@ machopic_output_stub (FILE *file, const char *symb, const char *stub)
    position-independent addresses go into a reg.  This is REG if non
    zero, otherwise we allocate register(s) as necessary.  */
 
-#define SMALL_INT(X) ((unsigned) (INTVAL(X) + 0x8000) < 0x10000)
+/* APPLE LOCAL 4538899 mainline candidate */
+#define SMALL_INT(X) ((unsigned HOST_WIDE_INT) (INTVAL(X) + 0x8000) < 0x10000)
 
 rtx
 rs6000_machopic_legitimize_pic_address (rtx orig, enum machine_mode mode,
@@ -20205,7 +20366,7 @@ rs6000_darwin_file_start (void)
   size_t i;
 
   rs6000_file_start();
-  /* APPLE LOCAL dwarf 4383509 */
+  /* APPLE LOCAL mainline 2006-03-16 dwarf 4383509 */
   darwin_file_start();
 
   /* Determine the argument to -mcpu=.  Default to G3 if not specified.  */
@@ -21407,7 +21568,7 @@ rs6000_dbx_register_number (unsigned int regno)
    forms.  */
 
 const char *
-rs6000_cw_asm_register_name (const char *regname, char *buf)
+rs6000_iasm_register_name (const char *regname, char *buf)
 {
   /* SP is a valid reg name, but asm doesn't like it yet, so translate.  */
   if (strcmp (regname, "sp") == 0)
@@ -21438,11 +21599,11 @@ rs6000_cw_asm_register_name (const char *regname, char *buf)
   return NULL;
 }
 
-extern bool cw_memory_clobber (const char *);
+extern bool iasm_memory_clobber (const char *);
 /* Return true iff the opcode wants memory to be stable.  We arrange
    for a memory clobber in these instances.  */
 bool
-cw_memory_clobber (const char *ARG_UNUSED (opcode))
+iasm_memory_clobber (const char *ARG_UNUSED (opcode))
 {
   return strncmp (opcode, "st", 2) == 0
     || (strncmp (opcode, "l", 1) == 0 && (strcmp (opcode, "la") != 0

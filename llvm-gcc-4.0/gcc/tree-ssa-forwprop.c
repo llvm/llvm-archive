@@ -574,6 +574,9 @@ all_uses_are_replacable (tree stmt, bool replace)
   int j, num_uses;
   bool replacable = true;
 
+  if (!cast_conversion_assignment_p (stmt))
+    return false;
+
   /* Now compute the immediate uses of TEST_VAR.  */
   df = get_immediate_uses (stmt);
   num_uses = num_immediate_uses (df);

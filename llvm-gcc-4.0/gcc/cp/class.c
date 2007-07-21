@@ -1496,8 +1496,8 @@ finish_struct_bits (tree t)
       TYPE_VFIELD (variants) = TYPE_VFIELD (t);
       TYPE_METHODS (variants) = TYPE_METHODS (t);
       TYPE_FIELDS (variants) = TYPE_FIELDS (t);
-      TYPE_SIZE (variants) = TYPE_SIZE (t);
-      TYPE_SIZE_UNIT (variants) = TYPE_SIZE_UNIT (t);
+      /* APPLE LOCAL begin mainline 4121962 */
+      /* APPLE LOCAL end mainline 4121962 */
     }
 
   if (BINFO_N_BASE_BINFOS (TYPE_BINFO (t)) && TYPE_POLYMORPHIC_P (t))
@@ -2891,13 +2891,19 @@ check_field_decls (tree t, tree *access_decls,
 
       if (TREE_CODE (x) == FIELD_DECL)
 	{
+	  /* APPLE LOCAL begin mainline 4121962 */
+          type = strip_array_types (type);
+	  /* APPLE LOCAL end mainline 4121962 */
+
 	  if (TYPE_PACKED (t))
 	    {
-	      if (!pod_type_p (TREE_TYPE (x)) && !TYPE_PACKED (TREE_TYPE (x)))
-		cp_warning_at
-		  ("ignoring packed attribute on unpacked non-POD field %q#D",
+	      /* APPLE LOCAL begin mainline 4121962 */
+	      if (!pod_type_p (type) && !TYPE_PACKED (type))
+		warning
+		   ("ignoring packed attribute on unpacked non-POD field %q+#D",
 		   x);
-	      else
+	      else if (TYPE_ALIGN (TREE_TYPE (x)) > BITS_PER_UNIT)
+	      /* APPLE LOCAL end mainline 4121962 */
 		DECL_PACKED (x) = 1;
 	    }
 
@@ -2907,17 +2913,18 @@ check_field_decls (tree t, tree *access_decls,
 	    ;
 	  else
 	    {
-	      tree element_type;
-
+	      /* APPLE LOCAL begin mainline 4121962 */
+	      /* APPLE LOCAL end mainline 4121962 */
 	      /* The class is non-empty.  */
 	      CLASSTYPE_EMPTY_P (t) = 0;
 	      /* The class is not even nearly empty.  */
 	      CLASSTYPE_NEARLY_EMPTY_P (t) = 0;
 	      /* If one of the data members contains an empty class,
 		 so does T.  */
-	      element_type = strip_array_types (type);
-	      if (CLASS_TYPE_P (element_type) 
-		  && CLASSTYPE_CONTAINS_EMPTY_CLASS_P (element_type))
+	      /* APPLE LOCAL begin mainline 4121962 */
+	      if (CLASS_TYPE_P (type) 
+		  && CLASSTYPE_CONTAINS_EMPTY_CLASS_P (type))
+	      /* APPLE LOCAL end mainline 4121962 */
 		CLASSTYPE_CONTAINS_EMPTY_CLASS_P (t) = 1;
 	    }
 	}
@@ -4676,6 +4683,10 @@ layout_class_type (tree t, tree *virtuals_p)
 	    }
 	  continue;
 	}
+      /* APPLE LOCAL begin radar 4592503 */
+      if (c_dialect_objc ())
+        objc_checkon_weak_attribute (field);
+      /* APPLE LOCAL end radar 4592503 */
 
       type = TREE_TYPE (field);
       

@@ -1,4 +1,4 @@
-/* APPLE LOCAL file KEXT indirect virtual calls */
+/* APPLE LOCAL file KEXT indirect-virtual-calls */
 /* Radar 3972840: Positive C++ test case */
 /* Origin: Matt Austern  <austern@apple.com> */
 /* { dg-do compile } */

@@ -1,5 +1,5 @@
 /* APPLE LOCAL file 4174405 */
-/* { dg-options "-Os -mdynamic-no-pic -framework Cocoa" } */
+/* { dg-options "-Os -mdynamic-no-pic -fobjc-exceptions -framework Cocoa" } */
 /* { dg-do run } */
 // /usr/bin/gcc-4.0 -x objective-c -arch i386 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -Os -Wreturn-type -Wunused-variable -fmessage-length=0 fvisibility=hidden -mdynamic-no-pic -framework Cocoa exceptionCodeGen.m
 

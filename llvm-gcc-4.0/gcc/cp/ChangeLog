@@ -1,3 +1,33 @@
+2005-07-02  Kazu Hirata  <kazu@codesourcery.com>
+
+	* Make-lang.in (cc1plus-checksum.c): Use
+	build/genchecksum$(build_exeext), not build/genchecksum$(exeext).
+
+2006-07-20  Mike Stump  <mrs@apple.com>
+
+	Radar 4634676
+	* decl2.c (determine_visibility_from_class): Don't use hidden
+	visibility for explicit instantiations.
+
+2005-10-28  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	PR C++/23229
+	* decl.c (grokfndecl): Create a new function type
+	after erroring out about main not returning int.
+
+2005-12-02  Mark Mitchell  <mark@codesourcery.com>
+
+	Radar 4458276
+	PR c++/24173
+	* decl.c (duplicate_decls): Don't rely on DECL_TEMPLATE_INFO after
+	clobbering newdecl.
+
+2006-02-24  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4086777
+	* except.c (expand_start_catch_block): Handle
+	flag_use_cxa_get_exception_ptr.
+
 2006-01-21  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/25895
@@ -8,7 +38,7 @@
 	PR c++/25856
 	* decl.c (begin_destructor_body): Robustify.
 
-	PR c++/25858 
+	PR c++/25858
 	* parser.c (cp_parser_direct_declarator): Robustify.
 
 2005-12-26  Mark Mitchell  <mark@codesourcery.com>
@@ -16,7 +46,7 @@
 	PR c++/25439
 	* decl.c (grokdeclarator): Remove dead code.
 	* ptree.c (cxx_print_xnode): Handle BASELINK.
-	* parser.c (make_id_declarator): Add sfk parameter.  
+	* parser.c (make_id_declarator): Add sfk parameter.
 	(cp_parser_direct_declarator): Do not pass TYPE_DECLs to
 	make_id_declarator.
 	(cp_parser_declarator_id): Simplify BASELINKs here.
@@ -104,7 +134,7 @@
 	* parser.c (cp_parser_postfix_expression): Allow non-constant
 	expressions as arguments to __builtin_constant_p.
 	* tree.c (builtin_valid_in_constant_expr_p): Use
-	DECL_IS_BUILTIN_CONSTANT_P. 
+	DECL_IS_BUILTIN_CONSTANT_P.
 
 2005-06-03  Mark Mitchell  <mark@codesourcery.com>
 
@@ -223,7 +253,7 @@
 	(lookup_template_class, instantiate_class_template): Adjust call
 	to pushtag.
 	* semantics.c (begin_class_definition): Likewise.
-	* rtti.c (init_rtti_processing, build_dynamic_cast_1, 
+	* rtti.c (init_rtti_processing, build_dynamic_cast_1,
 	tinfo_base_init, emit_support_tinfos): Use ts_current instead of
 	ts_global.
 
@@ -295,7 +325,7 @@
 	* typeck.c (cxx_sizeof_or_alignof_type): Check whether the type to
 	which sizeof/alignof is dependent, rather than just whether we are
 	processing_template_decl.
-	
+
 2005-04-14  Dale Johannesen  <dalej@apple.com>
 
 	* tree.c (cp_tree_equal):  Handle SSA_NAME.
@@ -312,7 +342,7 @@
 	(cp_parser_type_specifier_seq): In a condition, do not allow
 	invalid type-specifier combinations.
 	(cp_parser_exception_declaration): Adjust call to
-	cp_parser_type_specifier_seq. 
+	cp_parser_type_specifier_seq.
 
 	* cp-tree.def (TINST_LEVEL): Document TINST_IN_SYSTEM_HEADER_P.
 	* cp-tree.h (struct tinst_level): Add in_system_header_p.
@@ -326,7 +356,7 @@
 	(instantiate_class_template): Set in_system_header.
 	(instantiate_pending_templates): Likewise.
 	* tree.c (make_tinst_level): Remove.
-	
+
 2005-04-06  Joseph S. Myers  <joseph@codesourcery.com>
 
 	* decl.c (start_decl): Apply pending #pragma weak regardless of
@@ -378,7 +408,7 @@
 
         PR c++/18644
         * call.c (build_new_op): Remove check for -Wsynth.
-	
+
 2005-03-29  Richard Henderson  <rth@redhat.com>
 
 	PR c/20519
@@ -457,7 +487,7 @@
 2005-03-13  Mark Mitchell  <mark@codesourcery.com>
 
 	PR c++/20157
-	* pt.c (determine_specialization): Reject non-specializations. 
+	* pt.c (determine_specialization): Reject non-specializations.
 
 2005-03-10  Jakub Jelinek  <jakub@redhat.com>
 
@@ -484,7 +514,7 @@
 	PR c++/20142
 	* init.c (build_vec_init): When determining whether or not the
 	element type has an asignment operator, look through all array
-	dimensions. 
+	dimensions.
 
 2005-03-07  Mark Mitchell  <mark@codesourcery.com>
 
@@ -512,7 +542,7 @@
 
 	PR c++/20232
 	* class.c (update_vtable_entry_for_fn): Don't crash on invalid
-	covariancy. 
+	covariancy.
 
 	* cp-tree.g (THUNK_TARGET): Expand comment.
 	* method.c (use_thunk): Make sure we also use the target, if that
@@ -567,7 +597,7 @@
 	PR c++/20152
 	* parser.c (cp_parser_class_head): Check for redefintions here.
 	* semantics.c (begin_class_definition): Not here.
-	
+
 	PR c++/20153
 	* decl2.c (build_anon_union_vars): Add type parameter.
 	(finish_anon_union): Pass it.
@@ -580,15 +610,15 @@
 	* parser.c (cp_parser_direct_declarator): Always complain about
 	non-constant array bounds when in a function scope.
 	* semantics.c (finish_id_expression): Do not mark dependent names
-	as non-constant. 
+	as non-constant.
 
 2005-02-21  Douglas Gregor  <dgregor@cs.indiana.edu>
-	
+
 	PR c++/19076
 	PR c++/6628
 	* cp-tree.h (cp_apply_type_quals_to_decl): Declared.
 	* decl.c (grokdeclarator): Pedwarn about qualifying a function
-	type. 
+	type.
 	Add qualifiers when declaring a typedef of a function type.
 	Member function pointers pick up the qualifiers of the typedef
 	used to declare them.
@@ -599,7 +629,7 @@
 	(start_preparsed_function): Use cp_apply_type_quals_to_decl.
 	(grokclassfn): Use cp_apply_type_quals_to_decl.
 	* error.c (dump_type_suffix): Print qualifiers for function
-	types. 
+	types.
 	* pt.c (tsubst_decl): Use cp_apply_type_quals_to_decl.
 	(tsubst): When substituting a function type into a member
 	pointer type, pass along the qualifiers.

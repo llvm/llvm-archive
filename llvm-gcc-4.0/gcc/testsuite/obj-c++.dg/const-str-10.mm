@@ -5,6 +5,7 @@
 
 /* { dg-options "-fnext-runtime -fno-constant-cfstrings" } */
 /* { dg-do compile { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 

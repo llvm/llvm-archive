@@ -1,3 +1,29 @@
+2005-06-16  Joseph S. Myers  <joseph@codesourcery.com>
+
+	* Makefile.in (cc1-checksum.c): Use
+	build/genchecksum$(build_exeext), not build/genchecksum$(exeext).
+
+2006-08-16  Mike Stump  <mrs@apple.com>
+
+	* doc/invoke.texi (-Wno-deprecated-declarations): Fixup use of pxref.
+	* doc/cppopts.texi (-MD): Likewise.
+
+2005-10-31  Jan Hubicka  <jh@suse.cz>
+
+	Radar 4651177
+	PR target/20928
+	* i386.c (legitimize_pic_address): Deal with large immediates.
+
+2006-07-20  Eric Christopher  <echristo@apple.com>
+
+        PR target/26877
+	Radar 4639953
+	* config/i386/i386.h (OPTION_DEFAULT_SPECS): Reorder.
+
+2006-07-05  Mike Stump  <mrs@apple.com>
+
+	* doc/invoke.texi (Invoking G++): Clarify prose for g++.
+
 2006-06-02  Geoffrey Keating  <geoffk@apple.com>
 
 	Radar 4508814
@@ -97,7 +123,14 @@
 	PR c++/24302
 	* toplev.c (check_global_declarations): Check anonymous
 	decl name.
-	
+
+2006-06-11  Eric Christopher  <echristo@apple.com>
+
+	Radar 4581948
+	PR middle-end/27948
+	* stor-layout.c (place_field): Remove check for
+	remaining_in_alignment when aligning at the end of a run.
+
 2006-05-08  Eric Christopher  <echristo@apple.com>
 
 	Radar 4537881

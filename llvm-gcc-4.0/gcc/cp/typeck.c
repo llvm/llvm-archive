@@ -1776,6 +1776,8 @@ build_class_member_access_expr (tree object, tree member,
 
       result = build3 (COMPONENT_REF, member_type, object, member,
 		       NULL_TREE);
+      /* APPLE LOCAL radar 4697411 */
+      objc_volatilize_component_ref (result, TREE_TYPE (member));
       result = fold_if_not_in_template (result);
 
       /* Mark the expression const or volatile, as appropriate.  Even
@@ -1885,6 +1887,15 @@ finish_class_member_access_expr (tree object, tree name)
   if (!objc_is_public (object, name))
     return error_mark_node;
   /* APPLE LOCAL end mainline */
+
+  /* APPLE LOCAL begin C* property (Radar 4436866) */
+  if (!processing_template_decl)
+    {
+      if (TREE_CODE (name) == IDENTIFIER_NODE
+          && (expr = objc_build_getter_call (object, name)))
+        return expr;
+    }
+  /* APPLE LOCAL end C* property (Radar 4436866) */
 
   object_type = TREE_TYPE (object);
 
@@ -2318,7 +2329,6 @@ build_array_ref (tree array, tree idx)
                    NULL_TREE, NULL_TREE);
 #endif
     /* APPLE LOCAL end LLVM */
-    
     return build_indirect_ref (cp_build_binary_op (PLUS_EXPR, ar, ind),
 			       "array indexing");
   }
@@ -2771,7 +2781,7 @@ build_x_binary_op (enum tree_code code, tree arg1, tree arg2,
 
   /* APPLE LOCAL begin CW asm blocks */
   /* I think this is dead now.  */
-  if (inside_cw_asm_block)
+  if (inside_iasm_block)
     if (TREE_CODE (arg1) == IDENTIFIER_NODE
 	|| TREE_CODE (arg2) == IDENTIFIER_NODE
 	|| TREE_TYPE (arg1) == NULL_TREE
@@ -4027,13 +4037,18 @@ build_unary_op (enum tree_code code, tree xarg, int noconvert)
 	    break;
 	  }
 
+        /* APPLE LOCAL begin radar 4712269 */
+        if ((val = objc_build_incr_decr_setter_call (code, arg, inc)))
+          return val;
+        /* APPLE LOCAL end radar 4712269 */
+
 	/* Complain about anything else that is not a true lvalue.  */
-	/* APPLE LOCAL begin non-lvalue assign */
+	/* APPLE LOCAL begin non lvalue assign */
 	if (!lvalue_or_else (&arg, ((code == PREINCREMENT_EXPR
 				     || code == POSTINCREMENT_EXPR)
 				    ? lv_increment
 				    : lv_decrement)))
-	/* APPLE LOCAL end non-lvalue assign */
+	/* APPLE LOCAL end non lvalue assign */
 	  return error_mark_node;
 
 	/* Forbid using -- on `bool'.  */
@@ -4201,7 +4216,7 @@ build_unary_op (enum tree_code code, tree xarg, int noconvert)
       else if (TREE_CODE (argtype) != FUNCTION_TYPE
 	       && TREE_CODE (argtype) != METHOD_TYPE
 	       && TREE_CODE (arg) != OFFSET_REF
-	       /* APPLE LOCAL non-lvalue assign */
+	       /* APPLE LOCAL non lvalue assign */
 	       && !lvalue_or_else (&arg, lv_addressof))
 	return error_mark_node;
 
@@ -4774,6 +4789,15 @@ build_static_cast_1 (tree type, tree expr, bool c_cast_p,
       return expr;
     }
 
+  /* APPLE LOCAL begin radar 4696522 */
+  /* Casts to a (pointer to a) specific ObjC class (or 'id' or
+     'Class') should always be retained, because this information aids
+     in method lookup.  */
+  if (objc_is_object_ptr (type)
+      && objc_is_object_ptr (intype))
+    return build_nop (type, expr);
+  /* APPLE LOCAL end radar 4696522 */
+
   if (TYPE_PTR_P (type) && TYPE_PTR_P (intype)
       && CLASS_TYPE_P (TREE_TYPE (type))
       && CLASS_TYPE_P (TREE_TYPE (intype))
@@ -5275,13 +5299,11 @@ build_c_cast (tree type, tree expr)
     return vector_constructor_from_expr (expr, type);
   /* APPLE LOCAL end AltiVec */
 
-  /* Casts to a (pointer to a) specific ObjC class (or 'id' or
-     'Class') should always be retained, because this information aids
-     in method lookup.  */
-  if (objc_is_object_ptr (type)
-      && objc_is_object_ptr (TREE_TYPE (expr)))
-    return build_nop (type, expr);
+  /* APPLE LOCAL radar 4696522 */
+  /* objective-c pointer to object type-cast moved to build_static_cast_1. */
 
+  /* APPLE LOCAL C* warnings to easy porting to new abi */
+  diagnose_selector_cast (type, expr);
   /* build_c_cast puts on a NOP_EXPR to make the result not an lvalue.
      Strip such NOP_EXPRs if VALUE is being used in non-lvalue context.  */
   if (TREE_CODE (type) != REFERENCE_TYPE
@@ -5424,7 +5446,7 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
     case MAX_EXPR:
       /* MIN_EXPR and MAX_EXPR are currently only permitted as lvalues,
 	 when neither operand has side-effects.  */
-      /* APPLE LOCAL non-lvalue assign */
+      /* APPLE LOCAL non lvalue assign */
       if (!lvalue_or_else (&lhs, lv_assign))
 	return error_mark_node;
 
@@ -5453,7 +5475,7 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	
 	/* Check this here to avoid odd errors when trying to convert
 	   a throw to the type of the COND_EXPR.  */
-	/* APPLE LOCAL non-lvalue assign */
+	/* APPLE LOCAL non lvalue assign */
 	if (!lvalue_or_else (&lhs, lv_assign))
 	  return error_mark_node;
 
@@ -5510,6 +5532,14 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 
       if (modifycode == NOP_EXPR)
 	{
+  	  /* APPLE LOCAL begin C* property (Radar 4436866) */
+      	  if (c_dialect_objc ())
+            {
+              result = objc_build_setter_call (lhs, rhs);
+              if (result)
+                return result;
+            }
+	  /* APPLE LOCAL end C* property (Radar 4436866) */
 	  /* `operator=' is not an inheritable operator.  */
 	  if (! IS_AGGR_TYPE (lhstype))
 	    /* Do the default thing.  */;
@@ -5542,13 +5572,21 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	  
 	  /* Now it looks like a plain assignment.  */
 	  modifycode = NOP_EXPR;
+  	  /* APPLE LOCAL begin C* property (Radar 4436866) */
+      	  if (c_dialect_objc ())
+            {
+              result = objc_build_setter_call (lhs, newrhs);
+              if (result)
+                return result;
+            }
+	  /* APPLE LOCAL end C* property (Radar 4436866) */
 	}
       gcc_assert (TREE_CODE (lhstype) != REFERENCE_TYPE);
       gcc_assert (TREE_CODE (TREE_TYPE (newrhs)) != REFERENCE_TYPE);
     }
 
   /* The left-hand side must be an lvalue.  */
-  /* APPLE LOCAL non-lvalue assign */
+  /* APPLE LOCAL non lvalue assign */
   if (!lvalue_or_else (&lhs, lv_assign))
     return error_mark_node;
 
@@ -6905,7 +6943,7 @@ non_reference (tree t)
 
 /* APPLE LOCAL begin CW asm blocks */
 tree
-cw_asm_cp_build_component_ref (tree datum, tree component)
+iasm_cp_build_component_ref (tree datum, tree component)
 {
   tree expr = finish_class_member_access_expr (datum, component);
   /* If this is not a real component reference, extract the field

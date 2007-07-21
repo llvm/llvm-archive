@@ -5463,6 +5463,8 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 
 	case COMPONENT_REF:
 	  {
+	    /* APPLE LOCAL radar 4441049 */
+	    tree field_bit_offset;
 	    tree field = TREE_OPERAND (exp, 1);
 	    tree this_offset = component_ref_field_offset (exp);
 
@@ -5473,8 +5475,13 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	      break;
 
 	    offset = size_binop (PLUS_EXPR, offset, this_offset);
+	    /* APPLE LOCAL begin radar 4441049 */
+	    field_bit_offset = objc_v2_bitfield_ivar_bitpos (exp);
+	    if (!field_bit_offset)
+	      field_bit_offset = DECL_FIELD_BIT_OFFSET (field);
 	    bit_offset = size_binop (PLUS_EXPR, bit_offset,
-				     DECL_FIELD_BIT_OFFSET (field));
+				     field_bit_offset);
+	    /* APPLE LOCAL end radar 4441049 */
 
 	    /* ??? Right now we don't do anything with DECL_OFFSET_ALIGN.  */
 	  }
@@ -5629,7 +5636,12 @@ component_ref_field_offset (tree exp)
 {
   tree aligned_offset = TREE_OPERAND (exp, 2);
   tree field = TREE_OPERAND (exp, 1);
+  /* APPLE LOCAL begin radar 4441049 */
+  tree offset = objc_v2_component_ref_field_offset (exp);
 
+  if (offset)
+    return offset;
+  /* APPLE LOCAL end radar 4441049 */
   /* If an offset was specified in the COMPONENT_REF, it's the offset measured
      in units of DECL_OFFSET_ALIGN / BITS_PER_UNIT.  So multiply by that
      value.  */

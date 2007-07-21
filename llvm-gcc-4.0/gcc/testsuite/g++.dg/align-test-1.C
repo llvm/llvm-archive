@@ -152,7 +152,7 @@ class C20 {
 
 /* === vectors === */
 
-#ifdef __VEC__
+#ifdef __APPLE_ALTIVEC__
 class VC1 {
   public:
     vector signed short f1;
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
     check(Q(offsetof(C20, f1)), 4, 8, 4, "offset of double 1st field in class with v-table ptr");
 
     /* Vector tests */
-#ifdef __VEC__
+#ifdef __APPLE_ALTIVEC__
     check(Q(sizeof(VC1)), 32, 32, 32, "class with vector as 1st field");
     check(Q(sizeof(VS1)), 48, 48, 48, "struct with a class with a vector as 1st field");
     check(Q(sizeof(VC2)), 48, 48, 48, "class with base class containing a vector");

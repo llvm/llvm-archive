@@ -1,5 +1,6 @@
 /* APPLE LOCAL file mainline */
 /* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdlib.h>
 #include <string.h>

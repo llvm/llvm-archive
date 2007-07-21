@@ -494,6 +494,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 16:
     case 32:
     case 64:
+    case 128:
       break;
     default:
       static bool Warned = false;
@@ -942,7 +943,9 @@ struct StructTypeConversionInfo {
   /// getLLVMType - Return the LLVM type for the specified object.
   ///
   const Type *getLLVMType() const {
-    return StructType::get(Elements, Packed || AllBitFields);
+    // Use Packed type if Packed is set or all struct fields are bitfields.
+    // Empty struct is not packed unless packed is set.
+    return StructType::get(Elements, Packed || (!Elements.empty() && AllBitFields));
   }
   
   /// getSizeAsLLVMStruct - Return the size of this struct if it were converted
@@ -1015,6 +1018,7 @@ struct StructTypeConversionInfo {
         Elements.pop_back();
         ElementOffsetInBytes.pop_back();
         ElementSizeInBytes.pop_back();
+        PaddingElement.pop_back();
       }
     }
 
@@ -1058,6 +1062,8 @@ struct StructTypeConversionInfo {
                                ElementOffsetInBytes.end());
     ElementSizeInBytes.erase(ElementSizeInBytes.begin()+FieldNo,
                              ElementSizeInBytes.end());
+    PaddingElement.erase(PaddingElement.begin()+FieldNo, 
+                         PaddingElement.end());
   }
   
   /// getNewElementByteOffset - If we add a new element with the specified
@@ -1179,6 +1185,7 @@ void StructTypeConversionInfo::convertToPacked() {
                                   ElementOffsetInBytes[x-1] + ElementSizeInBytes[x-1]);
       ElementSizeInBytes.insert(ElementSizeInBytes.begin() + x, padding);
       Elements.insert(Elements.begin() + x, Pad);
+      PaddingElement.insert(PaddingElement.begin() + x, true);
     }
   }
 }

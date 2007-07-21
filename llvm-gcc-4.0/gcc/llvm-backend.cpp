@@ -1028,7 +1028,10 @@ void llvm_mark_decl_weak(tree decl) {
 //
 void llvm_emit_ctor_dtor(tree FnDecl, int InitPrio, int isCtor) {
   mark_decl_referenced(FnDecl);  // Inform cgraph that we used the global.
-  Function *F = cast<Function>(DECL_LLVM(FnDecl));
+  
+  if (errorcount || sorrycount) return;
+  
+  Function *F = cast_or_null<Function>(DECL_LLVM(FnDecl));
   (isCtor ? &StaticCtors:&StaticDtors)->push_back(std::make_pair(F, InitPrio));
 }
 

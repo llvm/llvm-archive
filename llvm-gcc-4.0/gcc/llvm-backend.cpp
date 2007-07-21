@@ -527,7 +527,7 @@ void make_decl_llvm(tree decl) {
   if (Name[0] == 1) {
 #ifdef REGISTER_PREFIX
     if (strlen (REGISTER_PREFIX) != 0) {
-      reg_number = decode_reg_name(Name);
+      int reg_number = decode_reg_name(Name);
       if (reg_number >= 0 || reg_number == -3)
         error("%Jregister name given for non-register variable %qD",
               decl, decl);

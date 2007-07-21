@@ -333,7 +333,7 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = ConstantSInt::get(Type::IntTy, Tors[i].second);
+    StructInit[0] = ConstantInt::get(Type::IntTy, Tors[i].second);
     StructInit[1] = Tors[i].first;
     InitList.push_back(ConstantStruct::get(StructInit));
   }

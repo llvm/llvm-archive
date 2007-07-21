@@ -199,7 +199,7 @@ public:
     } else if (TREE_CODE(type) == RECORD_TYPE) {
       for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
         if (TREE_CODE(Field) == FIELD_DECL) {
-          unsigned FNo = cast<ConstantUInt>(DECL_LLVM(Field))->getValue();
+          unsigned FNo = cast<ConstantInt>(DECL_LLVM(Field))->getZExtValue();
           assert(FNo != ~0U && "Case not handled yet!");
           
           C.EnterField(FNo, Ty);

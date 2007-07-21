@@ -4262,7 +4262,7 @@ enum ix86_builtins
   }                                                                           \
   case IX86_BUILTIN_SHUFPS:                                                   \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[2])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[1],                             \
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),   \
                                   ((EV & 0x30) >> 4)+4, ((EV & 0xc0) >> 6)+4);\
@@ -4272,7 +4272,7 @@ enum ix86_builtins
   case IX86_BUILTIN_PSHUFW:                                                   \
   case IX86_BUILTIN_PSHUFD:                                                   \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),   \
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6));  \
@@ -4281,7 +4281,7 @@ enum ix86_builtins
     return false;                                                             \
   case IX86_BUILTIN_PSHUFHW:                                                  \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   0, 1, 2, 3,                                 \
                                   ((EV & 0x03) >> 0)+4, ((EV & 0x0c) >> 2)+4, \
@@ -4291,7 +4291,7 @@ enum ix86_builtins
     return false;                                                             \
   case IX86_BUILTIN_PSHUFLW:                                                  \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),   \
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6),   \

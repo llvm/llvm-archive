@@ -3812,7 +3812,7 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTB:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                            \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   EV, EV, EV, EV, EV, EV, EV, EV,             \
                                   EV, EV, EV, EV, EV, EV, EV, EV);            \
@@ -3821,7 +3821,7 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTH:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                            \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   EV, EV, EV, EV, EV, EV, EV, EV);            \
       return true;                                                            \
@@ -3829,7 +3829,7 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTW:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getRawValue();                                            \
+      int EV = Elt->getZExtValue();                                            \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0], EV, EV, EV, EV);            \
       return true;                                                            \
     }                                                                         \
@@ -3840,7 +3840,7 @@ enum rs6000_builtins
   case ALTIVEC_BUILTIN_VSLDOI_4SF:                                            \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[2])) {                   \
       /* Map all of these to a shuffle. */                                    \
-      unsigned Amt = Elt->getRawValue() & 15;                                 \
+      unsigned Amt = Elt->getZExtValue() & 15;                                 \
       PackedType *v16i8 = PackedType::get(Type::SByteTy, 16);                 \
       OPS[0] = CastToType(OPS[0], v16i8);                                     \
       OPS[1] = CastToType(OPS[1], v16i8);                                     \
@@ -3890,7 +3890,7 @@ enum rs6000_builtins
     /* and out sign bits */                                                   \
     PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
     OPS[0] = new CastInst(OPS[0], v4i32, OPS[0]->getName(), CurBB);           \
-    Constant *C = ConstantSInt::get(Type::IntTy, 0x7FFFFFFF);                 \
+    Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                 \
     C = ConstantPacked::get(std::vector<Constant*>(4, C));                    \
     RESULT = BinaryOperator::createAnd(OPS[0], C, "tmp", CurBB);              \
     RESULT = new CastInst(RESULT, DESTTY, "tmp", CurBB);                      \

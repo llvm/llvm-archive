@@ -19,6 +19,23 @@ Target-specific configure options:
   * On Darwin/PPC or Darwin/X86, you can enable Objective C:
       EXTRALANGS=,objc,obj-c++
 
+  * On Darwin/PPC (but more likely, Mac OS X), if you get assembler errors
+    such as "complex expression, absolute segment assumed", you need to
+    update your assembler and specify the new assembler to configure.
+
+    - DarwinPorts: Install odcctools to get odas and odld, run
+      configure as follows:
+
+      env AS=/opt/local/bin/odas LD=/opt/local/bin/odld \
+	../configure --prefix=<your prefix> \
+	    --program-prefix=llvm- \
+	    --enable-llvm=$LLVMOBJDIR \
+	    --enable-languages=c,c++ \
+	    --with-as=/opt/local/bin/odas \
+	    --with-ld=/opt/local/bin/odld
+
+    - Fink and others: YMMV
+
   * On Darwin/X86 (X86-32 + X86-64), you should set:
       TARGETOPTIONS=--with-arch=nocona --with-tune=generic 
       --with-gxx-include-dir=/usr/include/c++/4.0.0

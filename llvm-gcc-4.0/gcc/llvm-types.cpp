@@ -987,7 +987,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         
       unsigned FieldNo = 
         Info.getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
-      SET_DECL_LLVM(Field, ConstantUInt::get(Type::UIntTy, FieldNo));
+      SET_DECL_LLVM(Field, ConstantInt::get(Type::UIntTy, FieldNo));
     }
   
   const Type *ResultTy = Info.getLLVMType();

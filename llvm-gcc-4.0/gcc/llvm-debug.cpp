@@ -389,8 +389,8 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
   
   // Invoke llvm.dbg.stoppoint
   std::vector<Value*> Args;
-  Args.push_back(ConstantUInt::get(Type::UIntTy, CurLineNo));
-  Args.push_back(ConstantUInt::get(Type::UIntTy, 0));
+  Args.push_back(ConstantInt::get(Type::UIntTy, CurLineNo));
+  Args.push_back(ConstantInt::get(Type::UIntTy, 0));
   Args.push_back(getCastValueFor(Unit));
   new CallInst(StopPointFn, Args, "", CurBB);
 }

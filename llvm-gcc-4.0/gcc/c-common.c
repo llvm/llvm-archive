@@ -6883,9 +6883,13 @@ iasm_op_clobber_comp (const void *a, const void *b)
   return strcasecmp (x->opcode, y->opcode);
 }
 
+/* APPLE LOCAL begin LLVM */
 #ifndef TARGET_IASM_EXTRA_CLOBBERS
-#define TARGET_IASM_EXTRA_CLOBBERS { "zzzzz", { 0 } }
+#define IASM_EXTRA_CLOBBERS { "zzzzz", { 0 } }
+#else
+#define IASM_EXTRA_CLOBBERS TARGET_IASM_EXTRA_CLOBBERS
 #endif
+/* APPLE LOCAL end LLVM */
 
 /* Add any extra clobbers to the clobbers list, if they are not
    already listed in the outputs for the instruction.  For example,
@@ -6896,13 +6900,14 @@ iasm_op_clobber_comp (const void *a, const void *b)
 static void
 iasm_extra_clobbers (const char *opcode, tree *clobbersp)
 {
-  struct iasm_op_clobber db[] = { TARGET_IASM_EXTRA_CLOBBERS };
+  struct iasm_op_clobber db[] = { IASM_EXTRA_CLOBBERS };
   struct iasm_op_clobber key;
   struct iasm_op_clobber *r;
   const char **clobbers;
   int num;
 
-#ifdef ENABLE_CHECKING
+/* APPLE LOCAL LLVM */
+#if defined(TARGET_IASM_EXTRA_CLOBBERS) && defined(ENABLE_CHECKING)
   /* Ensure that the table is sorted. */
   static int once;
   if (once == 0)

@@ -22,13 +22,12 @@ Target-specific configure options:
   * On Darwin/X86 (X86-32 + X86-64), you should set:
       TARGETOPTIONS=--with-arch=nocona --with-tune=generic 
       --with-gxx-include-dir=/usr/include/c++/4.0.0
-      --with-slibdir=/usr/lib
     to match Apple's GCC.
 
   * On Darwin/X86 (IA32 only), you should set:
       TARGETOPTIONS=--with-arch=pentium-m --with-tune=prescott
       --with-gxx-include-dir=/usr/include/c++/4.0.0
-      --with-slibdir=/usr/lib --disable-multilib
+      --disable-multilib
     to match Apple's GCC.
 
   * On Linux, until http://llvm.org/PR821 is fixed, you should 

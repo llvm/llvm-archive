@@ -674,7 +674,8 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
                                    NULL;
 
         if (TREE_CODE(Member) == FIELD_DECL) {
-          if (TREE_CODE(DECL_FIELD_OFFSET(Member)) != INTEGER_CST)
+          if (DECL_FIELD_OFFSET(Member) == 0 ||
+              TREE_CODE(DECL_FIELD_OFFSET(Member)) != INTEGER_CST)
             // FIXME: field with variable position, skip it for now.
             continue;
 

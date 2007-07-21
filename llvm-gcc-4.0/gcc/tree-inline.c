@@ -1220,9 +1220,16 @@ inlinable_function_p (tree fn)
       inlinable = false;
     }
 
+  /* APPLE LOCAL begin LLVM */
+  #ifndef ENABLE_LLVM
+  /* LLVM uses the uninlinable flag to know when the noinline attribute
+    was used. This code will cause all functions that this inliner decides
+    not to inline to appear to have been marked noinline. */
   /* Squirrel away the result so that we don't have to check again.  */
   DECL_UNINLINABLE (fn) = !inlinable;
-
+  #endif
+  /* APPLE LOCAL end LLVM */
+  
   return inlinable;
 }
 

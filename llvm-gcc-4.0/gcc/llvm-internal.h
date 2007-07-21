@@ -86,11 +86,11 @@ extern llvm::OStream *AsmOutFile;
 extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
-extern std::vector<GlobalValue*> AttributeUsedGlobals;
+extern std::vector<Constant*> AttributeUsedGlobals;
 
 /// AttributeNoinlineFunctions - The list of functions that are 
 /// marked attribute(noinline)
-extern std::vector<Function*> AttributeNoinlineFunctions;
+extern std::vector<Constant*> AttributeNoinlineFunctions;
 
 void changeLLVMValue(Value *Old, Value *New);
 void readLLVMTypesStringTable();

@@ -589,12 +589,16 @@ void TreeToLLVM::StartFunctionBody() {
     Fn->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(FnDecl)));
 
   // Handle used Functions
-  if (DECL_PRESERVE_P (FnDecl))
-    AttributeUsedGlobals.push_back(Fn);
+  if (DECL_PRESERVE_P (FnDecl)) {
+    const Type *SBP= PointerType::get(Type::Int8Ty);
+    AttributeUsedGlobals.push_back(ConstantExpr::getBitCast(Fn,SBP));
+  }
   
   // Handle noinline Functions
-  if (DECL_UNINLINABLE (FnDecl))
-    AttributeNoinlineFunctions.push_back(Fn); 
+  if (DECL_UNINLINABLE (FnDecl)) {
+    const Type *SBP= PointerType::get(Type::Int8Ty);
+    AttributeNoinlineFunctions.push_back(ConstantExpr::getBitCast(Fn,SBP));
+  }
   
   // Create a new basic block for the function.
   Builder.SetInsertPoint(new BasicBlock("entry", Fn));

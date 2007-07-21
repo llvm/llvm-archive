@@ -79,8 +79,8 @@ TypeConverter *TheTypeConverter = 0;
 llvm::OStream *AsmOutFile = 0;
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
-std::vector<GlobalValue*> AttributeUsedGlobals;
-std::vector<Function*> AttributeNoinlineFunctions;
+std::vector<Constant*> AttributeUsedGlobals;
+std::vector<Constant*> AttributeNoinlineFunctions;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
 /// as each is compiled.  In cases where we are not doing IPO, it includes the 
@@ -327,7 +327,7 @@ static void createOptimizationPasses() {
     PM->add(createReassociatePass());           // Reassociate expressions
     PM->add(createLoopRotatePass());            // Rotate Loop
     PM->add(createLICMPass());                  // Hoist loop invariants
-    PM->add(createLoopUnswitchPass());          // Unswitch loops.
+    PM->add(createLoopUnswitchPass(optimize_size ? true : false));
     PM->add(createInstructionCombiningPass());  // Clean up after LICM/reassoc
     PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
     if (flag_unroll_loops)
@@ -467,32 +467,29 @@ void llvm_asm_file_end(void) {
     CreateStructorsList(StaticDtors, "llvm.global_dtors");
   
   if (!AttributeUsedGlobals.empty()) {
-    std::vector<Constant*> GlobalInit;
     const Type *SBP = PointerType::get(Type::Int8Ty);
-    for (unsigned i = 0, e = AttributeUsedGlobals.size(); i != e; ++i)
-      GlobalInit.push_back(ConstantExpr::getBitCast(AttributeUsedGlobals[i], 
-                                                    SBP));
     ArrayType *AT = ArrayType::get(SBP, AttributeUsedGlobals.size());
-    Constant *Init = ConstantArray::get(AT, GlobalInit);
+    Constant *Init = ConstantArray::get(AT, AttributeUsedGlobals);
     new GlobalVariable(AT, false, GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
+    AttributeUsedGlobals.clear();
   }
   
   // Add llvm.noinline
+#ifdef 0
   if (!AttributeNoinlineFunctions.empty()) {
-    std::vector<Constant*> GlobalInit;
     const Type *SBP= PointerType::get(Type::Int8Ty);
-    for (unsigned i = 0, e = AttributeNoinlineFunctions.size(); i != e; ++i)
-      GlobalInit.push_back(ConstantExpr::getBitCast(
-                                                AttributeNoinlineFunctions[i], 
-                                                SBP));
     ArrayType *AT = ArrayType::get(SBP, AttributeNoinlineFunctions.size());
-    Constant *Init = ConstantArray::get(AT, GlobalInit);
+    Constant *Init = ConstantArray::get(AT, AttributeNoinlineFunctions);
     GlobalValue *gv = new GlobalVariable(AT, false, 
                                         GlobalValue::AppendingLinkage, Init,
                                         "llvm.noinline", TheModule);
     gv->setSection("llvm.metadata");
+    
+    // Clear vector
+    AttributeNoinlineFunctions.clear();
   }
+#endif
   
   // Finish off the per-function pass.
   if (PerFunctionPasses)
@@ -763,8 +760,10 @@ void emit_global_to_llvm(tree decl) {
     }
 
     // Handle used decls
-    if (DECL_PRESERVE_P (decl))
-      AttributeUsedGlobals.push_back(GV);
+    if (DECL_PRESERVE_P (decl)) {
+      const Type *SBP= PointerType::get(Type::Int8Ty);
+      AttributeUsedGlobals.push_back(ConstantExpr::getBitCast(GV, SBP));
+    }
   }
   
   if (TheDebugInfo) TheDebugInfo->EmitGlobalVariable(GV, decl); 

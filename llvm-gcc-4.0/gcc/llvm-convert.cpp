@@ -60,13 +60,6 @@ extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 }
 
-/// isAggregateType - Return true if the specified GCC type is an aggregate that
-/// cannot live in an LLVM register.
-static bool isAggregateType(tree type) {
-  return TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == ARRAY_TYPE ||
-         TREE_CODE(type) == UNION_TYPE  || TREE_CODE(type) == COMPLEX_TYPE;
-}
-
 /// isGCC_SSA_Temporary - Return true if this is an SSA temporary that we can
 /// directly compile into an LLVM temporary.  This saves us from creating an
 /// alloca and creating loads/stores of that alloca (a compile-time win).  We
@@ -75,7 +68,7 @@ static bool isAggregateType(tree type) {
 static bool isGCC_SSA_Temporary(tree decl) {
   return TREE_CODE(decl) == VAR_DECL &&
          DECL_GIMPLE_FORMAL_TEMP_P(decl) && !TREE_ADDRESSABLE(decl) &&
-         !isAggregateType(TREE_TYPE(decl));
+         !isAggregateTreeType(TREE_TYPE(decl));
 }
 
 /// isStructWithVarSizeArrayAtEnd - Return true if this StructType contains a
@@ -482,7 +475,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
 
 
 Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
-  assert((isAggregateType(TREE_TYPE(exp)) == (DestLoc != 0) ||
+  assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
           TREE_CODE(exp) == MODIFY_EXPR) &&
          "Didn't pass DestLoc to an aggregate expr, or passed it to scalar!");
   
@@ -1274,7 +1267,7 @@ Value *TreeToLLVM::EmitSTATEMENT_LIST(tree exp, Value *DestLoc) {
     // If this stmt returns an aggregate value (e.g. a call whose result is
     // ignored), create a temporary to receive the value.  Note that we don't
     // do this for MODIFY_EXPRs as an efficiency hack.
-    if (isAggregateType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
+    if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
       DestLoc = CreateTemporary(ConvertType(TREE_TYPE(stmt)));
 
     Emit(stmt, DestLoc);
@@ -2245,11 +2238,12 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, Value *DestLoc) {
   bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
   if (DestLoc == 0) {
     // Scalar to scalar copy.
-    assert(!isAggregateType(TREE_TYPE(Op)) && "Aggregate to scalar nop_expr!");
+    assert(!isAggregateTreeType(TREE_TYPE(Op))
+	   && "Aggregate to scalar nop_expr!");
     Value *OpVal = Emit(Op, DestLoc);
     if (Ty == Type::VoidTy) return 0;
     return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
-  } else if (isAggregateType(TREE_TYPE(Op))) {
+  } else if (isAggregateTreeType(TREE_TYPE(Op))) {
     // Aggregate to aggregate copy.
     DestLoc = CastToType(Instruction::BitCast, DestLoc, PointerType::get(Ty));
     Value *OpVal = Emit(Op, DestLoc);
@@ -2277,7 +2271,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
   tree Op = TREE_OPERAND(exp, 0);
   const Type *OpTy = ConvertType(TREE_TYPE(Op));
 
-  if (isAggregateType(TREE_TYPE(Op))) {
+  if (isAggregateTreeType(TREE_TYPE(Op))) {
     if (DestLoc) {
       // This is an aggregate-to-agg VIEW_CONVERT_EXPR, just evaluate in place.
       Value *OpVal = Emit(Op, CastToType(Instruction::BitCast, DestLoc, 
@@ -3833,7 +3827,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   Value *Arg1 = Emit(Arg1T, 0);   // Emit the address of the destination.
   // The second arg of llvm.va_copy is a pointer to a valist.
   Value *Arg2;
-  if (!isAggregateType(TREE_TYPE(Arg2T))) {
+  if (!isAggregateTreeType(TREE_TYPE(Arg2T))) {
     // Emit it as a value, then store it to a temporary slot.
     Value *V2 = Emit(Arg2T, 0);
     Arg2 = CreateTemporary(V2->getType());

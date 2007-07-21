@@ -194,7 +194,7 @@ if [ "$ENABLE_LLVM" == true ]; then
   # we don't want to make the builders hit swap by firing off too many gcc's at
   # the same time.
   ## FIXME: Remove -O2 when rdar://4560645 is fixed.
-  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH=\"$LLVM_ARCHS\" \
+  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
        OPTIMIZE_OPTION='-O2' \
        CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 fi

@@ -58,10 +58,6 @@ extern "C" {
 #include "tm.h"
 }
 
-static cl::opt<bool>
-DumpLLVM("dump-llvm", cl::desc("Dump out the llvm code for a file to stderr"),
-         cl::init(false));
-
 // Global state for the LLVM backend.
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
@@ -202,21 +198,13 @@ void llvm_asm_file_start(void) {
     //    PerFunctionPasses->add(createCFGSimplificationPass());
   }
 
-  if (!HasPerFunctionPasses) {
-    delete PerFunctionPasses;
-    PerFunctionPasses = 0;
-  }
-  
-  // Dump out .ll code.
-  //PerFunctionPasses->add(new PrintFunctionPass());
-  
   // FIXME: AT -O0/O1, we should stream out functions at a time.
   PerModulePasses = new PassManager();
-
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
-  if (DumpLLVM) PerModulePasses->add(new PrintModulePass(&std::cerr));
+  bool HasPerModulePasses = false;
 
   if (optimize > 0) {
+    HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
     PM->add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
     PM->add(createCFGSimplificationPass());    // Clean up disgusting code
@@ -280,6 +268,7 @@ void llvm_asm_file_start(void) {
     // Disable emission of .ident into the output file... which is completely
     // wrong for llvm/.bc emission cases.
     flag_no_ident = 1;
+    HasPerModulePasses = true;
   } else if (emit_llvm) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
     // -emit-llvm -S to the GCC driver.
@@ -288,18 +277,44 @@ void llvm_asm_file_start(void) {
     // Disable emission of .ident into the output file... which is completely
     // wrong for llvm/.bc emission cases.
     flag_no_ident = 1;
+    HasPerModulePasses = true;
   } else {
-    CodeGenPasses =
-      new FunctionPassManager(new ExistingModuleProvider(TheModule));
-    CodeGenPasses->add(new TargetData(*TheTarget->getTargetData()));
+    FunctionPassManager *PM;
+    
+    // If there are passes we have to run on the entire module, we do codegen
+    // as a separate "pass" after that happens.
+    // FIXME: This is disabled right now until bugs can be worked out.  Reenable
+    // this for fast -O0 compiles!
+    if (HasPerModulePasses || 1) {
+      CodeGenPasses = PM =
+        new FunctionPassManager(new ExistingModuleProvider(TheModule));
+      PM->add(new TargetData(*TheTarget->getTargetData()));
+    } else {
+      // If there are no module-level passes that have to be run, we codegen as
+      // each function is parsed.
+      PM = PerFunctionPasses;
+      HasPerFunctionPasses = true;
+    }
 
     // Normal mode, emit a .s file by running the code generator.
-    if (TheTarget->addPassesToEmitFile(*CodeGenPasses, *AsmOutFile, 
+    if (TheTarget->addPassesToEmitFile(*PM, *AsmOutFile, 
                                        TargetMachine::AssemblyFile,
                                        /*FAST*/optimize == 0)) {
       std::cerr << "Error interfacing to target machine!";
       exit(1);
     }
+    
+  }
+  
+  if (HasPerFunctionPasses) {
+    PerFunctionPasses->doInitialization();
+  } else {
+    delete PerFunctionPasses;
+    PerFunctionPasses = 0;
+  }
+  if (!HasPerModulePasses) {
+    delete PerModulePasses;
+    PerModulePasses = 0;
   }
   
   timevar_pop(TV_LLVM_INIT);
@@ -346,6 +361,10 @@ void llvm_asm_file_end(void) {
                        "llvm.used", TheModule);
   }
   
+  // Finish off the per-function pass.
+  if (PerFunctionPasses)
+    PerFunctionPasses->doFinalization();
+    
   // Run module-level optimizers, if any are present.
   if (PerModulePasses)
     PerModulePasses->run(*TheModule);

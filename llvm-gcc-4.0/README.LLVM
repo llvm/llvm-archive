@@ -42,10 +42,6 @@ $ tar zxvf llvm-gcc4-x.y.source.tar.gz
 //===-----------------------
 Linux-specific Instructions:
 
-Until http://llvm.org/PR1017 is fixed, you should configure with
---disable-shared. This fixes problems when missing symbols in the stdc++ 
-library when trying to link llvm-g++. 
-
 If llvm-gcc doesn't build right, try building LLVM with OPTIMIZE_OPTION=-O2.
 This may be host compiler version specific.
 

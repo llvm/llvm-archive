@@ -2659,6 +2659,7 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
   BasicBlock::iterator InsertPt;
   if (Instruction *I = dyn_cast<Instruction>(FirstVal)) {
     InsertPt = I;                      // Insert after the init instruction.
+    
     // If the instruction is an alloca in the entry block, the insert point
     // will be before the alloca.  Advance to the AllocaInsertionPoint if we are
     // before it.
@@ -2670,6 +2671,13 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
           break;
         }
       }
+    }
+    
+    // If the instruction is an invoke, the init is inserted on the normal edge.
+    if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+      InsertPt = II->getNormalDest()->begin();
+      while (isa<PHINode>(InsertPt))
+        ++InsertPt;
     }
   } else {
     InsertPt = AllocaInsertionPoint;   // Insert after the allocas.

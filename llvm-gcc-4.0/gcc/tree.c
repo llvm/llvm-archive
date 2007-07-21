@@ -1632,7 +1632,9 @@ staticp (tree arg)
     case VAR_DECL:
       return ((TREE_STATIC (arg) || DECL_EXTERNAL (arg))
 	      && ! DECL_THREAD_LOCAL (arg)
-	      && ! DECL_NON_ADDR_CONST_P (arg)
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+	      && ! DECL_DLLIMPORT_P (arg)
+ /* APPLE LOCAL end mainline 2005-10-12 */
 	      ? arg : NULL);
 
     case CONST_DECL:
@@ -3245,39 +3247,84 @@ tree
 merge_dllimport_decl_attributes (tree old, tree new)
 {
   tree a;
-  int delete_dllimport_p;
-
-  old = DECL_ATTRIBUTES (old);
-  new = DECL_ATTRIBUTES (new);
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  int delete_dllimport_p = 1;
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
   /* What we need to do here is remove from `old' dllimport if it doesn't
      appear in `new'.  dllimport behaves like extern: if a declaration is
      marked dllimport and a definition appears later, then the object
-     is not dllimport'd.  */
-  if (lookup_attribute ("dllimport", old) != NULL_TREE
-      && lookup_attribute ("dllimport", new) == NULL_TREE)
-    delete_dllimport_p = 1;
+     is not dllimport'd.  We also remove a `new' dllimport if the old list
+     contains dllexport:  dllexport always overrides dllimport, regardless
+     of the order of declaration.  */
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  if (!VAR_OR_FUNCTION_DECL_P (new))
+    delete_dllimport_p = 0;
+  else if (DECL_DLLIMPORT_P (new)
+           && lookup_attribute ("dllexport", DECL_ATTRIBUTES (old)))
+    { 
+      DECL_DLLIMPORT_P (new) = 0;
+      warning ("%qD already declared with dllexport attribute: "
+	      "dllimport ignored", new);
+    }
+  else if (DECL_DLLIMPORT_P (old) && !DECL_DLLIMPORT_P (new))
+    {
+      /* Warn about overriding a symbol that has already been used. eg:
+           extern int __attribute__ ((dllimport)) foo;
+           int* bar () {return &foo;}
+           int foo;
+      */
+      if (TREE_USED (old))
+        {
+          warning ("%qD redeclared without dllimport attribute "
+                   "after being referenced with dll linkage", new);
+          /* If we have used a variable's address with dllimport linkage,
+             keep the old DECL_DLLIMPORT_P flag: the ADDR_EXPR using the
+             decl may already have had TREE_INVARIANT and TREE_CONSTANT
+             computed.
+             We still remove the attribute so that assembler code refers
+             to '&foo rather than '_imp__foo'.  */
+          if (TREE_CODE (old) == VAR_DECL && TREE_ADDRESSABLE (old))
+            DECL_DLLIMPORT_P (new) = 1;
+        }
+
+      /* Let an inline definition silently override the external reference,
+         but otherwise warn about attribute inconsistency.  */ 
+      else if (TREE_CODE (new) == VAR_DECL
+               || !DECL_DECLARED_INLINE_P (new))
+        warning ("%qD redeclared without dllimport attribute: "
+                 "previous dllimport ignored", new);
+    }
+ /* APPLE LOCAL end mainline 2005-10-12 */
   else
     delete_dllimport_p = 0;
 
-  a = merge_attributes (old, new);
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  a = merge_attributes (DECL_ATTRIBUTES (old), DECL_ATTRIBUTES (new));
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
   if (delete_dllimport_p)
     {
       tree prev, t;
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+      const size_t attr_len = strlen ("dllimport");
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
       /* Scan the list for dllimport and delete it.  */
       for (prev = NULL_TREE, t = a; t; prev = t, t = TREE_CHAIN (t))
-	{
-	  if (is_attribute_p ("dllimport", TREE_PURPOSE (t)))
-	    {
-	      if (prev == NULL_TREE)
-		a = TREE_CHAIN (a);
-	      else
-		TREE_CHAIN (prev) = TREE_CHAIN (t);
-	      break;
-	    }
-	}
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+       {
+         if (is_attribute_with_length_p ("dllimport", attr_len,
+                                         TREE_PURPOSE (t)))           
+           {
+             if (prev == NULL_TREE)
+               a = TREE_CHAIN (a);
+             else
+               TREE_CHAIN (prev) = TREE_CHAIN (t);
+             break;
+           }
+       }
+ /* APPLE LOCAL end mainline 2005-10-12 */
     }
 
   return a;
@@ -3298,15 +3345,19 @@ handle_dll_attribute (tree * pnode, tree name, tree args, int flags,
     {
       if (flags & ((int) ATTR_FLAG_DECL_NEXT | (int) ATTR_FLAG_FUNCTION_NEXT
 		   | (int) ATTR_FLAG_ARRAY_NEXT))
-	{
-	  *no_add_attrs = true;
-	  return tree_cons (name, args, NULL_TREE);
-	}
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+        {
+          *no_add_attrs = true;
+          return tree_cons (name, args, NULL_TREE);
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
       if (TREE_CODE (node) != RECORD_TYPE && TREE_CODE (node) != UNION_TYPE)
-	{
-	  warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
-	  *no_add_attrs = true;
-	}
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+        {
+          warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+          *no_add_attrs = true;
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
       return NULL_TREE;
     }
@@ -3315,34 +3366,51 @@ handle_dll_attribute (tree * pnode, tree name, tree args, int flags,
      any damage.  */
   if (is_attribute_p ("dllimport", name))
     {
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+      /* Honor any target-specific overides. */ 
+      if (!targetm.valid_dllimport_attribute_p (node))
+        *no_add_attrs = true;
+
+      else if (TREE_CODE (node) == FUNCTION_DECL
+               && DECL_DECLARED_INLINE_P (node))
+        {
+          warning ("inline function %qD declared as "
+                   " dllimport: attribute ignored", node); 
+          *no_add_attrs = true;
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
       /* Like MS, treat definition of dllimported variables and
-	 non-inlined functions on declaration as syntax errors.  We
-	 allow the attribute for function definitions if declared
-	 inline.  */
-      if (TREE_CODE (node) == FUNCTION_DECL  && DECL_INITIAL (node)
-          && !DECL_DECLARED_INLINE_P (node))
-	{
-	  error ("%Jfunction %qD definition is marked dllimport.", node, node);
-	  *no_add_attrs = true;
-	}
+         non-inlined functions on declaration as syntax errors. */
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+      else if (TREE_CODE (node) == FUNCTION_DECL && DECL_INITIAL (node))
+        {
+          error ("%Jfunction %qD definition is marked dllimport.", node, node);
+          *no_add_attrs = true;
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
       else if (TREE_CODE (node) == VAR_DECL)
-	{
-	  if (DECL_INITIAL (node))
-	    {
-	      error ("%Jvariable %qD definition is marked dllimport.",
-		     node, node);
-	      *no_add_attrs = true;
-	    }
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+        {
+          if (DECL_INITIAL (node))
+            {
+              error ("%Jvariable %qD definition is marked dllimport.",
+                     node, node);
+              *no_add_attrs = true;
+            }
 
-	  /* `extern' needn't be specified with dllimport.
-	     Specify `extern' now and hope for the best.  Sigh.  */
-	  DECL_EXTERNAL (node) = 1;
-	  /* Also, implicitly give dllimport'd variables declared within
-	     a function global scope, unless declared static.  */
-	  if (current_function_decl != NULL_TREE && !TREE_STATIC (node))
-	    TREE_PUBLIC (node) = 1;
-	}
+          /* `extern' needn't be specified with dllimport.
+             Specify `extern' now and hope for the best.  Sigh.  */
+          DECL_EXTERNAL (node) = 1;
+          /* Also, implicitly give dllimport'd variables declared within
+             a function global scope, unless declared static.  */
+          if (current_function_decl != NULL_TREE && !TREE_STATIC (node))
+            TREE_PUBLIC (node) = 1;
+        }
+
+      if (*no_add_attrs == false)
+        DECL_DLLIMPORT_P (node) = 1;
+ /* APPLE LOCAL end mainline 2005-10-12 */
     }
 
   /*  Report error if symbol is not accessible at global scope.  */

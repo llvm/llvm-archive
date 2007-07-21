@@ -1209,9 +1209,11 @@ i[34567]86-*-pe | i[34567]86-*-cygwin*)
 	xm_file=i386/xm-cygwin.h
 	tmake_file="i386/t-cygwin i386/t-cygming"
 	target_gtfiles="\$(srcdir)/config/i386/winnt.c"
-	extra_objs=winnt.o
+ # APPLE LOCAL begin mainline 2005-10-12
+	extra_objs="winnt.o winnt-stubs.o"
+ # APPLE LOCAL end mainline 2005-10-12
 	c_target_objs=cygwin2.o
-	cxx_target_objs=cygwin2.o
+	cxx_target_objs="cygwin2.o winnt-cxx.o"
 	extra_gcc_objs=cygwin1.o
 	if test x$enable_threads = xyes; then
 		thread_file='posix'
@@ -1222,7 +1224,10 @@ i[34567]86-*-mingw32*)
 	xm_file=i386/xm-mingw32.h
 	tmake_file="i386/t-cygming i386/t-mingw32"
 	target_gtfiles="\$(srcdir)/config/i386/winnt.c"
-	extra_objs=winnt.o
+ # APPLE LOCAL begin mainline 2005-10-12
+	extra_objs="winnt.o winnt-stubs.o"
+	cxx_target_objs="winnt-cxx.o"
+ # APPLE LOCAL end mainline 2005-10-12
 	case ${enable_threads} in
 	  "" | yes | win32) thread_file='win32' ;;
 	esac

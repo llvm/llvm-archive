@@ -207,14 +207,21 @@ do {									\
    section and we need to set DECL_SECTION_NAME so we do that here.
    Note that we can be called twice on the same decl.  */
 
-#undef TARGET_ENCODE_SECTION_INFO
-#define TARGET_ENCODE_SECTION_INFO  i386_pe_encode_section_info
+ /* APPLE LOCAL begin mainline 2005-07-31 */
+#undef SUBTARGET_ENCODE_SECTION_INFO
+#define SUBTARGET_ENCODE_SECTION_INFO  i386_pe_encode_section_info
+ /* APPLE LOCAL end mainline 2005-07-31 */
 #undef  TARGET_STRIP_NAME_ENCODING
 #define TARGET_STRIP_NAME_ENCODING  i386_pe_strip_name_encoding_full
 
 /* Output a reference to a label.  */
 #undef ASM_OUTPUT_LABELREF
 #define ASM_OUTPUT_LABELREF  i386_pe_output_labelref
+
+ /* APPLE LOCAL begin mainline 2005-07-31 */
+#undef  COMMON_ASM_OP
+#define COMMON_ASM_OP	"\t.comm\t"
+ /* APPLE LOCAL end mainline 2005-07-31 */
 
 /* Output a common block.  */
 #undef ASM_OUTPUT_COMMON
@@ -421,6 +428,23 @@ extern int i386_pe_dllimport_p (tree);
    when constructing thunks.  */
 #undef TARGET_USE_LOCAL_THUNK_ALIAS_P
 #define TARGET_USE_LOCAL_THUNK_ALIAS_P(DECL) (!DECL_ONE_ONLY (DECL))
+
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+#define TARGET_VALID_DLLIMPORT_ATTRIBUTE_P i386_pe_valid_dllimport_attribute_p
+#define TARGET_CXX_ADJUST_CLASS_AT_DEFINITION i386_pe_adjust_class_at_definition
+ /* APPLE LOCAL end mainline 2005-10-12 */
+
+ /* APPLE LOCAL begin mainline 2005-06-01 */
+/*  mcount() does not need a counter variable.  */
+#undef NO_PROFILE_COUNTERS
+#define NO_PROFILE_COUNTERS 1
+ /* APPLE LOCAL end mainline 2005-06-01 */
+
+ /* APPLE LOCAL begin mainline 2005-04-01 */
+#define SUBTARGET_ATTRIBUTE_TABLE \
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler } */ \
+  { "selectany", 0, 0, true, false, false, ix86_handle_selectany_attribute }
+ /* APPLE LOCAL end mainline 2005-04-01 */
 
 #undef TREE
 

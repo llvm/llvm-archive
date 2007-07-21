@@ -2368,9 +2368,10 @@ extern bool llvm_set_decl_p(tree);
 #define DECL_LANG_FLAG_6(NODE) (DECL_CHECK (NODE)->decl.lang_flag_6)
 #define DECL_LANG_FLAG_7(NODE) (DECL_CHECK (NODE)->decl.lang_flag_7)
 
-/* Used to indicate that the pointer to this DECL cannot be treated as
-   an address constant.  */
-#define DECL_NON_ADDR_CONST_P(NODE) (DECL_CHECK (NODE)->decl.non_addr_const_p)
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+/* Used to indicate that the DECL is a dllimport.  */
+#define DECL_DLLIMPORT_P(NODE) (DECL_CHECK (NODE)->decl.dllimport_flag)
+ /* APPLE LOCAL end mainline 2005-10-12 */
 
 /* Used in a FIELD_DECL to indicate that we cannot form the address of
    this component.  */
@@ -2463,7 +2464,9 @@ struct tree_decl GTY(())
   unsigned artificial_flag : 1;
   unsigned weak_flag : 1;
 
-  unsigned non_addr_const_p : 1;
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  unsigned dllimport_flag : 1; 
+ /* APPLE LOCAL end mainline 2005-10-12 */
   unsigned no_instrument_function_entry_exit : 1;
   unsigned comdat_flag : 1;
   unsigned malloc_flag : 1;

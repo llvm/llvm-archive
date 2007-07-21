@@ -237,6 +237,9 @@ extern int ix86_data_alignment (tree, int);
 extern int ix86_local_alignment (tree, int);
 extern int ix86_constant_alignment (tree, int);
 extern tree ix86_handle_shared_attribute (tree *, tree, tree, int, bool *);
+/* APPLE LOCAL begin mainline 2005-04-01 */
+extern tree ix86_handle_selectany_attribute (tree *, tree, tree, int, bool *); 
+/* APPLE LOCAL end mainline 2005-04-01 */
 
 extern unsigned int i386_pe_section_type_flags (tree, const char *, int);
 extern void i386_pe_asm_named_section (const char *, unsigned int, tree);
@@ -261,6 +264,15 @@ extern void i386_pe_encode_section_info (tree, rtx, int);
 extern const char *i386_pe_strip_name_encoding (const char *);
 extern const char *i386_pe_strip_name_encoding_full (const char *);
 extern void i386_pe_output_labelref (FILE *, const char *);
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+extern int i386_pe_valid_dllimport_attribute_p (tree);
+
+/* In winnt-cxx.c and winnt-stubs.c  */
+extern void i386_pe_adjust_class_at_definition (tree);
+extern bool i386_pe_type_dllimport_p (tree);
+extern bool i386_pe_type_dllexport_p (tree);
+
+ /* APPLE LOCAL end mainline 2005-10-12 */
 extern rtx maybe_get_pool_constant (rtx);
 
 extern char internal_label_prefix[16];

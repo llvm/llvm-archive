@@ -1,7 +1,7 @@
 /* Subroutines for insn-output.c for Windows NT.
    Contributed by Douglas Rupp (drupp@cs.washington.edu)
    Copyright (C) 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
-   Free Software Foundation, Inc.
+   2005, 2006  Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -76,6 +76,31 @@ ix86_handle_shared_attribute (tree *node, tree name,
 
   return NULL_TREE;
 }
+ /* APPLE LOCAL begin mainline 2005-04-01 */
+
+/* Handle a "selectany" attribute;
+   arguments as in struct attribute_spec.handler.  */
+tree
+ix86_handle_selectany_attribute (tree *node, tree name,
+			         tree args ATTRIBUTE_UNUSED,
+			         int flags ATTRIBUTE_UNUSED,
+				 bool *no_add_attrs)
+{
+  /* The attribute applies only to objects that are initialized and have
+     external linkage.  However, we may not know about initialization
+     until the language frontend has processed the decl. We'll check for
+     initialization later in encode_section_info.  */	
+  if (TREE_CODE (*node) != VAR_DECL || !TREE_PUBLIC (*node))
+    {	
+      error ("%qs attribute applies only to initialized variables"
+       	     " with external linkage",  IDENTIFIER_POINTER (name));
+      *no_add_attrs = true;
+    }
+
+  return NULL_TREE;
+}
+
+ /* APPLE LOCAL end mainline 2005-04-01 */
 
 /* Return the type that we should use to determine if DECL is
    imported or exported.  */
@@ -83,132 +108,84 @@ ix86_handle_shared_attribute (tree *node, tree name,
 static tree
 associated_type (tree decl)
 {
-  tree t = NULL_TREE;
-
-  /* In the C++ frontend, DECL_CONTEXT for a method doesn't actually refer
-     to the containing class.  So we look at the 'this' arg.  */
-  if (TREE_CODE (TREE_TYPE (decl)) == METHOD_TYPE)
-    {
-      /* Artificial methods are not affected by the import/export status
-	 of their class unless they are COMDAT.  Implicit copy ctor's and
-	 dtor's are not affected by class status but virtual and
-	 non-virtual thunks are.  */
-      if (!DECL_ARTIFICIAL (decl) || DECL_COMDAT (decl))
-	t = TYPE_MAIN_VARIANT
-	  (TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (decl)))));
-    }
-  else if (DECL_CONTEXT (decl) && TYPE_P (DECL_CONTEXT (decl)))
-    t = DECL_CONTEXT (decl);
-
-  return t;
+  /* APPLE LOCAL begin mainline 2005-10-12 */
+  return  (DECL_CONTEXT (decl) && TYPE_P (DECL_CONTEXT (decl)))
+            ?  DECL_CONTEXT (decl) : NULL_TREE;
+  /* APPLE LOCAL end mainline 2005-10-12 */
 }
 
-/* Return nonzero if DECL is a dllexport'd object.  */
+/* Return true if DECL is a dllexport'd object.  */
 
 int
 i386_pe_dllexport_p (tree decl)
 {
-  tree exp;
-
   if (TREE_CODE (decl) != VAR_DECL
       && TREE_CODE (decl) != FUNCTION_DECL)
     return 0;
-  exp = lookup_attribute ("dllexport", DECL_ATTRIBUTES (decl));
-  if (exp)
+
+  /* APPLE LOCAL begin mainline 2005-10-12 */
+  if (lookup_attribute ("dllexport", DECL_ATTRIBUTES (decl)))
     return 1;
 
-  /* Class members get the dllexport status of their class.  */
-  if (associated_type (decl))
-    {
-      exp = lookup_attribute ("dllexport",
-			      TYPE_ATTRIBUTES (associated_type (decl)));
-      if (exp)
-	return 1;
-    }
-
+  /* Also mark class members of exported classes with dllexport.  */
+  if (associated_type (decl)
+      && lookup_attribute ("dllexport",
+                           TYPE_ATTRIBUTES (associated_type (decl))))
+    return i386_pe_type_dllexport_p (decl);
+  /* APPLE LOCAL end mainline 2005-10-12 */
+  
   return 0;
 }
 
-/* Return nonzero if DECL is a dllimport'd object.  */
+/* Return true if DECL is a dllimport'd object.  */
 
 int
 i386_pe_dllimport_p (tree decl)
 {
-  tree imp;
-  int context_imp = 0;
-
-  if (TREE_CODE (decl) == FUNCTION_DECL
-      && TARGET_NOP_FUN_DLLIMPORT)
-    return 0;
-
   if (TREE_CODE (decl) != VAR_DECL
       && TREE_CODE (decl) != FUNCTION_DECL)
     return 0;
 
-  imp = lookup_attribute ("dllimport", DECL_ATTRIBUTES (decl));
-
-  /* Class members get the dllimport status of their class.  */
-  if (!imp && associated_type (decl))
+  /* APPLE LOCAL begin mainline 2005-10-12 */
+  /* Lookup the attribute in addition to checking the DECL_DLLIMPORT_P flag.
+     We may need to override an earlier decision.  */
+  if (DECL_DLLIMPORT_P (decl)
+      && lookup_attribute ("dllimport", DECL_ATTRIBUTES (decl)))
     {
-      imp = lookup_attribute ("dllimport",
-			      TYPE_ATTRIBUTES (associated_type (decl)));
-      if (imp)
-	context_imp = 1;
-    }
-
-  if (imp)
-    {
-      /* Don't mark defined functions as dllimport.  If the definition
-	 itself was marked with dllimport, than ix86_handle_dll_attribute
-	 reports an error. This handles the case when the definition
-	 overrides an earlier declaration.  */
-      if (TREE_CODE (decl) ==  FUNCTION_DECL && DECL_INITIAL (decl)
-	  && !DECL_INLINE (decl))
-	{
-	   /* Don't warn about artificial methods.  */
-	  if (!DECL_ARTIFICIAL (decl))
-	    warning ("%Jfunction '%D' is defined after prior declaration "
-		     "as dllimport: attribute ignored", decl, decl);
-	  return 0;
-	}
-
-      /* We ignore the dllimport attribute for inline member functions.
-	 This differs from MSVC behavior which treats it like GNUC
-	 'extern inline' extension.  */
-      else if (TREE_CODE (decl) == FUNCTION_DECL && DECL_INLINE (decl))
+      /* Make a final check to see if this is a definition before we generate
+         RTL for an indirect reference.  */   
+      if (!DECL_EXTERNAL (decl))
         {
-	  if (extra_warnings)
-	    warning ("%Jinline function '%D' is declared as dllimport: "
-		     "attribute ignored.", decl, decl);
-	  return 0;
-	}
-
-      /*  Don't allow definitions of static data members in dllimport class,
-	  Just ignore attribute for vtable data.  */
-      else if (TREE_CODE (decl) == VAR_DECL
-	       && TREE_STATIC (decl) && TREE_PUBLIC (decl)
-	       && !DECL_EXTERNAL (decl) && context_imp)
-	{
-	  if (!DECL_VIRTUAL_P (decl))
-            error ("%Jdefinition of static data member '%D' of "
-		   "dllimport'd class.", decl, decl);
-	  return 0;
-	}
-
-      /* Since we can't treat a pointer to a dllimport'd symbol as a
-	 constant address, we turn off the attribute on C++ virtual
-	 methods to allow creation of vtables using thunks.  Don't mark
-	 artificial methods either (in associated_type, only COMDAT
-	 artificial method get import status from class context).  */
-      else if (TREE_CODE (TREE_TYPE (decl)) == METHOD_TYPE
-	       && (DECL_VIRTUAL_P (decl) || DECL_ARTIFICIAL (decl)))
-	return 0;
-
+          error ("%qD: definition is marked as dllimport", decl);
+          DECL_DLLIMPORT_P (decl) = 0;
+          return 0;
+        }
       return 1;
     }
 
+  /* The DECL_DLLIMPORT_P flag was set for decls in the class definition
+     by  targetm.cxx.adjust_class_at_definition.  Check again to emit
+     warnings if the class attribute has been overriden by an
+     out-of-class definition.  */
+  else if (associated_type (decl)
+           && lookup_attribute ("dllimport",
+                                TYPE_ATTRIBUTES (associated_type (decl))))
+    return i386_pe_type_dllimport_p (decl);
+  /* APPLE LOCAL end mainline 2005-10-12 */
+  
   return 0;
 }
+
+/* APPLE LOCAL begin mainline 2005-10-12 */
+/* Handle the -mno-fun-dllimport target switch.  */
+int
+i386_pe_valid_dllimport_attribute_p (tree decl)
+{
+   if (TARGET_NOP_FUN_DLLIMPORT && TREE_CODE (decl) == FUNCTION_DECL)
+     return 0;
+   return 1;
+}
+/* APPLE LOCAL end mainline 2005-10-12 */
 
 /* Return nonzero if SYMBOL is marked as being dllexport'd.  */
 
@@ -251,10 +228,9 @@ i386_pe_mark_dllexport (tree decl)
   if (i386_pe_dllimport_name_p (oldname))
     {
       warning ("%Jinconsistent dll linkage for '%D', dllexport assumed.",
-	       decl, decl);
+        decl, decl);
      /* Remove DLL_IMPORT_PREFIX.  */
       oldname += strlen (DLL_IMPORT_PREFIX);
-      DECL_NON_ADDR_CONST_P (decl) = 0;
     }
   else if (i386_pe_dllexport_name_p (oldname))
     return;  /*  already done  */
@@ -301,12 +277,15 @@ i386_pe_mark_dllimport (tree decl)
   else if (i386_pe_dllimport_name_p (oldname))
     {
       /* Already done, but do a sanity check to prevent assembler errors.  */
-      if (!DECL_EXTERNAL (decl) || !TREE_PUBLIC (decl))
-	{
-	  error ("%Jfailure in redeclaration of '%D': dllimport'd "
-		 "symbol lacks external linkage.", decl, decl);
-	  abort();
-	}
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+      if (!DECL_EXTERNAL (decl) || !TREE_PUBLIC (decl)
+          || !DECL_DLLIMPORT_P (decl))
+        {
+          error ("%Jfailure in redeclaration of '%D': dllimport'd "
+                 "symbol lacks external linkage.", decl, decl);
+          abort();
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
       return;
     }
 
@@ -324,8 +303,9 @@ i386_pe_mark_dllimport (tree decl)
   newrtl = gen_rtx_MEM (Pmode,symref);
   XEXP (DECL_RTL (decl), 0) = newrtl;
 
-  /* Can't treat a pointer to this as a constant address */
-  DECL_NON_ADDR_CONST_P (decl) = 1;
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  DECL_DLLIMPORT_P (decl) = 1;
+ /* APPLE LOCAL end mainline 2005-10-12 */
 }
 
 /* Return string which is the former assembler name modified with a
@@ -338,7 +318,7 @@ gen_stdcall_or_fastcall_suffix (tree decl, bool fastcall)
   int total = 0;
   /* ??? This probably should use XSTR (XEXP (DECL_RTL (decl), 0), 0) instead
      of DECL_ASSEMBLER_NAME.  */
-   const char *asmname =  IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+  const char *asmname =  IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
   char *newsym;
   char *p;
   tree formal_type;
@@ -351,7 +331,7 @@ gen_stdcall_or_fastcall_suffix (tree decl, bool fastcall)
   if (formal_type != NULL_TREE)
     {
       /* These attributes are ignored for variadic functions in
-	 i386.c:ix86_return_pops_args. For compatibility with MS
+         i386.c:ix86_return_pops_args. For compatibility with MS
          compiler do not add @0 suffix here.  */ 
       if (TREE_VALUE (tree_last (formal_type)) != void_type_node)
         return DECL_ASSEMBLER_NAME (decl);
@@ -360,17 +340,19 @@ gen_stdcall_or_fastcall_suffix (tree decl, bool fastcall)
          by convert_arguments in c-typeck.c or cp/typeck.c.  */
       while (TREE_VALUE (formal_type) != void_type_node
 	     && COMPLETE_TYPE_P (TREE_VALUE (formal_type)))	
-	{
-	  int parm_size
-	    = TREE_INT_CST_LOW (TYPE_SIZE (TREE_VALUE (formal_type)));
-	    /* Must round up to include padding.  This is done the same
-	       way as in store_one_arg.  */
-	  parm_size = ((parm_size + PARM_BOUNDARY - 1)
-		       / PARM_BOUNDARY * PARM_BOUNDARY);
-	  total += parm_size;
-	  formal_type = TREE_CHAIN (formal_type);\
-	}
-     }
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+        {
+          int parm_size
+            = TREE_INT_CST_LOW (TYPE_SIZE (TREE_VALUE (formal_type)));
+          /* Must round up to include padding.  This is done the same
+             way as in store_one_arg.  */
+          parm_size = ((parm_size + PARM_BOUNDARY - 1)
+                       / PARM_BOUNDARY * PARM_BOUNDARY);
+          total += parm_size;
+          formal_type = TREE_CHAIN (formal_type); \
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
+    }
 
   /* Assume max of 8 base 10 digits in the suffix.  */
   newsym = alloca (1 + strlen (asmname) + 1 + 8 + 1);
@@ -392,62 +374,65 @@ i386_pe_encode_section_info (tree decl, rtx rtl, int first)
       tree newid = NULL_TREE;
 
       if (lookup_attribute ("stdcall", type_attributes))
-	newid = gen_stdcall_or_fastcall_suffix (decl, false);
+        newid = gen_stdcall_or_fastcall_suffix (decl, false);
       else if (lookup_attribute ("fastcall", type_attributes))
-	newid = gen_stdcall_or_fastcall_suffix (decl, true);
+        newid = gen_stdcall_or_fastcall_suffix (decl, true);
       if (newid != NULL_TREE) 	
-	{
-	  rtx rtlname = XEXP (rtl, 0);
-	  if (GET_CODE (rtlname) == MEM)
-	    rtlname = XEXP (rtlname, 0);
-	  XSTR (rtlname, 0) = IDENTIFIER_POINTER (newid);
-	  /* These attributes must be present on first declaration,
-	     change_decl_assembler_name will warn if they are added
-	     later and the decl has been referenced, but duplicate_decls
-	     should catch the mismatch before this is called.  */ 
-	  change_decl_assembler_name (decl, newid);
-	}
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+        {
+          rtx rtlname = XEXP (rtl, 0);
+          if (GET_CODE (rtlname) == MEM)
+            rtlname = XEXP (rtlname, 0);
+          XSTR (rtlname, 0) = IDENTIFIER_POINTER (newid);
+          /* These attributes must be present on first declaration,
+             change_decl_assembler_name will warn if they are added
+             later and the decl has been referenced, but duplicate_decls
+             should catch the mismatch before this is called.  */ 
+          change_decl_assembler_name (decl, newid);
+        }
+ /* APPLE LOCAL end mainline 2005-10-12 */
     }
 
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  else if (TREE_CODE (decl) == VAR_DECL
+           && lookup_attribute ("selectany", DECL_ATTRIBUTES (decl)))
+    {
+      if (DECL_INITIAL (decl)
+        /* If an object is initialized with a ctor, the static
+           initialization and destruction code for it is present in
+           each unit defining the object.  The code that calls the
+           ctor is protected by a link-once guard variable, so that
+           the object still has link-once semantics,  */
+          || TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (decl)))
+        make_decl_one_only (decl);
+      else
+        error ("%qD:'selectany' attribute applies only to initialized objects",
+               decl);
+    }
+ /* APPLE LOCAL end mainline 2005-10-12 */
+
   /* Mark the decl so we can tell from the rtl whether the object is
-     dllexport'd or dllimport'd.  This also handles dllexport/dllimport
-     override semantics.  */
+     dllexport'd or dllimport'd.  tree.c: merge_dllimport_decl_attributes
+     handles dllexport/dllimport override semantics.  */
 
   if (i386_pe_dllexport_p (decl))
     i386_pe_mark_dllexport (decl);
   else if (i386_pe_dllimport_p (decl))
     i386_pe_mark_dllimport (decl);
-  /* It might be that DECL has already been marked as dllimport, but a
-     subsequent definition nullified that.  The attribute is gone but
-     DECL_RTL still has (DLL_IMPORT_PREFIX) prefixed. We need to remove
-     that. Ditto for the DECL_NON_ADDR_CONST_P flag.  */
-  else if ((TREE_CODE (decl) == FUNCTION_DECL
-	    || TREE_CODE (decl) == VAR_DECL)
-	   && DECL_RTL (decl) != NULL_RTX
-	   && GET_CODE (DECL_RTL (decl)) == MEM
-	   && GET_CODE (XEXP (DECL_RTL (decl), 0)) == MEM
-	   && GET_CODE (XEXP (XEXP (DECL_RTL (decl), 0), 0)) == SYMBOL_REF
-	   && i386_pe_dllimport_name_p (XSTR (XEXP (XEXP (DECL_RTL (decl), 0), 0), 0)))
-    {
-      const char *oldname = XSTR (XEXP (XEXP (DECL_RTL (decl), 0), 0), 0);
-
-      /* Remove DLL_IMPORT_PREFIX.  */
-      tree idp = get_identifier (oldname + strlen (DLL_IMPORT_PREFIX));
-      rtx symref = gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (idp));
-      SYMBOL_REF_DECL (symref) = decl;
-      XEXP (DECL_RTL (decl), 0) = symref;
-      DECL_NON_ADDR_CONST_P (decl) = 0;
-
-      /* We previously set TREE_PUBLIC and DECL_EXTERNAL.
-	 We leave these alone for now.  */
-
-      if (DECL_INITIAL (decl) || !DECL_EXTERNAL (decl))
-	warning ("%J'%D' defined locally after being "
-		 "referenced with dllimport linkage", decl, decl);
-      else
-	warning ("%J'%D' redeclared without dllimport attribute "
-		 "after being referenced with dllimport linkage", decl, decl);
-    }
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  /* It might be that DECL has been declared as dllimport, but a
+     subsequent definition nullified that.  Assert that
+     tree.c: merge_dllimport_decl_attributes has removed the attribute
+     before the RTL name was marked with the DLL_IMPORT_PREFIX.  */
+  else
+    gcc_assert(!((TREE_CODE (decl) == FUNCTION_DECL
+                  || TREE_CODE (decl) == VAR_DECL)
+               && rtl != NULL_RTX
+               && GET_CODE (rtl) == MEM
+               && GET_CODE (XEXP (rtl, 0)) == MEM
+               && GET_CODE (XEXP (XEXP (rtl, 0), 0)) == SYMBOL_REF
+               && i386_pe_dllimport_name_p (XSTR (XEXP (XEXP (rtl, 0), 0), 0))));
+ /* APPLE LOCAL end mainline 2005-10-12 */
 }
 
 /* Strip only the leading encoding, leaving the stdcall suffix and fastcall
@@ -595,8 +580,10 @@ i386_pe_section_type_flags (tree decl, const char *name, int reloc)
       flags = SECTION_WRITE;
 
       if (decl && TREE_CODE (decl) == VAR_DECL
-	  && lookup_attribute ("shared", DECL_ATTRIBUTES (decl)))
-	flags |= SECTION_PE_SHARED;
+ /* APPLE LOCAL begin mainline 2005-04-01 */
+          && lookup_attribute ("shared", DECL_ATTRIBUTES (decl)))
+        flags |= SECTION_PE_SHARED;
+ /* APPLE LOCAL end mainline 2005-04-01 */
     }
 
   if (decl && DECL_ONE_ONLY (decl))
@@ -612,7 +599,7 @@ i386_pe_section_type_flags (tree decl, const char *name, int reloc)
   else
     {
       if (decl && **slot != flags)
-	error ("%J'%D' causes a section type conflict", decl, decl);
+        error ("%J'%D' causes a section type conflict", decl, decl);
     }
 
   return flags;
@@ -620,7 +607,7 @@ i386_pe_section_type_flags (tree decl, const char *name, int reloc)
 
 void
 i386_pe_asm_named_section (const char *name, unsigned int flags, 
-			   tree decl ATTRIBUTE_UNUSED)
+			   tree decl)
 {
   char flagchars[8], *f = flagchars;
 
@@ -647,10 +634,18 @@ i386_pe_asm_named_section (const char *name, unsigned int flags,
   if (flags & SECTION_LINKONCE)
     {
       /* Functions may have been compiled at various levels of
-         optimization so we can't use `same_size' here.
-         Instead, have the linker pick one.  */
+	 optimization so we can't use `same_size' here.
+	 Instead, have the linker pick one, without warning.
+	 If 'selectany' attibute has been specified,  MS compiler
+	 sets 'discard' characteristic, rather than telling linker
+	 to warn of size or content mismatch, so do the same.  */ 
+ /* APPLE LOCAL begin mainline 2005-04-01 */
+      bool discard = (flags & SECTION_CODE)
+		      || lookup_attribute ("selectany",
+					   DECL_ATTRIBUTES (decl));	 
       fprintf (asm_out_file, "\t.linkonce %s\n",
-	       (flags & SECTION_CODE ? "discard" : "same_size"));
+	       (discard  ? "discard" : "same_size"));
+ /* APPLE LOCAL end mainline 2005-10-12 */
     }
 }
 
@@ -751,11 +746,11 @@ i386_pe_file_end (void)
 
       /* Positively ensure only one declaration for any given symbol.  */
       if (! TREE_ASM_WRITTEN (decl) && TREE_SYMBOL_REFERENCED (decl))
-	{
-	  TREE_ASM_WRITTEN (decl) = 1;
-	  i386_pe_declare_function_type (asm_out_file, p->name,
-					 TREE_PUBLIC (decl));
-	}
+        {
+          TREE_ASM_WRITTEN (decl) = 1;
+          i386_pe_declare_function_type (asm_out_file, p->name,
+                                         TREE_PUBLIC (decl));
+        }
     }
 
   if (export_head)
@@ -763,11 +758,11 @@ i386_pe_file_end (void)
       struct export_list *q;
       drectve_section ();
       for (q = export_head; q != NULL; q = q->next)
-	{
-	  fprintf (asm_out_file, "\t.ascii \" -export:%s%s\"\n",
-		   i386_pe_strip_name_encoding (q->name),
-		   (q->is_data) ? ",data" : "");
-	}
+        {
+          fprintf (asm_out_file, "\t.ascii \" -export:%s%s\"\n",
+                   i386_pe_strip_name_encoding (q->name),
+                   (q->is_data) ? ",data" : "");
+        }
     }
 }
 

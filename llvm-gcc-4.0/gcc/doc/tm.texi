@@ -8560,6 +8560,14 @@ to perform initial processing of the @samp{dllimport} and
 @file{i386/i386.c}, for example.
 @end deftypefn
 
+@c APPLE LOCAL begin mainline 2005-10-12
+@deftypefn {Target Hook} bool TARGET_VALID_DLLIMPORT_ATTRIBUTE_P (tree @var{decl})
+@var{decl} is a variable or function with @code{__attribute__((dllimport))}
+specified. Use this hook if the target needs to add extra validation
+checks to @code{handle_dll_attribute}.
+@end deftypefn
+@c APPLE LOCAL begin mainline 2005-10-12
+
 @defmac TARGET_DECLSPEC
 Define this macro to a nonzero value if you want to treat
 @code{__declspec(X)} as equivalent to @code{__attribute((X))}.  By
@@ -8727,6 +8735,15 @@ unit will not be COMDAT.
 @end deftypefn
 
 @c APPLE LOCAL end mainline 4.2 2006-03-01 4311680
+
+@c APPLE LOCAL begin mainline 2005-10-12
+@deftypefn {Target Hook} void TARGET_CXX_ADJUST_CLASS_AT_DEFINITION (tree @var{type})
+@var{type} is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that has just been
+defined.  Use this hook to make adjustments to the class (eg, tweak
+visibility or perform any other required target modifications).
+@end deftypefn
+@c APPLE LOCAL end mainline 2005-10-12
+
 @node Misc
 @section Miscellaneous Parameters
 @cindex parameters, miscellaneous

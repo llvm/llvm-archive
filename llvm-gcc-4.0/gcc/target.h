@@ -525,6 +525,13 @@ struct gcc_target
      to let the backend emit the call frame instructions.  */
   void (* dwarf_handle_frame_unspec) (const char *, rtx, int);
 
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  /* DECL is a variable or function with __attribute__((dllimport))
+     specified.  Use this hook if the target needs to add extra validation
+     checks to  handle_dll_attribute ().  */
+  bool (* valid_dllimport_attribute_p) (tree decl);
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+
   /* Functions relating to calls - argument passing, returns, etc.  */
   struct calls {
     bool (*promote_function_args) (tree fntype);
@@ -628,6 +635,13 @@ struct gcc_target
        only one translation unit will not be COMDAT.  */
     bool (*class_data_always_comdat) (void);
 /* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+    /* TYPE is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that
+       has just been defined.  Use this hook to make adjustments to the
+       class  (eg, tweak visibility or perform any other required
+       target modifications).  */  
+    void (*adjust_class_at_definition) (tree type);
+ /* APPLE LOCAL end mainline 2005-10-12 */
   } cxx;
 
   /* Leave the boolean fields at the end.  */

@@ -1354,6 +1354,13 @@ static void init_ext_80387_constants (void);
 #undef TARGET_ASM_FUNCTION_EPILOGUE
 #define TARGET_ASM_FUNCTION_EPILOGUE ix86_output_function_epilogue
 
+ /* APPLE LOCAL begin mainline 2005-07-31 */
+#ifdef SUBTARGET_ENCODE_SECTION_INFO
+#undef TARGET_ENCODE_SECTION_INFO
+#define TARGET_ENCODE_SECTION_INFO SUBTARGET_ENCODE_SECTION_INFO
+#endif
+
+ /* APPLE LOCAL end mainline 2005-07-31 */
 #undef TARGET_ASM_OPEN_PAREN
 #define TARGET_ASM_OPEN_PAREN ""
 #undef TARGET_ASM_CLOSE_PAREN
@@ -2323,7 +2330,9 @@ ix86_function_ok_for_sibcall (tree decl, tree exp)
 
 #if TARGET_DLLIMPORT_DECL_ATTRIBUTES
   /* Dllimport'd functions are also called indirectly.  */
-  if (decl && lookup_attribute ("dllimport", DECL_ATTRIBUTES (decl))
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  if (decl && DECL_DLLIMPORT_P (decl)
+ /* APPLE LOCAL end mainline 2005-10-12 */
       && ix86_function_regparm (TREE_TYPE (decl), NULL) >= 3)
     return false;
 #endif

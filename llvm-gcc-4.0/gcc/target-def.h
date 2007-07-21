@@ -416,6 +416,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #define TARGET_DWARF_HANDLE_FRAME_UNSPEC 0
 
+/* APPLE LOCAL begin mainline 2005-10-12 */
+#ifndef TARGET_VALID_DLLIMPORT_ATTRIBUTE_P
+#define TARGET_VALID_DLLIMPORT_ATTRIBUTE_P hook_bool_tree_true
+#endif
+/* APPLE LOCAL end mainline 2005-10-12 */
+
 #define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_false
 #define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_false
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_tree_false
@@ -530,6 +536,13 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 
 /* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
+
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+#ifndef TARGET_CXX_ADJUST_CLASS_AT_DEFINITION
+#define TARGET_CXX_ADJUST_CLASS_AT_DEFINITION hook_void_tree
+#endif
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+
 #define TARGET_CXX				\
   {						\
     TARGET_CXX_GUARD_TYPE,			\
@@ -543,6 +556,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
     TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY,	\
     TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT,        \
 /* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */ \
+ /* APPLE LOCAL begin mainline 2005-10-12 */ \
+    TARGET_CXX_ADJUST_CLASS_AT_DEFINITION          \
+ /* APPLE LOCAL end mainline 2005-10-12 */ \
   }
 
 /* The whole shebang.  */
@@ -604,6 +620,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
   TARGET_MD_ASM_CLOBBERS,			\
   TARGET_DWARF_CALLING_CONVENTION,              \
   TARGET_DWARF_HANDLE_FRAME_UNSPEC,		\
+ /* APPLE LOCAL begin mainline 2005-10-12 */   \
+  TARGET_VALID_DLLIMPORT_ATTRIBUTE_P,         \
+ /* APPLE LOCAL end mainline 2005-10-12 */    \
   TARGET_CALLS,					\
   TARGET_CXX,					\
   TARGET_HAVE_NAMED_SECTIONS,			\

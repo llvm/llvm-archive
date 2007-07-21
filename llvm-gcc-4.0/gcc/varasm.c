@@ -3705,7 +3705,9 @@ initializer_constant_valid_p (tree value, tree endtype)
       if (value
 	  && TREE_CODE (value) == FUNCTION_DECL
 	  && ((decl_function_context (value) && !DECL_NO_STATIC_CHAIN (value))
-	      || DECL_NON_ADDR_CONST_P (value)))
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+	      || DECL_DLLIMPORT_P (value)))
+ /* APPLE LOCAL end mainline 2005-10-12 */
 	return NULL_TREE;
       return value;
 

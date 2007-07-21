@@ -3846,6 +3846,18 @@ start_decl (const cp_declarator *declarator,
     objc_checkon_weak_attribute (decl);
   /* APPLE LOCAL end radar 4592503 */
 
+ /* APPLE LOCAL begin mainline 2005-10-12 */
+  /* Dllimported symbols cannot be defined.  Static data members (which
+     can be initialized in-class and dllimported) go through grokfield,
+     not here, so we don't need to exclude those decls when checking for
+     a definition.  */
+  if (initialized && DECL_DLLIMPORT_P (decl))
+    {
+      error ("definition of %q#D is marked %<dllimport%>", decl);
+      DECL_DLLIMPORT_P (decl) = 0;
+    }
+ /* APPLE LOCAL end mainline 2005-10-12 */
+
   /* If #pragma weak was used, mark the decl weak now.  */
   maybe_apply_pragma_weak (decl);
 

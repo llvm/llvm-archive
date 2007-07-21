@@ -1552,11 +1552,12 @@ void add_framework_path (char *);
  * For darwin, we have to handle all of the funny objc sections here.  Note that
  * doing this by name is very ugly.
  */
-#define LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)               \
-  ((DECL_NAME (decl) &&                                             \
-   TREE_CODE (DECL_NAME (decl)) == IDENTIFIER_NODE &&               \
-   IDENTIFIER_POINTER (DECL_NAME (decl)) &&                         \
-   !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "L_OBJC_", 7)) ? \
+#define LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)                   \
+  (((DECL_NAME (decl) &&                                                \
+    TREE_CODE (DECL_NAME (decl)) == IDENTIFIER_NODE &&                  \
+    IDENTIFIER_POINTER (DECL_NAME (decl)) &&                            \
+    !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "L_OBJC_", 7)) ||  \
+   TREE_CODE(decl) == CONST_DECL) ?                                     \
      darwin_objc_llvm_implicit_target_global_var_section(decl) : 0)
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
 

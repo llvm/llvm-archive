@@ -1379,8 +1379,28 @@ machopic_select_section (tree exp, int reloc,
 /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
+  const char *name;
+
+  if (TREE_CODE(decl) == CONST_DECL) {
+    extern int flag_next_runtime;
+    tree typename = TYPE_NAME(TREE_TYPE(decl));
+    if (TREE_CODE(typename) == TYPE_DECL)
+      typename = DECL_NAME(typename);
+    
+    if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_ObjCString")) {
+      if (flag_next_runtime)
+        return "__OBJC,__cstring_object,regular,no_dead_strip";
+      else
+        return "__OBJC,__string_object,no_dead_strip";
+    } else if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_CFString")) {
+      return "__DATA,__cfstring";
+    } else {
+      return 0;
+    }
+  }
+  
   /* Get a pointer to the name, past the L_OBJC_ prefix. */
-  const char *name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
+  name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
   
   if (!strncmp (name, "CLASS_METHODS_", 14))
     return "__OBJC,__cls_meth, regular, no_dead_strip";

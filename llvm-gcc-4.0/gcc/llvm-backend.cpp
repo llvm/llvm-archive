@@ -518,7 +518,7 @@ void emit_global_to_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
   
   // Set the section for the global.
-  if (TREE_CODE(decl) == VAR_DECL) {
+  if (TREE_CODE(decl) == VAR_DECL || TREE_CODE(decl) == CONST_DECL) {
     if (DECL_SECTION_NAME(decl)) {
       GV->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(decl)));
 #ifdef LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION

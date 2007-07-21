@@ -213,12 +213,15 @@ namespace {
         // the actual impls is a short or char.
         assert(ArgVal->getType()->isIntegral() && LLVMTy->isIntegral() &&
                "Lowerings don't match?");
-        ArgVal = new CastInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
+        ArgVal = 
+          CastInst::createInferredCast(ArgVal, LLVMTy, NameStack.back(), CurBB);
       }
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != LLVMTy)
-        Loc = new CastInst(Loc, PointerType::get(LLVMTy), "tmp", CurBB);
+        // This cast only involves pointers, therefore BitCast
+        Loc = CastInst::create(Instruction::BitCast, Loc, 
+                               PointerType::get(LLVMTy), "tmp", CurBB);
       
       new StoreInst(ArgVal, Loc, CurBB);
       AI->setName(NameStack.back());
@@ -232,7 +235,10 @@ namespace {
       Constant *FIdx = ConstantInt::get(Type::UIntTy, FieldNo);
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
-        Loc = new CastInst(Loc, PointerType::get(StructTy), "tmp", CurBB);
+        // This cast only involves pointers, therefore BitCast
+        Loc = CastInst::create(Instruction::BitCast, Loc, 
+                               PointerType::get(StructTy), 
+                                           "tmp", CurBB);
       Loc = new GetElementPtrInst(Loc, Zero, FIdx, "tmp", CurBB);
       LocStack.push_back(Loc);    
     }
@@ -662,7 +668,7 @@ Value *TreeToLLVM::CastToType(Value *V, const Type *Ty) {
   if (CastInst *CI = dyn_cast<CastInst>(V))
     if (Ty == Type::BoolTy && CI->getOperand(0)->getType() == Type::BoolTy)
       return CI->getOperand(0);
-  return new CastInst(V, Ty, V->getName(), CurBB);
+  return CastInst::createInferredCast(V, Ty, V->getName(), CurBB);
 }
 
 /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
@@ -670,7 +676,7 @@ Value *TreeToLLVM::CastToType(Value *V, const Type *Ty) {
 bool TreeToLLVM::isNoopCast(Value *V, const Type *Ty) {
   // int <-> uint
   const Type *VTy = V->getType();
-  if (VTy->isLosslesslyConvertibleTo(Ty)) return true;
+  if (VTy->canLosslesslyBitCastTo(Ty)) return true;
   
   // ptr -> intptr/uintptr
   if (isa<PointerType>(VTy)) {
@@ -694,9 +700,9 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
     // Create a dummy instruction in the entry block as a marker to insert new
     // alloc instructions before.  It doesn't matter what this instruction is,
     // it is dead.  This allows us to insert allocas in order without having to
-    // scan for an insertion point.
-    AllocaInsertionPoint = new CastInst(Constant::getNullValue(Type::IntTy),
-                                        Type::IntTy, "alloca point");
+    // scan for an insertion point. Use BitCast for int -> int
+    AllocaInsertionPoint = CastInst::create(Instruction::BitCast,
+      Constant::getNullValue(Type::IntTy), Type::IntTy, "alloca point");
     // Insert it as the first instruction in the entry block.
     Fn->begin()->getInstList().insert(Fn->begin()->begin(),
                                       AllocaInsertionPoint);
@@ -1764,7 +1770,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, Value *DestLoc) {
   }
   
   Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
- 
+
   //EmitCall(exp, DestLoc);
   Value *Result = EmitCallOf(Callee, exp, DestLoc);
 
@@ -1864,7 +1870,9 @@ namespace {
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != LLVMTy)
-        Loc = new CastInst(Loc, PointerType::get(LLVMTy), "tmp", CurBB);
+        // This always deals with pointer types so BitCast is appropriate
+        Loc = CastInst::create(Instruction::BitCast, Loc, 
+                               PointerType::get(LLVMTy), "tmp", CurBB);
       
       Value *V = new LoadInst(Loc, "tmp", CurBB);
       CallOperands.push_back(V);
@@ -1875,7 +1883,9 @@ namespace {
       Constant *FIdx = ConstantInt::get(Type::UIntTy, FieldNo);
       Value *Loc = LocStack.back();
       if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
-        Loc = new CastInst(Loc, PointerType::get(StructTy), "tmp", CurBB);
+        // This always deals with pointer types so BitCast is appropriate
+        Loc = CastInst::create(Instruction::BitCast, Loc, 
+                               PointerType::get(StructTy), "tmp", CurBB);
       
       Loc = new GetElementPtrInst(Loc, Zero, FIdx, "tmp", CurBB);
       LocStack.push_back(Loc);    
@@ -2083,7 +2093,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
       // Convert RHS to the right type if we can, otherwise convert the pointer.
       const PointerType *PT = cast<PointerType>(LV.Ptr->getType());
-      if (PT->getElementType()->isLosslesslyConvertibleTo(RHS->getType()))
+      if (PT->getElementType()->canLosslesslyBitCastTo(RHS->getType()))
         RHS = CastToType(RHS, PT->getElementType());
       else
         LV.Ptr = NOOPCastToType(LV.Ptr, PointerType::get(RHS->getType()));;
@@ -3806,8 +3816,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
         TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST) {
       // Make sure that ArrayAddr is of type ElementTy*, then do a 2-index gep.
       tree ElTy = TREE_TYPE(TREE_TYPE(Array));
-      ArrayAddr = new CastInst(ArrayAddr, PointerType::get(ConvertType(ElTy)),
-                               "tmp", CurBB);
+      // This cast only deals with pointers so BitCast is appropriate
+      ArrayAddr = CastInst::create(Instruction::BitCast, 
+          ArrayAddr, PointerType::get(ConvertType(ElTy)), "tmp", CurBB);
       return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
     }
   }

@@ -3854,14 +3854,14 @@ enum rs6000_builtins
     }                                                                         \
     return false;                                                             \
   case ALTIVEC_BUILTIN_VPKUHUM:                                               \
-    OPS[0] = new CastInst(OPS[0], DESTTY, OPS[0]->getName(), CurBB);          \
-    OPS[1] = new CastInst(OPS[1], DESTTY, OPS[0]->getName(), CurBB);          \
+    OPS[0] = CastInst::createInferredCast(OPS[0], DESTTY, OPS[0]->getName(), CurBB);  \
+    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, OPS[0]->getName(), CurBB);  \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15,    \
                                 17, 19, 21, 23, 25, 27, 29, 31);              \
     return true;                                                              \
   case ALTIVEC_BUILTIN_VPKUWUM:                                               \
-    OPS[0] = new CastInst(OPS[0], DESTTY, OPS[0]->getName(), CurBB);          \
-    OPS[1] = new CastInst(OPS[1], DESTTY, OPS[0]->getName(), CurBB);          \
+    OPS[0] = CastInst::createInferredCast(OPS[0], DESTTY, OPS[0]->getName(), CurBB);  \
+    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, OPS[0]->getName(), CurBB);  \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15);   \
     return true;                                                              \
   case ALTIVEC_BUILTIN_VMRGHB:                                                \
@@ -3889,11 +3889,12 @@ enum rs6000_builtins
   case ALTIVEC_BUILTIN_ABS_V4SF: {                                            \
     /* and out sign bits */                                                   \
     PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    OPS[0] = new CastInst(OPS[0], v4i32, OPS[0]->getName(), CurBB);           \
-    Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                 \
+    OPS[0] = CastInst::createInferredCast(OPS[0], v4i32, OPS[0]->getName(),   \
+        CurBB);                                                               \
+    Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                  \
     C = ConstantPacked::get(std::vector<Constant*>(4, C));                    \
     RESULT = BinaryOperator::createAnd(OPS[0], C, "tmp", CurBB);              \
-    RESULT = new CastInst(RESULT, DESTTY, "tmp", CurBB);                      \
+    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
     return true;                                                              \
   }                                                                           \
   case ALTIVEC_BUILTIN_ABS_V4SI:                                              \

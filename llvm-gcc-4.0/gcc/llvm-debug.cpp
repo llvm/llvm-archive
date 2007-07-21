@@ -357,8 +357,11 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Variable->setLine(Loc.line);
   Variable->setType(TyDesc);
 
+  // Cast the AllocA result to a {}* for the call to llvm.dbg.declare. Since
+  // only pointer types are involved, this is always a BitCast
+  Value *AllocACast = new BitCastInst(AI, EmpPtr, Name, CurBB);
+
   // Call llvm.dbg.declare.
-  Value *AllocACast = new CastInst(AI, EmpPtr, Name, CurBB);
   new CallInst(DeclareFn, AllocACast, getCastValueFor(Variable), "", CurBB);
 }
 

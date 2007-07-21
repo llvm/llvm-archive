@@ -1490,9 +1490,9 @@ static dw_cfa_location cfa_temp;
 	   cfa.base_offset = -cfa_temp.offset
 	   cfa_temp.offset -= mode_size(mem)
 
-  Rule 15:
-  (set <reg> {unspec, unspec_volatile})
-  effects: target-dependent  */
+  Rule 15:
+  (set <reg> {unspec, unspec_volatile})
+  effects: target-dependent  */
 
 static void
 dwarf2out_frame_debug_expr (rtx expr, const char *label)
@@ -14361,9 +14361,8 @@ prune_unused_types_update_strings (dw_die_ref die)
 	s->refcount++;
 	/* Avoid unnecessarily putting strings that are used less than
 	   twice in the hash table.  */
-	if (s->refcount == 2
-	    || (s->refcount == 1 
-		&& (DEBUG_STR_SECTION_FLAGS & SECTION_MERGE) != 0))
+	if (s->refcount
+	    == ((DEBUG_STR_SECTION_FLAGS & SECTION_MERGE) ? 1 : 2))
 	  {
 	    void ** slot;
 	    slot = htab_find_slot_with_hash (debug_str_hash, s->str,

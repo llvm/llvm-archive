@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-internal.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
 
 namespace llvm {
   class BasicBlock;
@@ -274,17 +275,31 @@ public:
   /// of the struct elements in.
   void PassInIntegerRegisters(tree type, const Type *Ty) {
     unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
-    
+
+    // FIXME: We should preserve all aggregate value alignment information.
+    // Work around to preserve some aggregate value alignment information:
+    // don't bitcast aggregate value to Int64 if its alignment is different
+    // from Int64 alignment. ARM backend needs this.
+    unsigned Align = TYPE_ALIGN(type)/8;
+    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    bool UseInt64 = (Align >= Int64Align);
+
     // FIXME: In cases where we can, we should use the original struct.
     // Consider cases like { int, int } and {int, short} for example!  This will
     // produce far better LLVM code!
     std::vector<const Type*> Elts;
-    for (; Size >= 8; Size -= 8)
-      Elts.push_back(Type::Int64Ty);
-    if (Size >= 4) {
-      Elts.push_back(Type::Int32Ty);
-      Size -= 4;
+    if (UseInt64) {
+      for (; Size >= 8; Size -= 8)
+        Elts.push_back(Type::Int64Ty);
+      if (Size >= 4) {
+        Elts.push_back(Type::Int32Ty);
+        Size -= 4;
+      }
+    } else {
+      for (; Size >= 4; Size -= 4)
+        Elts.push_back(Type::Int32Ty);
     }
+
     if (Size >= 2) {
       Elts.push_back(Type::Int16Ty);
       Size -= 2;

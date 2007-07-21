@@ -63,7 +63,7 @@ extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 }
 
-#define ITANIUM_STYLE_EXCEPTIONS
+//#define ITANIUM_STYLE_EXCEPTIONS
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees
@@ -622,9 +622,8 @@ Function *TreeToLLVM::FinishFunctionBody() {
                    CurBB);
       new UnreachableInst(CurBB);
     }
-#else
-    new UnwindInst(UnwindBB);
 #endif
+    new UnwindInst(UnwindBB);
   }
   
   // If this function takes the address of a label, emit the indirect goto
@@ -704,6 +703,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case CALL_EXPR:      Result = EmitCALL_EXPR(exp, DestLoc); break;
   case MODIFY_EXPR:    Result = EmitMODIFY_EXPR(exp, DestLoc); break;
   case ASM_EXPR:       Result = EmitASM_EXPR(exp); break;
+  case NON_LVALUE_EXPR: Result = Emit(TREE_OPERAND(exp, 0), DestLoc); break;
 
     // Unary Operators
   case NOP_EXPR:       Result = EmitNOP_EXPR(exp, DestLoc); break;
@@ -1423,7 +1423,8 @@ Value *TreeToLLVM::EmitBIND_EXPR(tree exp, Value *DestLoc) {
       tree RealVar = DECL_ORIGIN(Var);
       
       // If we haven't already emitted the var, do so now.
-      if (!TREE_ASM_WRITTEN(RealVar) && !lang_hooks.expand_decl(RealVar))
+      if (!TREE_ASM_WRITTEN(RealVar) && !lang_hooks.expand_decl(RealVar) &&
+          TREE_CODE (Var) == VAR_DECL)
         rest_of_decl_compilation(RealVar, 0, 0);
       continue;
     }
@@ -4541,10 +4542,14 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
         TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST) {
       // Make sure that ArrayAddr is of type ElementTy*, then do a 2-index gep.
       tree ElTy = TREE_TYPE(TREE_TYPE(Array));
-      // This cast only deals with pointers so BitCast is appropriate
-      ArrayAddr = CastInst::create(Instruction::BitCast, 
-          ArrayAddr, PointerType::get(ConvertType(ElTy)), "tmp", CurBB);
-      return new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+      ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
+      Value *Scale = Emit(TYPE_SIZE_UNIT(ElTy), 0);
+      if (Scale->getType() != IntPtrTy)
+        Scale = CastToUIntType(Scale, IntPtrTy);
+
+      IndexVal = BinaryOperator::createMul(IndexVal, Scale, "tmp", CurBB);
+      Value *Ptr = new GetElementPtrInst(ArrayAddr, IndexVal, "tmp", CurBB);
+      return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
     }
 
     // Otherwise, this is not a variable-sized array, use a GEP to index.
@@ -5424,6 +5429,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       ProcessBitFieldInitialization(Field, Val, STy, ResultElts);
     } else {
       // If not, things are much simpler.
+      assert(DECL_LLVM_SET_P(Field) && "Struct not laid out for LLVM?");
       unsigned FieldNo = cast<ConstantInt>(DECL_LLVM(Field))->getZExtValue();
       
       // If this is an initialization of a global that ends with a variable

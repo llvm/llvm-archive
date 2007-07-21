@@ -66,6 +66,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   default: break;
   case IX86_BUILTIN_ADDPS:
   case IX86_BUILTIN_ADDPD:
+  case IX86_BUILTIN_PADDB:
+  case IX86_BUILTIN_PADDW:
+  case IX86_BUILTIN_PADDD:
   case IX86_BUILTIN_PADDB128:
   case IX86_BUILTIN_PADDW128:
   case IX86_BUILTIN_PADDD128:
@@ -74,6 +77,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_SUBPS:
   case IX86_BUILTIN_SUBPD:
+  case IX86_BUILTIN_PSUBB:
+  case IX86_BUILTIN_PSUBW:
+  case IX86_BUILTIN_PSUBD:
   case IX86_BUILTIN_PSUBB128:
   case IX86_BUILTIN_PSUBW128:
   case IX86_BUILTIN_PSUBD128:
@@ -82,9 +88,26 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_MULPS:
   case IX86_BUILTIN_MULPD:
+  case IX86_BUILTIN_PMULLW:
   case IX86_BUILTIN_PMULLW128:
     Result = BinaryOperator::createMul(Ops[0], Ops[1], "tmp", CurBB);
     return true;
+  case IX86_BUILTIN_PSLLWI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    VectorType *v4i16 = VectorType::get(Type::Int16Ty, 4);
+    static Constant *psllw = 0;
+    if (psllw == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psllw = M->getOrInsertFunction("llvm.x86.mmx.psll.w",
+                                     v4i16, v4i16, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psllw, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
   case IX86_BUILTIN_PSLLWI128: {
     VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
@@ -101,6 +124,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
   }
+  case IX86_BUILTIN_PSLLDI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    static Constant *pslld = 0;
+    if (pslld == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      pslld = M->getOrInsertFunction("llvm.x86.mmx.psll.d",
+                                     v2i32, v2i32, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(pslld, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
   case IX86_BUILTIN_PSLLDI128: {
     VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     static Constant *pslld = 0;
@@ -112,6 +150,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Result = new CallInst(pslld, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
+  case IX86_BUILTIN_PSLLQI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    static Constant *psllq = 0;
+    if (psllq == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psllq = M->getOrInsertFunction("llvm.x86.mmx.psll.q",
+                                     v2i32, v2i32, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psllq, Ops[0], Ops[1], "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -132,6 +185,22 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
   }
+  case IX86_BUILTIN_PSRLWI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    VectorType *v4i16 = VectorType::get(Type::Int16Ty, 4);
+    static Constant *psrlw = 0;
+    if (psrlw == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psrlw = M->getOrInsertFunction("llvm.x86.mmx.psrl.w",
+                                     v4i16, v4i16, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psrlw, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
   case IX86_BUILTIN_PSRLWI128: {
     VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
@@ -148,6 +217,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
   }
+  case IX86_BUILTIN_PSRLDI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    static Constant *psrld = 0;
+    if (psrld == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psrld = M->getOrInsertFunction("llvm.x86.mmx.psrl.d",
+                                     v2i32, v2i32, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psrld, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
   case IX86_BUILTIN_PSRLDI128: {
     VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     static Constant *psrld = 0;
@@ -159,6 +243,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Result = new CallInst(psrld, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
+  case IX86_BUILTIN_PSRLQI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    static Constant *psrlq = 0;
+    if (psrlq == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psrlq = M->getOrInsertFunction("llvm.x86.mmx.psrl.q",
+                                     v2i32, v2i32, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psrlq, Ops[0], Ops[1], "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -179,6 +278,22 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
   }
+  case IX86_BUILTIN_PSRAWI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    VectorType *v4i16 = VectorType::get(Type::Int16Ty, 4);
+    static Constant *psraw = 0;
+    if (psraw == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psraw = M->getOrInsertFunction("llvm.x86.mmx.psra.w",
+                                     v4i16, v4i16, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psraw, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
   case IX86_BUILTIN_PSRAWI128: {
     VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
@@ -191,6 +306,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Result = new CallInst(psraw, Ops[0], Ops[1], "tmp", CurBB);
+    TargetIntrinsicCastResult(Result, ResultType,
+                              ResIsSigned, ExpIsSigned, CurBB);
+    return true;
+  }
+  case IX86_BUILTIN_PSRADI: {
+    VectorType *v2i32 = VectorType::get(Type::Int32Ty, 2);
+    static Constant *psrad = 0;
+    if (psrad == 0) {
+      Module *M = CurBB->getParent()->getParent();
+      psrad = M->getOrInsertFunction("llvm.x86.mmx.psra.d",
+                                     v2i32, v2i32, v2i32, NULL);
+    }
+    Value *Undef = UndefValue::get(Type::Int32Ty);
+    Ops[1] = BuildVector(Ops[1], Undef, NULL);
+    Result = new CallInst(psrad, Ops[0], Ops[1], "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -214,16 +344,20 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_DIVPD:
     Result = BinaryOperator::createFDiv(Ops[0], Ops[1], "tmp", CurBB);
     return true;
+  case IX86_BUILTIN_PAND:
   case IX86_BUILTIN_PAND128:
     Result = BinaryOperator::createAnd(Ops[0], Ops[1], "tmp", CurBB);
     return true;
+  case IX86_BUILTIN_PANDN:
   case IX86_BUILTIN_PANDN128:
     Ops[0] = BinaryOperator::createNot(Ops[0], "tmp", CurBB);
     Result = BinaryOperator::createAnd(Ops[0], Ops[1], "tmp", CurBB);
     return true;
+  case IX86_BUILTIN_POR:
   case IX86_BUILTIN_POR128:
     Result = BinaryOperator::createOr(Ops[0], Ops[1], "tmp", CurBB);
     return true;
+  case IX86_BUILTIN_PXOR:
   case IX86_BUILTIN_PXOR128:
     Result = BinaryOperator::createXor(Ops[0], Ops[1], "tmp", CurBB);
     return true;
@@ -470,6 +604,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                          Ops[3], Ops[2], Ops[1], Ops[0], NULL);
     return true;
   }
+  case IX86_BUILTIN_VEC_EXT_V2SI:
+  case IX86_BUILTIN_VEC_EXT_V4HI:
   case IX86_BUILTIN_VEC_EXT_V2DF:
   case IX86_BUILTIN_VEC_EXT_V4SI:
   case IX86_BUILTIN_VEC_EXT_V4SF:

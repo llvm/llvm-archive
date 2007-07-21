@@ -195,6 +195,7 @@ void llvm_pch_read(void) {
   fclose (asm_out_file);
   
   std::string ErrMsg;
+  clearTargetBuiltinCache();
   TheModule = ParseBytecodeFile(asm_file_name,
                                 Compressor::decompressToNewBuffer,
                                 &ErrMsg);

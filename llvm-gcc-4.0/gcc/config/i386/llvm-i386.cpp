@@ -30,6 +30,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 
+extern "C" {
+#include "toplev.h"
+}
+
 /* TargetIntrinsicCastResult - This function just provides a frequently                                                                                                                         * used sequence for use inside TargetIntrinsicLower.                                                                                                                                           */
 static void TargetIntrinsicCastResult(Value *&Result, const Type *ResultType,
                                       bool ResIsSigned, bool ExpIsSigned,
@@ -48,7 +52,8 @@ static bool IntrinsicOpIsSigned(SmallVector<tree, 8> &Args, unsigned OpNum) {
  * LLVM code, emit the code now.  If we can handle the code, this macro should
  * emit the code, return true.
  */
-bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
+bool TreeToLLVM::TargetIntrinsicLower(tree exp,
+                                      unsigned FnCode,
                                       Value *DestLoc,
                                       Value *&Result,
                                       const Type *ResultType,
@@ -280,9 +285,12 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
       Result = BuildVectorShuffle(Ops[0], Ops[1],
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4)+4, ((EV & 0xc0) >> 6)+4);
-      return true;
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    
+    return true;
   case IX86_BUILTIN_PSHUFW:
   case IX86_BUILTIN_PSHUFD:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
@@ -290,9 +298,11 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
       Result = BuildVectorShuffle(Ops[0], Ops[0],
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6));
-      return true;
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    return true;
   case IX86_BUILTIN_PSHUFHW:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
@@ -310,9 +320,12 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6),
                                   4, 5, 6, 7);
-      return true;
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    
+    return true;
   case IX86_BUILTIN_PUNPCKHBW128:
     Result = BuildVectorShuffle(Ops[0], Ops[1],  8, 24,  9, 25,
                                                 10, 26, 11, 27,

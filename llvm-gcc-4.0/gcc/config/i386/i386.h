@@ -4059,12 +4059,12 @@ enum ix86_builtins
  * macro should call the target TreeToLLVM::TargetIntrinsicLower method and
  *  return true.This macro is invoked from a method in the TreeToLLVM class.
  */
-#define LLVM_TARGET_INTRINSIC_LOWER(BUILTIN_CODE, DESTLOC, RESULT,            \
+#define LLVM_TARGET_INTRINSIC_LOWER(EXP, BUILTIN_CODE, DESTLOC, RESULT,       \
                                     DESTTY, OPS, ARGS, CURBB,                 \
                                     RESISSIGNED, EXPISSIGNED)                 \
-        return TargetIntrinsicLower(BUILTIN_CODE, DESTLOC, RESULT,            \
-                                    DESTTY, OPS, ARGS, CURBB,                 \
-                                    RESISSIGNED, EXPISSIGNED);
+        TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT,              \
+                             DESTTY, OPS, ARGS, CURBB,                        \
+                             RESISSIGNED, EXPISSIGNED);
 /* APPLE LOCAL end LLVM */
 
 /*

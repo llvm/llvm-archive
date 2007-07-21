@@ -30,6 +30,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 
+extern "C" {
+#include "toplev.h"
+}
+
 /* MergeIntPtrOperand - This merges the int and pointer operands of a GCC
  * intrinsic into a single operand for the LLVM intrinsic.  For example, this
  * turns LVX(4, p) -> llvm.lvx(gep P, 4).  OPNUM specifies the operand number
@@ -114,7 +118,8 @@ static bool IntrinsicOpIsSigned(SmallVector<tree, 8> &Args, unsigned OpNum) {
  * invocation into normal LLVM code.  If the target can handle the builtin, this
  * function should emit the expanded code and return true.
  */
-bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
+bool TreeToLLVM::TargetIntrinsicLower(tree exp,
+                                      unsigned FnCode,
                                       Value *DestLoc,
                                       Value *&Result,
                                       const Type *ResultType,
@@ -231,47 +236,59 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
       Elt = ConstantExpr::getIntegerCast(Elt, Type::Int8Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
-      return true;
+    } else {
+      error("%Helement must be an immediate", &EXPR_LOCATION(exp));
+      Result = UndefValue::get(VectorType::get(Type::Int8Ty, 16));
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSPLTISH:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
       Elt = ConstantExpr::getIntegerCast(Elt, Type::Int16Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
-      return true;
+    } else {
+      error("%Helement must be an immediate", &EXPR_LOCATION(exp));
+      Result = UndefValue::get(VectorType::get(Type::Int16Ty, 8));
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSPLTISW:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
       Elt = ConstantExpr::getIntegerCast(Elt, Type::Int32Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt, NULL);
-      return true;
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = UndefValue::get(VectorType::get(Type::Int32Ty, 4));
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSPLTB:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
       Result = BuildVectorShuffle(Ops[0], Ops[0],
                                   EV, EV, EV, EV, EV, EV, EV, EV,
                                   EV, EV, EV, EV, EV, EV, EV, EV);
-      return true;
+    } else {
+      error("%Helement number must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSPLTH:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
       Result = BuildVectorShuffle(Ops[0], Ops[0],
                                   EV, EV, EV, EV, EV, EV, EV, EV);
-      return true;
+    } else {
+      error("%Helement number must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSPLTW:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
       Result = BuildVectorShuffle(Ops[0], Ops[0], EV, EV, EV, EV);
-      return true;
+    } else {
+      error("%Helement number must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VSLDOI_16QI:
   case ALTIVEC_BUILTIN_VSLDOI_8HI:
   case ALTIVEC_BUILTIN_VSLDOI_4SI:
@@ -293,9 +310,11 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
                                   Amt+4, Amt+5, Amt+6, Amt+7,
                                   Amt+8, Amt+9, Amt+10, Amt+11,
                                   Amt+12, Amt+13, Amt+14, Amt+15);
-      return true;
+    } else {
+      error("%Hshift amount must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
     }
-    return false;
+    return true;
   case ALTIVEC_BUILTIN_VPKUHUM: {
     Value *Op0 = Ops[0];
     Instruction::CastOps opc = CastInst::getCastOpcode(Op0,

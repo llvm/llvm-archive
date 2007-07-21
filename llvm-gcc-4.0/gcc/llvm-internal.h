@@ -91,6 +91,7 @@ extern void readLLVMTypesStringTable();
 extern void writeLLVMTypesStringTable();
 extern void readLLVMValuesStringTable();
 extern void writeLLVMValuesStringTable();
+extern void clearTargetBuiltinCache();
 
 struct StructTypeConversionInfo;
 
@@ -472,7 +473,8 @@ private:
   Value *EmitCONSTRUCTOR(tree_node *exp, Value *DestLoc);
 
   // Optional target defined builtin intrinsic expanding function.
-  bool TargetIntrinsicLower(unsigned FnCode,
+  bool TargetIntrinsicLower(tree_node *exp,
+                            unsigned FnCode,
                             Value *DestLoc,
                             Value *&Result,
                             const Type *ResultType,

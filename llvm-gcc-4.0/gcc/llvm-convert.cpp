@@ -187,10 +187,10 @@ void writeLLVMValuesStringTable() {
   Constant *LLVMValuesNameTable = ConstantStruct::get(LLVMValuesNames, false);
 
   // Create variable to hold this string table.
-  GlobalVariable *GV = new GlobalVariable(LLVMValuesNameTable->getType(), true,
-                                          GlobalValue::ExternalLinkage, 
-                                          LLVMValuesNameTable,
-                                          "llvm.pch.values", TheModule);
+  new GlobalVariable(LLVMValuesNameTable->getType(), true,
+                     GlobalValue::ExternalLinkage, 
+                     LLVMValuesNameTable,
+                     "llvm.pch.values", TheModule);
 }
 
 /// isGCC_SSA_Temporary - Return true if this is an SSA temporary that we can
@@ -3448,12 +3448,20 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(tree exp, tree fndecl,
   bool ResIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_TYPE(fndecl)));
   bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
   unsigned FnCode = DECL_FUNCTION_CODE(fndecl);
-  LLVM_TARGET_INTRINSIC_LOWER(FnCode, DestLoc, Result, ResultType, Operands,
-                              Args, CurBB, ResIsSigned, ExpIsSigned);
+  return LLVM_TARGET_INTRINSIC_LOWER(exp, FnCode, DestLoc, Result, ResultType,
+                                     Operands, Args, CurBB, ResIsSigned,
+                                     ExpIsSigned);
 #endif
   return false;
 }
 
+/// TargetBuiltinCache - A cache of builtin intrisics indexed by the GCC builtin
+/// number.
+static std::vector<Constant*> TargetBuiltinCache;
+
+void clearTargetBuiltinCache() {
+  TargetBuiltinCache.clear();
+}
 
 /// EmitBuiltinCall - exp is a call to fndecl, a builtin function.  Try to emit
 /// the call in a special way, setting Result to the scalar result if necessary.
@@ -3462,7 +3470,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                  Value *DestLoc, Value *&Result) {
   if (DECL_BUILT_IN_CLASS(fndecl) == BUILT_IN_MD) {
     unsigned FnCode = DECL_FUNCTION_CODE(fndecl);
-    static std::vector<Constant*> TargetBuiltinCache;
     if (TargetBuiltinCache.size() <= FnCode)
       TargetBuiltinCache.resize(FnCode+1);
     

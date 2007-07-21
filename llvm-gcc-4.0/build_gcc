@@ -197,6 +197,11 @@ if [ "$ENABLE_LLVM" == true ]; then
   make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
        OPTIMIZE_OPTION='-O2' \
        CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
+
+  if ! test $? == 0 ; then
+      echo "error: LLVM 'make' failed!"
+      exit 1
+  fi 
 fi
 # APPLE LOCAL LLVM end
 
@@ -563,6 +568,11 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   ## Install the tree into the destination directory.
   make $MAKEFLAGS ENABLE_OPTIMIZED=1 UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
+
+  if ! test $? == 0 ; then
+      echo "error: LLVM 'make install' failed!"
+      exit 1
+  fi 
 
   ## Install Version.h
   if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then

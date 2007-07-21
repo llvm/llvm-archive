@@ -40,6 +40,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
@@ -196,9 +198,9 @@ void llvm_asm_file_start(void) {
     else
       PerFunctionPasses->add(createScalarReplAggregatesPass());
     PerFunctionPasses->add(createInstructionCombiningPass());
-//    PerFunctionPasses->add(createCFGSimplificationPass());
+    //    PerFunctionPasses->add(createCFGSimplificationPass());
   }
-  
+
   if (!HasPerFunctionPasses) {
     delete PerFunctionPasses;
     PerFunctionPasses = 0;
@@ -209,8 +211,66 @@ void llvm_asm_file_start(void) {
   
   // FIXME: AT -O0/O1, we should stream out functions at a time.
   PerModulePasses = new PassManager();
+
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
   if (DumpLLVM) PerModulePasses->add(new PrintModulePass(&std::cerr));
+
+  if (optimize > 0) {
+
+
+    PerModulePasses->add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+    PerModulePasses->add(createCFGSimplificationPass());    // Clean up disgusting code
+    PerModulePasses->add(createPromoteMemoryToRegisterPass());// Kill useless allocas
+    PerModulePasses->add(createGlobalOptimizerPass());      // Optimize out global vars
+    PerModulePasses->add(createGlobalDCEPass());            // Remove unused fns and globs
+    PerModulePasses->add(createIPConstantPropagationPass());// IP Constant Propagation
+    PerModulePasses->add(createDeadArgEliminationPass());   // Dead argument elimination
+    PerModulePasses->add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+    PerModulePasses->add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
+    PerModulePasses->add(createPruneEHPass());              // Remove dead EH info
+
+    if (optimize > 1) {
+      PerModulePasses->add(createFunctionInliningPass());   // Inline small functions
+      PerModulePasses->add(createSimplifyLibCallsPass());     // Library Call Optimizations
+
+      if (optimize > 2)
+    	PerModulePasses->add(createArgumentPromotionPass());    // Scalarize uninlined fn args
+      
+      PerModulePasses->add(createRaisePointerReferencesPass());// Recover type information
+    }
+    
+    PerModulePasses->add(createTailDuplicationPass());      // Simplify cfg by copying code
+    PerModulePasses->add(createCFGSimplificationPass());    // Merge & remove BBs
+    PerModulePasses->add(createScalarReplAggregatesPass()); // Break up aggregate allocas
+    PerModulePasses->add(createInstructionCombiningPass()); // Combine silly seq's
+    PerModulePasses->add(createCondPropagationPass());      // Propagate conditionals
+    PerModulePasses->add(createTailCallEliminationPass());  // Eliminate tail calls
+    PerModulePasses->add(createCFGSimplificationPass());    // Merge & remove BBs
+    PerModulePasses->add(createReassociatePass());          // Reassociate expressions
+    PerModulePasses->add(createLICMPass());                 // Hoist loop invariants
+    PerModulePasses->add(createLoopUnswitchPass());         // Unswitch loops.
+    PerModulePasses->add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
+    PerModulePasses->add(createIndVarSimplifyPass());       // Canonicalize indvars
+    PerModulePasses->add(createLoopUnrollPass());           // Unroll small loops
+    PerModulePasses->add(createInstructionCombiningPass()); // Clean up after the unroller
+    
+    if (optimize > 2)
+      PerModulePasses->add(createLoadValueNumberingPass());   // GVN for load instructions
+    
+    PerModulePasses->add(createGCSEPass());                 // Remove common subexprs
+    PerModulePasses->add(createSCCPPass());                 // Constant prop with SCCP
+    
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    PerModulePasses->add(createInstructionCombiningPass());
+    PerModulePasses->add(createCondPropagationPass());      // Propagate conditionals
+    PerModulePasses->add(createDeadStoreEliminationPass()); // Delete dead stores
+    PerModulePasses->add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+    PerModulePasses->add(createCFGSimplificationPass());    // Merge & remove BBs
+    
+    if (optimize > 1)
+      PerModulePasses->add(createConstantMergePass());        // Merge dup global constants 
+  }
   
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed

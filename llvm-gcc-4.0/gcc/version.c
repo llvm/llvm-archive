@@ -16,17 +16,15 @@
      to get version number string. Do not use new line.
 */
 
-const char version_string[] = "4.0.1 "
+const char version_string[] = "4.0.1 (Apple Computer, Inc. build 5449)"
 #ifdef ENABLE_LLVM
-                              "LLVM "
-#endif
-                              "(Apple Computer, Inc. build "
+                              "(LLVM build "
 #ifdef LLVM_VERSION_INFO
                               LLVM_VERSION_INFO
-#else
-                              "5449"
 #endif
-                              ")";
+                              ")"
+#endif
+  ;
 /* APPLE LOCAL end Apple version */
 
 /* This is the location of the online document giving instructions for

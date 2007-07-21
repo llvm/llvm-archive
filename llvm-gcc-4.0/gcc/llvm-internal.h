@@ -258,25 +258,38 @@ class TreeToLLVM {
     BranchFixup(BranchInst *srcBranch, bool IsExceptionEdge)
       : SrcBranch(srcBranch), isExceptionEdge(IsExceptionEdge) {}
   };
-  
+
+  enum CatchTypes { Unknown = 0, CatchList, FilterExpr };
+
   /// EHScope - One of these scopes is maintained for each TRY_CATCH_EXPR and
   /// TRY_FINALLY_EXPR blocks that we are currently in.
   struct EHScope {
     /// TryExpr - This is the actual TRY_CATCH_EXPR or TRY_FINALLY_EXPR.
     tree_node *TryExpr;
-    
+
     /// UnwindBlock - A basic block in this scope that branches to the unwind
     /// destination.  This is lazily created by the first invoke in this scope.
     BasicBlock *UnwindBlock;
-    
+
     // The basic blocks that are directly in this region.
     std::vector<BasicBlock*> Blocks;
-    
+
     /// BranchFixups - This is a list of fixups we need to process in this scope
     /// or in a parent scope.
     std::vector<BranchFixup> BranchFixups;
-    
-    EHScope(tree_node *expr) : TryExpr(expr), UnwindBlock(0) {}
+
+    /// InfosType - The nature of the type infos TryExpr contains: a list of
+    /// CATCH_EXPR (-> CatchList) or an EH_FILTER_EXPR (-> FilterExpr).  Equal
+    /// to Unknown if type info information has not yet been gathered.
+    CatchTypes InfosType;
+
+    /// TypeInfos - The type infos corresponding to the catches or filter in
+    /// TryExpr.  If InfosType is Unknown then this information has not yet
+    /// been gathered.
+    std::vector<Constant *> TypeInfos;
+
+    EHScope(tree_node *expr) :
+        TryExpr(expr), UnwindBlock(0), InfosType(Unknown) {}
   };
   
   /// CurrentEHScopes - The current stack of exception scopes we are
@@ -305,10 +318,6 @@ class TreeToLLVM {
   ///
   Function *FuncEHSelector;
   
-  /// FuncEHFilter - Function used to handle the exception filtering.
-  ///
-  Function *FuncEHFilter;
-
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
   ///
   Function *FuncEHGetTypeID;
@@ -457,7 +466,7 @@ private:
 private:
   /// GatherTypeInfo - Walk through the expression gathering all the
   /// typeinfos that are used.
-  void GatherTypeInfo(tree_node *exp, std::vector<Value *> &TypeInfos);
+  void GatherTypeInfo(tree_node *exp, std::vector<Constant *> &TypeInfos);
 
   /// AddLandingPad - Insert code to fetch and save the exception and exception
   /// selector.

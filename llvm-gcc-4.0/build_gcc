@@ -562,7 +562,11 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   # Remove PPC64 fat slices.
   cd $DEST_DIR$LLVM_INSTALL_PREFIX/bin
+if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
   find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
+else
+  find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
+fi
   cd $DEST_DIR$LLVM_INSTALL_PREFIX
   lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.so
 

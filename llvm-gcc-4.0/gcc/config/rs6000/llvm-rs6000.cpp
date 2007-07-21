@@ -279,7 +279,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
       /* Map all of these to a shuffle. */
       unsigned Amt = Elt->getZExtValue() & 15;
-      PackedType *v16i8 = PackedType::get(Type::Int8Ty, 16);
+      VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
       Value *Op0 = Ops[0];
       Instruction::CastOps opc = CastInst::getCastOpcode(Op0,
         IntrinsicOpIsSigned(Args,0), ResultType, false);
@@ -345,10 +345,10 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   case ALTIVEC_BUILTIN_ABS_V4SF: {
     /* and out sign bits */
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     Ops[0] = new BitCastInst(Ops[0], v4i32, Ops[0]->getName(),CurBB);
     Constant *C = ConstantInt::get(Type::Int32Ty, 0x7FFFFFFF);
-    C = ConstantPacked::get(std::vector<Constant*>(4, C));
+    C = ConstantVector::get(std::vector<Constant*>(4, C));
     Result = BinaryOperator::createAnd(Ops[0], C, "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
@@ -360,7 +360,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     Result = BinaryOperator::createNeg(Ops[0], "tmp", CurBB);
     /* get the right smax intrinsic. */
     static Constant *smax[3];
-    const PackedType *PTy = cast<PackedType>(ResultType);
+    const VectorType *PTy = cast<VectorType>(ResultType);
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());
     if (smax[N] == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -376,7 +376,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case ALTIVEC_BUILTIN_ABSS_V16QI: { /* iabss(x) -> smax(x, satsub(0,x)) */
     static Constant *sxs[3], *smax[3];
     /* get the right satsub intrinsic. */
-    const PackedType *PTy = cast<PackedType>(ResultType);
+    const VectorType *PTy = cast<VectorType>(ResultType);
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());
     if (sxs[N] == 0) {
       Module *M = CurBB->getParent()->getParent();

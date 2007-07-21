@@ -1750,7 +1750,7 @@ struct tree_type GTY(())
     char * GTY ((tag ("1"))) pointer;
     struct die_struct * GTY ((tag ("2"))) die;
     /* APPLE LOCAL begin LLVM */
-    long GTY ((tag ("3"))) llvm;   /* Really an LLVM "Type*" */
+    unsigned GTY ((tag ("3"))) llvm;   /* Really an LLVM Type vector (LTypes) index */
   } GTY ((desc ("LLVM_IS_ENABLED ? 3 : debug_hooks == &sdb_debug_hooks ? 1 : debug_hooks == &dwarf2_debug_hooks ? 2 : 0"),
 	  descbits ("2"))) symtab;
 /* APPLE LOCAL end LLVM */
@@ -2078,13 +2078,6 @@ namespace llvm { class Value; }
 #define SET_DECL_LLVM(NODE, LLVM) \
   (DECL_CHECK (NODE)->decl.llvm = (long)(Value*)LLVM)
 
-/* GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
- * These are lazily computed by ConvertType, accessors available only to C++
- * code.
- */
-#define GET_TYPE_LLVM(NODE) (const Type *)(TYPE_CHECK (NODE)->type.symtab.llvm)
-#define SET_TYPE_LLVM(NODE, TYPE) \
-   (const Type*)((TYPE_CHECK (NODE)->type.symtab.llvm) = (long)(TYPE))
 #else
 /* C versions */
 #define DECL_LLVM(NODE)					\

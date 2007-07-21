@@ -94,6 +94,9 @@ extern std::vector<GlobalValue*> AttributeUsedGlobals;
 extern std::map<std::string, GlobalVariable*> EmittedGlobalVars;
 extern std::map<std::string, Function*> EmittedFunctions;
 
+extern void readLLVMTypesStringTable();
+extern void writeLLVMTypesStringTable();
+
 struct StructTypeConversionInfo;
 
 /// TypeConverter - Implement the converter from GCC types to LLVM types.

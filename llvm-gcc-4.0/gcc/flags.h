@@ -334,4 +334,7 @@ extern int flag_pch_file;
 extern int flag_save_repository;
 /* APPLE LOCAL end ss2 */
 
+/* APPLE LOCAL LLVM */
+extern int flag_llvm_pch_read;
+
 #endif /* ! GCC_FLAGS_H */

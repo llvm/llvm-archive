@@ -81,8 +81,8 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     Result = BinaryOperator::createMul(Ops[0], Ops[1], "tmp", CurBB);
     return true;
   case IX86_BUILTIN_PSLLWI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
-    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
     static Constant *psllw = 0;
     if (psllw == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -97,7 +97,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSLLDI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     static Constant *pslld = 0;
     if (pslld == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -112,8 +112,8 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSLLQI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
-    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v2i64 = VectorType::get(Type::Int64Ty, 2);
     static Constant *psllq = 0;
     if (psllq == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -128,8 +128,8 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSRLWI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
-    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
     static Constant *psrlw = 0;
     if (psrlw == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -144,7 +144,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSRLDI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     static Constant *psrld = 0;
     if (psrld == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -159,8 +159,8 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSRLQI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
-    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v2i64 = VectorType::get(Type::Int64Ty, 2);
     static Constant *psrlq = 0;
     if (psrlq == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -175,8 +175,8 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSRAWI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
-    PackedType *v8i16 = PackedType::get(Type::Int16Ty, 8);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v8i16 = VectorType::get(Type::Int16Ty, 8);
     static Constant *psraw = 0;
     if (psraw == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -191,7 +191,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_PSRADI128: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     static Constant *psrad = 0;
     if (psrad == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -226,7 +226,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_ORPS:
   case IX86_BUILTIN_XORPS:
   case IX86_BUILTIN_ANDNPS: {
-    PackedType *v4i32 = PackedType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
     Ops[0] = new BitCastInst(Ops[0], v4i32, "tmp", CurBB);
     Ops[1] = new BitCastInst(Ops[1], v4i32, "tmp", CurBB);
     switch (FnCode) {
@@ -252,7 +252,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_ORPD:
   case IX86_BUILTIN_XORPD:
   case IX86_BUILTIN_ANDNPD: {
-    PackedType *v2i64 = PackedType::get(Type::Int64Ty, 2);
+    VectorType *v2i64 = VectorType::get(Type::Int64Ty, 2);
     Ops[0] = new BitCastInst(Ops[0], v2i64, "tmp", CurBB);
     Ops[1] = new BitCastInst(Ops[1], v2i64, "tmp", CurBB);
     switch (FnCode) {
@@ -389,7 +389,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_STOREHPS: {
-    PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);
     Ops[0] = new BitCastInst(Ops[0], f64Ptr, "tmp", CurBB);
     Value *Idx = ConstantInt::get(Type::Int32Ty, 1);
@@ -399,7 +399,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
     return true;
   }
   case IX86_BUILTIN_STORELPS: {
-    PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);
     Ops[0] = new BitCastInst(Ops[0], f64Ptr, "tmp", CurBB);
     Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
@@ -447,7 +447,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_CMPNGEPS:
   case IX86_BUILTIN_CMPORDPS:
   case IX86_BUILTIN_CMPUNORDPS: {
-    PackedType *v4f32 = PackedType::get(Type::FloatTy, 4);
+    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
     static Constant *cmpps = 0;
     if (cmpps == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -517,7 +517,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_CMPNGESS:
   case IX86_BUILTIN_CMPORDSS:
   case IX86_BUILTIN_CMPUNORDSS: {
-    PackedType *v4f32 = PackedType::get(Type::FloatTy, 4);
+    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
     static Constant *cmpss = 0;
     if (cmpss == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -572,7 +572,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_CMPNGEPD:
   case IX86_BUILTIN_CMPORDPD:
   case IX86_BUILTIN_CMPUNORDPD: {
-    PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
     static Constant *cmpps = 0;
     if (cmpps == 0) {
       Module *M = CurBB->getParent()->getParent();
@@ -641,7 +641,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case IX86_BUILTIN_CMPNLESD:
   case IX86_BUILTIN_CMPORDSD:
   case IX86_BUILTIN_CMPUNORDSD: {
-    PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
     static Constant *cmpss = 0;
     if (cmpss == 0) {
       Module *M = CurBB->getParent()->getParent();

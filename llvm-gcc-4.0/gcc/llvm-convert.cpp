@@ -3231,17 +3231,17 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
   for (unsigned i = 0, e = Ops.size(); i != e && AllConstants; ++i)
     AllConstants &= isa<Constant>(Ops[i]);
     
-  // If this is a constant vector, create a ConstantPacked.
+  // If this is a constant vector, create a ConstantVector.
   if (AllConstants) {
     std::vector<Constant*> CstOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
       CstOps.push_back(cast<Constant>(Ops[i]));
-    return ConstantPacked::get(CstOps);
+    return ConstantVector::get(CstOps);
   }
   
   // Otherwise, insertelement the values to build the vector.
   Value *Result = 
-    UndefValue::get(PackedType::get(Ops[0]->getType(), Ops.size()));
+    UndefValue::get(VectorType::get(Ops[0]->getType(), Ops.size()));
   
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     Result = new InsertElementInst(Result, Ops[i], 
@@ -3275,9 +3275,9 @@ Value *TreeToLLVM::BuildVector(Value *Elt, ...) {
 /// Undef values may be specified by passing in -1 as the result value.
 ///
 Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
-  assert(isa<PackedType>(InVec1->getType()) && 
+  assert(isa<VectorType>(InVec1->getType()) && 
          InVec1->getType() == InVec2->getType() && "Invalid shuffle!");
-  unsigned NumElements = cast<PackedType>(InVec1->getType())->getNumElements();
+  unsigned NumElements = cast<VectorType>(InVec1->getType())->getNumElements();
 
   // Get all the indexes from varargs.
   std::vector<Constant*> Idxs;
@@ -3295,7 +3295,7 @@ Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
   va_end(VA);
 
   // Turn this into the appropriate shuffle operation.
-  return new ShuffleVectorInst(InVec1, InVec2, ConstantPacked::get(Idxs),
+  return new ShuffleVectorInst(InVec1, InVec2, ConstantVector::get(Idxs),
                                "tmp", CurBB);
 }
 
@@ -4374,14 +4374,14 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
 Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, Value *DestLoc) {
   tree type = TREE_TYPE(exp);
   const Type *Ty = ConvertType(type);
-  if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
     assert(DestLoc == 0 && "Dest location for packed value?");
     
     std::vector<Value *> BuildVecOps;
     
     // Insert zero initializers for any uninitialized values.
     Constant *Zero = Constant::getNullValue(PTy->getElementType());
-    BuildVecOps.resize(cast<PackedType>(Ty)->getNumElements(), Zero);
+    BuildVecOps.resize(cast<VectorType>(Ty)->getNumElements(), Zero);
     
     // Insert all of the elements here.
     for (tree Ops = TREE_OPERAND(exp, 0); Ops; Ops = TREE_CHAIN(Ops)) {
@@ -4519,7 +4519,7 @@ Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
 
   for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
     Elts.push_back(Convert(TREE_VALUE(elt)));
-  return ConstantPacked::get(Elts);
+  return ConstantVector::get(Elts);
 }
 
 Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {

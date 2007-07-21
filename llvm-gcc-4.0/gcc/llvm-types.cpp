@@ -29,9 +29,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <map>
@@ -45,6 +47,148 @@ extern "C" {
 #include "llvm-abi.h"
 
 
+//===----------------------------------------------------------------------===//
+//                   Matching LLVM types with GCC trees
+//===----------------------------------------------------------------------===//
+//
+// LTypes is a vector of LLVM types. GCC tree nodes keep track of LLVM types 
+// using this vector's index. It is easier to save and restore the index than 
+// the LLVM type pointer while usig PCH. STL vector does not provide fast 
+// searching mechanism which is required to remove LLVM Type entry when type is 
+// refined and replaced by another LLVM Type. This is achieved by maintaining 
+// a map.
+
+// Collection of LLVM Types and their names
+static std::vector<const Type *> LTypes;
+typedef DenseMap<const Type *, unsigned> LTypesMapTy;
+static LTypesMapTy LTypesMap;
+
+// GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
+// These are lazily computed by ConvertType, accessors available only to C++
+// code.
+
+#define SET_TYPE_SYMTAB_LLVM(NODE, index) (TYPE_CHECK (NODE)->type.symtab.llvm = index)
+
+// Note down LLVM type for GCC tree node.
+static const Type * llvm_set_type(tree Tr, const Type *Ty) {
+
+  unsigned &TypeSlot = LTypesMap[Ty];
+  if (TypeSlot) {
+    // Already in map.
+    SET_TYPE_SYMTAB_LLVM(Tr, TypeSlot);
+    return Ty;
+  }
+
+  unsigned Index = LTypes.size() + 1;
+  LTypes.push_back(Ty);
+  SET_TYPE_SYMTAB_LLVM(Tr, Index);
+  LTypesMap[Ty] = Index;
+
+  return Ty;
+}
+
+#define SET_TYPE_LLVM(NODE, TYPE) (const Type *)llvm_set_type(NODE, TYPE)
+
+// Get LLVM Type for the GCC tree node based on LTypes vector index.
+// When GCC tree node is initialized, it has 0 as the index value. This is
+// why all recorded indexes are offset by 1. 
+static inline const Type *llvm_get_type(unsigned Index) {
+
+  if (Index == 0)
+    return NULL;
+  assert ((Index - 1) < LTypes.size() && "Invalid LLVM Type index");
+  return LTypes[Index - 1];
+}
+
+#define GET_TYPE_LLVM(NODE) \
+  (const Type *)llvm_get_type( TYPE_CHECK (NODE)->type.symtab.llvm)
+
+// Erase type from LTypes vector
+static void llvmEraseLType(const Type *Ty) {
+
+  LTypesMapTy::iterator I = LTypesMap.find(Ty);
+
+  if (I != LTypesMap.end()) {
+    // It is OK to clear this entry instead of removing this entry
+    // to avoid re-indexing of other entries.
+    LTypes[ LTypesMap[Ty] - 1] = NULL;
+    LTypesMap.erase(I);
+  }
+}
+
+// Read LLVM Types string table
+void readLLVMTypesStringTable() {
+
+  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.types");
+  if (!V)
+    return;
+
+  //  Value *GV = TheModule->getValueSymbolTable().lookup("llvm.pch.types");
+  GlobalVariable *GV = cast<GlobalVariable>(V);
+  ConstantStruct *LTypesNames = cast<ConstantStruct>(GV->getOperand(0));
+
+  for (unsigned i = 0; i < LTypesNames->getNumOperands(); ++i) {
+    const Type *Ty = NULL;
+
+    if (ConstantArray *CA = 
+        dyn_cast<ConstantArray>(LTypesNames->getOperand(i))) {
+      std::string Str = CA->getAsString();
+      Ty = TheModule->getTypeByName(Str);
+      assert (Ty != NULL && "Invalid Type in LTypes string table");
+    } 
+    // If V is not a string then it is empty. Insert NULL to represent 
+    // empty entries.
+    LTypes.push_back(Ty);
+  }
+
+  // Now, llvm.pch.types value is not required so remove it from the symbol table.
+  GV->eraseFromParent();
+}
+
+
+// GCC tree's uses LTypes vector's index to reach LLVM types.
+// Create a string table to hold these LLVM types' names. This string
+// table will be used to recreate LTypes vector after loading PCH.
+void writeLLVMTypesStringTable() {
+  
+  if (LTypes.empty()) 
+    return;
+
+  std::vector<Constant *> LTypesNames;
+  std::map < const Type *, std::string > TypeNameMap;
+
+  // Collect Type Names in advance.
+  const TypeSymbolTable &ST = TheModule->getTypeSymbolTable();
+  TypeSymbolTable::const_iterator TI = ST.begin();
+  for (; TI != ST.end(); ++TI) {
+    TypeNameMap[TI->second] = TI->first;
+  }
+
+  // Populate LTypesNames vector.
+  for (std::vector<const Type *>::iterator I = LTypes.begin(),
+         E = LTypes.end(); I != E; ++I)  {
+    const Type *Ty = *I;
+
+    // Give names to nameless types.
+    if (Ty && TypeNameMap[Ty].empty()) {
+      std::string NewName = TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
+      TheModule->addTypeName (NewName, Ty);
+      TypeNameMap[*I] = NewName;
+    }
+
+    const std::string &TypeName = TypeNameMap[*I];
+    LTypesNames.push_back(ConstantArray::get(TypeName, false));
+  }
+
+  // Create string table.
+  Constant *LTypesNameTable = ConstantStruct::get(LTypesNames, false);
+
+  // Create variable to hold this string table.
+  GlobalVariable *GV = new GlobalVariable(LTypesNameTable->getType(), true,
+                                          GlobalValue::ExternalLinkage, 
+                                          LTypesNameTable,
+                                          "llvm.pch.types", TheModule);
+}
 
 //===----------------------------------------------------------------------===//
 //                   Recursive Type Handling Code and Data
@@ -193,7 +337,6 @@ void TypeRefinementDatabase::RemoveTypeFromTable(tree type) {
   }
 }
 
-
 /// refineAbstractType - The callback method invoked when an abstract type is
 /// resolved to another type.  An object must override this method to update
 /// its internal state to reference NewType instead of OldType.
@@ -223,6 +366,7 @@ void TypeRefinementDatabase::refineAbstractType(const DerivedType *OldTy,
     }
   }
   
+  llvmEraseLType(OldTy);
   TypeUsers.erase(I);
   
   // Next, remove OldTy's entry in the TargetData object if it has one.
@@ -334,7 +478,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    Ty = PackedType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
+    Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
     return SET_TYPE_LLVM(type, Ty);
   }
     

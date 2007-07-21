@@ -64,6 +64,9 @@ extern "C" {
 #include "tree-inline.h"
 }
 
+// Non-zero if bytecode from PCH is successfully read.
+int flag_llvm_pch_read;
+
 // Global state for the LLVM backend.
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
@@ -184,12 +187,15 @@ void llvm_lang_dependent_init(const char *Name) {
 
 oFILEstream *AsmOutStream = 0;
 
+/// Read bytecode from PCH file. Initialize TheModue and setup
+/// LTypes vector.
 void llvm_pch_read(void) {
 
   if (TheModule)
     delete TheModule;
 
   fclose (asm_out_file);
+  
   std::string ErrMsg;
   TheModule = ParseBytecodeFile(asm_file_name,
                                 Compressor::decompressToNewBuffer,
@@ -199,10 +205,21 @@ void llvm_pch_read(void) {
     cerr << ErrMsg << "\n";
     exit(1);
   }
+
+  // Reopen asm_out_file for the rest of the compiler's use.
+  // This also removes llvm byte code from the asm_out_file.
+  asm_out_file = fopen (asm_file_name, "w+b");
+  if (asm_out_file == 0)
+    fatal_error ("can%'t open %s for writing: %m", asm_file_name);
+
+  // Read LLVM Types string table
+  readLLVMTypesStringTable();
+  flag_llvm_pch_read = 1;
 }
 
 // Initialize PCH writing. 
 void llvm_pch_write_init(void) {
+
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
   AsmOutFile = new OStream(*AsmOutStream);
@@ -218,6 +235,8 @@ void llvm_pch_write_init(void) {
   // wrong for llvm/.bc emission cases.
   flag_no_ident = 1;
 
+  flag_llvm_pch_read = 0;
+
   timevar_pop(TV_LLVM_INIT);
 }
 
@@ -227,6 +246,8 @@ void llvm_asm_file_start(void) {
   AsmOutStream = new oFILEstream(asm_out_file);
   AsmOutFile = new OStream(*AsmOutStream);
   
+  flag_llvm_pch_read = 0;
+
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
   PerFunctionPasses =
@@ -410,7 +431,10 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  
+
+  if (flag_pch_file)
+    writeLLVMTypesStringTable();
+
   // Add an llvm.global_ctors global if needed.
   if (!StaticCtors.empty())
     CreateStructorsList(StaticCtors, "llvm.global_ctors");

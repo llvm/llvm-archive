@@ -2329,7 +2329,7 @@ Value *TreeToLLVM::EmitCompare(tree exp, unsigned Opc, bool isUnord) {
       Result = IsUnord;
     
     // If this is an ORDERED_EXPR, invert the result of the isunordered call.
-    if (Opc == ORDERED_EXPR)
+    if (TREE_CODE(exp) == ORDERED_EXPR)
       Result = BinaryOperator::createNot(Result, "tmp", CurBB);
   }
   

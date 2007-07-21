@@ -4634,8 +4634,6 @@ static GTY(()) VEC(alias_pair) *alias_pairs;
 /* Given an assembly name, find the decl it is associated with.  At the
    same time, mark it needed for cgraph.  */
 
-/* APPLE LOCAL LLVM */
-#ifndef ENABLE_LLVM
 static tree
 find_decl_and_mark_needed (tree decl, tree target)
 {
@@ -4673,20 +4671,12 @@ find_decl_and_mark_needed (tree decl, tree target)
   else 
     return NULL_TREE;
 }
-/* APPLE LOCAL LLVM */
-#endif
 
+/* APPLE LOCAL LLVM */
+#ifndef ENABLE_LLVM  
 static void
 do_assemble_alias (tree decl, tree target)
 {
-/* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM  
-  if (emit_alias_to_llvm(decl, target, 1) == -1)
-    error ("%J%qD aliased to undefined symbol %qE",
-           decl, decl, target);
-  return;
-#endif
-/* APPLE LOCAL end LLVM */
   if (TREE_ASM_WRITTEN (decl))
     return;
 
@@ -4724,12 +4714,14 @@ do_assemble_alias (tree decl, tree target)
        we do not emit multiple .weak directives for it.  */
     for (p = &weak_decls; (t = *p) ; )
       if (DECL_ASSEMBLER_NAME (decl) == DECL_ASSEMBLER_NAME (TREE_VALUE (t)))
-	*p = TREE_CHAIN (t);
+       *p = TREE_CHAIN (t);
       else
-	p = &TREE_CHAIN (t);
+       p = &TREE_CHAIN (t);
   }
 #endif
 }
+/* APPLE LOCAL LLVM */
+#endif
 
 /* First pass of completing pending aliases.  Make sure that cgraph knows
    which symbols will be required.  */
@@ -4737,11 +4729,6 @@ do_assemble_alias (tree decl, tree target)
 void
 finish_aliases_1 (void)
 {
-/* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-  return;
-#else
-/* APPLE LOCAL end LLVM */
   unsigned i;
   alias_pair p;
 
@@ -4757,9 +4744,6 @@ finish_aliases_1 (void)
 	error ("%J%qD aliased to external symbol %qE",
 	       p->decl, p->decl, p->target);
     }
-/* APPLE LOCAL begin LLVM */
-#endif
-/* APPLE LOCAL end LLVM */
 }
 
 /* Second pass of completing pending aliases.  Emit the actual assembly.
@@ -4773,7 +4757,17 @@ finish_aliases_2 (void)
   alias_pair p;
 
   for (i = 0; VEC_iterate (alias_pair, alias_pairs, i, p); i++)
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+    {
+      tree target_decl;
+      target_decl = find_decl_and_mark_needed (p->decl, p->target);
+      emit_alias_to_llvm(p->decl, p->target, target_decl);
+    }
+#else  
     do_assemble_alias (p->decl, p->target);
+#endif    
+/*APPLE LOCAL end LLVM */
 
   alias_pairs = NULL;
 }
@@ -4784,12 +4778,8 @@ finish_aliases_2 (void)
 void
 assemble_alias (tree decl, tree target)
 {
-/* APPLE LOCAL begin LLVM */
-#ifndef ENABLE_LLVM
   tree target_decl;
-#endif  
-/* APPLE LOCAL end LLVM */
-  
+
 #if !defined (ASM_OUTPUT_DEF)
 # if !defined(ASM_OUTPUT_WEAK_ALIAS) && !defined (ASM_WEAKEN_DECL)
   error ("%Jalias definitions not supported in this configuration", decl);
@@ -4825,20 +4815,16 @@ assemble_alias (tree decl, tree target)
   else
     cgraph_varpool_node (decl)->alias = true;
 
-/* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-  /* Can we emit alias right now (usually true for C functions)? If yes - do it,
-   * otherwise save for late processing */
-  if (emit_alias_to_llvm(decl, target, 0) == -1)
-#else  
   /* If the target has already been emitted, we don't have to queue the
      alias.  This saves a tad o memory.  */
   target_decl = find_decl_and_mark_needed (decl, target);
   if (target_decl && TREE_ASM_WRITTEN (target_decl))
-    do_assemble_alias (decl, target);
-  else
+#ifdef ENABLE_LLVM
+    emit_alias_to_llvm(decl, target, target_decl);
+#else
+  do_assemble_alias (decl, target);
 #endif
-/* APPLE LOCAL end LLVM */    
+  else
     {
       alias_pair p;
 

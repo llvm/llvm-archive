@@ -58,7 +58,6 @@ extern "C" {
 #include "coretypes.h"
 #include "flags.h"
 #include "tree.h"
-#include "c-tree.h" // For aliases
 #include "diagnostic.h"
 #include "output.h"
 #include "toplev.h"
@@ -534,50 +533,46 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   timevar_pop(TV_LLVM_FUNCS);
 }
 
-// emit_alias_to_llvm - Given decl and target emit alias to target. gcc is
-// little bit insane, it can ask us for alias emission in many places. Such
-// places are divided into two stages: it's allowed to have unresolved target at
-// stage 0 (hence result code -1), but not on stage 1 (error). Zero is returned
-// if alias was emitted.
-int emit_alias_to_llvm(tree decl, tree target, unsigned stage) {
-  if (errorcount || sorrycount) return -2;
-    
+// emit_alias_to_llvm - Given decl and target emit alias to target.
+void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
+  if (errorcount || sorrycount) return;
+
   timevar_push(TV_LLVM_GLOBALS);
 
   // Get or create LLVM global for our alias.
   GlobalValue *V = cast<GlobalValue>(DECL_LLVM(decl));
   
-  // Try to grab decl from IDENTIFIER_NODE
-  GlobalValue *Aliasee = 0;
-  if (tree c_decl = lookup_name(target))
-    Aliasee = cast<GlobalValue>(DECL_LLVM(c_decl));
+  GlobalValue *Aliasee = NULL;
+  
+  if (target_decl)
+    Aliasee = cast<GlobalValue>(DECL_LLVM(target_decl));
+  else {
+    // This is something insane. Probably only LTHUNKs can be here
+    // Try to grab decl from IDENTIFIER_NODE
 
-  // Query SymTab for aliasee
-  const char* AliaseeName = IDENTIFIER_POINTER(target);
-  if (!Aliasee) {
+    // Query SymTab for aliasee
+    const char* AliaseeName = IDENTIFIER_POINTER(target);
     Aliasee =
       dyn_cast_or_null<GlobalValue>(TheModule->
                                     getValueSymbolTable().lookup(AliaseeName));
-  }
 
-  // Last resort. Query for name set via __asm__
-  if (!Aliasee) {
-    std::string starred = std::string("\001") + AliaseeName;
-    Aliasee =
-      dyn_cast_or_null<GlobalValue>(TheModule->
-                                    getValueSymbolTable().lookup(starred));
-  }
-  
-  if (!Aliasee) {
-    if (stage)
+    // Last resort. Query for name set via __asm__
+    if (!Aliasee) {
+      std::string starred = std::string("\001") + AliaseeName;
+      Aliasee =
+        dyn_cast_or_null<GlobalValue>(TheModule->
+                                      getValueSymbolTable().lookup(starred));
+    }
+    
+    if (!Aliasee) {
       error ("%J%qD aliased to undefined symbol %qE",
              decl, decl, target);
-    timevar_pop(TV_LLVM_GLOBALS);
-    return -1;
-  }  
-    
+      timevar_pop(TV_LLVM_GLOBALS);
+      return;
+    }
+  }
+  
   GlobalValue::LinkageTypes Linkage;
-  GlobalValue::VisibilityTypes Visibility;
 
   // Check for external weak linkage
   if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
@@ -590,15 +585,19 @@ int emit_alias_to_llvm(tree decl, tree target, unsigned stage) {
   GlobalAlias* GA = new GlobalAlias(Aliasee->getType(), Linkage, "",
                                     Aliasee, TheModule);
   // Handle visibility style
-  if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-    GA->setVisibility(GlobalValue::HiddenVisibility);
+  if (TREE_PUBLIC(decl)) {
+    if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+      GA->setVisibility(GlobalValue::HiddenVisibility);
+    else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+      GA->setVisibility(GlobalValue::ProtectedVisibility);
+  }
 
   if (V->getType() == GA->getType())
     V->replaceAllUsesWith(GA);
   else if (!V->use_empty()) {
     error ("%J Alias %qD used with invalid type!", decl, decl);
     timevar_pop(TV_LLVM_GLOBALS);
-    return -1;
+    return;
   }
     
   changeLLVMValue(V, GA);
@@ -611,9 +610,11 @@ int emit_alias_to_llvm(tree decl, tree target, unsigned stage) {
     F->eraseFromParent();
   else
     assert(0 && "Unsuported global value");
+
+  TREE_ASM_WRITTEN(decl) = 1;
   
   timevar_pop(TV_LLVM_GLOBALS);
-  return 0;
+  return;
 }
 
   
@@ -694,11 +695,15 @@ void emit_global_to_llvm(tree decl) {
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
   TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
-  
+
   // Handle visibility style
-  if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-    GV->setVisibility(GlobalValue::HiddenVisibility);
-  
+  if (TREE_PUBLIC(decl)) {
+    if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+      GV->setVisibility(GlobalValue::HiddenVisibility);
+    else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+      GV->setVisibility(GlobalValue::ProtectedVisibility);
+  }
+
   // Set the section for the global.
   if (TREE_CODE(decl) == VAR_DECL || TREE_CODE(decl) == CONST_DECL) {
     if (DECL_SECTION_NAME(decl)) {
@@ -864,9 +869,13 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
       // Handle visibility style
-      if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-        FnEntry->setVisibility(Function::HiddenVisibility);
-      
+      if (TREE_PUBLIC(decl)) {
+        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+          FnEntry->setVisibility(GlobalValue::HiddenVisibility);
+        else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+          FnEntry->setVisibility(GlobalValue::ProtectedVisibility);
+      }
+
       assert(FnEntry->getName() == Name &&"Preexisting fn with the same name!");
     }
     SET_DECL_LLVM(decl, FnEntry);
@@ -894,8 +903,13 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
       // Handle visibility style
-      if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-        GV->setVisibility(Function::HiddenVisibility);
+      if (TREE_PUBLIC(decl)) {
+        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+          GV->setVisibility(GlobalValue::HiddenVisibility);
+        else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+          GV->setVisibility(GlobalValue::ProtectedVisibility);
+      }
+
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
@@ -914,9 +928,13 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
         // Handle visibility style
-        if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-          GV->setVisibility(Function::HiddenVisibility);
-        
+        if (TREE_PUBLIC(decl)) {
+          if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+            GV->setVisibility(GlobalValue::HiddenVisibility);
+          else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+            GV->setVisibility(GlobalValue::ProtectedVisibility);
+        }
+
         // If GV got renamed, then there is already an object with this name in
         // the symbol table.  If this happens, the old one must be a forward
         // decl, just replace it with a cast of the new one.

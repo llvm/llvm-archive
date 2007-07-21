@@ -486,11 +486,15 @@ void TreeToLLVM::StartFunctionBody() {
     assert(Fn->getCallingConv() == CallingConv &&
            "Calling convention disagreement between prototype and impl!");
     // The visibility can be changed from the last time we've seen this
-    // function. Set to current.    
-    if (TREE_PUBLIC(FnDecl) && DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
-      Fn->setVisibility(Function::HiddenVisibility);
-    else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
-      Fn->setVisibility(Function::DefaultVisibility);
+    // function. Set to current.
+    if (TREE_PUBLIC(FnDecl)) {
+      if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+        Fn->setVisibility(Function::HiddenVisibility);
+      else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_PROTECTED)
+        Fn->setVisibility(Function::ProtectedVisibility);
+      else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
+        Fn->setVisibility(Function::DefaultVisibility);
+    }
   } else {
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry) {
@@ -513,6 +517,7 @@ void TreeToLLVM::StartFunctionBody() {
     if (FnEntry) {
       FnEntry->replaceAllUsesWith(ConstantExpr::getBitCast(Fn,
                                                            FnEntry->getType()));
+      changeLLVMValue(FnEntry, Fn);
       FnEntry->eraseFromParent();
     }
     SET_DECL_LLVM(FnDecl, Fn);
@@ -535,9 +540,13 @@ void TreeToLLVM::StartFunctionBody() {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
   // Handle visibility style
-  if (TREE_PUBLIC(FnDecl) && DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
-    Fn->setVisibility(Function::HiddenVisibility);
-  
+  if (TREE_PUBLIC(FnDecl)) {
+    if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+      Fn->setVisibility(Function::HiddenVisibility);
+    else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_PROTECTED)
+      Fn->setVisibility(Function::ProtectedVisibility);
+  }
+
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))
     Fn->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(FnDecl)));

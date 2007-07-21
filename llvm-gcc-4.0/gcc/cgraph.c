@@ -213,7 +213,13 @@ decl_assembler_name_equal (tree decl, tree asmname)
      historically been doing the wrong thing in assemble_alias by always
      printing the leading underscore.  Since we're not changing that, make
      sure user_label_prefix follows the '*' before matching.  */
+/* APPLE LOCAL begin LLVM */  
+#ifdef ENABLE_LLVM
+  if (IDENTIFIER_POINTER (decl_asmname)[0] == 1)
+#else  
   if (IDENTIFIER_POINTER (decl_asmname)[0] == '*')
+#endif
+/* APPLE LOCAL end LLVM */
     {
       const char *decl_str = IDENTIFIER_POINTER (decl_asmname) + 1;
       size_t ulp_len = strlen (user_label_prefix);

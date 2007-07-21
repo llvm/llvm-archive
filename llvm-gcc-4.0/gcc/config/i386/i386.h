@@ -4038,6 +4038,7 @@ enum ix86_builtins
     if (TARGET_SSE)   F.AddFeature("sse");                    \
     if (TARGET_SSE2)  F.AddFeature("sse2");                   \
     if (TARGET_SSE3)  F.AddFeature("sse3");                   \
+    if (TARGET_SSSE3) F.AddFeature("ssse3");                  \
     if (TARGET_3DNOW) F.AddFeature("3dnow");                  \
     if (TARGET_3DNOW_A) F.AddFeature("3dnowa");               \
   }

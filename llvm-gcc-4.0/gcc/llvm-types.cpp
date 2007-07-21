@@ -712,7 +712,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   if (static_chain) {
     // Pass the static chain in a register.
     ParamAttrs = new ParamAttrsList();
-    ParamAttrs->addAttributes(1, InRegAttribute);
+    ParamAttrs->addAttributes(1, ParamAttr::InReg);
   }
 
   return FunctionType::get(RetTy, ArgTys, false, ParamAttrs);
@@ -768,22 +768,22 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   // the function will be correctly sign or zero extended to 32-bits by
   // the LLVM code gen.
   ParamAttrsList Attrs;
-  uint16_t RAttributes = NoAttributeSet;
+  uint16_t RAttributes = ParamAttr::None;
   if (CallingConv == CallingConv::C) {
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_CODE(ResultTy) == BOOLEAN_TYPE) {
       if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-        RAttributes |= ZExtAttribute;
+        RAttributes |= ParamAttr::ZExt;
     } else {
       if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
           TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
         if (TYPE_UNSIGNED(ResultTy))
-          RAttributes |= ZExtAttribute;
+          RAttributes |= ParamAttr::ZExt;
         else 
-          RAttributes |= SExtAttribute;
+          RAttributes |= ParamAttr::SExt;
     }
   }
-  if (RAttributes != NoAttributeSet)
+  if (RAttributes != ParamAttr::None)
     Attrs.addAttributes(0, RAttributes);
   
   unsigned Idx = 1;
@@ -796,30 +796,30 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 
   if (static_chain)
     // Pass the static chain in a register.
-    Attrs.addAttributes(Idx++, InRegAttribute);
+    Attrs.addAttributes(Idx++, ParamAttr::InReg);
   
   // The struct return attribute must be associated with the first
   // parameter but that parameter may have other attributes too so we set up
   // the first Attributes value here based on struct return. This only works
   // Handle the structure return calling convention
   if (ABIConverter.isStructReturn())
-    Attrs.addAttributes(Idx++, StructRetAttribute);
+    Attrs.addAttributes(Idx++, ParamAttr::StructRet);
   
   for (tree Args = TYPE_ARG_TYPES(type);
        Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
     tree Ty = TREE_VALUE(Args);
     
-    unsigned Attributes = NoAttributeSet;
+    unsigned Attributes = ParamAttr::None;
     if (CallingConv == CallingConv::C) {
       if (TREE_CODE(Ty) == BOOLEAN_TYPE) {
         if (TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
-          Attributes |= ZExtAttribute;
+          Attributes |= ParamAttr::ZExt;
       } else if (TREE_CODE(Ty) == INTEGER_TYPE && 
                  TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE) {
         if (TYPE_UNSIGNED(Ty))
-          Attributes |= ZExtAttribute;
+          Attributes |= ParamAttr::ZExt;
         else
-          Attributes |= SExtAttribute;
+          Attributes |= ParamAttr::SExt;
       }
     }
 
@@ -829,7 +829,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
                                     isVarArg, lparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
 
-    if (Attributes != NoAttributeSet)
+    if (Attributes != ParamAttr::None)
       Attrs.addAttributes(Idx, Attributes);
     Idx++;
   }
@@ -1226,11 +1226,10 @@ void TypeConverter::DecodeStructFields(tree Field,
     // ordering.  Therefore convert to a packed struct and try again.
     Info.convertToPacked();
     DecodeStructFields(Field, Info);
-  }
-
-  // At this point, we know that adding the element will happen at the right
-  // offset.  Add it.
-  Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));
+  } else 
+    // At this point, we know that adding the element will happen at the right
+    // offset.  Add it.
+    Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));
 }
 
 /// DecodeStructBitField - This method decodes the specified bit-field, adding

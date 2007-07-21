@@ -54,7 +54,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
       int words = (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
       local_regparm -= words;                                   \
       if (local_regparm>=0) {                                   \
-        Attribute |= InRegAttribute;                            \
+        Attribute |= ParamAttr::InReg;                          \
       } else                                                    \
         local_regparm = 0;                                      \
     }                                                           \

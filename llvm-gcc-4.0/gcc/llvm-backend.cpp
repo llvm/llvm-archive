@@ -45,6 +45,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <cassert>
@@ -860,7 +861,7 @@ void make_decl_llvm(tree decl) {
 /// llvm_get_decl_name - Used by varasm.c, returns the specified declaration's
 /// name.
 const char *llvm_get_decl_name(void *LLVM) {
-  return ((Value*)LLVM)->getName().c_str();
+  return ((Value*)LLVM)->getValueName()->getKeyData();
 }
 
 // llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be

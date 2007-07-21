@@ -48,8 +48,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 static tree associated_type (tree);
 static tree gen_stdcall_or_fastcall_suffix (tree, bool);
-static int i386_pe_dllexport_p (tree);
-static int i386_pe_dllimport_p (tree);
 static void i386_pe_mark_dllexport (tree);
 static void i386_pe_mark_dllimport (tree);
 
@@ -107,7 +105,7 @@ associated_type (tree decl)
 
 /* Return nonzero if DECL is a dllexport'd object.  */
 
-static int
+int
 i386_pe_dllexport_p (tree decl)
 {
   tree exp;
@@ -133,7 +131,7 @@ i386_pe_dllexport_p (tree decl)
 
 /* Return nonzero if DECL is a dllimport'd object.  */
 
-static int
+int
 i386_pe_dllimport_p (tree decl)
 {
   tree imp;

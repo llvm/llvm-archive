@@ -318,6 +318,10 @@ void TreeToLLVM::StartFunctionBody() {
   } else if (DECL_WEAK(FnDecl) || DECL_ONE_ONLY(FnDecl)) {
     Fn->setLinkage(Function::WeakLinkage);
   }
+
+#ifdef TARGET_ADJUST_LLVM_LINKAGE
+  TARGET_ADJUST_LLVM_LINKAGE(Fn,FnDecl);
+#endif /* TARGET_ADJUST_LLVM_LINKAGE */
   
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))
@@ -1266,27 +1270,87 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, Value *DestLoc) {
 }
 
 Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
-  BasicBlock *TrueBlock = new BasicBlock("cond_true");
-  BasicBlock *FalseBlock = new BasicBlock("cond_false");
-  BasicBlock *ContBlock = new BasicBlock("cond_next");
-
-  // Emit the conditional and the cond branch.
+  // Emit the conditional expression.
   Value *Cond = EmitAsScalarType(COND_EXPR_COND(exp), Type::BoolTy);
+
+  tree Then = COND_EXPR_THEN(exp);
+  tree Else = COND_EXPR_ELSE(exp);
+
+  // One extremely common pattern produced by the loop lowering code are 
+  // COND_EXPRS that look like:
+  //
+  //    if (cond) { goto <D905>; } else { goto <D907>; }
+  //
+  // The generic code handles this below, but there is no reason to create a
+  // cond branch to two blocks which just contain branches themselves.
+  // Note that we only do this if we're not in the presence of C++ exceptions.
+  // C++ exceptions could require information for the edge, which requires the
+  // uncond branch to be available.
+  if (CurrentEHScopes.empty() && TREE_CODE(Then) == STATEMENT_LIST &&
+      TREE_CODE(Else) == STATEMENT_LIST) {
+    tree_stmt_iterator ThenI = tsi_start(Then), ElseI = tsi_start(Else);
+    if (!tsi_end_p(ThenI) && !tsi_end_p(ElseI)) { // {} isn't empty.
+      tree ThenStmt = tsi_stmt(ThenI), ElseStmt = tsi_stmt(ElseI);
+      tsi_next(&ThenI);
+      tsi_next(&ElseI);
+      
+      if (TREE_CODE(ThenStmt) == GOTO_EXPR &&      // Found two uncond gotos.
+          TREE_CODE(ElseStmt) == GOTO_EXPR &&
+          tsi_end_p(ThenI) && tsi_end_p(ElseI) &&  // Nothing after them.
+          TREE_CODE(TREE_OPERAND(ThenStmt, 0)) == LABEL_DECL &&// Not goto *p.
+          TREE_CODE(TREE_OPERAND(ElseStmt, 0)) == LABEL_DECL) {
+        BasicBlock *ThenDest = getLabelDeclBlock(TREE_OPERAND(ThenStmt, 0));
+        BasicBlock *ElseDest = getLabelDeclBlock(TREE_OPERAND(ElseStmt, 0));
+        
+        // Okay, we have success. Output the conditional branch.
+        new BranchInst(ThenDest, ElseDest, Cond, CurBB);
+        // Emit a "fallthrough" block, which is almost certainly dead.
+        EmitBlock(new BasicBlock(""));
+        return 0;
+      }
+    }
+  }
+  
+  BasicBlock *TrueBlock = new BasicBlock("cond_true");
+  BasicBlock *FalseBlock;
+  BasicBlock *ContBlock = new BasicBlock("cond_next");
+  
+  // Another extremely common case we want to handle are if/then blocks with
+  // no else.  The gimplifier turns these into:
+  //
+  //  if (cond) { goto <D905>; } else { }
+  //
+  // Recognize when the else is an empty STATEMENT_LIST, and don't emit the
+  // else if so.
+  //
+  bool HasEmptyElse =
+    TREE_CODE(Else) == STATEMENT_LIST && tsi_end_p(tsi_start(Else));
+
+  if (HasEmptyElse)
+    FalseBlock = ContBlock;
+  else
+    FalseBlock = new BasicBlock("cond_false");
+
+  // Emit the branch based on the condition.
   new BranchInst(TrueBlock, FalseBlock, Cond, CurBB);
   
   // Emit the true code.
   EmitBlock(TrueBlock);
   
-  Emit(COND_EXPR_THEN(exp), 0);
+  Emit(Then, 0);
   
-  if (CurBB->getTerminator() == 0 &&
-      (!CurBB->getName().empty() || 
-       !CurBB->use_empty()))
-    new BranchInst(ContBlock, CurBB);  // Branch to continue block.
+  // If this is an if/then/else cond-expr, emit the else part, otherwise, just
+  // fall through to the ContBlock.
+  if (!HasEmptyElse) {
+    if (CurBB->getTerminator() == 0 &&
+        (!CurBB->getName().empty() || 
+         !CurBB->use_empty()))
+      new BranchInst(ContBlock, CurBB);  // Branch to continue block.
 
-  EmitBlock(FalseBlock);
-  
-  Emit(COND_EXPR_ELSE(exp), 0);
+    EmitBlock(FalseBlock);
+    
+    Emit(Else, 0);
+  }
   
   EmitBlock(ContBlock);
   return 0;

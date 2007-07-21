@@ -353,6 +353,8 @@ extern void i386_pe_record_exported_symbol (const char *, int);
 extern void i386_pe_file_end (void);
 extern int i386_pe_dllexport_name_p (const char *);
 extern int i386_pe_dllimport_name_p (const char *);
+extern int i386_pe_dllexport_p (tree);
+extern int i386_pe_dllimport_p (tree);
 
 /* For Win32 ABI compatibility */
 #undef DEFAULT_PCC_STRUCT_RETURN
@@ -425,3 +427,15 @@ extern int i386_pe_dllimport_name_p (const char *);
 #ifndef BUFSIZ
 # undef FILE
 #endif
+
+/* LLVM specific stuff for supporting dllimport & dllexport linkage output */
+
+#define TARGET_ADJUST_LLVM_LINKAGE(GV, decl)            \
+  {                                                     \
+    if (i386_pe_dllimport_p((decl))) {                  \
+      (GV)->setLinkage(GlobalValue::DLLImportLinkage);  \
+    } else if (i386_pe_dllexport_p((decl))) {           \
+      (GV)->setLinkage(GlobalValue::DLLExportLinkage);  \
+    }                                                   \
+  }
+  

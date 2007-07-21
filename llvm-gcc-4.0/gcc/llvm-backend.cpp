@@ -503,6 +503,10 @@ void emit_global_to_llvm(tree decl) {
     // llvm-gcc also includes DECL_VIRTUAL_P here.
     GV->setLinkage(GlobalValue::WeakLinkage);
   }
+
+#ifdef TARGET_ADJUST_LLVM_LINKAGE
+  TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
+#endif /* TARGET_ADJUST_LLVM_LINKAGE */
   
   // Set the section for the global.
   if (TREE_CODE(decl) == VAR_DECL) {
@@ -655,6 +659,11 @@ void make_decl_llvm(tree decl) {
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), CC);
       FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
+
+#ifdef TARGET_ADJUST_LLVM_LINKAGE
+      TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
+#endif /* TARGET_ADJUST_LLVM_LINKAGE */
+
       assert(FnEntry->getName() == Name &&"Preexisting fn with the same name!");
     }
     SET_DECL_LLVM(decl, FnEntry);
@@ -670,6 +679,10 @@ void make_decl_llvm(tree decl) {
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
                               Name, TheModule);
+
+#ifdef TARGET_ADJUST_LLVM_LINKAGE
+      TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
+#endif /* TARGET_ADJUST_LLVM_LINKAGE */
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
@@ -678,6 +691,10 @@ void make_decl_llvm(tree decl) {
       if (GVE == 0) {
         GVE = GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
                                       Name, TheModule);
+
+#ifdef TARGET_ADJUST_LLVM_LINKAGE
+        TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
+#endif /* TARGET_ADJUST_LLVM_LINKAGE */
       } else {
         GV = GVE;  // Global already created, reuse it.
       }

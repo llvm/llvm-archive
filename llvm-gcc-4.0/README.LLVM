@@ -32,7 +32,7 @@ Target-specific configure options:
 
 
 Next, make an object directory and install directory as siblings to the 
-llvm-gcc source directory:
+llvm-gcc source directory, and build and install llvm-gcc:
 
 $ mkdir llvm-gcc
 $ cd llvm-gcc
@@ -44,7 +44,11 @@ $ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install/ --enable-llvm=$LL
 $ make
 $ make install
 
-Add symlinks for llvm-gcc and llvm-g++ to your path:
+Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc 
+executables have been compiled with llvm-gcc itself), replace "make" with
+"make bootstrap".
+
+Finally, add symlinks for llvm-gcc and llvm-g++ to your path:
 
 $ su
 $ cd /usr/local/bin

@@ -110,15 +110,10 @@ static tree isSingleElementStructOrArray(tree type) {
       }
     return FoundField ? isSingleElementStructOrArray(FoundField) : 0;
   case ARRAY_TYPE:
-    tree Domain = TYPE_DOMAIN(type);
-    if (!Domain || !TYPE_MIN_VALUE(Domain) || !TYPE_MAX_VALUE(Domain))
+    if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
       return 0;
-    if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST ||
-        TREE_CODE(TYPE_MIN_VALUE(Domain)) != INTEGER_CST ||
-        TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST)
-      return 0;
-    if (TREE_INT_CST_LOW(TYPE_MAX_VALUE(Domain)) !=
-        TREE_INT_CST_LOW(TYPE_MIN_VALUE(Domain)))
+    tree length = arrayLength(type);
+    if (!length || !integer_onep(length))
       return 0;
     return isSingleElementStructOrArray(TREE_TYPE(type));
   }

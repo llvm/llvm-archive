@@ -269,6 +269,21 @@ static std::string GetTypeName(const char *Prefix, tree type) {
   return Prefix + ContextStr + Name;
 }
 
+/// arrayLength - Return a tree expressing the number of elements in an array
+/// of the specified type, or NULL if the type does not specify the length.
+tree_node *arrayLength(tree_node *type) {
+  tree Domain = TYPE_DOMAIN(type);
+
+  if (!Domain || !TYPE_MAX_VALUE(Domain))
+    return NULL;
+
+  tree length = fold_convert(sizetype, TYPE_MAX_VALUE(Domain));
+  if (TYPE_MIN_VALUE(Domain))
+    length = size_binop (MINUS_EXPR, length,
+                         fold_convert(sizetype, TYPE_MIN_VALUE(Domain)));
+  return size_binop (PLUS_EXPR, length, size_one_node);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                     Abstract Type Refinement Helpers
@@ -566,11 +581,11 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       return Ty;
 
     unsigned NumElements;
-    tree Domain = TYPE_DOMAIN(type);
-    if (Domain && TYPE_MAX_VALUE(Domain)) {
-      if (TREE_CODE(TYPE_MAX_VALUE(Domain)) == INTEGER_CST) {
+    tree length = arrayLength(type);
+    if (length) {
+      if (host_integerp(length, 1)) {
         // Normal array.
-        NumElements = TREE_INT_CST_LOW(TYPE_MAX_VALUE(Domain))+1;
+        NumElements = tree_low_cst(length, 1);
       } else {
         // This handles cases like "int A[n]" which have a runtime constant
         // number of elements, but is a compile-time variable.  Since these are

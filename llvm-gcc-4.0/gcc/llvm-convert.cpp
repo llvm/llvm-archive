@@ -1353,18 +1353,14 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     DECL_USER_ALIGN(decl) = 0;
     Alignment = DECL_ALIGN(decl)/8;
   } else {
+    tree length;
+
     // Dynamic-size object: must push space on the stack.
-    if (TREE_CODE(type) == ARRAY_TYPE && TYPE_DOMAIN(type)) {
+    if (TREE_CODE(type) == ARRAY_TYPE && (length = arrayLength(type))) {
       Ty = ConvertType(TREE_TYPE(type));  // Get array element type.
-      // Compute the size of the number of elements of the array.
-      Size = Emit(TYPE_MAX_VALUE(TYPE_DOMAIN(type)), 0);
-      Size = CastToUIntType(Size, Type::Int32Ty);
-      
-      // Annoyingly, TYPE_MAX_VALUE returns the maximum valid index, NOT the
-      // number of elements in the array.  Thus, we must add one to the returned
-      // value.  This addition should be optimized out later.
-      Size = BinaryOperator::createAdd(Size, ConstantInt::get(Type::Int32Ty, 1),
-                                       "tmp", CurBB);
+      // Compute the number of elements in the array.
+      Size = Emit(length, 0);
+      Size = CastToUIntType(Size, Size->getType());
     } else {
       // Compute the variable's size in bytes.
       Size = CastToUIntType(Emit(DECL_SIZE_UNIT(decl), 0), Type::Int32Ty);
@@ -4538,9 +4534,8 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // If this is an index into an array, codegen as a GEP.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
     // Check for variable sized array reference.
-    tree Domain = TYPE_DOMAIN(TREE_TYPE(Array));
-    if (Domain && TYPE_MAX_VALUE(Domain) &&
-        TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST) {
+    tree length = arrayLength(TREE_TYPE(Array));
+    if (length && !host_integerp(length, 1)) {
       // Make sure that ArrayAddr is of type ElementTy*, then do a 2-index gep.
       tree ElTy = TREE_TYPE(TREE_TYPE(Array));
       ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
@@ -4596,6 +4591,20 @@ static unsigned getFieldOffsetInBits(tree Field) {
   return Result;
 }
 
+/// getComponentRefOffsetInBits - Return the offset (in bits) of the field
+/// referenced in a COMPONENT_REF exp.
+static unsigned getComponentRefOffsetInBits(tree exp) {
+  assert(TREE_CODE(exp) == COMPONENT_REF && "not a COMPONENT_REF!");
+  tree field = TREE_OPERAND(exp, 1);
+  assert(TREE_CODE(field) == FIELD_DECL && "not a FIELD_DECL!");
+  tree field_offset = component_ref_field_offset (exp);
+  assert(DECL_FIELD_BIT_OFFSET(field) && field_offset);
+  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field));
+  if (TREE_CODE(field_offset) == INTEGER_CST)
+    Result += TREE_INT_CST_LOW(field_offset)*8;
+  return Result;
+}
+
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
   tree FieldDecl = TREE_OPERAND(exp, 1);
@@ -4618,11 +4627,12 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
-  unsigned BitStart = getFieldOffsetInBits(FieldDecl);
+  unsigned BitStart = getComponentRefOffsetInBits(exp);
   Value *FieldPtr;
   
+  tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (TREE_CODE(DECL_FIELD_OFFSET(FieldDecl)) == INTEGER_CST) {
+  if (TREE_CODE(field_offset) == INTEGER_CST) {
     assert(DECL_LLVM_SET_P(FieldDecl) && "Struct not laid out for LLVM?");
     ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
     uint32_t MemberIndex = CI->getZExtValue();
@@ -4646,7 +4656,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     }
     
   } else {
-    Value *Offset = Emit(DECL_FIELD_OFFSET(FieldDecl), 0);
+    Value *Offset = Emit(field_offset, 0);
     Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr, 
                             Offset->getType());
     Ptr = BinaryOperator::createAdd(Ptr, Offset, "tmp", CurBB);
@@ -4988,7 +4998,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
     // If this is a variable sized array type, set the length to Len.
     if (ConstantSize == 0) {
       tree Domain = TYPE_DOMAIN(TREE_TYPE(exp));
-      if (Domain == 0 || TYPE_MAX_VALUE(Domain) == 0) {
+      if (!Domain || !TYPE_MAX_VALUE(Domain)) {
         ConstantSize = Len;
         StrTy = ArrayType::get(ElTy, Len);
       }
@@ -5087,21 +5097,23 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   // type indirectly.
   assert(TREE_CODE(TREE_TYPE(exp)) != VECTOR_TYPE &&
          "VECTOR_TYPE's haven't been tested!");
-  
-  // If we have constant lower bound for the range of the type, get it.  */
+
+  // If we have a lower bound for the range of the type, get it.  */
   tree Domain = TYPE_DOMAIN(TREE_TYPE(exp));
-  unsigned MinElement = 0;
-  if (Domain && TYPE_MIN_VALUE(Domain) && 
-      host_integerp(TYPE_MIN_VALUE(Domain), 0))
-    MinElement = tree_low_cst(TYPE_MIN_VALUE(Domain), 0);
-  
+  tree min_element = size_zero_node;
+  if (Domain && TYPE_MIN_VALUE(Domain))
+    min_element = fold_convert(sizetype, TYPE_MIN_VALUE(Domain));
+
   std::vector<Constant*> ResultElts;
   Constant *SomeVal = 0;
   
-  if (Domain && TYPE_MAX_VALUE(Domain) && 
-      host_integerp(TYPE_MAX_VALUE(Domain), 0)) {
-    unsigned MaxElement = tree_low_cst(TYPE_MAX_VALUE(Domain), 0);
-    ResultElts.resize(MaxElement-MinElement+1);
+  if (Domain && TYPE_MAX_VALUE(Domain)) {
+    tree max_element = fold_convert(sizetype, TYPE_MAX_VALUE(Domain));
+    tree size = size_binop (MINUS_EXPR, max_element, min_element);
+    size = size_binop (PLUS_EXPR, size, size_one_node);
+
+    if (host_integerp(size, 1))
+      ResultElts.resize(tree_low_cst(size, 1));
   }
 
   unsigned NextFieldToFill = 0;
@@ -5117,14 +5129,21 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
     // The first and last field to fill in, inclusive.
     unsigned FieldOffset, FieldLastOffset;
     if (index && TREE_CODE(index) == RANGE_EXPR) {
-      assert(TREE_CODE(TREE_OPERAND(index, 0)) == INTEGER_CST &&
-             TREE_CODE(TREE_OPERAND(index, 1)) == INTEGER_CST &&
+      tree first = fold_convert (sizetype, TREE_OPERAND(index, 0));
+      tree last  = fold_convert (sizetype, TREE_OPERAND(index, 1));
+
+      first = size_binop (MINUS_EXPR, first, min_element);
+      last  = size_binop (MINUS_EXPR, last, min_element);
+
+      assert(host_integerp(first, 1) && host_integerp(last, 1) &&
              "Unknown range_expr!");
-      FieldOffset     = TREE_INT_CST_LOW(TREE_OPERAND(index, 0))-MinElement;
-      FieldLastOffset = TREE_INT_CST_LOW(TREE_OPERAND(index, 1))-MinElement;
+      FieldOffset     = tree_low_cst(first, 1);
+      FieldLastOffset = tree_low_cst(last, 1);
     } else if (index) {
-      assert(TREE_CODE(index) == INTEGER_CST && TREE_INT_CST_HIGH(index) == 0);
-      FieldOffset = TREE_INT_CST_LOW(index)-MinElement;
+      index = size_binop (MINUS_EXPR, fold_convert (sizetype, index),
+                          min_element);
+      assert(host_integerp(index, 1));
+      FieldOffset = tree_low_cst(index, 1);
       FieldLastOffset = FieldOffset;
     } else {
       FieldOffset = NextFieldToFill;
@@ -5634,11 +5653,9 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   
   // Check for variable sized array reference.
   if (TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE) {
-    tree Domain = TYPE_DOMAIN(TREE_TYPE(Array));
-    if (Domain && TYPE_MAX_VALUE(Domain)) {
-      assert(TREE_CODE(TYPE_MAX_VALUE(Domain)) == INTEGER_CST &&
-             "Cannot have globals with variable size!");
-    }
+    tree length = arrayLength(TREE_TYPE(Array));
+    assert(!length || host_integerp(length, 1) &&
+           "Cannot have globals with variable size!");
   }
 
   std::vector<Value*> Idx;
@@ -5663,13 +5680,14 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
-  unsigned BitStart = getFieldOffsetInBits(FieldDecl);
+  unsigned BitStart = getComponentRefOffsetInBits(exp);
   unsigned BitSize  = 0;
   Constant *FieldPtr;
   const TargetData &TD = getTargetData();
-  
+
+  tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (TREE_CODE(DECL_FIELD_OFFSET(FieldDecl)) == INTEGER_CST) {
+  if (TREE_CODE(field_offset) == INTEGER_CST) {
     assert(DECL_LLVM_SET_P(FieldDecl) && "Struct not laid out for LLVM?");
     ConstantInt *CI = cast<ConstantInt>(DECL_LLVM(FieldDecl));
     uint64_t MemberIndex = CI->getZExtValue();
@@ -5689,18 +5707,18 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       }
     } else {
       // We were unable to make a nice offset, emit an ugly one.
-      Constant *Offset = Convert(DECL_FIELD_OFFSET(FieldDecl));
+      Constant *Offset = Convert(field_offset);
       FieldPtr = ConstantExpr::getPtrToInt(StructAddrLV, Offset->getType());
       FieldPtr = ConstantExpr::getAdd(FieldPtr, Offset);
       FieldPtr = ConstantExpr::getIntToPtr(FieldPtr, PointerType::get(FieldTy));
       
       // Do horrible pointer arithmetic to get the address of the field.
-      unsigned ByteOffset = TREE_INT_CST_LOW(DECL_FIELD_OFFSET(FieldDecl));
+      unsigned ByteOffset = TREE_INT_CST_LOW(field_offset);
       BitStart -= ByteOffset * 8;
     }
     
   } else {
-    Constant *Offset = Convert(DECL_FIELD_OFFSET(FieldDecl));
+    Constant *Offset = Convert(field_offset);
     Constant *Ptr = ConstantExpr::getPtrToInt(StructAddrLV, Offset->getType());
     Ptr = ConstantExpr::getAdd(Ptr, Offset);
     FieldPtr = ConstantExpr::getIntToPtr(Ptr, PointerType::get(FieldTy));

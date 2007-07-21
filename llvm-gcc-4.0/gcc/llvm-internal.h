@@ -148,6 +148,10 @@ inline const Type *ConvertType(tree_node *type) {
 /// thing by value, pass the address of a temporary.
 bool isPassedByInvisibleReference(tree_node *type);
 
+/// arrayLength - Return a tree expressing the number of elements in an array
+/// of the specified type, or NULL if the type does not specify the length.
+tree_node *arrayLength(tree_node *type);
+
 /// ValidateRegisterVariable - Check that a static "asm" variable is
 /// well-formed.  If not, emit error messages and return true.  If so, return
 /// false.

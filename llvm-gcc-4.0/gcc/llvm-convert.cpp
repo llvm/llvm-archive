@@ -522,6 +522,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case FIX_TRUNC_EXPR:
   case FLOAT_EXPR:
   case CONVERT_EXPR:   Result = EmitCONVERT_EXPR(exp, DestLoc); break;
+  case VIEW_CONVERT_EXPR: Result = EmitVIEW_CONVERT_EXPR(exp, DestLoc); break;
   case NEGATE_EXPR:    Result = EmitNEGATE_EXPR(exp, DestLoc); break;
   case CONJ_EXPR:      Result = EmitCONJ_EXPR(exp, DestLoc); break;
   case ABS_EXPR:       Result = EmitABS_EXPR(exp); break;
@@ -2136,20 +2137,20 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, Value *DestLoc) {
   if (DestLoc == 0) {
     // Scalar to scalar copy.
     assert(!isAggregateType(TREE_TYPE(Op)) && "Aggregate to scalar nop_expr!");
-    Value *Op = Emit(TREE_OPERAND(exp, 0), DestLoc);
+    Value *OpVal = Emit(Op, DestLoc);
     if (Ty == Type::VoidTy) return 0;
-    return CastToType(Op, Ty);
+    return CastToType(OpVal, Ty);
   } else if (isAggregateType(TREE_TYPE(Op))) {
     // Aggregate to aggregate copy.
     DestLoc = CastToType(DestLoc, PointerType::get(Ty));
-    Value *Op = Emit(TREE_OPERAND(exp, 0), DestLoc);
-    assert(Op == 0 && "Shouldn't cast scalar to aggregate!");
+    Value *OpVal = Emit(Op, DestLoc);
+    assert(OpVal == 0 && "Shouldn't cast scalar to aggregate!");
     return 0;
   } else {
     // Scalar to aggregate copy.
-    Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-    DestLoc = CastToType(DestLoc, PointerType::get(Op->getType()));
-    new StoreInst(Op, DestLoc, CurBB);
+    Value *OpVal = Emit(Op, 0);
+    DestLoc = CastToType(DestLoc, PointerType::get(OpVal->getType()));
+    new StoreInst(OpVal, DestLoc, CurBB);
     return 0;
   }
 }
@@ -2158,6 +2159,52 @@ Value *TreeToLLVM::EmitCONVERT_EXPR(tree exp, Value *DestLoc) {
   assert(!DestLoc && "Cannot handle aggregate casts!");
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   return CastToType(Op, ConvertType(TREE_TYPE(exp)));
+}
+
+Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
+  tree Op = TREE_OPERAND(exp, 0);
+  const Type *OpTy = ConvertType(TREE_TYPE(Op));
+
+  if (isAggregateType(TREE_TYPE(Op))) {
+    if (DestLoc) {
+      // This is an aggregate-to-agg VIEW_CONVERT_EXPR, just evaluate in place.
+      Value *OpVal = Emit(Op, CastToType(DestLoc, PointerType::get(OpTy)));
+      assert(OpVal == 0 && "Expected an aggregate operand!");
+      return 0;
+    } else {
+      // This is an aggregate-to-scalar VIEW_CONVERT_EXPR, evaluate, then load.
+      Value *DestLoc = CreateTemporary(OpTy);
+      Value *OpVal = Emit(Op, DestLoc);
+      assert(OpVal == 0 && "Expected an aggregate operand!");
+      
+      const Type *ExpTy = ConvertType(TREE_TYPE(exp));
+      return new LoadInst(CastToType(DestLoc, PointerType::get(ExpTy)), "tmp",
+                          CurBB);
+    }
+  }
+  
+  if (DestLoc) {
+    // The input is a scalar the output is an aggregate, just eval the input,
+    // then store into DestLoc.
+    Value *OpVal = Emit(Op, 0);
+    assert(OpVal && "Expected a scalar result!");
+    DestLoc = CastToType(DestLoc, PointerType::get(OpVal->getType()));
+    new StoreInst(OpVal, DestLoc, CurBB);
+    return 0;
+  }
+
+  // Otherwise, this is a scalar to scalar conversion.  FIXME: this should use
+  // a bitcast or int_to_ptr/ptr_to_int when cast changes land.  For now, go
+  // through memory. :P
+  Value *OpVal = Emit(Op, 0);
+  assert(OpVal && "Expected a scalar result!");
+
+  Value *TmpLoc = CreateTemporary(OpVal->getType());
+  new StoreInst(OpVal, TmpLoc, CurBB);
+
+  // Cast the memory to the right type.
+  TmpLoc = CastToType(TmpLoc, PointerType::get(ConvertType(TREE_TYPE(exp))));
+  return new LoadInst(TmpLoc, "tmp", CurBB);
 }
 
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, Value *DestLoc) {
@@ -4135,7 +4182,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
     const signed short *InStr = (const signed short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
       Elts.push_back(ConstantInt::get(Type::ShortTy, InStr[i]));
-  } else if (ElTy == Type::UByteTy) {
+  } else if (ElTy == Type::UShortTy) {
     const unsigned short *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)

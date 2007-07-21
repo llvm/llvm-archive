@@ -382,6 +382,7 @@ private:
   Value *EmitMODIFY_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitNOP_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitCONVERT_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitNEGATE_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitCONJ_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitABS_EXPR(tree_node *exp);

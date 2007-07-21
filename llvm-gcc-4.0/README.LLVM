@@ -48,7 +48,7 @@ $ tar zxvf llvm-gcc4-x.y.source.tar.gz
 $ mkdir obj
 $ mkdir install
 $ cd obj
-$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install/ --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
+$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
 $ make  [[BUILDOPTIONS, see above]]
 $ make install
 

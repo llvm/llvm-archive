@@ -217,25 +217,20 @@ WARN_CFLAGS = @warn_cflags@
 # APPLE LOCAL begin LLVM
 @checkingenabled_flag@
 LLVMOBJDIR = @LLVMBASEPATH@
-ifeq ($(LLVMOBJDIR),)
-CPPFLAGS = @CPPFLAGS@
-else
-CPPFLAGS = @CPPFLAGS@ -DENABLE_LLVM -D__STDC_LIMIT_MACROS
 
 ifdef LLVM_VERSION_INFO
 CPPFLAGS += -DLLVM_VERSION_INFO='"$(LLVM_VERSION_INFO)"'
 endif
 
-ifdef CHECKING_ENABLED
-BUILDMODE=Debug
-else
-ifdef DISABLE_LLVMASSERTIONS
-BUILDMODE=Release-Asserts
-else
-BUILDMODE=Release
-endif
-endif
+# Determine BUILDMODE from configure run (--enable-llvm)
+BUILDMODE := @LLVMBUILDMODE@
+
 LLVMBINPATH = $(LLVMOBJDIR)/$(BUILDMODE)/bin
+
+ifeq ($(LLVMOBJDIR),)
+CPPFLAGS = @CPPFLAGS@
+else
+CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM -D__STDC_LIMIT_MACROS $(shell $(LLVMBINPATH)/llvm-config --cppflags)
 
 # Use llvm-config to get the srcdir that LLVM was configured with, to support
 # srcdir != objdir builds.

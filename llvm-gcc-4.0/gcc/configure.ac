@@ -745,16 +745,38 @@ AC_ARG_ENABLE(llvm,
 
  if test -x "$LLVMBASEPATH/Release/bin/llc$EXEEXT"; then
      echo Found Release LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Release"
  elif test -x "$LLVMBASEPATH/Debug/bin/llc$EXEEXT"; then
      echo Found Debug LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Debug"
  elif test -x "$LLVMBASEPATH/Release-Asserts/bin/llc$EXEEXT"; then
      echo Found Release-Asserts LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Release-Asserts"
+ elif test -x "$LLVMBASEPATH/Debug-Asserts/bin/llc$EXEEXT"; then
+     echo Found Debug-Asserts LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Debug-Asserts"
+ elif test -x "$LLVMBASEPATH/Release+Checks/bin/llc$EXEEXT"; then
+     echo Found Release+Checks LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Release+Checks"
+ elif test -x "$LLVMBASEPATH/Debug+Checks/bin/llc$EXEEXT"; then
+     echo Found Debug+Checks LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Debug+Checks"
+ elif test -x "$LLVMBASEPATH/Release-Asserts+Checks/bin/llc$EXEEXT"; then
+     echo Found Release-Asserts+Checks LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Release-Asserts+Checks"
+ elif test -x "$LLVMBASEPATH/Debug-Asserts+Checks/bin/llc$EXEEXT"; then
+     echo Found Debug-Asserts+Checks LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Debug-Asserts+Checks"
  else
      AC_MSG_ERROR([You must specify valid path to your LLVM tree with --enable-llvm=DIR])
  fi
 ],
-[LLVMBASEPATH=""])
+[LLVMBASEPATH=""
+ LLVMBUILDMODE=""
+])
 AC_SUBST(LLVMBASEPATH)
+# Send llvm build mode to gcc Makefiles
+AC_SUBST(LLVMBUILDMODE)
 # APPLE LOCAL end LLVM
 
 # Sanity check enable_languages in case someone does not run the toplevel

@@ -40,7 +40,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 void dummy_function() {
   new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
-  llvm::WriteBytecodeToFile(0, llvm::llvm_cout);
+  llvm::WriteBytecodeToFile(0, llvm::cout);
 
   llvm::createInstructionCombiningPass();
   llvm::createScalarReplAggregatesPass();

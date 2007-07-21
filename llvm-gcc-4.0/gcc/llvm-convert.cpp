@@ -5362,7 +5362,13 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
       OffsetToBitFieldStart = 0;
       NumBitsToInsert -= NumEltBitsToInsert;
     }
-    
+
+    // Pad extra array elements. This may happens when one llvm field
+    // is used to access two struct fields and llvm field is represented
+    // as an array of bytes.
+    for (; i < Elts.size(); ++i)
+      Elts[i] = ConstantInt::get((cast<ArrayType>(FieldTy))->getElementType(), 0);
+
     return ConstantArray::get(cast<ArrayType>(FieldTy), Elts);
   }
 }

@@ -846,13 +846,15 @@ struct StructTypeConversionInfo {
   const TargetData &TD;
   unsigned GCCStructAlignmentInBytes;
   bool Packed; // True if struct is packed
+  bool AllBitFields; // True if all struct fields are bit fields
   bool LastFieldStartsAtNonByteBoundry;
   unsigned ExtraBitsAvailable; // Non-zero if last field is bit field and it
                                // does not use all allocated bits
 
   StructTypeConversionInfo(TargetMachine &TM, unsigned GCCAlign, bool P)
     : TD(*TM.getTargetData()), GCCStructAlignmentInBytes(GCCAlign),
-      Packed(P), LastFieldStartsAtNonByteBoundry(false), ExtraBitsAvailable(0) {}
+      Packed(P), AllBitFields(true), LastFieldStartsAtNonByteBoundry(false), 
+      ExtraBitsAvailable(0) {}
 
   void lastFieldStartsAtNonByteBoundry(bool value) {
     LastFieldStartsAtNonByteBoundry = value;
@@ -864,6 +866,10 @@ struct StructTypeConversionInfo {
 
   void markAsPacked() {
     Packed = true;
+  }
+
+  void allFieldsAreNotBitFields() {
+    AllBitFields = false;
   }
 
   unsigned getGCCStructAlignmentInBytes() const {
@@ -894,7 +900,7 @@ struct StructTypeConversionInfo {
   uint64_t getSizeAsLLVMStruct() const {
     if (Elements.empty()) return 0;
     unsigned MaxAlign = 1;
-    if (!Packed)
+    if (!Packed && !AllBitFields)
       for (unsigned i = 0, e = Elements.size(); i != e; ++i)
         MaxAlign = std::max(MaxAlign, getTypeAlignment(Elements[i]));
     
@@ -908,7 +914,7 @@ struct StructTypeConversionInfo {
 
     unsigned NoOfBytesToRemove = ExtraBitsAvailable/8;
     
-    if (!Packed)
+    if (!Packed && !AllBitFields)
       return;
 
     if (NoOfBytesToRemove == 0)
@@ -1193,6 +1199,8 @@ void TypeConverter::DecodeStructFields(tree Field,
     return;
   }
 
+  Info.allFieldsAreNotBitFields();
+
   // Get the starting offset in the record.
   unsigned StartOffsetInBits = getFieldOffsetInBits(Field);
   assert((StartOffsetInBits & 7) == 0 && "Non-bit-field has non-byte offset!");
@@ -1289,12 +1297,17 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     unsigned NumBitsRequired = FieldSizeInBits + 
       (prevFieldTypeSizeInBits/8 - 1)*8 + StartOffsetFromByteBoundry;
 
-    // If type used to access previous field is not large enough then
-    // remove previous field and insert new field that is large enough to
-    // hold both fields.
-    Info.RemoveFieldsAfter(Info.Elements.size() - 1);
-    for (unsigned idx = 0; idx < (prevFieldTypeSizeInBits/8); ++idx)
-      FirstUnallocatedByte--;
+    if (NumBitsRequired > 64) {
+      // Use bits from previous field.
+      NumBitsRequired = NumBitsRequired - FirstUnallocatedByte*8;
+    } else {
+      // If type used to access previous field is not large enough then
+      // remove previous field and insert new field that is large enough to
+      // hold both fields.
+      Info.RemoveFieldsAfter(Info.Elements.size() - 1);
+      for (unsigned idx = 0; idx < (prevFieldTypeSizeInBits/8); ++idx)
+	FirstUnallocatedByte--;
+    }
     Info.addNewBitField(NumBitsRequired, FirstUnallocatedByte);
     // Do this after adding Field.
     Info.lastFieldStartsAtNonByteBoundry(true);

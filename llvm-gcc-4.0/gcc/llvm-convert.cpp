@@ -3638,7 +3638,20 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       return 0;
     
     if (AllowsReg || !AllowsMem) {    // Register operand.
-      Value *Op = Emit(Val, 0);
+      const Type *LLVMTy = ConvertType(type);
+      Value *Op;
+      if (!LLVMTy->isFirstClassType()) {
+        // Structs and unions are permitted here, as long as they're the
+        // same size as a register.
+        Value *Target = CreateTemporary(LLVMTy);          
+        LValue LV = EmitLV(Val);
+        EmitAggregateCopy(Target, LV.Ptr, type, false, TREE_THIS_VOLATILE (Val));
+        LLVMTy = IntegerType::get(TD.getTypeSizeInBits(LLVMTy));
+        Op = new LoadInst(CastToType(Instruction::BitCast, Target,
+                          PointerType::get(LLVMTy)), "tmp", CurBB);
+      } else {
+        Op = Emit(Val, 0);
+      }
       CallOps.push_back(Op);
       CallArgTypes.push_back(Op->getType());
     } else {                          // Memory operand.

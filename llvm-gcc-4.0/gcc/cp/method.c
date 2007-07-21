@@ -136,8 +136,7 @@ make_thunk (tree function, bool this_adjusting,
   TREE_READONLY (thunk) = TREE_READONLY (function);
   TREE_THIS_VOLATILE (thunk) = TREE_THIS_VOLATILE (function);
   TREE_PUBLIC (thunk) = TREE_PUBLIC (function);
-  if (flag_weak)
-    comdat_linkage (thunk);
+  /* APPLE LOCAL mainline do not make thunks comdat */
   SET_DECL_THUNK_P (thunk, this_adjusting);
   THUNK_TARGET (thunk) = function;
   THUNK_FIXED_OFFSET (thunk) = d;
@@ -378,8 +377,10 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   DECL_VISIBILITY (thunk_fndecl) = DECL_VISIBILITY (function);
   DECL_VISIBILITY_SPECIFIED (thunk_fndecl) 
     = DECL_VISIBILITY_SPECIFIED (function);
-  if (flag_weak && TREE_PUBLIC (thunk_fndecl))
-    comdat_linkage (thunk_fndecl);
+  /* APPLE LOCAL begin mainline do not make thunks comdat */
+  if (DECL_ONE_ONLY (function))
+    make_decl_one_only (thunk_fndecl);
+  /* APPLE LOCAL end mainline do not make thunks comdat */
 
   if (flag_syntax_only)
     {

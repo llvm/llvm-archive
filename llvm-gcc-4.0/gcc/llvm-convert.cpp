@@ -606,15 +606,15 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
     else 
       Result = EmitBinOp(exp, DestLoc, Instruction::SDiv);
     break;
-  case RDIV_EXPR:      
-    Result = EmitBinOp(exp, DestLoc, Instruction::FDiv);
-    break;
+  case RDIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::FDiv); break;
+  case ROUND_DIV_EXPR: Result = EmitROUND_DIV_EXPR(exp); break;
   case TRUNC_MOD_EXPR: 
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
       Result = EmitBinOp(exp, DestLoc, Instruction::URem);
     else
       Result = EmitBinOp(exp, DestLoc, Instruction::SRem);
     break;
+  case FLOOR_MOD_EXPR: Result = EmitFLOOR_MOD_EXPR(exp, DestLoc); break;
   case BIT_AND_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::And);break;
   case BIT_IOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Or );break;
   case BIT_XOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Xor);break;
@@ -2588,6 +2588,143 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
 
   return new SelectInst(Compare, LHS, RHS,
                         TREE_CODE(exp) == MAX_EXPR ? "max" : "min", CurBB);
+}
+
+
+Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, Value *DestLoc) {
+  // Notation: FLOOR_MOD_EXPR <-> Mod, TRUNC_MOD_EXPR <-> Rem.
+  
+  // We express Mod in terms of Rem as follows: if RHS exactly divides LHS,
+  // or the values of LHS and RHS have the same sign, then Mod equals Rem.
+  // Otherwise Mod equals Rem + RHS.  This means that LHS Mod RHS traps iff
+  // LHS Rem RHS traps.
+  
+  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+    // LHS and RHS values must have the same sign if their type is unsigned.
+    return EmitBinOp(exp, DestLoc, Instruction::URem);
+  
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  Constant *Zero = ConstantInt::get(Ty, 0);
+  
+  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  
+  // The two possible values for Mod.
+  Value *Rem = BinaryOperator::create(Instruction::SRem, LHS, RHS, "rem",CurBB);
+  Value *RemPlusRHS = BinaryOperator::create(Instruction::Add, Rem, RHS, "tmp",
+                                             CurBB);
+  
+  // HaveSameSign: (LHS >= 0) == (RHS >= 0).
+  Value *LHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, LHS, Zero, "tmp",
+                                      CurBB);
+  Value *RHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, RHS, Zero, "tmp",
+                                      CurBB);
+  Value *HaveSameSign = new ICmpInst(ICmpInst::ICMP_EQ, LHSIsPositive,
+                                     RHSIsPositive, "tmp", CurBB);
+  
+  // RHS exactly divides LHS iff Rem is zero.
+  Value *RemIsZero = new ICmpInst(ICmpInst::ICMP_EQ, Rem, Zero, "tmp", CurBB);
+  
+  Value *SameAsRem = BinaryOperator::create(Instruction::Or, HaveSameSign,
+                                            RemIsZero, "tmp", CurBB);
+  return new SelectInst(SameAsRem, Rem, RemPlusRHS, "mod", CurBB);
+}
+
+Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
+  // Notation: ROUND_DIV_EXPR <-> RDiv, TRUNC_DIV_EXPR <-> Div.
+  
+  // RDiv calculates LHS/RHS by rounding to the nearest integer.  Ties
+  // are broken by rounding away from zero.  In terms of Div this means:
+  //   LHS RDiv RHS = (LHS + (RHS Div 2)) Div RHS
+  // if the values of LHS and RHS have the same sign; and
+  //   LHS RDiv RHS = (LHS - (RHS Div 2)) Div RHS
+  // if the values of LHS and RHS differ in sign.  The intermediate
+  // expressions in these formulae can overflow, so some tweaking is
+  // required to ensure correct results.  The details depend on whether
+  // we are doing signed or unsigned arithmetic.
+  
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  Constant *Zero = ConstantInt::get(Ty, 0);
+  Constant *Two = ConstantInt::get(Ty, 2);
+  
+  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  
+  if (!TYPE_UNSIGNED(TREE_TYPE(exp))) {
+    // In the case of signed arithmetic, we calculate RDiv as follows:
+    //   LHS RDiv RHS = (sign) ( (|LHS| + (|RHS| UDiv 2)) UDiv |RHS| ),
+    // where sign is +1 if LHS and RHS have the same sign, -1 if their
+    // signs differ.  Doing the computation unsigned ensures that there
+    // is no overflow.
+    
+    // On some machines INT_MIN Div -1 traps.  You might expect a trap for
+    // INT_MIN RDiv -1 too, but this implementation will not generate one.
+    // Quick quiz question: what value is returned for INT_MIN RDiv -1?
+    
+    // Determine the signs of LHS and RHS, and whether they have the same sign.
+    Value *LHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, LHS, Zero, "tmp",
+                                        CurBB);
+    Value *RHSIsPositive = new ICmpInst(ICmpInst::ICMP_SGE, RHS, Zero, "tmp",
+                                        CurBB);
+    Value *HaveSameSign = new ICmpInst(ICmpInst::ICMP_EQ, LHSIsPositive,
+                                       RHSIsPositive, "tmp", CurBB);
+    
+    // Calculate |LHS| ...
+    Value *MinusLHS = BinaryOperator::createNeg(LHS, "tmp", CurBB);
+    Value *AbsLHS = new SelectInst(LHSIsPositive, LHS, MinusLHS, "abs_" +
+                                   LHS->getName(), CurBB);
+    // ... and |RHS|
+    Value *MinusRHS = BinaryOperator::createNeg(RHS, "tmp", CurBB);
+    Value *AbsRHS = new SelectInst(RHSIsPositive, RHS, MinusRHS, "abs_" +
+                                   RHS->getName(), CurBB);
+    
+    // Calculate AbsRDiv = (|LHS| + (|RHS| UDiv 2)) UDiv |RHS|.
+    Value *HalfAbsRHS = BinaryOperator::create(Instruction::UDiv, AbsRHS, Two,
+                                               "tmp", CurBB);
+    Value *Numerator = BinaryOperator::create(Instruction::Add, AbsLHS,
+                                              HalfAbsRHS, "tmp", CurBB);
+    Value *AbsRDiv = BinaryOperator::create(Instruction::UDiv, Numerator,
+                                            AbsRHS, "tmp", CurBB);
+    
+    // Return AbsRDiv or -AbsRDiv according to whether LHS and RHS have the
+    // same sign or not.
+    Value *MinusAbsRDiv = BinaryOperator::createNeg(AbsRDiv, "tmp", CurBB);
+    return new SelectInst(HaveSameSign, AbsRDiv, MinusAbsRDiv, "rdiv", CurBB);
+  } else {
+    // In the case of unsigned arithmetic, LHS and RHS necessarily have the
+    // same sign, however overflow is a problem.  We want to use the formula
+    //   LHS RDiv RHS = (LHS + (RHS Div 2)) Div RHS,
+    // but if LHS + (RHS Div 2) overflows then we get the wrong result.  Since
+    // the use of a conditional branch seems to be unavoidable, we choose the
+    // simple solution of explicitly checking for overflow, and using
+    //   LHS RDiv RHS = ((LHS + (RHS Div 2)) - RHS) Div RHS + 1
+    // if it occurred.
+    
+    // Usually the numerator is LHS + (RHS Div 2); calculate this.
+    Value *HalfRHS = BinaryOperator::create(Instruction::UDiv, RHS, Two, "tmp",
+                                            CurBB);
+    Value *Numerator = BinaryOperator::create(Instruction::Add, LHS, HalfRHS,
+                                              "tmp", CurBB);
+    
+    // Did the calculation overflow?
+    Value *Overflowed = new ICmpInst(ICmpInst::ICMP_ULT, Numerator, HalfRHS,
+                                     "tmp", CurBB);
+    
+    // If so, use (LHS + (RHS Div 2)) - RHS for the numerator instead.
+    Value *AltNumerator = BinaryOperator::create(Instruction::Sub, Numerator,
+                                                 RHS, "tmp", CurBB);
+    Numerator = new SelectInst(Overflowed, AltNumerator, Numerator, "tmp",
+                               CurBB);
+    
+    // Quotient = Numerator / RHS.
+    Value *Quotient = BinaryOperator::create(Instruction::UDiv, Numerator, RHS,
+                                             "tmp", CurBB);
+    
+    // Return Quotient unless we overflowed, in which case return Quotient + 1.
+    return BinaryOperator::create(Instruction::Add, Quotient,
+                                  CastToUIntType(Overflowed, Ty), "rdiv",
+                                  CurBB);
+  }
 }
 
 //===----------------------------------------------------------------------===//

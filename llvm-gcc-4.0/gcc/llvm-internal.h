@@ -408,6 +408,8 @@ private:
   Value *EmitRotateOp(tree_node *exp, unsigned Opc1, unsigned Opc2);
   Value *EmitMinMaxExpr(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                         unsigned Opc);
+  Value *EmitFLOOR_MOD_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitROUND_DIV_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.
   Value *EmitASM_EXPR(tree_node *exp);

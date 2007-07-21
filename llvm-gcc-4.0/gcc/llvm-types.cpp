@@ -751,15 +751,17 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  ParamAttrsList *ParamAttrs = 0;
+  ParamAttrsList *PAL = 0;
 
   if (static_chain) {
     // Pass the static chain in a register.
-    ParamAttrs = new ParamAttrsList();
-    ParamAttrs->addAttributes(1, ParamAttr::InReg);
+    ParamAttrsVector Attrs;
+    ParamAttrsWithIndex PAWI; PAWI.index = 1; PAWI.attrs = ParamAttr::InReg;
+    Attrs.push_back(PAWI);
+    PAL = ParamAttrsList::get(Attrs);
   }
 
-  return FunctionType::get(RetTy, ArgTys, false, ParamAttrs);
+  return FunctionType::get(RetTy, ArgTys, false, PAL);
 }
 
 const FunctionType *TypeConverter::ConvertFunctionType(tree type,
@@ -811,7 +813,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   // the parameter attribute in the FunctionType so any arguments passed to
   // the function will be correctly sign or zero extended to 32-bits by
   // the LLVM code gen.
-  ParamAttrsList Attrs;
+  ParamAttrsVector Attrs;
   uint16_t RAttributes = ParamAttr::None;
   if (CallingConv == CallingConv::C) {
     tree ResultTy = TREE_TYPE(type);  
@@ -827,8 +829,10 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
           RAttributes |= ParamAttr::SExt;
     }
   }
-  if (RAttributes != ParamAttr::None)
-    Attrs.addAttributes(0, RAttributes);
+  if (RAttributes != ParamAttr::None) {
+    ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = RAttributes;
+    Attrs.push_back(PAWI);
+  }
   
   unsigned Idx = 1;
   bool isFirstArg = true;
@@ -838,16 +842,21 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   LLVM_TARGET_INIT_REGPARM(lparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
 
-  if (static_chain)
+  if (static_chain) {
     // Pass the static chain in a register.
-    Attrs.addAttributes(Idx++, ParamAttr::InReg);
+    ParamAttrsWithIndex PAWI; PAWI.index = Idx++; PAWI.attrs = ParamAttr::InReg;
+    Attrs.push_back(PAWI);
+  }
   
   // The struct return attribute must be associated with the first
   // parameter but that parameter may have other attributes too so we set up
   // the first Attributes value here based on struct return. This only works
   // Handle the structure return calling convention
-  if (ABIConverter.isStructReturn())
-    Attrs.addAttributes(Idx++, ParamAttr::StructRet);
+  if (ABIConverter.isStructReturn()) {
+    ParamAttrsWithIndex PAWI; 
+    PAWI.index = Idx++; PAWI.attrs = ParamAttr::StructRet;
+    Attrs.push_back(PAWI);
+  }
   
   for (tree Args = TYPE_ARG_TYPES(type);
        Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
@@ -873,18 +882,20 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
                                     isVarArg, lparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
 
-    if (Attributes != ParamAttr::None)
-      Attrs.addAttributes(Idx, Attributes);
+    if (Attributes != ParamAttr::None) {
+     ParamAttrsWithIndex PAWI; PAWI.index = Idx; PAWI.attrs = Attributes;
+     Attrs.push_back(PAWI);
+    }
     Idx++;
   }
 
   // Only instantiate the parameter attributes if we got some
-  ParamAttrsList *ParamAttrs = 0;
+  ParamAttrsList *PAL = 0;
   if (!Attrs.empty())
-    ParamAttrs = new ParamAttrsList(Attrs);
+    PAL = ParamAttrsList::get(Attrs);
 
   // Finally, make the function type
-  return FunctionType::get(RetTy, ArgTypes, isVarArg, ParamAttrs);
+  return FunctionType::get(RetTy, ArgTypes, isVarArg, PAL);
 }
 
 //===----------------------------------------------------------------------===//

@@ -157,17 +157,17 @@ void changeLLVMValue(Value *Old, Value *New) {
 }
 
 // Read LLVM Types string table
-void readLLVMValuesStringTable() {
+void readLLVMValues() {
 
   GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
   if (!V)
     return;
 
   GlobalVariable *GV = cast<GlobalVariable>(V);
-  ConstantStruct *LValueNames = cast<ConstantStruct>(GV->getOperand(0));
+  ConstantStruct *ValuesFromPCH = cast<ConstantStruct>(GV->getOperand(0));
 
-  for (unsigned i = 0; i < LValueNames->getNumOperands(); ++i) {
-    Value *Va = LValueNames->getOperand(i);
+  for (unsigned i = 0; i < ValuesFromPCH->getNumOperands(); ++i) {
+    Value *Va = ValuesFromPCH->getOperand(i);
 
     if (!Va) {
       // If V is empty then nsert NULL to represent empty entries.
@@ -189,36 +189,30 @@ void readLLVMValuesStringTable() {
 // GCC tree's uses LLVMValues vector's index to reach LLVM Values.
 // Create a string table to hold these LLVM Values' names. This string
 // table will be used to recreate LTypes vector after loading PCH.
-void writeLLVMValuesStringTable() {
+void writeLLVMValues() {
   
   if (LLVMValues.empty()) 
     return;
 
-  std::vector<Constant *> LLVMValuesNames;
+  std::vector<Constant *> ValuesForPCH;
 
   for (std::vector<Value *>::iterator I = LLVMValues.begin(),
          E = LLVMValues.end(); I != E; ++I)  {
-    Value *V = *I;
-
-    if (!V) {
-      LLVMValuesNames.push_back(ConstantArray::get("", false));      
-      continue;
-    }
-
-    // Give names to nameless values.
-    if (!V->hasName())
-      V->setName("llvm.fe.val");
-
-    LLVMValuesNames.push_back(ConstantArray::get(V->getName(), false));
+    if (Constant *C = dyn_cast<Constant>(*I))
+      ValuesForPCH.push_back(C);
+    else
+      // Non constant values, e.g. arguments, are not at global scope.
+      // When PCH is read, only global scope values are used.
+      ValuesForPCH.push_back(NULL);
   }
 
   // Create string table.
-  Constant *LLVMValuesNameTable = ConstantStruct::get(LLVMValuesNames, false);
+  Constant *LLVMValuesTable = ConstantStruct::get(ValuesForPCH, false);
 
   // Create variable to hold this string table.
-  new GlobalVariable(LLVMValuesNameTable->getType(), true,
+  new GlobalVariable(LLVMValuesTable->getType(), true,
                      GlobalValue::ExternalLinkage, 
-                     LLVMValuesNameTable,
+                     LLVMValuesTable,
                      "llvm.pch.values", TheModule);
 }
 
@@ -3607,13 +3601,23 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     std::string SimplifiedConstraint = '='+CanonicalizeConstraint(Constraint+1);
     
     LValue Dest = EmitLV(Operand);
+    const Type *DestValTy =
+      cast<PointerType>(Dest.Ptr->getType())->getElementType();
+    if (!DestValTy->isFirstClassType()) {
+      // If this is a pointer to a structure or a union, convert this to be a
+      // pointer to a same-sized integer.  GCC allows destinations of structs
+      // and unions if they are the same size as a register.
+      DestValTy = IntegerType::get(TD.getTypeSizeInBits(DestValTy));
+      Dest.Ptr = new BitCastInst(Dest.Ptr, PointerType::get(DestValTy), "tmp",
+                                 CurBB);
+    }
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
     if (ConstraintStr.empty() && !AllowsMem) {  // Reg dest and no output yet?
       assert(StoreCallResultAddr == 0 && "Already have a result val?");
       StoreCallResultAddr = Dest.Ptr;
       ConstraintStr += ",";
       ConstraintStr += SimplifiedConstraint;
-      CallResultType = cast<PointerType>(Dest.Ptr->getType())->getElementType();
+      CallResultType = DestValTy;
     } else {
       ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;

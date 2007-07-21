@@ -210,7 +210,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
   // Read LLVM Types string table
   readLLVMTypesStringTable();
-  readLLVMValuesStringTable();
+  readLLVMValues();
 
   flag_llvm_pch_read = 1;
 }
@@ -432,7 +432,7 @@ void llvm_asm_file_end(void) {
 
   if (flag_pch_file) {
     writeLLVMTypesStringTable();
-    writeLLVMValuesStringTable();
+    writeLLVMValues();
   }
 
   // Add an llvm.global_ctors global if needed.

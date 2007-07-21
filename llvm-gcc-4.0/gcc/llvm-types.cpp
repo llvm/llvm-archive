@@ -1287,11 +1287,11 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
 
   if (StartOffsetInBits < FirstUnallocatedByte*8) {
 
+    unsigned AvailableBits = FirstUnallocatedByte * 8 - StartOffsetInBits;
     // This field's starting point is already allocated.
     if (StartOffsetFromByteBoundry == 0) {
       // This field starts at byte boundry. Need to allocate space
       // for additional bytes not yet allocated.
-      unsigned AvailableBits = FirstUnallocatedByte * 8 - StartOffsetInBits;
       unsigned NumBitsToAdd = FieldSizeInBits - AvailableBits;
       Info.addNewBitField(NumBitsToAdd, FirstUnallocatedByte);
       return;
@@ -1300,15 +1300,15 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     // Otherwise, this field's starting point is inside previously used byte. 
     // This happens with Packed bit fields. In this case one LLVM Field is
     // used to access previous field and current field.
-
     unsigned prevFieldTypeSizeInBits = 
-      Info.Elements.back()->getPrimitiveSizeInBits();
-    unsigned NumBitsRequired = FieldSizeInBits + 
-      (prevFieldTypeSizeInBits/8 - 1)*8 + StartOffsetFromByteBoundry;
+      Info.ElementSizeInBytes[Info.Elements.size() - 1] * 8;
+
+    unsigned NumBitsRequired = prevFieldTypeSizeInBits 
+      + (FieldSizeInBits - AvailableBits);
 
     if (NumBitsRequired > 64) {
       // Use bits from previous field.
-      NumBitsRequired = NumBitsRequired - FirstUnallocatedByte*8;
+      NumBitsRequired = FieldSizeInBits - AvailableBits;
     } else {
       // If type used to access previous field is not large enough then
       // remove previous field and insert new field that is large enough to

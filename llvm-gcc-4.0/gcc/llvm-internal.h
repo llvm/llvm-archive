@@ -90,8 +90,8 @@ extern std::vector<GlobalValue*> AttributeUsedGlobals;
 void changeLLVMValue(Value *Old, Value *New);
 void readLLVMTypesStringTable();
 void writeLLVMTypesStringTable();
-void readLLVMValuesStringTable();
-void writeLLVMValuesStringTable();
+void readLLVMValues();
+void writeLLVMValues();
 void clearTargetBuiltinCache();
 
 struct StructTypeConversionInfo;

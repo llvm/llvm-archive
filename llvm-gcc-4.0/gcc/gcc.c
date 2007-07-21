@@ -812,8 +812,12 @@ static const char *cpp_debug_options = "%{d*}";
 
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
-/* APPLE LOCAL LLVM */
-"%{emit-llvm:%{S:-emit-llvm} %{!S:-emit-llvm-bc} %{!S:%W{o*}%{!o*:-o %b.o}}}"
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+ "%{O4|emit-llvm:%{S:-emit-llvm} %{!S:-emit-llvm-bc} %{!S:%W{o*}%{!o*:-o %b.o}}}"
+#else
+"%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"
+#endif
 /* APPLE LOCAL begin -fast */
 "%{fast:-O3}\
  %{fastf:-O3}\
@@ -836,10 +840,10 @@ static const char *asm_options =
 static const char *invoke_as =
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
 /* APPLE LOCAL LLVM */
-"%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %|.s %A }}";
+"%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %|.s %A }}}";
 #else
 /* APPLE LOCAL LLVM */
-"%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %m.s %A }}";
+"%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %m.s %A }}}";
 #endif
 
 /* Some compilers have limits on line lengths, and the multilib_select

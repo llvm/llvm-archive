@@ -401,8 +401,8 @@ Objective-C and Objective-C++ Dialects}.
 @c APPLE LOCAL lno
 -fscalar-evolutions -fall-data-deps @gol
 --param @var{name}=@var{value}
-@c APPLE LOCAL -fast, -Oz
--O  -O0  -O1  -O2  -O3  -Os -Oz (APPLE ONLY) -fast (APPLE ONLY)}
+@c APPLE LOCAL -fast, -Oz, llvm
+-O  -O0  -O1  -O2  -O3 -O4 (APPLE ONLY) -Os -Oz (APPLE ONLY) -fast (APPLE ONLY)}
 
 @item Preprocessor Options
 @xref{Preprocessor Options,,Options Controlling the Preprocessor}.
@@ -4623,6 +4623,13 @@ are disabled by default when optimizing.
 Optimize yet more.  @option{-O3} turns on all optimizations specified by
 @option{-O2} and also turns on the @option{-finline-functions},
 @option{-funswitch-loops} and @option{-fgcse-after-reload} options.
+
+@c APPLE LOCAL begin LLVM
+@item -O4
+@opindex O4
+Enable LLVM Link Time Optimization. @option{-O4} turns on all LLVM compile
+time optimizations specified by @option{-O2}.
+@c APPLE LOCAL end LLVM
 
 @item -O0
 @opindex O0

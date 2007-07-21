@@ -89,8 +89,8 @@ public:
   /// descriptor.
   Value *getValueFor(DebugInfoDesc *DD);
   
-  /// getCastValueFor - Return a llvm representation for a given debug information
-  /// descriptor cast to an empty struct pointer.
+  /// getCastValueFor - Return a llvm representation for a given debug 
+  /// information descriptor cast to an empty struct pointer.
   Value *getCastValueFor(DebugInfoDesc *DD);
 
   /// EmitFunctionStart - Constructs the debug code for entering a function -

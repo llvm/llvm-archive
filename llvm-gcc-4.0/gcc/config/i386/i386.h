@@ -4088,7 +4088,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllw, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLDI128: {                                              \
@@ -4102,7 +4104,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(pslld, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLQI128: {                                              \
@@ -4117,7 +4121,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllq, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLWI128: {                                              \
@@ -4132,7 +4138,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlw, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLDI128: {                                              \
@@ -4146,7 +4154,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrld, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLQI128: {                                              \
@@ -4161,7 +4171,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlq, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRAWI128: {                                              \
@@ -4176,7 +4188,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psraw, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRADI128: {                                              \
@@ -4190,7 +4204,9 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrad, OPS[0], OPS[1], "tmp", CurBB);               \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_DIVPS:                                                    \
@@ -4215,8 +4231,8 @@ enum ix86_builtins
   case IX86_BUILTIN_XORPS:                                                    \
   case IX86_BUILTIN_ANDNPS: {                                                 \
     PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    OPS[0] = CastInst::createInferredCast(OPS[0], v4i32, "tmp", CurBB);       \
-    OPS[1] = CastInst::createInferredCast(OPS[1], v4i32, "tmp", CurBB);       \
+    OPS[0] = new BitCastInst(OPS[0], v4i32, "tmp", CurBB);                    \
+    OPS[1] = new BitCastInst(OPS[1], v4i32, "tmp", CurBB);                    \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_ANDPS:                                                \
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
@@ -4232,7 +4248,9 @@ enum ix86_builtins
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
         break;                                                                \
     }                                                                         \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_ANDPD:                                                    \
@@ -4240,8 +4258,8 @@ enum ix86_builtins
   case IX86_BUILTIN_XORPD:                                                    \
   case IX86_BUILTIN_ANDNPD: {                                                 \
     PackedType *v2i64 = PackedType::get(Type::LongTy, 2);                     \
-    OPS[0] = CastInst::createInferredCast(OPS[0], v2i64, "tmp", CurBB);       \
-    OPS[1] = CastInst::createInferredCast(OPS[1], v2i64, "tmp", CurBB);       \
+    OPS[0] = new BitCastInst(OPS[0], v2i64, "tmp", CurBB);                    \
+    OPS[1] = new BitCastInst(OPS[1], v2i64, "tmp", CurBB);                    \
     switch (BUILTIN_CODE) {                                                   \
       case IX86_BUILTIN_ANDPD:                                                \
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
@@ -4257,7 +4275,9 @@ enum ix86_builtins
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
         break;                                                                \
     }                                                                         \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_SHUFPS:                                                   \
@@ -4342,38 +4362,48 @@ enum ix86_builtins
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
     Value *Idx0 = ConstantInt::get(Type::UIntTy, 0);                          \
     Value *Zero = ConstantFP::get(Type::DoubleTy, 0.0);                       \
-    OPS[0] = CastInst::createInferredCast(OPS[0], f64Ptr, "tmp", CurBB);      \
+    OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
     OPS[0] = new LoadInst(OPS[0], "tmp", false, CurBB);                       \
     RESULT = BuildVector(OPS[0], Zero, NULL);                                 \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LOADHPS: {                                                \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
-    OPS[1] = CastInst::createInferredCast(OPS[1], f64Ptr, "tmp", CurBB);      \
+    OPS[1] = new BitCastInst(OPS[1], f64Ptr, "tmp", CurBB);                   \
     Value *Load = new LoadInst(OPS[1], "tmp", false, CurBB);                  \
     OPS[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);        \
-    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[1] = CastInst::create(opcode, OPS[1], DESTTY, "tmp", CurBB);          \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 0, 1, 4, 5);                  \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    opcode = CastInst::getCastOpcode(RESULT, RESULT->getType()->isSigned(),   \
+                                     DESTTY, DESTTY->isSigned());             \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LOADLPS: {                                                \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
-    OPS[1] = CastInst::createInferredCast(OPS[1], f64Ptr, "tmp", CurBB);      \
+    OPS[1] = new BitCastInst(OPS[1], f64Ptr, "tmp", CurBB);                   \
     Value *Load = new LoadInst(OPS[1], "tmp", false, CurBB);                  \
     OPS[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);        \
-    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[1] = CastInst::create(opcode, OPS[1], DESTTY, "tmp", CurBB);          \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 4, 5, 2, 3);                  \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    opcode = CastInst::getCastOpcode(RESULT, RESULT->getType()->isSigned(),   \
+                                     DESTTY, DESTTY->isSigned());             \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_STOREHPS: {                                               \
     PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);                   \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
-    OPS[0] = CastInst::createInferredCast(OPS[0], f64Ptr, "tmp", CurBB);      \
+    OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
     Value *Idx = ConstantInt::get(Type::UIntTy, 1);                           \
-    OPS[1] = CastInst::createInferredCast(OPS[1], v2f64, "tmp", CurBB);       \
+    OPS[1] = new BitCastInst(OPS[1], v2f64, "tmp", CurBB);                    \
     OPS[1] = new ExtractElementInst(OPS[1], Idx, "tmp", CurBB);               \
     RESULT = new StoreInst(OPS[1], OPS[0], false, CurBB);                     \
     return true;                                                              \
@@ -4381,9 +4411,9 @@ enum ix86_builtins
   case IX86_BUILTIN_STORELPS: {                                               \
     PackedType *v2f64 = PackedType::get(Type::DoubleTy, 2);                   \
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);                   \
-    OPS[0] = CastInst::createInferredCast(OPS[0], f64Ptr, "tmp", CurBB);      \
+    OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
     Value *Idx = ConstantInt::get(Type::UIntTy, 0);                           \
-    OPS[1] = CastInst::createInferredCast(OPS[1], v2f64, "tmp", CurBB);       \
+    OPS[1] = new BitCastInst(OPS[1], v2f64, "tmp", CurBB);                    \
     OPS[1] = new ExtractElementInst(OPS[1], Idx, "tmp", CurBB);               \
     RESULT = new StoreInst(OPS[1], OPS[0], false, CurBB);                     \
     return true;                                                              \
@@ -4397,16 +4427,25 @@ enum ix86_builtins
   case IX86_BUILTIN_VEC_EXT_V2DF:                                             \
   case IX86_BUILTIN_VEC_EXT_V4SI:                                             \
   case IX86_BUILTIN_VEC_EXT_V4SF:                                             \
-  case IX86_BUILTIN_VEC_EXT_V8HI:                                             \
-    OPS[1] = CastInst::createInferredCast(OPS[1], Type::UIntTy,  "tmp", CurBB);\
+  case IX86_BUILTIN_VEC_EXT_V8HI: {                                           \
+    OPS[1] = CastInst::createIntegerCast(OPS[1], Type::UIntTy, false, "tmp",  \
+                                         CurBB);                              \
     RESULT = new ExtractElementInst(OPS[0], OPS[1], "tmp", CurBB);            \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
-  case IX86_BUILTIN_VEC_SET_V8HI:                                             \
-    OPS[1] = CastInst::createInferredCast(OPS[1], Type::ShortTy, "tmp", CurBB);\
-    OPS[2] = CastInst::createInferredCast(OPS[2], Type::UIntTy,  "tmp", CurBB);\
+  }                                                                           \
+  case IX86_BUILTIN_VEC_SET_V8HI: {                                           \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        OPS[1], OPS[1]->getType()->isSigned(), Type::ShortTy, true);          \
+    OPS[1] = CastInst::create(opcode, OPS[1], Type::ShortTy, "tmp", CurBB);   \
+    opcode = CastInst::getCastOpcode(                                         \
+        OPS[2], OPS[2]->getType()->isSigned(), Type::UIntTy, false);          \
+    OPS[2] = CastInst::create(opcode, OPS[2], Type::UIntTy,  "tmp", CurBB);   \
     RESULT = new InsertElementInst(OPS[0], OPS[1], OPS[2], "tmp", CurBB);     \
     return true;                                                              \
+  }                                                                           \
   case IX86_BUILTIN_CMPEQPS:                                                  \
   case IX86_BUILTIN_CMPLTPS:                                                  \
   case IX86_BUILTIN_CMPLEPS:                                                  \
@@ -4472,15 +4511,17 @@ enum ix86_builtins
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
     if (flip) {                                                               \
-      Ops.push_back(CastInst::createInferredCast(OPS[1], v4f32, "tmp", CurBB));\
-      Ops.push_back(CastInst::createInferredCast(OPS[0], v4f32, "tmp", CurBB));\
+      Ops.push_back(new BitCastInst(OPS[1], v4f32, "tmp", CurBB));            \
+      Ops.push_back(new BitCastInst(OPS[0], v4f32, "tmp", CurBB));            \
     } else {                                                                  \
-      Ops.push_back(CastInst::createInferredCast(OPS[0], v4f32, "tmp", CurBB));\
-      Ops.push_back(CastInst::createInferredCast(OPS[1], v4f32, "tmp", CurBB));\
+      Ops.push_back(new BitCastInst(OPS[0], v4f32, "tmp", CurBB));            \
+      Ops.push_back(new BitCastInst(OPS[1], v4f32, "tmp", CurBB));            \
     }                                                                         \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpps, Ops, "tmp", CurBB);                          \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQSS:                                                  \
@@ -4528,11 +4569,13 @@ enum ix86_builtins
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
-    Ops.push_back(CastInst::createInferredCast(OPS[0], v4f32, "tmp", CurBB)); \
-    Ops.push_back(CastInst::createInferredCast(OPS[1], v4f32, "tmp", CurBB)); \
+    Ops.push_back(new BitCastInst(OPS[0], v4f32, "tmp", CurBB));              \
+    Ops.push_back(new BitCastInst(OPS[1], v4f32, "tmp", CurBB));              \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpss, Ops, "tmp", CurBB);                          \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQPD:                                                  \
@@ -4600,15 +4643,17 @@ enum ix86_builtins
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
     if (flip) {                                                               \
-      Ops.push_back(CastInst::createInferredCast(OPS[1], v2f64, "tmp", CurBB));\
-      Ops.push_back(CastInst::createInferredCast(OPS[0], v2f64, "tmp", CurBB));\
+      Ops.push_back(new BitCastInst(OPS[1], v2f64, "tmp", CurBB));            \
+      Ops.push_back(new BitCastInst(OPS[0], v2f64, "tmp", CurBB));            \
     } else {                                                                  \
-      Ops.push_back(CastInst::createInferredCast(OPS[0], v2f64, "tmp", CurBB));\
-      Ops.push_back(CastInst::createInferredCast(OPS[1], v2f64, "tmp", CurBB));\
+      Ops.push_back(new BitCastInst(OPS[0], v2f64, "tmp", CurBB));            \
+      Ops.push_back(new BitCastInst(OPS[1], v2f64, "tmp", CurBB));            \
     }                                                                         \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpps, Ops, "tmp", CurBB);                          \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQSD:                                                  \
@@ -4654,11 +4699,13 @@ enum ix86_builtins
         break;                                                                \
     }                                                                         \
     std::vector<Value*> Ops;                                                  \
-    Ops.push_back(CastInst::createInferredCast(OPS[0], v2f64, "tmp", CurBB)); \
-    Ops.push_back(CastInst::createInferredCast(OPS[1], v2f64, "tmp", CurBB)); \
+    Ops.push_back(new BitCastInst(OPS[0], v2f64, "tmp", CurBB));              \
+    Ops.push_back(new BitCastInst(OPS[1], v2f64, "tmp", CurBB));              \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpss, Ops, "tmp", CurBB);                          \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LDMXCSR: {                                                \

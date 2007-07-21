@@ -3790,7 +3790,7 @@ enum rs6000_builtins
     return true;                                                              \
   case ALTIVEC_BUILTIN_VSPLTISB:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getCast(Elt, Type::SByteTy);                        \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::SByteTy, true);           \
       RESULT = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,           \
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);    \
       return true;                                                            \
@@ -3798,21 +3798,21 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTISH:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getCast(Elt, Type::ShortTy);                        \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::ShortTy, true);           \
       RESULT = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);    \
       return true;                                                            \
     }                                                                         \
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTISW:                                              \
     if (Constant *Elt = dyn_cast<ConstantInt>(OPS[0])) {                      \
-      Elt = ConstantExpr::getCast(Elt, Type::IntTy);                          \
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::IntTy, true);             \
       RESULT = BuildVector(Elt, Elt, Elt, Elt, NULL);                         \
       return true;                                                            \
     }                                                                         \
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTB:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getZExtValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   EV, EV, EV, EV, EV, EV, EV, EV,             \
                                   EV, EV, EV, EV, EV, EV, EV, EV);            \
@@ -3821,7 +3821,7 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTH:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getZExtValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0],                             \
                                   EV, EV, EV, EV, EV, EV, EV, EV);            \
       return true;                                                            \
@@ -3829,7 +3829,7 @@ enum rs6000_builtins
     return false;                                                             \
   case ALTIVEC_BUILTIN_VSPLTW:                                                \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[1])) {                   \
-      int EV = Elt->getZExtValue();                                            \
+      int EV = Elt->getZExtValue();                                           \
       RESULT = BuildVectorShuffle(OPS[0], OPS[0], EV, EV, EV, EV);            \
       return true;                                                            \
     }                                                                         \
@@ -3840,7 +3840,7 @@ enum rs6000_builtins
   case ALTIVEC_BUILTIN_VSLDOI_4SF:                                            \
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(OPS[2])) {                   \
       /* Map all of these to a shuffle. */                                    \
-      unsigned Amt = Elt->getZExtValue() & 15;                                 \
+      unsigned Amt = Elt->getZExtValue() & 15;                                \
       PackedType *v16i8 = PackedType::get(Type::SByteTy, 16);                 \
       OPS[0] = CastToType(OPS[0], v16i8);                                     \
       OPS[1] = CastToType(OPS[1], v16i8);                                     \
@@ -3853,17 +3853,27 @@ enum rs6000_builtins
       return true;                                                            \
     }                                                                         \
     return false;                                                             \
-  case ALTIVEC_BUILTIN_VPKUHUM:                                               \
-    OPS[0] = CastInst::createInferredCast(OPS[0], DESTTY, OPS[0]->getName(), CurBB);  \
-    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, OPS[0]->getName(), CurBB);  \
+  case ALTIVEC_BUILTIN_VPKUHUM: {                                             \
+    Instruction::CastOps opc = CastInst::getCastOpcode(                       \
+        OPS[0], OPS[0]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[0] = CastInst::create(opc, OPS[0], DESTTY, OPS[0]->getName(), CurBB); \
+    opc = CastInst::getCastOpcode(                                            \
+        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[1] = CastInst::create(opc, OPS[1], DESTTY, OPS[0]->getName(), CurBB); \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15,    \
                                 17, 19, 21, 23, 25, 27, 29, 31);              \
     return true;                                                              \
-  case ALTIVEC_BUILTIN_VPKUWUM:                                               \
-    OPS[0] = CastInst::createInferredCast(OPS[0], DESTTY, OPS[0]->getName(), CurBB);  \
-    OPS[1] = CastInst::createInferredCast(OPS[1], DESTTY, OPS[0]->getName(), CurBB);  \
+  }                                                                           \
+  case ALTIVEC_BUILTIN_VPKUWUM: {                                             \
+    Instruction::CastOps opc = CastInst::getCastOpcode(                       \
+        OPS[0], OPS[0]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[0] = CastInst::create(opc, OPS[0], DESTTY, OPS[0]->getName(), CurBB); \
+    opc = CastInst::getCastOpcode(                                            \
+        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    OPS[1] = CastInst::create(opc, OPS[1], DESTTY, OPS[0]->getName(), CurBB); \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15);   \
     return true;                                                              \
+  }                                                                           \
   case ALTIVEC_BUILTIN_VMRGHB:                                                \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1],                               \
                                 0, 16, 1, 17, 2, 18, 3, 19,                   \
@@ -3889,12 +3899,13 @@ enum rs6000_builtins
   case ALTIVEC_BUILTIN_ABS_V4SF: {                                            \
     /* and out sign bits */                                                   \
     PackedType *v4i32 = PackedType::get(Type::IntTy, 4);                      \
-    OPS[0] = CastInst::createInferredCast(OPS[0], v4i32, OPS[0]->getName(),   \
-        CurBB);                                                               \
+    OPS[0] = new BitCastInst(OPS[0], v4i32, OPS[0]->getName(),CurBB);         \
     Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                  \
     C = ConstantPacked::get(std::vector<Constant*>(4, C));                    \
     RESULT = BinaryOperator::createAnd(OPS[0], C, "tmp", CurBB);              \
-    RESULT = CastInst::createInferredCast(RESULT, DESTTY, "tmp", CurBB);      \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
+        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
     return true;                                                              \
   }                                                                           \
   case ALTIVEC_BUILTIN_ABS_V4SI:                                              \

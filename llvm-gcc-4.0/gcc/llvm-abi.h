@@ -285,7 +285,7 @@ public:
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
-    const StructType *STy = StructType::get(Elts);
+    const StructType *STy = StructType::get(Elts, false);
 
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);

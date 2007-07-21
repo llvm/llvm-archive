@@ -325,7 +325,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 128:
       // 128-bit long doubles map onto { double, double }.
       const Type *Ty = Type::DoubleTy;
-      Ty = StructType::get(std::vector<const Type*>(2, Ty));
+      Ty = StructType::get(std::vector<const Type*>(2, Ty), false);
       return SET_TYPE_LLVM(type, Ty);
     }
     
@@ -333,7 +333,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    Ty = StructType::get(std::vector<const Type*>(2, Ty));
+    Ty = StructType::get(std::vector<const Type*>(2, Ty), false);
     return SET_TYPE_LLVM(type, Ty);
   }
   case VECTOR_TYPE: {
@@ -612,7 +612,7 @@ struct StructTypeConversionInfo {
   /// getLLVMType - Return the LLVM type for the specified object.
   ///
   const Type *getLLVMType() const {
-    return StructType::get(Elements);
+    return StructType::get(Elements, false);
   }
   
   /// getSizeAsLLVMStruct - Return the size of this struct if it were converted
@@ -1115,7 +1115,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     if (Size != 1) UnionTy = ArrayType::get(UnionTy, Size);
   }
   
-  const Type *ResultTy = StructType::get(UnionElts);
+  const Type *ResultTy = StructType::get(UnionElts, false);
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
   

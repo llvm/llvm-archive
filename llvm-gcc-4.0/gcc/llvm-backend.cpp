@@ -345,7 +345,7 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
     StructInit[0] = ConstantInt::get(Type::IntTy, Tors[i].second);
     StructInit[1] = Tors[i].first;
-    InitList.push_back(ConstantStruct::get(StructInit));
+    InitList.push_back(ConstantStruct::get(StructInit, false));
   }
   Constant *Array =
     ConstantArray::get(ArrayType::get(InitList[0]->getType(), InitList.size()),
@@ -369,7 +369,8 @@ void llvm_asm_file_end(void) {
     std::vector<Constant*> GlobalInit;
     const Type *SBP = PointerType::get(Type::SByteTy);
     for (unsigned i = 0, e = AttributeUsedGlobals.size(); i != e; ++i)
-      GlobalInit.push_back(ConstantExpr::getCast(AttributeUsedGlobals[i], SBP));
+      GlobalInit.push_back(ConstantExpr::getBitCast(AttributeUsedGlobals[i], 
+                                                    SBP));
     ArrayType *AT = ArrayType::get(SBP, AttributeUsedGlobals.size());
     Constant *Init = ConstantArray::get(AT, GlobalInit);
     new GlobalVariable(AT, false, GlobalValue::AppendingLinkage, Init,
@@ -503,7 +504,7 @@ void emit_global_to_llvm(tree decl) {
     GlobalVariable *NGV = new GlobalVariable(Init->getType(), GV->isConstant(),
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName(), TheModule);
-    GV->replaceAllUsesWith(ConstantExpr::getCast(NGV, GV->getType()));
+    GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
     delete GV;
     SET_DECL_LLVM(decl, NGV);
     EmittedGlobalVars[NGV->getName()] = NGV;
@@ -700,7 +701,8 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy) Ty = StructType::get(std::vector<const Type*>());
+    if (Ty == Type::VoidTy) Ty = StructType::get(std::vector<const Type*>(),
+                                                 false);
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
                               Name, TheModule);

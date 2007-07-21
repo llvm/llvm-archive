@@ -1,13 +1,16 @@
 #!/bin/sh
-#                               update script
+#                                   info script
 # 
 # This file was developed by Reid Spencer and is distributed under the
 # University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 #===------------------------------------------------------------------------===#
 
-# This script allows easier checkout of LLVM modules. Just specify the names
-# of the modules on the command line.
+# This script gets subversion information about each module checked out. Just
+# specify the list of modules your' interested in or specify none to get show
+# information about the currently checked out modules. See the README.txt file.
+
+# Get the library.
 . ./library.sh
 
 # Get the list of modules

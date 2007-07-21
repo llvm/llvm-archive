@@ -8,7 +8,7 @@
 
 # This script allows easier cleaning of LLVM modules. Just specify the names
 # of the modules on the command line and they and their dependencies will be
-# cleaned.
+# cleaned. See the README.txt file.
 
 . ./library.sh
 

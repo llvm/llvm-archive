@@ -6,8 +6,10 @@
 # 
 #===------------------------------------------------------------------------===#
 
-# This script allows easier checkout of LLVM modules. Just specify the names
-# of the modules on the command line.
+# This script allows you to easily update a set of checked out modules. Just
+# specify the modules to be updated (or checked out) on the command line. 
+
+# Get the library.
 . ./library.sh
 
 # Get the list of modules

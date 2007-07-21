@@ -7,7 +7,9 @@
 #===------------------------------------------------------------------------===#
 
 # This script allows easier checkout of LLVM modules. Just specify the names
-# of the modules on the command line.
+# of the modules on the command line. See the README.txt file.
+
+# Get the library.
 . ./library.sh
 
 # Get the list of modules

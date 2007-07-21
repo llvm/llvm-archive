@@ -5,24 +5,13 @@
 # University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 #===------------------------------------------------------------------------===#
-# This script allows LLVM modules to be checked out, configured and built all in
-# one step.  Use it like this:
 #
-#    cd llvm-top
-#    ./build {module_names} {configure_options} {build_options}
-#
-# where:
-#    {module_names} is a list of modules you want to configure (e.g. llvm, hlvm)
-#    {configure_options} start with -- and are passed to the configure tool
-#      of *all* the modules you are building that need configuration.
-#    {build_options} contain an = and are passed to the build tool of *all*
-#      the modules you are building.
-#
-# Note that the script will checkout and configure any dependent modules as well
-# as the ones specified in {module_names} so it is only necessary to specify the
-# minimal set you're interested in.
+# This script allows LLVM modules to be built. Specify the modules you want to
+# build on the command line; or leave it blank to specify the currently checked
+# out modules. Any dependencies will be checked out and built before the 
+# specified list. You can also specify build options. See the README.txt file.
 
-# Get the library code
+# Get the library.
 . ./library.sh
 
 # Process the arguments so that anything starting with - is passed down to the

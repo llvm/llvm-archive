@@ -6,9 +6,10 @@
 # 
 #===------------------------------------------------------------------------===#
 
-# This script allows easier installing of LLVM modules. Just specify the names
+# This script allows easier installation of LLVM modules. Just specify the names
 # of the modules on the command line and they and their dependencies will be
-# checked out, built and installed. Use INSTALL_PREFIX= to process
+# checked out, built and installed. Use PREFIX= to specify where the modules
+# should be installed. See the README.txt file.
 
 . ./library.sh
 

@@ -18152,6 +18152,13 @@ handle_class_ref (tree chain)
   DECL_INITIAL (decl) = exp;
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* This decl's name is special. Ask llvm to not add leading underscore by 
+     setting it as a user supplied asm name.  */
+  set_user_assembler_name(decl, string);
+#endif ENABLE_LLVM
+/* APPLE LOCAL end LLVM */
 
   pushdecl (decl);
   rest_of_decl_compilation (decl, 0, 0);
@@ -18188,8 +18195,16 @@ handle_impent (struct imp_entry *impent)
       /* Do the same for categories.  Even though no references to
          these symbols are generated automatically by the compiler, it
          gives you a handle to pull them into an archive by hand.  */
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+      /* The * is a sentinel for gcc's back end, but is not wanted by llvm. */
+      sprintf (string, "%sobjc_category_name_%s_%s",
+               (flag_next_runtime ? "." : "__"), class_name, class_super_name);
+#else
       sprintf (string, "*%sobjc_category_name_%s_%s",
                (flag_next_runtime ? "." : "__"), class_name, class_super_name);
+#endif
+/* APPLE LOCAL end LLVM */
     }
   else
     return;

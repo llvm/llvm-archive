@@ -2636,6 +2636,18 @@ c_common_truthvalue_conversion (tree expr)
 	    && DECL_EXTERNAL (TREE_OPERAND (expr, 0)))
 	  break;
 
+/* APPLE LOCAL begin llvm */
+#if ENABLE_LLVM
+        /* LLVM extends ARRAY_REF to allow pointers to be the base value.  It is not
+           valid to assume ADDR of this is nonzero, because it could be derived from
+           original (P+constant).  Radar 5286401.  */
+        if (TREE_CODE (TREE_OPERAND (expr, 0)) == ARRAY_REF 
+            && TREE_CODE (TREE_TYPE (TREE_OPERAND (TREE_OPERAND (expr, 0), 0))) 
+                != ARRAY_TYPE)
+          break;
+#endif
+/* APPLE LOCAL end llvm */
+
 	if (TREE_SIDE_EFFECTS (TREE_OPERAND (expr, 0)))
 	  return build2 (COMPOUND_EXPR, truthvalue_type_node,
 			 TREE_OPERAND (expr, 0), truthvalue_true_node);

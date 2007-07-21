@@ -673,6 +673,23 @@ do {					\
     fputc ('\n', FILE);							\
   } while (0)
 
+/* APPLE LOCAL begin LLVM */
+/* weak_import, a Darwin special, does not make function definitions weak. */
+#define TARGET_ADJUST_LLVM_LINKAGE(FN, DECL)                            \
+  do {                                                                  \
+    if ((DECL) &&                                                       \
+        TREE_CODE (DECL) == FUNCTION_DECL &&                            \
+        !DECL_EXTERNAL (DECL) &&                                        \
+        TREE_PUBLIC (DECL) &&                                           \
+        DECL_WEAK (DECL) &&                                             \
+        ! lookup_attribute ("weak", DECL_ATTRIBUTES (DECL)) &&          \
+	lookup_attribute ("weak_import", DECL_ATTRIBUTES (DECL)) &&     \
+        (FN)->hasWeakLinkage()) {                                       \
+      (FN)->setLinkage(Function::ExternalLinkage);                      \
+    }                                                                   \
+  } while (0)
+/* APPLE LOCAL end LLVM */
+
 /* Darwin has the pthread routines in libSystem, which every program
    links to, so there's no need for weak-ness for that.  */
 #define GTHREAD_USE_WEAK 0

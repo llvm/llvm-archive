@@ -476,7 +476,6 @@ void llvm_asm_file_end(void) {
   }
   
   // Add llvm.noinline
-#ifdef 0
   if (!AttributeNoinlineFunctions.empty()) {
     const Type *SBP= PointerType::get(Type::Int8Ty);
     ArrayType *AT = ArrayType::get(SBP, AttributeNoinlineFunctions.size());
@@ -489,7 +488,6 @@ void llvm_asm_file_end(void) {
     // Clear vector
     AttributeNoinlineFunctions.clear();
   }
-#endif
   
   // Finish off the per-function pass.
   if (PerFunctionPasses)

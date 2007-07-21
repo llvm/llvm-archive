@@ -595,7 +595,7 @@ void TreeToLLVM::StartFunctionBody() {
   }
   
   // Handle noinline Functions
-  if (DECL_UNINLINABLE (FnDecl)) {
+  if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl))) {
     const Type *SBP= PointerType::get(Type::Int8Ty);
     AttributeNoinlineFunctions.push_back(ConstantExpr::getBitCast(Fn,SBP));
   }

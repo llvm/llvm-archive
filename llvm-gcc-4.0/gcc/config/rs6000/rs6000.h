@@ -3613,11 +3613,10 @@ enum rs6000_builtins
   { switch (rs6000_cpu) { \
     case PROCESSOR_RIOS1: \
     case PROCESSOR_RIOS2: \
-    case PROCESSOR_RS64A: \
     case PROCESSOR_MPCCORE: \
     case PROCESSOR_PPC403: \
     case PROCESSOR_PPC405: \
-    case PROCESSOR_PPC440: F.setCPU("generic"); break; \
+    case PROCESSOR_PPC440: F.setCPU("ppc"); break; \
     case PROCESSOR_PPC601: F.setCPU("601"); break; \
     case PROCESSOR_PPC603: F.setCPU("603"); break; \
     case PROCESSOR_PPC604: F.setCPU("604"); break; \
@@ -3628,6 +3627,7 @@ enum rs6000_builtins
     case PROCESSOR_PPC7400: F.setCPU("7400"); break; \
     case PROCESSOR_PPC7450: F.setCPU("7450"); break; \
     case PROCESSOR_PPC8540: F.setCPU("7450"); break; \
+    case PROCESSOR_RS64A: F.setCPU("ppc64"); break; \
     case PROCESSOR_POWER4: \
     case PROCESSOR_POWER5: F.setCPU("970"); break; /* FIXME: NOT RIGHT */ \
     } \

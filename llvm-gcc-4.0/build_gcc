@@ -104,7 +104,8 @@ I386_CPU="--with-arch=nocona --with-tune=generic"
 LIBSTDCXX_VERSION=4.0.0
 
 # Sniff to see if we can do ppc64 building.
-DARWIN_VERS=8
+DARWIN_VERS=`uname -r | sed 's/\([0-9]*\)\..*/\1/'`
+
 if [ x"`file /usr/lib/crt1.o | grep 'architecture ppc64'`" == x ]; then
     DARWIN_VERS=7
 fi

@@ -69,7 +69,7 @@ process_arguments() {
     local modinfo=""
     for modinfo in */ModuleInfo.txt ; do
       mod=`dirname $modinfo`
-      mod=`basename $modinfo`
+      msg 3 "Found module directory $mod"
       MODULES="$mod $MODULES"
     done
   fi

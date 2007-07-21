@@ -414,8 +414,10 @@ case ${target} in
       tm_defines="${tm_defines} FBSD_MAJOR=5" ;;
     *-*-freebsd6 | *-*-freebsd[6].*)
       tm_defines="${tm_defines} FBSD_MAJOR=6" ;;
+    # APPLE LOCAL begin LLVM 
     *-*-freebsd7 | *-*-freebsd[7].*)
       tm_defines="${tm_defines} FBSD_MAJOR=7" ;;
+    # APPLE LOCAL end LLVM   
     *)
       echo 'Please update *-*-freebsd* in gcc/config.gcc'
       exit 1

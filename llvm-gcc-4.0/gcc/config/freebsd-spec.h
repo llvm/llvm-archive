@@ -48,6 +48,30 @@ Boston, MA 02111-1307, USA.  */
    || !strcmp ((STR), "soname") || !strcmp ((STR), "defsym") 		\
    || !strcmp ((STR), "assert") || !strcmp ((STR), "dynamic-linker"))
 
+/* APPLE LOCAL begin LLVM */
+#ifndef ENABLE_LLVM
+#define FBSD_TARGET_OS_CPP_BUILTINS()					\
+  do									\
+    {									\
+	if (FBSD_MAJOR == 6)					\
+	  builtin_define ("__FreeBSD__=6");			       	\
+	else if (FBSD_MAJOR == 5)	       				\
+	  builtin_define ("__FreeBSD__=5");			       	\
+	else if (FBSD_MAJOR == 4)			       		\
+	  builtin_define ("__FreeBSD__=4");			       	\
+	else if (FBSD_MAJOR == 3)	       				\
+	  builtin_define ("__FreeBSD__=3");			       	\
+	else								\
+	  builtin_define ("__FreeBSD__");			       	\
+	builtin_define_std ("unix");					\
+	builtin_define ("__KPRINTF_ATTRIBUTE__");		       	\
+	builtin_assert ("system=unix");					\
+	builtin_assert ("system=bsd");					\
+	builtin_assert ("system=FreeBSD");				\
+	FBSD_TARGET_CPU_CPP_BUILTINS();					\
+    }									\
+  while (0)
+#else
 #define FBSD_TARGET_OS_CPP_BUILTINS()					\
   do									\
     {									\
@@ -71,6 +95,8 @@ Boston, MA 02111-1307, USA.  */
 	FBSD_TARGET_CPU_CPP_BUILTINS();					\
     }									\
   while (0)
+#endif
+/* APPLE LOCAL end LLVM */
 
 /* Define the default FreeBSD-specific per-CPU hook code.  */
 #define FBSD_TARGET_CPU_CPP_BUILTINS() do {} while (0)

@@ -473,16 +473,17 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
   }
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?
-    if (TYPE_SIZE(type) == 0) {
+    if (TYPE_SIZE(orig_type) == 0) {
       // If we already compiled this type, use the old type.
-      if (const Type *Ty = GET_TYPE_LLVM(type))
+      if (const Type *Ty = GET_TYPE_LLVM(orig_type))
         return Ty;
 
       const Type *Ty = OpaqueType::get();
       TheModule->addTypeName(GetTypeName("enum.", orig_type), Ty);
-      return TypeDB.setType(type, Ty);
+      return TypeDB.setType(orig_type, Ty);
     }
     // FALL THROUGH.
+    type = orig_type;
   case INTEGER_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
 

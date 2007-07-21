@@ -108,7 +108,9 @@ m4_changequote(,)
 case $target in
 	# APPLE LOCAL begin 4126124
 	alpha*-*-* | \
-	arm*-*-eabi* | \
+        #APPLE LOCAL begin LLVM
+	arm*-*-*eabi* | \
+        #APPLE LOCAL end LLVM
 	arm*-*-symbianelf* | \
 	x86_64-*-* | \
 	ia64-*-* | \

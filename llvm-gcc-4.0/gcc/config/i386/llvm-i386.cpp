@@ -34,7 +34,9 @@ extern "C" {
 #include "toplev.h"
 }
 
-/* TargetIntrinsicCastResult - This function just provides a frequently                                                                                                                         * used sequence for use inside TargetIntrinsicLower.                                                                                                                                           */
+/* TargetIntrinsicCastResult - This function just provides a frequently used
+ * sequence for use inside TargetIntrinsicLower.
+ */
 static void TargetIntrinsicCastResult(Value *&Result, const Type *ResultType,
                                       bool ResIsSigned, bool ExpIsSigned,
                                       BasicBlock *CurBB) {
@@ -43,14 +45,16 @@ static void TargetIntrinsicCastResult(Value *&Result, const Type *ResultType,
   Result = CastInst::create(opcode, Result, ResultType, "tmp", CurBB);
 }
 
-/* IntrinsicOpIsSigned - This function determines if a given operand                                                                                                                            * to the intrinsic is signed or not.                                                                                                                                                           */
+/* IntrinsicOpIsSigned - This function determines if a given operand to the
+ * intrinsic is signed or not.
+ */
 static bool IntrinsicOpIsSigned(SmallVector<tree, 8> &Args, unsigned OpNum) {
   return !TYPE_UNSIGNED(TREE_TYPE(Args[OpNum]));
 }
 
-/* TargetIntrinsicLower - For builtins that we want to expand to normal
- * LLVM code, emit the code now.  If we can handle the code, this macro should
- * emit the code, return true.
+/* TargetIntrinsicLower - For builtins that we want to expand to normal LLVM
+ * code, emit the code now.  If we can handle the code, this macro should emit
+ * the code, return true.
  */
 bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
@@ -69,6 +73,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PADDB:
   case IX86_BUILTIN_PADDW:
   case IX86_BUILTIN_PADDD:
+  case IX86_BUILTIN_PADDQ:
   case IX86_BUILTIN_PADDB128:
   case IX86_BUILTIN_PADDW128:
   case IX86_BUILTIN_PADDD128:

@@ -609,10 +609,13 @@ extern int arm_cpp_interwork;
       (MODE) = SImode;				\
     }
 
+/* APPLE LOCAL begin LLVM */
 #define PROMOTE_FUNCTION_MODE(MODE, UNSIGNEDP, TYPE)	\
-  if (GET_MODE_CLASS (MODE) == MODE_INT		\
-      && GET_MODE_SIZE (MODE) < 4)      	\
-    (MODE) = SImode;				\
+  if ((GET_MODE_CLASS (MODE) == MODE_INT		\
+       || GET_MODE_CLASS (MODE) == MODE_COMPLEX_INT)    \
+      && GET_MODE_SIZE (MODE) < 4)                      \
+    (MODE) = SImode;				        \
+/* APPLE LOCAL end LLVM */
 
 /* Define this if most significant bit is lowest numbered
    in instructions that operate on numbered bit-fields.  */
@@ -992,8 +995,13 @@ extern const char * structure_size_string;
 #define FIRST_HI_REGNUM		8
 #define LAST_HI_REGNUM		11
 
+/* APPLE LOCAL begin LLVM */
+#ifndef TARGET_UNWIND_INFO
 /* We use sjlj exceptions for backwards compatibility.  */
 #define MUST_USE_SJLJ_EXCEPTIONS 1
+#endif
+/* APPLE LOCAL end LLVM */
+
 /* We can generate DWARF2 Unwind info, even though we don't use it.  */
 #define DWARF2_UNWIND_INFO 1
 
@@ -1041,6 +1049,10 @@ extern const char * structure_size_string;
 /* ARM floating pointer registers.  */
 #define FIRST_FPA_REGNUM 	16
 #define LAST_FPA_REGNUM  	23
+/* APPLE LOCAL begin LLVM */
+#define IS_FPA_REGNUM(REGNUM) \
+  (((REGNUM) >= FIRST_FPA_REGNUM) && ((REGNUM) <= LAST_FPA_REGNUM))
+/* APPLE LOCAL end LLVM */
 
 #define FIRST_IWMMXT_GR_REGNUM	43
 #define LAST_IWMMXT_GR_REGNUM	46
@@ -1072,6 +1084,10 @@ extern const char * structure_size_string;
 /* Intel Wireless MMX Technology registers add 16 + 4 more.  */
 /* VFP adds 32 + 1 more.  */
 #define FIRST_PSEUDO_REGISTER   96
+
+/* APPLE LOCAL begin LLVM */
+#define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
+/* APPLE LOCAL end LLVM */
 
 /* Value should be nonzero if functions must have frame pointers.
    Zero means the frame pointer need not be set up (and parms may be accessed
@@ -1764,6 +1780,19 @@ typedef struct
 #define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
   arm_function_arg (&(CUM), (MODE), (TYPE), (NAMED))
 
+/* APPLE LOCAL begin LLVM */
+#define FUNCTION_ARG_PADDING(MODE, TYPE) \
+  (arm_pad_arg_upward (MODE, TYPE) ? upward : downward)
+
+#define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
+  (arm_pad_reg_upward (MODE, TYPE, FIRST) ? upward : downward)
+
+/* For AAPCS, padding should never be below the argument. For other ABIs,
+ * mimic the default.  */
+#define PAD_VARARGS_DOWN \
+  ((TARGET_AAPCS_BASED) ? 0 : BYTES_BIG_ENDIAN)
+/* APPLE LOCAL end LLVM */
+
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.
@@ -2127,6 +2156,17 @@ typedef struct
 #define ARM_DECLARE_FUNCTION_SIZE(STREAM, NAME, DECL)	\
   if (!TARGET_LONG_CALLS || ! DECL_SECTION_NAME (DECL)) \
     arm_encode_call_attribute (DECL, SHORT_CALL_FLAG_CHAR)
+
+/* APPLE LOCAL begin LLVM */
+#define ARM_OUTPUT_FN_UNWIND(F, PROLOGUE) arm_output_fn_unwind (F, PROLOGUE)
+
+#ifdef TARGET_UNWIND_INFO
+#define ARM_EABI_UNWIND_TABLES \
+  ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
+#else
+#define ARM_EABI_UNWIND_TABLES 0
+#endif
+/* APPLE LOCAL end LLVM */
 
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.

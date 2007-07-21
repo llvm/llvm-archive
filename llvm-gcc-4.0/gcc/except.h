@@ -84,6 +84,9 @@ extern rtx get_exception_filter (struct function *);
 extern int check_handled (tree, tree);
 
 extern void sjlj_emit_function_exit_after (rtx);
+/* APPLE LOCAL begin LLVM */
+extern void default_init_unwind_resume_libfunc (void);
+/* APPLE LOCAL end LLVM */
 
 extern struct eh_region *gen_eh_region_cleanup (struct eh_region *,
 						struct eh_region *);

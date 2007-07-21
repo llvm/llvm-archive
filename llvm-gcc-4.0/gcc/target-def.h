@@ -75,6 +75,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define TARGET_ASM_INTERNAL_LABEL default_internal_label
 #endif
 
+/* APPLE LOCAL begin LLVM */
+#ifndef TARGET_ARM_TTYPE
+#define TARGET_ASM_TTYPE hook_bool_rtx_false
+#endif
+/* APPLE LOCAL end LLVM */
+
 #ifndef TARGET_ASM_ASSEMBLE_VISIBILITY
 #define TARGET_ASM_ASSEMBLE_VISIBILITY default_assemble_visibility
 #endif
@@ -216,6 +222,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 			TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL,	\
 			TARGET_UNWIND_EMIT,			\
 			TARGET_ASM_INTERNAL_LABEL,		\
+/* APPLE LOCAL begin LLVM */					\
+			TARGET_ASM_TTYPE,			\
+/* APPLE LOCAL end LLVM */					\
 			TARGET_ASM_ASSEMBLE_VISIBILITY,		\
 			TARGET_ASM_FUNCTION_PROLOGUE,		\
 			TARGET_ASM_FUNCTION_END_PROLOGUE,	\
@@ -422,6 +431,10 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 /* APPLE LOCAL end mainline 2005-10-12 */
 
+/* APPLE LOCAL begin LLVM */
+#define TARGET_ARM_EABI_UNWINDER false
+/* APPLE LOCAL end LLVM */
+
 #define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_false
 #define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_false
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_tree_false
@@ -485,6 +498,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    }
 /* APPLE LOCAL end mainline 2005-04-14 */
 
+/* APPLE LOCAL begin LLVM */
+#ifndef TARGET_UNWIND_TABLES_DEFAULT
+#define TARGET_UNWIND_TABLES_DEFAULT false
+#endif
+/* APPLE LOCAL end LLVM */
 
 #ifndef TARGET_HANDLE_PRAGMA_REDEFINE_EXTNAME
 #define TARGET_HANDLE_PRAGMA_REDEFINE_EXTNAME 0
@@ -543,6 +561,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
  /* APPLE LOCAL begin mainline 2005-10-12 */
 
+/* APPLE LOCAL begin LLVM */
+#ifndef TARGET_CXX_USE_AEABI_ATEXIT
+#define TARGET_CXX_USE_AEABI_ATEXIT hook_bool_void_false
+#endif
+/* APPLE LOCAL end LLVM */
+
 #define TARGET_CXX				\
   {						\
     TARGET_CXX_GUARD_TYPE,			\
@@ -557,8 +581,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
     TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT,        \
 /* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */ \
  /* APPLE LOCAL begin mainline 2005-10-12 */ \
-    TARGET_CXX_ADJUST_CLASS_AT_DEFINITION          \
+    TARGET_CXX_ADJUST_CLASS_AT_DEFINITION,          \
  /* APPLE LOCAL end mainline 2005-10-12 */ \
+ /* APPLE LOCAL begin LLVM */ \
+    TARGET_CXX_USE_AEABI_ATEXIT,		\
+ /* APPLE LOCAL end LLVM */ \
   }
 
 /* The whole shebang.  */
@@ -625,6 +652,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  /* APPLE LOCAL end mainline 2005-10-12 */    \
   TARGET_CALLS,					\
   TARGET_CXX,					\
+/* APPLE LOCAL begin LLVM */			\
+  TARGET_UNWIND_TABLES_DEFAULT,			\
+/* APPLE LOCAL end LLVM */			\
   TARGET_HAVE_NAMED_SECTIONS,			\
   TARGET_HAVE_CTORS_DTORS,			\
   TARGET_HAVE_TLS,				\
@@ -637,6 +667,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
   TARGET_HANDLE_PRAGMA_REDEFINE_EXTNAME,	\
   TARGET_HANDLE_PRAGMA_EXTERN_PREFIX,		\
   TARGET_RELAXED_ORDERING,			\
+/* APPLE LOCAL begin LLVM */			\
+  TARGET_ARM_EABI_UNWINDER			\
+/* APPLE LOCAL end LLVM */			\
 }
 
 #include "hooks.h"

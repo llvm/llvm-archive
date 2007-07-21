@@ -146,4 +146,3 @@ gcc version 4.0.1 LLVM (Apple Computer, Inc. build 5400)
 
 ** NOTE: If the -v line above doesn't include "LLVM", you probably mistyped the
 --enable-llvm=xxx line and have a normal gcc, not an llvm-gcc.
-

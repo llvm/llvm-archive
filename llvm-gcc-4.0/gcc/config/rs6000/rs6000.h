@@ -3676,10 +3676,7 @@ enum rs6000_builtins
  *  return true.This macro is invoked from a method in the TreeToLLVM class.
  */
 #define LLVM_TARGET_INTRINSIC_LOWER(EXP, BUILTIN_CODE, DESTLOC, RESULT,       \
-                                    DESTTY, OPS, ARGS, CURBB,                 \
-                                    RESISSIGNED, EXPISSIGNED)                 \
-        TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT,              \
-                             DESTTY, OPS, ARGS, CURBB,                        \
-                             RESISSIGNED, EXPISSIGNED);
+                                    DESTTY, OPS)                 \
+        TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
 /* APPLE LOCAL end LLVM */

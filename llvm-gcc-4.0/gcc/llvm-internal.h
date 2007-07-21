@@ -35,6 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/LLVMBuilder.h"
 #include "llvm/Support/Streams.h"
 
 extern "C" {
@@ -217,9 +218,9 @@ class TreeToLLVM {
   
   // State that changes as the function is emitted.
 
-  /// CurBB - Always the same as &Fn->back() - the current basic block to insert
-  /// code into.
-  BasicBlock *CurBB;
+  /// Builder - Instruction creator, the location to insert into is always the
+  /// same as &Fn->back().
+  LLVMBuilder Builder;
 
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.
@@ -561,11 +562,7 @@ private:
                             Value *DestLoc,
                             Value *&Result,
                             const Type *ResultType,
-                            std::vector<Value*> &Ops,
-                            SmallVector<tree_node *, 8> &Args,
-                            BasicBlock *CurBB,
-                            bool ResIsSigned,
-                            bool ExpIsSigned);
+                            std::vector<Value*> &Ops);
 };
 
 /// TreeConstantToLLVM - An instance of this class is created and used to 

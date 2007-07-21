@@ -2299,6 +2299,22 @@ fix = {
 };
 
 
+/* APPLE LOCAL begin LLVM */
+/* We need to fix complex.h not to include inline FP assembly.
+ * This is needed to workaround PR879
+ */
+fix = {
+    hackname  = mingw_inline_fp_math;
+    files     = complex.h;
+    mach      = 'i[34567]86-*-mingw*';
+    select    = '[ \t]*__asm__[ \t]*\(\"fpatan';
+    sed       = "/^\\#ifdef[ \\t]*__GNUC__$/,/^\\#endif[ \\t]*\\/*[ \\t]*__GNUC__[ \\t]*$/ { :ack N; /\\n[ \\t]*:/! b ack; s/\\(\\n[ \\t]*double[ \\t]*res;\\)\\n/\\1\\n#ifdef __NO_MATH_INLINES\\n    res = atan((__imag__ _Z) \\/ (__real__ _Z));\\n#else\\n/; s/\\(\\n[ \\t]*float[ \\t]*res;\\)\\n/\\1\\n#ifdef __NO_MATH_INLINES\\n    res = atanf((__imag__ _Z) \\/ (__real__ _Z));\\n#else\\n/; s/\\(\\n[ \\t]*long[ \\t]*double[ \\t]*res;\\)\\n/\\1\\n#ifdef __NO_MATH_INLINES\\n    res = atanl((__imag__ _Z) \\/ (__real__ _Z));\\n#else\\n/; s/\\(\\\"st[(]1[)]\\\"[)];[ \\t]*\\)$/\\1\\n#endif/g }";
+    sed       = "s/\\(\\#include[ \\t]*<_mingw.h>\\)/\\1\\n\\#include <math.h>\/";
+    test_text = '  __asm__  ("fpatan;"'
+                '	   : "=t" (res) : "0" (__real__ _Z), "u" (__imag__ _Z) : "st(1)");';
+};
+/* APPLE local end LLVM */
+ 
 /*
  *  nested comment
  */

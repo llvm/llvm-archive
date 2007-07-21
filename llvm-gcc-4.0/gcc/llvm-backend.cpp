@@ -216,6 +216,7 @@ void llvm_asm_file_start(void) {
     PM->add(createIPConstantPropagationPass());// IP Constant Propagation
     PM->add(createDeadArgEliminationPass());   // Dead argument elimination
     PM->add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+    PM->add(createPredicateSimplifierPass());  // Canonicalize registers
     PM->add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
     PM->add(createPruneEHPass());              // Remove dead EH info
 

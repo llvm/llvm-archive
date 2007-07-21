@@ -3624,15 +3624,11 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
   tree fntype = TREE_TYPE(current_function_decl);
   
   static Constant *llvm_va_start_fn = 0;
-  if (!llvm_va_start_fn) {
-    tree FnDecl = TREE_OPERAND(TREE_OPERAND(exp, 0), 0);
-    const FunctionType *FnTy = 
-      cast<FunctionType>(ConvertType(TREE_TYPE(FnDecl)));
+  static const Type *VPTy = PointerType::get(Type::Int8Ty);
+
+  if (!llvm_va_start_fn)
     llvm_va_start_fn = TheModule->getOrInsertFunction("llvm.va_start",
-                                                      Type::VoidTy,
-                                                      FnTy->getParamType(0),
-                                                      NULL);
-  }
+                                                      Type::VoidTy, VPTy, NULL);
   
   if (TYPE_ARG_TYPES(fntype) == 0 ||
       (TREE_VALUE(tree_last(TYPE_ARG_TYPES(fntype))) == void_type_node)) {
@@ -3653,42 +3649,33 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
 
   const Type *FTy =
     cast<PointerType>(llvm_va_start_fn->getType())->getElementType();
-  ArgVal = CastToType(Instruction::BitCast, ArgVal, 
-                      cast<FunctionType>(FTy)->getParamType(0));
+  ArgVal = CastToType(Instruction::BitCast, ArgVal, VPTy);
   new CallInst(llvm_va_start_fn, ArgVal, "", CurBB);
   return true;
 }
 
 bool TreeToLLVM::EmitBuiltinVAEnd(tree exp) {
   static Constant *llvm_va_end_fn = 0;
-  if (!llvm_va_end_fn) {
-    tree FnDecl = TREE_OPERAND(TREE_OPERAND(exp, 0), 0);
-    const FunctionType *VAEndTy = 
-      cast<FunctionType>(ConvertType(TREE_TYPE(FnDecl)));
-    llvm_va_end_fn = TheModule->getOrInsertFunction("llvm.va_end", VAEndTy);
-  }
+  static const Type *VPTy = PointerType::get(Type::Int8Ty);
+  
+  if (!llvm_va_end_fn)
+    llvm_va_end_fn = TheModule->getOrInsertFunction("llvm.va_end", Type::VoidTy,
+                                                    VPTy, NULL);
   
   Value *Arg = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-  const Type *FTy =
-    cast<PointerType>(llvm_va_end_fn->getType())->getElementType();
-  Arg = CastToType(Instruction::BitCast, Arg, 
-                   cast<FunctionType>(FTy)->getParamType(0));
-
+  Arg = CastToType(Instruction::BitCast, Arg, VPTy);
   new CallInst(llvm_va_end_fn, Arg, "", CurBB);
   return true;
 }
 
 bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   static Constant *llvm_va_copy_fn = 0;
-  if (!llvm_va_copy_fn) {
-    tree FnDecl = TREE_OPERAND(TREE_OPERAND(exp, 0), 0);
-    const FunctionType *FnTy = 
-      cast<FunctionType>(ConvertType(TREE_TYPE(FnDecl)));
-    const Type *PtrVAListTy = FnTy->getParamType(0);
+  static const Type *VPTy = PointerType::get(Type::Int8Ty);
+
+  if (!llvm_va_copy_fn)
     llvm_va_copy_fn =
       TheModule->getOrInsertFunction("llvm.va_copy", Type::VoidTy,
-                                     PtrVAListTy, PtrVAListTy, NULL);
-  }
+                                     VPTy, VPTy, NULL);
 
   tree Arg1T = TREE_VALUE(TREE_OPERAND(exp, 1));
   tree Arg2T = TREE_VALUE(TREE_CHAIN(TREE_OPERAND(exp, 1)));
@@ -3696,7 +3683,6 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   Value *Arg1 = Emit(Arg1T, 0);   // Emit the address of the destination.
   // The second arg of llvm.va_copy is a pointer to a valist.
   Value *Arg2;
-  const Type *VAListTy = cast<PointerType>(Arg1->getType())->getElementType();
   if (!isAggregateType(TREE_TYPE(Arg2T))) {
     // Emit it as a value, then store it to a temporary slot.
     Value *V2 = Emit(Arg2T, 0);
@@ -3705,15 +3691,13 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   } else {
     // If the target has aggregate valists, emit the srcval directly into a
     // temporary.
+    const Type *VAListTy = cast<PointerType>(Arg1->getType())->getElementType();
     Arg2 = CreateTemporary(VAListTy);
     Emit(Arg2T, Arg2);
   }
   
-  const Type *FTy =
-    cast<PointerType>(llvm_va_copy_fn->getType())->getElementType();
-  const Type *PtrList = cast<FunctionType>(FTy)->getParamType(0);
-  Arg1 = CastToType(Instruction::BitCast, Arg1, PtrList);
-  Arg2 = CastToType(Instruction::BitCast, Arg2, PtrList);
+  Arg1 = CastToType(Instruction::BitCast, Arg1, VPTy);
+  Arg2 = CastToType(Instruction::BitCast, Arg2, VPTy);
   
   new CallInst(llvm_va_copy_fn, Arg1, Arg2, "", CurBB);
   return true;

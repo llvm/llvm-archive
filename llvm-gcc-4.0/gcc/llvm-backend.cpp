@@ -501,13 +501,13 @@ void emit_global_to_llvm(tree decl) {
   // Set the linkage.
   if (!TREE_PUBLIC(decl)) {
     GV->setLinkage(GlobalValue::InternalLinkage);
-  } else if (DECL_COMDAT(decl)) {
-    GV->setLinkage(GlobalValue::LinkOnceLinkage);
   } else if (DECL_WEAK(decl) || DECL_ONE_ONLY(decl) ||
              (DECL_COMMON(decl) &&  // DECL_COMMON is only meaningful if no init
               (!DECL_INITIAL(decl) || DECL_INITIAL(decl) == error_mark_node))) {
     // llvm-gcc also includes DECL_VIRTUAL_P here.
     GV->setLinkage(GlobalValue::WeakLinkage);
+  } else if (DECL_COMDAT(decl)) {
+    GV->setLinkage(GlobalValue::LinkOnceLinkage);
   }
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE

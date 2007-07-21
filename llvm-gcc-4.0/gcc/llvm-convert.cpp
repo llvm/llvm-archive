@@ -2202,18 +2202,22 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
     
     // Figure out how large the element pointed to is.
     const Type *ElTy = cast<PointerType>(LHS->getType())->getElementType();
-    int64_t EltSize = TD.getTypeSize(ElTy);
-    
-    // If EltSize exactly divides Offset, then we know that we can turn this
-    // into a getelementptr instruction.
-    int64_t EltOffset = Offset/EltSize;
-    if (EltOffset*EltSize == Offset) {
-      // If this is a subtract, we want to step backwards.
-      if (Opc == Instruction::Sub)
-        EltOffset = -EltOffset;
-      Constant *C = ConstantSInt::get(Type::LongTy, EltOffset);
-      Value *V = new GetElementPtrInst(LHS, C, "tmp", CurBB);
-      return CastToType(V, TREE_TYPE(exp));
+    // We can't get the type size (and thus convert to using a GEP instr) from
+    // pointers to opaque structs if the type isn't abstract.
+    if (ElTy->isSized()) {
+      int64_t EltSize = TD.getTypeSize(ElTy);
+      
+      // If EltSize exactly divides Offset, then we know that we can turn this
+      // into a getelementptr instruction.
+      int64_t EltOffset = Offset/EltSize;
+      if (EltOffset*EltSize == Offset) {
+        // If this is a subtract, we want to step backwards.
+        if (Opc == Instruction::Sub)
+          EltOffset = -EltOffset;
+        Constant *C = ConstantSInt::get(Type::LongTy, EltOffset);
+        Value *V = new GetElementPtrInst(LHS, C, "tmp", CurBB);
+        return CastToType(V, TREE_TYPE(exp));
+      }
     }
   }
   
@@ -3704,6 +3708,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   }
 
   if (tree DeclaredType = DECL_BIT_FIELD_TYPE(FieldDecl)) {
+    const Type *LLVMFieldTy = 
+      cast<PointerType>(FieldPtr->getType())->getElementType();
+    
     // If this is a bitfield, the declared type must be an integral type.
     FieldTy = ConvertType(DeclaredType);
     // If the field result is a bool, cast to a ubyte instead.  It is not
@@ -3713,11 +3720,20 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       FieldTy = Type::UByteTy;
     assert(FieldTy->isInteger() && "Invalid bitfield");
 
+    // If the LLVM notion of the field type is larger than the actual field type
+    // being accessed, use the LLVM type.  This avoids pointer casts and other
+    // bad things that are difficult to clean up later.  This occurs in cases
+    // like "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing
+    // y.  We want to access the field as a ulong, not as a uint with an offset.
+    if (LLVMFieldTy->isInteger() &&
+        LLVMFieldTy->getPrimitiveSize() > FieldTy->getPrimitiveSize())
+      FieldTy = LLVMFieldTy;
+    
     // We are now loading/storing through a casted pointer type, whose 
     // signedness depends on the signedness of the field.  Force the field to 
     // be unsigned.  This solves performance problems where you have, for 
     // example:  struct { int A:1; unsigned B:2; };  Consider a store to A then
-    // a store to be.  In this case, without this conversion, you'd have a 
+    // a store to B.  In this case, without this conversion, you'd have a 
     // store through an int*, followed by a load from a uint*.  Forcing them
     // both to uint* allows the store to be forwarded to the load.
     FieldTy = FieldTy->getUnsignedVersion();

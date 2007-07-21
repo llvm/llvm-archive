@@ -6997,11 +6997,11 @@ cw_asm_stmt (tree expr, tree args, int lineno)
   sexpr = build_string (strlen (cw_asm_buffer), cw_asm_buffer);
 
   clobbers = uses;
-  /* APPLE LOCAL LLVM begin */
+  /* APPLE LOCAL begin LLVM */
 #if TARGET_MACHO  /* Only do this on darwin targets */
   if (cw_memory_clobber (opcodename))
 #endif
-  /* APPLE LOCAL LLVM end*/
+  /* APPLE LOCAL end LLVM*/
     {
       /* To not clobber all of memory, we would need to know what
 	 memory locations were accessed; for now, punt.  */

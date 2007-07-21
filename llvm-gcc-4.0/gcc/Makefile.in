@@ -1037,6 +1037,7 @@ LLVMTARGETCOMPONENT := \
     arm*-*-*) echo arm;; \
     ia64-*-*) echo ia64;; \
     i[34567]86-*-*) echo x86;; \
+    x86_64-*-*) echo x86;; \
     powerpc*-*-*) echo powerpc;; \
     sparc-*-*) echo sparc;; \
     sparcv9-*-*) echo sparc;; \

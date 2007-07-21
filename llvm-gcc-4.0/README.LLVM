@@ -1,11 +1,22 @@
-Building llvm-gcc4 from source:
+//===----------------------------------------------------------------------===//
+//                      Building llvm-gcc4 from Source
+//===----------------------------------------------------------------------===//
 
-This is only well tested on Darwin/PowerPC and Darwin/X86 at the moment, but 
-should work on other platforms as well.  Patches to make it more general are
-appreciated, as are bug reports!
+These instructions describe how to build llvm-gcc4.
 
-Check out LLVM from CVS, then build it in optimized mode (a Release build,
-as opposed to a Debug one)):
+Note that this should work on all the supported LLVM targets.  If you run into
+problems, please ask for help or file a bug.
+
+Please follow these instructions carefully.  In particular, the target-specific
+configure instructions should be followed to ensure correct builds.
+
+
+//===----------------------------------------------------------------------===//
+                           First Step: Build LLVM
+//===----------------------------------------------------------------------===//
+
+First, check out LLVM from CVS, then build it in optimized mode (a Release
+build, as opposed to a Debug one)):
 
   make ENABLE_OPTIMIZED=1
 
@@ -14,70 +25,101 @@ If you use a Debug instead of a Release build of LLVM, make sure you add
 
 Below we assume the LLVM OBJDIR is $LLVMOBJDIR.  
 
-Target-specific configure options:
 
-  * On Darwin/PPC or Darwin/X86, you can enable Objective C:
-      EXTRALANGS=,objc,obj-c++
-
-  * On Darwin/PPC (but more likely, Mac OS X), if you get assembler errors
-    such as "complex expression, absolute segment assumed", you need to
-    update your assembler and specify the new assembler to configure.
-
-    - DarwinPorts: Install odcctools to get odas and odld, run
-      configure as follows:
-
-      env AS=/opt/local/bin/odas LD=/opt/local/bin/odld \
-	../configure --prefix=<your prefix> \
-	    --program-prefix=llvm- \
-	    --enable-llvm=$LLVMOBJDIR \
-	    --enable-languages=c,c++ \
-	    --with-as=/opt/local/bin/odas \
-	    --with-ld=/opt/local/bin/odld
-
-    - Fink and others: YMMV
-
-  * On Darwin/X86 (X86-32 + X86-64), you should set:
-      TARGETOPTIONS=--with-arch=nocona --with-tune=generic 
-      --with-gxx-include-dir=/usr/include/c++/4.0.0
-    to match Apple's GCC.
-
-  * On Darwin/X86 (IA32 only), you should set:
-      TARGETOPTIONS=--with-arch=pentium-m --with-tune=prescott
-      --with-gxx-include-dir=/usr/include/c++/4.0.0
-      --disable-multilib
-    to match Apple's GCC.
-
-  * On Linux, until http://llvm.org/PR821 is fixed, you should 
-    configure with --disable-threads.  This fixes problems linking
-    libgcc.so.1 with undefined references to pthread_*.
-
-  * On Linux, if llvm-gcc doesn't build right, try building LLVM with
-    OPTIMIZE_OPTION=-O2.  This may be host compiler version specific.
-
-  * On non-darwin X86-64/AMD-64/EM64-T, configure with --disable-shared.
-    The LLVM X86-64 backend doesn't support PIC codegen on non-darwin 
-    systems yet.
-
-Build Options:
-
-  * If you want LLVM to include an identifying marker in the --version
-    output, build llvm-gcc with LLVM_VERSION_INFO=XXX.  For example,
-    to build the LLVM 1.8 Release front-end, use
-    'make LLVM_VERSION_INFO=1.8'.  This will cause the front-end to
-    print: gcc (GCC) 4.0.1 LLVM (Apple Computer, Inc. build 1.8)
-    as the version number.
-
-Next, make an object directory and install directory as siblings to the 
-llvm-gcc source directory, and build and install llvm-gcc:
+//===----------------------------------------------------------------------===//
+                           Unpack Front-end Source
+//===----------------------------------------------------------------------===//
 
 $ mkdir llvm-gcc
 $ cd llvm-gcc
 $ tar zxvf llvm-gcc4-x.y.source.tar.gz
+
+
+//===----------------------------------------------------------------------===//
+                     Target-Specific configure Instructions
+//===----------------------------------------------------------------------===//
+
+//===-----------------------
+Linux-specific Instructions:
+
+Until http://llvm.org/PR821 is fixed, you should configure with
+--disable-threads.  This fixes problems linking libgcc.so.1 with
+undefined references to pthread_*.
+
+If llvm-gcc doesn't build right, try building LLVM with OPTIMIZE_OPTION=-O2.
+This may be host compiler version specific.
+
+
+//===-----------------------
+X86-64/AMD-64/EM64-T for any OS other than Darwin/Mac OS X:
+
+When targeting non-darwin X86-64/AMD-64/EM64-T, configure with
+--disable-shared.  The LLVM X86-64 backend doesn't support PIC codegen on
+non-darwin systems yet.
+
+
+//===-----------------------
+Darwin/Mac OS X Instructions:
+
+First step: Upgrade your Xcode installation: you need at least Xcode 2.4.
+
+Next, decide if you want Objective-C support.  If so:
+    EXTRALANGS=,objc,obj-c++
+
+If building for Darwin/PPC:
+    TRIPLE=powerpc-apple-darwin8
+  
+If building for Darwin/X86 (32- and 64-bit support):
+    TARGETOPTIONS=--with-arch=nocona --with-tune=generic
+    TRIPLE=i686-apple-darwin8
+    
+If building for Darwin/X86 (32-bit support only):
+    TARGETOPTIONS=--with-arch=pentium-m --with-tune=prescott --disable-multilib
+    TRIPLE=i686-apple-darwin8
+
+Building for Darwin/Mac OS X is significantly different than building for other
+targets.  Darwin considers libstdc++ to be part of the operating system, not as
+part of the compiler.  As such, you should *remove* the libstdc++-v3 directory
+from the llvm-gcc4 source directory before configuring it:
+
+  rm -rf llvm-gcc4-x.y.source/libstdc++-v3
+
+In addition, you *must* specify the following options to configure:
+
+  --with-gxx-include-dir=/usr/include/c++/4.0.0
+  --build=$TRIPLE --host=$TRIPLE --target=$TRIPLE 
+
+With these options, llvm-gcc will build the same way as Apple's system GCC.
+
+
+//===----------------------------------------------------------------------===//
+                                Build Options
+//===----------------------------------------------------------------------===//
+
+Version Identifier:
+
+  If you want LLVM to include an identifying marker in the --version output,
+  build llvm-gcc with LLVM_VERSION_INFO=XXX.  For example, to build the LLVM
+  1.9 Release front-end, use 'make LLVM_VERSION_INFO=1.9'.  This will cause the
+  front-end to print: "gcc (GCC) 4.0.1 LLVM (Apple Computer, Inc. build 1.9)"
+  as the version number.
+  
+  BUILDOPTIONS=LLVM_VERSION_INFO=whatever
+  
+
+//===----------------------------------------------------------------------===//
+                        Configure, Build, Install, Test
+//===----------------------------------------------------------------------===//
+
+Next, make an object directory and install directory as siblings to the 
+llvm-gcc source directory, and build and install llvm-gcc:
+
 $ mkdir obj
 $ mkdir install
 $ cd obj
-$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
-$ make  [[BUILDOPTIONS, see above]]
+$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install \
+    --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
+$ make $BUILDOPTIONS
 $ make install
 
 Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc 

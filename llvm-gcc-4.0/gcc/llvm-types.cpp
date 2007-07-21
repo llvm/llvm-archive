@@ -1013,7 +1013,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     PAWI.index = Idx++; PAWI.attrs = ParamAttr::StructRet;
     Attrs.push_back(PAWI);
   }
-  
+
+  if (static_chain)
+    // Skip over the static chain.
+    Idx++;
+
   for (tree Args = TYPE_ARG_TYPES(type);
        Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
     tree Ty = TREE_VALUE(Args);

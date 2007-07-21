@@ -55,11 +55,16 @@ ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
 endif
 
+ifndef RC_ProjectSourceSubversion
+RC_ProjectSourceSubversion = 00
+endif
+
 install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
-            $(RC_ProjectSourceVersion) $(LLVM_ASSERTIONS)
+	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) \
+	    $(LLVM_ASSERTIONS)
 # APPLE LOCAL end LLVM
 
 # installhdrs does nothing, because the headers aren't useful until

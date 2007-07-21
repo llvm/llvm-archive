@@ -175,16 +175,10 @@ static bool float_extend_from_mem[NUM_MACHINE_MODES][NUM_MACHINE_MODES];
 
 /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
+/* LLVM always emits moves with memcpy, which allows us to make smart decisions
+   later.  This affects CONSTRUCTOR lowering in the gimplifier.  */
 #undef MOVE_BY_PIECES_P
-#undef CLEAR_BY_PIECES_P
-#undef STORE_BY_PIECES_P
-
-/* Disable functions like move_by_pieces_ninsns which want to look at
- * optabs, which we do not initialize.
- */
-#define STORE_BY_PIECES_P(SIZE, ALIGN) (((SIZE)/(ALIGN)) > (MOVE_RATIO))
-#define CLEAR_BY_PIECES_P(SIZE, ALIGN) (((SIZE)/(ALIGN)) > (CLEAR_RATIO))
-#define MOVE_BY_PIECES_P(SIZE, ALIGN)  (((SIZE)/(ALIGN)) > (MOVE_RATIO))
+#define MOVE_BY_PIECES_P(SIZE, ALIGN) (0*(SIZE)*(ALIGN))
 #endif
 /* APPLE LOCAL end LLVM */
 

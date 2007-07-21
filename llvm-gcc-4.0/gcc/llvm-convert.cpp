@@ -2762,9 +2762,23 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
     }
 
     // Non-bitfield aggregate value.
-    Emit(TREE_OPERAND(exp, 1), LV.Ptr);
-    if (DestLoc)
+    if (DestLoc) {
+      Emit(TREE_OPERAND(exp, 1), LV.Ptr);
       EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), isVolatile, false);
+    } else if (!isVolatile) {
+      Emit(TREE_OPERAND(exp, 1), LV.Ptr);
+    } else {
+      // Need to do a volatile store into TREE_OPERAND(exp, 1).  To do this, we
+      // emit it into a temporary memory location, them do a volatile copy into
+      // the real destination.  This is probably suboptimal in some cases, but
+      // it gets the volatile memory access right.  It would be better if the
+      // destloc pointer of 'Emit' had a flag that indicated it should be
+      // volatile.
+      Value *Tmp = CreateTemporary(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
+      Emit(TREE_OPERAND(exp, 1), Tmp);
+      EmitAggregateCopy(LV.Ptr, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)),
+                        isVolatile, false);
+    }
     return 0;
   }
 
@@ -2973,6 +2987,11 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
 
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
+  if (isa<PointerType>(Op->getType())) {
+    assert (TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE &&
+            "Expected integer type here");
+    Op = CastToType(Instruction::PtrToInt, Op, TREE_TYPE(exp));
+  }
   return BinaryOperator::createNot(Op, Op->getName()+"not", CurBB);
 }
 
@@ -5791,7 +5810,7 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   // Create a new string global.
   GlobalVariable *GV = new GlobalVariable(Init->getType(), StringIsConstant,
                                           GlobalVariable::InternalLinkage,
-                                          Init, "str", TheModule);
+                                          Init, ".str", TheModule);
   if (SlotP) *SlotP = GV;
   return GV;
 }

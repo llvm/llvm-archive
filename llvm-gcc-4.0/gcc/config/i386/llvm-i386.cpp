@@ -591,22 +591,22 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int32Ty, false, "tmp",
                                            CurBB);
 
-    Result = BuildVector(Ops[1], Ops[0], NULL);
+    Result = BuildVector(Ops[0], Ops[1], NULL);
     return true;
   case IX86_BUILTIN_VEC_INIT_V4HI:
     for (unsigned i = 0; i < 4; ++i)
       Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int16Ty, false, "tmp",
                                            CurBB);
 
-    Result = BuildVector(Ops[3], Ops[2], Ops[1], Ops[0], NULL);
+    Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3], NULL);
     return true;
   case IX86_BUILTIN_VEC_INIT_V8QI: {
     for (unsigned i = 0; i < 8; ++i)
       Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int8Ty, false, "tmp",
                                            CurBB);
 
-    Result = BuildVector(Ops[7], Ops[6], Ops[5], Ops[4],
-                         Ops[3], Ops[2], Ops[1], Ops[0], NULL);
+    Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3],
+                         Ops[4], Ops[5], Ops[6], Ops[7], NULL);
     return true;
   }
   case IX86_BUILTIN_VEC_EXT_V2SI:

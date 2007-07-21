@@ -390,8 +390,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       // If we are converting a struct, and if we haven't converted the pointee
       // type, add this pointer to PointersToReresolve and return an opaque*.
       if (ConvertingStruct) {
-        // If the pointee type has not already been converted to LLVM, create a new
-        // opaque type and remember it in the database.
+        // If the pointee type has not already been converted to LLVM, create 
+        // a new opaque type and remember it in the database.
         Ty = GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)));
         if (Ty == 0) {
           PointersToReresolve.push_back(type);
@@ -399,15 +399,15 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         }
 
         // A type has already been computed.  However, this may be some sort of 
-        // recursive struct.  We don't want to call ConvertType on it, because this
-        // will try to resolve it, and not adding the type to the PointerToReresolve
-        // collection is just an optimization.  Instead, we'll use the type returned
-        // by GET_TYPE_LLVM directly, even if this may be resolved further in the
-        // future.
+        // recursive struct.  We don't want to call ConvertType on it, because 
+        // this will try to resolve it, and not adding the type to the 
+        // PointerToReresolve collection is just an optimization.  Instead, 
+        // we'll use the type returned by GET_TYPE_LLVM directly, even if this 
+        // may be resolved further in the future.
       } else {
-        // If we're not in a struct, just call ConvertType.  If it has already been
-        // converted, this will return the precomputed value, otherwise this will
-        // compute and return the new type.
+        // If we're not in a struct, just call ConvertType.  If it has already 
+        // been converted, this will return the precomputed value, otherwise 
+        // this will compute and return the new type.
         Ty = ConvertType(TREE_TYPE(type));
       }
     
@@ -495,8 +495,9 @@ namespace {
     }
     
     /// HandleAggregateShadowArgument - This callback is invoked if the function
-    /// returns an aggregate value by using a "shadow" first parameter.  If RetPtr
-    /// is set to true, the pointer argument itself is returned from the function.
+    /// returns an aggregate value by using a "shadow" first parameter.  If 
+    /// RetPtr is set to true, the pointer argument itself is returned from 
+    /// the function.
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
       // If this function returns a structure by value, it either returns void
@@ -510,7 +511,7 @@ namespace {
       CallingConv = CallingConv::CSRet;
     }
     
-    void HandleScalarArgument(const llvm::Type *LLVMTy) {
+    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       ArgTypes.push_back(LLVMTy);
     }
   };

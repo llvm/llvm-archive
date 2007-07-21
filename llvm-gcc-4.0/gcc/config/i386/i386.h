@@ -4044,6 +4044,27 @@ enum ix86_builtins
 #define LLVM_OVERRIDE_TARGET_ARCH() \
   (TARGET_64BIT ? "x86_64" : "")
 
+/* LLVM_TARGET_INTRINSIC_CAST_RESULT - This macro just provides a frequently
+ * used sequence for use inside LLVM_TARGET_INTRINSIC_LOWER. Note that this
+ * macro assumes it is being invoked from inside LLVM_TARGET_INTRINSC_LOWER
+ * (see below) because it requires the "ResIsSigned" and "ExpIsSigned" macro 
+ * arguments in order to derive signedness for the cast.
+ */
+#define LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT, RESISSIGNED, DESTTY,        \
+                                          EXPISSIGNED)                        \
+  { Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESISSIGNED, DESTTY, EXPISSIGNED);                                    \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+  } 
+
+/* LLVM_INTRINSIC_OP_IS_SIGNED - This macro determines if a given operand
+ * to the intrinsic is signed or not. Note that this macro assumes it is being
+ * invoked from inside LLVM_TARGET_INTRINSIC_LOWER (see below) because it 
+ * requires the "ARGS" macro argument in order to determine signedness
+ */
+#define LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, OPNUM) \
+  !TYPE_UNSIGNED(TREE_TYPE(ARGS[OPNUM]))
+
 /* LLVM_TARGET_INTRINSIC_LOWER - For builtins that we want to expand to normal
  * LLVM code, emit the code now.  If we can handle the code, this macro should
  * emit the code, return true.  Note that this would be much better as a
@@ -4052,7 +4073,8 @@ enum ix86_builtins
  * use methods it defines.
  */
 #define LLVM_TARGET_INTRINSIC_LOWER(BUILTIN_CODE, DESTLOC, RESULT,            \
-                                    DESTTY, OPS, CURBB)                       \
+                                    DESTTY, OPS, ARGS, CURBB,                 \
+                                    RESISSIGNED, EXPISSIGNED)                 \
   switch (BUILTIN_CODE) {                                                     \
   default: break;                                                             \
   case IX86_BUILTIN_ADDPS:                                                    \
@@ -4088,9 +4110,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllw, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLDI128: {                                              \
@@ -4104,9 +4124,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(pslld, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSLLQI128: {                                              \
@@ -4121,9 +4139,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psllq, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLWI128: {                                              \
@@ -4138,9 +4154,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlw, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLDI128: {                                              \
@@ -4154,9 +4168,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrld, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRLQI128: {                                              \
@@ -4171,9 +4183,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrlq, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRAWI128: {                                              \
@@ -4188,9 +4198,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psraw, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_PSRADI128: {                                              \
@@ -4204,9 +4212,7 @@ enum ix86_builtins
     Value *Undef = UndefValue::get(Type::IntTy);                              \
     OPS[1] = BuildVector(OPS[1], Undef, Undef, Undef, NULL);                  \
     RESULT = new CallInst(psrad, OPS[0], OPS[1], "tmp", CurBB);               \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_DIVPS:                                                    \
@@ -4248,9 +4254,7 @@ enum ix86_builtins
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
         break;                                                                \
     }                                                                         \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_ANDPD:                                                    \
@@ -4275,9 +4279,7 @@ enum ix86_builtins
         RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);     \
         break;                                                                \
     }                                                                         \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
-        RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());           \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_SHUFPS:                                                   \
@@ -4365,9 +4367,7 @@ enum ix86_builtins
     OPS[0] = new BitCastInst(OPS[0], f64Ptr, "tmp", CurBB);                   \
     OPS[0] = new LoadInst(OPS[0], "tmp", false, CurBB);                       \
     RESULT = BuildVector(OPS[0], Zero, NULL);                                 \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LOADHPS: {                                                \
@@ -4375,13 +4375,11 @@ enum ix86_builtins
     OPS[1] = new BitCastInst(OPS[1], f64Ptr, "tmp", CurBB);                   \
     Value *Load = new LoadInst(OPS[1], "tmp", false, CurBB);                  \
     OPS[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);        \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(OPS[1],             \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 1), DESTTY, EXPISSIGNED);             \
     OPS[1] = CastInst::create(opcode, OPS[1], DESTTY, "tmp", CurBB);          \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 0, 1, 4, 5);                  \
-    opcode = CastInst::getCastOpcode(RESULT, RESULT->getType()->isSigned(),   \
-                                     DESTTY, DESTTY->isSigned());             \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LOADLPS: {                                                \
@@ -4389,13 +4387,11 @@ enum ix86_builtins
     OPS[1] = new BitCastInst(OPS[1], f64Ptr, "tmp", CurBB);                   \
     Value *Load = new LoadInst(OPS[1], "tmp", false, CurBB);                  \
     OPS[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);        \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(OPS[1],             \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 1), DESTTY, EXPISSIGNED);             \
     OPS[1] = CastInst::create(opcode, OPS[1], DESTTY, "tmp", CurBB);          \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 4, 5, 2, 3);                  \
-    opcode = CastInst::getCastOpcode(RESULT, RESULT->getType()->isSigned(),   \
-                                     DESTTY, DESTTY->isSigned());             \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_STOREHPS: {                                               \
@@ -4431,17 +4427,15 @@ enum ix86_builtins
     OPS[1] = CastInst::createIntegerCast(OPS[1], Type::UIntTy, false, "tmp",  \
                                          CurBB);                              \
     RESULT = new ExtractElementInst(OPS[0], OPS[1], "tmp", CurBB);            \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_VEC_SET_V8HI: {                                           \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        OPS[1], OPS[1]->getType()->isSigned(), Type::ShortTy, true);          \
+    Instruction::CastOps opcode = CastInst::getCastOpcode(OPS[1],             \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 1),  Type::ShortTy, true);            \
     OPS[1] = CastInst::create(opcode, OPS[1], Type::ShortTy, "tmp", CurBB);   \
-    opcode = CastInst::getCastOpcode(                                         \
-        OPS[2], OPS[2]->getType()->isSigned(), Type::UIntTy, false);          \
+    opcode = CastInst::getCastOpcode(OPS[2],                                  \
+      LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, 2), Type::UIntTy, false);             \
     OPS[2] = CastInst::create(opcode, OPS[2], Type::UIntTy,  "tmp", CurBB);   \
     RESULT = new InsertElementInst(OPS[0], OPS[1], OPS[2], "tmp", CurBB);     \
     return true;                                                              \
@@ -4519,9 +4513,7 @@ enum ix86_builtins
     }                                                                         \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpps, Ops, "tmp", CurBB);                          \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQSS:                                                  \
@@ -4573,9 +4565,7 @@ enum ix86_builtins
     Ops.push_back(new BitCastInst(OPS[1], v4f32, "tmp", CurBB));              \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpss, Ops, "tmp", CurBB);                          \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQPD:                                                  \
@@ -4651,9 +4641,7 @@ enum ix86_builtins
     }                                                                         \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpps, Ops, "tmp", CurBB);                          \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_CMPEQSD:                                                  \
@@ -4703,9 +4691,7 @@ enum ix86_builtins
     Ops.push_back(new BitCastInst(OPS[1], v2f64, "tmp", CurBB));              \
     Ops.push_back(Pred);                                                      \
     RESULT = new CallInst(cmpss, Ops, "tmp", CurBB);                          \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case IX86_BUILTIN_LDMXCSR: {                                                \

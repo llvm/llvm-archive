@@ -3655,7 +3655,7 @@ enum rs6000_builtins
       Cache = M->getOrInsertFunction(NAME, FT);                               \
     }                                                                         \
     Value *Offset = OPS[OPNUM], *Ptr = OPS[OPNUM+1];                          \
-    Ptr = CastToType(Ptr, VoidPtrTy);                                         \
+    Ptr = CastToType(Instruction::BitCast, Ptr, VoidPtrTy);                   \
     if (!isa<Constant>(Offset) || !cast<Constant>(Offset)->isNullValue())     \
       Ptr = new GetElementPtrInst(Ptr, Offset, "tmp", CURBB);                 \
     OPS.erase(OPS.begin()+OPNUM);                                             \
@@ -3685,6 +3685,27 @@ enum rs6000_builtins
            ((TY == Type::SByteTy) ? 'b' :               \
             ((TY == Type::FloatTy) ? 'f' : 'x'))))
                   
+/* LLVM_TARGET_INTRINSIC_CAST_RESULT - This macro just provides a frequently
+ * used sequence for use inside LLVM_TARGET_INTRINSIC_LOWER. Note that this
+ * macro assumes it is being invoked from inside LLVM_TARGET_INTRINSC_LOWER
+ * (see below) because it requires the "ResIsSigned" and "ExpIsSigned" macro 
+ * arguments in order to derive signedness for the cast.
+ */
+#define LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT, RESISSIGNED, DESTTY,        \
+                                          EXPISSIGNED)                        \
+  { Instruction::CastOps opcode = CastInst::getCastOpcode(RESULT,             \
+        RESISSIGNED, DESTTY, EXPISSIGNED);                                    \
+    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+  } 
+
+/* LLVM_INTRINSIC_OP_IS_SIGNED - This macro determines if a given operand
+ * to the intrinsic is signed or not. Note that this macro assumes it is being
+ * invoked from inside LLVM_TARGET_INTRINSIC_LOWER (see below) because it 
+ * requires the "ARGS" macro argument in order to determine signedness
+ */
+#define LLVM_INTRINSIC_OP_IS_SIGNED(ARGS, OPNUM) \
+  !TYPE_UNSIGNED(TREE_TYPE(ARGS[OPNUM]))
+
 /* LLVM_TARGET_INTRINSIC_LOWER - For builtins that we want to expand to normal
  * LLVM code, emit the code now.  If we can handle the code, this macro should
  * emit the code, return true.  Note that this would be much better as a
@@ -3693,7 +3714,8 @@ enum rs6000_builtins
  * use methods it defines.
  */
 #define LLVM_TARGET_INTRINSIC_LOWER(BUILTIN_CODE, DESTLOC, RESULT,            \
-                                    DESTTY, OPS, CURBB)                       \
+                                    DESTTY, OPS, ARGS, CURBB,                 \
+                                    RESISSIGNED, EXPISSIGNED)                 \
   switch (BUILTIN_CODE) {                                                     \
   default: break;                                                             \
   case ALTIVEC_BUILTIN_VADDFP:                                                \
@@ -3827,35 +3849,44 @@ enum rs6000_builtins
       /* Map all of these to a shuffle. */                                    \
       unsigned Amt = Elt->getZExtValue() & 15;                                \
       PackedType *v16i8 = PackedType::get(Type::SByteTy, 16);                 \
-      OPS[0] = CastToType(OPS[0], v16i8);                                     \
-      OPS[1] = CastToType(OPS[1], v16i8);                                     \
+      Value *Op0 = OPS[0];                                                    \
+      Instruction::CastOps opc = CastInst::getCastOpcode(Op0,                 \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,0), DESTTY, DESTTY->isSigned());     \
+      OPS[0] = CastToType(opc, Op0, v16i8);                                   \
+      Value *Op1 = OPS[1];                                                    \
+      opc = CastInst::getCastOpcode(Op1,                                      \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,1), DESTTY, DESTTY->isSigned());     \
+      OPS[1] = CastToType(opc, Op1, v16i8);                                   \
       RESULT = BuildVectorShuffle(OPS[0], OPS[1],                             \
                                   Amt, Amt+1, Amt+2, Amt+3,                   \
                                   Amt+4, Amt+5, Amt+6, Amt+7,                 \
                                   Amt+8, Amt+9, Amt+10, Amt+11,               \
                                   Amt+12, Amt+13, Amt+14, Amt+15);            \
-      RESULT = CastToType(RESULT, DESTTY);                                    \
       return true;                                                            \
     }                                                                         \
     return false;                                                             \
   case ALTIVEC_BUILTIN_VPKUHUM: {                                             \
-    Instruction::CastOps opc = CastInst::getCastOpcode(                       \
-        OPS[0], OPS[0]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    OPS[0] = CastInst::create(opc, OPS[0], DESTTY, OPS[0]->getName(), CurBB); \
-    opc = CastInst::getCastOpcode(                                            \
-        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    OPS[1] = CastInst::create(opc, OPS[1], DESTTY, OPS[0]->getName(), CurBB); \
+    Value *Op0 = OPS[0];                                                      \
+    Instruction::CastOps opc = CastInst::getCastOpcode(Op0,                   \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,0), DESTTY, EXPISSIGNED);            \
+    OPS[0] = CastInst::create(opc, Op0, DESTTY, Op0->getName(), CurBB);       \
+    Value *Op1 = OPS[1];                                                      \
+    opc = CastInst::getCastOpcode(Op1,                                        \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,1), DESTTY, EXPISSIGNED);            \
+    OPS[1] = CastInst::create(opc, Op1, DESTTY, Op1->getName(), CurBB);       \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15,    \
                                 17, 19, 21, 23, 25, 27, 29, 31);              \
     return true;                                                              \
   }                                                                           \
   case ALTIVEC_BUILTIN_VPKUWUM: {                                             \
-    Instruction::CastOps opc = CastInst::getCastOpcode(                       \
-        OPS[0], OPS[0]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    OPS[0] = CastInst::create(opc, OPS[0], DESTTY, OPS[0]->getName(), CurBB); \
-    opc = CastInst::getCastOpcode(                                            \
-        OPS[1], OPS[1]->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    OPS[1] = CastInst::create(opc, OPS[1], DESTTY, OPS[0]->getName(), CurBB); \
+    Value *Op0 = OPS[0];                                                      \
+    Instruction::CastOps opc = CastInst::getCastOpcode(Op0,                   \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,0), DESTTY, EXPISSIGNED);            \
+    OPS[0] = CastInst::create(opc, Op0, DESTTY, Op0->getName(), CurBB);       \
+    Value *Op1 = OPS[1];                                                      \
+    opc = CastInst::getCastOpcode(Op1,                                        \
+        LLVM_INTRINSIC_OP_IS_SIGNED(ARGS,1), DESTTY, EXPISSIGNED);            \
+    OPS[1] = CastInst::create(opc, Op1, DESTTY, Op1->getName(), CurBB);       \
     RESULT = BuildVectorShuffle(OPS[0], OPS[1], 1, 3, 5, 7, 9, 11, 13, 15);   \
     return true;                                                              \
   }                                                                           \
@@ -3888,9 +3919,7 @@ enum rs6000_builtins
     Constant *C = ConstantInt::get(Type::IntTy, 0x7FFFFFFF);                  \
     C = ConstantPacked::get(std::vector<Constant*>(4, C));                    \
     RESULT = BinaryOperator::createAnd(OPS[0], C, "tmp", CurBB);              \
-    Instruction::CastOps opcode = CastInst::getCastOpcode(                    \
-        RESULT, RESULT->getType()->isSigned(), DESTTY, DESTTY->isSigned());   \
-    RESULT = CastInst::create(opcode, RESULT, DESTTY, "tmp", CurBB);          \
+    LLVM_TARGET_INTRINSIC_CAST_RESULT(RESULT,RESISSIGNED,DESTTY,EXPISSIGNED); \
     return true;                                                              \
   }                                                                           \
   case ALTIVEC_BUILTIN_ABS_V4SI:                                              \

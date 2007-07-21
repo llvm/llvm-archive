@@ -64,7 +64,7 @@ struct DefaultABIClient {
   
   /// HandleScalarArgument - This is the primary callback that specifies an LLVM
   /// argument to pass.
-  void HandleScalarArgument(const llvm::Type *LLVMTy) {}
+  void HandleScalarArgument(const llvm::Type *LLVMTy, tree argTreeType) {}
   
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the
@@ -191,9 +191,9 @@ public:
     const Type *Ty = ConvertType(type);
 
     if (TREE_ADDRESSABLE(type)) {    // Constructible object, pass by-ref
-      C.HandleScalarArgument(PointerType::get(Ty));
+      C.HandleScalarArgument(PointerType::get(Ty), type);
     } else if (Ty->isFirstClassType()) {
-      C.HandleScalarArgument(Ty);
+      C.HandleScalarArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, Ty);
     } else if (TREE_CODE(type) == RECORD_TYPE) {
@@ -289,10 +289,10 @@ public:
 
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
-      C.HandleScalarArgument(Elts[i]);
+      C.HandleScalarArgument(Elts[i], 0);
       C.ExitField();
     }
-  } 
+  }
 };
 
 /// TheLLVMABI - This can be defined by targets if they want total control over

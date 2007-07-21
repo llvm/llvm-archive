@@ -294,18 +294,34 @@ public:
   
   /// CastToType - Cast the specified value to the specified type if it is
   /// not already that type.
-  Value *CastToType(Value *V, const Type *Ty);
-  Value *CastToType(Value *V, tree_node *type) {
-    return CastToType(V, ConvertType(type));
+  Value *CastToType(unsigned opcode, Value *V, const Type *Ty);
+  Value *CastToType(unsigned opcode, Value *V, tree_node *type) {
+    return CastToType(opcode, V, ConvertType(type));
   }
 
-  /// NOOPCastToType - Insert a cast from V to Ty if needed.  This checks that
-  /// the cast doesn't change the types in any value changing way.
-  Value *NOOPCastToType(Value *V, const Type *Ty) {
-    assert(isNoopCast(V, Ty) && "This is not a noop cast!");
-    return CastToType(V, Ty);
-  }
-  
+  /// CastToAnyType - Cast the specified value to the specified type regardless
+  /// of the types involved. This is an inferred cast.
+  Value *CastToAnyType (Value *V, bool VSigned, const Type* Ty, bool TySigned);
+
+  /// CastToUIntTYpe - Cast the specified value to the specified type assuming
+  /// that V's type and Ty are integral types. This arbitrates between BitCast,
+  /// Trunc and ZExt.
+  Value *CastToUIntType(Value *V, const Type* Ty);
+
+  /// CastToSIntTYpe - Cast the specified value to the specified type assuming
+  /// that V's type and Ty are integral types. This arbitrates between BitCast,
+  /// Trunc and SExt.
+  Value *CastToSIntType (Value *V, const Type* Ty);
+
+  /// CastToFPTYpe - Cast the specified value to the specified type assuming
+  /// that V's type and Ty are floating point types. This arbitrates between
+  /// BitCast, FPTrunc and FPExt.
+  Value *CastToFPType  (Value *V, const Type* Ty);
+
+  /// NOOPCastToType - Insert a BitCast from V to Ty if needed. This is just a
+  /// convenience function for CastToType(Instruction::BitCast, V, Ty);
+  Value *BitCastToType(Value *V, const Type *Ty);
+
   /// CreateTemporary - Create a new alloca instruction of the specified type,
   /// inserting it into the entry block and returning it.  The resulting
   /// instruction's type is a pointer to the specified type.
@@ -313,12 +329,6 @@ public:
   
 private: // Helper functions.
 
-  /// EmitAsScalarType - Call Emit to output an expression which generates a
-  /// scalar value, then convert it to the specified type if it is not already.
-  Value *EmitAsScalarType(tree_node *exp, const Type *Ty) {
-    return CastToType(Emit(exp, 0), Ty);
-  }
-  
   /// EmitBlock - Add the specified basic block to the end of the function.  If
   /// the previous block falls through into it, add an explicit branch.  Also,
   /// manage fixups for EH info.

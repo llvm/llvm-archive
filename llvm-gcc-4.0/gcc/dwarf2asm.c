@@ -135,7 +135,10 @@ dw2_asm_output_delta (int size, const char *lab1, const char *lab2,
    special relocations for this that we must use.  */
 
 void
-dw2_asm_output_offset (int size, const char *label, const char * base,
+/* APPLE LOCAL begin LLVM */
+dw2_asm_output_offset (int size, const char *label,
+                       const char * base ATTRIBUTE_UNUSED,
+/* APPLE LOCAL end LLVM */
 		       const char *comment, ...)
 /* APPLE LOCAL end mainline 2006-03-16 dwarf 4383509 */
 {

@@ -491,7 +491,10 @@ enum arm_abi_type
   ARM_ABI_APCS,
   ARM_ABI_ATPCS,
   ARM_ABI_AAPCS,
-  ARM_ABI_IWMMXT
+  /* APPLE LOCAL begin LLVM */
+  ARM_ABI_IWMMXT,
+  ARM_ABI_AAPCS_LINUX
+  /* APPLE LOCAL end LLVM */
 };
 
 extern enum arm_abi_type arm_abi;
@@ -714,6 +717,12 @@ extern const char * structure_size_string;
 #ifndef SIZE_TYPE
 #define SIZE_TYPE (TARGET_AAPCS_BASED ? "unsigned int" : "long unsigned int")
 #endif
+
+/* APPLE LOCAL begin LLVM */
+#ifndef PTRDIFF_TYPE
+#define PTRDIFF_TYPE (TARGET_AAPCS_BASED ? "int" : "long int")
+#endif
+/* APPLE LOCAL end LLVM */
 
 /* AAPCS requires that structure alignment is affected by bitfields.  */
 #ifndef PCC_BITFIELD_TYPE_MATTERS

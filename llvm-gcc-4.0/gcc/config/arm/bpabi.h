@@ -27,7 +27,16 @@
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
 /* Section 4.1 of the AAPCS requires the use of VFP format.  */
+/* APPLE LOCAL begin LLVM */
+#undef FPUTYPE_DEFAULT
+/* APPLE LOCAL end LLVM */
 #define FPUTYPE_DEFAULT FPUTYPE_VFP
+
+/* APPLE LOCAL begin LLVM */
+/* EABI targets should enable interworking by default.  */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT ARM_FLAG_INTERWORK
+/* APPLE LOCAL end LLVM */
 
 /* The ARM BPABI functions return a boolean; they use no special
    calling convention.  */
@@ -98,5 +107,8 @@
     }							\
   while (false)
 
+/* APPLE LOCAL begin LLVM */
+#undef TARGET_OS_CPP_BUILTINS
+/* APPLE LOCAL end LLVM */
 #define TARGET_OS_CPP_BUILTINS() \
   TARGET_BPABI_CPP_BUILTINS()

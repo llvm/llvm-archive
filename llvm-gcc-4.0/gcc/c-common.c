@@ -6478,7 +6478,9 @@ struct iasm_op_constraint
 /* Default value of the constraint table.  */
 /* ??? This should be in defaults.h or a CW asm specific header.  */
 #ifndef TARGET_IASM_OP_CONSTRAINT
-#define TARGET_IASM_OP_CONSTRAINT {}
+/* APPLE LOCAL begin LLVM */
+#define TARGET_IASM_OP_CONSTRAINT
+/* APPLE LOCAL end LLVM */
 #endif
 
 /* Comparison function for bsearch to find an opcode/argument number
@@ -6558,6 +6560,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   /* This table must be sorted.  */
   const struct iasm_op_constraint db[] = {
     TARGET_IASM_OP_CONSTRAINT
+    /* APPLE LOCAL begin LLVM */
+    { "", 0, "" }
+    /* APPLE LOCAL end LLVM */
   };
   struct iasm_op_constraint key;
   struct iasm_op_constraint *r;
@@ -6569,7 +6574,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
     {
       size_t i;
       once = 1;
-      for (i=0; i < sizeof (db) / sizeof(db[0]) - 1; ++i)
+      /* APPLE LOCAL begin LLVM */
+      for (i=0; i < sizeof (db) / sizeof(db[0]) - 2; ++i)
+      /* APPLE LOCAL end LLVM */
 	gcc_assert (iasm_op_comp (&db[i+1], &db[i]) >= 0);
     }
 #endif
@@ -6579,7 +6586,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   
   TARGET_IASM_REORDER_ARG(opcode, key.argnum, num_args, argnum);
 
-  r = bsearch (&key, db, sizeof (db) / sizeof (db[0]), sizeof (db[0]), iasm_op_comp);
+  /* APPLE LOCAL begin LLVM */
+  r = bsearch (&key, db, sizeof (db) / sizeof (db[0]) - 1, sizeof (db[0]), iasm_op_comp);
+  /* APPLE LOCAL end LLVM */
 
   IASM_SYNTH_CONSTRAINTS(r, argnum, num_args, db);
 
@@ -6635,9 +6644,13 @@ iasm_process_arg (const char *opcodename, int op_num,
 		  tree *outputsp, tree *inputsp, tree *uses, unsigned num_args,
 		  iasm_md_extra_info *e)
 {
-  const char *s;
+  /* APPLE LOCAL begin LLVM */
+  const char *s = NULL;
+  /* APPLE LOCAL end LLVM */
   bool was_output = true;
-  tree str, one;
+  /* APPLE LOCAL begin LLVM */
+  tree str = NULL, one;
+  /* APPLE LOCAL end LLVM */
   tree var = e->dat[op_num].var;
   unsigned argnum = e->dat[op_num].argnum;
   /* must_be_reg is true, iff we know the operand must be a register.  */

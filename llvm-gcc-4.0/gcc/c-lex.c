@@ -826,7 +826,7 @@ static cpp_num
 my_cpp_num_sign_extend (cpp_num num, size_t precision)
 {
   if (num.high)
-    printf("%lu\n", num.high);
+    printf("%lu\n", (long unsigned int) num.high);
   if (!num.unsignedp)
     {
       if (precision > PART_PRECISION)

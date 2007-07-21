@@ -1245,6 +1245,29 @@ bool isPaddingElement(const Type *Ty, unsigned index) {
   return Info->PaddingElement[index];
 }
 
+/// OldTy and NewTy are union members. If they are representing
+/// structs then adjust their PaddingElement bits. Padding
+/// field in one struct may not be a padding field in another
+/// struct.
+void adjustPaddingElement(const Type *OldTy, const Type *NewTy) {
+
+  StructTypeConversionInfo *OldInfo = StructTypeInfoMap[OldTy];
+  StructTypeConversionInfo *NewInfo = StructTypeInfoMap[NewTy];
+
+  if (!OldInfo || !NewInfo)
+    return;
+
+  /// FIXME : Find overlapping padding fields and preserve their
+  /// isPaddingElement bit. For now, clear all isPaddingElement bits.
+  for (unsigned i = 0, size =  NewInfo->PaddingElement.size(); i != size; ++i)
+    NewInfo->PaddingElement[i] = false;
+
+  for (unsigned i = 0, size =  OldInfo->PaddingElement.size(); i != size; ++i)
+    OldInfo->PaddingElement[i] = false;
+
+}
+
+
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
 /// structure.
 static unsigned getFieldOffsetInBits(tree Field) {
@@ -1606,6 +1629,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     unsigned Size     = TD.getTypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
+    adjustPaddingElement(UnionTy, TheTy);
     if (UnionTy == 0 || Align > MaxAlign 
         || (MaxAlign == Align && Size > MaxSize)) {
       UnionTy = TheTy;

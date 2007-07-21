@@ -1752,18 +1752,4 @@ int flag_weak = 0;
 /* APPLE LOCAL constant cfstrings */
 struct cpp_reader* parse_in;
 
-/* APPLE LOCAL begin AltiVec */
-tree
-build_stmt (enum tree_code code ATTRIBUTE_UNUSED, ...)
-{
-  gcc_assert(0);
-}
-
-void
-store_init_value (tree decl ATTRIBUTE_UNUSED, tree init ATTRIBUTE_UNUSED)
-{
-  gcc_assert(0);
-}
-/* APPLE LOCAL end AltiVec */
-
 #include "gt-fortran-trans-types.h"

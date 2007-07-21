@@ -103,12 +103,16 @@ gfortran-cross$(exeext): gfortran$(exeext)
 	-rm -f gfortran-cross$(exeext)
 	cp gfortran$(exeext) gfortran-cross$(exeext)
 
+# APPLE LOCAL begin llvm
+# Language-independent object files.
+F95_BACKEND = $(BACKEND) attribs.o stub-objc.o stub-c.o
+
 # The compiler itself is called f951.
 f951$(exeext): $(F95_OBJS) \
-		$(BACKEND) $(LIBDEPS)
-	# APPLE LOCAL LLVM
+		$(F95_BACKEND) $(LIBDEPS)
 	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
-		$(F95_OBJS) $(BACKEND) $(F95_LIBS)
+		$(F95_OBJS) $(F95_BACKEND) $(F95_LIBS)
+# APPLE LOCAL end llvm
 
 gt-fortran-f95-lang.h gtype-fortran.h	      : s-gtype; @true
 gt-fortran-trans-decl.h gt-fortran-trans.h    : s-gtype; @true

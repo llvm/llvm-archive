@@ -28,11 +28,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_INTERNAL_H
 #define LLVM_INTERNAL_H
 
-#include <iosfwd>
 #include <vector>
 #include <cassert>
 #include <map>
 #include <string>
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/DataTypes.h"
 
 extern "C" {
@@ -76,7 +76,7 @@ const TargetData &getTargetData();
 
 /// AsmOutFile - A C++ ostream wrapper around asm_out_file.
 ///
-extern std::ostream *AsmOutFile;
+extern llvm::llvm_ostream *AsmOutFile;
 
 /// StaticCtors/StaticDtors - The static constructors and destructors that we
 /// need to emit.

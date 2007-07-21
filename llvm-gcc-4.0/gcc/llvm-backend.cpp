@@ -34,6 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -43,6 +44,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
+#include <ostream>
+#include <iostream>
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -65,7 +68,7 @@ Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TypeConverter *TheTypeConverter = 0;
-std::ostream *AsmOutFile = 0;
+llvm::llvm_ostream *AsmOutFile = 0;
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<GlobalValue*> AttributeUsedGlobals;
@@ -173,10 +176,13 @@ void llvm_lang_dependent_init(const char *Name) {
     TheModule->setModuleIdentifier(Name);
 }
 
+oFILEstream *AsmOutStream = 0;
+
 // llvm_asm_file_start - Start the .s file.
 void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
-  AsmOutFile = new oFILEstream(asm_out_file);
+  AsmOutStream = new oFILEstream(asm_out_file);
+  AsmOutFile = new llvm_ostream(*AsmOutStream);
   
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
@@ -307,7 +313,7 @@ void llvm_asm_file_start(void) {
     }
 
     // Normal mode, emit a .s file by running the code generator.
-    if (TheTarget->addPassesToEmitFile(*PM, *AsmOutFile, 
+    if (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream, 
                                        TargetMachine::AssemblyFile,
                                        /*FAST*/optimize == 0)) {
       std::cerr << "Error interfacing to target machine!";
@@ -389,6 +395,9 @@ void llvm_asm_file_end(void) {
     CodeGenPasses->doFinalization();
   }
   
+  AsmOutStream->flush();
+  delete AsmOutStream;
+  AsmOutStream = 0;
   delete AsmOutFile;
   AsmOutFile = 0;
   timevar_pop(TV_LLVM_PERFILE);

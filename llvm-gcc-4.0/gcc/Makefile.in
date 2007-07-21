@@ -1069,7 +1069,7 @@ endif
 
 # We use llvm-config to determine the libraries that we need to link in our
 # target, optimizations analyses and the bcwriter.
-LLVMCOMPONENTS := $(LLVMTARGETOBJ) scalaropts transformutils analysis bcwriter ipo transforms
+LLVMCOMPONENTS := $(LLVMTARGETOBJ) scalaropts transformutils analysis bcwriter ipo
 LLVMLIBFILES := $(shell $(LLVMBINPATH)/llvm-config --libfiles $(LLVMCOMPONENTS))
 LLVMLDFLAGS := $(shell $(LLVMBINPATH)/llvm-config --ldflags)
 LIBS += $(LLVMLDFLAGS)

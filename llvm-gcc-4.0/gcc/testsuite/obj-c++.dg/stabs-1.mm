@@ -7,7 +7,8 @@
 /* { dg-skip-if "No stabs" { mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* } { "*" } { "" } } */
 /* { dg-options "-gstabs" } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface Base: Object {
   int a;

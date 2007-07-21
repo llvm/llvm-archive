@@ -4446,6 +4446,10 @@ extern void cp_genericize			(tree);
 /* APPLE LOCAL begin CW asm blocks */
 extern tree iasm_cp_build_component_ref		(tree, tree);
 /* APPLE LOCAL end CW asm blocks */
+/* APPLE LOCAL begin radar 2848255 */
+extern bool objc2_valid_objc_catch_type (tree);
+extern tree objcp_build_eh_type_type (tree);
+/* APPLE LOCAL end radar 2848255 */
 
 /* -- end of C++ */
 

@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4294910 */
 /* Syntax check for the new foreach statement. 
    Use of declaration in loop-header without requiring c99 mode. */
+/* { dg-options "-mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 
 typedef struct objc_class *Class;

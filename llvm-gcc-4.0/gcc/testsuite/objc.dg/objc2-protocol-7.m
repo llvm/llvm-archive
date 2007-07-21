@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4695109 */
 /* Another test for definition of both protocol meta-data. */
-/* { dg-options "-fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 

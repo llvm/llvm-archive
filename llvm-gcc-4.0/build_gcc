@@ -387,6 +387,8 @@ for t in $TARGETS ; do
       cp -p $DIR/dst-$BUILD-$t$SL/$f .$DL/$f || exit 1
     fi
   done
+  ln -s ../../../../bin/as .$DL/as
+  ln -s ../../../../bin/ld .$DL/ld
 done
 
 # bin
@@ -452,9 +454,11 @@ for l in $SHARED_LIBS ; do
 done
 
 for t in $TARGETS ; do
-  ln -s ../../../libstdc++.6.dylib \
+  cp -p /usr/lib/libstdc++.6.dylib \
     .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \
     || exit 1
+# APPLE LOCAL LLVM
+#  strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
 done
 
 # include
@@ -494,7 +498,7 @@ done
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do
     $h-apple-darwin$DARWIN_VERS-gcc-$VERS				       \
-	$ORIG_SRC_DIR/gcc/config/darwin-driver.c                               \
+	$ORIG_SRC_DIR/driverdriver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-gcc-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
 	-I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
@@ -504,7 +508,7 @@ for h in $HOSTS ; do
 	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-gcc-$MAJ_VERS || exit 1
 
     $h-apple-darwin$DARWIN_VERS-gcc-$VERS				       \
-	$ORIG_SRC_DIR/gcc/config/darwin-driver.c                               \
+	$ORIG_SRC_DIR/driverdriver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-g++-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
 	-I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
@@ -525,9 +529,6 @@ ln -f $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/c++-$MAJ_V
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-g++-$MAJ_VERS || exit 1
 
-# Build sdk bits
-#$SRC_DIR/sdk "$DEST_DIR" "$MAJ_VERS" "$VERS" "$TARGETS" || exit 1
-
 ########################################
 # Create SYM_DIR with information required for debugging.
 
@@ -542,7 +543,7 @@ find $DEST_DIR -perm -0111 \! -name fixinc.sh \
 
 # Save .dSYM files and .a archives
 cd $DEST_DIR || exit 1
-find . \( -name \*.dSYM -or -name \*.a \) -print \
+find . \( -path \*.dSYM/\* -or -name \*.a \) -print \
   | cpio -pdml $SYM_DIR || exit 1
 # Save source files.
 mkdir $SYM_DIR/src || exit 1
@@ -553,7 +554,7 @@ find obj-* -name \*.\[chy\] -print | cpio -pdml $SYM_DIR/src || exit 1
 # Remove debugging information from DEST_DIR.
 
 find $DEST_DIR -perm -0111 \! -name \*.dylib \! -name fixinc.sh \
-    \! -name mkheaders -type f -print \
+    \! -name mkheaders \! -name libstdc++.dylib -type f -print \
   | xargs strip || exit 1
 # APPLE LOCAL begin LLVM - Strip with -Sx instead of -SX
 find $DEST_DIR \( -name \*.a -or -name \*.dylib \) \

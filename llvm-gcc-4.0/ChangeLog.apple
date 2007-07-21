@@ -1,3 +1,14 @@
+2007-03-21  Mike Stump  <mrs@apple.com>
+
+	Radar 5048438
+	* build_gcc: Add links for as and ld so the driver can find them
+	even when they aren't in the path.
+
+2007-03-15  Mike Stump  <mrs@apple.com>
+
+	Radar 5020628
+	* build_gcc: Stubify libstdc++.dylib instead of symlinking.
+
 2007-03-15  Geoffrey Keating  <geoffk@apple.com>
 
 	* build_gcc: Unset RC_DEBUG_OPTIONS when bootstrapping.

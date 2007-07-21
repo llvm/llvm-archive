@@ -1,11 +1,13 @@
 /* APPLE LOCAL file radar 4664707, 4712188 */
 /* Test sequence of assignment to setters. */
 /* Modified by adding -W. No warning must be issued. */
-/* { dg-options "-W -lobjc" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -W -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 extern "C" void abort (void);
 
 @interface Bar : Object

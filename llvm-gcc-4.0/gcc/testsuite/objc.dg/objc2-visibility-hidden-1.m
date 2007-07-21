@@ -2,7 +2,7 @@
 /* Test effect of "hidden" visibility setting of a class on exported symbols
    int objc2 abi. */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
 
 __attribute__((visibility("hidden"))) 
 @interface Foo {

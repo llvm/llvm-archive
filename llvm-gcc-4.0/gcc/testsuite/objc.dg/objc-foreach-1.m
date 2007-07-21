@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4294910 */
 /* Syntax check for the new foreach statement. */
-/* { dg-options "-std=c99 " } */
+/* { dg-options "-mmacosx-version-min=10.5 -std=c99 " } */
 /* { dg-do compile } */
 
 typedef struct objc_class *Class;

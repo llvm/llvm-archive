@@ -4,7 +4,8 @@
    Problem report and original fix by richard@brainstorm.co.uk.  */
 /* { dg-do run } */
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #include <objc/Protocol.h>
 
 @protocol NoInstanceMethods

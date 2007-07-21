@@ -1,8 +1,8 @@
 /* Test the -fconstant-string-class=Foo option under the NeXT
    runtime.  */
 /* Developed by Markus Hitter <mah@jump-ing.de>.  */
-
-/* { dg-options "-fnext-runtime -fconstant-string-class=Foo -lobjc" } */
+/* APPLE LOCAL radar 4621575 */
+/* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=Foo -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <stdio.h>
@@ -20,10 +20,12 @@
 @end
 
 /* APPLE LOCAL begin objc2 */
-#if OBJC_API_VERSION >= 2
-Class _FooClassReference;
-#else
-struct objc_class _FooClassReference;
+#if (!__OBJC2__)
+# if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+id _FooClassReference[20];
+# else
+ struct objc_class _FooClassReference;
+# endif
 #endif
 /* APPLE LOCAL end objc2 */
 
@@ -41,11 +43,15 @@ int main () {
     abort();
   printf("Strings are being uniqued properly\n");
 
+/* APPLE LOCAL begin objc2 */
+#if !__OBJC2__
   /* This memcpy has to be done before the first message is sent to a
      constant string object. Can't be moved to +initialize since _that_
      is already a message. */
 
   memcpy(&_FooClassReference, objc_getClass("Foo"), sizeof(_FooClassReference));
+#endif
+/* APPLE LOCAL end objc2 */
   if (strcmp ([string customString], "bla")) {
     abort ();
   }

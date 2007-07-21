@@ -385,7 +385,11 @@ enum dwarf_attribute
     /* PGI (STMicroelectronics) extensions.  */
     DW_AT_PGI_lbase    = 0x3a00,
     DW_AT_PGI_soffset  = 0x3a01,
-    DW_AT_PGI_lstride  = 0x3a02
+    /* APPLE LOCAL begin option verifier 4957887 */
+    DW_AT_PGI_lstride  = 0x3a02,
+    /* Apple extensions.  */
+    DW_AT_APPLE_flags = 0x3fe2
+    /* APPLE LOCAL end option verifier 4957887 */
   };
 
 #define DW_AT_lo_user	0x2000	/* Implementation-defined range start.  */

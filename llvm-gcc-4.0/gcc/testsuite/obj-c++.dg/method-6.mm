@@ -3,7 +3,8 @@
    @class (instance) should be treated like a 'Class') ('id').  */
 /* { dg-do compile } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @class NotKnown;
 

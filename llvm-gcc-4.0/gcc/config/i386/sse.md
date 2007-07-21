@@ -349,10 +349,11 @@
   [(set_attr "type" "sseadd")
    (set_attr "mode" "V4SF")])
 
+; APPLE LOCAL begin mainline
 (define_insn "sse_vmaddv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "=x")
 	(vec_merge:V4SF
-	  (plus:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "%0")
+	  (plus:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "0")
 		     (match_operand:V4SF 2 "nonimmediate_operand" "xm"))
 	  (match_dup 1)
 	  (const_int 1)))]
@@ -360,6 +361,7 @@
   "addss\t{%2, %0|%0, %2}"
   [(set_attr "type" "sseadd")
    (set_attr "mode" "SF")])
+; APPLE LOCAL end mainline
 
 (define_expand "subv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "")
@@ -405,10 +407,11 @@
   [(set_attr "type" "ssemul")
    (set_attr "mode" "V4SF")])
 
+; APPLE LOCAL begin mainline
 (define_insn "sse_vmmulv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "=x")
 	(vec_merge:V4SF
-	  (mult:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "%0")
+	  (mult:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "0")
 		     (match_operand:V4SF 2 "nonimmediate_operand" "xm"))
 	  (match_dup 1)
 	  (const_int 1)))]
@@ -416,6 +419,7 @@
   "mulss\t{%2, %0|%0, %2}"
   [(set_attr "type" "ssemul")
    (set_attr "mode" "SF")])
+; APPLE LOCAL end mainline
 
 (define_expand "divv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "")
@@ -540,18 +544,8 @@
   [(set_attr "type" "sse")
    (set_attr "mode" "V4SF")])
 
-(define_insn "*sse_vmsmaxv4sf3_finite"
-  [(set (match_operand:V4SF 0 "register_operand" "=x")
-	(vec_merge:V4SF
-	 (smax:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "%0")
-		    (match_operand:V4SF 2 "nonimmediate_operand" "xm"))
-	 (match_dup 1)
-	 (const_int 1)))]
-  "TARGET_SSE && flag_finite_math_only
-   && ix86_binary_operator_ok (SMAX, V4SFmode, operands)"
-  "maxss\t{%2, %0|%0, %2}"
-  [(set_attr "type" "sse")
-   (set_attr "mode" "SF")])
+; APPLE LOCAL mainline
+; sse_vmsmaxv4sf3_finite deleted
 
 (define_insn "sse_vmsmaxv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "=x")
@@ -595,18 +589,8 @@
   [(set_attr "type" "sse")
    (set_attr "mode" "V4SF")])
 
-(define_insn "*sse_vmsminv4sf3_finite"
-  [(set (match_operand:V4SF 0 "register_operand" "=x")
-	(vec_merge:V4SF
-	 (smin:V4SF (match_operand:V4SF 1 "nonimmediate_operand" "%0")
-		    (match_operand:V4SF 2 "nonimmediate_operand" "xm"))
-	 (match_dup 1)
-	 (const_int 1)))]
-  "TARGET_SSE && flag_finite_math_only
-   && ix86_binary_operator_ok (SMIN, V4SFmode, operands)"
-  "minss\t{%2, %0|%0, %2}"
-  [(set_attr "type" "sse")
-   (set_attr "mode" "SF")])
+; APPLE LOCAL mainline
+; sse_vmsminv4sf3_finite deleted
 
 (define_insn "sse_vmsminv4sf3"
   [(set (match_operand:V4SF 0 "register_operand" "=x")
@@ -1371,10 +1355,11 @@
   [(set_attr "type" "sseadd")
    (set_attr "mode" "V2DF")])
 
+; APPLE LOCAL begin mainline
 (define_insn "sse2_vmaddv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "=x")
 	(vec_merge:V2DF
-	  (plus:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "%0")
+	  (plus:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "0")
 		     (match_operand:V2DF 2 "nonimmediate_operand" "xm"))
 	  (match_dup 1)
 	  (const_int 1)))]
@@ -1382,6 +1367,7 @@
   "addsd\t{%2, %0|%0, %2}"
   [(set_attr "type" "sseadd")
    (set_attr "mode" "DF")])
+; APPLE LOCAL end mainline
 
 (define_expand "subv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "")
@@ -1427,10 +1413,11 @@
   [(set_attr "type" "ssemul")
    (set_attr "mode" "V2DF")])
 
+; APPLE LOCAL begin mainline
 (define_insn "sse2_vmmulv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "=x")
 	(vec_merge:V2DF
-	  (mult:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "%0")
+	  (mult:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "0")
 		     (match_operand:V2DF 2 "nonimmediate_operand" "xm"))
 	  (match_dup 1)
 	  (const_int 1)))]
@@ -1438,6 +1425,7 @@
   "mulsd\t{%2, %0|%0, %2}"
   [(set_attr "type" "ssemul")
    (set_attr "mode" "DF")])
+; APPLE LOCAL end mainline
 
 (define_expand "divv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "")
@@ -1520,18 +1508,8 @@
   [(set_attr "type" "sseadd")
    (set_attr "mode" "V2DF")])
 
-(define_insn "*sse2_vmsmaxv2df3_finite"
-  [(set (match_operand:V2DF 0 "register_operand" "=x")
-	(vec_merge:V2DF
-	  (smax:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "%0")
-		     (match_operand:V2DF 2 "nonimmediate_operand" "xm"))
-	  (match_dup 1)
-	  (const_int 1)))]
-  "TARGET_SSE2 && flag_finite_math_only
-   && ix86_binary_operator_ok (SMAX, V2DFmode, operands)"
-  "maxsd\t{%2, %0|%0, %2}"
-  [(set_attr "type" "sseadd")
-   (set_attr "mode" "DF")])
+; APPLE LOCAL mainline
+; sse2_vmsmaxv2df3_finite deleted
 
 (define_insn "sse2_vmsmaxv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "=x")
@@ -1575,18 +1553,8 @@
   [(set_attr "type" "sseadd")
    (set_attr "mode" "V2DF")])
 
-(define_insn "*sse2_vmsminv2df3_finite"
-  [(set (match_operand:V2DF 0 "register_operand" "=x")
-	(vec_merge:V2DF
-	  (smin:V2DF (match_operand:V2DF 1 "nonimmediate_operand" "%0")
-		     (match_operand:V2DF 2 "nonimmediate_operand" "xm"))
-	  (match_dup 1)
-	  (const_int 1)))]
-  "TARGET_SSE2 && flag_finite_math_only
-   && ix86_binary_operator_ok (SMIN, V2DFmode, operands)"
-  "minsd\t{%2, %0|%0, %2}"
-  [(set_attr "type" "sseadd")
-   (set_attr "mode" "DF")])
+; APPLE LOCAL mainline
+; sse2_vmsminv2df3_finite deleted
 
 (define_insn "sse2_vmsminv2df3"
   [(set (match_operand:V2DF 0 "register_operand" "=x")

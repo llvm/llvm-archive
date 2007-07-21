@@ -14,7 +14,7 @@
 }
 @end
 
-#if OBJC_API_VERSION >= 2
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
 extern Class _NSConstantStringClassReference;
 #else
 extern struct objc_class _NSConstantStringClassReference;

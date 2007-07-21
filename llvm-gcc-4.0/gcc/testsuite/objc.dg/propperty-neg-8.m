@@ -1,6 +1,8 @@
 /* APPLE LOCAL file radar 4558088 */
 /* Test that property declared in interface and implementation have
    identical types. */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <objc/Object.h>

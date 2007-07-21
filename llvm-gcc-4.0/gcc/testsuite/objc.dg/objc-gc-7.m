@@ -15,7 +15,13 @@
 static IMP globalIMP = 0;
 
 void foo(void) {
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
+   Class ObjectClass = objc_getClass ("Object");
+   IMP myIMP = method_getImplementation(class_getInstanceMethod (ObjectClass, @selector(new)));
+#else
    IMP myIMP = [Object methodFor:@selector(new)];
+#endif
    globalIMP = myIMP;
 }
 

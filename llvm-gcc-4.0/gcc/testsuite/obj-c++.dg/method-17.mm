@@ -5,7 +5,8 @@
    take place).  */
 /* { dg-do run } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 extern "C" void abort(void);
 #define CHECK_IF(expr) if(!(expr)) abort()
 

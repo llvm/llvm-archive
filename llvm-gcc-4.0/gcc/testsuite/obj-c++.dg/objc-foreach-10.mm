@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4631818 */
 /* Execution check for foreach. Make sure that whole tree is generated for function with
    this particular brand of foreach. */
-/* { dg-options "-framework Foundation" } */
+/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation" } */
 /* { dg-do run } */
 
 #include <Foundation/Foundation.h>

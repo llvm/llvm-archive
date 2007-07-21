@@ -12,11 +12,11 @@
 #else
 #ifndef _OBJC_OBJECT_H_
 #define _OBJC_OBJECT_H_
-#import <objc/runtime.h>
+#include <objc/runtime.h>
 
 @interface Object {
 @public
-     id isa;
+     Class isa;
 }
 +initialize;
 +alloc;

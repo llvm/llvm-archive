@@ -3,6 +3,8 @@
 // { dg-do run { target *-*-darwin* } }
 // APPLE LOCAL radar 4842158
 // { dg-options "-fobjc-call-cxx-cdtors -fnext-runtime -mmacosx-version-min=10.3" }
+/* APPLE LOCAL radar 4280641 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/objc-runtime.h>
 #include <stdlib.h>

@@ -1830,7 +1830,7 @@ void
 __eprintf (const char *string, const char *expression,
 	   unsigned int line, const char *filename)
 {
-  /* APPLE LOCAL begin sdk support */
+  /* APPLE LOCAL begin sdk support 4527353 */
 #ifdef __APPLE_CC__
   extern int my_fprintf(FILE * stream, const char * format, ...);
   extern int my_fprintf(FILE * stream, const char * format, ...) asm("_fprintf");
@@ -1839,7 +1839,7 @@ __eprintf (const char *string, const char *expression,
 #else
   fprintf (stderr, string, expression, line, filename);
 #endif
-  /* APPLE LOCAL end sdk support */
+  /* APPLE LOCAL end sdk support 4527353 */
   fflush (stderr);
   abort ();
 }

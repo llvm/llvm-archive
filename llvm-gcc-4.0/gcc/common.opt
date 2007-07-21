@@ -104,6 +104,11 @@ Warn when padding is required to align structure members
 Wshadow
 Common Var(warn_shadow)
 Warn when one local variable shadows another
+; APPLE LOCAL begin mainline
+Wstack-protector
+Common Var(warn_stack_protect)
+Warn when not issuing stack smashing protection for some reason
+; APPLE LOCAL end mainline
 
 Wstrict-aliasing
 Common
@@ -917,7 +922,15 @@ Common RejectNegative Joined
 fstack-limit-symbol=
 Common RejectNegative Joined
 -fstack-limit-symbol=<name>	Trap if the stack goes past symbol <name>
+; APPLE LOCAL begin mainline
+fstack-protector
+Common Report Var(flag_stack_protect, 1)
+Use propolice as a stack protection method
 
+fstack-protector-all
+Common Report RejectNegative Var(flag_stack_protect, 2) VarExists
+Use a stack protection method for every function
+; APPLE LOCAL end mainline
 ; APPLE LOCAL begin optimization pragmas 3124235/3420242
 fstrength-reduce
 Common Report Var(flag_strength_reduce) PerFunc

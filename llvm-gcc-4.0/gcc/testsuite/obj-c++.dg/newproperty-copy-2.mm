@@ -1,6 +1,6 @@
-/* APPLE LOCAL file radar 4805321 */
+/* APPLE LOCAL file radar 4805321 - 4947014 */
 /* Test that bycopy calls are generated. */
-/* { dg-options "-fobjc-new-property" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
 @protocol NSCopying;
 
@@ -22,5 +22,5 @@
 @implementation NSWindow (CAT)
 @synthesize title=IVAR;
 @end
-/* { dg-final { scan-assembler "object_getProperty_bycopy" } } */
-/* { dg-final { scan-assembler "object_setProperty_bycopy" } } */
+/* { dg-final { scan-assembler "objc_getProperty" } } */
+/* { dg-final { scan-assembler "objc_setProperty" } } */

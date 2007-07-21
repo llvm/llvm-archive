@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4547045 */
 /* Execution check for foreach. */
-/* { dg-options "-framework Foundation -fobjc-exceptions" } */
+/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation -fobjc-exceptions" } */
 /* { dg-do run } */
 #include <Foundation/Foundation.h>
 

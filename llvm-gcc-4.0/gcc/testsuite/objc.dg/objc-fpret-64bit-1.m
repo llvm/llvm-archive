@@ -1,6 +1,6 @@
 /* APPLE LOCAL begin radar 4781080 */
 /* { dg-do compile { target i?86-*-darwin* } } */
-/* { dg-options "-m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 #include <objc/Object.h>
 
 @interface Example : Object

@@ -1,8 +1,9 @@
 /* APPLE LOCAL file radar 4498373 */
 /* Test for a Dynamic Property */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-fobjc-abi-version=2" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 

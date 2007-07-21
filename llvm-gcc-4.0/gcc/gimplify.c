@@ -2629,7 +2629,10 @@ gimplify_init_ctor_eval (tree object, tree list, tree *pre_p, bool cleared)
 	cref = build (COMPONENT_REF, TREE_TYPE (purpose),
 		      unshare_expr (object), purpose, NULL_TREE);
 
-      if (TREE_CODE (value) == CONSTRUCTOR)
+      /* APPLE LOCAL begin mainline 5119788 */
+      if (TREE_CODE (value) == CONSTRUCTOR
+	  && TREE_CODE (TREE_TYPE (value)) != VECTOR_TYPE)
+      /* APPLE LOCAL end mainline 5119788 */
 	gimplify_init_ctor_eval (cref, CONSTRUCTOR_ELTS (value),
 				 pre_p, cleared);
       else

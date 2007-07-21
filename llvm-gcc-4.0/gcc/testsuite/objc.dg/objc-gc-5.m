@@ -3,7 +3,6 @@
 /* Provided by Blaine Garst  <blaine@apple.com>  */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc -Wassign-intercept" } */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #ifndef __OBJC_GC__
 #error Missing __OBJC_GC__ manifest constant

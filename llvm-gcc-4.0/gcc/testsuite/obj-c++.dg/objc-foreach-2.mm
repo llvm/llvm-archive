@@ -1,5 +1,6 @@
 /* APPLE LOCAL file radar 4507230 */
 /* Test for valid objc objects used in a for-each statement. */
+/* { dg-options "-mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 #include <Foundation/Foundation.h>
 

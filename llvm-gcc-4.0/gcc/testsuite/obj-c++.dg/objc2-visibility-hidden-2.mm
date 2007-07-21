@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4843145 */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-fobjc-abi-version=2 -fvisibility=hidden" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2 -fvisibility=hidden" } */
 
 @interface Unspecified {
 @private

@@ -2,7 +2,9 @@
 /* A run-time test for insertion of write barriers. */
 
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fnext-runtime -fobjc-gc -mmacosx-version-min=10.3" } */
+/* { dg-options "-fnext-runtime -fobjc-gc" } */
+/* { dg-options "-fnext-runtime -fobjc-gc -mmacosx-version-min=10.3" { target powerpc*-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/objc.h>
 #include <stdio.h>
@@ -12,6 +14,7 @@
 
 int IvarAssigns;
 
+static
 id objc_assign_ivar(id value, id dest, unsigned int offset) {
   id *slot = (id*) ((char *)dest + offset);
 

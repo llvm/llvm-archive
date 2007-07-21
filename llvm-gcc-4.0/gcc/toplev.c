@@ -1518,6 +1518,42 @@ print_switch_values (FILE *file, int pos, int max,
   fprintf (file, "%s", term);
 }
 
+/* APPLE LOCAL begin option verifier 4957887 */
+/* Return a string (allocated using xmalloc) listing all the arguments
+   originally passed to the compiler.  Arguments are separated by spaces,
+   and spaces or backslashes inside arguments are backslash-quoted.  */
+   
+char *
+get_arguments (void)
+{
+  size_t i;
+  size_t sz = 1;
+  char * result;
+  char * resultp;
+  
+  /* Make upper estimate of space required.  */
+  for (i = 0; save_argv[i] != NULL; i++)
+    sz += strlen (save_argv[i])*2 + 1;
+
+  /* Build up result.  */
+  result = xmalloc (sz);
+  resultp = result;
+  for (i = 0; save_argv[i] != NULL; i++)
+    {
+      const char * arg_p = save_argv[i];
+      while (*arg_p)
+	{
+	  if (*arg_p == '\\' || *arg_p == ' ')
+	    *resultp++ = '\\';
+	  *resultp++ = *arg_p++;
+	}
+      *resultp++ = ' ';
+    }
+  *resultp = 0;
+  return result;
+}
+/* APPLE LOCAL end option verifier 4957887 */
+
 /* Open assembly code output file.  Do this even if -fsyntax-only is
    on, because then the driver will have provided the name of a
    temporary file or bit bucket for us.  NAME is the file specified on
@@ -2144,6 +2180,18 @@ process_options (void)
   /* With -fcx-limited-range, we do cheap and quick complex arithmetic.  */
   if (flag_cx_limited_range)
     flag_complex_method = 0;
+  /* APPLE LOCAL begin mainline */
+
+  /* Targets must be able to place spill slots at lower addresses.  If the
+     target already uses a soft frame pointer, the transition is trivial.  */
+  if (!FRAME_GROWS_DOWNWARD && flag_stack_protect)
+    {
+      warning ("-fstack-protector not supported for this target");
+      flag_stack_protect = 0;
+    }
+  if (!flag_stack_protect)
+    warn_stack_protect = 0;
+  /* APPLE LOCAL end mainline */
 
   /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
   cl_pf_opts_cooked = cl_pf_opts;

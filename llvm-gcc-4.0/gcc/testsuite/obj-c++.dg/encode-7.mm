@@ -10,7 +10,8 @@
 
 /* Contributed by Alexander Malmberg <alexander@malmberg.org>  */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #include <stdlib.h>
 #include <stdio.h>
 #define CHECK_IF(expr) if(!(expr)) abort()
@@ -63,7 +64,8 @@ int main(int argc, char **argv)
 
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test2:with:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%di]%d^i%d", &offs1,
 	 &offs2, &offs3, &offs4, &offs5, &offs6);
 #else
@@ -75,7 +77,8 @@ int main(int argc, char **argv)
   
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test3:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%d[%d{Test=#f}]]%d",
 	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
 #else

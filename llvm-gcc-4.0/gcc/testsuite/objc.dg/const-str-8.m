@@ -1,7 +1,7 @@
 /* Test for assigning compile-time constant-string objects to static variables.  */
 /* Contributed by Ziemowit Laski <zlaski@apple.com>  */
-
-/* { dg-options "-fnext-runtime -fconstant-string-class=Foo -lobjc" } */
+/* APPLE LOCAL radar 4621575 */
+/* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=Foo -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 
@@ -16,7 +16,7 @@
 @end
 
 /* APPLE LOCAL begin objc2 */
-#if OBJC_API_VERSION >= 2
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
 Class _FooClassReference;
 #else
 struct objc_class _FooClassReference;

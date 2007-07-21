@@ -64,7 +64,8 @@ int main(int argc, char **argv)
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test2:with:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%di]%d^i%d", &offs1,
 	 &offs2, &offs3, &offs4, &offs5, &offs6);
 #else
@@ -78,7 +79,8 @@ int main(int argc, char **argv)
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test3:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%d[%d{Test=#f}]]%d",
 	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
 #else

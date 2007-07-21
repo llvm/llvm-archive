@@ -34,7 +34,8 @@ typedef struct _XXRect { XXPoint origin; XXSize size; struct _XXRect *next; } XX
 + (ProtoBool **)getBool:(ObjCBool **)b;
 @end
 
-Protocol *proto = @protocol(Proto);
+/* APPLE LOCAL radar 4894756 */
+/* code removed */
 struct objc_method_description *meth;
 unsigned totsize, offs0, offs1, offs2, offs3, offs4, offs5, offs6, offs7;
 
@@ -47,6 +48,8 @@ static void scan_initial(const char *pattern) {
 
 int main(void) {
   const char *string;
+  /* APPLE LOCAL radar 4894756 */
+  Protocol *proto = @protocol(Proto);
 
   meth = [proto descriptionForInstanceMethod: @selector(char:float:double:unsigned:short:long:)];
   if (sizeof (long) == 8)

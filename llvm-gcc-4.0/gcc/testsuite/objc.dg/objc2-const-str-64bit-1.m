@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4719165 */
 /* Test for new way of representing constant string structure */
-/* { dg-options "-fnext-runtime -m64 -fobjc-abi-version=2 -fno-constant-cfstrings" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fnext-runtime -m64 -fobjc-abi-version=2 -fno-constant-cfstrings" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface NSConstantString { id isa; const char *c; int l; } @end

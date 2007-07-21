@@ -10,6 +10,12 @@
 ### file and make sure the Radar is closed.
 ###
 ###------------------------------------------------------------------
+4998366: objc.dg/const-cfstring-6.m (test for excess errors)
+4998366: objc.dg/newproperty-retain-1.m (test for excess errors)
+4998366: objc.dg/newproperty-unimplementd-property-1.m (test for excess errors)
+4998366: objc.dg/property-11.m (test for excess errors)
+4998366: objc.dg/property-2.m (test for excess errors)
+4998366: objc.dg/property-3.m (test for excess errors)
 #
 # the following fail with -m64 only
 4385167: objc.dg/bitfield-3.m (test for excess errors)
@@ -20,45 +26,55 @@
 3988573: objc.dg/objc-gc-weak-1.m execution test
 3988573: objc.dg/objc-gc-weak-2.m execution test
 3988573: objc.dg/objc-gc-weak-3.m execution test
+4923914: objc.dg/category-1.m (test for excess errors)
+4923914: objc.dg/encode-2.m (test for excess errors)
+4923914: objc.dg/encode-4.m (test for excess errors)
+4923914: objc.dg/encode-5.m (test for excess errors)
+4923914: objc.dg/objc-gc-7.m (test for excess errors)
+4923914: objc.dg/type-size-2.m (test for excess errors)
+4943900: objc/execute/string1.m execution,  -O0 
+4943900: objc/execute/string1.m execution,  -O1 
+4943900: objc/execute/string1.m execution,  -O2 
+4943900: objc/execute/string1.m execution,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string1.m execution,  -O3 -g 
+4943900: objc/execute/string1.m execution,  -Os 
+4943900: objc/execute/string1.m execution,  -fast 
+4943900: objc/execute/string2.m execution,  -O0 
+4943900: objc/execute/string2.m execution,  -O1 
+4943900: objc/execute/string2.m execution,  -O2 
+4943900: objc/execute/string2.m execution,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string2.m execution,  -O3 -g 
+4943900: objc/execute/string2.m execution,  -Os 
+4943900: objc/execute/string2.m execution,  -fast 
+4943900: objc/execute/string3.m execution,  -O0 
+4943900: objc/execute/string3.m execution,  -O1 
+4943900: objc/execute/string3.m execution,  -O2 
+4943900: objc/execute/string3.m execution,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string3.m execution,  -O3 -g 
+4943900: objc/execute/string3.m execution,  -Os 
+4943900: objc/execute/string3.m execution,  -fast 
+4943900: objc/execute/string4.m execution,  -O0 
+4943900: objc/execute/string4.m execution,  -O1 
+4943900: objc/execute/string4.m execution,  -O2 
+4943900: objc/execute/string4.m execution,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string4.m execution,  -O3 -g 
+4943900: objc/execute/string4.m execution,  -Os 
+4943900: objc/execute/string4.m execution,  -fast
+4944530: objc.dg/objc-gc-3.m (test for excess errors)
+5040758: objc.dg/objc.c (test for excess errors)
+5040758: objc.dg/ss/one.h -gstabs+ -gfull (test for excess errors)
 #
 # the following fail for x86
-4261575: objc/execute/string1.m compilation,  -O0
-4261575: objc/execute/string1.m compilation,  -O1
-4261575: objc/execute/string1.m compilation,  -O2
-4261575: objc/execute/string1.m compilation,  -O3 -fomit-frame-pointer
-4261575: objc/execute/string1.m compilation,  -O3 -g
-4261575: objc/execute/string1.m compilation,  -Os
-4261575: objc/execute/string1.m compilation,  -fast
-4261575: objc/execute/string2.m compilation,  -O0
-4261575: objc/execute/string2.m compilation,  -O1
-4261575: objc/execute/string2.m compilation,  -O2
-4261575: objc/execute/string2.m compilation,  -O3 -fomit-frame-pointer
-4261575: objc/execute/string2.m compilation,  -O3 -g
-4261575: objc/execute/string2.m compilation,  -Os
-4261575: objc/execute/string2.m compilation,  -fast
-4261575: objc/execute/string3.m compilation,  -O0
-4261575: objc/execute/string3.m compilation,  -O1
-4261575: objc/execute/string3.m compilation,  -O2
-4261575: objc/execute/string3.m compilation,  -O3 -fomit-frame-pointer
-4261575: objc/execute/string3.m compilation,  -O3 -g
-4261575: objc/execute/string3.m compilation,  -Os
-4261575: objc/execute/string3.m compilation,  -fast
-4261575: objc/execute/string4.m compilation,  -O0
-4261575: objc/execute/string4.m compilation,  -O1
-4261575: objc/execute/string4.m compilation,  -O2
-4261575: objc/execute/string4.m compilation,  -O3 -fomit-frame-pointer
-4261575: objc/execute/string4.m compilation,  -O3 -g
-4261575: objc/execute/string4.m compilation,  -Os
-4261575: objc/execute/string4.m compilation,  -fast
 4674757: objc.dg/const-str-1.m  (test for errors, line 11)
-4261575: objc.dg/const-str-3.m (test for excess errors)
-4261575: objc.dg/const-str-4.m (test for excess errors)
+#4261575: objc.dg/const-str-3.m (test for excess errors)
+#4261575: objc.dg/const-str-4.m (test for excess errors)
 4674757: objc.dg/const-str-6.m  (test for errors, line 27)
-4261575: objc.dg/const-str-7.m (test for excess errors)
-4261575: objc.dg/const-str-8.m (test for excess errors)
+#4261575: objc.dg/const-str-7.m (test for excess errors)
+#4261575: objc.dg/const-str-8.m (test for excess errors)
 #
 # the following failures are for x86 -m64 only 
-4674613: objc.dg/encode-7a.m execution test
+4923914: objc.dg/encode-7a.m (test for excess errors)
+4923623: objc.dg/encode-7a.m execution test
 4674613: objc.dg/const-cfstring-4.m scan-assembler .long\t___CFConstantStringClassReference\n\t.long\t1992\n\t.long\t.*\n\t.long\t19\n\t.data
 4674613: objc.dg/const-str-10.m scan-assembler .long\t__NSConstantStringClassReference\n\t.long\t.*\n\t.long\t5\n\t.data
 4674613: objc.dg/const-str-11.m scan-assembler .long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5\n\t.data
@@ -80,3 +96,43 @@
 4674613: objc.dg/stubify-1.m scan-assembler (bl|call)[ \t]+L_bogonic\\$stub\n
 4674613: objc.dg/stubify-2.m scan-file-not symbol_ref.*"objc_msgSend"
 4674613: objc.dg/volatile-1.m scan-assembler movl\t\\$1, 16\\(%ebp\\)
+#
+# the following failures are for -mmacosx-version-min=10.5 only
+4943900: objc/execute/string1.m compilation,  -O0 
+4943900: objc/execute/string1.m compilation,  -O1 
+4943900: objc/execute/string1.m compilation,  -O2 
+4943900: objc/execute/string1.m compilation,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string1.m compilation,  -O3 -g 
+4943900: objc/execute/string1.m compilation,  -Os 
+4943900: objc/execute/string1.m compilation,  -fast 
+4943900: objc/execute/string2.m compilation,  -O0 
+4943900: objc/execute/string2.m compilation,  -O1 
+4943900: objc/execute/string2.m compilation,  -O2 
+4943900: objc/execute/string2.m compilation,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string2.m compilation,  -O3 -g 
+4943900: objc/execute/string2.m compilation,  -Os 
+4943900: objc/execute/string2.m compilation,  -fast 
+4943900: objc/execute/string3.m compilation,  -O0 
+4943900: objc/execute/string3.m compilation,  -O1 
+4943900: objc/execute/string3.m compilation,  -O2 
+4943900: objc/execute/string3.m compilation,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string3.m compilation,  -O3 -g 
+4943900: objc/execute/string3.m compilation,  -Os 
+4943900: objc/execute/string3.m compilation,  -fast 
+4943900: objc/execute/string4.m compilation,  -O0 
+4943900: objc/execute/string4.m compilation,  -O1 
+4943900: objc/execute/string4.m compilation,  -O2 
+4943900: objc/execute/string4.m compilation,  -O3 -fomit-frame-pointer 
+4943900: objc/execute/string4.m compilation,  -O3 -g 
+4943900: objc/execute/string4.m compilation,  -Os 
+4943900: objc/execute/string4.m compilation,  -fast 
+#5004537: objc.dg/const-str-3.m (test for excess errors)
+#5004537: objc.dg/const-str-7.m (test for excess errors)
+#5004537: objc.dg/const-str-8.m (test for excess errors)
+5040758: objc.dg/const-str-3.m execution test
+#
+# the following failures are for -fstack-protector-all only
+4990353: objc.dg/stubify-1.m scan-assembler-not \\$non_lazy_ptr
+# (x86 only)
+4990353: objc.dg/volatile-1-x86-64.m scan-assembler movl\t\\$1, -4\\(%rbp\\)
+4990353: objc.dg/volatile-1.m scan-assembler movl\t\\$1, 16\\(%ebp\\)

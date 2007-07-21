@@ -2,7 +2,8 @@
 /* Test that undeclared object does not result in compiler crash. */
 /* { dg-do compile } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface CrashTheCompiler : Object
 {
@@ -20,7 +21,7 @@
  if (obj == 0)
  {
   UnknownObject* obj2 = [[UnknownObject alloc] init]; /* { dg-error "\\\'UnknownObject\\\' was not declared" } */
-  						      /* { dg-error "\\\'obj2\\\' was not declared" "" { target *-*-* } 22 } */
+  						      /* { dg-error "\\\'obj2\\\' was not declared" "" { target *-*-* } 23 } */
  }
 }
 @end

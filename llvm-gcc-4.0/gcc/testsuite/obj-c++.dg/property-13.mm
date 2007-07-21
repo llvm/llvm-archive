@@ -3,6 +3,8 @@
    specifying ivar=name in the @implementation is legal. 2) 'ivar' can be inherited from base.
    3) super.string is how you access an inherited property from within a property accessor method.
 */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 // define a protocol consisting of 3 properties, object, number, and string.
@@ -40,7 +42,7 @@
 @implementation A
 @property(ivar=_object) id object;      // partially synthesized property number using inherited ivar _object.
 @end					/* { dg-warning "no synthesized or user getter" } */
-					/* { dg-warning "no synthesized or user setter" "" { target *-*-* } 42 } */
+					/* { dg-warning "no synthesized or user setter" "" { target *-*-* } 44 } */
 
 @interface B : Base {
 }
@@ -92,7 +94,7 @@
 
 @implementation Foo
 @end /* { dg-warning "no synthesized or user getter" } */
-     /* { dg-warning "no synthesized or user setter" "" { target *-*-* } 94 } */
+     /* { dg-warning "no synthesized or user setter" "" { target *-*-* } 96 } */
 
 int main(int argc, char **argv) {
     return 0;

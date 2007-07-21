@@ -3,7 +3,7 @@
    alignment on x86. */
 /* { dg-do compile { target i?86-*-darwin* } } */
 /* { dg-skip-if "" { i?86-*-darwin* } { "-m64" } { "" } } */
-/* { dg-options "-fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
 
 @interface c1 @end
 @interface c2 @end

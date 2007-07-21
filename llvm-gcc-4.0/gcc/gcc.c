@@ -250,7 +250,9 @@ static char *cc_print_options_filename;
 /* Nonzero if cross-compiling.
    When -b is used, the value comes from the `specs' file.  */
 
-#ifdef CROSS_COMPILE
+/* APPLE LOCAL begin mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325 */
+#ifdef CROSS_DIRECTORY_STRUCTURE
+/* APPLE LOCAL end mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325 */
 static const char *cross_compile = "1";
 #else
 static const char *cross_compile = "0";
@@ -529,15 +531,20 @@ or with constant text in a single argument.
           part of that switch that matched the '*'.
  %{.S:X}  substitutes X, if processing a file with suffix S.
  %{!.S:X} substitutes X, if NOT processing a file with suffix S.
-
+ APPLE LOCAL begin mainline 2007-03-13 5040758
+ %{,S:X}  substitutes X, if processing a file which will use spec S.
+ %{!,S:X} substitutes X, if NOT processing a file which will use spec S.
+	  
  %{S|T:X} substitutes X if either -S or -T was given to CC.  This may be
-	  combined with !, ., and * as above binding stronger than the OR.
+	  combined with '!', '.', ',', and '*' as above binding stronger
+	  than the OR.
 	  If %* appears in X, all of the alternatives must be starred, and
 	  only the first matching alternative is substituted.
  %{S:X;   if S was given to CC, substitutes X;
    T:Y;   else if T was given to CC, substitutes Y;
     :D}   else substitutes D.  There can be as many clauses as you need.
-          This may be combined with ., !, |, and * as above.
+          This may be combined with '.', '!', ',', '|', and '*' as above.
+ APPLE LOCAL end mainline 2007-03-13 5040758
 
  %(Spec) processes a specification defined in a specs file as *Spec:
  %[Spec] as above, but put __ around -D arguments
@@ -1505,7 +1512,9 @@ static const char *gcc_libexec_prefix;
 #define STANDARD_STARTFILE_PREFIX_2 "/usr/lib/"
 #endif
  
-#ifdef CROSS_COMPILE  /* Don't use these prefixes for a cross compiler.  */
+/* APPLE LOCAL begin mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325 */
+#ifdef CROSS_DIRECTORY_STRUCTURE  /* Don't use these prefixes for a cross compiler.  */
+/* APPLE LOCAL end mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325 */
 #undef MD_EXEC_PREFIX
 #undef MD_STARTFILE_PREFIX
 #undef MD_STARTFILE_PREFIX_1
@@ -2641,6 +2650,8 @@ find_a_file (struct path_prefix *pprefix, const char *name, int mode,
 
 enum path_prefix_priority
 {
+  /* APPLE LOCAL isysroot 5083137 */
+  PREFIX_PRIORITY_FIRST,
   PREFIX_PRIORITY_B_OPT,
   PREFIX_PRIORITY_LAST
 };
@@ -3498,30 +3509,6 @@ process_command (int argc, const char **argv)
 	    endp++;
 	}
     }
-
-  /* APPLE LOCAL begin deployment target */
-  /* Retrieve the deployment target from the environment and insert
-     it as a flag.  */
-  {
-    const char * macosx_deployment_target;
-    macosx_deployment_target = getenv ("MACOSX_DEPLOYMENT_TARGET");
-    if (macosx_deployment_target
-	/* Apparently, an empty string for MACOSX_DEPLOYMENT_TARGET means
-	   "use the default".  Or, possibly "use 10.1".  We choose
-	   to ignore the environment variable, as if it was never set.  */
-	&& macosx_deployment_target[0])
-      {
-	char ** new_argv;
-	new_argv = xmalloc ((argc + 1) * sizeof (argv[0]));
-	new_argv[0] = argv[0];
-	new_argv[1] = concat ("-mmacosx-version-min=",
-			      macosx_deployment_target, NULL);
-	memcpy (new_argv + 2, argv + 1, (argc - 1) * sizeof (argv[0]));
-	argc++;
-	argv = new_argv;
-      }
-  }
-  /* APPLE LOCAL end deployment target */
 
   /* Convert new-style -- options to old-style.  */
   translate_options (&argc, (const char *const **) &argv);
@@ -5817,28 +5804,27 @@ handle_spec_function (const char *p)
    input suffix matches the atom bracketed by ATOM and END_ATOM.  */
 static inline bool
 input_suffix_matches (const char *atom, const char *end_atom)
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
 {
-  /* We special case the semantics of {.s:...} and {.S:...} and their
-     negative variants.  Instead of testing the input filename suffix,
-     we test whether the input source file is an assembler file or an
-     assembler-with-cpp file respectively.  This allows us to correctly
-     handle the -x command line option.  */
-
-  if (atom + 1 == end_atom
-      && input_file_compiler
-      && input_file_compiler->suffix)
-    {
-      if (*atom == 's')
-	return !strcmp (input_file_compiler->suffix, "@assembler");
-      if (*atom == 'S')
-	return !strcmp (input_file_compiler->suffix, "@assembler-with-cpp");
-    }
-
   return (input_suffix
 	  && !strncmp (input_suffix, atom, end_atom - atom)
 	  && input_suffix[end_atom - atom] == '\0');
 }
 
+/* Subroutine of handle_braces.  Returns true if the current
+   input file's spec name matches the atom bracketed by ATOM and END_ATOM.  */
+static bool
+input_spec_matches (const char *atom, const char *end_atom)
+{
+  return (input_file_compiler
+	  && input_file_compiler->suffix
+	  && input_file_compiler->suffix[0] != '\0'
+	  && !strncmp (input_file_compiler->suffix + 1, atom,
+		       end_atom - atom)
+	  && input_file_compiler->suffix[end_atom - atom + 1] == '\0');
+}
+
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
 /* Inline subroutine of handle_braces.  Returns true if a switch
    matching the atom bracketed by ATOM and END_ATOM appeared on the
    command line.  */
@@ -5902,6 +5888,9 @@ handle_braces (const char *p)
   const char *orig = p;
 
   bool a_is_suffix;
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+  bool a_is_spectype;
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
   bool a_is_starred;
   bool a_is_negated;
   bool a_matched;
@@ -5921,10 +5910,16 @@ handle_braces (const char *p)
       if (a_must_be_last)
 	goto invalid;
 
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
       /* Scan one "atom" (S in the description above of %{}, possibly
-	 with !, ., or * modifiers).  */
-      a_matched = a_is_suffix = a_is_starred = a_is_negated = false;
+	 with '!', '.', '@', ',', or '*' modifiers).  */
+      a_matched = false;
+      a_is_suffix = false;
+      a_is_starred = false;
+      a_is_negated = false;
+      a_is_spectype = false;
 
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
       SKIP_WHITE();
       if (*p == '!')
 	p++, a_is_negated = true;
@@ -5932,7 +5927,11 @@ handle_braces (const char *p)
       SKIP_WHITE();
       if (*p == '.')
 	p++, a_is_suffix = true;
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+      else if (*p == ',')
+	p++, a_is_spectype = true;
 
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
       atom = p;
       while (ISIDNUM(*p) || *p == '-' || *p == '+' || *p == '='
 	     || *p == ',' || *p == '.' || *p == '@')
@@ -5949,7 +5948,9 @@ handle_braces (const char *p)
 	  /* Substitute the switch(es) indicated by the current atom.  */
 	  ordered_set = true;
 	  if (disjunct_set || n_way_choice || a_is_negated || a_is_suffix
-	      || atom == end_atom)
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+	      || a_is_spectype || atom == end_atom)
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
 	    goto invalid;
 
 	  mark_matching_switches (atom, end_atom, a_is_starred);
@@ -5968,7 +5969,10 @@ handle_braces (const char *p)
 	  if (atom == end_atom)
 	    {
 	      if (!n_way_choice || disj_matched || *p == '|'
-		  || a_is_negated || a_is_suffix || a_is_starred)
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+		  || a_is_negated || a_is_suffix || a_is_spectype 
+		  || a_is_starred)
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
 		goto invalid;
 
 	      /* An empty term may appear as the last choice of an
@@ -5979,28 +5983,32 @@ handle_braces (const char *p)
 	    }
 	  else
 	    {
-	       if (a_is_suffix && a_is_starred)
-		 goto invalid;
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+	      if ((a_is_suffix || a_is_spectype) && a_is_starred)
+		goto invalid;
+	      
+	      if (!a_is_starred)
+		disj_starred = false;
 
-	       if (!a_is_starred)
-		 disj_starred = false;
-
-	       /* Don't bother testing this atom if we already have a
-                  match.  */
-	       if (!disj_matched && !n_way_matched)
-		 {
-		   if (a_is_suffix)
-		     a_matched = input_suffix_matches (atom, end_atom);
-		   else
-		     a_matched = switch_matches (atom, end_atom, a_is_starred);
-
-		   if (a_matched != a_is_negated)
-		     {
-		       disj_matched = true;
-		       d_atom = atom;
-		       d_end_atom = end_atom;
-		     }
-		 }
+	      /* Don't bother testing this atom if we already have a
+		 match.  */
+	      if (!disj_matched && !n_way_matched)
+		{
+		  if (a_is_suffix)
+		    a_matched = input_suffix_matches (atom, end_atom);
+		  else if (a_is_spectype)
+		    a_matched = input_spec_matches (atom, end_atom);
+		  else
+		    a_matched = switch_matches (atom, end_atom, a_is_starred);
+		  
+		  if (a_matched != a_is_negated)
+		    {
+		      disj_matched = true;
+		      d_atom = atom;
+		      d_end_atom = end_atom;
+		    }
+		}
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
 	    }
 
 	  if (*p == ':')
@@ -6571,6 +6579,12 @@ main (int argc, const char **argv)
         target_sysroot_hdrs_suffix = xstrdup (argbuf[argbuf_index -1]);
     }
 
+/* APPLE LOCAL begin isysroot 5083137 */
+#ifndef SYSROOT_PRIORITY
+#define SYSROOT_PRIORITY PREFIX_PRIORITY_LAST
+#endif
+/* APPLE LOCAL end isysroot 5083137 */
+
   /* Look for startfiles in the standard places.  */
   if (*startfile_prefix_spec != 0
       && do_spec_2 (startfile_prefix_spec) == 0
@@ -6579,7 +6593,8 @@ main (int argc, const char **argv)
       int ndx;
       for (ndx = 0; ndx < argbuf_index; ndx++)
 	add_sysrooted_prefix (&startfile_prefixes, argbuf[ndx], "BINUTILS",
-			      PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      SYSROOT_PRIORITY, 0, 1);
     }
   /* We should eventually get rid of all these and stick to
      startfile_prefix_spec exclusively.  */
@@ -6587,15 +6602,18 @@ main (int argc, const char **argv)
     {
       if (*md_exec_prefix)
 	add_sysrooted_prefix (&startfile_prefixes, md_exec_prefix, "GCC",
-			      PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      SYSROOT_PRIORITY, 0, 1);
 
       if (*md_startfile_prefix)
 	add_sysrooted_prefix (&startfile_prefixes, md_startfile_prefix,
-			      "GCC", PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      "GCC", SYSROOT_PRIORITY, 0, 1);
 
       if (*md_startfile_prefix_1)
 	add_sysrooted_prefix (&startfile_prefixes, md_startfile_prefix_1,
-			      "GCC", PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      "GCC", SYSROOT_PRIORITY, 0, 1);
 
       /* If standard_startfile_prefix is relative, base it on
 	 standard_exec_prefix.  This lets us move the installed tree
@@ -6607,7 +6625,8 @@ main (int argc, const char **argv)
       if (IS_ABSOLUTE_PATH (standard_startfile_prefix))
 	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix, "BINUTILS",
-			      PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      SYSROOT_PRIORITY, 0, 1);
       else if (*cross_compile == '0')
 	{
 	  if (gcc_exec_prefix)
@@ -6625,11 +6644,13 @@ main (int argc, const char **argv)
       if (*standard_startfile_prefix_1)
  	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_1, "BINUTILS",
-			      PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      SYSROOT_PRIORITY, 0, 1);
       if (*standard_startfile_prefix_2)
 	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_2, "BINUTILS",
-			      PREFIX_PRIORITY_LAST, 0, 1);
+			      /* APPLE LOCAL isysroot 5083137 */
+			      SYSROOT_PRIORITY, 0, 1);
     }
 
   /* Process any user specified specs in the order given on the command
@@ -7285,7 +7306,9 @@ next_member:
     p++;
 
   SKIP_WHITE ();
-  if (*p == '.')
+/* APPLE LOCAL begin mainline 2007-03-13 5040758 */ \
+  if (*p == '.' || *p == ',')
+/* APPLE LOCAL end mainline 2007-03-13 5040758 */ \
     suffix = true, p++;
 
   atom = p;

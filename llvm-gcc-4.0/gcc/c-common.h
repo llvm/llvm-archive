@@ -96,7 +96,8 @@ enum rid
   /* Objective-C */
   RID_AT_ENCODE,   RID_AT_END,
   RID_AT_CLASS,    RID_AT_ALIAS,     RID_AT_DEFS,
-  RID_AT_PRIVATE,  RID_AT_PROTECTED, RID_AT_PUBLIC,
+  /* APPLE LOCAL radar 4564694 */
+  RID_AT_PACKAGE,  RID_AT_PRIVATE,  RID_AT_PROTECTED, RID_AT_PUBLIC,
   RID_AT_PROTOCOL, RID_AT_SELECTOR,  
   RID_AT_THROW,	   RID_AT_TRY,       RID_AT_CATCH,
   RID_AT_FINALLY,  RID_AT_SYNCHRONIZED,
@@ -114,6 +115,8 @@ enum rid
   RID_READONLY, RID_DYNAMIC, RID_GETTER, RID_SETTER, RID_WEAK, RID_IVAR,
   /* APPLE LOCAL objc new property */
   RID_READWRITE, RID_ASSIGN, RID_RETAIN, RID_COPY,
+  /* APPLE LOCAL radar 4947014 - objc atomic property */
+  RID_NONATOMIC,
 
   RID_MAX,
 
@@ -138,7 +141,10 @@ enum rid
     (unsigned int) (rid) == RID_READWRITE || \
     (unsigned int) (rid) == RID_ASSIGN    || \
     (unsigned int) (rid) == RID_RETAIN    || \
-    (unsigned int) (rid) == RID_COPY))
+    /* APPLE LOCAL begin radar 4947014 - objc atomic property */  \
+    (unsigned int) (rid) == RID_COPY	  || \
+    (unsigned int) (rid) == RID_NONATOMIC))
+    /* APPLE LOCAL end radar 4947014 - objc atomic property */  \
 /* APPLE LOCAL end objc new property */
 
 /* APPLE LOCAL begin C* property (Radar 4436866) */
@@ -528,6 +534,11 @@ extern int flag_next_runtime;
 
 extern int flag_objc_call_cxx_cdtors;
 /* APPLE LOCAL end mainline */
+/* APPLE LOCAL begin radar 2848255 */
+extern int flag_objc_zerocost_exceptions;
+bool objc2_valid_objc_catch_type (tree);
+tree objc2_build_throw_call (tree);
+/* APPLE LOCAL end radar 2848255 */
 
 /* Tells the compiler that this is a special run.  Do not perform any
    compiling, instead we are to test some platform dependent features
@@ -1156,6 +1167,9 @@ void diagnose_selector_cast (tree cast_type, tree sel_exp);
 tree objc_v2_component_ref_field_offset (tree);
 tree objc_v2_bitfield_ivar_bitpos (tree);
 /* APPLE LOCAL end radar 4441049 */
+
+/* APPLE LOCAL radar 4985544 */
+bool objc_check_format_nsstring (tree, unsigned HOST_WIDE_INT, bool *);
 
 /* The following are provided by the C and C++ front-ends, and called by
    ObjC/ObjC++.  */

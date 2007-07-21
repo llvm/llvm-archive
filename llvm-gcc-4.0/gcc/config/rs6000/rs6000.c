@@ -857,6 +857,8 @@ static rtx rs6000_emit_vector_compare (enum rtx_code, rtx, rtx,
 				       enum machine_mode);
 static int get_vsel_insn (enum machine_mode);
 static void rs6000_emit_vector_select (rtx, rtx, rtx, rtx);
+/* APPLE LOCAL mainline */
+static tree rs6000_stack_protect_fail (void);
 
 
 const int INSN_NOT_AVAILABLE = -1;
@@ -896,7 +898,10 @@ char rs6000_reg_names[][8] =
       "24", "25", "26", "27", "28", "29", "30", "31",
       "vrsave", "vscr",
       /* SPE registers.  */
-      "spe_acc", "spefscr"
+      /* APPLE LOCAL begin mainline */
+      "spe_acc", "spefscr",
+      "sfp"
+      /* APPLE LOCAL end mainline */
 };
 
 #ifdef TARGET_REGNAMES
@@ -920,7 +925,10 @@ static const char alt_reg_names[][8] =
   "%v24", "%v25", "%v26", "%v27", "%v28", "%v29", "%v30", "%v31",
   "vrsave", "vscr",
   /* SPE registers.  */
-  "spe_acc", "spefscr"
+   /* APPLE LOCAL begin mainline */
+   "spe_acc", "spefscr",
+   "sfp"
+   /* APPLE LOCAL end mainline */
 };
 #endif
 
@@ -1125,6 +1133,10 @@ static const char alt_reg_names[][8] =
 #undef TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN
 #define TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN invalid_arg_for_unprototyped_fn
 /* APPLE LOCAL end mainline 2005-04-14 */
+/* APPLE LOCAL begin mainline */
+#undef TARGET_STACK_PROTECT_FAIL
+#define TARGET_STACK_PROTECT_FAIL rs6000_stack_protect_fail
+/* APPLE LOCAL end mainline */
 
 /* MPC604EUM 3.5.2 Weak Consistency between Multiple Processors
    The PowerPC architecture requires only weak consistency among
@@ -13524,6 +13536,21 @@ rs6000_generate_compare (enum rtx_code code)
 		     gen_rtx_CLOBBER (VOIDmode, gen_rtx_SCRATCH (DFmode)),
 		     gen_rtx_CLOBBER (VOIDmode, gen_rtx_SCRATCH (DFmode)),
 		     gen_rtx_CLOBBER (VOIDmode, gen_rtx_SCRATCH (DFmode)))));
+      /* APPLE LOCAL begin mainline */
+      else if (GET_CODE (rs6000_compare_op1) == UNSPEC
+	       && XINT (rs6000_compare_op1, 1) == UNSPEC_SP_TEST)
+	{
+	  rtx op1 = XVECEXP (rs6000_compare_op1, 0, 0);
+	  comp_mode = CCEQmode;
+	  compare_result = gen_reg_rtx (CCEQmode);
+	  if (TARGET_64BIT)
+	    emit_insn (gen_stack_protect_testdi (compare_result,
+						 rs6000_compare_op0, op1));
+	  else
+	    emit_insn (gen_stack_protect_testsi (compare_result,
+						 rs6000_compare_op0, op1));
+	}
+      /* APPLE LOCAL end mainline */
       else
 	emit_insn (gen_rtx_SET (VOIDmode, compare_result,
 				gen_rtx_COMPARE (comp_mode,
@@ -14851,6 +14878,15 @@ rs6000_stack_info (void)
   info_ptr->vars_size    = RS6000_ALIGN (get_frame_size (), 8);
   info_ptr->parm_size    = RS6000_ALIGN (current_function_outgoing_args_size,
 					 TARGET_ALTIVEC ? 16 : 8);
+  /* APPLE LOCAL begin mainline */
+  if (FRAME_GROWS_DOWNWARD)
+    info_ptr->vars_size
+      += RS6000_ALIGN (info_ptr->fixed_size + info_ptr->varargs_size
+		       + info_ptr->vars_size + info_ptr->parm_size,
+		       ABI_STACK_BOUNDARY / BITS_PER_UNIT)
+      - (info_ptr->fixed_size + info_ptr->varargs_size
+	 + info_ptr->vars_size + info_ptr->parm_size);
+  /* APPLE LOCAL end mainline */
 
   if (TARGET_SPE_ABI && info_ptr->spe_64bit_regs_used != 0)
     info_ptr->spe_gp_size = 8 * (32 - info_ptr->first_gp_reg_save);
@@ -16767,8 +16803,10 @@ rs6000_emit_prologue (void)
   /* Set frame pointer, if needed.  */
   if (frame_pointer_needed)
     {
-      insn = emit_move_insn (gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),
+      /* APPLE LOCAL begin mainline */
+      insn = emit_move_insn (gen_rtx_REG (Pmode, HARD_FRAME_POINTER_REGNUM),
 			     sp_reg_rtx);
+      /* APPLE LOCAL end mainline */
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
@@ -21502,14 +21540,28 @@ rs6000_initial_elimination_offset (int from, int to)
   rs6000_stack_t *info = rs6000_stack_info ();
   HOST_WIDE_INT offset;
 
-  if (from == FRAME_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
+  /* APPLE LOCAL begin mainline */
+  if (from == HARD_FRAME_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
     offset = info->push_p ? 0 : -info->total_size;
-  else if (from == ARG_POINTER_REGNUM && to == FRAME_POINTER_REGNUM)
+  else if (from == FRAME_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
+    {
+    offset = info->push_p ? 0 : -info->total_size;
+      if (FRAME_GROWS_DOWNWARD)
+	offset += info->fixed_size + info->varargs_size
+	          + info->vars_size + info->parm_size;
+    }
+  else if (from == FRAME_POINTER_REGNUM && to == HARD_FRAME_POINTER_REGNUM)
+    offset = FRAME_GROWS_DOWNWARD
+      ? info->fixed_size + info->varargs_size
+        + info->vars_size + info->parm_size
+      : 0;
+  else if (from == ARG_POINTER_REGNUM && to == HARD_FRAME_POINTER_REGNUM)
     offset = info->total_size;
   else if (from == ARG_POINTER_REGNUM && to == STACK_POINTER_REGNUM)
     offset = info->push_p ? info->total_size : 0;
   else if (from == RS6000_PIC_OFFSET_TABLE_REGNUM)
     offset = 0;
+  /* APPLE LOCAL end mainline */
   else
     abort ();
 
@@ -21680,5 +21732,20 @@ invalid_arg_for_unprototyped_fn (tree typelist, tree funcdecl, tree val)
          : NULL;
 }
 /* APPLE LOCAL end mainline 2005-04-14 */
+/* APPLE LOCAL begin mainline */
+/* For TARGET_SECURE_PLT 32-bit PIC code we can save PIC register
+   setup by using __stack_chk_fail_local hidden function instead of
+   calling __stack_chk_fail directly.  Otherwise it is better to call
+   __stack_chk_fail directly.  */
 
+static tree
+rs6000_stack_protect_fail (void)
+{
+  /* Merge comment: This isn't really used since we don't have
+     TARGET_SECURE_PLT in 4.0.  */
+  return (DEFAULT_ABI == ABI_V4 && 0 && flag_pic)
+    ? default_hidden_stack_protect_fail ()
+    : default_external_stack_protect_fail ();
+}
+/* APPLE LOCAL end mainline */
 #include "gt-rs6000.h"

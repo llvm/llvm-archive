@@ -6078,7 +6078,8 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
      ignore the POS lowest bits, etc.  */
   enum machine_mode is_mode = GET_MODE (inner);
   enum machine_mode inner_mode;
-  enum machine_mode wanted_inner_mode = byte_mode;
+  /* APPLE LOCAL mainline 4968055 */
+  enum machine_mode wanted_inner_mode;
   enum machine_mode wanted_inner_reg_mode = word_mode;
   enum machine_mode pos_mode = word_mode;
   enum machine_mode extraction_mode = word_mode;
@@ -6320,10 +6321,28 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
      EXTRACTION_MODE.  */
   if (!MEM_P (inner))
     wanted_inner_mode = wanted_inner_reg_mode;
-  else if (inner_mode != wanted_inner_mode
-	   && (mode_dependent_address_p (XEXP (inner, 0))
-	       || MEM_VOLATILE_P (inner)))
-    wanted_inner_mode = extraction_mode;
+  /* APPLE LOCAL begin mainline 4968055 */
+  else
+    {
+      /* Be careful not to go beyond the extracted object and maintain the
+	 natural alignment of the memory.  */
+      wanted_inner_mode = smallest_mode_for_size (len, MODE_INT);
+      while (pos % GET_MODE_BITSIZE (wanted_inner_mode) + len
+	     > GET_MODE_BITSIZE (wanted_inner_mode))
+	{
+	  wanted_inner_mode = GET_MODE_WIDER_MODE (wanted_inner_mode);
+	  gcc_assert (wanted_inner_mode != VOIDmode);
+	}
+
+      /* If we have to change the mode of memory and cannot, the desired mode
+	 is EXTRACTION_MODE.  */
+      if (inner_mode != wanted_inner_mode
+	  && (mode_dependent_address_p (XEXP (inner, 0))
+	      || MEM_VOLATILE_P (inner)
+	      || pos_rtx))
+	wanted_inner_mode = extraction_mode;
+    }
+  /* APPLE LOCAL end mainline 4968055 */
 
   orig_pos = pos;
 

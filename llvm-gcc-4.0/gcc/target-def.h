@@ -424,6 +424,10 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define TARGET_DWARF_CALLING_CONVENTION hook_int_tree_0
 
 #define TARGET_DWARF_HANDLE_FRAME_UNSPEC 0
+/* APPLE LOCAL begin mainline */
+#define TARGET_STACK_PROTECT_GUARD  default_stack_protect_guard
+#define TARGET_STACK_PROTECT_FAIL   default_external_stack_protect_fail
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin mainline 2005-10-12 */
 #ifndef TARGET_VALID_DLLIMPORT_ATTRIBUTE_P
@@ -545,9 +549,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 /* APPLE LOCAL begin mainline 4.2 2006-03-01 4311680 */
 #ifndef TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY
 #define TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY hook_void_tree
-/* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
 #endif
 
+/* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
 /* APPLE LOCAL begin mainline 4.2 2006-03-01 4311680 */
 #ifndef TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT
 #define TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT hook_bool_void_true
@@ -567,6 +571,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 /* APPLE LOCAL end LLVM */
 
+/* APPLE LOCAL begin mainline 4.3 2006-01-10 4871915 */
+#ifndef TARGET_CXX_LIBRARY_RTTI_COMDAT
+#define TARGET_CXX_LIBRARY_RTTI_COMDAT hook_bool_void_true
+#endif
+
+/* APPLE LOCAL end mainline 4.3 2006-01-10 4871915 */
 #define TARGET_CXX				\
   {						\
     TARGET_CXX_GUARD_TYPE,			\
@@ -586,6 +596,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  /* APPLE LOCAL begin LLVM */ \
     TARGET_CXX_USE_AEABI_ATEXIT,		\
  /* APPLE LOCAL end LLVM */ \
+/* APPLE LOCAL begin mainline 4.3 2006-01-10 4871915 */ \
+    TARGET_CXX_LIBRARY_RTTI_COMDAT,	        \
+/* APPLE LOCAL end mainline 4.3 2006-01-10 4871915 */ \
   }
 
 /* The whole shebang.  */
@@ -647,9 +660,15 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
   TARGET_MD_ASM_CLOBBERS,			\
   TARGET_DWARF_CALLING_CONVENTION,              \
   TARGET_DWARF_HANDLE_FRAME_UNSPEC,		\
- /* APPLE LOCAL begin mainline 2005-10-12 */   \
-  TARGET_VALID_DLLIMPORT_ATTRIBUTE_P,         \
- /* APPLE LOCAL end mainline 2005-10-12 */    \
+  /* APPLE LOCAL begin mainline */		\
+  TARGET_STACK_PROTECT_GUARD,			\
+  /* APPLE LOCAL end mainline */		\
+  /* APPLE LOCAL begin mainline 2005-10-12 */   \
+  TARGET_VALID_DLLIMPORT_ATTRIBUTE_P,           \
+  /* APPLE LOCAL end mainline 2005-10-12 */     \
+  /* APPLE LOCAL begin mainline */		\
+  TARGET_STACK_PROTECT_FAIL,			\
+  /* APPLE LOCAL end mainline */		\
   TARGET_CALLS,					\
   TARGET_CXX,					\
 /* APPLE LOCAL begin LLVM */			\

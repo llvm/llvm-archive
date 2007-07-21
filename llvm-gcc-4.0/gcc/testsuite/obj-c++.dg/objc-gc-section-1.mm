@@ -3,6 +3,7 @@
    with flag of 0 */
 
 /* { dg-do compile } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface INTF
 @end

@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4805321 */
 /* This program tests use of properties . */
-/* { dg-options "-fobjc-new-property -framework Foundation -fobjc-exceptions" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -framework Foundation -fobjc-exceptions" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <Foundation/Foundation.h>
@@ -77,7 +77,11 @@ main()
 {
     char buf [256];
     NSAutoreleasePool* pool  = [[NSAutoreleasePool alloc] init];
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
+    sprintf(buf, "%s", [playWithProperties() UTF8String]);
+#else
     sprintf(buf, "%s", [playWithProperties() cString]);
+#endif
     [pool release];
     return strcmp (buf, "techlead Blaine Garst runtimeGuru Greg Parker propertiesMaven Patrick Beard");
 }

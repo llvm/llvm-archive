@@ -24,7 +24,7 @@ const char version_string[] = "4.0.1 "
 #ifdef LLVM_VERSION_INFO
                               LLVM_VERSION_INFO
 #else
-                              "5432"
+                              "5449"
 #endif
                               ")";
 /* APPLE LOCAL end Apple version */

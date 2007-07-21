@@ -4634,6 +4634,8 @@ static GTY(()) VEC(alias_pair) *alias_pairs;
 /* Given an assembly name, find the decl it is associated with.  At the
    same time, mark it needed for cgraph.  */
 
+/* APPLE LOCAL LLVM */
+#ifndef ENABLE_LLVM
 static tree
 find_decl_and_mark_needed (tree decl, tree target)
 {
@@ -4671,6 +4673,8 @@ find_decl_and_mark_needed (tree decl, tree target)
   else 
     return NULL_TREE;
 }
+/* APPLE LOCAL LLVM */
+#endif
 
 static void
 do_assemble_alias (tree decl, tree target)
@@ -4736,7 +4740,7 @@ finish_aliases_1 (void)
 /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
   return;
-#endif
+#else
 /* APPLE LOCAL end LLVM */
   unsigned i;
   alias_pair p;
@@ -4753,6 +4757,9 @@ finish_aliases_1 (void)
 	error ("%J%qD aliased to external symbol %qE",
 	       p->decl, p->decl, p->target);
     }
+/* APPLE LOCAL begin LLVM */
+#endif
+/* APPLE LOCAL end LLVM */
 }
 
 /* Second pass of completing pending aliases.  Emit the actual assembly.

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4899564 */
 /* 'retain' or 'copy' are nonsensical in our system when used with __weak, 
     and should provoke an error. */
-/* { dg-options "-fobjc-new-property -fobjc-gc" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -fobjc-gc" } */
 
 @interface DooFus  {
    __weak id y;

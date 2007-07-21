@@ -529,6 +529,11 @@ struct gcc_target
        (set (reg) (unspec_volatile [...] UNSPECV_INDEX))
      to let the backend emit the call frame instructions.  */
   void (* dwarf_handle_frame_unspec) (const char *, rtx, int);
+  /* APPLE LOCAL begin mainline */
+  /* This target hook allows the operating system to override the DECL
+     that represents the external variable that contains the stack
+     protection guard variable.  The type of this DECL is ptr_type_node.  */
+  tree (* stack_protect_guard) (void);
 
  /* APPLE LOCAL begin mainline 2005-10-12 */
   /* DECL is a variable or function with __attribute__((dllimport))
@@ -536,6 +541,11 @@ struct gcc_target
      checks to  handle_dll_attribute ().  */
   bool (* valid_dllimport_attribute_p) (tree decl);
  /* APPLE LOCAL begin mainline 2005-10-12 */
+
+  /* This target hook allows the operating system to override the CALL_EXPR
+     that is invoked when a check vs the guard variable fails.  */
+  tree (* stack_protect_fail) (void);
+  /* APPLE LOCAL end mainline */
 
   /* Functions relating to calls - argument passing, returns, etc.  */
   struct calls {
@@ -650,6 +660,12 @@ struct gcc_target
     /* APPLE LOCAL begin LLVM */
     bool (*use_aeabi_atexit) (void);
     /* APPLE LOCAL end LLVM */
+/* APPLE LOCAL begin mainline 4.3 2006-01-10 4871915 */
+    /* Returns true (the default) if the RTTI for the basic types,
+       which is always defined in the C++ runtime, should be COMDAT;
+       false if it should not be COMDAT.  */
+    bool (*library_rtti_comdat) (void);
+/* APPLE LOCAL end mainline 4.3 2006-01-10 4871915 */
   } cxx;
 
   /* APPLE LOCAL begin LLVM */

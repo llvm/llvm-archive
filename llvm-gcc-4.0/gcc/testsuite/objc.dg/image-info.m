@@ -4,6 +4,8 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-options "-freplace-objc-classes" } */
 /* { dg-do compile { target *-*-darwin* } } */
+/* APPLE LOCAL radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #ifndef __NEXT_RUNTIME__
 #error Feature not currently supported by the GNU runtime

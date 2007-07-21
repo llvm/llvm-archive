@@ -845,5 +845,10 @@ do { fputs (integer_asm_op (POINTER_SIZE / BITS_PER_UNIT, TRUE), FILE); \
 #define TARGET_KEXTABI false
 #endif
 /* APPLE LOCAL end KEXT */
+/* APPLE LOCAL begin mainline */
+#ifndef FRAME_GROWS_DOWNWARD
+#define FRAME_GROWS_DOWNWARD 0
+#endif
+/* APPLE LOCAL end mainline */
 
 #endif  /* ! GCC_DEFAULTS_H */

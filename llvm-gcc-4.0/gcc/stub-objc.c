@@ -527,4 +527,24 @@ void objc_declare_property_impl (int ARG_UNUSED (code),
 {
 }
 /* APPLE LOCAL end objc new property */
-
+/* APPLE LOCAL begin radar 2848255 */
+bool 
+objc2_valid_objc_catch_type (tree ARG_UNUSED (type))
+{
+  return false;
+}
+tree
+objc2_build_throw_call (tree ARG_UNUSED (exp))
+{
+  return NULL_TREE;
+}
+/* APPLE LOCAL end radar 2848255 */
+/* APPLE LOCAL begin radar 4985544 */
+bool
+objc_check_format_nsstring (tree ARG_UNUSED (argument), 
+			    unsigned HOST_WIDE_INT ARG_UNUSED (format_num),
+                     	    bool * ARG_UNUSED(no_add_attrs))
+{
+  return false;
+}
+/* APPLE LOCAL end radar 4985544 */

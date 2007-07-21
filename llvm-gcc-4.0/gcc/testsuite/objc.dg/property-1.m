@@ -1,10 +1,12 @@
 /* APPLE LOCAL file radar 4436866 */
 /* This program tests use of property provided setter/getter functions. */
-/* { dg-options "-std=c99 -lobjc" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -std=c99 -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface Bar : Object
 {

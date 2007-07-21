@@ -3,7 +3,8 @@
 /* { dg-final { scan-assembler "\"Object\\\\0\".*DW_AT_name" } } */
 /* { dg-final { scan-assembler "\"MyObject\\\\0\".*DW_AT_name.*DW_TAG_inheritance" } } */
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface MyObject : Object {
   int myData;

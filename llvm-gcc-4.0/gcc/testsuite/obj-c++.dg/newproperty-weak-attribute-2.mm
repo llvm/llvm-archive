@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test a variety of error reporting on mis-use of 'weak' attribute */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-fobjc-new-property -fobjc-gc" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -fobjc-gc" } */
 
 @interface INTF
 {

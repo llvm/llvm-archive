@@ -293,6 +293,8 @@ Objective-C and Objective-C++ Dialects}.
 -Wredundant-decls @gol
 @c APPLE LOCAL end mainline 2883585 2005-04-20
 -Wreturn-type  -Wsequence-point  -Wshadow @gol
+@c APPLE LOCAL mainline
+-Wstack-protector @gol
 -Wsign-compare  -Wstrict-aliasing -Wstrict-aliasing=2 @gol
 -Wswitch  -Wswitch-default  -Wswitch-enum @gol
 -Wsystem-headers  -Wtrigraphs  -Wundef  -Wuninitialized @gol
@@ -398,6 +400,8 @@ Objective-C and Objective-C++ Dialects}.
 -fsched2-use-superblocks @gol
 -fsched2-use-traces -freschedule-modulo-scheduled-loops @gol
 -fsignaling-nans -fsingle-precision-constant  -fspeculative-prefetching @gol
+@c APPLE LOCAL mainline
+-fstack-protector -fstack-protector-all @gol
 -fstrength-reduce  -fstrict-aliasing  -ftracer  -fthread-jumps @gol
 -funroll-all-loops  -funroll-loops  -fpeel-loops @gol
 -fsplit-ivs-in-unroller -funswitch-loops @gol
@@ -3665,6 +3669,13 @@ itself is likely to take inordinate amounts of time.
 Don't warn for pointer argument passing or assignment with different signedness.
 Only useful in the negative form since this warning is enabled by default.
 This option is only supported for C and Objective-C@.
+@c APPLE LOCAL begin mainline
+
+@item -Wstack-protector
+@opindex Wstack-protector
+This option is only active when @option{-fstack-protector} is active.  It
+warns about functions that will not be protected against stack smashing.
+@c APPLE LOCAL end mainline
 
 @item -Werror
 @opindex Werror
@@ -6094,6 +6105,19 @@ threading.
 @opindex fbtr-bb-exclusive
 When performing branch target register load optimization, don't reuse
 branch target registers in within any basic block.
+@c APPLE LOCAL begin mainline
+
+@item -fstack-protector
+Emit extra code to check for buffer overflows, such as stack smashing
+attacks.  This is done by adding a guard variable to functions with
+vulnerable objects.  This includes functions that call alloca, and
+functions with buffers larger than 8 bytes.  The guards are initialized
+when a function is entered and then checked when the function exits.
+If a guard check fails, an error message is printed and the program exits.
+
+@item -fstack-protector-all
+Like @option{-fstack-protector} except that all functions are protected.
+@c APPLE LOCAL end mainline
 
 @item --param @var{name}=@var{value}
 @opindex param
@@ -6440,7 +6464,11 @@ is 10000.
 Small integer constants can use a shared data structure, reducing the
 compiler's memory usage and increasing its speed.  This sets the maximum
 value of a shared integer constant's.  The default value is 256.
-
+@c APPLE LOCAL begin mainline
+@item ssp-buffer-size
+The minimum size of buffers (i.e. arrays) that will receive stack smashing
+protection when @option{-fstack-protection} is used.
+@c APPLE LOCAL end mainline
 @end table
 @end table
 
@@ -7289,13 +7317,22 @@ Substitutes @code{X}, if processing a file with suffix @code{S}.
 @item %@{!.@code{S}:@code{X}@}
 Substitutes @code{X}, if @emph{not} processing a file with suffix @code{S}.
 
-@item %@{@code{S}|@code{P}:@code{X}@}
-Substitutes @code{X} if either @code{-S} or @code{-P} was given to GCC@.
-This may be combined with @samp{!}, @samp{.}, and @code{*} sequences as well,
-although they have a stronger binding than the @samp{|}.  If @code{%*}
-appears in @code{X}, all of the alternatives must be starred, and only
-the first matching alternative is substituted.
+@c APPLE LOCAL begin mainline 2007-03-13 5040758
+@item %@{,@code{S}:@code{X}@}
+Substitutes @code{X}, if processing a file for language @code{S}.
 
+@item %@{!,@code{S}:@code{X}@}
+Substitutes @code{X}, if not processing a file for language @code{S}.
+
+@item %@{@code{S}|@code{P}:@code{X}@}
+Substitutes @code{X} if either @code{-S} or @code{-P} was given to
+GCC@.  This may be combined with @samp{!}, @samp{.}, @samp{,}, and
+@code{*} sequences as well, although they have a stronger binding than
+the @samp{|}.  If @code{%*} appears in @code{X}, all of the
+alternatives must be starred, and only the first matching alternative
+is substituted.
+
+@c APPLE LOCAL end mainline 2007-03-13 5040758
 For example, a spec string like this:
 
 @smallexample
@@ -7314,10 +7351,12 @@ jim.d         -bar -boggle
 
 @item %@{S:X; T:Y; :D@}
 
+@c APPLE LOCAL begin mainline 2007-03-13 5040758
 If @code{S} was given to GCC, substitutes @code{X}; else if @code{T} was
 given to GCC, substitutes @code{Y}; else substitutes @code{D}.  There can
 be as many clauses as you need.  This may be combined with @code{.},
-@code{!}, @code{|}, and @code{*} as needed.
+@code{,}, @code{!}, @code{|}, and @code{*} as needed.
+@c APPLE LOCAL end mainline 2007-03-13 5040758
 
 
 @end table
@@ -8179,9 +8218,13 @@ The earliest version of MacOS X that this executable will run on
 is @var{version}.  Typical values of @var{version} include @code{10.1},
 @code{10.2}, and @code{10.3.9}.
 
-The default for this option is to make choices that seem to be most
-useful.  
 @c APPLE LOCAL end mainline 2005-09-01 3449986
+@c APPLE LOCAL begin 4697325
+If the compiler was built to use the system's headers by default,
+then the default for this option is the system version on which the
+compiler is running, otherwise the default is to make choices which
+are compatible with as many systems and code bases as possible.
+@c APPLE LOCAL end 4697325
 
 @c APPLE LOCAL begin mainline 4468818
 @item -mkernel

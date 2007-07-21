@@ -2769,7 +2769,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       Emit(TREE_OPERAND(exp, 1), LV.Ptr);
     } else {
       // Need to do a volatile store into TREE_OPERAND(exp, 1).  To do this, we
-      // emit it into a temporary memory location, them do a volatile copy into
+      // emit it into a temporary memory location, then do a volatile copy into
       // the real destination.  This is probably suboptimal in some cases, but
       // it gets the volatile memory access right.  It would be better if the
       // destloc pointer of 'Emit' had a flag that indicated it should be
@@ -3575,12 +3575,14 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
     default: DoneModifiers = true; break;
     case '=': assert(0 && "Should be after '='s");
     case '+': assert(0 && "'+' should already be expanded");
-    case '&':
-    case '%':
     case '*':
     case '?':
     case '!':
       ++Constraint;
+      break;
+    case '&':     // Pass earlyclobber to LLVM.
+    case '%':     // Pass commutative to LLVM.
+      Result += *Constraint++;
       break;
     case '#':  // No constraint letters left.
       return Result;

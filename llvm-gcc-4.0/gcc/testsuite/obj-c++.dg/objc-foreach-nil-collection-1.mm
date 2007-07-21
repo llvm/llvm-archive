@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4854605 */
 /* Check that iterator of an empty or nil collection is set to nil
    after foreach statement. */
-/* { dg-options "-framework Foundation" } */
+/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation" } */
 /* { dg-do run } */
 
 #include <Foundation/Foundation.h>

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4841013 */
 /* Test that no warning of any kind about 'assign' property attribute
    is issued when property is 'readonly'. */
-/* { dg-options "-fobjc-new-property" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 
 @class SFSyncSet;

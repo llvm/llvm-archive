@@ -2,11 +2,13 @@
 /* Test that property can be declared 'readonly' in interface but it can be
    overridden in the implementation and can be assigned to.
 */
-/* { dg-options "-lobjc" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 
 @interface ReadOnly : Object

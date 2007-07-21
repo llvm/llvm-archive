@@ -8735,15 +8735,14 @@ unit will not be COMDAT.
 @end deftypefn
 
 @c APPLE LOCAL end mainline 4.2 2006-03-01 4311680
-
-@c APPLE LOCAL begin mainline 2005-10-12
-@deftypefn {Target Hook} void TARGET_CXX_ADJUST_CLASS_AT_DEFINITION (tree @var{type})
-@var{type} is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that has just been
-defined.  Use this hook to make adjustments to the class (eg, tweak
-visibility or perform any other required target modifications).
+@c APPLE LOCAL begin mainline 4.3 2006-01-10 4871915
+@deftypefn {Target Hook} bool TARGET_CXX_LIBRARY_RTTI_COMDAT (void)
+This hook returns true (the default) if the RTTI information for
+the basic types which is defined in the C++ runtime should always
+be COMDAT, false if it should not be COMDAT.
 @end deftypefn
-@c APPLE LOCAL end mainline 2005-10-12
 
+@c APPLE LOCAL end mainline 4.3 2006-01-10 4871915
 @node Misc
 @section Miscellaneous Parameters
 @cindex parameters, miscellaneous

@@ -441,6 +441,8 @@ cp_lexer_get_preprocessor_token (cp_lexer *lexer ATTRIBUTE_UNUSED ,
 	{
 	/* Map 'class' to '@class', 'private' to '@private', etc.  */
 	case RID_CLASS: token->keyword = RID_AT_CLASS; break;
+        /* APPLE LOCAL radar 4564694 */
+	case RID_AT_PACKAGE: token->keyword = RID_AT_PACKAGE; break;
 	case RID_PRIVATE: token->keyword = RID_AT_PRIVATE; break;
 	case RID_PROTECTED: token->keyword = RID_AT_PROTECTED; break;
 	case RID_PUBLIC: token->keyword = RID_AT_PUBLIC; break;
@@ -1806,7 +1808,8 @@ static void cp_parser_objc_protocol_declaration
 static tree cp_parser_objc_protocol_refs_opt
   (cp_parser *);
 static void cp_parser_objc_superclass_or_category
-  (cp_parser *, tree *, tree *);
+  /* APPLE LOCAL radar 4965989 */
+  (cp_parser *, tree *, tree *, bool *);
 static void cp_parser_objc_class_interface
   (cp_parser *);
 static void cp_parser_objc_class_implementation
@@ -2658,6 +2661,12 @@ objc_cp_parser_at_property (cp_parser *parser)
 	      objc_set_property_attr (12, NULL_TREE);
 	    }	
 	  /* APPLE LOCAL end objc new property */
+	  /* APPLE LOCAL begin radar 4947014 - objc atomic property */
+	  else if (node == ridpointers [(int) RID_NONATOMIC])
+	    {
+	      objc_set_property_attr (13, NULL_TREE);
+	    }	
+	  /* APPLE LOCAL end radar 4947014 - objc atomic property */
 	  else
 	    {
 	      error ("unknown property attribute");
@@ -7167,8 +7176,6 @@ cp_parser_parse_foreach_stmt (cp_parser *parser)
     }        
   if (is_legit_foreach)
     {
-      tree id_expression;
-      bool ambiguous_p;
       tree pushed_scope = NULL;
       tree decl;
       if (type_spec)
@@ -7180,34 +7187,27 @@ cp_parser_parse_foreach_stmt (cp_parser *parser)
                              NULL_TREE /*attributes*/,
                              NULL_TREE /*prefix_attributes*/,
                              &pushed_scope);
+          /* APPLE LOCAL begin radar 5130983 */
+          if (!decl || decl == error_mark_node)
+	    {
+	      error ("selector is undeclared"); 
+	      is_legit_foreach = false;
+	    }
+          else 
+            cp_finish_decl (decl,
+                            NULL_TREE /*initializer*/,
+                            NULL_TREE /*asm_specification*/,
+		            0 /*flags */);
 	}
       else {
+        tree statement;
 	/* we have: 'for (selector in...)' */
-        cp_parser_abort_tentative_parse (parser);
-        id_expression
-          = cp_parser_id_expression (parser,
-                                     /*template_keyword_p=*/false,
-                                     /*check_dependency_p=*/true,
-                                     /*template_p=*/NULL,
-                                     /*declarator_p=*/false);
-
-        decl = cp_parser_lookup_name (parser, id_expression,
-                                      none_type,
-                                      /*is_template=*/false,
-                                      /*is_namespace=*/false,
-                                      /*check_dependency=*/true,
-                                      &ambiguous_p);
+	/* Parse it as an expression. */
+	cp_parser_abort_tentative_parse (parser);
+        statement = cp_parser_expression (parser, /*cast_p=*/false);
+	add_stmt (statement);
       }
-      if (!decl || decl == error_mark_node)
-	{
-	  error ("selector is undeclared"); 
-	  is_legit_foreach = false;
-	}
-      else 
-        cp_finish_decl (decl,
-                        NULL_TREE /*initializer*/,
-                        NULL_TREE /*asm_specification*/,
-		        0 /*flags */);
+      /* APPLE LOCAL end radar 5130983 */
       /* Consume the 'in' token */
       cp_lexer_consume_token (parser->lexer);
     }
@@ -18504,6 +18504,11 @@ cp_parser_objc_visibility_spec (cp_parser* parser)
     case RID_AT_PUBLIC:
       objc_set_visibility (1);
       break;
+    /* APPLE LOCAL begin radar 4564694 */
+    case RID_AT_PACKAGE:
+      objc_set_visibility (3);
+      break;
+    /* APPLE LOCAL end radar 4564694 */
     default:
       return;
     }
@@ -19040,13 +19045,15 @@ cp_parser_objc_protocol_declaration (cp_parser* parser)
     }
 }
 
+/* APPLE LOCAL begin radar 4965989 */
 static void
 cp_parser_objc_superclass_or_category (cp_parser *parser, tree *super,
-							  tree *categ)
+				       tree *categ, bool *is_category)
 {
   cp_token *next = cp_lexer_peek_token (parser->lexer);
 
   *super = *categ = NULL_TREE;
+  *is_category = false;
   if (next->type == CPP_COLON)
     {
       cp_lexer_consume_token (parser->lexer);  /* Eat ':'.  */
@@ -19055,26 +19062,35 @@ cp_parser_objc_superclass_or_category (cp_parser *parser, tree *super,
   else if (next->type == CPP_OPEN_PAREN)
     {
       cp_lexer_consume_token (parser->lexer);  /* Eat '('.  */
-      *categ = cp_parser_identifier (parser);
+      /* APPLE LOCAL begin radar 4965989 */
+      next = cp_lexer_peek_token (parser->lexer);
+      *categ = (next->type == CPP_CLOSE_PAREN) ? NULL_TREE : cp_parser_identifier (parser);
+      *is_category = true;
+      /* APPLE LOCAL end radar 4965989 */
       cp_parser_require (parser, CPP_CLOSE_PAREN, "`)'");
     }
 }
+/* APPLE LOCAL end radar 4965989 */
 
 static void
 cp_parser_objc_class_interface (cp_parser* parser)
 {
   tree name, super, categ, protos;
+  /* APPLE LOCAL radar 4965989 */
+  bool is_categ;
   /* APPLE LOCAL begin radar 4548636 */
   tree attributes = NULL_TREE;
   cp_parser_objc_maybe_attributes (parser, &attributes);
   /* APPLE LOCAL end radar 4548636 */
   cp_lexer_consume_token (parser->lexer);  /* Eat '@interface'.  */
   name = cp_parser_identifier (parser);
-  cp_parser_objc_superclass_or_category (parser, &super, &categ);
+  /* APPLE LOCAL radar 4965989 */
+  cp_parser_objc_superclass_or_category (parser, &super, &categ, &is_categ);
   protos = cp_parser_objc_protocol_refs_opt (parser);
 
   /* We have either a class or a category on our hands.  */
-  if (categ)
+  /* APPLE LOCAL radar 4965989 */
+  if (is_categ)
   /* APPLE LOCAL begin radar 4548636 */
     {
       if (attributes)
@@ -19098,7 +19114,8 @@ static void
 cp_parser_objc_class_implementation (cp_parser* parser)
 {
   tree name, super, categ;
-
+  /* APPLE LOCAL radar 4965989 */
+  bool is_categ;
   cp_lexer_consume_token (parser->lexer);  /* Eat '@implementation'.  */
   /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
   if(cp_lexer_next_token_is (parser->lexer, CPP_LESS))
@@ -19113,11 +19130,21 @@ cp_parser_objc_class_implementation (cp_parser* parser)
 
   /* APPLE LOCAL end radar 4533974 - ObjC new protocol */
   name = cp_parser_identifier (parser);
-  cp_parser_objc_superclass_or_category (parser, &super, &categ);
+  /* APPLE LOCAL radar 4965989 */
+  cp_parser_objc_superclass_or_category (parser, &super, &categ, &is_categ);
 
   /* We have either a class or a category on our hands.  */
-  if (categ)
-    objc_start_category_implementation (name, categ);
+  /* APPLE LOCAL begin radar 4965989 */
+  if (is_categ)
+    {
+      if (categ == NULL_TREE)
+	{
+	  error ("cannot implement anonymous category");
+	  return;
+	}
+      objc_start_category_implementation (name, categ);
+    }
+  /* APPLE LOCAL end radar 4965989 */
   else
     {
       objc_start_class_implementation (name, super);
@@ -19204,14 +19231,33 @@ cp_parser_objc_try_catch_finally_statement (cp_parser *parser) {
     {
       cp_parameter_declarator *parmdecl;
       tree parm;
+      /* APPLE LOCAL radar 2848255 */
+      bool ellipsis_seen = false;
 
       cp_lexer_consume_token (parser->lexer);
       cp_parser_require (parser, CPP_OPEN_PAREN, "`('");
-      parmdecl = cp_parser_parameter_declaration (parser, false, NULL);
-      parm = grokdeclarator (parmdecl->declarator,
-			     &parmdecl->decl_specifiers,
-			     PARM, /*initialized=*/0, 
-			     /*attrlist=*/NULL);
+      /* APPLE LOCAL begin radar 2848255 */
+      /* APPLE LOCAL begin radar 4995967 */
+      {
+	cp_token *token = cp_lexer_peek_token (parser->lexer);
+	if (token->type == CPP_ELLIPSIS)
+	  {
+	    /* @catch (...) */
+	    parm = NULL_TREE;
+	    cp_lexer_consume_token (parser->lexer);	
+	    ellipsis_seen = true;
+	  }
+      }
+      /* APPLE LOCAL end radar 4995967 */
+      if (!ellipsis_seen)
+	{
+          parmdecl = cp_parser_parameter_declaration (parser, false, NULL);
+          parm = grokdeclarator (parmdecl->declarator,
+			         &parmdecl->decl_specifiers,
+			         PARM, /*initialized=*/0, 
+			         /*attrlist=*/NULL);
+	}
+      /* APPLE LOCAL end radar 2848255 */
       cp_parser_require (parser, CPP_CLOSE_PAREN, "`)'");
       objc_begin_catch_clause (parm);
       cp_parser_compound_statement (parser, NULL, false);
@@ -19327,7 +19373,7 @@ objc_finish_foreach_stmt (tree for_stmt)
   
   Into:
     {
-    type elem = nil;  radar 4854605
+    type elem
     __objcFastEnumerationState enumState = { 0 };
     id items[16];
 
@@ -19343,6 +19389,8 @@ objc_finish_foreach_stmt (tree for_stmt)
          } while (counter < limit);
      } while (limit = [collection countByEnumeratingWithState:&enumState objects:items count:16]);
   }
+  else
+    elem = nil; radar 4854605, 5128402 
 
 */
 
@@ -19361,10 +19409,21 @@ objc_foreach_stmt (cp_parser* parser, tree statement)
   tree counter_decl;
   tree_stmt_iterator i = tsi_start (TREE_CHAIN (statement));
   tree t = tsi_stmt (i);
-  tree elem_decl = DECL_EXPR_DECL (t);
+  /* APPLE LOCAL radar 5130983 */
+  tree elem_decl = TREE_CODE (t) == DECL_EXPR ? DECL_EXPR_DECL (t) : t;
 
   receiver  = cp_parser_condition (parser);
   cp_parser_require (parser, CPP_CLOSE_PAREN, "`)'");
+
+  /* APPLE LOCAL begin radar 5130983 */
+  if (elem_decl == error_mark_node)
+    return;
+  if (!lvalue_p (elem_decl))
+    {
+      error ("selector element must be an lvalue");
+      return;
+    }
+  /* APPLE LOCAL end radar 5130983 */
 
   /* APPLE LOCAL begin radar 4507230 */
   if (!objc_type_valid_for_messaging (TREE_TYPE (elem_decl)))
@@ -19384,12 +19443,6 @@ objc_foreach_stmt (cp_parser* parser, tree statement)
 								 &items_decl, &limit_decl, 
 								 &startMutations_decl, &counter_decl,
 							         &countByEnumeratingWithState);
-
-  /* APPLE LOCAL begin radar 4854605 */
-  /* elem = nil; */
-  add_stmt (build (MODIFY_EXPR, void_type_node, elem_decl, 
-            fold_convert (TREE_TYPE (elem_decl), integer_zero_node)));
-  /* APPLE LOCAL end radar 4854605 */
 
   /* __objcFastEnumerationState enumState = { 0 }; */
   exp = build_stmt (DECL_EXPR, enumState_decl);
@@ -19496,6 +19549,13 @@ objc_foreach_stmt (cp_parser* parser, tree statement)
   finish_then_clause (outer_if_stmt);
 
   /* } */
+  /* APPLE LOCAL begin radar 4854605 - radar 5128402 */
+  begin_else_clause (outer_if_stmt);
+  add_stmt (build (MODIFY_EXPR, void_type_node, elem_decl,
+            fold_convert (TREE_TYPE (elem_decl), integer_zero_node)));
+  finish_else_clause (outer_if_stmt);
+  /* APPLE LOCAL end radar 4854605 - radar 5128402 */
+
   finish_if_stmt (outer_if_stmt);
 
   objc_finish_foreach_stmt (statement);

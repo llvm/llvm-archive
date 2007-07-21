@@ -1710,7 +1710,8 @@ enum reg_class
    is at the high-address end of the local variables;
    that is, each additional local variable allocated
    goes at a more negative offset in the frame.  */
-#define FRAME_GROWS_DOWNWARD
+/* APPLE LOCAL mainline */
+#define FRAME_GROWS_DOWNWARD 1
 
 /* Offset within stack frame to start allocating local variables at.
    If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
@@ -2579,6 +2580,8 @@ extern enum reg_class const regclass_map[FIRST_PSEUDO_REGISTER];
 
 extern rtx ix86_compare_op0;	/* operand 0 for comparisons */
 extern rtx ix86_compare_op1;	/* operand 1 for comparisons */
+/* APPLE LOCAL mainline */
+extern rtx ix86_compare_emitted;
 
 /* To properly truncate FP values into integers, we need to set i387 control
    word.  We can't emit proper mode switching code before reload, as spills

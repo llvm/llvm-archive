@@ -1,10 +1,11 @@
 /* APPLE LOCAL file radar 4664707 */
 /* Test sequence of assignment to setters. */
-/* { dg-options "-std=c99 -lobjc" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -std=c99 -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+#include "../objc/execute/Object2.h"
 extern void abort (void);
 
 @interface Bar : Object

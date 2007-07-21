@@ -2,6 +2,8 @@
 /* Warn @defs() in Objective-C++ */
 /* { dg-options "-lobjc -Wobjc2" } */
 /* { dg-do run } */
+/* APPLE LOCAL radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 
 #include <stdlib.h>

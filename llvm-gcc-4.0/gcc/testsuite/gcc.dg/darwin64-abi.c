@@ -46,7 +46,7 @@ typedef struct
   double fprs[32];
   struct vr vrs[32];
   unsigned char stack[1000];
-} reg_parms_t;
+} reg_parms_t __attribute__((__aligned__ (16)));
 
 reg_parms_t gparms;
 

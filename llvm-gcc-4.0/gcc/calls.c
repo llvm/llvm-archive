@@ -2411,6 +2411,10 @@ expand_call (tree exp, rtx target, int ignore)
 	 if a libcall is deleted.  */
       if (pass && (flags & (ECF_LIBCALL_BLOCK | ECF_MALLOC)))
 	start_sequence ();
+      /* APPLE LOCAL begin mainline */
+      if (pass == 0 && cfun->stack_protect_guard)
+	stack_protect_epilogue ();
+      /* APPLE LOCAL end mainlne */
 
       adjusted_args_size = args_size;
       /* Compute the actual size of the argument block required.  The variable

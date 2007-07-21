@@ -84,8 +84,8 @@ do {									\
   /* APPLE LOCAL begin constant cfstrings */				\
   /* This just sets the default, SUBSUBTRAGET_OVERRIDE_OPTIONS will	\
      let the user override it.  */					\
-  darwin_constant_cfstrings = (darwin_macosx_version_min		\
-       && strverscmp (darwin_macosx_version_min, "10.2") >= 0);		\
+  darwin_constant_cfstrings = 						\
+    strverscmp (darwin_macosx_version_min, "10.2") >= 0;		\
   /* APPLE LOCAL end constant cfstrings */				\
   if (DEFAULT_ABI == ABI_DARWIN)					\
   {									\
@@ -136,7 +136,8 @@ do {									\
      G4 unless targetting the kernel.  */				\
   if (!flag_mkernel							\
       && !flag_apple_kext						\
-      && darwin_macosx_version_min					\
+/* APPLE LOCAL begin mainline 2007-02-20 5005743 */			\
+/* APPLE LOCAL end mainline 2007-02-20 5005743 */			\
       && strverscmp (darwin_macosx_version_min, "10.5") >= 0		\
       && ! (target_flags_explicit & MASK_ALTIVEC)			\
       && ! rs6000_select[1].string)					\
@@ -154,8 +155,8 @@ do {									\
 #define C_COMMON_OVERRIDE_OPTIONS do {					\
   /* On powerpc, __cxa_get_exception_ptr is available starting in the	\
      10.4.6 libstdc++.dylib.  */					\
-  if ((! darwin_macosx_version_min					\
-       || strverscmp (darwin_macosx_version_min, "10.4.6") < 0)		\
+/* APPLE LOCAL mainline 2007-02-20 5005743 */				\
+  if (strverscmp (darwin_macosx_version_min, "10.4.6") < 0		\
       && flag_use_cxa_get_exception_ptr == 2)				\
     flag_use_cxa_get_exception_ptr = 0;					\
   if (flag_mkernel)							\
@@ -186,6 +187,8 @@ do {									\
 #define CC1_SPEC "\
   "/* APPLE LOCAL ignore -msse and -msse2 and other x86 options */"\
   %<msse  %<msse2 %<msse3 %<march=pentium4 %<mcpu=pentium4 \
+  "/* APPLE LOCAL mainline 2007-02-20 5005743 */"\
+  %{!mmacosx-version-min=*:-mmacosx-version-min=%(darwin_minversion)} \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
   %{static: %{Zdynamic: %e conflicting code gen style switches are used}}\
   "/* APPLE LOCAL -fast and PIC code.  */"\
@@ -218,6 +221,18 @@ do {									\
 #define DARWIN_CRT2_SPEC \
   "%{!m64:%:version-compare(!> 10.4 mmacosx-version-min= crt2.o%s)}"
 /* APPLE LOCAL end mainline 2005-11-15 4271575 */
+/* APPLE LOCAL begin mainline 2007-03-13 5005743 5040758 */ \
+
+/* Determine a minimum version based on compiler options.  */
+#define DARWIN_MINVERSION_SPEC					\
+  "%{m64:%{fgnu-runtime:10.4;					\
+	   ,objective-c|,objc-cpp-output:10.5;			\
+	   ,objective-c++|,objective-c++-cpp-output:10.5;	\
+	   :10.4};						\
+     shared-libgcc:10.3;					\
+     :10.1}"
+
+/* APPLE LOCAL end mainline 2007-03-13 5040758 5005743 */
 /* APPLE LOCAL begin mainline */
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS			\
@@ -249,9 +264,10 @@ do {									\
 #define FIXED_R13 0
 
 /* Base register for access to local variables of the function.  */
-
-#undef  FRAME_POINTER_REGNUM
-#define FRAME_POINTER_REGNUM 30
+/* APPLE LOCAL begin mainline */
+#undef  HARD_FRAME_POINTER_REGNUM
+#define HARD_FRAME_POINTER_REGNUM 30
+/* APPLE LOCAL end mainline */
 
 #undef  RS6000_PIC_OFFSET_TABLE_REGNUM
 #define RS6000_PIC_OFFSET_TABLE_REGNUM 31
@@ -273,14 +289,16 @@ do {									\
     ? RS6000_PIC_OFFSET_TABLE_REGNUM \
     : INVALID_REGNUM)
 /* APPLE LOCAL end -pg fix */
-
 /* Pad the outgoing args area to 16 bytes instead of the usual 8.  */
-
+/* APPLE LOCAL begin mainline */
 #undef STARTING_FRAME_OFFSET
 #define STARTING_FRAME_OFFSET						\
-  (RS6000_ALIGN (current_function_outgoing_args_size, 16)		\
+  (FRAME_GROWS_DOWNWARD                                                 \
+   ? 0                                                                  \
+   : (RS6000_ALIGN (current_function_outgoing_args_size, 16)		\
    + RS6000_VARARGS_AREA						\
-   + RS6000_SAVE_AREA)
+      + RS6000_SAVE_AREA))
+/* APPLE LOCAL end mainline */
 
 #undef STACK_DYNAMIC_OFFSET
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
@@ -311,7 +329,8 @@ do {									\
 #define FP_SAVE_INLINE(FIRST_REG) \
 (optimize >= 3   \
 || ((FIRST_REG) > 60 && (FIRST_REG) < 64) \
-|| TARGET_LONG_BRANCH)
+|| TARGET_LONG_BRANCH \
+|| flag_stack_protect)
 /* APPLE LOCAL end inline FP save/restore (radar 3414605) */
 
 /* Define cutoff for using external functions to save vector registers.  */
@@ -319,12 +338,14 @@ do {									\
 #undef VECTOR_SAVE_INLINE
 #define VECTOR_SAVE_INLINE(FIRST_REG) \
   (((FIRST_REG) >= LAST_ALTIVEC_REGNO - 1 && (FIRST_REG) <= LAST_ALTIVEC_REGNO) \
-   || TARGET_LONG_BRANCH)
+   || TARGET_LONG_BRANCH \
+   || flag_stack_protect)
 /* APPLE LOCAL end long-branch */
 
 /* Darwin uses a function call if everything needs to be saved/restored.  */
 #undef WORLD_SAVE_P
-#define WORLD_SAVE_P(INFO) ((INFO)->world_save_p)
+/* APPLE LOCAL stack protection */
+#define WORLD_SAVE_P(INFO) ((flag_stack_protect == 0) && (INFO)->world_save_p)
 
 /* The assembler wants the alternate register names, but without
    leading percent sign.  */
@@ -347,7 +368,10 @@ do {									\
     "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",             \
     "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",             \
     "vrsave", "vscr",							\
-    "spe_acc", "spefscr"                                                \
+    /* APPLE LOCAL begin mainline */					\
+    "spe_acc", "spefscr",						\
+    "sfp"								\
+    /* APPLE LOCAL end mainline */					\
 }
 
 /* This outputs NAME to FILE.  */
@@ -368,19 +392,9 @@ do {									\
 #undef ASM_OUTPUT_INTERNAL_LABEL_PREFIX
 #define ASM_OUTPUT_INTERNAL_LABEL_PREFIX(FILE,PREFIX)	\
   fprintf (FILE, "%s", PREFIX)
-
-/* This says how to output an assembler line to define a global common
-   symbol.  */
-/* ? */
-#undef  ASM_OUTPUT_ALIGNED_COMMON
-#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)			\
-  do {									\
-    unsigned HOST_WIDE_INT _new_size = SIZE;				\
-    fputs (".comm ", (FILE));						\
-    RS6000_OUTPUT_BASENAME ((FILE), (NAME));				\
-    if (_new_size == 0) _new_size = 1;					\
-    fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", _new_size);	\
-  } while (0)
+/* APPLE LOCAL begin mainline */
+/* Removed ASM_OUTPUT_COMMON */
+/* APPLE LOCAL end mainline */
 
 /* Override the standard rs6000 definition.  */
 
@@ -587,8 +601,8 @@ extern const char *darwin_one_byte_bool;
     (flag_next_runtime			\
      && flag_objc_direct_dispatch != 0	\
      && !TARGET_64BIT			\
-     && ((darwin_macosx_version_min	\
-          && strverscmp (darwin_macosx_version_min, "10.4") >= 0) \
+/* APPLE LOCAL mainline 2007-02-20 5005743 */ \
+     && (strverscmp (darwin_macosx_version_min, "10.4") >= 0 \
          || flag_objc_direct_dispatch == 1))
 
 /* This is the reserved direct dispatch address for Objective-C.  */
@@ -605,8 +619,8 @@ extern const char *darwin_one_byte_bool;
 #undef TARGET_C99_FUNCTIONS
 #define TARGET_C99_FUNCTIONS					\
   (TARGET_64BIT							\
-   || (darwin_macosx_version_min				\
-       && strverscmp (darwin_macosx_version_min, "10.3") >= 0))
+/* APPLE LOCAL mainline 2007-02-20 5005743 */ \
+   || strverscmp (darwin_macosx_version_min, "10.3") >= 0)
 /* APPLE LOCAL end mainline 2005-09-01 3449986 */
 
 /* APPLE LOCAL begin mainline */

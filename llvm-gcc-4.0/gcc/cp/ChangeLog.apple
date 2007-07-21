@@ -1,3 +1,63 @@
+2007-04-20 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5130983
+	* parser.c (cp_parser_parse_foreach_stmt): Parse selector expression
+	as an expression.
+	(objc_foreach_stmt): Issue diagnostic on non-lavlue selector 
+	expression.
+
+2007-04-18 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5128402
+	* parser.c (objc_finish_foreach_stmt): Set elem to nil at the else part 
+	of the outer if-stmt instead of at the begining.
+
+2007-03-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4947014 - objc atomic property
+	* lex.c (RID_NONATOMIC): Add
+	* parser.c (objc_cp_parser_at_property): Recognize 'nonatomic' as
+	new property attribute.
+
+2007-03-13 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4564694
+	* lex.c (RID_AT_PACKAGE): Add
+	* parser.c (cp_lexer_get_preprocessor_token): Parse @package.
+
+2007-02-28  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 5027856
+	* g++spec.c (lang_specific_driver): Merge from FSF mainline.
+
+2007-02-15  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4995967
+	* parser.c (cp_parser_objc_try_catch_finally_stateme): Parse @catch (...) unconditionally.
+
+2007-02-12  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4965989
+        * parser.c (cp_parser_objc_superclass_or_category):  Add supprt for 
+	anonymous category syntax.
+	(cp_parser_objc_superclass_or_category, cp_parser_objc_class_interface): Changed because
+	of change to cp_parser_objc_superclass_or_category API.
+	
+2007-01-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 2848255
+	* except.c (do_begin_catch): Take a new argument to decide
+	to call objc_begin_catch for objc exceptions.
+	(objcp_build_eh_type_type): New.
+	(do_end_catch): Call objc_end_catch for objc type 
+	exceptions.
+	(expand_start_catch_block): Add new argument to do_begin_catch call.
+	(build_throw): Call objc_throw_exception for throwing objc type objects.
+	* cp-tree.h (objc2_valid_objc_catch_type, objcp_build_eh_type_type): 
+	New extern decl.
+	* parser.c (cp_parser_objc_try_catch_finally_stateme): Add syntax for
+	@catch(...).
+	
 2006-11-30  Fariborz Jahanian <fjahania@apple.com>
 
         Radar 4854605

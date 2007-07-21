@@ -2,7 +2,8 @@
 /* When assigning function pointers, allow for covariant return types
    and contravariant argument types.  */
 /* { dg-do compile } */
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @class Derived;
 

@@ -167,23 +167,21 @@ extern void objc_symbols_section (void);
 extern void objc_module_info_section (void);
 extern void objc_image_info_section (void);
 extern void objc_protocol_section (void);
-/* APPLE LOCAL begin ObjC new abi */
-extern void objc_classlist_section (void);
-extern void objc_categorylist_section (void);
+/* APPLE LOCAL begin ObjC new abi - radar 4792158*/
+extern void objc_v2_classlist_section (void);
+extern void objc_v2_categorylist_section (void);
 extern void objc_data_section (void);
-extern void objc_message_refs_section (void);
-extern void objc_classrefs_section (void);
-extern void objc_nonlazy_class_section (void);
-extern void objc_nonlazy_category_section (void);
+extern void objc_v2_message_refs_section (void);
+extern void objc_v2_classrefs_section (void);
+extern void objc_v2_nonlazy_class_section (void);
+extern void objc_v2_nonlazy_category_section (void);
 extern void objc_v2_selector_refs_section (void);
-extern void objc_v2_protocol_section (void);
-/* APPLE LOCAL end ObjC new abi */
-/* APPLE LOCAL radar 4535676 */
-extern void objc_super_classrefs_section (void);
-/* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
-extern void objc_protocollist_section (void);
-extern void objc_protocolrefs_section (void);
-/* APPLE LOCAL end radar 4533974 - ObjC new protocol */
+extern void objc_v2_super_classrefs_section (void);
+extern void objc_v2_protocollist_section (void);
+extern void objc_v2_protocolrefs_section (void);
+extern void objc_v2_image_info_section (void);
+extern void objc_v2_constant_string_object_section (void);
+/* APPLE LOCAL end ObjC new abi - radar 4792158 */
 /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
 extern void objc_class_ext_section (void);
 extern void objc_prop_list_section (void);
@@ -232,6 +230,11 @@ extern void darwin_init_cfstring_builtins (void);
 extern tree darwin_expand_tree_builtin (tree, tree, tree);
 extern tree darwin_construct_objc_string (tree);
 /* APPLE LOCAL end constant cfstrings */
+
+/* APPLE LOCAL begin radar 4985544 */
+extern bool darwin_cfstring_type_node (tree);
+extern bool objc_check_format_cfstring (tree, unsigned HOST_WIDE_INT, bool *);
+/* APPLE LOCAL end radar 4985544 */
 
 /* APPLE LOCAL CW asm blocks */
 #define IASM_SPECIAL_LABEL(ID) darwin_iasm_special_label (ID)

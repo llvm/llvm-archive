@@ -53,6 +53,10 @@
 4079018: g++.dg/template/spec19.C (test for excess errors)
 4084977: g++.old-deja/g++.oliva/expr2.C execution test
 4084991: g++.dg/expr/lval2.C (test for excess errors)
+5040758: g++.apple/4850442.C (test for excess errors)
+5040758: g++.apple/4905666.C (test for excess errors)
+5040758: g++.apple/asm-block-21.C (test for excess errors)
+5040758: g++.apple/asm-block-58.C (test for excess errors)
 #
 # The following tests fail only when the c++ suite is run with -mcpu=G5
 #4255172: g++.dg/align-test-1.C (test for excess errors)
@@ -109,3 +113,13 @@
 4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 10)
 4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 12)
 4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 13)
+#
+# the following failures are for -fstack-protector-all only
+# (x86 only)
+4990350: g++.apple/asm-block-11.C (test for excess errors)
+4990350: g++.apple/asm-block-15.C (test for excess errors)
+4990350: g++.apple/asm-block-27.C (test for excess errors)
+4990350: g++.apple/asm-block-37.C (test for excess errors)
+4990350: g++.apple/asm-block-38.C (test for excess errors)
+4990353: g++.apple/asm-block-54.C scan-assembler movq -16\\(%ebp\\), %mm0
+4990353: g++.apple/asm-block-59.C scan-assembler -24\\(%ebp,%edx,2\\), %ebx

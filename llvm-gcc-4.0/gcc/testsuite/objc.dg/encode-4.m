@@ -52,14 +52,16 @@ struct Nested {
 @end
 
 /* APPLE LOCAL begin objc2 */
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
 Ivar *ivar;
 #else
 struct objc_ivar *ivar;
 #endif
 
 static void check_ivar(const char *name, const char *type) {
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   CHECK_IF(!strcmp(ivar_getName(*ivar), name));
   CHECK_IF(!strcmp(ivar_getTypeEncoding(*ivar), type));
 #else
@@ -72,7 +74,8 @@ static void check_ivar(const char *name, const char *type) {
 
 int main(void) {
 /* APPLE LOCAL begin objc2 */
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int1"), NULL);
 #else
   ivar = ((Class)OBJC_GETCLASS("Int1"))->ivars->ivar_list;
@@ -85,7 +88,8 @@ int main(void) {
     "{Nested=\"a\"f\"b\"f\"next\"@\"Int1\"\"innermost\"{Innermost=\"a\"C\"b\"C\"encl\"^{Nested}}}");
 
 /* APPLE LOCAL begin objc2 */
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int2"), NULL);
 #else
   ivar = ((Class)OBJC_GETCLASS("Int2"))->ivars->ivar_list;

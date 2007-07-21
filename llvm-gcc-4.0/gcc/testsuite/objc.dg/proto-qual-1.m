@@ -30,7 +30,8 @@ extern void abort(void);
 - (bycopy) address:(byref inout id)location with:(out short unsigned **)arg2 { return nil; }
 @end
 
-Protocol *proto = @protocol(Retain);
+/* APPLE LOCAL radar 4894756 */
+/* declaration moved */
 struct objc_method_description *meth;
 unsigned totsize, offs0, offs1, offs2, offs3, offs4, offs5, offs6, offs7;
 
@@ -42,6 +43,8 @@ static void scan_initial(const char *pattern) {
 }
 
 int main(void) {
+  /* APPLE LOCAL radar 4894756 */
+  Protocol *proto = @protocol(Retain);
   meth = [proto descriptionForInstanceMethod: @selector(address:with:)];
   /* APPLE LOCAL radar 4301047 */
   scan_initial("O@%u@%u:%uNR@%uo^^S%u");

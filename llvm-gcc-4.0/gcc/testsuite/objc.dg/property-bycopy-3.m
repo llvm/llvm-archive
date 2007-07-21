@@ -1,6 +1,8 @@
 /* APPLE LOCAL file radar 4631814 */
 /* This test should not produce any error or warning when property name is
    assigned to without use of 'self' qualifier. */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <Cocoa/Cocoa.h>

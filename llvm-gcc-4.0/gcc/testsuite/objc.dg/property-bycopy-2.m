@@ -1,5 +1,7 @@
 /* APPLE LOCAL file radar 4625843 */
 /* Test that bycopy calls are generated. */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
 @protocol NSCopying;
 

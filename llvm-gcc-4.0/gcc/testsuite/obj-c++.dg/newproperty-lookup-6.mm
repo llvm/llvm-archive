@@ -1,9 +1,10 @@
 /* APPLE LOCAL file 4805321 */
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fobjc-new-property -lobjc" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -lobjc" } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 
 @protocol GCObject

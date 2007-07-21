@@ -3,6 +3,7 @@
 
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc" } */
+/* { dg-options "-fnext-runtime -fobjc-gc -mmacosx-version-min=10.3" { target powerpc*-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/objc.h>

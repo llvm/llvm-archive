@@ -1,7 +1,8 @@
 /* APPLE LOCAL file 4696522 */
 /* Test that c-style cast of objective-c pointer to objects works. */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 
 static int res = 1;

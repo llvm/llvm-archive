@@ -2,6 +2,7 @@
 /* Check that -fobjc-gc-only option produces a 110 flag in objc section. */
 /* { dg-options "-fobjc-gc-only" } */
 /* { dg-do compile } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface INTF
 @end

@@ -136,6 +136,8 @@ extern const char *llvm_optns;
 extern void display_target_options (void);
 extern void print_version (FILE *, const char *);
 extern void set_target_switch (const char *);
+/* APPLE LOCAL option verifier 4957887 */
+extern char * get_arguments (void);
 extern void * default_get_pch_validity (size_t *);
 extern const char * default_pch_valid_p (const void *, size_t);
 

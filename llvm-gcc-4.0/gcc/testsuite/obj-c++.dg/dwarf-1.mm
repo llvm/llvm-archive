@@ -3,7 +3,8 @@
 /* { dg-final { scan-assembler "\"main\\\\0\".*DW_AT_name" } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 extern "C" void abort (void);
 
 @interface Bar : Object

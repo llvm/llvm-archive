@@ -2,6 +2,8 @@
 /* { dg-do compile } */
 /* { dg-options "-O2" } */
 /* Contributed by Ziemowit Laski  <zlaski@apple.com>  */
+/* APPLE LOCAL radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface Test
 -(void) test2: (volatile int) a;

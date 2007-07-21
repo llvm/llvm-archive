@@ -2,7 +2,7 @@
 /* Test for correct property setter lookup when a similarl method name
    exists in an unrelated class. Test should compile with no error.
 */
-/* { dg-options "-fobjc-new-property -std=c99" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -std=c99" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <objc/objc.h>

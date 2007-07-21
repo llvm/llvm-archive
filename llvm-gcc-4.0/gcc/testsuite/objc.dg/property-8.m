@@ -2,11 +2,13 @@
 /* Test for correct property setter lookup when a similarl method name
    exists in an unrelated class. Test should compile with no error.
 */
-/* { dg-options "-std=c99 -lobjc" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -std=c99 -lobjc" } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 typedef struct {int x, y, w, h;} st1;
 typedef struct {int x, y, w, h;} st2;

@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test that property need not be declared in @implementation for it to be used. */
-/* { dg-options "-fobjc-new-property -framework Cocoa" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -framework Cocoa" } */
 /* { dg-do run { target *-*-darwin* } } */
 #include <Foundation/Foundation.h>
 
@@ -36,7 +36,11 @@
 
 -(void)observeValueForKeyPath:(NSString*)keypath ofObject:obj change:(NSDictionary *)change context:(void *) context
 {
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
+  printf("observing %s is now %d\n", [keypath UTF8String], ((Foo *)obj).bar);
+#else
   printf("observing %s is now %d\n", [keypath cString], ((Foo *)obj).bar);
+#endif
 }
 @end
 

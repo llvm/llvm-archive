@@ -2,7 +2,8 @@
 /* Test that in the presence of instantiated template as return method parameter
    that is memory bound, we still generate objc_msgSend_stret for all platforms. */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* APPLE LOCAL radar 4492976 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface Joiner {
 }

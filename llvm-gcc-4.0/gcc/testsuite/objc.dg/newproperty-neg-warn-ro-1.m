@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4815061 */
 /* Warn when derived class restrics accessors; i.e. readwrite->readonly. 
    But do not warn when it expands; i.e. readonly->readwrite. */
-/* { dg-options "-fobjc-new-property" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 
 @interface Mutable

@@ -3,6 +3,8 @@
 #include <objc/objc.h>
 #include <objc/objc-api.h>
 #include <objc/Object.h>
+/* APPLE LOCAL radar file 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 extern void abort (void);
 

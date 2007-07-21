@@ -115,8 +115,8 @@ extern bool output_addr_const_extra (FILE*, rtx);
 
 extern void split_di (rtx[], int, rtx[], rtx[]);
 extern void split_ti (rtx[], int, rtx[], rtx[]);
-
-extern const char *output_set_got (rtx);
+/* APPLE LOCAL mainline */
+extern const char *output_set_got (rtx, rtx);
 extern const char *output_387_binary_op (rtx, rtx*);
 extern const char *output_387_reg_move (rtx, rtx*);
 /* APPLE LOCAL mainline 2005-03-16 4054919 */

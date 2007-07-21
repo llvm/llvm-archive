@@ -3,7 +3,7 @@
 /* { dg-options "-fnext-runtime" } */
 /* { dg-do compile { target *-*-darwin* } } */
 /* APPLE LOCAL radar 4492976 */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

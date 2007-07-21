@@ -1067,6 +1067,8 @@ int const svr4_dbx_register_map[FIRST_PSEUDO_REGISTER+1] =
 
 rtx ix86_compare_op0 = NULL_RTX;
 rtx ix86_compare_op1 = NULL_RTX;
+/* APPLE LOCAL mainline */
+rtx ix86_compare_emitted = NULL_RTX;
 
 #define MAX_386_STACK_LOCALS 3
 /* Size of the register save area.  */
@@ -1467,6 +1469,10 @@ static void init_ext_80387_constants (void);
 #undef TARGET_INSERT_ATTRIBUTES
 #define TARGET_INSERT_ATTRIBUTES SUBTARGET_INSERT_ATTRIBUTES
 #endif
+/* APPLE LOCAL begin mainline */
+#undef TARGET_STACK_PROTECT_FAIL
+#define TARGET_STACK_PROTECT_FAIL default_hidden_stack_protect_fail
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin mainline 2005-09-20 4205103 */
 #undef TARGET_FUNCTION_VALUE
@@ -2096,9 +2102,9 @@ override_options (void)
       flag_pic = 2;
     }
   /* APPLE LOCAL end dynamic-no-pic */
-  /* APPLE LOCAL begin 4812802 -fast */
+  /* APPLE LOCAL begin 4812082 -fast */
   /* These flags were the best on the software H264 codec, and have therefore
-     been lumped into -fast per 4812802.  They have not been evaluated on
+     been lumped into -fast per 4812082.  They have not been evaluated on
      any other code, except that -fno-tree-pre is known to lose on the 
      hardware accelerated version of the codec. */
   if (flag_fast || flag_fastf || flag_fastcp)
@@ -2106,10 +2112,10 @@ override_options (void)
       flag_omit_frame_pointer = 1;
       flag_strict_aliasing = 1;
       flag_tree_pre = 0;
-      target_flags |= MASK_OMIT_LEAF_FRAME_POINTER;
+      target_flags &= ~MASK_OMIT_LEAF_FRAME_POINTER;
       align_loops = processor_target_table[ix86_tune].align_loop;
     }
-  /* APPLE LOCAL end 4812802 -fast */
+  /* APPLE LOCAL end 4812082 -fast */
 }
 
 void
@@ -4782,7 +4788,8 @@ ix86_setup_frame_addresses (void)
   cfun->machine->accesses_prev_frame = 1;
 }
 
-#if defined(HAVE_GAS_HIDDEN) && defined(SUPPORTS_ONE_ONLY)
+/* APPLE LOCAL mainline */
+#if (defined(HAVE_GAS_HIDDEN) && defined(SUPPORTS_ONE_ONLY)) || TARGET_MACHO
 # define USE_HIDDEN_LINKONCE 1
 #else
 # define USE_HIDDEN_LINKONCE 0
@@ -4825,7 +4832,20 @@ ix86_file_end (void)
 	continue;
 
       get_pc_thunk_name (name, regno);
-
+      /* APPLE LOCAL begin mainline */
+#if TARGET_MACHO
+      if (TARGET_MACHO)
+        {
+          text_coal_section ();
+          fputs ("\t.weak_definition\t", asm_out_file);
+          assemble_name (asm_out_file, name);
+          fputs ("\n\t.private_extern\t", asm_out_file);
+          assemble_name (asm_out_file, name);
+          fputs ("\n", asm_out_file);
+          ASM_OUTPUT_LABEL (asm_out_file, name);
+        }
+      else
+#endif
       if (USE_HIDDEN_LINKONCE)
 	{
 	  tree decl;
@@ -4845,20 +4865,7 @@ ix86_file_end (void)
 	  fputc ('\n', asm_out_file);
 	  ASM_DECLARE_FUNCTION_NAME (asm_out_file, name, decl);
 	}
-      /* APPLE LOCAL begin deep branch prediction pic-base */
-#if TARGET_MACHO
-      else if (TARGET_MACHO)
-	{
-	  text_coal_section ();
-	  fputs (".weak_definition\t", asm_out_file);
-	  assemble_name (asm_out_file, name);
-	  fputs ("\n.private_extern\t", asm_out_file);
-	  assemble_name (asm_out_file, name);
-	  fputs ("\n", asm_out_file);
-	  ASM_OUTPUT_LABEL (asm_out_file, name);
-	}
-#endif
-      /* APPLE LOCAL end deep branch prediction pic-base */
+      /* APPLE LOCAL end mainline */
       else
 	{
 	  text_section ();
@@ -4876,9 +4883,9 @@ ix86_file_end (void)
 }
 
 /* Emit code for the SET_GOT patterns.  */
-
+/* APPLE LOCAL begin mainline */
 const char *
-output_set_got (rtx dest)
+output_set_got (rtx dest, rtx label ATTRIBUTE_UNUSED)
 {
   rtx xops[3];
 
@@ -4887,7 +4894,7 @@ output_set_got (rtx dest)
 
   if (! TARGET_DEEP_BRANCH_PREDICTION || !flag_pic)
     {
-      xops[2] = gen_rtx_LABEL_REF (Pmode, gen_label_rtx ());
+      xops[2] = gen_rtx_LABEL_REF (Pmode, label ? label : gen_label_rtx ());
 
       if (!flag_pic)
 	output_asm_insn ("mov{l}\t{%2, %0|%0, %2}", xops);
@@ -4897,6 +4904,7 @@ output_set_got (rtx dest)
 #if TARGET_MACHO
       /* Output the "canonical" label name ("Lxx$pb") here too.  This
          is what will be referred to by the Mach-O PIC subsystem.  */
+      if (!label)
       ASM_OUTPUT_LABEL (asm_out_file, machopic_function_base_name ());
 #endif
       (*targetm.asm_out.internal_label) (asm_out_file, "L",
@@ -4918,24 +4926,26 @@ output_set_got (rtx dest)
 #if TARGET_MACHO
       /* Output the "canonical" label name ("Lxx$pb") here too.  This
          is what will be referred to by the Mach-O PIC subsystem.  */
-      if (cfun)
+      if (!label)
 	ASM_OUTPUT_LABEL (asm_out_file, machopic_function_base_name ());
+      else
+	targetm.asm_out.internal_label (asm_out_file, "L",
+					CODE_LABEL_NUMBER (label));
 #endif
       /* APPLE LOCAL end deep branch prediction pic-base */
     }
 
-  /* APPLE LOCAL begin deep branch prediction pic-base */
-#if !TARGET_MACHO
+  if (TARGET_MACHO)
+    return "";
+
   if (!flag_pic || TARGET_DEEP_BRANCH_PREDICTION)
     output_asm_insn ("add{l}\t{%1, %0|%0, %1}", xops);
-  else if (!TARGET_MACHO)
+  else
     output_asm_insn ("add{l}\t{%1+[.-%a2], %0|%0, %a1+(.-%a2)}", xops);
-#endif	/* !TARGET_MACHO */
-  /* APPLE LOCAL end deep branch prediction pic-base */
 
   return "";
 }
-
+/* APPLE LOCAL end mainline */
 /* Generate an "push" pattern for input ARG.  */
 
 static rtx
@@ -6714,7 +6724,13 @@ legitimize_pic_address (rtx orig, rtx reg)
 		{
 		  if (INTVAL (op1) < -16*1024*1024
 		      || INTVAL (op1) >= 16*1024*1024)
-		    new = gen_rtx_PLUS (Pmode, force_reg (Pmode, op0), op1);
+                    /* APPLE LOCAL begin mainline 2005-11-07 4905666 */
+                    {
+                      if (!x86_64_immediate_operand (op1, Pmode))
+                        op1 = force_reg (Pmode, op1);
+                      new = gen_rtx_PLUS (Pmode, force_reg (Pmode, op0), op1);
+                    }
+                    /* APPLE LOCAL end mainline 2005-11-07 4905666 */
 		}
 	    }
 	  else
@@ -10740,13 +10756,19 @@ ix86_expand_compare (enum rtx_code code, rtx *second_test, rtx *bypass_test)
     *second_test = NULL_RTX;
   if (bypass_test)
     *bypass_test = NULL_RTX;
+  /* APPLE LOCAL begin mainline */
 
-  if (GET_MODE_CLASS (GET_MODE (op0)) == MODE_FLOAT)
+  if (ix86_compare_emitted)
+    {
+      ret = gen_rtx_fmt_ee (code, VOIDmode, ix86_compare_emitted, const0_rtx);
+      ix86_compare_emitted = NULL_RTX;
+    }
+  else if (GET_MODE_CLASS (GET_MODE (op0)) == MODE_FLOAT)
     ret = ix86_expand_fp_compare (code, op0, op1, NULL_RTX,
 				  second_test, bypass_test);
   else
     ret = ix86_expand_int_compare (code, op0, op1);
-
+  /* APPLE LOCAL end mainline */
   return ret;
 }
 
@@ -11070,11 +11092,15 @@ ix86_expand_setcc (enum rtx_code code, rtx dest)
     }
 
   /* Attach a REG_EQUAL note describing the comparison result.  */
+  /* APPLE LOCAL begin mainline */
+  if (ix86_compare_op0 && ix86_compare_op1)
+    {
   equiv = simplify_gen_relational (code, QImode,
 				   GET_MODE (ix86_compare_op0),
 				   ix86_compare_op0, ix86_compare_op1);
   set_unique_reg_note (get_last_insn (), REG_EQUAL, equiv);
-
+    }
+  /* APPLE LOCAL end mainline */
   return 1; /* DONE */
 }
 
@@ -17448,7 +17474,8 @@ machopic_output_stub (FILE *file, const char *symb, const char *stub)
 	{
 	  /* 25-byte PIC stub using "CALL get_pc_thunk".  */
 	  rtx tmp = gen_rtx_REG (SImode, 2 /* ECX */);
-	  output_set_got (tmp);	/* "CALL ___<cpu>.get_pc_thunk.cx".  */
+	  /* APPLE LOCAL mainline */
+	  output_set_got (tmp, NULL_RTX);	/* "CALL ___<cpu>.get_pc_thunk.cx".  */
 	  fprintf (file, "LPC$%d:\tmovl\t%s-LPC$%d(%%ecx),%%ecx\n", label, lazy_ptr_name, label);
 	}
       else
@@ -17837,7 +17864,8 @@ x86_output_mi_thunk (FILE *file ATTRIBUTE_UNUSED,
 #endif /* TARGET_MACHO */
 	{
 	  tmp = gen_rtx_REG (SImode, 2 /* ECX */);
-	  output_set_got (tmp);
+	  /* APPLE LOCAL mainline */
+	  output_set_got (tmp, NULL_RTX);
 
 	  xops[1] = tmp;
 	  output_asm_insn ("mov{l}\t{%0@GOT(%1), %1|%1, %0@GOT[%1]}", xops);
@@ -20518,5 +20546,4 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
   return true;
 }
 /* APPLE LOCAL end CW asm blocks */
-
 #include "gt-i386.h"

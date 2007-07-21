@@ -4,7 +4,7 @@ The following test program should emit metadata for _OBJC_PROTOCOL_$_Proto2 and 
  This root emits both protocols and puts them both in __protocol_list.
 */
 // should emit Proto2 only. Proto1 should not be emitted.
-/* { dg-options "-fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 

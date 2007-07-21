@@ -1051,10 +1051,11 @@ darwin_cpp_builtins (cpp_reader *pfile)
   /* APPLE LOCAL Apple version */
   /* Don't define __APPLE_CC__ here.  */
 
-  if (darwin_macosx_version_min)
-    builtin_define_with_value ("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",
-			       version_as_macro(), false);
+/* APPLE LOCAL begin mainline 2007-02-20 5005743 */
+  builtin_define_with_value ("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",
+			     version_as_macro(), false);
 
+/* APPLE LOCAL end mainline 2007-02-20 5005743 */
   /* APPLE LOCAL begin constant cfstrings */
   if (darwin_constant_cfstrings)
     builtin_define ("__CONSTANT_CFSTRINGS__");
@@ -1079,9 +1080,17 @@ darwin_cpp_builtins (cpp_reader *pfile)
     }
   /* APPLE LOCAL end ObjC GC */
   /* APPLE LOCAL begin C* warnings to easy porting to new abi */
-  if (flag_objc_abi >= 2)
+  if (flag_objc_abi == 2)
     builtin_define ("__OBJC2__");
   /* APPLE LOCAL end C* warnings to easy porting to new abi */
+  /* APPLE LOCAL begin radar 5072864 */
+  if (flag_objc_zerocost_exceptions)
+    builtin_define ("OBJC_ZEROCOST_EXCEPTIONS");
+  /* APPLE LOCAL begin radar 4899595 */
+  if (flag_objc_new_property)
+    builtin_define ("OBJC_NEW_PROPERTIES");
+  /* APPLE LOCAL end radar 4899595 */
+  /* APPLE LOCAL end radar 5072864 */
   /* APPLE LOCAL begin radar 4224728 */
   if (flag_pic)
     builtin_define ("__PIC__");
@@ -1111,3 +1120,41 @@ darwin_handle_c_option (size_t code, const char *arg, int value ATTRIBUTE_UNUSED
   return true;
 }
 /* APPLE LOCAL end iframework for 4.3 4094959 */
+
+/* APPLE LOCAL begin radar 4985544 - radar 5096648 */
+/* This routine checks that FORMAT_NUM'th argument ARGUMENT has the 'CFStringRef' type. */
+bool
+objc_check_format_cfstring (tree argument,
+                            unsigned HOST_WIDE_INT format_num,
+                            bool *no_add_attrs)
+{
+  unsigned HOST_WIDE_INT i;
+  bool ok = true;
+  tree CFStringRef_decl;
+
+  for (i = 1; i != format_num; i++)
+    {
+      if (argument == 0)
+        break;
+       argument = TREE_CHAIN (argument);
+    }
+
+  CFStringRef_decl = lookup_name_two (get_identifier ("CFStringRef"), 0);
+  if (!CFStringRef_decl || TREE_CODE (CFStringRef_decl) != TYPE_DECL)
+    ok = false;
+  else
+    {
+      tree t1 = TREE_VALUE (argument);
+      tree t2 = TREE_TYPE (CFStringRef_decl);
+      if (t1 != t2)
+        ok = false;
+    }
+
+  if (!ok)
+    {
+      error ("format CFString argument not an 'CFStringRef' type");
+      *no_add_attrs = true;
+    }
+  return ok;
+}
+/* APPLE LOCAL end radar 4985544 - radar 5096648 */

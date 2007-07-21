@@ -381,6 +381,8 @@ case ${target} in
  # APPLE LOCAL begin mainline 2006-03-15 3992198
  # APPLE LOCAL end mainline 2006-03-15 3992198
   extra_objs="darwin.o"
+ # APPLE LOCAL 4697325
+  extra_gcc_objs="darwin-driver.o"
  # APPLE LOCAL begin mainline 2006-03-15 3992198
   default_use_cxa_atexit=yes
  # APPLE LOCAL end mainline 2006-03-15 3992198

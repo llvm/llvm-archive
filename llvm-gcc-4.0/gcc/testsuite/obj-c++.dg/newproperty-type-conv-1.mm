@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4903391 */
 /* Test that rules for 'ivar' assignment of property in a @synthesize declaration
    follows the same type conversion rule for a setter/getter. */
+/* { dg-options "-mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 
 @class AClass;

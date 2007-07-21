@@ -361,6 +361,11 @@ struct function GTY(())
 
   /* The variables unexpanded so far.  */
   tree unexpanded_var_list;
+  /* APPLE LOCAL begin mainline */
+  /* A variable living at the top of the frame that holds a known value.
+     Used for detecting stack clobbers.  */
+  tree stack_protect_guard;
+  /* APPLE LOCAL end mainline */
 
   /* Collected bit flags.  */
 

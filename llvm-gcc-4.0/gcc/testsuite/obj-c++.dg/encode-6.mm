@@ -5,7 +5,8 @@
 /* { dg-do run } */
 
 #include <stddef.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #ifdef __NEXT_RUNTIME__
 #include <objc/objc-class.h>
 #define OBJC_GETCLASS objc_getClass
@@ -52,15 +53,16 @@ struct Nested {
 
 @implementation Int2
 @end
-
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
 Ivar *ivar;
 #else
 struct objc_ivar *ivar;
 #endif
 
 static void check_ivar(const char *name, const char *type) {
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   CHECK_IF(!strcmp(ivar_getName(*ivar), name));
   CHECK_IF(!strcmp(ivar_getTypeEncoding(*ivar), type));
 #else
@@ -71,7 +73,8 @@ static void check_ivar(const char *name, const char *type) {
 }
 
 int main(void) {
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int1"), NULL);
 #else
   ivar = ((Class)OBJC_GETCLASS("Int1"))->ivars->ivar_list;
@@ -82,7 +85,8 @@ int main(void) {
   check_ivar("nested", 
     "{Nested=\"a\"f\"b\"f\"next\"@\"Int1\"\"innermost\"{Innermost=\"a\"C\"b\"C\"encl\"^{Nested}}}");
 
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int2"), NULL);
 #else
   ivar = ((Class)OBJC_GETCLASS("Int2"))->ivars->ivar_list;

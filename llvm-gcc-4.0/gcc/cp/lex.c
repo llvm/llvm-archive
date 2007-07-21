@@ -336,6 +336,10 @@ static const struct resword reswords[] =
   { "retain",           RID_RETAIN,       D_OBJC },
   { "copy",             RID_COPY,         D_OBJC },
   /* APPLE LOCAL end objc new property */
+  /* APPLE LOCAL radar 4947014 - objc atomic property */
+  { "nonatomic",       RID_NONATOMIC,          D_OBJC },
+  /* APPLE LOCAL radar 4564694 */
+  { "package",             RID_AT_PACKAGE,         D_OBJC },
 };
 
 void

@@ -17,6 +17,12 @@
 4880777: obj-c++.dg/const-str-11-64bit.mm scan-assembler .quad\t__XStrClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
 4880777: obj-c++.dg/const-str-9-64bit.mm (test for excess errors)
 4880777: obj-c++.dg/const-str-9-64bit.mm scan-assembler .quad\t__NSConstantStringClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
+4998366: obj-c++.dg/const-cfstring-6.mm (test for excess errors)
+4998366: obj-c++.dg/newproperty-retain-1.mm (test for excess errors)
+4998366: obj-c++.dg/newproperty-unimplementd-property-1.mm (test for excess errors)
+4998366: obj-c++.dg/property-11.mm (test for excess errors)
+4998366: obj-c++.dg/property-2.mm (test for excess errors)
+4998366: obj-c++.dg/property-3.mm (test for excess errors)
 #
 # the following fail with -m64 only 
 4385167: obj-c++.dg/bitfield-1.mm (test for excess errors)
@@ -27,15 +33,18 @@
 3988573: obj-c++.dg/objc-gc-weak-1.mm execution test
 3988573: obj-c++.dg/objc-gc-weak-2.mm execution test
 3988573: obj-c++.dg/objc-gc-weak-4.mm execution test
+4923634: obj-c++.dg/cxx-ivars-2.mm execution test
+4923914: obj-c++.dg/encode-6.mm (test for excess errors)
+4923914: obj-c++.dg/encode-7.mm (test for excess errors)
+4923914: obj-c++.dg/objc-gc-8.mm (test for excess errors)
+4923914: obj-c++.dg/encode-4.mm (test for excess errors)
+4944530: objc.dg/objc-gc-5.mm (test for excess errors)
 #
 # the following fail for x86
 #4674757: obj-c++.dg/const-str-1.mm  (test for errors, line 12)
-4261575: obj-c++.dg/const-str-3.mm (test for excess errors)
-4261575: obj-c++.dg/const-str-4.mm (test for excess errors)
+#4261575: obj-c++.dg/const-str-4.mm (test for excess errors)
 #4674757: obj-c++.dg/const-str-6.mm  (test for errors, line 28)
-4261575: obj-c++.dg/const-str-7.mm (test for excess errors)
-4261575: obj-c++.dg/const-str-8.mm (test for excess errors)
-4261575: obj-c++.dg/template-4.mm (test for excess errors)
+#4261575: obj-c++.dg/template-4.mm (test for excess errors)
 #
 # the following fail for x86 with -m64 only
 4674613: obj-c++.dg/encode-3.mm execution test
@@ -52,3 +61,14 @@
 4674613: obj-c++.dg/stubify-1.mm scan-assembler (bl|call)[ \t]+L_objc_msgSend\\$stub\n
 4674613: obj-c++.dg/stubify-1.mm scan-assembler-not (bl|call)[ \t]+_bogonic\n
 4674613: obj-c++.dg/stubify-1.mm scan-assembler (bl|call)[ \t]+L_bogonic\\$stub\n
+#
+# the following fail for -mmacosx-version-min=10.5 only
+#5004537: obj-c++.dg/const-str-3.mm (test for excess errors)
+#5004537: obj-c++.dg/const-str-7.mm (test for excess errors)
+#5004537: obj-c++.dg/const-str-8.mm (test for excess errors)
+#5004537: obj-c++.dg/const-str-9.mm (test for excess errors)
+5043278: obj-c++.dg/const-str-3.mm execution test
+#
+# the following failures are for -fstack-protector-all only
+# (G5 only)
+4990353: obj-c++.dg/stubify-1.mm scan-assembler-not \\$non_lazy_ptr

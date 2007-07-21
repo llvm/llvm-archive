@@ -2,12 +2,11 @@
 /* Test if ObjC strings play nice with -fwritable-strings.  */
 /* Author: Ziemowit Laski  */
 
-/* { dg-options "-fno-constant-cfstrings -fwritable-strings -fconstant-string-class=Foo" } */
+/* { dg-options "-fno-constant-cfstrings -fwritable-strings -fconstant-string-class=Foo -mmacosx-version-min=10.4" } */
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
-/* APPLE LOCAL radar 4894756 */
-#include "../objc/execute/Object2.h"
+#include <objc/Object.h>
 #include <stdlib.h>
 #include <memory.h>
 
@@ -18,8 +17,7 @@
 - (char *)c_string;
 @end
 
-/* Unavailable in objc 2.0, deprecated in Leopard */
-struct objc_class _FooClassReference; /* { dg-warning "warning: \'objc_class\' is deprecated" } */
+struct objc_class _FooClassReference;
 
 static Foo *foobar = @"Apple";
 

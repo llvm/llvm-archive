@@ -1,3 +1,1004 @@
+2007-04-25  Eric Christopher  <echristo@apple.com>
+
+	Radar 5127053
+	* gcc.dg/darwin64-abi.c: Require 16-byte alignment
+	for reg_parms_t.
+
+2007-04-24  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 5122634
+	Backport from mainline:
+	2007-04-24  Hui-May Chang  <hm.chang@apple.com>
+	* gcc.target/i386/reload-1.c. New.
+
+2007-04-23  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5153561
+	* obj-c++.dg/objc2-cplus-try-catch-1.mm: Add
+
+2007-04-20  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5142207
+	* objc.dg/objc-visibility-hidden-1.m: Add
+	* obj-c++.dg/objc-visibility-hidden-1.mm: Add
+
+2007-04-20 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5130983
+	* objc.dg/objc-foreach-lvalue-1.m: Add
+	* obj-c++.dg/objc-foreach-lvalue-1.mm: Add
+
+2007-04-19 Hui-May Chang <hm.chang@apple.com>
+
+        Radar 5131847
+	* gcc.target/i386/5131847.c. Added target x86 because of endianess
+	  issue.
+	* gcc.apple/execute/5131847.c. Deleted and moved to gcc.target/i386
+	  directory.
+
+2007-04-19 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5140757
+	* newproperty-compound-setter-1.m: Add
+	* obj-c++.dg/newproperty-compound-setter-1.mm: Add
+
+2007-04-18 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5128402
+	* objc.dg/objc-foreach-elem-collection-elem.m: Add
+	* obj-c++.dg/objc-foreach-elem-collection-elem.mm: Add
+
+2007-04-18  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4899595 (new property on by default).
+	* objc.dg/property-neg-1.m: Modified
+	* objc.dg/property-neg-9.m: Modified
+	* objc.dg/property-metadata-5.m: Modified
+	* objc.dg/property-3.m: Modified
+	* objc.dg/property-10.m: Modified
+	* objc.dg/property-18.m: Modified
+	* objc.dg/property-neg-2.m: Modified
+	* objc.dg/objc2-protocol-enc-1.m: Modified
+	* objc.dg/propperty-neg-8.m: Modified
+	* objc.dg/property-4.m: Modified
+	* objc.dg/property-11.m: Modified
+	* objc.dg/property-incr-decr-1.m: Modified
+	* objc.dg/property-neg-3.m: Modified
+	* objc.dg/property-bycopy-1.m: Modified
+	* objc.dg/property-5.m: Modified
+	* objc.dg/property-12.m: Modified
+	* objc.dg/property-neg-4.m: Modified
+	* objc.dg/property-bycopy-2.m: Modified
+	* objc.dg/property-13.m: Modified
+	* objc.dg/property-weak-attribute-1.m: Modified
+	* objc.dg/property-neg-5.m: Modified
+	* objc.dg/property-metadata-1.m: Modified
+	* objc.dg/property-bycopy-3.m: Modified
+	* objc.dg/property-14.m: Modified
+	* objc.dg/property-weak-attribute-2.m: Modified
+	* objc.dg/property-neg-6.m: Modified
+	* objc.dg/property-metadata-2.m: Modified
+	* objc.dg/property-dwarf-1.m: Modified
+	* objc.dg/property-bycopy-4.m: Modified
+	* objc.dg/property-8.m: Modified
+	* objc.dg/property-15.m: Modified
+	* objc.dg/property-byref-default-1.m: Modified
+	* objc.dg/property-neg-10.m: Modified
+	* objc.dg/property-weak-attribute-3.m: Modified
+	* objc.dg/property-neg-7.m: Modified
+	* objc.dg/property-metadata-3.m: Modified
+	* objc.dg/property-1.m: Modified
+	* objc.dg/property-9.m: Modified
+	* objc.dg/property-16.m: Modified
+	* objc.dg/property-weak-attribute-4.m: Modified
+	* objc.dg/property-neg-8.m: Modified
+	* objc.dg/property-metadata-4.m: Modified
+	* objc.dg/property-2.m: Modified
+	* objc.dg/class-attribute-1.m: Modified
+	* objc.dg/property-17.m: Modified
+	* obj-c++.dg/property-metadata-4.mm: Modified
+	* obj-c++.dg/property-2.mm: Modified
+	* obj-c++.dg/property-neg-4.mm: Modified
+	* obj-c++.dg/property-15.mm: Modified
+	* obj-c++.dg/property-weak-attribute-2.mm: Modified
+	* obj-c++.dg/property-10.mm: Modified
+	* obj-c++.dg/class-attribute-1.mm: Modified
+	* obj-c++.dg/property-metadata-5.mm: Modified
+	* obj-c++.dg/property-byref-default-1.mm: Modified
+	* obj-c++.dg/property-3.mm: Modified
+	* obj-c++.dg/property-neg-5.mm: Modified
+	* obj-c++.dg/property-16.mm: Modified
+	* obj-c++.dg/property-weak-attribute-3.mm: Modified
+	* obj-c++.dg/property-11.mm: Modified
+	* obj-c++.dg/property-20.mm: Modified
+	* obj-c++.dg/property-4.mm: Modified
+	* obj-c++.dg/property-neg-6.mm: Modified
+	* obj-c++.dg/property-metadata-1.mm: Modified
+	* obj-c++.dg/property-17.mm: Modified
+	* obj-c++.dg/property-weak-attribute-4.mm: Modified
+	* obj-c++.dg/property-neg-1.mm: Modified
+	* obj-c++.dg/property-12.mm: Modified
+	* obj-c++.dg/property-bycopy-1.mm: Modified
+	* obj-c++.dg/property-incr-decr-1.mm: Modified
+	* obj-c++.dg/property-5.mm: Modified
+	* obj-c++.dg/property-neg-7.mm: Modified
+	* obj-c++.dg/property-metadata-2.mm: Modified
+	* obj-c++.dg/property-18.mm: Modified
+	* obj-c++.dg/property-neg-2.mm: Modified
+	* obj-c++.dg/property-13.mm: Modified
+	* obj-c++.dg/property-bycopy-2.mm: Modified
+	* obj-c++.dg/property-dwarf-1.mm: Modified
+	* obj-c++.dg/property-neg-8.mm: Modified
+	* obj-c++.dg/property-metadata-3.mm: Modified
+	* obj-c++.dg/property-19.mm: Modified
+	* obj-c++.dg/property-1.mm: Modified
+	* obj-c++.dg/property-neg-3.mm: Modified
+	* obj-c++.dg/property-14.mm: Modified
+	* obj-c++.dg/property-weak-attribute-1.mm: Modified
+	* obj-c++.dg/property-bycopy-3.mm: Modified
+
+2007-03-21  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5061001
+	* objc.dg/stubify-1.mm: Modified
+
+2007-03-12  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5023725
+	* objc.dg/objc2-try-catch-neg-1.m: New
+	* obj-c++.dg/objc2-try-catch-neg-1.mm: New
+
+2007-04-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5131847
+	* gcc.apple/execute/5131847.c: New.
+	* gcc.apple/execute/i386-bitmask1.c: Skip for x86_64.
+
+2007-04-17  Mike Stump  <mrs@apple.com>
+
+	Radar 5119788
+	* g++.apple/r5119788.C: Add.
+
+2007-04-09 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5096648
+	* gcc.apple/format-security-attribute-1.c: Add
+	* gcc.apple/format-security-attribute-2.c: Add
+	* objc.dg/format-security-attribute-3.m: Add
+	* objc.dg/format-security-attribute-4.m: Add
+	* obj-c++.dg/format-security-attribute-3.mm: Add
+	* obj-c++.dg/format-security-attribute-2.mm: Add
+	* g++.apple/format-security-attribute-2.C: Add
+	* g++.apple/format-security-attribute-1.C: Add
+
+2007-04-05 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5109807
+	objc.dg/objc2-ivar-layout-1.m: Add
+
+2007-04-04 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4792158
+	* objc.dg/objc-gc-section-1.m: Modified
+	* objc.dg/objc2-super-class-1.m: Modified
+	* objc.dg/objc-gc-section-2.m: Modified
+	* objc.dg/objc-gc-section-3.m: Modified
+	* obj-c++.dg/objc2-super-class-1.mm: Modified
+	* obj-c++.dg/objc-gc-section-1.mm: Modified
+	* obj-c++.dg/objc-gc-section-2.mm: Modified
+	* obj-c++.dg/objc-gc-section-3.mm: Modified
+
+2007-03-28 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5096644
+	* objc.dg/newproperty-forward-class-1.m: Add
+
+2007-03-27 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5083523
+	* objc.dg/property-neg-10.m: Modified.
+
+2007-03-27 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5080710
+	* obj-c++.dg/method-copyctor-1.mm: Add
+
+2007-03-15 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5040740
+	* objc.dg/newproperty-nested-synthesis-1.m: Add
+	* obj-c++.dg/newproperty-nested-synthesis-1.mm: Add
+
+2007-03-13 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4564694
+	* objc.dg/objc2-package-ivar-1.m: Add
+	* obj-c++.dg/objc2-package-ivar-1.mm: Add
+
+2007-03-09  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4947014 - objc atomic property
+
+	* objc.dg/newproperty-atomicretained.m: add
+	* objc.dg/newproperty-atomiccopy.m: add
+	* objc.dg/newproperty-atomicretained-1.m: add
+	* objc.dg/newproperty-atomic-neg-1.m: add
+	* objc.dg/newproperty-atomiccopy-1.m: add
+	* obj-c++.dg/newproperty-atomic-neg-1.mm: add
+	* obj-c++.dg/newproperty-atomicretained.mm: add
+	* obj-c++.dg/newproperty-atomiccopy.mm: add
+	* obj-c++.dg/newproperty-atomicretained-1.mm: add
+	* obj-c++.dg/newproperty-atomiccopy-1.mm: add
+	* objc.dg/newproperty-retain-2.m: modified
+	* objc.dg/newproperty-copy-1.m: removed
+	* objc.dg/newproperty-copy-2.m: modified
+	* objc.dg/newproperty-copy-4.m: removed
+	* obj-c++.dg/newproperty-retain-2.mm: modified
+	* obj-c++.dg/newproperty-copy-4.mm: removed
+	* obj-c++.dg/newproperty-copy-1.mm: removed
+	* obj-c++.dg/newproperty-copy-2.mm: modified
+
+2007-03-09  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5025001
+	* objc.dg/objc2-bitfield-abi-1.m: New
+	* obj-c++.dg/objc2-bitfield-abi-1.mm: New
+	* obj-c++.dg/bitfield-3.mm: Modified
+
+2007-03-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5043278
+	* objc.dg/const-str-3.m: Modified
+	* obj-c++.dg/const-str-3.mm: Modified
+
+2007-02-28  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5028937
+
+	* objc.dg/property-neg-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-typedef-mangle-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-9.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-metadata-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-9.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-weak-attribute-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-9.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-fpret-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-deprecated-attr-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-10.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-18.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-retain-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-visibility-hidden-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-setter-getter-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-enc-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-type-conv-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/propperty-neg-8.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-weak-attribute-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-defs-ok.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-alignment-test-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/volatile-1-x86-64.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-10.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-protocol-lookup-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-11.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-6.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-retain-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-syntax-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-incr-decr-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-neg-warn-unimp-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-weak-attribute-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-bycopy-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-11.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-12.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-dot-syntax-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-copy-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/rty-category-impl-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-warn-weak-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-super-class-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-bycopy-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-neg-warn-ro-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-6.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-copy-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-13.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-setter-decl-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-weak-attribute-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-try-catch-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-none-fragile-ivar-use.m
+	* objc.dg/property-neg-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-impl-nowarn-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-metadata-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-ivar-test-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-no-protocol-warn-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-5.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-bycopy-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-7.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-copy-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-14.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-weak-attribute-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/const-cfstring-4-64bit.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-6.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/message-metadata-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-dotsyntax-warn-setter-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-metadata-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-anon-category-6.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-ivar-test-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-dwarf-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-dotsyntax-setter-getter-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-redundant-decl-accessor.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-6.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-bycopy-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-8.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-copy-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-15.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-byref-default-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-10.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-weak-attribute-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-const-str-64bit-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-7.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-protocol-7.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-metadata-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-dotsyntax-setter-getter-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-7.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-9.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-3.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-16.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-weak-attribute-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-nowarn-compound-exp.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-neg-ivar-check-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-neg-8.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-metadata-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-unimplementd-property-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-2.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-8.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-foreach-nil-collection-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/class-attribute-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-lookup-4.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/property-17.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/newproperty-nowarn-readonly-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-4698856.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-visibility-hidden-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc-fpret-64bit-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* objc.dg/objc2-warn-prev-osx-1.m: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-retain-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-type-conv-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-dotsyntax-setter-getter-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-7.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-metadata-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-ivar-test-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-super-class-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-neg-warn-unimp-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-15.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-copy-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-weak-attribute-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-no-protocol-warn-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-weak-attribute-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-7.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-10.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-10.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-deprecated-attr-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/class-attribute-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-syntax-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-8.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-9.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-metadata-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-byref-default-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-impl-nowarn-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-protocol-lookup-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-16.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-weak-attribute-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-weak-attribute-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-8.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-11.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-11.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-9.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-20.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-defs-ok.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-nil-collection-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-6.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-metadata-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-17.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-weak-attribute-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-weak-attribute-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-9.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-12.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-dot-syntax-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-copy-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-4698856.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-nowarn-compound-exp.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-4.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-bycopy-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-incr-decr-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-setter-getter-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/message-metadata-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-visibility-hidden-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-neg-ivar-check-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-typedef-mangle-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-7.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-metadata-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-category-impl-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-6.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-18.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-unimplementd-property-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-13.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-copy-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-setter-decl-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-5.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-bycopy-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-neg-warn-ro-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-visibility-hidden-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-retain-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-dwarf-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-dotsyntax-setter-getter-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-6.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-8.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-7.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-metadata-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-19.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-neg-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc2-protocol-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-lookup-2.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-6.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-14.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-copy-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-weak-attribute-1.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/objc-foreach-6.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-redundant-decl-accessor.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/property-bycopy-3.mm: Added -mmacosx-version-min=10.5 to command-line
+	* obj-c++.dg/newproperty-anon-category-1.mm: Added -mmacosx-version-min=10.5 to command-line
+
+2007-02-21  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4998366
+	* objc.dg/property-3.m: Modified
+	* objc.dg/newproperty-retain-1.m: Modified
+	* objc.dg/property-11.m: Modified
+	* objc.dg/const-cfstring-6.m: Modified
+	* objc.dg/newproperty-unimplementd-property-1.m: Modified
+	* objc.dg/property-2.m: Modified
+	* obj-c++.dg/property-2.mm: Modified
+	* obj-c++.dg/property-3.mm: Modified
+	* obj-c++.dg/property-11.mm: Modified
+	* obj-c++.dg/const-cfstring-6.mm: Modified
+	* obj-c++.dg/newproperty-unimplementd-property-1.mm: Modified
+	* obj-c++.dg/newproperty-retain-1.mm: Modified
+
+2007-02-21  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5005756
+	* objc.dg/method-attribute-1.m: Modified.
+	* obj-c++.dg/method-attribute-1.mm: Modified.
+
+2007-02-20  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5004537
+	* const-str-7.m: Modified
+	* const-str-8.m: Modified
+	* const-str-3.m: Modified
+	* dg/const-str-7.mm: Modified
+	* dg/const-str-8.mm: Modified
+	* dg/const-str-3.mm: Modified
+	* dg/const-str-9.mm: Modified
+
+2007-02-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5002848
+	* objc.dg/newproperty-typedef-mangle-1.m: New
+	* obj-c++.dg/newproperty-typedef-mangle-1.mm: New
+
+2007-02-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4985544
+	* objc.dg/format-security-attribute-1.m: Add
+	* objc.dg/format-security-attribute-2.m: Add
+	* obj-c++.dg/format-security-attribute-1.mm: Add
+
+2007-02-15  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4995967
+	* objc.dg/try-catch-17.m: Add
+	* obj-c++.dg/try-catch-20.mm: Add
+
+2007-02-14  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4968055
+	* gcc.apple/4968055.c: Typo.
+
+2007-02-13  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4995066
+	* objc.dg/objc-gc-9.m: Add
+	* obj-c++.dg/objc-gc-11.mm: Add
+
+2007-02-13  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4994854
+	* objc.dg/newproperty-anon-category-5.m
+	* objc.dg/newproperty-anon-category-6.m
+	* obj-c++.dg/newproperty-anon-category-5.mm
+	* obj-c++.dg/newproperty-anon-category-6.mm
+
+2007-02-12  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4965989
+	* objc.dg/newproperty-anon-category-1.m: Add
+	* objc.dg/newproperty-anon-category-2.m: Add
+	* objc.dg/newproperty-anon-category-3.m: Add
+	* objc.dg/newproperty-anon-category-4.m: Add
+	* obj-c++.dg/newproperty-anon-category-2.mm: Add
+	* obj-c++.dg/newproperty-anon-category-3.mm: Add
+	* obj-c++.dg/newproperty-anon-category-4.mm: Add
+	* obj-c++.dg/newproperty-anon-category-1.mm: Add
+
+2007-02-08  Jon Ziegler <jonz@apple.com>
+
+	Revert patch for Radar 4964338 (from 1/30/2007)
+
+2007-02-08  Fariborz Jahanian <fjahanian@apple.com>
+
+        Removed objc2 hybrid abi
+	* objc.dg/property-metadata-6.m: Removed
+	* objc.dg/hybrid-abi-1.m: Removed
+	* objc.dg/hybrid-abi-2.m: Removed
+	* obj-c++.dg/hybrid-abi-1.mm: Removed
+	* obj-c++.dg/hybrid-abi-2.mm: Removed
+	* obj-c++.dg/property-metadata-6.mm: Removed
+
+2007-02-08  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4982951
+	* objc.dg/objc-gc-assign-ivar-1.m: New
+	* obj-c++.dg/objc-gc-assign-ivar-1.mm: New.
+
+2007-02-08  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4968055
+	* gcc.apple/4968055.c: x86 only.
+
+2007-02-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4923914
+
+	* objc.dg/type-size-2.m: Modified
+	* objc.dg/encode-2.m: Modified
+	* objc.dg/encode-7a.m: Modified
+	* objc.dg/objc-gc-7.m: Modified
+	* objc.dg/category-1.m: Modified
+	* objc.dg/encode-4.m: Modified
+	* objc.dg/encode-5.m: Modified
+	* obj-c++.dg/encode-7.mm: Modified
+	* obj-c++.dg/objc-gc-8.mm: Modified
+	* obj-c++.dg/encode-4.mm: Modified
+	* obj-c++.dg/encode-6.mm: Modified
+
+2007-02-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4261575
+
+	* objc.dg/const-str-7.m: Modified
+	* objc.dg/const-str-8.m: Modified
+	* objc.dg/const-str-3.m: Modified
+	* objc.dg/const-str-4.m: Modified
+	* obj-c++.dg/const-str-7.mm: Modified
+	* obj-c++.dg/const-str-8.mm: Modified
+	* obj-c++.dg/const-str-3.mm: Modified
+	* obj-c++.dg/const-str-4.mm: Modified
+
+2007-02-06  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4968055
+	* gcc.apple/4968055.c: New.
+
+2007-02-02  Jason Merrill  <jason@redhat.com>
+	Stuart Hastings  <stuart@apple.com>
+
+	Radar 4950109
+	Backport from mainline: 2006-02-12
+	PR c++/24996
+	* g++.dg/eh/cond3.C: New.
+
+2007-02-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4966565
+	* objc.dg/newproperty-category-impl-1.m: New.
+	* obj-c++.dg/newproperty-category-impl-1.mm: New.
+
+2007-02-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4963113
+	* objc.dg/newproperty-no-protocol-warn-1.m: New.
+	* obj-c++.dg/newproperty-no-protocol-warn-1.mm: New.
+
+2007-02-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4968128
+	* objc.dg/newproperty-setter-decl-1.m: New.
+	* obj-c++.dg/newproperty-setter-decl-1.mm: New.
+
+2007-01-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4964338
+	* objc.dg/objc-gc-section-3.m: New.
+	* obj-c++.dg/objc-gc-section-3.mm: New.
+
+2007-01-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4959107
+	* objc.dg/newproperty-protocol-lookup-1.m: New.
+	* obj-c++.dg/newproperty-protocol-lookup-1.mm: New.
+
+2007-01-25  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4134510
+	* gcc.apple/4134510.c: New.
+
+2007-01-26  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4914392
+	* objc.dg/objc-gc-weak-3.m: Modified to not skip for -m64
+	* obj-c++.dg/objc-gc-weak-4.mm: Ditto
+
+2007-01-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4951615
+	* objc.dg/objc2-ivar-test-2.m: New
+	* obj-c++.dg/objc2-ivar-test-2.mm: New
+
+2007-01-26  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4954480
+	* objc.dg/objc2-none-fragile-ivar-use.m: New
+	* obj-c++.dg/objc2-none-fragile-ivar-use.mm: New
+
+2007-01-25  Eric Christopher  <echristo@apple.com>
+
+	Radar 4940862
+	Backport from mainline:
+	2005-06-27  Jakub Jelinek  <jakub@redhat.com>
+
+        * gcc.c-torture/execute/builtins/chk.h: New.
+        * gcc.c-torture/execute/builtins/lib/chk.c: New.
+        * gcc.c-torture/execute/builtins/memcpy-chk.c: New test.
+        * gcc.c-torture/execute/builtins/memcpy-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/memmove-chk.c: New test.
+        * gcc.c-torture/execute/builtins/memmove-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/mempcpy-chk.c: New test.
+        * gcc.c-torture/execute/builtins/mempcpy-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/memset-chk.c: New test.
+        * gcc.c-torture/execute/builtins/memset-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/snprintf-chk.c: New test.
+        * gcc.c-torture/execute/builtins/snprintf-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/sprintf-chk.c: New test.
+        * gcc.c-torture/execute/builtins/sprintf-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/stpcpy-chk.c: New test.
+        * gcc.c-torture/execute/builtins/stpcpy-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/strcat-chk.c: New test.
+        * gcc.c-torture/execute/builtins/strcat-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/strcpy-chk.c: New test.
+        * gcc.c-torture/execute/builtins/strcpy-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/strncat-chk.c: New test.
+        * gcc.c-torture/execute/builtins/strncat-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/strncpy-chk.c: New test.
+        * gcc.c-torture/execute/builtins/strncpy-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/vsnprintf-chk.c: New test.
+        * gcc.c-torture/execute/builtins/vsnprintf-chk-lib.c: New.
+        * gcc.c-torture/execute/builtins/vsprintf-chk.c: New test.
+        * gcc.c-torture/execute/builtins/vsprintf-chk-lib.c: New.
+        * gcc.dg/builtin-object-size-1.c: New test.
+        * gcc.dg/builtin-object-size-2.c: New test.
+        * gcc.dg/builtin-object-size-3.c: New test.
+        * gcc.dg/builtin-object-size-4.c: New test.
+        * gcc.dg/builtin-object-size-5.c: New test.
+        * gcc.dg/builtin-stringop-chk-1.c: New test.
+        * gcc.dg/builtin-stringop-chk-2.c: New test.
+        * gcc.dg/tree-ssa/builtin-fprintf-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-fprintf-chk-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-printf-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-printf-chk-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-vfprintf-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-vfprintf-chk-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-vprintf-1.c: New test.
+        * gcc.dg/tree-ssa/builtin-vprintf-chk-1.c: New test.
+        * gcc.c-torture/execute/printf-1.c: New test.
+        * gcc.c-torture/execute/fprintf-1.c: New test.
+        * gcc.c-torture/execute/vprintf-1.c: New test.
+        * gcc.c-torture/execute/vfprintf-1.c: New test.
+        * gcc.c-torture/execute/printf-chk-1.c: New test.
+        * gcc.c-torture/execute/fprintf-chk-1.c: New test.
+        * gcc.c-torture/execute/vprintf-chk-1.c: New test.
+        * gcc.c-torture/execute/vfprintf-chk-1.c: New test.
+
+2007-01-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4951324
+	* objc.dg/objc2-try-catch-1.m" Add
+
+2007-01-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4949034
+	* obj-c++.dg/cxx-ivars-4.mm: Add
+
+2007-01-23  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4923623
+	* objc.dg/encode-7a.m: Modified.
+
+2007-01-22  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4945770
+	* objc.dg/objc-weak-pointer.m: Add
+	* obj-c++.dg/objc-weak-pointer.mm: Add
+
+2007-01-22  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4944530:
+	* objc.dg/objc-gc-3.m: Skip for -m64
+	* obj-c++.dg/objc-gc-5.mm: Skip for -m64
+
+2007-01-19  Jon Ziegler  <jonz@apple.com>
+	Radar 4943035
+	Remove test case for obsolete linker option.
+
+2007-01-19  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4861528
+        * gcc/testsuite/gcc.apple/4861528.c: x86_32 only.
+
+2007-01-15  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4905666
+	* gcc/testsuite/g++.apple/4905666.C: New.
+
+2007-01-13  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4894756 - Part 14
+	* objc.dg/objc-gc-3.m: Modified
+	* objc.dg/objc-gc-2.m: Modified
+	* obj-c++.dg/objc-gc-5.mm: Modified
+
+2007-01-12  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4861528
+        * gcc/testsuite/gcc.apple/4861528.c: Skip for 64-bit.
+
+2007-01-12  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4639472
+        * gcc/testsuite/gcc.apple/4639472.c: New.
+
+2007-01-13  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4894756 - Part 13
+	* objc.dg/const-str-13.m: Modified
+	* obj-c++.dg/const-str-13.mm: Modified
+
+2007-01-12  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4894756 - Part 12
+	* objc.dg/volatile-1-x86-64.m: New
+	* objc.dg/volatile-1.m: Modified
+	* objc.dg/threedotthree-abi-1.m: Modified
+	* objc.dg/stubify-2.m: Modified
+	* objc.dg/property-14.m: Modified
+	* objc.dg/layout-1.m: Modified
+	* objc.dg/property-metadata-2.m: Modified
+	* objc.dg/proto-qual-1.m: Modified
+	* objc.dg/image-info.m: Modified
+	* obj-c++.dg/layout-1.mm: Modified
+
+2007-01-11  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4894756 - Part 11
+	objc/execute/Object2.h: Modified
+
+2007-01-11  Fariborz Jahanian <fjahania@apple.com>
+
+	Radar 4894756 - Part 10
+	* obj-c++.dg/objc-gc-7.mm: Modified
+	* obj-c++.dg/template-objc2-4.mm: Modified
+	* obj-c++.dg/objc-gc-8.mm: Modified
+	* obj-c++.dg/bitfield-1.mm: Modified
+	* obj-c++.dg/encode-3.mm: Modified
+	* obj-c++.dg/objc-gc-4.mm: Modified
+	* obj-c++.dg/objc-gc-5.mm: Modified
+	* obj-c++.dg/bitfield-4.mm: Modified
+
+2007-01-10  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4894756 - Part 9
+	* obj-c++.dg/template-4.mm: Modified
+	* obj-c++.dg/defs.mm: Modified
+	* obj-c++.dg/newproperty-dotsyntax-setter-getter-2.mm: Modified
+	* obj-c++.dg/property-metadata-4.mm: Modified
+	* obj-c++.dg/objc-gc-7.mm: Modified
+	* obj-c++.dg/cxx-scope-2.mm: Modified
+	* obj-c++.dg/selector-2.mm: Modified
+	* obj-c++.dg/basic.mm: Modified
+	* obj-c++.dg/try-catch-1.mm: Modified
+	* obj-c++.dg/local-decl-1.mm: Modified
+	* obj-c++.dg/newproperty-3.mm: Modified
+	* obj-c++.dg/method-23.mm: Modified
+	* obj-c++.dg/cxx-ivars-3.mm: Modified
+	* obj-c++.dg/objc-static-cast-1.mm: Modified
+	* obj-c++.dg/encode-7.mm: Modified
+	* obj-c++.dg/newproperty-deprecated-attr-1.mm: Modified
+	* obj-c++.dg/property-10.mm: Modified
+	* obj-c++.dg/class-attribute-1.mm: Modified
+	* obj-c++.dg/const-cfstring-4.mm: Modified
+	* obj-c++.dg/no-typedef-ivar.mm: Modified
+	* obj-c++.dg/try-catch-11.mm: Modified
+	* obj-c++.dg/comp-types-11.mm: Modified
+	* obj-c++.dg/method-6.mm: Modified
+	* obj-c++.dg/try-catch-7.mm: Modified
+	* obj-c++.dg/method-15.mm: Modified
+	* obj-c++.dg/objc-gc-8.mm: Modified
+	* obj-c++.dg/layout-1.mm: Modified
+	* obj-c++.dg/selector-3.mm: Modified
+	* obj-c++.dg/try-catch-2.mm: Modified
+	* obj-c++.dg/method-10.mm: Modified
+	* obj-c++.dg/newproperty-4.mm: Modified
+	* obj-c++.dg/objc-gc-3.mm: Modified
+	* obj-c++.dg/newproperty-lookup-4.mm: Modified
+	* obj-c++.dg/property-16.mm: Modified
+	* obj-c++.dg/gnu-runtime-1.mm: Modified
+	* obj-c++.dg/lookup-2.mm: Modified
+	* obj-c++.dg/bitfield-1.mm: Modified
+	* obj-c++.dg/objc-static-cast-2.mm: Modified
+	* obj-c++.dg/qual-types-1.mm: Modified
+	* obj-c++.dg/const-cfstring-5.mm: Modified
+	* obj-c++.dg/lvalue-cast-1.mm: Modified
+	* obj-c++.dg/comp-types-12.mm: Modified
+	* obj-c++.dg/proto-lossage-7.mm: Modified
+	* obj-c++.dg/property-20.mm: Modified
+	* obj-c++.dg/try-catch-8.mm: Modified
+	* obj-c++.dg/template-1.mm: Modified
+	* obj-c++.dg/objc-gc-9.mm: Modified
+	* obj-c++.dg/syntax-error-1.mm: Modified
+	* obj-c++.dg/method-2.mm: Modified
+	* obj-c++.dg/objc2-defs-ok.mm: Modified
+	* obj-c++.dg/proto-lossage-2.mm: Modified
+	* obj-c++.dg/try-catch-3.mm: Modified
+	* obj-c++.dg/method-11.mm: Modified
+	* obj-c++.dg/property-metadata-1.mm: Modified
+	* obj-c++.dg/comp-types-9.mm: Modified
+	* obj-c++.dg/gnu-runtime-2.mm: Modified
+	* obj-c++.dg/bitfield-2.mm: Modified
+	* obj-c++.dg/dwarf-1.mm: Modified
+	* obj-c++.dg/newproperty-dot-syntax-1.mm: Modified
+	* obj-c++.dg/ivar-list-semi.mm: Modified
+	* obj-c++.dg/stabs-1.mm: Modified
+	* obj-c++.dg/comp-types-13.mm: Modified
+	* obj-c++.dg/stubify-1.mm: Modified
+	* obj-c++.dg/property-incr-decr-1.mm: Modified
+	* obj-c++.dg/isa-field-1.mm: Modified
+	* obj-c++.dg/encode-4.mm: Modified
+	* obj-c++.dg/try-catch-9.mm: Modified
+	* obj-c++.dg/method-17.mm: Modified
+	* obj-c++.dg/no-extra-load.mm: Modified
+	* obj-c++.dg/proto-lossage-3.mm: Modified
+	* obj-c++.dg/property-metadata-2.mm: Modified
+	* obj-c++.dg/newproperty-lookup-6.mm: Modified
+	* obj-c++.dg/gnu-runtime-3.mm: Modified
+	* obj-c++.dg/newproperty-1.mm: Modified
+	* obj-c++.dg/method-21.mm: Modified
+	* obj-c++.dg/super-class-2.mm: Modified
+	* obj-c++.dg/stabs-2.mm: Modified
+	* obj-c++.dg/cxx-ivars-1.mm: Modified
+	* obj-c++.dg/objc-gc-weak-4.mm: Modified
+	* obj-c++.dg/va-meth-1.mm: Modified
+	* obj-c++.dg/fix-and-continue-2.mm: Modified
+	* obj-c++.dg/objc-stret-1.mm: Modified
+	* obj-c++.dg/template-3.mm: Modified
+	* obj-c++.dg/newproperty-dotsyntax-setter-getter-1.mm: Modified
+	* obj-c++.dg/defs-warn-1.mm: Modified
+	* obj-c++.dg/method-13.mm: Modified
+	* obj-c++.dg/unknown-receiver.mm: Modified
+	* obj-c++.dg/property-metadata-3.mm: Modified
+	* obj-c++.dg/objc-gc-6.mm: Modified
+	* obj-c++.dg/cxx-scope-1.mm: Modified
+	* obj-c++.dg/property-1.mm: Modified
+	* obj-c++.dg/bitfield-4.mm: Modified
+	* obj-c++.dg/newproperty-2.mm: Modified
+	* obj-c++.dg/method-22.mm: Modified
+	* obj-c++.dg/objc-gc-1.mm: Modified
+	* obj-c++.dg/dwarf-3.mm: Modified
+	* obj-c++.dg/property-14.mm: Modified
+	* obj-c++.dg/stabs-3.mm: Modified
+	* obj-c++.dg/cxx-ivars-2.mm: Modified
+	* obj-c++.dg/typedef-alias-1.mm: Modified
+	* obj-c++.dg/encode-6.mm: Modified
+
+2007-01-10  Fariborz Jahanian <fjahania@apple.com>
+
+        Radar 4894756 - Part 8
+	* objc.dg/objc-dir-dispatch.m: Modified.
+	* objc.dg/objc-gc-weak-3.m: Temporarily skipped for -m64,
+	pending fix for radar 4914392 (objc2 runtime).
+	* objc.dg/property-10.m: Modified.
+	* objc.dg/property-incr-decr-1.m: Modified.
+	* objc.dg/selector-3.m: Modified.
+	* objc.dg/const-str-1.m: Modified.
+	* objc.dg/objc-gc-5.m: Modified for -m64.
+	* objc.dg/symtab-1.m: Modified.
+	* objc.dg/property-metadata-1.m: Modified.
+	* objc.dg/special/unclaimed-category-1.m: Modified.
+	* objc.dg/func-ptr-1.m: Modified.
+	* objc.dg/objc-gc-7.m: Modified.
+	* objc.dg/encode-3.m: Modified.
+	* objc.dg/property-8.m: Modified.
+	* objc.dg/stret-2.m: Modified.
+	* objc.dg/property-15.m: Modified.
+	* objc.dg/zero-link-2.m: Modified.
+	* objc.dg/objc-gc-1-64bit.m: Test removed, consolidated
+	into objc-gc-1.m
+	* objc.dg/objc-gc-5-64bit.m: Test removed, consolidated
+	into objc-gc-5.m.
+	* objc.dg/property-metadata-3.m: Modified.
+	* objc.dg/method-4.m: Modified.
+	* objc.dg/property-1.m: Modified.
+	* objc.dg/next-runtime-1.m: Modified.
+	* objc.dg/objc-gc-1.m: Modified.
+	* objc.dg/gnu-runtime-1.m: Modified.
+	* property-metadata-4.m: Modified.
+	* objc.dg/try-catch-15.m: Modified.
+	* objc.dg/const-cfstring-4.m: Modified.
+	* objc.dg/gnu-runtime-2.m: Modified.
+	* objc/execute/Object2.h: Minor change.
+
 2007-01-05  Fariborz Jahanian <fjahania@apple.com>
 
 	Radar 4894756 - part 7
@@ -177,7 +1178,7 @@
 	Radar 4894756 - part 1
 	* objc/execute/next_mapping.h: Redefine all macros for
 	when the new objc2 abi is in effect.
-	
+
 2006-12-20  Fariborz Jahanian <fjahania@apple.com>
 
 	Radar 4881080
@@ -265,7 +1266,7 @@
 	* objc.dg/objc-dir-dispatch-64.m: Add -fobjc-abi-version=1
 	* objc.dg/encode-7-64bit.m: Add -fobjc-abi-version=1
 	* objc.dg/next-runtime-1-64bit.m: Add -fobjc-abi-version=1
-	
+
 2006-11-30  Fariborz Jahanian <fjahania@apple.com>
 
         Radar 4854605
@@ -316,7 +1317,7 @@
 
 	Radar 4841013
 	* objc.dg/newproperty-nowarn-readonly-1.m: Add
-	
+
 2006-11-16  Josh Conner  <jconner@apple.com>
 
 	Radar 4842147
@@ -458,7 +1459,7 @@
 	* obj-c++.dg/newproperty-copy-1.mm: Modified
 	* obj-c++.dg/newproperty-copy-2.mm: Modified
 	* obj-c++.dg/newproperty-copy-3.mm: Modified
-	
+
 2006-11-02  Stuart Hastings  <stuart@apple.com>
 
 	Radar 4523848

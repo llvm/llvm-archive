@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4805321 */
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fobjc-new-property -lobjc" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -lobjc" } */
 
 #include <objc/objc.h>
 /* APPLE LOCAL radar 4894756 */

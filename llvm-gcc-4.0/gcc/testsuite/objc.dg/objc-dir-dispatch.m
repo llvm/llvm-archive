@@ -3,7 +3,7 @@
    -mmacosx-version-min=10.4. */
 /* { dg-do compile } */
 /* { dg-options "-mmacosx-version-min=10.4" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

@@ -1716,14 +1716,19 @@ for f in $build_xm_file; do
   esac
 done
 
-# Define macro CROSS_COMPILE in compilation if this is a cross-compiler.
+ # APPLE LOCAL begin mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325
+# Define macro CROSS_DIRECTORY_STRUCTURE in compilation if this is a
+# cross-compiler which does not use the native headers and libraries.
+ # APPLE LOCAL end mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325
 # Also use all.cross instead of all.internal and adjust SYSTEM_HEADER_DIR.
 CROSS=						AC_SUBST(CROSS)
 ALL=all.internal				AC_SUBST(ALL)
 SYSTEM_HEADER_DIR='$(NATIVE_SYSTEM_HEADER_DIR)'	AC_SUBST(SYSTEM_HEADER_DIR)
 if test x$host != x$target
 then
-	CROSS="-DCROSS_COMPILE"
+ # APPLE LOCAL begin mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325
+	CROSS="-DCROSS_DIRECTORY_STRUCTURE"
+ # APPLE LOCAL end mainline 4.3 2006-12-13 CROSS_DIRECTORY_STRUCTURE 4697325
 	ALL=all.cross
 	SYSTEM_HEADER_DIR='$(CROSS_SYSTEM_HEADER_DIR)'
 	case "$host","$target" in

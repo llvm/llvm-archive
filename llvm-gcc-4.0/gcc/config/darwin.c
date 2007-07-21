@@ -1235,8 +1235,15 @@ machopic_select_section (tree exp, int reloc,
       /* APPLE LOCAL begin 4149909 */
       if (!strcmp (IDENTIFIER_POINTER (name), "__builtin_ObjCString"))
 	{
+	  /* APPLE LOCAL begin radar 4792158 */
 	  if (flag_next_runtime)
-	    objc_constant_string_object_section ();
+	    {
+              if (flag_objc_abi == 2)
+                objc_v2_constant_string_object_section ();
+              else
+                objc_constant_string_object_section ();
+	    }
+	  /* APPLE LOCAL end radar 4792158 */
 	  else
 	    objc_string_object_section ();
 	}
@@ -1256,116 +1263,103 @@ machopic_select_section (tree exp, int reloc,
     {
       const char *name = IDENTIFIER_POINTER (DECL_NAME (exp));
 
-      if (!strncmp (name, "_OBJC_CLASS_METHODS_", 20))
-	objc_cls_meth_section ();
-      else if (!strncmp (name, "_OBJC_INSTANCE_METHODS_", 23))
-	objc_inst_meth_section ();
-      else if (!strncmp (name, "_OBJC_CATEGORY_CLASS_METHODS_", 20))
-	objc_cat_cls_meth_section ();
-      else if (!strncmp (name, "_OBJC_CATEGORY_INSTANCE_METHODS_", 23))
-	objc_cat_inst_meth_section ();
-      else if (!strncmp (name, "_OBJC_CLASS_VARIABLES_", 22))
-	objc_class_vars_section ();
-      else if (!strncmp (name, "_OBJC_INSTANCE_VARIABLES_", 25))
-	objc_instance_vars_section ();
-      else if (!strncmp (name, "_OBJC_CLASS_PROTOCOLS_", 22))
-	objc_cat_cls_meth_section ();
-      else if (!strncmp (name, "_OBJC_CLASS_NAME_", 17))
-	objc_class_names_section ();
-      else if (!strncmp (name, "_OBJC_METH_VAR_NAME_", 20))
-	objc_meth_var_names_section ();
-      else if (!strncmp (name, "_OBJC_METH_VAR_TYPE_", 20))
-	objc_meth_var_types_section ();
-      else if (!strncmp (name, "_OBJC_CLASS_REFERENCES", 22))
-	objc_cls_refs_section ();
-      /* APPLE LOCAL begin ObjC new abi */
-      else if (!strncmp (name, "_OBJC_CLASSLIST_REFERENCES_", 27))
-	objc_classrefs_section ();
-      /* APPLE LOCAL begin radar 4535676 */
-      else if (!strncmp (name, "_OBJC_CLASSLIST_SUP_REFS_", 25))
-	objc_super_classrefs_section ();
-      /* APPLE LOCAL end radar 4535676 */
-      else if (!strncmp (name, "_OBJC_CLASS_RO_$", 16) 
-      /* APPLE LOCAL begin C* property metadata (Radar 4498373) */
-	       || !strncmp (name, "_OBJC_METACLASS_RO_$", 20)
-	       || !strncmp (name, "_OBJC_PROP_NAME_ATTR_", 21))
-      /* APPLE LOCAL end C* property metadata (Radar 4498373) */
-	objc_data_section ();
-      else if (!strncmp (name, "_OBJC_MESSAGE_REF", 17))
-	objc_message_refs_section ();
-      else if (!strncmp (name, "_OBJC_LABEL_CLASS_", 18))
-        objc_classlist_section ();
-      /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
-      else if (!strncmp (name, "_OBJC_LABEL_PROTOCOL_", 21))
-        objc_protocollist_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOL_REFERENCE_", 25))
-	objc_protocolrefs_section ();
-      /* APPLE LOCAL end radar 4533974 - ObjC new protocol */
-      else if (!strncmp (name, "_OBJC_LABEL_CATEGORY_", 21))
-        objc_categorylist_section ();
-      else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CLASS_", 26))
-	objc_nonlazy_class_section ();
-      else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CATEGORY_", 29))
-	objc_nonlazy_category_section ();
-      else if (!strncmp (name, "_OBJC_$_PROTOCOL_", 17))
-	objc_v2_protocol_section ();
-      /* APPLE LOCAL end ObjC new abi */
-      else if (!strncmp (name, "_OBJC_CLASS_", 12))
-	objc_class_section ();
-      else if (!strncmp (name, "_OBJC_METACLASS_", 16))
-	objc_meta_class_section ();
-      else if (!strncmp (name, "_OBJC_CATEGORY_", 15))
-	objc_category_section ();
-      else if (!strncmp (name, "_OBJC_SELECTOR_REFERENCES", 25))
-      /* APPLE LOCAL begin ObjC abi v2 */
-	(flag_objc_abi == 2 || flag_objc_abi == 3) 
-	  ?  objc_v2_selector_refs_section () 
-	  : objc_selector_refs_section ();
-      /* APPLE LOCAL end ObjC abi v2 */
-      else if (!strncmp (name, "_OBJC_SELECTOR_FIXUP", 20))
-	objc_selector_fixup_section ();
-      else if (!strncmp (name, "_OBJC_SYMBOLS", 13))
-	objc_symbols_section ();
-      else if (!strncmp (name, "_OBJC_MODULES", 13))
-	objc_module_info_section ();
-      else if (!strncmp (name, "_OBJC_IMAGE_INFO", 16))
-	objc_image_info_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOL_INSTANCE_METHODS_", 32))
-	objc_cat_inst_meth_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOL_CLASS_METHODS_", 29))
-	objc_cat_cls_meth_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOL_REFS_", 20))
-	objc_cat_cls_meth_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOL_", 15))
-	objc_protocol_section ();
-      /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
-      else if (!strncmp (name, "_OBJC_CLASSEXT_", 15))
-	objc_class_ext_section ();
-      else if (flag_objc_abi == 1
-	       && (!strncmp (name, "_OBJC_$_PROP_LIST", 17)
-		   || !strncmp (name, "_OBJC_$_PROP_PROTO", 18)))
-	objc_prop_list_section ();
-      else if (!strncmp (name, "_OBJC_PROTOCOLEXT", 17))
-        objc_protocol_ext_section ();
-      /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
-      else
-	base_function ();
+      /* APPLE LOCAL begin radar 4792158 */
+      if (flag_objc_abi == 1) 
+        {
+          if (!strncmp (name, "_OBJC_CLASS_METHODS_", 20))
+            objc_cls_meth_section ();
+          else if (!strncmp (name, "_OBJC_INSTANCE_METHODS_", 23))
+            objc_inst_meth_section ();
+          else if (!strncmp (name, "_OBJC_CATEGORY_CLASS_METHODS_", 29))
+            objc_cat_cls_meth_section ();
+          else if (!strncmp (name, "_OBJC_CATEGORY_INSTANCE_METHODS_", 32))
+            objc_cat_inst_meth_section ();
+          else if (!strncmp (name, "_OBJC_CLASS_VARIABLES_", 22))
+            objc_class_vars_section ();
+          else if (!strncmp (name, "_OBJC_INSTANCE_VARIABLES_", 25))
+            objc_instance_vars_section ();
+          else if (!strncmp (name, "_OBJC_CLASS_PROTOCOLS_", 22))
+            objc_cat_cls_meth_section ();
+          else if (!strncmp (name, "_OBJC_CLASS_NAME_", 17))
+            objc_class_names_section ();
+          else if (!strncmp (name, "_OBJC_METH_VAR_NAME_", 20))
+            objc_meth_var_names_section ();
+          else if (!strncmp (name, "_OBJC_METH_VAR_TYPE_", 20))
+            objc_meth_var_types_section ();
+          else if (!strncmp (name, "_OBJC_CLASS_REFERENCES", 22))
+            objc_cls_refs_section ();
+          else if (!strncmp (name, "_OBJC_CLASS_", 12))
+            objc_class_section ();
+          else if (!strncmp (name, "_OBJC_METACLASS_", 16))
+            objc_meta_class_section ();
+          else if (!strncmp (name, "_OBJC_CATEGORY_", 15))
+            objc_category_section ();
+          else if (!strncmp (name, "_OBJC_SELECTOR_REFERENCES", 25))
+            objc_selector_refs_section ();
+          else if (!strncmp (name, "_OBJC_SELECTOR_FIXUP", 20))
+            objc_selector_fixup_section ();
+          else if (!strncmp (name, "_OBJC_SYMBOLS", 13))
+            objc_symbols_section ();
+          else if (!strncmp (name, "_OBJC_MODULES", 13))
+            objc_module_info_section ();
+          else if (!strncmp (name, "_OBJC_IMAGE_INFO", 16))
+            objc_image_info_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOL_INSTANCE_METHODS_", 32))
+            objc_cat_inst_meth_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOL_CLASS_METHODS_", 29))
+            objc_cat_cls_meth_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOL_REFS_", 20))
+            objc_cat_cls_meth_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOL_", 15))
+            objc_protocol_section ();
+          /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
+          else if (!strncmp (name, "_OBJC_CLASSEXT_", 15))
+            objc_class_ext_section ();
+          else if (!strncmp (name, "_OBJC_$_PROP_LIST", 17)
+                   || !strncmp (name, "_OBJC_$_PROP_PROTO", 18))
+            objc_prop_list_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOLEXT", 17))
+            objc_protocol_ext_section ();
+          else if (!strncmp (name, "_OBJC_PROP_NAME_ATTR_", 21))
+            cstring_section ();
+          /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
+          else
+            base_function ();
+        }
+      else if (flag_objc_abi == 2) 
+        {
+          if (!strncmp (name, "_OBJC_PROP_NAME_ATTR_", 21)
+              || !strncmp (name, "_OBJC_CLASS_NAME_", 17)
+              || !strncmp (name, "_OBJC_METH_VAR_NAME_", 20)
+              || !strncmp (name, "_OBJC_METH_VAR_TYPE_", 20))
+            cstring_section ();
+          else if (!strncmp (name, "_OBJC_CLASSLIST_REFERENCES_", 27))
+            objc_v2_classrefs_section ();
+          else if (!strncmp (name, "_OBJC_CLASSLIST_SUP_REFS_", 25))
+            objc_v2_super_classrefs_section ();
+          else if (!strncmp (name, "_OBJC_MESSAGE_REF", 17))
+            objc_v2_message_refs_section ();
+          else if (!strncmp (name, "_OBJC_LABEL_CLASS_", 18))
+            objc_v2_classlist_section ();
+          else if (!strncmp (name, "_OBJC_LABEL_PROTOCOL_", 21))
+            objc_v2_protocollist_section ();
+          else if (!strncmp (name, "_OBJC_LABEL_CATEGORY_", 21))
+            objc_v2_categorylist_section ();
+          else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CLASS_", 26))
+            objc_v2_nonlazy_class_section ();
+          else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CATEGORY_", 29))
+            objc_v2_nonlazy_category_section ();
+          else if (!strncmp (name, "_OBJC_PROTOCOL_REFERENCE_", 25))
+            objc_v2_protocolrefs_section ();
+          else if (!strncmp (name, "_OBJC_SELECTOR_REFERENCES", 25))
+            objc_v2_selector_refs_section ();
+          else if (!strncmp (name, "_OBJC_IMAGE_INFO", 16))
+            objc_v2_image_info_section ();
+          else
+            base_function ();
+        } 
+      /* APPLE LOCAL end radar 4792158 */
     }
-  /* APPLE LOCAL begin ObjC abi v2 */
-  else if (TREE_CODE (exp) == VAR_DECL &&
-           DECL_NAME (exp) &&
-           TREE_CODE (DECL_NAME (exp)) == IDENTIFIER_NODE &&
-           IDENTIFIER_POINTER (DECL_NAME (exp)) &&
-	   !strncmp (IDENTIFIER_POINTER (DECL_NAME (exp)), "OBJC_", 5))
-    {
-      const char *name = IDENTIFIER_POINTER (DECL_NAME (exp));
-      if (!strncmp (name, "OBJC_CLASS_$", 12)
-	  || !strncmp (name, "OBJC_METACLASS_$", 16))
-	objc_data_section();
-      else
-	base_function ();
-    }
-  /* APPLE LOCAL end ObjC abi v2 */
   /* APPLE LOCAL coalescing */
   /* Removed special handling of '::operator new' and '::operator delete'.  */
   /* APPLE LOCAL begin darwin_set_section_for_var_p  */
@@ -2009,8 +2003,10 @@ darwin_binds_local_p (tree decl)
 int darwin_fix_and_continue;
 const char *darwin_fix_and_continue_switch;
 /* APPLE LOCAL mainline 2005-09-01 3449986 */
-const char *darwin_macosx_version_min;
+/* APPLE LOCAL begin mainline 2007-02-20 5005743 */
+const char *darwin_macosx_version_min = "10.1";
 
+/* APPLE LOCAL end mainline 2007-02-20 5005743 */
 /* APPLE LOCAL begin mainline */
 /* True, iff we're generating code for loadable kernel extentions.  */
 
@@ -2371,5 +2367,11 @@ darwin_iasm_special_label (tree id)
   return NULL_TREE;
 }
 /* APPLE LOCAL end CW asm blocks */
-
+/* APPLE LOCAL begin radar 4985544 */
+bool
+darwin_cfstring_type_node (tree type_node)
+{
+  return type_node == ccfstring_type_node;
+}
+/* APPLE LOCAL end radar 4985544 */
 #include "gt-darwin.h"

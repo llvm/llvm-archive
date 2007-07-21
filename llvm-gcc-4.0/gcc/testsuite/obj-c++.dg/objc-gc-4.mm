@@ -3,6 +3,8 @@
 
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc -mmacosx-version-min=10.3" } */
+/* APPLE LOCAL radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/objc.h>
 #include <stdio.h>

@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4531086 */
 /* Test for warning on usage of objc2 features on older os's. */
-/* { dg-options "-fobjc-abi-version=2 -fobjc-new-property -mmacosx-version-min=10.4 -std=c99" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2 -fobjc-new-property -mmacosx-version-min=10.4 -std=c99" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <objc/objc.h>

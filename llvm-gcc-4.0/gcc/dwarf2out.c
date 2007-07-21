@@ -14583,6 +14583,19 @@ dwarf2out_finish (const char *filename)
 /* APPLE LOCAL end dwarf-file-hash 4587142 */
     }
 
+  /* APPLE LOCAL begin option verifier 4957887 */
+  /* Add the options for this compilation now, so that the options
+     are from the final compilation not the PCH.
+     Do this only when the undocumented RC_DEBUG_OPTIONS
+     environment variable is set to a nonempty string.
+     This is intended only for internal Apple use.  */
+  {
+    char * debugopt = getenv("RC_DEBUG_OPTIONS");
+    if (debugopt && debugopt[0])
+      add_AT_string (comp_unit_die, DW_AT_APPLE_flags, get_arguments());
+  }
+  /* APPLE LOCAL end option verifier 4957887 */
+
   /* Traverse the limbo die list, and add parent/child links.  The only
      dies without parents that should be here are concrete instances of
      inline functions, and the comp_unit_die.  We can ignore the comp_unit_die.

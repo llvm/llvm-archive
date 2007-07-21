@@ -3700,6 +3700,14 @@ extern tree fold_builtin (tree, bool);
 extern tree fold_builtin_fputs (tree, bool, bool, tree);
 extern tree fold_builtin_strcpy (tree, tree);
 extern tree fold_builtin_strncpy (tree, tree);
+/* APPLE LOCAL begin mainline */
+extern tree fold_builtin_memory_chk (tree, tree, tree, bool,
+                                     enum built_in_function);
+extern tree fold_builtin_stxcpy_chk (tree, tree, tree, bool,
+                                     enum built_in_function);
+extern tree fold_builtin_strncpy_chk (tree, tree);
+extern tree fold_builtin_snprintf_chk (tree, tree, enum built_in_function);
+/* APPLE LOCAL end mainline */
 extern bool fold_builtin_next_arg (tree);
 extern enum built_in_function builtin_mathfn_code (tree);
 extern tree build_function_call_expr (tree, tree);
@@ -3736,6 +3744,10 @@ extern int simple_cst_list_equal (tree, tree);
 extern void dump_tree_statistics (void);
 extern void expand_function_end (void);
 extern void expand_function_start (tree);
+/* APPLE LOCAL begin mainline */
+extern void stack_protect_prologue (void);
+extern void stack_protect_epilogue (void);
+/* APPLE LOCAL end mainline */
 extern void recompute_tree_invarant_for_addr_expr (tree);
 extern bool is_global_var (tree t);
 extern bool needs_to_live_in_memory (tree);
@@ -4085,4 +4097,11 @@ extern tree get_base_address (tree t);
 /* In tree-vectorizer.c.  */
 extern void vect_set_verbosity_level (const char *);
 
+/* APPLE LOCAL begin mainline */
+/* In tree-object-size.c.  */
+extern void init_object_sizes (void);
+extern void fini_object_sizes (void);
+extern unsigned HOST_WIDE_INT compute_builtin_object_size (tree, int);
+
+/* APPLE LOCAL end mainline */
 #endif  /* GCC_TREE_H  */

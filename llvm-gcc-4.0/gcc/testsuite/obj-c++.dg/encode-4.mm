@@ -18,7 +18,8 @@
 /* { dg-do run } */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 #ifdef __NEXT_RUNTIME__
 #define METHOD Method
@@ -85,7 +86,8 @@ int main(void) {
 
   meth = CLASS_GETINSTANCEMETHOD(fooClass, @selector(setRect:withInt:));
   offs2 = 9999;
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "@%u@%u:%u{_XXRect={?=ff}{?=ff}}%ui%u",
       &offs1, &offs2, &offs3, &offs4, &offs5);
 #else
@@ -101,7 +103,8 @@ int main(void) {
     string = "v%u@%u:%uc%uf%ud%uq%u";
   else
     string = "v%u@%u:%uc%uf%ud%ul%u";
-#if OBJC_API_VERSION >= 2
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), string, &offs1, &offs2, &offs3,
 	 &offs4, &offs5, &offs6, &offs7);
 #else

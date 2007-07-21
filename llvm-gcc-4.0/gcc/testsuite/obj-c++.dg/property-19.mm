@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4738176 */
 /* Test that no bogus warning is issued in the synthesize compound-expression. */
-/* { dg-options "-Wall" } */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5 -Wall" } */
 /* { dg-do compile } */
 
 @interface test

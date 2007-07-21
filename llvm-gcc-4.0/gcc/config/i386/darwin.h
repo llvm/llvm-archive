@@ -62,6 +62,8 @@ Boston, MA 02111-1307, USA.  */
 #undef CC1_SPEC
 /* APPLE LOCAL mainline */
 #define CC1_SPEC "%{!mkernel:%{!static:%{!mdynamic-no-pic:-fPIC}}} \
+  "/* APPLE LOCAL mainline 2007-02-20 5005743 */"\
+  %{!mmacosx-version-min=*:-mmacosx-version-min=%(darwin_minversion)} \
   "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
   %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5 \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }}"
@@ -78,6 +80,15 @@ Boston, MA 02111-1307, USA.  */
   %{m64: x86_64}						\
   %{!m64: i386}"
 
+/* APPLE LOCAL begin mainline 2007-03-13 5005743 5040758 */ \
+/* Determine a minimum version based on compiler options.  */
+#define DARWIN_MINVERSION_SPEC				\
+ "%{!m64|fgnu-runtime:10.4;				\
+    ,objective-c|,objc-cpp-output:10.5;			\
+    ,objective-c++|,objective-c++-cpp-output:10.5;	\
+    :10.4}"
+
+/* APPLE LOCAL end mainline 2007-03-13 5005743 5040758 */ \
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS					\
   DARWIN_EXTRA_SPECS						\
@@ -127,7 +138,10 @@ extern void darwin_x86_file_end (void);
 
 #define TARGET_DYNAMIC_NO_PIC	(target_flags & MASK_MACHO_DYNAMIC_NO_PIC)
 /* APPLE LOCAL end dynamic-no-pic */
-
+/* APPLE LOCAL begin mainline */
+#undef GOT_SYMBOL_NAME
+#define GOT_SYMBOL_NAME (machopic_function_base_name ())
+/* APPLE LOCAL end mainline */
 /* Define the syntax of pseudo-ops, labels and comments.  */
 
 #define LPREFIX "L"
@@ -155,23 +169,9 @@ extern void darwin_x86_file_end (void);
             fprintf (FILE, "\t%s %d\n", ALIGN_ASM_OP, (LOG)); \
         }				\
     } while (0)
-
-/* This says how to output an assembler line
-   to define a global common symbol.  */
-
-#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)  \
-( fputs (".comm ", (FILE)),			\
-  assemble_name ((FILE), (NAME)),		\
-  fprintf ((FILE), ",%lu\n", (unsigned long)(ROUNDED)))
-
-/* This says how to output an assembler line
-   to define a local common symbol.  */
-
-#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)  \
-( fputs (".lcomm ", (FILE)),			\
-  assemble_name ((FILE), (NAME)),		\
-  fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", (ROUNDED)))
-
+/* APPLE LOCAL begin mainline */
+/* Removed ASM_OUTPUT_COMMON and ASM_OUTPUT_LOCAL */
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin Macintosh alignment 2002-2-19 --ff */
 #define MASK_ALIGN_NATURAL	0x40000000

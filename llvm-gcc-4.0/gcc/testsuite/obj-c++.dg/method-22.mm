@@ -3,7 +3,8 @@
    side-effects.  */
 /* { dg-do run } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #include <stdlib.h>
 
 #define CHECK_IF(E) if(!(E)) abort ()

@@ -1,6 +1,8 @@
 /* APPLE LOCAL file radar 4625843 */
 /* Test that we generate warning for property type mismatch and object_setProperty_bycopy's
    prototype. */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 #include <Foundation/Foundation.h>
 #include <stddef.h>
 

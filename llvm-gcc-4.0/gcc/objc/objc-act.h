@@ -475,6 +475,19 @@ enum objc_tree_index
     OCTI_UMSG_SETPROPERTY_BYCOPY,
     OCTI_UMSG_SETPROPERTY_BYREF,
     /* APPLE LOCAL end Radar 4591909 */
+    /* APPLE LOCAL begin radar 2848255 */
+    OCTI_EHTYPE,
+    OCTI_EHTYPE_VTABLE,
+    OCTI_BEGIN_CATCH,
+    OCTI_END_CATCH,
+    OCTI_EHTYPE_ID,
+    /* APPLE LOCAL end radar 2848255 */
+    /* APPLE LOCAL begin radar 4947014 - objc atomic property */
+    OCTI_UMSG_GETATOMICPROPERTY,
+    OCTI_UMSG_SETATOMICPROPERTY,
+    OCTI_UMSG_COPYATOMICSTRUCT,
+    OCTI_UMSG_NSCOPYING,
+    /* APPLE LOCAL end radar 4947014 - objc atomic property */
     OCTI_MAX
 };
 
@@ -603,7 +616,8 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define objc_stack_exception_data		\
 				objc_global_trees[OCTI_STACK_EXCEPTION_DATA_DECL]
 #define objc_caught_exception	objc_global_trees[OCTI_LOCAL_EXCEPTION_DECL]	
-#define objc_rethrow_exception	objc_global_trees[OCTI_RETHROW_EXCEPTION_DECL]	
+/* APPLE LOCAL radar 4957534 */
+#define objc_rethrow_exception_decl objc_global_trees[OCTI_RETHROW_EXCEPTION_DECL]	
 #define objc_eval_once		objc_global_trees[OCTI_EVAL_ONCE_DECL]	
 #define objc_catch_type		objc_global_trees[OCTI_CATCH_TYPE]
 
@@ -747,4 +761,27 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define umsg_setProperty_bycopy         objc_global_trees[OCTI_UMSG_SETPROPERTY_BYCOPY]
 #define umsg_setProperty_byref         objc_global_trees[OCTI_UMSG_SETPROPERTY_BYREF]
 /* APPLE LOCAL end Radar 4591909 */
+/* APPLE LOCAL begin radar 4947014 - objc atomic property */
+#define umsg_GetAtomicProperty		objc_global_trees[OCTI_UMSG_GETATOMICPROPERTY]
+#define umsg_SetAtomicProperty		objc_global_trees[OCTI_UMSG_SETATOMICPROPERTY]
+#define umsg_CopyAtomicStruct		objc_global_trees[OCTI_UMSG_COPYATOMICSTRUCT]
+#define umsg_NSCopying_Type		objc_global_trees[OCTI_UMSG_NSCOPYING]
+/* APPLE LOCAL end radar 4947014 - objc atomic property */
+/* APPLE LOCAL begin radar 2848255 */
+#define UOBJC2_EHTYPE_VTABLE_decl 	objc_global_trees[OCTI_EHTYPE_VTABLE]
+#define objc2_ehtype_template       	objc_global_trees[OCTI_EHTYPE]
+#define objc2_begin_catch_decl		objc_global_trees[OCTI_BEGIN_CATCH]
+#define objc2_end_catch_decl		objc_global_trees[OCTI_END_CATCH]
+#define UOBJC2_EHTYPE_id_decl		objc_global_trees[OCTI_EHTYPE_ID]
+/* APPLE LOCAL end radar 2848255 */
+/* APPLE LOCAL radar 4951615 */
+#define IVAR_PUBLIC_OR_PROTECTED(NODE) (DECL_LANG_FLAG_0 (NODE))
+/* APPLE LOCAL begin radar 4965989 */
+#define ANONYMOUS_CATEGORY(X) (TREE_CODE (X) == CATEGORY_INTERFACE_TYPE \
+				&& CLASS_SUPER_NAME (X) == NULL_TREE)
+/* APPLE LOCAL end radar 4965989 */
+/* APPLE LOCAL begin radar 4947014 - objc atomic property */
+#define ATOMIC_PROPERTY(NODE) (TREE_LANG_FLAG_1 (NODE))
+#define IS_ATOMIC(PROPERTY)   (ATOMIC_PROPERTY(PROPERTY))
+/* APPLE LOCAL end radar 4947014 - objc atomic property */
 #endif /* GCC_OBJC_ACT_H */

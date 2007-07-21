@@ -84,7 +84,8 @@ int main(void) {
   meth = CLASS_GETINSTANCEMETHOD(fooClass, @selector(setRect:withInt:));
   offs2 = 9999;
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "@%u@%u:%u{_XXRect={?=ff}{?=ff}}%ui%u",
 	 &offs1, &offs2, &offs3, &offs4, &offs5);
 #else
@@ -102,7 +103,8 @@ int main(void) {
   else
     string = "v%u@%u:%uc%uf%ud%ul%u";
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), string, &offs1, &offs2, &offs3,  
 	 &offs4, &offs5, &offs6, &offs7);
 #else

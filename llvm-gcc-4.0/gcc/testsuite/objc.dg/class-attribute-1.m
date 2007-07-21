@@ -1,5 +1,7 @@
 /* APPLE LOCAL file 4548636 */
 /* Check for a variety of rules for objc's class attributes. */
+/* APPLE LOCAL radar 4899595 */
+/* { dg-options "-fno-objc-new-property -mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
 
 #include <objc/objc.h>

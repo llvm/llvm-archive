@@ -2,7 +2,8 @@
 /* { dg-do compile } */
 /* { dg-options "-fnon-lvalue-assign" } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 typedef struct _NSPoint {
     float x; 

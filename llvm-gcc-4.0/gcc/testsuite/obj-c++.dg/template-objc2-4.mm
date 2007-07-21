@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4842177 */
-/* { dg-options "-fnext-runtime -mmacosx-version-min=10.5 -fconstant-cfstrings -framework Cocoa" } */
+/* { dg-options "-fnext-runtime -m64 -mmacosx-version-min=10.5 -fconstant-cfstrings -framework Cocoa" } */
 /* { dg-do run { target *-*-darwin* } } */
+/* { dg-require-effective-target lp64 } */
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #ifdef __NEXT_RUNTIME__
 /* The following ain't pretty, but does allow us to have just one copy
    of next_mapping.h.  */
+#include "../objc/execute/Object2.h"
 #include "../objc/execute/next_mapping.h"
 #else
 #include <objc/NXConstStr.h>

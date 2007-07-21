@@ -1,7 +1,8 @@
 /* APPLE LOCAL file mainline */
 /* Ensure that the preprocessor handles ObjC string constants gracefully. */
 /* Author: Ziemowit Laski <zlaski@apple.com> */
-/* { dg-options "-fnext-runtime -fconstant-string-class=MyString -lobjc" } */ 
+/* APPLE LOCAL radar 4621575 */
+/* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=MyString -lobjc" } */ 
 /* { dg-do run { target *-*-darwin* } } */
 
 extern "C" void abort(void);

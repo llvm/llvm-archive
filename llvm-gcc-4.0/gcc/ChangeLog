@@ -1,3 +1,127 @@
+2007-04-09  Jan Hubicka  <jh@suse.cz>
+
+	Radar 5097839
+        PR target/27869
+        * config/i386/sse.md
+        (sse_vmaddv4sf3, sse_vmmulv4sf3): Remove '%' modifier.
+        (sse_vmsmaxv4sf3_finite, sse_vmsminv4sf3_finite): Remove.
+        (sse2_vmaddv2df3, sse2_vmmulv2df3): Remove '%' modifier.
+        (sse2_vmsmaxv2df3_finite, sse2_vmsminv2df3_finite): Remove.
+
+2007-03-28  Mike Stump  <mrs@apple.com>
+
+	Radar 5077358
+	* config/darwin9.h (ASM_OUTPUT_ALIGNED_COMMON): Add.
+	* config/darwin.h (MAX_OFILE_ALIGNMENT): Fix.
+	* config/rs6000/darwin.h (ASM_OUTPUT_ALIGNED_COMMON): Removed #undef.
+
+2006-12-13  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4697325
+	* doc/invoke.texi (Darwin Options): Update documentation for
+	-mmacosx-version-min.
+	* config.gcc (*-*-darwin*): Set extra_gcc_objs.
+	* config/darwin-driver.c: New file.
+	* config/darwin.h (GCC_DRIVER_HOST_INITIALIZATION): New.
+	* config/t-darwin (darwin-driver.o): New rule.
+
+2006-12-12  Geoffrey Keating  <geoffk@apple.com>
+
+	* mips-tdump.c: Replace CROSS_COMPILE with
+	CROSS_DIRECTORY_STRUCTURE.
+	* mips-tfile.c: Likewise.
+	* gcc.c: Likewise.
+	* configure.ac: Likewise.
+	* cppdefault.c: Likewise.
+	* Makefile.in: Likewise.
+	* config/alpha/osf.h: Likewise.
+	* config/i386/cygwin.h: Likewise.
+	* config/i386/beos-elf.h: Likewise.
+	* config/i386/nto.h: Likewise.
+	* config/fr30/fr30.h: Likewise.
+	* config/svr4.h: Likewise.
+	* config/rs6000/aix.h: Likewise.
+	* config/rs6000/sysv4.h: Likewise.
+	* config/pa/pa64-hpux.h: Likewise.
+	* config/pa/pa-hpux10.h: Likewise.
+	* config/pa/pa-hpux11.h: Likewise.
+	* collect2.c: Likewise.
+	* configure: Regenerate.
+
+2007-03-13  Geoffrey Keating  <geoffk@apple.com>
+
+	* doc/invoke.texi (Spec Files): Update for '%{,' spec.
+
+2007-03-10  Tobias Schlüter  <tobi@gcc.gnu.org>
+
+	* config/i386/darwin.h (DARWIN_MINVERSION_SPEC): Add missing
+	quotation mark.
+
+2007-03-09  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 5040758
+	* gcc.c: Document %{, in big comment at top.
+	(input_suffix_matches): Remove special handling for .s and
+	.S.
+	(input_spec_matches): New.
+	(handle_braces): Handle %{,.
+	(validate_switches): ',' indicates a value which is not a switch.
+	* config/alpha/osf.h (ASM_FINAL_SPEC): Use %{, rather than %{.
+	to detect assembler input.
+	* config/i386/sol2.h (CPP_SPEC): Likewise.
+	* config/rs6000/sysv4.h (ASM_SPEC): Likewise.
+	* config/rs6000/vxworks.h (ASM_SPEC): Likewise.
+	* config/rs6000/lynx.h (ASM_SPEC): Likewise.
+	* config/rs6000/linux64.h (ASM_SPEC_COMMON): Likewise.
+	* config/i386/darwin.h (DARWIN_MINVERSION_SPEC): Objective-C plus
+	-m64 causes deployment target to default to 10.5.
+	* config/rs6000/darwin.h (DARWIN_MINVERSION_SPEC): Likewise.
+
+2007-02-20  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 5005743, 4226546
+	* config/darwin.h (LINK_SPEC): Default -mmacosx-version-min only
+	if user didn't pass it.
+	* config/i386/darwin.h (CC1_SPEC): Likewise.
+	* config/rs6000/darwin.h (CC1_SPEC): Likewise.
+	(DARWIN_MINVERSION_SPEC): Don't depend on user's setting of
+	-mmacosx-version-min.
+
+	* config/darwin.h (LINK_SPEC): Always pass -macosx_version_min
+	to linker.
+	(DARWIN_EXTRA_SPECS): Add %(darwin_minversion).
+	* config/rs6000/darwin.h (SUBTARGET_OVERRIDE_OPTIONS): Just call
+	darwin_rs6000_override_options.
+	(C_COMMON_OVERRIDE_OPTIONS): Expect
+	darwin_macosx_version_min to be non-NULL always.
+	(TARGET_C99_FUNCTIONS): Likewise.
+	(CC1_SPEC): Always pass -mmacosx-version-min to cc1*.
+	(DARWIN_MINVERSION_SPEC): New.
+	* config/rs6000/rs6000.c (darwin_rs6000_override_options): New.
+	* config/i386/darwin.h (CC1_SPEC): Always pass -mmacosx-version-min
+	to cc1*.
+	(DARWIN_MINVERSION_SPEC): New.
+	* config/darwin.opt (mmacosx-version-min): Initialize to non-NULL
+	value.
+	* config/darwin-c.c (darwin_cpp_builtins): Expect
+	darwin_macosx_version_min to be non-NULL always.
+
+2007-01-04  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4871915
+	* target.h (struct gcc_target): New field library_rtti_comdat.
+	* target-def.h (TARGET_CXX_LIBRARY_RTTI_COMDAT): New.
+	(TARGET_CXX): Add TARGET_CXX_LIBRARY_RTTI_COMDAT.
+	* doc/tm.texi (C++ ABI): Document TARGET_CXX_LIBRARY_RTTI_COMDAT.
+	* config/darwin.h (TARGET_CXX_LIBRARY_RTTI_COMDAT): Define.
+
+2006-12-18  Roger Sayle  <roger@eyesopen.com>
+            Eric Christopher  <echristo@apple.com>
+
+	Radar 4820385
+        PR target/29302
+        * real.c (real_maxval): Correctly handle IBM extended double format.
+
 2006-12-22  Mike Stump  <mrs@apple.com>
 
 	* config/rs6000/t-darwin (DARWIN_EXTRA_CRT_BUILD_CFLAGS): Add

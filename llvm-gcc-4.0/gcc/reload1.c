@@ -6103,12 +6103,23 @@ merge_assigned_reloads (rtx insn)
 	     be merged and a RELOAD_FOR_OUTPUT_ADDRESS reload that loads the
 	     same value or a part of it; we must not change its type if there
 	     is a conflicting input.  */
+          /* APPLE LOCAL begin mainline 2007-04-24 5122634 */
+          /* It is possible that the RELOAD_FOR_OPERAND_ADDRESS
+             instruction is assigned the same register as the
+             earlier RELOAD_FOR_OTHER_ADDRESS instruction.
+             Merging these two instructions will cause the
+             RELOAD_FOR_OTHER_ADDRESS instruction to be deleted
+             later on. */
+          /* APPLE LOCAL end mainline 2007-04-24 5122634 */
 
 	  if (rld[i].when_needed == RELOAD_OTHER)
 	    for (j = 0; j < n_reloads; j++)
 	      if (rld[j].in != 0
 		  && rld[j].when_needed != RELOAD_OTHER
 		  && rld[j].when_needed != RELOAD_FOR_OTHER_ADDRESS
+                  /* APPLE LOCAL begin mainline 2007-04-24 5122634 */
+		  && rld[j].when_needed != RELOAD_FOR_OPERAND_ADDRESS
+                  /* APPLE LOCAL end mainline 2007-04-24 5122634 */
 		  && (! conflicting_input
 		      || rld[j].when_needed == RELOAD_FOR_INPUT_ADDRESS
 		      || rld[j].when_needed == RELOAD_FOR_INPADDR_ADDRESS)

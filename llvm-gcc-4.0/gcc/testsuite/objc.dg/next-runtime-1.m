@@ -5,7 +5,7 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>  */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

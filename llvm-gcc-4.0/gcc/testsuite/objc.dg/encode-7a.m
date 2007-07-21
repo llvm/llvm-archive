@@ -4,7 +4,7 @@
 
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"
@@ -192,7 +192,8 @@ NSRange globalRange;
 @end
 
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
 int main(void) {
   Class fooClass = objc_getClass ("Foo");
   Method meth;

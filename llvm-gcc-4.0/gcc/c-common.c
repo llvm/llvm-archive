@@ -384,7 +384,8 @@ int flag_next_runtime = 0;
 /* Generate special '- .cxx_construct' and '- .cxx_destruct' methods
    to initialize any non-POD ivars in ObjC++ classes.  */
 
-int flag_objc_call_cxx_cdtors = 0;
+/* APPLE LOCAL radar 4949034 */
+/* declaration removed. */
 /* APPLE LOCAL end mainline */
 
 /* Tells the compiler that this is a special run.  Do not perform any
@@ -3146,6 +3147,7 @@ static void c_init_attributes (void);
 void
 c_common_nodes_and_builtins (void)
 {
+  /* APPLE LOCAL begin mainline */
   enum builtin_type
   {
 #define DEF_PRIMITIVE_TYPE(NAME, VALUE) NAME,
@@ -3154,10 +3156,16 @@ c_common_nodes_and_builtins (void)
 #define DEF_FUNCTION_TYPE_2(NAME, RETURN, ARG1, ARG2) NAME,
 #define DEF_FUNCTION_TYPE_3(NAME, RETURN, ARG1, ARG2, ARG3) NAME,
 #define DEF_FUNCTION_TYPE_4(NAME, RETURN, ARG1, ARG2, ARG3, ARG4) NAME,
+#define DEF_FUNCTION_TYPE_5(NAME, RETURN, ARG1, ARG2, ARG3, ARG4, ARG5) NAME,
+#define DEF_FUNCTION_TYPE_6(NAME, RETURN, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) \
+    NAME,
 #define DEF_FUNCTION_TYPE_VAR_0(NAME, RETURN) NAME,
 #define DEF_FUNCTION_TYPE_VAR_1(NAME, RETURN, ARG1) NAME,
 #define DEF_FUNCTION_TYPE_VAR_2(NAME, RETURN, ARG1, ARG2) NAME,
 #define DEF_FUNCTION_TYPE_VAR_3(NAME, RETURN, ARG1, ARG2, ARG3) NAME,
+#define DEF_FUNCTION_TYPE_VAR_4(NAME, RETURN, ARG1, ARG2, ARG3, ARG4) NAME,
+#define DEF_FUNCTION_TYPE_VAR_5(NAME, RETURN, ARG1, ARG2, ARG3, ARG4, ARG5) \
+    NAME,
 #define DEF_POINTER_TYPE(NAME, TYPE) NAME,
 #include "builtin-types.def"
 #undef DEF_PRIMITIVE_TYPE
@@ -3166,14 +3174,18 @@ c_common_nodes_and_builtins (void)
 #undef DEF_FUNCTION_TYPE_2
 #undef DEF_FUNCTION_TYPE_3
 #undef DEF_FUNCTION_TYPE_4
+#undef DEF_FUNCTION_TYPE_5
+#undef DEF_FUNCTION_TYPE_6
 #undef DEF_FUNCTION_TYPE_VAR_0
 #undef DEF_FUNCTION_TYPE_VAR_1
 #undef DEF_FUNCTION_TYPE_VAR_2
 #undef DEF_FUNCTION_TYPE_VAR_3
+#undef DEF_FUNCTION_TYPE_VAR_4
+#undef DEF_FUNCTION_TYPE_VAR_5
 #undef DEF_POINTER_TYPE
     BT_LAST
   };
-
+  /* APPLE LOCAL end mainline */
   typedef enum builtin_type builtin_type;
 
   tree builtin_types[(int) BT_LAST];
@@ -3422,6 +3434,44 @@ c_common_nodes_and_builtins (void)
 			      tree_cons (NULL_TREE,			\
 					 builtin_types[(int) ARG4],	\
 					 void_list_node)))));
+  /* APPLE LOCAL begin mainline */
+#define DEF_FUNCTION_TYPE_5(ENUM, RETURN, ARG1, ARG2, ARG3, ARG4, ARG5) \
+  builtin_types[(int) ENUM]                                             \
+    = build_function_type                                               \
+      (builtin_types[(int) RETURN],                                     \
+       tree_cons (NULL_TREE,                                            \
+                  builtin_types[(int) ARG1],                            \
+                  tree_cons (NULL_TREE,                                 \
+                             builtin_types[(int) ARG2],                 \
+                             tree_cons                                  \
+                             (NULL_TREE,                                \
+                              builtin_types[(int) ARG3],                \
+                              tree_cons (NULL_TREE,                     \
+                                         builtin_types[(int) ARG4],     \
+                                         tree_cons (NULL_TREE,          \
+                                              builtin_types[(int) ARG5],\
+                                              void_list_node))))));
+#define DEF_FUNCTION_TYPE_6(ENUM, RETURN, ARG1, ARG2, ARG3, ARG4, ARG5, \
+                            ARG6)                                       \
+  builtin_types[(int) ENUM]                                             \
+    = build_function_type                                               \
+      (builtin_types[(int) RETURN],                                     \
+       tree_cons (NULL_TREE,                                            \
+                  builtin_types[(int) ARG1],                            \
+                  tree_cons (NULL_TREE,                                 \
+                             builtin_types[(int) ARG2],                 \
+                             tree_cons                                  \
+                             (NULL_TREE,                                \
+                              builtin_types[(int) ARG3],                \
+                              tree_cons                                 \
+                              (NULL_TREE,                               \
+                               builtin_types[(int) ARG4],               \
+                               tree_cons (NULL_TREE,                    \
+                                         builtin_types[(int) ARG5],     \
+                                         tree_cons (NULL_TREE,          \
+                                              builtin_types[(int) ARG6],\
+                                              void_list_node)))))));
+  /* APPLE LOCAL end mainline */
 #define DEF_FUNCTION_TYPE_VAR_0(ENUM, RETURN)				\
   builtin_types[(int) ENUM]						\
     = build_function_type (builtin_types[(int) RETURN], NULL_TREE);
@@ -3453,6 +3503,38 @@ c_common_nodes_and_builtins (void)
 			     tree_cons (NULL_TREE,			\
 					builtin_types[(int) ARG3],	\
 					NULL_TREE))));
+  /* APPLE LOCAL begin mainline */
+#define DEF_FUNCTION_TYPE_VAR_4(ENUM, RETURN, ARG1, ARG2, ARG3, ARG4)   \
+   builtin_types[(int) ENUM]                                            \
+    = build_function_type                                               \
+      (builtin_types[(int) RETURN],                                     \
+       tree_cons (NULL_TREE,                                            \
+                  builtin_types[(int) ARG1],                            \
+                  tree_cons (NULL_TREE,                                 \
+                             builtin_types[(int) ARG2],                 \
+                             tree_cons (NULL_TREE,                      \
+                                        builtin_types[(int) ARG3],      \
+                                        tree_cons (NULL_TREE,           \
+                                              builtin_types[(int) ARG4],\
+                                              NULL_TREE)))));
+
+#define DEF_FUNCTION_TYPE_VAR_5(ENUM, RETURN, ARG1, ARG2, ARG3, ARG4,   \
+                                ARG5)                                   \
+   builtin_types[(int) ENUM]                                            \
+    = build_function_type                                               \
+      (builtin_types[(int) RETURN],                                     \
+       tree_cons (NULL_TREE,                                            \
+                  builtin_types[(int) ARG1],                            \
+                  tree_cons (NULL_TREE,                                 \
+                             builtin_types[(int) ARG2],                 \
+                             tree_cons                                  \
+                             (NULL_TREE,                                \
+                              builtin_types[(int) ARG3],                \
+                              tree_cons (NULL_TREE,                     \
+                                        builtin_types[(int) ARG4],      \
+                                        tree_cons (NULL_TREE,           \
+                                              builtin_types[(int) ARG5],\
+                                              NULL_TREE))))));
 
 #define DEF_POINTER_TYPE(ENUM, TYPE)			\
   builtin_types[(int) ENUM]				\
@@ -3467,7 +3549,10 @@ c_common_nodes_and_builtins (void)
 #undef DEF_FUNCTION_TYPE_VAR_1
 #undef DEF_FUNCTION_TYPE_VAR_2
 #undef DEF_FUNCTION_TYPE_VAR_3
+#undef DEF_FUNCTION_TYPE_VAR_4
+#undef DEF_FUNCTION_TYPE_VAR_5
 #undef DEF_POINTER_TYPE
+  /* APPLE LOCAL end mainline */
 
   c_init_attributes ();
 

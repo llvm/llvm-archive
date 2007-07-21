@@ -783,9 +783,8 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       break;
 
     /* APPLE LOCAL begin mainline */
-    case OPT_fobjc_call_cxx_cdtors:
-      flag_objc_call_cxx_cdtors = value;
-      break;
+    /* APPLE LOCAL radar 4949034 */
+    /* code removed */
     /* APPLE LOCAL end mainline */
 
     case OPT_fobjc_exceptions:

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4705250 */
 /* @defs is allowed with -fobjc-atdefs option. */
 /* Compile with no error or warning. */
-/* { dg-options "-fobjc-abi-version=2 -fobjc-atdefs" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2 -fobjc-atdefs" } */
 /* { dg-do compile } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 

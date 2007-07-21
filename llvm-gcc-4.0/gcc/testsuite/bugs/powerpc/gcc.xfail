@@ -73,6 +73,9 @@
 4787132: gcc.dg/cleanup-8.c execution test
 4787132: gcc.dg/cleanup-9.c execution test
 #
+# the following failures occur only for ppc32
+4965359: building longcall/dylib library
+#
 # the following failures occur only when the tests are being run through ObjC
 4079037: gcc.dg/cpp/direct2.c (test for excess errors)
 4079037: gcc.dg/cpp/direct2s.c (test for excess errors)
@@ -90,6 +93,18 @@
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 12)
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 13)
 3904213: gcc.apple/objc-negtest.c  (test for errors, line 3)
+5040758: gcc.apple/asm-block-21.c (test for excess errors)
+5040758: gcc.apple/asm-block-58.c (test for excess errors)
+5040758: gcc.apple/default-x86_64-sse3.c (test for excess errors)
+5040758: gcc.dg/builtin-cast.c (test for excess errors)
+5040758: gcc.dg/darwin-literal16-1.c (test for excess errors)
+5040758: gcc.apple/power-align-unsup.c (test for excess errors)
+5040758: gcc.apple/pragma.c (test for excess errors)
+5040758: gcc.dg/20060713-1.c (test for excess errors)
+5040758: gcc.dg/const-compare.c (test for excess errors)
+5040758: gcc.dg/darwin64-abi.c (test for excess errors)
+5040758: gcc.dg/mac68k-pragma-unsup-1.c (test for excess errors)
+5040758: gcc.dg/pragma-align-3.c (test for excess errors)
 #
 # the following failures are for -mcpu=G5
 #3788046: gcc.dg/simd-2.c (test for excess errors)
@@ -107,12 +122,10 @@
 4563868: gcc.c-torture/execute/pr21331.c execution,  -O1
 4563868: gcc.c-torture/execute/pr21331.c execution,  -O2
 4563834: gcc.dg/inline-16.c (test for excess errors)
+5040758: gcc.apple/objcpp.c (test for excess errors)
 #
 # the following failures are for -m64 on ppc only
-3939035: gcc.misc-tests/linkage.c link
 3966342: gcc.apple/apple-altivec-13.c (test for excess errors)
-3966342: gcc.apple/const-cfstring-3.c scan-assembler \\.long[ \\t]+___CFConstantStringClassReference\n[ \\t]*\\.long[ \\t]+1992\n[ \\t]*\\.long[ \\t]+LC.*\n[ \\t]*\\.long[ \\t]+4\n
-3966342: gcc.apple/const-cfstring-3.c scan-assembler \\.long[ \\t]+___CFConstantStringClassReference\n[ \\t]*\\.long[ \\t]+1992\n[ \\t]*\\.long[ \\t]+LC.*\n[ \\t]*\\.long[ \\t]+10\n
 3966342: gcc.dg/darwin-bool-1.c (test for excess errors)
 3966342: gcc.dg/lvalue-cast-1.c (test for excess errors)
 3967747: gcc.dg/cleanup-10.c execution test
@@ -133,7 +146,6 @@
 4085016: gcc.dg/altivec-14.c  (test for warnings, line 21)
 4085016: gcc.dg/altivec-14.c  (test for warnings, line 22)
 4085016: gcc.dg/altivec-14.c (test for excess errors)
-4085217: gcc.dg/asm-b.c execution test
 4085231: gcc.dg/transparent-union-1.c (test for excess errors)
 4085231: gcc.dg/transparent-union-2.c (test for excess errors)
 4464421: gcc.dg/vect/pr18536.c scan-tree-dump-times vectorized 1 loops 1
@@ -163,6 +175,9 @@
 4464421: gcc.dg/vect/vect-96.c scan-tree-dump-times Vectorizing an unaligned access 1
 4464421: gcc.dg/vect/vect-96.c scan-tree-dump-times Alignment of access forced using peeling 1
 4464421: gcc.dg/vect/vect-ifcvt-9.c scan-tree-dump-times vectorized 1 loops 2
+5103114: tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o-c_compat_y_tst.o execute
+5103114: tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_tst.o execute
+5103114: tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o-c_compat_y_tst.o execute
 #
 # the following failures are for x86 only
 3846097: gcc.c-torture/execute/builtins/strcat.c execution,  -fast
@@ -250,3 +265,56 @@
 4756486: gcc.dg/noncompile/const-ll-1.c  -fast  error for LUL suffix (test for errors, line 23)
 4756486: gcc.dg/noncompile/const-ll-1.c  -fast  error for Ll suffix (test for errors, line 24)
 4756486: gcc.dg/noncompile/const-ll-1.c  -fast  (test for excess errors)
+#
+# the following failures are for -fstack-protector-all only
+4990353: gcc.dg/funcorder.c scan-assembler-not link_error
+4990353: gcc.dg/tree-ssa/ssa-dce-2.c scan-tree-dump-times if  0
+4990348: gcc.dg/20020312-2.c (test for excess errors)
+4990360: gcc.c-torture/execute/920428-2.c execution,  -O0
+4990360: gcc.c-torture/execute/920428-2.c execution,  -O1
+4990360: gcc.c-torture/execute/920501-7.c execution,  -O0
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -O0
+# (x86 only)
+4990350: gcc.apple/asm-block-11.c (test for excess errors)
+4990350: gcc.apple/asm-block-15.c (test for excess errors)
+4990350: gcc.apple/asm-block-27.c (test for excess errors)
+4990350: gcc.apple/asm-block-37.c (test for excess errors)
+4990350: gcc.apple/asm-block-38.c (test for excess errors)
+4990353: gcc.apple/asm-block-54.c scan-assembler movq -16\\(%ebp\\), %mm0
+4990353: gcc.apple/asm-block-59.c scan-assembler -24\\(%ebp,%edx,2\\), %ebx
+4990353: gcc.apple/4113078.c scan-assembler \\-24\\(\\%ebp\\)
+4990353: gcc.apple/4172200.c scan-assembler-not \tmovl\t-12\\(%ebp\\)
+4990353: gcc.apple/i386-leaf-stack-opt.c scan-assembler-not sub[^\\n]*sp
+4990353: gcc.target/i386/compress-float-387-pic.c scan-assembler flds
+4990353: gcc.target/i386/compress-float-387.c scan-assembler flds
+4990353: gcc.target/i386/pr23098.c scan-assembler-not .LC[0-9]
+4990360: gcc.apple/4182984.c execution test
+4990360: gcc.c-torture/execute/920428-2.c execution,  -O2
+4990360: gcc.c-torture/execute/920428-2.c execution,  -O3 -fomit-frame-pointer
+4990360: gcc.c-torture/execute/920428-2.c execution,  -O3 -g
+4990360: gcc.c-torture/execute/920428-2.c execution,  -Os
+4990360: gcc.c-torture/execute/920428-2.c execution,  -fast
+4990360: gcc.c-torture/execute/920501-7.c execution,  -O1
+4990360: gcc.c-torture/execute/920501-7.c execution,  -O2
+4990360: gcc.c-torture/execute/920501-7.c execution,  -O3 -fomit-frame-pointer
+4990360: gcc.c-torture/execute/920501-7.c execution,  -O3 -g
+4990360: gcc.c-torture/execute/920501-7.c execution,  -Os
+4990360: gcc.c-torture/execute/920501-7.c execution,  -fast
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -O1
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -O2
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -O3 -fomit-frame-pointer
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -O3 -g
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -Os
+4990360: gcc.c-torture/execute/comp-goto-2.c execution,  -fast
+4990360: gcc.dg/20020616-1.c execution test
+4990360: gcc.dg/i386-call-1.c execution test
+# (G5 only)
+4990353: gcc.apple/4506977.c scan-assembler-not li r
+4990353: gcc.apple/non-lazy-ptr-test.c scan-assembler-not non_lazy_ptr
+4990353: gcc.dg/20020103-1.c scan-assembler-not LC
+4990353: gcc.dg/doloop-1.c scan-assembler bdnz
+4990353: gcc.dg/non-lazy-ptr-test.c scan-assembler-not non_lazy_ptr
+4990353: gcc.dg/rs6000-power2-2.c scan-assembler-not lfd
+4990353: gcc.dg/rs6000-power2-2.c scan-assembler lfq
+4990360: gcc.dg/darwin64-abi.c execution test
+4990372: gcc.dg/pr18096-1.c (test for excess errors)

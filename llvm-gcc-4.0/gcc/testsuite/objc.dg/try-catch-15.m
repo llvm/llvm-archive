@@ -4,8 +4,10 @@
 /* { dg-options "-mmacosx-version-min=10.2" } */
 /* { dg-do compile } */
 
-/* APPLE LOCAL radar 4894756 */
+/* APPLE LOCAL begin radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 #include "../objc/execute/Object2.h"
+/* APPLE LOCAL end radar 4894756 */
 
 @protocol Proto1
 - (int)meth1;

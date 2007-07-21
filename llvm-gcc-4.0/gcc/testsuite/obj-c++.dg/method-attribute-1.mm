@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 3803157 */
+/* APPLE LOCAL file radar 3803157, 5005756 */
 /* Test implementaion of attributes on methods. */
 /* { dg-do compile } */
 
@@ -35,12 +35,10 @@ int main()
 	[p bar];	/* { dg-warning "\\'bar\\' is deprecated" } */
 			/* { dg-warning "\\'bar\\' is unavailable" "" { target *-*-* } 35 } */
 
-	[pid foo];	/* { dg-warning "\\'foo\\' is deprecated" } */
-			/* { dg-warning "\\'foo\\' is unavailable" "" { target *-*-* } 38 } */
-	[pid variarg:1,2];	/* { dg-warning "\\'variarg:\\' is deprecated" } */
-	[pid fun1:1:2];	/* { dg-warning "\\'fun1::\\' is deprecated" } */
-	[pid bar];	/* { dg-warning "\\'bar\\' is deprecated" } */
-			/* { dg-warning "\\'bar\\' is unavailable" "" { target *-*-* } 42 } */
+	[pid foo];	// OK
+	[pid variarg:1,2]; // OK	
+	[pid fun1:1:2];		// OK
+	[pid bar];	// OK
 
 	[p ok];
 	[p ok1:1,2];

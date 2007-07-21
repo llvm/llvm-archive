@@ -41,11 +41,14 @@ extern void abort();
 -(oneway void)methodCall_oOn:(in bycopy out id)someValue_oOn { }
 @end
 
-Protocol *proto = @protocol(CommonProtocol);
+/* APPLE LOCAL radar 4894756 */
+/* declaration moved */
 struct objc_method_description *meth;
 
 int main()
 {
+	/* APPLE LOCAL radar 4894756 */
+        Protocol *proto = @protocol(CommonProtocol);
         meth = [proto descriptionForInstanceMethod: @selector(methodCall_On:)];
 	if (strcmp (meth->types, "Vv12@0:4On@8"))
 	  abort();

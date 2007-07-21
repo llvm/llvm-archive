@@ -38,7 +38,8 @@ int main (int argc, const char * argv[])
   Class w2 = [MyObject whatever2];
 
 /* APPLE LOCAL begin objc2 */
-#   if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
+/* APPLE LOCAL radar 4923914 */
+#   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   CHECK_IF(!strcmp(object_getClassName(w1), "Object"));
   CHECK_IF(!strcmp(object_getClassName(w2), "Object"));
 #else

@@ -1177,15 +1177,16 @@ void TreeToLLVM::EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree type,
       TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <
           TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY) {
     const Type *LLVMTy = ConvertType(type);
-    if (CountAggregateElements(LLVMTy) <= 8) {
+    
+    // If the GCC type is not fully covered by the LLVM type, use memcpy. This
+    // can occur with unions etc.
+    if (!TheTypeConverter->GCCTypeOverlapsWithLLVMTypePadding(type, LLVMTy) && 
+        // Don't copy tons of tiny elements.
+        CountAggregateElements(LLVMTy) <= 8) {
       DestPtr = CastToType(Instruction::BitCast, DestPtr, 
                            PointerType::get(LLVMTy));
       SrcPtr = CastToType(Instruction::BitCast, SrcPtr, 
                           PointerType::get(LLVMTy));
-      
-      // FIXME: Is this always safe?  The LLVM type might theoretically have
-      // holes or might be suboptimal to copy this way.  It may be better to
-      // copy the structure by the GCCType's fields.
       CopyAggregate(DestPtr, SrcPtr, isDstVolatile, isSrcVolatile, Builder);
       return;
     }
@@ -1940,15 +1941,19 @@ void TreeToLLVM::AddLandingPad() {
       break;
     }
   }
-  
+
+  CreateExceptionValues();
+
+  // Fetch and store the exception.
+  Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
+  Builder.CreateStore(Ex, ExceptionValue);
+
   if (!TryCatch) return;
   
   // Gather the typeinfo.
   std::vector<Value *> TypeInfos;
   tree Catches = TREE_OPERAND(TryCatch, 1);
   GatherTypeInfo(Catches, TypeInfos);
-  
-  CreateExceptionValues();
   
   // Choose type of landing pad type.
   Function *F = FuncEHSelector;
@@ -1959,10 +1964,6 @@ void TreeToLLVM::AddLandingPad() {
     F = FuncEHFilter;
   }
   
-  // Fetch and store the exception.
-  Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
-  Builder.CreateStore(Ex, ExceptionValue);
-        
   // Fetch and store exception handler.
   std::vector<Value*> Args;
   Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));

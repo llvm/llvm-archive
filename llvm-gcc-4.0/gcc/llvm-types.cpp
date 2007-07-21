@@ -1,6 +1,6 @@
 /* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
 /* Tree type to LLVM type converter 
-Copyright (C) 2005 Free Software Foundation, Inc.
+Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
 
 This file is part of GCC.
@@ -446,6 +446,168 @@ void TypeRefinementDatabase::dump() const {
   std::cerr << "TypeRefinementDatabase\n";
 }
 
+//===----------------------------------------------------------------------===//
+//                              Helper Routines
+//===----------------------------------------------------------------------===//
+
+/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
+/// structure.
+static unsigned getFieldOffsetInBits(tree Field) {
+  assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
+  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
+  if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
+    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
+  return Result;
+}
+
+
+/// FindLLVMTypePadding - If the specified struct has any inter-element padding,
+/// add it to the Padding array.
+static void FindLLVMTypePadding(const Type *Ty, unsigned BitOffset,
+                       SmallVector<std::pair<unsigned,unsigned>, 16> &Padding) {
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    const TargetData &TD = getTargetData();
+    const StructLayout *SL = TD.getStructLayout(STy);
+    unsigned PrevFieldBitOffset = 0;
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      unsigned FieldBitOffset = SL->getElementOffset(i)*8;
+
+      // Get padding of sub-elements.
+      FindLLVMTypePadding(STy->getElementType(i), 
+                          BitOffset+FieldBitOffset, Padding);
+      // Check to see if there is any padding between this element and the
+      // previous one.
+      if (i) {
+        unsigned PrevFieldEnd = 
+          PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
+        if (PrevFieldEnd < FieldBitOffset)
+          Padding.push_back(std::make_pair(PrevFieldEnd+BitOffset,
+                                           FieldBitOffset-PrevFieldEnd));
+      }
+      
+      PrevFieldBitOffset = FieldBitOffset;
+    }
+    
+    //  Check for tail padding.
+    if (unsigned EltCount = STy->getNumElements()) {
+      unsigned PrevFieldEnd = PrevFieldBitOffset +
+           TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
+      if (PrevFieldEnd < SL->getSizeInBytes()*8)
+        Padding.push_back(std::make_pair(PrevFieldEnd,
+                                         SL->getSizeInBytes()*8-PrevFieldEnd));
+    }
+    
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    unsigned EltSize = getTargetData().getTypeSizeInBits(ATy->getElementType());
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
+      FindLLVMTypePadding(ATy->getElementType(), BitOffset+i*EltSize, Padding);
+  }
+  
+  // primitive and vector types have no padding.
+}
+
+/// GCCTypeOverlapsWithPadding - Return true if the specified gcc type overlaps
+/// with the specified region of padding.  This only needs to handle types with
+/// a constant size.
+static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
+                                       int PadSizeBits) {
+  assert(type != error_mark_node);
+  // LLVM doesn't care about variants such as const, volatile, or restrict.
+  type = TYPE_MAIN_VARIANT(type);
+
+  // If the type does not overlap, don't bother checking below.
+  if (TYPE_SIZE(type) == 0 ||
+      PadStartBits >= int(TREE_INT_CST_LOW(TYPE_SIZE(type))) ||
+      PadStartBits+PadSizeBits <= 0)
+    return false;
+
+  
+  switch (TREE_CODE(type)) {
+  default:
+    fprintf(stderr, "Unknown type to compare:\n");
+    debug_tree(type);
+    abort();
+  case VOID_TYPE:
+  case BOOLEAN_TYPE:
+  case ENUMERAL_TYPE:
+  case INTEGER_TYPE:
+  case REAL_TYPE:
+  case COMPLEX_TYPE:
+  case VECTOR_TYPE:
+  case POINTER_TYPE:
+  case REFERENCE_TYPE:
+    // These types have no holes.
+    return true;
+
+  case ARRAY_TYPE: {
+    unsigned EltSizeBits = TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(type)));
+    unsigned NumElts = getInt64(arrayLength(type), true);
+    unsigned OverlapElt = (unsigned)PadStartBits/EltSizeBits;
+
+    // Check each element for overlap.  This is inelegant, but effective.
+    for (unsigned i = 0; i != NumElts; ++i)
+      if (GCCTypeOverlapsWithPadding(TREE_TYPE(type),
+                                     PadStartBits- i*EltSizeBits, PadSizeBits))
+        return true;
+    return false;
+  }
+  case UNION_TYPE: {
+    // If this is a union with the transparent_union attribute set, it is
+    // treated as if it were just the same as its first type.
+    if (TYPE_TRANSPARENT_UNION(type)) {
+      tree Field = TYPE_FIELDS(type);
+      assert(Field && "Transparent union must have some elements!");
+      while (TREE_CODE(Field) != FIELD_DECL) {
+        Field = TREE_CHAIN(Field);
+        assert(Field && "Transparent union must have some elements!");
+      }
+      return GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
+                                        PadStartBits, PadSizeBits);
+    }
+    
+    // See if any elements overlap.
+    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+      if (TREE_CODE(Field) != FIELD_DECL) continue;
+      assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
+
+      if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
+                                     PadStartBits, PadSizeBits))
+        return true;
+    }
+
+    return false;
+  }
+    
+  case RECORD_TYPE: 
+    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+      if (TREE_CODE(Field) != FIELD_DECL) continue;
+      
+      if (TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
+        return true;
+      
+      unsigned FieldBitOffset = getFieldOffsetInBits(Field);
+      if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field), 
+                                     PadStartBits-FieldBitOffset, PadSizeBits))
+        return true;
+    }
+    return false;
+  }
+}
+
+bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type, 
+                                                       const Type *Ty) {
+  
+  // Start by finding all of the padding in the LLVM Type.
+  SmallVector<std::pair<unsigned,unsigned>, 16> StructPadding;
+  FindLLVMTypePadding(Ty, 0, StructPadding);
+  
+  for (unsigned i = 0, e = StructPadding.size(); i != e; ++i)
+    if (GCCTypeOverlapsWithPadding(type, StructPadding[i].first,
+                                   StructPadding[i].second))
+      return true;
+  return false;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                      Main Type Conversion Routines
@@ -494,7 +656,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 16:
     case 32:
     case 64:
-    case 128:
+    //case 128:  Waiting for PR1462 etc.
       break;
     default:
       static bool Warned = false;
@@ -628,10 +790,10 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       if (!length) {
         // We get here if we have something that is globally declared as an
         // array with no dimension, this becomes just a zero size array of the
-        // element type so that: int X[] becomes *'%X = external global [0 x int]'
+        // element type so that: int X[] becomes '%X = external global [0x i32]'
         //
-        // Note that this also affects new expressions, which return a pointer to
-        // an unsized array of elements.
+        // Note that this also affects new expressions, which return a pointer 
+        // to an unsized array of elements.
         NumElements = 0;
       } else if (!isInt64(length, true)) {
         // A variable length array where the element type has size zero.  Turn
@@ -945,7 +1107,8 @@ struct StructTypeConversionInfo {
   const Type *getLLVMType() const {
     // Use Packed type if Packed is set or all struct fields are bitfields.
     // Empty struct is not packed unless packed is set.
-    return StructType::get(Elements, Packed || (!Elements.empty() && AllBitFields));
+    return StructType::get(Elements,
+                           Packed || (!Elements.empty() && AllBitFields));
   }
   
   /// getSizeAsLLVMStruct - Return the size of this struct if it were converted
@@ -1182,7 +1345,8 @@ void StructTypeConversionInfo::convertToPacked() {
       const Type *Pad = Type::Int8Ty;
       Pad = ArrayType::get(Pad, padding);
       ElementOffsetInBytes.insert(ElementOffsetInBytes.begin() + x,
-                                  ElementOffsetInBytes[x-1] + ElementSizeInBytes[x-1]);
+                                  ElementOffsetInBytes[x-1] +
+                                  ElementSizeInBytes[x-1]);
       ElementSizeInBytes.insert(ElementSizeInBytes.begin() + x, padding);
       Elements.insert(Elements.begin() + x, Pad);
       PaddingElement.insert(PaddingElement.begin() + x, true);
@@ -1274,16 +1438,6 @@ void adjustPaddingElement(const Type *OldTy, const Type *NewTy) {
 
 }
 
-
-/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
-/// structure.
-static unsigned getFieldOffsetInBits(tree Field) {
-  assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
-  if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
-    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
-  return Result;
-}
 
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to

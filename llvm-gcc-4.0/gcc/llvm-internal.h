@@ -1,6 +1,6 @@
 /* APPLE LOCAL begin LLVM (ENTIRE FILE!)  */
 /* Internal interfaces between the LLVM backend components
-Copyright (C) 2005 Free Software Foundation, Inc.
+Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner  (sabre@nondot.org)
 
 This file is part of GCC.
@@ -118,6 +118,12 @@ public:
   TypeConverter() : ConvertingStruct(false) {}
   
   const Type *ConvertType(tree_node *type);
+  
+  /// GCCTypeOverlapsWithLLVMTypePadding - Return true if the specified GCC type
+  /// has any data that overlaps with structure padding in the specified LLVM
+  /// type.
+  static bool GCCTypeOverlapsWithLLVMTypePadding(tree_node *t, const Type *Ty);
+  
   
   /// ConvertFunctionType - Convert the specified FUNCTION_TYPE or METHOD_TYPE
   /// tree to an LLVM type.  This does the same thing that ConvertType does, but

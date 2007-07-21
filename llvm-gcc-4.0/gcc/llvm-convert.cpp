@@ -558,7 +558,12 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case RDIV_EXPR:      
     Result = EmitBinOp(exp, DestLoc, Instruction::FDiv);
     break;
-  case TRUNC_MOD_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Rem);break;
+  case TRUNC_MOD_EXPR: 
+    if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+      Result = EmitBinOp(exp, DestLoc, Instruction::URem);
+    else
+      Result = EmitBinOp(exp, DestLoc, Instruction::SRem);
+    break;
   case BIT_AND_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::And);break;
   case BIT_IOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Or );break;
   case BIT_XOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Xor);break;

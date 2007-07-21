@@ -429,6 +429,12 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
 	  written += size;
 	}
       free (buf);
+      /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+      llvm_pch_read();
+#endif
+  /* APPLE LOCAL end LLVM */
+
     }
   else
     {
@@ -437,6 +443,7 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
       if (fseek (f, h.asm_size, SEEK_CUR) != 0)
 	cpp_errno (pfile, CPP_DL_ERROR, "seeking");
     }
+
 
   cpp_prepare_state (pfile, &smd);
 

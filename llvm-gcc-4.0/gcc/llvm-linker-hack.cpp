@@ -26,6 +26,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bytecode/Writer.h"
+#include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Streams.h"
@@ -41,6 +42,7 @@ void dummy_function() {
   new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
   llvm::WriteBytecodeToFile(0, llvm::cout);
+  llvm::ParseBytecodeFile(NULL,NULL);
 
   llvm::createInstructionCombiningPass();
   llvm::createScalarReplAggregatesPass();

@@ -367,6 +367,15 @@ do {					\
 #define CC1PLUS_SPEC "-D__private_extern__=extern"
 /* APPLE LOCAL end private extern */
 
+/* APPLE LOCAL begin llvm */
+#ifdef HAVE_DSYMUTIL
+#define DARWIN_DSYMUTIL_SPEC  "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+                                 %{.c|.cc|.C|.cpp|.c++|.CPP|.m|.mm: \
+                                 %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+#else
+#define DARWIN_DSYMUTIL_SPEC ""
+#endif
+/* APPLE LOCAL end llvm */
 /* This is mostly a clone of the standard LINK_COMMAND_SPEC, plus
    precomp, libtool, and fat build additions.  Also we
    don't specify a second %G after %L because libSystem is
@@ -389,10 +398,10 @@ do {					\
     %{fnested-functions: -allow_stack_execute} \
     %{!nostdlib:%{!nodefaultlibs:%G %L}} \
 "/* APPLE LOCAL begin mainline 4.3 2006-12-20 4370146 4869554 */"\
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
-%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %{.c|.cc|.C|.cpp|.c++|.CPP|.m|.mm: \
-    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+"/* APPLE LOCAL begin llvm */"\
+    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}} \n %(darwin_dsymutil) "
+/* APPLE LOCAL end llvm */
+
 /* APPLE LOCAL end mainline 4.3 2006-12-20 4370146 4869554 */
 /* APPLE LOCAL end no-libtool */
 
@@ -553,7 +562,9 @@ do {					\
 /* APPLE LOCAL begin crt1 4521370 */
 #define DARWIN_EXTRA_SPECS	\
   { "darwin_crt1", DARWIN_CRT1_SPEC },					\
-  { "darwin_dylib1", DARWIN_DYLIB1_SPEC },
+  { "darwin_dylib1", DARWIN_DYLIB1_SPEC },                              \
+  /* APPLE LOCAL LLVM */                                                \
+  { "darwin_dsymutil", DARWIN_DSYMUTIL_SPEC },
 
 #define DARWIN_DYLIB1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
@@ -576,9 +587,15 @@ do {					\
 #define DBX_DEBUGGING_INFO 1
 
 /* Prefer DWARF2.  */
+/* APPLE LOCAL begin llvm */
+/* Prefer DWARF only if appropriate dsymutil is available.  */
 #define DWARF2_DEBUGGING_INFO
+#ifdef HAVE_DSYMUTIL
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-
+#else
+#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+#endif
+/* APPLE LOCAL end llvm */
 /* APPLE LOCAL end for-fsf-4_3 4370143 */
 /* APPLE LOCAL begin mainline 2006-03-16 dwarf2 section flags */
 #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"

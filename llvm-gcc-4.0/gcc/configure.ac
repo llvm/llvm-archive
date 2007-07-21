@@ -705,6 +705,28 @@ esac],
 AC_SUBST(onestep)
 
 # APPLE LOCAL begin LLVM
+# See if dsymutil has been installed and is modern enough
+# that we can use DWARF.
+gcc_AC_CHECK_PROG_VER(DSYMUTIL, dsymutil, --version,
+  [.*dwarfutils.\([0-9]*\)],
+  [2[5-9]*])
+if test $gcc_cv_prog_dsymutil_modern = no; then
+   AC_MSG_RESULT([dsymutil is not available])
+else
+  AC_DEFINE(HAVE_DSYMUTIL, 1,
+            [dsymutil is available])
+fi
+
+gcc_AC_CHECK_PROG_VER(DSYMUTIL, dsymutil, --version,
+  [.*dwarfutils.\([0-9]*\)],
+  [[3-9][0-9]*])
+if test $gcc_cv_prog_dsymutil_modern = no; then
+   AC_MSG_RESULT([dsymutil is not available])
+else
+  AC_DEFINE(HAVE_DSYMUTIL, 1,
+            [dsymutil is available])
+fi
+
 AC_ARG_ENABLE(llvm,
 [  --enable-llvm=DIR       enable the LLVM backend, use DIR as LLVM root],
 [case "${enableval}" in

@@ -117,7 +117,8 @@ public:
   /// ConvertFunctionType - Convert the specified FUNCTION_TYPE or METHOD_TYPE
   /// tree to an LLVM type.  This does the same thing that ConvertType does, but
   /// it also returns the function's LLVM calling convention.
-  const FunctionType *ConvertFunctionType(tree_node *type, 
+  const FunctionType *ConvertFunctionType(tree_node *type,
+                                          tree_node *static_chain,
                                           unsigned &CallingConv);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
@@ -125,6 +126,7 @@ public:
   /// turning "T foo(...)" functions into "T foo(void)" functions.
   const FunctionType *ConvertArgListToFnType(tree_node *retty,
                                              tree_node *arglist,
+                                             tree_node *static_chain,
                                              unsigned &CallingConv);
   
 private:
@@ -461,7 +463,6 @@ private:
   Value *EmitComplexBinOp(tree_node *exp, Value *DestLoc);
 
   // L-Value Expressions.
-  LValue EmitLV_INDIRECT_REF(tree_node *exp);
   LValue EmitLV_DECL(tree_node *exp);
   LValue EmitLV_ARRAY_REF(tree_node *exp);
   LValue EmitLV_COMPONENT_REF(tree_node *exp);
@@ -513,8 +514,6 @@ public:
   static Constant *EmitLV_STRING_CST(tree_node *exp);
   static Constant *EmitLV_COMPONENT_REF(tree_node *exp);
   static Constant *EmitLV_ARRAY_REF(tree_node *exp);
-  static Constant *EmitLV_INDIRECT_REF(tree_node *exp);
-  static Constant *EmitLV_COMPOUND_LITERAL_EXPR(tree_node *exp);
 };
 
 #endif

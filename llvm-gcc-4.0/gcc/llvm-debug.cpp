@@ -31,6 +31,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
@@ -273,12 +274,8 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   Subprogram->setIsDefinition(true);
   
   // Lazily construct llvm.dbg.func.start.
-  if (!FuncStartFn) {
-    FuncStartFn =
-      cast<Function>(M->getOrInsertFunction("llvm.dbg.func.start",
-                                            Type::VoidTy,
-                                            SR.getEmptyStructPtrType(), NULL));
-  }
+  if (!FuncStartFn)
+    FuncStartFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_func_start);
 
   // Call llvm.dbg.func.start.
   new CallInst(FuncStartFn, getCastValueFor(Subprogram), "", CurBB);
@@ -298,12 +295,8 @@ void DebugInfo::EmitRegionStart(Function *Fn, BasicBlock *CurBB) {
   RegionStack.push_back(Block);
 
   // Lazily construct llvm.dbg.region.start function.
-  if (!RegionStartFn) {
-    const PointerType *EmpPtr = SR.getEmptyStructPtrType();
-    RegionStartFn = 
-      cast<Function>(M->getOrInsertFunction("llvm.dbg.region.start",
-                                            Type::VoidTy, EmpPtr, NULL));
-  }
+  if (!RegionStartFn)
+    RegionStartFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_region_start);
   
   // Call llvm.dbg.func.start.
   new CallInst(RegionStartFn, getCastValueFor(Block), "", CurBB);
@@ -313,12 +306,8 @@ void DebugInfo::EmitRegionStart(Function *Fn, BasicBlock *CurBB) {
 /// region - "llvm.dbg.region.end."
 void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
   // Lazily construct llvm.dbg.region.end function.
-  if (!RegionEndFn) {
-    const PointerType *EmpPtr = SR.getEmptyStructPtrType();
-    RegionEndFn =
-      cast<Function>(M->getOrInsertFunction("llvm.dbg.region.end", Type::VoidTy,
-                                            EmpPtr, NULL));
-  }
+  if (!RegionEndFn)
+    RegionEndFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_region_end);
   
   // Provide an region stop point.
   EmitStopPoint(Fn, CurBB);
@@ -334,11 +323,8 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
                             tree type, Value *AI, BasicBlock *CurBB) {
   // Lazily construct llvm.dbg.declare function.
   const PointerType *EmpPtr = SR.getEmptyStructPtrType();
-  if (!DeclareFn) {
-    DeclareFn =
-      cast<Function>(M->getOrInsertFunction("llvm.dbg.declare",
-                                            Type::VoidTy, EmpPtr, EmpPtr,NULL));
-  }
+  if (!DeclareFn)
+    DeclareFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_declare);
   
   // Get type information.
   CompileUnitDesc *Unit = getOrCreateCompileUnit(CurFullPath);
@@ -382,13 +368,8 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
   CompileUnitDesc *Unit = getOrCreateCompileUnit(CurFullPath);
   
   // Lazily construct llvm.dbg.stoppoint function.
-  if (!StopPointFn) {
-    StopPointFn =
-      cast<Function>(M->getOrInsertFunction("llvm.dbg.stoppoint",
-                                            Type::VoidTy, Type::Int32Ty,
-                                            Type::Int32Ty,
-                                            SR.getEmptyStructPtrType(), NULL));
-  }
+  if (!StopPointFn)
+    StopPointFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_stoppoint);
   
   // Invoke llvm.dbg.stoppoint
   std::vector<Value*> Args;

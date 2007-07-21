@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -183,6 +184,21 @@ void llvm_lang_dependent_init(const char *Name) {
 }
 
 oFILEstream *AsmOutStream = 0;
+
+void llvm_pch_read(void) {
+
+  if (TheModule)
+    delete TheModule;
+
+  fclose (asm_out_file);
+  std::string ErrMsg;
+  TheModule = ParseBytecodeFile(asm_file_name, &ErrMsg);
+  if (!TheModule) {
+    cerr << "Error reading bytecodes from PCH file\n";
+    cerr << ErrMsg << "\n";
+    exit(1);
+  }
+}
 
 // Initialize PCH writing. 
 void llvm_pch_write_init(void) {
@@ -338,13 +354,21 @@ void llvm_asm_file_start(void) {
     }
 
     // Normal mode, emit a .s file by running the code generator.
-    if (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream, 
-                                       TargetMachine::AssemblyFile,
-                                       /*FAST*/optimize == 0)) {
-      cerr << "Error interfacing to target machine!";
+    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream,
+                                           TargetMachine::AssemblyFile,
+                                           /*FAST*/optimize == 0)) {
+    default:
+    case FileModel::Error:
+      cerr << "Error interfacing to target machine!\n";
+      exit(1);
+    case FileModel::AsmFile:
+      break;
+    }
+
+    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
+      cerr << "Error interfacing to target machine!\n";
       exit(1);
     }
-    
   }
   
   if (HasPerFunctionPasses) {
@@ -433,9 +457,9 @@ void llvm_asm_file_end(void) {
 // llvm_emit_code_for_current_function - Top level interface for emitting a
 // function to the .s file.
 void llvm_emit_code_for_current_function(tree fndecl) {
-  if (cfun->static_chain_decl || cfun->nonlocal_goto_save_area)
-    sorry("%Jnested functions not supported by LLVM", fndecl);
-  
+  if (cfun->nonlocal_goto_save_area)
+    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
+
   if (errorcount || sorrycount) {
     TREE_ASM_WRITTEN(fndecl) = 1;
     return;  // Do not process broken code.
@@ -709,7 +733,7 @@ void make_decl_llvm(tree decl) {
     if (FnEntry == 0) {
       unsigned CC;
       const FunctionType *Ty = 
-        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), CC);
+        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), NULL, CC);
       FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
 

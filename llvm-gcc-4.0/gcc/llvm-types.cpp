@@ -416,7 +416,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       return Ty;
     
     unsigned CallingConv;
-    return TypeDB.setType(type, ConvertFunctionType(type, CallingConv));
+    return TypeDB.setType(type, ConvertFunctionType(type, NULL, CallingConv));
   }
   case ARRAY_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -530,7 +530,8 @@ namespace {
 /// fills in Result with the argument types for the function.  It returns the
 /// specified result type for the function.
 const FunctionType *TypeConverter::
-ConvertArgListToFnType(tree ReturnType, tree Args, unsigned &CallingConv) {
+ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
+                       unsigned &CallingConv) {
   std::vector<const Type*> ArgTys;
   const Type *RetTy;
   
@@ -538,12 +539,28 @@ ConvertArgListToFnType(tree ReturnType, tree Args, unsigned &CallingConv) {
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
   
   ABIConverter.HandleReturnType(ReturnType);
+
+  if (static_chain)
+    // Pass the static chain as the first parameter.
+    ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
-  return FunctionType::get(RetTy, ArgTys, false);
+
+  FunctionType::ParamAttrsList ParamAttrs;
+
+  if (static_chain) {
+    // Something for the return type.
+    ParamAttrs.push_back(FunctionType::NoAttributeSet);
+    // Pass the static chain in a register.
+    ParamAttrs.push_back(FunctionType::InRegAttribute);
+  }
+
+  return FunctionType::get(RetTy, ArgTys, false, ParamAttrs);
 }
 
-const FunctionType *TypeConverter::ConvertFunctionType(tree type, 
+const FunctionType *TypeConverter::ConvertFunctionType(tree type,
+                                                       tree static_chain,
                                                        unsigned &CallingConv) {
   const Type *RetTy = 0;
   std::vector<const Type*> ArgTypes;
@@ -557,7 +574,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 #ifdef TARGET_ADJUST_LLVM_CC
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
-    
+
+  if (static_chain)
+    // Pass the static chain as the first parameter.
+    ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+
   // Loop over all of the arguments, adding them as we go.
   tree Args = TYPE_ARG_TYPES(type);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
@@ -612,6 +633,10 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 #ifdef LLVM_TARGET_ENABLE_REGPARM
   LLVM_TARGET_INIT_REGPARM(lparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
+
+  if (static_chain)
+    // Pass the static chain in a register.
+    ParamAttrs.push_back(FunctionType::InRegAttribute);
 
   for (tree Args = TYPE_ARG_TYPES(type);
        Args && TREE_VALUE(Args) != void_type_node;

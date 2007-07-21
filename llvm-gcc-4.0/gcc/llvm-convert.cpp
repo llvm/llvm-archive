@@ -260,6 +260,7 @@ void TreeToLLVM::StartFunctionBody() {
     Name = IDENTIFIER_POINTER(ID);
   
   // Determine the FunctionType and calling convention for this function.
+  tree static_chain = cfun->static_chain_decl;
   const FunctionType *FTy;
   unsigned CallingConv;
   
@@ -271,16 +272,19 @@ void TreeToLLVM::StartFunctionBody() {
   if (TYPE_ARG_TYPES(TREE_TYPE(FnDecl)) == 0) {
     FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(TREE_TYPE(FnDecl)),
                                                    DECL_ARGUMENTS(FnDecl),
+                                                   static_chain,
                                                    CallingConv);
 #ifdef TARGET_ADJUST_LLVM_CC
     TARGET_ADJUST_LLVM_CC(CallingConv, TREE_TYPE(FnDecl));
 #endif
   } else {
     // Otherwise, just get the type from the function itself.
-    FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl), CallingConv);
+    FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl),
+						static_chain,
+						CallingConv);
   }
   
-  // If we've already see this function and created a prototype, and if the
+  // If we've already seen this function and created a prototype, and if the
   // proto has the right LLVM type, just use it.
   if (DECL_LLVM_SET_P(FnDecl) &&
       cast<PointerType>(DECL_LLVM(FnDecl)->getType())->getElementType() == FTy){
@@ -371,8 +375,11 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Handle the DECL_RESULT.
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)));
-  
-  for (tree Args = DECL_ARGUMENTS(FnDecl); Args; Args = TREE_CHAIN(Args)) {
+
+  // Prepend the static chain (if any) to the list of arguments.
+  tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
+
+  while (Args) {
     const char *Name = "unnamed_arg";
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
 
@@ -400,6 +407,8 @@ void TreeToLLVM::StartFunctionBody() {
       ABIConverter.HandleArgument(TREE_TYPE(Args));
       Client.clear();
     }
+
+    Args = Args == static_chain ? DECL_ARGUMENTS(FnDecl) : TREE_CHAIN(Args);
   }
 
   // If this is not a void-returning function, initialize the RESULT_DECL.
@@ -407,9 +416,9 @@ void TreeToLLVM::StartFunctionBody() {
       !DECL_LLVM_SET_P(DECL_RESULT(FnDecl)))
     EmitAutomaticVariableDecl(DECL_RESULT(FnDecl));
 
-  // If this function has nested functions, we should handle the static chain,
-  // and handle a potential nonlocal_goto_save_area.
-  if (cfun->static_chain_decl || cfun->nonlocal_goto_save_area) {
+  // If this function has nested functions, we should handle a potential
+  // nonlocal_goto_save_area.
+  if (cfun->nonlocal_goto_save_area) {
     // Not supported yet.
   }
   
@@ -680,18 +689,24 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case FUNCTION_DECL:
   case CONST_DECL:
   case RESULT_DECL:   return EmitLV_DECL(exp);
-  case STRING_CST:    return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
-  case INDIRECT_REF:  return EmitLV_INDIRECT_REF(exp);
   case ARRAY_RANGE_REF:
   case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
   case BIT_FIELD_REF: return EmitLV_BIT_FIELD_REF(exp);
   case REALPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 0);
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
+  // Constants.
+  case LABEL_DECL:    return TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
+  case STRING_CST:    return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
+
+  // Trivial Cases.
   case VIEW_CONVERT_EXPR:
   case WITH_SIZE_EXPR:
     // The address of a these is the address of their operand.
     return EmitLV(TREE_OPERAND(exp, 0));
+  case INDIRECT_REF:
+    // The lvalue is just the address.
+    return Emit(TREE_OPERAND(exp, 0), 0);
   }
 }
 
@@ -708,7 +723,10 @@ void TreeToLLVM::TODO(tree exp) {
 /// CastToType - Cast the specified value to the specified type if it is
 /// not already that type.
 Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
-  if (V->getType() == Ty) return V;
+  // Eliminate useless casts of a type to itself.
+  if (V->getType() == Ty) 
+    return V;
+
   if (Constant *C = dyn_cast<Constant>(V))
     return ConstantExpr::getCast(Instruction::CastOps(opcode), C, Ty);
   
@@ -725,28 +743,48 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
 /// assumptions about the types of the arguments. This creates an inferred cast.
 Value *TreeToLLVM::CastToAnyType(Value *V, bool VisSigned, 
                                  const Type* Ty, bool TyIsSigned) {
-  Instruction::CastOps opcode = CastInst::getCastOpcode(V, VisSigned, Ty, 
-                                                        TyIsSigned);
-  return CastToType(opcode, V, Ty);
+  // Eliminate useless casts of a type to itself.
+  if (V->getType() == Ty)
+    return V;
+
+  // The types are different so we must cast. Use getCastOpcode to create an
+  // inferred cast opcode.
+  Instruction::CastOps opc = 
+    CastInst::getCastOpcode(V, VisSigned, Ty, TyIsSigned);
+
+  // Generate the cast and return it.
+  return CastToType(opc, V, Ty);
 }
 
 /// CastToUIntType - Cast the specified value to the specified type assuming
 /// that the value and type are unsigned integer types.
 Value *TreeToLLVM::CastToUIntType(Value *V, const Type* Ty) {
+  // Eliminate useless casts of a type to itself.
+  if (V->getType() == Ty)
+    return V;
+
   unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
-  Instruction::CastOps opcode = (SrcBits == DstBits ? Instruction::BitCast :
-      (SrcBits > DstBits ? Instruction::Trunc : Instruction::ZExt));
+  assert(SrcBits != DstBits && "Types are different but have same #bits?");
+
+  Instruction::CastOps opcode = 
+    (SrcBits > DstBits ? Instruction::Trunc : Instruction::ZExt);
   return CastToType(opcode, V, Ty);
 }
 
 /// CastToSIntType - Cast the specified value to the specified type assuming
 /// that the value and type are signed integer types.
 Value *TreeToLLVM::CastToSIntType(Value *V, const Type* Ty) {
+  // Eliminate useless casts of a type to itself.
+  if (V->getType() == Ty)
+    return V;
+
   unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
-  Instruction::CastOps opcode = (SrcBits == DstBits ? Instruction::BitCast :
-      (SrcBits > DstBits ? Instruction::Trunc : Instruction::SExt));
+  assert(SrcBits != DstBits && "Types are different but have same #bits?");
+
+  Instruction::CastOps opcode = 
+    (SrcBits > DstBits ? Instruction::Trunc : Instruction::SExt);
   return CastToType(opcode, V, Ty);
 }
 
@@ -1804,13 +1842,13 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
     if (LV.BitStart+LV.BitSize != ValSizeInBits) {
       Value *ShAmt = ConstantInt::get(Val->getType(),
                                        ValSizeInBits-(LV.BitStart+LV.BitSize));
-      Val = BinaryOperator::create(Instruction::Shl, Val, ShAmt, "tmp", CurBB);
+      Val = BinaryOperator::createShl(Val, ShAmt, "tmp", CurBB);
     }
     
     // Shift right required?
     if (ValSizeInBits-LV.BitSize) {
       Value *ShAmt = ConstantInt::get(Val->getType(), ValSizeInBits-LV.BitSize);
-      Val = BinaryOperator::create( TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
+      Val = BinaryOperator::create(TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
         Instruction::LShr : Instruction::AShr, Val, ShAmt, "tmp", CurBB);
     }
 
@@ -1846,8 +1884,22 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, Value *DestLoc) {
     if (EmitBuiltinCall(exp, fndecl, DestLoc, Res))
       return Res;
   }
-  
+
   Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
+
+  if (TREE_OPERAND(exp, 2)) {
+    // This is a direct call to a function using a static chain.  We need to
+    // change the function type to one with an extra parameter for the chain.
+    assert(fndecl && "Indirect static chain call!");
+    tree function_type = TYPE_MAIN_VARIANT(TREE_TYPE(fndecl));
+    tree static_chain = TREE_OPERAND(exp, 2);
+
+    unsigned CallingConv;
+    const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
+                                                           static_chain,
+                                                           CallingConv);
+    Callee = CastToType(Instruction::BitCast, Callee, PointerType::get(Ty));
+  }
 
   //EmitCall(exp, DestLoc);
   Value *Result = EmitCallOf(Callee, exp, DestLoc);
@@ -2009,7 +2061,11 @@ FIXME: "Call terminate if needed!";
 
   // Handle the result, including struct returns.
   ABIConverter.HandleReturnType(TREE_TYPE(exp));
-  
+
+  // Pass the static chain, if any, as the first parameter.
+  if (TREE_OPERAND(exp, 2))
+    CallOperands.push_back (Emit(TREE_OPERAND(exp, 2), 0));
+
   // Loop over the arguments, expanding them and adding them to the op list.
   const PointerType *PFTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PFTy->getElementType());
@@ -2209,7 +2265,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   Value *RetVal = RHS;
   RHS = CastToAnyType(RHS, Op1Signed, OldVal->getType(), Op0Signed);
   if (LV.BitStart)
-    RHS = BinaryOperator::create(Instruction::Shl, RHS,
+    RHS = BinaryOperator::createShl(RHS,
                         ConstantInt::get(RHS->getType(), LV.BitStart),
                         "tmp", CurBB);
   // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
@@ -4043,11 +4099,6 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   return CastToType(Instruction::BitCast, Decl, PTy);
 }
 
-LValue TreeToLLVM::EmitLV_INDIRECT_REF(tree exp) {
-  // The lvalue is just the address.
-  return Emit(TREE_OPERAND(exp, 0), 0);
-}
-
 LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree Array = TREE_OPERAND(exp, 0);
   tree Index = TREE_OPERAND(exp, 1);
@@ -5045,9 +5096,11 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
   case ARRAY_RANGE_REF:
   case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
-  case INDIRECT_REF:  return EmitLV_INDIRECT_REF(exp);
+  case INDIRECT_REF:
+    // The lvalue is just the address.
+    return Convert(TREE_OPERAND(exp, 0));
   case COMPOUND_LITERAL_EXPR:
-    return EmitLV_COMPOUND_LITERAL_EXPR(exp);
+    return EmitLV(COMPOUND_LITERAL_EXPR_DECL(exp));
   }
 }
 
@@ -5226,16 +5279,6 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");
   return FieldPtr;
-}
-
-Constant* TreeConstantToLLVM::EmitLV_INDIRECT_REF(tree exp) {
-  // The lvalue is just the address.
-  return Convert(TREE_OPERAND(exp, 0));
-}
-
-Constant *TreeConstantToLLVM::EmitLV_COMPOUND_LITERAL_EXPR(tree exp) {
-  tree Decl = COMPOUND_LITERAL_EXPR_DECL(exp);
-  return EmitLV(Decl);
 }
 
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */

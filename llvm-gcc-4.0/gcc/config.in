@@ -329,6 +329,9 @@
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
 
+/* dsymutil is available */
+#undef HAVE_DSYMUTIL
+
 /* Define to 1 if you have the `dup2' function. */
 #undef HAVE_DUP2
 
@@ -657,22 +660,22 @@
 /* Define to PREFIX/include if cpp should also search that directory. */
 #undef PREFIX_INCLUDE_DIR
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of a `void *', as computed by sizeof. */
+/* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P
 
-/* The size of a `__int64', as computed by sizeof. */
+/* The size of `__int64', as computed by sizeof. */
 #undef SIZEOF___INT64
 
 /* Define to 1 if you have the ANSI C header files. */

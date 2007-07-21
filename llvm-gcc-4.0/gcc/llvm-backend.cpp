@@ -134,10 +134,11 @@ void llvm_initialize_backend(void) {
 #endif
   TheModule->setTargetTriple(TargetTriple);
   
-  TheModule->setEndianness(BITS_BIG_ENDIAN ? Module::BigEndian
-                                           : Module::LittleEndian);
-  TheModule->setPointerSize(POINTER_SIZE == 32 ? Module::Pointer32
-                                               : Module::Pointer64);
+  std::string DataLayout;
+  DataLayout.append(BITS_BIG_ENDIAN ? "E" : "e");
+  DataLayout.append(POINTER_SIZE == 32 ? "-p:32:32" : "-p:64:64");
+  TheModule->setDataLayout(DataLayout);
+  
   TheTypeConverter = new TypeConverter();
   
   // Create the TargetMachine we will be generating code with.

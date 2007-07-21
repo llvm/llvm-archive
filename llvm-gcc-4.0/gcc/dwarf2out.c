@@ -3731,6 +3731,32 @@ typedef struct die_struct GTY(())
 }
 die_node;
 
+/* APPLE LOCAL begin mainline 2006-05-15 rewrite 4548482  */
+/* The following struct is used to maintain a global list of iinlined
+   function call locaitons.  It contains die refs for both the caller and
+   callee.  */
+struct inlined_calls GTY(())
+{
+  dw_die_ref caller;    /* Die for subroutine containing call site.      */
+  dw_die_ref callee;    /* Abstract origin die for inlined subroutine.   */
+  /* Dwarf file index for file containing caller.  */
+  struct dwarf_file_data * file_index;
+  int line;             /* Line number for inlined call site.            */
+  int column;           /* Column position for inlined call site.        */
+  struct inlined_calls *next;
+};
+
+/* The following global data structure is a linked list containing 
+   information about all the inlined call sites.  It is used to help locate
+   in the presence of nested levels of inlining.   */
+
+static GTY(()) struct inlined_calls *inlined_calls_list = NULL;
+/* APPLE LOCAL end mainline 2006-05-15 rewrite 4548482  */
+
+/* APPLE LOCAL begin dwarf-file-hash 4587142 */
+static GTY(()) struct dwarf_file_data * file_table_last_lookup;
+/* APPLE LOCAL end mainline 2006-05-15 rewrite 4548482  */
+
 /* Evaluate 'expr' while 'c' is set to each child of DIE in order.  */
 #define FOR_EACH_CHILD(die, c, expr) do {	\
   c = die->die_child;				\
@@ -12101,25 +12127,6 @@ gen_lexical_block_die (tree stmt, dw_die_ref context_die, int depth)
 }
 
 /* APPLE LOCAL begin mainline 2006-05-15 rewrite 4548482  */
-/* The following struct is used to maintain a global list of iinlined
-   function call locaitons.  It contains die refs for both the caller and
-   callee.  */
-struct inlined_calls GTY(())
-{
-  dw_die_ref caller;    /* Die for subroutine containing call site.      */
-  dw_die_ref callee;    /* Abstract origin die for inlined subroutine.   */
-  /* Dwarf file index for file containing caller.  */
-  struct dwarf_file_data * file_index;
-  int line;             /* Line number for inlined call site.            */
-  int column;           /* Column position for inlined call site.        */
-  struct inlined_calls *next;
-};
-
-/* The following global data structure is a linked list containing 
-   information about all the inlined call sites.  It is used to help locate
-   in the presence of nested levels of inlining.   */
-
-static GTY(()) struct inlined_calls *inlined_calls_list = NULL;
 
 /* The following function takes information about the call site of an
    inlined function call and adds the information for the call site to
@@ -13714,8 +13721,6 @@ file_table_hash (const void *p_p)
    all searches.  */
 
 /* APPLE LOCAL begin dwarf-file-hash 4587142 */
-static GTY(()) struct dwarf_file_data * file_table_last_lookup;
-
 static struct dwarf_file_data *
 /* APPLE LOCAL end dwarf-file-hash 4587142 */
 lookup_filename (const char *file_name)

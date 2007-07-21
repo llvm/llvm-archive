@@ -46,6 +46,10 @@ Until http://llvm.org/PR821 is fixed, you should configure with
 --disable-threads.  This fixes problems linking libgcc.so.1 with
 undefined references to pthread_*.
 
+Until http://llvm.org/PR1006 is fixed, you should configure with
+--disable-shared. This fixes problems when missing symbols in the stdc++ 
+library when trying to link llvm-g++. 
+
 If llvm-gcc doesn't build right, try building LLVM with OPTIMIZE_OPTION=-O2.
 This may be host compiler version specific.
 

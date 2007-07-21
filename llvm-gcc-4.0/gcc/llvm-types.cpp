@@ -29,6 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -706,14 +707,12 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  FunctionType::ParamAttrsList ParamAttrs;
-
-  // Something for the return type.
-  ParamAttrs.push_back(FunctionType::NoAttributeSet);
+  ParamAttrsList *ParamAttrs = 0;
 
   if (static_chain) {
     // Pass the static chain in a register.
-    ParamAttrs.push_back(FunctionType::InRegAttribute);
+    ParamAttrs = new ParamAttrsList();
+    ParamAttrs->addAttributes(1, InRegAttribute);
   }
 
   return FunctionType::get(RetTy, ArgTys, false, ParamAttrs);
@@ -768,23 +767,24 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   // the parameter attribute in the FunctionType so any arguments passed to
   // the function will be correctly sign or zero extended to 32-bits by
   // the LLVM code gen.
-  FunctionType::ParamAttrsList ParamAttrs;
-  unsigned RAttributes = FunctionType::NoAttributeSet;
+  ParamAttrsList Attrs;
+  uint16_t RAttributes = NoAttributeSet;
   if (CallingConv == CallingConv::C) {
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_CODE(ResultTy) == BOOLEAN_TYPE) {
       if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-        RAttributes |= FunctionType::ZExtAttribute;
+        RAttributes |= ZExtAttribute;
     } else {
       if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
           TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
         if (TYPE_UNSIGNED(ResultTy))
-          RAttributes |= FunctionType::ZExtAttribute;
+          RAttributes |= ZExtAttribute;
         else 
-          RAttributes |= FunctionType::SExtAttribute;
+          RAttributes |= SExtAttribute;
     }
   }
-  ParamAttrs.push_back(FunctionType::ParameterAttributes(RAttributes));
+  if (RAttributes != NoAttributeSet)
+    Attrs.addAttributes(0, RAttributes);
   
   unsigned Idx = 1;
   bool isFirstArg = true;
@@ -796,27 +796,30 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 
   if (static_chain)
     // Pass the static chain in a register.
-    ParamAttrs.push_back(FunctionType::InRegAttribute);
+    Attrs.addAttributes(Idx++, InRegAttribute);
   
-  // Handle struct return
+  // The struct return attribute must be associated with the first
+  // parameter but that parameter may have other attributes too so we set up
+  // the first Attributes value here based on struct return. This only works
+  // Handle the structure return calling convention
   if (ABIConverter.isStructReturn())
-    ParamAttrs.push_back(FunctionType::StructRetAttribute);
+    Attrs.addAttributes(Idx++, StructRetAttribute);
   
   for (tree Args = TYPE_ARG_TYPES(type);
        Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
-    unsigned Attributes = FunctionType::NoAttributeSet;
     tree Ty = TREE_VALUE(Args);
     
+    unsigned Attributes = NoAttributeSet;
     if (CallingConv == CallingConv::C) {
       if (TREE_CODE(Ty) == BOOLEAN_TYPE) {
         if (TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
-          Attributes |= FunctionType::ZExtAttribute;
+          Attributes |= ZExtAttribute;
       } else if (TREE_CODE(Ty) == INTEGER_TYPE && 
                  TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE) {
         if (TYPE_UNSIGNED(Ty))
-          Attributes |= FunctionType::ZExtAttribute;
+          Attributes |= ZExtAttribute;
         else
-          Attributes |= FunctionType::SExtAttribute;
+          Attributes |= SExtAttribute;
       }
     }
 
@@ -826,10 +829,17 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
                                     isVarArg, lparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
 
+    if (Attributes != NoAttributeSet)
+      Attrs.addAttributes(Idx, Attributes);
     Idx++;
-
-    ParamAttrs.push_back(FunctionType::ParameterAttributes(Attributes));
   }
+
+  // Only instantiate the parameter attributes if we got some
+  ParamAttrsList *ParamAttrs = 0;
+  if (!Attrs.empty())
+    ParamAttrs = new ParamAttrsList(Attrs);
+
+  // Finally, make the function type
   return FunctionType::get(RetTy, ArgTypes, isVarArg, ParamAttrs);
 }
 

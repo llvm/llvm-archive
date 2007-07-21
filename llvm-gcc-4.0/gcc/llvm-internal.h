@@ -273,11 +273,11 @@ class TreeToLLVM {
   
   /// FuncCPPPersonality - Function handling c++ personality.
   ///
-  Function *FuncCPPPersonality;
+  Value *FuncCPPPersonality;
   
   /// FuncUnwindResume - Function used to continue exception unwinding.
   ///
-  Function *FuncUnwindResume;
+  Value *FuncUnwindResume;
   
   /// FinallyStack - Stack for nested try exit points.
   ///

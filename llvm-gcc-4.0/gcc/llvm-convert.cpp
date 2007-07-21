@@ -644,9 +644,12 @@ Function *TreeToLLVM::FinishFunctionBody() {
                    &Args[0], Args.size(), "",
                    CurBB);
       new UnreachableInst(CurBB);
+    } else {
+      new UnwindInst(UnwindBB);
     }
-#endif
+#else
     new UnwindInst(UnwindBB);
+#endif
   }
   
   // If this function takes the address of a label, emit the indirect goto
@@ -1922,20 +1925,16 @@ void TreeToLLVM::CreateExceptionValues() {
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_typeid_for);
                                                       
-  FuncCPPPersonality = cast<Function>(
+  FuncCPPPersonality =
     TheModule->getOrInsertFunction("__gxx_personality_v0",
                                    Type::getPrimitiveType(Type::VoidTyID),
-                                   NULL));
-  FuncCPPPersonality->setLinkage(Function::ExternalLinkage);
-  FuncCPPPersonality->setCallingConv(CallingConv::C);
+                                   NULL);
 
-  FuncUnwindResume = cast<Function>(
+  FuncUnwindResume =
     TheModule->getOrInsertFunction("_Unwind_Resume",
                                    Type::getPrimitiveType(Type::VoidTyID),
                                    PointerType::get(Type::Int8Ty),
-                                   NULL));
-  FuncUnwindResume->setLinkage(Function::ExternalLinkage);
-  FuncUnwindResume->setCallingConv(CallingConv::C);
+                                   NULL);
 
 }
 
@@ -2160,6 +2159,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
       tree TypeInfoNopExpr = (*lang_eh_runtime_type)(TREE_VALUE(Types));
       // Produce value.  Duplicate typeinfo get folded here.
       Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
+      TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
 
       // Call get eh type id.
       std::vector<Value*> Args;

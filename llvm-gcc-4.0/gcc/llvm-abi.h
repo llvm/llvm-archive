@@ -283,18 +283,23 @@ public:
     // Consider cases like { int, int } and {int, short} for example!  This will
     // produce far better LLVM code!
     std::vector<const Type*> Elts;
-    if (UseInt64) {
-      for (; Size >= 8; Size -= 8)
-        Elts.push_back(Type::Int64Ty);
-      if (Size >= 4) {
-        Elts.push_back(Type::Int32Ty);
-        Size -= 4;
-      }
-    } else {
-      for (; Size >= 4; Size -= 4)
-        Elts.push_back(Type::Int32Ty);
+
+    unsigned ElementSize = UseInt64 ? 8:4;
+    unsigned ArraySize = Size / ElementSize;
+
+    const Type *ATy = NULL;
+    const Type *ArrayElementType = NULL;
+    if (ArraySize) {
+      Size = Size % ElementSize;
+      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ATy = ArrayType::get(ArrayElementType, ArraySize);
+      Elts.push_back(ATy);
     }
 
+    if (Size >= 4) {
+      Elts.push_back(Type::Int32Ty);
+      Size -= 4;
+    }
     if (Size >= 2) {
       Elts.push_back(Type::Int16Ty);
       Size -= 2;
@@ -306,7 +311,18 @@ public:
     assert(Size == 0 && "Didn't cover value?");
     const StructType *STy = StructType::get(Elts, false);
 
-    for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
+    unsigned i = 0;
+    if (ArraySize) {
+      C.EnterField(0, STy);
+      for (unsigned j = 0; j < ArraySize; ++j) {
+        C.EnterField(j, ATy);
+        C.HandleScalarArgument(ArrayElementType, 0);
+        C.ExitField();
+      }
+      C.ExitField();
+      ++i;
+    }
+    for (unsigned e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
       C.HandleScalarArgument(Elts[i], 0);
       C.ExitField();

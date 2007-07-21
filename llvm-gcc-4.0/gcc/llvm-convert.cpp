@@ -2760,25 +2760,50 @@ Value *TreeToLLVM::EmitCONVERT_EXPR(tree exp, Value *DestLoc) {
 
 Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
   tree Op = TREE_OPERAND(exp, 0);
-  const Type *OpTy = ConvertType(TREE_TYPE(Op));
 
   if (isAggregateTreeType(TREE_TYPE(Op))) {
-    if (DestLoc) {
+    const Type *OpTy = ConvertType(TREE_TYPE(Op));
+    Value *Target = DestLoc ?
       // This is an aggregate-to-agg VIEW_CONVERT_EXPR, just evaluate in place.
-      Value *OpVal = Emit(Op, CastToType(Instruction::BitCast, DestLoc, 
-                                         PointerType::get(OpTy)));
-      assert(OpVal == 0 && "Expected an aggregate operand!");
-      return 0;
-    } else {
+      CastToType(Instruction::BitCast, DestLoc, PointerType::get(OpTy)) :
       // This is an aggregate-to-scalar VIEW_CONVERT_EXPR, evaluate, then load.
-      Value *DestLoc = CreateTemporary(OpTy);
-      Value *OpVal = Emit(Op, DestLoc);
+      CreateTemporary(OpTy);
+
+    switch (TREE_CODE(Op)) {
+    default: {
+      Value *OpVal = Emit(Op, Target);
       assert(OpVal == 0 && "Expected an aggregate operand!");
-      
-      const Type *ExpTy = ConvertType(TREE_TYPE(exp));
-      return new LoadInst(CastToType(Instruction::BitCast, DestLoc, 
-                                     PointerType::get(ExpTy)), "tmp", CurBB);
+      break;
     }
+
+    // Lvalues
+    case VAR_DECL:
+    case PARM_DECL:
+    case RESULT_DECL:
+    case INDIRECT_REF:
+    case ARRAY_REF:
+    case ARRAY_RANGE_REF:
+    case COMPONENT_REF:
+    case BIT_FIELD_REF:
+    case STRING_CST:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+      // Same as EmitLoadOfLValue but taking the size from TREE_TYPE(exp), since
+      // the size of TREE_TYPE(Op) may not be available.
+      LValue LV = EmitLV(Op);
+      assert(!LV.isBitfield() && "Expected an aggregate operand!");
+      bool isVolatile = TREE_THIS_VOLATILE(Op);
+
+      EmitAggregateCopy(Target, LV.Ptr, TREE_TYPE(exp), false, isVolatile);
+      break;
+    }
+
+    if (DestLoc)
+      return 0;
+
+    const Type *ExpTy = ConvertType(TREE_TYPE(exp));
+    return new LoadInst(CastToType(Instruction::BitCast, Target,
+                                   PointerType::get(ExpTy)), "tmp", CurBB);
   }
   
   if (DestLoc) {

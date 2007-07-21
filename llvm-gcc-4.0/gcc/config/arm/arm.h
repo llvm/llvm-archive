@@ -2920,4 +2920,7 @@ enum arm_builtins
     } \
   }
 
+#define LLVM_OVERRIDE_TARGET_ARCH() \
+  (TARGET_THUMB ? "thumb" : "")
+
 #endif /* ! GCC_ARM_H */

@@ -64,10 +64,13 @@
 #			defining header ${cpu_type}/${cpu_type.h}.
 #
 #  tm_p_file		Location of file with declarations for functions
-#			in $out_file.
+# APPLE LOCAL LLVM
+#			in $out_file & $out_cxx_file
 #
 #  out_file		The name of the machine description C support
 #			file, if different from "$cpu_type/$cpu_type.c".
+# APPLE LOCAL LLVM
+#  out_cxx_file		The name of the machine description C++ support file.
 #
 #  md_file		The name of the machine-description file, if
 #			different from "$cpu_type/$cpu_type.md".
@@ -144,6 +147,8 @@
 #			system normally uses GNU ld.
 
 out_file=
+# APPLE LOCAL LLVM
+out_cxx_file=
 tmake_file=
 extra_headers=
 extra_passes=
@@ -961,6 +966,9 @@ i[34567]86-*-darwin*)
  # APPLE LOCAL end mainline 2005-10-02 4218570
 	# APPLE LOCAL 4099000
 	tmake_file="${tmake_file} i386/t-darwin"
+# APPLE LOCAL begin LLVM
+	out_cxx_file=i386/llvm-i386.cpp
+# APPLE LOCAL end LLVM                               
 	# APPLE LOCAL 4126124
 	need_64bit_hwint=yes
 	;;
@@ -2842,6 +2850,8 @@ case ${target} in
 			target_cpu_default2="\\\"$with_cpu\\\""
 		fi
 		out_file=rs6000/rs6000.c
+                # APPLE LOCAL begin LLVM
+                out_cxx_file=rs6000/llvm-rs6000.cpp
 		c_target_objs="${c_target_objs} rs6000-c.o"
 		cxx_target_objs="${cxx_target_objs} rs6000-c.o"
 		tmake_file="rs6000/t-rs6000 ${tmake_file}"

@@ -428,7 +428,11 @@ TARGET_SYSTEM_ROOT = @TARGET_SYSTEM_ROOT@
 xmake_file=@xmake_file@
 tmake_file=@tmake_file@
 out_file=$(srcdir)/config/@out_file@
+# APPLE LOCAL LLVM
+out_cxx_file=$(srcdir)/config/@out_cxx_file@
 out_object_file=@out_object_file@
+# APPLE LOCAL LLVM
+out_cxx_object_file=@out_cxx_object_file@
 md_file=$(srcdir)/config/@md_file@
 tm_file_list=@tm_file_list@
 tm_include_list=@tm_include_list@
@@ -1019,7 +1023,8 @@ OBJS-common = \
  lambda-trans.o	lambda-code.o tree-loop-linear.o
 # APPLE LOCAL end lno, loops-to-memset
 
-OBJS-md = $(out_object_file)
+# APPLE LOCAL LLVM
+OBJS-md = $(out_object_file) $(out_cxx_object_file)
 OBJS-archive = $(EXTRA_OBJS) $(host_hook_obj) tree-inline.o		   \
   cgraph.o cgraphunit.o tree-nomudflap.o
 
@@ -1109,7 +1114,8 @@ endif
 endif
 # APPLE LOCAL end LLVM
 
-OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
+# APPLE LOCAL LLVM
+OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive) $(out_cxx_object_file)
 
 OBJS-onestep = libbackend.o $(OBJS-archive)
 
@@ -2465,6 +2471,15 @@ $(out_object_file): $(out_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) $(GGC_
    langhooks.h
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(out_file) $(OUTPUT_OPTION)
+# APPLE LOCAL begin LLVM
+$(out_cxx_object_file): $(out_cxx_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) $(GGC_H) \
+   $(RTL_H) $(REGS_H) hard-reg-set.h real.h insn-config.h conditions.h \
+   output.h $(INSN_ATTR_H) $(SYSTEM_H) toplev.h $(TARGET_H) libfuncs.h \
+   $(TARGET_DEF_H) function.h $(SCHED_INT_H) $(TM_P_H) $(EXPR_H) $(OPTABS_H) \
+   langhooks.h
+	$(CXX) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(out_cxx_file) $(OUTPUT_OPTION)
+# APPLE LOCAL end  LLVM
 
 # Build auxiliary files that support ecoff format.
 mips-tfile: mips-tfile.o version.o $(LIBDEPS)
@@ -2481,7 +2496,8 @@ mips-tdump.o : mips-tdump.c $(CONFIG_H) $(RTL_H) $(SYSTEM_H) coretypes.h $(TM_H)
 ifeq ($(LLVMOBJDIR),)
 
 # FIXME: writing proper dependencies for this is a *LOT* of work.
-libbackend.o : $(OBJS-common:.o=.c) $(out_file) \
+# APPLE LOCAL LLVM
+libbackend.o : $(OBJS-common:.o=.c) $(out_file) $(out_cxx_file) \
   insn-config.h insn-flags.h insn-codes.h insn-constants.h \
   insn-attr.h
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \

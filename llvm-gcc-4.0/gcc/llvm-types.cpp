@@ -1452,10 +1452,22 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
              "LLVM type size doesn't match GCC type size!");
       uint64_t LLVMLastElementEnd = Info.getNewElementByteOffset(1);
       const Type *PadTy = Type::Int8Ty;
-      if (GCCTypeSize-LLVMLastElementEnd != 1)
-        PadTy = ArrayType::get(PadTy, GCCTypeSize-LLVMStructSize);
-      Info.addElement(PadTy, GCCTypeSize-LLVMLastElementEnd, 
-                      GCCTypeSize-LLVMLastElementEnd);
+      if (GCCTypeSize-LLVMLastElementEnd != 1) {
+        unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
+        unsigned Int8ArraySize = (GCCTypeSize-LLVMStructSize) % 4;
+        if (Int32ArraySize != 0) {
+          PadTy = ArrayType::get(Type::Int32Ty, Int32ArraySize);
+          Info.addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
+                          Int32ArraySize);
+        }
+        if (Int8ArraySize != 0) {
+          PadTy = ArrayType::get(Type::Int8Ty, Int8ArraySize);
+          Info.addElement(PadTy, GCCTypeSize - Info.getNewElementByteOffset(1),
+                          Int8ArraySize);
+        }
+      } else
+        Info.addElement(PadTy, GCCTypeSize - LLVMLastElementEnd, 
+                        GCCTypeSize - LLVMLastElementEnd);
     }
   }
   

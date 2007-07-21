@@ -295,7 +295,7 @@ void TreeToLLVM::StartFunctionBody() {
            "Calling convention disagreement between prototype and impl!");
     // The visibility can be changed from the last time we've seen this
     // function. Set to current.    
-    if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+    if (TREE_PUBLIC(FnDecl) && DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
       Fn->setVisibility(Function::HiddenVisibility);
     else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
       Fn->setVisibility(Function::DefaultVisibility);
@@ -303,7 +303,7 @@ void TreeToLLVM::StartFunctionBody() {
     Function *&FnEntry = EmittedFunctions[Name];
     if (FnEntry) {
       assert(FnEntry->getName() == Name && "Same entry, different name?");
-      assert(FnEntry->isExternal() &&
+      assert(FnEntry->isDeclaration() &&
              "Multiple fns with same name and neither are external!");
       FnEntry->setName("");  // Clear name to avoid conflicts.
       assert(FnEntry->getCallingConv() == CallingConv &&
@@ -350,7 +350,7 @@ void TreeToLLVM::StartFunctionBody() {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
   // Handle visibility style
-  if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+  if (TREE_PUBLIC(FnDecl) && DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
     Fn->setVisibility(Function::HiddenVisibility);
   
   // Handle functions in specified sections.
@@ -4019,7 +4019,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
     // If this is an aggregate CONST_DECL, emit it to LLVM now.  GCC happens to
     // get this case right by forcing the initializer into memory.
     if (TREE_CODE(exp) == CONST_DECL) {
-      if (DECL_INITIAL(exp) && GV->isExternal()) {
+      if (DECL_INITIAL(exp) && GV->isDeclaration()) {
         emit_global_to_llvm(exp);
         Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
       }
@@ -5059,7 +5059,7 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
   // If this is an aggregate CONST_DECL, emit it to LLVM now.  GCC happens to
   // get this case right by forcing the initializer into memory.
   if (TREE_CODE(exp) == CONST_DECL) {
-    if (DECL_INITIAL(exp) && Val->isExternal()) {
+    if (DECL_INITIAL(exp) && Val->isDeclaration()) {
       emit_global_to_llvm(exp);
       // Decl could have change if it changed type.
       Val = cast<GlobalValue>(DECL_LLVM(exp));

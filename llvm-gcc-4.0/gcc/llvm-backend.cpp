@@ -398,7 +398,7 @@ void llvm_asm_file_end(void) {
     CodeGenPasses->doInitialization();
     for (Module::iterator I = TheModule->begin(), E = TheModule->end();
          I != E; ++I)
-      if (!I->isExternal())
+      if (!I->isDeclaration())
         CodeGenPasses->run(*I);
     CodeGenPasses->doFinalization();
   }
@@ -539,7 +539,7 @@ void emit_global_to_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
   
   // Handle visibility style
-  if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+  if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
     GV->setVisibility(GlobalValue::HiddenVisibility);
   
   // Set the section for the global.
@@ -703,7 +703,7 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
       // Handle visibility style
-      if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+      if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
         FnEntry->setVisibility(Function::HiddenVisibility);
       
       assert(FnEntry->getName() == Name &&"Preexisting fn with the same name!");
@@ -732,7 +732,7 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
       // Handle visibility style
-      if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+      if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
         GV->setVisibility(Function::HiddenVisibility);
     } else {
       // If the global has a name, prevent multiple vars with the same name from
@@ -752,7 +752,7 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
         // Handle visibility style
-        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+        if (TREE_PUBLIC(decl) && DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
           GV->setVisibility(Function::HiddenVisibility);
       } else {
         GV = GVE;  // Global already created, reuse it.
@@ -802,7 +802,7 @@ void llvm_mark_decl_weak(tree decl) {
 
   // Do not mark something that is already known to be linkonce or internal.
   if (GV->hasExternalLinkage()) {
-    if (GV->isExternal())
+    if (GV->isDeclaration())
       GV->setLinkage(GlobalValue::ExternalWeakLinkage);
     else
       GV->setLinkage(GlobalValue::WeakLinkage);

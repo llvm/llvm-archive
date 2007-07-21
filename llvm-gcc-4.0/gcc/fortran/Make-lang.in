@@ -106,7 +106,8 @@ gfortran-cross$(exeext): gfortran$(exeext)
 # The compiler itself is called f951.
 f951$(exeext): $(F95_OBJS) \
 		$(BACKEND) $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
+	# APPLE LOCAL LLVM
+	$(LINKCC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ \
 		$(F95_OBJS) $(BACKEND) $(F95_LIBS)
 
 gt-fortran-f95-lang.h gtype-fortran.h	      : s-gtype; @true

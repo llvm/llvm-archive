@@ -3415,11 +3415,9 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
 /// CanonicalizeConstraint - If we can canonicalize the constraint into
 /// something simpler, do so now.  This turns register classes with a single
 /// register into the register itself, expands builtin constraints to multiple
-/// alternatives, etc.  If the constraint cannot be simplified, this returns an
-/// empty string.
+/// alternatives, etc.
 static std::string CanonicalizeConstraint(const char *Constraint) {
   std::string Result;
-  unsigned RegClass;
   
   // Skip over modifier characters.
   bool DoneModifiers = false;
@@ -3436,55 +3434,67 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
       ++Constraint;
       break;
     case '#':  // No constraint letters left.
-      return "";
+      return Result;
     }
   }
   
-  
-  if (*Constraint == 'r')      // r is a special case for some reason.
-    RegClass = GENERAL_REGS;
-  else if (*Constraint == 'g')
-    // FIXME: 'imr' is the appropriate constraint to use here, as it allows
-    // maximum generality.  However, we accept just "r" for now because LLVM
-    // doesn't support multiple alternatives yet.
-    //return "imr"; 
-    return "r";
-  else 
-    RegClass = REG_CLASS_FROM_CONSTRAINT(*Constraint, Constraint);
-  
-  if (RegClass == NO_REGS) return Result;  // not a reg class.
+  while (*Constraint) {
+    char ConstraintChar = *Constraint++;
 
-  // Look to see if the specified regclass has exactly one member, and if so,
-  // what it is.  Cache this information in AnalyzedRegClasses once computed.
-  static std::map<unsigned, int> AnalyzedRegClasses;
+    // 'g' is just short-hand for 'imr'.
+    if (ConstraintChar == 'g') {
+      Result += "imr";
+      continue;
+    }
   
-  std::map<unsigned, int>::iterator I =AnalyzedRegClasses.lower_bound(RegClass);
+    // See if this is a regclass constraint.
+    unsigned RegClass;
+    if (ConstraintChar == 'r')
+      // REG_CLASS_FROM_CONSTRAINT doesn't support 'r' for some reason.
+      RegClass = GENERAL_REGS;
+    else 
+      RegClass = REG_CLASS_FROM_CONSTRAINT(Constraint[-1], Constraint-1);
   
-  int RegMember;
-  if (I != AnalyzedRegClasses.end() && I->first == RegClass) {
-    // We've already computed this, reuse value.
-    RegMember = I->second;
-  } else {
-    // Otherwise, scan the regclass, looking for exactly one member.
-    RegMember = -1;  // -1 => not one thing
-    for (unsigned j = 0; j != FIRST_PSEUDO_REGISTER; ++j)
-      if (TEST_HARD_REG_BIT(reg_class_contents[RegClass], j)) {
-        if (RegMember == -1) {
-          RegMember = j;
-        } else {
-          RegMember = -1;
-          break;
+    if (RegClass == NO_REGS) {  // not a reg class.
+      Result += ConstraintChar;
+      continue;
+    }
+
+    // Look to see if the specified regclass has exactly one member, and if so,
+    // what it is.  Cache this information in AnalyzedRegClasses once computed.
+    static std::map<unsigned, int> AnalyzedRegClasses;
+  
+    std::map<unsigned, int>::iterator I =
+      AnalyzedRegClasses.lower_bound(RegClass);
+  
+    int RegMember;
+    if (I != AnalyzedRegClasses.end() && I->first == RegClass) {
+      // We've already computed this, reuse value.
+      RegMember = I->second;
+    } else {
+      // Otherwise, scan the regclass, looking for exactly one member.
+      RegMember = -1;  // -1 => not a single-register class.
+      for (unsigned j = 0; j != FIRST_PSEUDO_REGISTER; ++j)
+        if (TEST_HARD_REG_BIT(reg_class_contents[RegClass], j)) {
+          if (RegMember == -1) {
+            RegMember = j;
+          } else {
+            RegMember = -1;
+            break;
+          }
         }
-      }
-    // Remember this answer for the next query of this regclass.
-    AnalyzedRegClasses.insert(I, std::make_pair(RegClass, RegMember));
-  }
+      // Remember this answer for the next query of this regclass.
+      AnalyzedRegClasses.insert(I, std::make_pair(RegClass, RegMember));
+    }
 
-  // If we found a single register register class, return the register.
-  if (RegMember != -1) {
-    Result = '{';
-    Result += reg_names[RegMember];
-    Result += '}';
+    // If we found a single register register class, return the register.
+    if (RegMember != -1) {
+      Result += '{';
+      Result += reg_names[RegMember];
+      Result += '}';
+    } else {
+      Result += ConstraintChar;
+    }
   }
   
   return Result;
@@ -3560,14 +3570,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     
     // If we can simplify the constraint into something else, do so now.  This
     // avoids LLVM having to know about all the (redundant) GCC constraints.
-    std::string Simplified = CanonicalizeConstraint(Constraint+1);
-    if (!Simplified.empty()) {
-      char *NewConstraint = (char*)alloca(Simplified.size()+2);
-      NewConstraint[0] = '=';
-      memcpy(NewConstraint+1, &Simplified[0], Simplified.size());
-      NewConstraint[Simplified.size()+1] = 0;
-      Constraint = NewConstraint;
-    }
+    std::string SimplifiedConstraint = '='+CanonicalizeConstraint(Constraint+1);
     
     LValue Dest = EmitLV(Operand);
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
@@ -3575,11 +3578,11 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       assert(StoreCallResultAddr == 0 && "Already have a result val?");
       StoreCallResultAddr = Dest.Ptr;
       ConstraintStr += ",";
-      ConstraintStr += Constraint;
+      ConstraintStr += SimplifiedConstraint;
       CallResultType = cast<PointerType>(Dest.Ptr->getType())->getElementType();
     } else {
       ConstraintStr += ",=";
-      ConstraintStr += Constraint;
+      ConstraintStr += SimplifiedConstraint;
       CallOps.push_back(Dest.Ptr);
       CallArgTypes.push_back(Dest.Ptr->getType());
     }
@@ -3628,12 +3631,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     } else {
       // If there is a simpler form for the register constraint, use it.
       std::string Simplified = CanonicalizeConstraint(Constraint);
-      if (!Simplified.empty()) {
-        ConstraintStr += Simplified;
-      } else {
-        // Otherwise, just add the constraint!
-        ConstraintStr += Constraint;
-      }
+      ConstraintStr += Simplified;
     }
   }
   

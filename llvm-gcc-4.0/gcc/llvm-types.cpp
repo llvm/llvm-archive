@@ -66,7 +66,8 @@ static LTypesMapTy LTypesMap;
 // GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
 // These are lazily computed by ConvertType.
 
-#define SET_TYPE_SYMTAB_LLVM(NODE, index) (TYPE_CHECK (NODE)->type.symtab.llvm = index)
+#define SET_TYPE_SYMTAB_LLVM(NODE, index) \
+  (TYPE_CHECK (NODE)->type.symtab.llvm = index)
 
 // Note down LLVM type for GCC tree node.
 static const Type * llvm_set_type(tree Tr, const Type *Ty) {
@@ -139,7 +140,8 @@ void readLLVMTypesStringTable() {
     LTypes.push_back(Ty);
   }
 
-  // Now, llvm.pch.types value is not required so remove it from the symbol table.
+  // Now, llvm.pch.types value is not required so remove it from the symbol
+  // table.
   GV->eraseFromParent();
 }
 
@@ -169,8 +171,9 @@ void writeLLVMTypesStringTable() {
 
     // Give names to nameless types.
     if (Ty && TypeNameMap[Ty].empty()) {
-      std::string NewName = TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
-      TheModule->addTypeName (NewName, Ty);
+      std::string NewName =
+        TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
+      TheModule->addTypeName(NewName, Ty);
       TypeNameMap[*I] = NewName;
     }
 
@@ -963,7 +966,8 @@ struct StructTypeConversionInfo {
       if (CurFieldNo < ElementOffsetInBytes.size())
         return CurFieldNo;
       // Otherwise, we couldn't find the field!
-      assert(0 && "Could not find field!");
+      // FIXME: this works around a latent bug!
+      //assert(0 && "Could not find field!");
       return ~0U;
     }
 

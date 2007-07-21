@@ -433,8 +433,8 @@ do {					\
    %{Zinit*:-init %*} \
 "/* APPLE LOCAL mainline 2005-09-01 3449986 */"\
    %{mmacosx-version-min=*:-macosx_version_min %*} \
-"/* APPLE LOCAL mainline 2006-03-15 3992198 */"\
-   %{!mmacosx-version-min=*:%{shared-libgcc:-macosx_version_min 10.3}} \
+"/* APPLE LOCAL mainline 2006-03-15 3992198 *//* "\
+   %{!mmacosx-version-min=*:%{shared-libgcc:-macosx_version_min 10.3}} \ */"\
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \

@@ -511,6 +511,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case RESULT_DECL:
   case INDIRECT_REF:
   case ARRAY_REF:
+  case ARRAY_RANGE_REF:
   case COMPONENT_REF:
   case BIT_FIELD_REF:
   case STRING_CST:
@@ -639,6 +640,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case RESULT_DECL:   return EmitLV_DECL(exp);
   case STRING_CST:    return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
   case INDIRECT_REF:  return EmitLV_INDIRECT_REF(exp);
+  case ARRAY_RANGE_REF:
   case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
   case BIT_FIELD_REF: return EmitLV_BIT_FIELD_REF(exp);
@@ -4742,6 +4744,7 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
   case LABEL_DECL:    return EmitLV_LABEL_DECL(exp);
   case STRING_CST:    return EmitLV_STRING_CST(exp);
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
+  case ARRAY_RANGE_REF:
   case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
   }
 }

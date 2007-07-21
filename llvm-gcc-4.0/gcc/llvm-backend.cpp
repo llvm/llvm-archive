@@ -192,7 +192,9 @@ void llvm_pch_read(void) {
 
   fclose (asm_out_file);
   std::string ErrMsg;
-  TheModule = ParseBytecodeFile(asm_file_name, &ErrMsg);
+  TheModule = ParseBytecodeFile(asm_file_name,
+                                Compressor::decompressToNewBuffer,
+                                &ErrMsg);
   if (!TheModule) {
     cerr << "Error reading bytecodes from PCH file\n";
     cerr << ErrMsg << "\n";

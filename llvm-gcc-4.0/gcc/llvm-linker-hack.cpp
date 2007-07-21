@@ -42,7 +42,7 @@ void dummy_function() {
   new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
   llvm::WriteBytecodeToFile(0, llvm::cout);
-  llvm::ParseBytecodeFile(NULL,NULL);
+  llvm::ParseBytecodeFile(NULL);
 
   llvm::createInstructionCombiningPass();
   llvm::createScalarReplAggregatesPass();

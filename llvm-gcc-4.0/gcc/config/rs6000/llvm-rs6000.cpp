@@ -36,12 +36,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  * of the integer to contract with its following pointer and NAME specifies the
  * name of the resultant intrinsic.
  */
-static void MergeIntPtrOperand(TreeToLLVM *TTL,
+static void MergeIntPtrOperand(TreeToLLVM *TTL, Constant *&Cache,
                                unsigned OpNum, const char *Name,
                                const Type *ResultType,
                                std::vector<Value*> &Ops,
                                BasicBlock *CurBB, Value *&Result) {
-  static Function *Cache = NULL;
   const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);
   
   if (!Cache) {
@@ -155,53 +154,77 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case ALTIVEC_BUILTIN_VXOR:
     Result = BinaryOperator::createXor(Ops[0], Ops[1], "tmp", CurBB);
     return true;
-  case ALTIVEC_BUILTIN_LVSL:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvsl",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVSL: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvsl",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVSR:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvsr",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVSR: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvsr",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVX:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVXL:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvxl",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVXL: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvxl",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVEBX:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvebx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVEBX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvebx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVEHX:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvehx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVEHX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvehx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_LVEWX:
-    MergeIntPtrOperand(this, 0, "llvm.ppc.altivec.lvewx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_LVEWX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 0, "llvm.ppc.altivec.lvewx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_STVX:
-    MergeIntPtrOperand(this, 1, "llvm.ppc.altivec.stvx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_STVX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 1, "llvm.ppc.altivec.stvx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_STVEBX:
-    MergeIntPtrOperand(this, 1, "llvm.ppc.altivec.stvebx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_STVEBX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 1, "llvm.ppc.altivec.stvebx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_STVEHX:
-    MergeIntPtrOperand(this, 1, "llvm.ppc.altivec.stvehx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_STVEHX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 1, "llvm.ppc.altivec.stvehx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_STVEWX:
-    MergeIntPtrOperand(this, 1, "llvm.ppc.altivec.stvewx",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_STVEWX: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 1, "llvm.ppc.altivec.stvewx",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
-  case ALTIVEC_BUILTIN_STVXL:
-    MergeIntPtrOperand(this, 1, "llvm.ppc.altivec.stvxl",
-                       ResultType, Ops, CurBB, Result);
+  case ALTIVEC_BUILTIN_STVXL: {
+      static Constant *Cache = NULL;
+      MergeIntPtrOperand(this, Cache, 1, "llvm.ppc.altivec.stvxl",
+                         ResultType, Ops, CurBB, Result);
+    }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISB:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
@@ -336,7 +359,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case ALTIVEC_BUILTIN_ABS_V16QI: { /* iabs(x) -> smax(x, 0-x) */
     Result = BinaryOperator::createNeg(Ops[0], "tmp", CurBB);
     /* get the right smax intrinsic. */
-    static Function *smax[3];
+    static Constant *smax[3];
     const PackedType *PTy = cast<PackedType>(ResultType);
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());
     if (smax[N] == 0) {
@@ -351,7 +374,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
   case ALTIVEC_BUILTIN_ABSS_V4SI:
   case ALTIVEC_BUILTIN_ABSS_V8HI:
   case ALTIVEC_BUILTIN_ABSS_V16QI: { /* iabss(x) -> smax(x, satsub(0,x)) */
-    static Function *sxs[3], *smax[3];
+    static Constant *sxs[3], *smax[3];
     /* get the right satsub intrinsic. */
     const PackedType *PTy = cast<PackedType>(ResultType);
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());

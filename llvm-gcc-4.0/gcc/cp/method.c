@@ -390,6 +390,12 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   push_to_top_level ();
 
   if (TARGET_USE_LOCAL_THUNK_ALIAS_P (function)
+      /* APPLE LOCAL begin LLVM */
+      /* PR1085 */
+#ifndef ENABLE_LLVM
+      && 0
+#endif
+      /* APPLE LOCAL end LLVM */
       && targetm.have_named_sections)
     {
       resolve_unique_section (function, 0, flag_function_sections);

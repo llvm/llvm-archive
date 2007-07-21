@@ -274,8 +274,10 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   
   // Lazily construct llvm.dbg.func.start.
   if (!FuncStartFn) {
-    FuncStartFn = M->getOrInsertFunction("llvm.dbg.func.start",
-      Type::VoidTy, SR.getEmptyStructPtrType(), NULL);  
+    FuncStartFn =
+      cast<Function>(M->getOrInsertFunction("llvm.dbg.func.start",
+                                            Type::VoidTy,
+                                            SR.getEmptyStructPtrType(), NULL));
   }
 
   // Call llvm.dbg.func.start.
@@ -298,8 +300,9 @@ void DebugInfo::EmitRegionStart(Function *Fn, BasicBlock *CurBB) {
   // Lazily construct llvm.dbg.region.start function.
   if (!RegionStartFn) {
     const PointerType *EmpPtr = SR.getEmptyStructPtrType();
-    RegionStartFn = M->getOrInsertFunction("llvm.dbg.region.start",
-      Type::VoidTy, EmpPtr, NULL);
+    RegionStartFn = 
+      cast<Function>(M->getOrInsertFunction("llvm.dbg.region.start",
+                                            Type::VoidTy, EmpPtr, NULL));
   }
   
   // Call llvm.dbg.func.start.
@@ -312,8 +315,9 @@ void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn) {
     const PointerType *EmpPtr = SR.getEmptyStructPtrType();
-    RegionEndFn = M->getOrInsertFunction("llvm.dbg.region.end",
-      Type::VoidTy, EmpPtr, NULL);
+    RegionEndFn =
+      cast<Function>(M->getOrInsertFunction("llvm.dbg.region.end", Type::VoidTy,
+                                            EmpPtr, NULL));
   }
   
   // Provide an region stop point.
@@ -331,8 +335,9 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   // Lazily construct llvm.dbg.declare function.
   const PointerType *EmpPtr = SR.getEmptyStructPtrType();
   if (!DeclareFn) {
-    DeclareFn = M->getOrInsertFunction("llvm.dbg.declare",
-      Type::VoidTy, EmpPtr, EmpPtr, NULL);
+    DeclareFn =
+      cast<Function>(M->getOrInsertFunction("llvm.dbg.declare",
+                                            Type::VoidTy, EmpPtr, EmpPtr,NULL));
   }
   
   // Get type information.
@@ -378,9 +383,11 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
   
   // Lazily construct llvm.dbg.stoppoint function.
   if (!StopPointFn) {
-    StopPointFn = M->getOrInsertFunction("llvm.dbg.stoppoint",
-      Type::VoidTy, Type::Int32Ty, Type::Int32Ty,
-                    SR.getEmptyStructPtrType(), NULL);
+    StopPointFn =
+      cast<Function>(M->getOrInsertFunction("llvm.dbg.stoppoint",
+                                            Type::VoidTy, Type::Int32Ty,
+                                            Type::Int32Ty,
+                                            SR.getEmptyStructPtrType(), NULL));
   }
   
   // Invoke llvm.dbg.stoppoint

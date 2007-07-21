@@ -1,3 +1,9 @@
+2007-01-06  Bill Wendling  <wendling@apple.com>
+
+        Radar 4897123
+        * directives.c (_cpp_do_file_change): Array of maps could change after
+        the "file_change" callback. We should relookup the map afterwards.
+
 2006-09-18  Bill Wendling  <wendling@apple.com>
 
         Radar 3222135

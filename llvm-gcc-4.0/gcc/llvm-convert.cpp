@@ -1172,9 +1172,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     if (DECL_NAME(decl)) {
       TheDebugInfo->EmitDeclare(decl, llvm::dwarf::DW_TAG_auto_variable,
                                 Name, TREE_TYPE(decl), AI, CurBB);
-    } else if (TREE_CODE(decl) == RESULT_DECL) {
-      TheDebugInfo->EmitDeclare(decl, llvm::dwarf::DW_TAG_return_variable,
-                                Name, TREE_TYPE(decl), AI, CurBB);
     }
   }
 }

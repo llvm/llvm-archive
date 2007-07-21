@@ -565,7 +565,25 @@ if [ "$ENABLE_LLVM" == true ]; then
   make $MAKEFLAGS ENABLE_OPTIMIZED=1 UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
 
   ## Install Version.h
+  if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
+      RC_ProjectSourceSubversion=0
+  else
+      case "$LLVM_SUBMIT_SUBVERSION" in
+          01) RC_ProjectSourceSubversion=1 ;;
+          02) RC_ProjectSourceSubversion=2 ;;
+          03) RC_ProjectSourceSubversion=3 ;;
+          04) RC_ProjectSourceSubversion=4 ;;
+          05) RC_ProjectSourceSubversion=5 ;;
+          06) RC_ProjectSourceSubversion=6 ;;
+          07) RC_ProjectSourceSubversion=7 ;;
+          08) RC_ProjectSourceSubversion=8 ;;
+          09) RC_ProjectSourceSubversion=9 ;;
+          *)  RC_ProjectSourceSubversion=$LLVM_SUBMIT_SUBVERSION ;;
+      esac
+  fi
+
   echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$LLVM_INSTALL_PREFIX/include/llvm/Version.h
+  echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$LLVM_INSTALL_PREFIX/include/llvm/Version.h
 
   ## Strip local symbols from llvm libraries.
   strip -S $DEST_DIR$LLVM_INSTALL_PREFIX/lib/*.[oa]

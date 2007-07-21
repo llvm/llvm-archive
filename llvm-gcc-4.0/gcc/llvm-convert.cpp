@@ -570,12 +570,17 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case TRUTH_AND_EXPR: Result = EmitTruthOp(exp, Instruction::And); break;
   case TRUTH_OR_EXPR:  Result = EmitTruthOp(exp, Instruction::Or); break;
   case TRUTH_XOR_EXPR: Result = EmitTruthOp(exp, Instruction::Xor); break;
-  case RSHIFT_EXPR:    Result = EmitShiftOp(exp,DestLoc,Instruction::Shr);break;
+  case RSHIFT_EXPR:
+    Result = EmitShiftOp(exp,DestLoc,
+       TYPE_UNSIGNED(TREE_TYPE(exp)) ? Instruction::LShr : Instruction::AShr);
+    break;
   case LSHIFT_EXPR:    Result = EmitShiftOp(exp,DestLoc,Instruction::Shl);break;
-  case RROTATE_EXPR:   Result = EmitRotateOp(exp, Instruction::Shr,
-                                             Instruction::Shl); break;
-  case LROTATE_EXPR:   Result = EmitRotateOp(exp, Instruction::Shl, 
-                                             Instruction::Shr); break;
+  case RROTATE_EXPR: 
+    Result = EmitRotateOp(exp, Instruction::LShr, Instruction::Shl);
+    break;
+  case LROTATE_EXPR:
+    Result = EmitRotateOp(exp, Instruction::Shl, Instruction::LShr);
+    break;
   case MIN_EXPR:       Result = EmitMinMaxExpr(exp, Instruction::SetLE); break;
   case MAX_EXPR:       Result = EmitMinMaxExpr(exp, Instruction::SetGE); break;
   case CONSTRUCTOR:    Result = EmitCONSTRUCTOR(exp, DestLoc); break;
@@ -1723,7 +1728,8 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
       }
         
       Value *ShAmt = ConstantInt::get(Type::UByteTy, ValSizeInBits-LV.BitSize);
-      Val = new ShiftInst(Instruction::Shr, Val, ShAmt, "tmp", CurBB);
+      Val = new ShiftInst( TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
+        Instruction::LShr : Instruction::AShr, Val, ShAmt, "tmp", CurBB);
     }
     
     return CastToType(Val, ConvertType(TREE_TYPE(exp)));

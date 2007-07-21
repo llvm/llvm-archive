@@ -252,10 +252,7 @@ void llvm_asm_file_start(void) {
     if (flag_unroll_loops)
       PM->add(createLoopUnrollPass());           // Unroll small loops
     PM->add(createInstructionCombiningPass()); // Clean up after the unroller
-    
-    if (optimize > 2)
-      PM->add(createLoadValueNumberingPass());   // GVN for load instructions
-    
+    PM->add(createLoadValueNumberingPass());   // GVN for load instructions
     PM->add(createGCSEPass());                 // Remove common subexprs
     PM->add(createSCCPPass());                 // Constant prop with SCCP
     

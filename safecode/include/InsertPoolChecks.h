@@ -143,7 +143,7 @@ struct InsertPoolChecks : public FunctionPass {
   std::map<Value *, GlobalVariable *> FuncListMap;
 
   // Set of DSNodes for which we do full bounds checks
-  std::vector<DSNode *> PHNeeded;
+  std::set<DSNode *> PHNeeded;
 
   void simplifyGEPList();
   void addObjFrees(Module& M);

@@ -80,7 +80,7 @@ static PassManager *PerModulePasses = 0;
 void llvm_initialize_backend(void) {
   // Initialize LLVM options.
   std::vector<const char*> Args;
-  Args.push_back(0); // program name
+  Args.push_back(progname); // program name
 
   // Allow targets to specify PIC options and other stuff to the corresponding
   // LLVM backends.
@@ -108,7 +108,7 @@ void llvm_initialize_backend(void) {
   
   int pseudo_argc = Args.size()-1;
   cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
-  
+
   TheModule = new Module("");
 
   // If the target wants to override the architecture, e.g. turning

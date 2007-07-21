@@ -429,6 +429,8 @@ extern int i386_pe_dllimport_p (tree);
 #endif
 
 /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+
 /* LLVM specific stuff for supporting dllimport & dllexport linkage output */
 
 #define TARGET_ADJUST_LLVM_LINKAGE(GV, decl)            \
@@ -439,18 +441,11 @@ extern int i386_pe_dllimport_p (tree);
       (GV)->setLinkage(GlobalValue::DLLExportLinkage);  \
     }                                                   \
   }
-  
-/* LLVM specific stuff for supporting calling convention output */
 
-#define TARGET_ADJUST_LLVM_CC(CC, type)                         \
-  {                                                             \
-    tree type_attributes = TYPE_ATTRIBUTES (type);              \
-    if (lookup_attribute ("stdcall", type_attributes)) {        \
-      CC = CallingConv::X86_StdCall;                            \
-    } else if (lookup_attribute("fastcall", type_attributes)) { \
-      CC = CallingConv::X86_FastCall;                           \
-    }                                                           \
-  }                                                             \
-    
+/* Add general target specific stuff */
+#include "llvm-i386-target.h"
+
 /* APPLE LOCAL end LLVM */
+
+#endif
                                                           

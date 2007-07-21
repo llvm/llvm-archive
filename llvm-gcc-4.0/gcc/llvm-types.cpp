@@ -468,13 +468,17 @@ namespace {
     const Type *&RetTy;
     std::vector<const Type*> &ArgTypes;
     unsigned &CallingConv;
+    bool isStructRet;
     bool KNRPromotion;
   public:
     FunctionTypeConversion(const Type *&retty, std::vector<const Type*> &AT,
                            unsigned &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR) {
       CallingConv = CallingConv::C;
+      isStructRet = false;
     }
+
+    bool isStructReturn() const { return isStructRet; }
     
     /// HandleScalarResult - This callback is invoked if the function returns a
     /// simple scalar result value.
@@ -502,8 +506,8 @@ namespace {
       // In any case, there is a dummy shadow argument though!
       ArgTypes.push_back(PtrArgTy);
       
-      // Also, switch the calling convention to C Struct Return.
-      CallingConv = CallingConv::CSRet;
+      // Also, switch the to C Struct Return.
+      isStructRet = true;
     }
     
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
@@ -584,36 +588,68 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   // the function will be correctly sign or zero extended to 32-bits by
   // the LLVM code gen.
   FunctionType::ParamAttrsList ParamAttrs;
-  if (CallingConv == CallingConv::C || CallingConv == CallingConv::CSRet) {
+  unsigned RAttributes = FunctionType::NoAttributeSet;
+  if (CallingConv == CallingConv::C) {
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_CODE(ResultTy) == BOOLEAN_TYPE) {
       if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-        ParamAttrs.push_back(FunctionType::ZExtAttribute);
-    } else if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
-             TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
-      if (TYPE_UNSIGNED(ResultTy))
-        ParamAttrs.push_back(FunctionType::ZExtAttribute);
-      else 
-        ParamAttrs.push_back(FunctionType::SExtAttribute);
-    else
-      ParamAttrs.push_back(FunctionType::NoAttributeSet);
-    tree Args = TYPE_ARG_TYPES(type);
-    unsigned Idx = 1;
-    for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
-      tree Ty = TREE_VALUE(Args);
+        RAttributes |= FunctionType::ZExtAttribute;
+    } else {
+      if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
+          TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
+        if (TYPE_UNSIGNED(ResultTy))
+          RAttributes |= FunctionType::ZExtAttribute;
+        else 
+          RAttributes |= FunctionType::SExtAttribute;
+    }
+  }
+  ParamAttrs.push_back(FunctionType::ParameterAttributes(RAttributes));
+  
+  unsigned Idx = 1;
+  bool isFirstArg = true;
+
+  int lparam = 0;
+#ifdef LLVM_TARGET_ENABLE_REGPARM
+  LLVM_TARGET_INIT_REGPARM(lparam, type);
+#endif // LLVM_TARGET_ENABLE_REGPARM
+
+  for (tree Args = TYPE_ARG_TYPES(type);
+       Args && TREE_VALUE(Args) != void_type_node;
+       Args = TREE_CHAIN(Args)) {
+    unsigned Attributes = FunctionType::NoAttributeSet;
+    tree Ty = TREE_VALUE(Args);
+    
+    if (CallingConv == CallingConv::C) {
       if (TREE_CODE(Ty) == BOOLEAN_TYPE) {
         if (TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
-          ParamAttrs.push_back(FunctionType::ZExtAttribute);
+          Attributes |= FunctionType::ZExtAttribute;
       } else if (TREE_CODE(Ty) == INTEGER_TYPE && 
-                 TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
+                 TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE) {
         if (TYPE_UNSIGNED(Ty))
-          ParamAttrs.push_back(FunctionType::ZExtAttribute);
-        else 
-          ParamAttrs.push_back(FunctionType::SExtAttribute);
-      else
-        ParamAttrs.push_back(FunctionType::NoAttributeSet);
-      Idx++;
+          Attributes |= FunctionType::ZExtAttribute;
+        else
+          Attributes |= FunctionType::SExtAttribute;
+      }
     }
+
+    // Handle struct return
+    if (isFirstArg) {
+      if (ABIConverter.isStructReturn()) {
+        Attributes |= FunctionType::StructRetAttribute;
+        //printf("Struct return!\n");
+      }
+      isFirstArg = false;
+    }
+
+#ifdef LLVM_TARGET_ENABLE_REGPARM
+    if (TREE_CODE(Ty) == INTEGER_TYPE || TREE_CODE(Ty) == POINTER_TYPE)
+      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes, TREE_INT_CST_LOW(TYPE_SIZE(Ty)),
+                                    isVarArg, lparam);
+#endif // LLVM_TARGET_ENABLE_REGPARM
+
+    Idx++;
+
+    ParamAttrs.push_back(FunctionType::ParameterAttributes(Attributes));
   }
   return FunctionType::get(RetTy, ArgTypes, isVarArg, ParamAttrs);
 }

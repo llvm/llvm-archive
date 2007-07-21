@@ -343,3 +343,13 @@ extern void ix86_darwin_init_expanders (void);
 #undef TARGET_DEEP_BRANCH_PREDICTION
 #define TARGET_DEEP_BRANCH_PREDICTION ((m_PPRO | m_K6 | m_ATHLON_K8 | m_PENT4) & TUNEMASK)
 /* APPLE LOCAL end 4106131 */
+
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+
+/* Add general target specific stuff */
+#include "llvm-i386-target.h"
+
+/* APPLE LOCAL end LLVM */
+
+#endif

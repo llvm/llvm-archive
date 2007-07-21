@@ -47,6 +47,8 @@ extern "C" {
 /// DefaultABIClient - This is a simple implementation of the ABI client
 /// interface that can be subclassed.
 struct DefaultABIClient {
+  bool isStructReturn() { return false; }
+  
   /// HandleScalarResult - This callback is invoked if the function returns a
   /// simple scalar result value.
   void HandleScalarResult(const Type *RetTy) {}
@@ -136,6 +138,8 @@ protected:
   Client &C;
 public:
   DefaultABI(Client &c) : C(c) {}
+
+  bool isStructReturn() const { return C.isStructReturn(); }
   
   /// HandleReturnType - This is invoked by the target-independent code for the
   /// return type. It potentially breaks down the argument and invokes methods

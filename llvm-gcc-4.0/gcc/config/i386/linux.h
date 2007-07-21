@@ -190,11 +190,15 @@ Boston, MA 02111-1307, USA.  */
 #ifdef ENABLE_LLVM
 
 /* Yes, we're supporting PIC codegen for X86-Linux-ELF target! */
-
 #define LLVM_SET_TARGET_OPTIONS(argvec)              \
   if (flag_pic)                                      \
     argvec.push_back ("--relocation-model=pic");     \
   else                                               \
     argvec.push_back ("--relocation-model=static");
-#endif
+
+/* Add general target specific stuff */
+#include "llvm-i386-target.h"
+
 /* APPLE LOCAL end LLVM */
+
+#endif

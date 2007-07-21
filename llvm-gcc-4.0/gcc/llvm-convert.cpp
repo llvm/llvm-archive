@@ -1876,6 +1876,7 @@ namespace {
     tree CallExpression;
     std::vector<Value*> &CallOperands;
     CallingConv::ID &CallingConvention;
+    bool isStructRet;
     BasicBlock *CurBB;
     Value *DestLoc;
     std::vector<Value*> LocStack;
@@ -1886,6 +1887,7 @@ namespace {
       : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
         CurBB(bb), DestLoc(destloc) {
       CallingConvention = CallingConv::C;
+      isStructRet = false;
 #ifdef TARGET_ADJUST_LLVM_CC
       tree ftype;
       if (tree fdecl = get_callee_fndecl(exp)) {
@@ -1931,8 +1933,8 @@ namespace {
     /// function.
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
-      // Make sure this call is marked as csret calling convention.
-      CallingConvention = CallingConv::CSRet;
+      // Make sure this call is marked as 'struct return'.
+      isStructRet = true;
       
       // If the front-end has already made the argument explicit, don't do it
       // again.

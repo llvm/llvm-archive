@@ -4195,7 +4195,7 @@ enum ix86_builtins
   }                                                                           \
   case IX86_BUILTIN_DIVPS:                                                    \
   case IX86_BUILTIN_DIVPD:                                                    \
-    RESULT = BinaryOperator::createDiv(OPS[0], OPS[1], "tmp", CURBB);         \
+    RESULT = BinaryOperator::createFDiv(OPS[0], OPS[1], "tmp", CURBB);         \
     return true;                                                              \
   case IX86_BUILTIN_PAND128:                                                  \
     RESULT = BinaryOperator::createAnd(OPS[0], OPS[1], "tmp", CURBB);         \

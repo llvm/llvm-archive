@@ -546,9 +546,18 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case PLUS_EXPR:      Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
   case MINUS_EXPR:     Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
   case MULT_EXPR:      Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
-  case TRUNC_DIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Div);break;
-  case EXACT_DIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Div);break;
-  case RDIV_EXPR:      Result = EmitBinOp(exp, DestLoc, Instruction::Div);break;
+  case TRUNC_DIV_EXPR: 
+    if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+      Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
+    else 
+      Result = EmitBinOp(exp, DestLoc, Instruction::SDiv);
+    break;
+  case EXACT_DIV_EXPR: 
+    Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
+    break;
+  case RDIV_EXPR:      
+    Result = EmitBinOp(exp, DestLoc, Instruction::FDiv);
+    break;
   case TRUNC_MOD_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Rem);break;
   case BIT_AND_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::And);break;
   case BIT_IOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Or );break;
@@ -2265,6 +2274,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, Value *DestLoc, unsigned Opc) {
   // everything to the result type.
   LHS = NOOPCastToType(LHS, Ty);
   RHS = NOOPCastToType(RHS, Ty);
+
   return BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS,
                                 "tmp", CurBB);
 }
@@ -3586,12 +3596,12 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, Value *DestLoc) {
     Value *Tmp4 = BinaryOperator::createMul(RHSr, RHSr, "tmp", CurBB); // c*c
     Value *Tmp5 = BinaryOperator::createMul(RHSi, RHSi, "tmp", CurBB); // d*d
     Value *Tmp6 = BinaryOperator::createAdd(Tmp4, Tmp5, "tmp", CurBB); // cc+dd
-    DSTr = BinaryOperator::createDiv(Tmp3, Tmp6, "tmp", CurBB);
+    DSTr = BinaryOperator::createFDiv(Tmp3, Tmp6, "tmp", CurBB);
 
     Value *Tmp7 = BinaryOperator::createMul(LHSi, RHSr, "tmp", CurBB); // b*c
     Value *Tmp8 = BinaryOperator::createMul(LHSr, RHSi, "tmp", CurBB); // a*d
     Value *Tmp9 = BinaryOperator::createSub(Tmp7, Tmp8, "tmp", CurBB); // bc-ad
-    DSTi = BinaryOperator::createDiv(Tmp9, Tmp6, "tmp", CurBB);
+    DSTi = BinaryOperator::createFDiv(Tmp9, Tmp6, "tmp", CurBB);
     break;
   }
   case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)

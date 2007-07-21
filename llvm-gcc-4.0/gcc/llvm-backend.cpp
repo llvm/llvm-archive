@@ -818,7 +818,7 @@ void llvm_emit_file_scope_asm(tree string) {
 void print_llvm(FILE *file, void *LLVM) {
   oFILEstream FS(file);
   FS << "LLVM: ";
-  WriteAsOperand(FS, (Value*)LLVM, true, true, TheModule);
+  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
 }
 
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */

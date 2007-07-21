@@ -260,62 +260,63 @@ void llvm_asm_file_start(void) {
     HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
     if (flag_unit_at_a_time)
-      PM->add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
-    PM->add(createCFGSimplificationPass());    // Clean up disgusting code
-    PM->add(createPromoteMemoryToRegisterPass());// Kill useless allocas
+      PM->add(createRaiseAllocationsPass());      // call %malloc -> malloc inst
+    PM->add(createCFGSimplificationPass());       // Clean up disgusting code
+    PM->add(createPromoteMemoryToRegisterPass()); // Kill useless allocas
     if (flag_unit_at_a_time) {
-      PM->add(createGlobalOptimizerPass());      // Optimize out global vars
-      PM->add(createGlobalDCEPass());            // Remove unused fns and globs
-      PM->add(createIPConstantPropagationPass());// IP Constant Propagation
-      PM->add(createDeadArgEliminationPass());   // Dead argument elimination
+      PM->add(createGlobalOptimizerPass());       // Optimize out global vars
+      PM->add(createGlobalDCEPass());             // Remove unused fns and globs
+      PM->add(createIPConstantPropagationPass()); // IP Constant Propagation
+      PM->add(createDeadArgEliminationPass());    // Dead argument elimination
     }
-    PM->add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+    PM->add(createInstructionCombiningPass());    // Clean up after IPCP & DAE
     // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
-    //PM->add(createPredicateSimplifierPass());  // Canonicalize registers
-    PM->add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
+    //PM->add(createPredicateSimplifierPass());   // Canonicalize registers
+    PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
     if (flag_unit_at_a_time)
-      PM->add(createPruneEHPass());              // Remove dead EH info
+      PM->add(createPruneEHPass());               // Remove dead EH info
 
     if (optimize > 1) {
-      if (flag_inline_trees > 1)   // respect -fno-inline-functions
-        PM->add(createFunctionInliningPass());   // Inline small functions
+      if (flag_inline_trees > 1)                // respect -fno-inline-functions
+        PM->add(createFunctionInliningPass());  // Inline small functions
       if (flag_unit_at_a_time)
-        PM->add(createSimplifyLibCallsPass());   // Library Call Optimizations
+        PM->add(createSimplifyLibCallsPass());  // Library Call Optimizations
 
       if (optimize > 2)
-    	PM->add(createArgumentPromotionPass());  // Scalarize uninlined fn args
+    	PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
     }
     
-    PM->add(createTailDuplicationPass());      // Simplify cfg by copying code
-    PM->add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
-    PM->add(createCFGSimplificationPass());    // Merge & remove BBs
-    PM->add(createScalarReplAggregatesPass()); // Break up aggregate allocas
-    PM->add(createInstructionCombiningPass()); // Combine silly seq's
-    PM->add(createCondPropagationPass());      // Propagate conditionals
-    PM->add(createTailCallEliminationPass());  // Eliminate tail calls
-    PM->add(createCFGSimplificationPass());    // Merge & remove BBs
-    PM->add(createReassociatePass());          // Reassociate expressions
-    PM->add(createLICMPass());                 // Hoist loop invariants
-    PM->add(createLoopUnswitchPass());         // Unswitch loops.
-    PM->add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
-    PM->add(createIndVarSimplifyPass());       // Canonicalize indvars
+    PM->add(createTailDuplicationPass());       // Simplify cfg by copying code
+    PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+    PM->add(createInstructionCombiningPass());  // Combine silly seq's
+    PM->add(createCondPropagationPass());       // Propagate conditionals
+    PM->add(createTailCallEliminationPass());   // Eliminate tail calls
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+    PM->add(createReassociatePass());           // Reassociate expressions
+    PM->add(createLICMPass());                  // Hoist loop invariants
+    PM->add(createLoopUnswitchPass());          // Unswitch loops.
+    PM->add(createInstructionCombiningPass());  // Clean up after LICM/reassoc
+    PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
     if (flag_unroll_loops)
-      PM->add(createLoopUnrollPass());           // Unroll small loops
-    PM->add(createInstructionCombiningPass()); // Clean up after the unroller
-    PM->add(createLoadValueNumberingPass());   // GVN for load instructions
-    PM->add(createGCSEPass());                 // Remove common subexprs
-    PM->add(createSCCPPass());                 // Constant prop with SCCP
+      PM->add(createLoopUnrollPass());          // Unroll small loops
+    PM->add(createInstructionCombiningPass());  // Clean up after the unroller
+    PM->add(createLoadValueNumberingPass());    // GVN for load instructions
+    PM->add(createGCSEPass());                  // Remove common subexprs
+    PM->add(createSCCPPass());                  // Constant prop with SCCP
     
     // Run instcombine after redundancy elimination to exploit opportunities
     // opened up by them.
     PM->add(createInstructionCombiningPass());
-    PM->add(createCondPropagationPass());      // Propagate conditionals
-    PM->add(createDeadStoreEliminationPass()); // Delete dead stores
-    PM->add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
-    PM->add(createCFGSimplificationPass());    // Merge & remove BBs
+    PM->add(createCondPropagationPass());       // Propagate conditionals
+    PM->add(createDeadStoreEliminationPass());  // Delete dead stores
+    PM->add(createAggressiveDCEPass());         // SSA based 'Aggressive DCE'
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     
     if (optimize > 1 && flag_unit_at_a_time)
-      PM->add(createConstantMergePass());        // Merge dup global constants 
+      PM->add(createConstantMergePass());       // Merge dup global constants 
+    PM->add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
   }
   
   if (emit_llvm_bc) {

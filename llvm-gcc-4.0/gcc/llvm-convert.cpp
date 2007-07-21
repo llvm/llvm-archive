@@ -33,7 +33,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -1118,63 +1117,55 @@ void TreeToLLVM::EmitAggregateZero(Value *DestPtr, tree type) {
 void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, 
                             unsigned Align) {
   const Type *SBP = PointerType::get(Type::Int8Ty);
-  static Constant *MemCpy = 0;
   const Type *IntPtr = TD.getIntPtrType();
-  if (!MemCpy) {
-    const char *Name = IntPtr == Type::Int32Ty ?
-                       "llvm.memcpy.i32" : "llvm.memcpy.i64";
-    MemCpy = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, 
-                                            SBP, IntPtr, Type::Int32Ty,
-                                            NULL);
-  }
   Value *Ops[4] = {
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToType(Instruction::BitCast, SrcPtr, SBP),
     CastToSIntType(Size, IntPtr),
     ConstantInt::get(Type::Int32Ty, Align)
   };
-  new CallInst(MemCpy, Ops, 4, "", CurBB);
+
+  new CallInst(Intrinsic::getDeclaration(TheModule, 
+                                         (IntPtr == Type::Int32Ty) ?
+                                         Intrinsic::memcpy_i32 :
+                                         Intrinsic::memcpy_i64),
+               Ops, 4, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
                              unsigned Align) {
   const Type *SBP = PointerType::get(Type::Int8Ty);
-  static Constant *MemMove = 0;
   const Type *IntPtr = TD.getIntPtrType();
-  if (!MemMove) {
-    const char *Name = IntPtr == Type::Int32Ty ?
-                       "llvm.memmove.i32" : "llvm.memmove.i64";
-    MemMove = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, SBP,
-                                             IntPtr, Type::Int32Ty, NULL);
-  }
   Value *Ops[4] = {
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToType(Instruction::BitCast, SrcPtr, SBP),
     CastToSIntType(Size, IntPtr),
     ConstantInt::get(Type::Int32Ty, Align)
   };
-  new CallInst(MemMove, Ops, 4, "", CurBB);
+
+  new CallInst(Intrinsic::getDeclaration(TheModule,
+                                         (IntPtr == Type::Int32Ty) ?
+                                         Intrinsic::memmove_i32 :
+                                         Intrinsic::memmove_i64),
+               Ops, 4, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
                             unsigned Align) {
   const Type *SBP = PointerType::get(Type::Int8Ty);
-  static Constant *MemSet = 0;
   const Type *IntPtr = TD.getIntPtrType();
-  if (!MemSet) {
-    const char *Name = IntPtr == Type::Int32Ty ?
-                       "llvm.memset.i32" : "llvm.memset.i64";
-    MemSet = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, 
-                                            Type::Int8Ty, IntPtr,
-                                            Type::Int32Ty, NULL);
-  }
   Value *Ops[4] = {
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToSIntType(SrcVal, Type::Int8Ty),
     CastToSIntType(Size, IntPtr),
     ConstantInt::get(Type::Int32Ty, Align)
   };
-  new CallInst(MemSet, Ops, 4, "", CurBB);
+
+  new CallInst(Intrinsic::getDeclaration(TheModule,
+                                         (IntPtr == Type::Int32Ty) ?
+                                         Intrinsic::memset_i32 :
+                                         Intrinsic::memset_i64),
+               Ops, 4, "", CurBB);
 }
 
 
@@ -2561,8 +2552,7 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
     return new SelectInst(Cmp, Op, OpN, "abs", CurBB);
   } else {
     // Turn FP abs into fabs/fabsf.
-    static Function *fabsf_cache = 0, *fabs_cache = 0;
-    return EmitBuiltinUnaryFPOp(Op, "fabsf", fabsf_cache, "fabs", fabs_cache);
+    return EmitBuiltinUnaryFPOp(Op, "fabsf", "fabs");
   }
 }
 
@@ -3504,17 +3494,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       }
       
       // Finally, map the intrinsic ID back to a name.
-      static const char * const IntrinsicNames[] = {
-#define GET_INTRINSIC_NAME_TABLE
-#include "llvm/Intrinsics.gen"
-#undef GET_INTRINSIC_NAME_TABLE
-        0
-      };
-      const char *IntrinsicName = IntrinsicNames[IntrinsicID-1];
-      const FunctionType *FTy = 
-        cast<FunctionType>(ConvertType(TREE_TYPE(fndecl)));
       TargetBuiltinCache[FnCode] = 
-        TheModule->getOrInsertFunction(IntrinsicName, cast<FunctionType>(FTy));
+        Intrinsic::getDeclaration(TheModule, IntrinsicID);
     }
 
     Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc);
@@ -3543,12 +3524,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_STACK_RESTORE:  return EmitBuiltinStackRestore(exp);
     
 #define HANDLE_UNARY_INT(I8, I16, I32, I64, V) \
-    { static Function *Fn8, *Fn16, *Fn32, *Fn64 = 0; \
       EmitBuiltinUnaryIntOp(V, Result, \
-                            I8, Fn8, I16, Fn16, I32, Fn32, I64, Fn64); }
+                            Intrinsic::I8, Intrinsic::I16, \
+                            Intrinsic::I32, Intrinsic::I64)
+
 #define HANDLE_UNARY_FP(F32, F64, V) \
-      { static Function *Fn32, *Fn64 = 0; \
-        Result = EmitBuiltinUnaryFPOp(V, F32, Fn32, F64, Fn64); }
+        Result = EmitBuiltinUnaryFPOp(V, Intrinsic::F32, Intrinsic::F64)
+
   // Unary bit counting intrinsics.
   // NOTE: do not merge these case statements.  That will cause the memoized 
   // Function* to be incorrectly shared across the different typed functions.
@@ -3556,24 +3538,24 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZL:
   case BUILT_IN_CLZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT("llvm.ctlz.i8", "llvm.ctlz.i16",
-                     "llvm.ctlz.i32", "llvm.ctlz.i64", Amt);
+    HANDLE_UNARY_INT(ctlz_i8, ctlz_i16,
+                     ctlz_i32, ctlz_i64, Amt);
     return true;
   }
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT("llvm.cttz.i8", "llvm.cttz.i16",
-                     "llvm.cttz.i32", "llvm.cttz.i64", Amt);
+    HANDLE_UNARY_INT(cttz_i8, cttz_i16,
+                     cttz_i32, cttz_i64, Amt);
     return true;
   }
   case BUILT_IN_POPCOUNT:  // These GCC builtins always return int.
   case BUILT_IN_POPCOUNTL:
   case BUILT_IN_POPCOUNTLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT("llvm.ctpop.i8", "llvm.ctpop.i16",
-                     "llvm.ctpop.i32", "llvm.ctpop.i64", Amt);
+    HANDLE_UNARY_INT(ctpop_i8, ctpop_i16,
+                     ctpop_i32, ctpop_i64, Amt);
     return true;
   }
   case BUILT_IN_SQRT: 
@@ -3582,7 +3564,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // If errno math has been disabled, expand these to llvm.sqrt calls.
     if (!flag_errno_math) {
       Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-      HANDLE_UNARY_FP("llvm.sqrt.f32", "llvm.sqrt.f64", Amt);
+      HANDLE_UNARY_FP(sqrt_f32, sqrt_f64, Amt);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true; 
     }
@@ -3598,8 +3580,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The argument and return type of cttz should match the argument type of
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    HANDLE_UNARY_INT("llvm.cttz.i8", "llvm.cttz.i16",
-                     "llvm.cttz.i32", "llvm.cttz.i64", Amt);
+    HANDLE_UNARY_INT(cttz_i8, cttz_i16,
+                     cttz_i32, cttz_i64, Amt);
     Result = BinaryOperator::createAdd(Result, 
                                        ConstantInt::get(Type::Int32Ty, 1),
                                        "tmp", CurBB);
@@ -3657,53 +3639,59 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 }
 
 bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
-                                       const char *I8Name, Function *&I8Cache,
-                                       const char *I16Name, Function *&I16Cache,
-                                       const char *I32Name, Function *&I32Cache,
-                                       const char *I64Name,Function *&I64Cache){
-  const char *Name;
-  Function  **FCache;
+                                       Intrinsic::ID I8ID, Intrinsic::ID I16ID,
+                                       Intrinsic::ID I32ID,
+                                       Intrinsic::ID I64ID) {
+  Intrinsic::ID Id = Intrinsic::not_intrinsic;
   const IntegerType *ITy = cast<IntegerType>(InVal->getType());
 
   switch (ITy->getBitWidth()) {
   default: assert(0 && "Unknown Integer type!");
-  case 8 : Name = I8Name;  FCache = &I8Cache ; break;
-  case 16: Name = I16Name; FCache = &I16Cache; break;
-  case 32: Name = I32Name; FCache = &I32Cache; break;
-  case 64: Name = I64Name; FCache = &I64Cache; break;
+  case 8 : Id = I8ID;  break;
+  case 16: Id = I16ID; break;
+  case 32: Id = I32ID; break;
+  case 64: Id = I64ID; break;
   }
   
-  if (*FCache == 0)
-    *FCache = cast<Function>(TheModule->getOrInsertFunction(Name,
-                                                            InVal->getType(),
-                                                            InVal->getType(),
-                                                            NULL));
-  Result = new CallInst(*FCache, InVal, "tmp", CurBB);
+  Result = new CallInst(Intrinsic::getDeclaration(TheModule, Id),
+                        InVal, "tmp", CurBB);
   
   // The LLVM intrinsics for these return the same type as their operands.  The
   // GCC version of these functions always returns int.  Cast to int for GCC.
   Result = CastToSIntType(Result, Type::Int32Ty);
   
-  return true;  
+  return true;
 }
 
-Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt,
-                                      const char *F32Name, Function *&F32Cache,
-                                      const char *F64Name, Function *&F64Cache){
-  const char *Name;
-  Function  **FCache;
+Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
+                                        const char *F64Name) {
+  const char *Name = 0;
   
   switch (Amt->getType()->getTypeID()) {
   default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Name = F32Name; FCache = &F32Cache; break;
-  case Type::DoubleTyID: Name = F64Name; FCache = &F64Cache; break;
+  case Type::FloatTyID:  Name = F32Name; break;
+  case Type::DoubleTyID: Name = F64Name; break;
   }
   
-  if (*FCache == 0)
-    *FCache = cast<Function>(TheModule->getOrInsertFunction(Name,Amt->getType(),
-                                                            Amt->getType(),
-                                                            NULL));
-  return new CallInst(*FCache, Amt, "tmp", CurBB);
+  return new CallInst(cast<Function>(
+      TheModule->getOrInsertFunction(Name,Amt->getType(),
+                                     Amt->getType(),
+                                     NULL)), Amt, "tmp", CurBB);
+}
+
+Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt,
+                                        Intrinsic::ID F32ID,
+                                        Intrinsic::ID F64ID) {
+  Intrinsic::ID Id = Intrinsic::not_intrinsic;
+  
+  switch (Amt->getType()->getTypeID()) {
+  default: assert(0 && "Unknown FP type!");
+  case Type::FloatTyID:  Id = F32ID; break;
+  case Type::DoubleTyID: Id = F64ID; break;
+  }
+
+  return new CallInst(Intrinsic::getDeclaration(TheModule, Id),
+                      Amt, "tmp", CurBB);
 }
 
 Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
@@ -3715,21 +3703,16 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
   Pow = CastToSIntType(Pow, Type::Int32Ty);
 
-  static Constant *Fn32 = 0, *Fn64 = 0;
-  const char *Name;
-  Constant **FCache;
+  Intrinsic::ID Id = Intrinsic::not_intrinsic;
+
   switch (Val->getType()->getTypeID()) {
   default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Name = "llvm.powi.f32"; FCache = &Fn32; break;
-  case Type::DoubleTyID: Name = "llvm.powi.f64"; FCache = &Fn64; break;
+  case Type::FloatTyID:  Id = Intrinsic::powi_f32; break;
+  case Type::DoubleTyID: Id = Intrinsic::powi_f64; break;
   }
   
-  // First time we used this intrinsic?
-  if (*FCache == 0)
-    *FCache = TheModule->getOrInsertFunction(Name, Val->getType(),
-                                             Val->getType(), Type::Int32Ty,
-                                             NULL);
-  return new CallInst(*FCache, Val, Pow, "tmp", CurBB);
+  return new CallInst(Intrinsic::getDeclaration(TheModule, Id),
+                      Val, Pow, "tmp", CurBB);
 }
 
 
@@ -3860,15 +3843,9 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
   
   Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
   
-  static Constant *llvm_prefetch_fn = 0;
-  if (!llvm_prefetch_fn)
-    llvm_prefetch_fn = 
-      TheModule->getOrInsertFunction("llvm.prefetch", Type::VoidTy,
-                                     Ptr->getType(), Type::Int32Ty, 
-                                     Type::Int32Ty, NULL);
-
   Value *Ops[3] = { Ptr, ReadWrite, Locality };
-  new CallInst(llvm_prefetch_fn, Ops, 3, "", CurBB);
+  new CallInst(Intrinsic::getDeclaration(TheModule, Intrinsic::prefetch),
+               Ops, 3, "", CurBB);
   return true;
 }
 
@@ -3888,25 +3865,11 @@ bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
     return false;
   }
   
-  Value *Fn;
-  static Constant *llvm_retaddr = 0, *llvm_frameaddr;
-  if (!isFrame) {
-    if (!llvm_retaddr)
-      llvm_retaddr = 
-        TheModule->getOrInsertFunction("llvm.returnaddress",
-                                       PointerType::get(Type::Int8Ty),
-                                       Type::Int32Ty, NULL);
-    Fn = llvm_retaddr;
-  } else {
-    if (!llvm_frameaddr)
-      llvm_frameaddr = 
-        TheModule->getOrInsertFunction("llvm.frameaddress",
-                                       PointerType::get(Type::Int8Ty),
-                                       Type::Int32Ty, NULL);
-    Fn = llvm_frameaddr;
-  }
-  
-  Result = new CallInst(Fn, Level, "tmp", CurBB);
+  Result = new CallInst(Intrinsic::getDeclaration(TheModule,
+                                                  !isFrame ?
+                                                  Intrinsic::returnaddress :
+                                                  Intrinsic::frameaddress),
+                        Level, "tmp", CurBB);
   Result = CastToType(Instruction::BitCast, Result, TREE_TYPE(exp));
   return true;
 }
@@ -3916,11 +3879,9 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
   if (!validate_arglist(arglist, VOID_TYPE))
     return false;
   
-  static Constant *Fn = 0;
-  if (!Fn)
-    Fn = TheModule->getOrInsertFunction("llvm.stacksave",
-                                       PointerType::get(Type::Int8Ty), NULL);
-  Result = new CallInst(Fn, "tmp", CurBB);
+  Result = new CallInst(Intrinsic::getDeclaration(TheModule,
+                                                  Intrinsic::stacksave),
+                        "tmp", CurBB);
   return true;
 }
 
@@ -3929,14 +3890,11 @@ bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
   if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
     return false;
   
-  static Constant *Fn = 0;
-  if (!Fn)
-    Fn = TheModule->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
-                                        PointerType::get(Type::Int8Ty), NULL);
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
   Ptr = CastToType(Instruction::BitCast, Ptr, PointerType::get(Type::Int8Ty));
 
-  new CallInst(Fn, Ptr, "", CurBB);
+  new CallInst(Intrinsic::getDeclaration(TheModule, Intrinsic::stackrestore),
+               Ptr, "", CurBB);
   return true;
 }
 
@@ -3965,13 +3923,6 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
   tree arglist = TREE_OPERAND(exp, 1);
   tree fntype = TREE_TYPE(current_function_decl);
   
-  static Constant *llvm_va_start_fn = 0;
-  static const Type *VPTy = PointerType::get(Type::Int8Ty);
-
-  if (!llvm_va_start_fn)
-    llvm_va_start_fn = TheModule->getOrInsertFunction("llvm.va_start",
-                                                      Type::VoidTy, VPTy, NULL);
-  
   if (TYPE_ARG_TYPES(fntype) == 0 ||
       (TREE_VALUE(tree_last(TYPE_ARG_TYPES(fntype))) == void_type_node)) {
     error("`va_start' used in function with fixed args");
@@ -3989,36 +3940,26 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
   
   Value *ArgVal = Emit(TREE_VALUE(arglist), 0);
 
+  Constant *llvm_va_start_fn = Intrinsic::getDeclaration(TheModule,
+                                                         Intrinsic::vastart);
   const Type *FTy =
     cast<PointerType>(llvm_va_start_fn->getType())->getElementType();
-  ArgVal = CastToType(Instruction::BitCast, ArgVal, VPTy);
+  ArgVal = CastToType(Instruction::BitCast, ArgVal,
+                      PointerType::get(Type::Int8Ty));
   new CallInst(llvm_va_start_fn, ArgVal, "", CurBB);
   return true;
 }
 
 bool TreeToLLVM::EmitBuiltinVAEnd(tree exp) {
-  static Constant *llvm_va_end_fn = 0;
-  static const Type *VPTy = PointerType::get(Type::Int8Ty);
-  
-  if (!llvm_va_end_fn)
-    llvm_va_end_fn = TheModule->getOrInsertFunction("llvm.va_end", Type::VoidTy,
-                                                    VPTy, NULL);
-  
   Value *Arg = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-  Arg = CastToType(Instruction::BitCast, Arg, VPTy);
-  new CallInst(llvm_va_end_fn, Arg, "", CurBB);
+  Arg = CastToType(Instruction::BitCast, Arg,
+                   PointerType::get(Type::Int8Ty));
+  new CallInst(Intrinsic::getDeclaration(TheModule, Intrinsic::vaend),
+               Arg, "", CurBB);
   return true;
 }
 
 bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
-  static Constant *llvm_va_copy_fn = 0;
-  static const Type *VPTy = PointerType::get(Type::Int8Ty);
-
-  if (!llvm_va_copy_fn)
-    llvm_va_copy_fn =
-      TheModule->getOrInsertFunction("llvm.va_copy", Type::VoidTy,
-                                     VPTy, VPTy, NULL);
-
   tree Arg1T = TREE_VALUE(TREE_OPERAND(exp, 1));
   tree Arg2T = TREE_VALUE(TREE_CHAIN(TREE_OPERAND(exp, 1)));
   
@@ -4038,10 +3979,13 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
     Emit(Arg2T, Arg2);
   }
   
+  static const Type *VPTy = PointerType::get(Type::Int8Ty);
+
   Arg1 = CastToType(Instruction::BitCast, Arg1, VPTy);
   Arg2 = CastToType(Instruction::BitCast, Arg2, VPTy);
   
-  new CallInst(llvm_va_copy_fn, Arg1, Arg2, "", CurBB);
+  new CallInst(Intrinsic::getDeclaration(TheModule, Intrinsic::vacopy),
+               Arg1, Arg2, "", CurBB);
   return true;
 }
 

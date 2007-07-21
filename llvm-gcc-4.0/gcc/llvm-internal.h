@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <cassert>
 #include <map>
 #include <string>
+#include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
@@ -426,13 +427,12 @@ private:
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
                                        Value *DestLoc, Value *&Result);
   bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
-                             const char *I8Name , Function *&I8Cache,
-                             const char *I16Name, Function *&I16Cache,
-                             const char *I32Name, Function *&I32Cache,
-                             const char *I64Name, Function *&I64Cache);
-  Value *EmitBuiltinUnaryFPOp(Value *InVal,
-                            const char *F32Name, Function *&F32Cache,
-                            const char *F64Name, Function *&F64Cache);
+                             Intrinsic::ID I8ID, Intrinsic::ID I16ID,
+                             Intrinsic::ID I32ID, Intrinsic::ID I64ID);
+  Value *EmitBuiltinUnaryFPOp(Value *Amt, Intrinsic::ID F32ID,
+                              Intrinsic::ID F64ID);
+  Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,
+                              const char *F64Name);
   Value *EmitBuiltinPOWI(tree_node *exp);
 
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);

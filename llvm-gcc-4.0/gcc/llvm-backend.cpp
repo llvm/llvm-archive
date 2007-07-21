@@ -44,8 +44,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
-#include <ostream>
-#include <iostream>
+#include "llvm/Support/Streams.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -144,7 +143,7 @@ void llvm_initialize_backend(void) {
   const TargetMachineRegistry::Entry *TME = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
-    std::cerr << "Did not get a target machine!\n";
+    llvm_cerr << "Did not get a target machine!\n";
     exit(1);
   }
   
@@ -316,7 +315,7 @@ void llvm_asm_file_start(void) {
     if (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream, 
                                        TargetMachine::AssemblyFile,
                                        /*FAST*/optimize == 0)) {
-      std::cerr << "Error interfacing to target machine!";
+      llvm_cerr << "Error interfacing to target machine!";
       exit(1);
     }
     

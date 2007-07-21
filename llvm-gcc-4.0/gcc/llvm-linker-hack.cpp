@@ -28,7 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/Passes.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
 /// library, allowing the llvm backend to be shared across the various
@@ -40,7 +40,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 void dummy_function() {
   new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
-  llvm::WriteBytecodeToFile(0, std::cout);
+  llvm::WriteBytecodeToFile(0, llvm::llvm_cout);
 
   llvm::createInstructionCombiningPass();
   llvm::createScalarReplAggregatesPass();

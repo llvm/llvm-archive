@@ -32,7 +32,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <cassert>
 #include <map>
 #include <string>
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/DataTypes.h"
 
 extern "C" {
@@ -40,6 +39,7 @@ extern "C" {
 }
 
 namespace llvm {
+  class llvm_ostream;
   class Module;
   class GlobalVariable;
   class Function;

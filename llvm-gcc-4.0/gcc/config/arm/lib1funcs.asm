@@ -637,6 +637,9 @@ LSYM(Lgot_result):
 #ifdef L_udivsi3
 
 	FUNC_START udivsi3
+/* APPLE LOCAL begin LLVM */
+       	FUNC_ALIAS aeabi_uidiv udivsi3
+/* APPLE LOCAL end LLVM */
 
 #ifdef __thumb__
 
@@ -747,6 +750,9 @@ LSYM(Lover10):
 #ifdef L_divsi3
 
 	FUNC_START divsi3	
+/* APPLE LOCAL begin LLVM */
+        FUNC_ALIAS aeabi_idiv divsi3
+/* APPLE LOCAL end LLVM */
 
 #ifdef __thumb__
 	cmp	divisor, #0
@@ -1230,4 +1236,7 @@ LSYM(Lchange_\register):
 #include "ieee754-df.S"
 #include "ieee754-sf.S"
 #include "bpabi.S"
+/* APPLE LOCAL begin LLVM */
+#include "libunwind.S"
+/* APPLE LOCAL end LLVM */
 #endif /* __symbian__ */

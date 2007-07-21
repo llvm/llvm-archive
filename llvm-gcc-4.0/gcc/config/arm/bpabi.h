@@ -26,6 +26,11 @@
 /* Assume that AAPCS ABIs should adhere to the full BPABI.  */ 
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
+/* APPLE LOCAL begin LLVM */
+/* BPABI targets use EABI frame unwinding tables.  */
+#define TARGET_UNWIND_INFO 1
+/* APPLE LOCAL end LLVM */
+
 /* Section 4.1 of the AAPCS requires the use of VFP format.  */
 /* APPLE LOCAL begin LLVM */
 #undef FPUTYPE_DEFAULT

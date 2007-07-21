@@ -87,3 +87,8 @@
       builtin_define ("__symbian__");		\
     }						\
   while (false)
+
+/* APPLE LOCAL begin LLVM */
+/* SymbianOS cannot merge entities with vague linkage at runtime.  */
+#define TARGET_ARM_DYNAMIC_VAGUE_LINKAGE_P false
+/* APPLE LOCAL end LLVM */

@@ -1650,26 +1650,15 @@ determine_visibility (tree decl)
 	  DECL_VISIBILITY (decl) = CLASSTYPE_VISIBILITY (class_type);
 	  DECL_VISIBILITY_SPECIFIED (decl) = 1;
 	}
-      /* If no explicit visibility information has been provided for
-	 this class, some targets require that class data be
-	 exported.  */
-      else if (TREE_CODE (decl) == VAR_DECL
-	       && targetm.cxx.export_class_data ()
-	       && (DECL_TINFO_P (decl)
-		   || (DECL_VTABLE_OR_VTT_P (decl)
-		       /* Construction virtual tables are not emitted
-			  because they cannot be referred to from other
-			  object files; their name is not standardized by
-			  the ABI.  */
-		       && !DECL_CONSTRUCTION_VTABLE_P (decl))))
-	DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
       /* APPLE LOCAL begin ms tinfo compat 4230099 */
       else if (TREE_CODE (decl) == VAR_DECL
 	       && flag_visibility_ms_compat
 	       && DECL_TINFO_P (decl))
 	DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
       /* APPLE LOCAL end ms tinfo compat 4230099 */
-      else
+      /* APPLE LOCAL begin LLVM */
+      else if (!DECL_VISIBILITY_SPECIFIED (decl))
+      /* APPLE LOCAL end LLVM */
 	{
 	  DECL_VISIBILITY (decl) = CLASSTYPE_VISIBILITY (class_type);
 	  DECL_VISIBILITY_SPECIFIED (decl) = 0;
@@ -1695,6 +1684,9 @@ import_export_decl (tree decl)
   int emit_p;
   bool comdat_p;
   bool import_p;
+  /* APPLE LOCAL begin LLVM */
+  tree class_type = NULL_TREE;
+  /* APPLE LOCAL end LLVM */
 
   if (DECL_INTERFACE_KNOWN (decl))
     return;
@@ -1785,17 +1777,23 @@ import_export_decl (tree decl)
     ;
   else if (TREE_CODE (decl) == VAR_DECL && DECL_VTABLE_OR_VTT_P (decl))
     {
-      tree type = DECL_CONTEXT (decl);
-      import_export_class (type);
-      if (TYPE_FOR_JAVA (type))
+      /* APPLE LOCAL begin LLVM */
+      class_type = DECL_CONTEXT (decl);
+      import_export_class (class_type);
+      if (TYPE_FOR_JAVA (class_type))
+      /* APPLE LOCAL end LLVM */
 	import_p = true;
-      else if (CLASSTYPE_INTERFACE_KNOWN (type)
-	       && CLASSTYPE_INTERFACE_ONLY (type))
+      /* APPLE LOCAL begin LLVM */
+      else if (CLASSTYPE_INTERFACE_KNOWN (class_type)
+	       && CLASSTYPE_INTERFACE_ONLY (class_type))
+      /* APPLE LOCAL end LLVM */
 	import_p = true;
       else if ((!flag_weak || TARGET_WEAK_NOT_IN_ARCHIVE_TOC)
-	       && !CLASSTYPE_USE_TEMPLATE (type)
-	       && CLASSTYPE_KEY_METHOD (type)
-	       && !DECL_DECLARED_INLINE_P (CLASSTYPE_KEY_METHOD (type)))
+      /* APPLE LOCAL begin LLVM */
+	       && !CLASSTYPE_USE_TEMPLATE (class_type)
+	       && CLASSTYPE_KEY_METHOD (class_type)
+	       && !DECL_DECLARED_INLINE_P (CLASSTYPE_KEY_METHOD (class_type)))
+      /* APPLE LOCAL end LLVM */
 	/* The ABI requires that all virtual tables be emitted with
 	   COMDAT linkage.  However, on systems where COMDAT symbols
 	   don't show up in the table of contents for a static
@@ -1807,11 +1805,15 @@ import_export_decl (tree decl)
 	   emitted in only one translation unit, we make the virtual
 	   table an ordinary definition with external linkage.  */
 	DECL_EXTERNAL (decl) = 0;
-      else if (CLASSTYPE_INTERFACE_KNOWN (type))
+      /* APPLE LOCAL begin LLVM */
+      else if (CLASSTYPE_INTERFACE_KNOWN (class_type))
+      /* APPLE LOCAL end LLVM */
 	{
-	  /* TYPE is being exported from this translation unit, so DECL
-	     should be defined here.  */ 
-	  if (!flag_weak && CLASSTYPE_EXPLICIT_INSTANTIATION (type))
+          /* APPLE LOCAL begin LLVM */
+	  /* CLASS_TYPE is being exported from this translation unit,
+	     so DECL should be defined here.  */ 
+	  if (!flag_weak && CLASSTYPE_EXPLICIT_INSTANTIATION (class_type))
+          /* APPLE LOCAL end LLVM */
 	    /* If a class is declared in a header with the "extern
 	       template" extension, then it will not be instantiated,
 	       even in translation units that would normally require
@@ -1822,16 +1824,29 @@ import_export_decl (tree decl)
 	    DECL_EXTERNAL (decl) = 0;
 	  else
 	    {
-	      /* The ABI requires COMDAT linkage.  Normally, we only
-		 emit COMDAT things when they are needed; make sure
-		 that we realize that this entity is indeed
-		 needed.  */
-	      comdat_p = true;
-	      mark_needed (decl);
+              /* APPLE LOCAL begin LLVM */
+	      /* The generic C++ ABI says that class data is always
+		 COMDAT, even if there is a key function.  Some
+		 variants (e.g., the ARM EABI) says that class data
+		 only has COMDAT linkage if the the class data might
+		 be emitted in more than one translation unit.  */
+	      if (!CLASSTYPE_KEY_METHOD (class_type)
+		  || targetm.cxx.class_data_always_comdat ())
+		{
+		  /* The ABI requires COMDAT linkage.  Normally, we
+		     only emit COMDAT things when they are needed;
+		     make sure that we realize that this entity is
+		     indeed needed.  */
+		  comdat_p = true;
+		  mark_needed (decl);
+		}
+              /* APPLE LOCAL end LLVM */
 	    }
 	}
       else if (!flag_implicit_templates
-	       && CLASSTYPE_IMPLICIT_INSTANTIATION (type))
+               /* APPLE LOCAL begin LLVM */
+	       && CLASSTYPE_IMPLICIT_INSTANTIATION (class_type))
+               /* APPLE LOCAL end LLVM */
 	import_p = true;
       else
 	comdat_p = true;
@@ -1841,6 +1856,9 @@ import_export_decl (tree decl)
       tree type = TREE_TYPE (DECL_NAME (decl));
       if (CLASS_TYPE_P (type))
 	{
+          /* APPLE LOCAL begin LLVM */
+	  class_type = type;
+          /* APPLE LOCAL end LLVM */
 	  import_export_class (type);
 	  if (CLASSTYPE_INTERFACE_KNOWN (type)
 	      && TYPE_POLYMORPHIC_P (type)
@@ -1853,10 +1871,12 @@ import_export_decl (tree decl)
 	    import_p = true;
 	  else 
 	    {
-	      comdat_p = true;
 	      if (CLASSTYPE_INTERFACE_KNOWN (type)
 		  && !CLASSTYPE_INTERFACE_ONLY (type))
 		{
+                  /* APPLE LOCAL begin LLVM */
+		  comdat_p = targetm.cxx.class_data_always_comdat ();
+                  /* APPLE LOCAL end LLVM */
 		  mark_needed (decl);
 		  if (!flag_weak)
 		    {
@@ -1864,6 +1884,10 @@ import_export_decl (tree decl)
 		      DECL_EXTERNAL (decl) = 0;
 		    }
 		}
+              /* APPLE LOCAL begin LLVM */
+	      else
+		comdat_p = true;
+              /* APPLE LOCAL end LLVM */
 	    }
 	}
       else
@@ -1927,6 +1951,23 @@ import_export_decl (tree decl)
 	 this point.  */
       comdat_linkage (decl);
     }
+
+/* APPLE LOCAL begin LLVM */
+  /* Give the target a chance to override the visibility associated
+     with DECL.  */
+  if (TREE_CODE (decl) == VAR_DECL
+      && (DECL_TINFO_P (decl)
+	  || (DECL_VTABLE_OR_VTT_P (decl)
+	      /* Construction virtual tables are not exported because
+		 they cannot be referred to from other object files;
+		 their name is not standardized by the ABI.  */
+	      && !DECL_CONSTRUCTION_VTABLE_P (decl)))
+      && TREE_PUBLIC (decl)
+      && !DECL_REALLY_EXTERN (decl)
+      && DECL_VISIBILITY_SPECIFIED (decl)
+      && (!class_type || !CLASSTYPE_VISIBILITY_SPECIFIED (class_type)))
+    targetm.cxx.determine_class_data_visibility (decl);
+/* APPLE LOCAL end LLVM */
 
   DECL_INTERFACE_KNOWN (decl) = 1;
 }

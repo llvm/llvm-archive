@@ -3373,7 +3373,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   // The second arg of llvm.va_copy is a pointer to a valist.
   Value *Arg2;
   const Type *VAListTy = cast<PointerType>(Arg1->getType())->getElementType();
-  if (VAListTy->isFirstClassType()) {
+  if (!isAggregateType(TREE_TYPE(Arg1T))) {
     // Emit it as a value, then store it to a temporary slot.
     Value *V2 = Emit(Arg2T, 0);
     Arg2 = CreateTemporary(V2->getType());

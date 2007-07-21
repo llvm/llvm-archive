@@ -288,7 +288,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
   case UNION_TYPE:  return ConvertUNION(type, orig_type);
   case BOOLEAN_TYPE:
     if (TREE_INT_CST_LOW(TYPE_SIZE(type)) <= 8)
-      return SET_TYPE_LLVM(type, Type::BoolTy);
+      return SET_TYPE_LLVM(type, Type::Int1Ty);
     else { // Bools on some platforms take more space than LLVM bool (e.g. PPC).
       if (const Type *Ty = GET_TYPE_LLVM(type))
         return Ty;
@@ -517,7 +517,7 @@ namespace {
         if (LLVMTy == Type::FloatTy)
           LLVMTy = Type::DoubleTy;
         else if (LLVMTy == Type::Int16Ty || LLVMTy == Type::Int8Ty ||
-                 LLVMTy == Type::BoolTy)
+                 LLVMTy == Type::Int1Ty)
           LLVMTy = Type::Int32Ty;
       }
       ArgTypes.push_back(LLVMTy);

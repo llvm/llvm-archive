@@ -24,6 +24,17 @@ HOSTS=`echo $1 | $TRANSLATE_ARCH `
 # installed.
 TARGETS=`echo $2 | $TRANSLATE_TARGETS`
 
+#APPLE LOCAL begin LLVM
+# LLVM does not require host name translation. 
+LLVM_HOSTS=$1
+# LLVM target list is comma separated list. 
+#LLVM_TARGETS=`echo $2 | sed -e s/\ /\,/ -e s/ppc/powerpc/ -e s/i386/x86/ \
+#    -e s/x86_64// -e s/powerpc64// -e s/ppc64//`
+#FIXME : Hard code targets. See LLVMTARGETOBJ comment in gcc/Makefile.in
+LLVM_TARGETS="x86,powerpc"
+#APPLE LOCAL end LLVM
+
+
 # The GNU makefile target ('bootstrap' by default).
 BOOTSTRAP=${BOOTSTRAP-bootstrap}
 
@@ -159,7 +170,7 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   # Build the LLVM tree universal.
   LLVMCONFIGFLAGS="--prefix=$DEST_DIR$LLVM_INSTALL_PREFIX \
-                   --enable-targets=x86,powerpc \
+                   --enable-targets=$LLVM_TARGETS \
                    --enable-assertions=$LLVM_ASSERTIONS"
   mkdir -p $DIR/obj-llvm || exit 1
   cd $DIR/obj-llvm || exit 1
@@ -177,7 +188,7 @@ if [ "$ENABLE_LLVM" == true ]; then
   # we don't want to make the builders hit swap by firing off too many gcc's at
   # the same time.
   ## FIXME: Remove -O2 when rdar://4560645 is fixed.
-  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="i386 ppc x86_64 ppc64" \
+  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_HOSTS" \
        OPTIMIZE_OPTION='-O2' \
        CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 fi
@@ -546,6 +557,9 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   ## Install the tree into the destination directory.
   make $MAKEFLAGS ENABLE_OPTIMIZED=1 UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
+
+  ## Install Version.h
+  echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$LLVM_INSTALL_PREFIX/include/llvm/Version.h
 
   ## Strip local symbols from llvm libraries.
   strip -S $DEST_DIR$LLVM_INSTALL_PREFIX/lib/*.[oa]

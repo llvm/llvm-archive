@@ -569,7 +569,7 @@ bool ValidateRegisterVariable(tree decl) {
   // If this has already been processed, don't emit duplicate error messages.
   if (DECL_LLVM_SET_P(decl)) {
     // Error state encoded into DECL_LLVM.
-    return cast<ConstantBool>(DECL_LLVM(decl))->getValue();
+    return cast<ConstantInt>(DECL_LLVM(decl))->getZExtValue();
   }
   
   /* Detect errors in declaring global registers.  */
@@ -593,10 +593,10 @@ bool ValidateRegisterVariable(tree decl) {
     if (TREE_THIS_VOLATILE(decl))
       warning("volatile register variables don%'t work as you might wish");
     
-    SET_DECL_LLVM(decl, ConstantBool::getFalse());
+    SET_DECL_LLVM(decl, ConstantInt::getFalse());
     return false;  // Everything ok.
   }
-  SET_DECL_LLVM(decl, ConstantBool::getTrue());
+  SET_DECL_LLVM(decl, ConstantInt::getTrue());
   return true;
 }
 

@@ -713,7 +713,7 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
   // Handle cast (cast bool X to T2) to bool as X, because this occurs all over
   // the place.
   if (CastInst *CI = dyn_cast<CastInst>(V))
-    if (Ty == Type::BoolTy && CI->getOperand(0)->getType() == Type::BoolTy)
+    if (Ty == Type::Int1Ty && CI->getOperand(0)->getType() == Type::Int1Ty)
       return CI->getOperand(0);
   return CastInst::create(Instruction::CastOps(opcode), V, Ty, V->getName(), 
                           CurBB);
@@ -1384,10 +1384,10 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, Value *DestLoc) {
 }
 
 Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
-  // Emit the conditional expression and trunc/bitcast to BoolTy
+  // Emit the conditional expression and trunc/bitcast to Int1Ty
   Value *Cond = Emit(COND_EXPR_COND(exp), 0);
   // If its not already a bool, insert a comparison against zero to make it so.
-  if (Cond->getType() != Type::BoolTy)
+  if (Cond->getType() != Type::Int1Ty)
     Cond = new ICmpInst(ICmpInst::ICMP_NE, Cond, 
                         Constant::getNullValue(Cond->getType()), "toBool", 
                            CurBB);
@@ -2376,7 +2376,7 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
 
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
   Value *V = Emit(TREE_OPERAND(exp, 0), 0);
-  if (V->getType() != Type::BoolTy) 
+  if (V->getType() != Type::Int1Ty) 
     V = new ICmpInst(ICmpInst::ICMP_NE, V, 
                      Constant::getNullValue(V->getType()), "toBool", CurBB);
   V = BinaryOperator::createNot(V, V->getName()+"not", CurBB);
@@ -3322,12 +3322,14 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
                                        const char *I64Name,Function *&I64Cache){
   const char *Name;
   Function  **FCache;
-  switch (InVal->getType()->getTypeID()) {
+  const IntegerType *ITy = cast<IntegerType>(InVal->getType());
+
+  switch (ITy->getBitWidth()) {
   default: assert(0 && "Unknown Integer type!");
-  case Type::Int8TyID:  Name = I8Name;  FCache = &I8Cache ; break;
-  case Type::Int16TyID: Name = I16Name; FCache = &I16Cache; break;
-  case Type::Int32TyID:   Name = I32Name; FCache = &I32Cache; break;
-  case Type::Int64TyID:  Name = I64Name; FCache = &I64Cache; break;
+  case 8 : Name = I8Name;  FCache = &I8Cache ; break;
+  case 16: Name = I16Name; FCache = &I16Cache; break;
+  case 32: Name = I32Name; FCache = &I32Cache; break;
+  case 64: Name = I64Name; FCache = &I64Cache; break;
   }
   
   if (*FCache == 0)
@@ -4038,7 +4040,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // If the field result is a bool, cast to a ubyte instead.  It is not
     // possible to access all bits of a memory object with a bool (only the low
     // bit) but it is possible to access them with a byte.
-    if (FieldTy == Type::BoolTy)
+    if (FieldTy == Type::Int1Ty)
       FieldTy = Type::Int8Ty;
     assert(FieldTy->isInteger() && "Invalid bitfield");
 
@@ -4048,7 +4050,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // like "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing
     // y.  We want to access the field as a ulong, not as a uint with an offset.
     if (LLVMFieldTy->isInteger() &&
-        LLVMFieldTy->getPrimitiveSize() > FieldTy->getPrimitiveSize())
+        LLVMFieldTy->getPrimitiveSizeInBits() > 
+          FieldTy->getPrimitiveSizeInBits())
       FieldTy = LLVMFieldTy;
     
     // We are now loading/storing through a casted pointer type, whose 

@@ -426,7 +426,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   Global->setLine(location.line);
   Global->setType(TyD);
   Global->setIsDefinition(true);
-  Global->setIsStatic(GV->getLinkage() == GlobalVariable::InternalLinkage);
+  Global->setIsStatic(GV->hasInternalLinkage());
   Global->setGlobalVariable(GV);
   
   // Make sure global is created if needed.
@@ -729,7 +729,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           Static->setLine(MemLoc.line);
           Static->setType(TyD);
           Static->setIsDefinition(false);
-          Static->setIsStatic(true);
+          Static->setIsStatic(!TREE_PUBLIC(Member));
 
           Elements.push_back(Static);
         } else {
@@ -760,7 +760,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
         Subprogram->setFile(Unit);
         Subprogram->setLine(CurLineNo);
         Subprogram->setType(SPTy);
-        Subprogram->setIsStatic(false);
+        Subprogram->setIsStatic(!TREE_PUBLIC(Member));
         Subprogram->setIsDefinition(false);
 
         Elements.push_back(Subprogram);

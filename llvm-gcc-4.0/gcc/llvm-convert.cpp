@@ -213,15 +213,17 @@ namespace {
           // If this is GCC being sloppy about pointer types, insert a bitcast.
           // See PR1083 for an example.
           ArgVal = new BitCastInst(ArgVal, LLVMTy, "tmp", CurBB);
+        } else if (ArgVal->getType() == Type::DoubleTy) {
+          // If this is a K&R float parameter, it got promoted to double. Insert
+          // the truncation to float now.
+          ArgVal = new FPTruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
         } else {
-          // If this is just a mismatch between integer types, this could be due
+          // If this is just a mismatch between integer types, this is due
           // to K&R prototypes, where the forward proto defines the arg as int
           // and the actual impls is a short or char.
-          assert(ArgVal->getType()->isIntegral() && LLVMTy->isIntegral() &&
+          assert(ArgVal->getType() == Type::Int32Ty && LLVMTy->isIntegral() &&
                  "Lowerings don't match?");
-          bool isSigned = type == 0 ? true : !TYPE_UNSIGNED(type);
-          ArgVal = CastInst::createIntegerCast(ArgVal, LLVMTy, isSigned,
-                                               NameStack.back(), CurBB);
+          ArgVal = new TruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
         }
       }
       assert(!LocStack.empty());

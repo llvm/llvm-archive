@@ -392,7 +392,7 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   if (TARGET_USE_LOCAL_THUNK_ALIAS_P (function)
       /* APPLE LOCAL begin LLVM */
       /* PR1085 */
-#ifndef ENABLE_LLVM
+#ifdef ENABLE_LLVM
       && 0
 #endif
       /* APPLE LOCAL end LLVM */

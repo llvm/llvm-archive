@@ -2209,18 +2209,26 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
     return 0;
   }
 
-  // Otherwise, this is a scalar to scalar conversion.  FIXME: this should use
-  // a bitcast or int_to_ptr/ptr_to_int when cast changes land.  For now, go
-  // through memory. :P
+  // Otherwise, this is a scalar to scalar conversion.
   Value *OpVal = Emit(Op, 0);
   assert(OpVal && "Expected a scalar result!");
+  const Type *DestTy = ConvertType(TREE_TYPE(exp));
+  
+  // If the source is a pointer, use ptrtoint to get it to something
+  // bitcast'able.  This supports things like v_c_e(foo*, float).
+  if (isa<PointerType>(OpVal->getType())) {
+    if (isa<PointerType>(DestTy))   // ptr->ptr is a simple bitcast.
+      return new BitCastInst(OpVal, DestTy, "tmp", CurBB);
+    // Otherwise, ptrtoint to intptr_t first.
+    OpVal = new PtrToIntInst(OpVal, TD.getIntPtrType(), "tmp", CurBB);
+  }
+  
+  // If the destination type is a pointer, use inttoptr.
+  if (isa<PointerType>(DestTy))
+    return new IntToPtrInst(OpVal, DestTy, "tmp", CurBB);
 
-  Value *TmpLoc = CreateTemporary(OpVal->getType());
-  new StoreInst(OpVal, TmpLoc, CurBB);
-
-  // Cast the memory to the right type.
-  TmpLoc = CastToType(TmpLoc, PointerType::get(ConvertType(TREE_TYPE(exp))));
-  return new LoadInst(TmpLoc, "tmp", CurBB);
+  // Otherwise, use a bitcast.
+  return new BitCastInst(OpVal, DestTy, "tmp", CurBB);
 }
 
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, Value *DestLoc) {

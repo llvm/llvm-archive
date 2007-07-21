@@ -1799,10 +1799,15 @@ namespace {
       CallingConvention = CallingConv::C;
 #ifdef TARGET_ADJUST_LLVM_CC
       tree ftype;
-      if (tree fdecl = get_callee_fndecl(exp))
+      if (tree fdecl = get_callee_fndecl(exp)) {
         ftype = TREE_TYPE(fdecl);
-      else
+      } else {
         ftype = TREE_TYPE(TREE_OPERAND(exp,0));
+
+        // If it's call to pointer, we look for the function type.
+        if (TREE_CODE(ftype) == POINTER_TYPE)
+          ftype = TREE_TYPE(ftype);
+      }
       
       TARGET_ADJUST_LLVM_CC(CallingConvention, ftype);
 #endif

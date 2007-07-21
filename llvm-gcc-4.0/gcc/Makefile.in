@@ -2445,8 +2445,12 @@ errors.o : errors.c $(CONFIG_H) $(SYSTEM_H) errors.h
 # APPLE LOCAL begin LLVM
 llvm-main.o : llvm-main.cpp $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) toplev.h
 llvm-symbol-stubs.o : llvm-symbol-stubs.cpp
-ALL_HEADERS = $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
-              llvm.h llvm-internal.h llvm-file-ostream.h llvm-abi.h llvm-debug.h
+LLVM_HEADERS := $(wildcard $(LLVMSRCDIR)/include/llvm/*) \
+                $(wildcard $(LLVMSRCDIR)/include/llvm/*/*)
+
+ALL_HEADERS := $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+            llvm.h llvm-internal.h llvm-file-ostream.h llvm-abi.h llvm-debug.h \
+            $(LLVM_HEADERS)
 llvm-backend.o : llvm-backend.cpp $(ALL_HEADERS)
 llvm-convert.o : llvm-convert.cpp $(ALL_HEADERS) \
                  $(LLVMSRCDIR)/include/llvm/Intrinsics.gen

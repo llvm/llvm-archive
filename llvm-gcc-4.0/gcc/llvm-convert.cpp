@@ -1120,6 +1120,10 @@ static unsigned CountAggregateElements(const Type *Ty) {
   }
 }
 
+#ifndef TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY
+#define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 64
+#endif
+
 /// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
 /// GCC type specified by GCCType to know which elements to copy.
 void TreeToLLVM::EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree type,
@@ -1129,7 +1133,8 @@ void TreeToLLVM::EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree type,
 
   // If the type is small, copy the elements instead of using a block copy.
   if (TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
-      TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) < 64) {
+      TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <
+          TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY) {
     const Type *LLVMTy = ConvertType(type);
     if (CountAggregateElements(LLVMTy) <= 8) {
       DestPtr = CastToType(Instruction::BitCast, DestPtr, 

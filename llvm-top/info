@@ -20,6 +20,3 @@ for mod in $MODULE_DEPENDENCIES ; do
   msg 0 "Information for module '$mod'"
   svn info $mod | sed -e '/^Repository/d' -e '/^Node/d' -e '/^Sched/d'
 done
-
-# Report what happened.
-msg 1 Modules updated:"$MODULE_DEPENDENCIES".

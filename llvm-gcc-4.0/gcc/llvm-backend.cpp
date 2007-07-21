@@ -208,23 +208,28 @@ void llvm_asm_file_start(void) {
   if (optimize > 0) {
     HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
-    PM->add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+    if (flag_unit_at_a_time)
+      PM->add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
     PM->add(createCFGSimplificationPass());    // Clean up disgusting code
     PM->add(createPromoteMemoryToRegisterPass());// Kill useless allocas
-    PM->add(createGlobalOptimizerPass());      // Optimize out global vars
-    PM->add(createGlobalDCEPass());            // Remove unused fns and globs
-    PM->add(createIPConstantPropagationPass());// IP Constant Propagation
-    PM->add(createDeadArgEliminationPass());   // Dead argument elimination
+    if (flag_unit_at_a_time) {
+      PM->add(createGlobalOptimizerPass());      // Optimize out global vars
+      PM->add(createGlobalDCEPass());            // Remove unused fns and globs
+      PM->add(createIPConstantPropagationPass());// IP Constant Propagation
+      PM->add(createDeadArgEliminationPass());   // Dead argument elimination
+    }
     PM->add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
     // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
     //PM->add(createPredicateSimplifierPass());  // Canonicalize registers
     PM->add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
-    PM->add(createPruneEHPass());              // Remove dead EH info
+    if (flag_unit_at_a_time)
+      PM->add(createPruneEHPass());              // Remove dead EH info
 
     if (optimize > 1) {
       if (flag_inline_trees)   // respect -fno-inline-functions
         PM->add(createFunctionInliningPass());   // Inline small functions
-      PM->add(createSimplifyLibCallsPass());   // Library Call Optimizations
+      if (flag_unit_at_a_time)
+        PM->add(createSimplifyLibCallsPass());   // Library Call Optimizations
 
       if (optimize > 2)
     	PM->add(createArgumentPromotionPass());  // Scalarize uninlined fn args
@@ -262,7 +267,7 @@ void llvm_asm_file_start(void) {
     PM->add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs
     
-    if (optimize > 1)
+    if (optimize > 1 && flag_unit_at_a_time)
       PM->add(createConstantMergePass());        // Merge dup global constants 
   }
   

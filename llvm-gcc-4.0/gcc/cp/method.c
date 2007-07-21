@@ -343,7 +343,14 @@ use_thunk (tree thunk_fndecl, bool emit_p)
   if (!emit_p)
     return;
 
+  /* APPLE LOCAL begin LLVM */
+  /* RC843 */
+#ifndef ENABLE_LLVM
   if (TARGET_USE_LOCAL_THUNK_ALIAS_P (function))
+#else
+  if (0 && TARGET_USE_LOCAL_THUNK_ALIAS_P (function))
+#endif
+  /* APPLE LOCAL end LLVM */
    alias = make_alias_for_thunk (function);
   else
    alias = function;

@@ -30,6 +30,14 @@ Target-specific configure options:
   * On Linux, if llvm-gcc doesn't build right, try building LLVM with
     OPTIMIZE_OPTION=-O2.  This may be host compiler version specific.
 
+Build Options:
+
+  * If you want LLVM to include an identifying marker in the --version
+    output, build llvm-gcc with LLVM_VERSION_INFO=XXX.  For example,
+    to build the LLVM 1.8 Release front-end, use
+    'make LLVM_VERSION_INFO=1.8'.  This will cause the front-end to
+    print: gcc (GCC) 4.0.1 LLVM (Apple Computer, Inc. build 1.8)
+    as the version number.
 
 Next, make an object directory and install directory as siblings to the 
 llvm-gcc source directory, and build and install llvm-gcc:
@@ -41,7 +49,7 @@ $ mkdir obj
 $ mkdir install
 $ cd obj
 $ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install/ --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
-$ make
+$ make  [[BUILDOPTIONS, see above]]
 $ make install
 
 Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc 

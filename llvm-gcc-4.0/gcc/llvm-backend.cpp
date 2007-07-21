@@ -155,9 +155,7 @@ void llvm_initialize_backend(void) {
   if (optimize) {
     RegisterScheduler::setDefault(createDefaultScheduler);
   } else {
-    // FIXME(RC859) - BFS Scheduler is broken. 
-    // RegisterScheduler::setDefault(createBFS_DAGScheduler);
-    RegisterScheduler::setDefault(createDefaultScheduler);
+    RegisterScheduler::setDefault(createBFS_DAGScheduler);
   }
   
   RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);

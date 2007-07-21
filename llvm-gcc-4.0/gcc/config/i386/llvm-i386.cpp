@@ -326,6 +326,26 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     
     return true;
+  case IX86_BUILTIN_PUNPCKHBW:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 12, 5, 13,
+                                                6, 14, 7, 15);
+    return true;
+  case IX86_BUILTIN_PUNPCKHWD:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 6, 3, 7);
+    return true;
+  case IX86_BUILTIN_PUNPCKHDQ:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 1, 3);
+    return true;
+  case IX86_BUILTIN_PUNPCKLBW:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 0,  8, 1,  9,
+                                                2, 10, 3, 11);
+    return true;
+  case IX86_BUILTIN_PUNPCKLWD:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 4, 1, 5);
+    return true;
+  case IX86_BUILTIN_PUNPCKLDQ:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
+    return true;
   case IX86_BUILTIN_PUNPCKHBW128:
     Result = BuildVectorShuffle(Ops[0], Ops[1],  8, 24,  9, 25,
                                                 10, 26, 11, 27,
@@ -427,6 +447,29 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_MOVSLDUP:
     Result = BuildVectorShuffle(Ops[0], Ops[0], 0, 0, 2, 2);
     return true;
+  case IX86_BUILTIN_VEC_INIT_V2SI:
+    for (unsigned i = 0; i < 2; ++i)
+      Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int32Ty, false, "tmp",
+                                           CurBB);
+
+    Result = BuildVector(Ops[1], Ops[0], NULL);
+    return true;
+  case IX86_BUILTIN_VEC_INIT_V4HI:
+    for (unsigned i = 0; i < 4; ++i)
+      Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int16Ty, false, "tmp",
+                                           CurBB);
+
+    Result = BuildVector(Ops[3], Ops[2], Ops[1], Ops[0], NULL);
+    return true;
+  case IX86_BUILTIN_VEC_INIT_V8QI: {
+    for (unsigned i = 0; i < 8; ++i)
+      Ops[i] = CastInst::createIntegerCast(Ops[i], Type::Int8Ty, false, "tmp",
+                                           CurBB);
+
+    Result = BuildVector(Ops[7], Ops[6], Ops[5], Ops[4],
+                         Ops[3], Ops[2], Ops[1], Ops[0], NULL);
+    return true;
+  }
   case IX86_BUILTIN_VEC_EXT_V2DF:
   case IX86_BUILTIN_VEC_EXT_V4SI:
   case IX86_BUILTIN_VEC_EXT_V4SF:

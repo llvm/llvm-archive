@@ -1666,6 +1666,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   
   // Emit the condition.
   Value *SwitchExp = Emit(SWITCH_COND(exp), 0);
+  bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(SWITCH_COND(exp)));
   
   // Emit the switch instruction.
   SwitchInst *SI = new SwitchInst(SwitchExp, CurBB,
@@ -1673,39 +1674,68 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   EmitBlock(new BasicBlock(""));
   SI->setSuccessor(0, CurBB);   // Default location starts out as fall-through
 
-  // Output the body of the switch.
-  if (SWITCH_BODY(exp))
-    Emit(SWITCH_BODY(exp), 0);
-  
+  assert(!SWITCH_BODY(exp) && "not a gimple switch?");
+
+  BasicBlock *DefaultDest = NULL;
   for (unsigned i = 0, e = TREE_VEC_LENGTH(Cases); i != e; ++i) {
     BasicBlock *Dest = getLabelDeclBlock(CASE_LABEL(TREE_VEC_ELT(Cases, i)));
-    if (CASE_LOW(TREE_VEC_ELT(Cases, i)) == 0) {
-      SI->setSuccessor(0, Dest);  // Change the default destination.
+
+    tree low = CASE_LOW(TREE_VEC_ELT(Cases, i));
+    if (!low) {
+      DefaultDest = Dest;
       continue;
     }
 
     // Convert the integer to the right type.
-    Value *Val = Emit(CASE_LOW(TREE_VEC_ELT(Cases, i)), 0);
-    Val = CastToSIntType(Val, SwitchExp->getType());
-    ConstantInt *ValC = cast<ConstantInt>(Val);
-    if (CASE_HIGH(TREE_VEC_ELT(Cases, i)) == 0) {
-      SI->addCase(ValC, Dest); // Single destination.
+    Value *Val = Emit(low, 0);
+    Val = CastToAnyType(Val, !TYPE_UNSIGNED(TREE_TYPE(low)),
+                        SwitchExp->getType(), ExpIsSigned);
+    ConstantInt *LowC = cast<ConstantInt>(Val);
+
+    tree high = CASE_HIGH(TREE_VEC_ELT(Cases, i));
+    if (!high) {
+      SI->addCase(LowC, Dest); // Single destination.
       continue;
     }
 
-    // Otherwise, we have a range, like 'case 1 ... 17'.  Add all of the
-    // necessary successors to the switch.
-    Val = Emit(CASE_HIGH(TREE_VEC_ELT(Cases, i)), 0);
-    // Make sure the case value is the same type as the switch expression (int)
-    Val = CastToSIntType(Val, SwitchExp->getType());
-    ConstantInt *HiC = cast<ConstantInt>(Val);
-    Constant *OneC = ConstantInt::get(ValC->getType(), 1);
-    while (1) {
-      SI->addCase(ValC, Dest);
-      if (ValC == HiC) break;  // Emitted the last one.
-      ValC = cast<ConstantInt>(ConstantExpr::getAdd(ValC, OneC));
+    // Otherwise, we have a range, like 'case 1 ... 17'.
+    Val = Emit(high, 0);
+    // Make sure the case value is the same type as the switch expression
+    Val = CastToAnyType(Val, !TYPE_UNSIGNED(TREE_TYPE(high)),
+                        SwitchExp->getType(), ExpIsSigned);
+    ConstantInt *HighC = cast<ConstantInt>(Val);
+
+    APInt Range = HighC->getValue() - LowC->getValue();
+    if (Range.ult(APInt(Range.getBitWidth(), 64))) {
+      // Add all of the necessary successors to the switch.
+      APInt CurrentValue = LowC->getValue();
+      while (1) {
+        SI->addCase(LowC, Dest);
+        if (LowC == HighC) break;  // Emitted the last one.
+        CurrentValue++;
+        LowC = ConstantInt::get(CurrentValue);
+      }
+    } else {
+      // The range is too big to add to the switch - emit an "if".
+      Value *Diff = BinaryOperator::create(Instruction::Sub, SwitchExp, LowC,
+                                           "tmp", CurBB);
+      Value *Cond = new ICmpInst(ICmpInst::ICMP_ULE, Diff,
+                                 ConstantInt::get(Range), "tmp", CurBB);
+      BasicBlock *False_Block = new BasicBlock("case_false");
+      new BranchInst(Dest, False_Block, Cond, CurBB);
+      EmitBlock(False_Block);
     }
   }
+
+  if (DefaultDest)
+    if (SI->getSuccessor(0) == CurBB)
+      SI->setSuccessor(0, DefaultDest);
+    else {
+      new BranchInst(DefaultDest, CurBB);
+      // Emit a "fallthrough" block, which is almost certainly dead.
+      EmitBlock(new BasicBlock(""));
+    }
+
   return 0;
 }
 

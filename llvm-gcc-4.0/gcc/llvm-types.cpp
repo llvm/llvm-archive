@@ -471,8 +471,6 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       debug_tree(type);
       abort();        
     case 32: return SET_TYPE_LLVM(type, Type::FloatTy);
-    case 80:     // Map long doubles to doubles.
-    case 96:     // Map long doubles to doubles.
     case 64: return SET_TYPE_LLVM(type, Type::DoubleTy);
     case 128:
       // 128-bit long doubles map onto { double, double }.

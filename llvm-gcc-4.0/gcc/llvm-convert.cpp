@@ -2928,6 +2928,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       return true; 
     }
     break;
+  case BUILT_IN_POWI:
+  case BUILT_IN_POWIF:
+  case BUILT_IN_POWIL:
+    Result = EmitBuiltinPOWI(exp);
+    return true;
   case BUILT_IN_FFS:  // These GCC builtins always return int.
   case BUILT_IN_FFSL:
   case BUILT_IN_FFSLL: {      // FFS(X) -> (x == 0 ? 0 : CTTZ(x)+1)
@@ -3001,11 +3006,11 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
   const char *Name;
   Function  **FCache;
   switch (InVal->getType()->getTypeID()) {
-    default: assert(0 && "Unknown Integer type!");
-    case Type::UByteTyID:  Name = I8Name;  FCache = &I8Cache ; break;
-    case Type::UShortTyID: Name = I16Name; FCache = &I16Cache; break;
-    case Type::UIntTyID:   Name = I32Name; FCache = &I32Cache; break;
-    case Type::ULongTyID:  Name = I64Name; FCache = &I64Cache; break;
+  default: assert(0 && "Unknown Integer type!");
+  case Type::UByteTyID:  Name = I8Name;  FCache = &I8Cache ; break;
+  case Type::UShortTyID: Name = I16Name; FCache = &I16Cache; break;
+  case Type::UIntTyID:   Name = I32Name; FCache = &I32Cache; break;
+  case Type::ULongTyID:  Name = I64Name; FCache = &I64Cache; break;
   }
   
   if (*FCache == 0)
@@ -3036,6 +3041,31 @@ Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt,
     *FCache = TheModule->getOrInsertFunction(Name, Amt->getType(),
                                              Amt->getType(), NULL);
   return new CallInst(*FCache, Amt, "tmp", CurBB);
+}
+
+Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
+  tree ArgList = TREE_OPERAND (exp, 1);
+  if (!validate_arglist(ArgList, REAL_TYPE, INTEGER_TYPE, VOID_TYPE))
+    return 0;
+
+  Value *Val = Emit(TREE_VALUE(ArgList), 0);
+  Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
+  Pow = CastToType(Pow, Type::IntTy);
+
+  static Function *Fn32 = 0, *Fn64 = 0;
+  const char *Name;
+  Function **FCache;
+  switch (Val->getType()->getTypeID()) {
+  default: assert(0 && "Unknown FP type!");
+  case Type::FloatTyID:  Name = "llvm.powi.f32"; FCache = &Fn32; break;
+  case Type::DoubleTyID: Name = "llvm.powi.f64"; FCache = &Fn64; break;
+  }
+  
+  // First time we used this intrinsic?
+  if (*FCache == 0)
+    *FCache = TheModule->getOrInsertFunction(Name, Val->getType(),
+                                             Val->getType(), Type::IntTy, NULL);
+  return new CallInst(*FCache, Val, Pow, "tmp", CurBB);
 }
 
 

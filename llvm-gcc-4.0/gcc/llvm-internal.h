@@ -418,6 +418,8 @@ private:
   Value *EmitBuiltinUnaryFPOp(Value *InVal,
                             const char *F32Name, Function *&F32Cache,
                             const char *F64Name, Function *&F64Cache);
+  Value *EmitBuiltinPOWI(tree_node *exp);
+
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);
   bool EmitBuiltinAlloca(tree_node *exp, Value *&Result);
   bool EmitBuiltinExpect(tree_node *exp, Value *DestLoc, Value *&Result);

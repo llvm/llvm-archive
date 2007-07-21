@@ -34,8 +34,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
 
@@ -2881,12 +2882,19 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
-  Value *CV = new CallInst(Asm, CallOps, StoreCallResultAddr ? "tmp" : "",
-                           CurBB);
+  CallInst *CV = new CallInst(Asm, CallOps, StoreCallResultAddr ? "tmp" : "",
+                              CurBB);
   
   // If the call produces a value, store it into the destination.
   if (StoreCallResultAddr)
     new StoreInst(CV, StoreCallResultAddr, CurBB);
+  
+  // Give the backend a chance to upgrade the inline asm to LLVM code.  This
+  // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->
+  // llvm.bswap.
+  if (const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo())
+    TAI->ExpandInlineAsm(CV);
+  
   return 0;
 }
 

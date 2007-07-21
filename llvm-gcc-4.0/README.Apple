@@ -1,4 +1,12 @@
 APPLE LOCAL file documentation
+//===----------------------------------------------------------------------===//
+
+NOTE: This file contains a description of the non-llvm GCC that llvm-gcc is 
+based on.  For information on building llvm-gcc for any platform (including
+Apple), please follow the directions in README.LLVM.
+
+//===----------------------------------------------------------------------===//
+
 
 This file describes Apple's version of GCC 4.x modified for Darwin /
 Mac OS X.  Although Apple's stated policy is to contribute all of its

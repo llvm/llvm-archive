@@ -1560,8 +1560,10 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   bool OldConvertingStruct = ConvertingStruct;
   ConvertingStruct = true;
   
-  // Find the type with the largest size, and if we have multiple things with
-  // the same size, the thing with the largest alignment.
+  // Find the type with the largest aligment, and if we have multiple types with
+  // the same alignment, select one with largest size. If type with max. align
+  // is smaller then other types then we will add padding later on anyway to 
+  // match union size.
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
   unsigned MaxSize = 0, MaxAlign = 0;
@@ -1576,9 +1578,10 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     unsigned Size     = TD.getTypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
-    if (UnionTy == 0 || Size>MaxSize || (Size == MaxSize && Align > MaxAlign)) {
+    if (UnionTy == 0 || Align > MaxAlign 
+        || (MaxAlign == Align && Size > MaxSize)) {
       UnionTy = TheTy;
-      MaxSize = Size;
+      MaxSize = MAX(MaxSize, Size);
       MaxAlign = Align;
     }
   }

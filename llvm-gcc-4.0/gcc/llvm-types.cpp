@@ -1384,10 +1384,11 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     if (StartOffsetFromByteBoundry != 0) {
       // New field does not start at byte boundry. 
       PadBits = StartOffsetInBits - (FirstUnallocatedByte*8);
-      PadBytes = PadBits/8 + 1;
-    }
+      PadBytes = PadBits/8;
+      PadBits = PadBits - PadBytes*8;
+    } else
+      PadBytes = StartOffsetInBits/8-FirstUnallocatedByte;
 
-    PadBytes += StartOffsetInBits/8-FirstUnallocatedByte;
     const Type *Pad = Type::Int8Ty;
     if (PadBytes != 1)
       Pad = ArrayType::get(Pad, PadBytes);
@@ -1396,7 +1397,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     // This field will use some of the bits from this PadBytes, if
     // starting offset is not at byte boundry.
     if (StartOffsetFromByteBoundry != 0)
-      FieldSizeInBits = FieldSizeInBits - (8 - PadBits);
+      FieldSizeInBits = PadBits;
   }
 
   // Now, Field starts at FirstUnallocatedByte and everything is aligned.

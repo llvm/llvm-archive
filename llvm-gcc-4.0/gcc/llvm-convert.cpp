@@ -5189,11 +5189,14 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
-  std::vector<Constant*> Elts;
-
-  for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
-    Elts.push_back(Convert(TREE_VALUE(elt)));
-  return ConstantVector::get(Elts);
+  if (TREE_VECTOR_CST_ELTS(exp)) {
+    std::vector<Constant*> Elts;
+    for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
+      Elts.push_back(Convert(TREE_VALUE(elt)));
+    return ConstantVector::get(Elts);
+  } else {
+    return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
+  }
 }
 
 Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {

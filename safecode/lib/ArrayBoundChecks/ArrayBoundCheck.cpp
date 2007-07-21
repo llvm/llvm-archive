@@ -10,6 +10,7 @@
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "ArrayBoundsCheck.h"
+#include "GEPUtils.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -896,41 +897,6 @@ void ArrayBoundsCheck::Omega(Instruction *maI, ABCExprTree *root ) {
   waitpid (perlpid, NULL, 0);
 }
 
-//
-// Description:
-//  Determine whether we need to consider checks on this structure
-//  type.
-//
-// Return value:
-//  true - There is no need to do static or run-time checks on this struct.
-//  false - We need to do either static or run-time checks on this struct.
-//
-// TODO:
-//  The test used in this function is extremely conservative.
-//
-static bool
-isStructTypeSafe (const StructType * ST) {
-  const StructType::element_iterator TI = ST->element_begin();
-
-  //
-  // For now, we consider any of the following types unsafe.
-  //  ArrayType
-  //  PointerType
-  //  VectorType
-  //  StructType
-  //
-  ++TotalStructs;
-  while (TI != ST->element_end()) {
-    Type * T = *TI;
-    if (isa<StructType>(T) || isa<PointerType>(T) || isa<ArrayType>(T))
-      return false;
-  }
-
-  // Keep some statistics on how many we prove safe
-  ++SafeStructs;
-  return true;
-}
-
 bool ArrayBoundsCheck::runOnModule(Module &M) {
   cbudsPass = &getAnalysis<CompleteBUDataStructures>();
   buCG      = &getAnalysis<BottomUpCallGraph>();
@@ -1032,7 +998,8 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
         } else {
           if (NoStaticChecks) {
-            MarkGEPUnsafe (MAI);
+            if (!indexesStructsOnly (MAI))
+              MarkGEPUnsafe (MAI);
             continue;
           }
         }

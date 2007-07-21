@@ -28,7 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_DEBUG_H
 #define LLVM_DEBUG_H
 
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 
 extern "C" {
 #include "config.h"

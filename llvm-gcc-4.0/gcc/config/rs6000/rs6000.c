@@ -136,6 +136,10 @@ typedef struct rs6000_stack {
 
 /* Target cpu type */
 
+/* APPLE LOCAL begin LLVM */
+const char *rs6000_cpu_target = "ppc";
+/* APPLE LOCAL end LLVM */
+
 enum processor_type rs6000_cpu;
 struct rs6000_cpu_select rs6000_select[3] =
 {
@@ -1324,6 +1328,10 @@ rs6000_override_options (const char *default_cpu)
   rs6000_select[0].string = default_cpu;
   rs6000_cpu = TARGET_POWERPC64 ? PROCESSOR_DEFAULT64 : PROCESSOR_DEFAULT;
 
+  /* APPLE LOCAL begin LLVM */
+  rs6000_cpu_target = TARGET_POWERPC64 ? "ppc64" : "ppc";
+  /* APPLE LOCAL end LLVM */
+
   /* APPLE LOCAL begin -fast */
   if (flag_fast || flag_fastf || flag_fastcp)
   {
@@ -1355,6 +1363,10 @@ rs6000_override_options (const char *default_cpu)
 		    /* APPLE LOCAL begin -fast */
 		    mcpu_cpu = processor_target_table[j].processor;
 		    /* APPLE LOCAL end -fast */
+        
+		    /* APPLE LOCAL begin LLVM */
+        rs6000_cpu_target = processor_target_table[j].name;
+		    /* APPLE LOCAL end LLVM */
 		  }
 		break;
 	      }

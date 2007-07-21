@@ -408,6 +408,10 @@ enum processor_type
    PROCESSOR_POWER5
 };
 
+/* APPLE LOCAL begin LLVM */
+extern const char *rs6000_cpu_target;
+/* APPLE LOCAL end LLVM */
+
 extern enum processor_type rs6000_cpu;
 
 /* Recast the processor type to the cpu attribute.  */
@@ -3610,27 +3614,8 @@ enum rs6000_builtins
 /* Turn -march=xx into a CPU type.
  */
 #define LLVM_SET_SUBTARGET_FEATURES(F) \
-  { switch (rs6000_cpu) { \
-    case PROCESSOR_RIOS1: \
-    case PROCESSOR_RIOS2: \
-    case PROCESSOR_MPCCORE: \
-    case PROCESSOR_PPC403: \
-    case PROCESSOR_PPC405: \
-    case PROCESSOR_PPC440: F.setCPU("ppc"); break; \
-    case PROCESSOR_PPC601: F.setCPU("601"); break; \
-    case PROCESSOR_PPC603: F.setCPU("603"); break; \
-    case PROCESSOR_PPC604: F.setCPU("604"); break; \
-    case PROCESSOR_PPC604e: F.setCPU("604e"); break; \
-    case PROCESSOR_PPC620: \
-    case PROCESSOR_PPC630: F.setCPU("620"); break; \
-    case PROCESSOR_PPC750: F.setCPU("750"); break; \
-    case PROCESSOR_PPC7400: F.setCPU("7400"); break; \
-    case PROCESSOR_PPC7450: F.setCPU("7450"); break; \
-    case PROCESSOR_PPC8540: F.setCPU("7450"); break; \
-    case PROCESSOR_RS64A: F.setCPU("ppc64"); break; \
-    case PROCESSOR_POWER4: \
-    case PROCESSOR_POWER5: F.setCPU("970"); break; /* FIXME: NOT RIGHT */ \
-    } \
+  { \
+    F.setCPU(rs6000_cpu_target); \
     F.AddFeature("altivec", TARGET_ALTIVEC); \
     F.AddFeature("gpul", TARGET_MFCRF); \
     F.AddFeature("fsqrt", TARGET_PPC_GPOPT); \

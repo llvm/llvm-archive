@@ -221,7 +221,7 @@ namespace {
           // If this is just a mismatch between integer types, this is due
           // to K&R prototypes, where the forward proto defines the arg as int
           // and the actual impls is a short or char.
-          assert(ArgVal->getType() == Type::Int32Ty && LLVMTy->isIntegral() &&
+          assert(ArgVal->getType() == Type::Int32Ty && LLVMTy->isInteger() &&
                  "Lowerings don't match?");
           ArgVal = new TruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
         }

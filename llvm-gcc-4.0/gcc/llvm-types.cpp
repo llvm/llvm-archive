@@ -385,18 +385,32 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(Actual);
       return GET_TYPE_LLVM(type);
     } else {
+      const Type *Ty;
+
       // If we are converting a struct, and if we haven't converted the pointee
       // type, add this pointer to PointersToReresolve and return an opaque*.
       if (ConvertingStruct) {
-        // If the pointer type is already converted to LLVM, just use it.
-        if (!GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)))) {
+        // If the pointee type has not already been converted to LLVM, create a new
+        // opaque type and remember it in the database.
+        Ty = GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)));
+        if (Ty == 0) {
           PointersToReresolve.push_back(type);
           return TypeDB.setType(type, PointerType::get(OpaqueType::get()));
         }
+
+        // A type has already been computed.  However, this may be some sort of 
+        // recursive struct.  We don't want to call ConvertType on it, because this
+        // will try to resolve it, and not adding the type to the PointerToReresolve
+        // collection is just an optimization.  Instead, we'll use the type returned
+        // by GET_TYPE_LLVM directly, even if this may be resolved further in the
+        // future.
+      } else {
+        // If we're not in a struct, just call ConvertType.  If it has already been
+        // converted, this will return the precomputed value, otherwise this will
+        // compute and return the new type.
+        Ty = ConvertType(TREE_TYPE(type));
       }
     
-      // Normal case, convert the type and remember we did so.
-      const Type *Ty = ConvertType(TREE_TYPE(type));
       if (Ty->getTypeID() == Type::VoidTyID) 
         Ty = Type::SByteTy;  // void* -> sbyte*
       return TypeDB.setType(type, PointerType::get(Ty));
@@ -898,7 +912,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       return Ty;
   }
   
-  if (TYPE_SIZE(type) == 0) {   // Forward declaraion?
+  if (TYPE_SIZE(type) == 0) {   // Forward declaration?
     const Type *Ty = OpaqueType::get();
     TheModule->addTypeName(GetTypeName("struct.", orig_type), Ty);
     return TypeDB.setType(type, Ty);

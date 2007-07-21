@@ -154,10 +154,8 @@ if [ "$ENABLE_LLVM" == true ]; then
 
   # Build the LLVM tree universal.
   LLVMCONFIGFLAGS="--prefix=$DEST_DIR$LLVM_INSTALL_PREFIX \
-                   --enable-targets=x86,powerpc "
-  if [ "$LLVM_ASSERTIONS" == yes ]; then
-      LLVMCONFIGFLAGS="$LLVMCONFIGFLAGS --enable-assertions=$LLVM_ASSERTIONS"
-  fi
+                   --enable-targets=x86,powerpc \
+                   --enable-assertions=$LLVM_ASSERTIONS"
   mkdir -p $DIR/obj-llvm || exit 1
   cd $DIR/obj-llvm || exit 1
   if [ \! -f Makefile.config ]; then

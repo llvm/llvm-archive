@@ -1556,7 +1556,7 @@ void add_framework_path (char *);
   ((DECL_NAME (decl) &&                                             \
    TREE_CODE (DECL_NAME (decl)) == IDENTIFIER_NODE &&               \
    IDENTIFIER_POINTER (DECL_NAME (decl)) &&                         \
-   !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "_OBJC_", 6)) ? \
+   !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "L_OBJC_", 7)) ? \
      darwin_objc_llvm_implicit_target_global_var_section(decl) : 0)
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
 

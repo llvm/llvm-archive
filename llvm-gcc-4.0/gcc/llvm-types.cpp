@@ -532,6 +532,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   
   ABIConverter.HandleReturnType(TREE_TYPE(type));
   
+  // Allow the target to set the CC for things like fastcall etc.
+#ifdef TARGET_ADJUST_LLVM_CC
+  TARGET_ADJUST_LLVM_CC(CallingConv, type);
+#endif
+    
   // Loop over all of the arguments, adding them as we go.
   tree Args = TYPE_ARG_TYPES(type);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){

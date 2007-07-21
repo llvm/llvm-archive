@@ -3373,8 +3373,28 @@ create_field_decl (tree type, const char *name)
 static tree
 start_var_decl (tree type, const char *name)
 {
-  tree var = build_decl (VAR_DECL, get_identifier (name), type);
+  /* APPLE LOCAL begin LLVM */
+  tree var = NULL_TREE;
+#ifdef ENABLE_LLVM
+  /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
+     later while emitting symbols, but fix it here for llvm.  */
+  char *new_name;
+  if (name && strncmp (name, "_OBJC_", 6) == 0) {
+    new_name = alloca (strlen (name) + 2);
+    new_name[0] = 'L';
+    strcpy (new_name + 1, name);
+    var = build_decl (VAR_DECL, get_identifier (new_name), type);
+    set_user_assembler_name (var, IDENTIFIER_POINTER (DECL_NAME (var)));
+    /* Let optimizer know that this var is not removable.  */
+    DECL_PRESERVE_P (var) = 1;
+  } 
+  else
+    /* Fall through. Build using 'name' */
+#endif
+  var = build_decl (VAR_DECL, get_identifier (name), type);
+  /* APPLE LOCAL end LLVM */
   objc_set_global_decl_fields (var);
+
   return var;
 }
 
@@ -5325,7 +5345,6 @@ build_class_reference_decl (void)
 
   sprintf (buf, "_OBJC_CLASS_REFERENCES_%d", class_reference_idx++);
   decl = start_var_decl (objc_class_type, buf);
-
   return decl;
 }
 
@@ -5643,8 +5662,21 @@ build_objc_string_decl (enum string_section section)
   else if (section == prop_names_attr)
     sprintf (buf, "_OBJC_PROP_NAME_ATTR_%d", property_name_attr_idx++);
   /* APPLE LOCAL end C* property metadata (Radar 4498373) */
-
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  {
+  /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
+     later while emitting symbols, but fix it here for llvm.  */
+    char *tbuf = alloca (strlen (buf) + 2);
+    tbuf[0] = 'L';
+    strcpy (tbuf + 1, buf);
+    ident = get_identifier (tbuf);
+  }
+#else
   ident = get_identifier (buf);
+#endif
+  /* APPLE LOCAL end LLVM */
+
 
   decl = build_decl (VAR_DECL, ident, build_array_type (char_type_node, 0));
   DECL_EXTERNAL (decl) = 1;
@@ -5661,6 +5693,11 @@ build_objc_string_decl (enum string_section section)
 #ifndef ENABLE_LLVM
   make_decl_rtl (decl);
 #else
+  /* This decl's name is special, it uses 'L' as a prefix. Ask llvm to not
+     add leading underscore by setting it as a user supplied asm name.  */
+  set_user_assembler_name (decl, IDENTIFIER_POINTER (DECL_NAME (decl)));
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
   make_decl_llvm (decl);
 #endif
   /* APPLE LOCAL end LLVM */
@@ -16236,6 +16273,17 @@ finish_objc (void)
     }
 
   warn_missing_braces = save_warn_missing_braces;
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  {
+    int i;
+    for (i = 0; i < OCTI_MAX; i++)
+      if (objc_global_trees[i] && DECL_P (objc_global_trees[i]))
+        /* Let optimizer know that this decl is not removable.  */
+        DECL_PRESERVE_P (objc_global_trees[i]) = 1;
+  }
+#endif
+  /* APPLE LOCAL end LLVM */
 }
 
 /* Subroutines of finish_objc.  */
@@ -16288,7 +16336,11 @@ handle_class_ref (tree chain)
   TREE_PUBLIC (decl) = 1;
   /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
+  /* This decl's name is special. Ask llvm to not add leading underscore by 
+     setting it as a user supplied asm name.  */
   set_user_assembler_name(decl, string);
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
 #endif ENABLE_LLVM
   /* APPLE LOCAL end LLVM */
 
@@ -16373,6 +16425,8 @@ handle_impent (struct imp_entry *impent)
       /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
       set_user_assembler_name(decl, string);
+      /* Let optimizer know that this decl is not removable.  */
+      DECL_PRESERVE_P (decl) = 1;
 #endif ENABLE_LLVM
       /* APPLE LOCAL end LLVM */
       DECL_INITIAL (decl) = init;

@@ -262,6 +262,9 @@ void TreeToLLVM::StartFunctionBody() {
     FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(TREE_TYPE(FnDecl)),
                                                    DECL_ARGUMENTS(FnDecl),
                                                    CallingConv);
+#ifdef TARGET_ADJUST_LLVM_CC
+    TARGET_ADJUST_LLVM_CC(CallingConv, TREE_TYPE(FnDecl));
+#endif
   } else {
     // Otherwise, just get the type from the function itself.
     FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl), CallingConv);
@@ -327,8 +330,8 @@ void TreeToLLVM::StartFunctionBody() {
   if (DECL_SECTION_NAME(FnDecl))
     Fn->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(FnDecl)));
 
-  // Handle attribute 'used'.
-  if (lookup_attribute("used", DECL_ATTRIBUTES(FnDecl)))
+  // Handle used Functions
+  if (DECL_PRESERVE_P (FnDecl))
     AttributeUsedGlobals.push_back(Fn);
   
   // Create a new basic block for the function.
@@ -1765,6 +1768,15 @@ namespace {
       : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
         CurBB(bb), DestLoc(destloc) {
       CallingConvention = CallingConv::C;
+#ifdef TARGET_ADJUST_LLVM_CC
+      tree ftype;
+      if (tree fdecl = get_callee_fndecl(exp))
+        ftype = TREE_TYPE(fdecl);
+      else
+        ftype = TREE_TYPE(TREE_OPERAND(exp,0));
+      
+      TARGET_ADJUST_LLVM_CC(CallingConvention, ftype);
+#endif
     }
     
     void setLocation(Value *Loc) {

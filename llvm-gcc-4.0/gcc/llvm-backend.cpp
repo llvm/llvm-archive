@@ -525,8 +525,8 @@ void emit_global_to_llvm(tree decl) {
         DECL_ALIGN_UNIT(decl))
       GV->setAlignment(DECL_ALIGN_UNIT(decl));
 
-    // Handle attribute 'used'.
-    if (lookup_attribute("used", DECL_ATTRIBUTES(decl)))
+    // Handle used decls
+    if (DECL_PRESERVE_P (decl))
       AttributeUsedGlobals.push_back(GV);
   }
   

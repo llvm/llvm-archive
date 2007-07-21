@@ -498,16 +498,11 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
         Pred = ConstantInt::get(Type::Int8Ty, 7);
         break;
     }
-    std::vector<Value*> CallOps;
-    if (flip) {
-      CallOps.push_back(new BitCastInst(Ops[1], v4f32, "tmp", CurBB));
-      CallOps.push_back(new BitCastInst(Ops[0], v4f32, "tmp", CurBB));
-    } else {
-      CallOps.push_back(new BitCastInst(Ops[0], v4f32, "tmp", CurBB));
-      CallOps.push_back(new BitCastInst(Ops[1], v4f32, "tmp", CurBB));
-    }
-    CallOps.push_back(Pred);
-    Result = new CallInst(cmpps, CallOps, "tmp", CurBB);
+    Value *Arg0 = new BitCastInst(Ops[0], v4f32, "tmp", CurBB);
+    Value *Arg1 = new BitCastInst(Ops[1], v4f32, "tmp", CurBB);
+    if (flip) std::swap(Arg0, Arg1);
+    Value *CallOps[3] = { Arg0, Arg1, Pred };
+    Result = new CallInst(cmpps, CallOps, 3, "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -556,11 +551,11 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
         Pred = ConstantInt::get(Type::Int8Ty, 7);
         break;
     }
-    std::vector<Value*> CallOps;
-    CallOps.push_back(new BitCastInst(Ops[0], v4f32, "tmp", CurBB));
-    CallOps.push_back(new BitCastInst(Ops[1], v4f32, "tmp", CurBB));
-    CallOps.push_back(Pred);
-    Result = new CallInst(cmpss, CallOps, "tmp", CurBB);
+    Value *Arg0 = new BitCastInst(Ops[0], v4f32, "tmp", CurBB);
+    Value *Arg1 = new BitCastInst(Ops[1], v4f32, "tmp", CurBB);
+    
+    Value *CallOps[3] = { Arg0, Arg1, Pred };
+    Result = new CallInst(cmpss, CallOps, 3, "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -628,16 +623,12 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
         Pred = ConstantInt::get(Type::Int8Ty, 7);
         break;
     }
-    std::vector<Value*> CallOps;
-    if (flip) {
-      CallOps.push_back(new BitCastInst(Ops[1], v2f64, "tmp", CurBB));
-      CallOps.push_back(new BitCastInst(Ops[0], v2f64, "tmp", CurBB));
-    } else {
-      CallOps.push_back(new BitCastInst(Ops[0], v2f64, "tmp", CurBB));
-      CallOps.push_back(new BitCastInst(Ops[1], v2f64, "tmp", CurBB));
-    }
-    CallOps.push_back(Pred);
-    Result = new CallInst(cmpps, CallOps, "tmp", CurBB);
+    Value *Arg0 = new BitCastInst(Ops[0], v2f64, "tmp", CurBB);
+    Value *Arg1 = new BitCastInst(Ops[1], v2f64, "tmp", CurBB);
+    if (flip) std::swap(Arg0, Arg1);
+
+    Value *CallOps[3] = { Arg0, Arg1, Pred };
+    Result = new CallInst(cmpps, CallOps, 3, "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;
@@ -684,11 +675,11 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
         Pred = ConstantInt::get(Type::Int8Ty, 7);
         break;
     }
-    std::vector<Value*> CallOps;
-    CallOps.push_back(new BitCastInst(Ops[0], v2f64, "tmp", CurBB));
-    CallOps.push_back(new BitCastInst(Ops[1], v2f64, "tmp", CurBB));
-    CallOps.push_back(Pred);
-    Result = new CallInst(cmpss, CallOps, "tmp", CurBB);
+
+    Value *Arg0 = new BitCastInst(Ops[0], v2f64, "tmp", CurBB);
+    Value *Arg1 = new BitCastInst(Ops[1], v2f64, "tmp", CurBB);
+    Value *CallOps[3] = { Arg0, Arg1, Pred };
+    Result = new CallInst(cmpss, CallOps, 3, "tmp", CurBB);
     TargetIntrinsicCastResult(Result, ResultType,
                               ResIsSigned, ExpIsSigned, CurBB);
     return true;

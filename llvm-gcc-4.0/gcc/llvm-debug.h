@@ -31,10 +31,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
 extern "C" {
-#include "config.h"
-#include "system.h"
-#include "coretypes.h"
-union tree_node;
+#include "llvm.h"
 }  
 
 #include <string>

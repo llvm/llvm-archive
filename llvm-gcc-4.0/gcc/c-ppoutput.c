@@ -21,6 +21,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+/* APPLE LOCAL LLVM */
+#include "toplev.h"
 #include "cpplib.h"
 #include "../libcpp/internal.h"
 #include "tree.h"
@@ -435,6 +437,10 @@ cb_read_pch (cpp_reader *pfile, const char *name,
 {
   c_common_read_pch (pfile, name, fd, orig_name);
   
-  fprintf (print.outf, "#pragma GCC pch_preprocess \"%s\"\n", name);
+  /* APPLE LOCAL begin LLVM */
+  fprintf (print.outf, "#pragma GCC pch_preprocess ");
+  output_quoted_string (print.outf, name);
+  fprintf (print.outf, "\n");
+  /* APPLE LOCAL end LLVM */
   print.src_line++;
 }

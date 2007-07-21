@@ -995,12 +995,13 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
                                             SBP, IntPtr, Type::Int32Ty,
                                             NULL);
   }
-  std::vector<Value*> Ops;
-  Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
-  Ops.push_back(CastToType(Instruction::BitCast, SrcPtr, SBP));
-  Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
-  new CallInst(MemCpy, Ops, "", CurBB);
+  Value *Ops[4] = {
+    CastToType(Instruction::BitCast, DestPtr, SBP),
+    CastToType(Instruction::BitCast, SrcPtr, SBP),
+    CastToSIntType(Size, IntPtr),
+    ConstantInt::get(Type::Int32Ty, Align)
+  };
+  new CallInst(MemCpy, Ops, 4, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
@@ -1014,12 +1015,13 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
     MemMove = TheModule->getOrInsertFunction(Name, Type::VoidTy, SBP, SBP,
                                              IntPtr, Type::Int32Ty, NULL);
   }
-  std::vector<Value*> Ops;
-  Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
-  Ops.push_back(CastToType(Instruction::BitCast, SrcPtr, SBP));
-  Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
-  new CallInst(MemMove, Ops, "", CurBB);
+  Value *Ops[4] = {
+    CastToType(Instruction::BitCast, DestPtr, SBP),
+    CastToType(Instruction::BitCast, SrcPtr, SBP),
+    CastToSIntType(Size, IntPtr),
+    ConstantInt::get(Type::Int32Ty, Align)
+  };
+  new CallInst(MemMove, Ops, 4, "", CurBB);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
@@ -1034,12 +1036,13 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
                                             Type::Int8Ty, IntPtr,
                                             Type::Int32Ty, NULL);
   }
-  std::vector<Value*> Ops;
-  Ops.push_back(CastToType(Instruction::BitCast, DestPtr, SBP));
-  Ops.push_back(CastToSIntType(SrcVal, Type::Int8Ty));
-  Ops.push_back(CastToSIntType(Size, IntPtr));
-  Ops.push_back(ConstantInt::get(Type::Int32Ty, Align));
-  new CallInst(MemSet, Ops, "", CurBB);
+  Value *Ops[4] = {
+    CastToType(Instruction::BitCast, DestPtr, SBP),
+    CastToSIntType(SrcVal, Type::Int8Ty),
+    CastToSIntType(Size, IntPtr),
+    ConstantInt::get(Type::Int32Ty, Align)
+  };
+  new CallInst(MemSet, Ops, 4, "", CurBB);
 }
 
 
@@ -1921,14 +1924,14 @@ namespace {
   /// stack/regs for a function call.
   struct FunctionCallArgumentConversion : public DefaultABIClient {
     tree CallExpression;
-    std::vector<Value*> &CallOperands;
+    SmallVector<Value*, 16> &CallOperands;
     CallingConv::ID &CallingConvention;
     bool isStructRet;
     BasicBlock *CurBB;
     Value *DestLoc;
     std::vector<Value*> LocStack;
 
-    FunctionCallArgumentConversion(tree exp, std::vector<Value*> &ops,
+    FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
                                    CallingConv::ID &cc,
                                    BasicBlock *bb, Value *destloc)
       : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
@@ -2053,7 +2056,7 @@ FIXME: "Call terminate if needed!";
 #endif
   }
   
-  std::vector<Value*> CallOperands;
+  SmallVector<Value*, 16> CallOperands;
   CallingConv::ID CallingConvention;
   FunctionCallArgumentConversion Client(exp, CallOperands, CallingConvention,
                                         CurBB, DestLoc);
@@ -2105,12 +2108,13 @@ FIXME: "Call terminate if needed!";
   
   Value *Call;
   if (!UnwindBlock) {
-    Call = new CallInst(Callee, CallOperands, "", CurBB);
+    Call = new CallInst(Callee, &CallOperands[0], CallOperands.size(),
+                        "", CurBB);
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
-    Call = new InvokeInst(Callee, NextBlock, UnwindBlock, CallOperands, "",
-                          CurBB);
+    Call = new InvokeInst(Callee, NextBlock, UnwindBlock,
+                          &CallOperands[0], CallOperands.size(), "", CurBB);
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
 
     // Lazily create an unwind block for this scope, which we can emit a fixup
@@ -3200,8 +3204,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
-  CallInst *CV = new CallInst(Asm, CallOps, StoreCallResultAddr ? "tmp" : "",
-                              CurBB);
+  CallInst *CV = new CallInst(Asm, &CallOps[0], CallOps.size(),
+                              StoreCallResultAddr ? "tmp" : "", CurBB);
   
   // If the call produces a value, store it into the destination.
   if (StoreCallResultAddr)
@@ -3731,11 +3735,8 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
                                      Ptr->getType(), Type::Int32Ty, 
                                      Type::Int32Ty, NULL);
 
-  std::vector<Value*> Ops;
-  Ops.push_back(Ptr);
-  Ops.push_back(ReadWrite);
-  Ops.push_back(Locality);
-  new CallInst(llvm_prefetch_fn, Ops, "", CurBB);
+  Value *Ops[3] = { Ptr, ReadWrite, Locality };
+  new CallInst(llvm_prefetch_fn, Ops, 3, "", CurBB);
   return true;
 }
 

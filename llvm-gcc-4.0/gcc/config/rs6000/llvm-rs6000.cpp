@@ -64,7 +64,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL, Constant *&Cache,
     
   Ops.erase(Ops.begin() + OpNum);
   Ops[OpNum] = Ptr;
-  Value *V = new CallInst(Cache, Ops, "", CurBB);
+  Value *V = new CallInst(Cache, &Ops[0], Ops.size(), "", CurBB);
   
   if (V->getType() != Type::VoidTy) {
     V->setName("tmp");

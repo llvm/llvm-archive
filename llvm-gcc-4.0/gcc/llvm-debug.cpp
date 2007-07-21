@@ -372,11 +372,12 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
     StopPointFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_stoppoint);
   
   // Invoke llvm.dbg.stoppoint
-  std::vector<Value*> Args;
-  Args.push_back(ConstantInt::get(Type::Int32Ty, CurLineNo));
-  Args.push_back(ConstantInt::get(Type::Int32Ty, 0));
-  Args.push_back(getCastValueFor(Unit));
-  new CallInst(StopPointFn, Args, "", CurBB);
+  Value *Args[3] = {
+    ConstantInt::get(Type::Int32Ty, CurLineNo),
+    ConstantInt::get(Type::Int32Ty, 0),
+    getCastValueFor(Unit)
+  };
+  new CallInst(StopPointFn, Args, 3, "", CurBB);
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.

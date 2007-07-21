@@ -746,9 +746,12 @@ extern int x86_prefetch_sse;
 	{							\
 	  builtin_define ("__nocona");				\
 	  builtin_define ("__nocona__");			\
-	}							\
-    }								\
-  while (0)
+	}                                                       \
+      /* APPLE LOCAL begin LLVM PR879 workaround */             \
+      builtin_define("__NO_MATH_INLINES");                      \
+      /* APPLE LOCAL end LLVM PR879 workaround */               \
+    }                                                           \
+while (0)
 
 #define TARGET_CPU_DEFAULT_i386 0
 #define TARGET_CPU_DEFAULT_i486 1

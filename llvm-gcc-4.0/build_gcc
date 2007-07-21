@@ -244,7 +244,9 @@ if [ \! -f Makefile ]; then
    `if [ $BUILD = i686 ] ; then echo $I386_CPU ; fi` \
    --host=$BUILD-apple-darwin$DARWIN_VERS --target=$BUILD-apple-darwin$DARWIN_VERS || exit 1
 fi
-make $MAKEFLAGS $BOOTSTRAP CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+# Unset RC_DEBUG_OPTIONS because it causes the bootstrap to fail.
+RC_DEBUG_OPTIONS= \
+  make $MAKEFLAGS $BOOTSTRAP CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS html CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1

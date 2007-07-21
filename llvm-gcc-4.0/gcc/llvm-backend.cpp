@@ -88,6 +88,8 @@ static FunctionPassManager *PerFunctionPasses = 0;
 static PassManager *PerModulePasses = 0;
 static FunctionPassManager *CodeGenPasses = 0;
 
+static void createOptimizationPasses();
+
 void llvm_initialize_backend(void) {
   // Initialize LLVM options.
   std::vector<const char*> Args;
@@ -209,13 +211,21 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   std::string ErrMsg;
   TheModule = ParseBitcodeFile(MB, &ErrMsg);
   delete MB;
-  
+
   if (!TheModule) {
     cerr << "Error reading bytecodes from PCH file\n";
     cerr << ErrMsg << "\n";
     exit(1);
   }
 
+  if (PerFunctionPasses || PerModulePasses || CodeGenPasses) {
+    delete PerFunctionPasses;
+    delete PerModulePasses;
+    delete CodeGenPasses;
+
+    createOptimizationPasses();
+  }
+    
   // Read LLVM Types string table
   readLLVMTypesStringTable();
   readLLVMValues();
@@ -225,7 +235,6 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
 // Initialize PCH writing. 
 void llvm_pch_write_init(void) {
-
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
   AsmOutFile = new OStream(*AsmOutStream);
@@ -246,14 +255,7 @@ void llvm_pch_write_init(void) {
   timevar_pop(TV_LLVM_INIT);
 }
 
-// llvm_asm_file_start - Start the .s file.
-void llvm_asm_file_start(void) {
-  timevar_push(TV_LLVM_INIT);
-  AsmOutStream = new oFILEstream(asm_out_file);
-  AsmOutFile = new OStream(*AsmOutStream);
-  
-  flag_llvm_pch_read = 0;
-
+static void createOptimizationPasses() {
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
   PerFunctionPasses =
@@ -411,6 +413,18 @@ void llvm_asm_file_start(void) {
     delete PerModulePasses;
     PerModulePasses = 0;
   }
+}
+
+
+// llvm_asm_file_start - Start the .s file.
+void llvm_asm_file_start(void) {
+  timevar_push(TV_LLVM_INIT);
+  AsmOutStream = new oFILEstream(asm_out_file);
+  AsmOutFile = new OStream(*AsmOutStream);
+  
+  flag_llvm_pch_read = 0;
+
+  createOptimizationPasses();
   
   timevar_pop(TV_LLVM_INIT);
 }
@@ -480,8 +494,9 @@ void llvm_asm_file_end(void) {
         CodeGenPasses->run(*I);
     CodeGenPasses->doFinalization();
   }
-  
+
   AsmOutStream->flush();
+  fflush(asm_out_file);
   delete AsmOutStream;
   AsmOutStream = 0;
   delete AsmOutFile;

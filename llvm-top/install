@@ -11,7 +11,22 @@
 # checked out, built and installed. Use PREFIX= to specify where the modules
 # should be installed. See the README.txt file.
 
-. ./library.sh
+# Get the shell function library.
+if test ! -z "$LLVM_TOP" ; then
+  if test -f "$LLVM_TOP/library.sh" ; then
+    . "$LLVM_TOP/library.sh"
+  else
+    echo "Your LLVM_TOP variable is not set to an llvm-top directory"
+    exit 1
+  fi
+elif test -f ./library.sh ; then
+  . ./library.sh
+elif test -f ../library.sh ; then
+  . ../library.sh
+else
+  echo Please run $0 from the llvm-top directory or a module directory.
+  exit 1
+fi
 
 # Get the list of modules to install.
 process_arguments "$@"
@@ -25,9 +40,8 @@ for mod in $MODULE_DEPENDENCIES ; do
   get_module_info $mod InstallCmd
   if test ! -z "$MODULE_INFO_VALUE" ; then
     msg 1 Installing module $mod
-    cd $mod
+    cd $LLVM_TOP/$mod
     $MODULE_INFO_VALUE || die $? "Install of module $mod failed."
-    cd $LLVM_TOP
   else
     msg 2 Module $mod has no InstallCmd in the ModuleInfo.txt
   fi

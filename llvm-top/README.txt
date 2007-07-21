@@ -79,9 +79,6 @@ are recognized by the scripts:
      you don't actually want it installed there! So, specify DESTDIR=/tmp and
      it would actually get installed in /tmp/usr/bin.
 
-  MODULE={module_name}
-     This allows you to override the name of the module (not recommended).
-
   LLVM_TOP=/path/to/llvm-top
      This allows you to override the location of the llvm-top directory.
      

@@ -9,28 +9,39 @@
 # This script provides the script fragments and functions that are common to
 # the scripts in the llvm-top module.
 
-# The arguments to all scripts are
+# Figure out where the llvm-top directory is located. This could be executed 
+# in a module or in llvm-top, so we have to figure out where the llvm-top 
+# directory is located by examining contents.
+if test -z "$LLVM_TOP" ; then
+  if test -x ./build -a -x ./get -a -f ./library.sh -a -x ./info ; then
+    LLVM_TOP=`pwd`
+  elif test -x ../build -a -x ../get -a -f ../library.sh -a -x ../info ; then
+    LLVM_TOP=`cd .. ; pwd`
+  else
+    echo "Cannot determine where your llvm-top directory is"
+    exit 1
+  fi
+fi
 
 # Get the options. If there is no options file, default the values.
-options="./.options"
+options="$LLVM_TOP/.options"
 if test -r "$options" -a -f "$options" ; then
   . "$options"
 else
-  LLVM_TOP=`pwd`
-  PREFIX="$LLVM_TOP/installed"
-  DESTDIR=
-  VERBOSE=0
-  TOOL_VERBOSE=0
-  SHAREDLIBS=0
-  ARCHIVELIBS=1
-  OPTIMIZED=0
+  ARCHIVE_LIBS=1
+  ASSERTS=1
   DEBUG=1
-  ASSERT=1
+  DESTDIR=""
   EXPENSIVE=0
+  OPTIMIZED=0
+  OPT_FOR_SIZE=0
+  PREFIX="$LLVM_TOP/installed"
   PROFILING=0
-  USEOBJDIR=0
+  SHARED_LIBS=0
   STRIP=0
-  OPTFORSIZE=0
+  TOOL_VERBOSE=0
+  USE_OBJ_DIR=0
+  VERBOSE=0
 fi
 
 # Define where subversion is. We assume by default its in the path.
@@ -65,7 +76,6 @@ process_arguments() {
       LLVM_TOP=*) LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'` ;;
       PREFIX=*)   PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'` ;;
       DESTDIR=*)  DESTDIR=`echo "$arg" | sed -e 's/DESTDIR=//'` ;;
-      MODULE=*)   MODULE=`echo "$arg" | sed -e 's/MODULE=//'` ;;
       VERBOSE=*)  VERBOSE=`echo "$arg" | sed -e 's/VERBOSE=//'` ;;
       --*)        OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
        -*)        OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
@@ -154,6 +164,11 @@ add_module_if_not_duplicate() {
   MODULE_DEPENDENCIES="$MODULE_DEPENDENCIES $mod_to_add"
 }
 
+# This function gets the dependencies for a single module. It is a recursive
+# function and returns its results by calling add_module_if_not_duplicate to
+# add modules to the MODULE_DEPENDENCIES variables. The function limits 
+# recursion depth to a total of ten which should be sufficient. This prevents
+# fork bombs in case the ModuleInfo.txt files specify cyclic dependencies.
 get_a_modules_dependencies() {
   if test "$RECURSION_DEPTH" -gt 10 ; then
     die 2 "Recursing too deeply on module dependencies"
@@ -179,6 +194,9 @@ get_a_modules_dependencies() {
   add_module_if_not_duplicate "$1"
 }
 
+# This is the public interface for getting module dependencies. It takes a list
+# of module names can calls get_a_modules_dependencies on each. The result is
+# returned in MODULE_DEPENDENCIES variable.
 get_module_dependencies() {
   msg 2 "Getting module dependencies: $*"
   local module=""
@@ -189,6 +207,7 @@ get_module_dependencies() {
   done
 }
 
+# This is used to build a single module.
 build_a_module() {
   local module="$1"
   msg 1 "Building module '$module'"   
@@ -200,8 +219,7 @@ build_a_module() {
   local build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
   msg 1 "Building Module '$module'"
   msg 2 "Build Command: $build_cmd"
-  cd $module
+  cd $LLVM_TOP/$module
   $build_cmd || die $? "Build of module '$module' failed."
-  cd $LLVM_TOP
 }
 

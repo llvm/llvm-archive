@@ -9,8 +9,22 @@
 # This script allows you to easily update a set of checked out modules. Just
 # specify the modules to be updated (or checked out) on the command line. 
 
-# Get the library.
-. ./library.sh
+# Get the shell function library.
+if test ! -z "$LLVM_TOP" ; then
+  if test -f "$LLVM_TOP/library.sh" ; then
+    . "$LLVM_TOP/library.sh"
+  else
+    echo "Your LLVM_TOP variable is not set to an llvm-top directory"
+    exit 1
+  fi
+elif test -f ./library.sh ; then
+  . ./library.sh
+elif test -f ../library.sh ; then
+  . ../library.sh
+else
+  echo Please run $0 from the llvm-top directory or a module directory.
+  exit 1
+fi
 
 # Get the list of modules
 process_arguments "$@"

@@ -1034,6 +1034,7 @@ ifneq ($(LLVMOBJDIR),)
 LLVMTARGETCOMPONENT := \
   case $(target) in \
     alpha*-*-*) echo alpha;; \
+    arm*-*-*) echo arm;; \
     ia64-*-*) echo ia64;; \
     i[34567]86-*-*) echo x86;; \
     powerpc*-*-*) echo powerpc;; \

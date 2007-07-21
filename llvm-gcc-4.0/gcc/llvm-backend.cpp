@@ -234,7 +234,6 @@ void llvm_asm_file_start(void) {
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs
     PM->add(createScalarReplAggregatesPass()); // Break up aggregate allocas
     PM->add(createInstructionCombiningPass()); // Combine silly seq's
-    PM->add(createPredicateSimplifierPass());  // Canonicalize registers
     PM->add(createCondPropagationPass());      // Propagate conditionals
     PM->add(createTailCallEliminationPass());  // Eliminate tail calls
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs

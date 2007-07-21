@@ -1800,15 +1800,15 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
       LV.BitStart = ValSizeInBits-LV.BitStart-LV.BitSize;
     
     if (LV.BitStart+LV.BitSize != ValSizeInBits) {
-      Value *ShAmt = ConstantInt::get(Type::Int8Ty,
+      Value *ShAmt = ConstantInt::get(Val->getType(),
                                        ValSizeInBits-(LV.BitStart+LV.BitSize));
-      Val = new ShiftInst(Instruction::Shl, Val, ShAmt, "tmp", CurBB);
+      Val = BinaryOperator::create(Instruction::Shl, Val, ShAmt, "tmp", CurBB);
     }
     
     // Shift right required?
     if (ValSizeInBits-LV.BitSize) {
-      Value *ShAmt = ConstantInt::get(Type::Int8Ty, ValSizeInBits-LV.BitSize);
-      Val = new ShiftInst( TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
+      Value *ShAmt = ConstantInt::get(Val->getType(), ValSizeInBits-LV.BitSize);
+      Val = BinaryOperator::create( TYPE_UNSIGNED(TREE_TYPE(exp)) ? 
         Instruction::LShr : Instruction::AShr, Val, ShAmt, "tmp", CurBB);
     }
 
@@ -2207,8 +2207,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   Value *RetVal = RHS;
   RHS = CastToAnyType(RHS, Op1Signed, OldVal->getType(), Op0Signed);
   if (LV.BitStart)
-    RHS = new ShiftInst(Instruction::Shl, RHS,
-                        ConstantInt::get(Type::Int8Ty, LV.BitStart),
+    RHS = BinaryOperator::create(Instruction::Shl, RHS,
+                        ConstantInt::get(RHS->getType(), LV.BitStart),
                         "tmp", CurBB);
   // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
   // be set in the result.
@@ -2532,23 +2532,30 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, Value *DestLoc, unsigned Opc) {
   
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-  RHS = CastToUIntType(RHS, Type::Int8Ty);
+  if (RHS->getType() != LHS->getType())
+    RHS = CastInst::createIntegerCast(RHS, LHS->getType(), false,
+                                      RHS->getName()+".cast", CurBB);
   
-  return new ShiftInst((Instruction::OtherOps)Opc, LHS, RHS, "tmp", CurBB);
+  return BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS, "tmp", 
+                                 CurBB);
 }
 
 Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *In  = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *Amt = CastToUIntType(Emit(TREE_OPERAND(exp, 1), 0), Type::Int8Ty);
-  
+  Value* Amt = Emit(TREE_OPERAND(exp, 1), 0);
+  if (Amt->getType() != In->getType())
+    Amt = CastInst::createIntegerCast(Amt, In->getType(), false,
+                                      Amt->getName()+".cast", CurBB);
+
   Value *TypeSize =
-    ConstantInt::get(Type::Int8Ty, In->getType()->getPrimitiveSizeInBits());
+    ConstantInt::get(In->getType(), In->getType()->getPrimitiveSizeInBits());
   
   // Do the two shifts.
-  Value *V1 = new ShiftInst((Instruction::OtherOps)Opc1, In, Amt, "tmp", CurBB);
+  Value *V1 = BinaryOperator::create((Instruction::BinaryOps)Opc1, In, Amt, 
+                                     "tmp", CurBB);
   Value *OtherShift = BinaryOperator::createSub(TypeSize, Amt, "tmp", CurBB);
-  Value *V2 = new ShiftInst((Instruction::OtherOps)Opc2, In, OtherShift, "tmp",
-                            CurBB);
+  Value *V2 = BinaryOperator::create((Instruction::BinaryOps)Opc2, In, 
+                                     OtherShift, "tmp", CurBB);
   
   // Or the two together to return them.
   Value *Merge = BinaryOperator::createOr(V1, V2, "tmp", CurBB);

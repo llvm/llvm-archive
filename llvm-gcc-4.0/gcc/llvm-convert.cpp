@@ -4558,7 +4558,8 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   }
 
   // Otherwise, this is an index off a pointer, codegen as a 2-idx GEP.
-  assert(TREE_CODE(TREE_TYPE(Array)) == POINTER_TYPE);
+  assert(TREE_CODE(TREE_TYPE(Array)) == POINTER_TYPE ||
+         TREE_CODE(TREE_TYPE(Array)) == REFERENCE_TYPE);
   tree IndexedType = TREE_TYPE(TREE_TYPE(Array));
   
   // If we are indexing over a fixed-size type, just use a GEP.

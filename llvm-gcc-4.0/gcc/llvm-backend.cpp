@@ -42,6 +42,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cassert>
+#undef VISIBILITY_HIDDEN
 extern "C" {
 #include "config.h"
 #include "system.h"

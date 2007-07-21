@@ -122,11 +122,11 @@ rm -rf $SRC_DIR/tcl $SRC_DIR/expect $SRC_DIR/dejagnu || exit 1
 
 # APPLE LOCAL begin LLVM Must build libstdc++ to install in /usr/local.
 LIBSTDCXX_CONFIG_OPTION=
-if [ "$ENABLE_LLVM" == false ]; then
-  # Also remove libstdc++ since it is built from a separate project.
-  rm -rf $SRC_DIR/libstdc++-v3 || exit 1
-  LIBSTDCXX_CONFIG_OPTION="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
+# Also remove libstdc++ since it is built from a separate project.
+rm -rf $SRC_DIR/libstdc++-v3 || exit 1
+LIBSTDCXX_CONFIG_OPTION="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
 
+if [ "$ENABLE_LLVM" == false ]; then
   # Clean out old specs files
   rm -f /usr/lib/gcc/*/4.0.0/specs
 fi
@@ -141,7 +141,7 @@ CONFIGFLAGS="--disable-checking -enable-werror \
   --enable-languages=c,objc,c++,obj-c++ \
   --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
   $LIBSTDCXX_CONFIG_OPTION \
-  --with-slibdir=$DEST_ROOT/lib \
+  --with-slibdir=/usr/lib \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
 # APPLE LOCAL end LLVM
 

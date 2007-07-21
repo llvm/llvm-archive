@@ -1,0 +1,27 @@
+#!/bin/sh
+#                               update script
+# 
+# This file was developed by Reid Spencer and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
+# 
+#===------------------------------------------------------------------------===#
+
+# This script allows easier checkout of LLVM modules. Just specify the names
+# of the modules on the command line.
+. ./library.sh
+
+# Get the list of modules
+process_arguments "$@"
+
+# Getting the module dependencies also causes them to be checked out.
+get_module_dependencies $MODULES
+
+for mod in $MODULE_DEPENDENCIES ; do
+  msg 1 Updating module "$mod"
+  cd $mod
+  svn update
+  cd $LLVM_TOP
+done
+
+# Report what happened.
+msg 1 Modules updated:"$MODULE_DEPENDENCIES".

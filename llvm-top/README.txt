@@ -22,9 +22,10 @@ dependencies) with the "get" script located here. For example:
 which will check out both llvm and llvm-gcc-4-0 because the latter depends on
 the former.
 
-In addition to checking out software, there are scripts to build, install, and
-clean the modules. They have the obvious names. These scripts do not dictate
-how to build, install or clean the modules; that is up to the module. The 
+In addition to checking out software, there are scripts to build, install, 
+clean and update the modules. They have the obvious names. These scripts do 
+not dictate how to build, install or clean the modules; that is up to the 
+modules themselves. The update and get scripts just work with subversion. The 
 only thing these scripts depend on is a file named ModuleInfo.txt located in
 each module's top directory. This module can have the following definitions:
 

@@ -250,15 +250,19 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     switch (FnCode) {
       case IX86_BUILTIN_ANDPS:
+      case IX86_BUILTIN_ANDPD:
         Result = Builder.CreateAnd(Ops[0], Ops[1], "tmp");
         break;
       case IX86_BUILTIN_ORPS:
+      case IX86_BUILTIN_ORPD:
         Result = Builder.CreateOr (Ops[0], Ops[1], "tmp");
          break;
       case IX86_BUILTIN_XORPS:
+      case IX86_BUILTIN_XORPD:
         Result = Builder.CreateXor(Ops[0], Ops[1], "tmp");
         break;
       case IX86_BUILTIN_ANDNPS:
+      case IX86_BUILTIN_ANDNPD:
         Ops[0] = Builder.CreateNot(Ops[0], "tmp");
         Result = Builder.CreateAnd(Ops[0], Ops[1], "tmp");
         break;

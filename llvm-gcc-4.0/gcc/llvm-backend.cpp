@@ -78,6 +78,11 @@ TargetMachine *TheTarget = 0;
 TypeConverter *TheTypeConverter = 0;
 llvm::OStream *AsmOutFile = 0;
 
+/// DisableLLVMOptimizations - Allow the user to specify:
+/// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
+/// optimizations off.
+static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
+
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<Constant*> AttributeUsedGlobals;
 std::vector<Constant*> AttributeNoinlineFunctions;
@@ -271,7 +276,7 @@ static void createOptimizationPasses() {
   HasPerFunctionPasses = true;
 #endif
 
-  if (optimize > 0) {
+  if (optimize > 0 && !DisableLLVMOptimizations) {
     HasPerFunctionPasses = true;
     PerFunctionPasses->add(createCFGSimplificationPass());
     if (optimize == 1)
@@ -287,7 +292,7 @@ static void createOptimizationPasses() {
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
   bool HasPerModulePasses = false;
 
-  if (optimize > 0) {
+  if (optimize > 0 && !DisableLLVMOptimizations) {
     HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
     if (flag_unit_at_a_time)

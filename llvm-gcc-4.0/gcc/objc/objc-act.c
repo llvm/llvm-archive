@@ -1855,8 +1855,10 @@ objc_build_compound_setter_call (tree receiver, tree prop_ident, tree rhs)
       /* To allow for correct property assignment semantics 
          and in accordance with C99 rules we generate: type temp; 
          (temp = rhs, [lhs Setter:temp], temp) */
-      temp = objc_create_named_tmp_var (
-      objc_decay_parm_type (TREE_TYPE (rhs)), "prop");
+      /* APPLE LOCAL begin radar 5279122 */
+      rhs = default_conversion(rhs);
+      temp = objc_create_named_tmp_var (TREE_TYPE (rhs), "prop");
+      /* APPLE LOCAL end radar 5279122 */
       bind = build (BIND_EXPR, void_type_node, temp, NULL, NULL);
       TREE_SIDE_EFFECTS (bind) = 1;
       add_stmt (bind);
@@ -1867,6 +1869,8 @@ objc_build_compound_setter_call (tree receiver, tree prop_ident, tree rhs)
   else
     {
       comma_exp = objc_setter_func_call (receiver, prop_ident, rhs);
+      /* APPLE LOCAL radar 5279122 */
+      rhs = default_conversion(rhs);
       /* APPLE LOCAL 5140757 */
       temp = save_expr (rhs);
       if (TREE_CODE (temp) == VAR_DECL || TREE_CODE (temp) == PARM_DECL)

@@ -557,11 +557,11 @@ followed by a newline.
 
 void
 psignal (signo, message)
-# APPLE LOCAL begin LLVM
-# This is needed for FC5 builds
+/* APPLE LOCAL begin LLVM */
+/* This is needed for FC5 builds */
   int signo;
   const char *message;
-# APPLE LOCAL end LLVM
+/* APPLE LOCAL end LLVM */
 {
   if (signal_names == NULL)
     {

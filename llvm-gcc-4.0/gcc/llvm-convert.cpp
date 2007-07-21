@@ -4217,8 +4217,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // the offset from BitStart.
     if (MemberIndex) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
-      assert(MemberIndex < SL->MemberOffsets.size() &&"Idx out of range!");
-      BitStart -= SL->MemberOffsets[MemberIndex] * 8;
+      BitStart -= SL->getElementOffset(MemberIndex) * 8;
     }
     
   } else {
@@ -4875,7 +4874,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
   assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
   
   // Get the offset and size of the LLVM field.
-  uint64_t STyFieldBitOffs = STyLayout->MemberOffsets[FieldNo]*8;
+  uint64_t STyFieldBitOffs = STyLayout->getElementOffset(FieldNo)*8;
   
   assert(BitfieldBitOffset >= STyFieldBitOffs &&
          "This bitfield doesn't start in this LLVM field!");
@@ -4884,7 +4883,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
   // Loop over all of the fields this bitfield is part of.  This is usually just
   // one, but can be several in some cases.
   for (; BitfieldSize; ++FieldNo) {
-    assert(STyFieldBitOffs == STyLayout->MemberOffsets[FieldNo]*8 &&
+    assert(STyFieldBitOffs == STyLayout->getElementOffset(FieldNo)*8 &&
            "Bitfield LLVM fields are not exactly consecutive in memory!");
     
     // Compute overlap of this bitfield with this LLVM field, then call a
@@ -5099,7 +5098,7 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
   case INDIRECT_REF:
     // The lvalue is just the address.
     return Convert(TREE_OPERAND(exp, 0));
-  case COMPOUND_LITERAL_EXPR:
+  case COMPOUND_LITERAL_EXPR: // FIXME: not gimple - defined by C front-end
     return EmitLV(COMPOUND_LITERAL_EXPR_DECL(exp));
   }
 }
@@ -5249,8 +5248,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       // the offset from BitStart.
       if (MemberIndex) {
         const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
-        assert(MemberIndex < SL->MemberOffsets.size() &&"Idx out of range!");
-        BitStart -= SL->MemberOffsets[MemberIndex] * 8;
+        BitStart -= SL->getElementOffset(MemberIndex) * 8;
       }
     } else {
       // We were unable to make a nice offset, emit an ugly one.

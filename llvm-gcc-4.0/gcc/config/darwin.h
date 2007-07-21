@@ -156,6 +156,8 @@ extern int machopic_symbol_defined_p (rtx);
   { "-image_base", "-Zimage_base" },  \
   { "-init", "-Zinit" },  \
   { "-install_name", "-Zinstall_name" },  \
+  /* APPLE LOCAL llvm */ \
+  { "-mllvm", "-Zmllvm" },  \
   /* APPLE LOCAL mainline */ \
   { "-mkernel", "-mkernel -static -Wa,-static" }, \
   { "-multiply_defined_unused", "-Zmultiplydefinedunused" },  \
@@ -305,6 +307,8 @@ do {					\
    !strcmp (STR, "Zimage_base") ? 1 :           \
    !strcmp (STR, "Zinit") ? 1 :                 \
    !strcmp (STR, "Zinstall_name") ? 1 :         \
+  /* APPLE LOCAL llvm */ \
+   !strcmp (STR, "Zmllvm") ? 1 :                \
    !strcmp (STR, "Zmultiplydefinedunused") ? 1 : \
    !strcmp (STR, "Zmultiply_defined") ? 1 :     \
    !strcmp (STR, "precomp-trustfile") ? 1 :     \

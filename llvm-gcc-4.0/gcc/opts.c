@@ -576,7 +576,7 @@ void set_flags_from_O (unsigned int cmdline)
 	}
       /* APPLE LOCAL begin LLVM */
       /* Enable loop unrolling at -O2 if -f[no-]unroll-loops is not used.  */
-      if (!flag_unroll_loops_set)
+      if (!flag_unroll_loops_set && !optimize_size)
         flag_unroll_loops = 1;
       /* APPLE LOCAL end LLVM */
     }

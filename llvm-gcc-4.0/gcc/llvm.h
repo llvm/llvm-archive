@@ -89,7 +89,7 @@ void print_llvm_type(FILE *file, void *LLVM);
 void llvm_pch_write_init(void);
 
 /* Read bytecodes from PCH file.  */
-void llvm_pch_read(void);
+void llvm_pch_read(const unsigned char *, unsigned);
 
 /* llvm_asm_file_start - Start the .s file. */
 void llvm_asm_file_start(void);

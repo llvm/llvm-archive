@@ -415,6 +415,13 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
 
   if (!flag_preprocess_only)
     {
+      /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+      unsigned char *buf = xmalloc (h.asm_size);
+      if (fread (buf, h.asm_size, 1, f) != 1)
+        cpp_errno (pfile, CPP_DL_ERROR, "reading");
+      llvm_pch_read(buf, h.asm_size);
+#else
       unsigned long written;
       char * buf = xmalloc (16384);
 
@@ -428,13 +435,9 @@ c_common_read_pch (cpp_reader *pfile, const char *name,
 	    cpp_errno (pfile, CPP_DL_ERROR, "reading");
 	  written += size;
 	}
-      free (buf);
-      /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-      llvm_pch_read();
 #endif
-  /* APPLE LOCAL end LLVM */
-
+      /* APPLE LOCAL end LLVM */
+      free (buf);
     }
   else
     {

@@ -829,7 +829,8 @@ static const char *cc1_options =
  %{fastcp:-O3}"
 /* APPLE LOCAL end -fast */
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
- %1 %{!Q:-quiet} -dumpbase %B %{d*} %{m*} %{a*}\
+"/* APPLE LOCAL llvm */"\
+ %1 %{!Q:-quiet} -dumpbase %B %{d*} %{Zmllvm*: -mllvm %*} %{m*} %{a*}\
  %{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}%{!c:%{!S:-auxbase %b}}\
  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*&ansi&trigraphs}\
  %{v:-version} %{pg:-p} %{p} %{f*} %{undef}\

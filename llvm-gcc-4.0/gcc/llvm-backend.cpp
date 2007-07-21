@@ -140,11 +140,6 @@ void llvm_initialize_backend(void) {
 #endif
   TheModule->setTargetTriple(TargetTriple);
   
-  std::string DataLayout;
-  DataLayout.append(BITS_BIG_ENDIAN ? "E" : "e");
-  DataLayout.append(POINTER_SIZE == 32 ? "-p:32:32" : "-p:64:64");
-  TheModule->setDataLayout(DataLayout);
-  
   TheTypeConverter = new TypeConverter();
   
   // Create the TargetMachine we will be generating code with.
@@ -156,7 +151,7 @@ void llvm_initialize_backend(void) {
     cerr << "Did not get a target machine!\n";
     exit(1);
   }
-  
+
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
   // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
@@ -168,6 +163,11 @@ void llvm_initialize_backend(void) {
 #endif
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
 
+  // Install information about target datalayout stuff into the module for
+  // optimizer use.
+  TheModule->setDataLayout(TheTarget->getTargetData()->
+                           getStringRepresentation());
+  
   if (optimize) {
     RegisterScheduler::setDefault(createDefaultScheduler);
   } else {
@@ -189,16 +189,16 @@ oFILEstream *AsmOutStream = 0;
 
 /// Read bytecode from PCH file. Initialize TheModue and setup
 /// LTypes vector.
-void llvm_pch_read(void) {
+void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
+  std::string ModuleName = TheModule->getModuleIdentifier();
   if (TheModule)
     delete TheModule;
 
-  fclose (asm_out_file);
-  
-  std::string ErrMsg;
   clearTargetBuiltinCache();
-  TheModule = ParseBytecodeFile(asm_file_name,
+
+  std::string ErrMsg;
+  TheModule = ParseBytecodeBuffer(Buffer, Size, ModuleName,
                                 Compressor::decompressToNewBuffer,
                                 &ErrMsg);
   if (!TheModule) {
@@ -206,12 +206,6 @@ void llvm_pch_read(void) {
     cerr << ErrMsg << "\n";
     exit(1);
   }
-
-  // Reopen asm_out_file for the rest of the compiler's use.
-  // This also removes llvm byte code from the asm_out_file.
-  asm_out_file = fopen (asm_file_name, "w+b");
-  if (asm_out_file == 0)
-    fatal_error ("can%'t open %s for writing: %m", asm_file_name);
 
   // Read LLVM Types string table
   readLLVMTypesStringTable();

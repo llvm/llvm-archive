@@ -32,7 +32,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -40,7 +41,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include <cassert>
 extern "C" {
 #include "config.h"
@@ -153,17 +153,11 @@ void llvm_initialize_backend(void) {
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
 
   if (optimize) {
-    TargetLowering &TLI = *TheTarget->getTargetLowering();
-    
-    if (TLI.getSchedulingPreference() == TargetLowering::SchedulingForLatency) {
-      RegisterScheduler::setDefault(createTDListDAGScheduler);
-    } else {
-      RegisterScheduler::setDefault(createBURRListDAGScheduler);
-    }
+    RegisterScheduler::setDefault(createDefaultScheduler);
   } else {
     // FIXME(RC859) - BFS Scheduler is broken. 
     // RegisterScheduler::setDefault(createBFS_DAGScheduler);
-    RegisterScheduler::setDefault(createTDListDAGScheduler);
+    RegisterScheduler::setDefault(createDefaultScheduler);
   }
   
   RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);

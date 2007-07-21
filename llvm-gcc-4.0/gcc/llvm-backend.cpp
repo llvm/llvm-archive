@@ -107,6 +107,9 @@ void llvm_initialize_backend(void) {
     Args.push_back("--disable-fp-elim");
   if (!flag_zero_initialized_in_bss)
     Args.push_back("--nozero-initialized-in-bss");
+  if (flag_debug_asm)
+    Args.push_back("--asm-verbose");
+
 // Disabled until PR1224 is resolved.
   //if (flag_exceptions)
   //  Args.push_back("--enable-eh");

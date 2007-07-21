@@ -584,8 +584,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   FunctionType::ParamAttrsList ParamAttrs;
   if (CallingConv == CallingConv::C || CallingConv == CallingConv::CSRet) {
     tree ResultTy = TREE_TYPE(type);  
-    if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
-        TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < 32)
+    if (TREE_CODE(ResultTy) == BOOLEAN_TYPE) {
+      if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
+        ParamAttrs.push_back(FunctionType::ZExtAttribute);
+    } else if (TREE_CODE(ResultTy) == INTEGER_TYPE && 
+             TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE)
       if (TYPE_UNSIGNED(ResultTy))
         ParamAttrs.push_back(FunctionType::ZExtAttribute);
       else 
@@ -596,7 +599,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     unsigned Idx = 1;
     for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
       tree Ty = TREE_VALUE(Args);
-      if (TREE_CODE(Ty) == INTEGER_TYPE && TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < 32)
+      if (TREE_CODE(Ty) == BOOLEAN_TYPE) {
+        if (TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
+          ParamAttrs.push_back(FunctionType::ZExtAttribute);
+      } else if (TREE_CODE(Ty) == INTEGER_TYPE && 
+                 TREE_INT_CST_LOW(TYPE_SIZE(Ty)) < INT_TYPE_SIZE)
         if (TYPE_UNSIGNED(Ty))
           ParamAttrs.push_back(FunctionType::ZExtAttribute);
         else 

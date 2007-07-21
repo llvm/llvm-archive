@@ -38,7 +38,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/SmallVector.h"
 #include <iostream>
 
 extern "C" {
@@ -212,12 +211,15 @@ namespace {
       if (ArgVal->getType() != LLVMTy) {
         // If this is just a mismatch between integer types, this could be due
         // to K&R prototypes, where the forward proto defines the arg as int and
-        // the actual impls is a short or char.
-        assert(ArgVal->getType()->isIntegral() && LLVMTy->isIntegral() &&
+        // the actual impls is a short or char.  Likewise for double -> float.
+        assert(ArgVal->getType()->isIntegral() == LLVMTy->isIntegral() &&
+               (ArgVal->getType() == Type::Int32Ty ||
+                ArgVal->getType() == Type::DoubleTy) &&
                "Lowerings don't match?");
-        bool isSigned = type == 0 ? true : !TYPE_UNSIGNED(type);
-        ArgVal = CastInst::createIntegerCast(ArgVal, LLVMTy, isSigned,
-                                             NameStack.back(), CurBB);
+        if (ArgVal->getType() == Type::Int32Ty)
+          ArgVal = new TruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
+        else
+          ArgVal = new FPTruncInst(ArgVal, LLVMTy, NameStack.back(), CurBB);
       }
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
@@ -571,7 +573,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case UNGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGT); break;
   case UNGE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGE); break;
   case UNEQ_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UEQ); break;
-  case LTGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UNE); break;
+  case LTGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ONE); break;
   case PLUS_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
   case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
   case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;

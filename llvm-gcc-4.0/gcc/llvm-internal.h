@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <cassert>
 #include <map>
 #include <string>
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 
@@ -469,6 +470,17 @@ private:
   Value *EmitINTEGER_CST(tree_node *exp);
   Value *EmitREAL_CST(tree_node *exp);
   Value *EmitCONSTRUCTOR(tree_node *exp, Value *DestLoc);
+
+  // Optional target defined builtin intrinsic expanding function.
+  bool TargetIntrinsicLower(unsigned FnCode,
+                            Value *DestLoc,
+                            Value *&Result,
+                            const Type *ResultType,
+                            std::vector<Value*> &Ops,
+                            SmallVector<tree_node *, 8> &Args,
+                            BasicBlock *CurBB,
+                            bool ResIsSigned,
+                            bool ExpIsSigned);
 };
 
 /// TreeConstantToLLVM - An instance of this class is created and used to 

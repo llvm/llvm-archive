@@ -455,7 +455,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
                                      v4f32, v4f32, v4f32, Type::Int8Ty, NULL);
     }
     bool flip = false;
-    Value *Pred;
+    Value *Pred = 0;
     switch (FnCode) {
       case IX86_BUILTIN_CMPEQPS:
         Pred = ConstantInt::get(Type::Int8Ty, 0);
@@ -524,7 +524,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
       cmpss = M->getOrInsertFunction("llvm.x86.sse.cmp.ss",
                                      v4f32, v4f32, v4f32, Type::Int8Ty, NULL);
     }
-    Value *Pred;
+    Value *Pred = 0;
     switch (FnCode) {
       case IX86_BUILTIN_CMPEQSS:
         Pred = ConstantInt::get(Type::Int8Ty, 0);
@@ -580,7 +580,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
                                      v2f64, v2f64, v2f64, Type::Int8Ty, NULL);
     }
     bool flip = false;
-    Value *Pred;
+    Value *Pred = 0;
     switch (FnCode) {
       case IX86_BUILTIN_CMPEQPD:
         Pred = ConstantInt::get(Type::Int8Ty, 0);
@@ -648,7 +648,7 @@ bool TreeToLLVM::TargetIntrinsicLower(unsigned FnCode,
       cmpss = M->getOrInsertFunction("llvm.x86.sse2.cmp.sd",
                                      v2f64, v2f64, v2f64, Type::Int8Ty, NULL);
     }
-    Value *Pred;
+    Value *Pred = 0;
     switch (FnCode) {
       case IX86_BUILTIN_CMPEQSD:
         Pred = ConstantInt::get(Type::Int8Ty, 0);

@@ -702,7 +702,7 @@ struct StructTypeConversionInfo {
   /// getTypeAlignment - Return the alignment of the specified type in bytes.
   ///
   unsigned getTypeAlignment(const Type *Ty) const {
-    return TD.getTypeAlignmentABI(Ty);
+    return TD.getABITypeAlignment(Ty);
   }
   
   /// getTypeSize - Return the size of the specified type in bytes.
@@ -1178,7 +1178,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     unsigned Size     = TD.getTypeSize(TheTy);
-    unsigned Align = TD.getTypeAlignmentABI(TheTy);
+    unsigned Align = TD.getABITypeAlignment(TheTy);
     if (UnionTy == 0 || Size>MaxSize || (Size == MaxSize && Align > MaxAlign)) {
       UnionTy = TheTy;
       MaxSize = Size;

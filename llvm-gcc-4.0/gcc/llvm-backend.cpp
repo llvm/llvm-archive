@@ -600,7 +600,7 @@ void emit_global_to_llvm(tree decl) {
     
     // Set the alignment for the global.
     if (DECL_ALIGN_UNIT(decl) && 
-        getTargetData().getTypeAlignmentABI(GV->getType()->getElementType()) !=
+        getTargetData().getABITypeAlignment(GV->getType()->getElementType()) !=
         DECL_ALIGN_UNIT(decl))
       GV->setAlignment(DECL_ALIGN_UNIT(decl));
 

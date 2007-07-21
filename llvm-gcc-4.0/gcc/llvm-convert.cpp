@@ -4280,7 +4280,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
         // In this case, we know that the alignment of the field is less than
         // the size of the field.  To get the pointer close enough, add some
         // number of alignment units to the pointer.
-        unsigned ByteAlignment = TD.getTypeAlignmentABI(FieldTy);
+        unsigned ByteAlignment = TD.getABITypeAlignment(FieldTy);
         assert(ByteAlignment*8 <= LLVMValueBitSize && "Unknown overlap case!");
         unsigned NumAlignmentUnits = BitStart/(ByteAlignment*8);
         assert(NumAlignmentUnits && "Not adjusting pointer?");
@@ -4971,8 +4971,8 @@ static Constant *ConvertStructFieldInitializerToType(Constant *Val,
   }
   
   // Otherwise, we can get away with this initialization.
-  assert(TD.getTypeAlignmentABI(FieldTy) >= 
-         TD.getTypeAlignmentABI(Val->getType()) &&
+  assert(TD.getABITypeAlignment(FieldTy) >= 
+         TD.getABITypeAlignment(Val->getType()) &&
          "Field initialize is over aligned for LLVM type!");
   return Val;
 }

@@ -1030,7 +1030,9 @@ OBJS-common = \
 OBJS-md = $(out_object_file)
 # APPLE LOCAL begin LLVM
 ifneq ($(out_cxx_file),)
+ifneq ($(LLVMOBJDIR),)
 OBJC-md += $(out_cxx_object_file)
+endif
 endif
 # APPLE LOCAL end LLVM
 OBJS-archive = $(EXTRA_OBJS) $(host_hook_obj) tree-inline.o		   \
@@ -1125,7 +1127,9 @@ endif
 OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
 # APPLE LOCAL begin LLVM
 ifneq ($(out_cxx_file),)
+ifneq ($(LLVMOBJDIR),)
 OBJS += $(out_cxx_object_file)
+endif
 endif
 # APPLE LOCAL end LLVM
 OBJS-onestep = libbackend.o $(OBJS-archive)
@@ -2488,9 +2492,9 @@ $(out_object_file): $(out_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) $(GGC_
 		$(out_file) $(OUTPUT_OPTION)
 # APPLE LOCAL begin LLVM
 ifneq ($(out_cxx_file),)
-$(out_cxx_object_file): $(srcdir)/config/$(out_cxx_file) $(CONFIG_H) coretypes.h $(TM_H) $(TREE_H) $(GGC_H) \
+$(out_cxx_object_file): $(srcdir)/config/$(out_cxx_file) $(ALL_HEADERS) $(TREE_H) $(GGC_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h real.h insn-config.h conditions.h \
-   output.h $(INSN_ATTR_H) $(SYSTEM_H) toplev.h $(TARGET_H) libfuncs.h \
+   output.h $(INSN_ATTR_H) toplev.h $(TARGET_H) libfuncs.h \
    $(TARGET_DEF_H) function.h $(SCHED_INT_H) $(TM_P_H) $(EXPR_H) $(OPTABS_H) \
    langhooks.h
 	$(CXX) -c $(ALL_CXXFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \

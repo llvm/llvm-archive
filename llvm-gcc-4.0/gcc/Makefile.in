@@ -1074,8 +1074,8 @@ LLVMTARGETOBJ := $(sort $(LLVMTARGETOBJ) x86 powerpc)
 endif
 
 # We use llvm-config to determine the libraries that we need to link in our
-# target, optimizations analyses and the bcwriter.
-LLVMCOMPONENTS := $(LLVMTARGETOBJ) scalaropts transformutils analysis bcwriter ipo bcreader
+# target, optimizations analyses and the bitwriter.
+LLVMCOMPONENTS := $(LLVMTARGETOBJ) scalaropts transformutils analysis bitwriter ipo bitreader
 LLVMLIBFILES := $(shell $(LLVMBINPATH)/llvm-config --libfiles $(LLVMCOMPONENTS))
 LLVMLDFLAGS := $(shell $(LLVMBINPATH)/llvm-config --ldflags)
 LIBS += $(LLVMLDFLAGS)

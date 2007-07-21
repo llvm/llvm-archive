@@ -29,12 +29,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ValueSymbolTable.h"
+#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
-#include "llvm/Bytecode/Reader.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -44,12 +44,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -190,7 +190,7 @@ void llvm_lang_dependent_init(const char *Name) {
 
 oFILEstream *AsmOutStream = 0;
 
-/// Read bytecode from PCH file. Initialize TheModue and setup
+/// Read bytecode from PCH file. Initialize TheModule and setup
 /// LTypes vector.
 void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
@@ -200,10 +200,13 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
   clearTargetBuiltinCache();
 
+  MemoryBuffer *MB = MemoryBuffer::getNewMemBuffer(Size, ModuleName.c_str());
+  memcpy((char*)MB->getBufferStart(), Buffer, Size);
+
   std::string ErrMsg;
-  TheModule = ParseBytecodeBuffer(Buffer, Size, ModuleName,
-                                Compressor::decompressToNewBuffer,
-                                &ErrMsg);
+  TheModule = ParseBitcodeFile(MB, &ErrMsg);
+  delete MB;
+  
   if (!TheModule) {
     cerr << "Error reading bytecodes from PCH file\n";
     cerr << ErrMsg << "\n";
@@ -229,7 +232,7 @@ void llvm_pch_write_init(void) {
 
   // Emit an LLVM .bc file to the output.  This is used when passed
   // -emit-llvm -c to the GCC driver.
-  PerModulePasses->add(new WriteBytecodePass(AsmOutFile));
+  PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
   
   // Disable emission of .ident into the output file... which is completely
   // wrong for llvm/.bc emission cases.
@@ -344,7 +347,7 @@ void llvm_asm_file_start(void) {
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
-    PerModulePasses->add(new WriteBytecodePass(AsmOutFile));
+    PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
 
     // Disable emission of .ident into the output file... which is completely
     // wrong for llvm/.bc emission cases.

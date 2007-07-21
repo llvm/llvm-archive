@@ -91,8 +91,7 @@ static const Type * llvm_set_type(tree Tr, const Type *Ty) {
 // Get LLVM Type for the GCC tree node based on LTypes vector index.
 // When GCC tree node is initialized, it has 0 as the index value. This is
 // why all recorded indexes are offset by 1. 
-extern "C" inline const Type *llvm_get_type(unsigned Index) {
-
+extern "C" const Type *llvm_get_type(unsigned Index) {
   if (Index == 0)
     return NULL;
   assert ((Index - 1) < LTypes.size() && "Invalid LLVM Type index");

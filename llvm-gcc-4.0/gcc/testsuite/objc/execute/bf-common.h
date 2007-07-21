@@ -2,6 +2,8 @@
 #include <objc/encoding.h>
 #endif
 #include "next_mapping.h"
+/* APPLE LOCAL radar 4894756 */
+#if OBJC_API_VERSION < 2
 
 void print_ivars (Class class)
 {
@@ -54,8 +56,12 @@ void compare_structures (Class class, const char* type)
   printf ("%d ivars checked\n", i);
 }
 
+/* APPLE LOCAL radar 4894756 */
+#endif 
 int main ()
 {
+/* APPLE LOCAL radar 4894756 */
+#if OBJC_API_VERSION < 2
   struct class_vars
     {
       @defs (MyObject);
@@ -73,6 +79,7 @@ int main ()
       printf ("sizes don't match (computed %d, exact %d)\n", size1, size2);
       abort ();
     }
-  
+/* APPLE LOCAL radar 4894756 */
+#endif 
   exit (0);
 }

@@ -4,7 +4,8 @@
 /* { dg-options "-fnext-runtime" } */
 /* { dg-do compile } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 typedef Object ObjectTypedef1;
 typedef ObjectTypedef1 ObjectTypedef2;

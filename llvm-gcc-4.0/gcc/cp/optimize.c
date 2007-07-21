@@ -102,7 +102,7 @@ maybe_thunk_body (tree fn)
   int parmno, vtt_parmno;
 
   /* APPLE LOCAL disable de-cloner */
-  if (TRUE || flag_apple_kext || flag_clone_structors)
+  if (TRUE || TARGET_KEXTABI || flag_clone_structors)
     return 0;
 
   /* If we've already seen this structor, avoid re-processing it.  */

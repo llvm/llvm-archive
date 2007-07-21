@@ -10,7 +10,8 @@
  * keyword generates the _F_BYCOPY qualifier for the return type.  */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 #include <objc/Protocol.h>
 
 #ifndef __NEXT_RUNTIME__

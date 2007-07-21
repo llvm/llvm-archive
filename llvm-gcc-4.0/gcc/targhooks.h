@@ -24,6 +24,8 @@ extern enum machine_mode default_cc_modes_compatible (enum machine_mode,
 						      enum machine_mode);
 
 extern bool default_return_in_memory (tree, tree);
+/* APPLE LOCAL radar 4781080 */
+extern bool default_objc_fpreturn_msgcall (tree, bool);
 
 extern rtx default_expand_builtin_saveregs (void);
 extern void default_setup_incoming_varargs (CUMULATIVE_ARGS *, enum machine_mode, tree, int *, int);

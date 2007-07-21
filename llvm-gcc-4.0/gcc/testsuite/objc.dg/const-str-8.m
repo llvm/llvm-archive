@@ -6,7 +6,8 @@
 
 
 #include <stdlib.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface Foo: Object {
   char *cString;
@@ -14,7 +15,13 @@
 }
 @end
 
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+Class _FooClassReference;
+#else
 struct objc_class _FooClassReference;
+#endif
+/* APPLE LOCAL end objc2 */
 
 @implementation Foo : Object
 - (char *)customString {

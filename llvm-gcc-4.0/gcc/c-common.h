@@ -105,9 +105,15 @@ enum rid
   RID_AT_OPTIONAL, RID_AT_REQUIRED,
   /* APPLE LOCAL C* property (Radar 4436866) */
   RID_AT_PROPERTY,
+  /* APPLE LOCAL begin objc new property */
+  RID_AT_SYNTHESIZE,
+  RID_AT_DYNAMIC,
+  /* APPLE LOCAL end objc new property */
   RID_AT_IMPLEMENTATION,
   /* APPLE LOCAL C* property (Radar 4436866, 4591909, 4621020) */
   RID_READONLY, RID_DYNAMIC, RID_GETTER, RID_SETTER, RID_WEAK, RID_IVAR,
+  /* APPLE LOCAL objc new property */
+  RID_READWRITE, RID_ASSIGN, RID_RETAIN, RID_COPY,
 
   RID_MAX,
 
@@ -124,6 +130,17 @@ enum rid
   RID_LAST_PQ = RID_ONEWAY
 };
 
+/* APPLE LOCAL begin objc new property */
+#define OBJC_IS_NEW_PATTR_KEYWORD(rid) \
+  (((unsigned int) (rid) == RID_SETTER    || \
+    (unsigned int) (rid) == RID_GETTER    || \
+    (unsigned int) (rid) == RID_READONLY  || \
+    (unsigned int) (rid) == RID_READWRITE || \
+    (unsigned int) (rid) == RID_ASSIGN    || \
+    (unsigned int) (rid) == RID_RETAIN    || \
+    (unsigned int) (rid) == RID_COPY))
+/* APPLE LOCAL end objc new property */
+
 /* APPLE LOCAL begin C* property (Radar 4436866) */
 #define OBJC_IS_PATTR_KEYWORD(rid) \
   ((unsigned int) (rid) >= (unsigned int) RID_FIRST_PATTR && \
@@ -133,6 +150,13 @@ enum rid
 #define OBJC_IS_AT_KEYWORD(rid) \
   ((unsigned int) (rid) >= (unsigned int) RID_FIRST_AT && \
    (unsigned int) (rid) <= (unsigned int) RID_LAST_AT)
+
+/* APPLE LOCAL begin objc new property */
+#define OBJC_IS_NEW_AT_KEYWORD(rid) \
+  (((OBJC_IS_AT_KEYWORD(rid) || \
+    (unsigned int) (rid) == RID_AT_SYNTHESIZE || \
+    (unsigned int) (rid) == RID_DYNAMIC)))
+/* APPLE LOCAL end objc new property */
 
 #define OBJC_IS_PQ_KEYWORD(rid) \
   ((unsigned int) (rid) >= (unsigned int) RID_FIRST_PQ && \
@@ -623,9 +647,6 @@ extern int flag_permissive;
    assertions and optimize accordingly, but not check them.  */
 
 extern int flag_enforce_eh_specs;
-
-/* APPLE LOCAL KEXT */
-extern int flag_apple_kext;
 
 /* APPLE LOCAL begin structor thunks */
 /* Nonzero if we prefer to clone con/de/structors.
@@ -1120,6 +1141,8 @@ tree objc_build_setter_call (tree, tree);
 /* APPLE LOCAL end C* property (Radar 4436866) */
 /* APPLE LOCAL radar 4712269 */
 tree objc_build_incr_decr_setter_call (enum tree_code, tree, tree);
+/* APPLE LOCAL objc new property */
+void objc_declare_property_impl (int, tree);
 
 /* APPLE LOCAL ObjC new abi */
 extern tree objc_v2_build_ivar_ref (tree datum, tree component);

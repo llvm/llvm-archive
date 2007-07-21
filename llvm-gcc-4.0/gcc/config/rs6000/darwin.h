@@ -97,9 +97,9 @@ do {									\
       }									\
     else if (flag_pic == 1)						\
       {									\
-        /* Darwin doesn't support -fpic.  */				\
-        warning ("-fpic is not supported; -fPIC assumed");		\
+	/* APPLE LOCAL begin mainline */				\
         flag_pic = 2;							\
+	/* APPLE LOCAL end mainline */					\
       }									\
 									\
     /* Handle -mfix-and-continue.  */					\
@@ -122,9 +122,35 @@ do {									\
       target_flags |= MASK_POWERPC64;					\
       warning ("-m64 requires PowerPC64 architecture, enabling");	\
     }									\
+  /* APPLE LOCAL begin mainline */					\
+  if (flag_mkernel)							\
+    {									\
+      rs6000_longcall_switch = "-mlongcall"+10;				\
+      rs6000_default_long_calls = 1;					\
+      target_flags |= MASK_SOFT_FLOAT;					\
+    }									\
+  /* APPLE LOCAL end mainline */					\
+  /* APPLE LOCAL begin mainline default to G4 for 10.5 4479990 */	\
+  /* Unless the user (not the configurer) has explicitly overridden	\
+     it with -mcpu=G3 or -mno-altivec, then 10.5+ targets default to	\
+     G4 unless targetting the kernel.  */				\
+  if (!flag_mkernel							\
+      && !flag_apple_kext						\
+      && darwin_macosx_version_min					\
+      && strverscmp (darwin_macosx_version_min, "10.5") >= 0		\
+      && ! (target_flags_explicit & MASK_ALTIVEC)			\
+      && ! rs6000_select[1].string)					\
+    {									\
+      target_flags |= MASK_ALTIVEC;					\
+      /* APPLE LOCAL begin AltiVec */					\
+      flag_disable_opts_for_faltivec = 0;				\
+      target_flags &= ~MASK_PIM_ALTIVEC;				\
+      /* APPLE LOCAL end AltiVec */					\
+    }									\
+  /* APPLE LOCAL end mainline default to G4 for 10.5 4479990 */		\
 } while(0)
 
-/* APPLE LOCAL begin mainline 2006-02-24 4086777 */
+/* APPLE LOCAL begin mainline */
 #define C_COMMON_OVERRIDE_OPTIONS do {					\
   /* On powerpc, __cxa_get_exception_ptr is available starting in the	\
      10.4.6 libstdc++.dylib.  */					\
@@ -132,10 +158,11 @@ do {									\
        || strverscmp (darwin_macosx_version_min, "10.4.6") < 0)		\
       && flag_use_cxa_get_exception_ptr == 2)				\
     flag_use_cxa_get_exception_ptr = 0;					\
-  /* APPLE LOCAL kexts */						\
+  if (flag_mkernel)							\
+    flag_no_builtin = 1;						\
   SUBTARGET_C_COMMON_OVERRIDE_OPTIONS;					\
 } while (0)
-/* APPLE LOCAL end mainline 2006-02-24 4086777 */
+/* APPLE LOCAL end mainline */
 
 /* Darwin has 128-bit long double support in libc in 10.4 and later.
    Default to 128-bit long doubles even on earlier platforms for ABI
@@ -155,13 +182,17 @@ do {									\
 /* We want -fPIC by default, unless we're using -static to compile for
    the kernel or some such.  */
 
+/* APPLE LOCAL begin mainline */
 #define CC1_SPEC "\
-"/* APPLE LOCAL ignore -msse and -msse2 and other x86 options */"\
-%<msse  %<msse2 %<msse3 %<march=pentium4 %<mcpu=pentium4 \
-%{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
-%{static: %{Zdynamic: %e conflicting code gen style switches are used}}\
-"/* APPLE LOCAL -fast and PIC code.  */"\
-%{!static:%{!fast:%{!fastf:%{!fastcp:%{!mdynamic-no-pic:-fPIC}}}}}"
+  "/* APPLE LOCAL ignore -msse and -msse2 and other x86 options */"\
+  %<msse  %<msse2 %<msse3 %<march=pentium4 %<mcpu=pentium4 \
+  %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
+  %{static: %{Zdynamic: %e conflicting code gen style switches are used}}\
+  "/* APPLE LOCAL -fast and PIC code.  */"\
+  %{!mkernel:%{!static:%{!fast:%{!fastf:%{!fastcp:%{!mdynamic-no-pic:-fPIC}}}}}}"
+/* APPLE LOCAL end mainline */
+/* APPLE LOCAL begin mainline */
+#define DARWIN_ARCH_SPEC "%{m64:ppc64;:ppc}"
 
 #define DARWIN_SUBARCH_SPEC "			\
  %{m64: ppc64}					\
@@ -181,20 +212,21 @@ do {									\
    mcpu=power4:ppc970;				\
    mcpu=G5:ppc970;				\
    :ppc}}"
-
+/* APPLE LOCAL end mainline */
 /* APPLE LOCAL begin mainline 2005-11-15 4271575 */
 /* crt2.o is at least partially required for 10.3.x and earlier.  */
 #define DARWIN_CRT2_SPEC \
   "%{!m64:%:version-compare(!> 10.4 mmacosx-version-min= crt2.o%s)}"
 /* APPLE LOCAL end mainline 2005-11-15 4271575 */
-
+/* APPLE LOCAL begin mainline */
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS			\
-  { "darwin_arch", "%{m64:ppc64;:ppc}" },	\
+  DARWIN_EXTRA_SPECS				\
+  { "darwin_arch", DARWIN_ARCH_SPEC },	\
   /* APPLE LOCAL mainline 2005-11-15 4271575 */	\
   { "darwin_crt2", DARWIN_CRT2_SPEC },		\
   { "darwin_subarch", DARWIN_SUBARCH_SPEC },
-
+/* APPLE LOCAL end mainline */
 /* Output a .machine directive.  */
 #undef TARGET_ASM_FILE_START
 #define TARGET_ASM_FILE_START rs6000_darwin_file_start
@@ -576,6 +608,12 @@ extern const char *darwin_one_byte_bool;
    || (darwin_macosx_version_min				\
        && strverscmp (darwin_macosx_version_min, "10.3") >= 0))
 /* APPLE LOCAL end mainline 2005-09-01 3449986 */
+
+/* APPLE LOCAL begin mainline */
+/* When generating kernel code or kexts, we don't use Altivec by
+   default, as kernel code doesn't save/restore those registers.  */
+#define OS_MISSING_ALTIVEC (flag_mkernel || flag_apple_kext)
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin x86_64 */
 #define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(ASM_OUT_FILE, ENCODING, SIZE, ADDR, DONE)	\

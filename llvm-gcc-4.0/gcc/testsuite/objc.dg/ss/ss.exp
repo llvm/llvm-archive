@@ -67,7 +67,7 @@ foreach test [lsort [glob -nocomplain $srcdir/$subdir/*.m]] {
 
     # We don't try to use the loop-optimizing options, since they are highly
     # unlikely to make any difference to CINFO.
-    foreach flags "[list {-gfull}]" {
+    foreach flags "[list {-gstabs+ -gfull}]" {
         verbose "Testing $nshort, $flags" 1
 
         # Clean up

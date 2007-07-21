@@ -435,7 +435,7 @@ c_lex_with_flags (tree *value, unsigned char *cpp_flags)
       if (tok->type == CPP_CLOSE_BRACE && iasm_state >= iasm_decls)
 	{
 	  iasm_state = iasm_none;
-	  iasm_saved_token = tok;
+	  _cpp_backup_tokens (parse_in, 1);
 	  iasm_at_bol = false;
 	  --c_lex_depth;
 	  timevar_pop (TV_CPP);
@@ -564,6 +564,8 @@ c_lex_with_flags (tree *value, unsigned char *cpp_flags)
 	{
 	  location_t atloc = input_location;
 	  
+	  /* APPLE LOCAL CW asm blocks */
+	  ++parse_in->keep_tokens;
 	retry_at:
 	  tok = cpp_get_token (parse_in);
 	  type = tok->type;
@@ -592,7 +594,7 @@ c_lex_with_flags (tree *value, unsigned char *cpp_flags)
                 {
                   /* This is necessary for C++, as we don't have the tight
                      integration between the lexer and the parser... */
-                  iasm_saved_token = tok;
+		  _cpp_backup_tokens (parse_in, 1);
                   /* Return the @-sign verbatim.  */
                   *value = NULL;
                   tok = lasttok;
@@ -605,21 +607,17 @@ c_lex_with_flags (tree *value, unsigned char *cpp_flags)
 	      error ("%Hstray %<@%> in program", &atloc);
 	      goto retry_after_at;
 	    }
+	  /* APPLE LOCAL CW asm blocks */
+	  --parse_in->keep_tokens;
 	  break;
 	}
 	/* APPLE LOCAL begin CW asm blocks C++ */
 	if (flag_iasm_blocks_local)
 	  {
-	    do 
-	      tok = cpp_get_token (parse_in);
-	    while (tok->type == CPP_PADDING);
 	    /* This is necessary for C++, as we don't have the tight
 	       integration between the lexer and the parser... */
-	       iasm_saved_token = tok;
 	    /* Return the @-sign verbatim.  */
 	    *value = NULL;
-	    tok = lasttok;
-	    type = tok->type;
 	    break;
 	  }
        /* APPLE LOCAL end CW asm blocks C++ */
@@ -698,10 +696,12 @@ c_lex_with_flags (tree *value, unsigned char *cpp_flags)
 	     or '+'. This is to allow "b *+8" which is disallwed by darwin's
 	     assembler but nevertheless is needed to be compatible with CW tools. */
   	  lasttok = tok;
+	  ++parse_in->keep_tokens;
 	  do
               tok = cpp_get_token (parse_in);
           while (tok->type == CPP_PADDING);
-	  iasm_saved_token = tok;
+	  _cpp_backup_tokens (parse_in, 1);
+	  --parse_in->keep_tokens;
 	  if (tok->type == CPP_PLUS || tok->type == CPP_MINUS)
 	      type = CPP_DOT;
 	  tok = lasttok;

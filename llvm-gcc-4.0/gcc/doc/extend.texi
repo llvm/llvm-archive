@@ -6391,7 +6391,8 @@ The following machine modes are available for use with MMX built-in functions
 (@pxref{Vector Extensions}): @code{V2SI} for a vector of two 32-bit integers,
 @code{V4HI} for a vector of four 16-bit integers, and @code{V8QI} for a
 vector of eight 8-bit integers.  Some of the built-in functions operate on
-MMX registers as a whole 64-bit entity, these use @code{DI} as their mode.
+@c APPLE LOCAL begin 4656532 use V1DI for _m64
+MMX registers as a whole 64-bit entity, these use @code{V1DI} as their mode.
 
 If 3Dnow extensions are enabled, @code{V2SF} is used as a mode for a vector
 of two 32-bit floating point values.
@@ -6410,13 +6411,13 @@ v8qi __builtin_ia32_paddb (v8qi, v8qi)
 v4hi __builtin_ia32_paddw (v4hi, v4hi)
 v2si __builtin_ia32_paddd (v2si, v2si)
 @c APPLE LOCAL begin radar 4395773
-di __builtin_ia32_paddq (di, di)
+v1di __builtin_ia32_paddq (v1di, v1di)
 @c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_psubb (v8qi, v8qi)
 v4hi __builtin_ia32_psubw (v4hi, v4hi)
 v2si __builtin_ia32_psubd (v2si, v2si)
 @c APPLE LOCAL begin radar 4395773
-di __builtin_ia32_psubq (di, di)
+v1di __builtin_ia32_psubq (v1di, v1di)
 @c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_paddsb (v8qi, v8qi)
 v4hi __builtin_ia32_paddsw (v4hi, v4hi)
@@ -6428,10 +6429,10 @@ v8qi __builtin_ia32_psubusb (v8qi, v8qi)
 v4hi __builtin_ia32_psubusw (v4hi, v4hi)
 v4hi __builtin_ia32_pmullw (v4hi, v4hi)
 v4hi __builtin_ia32_pmulhw (v4hi, v4hi)
-di __builtin_ia32_pand (di, di)
-di __builtin_ia32_pandn (di,di)
-di __builtin_ia32_por (di, di)
-di __builtin_ia32_pxor (di, di)
+v1di __builtin_ia32_pand (v1di, v1di)
+v1di __builtin_ia32_pandn (v1di,v1di)
+v1di __builtin_ia32_por (v1di, v1di)
+v1di __builtin_ia32_pxor (v1di, v1di)
 v8qi __builtin_ia32_pcmpeqb (v8qi, v8qi)
 v4hi __builtin_ia32_pcmpeqw (v4hi, v4hi)
 v2si __builtin_ia32_pcmpeqd (v2si, v2si)
@@ -6449,14 +6450,24 @@ v4hi __builtin_ia32_packssdw (v2si, v2si)
 v8qi __builtin_ia32_packuswb (v4hi, v4hi)
 @c APPLE LOCAL begin radar 4395773
 void __builtin_ia32_emms (void)
-v4hi __builtin_ia32_psllw (v4hi, di)
-v2si __builtin_ia32_pslld (v2si, di)
-di __builtin_ia32_psllq (di, di)
-v4hi __builtin_ia32_psrlw (v4hi, di)
-v2si __builtin_ia32_psrld (v2si, di)
-di __builtin_ia32_psrlq (di, di)
-v4hi __builtin_ia32_psraw (v4hi, di)
-v2si __builtin_ia32_psrad (v2si, di)
+v4hi __builtin_ia32_psllw (v4hi, v1di)
+v4hi __builtin_ia32_psllwi (v4hi, int)
+v2si __builtin_ia32_pslld (v2si, v1di)
+v2si __builtin_ia32_pslldi (v2si, int)
+v1di __builtin_ia32_psllq (v1di, v1di)
+@c APPLE LOCAL radar 4684674
+v1di __builtin_ia32_psllqi (v1di, int)
+v4hi __builtin_ia32_psrlw (v4hi, v1di)
+v4hi __builtin_ia32_psrlwi (v4hi, int)
+v2si __builtin_ia32_psrld (v2si, v1di)
+v2si __builtin_ia32_psrldi (v2si, int)
+v1di __builtin_ia32_psrlq (v1di, v1di)
+@c APPLE LOCAL radar 4684674
+v1di __builtin_ia32_psrlqi (v1di, int)
+v4hi __builtin_ia32_psraw (v4hi, v1di)
+v4hi __builtin_ia32_psrawi (v4hi, int)
+v2si __builtin_ia32_psrad (v2si, v1di)
+v2si __builtin_ia32_psradi (v2si, int)
 v4hi __builtin_ia32_pshufw (v4hi, int)
 v2si __builtin_ia32_pmaddwd (v4hi, v4hi)
 v2si __builtin_ia32_vec_init_v2si (int, int)
@@ -6473,9 +6484,6 @@ instruction that is part of the name.
 
 @smallexample
 v4hi __builtin_ia32_pmulhuw (v4hi, v4hi)
-@c APPLE LOCAL begin radar 4395773
-di __builtin_ia32_pmulhuq (di, di)
-@c APPLE LOCAL end radar 4395773
 v8qi __builtin_ia32_pavgb (v8qi, v8qi)
 v4hi __builtin_ia32_pavgw (v4hi, v4hi)
 v4hi __builtin_ia32_psadbw (v8qi, v8qi)
@@ -6487,7 +6495,7 @@ int __builtin_ia32_pextrw (v4hi, int)
 v4hi __builtin_ia32_pinsrw (v4hi, int, int)
 int __builtin_ia32_pmovmskb (v8qi)
 void __builtin_ia32_maskmovq (v8qi, v8qi, char *)
-void __builtin_ia32_movntq (di *, di)
+void __builtin_ia32_movntq (v1di *, v1di)
 void __builtin_ia32_sfence (void)
 @c APPLE LOCAL begin radar 4395773
 int __builtin_ia32_vec_ext_v4hi (v4hi, int)
@@ -6803,8 +6811,8 @@ The following built-in functions are available when @option{-msse3} is used.
 Generates the @code{movddup} machine instruction as a load from memory.
 @end table
 
-@c APPLE LOCAL begin mni 4424835
-The following built-in functions are available when @option{-mmni} is used.
+@c APPLE LOCAL begin ssse3 4424835
+The following built-in functions are available when @option{-mssse3} is used.
 All of them generate the machine instruction that is part of the name
 with MMX registers.
 
@@ -6821,13 +6829,14 @@ v8qi __builtin_ia32_pshufb (v8qi, v8qi)
 v8qi __builtin_ia32_psignb (v8qi, v8qi)
 v2si __builtin_ia32_psignd (v2si, v2si)
 v4hi __builtin_ia32_psignw (v4hi, v4hi)
-long long __builtin_ia32_palignr (long long, long long, int)
+v1di __builtin_ia32_palignr (v1di, v1di, int)
 v8qi __builtin_ia32_pabsb (v8qi)
 v2si __builtin_ia32_pabsd (v2si)
 v4hi __builtin_ia32_pabsw (v4hi)
 @end smallexample
+@c APPLE LOCAL end 4656532 use V1DI for _m64
 
-The following built-in functions are available when @option{-mmni} is used.
+The following built-in functions are available when @option{-mssse3} is used.
 All of them generate the machine instruction that is part of the name
 with SSE registers.
 
@@ -6849,7 +6858,7 @@ v16qi __builtin_ia32_pabsb128 (v16qi)
 v4si __builtin_ia32_pabsd128 (v4si)
 v8hi __builtin_ia32_pabsw128 (v8hi)
 @end smallexample
-@c APPLE LOCAL end mni
+@c APPLE LOCAL end ssse3
 The following built-in functions are available when @option{-m3dnow} is used.
 All of them generate the machine instruction that is part of the name.
 
@@ -9246,6 +9255,17 @@ This pragma sets the alignment of fields in structures.  The values of
 @code{power}, to emulate PowerPC alignment.  Uses of this pragma nest
 properly; to restore the previous setting, use @code{reset} for the
 @var{alignment}.
+
+@c APPLE LOCAL begin radar 4827197
+The @code{power} setting, when compiling for the Intel target, does not
+fully emulate the alignments on native PowerPC targets.  When the first
+field within a struct is of type @code{double}, this causes the struct
+to be 8-byte aligned on PowerPC target, but only 4-byte aligned on
+Intel target.  When such a struct is nested within another aggregate,
+differing layouts on the two targets can occur.  In such a case, a dummy
+field @code{char : 0;} can be inserted before the @code{double} to achieve
+the same layout on both targets.
+@c APPLE LOCAL end radar 4827197
 
 @item segment @var{tokens}@dots{}
 @cindex pragma, segment

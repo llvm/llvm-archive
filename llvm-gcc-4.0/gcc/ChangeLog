@@ -1,3 +1,176 @@
+2006-12-22  Mike Stump  <mrs@apple.com>
+
+	* config/rs6000/t-darwin (DARWIN_EXTRA_CRT_BUILD_CFLAGS): Add
+	-mmacosx-version-min=10.4.
+	(crt2.o): Add $(DARWIN_EXTRA_CRT_BUILD_CFLAGS).
+
+2006-12-18  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4869554
+	* doc/invoke.texi (Debugging Options): Document -g0.
+	* config/darwin.h (LINK_COMMAND_SPEC): Replace -gnone with -g0.
+
+2006-12-13  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4697325
+	* doc/invoke.texi (Darwin Options): Update documentation for
+	-mmacosx-version-min.
+	* config.gcc (*-*-darwin*): Set extra_gcc_objs.
+	* config/darwin-driver.c: New file.
+	* config/darwin.h (GCC_DRIVER_HOST_INITIALIZATION): New.
+	* config/t-darwin (darwin-driver.o): New rule.
+
+2006-12-12  Geoffrey Keating  <geoffk@apple.com>
+
+	* mips-tdump.c: Replace CROSS_COMPILE with
+	CROSS_DIRECTORY_STRUCTURE.
+	* mips-tfile.c: Likewise.
+	* gcc.c: Likewise.
+	* configure.ac: Likewise.
+	* cppdefault.c: Likewise.
+	* Makefile.in: Likewise.
+	* config/alpha/osf.h: Likewise.
+	* config/i386/cygwin.h: Likewise.
+	* config/i386/beos-elf.h: Likewise.
+	* config/i386/nto.h: Likewise.
+	* config/fr30/fr30.h: Likewise.
+	* config/svr4.h: Likewise.
+	* config/rs6000/aix.h: Likewise.
+	* config/rs6000/sysv4.h: Likewise.
+	* config/pa/pa64-hpux.h: Likewise.
+	* config/pa/pa-hpux10.h: Likewise.
+	* config/pa/pa-hpux11.h: Likewise.
+	* collect2.c: Likewise.
+	* configure: Regenerate.
+
+2006-12-08  Mike Stump  <mrs@apple.com>
+
+	* config/rs6000/t-darwin (TARGET_LIBGCC2_CFLAGS): Build
+	libgcc with -mmacosx-version-min=10.4.
+	* config/rs6000/darwin.h (SUBTARGET_OVERRIDE_OPTIONS): Default to
+	G4 for 10.5+ unless doing kernel builds.
+
+2005-09-19  Steven Bosscher  <steven@gcc.gnu.org>
+
+	Radar 4842086
+	PR rtl-optimization/23943
+	* cse.c (find_best_addr): Never propagate an EXPR_LIST rtx.
+
+2006-12-04  Eric Christopher  <echristo@apple.com>
+
+	Radar 4521370
+	* config/darwin.h (DARWIN_EXTRA_SPECS): New.
+	(STARTFILE_SPEC): Use.
+	(DARWIN_DYLIB1_SPEC): New.
+	(DARWIN_CRT1_SPEC): New.
+	* config/i386/darwin64.h (SUBTARGET_EXTRA_SPECS): Use
+	DARWIN_EXTRA_SPECS.
+	* config/i386/darwin.h: Ditto.
+	* config/rs6000/darwin.h: Ditto.
+
+2005-04-11  Mark Mitchell  <mark@codesourcery.com>
+
+	* target-def.h (TARGET_CXX_EXPORT_CLASS_DATA): Remove.
+	(TARGET_CXX_DETERMINE_CLASS_VISIBILITY): New macro.
+	(TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT): Likewise.
+	(TARGET_CXX): Adjust accordingly.
+	* target.h (struct gcc_target): Remove epxort_class_data.  Add
+	determine_class_data_visibility and class_data_always_comdat.
+	* doc/tm.texi (TARGET_CXX_EXPORT_CLASS_DATA): Remove.
+	(TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY): Document.
+	(TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT): Likewise.
+	* config/arm/arm.c (arm_cxx_export_class_data): Remove.
+	(arm_cxx_determine_class_data_visibility): New.
+	(arm_cxx_class_data_always_comdat): Likewise.
+	(TARGET_CXX_EXPORT_CLASS_DATA): Remove.
+	(TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY): Define.
+	(TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT): Likewise.
+	* config/arm/arm.h (TARGET_ARM_DYNAMIC_VAGUE_LINKAGE_P): Define.
+	* config/arm/symbian.h (TARGET_ARM_DYNAMIC_VAGUE_LINKAGE_P):
+	Define.
+
+2006-11-09  Eric Christopher  <echristo@apple.com>
+
+	PR bootstrap/26892
+	PR bootstrap/27814
+	PR other/28994
+	* configure: Regenerate.
+	* configure.ac: Match powerpc*-*-darwin* for powerpc darwin checks.
+	* config.gcc (powerpc64-*-darwin*): New target.
+	* config.host: Ditto.
+	* config/rs6000/darwin64.h: New file.
+	* config/rs6000/x-darwin64: Ditto.
+	* config/rs6000/host-ppc64-darwin.c: Ditto.
+
+2006-11-06  Eric Christopher  <echristo@apple.com>
+
+	* config.gcc: Add x86_64-darwin host support.
+	* config.host: Ditto.
+	* config/i386/darwin64.h: New file.
+	* config/i386/t-darwin64: Ditto.
+
+2006-10-27  Mike Stump  <mrs@apple.com>
+
+	* config/darwin-c.c (darwin_cpp_builtins): Move __STATIC__ and
+	__DYNAMIC__ from here back to ...
+	* config/darwin.h (CPP_SPEC): ... here.
+
+2006-10-16  Mike Stump  <mrs@apple.com>
+
+	* doc/invoke.texi (Darwin Options): Document -mkernel.
+	* config/rs6000/darwin.h (SUBTARGET_OVERRIDE_OPTIONS): Add
+	-mkernel support.
+	(C_COMMON_OVERRIDE_OPTIONS): Add -mkernel support.  Add
+	SUBTARGET_C_COMMON_OVERRIDE_OPTIONS callout.
+	(CC1_SPEC): Don't turn on -fPIC when -mkernel is given.
+	(OS_MISSING_ALTIVEC): Add.
+	* config/i386/i386.c (override_options): Add
+	SUBSUBTARGET_OVERRIDE_OPTIONS callout.
+	* config/i386/darwin.h (CC1_SPEC): Don't turn on -fPIC when
+	-mkernel, -static or -mdynamic-no-pic is given.
+	(C_COMMON_OVERRIDE_OPTIONS): Add.
+	* config/darwin.opt (fapple-kext): Add.
+	(mkernel): Add.
+	* config/darwin.h (TARGET_OPTION_TRANSLATE_TABLE): Add
+	-fapple-kext, -findirect-virtual-calls, -fterminated-vtables and
+	-mkernel support.
+	(SUBSUBTARGET_OVERRIDE_OPTIONS): Add.
+	(SUBTARGET_C_COMMON_OVERRIDE_OPTIONS): Add.
+	(CPP_SPEC): Move defines for __DYNAMIC__ and __STATIC__ from here...
+	(SUBTARGET_ATTRIBUTE_TABLE): Add apple_kext_compatibility.
+	(TARGET_CXX_CDTOR_RETURNS_THIS): Add.
+	(flag_mkernel): Add.
+	(flag_apple_kext): Add.
+	(TARGET_KEXTABI): Add.
+	* config/darwin.c (darwin_handle_kext_attribute): Add.
+	(DARWIN_VTABLE_P): Add.
+	(darwin_binds_local_p): Add partial support for rebinding vtables
+	in kexts.
+	(darwin_kextabi_p): Add.
+	(darwin_override_options): Add.
+	* config/darwin-protos.h (darwin_handle_kext_attribute): Add.
+	(darwin_kextabi_p): Add.
+	(darwin_override_options): Add.
+	* config/darwin-c.c (darwin_cpp_builtins): ... move defines for
+	__DYNAMIC__ and __STATIC__ here.
+
+2006-09-11  Geoffrey Keating  <geoffk@apple.com>
+
+	* config/darwin.h (PREFERRED_DEBUGGING_TYPE): Set to DWARF2_DEBUG.
+
+2006-09-01  Geoffrey Keating  <geoffk@apple.com>
+
+	* config/darwin.h (LINK_COMMAND_SPEC): Don't do weird things with -@.
+	Call dsymutil when compiling and linking one or more source files
+	in one step.
+
+2006-09-20  Eric Christopher  <echristo@apple.com>
+
+	Radar 4632262
+	* config/i386/i386.c (x86_fisttp): Remove.
+	* config/i386/i386.h (x86_fisttp): Ditto.
+        (TARGET_FISTTP): Ditto.
+
 2005-06-16  Joseph S. Myers  <joseph@codesourcery.com>
 
 	* Makefile.in (cc1-checksum.c): Use

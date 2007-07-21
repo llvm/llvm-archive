@@ -82,6 +82,14 @@ void objc_detect_field_duplicates (tree);
 /* APPLE LOCAL radar 4621020 */
 #define PROPERTY_WEAK(DECL) ((DECL)->decl.section_name)
 /* APPLE LOCAL end C* property (Radar 4436866, 4591909) */
+/* APPLE LOCAL begin objc new property */
+#define PROPERTY_COPY(DECL) PROPERTY_BYCOPY(DECL)
+#define PROPERTY_RETAIN(DECL) PROPERTY_BYREF(DECL)
+#define PROPERTY_ASSIGN(DECL) (!property_readonly \
+			       && PROPERTY_RETAIN(DECL) == boolean_false_node \
+			       && PROPERTY_COPY(DECL) == boolean_false_node)
+#define PROPERTY_READWRITE(DECL) PROPERTY_WEAK(DECL)
+/* APPLE LOCAL end objc new property */
 
 /* CLASS_INTERFACE_TYPE, CLASS_IMPLEMENTATION_TYPE,
    CATEGORY_INTERFACE_TYPE, CATEGORY_IMPLEMENTATION_TYPE,

@@ -4,6 +4,7 @@
 
 /* { dg-options "-fno-constant-cfstrings -fconstant-string-class=MyConstantString" } */
 /* { dg-do compile } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface MyBase {
   char p;

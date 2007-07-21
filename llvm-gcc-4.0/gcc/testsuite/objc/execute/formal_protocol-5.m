@@ -1,6 +1,7 @@
 /* Contributed by Nicola Pero - Fri Mar  9 21:35:47 CET 2001 */
 #include <objc/objc.h>
-#include <objc/Protocol.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 
 /* Test defining a protocol, and accessing it using @protocol */
 

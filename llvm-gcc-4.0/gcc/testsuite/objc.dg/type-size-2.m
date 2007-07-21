@@ -32,13 +32,26 @@ enum Enum { one, two, three, four };
 @end
 
 Class cls;
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+Method meth;
+#else
 struct objc_method *meth;
+#endif
+/* APPLE LOCAL end objc2 */
 unsigned totsize, offs0, offs1, offs2, offs3, offs4, offs5, offs6, offs7;
 
 static void scan_initial(const char *pattern) {
   totsize = offs0 = offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = offs7 = (unsigned)-1;
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+  sscanf(method_getTypeEncoding(meth), pattern, &totsize, &offs0, &offs1, &offs2, &offs3,
+      &offs4, &offs5, &offs6, &offs7);
+#else
   sscanf(meth->method_types, pattern, &totsize, &offs0, &offs1, &offs2, &offs3,
       &offs4, &offs5, &offs6, &offs7);
+#endif
+/* APPLE LOCAL end objc2 */
   CHECK_IF(!offs0 && offs1 == sizeof(id) && offs2 == offs1 + sizeof(SEL) && totsize >= offs2);
 }
 

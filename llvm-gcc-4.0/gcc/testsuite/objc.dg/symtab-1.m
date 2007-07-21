@@ -5,7 +5,8 @@
 /* APPLE LOCAL radar 4492976 */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface Base: Object 
 - (void)setValues;

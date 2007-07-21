@@ -16,12 +16,14 @@ SHLIB_LC = -lc
 # so the libgcc variants have different names not different locations.
 # Note that this version is used for the loader, not the linker; the linker
 # uses the stub versions named by $(LIBGCC).
+# APPLE LOCAL begin no-libtool
 SHLIB_LINK = $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -dynamiclib -nodefaultlibs \
-	-Wl,-install_name,$(slibdir)/$(SHLIB_INSTALL_NAME) \
+	-install_name $(slibdir)/$(SHLIB_INSTALL_NAME) \
 	-single_module -o $(SHLIB_DIR)/$(SHLIB_SONAME).tmp \
 	-Wl,-exported_symbols_list,$(SHLIB_MAP) \
 	$(SHLIB_VERSTRING) \
 	@multilib_flags@ $(SHLIB_OBJS) $(SHLIB_LC)
+# APPLE LOCAL end no-libtool
 
 # $(slibdir) double quoted to protect it from expansion while building
 # libgcc.mk.  We want this delayed until actual install time.

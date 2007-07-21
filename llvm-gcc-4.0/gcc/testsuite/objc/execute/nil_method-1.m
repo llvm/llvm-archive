@@ -1,6 +1,7 @@
 /* Contributed by Nicola Pero - Fri Aug 30 12:55:37 2002 */ 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 
 /* Test that calling a method of a nil object results in
    nothing to happen (but not a crash), and nil to be

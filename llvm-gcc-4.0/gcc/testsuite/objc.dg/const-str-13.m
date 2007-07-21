@@ -4,8 +4,10 @@
 
 /* { dg-options "-fno-constant-cfstrings -fwritable-strings -fconstant-string-class=Foo" } */
 /* { dg-do run { target *-*-darwin* } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #include <stdlib.h>
 #include <memory.h>
 
@@ -16,7 +18,8 @@
 - (char *)c_string;
 @end
 
-struct objc_class _FooClassReference;
+/* Unavailable in objc 2.0, deprecated in Leopard */
+struct objc_class _FooClassReference; /* { dg-warning "warning: \'objc_class\' is deprecated" } */
 
 static Foo *foobar = @"Apple";
 

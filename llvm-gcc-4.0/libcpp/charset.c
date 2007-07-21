@@ -1473,7 +1473,8 @@ narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
   else if ((i == 4 && CPP_OPTION (pfile, warn_four_char_constants))
            || (i > 1 && CPP_OPTION (pfile, warn_multichar)
                /* APPLE LOCAL begin 3222135 */
-               && (i != 4 || CPP_PEDANTIC (pfile))))
+               && (i != 4 || (CPP_PEDANTIC (pfile)
+                              && !CPP_IN_SYSTEM_HEADER (pfile)))))
                /* APPLE LOCAL end 3222135 */
     /* APPLE LOCAL end -Wfour-char-constants */
     cpp_error (pfile, CPP_DL_WARNING, "multi-character character constant");

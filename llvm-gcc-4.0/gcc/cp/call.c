@@ -5003,7 +5003,7 @@ build_over_call (struct z_candidate *cand, int flags)
 
   /* APPLE LOCAL begin KEXT indirect-virtual-calls --sts */
   if (DECL_VINDEX (fn)
-      && (flag_apple_kext
+      && (TARGET_KEXTABI
           || (flags & LOOKUP_NONVIRTUAL) == 0))
     /* APPLE LOCAL end KEXT indirect-virtual-calls --sts */
     {

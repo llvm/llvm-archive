@@ -7,7 +7,8 @@
 /* { dg-options "-fnext-runtime" } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface FooBar: Object
 - (void)boo;

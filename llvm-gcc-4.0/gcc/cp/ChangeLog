@@ -1,3 +1,20 @@
+2006-12-04  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 4311680
+	* decl2.c (determine_visibility): Don't set
+	DECL_VISIBILITY_SPECIFIED for -fvisibility-inlines-hidden.
+
+2006-03-01  Mike Stump  <mrs@apple.com>
+
+	PR darwin/25908
+	* decl2.c (import_export_decl): Fix ABI breakage on darwin.
+
+2005-04-11  Mark Mitchell  <mark@codesourcery.com>
+
+	* decl2.c (determine_visibility): Don't use export_class_data.
+	(import_export_decl): Honor TARGET_CXX_CLASS_DATA_ALWAYS_WEAK and
+	TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY. 
+
 2005-07-02  Kazu Hirata  <kazu@codesourcery.com>
 
 	* Make-lang.in (cc1plus-checksum.c): Use

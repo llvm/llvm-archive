@@ -3,6 +3,7 @@
 /* Compile with no error or warning. */
 /* { dg-options "-fobjc-abi-version=2 -fobjc-atdefs" } */
 /* { dg-do compile } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/objc.h>
 #include <objc/Object.h>
@@ -25,7 +26,6 @@ extern void abort(void);
   unsigned e;
   id f;
 } 
-- init;
 @end
 
 struct Derived_defs {
@@ -35,20 +35,10 @@ struct Derived_defs {
 @implementation Base
 @end
 @implementation Derived
-- init {
-  [super init];
-  a = 123;
-  b = 1.23;
-  c = 'c';
-  d = 123.456;
-  e = 456;
-  f = isa;
-  return self;
-}
 @end
 
 int main(void) {
-  Derived *derived = [[Derived alloc] init];
+  Derived *derived = [Derived  initialize];
   struct Derived_defs *derived_defs = (struct Derived_defs *)derived;
 
   CHECK_IF(derived->a == derived_defs->a && derived_defs->a == 123);

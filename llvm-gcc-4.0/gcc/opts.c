@@ -81,6 +81,13 @@ bool use_gnu_debug_info_extensions;
 /* The default visibility for all symbols (unless overridden) */
 enum symbol_visibility default_visibility = VISIBILITY_DEFAULT;
 
+/* APPLE LOCAL begin mainline 4840357 */
+/* Disable unit-at-a-time for frontends that might be still broken in this
+   respect.  */
+  
+bool no_unit_at_a_time_default;
+/* APPLE LOCAL end mainline 4840357 */
+
 /* Global visibility options.  */
 struct visibility_flags visibility_options;
 
@@ -293,7 +300,8 @@ handle_option (const char **argv, unsigned int lang_mask)
       value = 0;
     }
 
-  opt_index = find_opt (opt + 1, lang_mask | CL_COMMON);
+  /* APPLE LOCAL mainline */
+  opt_index = find_opt (opt + 1, lang_mask | CL_COMMON | CL_TARGET);
   if (opt_index == cl_options_count)
     goto done;
 
@@ -337,11 +345,24 @@ handle_option (const char **argv, unsigned int lang_mask)
 
   /* Now we've swallowed any potential argument, complain if this
      is a switch for a different front end.  */
-  if (!(option->flags & (lang_mask | CL_COMMON)))
+  /* APPLE LOCAL begin mainline */
+  if (!(option->flags & (lang_mask | CL_COMMON | CL_TARGET)))
+  /* APPLE LOCAL end mainline */
     {
       complain_wrong_lang (argv[0], option, lang_mask);
       goto done;
     }
+  /* APPLE LOCAL begin iframework for 4.3 4094959 */
+  else if ((option->flags & CL_TARGET)
+	   && (option->flags & CL_LANG_ALL)
+	   && !(option->flags & lang_mask))
+    {
+      /* Complain for target flag language mismatches if any languages
+	 are specified.  */
+      complain_wrong_lang (argv[0], option, lang_mask);
+      goto done;
+    }
+  /* APPLE LOCAL end iframework for 4.3 4094959 */
 
   if (arg == NULL && (option->flags & (CL_JOINED | CL_SEPARATE)))
     {
@@ -499,6 +520,10 @@ void set_flags_from_O (unsigned int cmdline)
       flag_tree_sra = 1;
       flag_tree_copyrename = 1;
       flag_tree_fre = 1;
+      /* APPLE LOCAL begin mainline 4840357 */
+      if (!no_unit_at_a_time_default)
+        flag_unit_at_a_time = 1;
+      /* APPLE LOCAL end mainline 4840357 */
 
       if (!optimize_size)
 	{
@@ -540,7 +565,8 @@ void set_flags_from_O (unsigned int cmdline)
 	{
 	  flag_strict_aliasing = 1;
 	  flag_reorder_functions = 1;
-	  flag_unit_at_a_time = 1;
+	  /* APPLE LOCAL begin mainline deletion 4840357 */
+	  /* APPLE LOCAL end mainline deletion 4840357 */
 	}
 
       if (!optimize_size)
@@ -1402,7 +1428,8 @@ print_filtered_help (unsigned int flag)
   const char *help, *opt, *tab;
   static char *printed;
 
-  if (flag == CL_COMMON)
+  /* APPLE LOCAL mainline */
+  if (flag == CL_COMMON || flag == CL_TARGET)
     {
       filter = flag;
       if (!printed)
@@ -1671,6 +1698,17 @@ restore_func_cl_pf_opts_mapping (tree func)
       *slot = entry;
     }
   cl_pf_opts = *(entry->cl_pf_opts);
+  /* APPLE LOCAL begin 4760857 optimization pragmas */
+  /* The variables set here are dependent on the per-func flags,
+     but do not have corresponding command line options, so can't
+     be saved and restored themselves in the current mechanism.
+     So just (re)compute them. */
+  align_loops_log = floor_log2 (align_loops * 2 - 1);
+  align_jumps_log = floor_log2 (align_jumps * 2 - 1);
+  align_labels_log = floor_log2 (align_labels * 2 - 1);
+  if (align_labels_max_skip > align_labels || !align_labels)
+    align_labels_max_skip = align_labels - 1;
+  /* APPLE LOCAL end 4760857 optimization pragmas */
 }
 
 void

@@ -1,0 +1,92 @@
+#!/bin/sh
+# APPLE LOCAL file sdk support
+
+DESTDIR="${1-/tmp/root}"
+MAJ_VERS="${2-4.0}"
+VERS="${3-4.0.1}"
+TARGETS="${4-powerpc i686}"
+
+# for debugging
+# set -x
+
+# Catch all errors
+set -e
+
+rm -rf "$DESTDIR/Developer/SDKs"
+
+do_link() {
+  mkdir -p "${2%/*}"
+  ln -s "$1" "$2"
+}
+
+not_dir() {
+  [ ! -d "$1" -o -L "$1" ]
+}
+
+dittoln() {
+    ditto "$1" "$2"
+    (
+	cd "$1"
+	find . -type f -exec ln -f "$2/{}" \{\} \;
+    )
+}
+
+for sdk in 10.3.9 10.3.internal 10.4u 10.4.0.Internal; do
+  DIR=$DESTDIR/Developer/SDKs/MacOSX$sdk.sdk
+
+  # opendarwin doesn't include SDKs
+  if [ ! -d /Developer/SDKs/MacOSX$sdk.sdk ]; then continue; fi
+
+  dittoln $DESTDIR/usr/lib/gcc $DIR/usr/lib/gcc
+
+  # temp to run fixincludes
+  ln -s ../../../../usr/libexec $DIR/usr/libexec
+
+  for t in $TARGETS; do
+    echo "Doing $t fixincludes"
+    ISYSROOT=/Developer/SDKs/MacOSX$sdk.sdk $DESTDIR/usr/libexec/gcc/$t-apple-darwin9/$VERS/install-tools/mkheaders -v -v -v $DIR/usr /Developer/SDKs/MacOSX$sdk.sdk
+
+    # Remove extraneous directories left by fixincludes
+    # rmdir $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/c++
+    rm -rf $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/gcc
+
+    # We don't need to regenerate, and besides, running them the normal
+    # way would alter the system headers by default, we avoid that by
+    # not giving them the rope.
+    rm -rf $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/install-tools
+
+    # fixup ppc_intrinsics.h and stdint.h
+    ln $DESTDIR/usr/include/gcc/darwin/$MAJ_VERS/stdint.h \
+       $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/stdint.h
+    ln $DESTDIR/usr/include/gcc/darwin/$MAJ_VERS/ppc_intrinsics.h \
+       $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/ppc_intrinsics.h
+  done
+
+  # we're done with fixincludes, now remove it
+  rm $DIR/usr/libexec
+done
+
+# Extra headers
+for sdk in 10.3.9 10.3.internal; do
+  DIR=$DESTDIR/Developer/SDKs/MacOSX$sdk.sdk
+
+  # opendarwin doesn't include SDKs
+  if [ ! -d /Developer/SDKs/MacOSX$sdk.sdk ]; then continue; fi
+
+  for t in $TARGETS; do
+    cp /Developer/SDKs/MacOSX$sdk.sdk/usr/include/gcc/darwin/4.0/assert.h \
+       $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/assert.h
+    cp /Developer/SDKs/MacOSX$sdk.sdk/usr/include/gcc/darwin/4.0/inttypes.h \
+       $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/inttypes.h
+    mkdir -p $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/machine
+    cp /Developer/SDKs/MacOSX$sdk.sdk/usr/include/gcc/darwin/4.0/machine/limits.h \
+       $DIR/usr/lib/gcc/$t-apple-darwin9/$VERS/include/machine/limits.h
+  done
+done
+
+# Don't need the i686 or ppc64 bits on 10.3
+for sdk in 10.3.9 10.3.internal; do
+  DIR=$DESTDIR/Developer/SDKs/MacOSX$sdk.sdk
+  rm -rf $DIR/usr/lib/gcc/i686-apple-darwin9
+  rm -rf $DIR/usr/lib/gcc/powerpc-apple-darwin9/$VERS/ppc64
+done

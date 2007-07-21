@@ -488,6 +488,16 @@ cp_lexer_consume_bincl_eincl_token (cp_lexer *lexer)
 static inline cp_token *
 cp_lexer_peek_token (cp_lexer *lexer)
 {
+  /* APPLE LOCAL begin CW asm blocks */
+  if (flag_ms_asms)
+    while (lexer->next_token->type == CPP_NUMBER
+	   && lexer->next_token->value == error_mark_node)
+      {
+	/* This was previously deferred.  */
+	error ("invalid suffix on integer constant");
+	cp_lexer_consume_token (lexer);
+      }
+  /* APPLE LOCAL end CW asm blocks */
   /* APPLE LOCAL 4137741 */
   cp_lexer_consume_bincl_eincl_token (lexer);
   if (cp_lexer_debugging_p (lexer))
@@ -1501,6 +1511,10 @@ static void objc_cp_parser_at_property
 static void objc_cp_parse_property_decl
   (cp_parser *);
 /* APPLE LOCAL end C* property (Radar 4436866) */
+/* APPLE LOCAL begin objc new property */
+static void objc_cp_parser_property_impl (cp_parser *parser, 
+					  enum rid keyword);
+/* APPLE LOCAL end objc new property */
 /* APPLE LOCAL begin radar 4548636 */
 static bool objc_attr_follwed_by_at_keyword
   (cp_parser *);
@@ -2472,9 +2486,22 @@ objc_cp_parse_property_decl (cp_parser *parser)
       /* Revover from any kind of error in property declaration. */
       if (property == error_mark_node || property == NULL_TREE)
 	return;
+      /* APPLE LOCAL begin objc new property */
+      if (declspecs.attributes)
+        cplus_decl_attributes (&property, declspecs.attributes, 0);
+      /* APPLE LOCAL begin radar 4712415 */
+      token = cp_lexer_peek_token (parser->lexer);
+      if (token->keyword == RID_ATTRIBUTE)
+	{
+	  /* Attribute on the property itself. */
+	  declspecs.attributes = cp_parser_attributes_opt (parser);
+	  cplus_decl_attributes (&property, declspecs.attributes, 0);
+          token = cp_lexer_peek_token (parser->lexer);
+	}
+      /* APPLE LOCAL end radar 4712415 */
+      /* APPLE LOCAL end objc new property */
       /* Add to property list. */
       objc_add_property_variable (copy_node (property));
-      token = cp_lexer_peek_token (parser->lexer);
       if (token->type == CPP_COMMA)
 	{
 	  cp_lexer_consume_token (parser->lexer);  /* Eat ','.  */
@@ -2485,6 +2512,48 @@ objc_cp_parse_property_decl (cp_parser *parser)
     }
     cp_lexer_consume_token (parser->lexer);  /* Eat ';'.  */
 }
+
+/* APPLE LOCAL begin objc new property */
+/* This routine parses @synthesize property_name[=ivar],... or 
+   @dynamic paroperty_name,...  syntax.
+*/
+static void
+objc_cp_parser_property_impl (cp_parser *parser, enum rid keyword)
+{
+  cp_lexer_consume_token (parser->lexer);  /* Eat @synthesize or @dynamic */
+  if (keyword == RID_AT_DYNAMIC)
+    {
+      tree identifier_list = cp_parser_objc_identifier_list (parser);
+      objc_declare_property_impl (2, identifier_list);
+    }
+  else
+    {
+      cp_token *sep = cp_lexer_peek_token (parser->lexer);
+      tree list = NULL_TREE;
+      do 
+        {
+	  tree property;
+          tree identifier_list;
+	  if (sep->type == CPP_COMMA)
+	    cp_lexer_consume_token (parser->lexer);  /* Eat ',' */
+	  property = cp_parser_identifier (parser);
+	  sep = cp_lexer_peek_token (parser->lexer);
+	  if (sep->type == CPP_EQ)
+	    {
+	      cp_lexer_consume_token (parser->lexer);  /* '=' */
+	      identifier_list = build_tree_list (cp_parser_identifier (parser), property);
+	    } 
+	  else
+	    identifier_list = build_tree_list (NULL_TREE, property); 
+	  list = chainon (list, identifier_list);
+	  sep = cp_lexer_peek_token (parser->lexer);
+      }
+      while (sep->type == CPP_COMMA);
+      objc_declare_property_impl (1, list);
+    }
+  cp_parser_consume_semicolon_at_end_of_statement (parser);
+}
+/* APPLE LOCAL end objc new property */
 
 /* This function parses a @property declaration inside an objective class
    or its implementation. */
@@ -2571,6 +2640,24 @@ objc_cp_parser_at_property (cp_parser *parser)
 	      objc_set_property_attr (8, NULL_TREE);
 	    }	
 	  /* APPLE LOCAL end radar 4621020 */
+	  /* APPLE LOCAL begin objc new property */
+	  else if (node == ridpointers [(int) RID_READWRITE])
+	    {
+	      objc_set_property_attr (9, NULL_TREE);
+	    }	
+	  else if (node == ridpointers [(int) RID_ASSIGN])
+	    {
+	      objc_set_property_attr (10, NULL_TREE);
+	    }	
+	  else if (node == ridpointers [(int) RID_RETAIN])
+	    {
+	      objc_set_property_attr (11, NULL_TREE);
+	    }	
+	  else if (node == ridpointers [(int) RID_COPY])
+	    {
+	      objc_set_property_attr (12, NULL_TREE);
+	    }	
+	  /* APPLE LOCAL end objc new property */
 	  else
 	    {
 	      error ("unknown property attribute");
@@ -3305,7 +3392,7 @@ cp_parser_primary_expression (cp_parser *parser,
 				     /*declarator_p=*/false);
 	/* APPLE LOCAL begin CW asm blocks */
 	/* Replace the id with an id prefixed with @.  */
-	if (atsignhack)
+	if (atsignhack && id_expression != error_mark_node)
 	  id_expression = prepend_char_identifier (id_expression, '@');
 	/* APPLE LOCAL end CW asm blocks */
 	if (id_expression == error_mark_node)
@@ -6773,7 +6860,9 @@ cp_parser_compound_statement (cp_parser *parser, tree in_statement_expr,
 static bool
 cp_lexer_iasm_bol (cp_lexer* lexer)
 {
-  cp_token *token = cp_lexer_peek_token (lexer);
+  /* We can't use cp_lexer_peek_token here, as it will give errors for things like
+     1st in MS-stype asm.  */
+  cp_token *token = lexer->next_token;
 
   return (token->flags & BOL) != 0;
 }
@@ -16152,8 +16241,12 @@ cp_parser_functional_cast (cp_parser* parser, tree type)
   cast = build_functional_cast (type, expression_list);
   /* [expr.const]/1: In an integral constant expression "only type
      conversions to integral or enumeration type can be used".  */
-  if (cast != error_mark_node && !type_dependent_expression_p (type)
-      && !INTEGRAL_OR_ENUMERATION_TYPE_P (TREE_TYPE (type)))
+  /* APPLE LOCAL begin mainline 4.2 4795703 */
+  if (TREE_CODE (type) == TYPE_DECL)
+    type = TREE_TYPE (type);
+  if (cast != error_mark_node && !dependent_type_p (type)
+      && !INTEGRAL_OR_ENUMERATION_TYPE_P (type))
+  /* APPLE LOCAL end mainline 4.2 4795703 */
     {
       if (cp_parser_non_integral_constant_expression
 	  (parser, "a call to a constructor"))
@@ -17175,8 +17268,13 @@ cp_parser_iasm_skip_to_eol (cp_parser *parser)
     {
       cp_token *token;
 
-      /* Peek at the next token.  */
-      token = cp_lexer_peek_token (parser->lexer);
+      /* Do CPP_NUMBER specially to avoid errors on things like ; 1st
+	 when doing MS-style asms.  */
+      if ((token = parser->lexer->next_token)->type == CPP_NUMBER)
+	;
+      else
+	/* Peek at the next token.  */
+	token = cp_lexer_peek_token (parser->lexer);
       /* If we've run out of tokens, stop.  */
       if (token->type == CPP_EOF)
 	break;
@@ -18755,6 +18853,11 @@ cp_parser_objc_method_definition_list (cp_parser* parser)
       else if (token->keyword == RID_AT_PROPERTY)
 	objc_cp_parser_at_property (parser);
       /* APPLE LOCAL end C* interface */
+      /* APPLE LOCAL begin objc new property */
+      else if (token->keyword == RID_AT_SYNTHESIZE
+	       || token->keyword == RID_AT_DYNAMIC)
+	objc_cp_parser_property_impl (parser, token->keyword);
+      /* APPLE LOCAL end objc new property */
       else
 	/* Allow for interspersed non-ObjC++ code.  */
 	cp_parser_objc_interstitial_code (parser);
@@ -19224,7 +19327,7 @@ objc_finish_foreach_stmt (tree for_stmt)
   
   Into:
     {
-    type elem;
+    type elem = nil;  radar 4854605
     __objcFastEnumerationState enumState = { 0 };
     id items[16];
 
@@ -19281,6 +19384,12 @@ objc_foreach_stmt (cp_parser* parser, tree statement)
 								 &items_decl, &limit_decl, 
 								 &startMutations_decl, &counter_decl,
 							         &countByEnumeratingWithState);
+
+  /* APPLE LOCAL begin radar 4854605 */
+  /* elem = nil; */
+  add_stmt (build (MODIFY_EXPR, void_type_node, elem_decl, 
+            fold_convert (TREE_TYPE (elem_decl), integer_zero_node)));
+  /* APPLE LOCAL end radar 4854605 */
 
   /* __objcFastEnumerationState enumState = { 0 }; */
   exp = build_stmt (DECL_EXPR, enumState_decl);

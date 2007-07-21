@@ -521,3 +521,10 @@ objc_build_incr_decr_setter_call (enum tree_code ARG_UNUSED (code),
   return NULL_TREE;
 }
 /* APPLE LOCAL end radar 4712269 */
+/* APPLE LOCAL begin objc new property */
+void objc_declare_property_impl (int ARG_UNUSED (code), 
+				 tree ARG_UNUSED (tree_list))
+{
+}
+/* APPLE LOCAL end objc new property */
+

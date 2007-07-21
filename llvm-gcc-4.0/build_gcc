@@ -6,7 +6,9 @@ set -x
 # -arch arguments are different than configure arguments. We need to
 # translate them.
 
-TRANSLATE_ARCH="sed -e s/ppc/powerpc/ -e s/i386/i686/"
+TRANSLATE_ARCH="sed -e s/ppc/powerpc/ -e s/i386/i686/ -e s/ppc64/powerpc64/"
+TRANSLATE_TARGETS="sed -e s/ppc/powerpc/ -e s/i386/i686/ -e s/x86_64// \
+  -e s/powerpc64// -e s/ppc64//"
 
 # Build GCC the "Apple way".
 # Parameters:
@@ -20,7 +22,7 @@ HOSTS=`echo $1 | $TRANSLATE_ARCH `
 # compilers will generate code for.  If the current machine isn't in
 # the list, a compiler for it will get built anyway, but won't be
 # installed.
-TARGETS=`echo $2 | $TRANSLATE_ARCH`
+TARGETS=`echo $2 | $TRANSLATE_TARGETS`
 
 # The GNU makefile target ('bootstrap' by default).
 BOOTSTRAP=${BOOTSTRAP-bootstrap}
@@ -98,13 +100,13 @@ fi
 # APPLE LOCAL end LLVM
 
 # This is the default architecture for i386 configurations.
-I386_CPU="--with-arch=nocona --with-tune=generic"
+I386_CPU="--with-arch=apple --with-tune=generic"
 
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.0.0
 
 # Sniff to see if we can do ppc64 building.
-DARWIN_VERS=8
+DARWIN_VERS=9
 if [ x"`file /usr/lib/crt1.o | grep 'architecture ppc64'`" == x ]; then
     DARWIN_VERS=7
 fi
@@ -257,7 +259,7 @@ done
 PATH=$DIR/bin:$PATH
 
 # Build the cross-compilers, using the compiler we just built.
-for t in $TARGETS ; do
+for t in `echo $TARGETS $HOSTS | sort -u`; do
  if [ $t != $BUILD ] ; then
   mkdir -p $DIR/obj-$BUILD-$t $DIR/dst-$BUILD-$t || exit 1
    cd $DIR/obj-$BUILD-$t || exit 1
@@ -324,7 +326,7 @@ rm -rf * || exit 1
 if [ "$ENABLE_LLVM" == false ]; then
 
 # HTML documentation
-HTMLDIR="/Developer/ADC Reference Library/documentation/DeveloperTools"
+HTMLDIR="/Developer/Documentation/DocSets/com.apple.ADC_Reference_Library.DeveloperTools.docset/Contents/Resources/Documents/documentation/DeveloperTools"
 mkdir -p ".$HTMLDIR" || exit 1
 cp -Rp $DIR/obj-$BUILD-$BUILD/gcc/HTML/* ".$HTMLDIR/" || exit 1
 
@@ -454,20 +456,6 @@ for h in `echo *.h` ; do
     done
   fi
 done
-mkdir -p $DEST_DIR$HEADERPATH/machine
-for h in `echo */*.h` ; do
-  if [ ! -f /usr/include/$h -o -L /usr/include/$h ] ; then
-    cp -R $h $DEST_DIR$HEADERPATH/$h || exit 1
-    for t in $TARGETS ; do
-      THEADERPATH=$DEST_DIR$DEST_ROOT/lib/gcc/${t}-apple-darwin$DARWIN_VERS/$VERS/include
-      mkdir -p $THEADERPATH/machine
-      # In fixincludes/fixinc.in we created this file...  always link for now
-      [ -f /disable/$THEADERPATH/$h ] || \
-        ln -f -s ../../../../../../include/gcc/darwin/$MAJ_VERS/$h $THEADERPATH/$h || \
-        exit 1
-    done
-  fi
-done
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
@@ -481,7 +469,7 @@ done
 
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do
-    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-gcc-$VERS -O3                         \
+    $h-apple-darwin$DARWIN_VERS-gcc-$VERS				       \
 	$ORIG_SRC_DIR/gcc/config/darwin-driver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-gcc-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
@@ -491,7 +479,7 @@ for h in $HOSTS ; do
         -L$DIR/obj-$h-$BUILD/libiberty/                                        \
 	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-gcc-$MAJ_VERS || exit 1
 
-    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-gcc-$VERS -O3                         \
+    $h-apple-darwin$DARWIN_VERS-gcc-$VERS				       \
 	$ORIG_SRC_DIR/gcc/config/darwin-driver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-g++-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
@@ -513,18 +501,24 @@ ln -f $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/c++-$MAJ_V
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-g++-$MAJ_VERS || exit 1
 
+# Build sdk bits
+#$SRC_DIR/sdk "$DEST_DIR" "$MAJ_VERS" "$VERS" "$TARGETS" || exit 1
 
 ########################################
-# Save the source files and objects needed for debugging
+# Create SYM_DIR with information required for debugging.
 
 cd $SYM_DIR || exit 1
 
 # Clean out SYM_DIR in case -noclean was passed to buildit.
 rm -rf * || exit 1
 
-# Save executables and libraries.
+# Generate .dSYM files
+find $DEST_DIR -perm -0111 \! -name fixinc.sh \
+    \! -name mkheaders -type f -print | xargs -n 1 -P ${SYSCTL} dsymutil
+
+# Save .dSYM files and .a archives
 cd $DEST_DIR || exit 1
-find . \( -perm -0111 -or -name \*.a -or -name \*.dylib \) -type f -print \
+find . \( -name \*.dSYM -or -name \*.a \) -print \
   | cpio -pdml $SYM_DIR || exit 1
 # Save source files.
 mkdir $SYM_DIR/src || exit 1
@@ -532,7 +526,8 @@ cd $DIR || exit 1
 find obj-* -name \*.\[chy\] -print | cpio -pdml $SYM_DIR/src || exit 1
 
 ########################################
-# Strip the executables and libraries
+# Remove debugging information from DEST_DIR.
+
 find $DEST_DIR -perm -0111 \! -name \*.dylib \! -name fixinc.sh \
     \! -name mkheaders -type f -print \
   | xargs strip || exit 1
@@ -588,6 +583,7 @@ fi
 fi
 # APPLE LOCAL end LLVM
 
+find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
 

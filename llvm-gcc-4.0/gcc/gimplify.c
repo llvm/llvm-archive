@@ -3054,9 +3054,17 @@ gimplify_modify_expr (tree *expr_p, tree *pre_p, tree *post_p, bool want_value)
      that is what we must here.  */
   maybe_with_size_expr (from_p);
 
-  ret = gimplify_expr (to_p, pre_p, post_p, is_gimple_lvalue, fb_lvalue);
-  if (ret == GS_ERROR)
-    return ret;
+/* APPLE LOCAL begin 4228828 */
+  /* For stores to a pointer, keep computation of the address close to the
+     pointer.  Later optimizations should do this; the 'sink' pass in 4.2
+     does it, but that's not in 4.0.  Temporary. */
+  if (TREE_CODE (*to_p) != INDIRECT_REF)
+    {
+      ret = gimplify_expr (to_p, pre_p, post_p, is_gimple_lvalue, fb_lvalue);
+      if (ret == GS_ERROR)
+	return ret;
+    }
+/* APPLE LOCAL end 4228828 */
 
   ret = gimplify_expr (from_p, pre_p, post_p,
 		       rhs_predicate_for (*to_p), fb_rvalue);
@@ -3068,6 +3076,15 @@ gimplify_modify_expr (tree *expr_p, tree *pre_p, tree *post_p, bool want_value)
 				  want_value);
   if (ret != GS_UNHANDLED)
     return ret;
+
+/* APPLE LOCAL begin 4228828 */
+  if (TREE_CODE (*to_p) == INDIRECT_REF)
+    {
+      ret = gimplify_expr (to_p, pre_p, post_p, is_gimple_lvalue, fb_lvalue);
+      if (ret == GS_ERROR)
+	return ret;
+    }
+/* APPLE LOCAL end 4228828 */
 
   /* If we've got a variable sized assignment between two lvalues (i.e. does
      not involve a call), then we can make things a bit more straightforward

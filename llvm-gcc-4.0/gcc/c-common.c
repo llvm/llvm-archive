@@ -6086,7 +6086,8 @@ lvalue_or_else (tree *ref, enum lvalue_use use)
       /* (1) Assignment to casts of lvalues, as long as both the lvalue and
 	     the cast are POD types with identical size and alignment.  */
       if ((TREE_CODE (r) == NOP_EXPR || TREE_CODE (r) == CONVERT_EXPR
-	   || TREE_CODE (r) == NON_LVALUE_EXPR)
+	   /* APPLE LOCAL 4253848 */
+	   || TREE_CODE (r) == VIEW_CONVERT_EXPR || TREE_CODE (r) == NON_LVALUE_EXPR)
 	  && (use == lv_assign || use == lv_increment || use == lv_decrement
 	      || use == lv_addressof)
 	  /* APPLE LOCAL non lvalue assign */
@@ -7202,7 +7203,6 @@ iasm_stmt (tree expr, tree args, int lineno)
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
 
   clobbers = uses;
-  /* APPLE LOCAL LLVM portability to other platforms! */
 #ifdef TARGET_MACHO
   if (iasm_memory_clobber (opcodename))
     {
@@ -7212,7 +7212,6 @@ iasm_stmt (tree expr, tree args, int lineno)
 			    build_string (6, "memory"),
 			    clobbers);
     }
-  /* APPLE LOCAL LLVM portability to other platforms! */
 #endif
 
   /* Perform default conversions on function inputs.

@@ -423,6 +423,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define TARGET_STRUCT_VALUE_RTX hook_rtx_tree_int_null
 #define TARGET_RETURN_IN_MEMORY default_return_in_memory
 #define TARGET_RETURN_IN_MSB hook_bool_tree_false
+/* APPLE LOCAL radar 4781080 */
+#define TARGET_OBJC_FPRETURN_MSGCALL default_objc_fpreturn_msgcall
 
 #define TARGET_EXPAND_BUILTIN_SAVEREGS default_expand_builtin_saveregs
 #define TARGET_SETUP_INCOMING_VARARGS default_setup_incoming_varargs
@@ -456,6 +458,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
    TARGET_STRUCT_VALUE_RTX,					\
    TARGET_RETURN_IN_MEMORY,					\
    TARGET_RETURN_IN_MSB,					\
+   /* APPLE LOCAL radar 4781080 */				\
+   TARGET_OBJC_FPRETURN_MSGCALL,				\
    TARGET_PASS_BY_REFERENCE,					\
    TARGET_EXPAND_BUILTIN_SAVEREGS,				\
    TARGET_SETUP_INCOMING_VARARGS,				\
@@ -514,10 +518,18 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define TARGET_CXX_KEY_METHOD_MAY_BE_INLINE hook_bool_void_true
 #endif
 
-#ifndef TARGET_CXX_EXPORT_CLASS_DATA
-#define TARGET_CXX_EXPORT_CLASS_DATA hook_bool_void_false
+/* APPLE LOCAL begin mainline 4.2 2006-03-01 4311680 */
+#ifndef TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY
+#define TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY hook_void_tree
+/* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
 #endif
 
+/* APPLE LOCAL begin mainline 4.2 2006-03-01 4311680 */
+#ifndef TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT
+#define TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT hook_bool_void_true
+#endif
+
+/* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */
 #define TARGET_CXX				\
   {						\
     TARGET_CXX_GUARD_TYPE,			\
@@ -527,7 +539,10 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
     TARGET_CXX_IMPORT_EXPORT_CLASS,		\
     TARGET_CXX_CDTOR_RETURNS_THIS,		\
     TARGET_CXX_KEY_METHOD_MAY_BE_INLINE,	\
-    TARGET_CXX_EXPORT_CLASS_DATA		\
+/* APPLE LOCAL begin mainline 4.2 2006-03-01 4311680 */ \
+    TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY,	\
+    TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT,        \
+/* APPLE LOCAL end mainline 4.2 2006-03-01 4311680 */ \
   }
 
 /* The whole shebang.  */

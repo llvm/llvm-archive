@@ -2,7 +2,7 @@
 /* A run-time test for insertion of write barriers. */
 
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fnext-runtime -fobjc-gc" } */
+/* { dg-options "-fnext-runtime -fobjc-gc -mmacosx-version-min=10.3" } */
 
 #include <objc/objc.h>
 #include <stdio.h>

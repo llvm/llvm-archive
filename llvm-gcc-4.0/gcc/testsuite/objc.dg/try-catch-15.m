@@ -4,7 +4,8 @@
 /* { dg-options "-mmacosx-version-min=10.2" } */
 /* { dg-do compile } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @protocol Proto1
 - (int)meth1;

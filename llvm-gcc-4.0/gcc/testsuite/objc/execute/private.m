@@ -1,6 +1,7 @@
 /* Contributed by Nicola Pero - Fri Mar  9 19:39:15 CET 2001 */
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 
 /* Test the @private, @protected, @public keyworks for ivars.  We only
    check syntax. */

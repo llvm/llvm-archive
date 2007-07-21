@@ -1,0 +1,46 @@
+#!/bin/sh
+# APPLE LOCAL file sdk support
+
+case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
+  *c*,-n*) ECHO_N= ECHO_C='                                                                 
+' ECHO_T='      ' ;;
+  *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
+  *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
+esac
+
+echo SDK testsuite:
+
+cat >/tmp/test.cc <<EOF
+#include <iostream>
+using namespace std;
+
+int main() { cout << "Hi\n"; }
+EOF
+
+export LD_NO_CLASSIC_LINKER=YES
+
+set +e
+set +x
+for gcc in g++-3.3 g++-4.0 g++-4.2; do
+  for sdk in 10.3.9 10.3.internal 10.4u 10.4.0.Internal 10.5 10.5.Internal; do
+    for arch in ppc ppc64 i386 x86_64; do
+      case "$gcc:$arch:$sdk" in
+      g++-3.3:i386:*) continue;;
+      g++-3.3:x86_64:*) continue;;
+      g++-3.3:ppc64:*) continue;;
+      *:ppc64:10.3*) continue;;
+      *:i386:10.3*) continue;;
+      *:x86_64:10.3*) continue;;
+      esac
+      if [ $gcc == g++-3.3 ]; then
+        $gcc -arch $arch -isystem /Developer/SDKs/MacOSX$sdk.sdk/usr/include/gcc/darwin/3.3 -I/Developer/SDKs/MacOSX$sdk.sdk/usr/include/gcc/darwin/3.3/c++/ppc-darwin -isystem /Developer/SDKs/MacOSX$sdk.sdk/usr/include -Wl,-syslibroot,/Developer/SDKs/MacOSX$sdk.sdk -DMAC_OS_X_VERSION_MIN_REQUIRED=1030 /tmp/test.cc -o /tmp/a.out -w
+      else 
+        $gcc -arch $arch -isysroot /Developer/SDKs/MacOSX$sdk.sdk /tmp/test.cc -o /tmp/a.out -w -mmacosx-version-min=10.3
+      fi
+      if [ $? = 0 ]; then echo $ECHO_N "PASS: $ECHO_C"; else echo $ECHO_N "FAIL: $ECHO_C"; fi
+      echo "$gcc $arch $sdk hello++"
+    done
+  done
+done
+
+exit 0

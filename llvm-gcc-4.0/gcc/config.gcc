@@ -975,6 +975,16 @@ i[34567]86-*-darwin*)
 	# APPLE LOCAL 4126124
 	need_64bit_hwint=yes
 	;;
+# APPLE LOCAL begin mainline
+x86_64-*-darwin*)
+# APPLE LOCAL begin apple arch
+	#with_arch=${with_arch:-apple}
+	#with_cpu=${with_cpu:-generic}
+# APPLE LOCAL end apple arch
+	tmake_file="t-darwin ${cpu_type}/t-darwin64 t-slibgcc-darwin"
+	tm_file="${tm_file} ${cpu_type}/darwin64.h"
+	;;
+# APPLE LOCAL end mainline
 i[34567]86-*-elf*)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h"
 	tmake_file="i386/t-i386elf t-svr4"
@@ -1640,6 +1650,14 @@ powerpc-*-darwin*)
 	esac
 	extra_headers=altivec.h
 	;;
+# APPLE LOCAL begin mainline
+powerpc64-*-darwin*)
+	# We're omitting t-darwin8 to avoid building any multilibs
+	tm_file="${tm_file} ${cpu_type}/darwin8.h ${cpu_type}/darwin64.h"
+	extra_options="${extra_options} ${cpu_type}/darwin.opt"
+	extra_headers=altivec.h
+	;;
+# APPLE LOCAL end mainline
 powerpc*-*-freebsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} rs6000/sysv4.h rs6000/freebsd.h"
 	tmake_file="rs6000/t-fprules rs6000/t-ppcos ${tmake_file} rs6000/t-ppccomm"
@@ -2606,7 +2624,9 @@ case "${target}" in
 				esac
 				# OK
 				;;
-			"" | k8 | opteron | athlon64 | athlon-fx | nocona | generic)
+# APPLE LOCAL apple cpu
+			"" | k8 | opteron | athlon64 | athlon-fx | nocona \
+			   | generic | apple)
 				# OK
 				;;
 # APPLE LOCAL end mainline 2006-04-19 4434601

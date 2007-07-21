@@ -4712,11 +4712,16 @@ digest_init (tree type, tree init, bool strict_string, int require_constant)
 	       && (code == VECTOR_TYPE && TREE_CODE (init) == CONSTRUCTOR))
 	  return inside_init;
       else if (require_constant
-	       && (code == VECTOR_TYPE && TREE_CODE (init) == NOP_EXPR))
+	       /* APPLE LOCAL begin 4253848 */
+	       && (code == VECTOR_TYPE
+		   && (TREE_CODE (init) == NOP_EXPR
+		       || TREE_CODE (init) == VIEW_CONVERT_EXPR)))
+	       /* APPLE LOCAL end 4253848 */
 	{
 	  /* User is using FSF style vector const. It must be converted to
 	    VECTOR_CST so it is generated at assebly time. */
-	  while (TREE_CODE (init) == NOP_EXPR)
+	  /* APPLE LOCAL 4253848 */
+	  while (TREE_CODE (init) == NOP_EXPR || TREE_CODE (init) == VIEW_CONVERT_EXPR)
 	    init = TREE_OPERAND (init, 0);
 	  if (TREE_CODE (init) == COMPOUND_LITERAL_EXPR)
 	    {

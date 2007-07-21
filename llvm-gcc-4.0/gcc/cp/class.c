@@ -1803,7 +1803,7 @@ layout_vtable_decl (tree binfo, int n)
   /* Enlarge suggested vtable size by one entry; it will be filled
      with a zero word.  Darwin kernel dynamic-driver loader looks
      for this value to find vtable ends for patching.  */
-  if (flag_apple_kext)
+  if (TARGET_KEXTABI)
     n_entries += 1;
   /* APPLE LOCAL end KEXT terminated-vtables */
 
@@ -3941,7 +3941,7 @@ clone_function_decl (tree fn, int update_method_vec_p)
 
       /* APPLE LOCAL begin KEXT double destructor */
       /* Don't use the complete dtor.  */
-      if (! flag_apple_kext
+      if (! TARGET_KEXTABI
 	  || ! has_apple_kext_compatibility_attr_p (DECL_CONTEXT (fn)))
 	{
 	  clone = build_clone (fn, complete_dtor_identifier);
@@ -7210,7 +7210,7 @@ dfs_accumulate_vtbl_inits (tree binfo,
       /* APPLE LOCAL begin KEXT double destructor */
 #ifdef VPTR_INITIALIZER_ADJUSTMENT
       /* Subtract VPTR_INITIALIZER_ADJUSTMENT from INDEX.  */
-      if (flag_apple_kext && !ctor_vtbl_p && ! BINFO_PRIMARY_P (binfo)
+      if (TARGET_KEXTABI && !ctor_vtbl_p && ! BINFO_PRIMARY_P (binfo)
 	  && TREE_CODE (index) == INTEGER_CST
 	  && TREE_INT_CST_LOW (index) >= VPTR_INITIALIZER_ADJUSTMENT
 	  && TREE_INT_CST_HIGH (index) == 0)

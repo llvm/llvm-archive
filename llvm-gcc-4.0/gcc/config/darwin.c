@@ -1539,9 +1539,7 @@ abort_assembly_and_exit (int status)
 }
 /* APPLE LOCAL end assembly "abort" directive  */
 
-/* APPLE LOCAL begin KEXT double destructor */
-#include "c-common.h"
-
+/* APPLE LOCAL begin mainline */
 /* Handle __attribute__ ((apple_kext_compatibility)).
    This only applies to darwin kexts for 2.95 compatibility -- it shrinks the
    vtable for classes with this attribute (and their descendants) by not
@@ -1554,20 +1552,22 @@ abort_assembly_and_exit (int status)
    class data members on the padding at the end of the base class.  */
 
 tree
-darwin_handle_odd_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
-			     int flags ATTRIBUTE_UNUSED, bool *no_add_attrs)
+darwin_handle_kext_attribute (tree *node, tree name,
+			      tree args ATTRIBUTE_UNUSED,
+			      int flags ATTRIBUTE_UNUSED,
+			      bool *no_add_attrs)
 {
   /* APPLE KEXT stuff -- only applies with pure static C++ code.  */
-  if (! flag_apple_kext || ! c_dialect_cxx ())
+  if (! TARGET_KEXTABI)
     {
-      warning ("`%s' 2.95 vtable-compatability attribute applies "
+      warning ("%<%s%> 2.95 vtable-compatability attribute applies "
 	       "only when compiling a kext", IDENTIFIER_POINTER (name));
 
       *no_add_attrs = true;
     }
   else if (TREE_CODE (*node) != RECORD_TYPE)
     {
-      warning ("`%s' 2.95 vtable-compatability attribute applies "
+      warning ("%<%s%> 2.95 vtable-compatability attribute applies "
 	       "only to C++ classes", IDENTIFIER_POINTER (name));
 
       *no_add_attrs = true;
@@ -1575,7 +1575,7 @@ darwin_handle_odd_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
 
   return NULL_TREE;
 }
-/* APPLE LOCAL end KEXT double destructor  */
+/* APPLE LOCAL end mainline  */
 
 /* APPLE LOCAL begin ObjC GC */
 tree
@@ -1724,6 +1724,11 @@ darwin_unique_section (tree decl ATTRIBUTE_UNUSED, int reloc ATTRIBUTE_UNUSED)
   /* Darwin does not use unique sections.  */
 }
 
+/* APPLE LOCAL begin radar 4733555 */
+/* Ick, this probably will cause other languages to die.  */
+extern bool objc_method_decl (enum tree_code ARG_UNUSED (opcode));
+  /* APPLE LOCAL end radar 4733555 */
+
 /* Handle a "weak_import" attribute; arguments as in
    struct attribute_spec.handler.  */
 
@@ -1733,6 +1738,12 @@ darwin_handle_weak_import_attribute (tree *node, tree name,
 				     int ARG_UNUSED (flags),
 				     bool * no_add_attrs)
 {
+  /* APPLE LOCAL begin radar 4733555 */
+  /* The compiler should silently ignore weak_import when specified on a method. All 
+     Objective-C methods are "weak" in the sense that the availability macros want. */
+  if (objc_method_decl (TREE_CODE (*node)))
+    return NULL_TREE;
+  /* APPLE LOCAL end radar 4733555 */
   if (TREE_CODE (*node) != FUNCTION_DECL && TREE_CODE (*node) != VAR_DECL)
     {
       warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
@@ -1916,6 +1927,9 @@ darwin_file_start (void)
 	  DEBUG_LINE_SECTION,
 	  DEBUG_LOC_SECTION,
 	  DEBUG_PUBNAMES_SECTION,
+	  /* APPLE LOCAL begin pubtypes, approved for 4.3 4535968  */
+	  DEBUG_PUBTYPES_SECTION,
+	  /* APPLE LOCAL end pubtypes, approved for 4.3 4535968  */
 	  DEBUG_STR_SECTION,
 	  DEBUG_RANGES_SECTION
 	};
@@ -1971,6 +1985,21 @@ darwin_file_end (void)
   fprintf (asm_out_file, "\t.subsections_via_symbols\n");
 }
 
+/* APPLE LOCAL begin mainline */
+/* APPLE LOCAL KEXT treat vtables as overridable */
+#define DARWIN_VTABLE_P(DECL) lang_hooks.vtable_p (DECL)
+
+/* Cross-module name binding.  Darwin does not support overriding
+   functions at dynamic-link time, except for vtables in kexts.  */
+
+bool
+darwin_binds_local_p (tree decl)
+{
+  return default_binds_local_p_1 (decl,
+				  TARGET_KEXTABI && DARWIN_VTABLE_P (decl));
+}
+/* APPLE LOCAL end mainline */
+
 /* True, iff we're generating fast turn around debugging code.  When
    true, we arrange for function prologues to start with 4 nops so
    that gdb may insert code to redirect them, and for data to accessed
@@ -1982,14 +2011,42 @@ const char *darwin_fix_and_continue_switch;
 /* APPLE LOCAL mainline 2005-09-01 3449986 */
 const char *darwin_macosx_version_min;
 
-/* APPLE LOCAL begin KEXT */
-/* Ture, iff we're generating code for loadable kernel extentions.  */
+/* APPLE LOCAL begin mainline */
+/* True, iff we're generating code for loadable kernel extentions.  */
 
 bool
-flag_apple_kext_p (void) {
+darwin_kextabi_p (void) {
   return flag_apple_kext;
 }
-/* APPLE LOCAL end KEXT */
+
+void
+darwin_override_options (void)
+{
+  /* APPLE LOCAL begin for iframework for 4.3 4094959 */
+  /* Remove this: */
+#if 0
+  if (flag_apple_kext && strcmp (lang_hooks.name, "GNU C++") != 0)
+    {
+      warning ("command line option %<-fapple-kext%> is only valid for C++");
+      flag_apple_kext = 0;
+    }
+#endif
+  /* APPLE LOCAL end for iframework for 4.3 4094959 */
+  if (flag_mkernel || flag_apple_kext)
+    {
+      /* -mkernel implies -fapple-kext for C++ */
+      if (strcmp (lang_hooks.name, "GNU C++") == 0)
+	flag_apple_kext = 1;
+	 
+      flag_no_common = 1;
+
+      /* No EH in kexts.  */
+      flag_exceptions = 0;
+      /* No -fnon-call-exceptions data in kexts.  */
+      flag_non_call_exceptions = 0;
+    }
+}
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin constant cfstrings */
 int darwin_constant_cfstrings = 1;

@@ -1204,7 +1204,8 @@ _mm_prefetch (void *__P, enum _mm_hint __I)
 static __inline void __attribute__((__always_inline__))
 _mm_stream_pi (__m64 *__P, __m64 __A)
 {
-  __builtin_ia32_movntq ((unsigned long long *)__P, (unsigned long long)__A);
+  /* APPLE LOCAL 4656532 use V1DImode for _m64 */
+  __builtin_ia32_movntq (__P, __A);
 }
 
 /* Likewise.  The address must be 16-byte aligned.  */

@@ -22,8 +22,10 @@ void function0 (char c)		// function that is actually called
   exit_status++;
 }
 
+/* APPLE LOCAL begin 3222135 */
 int main ()
 {
   function0 ('abcd');		// { dg-warning "multi-character character constant" } 
   return exit_status;
 }
+/* APPLE LOCAL end 3222135 */

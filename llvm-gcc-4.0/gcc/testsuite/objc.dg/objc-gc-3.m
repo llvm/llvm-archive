@@ -12,6 +12,7 @@
 
 int IvarAssigns;
 
+static
 id objc_assign_ivar(id value, id dest, unsigned int offset) {
   id *slot = (id*) ((char *)dest + offset);
 

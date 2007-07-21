@@ -943,7 +943,7 @@ _cpp_do_file_change (cpp_reader *pfile, enum lc_reason reason,
   if (map != NULL)
     linemap_line_start (pfile->line_table, map->to_line, 127);
 
-  /* APPLE LOCAL begin 4897123 */
+  /* APPLE LOCAL begin 4137741 */
   if (pfile->cb.file_change)
     {
       struct line_map *old_maps = pfile->line_table->maps;
@@ -959,9 +959,7 @@ _cpp_do_file_change (cpp_reader *pfile, enum lc_reason reason,
       if (map && old_maps != pfile->line_table->maps)
         map = linemap_lookup (pfile->line_table, old_loc);
     }
-  /* APPLE LOCAL end 4897123 */
 
-  /* APPLE LOCAL begin 4137741 */
 
   /* If file change debug hook callbacks are being deferred, we will
      need special CPP_BINCL and CPP_EINCL tokens to carry the information

@@ -33,7 +33,7 @@ struct A_defs
 
 int main() 
 {
-  A *a = [A init];
+  A *a = [A initialize];
   struct A_defs *a_defs = (struct A_defs *)a;
   
   if (a->a != a_defs->a)

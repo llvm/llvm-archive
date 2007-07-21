@@ -2,7 +2,7 @@
 /* Test that the correct version number (7) is set in the module descriptor
    when compiling for the NeXT runtime.  */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-fnext-runtime -m64" } */
+/* { dg-options "-fnext-runtime -m64 -fobjc-abi-version=1" } */
 
 #include <objc/Object.h>
 

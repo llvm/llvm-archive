@@ -24,19 +24,19 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_MACHO
 #define TARGET_MACHO 1
 
-/* APPLE LOCAL begin x86_64 support */
+/* APPLE LOCAL begin mainline */
 #undef  TARGET_64BIT
 #define TARGET_64BIT (target_flags & MASK_64BIT)
 
 #define TARGET_VERSION fprintf (stderr, " (i686 Darwin)");
-/* APPLE LOCAL end x86_64 support */
+/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL begin mainline 2005-04-11 4010614 */
 #undef TARGET_FPMATH_DEFAULT
 #define TARGET_FPMATH_DEFAULT (TARGET_SSE ? FPMATH_SSE : FPMATH_387)
 /* APPLE LOCAL end mainline 2005-04-11 4010614 */
 
-/* APPLE LOCAL begin x86_64 support */
+/* APPLE LOCAL begin mainline */
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
 
@@ -51,30 +51,28 @@ Boston, MA 02111-1307, USA.  */
       else					\
 	builtin_define ("__i386__");		\
       builtin_define ("__LITTLE_ENDIAN__");     \
-/* APPLE LOCAL mainline 2005-09-01 3449986 */	\
       darwin_cpp_builtins (pfile);		\
     }                                           \
   while (0)
-/* APPLE LOCAL end x86_64 support */
+/* APPLE LOCAL end mainline */
 
 /* We want -fPIC by default, unless we're using -static to compile for
    the kernel or some such.  */
 
 #undef CC1_SPEC
-/* APPLE LOCAL begin dynamic-no-pic */
-#define CC1_SPEC "\
-%{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
-"/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
-%{!static:%{!mdynamic-no-pic:-fPIC}} %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5"
-/* APPLE LOCAL end dynamic-no-pic */
+/* APPLE LOCAL mainline */
+#define CC1_SPEC "%{!mkernel:%{!static:%{!mdynamic-no-pic:-fPIC}}} \
+  "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
+  %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5 \
+  %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }}"
 
 /* APPLE LOCAL AltiVec */
 #define CPP_ALTIVEC_SPEC "%<faltivec"
 
-/* APPLE LOCAL begin x86_64 support */
+/* APPLE LOCAL begin mainline */
 #undef ASM_SPEC
-#define ASM_SPEC "%{m64: -arch x86_64 -force_cpusubtype_ALL} \
-                  %{!m64: -arch i386 -force_cpusubtype_ALL}"
+#define ASM_SPEC "-arch %(darwin_arch) -force_cpusubtype_ALL"
+
 #define DARWIN_ARCH_SPEC "%{m64:x86_64;:i386}"
 #define DARWIN_SUBARCH_SPEC "					\
   %{m64: x86_64}						\
@@ -82,13 +80,11 @@ Boston, MA 02111-1307, USA.  */
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS					\
-  /* APPLE LOCAL begin mainline 2005-04-11 */			\
+  DARWIN_EXTRA_SPECS						\
   { "darwin_arch", DARWIN_ARCH_SPEC },				\
-  /* APPLE LOCAL mainline 2005-11-15 4271575 */			\
   { "darwin_crt2", "" },					\
   { "darwin_subarch", DARWIN_SUBARCH_SPEC },
-  /* APPLE LOCAL end mainline 2005-04-11 */
-/* APPLE LOCAL end x86_64 support */
+/* APPLE LOCAL end mainline */
 
 /* Use the following macro for any Darwin/x86-specific command-line option
    translation.  */

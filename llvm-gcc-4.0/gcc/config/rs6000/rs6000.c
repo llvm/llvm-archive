@@ -710,7 +710,9 @@ static void rs6000_xcoff_file_start (void);
 static void rs6000_xcoff_file_end (void);
 #endif
 #if TARGET_MACHO
-static bool rs6000_binds_local_p (tree);
+/* APPLE LOCAL begin mainline remove rs6000_binds_local_p */
+/* APPLE LOCAL end mainline */
+
 /* APPLE LOCAL pragma reverse_bitfields */
 static bool rs6000_reverse_bitfields_p (tree);
 #endif
@@ -1042,7 +1044,8 @@ static const char alt_reg_names[][8] =
 
 #if TARGET_MACHO
 #undef TARGET_BINDS_LOCAL_P
-#define TARGET_BINDS_LOCAL_P rs6000_binds_local_p
+/* APPLE LOCAL mainline */
+#define TARGET_BINDS_LOCAL_P darwin_binds_local_p
 /* APPLE LOCAL begin pragma reverse_bitfields */
 #undef TARGET_REVERSE_BITFIELDS_P
 #define TARGET_REVERSE_BITFIELDS_P rs6000_reverse_bitfields_p
@@ -2059,8 +2062,9 @@ optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
    Do not reset things unless they're per-function.  */
 #if TARGET_MACHO
 void
-reset_optimization_options (int level ATTRIBUTE_UNUSED, 
-			    int size ATTRIBUTE_UNUSED)
+/* APPLE LOCAL begin 4760857 optimization pragmas */
+reset_optimization_options (int level ATTRIBUTE_UNUSED, int size)
+/* APPLE LOCAL end 4760857 optimization pragmas */
 {
   if (DEFAULT_ABI == ABI_DARWIN)
     {
@@ -2081,6 +2085,23 @@ reset_optimization_options (int level ATTRIBUTE_UNUSED,
 	 in darwin-c.c).  */
       flag_trapping_math = 0;
     }
+  /* APPLE LOCAL begin 4760857 optimization pragmas */
+  /* Set branch target alignment, if not optimizing for size.  */
+  if (!size)
+    {
+      if (rs6000_sched_groups)
+	{
+	  if (align_jumps <= 0)
+	    align_jumps = 16;
+	  if (align_loops <= 0)
+	    align_loops = 16;
+	}
+      if (align_jumps_max_skip <= 0)
+	align_jumps_max_skip = 15;
+      if (align_loops_max_skip <= 0)
+	align_loops_max_skip = 15;
+    }
+  /* APPLE LOCAL end 4760857 optimization pragmas */
 }
 #endif
 /* APPLE LOCAL end optimization pragmas 3124235/3420242 */
@@ -3428,7 +3449,12 @@ lwa_operand (rtx op, enum machine_mode mode)
 	&& GET_CODE (XEXP (inner, 0)) != PRE_DEC
 	&& (GET_CODE (XEXP (inner, 0)) != PLUS
 	    || GET_CODE (XEXP (XEXP (inner, 0), 1)) != CONST_INT
-	    || INTVAL (XEXP (XEXP (inner, 0), 1)) % 4 == 0));
+        /* APPLE LOCAL begin radar 4805365 */
+	    || INTVAL (XEXP (XEXP (inner, 0), 1)) % 4 == 0)
+        /* Return 1 if the alignment is known and 32 bits aligned. */
+        && (MEM_ALIGN (inner) != 0
+            && MEM_ALIGN (inner) % 32 == 0));
+        /* APPLE LOCAL end radar 4805365 */
 }
 
 /* Return 1 if the operand, used inside a MEM, is a SYMBOL_REF.  */
@@ -14943,8 +14969,7 @@ rs6000_stack_info (void)
 					 + ehrd_size
 					 + info_ptr->cr_size
 					 + info_ptr->lr_size
-					 /* APPLE LOCAL fix redundant add? */
- /* FIXME: the FSF does "+ info_ptr->vrsave_size" here, shouldn't we?  */
+					 + info_ptr->vrsave_size
 					 + info_ptr->toc_size,
 					 save_align);
 
@@ -20848,20 +20873,10 @@ rs6000_xcoff_file_end (void)
 }
 #endif /* TARGET_XCOFF */
 
-#if TARGET_MACHO
-/* Cross-module name binding.  Darwin does not support overriding
-   functions at dynamic-link time.  */
-
-static bool
-rs6000_binds_local_p (tree decl)
-{
-  /* APPLE LOCAL begin kext treat vtables as overridable  */
-  return default_binds_local_p_1 (decl, 
-	flag_apple_kext && lang_hooks.vtable_p (decl));
-}
-/* APPLE LOCAL end kext treat vtables as overridable  */
-
+/* APPLE LOCAL begin mainline remove rs6000_binds_local_p */
+/* APPLE LOCAL end mainline remove rs6000_binds_local_p */
 /* APPLE LOCAL begin pragma reverse_bitfields */
+#if TARGET_MACHO
 /* Pragma reverse_bitfields.  For compatibility with CW.
    This feature is not well defined by CW, and results in
    code that does not work in some cases!  Bug compatibility
@@ -20872,8 +20887,8 @@ rs6000_reverse_bitfields_p (tree record_type ATTRIBUTE_UNUSED)
 {
   return darwin_reverse_bitfields;
 }
-/* APPLE LOCAL end prgama reverse_bitfields */
 #endif
+/* APPLE LOCAL end prgama reverse_bitfields */
 
 /* Compute a (partial) cost for rtx X.  Return true if the complete
    cost has been computed, and false if subexpressions should be

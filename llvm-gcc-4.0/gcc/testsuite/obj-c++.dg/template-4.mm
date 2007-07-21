@@ -1,5 +1,7 @@
 /* APPLE LOCAL file mainline */
 /* Author:  Ziemowit Laski <zlaski@apple.com>.  */
+/* APPLE LOCAL radar 4842177 */
+/* { dg-options "-fnext-runtime -mmacosx-version-min=10.3 -fno-constant-cfstrings" } */
 /* { dg-do run } */
 
 #include <objc/Object.h>

@@ -1113,8 +1113,8 @@ void rewrite_command_line (char *override_options_line, int *argc, char ***argv)
    number of characters at the end of the path that make up the filename part of
    the path. */
 
-static int 
-get_prog_name_len (const char *prog) 
+static int
+get_prog_name_len (const char *prog)
 {
   int result = 0;
   const char *progend = prog + strlen(prog);
@@ -1145,17 +1145,17 @@ is_x_file (const char *path)
  */
 
 static const char *
-resolve_path_to_executable (const char *filename) 
+resolve_path_to_executable (const char *filename)
 {
   char path_buffer[2*PATH_MAX+1];
   char *PATH = getenv ("PATH");
   if (PATH == 0) return filename;  /* PATH not set */
-  
+
   do {
     unsigned prefix_size;
     struct stat st;
     char *colon = strchr (PATH, ':');
-  
+
     /* If we didn't find a :, use the whole last chunk. */
     prefix_size = colon ? colon-PATH : strlen (PATH);
 
@@ -1169,7 +1169,7 @@ resolve_path_to_executable (const char *filename)
       return strdup (path_buffer);
     PATH = colon ? colon+1 : PATH+prefix_size;
   } while (PATH[0]);
-  
+
   return filename;
 }
 
@@ -1179,7 +1179,7 @@ resolve_path_to_executable (const char *filename)
 
 static const char *
 resolve_symlink (const char *prog, char *symlink_buffer,
-		 int argv_0_len, int prog_len) 
+		 int argv_0_len, int prog_len)
 {
   /* If the link isn't to an absolute path, prefix it with the argv[0]
     directory. */
@@ -1205,7 +1205,7 @@ main (int argc, const char **argv)
   char *override_option_str = NULL;
   char path_buffer[2*PATH_MAX+1];
   int linklen;
-  
+
   total_argc = argc;
   prog_len = 0;
 
@@ -1213,25 +1213,25 @@ main (int argc, const char **argv)
 
   /* Get the progname, required by pexecute () and program location.  */
   prog_len = get_prog_name_len (argv[0]);
-  
+
   /* If argv[0] is all program name (no slashes), search the PATH environment
      variable to get the fully resolved path to the executable. */
   if (prog_len == argv_0_len)
     {
 #ifdef DEBUG
       progname = argv[0] + argv_0_len - prog_len;
-      fprintf (stderr,"%s: before PATH resolution, full progname = %s\n", 
+      fprintf (stderr,"%s: before PATH resolution, full progname = %s\n",
                argv[0]+argv_0_len-prog_len, argv[0]);
 #endif
       argv[0] = resolve_path_to_executable (argv[0]);
       prog_len = get_prog_name_len (argv[0]);
       argv_0_len = strlen(argv[0]);
     }
-  
+
   /* If argv[0] is a symbolic link, use the directory of the pointed-to file
      to find compiler components. */
-  
-  if ((linklen = readlink (argv[0], path_buffer, PATH_MAX)) != -1) 
+
+  if ((linklen = readlink (argv[0], path_buffer, PATH_MAX)) != -1)
     {
       /* readlink succeeds if argv[0] is a symlink.  path_buffer now contains
 	 the file referenced. */
@@ -1243,18 +1243,18 @@ main (int argc, const char **argv)
 #endif
       argv[0] = resolve_symlink(argv[0], path_buffer, argv_0_len, prog_len);
       argv_0_len = strlen(argv[0]);
-      
+
       /* Get the progname, required by pexecute () and program location.  */
       prog_len = get_prog_name_len (argv[0]);
-      
+
 #ifdef DEBUG
       progname = argv[0] + argv_0_len - prog_len;
       printf("%s: ARGV[0] after symlink = %s\n", progname, argv[0]);
-#endif      
+#endif
     }
-  
+
   progname = argv[0] + argv_0_len - prog_len;
-  
+
   /* Setup driver prefix.  */
   prefix_len = argv_0_len - prog_len;
   curr_dir = (char *) malloc (sizeof (char) * (prefix_len + 1));
@@ -1494,8 +1494,8 @@ main (int argc, const char **argv)
       /* Handle multiple -arch <blah>.  */
 
       /* If more than one input files are supplied but only one output filename
-	 is pressent then IMA will be used.  */
-      if (num_infiles > 1 && output_filename)
+	 is present then IMA will be used.  */
+      if (num_infiles > 1 && !compile_only_request)
 	ima_is_used = 1;
 
       /* Linker wants to know this in case of multiple -arch.  */

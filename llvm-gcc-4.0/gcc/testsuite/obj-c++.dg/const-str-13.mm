@@ -4,6 +4,7 @@
 
 /* { dg-options "-fno-constant-cfstrings -fwritable-strings -fconstant-string-class=Foo" } */
 /* { dg-do run { target *-*-darwin* } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 #include <stdlib.h>

@@ -11,6 +11,12 @@
 ###
 ###------------------------------------------------------------------
 4239991: obj-c++.dg/gnu-runtime-3.mm (test for excess errors)
+4880777: obj-c++.dg/const-str-10-64bit.mm (test for excess errors)
+4880777: obj-c++.dg/const-str-10-64bit.mm scan-assembler .quad\t__NSConstantStringClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
+4880777: obj-c++.dg/const-str-11-64bit.mm (test for excess errors)
+4880777: obj-c++.dg/const-str-11-64bit.mm scan-assembler .quad\t__XStrClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
+4880777: obj-c++.dg/const-str-9-64bit.mm (test for excess errors)
+4880777: obj-c++.dg/const-str-9-64bit.mm scan-assembler .quad\t__NSConstantStringClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
 #
 # the following fail with -m64 only 
 4385167: obj-c++.dg/bitfield-1.mm (test for excess errors)
@@ -23,16 +29,12 @@
 3988573: obj-c++.dg/objc-gc-weak-4.mm execution test
 #
 # the following fail for x86
-4674757: obj-c++.dg/const-str-1.mm  (test for errors, line 12)
+#4674757: obj-c++.dg/const-str-1.mm  (test for errors, line 12)
 4261575: obj-c++.dg/const-str-3.mm (test for excess errors)
 4261575: obj-c++.dg/const-str-4.mm (test for excess errors)
-4674757: obj-c++.dg/const-str-6.mm  (test for errors, line 28)
+#4674757: obj-c++.dg/const-str-6.mm  (test for errors, line 28)
 4261575: obj-c++.dg/const-str-7.mm (test for excess errors)
 4261575: obj-c++.dg/const-str-8.mm (test for excess errors)
-4674706: obj-c++.dg/const-str-9-64bit.mm scan-assembler .section __OBJC, __cstring_object
-4674706: obj-c++.dg/const-str-9-64bit.mm scan-assembler .quad\t__NSConstantStringClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data
-4674706: obj-c++.dg/const-str-9.mm scan-assembler .section __OBJC, __cstring_object
-4674706: obj-c++.dg/const-str-9.mm scan-assembler .long\t__NSConstantStringClassReference\n\t.long\t.*\n\t.long\t5\n\t.data
 4261575: obj-c++.dg/template-4.mm (test for excess errors)
 #
 # the following fail for x86 with -m64 only

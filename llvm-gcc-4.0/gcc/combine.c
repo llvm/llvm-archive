@@ -6353,11 +6353,16 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
      extract, try to adjust the byte to point to the byte containing
      the value.  */
   if (wanted_inner_mode != VOIDmode
+      /* APPLE LOCAL begin mainline radar 4874204 */
+      && inner_mode != wanted_inner_mode
+      && ! pos_rtx 
+      /* APPLE LOCAL end mainline radar 4874204 */
       && GET_MODE_SIZE (wanted_inner_mode) < GET_MODE_SIZE (is_mode)
-      && ((MEM_P (inner)
-	   && (inner_mode == wanted_inner_mode
-	       || (! mode_dependent_address_p (XEXP (inner, 0))
-		   && ! MEM_VOLATILE_P (inner))))))
+      /* APPLE LOCAL begin mainline radar 4874204 */
+      && MEM_P (inner)
+      && ! mode_dependent_address_p (XEXP (inner, 0))
+      && ! MEM_VOLATILE_P (inner)) 
+      /* APPLE LOCAL end mainline radar 4874204 */
     {
       int offset = 0;
 
@@ -6372,16 +6377,14 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	  && GET_MODE_SIZE (inner_mode) < GET_MODE_SIZE (is_mode))
 	offset -= GET_MODE_SIZE (is_mode) - GET_MODE_SIZE (inner_mode);
 
-      /* APPLE LOCAL begin 4229621 mainline */
-      /* If this is a constant position, we can move to the desired byte.
-	 Be careful not to go beyond the original object. */
-      if (pos_rtx == 0)
-	{
-	  enum machine_mode bfmode = smallest_mode_for_size (len, MODE_INT);
-	  offset += pos / GET_MODE_BITSIZE (bfmode);
-	  pos %= GET_MODE_BITSIZE (bfmode);
-	}
-      /* APPLE LOCAL end 4229621 mainline */
+      /* APPLE LOCAL begin mainline radar 4874204 */
+      /* APPLE LOCAL end mainline radar 4874204 */
+      /* APPLE LOCAL begin mainline radar 4874204 */
+      /* We can now move to the desired byte.  */
+      offset += (pos / GET_MODE_BITSIZE (wanted_inner_mode))
+               * GET_MODE_SIZE (wanted_inner_mode);
+      pos %= GET_MODE_BITSIZE (wanted_inner_mode);
+      /* APPLE LOCAL end mainline radar 4874204 */
 
       if (BYTES_BIG_ENDIAN != BITS_BIG_ENDIAN
 	  && ! spans_byte
@@ -6389,7 +6392,8 @@ make_extraction (enum machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	offset = (GET_MODE_SIZE (is_mode)
 		  - GET_MODE_SIZE (wanted_inner_mode) - offset);
 
-      if (offset != 0 || inner_mode != wanted_inner_mode)
+        /* APPLE LOCAL begin mainline radar 4874204 */
+        /* APPLE LOCAL end mainline radar 4874204 */
 	inner = adjust_address_nv (inner, wanted_inner_mode, offset);
     }
 

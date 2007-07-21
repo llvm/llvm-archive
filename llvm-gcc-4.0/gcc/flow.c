@@ -1494,6 +1494,17 @@ initialize_uninitialized_subregs (void)
   find_regno_partial_param param;
   edge_iterator ei;
 
+  /* APPLE LOCAL begin 4727273 */
+  /* This is needed for ia64, since a subreg operation does not guarantee
+     that the NaT bit will be cleared.  A discussion of this can be found
+     here: http://gcc.gnu.org/ml/gcc-patches/2001-11/msg00429.html
+     For the architectures we support, this code isn't needed and can
+     generate superfluous code.  */
+#ifndef TARGET_MUST_INIT_SUBREG
+  return 0;
+#endif
+  /* APPLE LOCAL end 4727273 */
+
   FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR->succs)
     {
       basic_block bb = e->dest;

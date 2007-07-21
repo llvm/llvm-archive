@@ -137,8 +137,8 @@ extern int target_flags;
 #define MASK_SSEREGPARM		0x01000000	/* Pass float & double in SSE regs */
 #define TARGET_SSEREGPARM (target_flags & MASK_SSEREGPARM)
 /* APPLE LOCAL end regparmandstackparm; delete at 4.1 merge (when i386.opt file appears) */
-/* APPLE LOCAL mni */
-#define MASK_MNI		0x02000000
+/* APPLE LOCAL ssse3 */
+#define MASK_SSSE3		0x02000000
 /* Unused:			0x03e0000	*/
 
 /* APPLE LOCAL begin AT&T-style stub 4164563 */
@@ -248,8 +248,7 @@ extern int target_flags;
 
 #define TUNEMASK (1 << ix86_tune)
 extern const int x86_use_leave, x86_push_memory, x86_zero_extend_with_and;
-/* APPLE LOCAL mainline 2005-03-16 4054919 */
-extern const int x86_use_bit_test, x86_cmove, x86_fisttp, x86_deep_branch;
+extern const int x86_use_bit_test, x86_cmove, x86_deep_branch;
 extern const int x86_branch_hints, x86_unroll_strlen;
 extern const int x86_double_with_add, x86_partial_reg_stall, x86_movx;
 extern const int x86_use_loop, x86_use_fiop, x86_use_mov0;
@@ -282,11 +281,8 @@ extern int x86_prefetch_sse;
 /* For sane SSE instruction set generation we need fcomi instruction.  It is
    safe to enable all CMOVE instructions.  */
 #define TARGET_CMOVE ((x86_cmove & (1 << ix86_arch)) || TARGET_SSE)
-/* APPLE LOCAL mainline 2005-03-16 4054919 */
-/* APPLE LOCAL begin mainline 2005-10-05 4196991 */
-#define TARGET_FISTTP (((x86_fisttp & (1 << ix86_arch)) || TARGET_SSE3) \
-			&& TARGET_80387)
-/* APPLE LOCAL end mainline 2005-10-05 4196991 */
+/* APPLE LOCAL mainline 4196991 4632262 */
+#define TARGET_FISTTP (TARGET_SSE3 && TARGET_80387)
 #define TARGET_DEEP_BRANCH_PREDICTION (x86_deep_branch & TUNEMASK)
 #define TARGET_BRANCH_PREDICTION_HINTS (x86_branch_hints & TUNEMASK)
 #define TARGET_DOUBLE_WITH_ADD (x86_double_with_add & TUNEMASK)
@@ -352,8 +348,8 @@ extern int x86_prefetch_sse;
 #define TARGET_MMX ((target_flags & MASK_MMX) != 0)
 #define TARGET_3DNOW ((target_flags & MASK_3DNOW) != 0)
 #define TARGET_3DNOW_A ((target_flags & MASK_3DNOW_A) != 0)
-/* APPLE LOCAL mni */
-#define TARGET_MNI ((target_flags & MASK_MNI) != 0)
+/* APPLE LOCAL ssse3 */
+#define TARGET_SSSE3 ((target_flags & MASK_SSSE3) != 0)
 
 #define TARGET_RED_ZONE (!(target_flags & MASK_NO_RED_ZONE))
 
@@ -447,12 +443,12 @@ extern int x86_prefetch_sse;
     N_("Support MMX, SSE, SSE2 and SSE3 built-in functions and code generation") },\
   { "no-sse3",			 -MASK_SSE3,				      \
     N_("Do not support MMX, SSE, SSE2 and SSE3 built-in functions and code generation") },\
-    /* APPLE LOCAL begin mni 4424835 */						      \
-  { "mni",			 MASK_MNI,				      \
-    N_("Support MNI built-in functions and code generation") },		      \
-  { "no-mni",			 -MASK_MNI,				      \
-    N_("Do not support MNI built-in functions and code generation") },	      \
-  /* APPLE LOCAL end mni */						      \
+    /* APPLE LOCAL begin ssse3 4424835 */						      \
+  { "ssse3",			 MASK_SSSE3,				      \
+    N_("Support SSSE3 built-in functions and code generation") },		      \
+  { "no-ssse3",			 -MASK_SSSE3,				      \
+    N_("Do not support SSSE3 built-in functions and code generation") },	      \
+  /* APPLE LOCAL end ssse3 */						      \
   { "128bit-long-double",	 MASK_128BIT_LONG_DOUBLE,		      \
     N_("sizeof(long double) is 16") },					      \
   { "96bit-long-double",	-MASK_128BIT_LONG_DOUBLE,		      \
@@ -687,10 +683,10 @@ extern int x86_prefetch_sse;
 	builtin_define ("__SSE2__");				\
       if (TARGET_SSE3)						\
 	builtin_define ("__SSE3__");				\
-      /* APPLE LOCAL begin mni 4424835 */				\
-      if (TARGET_MNI)						\
-	builtin_define ("__MNI__");				\
-      /* APPLE LOCAL end mni */					\
+      /* APPLE LOCAL begin ssse3 4424835 */			\
+      if (TARGET_SSSE3)						\
+	builtin_define ("__SSSE3__");				\
+      /* APPLE LOCAL end ssse3 */				\
       if (TARGET_SSE_MATH && TARGET_SSE)			\
 	builtin_define ("__SSE_MATH__");			\
       if (TARGET_SSE_MATH && TARGET_SSE2)			\
@@ -773,13 +769,16 @@ extern int x86_prefetch_sse;
 #define TARGET_CPU_DEFAULT_nocona 16
 /* APPLE LOCAL begin mainline 2006-04-19 4434601 */
 #define TARGET_CPU_DEFAULT_generic 17
+/* APPLE LOCAL begin apple cpu */
+#define TARGET_CPU_DEFAULT_apple 18
 
 #define TARGET_CPU_DEFAULT_NAMES {"i386", "i486", "pentium", "pentium-mmx",\
 				  "pentiumpro", "pentium2", "pentium3", \
 				  "pentium4", "k6", "k6-2", "k6-3",\
 				  "athlon", "athlon-4", "k8", \
 				  "pentium-m", "prescott", "nocona", \
-				  "generic"}
+				  "generic", "apple"}
+/* APPLE LOCAL end apple cpu */
 /* APPLE LOCAL end mainline 2006-04-19 4434601 */
 
 #ifndef CC1_SPEC
@@ -1173,7 +1172,8 @@ do {									\
 
 #define VALID_MMX_REG_MODE(MODE)					\
     ((MODE) == DImode || (MODE) == V8QImode || (MODE) == V4HImode	\
-     || (MODE) == V2SImode || (MODE) == SImode)
+/* APPLE LOCAL 4656532 use V1DImode for _m64 */				\
+     || (MODE) == V2SImode || (MODE) == SImode || (MODE) == V1DImode)
 
 /* ??? No autovectorization into MMX or 3DNOW until we can reliably
    place emms and femms instructions.  */
@@ -1320,6 +1320,11 @@ do {									\
 
 #define RETURN_IN_MEMORY(TYPE) \
   ix86_return_in_memory (TYPE)
+
+/* APPLE LOCAL begin radar 4781080 */
+#define OBJC_FPRETURN_MSGCALL(TYPE,WHICH) \
+  ix86_objc_fpreturn_msgcall (TYPE, WHICH)
+/* APPLE LOCAL end radar 4781080 */
 
 /* This is overridden by <cygwin.h>.  */
 #define MS_AGGREGATE_RETURN 0
@@ -2490,6 +2495,8 @@ enum processor_type
   PROCESSOR_GENERIC32,
   PROCESSOR_GENERIC64,
 /* APPLE LOCAL end mainline 2006-04-19 4434601 */
+/* APPLE LOCAL apple cpu */
+  PROCESSOR_APPLE,
   PROCESSOR_max
 };
 

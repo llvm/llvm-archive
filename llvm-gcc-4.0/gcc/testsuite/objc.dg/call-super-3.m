@@ -4,7 +4,8 @@
 /* { dg-do run } */
 /* { dg-options "-lobjc" } */
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 extern void abort(void);
 #define CHECK_IF(expr) if(!(expr)) abort()

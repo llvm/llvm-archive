@@ -840,4 +840,10 @@ do { fputs (integer_asm_op (POINTER_SIZE / BITS_PER_UNIT, TRUE), FILE); \
 #define MAX_OFILE_ALIGNMENT BIGGEST_ALIGNMENT
 #endif
 
+/* APPLE LOCAL begin KEXT */
+#ifndef TARGET_KEXTABI
+#define TARGET_KEXTABI false
+#endif
+/* APPLE LOCAL end KEXT */
+
 #endif  /* ! GCC_DEFAULTS_H */

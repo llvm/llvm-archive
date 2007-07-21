@@ -3,6 +3,8 @@
 /* APPLE LOCAL radar 4674757 */
 /* { dg-options "-fno-constant-cfstrings -fconstant-string-class=MyConstantString" } */
 /* { dg-do compile } */
+/* APPLE LOCAL radar 4894756 */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 @interface MyBase {
   char p;

@@ -222,9 +222,13 @@ extern bool g_switch_set;
    of two not less than the variable, for .align output.  */
 
 extern int align_loops_log;
-extern int align_loops_max_skip;
+/* APPLE LOCAL begin optimization pragmas 4760857*/
+/* remove align_loops_max_skip */
+/* APPLE LOCAL end optimization pragmas 4760857*/
 extern int align_jumps_log;
-extern int align_jumps_max_skip;
+/* APPLE LOCAL begin optimization pragmas 4760857*/
+/* remove align_jumps_max_skip */
+/* APPLE LOCAL end optimization pragmas 4760857*/
 extern int align_labels_log;
 extern int align_labels_max_skip;
 extern int align_functions_log;

@@ -2,7 +2,7 @@
 /* Additional testing for the NeXT runtime. Encoding in -m64 mode  */
 
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fnext-runtime -m64" } */
+/* { dg-options " -mmacosx-version-min=10.5 -fnext-runtime -m64" } */
 
 #include <objc/Object.h>
 #include <stdbool.h>
@@ -188,6 +188,86 @@ NSRange globalRange;
 }
 @end
 
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+int main(void) {
+  Class fooClass = objc_getClass ("Foo");
+  Method meth;
+  Ivar *ivars;
+  unsigned int ivar_count;
+  Ivar ivar;
+
+  meth = class_getInstanceMethod (fooClass, @selector(_errorWithOSStatus:ref1:ref2:reading:));
+  CHECK_IF (!strcmp (method_getTypeEncoding(meth), "@44@0:8q16r^{FSRef=[80C]}24r^{FSRef=[80C]}32c40"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_attributeRunForCharacterAtIndex:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "r^{?=@@QQ^Qffff{_NSRect={_NSPoint=ff}{_NSSize=ff}}q^qQ^Q@@@:::****{?=b1b1b1b1b1b27}}24@0:8Q16"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_getATSTypesetterGuts:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "r@24@0:8r:16"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(resumeWithSuspensionID:and:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "v32@0:8^{__NSAppleEventManagerSuspension=}16r^Q24"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(anotherMeth:and:and:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "r@40@0:8r:16r@24r@32"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(str1:str2:str3:str4:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "@48@0:8r*16*24*32r*40"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(foo1:foo2:foo3:foo4:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "Vv48@0:8@16r@24@32r@40"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(sel1:id1:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "rn*32@0:8r:16r@24"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(obj1:obj2:obj3:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "N@40@0:8r@16@24^{Object=#}32"));
+
+  meth = class_getClassMethod (fooClass, @selector(_defaultScriptingComponent));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "^{ComponentInstanceRecord=[1q]}16@0:8"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_formatCocoaErrorString:parameters:applicableFormatters:count:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "@44@0:8@16r*24^^{?}32i40"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(formatter_func:run:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "^{?=^?@I}32@0:8@16r^^{?}24"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_forgetWord:inDictionary:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "c32@0:8nO@16nO@24"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_registerServicesMenu:withSendTypes:andReturnTypes:addToList:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "v44@0:8@16r^*24r^*32c40"));
+
+  meth = class_getClassMethod (fooClass, @selector(_proxySharePointer));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "^^{__CFSet}16@0:8"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_checkGrammarInString:language:details:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "{_NSRange=II}40@0:8n@16nO@24oO^@32"));
+
+  meth = class_getInstanceMethod (fooClass, @selector(_resolvePositionalStakeGlyphsForLineFragment:lineFragmentRect:minPosition:maxPosition:maxLineFragmentWidth:breakHint:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "B60@0:8^{__CTLine=}16{_NSRect={_NSPoint=ff}{_NSSize=ff}}24f40f44f48^Q52"));
+
+  meth = class_getClassMethod (fooClass, @selector(findVoiceByIdentifier:returningCreator:returningID:));
+  CHECK_IF (!strcmp (method_getTypeEncoding (meth), "c40@0:8@16^I24^I32"));
+
+  ivars = class_copyIvarList (fooClass, &ivar_count);
+  CHECK_IF (ivar_count == 1);
+
+  ivar = ivars[0];
+  CHECK_IF (!strcmp (ivar_getName(ivar), "r"));
+  CHECK_IF (!strcmp (ivar_getTypeEncoding(ivar),
+   "{?=\"_attributes\"@\"NSDictionary\"\"_font\"@\"NSFont\"\"_characterLength\""
+    "Q\"_nominalGlyphLocation\"Q\"p\"^Q\"_defaultLineHeight\"f\"_defaultBaselineOffset\""
+    "f\"_horizExpansion\"f\"_baselineDelta\"f\"_attachmentBBox\"{_NSRect=\"origin\""
+    "{_NSPoint=\"x\"f\"y\"f}\"size\"{_NSSize=\"width\"f\"height\"f}}\"ll\"q\"llp\"^q\"ull\""
+    "Q\"ullp\"^Q\"a\"@\"a1\"@\"a2\"@\"b\":\"b1\":\"b2\":\"str1\"*\"str2\"*\"str3\"*\"str4\""
+    "*\"_rFlags\"{?=\"_isAttachmentRun\"b1\"_hasPositionalStake\"b1\"_isDefaultFace\""
+    "b1\"_hasCombiningMarks\"b1\"_isScreenFont\"b1\"_reserved\"b27}}"));
+
+  return 0;
+}
+#else
 int main(void) {
   Class fooClass = objc_getClass ("Foo");
   Method meth;
@@ -264,3 +344,5 @@ int main(void) {
 
   return 0;
 }
+#endif /* OBJC_API_VERSION >= 2 */
+/* APPLE LOCAL end objc2 */

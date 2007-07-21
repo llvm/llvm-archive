@@ -4,7 +4,7 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com> */
 
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-gused" } */
+/* { dg-options "-gstabs+ -gused" } */
 
 #include <objc/Object.h>
 

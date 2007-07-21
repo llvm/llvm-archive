@@ -58,7 +58,7 @@
 4261575: objc.dg/const-str-8.m (test for excess errors)
 #
 # the following failures are for x86 -m64 only 
-4674613: objc.dg/encode-7.m execution test
+4674613: objc.dg/encode-7a.m execution test
 4674613: objc.dg/const-cfstring-4.m scan-assembler .long\t___CFConstantStringClassReference\n\t.long\t1992\n\t.long\t.*\n\t.long\t19\n\t.data
 4674613: objc.dg/const-str-10.m scan-assembler .long\t__NSConstantStringClassReference\n\t.long\t.*\n\t.long\t5\n\t.data
 4674613: objc.dg/const-str-11.m scan-assembler .long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5\n\t.data

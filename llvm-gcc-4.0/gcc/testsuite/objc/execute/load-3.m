@@ -9,7 +9,8 @@
  */
 
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 
 @interface A : Object
 @end

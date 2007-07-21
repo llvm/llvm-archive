@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4492976 */
 /* Check if the objc_symtab descriptor is being laid out correctly.  */
-/* { dg-options "-fnext-runtime -m64" } */
+/* { dg-options "-fnext-runtime -m64 -fobjc-abi-version=1" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <objc/Object.h>

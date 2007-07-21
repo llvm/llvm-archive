@@ -3,6 +3,8 @@
 /* { dg-options "-lobjc" } */
 /* { dg-do run } */
 
+/* APPLE LOCAL objc2 */
+#include <stddef.h>
 #include <objc/Object.h>
 #ifdef __NEXT_RUNTIME__
 #include <objc/objc-class.h>
@@ -49,23 +51,46 @@ struct Nested {
 @implementation Int2
 @end
 
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+Ivar *ivar;
+#else
 struct objc_ivar *ivar;
+#endif
 
 static void check_ivar(const char *name, const char *type) {
+#if OBJC_API_VERSION >= 2
+  CHECK_IF(!strcmp(ivar_getName(*ivar), name));
+  CHECK_IF(!strcmp(ivar_getTypeEncoding(*ivar), type));
+#else
   CHECK_IF(!strcmp(ivar->ivar_name, name));
   CHECK_IF(!strcmp(ivar->ivar_type, type));
+#endif
   ivar++;
 }
+/* APPLE LOCAL end objc2 */
 
 int main(void) {
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+  ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int1"), NULL);
+#else
   ivar = ((Class)OBJC_GETCLASS("Int1"))->ivars->ivar_list;
+#endif
+/* APPLE LOCAL end objc2 */
   check_ivar("a", "c");
   check_ivar("b", "c");
   check_ivar("int2", "@\"Int2\"");
   check_ivar("nested", 
     "{Nested=\"a\"f\"b\"f\"next\"@\"Int1\"\"innermost\"{Innermost=\"a\"C\"b\"C\"encl\"^{Nested}}}");
-    
+
+/* APPLE LOCAL begin objc2 */
+#if OBJC_API_VERSION >= 2
+  ivar = class_copyIvarList ((Class)OBJC_GETCLASS("Int2"), NULL);
+#else
   ivar = ((Class)OBJC_GETCLASS("Int2"))->ivars->ivar_list;
+#endif
+/* APPLE LOCAL end objc2 */
   check_ivar("innermost", "^{Innermost=CC^{Nested}}");
   check_ivar("base", "@\"Int1\"");
   

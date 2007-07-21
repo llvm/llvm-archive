@@ -10,7 +10,7 @@
 
 @interface Foo : NSObject {
 };
-+ (NSString*) name;
++ (NSString*) _name;
 + (NSMutableDictionary*) _adaptorClassesDictionary;
 + (NSMutableSet*) _debuggerAdaptorClassesSet;
 + (void) registerAdaptorClasses:(NSArray *)adaptorClasses;
@@ -18,7 +18,7 @@
 @end
 
 @implementation Foo 
-+ (NSString*) name { return nil;}
++ (NSString*) _name { return nil;}
 + (NSMutableDictionary*) _adaptorClassesDictionary { return nil;}
 + (NSMutableSet*) _debuggerAdaptorClassesSet { return nil;}
 
@@ -26,7 +26,7 @@
   int i;
   for (i=0;i<[adaptorClasses count];i++) {
         Class adaptorClass = [adaptorClasses objectAtIndex: i];
-        [[self _adaptorClassesDictionary] setObject:adaptorClass forKey:[adaptorClass name]];
+        [[self _adaptorClassesDictionary] setObject:adaptorClass forKey:[adaptorClass _name]];
         if ([adaptorClass isSubclassOfClass:[PBXLSDebuggerAdaptor class]]) {
             [[self _debuggerAdaptorClassesSet] addObject:adaptorClass];
         }
@@ -36,7 +36,7 @@
 + (void) registerAdaptorClasses1:(NSArray *)adaptorClasses
 {
     for (Class  adaptorClass in adaptorClasses) {
-        [[self _adaptorClassesDictionary] setObject:adaptorClass forKey:[adaptorClass name]];
+        [[self _adaptorClassesDictionary] setObject:adaptorClass forKey:[adaptorClass _name]];
         if ([adaptorClass isSubclassOfClass:[PBXLSDebuggerAdaptor class]]) {
             [[self _debuggerAdaptorClassesSet] addObject:adaptorClass];
         }

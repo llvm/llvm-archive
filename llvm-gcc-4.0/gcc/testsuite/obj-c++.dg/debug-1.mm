@@ -2,8 +2,8 @@
 /* Contributed by Devang Patel  <dpatel@apple.com> */
 /* Tesst debug info for virtual base class.  */
 /* { dg-do compile }  */
-/* { dg-options "-gfull" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-options "-gstabs+ -gfull" } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 class A
 {

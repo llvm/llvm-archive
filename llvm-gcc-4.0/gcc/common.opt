@@ -215,7 +215,7 @@ Common Joined UInteger Var(flag_abi_version) Init(2)
 
 ; APPLE LOCAL begin ObjC new abi
 fobjc-abi-version=
-Common Joined UInteger Var(flag_objc_abi) Init(1)
+Common Joined UInteger Var(flag_objc_abi) Init(-1)
 
 fobjc-nilcheck
 Common Report Var(flag_objc_nilcheck,1)
@@ -243,15 +243,17 @@ Align labels which are only reached by jumping
 falign-jumps=
 Common RejectNegative Joined UInteger Var(align_jumps) VarExists VarUint PerFunc
 
+; APPLE LOCAL begin 4760857 make align-jumps-max-skip PerFunc
 ; APPLE LOCAL begin falign-jumps-max-skip
 
 falign-jumps-max-skip
-Common Report Var(align_jumps_max_skip,0)
+Common Report Var(align_jumps_max_skip,0) VarUint PerFunc
 
 falign-jumps-max-skip=
-Common RejectNegative Joined UInteger
+Common RejectNegative Joined UInteger Var(align_jumps_max_skip) PerFunc VarUint VarExists
 
 ; APPLE LOCAL end falign-jumps-max-skip
+; APPLE LOCAL end 4760857 make align-jumps-max-skip PerFunc
 
 falign-labels
 Common Report Var(align_labels,0) VarUint PerFunc
@@ -268,15 +270,17 @@ falign-loops=
 Common RejectNegative Joined UInteger Var(align_loops) VarExists PerFunc VarUint
 
 ; APPLE LOCAL end optimization pragmas 3124235/3420242
+; APPLE LOCAL begin 4760857 make align-loops-max-skip PerFunc
 ; APPLE LOCAL begin falign-loops-max-skip
 
 falign-loops-max-skip
-Common Report Var(align_loops_max_skip,0)
+Common Report Var(align_loops_max_skip,0) VarUint PerFunc
 
 falign-loops-max-skip=
-Common RejectNegative Joined UInteger
+Common RejectNegative Joined UInteger Var(align_loops_max_skip) VarExists PerFunc VarUint
 
 ; APPLE LOCAL end falign-loops-max-skip
+; APPLE LOCAL end 4760857 make align-loops-max-skip PerFunc
 
 ; APPLE LOCAL begin predictive compilation
 fpredictive-compilation
@@ -1128,11 +1132,23 @@ Common Report Var(flag_writable_strings) VarExists
 Store strings in writable data section
 ; APPLE LOCAL end fwritable strings
 
-; APPLE LOCAL begin KEXT
+; APPLE LOCAL begin mainline in darwin.opt
+; APPLE LOCAL begin iframework for 4.3 add C++ 4094959
 fapple-kext
-C++ Report Var(flag_apple_kext)
+Target Report C++ Var(flag_apple_kext)
 Generate code for darwin loadable kernel extentions
-; APPLE LOCAL end KEXT
+; APPLE LOCAL end iframework for 4.3 add C++ 4094959
+
+mkernel
+Target Report Var(flag_mkernel)
+Generate code for the kernel or loadable kernel extentions
+; APPLE LOCAL end mainline in darwin.opt
+
+; APPLE LOCAL begin iframework for 4.3 darwin.opt 4094959
+iframework
+Target RejectNegative C ObjC C++ ObjC++ Joined Separate 
+-iframework <dir>	Add <dir> to the end of the system framework include path
+; APPLE LOCAL end iframework for 4.3 darwin.opt 4094959
 
 fzero-initialized-in-bss
 Common Report Var(flag_zero_initialized_in_bss) Init(1)

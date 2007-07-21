@@ -139,13 +139,14 @@ extern void ix86_expand_binary_operator (enum rtx_code,
 extern int ix86_binary_operator_ok (enum rtx_code, enum machine_mode, rtx[]);
 extern void ix86_expand_unary_operator (enum rtx_code, enum machine_mode,
 					rtx[]);
-/* APPLE LOCAL begin 4176531 4424891 */
+/* APPLE LOCAL begin 4176531 4424891 4639472 */
 extern const char *ix86_expand_convert_uns_DF2SI_sse (rtx *);
 extern const char *ix86_expand_convert_uns_SF2SI_sse (rtx *);
 extern const char *ix86_expand_convert_uns_DI2DF_sse (rtx *);
 extern const char *ix86_expand_convert_uns_SI2DF_sse (rtx *);
+extern const char *ix86_expand_convert_uns_SI2SF_sse (rtx *);
 extern const char *ix86_expand_convert_sign_DI2DF_sse (rtx *);
-/* APPLE LOCAL end 4176531 4424891 */
+/* APPLE LOCAL end 4176531 4424891 4639472 */
 extern rtx ix86_build_signbit_mask (enum machine_mode, bool, bool);
 extern void ix86_expand_fp_absneg_operator (enum rtx_code, enum machine_mode,
 					    rtx[]);
@@ -186,6 +187,8 @@ extern bool ix86_function_value_regno_p (int);
 extern bool ix86_function_arg_regno_p (int);
 extern int ix86_function_arg_boundary (enum machine_mode, tree);
 extern int ix86_return_in_memory (tree);
+/* APPLE LOCAL radar 4781080 */
+extern bool ix86_objc_fpreturn_msgcall (tree, bool);
 extern void ix86_va_start (tree, rtx);
 extern rtx ix86_va_arg (tree, tree);
 

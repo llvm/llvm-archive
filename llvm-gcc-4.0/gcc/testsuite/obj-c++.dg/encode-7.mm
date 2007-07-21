@@ -63,15 +63,25 @@ int main(int argc, char **argv)
 
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test2:with:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
-  sscanf(meth->method_types, "v%d@%d:%d[%di]%d^i%d", &offs1, &offs2, &offs3,
-      &offs4, &offs5, &offs6);
+#if OBJC_API_VERSION >= 2
+  sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%di]%d^i%d", &offs1,
+	 &offs2, &offs3, &offs4, &offs5, &offs6);
+#else
+  sscanf(meth->method_types, "v%d@%d:%d[%di]%d^i%d", &offs1,
+	 &offs2, &offs3, &offs4, &offs5, &offs6);
+#endif
   CHECK_IF (!offs2 && offs4 == 5 && offs3 > 0);
   CHECK_IF (offs5 == 2 * offs3 && offs6 == 3 * offs3 && offs1 == 4 * offs3);
   
   meth = CLASS_GETINSTANCEMETHOD(testClass, @selector(test3:));
   offs1 = offs2 = offs3 = offs4 = offs5 = offs6 = -1;
-  sscanf(meth->method_types, "v%d@%d:%d[%d[%d{Test=#f}]]%d", &offs1, &offs2, &offs3,
-      &offs4, &offs5, &offs6);
+#if OBJC_API_VERSION >= 2
+  sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%d[%d{Test=#f}]]%d",
+	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
+#else
+  sscanf(meth->method_types, "v%d@%d:%d[%d[%d{Test=#f}]]%d",
+	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
+#endif
   CHECK_IF (!offs2 && offs4 == 3 && offs5 == 4 && offs3 > 0);
   CHECK_IF (offs6 == 2 * offs3 && offs1 == 3 * offs3);
   

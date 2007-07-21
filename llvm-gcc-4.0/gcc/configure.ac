@@ -935,13 +935,15 @@ vax-*-*)
     stage1_cflags="-J"
   fi
   ;;
-powerpc-*-darwin*)
+# APPLE LOCAL begin mainline
+powerpc*-*-darwin*)
   # The spiffy cpp-precomp chokes on some legitimate constructs in GCC
   # sources; use -no-cpp-precomp to get to GNU cpp.
   # Apple's GCC has bugs in designated initializer handling, so disable
   # that too.
   stage1_cflags="-no-cpp-precomp -DHAVE_DESIGNATED_INITIALIZERS=0"
   ;;
+# APPLE LOCAL end mainline
 esac
 AC_SUBST(stage1_cflags)
 
@@ -1228,6 +1230,8 @@ fi
 
 # Say what files are being used for the output code and MD file.
 echo "Using \`$srcdir/config/$out_file' for machine-specific logic."
+# APPLE LOCAL llvm
+echo "Using \`$srcdir/config/$out_cxx_file' for machine-specific C++ logic."
 echo "Using \`$srcdir/config/$md_file' as machine description file."
 
 # If any of the xm_file variables contain nonexistent files, warn
@@ -1319,7 +1323,7 @@ fi
 
 # APPLE LOCAL begin mainline 2006-06-02 4508814
 case ${host} in
-  powerpc-*-darwin*)
+  powerpc*-*-darwin*)
     AC_CACHE_CHECK([whether mcontext_t fields have underscores],
       gcc_cv_mcontext_underscores,
       AC_COMPILE_IFELSE([
@@ -1602,6 +1606,8 @@ cc_for_cross_gnattools=${CC}
 AC_SUBST(cc_for_cross_gnattools)
 
 out_object_file=`basename $out_file .c`.o
+# APPLE LOCAL LLVM
+out_cxx_object_file=`basename $out_cxx_file .cpp`.o
 
 tm_file_list=
 tm_include_list=
@@ -3385,7 +3391,11 @@ AC_SUBST(local_prefix)
 AC_SUBST(md_file)
 AC_SUBST(objc_boehm_gc)
 AC_SUBST(out_file)
+# APPLE LOCAL llvm
+AC_SUBST(out_cxx_file)
 AC_SUBST(out_object_file)
+# APPLE LOCAL llvm
+AC_SUBST(out_cxx_object_file)
 AC_SUBST(stage_prefix_set_by_configure)
 AC_SUBST(quoted_stage_prefix_set_by_configure)
 AC_SUBST(thread_file)

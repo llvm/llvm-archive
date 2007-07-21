@@ -4,7 +4,7 @@
 
 /* { dg-options "-fnext-runtime -fno-constant-cfstrings" } */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>
 
@@ -14,7 +14,11 @@
 }
 @end
 
+#if OBJC_API_VERSION >= 2
+extern Class _NSConstantStringClassReference;
+#else
 extern struct objc_class _NSConstantStringClassReference;
+#endif
 
 const NSConstantString *appKey = @"MyApp";
 

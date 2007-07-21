@@ -1,6 +1,8 @@
 /* Test for handling of function pointer ivars */
 /* { dg-do run } */
 
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 #include <objc/Object.h>
 
 extern int strcmp(const char *, const char *);

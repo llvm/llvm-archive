@@ -371,6 +371,8 @@ AR_FOR_TARGET := $(shell \
 AR_FLAGS_FOR_TARGET =
 AR_CREATE_FOR_TARGET = $(AR_FOR_TARGET) $(AR_FLAGS_FOR_TARGET) rc
 AR_EXTRACT_FOR_TARGET = $(AR_FOR_TARGET) $(AR_FLAGS_FOR_TARGET) x
+# APPLE LOCAL mainline
+LIPO_FOR_TARGET = lipo
 RANLIB_FOR_TARGET := $(shell \
   if [ -f $(objdir)/../binutils/ranlib ] ; then \
     echo $(objdir)/../binutils/ranlib ; \
@@ -393,6 +395,8 @@ NM_FOR_TARGET := $(shell \
        t='$(program_transform_name)'; echo nm | sed -e $$t ; \
     fi; \
   fi)
+# APPLE LOCAL mainline
+STRIP_FOR_TARGET = strip
 
 # --------
 # UNSORTED
@@ -3757,7 +3761,8 @@ install-mkheaders: stmp-int-hdrs $(STMP_FIXPROTO) install-include-dir \
 	  $(INSTALL_PROGRAM) build/fix-header$(build_exeext) \
 		$(DESTDIR)$(itoolsdir)/fix-header$(build_exeext) ; \
 	else :; fi
-	echo 'SYSTEM_HEADER_DIR="'"$(SYSTEM_HEADER_DIR)"'"' \
+	# APPLE LOCAL sdk support
+	echo 'SYSTEM_HEADER_DIR="$$ISYSROOT'"$(SYSTEM_HEADER_DIR)"'"' \
 		> $(DESTDIR)$(itoolsdatadir)/mkheaders.conf
 	echo 'OTHER_FIXINCLUDES_DIRS="$(OTHER_FIXINCLUDES_DIRS)"' \
 		>> $(DESTDIR)$(itoolsdatadir)/mkheaders.conf
@@ -4223,22 +4228,22 @@ slowcompare slowcompare3 slowcompare4 slowcompare-lean slowcompare3-lean slowcom
 fastcompare fastcompare3 fastcompare4 fastcompare-lean fastcompare3-lean fastcompare4-lean \
  gnucompare  gnucompare3  gnucompare4  gnucompare-lean  gnucompare3-lean  gnucompare4-lean: force
 	-rm -f .bad_compare
- # APPLE LOCAL begin mainline 4.1 2005-06-17 3988498
+ # APPLE LOCAL begin mainline
 	case "$@" in *compare | *compare-lean ) stage=2 ;; * ) stage=`echo $@ | sed -e 's,^[a-z]*compare\([0-9][0-9]*\).*,\1,'` ;; esac; \
 	for dir in . $(SUBDIRS) libgcc; do \
 	  if [ "`echo $$dir/*$(objext)`" != "$$dir/*$(objext)" ] ; then \
 	    for file in $$dir/*$(objext); do \
 	      case $$file in \
 		./cc*-checksum$(objext) | libgcc/* ) \
-		    tail -c 16 ./$$file > tmp-foo1 \
-		    && tail -c 16 stage$$stage/$$file > tmp-foo2 \
+		    tail -c +17 ./$$file > tmp-foo1 \
+		    && tail -c +17 stage$$stage/$$file > tmp-foo2 \
 		    && ( cmp tmp-foo1 tmp-foo2 > /dev/null 2>&1 \
 			 || echo warning: $$file differs || true ) \
 		  ;; \
 		*)  case "$@" in \
 		  slowcompare* ) \
-		    tail -c 16 ./$$file > tmp-foo1; \
-		    tail -c 16 stage$$stage/$$file > tmp-foo2 \
+		    tail -c +17 ./$$file > tmp-foo1; \
+		    tail -c +17 stage$$stage/$$file > tmp-foo2 \
 		      && (cmp tmp-foo1 tmp-foo2 > /dev/null 2>&1 \
 			  || echo $$file differs >> .bad_compare) || true; \
 		    ;; \
@@ -4255,7 +4260,7 @@ fastcompare fastcompare3 fastcompare4 fastcompare-lean fastcompare3-lean fastcom
 	    done; \
 	  else true; fi; \
 	done
- # APPLE LOCAL end mainline 4.1 2005-06-17 3988498
+ # APPLE LOCAL end mainline
 	-rm -f tmp-foo*
 	case "$@" in *compare | *compare-lean ) stage=2 ;; * ) stage=`echo $@ | sed -e 's,^[a-z]*compare\([0-9][0-9]*\).*,\1,'` ;; esac; \
 	if [ -f .bad_compare ]; then \

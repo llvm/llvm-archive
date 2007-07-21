@@ -118,10 +118,6 @@ extern int machopic_symbol_defined_p (rtx);
    architecture.  */
    
 #define TARGET_OPTION_TRANSLATE_TABLE \
-/* APPLE LOCAL KEXT terminated-vtables */ \
-  { "-fterminated-vtables", "-fapple-kext" }, \
-/* APPLE LOCAL KEXT indirect-virtual-calls --sts */ \
-  { "-findirect-virtual-calls", "-fapple-kext" }, \
   { "-all_load", "-Zall_load" },  \
   { "-allowable_client", "-Zallowable_client" },  \
   { "-arch_errors_fatal", "-Zarch_errors_fatal" },  \
@@ -144,14 +140,24 @@ extern int machopic_symbol_defined_p (rtx);
   { "-seg_addr_table", "-Zseg_addr_table" }, \
   /* APPLE LOCAL mainline 4.2 3941990 */ \
   { "-seg_addr_table_filename", "-Zfn_seg_addr_table_filename" }, \
+  /* APPLE LOCAL mainline */ \
+  { "-fapple-kext", "-fapple-kext -static -Wa,-static" }, \
   { "-filelist", "-Xlinker -filelist -Xlinker" },  \
-  { "-framework", "-Xlinker -framework -Xlinker" },  \
+  /* APPLE LOCAL begin mainline */ \
+  { "-findirect-virtual-calls", "-fapple-kext" }, \
+  /* APPLE LOCAL end mainline */ \
   { "-flat_namespace", "-Zflat_namespace" },  \
   { "-force_cpusubtype_ALL", "-Zforce_cpusubtype_ALL" },  \
   { "-force_flat_namespace", "-Zforce_flat_namespace" },  \
+  /* APPLE LOCAL mainline */ \
+  { "-framework", "-Xlinker -framework -Xlinker" },  \
+  /* APPLE LOCAL mainline */ \
+  { "-fterminated-vtables", "-fapple-kext" }, \
   { "-image_base", "-Zimage_base" },  \
   { "-init", "-Zinit" },  \
   { "-install_name", "-Zinstall_name" },  \
+  /* APPLE LOCAL mainline */ \
+  { "-mkernel", "-mkernel -static -Wa,-static" }, \
   { "-multiply_defined_unused", "-Zmultiplydefinedunused" },  \
   { "-multiply_defined", "-Zmultiply_defined" },  \
   { "-multi_module", "-Zmulti_module" },  \
@@ -186,7 +192,7 @@ extern int darwin_running_cxx;
    but there are no more bits in rs6000 TARGET_SWITCHES.  Note
    that this switch has no "no-" variant. */
 extern const char *darwin_one_byte_bool;
-  
+
 /* APPLE LOCAL begin pragma reverse_bitfields */
 /* True if pragma reverse_bitfields is in effect. */
 extern GTY(()) int darwin_reverse_bitfields;
@@ -234,53 +240,41 @@ extern const char *darwin_macho_att_stub_switch;
    {"no-warn-nonportable-cfstrings", &darwin_warn_nonportable_cfstrings_switch, "", 0}
 
 #define SUBSUBTARGET_OVERRIDE_OPTIONS					\
-do {									\
-  /* APPLE LOCAL kext */                                                \
-  extern int flag_weak;                                                 \
-  if (darwin_constant_cfstrings_switch)					\
-    {									\
-      const char *base = darwin_constant_cfstrings_switch;		\
-      while (base[-1] != 'm') base--;					\
+  do {									\
+    if (darwin_constant_cfstrings_switch)				\
+      {									\
+	const char *base = darwin_constant_cfstrings_switch;		\
+	while (base[-1] != 'm') base--;					\
 									\
-      if (*darwin_constant_cfstrings_switch != '\0')			\
-	error ("invalid option `%s'", base);				\
-      darwin_constant_cfstrings = (base[0] != 'n');			\
-    }									\
-  if (darwin_warn_nonportable_cfstrings_switch)				\
-    {									\
-      const char *base = darwin_warn_nonportable_cfstrings_switch;	\
-      while (base[-1] != 'm') base--;					\
+	if (*darwin_constant_cfstrings_switch != '\0')			\
+	  error ("invalid option `%s'", base);				\
+	darwin_constant_cfstrings = (base[0] != 'n');			\
+      }									\
+    if (darwin_warn_nonportable_cfstrings_switch)			\
+      {									\
+	const char *base = darwin_warn_nonportable_cfstrings_switch;	\
+	while (base[-1] != 'm') base--;					\
 									\
-      if (*darwin_warn_nonportable_cfstrings_switch != '\0')		\
-	error ("invalid option `%s'", base);				\
-      darwin_warn_nonportable_cfstrings = (base[0] != 'n');		\
-    }									\
-  if (darwin_pascal_strings_switch)					\
-    {									\
-      const char *base = darwin_pascal_strings_switch;			\
-      while (base[-1] != 'm') base--;					\
+	if (*darwin_warn_nonportable_cfstrings_switch != '\0')		\
+	  error ("invalid option `%s'", base);				\
+	darwin_warn_nonportable_cfstrings = (base[0] != 'n');		\
+      }									\
+    if (darwin_pascal_strings_switch)					\
+      {									\
+	const char *base = darwin_pascal_strings_switch;		\
+	while (base[-1] != 'm') base--;					\
 									\
-      if (*darwin_pascal_strings_switch != '\0')			\
-	error ("invalid option `%s'", base);				\
-      darwin_pascal_strings = (base[0] != 'n');				\
-      if (darwin_pascal_strings)					\
-        CPP_OPTION (parse_in, pascal_strings) = 1;			\
-    }									\
-  /* The c_dialect...() macros are not available to us here.  */	\
-  darwin_running_cxx = (strstr (lang_hooks.name, "C++") != 0);		\
-  /* APPLE LOCAL begin kexts --bowdidge */                              \
-  /* kexts should always be built without the coalesced sections */     \
-  /*  because the kernel loader doesn't grok such sections. */          \
-  if (flag_apple_kext) flag_weak = 0;                                   \
-  /* APPLE LOCAL end kexts */                                           \
-} while(0)
-
-/* APPLE LOCAL begin kexts */
-#define SUBTARGET_C_COMMON_OVERRIDE_OPTIONS do {	\
-  if (flag_apple_kext && flag_use_cxa_atexit == 2)	\
-    flag_use_cxa_atexit = 0;				\
-} while (0)
-/* APPLE LOCAL end kexts */
+	if (*darwin_pascal_strings_switch != '\0')			\
+	  error ("invalid option `%s'", base);				\
+	darwin_pascal_strings = (base[0] != 'n');			\
+	if (darwin_pascal_strings)					\
+	  CPP_OPTION (parse_in, pascal_strings) = 1;			\
+      }									\
+    /* The c_dialect...() macros are not available to us here.  */	\
+    darwin_running_cxx = (strstr (lang_hooks.name, "C++") != 0);	\
+    /* APPLE LOCAL mainline */						\
+    darwin_override_options ();						\
+  } while (0)
 
 #define SUBTARGET_INIT_BUILTINS		\
 do {					\
@@ -340,6 +334,21 @@ do {					\
    !strcmp (STR, "dylinker_install_name") ? 1 : \
    0)
 
+/* APPLE LOCAL begin mainline */
+#define SUBTARGET_C_COMMON_OVERRIDE_OPTIONS do {			\
+    if (flag_mkernel || flag_apple_kext)				\
+      {									\
+	if (flag_use_cxa_atexit == 2)					\
+	  flag_use_cxa_atexit = 0;					\
+        /* kexts should always be built without the coalesced sections  \
+           because the kernel loader doesn't grok such sections.  */    \
+	flag_weak = 0;                                                  \
+	/* No RTTI in kexts.  */					\
+	flag_rtti = 0;							\
+      }									\
+} while (0)
+/* APPLE LOCAL end mainline */
+
 /* Machine dependent cpp options.  __APPLE_CC__ is defined as the
    Apple include files expect it to be defined and won't work if it
    isn't.  */
@@ -366,11 +375,11 @@ do {					\
    instead of LINK_COMMAND_SPEC.  The command spec is better for
    specifying the handling of options understood by generic Unix
    linkers, and for positional arguments like libraries.  */
+/* APPLE LOCAL begin no-libtool */
 #define LINK_COMMAND_SPEC "\
 %{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %{!Zdynamiclib:%(linker)}%{Zdynamiclib:/usr/bin/libtool} \
-    %l %X %{d} %{s} %{t} %{Z} \
-    %{!Zdynamiclib:%{A} %{e*} %{m} %{N} %{n} %{r} %{u*} %{x} %{z}} \
+    %(linker) %l %X %{d} %{s} %{t} %{Z} \
+    %{A} %{e*} %{m} %{r} %{x} \
     %{@:-o %f%u.out}%{!@:%{o*}%{!o:-o a.out}} \
 "/* APPLE LOCAL mainline 2006-04-01 4495520 */"\
     %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
@@ -379,7 +388,13 @@ do {					\
 "/* APPLE LOCAL nested functions 4357979  */"\
     %{fnested-functions: -allow_stack_execute} \
     %{!nostdlib:%{!nodefaultlibs:%G %L}} \
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}"
+"/* APPLE LOCAL begin mainline 4.3 2006-12-20 4370146 4869554 */"\
+    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
+%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+    %{.c|.cc|.C|.cpp|.c++|.CPP|.m|.mm: \
+    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+/* APPLE LOCAL end mainline 4.3 2006-12-20 4370146 4869554 */
+/* APPLE LOCAL end no-libtool */
 
 /* Please keep the random linker options in alphabetical order (modulo
    'Z' and 'no' prefixes).  Options that can only go to one of libtool
@@ -388,6 +403,7 @@ do {					\
 /* Note that options taking arguments may appear multiple times on a
    command line with different arguments each time, so put a * after
    their names so all of them get passed.  */
+/* APPLE LOCAL begin no-libtool */
 #define LINK_SPEC  \
   "%{static}%{!static:-dynamic} \
    %{fgnu-runtime:%:replace-outfile(-lobjc -lobjc-gnu)}\
@@ -405,20 +421,20 @@ do {					\
      %{keep_private_externs} \
      %{private_bundle} \
     } \
-   %{Zdynamiclib: \
+   %{Zdynamiclib: -dylib \
      %{Zbundle:%e-bundle not allowed with -dynamiclib} \
      %{Zbundle_loader*:%e-bundle_loader not allowed with -dynamiclib} \
      %{client_name*:%e-client_name not allowed with -dynamiclib} \
-     %{compatibility_version*} \
-     %{current_version*} \
-     %{Zforce_cpusubtype_ALL:-arch_only %(darwin_arch)} \
-     %{!Zforce_cpusubtype_ALL: -arch_only %(darwin_subarch)} \
+     %{compatibility_version*:-dylib_compatibility_version %*} \
+     %{current_version*:-dylib_current_version %*} \
+     %{Zforce_cpusubtype_ALL:-arch %(darwin_arch)} \
+     %{!Zforce_cpusubtype_ALL: -arch %(darwin_subarch)} \
      %{Zforce_flat_namespace:%e-force_flat_namespace not allowed with -dynamiclib} \
-     %{Zinstall_name*:-install_name %*} \
+     %{Zinstall_name*:-dylib_install_name %*} \
      %{keep_private_externs:%e-keep_private_externs not allowed with -dynamiclib} \
      %{private_bundle:%e-private_bundle not allowed with -dynamiclib} \
     } \
-   %{Zall_load:-all_load}%{Zdynamiclib:%{!Zall_load:-noall_load}} \
+   %{Zall_load:-all_load} \
    %{Zallowable_client*:-allowable_client %*} \
    %{Zbind_at_load:-bind_at_load} \
    %{Zarch_errors_fatal:-arch_errors_fatal} \
@@ -469,7 +485,7 @@ do {					\
    %{sectalign*} %{sectobjectsymbols*} %{segcreate*} %{whyload} \
    %{whatsloaded} %{dylinker_install_name*} \
    %{dylinker} %{Mach} "
-
+/* APPLE LOCAL end no-libtool */
 
 /* APPLE LOCAL begin mainline 2005-09-01 3449986 */
 /* Machine dependent libraries.  */
@@ -490,7 +506,7 @@ do {					\
    you want to explicitly link against the static version of those
    routines, because you know you don't need to unwind through system
    libraries, you need to explicitly say -static-libgcc.
-   
+
    If it is linked against, it has to be before -lgcc, because it may
    need symbols from -lgcc.  */
 #undef REAL_LIBGCC_SPEC
@@ -513,42 +529,57 @@ do {					\
    it's only used with C++, which requires passing -shared-libgcc, key
    off that to avoid unnecessarily adding a destructor to every
    powerpc program built.  */
-
+/* APPLE LOCAL begin no-libtool */
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC  \
-  "%{!Zdynamiclib:%{Zbundle:%{!static:-lbundle1.o}} \
-     %{!Zbundle:%{pg:%{static:-lgcrt0.o} \
-                     %{!static:%{object:-lgcrt0.o} \
-                               %{!object:%{preload:-lgcrt0.o} \
+  "%{Zdynamiclib: %(darwin_dylib1) }   						\
+   %{!Zdynamiclib:%{Zbundle:%{!static:-lbundle1.o}}			\
+     %{!Zbundle:%{pg:%{static:-lgcrt0.o}				\
+                     %{!static:%{object:-lgcrt0.o}			\
+                               %{!object:%{preload:-lgcrt0.o}		\
                                  %{!preload:-lgcrt1.o %(darwin_crt2)}}}} \
-                %{!pg:%{static:-lcrt0.o} \
-                      %{!static:%{object:-lcrt0.o} \
-                                %{!object:%{preload:-lcrt0.o} \
-                                  %{!preload:-lcrt1.o %(darwin_crt2)}}}}}}  \
+                %{!pg:%{static:-lcrt0.o}				\
+                      %{!static:%{object:-lcrt0.o}			\
+                                %{!object:%{preload:-lcrt0.o}		\
+                                  %{!preload:%(darwin_crt1) %(darwin_crt2)}}}}}}\
   %{shared-libgcc:%:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}"
 
+/* APPLE LOCAL end no-libtool */
 /* APPLE LOCAL end 4484188 */
 /* The native Darwin linker doesn't necessarily place files in the order
    that they're specified on the link line.  Thus, it is pointless
    to put anything in ENDFILE_SPEC.  */
 /* #define ENDFILE_SPEC "" */
+/* APPLE LOCAL begin crt1 4521370 */
+#define DARWIN_EXTRA_SPECS	\
+  { "darwin_crt1", DARWIN_CRT1_SPEC },					\
+  { "darwin_dylib1", DARWIN_DYLIB1_SPEC },
 
+#define DARWIN_DYLIB1_SPEC						\
+  "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
+   %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)"
+
+#define DARWIN_CRT1_SPEC						\
+  "%:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
+   %:version-compare(>= 10.5 mmacosx-version-min= -lcrt1.10.5.o)"
+
+/* APPLE LOCAL end crt1 4521370 */
 /* Default Darwin ASM_SPEC, very simple.  */
 /* APPLE LOCAL begin radar 4161346 */
 #define ASM_SPEC "-arch %(darwin_arch) \
   %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL} \
   %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}}"
 /* APPLE LOCAL end radar 4161346 */
-/* APPLE LOCAL begin mainline */
-/* We use Dbx symbol format on 32 bit systems  */
+/* APPLE LOCAL begin for-fsf-4_3 4370143 */
+/* We still allow output of STABS.  */
+
 #define DBX_DEBUGGING_INFO 1
 
-/* Also enable Dwarf 2 as an option.  */
+/* Prefer DWARF2.  */
 #define DWARF2_DEBUGGING_INFO
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
-/* Default to stabs */
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-/* APPLE LOCAL end mainline */
+/* APPLE LOCAL end for-fsf-4_3 4370143 */
 /* APPLE LOCAL begin mainline 2006-03-16 dwarf2 section flags */
 #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"
 #define DEBUG_INFO_SECTION	"__DWARF,__debug_info,regular,debug"
@@ -558,6 +589,9 @@ do {					\
 #define DEBUG_LINE_SECTION	"__DWARF,__debug_line,regular,debug"
 #define DEBUG_LOC_SECTION	"__DWARF,__debug_loc,regular,debug"
 #define DEBUG_PUBNAMES_SECTION	"__DWARF,__debug_pubnames,regular,debug"
+/* APPLE LOCAL begin pubtypes, approved for 4.3  4535968 */
+#define DEBUG_PUBTYPES_SECTION  "__DWARF,__debug_pubtypes,regular,debug"
+/* APPLE LOCAL end pubtypes, approved for 4.3 4535968 */
 #define DEBUG_STR_SECTION	"__DWARF,__debug_str,regular,debug"
 #define DEBUG_RANGES_SECTION	"__DWARF,__debug_ranges,regular,debug"
 /* APPLE LOCAL end mainline 2006-03-16 dwarf2 section flags */
@@ -693,6 +727,24 @@ do {					\
 	 sprintf (BUF, "%c[%s %s]", (IS_INST) ? '-' : '+',		\
 		  (CLASS_NAME), (SEL_NAME));				\
      } while (0)
+
+/* APPLE LOCAL begin radar 4862848 */
+#undef OBJC_FLAG_OBJC_ABI
+#define OBJC_FLAG_OBJC_ABI						\
+  do { if (flag_objc_abi == -1)						\
+	 flag_objc_abi = TARGET_64BIT ? 2 : 1;				\
+  } while (0)
+/* APPLE LOCAL end radar 4862848 */
+
+/* APPLE LOCAL begin radar 4531086 */
+#undef OBJC_WARN_OBJC2_FEATURES
+#define OBJC_WARN_OBJC2_FEATURES(MESSAGE)				\
+  do { if (darwin_macosx_version_min					\
+	   && strverscmp (darwin_macosx_version_min, "10.5") < 0)	\
+	 warning ("Mac OS X version 10.5 or later is needed for use of %s",	\
+		  MESSAGE);						\
+     } while (0)
+/* APPLE LOCAL end radar 4531086 */
 
 /* The RTTI data (e.g., __ti4name) is common and public (and static),
    but it does need to be referenced via indirect PIC data pointers.
@@ -1264,10 +1316,10 @@ objc_section_init (void)			\
 /* Extra attributes for Darwin.  */
 #define SUBTARGET_ATTRIBUTE_TABLE					     \
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler } */ \
-  /* APPLE LOCAL begin KEXT double destructor */			     \
+  /* APPLE LOCAL begin mainline */					     \
   { "apple_kext_compatibility", 0, 0, false, true, false,		     \
-    darwin_handle_odd_attribute },					     \
-  /* APPLE LOCAL end KEXT double destructor */				     \
+    darwin_handle_kext_attribute },					     \
+  /* APPLE LOCAL end mainline */					     \
   /* APPLE LOCAL ObjC GC */						     \
   { "objc_gc", 1, 1, false, true, false, darwin_handle_objc_gc_attribute },  \
   { "weak_import", 0, 0, true, false, false,				     \
@@ -1470,7 +1522,7 @@ extern void abort_assembly_and_exit (int status) ATTRIBUTE_NORETURN;
 #define CHECK_TRIVIAL_FUNCTION(DECL)					\
     do {								\
       const char *_name = IDENTIFIER_POINTER (DECL_NAME (DECL));	\
-      if (flag_apple_kext && DECL_SAVED_TREE (DECL)			\
+      if (TARGET_KEXTABI && DECL_SAVED_TREE (DECL)			\
 	  && strstr (_name, "operator delete")				\
 	  && TREE_CODE (DECL_SAVED_TREE (DECL)) == COMPOUND_STMT	\
 	  && compound_body_is_empty_p (					\
@@ -1490,11 +1542,11 @@ extern void abort_assembly_and_exit (int status) ATTRIBUTE_NORETURN;
    This is getting ever cheesier.  */
 
 #define VPTR_INITIALIZER_ADJUSTMENT	8
-#define ADJUST_VTABLE_INDEX(IDX, VTBL)					\
-    do {								\
-      if (flag_apple_kext)						\
-	(IDX) = fold (build2 (PLUS_EXPR, TREE_TYPE (IDX), IDX, size_int (2))); \
-    } while (0)
+#define ADJUST_VTABLE_INDEX(IDX, VTBL)						\
+  do {										\
+    if (TARGET_KEXTABI)								\
+      (IDX) = fold (build2 (PLUS_EXPR, TREE_TYPE (IDX), IDX, size_int (2)));	\
+  } while (0)
 /* APPLE LOCAL end KEXT double destructor */
 
 /* APPLE LOCAL begin zerofill 20020218 --turly  */
@@ -1533,13 +1585,21 @@ void add_framework_path (char *);
 #define TARGET_C99_FUNCTIONS 1
 
 /* APPLE LOCAL end mainline 2005-09-01 3449986 */
-/* APPLE LOCAL begin KEXT ctors return this */
+#define WINT_TYPE "int"
+
+/* APPLE LOCAL begin mainline */
 /* For Apple KEXTs, we make the constructors return this to match gcc
    2.95.  */
-#define TARGET_CXX_CDTOR_RETURNS_THIS (flag_apple_kext_p)
-/* APPLE LOCAL end KEXT ctors return this */
+#define TARGET_CXX_CDTOR_RETURNS_THIS (darwin_kextabi_p)
+extern int flag_mkernel;
+extern int flag_apple_kext;
+#define TARGET_KEXTABI flag_apple_kext
+/* APPLE LOCAL end mainline */
 
-#define WINT_TYPE "int"
+/* APPLE LOCAL begin iframework for 4.3 4094959 */
+#define TARGET_HANDLE_C_OPTION(CODE, ARG, VALUE)			\
+  darwin_handle_c_option (CODE, ARG, VALUE)
+/* APPLE LOCAL end iframework for 4.3 4094959 */
 
 
 /* APPLE LOCAL begin LLVM */

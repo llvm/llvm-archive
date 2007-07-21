@@ -3,12 +3,14 @@
 /* Provided by Blaine Garst  <blaine@apple.com>  */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc -Wassign-intercept" } */
+/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #ifndef __OBJC_GC__
 #error Missing __OBJC_GC__ manifest constant
 #endif
 
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 extern id **somefunc(void);
 extern id *somefunc2(void);

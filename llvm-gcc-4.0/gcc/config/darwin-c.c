@@ -65,7 +65,9 @@ static void push_field_alignment (int, int, int);
 /* APPLE LOCAL end Macintosh alignment 2001-12-17 --ff */
 static void pop_field_alignment (void);
 static const char *find_subframework_file (const char *, const char *);
-static void add_system_framework_path (char *);
+/* APPLE LOCAL begin iframework for 4.3 4094959 */
+/* Remove add_system_framework_path */
+/* APPLE LOCAL end iframework for 4.3 4094959 */
 static const char *find_subframework_header (cpp_reader *pfile, const char *header,
 					     cpp_dir **dirp);
 
@@ -458,6 +460,37 @@ pop_opt_level (void)
   optimize = level & 0xffff;
 }
 
+/* APPLE LOCAL begin 4760857 optimization pragmas */
+/* Set the global flags as required by #pragma optimization_level or
+   #pragma optimize_size.  */
+
+static void darwin_set_flags_from_pragma (void)
+{
+  set_flags_from_O (false);
+
+  /* Enable new loop optimizer pass if any of its optimizations is called.  */
+  if (flag_move_loop_invariants
+      || flag_unswitch_loops
+      || flag_peel_loops
+      || flag_unroll_loops
+      || flag_branch_on_count_reg)
+    flag_loop_optimize2 = 1;
+
+  /* This is expected to be defined in each target.   Should contain
+     any snippets from OPTIMIZATION_OPTIONS and OVERRIDE_OPTIONS that
+     set per-func flags on the basis of -O level. */
+  reset_optimization_options (optimize, optimize_size);
+
+  if (align_loops <= 0) align_loops = 1;
+  if (align_loops_max_skip > align_loops || !align_loops)
+    align_loops_max_skip = align_loops - 1;
+  if (align_jumps <= 0) align_jumps = 1;
+  if (align_jumps_max_skip > align_jumps || !align_jumps)
+    align_jumps_max_skip = align_jumps - 1;
+  if (align_labels <= 0) align_labels = 1;
+}
+/* APPLE LOCAL end 4760857 optimization pragmas */
+
 void
 darwin_pragma_opt_level  (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
@@ -487,10 +520,9 @@ darwin_pragma_opt_level  (cpp_reader *pfile ATTRIBUTE_UNUSED)
   else
     BAD ("malformed '#pragma optimization_level [GCC] {0|1|2|3|reset}', ignoring");
 
-  set_flags_from_O (false);
-
-  /* This is expected to be defined in each target. */
-  reset_optimization_options (optimize, optimize_size);
+  /* APPLE LOCAL begin 4760857 optimization pragmas */
+  darwin_set_flags_from_pragma ();
+  /* APPLE LOCAL end 4760857 optimization pragmas */
 
   if (c_lex (&t) != CPP_EOF)
     warning ("junk at end of '#pragma optimization_level'");
@@ -521,10 +553,9 @@ darwin_pragma_opt_size  (cpp_reader *pfile ATTRIBUTE_UNUSED)
   else
     BAD ("malformed '#pragma optimize_for_size { on | off | reset }', ignoring");
 
-  set_flags_from_O (false);
-
-  /* This is expected to be defined in each target. */
-  reset_optimization_options (optimize, optimize_size);
+  /* APPLE LOCAL begin 4760857 optimization pragmas */
+  darwin_set_flags_from_pragma ();
+  /* APPLE LOCAL end 4760857 optimization pragmas */
 
   if (c_lex (&t) != CPP_EOF)
     warning ("junk at end of '#pragma optimize_for_size'");
@@ -1057,3 +1088,26 @@ darwin_cpp_builtins (cpp_reader *pfile)
   /* APPLE LOCAL end radar 4224728 */
 }
 /* APPLE LOCAL end mainline 2005-09-01 3449986 */
+
+/* APPLE LOCAL begin iframework for 4.3 4094959 */
+bool
+darwin_handle_c_option (size_t code, const char *arg, int value ATTRIBUTE_UNUSED)
+{
+  switch (code)
+    {
+    default:
+      /* Options with a flag are otherwise assumed to be handled.  */
+      if (cl_options[code].flag_var)
+	break;
+
+      /* Unrecognized options that we said we'd handle turn into
+	 errors if not listed here if they don't have a flag.  */
+      return false;
+
+    case OPT_iframework:
+      add_system_framework_path (xstrdup (arg));
+      break;
+    }
+  return true;
+}
+/* APPLE LOCAL end iframework for 4.3 4094959 */

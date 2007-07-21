@@ -31,6 +31,8 @@ Boston, MA 02111-1307, USA.  */
 #include "varray.h"
 #include "c-common.h"
 #include "name-lookup.h"
+/* APPLE LOCAL KEXT */
+#include "tm.h"
 struct diagnostic_context;
 
 /* Usage of TREE_LANG_FLAG_?:
@@ -2543,10 +2545,10 @@ struct lang_decl GTY(())
    before using this macro.  */
 /* APPLE LOCAL begin KEXT 2.95-ptmf-compatibility --turly */
 #define TYPE_PTRMEMFUNC_FN_TYPE(NODE)					\
-  *((flag_apple_kext) ?							\
-	&(TREE_TYPE (TYPE_FIELDS (TREE_TYPE (TREE_CHAIN (		\
-				 TREE_CHAIN (TYPE_FIELDS (NODE))))))) :	\
-    &(TREE_TYPE (TYPE_FIELDS (NODE))))					\
+  *(TARGET_KEXTABI							\
+    ? &(TREE_TYPE (TYPE_FIELDS (TREE_TYPE (TREE_CHAIN (			\
+				 TREE_CHAIN (TYPE_FIELDS (NODE)))))))	\
+    : &(TREE_TYPE (TYPE_FIELDS (NODE))))
 /* APPLE LOCAL end KEXT 2.95-ptmf-compatibility --turly */
 
 /* Returns `A' for a type like `int (A::*)(double)' */

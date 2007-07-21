@@ -1,7 +1,8 @@
 /* APPLE LOCAL file 4512786 */
 /* { dg-do run } */
 #include <objc/objc.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "../objc/execute/Object2.h"
 
 @interface M : Object
 - (void) foo;

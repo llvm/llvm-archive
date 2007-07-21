@@ -66,6 +66,7 @@
 3965017: g++.old-deja/g++.pt/repo2.C (test for excess errors)
 3965017: g++.old-deja/g++.pt/repo3.C (test for excess errors)
 3965017: g++.old-deja/g++.pt/repo4.C (test for excess errors)
+4803160: g++.apple/asm-block-59.C (test for excess errors)
 #
 # The following tests fail only when the c++ suite is run on ppc with -m64
 3967626: g++.dg/eh/forced1.C execution test
@@ -103,3 +104,8 @@
 #4597270: g++.apple/4474655.C scan-assembler maxsd
 #4597288: g++.dg/other/i386-1.C (test for excess errors)
 #4597308: g++.old-deja/g++.abi/align.C (test for excess errors)
+#
+# The following tests fail only when the c++ suite is run using -fasm-blocks
+4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 10)
+4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 12)
+4756486: g++.old-deja/g++.other/crash41.C  (test for errors, line 13)

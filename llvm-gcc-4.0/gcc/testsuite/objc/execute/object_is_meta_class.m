@@ -1,7 +1,8 @@
 /* Contributed by Nicola Pero - Tue Jul  3 10:55:21 BST 2001 */
 #include <objc/objc.h>
 #include <objc/objc-api.h>
-#include <objc/Object.h>
+/* APPLE LOCAL radar 4894756 */
+#include "Object2.h"
 
 #include "next_mapping.h"
 

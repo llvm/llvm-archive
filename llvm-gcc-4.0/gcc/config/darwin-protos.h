@@ -119,8 +119,6 @@ extern void darwin_pragma_call_on_unload (struct cpp_reader *);
 extern int darwin_set_section_for_var_p (tree, int, int);
 /* APPLE LOCAL end darwin_set_section_for_var_p  */
 
-/* APPLE LOCAL KEXT double destructor  */
-extern tree darwin_handle_odd_attribute (tree *, tree, tree, int, bool *);
 /* APPLE LOCAL ObjC GC */
 extern tree darwin_handle_objc_gc_attribute (tree *, tree, tree, int, bool *);
 
@@ -130,6 +128,8 @@ extern void darwin_file_end (void);
 
 extern void darwin_mark_decl_preserved (const char *);
 
+/* APPLE LOCAL mainline */
+extern tree darwin_handle_kext_attribute (tree *, tree, tree, int, bool *);
 extern tree darwin_handle_weak_import_attribute (tree *node, tree name,
 						 tree args, int flags,
 						 bool * no_add_attrs);
@@ -214,9 +214,14 @@ extern void darwin_asm_output_dwarf_delta (FILE *, int, const char *,
 extern void darwin_asm_output_dwarf_offset (FILE *, int, const char *,
 					    const char *);
 /* APPLE LOCAL end dwarf 4383509 */
-/* APPLE LOCAL begin mainline 2005-09-01 3449986 */
+/* APPLE LOCAL begin mainline */
+extern bool darwin_binds_local_p (tree);
 extern void darwin_cpp_builtins (struct cpp_reader *);
-/* APPLE LOCAL end mainline 2005-09-01 3449986 */
+/* APPLE LOCAL iframework for 4.3 4094959 */
+extern bool darwin_handle_c_option (size_t code, const char *arg, int value);
+extern bool darwin_kextabi_p (void);
+extern void darwin_override_options (void);
+/* APPLE LOCAL end mainline */
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 extern void reset_optimization_options (int, int);
 /* APPLE LOCAL C++ EH */
@@ -230,9 +235,3 @@ extern tree darwin_construct_objc_string (tree);
 
 /* APPLE LOCAL CW asm blocks */
 #define IASM_SPECIAL_LABEL(ID) darwin_iasm_special_label (ID)
-
-/* APPLE LOCAL begin KEXT */
-#ifdef TREE_CODE
-extern bool flag_apple_kext_p (void);
-#endif
-/* APPLE LOCAL end KEXT */

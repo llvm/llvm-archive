@@ -5,20 +5,27 @@
 
 // Weak Write Barriers
 
+#define objc_assign_weak _X_objc_assign_weak
+#define objc_read_weak _X_objc_read_weak
 
 #import <Foundation/Foundation.h>
+
+#undef objc_assign_weak
+#undef objc_read_weak
 
 struct S {
     int expected;
     int encountered;
 }
     Reads, Writes;
-    
+
+static    
 id objc_assign_weak(id value, id *location) {
     Writes.encountered++;
     return value;
 }
 
+static
 id objc_read_weak(id *location) {
     Reads.encountered++;
     return *location;

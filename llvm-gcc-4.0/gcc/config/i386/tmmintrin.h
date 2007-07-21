@@ -1,4 +1,4 @@
-/* APPLE LOCAL file mni 4424835 */
+/* APPLE LOCAL file ssse3 4424835 */
 /* Copyright (C) 2006 Free Software Foundation, Inc.
 
    This file is part of GCC.
@@ -31,7 +31,7 @@
 #ifndef _TMMINTRIN_H_INCLUDED
 #define _TMMINTRIN_H_INCLUDED
 
-#ifdef __MNI__
+#ifdef __SSSE3__
 #include <pmmintrin.h>
 
 /* APPLE LOCAL begin nodebug inline */
@@ -228,6 +228,6 @@ _mm_abs_pi32 (__m64 __X)
 #undef __always_inline__
 /* APPLE LOCAL end nodebug inline */
 
-#endif /* __MNI__ */
+#endif /* __SSSE3__ */
 
 #endif /* _TMMINTRIN_H_INCLUDED */

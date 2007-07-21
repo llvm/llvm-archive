@@ -4483,10 +4483,9 @@ grokdeclarator (const struct c_declarator *declarator,
 	    else
 	      type = build_array_type (type, itype);
 
-            /* APPLE LOCAL begin LLVM */
+            /* APPLE LOCAL begin mainline 2006-09-25 4745307 */
             if (type != error_mark_node)
               {
-            /* APPLE LOCAL end LLVM */
                 if (size_varies)
                   C_TYPE_VARIABLE_SIZE (type) = 1;
 
@@ -4506,8 +4505,8 @@ grokdeclarator (const struct c_declarator *declarator,
                     TYPE_SIZE_UNIT (type) = size_zero_node;
                   }
                 /* APPLE LOCAL end mainline 2006-05-18 4336222 */
-              /* APPLE LOCAL LLVM */
               }
+            /* APPLE LOCAL end mainline 2006-09-25 4745307 */
 
 	    if (decl_context != PARM
 		&& (array_ptr_quals != TYPE_UNQUALIFIED
@@ -4632,7 +4631,10 @@ grokdeclarator (const struct c_declarator *declarator,
 
   if (TREE_CODE (type) == ARRAY_TYPE
       && COMPLETE_TYPE_P (type)
-      && TREE_OVERFLOW (TYPE_SIZE (type)))
+      /* APPLE LOCAL begin mainline 4603883 */
+      && TREE_CODE (TYPE_SIZE_UNIT (type)) == INTEGER_CST
+      && TREE_OVERFLOW (TYPE_SIZE_UNIT (type)))
+      /* APPLE LOCAL end mainline 4603883 */
     {
       error ("size of array %qs is too large", name);
       /* If we proceed with the array type as it is, we'll eventually

@@ -329,6 +329,13 @@ static const struct resword reswords[] =
   /* APPLE LOCAL radar 4621020 */
   { "weak",             RID_WEAK,               D_OBJC },
   /* APPLE LOCAL end C* property (Radar 4436866) */
+  /* APPLE LOCAL begin objc new property */
+  { "synthesize",       RID_AT_SYNTHESIZE,   D_OBJC },
+  { "readwrite",        RID_READWRITE,    D_OBJC },
+  { "assign",           RID_ASSIGN,       D_OBJC },
+  { "retain",           RID_RETAIN,       D_OBJC },
+  { "copy",             RID_COPY,         D_OBJC },
+  /* APPLE LOCAL end objc new property */
 };
 
 void
@@ -345,7 +352,10 @@ init_reswords (void)
   for (i = 0; i < ARRAY_SIZE (reswords); i++)
     {
       id = get_identifier (reswords[i].word);
-      C_RID_CODE (id) = reswords[i].rid;
+      /* APPLE LOCAL begin objc new property */
+      C_RID_CODE (id) = (!flag_objc_new_property || reswords[i].rid != RID_DYNAMIC)
+			? reswords[i].rid : RID_AT_DYNAMIC;
+      /* APPLE LOCAL end objc new property */
       ridpointers [(int) reswords[i].rid] = id;
       if (! (reswords[i].disable & mask))
 	C_IS_RESERVED_WORD (id) = 1;

@@ -1637,11 +1637,15 @@ override_options (void)
 #endif
   /* APPLE LOCAL end mainline */
 
+/* APPLE LOCAL begin LLVM */
+#ifndef ENABLE_LLVM
   /* APPLE LOCAL begin x86_64 support 2006-02-02 */
   if (TARGET_MACHO && TARGET_64BIT) 
     /* -fPIC is the default for x86_64 */
     flag_pic = 2;
   /* APPLE LOCAL end x86_64 support 2006-02-02 */
+#endif
+/* APPLE LOCAL end LLVM */
 
   /* Set the default values for switches whose default depends on TARGET_64BIT
      in case they weren't overwritten by command line options.  */

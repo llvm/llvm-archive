@@ -88,6 +88,10 @@ extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern std::vector<GlobalValue*> AttributeUsedGlobals;
 
+/// AttributeNoinlineFunctions - The list of functions that are 
+/// marked attribute(noinline)
+extern std::vector<Function*> AttributeNoinlineFunctions;
+
 void changeLLVMValue(Value *Old, Value *New);
 void readLLVMTypesStringTable();
 void writeLLVMTypesStringTable();

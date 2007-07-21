@@ -592,6 +592,10 @@ void TreeToLLVM::StartFunctionBody() {
   if (DECL_PRESERVE_P (FnDecl))
     AttributeUsedGlobals.push_back(Fn);
   
+  // Handle noinline Functions
+  if (DECL_UNINLINABLE (FnDecl))
+    AttributeNoinlineFunctions.push_back(Fn); 
+  
   // Create a new basic block for the function.
   Builder.SetInsertPoint(new BasicBlock("entry", Fn));
   

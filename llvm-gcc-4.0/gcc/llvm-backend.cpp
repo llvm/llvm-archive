@@ -80,6 +80,7 @@ llvm::OStream *AsmOutFile = 0;
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<GlobalValue*> AttributeUsedGlobals;
+std::vector<Function*> AttributeNoinlineFunctions;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
 /// as each is compiled.  In cases where we are not doing IPO, it includes the 
@@ -475,6 +476,22 @@ void llvm_asm_file_end(void) {
     Constant *Init = ConstantArray::get(AT, GlobalInit);
     new GlobalVariable(AT, false, GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
+  }
+  
+  // Add llvm.noinline
+  if (!AttributeNoinlineFunctions.empty()) {
+    std::vector<Constant*> GlobalInit;
+    const Type *SBP= PointerType::get(Type::Int8Ty);
+    for (unsigned i = 0, e = AttributeNoinlineFunctions.size(); i != e; ++i)
+      GlobalInit.push_back(ConstantExpr::getBitCast(
+                                                AttributeNoinlineFunctions[i], 
+                                                SBP));
+    ArrayType *AT = ArrayType::get(SBP, AttributeNoinlineFunctions.size());
+    Constant *Init = ConstantArray::get(AT, GlobalInit);
+    GlobalValue *gv = new GlobalVariable(AT, false, 
+                                        GlobalValue::AppendingLinkage, Init,
+                                        "llvm.noinline", TheModule);
+    gv->setSection("llvm.metadata");
   }
   
   // Finish off the per-function pass.

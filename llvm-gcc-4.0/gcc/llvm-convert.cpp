@@ -293,6 +293,12 @@ void TreeToLLVM::StartFunctionBody() {
     Fn = cast<Function>(DECL_LLVM(FnDecl));
     assert(Fn->getCallingConv() == CallingConv &&
            "Calling convention disagreement between prototype and impl!");
+    // The visibility can be changed from the last time we've seen this
+    // function. Set to current.    
+    if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+      Fn->setVisibility(Function::HiddenVisibility);
+    else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
+      Fn->setVisibility(Function::DefaultVisibility);
   } else {
     Function *&FnEntry = EmittedFunctions[Name];
     if (FnEntry) {
@@ -338,11 +344,14 @@ void TreeToLLVM::StartFunctionBody() {
   } else if (DECL_COMDAT(FnDecl)) {
     Fn->setLinkage(Function::LinkOnceLinkage);
   }
-  
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
   TARGET_ADJUST_LLVM_LINKAGE(Fn,FnDecl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
+
+  // Handle visibility style
+  if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
+    Fn->setVisibility(Function::HiddenVisibility);
   
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))
@@ -496,7 +505,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   default:
     std::cerr << "Unhandled expression!\n";
     debug_tree(exp);
-    break;
+    abort();
   case EH_FILTER_EXPR:
   case CATCH_EXPR: {
     static bool PrintedWarning = false;
@@ -591,13 +600,11 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
   case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
   case TRUNC_DIV_EXPR: 
+  case EXACT_DIV_EXPR:   // TODO: Optimize EXACT_DIV_EXPR.
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
       Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
     else 
       Result = EmitBinOp(exp, DestLoc, Instruction::SDiv);
-    break;
-  case EXACT_DIV_EXPR: 
-    Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
     break;
   case RDIV_EXPR:      
     Result = EmitBinOp(exp, DestLoc, Instruction::FDiv);
@@ -2565,10 +2572,10 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
   bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
   bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  Instruction::CastOps opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, Ty, 
-                                                        TyIsSigned);
+  Instruction::CastOps opcode = 
+    CastInst::getCastOpcode(LHS, LHSIsSigned, Ty, TyIsSigned);
   LHS = CastToType(opcode, LHS, Ty);
-  opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, Ty, TyIsSigned);
+  opcode = CastInst::getCastOpcode(RHS, RHSIsSigned, Ty, TyIsSigned);
   RHS = CastToType(opcode, RHS, Ty);
   
   Value *Compare;
@@ -4260,6 +4267,7 @@ Constant *TreeConstantToLLVM::Convert(tree exp) {
   case PLUS_EXPR:
   case MINUS_EXPR:    return ConvertBinOp_CST(exp);
   case CONSTRUCTOR:   return ConvertCONSTRUCTOR(exp);
+  case VIEW_CONVERT_EXPR: return Convert(TREE_OPERAND(exp, 0));
   case ADDR_EXPR:     
     return ConstantExpr::getBitCast(EmitLV(TREE_OPERAND(exp, 0)),
                                  ConvertType(TREE_TYPE(exp)));

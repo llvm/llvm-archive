@@ -3160,7 +3160,7 @@ objcdef:
 	/* APPLE LOCAL C* property (Radar 4436866) (in 4.2 x) */
 	| property_declaration
 	/* APPLE LOCAL objc new property */
-	| property_implementation
+	| property_implementation {}
 	| AT_END
 		{
 		  objc_finish_implementation ();

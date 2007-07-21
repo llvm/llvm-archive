@@ -117,7 +117,8 @@ I386_CPU="--with-arch=apple --with-tune=generic"
 LIBSTDCXX_VERSION=4.0.0
 
 # Sniff to see if we can do ppc64 building.
-DARWIN_VERS=9
+# APPLE LOCAL llvm
+DARWIN_VERS=`echo $UNAME_RELEASE | sed -e s/.[0-9]//g`
 if [ x"`file /usr/lib/crt1.o | grep 'architecture ppc64'`" == x ]; then
     DARWIN_VERS=7
 fi

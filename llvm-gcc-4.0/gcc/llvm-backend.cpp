@@ -45,6 +45,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -245,6 +246,7 @@ void llvm_asm_file_start(void) {
     }
     
     PM->add(createTailDuplicationPass());      // Simplify cfg by copying code
+    PM->add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
     PM->add(createCFGSimplificationPass());    // Merge & remove BBs
     PM->add(createScalarReplAggregatesPass()); // Break up aggregate allocas
     PM->add(createInstructionCombiningPass()); // Combine silly seq's
@@ -357,6 +359,7 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
 // llvm_asm_file_end - Finish the .s file.
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
+  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   
   // Add an llvm.global_ctors global if needed.
   if (!StaticCtors.empty())
@@ -530,6 +533,10 @@ void emit_global_to_llvm(tree decl) {
   TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
   
+  // Handle visibility style
+  if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+    GV->setVisibility(GlobalValue::HiddenVisibility);
+  
   // Set the section for the global.
   if (TREE_CODE(decl) == VAR_DECL || TREE_CODE(decl) == CONST_DECL) {
     if (DECL_SECTION_NAME(decl)) {
@@ -690,6 +697,10 @@ void make_decl_llvm(tree decl) {
       TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
+      // Handle visibility style
+      if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+        FnEntry->setVisibility(Function::HiddenVisibility);
+      
       assert(FnEntry->getName() == Name &&"Preexisting fn with the same name!");
     }
     SET_DECL_LLVM(decl, FnEntry);
@@ -714,6 +725,10 @@ void make_decl_llvm(tree decl) {
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
       TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
+
+      // Handle visibility style
+      if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+        GV->setVisibility(Function::HiddenVisibility);
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
@@ -730,6 +745,10 @@ void make_decl_llvm(tree decl) {
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
         TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
+
+        // Handle visibility style
+        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+          GV->setVisibility(Function::HiddenVisibility);
       } else {
         GV = GVE;  // Global already created, reuse it.
       }

@@ -4027,13 +4027,16 @@ enum ix86_builtins
 /* Turn -march=xx into a CPU type.
  */
 #define LLVM_SET_SUBTARGET_FEATURES(F) \
-  { F.setCPU(ix86_arch_string); \
-    if (TARGET_MMX)   F.AddFeature("mmx");      \
-    if (TARGET_SSE)   F.AddFeature("sse");      \
-    if (TARGET_SSE2)  F.AddFeature("sse2");     \
-    if (TARGET_SSE3)  F.AddFeature("sse3");     \
-    if (TARGET_3DNOW) F.AddFeature("3dnow");    \
-    if (TARGET_3DNOW_A) F.AddFeature("3dnowa"); \
+  { if (TARGET_MACHO && ! strcmp (ix86_arch_string, "apple")) \
+      F.setCPU(TARGET_64BIT ? "yonah" :"core2");              \
+    else                                                      \
+      F.setCPU(ix86_arch_string);                             \
+    if (TARGET_MMX)   F.AddFeature("mmx");                    \
+    if (TARGET_SSE)   F.AddFeature("sse");                    \
+    if (TARGET_SSE2)  F.AddFeature("sse2");                   \
+    if (TARGET_SSE3)  F.AddFeature("sse3");                   \
+    if (TARGET_3DNOW) F.AddFeature("3dnow");                  \
+    if (TARGET_3DNOW_A) F.AddFeature("3dnowa");               \
   }
     
 /* LLVM ABI definition macros. */

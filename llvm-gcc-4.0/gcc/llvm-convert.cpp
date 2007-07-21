@@ -4075,8 +4075,6 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   //tree ElementSizeInBytes = array_ref_element_size(exp);
   
   if (IndexVal->getType() != Type::Int32Ty &&
-      IndexVal->getType() != Type::Int32Ty && 
-      IndexVal->getType() != Type::Int64Ty && 
       IndexVal->getType() != Type::Int64Ty)
     if (TYPE_UNSIGNED(TREE_TYPE(Index))) // if the index is unsigned
       // ZExt it to retain its value in the larger type

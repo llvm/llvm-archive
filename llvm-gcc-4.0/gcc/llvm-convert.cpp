@@ -24,6 +24,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // This is the code that converts GCC AST nodes into LLVM code.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ValueSymbolTable.h"
 #include "llvm-abi.h"
 #include "llvm-internal.h"
 #include "llvm-debug.h"
@@ -38,6 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/DenseMap.h"
 #include <iostream>
 
 extern "C" {
@@ -59,6 +61,137 @@ extern "C" {
 #include "hard-reg-set.h"
 extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
+}
+
+//===----------------------------------------------------------------------===//
+//                   Matching LLVM Values with GCC DECL trees
+//===----------------------------------------------------------------------===//
+//
+// LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM 
+// Values using this vector's index. It is easier to save and restore the index 
+// than the LLVM Value pointer while usig PCH. 
+
+// Collection of LLVM Values
+static std::vector<Value *> LLVMValues;
+typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
+static LLVMValuesMapTy LLVMValuesMap;
+
+// Remember the LLVM value for GCC tree node.
+void llvm_set_decl(tree Tr, Value *V) {
+
+  // If there is not any value then do not add new LLVMValues entry.
+  // However clear Tr index if it is non zero.
+  if (!V) {
+    if (GET_DECL_LLVM_INDEX(Tr))
+      SET_DECL_LLVM_INDEX(Tr, 0);
+    return;
+  }
+
+  unsigned &ValueSlot = LLVMValuesMap[V];
+  if (ValueSlot) {
+    // Already in map
+    SET_DECL_LLVM_INDEX(Tr, ValueSlot);
+    return;
+  }
+
+  unsigned Index = LLVMValues.size() + 1;
+  LLVMValues.push_back(V);
+  SET_DECL_LLVM_INDEX(Tr, Index);
+  LLVMValuesMap[V] = Index;
+}
+
+// Return TRUE if there is a LLVM Value associate with GCC tree node.
+bool llvm_set_decl_p(tree Tr) {
+  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+  if (Index == 0)
+    return false;
+
+  if (LLVMValues[Index - 1])
+    return true;
+
+  return false;
+}
+
+// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
+// If there is not any value associated then use make_decl_llvm() to 
+// make LLVM value. When GCC tree node is initialized, it has 0 as the 
+// index value. This is why all recorded indices are offset by 1.
+Value *llvm_get_decl(tree Tr) {
+
+  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+  if (Index == 0) {
+    make_decl_llvm(Tr);
+    Index = GET_DECL_LLVM_INDEX(Tr);
+  }
+  assert ((Index - 1) < LLVMValues.size() && "Invalid LLVM Value index");
+
+  return LLVMValues[Index - 1];
+}
+
+// Read LLVM Types string table
+void readLLVMValuesStringTable() {
+
+  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
+  if (!V)
+    return;
+
+  GlobalVariable *GV = cast<GlobalVariable>(V);
+  ConstantStruct *LValueNames = cast<ConstantStruct>(GV->getOperand(0));
+
+  for (unsigned i = 0; i < LValueNames->getNumOperands(); ++i) {
+    Value *Va = LValueNames->getOperand(i);
+
+    if (!Va) {
+      // If V is empty then nsert NULL to represent empty entries.
+      LLVMValues.push_back(Va);
+      continue;
+    }
+    if (ConstantArray *CA = dyn_cast<ConstantArray>(Va)) {
+      std::string Str = CA->getAsString();
+      Va = TheModule->getValueSymbolTable().lookup(Str);
+    } 
+    assert (Va != NULL && "Invalid Value in LLVMValues string table");
+    LLVMValues.push_back(Va);
+  }
+
+  // Now, llvm.pch.values is not required so remove it from the symbol table.
+  GV->eraseFromParent();
+}
+
+// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
+// Create a string table to hold these LLVM Values' names. This string
+// table will be used to recreate LTypes vector after loading PCH.
+void writeLLVMValuesStringTable() {
+  
+  if (LLVMValues.empty()) 
+    return;
+
+  std::vector<Constant *> LLVMValuesNames;
+
+  for (std::vector<Value *>::iterator I = LLVMValues.begin(),
+         E = LLVMValues.end(); I != E; ++I)  {
+    Value *V = *I;
+
+    if (!V) {
+      LLVMValuesNames.push_back(ConstantArray::get("", false));      
+      continue;
+    }
+
+    // Give names to nameless values.
+    if (!V->hasName())
+      V->setName("llvm.fe.val");
+
+    LLVMValuesNames.push_back(ConstantArray::get(V->getName(), false));
+  }
+
+  // Create string table.
+  Constant *LLVMValuesNameTable = ConstantStruct::get(LLVMValuesNames, false);
+
+  // Create variable to hold this string table.
+  GlobalVariable *GV = new GlobalVariable(LLVMValuesNameTable->getType(), true,
+                                          GlobalValue::ExternalLinkage, 
+                                          LLVMValuesNameTable,
+                                          "llvm.pch.values", TheModule);
 }
 
 /// isGCC_SSA_Temporary - Return true if this is an SSA temporary that we can
@@ -298,7 +431,7 @@ void TreeToLLVM::StartFunctionBody() {
     else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
       Fn->setVisibility(Function::DefaultVisibility);
   } else {
-    Function *&FnEntry = EmittedFunctions[Name];
+    Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry) {
       assert(FnEntry->getName() == Name && "Same entry, different name?");
       assert(FnEntry->isDeclaration() &&
@@ -322,7 +455,6 @@ void TreeToLLVM::StartFunctionBody() {
       FnEntry->eraseFromParent();
     }
     SET_DECL_LLVM(FnDecl, Fn);
-    FnEntry = Fn;
   }
 
   // The function should not already have a body.
@@ -5160,8 +5292,11 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   GlobalVariable *&Slot = StringCSTCache[Init];
   if (Slot) return Slot;
     
+  // Support -fwritable-strings.
+  bool StringIsConstant = !flag_writable_strings;
+  
   // Create a new string global.
-  return Slot = new GlobalVariable(Init->getType(), true,
+  return Slot = new GlobalVariable(Init->getType(), StringIsConstant,
                                    GlobalVariable::InternalLinkage,
                                    Init, "str", TheModule);
 }

@@ -58,7 +58,7 @@ extern "C" {
 // refined and replaced by another LLVM Type. This is achieved by maintaining 
 // a map.
 
-// Collection of LLVM Types and their names
+// Collection of LLVM Types
 static std::vector<const Type *> LTypes;
 typedef DenseMap<const Type *, unsigned> LTypesMapTy;
 static LTypesMapTy LTypesMap;
@@ -212,7 +212,7 @@ void writeLLVMTypesStringTable() {
 bool isPassedByInvisibleReference(tree Type) {
   // FIXME: Search for TREE_ADDRESSABLE in calls.c, and see if there are other
   // cases that make arguments automatically passed in by reference.
-  return TREE_ADDRESSABLE(Type);
+  return TREE_ADDRESSABLE(Type) || TREE_CODE(TYPE_SIZE(Type)) != INTEGER_CST;
 }
 
 /// GetTypeName - Return a fully qualified (with namespace prefixes) name for

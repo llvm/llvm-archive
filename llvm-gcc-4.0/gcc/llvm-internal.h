@@ -86,16 +86,10 @@ extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern std::vector<GlobalValue*> AttributeUsedGlobals;
 
-/// EmittedGlobalVars/EmittedFunctions - Keep track of the global variables and
-/// functions we have already emitted.  GCC periodically likes to create
-/// multiple VAR_DECL nodes with the same name and expects them to be linked
-/// together (particularly the objc front-end) and does the same for functions
-/// e.g. builtin_memset vs memset).  Emulate this functionality.
-extern std::map<std::string, GlobalVariable*> EmittedGlobalVars;
-extern std::map<std::string, Function*> EmittedFunctions;
-
 extern void readLLVMTypesStringTable();
 extern void writeLLVMTypesStringTable();
+extern void readLLVMValuesStringTable();
+extern void writeLLVMValuesStringTable();
 
 struct StructTypeConversionInfo;
 

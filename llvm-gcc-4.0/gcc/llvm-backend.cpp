@@ -76,8 +76,6 @@ llvm::OStream *AsmOutFile = 0;
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 std::vector<GlobalValue*> AttributeUsedGlobals;
-std::map<std::string, GlobalVariable*> EmittedGlobalVars;
-std::map<std::string, Function*> EmittedFunctions;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
 /// as each is compiled.  In cases where we are not doing IPO, it includes the 
@@ -214,6 +212,8 @@ void llvm_pch_read(void) {
 
   // Read LLVM Types string table
   readLLVMTypesStringTable();
+  readLLVMValuesStringTable();
+
   flag_llvm_pch_read = 1;
 }
 
@@ -432,8 +432,10 @@ void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
 
-  if (flag_pch_file)
+  if (flag_pch_file) {
     writeLLVMTypesStringTable();
+    writeLLVMValuesStringTable();
+  }
 
   // Add an llvm.global_ctors global if needed.
   if (!StaticCtors.empty())
@@ -584,7 +586,6 @@ void emit_global_to_llvm(tree decl) {
     GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
     delete GV;
     SET_DECL_LLVM(decl, NGV);
-    EmittedGlobalVars[NGV->getName()] = NGV;
     GV = NGV;
   }
  
@@ -755,7 +756,7 @@ void make_decl_llvm(tree decl) {
     assert(Name[0] && "Function with empty name!");
     // If this function has already been created, reuse the decl.  This happens
     // when we have something like __builtin_memset and memset in the same file.
-    Function *&FnEntry = EmittedFunctions[Name];
+    Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
       unsigned CC;
       const FunctionType *Ty = 
@@ -806,11 +807,11 @@ void make_decl_llvm(tree decl) {
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
-      GlobalVariable *&GVE = EmittedGlobalVars[Name];
+      GlobalVariable *GVE = TheModule->getGlobalVariable(Name);
     
       if (GVE == 0) {
-        GVE = GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
-                                      Name, TheModule);
+        GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
+                                Name, TheModule);
 
         // Check for external weak linkage
         if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))

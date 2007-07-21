@@ -96,6 +96,10 @@ static tree isSingleElementStructOrArray(tree type) {
   default:
     return 0;
   case RECORD_TYPE:
+    // If this record has variable length, reject it.
+    if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
+      return 0;
+
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
       if (TREE_CODE(Field) == FIELD_DECL) {
         if (!FoundField)
@@ -108,7 +112,8 @@ static tree isSingleElementStructOrArray(tree type) {
     tree Domain = TYPE_DOMAIN(type);
     if (!Domain || !TYPE_MIN_VALUE(Domain) || !TYPE_MAX_VALUE(Domain))
       return 0;
-    if (TREE_CODE(TYPE_MIN_VALUE(Domain)) != INTEGER_CST ||
+    if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST ||
+        TREE_CODE(TYPE_MIN_VALUE(Domain)) != INTEGER_CST ||
         TREE_CODE(TYPE_MAX_VALUE(Domain)) != INTEGER_CST)
       return 0;
     if (TREE_INT_CST_LOW(TYPE_MAX_VALUE(Domain)) !=
@@ -194,7 +199,7 @@ public:
   void HandleArgument(tree type) {
     const Type *Ty = ConvertType(type);
 
-    if (TREE_ADDRESSABLE(type)) {    // Constructible object, pass by-ref
+    if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::get(Ty), type);
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);

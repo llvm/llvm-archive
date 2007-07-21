@@ -2071,23 +2071,23 @@ extern void make_decl_llvm(tree);
 #ifdef __cplusplus
 namespace llvm { class Value; }
 /* C++ versions */
-#define DECL_LLVM(NODE)						\
-  ((llvm::Value*)(DECL_CHECK (NODE)->decl.llvm			\
-   ? (void*)(NODE)->decl.llvm					\
-   : (make_decl_llvm (NODE), (void*)(NODE)->decl.llvm)))
-#define SET_DECL_LLVM(NODE, LLVM) \
-  (DECL_CHECK (NODE)->decl.llvm = (long)(Value*)LLVM)
-
+extern void llvm_set_decl (tree, Value *);
+extern Value *llvm_get_decl(tree);
+#define DECL_LLVM(NODE) (llvm_get_decl(NODE))
 #else
 /* C versions */
-#define DECL_LLVM(NODE)					\
-  ((void*)(DECL_CHECK (NODE)->decl.llvm			\
-                 ? (void*)(NODE)->decl.llvm		\
-                 : (make_decl_llvm (NODE), (void*)(NODE)->decl.llvm)))
-#define SET_DECL_LLVM(NODE, LLVM) (DECL_CHECK (NODE)->decl.llvm = (long)LLVM)
+extern void llvm_set_decl (tree, void *);
+extern void *llvm_get_decl(tree);
+#define DECL_LLVM(NODE) ((void *) llvm_get_decl(NODE))
 #endif
+
+#define SET_DECL_LLVM(NODE, LLVM) (llvm_set_decl (NODE,LLVM))
+#define SET_DECL_LLVM_INDEX(NODE, INDEX) (DECL_CHECK (NODE)->decl.llvm = INDEX)
+#define GET_DECL_LLVM_INDEX(NODE) (DECL_CHECK (NODE)->decl.llvm)
+
 /* Returns nonzero if the DECL_LLVM for NODE has already been set.  */
-#define DECL_LLVM_SET_P(NODE) (DECL_CHECK (NODE)->decl.llvm != 0)
+extern bool llvm_set_decl_p(tree);
+#define DECL_LLVM_SET_P(NODE) (llvm_set_decl_p(NODE))
 /* Copy the LLVM from NODE1 to NODE2.  If the LLVM was not set for
    NODE1, it will not be set for NODE2; this is a lazy copy.  */
 #define COPY_DECL_LLVM(NODE1, NODE2)  \
@@ -2529,9 +2529,9 @@ struct tree_decl GTY(())
   tree assembler_name;
   tree section_name;
   tree attributes;
-  /* APPLE LOCAL begin LLVM */
   rtx rtl;	  /* RTL representation for object.  */
-  long llvm;      /* LLVM representation for object. */
+  /* APPLE LOCAL begin LLVM */
+  unsigned llvm;      /* LLVM representation for object. */
   /* APPLE LOCAL end LLVM */
 
   /* In FUNCTION_DECL, if it is inline, holds the saved insn chain.

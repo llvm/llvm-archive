@@ -46,6 +46,7 @@ extern "C" {
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
+#include "c-tree.h"  // FIXME: eliminate.
 #include "tree-iterator.h"
 #include "output.h"
 #include "diagnostic.h"
@@ -688,7 +689,8 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case REALPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 0);
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
   case VIEW_CONVERT_EXPR:
-    // The address of a VIEW_CONVERT_EXPR is the address of its operand.
+  case WITH_SIZE_EXPR:
+    // The address of a these is the address of their operand.
     return EmitLV(TREE_OPERAND(exp, 0));
   }
 }
@@ -2480,7 +2482,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
       
       // If EltSize exactly divides Offset, then we know that we can turn this
       // into a getelementptr instruction.
-      int64_t EltOffset = Offset/EltSize;
+      int64_t EltOffset = EltSize ? Offset/EltSize : 0;
       if (EltOffset*EltSize == Offset) {
         // If this is a subtract, we want to step backwards.
         if (Opc == Instruction::Sub)
@@ -5043,6 +5045,9 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
   case ARRAY_RANGE_REF:
   case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
+  case INDIRECT_REF:  return EmitLV_INDIRECT_REF(exp);
+  case COMPOUND_LITERAL_EXPR:
+    return EmitLV_COMPOUND_LITERAL_EXPR(exp);
   }
 }
 
@@ -5223,4 +5228,15 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   return FieldPtr;
 }
 
+Constant* TreeConstantToLLVM::EmitLV_INDIRECT_REF(tree exp) {
+  // The lvalue is just the address.
+  return Convert(TREE_OPERAND(exp, 0));
+}
+
+Constant *TreeConstantToLLVM::EmitLV_COMPOUND_LITERAL_EXPR(tree exp) {
+  tree Decl = COMPOUND_LITERAL_EXPR_DECL(exp);
+  return EmitLV(Decl);
+}
+
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
+

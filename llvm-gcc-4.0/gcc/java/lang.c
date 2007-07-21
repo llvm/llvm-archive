@@ -800,21 +800,8 @@ int flag_next_runtime = 1;
 /* APPLE LOCAL disable_typechecking_for_spec_flag */
 int disable_typechecking_for_spec_flag = 0;
 
-/* APPLE LOCAL begin CW asm blocks */
-/* Dummies needed because we use them from cpplib, yuck.  */
-int flag_iasm_blocks;
-int iasm_state;
-int iasm_in_operands;
-/* APPLE LOCAL end CW asm blocks */
-
-/* APPLE LOCAL begin 4174833 */
-tree
-objc_is_class_name (tree ARG_UNUSED (arg))
-{
-  return 0;
-}
-/* APPLE LOCAL end 4174833 */
-
+/* APPLE LOCAL llvm */
+/* Remove objc_is_class_name. stub-objc.o is directly linked in. */
 /* Every call to a static constructor has an associated boolean
    variable which is in the outermost scope of the calling method.
    This variable is used to avoid multiple calls to the static

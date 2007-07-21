@@ -2829,4 +2829,55 @@ enum arm_builtins
 
   ARM_BUILTIN_MAX
 };
+
+/* APPLE LOCAL begin LLVM */
+#define LLVM_TARGET_INTRINSIC_PREFIX "arm"
+
+/* Turn -march=xx into a CPU type.
+ */
+#define LLVM_SET_SUBTARGET_FEATURES(F) \
+  { switch (arm_tune) { \
+    case arm8:          F.setCPU("arm8"); break;\
+    case arm810:        F.setCPU("arm810"); break;\
+    case strongarm:     F.setCPU("strongarm"); break;\
+    case strongarm110:  F.setCPU("strongarm110"); break;\
+    case strongarm1100: F.setCPU("strongarm1100"); break;\
+    case strongarm1110: F.setCPU("strongarm1110"); break;\
+    case arm7tdmi:      F.setCPU("arm7tdmi"); break;\
+    case arm7tdmis:     F.setCPU("arm7tdmi-s"); break;\
+    case arm710t:       F.setCPU("arm710t"); break;\
+    case arm720t:       F.setCPU("arm720t"); break;\
+    case arm740t:       F.setCPU("arm740t"); break;\
+    case arm9:          F.setCPU("arm9"); break;\
+    case arm9tdmi:      F.setCPU("arm9tdmi"); break;\
+    case arm920:        F.setCPU("arm920"); break;\
+    case arm920t:       F.setCPU("arm920t"); break;\
+    case arm922t:       F.setCPU("arm922t"); break;\
+    case arm940t:       F.setCPU("arm940t"); break;\
+    case ep9312:        F.setCPU("ep9312"); break;\
+    case arm10tdmi:     F.setCPU("arm10tdmi"); break;\
+    case arm1020t:      F.setCPU("arm1020t"); break;\
+    case arm9e:         F.setCPU("arm9e"); break;\
+    case arm946es:      F.setCPU("arm946e-s"); break;\
+    case arm966es:      F.setCPU("arm966e-s"); break;\
+    case arm968es:      F.setCPU("arm968e-s"); break;\
+    case arm10e:        F.setCPU("arm10e"); break;\
+    case arm1020e:      F.setCPU("arm1020e"); break;\
+    case arm1022e:      F.setCPU("arm1022e"); break;\
+    case xscale:        F.setCPU("xscale"); break;\
+    case iwmmxt:        F.setCPU("iwmmxt"); break;\
+    case arm926ejs:     F.setCPU("arm926ej-s"); break;\
+    case arm1026ejs:    F.setCPU("arm1026ej-s"); break;\
+    case arm1136js:     F.setCPU("arm1136j-s"); break;\
+    case arm1136jfs:    F.setCPU("arm1136jf-s"); break;\
+    case arm1176jzs:    F.setCPU("arm1176jz-s"); break;\
+    case arm1176jzfs:   F.setCPU("arm1176jzf-s"); break;\
+    case mpcorenovfp:   F.setCPU("mpcorenovfp"); break;\
+    case mpcore:        F.setCPU("mpcore"); break;\
+    default: \
+      F.setCPU("arm7tdmi"); \
+      break; \
+    } \
+  }
+
 #endif /* ! GCC_ARM_H */

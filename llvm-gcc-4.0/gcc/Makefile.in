@@ -1622,6 +1622,10 @@ c-lang.o : c-lang.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) \
     c-objc-common.h c-pragma.h
 stub-objc.o : stub-objc.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TREE_H) \
     $(GGC_H) $(C_COMMON_H)
+# APPLE LOCAL begin llvm
+stub-c.o : stub-c.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TREE_H) \
+    $(GGC_H) $(C_COMMON_H)
+# APPLE LOCAL end llvm
 c-lex.o : c-lex.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) \
     $(RTL_H) debug.h $(C_TREE_H) $(C_COMMON_H) real.h c-incpath.h cppdefault.h \
     $(C_PRAGMA_H) input.h intl.h $(FLAGS_H) toplev.h output.h \

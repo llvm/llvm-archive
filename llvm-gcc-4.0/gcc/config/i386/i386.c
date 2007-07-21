@@ -19594,7 +19594,8 @@ iasm_type_for (tree arg)
 	mode = SFmode;
 
       if (mode != VOIDmode)
-	type = c_common_type_for_mode (mode, 1);
+        /* APPLE LOCAL llvm */
+	type = lang_hooks.types.type_for_mode (mode, 1);
     }
 
   return type;
@@ -19626,7 +19627,8 @@ iasm_raise_reg (tree arg)
 	      C_DECL_REGISTER (decl) = 1;
 	      DECL_HARD_REGISTER (decl) = 1;
 	      change_decl_assembler_name (decl, arg);
-	      decl = pushdecl (decl);
+              /* APPLE LOCAL llvm */
+	      decl = lang_hooks.decls.pushdecl (decl);
 	    }
 	}
 

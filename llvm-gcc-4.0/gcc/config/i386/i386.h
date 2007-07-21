@@ -4028,7 +4028,7 @@ enum ix86_builtins
  */
 #define LLVM_SET_SUBTARGET_FEATURES(F) \
   { if (TARGET_MACHO && ! strcmp (ix86_arch_string, "apple")) \
-      F.setCPU(TARGET_64BIT ? "yonah" :"core2");              \
+      F.setCPU(TARGET_64BIT ? "core2" : "yonah");             \
     else                                                      \
       F.setCPU(ix86_arch_string);                             \
     if (TARGET_MMX)   F.AddFeature("mmx");                    \

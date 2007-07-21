@@ -13,6 +13,7 @@
 
 #include "safecode/Config/config.h"
 #include "InsertPoolChecks.h"
+#include "GEPUtils.h"
 #include "llvm/Instruction.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
@@ -127,6 +128,9 @@ static Statistic<> ZeroFuncChecks     ("safecode", "Indirect Call Checks with Ze
 // Object registration statistics
 static Statistic<> StackRegisters     ("safecode", "Stack registrations");
 static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided");
+
+// Other statistics
+static Statistic<> StructGEPsRemoved  ("safecode", "Structure GEP Checks Removed");
 
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
@@ -389,6 +393,11 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
   ExactCheck = M.getOrInsertFunction("exactcheck", ExactCheckTy);
 
   std::vector<const Type *> FArg3(1, Type::UIntTy);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
+  FArg3.push_back(VoidPtrType);
   FArg3.push_back(VoidPtrType);
   FArg3.push_back(VoidPtrType);
   FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
@@ -679,36 +688,56 @@ void
 InsertPoolChecks::addHeapRegs (Module & M) {
   DSNode * Node;
   MetaPool * MP;
+  const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+  std::set<Value *> ProcessedMetaPools;
+  std::vector<Value *> args;
 
   while (PHNeeded.size()) {
-    Node = PHNeeded.back();
-    PHNeeded.pop_back();
+    Node = *(PHNeeded.begin());
+    PHNeeded.erase(Node);
     MP = Node->getMP();
     Value* MPV = MP->getMetaPoolValue();
+
+    //
+    // Determine if we have already processed this MetaPool.  If we have, then
+    // just go on to the next DSNode.
+    if (ProcessedMetaPools.find (MPV) == ProcessedMetaPools.end())
+      continue;
+    else
+      ProcessedMetaPools.insert (MPV);
 
     // Add registers in front of every allocation
     for (std::list<CallSite>::iterator i = MP->allocs.begin(),
           e = MP->allocs.end(); i != e; ++i) {
+      args.clear();
       std::string name = i->getCalledFunction()->getName();
       if (name == "kmem_cache_alloc") {
+        Instruction * InsertPt = i->getInstruction();
         //insert a register before
-        Value* VP = new CastInst(i->getArgument(0), PointerType::get(Type::SByteTy), "", i->getInstruction());
-        Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", i->getInstruction());
-        Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
-        new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
+        Value* VP  = castTo (i->getArgument(0), VoidPtrType, InsertPt);
+        Value* VMP = castTo (MPV, VoidPtrType, InsertPt);
+        Value* VMPP = new CallInst(PoolFindMP, VP, "", InsertPt);
+
+        args.push_back (VMP);
+        args.push_back (VP);
+        args.push_back (VMPP);
+        new CallInst (PoolRegMP, args, "", i->getInstruction());
       } else if ((name == "kmalloc") ||
                  (name == "__vmalloc") ||
                  (name == "__alloc_bootmem")) {
         //inser obj register after
         Instruction* IP = i->getInstruction()->getNext();
-        Value* VP = new CastInst(i->getInstruction(), PointerType::get(Type::SByteTy), "", IP);
-        Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", IP);
-        Value* len = new CastInst(i->getArgument(0), Type::UIntTy, "len", IP);
-        new CallInst(PoolRegister, make_vector(VMP, VP, len, 0), "", IP);
+        Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);
+        Value* VMP = castTo (MPV, VoidPtrType, IP);
+        Value* len = castTo (i->getArgument(0), Type::UIntTy, IP);
+
+        args.push_back (VMP);
+        args.push_back (VP);
+        args.push_back (len);
+        new CallInst(PoolRegister, args, "", IP);
       } else
         assert(0 && "unknown alloc");
     }
-
   }
 }
 
@@ -1678,14 +1707,25 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   if (!isa<PointerType>(PointerOperand->getType()))
     return false;
 
-  //
-  // Attempt to use a call to exactcheck() to check this value if it is a
-  // global array with a non-zero size.  We do not check zero length arrays
-  // because in C they are often used to declare an external array of unknown
-  // size as follows:
-  //        extern struct foo the_array[];
-  //
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
+    //
+    // Attempt to remove checks on GEPs that only index into structures.
+    // These criteria must be met:
+    //  1) The pool must be Type-Homogoneous.
+    //
+    if ((!(Node->isNodeCompletelyFolded())) &&
+        (indexesStructsOnly (GEP))) {
+      ++StructGEPsRemoved;
+      return true;
+    }
+
+    //
+    // Attempt to use a call to exactcheck() to check this value if it is a
+    // global array with a non-zero size.  We do not check zero length arrays
+    // because in C they are often used to declare an external array of unknown
+    // size as follows:
+    //        extern struct foo the_array[];
+    //
     const ArrayType *AT = dyn_cast<ArrayType>(GV->getType()->getElementType());
     if ((!WasIndexed) && AT && (AT->getNumElements())) {
       // we need to insert an actual check
@@ -1737,6 +1777,17 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // do an exactcheck on it, too.
   //
   if (AllocaInst *AI = dyn_cast<AllocaInst>(PointerOperand)) {
+    //
+    // Attempt to remove checks on GEPs that only index into structures.
+    // These criteria must be met:
+    //  1) The pool must be Type-Homogoneous.
+    //
+    if ((!(Node->isNodeCompletelyFolded())) &&
+        (indexesStructsOnly (GEP))) {
+      ++StructGEPsRemoved;
+      return true;
+    }
+
     const Type * AllocaType = AI->getAllocatedType();
     Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
 
@@ -1756,6 +1807,17 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
     if (CI->getCalledFunction() &&
         (CI->getCalledFunction()->getName() == "__vmalloc" || 
          CI->getCalledFunction()->getName() == "kmalloc")) {
+      //
+      // Attempt to remove checks on GEPs that only index into structures.
+      // These criteria must be met:
+      //  1) The pool must be Type-Homogoneous.
+      //
+      if ((!(Node->isNodeCompletelyFolded())) &&
+          (indexesStructsOnly (GEP))) {
+        ++StructGEPsRemoved;
+        return true;
+      }
+
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
       addExactCheck2(PointerOperand, GEP, Cast, GEP->getNext());
       return true;
@@ -1962,7 +2024,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   TD        = &getAnalysis<TargetData>();
 #endif
 
-#if 0
+#if 1
   // Transform the function
   if (!(F.isExternal())) TransformFunction (F);
   if (!DisableLSChecks)  addLoadStoreChecks(F);
@@ -2080,7 +2142,6 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(2), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
-#endif
     } else if ((FuncName == "llva_load_fp") || (FuncName == "llva_save_fp")) {
       //
       // Create a call to an accurate bounds check for the FP state
@@ -2113,7 +2174,6 @@ void InsertPoolChecks::handleCallInst(CallInst *CI) {
       // Create the call to do an accurate bounds check
       if (!insertExactCheck(CI, CI->getOperand(1), Length, InsertPt))
         insertBoundsCheck (CI, CI->getOperand(1), Bop1, InsertPt);
-#if 0
     } else if ((FuncName == "llva_init_icontext") ||
                (FuncName == "llva_clear_icontext") ||
                (FuncName == "llva_was_privileged") ||
@@ -3311,7 +3371,8 @@ InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
   DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
 
   // Register that we will need allocations with this DSNode registered.
-  PHNeeded.push_back (Node);
+  if (Node)
+    PHNeeded.insert (Node);
 
   // Get the pool handle for this DSNode...
   //  assert(!Node->isUnknownNode() && "Unknown node \n");

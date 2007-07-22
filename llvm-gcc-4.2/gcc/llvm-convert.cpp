@@ -294,7 +294,7 @@ static uint64_t getINTEGER_CSTVal(tree exp) {
 /// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
 /// true, returns whether the value is non-negative and fits in a uint64_t.
 /// Always returns false for overflowed constants.
-bool isInt64(tree_node *t, bool Unsigned) {
+bool isInt64(tree t, bool Unsigned) {
   if (HOST_BITS_PER_WIDE_INT == 64)
     return host_integerp(t, Unsigned);
   else {
@@ -314,9 +314,17 @@ bool isInt64(tree_node *t, bool Unsigned) {
 /// Unsigned is false, the value must fit in a int64_t.  If Unsigned is true,
 /// the value must be non-negative and fit in a uint64_t.  Must not be used on
 /// overflowed constants.  These conditions can be checked by calling isInt64.
-uint64_t getInt64(tree_node *t, bool Unsigned) {
+uint64_t getInt64(tree t, bool Unsigned) {
   assert(isInt64(t, Unsigned) && "invalid constant!");
   return getINTEGER_CSTVal(t);
+}
+
+/// getPointerAlignment - Return the alignment in bytes of exp, a pointer valued
+/// expression, or 1 if the alignment is not known.
+static unsigned int getPointerAlignment(tree exp) {
+  assert(POINTER_TYPE_P (TREE_TYPE (exp)) && "Expected a pointer type!");
+  unsigned int align = get_pointer_alignment(exp, BIGGEST_ALIGNMENT) / 8;
+  return align ? align : 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4422,67 +4430,57 @@ bool TreeToLLVM::EmitBuiltinExtendPointer(tree exp, Value *&Result) {
 
 /// EmitBuiltinMemCopy - Emit an llvm.memcpy or llvm.memmove intrinsic, 
 /// depending on the value of isMemMove.
-bool TreeToLLVM::EmitBuiltinMemCopy(tree_node *exp, Value *&Result, 
-                                    bool isMemMove) {
+bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove) {
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE, 
                         INTEGER_TYPE, VOID_TYPE))
     return false;
-  
+
   tree Dst = TREE_VALUE(arglist);
   tree Src = TREE_VALUE(TREE_CHAIN(arglist));
-  unsigned SrcAlign = get_pointer_alignment(Src, BIGGEST_ALIGNMENT);
-  unsigned DstAlign = get_pointer_alignment(Dst, BIGGEST_ALIGNMENT);
-  
-  // If the DST or SRC pointers are not pointer type, do this out of line.
-  if (SrcAlign == 0 || DstAlign == 0) return false;
+  unsigned SrcAlign = getPointerAlignment(Src);
+  unsigned DstAlign = getPointerAlignment(Dst);
 
   Value *DstV = Emit(Dst, 0);
   Value *SrcV = Emit(Src, 0);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0);
   if (isMemMove)
-    EmitMemMove(DstV, SrcV, Len, std::min(SrcAlign, DstAlign)/8);
+    EmitMemMove(DstV, SrcV, Len, std::min(SrcAlign, DstAlign));
   else
-    EmitMemCpy(DstV, SrcV, Len, std::min(SrcAlign, DstAlign)/8);
+    EmitMemCpy(DstV, SrcV, Len, std::min(SrcAlign, DstAlign));
   Result = DstV;
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinMemSet(tree_node *exp, Value *&Result) {
+bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result) {
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, 
                         INTEGER_TYPE, VOID_TYPE))
     return false;
-  
+
   tree Dst = TREE_VALUE(arglist);
-  unsigned DstAlign = get_pointer_alignment(Dst, BIGGEST_ALIGNMENT);
-  
-  // If the DST pointer is not a pointer type, do this out of line.
-  if (DstAlign == 0) return false;
-  
+  unsigned DstAlign = getPointerAlignment(Dst);
+
   Value *DstV = Emit(Dst, 0);
   Value *Val = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0);
-  EmitMemSet(DstV, Val, Len, DstAlign/8);
+  EmitMemSet(DstV, Val, Len, DstAlign);
   Result = DstV;
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinBZero(tree_node *exp, Value *&Result) {
+bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
     return false;
-  
+
   tree Dst = TREE_VALUE(arglist);
-  unsigned DstAlign = get_pointer_alignment(Dst, BIGGEST_ALIGNMENT);
-  
-  // If the DST pointer is not a pointer type, do this out of line.
-  if (DstAlign == 0) return false;
-  
+  unsigned DstAlign = getPointerAlignment(Dst);
+
   Value *DstV = Emit(Dst, 0);
   Value *Val = Constant::getNullValue(Type::Int32Ty);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
-  EmitMemSet(DstV, Val, Len, DstAlign/8);
+  EmitMemSet(DstV, Val, Len, DstAlign);
   return true;
 }
 

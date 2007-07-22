@@ -59,9 +59,11 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 
 dnl NOTES FOR MODULES:
-dnl   1. This is where you can put AC_ARG_WITH and AC_ARG_ENABLE macros to 
-dnl      define the --with-* and --enable-* options.
+dnl   1. This is where you can put LLVM_WITH_FEATURE, LLVM_WITH_LEVEL, 
+dnl      AC_ARG_WITH AC_ARG_ENABLE macros to define the --with-* and --enable-*
+dnl      options.
 dnl      For example:
+dnl        LLVM_WITH_FEATURE(feature-name,"Help text for feature-name",0)
 dnl        AC_ARG_WITH(my_thing, AS_HELP_STRING([--with-my-thing,
 dnl          [Specify where my-thing is]),,withval=default)
 dnl        case "$withval" in
@@ -69,7 +71,7 @@ dnl          default)  MY_THING=/default/path/to/my/thing ;;
 dnl          *) MY_THING=$withval ;;
 dnl        esac
 dnl        AC_SUBST(MY_THING,$MY_THING)
-dnl   2. Also put anything else here that is general and not a feature test
+dnl   2. Also put anything else here that is general or needed below.
 
 dnl===-----------------------------------------------------------------------===
 dnl===

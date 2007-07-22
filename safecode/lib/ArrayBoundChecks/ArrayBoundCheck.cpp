@@ -1000,6 +1000,9 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           if (NoStaticChecks) {
             if (!indexesStructsOnly (MAI))
               MarkGEPUnsafe (MAI);
+            else
+              ++SafeStructs;
+            ++TotalStructs;
             continue;
           }
         }

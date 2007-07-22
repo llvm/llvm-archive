@@ -1,5 +1,7 @@
 #include "llvm/Instructions.h"
 
+#include <vector>
+
 using namespace llvm;
 
 //
@@ -14,19 +16,36 @@ using namespace llvm;
 //
 static bool
 indexesStructsOnly (GetElementPtrInst * GEP) {
-  unsigned int index = 0;
-  const Type * ElementType = GEP->getPointerOperand()->getType();
-  if (isa<ArrayType>(ElementType))
-    return false;
-  for (index = 1; index < (GEP->getNumOperands() - 1); ++index) {
-    ElementType=GetElementPtrInst::getIndexedType (ElementType,
-                                                   GEP->getOperand(++index));
-    if (!ElementType)
+  const Type * PType = GEP->getPointerOperand()->getType();
+  const Type * ElementType;
+  unsigned int index = 1;
+  std::vector<Value *> Indices;
+  unsigned int maxOperands = GEP->getNumOperands() - 1;
+
+  //
+  // Check the first index of the GEP.  If it is non-zero, then it doesn't
+  // matter what type we're indexing into; we're indexing into an array.
+  //
+  if (ConstantInt * CI = dyn_cast<ConstantInt>(GEP->getOperand(1)))
+    if (!(CI->isNullValue ()))
       return false;
-                                                                                
+
+  //
+  // Scan through all types except for the last.  If any of them are an array
+  // type, the GEP is indexing into an array.
+  //
+  // If the last type is an array, the GEP returns a pointer to an array.  That
+  // means the GEP itself is not indexing into the array; this is why we don't
+  // check the type of the last GEP operand.
+  //
+  for (index = 1; index < maxOperands; ++index) {
+    Indices.push_back (GEP->getOperand(index));
+    ElementType=GetElementPtrInst::getIndexedType (PType, Indices, true);
+    assert (ElementType && "ElementType is NULL!");
     if (isa<ArrayType>(ElementType))
       return false;
   }
+
   return true;
 }
 

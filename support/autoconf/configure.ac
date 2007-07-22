@@ -231,8 +231,7 @@ LLVM_WANT_FEATURE(profiling,[Compile with profiling enabled],yes)
 LLVM_WANT_FEATURE(generate-pic,[Generate position independent code],no)
 LLVM_WANT_FEATURE(stripped,[Strip symbols from libraries and executables],no)
 LLVM_WANT_FEATURE(threads,[Use threads if available],yes)
-LLVM_WANT_FEATURE(tool-verbose,[Make the tools generate verbose output],no)
-LLVM_WANT_FEATURE(verbose,[Show each command executed while building],no)
+LLVM_WANT_LEVEL(verbose,[Show each command executed while building],0,0,3)
 
 dnl Allow configuration of the llvm-top directory from which all llvm software
 dnl can be found. Usually this corresponds to .., but weird things can happen

@@ -217,7 +217,6 @@ build_a_module() {
     return 0
   fi
   local build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
-  msg 1 "Building Module '$module'"
   msg 2 "Build Command: $build_cmd"
   cd $LLVM_TOP/$module
   $build_cmd || die $? "Build of module '$module' failed."

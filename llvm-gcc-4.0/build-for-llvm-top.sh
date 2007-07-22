@@ -27,7 +27,7 @@ if test ! -d "$config_status" -o "$config_status" -ot "$0" ; then
   config_options="--prefix=$PREFIX --enable-llvm=$LLVM_TOP/llvm "
   config_options="$config_options --program-prefix=llvm-"
   config_options="$config_options --enable-languages=c,c++"
-  if test -n "$ENABLE_OPTIMIZED" ; then
+  if test "$OPTIMIZED" -eq 0 ; then
     config_options="$config_options --enable-checking --enable-libstdcxx-debug"
   fi
   host=`./config.guess`

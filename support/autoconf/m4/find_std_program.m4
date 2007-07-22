@@ -6,7 +6,7 @@ dnl   $2 - program name to check
 dnl   $3 - header file to check 
 dnl   $4 - library file to check 
 AC_DEFUN([CHECK_STD_PROGRAM],
-[m4_define([allcapsname],translit($2,a-z,A-Z))
+[m4_define([allcapsname],translit($2,a-z-,A-Z_))
 if test -n "$1" -a -d "$1" -a -n "$2" -a -d "$1/bin" -a -x "$1/bin/$2" ; then
   AC_SUBST([USE_]allcapsname(),["USE_]allcapsname()[ = 1"])
   AC_SUBST(allcapsname(),[$1/bin/$2])
@@ -29,7 +29,7 @@ dnl   $2 - header file name to check (optional)
 dnl   $3 - library file name to check (optional)
 dnl   $4 - alternate (long) name for the program
 AC_DEFUN([FIND_STD_PROGRAM],
-[m4_define([allcapsname],translit($1,a-z,A-Z))
+[m4_define([allcapsname],translit($1,a-z-,A-Z_))
 m4_define([stdprog_long_name],ifelse($4,,translit($1,[ !@#$%^&*()-+={}[]:;"',./?],[-]),translit($4,[ !@#$%^&*()-+={}[]:;"',./?],[-])))
 AC_MSG_CHECKING([for ]stdprog_long_name()[ bin/lib/include locations])
 AC_ARG_WITH($1,

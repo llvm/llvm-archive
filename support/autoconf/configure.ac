@@ -33,7 +33,7 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl email address for reporting bugs.
-AC_INIT([[Support Module]],[[2.1svn]],[http://llvm.org/bugs],[support])
+AC_INIT([[LLVM Support Module]],[[2.1svn]],[http://llvm.org/bugs],[llvm-support])
 THIS_IS_LLVM_MODULE([support])
 
 dnl Verify that the source directory is valid. This makes sure that we are
@@ -205,12 +205,12 @@ dnl command line switches. When we build with a CVS directory, we get a
 dnl debug with assertions turned on. Without, we assume a source release and we
 dnl get an optimized build without assertions. See --enable-optimized and
 dnl --enable-assertions below
-if test -d "CVS" -o -d "${srcdir}/CVS" -o -d ".svn" -o -d "${srcdir}/.svn"; then
-  cvsbuild="yes"
+if test -d ".svn" -o -d "${srcdir}/.svn" -o -d "CVS" -o -d "${srcdir}/CVS"; then
+  svnbuild="yes"
   optimize="no"
-  AC_SUBST(CVSBUILD,[[CVSBUILD=1]])
+  AC_SUBST(SVNBUILD,[[SVNBUILD=1]])
 else
-  cvsbuild="no"
+  svnbuild="no"
   optimize="yes"
 fi
 
@@ -220,7 +220,20 @@ dnl=== SECTION 3: Command line arguments for the configure script.
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-LLVM_TOP=`cd .. ; pwd`
+dnl Define the standard LLVM compilation features
+LLVM_WANT_FEATURE(assertions,[Compile with assertion checks enabled],yes)
+LLVM_WANT_FEATURE(debug,[Produce debug symbols in compilation objects],yes)
+LLVM_WANT_FEATURE(doxygen,[Build doxygen documentation],no)
+LLVM_WANT_FEATURE(checking,[Compile with expensive checking enabled],no)
+LLVM_WANT_FEATURE(optimized,[Compile with optimizations enabled],no)
+LLVM_WANT_FEATURE(opt-for-size,[Optimize for executable size not speed],no)
+LLVM_WANT_FEATURE(profiling,[Compile with profiling enabled],yes)
+LLVM_WANT_FEATURE(generate-pic,[Generate position independent code],no)
+LLVM_WANT_FEATURE(stripped,[Strip symbols from libraries and executables],no)
+LLVM_WANT_FEATURE(threads,[Use threads if available],yes)
+LLVM_WANT_FEATURE(tool-verbose,[Make the tools generate verbose output],no)
+LLVM_WANT_FEATURE(verbose,[Show each command executed while building],no)
+
 dnl Allow configuration of the llvm-top directory from which all llvm software
 dnl can be found. Usually this corresponds to .., but weird things can happen
 dnl in build environments
@@ -228,87 +241,34 @@ AC_ARG_WITH(llvm-top,
   AS_HELP_STRING([--with-llvm-top],
                  [Specify where the llvm-top directory is]),,withval=default)
 case "$withval" in
-  default)  ;;
-  *) LLVM_TOP=$withval ;;
+  default)  LLVM_TOP=`cd .. ; pwd` ;; 
+  *)        LLVM_TOP=$withval ;;
 esac
 AC_SUBST(LLVM_TOP,$LLVM_TOP)
 
-dnl --enable-optimized : check whether they want to do an optimized build:
-AC_ARG_ENABLE(optimized, AS_HELP_STRING(
- [--enable-optimized,Compile with optimizations enabled (default is NO)]),,enableval=$optimize)
-if test ${enableval} = "no" ; then
-  AC_SUBST(ENABLE_OPTIMIZED,[[]])
-else
-  AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
-fi
-
-dnl --enable-assertions : check whether they want to turn on assertions or not:
-AC_ARG_ENABLE(assertions,AS_HELP_STRING(
-  [--enable-assertions,Compile with assertion checks enabled (default is YES)]),, enableval="yes")
-if test ${enableval} = "yes" ; then
-  AC_SUBST(DISABLE_ASSERTIONS,[[]])
-else
-  AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
-fi
-
-dnl --enable-expensive-checks : check whether they want to turn on expensive debug checks:
-AC_ARG_ENABLE(expensive-checks,AS_HELP_STRING(
-  [--enable-expensive-checks,Compile with expensive debug checks enabled (default is NO)]),, enableval="no")
-if test ${enableval} = "yes" ; then
-  AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[ENABLE_EXPENSIVE_CHECKS=1]])
-  AC_SUBST(EXPENSIVE_CHECKS,[[yes]])
-else
-  AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[]])
-  AC_SUBST(EXPENSIVE_CHECKS,[[no]])
-fi
-
-dnl --enable-debug-runtime : should runtime libraries have debug symbols?
-AC_ARG_ENABLE(debug-runtime,
-   AS_HELP_STRING([--enable-debug-runtime,Build runtime libs with debug symbols (default is NO)]),,enableval=no)
-if test ${enableval} = "no" ; then
-  AC_SUBST(DEBUG_RUNTIME,[[]])
-else
-  AC_SUBST(DEBUG_RUNTIME,[[DEBUG_RUNTIME=1]])
-fi
-
-dnl Allow enablement of doxygen generated documentation
-AC_ARG_ENABLE(doxygen,
-              AS_HELP_STRING([--enable-doxygen],
-                             [Build doxygen documentation (default is NO)]),,
-                             enableval=default)
-case "$enableval" in
-  yes) AC_SUBST(ENABLE_DOXYGEN,[1]) ;;
-  no)  AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
-  default) AC_SUBST(ENABLE_DOXYGEN,[0]) ;;
-  *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
+dnl Allow specification of the destination directory which is a meta-prefix for
+dnl the installation. It allows package maintainers for operating systems to
+dnl build an operating system image in a destination directory that uses the
+dnl final paths, without damaging their own installation.
+AC_ARG_WITH([destdir],
+  AS_HELP_STRING([--with-destdir],
+                 [Specify the install destination directory]),,withval=default)
+case "$withval" in
+  default)  DESTDIR="" ;;
+  *)        DESTDIR=$withval ;;
 esac
+AC_SUBST(DESTDIR,$DESTDIR)
 
-dnl Allow disablement of threads
-AC_ARG_ENABLE(threads,
-              AS_HELP_STRING([--enable-threads],
-                             [Use threads if available (default is YES)]),,
-                             enableval=default)
-case "$enableval" in
-  yes) AC_SUBST(ENABLE_THREADS,[1]) ;;
-  no)  AC_SUBST(ENABLE_THREADS,[0]) ;;
-  default) AC_SUBST(ENABLE_THREADS,[1]) ;;
-  *) AC_MSG_ERROR([Invalid setting for --enable-threads. Use "yes" or "no"]) ;;
+dnl Specify extra build options
+AC_ARG_WITH(extra-options,
+  AS_HELP_STRING([--with-extra-options],
+                 [Specify addtional options to compile LLVM with]),,
+                 withval=default)
+case "$withval" in
+  default) EXTRA_OPTIONS="" ;;
+  *) EXTRA_OPTIONS=$withval ;;
 esac
-AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
-
-dnl Allow building with position independent code
-AC_ARG_ENABLE(pic,
-  AS_HELP_STRING([--enable-pic],
-                 [Build LLVM with Position Independent Code (default is NO)]),,
-                 enableval=default)
-case "$enableval" in
-  yes) AC_SUBST(ENABLE_PIC,[1]) ;;
-  no)  AC_SUBST(ENABLE_PIC,[0]) ;;
-  default) AC_SUBST(ENABLE_PIC,[0]) ;;
-  *) AC_MSG_ERROR([Invalid setting for --enable-pic. Use "yes" or "no"]) ;;
-esac
-AC_DEFINE_UNQUOTED([ENABLE_PIC],$ENABLE_PIC,
-                   [Define if position independent code is enabled])
+AC_SUBST(EXTRA_OPTIONS,$EXTRA_OPTIONS)
 
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
@@ -316,7 +276,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM MIPS" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -348,51 +308,53 @@ esac
 TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
-dnl Specify extra build options
-AC_ARG_WITH(extra-options,
-  AS_HELP_STRING([--with-extra-options],
-                 [Specify addtional options to compile LLVM with]),,
-                 withval=default)
-case "$withval" in
-  default) EXTRA_OPTIONS= ;;
-  *) EXTRA_OPTIONS=$withval ;;
-esac
-AC_SUBST(EXTRA_OPTIONS,$EXTRA_OPTIONS)
-
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl Check for compilation tools
+dnl Check for standard compilation tools
+AC_PROG_INSTALL
 AC_PROG_CPP
 AC_PROG_CC(gcc)
 AC_PROG_CXX(g++)
 AC_PROG_FLEX
 AC_PROG_BISON
-
+AC_PROG_RANLIB
 AC_PROG_NM
+AC_PROG_LN_S
 AC_SUBST(NM)
 
-dnl Check for the tools that the makefiles require
+dnl Check for various build and documentation tools that could be used
 AC_CHECK_GNU_MAKE
-AC_PROG_LN_S
+AC_PATH_PROG(BINPWD,[pwd],  [pwd])
+AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
 AC_PATH_PROG(CMP, [cmp], [cmp])
 AC_PATH_PROG(CP, [cp], [cp])
+AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
 AC_PATH_PROG(DATE, [date], [date])
+AC_PATH_PROG(DOT, [dot], [echo dot])
+AC_PATH_PROG(DOTTY, [dotty], [echo dotty])
 AC_PATH_PROG(FIND, [find], [find])
 AC_PATH_PROG(GREP, [grep], [grep])
+AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
+AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
+AC_PATH_PROG(GV, [gv gsview32], [echo gv])
+AC_PATH_PROG(GZIP,[gzip],[echo "Skipped: gzip not found"])
 AC_PATH_PROG(MKDIR,[mkdir],[mkdir])
 AC_PATH_PROG(MV,   [mv],   [mv])
-AC_PROG_RANLIB
+AC_PATH_PROG(POD2HTML,[pod2html],[echo "Skipped: pod2html not found"])
+AC_PATH_PROG(POD2MAN,[pod2man],[echo "Skipped: pod2man not found"])
 AC_PATH_PROG(RM,   [rm],   [rm])
+AC_PATH_PROG(RUNTEST,[runtest],[echo "Skipped: runtest not found"])
 AC_PATH_PROG(SED,  [sed],  [sed])
 AC_PATH_PROG(TAR,  [tar],  [gtar])
-AC_PATH_PROG(BINPWD,[pwd],  [pwd])
+AC_PATH_PROG(ZIP,[zip],[echo "Skipped: zip not found"])
+DJ_AC_PATH_TCLSH
 
-dnl Looking for misc. graph plotting software
-AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
+dnl Adjust program paths for specific platforms so they can be used directly
+dnl inside the program from config.h
 if test "$GRAPHVIZ" != "echo Graphviz" ; then
   AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
@@ -400,9 +362,8 @@ if test "$GRAPHVIZ" != "echo Graphviz" ; then
     GRAPHVIZ=`echo $GRAPHVIZ | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ${EXEEXT}",
-   [Define to path to Graphviz program if found or 'echo Graphviz' otherwise])
+   [Define path to Graphviz program if found or 'echo Graphviz' otherwise])
 fi
-AC_PATH_PROG(DOT, [dot], [echo dot])
 if test "$DOT" != "echo dot" ; then
   AC_DEFINE([HAVE_DOT],[1],[Define if the dot program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
@@ -410,9 +371,8 @@ if test "$DOT" != "echo dot" ; then
     DOT=`echo $DOT | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOT],"$DOT${EXEEXT}",
-   [Define to path to dot program if found or 'echo dot' otherwise])
+   [Define path to dot program if found or 'echo dot' otherwise])
 fi
-AC_PATH_PROGS(GV, [gv gsview32], [echo gv])
 if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
@@ -420,9 +380,8 @@ if test "$GV" != "echo gv" ; then
     GV=`echo $GV | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
   AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV${EXEEXT}",
-   [Define to path to gv program if found or 'echo gv' otherwise])
+   [Define path to gv program if found or 'echo gv' otherwise])
 fi
-AC_PATH_PROG(DOTTY, [dotty], [echo dotty])
 if test "$DOTTY" != "echo dotty" ; then
   AC_DEFINE([HAVE_DOTTY],[1],[Define if the dotty program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
@@ -443,22 +402,10 @@ else
    AC_SUBST(HAVE_PERL,1)
 fi
 
-dnl Find the install program
-AC_PROG_INSTALL
-
 dnl Checks for documentation and testing tools that we can do without. If these
 dnl are not found then they are set to "true" which always succeeds but does
 dnl nothing. This just lets the build output show that we could have done 
 dnl something if the tool was available. 
-AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
-AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
-AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
-AC_PATH_PROG(GZIP,[gzip],[echo "Skipped: gzip not found"])
-AC_PATH_PROG(POD2HTML,[pod2html],[echo "Skipped: pod2html not found"])
-AC_PATH_PROG(POD2MAN,[pod2man],[echo "Skipped: pod2man not found"])
-AC_PATH_PROG(RUNTEST,[runtest],[echo "Skipped: runtest not found"])
-DJ_AC_PATH_TCLSH
-AC_PATH_PROG(ZIP,[zip],[echo "Skipped: zip not found"])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
@@ -575,7 +522,7 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
 
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
-if test "$ENABLE_THREADS" -eq 1 ; then
+if test "$WANT_THREADS" -eq 1 ; then
   AC_CHECK_LIB(pthread,pthread_mutex_init)
   AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
                  AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
@@ -622,12 +569,10 @@ AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h limits.h link.h])
 AC_CHECK_HEADERS([malloc.h setjmp.h signal.h stdint.h unistd.h utime.h])
 AC_CHECK_HEADERS([windows.h sys/mman.h sys/param.h sys/resource.h sys/time.h])
 AC_CHECK_HEADERS([sys/types.h malloc/malloc.h mach/mach.h])
-if test "$ENABLE_THREADS" -eq 1 ; then
-  AC_CHECK_HEADER(pthread.h,
-                  AC_SUBST(HAVE_PTHREAD, 1),
-		   AC_SUBST(HAVE_PTHREAD, 0))
+if test "$WANT_THREADS" -eq 1 ; then
+  AC_CHECK_HEADERS([pthread.h])
 else
-  AC_SUBST(HAVE_PTHREAD, 0)
+  AC_SUBST(HAVE_PTHREAD_,0)
 fi
 
 dnl===-----------------------------------------------------------------------===
@@ -701,53 +646,42 @@ dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 
-# Translate the various configuration directories and other basic
-# information into substitutions that will end up in Makefile.config.in 
-# that these configured values can be used by the makefiles
+dnl Get the time at which we were configured.
+LLVM_CONFIGTIME=`date`
+AC_SUBST(LLVM_CONFIGTIME)
+AC_DEFINE_UNQUOTED([LLVM_CONFIGTIME],["$LLVM_CONFIGTIME"],
+                   [Time at which LLVM was configured])
+
+# Make sure we have a prefix and exec_prefix value that makes sense.
 if test "${prefix}" = "NONE" ; then
   prefix="/usr/local"
 fi
-eval LLVM_PREFIX="${prefix}";
-eval LLVM_BINDIR="${prefix}/bin";
-eval LLVM_LIBDIR="${prefix}/lib";
-eval LLVM_DATADIR="${prefix}/share/llvm";
-eval LLVM_DOCSDIR="${prefix}/docs/llvm";
-eval LLVM_ETCDIR="${prefix}/etc/llvm";
-eval LLVM_INCLUDEDIR="${prefix}/include";
-eval LLVM_INFODIR="${prefix}/info";
-eval LLVM_MANDIR="${prefix}/man";
-AC_SUBST(LLVM_PREFIX)
-AC_SUBST(LLVM_BINDIR)
-AC_SUBST(LLVM_LIBDIR)
-AC_SUBST(LLVM_DATADIR)
-AC_SUBST(LLVM_DOCSDIR)
-AC_SUBST(LLVM_ETCDIR)
-AC_SUBST(LLVM_INCLUDEDIR)
-AC_SUBST(LLVM_INFODIR)
-AC_SUBST(LLVM_MANDIR)
+if test "${exec_prefix}" = "NONE" ; then
+  exec_prefix="$prefix"
+fi
 
-# Place the various directores into the config.h file as #defines so that we
-# can know about the installation paths within LLVM.
-AC_DEFINE_UNQUOTED(LLVM_PREFIX,"$LLVM_PREFIX", 
-                   [Installation prefix directory])
-AC_DEFINE_UNQUOTED(LLVM_BINDIR, "$LLVM_BINDIR", 
-                   [Installation directory for binary executables])
-AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR", 
-                   [Installation directory for libraries])
-AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR", 
-                   [Installation directory for data files])
-AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DOCSDIR", 
-                   [Installation directory for documentation])
-AC_DEFINE_UNQUOTED(LLVM_ETCDIR, "$LLVM_ETCDIR", 
-                   [Installation directory for config files])
-AC_DEFINE_UNQUOTED(LLVM_INCLUDEDIR, "$LLVM_INCLUDEDIR", 
-                   [Installation directory for include files])
-AC_DEFINE_UNQUOTED(LLVM_INFODIR, "$LLVM_INFODIR", 
-                   [Installation directory for .info files])
-AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR", 
-                   [Installation directory for man pages])
-AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", 
-                   [Time at which LLVM was configured])
+dnl make sure we resolve shell variables for paths because silly autoconf 
+dnl doesn't get this right.
+eval bindir="$bindir"
+eval sbindir="$sbindir"
+eval libexecdir="$libexecdir"
+eval sysconfdir="$sysconfdir"
+eval sharedstatedir="$sharedstatedir"
+eval localstatedir="$localstatedir"
+eval libdir="$libdir"
+eval includedir="$includedir"
+eval oldincludedir="$oldincludedir"
+eval datarootdir="$datarootdir"
+eval datadir="$datadir"
+eval infodir="$infodir"
+eval localedir="$localedir"
+eval mandir="$mandir"
+eval docdir="$docdir"
+eval htmldir="$htmldir"
+eval dvidir="$dvidir"
+eval pdfdir="$pdfdir"
+eval psdir="$psdir"
+
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -772,4 +706,3 @@ CONFIG_LLVM_MAKEFILE(lib/Makefile)
 
 dnl Finally, crank out the output
 AC_OUTPUT
-

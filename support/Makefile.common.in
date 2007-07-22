@@ -38,11 +38,20 @@ LLVM_CROSS_COMPILING=@LLVM_CROSS_COMPILING@
 # tablegen call if we're cross-compiling).
 BUILD_EXEEXT=@BUILD_EXEEXT@
 
+# Shared library extension for host platform.
+SHLIBEXT = @SHLIBEXT@
+
+# Executable file extension for host platform.
+EXEEXT = @EXEEXT@
+
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 
 # Targets that we should build
 TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
+
+# Enable JIT for this platform
+TARGET_HAS_JIT = @TARGET_HAS_JIT@
 
 # Extra options to compile LLVM with
 EXTRA_OPTIONS=@EXTRA_OPTIONS@
@@ -103,55 +112,81 @@ HAVE_PTHREAD := @HAVE_PTHREAD@
 
 LIBS       := @LIBS@
 
-# These are options that can either be enabled here, or can be enabled on the
-# make command line (ie, make ENABLE_PROFILING=1):
+##############################################################################
+# INSTALATION PATHS
+#
+# The following variables capture the installation paths set by the user or
+# defaulted by autoconf. This allows fine-grained control over what gets 
+# installed where
+DESTDIR := @DESTDIR@
+PREFIX := @prefix@
+BIN_DIR := @bindir@
+SBIN_DIR := @bindir@
+LIBEXEC_DIR := @libexecdir@
+SYSCONF_DIR := @sysconfdir@
+SHAREDSTATE_DIR := @sharedstatedir@
+LOCALSTATE_DIR := @localstatedir@
+LIB_DIR := @libdir@
+INCLUDE_DIR := @includedir@
+DATAROOT_DIR := @datarootdir@
+DATA_DIR := @datadir@
+INFO_DIR := @infodir@
+LOCALE_DIR := @localedir@
+MAN_DIR := @mandir@
+DOC_DIR := @docdir@
+HTML_DIR := @htmldir@
+DVI_DIR := @dvidir@
+PDF_DIR := @pdfdir@
+PS_DIR := @psdir@
 
-# When ENABLE_OPTIMIZED is enabled, LLVM code is optimized and output is put
+##############################################################################
+# FEATURES
+# 
+# The following macro definitions adjusts various options on build parameters
+# that affect the build output. You can specify them as part of the configure
+# options (--enable-FEATURE or --disable-FEATURE) or on the command line. Each
+# of them requires either a 0 or 1 value.
+
+# When WANT_ASSERTIONS is enabled, builds of all of the LLVM code will 
+# exclude assertion checks, otherwise they are included.
+WANT_ASSERTIONS := @WANT_ASSERTIONS@
+
+# When WANT_CHECkING is enabled, this turns on expensive runtime checking such as
+# GXXLIB_DEBUG, malloc debug, etc.
+WANT_CHECKING := @WANT_CHECKING@
+
+# When WANT_DEBUG is enabled, the compiler generates debug symbols in object code
+# and optional code is enabled.
+WANT_DEBUG := @WANT_DEBUG@
+
+# When ENABLE_DOXYGEN is enabled, the doxygen documentation will be built
+WANT_DOXYGEN = @WANT_DOXYGEN@
+
+# When WANT_OPTIMIZED is enabled, LLVM code is optimized and output is put
 # into the "Release" directories. Otherwise, LLVM code is not optimized and 
 # output is put in the "Debug" directories.
-#ENABLE_OPTIMIZED = 1
-@ENABLE_OPTIMIZED@
+WANT_OPTIMIZED := @WANT_OPTIMIZED@
 
-# When DISABLE_ASSERTIONS is enabled, builds of all of the LLVM code will 
-# exclude assertion checks, otherwise they are included.
-#DISABLE_ASSERTIONS = 1
-@DISABLE_ASSERTIONS@
-
-# When ENABLE_EXPENSIVE_CHECKS is enabled, builds of all of the LLVM
-# code will include expensive checks, otherwise they are excluded.
-#ENABLE_EXPENSIVE_CHECKS = 0
-@ENABLE_EXPENSIVE_CHECKS@
-
-# When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
-# symbols.
-#DEBUG_RUNTIME = 1
-@DEBUG_RUNTIME@
+# When WANT_OPT_FOR_SIZE is enabled, the optimizations performed will favor
+# optimizing for code and data size rather than for speed.
+WANT_OPT_FOR_SIZE := @WANT_OPT_FOR_SIZE@
 
 # When ENABLE_PROFILING is enabled, the llvm source base is built with profile
 # information to allow gprof to be used to get execution frequencies.
-#ENABLE_PROFILING = 1
+WANT_PROFILING = @WANT_PROFILING@
 
-# When ENABLE_DOXYGEN is enabled, the doxygen documentation will be built
-ENABLE_DOXYGEN = @ENABLE_DOXYGEN@
+# When WANT_STRIPPED is enabled, executables and libraries will be
+# stripped of debug symbols
+WANT_STRIPPED := @WANT_STRIPPED@
 
-# Do we want to enable threads?
-ENABLE_THREADS := @ENABLE_THREADS@
-
-# Do we want to build with position independent code?
-ENABLE_PIC := @ENABLE_PIC@
+# When WANT_THREADS is enabled, thread libraries will be found and included
+WANT_THREADS := @WANT_THREADS@
 
 # This option tells the Makefiles to produce verbose output.
 # It essentially prints the commands that make is executing
-#VERBOSE = 1
+WANT_VERBOSE := @WANT_VERBOSE@
 
-# Enable JIT for this platform
-TARGET_HAS_JIT = @TARGET_HAS_JIT@
-
-# Shared library extension for host platform.
-SHLIBEXT = @SHLIBEXT@
-
-# Executable file extension for host platform.
-EXEEXT = @EXEEXT@
+################################################################################
 
 # Things we just assume are "there"
 ECHO := echo

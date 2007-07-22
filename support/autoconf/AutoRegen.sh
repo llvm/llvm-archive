@@ -7,7 +7,7 @@ die () {
 ### NOTE: ############################################################"
 ### The below two variables specify the auto* versions
 ### periods should be escaped with backslash, for use by grep
-want_autoconf_version='2\.60'
+want_autoconf_version='2\.61'
 want_autoheader_version=$want_autoconf_version
 ### END NOTE #########################################################"
 

@@ -28,18 +28,18 @@ options="$LLVM_TOP/.options"
 if test -r "$options" -a -f "$options" ; then
   . "$options"
 else
-  ARCHIVE_LIBS=1
-  ASSERTS=1
+  ASSERTIONS=1
+  CHECKING=0
   DEBUG=1
   DESTDIR=""
-  EXPENSIVE=0
-  OPTIMIZED=0
+  DOXYGEN=0
   OPT_FOR_SIZE=0
+  OPTIMIZED=0
   PREFIX="$LLVM_TOP/installed"
   PROFILING=0
-  SHARED_LIBS=0
-  STRIP=0
-  TOOL_VERBOSE=0
+  STRIPPED=0
+  TARGETS_TO_BUILD="all"
+  THREADS=0
   USE_OBJ_DIR=0
   VERBOSE=0
 fi

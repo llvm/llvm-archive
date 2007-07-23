@@ -173,7 +173,7 @@ get_a_modules_dependencies() {
   if test "$RECURSION_DEPTH" -gt 10 ; then
     die 2 "Recursing too deeply on module dependencies"
   fi
-  let RECURSION_DEPTH="$((RECURSION_DEPTH + 1))"
+  RECURSION_DEPTH=$(($RECURSION_DEPTH + 1))
   local module="$1"
   msg 2 "Getting dependencies for module '$module'"
   get_module_info $module DepModule

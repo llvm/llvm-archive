@@ -3,6 +3,7 @@
 
 #include "safecode/Config/config.h"
 #include "ConvertUnsafeAllocas.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Pass.h"
 
 #ifndef LLVA_KERNEL
@@ -11,6 +12,7 @@
 #endif
 
 #include <map>
+#include <set>
 
 #ifdef LLVA_KERNEL
 #define LLVA_ICONTEXT_SIZE     (18*4)
@@ -91,6 +93,7 @@ struct InsertPoolChecks : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<PreInsertPoolChecks>();
       AU.addRequired<ConvertUnsafeAllocas>();
+      AU.addRequired<ScalarEvolution>();
 //      AU.addRequired<CompleteBUDataStructures>();
 //      AU.addRequired<TDDataStructures>();
 #ifndef LLVA_KERNEL      
@@ -106,6 +109,7 @@ struct InsertPoolChecks : public FunctionPass {
     };
     private :
     CUA::ConvertUnsafeAllocas * cuaPass;
+    ScalarEvolution * scevPass;
   TargetData * TD;
 #ifndef  LLVA_KERNEL
   PoolAllocate * paPass;

@@ -21,6 +21,7 @@
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ConstantRange.h"
 
 #include <iostream>
 #include <vector>
@@ -1429,6 +1430,12 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
 void
 InsertPoolChecks::addExactCheck (Instruction * GEP,
                                  Value * Index, Value * Bounds) {
+  // Upper and lower values on the index and bounds
+  int index_lower;
+  int index_upper;
+  int bounds_lower;
+  int bounds_upper;
+
   //
   // First, determine whether we need to perform a check at all.
   //
@@ -1443,10 +1450,41 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
     // Update stats and return
     ++ConstExactChecks;
     return;
+  } else if (CBounds) {
+    int bounds = CBounds->getSExtValue();
+    SCEVHandle SCEVIndex  = scevPass->getSCEV (Index);
+    ConstantRange IndexRange  = SCEVIndex->getValueRange();
+    if (!(IndexRange.isWrappedSet())) {
+      int index_lower = IndexRange.getLower()->getSExtValue();
+      int index_upper = IndexRange.getUpper()->getSExtValue();
+      int bounds_lower = bounds;
+      int bounds_upper = bounds;
+
+      if ((index_lower >= 0) && (index_upper < bounds_lower)) {
+        ++ConstExactChecks;
+        return;
+      }
+    }
+  }
+
+  SCEVHandle SCEVIndex  = scevPass->getSCEV (Index);
+  SCEVHandle SCEVBounds = scevPass->getSCEV (Bounds);
+  ConstantRange BoundsRange = SCEVBounds->getValueRange();
+  ConstantRange IndexRange  = SCEVIndex->getValueRange();
+  if ((!(IndexRange.isWrappedSet())) && (!(BoundsRange.isWrappedSet()))) {
+    int index_lower = IndexRange.getLower()->getSExtValue();
+    int index_upper = IndexRange.getUpper()->getSExtValue();
+    int bounds_lower = BoundsRange.getLower()->getSExtValue();
+    int bounds_upper = BoundsRange.getUpper()->getSExtValue();
+
+    if ((index_lower >= 0) && (index_upper < bounds_lower)) {
+      ++ConstExactChecks;
+      return;
+    }
   }
 
   //
-  // Second, cast the operands to the correct type.
+  // Cast the operands to the correct type.
   //
   Instruction * InsertPt = GEP->getNext();
 
@@ -1713,11 +1751,13 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
     // These criteria must be met:
     //  1) The pool must be Type-Homogoneous.
     //
+#if 0
     if ((!(Node->isNodeCompletelyFolded())) &&
         (indexesStructsOnly (GEP))) {
       ++StructGEPsRemoved;
       return true;
     }
+#endif
 
     //
     // Attempt to use a call to exactcheck() to check this value if it is a
@@ -1782,11 +1822,13 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
     // These criteria must be met:
     //  1) The pool must be Type-Homogoneous.
     //
+#if 0
     if ((!(Node->isNodeCompletelyFolded())) &&
         (indexesStructsOnly (GEP))) {
       ++StructGEPsRemoved;
       return true;
     }
+#endif
 
     const Type * AllocaType = AI->getAllocatedType();
     Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
@@ -1812,11 +1854,13 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       // These criteria must be met:
       //  1) The pool must be Type-Homogoneous.
       //
+#if 0
       if ((!(Node->isNodeCompletelyFolded())) &&
           (indexesStructsOnly (GEP))) {
         ++StructGEPsRemoved;
         return true;
       }
+#endif
 
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
       addExactCheck2(PointerOperand, GEP, Cast, GEP->getNext());
@@ -2013,8 +2057,9 @@ InsertPoolChecks::runOnFunction (Function & F) {
   // Retrieve references to all of the passes from which we will gather
   // information.
   //
-  cuaPass = &getAnalysis<ConvertUnsafeAllocas>();
-  TD      = &getAnalysis<TargetData>();
+  cuaPass  = &getAnalysis<ConvertUnsafeAllocas>();
+  TD       = &getAnalysis<TargetData>();
+  scevPass = &getAnalysis<ScalarEvolution>();
 #ifdef LLVA_KERNEL  
   TDPass  = &getAnalysis<TDDataStructures>();
 #else

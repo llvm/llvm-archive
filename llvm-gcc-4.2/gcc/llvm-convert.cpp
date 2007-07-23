@@ -5536,26 +5536,14 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   
   std::vector<Constant*> Elts;
   if (ElTy == Type::Int8Ty) {
-    const signed char *InStr = (const signed char *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::Int8Ty, InStr[i]));
-  } else if (ElTy == Type::Int8Ty) {
     const unsigned char *InStr =(const unsigned char *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
       Elts.push_back(ConstantInt::get(Type::Int8Ty, InStr[i]));
-  } else if (ElTy == Type::Int16Ty) {
-    const signed short *InStr = (const signed short *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
   } else if (ElTy == Type::Int16Ty) {
     const unsigned short *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
       Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
-  } else if (ElTy == Type::Int32Ty) {
-    const signed *InStr = (const signed *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len; ++i)
-      Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
   } else if (ElTy == Type::Int32Ty) {
     const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)

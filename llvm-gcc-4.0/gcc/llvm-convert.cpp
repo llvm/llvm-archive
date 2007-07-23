@@ -46,6 +46,7 @@ extern "C" {
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "tm_p.h"
 #include "tree.h"
 #include "c-tree.h"  // FIXME: eliminate.
 #include "tree-iterator.h"

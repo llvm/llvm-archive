@@ -118,7 +118,10 @@ void llvm_initialize_backend(void) {
     Args.push_back("--nozero-initialized-in-bss");
   if (flag_debug_asm)
     Args.push_back("--asm-verbose");
-
+  if (flag_debug_pass_structure)
+    Args.push_back("--debug-pass=Structure");
+  if (flag_debug_pass_arguments)
+    Args.push_back("--debug-pass=Arguments");
 // Disabled until PR1224 is resolved.
   //if (flag_exceptions)
   //  Args.push_back("--enable-eh");

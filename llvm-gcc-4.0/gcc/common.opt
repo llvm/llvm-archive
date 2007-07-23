@@ -202,6 +202,15 @@ Emit LLVM code to the .s file instead of native machine code.
 emit-llvm-bc
 Common Report Var(emit_llvm_bc)
 Emit LLVM IR to the output file instead of native machine code.
+
+; Debug pass manager
+fdebug-pass-structure
+Common Report Var(flag_debug_pass_structure)
+Print pass manager structure
+
+fdebug-pass-arguments
+Common Report Var(flag_debug_pass_arguments)
+Print pass manager arguments
 ; APPLE LOCAL end LLVM
 
 ; The version of the C++ ABI in use.  The following values are allowed:

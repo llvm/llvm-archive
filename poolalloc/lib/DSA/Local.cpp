@@ -50,6 +50,7 @@ Crash("dsa-crash", cl::Hidden,
 static cl::opt<int>
 CrashAt("dsa-crashat", cl::Hidden,
          cl::desc("Crash on unknowns"));
+static bool DebugUnknown = false;
 static int CrashCur = 0;
 DSNode *DSNode::setUnknownNodeMarker() { 
   if (Crash && CrashCur == CrashAt) assert(0); 
@@ -1124,14 +1125,81 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
             N->setReadMarker();
     return true;
 #ifdef LLVA_KERNEL
-    //TODO: 
-    //state.c:
-    //llva_ipush_function0,1,3 llva_push_function1 llva_push_syscall
-    //llva_set_integer_stackp, llva_load_integer 
-    //llva_load_stackp
-    //llva_load_invoke llva_save_invoke llva_icontext_save_retvalue
-    //llva_get_icontext_stackp llva_set_icontext_stackp
-    //llva_iset_privileged
+  } else if (F->getName() == "llva_print_icontext") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setReadMarker();
+    return true;
+  } else if (F->getName() == "llva_ipush_function0" ||
+             F->getName() == "llva_ipush_function1" ||
+             F->getName() == "llva_ipush_function3" ||
+             F->getName() == "llva_push_function1") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    DSNodeHandle FP = getValueDest(**(CS.arg_begin() + 1));
+    RetNH.getNode()->setModifiedMarker()->setReadMarker()->foldNodeCompletely();
+    RetNH.addEdgeTo(FP);
+    return true;
+  } else if (F->getName() == "llva_push_syscall" ) {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin() + 1));
+    DSNodeHandle FP = getValueDest(**(CS.arg_begin() + 2));
+    RetNH.getNode()->setModifiedMarker()->setReadMarker()->foldNodeCompletely();
+    RetNH.addEdgeTo(FP);
+    return true;
+  } else if (F->getName() == "llva_config_ldt" ||
+             F->getName() == "llva_mm_flush_tlb" ||
+             F->getName() == "llva_register_syscall_cleaner") {
+    return true;
+  } else if (F->getName() == "llva_iset_privileged") {
+    DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
+    RetNH.getNode()->setModifiedMarker();
+    return true;
+  } else if (F->getName() == "llva_load_invoke") {
+    Value* GV = F->getParent()->getNamedGlobal("llva.invoke");
+    DSNodeHandle Dest = getValueDest(*GV);
+    Dest.getNode()->setModifiedMarker();
+    Dest.getNode()->mergeTypeInfo((*CS.arg_begin())->getType(), Dest.getOffset());
+    Dest.addEdgeTo(getValueDest(**CS.arg_begin()));
+    return true;
+  } else if (F->getName() == "llva_save_invoke") {
+    Value* GV = F->getParent()->getNamedGlobal("llva.invoke");
+    DSNodeHandle Ptr = getValueDest(*GV);
+    if (Ptr.isNull())
+      Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Ptr.getNode()->mergeTypeInfo(CS.getInstruction()->getType(), Ptr.getOffset(), false);
+    setDestTo(*CS.getInstruction(), getLink(Ptr));
+    return true;
+  } else if (F->getName() == "llva_mm_load_pgtable") {
+      Value* GV = F->getParent()->getNamedGlobal("llva.pgtable");
+      DSNodeHandle Dest = getValueDest(*GV);
+      Dest.getNode()->setModifiedMarker();
+      Dest.getNode()->mergeTypeInfo((*CS.arg_begin())->getType(), Dest.getOffset());
+      Dest.addEdgeTo(getValueDest(**CS.arg_begin()));
+      return true;
+  } else if (F->getName() == "llva_mm_save_pgtable") {
+    Value* GV = F->getParent()->getNamedGlobal("llva.pgtable");
+    DSNodeHandle Ptr = getValueDest(*GV);
+    if (Ptr.isNull())
+      Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Ptr.getNode()->mergeTypeInfo(CS.getInstruction()->getType(), Ptr.getOffset(), false);
+    setDestTo(*CS.getInstruction(), getLink(Ptr));
+    return true;
+  } else if (F->getName() == "llva_load_kstackp") {
+      Value* GV = F->getParent()->getNamedGlobal("llva.kstackp");
+      DSNodeHandle Dest = getValueDest(*GV);
+      Dest.getNode()->setModifiedMarker();
+      Dest.getNode()->mergeTypeInfo((*CS.arg_begin())->getType(), Dest.getOffset());
+      Dest.addEdgeTo(getValueDest(**CS.arg_begin()));
+      return true;
+  } else if (F->getName() == "llva_save_kstackp") {
+    Value* GV = F->getParent()->getNamedGlobal("llva.kstackp");
+    DSNodeHandle Ptr = getValueDest(*GV);
+    if (Ptr.isNull())
+      Ptr = createNode();
+    Ptr.getNode()->setReadMarker();
+    Ptr.getNode()->mergeTypeInfo(CS.getInstruction()->getType(), Ptr.getOffset(), false);
+    setDestTo(*CS.getInstruction(), getLink(Ptr));
+    return true;
   } else if (F->getName() == "llva_icontext_save_retvalue") {
     DSNodeHandle RetNH = getValueDest(**(CS.arg_begin()));
     RetNH.getNode()->setModifiedMarker();
@@ -1197,7 +1265,9 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     Ptr.getNode()->setReadMarker();
     return true;
   } else if (F->getName() == "llva_register_syscall" ||
-             F->getName() == "llva_register_interrupt") {
+             F->getName() == "llva_register_interrupt" ||
+             F->getName() == "llva_register_general_exception" ||
+             F->getName() == "llva_register_memory_exception") {
     //FIXME: track functions and clear Incomplete flags on them
     //       or set userspace flag on pointers
     return true;
@@ -1498,7 +1568,7 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
       // to track the fact that the node points to SOMETHING, just something we
       // don't know about.  Make an "Unknown" node.
       //
-      CI.dump();
+      if (DebugUnknown) CI.dump();
       setDestTo(CI, createNode()->setUnknownNodeMarker());
     }
 }
@@ -1516,7 +1586,7 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
       CurNode.mergeWith(getValueDest(**I));
 
   if (DSNode *N = CurNode.getNode()) {
-    Inst.dump();
+    if (DebugUnknown) Inst.dump();
     N->setUnknownNodeMarker();
   }
 }
@@ -1688,6 +1758,12 @@ bool LocalDataStructures::runOnModule(Module &M) {
           if (Function* F = dyn_cast<Function>(fun))
               syscalls[num] = F;
         }
+
+  //Add shadow globals for processor state
+  new GlobalVariable(PointerType::get(Type::SByteTy), false, GlobalValue::InternalLinkage, Constant::getNullValue(PointerType::get(Type::SByteTy)), "llva.pgtable", &M);
+  new GlobalVariable(PointerType::get(Type::SByteTy), false, GlobalValue::InternalLinkage, Constant::getNullValue(PointerType::get(Type::SByteTy)), "llva.invoke", &M);
+  new GlobalVariable(PointerType::get(Type::SByteTy), false, GlobalValue::InternalLinkage, Constant::getNullValue(PointerType::get(Type::SByteTy)), "llva.kstackp", &M);
+
 #endif
 
   const TargetData &TD = getAnalysis<TargetData>();
@@ -1758,7 +1834,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
 
 #endif
 
-  return false;
+  return true;
 }
 
 // releaseMemory - If the pass pipeline is done with this pass, we can release

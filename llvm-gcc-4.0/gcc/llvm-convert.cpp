@@ -4679,6 +4679,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
                                                Intrinsic::eh_return),
                      Offset, Handler);
   Result = Builder.CreateUnreachable();
+  EmitBlock(new BasicBlock(""));
 
   return true;
 }

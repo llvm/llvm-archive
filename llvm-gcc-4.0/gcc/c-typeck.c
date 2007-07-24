@@ -2925,7 +2925,7 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 	  return build_binary_op (PLUS_EXPR, TREE_OPERAND (arg, 0),
 				  TREE_OPERAND (arg, 1), 1);
 	}
-#endif ENABLE_LLVM
+#endif
       /* APPLE LOCAL end LLVM */
 
       /* Anything not already handled and not a true memory reference

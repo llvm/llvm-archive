@@ -95,11 +95,11 @@ namespace {
   public:
     virtual bool runOnModule(Module &M) {
       CallTargetFinder* CTF = &getAnalysis<CallTargetFinder>();
-      bool changed = false;
 
       Function* ams = M.getNamedFunction("llva_assert_match_sig");
       
       std::set<Value*> safecalls;
+      std::vector<Instruction*> toDelete;
 
       for (Value::use_iterator ii = ams->use_begin(), ee = ams->use_end();
            ii != ee; ++ii) {
@@ -107,8 +107,9 @@ namespace {
           std::cerr << "Found safe call site in " 
                     << CI->getParent()->getParent()->getName() << "\n";
           Value* V = CI->getOperand(1);
-          CI->eraseFromParent();
+          toDelete.push_back(CI);
           do {
+            //V->dump();
             safecalls.insert(V);
             if (CastInst* CV = dyn_cast<CastInst>(V))
               V = CV->getOperand(0);
@@ -117,13 +118,11 @@ namespace {
         }
       }
 
-      std::vector<Instruction*> toDelete;
-
       for(std::set<Value*>::iterator i = safecalls.begin(), e = safecalls.end();
           i != e; ++i) {
-        for (Value::use_iterator ii = (*i)->use_begin(), ie = (*i)->use_end();
-             ii != ie; ++ii) {
-          CallSite cs = CallSite::get(*ii);
+        for (Value::use_iterator uii = (*i)->use_begin(), uie = (*i)->use_end();
+             uii != uie; ++uii) {
+          CallSite cs = CallSite::get(*uii);
           bool isSafeCall = cs.getInstruction() && 
             safecalls.find(cs.getCalledValue()) != safecalls.end();
           if (cs.getInstruction() && !cs.getCalledFunction() &&
@@ -135,9 +134,8 @@ namespace {
                 Targets.push_back(*ii);
             
             if (Targets.size() > 0) {
-              std::cerr << "Target count: " << Targets.size() << "\n";
+              std::cerr << "Target count: " << Targets.size() << " in " << cs.getInstruction()->getParent()->getParent()->getName() << "\n";
               Function* NF = buildBounce(cs, Targets, M);
-              changed = true;
               if (CallInst* ci = dyn_cast<CallInst>(cs.getInstruction())) {
                 ++CSConvert;
                 std::vector<Value*> Par(ci->op_begin(), ci->op_end());
@@ -155,13 +153,18 @@ namespace {
                 ci->replaceAllUsesWith(cn);
                 toDelete.push_back(ci);
               }
-            }
+            } else //Target size == 0
+              std::cerr << "Call site found, but no Targets\n";
           }
         }
       }
+
+      bool changed = false;
       for (std::vector<Instruction*>::iterator ii = toDelete.begin(), ee = toDelete.end();
-           ii != ee; ++ii)
+           ii != ee; ++ii) {
+        changed = true;
         (*ii)->eraseFromParent();
+      }
       return changed;
     }
 

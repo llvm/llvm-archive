@@ -5048,7 +5048,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
     // If this is an aggregate, emit it to LLVM now.  GCC happens to
     // get this case right by forcing the initializer into memory.
     if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
-      if (DECL_INITIAL(exp) && GV->isDeclaration()) {
+      if (GV->isDeclaration()) {
         emit_global_to_llvm(exp);
         Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
       }
@@ -6128,7 +6128,7 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
   // If this is an aggregate, emit it to LLVM now.  GCC happens to
   // get this case right by forcing the initializer into memory.
   if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
-    if (DECL_INITIAL(exp) && Val->isDeclaration()) {
+    if (Val->isDeclaration()) {
       emit_global_to_llvm(exp);
       // Decl could have change if it changed type.
       Val = cast<GlobalValue>(DECL_LLVM(exp));

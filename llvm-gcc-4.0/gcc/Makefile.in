@@ -218,10 +218,6 @@ WARN_CFLAGS = @warn_cflags@
 @checkingenabled_flag@
 LLVMOBJDIR = @LLVMBASEPATH@
 
-ifdef LLVM_VERSION_INFO
-CPPFLAGS += -DLLVM_VERSION_INFO='"$(LLVM_VERSION_INFO)"'
-endif
-
 # Determine BUILDMODE from configure run (--enable-llvm)
 BUILDMODE := @LLVMBUILDMODE@
 
@@ -235,6 +231,10 @@ CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppfla
 # Use llvm-config to get the srcdir that LLVM was configured with, to support
 # srcdir != objdir builds.
 LLVMSRCDIR := $(shell $(LLVMBINPATH)/llvm-config --src-root)
+endif
+
+ifdef LLVM_VERSION_INFO
+CPPFLAGS += -DLLVM_VERSION_INFO='"$(LLVM_VERSION_INFO)"'
 endif
 # APPLE LOCAL end LLVM
 

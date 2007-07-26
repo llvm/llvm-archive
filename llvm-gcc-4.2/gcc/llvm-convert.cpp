@@ -5496,25 +5496,22 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
   
   // Here's how this works:
   // REAL_VALUE_TO_TARGET_DOUBLE() will generate the floating point number
-  //  as an array of integers in the hosts's representation.  Each integer
+  // as an array of integers in the target's representation.  Each integer
   // in the array will hold 32 bits of the result REGARDLESS OF THE HOST'S
-  //  INTEGER SIZE.
+  // INTEGER SIZE.
   //
   // This, then, makes the conversion pretty simple.  The tricky part is
   // getting the byte ordering correct and make sure you don't print any
   // more than 32 bits per integer on platforms with ints > 32 bits.
-  //
-  bool HostBigEndian = false;
-#ifdef WORDS_BIG_ENDIAN
-  HostBigEndian = true;
-#endif
-  
+
   UArr[0] = RealArr[0];   // Long -> int convert
   UArr[1] = RealArr[1];
 
-  if (WORDS_BIG_ENDIAN != HostBigEndian)
+  // FIXME: verify on big-endian targets and cross from big- to little- endian
+  // targets
+  if (FLOAT_WORDS_BIG_ENDIAN)
     std::swap(UArr[0], UArr[1]);
-  
+
   return ConstantFP::get(Ty, V);
 }
 

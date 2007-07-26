@@ -6390,7 +6390,8 @@ int
 main (int argc, const char **argv)
 {
   size_t i;
-  int value;
+  /* APPLE LOCAL LLVM uninit warning */
+  int value = 0;
   int linker_was_run = 0;
   int lang_n_infiles = 0;
   int num_linker_inputs = 0;

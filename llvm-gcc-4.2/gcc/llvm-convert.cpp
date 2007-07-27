@@ -4236,6 +4236,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
    return EmitBuiltinExtractReturnAddr(exp, Result);
   case BUILT_IN_FROB_RETURN_ADDR:
    return EmitBuiltinFrobReturnAddr(exp, Result);
+  case BUILT_IN_INIT_TRAMPOLINE:
+    return EmitBuiltinInitTrampoline(exp);
+  case BUILT_IN_ADJUST_TRAMPOLINE:
+    return EmitBuiltinAdjustTrampoline(exp, Result);
 
   // Builtins used by the exception handling runtime.
   case BUILT_IN_DWARF_CFA:
@@ -4879,6 +4883,45 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   return true;
 }
 
+bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp) {
+  tree arglist = TREE_OPERAND(exp, 1);
+  if (!validate_arglist (arglist, POINTER_TYPE, POINTER_TYPE, POINTER_TYPE,
+                         VOID_TYPE))
+    return false;
+
+  static const Type *VPTy = PointerType::get(Type::Int8Ty);
+
+  Value *Tramp = Emit(TREE_VALUE(arglist), 0);
+  Tramp = CastToType(Instruction::BitCast, Tramp, VPTy);
+
+  Value *Func = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
+  Func = CastToType(Instruction::BitCast, Func, VPTy);
+
+  Value *Chain = Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0);
+  Chain = CastToType(Instruction::BitCast, Chain, VPTy);
+
+  Value *Ops[3] = { Tramp, Func, Chain };
+
+  Function *Intr = Intrinsic::getDeclaration(TheModule,
+                                             Intrinsic::init_trampoline);
+  Builder.CreateCall(Intr, Ops, 3);
+  return true;
+}
+
+bool TreeToLLVM::EmitBuiltinAdjustTrampoline(tree exp, Value *&Result) {
+  tree arglist = TREE_OPERAND(exp, 1);
+  if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
+    return false;
+
+  Value *Tramp = Emit(TREE_VALUE(arglist), 0);
+  Tramp = CastToType(Instruction::BitCast, Tramp,
+                     PointerType::get(Type::Int8Ty));
+
+  Function *Intr = Intrinsic::getDeclaration(TheModule,
+                                             Intrinsic::adjust_trampoline);
+  Result = Builder.CreateCall(Intr, Tramp, "adj");
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 //                      ... Complex Math Expressions ...

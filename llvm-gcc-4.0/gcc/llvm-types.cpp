@@ -962,9 +962,13 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
                                              ParamAttr::StructRet));
     
-  if (static_chain)
+  if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+    // Mark it as the chain argument.
+    Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
+                                             ParamAttr::Nest));
+  }
 
   // If the target has regparam parameters, allow it to inspect the function
   // type.

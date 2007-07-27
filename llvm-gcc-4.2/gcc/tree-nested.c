@@ -439,7 +439,7 @@ get_trampoline_type (void)
   align = TRAMPOLINE_ALIGNMENT;
   size = TRAMPOLINE_SIZE;
 
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #ifndef ENABLE_LLVM /* Rely on LLVM supporting large alignments. */
   /* If we won't be able to guarantee alignment simply via TYPE_ALIGN,
      then allocate extra space so that we can do dynamic alignment.  */
@@ -449,7 +449,7 @@ get_trampoline_type (void)
       size += ((align/BITS_PER_UNIT) - 1) & -(STACK_BOUNDARY/BITS_PER_UNIT);
       align = STACK_BOUNDARY;
     }
-/* APPLE LOCAL LLVM */
+/* LLVM LOCAL */
 #endif
 
   t = build_index_type (build_int_cst (NULL_TREE, size - 1));

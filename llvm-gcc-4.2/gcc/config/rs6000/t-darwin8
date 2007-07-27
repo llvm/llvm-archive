@@ -1,7 +1,3 @@
 # 64-bit libraries can only be built in Darwin 8.x or later.
-# LLVM LOCAL begin
-# FIXME: how do I only disable this for llvm?
-# MULTILIB_OPTIONS = m64
-# MULTILIB_DIRNAMES = ppc64
-# LLVM LOCAL end
-
+MULTILIB_OPTIONS = m64
+MULTILIB_DIRNAMES = ppc64

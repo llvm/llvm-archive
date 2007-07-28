@@ -38,12 +38,6 @@ using namespace __cxxabiv1;
 #define NO_SIZE_OF_ENCODED_VALUE
 #endif
 
-// LLVM LOCAL begin
-#ifdef __ARM_EABI_UNWINDER__
-#define NO_SIZE_OF_ENCODED_VALUE
-#endif
-// LLVM LOCAL end
-
 #include "unwind-pe.h"
 
 
@@ -204,119 +198,6 @@ typedef const std::type_info _throw_typet;
 
 // Return an element from a type table.
 
-// LLVM LOCAL begin
-#ifdef __ARM_EABI_UNWINDER__
-
-// Return an element from a type table.
-
-static const std::type_info*
-get_ttype_entry(lsda_header_info* info, _Unwind_Word i)
-{
-  _Unwind_Ptr ptr;
-
-  ptr = (_Unwind_Ptr) (info->TType - (i * 4));
-  ptr = _Unwind_decode_target2(ptr);
-  
-  return reinterpret_cast<const std::type_info *>(ptr);
-}
-
-// The ABI provides a routine for matching exception object types.
-typedef _Unwind_Control_Block _throw_typet;
-#define get_adjusted_ptr(catch_type, throw_type, thrown_ptr_p) \
-  (__cxa_type_match (throw_type, catch_type, false, thrown_ptr_p) \
-   != ctm_failed)
-
-// Return true if THROW_TYPE matches one if the filter types.
-
-static bool
-check_exception_spec(lsda_header_info* info, _throw_typet* throw_type,
-		     void* thrown_ptr, _Unwind_Sword filter_value)
-{
-  const _Unwind_Word* e = ((const _Unwind_Word*) info->TType)
-			  - filter_value - 1;
-
-  while (1)
-    {
-      const std::type_info* catch_type;
-      _Unwind_Word tmp;
-
-      tmp = *e;
-      
-      // Zero signals the end of the list.  If we've not found
-      // a match by now, then we've failed the specification.
-      if (tmp == 0)
-        return false;
-
-      tmp = _Unwind_decode_target2((_Unwind_Word) e);
-
-      // Match a ttype entry.
-      catch_type = reinterpret_cast<const std::type_info*>(tmp);
-
-      // ??? There is currently no way to ask the RTTI code about the
-      // relationship between two types without reference to a specific
-      // object.  There should be; then we wouldn't need to mess with
-      // thrown_ptr here.
-      if (get_adjusted_ptr(catch_type, throw_type, &thrown_ptr))
-	return true;
-
-      // Advance to the next entry.
-      e++;
-    }
-}
-
-
-// Save stage1 handler information in the exception object
-
-static inline void
-save_caught_exception(struct _Unwind_Exception* ue_header,
-		      struct _Unwind_Context* context,
-		      void* thrown_ptr,
-		      int handler_switch_value,
-		      const unsigned char* language_specific_data,
-		      _Unwind_Ptr landing_pad,
-		      const unsigned char* action_record
-			__attribute__((__unused__)))
-{
-    ue_header->barrier_cache.sp = _Unwind_GetGR(context, 13);
-    ue_header->barrier_cache.bitpattern[0] = (_uw) thrown_ptr;
-    ue_header->barrier_cache.bitpattern[1]
-      = (_uw) handler_switch_value;
-    ue_header->barrier_cache.bitpattern[2]
-      = (_uw) language_specific_data;
-    ue_header->barrier_cache.bitpattern[3] = (_uw) landing_pad;
-}
-
-
-// Restore the catch handler data saved during phase1.
-
-static inline void
-restore_caught_exception(struct _Unwind_Exception* ue_header,
-			 int& handler_switch_value,
-			 const unsigned char*& language_specific_data,
-			 _Unwind_Ptr& landing_pad)
-{
-  handler_switch_value = (int) ue_header->barrier_cache.bitpattern[1];
-  language_specific_data =
-    (const unsigned char*) ue_header->barrier_cache.bitpattern[2];
-  landing_pad = (_Unwind_Ptr) ue_header->barrier_cache.bitpattern[3];
-}
-
-#define CONTINUE_UNWINDING \
-  do								\
-    {								\
-      if (__gnu_unwind_frame(ue_header, context) != _URC_OK)	\
-	return _URC_FAILURE;					\
-      return _URC_CONTINUE_UNWIND;				\
-    }								\
-  while (0)
-
-#else
-// LLVM LOCAL end
-typedef const std::type_info _throw_typet;
-
-
-// Return an element from a type table.
-
 static const std::type_info *
 get_ttype_entry (lsda_header_info *info, _Unwind_Word i)
 {
@@ -432,52 +313,6 @@ restore_caught_exception(struct _Unwind_Exception* ue_header,
 #define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
 
 #endif // !__ARM_EABI_UNWINDER__
-
-
-// LLVM LOCAL begin
-// Save stage1 handler information in the exception object
-
-static inline void
-save_caught_exception(struct _Unwind_Exception* ue_header,
-		      struct _Unwind_Context* context
-			__attribute__((__unused__)),
-		      void* thrown_ptr,
-		      int handler_switch_value,
-		      const unsigned char* language_specific_data,
-		      _Unwind_Ptr landing_pad __attribute__((__unused__)),
-		      const unsigned char* action_record)
-{
-  __cxa_exception* xh = __get_exception_header_from_ue(ue_header);
-
-  xh->handlerSwitchValue = handler_switch_value;
-  xh->actionRecord = action_record;
-  xh->languageSpecificData = language_specific_data;
-  xh->adjustedPtr = thrown_ptr;
-
-  // ??? Completely unknown what this field is supposed to be for.
-  // ??? Need to cache TType encoding base for call_unexpected.
-  xh->catchTemp = landing_pad;
-}
-
-
-// Restore the catch handler information saved during phase1.
-
-static inline void
-restore_caught_exception(struct _Unwind_Exception* ue_header,
-			 int& handler_switch_value,
-			 const unsigned char*& language_specific_data,
-			 _Unwind_Ptr& landing_pad)
-{
-  __cxa_exception* xh = __get_exception_header_from_ue(ue_header);
-  handler_switch_value = xh->handlerSwitchValue;
-  language_specific_data = xh->languageSpecificData;
-  landing_pad = (_Unwind_Ptr) xh->catchTemp;
-}
-
-#define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
-
-#endif // !__ARM_EABI_UNWINDER__
-// LLVM LOCAL end
 
 // Return true if the filter spec is empty, ie throw().
 

@@ -226,16 +226,6 @@ __is_gxx_exception_class(_Unwind_Exception_Class c)
 
 #define __GXX_INIT_EXCEPTION_CLASS(c) c = __gxx_exception_class
 
-// LLVM LOCAL begin
-static inline bool
-__is_gxx_exception_class(_Unwind_Exception_Class c)
-{
-  return c == __gxx_exception_class;
-}
-
-#define __GXX_INIT_EXCEPTION_CLASS(c) c = __gxx_exception_class
-// LLVM LOCAL end
-
 // GNU C++ personality routine, Version 0.
 extern "C" _Unwind_Reason_Code __gxx_personality_v0
      (int, _Unwind_Action, _Unwind_Exception_Class,

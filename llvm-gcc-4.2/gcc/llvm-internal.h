@@ -620,6 +620,8 @@ private:
   LValue EmitLV_BIT_FIELD_REF(tree_node *exp);
   LValue EmitLV_XXXXPART_EXPR(tree_node *exp, unsigned Idx);
   LValue EmitLV_VIEW_CONVERT_EXPR(tree_node *exp);
+  LValue EmitLV_EXC_PTR_EXPR(tree_node *exp);
+  LValue EmitLV_FILTER_EXPR(tree_node *exp);
 
   // Constant Expressions.
   Value *EmitINTEGER_CST(tree_node *exp);

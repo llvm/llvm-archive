@@ -800,10 +800,21 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   
   switch (TREE_CODE(exp)) {
   default:
-    std::cerr << "Unhandled expression!\n";
+    std::cerr << "Unhandled expression!\n"
+              << "TREE_CODE: " << TREE_CODE(exp) << "\n";
     debug_tree(exp);
     abort();
-    
+
+  // FIXME: EH handling trees. Blank right now
+  case FILTER_EXPR:
+  case RESX_EXPR:
+    {
+      const Type *Ty = ConvertType(TREE_TYPE(exp));
+      if (Ty != Type::VoidTy)
+        Result = Constant::getNullValue(Ty);
+    }
+    break;
+        
   // Basic lists and binding scopes
   case BIND_EXPR:      Result = EmitBIND_EXPR(exp, DestLoc); break;
   case STATEMENT_LIST: Result = EmitSTATEMENT_LIST(exp, DestLoc); break;
@@ -1002,6 +1013,10 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case INDIRECT_REF:
     // The lvalue is just the address.
     return Emit(TREE_OPERAND(exp, 0), 0);
+
+  // EH stuff
+  case EXC_PTR_EXPR: return EmitLV_EXC_PTR_EXPR(exp);
+  case FILTER_EXPR: return EmitLV_FILTER_EXPR(exp);
   }
 }
 
@@ -5404,6 +5419,44 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
   return LV;
+}
+
+/// EmitLV_EXC_PTR_EXPR - Handle EXC_PTR_EXPR as lvalue.
+///
+LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+
+#ifdef ITANIUM_STYLE_EXCEPTIONS
+  // Create exception values.
+  CreateExceptionValues();
+  LValue LV = ExceptionValue;
+#else
+  Value* Tmp = CreateTemporary(PointerType::get(Ty));
+  Tmp->setName("dummy");
+  LValue LV = Tmp;
+#endif
+
+  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
+  return LV;  
+}
+
+/// EmitLV_FILTER_EXPR - Handle FILTER_EXPR as lvalue.
+///
+LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+
+#ifdef ITANIUM_STYLE_EXCEPTIONS
+  // Create exception values.
+  CreateExceptionValues();
+  LValue LV = ExceptionSelectorValue;
+#else
+  Value* Tmp = CreateTemporary(PointerType::get(Ty));
+  Tmp->setName("dummy");
+  LValue LV = Tmp;
+#endif
+
+  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
+  return LV;  
 }
 
 //===----------------------------------------------------------------------===//

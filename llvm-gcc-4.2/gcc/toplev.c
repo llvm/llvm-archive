@@ -2135,6 +2135,7 @@ lang_dependent_init (const char *name)
   /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   llvm_lang_dependent_init(name);
+  init_eh();
   return 1; /* don't initialize the RTL backend */
 #endif
   /* LLVM LOCAL end */

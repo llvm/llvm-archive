@@ -69,6 +69,13 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 
 #define ITANIUM_STYLE_EXCEPTIONS
 
+// Check for GCC bug 17347: C++ FE sometimes creates bogus ctor trees
+// which we should throw out
+#define BOGUS_CTOR(exp)                                                \
+  (DECL_INITIAL(exp) &&                                                \
+   TREE_CODE(DECL_INITIAL(exp)) == CONSTRUCTOR &&                      \
+   !TREE_TYPE(DECL_INITIAL(exp)))
+
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees
 //===----------------------------------------------------------------------===//
@@ -5106,7 +5113,9 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
     // If this is an aggregate, emit it to LLVM now.  GCC happens to
     // get this case right by forcing the initializer into memory.
     if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
-      if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && GV->isDeclaration()) {
+      if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && !DECL_EXTERNAL(exp) &&
+          GV->isDeclaration() &&
+          !BOGUS_CTOR(exp)) {
         emit_global_to_llvm(exp);
         Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
       }
@@ -6224,7 +6233,9 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
   // If this is an aggregate, emit it to LLVM now.  GCC happens to
   // get this case right by forcing the initializer into memory.
   if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
-    if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && Val->isDeclaration()) {
+    if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && !DECL_EXTERNAL(exp) &&
+        Val->isDeclaration() &&
+        !BOGUS_CTOR(exp)) {
       emit_global_to_llvm(exp);
       // Decl could have change if it changed type.
       Val = cast<GlobalValue>(DECL_LLVM(exp));

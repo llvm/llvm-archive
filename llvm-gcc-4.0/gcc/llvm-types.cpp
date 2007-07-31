@@ -785,7 +785,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       return Ty;
     
     unsigned CallingConv;
-    return TypeDB.setType(type, ConvertFunctionType(type, NULL, CallingConv));
+    return TypeDB.setType(type, ConvertFunctionType(type, orig_type, NULL, CallingConv));
   }
   case ARRAY_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -927,6 +927,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
 }
 
 const FunctionType *TypeConverter::ConvertFunctionType(tree type,
+                                                       tree decl,
                                                        tree static_chain,
                                                        unsigned &CallingConv) {
   const Type *RetTy = 0;
@@ -979,6 +980,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   
   // Loop over all of the arguments, adding them as we go.
   tree Args = TYPE_ARG_TYPES(type);
+  tree DeclArgs = DECL_ARGUMENTS(decl);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
     tree ArgTy = TREE_VALUE(Args);
     if (!isPassedByInvisibleReference(ArgTy) &&
@@ -1012,8 +1014,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     }
 
     // Compute noalias attributes.
-    if (TREE_CODE(ArgTy) == POINTER_TYPE || TREE_CODE(ArgTy) == REFERENCE_TYPE)
-      if (TYPE_RESTRICT(ArgTy))
+    tree RestrictArgTy = (DeclArgs) ? DeclArgs->type.common.type : ArgTy;
+    RestrictArgTy = (RestrictArgTy) ? RestrictArgTy : ArgTy;
+    if (TREE_CODE(RestrictArgTy) == POINTER_TYPE ||
+        TREE_CODE(RestrictArgTy) == REFERENCE_TYPE)
+      if (TYPE_RESTRICT(RestrictArgTy))
         Attributes |= ParamAttr::NoAlias;
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
@@ -1026,6 +1031,9 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     
     if (Attributes != ParamAttr::None)
       Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(), Attributes));
+      
+    if (DeclArgs)
+      DeclArgs = TREE_CHAIN(DeclArgs);
   }
   
   // If the argument list ends with a void type node, it isn't vararg.

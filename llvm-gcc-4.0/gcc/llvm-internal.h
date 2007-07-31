@@ -139,6 +139,7 @@ public:
   /// tree to an LLVM type.  This does the same thing that ConvertType does, but
   /// it also returns the function's LLVM calling convention.
   const FunctionType *ConvertFunctionType(tree_node *type,
+                                          tree_node *decl,
                                           tree_node *static_chain,
                                           unsigned &CallingConv);
   

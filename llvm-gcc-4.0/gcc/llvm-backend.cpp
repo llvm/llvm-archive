@@ -988,7 +988,7 @@ void make_decl_llvm(tree decl) {
     if (FnEntry == 0) {
       unsigned CC;
       const FunctionType *Ty = 
-        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), NULL, CC);
+        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL, CC);
       FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
 

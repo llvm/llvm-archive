@@ -37,11 +37,18 @@ struct PreInsertPoolChecks : public ModulePass {
       AU.addPreserved<ConvertUnsafeAllocas>();
       AU.addPreserved<TDDataStructures>();
     }
+
+    bool nodeNeedsAlignment (DSNode * Node) {
+      return ((AlignmentNodes.find (Node)) != (AlignmentNodes.end()));
+    }
   private:
     // Private variables
     CUA::ConvertUnsafeAllocas * cuaPass;
     TDDataStructures * TDPass;
     TargetData * TD;
+
+    // Set of DSNodes that require alignment checks
+    std::set<DSNode *> AlignmentNodes;
 
     // External functions in the SAFECode run-time library
     Function *PoolCheck;
@@ -72,6 +79,7 @@ struct PreInsertPoolChecks : public ModulePass {
     // Private methods
     void addPoolCheckProto(Module &M);
     void registerGlobalArraysWithGlobalPools(Module &M);
+    void addLinksNeedingAlignment (DSNode * Node);
     Value * createPoolHandle (const Value * V, Function * F);
     Value * createPoolHandle (Module & M, DSNode * Node);
     Value* getPD(DSNode* N, Module& M) { 
@@ -108,6 +116,7 @@ struct InsertPoolChecks : public FunctionPass {
       
     };
     private :
+    PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
     ScalarEvolution * scevPass;
   TargetData * TD;

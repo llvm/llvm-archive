@@ -97,6 +97,7 @@ static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 
 static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
 static Statistic<> SavedPoolChecks ("safecode", "Pool Checks Performed on Checked Pointers");
+static Statistic<> AlignChecks ("safecode", "Number of alignment checks required");
 
 // Bounds Check Statistics
 static Statistic<> BoundsChecks     ("safecode",
@@ -328,8 +329,35 @@ PreInsertPoolChecks::runOnModule (Module & M) {
     DSGraph & TDG = TDPass->getDSGraph(*F);
     DSGraph::node_iterator NI = TDG.node_begin(), NE = TDG.node_end();
     while (NI != NE) {
+      addLinksNeedingAlignment (NI);
       createPoolHandle (M, NI);
       ++NI;
+    }
+  }
+}
+
+//
+// Method: addLinksNeedingAlignment()
+//
+// Description:
+//  Determine if this DSNode has any pointers to DSNodes which will require
+//  alignment checks.  If so, add those DSNodes to the set of DSNodes needing
+//  alignment checks.  Note that we do not determine if the *given* node needs
+//  alignment checks.
+//
+void
+PreInsertPoolChecks::addLinksNeedingAlignment (DSNode * Node) {
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if ((Node) && (Node->isNodeCompletelyFolded())) {
+    for (unsigned i = 0 ; i < Node->getNumLinks(); ++i) {
+      DSNode * LinkNode = Node->getLink(i).getNode();
+      if (LinkNode && (!(LinkNode->isNodeCompletelyFolded()))) {
+        AlignmentNodes.insert (LinkNode);
+      }
     }
   }
 }
@@ -912,6 +940,15 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   //
   DSGraph & TDG = TDPass->getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
+
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if (preSCPass->nodeNeedsAlignment (Node)) {
+    ++AlignChecks;
+  }
 
   //
   // Do not bother to insert checks for nodes that do not have the any of the
@@ -1710,6 +1747,15 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   DSNode * Node = TDG.getNodeForValue(GEP).getNode();
   assert (Node && "boundscheck: DSNode is NULL!");
 
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if (preSCPass->nodeNeedsAlignment (Node)) {
+    ++AlignChecks;
+  }
+
 #if 0
   // Debugging: See if we're missing exactcheck opportunities
   if (isa<SelectInst>(PointerOperand))
@@ -1947,13 +1993,22 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   //
   // Get the DSNode for the instruction
   //
-#if 0
+#if 1
   Function *F   = I->getParent()->getParent();
   DSGraph & TDG = TDPass->getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
   if (!Node)
     return false;
 #endif
+
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if (preSCPass->nodeNeedsAlignment (Node)) {
+    ++AlignChecks;
+  }
 
   //
   // Attempt to find the original object for which this check applies.
@@ -2057,9 +2112,10 @@ InsertPoolChecks::runOnFunction (Function & F) {
   // Retrieve references to all of the passes from which we will gather
   // information.
   //
-  cuaPass  = &getAnalysis<ConvertUnsafeAllocas>();
-  TD       = &getAnalysis<TargetData>();
-  scevPass = &getAnalysis<ScalarEvolution>();
+  preSCPass = &getAnalysis<PreInsertPoolChecks>();
+  cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
+  TD        = &getAnalysis<TargetData>();
+  scevPass  = &getAnalysis<ScalarEvolution>();
 #ifdef LLVA_KERNEL  
   TDPass  = &getAnalysis<TDDataStructures>();
 #else
@@ -3161,6 +3217,15 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   if (findCheckedPointer(V)) {
     ++SavedPoolChecks;
     return;
+  }
+
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if (preSCPass->nodeNeedsAlignment (Node)) {
+    ++AlignChecks;
   }
 
   // Get the pool handle associated with this pointer.  If there is no pool

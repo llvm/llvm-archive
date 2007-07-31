@@ -1031,6 +1031,11 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
       else
         Attributes |= ParamAttr::SExt;
     }
+
+    // Compute noalias attributes.
+    if (TREE_CODE(ArgTy) == POINTER_TYPE || TREE_CODE(ArgTy) == REFERENCE_TYPE)
+      if (TYPE_RESTRICT(ArgTy))
+        Attributes |= ParamAttr::NoAlias;
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
     // Allow the target to mark this as inreg.

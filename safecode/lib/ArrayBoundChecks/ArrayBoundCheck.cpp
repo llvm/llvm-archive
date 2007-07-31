@@ -10,7 +10,7 @@
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "ArrayBoundsCheck.h"
-#include "GEPUtils.h"
+#include "SCUtils.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"

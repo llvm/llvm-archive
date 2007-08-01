@@ -36,6 +36,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
 #include <iostream>
@@ -346,7 +347,10 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Value *AllocACast = new BitCastInst(AI, EmpPtr, Name, CurBB);
 
   // Call llvm.dbg.declare.
-  new CallInst(DeclareFn, AllocACast, getCastValueFor(Variable), "", CurBB);
+  SmallVector<Value *, 2> Args;
+  Args.push_back(AllocACast);
+  Args.push_back(getCastValueFor(Variable));
+  new CallInst(DeclareFn, Args.begin(), Args.end(), "", CurBB);
 }
 
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
@@ -377,7 +381,7 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
     ConstantInt::get(Type::Int32Ty, 0),
     getCastValueFor(Unit)
   };
-  new CallInst(StopPointFn, Args, 3, "", CurBB);
+  new CallInst(StopPointFn, Args, Args+3, "", CurBB);
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.

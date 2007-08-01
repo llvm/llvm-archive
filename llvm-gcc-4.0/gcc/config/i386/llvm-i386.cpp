@@ -79,7 +79,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psllw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_w);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psllw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psllw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -88,7 +88,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psllw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psllw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -96,7 +96,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *pslld =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_d);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(pslld, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(pslld, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -105,7 +105,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       = Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_d);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(pslld, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(pslld, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -113,7 +113,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psllq =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_q);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psllq, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psllq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -122,7 +122,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_q);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psllq, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psllq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -130,7 +130,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psrlw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_w);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psrlw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrlw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -139,7 +139,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psrlw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrlw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -147,7 +147,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psrld =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_d);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psrld, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrld, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -156,7 +156,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_d);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psrld, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrld, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -164,7 +164,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psrlq =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_q);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psrlq, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrlq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -173,7 +173,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_q);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psrlq, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrlq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -181,7 +181,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psraw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psra_w);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psraw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psraw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -190,7 +190,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psra_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psraw, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psraw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -198,7 +198,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *psrad =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psra_d);
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
-    Result = Builder.CreateCall(psrad, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrad, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -207,7 +207,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psra_d);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
-    Result = Builder.CreateCall(psrad, Ops[0], Ops[1], "tmp");
+    Result = Builder.CreateCall(psrad, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -489,7 +489,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
     Value *CallOps[3] = { Arg0, Arg1, Pred };
-    Result = Builder.CreateCall(cmpps, CallOps, 3, "tmp");
+    Result = Builder.CreateCall(cmpps, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -519,7 +519,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
-    Result = Builder.CreateCall(cmpss, CallOps, 3, "tmp");
+    Result = Builder.CreateCall(cmpss, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -560,7 +560,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (flip) std::swap(Arg0, Arg1);
 
     Value *CallOps[3] = { Arg0, Arg1, Pred };
-    Result = Builder.CreateCall(cmppd, CallOps, 3, "tmp");
+    Result = Builder.CreateCall(cmppd, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -588,7 +588,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
-    Result = Builder.CreateCall(cmpsd, CallOps, 3, "tmp");
+    Result = Builder.CreateCall(cmpsd, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }

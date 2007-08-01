@@ -530,6 +530,7 @@ void TreeToLLVM::StartFunctionBody() {
   } else {
     // Otherwise, just get the type from the function itself.
     FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl),
+            FnDecl,
 						static_chain,
 						CallingConv);
   }
@@ -2597,6 +2598,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, Value *DestLoc) {
 
     unsigned CallingConv;
     const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
+                                                           fndecl,
                                                            static_chain,
                                                            CallingConv);
     Callee = CastToType(Instruction::BitCast, Callee, PointerType::get(Ty));

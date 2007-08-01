@@ -5521,8 +5521,9 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, Value *DestLoc) {
   case ARRAY_TYPE:
   case RECORD_TYPE:
   default:
-    if (elt) {
+    if (elt && VEC_length(constructor_elt, elt)) {
       // We don't handle elements yet.
+
       TODO(exp);
     }
     return 0;

@@ -4935,7 +4935,7 @@ bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp) {
 
   Function *Intr = Intrinsic::getDeclaration(TheModule,
                                              Intrinsic::init_trampoline);
-  Builder.CreateCall(Intr, Ops, 3);
+  Builder.CreateCall(Intr, Ops, Ops+3);
   return true;
 }
 

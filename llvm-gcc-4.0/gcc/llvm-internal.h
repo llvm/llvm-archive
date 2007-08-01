@@ -439,7 +439,8 @@ private: // Helper functions.
   /// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
   /// GCC type specified by GCCType to know which elements to copy.
   void EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree_node *GCCType,
-                         bool isDstVolatile, bool isSrcVolatile);
+                         bool isDstVolatile, bool isSrcVolatile,
+                         unsigned Alignment);
   /// EmitAggregateZero - Zero the elements of DestPtr.
   ///
   void EmitAggregateZero(Value *DestPtr, tree_node *GCCType);

@@ -1565,6 +1565,10 @@ expr_align (tree t)
     case SAVE_EXPR:         case COMPOUND_EXPR:       case MODIFY_EXPR:
     case INIT_EXPR:         case TARGET_EXPR:         case WITH_CLEANUP_EXPR:
     case CLEANUP_POINT_EXPR:
+    /* LLVM local begin */
+    /* return correctly the alignment of packed structs */
+    case COMPONENT_REF:
+    /* LLVM local end */
       /* These don't change the alignment of an object.  */
       return expr_align (TREE_OPERAND (t, 0));
 

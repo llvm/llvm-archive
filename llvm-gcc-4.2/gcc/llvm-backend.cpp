@@ -355,7 +355,7 @@ static void createOptimizationPasses() {
     // opened up by them.
     PM->add(createInstructionCombiningPass());
     PM->add(createCondPropagationPass());       // Propagate conditionals
-    PM->add(createFastDeadStoreEliminationPass());  // Delete dead stores
+    PM->add(createDeadStoreEliminationPass());  // Delete dead stores
     PM->add(createAggressiveDCEPass());         // SSA based 'Aggressive DCE'
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     

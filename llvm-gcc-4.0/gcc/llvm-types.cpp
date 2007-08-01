@@ -784,8 +784,9 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
     
+    // No declaration to pass through, passing NULL
     unsigned CallingConv;
-    return TypeDB.setType(type, ConvertFunctionType(type, orig_type, NULL, CallingConv));
+    return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL, CallingConv));
   }
   case ARRAY_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -978,9 +979,10 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   LLVM_TARGET_INIT_REGPARM(local_regparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
   
+  // Check if we have a corresponding decl to inspect
+  tree DeclArgs = (decl) ? DECL_ARGUMENTS(decl) : NULL;
   // Loop over all of the arguments, adding them as we go.
   tree Args = TYPE_ARG_TYPES(type);
-  tree DeclArgs = DECL_ARGUMENTS(decl);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
     tree ArgTy = TREE_VALUE(Args);
     if (!isPassedByInvisibleReference(ArgTy) &&
@@ -1013,13 +1015,15 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
         Attributes |= ParamAttr::SExt;
     }
 
-    // Compute noalias attributes.
-    tree RestrictArgTy = (DeclArgs) ? DeclArgs->type.common.type : ArgTy;
-    RestrictArgTy = (RestrictArgTy) ? RestrictArgTy : ArgTy;
+    // Compute noalias attributes. If we have a decl for the function
+    // inspect it for restrict qualifiers, otherwise try the argument
+    // types
+    tree RestrictArgTy = (DeclArgs) ? TREE_TYPE(DeclArgs) : ArgTy;
     if (TREE_CODE(RestrictArgTy) == POINTER_TYPE ||
-        TREE_CODE(RestrictArgTy) == REFERENCE_TYPE)
+        TREE_CODE(RestrictArgTy) == REFERENCE_TYPE) {
       if (TYPE_RESTRICT(RestrictArgTy))
         Attributes |= ParamAttr::NoAlias;
+    }
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
     // Allow the target to mark this as inreg.

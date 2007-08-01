@@ -624,13 +624,13 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
           Aliasee = new GlobalVariable(GV->getType(),
                                        GV->isConstant(),
-                                       GlobalVariable::ExternalLinkage,
+                                       GlobalVariable::ExternalWeakLinkage,
                                        NULL,
                                        AliaseeName,
                                        TheModule);
         else if (Function *F = dyn_cast<Function>(V))
           Aliasee = new Function(F->getFunctionType(),
-                                 Function::ExternalLinkage,
+                                 Function::ExternalWeakLinkage,
                                  AliaseeName,
                                  TheModule);
         else

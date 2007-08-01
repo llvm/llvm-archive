@@ -57,7 +57,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
     
   Ops.erase(Ops.begin() + OpNum);
   Ops[OpNum] = Ptr;
-  Value *V = Builder.CreateCall(IntFn, &Ops[0], Ops.size());
+  Value *V = Builder.CreateCall(IntFn, &Ops[0], &Ops[0]+Ops.size());
   
   if (V->getType() != Type::VoidTy) {
     V->setName("tmp");
@@ -297,7 +297,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     const VectorType *PTy = cast<VectorType>(ResultType);
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());
     Function *smax = Intrinsic::getDeclaration(TheModule, smax_iid[N]);
-    Result = Builder.CreateCall(smax, Ops[0], Result, "tmp");
+    Value *ActualOps[] = { Ops[0], Result };
+    Result = Builder.CreateCall(smax, ActualOps, ActualOps+2, "tmp");
     return true;
   }
   case ALTIVEC_BUILTIN_ABSS_V4SI:
@@ -321,9 +322,11 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *smax = Intrinsic::getDeclaration(TheModule, smax_iid[N]);
     Function *subss = Intrinsic::getDeclaration(TheModule, subss_iid[N]);
 
-    Result = Builder.CreateCall(subss, Constant::getNullValue(ResultType),
-                                Ops[0], "tmp");
-    Result = Builder.CreateCall(smax, Ops[0], Result, "tmp");
+    Value *ActualOps[] = { Constant::getNullValue(ResultType), Ops[0] };
+    Result = Builder.CreateCall(subss, ActualOps, ActualOps+2, "tmp");
+    ActualOps[0] = Ops[0];
+    ActualOps[1] = Result;
+    Result = Builder.CreateCall(smax, ActualOps, ActualOps+2, "tmp");
     return true;
   }
   }

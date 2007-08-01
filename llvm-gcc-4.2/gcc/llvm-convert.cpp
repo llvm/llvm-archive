@@ -739,7 +739,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
     if (ExceptionValue) {
       // Fetch and store exception handler.
       Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-      Builder.CreateCall(FuncUnwindResume, &Arg, 1);
+      Builder.CreateCall(FuncUnwindResume, Arg);
       Builder.CreateUnreachable();
     } else {
       new UnwindInst(UnwindBB);
@@ -1320,7 +1320,7 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Intrinsic::ID IID = 
     (IntPtr == Type::Int32Ty) ? Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, 4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
@@ -1336,7 +1336,7 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Intrinsic::ID IID = 
     (IntPtr == Type::Int32Ty) ? Intrinsic::memmove_i32 : Intrinsic::memmove_i64;
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, 4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
@@ -1353,7 +1353,7 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
   Intrinsic::ID IID = 
     (IntPtr == Type::Int32Ty) ? Intrinsic::memset_i32 : Intrinsic::memset_i64;
   
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, 4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
 
@@ -1487,7 +1487,7 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
         lineNo
       };
       
-      Builder.CreateCall(annotateFun, Ops, 4);
+      Builder.CreateCall(annotateFun, Ops, Ops+4);
     }
     
     // Get next annotate attribute.
@@ -2091,7 +2091,7 @@ void TreeToLLVM::AddLandingPad() {
     }
   }
 
-  Value *Select = Builder.CreateCall(FuncEHSelector, &Args[0], Args.size(),
+  Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
                                      "eh_select");
   Builder.CreateStore(Select, ExceptionSelectorValue);
 }
@@ -2371,7 +2371,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
     TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
 
     // Call get eh type id.
-    Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &TypeInfo, 1,
+    Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TypeInfo,
                                        "eh_typeid");
     Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 
@@ -2396,7 +2396,7 @@ Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
       TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
 
       // Call get eh type id.
-      Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, &TypeInfo, 1,
+      Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TypeInfo,
                                          "eh_typeid");
       Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 
@@ -2810,7 +2810,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   
   Value *Call;
   if (!UnwindBlock) {
-    Call = Builder.CreateCall(Callee, &CallOperands[0], CallOperands.size());
+    Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
@@ -3652,7 +3652,7 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   
   const char *Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
-  Builder.CreateCall(IA, &RHS, 1);
+  Builder.CreateCall(IA, RHS);
 }
 
 /// ConvertInlineAsmStr - Convert the specified inline asm string to an LLVM
@@ -4058,7 +4058,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
-  CallInst *CV = Builder.CreateCall(Asm, &CallOps[0], CallOps.size(),
+  CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     StoreCallResultAddr ? "tmp" : "");
   
   // If the call produces a value, store it into the destination.
@@ -4381,7 +4381,7 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
     InVal->getType()
   };
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, Tys, 
-                                                    sizeof(Tys)/sizeof(Tys[0])),
+                                                        sizeof(Tys)/sizeof(Tys[0])),
                               InVal, "tmp");
   
   return true;
@@ -4434,8 +4434,11 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   case Type::DoubleTyID: Id = Intrinsic::powi_f64; break;
   }
   
+  SmallVector<Value *,2> Args;
+  Args.push_back(Val);
+  Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id),
-                            Val, Pow, "tmp");
+                            Args.begin(), Args.end(), "tmp");
 }
 
 
@@ -4558,7 +4561,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
   
   Value *Ops[3] = { Ptr, ReadWrite, Locality };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::prefetch),
-                     Ops, 3);
+                     Ops, Ops+3);
   return true;
 }
 
@@ -4720,9 +4723,12 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Handler = CastToType(Instruction::BitCast, Handler,
                        PointerType::get(Type::Int8Ty));
 
+  SmallVector<Value *, 2> Args;
+  Args.push_back(Offset);
+  Args.push_back(Handler);
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::eh_return),
-                     Offset, Handler);
+                     Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
   EmitBlock(new BasicBlock(""));
 
@@ -4897,11 +4903,12 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   
   static const Type *VPTy = PointerType::get(Type::Int8Ty);
 
-  Arg1 = CastToType(Instruction::BitCast, Arg1, VPTy);
-  Arg2 = CastToType(Instruction::BitCast, Arg2, VPTy);
+  SmallVector<Value *, 2> Args;
+  Args.push_back(CastToType(Instruction::BitCast, Arg1, VPTy));
+  Args.push_back(CastToType(Instruction::BitCast, Arg2, VPTy));
   
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::vacopy),
-                     Arg1, Arg2);
+                     Args.begin(), Args.end());
   return true;
 }
 

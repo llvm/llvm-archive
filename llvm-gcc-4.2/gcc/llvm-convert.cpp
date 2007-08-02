@@ -4320,12 +4320,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
     return true;
   }
+  case BUILT_IN_PARITYL:
   case BUILT_IN_PARITY: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
     Result = Builder.CreateBinOp(Instruction::And, Result, 
-                      TreeConstantToLLVM::ConvertINTEGER_CST(integer_one_node),
-                                 "tmp");
+                                 ConstantInt::get(Result->getType(), 1), "tmp");
     return true;
   }
   case BUILT_IN_POPCOUNT:  // These GCC builtins always return int.

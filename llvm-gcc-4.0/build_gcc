@@ -424,35 +424,6 @@ for t in $TARGETS ; do
     .$DEST_ROOT/lib/gcc || exit 1
 done
 
-SHARED_LIBS="libgcc_s.1.dylib libgcc_s.10.4.dylib libgcc_s.10.5.dylib"
-if echo $HOSTS | grep -q powerpc ; then
-  SHARED_LIBS="${SHARED_LIBS} libgcc_s_ppc64.1.dylib"
-fi
-# APPLE LOCAL begin x86_64 support */
-if echo $HOSTS | grep -q i686 ; then
-  SHARED_LIBS="${SHARED_LIBS} libgcc_s_x86_64.1.dylib"
-fi
-# APPLE LOCAL end x86_64 support */
-for l in $SHARED_LIBS ; do
-  CANDIDATES=()
-  for t in $TARGETS ; do
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
-    if [ -e $DIR/dst-$t-$t/$DEST_ROOT/lib/$l ] ; then
-# APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
-      CANDIDATES[${#CANDIDATES[*]}]=$DIR/dst-$t-$t/$DEST_ROOT/lib/$l
-    fi
-  done
-# APPLE LOCAL LLVM CANDIDATES can be empty!
-  if [ "${CANDIDATES[@]}x" != x ]; then
-  if [ -L ${CANDIDATES[0]} ] ; then
-    ln -s `readlink ${CANDIDATES[0]}` .$DEST_ROOT/lib/$l || exit 1
-  else
-    lipo -output .$DEST_ROOT/lib/$l -create "${CANDIDATES[@]}" || exit 1
-  fi
-# APPLE LOCAL LLVM CANDIDATES can be empty!
-  fi
-done
-
 for t in $TARGETS ; do
   cp -p /usr/lib/libstdc++.6.dylib \
     .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \

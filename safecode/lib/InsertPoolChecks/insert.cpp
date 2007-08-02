@@ -827,61 +827,6 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // Enclosing function
   Function * F   = I->getParent()->getParent();
   Function *Fnew = F;
-#if 0
-  if ( (F->getName().find("fcheck") == 0)) return Dest;
-  if (
-      (F->getName().find("d_lookup") == 0) ||
-      (F->getName().find("d_hash") == 0) ||
-#if 0
-      (F->getName().find("set_bh_page") == 0) ||
-      (F->getName().find("do_sigaction") == 0) ||
-      (F->getName().find("locate_hd_struct") == 0) ||
-      (F->getName().find("skb_copy_datagram_iovec") == 0) ||
-      (F->getName().find("__make_request") == 0) ||
-      (F->getName().find("sigismember") == 0) ||
-      (F->getName().find("sys_close") == 0) ||
-      (F->getName().find("poll_freewait") == 0) ||
-      (F->getName().find("clear_bit") == 0) ||
-      (F->getName().find("set_bit") == 0) ||
-#endif
-#if 0
-      (F->getName().find("test_and_set_bit") == 0) ||
-      (F->getName().find("test_and_clear_bit") == 0) ||
-      (F->getName().find("constant_test_bit") == 0) ||
-      (F->getName().find("ext3_do_update_inode") == 0) ||
-      (F->getName().find("ext3_get_inode_loc") == 0) ||
-      (F->getName().find("ext3_find_entry") == 0) ||
-      (F->getName().find("find_revoke_record") == 0) ||
-      (F->getName().find("journal_write_revoke_records") == 0) ||
-      (F->getName().find("journal_write_metadata_buffer") == 0) ||
-      (F->getName().find("sd_find_queue") == 0) ||
-      (F->getName().find("fget") == 0) ||
-      (F->getName().find("fcheck") == 0) ||
-      (F->getName().find("get_file") == 0) ||
-      (F->getName().find("get_hash_table") == 0) ||
-      (F->getName().find("copy_files") == 0) ||
-      (F->getName().find("__wakeup_common") == 0) ||
-      (F->getName().find("schedule") == 0) ||
-      (F->getName().find("generic_make_request") == 0) ||
-      (F->getName().find("BusLogic_ProcessCompletedCCBs") == 0) ||
-      (F->getName().find("__make_request") == 0) ||
-      (F->getName().find("BusLogic_WriteOutgoingMailbox") == 0) ||
-      (F->getName().find("sd_init_command") == 0) ||
-      (F->getName().find("alloc_skb") == 0) ||
-      (F->getName().find("memcpy_fromiovec") == 0) ||
-      (F->getName().find("skb_put") == 0) ||
-      (F->getName().find("__init_io") == 0) ||
-      (F->getName().find("do_readv_writev") == 0) ||
-      (F->getName().find("scsi_free") == 0) ||
-      (F->getName().find("BusLogic_IncrementSizeBucket") == 0) ||
-      (F->getName().find("ext3_get_branch") == 0) ||
-      (F->getName().find("update_one_process") == 0)) {
-#else
-    (0)) {
-#endif
-    return Dest;
-  }
-#endif
 
   // Source node on which we will look up the pool handle
   Value *newSrc = Src;

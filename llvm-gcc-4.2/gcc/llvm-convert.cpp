@@ -1183,13 +1183,19 @@ void TreeToLLVM::EmitBlock(BasicBlock *BB) {
 /// ptrs, copying all of the elements.
 static void CopyAggregate(Value *DestPtr, Value *SrcPtr, 
                           bool isDstVolatile, bool isSrcVolatile,
-                          LLVMBuilder &Builder) {
+                          unsigned Alignment, LLVMBuilder &Builder) {
   assert(DestPtr->getType() == SrcPtr->getType() &&
          "Cannot copy between two pointers of different type!");
   const Type *ElTy = cast<PointerType>(DestPtr->getType())->getElementType();
+
+  unsigned TypeAlign = getTargetData().getABITypeAlignment(ElTy);
+  Alignment = MIN(Alignment, TypeAlign);
+
   if (ElTy->isFirstClassType()) {
     LoadInst *V = Builder.CreateLoad(SrcPtr, isSrcVolatile, "tmp");
-    Builder.CreateStore(V, DestPtr, isDstVolatile);
+    StoreInst *S = Builder.CreateStore(V, DestPtr, isDstVolatile);
+    V->setAlignment(Alignment);
+    S->setAlignment(Alignment);
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
@@ -1198,7 +1204,8 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = Builder.CreateGEP(DestPtr, Zero, Idx, "tmp");
       Value *SElPtr = Builder.CreateGEP(SrcPtr, Zero, Idx, "tmp");
-      CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Builder);
+      CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Alignment,
+                    Builder);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
@@ -1207,7 +1214,8 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *DElPtr = Builder.CreateGEP(DestPtr, Zero, Idx, "tmp");
       Value *SElPtr = Builder.CreateGEP(SrcPtr, Zero, Idx, "tmp");
-      CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Builder);
+      CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Alignment,
+                    Builder);
     }
   }
 }
@@ -1235,7 +1243,8 @@ static unsigned CountAggregateElements(const Type *Ty) {
 /// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
 /// GCC type specified by GCCType to know which elements to copy.
 void TreeToLLVM::EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree type,
-                                   bool isDstVolatile, bool isSrcVolatile) {
+                                   bool isDstVolatile, bool isSrcVolatile,
+                                   unsigned Alignment) {
   if (DestPtr == SrcPtr && !isDstVolatile && !isSrcVolatile)
     return;  // noop copy.
 
@@ -1254,12 +1263,12 @@ void TreeToLLVM::EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree type,
                            PointerType::get(LLVMTy));
       SrcPtr = CastToType(Instruction::BitCast, SrcPtr, 
                           PointerType::get(LLVMTy));
-      CopyAggregate(DestPtr, SrcPtr, isDstVolatile, isSrcVolatile, Builder);
+      CopyAggregate(DestPtr, SrcPtr, isDstVolatile, isSrcVolatile, Alignment,
+                    Builder);
       return;
     }
   }
   
-  unsigned Alignment = TYPE_ALIGN_OK(type) ? (TYPE_ALIGN_UNIT(type) & ~0U) : 0;
   Value *TypeSize = Emit(TYPE_SIZE_UNIT(type), 0);
   EmitMemCpy(DestPtr, SrcPtr, TypeSize, Alignment);
 }
@@ -2511,14 +2520,17 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   
   if (!LV.isBitfield()) {
-  
+    unsigned Alignment = expr_align(exp) / 8;
     if (!DestLoc) {
       // Scalar value: emit a load.
       Value *Ptr = CastToType(Instruction::BitCast, LV.Ptr, 
                               PointerType::get(Ty));
-      return Builder.CreateLoad(Ptr, isVolatile, "tmp");
+      LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile, "tmp");
+      LI->setAlignment(Alignment);
+      return LI;
     } else {
-      EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), false, isVolatile);
+      EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), false, isVolatile,
+                        Alignment);
       return 0;
     }
   } else {
@@ -2949,6 +2961,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   
   LValue LV = EmitLV(TREE_OPERAND(exp, 0));
   bool isVolatile = TREE_THIS_VOLATILE(TREE_OPERAND(exp, 0));
+  unsigned Alignment = expr_align(TREE_OPERAND(exp, 0)) / 8;
 
   if (!LV.isBitfield()) {
     const Type *ValTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 1)));
@@ -2961,14 +2974,16 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
         RHS = CastToAnyType(RHS, Op1Signed, PT->getElementType(), Op0Signed);
       else
         LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(RHS->getType()));
-      Builder.CreateStore(RHS, LV.Ptr, isVolatile);
+      StoreInst *SI = Builder.CreateStore(RHS, LV.Ptr, isVolatile);
+      SI->setAlignment(Alignment);
       return RHS;
     }
 
     // Non-bitfield aggregate value.
     if (DestLoc) {
       Emit(TREE_OPERAND(exp, 1), LV.Ptr);
-      EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), isVolatile, false);
+      EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), isVolatile, false,
+                        Alignment);
     } else if (!isVolatile) {
       Emit(TREE_OPERAND(exp, 1), LV.Ptr);
     } else {
@@ -2981,7 +2996,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       Value *Tmp = CreateTemporary(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
       Emit(TREE_OPERAND(exp, 1), Tmp);
       EmitAggregateCopy(LV.Ptr, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)),
-                        isVolatile, false);
+                        isVolatile, false, Alignment);
     }
     return 0;
   }
@@ -3095,8 +3110,10 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
       LValue LV = EmitLV(Op);
       assert(!LV.isBitfield() && "Expected an aggregate operand!");
       bool isVolatile = TREE_THIS_VOLATILE(Op);
+      unsigned Alignment = expr_align(Op) / 8;
 
-      EmitAggregateCopy(Target, LV.Ptr, TREE_TYPE(exp), false, isVolatile);
+      EmitAggregateCopy(Target, LV.Ptr, TREE_TYPE(exp), false, isVolatile,
+                        Alignment);
       break;
     }
 

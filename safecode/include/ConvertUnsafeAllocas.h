@@ -1,6 +1,7 @@
 #ifndef CONVERT_ALLOCA_H
 #define CONVERT_ALLOCA_H
 
+#include "dsa/DataStructure.h"
 #include "llvm/Pass.h"
 #include "ArrayBoundsCheck.h"
 #include "StackSafety.h"
@@ -20,17 +21,22 @@ using namespace CSS;
 struct MallocPass : public FunctionPass
 {
   private:
-    inline bool changeType (Instruction * Inst);
- 
+    // Private data
+    Function * memsetF;
+
+    // Private methods
+    inline bool changeType (DSGraph & TDG, Instruction * Inst);
     inline bool TypeContainsPointer(const Type *Ty);
 
   public:
     virtual bool runOnFunction (Function &F);
+    virtual bool doInitialization (Module &M);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TDDataStructures>();
       AU.addRequired<TargetData>();
-#ifdef LLVA_KERNEL
-      AU.setPreservesAll();
-#endif     
+
+      // List passes that we preserve
+      AU.addPreserved<TDDataStructures>();
     }
 };
  

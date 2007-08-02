@@ -391,6 +391,24 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
 }
 
 /* check that addr exists in pool MP */
+void poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
+  if (!ready || !MP) return;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_poolcheck;
+  PCLOCK();
+  void* S = addr;
+  unsigned len = 0;
+  int t = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  PCUNLOCK();
+  if ((t) && ((addr - S) == offset))
+    return;
+  if(do_fail) poolcheckfail ("poolcheckalign failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+}
+
+
+/* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
   if (!ready || !MP) return;
 #if 0
@@ -398,7 +416,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
 #endif
   ++stat_poolcheck;
   PCLOCK();
-  int t = adl_splay_find(&MP->Slabs, addr) || adl_splay_find(&MP->Objs, addr);
+  int t = adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
   if (t)
     return;
@@ -412,19 +430,10 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
   ++stat_poolcheckarray;
-  /* try slabs first */
   void* S = src;
   void* D = dest;
   PCLOCK();
-  adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  PCUNLOCK();
-  if (S == D)
-    return;
   /* try objs */
-  S = src;
-  D = dest;
-  PCLOCK2();
   adl_splay_retrieve(&MP->Objs, &S, 0, 0);
   adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   PCUNLOCK();
@@ -445,21 +454,10 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   void* S = src;
   void* D = dest;
   PCLOCK();
-  int fs = adl_splay_retrieve(&MP->Slabs, &S, 0, 0);
-  int fd = adl_splay_retrieve(&MP->Slabs, &D, 0, 0);
-  PCUNLOCK();
-  if (S == D)
-    return;
-  if (fs || fd) { /*fail if we found one but not the other*/ 
-    if(do_fail) poolcheckfail ("poolcheck failure: ", (unsigned)src, (void*)__builtin_return_address(0));
-    return;
-  }
+
   /* try objs */
-  S = src;
-  D = dest;
-  PCLOCK2();
-  fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
-  fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
+  int fs = adl_splay_retrieve(&MP->Objs, &S, 0, 0);
+  int fd = adl_splay_retrieve(&MP->Objs, &D, 0, 0);
   PCUNLOCK();
   if (S == D)
     return;
@@ -470,6 +468,13 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
   return; /*default is to pass*/
 }
 
+/*
+ * Function: pchk_iccheck()
+ *
+ * Description:
+ *  Determine whether the given pointer points to the beginning of an Interrupt
+ *  Context.
+ */
 void
 pchk_iccheck (void * addr) {
   if (!ready) return;
@@ -531,6 +536,7 @@ struct node {
 
 #define USERSPACE 0xC0000000
 
+struct node zero_page = {0, 0, 0, (char *)4095, 0};
 struct node not_found = {0, 0, 0, (char *)0x00000000, 0};
 struct node found =     {0, 0, 0, (char *)0xffffffff, 0};
 struct node userspace = {0, 0, 0, (char* )USERSPACE, 0};
@@ -562,8 +568,16 @@ void* getBounds(MetaPoolTy* MP, void* src) {
     return (MP->Objs);
   }
 
-  /* Return that the object was not found */
   PCUNLOCK();
+
+  /*
+   * If the source pointer is within the first page of memory, return the zero
+   * page.
+   */
+  if (src < 4096)
+    return &zero_page;
+
+  /* Return that the object was not found */
   return &not_found;
 }
 
@@ -628,6 +642,14 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   }
 
   PCUNLOCK();
+
+  /*
+   * If the source pointer is within the first page of memory, return the zero
+   * page.
+   */
+  if (src < 4096)
+    return &zero_page;
+
   return &found;
 }
 
@@ -763,6 +785,3 @@ void funccheck_g (MetaPoolTy * MP, void * f) {
 }
 
 
-void pchk_ind_fail() {
-  if (do_fail) poolcheckfail("indirect call failure", 0, (void*)__builtin_return_address(0));
-}

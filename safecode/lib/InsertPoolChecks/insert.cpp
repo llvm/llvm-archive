@@ -597,6 +597,13 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
     FunctionType::get(Type::VoidTy,Arg, false);
   PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
 
+  Arg.clear();
+  Arg.push_back(VoidPtrType);
+  Arg.push_back(VoidPtrType);
+  Arg.push_back(Type::UIntTy);
+  PoolCheckTy = FunctionType::get(Type::VoidTy,Arg, false);
+  PoolCheckAlign = M.getOrInsertFunction("poolcheckalign", PoolCheckTy);
+
   std::vector<const Type *> Arg2(1, VoidPtrType);
   Arg2.push_back(VoidPtrType);
   Arg2.push_back(VoidPtrType);
@@ -3109,8 +3116,60 @@ void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   ++StackRegisters;
 }
 
+//
+// Method: insertAlignmentCheck()
+//
+// Description:
+//  Insert an alignment check for the specified value.
+//
+void
+InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
+  // Get the function containing the load instruction
+  Function * F = LI->getParent()->getParent();
 
+  // Get the DSNode for the result of the load instruction.  If it is type
+  // unknown, then no alignment check is needed.
+  DSNode * LoadResultNode = getDSNode (LI,F);
+  if (!(LoadResultNode && (!(LoadResultNode->isNodeCompletelyFolded())))) {
+    return;
+  }
 
+  //
+  // Get the pool handle for the node.
+  //
+  Value *PH = getPoolHandle(LI, F);
+  if (!PH) return;
+
+  //
+  // A check is needed.  Scan through the links of the DSNode of the load's
+  // pointer operand; we need to determine the offset for the alignment check.
+  //
+  DSNode * Node = getDSNode (LI->getPointerOperand(), F);
+  if (!Node) return;
+  for (unsigned i = 0 ; i < Node->getNumLinks(); ++i) {
+    DSNodeHandle & LinkNode = Node->getLink(i);
+    if (LinkNode.getNode() == LoadResultNode) {
+      // Insertion point for this check is *after* the load.
+      Instruction * InsertPt = LI->getNext();
+
+      // Create instructions to cast the checked pointer and the checked pool
+      // into sbyte pointers.
+      Value *CastVI  = castTo (LI, PointerType::get(Type::SByteTy), InsertPt);
+      Value *CastPHI = castTo (PH, PointerType::get(Type::SByteTy), InsertPt);
+
+      // Create the call to poolcheck
+      std::vector<Value *> args(1,CastPHI);
+      args.push_back(CastVI);
+      args.push_back (ConstantInt::get(Type::UIntTy, LinkNode.getOffset()));
+      new CallInst (PoolCheckAlign,args, "", InsertPt);
+
+      // Update the statistics
+      ++AlignLSChecks;
+
+      break;
+    }
+  }
+}
 
 #ifdef LLVA_KERNEL
 //
@@ -3124,20 +3183,23 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   DSNode * Node = getDSNode (V,F);
 
   //
-  // Determine whether an alignment check is needed.  This occurs when a DSNode
-  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
-  // DSNodes.
-  //
-  if (preSCPass->nodeNeedsAlignment (Node)) {
-    ++AlignLSChecks;
-  }
-
-  //
   // Do not perform any checks if there is no DSNode, if the node is not folded,
   // or if the node is incomplete.
   //
   if (!(Node && Node->isNodeCompletelyFolded()))
     return;
+
+  //
+  // This may be a load instruction that loads a pointer that:
+  //  1) Points to a type known pool, and
+  //  2) Loaded from a type unknown pool
+  //
+  // If this is the case, we need to perform an alignment check on the result
+  // of the load.  Do that here.
+  //
+  if (LoadInst * LI = dyn_cast<LoadInst>(I)) {
+    insertAlignmentCheck (LI);
+  }
 
   //  
   // Do not perform a load/store check if the pointer used for this operation

@@ -118,6 +118,7 @@ struct InsertPoolChecks : public FunctionPass {
     };
 
   private :
+    // Prerequisite passes
     PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
     ScalarEvolution * scevPass;
@@ -129,7 +130,16 @@ struct InsertPoolChecks : public FunctionPass {
 #else
     TDDataStructures * TDPass;
 #endif  
+
+    // Map of DSNode to Function List Global Variables
+    std::map<Value *, GlobalVariable *> FuncListMap;
+
+    // Set of DSNodes for which we do full bounds checks
+    std::set<DSNode *> PHNeeded;
+
+    // Functions
     Function *PoolCheck;
+    Function *PoolCheckAlign;
     Function *PoolCheckArray;
     Function *PoolCheckIArray;
     Function *ExactCheck;
@@ -154,12 +164,6 @@ struct InsertPoolChecks : public FunctionPass {
     Function *getBegin;
     Function *getEnd;
 
-    // Map of DSNode to Function List Global Variables
-    std::map<Value *, GlobalVariable *> FuncListMap;
-
-    // Set of DSNodes for which we do full bounds checks
-    std::set<DSNode *> PHNeeded;
-
     void simplifyGEPList();
     void addObjFrees(Module& M);
     void addMetaPools(Module& M, MetaPool* MP, DSNode* N);
@@ -169,6 +173,7 @@ struct InsertPoolChecks : public FunctionPass {
     DSNode* getDSNode(const Value *V, Function *F);
     unsigned getDSNodeOffset(const Value *V, Function *F);
     void addLoadStoreChecks (Function & F);
+    void insertAlignmentCheck (LoadInst * LI);
     void TransformFunction(Function &F);
     void handleCallInst(CallInst *CI);
     void handleGetElementPtr(GetElementPtrInst *MAI);

@@ -4903,19 +4903,6 @@ arm_slowmul_rtx_costs (rtx x, int code, int outer_code, int *total)
     }
 }
 
-/* LLVM LOCAL begin */
-/* Values which must be returned in the most-significant end of the return
-   register.  */
-
-static bool
-arm_return_in_msb (tree valtype)
-{
-  return (TARGET_AAPCS_BASED
-          && BYTES_BIG_ENDIAN
-          && (AGGREGATE_TYPE_P (valtype)
-              || TREE_CODE (valtype) == COMPLEX_TYPE));
-}
-/* LLVM LOCAL end */
 
 /* RTX cost for cores with a fast multiply unit (M variants).  */
 
@@ -6234,60 +6221,6 @@ emit_stm_seq (rtx *operands, int nops)
   output_asm_insn (buf, operands);
   return "";
 }
-
-/* LLVM LOCAL begin */
-/* Return true if a type must be passed in memory. For AAPCS, small aggregates
-   (padded to the size of a word) should be passed in a register.  */
-
-static bool
-arm_must_pass_in_stack (enum machine_mode mode, tree type)
-{
-  if (TARGET_AAPCS_BASED)
-    return must_pass_in_stack_var_size (mode, type);
-  else
-    return must_pass_in_stack_var_size_or_pad (mode, type);
-}
-
-
-/* For use by FUNCTION_ARG_PADDING (MODE, TYPE).
-   Return true if an argument passed on the stack should be padded upwards,
-   i.e. if the least-significant byte has useful data.  */
-
-bool
-arm_pad_arg_upward (enum machine_mode mode, tree type)
-{
-  if (!TARGET_AAPCS_BASED)
-    return DEFAULT_FUNCTION_ARG_PADDING(mode, type);
-
-  if (type && BYTES_BIG_ENDIAN && INTEGRAL_TYPE_P (type))
-    return false;
-
-  return true;
-}
-
-
-/* Similarly, for use by BLOCK_REG_PADDING (MODE, TYPE, FIRST).
-   For non-AAPCS, return !BYTES_BIG_ENDIAN if the least significant
-   byte of the register has useful data, and return the opposite if the
-   most significant byte does.
-   For AAPCS, small aggregates and small complex types are always padded
-   upwards.  */
-
-bool
-arm_pad_reg_upward (enum machine_mode mode ATTRIBUTE_UNUSED,
-                    tree type, int first ATTRIBUTE_UNUSED)
-{
-  if (TARGET_AAPCS_BASED
-      && BYTES_BIG_ENDIAN
-      && (AGGREGATE_TYPE_P (type) || TREE_CODE (type) == COMPLEX_TYPE)
-      && int_size_in_bytes (type) <= 4)
-    return true;
-
-  /* Otherwise, use default padding.  */
-  return !BYTES_BIG_ENDIAN;
-}
-/* LLVM LOCAL end */
-
 
 /* Routines for use in generating RTL.  */
 
@@ -13042,23 +12975,6 @@ thumb_pushpop (FILE *f, unsigned long mask, int push, int *cfa_offset,
       fprintf (f, "}\n");
     }
 
-  /* LLVM LOCAL begin */
-  if (ARM_EABI_UNWIND_TABLES && push)
-    {
-      fprintf (f, "\t.save\t{");
-      for (regno = 0; regno < 15; regno++)
-	{
-	  if (real_regs & (1 << regno))
-	    {
-	      if (real_regs & ((1 << regno) -1))
-		fprintf (f, ", ");
-	      asm_fprintf (f, "%r", regno);
-	    }
-	}
-      fprintf (f, "}\n");
-    }
-  /* LLVM LOCAL end */
-
   fprintf (f, "\t%s\t{", push ? "push" : "pop");
 
   /* Look at the low registers first.  */
@@ -14111,11 +14027,6 @@ thumb_output_function_prologue (FILE *f, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
       if (ARM_EABI_UNWIND_TABLES)
 	asm_fprintf (f, "\t.pad #16\n");
 
-      /* LLVM LOCAL begin */
-      if (ARM_EABI_UNWIND_TABLES)
-	asm_fprintf (f, "\t.pad #16\n");
-      /* LLVM LOCAL end */
-
       asm_fprintf
 	(f, "\tsub\t%r, %r, #16\t%@ Create stack backtrace structure\n",
 	 SP_REGNUM, SP_REGNUM);
@@ -15145,9 +15056,7 @@ arm_default_short_enums (void)
 static bool
 arm_align_anon_bitfield (void)
 {
-  /* LLVM LOCAL begin */
-  return TARGET_AAPCS_BASED && arm_abi != ARM_ABI_AAPCS_LINUX;
-  /* LLVM LOCAL end */
+  return TARGET_AAPCS_BASED;
 }
 
 
@@ -15245,14 +15154,6 @@ arm_cxx_use_aeabi_atexit (void)
   return TARGET_AAPCS_BASED;
 }
 
-
-/* LLVM LOCAL begin */
-static bool
-arm_cxx_use_aeabi_atexit (void)
-{
-  return TARGET_AAPCS_BASED;
-}
-/* LLVM LOCAL end */
 
 void
 arm_set_return_address (rtx source, rtx scratch)

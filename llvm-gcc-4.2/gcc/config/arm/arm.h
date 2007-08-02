@@ -519,12 +519,6 @@ extern int arm_structure_size_boundary;
 #define PTRDIFF_TYPE (TARGET_AAPCS_BASED ? "int" : "long int")
 #endif
 
-/* LLVM LOCAL begin */
-#ifndef PTRDIFF_TYPE
-#define PTRDIFF_TYPE (TARGET_AAPCS_BASED ? "int" : "long int")
-#endif
-/* LLVM LOCAL end */
-
 /* AAPCS requires that structure alignment is affected by bitfields.  */
 #ifndef PCC_BITFIELD_TYPE_MATTERS
 #define PCC_BITFIELD_TYPE_MATTERS TARGET_AAPCS_BASED
@@ -881,10 +875,6 @@ extern int arm_structure_size_boundary;
 #define FIRST_PSEUDO_REGISTER   96
 
 #define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
-
-/* LLVM LOCAL begin */
-#define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
-/* LLVM LOCAL end */
 
 /* Value should be nonzero if functions must have frame pointers.
    Zero means the frame pointer need not be set up (and parms may be accessed
@@ -1482,19 +1472,6 @@ typedef struct
 #define PAD_VARARGS_DOWN \
   ((TARGET_AAPCS_BASED) ? 0 : BYTES_BIG_ENDIAN)
 
-/* LLVM LOCAL begin */
-#define FUNCTION_ARG_PADDING(MODE, TYPE) \
-  (arm_pad_arg_upward (MODE, TYPE) ? upward : downward)
-
-#define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
-  (arm_pad_reg_upward (MODE, TYPE, FIRST) ? upward : downward)
-
-/* For AAPCS, padding should never be below the argument. For other ABIs,
- * mimic the default.  */
-#define PAD_VARARGS_DOWN \
-  ((TARGET_AAPCS_BASED) ? 0 : BYTES_BIG_ENDIAN)
-/* LLVM LOCAL end */
-
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.
@@ -1917,17 +1894,6 @@ typedef struct
 #else
 #define ARM_EABI_UNWIND_TABLES 0
 #endif
-
-/* LLVM LOCAL begin */
-#define ARM_OUTPUT_FN_UNWIND(F, PROLOGUE) arm_output_fn_unwind (F, PROLOGUE)
-
-#ifdef TARGET_UNWIND_INFO
-#define ARM_EABI_UNWIND_TABLES \
-  ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
-#else
-#define ARM_EABI_UNWIND_TABLES 0
-#endif
-/* LLVM LOCAL end */
 
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.

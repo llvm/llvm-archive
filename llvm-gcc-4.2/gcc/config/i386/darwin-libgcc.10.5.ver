@@ -44,15 +44,19 @@ ___fixunsdfdi
 ___fixunsdfsi
 ___fixunssfdi
 ___fixunssfsi
-___fixunsxfdi
-___fixunsxfsi
-___fixxfdi
+# LLVM LOCAL begin FIXME!
+#___fixunsxfdi
+#___fixunsxfsi
+#___fixxfdi
+# LLVM LOCAL end FIXME!
 ___floatdidf
 ___floatdisf
-___floatdixf
+# LLVM LOCAL FIXME!
+#___floatdixf
 ___floatundidf
 ___floatundisf
-___floatundixf
+# LLVM LOCAL FIXME!
+#___floatundixf
 ___gcc_personality_v0
 ___lshrdi3
 ___moddi3

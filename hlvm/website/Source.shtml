@@ -1,0 +1,6 @@
+<!--#set var="title" value="Latest Sources" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>Latest HLVM Sources</h1>
+<iframe src="http://hlvm.org/src/" width="100%" height="600">
+</iframe>
+<!--#include virtual="/incl/footer.incl" -->

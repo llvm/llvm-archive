@@ -1,0 +1,20 @@
+</td>
+<td class="sidebar">
+  <!--#include file="lists.incl"-->
+  <!--#include file="resources.incl"-->
+  <!--#include file="funfact.incl"-->
+  <!--#include file="notices.incl"-->
+</td>
+</tr>
+</table>
+<div class="footer">
+<a href="/Privacy.shtml">Privacy</a>&nbsp;&nbsp;<a 
+href="/Feedback.php">Feedback</a>&nbsp;&nbsp;<a
+href="/">Home</a>
+<br/>
+Copyright&nbsp;&copy;&nbsp;2006&nbsp;Reid Spencer&nbsp;All&nbsp;Rights&nbsp;Reserved.<br/>
+Last Modified: 
+<!--#flastmod virtual="${DOCUMENT_URI}"-->
+</div>
+</body>
+</html>

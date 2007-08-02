@@ -1,0 +1,85 @@
+<!--#set var="title" value="Overview" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>HLVM Overview</h1>
+<p>The High Level Virtual Machine (HLVM) is currently under development.  To
+monitor the progress of HLVM as it develops, you can utilize these resources:
+</p>
+<table>
+  <tr><th>Written Status Updates</th><th>Source Code Progress</th></tr>
+  <tr>
+    <td style="width:50%">
+      <ul>
+        <li><a href="http://hlvm.org/docs/status/index.html">Status Updates</a>:
+	approximately monthly updates on the statuf of HLVM.</li>
+        <li><a href="http://hlvm.org/releases/index.shtml">Releases</a>:
+        release notes, release media, SVN access</li>
+        <li><a href="http://hlvm.org/docs/ReleasePlans.html#status">Plans</a>:
+        current release plans, status of current release, past releases</li>
+      </ul>
+    </td>
+    <td style="width:50%">
+      <ul>
+        <li><a href="http://hlvm.org/Source.shtml">Latest Sources</a>:
+        A browsable source tree that is synchronized with the source repository.
+        <li>
+	<a href="http://hlvm.org/pipermail/hlvm-commits/">Commits Archive</a>:
+	an email archive of the Subversion commits history</li>
+	<li><a href="irc://irc.oftc.net/#hlvm">IRC Channel</a>: come and talk
+	to the developers on-line</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+<p>HLVM is a language designer's toolkit. It's goal is to take care of the many 
+compilation, optimization and runtime details needed in a language system.  Here
+is how we envision HLVM when it is completed (written in present tense for
+simplicity):</p>
+<ol>
+  <li><em>Based on LLVM</em> 
+  (<a href="http://llvm.org/">Low Level Virtual Machine</a>).
+  LLVM is HLVM's sister project. HLVM gains tremendous capability from LLVM in
+  the areas of code generation, optimization, bytecode facilties, JIT 
+  compilation, target machine support, etc.</li>
+  <li><em>Dynamic Compilation</em>. HLVM supports "dynamic" languages, i.e. 
+  those that that have run-time compilation or interpretation as a language 
+  feature. For example, languages that support an <tt>eval</tt> function that 
+  compiles or interprets a source language statement (or entire program) at 
+  run-time.</li>
+  <li><em>Language Designer's Toolkit</em>. HLVM provides a complete language 
+  designer's toolkit for creating new programming languages. A plug-in model is
+  used to allow a language front end to be executed at run-time. A language
+  plug-in handles the process of translating from the language's source code
+  into the HLVM Abstract Syntax Tree (AST) representation. 
+  After that, HLVM handles all aspects of code generation, bytecode storage, 
+  JIT execution or interpretation, and native compilation.</li> 
+  <li><em>Common Runtime</em>. HLVM supports a common runtime for a variety of
+  programming languages including Ruby, Python, Perl, Jython, Haskell, Prolog, 
+  and others.</li>
+  <li><em>Language Interoperability Framework</em>. Because HLVM uses the same
+  facilities to implement the execution of different source languages, it is
+  also a language interoperability framework. All language plug-ins translate
+  source code into the same AST. This means they <i>can</i> interoperate. It 
+  doesn't mean they <i>will</i> interoperate. Language plug-ins that make use
+  of the HLVM runtime library for common constructs (e.g. "string") will enhance
+  the language's ability to interoperate with other languages.</li>
+</ol>
+<table>
+  <tr><th>More Info</th><th>HLVM On The Net</th></tr>
+  <tr><td style="width:50%">
+<ul>
+<li><a href="/docs/FAQ.html">Frequently Asked Questions</a></li>
+<li><a href="/docs/OpenProjects.html">Open Projects (How You Can Help)</a></li>
+<li><a href="/docs/index.html">User Documentation</a></li>
+<li><a href="/APIs.php">API documentation generated from source code</a></li>
+</ul>
+</td>
+<td style="width:50%">
+<ul>
+<li><a href="http://osnews.com/comment.php?news_id=14920">OS News</a></li>
+<li><a href="http://lambda-the-ultimate.org/node/1562">Lambda-the-Ultimate</a></li>
+<li><a href="http://freshmeat.net/projects/hlvm/">Freshmeat.net Project</a></li>
+<!--<li><a href="http://silentcentre.net/cgi-bin/hgwebdir.cgi/hlvm?cmd=summary;style=gitweb">Mercurial Repository on 2 hr sync (thanks Owen)</a></li>-->
+</ul>
+</td></tr>
+</table>
+<!--#include virtual="/incl/footer.incl" -->

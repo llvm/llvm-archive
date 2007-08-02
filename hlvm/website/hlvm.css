@@ -1,0 +1,178 @@
+/* HLVM website style sheet */
+A:link {
+  color: #0000CC;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bolder;
+}
+A:visited {
+  color: #0000CC;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bolder;
+}
+A:hover {
+  color: #8888FF;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bolder;
+}
+A:active {
+  color: #8888FF;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bolder;
+  font-style: italic;
+}
+ADDRESS IMG { 
+  float: right; 
+  width: 88px; 
+  height: 31px; 
+}
+ADDRESS { 
+  clear: right; 
+}
+B { font-weight: bold; }
+BODY {
+  background: #f0f0f0;
+  color: #000000;
+  text-align: left;
+  line-height: normal;
+  letter-spacing: normal;
+  word-spacing: normal;
+  font-family: "Verdana,Arial,sans";
+  font-size: medium;
+  font-style: normal;
+  font-weight: bold;
+  font-variant: normal;
+  position: relative;
+  margin-left: 0em;
+  min-width: 400px;
+  width: 100%;
+  margin: 2px 2px 2px 2px;
+  padding: 0 0 0 0;
+  border: none;
+}
+DT { margin-top: 0.75em; }
+EM { color: #0000DD; font-style: italic; }
+H1 {
+  background: url("/img/lines.png");
+  color: #EEEEFF;
+  border-top: 1px solid #CCEEFF;
+  border-bottom: 1px solid #CCEEFF;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 150%;
+  font-weight: bold;
+  padding: 0.1em 0.1em 0.1em 0.1em; 
+  width: 100%;
+  margin-bottom: 0.3em; 
+}
+H2 {
+  border-top: 1px solid #0000AA;
+  border-bottom: 1px solid #0000AA;
+  background-color: #4444AA;
+  color: #EEEEFF;
+  text-align: left;  
+  font-size: 120%;
+  font-weight: bold;
+}
+H3 {
+  color: #0000AA;
+  text-align: left;
+  text-decoration: underline;
+  font-size: 110%;
+  font-weight: bold;
+}
+H4 {
+  color: #0000AA;
+  text-align: left;
+  font-size: 100%;
+  font-weight: bold;
+}
+HR    { color: #0000AA; }
+I     { font-style: italic; }
+LI    { margin-top: 0.25em; }
+STRONG{ color: #0000FF; font-weight: bold }
+PRE   { font-size: 80%; }
+TABLE {
+  width: 95%;
+  font-size: 95%;
+  table-layout: auto;
+  border-collapse: collapse;
+  text-align: left;
+  vertical-align: top;
+  border: 2px dotted #0000AA;
+  margin: 4px;
+}
+TH {
+  color: #EEEEFF;
+  font-size: 105%;
+  font-weight: bold;
+  border: 2px solid #0000AA;
+  padding: 0px 4px 1px 4px;
+  text-align: left;
+  vertical-align: top;
+  background: url("img/lines.png");
+}
+TD {
+  margin: 4px;
+  border: 2px solid #0000AA;
+  text-align: left;
+  vertical-align: top;
+  padding: 0px 4px 1px 4px;
+}
+DIV.sidebox {
+  background-color: #000088;
+  color: #EEEEFF;
+  border-left: 2px solid #666666;
+  border-top: 2px solid #666666;
+  padding: 0.25em 0.25em 0.25em .25em; 
+  margin: 5px 5px 5px 5px;
+}
+DIV.sidebox A:link, DIV.sidebox A:visited {
+  color: #BBBBFF;
+}
+DIV.sidebox A:hover, DIV.sidebox A:active {
+  color: #EEEEFF;
+}
+TABLE.layout {
+  border: 1px solid #0000AA;
+  width: 98%;
+  margin-left: 1%;
+  margin-right: 1%;
+  text-align: center;
+}
+TD.body {
+  border: none;
+  text-align: left;
+  vertical-align: top;
+  padding-left: 1em; 
+  padding-right: 1em;
+}
+TD.sidebar  { 
+  text-align: center; 
+  vertical-align: top;
+  margin-left: 0em; 
+  margin-right: 0em;
+  padding: 0.15em 0.15em 0.15em .15em; 
+  width: 15%;
+  background: url("/img/lines.png");
+  color: #EEEEFF;
+  border: 1px solid #331100;
+}
+.warning {
+  color: red; 
+  font-weight: bold;
+}
+.code { 
+  border: solid 1px gray; background: #eeeeee;
+  margin: 0 1em 0 1em; 
+  padding: 0 1em 0 1em;
+  display: table; 
+}
+.footer { 
+  text-align: center; 
+  font-size: 85%;
+  padding: 0 0 0 0 
+}

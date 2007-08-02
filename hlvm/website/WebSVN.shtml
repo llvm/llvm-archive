@@ -1,0 +1,6 @@
+<!--#set var="title" value="Web Subversion" -->
+<!--#include virtual="/incl/header.incl" -->
+<h1>HLVM Web Subversion</h1>
+<!-- <iframe src="http://hlvm.org/wsvn/HLVM/?sc=0" width="100%" height="600"></iframe> -->
+<p>Unfortunately, the Subversion repository browser is not functioning well on the new server. I will be working towards remedying this soon. Sorry for the inconvenience.</p>
+<!--#include virtual="/incl/footer.incl" -->

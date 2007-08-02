@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /bugs
+Disallow: /wsvn
+Disallow: /src
+Disallow: /usage

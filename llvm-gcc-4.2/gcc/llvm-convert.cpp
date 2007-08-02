@@ -4320,6 +4320,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
     return true;
   }
+  case BUILT_IN_PARITYLL:
   case BUILT_IN_PARITYL:
   case BUILT_IN_PARITY: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);

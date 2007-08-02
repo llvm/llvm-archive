@@ -98,6 +98,7 @@ static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
 static Statistic<> SavedPoolChecks ("safecode", "Pool Checks Performed on Checked Pointers");
 static Statistic<> AlignChecks ("safecode", "Number of alignment checks required");
+static Statistic<> AlignLSChecks ("safecode", "Number of alignment on load/store checks required");
 
 // Bounds Check Statistics
 static Statistic<> BoundsChecks     ("safecode",
@@ -3176,6 +3177,15 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   DSNode * Node = getDSNode (V,F);
 
   //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if (preSCPass->nodeNeedsAlignment (Node)) {
+    ++AlignLSChecks;
+  }
+
+  //
   // Do not perform any checks if there is no DSNode, if the node is not folded,
   // or if the node is incomplete.
   //
@@ -3189,15 +3199,6 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   if (findCheckedPointer(V)) {
     ++SavedPoolChecks;
     return;
-  }
-
-  //
-  // Determine whether an alignment check is needed.  This occurs when a DSNode
-  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
-  // DSNodes.
-  //
-  if (preSCPass->nodeNeedsAlignment (Node)) {
-    ++AlignChecks;
   }
 
   // Get the pool handle associated with this pointer.  If there is no pool

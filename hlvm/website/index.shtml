@@ -9,21 +9,22 @@ monitor the progress of HLVM as it develops, you can utilize these resources:
   <tr>
     <td style="width:50%">
       <ul>
-        <li><a href="http://hlvm.org/docs/status/index.html">Status Updates</a>:
+        <li><a href="/docs/status/index.html">Status Updates</a>:
 	approximately monthly updates on the statuf of HLVM.</li>
-        <li><a href="http://hlvm.org/releases/index.shtml">Releases</a>:
+        <li><a href="/releases/index.shtml">Releases</a>:
         release notes, release media, SVN access</li>
-        <li><a href="http://hlvm.org/docs/ReleasePlans.html#status">Plans</a>:
+        <li><a href="/docs/ReleasePlans.html#status">Plans</a>:
         current release plans, status of current release, past releases</li>
       </ul>
     </td>
     <td style="width:50%">
       <ul>
-        <li><a href="http://hlvm.org/Source.shtml">Latest Sources</a>:
+        <li><a href="/Source.shtml">Latest Sources</a>:
         A browsable source tree that is synchronized with the source repository.
         <li>
-	<a href="http://hlvm.org/pipermail/hlvm-commits/">Commits Archive</a>:
-	an email archive of the Subversion commits history</li>
+        <a href="http://lists.cs.uiuc.edu/mailman/listinfo/hlvm-commits">
+          Commits Archive</a>: an email archive of the Subversion commits 
+        history</li>
 	<li><a href="irc://irc.oftc.net/#hlvm">IRC Channel</a>: come and talk
 	to the developers on-line</li>
       </ul>

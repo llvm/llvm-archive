@@ -1,6 +1,6 @@
 <!--#set var="title" value="Developers List Registration" -->
 <!--#include virtual="/incl/header.incl" -->
 <h1>HLVM Developer's List Registration</h1>
-<iframe src="http://hlvm.org/mailman/listinfo/hlvm-dev" 
+<iframe src="http://lists.cs.uiuc.edu/mailman/listinfo/hlvm-dev" 
 width="100%" height="600"></iframe>
 <!--#include virtual="/incl/footer.incl" -->

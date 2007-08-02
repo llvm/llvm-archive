@@ -9,9 +9,8 @@
   <meta name="description" 
     content="A resuable virtula machine infrastructure."/>
   <link rel="stylesheet" href="/hlvm.css" type="text/css"/>
-  <link rel="icon" href="http://hlvm.org/favicon.png" type="image/png"/>
-  <link rel="shortcut icon" href="http://hlvm.org/favicon.png" 
-    type="image/png"/>
+  <link rel="icon" href="/favicon.png" type="image/png"/>
+  <link rel="shortcut icon" href="/favicon.png" type="image/png"/>
 </head>
 <body>
 <table class="layout"><tr><td class="sidebar">

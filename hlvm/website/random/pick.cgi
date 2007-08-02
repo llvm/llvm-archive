@@ -21,7 +21,7 @@ print "Content-type: text/html\n\n";
 
 # Open the directory and get the file names that
 # contain at least one digit
-$Dir = "/var/www/sites/hlvm/random";
+$Dir = "/home/vadve/shared/llvm-wwwroot/hlvm/random";
 opendir DH, $Dir  or die "Where did the random content go?";
 @Files = grep /^[0-9]/, readdir DH;
 closedir DH;

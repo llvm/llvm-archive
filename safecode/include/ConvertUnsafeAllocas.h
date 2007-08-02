@@ -16,22 +16,23 @@ ModulePass *createConvertUnsafeAllocas();
 
 using namespace ABC;
 using namespace CSS;
- struct MallocPass : public FunctionPass
- {
-   private:
-inline bool changeType (Instruction * Inst);
-   
-   inline bool TypeContainsPointer(const Type *Ty);
-   
-   public:
-   virtual bool runOnFunction (Function &F);
-   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-     AU.addRequired<TargetData>();
+
+struct MallocPass : public FunctionPass
+{
+  private:
+    inline bool changeType (Instruction * Inst);
+ 
+    inline bool TypeContainsPointer(const Type *Ty);
+
+  public:
+    virtual bool runOnFunction (Function &F);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
 #ifdef LLVA_KERNEL
-     AU.setPreservesAll();
+      AU.setPreservesAll();
 #endif     
-   }
- };
+    }
+};
  
  
 namespace CUA {

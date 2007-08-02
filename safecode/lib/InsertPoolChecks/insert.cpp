@@ -1304,7 +1304,13 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
                                  Value * Index, Value * Bounds,
                                  Instruction * InsertPt) {
   //
-  // First, determine whether we need to perform a check at all.
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (Pointer);
+
+  //
+  // Attempt to determine statically if this check will always pass; if so,
+  // then don't bother doing it at run-time.
   //
   ConstantInt * CIndex  = dyn_cast<ConstantInt>(Index);
   ConstantInt * CBounds = dyn_cast<ConstantInt>(Bounds);
@@ -1343,10 +1349,6 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
   args.push_back(CastResult);
   Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
 
-  //
-  // Record that this value was checked.
-  //
-  CheckedValues.insert (Pointer);
 #if 0
   //
   // Replace the old index with the return value of exactcheck(); this
@@ -1368,7 +1370,6 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
   return;
 }
 
-
 //
 // Function: addExactCheck()
 //
@@ -1385,6 +1386,11 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
 void
 InsertPoolChecks::addExactCheck (Instruction * GEP,
                                  Value * Index, Value * Bounds) {
+  //
+  // Record that this value was checked.
+  //
+  CheckedValues.insert (GEP);
+
   // Upper and lower values on the index and bounds
   int index_lower;
   int index_upper;
@@ -1392,7 +1398,8 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
   int bounds_upper;
 
   //
-  // First, determine whether we need to perform a check at all.
+  // First, attempt to determine statically whether the check will always pass.
+  // If so, then don't bother doing it at run-time.
   //
   ConstantInt * CIndex  = dyn_cast<ConstantInt>(Index);
   ConstantInt * CBounds = dyn_cast<ConstantInt>(Bounds);
@@ -1463,11 +1470,6 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
   args.push_back(CastBounds);
   args.push_back(CastResult);
   Instruction * CI = new CallInst(ExactCheck, args, "ec", InsertPt);
-
-  //
-  // Record that this value was checked.
-  //
-  CheckedValues.insert (GEP);
 
   //
   // Replace the old index with the return value of exactcheck(); this

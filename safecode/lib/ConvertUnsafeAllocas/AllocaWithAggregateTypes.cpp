@@ -46,8 +46,19 @@ static const unsigned meminitvalue = 0xcc;
   }
 
   inline bool
-  MallocPass::changeType (Instruction * Inst)
+  MallocPass::changeType (DSGraph & TDG, Instruction * Inst)
   {
+    // Get the DSNode for this instruction
+    DSNode *Node = TDG.getNodeForValue((Value *)Inst).getNode();
+
+    //
+    // Do not bother to change this allocation if the type is unknown;
+    // regular SAFECode checks will prevent anything bad from happening to
+    // uninitialzed pointers loaded from this memory.
+    //
+    if (Node && (Node->isNodeCompletelyFolded()))
+      return false;
+
     //
     // Check to see if the instruction is an alloca.
     //
@@ -60,10 +71,21 @@ static const unsigned meminitvalue = 0xcc;
       const Type * TypeCreated = AllocInst->getAllocatedType ();
       
       if (TypeContainsPointer(TypeCreated))
-	return true;
+        return true;
       
     }
     return false;
+  }
+
+  bool
+  MallocPass::doInitialization (Module & M) {
+    Type * VoidPtrType = PointerType::get(Type::SByteTy);
+    memsetF = M.getOrInsertFunction ("memset", Type::VoidTy,
+                                               VoidPtrType,
+                                               Type::IntTy ,
+                                               Type::UIntTy, NULL);
+
+    return true;
   }
 
   bool
@@ -72,12 +94,17 @@ static const unsigned meminitvalue = 0xcc;
     bool modified = false;
     Type * VoidPtrType = PointerType::get(Type::SByteTy);
 
+    // Don't bother processing external functions
+    if ((F.isExternal()) || (F.getName() == "poolcheckglobals"))
+      return modified;
+
+    // Get references to previous analysis passes
     TargetData &TD = getAnalysis<TargetData>();
-    Module *theM = F.getParent();  
-    Function *memsetF = 
-      theM->getOrInsertFunction("memset", Type::VoidTy, 
-				PointerType::get(Type::SByteTy), Type::IntTy , 
-				Type::UIntTy, NULL);
+    TDDataStructures & TDPass = getAnalysis<TDDataStructures>();
+
+    // Get the DSGraph for this function
+    DSGraph & TDG = TDPass.getDSGraph(F);
+
     for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
       for (BasicBlock::iterator IAddrBegin=I->begin(), IAddrEnd = I->end();
            IAddrBegin != IAddrEnd;
@@ -85,7 +112,7 @@ static const unsigned meminitvalue = 0xcc;
         //
         // Determine if the instruction needs to be changed.
         //
-        if (changeType (IAddrBegin)) {
+        if (changeType (TDG, IAddrBegin)) {
           AllocationInst * AllocInst = cast<AllocationInst>(IAddrBegin);
 #if 0
           //

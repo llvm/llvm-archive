@@ -5777,7 +5777,11 @@ Constant *TreeConstantToLLVM::ConvertBinOp_CST(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertCONSTRUCTOR(tree exp) {
-  if (CONSTRUCTOR_ELTS(exp) == 0)  // All zeros?
+  // Please note, that we can have empty ctor, even if array is non-trivial (has
+  // nonzero number of entries). This situation is typical for static ctors,
+  // when array is filled during program initialization.
+  if (CONSTRUCTOR_ELTS(exp) == 0 ||
+      VEC_length(constructor_elt, CONSTRUCTOR_ELTS(exp)) == 0)  // All zeros?
     return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
 
   switch (TREE_CODE(TREE_TYPE(exp))) {

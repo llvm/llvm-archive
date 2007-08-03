@@ -1039,7 +1039,6 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; APPLE LOCAL begin 4332318
 (define_insn "sse_movhlps"
   [(set (match_operand:V4SF 0 "nonimmediate_operand"     "=x,x,m")
 	(vec_select:V4SF
@@ -1057,7 +1056,6 @@
    movhps\t{%2, %0|%0, %2}"
   [(set_attr "type" "ssemov")
    (set_attr "mode" "V4SF,V2SF,V2SF")])
-;; APPLE LOCAL end 4332318
 
 ; APPLE LOCAL begin radar 4099352
 (define_insn "sse_movlhps"

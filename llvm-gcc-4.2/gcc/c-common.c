@@ -359,6 +359,11 @@ int flag_gen_declaration;
 
 int print_struct_values;
 
+/* APPLE LOCAL begin radar 5082000 */
+/* Tells the compiler to print out gc's ivar layout. */
+int print_objc_ivar_layout;
+/* APPLE LOCAL end radar 5082000 */
+
 /* Tells the compiler what is the constant string class for Objc.  */
 
 const char *constant_string_class_name;
@@ -851,7 +856,7 @@ fname_as_string (int pretty_p)
       strname.text = (unsigned char *) namep;
       strname.len = len - 1;
 
-      /* APPLE LOCAL pascal strings add extra flag */
+      /* APPLE LOCAL pascal strings */
       if (cpp_interpret_string (parse_in, &strname, 1, &cstr, false, false))
 	{
 	  XDELETEVEC (namep);

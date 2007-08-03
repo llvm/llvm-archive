@@ -1,3 +1,115 @@
+2007-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5259868
+	* objc-act.c (objc_build_ivar_layout): Compress ivar layout nibbles
+	if can.
+
+2007-07-27  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 3742561
+	* objc-act.h (objc_memmove_collectable_decl): New declaration
+	* objc-act.c (objc_build_memmove_collectable): New
+	(objc_aggr_type_strong): New
+	(objc_generate_write_barrier): Generate write barrier call for
+	structs holding object pointers (or __strong pointers).
+	(build_next_objc_exception_stuff): Generate the write barrier function
+	declaration.
+
+2007-07-24  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5355344
+	* objc-act.c (cp_objc_protocol_id_list): New
+
+2007-07-17  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5338634
+	* objc-act.c (finish_class): Fix check for name conflict between
+	property name and its setter name.
+
+2007-07-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5333233
+	* objc-act.c (generate_v2_shared_structures): If class has no
+	'ivar', set 'field' to class's hiden field (for its super class).
+
+2007-07-13  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5277239
+	* objc-act.c (lookup_method_static): Takes a new argument.
+	(objc_property_access_info): Now recognizes 'receiver' when 
+	it is a class object.
+	(objc_build_property_reference_expr): Can now build property
+	reference expression for class-name.class-method syntax as well.
+	(objc_build_getter_call): Can now build method-call expression from
+	property reference expression.
+	(objc_resolve_build_property_setter_name): Can now build a setter name
+	(which should be a class method) for a property dot-syntax used on a
+	class object.
+	(objc_finish_message_expr): Add argument in call to lookup_method_static.
+	(really_start_method): Ditto.
+	(lookup_method_static): Has a new argument which when true only finds class
+	methods.
+	
+2007-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5285911
+	* objc-tree.def (OBJC_PROPERTY_REFERENCE_EXPR): New code tree.
+	* objc-act.c (objc_property_access_info): New
+	(objc_build_property_reference_expr): New
+	(objc_property_reference_expr): New
+	(objc_property_call): Removed
+	(objc_v2_build_setter_call): Removed
+	(objc_v2_build_incr_decl_setter_call): Removed
+	(objc_build_getter_call): Revised and greatly simplified.
+	(objc_build_setter_call): Revised and greatly simplified.
+	(objc_build_incr_decr_setter_call): Revised and greatly simplified.
+	(objc_gimplify_expr): Build getter for OBJC_PROPERTY_REFERENCE_EXPR
+	tree before gimplification.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5082000
+        * lang-specs.h (print-objc-ivar-layout): Add
+        * objc-act.c (total_type_elements): New
+        (OUTPUT_LAYOUT_BYTE): New macro
+        (adjust_max_layout_buf_size): New
+        (objc_build_aggregate_ivar_layout): Add support to handle
+        layout for ivar of array type.
+        (objc_build_ivar_layout): Modified to support dynamic
+        buffer allocation and printing of gc ivar layout on demand.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5251019
+        * objc-act.c (objc_build_ivar_layout): ivar layout nibble string
+        must include count of words to skip at the end.
+
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5276085
+
+        * objc-tree.def (OBJC_WEAK_REFERENCE_EXPR): New tree code.
+        (objc_tree_is_weak_expr): New routine to decide if expression
+        is 'weak' reference.
+        (objc_build_weak_reference_tree): New routine to build a
+        'weak' reference tree.
+        (objc_weak_reference_expr): New routine to return the 'weak'
+        reference expression tree.
+	(objc_synthesize_getter, objc_synthesize_new_getter): Call
+	objc_build_weak_reference_tree.
+        (objc_generate_weak_read): Removed.
+        (objc_remove_weak_read): Removed.
+        (objc_gimplify_expr): Take a OBJC_WEAK_REFERENCE_EXPR
+        tree and covert it into a 'weak' reference API before
+        gimplification.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5279122
+	* objc-act.c (objc_build_compound_setter_call): Decay rhs before using it in
+	a setter call generation.
+
 2007-06-18  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5265737

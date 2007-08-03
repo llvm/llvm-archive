@@ -707,7 +707,13 @@ static inline bool
 c_parser_next_token_starts_declspecs (c_parser *parser)
 {
   c_token *token = c_parser_peek_token (parser);
-  return c_token_starts_declspecs (token);
+  /* APPLE LOCAL begin radar 5277239 */
+  /* Yes, we can have CLASS.method to mean property-style dot-syntax 
+     notation to call a class method (equiv to [CLASS meth]). */
+  return c_token_starts_declspecs (token) 
+	 && (token->id_kind != C_ID_CLASSNAME 
+	     || c_parser_peek_2nd_token (parser)->type != CPP_DOT);
+  /* APPLE LOCAL end radar 5277239 */
 }
 
 /* Return a pointer to the next-but-one token from PARSER, reading it
@@ -4907,7 +4913,8 @@ c_parser_binary_expression (c_parser *parser, struct c_expr *after)
   stack[0].expr = c_parser_cast_expression (parser, after);
   /* APPLE LOCAL begin radar 4426814 */
   if (c_dialect_objc() && flag_objc_gc)
-    stack[0].expr.value = objc_generate_weak_read (stack[0].expr.value);
+    /* APPLE LOCAL radar 5276085 */
+    stack[0].expr.value = objc_build_weak_reference_tree (stack[0].expr.value);
   /* APPLE LOCAL end radar 4426814 */
   stack[0].prec = PREC_NONE;
   sp = 0;
@@ -5022,7 +5029,8 @@ c_parser_binary_expression (c_parser *parser, struct c_expr *after)
       stack[sp].expr = c_parser_cast_expression (parser, NULL);
       /* APPLE LOCAL begin radar 4426814 */
       if (c_dialect_objc() && flag_objc_gc)
-        stack[sp].expr.value = objc_generate_weak_read (stack[sp].expr.value);
+        /* APPLE LOCAL radar 5276085 */
+        stack[sp].expr.value = objc_build_weak_reference_tree (stack[sp].expr.value);
       /* APPLE LOCAL end radar 4426814 */
       stack[sp].prec = oprec;
       stack[sp].op = ocode;
@@ -5417,6 +5425,21 @@ c_parser_postfix_expression (c_parser *parser)
       c_parser_consume_token (parser);
       break;
     case CPP_NAME:
+      /* APPLE LOCAL begin radar 5277239 */
+      if (c_parser_peek_token (parser)->id_kind == C_ID_CLASSNAME
+	  && c_parser_peek_2nd_token (parser)->type == CPP_DOT)
+	{
+	  /* CLASS.class_method expression. */
+	  tree receiver, component;
+	  receiver = c_parser_objc_receiver (parser);
+          /* consume '.' operator */
+	  c_parser_consume_token (parser); 
+	  component = c_parser_objc_message_args (parser);
+	  expr.value = objc_build_property_reference_expr (receiver, component);
+	  expr.original_code = ERROR_MARK;
+	  break;
+	}
+      /* APPLE LOCAL end radar 5277239 */
       if (c_parser_peek_token (parser)->id_kind != C_ID_ID)
 	{
 	  c_parser_error (parser, "expected expression");

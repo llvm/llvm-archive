@@ -22,7 +22,8 @@
 4869813: g++.dg/apple-altivec-2.C (test for excess errors)
 4872028: g++.dg/other/unused1.C scan-assembler (string|ascii?)z?\t"class2("|\\\\000)
 4872028: g++.dg/other/unused1.C scan-assembler (string|ascii?)z?\t"printer("|\\\\000)
-5281849: g++.apple/visibility-1.C scan-not-hidden private_extern[ \t_]*_?__ZTI1S
+5281849: g++.apple/visibility-1.C scan-hidden private_extern[ \t_]*_?__ZTI1T
+5317196: g++.old-deja/g++.pt/const2.C (test for excess errors)
 #
 # The following tests fail only when the c++ suite is run through Obj-C++.
 #

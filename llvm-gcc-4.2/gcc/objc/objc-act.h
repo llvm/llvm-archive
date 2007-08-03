@@ -37,6 +37,8 @@ enum gimplify_status objc_gimplify_expr (tree *, tree *, tree *);
 extern void emit_instantiate_pending_templates (location_t *);
 /* APPLE LOCAL radar 4291785 */
 void objc_detect_field_duplicates (tree);
+/* APPLE LOCAL radar 5355344 */
+bool cp_objc_protocol_id_list (tree);
 
 /* NB: The remaining public functions are prototyped in c-common.h, for the
    benefit of stub-objc.c and objc-act.c.  */
@@ -370,6 +372,8 @@ enum objc_tree_index
      /* removed OCTI_ASSIGN_IVAR_FAST_DECL */
     OCTI_ASSIGN_GLOBAL_DECL,
     OCTI_ASSIGN_STRONGCAST_DECL,
+    /* APPLE LOCAL radar 3742561 */
+    OCTI_MEMMOVE_DECL,
     /* APPLE LOCAL begin radar 4426814 */
     OCTI_ASSIGN_WEAK_DECL,
     OCTI_READ_WEAK_DECL,
@@ -598,6 +602,8 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define objc_assign_global_decl	objc_global_trees[OCTI_ASSIGN_GLOBAL_DECL]
 #define objc_assign_strong_cast_decl		\
 				objc_global_trees[OCTI_ASSIGN_STRONGCAST_DECL]
+/* APPLE LOCAL radar 3742561 */
+#define objc_memmove_collectable_decl objc_global_trees[OCTI_MEMMOVE_DECL]
 
 /* APPLE LOCAL begin radar 4426814 */
 #define objc_assign_weak_decl	objc_global_trees[OCTI_ASSIGN_WEAK_DECL]

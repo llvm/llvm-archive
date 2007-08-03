@@ -1757,8 +1757,7 @@ cgraph_build_static_cdtor (char which, tree body, int priority)
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
   DECL_ARTIFICIAL (decl) = 1;
-  /* APPLE LOCAL Radar 3939078 */
-  /* Delete DECL_IGNORED_P (decl) = 1; */
+  DECL_IGNORED_P (decl) = 1;
   DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (decl) = 1;
   DECL_SAVED_TREE (decl) = body;
   TREE_PUBLIC (decl) = ! targetm.have_ctors_dtors;

@@ -265,12 +265,12 @@ const char *llvm_optns = 0;
 
 /* LLVM LOCAL end */
 
-/* APPLE LOCAL begin -fast */
+/* APPLE LOCAL begin -fast or -fastf or -fastcp */
 /* Nonzero if we should perform SPEC oriented optimizations.  */
 int flag_fast = 0;
 int flag_fastf = 0;
 int flag_fastcp = 0;
-/* APPLE LOCAL end -fast */
+/* APPLE LOCAL end -fast or -fastf or -fastcp */
 
 /* Nonzero if structures and unions should be returned in memory.
 

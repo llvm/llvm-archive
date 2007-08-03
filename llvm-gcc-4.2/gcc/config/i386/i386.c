@@ -779,7 +779,6 @@ struct processor_costs generic32_cost = {
 
 const struct processor_costs *ix86_cost = &pentium_cost;
 
-
 /* Processor feature/optimization bitmasks.  */
 #define m_386 (1<<PROCESSOR_I386)
 #define m_486 (1<<PROCESSOR_I486)
@@ -814,7 +813,7 @@ const int x86_unroll_strlen = m_486 | m_PENT | m_PPRO | m_ATHLON_K8 | m_K6 | m_C
 const int x86_cmove = m_PPRO | m_ATHLON_K8 | m_PENT4 | m_NOCONA;
 const int x86_3dnow_a = m_ATHLON_K8;
 /* APPLE LOCAL end mainline */
-const int x86_deep_branch = m_PPRO | m_K6 | m_ATHLON_K8 | m_PENT4 | m_GENERIC;
+const int x86_deep_branch = m_PPRO | m_K6 | m_ATHLON_K8 | m_PENT4 | m_NOCONA | m_GENERIC;
 /* Branch hints were put in P4 based on simulation result. But
    after P4 was made, no performance benefit was observed with
    branch hints. It also increases the code size. As the result,
@@ -1695,7 +1694,6 @@ override_options (void)
     {
       if (ix86_arch_string)
 	ix86_tune_string = ix86_arch_string;
-
       if (!ix86_tune_string)
 	{
 	  ix86_tune_string = cpu_names [TARGET_CPU_DEFAULT];
@@ -5630,7 +5628,6 @@ pro_epilogue_adjust_stack (rtx dest, rtx src, rtx offset, int style)
 static rtx
 ix86_internal_arg_pointer (void)
 {
-  /* APPLE LOCAL begin mainline */
   bool has_force_align_arg_pointer =
     (0 != lookup_attribute (ix86_force_align_arg_pointer_string,
 			    TYPE_ATTRIBUTES (TREE_TYPE (current_function_decl))));
@@ -5656,7 +5653,6 @@ ix86_internal_arg_pointer (void)
       cfun->machine->force_align_arg_pointer = gen_rtx_REG (Pmode, 2);
       return copy_to_reg (cfun->machine->force_align_arg_pointer);
     }
-  /* APPLE LOCAL end mainline */
   else
     return virtual_incoming_args_rtx;
 }
@@ -14357,6 +14353,9 @@ assign_386_stack_local (enum machine_mode mode, enum ix86_stack_slot n)
 
   gcc_assert (n < MAX_386_STACK_LOCALS);
 
+  /* Virtual slot is valid only before vregs are instantiated.  */
+  gcc_assert ((n == SLOT_VIRTUAL) == !virtuals_instantiated);
+
   for (s = ix86_stack_locals; s; s = s->next)
     if (s->mode == mode && s->n == n)
       return s->rtl;
@@ -16194,6 +16193,10 @@ ix86_init_mmx_sse_builtins (void)
   def_builtin (MASK_MMX, "__builtin_ia32_vec_ext_v2si",
 	       ftype, IX86_BUILTIN_VEC_EXT_V2SI);
 
+  ftype = build_function_type_list (intQI_type_node, V16QI_type_node,
+				    integer_type_node, NULL_TREE);
+  def_builtin (MASK_SSE2, "__builtin_ia32_vec_ext_v16qi", ftype, IX86_BUILTIN_VEC_EXT_V16QI);
+
   /* Access to the vec_set patterns.  */
   ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
 				    intHI_type_node,
@@ -16756,13 +16759,13 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 
     case IX86_BUILTIN_LDMXCSR:
       op0 = expand_normal (TREE_VALUE (arglist));
-      target = assign_386_stack_local (SImode, SLOT_TEMP);
+      target = assign_386_stack_local (SImode, SLOT_VIRTUAL);
       emit_move_insn (target, op0);
       emit_insn (gen_sse_ldmxcsr (target));
       return 0;
 
     case IX86_BUILTIN_STMXCSR:
-      target = assign_386_stack_local (SImode, SLOT_TEMP);
+      target = assign_386_stack_local (SImode, SLOT_VIRTUAL);
       emit_insn (gen_sse_stmxcsr (target));
       return copy_to_mode_reg (SImode, target);
 
@@ -17173,6 +17176,7 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
     case IX86_BUILTIN_VEC_EXT_V4SF:
     case IX86_BUILTIN_VEC_EXT_V4SI:
     case IX86_BUILTIN_VEC_EXT_V8HI:
+    case IX86_BUILTIN_VEC_EXT_V16QI:
     case IX86_BUILTIN_VEC_EXT_V2SI:
     case IX86_BUILTIN_VEC_EXT_V4HI:
       return ix86_expand_vec_ext_builtin (arglist, target);

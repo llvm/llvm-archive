@@ -512,6 +512,8 @@ tree objc2_build_throw_call (tree);
 
 extern int print_struct_values;
 
+/* APPLE LOCAL radar 5082000 */
+extern int print_objc_ivar_layout; 
 /* ???.  Undocumented.  */
 
 extern const char *constant_string_class_name;
@@ -1052,10 +1054,11 @@ extern tree objc_build_synchronized (location_t, tree, tree);
 extern int objc_static_init_needed_p (void);
 extern tree objc_generate_static_init_call (tree);
 extern tree objc_generate_write_barrier (tree, enum tree_code, tree);
-/* APPLE LOCAL begin radar 4426814 */
-extern tree objc_generate_weak_read (tree);
-extern void objc_remove_weak_read (tree*);
-/* APPLE LOCAL end radar 4426814 */
+/* APPLE LOCAL radar 5276085 */
+extern void objc_weak_reference_expr (tree*);
+/* APPLE LOCAL begin 5276085 */
+extern tree objc_build_weak_reference_tree (tree);
+/* APPLE LOCAL end 5276085 */
 
 /* APPLE LOCAL begin C* language */
 extern void objc_set_method_opt (int);
@@ -1067,29 +1070,36 @@ tree objc_build_foreach_components (tree, tree*, tree*, tree*,
 /* APPLE LOCAL begin C* property (Radar 4436866) */
 void objc_set_property_attr (int, tree);
 void objc_add_property_variable (tree);
-tree objc_build_getter_call (tree, tree);
+/* APPLE LOCAL begin radar 5285911 */
+tree objc_build_property_reference_expr (tree, tree);
+bool objc_property_reference_expr (tree);
+/* APPLE LOCAL end radar 5285911 */
 tree objc_build_setter_call (tree, tree);
 /* APPLE LOCAL end C* property (Radar 4436866) */
 /* APPLE LOCAL radar 4712269 */
 tree objc_build_incr_decr_setter_call (enum tree_code, tree, tree);
 /* APPLE LOCAL begin objc new property */
 void objc_declare_property_impl (int, tree);
-bool objc_property_call (tree);
+/* APPLE LOCAL radar 5285911 */
+/* objc_property_call decl removed. */
 /* APPLE LOCAL end objc new property */
 
-/* APPLE LOCAL ObjC new abi */
+/* APPLE LOCAL begin ObjC new abi */
 extern tree objc_v2_build_ivar_ref (tree datum, tree component);
+/* APPLE LOCAL end ObjC new abi */
 
-/* APPLE LOCAL C* warnings to easy porting to new abi */
+/* APPLE LOCAL begin C* warnings to easy porting to new abi */
 void diagnose_selector_cast (tree cast_type, tree sel_exp);
+/* APPLE LOCAL end C* warnings to easy porting to new abi */
 
 /* APPLE LOCAL begin radar 4441049 */
 tree objc_v2_component_ref_field_offset (tree);
 tree objc_v2_bitfield_ivar_bitpos (tree);
 /* APPLE LOCAL end radar 4441049 */
 
-/* APPLE LOCAL radar 4985544 */
+/* APPLE LOCAL begin 4985544 */
 bool objc_check_format_nsstring (tree, unsigned HOST_WIDE_INT, bool *);
+/* APPLE LOCAL end 4985544 */
 
 /* APPLE LOCAL radar 2996215 */
 tree objc_create_init_utf16_var (const unsigned char *, size_t, size_t *);

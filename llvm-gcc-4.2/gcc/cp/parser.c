@@ -1855,6 +1855,10 @@ static tree cp_parser_objc_message_args
   (cp_parser *);
 static tree cp_parser_objc_message_expression
   (cp_parser *);
+/* APPLE LOCAL begin radar 5277239 */
+static tree cp_parser_objc_reference_expression
+  (cp_parser *, tree);
+/* APPLE LOCAL end radar 5277239 */
 static tree cp_parser_objc_encode_expression
   (cp_parser *);
 static tree cp_parser_objc_defs_expression
@@ -1877,6 +1881,10 @@ static tree cp_parser_objc_identifier_list
 /* APPLE LOCAL end radar 3803157 - objc attribute */
 static tree cp_parser_objc_protocol_refs_opt
   (cp_parser *);
+/* APPLE LOCAL begin radar 5355344 */
+static bool cp_parser_objc_tentative_protocol_refs_opt
+  (cp_parser *, tree *);
+/* APPLE LOCAL end radar 5355344 */
 static void cp_parser_objc_declaration
   (cp_parser *);
 static tree cp_parser_objc_statement
@@ -2192,7 +2200,7 @@ cp_parser_check_decl_spec (cp_decl_specifier_seq *decl_specs)
 	    "typedef",
 	    "__complex",
 	    "__thread"
-	    /* APPLE LOCAL CW asm blocks. */
+	    /* APPLE LOCAL CW asm blocks */
 	    , "asm"
 	  };
 	  error ("duplicate %qs", decl_spec_names[(int)ds]);
@@ -2564,6 +2572,18 @@ cp_parser_skip_to_end_of_statement (cp_parser* parser)
     }
 }
 
+/* APPLE LOCAL begin radar 5277239 */
+/* This routine checks that type_decl is a class or class object followed by a '.'
+   which is an alternative syntax to class-method messaging [class-name class-method]
+*/
+
+static bool
+cp_objc_property_reference_prefix (cp_parser *parser, tree type)
+{
+  return c_dialect_objc () && cp_lexer_peek_token (parser->lexer)->type == CPP_DOT 
+	 && (objc_is_id (type) || objc_is_class_name (type));
+}
+/* APPLE LOCAL end radar 5277239 */
 /* APPLE LOCAL begin C* property (Radar 4436866, 4591909) */
 /* This routine parses the propery declarations. */
 
@@ -3549,6 +3569,11 @@ cp_parser_primary_expression (cp_parser *parser,
 	    if (ambiguous_decls)
 	      return error_mark_node;
 
+	    /* APPLE LOCAL begin radar 5277239 */
+	    if (TREE_CODE (decl) == TYPE_DECL 
+		&& cp_objc_property_reference_prefix (parser, TREE_TYPE (decl)))
+	      return cp_parser_objc_reference_expression (parser, decl);
+	    /* APPLE LOCAL end radar 5277239 */
 	    /* In Objective-C++, an instance variable (ivar) may be preferred
 	       to whatever cp_parser_lookup_name() found.  */
 	    decl = objc_lookup_ivar (decl, id_expression);
@@ -3556,7 +3581,19 @@ cp_parser_primary_expression (cp_parser *parser,
 	    /* If name lookup gives us a SCOPE_REF, then the
 	       qualifying scope was dependent.  */
 	    if (TREE_CODE (decl) == SCOPE_REF)
-	      return decl;
+	      {
+		/* At this point, we do not know if DECL is a valid
+		   integral constant expression.  We assume that it is
+		   in fact such an expression, so that code like:
+
+		      template <int N> struct A {
+			int a[B<N>::i];
+		      };
+		     
+		   is accepted.  At template-instantiation time, we
+		   will check that B<N>::i is actually a constant.  */
+		return decl;
+	      }
 	    /* Check to see if DECL is a local variable in a context
 	       where that is forbidden.  */
 	    if (parser->local_variables_forbidden_p
@@ -6077,7 +6114,8 @@ cp_parser_cast_expression (cp_parser *parser, bool address_p, bool cast_p)
 	  expr = build_c_cast (type, expr);
           /* APPLE LOCAL begin radar 4426814 */
 	  return (c_dialect_objc() && flag_objc_gc) 
-		  ? objc_generate_weak_read (expr) : expr;
+		  /* APPLE LOCAL radar 5276085 */
+		  ? objc_build_weak_reference_tree (expr) : expr;
 	  /* APPLE LOCAL end radar 4426814 */
 	}
     }
@@ -6086,7 +6124,8 @@ cp_parser_cast_expression (cp_parser *parser, bool address_p, bool cast_p)
      unary-expression.  */
   /* APPLE LOCAL begin radar 4426814 */
   if (c_dialect_objc() && flag_objc_gc)
-    return objc_generate_weak_read (
+    /* APPLE LOCAL radar 5276085 */
+    return objc_build_weak_reference_tree (
 	    cp_parser_unary_expression (parser, address_p, cast_p));
   else
     return cp_parser_unary_expression (parser, address_p, cast_p);
@@ -6972,10 +7011,8 @@ cp_parser_compound_statement (cp_parser *parser, tree in_statement_expr,
   tree compound_stmt;
 
   /* Consume the `{'.  */
-  /* APPLE LOCAL begin mainline 2007-04-11 4872022 */
   if (!cp_parser_require (parser, CPP_OPEN_BRACE, "`{'"))
     return error_mark_node;
-  /* APPLE LOCAL end mainline 2007-04-11 4872022 */
   /* Begin the compound-statement.  */
   compound_stmt = begin_compound_stmt (in_try ? BCS_TRY_BLOCK : 0);
   /* APPLE LOCAL begin CW asm blocks */
@@ -10843,14 +10880,22 @@ cp_parser_type_name (cp_parser* parser)
 	  && (objc_is_id (identifier) || objc_is_class_name (identifier)))
 	{
 	  /* See if this is an Objective-C type.  */
-	  tree protos = cp_parser_objc_protocol_refs_opt (parser);
-	  tree type = objc_get_protocol_qualified_type (identifier, protos);
-	  if (type)
-	    type_decl = TYPE_NAME (type);
+	  /* APPLE LOCAL begin radar 5355344 */
+	  tree protos;
+	  if (cp_parser_objc_tentative_protocol_refs_opt (parser, &protos))
+	    {
+	      tree type = objc_get_protocol_qualified_type (identifier, protos);
+	      if (type)
+	        type_decl = TYPE_NAME (type);
+	    }
+	  /* APPLE LOCAL end radar 5355344 */
 	}
 
       /* Issue an error if we did not find a type-name.  */
-      if (TREE_CODE (type_decl) != TYPE_DECL)
+      /* APPLE LOCAL begin radar 5277239 */
+      if (TREE_CODE (type_decl) != TYPE_DECL 
+	  || cp_objc_property_reference_prefix (parser, TREE_TYPE (type_decl)))
+      /* APPLE LOCAL end radar 5277239 */
 	{
 	  if (!cp_parser_simulate_error (parser))
 	    cp_parser_name_lookup_error (parser, identifier, type_decl,
@@ -13892,7 +13937,10 @@ cp_parser_class_name (cp_parser *parser,
     }
   else if (TREE_CODE (decl) != TYPE_DECL
 	   || TREE_TYPE (decl) == error_mark_node
-	   || !IS_AGGR_TYPE (TREE_TYPE (decl)))
+	   /* APPLE LOCAL begin radar 5277239 */
+	   || !IS_AGGR_TYPE (TREE_TYPE (decl))
+	   || cp_objc_property_reference_prefix (parser, TREE_TYPE (decl)))
+	   /* APPLE LOCAL end radar 5277239 */
     decl = error_mark_node;
 
   if (decl == error_mark_node)
@@ -18755,6 +18803,24 @@ cp_parser_objc_message_expression (cp_parser* parser)
   return objc_build_message_expr (build_tree_list (receiver, messageargs));
 }
 
+/* APPLE LOCAL begin radar 5277239 */
+/* Parse an Objective-C dot-syntax class expression.
+
+   objc-message-expression:
+     class-name '.' class-method-name
+
+  Returns an objc_property_reference expression. */
+
+static tree
+cp_parser_objc_reference_expression (cp_parser* parser, tree type_decl)
+{
+  tree receiver, component;
+  receiver = objc_get_class_reference (TREE_TYPE (type_decl));
+  cp_lexer_consume_token (parser->lexer);  /* Eact '.' */
+  component = cp_parser_objc_message_args (parser);
+  return objc_build_property_reference_expr (receiver, TREE_PURPOSE (component));
+}
+/* APPLE LOCAL end radar 5277239 */
 /* Parse an objc-message-receiver.
 
    objc-message-receiver:
@@ -19087,6 +19153,32 @@ cp_parser_objc_protocol_refs_opt (cp_parser* parser)
 
   return protorefs;
 }
+
+/* APPLE LOCAL begin radar 5355344 */
+/* This routine also parses a list of Objective-C protocol references; except that
+   if list is not valid, it returns FALSE and back-tracks parsing. */
+
+static bool
+cp_parser_objc_tentative_protocol_refs_opt (cp_parser* parser, tree *protorefs)
+{
+  *protorefs = NULL_TREE;
+  if(cp_lexer_next_token_is (parser->lexer, CPP_LESS))
+    {
+      cp_parser_parse_tentatively (parser);
+      cp_lexer_consume_token (parser->lexer);  /* Eat '<'.  */
+      *protorefs = cp_parser_objc_identifier_list (parser);
+      if (!cp_objc_protocol_id_list (*protorefs))
+        {
+          cp_parser_abort_tentative_parse (parser);
+          return false;
+        }
+      if (cp_parser_parse_definitely (parser))
+        cp_parser_require (parser, CPP_GREATER, "`>'");
+    }
+
+  return true;
+}
+/* APPLE LOCAL end radar 5355344 */
 
 /* Parse a Objective-C visibility specification.  */
 

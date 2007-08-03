@@ -1291,10 +1291,13 @@ machopic_select_section (tree exp, int reloc,
   /* APPLE LOCAL begin fwritable strings  */
   if (TREE_CODE (exp) == STRING_CST
       && ((size_t) TREE_STRING_LENGTH (exp)
-	  == strlen (TREE_STRING_POINTER (exp)) + 1)
+      /* Copied from varasm.c:output_constant_def_contents().  5346453 */
+      && (MAX ((HOST_WIDE_INT)TREE_STRING_LENGTH (exp),
+	       int_size_in_bytes (TREE_TYPE (exp)))
+	  == strlen (TREE_STRING_POINTER (exp)) + 1))
       && ! flag_writable_strings)
     return darwin_sections[cstring_section];
-  /* APPLE LOCAL end fwritable strings  */
+  /* APPLE LOCAL end fwritable strings, 5346453 */
   else if ((TREE_CODE (exp) == INTEGER_CST || TREE_CODE (exp) == REAL_CST)
 	   && flag_merge_constants)
     {

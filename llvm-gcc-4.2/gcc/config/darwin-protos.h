@@ -117,8 +117,6 @@ extern bool darwin_kextabi_p (void);
 extern void darwin_override_options (void);
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 extern void reset_optimization_options (int, int);
-/* APPLE LOCAL C++ EH */
-extern void darwin_non_lazy_pcrel (FILE *file, rtx addr);
 
 /* APPLE LOCAL begin constant cfstrings */
 extern void darwin_init_cfstring_builtins (void);

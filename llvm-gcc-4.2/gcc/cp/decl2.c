@@ -1729,19 +1729,19 @@ determine_visibility (tree decl)
 	     but have no TEMPLATE_INFO, so don't try to check it.  */
 	  use_template = 0;
 	}
-      /* APPLE LOCAL begin ms tinfo compat 4230099 */
+      /* APPLE LOCAL begin mainline 2007-06-28 ms tinfo compat 4230099 */
       else if (TREE_CODE (decl) == VAR_DECL && DECL_TINFO_P (decl)
 	       && flag_visibility_ms_compat)
 	{
 	  tree underlying_type = TREE_TYPE (DECL_NAME (decl));
 	  int underlying_vis = type_visibility (underlying_type);
 	  if (underlying_vis == VISIBILITY_ANON
-	      || DECL_VISIBILITY_SPECIFIED (underlying_type))
+	      || CLASSTYPE_VISIBILITY_SPECIFIED (underlying_type))
 	    constrain_visibility (decl, underlying_vis);
 	  else
 	    DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
 	}
-      /* APPLE LOCAL end ms tinfo compat 4230099 */
+      /* APPLE LOCAL end mainline 2007-06-28 ms tinfo compat 4230099 */
       else if (TREE_CODE (decl) == VAR_DECL && DECL_TINFO_P (decl))
 	{
 	  /* tinfo visibility is based on the type it's for.  */
@@ -2345,6 +2345,12 @@ start_objects (int method_type, int initp)
   /* It can be a static function as long as collect2 does not have
      to scan the object file to find its ctor/dtor routine.  */
   TREE_PUBLIC (current_function_decl) = ! targetm.have_ctors_dtors;
+
+  /* APPLE LOCAL begin mainline 4.3 2007-06-28 4992129 */
+  /* Mark as artificial because it's not explicitly in the user's
+     source code.  */
+  DECL_ARTIFICIAL (current_function_decl) = 1;
+  /* APPLE LOCAL end mainline 4.3 2007-06-28 4992129 */
 
   /* Mark this declaration as used to avoid spurious warnings.  */
   TREE_USED (current_function_decl) = 1;

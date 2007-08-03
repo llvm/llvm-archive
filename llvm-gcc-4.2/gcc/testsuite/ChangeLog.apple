@@ -1,3 +1,154 @@
+2007-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5259868
+	* objc.dg/objc2-ivar-layout-array-8.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-1.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-1.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-2.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-2.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-3.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-3.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-4.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-4.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-5.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-6.m: ivar layout pattern compressed.
+	* objc.dg/objc2-ivar-layout-array-7.m: ivar layout pattern compressed.
+
+2007-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5297200
+	* objc.dg/objc-gc-3.m: Modified
+
+2007-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5004398
+	* obj-c++.dg/objc2-const-str-64bit-1.mm: Remove
+
+2007-07-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3742561
+	* objc.dg/objc-gc-aggr-assign-1.m: Add
+	* obj-c++.dg/objc-gc-aggr-assign-1.mm: Add
+
+2007-07-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5355344
+	* obj-c++.dg/disambiguate-1.mm: Add
+
+2007-07-24  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4875126
+	Backport from mainline:
+	2007-06-13  Eric Christopher  <echristo@apple.com>
+	* gcc.target/i386/ssefn-1.c: Add -march=i386.
+
+2007-07-23  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5245963
+	* objc/execute/protocol-isEqual-1.m: Modified
+	* objc/execute/protocol-isEqual-3.m: Modified
+	* objc/execute/protocol-isEqual-2.m: Modified
+	* objc/execute/protocol-isEqual-4.m: Modified
+
+2007-07-20  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4875094
+	* gcc.target/i386/movq-2.c (dg-options) : Use -Oz instead of -Os.
+
+2007-07-17  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5338634
+	* objc.dg/newproperty-setter-name.m: Add
+
+2007-07-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5333233
+	* obj-c++.dg/objc2-instanceSizeStart-1.mm: Add
+
+2007-07-17  Hui-May Chang <hm.chang@apple.com>
+
+	* gcc.target/i386/reload-1.c. Replaced scan-file by scan-rtl-dump.
+
+2007-07-13  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5277239
+	* objc.dg/newproperty-class-method-1.m: Add
+	* objc.dg/newproperty-class-method-2.m: Add
+	* obj-c++.dg/newproperty-class-method-1.mm: Add
+	* obj-c++.dg/newproperty-class-method-2.mm: Add
+	* objc.dg/property-neg-4.m: Modified
+	* obj-c++.dg/property-neg-4.mm: Modified
+
+2007-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5285911
+	* objc.dg/newproperty-deprecated-attr-1.m: Modified
+	* objc.dg/newproperty-5.m: Add
+	* obj-c++.dg/newproperty-deprecated-attr-1.mm: Modified
+	* obj-c++.dg/newproperty-5.mm: Add
+
+2007-07-5  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5315235
+	* objc.dg/const-cfstring-7.m: Modified
+	* objc.dg/objc2-package-ivar-1.m: Modified
+	* obj-c++.dg/objc2-package-ivar-1.mm: Modified
+	* obj-c++.dg/const-cfstring-4-64bit.mm: Modified
+	* obj-c++.dg/objc2-none-fragile-ivar-use.mm: Modified
+	* obj-c++.dg/objc2-ivar-test-2.mm: Modified
+	* obj-c++.dg/cxx-ivars-4.mm: Modified
+	* obj-c++.dg/objc2-const-str-64bit-1.mm: Modified
+	* obj-c++.dg/const-cfstring-7.mm: Modified
+	* obj-c++.dg/encode-3-64bit.mm: Modified
+
+2007-07-5  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5274332
+	gcc.apple/asm-static-entry-1.c: Modified to be
+	compilation model neutral.
+
+2007-07-5  Fariborz Jahanian <fjahanian@apple.com>
+ 
+      Radar 5297325
+      * objc.dg/stubify-1.m: Modified to make it a 32bit
+      abi test.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5082000
+        * objc.dg/objc2-ivar-layout-array.m: Add
+        * objc.dg/objc2-ivar-layout-array-1.m: Add
+        * objc.dg/objc2-ivar-layout-array-2.m: Add
+        * objc.dg/objc2-ivar-layout-array-3.m: Add
+        * objc.dg/objc2-ivar-layout-array-4.m: Add
+        * objc.dg/objc2-ivar-layout-array-5.m: Add
+        * objc.dg/objc2-ivar-layout-array-6.m: Add
+        * objc.dg/objc2-ivar-layout-array-7.m: Add
+        * objc.dg/objc2-ivar-layout-array-8.m: Add
+        * objc.dg/objc2-ivar-layout-array-9.m: Add
+        * objc.dg/objc2-ivar-layout-1.m: Modified
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5251019
+        * objc.dg/objc2-ivar-layout-2.m: Modified
+        * objc.dg/objc2-ivar-layout-3.m: Add
+        * objc.dg/objc2-ivar-layout-4.m: Add
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5276085
+	* objc.dg/objc-gc-weak-3.m: Enhanced to test weak array of ivars.
+        * obj-c++.dg/objc-gc-weak-4.mm: Ditto.
+	* objc.dg/objc-gc-weak-2.m: Modified
+	* obj-c++.dg/objc-gc-weak-2.mm : Modifed
+
+2007-06-27  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4641942
+	* gcc.apple/4641942.c : New.
+
 2007-06-26  Hui-May Chang <hm.chang@apple.com>
 
 	Backport from mainline:

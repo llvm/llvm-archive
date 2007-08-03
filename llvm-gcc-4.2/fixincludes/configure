@@ -2355,7 +2355,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Figure out what compiler warnings we can enable.
 # See config/warnings.m4 for details.
-# APPLE LOCAL begin fixincludes add -Wno-overlength-strings
 
 
 WARN_CFLAGS=
@@ -2493,7 +2492,6 @@ fi
 fi
 
 
-# APPLE LOCAL end fixincludes add -Wno-overlength-strings
 
 # Only enable with --enable-werror-always until existing warnings are
 # corrected.

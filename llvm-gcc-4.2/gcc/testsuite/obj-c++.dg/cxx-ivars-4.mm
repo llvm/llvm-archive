@@ -4,7 +4,7 @@
 // This test checks that -fobjc-call-cxx-cdtors is the default with -m64. 
 // This test must compile with no diagnostics.
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 
 
 /* APPLE LOCAL radar 4894756 */

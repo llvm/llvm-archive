@@ -78,6 +78,8 @@
 5271896: gcc.apple/asm-label-2.c (test for excess errors)
 5271896: gcc.apple/asm-read-global.c (test for excess errors)
 5271896: gcc.apple/asm-test-nofralloc.c (test for excess errors)
+5341634: gcc.dg/darwin64-abi.c (internal compiler error)
+5341634: gcc.dg/darwin64-abi.c (test for excess errors)
 #
 # x86 only
 4874197: gcc.apple/4283414.c scan-assembler pcmpeq
@@ -158,8 +160,30 @@
 3904228: gcc.dg/uninit-A.c (test for excess errors)
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 12)
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 13)
-5275911: gcc.dg/invalid-call-1.c non-compatible type (test for warnings, line 16)
+5275911: gcc.dg/invalid-call-1.c non-compatible type (test for warnings, line 18)
 0000000: compiler driver --coverage option(s) (compiler options)
+#
+# -mmacosx-version-min=10.4 only
+5342828: gcc.dg/pie-link.c (test for excess errors)
+#
+# -m64 -mmacosx-version-min=10.4 only
+5342857: gcc.apple/objcpp.c (test for excess errors)
+#
+# ppc -m64 -mmacosx-version-min=10.4 only
+5342320: gcc.c-torture/execute/conversion.c compilation,  -O0
+5342320: gcc.c-torture/execute/conversion.c compilation,  -O1
+5342320: gcc.c-torture/execute/conversion.c compilation,  -O2
+5342320: gcc.c-torture/execute/conversion.c compilation,  -O3 -fomit-frame-pointer
+5342320: gcc.c-torture/execute/conversion.c compilation,  -O3 -g
+5342320: gcc.c-torture/execute/conversion.c compilation,  -Os
+5342320: gcc.c-torture/execute/conversion.c compilation,  -fast
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -O0  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -O1  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -O2  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -O3 -fomit-frame-pointer  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -O3 -g  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -Os  (test for excess errors)
+5342320: gcc.dg/torture/fp-int-convert-long-double.c  -fast  (test for excess errors)
 #
 # when running through ObjC on x86 only
 5087201: gcc.apple/4443946.c (test for excess errors)

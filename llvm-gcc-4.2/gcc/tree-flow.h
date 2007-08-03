@@ -878,7 +878,6 @@ enum move_pos
   };
 extern enum move_pos movement_possibility (tree);
 
-
 /* The reasons a variable may escape a function.  */
 enum escape_type 
   {

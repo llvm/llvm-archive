@@ -115,7 +115,7 @@
   %{static: %{Zdynamic: %e conflicting code gen style switches are used}}\
   "/* APPLE LOCAL mainline 2007-02-20 5005743 */" \
   %{!mmacosx-version-min=*:-mmacosx-version-min=%(darwin_minversion)} \
-  "/* APPLE LOCAL -fast and PIC code.  */"\
+  "/* APPLE LOCAL -fast or -fastf or -fastcp */"\
   %{!mkernel:%{!static:%{!fast:%{!fastf:%{!fastcp:%{!mdynamic-no-pic:-fPIC}}}}}}"
 
 #define DARWIN_ARCH_SPEC "%{m64:ppc64;:ppc}"

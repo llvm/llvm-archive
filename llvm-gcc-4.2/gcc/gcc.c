@@ -836,11 +836,11 @@ static const char *llvm_options =
 /* LLVM LOCAL end */
 /* NB: This is shared amongst all front-ends.  */
 static const char *cc1_options =
-/* APPLE LOCAL begin -fast */
+/* APPLE LOCAL begin -fast or -fastf or -fastcp */
 "%{fast:-O3}\
  %{fastf:-O3}\
  %{fastcp:-O3}"
-/* APPLE LOCAL end -fast */
+/* APPLE LOCAL end -fast or -fastf or -fastcp */
 "%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}}\
 "/* LLVM LOCAL */"\
  %1 %{!Q:-quiet} -dumpbase %B %{d*} %{Zmllvm*: -mllvm %*} %{m*} %{a*}\
@@ -3207,14 +3207,14 @@ int n_infiles;
 
 static bool combine_inputs;
 
-/* APPLE LOCAL begin IMA variables */
+/* APPLE LOCAL begin IMA */
 
 /* True if "-traditional-cpp" appears on commandline.  */
 static int traditional_cpp_flag = 0;
 
 /* True if "-E" appears on commandline.  */
 static int capital_e_flag = 0;
-/* APPLE LOCAL end IMA variables */
+/* APPLE LOCAL end IMA */
 
 /* This counts the number of libraries added by lang_specific_driver, so that
    we can tell if there were any user supplied any files or libraries.  */

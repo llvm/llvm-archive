@@ -256,11 +256,9 @@ type_after_usual_arithmetic_conversions (tree t1, tree t2)
 
   /* FIXME: Attributes.  */
   gcc_assert (ARITHMETIC_TYPE_P (t1)
-	      || TREE_CODE (t1) == COMPLEX_TYPE
 	      || TREE_CODE (t1) == VECTOR_TYPE
 	      || TREE_CODE (t1) == ENUMERAL_TYPE);
   gcc_assert (ARITHMETIC_TYPE_P (t2)
-	      || TREE_CODE (t2) == COMPLEX_TYPE
 	      || TREE_CODE (t2) == VECTOR_TYPE
 	      || TREE_CODE (t2) == ENUMERAL_TYPE);
 
@@ -763,9 +761,9 @@ common_type (tree t1, tree t2)
   code2 = TREE_CODE (t2);
 
   if ((ARITHMETIC_TYPE_P (t1) || code1 == ENUMERAL_TYPE
-       || code1 == COMPLEX_TYPE || code1 == VECTOR_TYPE)
+       || code1 == VECTOR_TYPE)
       && (ARITHMETIC_TYPE_P (t2) || code2 == ENUMERAL_TYPE
-	  || code2 == COMPLEX_TYPE || code2 == VECTOR_TYPE))
+	  || code2 == VECTOR_TYPE))
     return type_after_usual_arithmetic_conversions (t1, t2);
 
   else if ((TYPE_PTR_P (t1) && TYPE_PTR_P (t2))
@@ -2112,7 +2110,8 @@ finish_class_member_access_expr (tree object, tree name, bool template_p)
   if (!processing_template_decl)
     {
       if (TREE_CODE (name) == IDENTIFIER_NODE
-          && (expr = objc_build_getter_call (object, name)))
+	  /* APPLE LOCAL radar 5285911 */
+          && (expr = objc_build_property_reference_expr (object, name)))
         return expr;
     }
   /* APPLE LOCAL end C* property (Radar 4436866) */
@@ -5726,7 +5725,8 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
   /* APPLE LOCAL begin radar 4426814 */
   if (c_dialect_objc () && flag_objc_gc)
     {
-      objc_remove_weak_read (&lhs);
+      /* APPLE LOCAL radar radar 5276085 */
+      objc_weak_reference_expr (&lhs);
       lhstype = TREE_TYPE (lhs);
       olhstype = lhstype;
     }
@@ -5876,6 +5876,17 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	      result = build_new_op (MODIFY_EXPR, LOOKUP_NORMAL,
 				     lhs, rhs, make_node (NOP_EXPR),
 				     /*overloaded_p=*/NULL);
+	      /* APPLE LOCAL begin radar 3742561 */
+	      if (c_dialect_objc () && flag_objc_gc
+		  && result && TREE_CODE (result) == MODIFY_EXPR)
+		{
+		  /* Any thing other than MODIFY_EXPR indicates that 
+		     '=' is overloaded. Leave it alone. */
+		  tree t = objc_generate_write_barrier (lhs, MODIFY_EXPR, rhs);
+		  if (t)
+		    result = t;
+		}
+	      /* APPLE LOCAL end radar 3742561 */
 	      if (result == NULL_TREE)
 		return error_mark_node;
 	      return result;

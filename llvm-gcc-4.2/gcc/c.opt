@@ -872,11 +872,11 @@ fvisibility-inlines-hidden
 C++ ObjC++
 Marks all inlined methods as having hidden visibility
 
-; APPLE LOCAL begin ms tinfo compat 4230099
+; APPLE LOCAL begin mainline 2007-06-28 ms tinfo compat 4230099
 fvisibility-ms-compat
 C++ ObjC++ Var(flag_visibility_ms_compat)
 Changes visibility to match Microsoft Visual Studio by default
-; APPLE LOCAL end ms tinfo compat 4230099
+; APPLE LOCAL end mainline 2007-06-28 ms tinfo compat 4230099
 
 fvtable-gc
 C++ ObjC++
@@ -982,6 +982,12 @@ C ObjC C++ ObjC++
 print-objc-runtime-info
 ObjC ObjC++
 Generate C header of platform-specific features
+
+; APPLE LOCAL begin radar 5082000
+print-objc-ivar-layout
+ObjC ObjC++
+Generate GC ivar layout information
+; APPLE LOCAL end radar 5082000
 
 print-pch-checksum
 C ObjC C++ ObjC++

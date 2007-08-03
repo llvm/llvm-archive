@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 2872232 */
+/* APPLE LOCAL file mainline 2007-06-12 2872232 */
 /* Copyright (C) 2004
    Free Software Foundation, Inc.
 

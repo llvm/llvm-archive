@@ -421,21 +421,21 @@ for t in $TARGETS ; do
     .$DEST_ROOT/lib/gcc || exit 1
 done
 
-# And copy libgomp stuff and libobjc-gnu by hand...
+# And copy libgomp stuff by hand...
 for t in $TARGETS ; do
     for h in $HOSTS ; do
 	if [ $h = $t ] ; then
-	    cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/lib{gomp,objc-gnu}.a \
+	    cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/libgomp.a \
 		.$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ || exit 1
 	    cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/libgomp.spec \
 		.$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ || exit 1
 	    if [ $h = 'powerpc' ] ; then
-		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/ppc64/lib{gomp,objc-gnu}.a \
+		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/ppc64/libgomp.a \
 		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/ || exit 1
 		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/ppc64/libgomp.spec \
 		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/ || exit 1
 	    elif [ $h = 'i686' ] ; then
-		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/x86_64/lib{gomp,objc-gnu}.a \
+		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/x86_64/libgomp.a \
 		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/x86_64/ || exit 1
 		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/x86_64/libgomp.spec \
 		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/x86_64/ || exit 1

@@ -8,13 +8,11 @@ AC_PROG_CC
 
 # Figure out what compiler warnings we can enable.
 # See config/warnings.m4 for details.
-# APPLE LOCAL begin fixincludes add -Wno-overlength-strings
 
 ACX_PROG_CC_WARNING_OPTS([-W -Wall -Wwrite-strings -Wstrict-prototypes \
 			  -Wmissing-prototypes -Wold-style-definition \
 			  -Wmissing-format-attribute -Wno-overlength-strings])
 ACX_PROG_CC_WARNING_ALMOST_PEDANTIC([-Wno-long-long])
-# APPLE LOCAL end fixincludes add -Wno-overlength-strings
 
 # Only enable with --enable-werror-always until existing warnings are
 # corrected.

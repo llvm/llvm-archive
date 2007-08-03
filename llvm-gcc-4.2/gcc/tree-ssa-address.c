@@ -569,7 +569,9 @@ create_mem_ref (block_stmt_iterator *bsi, tree type,
 		struct affine_tree_combination *addr)
 {
   tree mem_ref, tmp;
-  tree addr_type = build_pointer_type (type), atype;
+  /* APPLE LOCAL begin mainline 2007-03-08 4993982 */
+  tree atype;
+  /* APPLE LOCAL end mainline 2007-03-08 4993982 */
   struct mem_address parts;
 
   addr_to_parts (addr, &parts);
@@ -597,18 +599,30 @@ create_mem_ref (block_stmt_iterator *bsi, tree type,
 
   if (parts.symbol)
     {
-      tmp = fold_convert (addr_type,
-			  build_addr (parts.symbol, current_function_decl));
+      /* APPLE LOCAL begin mainline 2007-03-08 4993982 */
+      tmp = build_addr (parts.symbol, current_function_decl);
+      gcc_assert (is_gimple_val (tmp));
+      /* APPLE LOCAL end mainline 2007-03-08 4993982 */
     
       /* Add the symbol to base, eventually forcing it to register.  */
       if (parts.base)
 	{
+          /* APPLE LOCAL begin mainline 2007-03-08 4993982 */
+          gcc_assert (tree_ssa_useless_type_conversion_1
+                                (sizetype, TREE_TYPE (parts.base)));
+          /* APPLE LOCAL end mainline 2007-03-08 4993982 */
+
 	  if (parts.index)
-	    parts.base = force_gimple_operand_bsi (bsi,
-			fold_build2 (PLUS_EXPR, addr_type,
-				     fold_convert (addr_type, parts.base),
-				     tmp),
-			true, NULL_TREE);
+            /* APPLE LOCAL begin mainline 2007-03-08 4993982 */
+            {
+              atype = TREE_TYPE (tmp);
+              parts.base = force_gimple_operand_bsi (bsi,
+                        fold_build2 (PLUS_EXPR, atype,
+                                     fold_convert (atype, parts.base),
+                                     tmp),
+                        true, NULL_TREE);
+            }
+            /* APPLE LOCAL end mainline 2007-03-08 4993982 */
 	  else
 	    {
 	      parts.index = parts.base;

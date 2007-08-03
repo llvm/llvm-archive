@@ -9,16 +9,7 @@
    the revision of your modified compiler.  */
 
 /* APPLE LOCAL begin Apple version */
-/* When updating this string:
-   - For each internal build, increment the build number.
-   - When merging from the FSF, delete any (experimental) or (prerelease).
-     Apple doesn't mark its GCC versions as 'prerelease', because a released
-     compiler will be identical to the last prerelease compiler and it
-     makes no sense to mark released compilers as 'prerelease'.
-   - There are other scripts that search for first word of the string
-     to get version number string. Do not use new line.
-*/
-#define VERSUFFIX "(llvm) (Based on Apple Inc. build 5525)"
+#define VERSUFFIX "(llvm) (Based on Apple Inc. build 5530)"
 /* APPLE LOCAL end Apple version */
 
 /* This is the location of the online document giving instructions for

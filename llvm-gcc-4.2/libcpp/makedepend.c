@@ -27,12 +27,12 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include "getopt.h"
 #include "mkdeps.h"
 
-/* APPLE LOCAL begin CW asm blocks -sshebs */
+/* APPLE LOCAL begin CW asm blocks */
 /* Dummies needed because we use them from cpplib, yuck.  */
 int flag_iasm_blocks;
 int iasm_state;
 int iasm_in_operands;
-/* APPLE LOCAL end CW asm blocks -sshebs */
+/* APPLE LOCAL end CW asm blocks */
 
 const char *progname;
 const char *vpath;

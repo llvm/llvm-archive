@@ -1,9 +1,8 @@
-/* APPLE LOCAL file radar 4591756 */
+/* APPLE LOCAL file radar 4591756 - radar 5276085 */
 /* A run-time test for insertion of read barriers for __weak objects. */
+/* Test enhanced for radar 5276085 to test weak array of ivars. */
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-framework Foundation -fobjc-gc" } */
-/* TEMPORARY SKIP! UNTIL RADAR 4914392 is fixed */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 // Weak Write Barriers
 
@@ -21,7 +20,7 @@ struct S {
 }
     Reads, Writes;
 
-static    
+static
 id objc_assign_weak(id value, id *location) {
     Writes.encountered++;
     return value;
@@ -36,6 +35,8 @@ id objc_read_weak(id *location) {
 
 @interface TestObject : NSObject {
     __weak id ivar;
+    __weak id arr_ivar[3];
+    __weak id another_arr_ivar[3][2];
 }
 - (int)doTest;  // error count
 @end
@@ -45,12 +46,30 @@ __weak id *pweak;
 
 @implementation TestObject
 - (int)writeIvar {
+    int i,j;
     ++Writes.expected;
     ivar = self;
     if (Writes.expected != Writes.encountered) {
         printf("writeIvar failed\n");
         return 1;
     }
+    Writes.expected += 3;
+    for (i=0; i < 3; i++)
+      arr_ivar[i] = self;
+    if (Writes.expected != Writes.encountered) {
+        printf("writeIvar failed\n");
+        return 1;
+    }
+
+    Writes.expected += 6;
+    for (i=0; i < 3; i++)
+      for (j=0; j < 2; j++)
+        another_arr_ivar[i][j] = self;
+    if (Writes.expected != Writes.encountered) {
+        printf("writeIvar failed\n");
+        return 1;
+    }
+
     return 0;
 }
 

@@ -1816,7 +1816,8 @@ build_component_ref (tree datum, tree component)
   /* APPLE LOCAL end ObjC new abi */
 
   /* APPLE LOCAL begin C* property (Radar 4436866) */
-  if ((ref = objc_build_getter_call (datum, component)))
+  /* APPLE LOCAL radar 5285911 */
+  if ((ref = objc_build_property_reference_expr (datum, component)))
     return ref;
   /* APPLE LOCAL end C* property (Radar 4436866) */
 
@@ -3895,7 +3896,8 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
   /* APPLE LOCAL begin radar 4426814 */
   if (c_dialect_objc () && flag_objc_gc)
     {
-      objc_remove_weak_read (&lhs);
+      /* APPLE LOCAL radar 5276085 */
+      objc_weak_reference_expr (&lhs);
       lhstype = TREE_TYPE (lhs);
       olhstype = lhstype;
     }
@@ -3909,7 +3911,8 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
     return error_mark_node;
 
   /* APPLE LOCAL non lvalue assign  - objc new property*/
-  if (!objc_property_call (lhs) && !lvalue_or_else (&lhs, lv_assign))
+  /* APPLE LOCAL radar 5285911 */
+  if (!objc_property_reference_expr (lhs) && !lvalue_or_else (&lhs, lv_assign))
     return error_mark_node;
 
   STRIP_TYPE_NOPS (rhs);
@@ -7187,7 +7190,7 @@ build_asm_expr (tree string, tree outputs, tree inputs, tree clobbers,
       TREE_VALUE (tail) = input;
     }
 
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
   args = build_stmt (ASM_EXPR, string, outputs, inputs, clobbers, NULL_TREE);
 
   /* asm statements without outputs, including simple ones, are treated
@@ -8959,8 +8962,8 @@ c_objc_common_truthvalue_conversion (tree expr)
 
   /* ??? Should we also give an error for void and vectors rather than
      leaving those to give errors later?  */
-  /* APPLE LOCAL radar 4426814 */
-  return c_common_truthvalue_conversion (objc_generate_weak_read (expr));
+  /* APPLE LOCAL radar 4426814 - radar 5276085 */
+  return c_common_truthvalue_conversion (objc_build_weak_reference_tree (expr));
 }
 
 

@@ -1037,12 +1037,6 @@ extern void omp_clause_range_check_failed (const tree, const char *, int,
    call optimizations.  */
 #define CALL_EXPR_TAILCALL(NODE) (CALL_EXPR_CHECK(NODE)->common.addressable_flag)
 
-/* APPLE LOCAL begin C* property (Radar 4436866) */
-/* Set on a CALL_EXPR if it is for call to a getter function represented by an
-   objective-c property declaration. */
-#define CALL_EXPR_OBJC_PROPERTY_GETTER(NODE) (CALL_EXPR_CHECK(NODE)->common.deprecated_flag)
-/* APPLE LOCAL end C* property (Radar 4436866) */
-
 /* Used as a temporary field on a CASE_LABEL_EXPR to indicate that the
    CASE_LOW operand has been processed.  */
 #define CASE_LOW_SEEN(NODE) \

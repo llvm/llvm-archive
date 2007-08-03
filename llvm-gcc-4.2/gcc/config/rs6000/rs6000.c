@@ -1263,7 +1263,7 @@ rs6000_override_options (const char *default_cpu)
   size_t i, j;
   struct rs6000_cpu_select *ptr;
   int set_masks;
-  /* APPLE LOCAL -fast */
+  /* APPLE LOCAL -fast or -fastf or -fastcp */
   enum processor_type mcpu_cpu = PROCESSOR_POWER4;
 
   /* Simplifications for entries below.  */
@@ -1406,7 +1406,7 @@ rs6000_override_options (const char *default_cpu)
   rs6000_cpu_target = TARGET_POWERPC64 ? "ppc64" : "ppc";
   /* LLVM LOCAL end */
 
-  /* APPLE LOCAL begin -fast */
+  /* APPLE LOCAL begin -fast or -fastf or -fastcp */
   if (flag_fast || flag_fastf || flag_fastcp)
   {
     if (rs6000_select[1].string == (char *)0 && rs6000_select[2].string == (char *)0)
@@ -1416,7 +1416,7 @@ rs6000_override_options (const char *default_cpu)
       rs6000_select[2].string = "G5";
     }
   }
-  /* APPLE LOCAL end -fast */
+  /* APPLE LOCAL end -fast or -fastf or -fastcp */
 
   for (i = 0; i < ARRAY_SIZE (rs6000_select); i++)
     {
@@ -1475,7 +1475,7 @@ rs6000_override_options (const char *default_cpu)
     }
   /* APPLE LOCAL end AltiVec */
 
-  /* APPLE LOCAL begin -fast */
+  /* APPLE LOCAL begin -fast or -fastf or -fastcp */
   if (flag_fast || flag_fastf || flag_fastcp)
     {
       flag_gcse_sm = 1;
@@ -1513,10 +1513,11 @@ rs6000_override_options (const char *default_cpu)
       disable_typechecking_for_spec_flag = 1;
       flag_unit_at_a_time = 1;
     }
-  /* APPLE LOCAL end -fast */
 
-  /* APPLE LOCAL rs6000_init_hard_regno_mode_ok must come AFTER setting of -fast flags */
+  /* rs6000_init_hard_regno_mode_ok must come AFTER setting of -fast flags.  */
   rs6000_init_hard_regno_mode_ok ();
+
+  /* APPLE LOCAL end -fast or -fastf or -fastcp */
 
   if (TARGET_E500)
     rs6000_isel = 1;
@@ -15380,7 +15381,8 @@ rs6000_function_ok_for_sibcall (tree decl, tree exp ATTRIBUTE_UNUSED)
 	    }
 	}
       if (DEFAULT_ABI == ABI_DARWIN
-	  || (*targetm.binds_local_p) (decl))
+	  || ((*targetm.binds_local_p) (decl)
+	      && (DEFAULT_ABI != ABI_AIX || !DECL_EXTERNAL (decl))))
 	{
 	  tree attr_list = TYPE_ATTRIBUTES (TREE_TYPE (decl));
 

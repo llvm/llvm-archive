@@ -1206,24 +1206,22 @@ fix = {
 };
 
 
-/* APPLE LOCAL begin deployment target */
+/* APPLE LOCAL begin for-fsf-4_4 5133297 */
 /*
- *  GCC used to set MAC_OS_X_VERSION_MIN_REQUIRED directly, but that isn't
- *  namespace-clean.
+ *  On darwin8 and earlier, mach-o/swap.h isn't properly guarded
+ *  by 'extern "C"'.
  */
 fix = {
-  hackname  = darwin_macosx_deployment_target;
+  hackname  = darwin_macho_swaph_externc;
   mach      = "*-*-darwin*";
-  files     = AvailabilityMacros.h;
-  bypass    = "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__";
-  c_fix     = format;
-  c_fix_arg = "#if ! defined (MAC_OS_X_VERSION_MIN_REQUIRED) && defined (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__)\n  #define MAC_OS_X_VERSION_MIN_REQUIRED __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__\n#elif ! defined (MAC_OS_X_VERSION_MIN_REQUIRED)\n";
-  c_fix_arg = "#ifndef MAC_OS_X_VERSION_MIN_REQUIRED\n";
-  test_text = "__private_extern__ int _dyld_func_lookup(\n"
-	      "const char *dyld_func_name,\n"
-	      "unsigned long *address);\n";
+  files     = mach-o/swap.h;
+  bypass    = "extern \"C\"";
+  c_fix     = wrap;
+  c_fix_arg = "#if __cplusplus\nextern \"C\" {\n#endif\n";
+  c_fix_arg = "#if __cplusplus\n}\n#endif\n";
+  test_text = "extern void swap_fat_header();\n";
 };
-/* APPLE LOCAL end deployment target */
+/* APPLE LOCAL end for-fsf-4_4 5133297 */
 
 
 /*
@@ -2198,6 +2196,24 @@ fix = {
 
     test_text = "#define _SOCKLEN_T\ntypedef u_int32_t socklen_t;";
 };
+
+/*
+ *  IRIX 6.5 <stdint.h> only works with ISO C99 and errors out
+ *  otherwise.
+ */
+fix = {
+    hackname  = irix_stdint_c99;
+    files     = stdint.h;
+    select = "(#ifndef __c99\n)(#error This header file is to be used only for c99 mode compilations)";
+
+    mach      = "mips-sgi-irix6.5";
+    c_fix  = format;
+    c_fix_arg = "#if 0\n"
+	        "%2";
+    test_text =
+    "#ifndef __c99\n#error This header file is to be used only for c99 mode compilations\n#else";
+};
+
 
 /*
  *  IRIX 5.x's stdio.h and IRIX 6.5's internal/stdio_core.h declare

@@ -48,8 +48,6 @@ Boston, MA 02110-1301, USA.  */
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {"@c++",
     "%{E|M|MM:cc1plus -E %(cpp_options) %2 %(cpp_debug_options)}\
-    "/* APPLE LOCAL prohibit -arch with -E and -S  */"\
-     %{E|S:%{@:%e-E and -S are not allowed with multiple -arch flags}}\
      %{!E:%{!M:%{!MM:\
        %{save-temps|no-integrated-cpp:cc1plus -E\
 		%(cpp_options) %2 -o %{save-temps:%b.ii} %{!save-temps:%g.ii} \n}\

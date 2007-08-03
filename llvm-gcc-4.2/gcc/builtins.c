@@ -6300,7 +6300,6 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 	return target;
       break;
 
-
     case BUILT_IN_FETCH_AND_ADD_1:
     case BUILT_IN_FETCH_AND_ADD_2:
     case BUILT_IN_FETCH_AND_ADD_4:

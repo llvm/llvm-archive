@@ -136,7 +136,6 @@
 ;; executed in the core.  So we just model that they can only be decoded
 ;; on decoder 0, and say that it takes a little while before the result
 ;; is available.
-; APPLE LOCAL begin mainline 2006-04-19 4434601
 (define_insn_reservation "ppro_complex_insn" 6
 			 (and (eq_attr "cpu" "pentiumpro,generic32")
 			      (eq_attr "type" "other,multi,call,callv,str"))
@@ -762,4 +761,3 @@
 			      (and (eq_attr "memory" "both")
 				   (eq_attr "type" "alu,alu1,negnot,incdec,icmp,test,setcc,icmov,push,pop,fxch,sseiadd,sseishft,sseimul,mmx,mmxadd,mmxcmp")))
 			 "decoder0,p2+(p0|p1),p4+p3")
-; APPLE LOCAL end mainline 2006-04-19 4434601

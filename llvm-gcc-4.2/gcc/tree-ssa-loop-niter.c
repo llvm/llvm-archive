@@ -1747,6 +1747,12 @@ infer_loop_bounds_from_undefined (struct loop *loop)
     {
       bb = bbs[i];
 
+      /* If BB is not executed in each iteration of the loop, we cannot
+	 use the operations in it to infer reliable upper bound on the
+	 # of iterations of the loop.  */
+      if (!dominated_by_p (CDI_DOMINATORS, loop->latch, bb))
+	continue;
+
       for (bsi = bsi_start (bb); !bsi_end_p (bsi); bsi_next (&bsi))
         {
 	  tree stmt = bsi_stmt (bsi);
@@ -2117,4 +2123,3 @@ substitute_in_loop_info (struct loop *loop, tree name, tree val)
   loop->estimated_nb_iterations
 	  = simplify_replace_tree (loop->estimated_nb_iterations, name, val);
 }
-

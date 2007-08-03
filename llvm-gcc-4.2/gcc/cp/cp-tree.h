@@ -2432,14 +2432,21 @@ extern void decl_shadowed_for_var_insert (tree, tree);
 /* [basic.fundamental]
 
    Integral and floating types are collectively called arithmetic
-   types.  Keep these checks in ascending code order.  */
+   types.  
+
+   As a GNU extension, we also accept complex types.
+
+   Keep these checks in ascending code order.  */
 #define ARITHMETIC_TYPE_P(TYPE) \
-  (CP_INTEGRAL_TYPE_P (TYPE) || TREE_CODE (TYPE) == REAL_TYPE)
+  (CP_INTEGRAL_TYPE_P (TYPE) \
+   || TREE_CODE (TYPE) == REAL_TYPE \
+   || TREE_CODE (TYPE) == COMPLEX_TYPE)
 
 /* [basic.types]
 
    Arithmetic types, enumeration types, pointer types, and
    pointer-to-member types, are collectively called scalar types.
+   
    Keep these checks in ascending code order.  */
 #define SCALAR_TYPE_P(TYPE)			\
   (TYPE_PTRMEM_P (TYPE)				\
@@ -3654,7 +3661,7 @@ typedef enum cp_decl_spec {
   ds_typedef,
   ds_complex,
   ds_thread,
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
   ds_iasm_asm,
   ds_last
 } cp_decl_spec;
@@ -4173,6 +4180,7 @@ extern bool dependent_template_id_p		(tree, tree);
 extern bool type_dependent_expression_p		(tree);
 extern bool any_type_dependent_arguments_p      (tree);
 extern bool value_dependent_expression_p	(tree);
+extern bool any_value_dependent_elements_p      (tree);
 extern tree resolve_typename_type		(tree, bool);
 extern tree template_for_substitution		(tree);
 extern tree build_non_dependent_expr		(tree);
@@ -4596,6 +4604,8 @@ extern tree iasm_cp_build_component_ref		(tree, tree);
 extern bool objc2_valid_objc_catch_type (tree);
 extern tree objcp_build_eh_type_type (tree);
 /* APPLE LOCAL end radar 2848255 */
+/* APPLE LOCAL radar 5355344 */
+extern bool cp_objc_protocol_id_list (tree);
 
 /* -- end of C++ */
 

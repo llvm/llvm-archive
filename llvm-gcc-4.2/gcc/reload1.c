@@ -5850,10 +5850,6 @@ choose_reload_regs (struct insn_chain *chain)
 		 and of the desired class.  */
 	      if (equiv != 0)
 		{
-		  /* APPLE LOCAL begin don't reload unavailable hard regs. PR/16028 */
-		  /* MERGE FIXME: I removed a hunk that should have been fixed for PR 16028 */
-		  /* First hunk is current code, second was the APPLE LOCAL code */
-#if 1
 		  int regs_used = 0;
 		  int bad_for_class = 0;
 		  int max_regno = regno + rld[r].nregs;
@@ -5872,20 +5868,6 @@ choose_reload_regs (struct insn_chain *chain)
 					      rld[r].in, rld[r].out, r, 1))
 		      || bad_for_class)
 		    equiv = 0;
-#else
-		  int bad_for_class = 0;
-		  int max_regno = regno + rld[r].nregs;
-
-		  for (i = regno; i < max_regno; i++)
-		      bad_for_class |= ! TEST_HARD_REG_BIT (reg_class_contents[(int) rld[r].class],
-							   i);
-                  if (bad_for_class
-                      || ! free_for_value_p (regno, rld[r].mode,
-                                             rld[r].opnum, rld[r].when_needed,
-                                             rld[r].in, rld[r].out, r, 1))
-		    equiv = 0;
-#endif
-		  /* APPLE LOCAL end don't reload unavailable hard regs. PR/16028 */
 		}
 
 	      if (equiv != 0 && ! HARD_REGNO_MODE_OK (regno, rld[r].mode))

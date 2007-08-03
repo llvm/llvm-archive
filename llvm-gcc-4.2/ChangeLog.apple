@@ -1,3 +1,8 @@
+2007-07-31  Mike Stump  <mrs@apple.com>
+
+	Radar 5370764
+	* REMOVED: Document removed files.
+
 2007-06-20  Eric Christopher  <echristo@apple.com>
 
 	Radar 5279253

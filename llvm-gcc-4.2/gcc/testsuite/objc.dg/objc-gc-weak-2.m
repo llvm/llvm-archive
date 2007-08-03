@@ -21,7 +21,8 @@ static id objc_read_weak(id *location) {
 }
 
 static id objc_assign_weak(id value, id *dest) {
-  return ((__weak id)*dest = value);
+  /* APPLE LOCAL radar 5276985 */
+  return (*dest = value);
 }
 
 

@@ -2145,7 +2145,6 @@ purge_dead_edges (basic_block bb)
 	      && (! (e->flags & EDGE_ABNORMAL_CALL)
 		  || CALL_P (BB_END (bb))))
 	    {
-
 	      ei_next (&ei);
 	      continue;
 	    }

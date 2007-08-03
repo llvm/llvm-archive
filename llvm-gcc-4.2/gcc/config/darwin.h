@@ -281,8 +281,7 @@ do {					\
    them to darwin_cpp_builtins in darwin-c.c.  */
 
 #undef	CPP_SPEC
-/* APPLE LOCAL -arch */
-#define CPP_SPEC "%{static:%{!dynamic:-D__STATIC__}}%{!static:-D__DYNAMIC__} %{arch}" \
+#define CPP_SPEC "%{static:%{!dynamic:-D__STATIC__}}%{!static:-D__DYNAMIC__}" \
 	" %{pthread:-D_REENTRANT}"
 
 /* APPLE LOCAL begin private extern  */
@@ -312,7 +311,7 @@ do {					\
 %{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
     %(linker) %l %X %{d} %{s} %{t} %{Z} %{u*} \
     %{A} %{e*} %{m} %{r} %{x} \
-    %{@:-o %f%u.out}%{!@:%{o*}%{!o:-o a.out}} \
+    %{o*}%{!o:-o a.out} \
     %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
     %{L*} %{fopenmp:%:include(libgomp.spec)%(link_gomp)}   \
 "/* APPLE LOCAL add fcreate-profile */"\

@@ -2,7 +2,7 @@
 /* { dg-do compile { target i?86-*-* } } */
 /* { dg-options "-O3 -msse2 -fdump-rtl-csa" } */
 /* { dg-skip-if "" { i?86-*-* } { "-m64" } { "" } } */
-/* { dg-final { scan-file reload-1.c.144r.csa "deleted 5 dead insns" } }*/
+/* { dg-final { scan-rtl-dump "deleted 5 dead insns" "csa" } }*/
 #include <emmintrin.h>
 typedef __SIZE_TYPE__ size_t;
 typedef float vFloat __attribute__ ((__vector_size__ (16)));

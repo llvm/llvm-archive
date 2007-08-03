@@ -346,7 +346,7 @@ INSTALL_HEADERS_DIR = @build_install_headers_dir@
 
 # Header files that are made available under the same name
 # to programs compiled with GCC.
-# APPLE LOCAL begin radar 2872232 add tgmath.h
+# APPLE LOCAL begin mainline 2007-06-12 2872232
 USER_H = $(srcdir)/ginclude/decfloat.h \
 	 $(srcdir)/ginclude/float.h \
 	 $(srcdir)/ginclude/iso646.h \
@@ -356,7 +356,7 @@ USER_H = $(srcdir)/ginclude/decfloat.h \
 	 $(srcdir)/ginclude/tgmath.h \
 	 $(srcdir)/ginclude/varargs.h \
 	 $(EXTRA_HEADERS)
-# APPLE LOCAL end radar 2872232 add tgmath.h
+# APPLE LOCAL end mainline 2007-06-12 2872232
 
 UNWIND_H = $(srcdir)/unwind-generic.h
 

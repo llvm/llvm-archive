@@ -7,14 +7,14 @@
 @interface Person 
 {
 }
-@property char *fullName;
+@property const char *fullName;
 + (void) testClass;
 @end	
 
 @implementation  Person
 @dynamic  fullName;
 + (void) testClass {
-	self.fullName = "MyName";  /* { dg-error "request for member \\'fullName\\' in \\'self\\'" } */
+	self.fullName = "MyName"; /* { dg-error "accessing unknown" } */
 }
 @end
 

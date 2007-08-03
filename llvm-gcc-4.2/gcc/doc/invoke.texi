@@ -234,7 +234,7 @@ in the following sections.
 -frepo  -fno-rtti  -fstats  -ftemplate-depth-@var{n} @gol
 -fno-threadsafe-statics -fuse-cxa-atexit  -fno-weak  -nostdinc++ @gol
 -fno-default-inline  -fvisibility-inlines-hidden @gol
-@c APPLE LOCAL ms tinfo compat 4230099
+@c APPLE LOCAL mainline 2007-06-28 ms tinfo compat 4230099
 -fvisibility-ms-compat
 -Wabi  -Wctor-dtor-privacy @gol
 -Wnon-virtual-dtor  -Wreorder @gol
@@ -1897,7 +1897,7 @@ Explicitly instantiated inline methods are unaffected by this option
 as their linkage might otherwise cross a shared library boundary.
 @xref{Template Instantiation}.
 
-@c APPLE LOCAL begin ms tinfo compat 4230099
+@c APPLE LOCAL begin mainline 2007-06-28 ms tinfo compat 4230099
 @item -fvisibility-ms-compat
 @opindex fvisibility-ms-compat
 This flag attempts to use visibility settings to make GCC's C++
@@ -1925,7 +1925,7 @@ objects will be different, so changing one will not change the other;
 and that pointers to function members defined in different shared
 objects will not compare equal.  When this flag is given, it is a
 violation of the ODR to define types with the same name differently.
-@c APPLE LOCAL end ms tinfo compat 4230099
+@c APPLE LOCAL end mainline 2007-06-28 ms tinfo compat 4230099
 
 @item -fno-weak
 @opindex fno-weak
@@ -4253,6 +4253,7 @@ above for a description of @var{auxname} and instructions on how to
 generate test coverage data.  Coverage data will match the source files
 more closely, if you do not optimize.
 
+@c APPLE LOCAL begin mainline
 @item -d@var{letters}
 @item -fdump-rtl-@var{pass}
 @opindex d
@@ -4261,7 +4262,10 @@ Says to make debugging dumps during compilation at times specified by
 compiler.  The file names for most of the dumps are made by appending a
 pass number and a word to the @var{dumpname}.  @var{dumpname} is generated
 from the name of the output file, if explicitly specified and it is not
-an executable, otherwise it is the basename of the source file.
+an executable, otherwise it is the basename of the source file. These
+switches may have different effects when @option{-E} is used for
+preprocessing.
+@c APPLE LOCAL end mainline
 
 Most debug dumps can be enabled either passing a letter to the @option{-d}
 option, or with a long @option{-fdump-rtl} switch; here are the possible
@@ -4395,8 +4399,10 @@ Dump after modulo scheduling, to @file{@var{file}.136r.sms}.
 @itemx -fdump-rtl-mach
 @opindex dM
 @opindex fdump-rtl-mach
+@c APPLE LOCAL begin mainline
 Dump after performing the machine dependent reorganization pass, to
-@file{@var{file}.155r.mach}.
+@file{@var{file}.155r.mach} if that pass exists.
+@c APPLE LOCAL end mainline
 
 @item -dn
 @itemx -fdump-rtl-rnreg
@@ -5084,7 +5090,7 @@ time optimizations specified by @option{-O2}.
 @opindex O0
 Do not optimize.  This is the default.
 
-@c APPLE LOCAL begin -fast  
+@c APPLE LOCAL begin -fast or -fastf or -fastcp
 @item -fast
 @opindex fast
 Optimize for maximum performance. @option{-fast} changes the overall optimization 
@@ -5137,7 +5143,7 @@ On Intel target, @option{-fast} currently enables the following optimization fla
 
 All choices of flags enabled by @option{-fast} are subject to change without notice.
 
-@c APPLE LOCAL end -fast
+@c APPLE LOCAL end -fast or -fastf or -fastcp
 
 @c APPLE LOCAL begin 4231761 -Oz
 @item -Os
@@ -10025,7 +10031,6 @@ linker.
 These @samp{-m} options are defined for the i386 and x86-64 family of
 computers:
 
-@c APPLE LOCAL begin mainline 2006-04-19 4434601
 @table @gcctabopt
 @item -mtune=@var{cpu-type}
 @opindex mtune
@@ -10070,7 +10075,6 @@ Intel PentiumPro CPU@.
 @item i686
 Same as @code{generic}, but when used as @code{march} option, PentiumPro
 instruction set will be used, so the code will run on all i686 family chips.
-@c APPLE LOCAL end mainline 2006-04-19 4434601
 @item pentium2
 Intel Pentium2 CPU based on PentiumPro core with MMX instruction set support.
 @item pentium3, pentium3m

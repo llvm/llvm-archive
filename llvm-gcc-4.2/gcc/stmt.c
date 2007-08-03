@@ -640,18 +640,18 @@ tree_conflicts_with_clobbers_p (tree t, HARD_REG_SET *clobbered_regs)
 
    VOL nonzero means the insn is volatile; don't optimize it.  */
 
-/* APPLE LOCAL begin CW asm blocks. */
+/* APPLE LOCAL begin CW asm blocks */
 static void
 expand_asm_operands (tree string, tree outputs, tree inputs,
 		     tree clobbers, int vol, tree uses, location_t locus)
-/* APPLE LOCAL end CW asm blocks. */
+/* APPLE LOCAL end CW asm blocks */
 {
   rtvec argvec, constraintvec;
   rtx body;
   int ninputs = list_length (inputs);
   int noutputs = list_length (outputs);
   int ninout;
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
   int nuses = 0;
   int nclobbers;
   HARD_REG_SET clobbered_regs;
@@ -713,12 +713,12 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
       if (i >= 0)
         {
 	  /* Clobbering the PIC register is an error.  */
-	  /* APPLE LOCAL begin CW asm blocks. */
+	  /* APPLE LOCAL begin CW asm blocks */
 	  /* Clobbering of PIC register is allowed in CW asm block.
 	     We check this condition by checking value of 'uses'.
 	     'uses' is non-null for a CW asm expression only. */
 	  if (uses == NULL && i == (int) PIC_OFFSET_TABLE_REGNUM)
-	  /* APPLE LOCAL end CW asm blocks. */
+	  /* APPLE LOCAL end CW asm blocks */
 	    {
 	      error ("PIC register %qs clobbered in %<asm%>", regname);
 	      return;
@@ -952,7 +952,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
       generating_concat_p = old_generating_concat_p;
       ASM_OPERANDS_INPUT (body, i) = op;
 
-      /* APPLE LOCAL begin CW asm blocks. */
+      /* APPLE LOCAL begin CW asm blocks */
       /* Crude way of detecting an entry static label declaration 
 	 (See iasm_entry).  Make this a local symbol. */
       if (i == 0 && !TREE_CHAIN (tail) 
@@ -962,7 +962,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
 	  SYMBOL_REF_FLAGS (op) |= SYMBOL_FLAG_LOCAL;
           SYMBOL_REF_FLAGS (op) &= ~SYMBOL_FLAG_EXTERNAL;
         }
-      /* APPLE LOCAL end CW asm blocks. */
+      /* APPLE LOCAL end CW asm blocks */
 
       ASM_OPERANDS_INPUT_CONSTRAINT_EXP (body, i)
 	= gen_rtx_ASM_INPUT (TYPE_MODE (type), 
@@ -991,10 +991,10 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
 	= gen_rtx_ASM_INPUT (inout_mode[i], ggc_strdup (buffer));
     }
 
-    /* APPLE LOCAL begin CW asm blocks. */
+    /* APPLE LOCAL begin CW asm blocks */
     for (tail = uses; tail; tail = TREE_CHAIN (tail))
       nuses++;
-    /* APPLE LOCAL end CW asm blocks. */
+    /* APPLE LOCAL end CW asm blocks */
   generating_concat_p = old_generating_concat_p;
 
   /* Now, for each output, construct an rtx
@@ -1002,14 +1002,14 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
 			       ARGVEC CONSTRAINTS OPNAMES))
      If there is more than one, put them inside a PARALLEL.  */
 
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
   if (noutputs == 1 && nclobbers == 0 && nuses == 0)
     {
       ASM_OPERANDS_OUTPUT_CONSTRAINT (body) = ggc_strdup (constraints[0]);
       emit_insn (gen_rtx_SET (VOIDmode, output_rtx[0], body));
     }
 
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
   else if (noutputs == 0 && nclobbers == 0 && nuses == 0)
     {
       /* No output operands: put in a raw ASM_OPERANDS rtx.  */
@@ -1024,7 +1024,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
       if (num == 0)
 	num = 1;
 
-      /* APPLE LOCAL CW asm blocks. */
+      /* APPLE LOCAL CW asm blocks */
       body = gen_rtx_PARALLEL (VOIDmode, rtvec_alloc (num + nclobbers + nuses));
 
       /* For each output operand, store a SET.  */
@@ -1101,7 +1101,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
 	    = gen_rtx_CLOBBER (VOIDmode, clobbered_reg);
 	}
 
-      /* APPLE LOCAL begin CW asm blocks. */
+      /* APPLE LOCAL begin CW asm blocks */
       for (tail = uses; tail; tail = TREE_CHAIN (tail))
         {
           int regno;
@@ -1111,7 +1111,7 @@ expand_asm_operands (tree string, tree outputs, tree inputs,
           rtx_reg = gen_rtx_REG (QImode, regno);
 	  XVECEXP (body, 0, i++) = gen_rtx_USE (VOIDmode, rtx_reg);
         }
-      /* APPLE LOCAL end CW asm blocks. */
+      /* APPLE LOCAL end CW asm blocks */
       emit_insn (body);
     }
 
@@ -1150,7 +1150,7 @@ expand_asm_expr (tree exp)
      OUTPUTS some trees for where the values were actually stored.  */
   expand_asm_operands (ASM_STRING (exp), outputs, ASM_INPUTS (exp),
 		       ASM_CLOBBERS (exp), ASM_VOLATILE_P (exp),
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
 		       ASM_USES (exp),
 		       input_location);
 

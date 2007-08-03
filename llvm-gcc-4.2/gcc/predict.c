@@ -776,7 +776,6 @@ predict_loops (struct loops *loops_info, bool rtlsimpleloops)
       /* Free basic blocks from get_loop_body.  */
       free (bbs);
     }
-      
 
   if (!rtlsimpleloops)
     {

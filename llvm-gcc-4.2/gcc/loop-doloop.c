@@ -174,7 +174,6 @@ doloop_valid_p (struct loop *loop, struct niter_desc *desc)
 	 If the absolute increment is not 1, the loop can be infinite
 	 even with LTU/GTU, e.g. for (i = 3; i > 0; i -= 2)
 
-
 	 ??? We could compute these conditions at run-time and have a
 	 additional jump around the loop to ensure an infinite loop.
 	 However, it is very unlikely that this is the intended

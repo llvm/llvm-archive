@@ -760,7 +760,6 @@
   "vmladduhm %0,%1,%2,%3"
   [(set_attr "type" "veccomplex")])
 
-;; APPLE LOCAL begin radar 4110116
 (define_insn "altivec_vmrghb"
   [(set (match_operand:V16QI 0 "register_operand" "=v")
         (vec_merge:V16QI (vec_select:V16QI (match_operand:V16QI 1 "register_operand" "v")
@@ -926,7 +925,6 @@
   "TARGET_ALTIVEC"
   "vmrglw %0,%1,%2"
   [(set_attr "type" "vecperm")])
-;; APPLE LOCAL end radar 4110116
 
 (define_insn "altivec_vmuleub"
   [(set (match_operand:V8HI 0 "register_operand" "=v")

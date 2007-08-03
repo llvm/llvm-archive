@@ -368,7 +368,7 @@ define__GNUC__ (void)
   else
     builtin_define_with_value_n ("__GNUC_PATCHLEVEL__", "0", 1);
 
-  gcc_assert (!*v || *v == ' ' || *v == '-');
+  gcc_assert (!*v || *v == ' ' || *v == '-' || *v == '(');
 
   /* LLVM LOCAL no version number */
 #ifndef LLVM_VERSION_INFO

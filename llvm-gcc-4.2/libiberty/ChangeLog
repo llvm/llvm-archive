@@ -1,11 +1,15 @@
- # APPLE LOCAL begin mainline 2007-05-09 5173149
 2007-05-05  Geoffrey Keating  <geoffk@apple.com>
 
 	* cp-demangle.c (d_name): Detect local-source-name.
 	(d_prefix): Likewise.
 	(d_unqualified_name): Implement local-source-name.
 
- # APPLE LOCAL end mainline 2007-05-09 5173149
+/* APPLE LOCAL merge marger */
+/* Stuff above is only in mainline, not the 4.2 branch */
+2007-07-19  Release Manager
+
+	* GCC 4.2.1 released.
+
 2007-05-13  Release Manager
 
 	* GCC 4.2.0 released.

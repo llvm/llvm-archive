@@ -14,7 +14,7 @@
 @implementation  Person
 @dynamic  fullName;
 + (void) testClass {
-	self.fullName = "MyName"; /* { dg-error "request for member \\'fullName\\' in something not a structure or union" } */
+	self.fullName = "MyName"; /* { dg-error "accessing unknown" } */
 }
 @end
 

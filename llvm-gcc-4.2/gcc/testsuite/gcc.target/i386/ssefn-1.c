@@ -7,7 +7,9 @@
 /* { dg-final { scan-assembler "mulss" } } */
 /* { dg-final { scan-assembler-not "movsd" } } */
 /* { dg-final { scan-assembler-not "mulsd" } } */
-/* { dg-options "-O2 -msse -mfpmath=sse -fno-inline" } */
+/* APPLE LOCAL begin mainline 2007-06-13 4875126 */
+/* { dg-options "-O2 -march=i386 -msse -mfpmath=sse -fno-inline" } */
+/* APPLE LOCAL end mainline 2007-06-13 4875126 */
 
 static float xs (void)
 {

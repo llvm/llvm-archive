@@ -977,6 +977,12 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       print_struct_values = 1;
       break;
 
+    /* APPLE LOCAL begin radar 5082000 */
+    case OPT_print_objc_ivar_layout:
+      print_objc_ivar_layout = 1;
+      break;
+    /* APPLE LOCAL end radar 5082000 */
+
     case OPT_print_pch_checksum:
       c_common_print_pch_checksum (stdout);
       exit_after_options = true;

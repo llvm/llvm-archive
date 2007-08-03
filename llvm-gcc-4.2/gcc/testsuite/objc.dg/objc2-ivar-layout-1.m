@@ -3,7 +3,7 @@
    extracted from AppKit */
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -framework Foundation -fobjc-gc" } */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 #include <Foundation/Foundation.h>
 
@@ -24,8 +24,7 @@
 
 @implementation NSFileLocationComponent @end
 
-const char expected [] = {0x02, 0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x10,
-				   0x04, 0};
+const char expected [] = {0x02, 0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x14,0};
 
 int main()
 {

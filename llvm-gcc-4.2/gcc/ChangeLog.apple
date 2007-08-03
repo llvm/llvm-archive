@@ -1,3 +1,108 @@
+2007-07-24  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5346453
+	* gcc/config/darwin.c (machopic_select_section): C strings
+	with embedded NUL characters are ineligible for the .cstring
+	section.
+
+2007-07-17  Stuart Hastings  <stuart@apple.com>
+
+	* config/i386.c (ix86_init_mmx_sse_builtins): Delete
+          twice-merged definition of __builtin_ia32_vec_ext_v16qi.
+
+2007-07-13  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5277239
+	* c-parser.c (c_parser_next_token_starts_declspecs): Exclude
+	objc2's property dot-syntax as a declarator.
+	(c_parser_postfix_expression): Convert property dot-syntax on
+	class objects into a property reference expression.
+
+2007-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5285911
+	* tree.h (CALL_EXPR_OBJC_PROPERTY_GETTER): Macro removed.
+	* c-typeck.c (build_component_ref): Call 
+	objc_build_property_reference_expr instead of objc_build_getter_call.
+	(build_modify_expr): Call objc_property_reference_expr instead of
+	objc_property_call.
+	* c-common.h (objc_build_getter_call, objc_property_call): Decl removed.
+	(objc_build_property_reference_expr, objc_property_reference_expr): Decl.
+	added.
+	* stub-objc.c (objc_build_getter_call, objc_property_call): Stub removed.
+	(objc_build_property_reference_expr, objc_property_reference_expr): 
+	Stub added.
+
+2007-06-29  Stuart Hastings  <stuart@apple.com>
+
+	* gcc/cfghooks.c (split_block): One-line APPLE LOCAL needs
+          begin and end markers.
+	* gcc/objc/objc-act.c (objc2_build_indirect_ref_ivar2): Add a
+          comment to prevent '}' from matching in the wrong place.
+	* gcc/testsuite/gcc.dg/invalid-call-1.c: Missing APPLE LOCAL.
+	* gcc/c-common.h (objc_build_weak_reference_tree,
+          objc_v2_build_ivar_ref, diagnose_selector_cast,
+          objc_check_format_nsstring): One-line APPLE LOCAL needs
+          begin and end markers.
+	* gcc/stub-objc.c: Remove a blank line to appease checklocals.
+          (objc_build_weak_reference_type): Move an APPLE LOCAL from
+          here... (objc_weak_reference_expr): ...to here.
+	* gcc/loop-doloop.c (doloop_valid_p): Remove a blank line to
+          appease checklocals.
+	* gcc/predict.c (predict_loops): Likewise.
+	* gcc/tree-flow.c: Likewise.
+	* gcc/tree-ssa-loop-niter.c: Likewise.
+	* gcc/config/i386/i386.c: Likewise.
+	* gcc/cfgrtl.c: Likewise.
+
+2007-07-02  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4993982
+	Backport from mainline:
+	007-03-08  Zdenek Dvorak  <dvorakz@suse.cz>
+	PR tree-optimization/31085
+	* tree-ssa-address.c (create_mem_ref): Fix test of type of base.
+	Do not put an expression containing a cast to the base of
+	TARGET_MEM_REF.
+
+2007-06-29  Stuart Hastings  <stuart@apple.com>
+
+	* gcc/builtins.c: Remove a blank line to appease checklocals.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+       Radar 5082000
+       * c.opt (-print-objc-ivar-layout): New option
+       * c-opts.c (c_common_handle_option): Set print_objc_ivar_layout
+       * c-common.c (print_objc_ivar_layout): declare
+       * c-common.h (print_objc_ivar_layout): declare
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5276085
+        * c-parser.c (c_parser_binary_expression) : objc_generate_weak_read 
+	replaced with call to objc_build_weak_reference_tree
+        * c-typeck.c (build_modify_expr, c_objc_common_truthvalue_conversion): 
+	objc_remove_weak_read replaced with call to objc_weak_reference_expr.
+        * c-common.h (objc_weak_reference_expr,
+        objc_build_weak_reference_tree) : New decl.
+        (objc_generate_weak_read, objc_remove_weak_read): remove.
+        * stub-objc.c (objc_weak_reference_expr,
+        objc_build_weak_reference_tree): New stub.
+        (objc_generate_weak_read, objc_remove_weak_read): remove.
+
+2007-06-28  Geoffrey Keating  <geoffk@apple.com>
+
+	* version.c: Update comments, put space before VERSUFFIX.
+
+2007-06-27  Geoffrey Keating  <geoffk@apple.com>
+
+	* config/darwin.h (CPP_SPEC): Remove local change to pass down
+	-arch (which cc1 doesn't understand).
+
+	* cgraphunit.c (cgraph_build_static_cdtor): Remove local change
+	so that DECL_IGNORED_P is set.
+
 2007-06-26  Geoffrey Keating  <geoffk@apple.com>
 
 	Radar 5295606

@@ -1297,7 +1297,7 @@ finish_asm_stmt (int volatile_p, tree string, tree output_operands,
 
   r = build_stmt (ASM_EXPR, string,
 		  output_operands, input_operands,
-  /* APPLE LOCAL CW asm blocks. */
+  /* APPLE LOCAL CW asm blocks */
 		  clobbers, uses);
   ASM_VOLATILE_P (r) = volatile_p || noutputs == 0;
   r = maybe_cleanup_point_expr_void (r);
@@ -3362,14 +3362,17 @@ finish_omp_clauses (tree clauses)
 	    {
 	      if (processing_template_decl)
 		break;
-	      error ("%qE is not a variable in clause %qs", t, name);
+	      if (DECL_P (t))
+		error ("%qD is not a variable in clause %qs", t, name);
+	      else
+		error ("%qE is not a variable in clause %qs", t, name);
 	      remove = true;
 	    }
 	  else if (bitmap_bit_p (&generic_head, DECL_UID (t))
 		   || bitmap_bit_p (&firstprivate_head, DECL_UID (t))
 		   || bitmap_bit_p (&lastprivate_head, DECL_UID (t)))
 	    {
-	      error ("%qE appears more than once in data clauses", t);
+	      error ("%qD appears more than once in data clauses", t);
 	      remove = true;
 	    }
 	  else

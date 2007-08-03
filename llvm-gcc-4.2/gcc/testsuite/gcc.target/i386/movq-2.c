@@ -1,6 +1,8 @@
 /* PR target/25199 */
 /* { dg-do compile } */
-/* { dg-options "-Os -mtune=pentium4" } */
+/* APPLE LOCAL begin radar 4875094 */
+/* { dg-options "-Oz -mtune=pentium4" } */
+/* APPLE LOCAL end radar 4875094 */
 /* { dg-require-effective-target ilp32 } */
 
 struct S

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4492973 */
 /* Encoding in -m64 bit mode. */
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 5217964 */
+/* APPLE LOCAL file radar 5217964 - radar 5251019 */
 /* Test that ivar layout bytestream info is generated as expected for weak as well
    as strong layout. */
 /* { dg-do run { target *-*-darwin* } } */
@@ -47,9 +47,9 @@
 @implementation NSTableOptions
 @end
 
-const char expected_strong [] = {0x0f, 0x01, 0x10, 0x01, 0xa0, 0x02, 0};
+const char expected_strong [] = {0x0f, 0x01, 0x11, 0xa2, 0x10, 0};
 
-const char expected_weak [] = {0xf0, 0x11, 0};
+const char expected_weak [] = {0xf0, 0x11, 0xe0, 0};
 
 int main()
 {

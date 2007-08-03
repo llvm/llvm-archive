@@ -631,7 +631,6 @@
 })
 
 ;; True if this is a constant appropriate for an increment or decrement.
-; APPLE LOCAL begin mainline 2006-04-19 4434601
 (define_predicate "incdec_operand"
   (match_code "const_int")
 {
@@ -641,7 +640,6 @@
     return 0;
   return op == const1_rtx || op == constm1_rtx;
 })
-; APPLE LOCAL end mainline 2006-04-19 4434601
 
 ;; True for registers, or 1 or -1.  Used to optimize double-word shifts.
 (define_predicate "reg_or_pm1_operand"

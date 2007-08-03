@@ -1,3 +1,47 @@
+2007-07-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3742561
+	* typeck.c (build_modify_expr): Call to generate write barrier
+	for class assignment only when assignment is not overloaded.
+
+2007-07-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5355344
+	* cp-tree.h (cp_objc_protocol_id_list): New declaration
+	* cp-lang.c (cp_objc_protocol_id_list): New stub
+	* parser.c (cp_parser_type_name): Added code to disambiguate
+	conditional from a protocol type.
+	(cp_parser_objc_tentative_protocol_refs_opt): New
+
+2007-07-13  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5277239
+	* parser.c (cp_parser_objc_reference_expression): New routine to
+	build a property reference expression.
+	(cp_objc_property_reference_prefix): New routine to recognize a 
+	property dot syntax.
+	(cp_parser_primary_expression): Build a property reference expression
+	when a property dot-syntax is recognized.
+	(cp_parser_type_name): Exclude property dot-syntax from being recognized
+	as a type name.
+	(cp_parser_class_name): Exclude property dot-syntax from being recognized
+	as a class name.
+
+2007-07-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5285911
+	* typeck.c (finish_class_member_access_expr): Call
+	objc_build_property_reference_expr instead of objc_build_getter_call.
+
+2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5276085
+	* typeck.c (build_modify_expr): Call objc_weak_reference_expr
+        instead of objc_remove_weak_read.
+        * parser.c (cp_parser_cast_expression): Call
+        objc_build_weak_reference_tree instead of objc_generate_weak_read.
+        (cp_parser_cast_expression): Ditto.
+
 2007-06-20  Geoffrey Keating  <geoffk@apple.com>
 
 	Radar 5281849

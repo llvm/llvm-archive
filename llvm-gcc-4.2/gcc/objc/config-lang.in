@@ -32,10 +32,7 @@ compilers="cc1obj\$(exeext)"
 
 stagestuff="cc1obj\$(exeext)"
 
-# LLVM LOCAL begin
-# Do not comment target_libs setting
 target_libs=target-libobjc
-# LLVM LOCAL end
 
 # Most of the object files for cc1obj actually come from C.
 lang_requires="c"

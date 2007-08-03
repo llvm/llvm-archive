@@ -212,7 +212,6 @@ convert_to_real (tree type, tree expr)
 	  break;
 	}
     }
-  /* APPLE LOCAL begin 4221664 */
   if (optimize
       && (((fcode == BUILT_IN_FLOORL
 	   || fcode == BUILT_IN_CEILL
@@ -248,7 +247,6 @@ convert_to_real (tree type, tree expr)
 					  fold (convert_to_real (type, arg))));
 	}
     }
-  /* APPLE LOCAL end 4221664 */
 
   /* Propagate the cast into the operation.  */
   if (itype != type && FLOAT_TYPE_P (type))

@@ -245,7 +245,6 @@ extern void darwin_x86_file_end (void);
 /* APPLE LOCAL end Macintosh alignment 2002-2-19 --ff */
 
 /* Darwin profiling -- call mcount.  */
-/* APPLE LOCAL begin mainline */
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
     do {								\
@@ -257,7 +256,6 @@ extern void darwin_x86_file_end (void);
 	}								\
       else fprintf (FILE, "\tcall mcount\n");				\
     } while (0)
-/* APPLE LOCAL end mainline */
 
 /* APPLE LOCAL CW asm blocks */
 extern int flag_iasm_blocks;

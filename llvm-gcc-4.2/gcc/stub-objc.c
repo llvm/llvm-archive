@@ -377,11 +377,8 @@ void
 objc_add_property_variable (tree ARG_UNUSED (prop))
 {
 }
-tree
-objc_build_getter_call (tree ARG_UNUSED (datum), tree ARG_UNUSED (component))
-{
-  return 0;
-}
+/* APPLE LOCAL radar 5285911 */
+/* Stub for objc_build_getter_call is removed. */
 tree
 objc_build_setter_call (tree ARG_UNUSED (lhs), tree ARG_UNUSED (rhs))
 {
@@ -442,18 +439,17 @@ objc_generate_write_barrier (tree ARG_UNUSED (lhs),
 {
   return 0;
 }  
+/* APPLE LOCAL begin radar 5276085 */
+void objc_weak_reference_expr (tree* ARG_UNUSED (expr))
+{
+}
 
-/* APPLE LOCAL begin radar 4426814 */
 tree
-objc_generate_weak_read (tree expr)
+objc_build_weak_reference_tree (tree expr)
 {
   return expr;
 }
-
-void objc_remove_weak_read (tree* ARG_UNUSED (expr))
-{
-}
-/* APPLE LOCAL end radar 4426814 */
+/* APPLE LOCAL end radar 5276085 */
 
 /* APPLE LOCAL begin ObjC new abi */
 tree
@@ -535,11 +531,19 @@ void objc_declare_property_impl (int ARG_UNUSED (code),
 				 tree ARG_UNUSED (tree_list))
 {
 }
+/* APPLE LOCAL begin radar 5285911 */
+tree
+objc_build_property_reference_expr (tree ARG_UNUSED (datum), 
+				    tree ARG_UNUSED (component))
+{
+  return 0;
+}
 bool 
-objc_property_call (tree ARG_UNUSED (exp))
+objc_property_reference_expr (tree ARG_UNUSED (exp))
 {
   return false;
 }
+/* APPLE LOCAL end radar 5285911 */
 /* APPLE LOCAL end objc new property */
 /* APPLE LOCAL begin radar 2848255 */
 bool

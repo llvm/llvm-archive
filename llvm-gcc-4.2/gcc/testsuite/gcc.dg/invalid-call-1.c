@@ -4,6 +4,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2" } */
 /* { dg-options "-O2 -mtune=i586" { target i?86-*-* } } */
+/* APPLE LOCAL */
 /* { dg-require-effective-target ilp32 } */
 
 typedef void (*fp)(void);

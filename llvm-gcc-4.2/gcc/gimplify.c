@@ -836,25 +836,6 @@ mostly_copy_tree_r (tree *tp, int *walk_subtrees, void *data)
   return NULL_TREE;
 }
 
-/* APPLE LOCAL begin PR 14498, etc --bowdidge */
-/* This routine was deleted from FSF mainline and lno-branch; however,
-   we're still using it in the next routine.  Keep a local copy until 
-   we can rewrite that other stuff.  The FIXME on this worries me. */
-
-/* Mark all the _DECL nodes under *TP as volatile.  FIXME: This must die
-   after VA_ARG_EXPRs are properly lowered.  */
-
-static tree
-mark_decls_volatile_r (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
-		       void *data ATTRIBUTE_UNUSED)
-{
-  if (SSA_VAR_P (*tp))
-    TREE_THIS_VOLATILE (*tp) = 1;
-
-  return NULL_TREE;
-}
-/* APPLE LOCAL end PR 14498, etc --bowdidge */
-
 /* Callback for walk_tree to unshare most of the shared trees rooted at
    *TP.  If *TP has been visited already (i.e., TREE_VISITED (*TP) == 1),
    then *TP is deep copied by calling copy_tree_r.
@@ -895,24 +876,7 @@ copy_if_shared_r (tree *tp, int *walk_subtrees ATTRIBUTE_UNUSED,
 
   /* Otherwise, mark the tree as visited and keep looking.  */
   else
-    /* APPLE LOCAL begin PR 14498, etc. --dbj */
-    /* History is complicated, this was in mainline prior to merge,
-       temporarily and erroneously removed at merge snapshot,
-       later put back, still later replaced by different mechanism. */
-    {
-      TREE_VISITED (t) = 1;
-      if (TREE_CODE (*tp) == VA_ARG_EXPR)
-	{
-	  /* Mark any _DECL inside the operand as volatile to avoid
-	     the optimizers messing around with it. We have to do this
-	     early, otherwise we might mark a variable as volatile
-	     after we gimplify other statements that use the variable
-	     assuming it's not volatile.  */
-	  walk_tree (&TREE_OPERAND (*tp, 0), mark_decls_volatile_r,
-		     NULL, NULL);
-	}
-    }
-    /* APPLE LOCAL end PR 14498, etc. */
+    TREE_VISITED (t) = 1;
 
   return NULL_TREE;
 }
@@ -4875,7 +4839,20 @@ gimplify_adjust_omp_clauses_1 (splay_tree_node n, void *data)
   else if (flags & GOVD_SHARED)
     {
       if (is_global_var (decl))
-	return 0;
+	{
+	  struct gimplify_omp_ctx *ctx = gimplify_omp_ctxp->outer_context;
+	  while (ctx != NULL)
+	    {
+	      splay_tree_node on
+		= splay_tree_lookup (ctx->variables, (splay_tree_key) decl);
+	      if (on && (on->value & (GOVD_FIRSTPRIVATE | GOVD_LASTPRIVATE
+				      | GOVD_PRIVATE | GOVD_REDUCTION)) != 0)
+		break;
+	      ctx = ctx->outer_context;
+	    }
+	  if (ctx == NULL)
+	    return 0;
+	}
       code = OMP_CLAUSE_SHARED;
     }
   else if (flags & GOVD_PRIVATE)

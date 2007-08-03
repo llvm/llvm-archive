@@ -110,6 +110,13 @@ objcp_tsubst_copy_and_build (tree t ATTRIBUTE_UNUSED,
   return NULL_TREE;
 }
 
+/* APPLE LOCAL begin radar 5355344 */
+bool
+cp_objc_protocol_id_list (tree t ATTRIBUTE_UNUSED)
+{
+  return false;
+}
+/* APPLE LOCAL end radar 5355344 */
 
 static void
 cp_init_ts (void)

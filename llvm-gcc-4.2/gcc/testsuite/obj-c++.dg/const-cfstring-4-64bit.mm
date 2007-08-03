@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4492976 */
 /* Test if constant CFStrings get placed in the correct section.  */
 
-/* { dg-options "-fconstant-cfstrings -m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fconstant-cfstrings -m64" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 typedef const struct __CFString * CFStringRef;

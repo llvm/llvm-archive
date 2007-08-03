@@ -50,7 +50,7 @@ Crash("dsa-crash", cl::Hidden,
 static cl::opt<int>
 CrashAt("dsa-crashat", cl::Hidden,
          cl::desc("Crash on unknowns"));
-static bool DebugUnknown = false;
+static bool DebugUnknown = true;
 static int CrashCur = 0;
 DSNode *DSNode::setUnknownNodeMarker() { 
   if (Crash && CrashCur == CrashAt) assert(0); 
@@ -306,7 +306,8 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
               isa<ConstantInt>(CE->getOperand(0)) && 
               (
                cast<ConstantInt>(CE->getOperand(0))->equalsInt(1) ||
-               cast<ConstantInt>(CE->getOperand(0))->getZExtValue() == 0xFFFFFFFF
+               (-cast<ConstantInt>(CE->getOperand(0))->getSExtValue() <= 124 &&
+                -cast<ConstantInt>(CE->getOperand(0))->getSExtValue() >= 0)
                ))
             NH = createNode();
           else
@@ -1277,7 +1278,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
     if (Ptr.isNull()) Ptr = createNode();
     Ptr.getNode()->setReadMarker();
-    Type* T;
+    Type* T = 0;
     if (F->getName() == "llva_readiob") T = Type::SByteTy;
     if (F->getName() == "llva_readioh") T = Type::ShortTy;
     if (F->getName() == "llva_readiow") T = Type::IntTy;
@@ -1289,13 +1290,14 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
     DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
     if (Ptr.isNull()) Ptr = createNode();
     Ptr.getNode()->setReadMarker();
-    Type* T;
+    Type* T = 0;
     if (F->getName() == "llva_writeiob") T = Type::SByteTy;
     if (F->getName() == "llva_writeioh") T = Type::ShortTy;
     if (F->getName() == "llva_writeiow") T = Type::IntTy;
     Ptr.getNode()->mergeTypeInfo(T, Ptr.getOffset(), false);
     return true;
   } else if (F->getName() == "llva_atomic_compare_and_swap" ||
+             F->getName() == "llva_atomic_compare_and_swap_p" ||
              F->getName() == "llva_atomic_cas_lw" ||
              F->getName() == "llva_atomic_cas_h" ||
              F->getName() == "llva_atomic_cas_b" ||
@@ -1568,7 +1570,15 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
       // to track the fact that the node points to SOMETHING, just something we
       // don't know about.  Make an "Unknown" node.
       //
-      if (DebugUnknown) CI.dump();
+
+      if (ConstantInt* I = dyn_cast<ConstantInt>(CI.getOperand(0)))
+        if (-I->getSExtValue() <= 124 && -I->getSExtValue() >= 0)
+          setDestTo(CI, createNode());
+
+      if (DebugUnknown) {
+        std::cerr << "In " << CI.getParent()->getParent()->getName() << " ";
+        CI.dump();
+      }
       setDestTo(CI, createNode()->setUnknownNodeMarker());
     }
 }
@@ -1586,7 +1596,10 @@ void GraphBuilder::visitInstruction(Instruction &Inst) {
       CurNode.mergeWith(getValueDest(**I));
 
   if (DSNode *N = CurNode.getNode()) {
-    if (DebugUnknown) Inst.dump();
+    if (DebugUnknown) {
+      std::cerr << "In " << Inst.getParent()->getParent()->getName() << " ";
+      Inst.dump();
+    }
     N->setUnknownNodeMarker();
   }
 }
@@ -1742,6 +1755,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   FreeList.push_back("kfree");
   FreeList.push_back("vfree");
   FreeList.push_back("free_pages");
+  FreeList.push_back("kmem_cache_free");
 
   //figure out all system call numbers
   Function* lrs = M.getNamedFunction("llva_register_syscall");

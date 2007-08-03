@@ -17,6 +17,7 @@ namespace {
   Statistic<> IndDirSplit("CSCloner", "Number of direct and indirect splits");
   Statistic<> LeafClone("CSCloner", "Number of leaves cloned");
   Statistic<> ShallowClone("CSCloner", "Number of shallow functions cloned");
+  Statistic<> ConstantClone("CSCloner", "Number of functions with constant pointers cloned");
 
   class CSCloner : public ModulePass {
 
@@ -68,6 +69,57 @@ namespace {
       return FNew;
     }
 
+    bool isDirect(Function* F) {
+      for (Value::use_iterator ii = F->use_begin(), ee = F->use_end();
+           ii != ee; ++ii) {
+        CallInst* CI = dyn_cast<CallInst>(*ii);
+        if (CI && CI->getCalledFunction() == F)
+          return true;
+      }
+      return false;
+    }
+
+    bool isUnknown(Function* F) {
+          for (Value::use_iterator ii = F->use_begin(), ee = F->use_end();
+               ii != ee; ++ii) {
+            CallInst* CI = dyn_cast<CallInst>(*ii);
+            if (!CI || CI->getCalledFunction() != F)
+              return true;
+          }
+          return false;
+    }
+
+    bool hasPointer(Function* F) {
+      const FunctionType* FT = F->getFunctionType();
+      if (FT->isVarArg() || isa<PointerType>(FT->getReturnType()))
+        return true;
+      else
+        for (FunctionType::param_iterator pi = FT->param_begin(), pe = FT->param_end();
+             pi != pe; ++pi)
+          if (isa<PointerType>(pi->get()))
+            return true;
+      return false;
+    }    
+
+    bool hasConstArgs(CallInst* CI) {
+      for (unsigned x = 1; x < CI->getNumOperands(); ++x)
+        if (isa<Constant>(CI->getOperand(x)) && isa<PointerType>(CI->getOperand(x)->getType()))
+          return true;
+      return false;
+    }
+
+    bool hasConstArgs(Function* F) {
+      for (Value::use_iterator ii = F->use_begin(), ee = F->use_end();
+           ii != ee; ++ii) {
+        CallInst* CI = dyn_cast<CallInst>(*ii);
+        if (CI && CI->getCalledFunction() == F)
+          if (hasConstArgs(CI))
+            return true;
+      }
+      return false;
+    }
+
+
   public:
     bool runOnModuleI(Module& M) {
       
@@ -79,6 +131,7 @@ namespace {
       std::set<Function*> TakesPointers;
       std::set<Function*> Leaf;
       std::set<Function*> Shallow;
+      std::set<Function*> ConstantArgs;
       std::vector<std::string> IgnoreList;
       IgnoreList.push_back("kmalloc");
       IgnoreList.push_back("__vmalloc");
@@ -97,22 +150,14 @@ namespace {
             Leaf.insert(MI);
           if (isLevelOne(MI) || isLevelTwo(MI))
             Shallow.insert(MI);
-          for (Value::use_iterator ii = MI->use_begin(), ee = MI->use_end();
-               ii != ee; ++ii) {
-            CallInst* CI = dyn_cast<CallInst>(*ii);
-            if (CI && CI->getCalledFunction() == MI)
-              DirectCalls.insert(MI);
-            else
-              Unknowns.insert(MI);
-            const FunctionType* FT = MI->getFunctionType();
-            if (FT->isVarArg() || isa<PointerType>(FT->getReturnType()))
-              TakesPointers.insert(MI);
-            else
-              for (FunctionType::param_iterator pi = FT->param_begin(), pe = FT->param_end();
-                   pi != pe; ++pi)
-                if (isa<PointerType>(pi->get()))
-                  TakesPointers.insert(MI);
-          }
+          if (isDirect(MI))
+            DirectCalls.insert(MI);
+          if (isUnknown(MI))
+            Unknowns.insert(MI);
+          if (hasPointer(MI))
+            TakesPointers.insert(MI);
+          if (hasConstArgs(MI))
+            ConstantArgs.insert(MI);
         }
       
       //now think about replicating some functions
@@ -124,17 +169,32 @@ namespace {
           //clone a function for the indirect calls
           if (DirectCalls.find(MI) != DirectCalls.end() &&
               Unknowns.find(MI) != Unknowns.end()) {
-            Function* FNew = clone(MI);
-            ++IndDirSplit;
             changed = true;
+            ++IndDirSplit;
+            Function* FNew = clone(MI);
             for (Value::use_iterator ii = MI->use_begin(), ee = MI->use_end();
                  ii != ee; ++ii) {
               CallInst* CI = dyn_cast<CallInst>(*ii);
-              if (CI && CI->getCalledFunction() == MI)
+              if (CI && CI->getCalledFunction() == MI) {
                 CI->setOperand(0, FNew);
+              }
             }
           }
-
+          
+          //if it takes constants in pointer parameters
+          if (ConstantArgs.find(MI) != ConstantArgs.end() && !MI->hasOneUse() && !MI->use_empty()) {
+            for (Value::use_iterator ii = MI->use_begin(), ee = MI->use_end();
+                 ii != ee; ++ii) {
+              CallInst* CI = dyn_cast<CallInst>(*ii);
+              if (CI && CI->getCalledFunction() == MI && hasConstArgs(CI)) {
+                Function* FNew = clone(MI);
+                ++ConstantClone;
+                changed = true;
+                CI->setOperand(0, FNew);
+              }
+            }
+          }
+          
           //if it is a leaf, clone it
           if (Leaf.find(MI) != Leaf.end() && !MI->hasOneUse() && !MI->use_empty()) {
             for (Value::use_iterator ii = MI->use_begin(), ee = MI->use_end();
@@ -148,7 +208,7 @@ namespace {
               }
             }
           }
-
+          
           //if it has only level 1 loads (aka no loads of pointers), clone it
           if (Shallow.find(MI) != Shallow.end() && !MI->hasOneUse() && !MI->use_empty()) {
             for (Value::use_iterator ii = MI->use_begin(), ee = MI->use_end();
@@ -162,7 +222,6 @@ namespace {
               }
             }
           }
-
         }
       }
       return changed;

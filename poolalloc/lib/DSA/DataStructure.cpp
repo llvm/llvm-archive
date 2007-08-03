@@ -1890,7 +1890,7 @@ static void removeIdenticalCalls(std::list<DSCallSite> &Calls) {
       if (Callee->getNumReferrers() == 1 && Callee->isComplete() &&
           Callee->getGlobalsList().empty()) {  // No useful info?
 #ifndef NDEBUG
-        std::cerr << "WARNING: Useless call site found.\n";
+        std::cerr << "WARNING: Useless call site found in " << CS.getCallSite().getInstruction()->getParent()->getParent()->getName() << "\n";
 #endif
         Calls.erase(OldIt);
         ++NumDeleted;

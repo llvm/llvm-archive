@@ -1,3 +1,5 @@
+# Match SYSTEM_INCLUDE_DIR
+NATIVE_SYSTEM_HEADER_DIR = /mingw/include
 
  # APPLE LOCAL begin mainline 2005-08-02
 # Match SYSTEM_INCLUDE_DIR

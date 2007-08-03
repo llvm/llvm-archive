@@ -784,4 +784,7 @@ void funccheck_g (MetaPoolTy * MP, void * f) {
   if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
 }
 
+void pchk_ind_fail() {
+  if (do_fail) poolcheckfail("indirect call failure", 0, (void*)__builtin_return_address(0));
+}
 

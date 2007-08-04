@@ -1517,6 +1517,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
     assert (isa<ConstantInt>(CS.getArgument(0)) && "llva_syscall6 called with non-const argument");
     ConstantInt * C = dyn_cast<ConstantInt>(CS.getArgument(0));
     Callee = syscalls[C->getSExtValue()];
+    assert (Callee && "llva_syscall: No target for system call vector");
   }
 
   // Set up the return value...

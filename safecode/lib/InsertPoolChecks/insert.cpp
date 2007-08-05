@@ -642,6 +642,15 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   PoolFindMP = M.getOrInsertFunction("pchk_getLoc", VoidPtrType, VoidPtrType, NULL);
   PoolRegMP = M.getOrInsertFunction("pchk_reg_pool", Type::VoidTy, VoidPtrType, VoidPtrType, VoidPtrType, NULL);
 
+  //  Function *KmemCacheAlloc = M.getNamedFunction("kmem_cache_alloc");
+  //  assert(KmemCacheAlloc->arg_size() == 2 &&"Kmem_cache_alloc number of arguments != 2");
+  //  Function::arg_iterator kcai = KmemCacheAlloc->arg_begin();
+  //  Type *kmem_cache_t = kcai->getType();
+  //  kcai++;
+  //  Type *kem_cache_size_t = kcai->getType();
+  //  We'll use Void * instead of the above
+  KmemCachegetSize = M.getOrInsertFunction("kmem_cache_size", Type::UIntTy, VoidPtrType, NULL);
+
   std::vector<const Type *> FArg2(1, Type::IntTy);
   FArg2.push_back(Type::IntTy);
   FArg2.push_back(VoidPtrType);
@@ -732,6 +741,18 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (VMPP);
         new CallInst (PoolRegMP, args, "", i->getInstruction());
+
+        //Insert Obj reg using kmem_cache_size after
+        Instruction* IP = i->getInstruction()->getNext();
+        Value* VRP = castTo (i->getInstruction(), VoidPtrType, IP);
+        CallInst *len = new CallInst(KmemCachegetSize, VP, "", IP);
+          
+        args.clear();
+        args.push_back (VMP); //MetaPool
+        args.push_back (VRP); //object 
+        args.push_back (len); //len
+        new CallInst(PoolRegister, args, "", IP);
+
 #if 0
       } else if ((name == "kmalloc") ||
 #else

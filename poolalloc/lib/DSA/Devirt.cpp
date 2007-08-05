@@ -6,6 +6,7 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#include "llvm/Constants.h"
 #include "llvm/Transforms/IPO.h"
 #include "dsa/CallTargets.h"
 #include "llvm/Pass.h"
@@ -23,6 +24,32 @@
 
 using namespace llvm;
 
+//
+// Function: castTo()
+//
+// Description: //  Given an LLVM value, insert a cast instruction to make it a given type.
+//
+static inline Value *
+castTo (Value * V, const Type * Ty, Instruction * InsertPt) {   //
+  // Don't bother creating a cast if it's already the correct type.
+  //
+  if (V->getType() == Ty)
+    return V;
+
+  //
+  // If it's a constant, just create a constant expression.
+  //
+  if (Constant * C = dyn_cast<Constant>(V)) {
+    Constant * CE = ConstantExpr::getCast (C, Ty);
+    return CE;
+  }
+
+  //
+  // Otherwise, insert a cast instruction.
+  //
+  return new CastInst(V, Ty, "cast", InsertPt);
+}
+
 namespace {
 
   static cl::opt<int>
@@ -35,10 +62,23 @@ namespace {
   class Devirtualize : public ModulePass {
 
 
+    Function * IndirectFuncFail;
+
     std::map<std::pair<const Type*, std::vector<Function*> >, Function*> cache;
     int fnum;
 
-    Function* buildBounce(CallSite cs, std::vector<Function*>& Targets, Module& M) {
+    //
+    // Method: buildBounds()
+    //
+    // Description:
+    //  Replaces the given call site with a call to a bound function.  The
+    //  bounce function compares the function pointer to one of the given
+    //  target functions and calls the function directly if the pointer
+    //  matches.
+    Function* buildBounce (CallSite cs,
+                           std::vector<Function*>& Targets,
+                           Module& M) {
+
       Value* ptr = cs.getCalledValue();
       const FunctionType* OrigType = 
         cast<FunctionType>(cast<PointerType>(ptr->getType())->getElementType());;
@@ -74,17 +114,39 @@ namespace {
           new ReturnInst(call, BL);
       }
 
-      //hookup the test chain
+      // Create a set of tests that search for the correct function target
+      // and call it directly.  If none of the target functions match,
+      // call pchk_ind_fail() to note the failure.
+
+      //
+      // Create the failure basic block.  Then, add the following:
+      //  o the terminating instruction
+      //  o the indirect call to the original function
+      //  o a call to phck_ind_fail()
+      //
       BasicBlock* tail = new BasicBlock("fail", F, &F->getEntryBlock());
-      new CallInst(M.getOrInsertFunction("pchk_ind_fail", Type::VoidTy, NULL),
-                   "", tail);
-      new UnreachableInst(tail);
+      Instruction * InsertPt;
+#if 0
+      InsertPt = new UnreachableInst(tail);
+#else
+      Value* p = F->arg_begin();
+      Instruction * realCall = new CallInst (p, fargs, "", tail);
+      if (OrigType->getReturnType() == Type::VoidTy)
+        InsertPt = new ReturnInst(0, tail);
+      else
+        InsertPt = new ReturnInst(realCall, tail);
+#endif
+      Value * FuncVoidPtr = castTo (p,
+                                    PointerType::get(Type::SByteTy),
+                                    realCall);
+      new CallInst (IndirectFuncFail, FuncVoidPtr, "", realCall);
       
+
+      // Create basic blocks for valid target functions
       for (std::vector<Function*>::iterator i = Targets.begin(), e = Targets.end();
            i != e; ++i) {
         BasicBlock* TB = targets[*i];
         BasicBlock* newB = new BasicBlock("test." + (*i)->getName(), F, &F->getEntryBlock());
-        Value* p = F->arg_begin();
         SetCondInst* setcc = new SetCondInst(Instruction::SetEQ, *i, p, "sc", newB);
         new BranchInst(TB, tail, setcc, newB);
         tail = newB;
@@ -96,7 +158,15 @@ namespace {
     virtual bool runOnModule(Module &M) {
       CallTargetFinder* CTF = &getAnalysis<CallTargetFinder>();
 
-      Function* ams = M.getNamedFunction("llva_assert_match_sig");
+      // Get references to functions that are needed in the module
+      Function* ams = M.getNamedFunction ("llva_assert_match_sig");
+      if (!ams)
+        return false;
+
+      IndirectFuncFail = M.getOrInsertFunction ("pchk_ind_fail",
+                                                Type::VoidTy,
+                                                PointerType::get(Type::SByteTy),
+                                                NULL);
       
       std::set<Value*> safecalls;
       std::vector<Instruction*> toDelete;
@@ -132,7 +202,7 @@ namespace {
                  ii != ee; ++ii)
               if (!isSafeCall || (*ii)->getType() == cs.getCalledValue()->getType())
                 Targets.push_back(*ii);
-            
+
             if (Targets.size() > 0) {
               std::cerr << "Target count: " << Targets.size() << " in " << cs.getInstruction()->getParent()->getParent()->getName() << "\n";
               Function* NF = buildBounce(cs, Targets, M);

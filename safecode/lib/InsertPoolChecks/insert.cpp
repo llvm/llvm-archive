@@ -96,6 +96,7 @@ static Statistic<> MissChecks ("safecode",
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
 
 static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
+static Statistic<> MissedFuncChecks ("safecode", "Indirect Call Checks Missed");
 static Statistic<> SavedPoolChecks ("safecode", "Pool Checks Performed on Checked Pointers");
 static Statistic<> AlignChecks ("safecode", "Number of alignment checks required");
 static Statistic<> AlignLSChecks ("safecode", "Number of alignment on load/store checks required");
@@ -1105,6 +1106,16 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   }
   DSNode* Node = getDSNode(FuncPointer, F);
 
+  //
+  // If the node is incomplete, then the call targets associated with the
+  // DSNode may be missing valid function targets.  In that case, do not
+  // insert a check.
+  //
+  if (Node->isIncomplete()) {
+    ++MissedFuncChecks;
+    return;
+  }
+ 
 	// Get the globals list corresponding to the node
 	std::vector<Function *> FuncList;
 	Node->addFullFunctionList(FuncList);

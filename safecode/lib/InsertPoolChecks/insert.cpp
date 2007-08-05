@@ -731,7 +731,11 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (VMPP);
         new CallInst (PoolRegMP, args, "", i->getInstruction());
+#if 0
       } else if ((name == "kmalloc") ||
+#else
+      } else if (
+#endif
                  (name == "__vmalloc") ||
                  (name == "__alloc_bootmem")) {
         //inser obj register after
@@ -764,7 +768,11 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
       Value* VMP = new CastInst(MPV, PointerType::get(Type::SByteTy), "MP", i->getInstruction());
       Value* VMPP = new CallInst(PoolFindMP, make_vector(VP, 0), "", i->getInstruction());
       new CallInst(PoolRegMP, make_vector(VMP, VP, VMPP, 0), "", i->getInstruction());
+#if 0
     } else if ((name == "kmalloc") ||
+#else
+    } else if (
+#endif
                (name == "__vmalloc") ||
                (name == "__alloc_bootmem")) {
       //inser obj register after
@@ -780,10 +788,14 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
 
 void InsertPoolChecks::addObjFrees(Module& M) {
 #ifdef LLVA_KERNEL
+#if 0
   Function* KMF = M.getNamedFunction("kfree");
+#endif
   Function* VMF = M.getNamedFunction("vfree");
   std::list<Function*> L;
+#if 0
   if (KMF) L.push_back(KMF);
+#endif
   if (VMF) L.push_back(VMF);
   for (std::list<Function*>::iterator ii = L.begin(), ee = L.end();
        ii != ee; ++ii) {

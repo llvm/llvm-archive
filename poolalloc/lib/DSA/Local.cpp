@@ -1747,13 +1747,17 @@ static void EliminateUsesOfECGlobals(DSGraph &G,
 bool LocalDataStructures::runOnModule(Module &M) {
 
 #ifdef LLVA_KERNEL
+#if 0
   AllocList.push_back("kmalloc");
+#endif
   AllocList.push_back("__vmalloc");
   AllocList.push_back("kmem_cache_alloc");
   AllocList.push_back("__alloc_bootmem");
   AllocList.push_back(" __get_free_pages");
 
+#if 0
   FreeList.push_back("kfree");
+#endif
   FreeList.push_back("vfree");
   FreeList.push_back("free_pages");
   FreeList.push_back("kmem_cache_free");

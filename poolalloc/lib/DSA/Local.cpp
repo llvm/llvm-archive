@@ -28,6 +28,7 @@
 #include "llvm/Support/Timer.h"
 #include "poolalloc/Config/config.h"
 #include <iostream>
+#include <queue>
 
 // FIXME: This should eventually be a FunctionPass that is automatically
 // aggregated into a Pass.
@@ -42,6 +43,9 @@ static Statistic<> KMallocs    ("dsa", "Number of kmalloc calls");
 static Statistic<> GlobalPools ("dsa", "Number of global pools");
 std::map<unsigned int, Function*> syscalls;
 #endif
+
+static Statistic<> CastTraceT ("dsa", "Number of int casts traced successfully");
+static Statistic<> CastTraceF ("dsa", "Number of int casts not traced");
 
 Statistic<> stat_unknown ("dsa", "Number of markunknowns");
 static cl::opt<bool>
@@ -277,6 +281,46 @@ DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
 // Helper method implementations...
 //
 
+static bool getSourcePointerValues(Value* V, std::set<Value*>& sources) {
+  std::queue<Value*> tocheck;
+  std::set<Value*> visited;
+  tocheck.push(V);
+  while (!tocheck.empty()) {
+    V = tocheck.front();
+    tocheck.pop();
+    if (visited.find(V) == visited.end()) {
+      visited.insert(V);
+      if (isa<PointerType>(V->getType())) {
+        sources.insert(V);
+      } else if (ConstantInt* N = dyn_cast<ConstantInt>(V)) {
+        if (!(-N->getSExtValue() <= 124 && -N->getSExtValue() >= 0)) {
+          goto fail;
+        }
+      } else if (PHINode* N = dyn_cast<PHINode>(V)) {
+        for (unsigned x = 0; x < N->getNumIncomingValues(); ++x)
+          tocheck.push(N->getIncomingValue(x));
+      } else if (CastInst* N = dyn_cast<CastInst>(V)) {
+        tocheck.push(N->getOperand(0));
+      } else if (ConstantExpr* N = dyn_cast<ConstantExpr>(V)) {
+        if (N->getOpcode() == Instruction::Cast) {
+          tocheck.push(N->getOperand(0));
+        } else {
+          goto fail;
+        }
+      } else {
+        goto fail;
+      }
+    }
+  }
+  ++CastTraceT;
+  return true;
+ fail:
+  ++CastTraceF;
+  std::cerr << "Int2Ptr: fail ";
+  V->dump();
+  return false;
+}
+
 /// getValueDest - Return the DSNode that the actual value points to.
 ///
 DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
@@ -298,20 +342,12 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
     N->addGlobal(GV);
   } else if (Constant *C = dyn_cast<Constant>(V)) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::Cast) {
-        if (isa<PointerType>(CE->getOperand(0)->getType()))
-          NH = getValueDest(*CE->getOperand(0));
-        else
-          if (CE->getOpcode() == Instruction::Cast &&
-              isa<ConstantInt>(CE->getOperand(0)) && 
-              (
-               cast<ConstantInt>(CE->getOperand(0))->equalsInt(1) ||
-               (-cast<ConstantInt>(CE->getOperand(0))->getSExtValue() <= 124 &&
-                -cast<ConstantInt>(CE->getOperand(0))->getSExtValue() >= 0)
-               ))
-            NH = createNode();
-          else
-            NH = createNode()->setUnknownNodeMarker();
+      std::set<Value*> sources;
+      if (getSourcePointerValues(CE, sources)) {      
+        NH = createNode();
+        for (std::set<Value*>::iterator ii = sources.begin(), ee = sources.end();
+             ii != ee; ++ii)
+          NH.mergeWith(getValueDest(**ii));
       } else if (CE->getOpcode() == Instruction::GetElementPtr) {
         visitGetElementPtrInst(*CE);
         DSScalarMap::iterator I = ScalarMap.find(CE);
@@ -1428,9 +1464,9 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
   } else if (F->getName() == "llva_get_icontext_stackp") {
     // Create a new DSNode for the memory returned by llva_save_stackp()
     DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
-    RetNH.getNode()->setAllocaNodeMarker();
-    RetNH.getNode()->setUnknownNodeMarker();
-    RetNH.getNode()->foldNodeCompletely();
+    //    RetNH.getNode()->setAllocaNodeMarker();
+    //    RetNH.getNode()->setUnknownNodeMarker();
+    //    RetNH.getNode()->foldNodeCompletely();
     if (DSNode *N = getValueDest(**CS.arg_begin()).getNode())
       N->setReadMarker();
     return true;
@@ -1468,7 +1504,11 @@ void GraphBuilder::visitCallSite(CallSite CS) {
     // Determine if the called function is one of the specified heap
     // allocation functions
     if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
-      DSNodeHandle RetNH = getValueDest(*CS.getInstruction());
+      DSNodeHandle RetNH;
+      if (F->getName() == "pseudo_alloc")
+        RetNH = getValueDest(**CS.arg_begin());
+      else
+        RetNH = getValueDest(*CS.getInstruction());
       RetNH.getNode()->setHeapNodeMarker()->setModifiedMarker();
       RetNH.getNode()->getMP()->addCallSite(CS);
       return;
@@ -1572,15 +1612,20 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
       // don't know about.  Make an "Unknown" node.
       //
 
-      if (ConstantInt* I = dyn_cast<ConstantInt>(CI.getOperand(0)))
-        if (-I->getSExtValue() <= 124 && -I->getSExtValue() >= 0)
-          setDestTo(CI, createNode());
-
-      if (DebugUnknown) {
-        std::cerr << "In " << CI.getParent()->getParent()->getName() << " ";
-        CI.dump();
-      }
-      setDestTo(CI, createNode()->setUnknownNodeMarker());
+      //Try to track all values of ints back to constants or valid pointers
+      std::set<Value*> sources;
+      if (getSourcePointerValues(&CI, sources)) {
+        setDestTo(CI, createNode());
+        for (std::set<Value*>::iterator ii = sources.begin(), ee = sources.end();
+             ii != ee; ++ii)
+          getValueDest(CI).mergeWith(getValueDest(**ii));
+      } else {
+        if (DebugUnknown) {
+          std::cerr << "In " << CI.getParent()->getParent()->getName() << " ";
+          CI.dump();
+        }
+        setDestTo(CI, createNode()->setUnknownNodeMarker());
+      } 
     }
 }
 
@@ -1754,6 +1799,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("kmem_cache_alloc");
   AllocList.push_back("__alloc_bootmem");
   AllocList.push_back(" __get_free_pages");
+  AllocList.push_back("pseudo_alloc");
 
 #if 0
   FreeList.push_back("kfree");
@@ -1761,6 +1807,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   FreeList.push_back("vfree");
   FreeList.push_back("free_pages");
   FreeList.push_back("kmem_cache_free");
+  FreeList.push_back("pseudo_free");
 
   //figure out all system call numbers
   Function* lrs = M.getNamedFunction("llva_register_syscall");

@@ -140,6 +140,8 @@ struct InsertPoolChecks : public FunctionPass {
     // Functions
     Function *PoolCheck;
     Function *PoolCheckAlign;
+    Function *PoolCheckUI;
+    Function *PoolCheckAlignUI;
     Function *PoolCheckArray;
     Function *PoolCheckIArray;
     Function *ExactCheck;

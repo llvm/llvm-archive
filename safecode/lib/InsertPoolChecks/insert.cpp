@@ -43,13 +43,9 @@ cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::desc("Insert pool checks instead of exact bounds checks"));
   
 // Options for Enabling/Disabling the Insertion of Various Checks
-cl::opt<bool> EnableIncompleteChecks  ("enable-incompletechecks", cl::Hidden,
-                                cl::init(false),
-                                cl::desc("Enable Checks on Incomplete Nodes"));
-
 cl::opt<bool> EnableUnknownChecks ("enable-unknownchecks", cl::Hidden,
                                    cl::init(false),
-                                   cl::desc("Enable Checks on Unknown Nodes"));
+                                   cl::desc("Enable Checks on Incomplete/Unknown Nodes"));
 
 cl::opt<bool> EnableNullChecks  ("enable-nullchecks", cl::Hidden,
                                 cl::init(false),
@@ -596,14 +592,16 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   Arg.push_back(VoidPtrType);
   FunctionType *PoolCheckTy =
     FunctionType::get(Type::VoidTy,Arg, false);
-  PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
+  PoolCheck   = M.getOrInsertFunction("poolcheck", PoolCheckTy);
+  PoolCheckUI = M.getOrInsertFunction("poolcheck_i", PoolCheckTy);
 
   Arg.clear();
   Arg.push_back(VoidPtrType);
   Arg.push_back(VoidPtrType);
   Arg.push_back(Type::UIntTy);
   PoolCheckTy = FunctionType::get(Type::VoidTy,Arg, false);
-  PoolCheckAlign = M.getOrInsertFunction("poolcheckalign", PoolCheckTy);
+  PoolCheckAlign   = M.getOrInsertFunction("poolcheckalign", PoolCheckTy);
+  PoolCheckAlignUI = M.getOrInsertFunction("poolcheckalign_i", PoolCheckTy);
 
   std::vector<const Type *> Arg2(1, VoidPtrType);
   Arg2.push_back(VoidPtrType);
@@ -909,36 +907,15 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     ++AlignChecks;
   }
 
-  //
-  // Do not bother to insert checks for nodes that do not have the any of the
-  // stack, heap, or global flags set.
-  //
-  if (DisableStackChecks) {
-    if (!Node || !((Node->isHeapNode())   ||
-                   (Node->isGlobalNode())))
-    {
-      ++NoSHGBoundsChecks;
-      return Dest;
-    }
-  } else {
-    if (!Node || !((Node->isAllocaNode()) ||
-                   (Node->isHeapNode())   ||
-                   (Node->isGlobalNode())))
-    {
-      ++NoSHGBoundsChecks;
-      return Dest;
-    }
-  }
+  // If there is no DSNode, do not perform a check
+  if (!Node) return Dest;
 
   // Record statistics on the incomplete checks we do.  Note that a node may
   // be counted more than once.
   if (Node->isIncomplete())
     ++IBoundsChecks;
-  if (Node->isUnknownNode()) {
+  if (Node->isUnknownNode())
     ++UBoundsChecks;
-    if (!EnableUnknownChecks)
-      return Dest;
-  }
   if (Node->isAllocaNode())
     ++ABoundsChecks;
 
@@ -1132,7 +1109,7 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   // DSNode may be missing valid function targets.  In that case, do not
   // insert a check.
   //
-  if (Node->isIncomplete()) {
+  if ((!EnableUnknownChecks) && (Node->isIncomplete())) {
     ++MissedFuncChecks;
     return;
   }
@@ -3185,6 +3162,20 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
   if (!PH) return;
 
   //
+  // If the node is incomplete or unknown, then only perform the check if
+  // checks to incomplete or unknown are allowed.
+  //
+  Function * ThePoolCheckFunction = PoolCheckAlign;
+  if ((LoadResultNode->isUnknownNode()) || (LoadResultNode->isIncomplete())) {
+    if (EnableUnknownChecks) {
+      ThePoolCheckFunction = PoolCheckAlignUI;
+    } else {
+      ++MissedIncompleteChecks;
+      return;
+    }
+  }
+
+  //
   // A check is needed.  Scan through the links of the DSNode of the load's
   // pointer operand; we need to determine the offset for the alignment check.
   //
@@ -3234,6 +3225,20 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
     return;
 
   //
+  // We will perform checks on incomplete or unknown nodes, but we must accept
+  // the possibility that the object will not be found.
+  //
+  Function * ThePoolCheckFunction = PoolCheck;
+  if ((Node->isUnknownNode()) || (Node->isIncomplete())) {
+    if (EnableUnknownChecks) {
+      ThePoolCheckFunction = PoolCheckUI;
+    } else {
+      ++MissedIncompleteChecks;
+      return;
+    }
+  }
+
+  //
   // This may be a load instruction that loads a pointer that:
   //  1) Points to a type known pool, and
   //  2) Loaded from a type unknown pool
@@ -3258,23 +3263,17 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // handle, use a NULL pointer value and let the runtime deal with it.
   Value *PH = getPoolHandle(V, F);
 
-  if ((!PH) || (Node->isIncomplete()) ||
-               (Node->isUnknownNode()) ||
-               (!((Node->isHeapNode()) ||
-                  (Node->isGlobalNode()) ||
-                  (Node->isAllocaNode())))) {
+  if (!PH) {
     // Update the number of poolchecks that won't do anything
     ++NullChecks;
 
     // Update the stats on why there will be no check
-    if ((Node->isUnknownNode()) || (Node->isIncomplete()))
-      ++MissedIncompleteChecks;
-    if (!PH) ++MissedNullChecks;
+    ++MissedNullChecks;
 
     // Don't bother to insert the NULL check unless the user requested it
     if (!EnableNullChecks)
       return;
-    if (!PH) PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+    PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
   } else {
     // This will be a full check; update the stats.
     assert (isa<GlobalValue>(PH));
@@ -3289,7 +3288,7 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // Create the call to poolcheck
   std::vector<Value *> args(1,CastPHI);
   args.push_back(CastVI);
-  new CallInst(PoolCheck,args, "", I);
+  new CallInst (ThePoolCheckFunction ,args, "", I);
 }
 
 void InsertPoolChecks::addLoadStoreChecks (Function & FR) {

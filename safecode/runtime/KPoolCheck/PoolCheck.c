@@ -390,8 +390,16 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
   PCUNLOCK();
 }
 
-/* check that addr exists in pool MP */
-void poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
+/*
+ * Function: poolcheckalign()
+ *
+ * Description:
+ *  Detremine whether the specified pointer is within the specified MetaPool
+ *  and whether it is at the specified offset from the beginning on an
+ *  object.
+ */
+void
+poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   if (!ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
@@ -407,6 +415,33 @@ void poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   if(do_fail) poolcheckfail ("poolcheckalign failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
 }
 
+/*
+ * Function: poolcheckalign_i()
+ *
+ * Description:
+ *  This is the same as poolcheckalign(), but does not fail if an object cannot
+ *  be found.  This is useful for checking incomplete/unknown nodes.
+ */
+void
+poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
+  if (!ready || !MP) return;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_poolcheck;
+  PCLOCK();
+  void* S = addr;
+  unsigned len = 0;
+  volatile int t = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  PCUNLOCK();
+  if (t) {
+    if ((addr - S) == offset)
+      return;
+    else
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+  return;
+}
 
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
@@ -421,6 +456,25 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
   if (t)
     return;
   if(do_fail) poolcheckfail ("poolcheck failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+}
+
+/*
+ * Function: poolcheck_i()
+ *
+ * Description:
+ *  Same as poolcheck(), but does not fail if the pointer is not found. This is
+ *  useful for checking incomplete/unknown nodes.
+ */
+void poolcheck_i (MetaPoolTy* MP, void* addr) {
+  if (!ready || !MP) return;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_poolcheck;
+  PCLOCK();
+  volatile int t = adl_splay_find(&MP->Objs, addr);
+  PCUNLOCK();
+  return;
 }
 
 /* check that src and dest are same obj or slab */
@@ -784,7 +838,11 @@ void funccheck_g (MetaPoolTy * MP, void * f) {
   if (do_fail) poolcheckfail ("funccheck_g failed", f, (void*)__builtin_return_address(0));
 }
 
-void pchk_ind_fail() {
-  if (do_fail) poolcheckfail("indirect call failure", 0, (void*)__builtin_return_address(0));
+void pchk_ind_fail(void * f) {
+#if 0
+  if (do_fail) poolcheckfail("indirect call failure", f, (void*)__builtin_return_address(0));
+#else
+  printk ("<0> LLVA: pchk_ind_fail: pc=%x, f=%x\n", f, (void*)(__builtin_return_address(0)));
+#endif
 }
 

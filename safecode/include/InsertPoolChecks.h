@@ -159,6 +159,7 @@ struct InsertPoolChecks : public FunctionPass {
     Function *ObjFree;
     Function *StackFree;
     Function *FuncRegister;
+    Function *KmemCachegetSize;
     Function *PoolRegMP;
     Function *PoolFindMP;
     Function *getBegin;

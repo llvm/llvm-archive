@@ -719,9 +719,9 @@ InsertPoolChecks::addHeapRegs (Module & M) {
     // Determine if we have already processed this MetaPool.  If we have, then
     // just go on to the next DSNode.
     if (ProcessedMetaPools.find (MPV) == ProcessedMetaPools.end())
-      continue;
-    else
       ProcessedMetaPools.insert (MPV);
+    else
+      continue;
 
     // Add registers in front of every allocation
     for (std::list<CallSite>::iterator i = MP->allocs.begin(),

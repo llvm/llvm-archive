@@ -102,6 +102,7 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<PreInsertPoolChecks>();
       AU.addRequired<ConvertUnsafeAllocas>();
       AU.addRequired<ScalarEvolution>();
+      AU.addRequired<LoopInfo>();
 #if 0
       AU.addRequired<CompleteBUDataStructures>();
       AU.addRequired<TDDataStructures>();
@@ -122,6 +123,7 @@ struct InsertPoolChecks : public FunctionPass {
     PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
     ScalarEvolution * scevPass;
+    LoopInfo *LI;
     TargetData * TD;
 #ifndef  LLVA_KERNEL
     PoolAllocate * paPass;

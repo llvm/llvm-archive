@@ -22,7 +22,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ConstantRange.h"
-
+#include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Analysis/LoopInfo.h" 
 #include <iostream>
 #include <vector>
 #include <set>
@@ -75,6 +76,10 @@ cl::opt<bool> DisableFuncChecks ("disable-funcchecks", cl::Hidden,
 cl::opt<bool> DisableIntrinsicChecks ("disable-intrinchecks", cl::Hidden,
                                       cl::init(false),
                                       cl::desc("Disable Intrinsic Checks"));
+
+cl::opt<bool> EnableMonotonicOptimisation("enable-monotonic", cl::Hidden,
+                                          cl::init(false),
+                   cl::desc("Enable LICM for bounds checks on monotonic loops"));
 
 // Options for where to insert various initialization code
 cl::opt<string> InitFunctionName ("initfunc",
@@ -131,6 +136,9 @@ static Statistic<> SavedRegAllocs     ("safecode", "Stack registrations avoided"
 
 // Other statistics
 static Statistic<> StructGEPsRemoved  ("safecode", "Structure GEP Checks Removed");
+
+//MonotonicOpts
+static Statistic<> MonotonicOpts  ("safecode", "Number of monotonic LICM bounds check optimisations");
 
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
@@ -744,7 +752,7 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         Instruction* IP = i->getInstruction()->getNext();
         Value* VRP = castTo (i->getInstruction(), VoidPtrType, IP);
         CallInst *len = new CallInst(KmemCachegetSize, VP, "", IP);
-          
+
         args.clear();
         args.push_back (VMP); //MetaPool
         args.push_back (VRP); //object 
@@ -2064,6 +2072,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
   TD        = &getAnalysis<TargetData>();
   scevPass  = &getAnalysis<ScalarEvolution>();
+  LI        = &getAnalysis<LoopInfo>();
 #ifdef LLVA_KERNEL  
   TDPass  = &getAnalysis<TDDataStructures>();
 #else
@@ -2820,12 +2829,63 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             abort();
           }
         } else {
-          //
-          // Insert a bounds check and use its return value in all subsequent
-          // uses.
-          //
-          Instruction *nextIns = MAI->getNext();
-          insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, nextIns);
+          // Now check if the GEP is inside a loop with monotonically increasing
+          //loop bounds
+          //We use the LoopInfo Pass this
+          Loop *L = LI->getLoopFor(MAI->getParent());
+          bool monotonicOpt = false;
+          if (L && (MAI->getNumOperands() == 2)) {
+            bool HasConstantItCount = isa<SCEVConstant>(scevPass->getIterationCount(L));
+            Value *vIndex = MAI->getOperand(1);
+            if (Instruction *Index = dyn_cast<Instruction>(vIndex)) {
+              //If it is not an instruction then it must already be loop invariant
+              if (L->isLoopInvariant(MAI->getPointerOperand())) { 
+                SCEVHandle SH = scevPass->getSCEV(Index);
+                if (SH->hasComputableLoopEvolution(L) ||    // Varies predictably
+                    HasConstantItCount) {
+                  if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SH))
+                    if (AR->isAffine()) {
+                      SCEVHandle EntryValue = AR->getStart();
+                      //                      EntryValue->getValueRange().dump();
+                      //                      Index->dump();
+                      SCEVHandle ExitValue = scevPass->getSCEVAtScope(Index, L->getParentLoop());
+                      BasicBlock *Preheader = L->getLoopPreheader();
+                      if (!isa<SCEVCouldNotCompute>(ExitValue)) {
+                        SCEVExpander Rewriter(*scevPass, *LI);
+                        Instruction *ptIns = Preheader->getTerminator();
+                        Value *NewVal = Rewriter.expandCodeFor(ExitValue, ptIns,
+                                                               Index->getType());
+                        //                        NewVal->dump();
+                        if (!isa<SCEVCouldNotCompute>(EntryValue)) {
+                          Value *NewVal2 = Rewriter.expandCodeFor(EntryValue, ptIns,
+                                                                  Index->getType());
+                          //                          NewVal2->dump();
+                          //Inserted the values now insert GEPs and add checks
+                          std::vector<Value *> gepargs1(1,NewVal);
+                          GetElementPtrInst *GEPUpper =
+                            new GetElementPtrInst(MAI->getPointerOperand(), gepargs1, MAI->getName()+"upbc", ptIns);
+                          insertBoundsCheck (MAI, GEPUpper->getPointerOperand(), GEPUpper, ptIns);
+                          std::vector<Value *> gepargs2(1,NewVal2);
+                          GetElementPtrInst *GEPLower =
+                            new GetElementPtrInst(MAI->getPointerOperand(), gepargs2, MAI->getName()+"lobc", ptIns);
+                          insertBoundsCheck (MAI, GEPLower->getPointerOperand(), GEPLower, ptIns);
+                          monotonicOpt = true;
+                          ++MonotonicOpts;
+                        }
+                      }
+                    }
+                }
+              }
+            }
+          }
+          if (!monotonicOpt) {
+            //
+            // Insert a bounds check and use its return value in all subsequent
+            // uses.
+            //
+            Instruction *nextIns = MAI->getNext();
+            insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, nextIns);
+          }
         }
       }
     } else {

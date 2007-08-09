@@ -147,6 +147,20 @@ static std::set<Value *> CheckedValues;
 // Static Functions
 ////////////////////////////////////////////////////////////////////////////
 
+static inline bool
+isNodeRegistered (DSNode * Node) {
+  // Do not perform checks on the pointer if its DSNode does not have a known
+  // allocation site.
+  if (!((Node->isAllocaNode()) ||
+        (Node->isHeapNode())   ||
+        (Node->isGlobalNode()))) {
+    ++NoSHGBoundsChecks;
+    return false;
+  }
+
+  return true;
+}
+
 //Do not replace these with check results
 static std::set<Value*> AddedValues;
 
@@ -917,6 +931,10 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
 
   // If there is no DSNode, do not perform a check
   if (!Node) return Dest;
+
+  // If we do not know the allocation site, don't bother checking it
+  if (!(isNodeRegistered (Node)))
+    return Dest;
 
   // Record statistics on the incomplete checks we do.  Note that a node may
   // be counted more than once.
@@ -2832,6 +2850,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // Now check if the GEP is inside a loop with monotonically increasing
           //loop bounds
           //We use the LoopInfo Pass this
+#if 0
           Loop *L = LI->getLoopFor(MAI->getParent());
           bool monotonicOpt = false;
           if (L && (MAI->getNumOperands() == 2)) {
@@ -2886,6 +2905,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             Instruction *nextIns = MAI->getNext();
             insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, nextIns);
           }
+#endif
         }
       }
     } else {
@@ -3282,6 +3302,12 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // or if the node is incomplete.
   //
   if (!(Node && Node->isNodeCompletelyFolded()))
+    return;
+
+  //
+  // If the node is not registered, don't bother to check it.
+  //
+  if (!(isNodeRegistered (Node)))
     return;
 
   //

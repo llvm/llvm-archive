@@ -47,8 +47,6 @@
 ; be linked LAST in order for this to work.
 @hlvm_programs = appending constant [1 x %hlvm_programs_element] zeroinitializer
 
-; End of declarations, start the implementation
-implementation
 
 ; This is a very simple function to get the address of %hlvm_programs.
 define %hlvm_programs_element* @hlvm_get_programs() {

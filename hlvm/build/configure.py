@@ -277,9 +277,9 @@ def ConfigureHLVM(env):
   env['LIBS'] = ''
 
   FindLLVM(conf)
+  FindLibXML2(conf)
   FindAPR(conf)
   FindAPRU(conf)
-  FindLibXML2(conf)
   CheckForHeaders(conf)
   CheckForPrograms(conf)
   conf.Finish()

@@ -27,6 +27,8 @@
 /// @brief Provides the interface to hlvm::XMLReader
 //===----------------------------------------------------------------------===//
 
+#include <libxml/parser.h>
+#include <libxml/relaxng.h>
 #include <hlvm/Reader/XMLReader.h>
 #include <hlvm/Reader/HLVMTokenizer.h>
 #include <hlvm/AST/Locator.h>
@@ -46,8 +48,6 @@
 #include <hlvm/AST/StringOps.h>
 #include <hlvm/Base/Assert.h>
 #include <llvm/ADT/StringExtras.h>
-#include <libxml/parser.h>
-#include <libxml/relaxng.h>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -1431,7 +1431,7 @@ XMLReaderImpl::read() {
   }
 
   // Provide the error handler for parsing the schema
-  ::xmlRelaxNGSetParserStructuredErrors(rngparser, ParseHandler, this);
+  xmlRelaxNGSetParserStructuredErrors(rngparser, ParseHandler, this);
 
   // Parse the schema and build an internal structure for it
   xmlRelaxNGPtr schema = xmlRelaxNGParse(rngparser);

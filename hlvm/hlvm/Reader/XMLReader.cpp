@@ -1431,7 +1431,7 @@ XMLReaderImpl::read() {
   }
 
   // Provide the error handler for parsing the schema
-  xmlRelaxNGSetParserStructuredErrors(rngparser, ParseHandler, this);
+  ::xmlRelaxNGSetParserStructuredErrors(rngparser, ParseHandler, this);
 
   // Parse the schema and build an internal structure for it
   xmlRelaxNGPtr schema = xmlRelaxNGParse(rngparser);

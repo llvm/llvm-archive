@@ -15,17 +15,19 @@
 MYMODE := Debug
 
 # Specify a path for where the 3rd party software is installed
-MYPATH := /proj/install:/proj/llvm/cfe/install
+MYPATH := :/proj/llvm/hlvm/installed:/proj/install:
 
 # Specify where you want HLVM to be installed
-MYPREFIX := /proj/install/hlvm
+MYPREFIX := /proj/llvm/hlvm/installed
 
 # Specify where the llvm-gcc tools are located
-MYLLVMGCC := /proj/llvm/cfe/install/bin
+MYLLVMGCC := /proj/llvm/hlvm/installed/bin
 
 SCONSOPTS := -Q -j 2
 
 SUITES := normal
+
+CONFPATH=$(MYPATH):$(PATH)
 
 .PHONY: all debug Debug optimized Optimized release Release check clean \
 	install hlvm tools
@@ -36,25 +38,25 @@ all:
 debug Debug:
 	scons $(SCONSOPTS)  mode=Debug debug=1 assertions=1 optimized=0 \
 	inline=0 small=0 \
-	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	confpath=$(CONFPATH) prefix=$(MYPREFIX) \
 	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 optimized Optimized:
 	scons $(SCONSOPTS)  mode=Optimized debug=0 assertions=1 optimized=1 \
 	inline=1 small=0 strip=0 \
-	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	confpath=$(CONFPATH) prefix=$(MYPREFIX) \
 	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 release Release:
 	scons $(SCONSOPTS) mode=Release debug=0 assertions=0 optimized=1 \
 	inline=1 small=1 strip=1 \
-	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	confpath=$(CONFPATH) prefix=$(MYPREFIX) \
 	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 profile Profile:
 	scons $(SCONSOPTS) mode=Profile debug=0 assertions=0 optimized=1  \
 	inline=1 small=0 strip=0 profile=1 \
-	confpath=$(MYPATH) prefix=$(MYPREFIX) \
+	confpath=$(CONFPATH) prefix=$(MYPREFIX) \
 	with_llvmgcc=$(MYLLVMGCC)/llvm-gcc with_llvmgxx=$(MYLLVMGCC)/llvm-g++
 
 check: 
@@ -99,5 +101,5 @@ exclusions: Makefile
 
 build-for-llvm-top:
 	scons $(SCONSOPTS) mode=Debug debug=1 assertions=1 optimized=0 \
-	inline=0 small=0 confpath=$(LLVM_TOP)/install:$$PATH \
+	inline=0 small=0 confpath=$(LLVM_TOP)/installed:$$PATH \
 	prefix=$(LLVM_TOP)/install \

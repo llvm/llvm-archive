@@ -269,10 +269,10 @@ def ConfigureHLVM(env):
   )
   rlist = []
   for p in env['confpath'].split(':'):
-    if p != '' and exists(p) and exists(pjoin(p,'bin')):
-      rlist = [p] + rlist
-  for p in rlist:
-    env.PrependENVPath('PATH', pjoin(p,'bin'))
+    if p != '' and exists(p):
+      env.PrependENVPath('PATH', p)
+      if exists(pjoin(p,'bin')):
+        env.PrependENVPath('PATH', pjoin(p,'bin'))
 
   env['LIBS'] = ''
 

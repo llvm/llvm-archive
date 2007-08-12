@@ -44,10 +44,12 @@
 #include <hlvm/Pass/Pass.h>
 #include <hlvm/CodeGen/LLVMEmitter.h>
 #include <llvm/Linker.h>
+#include <llvm/PassManager.h>
 #include <llvm/Analysis/LoadValueNumbering.h>
+#include <llvm/Analysis/LoopPass.h>
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Assembly/Parser.h>
-#include <llvm/Bytecode/Writer.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Target/TargetData.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
@@ -187,7 +189,7 @@ LLVMGeneratorPass::getType(const hlvm::Type* ty)
       break;
     case IntegerTypeID:
     {
-      const IntegerType* IT = llvm::cast<hlvm::IntegerType>(ty);
+      const hlvm::IntegerType* IT = llvm::cast<hlvm::IntegerType>(ty);
       uint16_t bits = IT->getBits();
       if (bits <= 8)
         result = (IT->isSigned() ? llvm::Type::Int8Ty : llvm::Type::Int8Ty);
@@ -372,7 +374,8 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     case ConstantIntegerID:
     {
       const ConstantInteger* CI = llvm::cast<const ConstantInteger>(C);
-      if (const IntegerType* iType = llvm::dyn_cast<IntegerType>(hType)) {
+      if (const hlvm::IntegerType* iType = 
+          llvm::dyn_cast<hlvm::IntegerType>(hType)) {
         if (iType->isSigned()) {
           int64_t val = strtoll(CI->getValue().c_str(),0,CI->getBase());
           result = em->getSVal(lType,val);
@@ -396,19 +399,19 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     }
     case ConstantStringID:
     {
-      const ConstantString* CT = llvm::cast<ConstantString>(C);
+      const hlvm::ConstantString* CT = llvm::cast<hlvm::ConstantString>(C);
       llvm::Constant* CA = llvm::ConstantArray::get(CT->getValue(), true);
       llvm::GlobalVariable* GV  = em->NewGConst(CA->getType(), CA, C->getName());
       std::vector<llvm::Constant*> indices;
       indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
       indices.push_back(llvm::Constant::getNullValue(llvm::Type::Int32Ty));
-      result = llvm::ConstantExpr::getGetElementPtr(GV,indices);
+      result = llvm::ConstantExpr::getGetElementPtr(GV, &indices[0], 2);
       break;
     }
     case ConstantPointerID:
     {
-      const ConstantPointer* hCT = llvm::cast<ConstantPointer>(C);
-      const Constant* hC = hCT->getValue();
+      const hlvm::ConstantPointer* hCT = llvm::cast<hlvm::ConstantPointer>(C);
+      const hlvm::Constant* hC = hCT->getValue();
       const llvm::Type* Ty = getType(hC->getType());
       llvm::Constant* Init = getConstant(hC);
       result = em->NewGConst(Ty,Init, hCT->getName());
@@ -416,11 +419,11 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     }
     case ConstantArrayID:
     {
-      const ConstantArray* hCA = llvm::cast<ConstantArray>(C);
+      const hlvm::ConstantArray* hCA = llvm::cast<hlvm::ConstantArray>(C);
       const llvm::Type* elemType = getType(hCA->getElementType());
       const llvm::ArrayType* lAT = llvm::ArrayType::get(elemType,hCA->size());
       std::vector<llvm::Constant*> elems;
-      for (ConstantArray::const_iterator I = hCA->begin(), E = hCA->end();
+      for (hlvm::ConstantArray::const_iterator I = hCA->begin(), E = hCA->end();
            I != E; ++I )
         elems.push_back(getConstant(*I));
       llvm::Constant* lCA = llvm::ConstantArray::get(lAT,elems);
@@ -436,11 +439,11 @@ LLVMGeneratorPass::getConstant(const hlvm::Constant* C)
     }
     case ConstantVectorID:
     {
-      const ConstantVector* hCA = llvm::cast<ConstantVector>(C);
+      const hlvm::ConstantVector* hCA = llvm::cast<hlvm::ConstantVector>(C);
       const llvm::ArrayType* Ty =
         llvm::cast<llvm::ArrayType>(getType(hCA->getType()));
       std::vector<llvm::Constant*> elems;
-      for (ConstantArray::const_iterator I = hCA->begin(), E = hCA->end();
+      for (hlvm::ConstantArray::const_iterator I = hCA->begin(), E = hCA->end();
            I != E; ++I )
         elems.push_back(getConstant(*I));
       result = llvm::ConstantArray::get(Ty,elems);
@@ -582,11 +585,11 @@ LLVMGeneratorPass::getReferent(hlvm::GetOp* r)
     llvm::Value* V = getVariable(llvm::cast<hlvm::Variable>(referent));
     hlvmAssert(V && "Variable not found?");
     v = V;
-  } else if (llvm::isa<Function>(referent)) {
+  } else if (llvm::isa<hlvm::Function>(referent)) {
     llvm::Function* F = getFunction(llvm::cast<hlvm::Function>(referent));
     hlvmAssert(F && "Function not found?");
     v = F;
-  } else if (llvm::isa<Argument>(referent)) {
+  } else if (llvm::isa<hlvm::Argument>(referent)) {
     llvm::Argument* arg = getArgument(llvm::cast<hlvm::Argument>(referent));
     hlvmAssert(arg && "Argument not found?");
     v = arg;
@@ -1546,7 +1549,7 @@ LLVMGeneratorPass::gen(ReturnOp* r)
 {
   // First, if this function returns nothing (void) then just issue a void
   // return instruction.
-  const Type* resTy = function->getResultType();
+  const hlvm::Type* resTy = function->getResultType();
   if (resTy == 0) {
     em->emitReturn(0);
     return;
@@ -1723,7 +1726,7 @@ LLVMGeneratorPass::genProgramLinkage()
       /*name=*/"prog_name"
     );
 
-    llvm::Constant* index = llvm::ConstantExpr::getPtrPtrFromArrayPtr(name);
+    llvm::Constant* index = em->getFirstElement(name);
 
     // Get a constant structure for the entry containing the name and pointer
     // to the function.
@@ -1783,31 +1786,31 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
         getConstant(llvm::cast<ConstantEnumerator>(n));
         break;
       case ConstantIntegerID:       
-        getConstant(llvm::cast<ConstantInteger>(n));
+        getConstant(llvm::cast<hlvm::ConstantInteger>(n));
         break;
       case ConstantRealID:          
-        getConstant(llvm::cast<ConstantReal>(n));
+        getConstant(llvm::cast<hlvm::ConstantReal>(n));
         break;
       case ConstantStringID:        
-        getConstant(llvm::cast<ConstantString>(n));
+        getConstant(llvm::cast<hlvm::ConstantString>(n));
         break;
       case ConstantAnyID:
-        getConstant(llvm::cast<ConstantAny>(n));
+        getConstant(llvm::cast<hlvm::ConstantAny>(n));
         break;
       case ConstantStructureID:
-        getConstant(llvm::cast<ConstantStructure>(n));
+        getConstant(llvm::cast<hlvm::ConstantStructure>(n));
         break;
       case ConstantArrayID:
-        getConstant(llvm::cast<ConstantArray>(n));
+        getConstant(llvm::cast<hlvm::ConstantArray>(n));
         break;
       case ConstantVectorID:
-        getConstant(llvm::cast<ConstantVector>(n));
+        getConstant(llvm::cast<hlvm::ConstantVector>(n));
         break;
       case ConstantContinuationID:
-        getConstant(llvm::cast<ConstantContinuation>(n));
+        getConstant(llvm::cast<hlvm::ConstantContinuation>(n));
         break;
       case ConstantPointerID:
-        getConstant(llvm::cast<ConstantPointer>(n));
+        getConstant(llvm::cast<hlvm::ConstantPointer>(n));
         break;
       case VariableID:              
         getVariable(llvm::cast<Variable>(n)); 
@@ -1874,7 +1877,7 @@ LLVMGeneratorPass::handle(Node* n,Pass::TraversalKinds mode)
       case SignatureTypeID:
       case VectorTypeID:
       {
-        Type* t = llvm::cast<Type>(n);
+        hlvm::Type* t = llvm::cast<hlvm::Type>(n);
         em->AddType(getType(t), t->getName());
         break;
       }
@@ -2100,8 +2103,7 @@ hlvm::generateBytecode(AST* tree, std::ostream& output, std::string& ErrMsg)
   llvm::Module* mod = genPass.linkModules();
   bool result = optimizeModule(mod,ErrMsg);
   if (result) {
-    llvm::OStream strm(output);
-    llvm::WriteBytecodeToFile(mod, strm, /*compress= */ true);
+    llvm::WriteBitcodeToFile(mod, output);
   }
   delete mod;
   return result;

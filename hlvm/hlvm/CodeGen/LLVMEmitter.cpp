@@ -164,7 +164,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_text_create(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_text_create();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "buffer"), 
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "buffer"), 
                           TheBlock);
     }
 
@@ -187,7 +187,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_text_delete(const hlvm::ArgList& args)
     {
       Function* F = get_hlvm_text_delete();
-      return new CallInst(F, &args[0], args.size(), "hlvm_text_delete", 
+      return new CallInst(F, args.begin(), args.end(), "hlvm_text_delete", 
                           TheBlock);
     }
 
@@ -209,7 +209,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_text_to_buffer(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_text_to_buffer();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "buffer"), 
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "buffer"), 
                           TheBlock);
     }
 
@@ -242,7 +242,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_buffer_create(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_buffer_create();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "buffer"), 
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "buffer"), 
                           TheBlock);
     }
 
@@ -264,7 +264,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_buffer_delete(const hlvm::ArgList& args)
     {
       Function* F = get_hlvm_buffer_delete();
-      return new CallInst(F, &args[0], args.size(), "", TheBlock);
+      return new CallInst(F, args.begin(), args.end(), "", TheBlock);
     }
 
     PointerType* get_hlvm_stream()
@@ -296,7 +296,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_open(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_stream_open();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "stream"), TheBlock);
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "stream"), 
+                          TheBlock);
     }
 
     Function* get_hlvm_stream_read()
@@ -319,7 +320,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_read(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_stream_read();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "readlen"), TheBlock);
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "readlen"), 
+                          TheBlock);
     }
 
     Function* get_hlvm_stream_write_buffer()
@@ -341,7 +343,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_write_buffer(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_stream_write_buffer();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "writelen"), TheBlock);
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "writelen"), 
+                          TheBlock);
     }
 
     Function* get_hlvm_stream_write_string()
@@ -363,7 +366,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_write_string(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_stream_write_string();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "writelen"), TheBlock);
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "writelen"), 
+                          TheBlock);
     }
 
     Function* get_hlvm_stream_write_text()
@@ -385,7 +389,8 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_write_text(const hlvm::ArgList& args, const char* nm)
     {
       Function* F = get_hlvm_stream_write_text();
-      return new CallInst(F, &args[0], args.size(), (nm ? nm : "writelen"), TheBlock);
+      return new CallInst(F, args.begin(), args.end(), (nm ? nm : "writelen"), 
+                          TheBlock);
     }
 
     Function* get_hlvm_stream_close()
@@ -406,7 +411,7 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
     CallInst* call_hlvm_stream_close(const hlvm::ArgList& args)
     {
       Function* F = get_hlvm_stream_close();
-      return new CallInst(F, &args[0], args.size(), "", TheBlock);
+      return new CallInst(F, args.begin(), args.end(), "", TheBlock);
     }
 
     FunctionType* get_hlvm_program_signature()
@@ -701,87 +706,103 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
 
     CallInst* call_hlvm_f32_ispinf(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_ispinf(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_ispinf(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_isninf(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_isninf(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_isninf(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_isnan(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_isnan(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_isnan(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_trunc(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_trunc(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_trunc(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_round(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_round(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_round(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_floor(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_floor(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_floor(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_ceiling(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_ceiling(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_ceiling(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_loge(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_loge(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_loge(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_log2(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_log2(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_log2(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_log10(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_log10(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_log10(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_squareroot(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_squareroot(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_squareroot(), args.begin(), args.end(), 
+                          "", TheBlock);
     }
 
     CallInst* call_hlvm_f32_cuberoot(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_cuberoot(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_cuberoot(), args.begin(), args.end(), 
+                          "", TheBlock);
     }
 
     CallInst* call_hlvm_f32_factorial(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_factorial(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_factorial(), args.begin(), args.end(), 
+                          "", TheBlock);
     }
 
     CallInst* call_hlvm_f32_power(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_power(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_power(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_root(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_root(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_root(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_gcd(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_gcd(), &args[0], args.size(), "", TheBlock);
+      return new CallInst(get_hlvm_f32_gcd(), args.begin(), args.end(), "", 
+                          TheBlock);
     }
 
     CallInst* call_hlvm_f32_lcm(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f32_lcm(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f32_lcm(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
@@ -1029,103 +1050,103 @@ class LLVMEmitterImpl : public hlvm::LLVMEmitter
 
     CallInst* call_hlvm_f64_ispinf(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_ispinf(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_ispinf(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_isninf(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_isninf(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_isninf(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_isnan(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_isnan(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_isnan(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_trunc(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_trunc(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_trunc(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_round(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_round(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_round(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_floor(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_floor(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_floor(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_ceiling(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_ceiling(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_ceiling(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_loge(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_loge(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_loge(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_log2(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_log2(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_log2(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_log10(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_log10(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_log10(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_squareroot(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_squareroot(), &args[0], args.size(), "",
-                          TheBlock);
+      return new CallInst(get_hlvm_f64_squareroot(), args.begin(), args.end(), 
+                          "", TheBlock);
     }
 
     CallInst* call_hlvm_f64_cuberoot(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_cuberoot(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_cuberoot(), args.begin(), args.end(), "",
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_factorial(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_factorial(), &args[0], args.size(), "", 
-                          TheBlock);
+      return new CallInst(get_hlvm_f64_factorial(), args.begin(), args.end(), 
+                          "", TheBlock);
     }
 
     CallInst* call_hlvm_f64_power(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_power(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_power(), args.begin(), args.end(), "",
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_root(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_root(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_root(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_gcd(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_gcd(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_gcd(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
     CallInst* call_hlvm_f64_lcm(const hlvm::ArgList& args)
     {
-      return new CallInst(get_hlvm_f64_lcm(), &args[0], args.size(), "", 
+      return new CallInst(get_hlvm_f64_lcm(), args.begin(), args.end(), "", 
                           TheBlock);
     }
 
@@ -1207,7 +1228,9 @@ LLVMEmitter::FinishFunction()
   // The entry block was created to hold the automatic variables. We now
   // need to terminate the block by branching it to the first active block
   // in the function.
-  new BranchInst(TheFunction->front().getNext(),&TheFunction->front());
+  Function::iterator I = TheFunction->begin();
+  ++I;
+  new BranchInst(&*I, &TheFunction->front());
   hlvmAssert(blocks.empty());
   hlvmAssert(breaks.empty());
   hlvmAssert(continues.empty());
@@ -1364,7 +1387,7 @@ LLVMEmitter::getFirstElement(GlobalVariable* GV)
 {
   ArgList indices;
   TwoZeroIndices(indices);
-  return ConstantExpr::getGetElementPtr(GV,indices);
+  return ConstantExpr::getGetElementPtr(GV, &indices[0], 2);
 }
 
 FunctionType*
@@ -1670,7 +1693,7 @@ LLVMEmitter::emitCall(Function* F, const ArgList& args)
           newArgs.push_back(*I);
 
       // Generate the call
-      return new CallInst(F, &newArgs[0], args.size(), "", TheBlock);
+      return new CallInst(F, newArgs.begin(), newArgs.end(), "", TheBlock);
     }
   }
 
@@ -1687,8 +1710,8 @@ LLVMEmitter::emitCall(Function* F, const ArgList& args)
         cast<Constant>(*I), (*I)->getName()));
     else
       newArgs.push_back(*I);
-  return new CallInst(F, &newArgs[0], newArgs.size(),  F->getName() + "_result",
-                      TheBlock);
+  return new CallInst(F, newArgs.begin(), newArgs.end(), 
+                      F->getName() + "_result", TheBlock);
 }
 
 void 
@@ -1705,7 +1728,8 @@ LLVMEmitter::emitMemCpy(
   args.push_back(size);
   args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
-  new CallInst(emimp->get_llvm_memcpy(), &args[0], args.size(), "", TheBlock);
+  new CallInst(emimp->get_llvm_memcpy(), args.begin(), args.end(), "", 
+               TheBlock);
 }
 
 /// Emit an llvm.memmove.i64 intrinsic
@@ -1723,7 +1747,8 @@ LLVMEmitter::emitMemMove(
   args.push_back(size);
   args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
-  new CallInst(emimp->get_llvm_memmove(), &args[0], args.size(), "", TheBlock);
+  new CallInst(emimp->get_llvm_memmove(), args.begin(), args.end(), "", 
+               TheBlock);
 }
 
 /// Emit an llvm.memset.i64 intrinsic
@@ -1741,7 +1766,7 @@ LLVMEmitter::emitMemSet(
   args.push_back(size);
   args.push_back(ConstantInt::get(Type::Int32Ty, 0u));
   LLVMEmitterImpl* emimp = static_cast<LLVMEmitterImpl*>(this);
-  new CallInst(emimp->get_llvm_memset(), &args[0], args.size(), "", 
+  new CallInst(emimp->get_llvm_memset(), args.begin(), args.end(), "", 
                TheBlock);
 }
 

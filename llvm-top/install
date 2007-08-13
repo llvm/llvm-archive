@@ -38,13 +38,16 @@ get_module_dependencies $MODULES
 # sorted in dependence order by get_module_dependencies
 for mod in $MODULE_DEPENDENCIES ; do
   get_module_info $mod InstallCmd
-  if test ! -z "$MODULE_INFO_VALUE" ; then
+  TheCommand="$MODULE_INFO_VALUE"
+  if test ! -z "$TheCommand" ; then
     msg 1 Installing module $mod
     cd $LLVM_TOP/$mod
-    $MODULE_INFO_VALUE || die $? "Install of module $mod failed."
+    msg 2 Install command for "$mod" is "$TheCommand"
+    $TheCommand || die $? "Install of module $mod failed."
   else
     msg 2 Module $mod has no InstallCmd in the ModuleInfo.txt
   fi
+  cd $LLVM_TOP
 done
 
 # Report what happened.

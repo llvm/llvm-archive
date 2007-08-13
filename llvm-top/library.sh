@@ -127,13 +127,15 @@ checkout_a_module() {
 get_module_info() {
   local module="$1"
   local item_name="$2"
+  local item_value=""
   msg 2 "Getting '$item_name' module info for '$module'"
   if test ! -d "$module" ; then
     checkout_a_module "$module" || die $? "Checkout failed."
   fi
+  msg 2 "Getting module info from $module/ModuleInfo.txt"
   local module_info="$module/ModuleInfo.txt"
   if test -f "$module_info" ; then
-    local item_value=`grep -i "$item_name:" $module_info | \
+    item_value=`grep -i "$item_name:" $module_info | \
                 sed -e "s/$item_name: *//g"`
     if test "$?" -ne 0 ; then 
       die $? "Searching file '$module_info for $item_name' failed."
@@ -213,12 +215,13 @@ build_a_module() {
   msg 1 "Building module '$module'"   
   get_module_info $module BuildCmd
   if test -z "$MODULE_INFO_VALUE" ; then
-    msg 2 "Module $module has no BuildCmd entry so it will not be built."
+    msg 1 "Module $module has no BuildCmd entry so it will not be built."
     return 0
   fi
   local build_cmd="$MODULE_INFO_VALUE MODULE=$module $build_args"
   msg 2 "Build Command: $build_cmd"
-  cd $LLVM_TOP/$module
+  cd "$LLVM_TOP/$module"
   $build_cmd || die $? "Build of module '$module' failed."
+  cd "$LLVM_TOP"
 }
 

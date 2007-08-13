@@ -2478,9 +2478,9 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
   LValue LV = EmitLV(exp);
   bool isVolatile = TREE_THIS_VOLATILE(exp);
   const Type *Ty = ConvertType(TREE_TYPE(exp));
+  unsigned Alignment = expr_align(exp) / 8;
   
   if (!LV.isBitfield()) {
-    unsigned Alignment = expr_align(exp) / 8;
     if (!DestLoc) {
       // Scalar value: emit a load.
       Value *Ptr = CastToType(Instruction::BitCast, LV.Ptr, 
@@ -2495,7 +2495,10 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, Value *DestLoc) {
     }
   } else {
     // This is a bitfield reference.
-    Value *Val = Builder.CreateLoad(LV.Ptr, isVolatile, "tmp");
+    LoadInst *LI = Builder.CreateLoad(LV.Ptr, isVolatile, "tmp");
+    LI->setAlignment(Alignment);
+
+    Value *Val = LI;
     unsigned ValSizeInBits = Val->getType()->getPrimitiveSizeInBits();
       
     assert(Val->getType()->isInteger() && "Invalid bitfield lvalue!");
@@ -2968,7 +2971,9 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
 
   // Last case, this is a store to a bitfield, so we have to emit a 
   // read/modify/write sequence.
-  Value *OldVal = Builder.CreateLoad(LV.Ptr, isVolatile, "tmp");
+  LoadInst *LI = Builder.CreateLoad(LV.Ptr, isVolatile, "tmp");
+  LI->setAlignment(Alignment);
+  Value *OldVal = LI;
   
   // If the target is big-endian, invert the bit in the word.
   unsigned ValSizeInBits = TD.getTypeSize(OldVal->getType())*8;
@@ -2997,7 +3002,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   
   // Finally, merge the two together and store it.
   Value *Val = Builder.CreateOr(OldVal, RHS, "tmp");
-  Builder.CreateStore(Val, LV.Ptr, isVolatile);
+  StoreInst *SI = Builder.CreateStore(Val, LV.Ptr, isVolatile);
+  SI->setAlignment(Alignment);
   return RetVal;
 }
 

@@ -1700,6 +1700,10 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         unsigned DeclBitAlignment = Info->getTypeAlignment(DeclFieldTy)*8;
         
         FieldOffsetInBits &= ~(DeclBitAlignment-1ULL);
+        // When we fix the field alignment, we must restart the FieldNo search
+        // because the FieldOffsetInBits can be lower than it was in the
+        // previous iteration.
+        CurFieldNo = 0;
       }
       
       // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do

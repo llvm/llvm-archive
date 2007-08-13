@@ -77,6 +77,8 @@ hlvm:
 tools:
 	cd tools ; scons $(SCONSOPTS) -u mode=$(MYMODE)
 
+runtime:
+	cd hlvm/Runtime ; scons $(SCONSOPTS) -u mode=$(MYMODE)
 codegen:
 	cd hlvm/CodeGen ; scons $(SCONSOPTS) -u mode=$(MYMODE)
 

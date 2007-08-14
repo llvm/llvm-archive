@@ -34,6 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1045,16 +1046,26 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
   if (V->getType() == Ty) 
     return V;
 
+  // If this is a simple constant operand, fold it now.  If it is a constant
+  // expr operand, fold it below.
   if (Constant *C = dyn_cast<Constant>(V))
-    return ConstantExpr::getCast(Instruction::CastOps(opcode), C, Ty);
+    if (!isa<ConstantExpr>(C))
+      return ConstantExpr::getCast(Instruction::CastOps(opcode), C, Ty);
   
   // Handle 'trunc (zext i1 X to T2) to i1' as X, because this occurs all over
   // the place.
   if (ZExtInst *CI = dyn_cast<ZExtInst>(V))
     if (Ty == Type::Int1Ty && CI->getOperand(0)->getType() == Type::Int1Ty)
       return CI->getOperand(0);
-  return Builder.CreateCast(Instruction::CastOps(opcode), V, Ty,
-                            V->getName().c_str());
+  Value *Result = Builder.CreateCast(Instruction::CastOps(opcode), V, Ty,
+                                     V->getNameStart());
+
+  // If this is a constantexpr, fold the instruction with
+  // ConstantFoldInstruction to allow TargetData-driven folding to occur.
+  if (isa<ConstantExpr>(V))
+    Result = ConstantFoldInstruction(cast<Instruction>(Result), &TD);
+  
+  return Result;
 }
 
 /// CastToAnyType - Cast the specified value to the specified type making no

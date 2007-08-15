@@ -233,7 +233,11 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
     delete PerModulePasses;
     delete CodeGenPasses;
 
-    createOptimizationPasses();
+    // Don't run codegen, when we should output PCH
+    if (!flag_pch_file)
+      createOptimizationPasses();
+    else
+      llvm_pch_write_init();
   }
     
   // Read LLVM Types string table

@@ -1112,8 +1112,16 @@ compile_file (void)
 
   lang_hooks.decls.final_write_globals ();
   cgraph_varpool_assemble_pending_decls ();
+  
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  if (!flag_pch_file)
+    finish_aliases_2 ();
+#else
   finish_aliases_2 ();
-
+#endif
+  /* LLVM LOCAL end */
+  
   /* This must occur after the loop to output deferred functions.
      Else the coverage initializer would not be emitted if all the
      functions in this compilation unit were deferred.  */

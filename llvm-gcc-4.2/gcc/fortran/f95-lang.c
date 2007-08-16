@@ -175,9 +175,6 @@ void iasm_force_constraint (void);
 void pointer_int_sum (void);
 void decl_constant_value (void);
 void lookup_name (void);
-tree decl_attributes (tree *ARG_UNUSED (tp),
-		      tree ARG_UNUSED (p),
-		      int ARG_UNUSED (s));
 void build_modify_expr (void) { abort (); }
 void iasm_addr (void) { abort (); }
 void iasm_build_bracket (void) { abort (); }
@@ -190,56 +187,7 @@ void iasm_force_constraint (void) { abort (); }
 void pointer_int_sum (void) { abort (); }
 void decl_constant_value (void) { abort (); }
 void lookup_name (void) { abort (); }
-tree decl_attributes (tree *ARG_UNUSED (tp),
-		      tree ARG_UNUSED (p),
-		      int ARG_UNUSED (s))
-{
-  abort ();
-}
 /* APPLE LOCAL end CW asm blocks */
-
-/* APPLE LOCAL begin 4174833 */
-tree objc_is_class_name (tree ARG_UNUSED (arg));
-
-bool objc_method_decl (enum tree_code ARG_UNUSED (opcode));
-bool 
-objc_method_decl (enum tree_code ARG_UNUSED (opcode))
-{
-  return false;
-}
-/* APPLE LOCAL end 4174833 */
-/* APPLE LOCAL begin radar 4441049 */
-tree objc_v2_bitfield_ivar_bitpos (tree);
-
-tree
-objc_v2_bitfield_ivar_bitpos (tree ARG_UNUSED (exp))
-{
-  return 0;
-}
-
-tree objc_v2_component_ref_field_offset (tree);
-
-tree
-objc_v2_component_ref_field_offset (tree ARG_UNUSED (exp))
-{
-  return 0;
-}
-/* APPLE LOCAL end radar 4441049 */ 
-/* APPLE LOCAL begin fariborz 2996215 */
-tree objc_create_init_utf16_var (void);
-tree
-objc_create_init_utf16_var (void)
-{
-  return NULL;
-}
-
-bool objc_anonymous_local_objc_name (const char * ARG_UNUSED (name));
-bool
-objc_anonymous_local_objc_name (const char * ARG_UNUSED (name))
-{
-  return false;
-}
-/* APPLE LOCAL end fariborz 2996215 */
 
 /* A list (chain of TREE_LIST nodes) of all LABEL_DECLs in the function
    that have names.  Here so we can clear out their names' definitions

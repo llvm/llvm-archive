@@ -20,7 +20,10 @@ dependencies) with the "get" script located here. For example:
   ./get llvm-gcc-4-0
 
 which will check out both llvm and llvm-gcc-4-0 because the latter depends on
-the former. 
+the former.  You can check out any number of modules using the "get" script, 
+for example, like this:
+
+  ./get llvm-gcc-4.0 test-suite stacker
 
 
 In addition to checking out software, there are several more scripts in 
@@ -33,16 +36,19 @@ The scripts available are:
   get      - check out modules and their dependencies from subversion
   info     - get subversion information about one or more modules
   update   - update one or more modules
+  options  - specify options once that are "sticky" for all scripts.
 
   build    - configure, compile and link one or more modules
   install  - install one or more modules (presumes build already done)
   clean    - clean (remove build products) one or more modules
 
-The first three scripts just work with subversion.  The last three scripts do 
-not dictate how to build, install or clean the modules; that is up to the 
-modules themselves.  The only thing these scripts depend on is a file named 
-ModuleInfo.txt located in each module's top directory. This file can contain 
-the following definitions:
+
+The first four scripts just work with subversion or llvm-top itself.  The last
+three scripts implement an easier method for building, isntalling and cleaning
+the LLVM modules themselves. However, these three do not dictate how to build, 
+install or clean the modules; that is up to the modules themselves.  The only 
+thing these scripts depend on is a file named ModuleInfo.txt located in each 
+module's top directory. This file can contain the following definitions:
 
   DepModule:  - the list of modules this module depends on 
   BuildCmd:   - a command to build (and configure) the module
@@ -61,7 +67,7 @@ ensure their function is regular. In particular, they all accept the same set
 of arguments. The arguments recognized are listed below in the order they
 are recognized by the scripts:
 
-  VEROBSE={verbosity_level}
+  VERBOSE={verbosity_level}
      This controls how verbose the scripts are in their output. The default
      level is 0 which produces no output unless there's an error. At level 1
      you'll get basic confirmation of the action taken. At level 2 you'll get
@@ -89,7 +95,7 @@ are recognized by the scripts:
      build, install or clean commands.
 
   all
-     This is equivalent to specify all modules in the LLVM subversion 
+     This is equivalent to specifying all modules in the LLVM subversion 
      repository. Careful! All the scripts will check out EVERYTHING in the
      repository. 
 
@@ -111,7 +117,7 @@ choices on the command line:
 
   3. Specify "all" - all modules will be checked out (careful!)
 
-So, for example:
+So, for example, consider:
 
   ./build llvm-gcc-4.0 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
 
@@ -120,7 +126,7 @@ As you might guess, this will do the following:
   1. Check out the llvm-gcc-4.0 module
   2. Check out the core module because llvm-gcc-4.0 depends on core
   3. Check out the support module because core depends on support
-  4. Build the support module in optimized mode and configured to install
+  4. Build the support module in optimized mode and configure it to install
      into /my/install/dir
   5. Build the core module the same way.
   6. Build the llvm-gcc-4.0 module the same way.
@@ -140,12 +146,6 @@ The modules available are:
   hlvm         - High Level Virtual Machine (nascent)
   java         - Java Front End (unfinished, out of date)
   poolalloc    - The pooled allocator from Chris Lattner's thesis
-
-
-You can check out any number of modules using the "get" script, for example,
-like this:
-
-  ./get llvm-gcc-4.0 test-suite stacker
 
 -----------------------------------------------------------------------------
 

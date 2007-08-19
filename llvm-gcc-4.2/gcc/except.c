@@ -255,7 +255,8 @@ struct eh_status GTY(())
 static int t2r_eq (const void *, const void *);
 static hashval_t t2r_hash (const void *);
 static void add_type_for_runtime (tree);
-static tree lookup_type_for_runtime (tree);
+/* LLVM local */
+/* static tree lookup_type_for_runtime (tree); */
 
 static void remove_unreachable_regions (rtx);
 
@@ -561,6 +562,62 @@ set_eh_region_tree_label (struct eh_region *region, tree lab)
 {
   region->tree_label = lab;
 }
+
+/* LLVM local begin */
+int
+classify_eh_handler (struct eh_region *region)
+{
+  switch (region->type)
+    {
+    case ERT_ALLOWED_EXCEPTIONS:
+    case ERT_MUST_NOT_THROW: /* Equivalent to an empty filter */
+      return -1;
+    case ERT_CLEANUP:
+      return 0;
+    case ERT_CATCH:
+      return 1;
+    default:
+      gcc_unreachable();
+    }
+}
+
+struct eh_region *
+get_eh_next_catch (struct eh_region *region)
+{
+  gcc_assert(region->type == ERT_CATCH);
+  return region->u.catch.next_catch;
+}
+
+struct eh_region *
+get_eh_region (unsigned region_number)
+{
+  struct eh_region *region =
+    VEC_index (eh_region, cfun->eh->region_array, region_number);
+
+  if (!region || region->region_number != (int)region_number)
+    return NULL;
+
+  return region;
+}
+
+tree
+get_eh_type_list (struct eh_region *region)
+{
+  switch (region->type)
+    {
+    case ERT_ALLOWED_EXCEPTIONS:
+      return region->u.allowed.type_list;
+    case ERT_CATCH:
+      return region->u.catch.type_list;
+    case ERT_MUST_NOT_THROW:
+      /* Equivalent to an empty filter */
+      return NULL_TREE;
+    default:
+      gcc_unreachable();
+    }
+}
+/* LLVM local end */
+
 
 void
 expand_resx_expr (tree exp)
@@ -1156,7 +1213,8 @@ add_type_for_runtime (tree type)
     }
 }
 
-static tree
+/* LLVM local */
+tree
 lookup_type_for_runtime (tree type)
 {
   tree *slot;

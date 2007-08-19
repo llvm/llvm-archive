@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <map>
 #include <string>
 #include "llvm/Intrinsics.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/LLVMBuilder.h"
@@ -41,6 +42,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #include "llvm.h"
 }
+
+/// Internal gcc structure describing an exception handling region.  Declared
+/// here to avoid including all of except.h.
+struct eh_region;
 
 namespace llvm {
   class Module;
@@ -237,6 +242,8 @@ struct LValue {
   bool isBitfield() const { return BitStart != 255; }
 };
 
+typedef IndexedMap<BasicBlock *> RegionMapType;
+
 /// TreeToLLVM - An instance of this class is created and used to convert the
 /// body of each function to LLVM.
 ///
@@ -258,105 +265,36 @@ class TreeToLLVM {
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
   
-  //===-------------- Exception / Finally Block Handling ------------------===//
-  
-  struct BranchFixup {
-    /// SrcBranch - This is the unconditional branch instruction that we are 
-    /// fixing up.  The destination of the fixup is the dest of the uncond
-    /// branch.
-    BranchInst *SrcBranch;
-    
-    /// isExceptionEdge - True if this fixup is for an exception.  If not for
-    /// an exception, cleanups that only apply to exceptions don't get emitted
-    /// for this fixup.
-    bool isExceptionEdge;
-    
-    BranchFixup(BranchInst *srcBranch, bool IsExceptionEdge)
-      : SrcBranch(srcBranch), isExceptionEdge(IsExceptionEdge) {}
-  };
+  //===---------------------- Exception Handling --------------------------===//
 
-  enum CatchTypes { Unknown = 0, CatchList, FilterExpr };
+  /// LandingPads - The landing pad for a given EH region.
+  RegionMapType LandingPads;
 
-  /// EHScope - One of these scopes is maintained for each TRY_CATCH_EXPR and
-  /// TRY_FINALLY_EXPR blocks that we are currently in.
-  struct EHScope {
-    /// CatchExpr - Contains the cleanup code for a TRY_CATCH_EXPR, and NULL for
-    /// a TRY_FINALLY_EXPR.
-    tree_node *CatchExpr;
-
-    /// UnwindBlock - A basic block in this scope that branches to the unwind
-    /// destination.  This is lazily created by the first invoke in this scope.
-    BasicBlock *UnwindBlock;
-
-    // The basic blocks that are directly in this region.
-    std::vector<BasicBlock*> Blocks;
-
-    /// BranchFixups - This is a list of fixups we need to process in this scope
-    /// or in a parent scope.
-    std::vector<BranchFixup> BranchFixups;
-
-    /// InfosType - The nature of the type infos CatchExpr contains: a list of
-    /// CATCH_EXPR (-> CatchList) or an EH_FILTER_EXPR (-> FilterExpr).  Equal
-    /// to Unknown if type info information has not yet been gathered.
-    CatchTypes InfosType;
-
-    /// TypeInfos - The type infos corresponding to the catches or filter in
-    /// CatchExpr.  If InfosType is Unknown then this information has not yet
-    /// been gathered.
-    std::vector<Constant *> TypeInfos;
-
-    EHScope(tree_node *expr) :
-        CatchExpr(expr), UnwindBlock(0), InfosType(Unknown) {}
-  };
-  
-  /// CurrentEHScopes - The current stack of exception scopes we are
-  /// maintaining.
-  std::vector<EHScope> CurrentEHScopes;
-  void dumpEHScopes() const;
-  
-  /// BlockEHScope - If a block is in an exception scope, it is added to the
-  /// list of blocks maintained by the scope and the scope number is added to
-  /// this map.
-  std::map<BasicBlock*, unsigned> BlockEHScope;
-
-  /// CleanupFilter - Lazily created EH_FILTER_EXPR wrapped in a STATEMENT_LIST
-  /// used to catch exceptions thrown by the finally part of a TRY_FINALLY_EXPR.
-  /// The handler code is specified by the lang_protect_cleanup_actions langhook
-  /// (which returns a call to "terminate" in the case of C++).
-  tree_node *CleanupFilter;
+  /// PostPads - The post landing pad for a given EH region.
+  RegionMapType PostPads;
 
   /// ExceptionValue - Is the local to receive the current exception.
-  /// 
   Value *ExceptionValue;
-  
+
   /// ExceptionSelectorValue - Is the local to receive the current exception
   /// selector.
   Value *ExceptionSelectorValue;
-  
+
   /// FuncEHException - Function used to receive the exception.
-  ///
   Function *FuncEHException;
-  
+
   /// FuncEHSelector - Function used to receive the exception selector.
-  ///
   Function *FuncEHSelector;
-  
+
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
-  ///
   Function *FuncEHGetTypeID;
-  
+
   /// FuncCPPPersonality - Function handling c++ personality.
-  ///
   Value *FuncCPPPersonality;
-  
+
   /// FuncUnwindResume - Function used to continue exception unwinding.
-  ///
   Value *FuncUnwindResume;
-  
-  /// FinallyStack - Stack for nested try exit points.
-  ///
-  std::vector<BasicBlock *> FinallyStack;
-  
+
   /// NumAddressTakenBlocks - Count the number of labels whose addresses are
   /// taken.
   uint64_t NumAddressTakenBlocks;
@@ -453,8 +391,7 @@ private: // Helper functions.
   void EmitStatement(tree_node *stmt);
 
   /// EmitBlock - Add the specified basic block to the end of the function.  If
-  /// the previous block falls through into it, add an explicit branch.  Also,
-  /// manage fixups for EH info.
+  /// the previous block falls through into it, add an explicit branch.
   void EmitBlock(BasicBlock *BB);
   
   /// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
@@ -472,15 +409,29 @@ private: // Helper functions.
   void EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
   void EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, unsigned Align);
 
-  /// EmitBranchInternal - Emit an unconditional branch to the specified basic
-  /// block, running cleanups if the branch exits scopes.  The argument specify
-  /// how to handle these cleanups.
-  void EmitBranchInternal(BasicBlock *Dest, bool IsExceptionEdge);
+  /// EmitLandingPads - Emit EH landing pads.
+  void EmitLandingPads();
 
-  /// AddBranchFixup - Add the specified unconditional branch to the fixup list
-  /// for the outermost exception scope, merging it if there is already a fixup
-  /// that works.
-  void AddBranchFixup(BranchInst *BI, bool isExceptionEdge);
+  /// EmitPostPads - Emit EH post landing pads.
+  void EmitPostPads();
+
+  /// EmitUnwindBlock - Emit the lazily created EH unwind block.
+  void EmitUnwindBlock();
+
+private: // Helpers for exception handling.
+
+  /// CreateExceptionValues - Create values used internally by exception
+  /// handling.
+  void CreateExceptionValues();
+
+  /// getLandingPad - Return the landing pad for the given exception handling
+  /// region, creating it if necessary.
+  BasicBlock *getLandingPad(unsigned RegionNo);
+
+  /// getPostPad - Return the post landing pad for the given exception handling
+  /// region, creating it if necessary.
+  BasicBlock *getPostPad(unsigned RegionNo);
+
 private:
   void EmitAutomaticVariableDecl(tree_node *decl);
   
@@ -494,17 +445,6 @@ private:
   void EmitAnnotateIntrinsic(Value *V, tree_node *decl);
   
 private:
-  /// GatherTypeInfo - Walk through the expression gathering all the
-  /// typeinfos that are used.
-  void GatherTypeInfo(tree_node *exp, std::vector<Constant *> &TypeInfos);
-
-  /// AddLandingPad - Insert code to fetch and save the exception and exception
-  /// selector.
-  void AddLandingPad();
-
-  /// CreateExceptionValues - Create values used internally by exception handling.
-  ///
-  void CreateExceptionValues();
 
   // Emit* - These are delegates from Emit, and have the same parameter
   // characteristics.
@@ -513,20 +453,12 @@ private:
   Value *EmitBIND_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitSTATEMENT_LIST(tree_node *exp, Value *DestLoc);
 
-  // Helpers for exception handling.
-  void   EmitProtectedCleanups(tree_node *cleanups);
-  Value *EmitTryInternal(tree_node *inner, tree_node *handler, bool isCatch);
-
   // Control flow.
   Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);
   Value *EmitRETURN_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitCOND_EXPR(tree_node *exp);
   Value *EmitSWITCH_EXPR(tree_node *exp);
-  Value *EmitTRY_EXPR(tree_node *exp);
-  Value *EmitCATCH_EXPR(tree_node *exp);
-  Value *EmitEXC_PTR_EXPR(tree_node *exp);
-  Value *EmitEH_FILTER_EXPR(tree_node *exp);
 
   // Expressions.
   void   EmitINTEGER_CST_Aggregate(tree_node *exp, Value *DestLoc);
@@ -558,6 +490,11 @@ private:
   Value *EmitFLOOR_MOD_EXPR(tree_node *exp, Value *DestLoc);
   Value *EmitCEIL_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
+
+  // Exception Handling.
+  Value *EmitEXC_PTR_EXPR(tree_node *exp);
+  Value *EmitFILTER_EXPR(tree_node *exp);
+  Value *EmitRESX_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.
   Value *EmitASM_EXPR(tree_node *exp);

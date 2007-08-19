@@ -68,8 +68,6 @@ extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
 
-#define ITANIUM_STYLE_EXCEPTIONS
-
 // Check for GCC bug 17347: C++ FE sometimes creates bogus ctor trees
 // which we should throw out
 #define BOGUS_CTOR(exp)                                                \
@@ -339,8 +337,7 @@ static unsigned int getPointerAlignment(tree exp) {
 //                         ... High-Level Methods ...
 //===----------------------------------------------------------------------===//
 
-/// TheTreeToLLVM - Keep track of the current function being compiled.  This is
-/// only to support the address of labels extension.
+/// TheTreeToLLVM - Keep track of the current function being compiled.
 static TreeToLLVM *TheTreeToLLVM = 0;
 
 const TargetData &getTargetData() {
@@ -365,20 +362,18 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   }
 
   AllocaInsertionPoint = 0;
-  
-  CleanupFilter = NULL_TREE;
+
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
   FuncCPPPersonality = 0;
-  FuncUnwindResume = 0; 
-  
+  FuncUnwindResume = 0;
+
   NumAddressTakenBlocks = 0;
   IndirectGotoBlock = 0;
-  CurrentEHScopes.reserve(16);
-  
+
   assert(TheTreeToLLVM == 0 && "Reentering function creation?");
   TheTreeToLLVM = this;
 }
@@ -733,24 +728,12 @@ Function *TreeToLLVM::FinishFunctionBody() {
   }
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
   Builder.CreateRet(RetVal);
-  
-  // If this function has exceptions, emit the lazily created unwind block.
-  if (UnwindBB) {
-    EmitBlock(UnwindBB);
-#ifdef ITANIUM_STYLE_EXCEPTIONS
-    if (ExceptionValue) {
-      // Fetch and store exception handler.
-      Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-      Builder.CreateCall(FuncUnwindResume, Arg);
-      Builder.CreateUnreachable();
-    } else {
-      new UnwindInst(UnwindBB);
-    }
-#else
-    new UnwindInst(UnwindBB);
-#endif
-  }
-  
+
+  // Emit pending exception handling code.
+  EmitLandingPads();
+  EmitPostPads();
+  EmitUnwindBlock();
+
   // If this function takes the address of a label, emit the indirect goto
   // block.
   if (IndirectGotoBlock) {
@@ -814,16 +797,6 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
     debug_tree(exp);
     abort();
 
-  // FIXME: EH handling trees. Blank right now
-  case FILTER_EXPR:
-  case RESX_EXPR:
-    {
-      const Type *Ty = ConvertType(TREE_TYPE(exp));
-      if (Ty != Type::VoidTy)
-        Result = Constant::getNullValue(Ty);
-    }
-    break;
-        
   // Basic lists and binding scopes
   case BIND_EXPR:      Result = EmitBIND_EXPR(exp, DestLoc); break;
   case STATEMENT_LIST: Result = EmitSTATEMENT_LIST(exp, DestLoc); break;
@@ -834,12 +807,12 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
   case RETURN_EXPR:    Result = EmitRETURN_EXPR(exp, DestLoc); break;
   case COND_EXPR:      Result = EmitCOND_EXPR(exp); break;
   case SWITCH_EXPR:    Result = EmitSWITCH_EXPR(exp); break;
-  case TRY_FINALLY_EXPR:
-  case TRY_CATCH_EXPR: Result = EmitTRY_EXPR(exp); break;
+
+  // Exception handling.
   case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
-  case CATCH_EXPR:     Result = EmitCATCH_EXPR(exp); break;
-  case EH_FILTER_EXPR: Result = EmitEH_FILTER_EXPR(exp); break;
-    
+  case FILTER_EXPR:    Result = EmitFILTER_EXPR(exp); break;
+  case RESX_EXPR:      Result = EmitRESX_EXPR(exp); break;
+
   // Expressions
   case VAR_DECL:
   case PARM_DECL:
@@ -990,6 +963,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
 /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
 /// the address of the result.
 LValue TreeToLLVM::EmitLV(tree exp) {
+  // Needs to be in sync with EmitVIEW_CONVERT_EXPR.
   switch (TREE_CODE(exp)) {
   default:
     std::cerr << "Unhandled lvalue expression!\n";
@@ -1015,6 +989,10 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // Type Conversion.
   case VIEW_CONVERT_EXPR: return EmitLV_VIEW_CONVERT_EXPR(exp);
 
+  // Exception Handling.
+  case EXC_PTR_EXPR:  return EmitLV_EXC_PTR_EXPR(exp);
+  case FILTER_EXPR:   return EmitLV_FILTER_EXPR(exp);
+
   // Trivial Cases.
   case WITH_SIZE_EXPR:
     // The address is the address of the operand.
@@ -1022,10 +1000,6 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case INDIRECT_REF:
     // The lvalue is just the address.
     return Emit(TREE_OPERAND(exp, 0), 0);
-
-  // EH stuff
-  case EXC_PTR_EXPR: return EmitLV_EXC_PTR_EXPR(exp);
-  case FILTER_EXPR: return EmitLV_FILTER_EXPR(exp);
   }
 }
 
@@ -1154,40 +1128,23 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
 }
 
 /// EmitBlock - Add the specified basic block to the end of the function.  If
-/// the previous block falls through into it, add an explicit branch.  Also,
-/// manage fixups for EH info.
+/// the previous block falls through into it, add an explicit branch.
 void TreeToLLVM::EmitBlock(BasicBlock *BB) {
   BasicBlock *CurBB = Builder.GetInsertBlock();
   // If the previous block falls through to BB, add an explicit branch.
   if (CurBB->getTerminator() == 0) {
     // If the previous block has no label and is empty, remove it: it is a
     // post-terminator block.
-    if (CurBB->getName().empty() && CurBB->begin() == CurBB->end()) {
+    if (CurBB->getName().empty() && CurBB->begin() == CurBB->end())
       CurBB->eraseFromParent();
-      
-      if (!CurrentEHScopes.empty()) {
-        assert(CurrentEHScopes.back().Blocks.back() == CurBB);
-        CurrentEHScopes.back().Blocks.pop_back();
-        BlockEHScope.erase(CurBB);
-      }
-    } else {
+    else
       // Otherwise, fall through to this block.
       Builder.CreateBr(BB);
-    }
   }
   
   // Add this block.
   Fn->getBasicBlockList().push_back(BB);
   Builder.SetInsertPoint(BB);  // It is now the current block.
-
-  // If there are no exception scopes that contain this block, exit.  This is
-  // common for C++ code and almost uniformly true for C code.
-  if (CurrentEHScopes.empty()) return;
-  
-  // Otherwise, we now know that this block is in this exception scope.  Update
-  // records.
-  CurrentEHScopes.back().Blocks.push_back(BB);
-  BlockEHScope[BB] = CurrentEHScopes.size()-1;
 }
 
 /// CopyAggregate - Recursively traverse the potientially aggregate src/dest
@@ -1377,92 +1334,6 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
-
-/// EmitBranchInternal - Emit an unconditional branch to the specified basic
-/// block, running cleanups if the branch exits scopes.  The arguments specify
-/// how to handle these cleanups.
-///
-/// This function is used for a variety of control flow purposes. In particular,
-/// it is responsible for determining which cleanups must be executed as a
-/// result of leaving blocks with destructors.  For branches that require
-/// cleanups, it schedules cleanup insertion with a goto_fixup record.  When the
-/// block containing the cleanup is exited, the end-of-block code inserts the
-/// cleanups as indicated by goto_fixups.
-///
-/// Note that some cleanups only apply to exception edges.  If this is an
-/// exception edge (as indicated by IsExceptionEdge) these are expanded,
-/// otherwise not.
-///
-/// Note that all calling code should emit a new basic block after this, so that
-/// future code does not fall after the terminator.
-///
-void TreeToLLVM::EmitBranchInternal(BasicBlock *Dest, bool IsExceptionEdge) {
-  // Insert the branch.
-  BranchInst *BI = Builder.CreateBr(Dest);
-
-  // If there are no current exception scopes, this edge *couldn't* need
-  // cleanups.  It is not possible to jump into a scope that requires a cleanup.
-  // This keeps the C case fast.
-  if (CurrentEHScopes.empty()) return;
-
-  // If the destination block has already been emitted, this is a backwards
-  // branch, and we can resolve it now.
-  if (Dest->getParent()) {
-    // This is a forward reference to a block.  Since we know that we can't jump
-    // INTO a region that has cleanups, we can only be branching out.
-    std::map<BasicBlock*, unsigned>::iterator I = BlockEHScope.find(Dest);
-    if (I != BlockEHScope.end() && I->second == CurrentEHScopes.size() - 1)
-      return;  // Branch within the same EH scope.
-
-    assert((I == BlockEHScope.end() || I->second < CurrentEHScopes.size()) &&
-           "Invalid branch into EH region");
-  }
-
-  AddBranchFixup(BI, IsExceptionEdge);
-}
-
-/// AddBranchFixup - Add the specified unconditional branch to the fixup list
-/// for the outermost exception scope, merging it if there is already a fixup
-/// that works.
-void TreeToLLVM::AddBranchFixup(BranchInst *BI, bool isExceptionEdge) {
-  BasicBlock *Dest = BI->getSuccessor(0);
-
-  // Check to see if we already have a fixup for this destination.
-  std::vector<BranchFixup> &BranchFixups = CurrentEHScopes.back().BranchFixups;
-  for (unsigned i = 0, e = BranchFixups.size(); i != e; ++i)
-    if (BranchFixups[i].SrcBranch->getSuccessor(0) == Dest &&
-        BranchFixups[i].isExceptionEdge == isExceptionEdge) {
-      BranchFixup &Fixup = BranchFixups[i];
-      // We found a fixup for this destination already.  Recycle it.
-      if (&Fixup.SrcBranch->getParent()->front() == Fixup.SrcBranch) {
-        // If the fixup's branch is the only instruction in its block, change
-        // the branch we just emitted to branch to that block instead.
-        BI->setSuccessor(0, Fixup.SrcBranch->getParent());
-        return;
-      }
-      
-      if (&Builder.GetInsertBlock()->front() == BI) {
-        // Otherwise, if this block is empty except for the branch, change the
-        // fixup to jump here and change the fixup to fix this branch.
-        Fixup.SrcBranch->setSuccessor(0, Builder.GetInsertBlock());
-        Fixup.SrcBranch = BI;
-        return;
-      }
-      
-      // Finally, if neither block is empty, create a new (empty) one and
-      // revector BOTH branches to the new block.
-      EmitBlock(new BasicBlock("cleanup"));
-      BranchInst *NewBI = Builder.CreateBr(Dest);
-      BI->setSuccessor(0, Builder.GetInsertBlock());
-      Fixup.SrcBranch->setSuccessor(0, Builder.GetInsertBlock());
-      Fixup.SrcBranch = NewBI;
-      return;
-    }
-  
-  // Otherwise, create a new fixup for this branch so we know that it needs
-  // cleanups when we finish up the scopes that it is in.
-  BranchFixups.push_back(BranchFixup(BI, isExceptionEdge));
-}
 
 // Emits annotate intrinsic if the decl has the annotate attribute set.
 void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
@@ -1772,7 +1643,7 @@ Value *TreeToLLVM::EmitLABEL_EXPR(tree exp) {
 Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
   if (TREE_CODE(TREE_OPERAND(exp, 0)) == LABEL_DECL) {
     // Direct branch.
-    EmitBranchInternal(getLabelDeclBlock(TREE_OPERAND(exp, 0)), false);
+    Builder.CreateBr(getLabelDeclBlock(TREE_OPERAND(exp, 0)));
   } else {
 
     // Otherwise we have an indirect goto.
@@ -1787,7 +1658,7 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
     // There should be one collector block per cleanup level!  Note that
     // standard GCC gets this wrong as well.
     //
-    EmitBranchInternal(DestBB, false);
+    Builder.CreateBr(DestBB);
   }
   EmitBlock(new BasicBlock(""));
   return 0;
@@ -1807,7 +1678,7 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, Value *DestLoc) {
   }
 
   // Emit a branch to the exit label.
-  EmitBranchInternal(ReturnBB, false);
+  Builder.CreateBr(ReturnBB);
   EmitBlock(new BasicBlock(""));
   return 0;
 }
@@ -1829,11 +1700,7 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   //
   // The generic code handles this below, but there is no reason to create a
   // cond branch to two blocks which just contain branches themselves.
-  // Note that we only do this if we're not in the presence of C++ exceptions.
-  // C++ exceptions could require information for the edge, which requires the
-  // uncond branch to be available.
-  if (CurrentEHScopes.empty() && TREE_CODE(Then) == STATEMENT_LIST &&
-      TREE_CODE(Else) == STATEMENT_LIST) {
+  if (TREE_CODE(Then) == STATEMENT_LIST && TREE_CODE(Else) == STATEMENT_LIST) {
     tree_stmt_iterator ThenI = tsi_start(Then), ElseI = tsi_start(Else);
     if (!tsi_end_p(ThenI) && !tsi_end_p(ElseI)) { // {} isn't empty.
       tree ThenStmt = tsi_stmt(ThenI), ElseStmt = tsi_stmt(ElseI);
@@ -1979,164 +1846,25 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   return 0;
 }
 
-#ifndef NDEBUG
-void TreeToLLVM::dumpEHScopes() const {
-  std::cerr << CurrentEHScopes.size() << " EH Scopes:\n";
-  for (unsigned i = 0, e = CurrentEHScopes.size(); i != e; ++i) {
-    std::cerr << "  " << i << ". catch=" << (void*)CurrentEHScopes[i].CatchExpr
-              << " #blocks=" << CurrentEHScopes[i].Blocks.size()
-              << " #fixups=" << CurrentEHScopes[i].BranchFixups.size() << "\n";
-    for (unsigned f = 0, e = CurrentEHScopes[i].BranchFixups.size(); f != e;++f)
-      std::cerr << "    Fixup #" << f << ": isEH="
-                << CurrentEHScopes[i].BranchFixups[f].isExceptionEdge
-                << "  br = " << *CurrentEHScopes[i].BranchFixups[f].SrcBranch;
-  }
-}
-#endif
-
-/// StripLLVMTranslationFn - Recursive function called from walk_trees to
-/// implement StripLLVMTranslation.
-static tree StripLLVMTranslationFn(tree *nodep, int *walk_subtrees,
-                                   void *data) {
-  tree node = *nodep;
-  if (TYPE_P(node)) {
-    // Don't walk into types.
-    *walk_subtrees = 0;
-  } else if (TREE_CODE(node) == STATEMENT_LIST) {
-    // Look for basic block labels, clearing them out.
-    for (tree_stmt_iterator I = tsi_start(node); !tsi_end_p(I); tsi_next(&I))
-      if (TREE_CODE(tsi_stmt(I)) == LABEL_EXPR)
-        SET_DECL_LLVM(TREE_OPERAND(tsi_stmt(I), 0), 0);
-  } else if (TREE_CODE(node) == BIND_EXPR) {
-    // Reset the declarations for local vars.  
-    tree Var = BIND_EXPR_VARS(node);
-    for (; Var; Var = TREE_CHAIN(Var)) {
-      if (TREE_CODE(Var) == VAR_DECL && !TREE_STATIC(Var))
-        SET_DECL_LLVM(Var, 0);
-    }
-  }
-  return NULL_TREE;
-}
-
-
-/// StripLLVMTranslation - Given a block of code, walk it stripping off LLVM
-/// information from declarations.  This permits the code to be expanded into
-/// multiple places in the code without (e.g.) emitting the same LABEL_DECL node
-/// into multiple places.
-static void StripLLVMTranslation(tree code) {
-  // Strip off llvm code.
-  walk_tree_without_duplicates(&code, StripLLVMTranslationFn, 0);
-}
-
-
-/// GatherTypeInfo - Walk through the expression gathering all the
-/// typeinfos that are used.
-void TreeToLLVM::GatherTypeInfo(tree exp,
-                                std::vector<Constant *> &TypeInfos) {
-  if (TREE_CODE(exp) == CATCH_EXPR || TREE_CODE(exp) == EH_FILTER_EXPR) {
-    tree Types = TREE_CODE(exp) == CATCH_EXPR ? CATCH_TYPES(exp)
-                                              : EH_FILTER_TYPES(exp);
-
-    if (!Types) {
-      // Catch all or empty filter.
-      if (TREE_CODE(exp) == CATCH_EXPR)
-        // Catch all.
-        TypeInfos.push_back(
-          Constant::getNullValue(PointerType::get(Type::Int8Ty))
-        );
-    } else if (TREE_CODE(Types) != TREE_LIST) {
-      // Construct typeinfo object.  Each call will produce a new expression
-      // even if duplicate.
-      tree TypeInfoNopExpr = (*lang_eh_runtime_type)(Types);
-      // Produce value.  Duplicate typeinfo get folded here.
-      Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
-      // Capture typeinfo.
-      TypeInfos.push_back(cast<Constant>(TypeInfo));
-    } else {
-      for (; Types; Types = TREE_CHAIN (Types)) {
-        // Construct typeinfo object.  Each call will produce a new expression
-        // even if duplicate.
-        tree TypeInfoNopExpr = (*lang_eh_runtime_type)(TREE_VALUE(Types));
-        // Produce value.  Duplicate typeinfo get folded here.
-        Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
-        // Capture typeinfo.
-        TypeInfos.push_back(cast<Constant>(TypeInfo));
-      }
-    }
-  } else if (TREE_CODE(exp) == STATEMENT_LIST) {
-    // Each statement in the statement list will be a catch, or none will.
-    for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I))
-      GatherTypeInfo(tsi_stmt(I), TypeInfos);
-  } else {
-    assert(TypeInfos.empty() && "Need an exp with typeinfo");
-  }
-}
-
-
-/// AddLandingPad - Insert code to fetch and save the exception and exception
-/// selector.
-void TreeToLLVM::AddLandingPad() {
-  CreateExceptionValues();
-
-  // Fetch and store the exception.
-  Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
-  Builder.CreateStore(Ex, ExceptionValue);
-
-  // Fetch and store the exception selector.
-  std::vector<Value*> Args;
-
-  // The exception and the personality function.
-  Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-  Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
-                            PointerType::get(Type::Int8Ty)));
-
-  for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
-       E = CurrentEHScopes.rend(); I != E; ++I) {
-    if (I->CatchExpr) {
-      if (I->InfosType == Unknown) {
-         // Gather the type info and determine the catch type.
-         GatherTypeInfo(I->CatchExpr, I->TypeInfos);
-         I->InfosType = (TREE_CODE(I->CatchExpr) == STATEMENT_LIST &&
-                         !tsi_end_p(tsi_start(I->CatchExpr)) &&
-                         TREE_CODE(tsi_stmt(tsi_start(I->CatchExpr))) ==
-                         EH_FILTER_EXPR) ? FilterExpr : CatchList;
-      }
-
-      if (I->InfosType == FilterExpr)
-        // Filter - note the size.
-        Args.push_back(ConstantInt::get(Type::Int32Ty, I->TypeInfos.size()));
-
-      Args.reserve(Args.size() + I->TypeInfos.size());
-      for (unsigned j = 0, N = I->TypeInfos.size(); j < N; ++j)
-        Args.push_back(I->TypeInfos[j]);
-    }
-  }
-
-  Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
-                                     "eh_select");
-  Builder.CreateStore(Select, ExceptionSelectorValue);
-}
-
 
 /// CreateExceptionValues - Create values used internally by exception handling.
-///
 void TreeToLLVM::CreateExceptionValues() {
   // Check to see if the exception values have been constructed.
   if (ExceptionValue) return;
-  
+
   ExceptionValue = CreateTemporary(PointerType::get(Type::Int8Ty));
   ExceptionValue->setName("eh_exception");
-  
+
   ExceptionSelectorValue = CreateTemporary(Type::Int32Ty);
   ExceptionSelectorValue->setName("eh_selector");
-  
+
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_selector);
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_typeid_for);
-                                                      
+
   FuncCPPPersonality =
     TheModule->getOrInsertFunction("__gxx_personality_v0",
                                    Type::getPrimitiveType(Type::VoidTyID),
@@ -2150,343 +1878,237 @@ void TreeToLLVM::CreateExceptionValues() {
 
 }
 
+/// getLandingPad - Return the landing pad for the given exception handling
+/// region, creating it if necessary.
+BasicBlock *TreeToLLVM::getLandingPad(unsigned RegionNo) {
+  LandingPads.grow(RegionNo);
+  BasicBlock *&LandingPad = LandingPads[RegionNo];
 
-/// EmitProtectedCleanups - Wrap cleanups in a TRY_FILTER_EXPR that executes the
-/// code specified by lang_protect_cleanup_actions if an exception is thrown.
-void TreeToLLVM::EmitProtectedCleanups(tree cleanups) {
-  if (!lang_protect_cleanup_actions) {
-    Emit(cleanups, 0);
-    return;
-  }
+  if (!LandingPad)
+    LandingPad = new BasicBlock("lpad");
 
-  if (CleanupFilter == NULL_TREE) {
-    // Create a catch-all filter that routes exceptions to the code specified
-    // by the lang_protect_cleanup_actions langhook.
-    // FIXME: the handler is supposed to be a "nothrow region".  Support for
-    // this is blocked on support for nothrow functions.
-    tree filter = build2 (EH_FILTER_EXPR, void_type_node, NULL, NULL);
-    append_to_statement_list (lang_protect_cleanup_actions(),
-                              &EH_FILTER_FAILURE (filter));
-    // CleanupFilter is the filter wrapped in a STATEMENT_LIST.
-    append_to_statement_list (filter, &CleanupFilter);
-  }
-
-  EmitTryInternal(cleanups, CleanupFilter, true);
+  return LandingPad;
 }
 
+/// getPostPad - Return the post landing pad for the given exception handling
+/// region, creating it if necessary.
+BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
+  PostPads.grow(RegionNo);
+  BasicBlock *&PostPad = PostPads[RegionNo];
 
-/// EmitTRY_EXPR - Handle TRY_FINALLY_EXPR and TRY_CATCH_EXPR.
-Value *TreeToLLVM::EmitTRY_EXPR(tree exp) {
-  return EmitTryInternal(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
-                         TREE_CODE(exp) == TRY_CATCH_EXPR);
+  if (!PostPad)
+    PostPad = new BasicBlock("ppad");
+
+  return PostPad;
 }
 
+/// AddHandler - Append the given region to a vector of exception handlers.
+/// A callback passed to foreach_reachable_handler.
+static void AddHandler (struct eh_region *region, void *data) {
+  ((std::vector<struct eh_region *> *)data)->push_back(region);
+}
 
-/// EmitTryInternal - Handle TRY_FINALLY_EXPR and TRY_CATCH_EXPR given only the
-/// expression operands.  Done to avoid having EmitProtectedCleanups build a new
-/// TRY_CATCH_EXPR for every cleanup block it wraps.
-Value *TreeToLLVM::EmitTryInternal(tree inner, tree handler, bool isCatch) {
-  // The C++ front-end produces a lot of TRY_FINALLY_EXPR nodes that have empty
-  // try blocks.  When these are seen, just emit the finally block directly for
-  // a small compile time speedup.
-  if (TREE_CODE(inner) == STATEMENT_LIST && tsi_end_p(tsi_start(inner))) {
-    if (isCatch)
-      return 0;   // TRY_CATCH_EXPR with empty try block: nothing thrown.
+/// EmitLandingPads - Emit EH landing pads.
+void TreeToLLVM::EmitLandingPads() {
+  std::vector<Value*> Args;
+  std::vector<struct eh_region *> Handlers;
 
-    // TRY_FINALLY_EXPR - Just run the finally block.
-    assert(!isCatch);
-    EmitProtectedCleanups(handler);
-    return 0;
-  }  
+  for (unsigned i = 1; i < LandingPads.size(); ++i) {
+    BasicBlock *LandingPad = LandingPads[i];
 
-  // Remember that we are in this scope.
-  CurrentEHScopes.push_back(isCatch ? handler : NULL);
-  
-  Emit(inner, 0);
-  
-  assert(!isCatch || CurrentEHScopes.back().CatchExpr == handler
-         && "Scope imbalance!");
-
-  // Emit a new block for the fall-through of the finally block.
-  BasicBlock *FinallyBlock = new BasicBlock("finally");
-  EmitBlock(FinallyBlock);
-
-  // Get the basic blocks in the current scope.
-  std::vector<BasicBlock*> BlocksInScope;
-  std::swap(CurrentEHScopes.back().Blocks, BlocksInScope);
-  
-  // Get the fixups in the current scope.
-  std::vector<BranchFixup> BranchFixups;
-  std::swap(CurrentEHScopes.back().BranchFixups, BranchFixups);
-  
-  // Remove the current scope.  The state of the function is no longer in this
-  // scope.
-  CurrentEHScopes.pop_back();
-
-  // The finally fall-through block actually goes into the parent EH scope.  We
-  // must emit things in this order so that EmitBlock can choose to nuke the
-  // previous block, and correctly nuke it from the nested scope.
-  if (!CurrentEHScopes.empty()) {
-    CurrentEHScopes.back().Blocks.push_back(FinallyBlock);
-    BlockEHScope[FinallyBlock] = CurrentEHScopes.size()-1;
-  } else {
-    BlockEHScope.erase(FinallyBlock);
-  }
-  
-  // The finally block is not in the inner scope, it's actually in the outer
-  // one.
-  assert(BlocksInScope.back() == FinallyBlock);
-  BlocksInScope.pop_back();
-  
-  // Give the FinallyBlock back a temporary terminator instruction.
-  new UnreachableInst(FinallyBlock);
-
-  // If the try block falls through (i.e. it doesn't end with a return), make
-  // sure to add a fixup on that edge if needed.  If it falls through, EmitBlock
-  // would add a branch from the fall-through source to FinallyBlock, otherwise
-  // there will be no uses of it.
-  if (!FinallyBlock->use_empty()) {
-    BranchInst *BI = cast<BranchInst>(FinallyBlock->use_back());
-    assert(FinallyBlock->hasOneUse() && BI->isUnconditional() &&
-           "Unexpected behavior for EmitBlock");
-    // Add an extra branch fixup for the try fall-through.
-    BranchFixups.push_back(BranchFixup(BI, false));
-  }
-  
-  // Loop over all of the fixups.  If the fixup destination was in the current
-  // scope, then there is nothing to do and the fixup is done.  Remove these.
-  for (unsigned i = 0, e = BranchFixups.size(); i != e; ++i) {
-    BasicBlock *DestBlock = BranchFixups[i].SrcBranch->getSuccessor(0);
-    std::map<BasicBlock*, unsigned>::iterator I = BlockEHScope.find(DestBlock);
-    if (I != BlockEHScope.end() && I->second == CurrentEHScopes.size()) {
-      BranchFixups[i] = BranchFixups.back();
-      BranchFixups.pop_back();
-      --i; --e;
+    if (!LandingPad)
       continue;
-    }
-    
-    // If this is a TRY_CATCH expression and the fixup isn't for an exception
-    // edge, punt the fixup up to the parent scope.
-    if (isCatch && !BranchFixups[i].isExceptionEdge) {
-      // Add the fixup to the parent cleanup scope if there is one.
-      if (!CurrentEHScopes.empty())
-        AddBranchFixup(BranchFixups[i].SrcBranch, false);
-      // Remove the fixup from this scope.
-      BranchFixups[i] = BranchFixups.back();
-      BranchFixups.pop_back();
-      --i; --e;
-      continue;
-    }
-  }
-  
-  // Otherwise, the branch is to some block outside of the scope, which requires
-  // us to emit a copy of the finally code into the codepath.
-  while (!BranchFixups.empty()) {
-    BranchInst *FixupBr = BranchFixups.back().SrcBranch;
-    bool FixupIsExceptionEdge = BranchFixups.back().isExceptionEdge;
-    BranchFixups.pop_back();
-    
-    // Okay, the destination is in a parent to this scope, which means that the
-    // branch fixup corresponds to an exit from this region.  Expand the cleanup
-    // code then patch it into the code sequence.
 
-    // Add a basic block to emit the code into.
-    BasicBlock *CleanupBB = new BasicBlock("cleanup");
-    EmitBlock(CleanupBB);
-    
-    // Provide exit point for cleanup code.
-    FinallyStack.push_back(FinallyBlock);
+    CreateExceptionValues();
 
-    // Emit the code.
-    if (isCatch)
-      switch (TREE_CODE (tsi_stmt (tsi_start (handler)))) {
-      case CATCH_EXPR:
-      case EH_FILTER_EXPR:
-        Emit(handler, 0);
-        break;
-      default:
-        // Wrap the handler in a filter, like for TRY_FINALLY_EXPR, since this
-        // is what tree-eh.c does.
-        EmitProtectedCleanups(handler);
-        break;
+    EmitBlock(LandingPad);
+
+    // Fetch and store the exception.
+    Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
+    Builder.CreateStore(Ex, ExceptionValue);
+
+    // Fetch and store the exception selector.
+
+    // The exception and the personality function.
+    Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
+    Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
+                              PointerType::get(Type::Int8Ty)));
+
+    // Add selections for each handler.
+    foreach_reachable_handler (i, false, AddHandler, &Handlers);
+
+    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+         E = Handlers.end(); I != E; ++I) {
+      struct eh_region *region = *I;
+
+      // Create a post landing pad for the handler.
+      getPostPad(get_eh_region_number(region));
+
+      int RegionKind = classify_eh_handler(region);
+      if (RegionKind < 0) {
+        // Filter - note the length.
+        tree TypeList = get_eh_type_list(region);
+        unsigned Length = list_length(TypeList);
+        Args.reserve(Args.size() + Length + 1);
+        Args.push_back(ConstantInt::get(Type::Int32Ty, Length));
+
+        // Add the type infos.
+        for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
+          tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
+          Args.push_back(Emit(TType, 0));
+        }
+      } else if (RegionKind > 0) {
+        // Catch.
+        tree TypeList = get_eh_type_list(region);
+
+        if (!TypeList) {
+          // Catch-all - push a null pointer.
+          Args.push_back(
+            Constant::getNullValue(PointerType::get(Type::Int8Ty))
+          );
+        } else {
+          // Add the type infos.
+          for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
+            tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
+            Args.push_back(Emit(TType, 0));
+          }
+        }
       }
-    else
-      EmitProtectedCleanups(handler);
-
-    // Clear exit point for cleanup code.
-    FinallyStack.pop_back();
-
-    // Because we can emit the same cleanup in more than one context, we must
-    // strip off LLVM information from the decls in the code.  Otherwise, we
-    // will try to insert the same label into multiple places in the code.
-    StripLLVMTranslation(handler);
-
-
-    // Catches will supply own terminator.
-    if (!Builder.GetInsertBlock()->getTerminator()) {
-      // Emit a branch to the new target.
-      BranchInst *BI = Builder.CreateBr(FixupBr->getSuccessor(0));
-    
-      // The old branch now goes to the cleanup block.
-      FixupBr->setSuccessor(0, CleanupBB);
-    
-      // Fixup this new branch now.
-      FixupBr = BI;
-      
-      // Add the fixup to the next cleanup scope if there is one.
-      if (!CurrentEHScopes.empty())
-        AddBranchFixup(FixupBr, FixupIsExceptionEdge);
-    } else {
-      // The old branch now goes to the cleanup block.
-      FixupBr->setSuccessor(0, CleanupBB);
     }
-  }
 
-  // Move the finally block to the end of the function so we can continue
-  // emitting code into it.
-  Fn->getBasicBlockList().splice(Fn->end(), Fn->getBasicBlockList(),
-                                 FinallyBlock);
-  Builder.SetInsertPoint(FinallyBlock);
-  
-  // Now that all of the cleanup blocks have been expanded, remove the temporary
-  // terminator we put on the FinallyBlock.
-  assert(isa<UnreachableInst>(FinallyBlock->getTerminator()));
-  FinallyBlock->getInstList().pop_back();
-  
-  // Finally, remove the blocks in the scope from the BlockEHScope map.
-  for (unsigned i = 0, e = BlocksInScope.size(); i != e; ++i) {
-    bool Erased = BlockEHScope.erase(BlocksInScope[i]);
-    assert(Erased && "Block wasn't in map!");
+    // Emit the selector call.
+    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
+                                       "eh_select");
+    Builder.CreateStore(Select, ExceptionSelectorValue);
+
+    // Branch to the post landing pad for the first reachable handler.
+    assert(!Handlers.empty() && "Landing pad but no handler?");
+    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
+
+    Handlers.clear();
+    Args.clear();
   }
-  return 0;
 }
 
+/// EmitPostPads - Emit EH post landing pads.
+void TreeToLLVM::EmitPostPads() {
+  std::vector<struct eh_region *> Handlers;
 
-/// EmitCATCH_EXPR - Handle CATCH_EXPR.
-///
-Value *TreeToLLVM::EmitCATCH_EXPR(tree exp) {
-#ifndef ITANIUM_STYLE_EXCEPTIONS
-  return 0;
-#endif
+  for (unsigned i = 1; i < PostPads.size(); ++i) {
+    BasicBlock *PostPad = PostPads[i];
 
-  // Make sure we have all the exception values in place.
-  CreateExceptionValues();
+    if (!PostPad)
+      continue;
 
-  // Break out parts of catch.
-  tree Types = CATCH_TYPES(exp);
-  tree Body = CATCH_BODY(exp);
-  
-  // Destinations of the catch entry conditions.
-  BasicBlock *ThenBlock = 0;
-  BasicBlock *ElseBlock = 0;
-  
-  // FiXME - Determine last case so we don't need to emit test.
-  if (!Types) {
-    // Catch all - no testing required.
-  } else if (TREE_CODE(Types) != TREE_LIST) {
-    // Construct typeinfo object.  Each call will produce a new expression
-    // even if duplicate.
-    tree TypeInfoNopExpr = (*lang_eh_runtime_type)(Types);
-    // Produce value.  Duplicate typeinfo get folded here.
-    Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
-    TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
+    CreateExceptionValues();
 
-    // Call get eh type id.
-    Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TypeInfo,
-                                       "eh_typeid");
-    Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
+    EmitBlock(PostPad);
 
-    // Compare with the exception selector.
-    Value *Compare = Builder.CreateICmpEQ(Select, TypeID, "tmp");
-    ThenBlock = new BasicBlock("eh_then");
-    ElseBlock = new BasicBlock("eh_else");
-    
-    // Branch on the compare.
-    Builder.CreateCondBr(Compare, ThenBlock, ElseBlock);
-  } else {
-    ThenBlock = new BasicBlock("eh_then");
-  
-    for (; Types; Types = TREE_CHAIN (Types)) {
-      if (ElseBlock) EmitBlock(ElseBlock);
-    
-      // Construct typeinfo object.  Each call will produce a new expression
-      // even if duplicate.
-      tree TypeInfoNopExpr = (*lang_eh_runtime_type)(TREE_VALUE(Types));
-      // Produce value.  Duplicate typeinfo get folded here.
-      Value *TypeInfo = Emit(TypeInfoNopExpr, 0);
-      TypeInfo = BitCastToType(TypeInfo, PointerType::get(Type::Int8Ty));
+    struct eh_region *region = get_eh_region(i);
+    BasicBlock *Dest = getLabelDeclBlock(get_eh_region_tree_label(region));
 
-      // Call get eh type id.
-      Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TypeInfo,
-                                         "eh_typeid");
+    int RegionKind = classify_eh_handler(region);
+    if (!RegionKind || !get_eh_type_list(region)) {
+      // Cleanup, catch-all or empty filter - no testing required.
+      Builder.CreateBr(Dest);
+      continue;
+    } else if (RegionKind < 0) {
+      // Filter - the result of a filter selection will be a negative index if
+      // there is a match.
       Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 
-      // Compare with the exception selector.
-      Value *Compare = Builder.CreateICmpEQ(Select, TypeID, "tmp");
-      ElseBlock = new BasicBlock("eh_else");
-      
+      // Compare with the filter action value.
+      Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+      Value *Compare = Builder.CreateICmpSLT(Select, Zero, "tmp");
+
       // Branch on the compare.
-      Builder.CreateCondBr(Compare, ThenBlock, ElseBlock);
+      BasicBlock *NoFilterBB = new BasicBlock("nofilter");
+      Builder.CreateCondBr(Compare, Dest, NoFilterBB);
+      EmitBlock(NoFilterBB);
+    } else if (RegionKind > 0) {
+      // Catch
+      tree TypeList = get_eh_type_list(region);
+
+      Value *Cond = NULL;
+      for (; TypeList; TypeList = TREE_CHAIN (TypeList)) {
+        Value *TType = Emit(lookup_type_for_runtime(TREE_VALUE(TypeList)), 0);
+        TType = BitCastToType(TType, PointerType::get(Type::Int8Ty));
+
+        // Call get eh type id.
+        Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
+        Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
+
+        // Compare with the exception selector.
+        Value *Compare = Builder.CreateICmpEQ(Select, TypeID, "tmp");
+
+        Cond = Cond ? Builder.CreateOr(Cond, Compare, "tmp") : Compare;
+      }
+
+      BasicBlock *NoCatchBB = NULL;
+
+      // If the comparion fails, branch to the next catch that has a
+      // post landing pad.
+      struct eh_region *next_catch = get_eh_next_catch(region);
+      for (; next_catch; next_catch = get_eh_next_catch(next_catch)) {
+        unsigned CatchNo = get_eh_region_number(next_catch);
+
+        if (CatchNo < PostPads.size())
+          NoCatchBB = PostPads[CatchNo];
+
+        if (NoCatchBB)
+          break;
+      }
+
+      if (NoCatchBB) {
+        // Branch on the compare.
+        Builder.CreateCondBr(Cond, Dest, NoCatchBB);
+        continue;
+      }
+
+      // If there is no such catch, execute a RESX if the comparison fails.
+      NoCatchBB = new BasicBlock("nocatch");
+      // Branch on the compare.
+      Builder.CreateCondBr(Cond, Dest, NoCatchBB);
+      EmitBlock(NoCatchBB);
     }
+
+    // Emit a RESX_EXPR which skips handlers with no post landing pad.
+    foreach_reachable_handler (i, true, AddHandler, &Handlers);
+
+    BasicBlock *TargetBB = NULL;
+
+    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+         E = Handlers.end(); I != E; ++I) {
+      unsigned UnwindNo = get_eh_region_number(*I);
+
+      if (UnwindNo < PostPads.size())
+        TargetBB = PostPads[UnwindNo];
+
+      if (TargetBB)
+        break;
+    }
+
+    if (!TargetBB) {
+      if (!UnwindBB)
+        UnwindBB = new BasicBlock("Unwind");
+      TargetBB = UnwindBB;
+    }
+
+    Builder.CreateBr(TargetBB);
+    Handlers.clear();
   }
-  
-  // Start the then block.
-  if (ThenBlock) EmitBlock(ThenBlock);
-  
-  // Emit the body.
-  Emit(Body, 0);
-
-  // Branch to the try exit.
-  assert(!FinallyStack.empty() && "Need an exit point");
-  if (!Builder.GetInsertBlock()->getTerminator())
-    Builder.CreateBr(FinallyStack.back());
-
-  // Start the else block.
-  if (ElseBlock) EmitBlock(ElseBlock);
-  
-  return 0;
 }
 
-/// EmitEXC_PTR_EXPR - Handle EXC_PTR_EXPR.
-///
-Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
-#ifndef ITANIUM_STYLE_EXCEPTIONS
-  return 0;
-#endif
-
-  // Load exception address.
-  CreateExceptionValues();
-  return Builder.CreateLoad(ExceptionValue, "eh_value");
-}
-
-/// EmitEH_FILTER_EXPR - Handle EH_FILTER_EXPR.
-///
-Value *TreeToLLVM::EmitEH_FILTER_EXPR(tree exp) {
-#ifndef ITANIUM_STYLE_EXCEPTIONS
-  return 0;
-#endif
-
-  CreateExceptionValues();
-
-  // The result of a filter landing pad will be a negative index if there is
-  // a match.
-  Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
-
-  // Compare with the filter action value.
-  Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
-  Value *Compare = Builder.CreateICmpSLT(Select, Zero, "tmp");
-  
-  // Branch on the compare.
-  BasicBlock *FilterBB = new BasicBlock("filter");
-  BasicBlock *NoFilterBB = new BasicBlock("nofilter");
-  Builder.CreateCondBr(Compare, FilterBB, NoFilterBB);
-
-  EmitBlock(FilterBB);
-  Emit(EH_FILTER_FAILURE(exp), 0);
-  
-  EmitBlock(NoFilterBB);
-  
-  return 0;
+/// EmitUnwindBlock - Emit the lazily created EH unwind block.
+void TreeToLLVM::EmitUnwindBlock() {
+  if (UnwindBB) {
+    CreateExceptionValues();
+    EmitBlock(UnwindBB);
+    // Fetch and store exception handler.
+    Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
+    Builder.CreateCall(FuncUnwindResume, Arg);
+    Builder.CreateUnreachable();
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -2748,24 +2370,34 @@ namespace {
   };
 }
 
-
 /// EmitCallOf - Emit a call to the specified callee with the operands specified
 /// in the CALL_EXP 'exp'.  If the result of the call is a scalar, return the
 /// result, otherwise store it in DestLoc.
 Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   // Determine if we need to generate an invoke instruction (instead of a simple
   // call) and if so, what the exception destination will be.
-  BasicBlock *UnwindBlock = 0;
-  
-  // Do not turn intrinsic calls or no-throw calls into invokes.
-  if ((!isa<Function>(Callee) || !cast<Function>(Callee)->getIntrinsicID()) &&
-      // Turn calls that throw that are inside of a cleanup scope into invokes.
-      !CurrentEHScopes.empty() && tree_could_throw_p(exp)) {
-    if (UnwindBB == 0)
-      UnwindBB = new BasicBlock("Unwind");
-    UnwindBlock = UnwindBB;
+  BasicBlock *LandingPad = 0;
+  bool NoUnwind = false;
+  // FIXME: set the nounwind attribute if NoUnwind.
+
+  // Do not turn intrinsic calls into invokes.
+  if (!isa<Function>(Callee) || !cast<Function>(Callee)->getIntrinsicID()) {
+    // Do not turn no-throw calls into invokes; mark them as "nounwind".
+    NoUnwind = !tree_could_throw_p(exp);
+
+    if (!NoUnwind) {
+      int RegionNo = lookup_stmt_eh_region(exp);
+
+      if (RegionNo > 0) {
+        if (can_throw_internal_1(RegionNo, false))
+          // Turn the call into an invoke.
+          LandingPad = getLandingPad(RegionNo);
+        else
+          NoUnwind = !can_throw_external_1(RegionNo, false);
+      }
+    }
   }
-  
+
   SmallVector<Value*, 16> CallOperands;
   CallingConv::ID CallingConvention;
   FunctionCallArgumentConversion Client(exp, CallOperands, CallingConvention,
@@ -2837,31 +2469,14 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   }
   
   Value *Call;
-  if (!UnwindBlock) {
+  if (!LandingPad) {
     Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
-    Call = Builder.CreateInvoke(Callee, NextBlock, UnwindBlock,
+    Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
                                 &CallOperands[0], CallOperands.size());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
-
-    // Lazily create an unwind block for this scope, which we can emit a fixup
-    // branch in.
-    if (CurrentEHScopes.back().UnwindBlock == 0) {
-      EmitBlock(CurrentEHScopes.back().UnwindBlock = new BasicBlock("unwind"));
-      
-#ifdef ITANIUM_STYLE_EXCEPTIONS
-      // Add landing pad entry code.
-      AddLandingPad();
-#endif
-      // This branch to the unwind edge should have exception cleanups
-      // inserted onto it.
-      EmitBranchInternal(UnwindBlock, true);
-    }
-
-    cast<InvokeInst>(Call)->setUnwindDest(CurrentEHScopes.back().UnwindBlock);
-    
     EmitBlock(NextBlock);
   }
   
@@ -3103,6 +2718,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
       // This is an aggregate-to-scalar VIEW_CONVERT_EXPR, evaluate, then load.
       CreateTemporary(OpTy);
 
+    // Needs to be in sync with EmitLV.
     switch (TREE_CODE(Op)) {
     default: {
       Value *OpVal = Emit(Op, Target);
@@ -3647,6 +3263,49 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
   
   // Return Quotient unless we overflowed, in which case return Quotient + 1.
   return Builder.CreateAdd(Quotient, CastToUIntType(Overflowed, Ty), "rdiv");
+}
+
+//===----------------------------------------------------------------------===//
+//                        ... Exception Handling ...
+//===----------------------------------------------------------------------===//
+
+
+/// EmitEXC_PTR_EXPR - Handle EXC_PTR_EXPR.
+Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
+  CreateExceptionValues();
+  // Load exception address.
+  return Builder.CreateLoad(ExceptionValue, "eh_value");
+}
+
+/// EmitFILTER_EXPR - Handle FILTER_EXPR.
+Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
+  CreateExceptionValues();
+  // Load exception selector.
+  return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
+}
+
+/// EmitRESX_EXPR - Handle RESX_EXPR.
+Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
+  unsigned RegionNo = TREE_INT_CST_LOW(TREE_OPERAND (exp, 0));
+  std::vector<struct eh_region *> Handlers;
+
+  foreach_reachable_handler (RegionNo, true, AddHandler, &Handlers);
+
+  if (!Handlers.empty()) {
+    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+         E = Handlers.end(); I != E; ++I)
+      // Create a post landing pad for the handler.
+      getPostPad(get_eh_region_number(*I));
+
+    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
+  } else {
+    if (!UnwindBB)
+      UnwindBB = new BasicBlock("Unwind");
+    Builder.CreateBr(UnwindBB);
+  }
+
+  EmitBlock(new BasicBlock(""));
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -5482,42 +5141,14 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
   return LV;
 }
 
-/// EmitLV_EXC_PTR_EXPR - Handle EXC_PTR_EXPR as lvalue.
-///
 LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-
-#ifdef ITANIUM_STYLE_EXCEPTIONS
-  // Create exception values.
   CreateExceptionValues();
-  LValue LV = ExceptionValue;
-#else
-  Value* Tmp = CreateTemporary(PointerType::get(Ty));
-  Tmp->setName("dummy");
-  LValue LV = Tmp;
-#endif
-
-  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
-  return LV;  
+  return ExceptionValue;
 }
 
-/// EmitLV_FILTER_EXPR - Handle FILTER_EXPR as lvalue.
-///
 LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-
-#ifdef ITANIUM_STYLE_EXCEPTIONS
-  // Create exception values.
   CreateExceptionValues();
-  LValue LV = ExceptionSelectorValue;
-#else
-  Value* Tmp = CreateTemporary(PointerType::get(Ty));
-  Tmp->setName("dummy");
-  LValue LV = Tmp;
-#endif
-
-  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
-  return LV;  
+  return ExceptionSelectorValue;
 }
 
 //===----------------------------------------------------------------------===//

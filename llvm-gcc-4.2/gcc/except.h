@@ -117,6 +117,14 @@ extern int lookup_stmt_eh_region_fn (struct function *, tree);
 extern int lookup_stmt_eh_region (tree);
 extern bool verify_eh_edges (tree);
 
+/* LLVM local begin */
+extern int classify_eh_handler (struct eh_region *);
+extern struct eh_region *get_eh_next_catch (struct eh_region *);
+extern struct eh_region *get_eh_region (unsigned);
+extern tree get_eh_type_list (struct eh_region *);
+extern tree lookup_type_for_runtime (tree);
+/* LLVM local end */
+
 /* If non-NULL, this is a function that returns an expression to be
    executed if an unhandled exception is propagated out of a cleanup
    region.  For example, in C++, an exception thrown by a destructor

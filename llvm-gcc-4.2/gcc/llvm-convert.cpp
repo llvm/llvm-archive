@@ -382,6 +382,22 @@ TreeToLLVM::~TreeToLLVM() {
   TheTreeToLLVM = 0;
 }
 
+/// getLabelDeclBlock - Lazily get and create a basic block for the specified
+/// label.
+static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
+  assert(TREE_CODE(LabelDecl) == LABEL_DECL && "Isn't a label!?");
+  if (DECL_LLVM_SET_P(LabelDecl))
+    return cast<BasicBlock>(DECL_LLVM(LabelDecl));
+
+  const char *Name = "bb";
+  if (DECL_NAME(LabelDecl))
+    Name = IDENTIFIER_POINTER(DECL_NAME(LabelDecl));
+
+  BasicBlock *NewBB = new BasicBlock(Name);
+  SET_DECL_LLVM(LabelDecl, NewBB);
+  return NewBB;
+}
+
 namespace {
   /// FunctionPrologArgumentConversion - This helper class is driven by the ABI
   /// definition for this target to figure out how to retrieve arguments from
@@ -757,15 +773,23 @@ Function *TreeToLLVM::EmitFunction() {
   // Set up parameters and prepare for return, for the function.
   StartFunctionBody();
 
-  // Drop all fallthru edges, make explicit jumps
-  disband_implicit_edges();
- 
   // Emit the body of the function iterating over all BBs
   basic_block bb;
-  FOR_EACH_BB (bb)
+  edge e;
+  edge_iterator ei;
+  FOR_EACH_BB (bb) {
     for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
          bsi_next (&bsi))
       EmitStatement(bsi_stmt (bsi));
+
+    FOR_EACH_EDGE (e, ei, bb->succs)
+      if (e->flags & EDGE_FALLTHRU)
+        break;
+    if (e && e->dest != bb->next_bb) {
+      Builder.CreateBr(getLabelDeclBlock(tree_block_label (e->dest)));
+      EmitBlock(new BasicBlock(""));
+    }
+  }
  
   // Wrap things up.
   return FinishFunctionBody();
@@ -1616,22 +1640,6 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 //===----------------------------------------------------------------------===//
 //                           ... Control Flow ...
 //===----------------------------------------------------------------------===//
-
-/// getLabelDeclBlock - Lazily get and create a basic block for the specified
-/// label.
-static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
-  assert(TREE_CODE(LabelDecl) == LABEL_DECL && "Isn't a label!?");
-  if (DECL_LLVM_SET_P(LabelDecl))
-    return cast<BasicBlock>(DECL_LLVM(LabelDecl));
-
-  const char *Name = "bb";
-  if (DECL_NAME(LabelDecl))
-    Name = IDENTIFIER_POINTER(DECL_NAME(LabelDecl));
-  
-  BasicBlock *NewBB = new BasicBlock(Name);
-  SET_DECL_LLVM(LabelDecl, NewBB);
-  return NewBB;
-}
 
 /// EmitLABEL_EXPR - Emit the basic block corresponding to the specified label.
 ///

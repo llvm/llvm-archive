@@ -387,9 +387,6 @@ private: // Helper functions.
   /// DestLoc.
   Value *Emit(tree_node *exp, Value *DestLoc);
 
-  /// EmitStatement - Convert the specified statement to LLVM code.
-  void EmitStatement(tree_node *stmt);
-
   /// EmitBlock - Add the specified basic block to the end of the function.  If
   /// the previous block falls through into it, add an explicit branch.
   void EmitBlock(BasicBlock *BB);
@@ -449,10 +446,6 @@ private:
   // Emit* - These are delegates from Emit, and have the same parameter
   // characteristics.
     
-  // Basic lists and binding scopes.
-  Value *EmitBIND_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitSTATEMENT_LIST(tree_node *exp, Value *DestLoc);
-
   // Control flow.
   Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);

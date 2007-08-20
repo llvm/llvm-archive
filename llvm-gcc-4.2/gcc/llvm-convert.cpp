@@ -779,8 +779,18 @@ Function *TreeToLLVM::EmitFunction() {
   edge_iterator ei;
   FOR_EACH_BB (bb) {
     for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
-         bsi_next (&bsi))
-      EmitStatement(bsi_stmt (bsi));
+         bsi_next (&bsi)) {
+      tree stmt = bsi_stmt (bsi);
+      Value *DestLoc = 0;
+
+      // If this stmt returns an aggregate value (e.g. a call whose result is
+      // ignored), create a temporary to receive the value.  Note that we don't
+      // do this for MODIFY_EXPRs as an efficiency hack.
+      if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
+        DestLoc = CreateTemporary(ConvertType(TREE_TYPE(stmt)));
+
+      Emit(stmt, DestLoc);
+    }
 
     FOR_EACH_EDGE (e, ei, bb->succs)
       if (e->flags & EDGE_FALLTHRU)
@@ -808,10 +818,6 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
       TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
       TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
     }
-  
-    // These node create an artificial jump to end of block.  
-    if (TREE_CODE(exp) != BIND_EXPR && TREE_CODE(exp) != STATEMENT_LIST)
-      TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
   }
   
   switch (TREE_CODE(exp)) {
@@ -820,10 +826,6 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
               << "TREE_CODE: " << TREE_CODE(exp) << "\n";
     debug_tree(exp);
     abort();
-
-  // Basic lists and binding scopes
-  case BIND_EXPR:      Result = EmitBIND_EXPR(exp, DestLoc); break;
-  case STATEMENT_LIST: Result = EmitSTATEMENT_LIST(exp, DestLoc); break;
 
   // Control flow
   case LABEL_EXPR:     Result = EmitLABEL_EXPR(exp); break;
@@ -1532,71 +1534,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
                                 Builder.GetInsertBlock());
     }
   }
-}
-
-Value *TreeToLLVM::EmitBIND_EXPR(tree exp, Value *DestLoc) {
-  // Start region only if not top level.
-  if (TheDebugInfo && DECL_SAVED_TREE(FnDecl) != exp) 
-    TheDebugInfo->EmitRegionStart(Fn, Builder.GetInsertBlock());
-  
-  // Mark the corresponding BLOCK for output in its proper place.
-  if (BIND_EXPR_BLOCK(exp) != 0 && !TREE_USED(BIND_EXPR_BLOCK(exp)))
-    TREE_USED(BIND_EXPR_BLOCK(exp)) = 1;
-  //lang_hooks.decls.insert_block(BIND_EXPR_BLOCK(exp));
-
-  // If VARS have not yet been expanded, expand them now.
-  tree Var = BIND_EXPR_VARS(exp);
-  for (; Var; Var = TREE_CHAIN(Var)) {
-    if (TREE_STATIC(Var)) {
-      // If this is an inlined copy of a static local variable, look up the
-      // original.
-      tree RealVar = DECL_ORIGIN(Var);
-      
-      // If we haven't already emitted the var, do so now.
-      if (!TREE_ASM_WRITTEN(RealVar) && !lang_hooks.expand_decl(RealVar) &&
-          TREE_CODE (Var) == VAR_DECL)
-        rest_of_decl_compilation(RealVar, 0, 0);
-      continue;
-    }
-
-    // Otherwise, if this is an automatic variable that hasn't been emitted, do
-    // so now.
-    if (!DECL_LLVM_SET_P(Var))
-      EmitAutomaticVariableDecl(Var);
-  }
-
-  // Finally, emit the body of the bind expression.
-  Value *Result = Emit(BIND_EXPR_BODY(exp), DestLoc);
-
-  TREE_USED(exp) = 1;
-
-  // End region only if not top level.
-  if (TheDebugInfo && DECL_SAVED_TREE(FnDecl) != exp) 
-    TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
-
-  return Result;
-}
-
-void TreeToLLVM::EmitStatement(tree stmt) {
-  Value *DestLoc = 0;
-  
-  // If this stmt returns an aggregate value (e.g. a call whose result is
-  // ignored), create a temporary to receive the value.  Note that we don't
-  // do this for MODIFY_EXPRs as an efficiency hack.
-  if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt) != MODIFY_EXPR)
-    DestLoc = CreateTemporary(ConvertType(TREE_TYPE(stmt)));
-
-  Emit(stmt, DestLoc);
-}
-
-Value *TreeToLLVM::EmitSTATEMENT_LIST(tree exp, Value *DestLoc) {
-  assert(DestLoc == 0 && "Does not return a value!");
-
-  // Convert each statement.
-  for (tree_stmt_iterator I = tsi_start(exp); !tsi_end_p(I); tsi_next(&I))
-    EmitStatement(tsi_stmt(I));
-
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//

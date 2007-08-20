@@ -1698,82 +1698,16 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   if (Cond->getType() != Type::Int1Ty)
     Cond = Builder.CreateICmpNE(Cond, Constant::getNullValue(Cond->getType()),
                                 "toBool");
+
   tree Then = COND_EXPR_THEN(exp);
   tree Else = COND_EXPR_ELSE(exp);
+  assert(TREE_CODE(Then) == GOTO_EXPR && TREE_CODE(Else) == GOTO_EXPR
+         && "Not a gimple if?");
 
-  // One extremely common pattern produced by the loop lowering code are 
-  // COND_EXPRS that look like:
-  //
-  //    if (cond) { goto <D905>; } else { goto <D907>; }
-  //
-  // The generic code handles this below, but there is no reason to create a
-  // cond branch to two blocks which just contain branches themselves.
-  if (TREE_CODE(Then) == STATEMENT_LIST && TREE_CODE(Else) == STATEMENT_LIST) {
-    tree_stmt_iterator ThenI = tsi_start(Then), ElseI = tsi_start(Else);
-    if (!tsi_end_p(ThenI) && !tsi_end_p(ElseI)) { // {} isn't empty.
-      tree ThenStmt = tsi_stmt(ThenI), ElseStmt = tsi_stmt(ElseI);
-      tsi_next(&ThenI);
-      tsi_next(&ElseI);
-      
-      if (TREE_CODE(ThenStmt) == GOTO_EXPR &&      // Found two uncond gotos.
-          TREE_CODE(ElseStmt) == GOTO_EXPR &&
-          tsi_end_p(ThenI) && tsi_end_p(ElseI) &&  // Nothing after them.
-          TREE_CODE(TREE_OPERAND(ThenStmt, 0)) == LABEL_DECL &&// Not goto *p.
-          TREE_CODE(TREE_OPERAND(ElseStmt, 0)) == LABEL_DECL) {
-        BasicBlock *ThenDest = getLabelDeclBlock(TREE_OPERAND(ThenStmt, 0));
-        BasicBlock *ElseDest = getLabelDeclBlock(TREE_OPERAND(ElseStmt, 0));
-        
-        // Okay, we have success. Output the conditional branch.
-        Builder.CreateCondBr(Cond, ThenDest, ElseDest);
-        // Emit a "fallthrough" block, which is almost certainly dead.
-        EmitBlock(new BasicBlock(""));
-        return 0;
-      }
-    }
-  }
-  
-  BasicBlock *TrueBlock = new BasicBlock("cond_true");
-  BasicBlock *FalseBlock;
-  BasicBlock *ContBlock = new BasicBlock("cond_next");
-  
-  // Another extremely common case we want to handle are if/then blocks with
-  // no else.  The gimplifier turns these into:
-  //
-  //  if (cond) { goto <D905>; } else { }
-  //
-  // Recognize when the else is an empty STATEMENT_LIST, and don't emit the
-  // else if so.
-  //
-  bool HasEmptyElse =
-    TREE_CODE(Else) == STATEMENT_LIST && tsi_end_p(tsi_start(Else));
-
-  if (HasEmptyElse)
-    FalseBlock = ContBlock;
-  else
-    FalseBlock = new BasicBlock("cond_false");
-
-  // Emit the branch based on the condition.
-  Builder.CreateCondBr(Cond, TrueBlock, FalseBlock);
-  
-  // Emit the true code.
-  EmitBlock(TrueBlock);
-  
-  Emit(Then, 0);
-  
-  // If this is an if/then/else cond-expr, emit the else part, otherwise, just
-  // fall through to the ContBlock.
-  if (!HasEmptyElse) {
-    if (Builder.GetInsertBlock()->getTerminator() == 0 &&
-        (!Builder.GetInsertBlock()->getName().empty() || 
-         !Builder.GetInsertBlock()->use_empty()))
-      Builder.CreateBr(ContBlock);  // Branch to continue block.
-
-    EmitBlock(FalseBlock);
-    
-    Emit(Else, 0);
-  }
-  
-  EmitBlock(ContBlock);
+  BasicBlock *ThenDest = getLabelDeclBlock(TREE_OPERAND(Then, 0));
+  BasicBlock *ElseDest = getLabelDeclBlock(TREE_OPERAND(Else, 0));
+  Builder.CreateCondBr(Cond, ThenDest, ElseDest);
+  EmitBlock(new BasicBlock(""));
   return 0;
 }
 

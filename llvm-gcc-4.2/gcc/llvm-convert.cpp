@@ -818,6 +818,8 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
       TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
       TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
     }
+
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
   }
   
   switch (TREE_CODE(exp)) {

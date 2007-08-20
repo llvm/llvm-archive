@@ -962,10 +962,7 @@ Value *TreeToLLVM::Emit(tree exp, Value *DestLoc) {
     
   // Constant Expressions
   case INTEGER_CST:
-    if (!DestLoc)
-      Result = TreeConstantToLLVM::ConvertINTEGER_CST(exp);
-    else
-      EmitINTEGER_CST_Aggregate(exp, DestLoc);
+    Result = TreeConstantToLLVM::ConvertINTEGER_CST(exp);
     break;
   case REAL_CST:
     Result = TreeConstantToLLVM::ConvertREAL_CST(exp);
@@ -1993,23 +1990,6 @@ void TreeToLLVM::EmitUnwindBlock() {
 //===----------------------------------------------------------------------===//
 //                           ... Expressions ...
 //===----------------------------------------------------------------------===//
-
-/// EmitINTEGER_CST_Aggregate - The C++ front-end abuses INTEGER_CST nodes to
-/// represent empty classes.  For now we check that this is the case we handle,
-/// then zero out DestLoc.
-///
-/// FIXME: When merged with mainline, remove this code.  The C++ front-end has
-/// been fixed.
-///
-void TreeToLLVM::EmitINTEGER_CST_Aggregate(tree exp, Value *DestLoc) {
-  tree type = TREE_TYPE(exp);
-#ifndef NDEBUG
-  assert(TREE_CODE(type) == RECORD_TYPE && "Not an empty class!");
-  for (tree F = TYPE_FIELDS(type); F; F = TREE_CHAIN(F))
-    assert(TREE_CODE(F) != FIELD_DECL && "Not an empty struct/class!");
-#endif
-  EmitAggregateZero(DestLoc, type);
-}
 
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
 /// requires an r-value, this method emits the lvalue computation, then loads

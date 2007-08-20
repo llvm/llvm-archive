@@ -454,7 +454,6 @@ private:
   Value *EmitSWITCH_EXPR(tree_node *exp);
 
   // Expressions.
-  void   EmitINTEGER_CST_Aggregate(tree_node *exp, Value *DestLoc);
   Value *EmitLoadOfLValue(tree_node *exp, Value *DestLoc);
   Value *EmitOBJ_TYPE_REF(tree_node *exp, Value *DestLoc);
   Value *EmitADDR_EXPR(tree_node *exp);

@@ -2983,13 +2983,14 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
              && Ekind (Etype (gnat_desig_full)) == E_Record_Type)
 	  gnat_desig_full = Etype (gnat_desig_full);
 
+/* LLVM local begin gcc 125602 */
 	/* If we are pointing to an incomplete type whose completion is an
-	   unconstrained array, make a fat pointer type instead of a pointer
-	   to VOID.  The two types in our fields will be pointers to VOID and
-	   will be replaced in update_pointer_to.  Similarly, if the type
-	   itself is a dummy type or an unconstrained array.  Also make
-	   a dummy TYPE_OBJECT_RECORD_TYPE in case we have any thin
-	   pointers to it.  */
+	   unconstrained array, make a fat pointer type.  The two types in our
+	   fields will be pointers to dummy nodes and will be replaced in
+	   update_pointer_to.  Similarly, if the type itself is a dummy type or
+	   an unconstrained array.  Also make a dummy TYPE_OBJECT_RECORD_TYPE
+	   in case we have any thin pointers to it.  */
+/* LLVM local end gcc 125602 */
 
 	if ((Present (gnat_desig_full)
 	     && Is_Array_Type (gnat_desig_full)
@@ -3026,6 +3027,23 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
 	    gnu_type = TYPE_POINTER_TO (gnu_old);
 	    if (!gnu_type)
 	      {
+/* LLVM local begin gcc 125602 */
+		tree gnu_template_type = make_node (ENUMERAL_TYPE);
+		tree gnu_ptr_template = build_pointer_type (gnu_template_type);
+		tree gnu_array_type = make_node (ENUMERAL_TYPE);
+		tree gnu_ptr_array = build_pointer_type (gnu_array_type);
+
+		TYPE_NAME (gnu_template_type)
+		  = concat_id_with_name (get_entity_name (gnat_desig_type),
+					 "XUB");
+		TYPE_DUMMY_P (gnu_template_type) = 1;
+
+		TYPE_NAME (gnu_array_type)
+		  = concat_id_with_name (get_entity_name (gnat_desig_type),
+					 "XUA");
+		TYPE_DUMMY_P (gnu_array_type) = 1;
+
+/* LLVM local end gcc 125602 */
 		gnu_type = make_node (RECORD_TYPE);
 		SET_TYPE_UNCONSTRAINED_ARRAY (gnu_type, gnu_old);
 		TYPE_POINTER_TO (gnu_old) = gnu_type;
@@ -3035,10 +3053,13 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
 		  = chainon (chainon (NULL_TREE,
 				      create_field_decl
 				      (get_identifier ("P_ARRAY"),
-				       ptr_void_type_node, gnu_type,
-				       0, 0, 0, 0)),
+/* LLVM local begin gcc 125602 */
+				       gnu_ptr_array,
+				       gnu_type, 0, 0, 0, 0)),
+/* LLVM local end gcc 125602 */
 			     create_field_decl (get_identifier ("P_BOUNDS"),
-						ptr_void_type_node,
+/* LLVM local gcc 125602 */
+						gnu_ptr_template,
 						gnu_type, 0, 0, 0, 0));
 
 		/* Make sure we can place this into a register.  */

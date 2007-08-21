@@ -2630,71 +2630,69 @@ update_pointer_to (tree old_type, tree new_type)
 	  TREE_TYPE (ref1) = new_type;
     }
 
+/* LLVM local begin gcc 125602 */
   /* Now deal with the unconstrained array case. In this case the "pointer"
-     is actually a RECORD_TYPE where the types of both fields are
-     pointers to void.  In that case, copy the field list from the
-     old type to the new one and update the fields' context. */
+     is actually a RECORD_TYPE where both fields are pointers to dummy nodes.
+     Turn them into pointers to the correct types using update_pointer_to.  */
+/* LLVM local end gcc 125602 */
   else if (TREE_CODE (ptr) != RECORD_TYPE || !TYPE_IS_FAT_POINTER_P (ptr))
     gcc_unreachable ();
 
   else
     {
       tree new_obj_rec = TYPE_OBJECT_RECORD_TYPE (new_type);
-      tree ptr_temp_type;
+/* LLVM local begin gcc 125602 */
+      tree array_field = TYPE_FIELDS (ptr);
+      tree bounds_field = TREE_CHAIN (TYPE_FIELDS (ptr));
+      tree new_ptr = TYPE_POINTER_TO (new_type);
       tree new_ref;
       tree var;
 
-      SET_DECL_ORIGINAL_FIELD (TYPE_FIELDS (ptr),
-			       TYPE_FIELDS (TYPE_POINTER_TO (new_type)));
-      SET_DECL_ORIGINAL_FIELD (TREE_CHAIN (TYPE_FIELDS (ptr)),
-			       TREE_CHAIN (TYPE_FIELDS
-					   (TYPE_POINTER_TO (new_type))));
-
-      TYPE_FIELDS (ptr) = TYPE_FIELDS (TYPE_POINTER_TO (new_type));
-      DECL_CONTEXT (TYPE_FIELDS (ptr)) = ptr;
-      DECL_CONTEXT (TREE_CHAIN (TYPE_FIELDS (ptr))) = ptr;
-
-      /* Rework the PLACEHOLDER_EXPR inside the reference to the
-	 template bounds.
-
-	 ??? This is now the only use of gnat_substitute_in_type, which
-	 is now a very "heavy" routine to do this, so it should be replaced
-	 at some point.  */
-      ptr_temp_type = TREE_TYPE (TREE_CHAIN (TYPE_FIELDS (ptr)));
-      new_ref = build3 (COMPONENT_REF, ptr_temp_type,
-			build0 (PLACEHOLDER_EXPR, ptr),
-			TREE_CHAIN (TYPE_FIELDS (ptr)), NULL_TREE);
-
+      /* Make pointers to the dummy template point to the real template.  */
       update_pointer_to
-	(TREE_TYPE (TREE_TYPE (TYPE_FIELDS (ptr))),
-	 gnat_substitute_in_type (TREE_TYPE (TREE_TYPE (TYPE_FIELDS (ptr))),
-				  TREE_CHAIN (TYPE_FIELDS (ptr)), new_ref));
+	(TREE_TYPE (TREE_TYPE (bounds_field)),
+	 TREE_TYPE (TREE_TYPE (TREE_CHAIN (TYPE_FIELDS (new_ptr)))));
 
-      for (var = TYPE_MAIN_VARIANT (ptr); var; var = TYPE_NEXT_VARIANT (var))
-	{
-	  SET_TYPE_UNCONSTRAINED_ARRAY (var, new_type);
+      /* The references to the template bounds present in the array type
+	 are made through a PLACEHOLDER_EXPR of type new_ptr.  Since we
+	 are updating ptr to make it a full replacement for new_ptr as
+	 pointer to new_type, we must rework the PLACEHOLDER_EXPR so as
+	 to make it of type ptr.  */
+      new_ref = build3 (COMPONENT_REF, TREE_TYPE (bounds_field),
+			build0 (PLACEHOLDER_EXPR, ptr),
+			bounds_field, NULL_TREE);
 
-	  /* This may seem a bit gross, in particular wrt DECL_CONTEXT, but
-	     actually is in keeping with what build_qualified_type does.  */
-	  TYPE_FIELDS (var) = TYPE_FIELDS (ptr);
-	}
+      /* Create the new array for the new PLACEHOLDER_EXPR and make
+	 pointers to the dummy array point to it.
 
+	 ??? This is now the only use of gnat_substitute_in_type,
+	 which is a very "heavy" routine to do this, so it
+	 should be replaced at some point.  */
+      update_pointer_to
+	(TREE_TYPE (TREE_TYPE (array_field)),
+	 gnat_substitute_in_type (TREE_TYPE (TREE_TYPE (TYPE_FIELDS (new_ptr))),
+				  TREE_CHAIN (TYPE_FIELDS (new_ptr)), new_ref));
+
+      /* Make ptr the pointer to new_type.  */
       TYPE_POINTER_TO (new_type) = TYPE_REFERENCE_TO (new_type)
 	= TREE_TYPE (new_type) = ptr;
 
+      for (var = TYPE_MAIN_VARIANT (ptr); var; var = TYPE_NEXT_VARIANT (var))
+	SET_TYPE_UNCONSTRAINED_ARRAY (var, new_type);
+
       /* Now handle updating the allocation record, what the thin pointer
 	 points to.  Update all pointers from the old record into the new
-	 one, update the types of the fields, and recompute the size.  */
-
+	 one, update the type of the array field, and recompute the size.  */
       update_pointer_to (TYPE_OBJECT_RECORD_TYPE (old_type), new_obj_rec);
 
-      TREE_TYPE (TYPE_FIELDS (new_obj_rec)) = TREE_TYPE (ptr_temp_type);
       TREE_TYPE (TREE_CHAIN (TYPE_FIELDS (new_obj_rec)))
-	= TREE_TYPE (TREE_TYPE (TYPE_FIELDS (ptr)));
+	= TREE_TYPE (TREE_TYPE (array_field));
+
       DECL_SIZE (TREE_CHAIN (TYPE_FIELDS (new_obj_rec)))
-	= TYPE_SIZE (TREE_TYPE (TREE_TYPE (TYPE_FIELDS (ptr))));
+	= TYPE_SIZE (TREE_TYPE (TREE_TYPE (array_field)));
       DECL_SIZE_UNIT (TREE_CHAIN (TYPE_FIELDS (new_obj_rec)))
-	= TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (TYPE_FIELDS (ptr))));
+	= TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (array_field)));
+/* LLVM local end gcc 125602 */
 
       TYPE_SIZE (new_obj_rec)
 	= size_binop (PLUS_EXPR,

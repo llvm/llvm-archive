@@ -325,6 +325,17 @@ tree_node *arrayLength(tree_node *type) {
   return size_binop (PLUS_EXPR, length, size_one_node);
 }
 
+/// refine_type_to - Cause all users of the opaque type old_type to switch
+/// to the more concrete type new_type.
+void refine_type_to(tree old_type, tree new_type)
+{
+  const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(old_type));
+  if (OldTy) {
+    const Type *NewTy = ConvertType (new_type);
+    const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(NewTy);
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                     Abstract Type Refinement Helpers

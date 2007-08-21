@@ -2562,7 +2562,13 @@ build_unc_object_type_from_ptr (tree thin_fat_ptr_type, tree object_type,
        : TREE_TYPE (TYPE_FIELDS (TREE_TYPE (thin_fat_ptr_type))));
   return build_unc_object_type (template_type, object_type, name);
 }
-
+
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#include "llvm.h"
+#endif
+/* LLVM LOCAL end */
+
 /* Update anything previously pointing to OLD_TYPE to point to NEW_TYPE.  In
    the normal case this is just two adjustments, but we have more to do
    if NEW is an UNCONSTRAINED_ARRAY_TYPE.  */
@@ -2704,6 +2710,12 @@ update_pointer_to (tree old_type, tree new_type)
 		      DECL_SIZE_UNIT (TREE_CHAIN (TYPE_FIELDS (new_obj_rec))));
       rest_of_type_compilation (ptr, global_bindings_p ());
     }
+
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  refine_type_to (old_type, new_type);
+#endif
+/* LLVM LOCAL end */
 }
 
 /* Convert a pointer to a constrained array into a pointer to a fat

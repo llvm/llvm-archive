@@ -1008,8 +1008,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
 
   // Constants.
-  case LABEL_DECL:    return TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-  case STRING_CST:    return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
+  case LABEL_DECL:   return TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
+  case COMPLEX_CST:  return LValue(TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp));
+  case STRING_CST:   return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
 
   // Type Conversion.
   case VIEW_CONVERT_EXPR: return EmitLV_VIEW_CONVERT_EXPR(exp);
@@ -5756,6 +5757,7 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
   case CONST_DECL:
   case VAR_DECL:      return EmitLV_Decl(exp);
   case LABEL_DECL:    return EmitLV_LABEL_DECL(exp);
+  case COMPLEX_CST:   return EmitLV_COMPLEX_CST(exp);
   case STRING_CST:    return EmitLV_STRING_CST(exp);
   case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
   case ARRAY_RANGE_REF:
@@ -5815,6 +5817,22 @@ Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
   BasicBlock *BB = getLabelDeclBlock(exp);
   Constant *C = TheTreeToLLVM->getIndirectGotoBlockNumber(BB);
   return ConstantExpr::getIntToPtr(C, PointerType::get(Type::Int8Ty));
+}
+
+Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
+  Constant *Init = TreeConstantToLLVM::ConvertCOMPLEX_CST(exp);
+
+  // Cache the constants to avoid making obvious duplicates that have to be
+  // folded by the optimizer.
+  static std::map<Constant*, GlobalVariable*> ComplexCSTCache;
+  GlobalVariable *&Slot = ComplexCSTCache[Init];
+  if (Slot) return Slot;
+
+  // Create a new complex global.
+  Slot = new GlobalVariable(Init->getType(), true,
+                            GlobalVariable::InternalLinkage,
+                            Init, ".cpx", TheModule);
+  return Slot;
 }
 
 Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {

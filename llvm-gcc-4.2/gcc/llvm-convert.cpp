@@ -3849,13 +3849,19 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctlz); 
+    const Type *DestTy = ConvertType(TREE_TYPE(exp));
+    if (Result->getType() != DestTy)
+      Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz);
+    const Type *DestTy = ConvertType(TREE_TYPE(exp));
+    if (Result->getType() != DestTy)
+      Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_PARITYLL:
@@ -3872,6 +3878,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_POPCOUNTLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
+    const Type *DestTy = ConvertType(TREE_TYPE(exp));
+    if (Result->getType() != DestTy)
+      Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_SQRT: 

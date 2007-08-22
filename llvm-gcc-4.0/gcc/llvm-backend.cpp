@@ -483,8 +483,10 @@ void llvm_asm_file_end(void) {
     const Type *SBP = PointerType::get(Type::Int8Ty);
     ArrayType *AT = ArrayType::get(SBP, AttributeUsedGlobals.size());
     Constant *Init = ConstantArray::get(AT, AttributeUsedGlobals);
-    new GlobalVariable(AT, false, GlobalValue::AppendingLinkage, Init,
+    GlobalValue* gv = new GlobalVariable(AT, false, 
+                       GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
+    gv->setSection("llvm.metadata");
     AttributeUsedGlobals.clear();
   }
   

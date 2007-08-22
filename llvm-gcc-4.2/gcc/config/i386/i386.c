@@ -20455,7 +20455,7 @@ iasm_type_for (tree arg)
       else if (IDENTIFIER_POINTER (arg)[1] == 'x')
 	mode = SFmode;
       else if (IDENTIFIER_POINTER (arg)[1] == 'm')
-        /* APPLE LOCAL llvm - Force MMX to use a vector mode: PR1222. */
+        /* LLVM LOCAL - Force MMX to use a vector mode: PR1222. */
 	mode = V2SImode;
 
       if (mode != VOIDmode)

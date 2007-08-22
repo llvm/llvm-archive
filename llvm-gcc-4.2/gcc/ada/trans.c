@@ -4003,9 +4003,12 @@ gnat_to_gnu (Node_Id gnat_node)
 
 	  gnu_input_list = nreverse (gnu_input_list);
 	  gnu_output_list = nreverse (gnu_output_list);
-	  gnu_result = build4 (ASM_EXPR,  void_type_node,
+/* LLVM local begin */
+	  gnu_result = build5 (ASM_EXPR,  void_type_node,
 			       gnu_template, gnu_output_list,
-			       gnu_input_list, gnu_clobber_list);
+			       gnu_input_list, gnu_clobber_list,
+			       NULL_TREE);
+/* LLVM local end */
 	  ASM_VOLATILE_P (gnu_result) = Is_Asm_Volatile (gnat_node);
 	}
       else

@@ -77,6 +77,7 @@ void dummy_function() {
   llvm::createDeadArgEliminationPass();
   llvm::createLoadValueNumberingPass();
   llvm::createTailCallEliminationPass();
+  llvm::createDeadStoreEliminationPass();
   llvm::createIPConstantPropagationPass();
   llvm::createStripDeadPrototypesPass();
 }

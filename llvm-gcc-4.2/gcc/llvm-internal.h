@@ -189,13 +189,12 @@ inline unsigned int GetFieldIndex(tree_node *field_decl) {
 /// isInt64 - Return true if t is an INTEGER_CST that fits in a 64 bit integer.
 /// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
 /// true, returns whether the value is non-negative and fits in a uint64_t.
-/// Always returns false for overflowed constants.
 bool isInt64(tree_node *t, bool Unsigned);
 
 /// getInt64 - Extract the value of an INTEGER_CST as a 64 bit integer.  If
 /// Unsigned is false, the value must fit in a int64_t.  If Unsigned is true,
-/// the value must be non-negative and fit in a uint64_t.  Must not be used on
-/// overflowed constants.  These conditions can be checked by calling isInt64.
+/// the value must be non-negative and fit in a uint64_t.  These conditions can
+/// be checked by calling isInt64.
 uint64_t getInt64(tree_node *t, bool Unsigned);
 
 /// isPassedByInvisibleReference - Return true if the specified type should be

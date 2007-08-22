@@ -299,7 +299,6 @@ static uint64_t getINTEGER_CSTVal(tree exp) {
 /// isInt64 - Return true if t is an INTEGER_CST that fits in a 64 bit integer.
 /// If Unsigned is false, returns whether it fits in a int64_t.  If Unsigned is
 /// true, returns whether the value is non-negative and fits in a uint64_t.
-/// Always returns false for overflowed constants.
 bool isInt64(tree t, bool Unsigned) {
   if (HOST_BITS_PER_WIDE_INT == 64)
     return host_integerp(t, Unsigned);
@@ -307,7 +306,7 @@ bool isInt64(tree t, bool Unsigned) {
     assert(HOST_BITS_PER_WIDE_INT == 32 &&
            "Only 32- and 64-bit hosts supported!");
     return
-      (TREE_CODE (t) == INTEGER_CST && !TREE_OVERFLOW (t))
+      (TREE_CODE (t) == INTEGER_CST)
       && ((TYPE_UNSIGNED(TREE_TYPE(t)) == Unsigned) ||
           // If the constant is signed and we want an unsigned result, check
           // that the value is non-negative.  If the constant is unsigned and
@@ -318,8 +317,8 @@ bool isInt64(tree t, bool Unsigned) {
 
 /// getInt64 - Extract the value of an INTEGER_CST as a 64 bit integer.  If
 /// Unsigned is false, the value must fit in a int64_t.  If Unsigned is true,
-/// the value must be non-negative and fit in a uint64_t.  Must not be used on
-/// overflowed constants.  These conditions can be checked by calling isInt64.
+/// the value must be non-negative and fit in a uint64_t.  These conditions
+/// can be checked by calling isInt64.
 uint64_t getInt64(tree t, bool Unsigned) {
   assert(isInt64(t, Unsigned) && "invalid constant!");
   return getINTEGER_CSTVal(t);

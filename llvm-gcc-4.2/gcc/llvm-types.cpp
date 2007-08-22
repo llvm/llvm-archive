@@ -73,8 +73,15 @@ static LTypesMapTy LTypesMap;
 // Note down LLVM type for GCC tree node.
 static const Type * llvm_set_type(tree Tr, const Type *Ty) {
 
+  // Require gcc and LLVM types to have the same size, if the gcc type has a
+  // constant size that fits in 64 bits.  Unfortunately we have to make an
+  // exception for huge arrays for which the size overflowed.
   assert(!TYPE_SIZE(Tr) || !Ty->isSized() || !isInt64(TYPE_SIZE(Tr), true) ||
          getInt64(TYPE_SIZE(Tr), true) == getTargetData().getTypeSizeInBits(Ty)
+         // Due to TREE_OVERFLOW not always being set correctly, we sometimes
+         // turn a gcc array with an overflowed size into a zero length LLVM
+         // array.
+         || (isa<ArrayType>(Ty) && !cast<ArrayType>(Ty)->getNumElements())
          && "LLVM type size doesn't match GCC type size!");
 
   unsigned &TypeSlot = LTypesMap[Ty];
@@ -302,10 +309,11 @@ bool isArrayCompatible(tree_node *type) {
       (!TYPE_SIZE(type) && isSequentialCompatible(type)) ||
 
       // Arrays with constant size map to LLVM arrays.  If the array has zero
-      // size then there can be two exotic cases: (1) the array might have zero
-      // length and a component type of variable size; or (2) the array could
-      // have variable length and a component type with zero size.  In both
-      // cases we convert to a zero length LLVM array.
+      // size then there can be three exotic cases: (1) the array might have
+      // zero length and a component type of variable size; or (2) the array
+      // could have variable length and a component type with zero size; or
+      // (3) the array size computation overflowed, giving an apparent size of
+      // zero.  In all cases we convert to a zero length LLVM array.
       (TYPE_SIZE(type) && isInt64(TYPE_SIZE(type), true))
     );
 }
@@ -840,18 +848,28 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         // to an unsized array of elements.
         NumElements = 0;
       } else if (!isInt64(length, true)) {
-        // A variable length array where the element type has size zero.  Turn
-        // it into a zero length array of the element type.
-        assert(integer_zerop(TYPE_SIZE(TREE_TYPE(type)))
-               && "variable length array has constant size!");
+        // A variable length array where the element type has size zero.
+        // Alternatively, the length may be negative due to overflow.
+        // Turn it into a zero length array of the element type.
         NumElements = 0;
       } else {
         // Normal array.
         NumElements = getInt64(length, true);
       }
 
-      return TypeDB.setType(type, ArrayType::get(ConvertType(TREE_TYPE(type)),
-                                                 NumElements));
+      const Type *Ty = ArrayType::get(ConvertType(TREE_TYPE(type)),
+                                      NumElements);
+
+      if (NumElements && TYPE_SIZE(type) && Ty->isSized() &&
+          getInt64(TYPE_SIZE(type), true) !=
+          getTargetData().getTypeSizeInBits(Ty))
+        // The type size and/or the array length overflowed.  It would be nice
+        // to detect this earlier as in llvm-gcc-4.0, but unfortunately
+        // TREE_OVERFLOW is no longer reliable.  Use a zero length array.
+        // This may result in wrong code, but that seems to be unavoidable.
+        Ty = ArrayType::get(ConvertType(TREE_TYPE(type)), 0);
+
+      return TypeDB.setType(type, Ty);
     }
 
     // This handles cases like "int A[n]" which have a runtime constant

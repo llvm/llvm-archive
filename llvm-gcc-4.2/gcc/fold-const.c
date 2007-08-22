@@ -1890,22 +1890,25 @@ size_binop (enum tree_code code, tree arg0, tree arg1)
   if (TREE_CODE (arg0) == INTEGER_CST && TREE_CODE (arg1) == INTEGER_CST)
     {
       /* And some specific cases even faster than that.  */
-/* LLVM local begin */
-      if (code == PLUS_EXPR && integer_zerop (arg0)
-	  && !TREE_OVERFLOW (arg0))
-/* LLVM local end */
-	return arg1;
-      else if ((code == MINUS_EXPR || code == PLUS_EXPR)
-/* LLVM local begin */
-	       && integer_zerop (arg1)
-	       && !TREE_OVERFLOW (arg1))
-/* LLVM local end */
-	return arg0;
-/* LLVM local begin */
-      else if (code == MULT_EXPR && integer_onep (arg0)
-	       && !TREE_OVERFLOW (arg0))
-/* LLVM local end */
-	return arg1;
+      /* LLVM local begin gcc 121252 */
+      if (code == PLUS_EXPR)
+	{
+	  if (integer_zerop (arg0) && !TREE_OVERFLOW (arg0))
+	    return arg1;
+	  if (integer_zerop (arg1) && !TREE_OVERFLOW (arg1))
+	    return arg0;
+	}
+      else if (code == MINUS_EXPR)
+	{
+	  if (integer_zerop (arg1) && !TREE_OVERFLOW (arg1))
+	    return arg0;
+	}
+      else if (code == MULT_EXPR)
+	{
+	  if (integer_onep (arg0) && !TREE_OVERFLOW (arg0))
+	    return arg1;
+	}
+      /* LLVM local end gcc 121252 */
 
       /* Handle general case of two integer constants.  */
       return int_const_binop (code, arg0, arg1, 0);

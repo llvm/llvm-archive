@@ -1,4 +1,4 @@
 DepModule: llvm
 BuildCmd: ./build-for-llvm-top.sh 
-CleanCmd: cd ../build.llvm-gcc-4.2 ; make clean
-InstallCmd: cd ../build.llvm-gcc-4.2 ; make install
+CleanCmd: make clean -C ../build.llvm-gcc-4.2
+InstallCmd: make install -C ../build.llvm-gcc-4.2

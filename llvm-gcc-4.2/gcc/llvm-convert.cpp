@@ -3906,11 +3906,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
-    Result = Builder.CreateAdd(Result, ConstantInt::get(Type::Int32Ty, 1),
+    Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1),
                                "tmp");
     Value *Cond =
       Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()), "tmp");
-    Result = Builder.CreateSelect(Cond, Constant::getNullValue(Type::Int32Ty),
+    Result = Builder.CreateSelect(Cond,
+                                  Constant::getNullValue(Result->getType()),
                                   Result, "tmp");
     return true;
   }
@@ -3952,13 +3953,9 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
   // varying type. Make sure that we specify the actual type for "iAny" 
   // by passing it as the 3rd and 4th parameters. This isn't needed for
   // most intrinsics, but is needed for ctpop, cttz, ctlz.
-  const Type* Tys[] = {
-    InVal->getType()
-  };
-  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, Tys, 
-                                                        sizeof(Tys)/sizeof(Tys[0])),
-                              InVal, "tmp");
-  
+  const Type *Ty = InVal->getType();
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
+                                                        InVal, "tmp");
   return true;
 }
 

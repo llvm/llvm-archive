@@ -542,9 +542,9 @@ void TreeToLLVM::StartFunctionBody() {
   } else {
     // Otherwise, just get the type from the function itself.
     FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl),
-            FnDecl,
-						static_chain,
-						CallingConv);
+                                                FnDecl,
+                                                static_chain,
+                                                CallingConv);
   }
   
   // If we've already seen this function and created a prototype, and if the

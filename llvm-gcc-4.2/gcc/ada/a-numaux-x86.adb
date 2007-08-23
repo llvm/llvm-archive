@@ -37,11 +37,13 @@
 --  This version of Numerics.Aux is for the IEEE Double Extended floating
 --  point format on x86.
 
-with System.Machine_Code; use System.Machine_Code;
+--  LLVM local
+--  with System.Machine_Code; use System.Machine_Code;
 
 package body Ada.Numerics.Aux is
 
-   NL : constant String := ASCII.LF & ASCII.HT;
+--  LLVM local
+--   NL : constant String := ASCII.LF & ASCII.HT;
 
    -----------------------
    -- Local subprograms --
@@ -54,6 +56,11 @@ package body Ada.Numerics.Aux is
    --  Implementation of X**Y using Exp and Log functions (binary base)
    --  to calculate the exponentiation. This is used by Pow for values
    --  for values of Y in the open interval (-0.25, 0.25)
+
+   --  LLVM local begin
+   pragma Import (C, Logarithmic_Pow, "pow");
+   pragma Pure_Function (Logarithmic_Pow);
+   --  LLVM local end
 
    procedure Reduce (X : in out Double; Q : out Natural);
    --  Implements reduction of X by Pi/2. Q is the quadrant of the final
@@ -73,15 +80,18 @@ package body Ada.Numerics.Aux is
    -- Atan --
    ----------
 
+   --  LLVM local begin
+   function C_Atan (X : Double) return Double;
+   pragma Import (C, C_Atan, "atan");
+   pragma Pure_Function (C_Atan);
+   --  LLVM local end
+
    function Atan (X : Double) return Double is
       Result  : Double;
 
    begin
-      Asm (Template =>
-           "fld1" & NL
-         & "fpatan",
-         Outputs  => Double'Asm_Output ("=t", Result),
-         Inputs   => Double'Asm_Input  ("0", X));
+      --  LLVM local
+      Result := C_Atan (X);
 
       --  The result value is NaN iff input was invalid
 
@@ -96,25 +106,27 @@ package body Ada.Numerics.Aux is
    -- Exp --
    ---------
 
-   function Exp (X : Double) return Double is
-      Result : Double;
-   begin
-      Asm (Template =>
-         "fldl2e               " & NL
-       & "fmulp   %%st, %%st(1)" & NL -- X * log2 (E)
-       & "fld     %%st(0)      " & NL
-       & "frndint              " & NL -- Integer (X * Log2 (E))
-       & "fsubr   %%st, %%st(1)" & NL -- Fraction (X * Log2 (E))
-       & "fxch                 " & NL
-       & "f2xm1                " & NL -- 2**(...) - 1
-       & "fld1                 " & NL
-       & "faddp   %%st, %%st(1)" & NL -- 2**(Fraction (X * Log2 (E)))
-       & "fscale               " & NL -- E ** X
-       & "fstp    %%st(1)      ",
-         Outputs  => Double'Asm_Output ("=t", Result),
-         Inputs   => Double'Asm_Input  ("0", X));
-      return Result;
-   end Exp;
+--  LLVM local begin
+--   function Exp (X : Double) return Double is
+--      Result : Double;
+--   begin
+--      Asm (Template =>
+--         "fldl2e               " & NL
+--       & "fmulp   %%st, %%st(1)" & NL -- X * log2 (E)
+--       & "fld     %%st(0)      " & NL
+--       & "frndint              " & NL -- Integer (X * Log2 (E))
+--       & "fsubr   %%st, %%st(1)" & NL -- Fraction (X * Log2 (E))
+--       & "fxch                 " & NL
+--       & "f2xm1                " & NL -- 2**(...) - 1
+--       & "fld1                 " & NL
+--       & "faddp   %%st, %%st(1)" & NL -- 2**(Fraction (X * Log2 (E)))
+--       & "fscale               " & NL -- E ** X
+--       & "fstp    %%st(1)      ",
+--         Outputs  => Double'Asm_Output ("=t", Result),
+--         Inputs   => Double'Asm_Input  ("0", X));
+--      return Result;
+--   end Exp;
+--  LLVM local end
 
    ------------
    -- Is_Nan --
@@ -131,18 +143,20 @@ package body Ada.Numerics.Aux is
    -- Log --
    ---------
 
-   function Log (X : Double) return Double is
-      Result : Double;
-
-   begin
-      Asm (Template =>
-         "fldln2               " & NL
-       & "fxch                 " & NL
-       & "fyl2x                " & NL,
-         Outputs  => Double'Asm_Output ("=t", Result),
-         Inputs   => Double'Asm_Input  ("0", X));
-      return Result;
-   end Log;
+--  LLVM local begin
+--   function Log (X : Double) return Double is
+--      Result : Double;
+--
+--   begin
+--      Asm (Template =>
+--         "fldln2               " & NL
+--       & "fxch                 " & NL
+--       & "fyl2x                " & NL,
+--         Outputs  => Double'Asm_Output ("=t", Result),
+--         Inputs   => Double'Asm_Input  ("0", X));
+--      return Result;
+--   end Log;
+--  LLVM local end
 
    ------------
    -- Reduce --
@@ -193,6 +207,12 @@ package body Ada.Numerics.Aux is
    -- Sqrt --
    ----------
 
+   --  LLVM local begin
+   function C_Sqrt (X : Double) return Double;
+   pragma Import (C, C_Sqrt, "sqrt");
+   pragma Pure_Function (C_Sqrt);
+   --  LLVM local end
+
    function Sqrt (X : Double) return Double is
       Result  : Double;
 
@@ -201,9 +221,8 @@ package body Ada.Numerics.Aux is
          raise Argument_Error;
       end if;
 
-      Asm (Template => "fsqrt",
-           Outputs  => Double'Asm_Output ("=t", Result),
-           Inputs   => Double'Asm_Input  ("0", X));
+      --  LLVM local
+      Result := C_Sqrt (X);
 
       return Result;
    end Sqrt;
@@ -213,6 +232,23 @@ package body Ada.Numerics.Aux is
    --------------------------------
 
    --  These are built using the previously implemented basic functions
+
+   --  LLVM local begin
+   function C_Sin (X : Double) return Double;
+   pragma Import (C, C_Sin, "sin");
+   pragma Pure_Function (C_Sin);
+
+   function C_Cos (X : Double) return Double;
+   pragma Import (C, C_Cos, "cos");
+   pragma Pure_Function (C_Cos);
+
+   function C_Tan (X : Double) return Double;
+   pragma Import (C, C_Tan, "tan");
+   pragma Pure_Function (C_Tan);
+
+   procedure Sin_Cos (X : Double; Sin, Cos : out Double);
+   pragma Import (C, Sin_Cos, "sincos");
+   --  LLVM local end
 
    ----------
    -- Acos --
@@ -267,27 +303,22 @@ package body Ada.Numerics.Aux is
 
          case Quadrant is
             when 0 =>
-               Asm (Template  => "fcos",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := C_Cos (Reduced_X);
             when 1 =>
-               Asm (Template  => "fsin",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", -Reduced_X));
+               --  LLVM local
+               Result := C_Sin (-Reduced_X);
             when 2 =>
-               Asm (Template  => "fcos ; fchs",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := -C_Cos (Reduced_X);
             when 3 =>
-               Asm (Template  => "fsin",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := C_Sin (Reduced_X);
          end case;
 
       else
-         Asm (Template  => "fcos",
-              Outputs  => Double'Asm_Output ("=t", Result),
-              Inputs   => Double'Asm_Input  ("0", Reduced_X));
+         --  LLVM local
+         Result := C_Cos (Reduced_X);
       end if;
 
       return Result;
@@ -297,26 +328,28 @@ package body Ada.Numerics.Aux is
    -- Logarithmic_Pow --
    ---------------------
 
-   function Logarithmic_Pow (X, Y : Double) return Double is
-      Result  : Double;
-   begin
-      Asm (Template => ""             --  X                  : Y
-       & "fyl2x                " & NL --  Y * Log2 (X)
-       & "fst     %%st(1)      " & NL --  Y * Log2 (X)       : Y * Log2 (X)
-       & "frndint              " & NL --  Int (...)          : Y * Log2 (X)
-       & "fsubr   %%st, %%st(1)" & NL --  Int (...)          : Fract (...)
-       & "fxch                 " & NL --  Fract (...)        : Int (...)
-       & "f2xm1                " & NL --  2**Fract (...) - 1 : Int (...)
-       & "fld1                 " & NL --  1 : 2**Fract (...) - 1 : Int (...)
-       & "faddp   %%st, %%st(1)" & NL --  2**Fract (...)     : Int (...)
-       & "fscale               " & NL --  2**(Fract (...) + Int (...))
-       & "fstp    %%st(1)      ",
-         Outputs  => Double'Asm_Output ("=t", Result),
-         Inputs   =>
-           (Double'Asm_Input  ("0", X),
-            Double'Asm_Input  ("u", Y)));
-      return Result;
-   end Logarithmic_Pow;
+--  LLVM local begin
+--   function Logarithmic_Pow (X, Y : Double) return Double is
+--      Result  : Double;
+--   begin
+--      Asm (Template => ""             --  X                  : Y
+--       & "fyl2x                " & NL --  Y * Log2 (X)
+--       & "fst     %%st(1)      " & NL --  Y * Log2 (X)       : Y * Log2 (X)
+--       & "frndint              " & NL --  Int (...)          : Y * Log2 (X)
+--       & "fsubr   %%st, %%st(1)" & NL --  Int (...)          : Fract (...)
+--       & "fxch                 " & NL --  Fract (...)        : Int (...)
+--       & "f2xm1                " & NL --  2**Fract (...) - 1 : Int (...)
+--       & "fld1                 " & NL --  1 : 2**Fract (...) - 1 : Int (...)
+--       & "faddp   %%st, %%st(1)" & NL --  2**Fract (...)     : Int (...)
+--       & "fscale               " & NL --  2**(Fract (...) + Int (...))
+--       & "fstp    %%st(1)      ",
+--         Outputs  => Double'Asm_Output ("=t", Result),
+--         Inputs   =>
+--           (Double'Asm_Input  ("0", X),
+--            Double'Asm_Input  ("u", Y)));
+--      return Result;
+--   end Logarithmic_Pow;
+--  LLVM local end
 
    ---------
    -- Pow --
@@ -453,27 +486,22 @@ package body Ada.Numerics.Aux is
 
          case Quadrant is
             when 0 =>
-               Asm (Template  => "fsin",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := C_Sin (Reduced_X);
             when 1 =>
-               Asm (Template  => "fcos",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := C_Cos (Reduced_X);
             when 2 =>
-               Asm (Template  => "fsin",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", -Reduced_X));
+               --  LLVM local
+               Result := C_Sin (-Reduced_X);
             when 3 =>
-               Asm (Template  => "fcos ; fchs",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+               --  LLVM local
+               Result := -C_Cos (Reduced_X);
          end case;
 
       else
-         Asm (Template  => "fsin",
-            Outputs  => Double'Asm_Output ("=t", Result),
-            Inputs   => Double'Asm_Input  ("0", Reduced_X));
+         --  LLVM local
+         Result := C_Sin (Reduced_X);
       end if;
 
       return Result;
@@ -487,32 +515,26 @@ package body Ada.Numerics.Aux is
       Reduced_X : Double := X;
       Result    : Double;
       Quadrant  : Natural range 0 .. 3;
+      --  LLVM local
+      Sin, Cos  : Double;
 
    begin
       if abs X > Pi / 4.0 then
          Reduce (Reduced_X, Quadrant);
 
          if Quadrant mod 2 = 0 then
-            Asm (Template  => "fptan" & NL
-                            & "ffree   %%st(0)"  & NL
-                            & "fincstp",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+            --  LLVM local
+            Result := C_Tan (Reduced_X);
          else
-            Asm (Template  => "fsincos" & NL
-                            & "fdivp   %%st, %%st(1)" & NL
-                            & "fchs",
-                  Outputs  => Double'Asm_Output ("=t", Result),
-                  Inputs   => Double'Asm_Input  ("0", Reduced_X));
+            --  LLVM local begin
+            Sin_Cos (X, Sin, Cos);
+            Result := -(Cos / Sin);
+            --  LLVM local end
          end if;
 
       else
-         Asm (Template  =>
-               "fptan                 " & NL
-             & "ffree   %%st(0)      " & NL
-             & "fincstp              ",
-               Outputs  => Double'Asm_Output ("=t", Result),
-               Inputs   => Double'Asm_Input  ("0", Reduced_X));
+         --  LLVM local
+         Result := C_Tan (Reduced_X);
       end if;
 
       return Result;

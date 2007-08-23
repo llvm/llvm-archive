@@ -81,4 +81,11 @@ private
    pragma Inline (Sin);
    pragma Inline (Sqrt);
 
+   --  LLVM local begin
+   pragma Import (C, Exp, "exp");
+   pragma Pure_Function (Exp);
+   pragma Import (C, Log, "log");
+   pragma Pure_Function (Log);
+   --  LLVM local end
+
 end Ada.Numerics.Aux;

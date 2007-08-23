@@ -302,7 +302,7 @@ static uint64_t getINTEGER_CSTVal(tree exp) {
 /// Always returns false for overflowed constants.
 bool isInt64(tree t, bool Unsigned) {
   if (HOST_BITS_PER_WIDE_INT == 64)
-    return !TREE_OVERFLOW (t) && host_integerp(t, Unsigned);
+    return host_integerp(t, Unsigned) && !TREE_OVERFLOW (t);
   else {
     assert(HOST_BITS_PER_WIDE_INT == 32 &&
            "Only 32- and 64-bit hosts supported!");

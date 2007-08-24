@@ -37,6 +37,8 @@
     %{nostdlib*}\
     -dumpbase %{.adb:%b.adb}%{.ads:%b.ads}%{!.adb:%{!.ads:%b.ada}}\
     %{O*} %{W*} %{w} %{p} %{pg:-p} %{a} %{f*} %{d*} %{g*&m*} %1\
+        "/* LLVM LOCAL */"\
+    %(llvm_options) \
     %{!S:%{o*:%w%*-gnatO}} \
     %i %{S:%W{o*}%{!o*:-o %b.s}} \
     %{gnatc*|gnats*: -o %j} %{-param*} \

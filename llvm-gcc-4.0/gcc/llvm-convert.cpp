@@ -2039,6 +2039,7 @@ void TreeToLLVM::AddLandingPad() {
   Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
                             PointerType::get(Type::Int8Ty)));
 
+  bool CaughtAll = false;
   for (std::vector<EHScope>::reverse_iterator I = CurrentEHScopes.rbegin(),
        E = CurrentEHScopes.rend(); I != E; ++I) {
     if (I->CatchExpr) {
@@ -2051,15 +2052,29 @@ void TreeToLLVM::AddLandingPad() {
                          EH_FILTER_EXPR) ? FilterExpr : CatchList;
       }
 
-      if (I->InfosType == FilterExpr)
+      if (I->InfosType == FilterExpr) {
         // Filter - note the size.
-        Args.push_back(ConstantInt::get(Type::Int32Ty, I->TypeInfos.size()));
+        Args.push_back(ConstantInt::get(Type::Int32Ty, I->TypeInfos.size()+1));
+        // An empty filter catches all exceptions.
+        if ((CaughtAll = !I->TypeInfos.size()))
+          break;
+      }
 
       Args.reserve(Args.size() + I->TypeInfos.size());
-      for (unsigned j = 0, N = I->TypeInfos.size(); j < N; ++j)
+      for (unsigned j = 0, N = I->TypeInfos.size(); j < N; ++j) {
         Args.push_back(I->TypeInfos[j]);
+        // A null typeinfo indicates a catch-all.
+        if ((CaughtAll = I->TypeInfos[j]->isNullValue()))
+          break;
+      }
     }
   }
+
+  // Invokes are required to branch to the unwind label no matter what exception
+  // is being unwound.  Enforce this by appending a catch-all.
+  // FIXME: The use of null as catch-all is C++ specific.
+  if (!CaughtAll)
+    Args.push_back(Constant::getNullValue(PointerType::get(Type::Int8Ty)));
 
   Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
                                      "eh_select");

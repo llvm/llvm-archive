@@ -2663,9 +2663,13 @@ foreach_reachable_handler (int region_number, bool is_resx,
 	 processing any more of them.  Each cleanup will have an edge
 	 to the next outer cleanup region, so the flow graph will be
 	 accurate.  */
+/* LLVM local */
+#ifndef ENABLE_LLVM
       if (region->type == ERT_CLEANUP)
 	region = region->u.cleanup.prev_try;
       else
+/* LLVM local */
+#endif
 	region = region->outer;
     }
 }
@@ -2800,21 +2804,9 @@ can_throw_external_1 (int region_number, bool is_resx)
 
   /* If the exception is caught or blocked by any containing region,
      then it is not seen by any calling function.  */
-  /* LLVM local begin */
-  while (region)
-    {
-      if (reachable_next_level (region, type_thrown, NULL) >= RNL_CAUGHT)
-        return false;
-      /* If we have processed one cleanup, there is no point in
-         processing any more of them.  Each cleanup will have an edge
-         to the next outer cleanup region, so the flow graph will be
-         accurate.  */
-      if (region->type == ERT_CLEANUP)
-        region = region->u.cleanup.prev_try;
-      else
-        region = region->outer;
-    }
-  /* LLVM local end */
+  for (; region ; region = region->outer)
+    if (reachable_next_level (region, type_thrown, NULL) >= RNL_CAUGHT)
+      return false;
 
   return true;
 }

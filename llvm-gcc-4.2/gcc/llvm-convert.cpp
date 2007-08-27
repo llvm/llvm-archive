@@ -2343,7 +2343,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
-                                &CallOperands[0], CallOperands.size());
+                                CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
     EmitBlock(NextBlock);
   }

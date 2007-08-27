@@ -242,8 +242,6 @@ struct LValue {
   bool isBitfield() const { return BitStart != 255; }
 };
 
-typedef IndexedMap<BasicBlock *> RegionMapType;
-
 /// TreeToLLVM - An instance of this class is created and used to convert the
 /// body of each function to LLVM.
 ///
@@ -268,10 +266,10 @@ class TreeToLLVM {
   //===---------------------- Exception Handling --------------------------===//
 
   /// LandingPads - The landing pad for a given EH region.
-  RegionMapType LandingPads;
+  IndexedMap<BasicBlock *> LandingPads;
 
   /// PostPads - The post landing pad for a given EH region.
-  RegionMapType PostPads;
+  IndexedMap<BasicBlock *> PostPads;
 
   /// ExceptionValue - Is the local to receive the current exception.
   Value *ExceptionValue;
@@ -420,10 +418,6 @@ private: // Helpers for exception handling.
   /// CreateExceptionValues - Create values used internally by exception
   /// handling.
   void CreateExceptionValues();
-
-  /// getLandingPad - Return the landing pad for the given exception handling
-  /// region, creating it if necessary.
-  BasicBlock *getLandingPad(unsigned RegionNo);
 
   /// getPostPad - Return the post landing pad for the given exception handling
   /// region, creating it if necessary.

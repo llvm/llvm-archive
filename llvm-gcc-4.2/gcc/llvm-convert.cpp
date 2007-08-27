@@ -1757,18 +1757,6 @@ void TreeToLLVM::CreateExceptionValues() {
 
 }
 
-/// getLandingPad - Return the landing pad for the given exception handling
-/// region, creating it if necessary.
-BasicBlock *TreeToLLVM::getLandingPad(unsigned RegionNo) {
-  LandingPads.grow(RegionNo);
-  BasicBlock *&LandingPad = LandingPads[RegionNo];
-
-  if (!LandingPad)
-    LandingPad = new BasicBlock("lpad");
-
-  return LandingPad;
-}
-
 /// getPostPad - Return the post landing pad for the given exception handling
 /// region, creating it if necessary.
 BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
@@ -1829,7 +1817,7 @@ void TreeToLLVM::EmitLandingPads() {
         tree TypeList = get_eh_type_list(region);
         unsigned Length = list_length(TypeList);
         Args.reserve(Args.size() + Length + 1);
-        Args.push_back(ConstantInt::get(Type::Int32Ty, Length));
+        Args.push_back(ConstantInt::get(Type::Int32Ty, Length + 1));
 
         // Add the type infos.
         for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
@@ -1854,6 +1842,13 @@ void TreeToLLVM::EmitLandingPads() {
         }
       }
     }
+
+    if (can_throw_external_1(i, false))
+      // Some exceptions from this region may not be caught by any handler.
+      // Since invokes are required to branch to the unwind label no matter
+      // what exception is being unwound, append a catch-all.
+      // FIXME: The use of null as catch-all is C++ specific.
+      Args.push_back(Constant::getNullValue(PointerType::get(Type::Int8Ty)));
 
     // Emit the selector call.
     Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
@@ -2250,12 +2245,23 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
     if (!NoUnwind) {
       int RegionNo = lookup_stmt_eh_region(exp);
 
+      // Is the call contained in an exception handling region?
       if (RegionNo > 0) {
-        if (can_throw_internal_1(RegionNo, false))
+        // Are there any exception handlers for this region?
+        if (can_throw_internal_1(RegionNo, false)) {
           // Turn the call into an invoke.
-          LandingPad = getLandingPad(RegionNo);
-        else
+          LandingPads.grow(RegionNo);
+          BasicBlock *&ThisPad = LandingPads[RegionNo];
+
+          // Create a landing pad if one didn't exist already.
+          if (!ThisPad)
+            ThisPad = new BasicBlock("lpad");
+
+          LandingPad = ThisPad;
+        } else {
+          // Can this call unwind out of the current function?
           NoUnwind = !can_throw_external_1(RegionNo, false);
+        }
       }
     }
   }

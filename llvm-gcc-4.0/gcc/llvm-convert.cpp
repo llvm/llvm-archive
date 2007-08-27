@@ -2812,7 +2812,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, UnwindBlock,
-                                &CallOperands[0], CallOperands.size());
+                                CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
 
     // Lazily create an unwind block for this scope, which we can emit a fixup

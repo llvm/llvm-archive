@@ -122,8 +122,9 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (flag_exceptions)
-    Args.push_back("--enable-eh");
+// Breaks the x86-darwin build
+//  if (flag_exceptions)
+//    Args.push_back("--enable-eh");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging

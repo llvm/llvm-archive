@@ -11791,7 +11791,8 @@ cp_parser_asm_definition (cp_parser* parser, bool statement_p ATTRIBUTE_UNUSED)
       || cp_lexer_next_token_is (parser->lexer, CPP_NAME)
       || cp_lexer_next_token_is_keyword (parser->lexer, RID_ASM)
       || cp_lexer_next_token_is (parser->lexer, CPP_SEMICOLON)
-      || cp_lexer_iasm_bol (parser->lexer))
+      || (cp_lexer_iasm_bol (parser->lexer)
+          && !cp_lexer_next_token_is (parser->lexer, CPP_OPEN_PAREN)))
     {
       if (flag_iasm_blocks)
 	cp_parser_iasm_top_statement (parser);

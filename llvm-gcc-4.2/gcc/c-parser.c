@@ -4464,12 +4464,14 @@ c_parser_asm_statement (c_parser *parser)
 	}
       return NULL_TREE;
     }
-  if (c_parser_next_token_is (parser, CPP_DOT)
-      || c_parser_next_token_is (parser, CPP_ATSIGN)
-      || c_parser_next_token_is (parser, CPP_NAME)
-      || c_parser_next_token_is_keyword (parser, RID_ASM)
-      || c_parser_next_token_is (parser, CPP_SEMICOLON)
-      || c_parser_iasm_bol (parser))
+  if (quals == NULL_TREE
+      && (c_parser_next_token_is (parser, CPP_DOT)
+	  || c_parser_next_token_is (parser, CPP_ATSIGN)
+	  || c_parser_next_token_is (parser, CPP_NAME)
+	  || c_parser_next_token_is_keyword (parser, RID_ASM)
+	  || c_parser_next_token_is (parser, CPP_SEMICOLON)
+	  || (c_parser_iasm_bol (parser)
+	      && ! c_parser_next_token_is (parser, CPP_OPEN_PAREN))))
     {
       if (flag_iasm_blocks)
 	c_parser_iasm_top_statement (parser);
@@ -5338,6 +5340,8 @@ c_parser_alignof_expression (c_parser *parser)
      postfix-expression [ expression ]
      postfix-expression ( argument-expression-list[opt] )
      postfix-expression . identifier
+     APPLE LOCAL CW asm blocks
+     typedef-name . identifier
      postfix-expression -> identifier
      postfix-expression ++
      postfix-expression --
@@ -5351,7 +5355,11 @@ c_parser_alignof_expression (c_parser *parser)
      argument-expression-list , argument-expression
 
    primary-expression:
+     APPLE LOCAL CW asm blocks
+     .
      identifier
+     APPLE LOCAL CW asm blocks
+     @identifier
      constant
      string-literal
      ( expression )
@@ -5442,6 +5450,16 @@ c_parser_postfix_expression (c_parser *parser)
       /* APPLE LOCAL end radar 5277239 */
       if (c_parser_peek_token (parser)->id_kind != C_ID_ID)
 	{
+	  /* APPLE LOCAL begin CW asm blocks (in 4.2 bf) */
+	  if (inside_iasm_block
+	      && c_parser_peek_2nd_token (parser)->type == CPP_DOT)
+	    {
+	      expr.value = c_parser_peek_token (parser)->value;
+	      expr.original_code = ERROR_MARK;
+	      c_parser_consume_token (parser);
+	      break;
+	    }
+	  /* APPLE LOCAL end CW asm blocks (in 4.2 bf) */
 	  c_parser_error (parser, "expected expression");
 	  expr.value = error_mark_node;
 	  expr.original_code = ERROR_MARK;
@@ -5828,6 +5846,29 @@ c_parser_postfix_expression (c_parser *parser)
 	      expr.original_code = ERROR_MARK;
 	      break;
 	    }
+	  /* (in 4.2 be) */
+	  if (c_parser_next_token_is (parser, CPP_ATSIGN))
+	    {
+	      tree id;
+	      location_t loc = c_parser_peek_token (parser)->location;
+	      c_parser_consume_token (parser);
+	      if (c_parser_peek_token (parser)->id_kind != C_ID_ID)
+		{
+		  c_parser_error (parser, "expected identifier");
+		  expr.value = error_mark_node;
+		  expr.original_code = ERROR_MARK;
+		  break;
+		}
+
+	      id = c_parser_peek_token (parser)->value;
+	      c_parser_consume_token (parser);
+	      id = prepend_char_identifier (id, '@');
+	      expr.value = build_external_ref (id,
+					       (c_parser_peek_token (parser)->type
+						== CPP_OPEN_PAREN), loc);
+	      expr.original_code = ERROR_MARK;
+	      break;
+	    }
 	}
       /* APPLE LOCAL end CW asm blocks */
       c_parser_error (parser, "expected expression");
@@ -5882,6 +5923,11 @@ c_parser_postfix_expression_after_primary (c_parser *parser,
   tree ident, idx, exprlist;
   while (true)
     {
+      /* APPLE LOCAL begin CW asm blocks */
+      if (inside_iasm_block
+	  && c_parser_iasm_bol (parser))
+	return expr;
+      /* APPLE LOCAL end CW asm blocks */
       switch (c_parser_peek_token (parser)->type)
 	{
 	case CPP_OPEN_SQUARE:
@@ -5894,6 +5940,10 @@ c_parser_postfix_expression_after_primary (c_parser *parser,
 	  expr.original_code = ERROR_MARK;
 	  break;
 	case CPP_OPEN_PAREN:
+	  /* APPLE LOCAL begin CW asm blocks (in 4.2 bd) */
+	  if (inside_iasm_block)
+	    return expr;
+	  /* APPLE LOCAL end CW asm blocks (in 4.2 bd) */
 	  /* Function call.  */
 	  c_parser_consume_token (parser);
 	  if (c_parser_next_token_is (parser, CPP_CLOSE_PAREN))
@@ -5909,19 +5959,24 @@ c_parser_postfix_expression_after_primary (c_parser *parser,
 	  /* Structure element reference.  */
 	  c_parser_consume_token (parser);
 	  expr = default_function_array_conversion (expr);
-	  if (c_parser_next_token_is (parser, CPP_NAME))
-	    ident = c_parser_peek_token (parser)->value;
-	  /* APPLE LOCAL begin CW asm blocks (in 4.2 bc) */
-	  else if (inside_iasm_block
-		   && c_parser_next_token_is (parser, CPP_NUMBER))
+	  /* APPLE LOCAL begin CW asm blocks */
+	  if (inside_iasm_block)
 	    {
-	      tree c = c_parser_peek_token (parser)->value;
-	      c_parser_consume_token (parser);
-	      expr.value = iasm_c_build_component_ref (expr.value, c);
-	      expr.original_code = ERROR_MARK;
-	      break;
+	      /* (in 4.2 bf) */
+	      if (c_parser_next_token_is (parser, CPP_NAME)
+		  /* (in 4.2 bc) */
+		  || c_parser_next_token_is (parser, CPP_NUMBER))
+		{
+		  tree c = c_parser_peek_token (parser)->value;
+		  c_parser_consume_token (parser);
+		  expr.value = iasm_c_build_component_ref (expr.value, c);
+		  expr.original_code = ERROR_MARK;
+		  break;
+		}
 	    }
 	  /* APPLE LOCAL end CW asm blocks */
+	  if (c_parser_next_token_is (parser, CPP_NAME))
+	    ident = c_parser_peek_token (parser)->value;
 	  else
 	    {
 	      c_parser_error (parser, "expected identifier");
@@ -8660,13 +8715,16 @@ static tree c_parser_iasm_identifier_or_number (c_parser*);
 static bool
 c_parser_iasm_bol (c_parser *parser)
 {
+  location_t loc;
   c_token *token;
   /* We can't use c_parser_peek_token here, as it will give errors for things like
      1st in MS-stype asm.  */
   if (parser->tokens_avail == 0)
     {
+      loc = input_location;
       parser->tokens_avail = 1;
       c_lex_one_token (&parser->tokens[0], parser);
+      input_location = loc;
     }
   token = &parser->tokens[0];
 
@@ -8719,6 +8777,8 @@ c_parser_iasm_statement_seq_opt (c_parser* parser)
 	{
 	  /* Parse a single statement.  */
 	  c_parser_iasm_statement (parser);
+	  /* Resynchronize from c_parser_iasm_bol.  */
+	  input_location = c_parser_peek_token (parser)->location;
 	  check = 1;
 	}
 
@@ -9002,6 +9062,17 @@ c_parser_iasm_operand (c_parser *parser)
 
   /* Jump into the usual operand precedence stack.  */
   operand = c_parser_binary_expression (parser, false).value;
+
+  /* (in 4.2 bd) */
+  while (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
+    {
+      struct c_expr op2;
+      c_parser_consume_token (parser);
+      op2 = c_parser_expr_no_commas (parser, NULL);
+      c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
+				 "expected %<)%>");
+      operand = iasm_build_register_offset (operand, op2.value);
+    }
 
   return operand;
 }

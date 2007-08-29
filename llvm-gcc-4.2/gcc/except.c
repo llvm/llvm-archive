@@ -95,6 +95,11 @@ int (*lang_eh_type_covers) (tree a, tree b);
 /* Map a type to a runtime object to match type.  */
 tree (*lang_eh_runtime_type) (tree);
 
+/* LLVM local begin */
+/* Return a type that catches all others */
+tree (*lang_eh_catch_all) (void);
+/* LLVM local end */
+
 /* A hash table of label to region number.  */
 
 struct ehl_map_entry GTY(())

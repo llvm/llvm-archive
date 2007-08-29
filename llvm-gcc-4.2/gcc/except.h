@@ -139,6 +139,13 @@ extern int (*lang_eh_type_covers) (tree a, tree b);
 /* Map a type to a runtime object to match type.  */
 extern tree (*lang_eh_runtime_type) (tree);
 
+/* LLVM local begin */
+/* If non-NULL, this function returns a type that covers all others,
+   a "catch-all" type.  It may also return NULL_TREE, indicating that
+   the null runtime object catches all types, as in C++.  */
+extern tree (*lang_eh_catch_all) (void);
+/* LLVM local end */
+
 
 /* Just because the user configured --with-sjlj-exceptions=no doesn't
    mean that we can use call frame exceptions.  Detect that the target

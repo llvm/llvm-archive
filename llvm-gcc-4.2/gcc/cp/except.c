@@ -56,6 +56,16 @@ static bool is_admissible_throw_operand (tree);
 static int can_convert_eh (tree, tree);
 static tree cp_protect_cleanup_actions (void);
 
+/* LLVM local begin */
+/* Do nothing (return NULL_TREE).  */
+
+tree
+return_null_tree (void)
+{
+  return NULL_TREE;
+}
+/* LLVM local end */
+
 /* Sets up all the global eh stuff that needs to be initialized at the
    start of compilation.  */
 
@@ -92,6 +102,8 @@ init_exception_processing (void)
 
   lang_eh_runtime_type = build_eh_type_type;
   lang_protect_cleanup_actions = &cp_protect_cleanup_actions;
+  /* LLVM local */
+  lang_eh_catch_all = return_null_tree;
 }
 
 /* Returns an expression to be executed if an unhandled exception is

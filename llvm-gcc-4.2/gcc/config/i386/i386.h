@@ -3707,6 +3707,7 @@ enum ix86_builtins
       F.setCPU(TARGET_64BIT ? "core2" : "yonah");             \
     else                                                      \
       F.setCPU(ix86_arch_string);                             \
+    if (TARGET_64BIT) F.AddFeature("64bit");                  \
     if (TARGET_MMX)   F.AddFeature("mmx");                    \
     if (TARGET_SSE)   F.AddFeature("sse");                    \
     if (TARGET_SSE2)  F.AddFeature("sse2");                   \

@@ -58,6 +58,8 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 optab optab_table[OTI_MAX];
 
 rtx libfunc_table[LTI_MAX];
+/* LLVM LOCAL */
+tree llvm_libfunc_table[LTI_MAX];
 
 /* Tables of patterns for converting one mode to another.  */
 convert_optab convert_optab_table[COI_MAX];
@@ -5133,28 +5135,41 @@ init_intraclass_conv_libfuncs (convert_optab tab, const char *opname,
 }
 
 
-rtx
-init_one_libfunc (const char *name)
+/* LLVM local begin */
+tree
+llvm_init_one_libfunc (const char *name)
 {
-  rtx symbol;
-  
   /* Create a FUNCTION_DECL that can be passed to
      targetm.encode_section_info.  */
   /* ??? We don't have any type information except for this is
      a function.  Pretend this is "int foo()".  */
   tree decl;
 
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-  return NULL_RTX;
-#endif
   decl = build_decl (FUNCTION_DECL, get_identifier (name),
                      build_function_type (integer_type_node, NULL_TREE));
-  /* LLVM LOCAL end */
 
   DECL_ARTIFICIAL (decl) = 1;
   DECL_EXTERNAL (decl) = 1;
   TREE_PUBLIC (decl) = 1;
+
+  return decl;
+}
+
+/* LLVM local end */
+rtx
+init_one_libfunc (const char *name)
+{
+  rtx symbol;
+
+  /* LLVM local begin */
+  tree decl;
+
+#ifdef ENABLE_LLVM
+  return NULL_RTX;
+#endif
+
+  decl = llvm_init_one_libfunc (name);
+  /* LLVM local end */
 
   symbol = XEXP (DECL_RTL (decl), 0);
 

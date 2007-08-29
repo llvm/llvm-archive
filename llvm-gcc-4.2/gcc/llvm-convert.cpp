@@ -62,6 +62,7 @@ extern "C" {
 #include "hard-reg-set.h"
 #include "except.h"
 #include "rtl.h"
+#include "libfuncs.h"
 #include "tree-flow.h"
 extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
@@ -368,7 +369,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
-  FuncCPPPersonality = 0;
+  FuncEHPersonality = 0;
   FuncUnwindResume = 0;
 
   NumAddressTakenBlocks = 0;
@@ -1744,17 +1745,13 @@ void TreeToLLVM::CreateExceptionValues() {
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_typeid_for);
 
-  FuncCPPPersonality =
-    TheModule->getOrInsertFunction("__gxx_personality_v0",
-                                   Type::getPrimitiveType(Type::VoidTyID),
-                                   NULL);
+  assert(llvm_eh_personality_libfunc
+         && "no exception handling personality function!");
+  FuncEHPersonality = DECL_LLVM(llvm_eh_personality_libfunc);
 
-  FuncUnwindResume =
-    TheModule->getOrInsertFunction("_Unwind_Resume",
-                                   Type::getPrimitiveType(Type::VoidTyID),
-                                   PointerType::get(Type::Int8Ty),
-                                   NULL);
-
+  assert(llvm_unwind_resume_libfunc
+         && "no unwind resume function!");
+  FuncUnwindResume = DECL_LLVM(llvm_unwind_resume_libfunc);
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling
@@ -1798,7 +1795,7 @@ void TreeToLLVM::EmitLandingPads() {
 
     // The exception and the personality function.
     Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-    Args.push_back(CastToType(Instruction::BitCast, FuncCPPPersonality,
+    Args.push_back(CastToType(Instruction::BitCast, FuncEHPersonality,
                               PointerType::get(Type::Int8Ty)));
 
     // Add selections for each handler.

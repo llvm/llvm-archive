@@ -4007,9 +4007,11 @@ void
 default_init_unwind_resume_libfunc (void)
 {
   /* The default c++ routines aren't actually c++ specific, so use those.  */
-  unwind_resume_libfunc =
-    init_one_libfunc ( USING_SJLJ_EXCEPTIONS ? "_Unwind_SjLj_Resume"
-					     : "_Unwind_Resume");
+  /* LLVM local begin */
+  llvm_unwind_resume_libfunc = llvm_init_one_libfunc ( USING_SJLJ_EXCEPTIONS ?
+                                                       "_Unwind_SjLj_Resume"
+                                                       : "_Unwind_Resume");
+  /* LLVM local end */
 }
 
 

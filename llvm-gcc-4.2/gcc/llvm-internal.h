@@ -287,8 +287,8 @@ class TreeToLLVM {
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
   Function *FuncEHGetTypeID;
 
-  /// FuncCPPPersonality - Function handling c++ personality.
-  Value *FuncCPPPersonality;
+  /// FuncEHPersonality - Function providing the exception handling personality.
+  Value *FuncEHPersonality;
 
   /// FuncUnwindResume - Function used to continue exception unwinding.
   Value *FuncUnwindResume;

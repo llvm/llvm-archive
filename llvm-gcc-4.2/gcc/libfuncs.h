@@ -20,6 +20,8 @@ Boston, MA 02110-1301, USA.  */
 
 #ifndef GCC_LIBFUNCS_H
 #define GCC_LIBFUNCS_H
+/* LOCAL LLVM */
+#include "tree.h"
 
 /* Enumeration of indexes into libfunc_table.  */
 enum libfunc_index
@@ -49,6 +51,13 @@ enum libfunc_index
 /* SYMBOL_REF rtx's for the library functions that are called
    implicitly and not via optabs.  */
 extern GTY(()) rtx libfunc_table[LTI_MAX];
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+/* FUNCTION_DECL nodes for the library functions that are called
+   implicitly and not via optabs.  */
+extern GTY(()) tree llvm_libfunc_table[LTI_MAX];
+#endif
+/* LLVM LOCAL end */
 
 /* Accessor macros for libfunc_table.  */
 
@@ -66,6 +75,15 @@ extern GTY(()) rtx libfunc_table[LTI_MAX];
 #define unwind_sjlj_register_libfunc (libfunc_table[LTI_unwind_sjlj_register])
 #define unwind_sjlj_unregister_libfunc \
   (libfunc_table[LTI_unwind_sjlj_unregister])
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#define llvm_unwind_resume_libfunc	(llvm_libfunc_table[LTI_unwind_resume])
+#define llvm_eh_personality_libfunc	(llvm_libfunc_table[LTI_eh_personality])
+#else
+#define llvm_unwind_resume_libfunc	unwind_resume_libfunc
+#define llvm_eh_personality_libfunc	eh_personality_libfunc
+#endif
+/* LLVM LOCAL end */
 
 #define profile_function_entry_libfunc	(libfunc_table[LTI_profile_function_entry])
 #define profile_function_exit_libfunc	(libfunc_table[LTI_profile_function_exit])

@@ -7555,8 +7555,10 @@ objc_init_exceptions (void)
 #endif
       /* APPPLE LOCAL radar 5023725 */
       OBJC_FLAG_ZEROCOST_EXCEPTIONS; 
-      eh_personality_libfunc
-        = init_one_libfunc ("__objc_personality_v0");
+      /* LLVM local begin */
+      llvm_eh_personality_libfunc
+        = llvm_init_one_libfunc ("__objc_personality_v0");
+      /* LLVM local end */
       default_init_unwind_resume_libfunc ();
       using_eh_for_cleanups ();
       lang_eh_runtime_type = objc2_eh_runtime_type;
@@ -7568,10 +7570,12 @@ objc_init_exceptions (void)
   else
     {
       c_eh_initialized_p = true;
-      eh_personality_libfunc
-	= init_one_libfunc (USING_SJLJ_EXCEPTIONS
-			    ? "__gnu_objc_personality_sj0"
-			    : "__gnu_objc_personality_v0");
+      /* LLVM local begin */
+      llvm_eh_personality_libfunc
+	= llvm_init_one_libfunc (USING_SJLJ_EXCEPTIONS
+                                 ? "__gnu_objc_personality_sj0"
+                                 : "__gnu_objc_personality_v0");
+      /* LLVM local end */
       default_init_unwind_resume_libfunc ();
       using_eh_for_cleanups ();
       lang_eh_runtime_type = objc_eh_runtime_type;

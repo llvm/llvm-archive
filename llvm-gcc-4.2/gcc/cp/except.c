@@ -78,11 +78,15 @@ init_exception_processing (void)
   call_unexpected_node
     = push_throw_library_fn (get_identifier ("__cxa_call_unexpected"), tmp);
 
-  eh_personality_libfunc = init_one_libfunc (USING_SJLJ_EXCEPTIONS
-					     ? "__gxx_personality_sj0"
-					     : "__gxx_personality_v0");
+  /* LLVM local begin */
+  llvm_eh_personality_libfunc
+    = llvm_init_one_libfunc (USING_SJLJ_EXCEPTIONS
+                             ? "__gxx_personality_sj0"
+                             : "__gxx_personality_v0");
+  /* LLVM local end */
   if (targetm.arm_eabi_unwinder)
-    unwind_resume_libfunc = init_one_libfunc ("__cxa_end_cleanup");
+    /* LLVM local */
+    llvm_unwind_resume_libfunc = llvm_init_one_libfunc ("__cxa_end_cleanup");
   else
     default_init_unwind_resume_libfunc ();
 
@@ -354,9 +358,12 @@ choose_personality_routine (enum languages lang)
 
     case lang_java:
       state = chose_java;
-      eh_personality_libfunc = init_one_libfunc (USING_SJLJ_EXCEPTIONS
-						 ? "__gcj_personality_sj0"
-						 : "__gcj_personality_v0");
+      /* LLVM local begin */
+      llvm_eh_personality_libfunc
+        = llvm_init_one_libfunc (USING_SJLJ_EXCEPTIONS
+                                 ? "__gcj_personality_sj0"
+                                 : "__gcj_personality_v0");
+      /* LLVM local end */
       break;
 
     default:

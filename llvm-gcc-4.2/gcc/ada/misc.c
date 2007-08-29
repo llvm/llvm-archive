@@ -512,8 +512,8 @@ gnat_init_gcc_eh (void)
      right exception regions.  */
   using_eh_for_cleanups ();
 
-  eh_personality_libfunc = init_one_libfunc ("__gnat_eh_personality");
   /* LLVM LOCAL begin */
+  llvm_eh_personality_libfunc = llvm_init_one_libfunc ("__gnat_eh_personality");
   default_init_unwind_resume_libfunc ();
   /* LLVM LOCAL end */
   lang_eh_type_covers = gnat_eh_type_covers;

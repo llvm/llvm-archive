@@ -3550,10 +3550,12 @@ c_maybe_initialize_eh (void)
     return;
 
   c_eh_initialized_p = true;
-  eh_personality_libfunc
-    = init_one_libfunc (USING_SJLJ_EXCEPTIONS
-			? "__gcc_personality_sj0"
-			: "__gcc_personality_v0");
+  /* LLVM local begin */
+  llvm_eh_personality_libfunc
+    = llvm_init_one_libfunc (USING_SJLJ_EXCEPTIONS
+                             ? "__gcc_personality_sj0"
+                             : "__gcc_personality_v0");
+  /* LLVM local end */
   default_init_unwind_resume_libfunc ();
   using_eh_for_cleanups ();
 }

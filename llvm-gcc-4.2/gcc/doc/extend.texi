@@ -2322,22 +2322,6 @@ function.  Examples of such functions are @code{setjmp} and @code{vfork}.
 The @code{longjmp}-like counterpart of such function, if any, might need
 to be marked with the @code{noreturn} attribute.
 
-@c APPLE LOCAL begin 4356747 stack realign
-@item force_align_arg_pointer
-@cindex @code{force_align_arg_pointer} attribute
-On the Intel x86, the @code{force_align_arg_pointer} attribute may be
-applied to individual function definitions, generating an alternate
-prologue and epilogue that realigns the runtime stack.  This supports
-mixing legacy codes that run with a 4-byte aligned stack with modern
-codes that keep a 16-byte stack for SSE compatibility.  The alternate
-prologue/epilogue is slower and bigger than the regular one, and it
-requires one dedicated register for the life of the function.  This
-also lowers the number of registers available if used in conjunction
-with the @code{regparm} attribute.  The @code{force_align_arg_pointer}
-attribute is incompatible with nested functions; this is considered a
-hard error.
-@c APPLE LOCAL end 4356747 stack realign
-
 @item saveall
 @cindex save all registers on the Blackfin, H8/300, H8/300H, and H8S
 Use this attribute on the Blackfin, H8/300, H8/300H, and H8S to indicate that

@@ -1071,13 +1071,3 @@ objc_check_format_cfstring (tree argument,
   return true;
 }
 /* APPLE LOCAL end radar 4985544 - radar 5096648 - radar 5195402 */
-
-/* APPLE LOCAL begin radar 2996215 */
-/* Objc wrapper to call libcpp's conversion routine. */
-bool
-objc_cvt_utf8_utf16 (const unsigned char *inbuf, size_t length, 
-		     unsigned char **uniCharBuf, size_t *numUniChars)
-{
-  return cpp_utf8_utf16 (parse_in, inbuf, length, uniCharBuf, numUniChars);
-}
-/* APPLE LOCAL end radar 2996215 */

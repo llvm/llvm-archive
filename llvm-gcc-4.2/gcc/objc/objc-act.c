@@ -123,6 +123,13 @@ static bool should_call_super_finalize = false;
 #define OBJC_FLAG_ZEROCOST_EXCEPTIONS
 #endif
 /* APPLE LOCAL end radar 5023725 */
+/* LLVM LOCAL begin */
+/* APPLE LOCAL begin radar 4590191 */
+#ifndef OBJC_FLAG_SJLJ_EXCEPTIONS
+#define OBJC_FLAG_SJLJ_EXCEPTIONS
+#endif
+/* APPLE LOCAL end radar 4590191 */
+/* LLVM LOCAL end */
 /* APPLE LOCAL begin radar 4531086 */
 #ifndef OBJC_WARN_OBJC2_FEATURES
 #define OBJC_WARN_OBJC2_FEATURES(MESSAGE)
@@ -7541,10 +7548,9 @@ objc_init_exceptions (void)
   /* APPLE LOCAL begin radar 4590191 */
   if (flag_objc_sjlj_exceptions)
     {
-      if (darwin_macosx_version_min 
-	  && strverscmp (darwin_macosx_version_min, "10.3") < 0)
-	warning (0, "Mac OS X version 10.3 or later is needed instead of %s for objc/obj-c++ exceptions",
-	         darwin_macosx_version_min);
+      /* LLVM LOCAL begin */    
+      OBJC_FLAG_SJLJ_EXCEPTIONS;
+      /* LLVM LOCAL end */
     }
   /* APPLE LOCAL end radar 4590191 */
  /* APPLE LOCAL begin radar 2848255 */
@@ -17855,7 +17861,7 @@ handle_class_ref (tree chain)
   set_user_assembler_name(decl, string);
   /* Let optimizer know that this decl is not removable.  */
   DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
   /* LLVM LOCAL end */
 
   pushdecl (decl);
@@ -17874,7 +17880,7 @@ handle_class_ref (tree chain)
   /* This decl's name is special. Ask llvm to not add leading underscore by 
      setting it as a user supplied asm name.  */
   set_user_assembler_name(decl, string);
-#endif ENABLE_LLVM
+#endif
 /* LLVM LOCAL end */
   /* Force the output of the decl as this forces the reference of the class.  */
   mark_decl_referenced (decl);
@@ -17958,7 +17964,7 @@ handle_impent (struct imp_entry *impent)
       set_user_assembler_name(decl, string);
       /* Let optimizer know that this decl is not removable.  */
       DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
       /* LLVM LOCAL end */
       DECL_INITIAL (decl) = init;
       assemble_variable (decl, 1, 0, 0);
@@ -18811,7 +18817,17 @@ objc_check_format_nsstring (tree argument,
 }
 /* APPLE LOCAL end radar 4985544 - 5195402 */
 
+/* LLVM LOCAL begin */
 /* APPLE LOCAL begin radar 2996215 */
+/* Objc wrapper to call libcpp's conversion routine. */
+static bool
+objc_cvt_utf8_utf16 (const unsigned char *inbuf, size_t length, 
+		     unsigned char **uniCharBuf, size_t *numUniChars)
+{
+  return cpp_utf8_utf16 (parse_in, inbuf, length, uniCharBuf, numUniChars);
+}
+/* LLVM LOCAL end */
+
 /* This routine declares static char __utf16_string [numUniChars] in __TEXT,__ustring 
    section and initializes it with uniCharBuf[numUniChars] characters. 
 */

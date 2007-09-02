@@ -38,6 +38,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "langhooks.h"
 #include "real.h"
 
+#include "llvm.h"
 /* Convert EXPR to some pointer or reference type TYPE.
    EXPR must be pointer, reference, integer, enumeral, or literal zero;
    in other cases error is called.  */
@@ -394,6 +395,12 @@ convert_to_integer (tree type, tree expr)
 	  /* Only convert in ISO C99 mode.  */
 	  if (!TARGET_C99_FUNCTIONS)
 	    break;
+	  /* LLVM LOCAL begin */
+	  /* FIXME: l-functions should be supported sometimes */
+	  #ifdef ENABLE_LLVM
+	  break;
+	  #endif
+	  /* LLVM LOCAL end */
 	  if (outprec < TYPE_PRECISION (long_integer_type_node)
 	      || (outprec == TYPE_PRECISION (long_integer_type_node)
 		  && !TYPE_UNSIGNED (type)))
@@ -407,6 +414,10 @@ convert_to_integer (tree type, tree expr)
 	  /* Only convert in ISO C99 mode.  */
 	  if (!TARGET_C99_FUNCTIONS)
 	    break;
+	  /* LLVM LOCAL begin */
+	  #ifdef ENABLER_LLVM
+	  break;
+	  #endif
 	  if (outprec < TYPE_PRECISION (long_integer_type_node)
 	      || (outprec == TYPE_PRECISION (long_integer_type_node)
 		  && !TYPE_UNSIGNED (type)))

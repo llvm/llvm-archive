@@ -58,8 +58,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 optab optab_table[OTI_MAX];
 
 rtx libfunc_table[LTI_MAX];
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 tree llvm_libfunc_table[LTI_MAX];
+/* LLVM LOCAL end */
 
 /* Tables of patterns for converting one mode to another.  */
 convert_optab convert_optab_table[COI_MAX];

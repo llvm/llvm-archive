@@ -415,7 +415,7 @@ convert_to_integer (tree type, tree expr)
 	  if (!TARGET_C99_FUNCTIONS)
 	    break;
 	  /* LLVM LOCAL begin */
-	  #ifdef ENABLER_LLVM
+	  #ifdef ENABLE_LLVM
 	  break;
 	  #endif
 	  if (outprec < TYPE_PRECISION (long_integer_type_node)

@@ -506,7 +506,7 @@ namespace {
         ConstantInt::get(Type::Int32Ty, FieldNo)
       };
 
-      Loc = Builder.CreateGEP(Loc, Idxs, 2, "tmp");
+      Loc = Builder.CreateGEP(Loc, Idxs, Idxs + 2, "tmp");
       LocStack.push_back(Loc);    
     }
     void ExitField() {
@@ -1197,8 +1197,9 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
       if (isPaddingElement(STy, i))
         continue;
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
-      Value *DElPtr = Builder.CreateGEP(DestPtr, Zero, Idx, "tmp");
-      Value *SElPtr = Builder.CreateGEP(SrcPtr, Zero, Idx, "tmp");
+      Value *Idxs[2] = { Zero, Idx };
+      Value *DElPtr = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, "tmp");
+      Value *SElPtr = Builder.CreateGEP(SrcPtr, Idxs, Idxs + 2, "tmp");
       CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Alignment,
                     Builder);
     }
@@ -1207,8 +1208,9 @@ static void CopyAggregate(Value *DestPtr, Value *SrcPtr,
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
-      Value *DElPtr = Builder.CreateGEP(DestPtr, Zero, Idx, "tmp");
-      Value *SElPtr = Builder.CreateGEP(SrcPtr, Zero, Idx, "tmp");
+      Value *Idxs[2] = { Zero, Idx };
+      Value *DElPtr = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, "tmp");
+      Value *SElPtr = Builder.CreateGEP(SrcPtr, Idxs, Idxs + 2, "tmp");
       CopyAggregate(DElPtr, SElPtr, isDstVolatile, isSrcVolatile, Alignment,
                     Builder);
     }
@@ -1278,14 +1280,18 @@ static void ZeroAggregate(Value *DestPtr, LLVMBuilder &Builder) {
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
-      ZeroAggregate(Builder.CreateGEP(DestPtr, Zero, Idx, "tmp"), Builder);
+      Value *Idxs[2] = { Zero, Idx };
+      ZeroAggregate(Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, "tmp"),
+                    Builder);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
-      ZeroAggregate(Builder.CreateGEP(DestPtr, Zero, Idx, "tmp"), Builder);
+      Value *Idxs[2] = { Zero, Idx };
+      ZeroAggregate(Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, "tmp"),
+                    Builder);
     }
   }
 }
@@ -2231,7 +2237,8 @@ namespace {
         // This always deals with pointer types so BitCast is appropriate
         Loc = Builder.CreateBitCast(Loc, PointerType::get(StructTy), "tmp");
       
-      LocStack.push_back(Builder.CreateGEP(Loc, Zero, FIdx, "tmp"));
+      Value *Idxs[2] = { Zero, FIdx };
+      LocStack.push_back(Builder.CreateGEP(Loc, Idxs, Idxs + 2, "tmp"));
     }
     void ExitField() {
       LocStack.pop_back();
@@ -4550,23 +4557,27 @@ void TreeToLLVM::EmitLoadFromComplex(Value *&Real, Value *&Imag,
                                      Value *SrcComplex, bool isVolatile) {
   Value *I0 = ConstantInt::get(Type::Int32Ty, 0);
   Value *I1 = ConstantInt::get(Type::Int32Ty, 1);
-  
-  Value *RealPtr = Builder.CreateGEP(SrcComplex, I0, I0, "real");
+  Value *Idxs[2] = { I0, I0 };
+
+  Value *RealPtr = Builder.CreateGEP(SrcComplex, Idxs, Idxs + 2, "real");
   Real = Builder.CreateLoad(RealPtr, isVolatile, "real");
   
-  Value *ImagPtr = Builder.CreateGEP(SrcComplex, I0, I1, "real");
+  Idxs[1] = I1;
+  Value *ImagPtr = Builder.CreateGEP(SrcComplex, Idxs, Idxs + 2, "real");
   Imag = Builder.CreateLoad(ImagPtr, isVolatile, "imag");
 }
 
 void TreeToLLVM::EmitStoreToComplex(Value *DestComplex, Value *Real,
                                     Value *Imag, bool isVolatile) {
   Value *I0 = ConstantInt::get(Type::Int32Ty, 0);
-  Value *I1 = ConstantInt::get(Type::Int32Ty, 1);
-  
-  Value *RealPtr = Builder.CreateGEP(DestComplex, I0, I0, "real");
+  Value *I1 = ConstantInt::get(Type::Int32Ty, 1);  
+  Value *Idxs[2] = { I0, I0 };
+
+  Value *RealPtr = Builder.CreateGEP(DestComplex, Idxs, Idxs + 2, "real");
   Builder.CreateStore(Real, RealPtr, isVolatile);
   
-  Value *ImagPtr = Builder.CreateGEP(DestComplex, I0, I1, "real");
+  Idxs[1] = I1;
+  Value *ImagPtr = Builder.CreateGEP(DestComplex, Idxs, Idxs + 2, "real");
   Builder.CreateStore(Imag, ImagPtr, isVolatile);
 }
 
@@ -4777,8 +4788,8 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   // If this is an index into an LLVM array, codegen as a GEP.
   if (isArrayCompatible(ArrayType)) {
-    Value *Ptr = Builder.CreateGEP(ArrayAddr,ConstantInt::get(Type::Int32Ty, 0),
-                                   IndexVal, "tmp");
+    Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), IndexVal };
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idxs, Idxs + 2, "tmp");
     return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
   }
 
@@ -4859,10 +4870,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
-    FieldPtr = Builder.CreateGEP(StructAddrLV.Ptr,
-                                 Constant::getNullValue(Type::Int32Ty),
-                                 ConstantInt::get(Type::Int32Ty, MemberIndex),
-                                 "tmp");
+    Value *Idxs[2] = { Constant::getNullValue(Type::Int32Ty),
+                       ConstantInt::get(Type::Int32Ty, MemberIndex) };
+    FieldPtr = Builder.CreateGEP(StructAddrLV.Ptr, Idxs, Idxs + 2, "tmp");
 
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.
@@ -5013,9 +5023,9 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
   assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
 
-  return LValue(Builder.CreateGEP(Ptr.Ptr, 
-                                  ConstantInt::get(Type::Int32Ty, 0),
-                                  ConstantInt::get(Type::Int32Ty, Idx), "tmp"));
+  Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0),
+                     ConstantInt::get(Type::Int32Ty, Idx) };
+  return LValue(Builder.CreateGEP(Ptr.Ptr, Idxs, Idxs + 2, "tmp"));
 }
 
 LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {

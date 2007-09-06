@@ -35,6 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/LLVMBuilder.h"
 #include "llvm/Support/Streams.h"
@@ -91,7 +92,7 @@ extern llvm::OStream *AsmOutFile;
 extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
-extern std::vector<Constant*> AttributeUsedGlobals;
+extern SmallPtrSet<Constant *,32> AttributeUsedGlobals;
 
 /// AttributeNoinlineFunctions - The list of functions that are 
 /// marked attribute(noinline)

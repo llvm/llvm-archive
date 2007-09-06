@@ -85,7 +85,7 @@ llvm::OStream *AsmOutFile = 0;
 static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
-std::vector<Constant*> AttributeUsedGlobals;
+SmallPtrSet<Constant*, 32> AttributeUsedGlobals;
 std::vector<Constant*> AttributeNoinlineFunctions;
 std::vector<Constant*> AttributeAnnotateGlobals;
 
@@ -440,6 +440,7 @@ void llvm_asm_file_start(void) {
 
   createOptimizationPasses();
   
+  AttributeUsedGlobals.clear();
   timevar_pop(TV_LLVM_INIT);
 }
 
@@ -480,9 +481,16 @@ void llvm_asm_file_end(void) {
     CreateStructorsList(StaticDtors, "llvm.global_dtors");
   
   if (!AttributeUsedGlobals.empty()) {
-    const Type *SBP = PointerType::get(Type::Int8Ty);
-    ArrayType *AT = ArrayType::get(SBP, AttributeUsedGlobals.size());
-    Constant *Init = ConstantArray::get(AT, AttributeUsedGlobals);
+    std::vector<Constant *> AUGs;
+    const Type *SBP= PointerType::get(Type::Int8Ty);
+    for (SmallPtrSet<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
+           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      AUGs.push_back(ConstantExpr::getBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
+    Constant *Init = ConstantArray::get(AT, AUGs);
     GlobalValue *gv = new GlobalVariable(AT, false, 
                        GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
@@ -806,6 +814,10 @@ void emit_global_to_llvm(tree decl) {
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName(), TheModule);
     GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
+    if (AttributeUsedGlobals.count(GV)) {
+      AttributeUsedGlobals.erase(GV);
+      AttributeUsedGlobals.insert(NGV);
+    }
     delete GV;
     SET_DECL_LLVM(decl, NGV);
     GV = NGV;
@@ -865,10 +877,8 @@ void emit_global_to_llvm(tree decl) {
     }
 
     // Handle used decls
-    if (DECL_PRESERVE_P (decl)) {
-      const Type *SBP= PointerType::get(Type::Int8Ty);
-      AttributeUsedGlobals.push_back(ConstantExpr::getBitCast(GV, SBP));
-    }
+    if (DECL_PRESERVE_P (decl))
+      AttributeUsedGlobals.insert(GV);
   
     // Add annotate attributes for globals
     if (DECL_ATTRIBUTES(decl))

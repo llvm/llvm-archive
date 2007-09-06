@@ -622,10 +622,8 @@ void TreeToLLVM::StartFunctionBody() {
     Fn->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(FnDecl)));
 
   // Handle used Functions
-  if (DECL_PRESERVE_P (FnDecl)) {
-    const Type *SBP= PointerType::get(Type::Int8Ty);
-    AttributeUsedGlobals.push_back(ConstantExpr::getBitCast(Fn,SBP));
-  }
+  if (DECL_PRESERVE_P (FnDecl))
+    AttributeUsedGlobals.insert(Fn);
   
   // Handle noinline Functions
   if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl))) {

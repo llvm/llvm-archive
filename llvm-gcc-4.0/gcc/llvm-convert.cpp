@@ -5603,7 +5603,8 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
   if (WORDS_BIG_ENDIAN != HostBigEndian)
     std::swap(UArr[0], UArr[1]);
   
-  return ConstantFP::get(Ty, V);
+  return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
+                                               : APFloat(V));
 }
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {

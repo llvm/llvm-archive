@@ -6453,7 +6453,13 @@ output_init_element (tree value, bool strict_string, tree type, tree field,
 
   if (value == error_mark_node)
     constructor_erroneous = 1;
-  else if (!TREE_CONSTANT (value))
+  else if (!(TREE_CONSTANT (value)
+             || (DECL_P (value)
+                 && DECL_INITIAL (value)
+                 && DECL_INITIAL (value) != error_mark_node
+                 && ! TREE_THIS_VOLATILE (value)
+                 && ! TYPE_P (DECL_INITIAL (value))
+                 && TREE_CONSTANT (DECL_INITIAL (value)))))
     constructor_constant = 0;
   else if (!initializer_constant_valid_p (value, TREE_TYPE (value))
 	   || ((TREE_CODE (constructor_type) == RECORD_TYPE

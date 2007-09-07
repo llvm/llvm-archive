@@ -18267,10 +18267,22 @@ generate_objc_image_info (void)
   /* APPLE LOCAL end radar 4810609 */
 
   /* APPLE LOCAL begin radar 4810587, radar 4964338 */
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
+     later while emitting symbols, but fix it here for llvm.  */
+  decl = build_decl (VAR_DECL, get_identifier ("L_OBJC_IMAGE_INFO"),
+                     build_array_type
+                       (integer_type_node,
+                        build_index_type (build_int_cst (NULL_TREE, 2 - 1))));
+#else
+  /* APPLE LOCAL end LLVM */
   decl = build_decl (VAR_DECL, get_identifier ("_OBJC_IMAGE_INFO"),
                      build_array_type
                        (integer_type_node,
                         build_index_type (build_int_cst (NULL_TREE, 2 - 1))));
+  /* APPLE LOCAL LLVM */
+#endif
   initlist = build_tree_list (NULL_TREE, build_int_cst (NULL_TREE, 0));
   initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, flags), initlist);
   initlist = objc_build_constructor (TREE_TYPE (decl), nreverse (initlist));
@@ -18285,6 +18297,13 @@ generate_objc_image_info (void)
   DECL_CONTEXT (decl) = 0;
   DECL_ARTIFICIAL (decl) = 1;
   DECL_INITIAL (decl) = initlist;
+      /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* Let optimizer know that this decl is not removable.  */
+  set_user_assembler_name(decl, IDENTIFIER_POINTER (DECL_NAME(decl)));
+  DECL_PRESERVE_P (decl) = 1;
+#endif ENABLE_LLVM
+  /* APPLE LOCAL end LLVM */
   assemble_variable (decl, 1, 0, 0);
 }
 /* APPLE LOCAL end radar 4810587, radar 4964338 */

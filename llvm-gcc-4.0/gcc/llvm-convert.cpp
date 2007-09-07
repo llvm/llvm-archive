@@ -2091,19 +2091,25 @@ void TreeToLLVM::AddLandingPad() {
 void TreeToLLVM::CreateExceptionValues() {
   // Check to see if the exception values have been constructed.
   if (ExceptionValue) return;
+
+  const Type *IntPtr = TD.getIntPtrType();
   
   ExceptionValue = CreateTemporary(PointerType::get(Type::Int8Ty));
   ExceptionValue->setName("eh_exception");
   
-  ExceptionSelectorValue = CreateTemporary(Type::Int32Ty);
+  ExceptionSelectorValue = CreateTemporary(IntPtr);
   ExceptionSelectorValue->setName("eh_selector");
   
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
-                                              Intrinsic::eh_selector);
+                                              (IntPtr == Type::Int32Ty ?
+                                               Intrinsic::eh_selector_i32 :
+                                               Intrinsic::eh_selector_i64));
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
-                                              Intrinsic::eh_typeid_for);
+                                              (IntPtr == Type::Int32Ty ?
+                                               Intrinsic::eh_typeid_for_i32 :
+                                               Intrinsic::eh_typeid_for_i64));
                                                       
   FuncCPPPersonality =
     TheModule->getOrInsertFunction("__gxx_personality_v0",

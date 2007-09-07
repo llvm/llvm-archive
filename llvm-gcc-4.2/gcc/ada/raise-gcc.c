@@ -39,14 +39,10 @@
    it does.  To avoid branching raise.c just for that purpose, we kludge by
    looking for a symbol always defined by tm.h and if it's not defined,
    we include it.  */
-/* LLVM LOCAL begin */
-/*
 #ifndef FIRST_PSEUDO_REGISTER
 #include "coretypes.h"
 #include "tm.h"
 #endif
-*/
-/* LLVM LOCAL end */
 #include "tsystem.h"
 #include <sys/stat.h>
 #include <stdarg.h>

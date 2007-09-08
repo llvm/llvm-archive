@@ -54,6 +54,7 @@ void dummy_function() {
   llvm::createBFS_DAGScheduler(NULL, NULL, NULL);
   llvm::createLinearScanRegisterAllocator();
 
+  llvm::createGVNPass();
   llvm::createGCSEPass();
   llvm::createLoopRotatePass();
   llvm::createLICMPass();

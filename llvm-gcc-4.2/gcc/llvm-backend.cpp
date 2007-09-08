@@ -346,8 +346,7 @@ static void createOptimizationPasses() {
     if (flag_unroll_loops)
       PM->add(createLoopUnrollPass());          // Unroll small loops
     PM->add(createInstructionCombiningPass());  // Clean up after the unroller
-    PM->add(createLoadValueNumberingPass());    // GVN for load instructions
-    PM->add(createGCSEPass());                  // Remove common subexprs
+    PM->add(createGVNPass());                   // Remove redundancies
     PM->add(createSCCPPass());                  // Constant prop with SCCP
     
     // Run instcombine after redundancy elimination to exploit opportunities

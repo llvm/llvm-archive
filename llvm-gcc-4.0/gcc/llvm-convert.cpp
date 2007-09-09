@@ -2447,7 +2447,7 @@ Value *TreeToLLVM::EmitEH_FILTER_EXPR(tree exp) {
   Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
 
   // Compare with the filter action value.
-  Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Value *Zero = ConstantInt::get(Select->getType(), 0);
   Value *Compare = Builder.CreateICmpSLT(Select, Zero, "tmp");
   
   // Branch on the compare.

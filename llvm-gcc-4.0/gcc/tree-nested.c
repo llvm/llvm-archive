@@ -395,16 +395,20 @@ save_tmp_var (struct nesting_info *info, tree exp,
 
 /* Build or return the type used to represent a nested function trampoline.  */
 
-static GTY(()) tree trampoline_type;
+/* LLVM local */
+static GTY(()) tree trampoline_storage_type;
 
 static tree
-get_trampoline_type (void)
+/* LLVM local */
+get_trampoline_storage_type (void)
 {
   tree record, t;
   unsigned align, size;
 
-  if (trampoline_type)
-    return trampoline_type;
+  /* LLVM local begin */
+  if (trampoline_storage_type)
+    return trampoline_storage_type;
+  /* LLVM local end */
 
   align = TRAMPOLINE_ALIGNMENT;
   size = TRAMPOLINE_SIZE;
@@ -460,8 +464,9 @@ lookup_tramp_for_decl (struct nesting_info *info, tree decl,
     {
       field = make_node (FIELD_DECL);
       DECL_NAME (field) = DECL_NAME (decl);
-      TREE_TYPE (field) = get_trampoline_type ();
-      TREE_ADDRESSABLE (field) = 1;
+      /* LLVM local begin */
+      TREE_TYPE (field) = TYPE_POINTER_TO (TREE_TYPE (decl));
+      /* LLVM local end */
 
       insert_field_into_struct (get_frame_type (info), field);
 
@@ -1190,17 +1195,14 @@ convert_tramp_reference (tree *tp, int *walk_subtrees, void *data)
 {
   struct walk_stmt_info *wi = data;
   struct nesting_info *info = wi->info, *i;
-  tree t = *tp, decl, target_context, x, arg;
+  /* LLVM local */
+  tree t = *tp, decl, target_context, x;
 
   *walk_subtrees = 0;
   switch (TREE_CODE (t))
     {
     case ADDR_EXPR:
-      /* Build
-	   T.1 = &CHAIN->tramp;
-	   T.2 = __builtin_adjust_trampoline (T.1);
-	   T.3 = (func_type)T.2;
-      */
+      /* LLVM local deleted 5 lines */
 
       decl = TREE_OPERAND (t, 0);
       if (TREE_CODE (decl) != FUNCTION_DECL)
@@ -1220,22 +1222,12 @@ convert_tramp_reference (tree *tp, int *walk_subtrees, void *data)
 	 we need to insert the trampoline.  */
       for (i = info; i->context != target_context; i = i->outer)
 	continue;
+      /* LLVM local begin */
+
+      /* Lookup the trampoline.  */
       x = lookup_tramp_for_decl (i, decl, INSERT);
-
-      /* Compute the address of the field holding the trampoline.  */
       x = get_frame_field (info, target_context, x, &wi->tsi);
-      x = build_addr (x);
-      x = tsi_gimplify_val (info, x, &wi->tsi);
-      arg = tree_cons (NULL, x, NULL);
-
-      /* Do machine-specific ugliness.  Normally this will involve
-	 computing extra alignment, but it can really be anything.  */
-      x = implicit_built_in_decls[BUILT_IN_ADJUST_TRAMPOLINE];
-      x = build_function_call_expr (x, arg);
-      x = init_tmp_var (info, x, &wi->tsi);
-
-      /* Cast back to the proper function type.  */
-      x = build1 (NOP_EXPR, TREE_TYPE (t), x);
+      /* LLVM local end */
       x = init_tmp_var (info, x, &wi->tsi);
 
       *tp = x;
@@ -1390,7 +1382,8 @@ finalize_nesting_tree_1 (struct nesting_info *root)
       struct nesting_info *i;
       for (i = root->inner; i ; i = i->next)
 	{
-	  tree arg, x, field;
+	  /* LLVM local */
+	  tree arg, x, y, field;
 
 	  field = lookup_tramp_for_decl (root, i->context, NO_INSERT);
 	  if (!field)
@@ -1405,13 +1398,27 @@ finalize_nesting_tree_1 (struct nesting_info *root)
 	  x = build_addr (i->context);
 	  arg = tree_cons (NULL, x, arg);
 
-	  x = build (COMPONENT_REF, TREE_TYPE (field),
-		     root->frame_decl, field, NULL_TREE);
-	  x = build_addr (x);
+	  /* LLVM local begin */
+	  /* Create a local variable to hold the trampoline code.  */
+	  y = create_tmp_var_for (root, get_trampoline_storage_type(),
+				  "TRAMP");
+	  x = build_addr (y);
 	  arg = tree_cons (NULL, x, arg);
 
 	  x = implicit_built_in_decls[BUILT_IN_INIT_TRAMPOLINE];
 	  x = build_function_call_expr (x, arg);
+	  y = create_tmp_var_for (root, TREE_TYPE(x), NULL);
+	  x = build2 (MODIFY_EXPR, TREE_TYPE (x), y, x);
+	  append_to_statement_list (x, &stmt_list);
+
+	  /* Cast back to the proper function type.  */
+	  y = build1 (NOP_EXPR, TREE_TYPE (field), y);
+
+	  /* Initialize the trampoline.  */
+	  x = build3 (COMPONENT_REF, TREE_TYPE (field),
+		      root->frame_decl, field, NULL_TREE);
+	  x = build2 (MODIFY_EXPR, TREE_TYPE (field), x, y);
+	  /* LLVM local end */
 
 	  append_to_statement_list (x, &stmt_list);
 	}

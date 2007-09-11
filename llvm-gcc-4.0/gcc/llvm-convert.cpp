@@ -4274,9 +4274,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FROB_RETURN_ADDR:
    return EmitBuiltinFrobReturnAddr(exp, Result);
   case BUILT_IN_INIT_TRAMPOLINE:
-    return EmitBuiltinInitTrampoline(exp);
-  case BUILT_IN_ADJUST_TRAMPOLINE:
-    return EmitBuiltinAdjustTrampoline(exp, Result);
+    return EmitBuiltinInitTrampoline(exp, Result);
 
   // Builtins used by the exception handling runtime.
   case BUILT_IN_DWARF_CFA:
@@ -4936,7 +4934,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp) {
+bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp, Value *&Result) {
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist (arglist, POINTER_TYPE, POINTER_TYPE, POINTER_TYPE,
                          VOID_TYPE))
@@ -4957,22 +4955,7 @@ bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp) {
 
   Function *Intr = Intrinsic::getDeclaration(TheModule,
                                              Intrinsic::init_trampoline);
-  Builder.CreateCall(Intr, Ops, Ops+3);
-  return true;
-}
-
-bool TreeToLLVM::EmitBuiltinAdjustTrampoline(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
-  if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
-    return false;
-
-  Value *Tramp = Emit(TREE_VALUE(arglist), 0);
-  Tramp = CastToType(Instruction::BitCast, Tramp,
-                     PointerType::get(Type::Int8Ty));
-
-  Function *Intr = Intrinsic::getDeclaration(TheModule,
-                                             Intrinsic::adjust_trampoline);
-  Result = Builder.CreateCall(Intr, Tramp, "adj");
+  Result = Builder.CreateCall(Intr, Ops, Ops+3, "tramp");
   return true;
 }
 

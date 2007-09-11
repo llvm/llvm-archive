@@ -583,8 +583,7 @@ private:
   bool EmitBuiltinEHReturn(tree_node *exp, Value *&Result);
   bool EmitBuiltinInitDwarfRegSizes(tree_node *exp, Value *&Result);
   bool EmitBuiltinUnwindInit(tree_node *exp, Value *&Result);
-  bool EmitBuiltinInitTrampoline(tree_node *exp);
-  bool EmitBuiltinAdjustTrampoline(tree_node *exp, Value *&Result);
+  bool EmitBuiltinInitTrampoline(tree_node *exp, Value *&Result);
 
   // Complex Math Expressions.
   void EmitLoadFromComplex(Value *&Real, Value *&Imag, Value *SrcComplex,

@@ -207,6 +207,19 @@ void writeLLVMTypesStringTable() {
 // opaque*, and remember that they did this in PointersToReresolve.
 
 
+/// GetFunctionType - This is just a helper like FunctionType::get but that
+/// takes PATypeHolders.
+static FunctionType *GetFunctionType(const PATypeHolder &Res,
+                                     std::vector<PATypeHolder> &ArgTys,
+                                     bool isVarArg,
+                                     const ParamAttrsList *Attrs) {
+  std::vector<const Type*> ArgTysP;
+  ArgTysP.reserve(ArgTys.size());
+  for (unsigned i = 0, e = ArgTys.size(); i != e; ++i)
+    ArgTysP.push_back(ArgTys[0]);
+  
+  return FunctionType::get(Res, ArgTysP, isVarArg, Attrs);
+}
 
 //===----------------------------------------------------------------------===//
 //                       Type Conversion Utilities
@@ -845,13 +858,13 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 
 namespace {
   class FunctionTypeConversion : public DefaultABIClient {
-    const Type *&RetTy;
-    std::vector<const Type*> &ArgTypes;
+    PATypeHolder &RetTy;
+    std::vector<PATypeHolder> &ArgTypes;
     unsigned &CallingConv;
     bool isStructRet;
     bool KNRPromotion;
   public:
-    FunctionTypeConversion(const Type *&retty, std::vector<const Type*> &AT,
+    FunctionTypeConversion(PATypeHolder &retty, std::vector<PATypeHolder> &AT,
                            unsigned &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR) {
       CallingConv = CallingConv::C;
@@ -903,6 +916,7 @@ namespace {
   };
 }
 
+
 /// ConvertParamListToLLVMSignature - This method is used to build the argument
 /// type list for K&R prototyped functions.  In this case, we have to figure out
 /// the type list (to build a FunctionType) from the actual DECL_ARGUMENTS list
@@ -912,8 +926,8 @@ namespace {
 const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
                        unsigned &CallingConv) {
-  std::vector<const Type*> ArgTys;
-  const Type *RetTy;
+  std::vector<PATypeHolder> ArgTys;
+  PATypeHolder RetTy(Type::VoidTy);
   
   FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
@@ -927,15 +941,15 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  return FunctionType::get(RetTy, ArgTys, false, 0);
+  return GetFunctionType(RetTy, ArgTys, false, 0);
 }
 
 const FunctionType *TypeConverter::ConvertFunctionType(tree type,
                                                        tree decl,
                                                        tree static_chain,
                                                        unsigned &CallingConv) {
-  const Type *RetTy = 0;
-  std::vector<const Type*> ArgTypes;
+  PATypeHolder RetTy = Type::VoidTy;
+  std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
@@ -950,7 +964,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   // Compute whether the result needs to be zext or sext'd, adding an attribute
   // if so.
   ParamAttrsVector Attrs;
-  if (isa<IntegerType>(RetTy)) {
+  if (isa<IntegerType>(RetTy.get())) {
     uint16_t RAttributes = ParamAttr::None;
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE) {
@@ -996,7 +1010,8 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
       if (CallingConv == CallingConv::C)
         ArgTypes.clear();
       else
-        ArgTypes.resize(1);   // Don't nuke last argument.
+        // Don't nuke last argument.
+        ArgTypes.erase(ArgTypes.begin()+1, ArgTypes.end());
       Args = 0;
       break;        
     }
@@ -1053,7 +1068,7 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
     PAL = ParamAttrsList::get(Attrs);
 
   // Finally, make the function type
-  return FunctionType::get(RetTy, ArgTypes, isVarArg, PAL);
+  return GetFunctionType(RetTy, ArgTypes, isVarArg, PAL);
 }
 
 //===----------------------------------------------------------------------===//

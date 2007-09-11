@@ -216,7 +216,7 @@ static FunctionType *GetFunctionType(const PATypeHolder &Res,
   std::vector<const Type*> ArgTysP;
   ArgTysP.reserve(ArgTys.size());
   for (unsigned i = 0, e = ArgTys.size(); i != e; ++i)
-    ArgTysP.push_back(ArgTys[0]);
+    ArgTysP.push_back(ArgTys[i]);
   
   return FunctionType::get(Res, ArgTysP, isVarArg, Attrs);
 }

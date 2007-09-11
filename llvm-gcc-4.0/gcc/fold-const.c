@@ -7997,6 +7997,9 @@ fold (tree expr)
 		    }
 		}
 
+              /* LLVM LOCAL Disable pow generation (FIXME: PR1631) */
+#ifndef ENABLE_LLVM
+              
 	      /* Optimize x*x as pow(x,2.0), which is expanded as x*x.  */
 	      if (! optimize_size
 		  && operand_equal_p (arg0, arg1, 0))
@@ -8011,6 +8014,8 @@ fold (tree expr)
 		      return build_function_call_expr (powfn, arglist);
 		    }
 		}
+              /* LLVM LOCAL Disable pow generation (FIXME: PR1631) */
+#endif /*ENABLE_LLVM*/
 	    }
 	}
       goto associate;

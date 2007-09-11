@@ -6772,17 +6772,12 @@ build_common_builtin_nodes (void)
   tmp = tree_cons (NULL_TREE, ptr_type_node, void_list_node);
   tmp = tree_cons (NULL_TREE, ptr_type_node, tmp);
   tmp = tree_cons (NULL_TREE, ptr_type_node, tmp);
-  ftype = build_function_type (void_type_node, tmp);
+  /* LLVM local begin */
+  ftype = build_function_type (ptr_type_node, tmp);
   local_define_builtin ("__builtin_init_trampoline", ftype,
 			BUILT_IN_INIT_TRAMPOLINE,
 			"__builtin_init_trampoline", ECF_NOTHROW);
-
-  tmp = tree_cons (NULL_TREE, ptr_type_node, void_list_node);
-  ftype = build_function_type (ptr_type_node, tmp);
-  local_define_builtin ("__builtin_adjust_trampoline", ftype,
-			BUILT_IN_ADJUST_TRAMPOLINE,
-			"__builtin_adjust_trampoline",
-			ECF_CONST | ECF_NOTHROW);
+  /* LLVM local end */
 
   tmp = tree_cons (NULL_TREE, ptr_type_node, void_list_node);
   tmp = tree_cons (NULL_TREE, ptr_type_node, tmp);

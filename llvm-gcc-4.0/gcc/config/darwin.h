@@ -1563,6 +1563,11 @@ enum machopic_addr_class {
   } while (0)
 /* APPLE LOCAL end OS pragma hook */
 
+/* LLVM LOCAL begin */
+/* Handle pragma pack separately */
+#define TARGET_OVERRIDE_PRAGMA_PACK_HANDLER 1
+/* LLVM LOCAL end */
+
 #define TARGET_TERMINATE_DW2_EH_FRAME_INFO false
 
 #undef TARGET_ASM_NAMED_SECTION

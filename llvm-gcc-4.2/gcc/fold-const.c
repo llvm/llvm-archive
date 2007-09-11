@@ -9380,6 +9380,9 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 		    }
 		}
 
+              /* LLVM LOCAL Disable pow generation (FIXME: PR1631) */
+#ifndef ENABLE_LLVM
+              
 	      /* Optimize x*x as pow(x,2.0), which is expanded as x*x.  */
 	      if (! optimize_size
 		  && operand_equal_p (arg0, arg1, 0))
@@ -9394,6 +9397,8 @@ fold_binary (enum tree_code code, tree type, tree op0, tree op1)
 		      return build_function_call_expr (powfn, arglist);
 		    }
 		}
+              /* LLVM LOCAL Disable pow generation (FIXME: PR1631) */
+#endif /*ENABLE_LLVM*/
 	    }
 	}
       goto associate;

@@ -1115,6 +1115,11 @@ enum machopic_addr_class {
 
 #define HANDLE_PRAGMA_PACK_PUSH_POP 1
 
+/* LLVM LOCAL begin */
+/* Handle pragma pack separately */
+#define TARGET_OVERRIDE_PRAGMA_PACK_HANDLER 1
+/* LLVM LOCAL end */
+
 #define DARWIN_REGISTER_TARGET_PRAGMAS()			\
   do {								\
     c_register_pragma (0, "mark", darwin_pragma_ignore);	\

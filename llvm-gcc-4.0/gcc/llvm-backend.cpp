@@ -677,7 +677,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   else if (Function *F = dyn_cast<Function>(V))
     F->eraseFromParent();
   else
-    assert(0 && "Unsuported global value");
+    assert(0 && "Unsupported global value");
 
   TREE_ASM_WRITTEN(decl) = 1;
   

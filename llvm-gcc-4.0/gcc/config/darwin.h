@@ -674,6 +674,9 @@ do {					\
   } while (0)
 
 /* APPLE LOCAL begin LLVM */
+/* As in the warning above, alias definitions aren't supported on Mach-O. */
+#define TARGET_DOES_NOT_SUPPORT_ALIAS_DEFINITIONS
+
 /* weak_import, a Darwin special, does not make function definitions weak. */
 #define TARGET_ADJUST_LLVM_LINKAGE(FN, DECL)                            \
   do {                                                                  \

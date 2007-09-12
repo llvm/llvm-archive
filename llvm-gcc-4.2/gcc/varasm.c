@@ -5177,7 +5177,12 @@ finish_aliases_2 (void)
         }
               
       target_decl = find_decl_and_mark_needed (p->decl, p->target);
+#ifdef TARGET_DOES_NOT_SUPPORT_ALIAS_DEFINITIONS
+      if (target_decl)
+        warning ("%Jalias definitions not supported; ignored", target_decl);
+#else
       emit_alias_to_llvm(p->decl, p->target, target_decl);
+#endif
     }
 #else  
     do_assemble_alias (p->decl, p->target);
@@ -5260,7 +5265,11 @@ assemble_alias (tree decl, tree target)
   target_decl = find_decl_and_mark_needed (decl, target);
   if (target_decl && TREE_ASM_WRITTEN (target_decl))
 #ifdef ENABLE_LLVM
-    emit_alias_to_llvm(decl, target, target_decl);
+#ifdef TARGET_DOES_NOT_SUPPORT_ALIAS_DEFINITIONS
+      warning ("%Jalias definitions not supported; ignored", target_decl);
+#else
+      emit_alias_to_llvm(decl, target, target_decl);
+#endif
 #else
   do_assemble_alias (decl, target);
 #endif

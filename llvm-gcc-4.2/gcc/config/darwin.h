@@ -1258,10 +1258,11 @@ void add_framework_path (char *);
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
 
 #define LLVM_SET_TARGET_OPTIONS(argvec)              \
-  if (flag_pic)                                      \
-    argvec.push_back ("--relocation-model=pic");     \
-  else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
-    argvec.push_back ("--relocation-model=static")
+  if (!TARGET_64BIT)                                 \
+    if (flag_pic)                                    \
+      argvec.push_back ("--relocation-model=pic");   \
+    else if (!MACHO_DYNAMIC_NO_PIC_P)                \
+      argvec.push_back ("--relocation-model=static")
 #endif
 /* LLVM LOCAL end */
 

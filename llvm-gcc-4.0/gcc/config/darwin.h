@@ -1720,12 +1720,20 @@ extern int flag_apple_kext;
      darwin_objc_llvm_implicit_target_global_var_section(decl) : 0)
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
 
+#if defined (TARGET_386)
 #define LLVM_SET_TARGET_OPTIONS(argvec)              \
   if (!TARGET_64BIT)                                 \
     if (flag_pic)                                    \
       argvec.push_back ("--relocation-model=pic");   \
     else if (!MACHO_DYNAMIC_NO_PIC_P)                \
       argvec.push_back ("--relocation-model=static")
+#else /* defined (TARGET_386) */
+#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+  if (flag_pic)                                      \
+    argvec.push_back ("--relocation-model=pic");     \
+  else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
+    argvec.push_back ("--relocation-model=static")
+#endif /* defined (TARGET_386) */
 #endif
 /* APPLE LOCAL end LLVM */
 

@@ -1,3 +1,0 @@
-Please go to docs/Credits.html for a list of the poeple who have
-contributed time, money, code or talent to the HLVM project.  You can always
-view this page at: http://hlvm.org/Credits.html.

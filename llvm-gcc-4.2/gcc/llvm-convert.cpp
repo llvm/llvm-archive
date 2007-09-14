@@ -5164,28 +5164,47 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     int UArr[2];
     double V;
   };
-  REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(exp), RealArr);
-  
-  // Here's how this works:
-  // REAL_VALUE_TO_TARGET_DOUBLE() will generate the floating point number
-  // as an array of integers in the target's representation.  Each integer
-  // in the array will hold 32 bits of the result REGARDLESS OF THE HOST'S
-  // INTEGER SIZE.
-  //
-  // This, then, makes the conversion pretty simple.  The tricky part is
-  // getting the byte ordering correct and make sure you don't print any
-  // more than 32 bits per integer on platforms with ints > 32 bits.
+  if (Ty==Type::FloatTy || Ty==Type::DoubleTy) {
+    REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(exp), RealArr);
 
-  UArr[0] = RealArr[0];   // Long -> int convert
-  UArr[1] = RealArr[1];
+    // Here's how this works:
+    // REAL_VALUE_TO_TARGET_DOUBLE() will generate the floating point number
+    // as an array of integers in the target's representation.  Each integer
+    // in the array will hold 32 bits of the result REGARDLESS OF THE HOST'S
+    // INTEGER SIZE.
+    //
+    // This, then, makes the conversion pretty simple.  The tricky part is
+    // getting the byte ordering correct and make sure you don't print any
+    // more than 32 bits per integer on platforms with ints > 32 bits.
 
-  // FIXME: verify on big-endian targets and cross from big- to little- endian
-  // targets
-  if (FLOAT_WORDS_BIG_ENDIAN)
-    std::swap(UArr[0], UArr[1]);
+    UArr[0] = RealArr[0];   // Long -> int convert
+    UArr[1] = RealArr[1];
 
-  return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
-                                               : APFloat(V));
+    // FIXME: verify on big-endian targets and cross from big- to little- endian
+    // targets
+    if (FLOAT_WORDS_BIG_ENDIAN)
+      std::swap(UArr[0], UArr[1]);
+
+    return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
+                                                 : APFloat(V));
+  } else if (Ty==Type::X86_FP80Ty) {
+     long RealArr[4];
+     uint64_t UArr[2];
+     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
+
+    if (FLOAT_WORDS_BIG_ENDIAN) {
+    // FIXME
+    } else {
+      UArr[0] = ((uint64_t)((uint16_t)RealArr[2]) << 48) |
+                ((uint64_t)((uint32_t)RealArr[1]) << 16) |
+                ((uint64_t)((uint16_t)(RealArr[0] >> 16)));
+      UArr[1] = (uint16_t)RealArr[0];
+
+    return ConstantFP::get(Ty, APFloat(APInt(80, 2, UArr)));
+    }
+  }
+  assert(0 && "Floating point type not handled yet");
+  return 0;   // outwit compiler warning
 }
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {

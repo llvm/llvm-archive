@@ -1210,12 +1210,12 @@ case "${target}" in
     ;;
   powerpc-*-darwin* | i[3456789]86-*-darwin*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
-    noconfigdirs="$noconfigdirs sim target-rda"
+    noconfigdirs="$noconfigdirs sim target-rda target-libstdc++-v3"
     ;;
   *-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
-    noconfigdirs="$noconfigdirs ${libgcj}"
+    noconfigdirs="$noconfigdirs ${libgcj} target-libstdc++-v3"
     ;;
   *-*-freebsd[12] | *-*-freebsd[12].* | *-*-freebsd*aout*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"

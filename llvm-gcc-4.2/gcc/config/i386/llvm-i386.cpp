@@ -376,7 +376,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_LOADQ: {
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);
-    Value *Zero = ConstantFP::get(Type::DoubleTy, 0.0);
+    Value *Zero = ConstantFP::get(Type::DoubleTy, APFloat(0.0));
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
     Result = BuildVector(Ops[0], Zero, NULL);

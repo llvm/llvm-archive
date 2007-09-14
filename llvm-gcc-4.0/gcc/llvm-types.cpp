@@ -698,6 +698,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       abort();        
     case 32: return SET_TYPE_LLVM(type, Type::FloatTy);
     case 64: return SET_TYPE_LLVM(type, Type::DoubleTy);
+    case 80: return SET_TYPE_LLVM(type, Type::X86_FP80Ty);
     case 128:
       // 128-bit long doubles map onto { double, double }.
       const Type *Ty = Type::DoubleTy;

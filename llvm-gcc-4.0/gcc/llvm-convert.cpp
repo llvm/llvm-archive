@@ -3156,8 +3156,17 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, Value *DestLoc) {
 }
 
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, Value *DestLoc) {
-  if (!DestLoc)
-    return Builder.CreateNeg(Emit(TREE_OPERAND(exp, 0), 0), "tmp");
+  if (!DestLoc) {
+    Value *V = Emit(TREE_OPERAND(exp, 0), 0);
+    if (!isa<PointerType>(V->getType()))
+      return Builder.CreateNeg(V, "tmp");
+    
+    // GCC allows NEGATE_EXPR on pointers as well.  Cast to int, negate, cast
+    // back.
+    V = CastToAnyType(V, false, TD.getIntPtrType(), false);
+    V = Builder.CreateNeg(V, "tmp");
+    return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
+  }
   
   // Emit the operand to a temporary.
   const Type *ComplexTy=cast<PointerType>(DestLoc->getType())->getElementType();

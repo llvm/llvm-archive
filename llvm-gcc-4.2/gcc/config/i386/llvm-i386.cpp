@@ -433,9 +433,15 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = BuildVector(Ops[0], Ops[1], NULL);
     return true;
   case IX86_BUILTIN_VEC_INIT_V4HI:
+    // Sometimes G++ promotes arguments to int.
+    for (unsigned i = 0; i != 4; ++i)
+      Ops[i] = Builder.CreateIntCast(Ops[i], Type::Int16Ty, false, "tmp");
     Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3], NULL);
     return true;
   case IX86_BUILTIN_VEC_INIT_V8QI:
+    // Sometimes G++ promotes arguments to int.
+    for (unsigned i = 0; i != 8; ++i)
+      Ops[i] = Builder.CreateIntCast(Ops[i], Type::Int16Ty, false, "tmp");
     Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3],
                          Ops[4], Ops[5], Ops[6], Ops[7], NULL);
     return true;

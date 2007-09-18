@@ -808,13 +808,7 @@ while (0)
 
 /* target machine storage layout */
 
-/* APPLE LOCAL begin LLVM */
-#if defined(ENABLE_LLVM) || defined(__llvm__)
-#define LONG_DOUBLE_TYPE_SIZE 64
-#else
 #define LONG_DOUBLE_TYPE_SIZE 80
-#endif
-/* APPLE LOCAL end LLVM */
 
 /* Set the value of FLT_EVAL_METHOD in float.h.  When using only the
    FPU, assume that the fpcw is set to extended precision; when using

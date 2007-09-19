@@ -806,6 +806,7 @@ void emit_global_to_llvm(tree decl) {
       AttributeUsedGlobals.remove(GV);
       AttributeUsedGlobals.insert(NGV);
     }
+    changeLLVMValue(GV, NGV);
     delete GV;
     SET_DECL_LLVM(decl, NGV);
     GV = NGV;

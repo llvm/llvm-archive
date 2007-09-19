@@ -119,7 +119,7 @@ llvm-gcc source directory, and build and install llvm-gcc:
 $ mkdir obj
 $ mkdir install
 $ cd obj
-$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install \
+$ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install --program-prefix=llvm- \
     --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
 $ make $BUILDOPTIONS
 $ make install

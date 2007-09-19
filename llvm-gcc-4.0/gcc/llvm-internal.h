@@ -558,7 +558,7 @@ private:
   Value *EmitBuiltinUnaryFPOp(Value *Amt, Intrinsic::ID F32ID,
                               Intrinsic::ID F64ID);
   Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,
-                              const char *F64Name);
+                              const char *F64Name, const char *LongDoubleName);
   Value *EmitBuiltinPOWI(tree_node *exp);
 
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);

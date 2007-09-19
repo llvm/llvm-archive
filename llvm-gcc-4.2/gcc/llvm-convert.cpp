@@ -2734,7 +2734,7 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
     return Builder.CreateSelect(Cmp, Op, OpN, "abs");
   } else {
     // Turn FP abs into fabs/fabsf.
-    return EmitBuiltinUnaryFPOp(Op, "fabsf", "fabs");
+    return EmitBuiltinUnaryFPOp(Op, "fabsf", "fabs", "fabsl");
   }
 }
 
@@ -3998,13 +3998,17 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
 }
 
 Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
-                                        const char *F64Name) {
+                                        const char *F64Name, 
+                                        const char *LongDoubleName) {
   const char *Name = 0;
   
   switch (Amt->getType()->getTypeID()) {
   default: assert(0 && "Unknown FP type!");
   case Type::FloatTyID:  Name = F32Name; break;
   case Type::DoubleTyID: Name = F64Name; break;
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID: Name = LongDoubleName; break;
   }
   
   return Builder.CreateCall(cast<Function>(

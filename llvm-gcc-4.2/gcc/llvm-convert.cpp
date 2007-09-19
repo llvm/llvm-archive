@@ -3919,9 +3919,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
+  case BUILT_IN_SQRTL:
+    return false;   // treat long double as normal call
   case BUILT_IN_SQRT: 
   case BUILT_IN_SQRTF:
-  case BUILT_IN_SQRTL:
     // If errno math has been disabled, expand these to llvm.sqrt calls.
     if (!flag_errno_math) {
       Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
@@ -3930,9 +3931,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       return true; 
     }
     break;
+  case BUILT_IN_POWIL:
+    return false;   // treat long double as normal call
   case BUILT_IN_POWI:
   case BUILT_IN_POWIF:
-  case BUILT_IN_POWIL:
     Result = EmitBuiltinPOWI(exp);
     return true;
   case BUILT_IN_FFS:  // These GCC builtins always return int.

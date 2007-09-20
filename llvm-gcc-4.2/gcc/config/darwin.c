@@ -1522,7 +1522,9 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "CATEGORY_", 9))
     return "__OBJC,__category,regular,no_dead_strip";
   else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
-    return "__OBJC,__message_refs,literal_pointers,no_dead_strip";
+    return (flag_objc_abi == 1 ? 
+            "__OBJC,__message_refs,literal_pointers,no_dead_strip" :
+            "__DATA, __objc_selrefs, regular, no_dead_strip");
   else if (!strncmp (name, "SELECTOR_FIXUP", 14))
     return "__OBJC,__sel_fixup,regular";/*,no_dead_strip";*/
   else if (!strncmp (name, "SYMBOLS", 7))
@@ -1530,7 +1532,9 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "MODULES", 7))
     return "__OBJC,__module_info,regular,no_dead_strip";
   else if (!strncmp (name, "IMAGE_INFO", 10))
-    return "__OBJC,__image_info,regular";/*,no_dead_strip";*/
+    return (flag_objc_abi == 1 ? 
+            "__OBJC,__image_info,regular" /*,no_dead_strip";*/ :
+            "__DATA, __objc_imageinfo, regular, no_dead_strip");
   else if (!strncmp (name, "PROTOCOL_INSTANCE_METHODS_", 26))
     return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
   else if (!strncmp (name, "PROTOCOL_CLASS_METHODS_", 23))
@@ -1539,7 +1543,28 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
     return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "PROTOCOL_", 9))
     return "__OBJC,__protocol,regular,no_dead_strip";
-  else
+  else if (flag_objc_abi == 2) {
+    if (!strncmp (name, "CLASSLIST_REFERENCES_", 21))
+    return "__DATA, __objc_classrefs, regular, no_dead_strip";
+    else if (!strncmp (name, "CLASSLIST_SUP_REFS_", 19))
+      return "__DATA, __objc_superrefs, regular, no_dead_strip"; 
+    else if (!strncmp (name, "MESSAGE_REF", 11))
+      return "__DATA, __objc_msgrefs, regular, no_dead_strip"; 
+    else if (!strncmp (name, "LABEL_CLASS_", 12))
+      return "__DATA, __objc_classlist, regular, no_dead_strip"; 
+    else if (!strncmp (name, "LABEL_PROTOCOL_", 15))
+      return "__DATA, __objc_protolist, regular, no_dead_strip"; 
+    else if (!strncmp (name, "LABEL_CATEGORY_", 15))
+      return "__DATA, __objc_catlist, regular, no_dead_strip"; 
+    else if (!strncmp (name, "LABEL_NONLAZY_CLASS_", 20))
+      return "__DATA, __objc_nlclslist, regular, no_dead_strip";
+    else if (!strncmp (name, "LABEL_NONLAZY_CAGEGORY_", 23))
+      return "__DATA, __objc_nlcatlist, regular, no_dead_strip";
+    else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
+      return "__DATA, __objc_protorefs, regular, no_dead_strip";
+    else 
+      return 0;
+  } else
     return 0;
 }
 #endif

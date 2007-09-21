@@ -547,13 +547,14 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   // If the type does not overlap, don't bother checking below.
 
   if (!TYPE_SIZE(type))
-    return false;
-
-  if (!isInt64(TYPE_SIZE(type), false))
-    // Variable sized or huge - be conservative.
+    // C-style variable length array?  Be conservative.
     return true;
 
-  if (!getInt64(TYPE_SIZE(type), false) ||
+  if (!isInt64(TYPE_SIZE(type), true))
+    // Negative size (!) or huge - be conservative.
+    return true;
+
+  if (!getInt64(TYPE_SIZE(type), true) ||
       PadStartBits >= (int64_t)getInt64(TYPE_SIZE(type), false) ||
       PadStartBits+PadSizeBits <= 0)
     return false;

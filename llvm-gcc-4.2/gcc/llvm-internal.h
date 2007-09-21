@@ -435,7 +435,9 @@ private:
   
   /// EmitAnnotateIntrinsic - Emits call to annotate attr intrinsic
   void EmitAnnotateIntrinsic(Value *V, tree_node *decl);
-  
+
+  /// EmitTypeGcroot - Emits call to make type a gcroot
+  void EmitTypeGcroot(Value *V, tree_node *decl);
 private:
 
   // Emit* - These are delegates from Emit, and have the same parameter

@@ -683,6 +683,11 @@ void TreeToLLVM::StartFunctionBody() {
       // Emit annotate intrinsic if arg has annotate attr
       if (DECL_ATTRIBUTES(Args))
         EmitAnnotateIntrinsic(Tmp, Args);
+
+      // Emit gcroot intrinsic if arg has attribute
+      if (POINTER_TYPE_P(TREE_TYPE(Args))
+	  && lookup_attribute ("gcroot", TYPE_ATTRIBUTES(TREE_TYPE(Args))))
+      	EmitTypeGcroot(Tmp, Args);
       
       Client.setName(Name);
       Client.setLocation(Tmp);
@@ -1366,6 +1371,25 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
 }
 
 
+// Emits code to do something for a type attribute
+void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
+
+  Function *gcrootFun = Intrinsic::getDeclaration(TheModule,
+						  Intrinsic::gcroot);
+  
+  // The idea is that it's a pointer to type "Value"
+  // which is opaque* but the routine expects i8** and i8*.
+  const PointerType *Ty = PointerType::get(Type::Int8Ty);
+  V = Builder.CreateBitCast(V, PointerType::get(Ty), "tmp");
+  
+  Value *Ops[2] = {
+    V,
+    ConstantPointerNull::get(Ty)
+  };
+  
+  Builder.CreateCall(gcrootFun, Ops, Ops+2);
+}  
+
 // Emits annotate intrinsic if the decl has the annotate attribute set.
 void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
   
@@ -1527,6 +1551,17 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(decl))
     EmitAnnotateIntrinsic(AI, decl);
+
+  // Handle gcroot attribute
+  if (POINTER_TYPE_P(TREE_TYPE (decl))
+      && lookup_attribute("gcroot", TYPE_ATTRIBUTES(TREE_TYPE (decl))))
+    {
+      // We should null out local variables so that a stack crawl
+      // before initialization doesn't get garbage results to follow.
+      const Type *T = cast<PointerType>(AI->getType())->getElementType();
+      EmitTypeGcroot(AI, decl);
+      Builder.CreateStore(Constant::getNullValue(T), AI);
+    }
   
   if (TheDebugInfo) {
     if (DECL_NAME(decl)) {

@@ -5238,20 +5238,16 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
                                                  : APFloat(V));
   } else if (Ty==Type::X86_FP80Ty) {
-     long RealArr[4];
-     uint64_t UArr[2];
-     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
+    long RealArr[4];
+    uint64_t UArr[2];
+    REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
 
-    if (FLOAT_WORDS_BIG_ENDIAN) {
-    // FIXME
-    } else {
-      UArr[0] = ((uint64_t)((uint16_t)RealArr[2]) << 48) |
-                ((uint64_t)((uint32_t)RealArr[1]) << 16) |
-                ((uint64_t)((uint16_t)(RealArr[0] >> 16)));
-      UArr[1] = (uint16_t)RealArr[0];
+    UArr[0] = ((uint64_t)((uint16_t)RealArr[2]) << 48) |
+              ((uint64_t)((uint32_t)RealArr[1]) << 16) |
+              ((uint64_t)((uint16_t)(RealArr[0] >> 16)));
+    UArr[1] = (uint16_t)RealArr[0];
 
     return ConstantFP::get(Ty, APFloat(APInt(80, 2, UArr)));
-    }
   }
   assert(0 && "Floating point type not handled yet");
   return 0;   // outwit compiler warning

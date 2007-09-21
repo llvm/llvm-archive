@@ -472,7 +472,9 @@ private:
   
   /// EmitAnnotateIntrinsic - Emits call to annotate attr intrinsic
   void EmitAnnotateIntrinsic(Value *V, tree_node *decl);
-  
+
+  /// EmitTypeGcroot - Emits call to make type a gcroot
+  void EmitTypeGcroot(Value *V, tree_node *decl);
 private:
   /// GatherTypeInfo - Walk through the expression gathering all the
   /// typeinfos that are used.

@@ -663,6 +663,7 @@ static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
 /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
 static tree handle_annotate_attribute (tree*, tree, tree, int, bool *);
+static tree handle_gcroot_attribute (tree *, tree, tree, int, bool *);
 #endif
 /* APPLE LOCAL end LLVM */
 
@@ -757,6 +758,8 @@ const struct attribute_spec c_common_attribute_table[] =
   #ifdef ENABLE_LLVM
   { "annotate",                0, -1, true, false, false,
                               handle_annotate_attribute },
+  { "gcroot",		      0, 0, false, true, false,
+			      handle_gcroot_attribute },
   #endif
   /* APPLE LOCAL end LLVM */
   { NULL,                     0, 0, false, false, false, NULL }
@@ -5809,6 +5812,21 @@ handle_annotate_attribute (tree *node, tree name, tree args,
     warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
     *no_add_attrs = true;
   }
+  
+  return NULL_TREE;
+}
+
+/* Handle the "gcroot" attribute */
+static tree
+handle_gcroot_attribute (tree *node, tree name, tree ARG_UNUSED(args),
+			 int ARG_UNUSED(flags), bool *ARG_UNUSED(no_add_attrs))
+{
+  if (!TYPE_P (*node)
+      || !POINTER_TYPE_P (*node))
+    {
+      warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+      *no_add_attrs = true;
+    }
   
   return NULL_TREE;
 }

@@ -855,7 +855,7 @@ void emit_global_to_llvm(tree decl) {
   }
 
   // Set the section for the global.
-  if (TREE_CODE(decl) == VAR_DECL || TREE_CODE(decl) == CONST_DECL) {
+  if (TREE_CODE(decl) == VAR_DECL) {
     if (DECL_SECTION_NAME(decl)) {
       GV->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(decl)));
 #ifdef LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION
@@ -864,6 +864,15 @@ void emit_global_to_llvm(tree decl) {
       GV->setSection(Section);
 #endif
     }
+#ifdef LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION
+    else if (TREE_CODE(decl) == CONST_DECL) {
+      if (const char *Section = 
+          LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)) {
+        GV->setSection(Section);
+      }
+    }
+#endif
+
     
     // Set the alignment for the global if one of the following condition is met
     // 1) DECL_ALIGN_UNIT does not match alignment as per ABI specification

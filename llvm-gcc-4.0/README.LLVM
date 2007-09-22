@@ -128,12 +128,12 @@ Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc
 executables have been compiled with llvm-gcc itself), replace "make" with
 "make bootstrap".
 
-Finally, add symlinks for llvm-gcc and llvm-g++ to your path:
+Finally, add symlinks for llvm-gcc and llvm-g++ to your path (optional):
 
 $ su
 $ cd /usr/local/bin
-$ ln -s <llvmgccdir>/install/bin/gcc llvm-gcc
-$ ln -s <llvmgccdir>/install/bin/g++ llvm-g++
+$ ln -s <llvmgccdir>/install/bin/llvm-gcc llvm-gcc
+$ ln -s <llvmgccdir>/install/bin/llvm-g++ llvm-g++
 $ exit
 
 You should now have something like:

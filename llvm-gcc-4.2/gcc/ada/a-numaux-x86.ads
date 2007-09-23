@@ -44,6 +44,8 @@
 package Ada.Numerics.Aux is
    pragma Pure;
 
+   pragma Linker_Options ("-lm");
+
    type Double is new Long_Long_Float;
 
    function Sin (X : Double) return Double;

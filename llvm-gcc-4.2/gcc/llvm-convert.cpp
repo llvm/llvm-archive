@@ -1510,15 +1510,17 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     DECL_USER_ALIGN(decl) = 0;
     Alignment = DECL_ALIGN(decl)/8;
   } else {
-    tree length;
-
     // Dynamic-size object: must push space on the stack.
-    if (TREE_CODE(type) == ARRAY_TYPE &&
-        isSequentialCompatible(type) &&
-        (length = arrayLength(type))) {
+    if (TREE_CODE(type) == ARRAY_TYPE
+        && isSequentialCompatible(type)
+        && TYPE_SIZE(type) == DECL_SIZE(decl)) {
       Ty = ConvertType(TREE_TYPE(type));  // Get array element type.
       // Compute the number of elements in the array.
-      Size = Emit(length, 0);
+      Size = Emit(DECL_SIZE(decl), 0);
+      assert(!integer_zerop(TYPE_SIZE(TREE_TYPE(type)))
+             && "Array of positive size with elements of zero size!");
+      Value *EltSize = Emit(TYPE_SIZE(TREE_TYPE(type)), 0);
+      Size = Builder.CreateUDiv(Size, EltSize, "len");
     } else {
       // Compute the variable's size in bytes.
       Size = Emit(DECL_SIZE_UNIT(decl), 0);

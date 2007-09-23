@@ -299,9 +299,9 @@ static std::string GetTypeName(const char *Prefix, tree type) {
 /// type and the corresponding LLVM SequentialType lay out their components
 /// identically in memory.
 bool isSequentialCompatible(tree_node *type) {
-  assert((TREE_CODE (type) == ARRAY_TYPE ||
-          TREE_CODE (type) == POINTER_TYPE ||
-          TREE_CODE (type) == REFERENCE_TYPE) && "not a sequential type!");
+  assert((TREE_CODE(type) == ARRAY_TYPE ||
+          TREE_CODE(type) == POINTER_TYPE ||
+          TREE_CODE(type) == REFERENCE_TYPE) && "not a sequential type!");
   // This relies on gcc types with constant size mapping to LLVM types with the
   // same size.
   return isInt64(TYPE_SIZE(TREE_TYPE(type)), true);
@@ -310,13 +310,13 @@ bool isSequentialCompatible(tree_node *type) {
 /// isArrayCompatible - Return true if the specified gcc array or pointer type
 /// corresponds to an LLVM array type.
 bool isArrayCompatible(tree_node *type) {
-  assert((TREE_CODE (type) == ARRAY_TYPE ||
-          TREE_CODE (type) == POINTER_TYPE ||
-          TREE_CODE (type) == REFERENCE_TYPE) && "not a sequential type!");
+  assert((TREE_CODE(type) == ARRAY_TYPE ||
+          TREE_CODE(type) == POINTER_TYPE ||
+          TREE_CODE(type) == REFERENCE_TYPE) && "not a sequential type!");
   return
-    (TREE_CODE (type) == ARRAY_TYPE) && (
+    (TREE_CODE(type) == ARRAY_TYPE) && (
       // Arrays with no size are fine as long as their components are layed out
-      // the same way in memory by LLVM.  For example "int X[]" -> "[0 x int]".
+      // the same way in memory by LLVM.  For example 'int X[]' -> '[0 x i32]'.
       (!TYPE_SIZE(type) && isSequentialCompatible(type)) ||
 
       // Arrays with constant size map to LLVM arrays.  If the array has zero
@@ -326,21 +326,6 @@ bool isArrayCompatible(tree_node *type) {
       // cases we convert to a zero length LLVM array.
       (TYPE_SIZE(type) && isInt64(TYPE_SIZE(type), true))
     );
-}
-
-/// arrayLength - Return a tree expressing the number of elements in an array
-/// of the specified type, or NULL if the type does not specify the length.
-tree_node *arrayLength(tree_node *type) {
-  tree Domain = TYPE_DOMAIN(type);
-
-  if (!Domain || !TYPE_MAX_VALUE(Domain))
-    return NULL;
-
-  tree length = fold_convert(sizetype, TYPE_MAX_VALUE(Domain));
-  if (TYPE_MIN_VALUE(Domain))
-    length = size_binop (MINUS_EXPR, length,
-                         fold_convert(sizetype, TYPE_MIN_VALUE(Domain)));
-  return size_binop (PLUS_EXPR, length, size_one_node);
 }
 
 /// refine_type_to - Cause all users of the opaque type old_type to switch
@@ -579,7 +564,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
 
   case ARRAY_TYPE: {
     unsigned EltSizeBits = TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(type)));
-    unsigned NumElts = getInt64(arrayLength(type), true);
+    unsigned NumElts = cast<ArrayType>(ConvertType(type))->getNumElements();
     unsigned OverlapElt = (unsigned)PadStartBits/EltSizeBits;
 
     // Check each element for overlap.  This is inelegant, but effective.
@@ -849,25 +834,32 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 
     if (isArrayCompatible(type)) {
       uint64_t NumElements;
-      tree length = arrayLength(type);
 
-      if (!length) {
-        // We get here if we have something that is globally declared as an
-        // array with no dimension, this becomes just a zero size array of the
-        // element type so that: int X[] becomes '%X = external global [0x i32]'
+      if (!TYPE_SIZE(type)) {
+        // We get here if we have something that is declared to be an array with
+        // no dimension.  This just becomes a zero length array of the element
+        // type, so 'int X[]' becomes '%X = external global [0 x i32]'.
         //
-        // Note that this also affects new expressions, which return a pointer 
+        // Note that this also affects new expressions, which return a pointer
         // to an unsized array of elements.
         NumElements = 0;
-      } else if (!isInt64(length, true)) {
-        // A variable length array where the element type has size zero.  Turn
-        // it into a zero length array of the element type.
-        assert(integer_zerop(TYPE_SIZE(TREE_TYPE(type)))
-               && "variable length array has constant size!");
+      } else if (integer_zerop(TYPE_SIZE(type))) {
+        // An array of zero length, or with an element type of zero size.
+        // Turn it into a zero length array of the element type.
         NumElements = 0;
       } else {
-        // Normal array.
-        NumElements = getInt64(length, true);
+        // Normal constant-size array.
+        NumElements = getInt64(TYPE_SIZE(type), true);
+
+        assert(isInt64(TYPE_SIZE(TREE_TYPE(type)), true)
+               && "Array of constant size with elements of variable size!");
+        uint64_t ElementSize = getInt64(TYPE_SIZE(TREE_TYPE(type)), true);
+        assert(ElementSize
+               && "Array of positive size with elements of zero size!");
+        assert(!(NumElements % ElementSize)
+               && "Array size is not a multiple of the element size!");
+
+        NumElements /= ElementSize;
       }
 
       return TypeDB.setType(type, ArrayType::get(ConvertType(TREE_TYPE(type)),

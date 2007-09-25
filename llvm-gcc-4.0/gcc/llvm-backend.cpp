@@ -1060,7 +1060,7 @@ void make_decl_llvm(tree decl) {
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
-      GlobalVariable *GVE = TheModule->getGlobalVariable(Name);
+      GlobalVariable *GVE = TheModule->getGlobalVariable(Name, true);
 
       // And Objective-C "@protocol" will create a decl for the
       // protocol metadata and then when the protocol is
@@ -1068,7 +1068,7 @@ void make_decl_llvm(tree decl) {
       // aren't found in the GlobalVariable list unless we look at
       // non-extern globals as well.
       if (!GVE && c_dialect_objc() && objc_is_protocol_reference(Name))
-	GVE = TheModule->getGlobalVariable(Name, true);
+        GVE = TheModule->getGlobalVariable(Name, true);
     
       if (GVE == 0) {
         GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,

@@ -1060,7 +1060,7 @@ void make_decl_llvm(tree decl) {
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
-      GlobalVariable *GVE = TheModule->getGlobalVariable(Name, true);
+      GlobalVariable *GVE = TheModule->getGlobalVariable(Name);
 
       // And Objective-C "@protocol" will create a decl for the
       // protocol metadata and then when the protocol is

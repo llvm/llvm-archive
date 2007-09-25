@@ -18249,6 +18249,8 @@ handle_impent (struct imp_entry *impent)
       DECL_ARTIFICIAL (decl) = 1;
       /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
+      DECL_VISIBILITY (decl) = VISIBILITY_DEFAULT;
+      DECL_VISIBILITY_SPECIFIED (decl) = 1;
       set_user_assembler_name(decl, string);
       /* Let optimizer know that this decl is not removable.  */
       DECL_PRESERVE_P (decl) = 1;

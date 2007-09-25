@@ -11669,6 +11669,19 @@ build_protocollist_translation_table (void)
     }
 }
 
+/* APPLE LOCAL begin - LLVM radar 5476262 */
+#ifdef ENABLE_LLVM
+/* This routine returns true if the name is the same as a protocol
+   reference name.  */
+
+bool
+objc_is_protocol_reference (const char *name)
+{
+  return flag_objc_abi == 2 && strstr (name, "_OBJC_PROTOCOL_$_") != 0;
+}
+#endif
+/* APPLE LOCAL end - LLVM radar 5476262 */
+
 /* This routine builds the protocol_reference_chain for each protocol name used
    @protocol(MyProtocol) expression. IDENT is current protocol name.  */
 

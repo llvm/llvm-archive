@@ -548,3 +548,13 @@ objc_check_format_nsstring (tree ARG_UNUSED (argument),
   return false;
 }
 /* APPLE LOCAL end radar 4985544 */
+
+/* APPLE LOCAL begin - LLVM radar 5476262 */
+#ifdef ENABLE_LLVM
+bool
+objc_is_protocol_reference (const char * ARG_UNUSED(name))
+{
+  return false;
+}
+#endif
+/* APPLE LOCAL end - LLVM radar 5476262 */

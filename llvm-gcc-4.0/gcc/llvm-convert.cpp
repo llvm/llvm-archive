@@ -5517,12 +5517,22 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
 }
 
 LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
-  // The address is the address of the operand.
-  LValue LV = EmitLV(TREE_OPERAND(exp, 0));
-  // The type is the type of the expression.
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-  LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(Ty));
-  return LV;
+  tree Op = TREE_OPERAND(exp, 0);
+
+  if (isAggregateTreeType(TREE_TYPE(Op))) {
+    // If the input is an aggregate, the address is the address of the operand.
+    LValue LV = EmitLV(Op);
+    // The type is the type of the expression.
+    LV.Ptr = BitCastToType(LV.Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
+    return LV;
+  } else {
+    // If the input is a scalar, emit to a temporary.
+    Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
+    Builder.CreateStore(Emit(Op, 0), Dest);
+    // The type is the type of the expression.
+    Dest = BitCastToType(Dest, PointerType::get(ConvertType(TREE_TYPE(exp))));
+    return LValue(Dest);
+  }
 }
 
 //===----------------------------------------------------------------------===//

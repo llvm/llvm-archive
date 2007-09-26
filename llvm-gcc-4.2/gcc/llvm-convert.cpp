@@ -1485,11 +1485,10 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   // eliminated all uses of, but is preserving for debug info, ignore it.
   if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
     return;
-  
-  const Type *Ty;         // Type to allocate
-  Value *Size = 0;        // Amount to alloca (null for 1)
-  unsigned Alignment = 0; // Alignment in bytes.
-  
+
+  const Type *Ty;  // Type to allocate
+  Value *Size = 0; // Amount to alloca (null for 1)
+
   if (DECL_SIZE(decl) == 0) {    // Variable with incomplete type.
     if (DECL_INITIAL(decl) == 0)
       return; // Error message was already done; now avoid a crash.
@@ -1501,14 +1500,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   } else if (TREE_CODE(DECL_SIZE_UNIT(decl)) == INTEGER_CST) {
     // Variable of fixed size that goes on the stack.
     Ty = ConvertType(type);
-    
-    // Set alignment we actually gave this decl.
-    if (DECL_MODE(decl) == BLKmode)
-      DECL_ALIGN(decl) = BIGGEST_ALIGNMENT;
-    else
-      DECL_ALIGN(decl) = GET_MODE_BITSIZE(DECL_MODE(decl));
-    DECL_USER_ALIGN(decl) = 0;
-    Alignment = DECL_ALIGN(decl)/8;
   } else {
     // Dynamic-size object: must push space on the stack.
     if (TREE_CODE(type) == ARRAY_TYPE
@@ -1528,7 +1519,18 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     }
     Size = CastToUIntType(Size, Type::Int32Ty);
   }
-  
+
+  unsigned Alignment = 0; // Alignment in bytes.
+
+  // Set the alignment for the local if one of the following condition is met
+  // 1) DECL_ALIGN_UNIT does not match alignment as per ABI specification
+  // 2) DECL_ALIGN is set by user.
+  if (DECL_ALIGN_UNIT(decl)) {
+    unsigned TargetAlign = getTargetData().getABITypeAlignment(Ty);
+    if (DECL_USER_ALIGN(decl) || TargetAlign != (unsigned)DECL_ALIGN_UNIT(decl))
+      Alignment = DECL_ALIGN_UNIT(decl);
+  }
+
   const char *Name;      // Name of variable
   if (DECL_NAME(decl))
     Name = IDENTIFIER_POINTER(DECL_NAME(decl));

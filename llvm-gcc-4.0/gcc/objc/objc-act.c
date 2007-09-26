@@ -11683,7 +11683,8 @@ build_protocollist_translation_table (void)
 bool
 objc_is_protocol_reference (const char *name)
 {
-  return flag_objc_abi == 2 && strstr (name, "_OBJC_PROTOCOL_$_") != 0;
+  return flag_objc_abi == 2 && strlen (name) > 19  &&
+    strncmp (name, "\01L_OBJC_PROTOCOL_$_", 19) == 0;
 }
 #endif
 /* APPLE LOCAL end - LLVM radar 5476262 */

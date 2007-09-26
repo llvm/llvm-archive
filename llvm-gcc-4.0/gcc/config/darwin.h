@@ -798,7 +798,7 @@ do {					\
   do {                                                                  \
     if (darwin_macosx_version_min                                       \
         && strverscmp (darwin_macosx_version_min, "10.3") < 0)          \
-      warning (0, "Mac OS X version 10.3 or later is needed instead of %s for objc/obj-c++ exceptions", \
+      warning ("Mac OS X version 10.3 or later is needed instead of %s for objc/obj-c++ exceptions", \
                darwin_macosx_version_min);                              \
   } while(0)
 /* APPLE LOCAL end radar 4590191 */

@@ -124,6 +124,13 @@ static bool should_call_super_finalize = false;
 #ifndef OBJC_FLAG_ZEROCOST_EXCEPTIONS
 #define OBJC_FLAG_ZEROCOST_EXCEPTIONS
 #endif
+/* LLVM LOCAL begin */
+/* APPLE LOCAL begin radar 4590191 */
+#ifndef OBJC_FLAG_SJLJ_EXCEPTIONS
+#define OBJC_FLAG_SJLJ_EXCEPTIONS
+#endif
+/* APPLE LOCAL end radar 4590191 */
+/* LLVM LOCAL end */
 /* APPLE LOCAL end radar 5023725 */
 /* APPLE LOCAL begin radar 4531086 */
 #ifndef OBJC_WARN_OBJC2_FEATURES
@@ -7638,10 +7645,9 @@ objc_init_exceptions (void)
   /* APPLE LOCAL begin radar 4590191 */
   if (flag_objc_sjlj_exceptions)
     {
-      if (darwin_macosx_version_min 
-	  && strverscmp (darwin_macosx_version_min, "10.3") < 0)
-	warning ("Mac OS X version 10.3 or later is needed instead of %s for objc/obj-c++ exceptions",
-	         darwin_macosx_version_min);
+      /* LLVM LOCAL begin */    
+      OBJC_FLAG_SJLJ_EXCEPTIONS;
+      /* LLVM LOCAL end */
   /* APPLE LOCAL end radar 4590191 */
       /* APPLE LOCAL radar 4512786. */
       /* code removed */
@@ -18151,7 +18157,7 @@ handle_class_ref (tree chain)
   set_user_assembler_name(decl, string);
   /* Let optimizer know that this decl is not removable.  */
   DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
   /* APPLE LOCAL end LLVM */
 
   pushdecl (decl);
@@ -18170,7 +18176,7 @@ handle_class_ref (tree chain)
   /* This decl's name is special. Ask llvm to not add leading underscore by 
      setting it as a user supplied asm name.  */
   set_user_assembler_name(decl, string);
-#endif ENABLE_LLVM
+#endif
 /* APPLE LOCAL end LLVM */
 
   pushdecl (decl);
@@ -18254,7 +18260,7 @@ handle_impent (struct imp_entry *impent)
       set_user_assembler_name(decl, string);
       /* Let optimizer know that this decl is not removable.  */
       DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
       /* APPLE LOCAL end LLVM */
       DECL_INITIAL (decl) = init;
       assemble_variable (decl, 1, 0, 0);
@@ -18317,7 +18323,7 @@ generate_objc_image_info (void)
   /* Let optimizer know that this decl is not removable.  */
   set_user_assembler_name(decl, IDENTIFIER_POINTER (DECL_NAME(decl)));
   DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
   /* APPLE LOCAL end LLVM */
   assemble_variable (decl, 1, 0, 0);
 }

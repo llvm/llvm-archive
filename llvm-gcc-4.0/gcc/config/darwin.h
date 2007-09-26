@@ -790,6 +790,20 @@ do {					\
 	 error ("Mac OS X version 10.5 or later is needed for zerocost-exceptions"); \
      } while (0)
 /* APPLE LOCAL end radar 5023725 */
+
+/* LLVM LOCAL begin */
+/* APPLE LOCAL begin radar 4590191 */
+#undef OBJC_FLAG_SJLJ_EXCEPTIONS
+#define OBJC_FLAG_SJLJ_EXCEPTIONS                                       \
+  do {                                                                  \
+    if (darwin_macosx_version_min                                       \
+        && strverscmp (darwin_macosx_version_min, "10.3") < 0)          \
+      warning (0, "Mac OS X version 10.3 or later is needed instead of %s for objc/obj-c++ exceptions", \
+               darwin_macosx_version_min);                              \
+  } while(0)
+/* APPLE LOCAL end radar 4590191 */
+/* LLVM LOCAL end */
+
 /* APPLE LOCAL begin radar 4862848 */
 #undef OBJC_FLAG_OBJC_ABI
 #define OBJC_FLAG_OBJC_ABI						\

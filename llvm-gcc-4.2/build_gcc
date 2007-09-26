@@ -33,7 +33,11 @@ LLVM_TARGETS="x86,powerpc"
 #LLVM LOCAL end
 
 # The GNU makefile target ('bootstrap' by default).
-BOOTSTRAP=${BOOTSTRAP-bootstrap}
+if [ "x$LLVM_DEBUG" == "x" ]; then
+    BOOTSTRAP=${BOOTSTRAP-bootstrap}
+else
+    BOOTSTRAP=
+fi
 if [ "$BOOTSTRAP" != bootstrap ]; then
     bootstrap=--disable-bootstrap
 fi
@@ -43,7 +47,13 @@ fi
 # $RC_NONARCH_CFLAGS (and mysteriously prepends '-pipe' thereto).
 # We will allow this to override the default $CFLAGS and $CXXFLAGS.
 
-CFLAGS="-g -O2 ${RC_NONARCH_CFLAGS/-pipe/}"
+if [ "x$LLVM_DEBUG" == "x" ]; then
+    CFLAGS="-g -O2 ${RC_NONARCH_CFLAGS/-pipe/}"
+    OPTIMIZE_OPTS="ENABLE_OPTIMIZED=1"
+else
+    CFLAGS="-g"
+    OPTIMIZE_OPTS=
+fi
 
 # This isn't a parameter; it is the architecture of the current machine.
 BUILD=`arch | $TRANSLATE_ARCH`
@@ -187,7 +197,7 @@ if [ "$ENABLE_LLVM" == true ]; then
   # we don't want to make the builders hit swap by firing off too many gcc's at
   # the same time.
   ## FIXME: Remove -O2 when rdar://4560645 is fixed.
-  make ENABLE_OPTIMIZED=1 UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
+  make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
        OPTIMIZE_OPTION='-O2' \
        CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 
@@ -561,7 +571,7 @@ if [ "$ENABLE_LLVM" == true ]; then
   cd $DIR/obj-llvm || exit 1
 
   ## Install the tree into the destination directory.
-  make $MAKEFLAGS ENABLE_OPTIMIZED=1 UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
+  make $MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
 
   if ! test $? == 0 ; then
       echo "error: LLVM 'make install' failed!"

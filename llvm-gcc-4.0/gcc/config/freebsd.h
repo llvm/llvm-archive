@@ -85,3 +85,7 @@ Boston, MA 02111-1307, USA.  */
    This enables the test coverage code to use file locking when exiting a
    program, which avoids race conditions if the program has forked.  */
 #define TARGET_HAS_F_SETLKW
+
+/* LLVM LOCAL begin */
+#define HANDLE_PRAGMA_PACK_PUSH_POP
+/* LLVM LOCAL end */

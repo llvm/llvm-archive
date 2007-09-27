@@ -2935,6 +2935,7 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
            CI != E; ++CI) {
         if (&*CI == AllocaInsertionPoint) {
           InsertPt = AllocaInsertionPoint;
+          ++InsertPt;
           break;
         }
       }
@@ -2945,12 +2946,14 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
       InsertPt = II->getNormalDest()->begin();
       while (isa<PHINode>(InsertPt))
         ++InsertPt;
-    }
+    } else
+      ++InsertPt; // Insert after the init instruction.
   } else {
     InsertPt = AllocaInsertionPoint;   // Insert after the allocas.
+    ++InsertPt;
   }
   BasicBlock *BB = InsertPt->getParent();
-  BB->getInstList().insert(++InsertPt, SI);
+  BB->getInstList().insert(InsertPt, SI);
   
   // Finally, This is no longer a GCC temporary.
   DECL_GIMPLE_FORMAL_TEMP_P(Var) = 0;

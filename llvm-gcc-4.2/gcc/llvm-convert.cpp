@@ -4691,14 +4691,22 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, Value *DestLoc) {
     break;
   }
   case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)
-    // FIXME: What about integer complex?
-    DSTr = Builder.CreateFCmpOEQ(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateFCmpOEQ(LHSi, RHSi, "tmpi");
+    if (LHSr->getType()->isFloatingPoint()) {
+      DSTr = Builder.CreateFCmpOEQ(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateFCmpOEQ(LHSi, RHSi, "tmpi");
+    } else {
+      DSTr = Builder.CreateICmpEQ(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateICmpEQ(LHSi, RHSi, "tmpi");
+    }
     return Builder.CreateAnd(DSTr, DSTi, "tmp");
   case NE_EXPR:   // (a+ib) != (c+id) = (a != c) | (b != d) 
-    // FIXME: What about integer complex?
-    DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateFCmpUNE(LHSi, RHSi, "tmpi");
+    if (LHSr->getType()->isFloatingPoint()) {
+      DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateFCmpUNE(LHSi, RHSi, "tmpi");
+    } else {
+      DSTr = Builder.CreateICmpEQ(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateICmpEQ(LHSi, RHSi, "tmpi");
+    }
     return Builder.CreateOr(DSTr, DSTi, "tmp");
   }
   

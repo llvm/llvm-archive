@@ -4343,9 +4343,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_UNWIND_INIT:
     return EmitBuiltinUnwindInit(exp, Result);
 
-#define HANDLE_UNARY_FP(F32, F64, V) \
-        Result = EmitBuiltinUnaryFPOp(V, Intrinsic::F32, Intrinsic::F64)
-
   // Unary bit counting intrinsics.
   // NOTE: do not merge these case statements.  That will cause the memoized 
   // Function* to be incorrectly shared across the different typed functions.
@@ -4379,22 +4376,19 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
-  case BUILT_IN_SQRTL:
-    return false;   // treat long double as normal call
   case BUILT_IN_SQRT: 
   case BUILT_IN_SQRTF:
+  case BUILT_IN_SQRTL:
     // If errno math has been disabled, expand these to llvm.sqrt calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-      HANDLE_UNARY_FP(sqrt_f32, sqrt_f64, Amt);
+      Result = EmitBuiltinSQRT(exp);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true; 
     }
     break;
-  case BUILT_IN_POWIL:
-    return false;   // treat long double as normal call
   case BUILT_IN_POWI:
   case BUILT_IN_POWIF:
+  case BUILT_IN_POWIL:
     Result = EmitBuiltinPOWI(exp);
     return true;
   case BUILT_IN_FFS:  // These GCC builtins always return int.
@@ -4444,7 +4438,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                 Args.begin(), Args.end());
     return true;
   }
-#undef HANDLE_UNARY_FP
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:
@@ -4503,15 +4496,17 @@ Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
                             Amt, "tmp");
 }
 
-Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt,
-                                        Intrinsic::ID F32ID,
-                                        Intrinsic::ID F64ID) {
+Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
+  Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
   Intrinsic::ID Id = Intrinsic::not_intrinsic;
   
   switch (Amt->getType()->getTypeID()) {
   default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Id = F32ID; break;
-  case Type::DoubleTyID: Id = F64ID; break;
+  case Type::FloatTyID:  Id = Intrinsic::sqrt_f32; break;
+  case Type::DoubleTyID: Id = Intrinsic::sqrt_f64;  break;
+  case Type::X86_FP80TyID:  Id = Intrinsic::sqrt_f80; break;
+  case Type::FP128TyID: Id = Intrinsic::sqrt_f128; break;
+  case Type::PPC_FP128TyID:  Id = Intrinsic::sqrt_ppcf128; break;
   }
 
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id),
@@ -4533,6 +4528,9 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   default: assert(0 && "Unknown FP type!");
   case Type::FloatTyID:  Id = Intrinsic::powi_f32; break;
   case Type::DoubleTyID: Id = Intrinsic::powi_f64; break;
+  case Type::X86_FP80TyID: Id = Intrinsic::powi_f80; break;
+  case Type::FP128TyID: Id = Intrinsic::powi_f128; break;
+  case Type::PPC_FP128TyID: Id = Intrinsic::powi_ppcf128; break;
   }
   
   SmallVector<Value *,2> Args;

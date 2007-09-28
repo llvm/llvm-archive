@@ -497,10 +497,9 @@ private:
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
                                        Value *DestLoc, Value *&Result);
   bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
-  Value *EmitBuiltinUnaryFPOp(Value *Amt, Intrinsic::ID F32ID,
-                              Intrinsic::ID F64ID);
   Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,
                               const char *F64Name, const char *LongDoubleName);
+  Value *EmitBuiltinSQRT(tree_node *exp);
   Value *EmitBuiltinPOWI(tree_node *exp);
 
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);

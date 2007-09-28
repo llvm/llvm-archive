@@ -163,7 +163,13 @@ fi
 # These are the configure and build flags that are used.
 # LLVM LOCAL begin  Support for non /usr $DEST_ROOT, use libstdc++
 
-CONFIGFLAGS="--disable-checking --enable-werror \
+if [ "x$LLVM_DEBUG" == "x" ]; then
+    CHECKING_FLAGS="--disable-checking --enable-werror"
+else
+    CHECKING_FLAGS="--enable-checking"
+fi
+
+CONFIGFLAGS="$CHECKING_FLAGS \
   --prefix=$DEST_ROOT \
   --mandir=$LLVM_INSTALL_PREFIX/share/man \
   --enable-languages=c,objc,c++,obj-c++ \
@@ -292,7 +298,12 @@ for t in $TARGETS ; do
   mkdir -p $DIR/obj-$BUILD-$t $DIR/dst-$BUILD-$t || exit 1
    cd $DIR/obj-$BUILD-$t || exit 1
    if [ \! -f Makefile ]; then
-    $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
+    if [ "x$LLVM_DEBUG" == "x" ]; then
+     WERROR_FLAGS="--enable-werror-always"
+    else
+     WERROR_FLAGS=""
+    fi
+    $SRC_DIR/configure $CONFIGFLAGS $WERROR_FLAGS \
       --program-prefix=$t-apple-darwin$DARWIN_VERS- \
       --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
    fi

@@ -2566,7 +2566,8 @@ generate_objc_protocol_extension (tree proto_interface, tree optional_instance_m
 
   /* struct objc_method_list   *optional_instance_methods; */
   if (!optional_instance_meth)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_method_list_ptr, build_unary_op (ADDR_EXPR, 
@@ -2576,7 +2577,8 @@ generate_objc_protocol_extension (tree proto_interface, tree optional_instance_m
 
   /* struct objc_method_list   *optional_class_methods; */
   if (!optional_class_meth)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_method_list_ptr, build_unary_op (ADDR_EXPR, 
@@ -2586,7 +2588,8 @@ generate_objc_protocol_extension (tree proto_interface, tree optional_instance_m
 
   /* struct objc_prop_list     *instance_properties; */
   if (!instance_prop)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_prop_list_ptr, build_unary_op (ADDR_EXPR, 
@@ -2667,7 +2670,8 @@ generate_objc_class_ext (tree property_list)
 
   /* struct _prop_list_t *properties; */
   if (!property_list)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_prop_list_ptr,
@@ -4974,7 +4978,8 @@ init_objc_symtab (tree type)
   /* refs = { ..., _OBJC_SELECTOR_TABLE, ... } */
 
   if (flag_next_runtime || ! sel_ref_chain)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     initlist
       = tree_cons (NULL_TREE,
@@ -9234,7 +9239,8 @@ generate_protocols (void)
 						 (objc_protocol_template)),
 			     build_unary_op (ADDR_EXPR, refs_decl, 0));
       else
-	refs_expr = build_int_cst (NULL_TREE, 0);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	refs_expr = null_pointer_node;
 
 
       /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
@@ -9304,7 +9310,8 @@ build_protocol_initializer (tree type, tree protocol_name,
   if (newabi)
     {
       /* 'isa' is NULL in the new ObjC abi */
-      expr = build_int_cst (NULL_TREE, 0);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      expr = null_pointer_node;
     }
   /* APPLE LOCAL end radar 4533974 - ObjC newprotocol - radar 4695109 */
   /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
@@ -9312,7 +9319,8 @@ build_protocol_initializer (tree type, tree protocol_name,
   else
     {
       if (!objc_protocol_or_opt_ins_meth)
-	expr = build_int_cst (NULL_TREE, 0);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	expr = null_pointer_node;
       else
 	expr = convert (build_pointer_type (objc_protocol_extension_template),
 			build_unary_op (ADDR_EXPR, objc_protocol_or_opt_ins_meth, 0));	
@@ -9326,7 +9334,8 @@ build_protocol_initializer (tree type, tree protocol_name,
   initlist = tree_cons (NULL_TREE, protocol_list, initlist);
 
   if (!instance_methods)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -9337,7 +9346,8 @@ build_protocol_initializer (tree type, tree protocol_name,
     }
 
   if (!class_methods)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -9352,7 +9362,8 @@ build_protocol_initializer (tree type, tree protocol_name,
     {
       /* APPLE LOCAL begin radar 4695109 */
       if (!objc_protocol_or_opt_ins_meth)
-	initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
       else
 	{
 	  expr = convert (objc_method_proto_list_ptr,
@@ -9360,7 +9371,8 @@ build_protocol_initializer (tree type, tree protocol_name,
 	  initlist = tree_cons (NULL_TREE, expr, initlist);
 	}
       if (!opt_cls_meth)
-	initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
       else
 	{
 	  expr = convert (objc_method_proto_list_ptr,
@@ -9369,7 +9381,8 @@ build_protocol_initializer (tree type, tree protocol_name,
 	}
       /* APPLE LOCAL end radar 4695109 */
       if (!property_list)
-	initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
       else
 	{
 	  expr = convert (objc_prop_list_ptr,
@@ -10389,7 +10402,8 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
 			ivar);
     else
       /* Unnamed bit-field ivar (yuck).  */
-      ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), ivar);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      ivar = tree_cons (NULL_TREE, null_pointer_node, ivar);
 
     /* Set type */
     encode_field_decl (field_decl,
@@ -10446,7 +10460,8 @@ build_ivar_list_initializer (tree type, tree field_decl)
 			  ivar);
       else
 	/* Unnamed bit-field ivar (yuck).  */
-	ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), ivar);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	ivar = tree_cons (NULL_TREE, null_pointer_node, ivar);
 
       /* Set type.  */
       encode_field_decl (field_decl,
@@ -11142,7 +11157,8 @@ build_category_initializer (tree type, tree cat_name, tree class_name,
   initlist = tree_cons (NULL_TREE, class_name, initlist);
 
   if (!instance_methods)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -11152,7 +11168,8 @@ build_category_initializer (tree type, tree cat_name, tree class_name,
       initlist = tree_cons (NULL_TREE, expr, initlist);
     }
   if (!class_methods)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -11164,7 +11181,8 @@ build_category_initializer (tree type, tree cat_name, tree class_name,
 
   /* protocol_list = */
   if (!protocol_list)
-     initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
@@ -11186,7 +11204,8 @@ build_category_initializer (tree type, tree cat_name, tree class_name,
   /* APPLE LOCAL begin C* property metadata (Radar 4498373) */
   /* struct _objc_property_list *instance_properties; */
   if (!property_list)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_prop_list_ptr,
@@ -11253,7 +11272,8 @@ build_shared_structure_initializer (tree type, tree isa, tree super,
 
   /* objc_ivar_list = */
   if (!ivar_list)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -11265,7 +11285,8 @@ build_shared_structure_initializer (tree type, tree isa, tree super,
 
   /* objc_method_list = */
   if (!dispatch_table)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* APPLE LOCAL begin mainline */
@@ -11277,22 +11298,27 @@ build_shared_structure_initializer (tree type, tree isa, tree super,
 
   if (flag_next_runtime)
     /* method_cache = */
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       /* dtable = */
-      initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
 
       /* subclass_list = */
-      initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
 
       /* sibling_class = */
-      initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
     }
 
   /* protocol_list = */
   if (! protocol_list)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (build_pointer_type
@@ -11307,18 +11333,21 @@ build_shared_structure_initializer (tree type, tree isa, tree super,
     {
       /* const char *ivar_layout; */
       if (IS_CLS_META (status)) /* Meta Class ? */
-	initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
       else
 	{
 	  tree ivar_layout = objc_build_ivar_layout (true);
 	  if (!ivar_layout)
-	    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	    /* APPLE LOCAL LLVM - NUL pointer */
+	    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
 	  else
 	    initlist = tree_cons (NULL_TREE, ivar_layout, initlist);
 	}
       /* struct _objc_class_ext *ext; */
       if (!objc_class_ext)
-        initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+	/* APPLE LOCAL LLVM - NUL pointer */
+        initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
       else
 	{
 	  expr = convert (build_pointer_type (objc_class_ext_template), 
@@ -11328,7 +11357,8 @@ build_shared_structure_initializer (tree type, tree isa, tree super,
     }
   else
     /* gc_object_type = NULL */
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
 
   return objc_build_constructor (type, nreverse (initlist));
@@ -11490,13 +11520,15 @@ build_class_t_initializer (tree type, tree isa, tree superclass, tree ro, tree c
   if (cache)
     initlist = tree_cons (NULL_TREE, cache, initlist);
   else
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
 
   /* vtable */
   if (vtable)
     initlist = tree_cons (NULL_TREE, vtable, initlist);
   else
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
 
   /* ro */
   initlist = tree_cons (NULL_TREE, ro, initlist);
@@ -11540,7 +11572,8 @@ build_class_ro_t_initializer (tree type, tree name,
   /* APPLE LOCAL begin radar 4695101 */
   /* ivarLayout */
   if (!ivarLayout)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     initlist = tree_cons (NULL_TREE, ivarLayout, initlist);
   /* APPLE LOCAL end radar 4695101 */
@@ -11550,7 +11583,8 @@ build_class_ro_t_initializer (tree type, tree name,
 
   /* baseMethods */
   if (!baseMethods)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_method_list_ptr,
@@ -11560,31 +11594,34 @@ build_class_ro_t_initializer (tree type, tree name,
 
   /* baseProtocols */
   if (!baseProtocols)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       tree protocol_list_t_p = build_pointer_type (
 		               xref_tag (RECORD_TYPE, 
 			                 get_identifier (UTAG_V2_PROTOCOL_LIST)));
       expr = convert (protocol_list_t_p,
-                      build_unary_op (ADDR_EXPR, baseProtocols, 0));
+		      build_unary_op (ADDR_EXPR, baseProtocols, 0));
       initlist = tree_cons (NULL_TREE, expr, initlist);
     }
 
   /* ivars */
   if (!ivars)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_v2_ivar_list_ptr,
-                      build_unary_op (ADDR_EXPR, ivars, 0));
+		      build_unary_op (ADDR_EXPR, ivars, 0));
       initlist = tree_cons (NULL_TREE, expr, initlist);
     }
 
   /* APPLE LOCAL begin radar 4695101 */
   /* weakIvarLayout */
   if (!weakIvarLayout)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     initlist = tree_cons (NULL_TREE, weakIvarLayout, initlist);
   /* APPLE LOCAL end radar 4695101 */
@@ -11592,11 +11629,12 @@ build_class_ro_t_initializer (tree type, tree name,
   /* APPLE LOCAL begin C* property metadata (Radar 4498373) */
   /* property list */
   if (!property_list)
-    initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), initlist);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    initlist = tree_cons (NULL_TREE, null_pointer_node, initlist);
   else
     {
       expr = convert (objc_prop_list_ptr,
-                      build_unary_op (ADDR_EXPR, property_list, 0));
+		      build_unary_op (ADDR_EXPR, property_list, 0));
       initlist = tree_cons (NULL_TREE, expr, initlist);
     }
   /* APPLE LOCAL end C* property metadata (Radar 4498373) */
@@ -11854,7 +11892,8 @@ generate_v2_shared_structures (int cls_flags)
       /* root class.  */
       root_expr = build_unary_op (ADDR_EXPR, metaclass_decl, 0);
       metaclass_superclass_expr = build_unary_op (ADDR_EXPR, class_decl, 0);
-      class_superclass_expr = build_int_cst (NULL_TREE, 0);
+      /* APPLE LOCAL LLVM - NUL pointer */
+      class_superclass_expr = null_pointer_node;
       flags |= 0x2; /* CLS_ROOT: it is also a root meta class */
     }
 
@@ -12043,7 +12082,8 @@ generate_shared_structures (int cls_flags)
       super_expr = build_c_cast (cast_type, super_expr); /* cast! */
     }
   else
-    super_expr = build_int_cst (NULL_TREE, 0);
+    /* APPLE LOCAL LLVM - NUL pointer */
+    super_expr = null_pointer_node;
 
   root_expr = add_objc_string (my_root_id, class_names);
   root_expr = build_c_cast (cast_type, root_expr); /* cast! */
@@ -13303,7 +13343,8 @@ generate_v2_protocols (void)
 	refs_expr = convert (build_pointer_type (objc_v2_protocol_template),
 			     build_unary_op (ADDR_EXPR, refs_decl, 0));
       else
-	refs_expr = build_int_cst (NULL_TREE, 0);
+	/* APPLE LOCAL LLVM - NUL pointer */
+	refs_expr = null_pointer_node;
 
       /* APPLE LOCAL begin radar 4695101 */
       /* Build table of list of properties for this protocol. */

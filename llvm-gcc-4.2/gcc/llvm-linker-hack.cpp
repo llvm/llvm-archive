@@ -51,7 +51,6 @@ void dummy_function() {
   llvm::createCFGSimplificationPass();
 
   llvm::createDefaultScheduler(NULL, NULL, NULL);
-  llvm::createBFS_DAGScheduler(NULL, NULL, NULL);
   llvm::createLinearScanRegisterAllocator();
 
   llvm::createGVNPass();

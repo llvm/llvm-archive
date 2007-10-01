@@ -185,14 +185,13 @@ void llvm_initialize_backend(void) {
   // optimizer use.
   TheModule->setDataLayout(TheTarget->getTargetData()->
                            getStringRepresentation());
+
+  RegisterScheduler::setDefault(createDefaultScheduler);
   
-  if (optimize) {
-    RegisterScheduler::setDefault(createDefaultScheduler);
-  } else {
-    RegisterScheduler::setDefault(createBFS_DAGScheduler);
-  }
-  
-  RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
+  if (optimize)
+    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
+  else
+    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
  
   if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);

@@ -2082,7 +2082,8 @@ build_array_ref (tree array, tree index)
        */
       {
         tree ty = TREE_TYPE(TREE_TYPE(ar));
-        if (TREE_CODE(ty) != ARRAY_TYPE)
+        if (TREE_CODE(ty) == RECORD_TYPE || TREE_CODE(ty) == UNION_TYPE
+            || TREE_CODE(ty) == QUAL_UNION_TYPE)
           ty = TYPE_MAIN_VARIANT (ty);
         return build4 (ARRAY_REF, ty, ar, index, NULL_TREE, NULL_TREE);
       }

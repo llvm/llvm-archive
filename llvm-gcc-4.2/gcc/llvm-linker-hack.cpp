@@ -52,6 +52,7 @@ void dummy_function() {
 
   llvm::createDefaultScheduler(NULL, NULL, NULL);
   llvm::createLinearScanRegisterAllocator();
+  llvm::createLocalRegisterAllocator();
 
   llvm::createGVNPass();
   llvm::createGCSEPass();

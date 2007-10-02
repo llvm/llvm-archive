@@ -74,12 +74,11 @@ static LTypesMapTy LTypesMap;
 static const Type * llvm_set_type(tree Tr, const Type *Ty) {
 
   // For x86 long double, llvm records the size of the data (80) while
-  // gcc's TYPE_SIZE including alignment padding.  Compensate.
+  // gcc's TYPE_SIZE including alignment padding.  getABITypeSizeInBits
+  // is used to compensate for this.
   assert((!TYPE_SIZE(Tr) || !Ty->isSized() || !isInt64(TYPE_SIZE(Tr), true) ||
-         getInt64(TYPE_SIZE(Tr), true) == getTargetData().getTypeSizeInBits(Ty) ||
-         (getTargetData().getTypeSizeInBits(Ty) == 80 &&
-          (getInt64(TYPE_SIZE(Tr), true) == 96 ||
-           getInt64(TYPE_SIZE(Tr), true) == 128)))
+         getInt64(TYPE_SIZE(Tr), true) == 
+            getTargetData().getABITypeSizeInBits(Ty))
          && "LLVM type size doesn't match GCC type size!");
 
   unsigned &TypeSlot = LTypesMap[Ty];

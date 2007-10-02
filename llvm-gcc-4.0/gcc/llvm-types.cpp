@@ -1160,7 +1160,7 @@ struct StructTypeConversionInfo {
 
   // If this is a Packed struct and ExtraBitsAvailable is not zero then
   // remove Extra bytes if ExtraBitsAvailable > 8.
-  void RemoveExtraBytes (unsigned GCCTypeSize) {
+  void RemoveExtraBytes () {
 
     unsigned NoOfBytesToRemove = ExtraBitsAvailable/8;
     
@@ -1168,10 +1168,6 @@ struct StructTypeConversionInfo {
       return;
 
     if (NoOfBytesToRemove == 0)
-      return;
-
-    unsigned OriginalSize = ElementSizeInBytes.back();
-    if (OriginalSize == GCCTypeSize)
       return;
 
     const Type *LastType = Elements.back();
@@ -1192,6 +1188,7 @@ struct StructTypeConversionInfo {
 
     // Update last element type and size, element offset is unchanged.
     const Type *Pad =  ArrayType::get(Type::Int8Ty, PadBytes);
+    unsigned OriginalSize = ElementSizeInBytes.back();
     Elements.pop_back();
     Elements.push_back(Pad);
 
@@ -1670,13 +1667,17 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
     DecodeStructFields(Field, *Info);
 
-  uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
-  Info->RemoveExtraBytes(GCCTypeSize);
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC struct, insert tail padding now.  This handles, e.g., "{}" in C++.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
+    uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
     uint64_t LLVMStructSize = Info->getSizeAsLLVMStruct();
-    
+
+    if (LLVMStructSize > GCCTypeSize) {
+      Info->RemoveExtraBytes();
+      LLVMStructSize = Info->getSizeAsLLVMStruct();
+    }
+      
     if (LLVMStructSize != GCCTypeSize) {
       assert(LLVMStructSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
@@ -1702,7 +1703,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         }
       }
     }
-  }
+  } else
+    Info->RemoveExtraBytes();
+    
   
   // Now that the LLVM struct is finalized, figure out a safe place to index to
   // and set the DECL_LLVM values for each FieldDecl that doesn't start at a

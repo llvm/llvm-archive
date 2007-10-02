@@ -1185,7 +1185,7 @@ struct StructTypeConversionInfo {
 
   // If this is a Packed struct and ExtraBitsAvailable is not zero then
   // remove Extra bytes if ExtraBitsAvailable > 8.
-  void RemoveExtraBytes () {
+  void RemoveExtraBytes (unsigned GCCTypeSize) {
 
     unsigned NoOfBytesToRemove = ExtraBitsAvailable/8;
     
@@ -1193,6 +1193,10 @@ struct StructTypeConversionInfo {
       return;
 
     if (NoOfBytesToRemove == 0)
+      return;
+
+    unsigned OriginalSize = ElementSizeInBytes.back();
+    if (OriginalSize == GCCTypeSize)
       return;
 
     const Type *LastType = Elements.back();
@@ -1216,7 +1220,6 @@ struct StructTypeConversionInfo {
     Elements.pop_back();
     Elements.push_back(Pad);
 
-    unsigned OriginalSize = ElementSizeInBytes.back();
     ElementSizeInBytes.pop_back();
     ElementSizeInBytes.push_back(OriginalSize - NoOfBytesToRemove);
   }
@@ -1692,12 +1695,12 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
     DecodeStructFields(Field, *Info);
 
-  Info->RemoveExtraBytes();
+  uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
+  Info->RemoveExtraBytes(GCCTypeSize);
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC struct, insert tail padding now.  This handles, e.g., "{}" in C++.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
     uint64_t LLVMStructSize = Info->getSizeAsLLVMStruct();
-    uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
     
     if (LLVMStructSize != GCCTypeSize) {
       assert(LLVMStructSize < GCCTypeSize &&

@@ -4499,17 +4499,10 @@ Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
   Intrinsic::ID Id = Intrinsic::not_intrinsic;
+  const Type* Ty = Amt->getType();
   
-  switch (Amt->getType()->getTypeID()) {
-  default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Id = Intrinsic::sqrt_f32; break;
-  case Type::DoubleTyID: Id = Intrinsic::sqrt_f64;  break;
-  case Type::X86_FP80TyID:  Id = Intrinsic::sqrt_f80; break;
-  case Type::FP128TyID: Id = Intrinsic::sqrt_f128; break;
-  case Type::PPC_FP128TyID:  Id = Intrinsic::sqrt_ppcf128; break;
-  }
-
-  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id),
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::sqrt, &Ty, 1),
                             Amt, "tmp");
 }
 
@@ -4520,23 +4513,14 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
   Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
+  const Type *Ty = Val->getType();
   Pow = CastToSIntType(Pow, Type::Int32Ty);
 
-  Intrinsic::ID Id = Intrinsic::not_intrinsic;
-
-  switch (Val->getType()->getTypeID()) {
-  default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Id = Intrinsic::powi_f32; break;
-  case Type::DoubleTyID: Id = Intrinsic::powi_f64; break;
-  case Type::X86_FP80TyID: Id = Intrinsic::powi_f80; break;
-  case Type::FP128TyID: Id = Intrinsic::powi_f128; break;
-  case Type::PPC_FP128TyID: Id = Intrinsic::powi_ppcf128; break;
-  }
-  
   SmallVector<Value *,2> Args;
   Args.push_back(Val);
   Args.push_back(Pow);
-  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id),
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::powi, &Ty, 1),
                             Args.begin(), Args.end(), "tmp");
 }
 

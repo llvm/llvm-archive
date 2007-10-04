@@ -11756,9 +11756,15 @@ build_protocollist_translation_table (void)
       tree decl = TREE_PURPOSE (chain);
       gcc_assert (TREE_CODE (expr) == PROTOCOL_INTERFACE_TYPE);
       /* APPLE LOCAL begin radar 4695109 */
-      sprintf (string, "_OBJC_PROTOCOL_$_%s", 
+      /* APPLE LOCAL begin - LLVM radar 5476262 */
+      sprintf (string, "L_OBJC_PROTOCOL_$_%s", 
 	       IDENTIFIER_POINTER (PROTOCOL_NAME (expr)));
-      expr = start_var_decl (objc_v2_protocol_template, string);
+#ifdef ENABLE_LLVM
+      expr = lookup_name (get_identifier(string));
+      if (expr == NULL_TREE)
+#endif
+	expr = start_var_decl (objc_v2_protocol_template, &string[1]);
+      /* APPLE LOCAL end - LLVM radar 5476262 */
       /* APPLE LOCAL end radar 4695109 */
       expr = convert (objc_protocol_type, build_fold_addr_expr (expr));
       finish_var_decl (decl, expr);
@@ -13299,6 +13305,9 @@ build_v2_protocol_reference (tree p)
   proto_name = synth_id_with_class_suffix ("_OBJC_PROTOCOL_$", p);
   decl = start_var_decl (objc_v2_protocol_template, proto_name);
   PROTOCOL_V2_FORWARD_DECL (p) = decl;
+  /* APPLE LOCAL begin - LLVM radar 5476262 */
+  pushdecl_top_level(decl);
+  /* APPLE LOCAL end - LLVM radar 5476262 */
 }
 /* APPLE LOCAL end radar 4695109 */
 

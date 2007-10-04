@@ -610,9 +610,11 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_STMXCSR: {
     Function *stmxcsr =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_stmxcsr);
-    Value *Ptr = CreateTemporary(Type::Int32Ty);
-    Ptr = Builder.CreateBitCast(Ptr, PointerType::get(Type::Int8Ty), "tmp");
-    Builder.CreateCall(stmxcsr, Ptr);
+    Value *Ptr  = CreateTemporary(Type::Int32Ty);
+    Value *BPtr = Builder.CreateBitCast(Ptr, PointerType::get(Type::Int8Ty),
+                                        "tmp");
+    Builder.CreateCall(stmxcsr, BPtr);
+    
     Result = Builder.CreateLoad(Ptr, "tmp");
     return true;
   }

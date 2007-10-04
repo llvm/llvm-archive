@@ -11867,28 +11867,20 @@ build_protocollist_translation_table (void)
       tree decl = TREE_PURPOSE (chain);
       gcc_assert (TREE_CODE (expr) == PROTOCOL_INTERFACE_TYPE);
       /* APPLE LOCAL begin radar 4695109 */
-      sprintf (string, "_OBJC_PROTOCOL_$_%s", 
+      /* APPLE LOCAL begin - LLVM radar 5476262 */
+      sprintf (string, "L_OBJC_PROTOCOL_$_%s", 
 	       IDENTIFIER_POINTER (PROTOCOL_NAME (expr)));
-      expr = start_var_decl (objc_v2_protocol_template, string);
+#ifdef ENABLE_LLVM
+      expr = lookup_name (get_identifier(string));
+      if (expr == NULL_TREE)
+#endif
+	expr = start_var_decl (objc_v2_protocol_template, &string[1]);
+      /* APPLE LOCAL end - LLVM radar 5476262 */
       /* APPLE LOCAL end radar 4695109 */
       expr = convert (objc_protocol_type, build_fold_addr_expr (expr));
       finish_var_decl (decl, expr);
     }
 }
-
-/* APPLE LOCAL begin - LLVM radar 5476262 */
-#ifdef ENABLE_LLVM
-/* This routine returns true if the name is the same as a protocol
-   reference name.  */
-
-bool
-objc_is_protocol_reference (const char *name)
-{
-  return flag_objc_abi == 2 && strlen (name) > 19  &&
-    strncmp (name, "\01L_OBJC_PROTOCOL_$_", 19) == 0;
-}
-#endif
-/* APPLE LOCAL end - LLVM radar 5476262 */
 
 /* This routine builds the protocol_reference_chain for each protocol name used
    @protocol(MyProtocol) expression. IDENT is current protocol name.  */
@@ -13402,7 +13394,7 @@ build_v2_build_objc_method_call (int super_flag, tree method_prototype,
 
 /* Declare variable which holds 'struct protocol_t' meta data.  */
 /* APPLE LOCAL begin radar 4695109 */
-/* poniter to protocol metadata in new ABI protocol is now generated 
+/* pointer to protocol metadata in new ABI protocol is now generated 
    like the old abi. */
 static void
 build_v2_protocol_reference (tree p)
@@ -13415,6 +13407,9 @@ build_v2_protocol_reference (tree p)
   proto_name = synth_id_with_class_suffix ("_OBJC_PROTOCOL_$", p);
   decl = start_var_decl (objc_v2_protocol_template, proto_name);
   PROTOCOL_V2_FORWARD_DECL (p) = decl;
+  /* APPLE LOCAL begin - LLVM radar 5476262 */
+  pushdecl_top_level(decl);
+  /* APPLE LOCAL end - LLVM radar 5476262 */
 }
 /* APPLE LOCAL end radar 4695109 */
 

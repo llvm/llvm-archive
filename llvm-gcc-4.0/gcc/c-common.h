@@ -1139,12 +1139,6 @@ extern tree objc_generate_weak_read (tree);
 extern void objc_remove_weak_read (tree*);
 /* APPLE LOCAL end radar 4426814 */
 
-/* APPLE LOCAL begin - LLVM radar 5476262 */
-#ifdef ENABLE_LLVM
-extern bool objc_is_protocol_reference (const char *name);
-#endif
-/* APPLE LOCAL end - LLVM radar 5476262 */
-
 /* APPLE LOCAL begin C* language */
 extern void objc_set_method_opt (int);
 void objc_finish_foreach_loop (location_t, tree, tree, tree, tree);

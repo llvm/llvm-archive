@@ -12240,8 +12240,11 @@ generate_shared_structures (int cls_flags)
     }
   else
     /* APPLE LOCAL LLVM - begin NUL pointer */
-    super_expr = convert (string_type_node,
-                          build_int_cst (NULL_TREE, 0));
+    {
+      super_expr = convert (string_type_node,
+                            build_int_cst (NULL_TREE, 0));
+      super_expr = build_c_cast (cast_type, super_expr); /* cast! */
+    }
     /* APPLE LOCAL LLVM - end NUL pointer */
 
   root_expr = add_objc_string (my_root_id, class_names);

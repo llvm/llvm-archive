@@ -415,8 +415,8 @@ $buildstatus = $_POST['buildstatus'];
 
 
 // Add new test run config
-$testRunConfigId = addTestRunConfig($runDateTime, $machineId, $machineUname, 
-                                    $gccVersion, $cvsCpuTime, $cvsWallTime, 
+$testRunConfigId = addTestRunConfig($runDateTime, $machineId, $uname, 
+                                    $gcc_version, $cvsCpuTime, $cvsWallTime, 
                                     $configureCpuTime, $configureWallTime,
                                     $buildCpuTime, 
                                     $buildWallTime, $dejagnuCpuTime,

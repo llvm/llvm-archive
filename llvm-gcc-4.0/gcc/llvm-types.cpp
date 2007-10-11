@@ -705,10 +705,17 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 64: return SET_TYPE_LLVM(type, Type::DoubleTy);
     case 80: return SET_TYPE_LLVM(type, Type::X86_FP80Ty);
     case 128:
+#ifdef TARGET_POWERPC
+             return SET_TYPE_LLVM(type, Type::PPC_FP128Ty);
+#elif 0
+             // This is for IEEE double extended, e.g. Sparc
+             return SET_TYPE_LLVM(type, Type::FP128Ty);
+#else
       // 128-bit long doubles map onto { double, double }.
       const Type *Ty = Type::DoubleTy;
       Ty = StructType::get(std::vector<const Type*>(2, Ty), false);
       return SET_TYPE_LLVM(type, Ty);
+#endif
     }
     
   case COMPLEX_TYPE: {

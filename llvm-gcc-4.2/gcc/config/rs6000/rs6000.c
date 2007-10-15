@@ -9077,22 +9077,6 @@ rs6000_init_builtins (void)
   unsigned_V8HI_type_node = build_vector_type (unsigned_intHI_type_node, 8);
   unsigned_V4SI_type_node = build_vector_type (unsigned_intSI_type_node, 4);
 
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-  /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
-    all of these types BLKmode.  This interferes with rs6000.c-specific
-    handling of -faltivec overloads (an apple local patch).  As such, give them
-    the correct modes here manually. */
-  TYPE_MODE (V4SI_type_node) = V4SImode;
-  TYPE_MODE (V4SF_type_node) = V4SFmode;
-  TYPE_MODE (V8HI_type_node) = V8HImode;
-  TYPE_MODE (V16QI_type_node) = V16QImode;
-  TYPE_MODE (unsigned_V4SI_type_node) = V4SImode;
-  TYPE_MODE (unsigned_V8HI_type_node) = V8HImode;
-  TYPE_MODE (unsigned_V16QI_type_node) = V16QImode;
-#endif
-  /* LLVM LOCAL end */
-  
   opaque_V2SF_type_node = build_opaque_vector_type (float_type_node, 2);
   opaque_V2SI_type_node = build_opaque_vector_type (intSI_type_node, 2);
   opaque_p_V2SI_type_node = build_pointer_type (opaque_V2SI_type_node);
@@ -9106,6 +9090,26 @@ rs6000_init_builtins (void)
   bool_short_type_node = build_distinct_type_copy (unsigned_intHI_type_node);
   bool_int_type_node = build_distinct_type_copy (unsigned_intSI_type_node);
   pixel_type_node = build_distinct_type_copy (unsigned_intHI_type_node);
+
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
+    all of these types BLKmode.  This interferes with rs6000.c-specific
+    handling of -faltivec overloads (an apple local patch).  As such, give them
+    the correct modes here manually. */
+  TYPE_MODE (V4SI_type_node) = V4SImode;
+  TYPE_MODE (V4SF_type_node) = V4SFmode;
+  TYPE_MODE (V8HI_type_node) = V8HImode;
+  TYPE_MODE (V16QI_type_node) = V16QImode;
+  TYPE_MODE (unsigned_V4SI_type_node) = V4SImode;
+  TYPE_MODE (unsigned_V8HI_type_node) = V8HImode;
+  TYPE_MODE (unsigned_V16QI_type_node) = V16QImode;
+  TYPE_MODE (bool_V16QI_type_node) = V16QImode;
+  TYPE_MODE (bool_V8HI_type_node) = V8HImode;
+  TYPE_MODE (bool_V4SI_type_node) = V4SImode;
+  TYPE_MODE (pixel_V8HI_type_node) = V8HImode;
+#endif
+  /* APPLE LOCAL end LLVM */
 
   long_integer_type_internal_node = long_integer_type_node;
   long_unsigned_type_internal_node = long_unsigned_type_node;

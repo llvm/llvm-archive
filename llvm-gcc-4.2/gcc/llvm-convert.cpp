@@ -4838,13 +4838,20 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   //   float foo(int w, float A[][w], int g) { return A[g][0]; }
 
   ArrayAddr = BitCastToType(ArrayAddr, PointerType::get(Type::Int8Ty));
-  Value *TypeSize = Emit(array_ref_element_size(exp), 0);
-  TypeSize = CastToUIntType(TypeSize, IntPtrTy);
+  Value *TypeSize = NULL;
+  if (VOID_TYPE_P(TREE_TYPE(ArrayType))) {
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
+    return BitCastToType(Ptr, PointerType::get(Type::Int8Ty));
+  }
+  else {
+    TypeSize = Emit(array_ref_element_size(exp), 0);
+    TypeSize = CastToUIntType(TypeSize, IntPtrTy);
+    IndexVal = Builder.CreateMul(IndexVal, TypeSize, "tmp");
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
+    return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
+  }
 
-  IndexVal = Builder.CreateMul(IndexVal, TypeSize, "tmp");
-  Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
 
-  return BitCastToType(Ptr, PointerType::get(ConvertType(TREE_TYPE(exp))));
 }
 
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a

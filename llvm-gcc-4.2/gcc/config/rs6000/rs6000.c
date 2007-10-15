@@ -9091,26 +9091,6 @@ rs6000_init_builtins (void)
   bool_int_type_node = build_distinct_type_copy (unsigned_intSI_type_node);
   pixel_type_node = build_distinct_type_copy (unsigned_intHI_type_node);
 
-  /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-  /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
-    all of these types BLKmode.  This interferes with rs6000.c-specific
-    handling of -faltivec overloads (an apple local patch).  As such, give them
-    the correct modes here manually. */
-  TYPE_MODE (V4SI_type_node) = V4SImode;
-  TYPE_MODE (V4SF_type_node) = V4SFmode;
-  TYPE_MODE (V8HI_type_node) = V8HImode;
-  TYPE_MODE (V16QI_type_node) = V16QImode;
-  TYPE_MODE (unsigned_V4SI_type_node) = V4SImode;
-  TYPE_MODE (unsigned_V8HI_type_node) = V8HImode;
-  TYPE_MODE (unsigned_V16QI_type_node) = V16QImode;
-  TYPE_MODE (bool_V16QI_type_node) = V16QImode;
-  TYPE_MODE (bool_V8HI_type_node) = V8HImode;
-  TYPE_MODE (bool_V4SI_type_node) = V4SImode;
-  TYPE_MODE (pixel_V8HI_type_node) = V8HImode;
-#endif
-  /* APPLE LOCAL end LLVM */
-
   long_integer_type_internal_node = long_integer_type_node;
   long_unsigned_type_internal_node = long_unsigned_type_node;
   intQI_type_internal_node = intQI_type_node;
@@ -9139,6 +9119,27 @@ rs6000_init_builtins (void)
   bool_V8HI_type_node = build_vector_type (bool_short_type_node, 8);
   bool_V4SI_type_node = build_vector_type (bool_int_type_node, 4);
   pixel_V8HI_type_node = build_vector_type (pixel_type_node, 8);
+
+
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
+    all of these types BLKmode.  This interferes with rs6000.c-specific
+    handling of -faltivec overloads (an apple local patch).  As such, give them
+    the correct modes here manually. */
+  TYPE_MODE (V4SI_type_node) = V4SImode;
+  TYPE_MODE (V4SF_type_node) = V4SFmode;
+  TYPE_MODE (V8HI_type_node) = V8HImode;
+  TYPE_MODE (V16QI_type_node) = V16QImode;
+  TYPE_MODE (unsigned_V4SI_type_node) = V4SImode;
+  TYPE_MODE (unsigned_V8HI_type_node) = V8HImode;
+  TYPE_MODE (unsigned_V16QI_type_node) = V16QImode;
+  TYPE_MODE (bool_V16QI_type_node) = V16QImode;
+  TYPE_MODE (bool_V8HI_type_node) = V8HImode;
+  TYPE_MODE (bool_V4SI_type_node) = V4SImode;
+  TYPE_MODE (pixel_V8HI_type_node) = V8HImode;
+#endif
+  /* APPLE LOCAL end LLVM */
 
   (*lang_hooks.decls.pushdecl) (build_decl (TYPE_DECL,
 					    get_identifier ("__vector unsigned char"),

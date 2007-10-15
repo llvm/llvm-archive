@@ -1040,7 +1040,6 @@ i[34567]86-*-darwin*)
 	# Deleted a comment here.
 	# APPLE LOCAL mainline
 	with_cpu=${with_cpu:-core2}
-	/* APPLE LOCAL Macintosh alignment 2002-2-19 --ff */
 	extra_options="${extra_options} i386/darwin.opt"
 	# APPLE LOCAL 4099000
 	tmake_file="${tmake_file} i386/t-darwin"

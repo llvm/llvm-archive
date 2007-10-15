@@ -9330,15 +9330,8 @@ build_protocol_initializer (tree type, tree protocol_name,
   /* APPLE LOCAL begin radar 4533974 - ObjC newprotocol - radar 4695109 */
   /* APPLE LOCAL LLVM - begin NUL pointer */
   if (newabi)
-    {
-      if (!objc_protocol_extension_template)
-        build_objc_protocol_extension_template ();    
-
-      /* 'isa' is NULL in the new ObjC abi */
-      expr =
-        convert (build_pointer_type (objc_protocol_extension_template),
-                 build_int_cst (NULL_TREE, 0));
-    }
+    /* 'isa' is NULL in the new ObjC abi */
+    expr = convert (objc_object_type, build_int_cst (NULL_TREE, 0));
   /* APPLE LOCAL end radar 4533974 - ObjC newprotocol - radar 4695109 */
   /* APPLE LOCAL begin radar 4585769 - Objective-C 1.0 extensions */
   /* "isa" field now points to struct _objc_protocol_extension * */

@@ -376,6 +376,8 @@ case "${target}" in
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
     noconfigdirs="$noconfigdirs ${libgcj} target-libstdc++-v3"
+    # LLVM LOCAL
+    noconfigdirs="$noconfigdirs target-libobjc"
     ;;
   *-*-freebsd[[12]] | *-*-freebsd[[12]].* | *-*-freebsd*aout*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"

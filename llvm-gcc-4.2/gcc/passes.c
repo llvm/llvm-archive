@@ -659,6 +659,8 @@ init_optimization_passes (void)
   NEXT_PASS (pass_dce_loop);
   *p = NULL;
 
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   p = &pass_loop2.sub;
   NEXT_PASS (pass_rtl_loop_init);
   NEXT_PASS (pass_rtl_move_loop_invariants);
@@ -733,6 +735,8 @@ init_optimization_passes (void)
   NEXT_PASS (pass_set_nothrow_function_flags);
   NEXT_PASS (pass_final);
   *p = NULL;
+#endif
+  /* LLVM LOCAL end */
 
 #undef NEXT_PASS
 

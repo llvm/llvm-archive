@@ -2777,7 +2777,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, Value *DestLoc) {
   // Do not turn intrinsic calls or no-throw calls into invokes.
   if ((!isa<Function>(Callee) || !cast<Function>(Callee)->getIntrinsicID()) &&
       // Turn calls that throw that are inside of a cleanup scope into invokes.
-      !CurrentEHScopes.empty() && tree_could_throw_p(exp)) {
+      !CurrentEHScopes.empty() && tree_could_throw_p(exp) &&
+      // Don't generate the unwind block for ObjC if it's using SJLJ exceptions.
+      !(c_dialect_objc() && flag_objc_sjlj_exceptions)) {
     if (UnwindBB == 0)
       UnwindBB = new BasicBlock("Unwind");
     UnwindBlock = UnwindBB;

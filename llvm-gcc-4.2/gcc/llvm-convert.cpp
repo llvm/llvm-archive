@@ -5236,10 +5236,11 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     UArr[0] = RealArr[0];   // Long -> int convert
     UArr[1] = RealArr[1];
 
-    // FIXME: verify on big-endian targets and cross from big- to little- endian
-    // targets
-    if (FLOAT_WORDS_BIG_ENDIAN)
-      std::swap(UArr[0], UArr[1]);
+    // We want to switch the words of UArr if host and target endianness 
+    // do not match.  FLOAT_WORDS_BIG_ENDIAN describes the target endianness.
+    // The host's used to be available in HOST_WORDS_BIG_ENDIAN, but the gcc
+    // maintainers removed this in a fit of cleanliness between 4.0 
+    // and 4.2. For now, host and target endianness must match.
 
     return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
                                                  : APFloat(V));

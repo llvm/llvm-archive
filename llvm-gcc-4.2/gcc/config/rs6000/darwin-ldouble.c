@@ -165,11 +165,7 @@ __gcc_qmul (double a, double b, double c, double d)
   
   /* Use fused multiply-add to get low part of a * c.  */
 #ifndef _SOFT_FLOAT
-/* LLVM LOCAL begin */
-#ifndef __llvm__  /* FIXME: no long double support! */
   asm ("fmsub %0,%1,%2,%3" : "=f"(tau) : "f"(a), "f"(c), "f"(t));
-#endif
-/* LLVM LOCAL end */
 #else
   tau = fmsub (a, c, t);
 #endif
@@ -206,11 +202,7 @@ __gcc_qdiv (double a, double b, double c, double d)
   
   /* Use fused multiply-add to get low part of c * t.	 */
 #ifndef _SOFT_FLOAT
-/* LLVM LOCAL begin */
-#ifndef __llvm__  /* FIXME: no long double support! */
   asm ("fmsub %0,%1,%2,%3" : "=f"(sigma) : "f"(c), "f"(t), "f"(s));
-#endif
-/* LLVM LOCAL end */
 #else
   sigma = fmsub (c, t, s);
 #endif

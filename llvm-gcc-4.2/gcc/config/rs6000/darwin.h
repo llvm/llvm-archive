@@ -95,15 +95,7 @@
    consistency; arithmetic will work even if libc and libm support is
    not available.  */
 
-/* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
 #define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
-#else
-/* FIXME: no long double support yet! */
-#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 64
-#endif
-/* LLVM LOCAL end */
-
 
 /* We want -fPIC by default, unless we're using -static to compile for
    the kernel or some such.  */

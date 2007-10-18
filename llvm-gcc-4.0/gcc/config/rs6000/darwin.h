@@ -170,15 +170,7 @@ do {									\
    consistency; arithmetic will work even if libc and libm support is
    not available.  */
 
-/* APPLE LOCAL begin LLVM */
-#ifndef ENABLE_LLVM
 #define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
-#else
-/* FIXME: no long double support yet! */
-#define RS6000_DEFAULT_LONG_DOUBLE_SIZE 64
-#endif
-/* APPLE LOCAL end LLVM */
-
 
 /* We want -fPIC by default, unless we're using -static to compile for
    the kernel or some such.  */

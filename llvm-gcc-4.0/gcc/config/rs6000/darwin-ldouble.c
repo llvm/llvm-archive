@@ -147,11 +147,7 @@ __gcc_qmul (double a, double b, double c, double d)
   /* Sum terms of two highest orders. */
   
   /* Use fused multiply-add to get low part of a * c.  */
-/* APPLE LOCAL begin LLVM */
-#ifndef __llvm__  /* FIXME: no long double support! */
   asm ("fmsub %0,%1,%2,%3" : "=f"(tau) : "f"(a), "f"(c), "f"(t));
-#endif
-/* APPLE LOCAL end LLVM */
   v = a*d;
   w = b*c;
   tau += v + w;	    /* Add in other second-order terms.	 */
@@ -184,11 +180,7 @@ __gcc_qdiv (double a, double b, double c, double d)
 			   numerically necessary.  */
   
   /* Use fused multiply-add to get low part of c * t.	 */
-/* APPLE LOCAL begin LLVM */
-#ifndef __llvm__  /* FIXME: no long double support! */
   asm ("fmsub %0,%1,%2,%3" : "=f"(sigma) : "f"(c), "f"(t), "f"(s));
-#endif
-/* APPLE LOCAL end LLVM */
   v = a - s;
   
   tau = ((v-sigma)+w)/c;   /* Correction to t.  */

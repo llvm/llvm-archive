@@ -34,24 +34,20 @@ ___deregister_frame_info_bases
 ___divdc3
 ___divdi3
 ___divsc3
-# APPLE LOCAL LLVM FIXME!
-#___divtc3
+___divtc3
 ___enable_execute_stack
 ___ffsdi2
 ___fixdfdi
 ___fixsfdi
-# APPLE LOCAL LLVM FIXME!
-#___fixtfdi
+___fixtfdi
 ___fixunsdfdi
 ___fixunsdfsi
 ___fixunssfdi
 ___fixunssfsi
-# APPLE LOCAL LLVM FIXME!
-#___fixunstfdi
+___fixunstfdi
 ___floatdidf
 ___floatdisf
-# APPLE LOCAL LLVM FIXME!
-#___floatditf
+___floatditf
 ___gcc_personality_v0
 ___gcc_qadd
 ___gcc_qdiv
@@ -62,8 +58,7 @@ ___moddi3
 ___muldc3
 ___muldi3
 ___mulsc3
-# APPLE LOCAL LLVM FIXME!
-#___multc3
+___multc3
 ___mulvdi3
 ___mulvsi3
 ___negdi2
@@ -75,8 +70,7 @@ ___popcountdi2
 ___popcountsi2
 ___powidf2
 ___powisf2
-# APPLE LOCAL LLVM FIXME!
-#___powitf2
+___powitf2
 ___register_frame
 ___register_frame_info
 ___register_frame_info_bases

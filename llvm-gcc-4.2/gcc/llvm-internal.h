@@ -284,12 +284,6 @@ class TreeToLLVM {
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
   Function *FuncEHGetTypeID;
 
-  /// FuncEHPersonality - Function providing the exception handling personality.
-  Value *FuncEHPersonality;
-
-  /// FuncUnwindResume - Function used to continue exception unwinding.
-  Value *FuncUnwindResume;
-
   /// NumAddressTakenBlocks - Count the number of labels whose addresses are
   /// taken.
   uint64_t NumAddressTakenBlocks;

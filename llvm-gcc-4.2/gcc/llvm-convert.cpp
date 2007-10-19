@@ -369,8 +369,6 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
-  FuncEHPersonality = 0;
-  FuncUnwindResume = 0;
 
   NumAddressTakenBlocks = 0;
   IndirectGotoBlock = 0;
@@ -1793,14 +1791,6 @@ void TreeToLLVM::CreateExceptionValues() {
                                               (IntPtr == Type::Int32Ty ?
                                                Intrinsic::eh_typeid_for_i32 :
                                                Intrinsic::eh_typeid_for_i64));
-
-  assert(llvm_eh_personality_libfunc
-         && "no exception handling personality function!");
-  FuncEHPersonality = DECL_LLVM(llvm_eh_personality_libfunc);
-
-  assert(llvm_unwind_resume_libfunc
-         && "no unwind resume function!");
-  FuncUnwindResume = DECL_LLVM(llvm_unwind_resume_libfunc);
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling
@@ -1844,7 +1834,10 @@ void TreeToLLVM::EmitLandingPads() {
 
     // The exception and the personality function.
     Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-    Args.push_back(CastToType(Instruction::BitCast, FuncEHPersonality,
+    assert(llvm_eh_personality_libfunc
+           && "no exception handling personality function!");
+    Args.push_back(CastToType(Instruction::BitCast,
+                              DECL_LLVM(llvm_eh_personality_libfunc),
                               PointerType::get(Type::Int8Ty)));
 
     // Add selections for each handler.
@@ -2041,7 +2034,8 @@ void TreeToLLVM::EmitUnwindBlock() {
     EmitBlock(UnwindBB);
     // Fetch and store exception handler.
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-    Builder.CreateCall(FuncUnwindResume, Arg);
+    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
+    Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
     Builder.CreateUnreachable();
   }
 }

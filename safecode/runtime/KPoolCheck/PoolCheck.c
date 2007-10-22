@@ -21,8 +21,9 @@
 #endif
 #define DEBUG(x) 
 
-/* Flag whether we are ready to perform pool operations */
-static int ready = 0;
+/* Flag whether we are pchk_ready to perform pool operations */
+int pchk_ready = 0;
+
 /* Flag whether to do profiling */
 /* profiling only works if this library is compiled to a .o file, not llvm */
 static const int do_profile = 0;
@@ -151,9 +152,9 @@ void pchk_init(void) {
   poolcheckglobals();
 
   /*
-   * Flag that we're ready to rumble!
+   * Flag that we're pchk_ready to rumble!
    */
-  ready = 1;
+  pchk_ready = 1;
   return;
 }
 
@@ -187,14 +188,14 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   if (!MP) { return; }
 #endif
 #if 0
-  if (ready) poolcheckinfo2 ("pchk_reg_obj", addr, len);
+  if (pchk_ready) poolcheckinfo2 ("pchk_reg_obj", addr, len);
 #endif
   PCLOCK();
 #if 0
   {
   void * S = addr;
   unsigned len, tag = 0;
-  if ((ready) && (adl_splay_retrieve(&MP->Objs, &S, &len, &tag)))
+  if ((pchk_ready) && (adl_splay_retrieve(&MP->Objs, &S, &len, &tag)))
     poolcheckinfo2 ("regobj: Object exists", __builtin_return_address(0), tag);
   }
 #endif
@@ -252,7 +253,7 @@ void pchk_reg_ic_memtrap (void * p, void* addr) {
 
 void pchk_reg_int (void* addr) {
   unsigned int index;
-  if (!ready) return;
+  if (!pchk_ready) return;
   PCLOCK();
   adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, __builtin_return_address(0));
 #if 1
@@ -400,7 +401,7 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
  */
 void
 poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -424,7 +425,7 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
  */
 void
 poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -445,7 +446,7 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
 
 /* check that addr exists in pool MP */
 void poolcheck(MetaPoolTy* MP, void* addr) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -466,7 +467,7 @@ void poolcheck(MetaPoolTy* MP, void* addr) {
  *  useful for checking incomplete/unknown nodes.
  */
 void poolcheck_i (MetaPoolTy* MP, void* addr) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -479,7 +480,7 @@ void poolcheck_i (MetaPoolTy* MP, void* addr) {
 
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -499,7 +500,7 @@ void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
 /* check that src and dest are same obj or slab */
 /* if src and dest do not exist in the pool, pass */
 void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
-  if (!ready || !MP) return;
+  if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -531,7 +532,7 @@ void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest) {
  */
 void
 pchk_iccheck (void * addr) {
-  if (!ready) return;
+  if (!pchk_ready) return;
 
   /* try objs */
   void* S = addr;
@@ -553,7 +554,7 @@ const unsigned InvalidLower = 0x03;
 
 /* if src is an out of object pointer, get the original value */
 void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP || !use_oob) return src;
+  if (!pchk_ready || !MP || !use_oob) return src;
   if ((unsigned)src <= InvalidLower) return src;
   void* tag = 0;
   /* outside rewrite zone */
@@ -578,7 +579,7 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
  *  If the node is found in the pool, it returns the bounds relative to
  *  *src* (NOT the beginning of the object).
  *  If the node is not found in the pool, it returns 0x00000000.
- *  If the pool is not yet ready, it returns 0xffffffff
+ *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
 struct node {
   void* left;
@@ -604,7 +605,7 @@ void * getEnd (void * node) {
 }
 
 void* getBounds(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP) return &found;
+  if (!pchk_ready || !MP) return &found;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -644,10 +645,10 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  * Return value:
  *  If the node is found in the pool, it returns the bounds.
  *  If the node is not found in the pool, it returns 0xffffffff.
- *  If the pool is not yet ready, it returns 0xffffffff
+ *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
-  if (!ready || !MP) return &found;
+  if (!pchk_ready || !MP) return &found;
   ++stat_boundscheck;
   /* Try fail cache first */
   PCLOCK();
@@ -718,7 +719,7 @@ char* invalidptr = 0;
  *  know that the pointer is bad and should not be dereferenced.
  */
 void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
-  if (!ready || !MP) return dest;
+  if (!pchk_ready || !MP) return dest;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -771,7 +772,7 @@ void* pchk_bounds(MetaPoolTy* MP, void* src, void* dest) {
  *  poolcheck failure if the source node cannot be found within the MetaPool.
  */
 void* pchk_bounds_i(MetaPoolTy* MP, void* src, void* dest) {
-  if (!ready || !MP) return dest;
+  if (!pchk_ready || !MP) return dest;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif

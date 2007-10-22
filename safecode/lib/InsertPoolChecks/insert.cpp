@@ -234,7 +234,7 @@ PreInsertPoolChecks::createPoolHandle (const Value * V, Function * F) {
   //
   // Get the DSNode from the Top Down DSGraph.
   //
-  DSGraph &TDG =  TDPass->getDSGraph(*F);
+  DSGraph &TDG =  getDSGraph(*F);
   DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
 
   // If there is no node, return NULL.
@@ -318,7 +318,7 @@ PreInsertPoolChecks::runOnModule (Module & M) {
     if (F->getName() == "poolcheckglobals") continue;
 
     // Create a MetaPool variable for each DSNode in the DSGraph.
-    DSGraph & TDG = TDPass->getDSGraph(*F);
+    DSGraph & TDG = getDSGraph(*F);
     DSGraph::node_iterator NI = TDG.node_begin(), NE = TDG.node_end();
     while (NI != NE) {
       addLinksNeedingAlignment (NI);
@@ -326,6 +326,23 @@ PreInsertPoolChecks::runOnModule (Module & M) {
       ++NI;
     }
   }
+}
+
+//
+// Method: getDSGraph()
+//
+// Description:
+//  Return the DSGraph for the given function.  This method automatically
+//  selects the correct pass to query for the graph based upon whether we're
+//  doing user-space or kernel analysis.
+//
+DSGraph &
+PreInsertPoolChecks::getDSGraph(Function & F) {
+#ifndef LLVA_KERNEL
+  return equivPass->getDSGraph(F);
+#else  
+  return TDPass->getDSGraph(F);
+#endif  
 }
 
 //
@@ -917,7 +934,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // Get the DSGraph of the enclosing function and get the corresponding
   // DSNode.
   //
-  DSGraph & TDG = TDPass->getDSGraph(*F);
+  DSGraph & TDG = getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
 
   //
@@ -1719,7 +1736,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // Get the DSNode for the instruction
   //
   Function *F   = GEP->getParent()->getParent();
-  DSGraph & TDG = TDPass->getDSGraph(*F);
+  DSGraph & TDG = getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(GEP).getNode();
   assert (Node && "boundscheck: DSNode is NULL!");
 
@@ -1982,7 +1999,7 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   //
 #if 1
   Function *F   = I->getParent()->getParent();
-  DSGraph & TDG = TDPass->getDSGraph(*F);
+  DSGraph & TDG = getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
   if (!Node)
     return false;
@@ -2568,7 +2585,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     GetElementPtrInst *GEPNew = GEP;
     Instruction *Casted = GEP;
 
-    DSGraph & TDG = TDPass->getDSGraph(*F);
+    DSGraph & TDG = getDSGraph(*F);
     DSNode * Node = TDG.getNodeForValue(GEP).getNode();
 
     DEBUG(std::cerr << "LLVA: addGEPChecks: Pool " << PH << " Node ");
@@ -3535,22 +3552,31 @@ void InsertPoolChecks::addLoadStoreChecks(Module &M){
 
 #endif
 
-DSNode* InsertPoolChecks::getDSNode(const Value *V, Function *F) {
+//
+// Method: getDSGraph()
+//
+// Description:
+//  Return the DSGraph for the given function.  This method automatically
+//  selects the correct pass to query for the graph based upon whether we're
+//  doing user-space or kernel analysis.
+//
+DSGraph &
+InsertPoolChecks::getDSGraph(Function & F) {
 #ifndef LLVA_KERNEL
-  DSGraph &TDG = equivPass->getDSGraph(*F);
+  return equivPass->getDSGraph(F);
 #else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
+  return TDPass->getDSGraph(F);
 #endif  
+}
+
+DSNode* InsertPoolChecks::getDSNode(const Value *V, Function *F) {
+  DSGraph &TDG = getDSGraph(*F);
   DSNode *DSN = TDG.getNodeForValue((Value *)V).getNode();
   return DSN;
 }
 
 unsigned InsertPoolChecks::getDSNodeOffset(const Value *V, Function *F) {
-#ifndef LLVA_KERNEL
-  DSGraph &TDG = equivPass->getDSGraph(*F);
-#else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
-#endif  
+  DSGraph &TDG = getDSGraph(*F);
   return TDG.getNodeForValue((Value *)V).getOffset();
 }
 #ifndef LLVA_KERNEL
@@ -3599,7 +3625,7 @@ Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo
 #else
 Value *
 InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
-  DSGraph &TDG =  TDPass->getDSGraph(*F);
+  DSGraph &TDG =  getDSGraph(*F);
   DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
 
   // Register that we will need allocations with this DSNode registered.

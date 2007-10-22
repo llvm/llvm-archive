@@ -1490,8 +1490,8 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
       N->setModifiedMarker()->setReadMarker();
     return true;
 #endif
-  }
 #endif
+  }
 
   return false;
 }
@@ -1553,12 +1553,14 @@ void GraphBuilder::visitCallSite(CallSite CS) {
     }
   }
 
+#ifdef LLVA_KERNEL
   if (isSyscall6) {
     assert (isa<ConstantInt>(CS.getArgument(0)) && "llva_syscall6 called with non-const argument");
     ConstantInt * C = dyn_cast<ConstantInt>(CS.getArgument(0));
     Callee = syscalls[C->getSExtValue()];
     assert (Callee && "llva_syscall: No target for system call vector");
   }
+#endif
 
   // Set up the return value...
   DSNodeHandle RetVal;

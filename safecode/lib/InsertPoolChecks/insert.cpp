@@ -2863,7 +2863,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // Now check if the GEP is inside a loop with monotonically increasing
           //loop bounds
           //We use the LoopInfo Pass this
-#if 0
           Loop *L = LI->getLoopFor(MAI->getParent());
           bool monotonicOpt = false;
           if (L && (MAI->getNumOperands() == 2)) {
@@ -2918,7 +2917,6 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
             Instruction *nextIns = MAI->getNext();
             insertBoundsCheck (MAI, MAI->getPointerOperand(), MAI, nextIns);
           }
-#endif
         }
       }
     } else {

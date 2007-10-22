@@ -42,6 +42,12 @@ struct PreInsertPoolChecks : public ModulePass {
       return ((AlignmentNodes.find (Node)) != (AlignmentNodes.end()));
     }
   private:
+#ifndef  LLVA_KERNEL
+    PoolAllocate * paPass;
+    EquivClassGraphs *equivPass;
+    EmbeCFreeRemoval *efPass;
+#endif  
+
     // Private variables
     CUA::ConvertUnsafeAllocas * cuaPass;
     TDDataStructures * TDPass;
@@ -82,6 +88,7 @@ struct PreInsertPoolChecks : public ModulePass {
     void addLinksNeedingAlignment (DSNode * Node);
     Value * createPoolHandle (const Value * V, Function * F);
     Value * createPoolHandle (Module & M, DSNode * Node);
+    DSGraph & getDSGraph (Function & F);
     Value* getPD(DSNode* N, Module& M) { 
       if (!N) return 0;
       createPoolHandle (M, N);
@@ -175,6 +182,7 @@ struct InsertPoolChecks : public FunctionPass {
     void addPoolCheckProto(Module &M);
     void addPoolChecks(Module &M);
     void addGetElementPtrChecks(Module &M);
+    DSGraph & getDSGraph (Function & F);
     DSNode* getDSNode(const Value *V, Function *F);
     unsigned getDSNodeOffset(const Value *V, Function *F);
     void addLoadStoreChecks (Function & F);

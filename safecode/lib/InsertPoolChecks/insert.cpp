@@ -1561,7 +1561,9 @@ isEligableForExactCheck (Value * Pointer) {
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction() &&
         (CI->getCalledFunction()->getName() == "__vmalloc" || 
-         CI->getCalledFunction()->getName() == "kmalloc")) {
+         CI->getCalledFunction()->getName() == "kmalloc" || 
+         CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
+         CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
       return true;
     }
   }
@@ -1865,10 +1867,11 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   //
   // If the pointer was an allocation, we should be able to do exact checks
   //
-  if(CallInst* CI = dyn_cast<CallInst>(PointerOperand)) {
-    if (CI->getCalledFunction() &&
-        (CI->getCalledFunction()->getName() == "__vmalloc" || 
-         CI->getCalledFunction()->getName() == "kmalloc")) {
+  CallInst* CI = dyn_cast<CallInst>(PointerOperand);
+  if (CI && (CI->getCalledFunction())) {
+    if ((CI->getCalledFunction()->getName() == "__vmalloc") || 
+        (CI->getCalledFunction()->getName() == "kmalloc") || 
+        (CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
       //
       // Attempt to remove checks on GEPs that only index into structures.
       // These criteria must be met:
@@ -1885,6 +1888,16 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
       addExactCheck2(PointerOperand, GEP, Cast, GEP->getNext());
       return true;
+    } else if (CI->getCalledFunction()->getName() == "kmem_cache_alloc") {
+      // Insert a call to kmem_get_cachesize() to determine the size of the
+      // allocated object
+      const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+      Value* VP  = castTo (CI->getOperand(1), VoidPtrType, GEP);
+      CallInst *len = new CallInst(KmemCachegetSize, VP, "", GEP);
+
+      // Add the exactcheck
+      Value* CastLen = castTo (len, Type::IntTy, GEP);
+      addExactCheck2(PointerOperand, GEP, CastLen, GEP->getNext());
     }
   }
 

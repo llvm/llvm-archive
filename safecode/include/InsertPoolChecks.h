@@ -212,6 +212,7 @@ struct InsertPoolChecks : public FunctionPass {
 #ifndef LLVA_KERNEL  
     void addLSChecks(Value *Vnew, const Value *V, Instruction *I, Function *F);
     Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);
+    Value * getPoolHandle(const Value *V, Function *F, bool collapsed = false);
 #else
     Value* getPD(DSNode* N, Module& M) { 
       if (!N) return 0;

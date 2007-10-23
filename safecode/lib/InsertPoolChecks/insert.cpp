@@ -3607,14 +3607,13 @@ Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo
     
     if (!collapsed && CollapsedPoolPtrs.count(F)) {
       Value *v = I->second;
-      if (CollapsedPoolPtrs[F].find(I->second) !=
-	  CollapsedPoolPtrs[F].end()) {
+      if (CollapsedPoolPtrs[F].find(I->second) != CollapsedPoolPtrs[F].end()) {
 #ifdef DEBUG
-	std::cerr << "Collapsed pools \n";
+        std::cerr << "Collapsed pools \n";
 #endif
-	return Constant::getNullValue(PoolDescPtrTy);
+        return Constant::getNullValue(PoolDescPtrTy);
       } else {
-	return v;
+        return v;
       }
     } else {
       return I->second;

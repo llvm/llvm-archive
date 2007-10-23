@@ -86,6 +86,9 @@ struct PreInsertPoolChecks : public ModulePass {
     void addPoolCheckProto(Module &M);
     void registerGlobalArraysWithGlobalPools(Module &M);
     void addLinksNeedingAlignment (DSNode * Node);
+#ifndef LLVA_KERNEL
+    Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);
+#endif
     Value * createPoolHandle (const Value * V, Function * F);
     Value * createPoolHandle (Module & M, DSNode * Node);
     DSGraph & getDSGraph (Function & F);

@@ -6914,6 +6914,9 @@ objc_generate_write_barrier (tree lhs, enum tree_code modifycode, tree rhs)
     return NULL_TREE;
   /* APPLE LOCAL end ObjC GC */
 
+  /* LLVM LOCAL 5541393 */
+  if (TREE_CODE(TREE_TYPE(lhs)) != POINTER_TYPE) return NULL_TREE;  
+
   /* APPLE LOCAL begin ObjC GC */
   /* At this point, we are committed to using one of the write-barriers,
      unless the user is attempting to perform pointer arithmetic.  */

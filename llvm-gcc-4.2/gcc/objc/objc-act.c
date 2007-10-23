@@ -6882,6 +6882,9 @@ objc_generate_write_barrier (tree lhs, enum tree_code modifycode, tree rhs)
     return NULL_TREE;
   /* APPLE LOCAL end radar 4426814 */
 
+  /* LLVM LOCAL 5541393 */
+  if (TREE_CODE(TREE_TYPE(lhs)) != POINTER_TYPE) return NULL_TREE;  
+
   /* APPLE LOCAL begin ObjC GC */
   /* Use the strong-cast write barrier as a last resort.  */
   if (warn_assign_intercept)

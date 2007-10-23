@@ -212,6 +212,53 @@ makeMetaPool(Module* M, DSNode* N) {
                             /*parent=*/ M );
 }
 
+#ifndef LLVA_KERNEL
+Value *
+PreInsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed) {
+  DSGraph &TDG = getDSGraph(*F);
+  const DSNode *Node  = TDG.getNodeForValue((Value *)V).getNode();
+  // Get the pool handle for this DSNode...
+  //  assert(!Node->isUnknownNode() && "Unknown node \n");
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+  if (!Node) {
+    return 0; //0 means there is no isse with the value, otherwise there will be a callnode
+  }
+  if (Node->isUnknownNode()) {
+    //FIXME this should be in a top down pass or propagated like collapsed pools below 
+    if (!collapsed) {
+      unsigned offset = TDG.getNodeForValue((Value *)V).getOffset();
+      assert((!offset) && " we don't handle middle of structs yet\n");
+      return Constant::getNullValue(PoolDescPtrTy);
+    }
+  }
+  std::map<const DSNode*, Value*>::iterator I = FI.PoolDescriptors.find(Node);
+  map <Function *, set<Value *> > &
+    CollapsedPoolPtrs = efPass->CollapsedPoolPtrs;
+  
+  if (I != FI.PoolDescriptors.end()) {
+    // Check that the node pointed to by V in the TD DS graph is not
+    // collapsed
+    
+    if (!collapsed && CollapsedPoolPtrs.count(F)) {
+      Value *v = I->second;
+      if (CollapsedPoolPtrs[F].find(I->second) != CollapsedPoolPtrs[F].end()) {
+#ifdef DEBUG
+        std::cerr << "Collapsed pools \n";
+#endif
+        return Constant::getNullValue(PoolDescPtrTy);
+      } else {
+        return v;
+      }
+    } else {
+      return I->second;
+    } 
+  }
+  return 0;
+}
+#endif
+
 Value *
 PreInsertPoolChecks::createPoolHandle (Module & M, DSNode * Node) {
   // If there is no node, return NULL.
@@ -910,14 +957,17 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   Value *newSrc = Src;
 
 #ifndef LLVA_KERNEL    
+#ifdef NOEQUIV
   // Some times the ECGraphs doesnt contain F for newly created cloned
   // functions
   if (!equivPass->ContainsDSGraphFor(*F)) {
     PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-    newSrc = FI->MapValueToOriginal(MAI);
+    newSrc = FI->MapValueToOriginal(Src);
+    Instruction * Inew = FI->MapValueToOriginal(I);
     assert(newSrc && " Instruction not in value map (clone)\n");
   }
-  Function *Fnew = newSrc->getParent()->getParent();
+  Fnew = Inew->getParent()->getParent();
+#endif
 #endif          
 
   //
@@ -2948,6 +2998,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     Value *op = SCI->getOperand(operand);
     Function *F = SCI->getParent()->getParent();
 #ifndef LLVA_KERNEL    
+#ifdef NOEQUIV
     if (!equivPass->ContainsDSGraphFor(*F)) {
       //some times the ECGraphs doesnt contain F
       //for newly created cloned functions
@@ -2955,6 +3006,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
       op = FI->MapValueToOriginal(op);
       if (!op) return; //abort();
     }
+#endif    
 #endif    
     Function *Fnew = F;
     Value *PH = 0;
@@ -3051,6 +3103,7 @@ void InsertPoolChecks::TransformFunction (Function & F) {
       AllocaInst * AIOrig = AI;
       if (!DisableStackChecks) {
 #ifndef LLVA_KERNEL      
+#ifdef NOEQUIV
         if (!equivPass->ContainsDSGraphFor(F)) {
           //some times the ECGraphs doesnt contain F
           //for newly created cloned functions
@@ -3062,6 +3115,7 @@ void InsertPoolChecks::TransformFunction (Function & F) {
             continue;
           assert(AIOrig && " Instruction not in value map (clone)\n");
         }
+#endif       
 #endif       
         ++I;
         registerAllocaInst(AI, AIOrig);
@@ -3579,6 +3633,7 @@ unsigned InsertPoolChecks::getDSNodeOffset(const Value *V, Function *F) {
   DSGraph &TDG = getDSGraph(*F);
   return TDG.getNodeForValue((Value *)V).getOffset();
 }
+
 #ifndef LLVA_KERNEL
 Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed) {
   const DSNode *Node = getDSNode(V,F);

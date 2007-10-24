@@ -163,7 +163,7 @@ void llvm_initialize_backend(void) {
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
-  const TargetMachineRegistry::entry *TME = 
+  const TargetMachineRegistry::Entry *TME = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
     cerr << "Did not get a target machine!\n";

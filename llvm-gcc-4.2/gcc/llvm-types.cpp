@@ -971,6 +971,12 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   
   ABIConverter.HandleReturnType(ReturnType);
 
+  // If this is a struct-return function, the dest loc is passed in as a
+  // pointer.  Mark that pointer as structret.
+  ParamAttrsVector Attrs;
+  if (ABIConverter.isStructReturn())
+    Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
+                                             ParamAttr::StructRet));
   if (static_chain)
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
@@ -978,7 +984,11 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  return GetFunctionType(RetTy, ArgTys, false, 0);
+  ParamAttrsList *PAL = 0;
+  if (!Attrs.empty())
+    PAL = ParamAttrsList::get(Attrs);
+
+  return GetFunctionType(RetTy, ArgTys, false, PAL);
 }
 
 const FunctionType *TypeConverter::ConvertFunctionType(tree type,

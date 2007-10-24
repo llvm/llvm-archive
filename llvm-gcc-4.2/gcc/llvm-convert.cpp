@@ -2872,8 +2872,8 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
       TREE_CODE(TREE_OPERAND(exp, 1)) == INTEGER_CST) {
     int64_t Offset = getINTEGER_CSTVal(TREE_OPERAND(exp, 1));
     
-    // If POINTER_SIZE is 32-bits, sign extend the offset.
-    if (POINTER_SIZE == 32)
+    // If POINTER_SIZE is 32-bits and the offset is signed, sign extend the offset.
+    if (POINTER_SIZE == 32 && !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1))))
       Offset = (Offset << 32) >> 32;
     
     // Figure out how large the element pointed to is.

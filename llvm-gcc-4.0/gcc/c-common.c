@@ -7094,9 +7094,12 @@ iasm_extra_clobbers (const char *opcode, tree *clobbersp)
   if (once == 0)
     {
       size_t i;
+      /* Extract this into a variable to prevent compiler warning. */
+      unsigned limit = sizeof(db) / sizeof(db[0]) - 1;
       once = 1;
-      for (i=0; i < sizeof (db) / sizeof(db[0]) - 1; ++i)
-	gcc_assert (iasm_op_clobber_comp (&db[i+1], &db[i]) >= 0);
+      
+        for (i=0; i < limit; ++i)
+          gcc_assert (iasm_op_clobber_comp (&db[i+1], &db[i]) >= 0);
     }
 #endif
 

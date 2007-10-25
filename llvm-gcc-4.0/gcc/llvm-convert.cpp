@@ -3020,7 +3020,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       Emit(TREE_OPERAND(exp, 1), LV.Ptr);
       EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), isVolatile, false,
                         Alignment);
-    } else if (!isVolatile) {
+    } else if (!isVolatile && TREE_CODE(TREE_OPERAND(exp, 0))!=RESULT_DECL) {
       Emit(TREE_OPERAND(exp, 1), LV.Ptr);
     } else {
       // Need to do a volatile store into TREE_OPERAND(exp, 1).  To do this, we
@@ -3029,6 +3029,10 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       // it gets the volatile memory access right.  It would be better if the
       // destloc pointer of 'Emit' had a flag that indicated it should be
       // volatile.
+      // We do this for stores into RESULT_DECL because it is possible for that
+      // memory area to overlap with the object being stored into it; see 
+      // gcc.c-torture/execute/20010124-1.c.
+
       Value *Tmp = CreateTemporary(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
       Emit(TREE_OPERAND(exp, 1), Tmp);
       EmitAggregateCopy(LV.Ptr, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)),

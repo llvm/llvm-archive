@@ -3962,6 +3962,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     if (IsInOut)
       ++NumInOut, ++NumInputs;
 
+    std::string SimplifiedConstraint;
     // If this output register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
     if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
@@ -3975,13 +3976,13 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         memcpy(NewConstraint+2, reg_names[RegNum], RegNameLen);
         NewConstraint[RegNameLen+2] = '}';
         NewConstraint[RegNameLen+3] = 0;
-        Constraint = NewConstraint;
+        SimplifiedConstraint = NewConstraint;
       }
+    } else {
+      // If we can simplify the constraint into something else, do so now.  This
+      // avoids LLVM having to know about all the (redundant) GCC constraints.
+       SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
     }
-    
-    // If we can simplify the constraint into something else, do so now.  This
-    // avoids LLVM having to know about all the (redundant) GCC constraints.
-    std::string SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
     
     LValue Dest = EmitLV(Operand);
     const Type *DestValTy =

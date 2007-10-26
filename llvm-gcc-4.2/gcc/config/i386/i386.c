@@ -20543,7 +20543,11 @@ iasm_is_offset (tree v)
     }
   if (TREE_CODE (v) == VAR_DECL
       && TREE_STATIC (v)
-      && MEM_P (DECL_RTL (v)))
+/* APPLE LOCAL begin LLVM */
+/* DECL_RTL is not set for LLVM */
+/*    && MEM_P (DECL_RTL (v))*/
+     )
+/* APPLE LOCAL end LLVM */
     {
       note_alternative_entry_points ();
       return true;

@@ -2541,7 +2541,25 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
       EmitAggregateCopy(DestLoc, LV.Ptr, TREE_TYPE(exp), isVolatile, false,
                         Alignment);
     } else if (!isVolatile && TREE_CODE(TREE_OPERAND(exp, 0))!=RESULT_DECL) {
-      Emit(TREE_OPERAND(exp, 1), LV.Ptr);
+      // At this point, Alignment is the alignment of the destination
+      // pointer. It may not match the alignment of the source pointer. So, we
+      // need to make sure that it's has at least its alignment.
+      tree new_exp = copy_node(TREE_OPERAND(exp, 1));
+      unsigned NewAlignment = expr_align(new_exp) / 8;
+      Alignment = (Alignment < NewAlignment) ? Alignment : NewAlignment;
+      TYPE_ALIGN(TREE_TYPE(new_exp)) = Alignment;
+ 
+      switch (TREE_CODE(new_exp)) {
+      case VAR_DECL:
+      case PARM_DECL:
+      case RESULT_DECL:
+ 	DECL_ALIGN (new_exp) = Alignment * 8;
+ 	break;
+      default:
+ 	break;
+      }
+ 
+      Emit(new_exp, LV.Ptr);
     } else {
       // Need to do a volatile store into TREE_OPERAND(exp, 1).  To do this, we
       // emit it into a temporary memory location, then do a volatile copy into

@@ -7669,10 +7669,10 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
       if (TREE_CODE (arg) == VAR_DECL
 	  && TREE_STATIC (arg)
 /* APPLE LOCAL begin LLVM */
-/* DECL_RTL does not get set for LLVM 
+/* DECL_RTL does not get set for LLVM */
 /*	  && MEM_P (DECL_RTL (arg))*/
-/* APPLE LOCAL end LLVM */
          )
+/* APPLE LOCAL end LLVM */
 	{
 	  /* See assemble_name for details.  */
 	  const char *name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (arg));

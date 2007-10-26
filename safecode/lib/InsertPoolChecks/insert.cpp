@@ -3542,65 +3542,61 @@ void InsertPoolChecks::addLSChecks(Value *Vnew, const Value *V, Instruction *I, 
   }
 }
 
+void InsertPoolChecks::addLoadStoreChecks(Function & Func){
+  Function *F = &Func;
+  //here we check that we only do this on original functions
+  //and not the cloned functions, the cloned functions may not have the
+  //DSG
+  bool isClonedFunc = false;
+  if (paPass->getFuncInfo(*F))
+    isClonedFunc = false;
+  else
+    isClonedFunc = true;
+  Function *Forig = F;
+  PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
+  if (isClonedFunc) {
+    Forig = paPass->getOrigFunctionFromClone(F);
+  }
+  //we got the original function
 
-void InsertPoolChecks::addLoadStoreChecks(Module &M){
-  Module::iterator mI = M.begin(), mE = M.end();
-  for ( ; mI != mE; ++mI) {
-    Function *F = mI;
-    //here we check that we only do this on original functions
-    //and not the cloned functions, the cloned functions may not have the
-    //DSG
-    bool isClonedFunc = false;
-    if (paPass->getFuncInfo(*F))
-      isClonedFunc = false;
-    else
-      isClonedFunc = true;
-    Function *Forig = F;
-    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-    if (isClonedFunc) {
-      Forig = paPass->getOrigFunctionFromClone(F);
-    }
-    //we got the original function
-
-    for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-      if (LoadInst *LI = dyn_cast<LoadInst>(&*I)) {
-	//we need to get the LI from the original function
-	Value *P = LI->getPointerOperand();
-	if (isClonedFunc) {
-	  assert(FI->NewToOldValueMap.count(LI) && " not in the value map \n");
-	  const LoadInst *temp = dyn_cast<LoadInst>(FI->NewToOldValueMap[LI]);
-	  assert(temp && " Instruction  not there in the NewToOldValue map");
-	  const Value *Ptr = temp->getPointerOperand();
-	  addLSChecks(P, Ptr, LI, Forig);
-	} else {
-	  addLSChecks(P, P, LI, Forig);
-	}
-      } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
-	Value *P = SI->getPointerOperand();
-	if (isClonedFunc) {
-	  assert(FI->NewToOldValueMap.count(SI) && " not in the value map \n");
-	  const StoreInst *temp = dyn_cast<StoreInst>(FI->NewToOldValueMap[SI]);
-	  assert(temp && " Instruction  not there in the NewToOldValue map");
-	  const Value *Ptr = temp->getPointerOperand();
-	  addLSChecks(P, Ptr, SI, Forig);
-	} else {
-	  addLSChecks(P, P, SI, Forig);
-	}
-      } else if (CallInst *CI = dyn_cast<CallInst>(&*I)) {
-	Value *FunctionOp = CI->getOperand(0);
-	if (!isa<Function>(FunctionOp)) {
-	  if (isClonedFunc) {
-	    assert(FI->NewToOldValueMap.count(CI) && " not in the value map \n");
-	    const CallInst *temp = dyn_cast<CallInst>(FI->NewToOldValueMap[CI]);
-	    assert(temp && " Instruction  not there in the NewToOldValue map");
-	    const Value* FunctionOp1 = temp->getOperand(0);
-	    addLSChecks(FunctionOp, FunctionOp1, CI, Forig);
-	  } else {
-	    addLSChecks(FunctionOp, FunctionOp, CI, Forig);
-	  }
-	}
-      } 
-    }
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(&*I)) {
+//we need to get the LI from the original function
+Value *P = LI->getPointerOperand();
+if (isClonedFunc) {
+  assert(FI->NewToOldValueMap.count(LI) && " not in the value map \n");
+  const LoadInst *temp = dyn_cast<LoadInst>(FI->NewToOldValueMap[LI]);
+  assert(temp && " Instruction  not there in the NewToOldValue map");
+  const Value *Ptr = temp->getPointerOperand();
+  addLSChecks(P, Ptr, LI, Forig);
+} else {
+  addLSChecks(P, P, LI, Forig);
+}
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(&*I)) {
+Value *P = SI->getPointerOperand();
+if (isClonedFunc) {
+  assert(FI->NewToOldValueMap.count(SI) && " not in the value map \n");
+  const StoreInst *temp = dyn_cast<StoreInst>(FI->NewToOldValueMap[SI]);
+  assert(temp && " Instruction  not there in the NewToOldValue map");
+  const Value *Ptr = temp->getPointerOperand();
+  addLSChecks(P, Ptr, SI, Forig);
+} else {
+  addLSChecks(P, P, SI, Forig);
+}
+    } else if (CallInst *CI = dyn_cast<CallInst>(&*I)) {
+Value *FunctionOp = CI->getOperand(0);
+if (!isa<Function>(FunctionOp)) {
+  if (isClonedFunc) {
+    assert(FI->NewToOldValueMap.count(CI) && " not in the value map \n");
+    const CallInst *temp = dyn_cast<CallInst>(FI->NewToOldValueMap[CI]);
+    assert(temp && " Instruction  not there in the NewToOldValue map");
+    const Value* FunctionOp1 = temp->getOperand(0);
+    addLSChecks(FunctionOp, FunctionOp1, CI, Forig);
+  } else {
+    addLSChecks(FunctionOp, FunctionOp, CI, Forig);
+  }
+}
+    } 
   }
 }
 
@@ -3657,6 +3653,51 @@ Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo
     CollapsedPoolPtrs = efPass->CollapsedPoolPtrs;
   
   if (I != FI.PoolDescriptors.end()) {
+    // Check that the node pointed to by V in the TD DS graph is not
+    // collapsed
+    
+    if (!collapsed && CollapsedPoolPtrs.count(F)) {
+      Value *v = I->second;
+      if (CollapsedPoolPtrs[F].find(I->second) != CollapsedPoolPtrs[F].end()) {
+#ifdef DEBUG
+        std::cerr << "Collapsed pools \n";
+#endif
+        return Constant::getNullValue(PoolDescPtrTy);
+      } else {
+        return v;
+      }
+    } else {
+      return I->second;
+    } 
+  }
+  return 0;
+}
+
+Value *
+InsertPoolChecks::getPoolHandle(const Value *V, Function *F, bool collapsed) {
+  const DSNode *Node = getDSNode(V,F);
+  PA::FuncInfo * FI = paPass->getFuncInfoOrClone(*F);
+
+  // Get the pool handle for this DSNode...
+  //  assert(!Node->isUnknownNode() && "Unknown node \n");
+  Type *VoidPtrType = PointerType::get(Type::SByteTy); 
+  Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
+  Type *PoolDescPtrTy = PointerType::get(PoolDescType);
+  if (!Node) {
+    return 0; //0 means there is no isse with the value, otherwise there will be a callnode
+  }
+  if (Node->isUnknownNode()) {
+    //FIXME this should be in a top down pass or propagated like collapsed pools below 
+    if (!collapsed) {
+      assert(!getDSNodeOffset(V, F) && " we don't handle middle of structs yet\n");
+      return Constant::getNullValue(PoolDescPtrTy);
+    }
+  }
+  std::map<const DSNode*, Value*>::iterator I = FI->PoolDescriptors.find(Node);
+  map <Function *, set<Value *> > &
+    CollapsedPoolPtrs = efPass->CollapsedPoolPtrs;
+  
+  if (I != FI->PoolDescriptors.end()) {
     // Check that the node pointed to by V in the TD DS graph is not
     // collapsed
     

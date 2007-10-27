@@ -19711,8 +19711,12 @@ iasm_is_offset (tree v)
       v = TREE_OPERAND (v, 0);
       if (TREE_CODE (v) == VAR_DECL
 	  && TREE_STATIC (v)
-	  && MEM_P (DECL_RTL (v)))
-    return true;
+/* APPLE LOCAL begin LLVM */
+/* DECL_RTL is not set for LLVM */
+/*        && MEM_P (DECL_RTL (v))*/
+         )
+/* APPLE LOCAL end LLVM */
+        return true;
       if (TREE_CODE (v) == LABEL_DECL)
 	return true;
       return false;

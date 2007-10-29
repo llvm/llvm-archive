@@ -5871,7 +5871,13 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
     // The lvalue is just the address.
     return Convert(TREE_OPERAND(exp, 0));
   case COMPOUND_LITERAL_EXPR: // FIXME: not gimple - defined by C front-end
-    return EmitLV(COMPOUND_LITERAL_EXPR_DECL(exp));
+    /* This used to read 
+       return EmitLV(COMPOUND_LITERAL_EXPR_DECL(exp));
+       but gcc warns about that and there doesn't seem to be any way to stop it 
+       with casts or the like.  The following is equivalent with no checking
+       (since we know TREE_CODE(exp) is COMPOUND_LITERAL_EXPR the checking 
+       doesn't accomplish anything anyway). */
+    return EmitLV(DECL_EXPR_DECL (TREE_OPERAND (exp, 0)));
   }
 }
 

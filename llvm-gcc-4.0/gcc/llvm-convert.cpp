@@ -3977,11 +3977,13 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         NewConstraint[RegNameLen+2] = '}';
         NewConstraint[RegNameLen+3] = 0;
         SimplifiedConstraint = NewConstraint;
+      } else {
+        // If we can simplify the constraint into something else, do so now.  This
+        // avoids LLVM having to know about all the (redundant) GCC constraints.
+        SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
       }
     } else {
-      // If we can simplify the constraint into something else, do so now.  This
-      // avoids LLVM having to know about all the (redundant) GCC constraints.
-       SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
+      SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
     }
     
     LValue Dest = EmitLV(Operand);

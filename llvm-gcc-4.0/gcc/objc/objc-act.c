@@ -6875,10 +6875,39 @@ objc_strip_off_indirection (tree expr)
 }
 /* APPLE LOCAL end radar 4591756 */
 
+/* LLVM LOCAL begin LLVM */
+/* llvm-gcc intentionally preserver array notation &array[i] and avoid
+   pointer arithmetic. 
+   Example 1: struct { int *a; } b;    b->a[2] = 42;
+   Example 2: struct { int a[42]; } b;  b->a[2] = 42.
+   In both of this cases, expr is preserved as ARRAY_REF. Normally, gcc
+   would decomponse first example into a pointer arithmetic expression.
+   So in llvm mode, check expression's field type to ensure that this is really a
+   array reference or not. */
+static int objc_is_really_array_ref(tree expr) {
+  tree component = NULL_TREE;
+  tree field = NULL_TREE;
+
+  if (TREE_CODE(expr) != ARRAY_REF)
+    return 0;
+
+  component = TREE_OPERAND(expr, 0);
+  if (!component || TREE_CODE(component) != COMPONENT_REF)
+    return 0;
+
+  field = TREE_OPERAND(component, 1);
+  if (!field || TREE_CODE(TREE_TYPE(field)) != ARRAY_TYPE)
+    return 0;
+
+  return 1;
+}
+/* LLVM LOCAL end LLVM */
+
 static int
 objc_is_ivar_reference_p (tree expr)
 {
-  return (TREE_CODE (expr) == ARRAY_REF
+  /* LLVM LOCAL pointer arithmetic */
+  return (objc_is_really_array_ref(expr) == 1 
 	  ? objc_is_ivar_reference_p (TREE_OPERAND (expr, 0))
 	  : TREE_CODE (expr) == COMPONENT_REF
 	  ? TREE_CODE (TREE_OPERAND (expr, 1)) == FIELD_DECL

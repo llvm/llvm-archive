@@ -6876,7 +6876,7 @@ objc_strip_off_indirection (tree expr)
 /* APPLE LOCAL end radar 4591756 */
 
 /* LLVM LOCAL begin LLVM */
-/* llvm-gcc intentionally preserver array notation &array[i] and avoid
+/* llvm-gcc intentionally preserve array notation &array[i] and avoid
    pointer arithmetic. 
    Example 1: struct { int *a; } b;    b->a[2] = 42;
    Example 2: struct { int a[42]; } b;  b->a[2] = 42.

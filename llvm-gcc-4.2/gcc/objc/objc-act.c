@@ -10976,8 +10976,12 @@ build_v2_descriptor_table_initializer (tree type, tree entries)
                                       meth_var_types),
                      eltlist);
 
-      eltlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), eltlist);
-
+      /* LLVM LOCAL begin */
+      eltlist = tree_cons (NULL_TREE, 
+                           convert (objc_method_list_ptr,
+                                    build_int_cst (NULL_TREE, 0)), 
+                           eltlist);
+      /* LLVM LOCAL end */
       initlist
         = tree_cons (NULL_TREE,
                      objc_build_constructor (type, nreverse (eltlist)),

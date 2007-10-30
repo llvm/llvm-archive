@@ -113,8 +113,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PSLLQI: {
     Function *psllq =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_q);
-    Ops[0] = Builder.CreateBitCast(Ops[0], MVT::getTypeForValueType(MVT::v2i32),
-                                   "tmp");
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
     Result = Builder.CreateCall(psllq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -166,8 +164,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PSRLQI: {
     Function *psrlq =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_q);
-    Ops[0] = Builder.CreateBitCast(Ops[0], MVT::getTypeForValueType(MVT::v2i32),
-                                   "tmp");
     Ops[1] = BuildVector(Ops[1], UndefValue::get(Type::Int32Ty), NULL);
     Result = Builder.CreateCall(psrlq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");

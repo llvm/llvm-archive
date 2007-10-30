@@ -2550,8 +2550,8 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
       TREE_CONSTANT (folded) = TREE_CONSTANT (ptrop) & TREE_CONSTANT (intop);
     
     /* If the original was void* + int, we converted it to char* + int.  Convert
-       back to the appropriate void* result.  */
-    if (!size_set)
+       back to the appropriate void* result and match type qualifiers. */
+    if (!size_set || TYPE_QUALS(result_type) != TYPE_QUALS(TREE_TYPE(folded)))
       folded = convert(result_type, folded);
     return folded;
   }

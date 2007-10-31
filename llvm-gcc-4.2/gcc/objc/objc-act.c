@@ -3876,6 +3876,7 @@ start_var_decl (tree type, const char *name)
     set_user_assembler_name (var, IDENTIFIER_POINTER (DECL_NAME (var)));
     /* Let optimizer know that this var is not removable.  */
     DECL_PRESERVE_P (var) = 1;
+    TREE_USED(var) = 1;
   } 
   else
     /* Fall through. Build using 'name' */

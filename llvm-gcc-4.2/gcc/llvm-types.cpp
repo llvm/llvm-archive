@@ -1173,7 +1173,7 @@ struct StructTypeConversionInfo {
   /// getTypeSize - Return the size of the specified type in bytes.
   ///
   unsigned getTypeSize(const Type *Ty) const {
-    return TD.getTypeSize(Ty);
+    return Packed ? TD.getTypeStoreSize(Ty) : TD.getABITypeSize(Ty);
   }
   
   /// getLLVMType - Return the LLVM type for the specified object.
@@ -1859,7 +1859,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     bool isPacked = false;
-    unsigned Size     = TD.getTypeSize(TheTy);
+    unsigned Size  = TD.getABITypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
     if (const StructType *STy = dyn_cast<StructType>(TheTy)) 
       if (STy->isPacked())
@@ -1892,7 +1892,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   std::vector<const Type*> UnionElts;
   unsigned UnionSize = 0;
   if (UnionTy) {            // Not an empty union.
-    UnionSize = TD.getTypeSize(UnionTy);
+    UnionSize = TD.getABITypeSize(UnionTy);
     UnionElts.push_back(UnionTy);
   }
   

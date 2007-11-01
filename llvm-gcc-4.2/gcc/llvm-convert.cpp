@@ -2885,7 +2885,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
     // We can't get the type size (and thus convert to using a GEP instr) from
     // pointers to opaque structs if the type isn't abstract.
     if (ElTy->isSized()) {
-      int64_t EltSize = TD.getTypeSize(ElTy);
+      int64_t EltSize = TD.getABITypeSize(ElTy);
       
       // If EltSize exactly divides Offset, then we know that we can turn this
       // into a getelementptr instruction.
@@ -5712,7 +5712,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
 static Constant *ConvertStructFieldInitializerToType(Constant *Val, 
                                                      const Type *FieldTy) {
   const TargetData &TD = getTargetData();
-  assert(TD.getTypeSize(FieldTy) == TD.getTypeSize(Val->getType()) &&
+  assert(TD.getABITypeSize(FieldTy) == TD.getABITypeSize(Val->getType()) &&
          "Mismatched initializer type isn't same size as initializer!");
 
   // If this is an integer initializer for an array of ubytes, we are
@@ -5834,7 +5834,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
   tree UnionType = TREE_TYPE(exp);
   if (TYPE_SIZE(UnionType) && TREE_CODE(TYPE_SIZE(UnionType)) == INTEGER_CST) {
     unsigned UnionSize = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(UnionType))+7)/8;
-    unsigned InitSize = getTargetData().getTypeSize(Elts[0]->getType());
+    unsigned InitSize = getTargetData().getABITypeSize(Elts[0]->getType());
     if (UnionSize != InitSize) {
       const Type *FillTy;
       assert(UnionSize > InitSize && "Init shouldn't be larger than union!");

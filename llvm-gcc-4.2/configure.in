@@ -371,6 +371,8 @@ case "${target}" in
   powerpc-*-darwin* | i[[3456789]]86-*-darwin*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda target-libstdc++-v3"
+    # LLVM LOCAL
+    noconfigdirs="$noconfigdirs target-libobjc"
     ;;
   *-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"

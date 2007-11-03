@@ -936,7 +936,7 @@ endif
 # LLVM LOCAL begin
 # Disable C-only warning flags if they are present.
 ALL_CXXFLAGS = $(filter-out -Wstrict-prototypes -Wmissing-prototypes \
-                            -Wold-style-definition, $(ALL_CFLAGS)) -Wno-unused
+                            -Wold-style-definition -Wno-overlength-strings, $(ALL_CFLAGS)) -Wno-unused
 ALL_CXXFLAGS += -DTARGET_NAME=\"$(target_noncanonical)\"
 
 # Turn off LLVM assertions in a non-checking build.
@@ -1174,8 +1174,6 @@ OBJS-common := $(filter-out sched-deps.o sched-ebb.o sched-rgn.o sched-vis.o \
                             ddg.o haifa-sched.o modulo-sched.o, $(OBJS-common))
 
 # Remove other random RTL optimizations. 
-#OBJS-common := $(filter-out bt-load.o caller-save.o combine.o cse.o ifcvt.o \
-#                            simplify-rtx.o, $(OBJS-common))
 OBJS-common := $(filter-out bt-load.o caller-save.o combine.o ifcvt.o \
                             simplify-rtx.o, $(OBJS-common))
 

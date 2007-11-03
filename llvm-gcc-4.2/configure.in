@@ -2424,6 +2424,8 @@ case $build in
     ;;
 esac
 
+# LLVM LOCAL begin - LLVM uses inlined functions
+if false ; then
 # This is aimed to mimic bootstrap with a non-GCC compiler to catch problems.
 if test "$GCC" = yes; then
   saved_CFLAGS="$CFLAGS"
@@ -2443,6 +2445,8 @@ if test "$GCC" = yes; then
 
   CFLAGS="$saved_CFLAGS"
 fi
+fi
+# LLVM LOCAL end - LLVM uses inlined functions.
 
 AC_SUBST(stage1_cflags)
 

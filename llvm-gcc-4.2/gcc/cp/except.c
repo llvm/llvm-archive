@@ -58,6 +58,7 @@ static tree cp_protect_cleanup_actions (void);
 
 /* LLVM local begin */
 /* Do nothing (return NULL_TREE).  */
+static tree return_null_tree (void);
 
 tree
 return_null_tree (void)

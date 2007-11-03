@@ -1174,7 +1174,9 @@ OBJS-common := $(filter-out sched-deps.o sched-ebb.o sched-rgn.o sched-vis.o \
                             ddg.o haifa-sched.o modulo-sched.o, $(OBJS-common))
 
 # Remove other random RTL optimizations. 
-OBJS-common := $(filter-out bt-load.o caller-save.o combine.o cse.o ifcvt.o \
+#OBJS-common := $(filter-out bt-load.o caller-save.o combine.o cse.o ifcvt.o \
+#                            simplify-rtx.o, $(OBJS-common))
+OBJS-common := $(filter-out bt-load.o caller-save.o combine.o ifcvt.o \
                             simplify-rtx.o, $(OBJS-common))
 
 # LLVM LOCAL begin - Remove gcse.o

@@ -682,11 +682,15 @@ static int rs6000_variable_issue (FILE *, int, rtx, int);
 /* LLVM LOCAL - Disable scheduler. */
 #endif
 static bool rs6000_rtx_costs (rtx, int, int, int *);
+/* LLVM LOCAL begin - Not defined */
+#ifndef ENABLE_LLVM
 static int rs6000_adjust_cost (rtx, rtx, rtx, int);
 static bool is_microcoded_insn (rtx);
 static int is_dispatch_slot_restricted (rtx);
 static bool is_cracked_insn (rtx);
 static bool is_branch_slot_insn (rtx);
+#endif
+/* LLVM LOCAL end - Not defined */
 /* LLVM LOCAL - Disable scheduler. */
 #ifndef ENABLE_LLVM
 static int rs6000_adjust_priority (rtx, int);

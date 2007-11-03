@@ -6080,7 +6080,7 @@ handle_gcroot_attribute (tree *node, tree name, tree ARG_UNUSED(args),
   if (!TYPE_P (*node)
       || !POINTER_TYPE_P (*node))
     {
-      warning ("%qs attribute ignored", IDENTIFIER_POINTER (name));
+      warning (0, "%qs attribute ignored", IDENTIFIER_POINTER (name));
       *no_add_attrs = true;
     }
   

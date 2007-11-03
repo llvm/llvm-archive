@@ -353,7 +353,8 @@ strict1_warn=
 if test $ac_cv_prog_cc_w_no_long_long = yes \
    && test $ac_cv_prog_cc_w_no_variadic_macros = yes \
    && test $ac_cv_prog_cc_w_no_overlength_strings = yes ; then
-  strict1_warn="-pedantic -Wno-long-long -Wno-variadic-macros"
+   && test $ac_cv_prog_cc_w_no_overlength_strings = yes ; then
+  strict1_warn="-pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings"
 fi
 
 # Add -Wold-style-definition if it's accepted

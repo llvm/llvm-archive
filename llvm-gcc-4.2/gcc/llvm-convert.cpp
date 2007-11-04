@@ -2568,7 +2568,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, Value *DestLoc) {
   Value *OldVal = LI;
   
   // If the target is big-endian, invert the bit in the word.
-  unsigned ValSizeInBits = TD.getTypeSize(OldVal->getType())*8;
+  unsigned ValSizeInBits = TD.getTypeSizeInBits(OldVal->getType());
   if (BITS_BIG_ENDIAN)
     LV.BitStart = ValSizeInBits-LV.BitStart-LV.BitSize;
 
@@ -5026,7 +5026,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   unsigned BitSize = (unsigned)TREE_INT_CST_LOW(TREE_OPERAND(exp, 1));
   const Type *ValTy = ConvertType(TREE_TYPE(exp));
   
-  unsigned ValueSizeInBits = 8*TD.getTypeSize(ValTy);
+  unsigned ValueSizeInBits = TD.getTypeSizeInBits(ValTy);
   assert(BitSize <= ValueSizeInBits &&
          "ValTy isn't large enough to hold the value loaded!");
 
@@ -5660,7 +5660,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
     // function to insert (the STy element may be an array of bytes or
     // something).
     const Type *STyFieldTy = STy->getElementType(FieldNo);
-    unsigned STyFieldBitSize = getTargetData().getTypeSize(STyFieldTy)*8;
+    unsigned STyFieldBitSize = getTargetData().getTypeSizeInBits(STyFieldTy);
     
     // If the bitfield starts after this field, advance to the next field.  This
     // can happen because we start looking at the first element overlapped by

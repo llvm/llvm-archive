@@ -16535,7 +16535,12 @@ rs6000_emit_prologue (void)
 	     If we're saving AltiVec regs via a function, we're not last.  */
 	  && (info->first_altivec_reg_save > LAST_ALTIVEC_REGNO 
 	      || VECTOR_SAVE_INLINE (info->first_altivec_reg_save)))
-	gen_following_label = lr_already_set_up_for_pic = 1;
+	gen_following_label =
+#if TARGET_MACHO
+                              lr_already_set_up_for_pic =
+#endif
+                              1;
+
       /* APPLE LOCAL end reduce code size */
 
       /* APPLE LOCAL begin +2 (could be conditionalized) */

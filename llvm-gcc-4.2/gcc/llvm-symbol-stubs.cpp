@@ -49,6 +49,7 @@ SYMBOL(simplify_rtx)
 SYMBOL(simplify_gen_relational)
 SYMBOL(simplify_gen_ternary)
 SYMBOL(avoid_constant_pool_reference)
+SYMBOL(simplify_const_unary_operation)
 
 // insn-attr-tab.o (i386)
 SYMBOL(get_attr_fp_int_src)
@@ -58,4 +59,4 @@ SYMBOL(get_attr_mode)
 SYMBOL(get_attr_prefix_0f)
 SYMBOL(get_attr_type)
 SYMBOL(get_attr_unit)
-
+SYMBOL(get_attr_i387_cw)

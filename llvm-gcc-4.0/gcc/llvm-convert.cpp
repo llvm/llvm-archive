@@ -4029,7 +4029,13 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
 
       Value *Op = 0;
       if (LLVMTy->isFirstClassType()) {
-        Op = Emit(Val, 0);
+        if (TREE_CODE(Val)==ADDR_EXPR &&
+            TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
+          // Emit the label, but do not assume it is going to be the target
+          // of an indirect branch.
+          Op = getLabelDeclBlock(TREE_OPERAND(Val, 0));
+        } else
+          Op = Emit(Val, 0);
       } else {
         LValue LV = EmitLV(Val);
         assert(!LV.isBitfield() && "Inline asm can't have bitfield operand");

@@ -8211,12 +8211,18 @@ iasm_reg_name (tree id)
 tree
 iasm_label (tree labid, bool atsign)
 {
-  tree sexpr;
-  tree inputs = NULL_TREE, outputs = NULL_TREE, clobbers = NULL_TREE;
-  tree stmt;
-  tree label, l;
-  tree str, one;
-
+/* LLVM LOCAL begin */
+/* Unused variables resulting from code change below. */
+#if 1
+  tree stmt, label;
+#else
+   tree sexpr;
+   tree inputs = NULL_TREE, outputs = NULL_TREE, clobbers = NULL_TREE;
+   tree stmt;
+   tree label, l;
+   tree str, one;
+#endif
+/* LLVM LOCAL end */
   STRIP_NOPS (labid);
 
   if (iasm_buffer == NULL)
@@ -8236,7 +8242,9 @@ iasm_label (tree labid, bool atsign)
 
   iasm_buffer[0] = '\0';
   label = iasm_get_label (labid);
-#if 0
+/* LLVM LOCAL begin */
+#if 1
+/* LLVM LOCAL end */
   /* Ideally I'd like to do this, but, it moves the label in:
 
 	nop

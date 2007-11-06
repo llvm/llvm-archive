@@ -13048,13 +13048,8 @@ objc_finish_message_expr (tree receiver, tree sel_name, tree method_params)
 	      && TREE_TYPE (receiver) == objc_class_type))
 	check_for_nil = false;
 
-      if (!targetm.calls.struct_value_rtx (0, 0)
-          && (TREE_CODE (ret_type) == RECORD_TYPE 
-       	      || TREE_CODE (ret_type) == UNION_TYPE)
-          /* APPLE LOCAL begin radar 5080710 */
-          && (TREE_ADDRESSABLE (ret_type)
-              || targetm.calls.return_in_memory (ret_type, 0)))
-          /* APPLE LOCAL end radar 5080710 */
+      /* LLVM LOCAL pr 1654 */
+      if (aggregate_value_p (ret_type, 0))
 	{
 	  if (super)
 	    message_func_decl = umsg_id_super2_stret_fixup_decl;
@@ -13188,13 +13183,8 @@ build_objc_method_call (int super_flag, tree method_prototype,
 	 argument, then change which messenger entry point this
 	 expr will call.  NB: Note that sender_cast remains
 	 unchanged (it already has a struct return type).  */
-      if (!targetm.calls.struct_value_rtx (0, 0)
-	  && (TREE_CODE (ret_type) == RECORD_TYPE
-	      || TREE_CODE (ret_type) == UNION_TYPE)
-          /* APPLE LOCAL begin radar 5080710 */
-          && (TREE_ADDRESSABLE (ret_type)
-              || targetm.calls.return_in_memory (ret_type, 0)))
-          /* APPLE LOCAL end radar 5080710 */
+      /* LLVM LOCAL pr 1654 */
+      if (aggregate_value_p (ret_type, 0))
 	sender = (super_flag ? umsg_super_stret_decl :
 		flag_nil_receivers ? umsg_stret_decl : umsg_nonnil_stret_decl);
       /* APPLE LOCAL begin radar 4280641 */

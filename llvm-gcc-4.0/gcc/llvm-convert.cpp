@@ -1297,7 +1297,7 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToType(Instruction::BitCast, SrcPtr, SBP),
     CastToSIntType(Size, IntPtr),
-    ConstantInt::get(Type::Int32Ty, 1)
+    ConstantInt::get(Type::Int32Ty, 1) // FIXME: Hardcoding 1 here is a hack.
   };
 
   Intrinsic::ID IID = 
@@ -1329,7 +1329,7 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToSIntType(SrcVal, Type::Int8Ty),
     CastToSIntType(Size, IntPtr),
-    ConstantInt::get(Type::Int32Ty, 1)
+    ConstantInt::get(Type::Int32Ty, 1) // FIXME: Hardcoding 1 here is a hack.
   };
 
   Intrinsic::ID IID = 

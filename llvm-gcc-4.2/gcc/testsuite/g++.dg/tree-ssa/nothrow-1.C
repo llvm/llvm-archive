@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-cfg" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-skip-if "" { "*-*-*" } { "-fpic" "-fPIC" } { "" } } */
 double a;
 void t()

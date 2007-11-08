@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-forwprop2" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 class YY { public:
   YY(const YY &v) { e[0] = v.e[0]; e[1] = v.e[1]; e[2] = v.e[2]; }

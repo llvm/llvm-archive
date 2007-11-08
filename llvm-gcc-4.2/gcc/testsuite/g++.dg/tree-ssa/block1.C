@@ -1,6 +1,8 @@
 // PR 13764: We were inserting an extra body block in all functions, but
 // it's only really necessary for [cd]tors.
 // { dg-options "-fdump-tree-gimple" }
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void bar (void)
 {

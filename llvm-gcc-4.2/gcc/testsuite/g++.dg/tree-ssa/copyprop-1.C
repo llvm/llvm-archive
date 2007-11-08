@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O -fdump-tree-dce2" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Verify that we can eliminate the useless conversions to/from
    const qualified pointer types

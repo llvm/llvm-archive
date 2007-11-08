@@ -77,6 +77,19 @@ proc dg-require-profiling { args } {
     }
 }
 
+# LLVM LOCAL begin
+# Skip tests that use the -fdump options; llvm doesn't have these
+# and never will.
+
+proc dg-require-fdump { args } {
+    if { [ is_llvm ] } {
+	upvar dg-do-what dg-do-what
+	set dg-do-what [list [lindex ${dg-do-what} 0] "N" "P"]
+    }
+}    
+
+# LLVM LOCAL end
+
 # If this target does not support DLL attributes skip this test.
 
 proc dg-require-dll { args } {

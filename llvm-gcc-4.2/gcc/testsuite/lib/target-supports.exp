@@ -307,6 +307,13 @@ proc check_profiling_available { test_what } {
 
     verbose "Profiling argument is <$test_what>" 1
 
+# LLVM LOCAL begin
+    # We don't yet support profiling.
+    if { [ is_llvm ] } {
+      return 0
+    }
+# LLVM LOCAL end
+
     # These conditions depend on the argument so examine them before
     # looking at the cache variable.
 
@@ -1968,3 +1975,10 @@ proc check_effective_target_simulator { } {
 
     return 0
 }
+
+# LLVM LOCAL begin
+# This is used to disable various tests for llvm.
+proc is_llvm { } {
+  return 1
+}
+# LLVM LOCAL end

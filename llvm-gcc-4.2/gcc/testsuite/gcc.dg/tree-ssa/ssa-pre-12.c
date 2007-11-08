@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-pre-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 double cos (double) __attribute__ ((const));
 double sin (double) __attribute__ ((const));
 double f(double a)

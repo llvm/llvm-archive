@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-vrp1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 
 extern void abort (void) __attribute__ ((__noreturn__));

@@ -6,6 +6,8 @@
 
 /* { dg-do compile { target i?86-*-* x86_64-*-* powerpc*-*-*} } */
 /* { dg-options "-O3 -fdump-tree-final_cleanup" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 # define N      2000000
 static double   a[N],c[N];

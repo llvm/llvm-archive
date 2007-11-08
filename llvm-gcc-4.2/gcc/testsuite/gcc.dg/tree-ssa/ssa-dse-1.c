@@ -1,6 +1,8 @@
 /* { dg-do compile } */
 /* APPLE LOCAL 4875151 needs strict aliasing */
 /* { dg-options "-O2 -fdump-tree-dse1 -fstrict-aliasing" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int
 foo (int a, int b, int c)

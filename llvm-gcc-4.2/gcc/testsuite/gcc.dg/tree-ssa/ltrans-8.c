@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -ftree-loop-linear -fdump-tree-ltrans-all" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 double foo(double *a)
 {
        int i,j;

@@ -1,5 +1,7 @@
 /* { dg-options "-O1 -funsafe-math-optimizations -ftrapping-math -fdump-tree-recip -fdump-tree-optimized" } */
 /* { dg-do compile } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Test the reciprocal optimizations together with trapping math.  */
 

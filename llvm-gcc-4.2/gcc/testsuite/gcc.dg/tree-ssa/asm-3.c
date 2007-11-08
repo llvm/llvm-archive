@@ -1,6 +1,8 @@
 /* PR 17739 */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #ifdef __hppa__
 #define REGISTER "1"

@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -funswitch-loops -fdump-tree-unswitch-details -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int ch;
 int a[100];

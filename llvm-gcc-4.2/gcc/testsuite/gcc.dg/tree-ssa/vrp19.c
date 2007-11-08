@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fwrapv -O1 -ftree-vrp -fdump-tree-vrp1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <limits.h>
 extern void abort ();

@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-pre-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 unsigned foo1 (unsigned a, unsigned b)
 {
   unsigned i, j, k;

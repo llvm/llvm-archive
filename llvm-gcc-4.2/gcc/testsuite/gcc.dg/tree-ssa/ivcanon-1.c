@@ -1,6 +1,8 @@
 /* APPLE LOCAL file lno */
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -ftree-loop-optimize -funroll-loops -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void foo(void)
 {

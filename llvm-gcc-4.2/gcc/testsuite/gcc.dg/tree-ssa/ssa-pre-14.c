@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 extern __SIZE_TYPE__ strlen (const char *) __attribute__ ((__pure__));
 
 void

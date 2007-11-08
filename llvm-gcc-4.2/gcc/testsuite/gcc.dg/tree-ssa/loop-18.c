@@ -3,6 +3,8 @@
    i is first extended to 64-bit type).  */
 
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-do compile { target x86_64-*-* } } */
 
 unsigned bar(void);

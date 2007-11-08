@@ -1,5 +1,7 @@
 /* { dg-do run } */
 /* { dg-options "-O1 -foptimize-sibling-calls -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 extern void abort (void);
 extern void exit (int);

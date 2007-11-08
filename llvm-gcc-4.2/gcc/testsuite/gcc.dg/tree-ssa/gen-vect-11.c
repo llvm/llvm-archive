@@ -1,5 +1,7 @@
 /* { dg-do run { target vect_cmdline_needed } } */
 /* { dg-options "-O2 -ftree-vectorize -ftree-vectorizer-verbose=3 -fwrapv -fdump-tree-vect-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <stdlib.h>
 

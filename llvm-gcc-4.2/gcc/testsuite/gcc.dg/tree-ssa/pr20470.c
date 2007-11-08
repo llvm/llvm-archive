@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* PR tree-optimization/20470:
     Missing fold to abs(x) when x == MINUS_EXPR.  */

@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-cddce -fdump-tree-forwprop1-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
   
 int abarney[2];
 int afred[1];

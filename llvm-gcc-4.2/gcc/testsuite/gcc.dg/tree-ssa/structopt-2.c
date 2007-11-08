@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-optimized -fno-tree-sra" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Even without SRA being enabled, we should be able to eliminate every structure store and load here. */
 extern void foo (const int);

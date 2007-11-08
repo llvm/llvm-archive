@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-alias1-vops" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 extern void abort (void);
 int a; 
  

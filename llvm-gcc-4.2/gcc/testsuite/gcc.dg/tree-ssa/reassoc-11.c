@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-reassoc1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int main(int a, int b, int c, int d)
 {
   /* All the xor's cancel each other out, leaving 0  */

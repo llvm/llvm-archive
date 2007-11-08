@@ -1,4 +1,6 @@
 /* { dg-options "-O2 -fargument-noalias-global -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int f;
 void link_error ();
 

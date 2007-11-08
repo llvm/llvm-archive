@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-sink-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int
 bar (int a, int b, int c)
 {

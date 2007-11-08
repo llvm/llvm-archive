@@ -1,6 +1,8 @@
 /* This test has architecture specific function passing details.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-stdarg" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <stdarg.h>
 

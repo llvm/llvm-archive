@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-pre-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 typedef int type[2];
 int main(type *a, int argc)
 {

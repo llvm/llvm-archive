@@ -4,6 +4,8 @@
    happen any more.  */
 
 /* { dg-options "-O1 -fdump-tree-mergephi" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int
 foo (int a)

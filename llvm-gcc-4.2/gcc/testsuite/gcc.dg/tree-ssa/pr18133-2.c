@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-optimized-blocks" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int c, d;
 

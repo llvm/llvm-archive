@@ -1,6 +1,8 @@
 /* { dg-do compile } */
 /* APPLE LOCAL lno */
 /* { dg-options "-O1 -fdump-tree-dom3 -ftree-loop-optimize" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
    
 
 union tree_node;

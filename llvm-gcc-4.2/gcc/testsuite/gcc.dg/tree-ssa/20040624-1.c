@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-dom1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
   
 void bar1 (void);
 void bar2 (void);

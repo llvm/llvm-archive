@@ -2,6 +2,8 @@
    a VOP of x in the asm statement.  */
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-alias1-vops" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 struct s { int a; };
 

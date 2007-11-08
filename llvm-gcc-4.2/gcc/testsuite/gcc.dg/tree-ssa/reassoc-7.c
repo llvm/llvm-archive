@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-reassoc1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int main(int a, int b, int c, int d, int e, int f, int g, int h)
 {
   /* Should be transformed into a + c + d + e + g + 15 */

@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-pre-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int p;
 int r;
 int a(void)

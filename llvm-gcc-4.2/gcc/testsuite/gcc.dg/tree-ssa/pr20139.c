@@ -4,6 +4,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-final_cleanup" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 extern double fabs (double);
 extern void link_error (void);

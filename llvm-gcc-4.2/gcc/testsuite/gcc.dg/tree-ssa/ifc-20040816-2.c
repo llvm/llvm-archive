@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-c -O2 -ftree-vectorize -fdump-tree-ifcvt-stats" { target *-*-* } } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void foo(const int * __restrict__ zr_in,
 		const int * __restrict__ zi_in,

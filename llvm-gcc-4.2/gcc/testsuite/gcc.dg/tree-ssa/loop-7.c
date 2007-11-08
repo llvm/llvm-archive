@@ -2,6 +2,8 @@
 /* { dg-do compile } */
 /* APPLE LOCAL 4875151 make sure PRE is off */
 /* { dg-options "-O1 -fno-tree-pre -fdump-tree-lim-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int cst_fun1 (int) __attribute__((__const__));
 int cst_fun2 (int) __attribute__((__const__));

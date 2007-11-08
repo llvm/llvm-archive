@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-fab" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Check that we fold strlen of equally long strings, and that we do not
    fail to terminate when there is a nontrivial cycle in the corresponding

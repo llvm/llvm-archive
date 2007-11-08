@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-dse1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 foo( int *a)
 {

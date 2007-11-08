@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-dom2" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 float foo(float x)
 {

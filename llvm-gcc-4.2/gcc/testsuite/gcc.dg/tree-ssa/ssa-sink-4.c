@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-sink-stats" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 extern int foo (int *, int *);
 extern int foo2 (int);
 int

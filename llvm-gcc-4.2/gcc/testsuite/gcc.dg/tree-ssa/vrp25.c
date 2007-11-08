@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-vrp1-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 extern void abort ();
 int tree_code_length[100];

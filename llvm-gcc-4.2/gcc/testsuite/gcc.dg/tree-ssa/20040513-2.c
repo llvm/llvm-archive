@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-dom2" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int link_error(void);
 int s(void);
 

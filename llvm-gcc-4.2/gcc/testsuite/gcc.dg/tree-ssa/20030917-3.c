@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fno-tree-dominator-opts -fdump-tree-store_ccp" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 extern int printf (const char *, ...); 
 

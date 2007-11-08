@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-dce3" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int t() __attribute__ ((const));
 q()

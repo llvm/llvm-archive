@@ -1,5 +1,7 @@
 /* { dg-do link }  */
 /* { dg-options "-O2 -fdump-tree-vrp1" }  */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 static inline void do_thing(char *s, int *p, char *q)
 {

@@ -4,6 +4,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-forwprop1-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int
 foo (int a)

@@ -1,6 +1,8 @@
 /* APPLE LOCAL 4875151 make sure PRE is off */
 /* { dg-options "-O1 -funsafe-math-optimizations -fno-trapping-math -fdump-tree-recip -fno-tree-pre" } */
 /* { dg-do compile } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Test inserting in a block that does not contain a division.  */
 

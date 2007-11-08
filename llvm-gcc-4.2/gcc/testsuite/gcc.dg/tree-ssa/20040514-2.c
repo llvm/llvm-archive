@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-phiopt1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int
 foo2 (distance, i, j)
      int distance;

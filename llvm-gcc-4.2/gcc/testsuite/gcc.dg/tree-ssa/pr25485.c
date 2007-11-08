@@ -2,6 +2,8 @@
    VRP did not fold TRUTH_AND_EXPR.  Make sure it does now.  */
 
 /* { dg-options "-O2 -fdump-tree-vrp1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int
 foo (int a, int b)

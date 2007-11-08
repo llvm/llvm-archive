@@ -1,6 +1,8 @@
 /* Verify that we don't libcall for complex * real.  */
 /* { dg-do compile } */
 /* { dg-options "-std=c99 -O -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef _Complex float C;
 

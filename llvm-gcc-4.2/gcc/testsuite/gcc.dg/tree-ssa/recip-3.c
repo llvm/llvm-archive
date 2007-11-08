@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fno-trapping-math -funsafe-math-optimizations -fdump-tree-recip" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 double F[2] = { 0.0, 0.0 }, e;
 

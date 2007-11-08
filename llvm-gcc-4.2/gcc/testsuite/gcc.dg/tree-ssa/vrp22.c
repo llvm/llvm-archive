@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -ftree-vrp -fdump-tree-vrp1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-require-effective-target int32plus } */
 
 extern void link_error ();

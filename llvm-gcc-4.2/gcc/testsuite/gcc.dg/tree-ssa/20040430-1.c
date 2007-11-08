@@ -5,6 +5,8 @@
 
 /* { dg-do run } */
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 
 extern void abort(void);

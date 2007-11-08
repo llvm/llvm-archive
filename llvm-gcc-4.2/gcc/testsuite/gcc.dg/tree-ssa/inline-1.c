@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-final_cleanup" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 
 typedef struct {

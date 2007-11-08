@@ -4,6 +4,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-store_ccp-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 struct car {
   int speed;

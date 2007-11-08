@@ -2,6 +2,8 @@
 
 /* { dg-do compile { target fpic } } */
 /* { dg-options "-O -ftree-vrp -fPIC -fdump-tree-ivopts" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef struct gfc_se { int pre; } gfc_se;
 typedef struct gfc_ss_info { int dim[7]; } gfc_ss_info;

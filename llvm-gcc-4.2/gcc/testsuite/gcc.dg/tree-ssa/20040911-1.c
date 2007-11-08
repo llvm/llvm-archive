@@ -2,6 +2,8 @@
    pointer arithmetics.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-alias1-vops" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 char buf[4], *q;
 int foo (int i)

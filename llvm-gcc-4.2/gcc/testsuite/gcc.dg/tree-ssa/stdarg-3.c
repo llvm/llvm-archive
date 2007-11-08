@@ -4,6 +4,8 @@
    or char * va_list.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-stdarg" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <stdarg.h>
 

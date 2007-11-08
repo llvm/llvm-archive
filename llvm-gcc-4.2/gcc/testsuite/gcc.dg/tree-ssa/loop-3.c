@@ -6,6 +6,8 @@
 /* APPLE LOCAL begin 4874947 mainline */
 /* { dg-skip-if "" { i?86-*-* x86_64-*-* } { "-fpic" "-fPIC" } { "" } } */
 /* { dg-options "-O1 -fno-pic -fno-PIC -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* APPLE LOCAL end 4874947 mainline */
 
 int arr_base[100];

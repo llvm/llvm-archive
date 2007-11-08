@@ -1,6 +1,8 @@
 /* PR 21171.  Ivopts should not rewrite references to volatile memory.  */
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef	unsigned int u_int32_t;
 typedef	unsigned char u_int8_t;

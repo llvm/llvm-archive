@@ -1,6 +1,8 @@
 /* APPLE LOCAL file lno */
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-phiopt1-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int t( int i)
 {

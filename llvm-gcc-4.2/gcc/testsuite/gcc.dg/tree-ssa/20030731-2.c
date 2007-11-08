@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-store_ccp" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
   
 
 bar (int i, int partial, int args_addr)

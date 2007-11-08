@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-tailc-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* Test provided by Richard Earnshaw in PR 14312.  */
 
 void bar (int i);

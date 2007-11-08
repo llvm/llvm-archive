@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-fre-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int t(int a) __attribute__ ((const));
 void q (void);
 void

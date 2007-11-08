@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-dce1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 void
 cleanup (int a, int b)
 {

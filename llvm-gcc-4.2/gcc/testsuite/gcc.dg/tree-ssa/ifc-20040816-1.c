@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-c -O2 -ftree-vectorize -fdump-tree-ifcvt-stats" { target *-*-* } } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <stdarg.h>
 #include <signal.h>

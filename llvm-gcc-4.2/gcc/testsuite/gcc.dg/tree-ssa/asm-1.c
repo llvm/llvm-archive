@@ -3,6 +3,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void f()
 {

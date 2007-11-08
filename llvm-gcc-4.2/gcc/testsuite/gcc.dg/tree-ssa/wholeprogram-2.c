@@ -1,4 +1,6 @@
 /* { dg-options "-O2 -fdump-tree-optimized -fwhole-program" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 __attribute__ ((externally_visible))
 void
 externally_visible_function ()

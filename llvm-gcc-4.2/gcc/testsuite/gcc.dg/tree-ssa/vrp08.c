@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fno-tree-fre -fdump-tree-vrp1-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Compile with -fno-tree-fre -O2 to prevent CSEing *p.  */
 foo (int a, int *p)

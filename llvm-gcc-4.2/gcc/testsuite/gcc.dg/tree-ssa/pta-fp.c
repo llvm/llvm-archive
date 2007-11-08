@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-alias1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 extern double cos (double);
 extern double sin (double);
 double f(double a)

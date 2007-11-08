@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef _Complex float COMPLEX_FLOAT;
 float real_part(COMPLEX_FLOAT a)

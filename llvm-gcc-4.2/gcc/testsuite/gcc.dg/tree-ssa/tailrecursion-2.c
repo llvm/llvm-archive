@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -foptimize-sibling-calls -fdump-tree-tailr-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int
 t(char *a)
 {

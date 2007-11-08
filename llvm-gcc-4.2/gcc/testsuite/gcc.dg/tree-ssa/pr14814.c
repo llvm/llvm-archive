@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-forwprop2" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 
 struct YY {

@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-alias-vops" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 struct a
 {
   int length;

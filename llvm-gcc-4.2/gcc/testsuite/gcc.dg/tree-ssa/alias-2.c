@@ -1,4 +1,6 @@
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 static int a;
 int f;
 void bar (void)  __attribute__((noinline));

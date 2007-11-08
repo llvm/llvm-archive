@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O1 -fdump-tree-optimized --param sra-max-structure-size=32" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Test for SRA. */
 

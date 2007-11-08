@@ -1,6 +1,8 @@
 /* A test for final value replacement.  */
 
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int foo(void);
 

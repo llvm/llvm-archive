@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-dom3" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
      
 extern void exit (int);
 extern void *ggc_alloc (__SIZE_TYPE__);

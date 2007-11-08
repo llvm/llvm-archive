@@ -3,6 +3,8 @@
    and we may use 64-bit variable to represent them.  */
 
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-do compile { target x86_64-*-* } } */
 
 unsigned a[100];

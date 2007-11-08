@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-lim-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int x; int y;
 struct { int x; int y; } global;
 int foo() {

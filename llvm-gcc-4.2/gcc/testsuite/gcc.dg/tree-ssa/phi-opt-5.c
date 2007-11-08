@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -ffinite-math-only -fdump-tree-phiopt1" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 float repl1 (float varx)
 {

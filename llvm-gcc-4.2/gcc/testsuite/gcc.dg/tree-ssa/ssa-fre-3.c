@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O -fwrapv -fdump-tree-fre-details" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* From PR14844.  */
 

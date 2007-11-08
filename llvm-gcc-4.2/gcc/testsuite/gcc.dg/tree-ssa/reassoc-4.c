@@ -1,5 +1,7 @@
 /* { dg-do compile } */ 
 /* { dg-options "-O2 -fdump-tree-optimized -ffast-math" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 float a, b, c, d;
 extern int printf (const char *, ...);
 int main(void)

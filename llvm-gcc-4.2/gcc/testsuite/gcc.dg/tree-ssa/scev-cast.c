@@ -2,6 +2,8 @@
 
 /* { dg-do compile { target i?86-*-* x86_64-*-* } } */
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void blas (char xxx);
 void blau (unsigned char xxx);

@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-optimized -fdump-tree-alias1-vops" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* Test to make sure that inline-asm causes a V_MAY_DEF and that we call test_function twice. */
 
 char test_function(void ) __attribute__((__pure__));

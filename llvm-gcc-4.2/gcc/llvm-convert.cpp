@@ -3375,7 +3375,11 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
         Result += '%';
       } else if (EscapedChar == '=') {     // Unique ID for the asm instance.
         Result += utostr(InlineAsmNum);
-      } else if (ISALPHA(EscapedChar)) {
+      }
+#ifdef LLVM_ASM_EXTENSIONS
+      LLVM_ASM_EXTENSIONS(EscapedChar, InStr, Result)
+#endif
+      else if (ISALPHA(EscapedChar)) {
         // % followed by a letter and some digits. This outputs an operand in a
         // special way depending on the letter.  We turn this into LLVM ${N:o}
         // syntax.

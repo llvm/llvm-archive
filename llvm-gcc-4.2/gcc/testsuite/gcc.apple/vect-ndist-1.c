@@ -1,6 +1,8 @@
 /* APPLE LOCAL file AV data dependence */
 /* { dg-do run { target powerpc*-*-* } } */
 /* { dg-options "-O2 -ftree-vectorize -fdump-tree-vect-stats -maltivec" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include <stdarg.h>
 #include <signal.h>

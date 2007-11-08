@@ -3,6 +3,8 @@
 /* For 64-bit we need 64-bit headers.  */
 /* { dg-xfail-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 /* { dg-options "-O3 -finline-limit=9999 -maltivec -Wa,-force_cpusubtype_ALL -fdump-ipa-cgraph -S -faltivec" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* Inliner should inline AltiVec(tm) functions normally when -maltivec is on.  */
 /* <rdar://problem/3837835> Selective inlining of functions that use Altivec */
 #include	<Carbon/Carbon.h>

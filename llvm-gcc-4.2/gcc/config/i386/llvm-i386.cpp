@@ -40,7 +40,7 @@ extern "C" {
  */
 bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
-                                      Value *DestLoc,
+                                      const MemRef *DestLoc,
                                       Value *&Result,
                                       const Type *ResultType,
                                       std::vector<Value*> &Ops) {

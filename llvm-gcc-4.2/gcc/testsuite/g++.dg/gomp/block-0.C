@@ -1,7 +1,5 @@
 // { dg-do compile }
 // { dg-options "-fopenmp -fdump-tree-omplower" }
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 void bar();
 void foo()

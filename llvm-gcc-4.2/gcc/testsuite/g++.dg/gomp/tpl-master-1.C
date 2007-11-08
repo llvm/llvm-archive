@@ -1,8 +1,6 @@
 // PR c++/24734
 // { dg-do compile }
 // { dg-options "-fopenmp -fdump-tree-gimple" }
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 int i;
 

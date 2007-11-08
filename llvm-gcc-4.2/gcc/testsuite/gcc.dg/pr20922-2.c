@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-fwrapv -fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 int f (int i)
 {
   return (i - 2) > i;

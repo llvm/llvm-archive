@@ -1,8 +1,6 @@
 /* { dg-do compile } */
 /* { dg-require-effective-target int32plus } */
 /* { dg-options "-fdump-tree-gimple -fstrict-overflow" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 #define ABS(x) (x > 0 ? x : -x)
 

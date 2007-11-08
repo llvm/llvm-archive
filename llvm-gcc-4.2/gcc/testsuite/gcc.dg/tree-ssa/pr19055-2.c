@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 int f1(int a,int b,int c,int d)
 {
   return ((a&d)|(b&c)) ^ (b&c);

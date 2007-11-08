@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-ffinite-math-only -fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 double f(double x)
 {

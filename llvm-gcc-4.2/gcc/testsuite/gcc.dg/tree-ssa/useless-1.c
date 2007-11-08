@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-useless" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 void
 foo (void)

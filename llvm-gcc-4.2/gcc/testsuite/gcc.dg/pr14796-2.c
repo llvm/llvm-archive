@@ -1,8 +1,6 @@
 /* { dg-do compile } */
 /* { dg-require-effective-target int32plus } */
 /* { dg-options "-fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 int f (int a) {
 	return (a << 31) << 6;

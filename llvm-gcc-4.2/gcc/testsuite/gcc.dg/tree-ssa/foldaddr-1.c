@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-original" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 
 char *a;

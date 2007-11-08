@@ -1,7 +1,5 @@
 /* { dg-do run } */
 /* { dg-options "-ffast-math -fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 extern double sqrt (double);
 extern double pow (double, double);

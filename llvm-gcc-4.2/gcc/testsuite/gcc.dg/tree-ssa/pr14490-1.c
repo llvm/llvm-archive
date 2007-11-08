@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-fstrict-overflow -fdump-tree-gimple" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 int g(int x)
 {
    return (x - 10) < 0;

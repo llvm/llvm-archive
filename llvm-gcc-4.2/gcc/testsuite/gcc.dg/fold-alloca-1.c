@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-useless" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 void *alloca (__SIZE_TYPE__);
 void link_error ();

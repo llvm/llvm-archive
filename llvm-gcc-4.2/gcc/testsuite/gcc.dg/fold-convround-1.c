@@ -1,8 +1,6 @@
 /* PR middle-end/28473.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-original" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 
 extern double round(double);
 extern double floor(double);

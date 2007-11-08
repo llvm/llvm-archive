@@ -1,7 +1,5 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-gimple -fwrapv" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
 extern float fabsf (float);
 extern float cabsf (_Complex float);
 

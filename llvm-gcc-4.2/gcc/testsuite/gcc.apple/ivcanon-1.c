@@ -1,8 +1,6 @@
-/* APPLE LOCAL file lno */
+/* APPLE LOCAL file */
 /* { dg-do compile } */ 
-/* { dg-options "-O2 -ftree-loop-optimize -funroll-loops -fdump-tree-optimized" } */
-/* LLVM LOCAL test not applicable */
-/* { dg-require-fdump "" } */
+/* { dg-options "-O2 -fno-tree-dominator-opts -funroll-loops" } */
 
 void foo(void)
 {
@@ -36,5 +34,5 @@ void test(long x)
   bar (power (x, 27));
 }
 
-/* All loops should be completely unrolled, so there should be no labels.  */
-/* { dg-final { scan-tree-dump-times "<L" 0 "optimized"} } */
+/* All loops should be completely unrolled, so there should be no local labels.  */
+/* { dg-final { scan-assembler-not "L\[0-9\]*:" } } */

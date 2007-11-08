@@ -17,54 +17,6 @@
 # Various utilities for scanning tree dump output, used by gcc-dg.exp and
 # g++-dg.exp.
 
-# APPLE LOCAL begin lno
-# Utility for diffing compiler result against an expected output file.
-# Invoked via dg-final.  Call pass if there are no differences between
-# the output of the compiler and the expected output file, otherwise
-# fail.  The expected output file has the same name as the output
-# file, and is stored in the same directory as the testcase.  
-#
-# Argument 0 is the suffix for the tree dump file
-# Argument 1 handles expected failures and the like
-proc diff-tree-dumps { args } {
-    if { [llength $args] < 1 } {
-	error "diff-tree-dumps: too few arguments"
-        return
-    }
-    if { [llength $args] > 2 } {
-	error "diff-tree-dumps:: too many arguments"
-	return
-    }
-    if { [llength $args] >= 2 } {
-	switch [dg-process-target [lindex $args 1]] {
-	    "S" { }
-	    "N" { return }
-	    "F" { setup_xfail "*-*-*" }
-	    "P" { }
-	}
-    }
-
-    # This assumes that we are two frames down from dg-test, and that
-    # it still stores the filename of the testcase in a local variable "name".
-    # A cleaner solution would require a new dejagnu release.
-    upvar 2 prog testcase
-    
-    # This must match the rule in gcc-dg.exp.
-    # APPLE LOCAL Selective inlining of functions that use Altivec 3837835
-    set new_file "[glob [file tail $testcase].\[ti\]??.[lindex $args 0]]"
-    set reference_file "[glob $testcase.[lindex $args 0]]"
-    
-    set test_result [diff $reference_file $new_file]
-    
-    if { $test_result == 1 } {
-	pass "$testcase diff-tree-dumps [lindex $args 0]"
-    } else {
-	fail "$testcase diff-tree-dumps [lindex $args 0]"
-	local_exec (diff $reference_file $new_file 0);
-    }
-}
-# APPLE LOCAL end lno
-
 load_lib scandump.exp
 
 # Utility for scanning compiler result, invoked via dg-final.

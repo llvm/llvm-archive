@@ -3,6 +3,9 @@
 // wrong for some fields.
 
 // { dg-do run }
+// APPLE LOCAL begin radar 5457234
+// { dg-skip-if "" { "powerpc-apple-darwin*" } { "*" } { "" } }
+// APPLE LOCAL end radar 5457234
 
 extern "C" void abort();
 

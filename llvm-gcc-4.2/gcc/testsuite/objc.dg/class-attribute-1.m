@@ -1,4 +1,4 @@
-/* APPLE LOCAL file 4548636 */
+/* APPLE LOCAL file 4548636, 5556192 */
 /* Check for a variety of rules for objc's class attributes. */
 /* APPLE LOCAL radar 4899595 */
 /* { dg-options "-mmacosx-version-min=10.5" } */
@@ -32,17 +32,17 @@ __attribute ((unavailable)) __attribute ((XXXX))
 @interface UNAVAILABLE 
   - (int *) AnaotherInst;	/* { dg-warning "unknown" } */
   + (DEPRECATED*) return_deprecated; /* { dg-warning "deprecated" } */
-  - (UNAVAILABLE *) return_unavailable;  /* { dg-warning "unavailable" } */
+  - (UNAVAILABLE *) return_unavailable;  /* { dg-error "unavailable" } */
 @end
 
 DEPRECATED * deprecated_obj; /* { dg-warning "deprecated" } */
 
-UNAVAILABLE *unavailable_obj;		/* { dg-warning "unavailable" } */
+UNAVAILABLE *unavailable_obj;		/* { dg-error "unavailable" } */
 
 @implementation UNAVAILABLE
   - (int *) AnaotherInst { return (int*)0; }
   + (DEPRECATED *) return_deprecated { return deprecated_obj; } /* { dg-warning "deprecated" } */
-  - (UNAVAILABLE *) return_unavailable { return unavailable_obj; }	/* { dg-warning "unavailable" } */
+  - (UNAVAILABLE *) return_unavailable { return unavailable_obj; }	/* { dg-error "unavailable" } */
 @end
 
 int foo (DEPRECATED *unavailable_obj) /* { dg-warning "deprecated" } */

@@ -1,6 +1,5 @@
 /* { dg-do compile } */
-/* APPLE LOCAL lno */
-/* { dg-options "-O1 -fdump-tree-dom3 -ftree-loop-optimize" } */
+/* { dg-options "-O1 -fdump-tree-dom3" } */
 /* LLVM LOCAL test not applicable */
 /* { dg-require-fdump "" } */
    

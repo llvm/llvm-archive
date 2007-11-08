@@ -1,3 +1,186 @@
+2007-10-30  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5543378
+	* gcc.apple/x86-5543378.c: New.
+
+2007-10-25  Josh Conner  <jconner@apple.com>
+
+	Radar 3399553
+	* gcc.dg/flt-rounds.c: New.
+
+2007-10-19  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5450903
+	* gcc.apple/ppc-5450903.c: New.
+
+2007-10-15  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5494442
+	* g++.apple/altivec-5494442.C: Renamed from apple-altivec-5494442.C.
+
+2007-10-15  Caroline Tice   <ctice@apple.com>
+
+       Radar 5359827
+       * testsuite/objc.dg/pubtypes-id-test.m:  New test case.
+       * testsuite/g++.apple/pubtypes.c:  Change test case to accept any size
+       for the pubtypes section, to eliminate having to change this every
+       time the pubtypes section changes.
+
+2007-10-12  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5494442
+	* g++.apple/apple-altivec-5494442.C: Replaced -O3 by -O2.
+
+2007-10-12  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5494442
+	* g++.apple/apple-altivec-5494442.C: New.
+
+2007-10-12  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5533365
+	* g++.apple/5533365.C: New.
+
+2007-10-08  Eric Christopher  <echristo@apple.com>
+
+	Radar 5516808
+	* gcc.apple/altivec-6.c: New.
+
+2007-10-05  Eric Christopher  <echristo@apple.com>
+
+	Radar 5490617
+	* gcc.apple/5490617.c: New.
+
+2007-09-26  Hui-May Chang  <hm.chang@apple.com>
+ 
+	Radar 5280301
+	* gcc.apple/altivec-5280301.c: New.
+
+2007-09-21  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5447227
+	* gcc.apple/altivec-5447227.c: New.
+
+2007-09-05  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5457234
+	* g++.dg/ext/alignof2.C: Modified the test to skip for
+	ppc darwin targets.
+
+2007-09-04  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5155743
+	* gcc.dg/builtin-alloca-1.c: New.
+	* gcc.dg/builtin-alloca-2.c: New.
+
+2007-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4947311
+	* objc.dg/protocol-atttribute-1.m: Add
+	* obj-c++.dg/protocol-atttribute-1.mm: Add
+
+2007-08-21  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4874197
+	* gcc.apple/4283414.c: Added mainline candidate comment.
+
+2007-08-21  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5424473
+	* objc.dg/super-finalize-3.m: Add
+
+2007-08-20  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5422751
+	* objc.dg/objc2-protocol-3.m: Removed.
+	* obj-c++.dg/objc2-protocol-3.mm: Removed.
+
+2007-08-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 3533972
+	* obj-c++.dg/cxx-typeconv-func-1.mm: New
+
+2007-08-14  Hui-May Chang  <hm.chang@apple.com>
+
+        Radar 4870336, 4874471, 4874208
+        * gcc.apple/4874471.c: New.
+
+2007-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5409313
+	* obj-c++.dg/objc-neg-selector.mm: New
+
+2007-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5407792
+	* objc.dg/newproperty-attr-encode-1.m: New
+
+2007-08-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5376125
+        * objc.dg/newproperty-warn-direct-ivar-access.m: New
+        * obj-c++.dg/newproperty-warn-direct-ivar-access.mm: New
+
+2007-08-10  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5238795 4448096
+	* g++.apple/4474655.C: Remove.
+
+2007-08-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5398274
+        * obj-c++.dg/newproperty-nowarn-unused-param.mm: Expanded
+
+2007-08-09  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4875125
+	* gcc.target/i386/sse-99.c. Added -mtune=generic option. 
+
+2007-08-09  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3742561 (test change)
+	* obj-c++/objc-gc-aggr-assign-1.mm: Test changed for ppc32.
+
+2007-08-08  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5389292
+	* objc.dg/newproperty-bitfield-1.m: Add
+	* obj-c++.dg/newproperty-bitfield-1.mm: Add
+
+2007-08-08  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4875094
+	* gcc.target/i386/local2.c : Added APPLE LOCAL marker.
+
+2007-08-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5390587
+	* objc.dg/newproperty-neg-1.m: Add
+
+2007-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4653422
+	* objc.dg/enhanced-proto-4.m: Add
+	* obj-c++.dg/enhanced-proto-4.mm: Add
+
+2007-08-03  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4875094
+	* gcc.target/i386/local2.c : Modified the test to skip for
+	  darwin targets.
+
+2007-07-31  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4874513
+	* gcc/testsuite/gcc.dg/tree-ssa/ivcanon-1.c: Moved to
+          gcc/testsuite/gcc.apple; revised testcase to work around
+          improved jump-threader.
+
+2007-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 3742561 (test change)
+	* objc.dg/objc-gc-aggr-assign-1.m: Test changed for ppc32.
+
 2007-07-31  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 5259868

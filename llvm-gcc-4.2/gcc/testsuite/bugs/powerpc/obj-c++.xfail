@@ -10,7 +10,7 @@
 ### file and make sure the Radar is closed.
 ###
 ###------------------------------------------------------------------
-5004398: obj-c++.dg/objc2-const-str-64bit-1.mm scan-assembler LC1:\n\t.quad\t_OBJC_CLASS_\\$_NSConstantString
+5405050: obj-c++.dg/gnu-runtime-3.mm (test for excess errors)
 #
 # the following fail with -m64 only 
 5272224: obj-c++.dg/const-str-3.mm execution test

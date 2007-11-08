@@ -196,8 +196,10 @@ typedef struct B2 {
 } B2;
 
 
-static void check(char * rec_name, int actual, int expected32, int expected64, 
-		  int expected_ia32, char * comment)
+/* APPLE LOCAL begin radar 4869885 */
+static void check(const char * rec_name, int actual, int expected32, int expected64, 
+		  int expected_ia32, const char * comment)
+/* APPLE LOCAL end radar 4869885 */
 {
     int expected;
 #ifdef __i386__

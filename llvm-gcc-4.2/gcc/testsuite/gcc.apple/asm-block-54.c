@@ -1,7 +1,7 @@
 /* { dg-do compile { target i?86*-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 /* { dg-options { -fasm-blocks -msse3 } } */
-/* { dg-final { scan-assembler "movq -16\\\(%ebp\\\), %mm0" } } */
+/* { dg-final { scan-assembler "movq -\(16|36\)\\\(%ebp\\\), %mm0" } } */
 /* Radar 4515069 */
 
 void foo() {

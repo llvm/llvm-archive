@@ -1,3 +1,25 @@
+2007-10-07  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.dg/pragma-darwin-2.c: New.
+
+2007-09-14  Geoffrey Keating  <geoffk@apple.com>
+
+	* gcc.dg/unwind-1.c: New.
+
+2007-08-03  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 3274130, 5295549
+	* g++.dg/ext/align2.C: New.
+	* g++.dg/ext/align3.C: New.
+	* g++.dg/ext/align4.C: New.
+
+	* gcc.dg/align-6.c: New.
+	* gcc.dg/align-5.c: New.
+	* gcc.dg/align-4.c: New.
+	* gcc.dg/attr-unused-1.c: New.
+
+	* gcc.dg/align-3.c: New.
+
 2007-06-14  Geoff Keating  <geoffk@apple.com>
 
 	* g++.dg/ext/visibility/overload-1.C: New.

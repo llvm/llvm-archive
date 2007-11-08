@@ -38,12 +38,8 @@
 5103220: tmpdir-g++.dg-struct-layout-1/t011 cp_compat_x_tst.o-cp_compat_y_tst.o execute
 5103220: tmpdir-g++.dg-struct-layout-1/t015 cp_compat_x_tst.o-cp_compat_y_tst.o execute
 5103220: tmpdir-g++.dg-struct-layout-1/t020 cp_compat_x_tst.o-cp_compat_y_tst.o execute
-5103220: tmpdir-g++.dg-struct-layout-1/t024 cp_compat_x_tst.o compile,  (internal compiler error)
-5103220: tmpdir-g++.dg-struct-layout-1/t026 cp_compat_x_tst.o compile,  (internal compiler error)
-5103220: tmpdir-g++.dg-struct-layout-1/t027 cp_compat_x_tst.o compile,  (internal compiler error)
-5103220: tmpdir-g++.dg-struct-layout-1/t028 cp_compat_x_tst.o compile,  (internal compiler error)
-5103220: tmpdir-g++.dg-struct-layout-1/t029 cp_compat_x_tst.o compile,  (internal compiler error)
-5103220: tmpdir-g++.dg-struct-layout-1/t030 cp_compat_x_tst.o compile,  (internal compiler error)
+5103220: tmpdir-g++.dg-struct-layout-1/t026 cp_compat_x_tst.o-cp_compat_y_tst.o execute
+5103220: tmpdir-g++.dg-struct-layout-1/t027 cp_compat_x_tst.o-cp_compat_y_tst.o execute
 #
 # The following tests fail only when the c++ suite is run on x86
 5087173: g++.old-deja/g++.other/crash41.C  (test for errors, line 10)

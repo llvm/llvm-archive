@@ -1,6 +1,8 @@
 // PR middle-end/28046
 // { dg-do compile }
 // { dg-options "-fopenmp -fdump-tree-gimple" }
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int a[3], b;
 struct C { int x; int y; } c;

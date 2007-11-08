@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fopenmp -fdump-tree-ompexp" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 extern void bar(int);
 

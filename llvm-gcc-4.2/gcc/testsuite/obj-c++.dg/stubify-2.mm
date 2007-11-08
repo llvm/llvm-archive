@@ -4,6 +4,8 @@
 
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-mdynamic-no-pic -fdump-rtl-jump" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef struct objc_object { } *id ;
 int x = 41 ;

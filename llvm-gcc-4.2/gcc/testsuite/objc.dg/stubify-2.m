@@ -5,6 +5,8 @@
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-skip-if "" { i?86-*-darwin* } } */
 /* { dg-options "-mdynamic-no-pic -fdump-rtl-jump" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* APPLE LOCAL radar 4894756 */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 

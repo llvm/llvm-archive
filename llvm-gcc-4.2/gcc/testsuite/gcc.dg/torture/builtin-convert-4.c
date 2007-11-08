@@ -9,6 +9,8 @@
 /* { dg-options "-ftrapping-math -fdump-tree-original" } */
 /* { dg-options "-ftrapping-math -fdump-tree-original -mmacosx-version-min=10.3" { target powerpc-*-darwin* } } */
 /* { dg-options "-ftrapping-math -fdump-tree-original -std=c99" { target *-*-solaris2* } } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 #include "../builtins-config.h"
 

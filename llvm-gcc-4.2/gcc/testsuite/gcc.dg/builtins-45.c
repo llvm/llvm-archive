@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fno-trapping-math -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
   
 extern void f(int);
 extern void link_error ();

@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-gimple -ffast-math" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* Test for folding abs(x) where appropriate.  */
 #define abs(x) x > 0 ? x : -x
 extern double fabs (double);

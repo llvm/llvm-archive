@@ -1,5 +1,7 @@
 /* { dg-do run } */
 /* { dg-options "-fdump-tree-original" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Check that MIN-MAX and MAX-MIN combinations are folded.  */
 

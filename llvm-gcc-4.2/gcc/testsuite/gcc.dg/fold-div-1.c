@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-funsafe-math-optimizations -fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 float f(float x)
 {

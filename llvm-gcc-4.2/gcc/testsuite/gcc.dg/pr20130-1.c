@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int z (int a) {
 	return a * -1;
 }

@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O -fdump-tree-optimized -frounding-math" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void bar(float x);
 void foo(double x)

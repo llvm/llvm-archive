@@ -2,6 +2,8 @@
    that CSE would catch later on.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-store_ccp" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 double _Complex *a; 
 static const double _Complex b[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; 

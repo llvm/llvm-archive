@@ -2,7 +2,11 @@
 /* { dg-do compile } */
 /* { dg-require-effective-target vect_int } */
 /* { dg-options "-dA -O2 -ftree-vectorize -fdump-tree-vect-stats -maltivec -gdwarf-2 -fopt-diary" { target powerpc*-*-* } } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-options "-dA -O2 -ftree-vectorize -fdump-tree-vect-stats -msse2 -gdwarf-2 -fopt-diary" { target i?86-*-* x86_64-*-* } } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 
 #define N 16

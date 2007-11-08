@@ -1,6 +1,8 @@
 /* PR middle-end/29726 */
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-original" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void foo (void);
 

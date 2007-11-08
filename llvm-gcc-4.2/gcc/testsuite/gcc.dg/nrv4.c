@@ -2,6 +2,8 @@
    indirect reference to something that may be call-clobbered. */
 /* { dg-do compile } */
 /* { dg-options "-O -fdump-tree-optimized" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 typedef struct { int x[20]; void *y; } S;
 S nrv_candidate (void);

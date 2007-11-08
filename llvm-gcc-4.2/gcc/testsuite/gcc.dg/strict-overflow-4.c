@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fstrict-overflow -O2 -fdump-tree-final_cleanup" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Source: Ian Lance Taylor.  Dual of no-strict-overflow-4.c.  */
 

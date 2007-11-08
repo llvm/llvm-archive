@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fno-strict-overflow -O2 -fdump-tree-final_cleanup" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 /* Source: Ian Lance Taylor.  */
 

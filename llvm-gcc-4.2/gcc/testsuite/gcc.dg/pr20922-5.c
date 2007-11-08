@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fsignaling-nans -fwrapv -fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 int f(int i)
 {
   return i < (i - 2);

@@ -1,7 +1,7 @@
 /* { dg-options "-O1 -ffast-math -fdump-tree-recip" } */
+/* { dg-do compile } */
 /* LLVM LOCAL test not applicable */
 /* { dg-require-fdump "" } */
-/* { dg-do compile } */
 
 struct MIOFILE {
   ~MIOFILE();

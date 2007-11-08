@@ -1297,7 +1297,10 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToType(Instruction::BitCast, SrcPtr, SBP),
     CastToSIntType(Size, IntPtr),
-    ConstantInt::get(Type::Int32Ty, 1) // FIXME: Hardcoding 1 here is a hack.
+    // FIXME: (PR1781) The alignment of DestPtr and SrcPtr may be different. We
+    // want the alignment of memcpy to be the minimal of the two. This isn't
+    // currently possible. Setting to 1 for the meantime.
+    ConstantInt::get(Type::Int32Ty, 1)
   };
 
   Intrinsic::ID IID = 
@@ -1313,7 +1316,10 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToType(Instruction::BitCast, SrcPtr, SBP),
     CastToSIntType(Size, IntPtr),
-    ConstantInt::get(Type::Int32Ty, Align)
+    // FIXME: (PR1781) The alignment of DestPtr and SrcPtr may be different. We
+    // want the alignment of memmove to be the minimal of the two. This isn't
+    // currently possible. Setting to 1 for the meantime.
+    ConstantInt::get(Type::Int32Ty, 1)
   };
 
   Intrinsic::ID IID = 
@@ -1329,7 +1335,10 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
     CastToType(Instruction::BitCast, DestPtr, SBP),
     CastToSIntType(SrcVal, Type::Int8Ty),
     CastToSIntType(Size, IntPtr),
-    ConstantInt::get(Type::Int32Ty, 1) // FIXME: Hardcoding 1 here is a hack.
+    // FIXME: (PR1781) The alignment of DestPtr and SrcPtr may be different. We
+    // want the alignment of memset to be the minimal of the two. This isn't
+    // currently possible. Setting to 1 for the meantime.
+    ConstantInt::get(Type::Int32Ty, 1)
   };
 
   Intrinsic::ID IID = 

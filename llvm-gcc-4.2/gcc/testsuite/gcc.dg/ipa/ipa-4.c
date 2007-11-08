@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O3 -fipa-cp -fdump-ipa-cp"  } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 /* { dg-skip-if "PR 25442" { "*-*-*" } { "-fpic" "-fPIC" } { "" } } */
 
 #include <stdio.h>

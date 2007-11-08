@@ -1,6 +1,8 @@
 // Test that the nothrow optimization works properly.
 // { dg-do compile }
 // { dg-options "-O -fdump-tree-optimized" }
+// LLVM LOCAL fdump not supported
+// { dg-require-fdump "" }
 
 extern void blah() throw();
 

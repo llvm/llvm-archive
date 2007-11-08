@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fopenmp -fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 volatile int *bar(void);
 

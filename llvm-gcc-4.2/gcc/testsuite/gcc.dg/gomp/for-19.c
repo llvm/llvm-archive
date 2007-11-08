@@ -3,6 +3,8 @@
    copied to the omp_fn function.  */
 /* { dg-do compile } */
 /* { dg-options "-O -fopenmp -fdump-tree-gimple" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void foo (int *a, int i, int j, int k, int l, int m)
 {

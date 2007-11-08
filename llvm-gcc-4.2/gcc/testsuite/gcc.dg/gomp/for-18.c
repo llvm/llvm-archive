@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O -fopenmp -fdump-tree-ompexp" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 void
 foo (int *a, int i)

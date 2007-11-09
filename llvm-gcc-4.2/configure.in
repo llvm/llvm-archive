@@ -368,18 +368,37 @@ case "${target}" in
   *-*-chorusos)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
     ;;
+  # APPLE LOCAL begin ARM darwin target
+  arm-*-darwin*)
+    noconfigdirs="$noconfigdirs target-libgomp target-libobjc"
+    noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libssp"
+    # LLVM LOCAL begin
+    noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
+    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libmudflap target-zlib"
+    # LLVM LOCAL end
+    ;;
+  # APPLE LOCAL end ARM darwin target
   powerpc-*-darwin* | i[[3456789]]86-*-darwin*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda target-libstdc++-v3"
-    # LLVM LOCAL
-    noconfigdirs="$noconfigdirs target-libobjc"
+    # LLVM LOCAL begin
+    noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
+    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
+    noconfigdirs="$noconfigdirs target-libssp target-zlib"
+    # LLVM LOCAL end
     ;;
   *-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
     noconfigdirs="$noconfigdirs ${libgcj} target-libstdc++-v3"
-    # LLVM LOCAL
-    noconfigdirs="$noconfigdirs target-libobjc"
+    # LLVM LOCAL begin
+    noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
+    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
+    noconfigdirs="$noconfigdirs target-libssp target-zlib"
+    # LLVM LOCAL end
     ;;
   *-*-freebsd[[12]] | *-*-freebsd[[12]].* | *-*-freebsd*aout*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"

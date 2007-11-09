@@ -18406,7 +18406,7 @@ generate_objc_image_info (void)
   /* Let optimizer know that this decl is not removable.  */
   set_user_assembler_name(decl, IDENTIFIER_POINTER (DECL_NAME(decl)));
   DECL_PRESERVE_P (decl) = 1;
-#endif ENABLE_LLVM
+#endif
   /* APPLE LOCAL end LLVM */
   assemble_variable (decl, 1, 0, 0);
 }

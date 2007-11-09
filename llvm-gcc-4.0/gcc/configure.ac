@@ -767,6 +767,8 @@ AC_ARG_ENABLE(llvm,
  elif test -x "$LLVMBASEPATH/Debug-Asserts+Checks/bin/llc$EXEEXT"; then
      echo Found Debug-Asserts+Checks LLVM Tree in $LLVMBASEPATH
      LLVMBUILDMODE="Debug-Asserts+Checks"
+ elif test -x "$LLVMBASEPATH/bin/llc$EXEEXT"; then
+     echo Found Installed LLVM Tree in $LLVMBASEPATH
  else
      AC_MSG_ERROR([You must specify valid path to your LLVM tree with --enable-llvm=DIR])
  fi

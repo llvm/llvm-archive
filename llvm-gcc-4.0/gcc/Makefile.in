@@ -221,7 +221,11 @@ LLVMOBJDIR = @LLVMBASEPATH@
 # Determine BUILDMODE from configure run (--enable-llvm)
 BUILDMODE := @LLVMBUILDMODE@
 
+ifneq ($(BUILDMODE),)
 LLVMBINPATH = $(LLVMOBJDIR)/$(BUILDMODE)/bin
+else
+LLVMBINPATH = $(LLVMOBJDIR)/bin
+endif
 
 ifeq ($(LLVMOBJDIR),)
 CPPFLAGS = @CPPFLAGS@

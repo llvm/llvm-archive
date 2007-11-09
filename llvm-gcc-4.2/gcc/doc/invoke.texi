@@ -47,8 +47,7 @@ remainder.  @samp{g++} accepts mostly the same options as @samp{gcc}.
 
 @c APPLE LOCAL begin manual
 In Apple's version of GCC, both @samp{cc} and @samp{gcc} are actually
-symbolic links to a compiler named like gcc-@var{version}; which compiler
-is linked to may be changed using the command @samp{gcc_select}.
+symbolic links to a compiler named like gcc-@var{version}.
 Similarly, @samp{c++} and @samp{g++} are links to a compiler named like
 g++-@var{version}.
 
@@ -206,8 +205,6 @@ in the following sections.
 @c APPLE LOCAL pch distcc --mrs
 -fpch-preprocess (APPLE ONLY) @gol
 -fsigned-bitfields  -fsigned-char @gol
-@c APPLE LOCAL pascal strings
--fpascal-strings (APPLE ONLY) @gol
 @c APPLE LOCAL -Wno-#warnings
 -Wno-#warnings (APPLE ONLY) @gol
 @c APPLE LOCAL -Wextra-tokens 2001-08-02 --sts **
@@ -329,11 +326,6 @@ Objective-C and Objective-C++ Dialects}.
 -fdump-tree-ssa@r{[}-@var{n}@r{]} -fdump-tree-pre@r{[}-@var{n}@r{]} @gol
 -fdump-tree-ccp@r{[}-@var{n}@r{]} -fdump-tree-dce@r{[}-@var{n}@r{]} @gol
 -fdump-tree-gimple@r{[}-raw@r{]} -fdump-tree-mudflap@r{[}-@var{n}@r{]} @gol
-@c APPLE LOCAL begin lno
--fdump-tree-scev @r{[}-@var{n}@r{]} @gol
--fdump-tree-ddall @r{[}-@var{n}@r{]}@gol
--fdump-tree-elck @r{[}-@var{n}@r{]} @gol
-@c APPLE LOCAL end lno
 -fdump-tree-dom@r{[}-@var{n}@r{]} @gol
 -fdump-tree-dse@r{[}-@var{n}@r{]} @gol
 -fdump-tree-phiopt@r{[}-@var{n}@r{]} @gol
@@ -344,10 +336,6 @@ Objective-C and Objective-C++ Dialects}.
 -fdump-tree-sra@r{[}-@var{n}@r{]} @gol
 -fdump-tree-salias @gol
 -fdump-tree-fre@r{[}-@var{n}@r{]} @gol
-@c APPLE LOCAL begin lno
--fdump-tree-loop@r{[}-@var{n}@r{]} @gol
--fdump-tree-vect@r{[}-@var{n}@r{]} @gol
-@c APPLE LOCAL end lno
 -fdump-tree-vrp@r{[}-@var{n}@r{]} @gol
 -ftree-vectorizer-verbose=@var{n} @gol
 -fdump-tree-storeccp@r{[}-@var{n}@r{]} @gol
@@ -420,8 +408,6 @@ Objective-C and Objective-C++ Dialects}.
 @c APPLE LOCAL add fuse-profile
 -ftree-vect-loop-version -ftree-salias -fuse-profile -fipa-pta -fweb @gol
 -ftree-copy-prop -ftree-store-ccp -ftree-store-copy-prop -fwhole-program @gol
-@c APPLE LOCAL lno
--fscalar-evolutions -fall-data-deps @gol
 --param @var{name}=@var{value}
 @c LLVM LOCAL -fast, -Oz,
 -O  -O0  -O1  -O2  -O3 -O4 (APPLE ONLY) -Os -Oz (APPLE ONLY) -fast (APPLE ONLY)}
@@ -476,6 +462,8 @@ Objective-C and Objective-C++ Dialects}.
 @gccoptlist{-EB  -EL @gol
 -mmangle-cpu  -mcpu=@var{cpu}  -mtext=@var{text-section} @gol
 -mdata=@var{data-section}  -mrodata=@var{readonly-data-section}}
+@c APPLE LOCAL ARM prune man page
+@end ignore
 
 @emph{ARM Options}
 @gccoptlist{-mapcs-frame  -mno-apcs-frame @gol
@@ -501,6 +489,8 @@ Objective-C and Objective-C++ Dialects}.
 -mcaller-super-interworking  -mcallee-super-interworking @gol
 -mtp=@var{name}}
 
+@c APPLE LOCAL ARM prune man page
+@ignore
 @emph{AVR Options}
 @gccoptlist{-mmcu=@var{mcu}  -msize  -minit-stack=@var{n}  -mno-interrupts @gol
 -mcall-prologues  -mno-tablejump  -mtiny-stack  -mint8}
@@ -552,6 +542,8 @@ Objective-C and Objective-C++ Dialects}.
 -twolevel_namespace  -umbrella  -undefined @gol
 -unexported_symbols_list  -weak_reference_mismatches @gol
 -whatsloaded -F -gused -gfull -mmacosx-version-min=@var{version} @gol
+@c APPLE LOCAL pascal strings
+-mpascal-strings (APPLE ONLY) @gol
 -mkernel -mone-byte-bool}
 
 @c APPLE LOCAL prune man page
@@ -1629,18 +1621,6 @@ Warn if constant CFString objects contain non-portable characters
 (default behavior)
 @c APPLE LOCAL end radar 3506309
 
-@c APPLE LOCAL begin pascal strings
-@item -fpascal-strings
-Allow Pascal-style string literals to be constructed.  This option
-implies @option{-Wpointer-sign} so that conversions between
-Pascal-style strings and C-style strings are warned about.  (APPLE
-ONLY)
-
-@xref{Pascal Strings,,Constructing String Literals with a Pascal-style
-Length Byte}, for more information on the syntax and semantics of Pascal
-string literals.
-@c APPLE LOCAL end pascal strings
-
 @c APPLE LOCAL begin fwritable strings. 
 @item -fwritable-strings
 @opindex fwritable-strings
@@ -2509,6 +2489,13 @@ Warn if no ``assign'', ``retain'', or ``copy'' attribute is specified on
 a property of pointer to object type. Property is then assumed to be
 ``assign'' by default.
 @c APPLE LOCAL end radar 5172645
+
+@c APPLE LOCAL begin radar 5376125
+@item -Wdirect-ivar-access
+@opindex Wdirect-ivar-access
+Warn if ivar of pointer to object type is directly accessed in non-gc
+mode, instead of using property syntax access.
+@c APPLE LOCAL end radar 5376125
  
 @item -Wstrict-selector-match
 @opindex Wstrict-selector-match
@@ -4710,24 +4697,6 @@ appending @file{.dce} to the source file name.
 Dump each function after adding mudflap instrumentation.  The file name is
 made by appending @file{.mudflap} to the source file name.
 
-@c APPLE LOCAL begin lno
-@item scev
-@opindex fdump-tree-scev
-Dump the information gathered by the scalar evolution analyzer.
-The file name is made by appending @file{.scev} to the source file name.
-
-@item ddall
-@opindex fdump-tree-ddall
-Dump all the data dependence relations.
-The file name is made by appending @file{.ddall} to the source file name.
-
-@item elck
-@opindex fdump-tree-elck
-Dump each function after performing checks elimination based on scalar
-evolution informations.  The file name is made by appending
-@file{.elck} to the source file name.
-@c APPLE LOCAL end lno
-
 @item sra
 @opindex fdump-tree-sra
 Dump each function after performing scalar replacement of aggregates.  The
@@ -4768,13 +4737,6 @@ name is made by appending @file{.copyrename} to the source file name.
 Dump each function after applying the named return value optimization on
 generic trees.  The file name is made by appending @file{.nrv} to the source
 file name.
-
-@c APPLE LOCAL begin lno
-@item loop
-@opindex fdump-tree-loop
-Dump each function after applying tree-level loop optimizations.  The file
-name is made by appending @file{.loop} to the source file name.
-@c APPLE LOCAL end lno
 
 @item vect
 @opindex fdump-tree-vect
@@ -5783,12 +5745,6 @@ effectiveness of code motion optimizations.  It also saves one jump.  This flag
 is enabled by default at @option{-O} and higher.  It is not enabled
 @c APPLE LOCAL 4231761 -Oz
 for @option{-Os} or @option{-Oz} (APPLE ONLY), since it usually increases code size.
-
-@c APPLE LOCAL begin lno
-@item -ftree-elim-checks 
-Perform elimination of checks based on scalar evolution informations.
-This flag is disabled by default.  
-@c APPLE LOCAL end lno
 
 @item -ftree-loop-optimize
 Perform loop optimizations on trees.  This flag is enabled by default
@@ -8052,7 +8008,11 @@ platform.
 @c APPLE LOCAL prune man page
 @ignore
 * ARC Options::
+@c APPLE LOCAL ARM prune man page
+@end ignore
 * ARM Options::
+@c APPLE LOCAL ARM prune man page
+@ignore
 * AVR Options::
 * Blackfin Options::
 * CRIS Options::
@@ -8151,6 +8111,8 @@ by default.  This can be overridden with the @code{section} attribute.
 @xref{Variable Attributes}.
 
 @end table
+@c APPLE LOCAL ARM prune man page
+@end ignore
 
 @node ARM Options
 @subsection ARM Options
@@ -8472,6 +8434,8 @@ best available method for the selected processor.  The default setting is
 
 @end table
 
+@c APPLE LOCAL ARM prune man page
+@ignore
 @node AVR Options
 @subsection AVR Options
 @cindex AVR Options
@@ -8928,13 +8892,20 @@ altered by adding a zero word at the end of every vtable.
 this flag.  @option{-findirect-virtual-calls} and
 @option{-fterminated-vtables} are accepted for backwards compatibility
 but will be removed in the future.
-On Intel x86-based Apple platforms, the kernel and its extensions run
-with a four-byte aligned stack
-(@option{-mpreferred-stack-boundary=2}); function prologues inside
-kernel extentions won't keep the usual 16-byte alignment required
-everywhere else in OS X.
 (APPLE ONLY)
 @c APPLE LOCAL end KEXT
+
+@c APPLE LOCAL begin pascal strings
+@item -mpascal-strings
+Allow Pascal-style string literals to be constructed.  This option
+implies @option{-Wpointer-sign} so that conversions between
+Pascal-style strings and C-style strings are warned about.  (APPLE
+ONLY)
+
+@xref{Pascal Strings,,Constructing String Literals with a Pascal-style
+Length Byte}, for more information on the syntax and semantics of Pascal
+string literals.
+@c APPLE LOCAL end pascal strings
 
 @item -all_load
 @opindex all_load

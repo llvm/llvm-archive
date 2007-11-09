@@ -5618,7 +5618,7 @@ build_c_cast (tree type, tree expr)
      initializer if this target supports it.  */
   if (TREE_CODE (type) == VECTOR_TYPE 
       && targetm.cast_expr_as_vector_init
-      && !IS_AGGR_TYPE (TREE_TYPE(expr)))
+      && !IS_AGGR_TYPE (TREE_TYPE (expr)))
     return vector_constructor_from_expr (expr, type);
   /* APPLE LOCAL end AltiVec */
 
@@ -6193,10 +6193,13 @@ build_ptrmemfunc1 (tree type, tree delta, tree pfn)
 	 Won't this be fun.  Much of this is snarfed from 2.95.
 	 Note that the __delta2 val, if required, will always be __delta.  */
 
+      /* APPLE LOCAL begin ARM kext */
       tree subtype, pfn_or_delta2_field, idx, idx_field, delta2_field;
-      tree delta2 = integer_zero_node;
       int ixval = 0;
       int allconstant = 0, allsimple = 0, allinvariant = 0;
+      tree virt_p;
+      int pfn_offset = 0;
+      /* APPLE LOCAL end ARM kext */
 
       delta_field = TYPE_FIELDS (type);
       idx_field = TREE_CHAIN (delta_field);
@@ -6205,58 +6208,62 @@ build_ptrmemfunc1 (tree type, tree delta, tree pfn)
       pfn_field = TYPE_FIELDS (subtype);
       delta2_field = TREE_CHAIN (pfn_field);
 
+      /* APPLE LOCAL begin ARM kext */
       if (TARGET_PTRMEMFUNC_VBIT_LOCATION == ptrmemfunc_vbit_in_pfn)
 	{
-	  /* If the low bit of PFN is set, the virtual index is PFN >> 1.
-	     Else it's nonvirtual.  */
-	  allconstant = TREE_CONSTANT (pfn);
-	  allinvariant = TREE_INVARIANT (pfn);
-	  allsimple = !! initializer_constant_valid_p (pfn, TREE_TYPE (pfn));
-	  if (TREE_CODE (pfn) == INTEGER_CST && (TREE_INT_CST_LOW (pfn) & 1))
-	    {
-	      /* It's a virtual function.  PFN is the vt offset + 1.  */
-
-	      int vt_entry_sz = 4;
-	      tree vt_entry_sz_tree = TYPE_SIZE_UNIT (vtable_entry_type);
-	      if (TREE_CODE (vt_entry_sz_tree) == INTEGER_CST)
-		vt_entry_sz = TREE_INT_CST_LOW (vt_entry_sz_tree);
-
-	      ixval = (TREE_INT_CST_LOW (pfn) - 1);
-	      ixval /= vt_entry_sz;
-
-	      /* Now add 2 for that spadgey VPTR index hack, plus one because
-		 2.95 indices are offset by 1.  */
-	      ixval += 2 + 1;
-
-	      /* __delta2 is the same as __delta.  */
-	      u = tree_cons (delta2_field, delta, NULL_TREE);
-	    }
-	  else
-	  if (TREE_CODE (pfn) == INTEGER_CST && TREE_INT_CST_LOW (pfn) == 0)
-	    {
-	      /* NULL pfn.  Just zero out everything.  */
-	      ixval = 0;
-	      pfn = integer_zero_node;
-	      delta = integer_zero_node;
-	      u = tree_cons (pfn_field, pfn, NULL_TREE);
-	    }
-	  else
-	    {
-	      ixval = -1;  /* -1 ==> PFN is the pointer  */
-	      u = tree_cons (pfn_field, pfn, NULL_TREE);
-	    }
+	  /* If the low bit of PFN is set, the virtual index is PFN >> 1,
+	     else it's non-virtual.  */
+	  virt_p = pfn;
+	  pfn_offset = 1;
 	}
       else	/* Low bit of DELTA is set if we're virtual.  */
 	{
-	  /* Don't know how to do this yet. Much like the above, probably.  */
-	  abort ();
-	  allconstant = TREE_CONSTANT (delta);
-	  allinvariant = TREE_INVARIANT (delta);
-	  allsimple = !! initializer_constant_valid_p (delta,
-							TREE_TYPE (delta));
-	  
-	  u = tree_cons (delta2_field, delta2, NULL_TREE);
+	  virt_p = delta;
 	}
+      allconstant = TREE_CONSTANT (virt_p);
+      allinvariant = TREE_INVARIANT (virt_p);
+      allsimple = !! initializer_constant_valid_p (virt_p, TREE_TYPE (virt_p));
+
+      if (TREE_CODE (virt_p) == INTEGER_CST && (TREE_INT_CST_LOW (virt_p) & 1))
+	{
+	  /* It's a virtual function.  PFN is the vt offset + 1.  */
+
+	  int vt_entry_sz = 4;
+	  tree vt_entry_sz_tree = TYPE_SIZE_UNIT (vtable_entry_type);
+	  if (TREE_CODE (vt_entry_sz_tree) == INTEGER_CST)
+	    vt_entry_sz = TREE_INT_CST_LOW (vt_entry_sz_tree);
+
+	  ixval = (TREE_INT_CST_LOW (pfn) - pfn_offset);
+	  ixval /= vt_entry_sz;
+
+	  /* Now add 2 for that spadgey VPTR index hack, plus one
+	     because 2.95 indices are offset by 1.  */
+	  ixval += 2 + 1;
+
+	  if (TARGET_PTRMEMFUNC_VBIT_LOCATION == ptrmemfunc_vbit_in_delta)
+	    {
+	      delta = build2 (RSHIFT_EXPR, TREE_TYPE (delta),
+			      delta, integer_one_node);
+	      delta = fold_if_not_in_template (delta);
+	    }
+
+	  /* __delta2 is the same as __delta.  */
+	  u = tree_cons (delta2_field, delta, NULL_TREE);
+	}
+      else if (TREE_CODE (pfn) == INTEGER_CST && TREE_INT_CST_LOW (pfn) == 0)
+	{
+	  /* NULL pfn.  Just zero out everything.  */
+	  ixval = 0;
+	  pfn = integer_zero_node;
+	  delta = integer_zero_node;
+	  u = tree_cons (pfn_field, pfn, NULL_TREE);
+	}
+      else
+	{
+	  ixval = -1;  /* -1 ==> PFN is the pointer  */
+	  u = tree_cons (pfn_field, pfn, NULL_TREE);
+	}
+      /* APPLE LOCAL end ARM kext */
 
       delta = convert_and_check (delta_type_node, delta);
       idx = convert_and_check (delta_type_node, ssize_int (ixval));

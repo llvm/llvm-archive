@@ -606,13 +606,23 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    Another pseudo (not included in DWARF_FRAME_REGISTERS) is soft frame
    pointer, which is eventually eliminated in favor of SP or FP.  */
 
-#define FIRST_PSEUDO_REGISTER 114
+/* APPLE LOCAL begin 3399553 */
+/* OK, so this isn't technically the last physical register on the
+   processor.  It's the last register we want mapped into the EH
+   information.  Typically, this would be the last physical register,
+   however in our case we'd like to maintain backwards compatibility
+   instead of defining space we won't use anyway.  */
+#define LAST_PHYSICAL_REGISTER	113
+
+#define FIRST_PSEUDO_REGISTER 115
+/* APPLE LOCAL end 3399553 */
 
 /* This must be included for pre gcc 3.0 glibc compatibility.  */
 #define PRE_GCC3_DWARF_FRAME_REGISTERS 77
 
 /* Add 32 dwarf columns for synthetic SPE registers.  */
-#define DWARF_FRAME_REGISTERS ((FIRST_PSEUDO_REGISTER - 1) + 32)
+/* APPLE LOCAL 3399553 */
+#define DWARF_FRAME_REGISTERS (LAST_PHYSICAL_REGISTER + 32)
 
 /* The SPE has an additional 32 synthetic registers, with DWARF debug
    info numbering for these registers starting at 1200.  While eh_frame
@@ -628,7 +638,7 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    We must map them here to avoid huge unwinder tables mostly consisting
    of unused space.  */
 #define DWARF_REG_TO_UNWIND_COLUMN(r) \
-  ((r) > 1200 ? ((r) - 1200 + FIRST_PSEUDO_REGISTER - 1) : (r))
+  ((r) > 1200 ? ((r) - 1200 + LAST_PHYSICAL_REGISTER) : (r))
 
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)
@@ -669,6 +679,8 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
    , 1, 1, 1                                       \
+   /* APPLE LOCAL 3399553 */                       \
+   , 1                                             \
 }
 
 /* 1 for registers not available across function calls.
@@ -689,6 +701,8 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
    , 1, 1, 1                                       \
+   /* APPLE LOCAL 3399553 */                       \
+   , 1                                             \
 }
 
 /* Like `CALL_USED_REGISTERS' except this macro doesn't require that
@@ -708,6 +722,8 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0						   \
    , 0, 0, 0                                       \
+   /* APPLE LOCAL 3399553 */                       \
+   , 0						   \
 }
 
 #define MQ_REGNO     64
@@ -725,11 +741,14 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
 #define VSCR_REGNO		110
 #define SPE_ACC_REGNO		111
 #define SPEFSCR_REGNO		112
+/* APPLE LOCAL 3399553 */
+#define FPSCR_REGNO		114
 
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
 #define FIRST_SAVED_FP_REGNO    (14+32)
 #define FIRST_SAVED_GP_REGNO 13
 
+/* APPLE LOCAL begin 3399553 */
 /* List the order in which to allocate registers.  Each register must be
    listed once, even those in FIXED_REGISTERS.
 
@@ -760,7 +779,9 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
 	vrsave, vscr	(fixed)
 	spe_acc, spefscr (fixed)
 	sfp		(fixed)
+        fpscr		(fixed)
 */
+/* APPLE LOCAL end 3399553 */
 
 #if FIXED_R2 == 1
 #define MAYBE_R2_AVAILABLE
@@ -791,7 +812,8 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    96, 95, 94, 93, 92, 91,					\
    108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97,	\
    109, 110,							\
-   111, 112, 113						\
+   /* APPLE LOCAL 3399553 */					\
+   111, 112, 113, 114						\
 }
 
 /* True if register is floating-point.  */
@@ -1061,7 +1083,8 @@ enum reg_class
   { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000 }, /* CR_REGS */	     \
   { 0xffffffff, 0x00000000, 0x0000efff, 0x00020000 }, /* NON_FLOAT_REGS */   \
   { 0x00000000, 0x00000000, 0x00001000, 0x00000000 }, /* XER_REGS */	     \
-  { 0xffffffff, 0xffffffff, 0xffffffff, 0x0003ffff }  /* ALL_REGS */	     \
+  /* APPLE LOCAL 3399553 */						     \
+  { 0xffffffff, 0xffffffff, 0xffffffff, 0x0007ffff }  /* ALL_REGS */	     \
 }
 
 /* The same information, inverted:
@@ -2166,6 +2189,8 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[111][0],	/* spe_acc */				\
   &rs6000_reg_names[112][0],	/* spefscr */				\
   &rs6000_reg_names[113][0],	/* sfp  */				\
+  /* APPLE LOCAL 3399553 */						\
+  &rs6000_reg_names[114][0],	/* fpscr */				\
 }
 
 /* Table of additional register names to use in user input.  */

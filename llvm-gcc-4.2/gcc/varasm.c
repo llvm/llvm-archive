@@ -1432,7 +1432,9 @@ assemble_start_function (tree decl, const char *fnname)
   if (flag_reorder_blocks_and_partition)
     {
       switch_to_section (unlikely_text_section ());
-      assemble_align (FUNCTION_BOUNDARY);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+      assemble_align (DECL_ALIGN (decl));
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
       ASM_OUTPUT_LABEL (asm_out_file, cfun->cold_section_label);
 
       /* When the function starts with a cold section, we need to explicitly
@@ -1442,7 +1444,9 @@ assemble_start_function (tree decl, const char *fnname)
 	  && BB_PARTITION (ENTRY_BLOCK_PTR->next_bb) == BB_COLD_PARTITION)
 	{
 	  switch_to_section (text_section);
-	  assemble_align (FUNCTION_BOUNDARY);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	  assemble_align (DECL_ALIGN (decl));
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 	  ASM_OUTPUT_LABEL (asm_out_file, cfun->hot_section_label);
 	  hot_label_written = true;
 	  first_function_block_is_cold = true;
@@ -1909,7 +1913,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
   /* APPLE LOCAL begin zerofill 20020218 --turly  */
 #ifdef ASM_OUTPUT_ZEROFILL
   /* We need a ZEROFILL COALESCED option!  */
-  if (!DECL_COMMON (decl)
+  if ((sect->common.flags & SECTION_COMMON) == 0
       && ! dont_output_data
       && ! DECL_ONE_ONLY (decl)
       && ! DECL_WEAK (decl)
@@ -2455,7 +2459,12 @@ decode_addr_const (tree exp, struct addr_const *value)
 {
   tree target = TREE_OPERAND (exp, 0);
   int offset = 0;
-  rtx x;
+  /* APPLE LOCAL begin handle CONST_DECLs 5494472 */
+  rtx x = NULL_RTX;
+
+  if (TREE_CODE (target) == CONST_DECL)
+    target = DECL_INITIAL (target);
+  /* APPLE LOCAL end handle CONST_DECLs 5494472 */
 
   while (1)
     {

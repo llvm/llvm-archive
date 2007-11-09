@@ -455,4 +455,19 @@
   (and (match_code "const_int")
        (match_test "((unsigned HOST_WIDE_INT) INTVAL (op)) < 64")))
 
+;; APPLE LOCAL begin ARM pic support
+;; Allow local symbols and stub references
+(define_predicate "arm_branch_target"
+  (match_code "reg,symbol_ref")
+{
+#if TARGET_MACHO
+  return GET_CODE (op) == REG
+         || ! (flag_pic || MACHO_DYNAMIC_NO_PIC_P)
+         || machopic_data_defined_p (op)
+         || machopic_lookup_stub_or_non_lazy_ptr (XSTR (op, 0));
+#else
+  return 1;
+#endif
+})
+;; APPLE LOCAL end ARM pic support
 

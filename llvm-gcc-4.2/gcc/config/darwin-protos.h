@@ -21,6 +21,8 @@ Boston, MA 02110-1301, USA.  */
 extern void darwin_init_sections (void);
 extern int name_needs_quotes (const char *);
 
+/* APPLE LOCAL ARM pic support */
+extern int machopic_lookup_stub_or_non_lazy_ptr (const char *);
 extern void machopic_validate_stub_or_non_lazy_ptr (const char *);
 
 extern const char *machopic_function_base_name (void);
@@ -42,6 +44,8 @@ extern rtx machopic_legitimize_pic_address (rtx, enum machine_mode, rtx);
 
 extern void machopic_asm_out_constructor (rtx, int);
 extern void machopic_asm_out_destructor (rtx, int);
+/* APPLE LOCAL ARM pic support */
+extern int machopic_data_defined_p (rtx sym_ref);
 #endif /* RTX_CODE */
 
 #ifdef TREE_CODE

@@ -3487,6 +3487,21 @@ merge_functions (tree s1, tree s2)
   return s1;
 }
 
+/* APPLE LOCAL begin C++ using lookup 4329536 */
+static bool
+same_entity (tree e1, tree e2)
+{
+  /* Should we just call decls_match instead?  */
+  if (e1 == e2)
+    return true;
+  if (TREE_CODE (e1) == TYPE_DECL
+      && decls_match (e1, e2))
+    return true;
+
+  return false;
+}
+/* APPLE LOCAL end C++ using lookup 4329536 */
+
 /* This should return an error not all definitions define functions.
    It is not an error if we find two functions with exactly the
    same signature, only if these are selected in overload resolution.
@@ -3534,7 +3549,8 @@ ambiguous_decl (tree name, struct scope_binding *old, cxx_binding *new,
 
   if (!old->value)
     old->value = val;
-  else if (val && val != old->value)
+  /* APPLE LOCAL C++ using lookup 4329536 */
+  else if (val && !same_entity (val, old->value))
     {
       if (is_overloaded_fn (old->value) && is_overloaded_fn (val))
 	old->value = merge_functions (old->value, val);

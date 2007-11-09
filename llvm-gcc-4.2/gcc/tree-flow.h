@@ -807,9 +807,6 @@ bool empty_block_p (basic_block);
 
 /* In tree-ssa-loop*.c  */
 
-/* APPLE LOCAL begin loops-to-memset  */
-void tree_ssa_memset (struct loops *);
-/* APPLE LOCAL end loops-to-memset  */
 void tree_ssa_lim (struct loops *);
 unsigned int tree_ssa_unswitch_loops (struct loops *);
 unsigned int canonicalize_induction_variables (struct loops *);

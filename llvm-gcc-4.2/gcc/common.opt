@@ -770,12 +770,6 @@ fpack-struct
 Common Report Var(flag_pack_struct)
 Pack structure members together without holes
 
-; APPLE LOCAL begin pascal strings
-fpascal-strings
-Common
-Allow Pascal-style string literals
-; APPLE LOCAL end pascal strings
-
 fpack-struct=
 Common RejectNegative Joined UInteger
 -fpack-struct=<number>	Set initial maximum structure member alignment

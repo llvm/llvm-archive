@@ -114,6 +114,10 @@ extern rtx rs6000_machopic_legitimize_pic_address (rtx, enum machine_mode,
 #ifdef TREE_CODE
 extern unsigned int rs6000_special_round_type_align (tree, unsigned int,
 						     unsigned int);
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+extern unsigned int darwin_rs6000_special_round_type_align (tree, unsigned int,
+							    unsigned int);
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 extern void function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode,
 				  tree, int, int);
 extern int function_arg_boundary (enum machine_mode, tree);
@@ -160,6 +164,8 @@ extern void rs6000_conditional_register_usage (void);
 extern tree rs6000_fold_builtin (tree, tree, bool);
 /* APPLE LOCAL CW asm blocks */
 extern const char *rs6000_iasm_register_name (const char *, char *);
+/* APPLE LOCAL 3399553 */
+extern void rs6000_expand_flt_rounds (rtx);
 
 /* Declare functions in rs6000-c.c */
 

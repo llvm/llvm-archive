@@ -199,6 +199,8 @@ static tree fold_builtin_sprintf_chk (tree, enum built_in_function);
 static tree fold_builtin_printf (tree, tree, bool, enum built_in_function);
 static tree fold_builtin_fprintf (tree, tree, bool, enum built_in_function);
 static bool init_target_chars (void);
+/* APPLE LOCAL 3399553 */
+static rtx expand_builtin_flt_rounds (void);
 
 static unsigned HOST_WIDE_INT target_newline;
 static unsigned HOST_WIDE_INT target_percent;
@@ -319,9 +321,9 @@ get_pointer_alignment (tree exp, unsigned int max_align)
 	      else if (offset)
 		inner = MIN (inner, BITS_PER_UNIT);
 	    }
-	  if (TREE_CODE (exp) == FUNCTION_DECL)
-	    align = FUNCTION_BOUNDARY;
-	  else if (DECL_P (exp))
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	  if (DECL_P (exp))
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 	    align = MIN (inner, DECL_ALIGN (exp));
 #ifdef CONSTANT_ALIGNMENT
 	  else if (CONSTANT_CLASS_P (exp))
@@ -595,14 +597,21 @@ expand_builtin_return_addr (enum built_in_function fndecl_code, int count)
       tem = copy_to_reg (tem);
     }
 
+  /* APPLE LOCAL begin ARM reliable backtraces */
   /* For __builtin_frame_address, return what we've got.  But, on
      the SPARC for example, we may have to add a bias.  */
   if (fndecl_code == BUILT_IN_FRAME_ADDRESS)
+    {
+      current_function_calls_builtin_frame_addr = 1;
 #ifdef FRAME_ADDR_RTX
-    return FRAME_ADDR_RTX (tem);
+      return FRAME_ADDR_RTX (tem);
 #else
-    return tem;
+      return tem;
 #endif
+    }
+  else
+    current_function_calls_builtin_ret_addr = 1;
+  /* APPLE LOCAL begin ARM reliable backtraces */
 
   /* For __builtin_return_address, get the return address from that frame.  */
 #ifdef RETURN_ADDR_RTX
@@ -690,12 +699,18 @@ expand_builtin_setjmp_receiver (rtx receiver_label ATTRIBUTE_UNUSED)
 #ifdef HAVE_nonlocal_goto
   if (! HAVE_nonlocal_goto)
 #endif
+/* APPLE LOCAL begin ARM reliable backtraces */
+/* If we have chosen a different definition of
+   builtin_setjmp_frame_value, then it's up to us to manually restore
+   it as needed in builtin_setjmp_receiver.  */
+  if (targetm.builtin_setjmp_frame_value () == virtual_stack_vars_rtx)
     {
       emit_move_insn (virtual_stack_vars_rtx, hard_frame_pointer_rtx);
       /* This might change the hard frame pointer in ways that aren't
 	 apparent to early optimization passes, so force a clobber.  */
       emit_insn (gen_rtx_CLOBBER (VOIDmode, hard_frame_pointer_rtx));
     }
+/* APPLE LOCAL end ARM reliable backtraces */
 
 #if ARG_POINTER_REGNUM != HARD_FRAME_POINTER_REGNUM
   if (fixed_regs[ARG_POINTER_REGNUM])
@@ -4272,8 +4287,10 @@ std_gimplify_va_arg_expr (tree valist, tree type, tree *pre_p, tree *post_p)
 
   /* va_list pointer is aligned to PARM_BOUNDARY.  If argument actually
      requires greater alignment, we must perform dynamic alignment.  */
+  /* APPLE LOCAL begin unbreak ppc64 abi 5103220 */
   if (boundary > align
-      && !integer_zerop (TYPE_SIZE (type)))
+      /* && !integer_zerop (TYPE_SIZE (type)) */)
+  /* APPLE LOCAL end unbreak ppc64 abi 5103220 */
     {
       t = fold_convert (TREE_TYPE (valist), size_int (boundary - 1));
       t = build2 (MODIFY_EXPR, TREE_TYPE (valist), valist_tmp,
@@ -4589,6 +4606,11 @@ expand_builtin_alloca (tree arglist, rtx target)
   /* Allocate the desired space.  */
   result = allocate_dynamic_stack_space (op0, target, BITS_PER_UNIT);
   result = convert_memory_address (ptr_mode, result);
+
+  /* APPLE LOCAL begin ARM 5051776 */
+  /* EH with sjlj needs to know when the stack layout has changed.  */
+  emit_note (NOTE_INSN_ALLOCA);
+  /* APPLE LOCAL end ARM 5051776 */
 
   return result;
 }
@@ -6508,6 +6530,11 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
     case BUILT_IN_VSPRINTF_CHK:
       maybe_emit_sprintf_chk_warning (exp, fcode);
       break;
+
+    /* APPLE LOCAL begin 3399553 */
+    case BUILT_IN_FLT_ROUNDS:
+      return expand_builtin_flt_rounds ();
+    /* APPLE LOCAL end 3399553 */
 
     default:	/* just do library call, if unknown builtin */
       break;
@@ -11314,3 +11341,26 @@ init_target_chars (void)
     }
   return true;
 }
+
+/* APPLE LOCAL begin 3399553 */
+
+/* Evaluate FLT_ROUNDS, whose value is dependent upon the current
+   rounding mode and which may be changed by a call to fesetround.  */
+
+static rtx
+expand_builtin_flt_rounds (void)
+{
+#ifdef HAVE_flt_rounds
+  if (HAVE_flt_rounds)
+    {
+      rtx target = gen_reg_rtx (TYPE_MODE (integer_type_node));
+      emit_insn (gen_flt_rounds (target));
+      return target;
+    }
+  else
+#endif
+  /* Default: round to nearest.  */
+  return const1_rtx;
+}
+/* APPLE LOCAL end 3399553 */
+

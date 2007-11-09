@@ -41,7 +41,8 @@
 #ifdef L_negsf2
 	
 ARM_FUNC_START negsf2
-ARM_FUNC_ALIAS aeabi_fneg negsf2
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fneg,negsf2)
 
 	eor	r0, r0, #0x80000000	@ flip sign bit
 	RET
@@ -59,7 +60,8 @@ ARM_FUNC_START aeabi_frsub
 	b	1f
 
 ARM_FUNC_START subsf3
-ARM_FUNC_ALIAS aeabi_fsub subsf3
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fsub,subsf3)
 
 	eor	r1, r1, #0x80000000	@ flip sign bit of second arg
 #if defined(__INTERWORKING_STUBS__)
@@ -67,7 +69,8 @@ ARM_FUNC_ALIAS aeabi_fsub subsf3
 #endif
 
 ARM_FUNC_START addsf3
-ARM_FUNC_ALIAS aeabi_fadd addsf3
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fadd,addsf3)
 
 1:	@ Look for zeroes, equal values, INF, or NAN.
 	movs	r2, r0, lsl #1
@@ -269,13 +272,15 @@ LSYM(Lad_i):
 	FUNC_END subsf3
 
 ARM_FUNC_START floatunsisf
-ARM_FUNC_ALIAS aeabi_ui2f floatunsisf
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_ui2f,floatunsisf)
 		
 	mov	r3, #0
 	b	1f
 
 ARM_FUNC_START floatsisf
-ARM_FUNC_ALIAS aeabi_i2f floatsisf
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_i2f,floatsisf)
 	
 	ands	r3, r0, #0x80000000
 	rsbmi	r0, r0, #0
@@ -286,9 +291,11 @@ ARM_FUNC_ALIAS aeabi_i2f floatsisf
 	@ Add initial exponent to sign
 	orr	r3, r3, #((127 + 23) << 23)
 
-	.ifnc	ah, r0
+	/* APPLE LOCAL begin ARM MACH assembler */
+#ifndef __ARMEB__
 	mov	ah, r0
-	.endif
+#endif
+	/* APPLE LOCAL end ARM MACH assembler */
 	mov	al, #0
 	b	2f
 
@@ -298,7 +305,8 @@ ARM_FUNC_ALIAS aeabi_i2f floatsisf
 	FUNC_END floatunsisf
 
 ARM_FUNC_START floatundisf
-ARM_FUNC_ALIAS aeabi_ul2f floatundisf
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_ul2f,floatundisf)
 
 	orrs	r2, r0, r1
 #if !defined (__VFP_FP__) && !defined(__SOFTFP__)
@@ -310,7 +318,8 @@ ARM_FUNC_ALIAS aeabi_ul2f floatundisf
 	b	1f
 
 ARM_FUNC_START floatdisf
-ARM_FUNC_ALIAS aeabi_l2f floatdisf
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_l2f,floatdisf)
 
 	orrs	r2, r0, r1
 #if !defined (__VFP_FP__) && !defined(__SOFTFP__)
@@ -403,7 +412,8 @@ LSYM(f0_ret):
 #ifdef L_muldivsf3
 
 ARM_FUNC_START mulsf3
-ARM_FUNC_ALIAS aeabi_fmul mulsf3
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fmul,mulsf3)
 
 	@ Mask out exponents, trap any zero/denormal/INF/NAN.
 	mov	ip, #0xff
@@ -592,7 +602,8 @@ LSYM(Lml_n):
 	FUNC_END mulsf3
 
 ARM_FUNC_START divsf3
-ARM_FUNC_ALIAS aeabi_fdiv divsf3
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fdiv,divsf3)
 
 	@ Mask out exponents, trap any zero/denormal/INF/NAN.
 	mov	ip, #0xff
@@ -739,18 +750,22 @@ LSYM(Ldv_s):
 	@   ip, r0, r1, r2, r3
 
 ARM_FUNC_START gtsf2
-ARM_FUNC_ALIAS gesf2 gtsf2
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(gesf2,gtsf2)
 	mov	ip, #-1
 	b	1f
 
 ARM_FUNC_START ltsf2
-ARM_FUNC_ALIAS lesf2 ltsf2
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(lesf2,ltsf2)
 	mov	ip, #1
 	b	1f
 
 ARM_FUNC_START cmpsf2
-ARM_FUNC_ALIAS nesf2 cmpsf2
-ARM_FUNC_ALIAS eqsf2 cmpsf2
+/* APPLE LOCAL begin ARM MACH assembler */
+ARM_FUNC_ALIAS(nesf2,cmpsf2)
+ARM_FUNC_ALIAS(eqsf2,cmpsf2)
+/* APPLE LOCAL end ARM MACH assembler */
 	mov	ip, #1			@ how should we specify unordered here?
 
 1:	str	ip, [sp, #-4]
@@ -802,7 +817,8 @@ ARM_FUNC_START aeabi_cfrcmple
 	b	6f
 
 ARM_FUNC_START aeabi_cfcmpeq
-ARM_FUNC_ALIAS aeabi_cfcmple aeabi_cfcmpeq
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_cfcmple,aeabi_cfcmpeq)
 
 	@ The status-returning routines are required to preserve all
 	@ registers except ip, lr, and cpsr.
@@ -813,7 +829,8 @@ ARM_FUNC_ALIAS aeabi_cfcmple aeabi_cfcmpeq
 	@ Clear the C flag if the return value was -1, indicating
 	@ that the first operand was smaller than the second.
 	cmnmi	 r0, #0
-	RETLDM  "r0, r1, r2, r3"
+	/* APPLE LOCAL ARM MACH assembler */
+	RETLDM1(r0, r1, r2, r3)
 
 	FUNC_END aeabi_cfcmple
 	FUNC_END aeabi_cfcmpeq
@@ -875,7 +892,8 @@ ARM_FUNC_START	aeabi_fcmpgt
 #ifdef L_unordsf2
 
 ARM_FUNC_START unordsf2
-ARM_FUNC_ALIAS aeabi_fcmpun unordsf2
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_fcmpun,unordsf2)
 
 	mov	r2, r0, lsl #1
 	mov	r3, r1, lsl #1
@@ -900,7 +918,8 @@ ARM_FUNC_ALIAS aeabi_fcmpun unordsf2
 #ifdef L_fixsfsi
 
 ARM_FUNC_START fixsfsi
-ARM_FUNC_ALIAS aeabi_f2iz fixsfsi
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_f2iz,fixsfsi)
 
 	@ check exponent range.
 	mov	r2, r0, lsl #1
@@ -940,7 +959,8 @@ ARM_FUNC_ALIAS aeabi_f2iz fixsfsi
 #ifdef L_fixunssfsi
 
 ARM_FUNC_START fixunssfsi
-ARM_FUNC_ALIAS aeabi_f2uiz fixunssfsi
+/* APPLE LOCAL ARM MACH assembler */
+ARM_FUNC_ALIAS(aeabi_f2uiz,fixunssfsi)
 
 	@ check exponent range.
 	movs	r2, r0, lsl #1

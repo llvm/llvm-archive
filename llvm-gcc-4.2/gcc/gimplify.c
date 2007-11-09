@@ -5621,16 +5621,6 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
 	case MISALIGNED_INDIRECT_REF:
 	  ret = gimplify_expr (&TREE_OPERAND (*expr_p, 0), pre_p, post_p,
 			       is_gimple_reg, fb_rvalue);
-
-	  /* APPLE LOCAL begin Radar 4124724 */
-	  /* Useless type conversions may have been discarded, so ensure
-	     that the INDIRECT_REF has a type corresponding to the pointee
-	     type of its operand.  */
-	  if (TREE_CODE (*expr_p) == INDIRECT_REF)
-	    TREE_TYPE (*expr_p)
-	      = TREE_TYPE (TREE_TYPE (TREE_OPERAND (*expr_p, 0)));
-	  /* APPLE LOCAL end Radar 4124724 */
-
 	  recalculate_side_effects (*expr_p);
 	  break;
 

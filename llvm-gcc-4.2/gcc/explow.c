@@ -1140,10 +1140,30 @@ allocate_dynamic_stack_space (rtx size, rtx target, int known_align)
 #endif
 
   if (MUST_ALIGN)
+  /* APPLE LOCAL begin radar 5155743, mainline candidate */
+  {  
+    /* Reserve space for the outgoing args and register saved area
+       whose information is available from STACK_DYNAMIC_OFFEST of
+       the current function. 
+       The stack pointer is saved on the stack before being changed
+       for alloca. If setjmp is called before alloca, the old stack
+       pointer will be used when longjmp returns.
+    */
+#if defined (STACK_DYNAMIC_OFFSET)
+    if (current_function_calls_setjmp
+        && targetm.have_dynamic_stack_space)
+      size = gen_rtx_PLUS (GET_MODE (size), size,
+        gen_rtx_CONST_INT (GET_MODE (size),
+        abs (STACK_DYNAMIC_OFFSET (current_function_decl))));
+#endif
+    /* APPLE LOCAL end radar 5155743, mainline candidate */
     size
       = force_operand (plus_constant (size,
 				      BIGGEST_ALIGNMENT / BITS_PER_UNIT - 1),
 		       NULL_RTX);
+  /* APPLE LOCAL begin radar 5155743, mainline candidate */
+  }
+  /* APPLE LOCAL end radar 5155743, mainline candidate */
 
 #ifdef SETJMP_VIA_SAVE_AREA
   /* If setjmp restores regs from a save area in the stack frame,

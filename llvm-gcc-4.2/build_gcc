@@ -123,6 +123,7 @@ rm -rf $SRC_DIR/libstdc++-v3 || exit 1
 rm -f /usr/lib/gcc/*/4.0.0/specs
 
 # These are the configure and build flags that are used.
+# LLVM LOCAL begin - FIXME: Disable multilibs
 CONFIGFLAGS="--disable-checking -enable-werror \
   --disable-multilib \
   --prefix=$DEST_ROOT \
@@ -132,6 +133,7 @@ CONFIGFLAGS="--disable-checking -enable-werror \
   --with-gxx-include-dir=\${prefix}/include/c++/$LIBSTDCXX_VERSION \
   --with-slibdir=/usr/lib \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
+# LLVM LOCAL end - FIXME: Disable multilibs
 
 # LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then

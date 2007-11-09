@@ -1,3 +1,96 @@
+2007-11-05  Josh Conner  <jconner@apple.com>
+
+	Radar 5569420
+	* objc-act.c (build_objc_method_call): Use aggregate_value_p
+	to determine dispatch mechanism.
+
+2007-10-26  Josh Conner  <jconner@apple.com>
+
+	Radar 5562046
+	* objc-act.c (generate_v2_shared_structures): Fix signedness
+	mismatch.
+
+2007-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4947311
+	* objc-act.c (objc_start_protocol): Takes attribute list as new argument
+	(start_protocol): Takes attribute list as new argument and
+	Sets protocol's PROTOCOL_ATTRIBUTES field.
+	(objc_declare_protocols): Ditto.
+	(objc_handle_protocol_attrs): New routine to warn on 'deprecated' and
+	'unavailable' protocols.
+	(lookup_and_install_protocols): Call objc_handle_protocol_attrs to warn
+	on protocol attributes.
+	* objc-act.h (PROTOCOL_ATTRIBUTES): Macro for protocol's attributes.
+	
+2007-08-21  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5424473
+	* objc-act.c (start_method_def): Exclude +finalize from
+	warning issuance (was radar 4757423).
+
+2007-08-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5422751
+	* objc-act.c (objc_protocol_implementation): Function removed.
+
+2007-08-17  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5376125 (64bit abi)
+	* objc-act.c (objc_property_access_info): Warning check for 32bit abi only.
+	(objc_v2_build_ivar_ref): Warning for 64bit abi.
+
+2007-08-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 3533972
+	* objc-act.c (objc_finish_message_expr): Do the receiver type
+	conversion if user has provided one.
+
+2007-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5409313
+	* objc-act.c (objc_build_selector_expr): Diagnose empty @selector
+	directive.
+
+2007-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5407792
+	* objc-act.c (objc_v2_encode_prop_attr): Add 'N' for nonatomic
+	property attribute encoding.
+
+2007-08-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5376125
+        * objc-act.c (objc_warn_direct_ivar_access): New
+        (objc_build_getter_call): Warn if 'ivar' accessed outside
+        property context.
+        (objc_synthesize_new_getter): Turn off above warning if 'ivar' is
+        accessed for getter synthesis.
+        (objc_synthesize_new_setter): Turn off above warning if 'ivar' is
+        accessed for setter synthesis.
+
+2007-08-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5398274
+        * objc-act.c (objc_synthesize_new_setter): Set 'used' flag 
+        on '_value' argument when doing lhs = _value;
+
+2007-08-08  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5389292
+	* objc-act.c (objc_declare_property_impl): For ivar decl. get the 
+	underlying bitfield type for comparison.
+
+2007-08-07  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5390587
+	* objc-act.c (objc_build_property_reference_expr): Preserve the original
+	receiver.property_name information.
+	(objc_resolve_build_property_setter_name): Get 'setter' name from original property name.
+	(objc_finish_message_expr): return error_mark_node on error.
+	(finish_class): Set property context field only when new getter is
+	introduced (but not when existing one is found).
+
 2007-07-31  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5259868

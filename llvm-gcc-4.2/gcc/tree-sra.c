@@ -1561,7 +1561,6 @@ decide_block_copy (struct sra_elt *elt)
 
       /* Groups behave like their parent.  */
       for (c = elt->groups; c; c = c->sibling)
-	/* APPLE LOCAL MERGE FIXME like this? */
 	/* APPLE LOCAL 4158356 PR 22156/22157 */
 	c->how_to_copy = how_to_copy;
 

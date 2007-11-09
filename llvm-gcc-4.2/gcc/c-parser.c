@@ -661,6 +661,8 @@ c_token_starts_declspecs (c_token *token)
 	{
 	case RID_STATIC:
 	case RID_EXTERN:
+	  /* APPLE LOCAL private extern 5487726 */
+	case RID_PRIVATE_EXTERN:
 	case RID_REGISTER:
 	case RID_TYPEDEF:
 	case RID_INLINE:
@@ -1162,7 +1164,8 @@ static void c_parser_objc_class_definition (c_parser *, tree);
 static void c_parser_objc_class_instance_variables (c_parser *);
 static void c_parser_objc_class_declaration (c_parser *);
 static void c_parser_objc_alias_declaration (c_parser *);
-static void c_parser_objc_protocol_definition (c_parser *);
+/* APPLE LOCAL radar 4947311 - protocol attributes */
+static void c_parser_objc_protocol_definition (c_parser *, tree);
 static enum tree_code c_parser_objc_method_type (c_parser *);
 static void c_parser_objc_method_definition (c_parser *);
 /* APPLE LOCAL C* property (Radar 4436866) (in 4.2 b) */
@@ -1279,8 +1282,10 @@ c_parser_external_declaration (c_parser *parser)
 	  break;
 	case RID_AT_PROTOCOL:
 	  gcc_assert (c_dialect_objc ());
-	  c_parser_objc_protocol_definition (parser);
+	  /* APPLE LOCAL begin radar 4947311 - protocol attributes */
+	  c_parser_objc_protocol_definition (parser, NULL_TREE);
 	  break;
+	  /* APPLE LOCAL end radar 4947311 - protocol attributes */
 	  /* APPLE LOCAL begin C* property (Radar 4436866) (in 4.2 x) */
 	case RID_AT_PROPERTY:
 	  c_parser_objc_property_declaration (parser);
@@ -1437,6 +1442,17 @@ c_parser_declaration_or_fndef (c_parser *parser, bool fndef_ok, bool empty_ok,
       return;
     }
   /* APPLE LOCAL end radar 4548636 - class attributes. */
+  /* APPLE LOCAL begin radar 4947311 - protocol attributes */
+  else if (c_parser_next_token_is_keyword (parser, RID_AT_PROTOCOL))
+    {
+      gcc_assert (c_dialect_objc ());
+      if (!specs->declspecs_seen_p || specs->attrs == NULL_TREE
+	  || specs->type_seen_p || specs->non_sc_seen_p)
+	c_parser_error (parser, "no type or storage class may be specified here");
+      c_parser_objc_protocol_definition (parser, specs->attrs);
+      return;
+    }
+  /* APPLE LOCAL end radar 4947311 - protocol attributes */
   pending_xref_error ();
   prefix_attrs = specs->attrs;
   all_prefix_attrs = prefix_attrs;
@@ -3091,6 +3107,8 @@ c_parser_attributes (c_parser *parser)
 		case RID_LONG:
 		case RID_CONST:
 		case RID_EXTERN:
+		  /* APPLE LOCAL private extern 5487726 */
+		case RID_PRIVATE_EXTERN:
 		case RID_REGISTER:
 		case RID_TYPEDEF:
 		case RID_SHORT:
@@ -4056,6 +4074,7 @@ c_parser_statement_after_labels (c_parser *parser)
 	{
 	  iasm_state = iasm_asm;
 	  inside_iasm_block = true;
+	  iasm_kill_regs = true;
 	  iasm_in_decl = false;
 	  c_parser_iasm_line_seq_opt (parser);
 	  stmt = NULL_TREE;
@@ -4201,16 +4220,25 @@ c_parser_switch_statement (c_parser *parser)
 /* Parse a while statement (C90 6.6.5, C99 6.8.5).
 
    while-statement:
-      while (expression) statement
+   APPLE LOCAL begin for-fsf-4_4 3274130 5295549
+      while attributes (expression) statement
+
+   The use of attributes is a GNU extension.
+   APPLE LOCAL end for-fsf-4_4 3274130 5295549
 */
 
 static void
 c_parser_while_statement (c_parser *parser)
 {
-  tree block, cond, body, save_break, save_cont;
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  tree block, cond, body, save_break, save_cont, attrs;
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   location_t loc;
   gcc_assert (c_parser_next_token_is_keyword (parser, RID_WHILE));
   c_parser_consume_token (parser);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  attrs = c_parser_attributes (parser);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   block = c_begin_compound_stmt (flag_isoc99);
   loc = c_parser_peek_token (parser)->location;
   cond = c_parser_paren_condition (parser);
@@ -4219,7 +4247,10 @@ c_parser_while_statement (c_parser *parser)
   save_cont = c_cont_label;
   c_cont_label = NULL_TREE;
   body = c_parser_c99_block_statement (parser);
-  c_finish_loop (loc, cond, NULL, body, c_break_label, c_cont_label, true);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  c_finish_loop (loc, cond, NULL, body, c_break_label, c_cont_label, attrs,
+		 true);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
   c_break_label = save_break;
   c_cont_label = save_cont;
@@ -4228,16 +4259,25 @@ c_parser_while_statement (c_parser *parser)
 /* Parse a do statement (C90 6.6.5, C99 6.8.5).
 
    do-statement:
-     do statement while ( expression ) ;
+   APPLE LOCAL begin for-fsf-4_4 3274130 5295549
+     do attributes statement while ( expression ) ;
+
+   The use of attributes is a GNU extension.
+   APPLE LOCAL end for-fsf-4_4 3274130 5295549
 */
 
 static void
 c_parser_do_statement (c_parser *parser)
 {
-  tree block, cond, body, save_break, save_cont, new_break, new_cont;
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  tree block, cond, body, save_break, save_cont, new_break, new_cont, attrs;
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   location_t loc;
   gcc_assert (c_parser_next_token_is_keyword (parser, RID_DO));
   c_parser_consume_token (parser);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  attrs = c_parser_attributes (parser);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   block = c_begin_compound_stmt (flag_isoc99);
   loc = c_parser_peek_token (parser)->location;
   save_break = c_break_label;
@@ -4253,18 +4293,26 @@ c_parser_do_statement (c_parser *parser)
   cond = c_parser_paren_condition (parser);
   if (!c_parser_require (parser, CPP_SEMICOLON, "expected %<;%>"))
     c_parser_skip_to_end_of_block_or_statement (parser);
-  c_finish_loop (loc, cond, NULL, body, new_break, new_cont, false);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  c_finish_loop (loc, cond, NULL, body, new_break, new_cont, attrs, false);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
 }
 
 /* Parse a for statement (C90 6.6.5, C99 6.8.5).
 
    for-statement:
-     for ( expression[opt] ; expression[opt] ; expression[opt] ) statement
-     for ( nested-declaration expression[opt] ; expression[opt] ) statement
+   APPLE LOCAL begin for-fsf-4_4 3274130 5295549
+     for attributes ( expression[opt] ; expression[opt] ; expression[opt] ) \
+         statement
+     for attributes ( nested-declaration expression[opt] ; expression[opt] ) \
+         statement
 
    The form with a declaration is new in C99.
 
+   The use of attributes is a GNU extension.
+
+   APPLE LOCAL end for-fsf-4_4 3274130 5295549
    ??? In accordance with the old parser, the declaration may be a
    nested function, which is then rejected in check_for_loop_decls,
    but does it make any sense for this to be included in the grammar?
@@ -4276,13 +4324,18 @@ c_parser_do_statement (c_parser *parser)
 static void
 c_parser_for_statement (c_parser *parser)
 {
-  tree block, cond, incr, save_break, save_cont, body;
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  tree block, cond, incr, save_break, save_cont, body, attrs;
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   location_t loc;
   /* APPLE LOCAL radar 4708210 (for_objc_collection in 4.2) */
   bool foreach_p = false;
   gcc_assert (c_parser_next_token_is_keyword (parser, RID_FOR));
   loc = c_parser_peek_token (parser)->location;
   c_parser_consume_token (parser);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+  attrs = c_parser_attributes (parser);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   /* APPLE LOCAL radar 4472881 (in 4.2 ah) */
   block = c_begin_compound_stmt (flag_isoc99 || c_dialect_objc ());
   if (c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
@@ -4399,7 +4452,10 @@ c_parser_for_statement (c_parser *parser)
   if (foreach_p)
     objc_finish_foreach_loop (loc, cond, body, c_break_label, c_cont_label);
   else
-    c_finish_loop (loc, cond, incr, body, c_break_label, c_cont_label, true);
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+    c_finish_loop (loc, cond, incr, body, c_break_label, c_cont_label, attrs,
+		   true);
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   /* APPLE LOCAL end radar 4708210 (for_objc_collection in 4.2) */
   /* APPLE LOCAL radar 4472881 (in 4.2 ai) */
   add_stmt (c_end_compound_stmt (block, flag_isoc99 || c_dialect_objc ()));
@@ -4461,17 +4517,18 @@ c_parser_asm_statement (c_parser *parser)
 	{
 	  c_parser_skip_until_found (parser, CPP_CLOSE_BRACE, NULL);
 	  c_parser_error (parser, "asm blocks not enabled, use `-fasm-blocks'");
+ 	  iasm_state = iasm_none;
 	}
       return NULL_TREE;
     }
   if (quals == NULL_TREE
       && (c_parser_next_token_is (parser, CPP_DOT)
-	  || c_parser_next_token_is (parser, CPP_ATSIGN)
-	  || c_parser_next_token_is (parser, CPP_NAME)
-	  || c_parser_next_token_is_keyword (parser, RID_ASM)
-	  || c_parser_next_token_is (parser, CPP_SEMICOLON)
-	  || (c_parser_iasm_bol (parser)
-	      && ! c_parser_next_token_is (parser, CPP_OPEN_PAREN))))
+ 	  || c_parser_next_token_is (parser, CPP_ATSIGN)
+ 	  || c_parser_next_token_is (parser, CPP_NAME)
+ 	  || c_parser_next_token_is_keyword (parser, RID_ASM)
+ 	  || c_parser_next_token_is (parser, CPP_SEMICOLON)
+ 	  || (c_parser_iasm_bol (parser)
+ 	      && ! c_parser_next_token_is (parser, CPP_OPEN_PAREN))))
     {
       if (flag_iasm_blocks)
 	c_parser_iasm_top_statement (parser);
@@ -5869,6 +5926,29 @@ c_parser_postfix_expression (c_parser *parser)
 	      expr.original_code = ERROR_MARK;
 	      break;
 	    }
+	  /* (in 4.2 be) */
+	  if (c_parser_next_token_is (parser, CPP_ATSIGN))
+	    {
+	      tree id;
+	      location_t loc = c_parser_peek_token (parser)->location;
+	      c_parser_consume_token (parser);
+	      if (c_parser_peek_token (parser)->id_kind != C_ID_ID)
+		{
+		  c_parser_error (parser, "expected identifier");
+		  expr.value = error_mark_node;
+		  expr.original_code = ERROR_MARK;
+		  break;
+		}
+
+	      id = c_parser_peek_token (parser)->value;
+	      c_parser_consume_token (parser);
+	      id = prepend_char_identifier (id, '@');
+	      expr.value = build_external_ref (id,
+					       (c_parser_peek_token (parser)->type
+						== CPP_OPEN_PAREN), loc);
+	      expr.original_code = ERROR_MARK;
+	      break;
+	    }
 	}
       /* APPLE LOCAL end CW asm blocks */
       c_parser_error (parser, "expected expression");
@@ -6152,14 +6232,6 @@ c_parser_objc_class_definition (c_parser *parser, tree prefix_attrs)
   else
     gcc_unreachable ();
   c_parser_consume_token (parser);
-  /* APPLE LOCAL begin radar 4533974 - ObjC new protocol (in 4.2 v) */
-  if (c_parser_next_token_is (parser, CPP_LESS))
-    {
-      tree proto = c_parser_objc_protocol_refs (parser);
-      objc_protocol_implementation (proto);
-      return;
-    }
-  /* APPLE LOCAL end radar 4533974 - ObjC new protocol (in 4.2 v) */
   if (c_parser_next_token_is_not (parser, CPP_NAME))
     {
       /* APPLE LOCAL radar 4533974 - ObjC new protocol (in 4.2 v) */
@@ -6615,7 +6687,8 @@ c_parser_objc_alias_declaration (c_parser *parser)
    omitted.  */
 
 static void
-c_parser_objc_protocol_definition (c_parser *parser)
+/* APPLE LOCAL radar 4947311 - protocol attributes */
+c_parser_objc_protocol_definition (c_parser *parser, tree attributes)
 {
   gcc_assert (c_parser_next_token_is_keyword (parser, RID_AT_PROTOCOL));
   c_parser_consume_token (parser);
@@ -6647,7 +6720,8 @@ c_parser_objc_protocol_definition (c_parser *parser)
 	    break;
 	}
       c_parser_skip_until_found (parser, CPP_SEMICOLON, "expected %<;%>");
-      objc_declare_protocols (list);
+      /* APPLE LOCAL radar 4947311 - protocol attributes */
+      objc_declare_protocols (list, attributes);
     }
   else
     {
@@ -6657,7 +6731,8 @@ c_parser_objc_protocol_definition (c_parser *parser)
       if (c_parser_next_token_is (parser, CPP_LESS))
 	proto = c_parser_objc_protocol_refs (parser);
       objc_pq_context = 1;
-      objc_start_protocol (id, proto);
+      /* APPLE LOCAL radar 4947311 - protocol attributes */
+      objc_start_protocol (id, proto, attributes);
       /* APPLE LOCAL C* property (Radar 4436866) (in 4.2 r) */
       c_parser_objc_interfacedecllist (parser);
       c_parser_require_keyword (parser, RID_AT_END, "expected %<@end%>");
@@ -8843,7 +8918,7 @@ c_parser_iasm_compound_statement (c_parser *parser)
 
   iasm_state = iasm_asm;
   inside_iasm_block = true;
-  iasm_clear_labels ();
+  iasm_kill_regs = true;
   stmt = c_begin_compound_stmt (true);
   /* Parse an (optional) statement-seq.  */
   c_parser_iasm_line_seq_opt (parser);
@@ -8863,7 +8938,7 @@ c_parser_iasm_top_statement (c_parser *parser)
 
   iasm_state = iasm_asm;
   inside_iasm_block = true;
-  iasm_clear_labels ();
+  iasm_kill_regs = true;
   stmt = c_begin_compound_stmt (true);
   if (!c_parser_iasm_bol (parser))
     {    
@@ -9062,6 +9137,17 @@ c_parser_iasm_operand (c_parser *parser)
 
   /* Jump into the usual operand precedence stack.  */
   operand = c_parser_binary_expression (parser, false).value;
+
+  /* (in 4.2 bd) */
+  while (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
+    {
+      struct c_expr op2;
+      c_parser_consume_token (parser);
+      op2 = c_parser_expr_no_commas (parser, NULL);
+      c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
+				 "expected %<)%>");
+      operand = iasm_build_register_offset (operand, op2.value);
+    }
 
   /* (in 4.2 bd) */
   while (c_parser_next_token_is (parser, CPP_OPEN_PAREN))

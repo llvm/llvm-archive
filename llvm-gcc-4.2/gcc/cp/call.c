@@ -5105,6 +5105,10 @@ build_over_call (struct z_candidate *cand, int flags)
         fn = (build_vfn_ref_using_vtable
               (BINFO_VTABLE (TYPE_BINFO (call_site_type)),
                DECL_VINDEX (fn)));
+	/* We have to construct something for which we can directly
+	   alter the TREE_TYPE.  We can't allow the INDIRECT_REF built
+	   above to be so altered, as that would be invalid.  */
+	fn = build1 (NOP_EXPR, t, fn);
       }
       /* APPLE LOCAL end KEXT indirect-virtual-calls --sts */
       else

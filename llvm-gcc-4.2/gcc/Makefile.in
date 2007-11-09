@@ -1044,7 +1044,7 @@ C_AND_OBJC_OBJS = attribs.o c-errors.o c-lex.o c-pragma.o c-decl.o c-typeck.o \
 C_OBJS = c-lang.o stub-objc.o $(C_AND_OBJC_OBJS)
 
 # Language-independent object files.
-# APPLE LOCAL begin lno, loops-to-memset
+# APPLE LOCAL begin loops-to-memset
 OBJS-common = \
  double-int.o tree-chrec.o tree-scalar-evolution.o tree-data-ref.o	   \
  tree-cfg.o tree-dfa.o tree-eh.o tree-ssa.o tree-optimize.o tree-gimple.o  \
@@ -1066,7 +1066,7 @@ OBJS-common = \
  cfg.o cfganal.o cfgbuild.o cfgcleanup.o cfglayout.o cfgloop.o		   \
  cfgloopanal.o cfgloopmanip.o loop-init.o loop-unswitch.o loop-unroll.o	   \
  cfgrtl.o combine.o conflict.o convert.o coverage.o cse.o cselib.o 	   \
- tree-ssa-loop-prefetch.o  tree-ssa-loop-memset.o \
+ tree-ssa-loop-prefetch.o  \
  dbxout.o ddg.o tree-ssa-loop-ch.o loop-invariant.o tree-ssa-loop-im.o	   \
  debug.o df-core.o df-problems.o df-scan.o dfp.o diagnostic.o dojump.o     \
  dominance.o loop-doloop.o	   					   \
@@ -1092,7 +1092,7 @@ OBJS-common = \
  tree-vrp.o tree-stdarg.o tree-cfgcleanup.o tree-ssa-reassoc.o		   \
  tree-ssa-structalias.o tree-object-size.o 				   \
  rtl-factoring.o
-# APPLE LOCAL end lno, loops-to-memset
+# APPLE LOCAL end loops-to-memset
 
 
 OBJS-md = $(out_object_file)
@@ -2001,20 +2001,11 @@ tree-optimize.o : opts.h
 convert.o: c-tree.h c-common.h
 # APPLE LOCAL 4133801
 langhooks.o : debug.h
-# APPLE LOCAL begin loops-to-memset
-tree-ssa-loop-memset.o : tree-ssa-loop-memset.c $(TREE_FLOW_H) $(CONFIG_H) \
-   $(SYSTEM_H) $(RTL_H) $(TREE_H) $(TM_P_H) cfgloop.h $(PARAMS_H) tree-inline.h \
-   output.h diagnostic.h $(TM_H) coretypes.h $(TREE_DUMP_H) flags.h \
-   tree-pass.h $(SCEV_H)
-# APPLE LOCAL end loops-to-memset
-# APPLE LOCAL begin lno
-tree-ssa-loop.o : $(TREE_DATA_REF_H) function.h
 tree-ssa-loop-prefetch.o : tree-ssa-loop-prefetch.c $(TREE_FLOW_H) $(CONFIG_H) \
    $(SYSTEM_H) $(RTL_H) $(TREE_H) $(TM_P_H) $(CFGLOOP_H) varray.h $(EXPR_H) \
    output.h diagnostic.h $(TIMEVAR_H) $(TM_H) coretypes.h $(TREE_DUMP_H) \
    tree-pass.h $(GGC_H) $(RECOG_H) insn-config.h $(HASHTAB_H) $(SCEV_H)
 tree-ssa-loop-manip.o : tree-inline.h $(FLAGS_H)
-# APPLE LOCAL end lno
 # APPLE LOCAL 4321079 options.h
 cfgloopmanip.o : options.h
 # APPLE LOCAL 4133801

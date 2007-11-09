@@ -335,10 +335,6 @@ extern stmt_vec_info new_stmt_vec_info (tree stmt, loop_vec_info);
 /* Main driver.  */
 extern void vectorize_loops (struct loops *);
 
-/* APPLE LOCAL begin loops-to-memset  */
-extern struct data_reference * vect_analyze_pointer_ref_access (tree, tree, bool, tree, tree *, tree *);
-extern tree vect_get_loop_niters (struct loop *, tree *);
-/* APPLE LOCAL end loops-to-memset  */
 
 /** In tree-vect-analyze.c  **/
 /* Driver for analysis stage.  */

@@ -26,6 +26,16 @@
 #ifndef GCC_ARM_H
 #define GCC_ARM_H
 
+/* APPLE LOCAL begin ARM darwin target */
+/* Overridden by arm/darwin.h, whether it is included first or not. */
+#ifndef TARGET_MACHO
+#define TARGET_MACHO 0
+#endif
+/* APPLE LOCAL end ARM darwin target */
+
+/* APPLE LOCAL ARM interworking */
+#define TARGET_INTERWORK (interwork_option == 1)
+
 /* The architecture define.  */
 extern char arm_arch_name[];
 
@@ -824,7 +834,8 @@ extern int arm_structure_size_boundary;
    backtrace structures on the stack (if required to do so via a command line
    option) using r11.  This is the only 'user visible' use of r11 as a frame
    pointer.  */
-#define ARM_HARD_FRAME_POINTER_REGNUM	11
+/* APPLE LOCAL ARM custom frame layout */
+#define ARM_HARD_FRAME_POINTER_REGNUM    7
 #define THUMB_HARD_FRAME_POINTER_REGNUM	 7
 
 #define HARD_FRAME_POINTER_REGNUM		\
@@ -887,10 +898,17 @@ extern int arm_structure_size_boundary;
 #define SUBTARGET_FRAME_POINTER_REQUIRED 0
 #endif
 
+/* APPLE LOCAL begin ARM thumb requires FP */
 #define FRAME_POINTER_REQUIRED					\
   (current_function_has_nonlocal_label				\
    || SUBTARGET_FRAME_POINTER_REQUIRED				\
-   || (TARGET_ARM && TARGET_APCS_FRAME && ! leaf_function_p ()))
+   || current_function_calls_builtin_ret_addr			\
+   || current_function_calls_builtin_frame_addr			\
+   || ! flag_omit_frame_pointer				 	\
+   || (TARGET_THUMB && ! leaf_function_p ())			\
+   || (TARGET_ARM && TARGET_APCS_FRAME && ! leaf_function_p ()) \
+   || (TARGET_ARM && regs_ever_live [LR_REGNUM]))
+/* APPLE LOCAL end ARM thumb requires FP */
 
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
@@ -1589,14 +1607,13 @@ typedef struct
    pointer.  Note we have to use {ARM|THUMB}_HARD_FRAME_POINTER_REGNUM
    because the definition of HARD_FRAME_POINTER_REGNUM is not a constant.  */
 
+/* APPLE LOCAL begin ARM custom frame layout */
 #define ELIMINABLE_REGS						\
 {{ ARG_POINTER_REGNUM,        STACK_POINTER_REGNUM            },\
- { ARG_POINTER_REGNUM,        FRAME_POINTER_REGNUM            },\
- { ARG_POINTER_REGNUM,        ARM_HARD_FRAME_POINTER_REGNUM   },\
- { ARG_POINTER_REGNUM,        THUMB_HARD_FRAME_POINTER_REGNUM },\
+ { ARG_POINTER_REGNUM,        HARD_FRAME_POINTER_REGNUM       },\
  { FRAME_POINTER_REGNUM,      STACK_POINTER_REGNUM            },\
- { FRAME_POINTER_REGNUM,      ARM_HARD_FRAME_POINTER_REGNUM   },\
- { FRAME_POINTER_REGNUM,      THUMB_HARD_FRAME_POINTER_REGNUM }}
+ { FRAME_POINTER_REGNUM,      HARD_FRAME_POINTER_REGNUM       }}
+/* APPLE LOCAL end ARM custom frame layout */
 
 /* Given FROM and TO register numbers, say whether this elimination is
    allowed.  Frame pointer elimination is automatically handled.
@@ -1608,9 +1625,12 @@ typedef struct
    ARG_POINTER_REGNUM.  */
 #define CAN_ELIMINATE(FROM, TO)						\
   (((TO) == FRAME_POINTER_REGNUM && (FROM) == ARG_POINTER_REGNUM) ? 0 :	\
-   ((TO) == STACK_POINTER_REGNUM && frame_pointer_needed) ? 0 :		\
-   ((TO) == ARM_HARD_FRAME_POINTER_REGNUM && TARGET_THUMB) ? 0 :	\
-   ((TO) == THUMB_HARD_FRAME_POINTER_REGNUM && TARGET_ARM) ? 0 :	\
+   /* APPLE LOCAL begin ARM prefer SP to FP */				\
+   ((TO) == STACK_POINTER_REGNUM					\
+            && !current_function_sp_is_unchanging) ? 0 :		\
+   /* APPLE LOCAL end ARM prefer SP to FP */				\
+   /* APPLE LOCAL ARM custom frame layout */				\
+   /* Removed lines.  */						\
    1)
 
 /* Define the offset between two registers, one to be eliminated, and the
@@ -1622,7 +1642,8 @@ typedef struct
     (OFFSET) = thumb_compute_initial_elimination_offset (FROM, TO)
 
 /* Special case handling of the location of arguments passed on the stack.  */
-#define DEBUGGER_ARG_OFFSET(value, addr) value ? value : arm_debugger_arg_offset (value, addr)
+/* APPLE LOCAL ARM prefer SP to FP */
+#define DEBUGGER_ARG_OFFSET(value, addr) arm_debugger_arg_offset (value, addr)
 
 /* Initialize data used by insn expanders.  This is called from insn_emit,
    once for every function before code is generated.  */
@@ -1648,6 +1669,10 @@ typedef struct
   assemble_aligned_integer (UNITS_PER_WORD, const0_rtx);	\
 }
 
+/* APPLE LOCAL begin ARM MACH assembler */
+#define DOT_WORD ".word"
+/* APPLE LOCAL end ARM MACH assembler */
+
 /* On the Thumb we always switch into ARM mode to execute the trampoline.
    Why - because it is easier.  This code will always be branched to via
    a BX instruction and since the compiler magically generates the address
@@ -1666,8 +1691,10 @@ typedef struct
   asm_fprintf (FILE, "\torr\t%r, %r, #1\n",     \
 	       IP_REGNUM, IP_REGNUM);     	\
   asm_fprintf (FILE, "\tbx\t%r\n", IP_REGNUM);	\
-  fprintf (FILE, "\t.word\t0\n");		\
-  fprintf (FILE, "\t.word\t0\n");		\
+  /* APPLE LOCAL begin ARM MACH assembler */	\
+  fprintf (FILE, "\t" DOT_WORD "\t0\n");	\
+  fprintf (FILE, "\t" DOT_WORD "\t0\n");	\
+  /* APPLE LOCAL end ARM MACH assembler */	\
   fprintf (FILE, "\t.code 16\n");		\
 }
 
@@ -1793,17 +1820,21 @@ typedef struct
    && (TARGET_ARM ? ARM_LEGITIMATE_CONSTANT_P (X)	\
 		  : THUMB_LEGITIMATE_CONSTANT_P (X)))
 
+/* APPLE LOCAL begin ARM longcall */
+#define SYMBOL_SHORT_CALL ((SYMBOL_FLAG_MACH_DEP) << 3)
+#define SYMBOL_LONG_CALL ((SYMBOL_FLAG_MACH_DEP) << 4)
+
 /* Special characters prefixed to function names
    in order to encode attribute like information.
    Note, '@' and '*' have already been taken.  */
 #define SHORT_CALL_FLAG_CHAR	'^'
 #define LONG_CALL_FLAG_CHAR	'#'
 
-#define ENCODED_SHORT_CALL_ATTR_P(SYMBOL_NAME)	\
-  (*(SYMBOL_NAME) == SHORT_CALL_FLAG_CHAR)
+#define SYMBOL_SHORT_CALL_ATTR_P(SYMBOL) \
+  (SYMBOL_REF_FLAGS (SYMBOL) & SYMBOL_SHORT_CALL)
 
-#define ENCODED_LONG_CALL_ATTR_P(SYMBOL_NAME)	\
-  (*(SYMBOL_NAME) == LONG_CALL_FLAG_CHAR)
+#define SYMBOL_LONG_CALL_ATTR_P(SYMBOL) \
+  (SYMBOL_REF_FLAGS (SYMBOL) & SYMBOL_LONG_CALL)
 
 #ifndef SUBTARGET_NAME_ENCODING_LENGTHS
 #define SUBTARGET_NAME_ENCODING_LENGTHS
@@ -1814,10 +1845,9 @@ typedef struct
    be stripped from the start of a function's name, if that
    name starts with the indicated character.  */
 #define ARM_NAME_ENCODING_LENGTHS		\
-  case SHORT_CALL_FLAG_CHAR: return 1;		\
-  case LONG_CALL_FLAG_CHAR:  return 1;		\
   case '*':  return 1;				\
   SUBTARGET_NAME_ENCODING_LENGTHS
+/* APPLE LOCAL end ARM longcall */
 
 /* This is how to output a reference to a user-level label named NAME.
    `assemble_name' uses this.  */
@@ -1882,9 +1912,11 @@ typedef struct
    attribute when long-calls are in effect as this tells the compiler
    that the section might be placed a long way from the caller.
    See arm_is_longcall_p() for more information.  */
+/* APPLE LOCAL begin ARM longcall */
 #define ARM_DECLARE_FUNCTION_SIZE(STREAM, NAME, DECL)	\
   if (!TARGET_LONG_CALLS || ! DECL_SECTION_NAME (DECL)) \
-    arm_encode_call_attribute (DECL, SHORT_CALL_FLAG_CHAR)
+    arm_encode_call_attribute (DECL, SYMBOL_SHORT_CALL)
+/* APPLE LOCAL end ARM longcall */
 
 #define ARM_OUTPUT_FN_UNWIND(F, PROLOGUE) arm_output_fn_unwind (F, PROLOGUE)
 
@@ -2118,6 +2150,20 @@ extern unsigned arm_pic_register;
 		   || label_mentioned_p (get_pool_constant (X)))))	\
 	 || tls_mentioned_p (X))
 
+/* APPLE LOCAL begin ARM -mdynamic-no-pic support */
+#define LEGITIMATE_DYNAMIC_NO_PIC_OPERAND_P(X)				\
+	(! non_local_symbol_mentioned_p (X))
+
+/* Unfortunately, the places where LEGITIMATE_PIC_OPERAND_P appear in
+   the source code are potential hazards for -mdynamic-no-pic, too.
+   This macro is similar in usage to LEGITIMATE_PIC_OPERAND_P, but it
+   doesn't assume flag_pic is set.  */
+#define LEGITIMATE_INDIRECT_OPERAND_P(X)				\
+	((! flag_pic || LEGITIMATE_PIC_OPERAND_P(X))			\
+	 && (! MACHO_DYNAMIC_NO_PIC_P					\
+	     || LEGITIMATE_DYNAMIC_NO_PIC_OPERAND_P(X)))
+/* APPLE LOCAL end ARM -mdynamic-no-pic support */
+
 /* We need to know when we are making a constant pool; this determines
    whether data needs to be in the GOT or can be referenced via a GOT
    offset.  */
@@ -2207,7 +2253,15 @@ extern int making_const_table;
 			  || current_function_is_thunk)		\
             fprintf (STREAM, "\t.code 32\n") ;		\
           else						\
-           fprintf (STREAM, "\t.code 16\n\t.thumb_func\n") ;	\
+/* APPLE LOCAL begin ARM thumb_func <symbol_name> */	\
+	    {						\
+	      fputs ("\t.code 16\n", STREAM);		\
+	      fputs ("\t.thumb_func ", STREAM);		\
+	      if (TARGET_MACHO)				\
+		assemble_name (STREAM, (char *) NAME);	\
+	      putc ('\n', STREAM);			\
+}							\
+/* APPLE LOCAL end ARM thumb_func <symbol_name> */	\
         }						\
       if (TARGET_POKE_FUNCTION_NAME)			\
         arm_poke_function_name (STREAM, (char *) NAME);	\
@@ -2259,6 +2313,8 @@ extern int making_const_table;
 
 #define PRINT_OPERAND_PUNCT_VALID_P(CODE)	\
   (CODE == '@' || CODE == '|'			\
+   /* APPLE LOCAL ARM MACH assembler */		\
+   || CODE == '.'				\
    || (TARGET_ARM   && (CODE == '?'))		\
    || (TARGET_THUMB && (CODE == '_')))
 
@@ -2428,6 +2484,16 @@ extern int making_const_table;
    ? (gen_int_mode ((unsigned long)0xffffffff, Pmode))			\
    : arm_gen_return_addr_mask ())
 
+/* APPLE LOCAL begin ARM darwin optimization defaults */
+/* Define this to change the optimizations performed by default.  */
+#define OPTIMIZATION_OPTIONS(LEVEL, SIZE) \
+  optimization_options ((LEVEL), (SIZE))
+/* APPLE LOCAL end ARM darwin optimization defaults */
+
+/* APPLE LOCAL begin ARM prefer SP to FP */
+#define DEBUGGER_AUTO_OFFSET(X) arm_local_debug_offset (X)
+#define ALLOW_ELIMINATION_TO_SP
+/* APPLE LOCAL end ARM prefer SP to FP */
 
 enum arm_builtins
 {

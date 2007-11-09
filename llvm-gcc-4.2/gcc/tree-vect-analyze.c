@@ -56,8 +56,7 @@ static bool vect_determine_vectorization_factor (loop_vec_info);
 static bool exist_non_indexing_operands_for_use_p (tree, tree);
 static void vect_mark_relevant (VEC(tree,heap) **, tree, bool, bool);
 static bool vect_stmt_relevant_p (tree, loop_vec_info, bool *, bool *);
-/* APPLE LOCAL loops-to-memset  */
-extern tree vect_get_loop_niters (struct loop *, tree *);
+static tree vect_get_loop_niters (struct loop *, tree *);
 static bool vect_analyze_data_ref_dependence
   (struct data_dependence_relation *, loop_vec_info);
 static bool vect_compute_data_ref_alignment (struct data_reference *); 
@@ -1836,8 +1835,7 @@ vect_can_advance_ivs_p (loop_vec_info loop_vinfo)
    can be constructed, place it in NUMBER_OF_ITERATIONS.
    Return the loop exit condition.  */
 
-/* APPLE LOCAL loops-to-memset */
-tree
+static tree
 vect_get_loop_niters (struct loop *loop, tree *number_of_iterations)
 {
   tree niters;

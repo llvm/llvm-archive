@@ -252,4 +252,6 @@ extern void iasm_x86_print_prefix (char *buf, tree prefix_list);
 extern tree iasm_raise_reg (tree);
 /* APPLE LOCAL end CW asm blocks */
 
+/* APPLE LOCAL 3399553 */
+extern void ix86_expand_flt_rounds (rtx);
 extern int asm_preferred_eh_data_format (int, int);

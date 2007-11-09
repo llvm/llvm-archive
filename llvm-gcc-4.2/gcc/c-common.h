@@ -625,14 +625,6 @@ extern int flag_permissive;
 
 extern int flag_enforce_eh_specs;
 
-/* APPLE LOCAL begin structor thunks */
-/* Nonzero if we prefer to clone con/de/structors.
-   Alternative is to gen multiple tiny thunk-esque things that
-   call/jump to a unified con/de/structor.  This is a classic
-   size/speed tradeoff.  */
-extern int flag_clone_structors;
-/* APPLE LOCAL end structor thunks */
-
 /* APPLE LOCAL begin private extern  Radar 2872481 --ilr */
 /* Nonzero if -fpreprocessed specified.  This is needed by init_reswords()
    so that it can make __private_extern__ have the same rid code as extern
@@ -801,13 +793,6 @@ extern void finish_file	(void);
 /* Nonzero if a label has been added to the statement list.  */
 #define STATEMENT_LIST_HAS_LABEL(NODE) \
   TREE_LANG_FLAG_3 (STATEMENT_LIST_CHECK (NODE))
-
-/* APPLE LOCAL begin C* language */
-/* Used as a flag to indicate synthesized inner do-while loop of a 
-   foreach statement.  Used for generation of break/continue statement 
-   of the loop. */
-#define DO_FOREACH(NODE)           TREE_OPERAND (DO_STMT_CHECK (NODE), 2)
-/* APPLE LOCAL end C* language */
 
 /* COMPOUND_LITERAL_EXPR accessors.  */
 #define COMPOUND_LITERAL_EXPR_DECL_STMT(NODE)		\
@@ -1004,7 +989,8 @@ extern int objc_is_public (tree, tree);
 extern tree objc_is_id (tree);
 extern void objc_declare_alias (tree, tree);
 extern void objc_declare_class (tree);
-extern void objc_declare_protocols (tree);
+/* APPLE LOCAL radar 4947311 - protocol attributes */
+extern void objc_declare_protocols (tree, tree);
 extern tree objc_build_message_expr (tree);
 extern tree objc_finish_message_expr (tree, tree, tree);
 extern tree objc_build_selector_expr (tree);
@@ -1021,13 +1007,12 @@ extern void objc_detect_field_duplicates (tree);
 /* APPLE LOCAL radar 4548636 */
 extern void objc_start_class_interface (tree, tree, tree, tree);
 extern void objc_start_category_interface (tree, tree, tree);
-extern void objc_start_protocol (tree, tree);
+/* APPLE LOCAL radar 4947311 - protocol attributes */
+extern void objc_start_protocol (tree, tree, tree);
 extern void objc_continue_interface (void);
 extern void objc_finish_interface (void);
 extern void objc_start_class_implementation (tree, tree);
 extern void objc_start_category_implementation (tree, tree);
-/* APPLE LOCAL radar 4533974 - ObjC new protocol */
-extern void objc_protocol_implementation (tree);
 /* APPLE LOCAL radar 4592503 */
 extern void objc_checkon_weak_attribute (tree);
 extern void objc_continue_implementation (void);

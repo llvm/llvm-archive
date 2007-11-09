@@ -45,8 +45,8 @@ DEFTREECODE (MESSAGE_SEND_EXPR, "message_send_expr", tcc_expression, 3)
 DEFTREECODE (CLASS_REFERENCE_EXPR, "class_reference_expr", tcc_expression, 1)
 /* APPLE LOCAL radar 5276085 */
 DEFTREECODE (OBJC_WEAK_REFERENCE_EXPR, "weak_object_reference_expr", tcc_expression, 1)
-/* APPLE LOCAL radar 5285911 */
-DEFTREECODE (OBJC_PROPERTY_REFERENCE_EXPR, "property_reference_expr", tcc_expression, 2)
+/* APPLE LOCAL radar 5285911 5494488 */
+DEFTREECODE (OBJC_PROPERTY_REFERENCE_EXPR, "property_reference_expr", tcc_expression, 3)
 
 /*
 Local variables:

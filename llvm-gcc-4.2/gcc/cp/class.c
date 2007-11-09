@@ -224,10 +224,6 @@ int n_compute_conversion_costs = 0;
 int n_inner_fields_searched = 0;
 #endif
 
-/* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff  */
-extern int darwin_align_is_first_member_of_class;
-/* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff  */
-
 /* Convert to or from a base subobject.  EXPR is an expression of type
    `A' or `A*', an expression of type `B' or `B*' is returned.  To
    convert A to a base B, CODE is PLUS_EXPR and BINFO is the binfo for
@@ -4660,13 +4656,6 @@ layout_class_type (tree t, tree *virtuals_p)
 				       NULL, NULL);
   build_base_fields (rli, empty_base_offsets, next_field);
 
-  /* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff  */
-  /* Turn on this flag until the first real member of the class is
-     laid out.  (Enums and such things declared in the class do not
-     count.)  */
-  darwin_align_is_first_member_of_class = 1;	  
-  /* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff  */
-
   /* Layout the non-static data members.  */
   for (field = non_static_data_members; field; field = TREE_CHAIN (field))
     {
@@ -4792,12 +4781,6 @@ layout_class_type (tree t, tree *virtuals_p)
 	layout_nonempty_base_or_field (rli, field, NULL_TREE,
 				       empty_base_offsets);
 
-      /* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff  */
-      /* When we reach here we have laid out the first real member of
-         the class.  */
-      darwin_align_is_first_member_of_class = 0;	  
-      /* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff  */
-
       /* Remember the location of any empty classes in FIELD.  */
       if (abi_version_at_least (2))
 	record_subobject_offsets (TREE_TYPE (field),
@@ -4877,12 +4860,6 @@ layout_class_type (tree t, tree *virtuals_p)
       last_field_was_bitfield = DECL_C_BIT_FIELD (field);
     }
 
-  /* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff  */
-  /* Make sure the flag is turned off in cases where there were no
-     real members in the class.  */
-  darwin_align_is_first_member_of_class = 0;	  
-
-  /* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff  */
   if (abi_version_at_least (2) && !integer_zerop (rli->bitpos))
     {
       /* Make sure that we are on a byte boundary so that the size of

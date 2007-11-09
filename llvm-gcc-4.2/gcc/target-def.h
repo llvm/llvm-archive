@@ -547,6 +547,10 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define TARGET_FUNCTION_VALUE default_function_value
 #define TARGET_INTERNAL_ARG_POINTER default_internal_arg_pointer
 
+/* APPLE LOCAL begin radar 5155743, mainline candidate */
+#define TARGET_HAVE_DYNAMIC_STACK_SPACE false
+/* APPLE LOCAL end radar 5155743, mainline candidate */
+
 #define TARGET_CALLS {						\
    TARGET_PROMOTE_FUNCTION_ARGS,				\
    TARGET_PROMOTE_FUNCTION_RETURN,				\
@@ -763,7 +767,10 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   TARGET_HANDLE_PRAGMA_REDEFINE_EXTNAME,	\
   TARGET_HANDLE_PRAGMA_EXTERN_PREFIX,		\
   TARGET_RELAXED_ORDERING,			\
-  TARGET_ARM_EABI_UNWINDER			\
+  /* APPLE LOCAL begin radar 5155743, mainline candidate */	\
+  TARGET_ARM_EABI_UNWINDER,			\
+  TARGET_HAVE_DYNAMIC_STACK_SPACE		\
+  /* APPLE LOCAL end radar 5155743, mainline candidate */	\
 }
 
 #include "hooks.h"

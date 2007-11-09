@@ -244,9 +244,6 @@ extern struct tree_opt_pass pass_tail_calls;
 extern struct tree_opt_pass pass_tree_loop;
 extern struct tree_opt_pass pass_tree_loop_init;
 extern struct tree_opt_pass pass_lim;
-/* APPLE LOCAL begin loops-to-memset */
-extern struct tree_opt_pass pass_memset;
-/* APPLE LOCAL end loops-to-memset */
 extern struct tree_opt_pass pass_tree_unswitch;
 extern struct tree_opt_pass pass_iv_canon;
 extern struct tree_opt_pass pass_scev_cprop;

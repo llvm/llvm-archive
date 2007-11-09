@@ -436,7 +436,6 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
 	    {
 	      iasm_state = iasm_asm;
 	      inside_iasm_block = true;
-	      iasm_clear_labels ();
 	    }
 	  else
 	    {
@@ -610,7 +609,7 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
 	   out with or eat as a comment as appropriate.  */
 	if (flag_iasm_blocks_local)
 	  {
-	    *value = NULL;
+	    *value = build_int_cst_wide (char_type_node, c, 0);
 	    break;
 	  }
 	/* APPLE LOCAL end CW asm blocks C++ comments 4248139 */

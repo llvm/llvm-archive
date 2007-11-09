@@ -36,7 +36,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Alignment.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"

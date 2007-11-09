@@ -18527,7 +18527,11 @@ objc_build_foreach_components (tree receiver, tree *enumState_decl,
   constructor_fields = TYPE_FIELDS (fast_enum_state_type);
   /* __objcFastEnumerationState enumState = { 0 }; */
   *enumState_decl = objc_create_named_tmp_var (fast_enum_state_type, "cstar");
-  initlist = build_tree_list (constructor_fields, build_int_cst (NULL_TREE, 0));
+  /* LLVM LOCAL begin */
+  initlist = build_tree_list (constructor_fields, 
+                              convert (TREE_TYPE(constructor_fields),
+                                       build_int_cst (NULL_TREE, 0)));
+  /* LLVM LOCAL end */
   init = objc_build_constructor (fast_enum_state_type, initlist);
   DECL_INITIAL (*enumState_decl) = init;
 

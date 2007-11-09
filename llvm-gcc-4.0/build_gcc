@@ -25,22 +25,8 @@ HOSTS=`echo $1 | $TRANSLATE_ARCH `
 # installed.
 TARGETS=`echo $2 | $TRANSLATE_TARGETS`
 
-#APPLE LOCAL begin LLVM
-# LLVM does not require host name translation. 
-LLVM_HOSTS=$1
-# LLVM target list is comma separated list. 
-#LLVM_TARGETS=`echo $2 | sed -e s/\ /\,/ -e s/ppc/powerpc/ -e s/i386/x86/ \
-#    -e s/x86_64// -e s/powerpc64// -e s/ppc64//`
-#FIXME : Hard code targets. See LLVMTARGETOBJ comment in gcc/Makefile.in
-LLVM_TARGETS="x86,powerpc"
-#APPLE LOCAL end LLVM
-
 # The GNU makefile target ('bootstrap' by default).
-if [ "x$LLVM_DEBUG" == "x" ]; then
-    BOOTSTRAP=${BOOTSTRAP-bootstrap}
-else
-    BOOTSTRAP=
-fi
+BOOTSTRAP=${BOOTSTRAP-bootstrap}
 
 # The B&I build srcript (~rc/bin/buildit) accepts an '-othercflags'
 # command-line flag, and captures the argument to that flag in
@@ -148,8 +134,6 @@ mkdir $SRC_DIR || exit 1
 ln -s $ORIG_SRC_DIR/* $SRC_DIR/ || exit 1
 rm -rf $SRC_DIR/tcl $SRC_DIR/expect $SRC_DIR/dejagnu || exit 1
 
-# APPLE LOCAL begin LLVM Must build libstdc++ to install in /usr/local.
-LIBSTDCXX_CONFIG_OPTION=
 # Also remove libstdc++ since it is built from a separate project.
 rm -rf $SRC_DIR/libstdc++-v3 || exit 1
 LIBSTDCXX_CONFIG_OPTION="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
@@ -161,7 +145,6 @@ fi
 # APPLE LOCAL end LLVM
 
 # These are the configure and build flags that are used.
-# APPLE LOCAL begin LLVM  Support for non /usr $DEST_ROOT, use libstdc++
 
 if [ "x$LLVM_DEBUG" == "x" ]; then
     CHECKING_FLAGS="--disable-checking --enable-werror"
@@ -177,43 +160,8 @@ CONFIGFLAGS="$CHECKING_FLAGS \
   --program-suffix=-$MAJ_VERS \
   $LIBSTDCXX_CONFIG_OPTION \
   --with-slibdir=/usr/lib \
+  --enable-llvm=/usr/local/ \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
-# APPLE LOCAL end LLVM
-
-# APPLE LOCAL begin LLVM
-if [ "$ENABLE_LLVM" == true ]; then
-  CONFIGFLAGS="$CONFIGFLAGS --enable-llvm=$DIR/obj-llvm"
-
-  # Build the LLVM tree universal.
-  LLVMCONFIGFLAGS="--prefix=$DEST_DIR$DEST_ROOT \
-                   --enable-targets=$LLVM_TARGETS \
-                   --enable-assertions=$LLVM_ASSERTIONS"
-  mkdir -p $DIR/obj-llvm || exit 1
-  cd $DIR/obj-llvm || exit 1
-  if [ \! -f Makefile.config ]; then
-   $SRC_DIR/llvm/configure $LLVMCONFIGFLAGS || exit 1
-  fi
-
-  if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
-   LLVM_VERSION="$LLVM_SUBMIT_VERSION"
-  else
-   LLVM_VERSION="$LLVM_SUBMIT_VERSION-$LLVM_SUBMIT_SUBVERSION"
-  fi
-
-  # Note: Don't pass -jN here.  Building universal already has parallelism and
-  # we don't want to make the builders hit swap by firing off too many gcc's at
-  # the same time.
-  ## FIXME: Remove -O2 when rdar://4560645 is fixed.
-  make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
-      OPTIMIZE_OPTION='-O2' \
-      CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
-
-  if ! test $? == 0 ; then
-      echo "error: LLVM 'make' failed!"
-      exit 1
-  fi 
-fi
-# APPLE LOCAL LLVM end
 
 # Figure out how many make processes to run.
 SYSCTL=`sysctl -n hw.activecpu`
@@ -236,12 +184,12 @@ MAKEFLAGS=${LOCAL_MAKEFLAGS-"-j $SYSCTL"}
 # APPLE LOCAL begin LLVM
 if [ "$ENABLE_LLVM" == true ]; then
   # Build llvm-gcc in 'dylib mode'.
-  MAKEFLAGS="$MAKEFLAGS BUILD_LLVM_INTO_A_DYLIB=1"
-  MAKEFLAGS="$MAKEFLAGS LLVM_VERSION_INFO=$LLVM_SUBMIT_VERSION"
-
-  if [ "$LLVM_ASSERTIONS" == no ]; then
-    MAKEFLAGS="$MAKEFLAGS DISABLE_LLVMASSERTIONS=1"
-  fi
+    MAKEFLAGS="$MAKEFLAGS BUILD_LLVM_INTO_A_DYLIB=1"
+    MAKEFLAGS="$MAKEFLAGS LLVM_VERSION_INFO=$LLVM_SUBMIT_VERSION"
+    
+    if [ "$LLVM_ASSERTIONS" == no ]; then
+        MAKEFLAGS="$MAKEFLAGS DISABLE_LLVMASSERTIONS=1"
+    fi
 fi
 # APPLE LOCAL LLVM end
 
@@ -258,7 +206,7 @@ fi
 # Also keep unset for cross compilers so that the cross built libraries are
 # comparable to the native built libraries.
 unset RC_DEBUG_OPTIONS
-make $MAKEFLAGS CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+make $MAKEFLAGS $BOOTSTRAP CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS html CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
@@ -548,74 +496,22 @@ find $DEST_DIR -name \*.a -type f -print \
   | xargs ranlib || exit 1
 
 # APPLE LOCAL begin LLVM
-# Install LLVM libraries/headers/tools.
-if [ "$ENABLE_LLVM" == true ]; then
-  cd $DIR/obj-llvm || exit 1
-
-  ## Install the tree into the destination directory.
-  make $MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
-
-  if ! test $? == 0 ; then
-      echo "error: LLVM 'make install' failed!"
-      exit 1
-  fi 
-
-  ## Install Version.h
-  if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
-      RC_ProjectSourceSubversion=0
-  else
-      case "$LLVM_SUBMIT_SUBVERSION" in
-          01) RC_ProjectSourceSubversion=1 ;;
-          02) RC_ProjectSourceSubversion=2 ;;
-          03) RC_ProjectSourceSubversion=3 ;;
-          04) RC_ProjectSourceSubversion=4 ;;
-          05) RC_ProjectSourceSubversion=5 ;;
-          06) RC_ProjectSourceSubversion=6 ;;
-          07) RC_ProjectSourceSubversion=7 ;;
-          08) RC_ProjectSourceSubversion=8 ;;
-          09) RC_ProjectSourceSubversion=9 ;;
-          *)  RC_ProjectSourceSubversion=$LLVM_SUBMIT_SUBVERSION ;;
-      esac
-  fi
-
-  echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
-  echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
-
-  ## Strip local symbols from llvm libraries.
-  strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
-  strip -Sx $DEST_DIR$DEST_ROOT/lib/*.so
-
-  # Remove .dir files 
-  cd $DEST_DIR$DEST_ROOT/
-  rm bin/.dir etc/llvm/.dir lib/.dir
-
-  # Remove PPC64 fat slices.
-  cd $DEST_DIR$DEST_ROOT/bin
-if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
-  find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
-else
-  find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
-fi
-  cd $DEST_DIR$DEST_ROOT
-  lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.so
-
-  # Set up the llvm-gcc/llvm-g++ symlinks.
-  mkdir -p $DEST_DIR$LLVM_BIN_DIR
-  cd $DEST_DIR$LLVM_BIN_DIR
-  ln -s -f ../../../$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
-  ln -s -f ../../../$DEST_ROOT/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
+# Set up the llvm-gcc/llvm-g++ symlinks.
+mkdir -p $DEST_DIR$LLVM_BIN_DIR
+cd $DEST_DIR$LLVM_BIN_DIR
+ln -s -f ../../../$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
+ln -s -f ../../../$DEST_ROOT/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
 
   # Copy one of the libllvmgcc.dylib's up to libexec/gcc.
-  cp $DEST_DIR/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS/libllvmgcc.dylib \
-     $DEST_DIR/$DEST_ROOT/libexec/gcc/
+cp $DEST_DIR/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS/libllvmgcc.dylib \
+    $DEST_DIR/$DEST_ROOT/libexec/gcc/
 
   # Replace the installed ones with symlinks to the common one.
-  for t in $TARGETS ; do
+for t in $TARGETS ; do
     cd $DEST_DIR/$DEST_ROOT/libexec/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/
     rm libllvmgcc.dylib
     ln -s ../../libllvmgcc.dylib
-  done
-fi
+done
 # APPLE LOCAL end LLVM
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1

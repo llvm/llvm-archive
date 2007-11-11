@@ -381,23 +381,23 @@ case "${target}" in
   # APPLE LOCAL end ARM darwin target
   powerpc-*-darwin* | i[[3456789]]86-*-darwin*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
-    noconfigdirs="$noconfigdirs sim target-rda target-libstdc++-v3"
+    noconfigdirs="$noconfigdirs sim target-rda"
     # LLVM LOCAL begin
     noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
     noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
     noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
-    noconfigdirs="$noconfigdirs target-libssp target-zlib"
+    noconfigdirs="$noconfigdirs target-libssp target-libstdc++-v3 target-zlib"
     # LLVM LOCAL end
     ;;
   *-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
-    noconfigdirs="$noconfigdirs ${libgcj} target-libstdc++-v3"
+    noconfigdirs="$noconfigdirs ${libgcj}"
     # LLVM LOCAL begin
     noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
     noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
     noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
-    noconfigdirs="$noconfigdirs target-libssp target-zlib"
+    noconfigdirs="$noconfigdirs target-libssp target-libstdc++-v3 target-zlib"
     # LLVM LOCAL end
     ;;
   *-*-freebsd[[12]] | *-*-freebsd[[12]].* | *-*-freebsd*aout*)

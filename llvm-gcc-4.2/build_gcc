@@ -123,17 +123,14 @@ rm -rf $SRC_DIR/libstdc++-v3 || exit 1
 rm -f /usr/lib/gcc/*/4.0.0/specs
 
 # These are the configure and build flags that are used.
-# LLVM LOCAL begin - FIXME: Disable multilibs
 CONFIGFLAGS="--disable-checking -enable-werror \
-  --disable-multilib \
   --prefix=$DEST_ROOT \
   --mandir=\${prefix}/share/man \
   --enable-languages=c,objc,c++,obj-c++ \
   --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
-  --with-gxx-include-dir=\${prefix}/include/c++/$LIBSTDCXX_VERSION \
+  --with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION \
   --with-slibdir=/usr/lib \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
-# LLVM LOCAL end - FIXME: Disable multilibs
 
 # LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then
@@ -175,8 +172,10 @@ if [ \! -f Makefile ]; then
    --host=$BUILD-apple-darwin$DARWIN_VERS --target=$BUILD-apple-darwin$DARWIN_VERS || exit 1
 fi
 # Unset RC_DEBUG_OPTIONS because it causes the bootstrap to fail.
-RC_DEBUG_OPTIONS= \
-  make $MAKEFLAGS CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+# Also keep unset for cross compilers so that the cross built libraries are
+# comparable to the native built libraries.
+unset RC_DEBUG_OPTIONS
+make $MAKEFLAGS CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS html CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1

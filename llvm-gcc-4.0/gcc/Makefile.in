@@ -234,7 +234,18 @@ CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppfla
 
 # Use llvm-config to get the srcdir that LLVM was configured with, to support
 # srcdir != objdir builds.
-LLVMSRCDIR := $(shell $(LLVMBINPATH)/llvm-config --src-root)
+### FIXME: Relying upon llvm-config doesn't work if we built LLVM in one placed,
+### moved it to another place, and then built LLVM-GCC. If the directory doesn't
+### exist, then use LLVMOBJDIR.
+#LLVMSRCDIR := $(shell $(LLVMBINPATH)/llvm-config --src-root)
+LLVMSRCDIR := $(shell \
+  P=`$(LLVMBINPATH)/llvm-config --src-root`; \
+  if [ `pwd` == $$P ]; then \
+    echo "$(LLVMOBJDIR)"; \
+  else \
+    echo "$$P"; \
+  fi);
+LLVMSRCDIR := $(shell echo "$(LLVMSRCDIR)" | sed -e 's,;,,')
 endif
 
 ifdef LLVM_VERSION_INFO
@@ -1129,7 +1140,7 @@ DYLIB_COMPILE_FLAGS := $(filter-out -mdynamic-no-pic, \
 libllvmgcc$(LLVM_STAGE).dylib: llvm-linker-hack.cpp $(LLVMLIBFILES)
 	echo $(LLVMLIBFILES)
 	$(CXX) $(DYLIB_COMPILE_FLAGS) $(INCLUDES) -o $@ \
-           $< $(LLVMLIBFILES)  -dynamiclib -single_module \
+           $< $(LLVMLIBFILES) -L/usr/lib/gcc/$(build)/4.0.1/ -dynamiclib -single_module \
            -install_name @executable_path/$@
 
 LLVMBACKENDFILES := libllvmgcc$(LLVM_STAGE).dylib
@@ -1394,7 +1405,7 @@ ifdef BUILD_LLVM_INTO_A_DYLIB
 cc1-exported-symbol-list.txt:
 	echo "_main" > $@
 LIBDEPS += cc1-exported-symbol-list.txt
-LINKCC += -dead_strip -exported_symbols_list cc1-exported-symbol-list.txt
+LINKCC += -dead_strip -exported_symbols_list cc1-exported-symbol-list.txt -L/usr/lib/gcc/$(build)/4.0.1/
 endif
 else
 LINKCC := $(CC)
@@ -1824,7 +1835,6 @@ s-options: $(lang_opt_files) Makefile $(srcdir)/opt-gather.awk
 	$(AWK) -f $(srcdir)/opt-gather.awk $(lang_opt_files) > tmp-optionlist
 	$(SHELL) $(srcdir)/../move-if-change tmp-optionlist optionlist
 	$(STAMP) s-options
-
 
 options.c: optionlist $(srcdir)/opt-functions.awk $(srcdir)/optc-gen.awk
 	$(AWK) -f $(srcdir)/opt-functions.awk -f $(srcdir)/optc-gen.awk \
@@ -3206,7 +3216,7 @@ s-macro_list : $(GCC_PASSES)
 # working directory in object files (-g absent, or -fno-working-dir
 # present), and build and host are the same, fixincl for the host will
 # build after fixincl for the build machine, getting a cache hit,
-# thereby updating the timestamp of fixincl.o in the the host tree.
+# thereby updating the timestamp of fixincl.o in the host tree.
 # Because of CCACHE_HARDLINK, this will also update the timestamp in
 # the build tree, and so fixincl in the build tree will appear to be
 # out of date.  Yuck.

@@ -252,7 +252,7 @@ CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppfla
 ### exist, then use LLVMOBJDIR.
 LLVMSRCDIR := $(shell \
   P=`$(LLVMBINPATH)/llvm-config --src-root`; \
-  if [ `pwd` == $$P ]; then \
+  if [ `pwd` = $$P ]; then \
     echo "$(LLVMOBJDIR)"; \
   else \
     echo "$$P"; \

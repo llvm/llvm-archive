@@ -882,6 +882,9 @@ struct gcc_target
    */
   bool arm_eabi_unwinder;
 
+/* APPLE LOCAL begin radar 5155743, mainline candidate */
+  bool have_dynamic_stack_space;
+/* APPLE LOCAL end radar 5155743, mainline candidate */
   /* Leave the boolean fields at the end.  */
 };
 

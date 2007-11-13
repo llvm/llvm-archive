@@ -2380,12 +2380,16 @@ check_previous_goto_1 (tree decl, struct cp_binding_level* level, tree names,
 {
   struct cp_binding_level *b;
   bool identified = false, saw_eh = false, saw_omp = false;
+  /* APPLE LOCAL pedwarn for a release 5493351 */
+  bool errored_out = false;
 
   if (exited_omp)
     {
       identify_goto (decl, locus);
       error ("  exits OpenMP structured block");
       identified = saw_omp = true;
+      /* APPLE LOCAL pedwarn for a release 5493351 */
+      errored_out = true;
     }
 
   for (b = current_binding_level; b ; b = b->level_chain)
@@ -2405,7 +2409,8 @@ check_previous_goto_1 (tree decl, struct cp_binding_level* level, tree names,
 	      identified = true;
 	    }
 	  if (problem > 1)
-	    error ("  crosses initialization of %q+#D", new_decls);
+	    /* APPLE LOCAL pedwarn for a release 5493351 */
+	    pedwarn ("  crosses initialization of %q+#D", new_decls);
 	  else
 	    pedwarn ("  enters scope of non-POD %q+#D", new_decls);
 	}
@@ -2423,6 +2428,8 @@ check_previous_goto_1 (tree decl, struct cp_binding_level* level, tree names,
 	    error ("  enters try block");
 	  else
 	    error ("  enters catch block");
+	  /* APPLE LOCAL pedwarn for a release 5493351 */
+	  errored_out = true;
 	  saw_eh = true;
 	}
       if (b->kind == sk_omp && !saw_omp)
@@ -2433,11 +2440,14 @@ check_previous_goto_1 (tree decl, struct cp_binding_level* level, tree names,
 	      identified = true;
 	    }
 	  error ("  enters OpenMP structured block");
+	  /* APPLE LOCAL pedwarn for a release 5493351 */
+	  errored_out = true;
 	  saw_omp = true;
 	}
     }
 
-  return !identified;
+  /* APPLE LOCAL pedwarn for a release 5493351 */
+  return !errored_out;
 }
 
 static void

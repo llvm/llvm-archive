@@ -443,7 +443,7 @@ static void darwin_set_flags_from_pragma (void)
 {
   set_flags_from_O (false);
 
-  /* MERGE FIXME - flag_loop_optimize2 is gone now */
+  /* MERGE FIXME 5416402 flag_loop_optimize2 is gone now */
 #if 0
   /* Enable new loop optimizer pass if any of its optimizations is called.  */
   if (flag_move_loop_invariants

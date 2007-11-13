@@ -4191,7 +4191,7 @@ grokdeclarator (const struct c_declarator *declarator,
 
   /* APPLE LOCAL begin "unavailable" attribute (radar 2809697) */
   if (declspecs->unavailable_p)
-    warn_unavailable_use (declspecs->type);
+    error_unavailable_use (declspecs->type);
   else
   /* APPLE LOCAL end "unavailable" attribute (radar 2809697) */
   if (declspecs->deprecated_p && deprecated_state != DEPRECATED_SUPPRESS)
@@ -5569,12 +5569,20 @@ start_struct (enum tree_code code, tree name)
 	    error ("nested redefinition of %<union %E%>", name);
 	  else
 	    error ("nested redefinition of %<struct %E%>", name);
+            /* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+            /* Don't create structures that contain themselves.  */
+            ref = NULL_TREE;
+            /* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 	}
     }
-  else
-    {
-      /* Otherwise create a forward-reference just so the tag is in scope.  */
+  /* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+  /* Otherwise create a forward-reference just so the tag is in scope.  */
+  /* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 
+  /* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+  if (ref == NULL_TREE || TREE_CODE (ref) != code)
+    {
+  /* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
       ref = make_node (code);
       pushtag (name, ref);
     }

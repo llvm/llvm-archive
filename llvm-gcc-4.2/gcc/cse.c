@@ -4145,6 +4145,8 @@ fold_rtx (rtx x, rtx insn)
 				  && rtx_equal_p (ent->comparison_const,
 						  const_arg1))
 			      || (REG_P (folded_arg1)
+				  /* APPLE LOCAL ARM 4587904 */
+				  && (REGNO_QTY_VALID_P (REGNO (folded_arg1)))
 				  && (REG_QTY (REGNO (folded_arg1)) == ent->comparison_qty))))
 			return (comparison_dominates_p (ent->comparison_code, code)
 				? true_rtx : false_rtx);

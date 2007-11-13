@@ -960,7 +960,8 @@ general_operand (rtx op, enum machine_mode mode)
   if (CONSTANT_P (op))
     return ((GET_MODE (op) == VOIDmode || GET_MODE (op) == mode
 	     || mode == VOIDmode)
-	    && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op))
+	    /* APPLE LOCAL ARM -mdynamic-no-pic support */
+	    && LEGITIMATE_INDIRECT_OPERAND_P (op)
 	    && LEGITIMATE_CONSTANT_P (op));
 
   /* Except for certain constants with VOIDmode, already checked for,
@@ -1137,7 +1138,8 @@ immediate_operand (rtx op, enum machine_mode mode)
   return (CONSTANT_P (op)
 	  && (GET_MODE (op) == mode || mode == VOIDmode
 	      || GET_MODE (op) == VOIDmode)
-	  && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op))
+	  /* APPLE LOCAL ARM -mdynamic-no-pic support */
+	  && LEGITIMATE_INDIRECT_OPERAND_P (op)
 	  && LEGITIMATE_CONSTANT_P (op));
 }
 
@@ -1203,7 +1205,8 @@ nonmemory_operand (rtx op, enum machine_mode mode)
 
       return ((GET_MODE (op) == VOIDmode || GET_MODE (op) == mode
 	       || mode == VOIDmode)
-	      && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op))
+	      /* APPLE LOCAL ARM -mdynamic-no-pic support */
+	      && LEGITIMATE_INDIRECT_OPERAND_P (op)
 	      && LEGITIMATE_CONSTANT_P (op));
     }
 
@@ -1720,7 +1723,8 @@ asm_operand_ok (rtx op, const char *constraint)
 	  /* Fall through.  */
 
 	case 'i':
-	  if (CONSTANT_P (op) && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op)))
+	  /* APPLE LOCAL ARM -mdynamic-no-pic support */
+	  if (CONSTANT_P (op) && LEGITIMATE_INDIRECT_OPERAND_P (op))
 	    result = 1;
 	  break;
 

@@ -1871,7 +1871,7 @@ build_component_ref (tree datum, tree component)
 
 	  /* APPLE LOCAL begin "unavailable" attribute (radar 2809697) */
 	  if (TREE_UNAVAILABLE (subdatum))
-	    warn_unavailable_use (subdatum);
+	    error_unavailable_use (subdatum);
 	  /* APPLE LOCAL end "unavailable" attribute (radar 2809697) */
 
 	  datum = ref;
@@ -2122,7 +2122,14 @@ build_external_ref (tree id, int fun, location_t loc)
 	  /* Locals and parms just need to be left alone for now.  */
 	}
       else
-	return iasm_do_id (id);
+	{
+	  location_t save = input_location;
+	  tree r;
+	  input_location = loc;
+	  r = iasm_do_id (id);
+	  input_location = save;
+	  return r;
+	}
     }
   /* APPLE LOCAL end CW asm blocks */
 
@@ -2153,7 +2160,7 @@ build_external_ref (tree id, int fun, location_t loc)
 
   /* APPLE LOCAL begin "unavailable" attribute (radar 2809697) */
   if (TREE_UNAVAILABLE (ref))
-    warn_unavailable_use (ref);
+    error_unavailable_use (ref);
   /* APPLE LOCAL end "unavailable" attribute (radar 2809697) */
 
   if (!skip_evaluation)
@@ -2696,14 +2703,24 @@ parser_build_unary_op (enum tree_code code, struct c_expr arg)
   struct c_expr result;
 
   /* APPLE LOCAL begin CW asm blocks (in 4.2 bc) */
-  if (inside_iasm_block
-      && code == ADDR_EXPR
-      && TREE_CODE (arg.value) == LABEL_DECL)
+  if (inside_iasm_block)
     {
-      result.original_code = ERROR_MARK;
-      result.value = finish_label_address_expr (DECL_NAME (arg.value));
-      overflow_warning (result.value);
-      return result;
+      if (TREE_CODE (arg.value) == COMPOUND_EXPR)
+	{
+	  tree neg = build_unary_op (code, TREE_OPERAND (arg.value, 0), 0);
+	  tree reg = TREE_OPERAND (arg.value, 1);
+	  result.original_code = ERROR_MARK;
+	  result.value = iasm_build_register_offset (neg, reg);
+	  return result;
+	}
+      else if (code == ADDR_EXPR
+	       && TREE_CODE (arg.value) == LABEL_DECL)
+	{
+	  result.original_code = ERROR_MARK;
+	  result.value = finish_label_address_expr (DECL_NAME (arg.value));
+	  overflow_warning (result.value);
+	  return result;
+	}
     }
   /* APPLE LOCAL end CW asm blocks (in 4.2 bc) */
     
@@ -2753,6 +2770,7 @@ parser_build_binary_op (enum tree_code code, struct c_expr arg1,
 	    || TREE_CODE (arg1.value) == IDENTIFIER_NODE
 	    || TREE_CODE (arg2.value) == IDENTIFIER_NODE)
         {
+	  error ("block assembly operand not recognized");
           result.value = error_mark_node;
           result.original_code = code;
           return result;
@@ -7379,7 +7397,7 @@ iasm_c_build_component_ref (tree typename, tree component)
 
 	  /* APPLE LOCAL begin "unavailable" attribute (radar 2809697) */
 	  if (TREE_UNAVAILABLE (subdatum))
-	    warn_unavailable_use (subdatum);
+	    error_unavailable_use (subdatum);
 	  /* APPLE LOCAL end "unavailable" attribute (radar 2809697) */
 
 	  fake_datum = ref;
@@ -7719,15 +7737,22 @@ c_finish_if_stmt (location_t if_locus, tree cond, tree then_block,
   add_stmt (stmt);
 }
 
-/* Emit a general-purpose loop construct.  START_LOCUS is the location of
-   the beginning of the loop.  COND is the loop condition.  COND_IS_FIRST
-   is false for DO loops.  INCR is the FOR increment expression.  BODY is
-   the statement controlled by the loop.  BLAB is the break label.  CLAB is
-   the continue label.  Everything is allowed to be NULL.  */
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+/* Emit a general-purpose loop construct.  START_LOCUS is the location
+   of the beginning of the loop.  COND is the loop condition.
+   COND_IS_FIRST is false for DO loops.  INCR is the FOR increment
+   expression.  BODY is the statement controlled by the loop.  BLAB is
+   the break label.  CLAB is the continue label.  ATTRS is the
+   attributes associated with the loop, which at present are
+   associated with the topmost label.  Everything is allowed to be
+   NULL.  */
 
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 void
 c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
-	       tree blab, tree clab, bool cond_is_first)
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	       tree blab, tree clab, tree attrs, bool cond_is_first)
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 {
   tree entry = NULL, exit = NULL, t;
 
@@ -7750,6 +7775,11 @@ c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
 	 then we just build a jump back to the top.  */
       exit = build_and_jump (&LABEL_EXPR_LABEL (top));
 
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+      /* Add the attributes to the 'top' label.  */
+      decl_attributes (&LABEL_EXPR_LABEL (top), attrs, 0);
+
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
       if (cond && !integer_nonzerop (cond))
 	{
 	  /* Canonicalize the loop condition to the end.  This means

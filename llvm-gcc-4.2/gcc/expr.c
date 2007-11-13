@@ -4596,7 +4596,8 @@ categorize_ctor_elements_1 (tree ctor, HOST_WIDE_INT *p_nz_elts,
       HOST_WIDE_INT mult;
 
       mult = 1;
-      if (TREE_CODE (purpose) == RANGE_EXPR)
+      /* APPLE LOCAL Altivec initializers 4869813 */
+      if (purpose && TREE_CODE (purpose) == RANGE_EXPR)
 	{
 	  tree lo_index = TREE_OPERAND (purpose, 0);
 	  tree hi_index = TREE_OPERAND (purpose, 1);

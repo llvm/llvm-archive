@@ -101,6 +101,8 @@
    the kernel or some such.  */
 
 #define CC1_SPEC "\
+  "/* APPLE LOCAL ARM ignore -mthumb and -mno-thumb */"\
+  %<mthumb %<mno-thumb \
   "/* APPLE LOCAL ignore -msse and -msse2 and other x86 options */"\
   %<msse  %<msse2 %<msse3 %<march=pentium4 %<mcpu=pentium4 \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
@@ -148,6 +150,16 @@
      :10.1}"
 
 /* APPLE LOCAL end mainline 2007-03-13 5040758 5005743 */
+/* APPLE LOCAL begin 5342595 */
+/* LLVM LOCAL begin */
+#ifdef HAVE_DSYMUTIL
+#define DARWIN_DSYMUTIL_SPEC	\
+  "%{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}"
+#else
+#define DARWIN_DSYMUTIL_SPEC ""
+#endif
+/* LLVM LOCAL end */
+/* APPLE LOCAL end 5342595 */
 /* APPLE LOCAL begin mainline */
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS			\
@@ -280,6 +292,8 @@
     "vrsave", "vscr",							\
     "spe_acc", "spefscr",                                               \
     "sfp"								\
+    /* APPLE LOCAL 3399553 */                                           \
+    , "fpscr"								\
 }
 
 /* This outputs NAME to FILE.  */
@@ -418,26 +432,27 @@
 #define darwin_alignment_flags rs6000_alignment_flags
 #define OPTION_ALIGN_NATURAL TARGET_ALIGN_NATURAL
 #define OPTION_MASK_ALIGN_NATURAL MASK_ALIGN_NATURAL
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
 /* This now supports the Macintosh power, mac68k, and natural 
-   alignment modes.  It now has one more parameter than the standard 
-   version of the ADJUST_FIELD_ALIGN macro.  
-   
-   The macro works as follows: We use the computed alignment of the 
-   field if we are in the natural alignment mode or if the field is 
-   a vector.  Otherwise, if we are in the mac68k alignment mode, we
-   use the minimum of the computed alignment and 16 (pegging at
-   2-byte alignment).  If we are in the power mode, we peg at 32
-   (word alignment) unless it is the first field of the struct, in 
-   which case we use the computed alignment.  */
+   alignment modes.
+
+   Compute field alignment.  This is similar to the version of the
+   macro in the Apple version of GCC, except that version supports
+   'mac68k' alignment, and that version uses the computed alignment
+   always for the first field of a structure.  The first-field
+   behavior is dealt with by
+   darwin_rs6000_special_round_type_align.  */
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #undef ADJUST_FIELD_ALIGN
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED, FIRST_FIELD_P)	\
-  (TARGET_ALIGN_NATURAL ? (COMPUTED) :				\
-   (((COMPUTED) == RS6000_VECTOR_ALIGNMENT)			\
-    ? RS6000_VECTOR_ALIGNMENT					\
-    : (MIN ((COMPUTED), 					\
-    	    (OPTION_ALIGN_MAC68K ? 16 				\
-    	    			 : ((FIRST_FIELD_P) ? (COMPUTED) \
-    	    			 		    : 32))))))
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)	\
+  (TARGET_ALIGN_NATURAL ? (COMPUTED)		\
+   : (((COMPUTED) == RS6000_VECTOR_ALIGNMENT)	\
+      ? RS6000_VECTOR_ALIGNMENT			\
+      : (MIN ((COMPUTED), 			\
+	      (OPTION_ALIGN_MAC68K ? 16		\
+	       : 32)))))
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 
 /* When adjusting (lowering) the alignment of fields when in the
    mac68k alignment mode, the 128-bit alignment of vectors *MUST*
@@ -447,14 +462,20 @@
         ((DESIRED) == RS6000_VECTOR_ALIGNMENT ? RS6000_VECTOR_ALIGNMENT	\
          : MIN ((DESIRED), 16))
 
-#undef ROUND_TYPE_ALIGN
-/* Macintosh alignment modes require more complicated handling
-   of alignment, so we replace the macro with a call to a
-   out-of-line function.  */
-union tree_node;
-extern unsigned round_type_align (union tree_node*, unsigned, unsigned); /* rs6000.c  */
-#define ROUND_TYPE_ALIGN(STRUCT, COMPUTED, SPECIFIED)	\
-  round_type_align(STRUCT, COMPUTED, SPECIFIED)
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+/* Darwin increases natural record alignment to doubleword if the first
+   field is an FP double while the FP fields remain word aligned.  */
+#define ROUND_TYPE_ALIGN(STRUCT, COMPUTED, SPECIFIED)			  \
+  ((TREE_CODE (STRUCT) == RECORD_TYPE					  \
+    || TREE_CODE (STRUCT) == UNION_TYPE					  \
+    || TREE_CODE (STRUCT) == QUAL_UNION_TYPE)				  \
+   && TARGET_ALIGN_NATURAL == 0						  \
+   ? darwin_rs6000_special_round_type_align (STRUCT, COMPUTED, SPECIFIED) \
+   : (TREE_CODE (STRUCT) == VECTOR_TYPE					  \
+      && ALTIVEC_VECTOR_MODE (TYPE_MODE (STRUCT)))			  \
+   ? MAX (MAX ((COMPUTED), (SPECIFIED)), 128)				  \
+   : MAX ((COMPUTED), (SPECIFIED)))
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 /* APPLE LOCAL end Macintosh alignment 2002-2-26 --ff */
 
 /* APPLE LOCAL begin alignment */

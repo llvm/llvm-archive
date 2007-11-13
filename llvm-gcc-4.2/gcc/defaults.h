@@ -874,6 +874,12 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #define LEGITIMATE_PIC_OPERAND_P(X) 1
 #endif
 
+/* APPLE LOCAL begin ARM -mdynamic-no-pic support */
+#ifndef LEGITIMATE_INDIRECT_OPERAND_P
+#define LEGITIMATE_INDIRECT_OPERAND_P(X) (! flag_pic || LEGITIMATE_PIC_OPERAND_P(X))
+#endif
+/* APPLE LOCAL end ARM -mdynamic-no-pic support */
+
 #ifndef REVERSIBLE_CC_MODE
 #define REVERSIBLE_CC_MODE(MODE) 0
 #endif

@@ -443,6 +443,8 @@ void set_flags_from_O (unsigned int cmdline)
     {
       if (cmdline)
 	flag_merge_constants = 0;
+      /* APPLE LOCAL ARM structor thunks */
+      flag_clone_structors = 1;
     }
 
   if (optimize >= 1)

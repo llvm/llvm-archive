@@ -150,15 +150,18 @@ objc_declare_class (tree ARG_UNUSED (list))
 }
 
 void
-objc_declare_protocols (tree ARG_UNUSED (list))
+/* APPLE LOCAL begin radar 4947311 - protocol attributes */
+objc_declare_protocols (tree ARG_UNUSED (list), tree ARG_UNUSED (attributes))
 {
 }
 
 void
 objc_start_protocol (tree ARG_UNUSED (proto),
-		     tree ARG_UNUSED (protorefs))
+		     tree ARG_UNUSED (protorefs),
+		     tree ARG_UNUSED (attributes))
 {
 }
+/* APPLE LOCAL end radar 4947311 - protocol attributes */
 
 void
 objc_start_class_interface (tree ARG_UNUSED (name),
@@ -494,13 +497,6 @@ objc_method_decl (enum tree_code ARG_UNUSED (opcode))
 }
 /* APPLE LOCAL end radar 3803157 - objc attribute */
 
-/* APPLE LOCAL begin radar 4533974 - ObjC new protocol */
-void 
-objc_protocol_implementation (tree ARG_UNUSED (protolist))
-{
-  return;
-}
-/* APPLE LOCAL end radar 4533974 - ObjC new protocol */
 /* APPLE LOCAL begin radar 4708210 (for_objc_collection in 4.2) */
 void
 objc_finish_foreach_loop (location_t ARG_UNUSED (location), tree ARG_UNUSED (cond), 

@@ -139,6 +139,7 @@ output_objc_section_asm_op (const void *directive)
 	  objc_class_ext_section,
 	  objc_prop_list_section
 	  /* APPLE LOCAL end objc2 */
+	  /* APPLE LOCAL curly braces confuse me */
 	};
       /* APPLE LOCAL begin ObjC abi v2 - radar 4792158 */
       static const enum darwin_section_enum tomarkv2[] =
@@ -288,7 +289,8 @@ indirect_data (rtx sym_ref)
 }
 
 
-static int
+/* APPLE LOCAL ARM pic support */
+int
 machopic_data_defined_p (rtx sym_ref)
 {
   if (indirect_data (sym_ref))
@@ -391,6 +393,10 @@ typedef struct machopic_indirection GTY (())
   bool stub_p;
   /* True iff this stub or pointer pointer has been referenced.  */
   bool used;
+  /* APPLE LOCAL begin ARM 5440570 */
+  /* True iff this stub or pointer pointer has been outputted.  */
+  bool emitted;
+  /* APPLE LOCAL end ARM 5440570 */
 } machopic_indirection;
 
 /* A table mapping stub names and non-lazy pointer names to
@@ -398,6 +404,12 @@ typedef struct machopic_indirection GTY (())
 
 static GTY ((param_is (struct machopic_indirection))) htab_t
   machopic_indirections;
+
+/* APPLE LOCAL begin 5440570 */
+/* Used to identify that usage information has changed while
+   outputting the stubs.  */
+static GTY (()) bool indirection_uses_changed;
+/* APPLE LOCAL end 5440570 */
 
 /* Return a hash value for a SLOT in the indirections hash table.  */
 
@@ -497,6 +509,8 @@ machopic_indirection_name (rtx sym_ref, bool stub_p)
       p->ptr_name = xstrdup (buffer);
       p->stub_p = stub_p;
       p->used = false;
+      /* APPLE LOCAL ARM 5440570 */
+      p->emitted = false;
       *slot = p;
     }
 
@@ -511,6 +525,26 @@ machopic_mcount_stub_name (void)
   rtx symbol = gen_rtx_SYMBOL_REF (Pmode, "*mcount");
   return machopic_indirection_name (symbol, /*stub_p=*/true);
 }
+
+/* APPLE LOCAL begin ARM pic support */
+/* Determine whether the specified symbol is in the indirections table.  */
+int
+machopic_lookup_stub_or_non_lazy_ptr (const char *name)
+{
+  machopic_indirection *p;
+
+  if (! machopic_indirections)
+    return 0;
+
+  p = (machopic_indirection *)
+       htab_find_with_hash (machopic_indirections, name,
+			    htab_hash_string (name));
+  if (p)
+    return 1;
+  else
+    return 0;
+}
+/* APPLE LOCAL end ARM pic support */
 
 /* If NAME is the name of a stub or a non-lazy pointer , mark the stub
    or non-lazy pointer as used -- and mark the object to which the
@@ -531,6 +565,8 @@ machopic_validate_stub_or_non_lazy_ptr (const char *name)
       tree id;
 
       p->used = true;
+      /* APPLE LOCAL ARM 5440570 */
+      indirection_uses_changed = true;
 
       /* Do what output_addr_const will do when we actually call it.  */
       if (SYMBOL_REF_DECL (p->symbol))
@@ -1091,7 +1127,8 @@ machopic_output_indirection (void **slot, void *data)
   const char *sym_name;
   const char *ptr_name;
 
-  if (!p->used)
+  /* APPLE LOCAL ARM 5440570 */
+  if (!p->used || p->emitted)
     return 1;
 
   symbol = p->symbol;
@@ -1168,6 +1205,8 @@ machopic_output_indirection (void **slot, void *data)
       assemble_integer (init, GET_MODE_SIZE (Pmode),
 			GET_MODE_ALIGNMENT (Pmode), 1);
     }
+  /* APPLE LOCAL ARM 5440570 */
+  p->emitted = true;
 
   return 1;
 }
@@ -1176,9 +1215,16 @@ void
 machopic_finish (FILE *asm_out_file)
 {
   if (machopic_indirections)
-    htab_traverse_noresize (machopic_indirections,
-			    machopic_output_indirection,
-			    asm_out_file);
+    /* APPLE LOCAL begin 5440570 */
+    do
+      {
+	indirection_uses_changed = false;
+	htab_traverse_noresize (machopic_indirections,
+				machopic_output_indirection,
+				asm_out_file);
+      }
+    while (indirection_uses_changed == true);
+    /* APPLE LOCAL end 5440570 */
 }
 
 int
@@ -1294,7 +1340,8 @@ machopic_select_section (tree exp, int reloc,
       /* Copied from varasm.c:output_constant_def_contents().  5346453 */
       && (MAX ((HOST_WIDE_INT)TREE_STRING_LENGTH (exp),
 	       int_size_in_bytes (TREE_TYPE (exp)))
-	  == strlen (TREE_STRING_POINTER (exp)) + 1))
+	  /* APPLE LOCAL ARM signedness mismatch */
+	  == (HOST_WIDE_INT) strlen (TREE_STRING_POINTER (exp)) + 1))
       && ! flag_writable_strings)
     return darwin_sections[cstring_section];
   /* APPLE LOCAL end fwritable strings, 5346453 */
@@ -1851,12 +1898,8 @@ darwin_handle_weak_import_attribute (tree *node, tree name,
   return NULL_TREE;
 }
 
-static void
-no_dead_strip (FILE *file, const char *lab)
-{
-  fprintf (file, ".no_dead_strip %s\n", lab);
-}
-
+/* APPLE LOCAL begin for-fsf-4_4 5480287 */ \
+/* APPLE LOCAL end for-fsf-4_4 5480287 */ \
 /* Emit a label for an FDE, making it global and/or weak if appropriate.
    The third parameter is nonzero if this is for exception handling.
    The fourth parameter is nonzero if this is just a placeholder for an
@@ -1865,47 +1908,47 @@ no_dead_strip (FILE *file, const char *lab)
 void
 darwin_emit_unwind_label (FILE *file, tree decl, int for_eh, int empty)
 {
-  const char *base;
+/* APPLE LOCAL begin for-fsf-4_4 5480287 */ \
   char *lab;
-  bool need_quotes;
-
-  if (DECL_ASSEMBLER_NAME_SET_P (decl))
-    base = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
-  else
-    base = IDENTIFIER_POINTER (DECL_NAME (decl));
-
-  base = targetm.strip_name_encoding (base);
-  need_quotes = name_needs_quotes (base);
 
   if (! for_eh)
     return;
 
-  lab = concat (need_quotes ? "\"" : "", user_label_prefix, base, ".eh",
-		need_quotes ? "\"" : "", NULL);
+  lab = concat (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)), ".eh", NULL);
 
   if (TREE_PUBLIC (decl))
-    fprintf (file, "\t%s %s\n",
-	     (DECL_VISIBILITY (decl) != VISIBILITY_HIDDEN
-	      ? ".globl"
-	      : ".private_extern"),
-	     lab);
+    {
+      targetm.asm_out.globalize_label (file, lab);
+      if (DECL_VISIBILITY (decl) == VISIBILITY_HIDDEN)
+	{
+	  fputs ("\t.private_extern ", file);
+	  assemble_name (file, lab);
+	  fputc ('\n', file);
+	}
+    }
 
   if (DECL_WEAK (decl))
-    fprintf (file, "\t.weak_definition %s\n", lab);
+    {
+      fputs ("\t.weak_definition ", file);
+      assemble_name (file, lab);
+      fputc ('\n', file);
+    }
 
+  assemble_name (file, lab);
   if (empty)
     {
-      fprintf (file, "%s = 0\n", lab);
+      fputs (" = 0\n", file);
 
       /* Mark the absolute .eh and .eh1 style labels as needed to
 	 ensure that we don't dead code strip them and keep such
 	 labels from another instantiation point until we can fix this
 	 properly with group comdat support.  */
-      no_dead_strip (file, lab);
+      darwin_mark_decl_preserved (lab);
     }
   else
-    fprintf (file, "%s:\n", lab);
+    fputs (":\n", file);
 
+/* APPLE LOCAL end for-fsf-4_4 5480287 */ \
   free (lab);
 }
 
@@ -2107,6 +2150,9 @@ void
 darwin_init_cfstring_builtins (void)
 {
   tree field, fields, pccfstring_ftype_pcchar;
+  /* APPLE LOCAL begin 3996036 */
+  int save_warn_padded;
+  /* APPLE LOCAL end 3996036 */
 
   /* struct __builtin_CFString {
        const int *isa;		(will point at
@@ -2132,8 +2178,15 @@ darwin_init_cfstring_builtins (void)
   TREE_CHAIN (field) = fields; fields = field;
   /* NB: The finish_builtin_struct() routine expects FIELD_DECLs in
      reverse order!  */
+  /* APPLE LOCAL begin 3996036 */
+  save_warn_padded = warn_padded;
+  warn_padded = 0;
+  /* APPLE LOCAL end 3996036 */
   finish_builtin_struct (cfstring_type_node, "__builtin_CFString",
 			 fields, NULL_TREE);
+  /* APPLE LOCAL begin 3996036 */
+  warn_padded = save_warn_padded; 
+  /* APPLE LOCAL end 3996036 */
 
   /* const struct __builtin_CFstring *
      __builtin___CFStringMakeConstantString (const char *); */

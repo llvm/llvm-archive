@@ -542,9 +542,17 @@ make_node_stat (enum tree_code code MEM_STAT_DECL)
 	DECL_IN_SYSTEM_HEADER (t) = in_system_header;
       if (CODE_CONTAINS_STRUCT (code, TS_DECL_COMMON))
 	{
-	  if (code != FUNCTION_DECL)
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	  if (code == FUNCTION_DECL)
+	    {
+	      DECL_ALIGN (t) = FUNCTION_BOUNDARY;
+	      DECL_MODE (t) = FUNCTION_MODE;
+	    }
+	  else
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 	    DECL_ALIGN (t) = 1;
-	  DECL_USER_ALIGN (t) = 0;	  
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 	  /* We have not yet computed the alias set for this declaration.  */
 	  DECL_POINTER_ALIAS_SET (t) = -1;
 	}
@@ -962,7 +970,9 @@ build_vector (tree type, tree vals)
   int over1 = 0, over2 = 0;
   tree link;
   /* APPLE LOCAL begin AltiVec */
-  int max_index, count = 0;
+  /* APPLE LOCAL begin AltiVec, radar 4870336, 4874471, 4874208 */
+  int count = 0;
+  /* APPLE LOCAL end AltiVec, radar 4870336, 4874471, 4874208 */
   tree list = NULL_TREE;
   /* APPLE LOCAL end AltiVec */
 
@@ -989,8 +999,11 @@ build_vector (tree type, tree vals)
       over2 |= TREE_CONSTANT_OVERFLOW (value);
     }
 
-  /* APPLE LOCAL begin AltiVec */
-  max_index = TYPE_VECTOR_SUBPARTS (type);
+  /* APPLE LOCAL begin AltiVec, radar 4870336, 4874471, 4874208 */
+#ifdef TARGET_PIM_ALTIVEC
+  if (TARGET_PIM_ALTIVEC)
+  {
+  int max_index = TYPE_VECTOR_SUBPARTS (type);
   if (count > 0 && count < max_index)
     {
       int index;
@@ -1000,7 +1013,9 @@ build_vector (tree type, tree vals)
                          build_tree_list (NULL_TREE,
                                           convert (TREE_TYPE (type), expr)));
     }
-  /* APPLE LOCAL end AltiVec */
+  }
+#endif
+  /* APPLE LOCAL end AltiVec, radar 4870336, 4874471, 4874208 */
 
   TREE_OVERFLOW (v) = over1;
   TREE_CONSTANT_OVERFLOW (v) = over2;
@@ -1910,15 +1925,20 @@ expr_align (tree t)
       align1 = expr_align (TREE_OPERAND (t, 2));
       return MIN (align0, align1);
 
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+      /* FIXME: LABEL_DECL and CONST_DECL never have DECL_ALIGN set
+	 meaningfully, it's always 1.  */
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
     case LABEL_DECL:     case CONST_DECL:
     case VAR_DECL:       case PARM_DECL:   case RESULT_DECL:
-      if (DECL_ALIGN (t) != 0)
-	return DECL_ALIGN (t);
-      break;
-
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
     case FUNCTION_DECL:
-      return FUNCTION_BOUNDARY;
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+      gcc_assert (DECL_ALIGN (t) != 0);
+      return DECL_ALIGN (t);
 
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
     default:
       break;
     }
@@ -3226,9 +3246,9 @@ build_decl_stat (enum tree_code code, tree name, tree type MEM_STAT_DECL)
 
   if (code == VAR_DECL || code == PARM_DECL || code == RESULT_DECL)
     layout_decl (t, 0);
-  else if (code == FUNCTION_DECL)
-    DECL_MODE (t) = FUNCTION_MODE;
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
 
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   return t;
 }
 

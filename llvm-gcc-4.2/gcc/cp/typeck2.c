@@ -756,6 +756,15 @@ digest_init (tree type, tree init)
 	  return error_mark_node;
 	}
 
+      /* APPLE LOCAL begin AltiVec */
+      if (code == VECTOR_TYPE
+          && TREE_CODE (init) == CONSTRUCTOR
+          && TREE_CODE (TREE_TYPE (init)) == VECTOR_TYPE
+          && vector_types_convertible_p (TREE_TYPE (init), type)
+          && TREE_CONSTANT (init))
+        return build_vector_from_ctor (type, CONSTRUCTOR_ELTS (init));
+      /* APPLE LOCAL end AltiVec */
+
       return convert_for_initialization (NULL_TREE, type, init,
 					 LOOKUP_NORMAL | LOOKUP_ONLYCONVERTING,
 					 "initialization", NULL_TREE, 0);

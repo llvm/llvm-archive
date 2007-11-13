@@ -4451,11 +4451,24 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 		  if (arg->locate.offset.constant < i + INTVAL (size_rtx))
 		    sibcall_failure = 1;
 		}
+	      /* APPLE LOCAL begin ARM mainline 4567449 */
+	      /* Use arg->locate.size.constant instead of size_rtx because
+		 we only care about the part of the argument on the stack.  */
 	      else if (arg->locate.offset.constant < i)
 		{
-		  if (i < arg->locate.offset.constant + INTVAL (size_rtx))
+		  if (i < arg->locate.offset.constant + arg->locate.size.constant)
 		    sibcall_failure = 1;
 		}
+	      /* Even though they appear to be at the same location, if
+		 part of the outgoing argument is in registers, they aren't
+		 really at the same location.  Check for this by making sure
+		 that the incoming size is the same as the outgoing size.  */
+	      else
+		{
+		  if (arg->locate.size.constant != INTVAL (size_rtx))
+		    sibcall_failure = 1;
+		}
+	      /* APPLE LOCAL end ARM mainline 4567449 */
 	    }
 	}
 

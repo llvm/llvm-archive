@@ -779,6 +779,13 @@ arm*-*-elf | ep9312-*-elf)
 	tm_file="dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
 	tmake_file="arm/t-arm arm/t-arm-elf"
 	;;
+# APPLE LOCAL begin ARM darwin target
+arm*-*-darwin*)
+	extra_options="${extra_options} arm/darwin.opt"
+        tm_file="${tm_file} arm/darwin.h"
+        tmake_file="${tmake_file} arm/t-darwin"
+        ;;
+# APPLE LOCAL end ARM darwin target
 arm*-wince-pe*)
 	tm_file="arm/semi.h arm/aout.h arm/arm.h arm/coff.h dbxcoff.h arm/pe.h arm/wince-pe.h"
 	tmake_file="arm/t-arm arm/t-wince-pe"
@@ -1040,11 +1047,10 @@ i[34567]86-*-darwin*)
 	# Deleted a comment here.
 	# APPLE LOCAL mainline
 	with_cpu=${with_cpu:-core2}
+ 	# APPLE LOCAL Macintosh alignment 2002-2-19 --ff
 	extra_options="${extra_options} i386/darwin.opt"
 	# APPLE LOCAL 4099000
 	tmake_file="${tmake_file} i386/t-darwin"
-	# APPLE LOCAL mainline
-	need_64bit_hwint=yes
 	;;
 x86_64-*-darwin*)
 	# APPLE LOCAL mainline

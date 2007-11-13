@@ -2196,6 +2196,9 @@ output_call_frame_info (int for_eh)
      specialization doesn't.  */
   if (TARGET_USES_WEAK_UNWIND_INFO
       && ! flag_asynchronous_unwind_tables
+/* APPLE LOCAL begin for-fsf-4_4 5480287 */ \
+      && flag_exceptions
+/* APPLE LOCAL end for-fsf-4_4 5480287 */ \
       && for_eh)
     for (i = 0; i < fde_table_in_use; i++)
       if ((fde_table[i].nothrow || fde_table[i].all_throwers_are_sibcalls)
@@ -8642,6 +8645,14 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
 
   if (sub_die != NULL)
     add_AT_die_ref (mod_type_die, DW_AT_type, sub_die);
+
+  /* APPLE LOCAL begin radar 5359827 add named pointer types to
+     pubtype table  */
+  if (mod_type_die
+      && mod_type_die->die_tag  == DW_TAG_pointer_type 
+      && get_AT (mod_type_die, DW_AT_name))
+    add_pubtype (type, mod_type_die);
+  /* APPLE LOCAL end radar 5359827 add named pointer types to pubtype table  */
 
   return mod_type_die;
 }

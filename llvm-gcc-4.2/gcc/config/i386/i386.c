@@ -1967,6 +1967,13 @@ override_options (void)
         target_flags
           |= ((MASK_SSE2 | MASK_SSE | MASK_MMX | MASK_128BIT_LONG_DOUBLE
                | TARGET_SUBTARGET64_DEFAULT) & ~target_flags_explicit);
+      /* APPLE LOCAL begin mainline candidate */
+      /* Disable the red zone for kernel compilation.
+	 ??? Why aren't we using -mcmodel=kernel?  */
+      if (TARGET_MACHO
+	  && (flag_mkernel || flag_apple_kext))
+	target_flags |= MASK_NO_RED_ZONE;
+      /* APPLE LOCAL end mainline candidate */
     }
   else
     {
@@ -2139,7 +2146,7 @@ override_options (void)
   /* APPLE LOCAL begin 4812082 -fast */
   /* These flags were the best on the software H264 codec, and have therefore
      been lumped into -fast per 4812082.  They have not been evaluated on
-     any other code, except that -fno-tree-pre is known to lose on the 
+     any other code, except that -fno-tree-pre is known to lose on the
      hardware accelerated version of the codec. */
   if (flag_fast || flag_fastf || flag_fastcp)
     {
@@ -4072,6 +4079,10 @@ ix86_function_arg_boundary (enum machine_mode mode, tree type)
     align = TYPE_ALIGN (type);
   else
     align = GET_MODE_ALIGNMENT (mode);
+  /* APPLE LOCAL begin unbreak ppc64 abi 5103220 */
+  if (type && integer_zerop (TYPE_SIZE (type)))
+    align = PARM_BOUNDARY;
+  /* APPLE LOCAL end unbreak ppc64 abi 5103220 */
   if (align < PARM_BOUNDARY)
     align = PARM_BOUNDARY;
   if (!TARGET_64BIT)
@@ -4166,8 +4177,8 @@ ix86_function_value (tree valtype, tree fntype_or_decl,
 }
 
 /* APPLE LOCAL begin radar 4781080 */
-/* Return true iff must generate call to objcMsgSend for an 
-   fp-returning method. */ 
+/* Return true iff must generate call to objcMsgSend for an
+   fp-returning method. */
 bool
 ix86_objc_fpreturn_msgcall (tree ret_type, bool no_long_double)
 {
@@ -4206,7 +4217,10 @@ ix86_return_in_memory (tree type)
       /* MMX/3dNow values are returned in MM0,
 	 except when it doesn't exits.  */
       if (size == 8)
-	return (TARGET_MMX ? 0 : 1);
+        /* APPLE LOCAL begin radar 4875125. */
+        /* Undo the mainline patch which broke MACHO ABI compatibility. */
+	return (TARGET_MACHO) ? 1 : (TARGET_MMX ? 0 : 1);
+        /* APPLE LOCAL end radar 4875125. */
 
       /* SSE values are returned in XMM0, except when it doesn't exist.  */
       if (size == 16)
@@ -5681,6 +5695,50 @@ ix86_dwarf_handle_frame_unspec (const char *label, rtx pattern, int index)
     }
 }
 
+/* APPLE LOCAL begin 3399553 */
+/* Calculate the value of FLT_ROUNDS into DEST.
+
+   The rounding mode is in bits 11:10 of FPSR, and has the following
+   settings:
+     00 Round to nearest
+     01 Round to -inf
+     10 Round to +inf
+     11 Round to 0
+
+  FLT_ROUNDS, on the other hand, expects the following:
+    -1 Undefined
+     0 Round to 0
+     1 Round to nearest
+     2 Round to +inf
+     3 Round to -inf
+
+  To perform the conversion, we do:
+    (((((FPSR & 0x800) >> 11) | ((FPSR & 0x400) >> 9)) + 1) & 3)
+*/
+void
+ix86_expand_flt_rounds (rtx dest)
+{
+  rtx mem = assign_stack_temp (HImode, GET_MODE_SIZE (HImode), 0);
+  rtx temp = gen_reg_rtx (SImode);
+
+  /* Step #1: Read FPSR.  Unfortunately, this can only be done into a
+     16-bit memory location.  */
+  emit_insn (gen_x86_fnstcw_1 (mem));
+
+  /* Step #2: Copy into a register.  */
+  emit_insn (gen_zero_extendhisi2 (dest, mem));
+
+  /* Step #3: Perform conversion described above.  */
+  emit_insn (gen_andsi3 (temp, dest, GEN_INT (0x400)));
+  emit_insn (gen_andsi3 (dest, dest, GEN_INT (0x800)));
+  emit_insn (gen_lshrsi3 (temp, temp, GEN_INT (9)));
+  emit_insn (gen_lshrsi3 (dest, dest, GEN_INT (11)));
+  emit_insn (gen_iorsi3 (dest, dest, temp));
+  emit_insn (gen_addsi3 (dest, dest, const1_rtx));
+  emit_insn (gen_andsi3 (dest, dest, GEN_INT (3)));
+}
+/* APPLE LOCAL end 3399553 */
+
 /* APPLE LOCAL begin fix-and-continue x86 */
 #ifndef TARGET_FIX_AND_CONTINUE
 #define TARGET_FIX_AND_CONTINUE 0
@@ -6476,7 +6534,9 @@ legitimate_constant_p (rtx x)
       break;
 
     case CONST_VECTOR:
-      if (x == CONST0_RTX (GET_MODE (x)))
+      /* APPLE LOCAL begin radar 4874197 mainline candidate */
+      if (standard_sse_constant_p (x))
+      /* APPLE LOCAL end radar 4874197 mainline candidate */
 	return true;
       return false;
 
@@ -9895,7 +9955,7 @@ ix86_expand_convert_uns_DF2SI_sse (rtx operands[])
   ix86_expand_vector_move2 (V2DFmode, fp_value,
 			    gen_rtx_SUBREG (V2DFmode, incoming_value, 0));
   large_xmm = gen_reg_rtx (V2DFmode);
-  
+
   v_rtx = gen_rtx_CONST_VECTOR (V2DFmode,
 				gen_2_4_rtvec (2, int_two31_as_fp, DFmode));
   ix86_expand_vector_move2 (DFmode, large_xmm, v_rtx);
@@ -9922,7 +9982,7 @@ ix86_expand_convert_uns_DF2SI_sse (rtx operands[])
   zero_or_two31_xmm = gen_reg_rtx (V2DFmode);
   v_rtx = gen_rtx_CONST_VECTOR (V2DFmode,
 				gen_2_4_rtvec (2, int_two31_as_fp, DFmode));
-  ix86_expand_vector_move2 (DFmode, zero_or_two31_xmm, v_rtx);  
+  ix86_expand_vector_move2 (DFmode, zero_or_two31_xmm, v_rtx);
 
   /* zero_or_two31 = (large_xmm) ? 2**31 : 0; */
   emit_insn (gen_andv2df3 (zero_or_two31_xmm, zero_or_two31_xmm, large_xmm));
@@ -9991,7 +10051,7 @@ ix86_expand_convert_uns_SF2SI_sse (rtx operands[])
   ix86_expand_vector_move2 (V4SFmode, fp_value,
 			    gen_rtx_SUBREG (V4SFmode, incoming_value, 0));
   large_xmm = gen_reg_rtx (V4SFmode);
-  
+
   /* fp_value = MAX (fp_value, 0.0); */
   /* Preclude negative values; truncate at zero.  */
   int_zero_as_xmm = gen_reg_rtx (V4SFmode);
@@ -16870,13 +16930,23 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       op0 = expand_expr (arg0, NULL_RTX, VOIDmode, 0);
       op1 = expand_expr (arg1, NULL_RTX, VOIDmode, 0);
 
-      if (GET_CODE (op1) != CONST_INT)
-	{
-	  error ("shift must be an immediate");
-	  return const0_rtx;
-	}
-      if (INTVAL (op1) < 0 || INTVAL (op1) > 255)
-	op1 = GEN_INT (255);
+     /* APPLE LOCAL begin radar 5543378 mainline candidate */
+      if (GET_CODE (op1) == CONST_INT)
+        {
+          if (INTVAL (op1) < 0 || INTVAL (op1) > 255)
+            op1 = GEN_INT (255);
+        }   
+      else
+        {
+          mode2 = insn_data[icode].operand[2].mode;
+          if (! (*insn_data[icode].operand[2].predicate) (op1, mode2))
+          {
+	    op1 = copy_to_reg (op1);
+            if (GET_MODE (op1) != mode2)
+              op1 = convert_to_mode (mode2, op1, 0);
+          }
+        } 
+      /* APPLE LOCAL end radar 5543378 mainline candidate */
 
       tmode = insn_data[icode].operand[0].mode;
       mode1 = insn_data[icode].operand[1].mode;
@@ -19982,7 +20052,7 @@ ix86_darwin_regparmandstackparm_dup_fndecl (tree trad_fndecl, splay_tree st)
     = copy_list (TYPE_ATTRIBUTES (TREE_TYPE (trad_fndecl)));
   ix86_make_regparmandstackparmee (&TREE_TYPE (new_fndecl));
   /* Kludge: block copied from tree-inline.c(save_body).  Should
-     be refactored into a common shareable routine.  */	
+     be refactored into a common shareable routine.  */
   {
     tree *parg;
 
@@ -20074,7 +20144,7 @@ ix86_darwin_redirect_calls(void)
 
   if (!ix86_darwin_fntype_st)
     ix86_darwin_fntype_st = splay_tree_new (splay_tree_compare_pointers, NULL, NULL);
-  
+
   if (!ix86_darwin_regparmandstackparm_st)
     ix86_darwin_regparmandstackparm_st
       = splay_tree_new (splay_tree_compare_pointers, NULL, NULL);
@@ -20833,7 +20903,7 @@ iasm_canonicalize_bracket (tree arg)
       TREE_OPERAND (arg, 0) = integer_zero_node;
       TREE_OPERAND (arg, 1) = swp;
     }
-    
+
   if (TREE_OPERAND (arg, 1))
     {
       rtype = iasm_canonicalize_bracket_1 (&TREE_OPERAND (arg, 1), arg);
@@ -20910,10 +20980,19 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
   tree args = iargs;
   int argnum = 1;
   const char *opcode = *opcode_p;
+  bool fp_style = false;
+  bool fpi_style = false;
 
   /* Don't transform if output format is the same as input format.  */
   if (ASSEMBLER_DIALECT == ASM_INTEL)
     return iargs;
+
+  if (strncasecmp (opcode, "f", 1) == 0)
+    fp_style = true;
+
+  if (fp_style
+      && strncasecmp (opcode+1, "i", 1) == 0)
+    fpi_style = true;
 
   while (args)
     {
@@ -20945,7 +21024,7 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	}
       else if (TREE_CODE (arg) == BRACKET_EXPR)
 	TREE_VALUE (args) = arg = iasm_canonicalize_bracket (arg);
-	  
+
       switch (TREE_CODE (arg))
 	{
 	case ARRAY_REF:
@@ -20955,9 +21034,9 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	  if (TYPE_MODE (TREE_TYPE (arg)) == QImode)
 	    e->mod[argnum-1] = 'b';
 	  else if (TYPE_MODE (TREE_TYPE (arg)) == HImode)
-	    e->mod[argnum-1] = 'w';
+	    e->mod[argnum-1] = fpi_style ? 's' : 'w';
 	  else if (TYPE_MODE (TREE_TYPE (arg)) == SImode)
-	    e->mod[argnum-1] = 'l';
+	    e->mod[argnum-1] = fpi_style ? 'l' : (fp_style ? 's' : 'l');
 	  else if (TYPE_MODE (TREE_TYPE (arg)) == DImode)
 	    e->mod[argnum-1] = 'q';
 	  else if (TYPE_MODE (TREE_TYPE (arg)) == SFmode)
@@ -20976,9 +21055,9 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	      if (strcasecmp (s, "byte") == 0)
 		e->mod[argnum-1] = 'b';
 	      else if (strcasecmp (s, "word") == 0)
-		e->mod[argnum-1] = 'w';
+		e->mod[argnum-1] = fpi_style ? 's' : 'w';
 	      else if (strcasecmp (s, "dword") == 0)
-		e->mod[argnum-1] = 'l';
+		e->mod[argnum-1] = fpi_style ? 'l' : (fp_style ? 's' : 'l');
 	      else if (strcasecmp (s, "qword") == 0)
 		e->mod[argnum-1] = 'q';
 	      else if (strcasecmp (s, "real4") == 0)

@@ -1,3 +1,532 @@
+2007-11-07  Josh Conner  <jconner@apple.com>
+
+	Radar 5581683
+	* function.h (struct function): Add calls_builtin_ret_addr
+	and calls_builtin_frame_addr.
+	(current_function_calls_builtin_ret_addr): New definition.
+	(current_function_calls_builtin_frame_addr): New definition.
+	* builtins.c (expand_builtin_return_addr): Set
+	current_function_calls_builtin_frame_addr and
+	current_function_calls_builtin_ret_addr.
+	(expand_builtin_setjmp_receiver): Check
+	builtin_setjmp_frame_value.
+	* dbxout.c (dbxout_parms): Adjust debug info offset by
+	DEBUGGER_ARG_OFFSET.
+	* global.c (global_alloc): Add ALLOW_ELIMINATION_TO_SP
+	logic.
+	* reload1.c (update_eliminables): Likewise.
+	(init_elim_table): Likewise.
+	* config/arm/arm.c (arm_builtin_setjmp_frame_value): New
+	function.
+	(TARGET_BUILTIN_SETJMP_FRAME_VALUE): Define.
+	(inclusive_bitmask): New function.
+	(use_return_insn): Support darwin alternate frame layout.
+	(arm_compute_save_reg0_reg12_mask): Likewise.
+	(arm_compute_save_reg_mask): Likewise.
+	(thumb_compuate_save_reg_mask): Mandate use of FP.  Also,
+	support darwin alternate frame layout.
+	(arm_output_epilogue): Support darwin alternate frame layout.
+	(arm_get_frame_offsets): Likewise.
+	(arm_compute_initial_elimination_offset): Likewise.
+	(arm_expand_prologue): Likewise.
+	(arm_return_addr): Likewise.
+	(thumb_compute_initial_elimination_offset): Likewise.
+	(thumb_expand_prologue): Likewise.
+	(arm_set_return_addr): Likewise.
+	(thumb_set_return_addr): Likewise.
+	(arm_debugger_arg_offset): Adjust for SP-relative addressing.
+	(thumb_output_function_prologue): Mandate use of FP.
+	(arm_builtin_setjmp_frame_value): New function.
+	(arm_local_debug_offset): New function.
+	* config/arm/arm.h (ARM_HARD_FRAME_POINTER_REGNUM): Define as
+	r7.
+	(FRAME_POINTER_REQUIRED): Redefine to match darwin alternate
+	frame layout.
+	(ELIMINABLE_REGS): Don't eliminate from AP into FP.
+	Merge ARM and Thumb hard frame pointers.
+	(CAN_ELIMINATE): Allow elimination to SP if SP doesn't change
+	during a function's lifetime.
+	(DEBUGGER_ARG_OFFSET): Always call arm_debugger_arg_offset.
+	(DEBUGGER_AUTO_OFFSET): Define.
+	(ALLOW_ELIMINATION_TO_SP): Define.
+	* config/arm/arm-protos.h (arm_local_debug_offset): New proto.
+	* config/arm/darwin-libgcc.10.4.ver (addsf3, floatdisf,
+	floatsisf, subsf3): Remove.
+
+2007-11-07  Josh Conner  <jconner@apple.com>
+
+	Radar 5585396
+	* config/arm/arm.md (trap): New define_insn.
+
+2007-11-06  Eric Christopher  <echristo@apple.com>
+
+	Radar 5583537
+	* config.gcc: Remove duplicate apple local code.
+
+2007-11-05  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4709514
+	* tree-pass.h (pass_memset) : Removed.
+	* bitmap.h (bitmap_empty_p) : Removed.
+	* tree-ssa-loop.c: (tree_ssa_loop_memset, gate_tree_ssa_loop_memset,
+	pass_memset) : Removed.
+	* tree-ssa-loop-memset.c : Removed.
+	* tree-vectorizer.h: (vect_analyze_pointer_ref_access) : Removed.
+	* tree-vect-analyze.c (tree vect_get_loop_niters): Declared it as
+	a static instead of an extern function.
+	* tree-flow.h (tree_ssa_memset): Removed.
+	* passes.c (pass_memset): Removed.
+	* Makefile.in (tree-ssa-loop-memset.o) : Removed.
+
+2007-11-05  Josh Conner  <jconner@apple.com>
+
+	Radar 5569420
+	* doc/invoke.texi: Reinstate ARM options.
+	* builtins.c (expand_builtin_alloca): Emit NOTE_INSN_ALLOCA.
+	* final.c (final_scan_insn): Handle NOTE_INSN_ALLOCA.
+	* insn-notes.def (ALLOCA): New INSN_NOTE.
+	* cse.c (fold_rtx): Verify REGNO_QTY_VALID_P (folded_arg1)
+	before using it.
+	* stor-layout.c (start_record_layout): Add PEG_ALIGN_FOR_MAC68K
+	handling.
+	* calls.c (store_one_arg): Handle arguments which are partially
+	on the stack when detecting argument overlap.
+	* except.c (sjlj_emit_function_enter): Split this into
+	(sjlj_generate_setjmp_sequence): ...this new function...
+	(sjlj_emit_function_setjmps): ...and this new function.
+	(sjlj_emit_dispatch_table): Call sjlj_emit_function_setjmps
+	instead of sjlj_emit_function_enter.
+	* config/i386/darwin.h (CC1_SPEC): Ignore -mthumb and
+	-mno-thumb.
+	* config/rs6000/darwin.h (CC1_SPEC): Likewise.
+	* config/arm/arm.c (all_architectures): Change default
+	processors for TARGET_MACHO.
+	(arm_override_options): Don't warn if interworking selected
+	on a processor that doesn't support thumb.  Enable
+	interworking by default on v5 and later architectures.
+	(arm_compute_func_type): Consider TARGET_INTERWORK only on
+	pre-v5 architectures.
+	(use_return_insn): Likewise.
+	(thumb_pushpop): Likewise.
+	(thumb_exit): Likewise.
+	(arm_function_ok_for_sibcall): Likewise.  Also, don't allow
+	sibcalls of external functions on TARGET_MACHO.  Also,
+	don't allow sibcalls of weak functions.
+	(arm_legitimate_index_p): Limit indexed addressing on
+	TARGET_VFP.  Also, consider TARGET_INTERWORK only on pre-v5
+	architectures.
+	(arm_output_mi_thunk): Use a stub for dynamic references.
+	Also, use a -8 offset when calculating the address of a
+	PIC reference to a non-local function.
+	(optimization_options): New function.
+	* config/arm/arm.h (TARGET_INTERWORK): Define.
+	(OPTIMIZATION_OPTIONS): Define.
+	* config/arm/arm-protos.h (optimization_options): New
+	prototype.
+	* config/arm/arm.opt (mthumb-interwork): Set interwork_option
+	instead of a target mask.
+	* config/arm/arm.md (UNSPEC_JMP_XCHG): New UNSPEC.
+	(thumb_extendqisi2_v6): Check for which_alternative == 1.
+	(builtin_setjmp_receiver): Remove.
+	(builtin_setjmp_setup): New define_expand.
+	(builtin_longjmp): New define_expand.
+	(indirect_jump_exchange): New define_expand.
+	(arm_indirect_jump_exchange): New define_insn.
+	(thumb_indirect_jump_exchange): New define_insn.
+
+2007-11-04  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5543378
+	* config/i386/i386.c (ix86_expand_builtin): Improved the previous
+	patch.
+
+2007-10-30  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5543378
+	* config/i386/i386.c (ix86_expand_builtin): Allow non-immediate
+	shift count, load a memory operand to a register and convert to
+	TI mode if necessary.
+
+2007-10-26  Josh Conner  <jconner@apple.com>
+
+	Radar 5562046
+	* defaults.h (LEGITIMATE_INDIRECT_OPERAND_P): Define...
+	* reload.c (find_reloads): ...use.
+	* reload1.c (reload): Likewise.
+	* recog.c (general_operand): Likewise.
+	(immediate_operand): Likewise.
+	(nonmemory_operand): Likewise.
+	(asm_operand_ok): Likewise.
+	* regclass.c (record_reg_classes): Likewise.
+	* gcc.c (main): Add sysroot prefix to startfile_prefixes.
+	* jump.c (rtx_renumbered_equal_p): Don't allow LABEL_REFs to
+	undefined labels to match.
+	* c-common.c (iasm_process_arg): Define default constraints for
+	ARM.
+	(cw_cpsr, cw_cpsr_c): New variables.
+	(iasm_lookup_label): Recognize cpsr and cpsr_c as operands.
+	* config.gcc: Add arm*-*-darwin* target.
+	* config/i386/darwin.h (DARWIN_DSYMUTIL_SPEC): New definition.
+	* config/rs6000/darwin.h (DARWIN_DSYMUTIL_SPEC): New definition.
+	* config/darwin-protos.h (machopic_lookup_stub_or_non_lazy_ptr):
+	New function.
+	(machopic_data_defined_p): Make extern.
+	* config/darwin.c (machopic_data_defined_p): Make extern.
+	(struct machopic_indirection): Add 'emitted' field.
+	(indirection_uses_changed): New variable.
+	(machopic_indirection_name): Set 'emitted' field.
+	(machopic_lookup_stub_or_non_lazy_ptr): New function.
+	(machopic_validate_stub_or_non_lazy_ptr): Set
+	indirection_uses_changed.  Use 'emitted' field.
+	(machopic_output_indirection): Set 'emitted' field.
+	(machopic_finish): Use 'indirection_uses_changed' to determine
+	whether to invoke htabl_traverse_noresize again.
+	(machopic_select_section): Fix a signedness mismatch.
+	* config/darwin-sections.def (machopic_symbol_stub4_section):
+	New section defintion.
+	(machopic_picsymbol_stub4_section): New section definition.
+	* config/darwin.h (LINK_COMMAND_SPEC): Use DARWIN_DSYMUTIL_SEPC.
+	(DARWIN_EXTRA_SPECS): Add darwin_dsymutil.
+	(SUBTARGET_ASM_DECLARE_FUNCTION_NAME): New definition...
+	(ASM_DECLARE_FUNCTION_NAME): ...use it.
+	* config/arm/t-darwin: New file.
+	* config/arm/ieee754-df.S (*): Convert macro definitions to
+	gcc preprocessor and cctools assembler style macros.  Don't
+	use local labels > 9.
+	* config/arm/ieee754-sf.S (*): Likewise.
+	* config/arm/lib1funcs.asm (*): Likewise.
+	* config/arm/arm.c: Add libcpp/internal.h include.
+	(arm_darwin_file_start): New function.
+	(arm_darwin_file_end): New function.
+	(symbol_mentioned_with_filter): New function.
+	(arm_cannot_force_const_mem): New function.
+	(arm_binds_local_p): New function.
+	(TARGET_ASM_FILE_START): New definition.
+	(TARGET_ASM_FILE_END): New definition.
+	(TARGET_ASM_ALIGNED_SI_OP): New definition.
+	(TARGET_CANNOT_FORCE_CONST_MEM): Redefine.
+	(TARGET_BINDS_LOCAL_P): New definition.
+	(arm_override_options): Don't warn for conflicting -mcpu and
+	-march switch on darwin.  Don't set arm_pic_register on darwin.
+	Invoke SUBTARGET_OVERRIDE_OPTIONS and
+	SUBSUBTARGET_OVERRIDE_OPTIONS.
+	(arm_attribute_table): Include SUBTARGET_ATTRIBUTE_TABLE.
+	(arm_encode_call_attribute): Add MACHO handling.
+	(current_file_function_operand): Use SYMBOL_SHORT_CALL_ATTR_P on
+	darwin.
+	(arm_is_longcall_p): Use SYMBOL_LONG_CALL_ATTR_P on darwin.
+	(legitimize_pic_address): Add TARGET_MACHO support.
+	(arm_load_pic_register): Disable for darwin.  Pass label rtx
+	when calling gen_pic_load_addr_arm, gen_pic_add_dot_plus_eight,
+	gen_pic_load_addr_thumb, and gen_pic_add_dot_plus_four.
+	(arm_cannot_force_const_mem): New function.
+	(symbol_mentioned_p): Call symbol_mentioned_with_filter.
+	(symbol_mentioned_with_filter): New function.
+	(arm_cannot_copy_insn_p): Match MACHO UNSPEC_PIC_BASE.
+	(arm_output_function_epilogue): For darwin, insert a nop after
+	a trailing label.
+	(arm_print_operand): Use a LOCAL_LABEL_PREFIX, if one is
+	defined.
+	(arm_assemble_integer): Assume aligned_p on darwin.  Use
+	DOT_WORD instead of ".word".
+	(arm_elf_asm_constructor): Only define if OBJECT_FORMAT_ELF.
+	(arm_init_builtins): Include SUBTARGET_INIT_BUILTINS.
+	(arm_darwin_file_start): New function.
+	(arm_darwin_file_end): New function.
+	(arm_encode_section_info): For TARGET_MACHO, call
+	darwin_encode_section_info, and use SYMBOL_LONG_CALL and
+	SYMBOL_SHORT_CALL.
+	(arm_cxx_class_data_always_comdat): Return false for darwin.
+	(arm_binds_local_p): New function.
+	(reset_optimization_options): New function.
+	(machopic_output_stub): New function.
+	(iasm_memory_clobber): New function.
+	* config/arm/arm.h (TARGET_MACHO, DOT_WORD, SYMBOL_SHORT_CALL,
+	SYMBOL_LONG_CALL, SYMBOL_SHORT_CALL_ATTR_P,
+	SYMBOL_LONG_CALL_ATTR_P, LEGITIMATE_DYNAMIC_NO_PIC_OPERAND_P,
+	LEGITIMATE_INDIRECT_OPERAND_P): Define.
+	(ENCODED_SHORT_CALL_ATTR_P, ENCODED_LONG_CALL_ATTR_P): Remove.
+	(THUMB_TRAMPOLINE_TEMPLATE): Use DOT_WORD instead of ".word".
+	(ARM_NAME_ENCODING_LENGTHS): Remove handling of
+	SHORT_CALL_FLAG_CHAR and LONG_CALL_FLAG_CHAR.
+	(ARM_DECLARE_FUNCTION_SIZE): Use SYMBOL_SHORT_CALL instead of
+	SHORT_CALL_FLAG_CHAR.
+	(ARM_DECLARE_FUNCTION_NAME): Add symbol name to .thumb_func.
+	(PRINT_OPERAND_PUNCT_VALID_P): Allow '.'.
+	* config/arm/darwin.opt: New file.
+	* config/arm/arm-protos.h (non_local_symbol_mentioned_p): New
+	prototype.
+	* config/arm/darwin.h: New file.
+	* config/arm/arm.opt (mlong-branch): New option, alias for
+	-mlong-calls).
+	* config/arm/predicates.md (arm_branch_target): New predicate.
+	* config/arm/arm.md (movsi): Use LEGITIMATE_INDIRECT_OPERAND_P.
+	(pic_load_addr_arm): Include label reference as param.  Allow
+	to match for dynamic-no-pic on darwin.
+	(pic_load_addr_thumb): Likewise.
+	(pic_add_dot_plus_four): Likewise.
+	(pic_add_dot_plus_eight): Likewise.
+	(cbranchsi4_insn, cbranchsi4_scratch, movsi_cbranchsi4,
+	negated_cbranchsi4, tbit_cbranch, tlobits_cbranch,
+	tstsi3_cbranch, andsi3_cbranch, orrsi3_cbranch_scratch,
+	orrsi3_cbranch, xorsi3_cbranch_scratch, xorsi3_cbranch,
+	bicsi3_cbranch_scratch, bicsi3_cbranch, cbranchne_decr1,
+	addsi3_cbranch, addsi3_cbranch_scratch, subsi3_cbranch,
+	subsi3_cbranch_scratch): Don't use relative local labels.
+	(call): Calculate stub name on darwin, if building dynamic.
+	(call_value): Likewise.
+	(sibcall): Likewise.
+	(sibcall_value): Likewise.
+	(call_symbol): Require an arm_branch_target destination.
+	(call_value_symbol): Likewise.
+	(call_insn): Likewise.  On darwin, use stub if one was
+	generated.
+	(call_value_insn): Likewise.
+	* config/arm/darwin-libgcc.10.4.ver: New file.
+	* config/arm/darwin-libgcc.10.5.ver: New file.
+
+2007-10-26  Josh Conner  <jconner@apple.com>
+
+	Radar 3399553
+	* config/i386/i386.c (ix86_expand_flt_rounds): Fix comment.
+
+2007-10-25  Josh Conner  <jconner@apple.com>
+
+	Radar 3399553
+	* ginclude/float.h (FLT_ROUNDS): Define to __builtin_flt_rounds.
+	* builtins.c (expand_builtin_flt_rounds): New function...
+	(expand_builtin): ...call it.
+	* builtins.def (BUILT_IN_FLT_ROUNDS): Define.
+	* config/i386/i386.md (UNSPEC_FLT_ROUNDS): New UNSPEC.
+	(flt_rounds): New define_expand.
+	* config/i386/i386-protos.h (ix86_expand_flt_rounds): New proto.
+	* config/i386/i386.c (ix86_expand_flt_rounds): New function.
+	* config/rs6000/rs6000.h (FIRST_PSEUDO_REGISTER): Bump to 115.
+	(LAST_PHYSICAL_REGISTER): New definition...
+	(DWARF_FRAME_REGISTERS): ...use it here...
+	(DWARF_REG_TO_UNWIND_COLUMN): ...and here.
+	(FIXED_REGISTERS): Add value for FPSCR_REGNO.
+	(CALL_USED_REGISTERS): Likewise.
+	(CALL_REALLY_USED_REGISTERS): Likewise.
+	(FPSCR_REGNO): Define.
+	(REG_ALLOC_ORDER): Add FPSCR_REGNO.
+	(enum reg_class): Add FPSCR_REGNO to ALL_REGS class.
+	(REGISTER_NAME): Add FPSCR name.
+	* config/rs6000/rs6000.md (UNSPEC_MFFS) New UNSPEC.
+	(UNSPEC_FLT_ROUNDS): Likewise.
+	(mffs): New define_insn.
+	(flt_rounds): New define_expand.
+	* config/rs6000/rs6000-protos.h (rs6000_expand_flt_rounds): New
+	proto.
+	* config/rs6000/darwin.h (REGISTER_NAMES): Add fpscr.
+	* config/rs6000/rs6000.c (rs6000_reg_names): Add fpscr.
+	(alt_reg_names): Likewise.
+	(rs6000_expand_flt_rounds): New function.
+
+2007-10-23  Eric Christopher  <echristo@apple.com>
+
+	Radar 5547244
+	* config/i386/i386.c (override_options): For darwin 64-bit kernel
+	compilations turn off the red zone.
+
+2007-10-23  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 3996036
+	* config/darwin.c (darwin_init_cfstring_builtins) : Do not emit
+	a warning message for __builtin_CFString when -Wpadded is specified.
+
+2007-10-15  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5416357
+	* tree-sra.c (decide_block_copy) : Removed MERGE FIXME.
+
+2007-10-15  Caroline Tice   <ctice@apple.com>
+
+       Radar 5359827
+       * dwarf2out.c (modified_type_die):  If the die is a pointer type, and
+       it has a name, add it to the list of potential types for the pubtypes
+       table.
+
+2007-10-08  Eric Christopher  <echristo@apple.com>
+
+	Radar 5516808
+	* config/rs6000/rs6000.c (altivec_pim_info): Fix comment.
+	(altivec_ovl_resolve): Split out conditionals.
+	(altivec_convert_args): Check for too many arguments to builtin.
+	(rs6000_fold_builtin): Update comment, remove merge fixme.
+	Fix type for fcode. Make sure that our second argument has
+	a proper type as well.
+
+2007-10-05  Eric Christopher  <echristo@apple.com>
+
+	Radar 5518348
+	* common.opt: Remove -fpascal-strings option.
+
+2007-10-01  Jon Ziegler <jonz@apple.com>
+
+	Radar 5490688
+	* doc/invoke.texi: remove reference to gcc_select
+
+2007-09-28  Eric Christopher  <echristo@apple.com>
+
+	Radar 5490617
+	* varasm.c (assemble_variable): Use the classified section, not
+	DECL_COMMON for zerofill.
+
+2007-09-24  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5447227
+	* config/rs6000/rs6000.c (altivec_expand_predicate_builtin) :
+	Fixed APPLE LOCAL marker.
+
+2007-09-22  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5447227
+	* config/rs6000/rs6000.c (altivec_expand_abs_builtin,
+	altivec_expand_predicate_builtin, altivec_expand_lv_builtin,
+	altivec_expand_stv_builtin) : Fixed compile time warnings.
+
+2007-09-21  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 5447227
+	* config/rs6000/rs6000.c (altivec_expand_abs_builtin,
+	altivec_expand_predicate_builtin, altivec_expand_lv_builtin,
+	altivec_expand_stv_builtin, altivec_expand_ld_builtin,
+	altivec_expand_st_builtin, altivec_expand_dst_builtin)
+	: Issue error messages for functions with too few arguments.
+
+2007-09-21  Hui-May Chang <hm.chang@apple.com>
+
+	Radar 4994150
+	* rs6000.c (rs6000_legitimate_offset_address_p): Return
+	false for AltiVec vector modes.
+
+2007-09-13  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5437393
+	* gcse.c (gcse_main, cprop_insn): Remove APPLE LOCAL.
+
+2007-09-04  Hui-May Chang  <hm.chang@apple.com>
+	Radar 5155743
+	* target.h (have_dynamic_stack_space): New.
+        * target-def.h (TARGET_HAVE_DYNAMIC_STACK_SPACE) : New.
+        * explow.c (allocate_dynamic_stack_space) : Reserve space
+          for outgoing args and registers saved area if
+          DYNAMIC_STACK_OFFSET is defined.
+        * rs6000.c (TARGET_HAVE_DYNAMIC_STACK_SPACE): New.
+
+2007-08-23  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4869885
+	Backport from mainline:
+	2006-10-31  Geoffrey Keating  <geoffk@apple.com>
+	PR 23067
+	* c-decl.c (start_struct): Don't create self-containing
+	structures.
+	* config/rs6000/rs6000.c (darwin_rs6000_special_round_type_align):
+	New.
+	* config/rs6000/rs6000-protos.h
+	(darwin_rs6000_special_round_type_align): New.
+	* config/rs6000/darwin.h (ADJUST_FIELD_ALIGN): Rewrite.
+	(ROUND_TYPE_ALIGN): Use darwin_rs6000_special_round_type_align.
+
+	* stor-layout.c (ADJUST_FIELD_ALIGN): Only passed two arguments.
+
+2007-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4947311
+	* c-common.h (objc_declare_protocols, objc_start_protocol): Decl changed.
+	* stub-objc.c (objc_declare_protocols, objc_start_protocol): Changed.
+	* c-parser.c (c_parser_external_declaration): Call to
+	c_parser_objc_protocol_definition takes additional argument.
+	(c_parser_declaration_or_fndef): Protocols with attributes are processed
+	here by passing it to c_parser_objc_protocol_definition.
+	(c_parser_objc_protocol_definition): Takes additional argument and passes
+	it to objc_declare_protocols or objc_start_protocol.
+
+2007-08-21  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4874197
+	* gcc/config/i386/i386.c (legitimate_constant_p): Accepted a sse
+	constant vector as a legitimate constant.
+
+2007-08-20  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4870336, 4874471, 4874208
+	* tree.c (build_vector) : Moved the declaration of max_index
+	inside the block it is used.
+
+2007-08-20  Hui-May Chang  <hm.chang@apple.com>
+
+        Radar 4708086
+        * passes.c (rest_of_compilation): Removed after confirming the
+	patch to radar 4548482 is no longer needed in gcc 4.2.
+
+2007-08-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5422751
+	* c-common.h (objc_protocol_implementation): decl removed.
+	* stub-objc.c (objc_protocol_implementation): stub removed.
+	* c-parser.c (c_parser_objc_class_definition): Misplaced syntax
+	recognition removed.
+
+2007-08-17  Hui-May Chang  <hm.chang@apple.com>
+
+        Radar 5134231
+        * gcc/config/rs6000/rs6000.c (rs6000_handle_option): Set
+        rs6000_alignment_flags to OPTION_MASK_ALIGN_MAC68K instead of
+        OPTION_ALIGN_MAC68K for -malign-mac68k option.
+
+2007-08-17  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4876451
+	Backport from mainline:
+	2007-04-24  Richard Henderson  <rth@redhat.com>
+	* libgcc2.h (AVOID_FP_TYPE_CONVERSION): Rename from
+	IS_IBM_EXTENDED.  Also define in terms of WIDEST_HARDWARE_FP_SIZE.
+	* libgcc2.c (__floatdisf): Avoid double-word arithmetic when
+	looking for non-zero bits shifted out.  Avoid a recursive call
+	when constructing the scalar.
+	(__floatundisf): Likewise.
+
+2007-08-14  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4870336, 4874471, 4874208
+	* tree.c (build_vector) : Assign zeroes to uninitialized
+	vector elements only for -mpim-alitivec option on ppc.
+
+2007-08-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5376125
+        * doc/invoke.texi (-Wdirect-ivar-access): New option
+        * c.opt (-Wdirect-ivar-access): New warning
+
+2007-08-10  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5379188
+	* config/i386/i386.md (*darwin_cmpstrnqi_nz_1,
+          *darwin_cmpstrqi_1): Mark destination with earlyclobber.
+
+2007-08-10  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4448096, 5238795
+	* gcc/doc/invoke.texi: Remove erroneous comment.
+
+2007-08-09  Hui-May Chang  <hm.chang@apple.com>
+
+	Radar 4875125
+	Undo the mainline patch who broke ABI compatibility.
+	2005-06-10  Uros Bizjak  <uros@kss-loka.si>
+	PR target/21981
+	* config/i386/i386.c (ix86_return_in_memory): Return 1 for MMX/3dNow
+	vectors.
+
+2007-08-08  Geoffrey Keating  <geoffk@apple.com>
+
+	Radar 5395148
+	* toplev.c (general_init): Don't install SIGHUP handler.
+	(interrupt_signal): Remove.
+
 2007-07-24  Stuart Hastings  <stuart@apple.com>
 
 	Radar 5346453
@@ -22,7 +551,7 @@
 
 	Radar 5285911
 	* tree.h (CALL_EXPR_OBJC_PROPERTY_GETTER): Macro removed.
-	* c-typeck.c (build_component_ref): Call 
+	* c-typeck.c (build_component_ref): Call
 	objc_build_property_reference_expr instead of objc_build_getter_call.
 	(build_modify_expr): Call objc_property_reference_expr instead of
 	objc_property_call.
@@ -30,7 +559,7 @@
 	(objc_build_property_reference_expr, objc_property_reference_expr): Decl.
 	added.
 	* stub-objc.c (objc_build_getter_call, objc_property_call): Stub removed.
-	(objc_build_property_reference_expr, objc_property_reference_expr): 
+	(objc_build_property_reference_expr, objc_property_reference_expr):
 	Stub added.
 
 2007-06-29  Stuart Hastings  <stuart@apple.com>
@@ -80,9 +609,9 @@
 2007-06-29  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5276085
-        * c-parser.c (c_parser_binary_expression) : objc_generate_weak_read 
+        * c-parser.c (c_parser_binary_expression) : objc_generate_weak_read
 	replaced with call to objc_build_weak_reference_tree
-        * c-typeck.c (build_modify_expr, c_objc_common_truthvalue_conversion): 
+        * c-typeck.c (build_modify_expr, c_objc_common_truthvalue_conversion):
 	objc_remove_weak_read replaced with call to objc_weak_reference_expr.
         * c-common.h (objc_weak_reference_expr,
         objc_build_weak_reference_tree) : New decl.
@@ -230,7 +759,7 @@
 
 	Radar 5109764
 	* reload1.c (emit_output_reload_insns): Undo radar 5002270.
-	* config/i386/sse.md (sse2_stored) : Undo radar 4412214, 4172200. 
+	* config/i386/sse.md (sse2_stored) : Undo radar 4412214, 4172200.
 	Backport from mainline:
 	2007-04-23  H.J. Lu  <hongjiu.lu@intel.com>
 	* config/i386/sse.md (sse2_stored): Don't split to inter-unit
@@ -239,7 +768,7 @@
 	move if inter-unit move isn't allowed.
 	2007-02-09  Richard Henderson  <rth@redhat.com>
 	* config/i386/sse.md (sse2_stored): Split rm alternative, use Yi.
-	
+
 2007-06-06  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5250860 (Remove old property)
@@ -278,21 +807,21 @@
 
 	Radar 5164498
 	Backport from mainline:
-	* config/i386/i386.c (ix86_function_regparm): Added checking of 
+	* config/i386/i386.c (ix86_function_regparm): Added checking of
 	ix86_force_align_arg_pointer to determine the number of
 	register parameters.
 
 2007-05-23 Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5195402
-	* c-format.c (handle_format_arg_attribute): Check for NSString * 
+	* c-format.c (handle_format_arg_attribute): Check for NSString *
 	and CFStringRef as valid formatting types.
 	(check_format_string): Ditto.
 	* c-common.h (objc_check_format_nsstring,
 	objc_check_cfstringref_type): New decls.
 	* stub-objc.c (objc_check_nsstring_pointer_type): New stub.
 	* config/darwin-c.c (objc_check_cfstringref_type): New
-	(objc_check_format_cfstring): Call objc_check_cfstringref_type 
+	(objc_check_format_cfstring): Call objc_check_cfstringref_type
 	for valid CFStringRef argument type.
 	* config/darwin-protos.h (objc_check_cfstringref_type): New decl.
 	* config/darwin.h (CFSTRING_TYPE_CHECK): New macro.
@@ -316,7 +845,7 @@
 	* c-common.h (objc_anonymous_local_objc_name): New decl.
 	* config/darwin-protos.h (objc_anonymous_local_objc_name): Decl.
 	* stub-objc.c (objc_anonymous_local_objc_name): New stub.
-	* config/darwin.h (ASM_OUTPUT_LABELREF) Call 
+	* config/darwin.h (ASM_OUTPUT_LABELREF) Call
 	objc_anonymous_local_objc_name.
 
 2007-05-17  Fariborz Jahanian <fjahanian@apple.com>
@@ -333,10 +862,10 @@
 2007-05-09  Caroline Tice  <ctice@apple.com>
 
 	Radar 4964532
-	* defaults.h (TARGET_DWARF_UNINIT_VARS): New macro, to control 
+	* defaults.h (TARGET_DWARF_UNINIT_VARS): New macro, to control
 	tracking uninitialized variables.
-	* rtl.def (VAR_LOCATION): Add a new integer subfield to VAR_LOCATION 
-	note definitions, to allow recording of initialization status in the 
+	* rtl.def (VAR_LOCATION): Add a new integer subfield to VAR_LOCATION
+	note definitions, to allow recording of initialization status in the
 	notes.
 	* dwarf2out.c (dwarf_stack_op_name): Add case for DW_OP_APPLE_uninit.
 	(add_var_loc_to_decl): Add comparison of NOTE_VAR_LOCATION_STATUS to
@@ -345,8 +874,8 @@
 	are the same.
 	(reg_loc_descriptor): Add parameter for initialization status; pass it
 	to other loc descriptor functions.
-	(one_reg_loc_descriptor): Add parameter for initialization status; 
-	check its value and add DW_OP_APPLE_uninit to returned loc descr if 
+	(one_reg_loc_descriptor): Add parameter for initialization status;
+	check its value and add DW_OP_APPLE_uninit to returned loc descr if
 	appropriate.
 	(multiple_reg_loc_descriptor): Add parameter for initialization status;
 	pass its value to other loc descriptor functions; check its value and
@@ -354,28 +883,28 @@
  	(based_loc_descr): Likewise.
 	(mem_loc_descriptor): Likewise.
 	(concat_loc_descriptor): Likewise.
-	(loc_descriptor): Add parameter for initialization status; add 
-	appropriate initialization status to other loc descriptor function 
+	(loc_descriptor): Add parameter for initialization status; add
+	appropriate initialization status to other loc descriptor function
 	calls.
 	(loc_descriptor_from_tree_1): Add appropriate initialization status
 	to loc descriptor function calls.
-	(add_location_or_const_value_attribute): Get initialization status 
+	(add_location_or_const_value_attribute): Get initialization status
 	from note; add initialization status to loc descriptor function calls.
 	* dwarf2.h (enum dwarf_location_atom): New op, DW_OP_APPLE_uninit.
 	* print-rtl.c (print_rtx): When printing a VAR_LOCATION note, if status
 	is uninitialized, add "[uninint]" to output.
 	* rtl.h (NOTE_VAR_LOCATION_STATUS): New macro for accessing new field.
 	(enum var_init_status): New type, for var initialization status field.
-	* var-tracking.c (struct location_chain_def): Two new fields, init, 
+	* var-tracking.c (struct location_chain_def): Two new fields, init,
 	for initialization status, and set_src for the assignment value expr.
 	(unshare_variable): New parameter for initialization status; initialize
 	new init and set_src fields.
-	(var_reg_set): New parameters for initialization status and value; 
+	(var_reg_set): New parameters for initialization status and value;
 	pass them to set_variable_part.
 	(var_mem_set): Likewise.
 	(get_init_value): New function.
 	(var_reg_delete_and_set): New initialization status & value parameters;
-	add call to get_init_value if status is unknown; pass new parameters 
+	add call to get_init_value if status is unknown; pass new parameters
 	to clobber_variable_part and var_reg_set.
 	(var_mem_delete_and_set): Likewise.
 	(variable_union): Pass status to unshare_variable; initialize new init
@@ -384,13 +913,13 @@
 	used later to get the set_src value.
 	(find_src_status): New function.
 	(find_src_set_src): New function.
-	(compute_bb_dataflow): Pass status to calls to var_reg_set, 
+	(compute_bb_dataflow): Pass status to calls to var_reg_set,
 	var_mem_set, var_reg_delete_and_set and var_mem_delete_and_set; for
-	MO_SET, get set_src value and pass it to 
+	MO_SET, get set_src value and pass it to
 	var_reg_delete_and_set and var_mem_delete_and_set.
 	(dump_variable):  Print out "[uninit]" if appropriate.
-	(set_variable_part): Add new initialization and set_src parameters; 
-	pass status to unshare_variable; set node->init and node->set_src 
+	(set_variable_part): Add new initialization and set_src parameters;
+	pass status to unshare_variable; set node->init and node->set_src
 	fields and modify slot in hash table appropriately; save the init and
 	set_src values if appropriate and assign to the new node.
 	(clobber_variable_part): New set_src parameter; if two nodes have
@@ -406,16 +935,16 @@
 	var_mem_delete_and_set; call emit_notes_for_changes on NEXT_INSN(insn)
 	rather than on insn, to make up for change in add_stores.
 	(vt_add_function_parameters): Add status to calls to set_variable_part.
-	* config/i386/darwin.h (TARGET_DWARF_UNINIT_VARS): New macro 
+	* config/i386/darwin.h (TARGET_DWARF_UNINIT_VARS): New macro
 	definition to control tracking uninitialized variables.
-	* config/rs6000/darwin.h (TARGET_DWARF_UNINIT_VARS): New macro 
+	* config/rs6000/darwin.h (TARGET_DWARF_UNINIT_VARS): New macro
 	definition to control tracking uninitialized variables.
 
 2007-05-07  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 3506309
 	* doc/invoke.texi: Document -Wnonportable-cfstrings
-	
+
 2007-05-07  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 4157812
@@ -6623,7 +7152,6 @@
 	* fold-const.c (fold_widened_comparison) Replace it with the
 	one from FSF mainline.
 	(fold_sign_changed_comparison): Ditto.
-	(fold): Remove APPLE LOCAL lno marker.
 
 2005-01-10  Ziemowit Laski  <zlaski@apple.com>
 

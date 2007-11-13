@@ -93,6 +93,8 @@ Boston, MA 02110-1301, USA.  */
 
 #undef CC1_SPEC
 #define CC1_SPEC "%{!mkernel:%{!static:%{!mdynamic-no-pic:-fPIC}}} \
+  "/* APPLE LOCAL ARM ignore -mthumb and -mno-thumb */"\
+  %<mthumb %<mno-thumb \
 "/* APPLE LOCAL mainline 2007-02-20 5005743 */" \
   %{!mmacosx-version-min=*:-mmacosx-version-min=%(darwin_minversion)} \
   "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
@@ -120,6 +122,11 @@ Boston, MA 02110-1301, USA.  */
     :10.4}"
 
 /* APPLE LOCAL end mainline 2007-03-13 5005743 5040758 */ \
+/* APPLE LOCAL begin 5342595 */
+#define DARWIN_DSYMUTIL_SPEC \
+  "%{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}"
+/* APPLE LOCAL end 5342595 */
+
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS                                   \
   DARWIN_EXTRA_SPECS                                            \

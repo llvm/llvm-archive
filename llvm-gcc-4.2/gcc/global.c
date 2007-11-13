@@ -457,7 +457,17 @@ global_alloc (void)
     {
       bool cannot_elim
 	= (! CAN_ELIMINATE (eliminables[i].from, eliminables[i].to)
+/* APPLE LOCAL begin ARM prefer SP to FP */
+#ifdef ALLOW_ELIMINATION_TO_SP
+	   /* There are certain performance benefits for some targets
+	      in using SP instead of FP.  CAN_ELIMINATE must prevent us
+	      from using SP when we can't so there's no need for us to
+	      prevent elimination to the SP.  */
+	   );
+#else
 	   || (eliminables[i].to == STACK_POINTER_REGNUM && need_fp));
+#endif
+/* APPLE LOCAL end ARM prefer SP to FP */
 
       if (!regs_asm_clobbered[eliminables[i].from])
 	{

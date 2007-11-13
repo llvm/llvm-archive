@@ -677,8 +677,9 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define BIGGEST_FIELD_ALIGNMENT 32
 #endif
 #else
-/* APPLE LOCAL Macintosh alignment */
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED, FIRST_FIELD_P) \
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED) \
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */ \
    x86_field_alignment (FIELD, COMPUTED)
 #endif
 

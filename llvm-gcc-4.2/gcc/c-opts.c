@@ -716,12 +716,6 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       flag_signed_char = !value;
       break;
 
-      /* APPLE LOCAL begin structor decloning */
-    case OPT_fclone_structors:
-      flag_clone_structors = value;
-      break;
-      /* APPLE LOCAL end structor decloning */
-
     case OPT_fcheck_new:
       flag_check_new = value;
       break;

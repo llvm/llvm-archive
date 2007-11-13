@@ -346,6 +346,12 @@ C ObjC C++ ObjC++ Var(warn_non_lvalue_assign) Init(1)
 Warn about assignment to casts and conditional expressions of lvalues
 ; APPLE LOCAL end non lvalue assign
 
+; APPLE LOCAL begin radar 5376125
+Wdirect-ivar-access
+ObjC ObjC++ Var(warn_direct_ivar_access)
+Warn about direct access to gc-enabled ivars
+; APPLE LOCAL end radar 5376125
+
 Wnon-template-friend
 C++ ObjC++ Var(warn_nontemplate_friend) Init(1)
 Warn when non-templatized friend functions are declared within a template
@@ -560,11 +566,14 @@ fcheck-new
 C++ ObjC++
 Check the return value of new
 
-; APPLE LOCAL begin structor decloning
+; APPLE LOCAL begin ARM structor thunks
+; Nonzero if we prefer to clone con/de/structors.  Alternative is to
+; gen multiple tiny thunk-esque things that call/jump to a unified
+; con/de/structor.  This is a classic size/speed tradeoff.
 fclone-structors
-C++ ObjC++
+C++ ObjC++ Var(flag_clone_structors)
 Factor out certain duplicate code in constructors and destructors
-; APPLE LOCAL end structor decloning
+; APPLE LOCAL end ARM structor thunks
 
 fcond-mismatch
 C ObjC C++ ObjC++

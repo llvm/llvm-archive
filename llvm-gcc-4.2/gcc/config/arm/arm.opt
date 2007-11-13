@@ -98,9 +98,17 @@ mlittle-endian
 Target Report RejectNegative InverseMask(BIG_END)
 Assume target CPU is configured as little endian
 
+mlong-branch
+Target Mask(LONG_CALLS)
+Alias for -mlong-calls
+
 mlong-calls
-Target Report Mask(LONG_CALLS)
+Target Report Mask(LONG_CALLS) MaskExists
 Generate call insns as indirect calls, if necessary
+
+mlongcall
+Target Mask(LONG_CALLS) MaskExists
+Alias for -mlong-calls
 
 mpic-register=
 Target RejectNegative Joined Var(arm_pic_register_string)
@@ -130,9 +138,11 @@ mthumb
 Target Report Mask(THUMB)
 Compile for the Thumb not the ARM
 
+; APPLE LOCAL begin ARM interworking
 mthumb-interwork
-Target Report Mask(INTERWORK)
+Target Report Var(interwork_option) Init(-1)
 Support calls between Thumb and ARM instruction sets
+; APPLE LOCAL end ARM interworking
 
 mtp=
 Target RejectNegative Joined Var(target_thread_switch)

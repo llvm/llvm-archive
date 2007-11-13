@@ -330,10 +330,9 @@ split_block (basic_block bb, void *i)
   new_bb->count = bb->count;
   new_bb->frequency = bb->frequency;
   new_bb->loop_depth = bb->loop_depth;
-  /* APPLE LOCAL begin 4203984 mainline candidate */
+  /* APPLE LOCAL 4203984 mainline candidate */
   new_bb->loop_father = bb->loop_father;
-  /* APPLE LOCAL end 4203984 mainline candidate */
- 
+
   if (dom_info_available_p (CDI_DOMINATORS))
     {
       redirect_immediate_dominators (CDI_DOMINATORS, bb, new_bb);

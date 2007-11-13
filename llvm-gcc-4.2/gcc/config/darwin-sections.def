@@ -67,6 +67,11 @@ DEF_SECTION (machopic_symbol_stub_section, 0, ".symbol_stub", 0)
 DEF_SECTION (machopic_symbol_stub1_section, 0,
 	     ".section __TEXT,__symbol_stub1,symbol_stubs,"
 	     "pure_instructions,16", 0)
+/* APPLE LOCAL begin ARM pic support */
+DEF_SECTION (machopic_symbol_stub4_section, 0,
+	     ".section __TEXT,__symbol_stub4,symbol_stubs,"
+	     "none,12", 0)
+/* APPLE LOCAL end ARM pic support */
 DEF_SECTION (machopic_picsymbol_stub_section, 0, ".picsymbol_stub", 0)
 DEF_SECTION (machopic_picsymbol_stub1_section, 0,
 	     ".section __TEXT,__picsymbolstub1,symbol_stubs,"
@@ -79,6 +84,10 @@ DEF_SECTION (machopic_picsymbol_stub2_section, 0,
 DEF_SECTION (machopic_picsymbol_stub3_section, 0,
 	     ".section __IMPORT,__jump_table,symbol_stubs,self_modifying_code+pure_instructions,5", 0)
 /* APPLE LOCAL end AT&T-style stub 4164563 */
+/* APPLE LOCAL begin ARM pic support */
+DEF_SECTION (machopic_picsymbol_stub4_section, 0,
+	     ".section __TEXT,__picsymbolstub4,symbol_stubs,none,16", 0)
+/* APPLE LOCAL end ARM pic support */
 DEF_SECTION (darwin_exception_section, 0,
 	     ".section __DATA,__gcc_except_tab", 0)
 DEF_SECTION (darwin_eh_frame_section, 0,

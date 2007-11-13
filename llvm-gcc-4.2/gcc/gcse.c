@@ -724,17 +724,6 @@ gcse_main (rtx f ATTRIBUTE_UNUSED)
       changed = one_cprop_pass (pass + 1, false, false);
       timevar_pop (TV_CPROP1);
 
-      /* APPLE LOCAL begin div by const */
-      /* div by const optimization can introduce new instructions.
-	 All this stuff needs to be recomputed. */
-      free_gcse_mem ();
-      max_gcse_regno = max_reg_num ();
-      alloc_gcse_mem ();
-      free_reg_set_mem ();
-      alloc_reg_set_mem (max_reg_num ());
-      compute_sets ();
-      /* APPLE LOCAL end div by const */
-
       if (optimize_size)
 	/* Do nothing.  */ ;
       else
@@ -2981,64 +2970,6 @@ cprop_insn (rtx insn, int alter_jumps)
 	      if (INSN_DELETED_P (insn))
 		return 1;
 	    }
-	  /* APPLE LOCAL begin div by const */
-	  /* Look for int div by constant and expand if found. */
-	  if ( GET_CODE (insn) == INSN
-	       && GET_CODE (PATTERN (insn)) == SET
-	       && ( GET_CODE (XEXP (PATTERN (insn), 1)) == DIV 
-		    || GET_CODE (XEXP (PATTERN (insn), 1)) == UDIV)
-	       && GET_MODE (XEXP (PATTERN (insn), 1)) == SImode
-	       && GET_CODE (XEXP (XEXP (PATTERN (insn), 1), 1)) == CONST_INT )
-	    {
-	      rtx seq, result, target;
-	      target = XEXP (PATTERN (insn), 0);
-	      start_sequence ();
-	      result = expand_divmod (0, TRUNC_DIV_EXPR, SImode,
-		    XEXP (XEXP (PATTERN (insn), 1), 0),
-		    XEXP (XEXP (PATTERN (insn), 1), 1),
-		    target,
-		    GET_CODE (XEXP (PATTERN (insn), 1))==DIV ? 0 : 1);
-	      if ( result != target )
-		emit_move_insn (target, result);
-	      seq = get_insns ();
-	      end_sequence ();
-	      emit_insn_after (seq, insn);
-	      PUT_CODE (insn, NOTE);
-	      NOTE_LINE_NUMBER (insn) = NOTE_INSN_DELETED;
-	      NOTE_SOURCE_FILE (insn) = 0;
-	      update_bb_for_insn (BLOCK_FOR_INSN (insn));
-	      changed = 1;
-	      break;
-	    }
-	  else if ( GET_CODE (insn) == INSN
-		   && GET_CODE (PATTERN (insn)) == SET
-		   && (note = find_reg_equal_equiv_note (insn))
-		   && (GET_CODE (XEXP (note, 0)) == DIV
-		       || GET_CODE (XEXP (note, 0)) == UDIV)
-		   && GET_MODE (XEXP (note, 0)) == SImode
-		   && GET_CODE (XEXP (XEXP (note, 0), 1)) == CONST_INT )
-	    {
-	      rtx seq, result, target;
-	      target = XEXP (PATTERN (insn), 0);
-	      start_sequence ();
-	      result = expand_divmod (0, TRUNC_DIV_EXPR, SImode,
-		    XEXP (XEXP (note, 0), 0),
-		    XEXP (XEXP (note, 0), 1),
-		    target,
-		    GET_CODE (XEXP (note, 0))==DIV ? 0 : 1);
-	      if ( result != target )
-		emit_move_insn (target, result);
-	      seq = get_insns ();
-	      end_sequence ();
-	      emit_insn_after (seq, insn);
-	      PUT_CODE (insn, NOTE);
-	      NOTE_LINE_NUMBER (insn) = NOTE_INSN_DELETED;
-	      NOTE_SOURCE_FILE (insn) = 0;
-	      update_bb_for_insn (BLOCK_FOR_INSN (insn));
-	      changed = 1;
-	      break;
-	    }
-	  /* APPLE LOCAL end div by const */
 	}
       else if (REG_P (src)
 	       && REGNO (src) >= FIRST_PSEUDO_REGISTER

@@ -1,3 +1,29 @@
+1007-10-26  Josh Conner  <jconner@apple.com>
+
+	Radar 5562046
+	* typeck.c (build_ptrmemfunc1): Add kext support for ARM.
+
+2007-08-23  Hui-May Chang <hm.chang@apple.com>
+
+        Radar 4869885
+	* class.c: Removed darwin_align_is_first_member_of_class.
+
+2007-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4947311
+	* parser.c (cp_parser_objc_protocol_declaration): Takes attribute list
+	as extra argument and passes it down to 
+	objc_declare_protocols/objc_start_protocol.
+	(cp_parser_objc_class_interface): Now receives attribute list as input.
+	(cp_parser_objc_declaration): Parses attribute list and passes it down 
+	to cp_parser_objc_class_interface/cp_parser_objc_protocol_declaration.
+	
+2007-08-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5422751
+	* parser.c (cp_parser_objc_class_implementation): Unused syntax recognition
+	removed.
+
 2007-07-27  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 3742561

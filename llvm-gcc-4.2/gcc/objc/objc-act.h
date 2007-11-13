@@ -47,8 +47,8 @@ bool cp_objc_protocol_id_list (tree);
 
 /* APPLE LOCAL radar 4291785, 4548636 */
 #define CLASS_LANG_SLOT_ELTS		9
-/* APPLE LOCAL ObjC abi v2 */
-#define PROTOCOL_LANG_SLOT_ELTS		8
+/* APPLE LOCAL ObjC abi v2 - radar 4947311 */
+#define PROTOCOL_LANG_SLOT_ELTS		9
 #define OBJC_INFO_SLOT_ELTS		2
 
 /* KEYWORD_DECL */
@@ -130,6 +130,9 @@ bool cp_objc_protocol_id_list (tree);
 /* For CLASS_INTERFACE_TYPE only */
 #define CLASS_ATTRIBUTES(CLASS) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (CLASS), 8)
 /* APPLE LOCAL end radar 4548636 */
+/* APPLE LOCAL begin radar 4947311 - protocol attributes */
+#define PROTOCOL_ATTRIBUTES(PROTO) TREE_VEC_ELT (TYPE_LANG_SLOT_1 (PROTO), 8)
+/* APPLE LOCAL end radar 4947311 - protocol attributes */
 /* APPLE LOCAL radar 4695101 */
 /* declaration of  PROTOCOL_IMPL_OBJ removed. */
 
@@ -748,4 +751,6 @@ extern GTY(()) tree objc_global_trees[OCTI_MAX];
 #define ATOMIC_PROPERTY(NODE) (TREE_LANG_FLAG_1 (NODE))
 #define IS_ATOMIC(PROPERTY)   (ATOMIC_PROPERTY(PROPERTY))
 /* APPLE LOCAL end radar 4947014 - objc atomic property */
+/* APPLE LOCAL radar 4653422 */
+#define OPTIONAL_PROPERTY(PROPERTY_NODE) (TREE_LANG_FLAG_2 (PROPERTY_NODE))
 #endif /* GCC_OBJC_ACT_H */

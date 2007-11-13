@@ -6716,11 +6716,23 @@ main (int argc, char **argv)
 			concat (gcc_exec_prefix, machine_suffix,
 				standard_startfile_prefix, NULL),
 			NULL, PREFIX_PRIORITY_LAST, 0, 1);
-	  add_prefix (&startfile_prefixes,
-		      concat (standard_exec_prefix,
-			      machine_suffix,
-			      standard_startfile_prefix, NULL),
-		      NULL, PREFIX_PRIORITY_LAST, 0, 1);
+
+	  /* APPLE LOCAL begin ARM sysroot startfile_prefixes */
+	  /* All absolute startfile_prefixes must be sysrooted so we
+	     don't pick up host headers.  */
+	  if (IS_ABSOLUTE_PATH (standard_exec_prefix))
+	    add_sysrooted_prefix (&startfile_prefixes,
+				  concat (standard_exec_prefix,
+					  machine_suffix,
+					  standard_startfile_prefix, NULL),
+				  NULL, PREFIX_PRIORITY_LAST, 0, 1);
+	  else
+	    add_prefix (&startfile_prefixes,
+			concat (standard_exec_prefix,
+				machine_suffix,
+				standard_startfile_prefix, NULL),
+			NULL, PREFIX_PRIORITY_LAST, 0, 1);
+	  /* APPLE LOCAL end ARM sysroot startfile_prefixes */
 	}
 
       if (*standard_startfile_prefix_1)
@@ -8291,7 +8303,33 @@ version_compare_spec_function (int argc, const char **argv)
   if (! result)
     return NULL;
 
-  return argv[nargs + 2];
+  /* APPLE LOCAL begin version-compare quoting 5378841 */
+  {
+    /* Escape all spec special characters.  */
+    const char *p = argv[nargs + 2];
+    char *q, *b;
+    while (*p)
+      {
+	if (*p == ' ' || *p == '\t' || *p == '\n' || *p == '%' || *p == '\\')
+	  break;
+	++p;
+      }
+
+    if (*p == 0)
+      return argv[nargs + 2];
+
+    q = b = xmalloc (strlen (p)*2 + 1);
+    p = argv[nargs + 2];
+    while (*p)
+      {
+	if (*p == ' ' || *p == '\t' || *p == '\n' || *p == '%' || *p == '\\')
+	  *q++ = '\\';
+	*q++ = *p++;
+      }
+    *q = *p;
+    return b;
+  }
+  /* APPLE LOCAL end version-compare quoting 5378841 */
 }
 
 /* %:include builtin spec function.  This differs from %include in that it

@@ -1628,7 +1628,8 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 		    break;
 		case 'i':
 		  if (CONSTANT_P (op)
-		      && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op)))
+		      /* APPLE LOCAL ARM -mdynamic-no-pic support */
+		      && LEGITIMATE_INDIRECT_OPERAND_P (op))
 		    win = 1;
 		  break;
 
@@ -1659,7 +1660,8 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 		case 'g':
 		  if (MEM_P (op)
 		      || (CONSTANT_P (op)
-			  && (! flag_pic || LEGITIMATE_PIC_OPERAND_P (op))))
+			  /* APPLE LOCAL ARM -mdynamic-no-pic support */
+			  && LEGITIMATE_INDIRECT_OPERAND_P (op)))
 		    win = 1;
 		  allows_mem[i] = 1;
 		case 'r':

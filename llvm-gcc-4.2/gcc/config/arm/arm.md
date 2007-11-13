@@ -93,6 +93,8 @@
    (UNSPEC_TLS      20) ; A symbol that has been treated properly for TLS usage.
    (UNSPEC_PIC_LABEL 21) ; A label used for PIC access that does not appear in the
                          ; instruction stream.
+   ; APPLE LOCAL ARM setjmp/longjmp interworking
+   (UNSPEC_JMP_XCHG 22) ; Indirect jump with possible change in ARM/Thumb state.
   ]
 )
 
@@ -4025,7 +4027,8 @@
         && GET_CODE (XEXP (mem, 0)) == LABEL_REF)
       return \"ldr\\t%0, %1\";
       
-    if (which_alternative == 0)
+    /* APPLE LOCAL ARM fix obvious typo */
+    if (which_alternative == 1)
       return \"ldrsb\\t%0, %1\";
       
     ops[0] = operands[0];
@@ -4379,10 +4382,8 @@
         }
       operands[1] = tmp;
     }
-  else if (flag_pic
-	   && (CONSTANT_P (operands[1])
-	       || symbol_mentioned_p (operands[1])
-	       || label_mentioned_p (operands[1])))
+  /* APPLE LOCAL ARM pic support */
+  else if (! LEGITIMATE_INDIRECT_OPERAND_P (operands[1]))
       operands[1] = legitimize_pic_address (operands[1], SImode,
 					    (no_new_pseudos ? operands[0] : 0));
   "
@@ -4484,10 +4485,13 @@
 ;; the insn alone, and to force the minipool generation pass to then move
 ;; the GOT symbol to memory.
 
+;; APPLE LOCAL begin ARM pic support
 (define_insn "pic_load_addr_arm"
   [(set (match_operand:SI 0 "s_register_operand" "=r")
-	(unspec:SI [(match_operand:SI 1 "" "mX")] UNSPEC_PIC_SYM))]
-  "TARGET_ARM && flag_pic"
+	(unspec:SI [(match_operand:SI 1 "" "mX")
+		    (label_ref (match_operand 2 "" ""))] UNSPEC_PIC_SYM))
+   (use (label_ref (match_dup 2)))]
+  "TARGET_ARM && (flag_pic || (TARGET_MACHO && MACHO_DYNAMIC_NO_PIC_P))"
   "ldr%?\\t%0, %1"
   [(set_attr "type" "load1")
    (set (attr "pool_range")     (const_int 4096))
@@ -4496,12 +4500,16 @@
 
 (define_insn "pic_load_addr_thumb"
   [(set (match_operand:SI 0 "s_register_operand" "=l")
-	(unspec:SI [(match_operand:SI 1 "" "mX")] UNSPEC_PIC_SYM))]
-  "TARGET_THUMB && flag_pic"
+	(unspec:SI [(match_operand:SI 1 "" "mX")
+		    (label_ref (match_operand 2 "" ""))] UNSPEC_PIC_SYM))
+   (use (label_ref (match_dup 2)))]
+  "TARGET_THUMB && (flag_pic || (TARGET_MACHO && MACHO_DYNAMIC_NO_PIC_P))"
   "ldr\\t%0, %1"
   [(set_attr "type" "load1")
-   (set (attr "pool_range") (const_int 1024))]
+   (set (attr "pool_range") (const_int 1024))
+   (set_attr "length" "2")]
 )
+;; APPLE LOCAL end ARM pic support
 
 ;; This variant is used for AOF assembly, since it needs to mention the
 ;; pic register in the rtl.
@@ -4536,16 +4544,17 @@
 		      (const_int 4084)))]
 )
 
+;; APPLE LOCAL begin ARM pic support
 (define_insn "pic_add_dot_plus_four"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(unspec:SI [(plus:SI (match_operand:SI 1 "register_operand" "0")
+	(unspec:SI [(label_ref (match_operand 1 "" ""))
+		    (plus:SI (match_operand:SI 2 "register_operand" "0")
 			     (const (plus:SI (pc) (const_int 4))))]
-		   UNSPEC_PIC_BASE))
-   (use (match_operand 2 "" ""))]
-  "TARGET_THUMB"
+		   UNSPEC_PIC_BASE))]
+  "TARGET_THUMB && (flag_pic || (TARGET_MACHO && MACHO_DYNAMIC_NO_PIC_P))"
   "*
-  (*targetm.asm_out.internal_label) (asm_out_file, \"LPIC\",
-				     INTVAL (operands[2]));
+  (*targetm.asm_out.internal_label) (asm_out_file, \"L\",
+				     CODE_LABEL_NUMBER (operands[1]));
   return \"add\\t%0, %|pc\";
   "
   [(set_attr "length" "2")]
@@ -4553,18 +4562,19 @@
 
 (define_insn "pic_add_dot_plus_eight"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(unspec:SI [(plus:SI (match_operand:SI 1 "register_operand" "r")
+	(unspec:SI [(label_ref (match_operand 1 "" ""))
+		    (plus:SI (match_operand:SI 2 "register_operand" "r")
 			     (const (plus:SI (pc) (const_int 8))))]
-		   UNSPEC_PIC_BASE))
-   (use (match_operand 2 "" ""))]
-  "TARGET_ARM"
+		   UNSPEC_PIC_BASE))]
+  "TARGET_ARM && (flag_pic || (TARGET_MACHO && MACHO_DYNAMIC_NO_PIC_P))"
   "*
-    (*targetm.asm_out.internal_label) (asm_out_file, \"LPIC\",
-				       INTVAL (operands[2]));
-    return \"add%?\\t%0, %|pc, %1\";
+    (*targetm.asm_out.internal_label) (asm_out_file, \"L\",
+				       CODE_LABEL_NUMBER (operands[1]));
+    return \"add%?\\t%0, %|pc, %2\";
   "
   [(set_attr "predicable" "yes")]
 )
+;; APPLE LOCAL end ARM pic support
 
 (define_insn "tls_load_dot_plus_eight"
   [(set (match_operand:SI 0 "register_operand" "+r")
@@ -4601,17 +4611,64 @@
   ""
 )
 
-(define_expand "builtin_setjmp_receiver"
-  [(label_ref (match_operand 0 "" ""))]
-  "flag_pic"
+;; APPLE LOCAL begin ARM setjmp/longjmp interworking
+;; If we'll be  returning to thumb code, we need to set the low-order
+;; bit of the resume address.  builtin_setjmp_setup doesn't handle all
+;; of the setup, it just augments the logic in builtins.c, to post-
+;; process the already-initialized mini-jmp_buf.
+(define_expand "builtin_setjmp_setup"
+  [(use (match_operand 0 "register_operand"))]
+  "TARGET_THUMB"
+{
+  rtx resume_addr =
+    gen_rtx_MEM (Pmode, plus_constant (operands[0],
+				       GET_MODE_SIZE (Pmode)));
+  rtx resume_reg;
+
+  /* Set low-order bit of resume address */
+  resume_reg = force_reg (Pmode, resume_addr);
+  resume_reg = gen_rtx_IOR (Pmode, resume_reg, GEN_INT (1));
+  emit_move_insn (resume_addr, resume_reg);
+})
+
+;; Very similar to the logic in builtins.c, except that we always
+;; restore both ARM_HARD_FRAME_POINTER and THUMB_HARD_FRAME_POINTER,
+;; and we emit an "indirect_jump_exchange" instead of the standard
+;; "indirect_jump".  If we're jumping back into ARM code, we will
+;; unnecessarily (but harmlessly) trash the Thumb FP register.
+(define_expand "builtin_longjmp"
+  [(use (match_operand 0 "register_operand"))]
+  ""
   "
 {
-  /* r3 is clobbered by set/longjmp, so we can use it as a scratch
-     register.  */
-  if (arm_pic_register != INVALID_REGNUM)
-    arm_load_pic_register (1UL << 3);
+  rtx arm_saved_fp = gen_rtx_MEM (Pmode, operands[0]);
+  rtx lab =
+    gen_rtx_MEM (Pmode, plus_constant (operands[0],
+				       GET_MODE_SIZE (Pmode)));
+  rtx stack =
+    gen_rtx_MEM (Pmode, plus_constant (operands[0],
+				       2 * GET_MODE_SIZE (Pmode)));
+  rtx arm_fp = gen_rtx_REG (Pmode, ARM_HARD_FRAME_POINTER_REGNUM);
+
+  emit_insn (gen_rtx_CLOBBER (VOIDmode, gen_rtx_MEM (BLKmode, arm_fp)));
+
+  emit_move_insn (arm_fp, arm_saved_fp);
+
+  emit_stack_restore (SAVE_NONLOCAL, stack, NULL_RTX);
+
+  if (arm_arch4t)
+    {
+      lab = copy_to_mode_reg (Pmode, lab);
+      emit_insn (gen_rtx_USE (VOIDmode, arm_fp));
+      emit_jump_insn (gen_indirect_jump_exchange (lab));
+      emit_barrier ();
+    }
+  else
+    emit_indirect_jump (lab);
+
   DONE;
 }")
+;; APPLE LOCAL end ARM setjmp/longjmp interworking
 
 ;; If copying one reg to another we can set the condition codes according to
 ;; its value.  Such a move is common after a return from subroutine and the
@@ -5831,8 +5888,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d0\\t%l3\";
-    case 6:  return \"b%D0\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D0\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D0\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D0\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   "
   [(set (attr "far_jump")
@@ -5867,8 +5926,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d4\\t%l3\";
-    case 6:  return \"b%D4\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D4\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D4\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D4\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   "
   [(set (attr "far_jump")
@@ -5914,8 +5975,10 @@
   switch (get_attr_length (insn) - ((which_alternative > 1) ? 2 : 0))
     {
     case 4:  return \"b%d3\\t%l2\";
-    case 6:  return \"b%D3\\t.LCB%=\;b\\t%l2\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D3\\t.LCB%=\;bl\\t%l2\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D3\\t%.LCB%=\;b\\t%l2\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D3\\t%.LCB%=\;bl\\t%l2\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -5964,8 +6027,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d0\\t%l3\";
-    case 6:  return \"b%D0\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D0\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D0\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D0\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   "
   [(set (attr "far_jump")
@@ -6008,8 +6073,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d0\\t%l3\";
-    case 6:  return \"b%D0\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D0\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D0\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D0\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6052,8 +6119,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d0\\t%l3\";
-    case 6:  return \"b%D0\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D0\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D0\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D0\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6089,8 +6158,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d3\\t%l2\";
-    case 6:  return \"b%D3\\t.LCB%=\;b\\t%l2\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D3\\t.LCB%=\;bl\\t%l2\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D3\\t%.LCB%=\;b\\t%l2\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D3\\t%.LCB%=\;bl\\t%l2\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6141,8 +6212,10 @@
   switch (get_attr_length (insn) - (which_alternative ? 2 : 0))
     {
     case 4:  return \"b%d5\\t%l4\";
-    case 6:  return \"b%D5\\t.LCB%=\;b\\t%l4\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D5\\t.LCB%=\;bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D5\\t%.LCB%=\;b\\t%l4\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D5\\t%.LCB%=\;bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6194,8 +6267,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d4\\t%l3\";
-    case 6:  return \"b%D4\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D4\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D4\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D4\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6246,8 +6321,10 @@
   switch (get_attr_length (insn) - (which_alternative ? 2 : 0))
     {
     case 4:  return \"b%d5\\t%l4\";
-    case 6:  return \"b%D5\\t.LCB%=\;b\\t%l4\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D5\\t.LCB%=\;bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D5\\t%.LCB%=\;b\\t%l4\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D5\\t%.LCB%=\;bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6299,8 +6376,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d4\\t%l3\";
-    case 6:  return \"b%D4\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D4\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D4\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D4\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6351,8 +6430,10 @@
   switch (get_attr_length (insn) - (which_alternative ? 2 : 0))
     {
     case 4:  return \"b%d5\\t%l4\";
-    case 6:  return \"b%D5\\t.LCB%=\;b\\t%l4\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D5\\t.LCB%=\;bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D5\\t%.LCB%=\;b\\t%l4\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D5\\t%.LCB%=\;bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6404,8 +6485,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d4\\t%l3\";
-    case 6:  return \"b%D4\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D4\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D4\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D4\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6458,8 +6541,10 @@
   switch (get_attr_length (insn) - (which_alternative ? 2 : 0))
     {
     case 4:  return \"b%d5\\t%l4\";
-    case 6:  return \"b%D5\\t.LCB%=\;b\\t%l4\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D5\\t.LCB%=\;bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D5\\t%.LCB%=\;b\\t%l4\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D5\\t%.LCB%=\;bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   }"
   [(set (attr "far_jump")
@@ -6533,15 +6618,17 @@
 
      switch (get_attr_length (insn) - (which_alternative ? 2 : 0))
        {
+	 /* APPLE LOCAL begin ARM MACH assembler */
 	 case 4:
 	   output_asm_insn (\"b%d0\\t%l1\", cond);
 	   return \"\";
 	 case 6:
-	   output_asm_insn (\"b%D0\\t.LCB%=\", cond);
-	   return \"b\\t%l4\\t%@long jump\\n.LCB%=:\";
+	   output_asm_insn (\"b%D0\\t%.LCB%=\", cond);
+	   return \"b\\t%l4\\t%@long jump\\n%.LCB%=:\";
 	 default:
-	   output_asm_insn (\"b%D0\\t.LCB%=\", cond);
-	   return \"bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+	   output_asm_insn (\"b%D0\\t%.LCB%=\", cond);
+	   return \"bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+	 /* APPLE LOCAL end ARM MACH assembler */
        }
    }
   "
@@ -6640,10 +6727,12 @@
        {
 	 case 4:
 	   return \"b%d4\\t%l5\";
+	 /* APPLE LOCAL begin ARM MACH assembler */
 	 case 6:
-	   return \"b%D4\\t.LCB%=\;b\\t%l5\\t%@long jump\\n.LCB%=:\";
+	   return \"b%D4\\t%.LCB%=\;b\\t%l5\\t%@long jump\\n%.LCB%=:\";
 	 default:
-	   return \"b%D4\\t.LCB%=\;bl\\t%l5\\t%@far jump\\n.LCB%=:\";
+	   return \"b%D4\\t%.LCB%=\;bl\\t%l5\\t%@far jump\\n%.LCB%=:\";
+	 /* APPLE LOCAL end ARM MACH assembler */
        }
    }
   "
@@ -6723,10 +6812,12 @@
        {
 	 case 4:
 	   return \"b%d3\\t%l4\";
+	 /* APPLE LOCAL begin ARM MACH assembler */
 	 case 6:
-	   return \"b%D3\\t.LCB%=\;b\\t%l4\\t%@long jump\\n.LCB%=:\";
+	   return \"b%D3\\t%.LCB%=\;b\\t%l4\\t%@long jump\\n%.LCB%=:\";
 	 default:
-	   return \"b%D3\\t.LCB%=\;bl\\t%l4\\t%@far jump\\n.LCB%=:\";
+	   return \"b%D3\\t%.LCB%=\;bl\\t%l4\\t%@far jump\\n%.LCB%=:\";
+	 /* APPLE LOCAL end ARM MACH assembler */
        }
    }
   "
@@ -6789,10 +6880,12 @@
        {
 	 case 4:
 	   return \"b%d4\\t%l5\";
+	 /* APPLE LOCAL begin ARM MACH assembler */
 	 case 6:
-	   return \"b%D4\\t.LCB%=\;b\\t%l5\\t%@long jump\\n.LCB%=:\";
+	   return \"b%D4\\t%.LCB%=\;b\\t%l5\\t%@long jump\\n%.LCB%=:\";
 	 default:
-	   return \"b%D4\\t.LCB%=\;bl\\t%l5\\t%@far jump\\n.LCB%=:\";
+	   return \"b%D4\\t%.LCB%=\;bl\\t%l5\\t%@far jump\\n%.LCB%=:\";
+	 /* APPLE LOCAL end ARM MACH assembler */
        }
    }
   "
@@ -6847,8 +6940,10 @@
   switch (get_attr_length (insn))
     {
     case 4:  return \"b%d0\\t%l3\";
-    case 6:  return \"b%D0\\t.LCB%=\;b\\t%l3\\t%@long jump\\n.LCB%=:\";
-    default: return \"b%D0\\t.LCB%=\;bl\\t%l3\\t%@far jump\\n.LCB%=:\";
+    /* APPLE LOCAL begin ARM MACH assembler */
+    case 6:  return \"b%D0\\t%.LCB%=\;b\\t%l3\\t%@long jump\\n%.LCB%=:\";
+    default: return \"b%D0\\t%.LCB%=\;bl\\t%l3\\t%@far jump\\n%.LCB%=:\";
+    /* APPLE LOCAL end ARM MACH assembler */
     }
   "
   [(set (attr "far_jump")
@@ -7619,6 +7714,13 @@
   {
     rtx callee;
     
+    /* APPLE LOCAL begin ARM dynamic */
+#if TARGET_MACHO
+    if (MACHOPIC_INDIRECT)
+      operands[0] = machopic_indirect_call_target (operands[0]);
+#endif
+    /* APPLE LOCAL end ARM dynamic */
+
     /* In an untyped call, we can get NULL for operand 2.  */
     if (operands[2] == NULL_RTX)
       operands[2] = const0_rtx;
@@ -7720,7 +7822,16 @@
   "TARGET_EITHER"
   "
   {
-    rtx callee = XEXP (operands[1], 0);
+    /* APPLE LOCAL begin ARM dynamic */
+    rtx callee;
+
+#if TARGET_MACHO
+    if (MACHOPIC_INDIRECT)
+      operands[1] = machopic_indirect_call_target (operands[1]);
+#endif
+
+    callee = XEXP (operands[1], 0);
+    /* APPLE LOCAL end ARM dynamic */
     
     /* In an untyped call, we can get NULL for operand 2.  */
     if (operands[3] == 0)
@@ -7810,8 +7921,14 @@
 ;; Allow calls to SYMBOL_REFs specially as they are not valid general addresses
 ;; The 'a' causes the operand to be treated as an address, i.e. no '#' output.
 
+;; APPLE LOCAL begin ARM pic support
+;; Prevent these patterns from being used with dynamic symbol_refs.  An
+;; alternate approach would be to generate a stub, but this would be
+;; of questionnable value, as these patterns are not generally used
+;; for dynamic code anyway (see rdar://4514281 for an example of what it
+;; takes to get here).
 (define_insn "*call_symbol"
-  [(call (mem:SI (match_operand:SI 0 "" ""))
+  [(call (mem:SI (match_operand:SI 0 "arm_branch_target" ""))
 	 (match_operand 1 "" ""))
    (use (match_operand 2 "" ""))
    (clobber (reg:SI LR_REGNUM))]
@@ -7827,7 +7944,7 @@
 
 (define_insn "*call_value_symbol"
   [(set (match_operand 0 "" "")
-	(call (mem:SI (match_operand:SI 1 "" ""))
+	(call (mem:SI (match_operand:SI 1 "arm_branch_target" ""))
 	(match_operand:SI 2 "" "")))
    (use (match_operand 3 "" ""))
    (clobber (reg:SI LR_REGNUM))]
@@ -7840,33 +7957,52 @@
   }"
   [(set_attr "type" "call")]
 )
+;; APPLE LOCAL end ARM pic support
 
+;; APPLE LOCAL begin ARM dynamic
 (define_insn "*call_insn"
-  [(call (mem:SI (match_operand:SI 0 "" ""))
+  [(call (mem:SI (match_operand:SI 0 "arm_branch_target" ""))
 	 (match_operand:SI 1 "" ""))
    (use (match_operand 2 "" ""))
    (clobber (reg:SI LR_REGNUM))]
   "TARGET_THUMB
    && GET_CODE (operands[0]) == SYMBOL_REF
    && !arm_is_longcall_p (operands[0], INTVAL (operands[2]), 1)"
-  "bl\\t%a0"
+  "*
+  {
+#if TARGET_MACHO
+    if (machopic_lookup_stub_or_non_lazy_ptr (XSTR (operands[0], 0)))
+      return \"blx\\t%a0\";
+    else
+#endif
+      return \"bl\\t%a0\";
+  }"
   [(set_attr "length" "4")
    (set_attr "type" "call")]
 )
 
 (define_insn "*call_value_insn"
   [(set (match_operand 0 "" "")
-	(call (mem:SI (match_operand 1 "" ""))
+	(call (mem:SI (match_operand 1 "arm_branch_target" ""))
 	      (match_operand 2 "" "")))
    (use (match_operand 3 "" ""))
    (clobber (reg:SI LR_REGNUM))]
   "TARGET_THUMB
    && GET_CODE (operands[1]) == SYMBOL_REF
    && !arm_is_longcall_p (operands[1], INTVAL (operands[3]), 1)"
-  "bl\\t%a1"
+  "*
+  {
+#if TARGET_MACHO
+    if (machopic_lookup_stub_or_non_lazy_ptr (XSTR (operands[1], 0)))
+      return \"blx\\t%a1\";
+    else
+#endif
+      return \"bl\\t%a1\";
+  }"
   [(set_attr "length" "4")
    (set_attr "type" "call")]
 )
+;; APPLE LOCAL end ARM dynamic
 
 ;; We may also be able to do sibcalls for Thumb, but it's much harder...
 (define_expand "sibcall"
@@ -7877,6 +8013,13 @@
   "TARGET_ARM"
   "
   {
+/* APPLE LOCAL begin ARM dynamic */
+#if TARGET_MACHO
+    if (MACHOPIC_INDIRECT)
+      operands[0] = machopic_indirect_call_target (operands[0]);
+#endif
+/* APPLE LOCAL end ARM dynamic */
+
     if (operands[2] == NULL_RTX)
       operands[2] = const0_rtx;
   }"
@@ -7891,6 +8034,13 @@
   "TARGET_ARM"
   "
   {
+/* APPLE LOCAL begin ARM dynamic */
+#if TARGET_MACHO
+    if (MACHOPIC_INDIRECT)
+      operands[1] = machopic_indirect_call_target (operands[1]);
+#endif
+/* APPLE LOCAL end ARM dynamic */
+
     if (operands[3] == NULL_RTX)
       operands[3] = const0_rtx;
   }"
@@ -8189,6 +8339,33 @@
   [(set_attr "conds" "clob")
    (set_attr "length" "12")]
 )
+
+;; APPLE LOCAL begin ARM setjmp/longjmp interworking
+;; Indirect jump with possible change between ARM/Thumb state
+(define_expand "indirect_jump_exchange"
+  [(unspec:SI [(match_operand:SI 0 "s_register_operand" "")]
+	      UNSPEC_JMP_XCHG)]
+  "TARGET_EITHER"
+  ""
+)
+
+(define_insn "*arm_indirect_jump_exchange"
+  [(unspec:SI [(match_operand:SI 0 "s_register_operand" "r")]
+	      UNSPEC_JMP_XCHG)]
+  "TARGET_ARM && (arm_arch4t)"
+  "bx\\t%0"
+  [(set_attr "predicable" "yes")]
+)
+
+(define_insn "*thumb_indirect_jump_exchange"
+  [(unspec:SI [(match_operand:SI 0 "s_register_operand" "l*r")]
+	      UNSPEC_JMP_XCHG)]
+  "TARGET_THUMB"
+  "bx\\t%0"
+  [(set_attr "conds" "clob")
+   (set_attr "length" "2")]
+)
+;; APPLE LOCAL end ARM setjmp/longjmp interworking
 
 (define_expand "indirect_jump"
   [(set (pc)
@@ -10293,6 +10470,16 @@
   [(set_attr "conds" "clob")]
 )
 
+;; APPLE LOCAL begin ARM builtin_trap
+
+;; Darwin support
+
+(define_insn "trap"
+  [(trap_if (const_int 1) (const_int 0))]
+  ""
+  "trap")
+;; APPLE LOCAL end ARM builtin_trap
+ 
 ;; Load the FPA co-processor patterns
 (include "fpa.md")
 ;; Load the Maverick co-processor patterns

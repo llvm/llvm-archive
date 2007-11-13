@@ -766,13 +766,15 @@ reload (rtx first, int global)
 	  if (i <= LAST_VIRTUAL_REGISTER)
 	    continue;
 
+	  /* APPLE LOCAL begin ARM -mdynamic-no-pic support */
 	  if (! function_invariant_p (x)
 	      || ! flag_pic
 	      /* A function invariant is often CONSTANT_P but may
 		 include a register.  We promise to only pass
-		 CONSTANT_P objects to LEGITIMATE_PIC_OPERAND_P.  */
+		 CONSTANT_P objects to LEGITIMATE_INDIRECT_OPERAND_P.  */
 	      || (CONSTANT_P (x)
-		  && LEGITIMATE_PIC_OPERAND_P (x)))
+		  && LEGITIMATE_INDIRECT_OPERAND_P (x)))
+	  /* APPLE LOCAL end ARM -mdynamic-no-pic support */
 	    {
 	      /* It can happen that a REG_EQUIV note contains a MEM
 		 that is not a legitimate memory operand.  As later
@@ -3545,7 +3547,17 @@ update_eliminables (HARD_REG_SET *pset)
   struct elim_table *ep;
 
   for (ep = reg_eliminate; ep < &reg_eliminate[NUM_ELIMINABLE_REGS]; ep++)
+/* APPLE LOCAL begin ARM prefer SP to FP */
+#ifdef ALLOW_ELIMINATION_TO_SP
+    /* Don't prevent elimination to SP -- on some targets it can be more
+       efficient than the FP.  For those cases where elimination to the SP
+       isn't valid (e.g., alloca present in function), CAN_ELIMINATE must
+       be specific enough to detect and disallow them.  */
+    if (0
+#else
     if ((ep->from == HARD_FRAME_POINTER_REGNUM && FRAME_POINTER_REQUIRED)
+#endif
+/* APPLE LOCAL end ARM prefer SP to FP */
 #ifdef ELIMINABLE_REGS
 	|| ! CAN_ELIMINATE (ep->from, ep->to)
 #endif
@@ -3595,6 +3607,16 @@ update_eliminables (HARD_REG_SET *pset)
   for (ep = reg_eliminate; ep < &reg_eliminate[NUM_ELIMINABLE_REGS]; ep++)
     {
       if (ep->can_eliminate && ep->from == FRAME_POINTER_REGNUM
+/* APPLE LOCAL begin ARM prefer SP to FP */
+#ifdef ALLOW_ELIMINATION_TO_SP
+	  /* Because we allow the FP to eliminate into SP, even when
+	     FRAME_POINTER_REQUIRED is 1, we can end up with the case
+	     that all instances of FP are removed but we still have
+	     FRAME_POINTER_REQUIRED.  In that case, don't allow
+	     frame_pointer_needed to be set to 0.  */
+	  && !FRAME_POINTER_REQUIRED
+#endif
+/* APPLE LOCAL end ARM prefer SP to FP */
 	  && ep->to != HARD_FRAME_POINTER_REGNUM)
 	frame_pointer_needed = 0;
 
@@ -3652,7 +3674,17 @@ init_elim_table (void)
       ep->to = ep1->to;
       ep->can_eliminate = ep->can_eliminate_previous
 	= (CAN_ELIMINATE (ep->from, ep->to)
+/* APPLE LOCAL begin ARM prefer SP to FP */
+#ifdef ALLOW_ELIMINATION_TO_SP
+	  /* Sometimes we do want to eliminate to the SP even when a FP
+	     is present, for performance benefits.  Note that this
+	     means that the target definition of CAN_ELIMIATE must
+	     be adequate to describe all allowable transformations.  */
+	  );
+#else
 	   && ! (ep->to == STACK_POINTER_REGNUM && frame_pointer_needed));
+#endif
+/* APPLE LOCAL end ARM prefer SP to FP */
     }
 #else
   reg_eliminate[0].from = reg_eliminate_1[0].from;

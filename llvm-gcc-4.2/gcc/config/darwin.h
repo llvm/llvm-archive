@@ -289,15 +289,6 @@ do {					\
 #define CC1PLUS_SPEC "-D__private_extern__=extern"
 /* APPLE LOCAL end private extern */
 
-/* LLVM LOCAL begin */
-#ifdef HAVE_DSYMUTIL
-#define DARWIN_DSYMUTIL_SPEC  "%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-                                 %{.c|.cc|.C|.cpp|.c++|.CPP|.m|.mm: \
-                                 %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
-#else
-#define DARWIN_DSYMUTIL_SPEC ""
-#endif
-/* LLVM LOCAL end */
 /* This is mostly a clone of the standard LINK_COMMAND_SPEC, plus
    precomp, libtool, and fat build additions.  Also we
    don't specify a second %G after %L because libSystem is
@@ -320,10 +311,11 @@ do {					\
     %{fnested-functions: -allow_stack_execute} \
     %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %G %L}} \
 "/* APPLE LOCAL begin mainline 4.3 2006-10-31 4370146 */"\
-"/* LLVM LOCAL begin */"\
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}} \n %(darwin_dsymutil) "
-/* LLVM LOCAL end */
-/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */
+    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
+%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+"/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
+"/* APPLE LOCAL ARM 5342595 */"\
+    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: %(darwin_dsymutil) }}}}}}}}"
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT
@@ -484,10 +476,13 @@ do {					\
 #define DARWIN_EXTRA_SPECS						\
   { "darwin_crt1", DARWIN_CRT1_SPEC },					\
   { "darwin_dylib1", DARWIN_DYLIB1_SPEC },				\
-  /* LLVM LOCAL */                                                \
-  { "darwin_dsymutil", DARWIN_DSYMUTIL_SPEC },                          \
-  { "darwin_minversion", DARWIN_MINVERSION_SPEC },
-
+  { "darwin_minversion", DARWIN_MINVERSION_SPEC },			\
+/* APPLE LOCAL end mainline */						\
+/* APPLE LOCAL begin ARM 5342595 */					\
+  { "darwin_dsymutil", DARWIN_DSYMUTIL_SPEC },
+/* APPLE LOCAL end ARM 5342595 */
+ 
+/* APPLE LOCAL begin mainline */
 #define DARWIN_DYLIB1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
    %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)"
@@ -778,9 +773,17 @@ do {					\
       assemble_zeros (1);						\
   } while (0)
 
+/* APPLE LOCAL begin ARM darwin target */
+#ifndef SUBTARGET_ASM_DECLARE_FUNCTION_NAME
+#define SUBTARGET_ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)
+#endif
+/* APPLE LOCAL end ARM darwin target */
+
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
   do {									\
     const char *xname = NAME;						\
+    /* APPLE LOCAL ARM darwin target */					\
+    SUBTARGET_ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL);		\
     if (GET_CODE (XEXP (DECL_RTL (DECL), 0)) != SYMBOL_REF)		\
       xname = IDENTIFIER_POINTER (DECL_NAME (DECL));			\
     if (! DECL_WEAK (DECL)						\
@@ -1125,7 +1128,10 @@ enum machopic_addr_class {
 
 #define DARWIN_REGISTER_TARGET_PRAGMAS()			\
   do {								\
-    c_register_pragma (0, "mark", darwin_pragma_ignore);	\
+    /* APPLE LOCAL begin mainline 2007-10-10 5497482 */		\
+    cpp_register_pragma (parse_in, NULL, "mark",		\
+			 darwin_pragma_ignore, false);		\
+    /* APPLE LOCAL end mainline 2007-10-10 5497482 */		\
     c_register_pragma (0, "options", darwin_pragma_options);	\
     c_register_pragma (0, "segment", darwin_pragma_ignore);	\
     /* APPLE LOCAL pragma fenv */                               \

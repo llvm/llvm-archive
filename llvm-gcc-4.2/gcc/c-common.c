@@ -486,13 +486,6 @@ int flag_enforce_eh_specs = 1;
 int flag_preprocessed = 0;
 /* APPLE LOCAL end private extern  Radar 2872481 --ilr */
 
-/* APPLE LOCAL begin structor thunks */
-/* Nonzero if we prefer to clone con/de/structors.  Alternative is to
-   gen multiple tiny thunk-esque things that call/jump to a unified
-   con/de/structor.  This is a classic size/speed tradeoff.  */
-int flag_clone_structors = 0;
-/* APPLE LOCAL end structor thunks */
-
 /* Nonzero means to generate thread-safe code for initializing local
    statics.  */
 
@@ -556,22 +549,23 @@ bool iasm_in_decl;
    not quite the same as any of the states of iasm_state.  */
 bool inside_iasm_block;
 
+/* This is true if we should kill the registers at the front of the
+   next block.  */
+bool iasm_kill_regs;
+
 /* True when the lexer/parser is handling operands.  */
 bool iasm_in_operands;
 
 /* Working buffer for building the assembly string.  */
 static char *iasm_buffer;
 
-/* Two arrays used as a map from user-supplied labels, local to an asm
-   block, to unique global labels that the assembler will like.  */
-static GTY(()) varray_type iasm_labels;
-static GTY(()) varray_type iasm_labels_uniq;
 static tree iasm_identifier (tree expr);
 
 /* Return true iff the opcode wants memory to be stable.  We arrange
    for a memory clobber in these instances.  */
 extern bool iasm_memory_clobber (const char *);
-static tree iasm_get_label (tree);
+static tree iasm_lookup_label (tree);
+static tree iasm_define_label (tree);
 /* APPLE LOCAL end CW asm blocks */
 
 static tree handle_packed_attribute (tree *, tree, tree, int, bool *);
@@ -2661,8 +2655,8 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 		     Hope it doesn't break something else.  */
 		  | TREE_THIS_VOLATILE (array));
 	    r = fold (r);
-	    r = build1 (ADDR_EXPR, result_type, r);
-	    r = fold (r);
+	    r = fold_build1 (ADDR_EXPR, result_type, r);
+	    fold_undefer_and_ignore_overflow_warnings ();
 	    return r;
 	  }
       }
@@ -4595,7 +4589,10 @@ handle_unused_attribute (tree *node, tree name, tree ARG_UNUSED (args),
       if (TREE_CODE (decl) == PARM_DECL
 	  || TREE_CODE (decl) == VAR_DECL
 	  || TREE_CODE (decl) == FUNCTION_DECL
-	  || TREE_CODE (decl) == LABEL_DECL
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	  || (TREE_CODE (decl) == LABEL_DECL
+	      && ! DECL_ARTIFICIAL (decl))
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
 	  || TREE_CODE (decl) == TYPE_DECL)
 	TREE_USED (decl) = 1;
       else
@@ -5043,7 +5040,10 @@ handle_aligned_attribute (tree *node, tree ARG_UNUSED (name), tree args,
       TYPE_USER_ALIGN (*type) = 1;
     }
   else if (TREE_CODE (decl) != VAR_DECL
-	   && TREE_CODE (decl) != FIELD_DECL)
+/* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
+	   && TREE_CODE (decl) != FIELD_DECL
+	   && TREE_CODE (decl) != LABEL_DECL)
+/* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
     {
       error ("alignment may not be specified for %q+D", decl);
       *no_add_attrs = true;
@@ -5565,7 +5565,6 @@ handle_unavailable_attribute (tree *node, tree name,
 	  || objc_method_decl (TREE_CODE (decl)))
 	  /* APPLE LOCAL end radar 3803157 - objc attribute */
 	{
-	  TREE_DEPRECATED (decl) = 1;
 	  TREE_UNAVAILABLE (decl) = 1;
 	}
       else
@@ -5575,7 +5574,6 @@ handle_unavailable_attribute (tree *node, tree name,
     {
       if (!(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
 	*node = build_variant_type_copy (*node);
-      TREE_DEPRECATED (*node) = 1;
       TREE_UNAVAILABLE (*node) = 1;
       type = *node;
     }
@@ -7133,7 +7131,8 @@ iasm_process_arg (const char *opcodename, int op_num,
       /* This is the default constraint used for all instructions.  */
 #if defined(TARGET_TOC)
       s = "+b";
-#elif defined(TARGET_386)
+/* APPLE LOCAL ARM CW asm */
+#elif defined(TARGET_386) || defined(TARGET_ARM)
       s = "+r";
 #endif
     }
@@ -7142,7 +7141,8 @@ iasm_process_arg (const char *opcodename, int op_num,
 
   if (TREE_CODE (var) == FUNCTION_DECL)
     {
-#if defined(TARGET_TOC)
+/* APPLE LOCAL ARM CW asm */
+#if defined(TARGET_TOC) || defined(TARGET_ARM)
       str = build_string (1, "s");
 #elif defined (TARGET_386)
       str = build_string (strlen (s), s);
@@ -7167,7 +7167,8 @@ iasm_process_arg (const char *opcodename, int op_num,
 	    /* This is the default constraint used for all instructions.  */
 #if defined(TARGET_TOC)
 	    str = build_string (2, "+b");
-#elif defined(TARGET_386)
+/* APPLE LOCAL ARM CW asm */
+#elif defined(TARGET_386) || defined(TARGET_ARM)
 	    str = build_string (2, "+r");
 #endif
 	  }
@@ -7558,6 +7559,46 @@ iasm_stmt (tree expr, tree args, int lineno)
   if (iasm_buffer == NULL)
     iasm_buffer = xmalloc (4000);
 
+#ifdef TARGET_386
+  if (iasm_kill_regs)
+    {
+      iasm_kill_regs = false;
+      /* One cannot use these registers across inline asm blocks per
+	 MS docs.  We explicitly kill them to ensure that the register
+	 allocator can use them as it sees fit.  We really only have
+	 to kill the registers used in the block, but, until we
+	 understand the entire block perfectly, this is conservatively
+	 correct.  The down side, we can't enregister variables into
+	 any of these registers across an asm block and we use 3 words
+	 more stack space to save ebx/esi/edi.  */
+      clobbers = tree_cons (NULL_TREE,
+			    build_string (3, "eax"),
+			    clobbers);
+      if (MACHO_DYNAMIC_NO_PIC_P)
+	clobbers = tree_cons (NULL_TREE,
+			      build_string (3, "ebx"),
+			      clobbers);
+      clobbers = tree_cons (NULL_TREE,
+			    build_string (3, "ecx"),
+			    clobbers);
+      clobbers = tree_cons (NULL_TREE,
+			    build_string (3, "edx"),
+			    clobbers);
+      clobbers = tree_cons (NULL_TREE,
+			    build_string (3, "esi"),
+			    clobbers);
+      clobbers = tree_cons (NULL_TREE,
+			    build_string (3, "edi"),
+			    clobbers);
+      sprintf(iasm_buffer, "%s top of block", ASM_COMMENT_START);
+      sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
+      stmt = build_stmt (ASM_EXPR, sexpr, NULL_TREE, NULL_TREE, clobbers, NULL_TREE);
+      clobbers = NULL_TREE;
+      ASM_VOLATILE_P (stmt) = 1;
+      (void)add_stmt (stmt);
+    }
+#endif
+
   /* Build .file "file-name" directive. */
   sprintf(iasm_buffer, "%s \"%s\"", ".file", input_filename);
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
@@ -7842,7 +7883,10 @@ iasm_maybe_force_mem (tree arg, char *buf, unsigned argnum, bool must_be_reg, ia
      clobbering memory anyway with iasm_memory_clobber.  */
   if (! (TREE_CODE (arg) == VAR_DECL && DECL_HARD_REGISTER (arg))
       && e->dat[e->num].constraint == 0)
-    iasm_force_constraint ("m", e);
+    {
+      lang_hooks.mark_addressable (arg);
+      iasm_force_constraint ("m", e);
+    }
 #endif
   iasm_get_register_var (arg, "", buf, argnum, must_be_reg, e);
 #if defined (TARGET_386)
@@ -7876,7 +7920,6 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
       break;
 
     case LABEL_DECL:
-      TREE_USED (arg) = 1;
       if (e->no_label_map
 	  && strncmp (IDENTIFIER_POINTER (DECL_NAME (arg)),
 		      "LASM$", 5) == 0)
@@ -7893,9 +7936,14 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	    }
 #endif
 	  /* APPLE LOCAL end remove when 4512478 is fixed */
+	  TREE_USED (arg) = 1;
+	  DECL_SOURCE_LOCATION (arg) = input_location;
+	  /* Mark label as having been defined.  */
+	  DECL_INITIAL (arg) = error_mark_node;
 	  sprintf (buf + strlen (buf), "%s", name);
 	  break;
 	}
+      TREE_USED (arg) = 1;
       IASM_OFFSET_PREFIX (e, buf);
       arg = build1 (ADDR_EXPR, ptr_type_node, arg);
       /* There was no other spelling I could find that would work.
@@ -8228,20 +8276,11 @@ iasm_label (tree labid, bool atsign)
   if (iasm_buffer == NULL)
     iasm_buffer = xmalloc (4000);
 
-  if (TREE_CODE (labid) == INTEGER_CST)
-    {
-      /* In C, for asm @ 1: nop, we can't switch the lexer
-	 fast enough to see the number as an identifier, so
-	 we also allow INTEGER_CST.  */
-      sprintf (iasm_buffer, HOST_WIDE_INT_PRINT_UNSIGNED, tree_low_cst (labid, 0));
-      labid = get_identifier (iasm_buffer);
-    }
-
   if (atsign)
     labid = prepend_char_identifier (labid, '@');
 
   iasm_buffer[0] = '\0';
-  label = iasm_get_label (labid);
+  label = iasm_define_label (labid);
 /* LLVM LOCAL begin */
 #if 1
 /* LLVM LOCAL end */
@@ -8259,18 +8298,17 @@ iasm_label (tree labid, bool atsign)
 	nop
 	jmp L2
 
-     for some odd reason.  The statement list seems correct.  */
+     because the backend knows that asms can't do jumps, and since
+     there are no found non-asm jumps, the label isn't `used' and so
+     can be deleted.  It knows there is a reference to the label, so,
+     it merely moves it to the top of the previous basic block.
+     Because of this we have to hide the fact this is a label.  */
   
   stmt = add_stmt (build_stmt (LABEL_EXPR, label));
-#else
-#if 0
-  strcat (iasm_buffer, IDENTIFIER_POINTER (DECL_NAME (label)));
-  strcat (iasm_buffer, ":");
 #else
   /* Arrange for the label to be a parameter to the ASM_EXPR, as only then will the
      backend `manage it' for us, say, making a unique copy for inline expansion.  */
   sprintf (iasm_buffer, "%%l0: # %s", IDENTIFIER_POINTER (DECL_NAME (label)));
-#endif
 
   l = build1 (ADDR_EXPR, ptr_type_node, label);
 
@@ -8316,20 +8354,13 @@ iasm_get_identifier (tree id, const char *str)
   return get_identifier (buf);
 }
 
-void
-iasm_clear_labels (void)
-{
-  if (!iasm_labels)
-    VARRAY_TREE_INIT (iasm_labels, 40, "iasm_labels");
-  if (!iasm_labels_uniq)
-    VARRAY_TREE_INIT (iasm_labels_uniq, 40, "iasm_labels_uniq");
-  VARRAY_POP_ALL (iasm_labels);
-  VARRAY_POP_ALL (iasm_labels_uniq);
-}
-
 static GTY(()) tree iasm_ha16;
 static GTY(()) tree iasm_hi16;
 static GTY(()) tree iasm_lo16;
+/* APPLE LOCAL begin ARM CW asm */
+static GTY(()) tree cw_cpsr;
+static GTY(()) tree cw_cpsr_c;
+/* APPLE LOCAL end ARM cw_asm */
 
 /* Given an identifier not otherwise found in the high level language, create up
    a meaning for it.  */
@@ -8370,7 +8401,7 @@ iasm_do_id (tree id)
 #endif
 
   /* Assume undeclared symbols are labels. */
-  return iasm_get_label (id);
+  return iasm_lookup_label (id);
 }
 
 /* Given a label identifier and a flag indicating whether it had an @
@@ -8378,9 +8409,8 @@ iasm_do_id (tree id)
    assembler will like.  */
 
 static tree
-iasm_get_label (tree labid)
+iasm_lookup_label (tree labid)
 {
-  unsigned int n;
   const char *labname;
   char *buf;
   tree newid;
@@ -8390,6 +8420,12 @@ iasm_get_label (tree labid)
       iasm_ha16 = get_identifier ("ha16");
       iasm_hi16 = get_identifier ("hi16");
       iasm_lo16 = get_identifier ("lo16");
+/* APPLE LOCAL begin ARM CW asm */
+#if defined(TARGET_ARM)
+      cw_cpsr = get_identifier ("cpsr");
+      cw_cpsr_c = get_identifier ("cpsr_c");
+#endif
+/* APPLE LOCAL end ARM CW asm */
     }
 
   /* lo16(), ha16() and hi16() should be left unmolested.  */
@@ -8400,13 +8436,42 @@ iasm_get_label (tree labid)
   else if (labid == iasm_hi16)
     return iasm_hi16;
 
-  for (n = 0; n < VARRAY_ACTIVE_SIZE (iasm_labels); ++n)
+/* APPLE LOCAL begin ARM CW asm */
+#if defined(TARGET_ARM)
+  if (labid == cw_cpsr)
+    return cw_cpsr;
+  else if (labid == cw_cpsr_c)
+    return cw_cpsr_c;
+#endif
+/* APPLE LOCAL end ARM CW asm */
+
+  buf = (char *) alloca (IDENTIFIER_LENGTH (labid) + 20);
+  sprintf (buf, "LASM$");
+  /* Assembler won't like a leading @-sign, so make it into a $ if
+     seen.  */
+  labname = IDENTIFIER_POINTER (labid);
+  if (*labname == '@')
     {
-      if (labid == VARRAY_TREE (iasm_labels, n))
-	return VARRAY_TREE (iasm_labels_uniq, n);
+      strcat (buf, "$");
+      ++labname;
     }
-  /* Not already seen, make up a label.  */
-  VARRAY_PUSH_TREE (iasm_labels, labid);
+  strcat (buf, labname);
+  newid = get_identifier (buf);
+  newid = lookup_label (newid);
+  return newid;
+}
+
+/* Given a label identifier and a flag indicating whether it had an @
+   preceding it, return a synthetic and unique label that the
+   assembler will like.  */
+
+static tree
+iasm_define_label (tree labid)
+{
+  const char *labname;
+  char *buf;
+  tree newid;
+
   buf = (char *) alloca (IDENTIFIER_LENGTH (labid) + 20);
   sprintf (buf, "LASM$");
   /* Assembler won't like a leading @-sign, so make it into a $ if
@@ -8420,7 +8485,6 @@ iasm_get_label (tree labid)
   strcat (buf, labname);
   newid = get_identifier (buf);
   newid = define_label (input_location, newid);
-  VARRAY_PUSH_TREE (iasm_labels_uniq, newid);
   return newid;
 }
 

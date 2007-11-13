@@ -113,8 +113,6 @@ static void init_asm_output (const char *);
 static void finalize (void);
 
 static void crash_signal (int) ATTRIBUTE_NORETURN;
-/* APPLE LOCAL interrupt signal handler (radar 2941633)  --ilr */
-static void interrupt_signal (int) ATTRIBUTE_NORETURN;
 static void setup_core_dumping (void);
 static void compile_file (void);
 
@@ -605,30 +603,6 @@ floor_log2 (unsigned HOST_WIDE_INT x)
   return t;
 }
 
-/* APPLE LOCAL begin interrupt signal handler (radar 2941633)  --ilr */
-/* If the compilation is interrupted do some cleanup. Any files created
-   by the compilation are deleted.  The compilation is terminated from
-   here.  */
-static void
-interrupt_signal (int signo ATTRIBUTE_UNUSED)
-{
-  /* Close the dump files.  */
-  if (flag_gen_aux_info)
-    {
-      fclose (aux_info_file);
-      unlink (aux_info_file_name);
-    }
-  if (asm_out_file)
-    {
-      fclose (asm_out_file);
-      if (asm_file_name && *asm_file_name)
-      	unlink (asm_file_name);
-    }
-
-  exit (FATAL_EXIT_CODE);
-}
-/* APPLE LOCAL end interrupt signal handler */
-
 /* Return the logarithm of X, base 2, considering X unsigned,
    if X is a power of 2.  Otherwise, returns -1.  */
 
@@ -1012,15 +986,15 @@ warn_deprecated_use (tree node)
 /* APPLE LOCAL begin "unavailable" attribute (radar 2809697) --ilr */
 /* Warn about a use of an identifier which was marked deprecated.  */
 void
-warn_unavailable_use (tree node)
+error_unavailable_use (tree node)
 {
   if (node == 0)
     return;
 
   if (DECL_P (node))
-    warning (0, "%qs is unavailable (declared at %s:%d)",
-	     IDENTIFIER_POINTER (DECL_NAME (node)),
-	     DECL_SOURCE_FILE (node), DECL_SOURCE_LINE (node));
+    error ("%qs is unavailable (declared at %s:%d)",
+	   IDENTIFIER_POINTER (DECL_NAME (node)),
+	   DECL_SOURCE_FILE (node), DECL_SOURCE_LINE (node));
   else if (TYPE_P (node))
     {
       const char *what = NULL;
@@ -1035,16 +1009,16 @@ warn_unavailable_use (tree node)
       if (what)
 	{
 	  if (decl)
-	    warning (0, "%qs is unavailable (declared at %s:%d)", what,
-		     DECL_SOURCE_FILE (decl), DECL_SOURCE_LINE (decl));
+	    error ("%qs is unavailable (declared at %s:%d)", what,
+		   DECL_SOURCE_FILE (decl), DECL_SOURCE_LINE (decl));
 	  else
-	    warning (0, "%qs is unavailable", what);
+	    error ("%qs is unavailable", what);
 	}
       else if (decl)
-	warning (0, "type is unavailable (declared at %s:%d)",
-		 DECL_SOURCE_FILE (decl), DECL_SOURCE_LINE (decl));
+	error ("type is unavailable (declared at %s:%d)",
+	       DECL_SOURCE_FILE (decl), DECL_SOURCE_LINE (decl));
       else
-	warning (0, "type is unavailable");
+	error ("type is unavailable");
     }
 }
 /* APPLE LOCAL end "unavailable" attribute (radar 2809697) --ilr */
@@ -1695,13 +1669,6 @@ general_init (const char *argv0)
 #if defined SIGIOT && (!defined SIGABRT || SIGABRT != SIGIOT)
   signal (SIGIOT, crash_signal);
 #endif
-  /* APPLE LOCAL begin interrupt signal handler (radar 2941633)  --ilr */
-  /* Handle compilation interrupts.  */
-  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
-    signal (SIGINT, interrupt_signal);
-  if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
-    signal (SIGTERM, interrupt_signal);
-  /* APPLE LOCAL end interrupt signal handler */
 #ifdef SIGFPE
   signal (SIGFPE, crash_signal);
 #endif

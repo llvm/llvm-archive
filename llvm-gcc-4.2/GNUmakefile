@@ -39,7 +39,7 @@ PREFIX = /usr
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
 # LLVM gets installed into /usr/local, not /usr.
-PREFIX = /usr/local/llvm-gcc-install
+PREFIX = /Developer/usr/llvm-gcc-4.2
 else
 ENABLE_LLVM = false
 endif

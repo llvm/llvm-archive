@@ -22,6 +22,7 @@ extern int flag_iasm_blocks;
 extern enum iasm_states iasm_state;
 extern bool iasm_in_decl;
 extern bool inside_iasm_block;
+extern bool iasm_kill_regs;
 extern bool iasm_in_operands;
 extern tree iasm_do_id (tree);
 /* Maximum number of arguments.  */
@@ -69,7 +70,6 @@ extern void iasm_stmt (tree, tree, int);
 extern tree iasm_build_register_offset (tree, tree);
 extern tree iasm_label (tree, bool);
 extern tree prepend_char_identifier (tree, char);
-extern void iasm_clear_labels (void);
 extern tree iasm_reg_name (tree);
 extern void iasm_entry (int, tree);
 extern int iasm_typename_or_reserved (tree);

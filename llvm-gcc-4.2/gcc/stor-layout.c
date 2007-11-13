@@ -70,15 +70,6 @@ static GTY(()) tree pending_sizes;
 /* Show that REFERENCE_TYPES are internal and should be Pmode.  Called only
    by front end.  */
 
-/* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff  */
-/* Keep track of whether we are laying out the first declared member
-   of a C++ class.  We need this flag to handle the case of classes
-   with v-tables where the test to see if the offset in the record
-   is zero is not sufficient to determine if we are dealing with the
-   first declared member.  */
-int darwin_align_is_first_member_of_class = 0;
-/* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff  */
-
 void
 internal_reference_types (void)
 {
@@ -450,10 +441,9 @@ layout_decl (tree decl, unsigned int known_align)
 	    = MIN (DECL_ALIGN (decl), (unsigned) BIGGEST_FIELD_ALIGNMENT);
 #endif
 #ifdef ADJUST_FIELD_ALIGN
-      /* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff */
-	  DECL_ALIGN (decl) = ADJUST_FIELD_ALIGN (decl, DECL_ALIGN (decl),
-						  known_align == 0);
-      /* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff */
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+	  DECL_ALIGN (decl) = ADJUST_FIELD_ALIGN (decl, DECL_ALIGN (decl));
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #endif
 	}
 
@@ -556,6 +546,11 @@ start_record_layout (tree t)
   rli->offset_align = MAX (rli->record_align, BIGGEST_ALIGNMENT);
 
 #ifdef STRUCTURE_SIZE_BOUNDARY
+/* APPLE LOCAL begin ARM Macintosh alignment */
+#ifdef PEG_ALIGN_FOR_MAC68K
+  if (! OPTION_ALIGN_MAC68K)
+#endif
+/* APPLE LOCAL end ARM Macintosh alignment */
   /* Packed structures don't need to have minimum size.  */
   if (! TYPE_PACKED (t))
     rli->record_align = MAX (rli->record_align, (unsigned) STRUCTURE_SIZE_BOUNDARY);
@@ -713,17 +708,10 @@ update_alignment_for_field (record_layout_info rli, tree field,
   /* APPLE LOCAL begin Macintosh alignment 2002-5-24 --ff */
 #ifdef ADJUST_FIELD_ALIGN
   if (! user_align && TREE_CODE (rli->t) == RECORD_TYPE)
-    /* The third argument to ADJUST_FIELD_ALIGN indicates whether
-       we are dealing with the first field of the structure.  
-       Only adjust the alignment for structs. For unions, every
-       field is the 'first' field and thus holds to its
-       natural alignment. Alignment of union is later deterimined 
-       by the maximum alignment among all its fields. */
     desired_align = 
-      ADJUST_FIELD_ALIGN (field, desired_align,
-			  (darwin_align_is_first_member_of_class 
-			   || (integer_zerop (rli->offset)
-			       && integer_zerop (rli->bitpos))));
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+      ADJUST_FIELD_ALIGN (field, desired_align);
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #endif
   /* APPLE LOCAL end Macintosh alignment 2002-5-24 --ff */
 
@@ -766,12 +754,9 @@ update_alignment_for_field (record_layout_info rli, tree field,
 
 #ifdef ADJUST_FIELD_ALIGN
 	  if (! TYPE_USER_ALIGN (type))
-	    /* APPLE LOCAL begin Macintosh alignment */
-	    type_align = ADJUST_FIELD_ALIGN (field, type_align,
-					     (darwin_align_is_first_member_of_class 
-					      || (integer_zerop (rli->offset)
-						  && integer_zerop (rli->bitpos))));
-	  /* APPLE LOCAL end Macintosh alignment */
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+	    type_align = ADJUST_FIELD_ALIGN (field, type_align);
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #endif
 
 	  /* Targets might chose to handle unnamed and hence possibly
@@ -1023,12 +1008,9 @@ place_field (record_layout_info rli, tree field)
 
 #ifdef ADJUST_FIELD_ALIGN
       if (! TYPE_USER_ALIGN (type))
-	/* APPLE LOCAL begin Macintosh alignment */
-	type_align = ADJUST_FIELD_ALIGN (field, type_align,
-					 (darwin_align_is_first_member_of_class 
-					  || (integer_zerop (rli->offset)
-					      && integer_zerop (rli->bitpos))));
-      /* APPLE LOCAL end Macintosh alignment */
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+	type_align = ADJUST_FIELD_ALIGN (field, type_align);
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #endif
 
       /* A bit field may not span more units of alignment of its type
@@ -1060,12 +1042,9 @@ place_field (record_layout_info rli, tree field)
 
 #ifdef ADJUST_FIELD_ALIGN
       if (! TYPE_USER_ALIGN (type))
-	/* APPLE LOCAL begin Macintosh alignment */
-	type_align = ADJUST_FIELD_ALIGN (field, type_align,
-					 (darwin_align_is_first_member_of_class 
-					  || (integer_zerop (rli->offset)
-					      && integer_zerop (rli->bitpos))));
-      /* APPLE LOCAL end Macintosh alignment */
+/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
+	type_align = ADJUST_FIELD_ALIGN (field, type_align);
+/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */
 #endif
 
       if (maximum_field_alignment != 0)
@@ -1160,7 +1139,7 @@ place_field (record_layout_info rli, tree field)
 				       TYPE_SIZE (type),
 				       bitsize_int (rli->remaining_in_alignment)));
 		      rli->prev_field = field;
-		      /* MERGE FIXME: audit for correctness wrt:
+		      /* MERGE FIXME 5416334 audit for correctness wrt:
 
 			 2006-07-15  Kaz Kojima  <kkojima@gcc.gnu.org>
 

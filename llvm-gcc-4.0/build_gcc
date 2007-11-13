@@ -35,10 +35,8 @@ BOOTSTRAP=${BOOTSTRAP-bootstrap}
 
 if [ "x$LLVM_DEBUG" == "x" ]; then
     CFLAGS="-g -O2 ${RC_NONARCH_CFLAGS/-pipe/}"
-    OPTIMIZE_OPTS="ENABLE_OPTIMIZED=1"
 else
     CFLAGS="-g"
-    OPTIMIZE_OPTS=
 fi
 
 # This isn't a parameter; it is the architecture of the current machine.

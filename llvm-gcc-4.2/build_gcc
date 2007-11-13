@@ -68,9 +68,8 @@ LLVM_GCC_SUBMIT_VERSION="$8"
 # The nineth parameter is the subversion number of the submission, e.g. 03.
 LLVM_GCC_SUBMIT_SUBVERSION="$9"
 
-# LLVM_INSTALL_PREFIX - This is the prefix where LLVM tools/headers/libraries
-# and the llvm-gcc/llvm-g++ symlinks get installed.
-LLVM_INSTALL_PREFIX=/usr/local
+# LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
+LLVM_BIN_DIR=/Developer/usr/bin
 
 
 # The current working directory is where the build will happen.
@@ -89,13 +88,6 @@ fi
 # This isn't a parameter either, it's the major version of the compiler
 # to be built.  It's VERS but only up to the second '.' (if there is one).
 MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
-
-# LLVM LOCAL begin
-if [ "$ENABLE_LLVM" == true ]; then
-  # Add suffix.
-  MAJ_VERS="${MAJ_VERS}-llvm"
-fi
-# LLVM LOCAL end
 
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.0.0
@@ -127,7 +119,8 @@ CONFIGFLAGS="--disable-checking -enable-werror \
   --prefix=$DEST_ROOT \
   --mandir=\${prefix}/share/man \
   --enable-languages=c,objc,c++,obj-c++ \
-  --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
+  --program-prefix=llvm- \
+  --program-suffix=-$MAJ_VERS \
   --with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION \
   --with-slibdir=/usr/lib \
   --build=$BUILD-apple-darwin$DARWIN_VERS"
@@ -335,10 +328,10 @@ lipo -output .$DEST_ROOT/bin/gcov-$MAJ_VERS -create \
   $DIR/dst-*-$TARG0$DEST_ROOT/bin/*gcov* || exit 1
 # The fully-named drivers, which have the same target on every host.
 for t in $TARGETS ; do
-  lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc-$VERS -create \
-    $DIR/dst-*-$t$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc-$VERS || exit 1
-  lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++-$VERS -create \
-    $DIR/dst-*-$t$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++* || exit 1
+  lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS -create \
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS || exit 1
+  lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS -create \
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS || exit 1
 done
 
 # lib
@@ -413,47 +406,47 @@ done
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
-ln -f $MDIR/g++-$MAJ_VERS.1 $MDIR/c++-$MAJ_VERS.1 || exit 1
+ln -f $MDIR/llvm-g++-$MAJ_VERS.1 $MDIR/llvm-c++-$MAJ_VERS.1 || exit 1
 for t in $TARGETS ; do
-  ln -f $MDIR/gcc-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-gcc-$VERS.1 \
+  ln -f $MDIR/llvm-gcc-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS.1 \
       || exit 1
-  ln -f $MDIR/g++-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-g++-$VERS.1 \
+  ln -f $MDIR/llvm-g++-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS.1 \
       || exit 1
 done
 
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do
-    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-gcc-$VERS                          \
+    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-llvm-gcc-$VERS                          \
 	$ORIG_SRC_DIR/driverdriver.c                               \
-	-DPDN="\"-apple-darwin$DARWIN_VERS-gcc-$VERS\""                                    \
+	-DPDN="\"-apple-darwin$DARWIN_VERS-llvm-gcc-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
 	-I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
 	-liberty -L$DIR/dst-$BUILD-$h$DEST_ROOT/lib/                           \
 	-L$DIR/dst-$BUILD-$h$DEST_ROOT/$h-apple-darwin$DARWIN_VERS/lib/                    \
         -L$DIR/obj-$h-$BUILD/libiberty/                                        \
-	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-gcc-$MAJ_VERS || exit 1
+	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-gcc-$MAJ_VERS || exit 1
 
-    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-gcc-$VERS                          \
+    $DEST_DIR$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-llvm-gcc-$VERS                          \
 	$ORIG_SRC_DIR/driverdriver.c                               \
-	-DPDN="\"-apple-darwin$DARWIN_VERS-g++-$VERS\""                                    \
+	-DPDN="\"-apple-darwin$DARWIN_VERS-llvm-g++-$VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
 	-I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
 	-liberty -L$DIR/dst-$BUILD-$h$DEST_ROOT/lib/                           \
 	-L$DIR/dst-$BUILD-$h$DEST_ROOT/$h-apple-darwin$DARWIN_VERS/lib/                    \
         -L$DIR/obj-$h-$BUILD/libiberty/                                        \
-	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-g++-$MAJ_VERS || exit 1
+	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-g++-$MAJ_VERS || exit 1
 done
 
-lipo -output $DEST_DIR/$DEST_ROOT/bin/gcc-$MAJ_VERS -create \
-  $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1
+lipo -output $DEST_DIR/$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS -create \
+  $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-gcc-$MAJ_VERS || exit 1
 
-lipo -output $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS -create \
-  $DEST_DIR/$DEST_ROOT/bin/tmp-*-g++-$MAJ_VERS || exit 1
+lipo -output $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS -create \
+  $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
 
-ln -f $DEST_DIR/$DEST_ROOT/bin/g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/c++-$MAJ_VERS || exit 1
+ln -f $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/llvm-c++-$MAJ_VERS || exit 1
 
-rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-gcc-$MAJ_VERS || exit 1
-rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-g++-$MAJ_VERS || exit 1
+rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-gcc-$MAJ_VERS || exit 1
+rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
 
 ########################################
 # Create SYM_DIR with information required for debugging.
@@ -482,8 +475,33 @@ find obj-* -name \*.\[chy\] -print | cpio -pdml $SYM_DIR/src || exit 1
 find $DEST_DIR -perm -0111 \! -name fixinc.sh \
     \! -name mkheaders \! -name libstdc++.dylib -type f -print \
   | xargs strip || exit 1
-find $DEST_DIR -name \*.a -print | xargs strip -SX || exit 1
-find $DEST_DIR -name \*.a -print | xargs ranlib || exit 1
+# APPLE LOCAL begin LLVM - Strip with -Sx instead of -SX
+find $DEST_DIR \( -name \*.a -or -name \*.dylib \) \
+    \! -name libgcc_s.10.*.dylib -type f -print \
+  | xargs strip -SX || exit 1
+# APPLE LOCAL end LLVM - Strip with -Sx instead of -SX
+find $DEST_DIR -name \*.a -type f -print \
+  | xargs ranlib || exit 1
+
+# APPLE LOCAL begin LLVM
+# Set up the llvm-gcc/llvm-g++ symlinks.
+mkdir -p $DEST_DIR$LLVM_BIN_DIR
+cd $DEST_DIR$LLVM_BIN_DIR
+ln -s -f ../../../$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
+ln -s -f ../../../$DEST_ROOT/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
+
+  # Copy one of the libllvmgcc.dylib's up to libexec/gcc.
+cp $DEST_DIR/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS/libllvmgcc.dylib \
+    $DEST_DIR/$DEST_ROOT/libexec/gcc/
+
+  # Replace the installed ones with symlinks to the common one.
+for t in $TARGETS ; do
+    cd $DEST_DIR/$DEST_ROOT/libexec/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/
+    rm libllvmgcc.dylib
+    ln -s ../../libllvmgcc.dylib
+done
+# APPLE LOCAL end LLVM
+
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
 chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR

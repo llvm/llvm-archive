@@ -157,7 +157,7 @@ CONFIGFLAGS="$CHECKING_FLAGS \
   --mandir=$DEST_ROOT/share/man \
   --enable-languages=c,objc,c++,obj-c++ \
   --program-prefix=llvm- \
-  --program-suffix=-$MAJ_VERS \
+  --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
   $LIBSTDCXX_CONFIG_OPTION \
   --with-slibdir=/usr/lib \
   --enable-llvm=/usr/local/ \
@@ -211,6 +211,11 @@ make $MAKEFLAGS html CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 
+# Add the compiler we just built to the path, giving it appropriate names.
+# APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
+D=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin
+ln -f $D/llvm-gcc $D/gcc || exit 1
+ln -f $D/gcc $D/$BUILD-apple-darwin$DARWIN_VERS-gcc || exit 1
 # APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
 PATH=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin:$PATH
 
@@ -370,10 +375,10 @@ lipo -output .$DEST_ROOT/bin/gcov-$MAJ_VERS -create \
 for t in $TARGETS ; do
 # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS -create \
-    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS || exit 1
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc || exit 1
 # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS -create \
-    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS || exit 1
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++ || exit 1
 done
 
 # lib
@@ -418,17 +423,17 @@ done
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
-ln -f $MDIR/llvm-g++-$MAJ_VERS.1 $MDIR/llvm-c++-$MAJ_VERS.1 || exit 1
+ln -f $MDIR/llvm-g++.1 $MDIR/llvm-c++.1 || exit 1
 for t in $TARGETS ; do
-  ln -f $MDIR/llvm-gcc-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS.1 \
+  ln -f $MDIR/llvm-gcc.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-gcc.1 \
       || exit 1
-  ln -f $MDIR/llvm-g++-$MAJ_VERS.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS.1 \
+  ln -f $MDIR/llvm-g++.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-g++.1 \
       || exit 1
 done
 
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do
-    $h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS				       \
+    $h-apple-darwin$DARWIN_VERS-gcc \
 	$ORIG_SRC_DIR/driverdriver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
@@ -438,7 +443,7 @@ for h in $HOSTS ; do
         -L$DIR/obj-$h-$BUILD/libiberty/                                        \
 	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-gcc-$MAJ_VERS || exit 1
 
-    $h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS				       \
+    $h-apple-darwin$DARWIN_VERS-gcc \
 	$ORIG_SRC_DIR/driverdriver.c                               \
 	-DPDN="\"-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS\""                                    \
 	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \

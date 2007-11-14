@@ -4010,6 +4010,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         NewConstraint[RegNameLen+2] = '}';
         NewConstraint[RegNameLen+3] = 0;
         SimplifiedConstraint = NewConstraint;
+        // We should no longer consider mem constraints.
+        AllowsMem = false;
       } else {
         // If we can simplify the constraint into something else, do so now.  This
         // avoids LLVM having to know about all the (redundant) GCC constraints.

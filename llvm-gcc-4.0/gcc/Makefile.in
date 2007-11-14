@@ -240,7 +240,7 @@ CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppfla
 #LLVMSRCDIR := $(shell $(LLVMBINPATH)/llvm-config --src-root)
 LLVMSRCDIR := $(shell \
   P=`$(LLVMBINPATH)/llvm-config --src-root`; \
-  if [ `pwd` == $$P ]; then \
+  if [ `pwd` = $$P ]; then \
     echo "$(LLVMOBJDIR)"; \
   else \
     echo "$$P"; \

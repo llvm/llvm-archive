@@ -66,17 +66,17 @@ SYM_DIR="$6"
 # or not.
 ENABLE_LLVM="$7"
 
-# The tenth parameter is a yes/no that indicates whether assertions should be
+# The eighth parameter is a yes/no that indicates whether assertions should be
 # enabled in the LLVM libs/tools.
 LLVM_ASSERTIONS="$8"
 
-# The eleventh parameter indicates llvmCore location.
+# The nineth parameter indicates llvmCore location.
 LLVMCORE_PATH="$9"
 
-# The eighth parameter is the version number of the submission, e.g. 1007.
+# The tenth parameter is the version number of the submission, e.g. 1007.
 LLVM_SUBMIT_VERSION="${10}"
 
-# The nineth parameter is the subversion number of the submission, e.g. 03.
+# The eleventh parameter is the subversion number of the submission, e.g. 03.
 LLVM_SUBMIT_SUBVERSION="${11}"
 
 # LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.

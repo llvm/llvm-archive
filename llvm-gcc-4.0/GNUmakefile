@@ -51,6 +51,10 @@ else
 LLVM_ASSERTIONS := no
 endif
 
+ifndef LLVMCORE_PATH
+LLVMCORE_PATH = /usr/local
+endif
+
 ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
 endif
@@ -63,8 +67,9 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
-	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) \
-	    $(LLVM_ASSERTIONS)
+	    $(LLVM_ASSERTIONS) $(LLVMCORE_PATH) \
+	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
+
 # APPLE LOCAL end LLVM
 
 # installhdrs does nothing, because the headers aren't useful until

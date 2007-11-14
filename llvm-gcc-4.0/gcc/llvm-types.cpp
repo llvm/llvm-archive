@@ -983,20 +983,31 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 #ifdef TARGET_ADJUST_LLVM_CC
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
-  
-  // Compute whether the result needs to be zext or sext'd, adding an attribute
-  // if so.
+
+  // Compute attributes for return type (and function attributes)
   ParamAttrsVector Attrs;
+  uint16_t RAttributes = ParamAttr::None;
+
+  // Check for 'const' function attribute
+  if (decl && TREE_READONLY(decl))
+    RAttributes |= ParamAttr::Const;
+
+  // Check for 'pure' function attribute
+  if (decl && DECL_IS_PURE(decl))
+    RAttributes |= ParamAttr::Pure;
+
+  // Compute whether the result needs to be zext or sext'd
   if (isa<IntegerType>(RetTy.get())) {
-    uint16_t RAttributes = ParamAttr::None;
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE) {
       if (TYPE_UNSIGNED(ResultTy) || TREE_CODE(ResultTy) == BOOLEAN_TYPE)
-        Attrs.push_back(ParamAttrsWithIndex::get(0, ParamAttr::ZExt));
-      else 
-        Attrs.push_back(ParamAttrsWithIndex::get(0, ParamAttr::SExt));
+        RAttributes |= ParamAttr::ZExt;
+      else
+        RAttributes |= ParamAttr::SExt;
     }
   }
+  
+  Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
   
   // If this is a struct-return function, the dest loc is passed in as a
   // pointer.  Mark that pointer as structret.

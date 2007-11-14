@@ -202,6 +202,21 @@ tree_node *arrayLength(tree_node *type);
 /// false.
 bool ValidateRegisterVariable(tree_node *decl);
 
+/// MemRef - This struct holds the information needed for a memory access: a
+/// pointer to the memory, its alignment and whether the access is volatile.
+struct MemRef {
+  Value *Ptr;
+  unsigned Alignment;
+  bool Volatile;
+
+  MemRef() : Ptr(0), Alignment(0), Volatile(false) {}
+  MemRef(Value *P, unsigned A, bool V)
+    : Ptr(P), Alignment(A), Volatile(V) {
+    // Allowing alignment 0 would complicate calculations, so forbid it.
+    assert(A && !(A & (A - 1)) && "Alignment not a power of 2!");
+  }
+};
+
 /// LValue - This struct represents an lvalue in the program.  In particular,
 /// the Ptr member indicates the memory that the lvalue lives in.  If this is
 /// a bitfield reference, BitStart indicates the first bit in the memory that
@@ -375,7 +390,7 @@ public:
   /// expression that fits into an LLVM scalar value, the result is returned. If
   /// the result is an aggregate, it is stored into the location specified by
   /// DestLoc.
-  Value *Emit(tree_node *exp, Value *DestLoc);
+  Value *Emit(tree_node *exp, const MemRef *DestLoc);
   
   /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
   /// the address of the result.
@@ -437,14 +452,13 @@ private: // Helper functions.
   /// manage fixups for EH info.
   void EmitBlock(BasicBlock *BB);
   
-  /// EmitAggregateCopy - Copy the elements from SrcPtr to DestPtr, using the
+  /// EmitAggregateCopy - Copy the elements from SrcPtr to DestLoc, using the
   /// GCC type specified by GCCType to know which elements to copy.
-  void EmitAggregateCopy(Value *DestPtr, Value *SrcPtr, tree_node *GCCType,
-                         bool isDstVolatile, bool isSrcVolatile,
-                         unsigned Alignment);
-  /// EmitAggregateZero - Zero the elements of DestPtr.
+  void EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree_node *GCCType);
+
+  /// EmitAggregateZero - Zero the elements of DestLoc.
   ///
-  void EmitAggregateZero(Value *DestPtr, tree_node *GCCType);
+  void EmitAggregateZero(MemRef DestLoc, tree_node *GCCType);
                          
   /// EmitMemCpy/EmitMemMove/EmitMemSet - Emit an llvm.memcpy/llvm.memmove or
   /// llvm.memset call with the specified operands.
@@ -462,6 +476,9 @@ private: // Helper functions.
   /// that works.
   void AddBranchFixup(BranchInst *BI, bool isExceptionEdge);
 private:
+  /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
+  MemRef CreateTempLoc(const Type *Ty);
+
   void EmitAutomaticVariableDecl(tree_node *decl);
   
   /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
@@ -492,8 +509,8 @@ private:
   // characteristics.
     
   // Basic lists and binding scopes.
-  Value *EmitBIND_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitSTATEMENT_LIST(tree_node *exp, Value *DestLoc);
+  Value *EmitBIND_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitSTATEMENT_LIST(tree_node *exp, const MemRef *DestLoc);
 
   // Helpers for exception handling.
   void   EmitProtectedCleanups(tree_node *cleanups);
@@ -502,7 +519,7 @@ private:
   // Control flow.
   Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);
-  Value *EmitRETURN_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCOND_EXPR(tree_node *exp);
   Value *EmitSWITCH_EXPR(tree_node *exp);
   Value *EmitTRY_EXPR(tree_node *exp);
@@ -511,39 +528,39 @@ private:
   Value *EmitEH_FILTER_EXPR(tree_node *exp);
 
   // Expressions.
-  void   EmitINTEGER_CST_Aggregate(tree_node *exp, Value *DestLoc);
-  Value *EmitLoadOfLValue(tree_node *exp, Value *DestLoc);
-  Value *EmitOBJ_TYPE_REF(tree_node *exp, Value *DestLoc);
+  void   EmitINTEGER_CST_Aggregate(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitLoadOfLValue(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitOBJ_TYPE_REF(tree_node *exp, const MemRef *DestLoc);
   Value *EmitADDR_EXPR(tree_node *exp);
   Value *EmitOBJ_TYPE_REF(tree_node *exp);
-  Value *EmitCALL_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitCallOf(Value *Callee, tree_node *exp, Value *DestLoc);
-  Value *EmitMODIFY_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitNOP_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitCONVERT_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitNEGATE_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitCONJ_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitCALL_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc);
+  Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitNOP_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitCONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitNEGATE_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitCONJ_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitABS_EXPR(tree_node *exp);
   Value *EmitBIT_NOT_EXPR(tree_node *exp);
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
-  Value *EmitEXACT_DIV_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                      unsigned FPOpc);
-  Value *EmitBinOp(tree_node *exp, Value *DestLoc, unsigned Opc);
+  Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
   Value *EmitPtrBinOp(tree_node *exp, unsigned Opc);
   Value *EmitTruthOp(tree_node *exp, unsigned Opc);
-  Value *EmitShiftOp(tree_node *exp, Value *DestLoc, unsigned Opc);
+  Value *EmitShiftOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
   Value *EmitRotateOp(tree_node *exp, unsigned Opc1, unsigned Opc2);
   Value *EmitMinMaxExpr(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                         unsigned Opc);
-  Value *EmitFLOOR_MOD_EXPR(tree_node *exp, Value *DestLoc);
+  Value *EmitFLOOR_MOD_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCEIL_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.
   Value *EmitASM_EXPR(tree_node *exp);
-  Value *EmitReadOfRegisterVariable(tree_node *vardecl, Value *DestLoc);
+  Value *EmitReadOfRegisterVariable(tree_node *vardecl, const MemRef *DestLoc);
   void EmitModifyOfRegisterVariable(tree_node *vardecl, Value *RHS);
 
   // Helpers for Builtin Function Expansion.
@@ -553,9 +570,9 @@ private:
 
   // Builtin Function Expansion.
   bool EmitBuiltinCall(tree_node *exp, tree_node *fndecl, 
-                       Value *DestLoc, Value *&Result);
+                       const MemRef *DestLoc, Value *&Result);
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
-                                       Value *DestLoc, Value *&Result);
+                                       const MemRef *DestLoc, Value *&Result);
   bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
   Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,
                               const char *F64Name, const char *LongDoubleName);
@@ -564,7 +581,7 @@ private:
 
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);
   bool EmitBuiltinAlloca(tree_node *exp, Value *&Result);
-  bool EmitBuiltinExpect(tree_node *exp, Value *DestLoc, Value *&Result);
+  bool EmitBuiltinExpect(tree_node *exp, const MemRef *DestLoc, Value *&Result);
   bool EmitBuiltinExtendPointer(tree_node *exp, Value *&Result);
   bool EmitBuiltinVAStart(tree_node *exp);
   bool EmitBuiltinVAEnd(tree_node *exp);
@@ -587,13 +604,11 @@ private:
   bool EmitBuiltinInitTrampoline(tree_node *exp, Value *&Result);
 
   // Complex Math Expressions.
-  void EmitLoadFromComplex(Value *&Real, Value *&Imag, Value *SrcComplex,
-                           bool isVolatile);
-  void EmitStoreToComplex(Value *DestComplex, Value *Real, Value *Imag,
-                          bool isVolatile);
-  void EmitCOMPLEX_CST(tree_node *exp, Value *DestLoc);
-  void EmitCOMPLEX_EXPR(tree_node *exp, Value *DestLoc);
-  Value *EmitComplexBinOp(tree_node *exp, Value *DestLoc);
+  void EmitLoadFromComplex(Value *&Real, Value *&Imag, MemRef SrcComplex);
+  void EmitStoreToComplex(MemRef DestComplex, Value *Real, Value *Imag);
+  void EmitCOMPLEX_CST(tree_node *exp, const MemRef *DestLoc);
+  void EmitCOMPLEX_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitComplexBinOp(tree_node *exp, const MemRef *DestLoc);
 
   // L-Value Expressions.
   LValue EmitLV_DECL(tree_node *exp);
@@ -606,12 +621,12 @@ private:
   // Constant Expressions.
   Value *EmitINTEGER_CST(tree_node *exp);
   Value *EmitREAL_CST(tree_node *exp);
-  Value *EmitCONSTRUCTOR(tree_node *exp, Value *DestLoc);
+  Value *EmitCONSTRUCTOR(tree_node *exp, const MemRef *DestLoc);
 
   // Optional target defined builtin intrinsic expanding function.
   bool TargetIntrinsicLower(tree_node *exp,
                             unsigned FnCode,
-                            Value *DestLoc,
+                            const MemRef *DestLoc,
                             Value *&Result,
                             const Type *ResultType,
                             std::vector<Value*> &Ops);

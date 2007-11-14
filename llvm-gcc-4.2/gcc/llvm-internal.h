@@ -399,7 +399,7 @@ private: // Helper functions.
   /// GCC type specified by GCCType to know which elements to copy.
   void EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree_node *GCCType);
 
-  /// EmitAggregateZero - Zero the elements of DestPtr.
+  /// EmitAggregateZero - Zero the elements of DestLoc.
   ///
   void EmitAggregateZero(MemRef DestLoc, tree_node *GCCType);
                          

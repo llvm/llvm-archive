@@ -1314,7 +1314,7 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
   }
 }
 
-/// EmitAggregateZero - Zero the elements of DestPtr.
+/// EmitAggregateZero - Zero the elements of DestLoc.
 ///
 void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
   // If the type is small, copy the elements instead of using a block copy.

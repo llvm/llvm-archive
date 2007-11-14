@@ -217,6 +217,9 @@ make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
 D=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin
 ln -f $D/llvm-gcc $D/gcc || exit 1
 ln -f $D/gcc $D/$BUILD-apple-darwin$DARWIN_VERS-gcc || exit 1
+# FIXME Why do we need this. Stop this madness somehow.
+ln -f $D/llvm-g++ $D/g++ || exit 1
+ln -f $D/g++ $D/$BUILD-apple-darwin$DARWIN_VERS-g++ || exit 1
 # APPLE LOCAL LLVM  Support for non /usr $DEST_ROOT
 PATH=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin:$PATH
 

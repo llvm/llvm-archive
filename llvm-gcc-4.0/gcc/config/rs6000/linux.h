@@ -110,13 +110,3 @@
 #define TARGET_HAS_F_SETLKW
 
 #define MD_UNWIND_SUPPORT "config/rs6000/linux-unwind.h"
-
-#undef ADJUST_FIELD_ALIGN
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED, FIRST_FIELD_P)	\
-  (TARGET_ALIGN_NATURAL ? (COMPUTED) :				\
-   (((COMPUTED) == RS6000_VECTOR_ALIGNMENT)			\
-    ? RS6000_VECTOR_ALIGNMENT					\
-    : (MIN ((COMPUTED), 					\
-    	    (TARGET_ALIGN_MAC68K ? 16 				\
-    	    			 : ((FIRST_FIELD_P) ? (COMPUTED) \
-    	    			 		    : 32))))))

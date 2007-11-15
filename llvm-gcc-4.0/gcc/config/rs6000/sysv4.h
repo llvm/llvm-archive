@@ -415,7 +415,7 @@ do {									\
 
 /* An expression for the alignment of a structure field FIELD if the
    alignment computed in the usual way is COMPUTED.  */
-#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)				      \
+#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED, FIRST_FIELD_P)				\
 	((TARGET_ALTIVEC && TREE_CODE (TREE_TYPE (FIELD)) == VECTOR_TYPE)     \
 	 ? 128 : COMPUTED)
 

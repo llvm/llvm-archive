@@ -16202,8 +16202,6 @@ rs6000_emit_prologue (void)
 	  /* If we're saving vector or FP regs via a function call,
 	     then don't bother with this ObjC R12 optimization.
 	     This test also eliminates world_save.  */
-	  && (info->first_altivec_reg_save > LAST_ALTIVEC_REGNO
-	      || VECTOR_SAVE_INLINE (info->first_altivec_reg_save))
 	  && (info->first_fp_reg_save == 64 
 	      || FP_SAVE_INLINE (info->first_fp_reg_save)))
 	{
@@ -16531,10 +16529,7 @@ rs6000_emit_prologue (void)
 	     while scheduling insns after global_alloc!  */
 	  && (optimize == 0 || !flag_schedule_insns_after_reload)
 #endif
-	  /* If this is the last CALL in the prolog, then we've got our PC.
-	     If we're saving AltiVec regs via a function, we're not last.  */
-	  && (info->first_altivec_reg_save > LAST_ALTIVEC_REGNO 
-	      || VECTOR_SAVE_INLINE (info->first_altivec_reg_save)))
+	  )
 	gen_following_label =
 #if TARGET_MACHO
                               lr_already_set_up_for_pic =
@@ -17879,7 +17874,6 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 #if TARGET_MACHO
   if (MACHOPIC_INDIRECT)
     funexp = machopic_indirect_call_target (funexp);
-#endif
 
   /* APPLE LOCAL begin 4299630 */
   if (DEFAULT_ABI == ABI_DARWIN
@@ -17894,6 +17888,7 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 	is_longcall_p = (TARGET_LONG_BRANCH);
     }
   if (!is_longcall_p)
+#endif
     {
       /* gen_sibcall expects reload to convert scratch pseudo to LR so we must
 	 generate sibcall RTL explicitly to avoid constraint abort.  */
@@ -17909,6 +17904,7 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 				     gen_rtx_RETURN (VOIDmode))));
       SIBLING_CALL_P (insn) = 1;
     }
+#if TARGET_MACHO
   else
     {
       /* APPLE LOCAL begin 4380289 */
@@ -17936,6 +17932,7 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 					   XEXP (DECL_RTL (function), 0)));
       /* APPLE LOCAL end 4380289 */
     }
+#endif
   /* APPLE LOCAL end 4299630 */
   emit_barrier ();
 
@@ -20088,10 +20085,10 @@ rs6000_fatal_bad_address (rtx op)
   fatal_insn ("bad address", op);
 }
 
-#if TARGET_MACHO
-
 /* APPLE LOCAL mlongcall long names 4271187 */
 static GTY (()) tree branch_island_list = 0;
+
+#if TARGET_MACHO
 
 /* APPLE LOCAL begin 4380289 */
 /* Remember to generate a branch island for far calls to the given

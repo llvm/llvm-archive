@@ -2948,7 +2948,8 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
                       //                      Index->dump();
                       SCEVHandle ExitValue = scevPass->getSCEVAtScope(Index, L->getParentLoop());
                       BasicBlock *Preheader = L->getLoopPreheader();
-                      if (!isa<SCEVCouldNotCompute>(ExitValue)) {
+                      if ((Preheader) &&
+                          (!isa<SCEVCouldNotCompute>(ExitValue)) ){
                         SCEVExpander Rewriter(*scevPass, *LI);
                         Instruction *ptIns = Preheader->getTerminator();
                         Value *NewVal = Rewriter.expandCodeFor(ExitValue, ptIns,

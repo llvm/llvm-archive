@@ -3911,15 +3911,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   }
   
   switch (DECL_FUNCTION_CODE(fndecl)) {
-  default:
-#ifndef NDEBUG
-    std::cerr << "Unhandled builtin!\n"
-              << "DECL_FUNCTION_CODE: " << DECL_FUNCTION_CODE(fndecl) << "\n";
-    debug_tree(fndecl);
-    abort();
-#else
-    return false;
-#endif
+  default: return false;
   // Varargs builtins.
   case BUILT_IN_VA_START:
   case BUILT_IN_STDARG_START:   return EmitBuiltinVAStart(exp);

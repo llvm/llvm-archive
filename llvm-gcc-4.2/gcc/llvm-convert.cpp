@@ -3911,7 +3911,15 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   }
   
   switch (DECL_FUNCTION_CODE(fndecl)) {
-  default: return false;
+  default:
+#ifndef NDEBUG
+    std::cerr << "Unhandled builtin!\n"
+              << "DECL_FUNCTION_CODE: " << DECL_FUNCTION_CODE(fndecl) << "\n";
+    debug_tree(fndecl);
+    abort();
+#else
+    return false;
+#endif
   // Varargs builtins.
   case BUILT_IN_VA_START:
   case BUILT_IN_STDARG_START:   return EmitBuiltinVAStart(exp);
@@ -4028,7 +4036,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                   Result, "tmp");
     return true;
   }
-
+  case BUILT_IN_FLT_ROUNDS: {
+    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                                          Intrinsic::flt_rounds),
+                                "tmp");
+    Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:
     case BUILT_IN_APPLY:

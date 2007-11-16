@@ -1,5 +1,5 @@
 LEVEL = ..
-PARALLEL_DIRS = Sc
+PARALLEL_DIRS = 
 
 include $(LEVEL)/Makefile.common
 

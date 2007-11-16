@@ -13,6 +13,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -79,11 +80,8 @@ int main(int argc, char **argv) {
     PassManager Passes;
 
     Passes.add(new ABCPreProcess());
-    std::cerr << "Finished ABCPre" << std::endl;
     Passes.add(new TargetData(M.get()));
-    std::cerr << "Finished TargetData" << std::endl;
     Passes.add(new InsertPoolChecks());
-    std::cerr << "Finished InsertPoolChecks" << std::endl;
 
     // Figure out where we are going to send the output...
     std::ostream *Out = 0;
@@ -135,6 +133,9 @@ int main(int argc, char **argv) {
       sys::RemoveFileOnSignal(sys::Path(OutputFilename));
     }
     
+    // Add the writing of the output file to the list of passes
+    Passes.add (new WriteBytecodePass (Out));
+
     // Run our queue of passes all at once now, efficiently.
     Passes.run(*M.get());
 

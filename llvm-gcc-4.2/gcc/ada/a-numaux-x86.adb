@@ -58,7 +58,7 @@ package body Ada.Numerics.Aux is
    --  for values of Y in the open interval (-0.25, 0.25)
 
    --  LLVM local begin
-   pragma Import (C, Logarithmic_Pow, "pow");
+   pragma Import (C, Logarithmic_Pow, "powl");
    pragma Pure_Function (Logarithmic_Pow);
    --  LLVM local end
 
@@ -82,7 +82,7 @@ package body Ada.Numerics.Aux is
 
    --  LLVM local begin
    function C_Atan (X : Double) return Double;
-   pragma Import (C, C_Atan, "atan");
+   pragma Import (C, C_Atan, "atanl");
    pragma Pure_Function (C_Atan);
    --  LLVM local end
 
@@ -209,7 +209,7 @@ package body Ada.Numerics.Aux is
 
    --  LLVM local begin
    function C_Sqrt (X : Double) return Double;
-   pragma Import (C, C_Sqrt, "sqrt");
+   pragma Import (C, C_Sqrt, "sqrtl");
    pragma Pure_Function (C_Sqrt);
    --  LLVM local end
 
@@ -235,19 +235,19 @@ package body Ada.Numerics.Aux is
 
    --  LLVM local begin
    function C_Sin (X : Double) return Double;
-   pragma Import (C, C_Sin, "sin");
+   pragma Import (C, C_Sin, "sinl");
    pragma Pure_Function (C_Sin);
 
    function C_Cos (X : Double) return Double;
-   pragma Import (C, C_Cos, "cos");
+   pragma Import (C, C_Cos, "cosl");
    pragma Pure_Function (C_Cos);
 
    function C_Tan (X : Double) return Double;
-   pragma Import (C, C_Tan, "tan");
+   pragma Import (C, C_Tan, "tanl");
    pragma Pure_Function (C_Tan);
 
    procedure Sin_Cos (X : Double; Sin, Cos : out Double);
-   pragma Import (C, Sin_Cos, "sincos");
+   pragma Import (C, Sin_Cos, "sincosl");
    --  LLVM local end
 
    ----------

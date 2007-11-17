@@ -84,9 +84,9 @@ private
    pragma Inline (Sqrt);
 
    --  LLVM local begin
-   pragma Import (C, Exp, "exp");
+   pragma Import (C, Exp, "expl");
    pragma Pure_Function (Exp);
-   pragma Import (C, Log, "log");
+   pragma Import (C, Log, "logl");
    pragma Pure_Function (Log);
    --  LLVM local end
 

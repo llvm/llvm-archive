@@ -527,7 +527,7 @@ package body Ada.Numerics.Aux is
             Result := C_Tan (Reduced_X);
          else
             --  LLVM local begin
-            Sin_Cos (X, Sin, Cos);
+            Sin_Cos (Reduced_X, Sin, Cos);
             Result := -(Cos / Sin);
             --  LLVM local end
          end if;

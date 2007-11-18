@@ -80,7 +80,8 @@ struct DefaultABIClient {
 /// that cannot live in an LLVM register.
 static bool isAggregateTreeType(tree type) {
   return TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == ARRAY_TYPE ||
-         TREE_CODE(type) == UNION_TYPE  || TREE_CODE(type) == COMPLEX_TYPE;
+         TREE_CODE(type) == UNION_TYPE  || TREE_CODE(type) == QUAL_UNION_TYPE ||
+         TREE_CODE(type) == COMPLEX_TYPE;
 }
 
 /// isSingleElementStructOrArray - If this is (recursively) a structure with one
@@ -92,6 +93,7 @@ static tree isSingleElementStructOrArray(tree type) {
   
   tree FoundField = 0;
   switch (TREE_CODE(type)) {
+  case QUAL_UNION_TYPE:
   case UNION_TYPE:     // Single element unions don't count.
   case COMPLEX_TYPE:   // Complex values are like 2-element records.
   default:
@@ -216,7 +218,8 @@ public:
       C.EnterField(1, Ty);
       HandleArgument(TREE_TYPE(type));
       C.ExitField();
-    } else if (TREE_CODE(type) == UNION_TYPE) {
+    } else if ((TREE_CODE(type) == UNION_TYPE) ||
+               (TREE_CODE(type) == QUAL_UNION_TYPE)) {
       HandleUnion(type);
     } else if (TREE_CODE(type) == ARRAY_TYPE) {
       const ArrayType *ATy = cast<ArrayType>(Ty);
@@ -231,7 +234,7 @@ public:
     }
   }
 
-  /// HandleUnion - Handle a UNION_TYPE tree.
+  /// HandleUnion - Handle a UNION_TYPE or QUAL_UNION_TYPE tree.
   ///
   void HandleUnion(tree type) {
     if (TYPE_TRANSPARENT_UNION(type)) {
@@ -249,12 +252,22 @@ public:
       tree MaxElt = 0;
       for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
         if (TREE_CODE(Field) == FIELD_DECL) {
+          // Skip fields that are known not to be present.
+          if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+              integer_zerop(DECL_QUALIFIER(Field)))
+              continue;
+
           tree SizeTree = TYPE_SIZE(TREE_TYPE(Field));
           unsigned Size = ((unsigned)TREE_INT_CST_LOW(SizeTree)+7)/8;
           if (Size > MaxSize) {
             MaxSize = Size;
             MaxElt = Field;
           }
+
+          // Skip remaining fields if this one is known to be present.
+          if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+              integer_onep(DECL_QUALIFIER(Field)))
+              break;
         }
       }
       

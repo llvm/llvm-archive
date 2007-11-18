@@ -573,6 +573,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
         return true;
     return false;
   }
+  case QUAL_UNION_TYPE:
   case UNION_TYPE: {
     // If this is a union with the transparent_union attribute set, it is
     // treated as if it were just the same as its first type.
@@ -591,10 +592,19 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
       if (TREE_CODE(Field) != FIELD_DECL) continue;
       assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
+      // Skip fields that are known not to be present.
+      if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+          integer_zerop(DECL_QUALIFIER(Field)))
+        continue;
 
       if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
                                      PadStartBits, PadSizeBits))
         return true;
+
+      // Skip remaining fields if this one is known to be present.
+      if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+          integer_onep(DECL_QUALIFIER(Field)))
+        break;
     }
 
     return false;
@@ -669,6 +679,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     abort();
   case VOID_TYPE:   return SET_TYPE_LLVM(type, Type::VoidTy);
   case RECORD_TYPE: return ConvertRECORD(type, orig_type);
+  case QUAL_UNION_TYPE:
   case UNION_TYPE:  return ConvertUNION(type, orig_type);
   case BOOLEAN_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -1834,8 +1845,8 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 }
 
 
-/// ConvertUNION - We know that 'type' is a UNION_TYPE: convert it to an LLVM
-/// type.
+/// ConvertUNION - We know that 'type' is a UNION_TYPE or a QUAL_UNION_TYPE:
+/// convert it to an LLVM type.
 const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   if (const Type *Ty = GET_TYPE_LLVM(type)) {
     // If we already compiled this type, and if it was not a forward
@@ -1853,7 +1864,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // Note that we are compiling a struct now.
   bool OldConvertingStruct = ConvertingStruct;
   ConvertingStruct = true;
-  
+
   // Find the type with the largest aligment, and if we have multiple types with
   // the same alignment, select one with largest size. If type with max. align
   // is smaller then other types then we will add padding later on anyway to 
@@ -1867,6 +1878,11 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
     // Set the field idx to zero for all fields.
     SetFieldIndex(Field, 0);
+
+    // Skip fields that are known not to be present.
+    if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+        integer_zerop(DECL_QUALIFIER(Field)))
+      continue;
 
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
     bool isPacked = false;
@@ -1898,6 +1914,11 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       MaxSize = MAX(MaxSize, Size);
       MaxAlign = Align;
     }
+
+    // Skip remaining fields if this one is known to be present.
+    if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+        integer_onep(DECL_QUALIFIER(Field)))
+      break;
   }
 
   std::vector<const Type*> UnionElts;

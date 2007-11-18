@@ -4931,7 +4931,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree FieldDecl = TREE_OPERAND(exp, 1);
 
   assert((TREE_CODE(DECL_CONTEXT(FieldDecl)) == RECORD_TYPE ||
-          TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE));
+          TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE  ||
+          TREE_CODE(DECL_CONTEXT(FieldDecl)) == QUAL_UNION_TYPE));
    
   // Ensure that the struct type has been converted, so that the fielddecls
   // are laid out.  Note that we convert to the context of the Field, not to the
@@ -5192,6 +5193,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
       TODO(exp);
     }
     return 0;
+  case QUAL_UNION_TYPE:
   case UNION_TYPE:
     // Store each element of the constructor into the corresponding field of
     // DEST.
@@ -5457,6 +5459,7 @@ Constant *TreeConstantToLLVM::ConvertCONSTRUCTOR(tree exp) {
   case VECTOR_TYPE:
   case ARRAY_TYPE:  return ConvertArrayCONSTRUCTOR(exp);
   case RECORD_TYPE: return ConvertRecordCONSTRUCTOR(exp);
+  case QUAL_UNION_TYPE:
   case UNION_TYPE:  return ConvertUnionCONSTRUCTOR(exp);
   }
 }

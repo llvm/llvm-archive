@@ -628,8 +628,8 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
     }
     
     case RECORD_TYPE:
-    case UNION_TYPE:
-    case QUAL_UNION_TYPE: {
+    case QUAL_UNION_TYPE:
+    case UNION_TYPE: {
       // struct { a; b; ... z; }; | union { a; b; ... z; };
       unsigned Tag = TREE_CODE(type) == RECORD_TYPE ? DW_TAG_structure_type :
                                                       DW_TAG_union_type;

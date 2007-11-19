@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h" // FIXME: Remove once PR1146 is done.
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/MathExtras.h"
@@ -2648,20 +2649,31 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
 
   Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
 
-  if (TREE_OPERAND(exp, 2)) {
-    // This is a direct call to a function using a static chain.  We need to
-    // change the function type to one with an extra parameter for the chain.
-    assert(fndecl && "Indirect static chain call!");
-    tree function_type = TYPE_MAIN_VARIANT(TREE_TYPE(fndecl));
-    tree static_chain = TREE_OPERAND(exp, 2);
-
-    unsigned CallingConv;
-    const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
-                                                           fndecl,
-                                                           static_chain,
-                                                           CallingConv);
-    Callee = CastToType(Instruction::BitCast, Callee, PointerType::get(Ty));
-  }
+  // Avoid this kind of thing while waiting for PR1146 to be fixed:
+  //
+  //   call void bitcast (void (i32* noalias , i32*)* @_Z3fooPiPVi
+  //     to void (i32*, i32*)*)( i32* %x, i32* %y )
+  //
+  // The problem is that some attributes like noalias are only stored in the
+  // GCC function declaration and are not available from the function type.
+  // Converting the function type to LLVM results in an LLVM function type
+  // without the attributes.  The function declaration however is turned into
+  // an LLVM function type with the attributes present.  The discrepancy in
+  // the types results in the bitcast.  The solution is to bitcast back to the
+  // type of the function declaration.  Once PR1146 is done this logic will only
+  // be needed for nested functions (-> TREE_OPERAND(exp, 2) is not NULL) - they
+  // get an extra parameter.
+  assert(TREE_TYPE (TREE_OPERAND (exp, 0)) &&
+         TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE
+         && "Not calling a function pointer?");
+  tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
+  unsigned CallingConv;
+  const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
+                                                         fndecl,
+                                                         TREE_OPERAND(exp, 2),
+                                                         CallingConv);
+  Callee = BitCastToType(IntrinsicInst::StripPointerCasts(Callee),
+                         PointerType::get(Ty));
 
   //EmitCall(exp, DestLoc);
   Value *Result = EmitCallOf(Callee, exp, DestLoc);
@@ -2857,7 +2869,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc) {
       ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)));
     }
   }
-  
+
   // Compile stuff like:
   //   %tmp = call float (...)* bitcast (float ()* @foo to float (...)*)( )
   // to:

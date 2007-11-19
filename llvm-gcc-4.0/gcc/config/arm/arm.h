@@ -2925,6 +2925,15 @@ enum arm_builtins
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4
+
+/* These are a couple of extensions to the asm formats
+     %@ prints out ASM_COMMENT_START
+     TODO: %r prints out REGISTER_PREFIX reg_names[arg]  */
+#define LLVM_ASM_EXTENSIONS(ESCAPED_CHAR, ASM, RESULT)	\
+  else if ((ESCAPED_CHAR) == '@') {       		\
+    (RESULT) += ASM_COMMENT_START;                      \
+  }
+
 /* APPLE LOCAL end llvm */
 
 #endif /* ! GCC_ARM_H */

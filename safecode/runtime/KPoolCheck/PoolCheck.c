@@ -840,10 +840,6 @@ void funccheck_g (MetaPoolTy * MP, void * f) {
 }
 
 void pchk_ind_fail(void * f) {
-#if 0
   if (do_fail) poolcheckfail("indirect call failure", f, (void*)__builtin_return_address(0));
-#else
-  printk ("<0> LLVA: pchk_ind_fail: pc=%x, f=%x\n", f, (void*)(__builtin_return_address(0)));
-#endif
 }
 

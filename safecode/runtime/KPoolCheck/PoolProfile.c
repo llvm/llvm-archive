@@ -35,7 +35,8 @@ void pchk_profile(MetaPoolTy* MP, void* pc, long time) {
 static void * thepool;
 
 void print_item(void* p, unsigned l, void* t) {
-  printk("(0x%x, 0x%x, %d)\n", thepool, p, (unsigned) t);
+  poolcheckinfo2 ("item1: ", thepool, p);
+  poolcheckinfo2 ("item2: ", thepool, (unsigned) t);
 }
 
 void print_pool(void* p, unsigned l, void* t) {
@@ -46,8 +47,8 @@ void print_pool(void* p, unsigned l, void* t) {
 void pchk_profile_print() {
   int old = profile_pause;
   profile_pause = 1;
-  
-printk ("LLVA:Printing Profile:\n");
+
+  poolcheckinfo ("LLVA:Printing Profile:\n", 0);
   adl_splay_foreach(&allmp, print_pool);
   
   profile_pause = old;  

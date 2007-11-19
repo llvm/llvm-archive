@@ -340,9 +340,15 @@ AddCallToRegFunc (Function* F, GlobalVariable* GV, Function* PR, Value* PH,
 bool
 PreInsertPoolChecks::runOnModule (Module & M) {
   // Retrieve the analysis results from other passes
-  cuaPass = &getAnalysis<ConvertUnsafeAllocas>();
-  TDPass  = &getAnalysis<TDDataStructures>();
-  TD      = &getAnalysis<TargetData>();
+  cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
+  TDPass    = &getAnalysis<TDDataStructures>();
+  TD        = &getAnalysis<TargetData>();
+
+#ifndef LLVA_KERNEL
+  paPass    = &getAnalysis<PoolAllocate>();
+  efPass    = &getAnalysis<EmbeCFreeRemoval>();
+  equivPass = &(paPass->getECGraphs());
+#endif
 
   // Add prototypes for the run-time checks to the module
   addPoolCheckProto (M);
@@ -1534,6 +1540,7 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
     ++ConstExactChecks;
     return;
   } else if (CBounds) {
+#ifdef LLVA_KERNEL
     int bounds = CBounds->getSExtValue();
     SCEVHandle SCEVIndex  = scevPass->getSCEV (Index);
     ConstantRange IndexRange  = SCEVIndex->getValueRange();
@@ -1548,8 +1555,10 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
         return;
       }
     }
+#endif
   }
 
+#ifdef LLVA_KERNEL
   SCEVHandle SCEVIndex  = scevPass->getSCEV (Index);
   SCEVHandle SCEVBounds = scevPass->getSCEV (Bounds);
   ConstantRange BoundsRange = SCEVBounds->getValueRange();
@@ -1565,6 +1574,7 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
       return;
     }
   }
+#endif
 
   //
   // Cast the operands to the correct type.
@@ -2169,10 +2179,10 @@ InsertPoolChecks::runOnFunction (Function & F) {
   preSCPass = &getAnalysis<PreInsertPoolChecks>();
   cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
   TD        = &getAnalysis<TargetData>();
+#ifdef LLVA_KERNEL  
+  TDPass    = &getAnalysis<TDDataStructures>();
   scevPass  = &getAnalysis<ScalarEvolution>();
   LI        = &getAnalysis<LoopInfo>();
-#ifdef LLVA_KERNEL  
-  TDPass  = &getAnalysis<TDDataStructures>();
 #else
   paPass    = &getAnalysis<PoolAllocate>();
   equivPass = &(paPass->getECGraphs());
@@ -2930,8 +2940,9 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
           // Now check if the GEP is inside a loop with monotonically increasing
           //loop bounds
           //We use the LoopInfo Pass this
-          Loop *L = LI->getLoopFor(MAI->getParent());
           bool monotonicOpt = false;
+#ifdef LLVA_KERNEL
+          Loop *L = LI->getLoopFor(MAI->getParent());
           if (L && (MAI->getNumOperands() == 2)) {
             bool HasConstantItCount = isa<SCEVConstant>(scevPass->getIterationCount(L));
             Value *vIndex = MAI->getOperand(1);
@@ -2977,6 +2988,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
               }
             }
           }
+#endif
           if (!monotonicOpt) {
             //
             // Insert a bounds check and use its return value in all subsequent

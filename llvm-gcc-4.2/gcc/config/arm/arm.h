@@ -2723,7 +2723,7 @@ enum arm_builtins
      TODO: %r prints out REGISTER_PREFIX reg_names[arg]  */
 #define LLVM_ASM_EXTENSIONS(ESCAPED_CHAR, ASM, RESULT)	\
   else if ((ESCAPED_CHAR) == '@') {       		\
-    (RESULT) += '@';                                    \
+    (RESULT) += ASM_COMMENT_START;                      \
   }
 
 /* LLVM LOCAL end */

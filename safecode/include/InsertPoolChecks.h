@@ -32,10 +32,16 @@ struct PreInsertPoolChecks : public ModulePass {
       AU.addRequired<ConvertUnsafeAllocas>();
       AU.addRequired<TDDataStructures>();
       AU.addRequired<TargetData>();
+#ifndef LLVA_KERNEL
+      AU.addRequired<EquivClassGraphs>();
+      AU.addRequired<PoolAllocate>();
+      AU.addRequired<EmbeCFreeRemoval>();
+#endif
 
       // Preserved passes
       AU.addPreserved<ConvertUnsafeAllocas>();
       AU.addPreserved<TDDataStructures>();
+      AU.addPreserved<TargetData>();
     }
 
     bool nodeNeedsAlignment (DSNode * Node) {
@@ -109,10 +115,9 @@ struct InsertPoolChecks : public FunctionPass {
     virtual bool doFinalization   (Module &M);
     virtual bool runOnFunction (Function & F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<PreInsertPoolChecks>();
       AU.addRequired<ConvertUnsafeAllocas>();
-      AU.addRequired<ScalarEvolution>();
-      AU.addRequired<LoopInfo>();
+      AU.addRequired<PreInsertPoolChecks>();
+      AU.addPreserved<PreInsertPoolChecks>();
 #if 0
       AU.addRequired<CompleteBUDataStructures>();
       AU.addRequired<TDDataStructures>();
@@ -123,6 +128,8 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<EmbeCFreeRemoval>();
       AU.addRequired<TargetData>();
 #else 
+      AU.addRequired<ScalarEvolution>();
+      AU.addRequired<LoopInfo>();
       AU.addRequired<TDDataStructures>();
       AU.addRequired<TargetData>();
 #endif
@@ -132,8 +139,6 @@ struct InsertPoolChecks : public FunctionPass {
     // Prerequisite passes
     PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
-    ScalarEvolution * scevPass;
-    LoopInfo *LI;
     TargetData * TD;
 #ifndef  LLVA_KERNEL
     PoolAllocate * paPass;
@@ -141,6 +146,8 @@ struct InsertPoolChecks : public FunctionPass {
     EmbeCFreeRemoval *efPass;
 #else
     TDDataStructures * TDPass;
+    ScalarEvolution  * scevPass;
+    LoopInfo         * LI;
 #endif  
 
     // Map of DSNode to Function List Global Variables

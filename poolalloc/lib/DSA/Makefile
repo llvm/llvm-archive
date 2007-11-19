@@ -8,8 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 SHARED_LIBRARY=1
-LOADABLE_MODULE = 1
-DONT_BUILD_RELINKED=1
+#LOADABLE_MODULE = 1
+#DONT_BUILD_RELINKED=1
 LIBRARYNAME = LLVMDataStructure
 
 include $(LEVEL)/Makefile.common

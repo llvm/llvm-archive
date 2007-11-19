@@ -649,7 +649,11 @@ void FuncTransform::visitCallSite(CallSite CS) {
 	  //Dinakar we need pooldescriptors for allocas in the callee if it escapes
 	  BasicBlock::iterator InsertPt = TheCall->getParent()->getParent()->front().begin();
 	  Type *VoidPtrTy = PointerType::get(Type::SByteTy);
+#ifdef SAFECODE
+	  ArgVal =  new AllocaInst(ArrayType::get(VoidPtrTy, 50), 0, "PD", InsertPt);
+#else
 	  ArgVal =  new AllocaInst(ArrayType::get(VoidPtrTy, 16), 0, "PD", InsertPt);
+#endif
 	  Value *ElSize = ConstantInt::get(Type::UIntTy,0);
 	  Value *Align  = ConstantInt::get(Type::UIntTy,0);
 	  new CallInst(PAInfo.PoolInit, make_vector(ArgVal, ElSize, Align, 0),"", TheCall);

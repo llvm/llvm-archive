@@ -1802,6 +1802,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("__alloc_bootmem");
   AllocList.push_back(" __get_free_pages");
   AllocList.push_back("pseudo_alloc");
+  AllocList.push_back("malloc");
 
 #if 0
   FreeList.push_back("kfree");
@@ -1810,6 +1811,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   FreeList.push_back("free_pages");
   FreeList.push_back("kmem_cache_free");
   FreeList.push_back("pseudo_free");
+  FreeList.push_back("free");
 
   //figure out all system call numbers
   Function* lrs = M.getNamedFunction("llva_register_syscall");

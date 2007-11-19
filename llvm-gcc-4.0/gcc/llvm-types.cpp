@@ -988,12 +988,22 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   ParamAttrsVector Attrs;
   uint16_t RAttributes = ParamAttr::None;
 
+  int flags = flags_from_decl_or_type(decl ? decl : type);
+
   // Check for 'const' function attribute
-  if (decl && TREE_READONLY(decl))
+  if (flags & ECF_CONST)
     RAttributes |= ParamAttr::Const;
 
+  // Check for 'noreturn' function attribute
+  if (flags & ECF_NORETURN)
+    RAttributes |= ParamAttr::NoReturn;
+
+  // Check for 'nounwind' function attribute
+  if (flags & ECF_NOTHROW)
+    RAttributes |= ParamAttr::NoUnwind;
+
   // Check for 'pure' function attribute
-  if (decl && DECL_IS_PURE(decl))
+  if (flags & ECF_PURE)
     RAttributes |= ParamAttr::Pure;
 
   // Compute whether the result needs to be zext or sext'd

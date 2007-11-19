@@ -849,6 +849,7 @@ InsertPoolChecks::addHeapRegs (Module & M) {
       } else if (
 #endif
                  (name == "__vmalloc") ||
+                 (name == "malloc") ||
                  (name == "__alloc_bootmem")) {
         //inser obj register after
         Instruction* IP = i->getInstruction()->getNext();
@@ -886,6 +887,7 @@ void InsertPoolChecks::addMetaPools(Module& M, MetaPool* MP, DSNode* N) {
     } else if (
 #endif
                (name == "__vmalloc") ||
+               (name == "malloc") ||
                (name == "__alloc_bootmem")) {
       //inser obj register after
       Instruction* IP = i->getInstruction()->getNext();
@@ -1638,6 +1640,7 @@ isEligableForExactCheck (Value * Pointer) {
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction() &&
         (CI->getCalledFunction()->getName() == "__vmalloc" || 
+         CI->getCalledFunction()->getName() == "malloc" || 
          CI->getCalledFunction()->getName() == "kmalloc" || 
          CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
          CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
@@ -1948,6 +1951,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   if (CI && (CI->getCalledFunction())) {
     if ((CI->getCalledFunction()->getName() == "__vmalloc") || 
         (CI->getCalledFunction()->getName() == "kmalloc") || 
+        (CI->getCalledFunction()->getName() == "malloc") || 
         (CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
       //
       // Attempt to remove checks on GEPs that only index into structures.
@@ -2133,6 +2137,7 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   if(CallInst* CI = dyn_cast<CallInst>(PointerOperand)) {
     if (CI->getCalledFunction() && (
                               CI->getCalledFunction()->getName() == "__vmalloc" || 
+                              CI->getCalledFunction()->getName() == "malloc" || 
                               CI->getCalledFunction()->getName() == "kmalloc")) {
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "allocsize", InsertPt);
       if (WasIndexed)

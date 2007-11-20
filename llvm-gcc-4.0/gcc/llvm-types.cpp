@@ -1016,8 +1016,9 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
         RAttributes |= ParamAttr::SExt;
     }
   }
-  
-  Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+
+  if (RAttributes != ParamAttr::None)
+    Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
   
   // If this is a struct-return function, the dest loc is passed in as a
   // pointer.  Mark that pointer as structret.

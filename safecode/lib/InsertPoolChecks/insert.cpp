@@ -1875,21 +1875,31 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       // First get the size
       // This only works for one or two dimensional arrays
       if (GEP->getNumOperands() == 2) {
+#if 0
         Value *secOp = GEP->getOperand(1);
 
         const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
         ConstantInt * Bounds = ConstantInt::get(csiType,AT->getNumElements());
         addExactCheck (GEP, secOp, Bounds);
+#else
+        Value* Size=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()));
+        addExactCheck2 (PointerOperand, GEP, Size, GEP->getNext());
+#endif
         return true;
       } else if (GEP->getNumOperands() == 3) {
         if (ConstantInt *COP = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
           //FIXME assuming that the first array index is 0
+#if 0
           assert((COP->getZExtValue() == 0) && "non zero array index\n");
 
           Value * secOp = GEP->getOperand(2);
           const Type* csiType = Type::getPrimitiveType(Type::IntTyID);
           ConstantInt * Bounds = ConstantInt::get(csiType,AT->getNumElements());
           addExactCheck (GEP, secOp, Bounds);
+#else
+        Value* Size=ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()));
+        addExactCheck2 (PointerOperand, GEP, Size, GEP->getNext());
+#endif
           return true;
         } else {
           // TODO:

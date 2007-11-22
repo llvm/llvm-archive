@@ -984,29 +984,35 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
 
-  // Compute attributes for return type (and function attributes)
+  // Compute attributes for return type (and function attributes).
   ParamAttrsVector Attrs;
   uint16_t RAttributes = ParamAttr::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
 
-  // Check for 'const' function attribute
+  // Check for 'const' function attribute.
   if (flags & ECF_CONST)
-    RAttributes |= ParamAttr::Const;
+    // Since they write the return value through a pointer,
+    // 'sret' functions cannot be 'const'.
+    if (!ABIConverter.isStructReturn())
+      RAttributes |= ParamAttr::Const;
 
-  // Check for 'noreturn' function attribute
+  // Check for 'noreturn' function attribute.
   if (flags & ECF_NORETURN)
     RAttributes |= ParamAttr::NoReturn;
 
-  // Check for 'nounwind' function attribute
+  // Check for 'nounwind' function attribute.
   if (flags & ECF_NOTHROW)
     RAttributes |= ParamAttr::NoUnwind;
 
-  // Check for 'pure' function attribute
+  // Check for 'pure' function attribute.
   if (flags & ECF_PURE)
-    RAttributes |= ParamAttr::Pure;
+    // Since they write the return value through a pointer,
+    // 'sret' functions cannot be 'pure'.
+    if (!ABIConverter.isStructReturn())
+      RAttributes |= ParamAttr::Pure;
 
-  // Compute whether the result needs to be zext or sext'd
+  // Compute whether the result needs to be zext or sext'd.
   if (isa<IntegerType>(RetTy.get())) {
     tree ResultTy = TREE_TYPE(type);  
     if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE) {

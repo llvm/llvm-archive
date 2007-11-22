@@ -990,13 +990,6 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
 
-  // Check for 'const' function attribute.
-  if (flags & ECF_CONST)
-    // Since they write the return value through a pointer,
-    // 'sret' functions cannot be 'const'.
-    if (!ABIConverter.isStructReturn())
-      RAttributes |= ParamAttr::Const;
-
   // Check for 'noreturn' function attribute.
   if (flags & ECF_NORETURN)
     RAttributes |= ParamAttr::NoReturn;
@@ -1005,12 +998,19 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   if (flags & ECF_NOTHROW)
     RAttributes |= ParamAttr::NoUnwind;
 
-  // Check for 'pure' function attribute.
+  // Check for 'readnone' function attribute.
+  if (flags & ECF_CONST)
+    // Since they write the return value through a pointer,
+    // 'sret' functions cannot be 'readnone'.
+    if (!ABIConverter.isStructReturn())
+      RAttributes |= ParamAttr::ReadNone;
+
+  // Check for 'readonly' function attribute.
   if (flags & ECF_PURE)
     // Since they write the return value through a pointer,
-    // 'sret' functions cannot be 'pure'.
+    // 'sret' functions cannot be 'readonly'.
     if (!ABIConverter.isStructReturn())
-      RAttributes |= ParamAttr::Pure;
+      RAttributes |= ParamAttr::ReadOnly;
 
   // Compute whether the result needs to be zext or sext'd.
   if (isa<IntegerType>(RetTy.get())) {

@@ -82,7 +82,7 @@ LLVM_SUBMIT_VERSION="${10}"
 LLVM_SUBMIT_SUBVERSION="${11}"
 
 # LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
-LLVM_BIN_DIR=/Developer/usr/bin
+LLVM_BIN_DIR=$DEST_ROOT/../bin
 
 # LLVM_ARCHS - This tells us which architectures we'd like the libraries to be
 # build for. The default is 4-way.

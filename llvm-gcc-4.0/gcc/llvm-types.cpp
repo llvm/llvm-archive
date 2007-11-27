@@ -929,6 +929,21 @@ namespace {
 }
 
 
+static uint16_t HandleArgumentExtension(tree ArgTy) {
+  if (TREE_CODE(ArgTy) == BOOLEAN_TYPE) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE)
+      return ParamAttr::ZExt;
+  } else if (TREE_CODE(ArgTy) == INTEGER_TYPE && 
+             TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE) {
+    if (TYPE_UNSIGNED(ArgTy))
+      return ParamAttr::ZExt;
+    else
+      return ParamAttr::SExt;
+  }
+
+  return ParamAttr::None;
+}
+
 /// ConvertParamListToLLVMSignature - This method is used to build the argument
 /// type list for K&R prototyped functions.  In this case, we have to figure out
 /// the type list (to build a FunctionType) from the actual DECL_ARGUMENTS list
@@ -946,18 +961,39 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   
   ABIConverter.HandleReturnType(ReturnType);
 
+  ParamAttrsVector Attrs;
+
+  // Compute whether the result needs to be zext or sext'd.
+  uint16_t RAttributes = HandleArgumentExtension(ReturnType);
+  if (RAttributes != ParamAttr::None)
+    Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+
   // If this is a struct-return function, the dest loc is passed in as a
   // pointer.  Mark that pointer as structret.
-  ParamAttrsVector Attrs;
   if (ABIConverter.isStructReturn())
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
                                              ParamAttr::StructRet));
-  if (static_chain)
+  if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+    // Mark it as the chain argument.
+    Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
+                                             ParamAttr::Nest));
+  }
 
-  for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
-    ABIConverter.HandleArgument(TREE_TYPE(Args));
+  for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
+    tree ArgTy = TREE_TYPE(Args);
+    ABIConverter.HandleArgument(ArgTy);
+
+    // Determine if there are any attributes for this param.
+    uint16_t Attributes = ParamAttr::None;
+
+    // Compute zext/sext attributes.
+    Attributes |= HandleArgumentExtension(ArgTy);
+
+    if (Attributes != ParamAttr::None)
+      Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(), Attributes));
+  }
 
   PAL = 0;
   if (!Attrs.empty())
@@ -1011,15 +1047,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
       RAttributes |= ParamAttr::ReadOnly;
 
   // Compute whether the result needs to be zext or sext'd.
-  if (isa<IntegerType>(RetTy.get())) {
-    tree ResultTy = TREE_TYPE(type);  
-    if (TREE_INT_CST_LOW(TYPE_SIZE(ResultTy)) < INT_TYPE_SIZE) {
-      if (TYPE_UNSIGNED(ResultTy) || TREE_CODE(ResultTy) == BOOLEAN_TYPE)
-        RAttributes |= ParamAttr::ZExt;
-      else
-        RAttributes |= ParamAttr::SExt;
-    }
-  }
+  RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
   if (RAttributes != ParamAttr::None)
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
@@ -1068,19 +1096,10 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     ABIConverter.HandleArgument(ArgTy);
 
     // Determine if there are any attributes for this param.
+    uint16_t Attributes = ParamAttr::None;
     
     // Compute zext/sext attributes.
-    unsigned Attributes = ParamAttr::None;
-    if (TREE_CODE(ArgTy) == BOOLEAN_TYPE) {
-      if (TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE)
-        Attributes |= ParamAttr::ZExt;
-    } else if (TREE_CODE(ArgTy) == INTEGER_TYPE && 
-               TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE) {
-      if (TYPE_UNSIGNED(ArgTy))
-        Attributes |= ParamAttr::ZExt;
-      else
-        Attributes |= ParamAttr::SExt;
-    }
+    Attributes |= HandleArgumentExtension(ArgTy);
 
     // Compute noalias attributes. If we have a decl for the function
     // inspect it for restrict qualifiers, otherwise try the argument

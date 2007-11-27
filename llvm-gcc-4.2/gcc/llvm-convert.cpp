@@ -33,7 +33,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h" // FIXME: Remove once PR1146 is done.
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/MathExtras.h"
@@ -526,7 +525,8 @@ void TreeToLLVM::StartFunctionBody() {
   tree static_chain = cfun->static_chain_decl;
   const FunctionType *FTy;
   unsigned CallingConv;
-  
+  const ParamAttrsList *PAL;
+
   // If the function has no arguments and is varargs (...), turn it into a
   // non-varargs function by scanning the param list for the function.  This
   // allows C functions declared as "T foo() {}" to be treated like 
@@ -536,7 +536,7 @@ void TreeToLLVM::StartFunctionBody() {
     FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(TREE_TYPE(FnDecl)),
                                                    DECL_ARGUMENTS(FnDecl),
                                                    static_chain,
-                                                   CallingConv);
+                                                   CallingConv, PAL);
 #ifdef TARGET_ADJUST_LLVM_CC
     TARGET_ADJUST_LLVM_CC(CallingConv, TREE_TYPE(FnDecl));
 #endif
@@ -545,7 +545,7 @@ void TreeToLLVM::StartFunctionBody() {
     FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl),
                                                 FnDecl,
                                                 static_chain,
-                                                CallingConv);
+                                                CallingConv, PAL);
   }
   
   // If we've already seen this function and created a prototype, and if the
@@ -581,7 +581,8 @@ void TreeToLLVM::StartFunctionBody() {
     Fn = new Function(FTy, Function::ExternalLinkage, Name, TheModule);
     assert(Fn->getName() == Name && "Preexisting fn with the same name!");
     Fn->setCallingConv(CallingConv);
-    
+    Fn->setParamAttrs(PAL);
+
     // If a previous proto existed with the wrong type, replace any uses of it
     // with the actual function and delete the proto.
     if (FnEntry) {
@@ -2166,34 +2167,25 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
 
   Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
 
-  // Avoid this kind of thing while waiting for PR1146 to be fixed:
-  //
-  //   call void bitcast (void (i32* noalias , i32*)* @_Z3fooPiPVi
-  //     to void (i32*, i32*)*)( i32* %x, i32* %y )
-  //
-  // The problem is that some attributes like noalias are only stored in the
-  // GCC function declaration and are not available from the function type.
-  // Converting the function type to LLVM results in an LLVM function type
-  // without the attributes.  The function declaration however is turned into
-  // an LLVM function type with the attributes present.  The discrepancy in
-  // the types results in the bitcast.  The solution is to bitcast back to the
-  // type of the function declaration.  Once PR1146 is done this logic will only
-  // be needed for nested functions (-> TREE_OPERAND(exp, 2) is not NULL) - they
-  // get an extra parameter.
   assert(TREE_TYPE (TREE_OPERAND (exp, 0)) &&
          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
   unsigned CallingConv;
+  const ParamAttrsList *PAL;
+
   const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
                                                          fndecl,
                                                          TREE_OPERAND(exp, 2),
-                                                         CallingConv);
-  Callee = BitCastToType(IntrinsicInst::StripPointerCasts(Callee),
-                         PointerType::get(Ty));
+                                                         CallingConv, PAL);
+
+  // If this is a direct call to a function using a static chain then we need
+  // to ensure the function type is the one just calculated: it has an extra
+  // parameter for the chain.
+  Callee = BitCastToType(Callee, PointerType::get(Ty));
 
   //EmitCall(exp, DestLoc);
-  Value *Result = EmitCallOf(Callee, exp, DestLoc);
+  Value *Result = EmitCallOf(Callee, exp, DestLoc, PAL);
 
   // If the function has the volatile bit set, then it is a "noreturn" function.
   // Output an unreachable instruction right after the function to prevent LLVM
@@ -2214,7 +2206,6 @@ namespace {
     tree CallExpression;
     SmallVector<Value*, 16> &CallOperands;
     CallingConv::ID &CallingConvention;
-    bool isStructRet;
     LLVMBuilder &Builder;
     const MemRef *DestLoc;
     std::vector<Value*> LocStack;
@@ -2225,7 +2216,6 @@ namespace {
       : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
         Builder(b), DestLoc(destloc) {
       CallingConvention = CallingConv::C;
-      isStructRet = false;
 #ifdef TARGET_ADJUST_LLVM_CC
       tree ftype;
       if (tree fdecl = get_callee_fndecl(exp)) {
@@ -2271,9 +2261,6 @@ namespace {
     /// function.
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
-      // Make sure this call is marked as 'struct return'.
-      isStructRet = true;
-
       // We need to pass a buffer to return into.  If the caller uses the
       // result, DestLoc will be set.  If it ignores it, it could be unset,
       // in which case we need to create a dummy buffer.
@@ -2318,7 +2305,8 @@ namespace {
 /// EmitCallOf - Emit a call to the specified callee with the operands specified
 /// in the CALL_EXP 'exp'.  If the result of the call is a scalar, return the
 /// result, otherwise store it in DestLoc.
-Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc) {
+Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
+                              const ParamAttrsList *PAL) {
   // Determine if we need to generate an invoke instruction (instead of a simple
   // call) and if so, what the exception destination will be.
   BasicBlock *LandingPad = 0;
@@ -2428,11 +2416,13 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc) {
   if (!LandingPad) {
     Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
+    cast<CallInst>(Call)->setParamAttrs(PAL);
   } else {
     BasicBlock *NextBlock = new BasicBlock("invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
                                 CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
+    cast<InvokeInst>(Call)->setParamAttrs(PAL);
     EmitBlock(NextBlock);
   }
   
@@ -3920,7 +3910,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         Intrinsic::getDeclaration(TheModule, IntrinsicID);
     }
 
-    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc);
+    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, 0);
     return true;
   }
   

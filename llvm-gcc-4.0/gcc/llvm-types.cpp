@@ -215,14 +215,13 @@ void writeLLVMTypesStringTable() {
 /// takes PATypeHolders.
 static FunctionType *GetFunctionType(const PATypeHolder &Res,
                                      std::vector<PATypeHolder> &ArgTys,
-                                     bool isVarArg,
-                                     const ParamAttrsList *Attrs) {
+                                     bool isVarArg) {
   std::vector<const Type*> ArgTysP;
   ArgTysP.reserve(ArgTys.size());
   for (unsigned i = 0, e = ArgTys.size(); i != e; ++i)
     ArgTysP.push_back(ArgTys[i]);
   
-  return FunctionType::get(Res, ArgTysP, isVarArg, Attrs);
+  return FunctionType::get(Res, ArgTysP, isVarArg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -812,10 +811,10 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     
     // No declaration to pass through, passing NULL.
     unsigned CallingConv;
-    return TypeDB.setType(type, ConvertFunctionType(type, 
-                                                    NULL, 
-                                                    NULL, 
-                                                    CallingConv));
+    const ParamAttrsList *PAL;
+
+    return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
+                                                    CallingConv, PAL));
   }
   case ARRAY_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -938,7 +937,7 @@ namespace {
 /// specified result type for the function.
 const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
-                       unsigned &CallingConv) {
+                       unsigned &CallingConv, const ParamAttrsList *&PAL) {
   std::vector<PATypeHolder> ArgTys;
   PATypeHolder RetTy(Type::VoidTy);
   
@@ -960,17 +959,16 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args))
     ABIConverter.HandleArgument(TREE_TYPE(Args));
 
-  ParamAttrsList *PAL = 0;
+  PAL = 0;
   if (!Attrs.empty())
     PAL = ParamAttrsList::get(Attrs);
 
-  return GetFunctionType(RetTy, ArgTys, false, PAL);
+  return GetFunctionType(RetTy, ArgTys, false);
 }
 
-const FunctionType *TypeConverter::ConvertFunctionType(tree type,
-                                                       tree decl,
-                                                       tree static_chain,
-                                                       unsigned &CallingConv) {
+const FunctionType *TypeConverter::
+ConvertFunctionType(tree type, tree decl, tree static_chain,
+                    unsigned &CallingConv, const ParamAttrsList *&PAL) {
   PATypeHolder RetTy = Type::VoidTy;
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
@@ -1114,12 +1112,12 @@ const FunctionType *TypeConverter::ConvertFunctionType(tree type,
   assert(RetTy && "Return type not specified!");
 
   // Only instantiate the parameter attributes if we got some.
-  ParamAttrsList *PAL = 0;
+  PAL = 0;
   if (!Attrs.empty())
     PAL = ParamAttrsList::get(Attrs);
 
   // Finally, make the function type
-  return GetFunctionType(RetTy, ArgTypes, isVarArg, PAL);
+  return GetFunctionType(RetTy, ArgTypes, isVarArg);
 }
 
 //===----------------------------------------------------------------------===//

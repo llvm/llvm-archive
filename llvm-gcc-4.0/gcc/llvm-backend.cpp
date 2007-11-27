@@ -1000,10 +1000,13 @@ void make_decl_llvm(tree decl) {
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
       unsigned CC;
+      const ParamAttrsList *PAL;
       const FunctionType *Ty = 
-        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL, CC);
+        TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
+                                              CC, PAL);
       FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
+      FnEntry->setParamAttrs(PAL);
 
       // Check for external weak linkage
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))

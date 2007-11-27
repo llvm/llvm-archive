@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="name">
-  <bundle id="bundle">
-    <array id="anArray" of="someType" length="128"/>
-    <any id="someType"/>
-  </bundle>
-</hlvm>

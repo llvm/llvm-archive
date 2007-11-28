@@ -2887,6 +2887,22 @@ do { tree _node = (NODE); \
     }
   else if (CONSTANT_CLASS_P (node))
     ;
+/* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* Support the "array ref with pointer base" extension.  If we have &p[i],
+     treat this like we do a binop.
+   */
+  else if (TREE_CODE(node) == ARRAY_REF && 
+           POINTER_TYPE_P(TREE_TYPE(TREE_OPERAND(node, 0)))) {
+    ti &= TREE_INVARIANT(TREE_OPERAND(node, 0)) & 
+          TREE_INVARIANT(TREE_OPERAND(node, 1));
+    tc &= TREE_CONSTANT(TREE_OPERAND(node, 0)) & 
+          TREE_CONSTANT(TREE_OPERAND(node, 1));
+    se |= TREE_SIDE_EFFECTS(TREE_OPERAND(node, 0)) |
+          TREE_SIDE_EFFECTS(TREE_OPERAND(node, 1));
+  }
+#endif
+/* APPLE LOCAL end LLVM */
   else
     {
       ti = tc = false;

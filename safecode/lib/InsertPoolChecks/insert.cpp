@@ -2205,11 +2205,9 @@ InsertPoolChecks::runOnFunction (Function & F) {
   TD        = &getAnalysis<TargetData>();
 #endif
 
-#if 1
   // Transform the function
   if (!(F.isExternal())) TransformFunction (F);
   if (!DisableLSChecks)  addLoadStoreChecks(F);
-#endif
 
   //
   // Update the statistics.

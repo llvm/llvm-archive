@@ -39,7 +39,7 @@ PREFIX = /usr
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
 # LLVM gets installed into /usr/local, not /usr.
-#ifndef DEVELOPER_DIR
+ifndef DEVELOPER_DIR
 PREFIX = /Developer/usr/llvm-gcc-4.0
 else
 PREFIX = ${DEVELOPER_DIR}/usr/lvm-gcc-4.0

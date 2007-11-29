@@ -334,6 +334,11 @@ struct tree_opt_pass pass_postreload =
 
 /* The root of the compilation pass tree, once constructed.  */
 struct tree_opt_pass *all_passes, *all_ipa_passes, *all_lowering_passes;
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+struct tree_opt_pass *all_extra_lowering_passes;
+#endif
+/* LLVM LOCAL end */
 
 /* Iterate over the pass tree allocating dump file numbers.  We want
    to do this depth first, and independent of whether the pass is
@@ -510,6 +515,17 @@ init_optimization_passes (void)
   NEXT_PASS (pass_cleanup_cfg);
   NEXT_PASS (pass_rebuild_cgraph_edges);
   *p = NULL;
+
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  p = &all_extra_lowering_passes;
+  NEXT_PASS (pass_fixup_cfg);
+  NEXT_PASS (pass_init_datastructures);
+  NEXT_PASS (pass_expand_omp);
+  NEXT_PASS (pass_free_datastructures);
+  *p = NULL;
+#endif
+  /* LLVM LOCAL end */
 
   p = &all_passes;
   NEXT_PASS (pass_fixup_cfg);
@@ -742,6 +758,13 @@ init_optimization_passes (void)
 		       PROP_gimple_any | PROP_gimple_lcf | PROP_gimple_leh
 		       | PROP_cfg);
   register_dump_files (all_lowering_passes, false, PROP_gimple_any);
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  register_dump_files (all_extra_lowering_passes, false,
+		       PROP_gimple_any | PROP_gimple_lcf | PROP_gimple_leh
+		       | PROP_cfg);
+#endif
+  /* LLVM LOCAL end */
   register_dump_files (all_passes, false,
 		       PROP_gimple_any | PROP_gimple_lcf | PROP_gimple_leh
 		       | PROP_cfg);

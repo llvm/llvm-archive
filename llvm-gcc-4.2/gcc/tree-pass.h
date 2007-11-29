@@ -397,6 +397,11 @@ extern struct tree_opt_pass pass_rtl_seqabstr;
 
 /* The root of the compilation pass tree, once constructed.  */
 extern struct tree_opt_pass *all_passes, *all_ipa_passes, *all_lowering_passes;
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+extern struct tree_opt_pass *all_extra_lowering_passes;
+#endif
+/* LLVM LOCAL end */
 
 extern void execute_pass_list (struct tree_opt_pass *);
 extern void execute_ipa_pass_list (struct tree_opt_pass *);

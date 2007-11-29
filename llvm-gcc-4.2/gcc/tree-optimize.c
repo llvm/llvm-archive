@@ -473,6 +473,7 @@ tree_rest_of_compilation (tree fndecl)
   /* Perform all tree transforms and optimizations.  */
   /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
+  execute_pass_list(all_extra_lowering_passes);
   llvm_emit_code_for_current_function(fndecl);
 #else
   execute_pass_list (all_passes);

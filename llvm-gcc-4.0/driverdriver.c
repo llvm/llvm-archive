@@ -1204,6 +1204,7 @@ main (int argc, const char **argv)
   char *override_option_str = NULL;
   char path_buffer[2*PATH_MAX+1];
   int linklen;
+  int delete_prefix = 0;
 
   total_argc = argc;
   prog_len = 0;
@@ -1266,10 +1267,12 @@ main (int argc, const char **argv)
     size_t bin_dir_len = strlen (llvm_bin_dir);
 
     if (curr_dir_len <= bin_dir_len ||
-        strncmp (&curr_dir[curr_dir_len - bin_dir_len], llvm_bin_dir, bin_dir_len) != 0)
+        strncmp (&curr_dir[curr_dir_len - bin_dir_len], llvm_bin_dir, bin_dir_len) != 0) {
       driver_exec_prefix =
         make_relative_prefix (argv[0], curr_dir, "/usr/llvm-gcc-4.0/bin/");
-    else
+      delete_prefix = 1;
+      prefix_len = strlen (driver_exec_prefix);
+    } else
       driver_exec_prefix = curr_dir;
   }
   /* LLVM LOCAL end - These drivers live in /.../usr/llvm-gcc-4.0/bin */
@@ -1559,5 +1562,7 @@ main (int argc, const char **argv)
 
   final_cleanup ();
   free (curr_dir);
+  if (delete_prefix)
+    free (driver_exec_prefix);
   return greatest_status;
 }

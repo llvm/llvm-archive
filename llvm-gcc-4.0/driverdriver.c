@@ -20,7 +20,6 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1260,11 +1259,25 @@ main (int argc, const char **argv)
   curr_dir = (char *) malloc (sizeof (char) * (prefix_len + 1));
   strncpy (curr_dir, argv[0], prefix_len);
   curr_dir[prefix_len] = '\0';
-  driver_exec_prefix = (argv[0], "/usr/bin", curr_dir);
+  /* LLVM LOCAL begin - These drivers live in /.../usr/llvm-gcc-4.0/bin */
+  {
+    size_t curr_dir_len = strlen (curr_dir);
+    const char *llvm_bin_dir = "/usr/llvm-gcc-4.0/bin/";
+    size_t bin_dir_len = strlen (llvm_bin_dir);
+
+    if (curr_dir_len <= bin_dir_len ||
+        strncmp (&curr_dir[curr_dir_len - bin_dir_len], llvm_bin_dir, bin_dir_len) != 0)
+      driver_exec_prefix =
+        make_relative_prefix (argv[0], curr_dir, "/usr/llvm-gcc-4.0/bin/");
+    else
+      driver_exec_prefix = curr_dir;
+  }
+  /* LLVM LOCAL end - These drivers live in /.../usr/llvm-gcc-4.0/bin */
 
 #ifdef DEBUG
   fprintf (stderr,"%s: full progname = %s\n", progname, argv[0]);
   fprintf (stderr,"%s: progname = %s\n", progname, progname);
+  fprintf (stderr,"%s: curr_dir = %s\n", progname, curr_dir);
   fprintf (stderr,"%s: driver_exec_prefix = %s\n", progname, driver_exec_prefix);
 #endif
 

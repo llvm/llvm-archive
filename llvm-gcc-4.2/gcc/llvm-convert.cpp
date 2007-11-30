@@ -2311,7 +2311,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   // call) and if so, what the exception destination will be.
   BasicBlock *LandingPad = 0;
   bool NoUnwind = false;
-  // FIXME: set the nounwind attribute if NoUnwind.
 
   // Do not turn intrinsic calls into invokes.
   if (!isa<Function>(Callee) || !cast<Function>(Callee)->getIntrinsicID()) {
@@ -2340,6 +2339,17 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
         }
       }
     }
+  }
+
+  if (NoUnwind && !(PAL && PAL->paramHasAttr(0, ParamAttr::NoUnwind))) {
+    // This particular call does not unwind even though the callee may
+    // unwind in general.  Add the 'nounwind' attribute to the call.
+    uint16_t RAttributes = PAL ? PAL->getParamAttrs(0) : 0;
+    RAttributes |= ParamAttr::NoUnwind;
+
+    ParamAttrsVector modVec;
+    modVec.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+    PAL = ParamAttrsList::getModified(PAL, modVec);
   }
 
   SmallVector<Value*, 16> CallOperands;

@@ -242,6 +242,9 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   readLLVMTypesStringTable();
   readLLVMValues();
 
+  if (TheDebugInfo)
+    TheDebugInfo->readLLVMDebugInfo();
+
   flag_llvm_pch_read = 1;
 }
 

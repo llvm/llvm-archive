@@ -123,7 +123,9 @@ public:
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.
   CompileUnitDesc *getOrCreateCompileUnit(const std::string &FullPath);
-  
+
+  /// readLLVMDebugInfo - Read debug info from PCH file.
+  void readLLVMDebugInfo();
 };
 
 } // end namespace llvm

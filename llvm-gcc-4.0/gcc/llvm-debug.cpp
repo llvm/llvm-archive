@@ -881,6 +881,36 @@ CompileUnitDesc *DebugInfo::getOrCreateCompileUnit(const std::string &FullPath){
   return Unit;
 }
 
+/// readLLVMDebugInfo - Read debug info from PCH file. TheModule already
+/// represents module read from PCH file. Restore AnchorDesc from PCH file.
+void DebugInfo::readLLVMDebugInfo() {
+  MachineModuleInfo MMI;
+  MMI.AnalyzeModule(*TheModule);
+
+  std::vector<SubprogramDesc *> Subprograms =
+    MMI.getAnchoredDescriptors<SubprogramDesc>(*TheModule);
+
+  if (!Subprograms.empty())
+    SubprogramAnchor = Subprograms[0]->getAnchor();
+
+  std::vector<CompileUnitDesc *> CUs =
+    MMI.getAnchoredDescriptors<CompileUnitDesc>(*TheModule);
+
+  if (!CUs.empty())
+    CompileUnitAnchor = CUs[0]->getAnchor();
+
+  std::vector<GlobalVariableDesc *> GVs =
+    MMI.getAnchoredDescriptors<GlobalVariableDesc>(*TheModule);
+
+  if (!GVs.empty())
+    GlobalVariableAnchor = GVs[0]->getAnchor();
+
+  const std::map<GlobalVariable *, DebugInfoDesc *> &GlobalDescs
+    = MMI.getDIDeserializer()->getGlobalDescs();
+  for (std::map<GlobalVariable *, DebugInfoDesc *>::const_iterator 
+         I = GlobalDescs.begin(), E = GlobalDescs.end(); I != E; ++I) 
+    SR.addDescriptor(I->second, I->first);
+}
 
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
 

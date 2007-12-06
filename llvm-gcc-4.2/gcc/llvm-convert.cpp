@@ -2307,36 +2307,36 @@ namespace {
 /// result, otherwise store it in DestLoc.
 Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
                               const ParamAttrsList *PAL) {
+  if (!PAL && isa<Function>(Callee))
+    PAL = cast<Function>(Callee)->getParamAttrs();
+
   // Determine if we need to generate an invoke instruction (instead of a simple
   // call) and if so, what the exception destination will be.
   BasicBlock *LandingPad = 0;
-  bool NoUnwind = false;
+  bool NoUnwind =
+    (PAL && PAL->paramHasAttr(0, ParamAttr::NoUnwind)) ||
+    !tree_could_throw_p(exp);
 
-  // Do not turn intrinsic calls into invokes.
-  if (!isa<Function>(Callee) || !cast<Function>(Callee)->getIntrinsicID()) {
-    // Do not turn no-throw calls into invokes; mark them as "nounwind".
-    NoUnwind = !tree_could_throw_p(exp);
+  // Do not turn nounwind calls into invokes.
+  if (!NoUnwind) {
+    int RegionNo = lookup_stmt_eh_region(exp);
 
-    if (!NoUnwind) {
-      int RegionNo = lookup_stmt_eh_region(exp);
+    // Is the call contained in an exception handling region?
+    if (RegionNo > 0) {
+      // Are there any exception handlers for this region?
+      if (can_throw_internal_1(RegionNo, false)) {
+        // Turn the call into an invoke.
+        LandingPads.grow(RegionNo);
+        BasicBlock *&ThisPad = LandingPads[RegionNo];
 
-      // Is the call contained in an exception handling region?
-      if (RegionNo > 0) {
-        // Are there any exception handlers for this region?
-        if (can_throw_internal_1(RegionNo, false)) {
-          // Turn the call into an invoke.
-          LandingPads.grow(RegionNo);
-          BasicBlock *&ThisPad = LandingPads[RegionNo];
+        // Create a landing pad if one didn't exist already.
+        if (!ThisPad)
+          ThisPad = new BasicBlock("lpad");
 
-          // Create a landing pad if one didn't exist already.
-          if (!ThisPad)
-            ThisPad = new BasicBlock("lpad");
-
-          LandingPad = ThisPad;
-        } else {
-          // Can this call unwind out of the current function?
-          NoUnwind = !can_throw_external_1(RegionNo, false);
-        }
+        LandingPad = ThisPad;
+      } else {
+        // Can this call unwind out of the current function?
+        NoUnwind = !can_throw_external_1(RegionNo, false);
       }
     }
   }

@@ -1253,6 +1253,7 @@ main (int argc, const char **argv)
   strncpy (curr_dir, argv[0], prefix_len);
   curr_dir[prefix_len] = '\0';
   /* LLVM LOCAL begin - These drivers live in /.../usr/llvm-gcc-4.2/bin */
+#if 0
   {
     size_t curr_dir_len = strlen (curr_dir);
     const char *llvm_bin_dir = "/usr/llvm-gcc-4.2/bin/";
@@ -1267,6 +1268,9 @@ main (int argc, const char **argv)
     } else
       driver_exec_prefix = curr_dir;
   }
+#else
+  driver_exec_prefix = curr_dir;
+#endif
   /* LLVM LOCAL end - These drivers live in /.../usr/llvm-gcc-4.2/bin */
 
 #ifdef DEBUG
@@ -1553,7 +1557,11 @@ main (int argc, const char **argv)
 
   final_cleanup ();
   free (curr_dir);
+  /* LLVM LOCAL - begin */
+#if 0
   if (delete_prefix)
     free (driver_exec_prefix);
+#endif
+  /* LLVM LOCAL - end */
   return greatest_status;
 }

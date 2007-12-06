@@ -372,7 +372,7 @@ for t in $TARGETS ; do
     $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc || exit 1
 # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS -create \
-    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++ || exit 1
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++ || exit 1
 done
 
 # lib
@@ -524,11 +524,17 @@ cd $DEST_DIR$LLVM_BIN_DIR
 ln -s -f ../../../$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
 ln -s -f ../../../$DEST_ROOT/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
 
-  # Copy one of the libllvmgcc.dylib's up to libexec/gcc.
+# FIXME: This is a hack to get things working.
+for h in $HOSTS ; do
+    ln -s -f ../../../$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS $h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS || exit 1
+    ln -s -f ../../../$DEST_ROOT/bin/$h-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS $h-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS || exit 1
+done
+
+# Copy one of the libllvmgcc.dylib's up to libexec/gcc.
 cp $DEST_DIR/$DEST_ROOT/libexec/gcc/$BUILD-apple-darwin$DARWIN_VERS/$VERS/libllvmgcc.dylib \
     $DEST_DIR/$DEST_ROOT/libexec/gcc/
 
-  # Replace the installed ones with symlinks to the common one.
+# Replace the installed ones with symlinks to the common one.
 for t in $TARGETS ; do
     cd $DEST_DIR/$DEST_ROOT/libexec/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/
     rm libllvmgcc.dylib

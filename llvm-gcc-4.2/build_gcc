@@ -348,8 +348,9 @@ for t in $TARGETS ; do
       cp -p $DIR/dst-$BUILD-$t$DL/$f .$DL/$f || exit 1
     fi
   done
-  ln -s ../../../../bin/as .$DL/as
-  ln -s ../../../../bin/ld .$DL/ld
+  # LLVM LOCAL fix broken link
+  ln -s ../../../../../bin/as .$DL/as
+  ln -s ../../../../../bin/ld .$DL/ld
 done
 
 # bin

@@ -90,29 +90,6 @@ ifneq ($(strip $(BUILT_SOURCES)),)
 	-$(Verb) $(RM) -f $(BUILT_SOURCES)
 endif
 
-ifneq ($(OBJ_ROOT),$(SRC_ROOT))
-spotless:
-	$(Verb) if test -x config.status ; then \
-	  $(EchoCmd) Wiping out $(OBJ_ROOT) ; \
-	  $(MKDIR) .spotless.save ; \
-	  $(MV) config.status .spotless.save ; \
-	  $(MV) mklib  .spotless.save ; \
-	  $(MV) projects  .spotless.save ; \
-	  $(RM) -rf * ; \
-	  $(MV) .spotless.save/config.status . ; \
-	  $(MV) .spotless.save/mklib . ; \
-	  $(MV) .spotless.save/projects . ; \
-	  $(RM) -rf .spotless.save ; \
-	  $(EchoCmd) Rebuilding configuration of $(OBJ_ROOT) ; \
-	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
-	  $(ConfigStatusScript) ; \
-	else \
-	  $(EchoCmd) "make spotless" can only be run from $(OBJ_ROOT); \
-	fi
-else
-spotless:
-	$(EchoCmd) "spotless target not supported for objdir == srcdir"
-endif
 
 $(BUILT_SOURCES) : $(ObjMakefiles)
 
@@ -446,8 +423,9 @@ LD.Flags      += -L$(LibDir) -L$(LLVMLibDir)
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
 CPP.Flags     += -I$(OBJ_DIR) -I$(SRC_DIR) \
-	         -I$(OBJ_ROOT)/include \
-	         -I$(SRC_ROOT)/include \
+                 -I$(OBJ_ROOT)/include -I$(SRC_ROOT)/include \
+		 -I$(OBJ_ROOT) -I$(SRC_ROOT) \
+                 $(patsubst %,-I$(LLVM_TOP)/%/include -I$(LLVM_TOP)/%,$(LLVM_MODULE_DEPENDS_ON)) \
 		 $(CPP.BaseFlags)
 
 Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c

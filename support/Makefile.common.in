@@ -173,7 +173,7 @@ WANT_OPT_FOR_SIZE := @WANT_OPT_FOR_SIZE@
 
 # When ENABLE_PROFILING is enabled, the llvm source base is built with profile
 # information to allow gprof to be used to get execution frequencies.
-WANT_PROFILING = @WANT_PROFILING@
+WANT_PROFILING := @WANT_PROFILING@
 
 # When WANT_STRIPPED is enabled, executables and libraries will be
 # stripped of debug symbols

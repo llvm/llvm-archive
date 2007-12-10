@@ -33,7 +33,7 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
 dnl email address for reporting bugs.
-AC_INIT([[LLVM Support Module]],[[2.1svn]],[http://llvm.org/bugs],[llvm-support])
+AC_INIT([[LLVM Support Module]],[[2.2svn]],[http://llvm.org/bugs],[llvm-support])
 THIS_IS_LLVM_MODULE([support])
 
 dnl Verify that the source directory is valid. This makes sure that we are
@@ -253,7 +253,7 @@ AC_ARG_WITH([destdir],
   AS_HELP_STRING([--with-destdir],
                  [Specify the install destination directory]),,withval=default)
 case "$withval" in
-  default)  DESTDIR="" ;;
+  default)  DESTDIR='' ;;
   *)        DESTDIR=$withval ;;
 esac
 AC_SUBST(DESTDIR,$DESTDIR)

@@ -897,7 +897,8 @@ void emit_global_to_llvm(tree decl) {
   }
   
   if (TheDebugInfo) TheDebugInfo->EmitGlobalVariable(GV, decl); 
-  
+
+  TREE_ASM_WRITTEN(decl) = 1;
   timevar_pop(TV_LLVM_GLOBALS);
 }
 

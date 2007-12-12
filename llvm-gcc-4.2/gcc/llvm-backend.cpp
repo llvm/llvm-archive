@@ -600,7 +600,10 @@ void llvm_emit_code_for_current_function(tree fndecl) {
 
 // emit_alias_to_llvm - Given decl and target emit alias to target.
 void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
-  if (errorcount || sorrycount) return;
+  if (errorcount || sorrycount) {
+    TREE_ASM_WRITTEN(decl) = 1;
+    return;  // Do not process broken code.
+  }
 
   timevar_push(TV_LLVM_GLOBALS);
 
@@ -769,7 +772,10 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
 /// LLVM as a global variable.  This function implements the end of
 /// assemble_variable.
 void emit_global_to_llvm(tree decl) {
-  if (errorcount || sorrycount) return;
+  if (errorcount || sorrycount) {
+    TREE_ASM_WRITTEN(decl) = 1;
+    return;  // Do not process broken code.
+  }
 
   // FIXME: Support alignment on globals: DECL_ALIGN.
   // FIXME: DECL_PRESERVE_P indicates the var is marked with attribute 'used'.

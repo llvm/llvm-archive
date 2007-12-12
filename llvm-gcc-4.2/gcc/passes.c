@@ -485,10 +485,14 @@ init_optimization_passes (void)
   NEXT_PASS (pass_early_local_passes);
   NEXT_PASS (pass_ipa_cp);
   NEXT_PASS (pass_ipa_inline);
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);
   NEXT_PASS (pass_ipa_pta);
+#endif
+/* LLVM LOCAL end */
   *p = NULL;
 
   /* All passes needed to lower the function into shape optimizers can

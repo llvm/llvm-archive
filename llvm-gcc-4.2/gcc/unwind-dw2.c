@@ -1511,7 +1511,14 @@ uw_install_context_1 (struct _Unwind_Context *current,
 static inline _Unwind_Ptr
 uw_identify_context (struct _Unwind_Context *context)
 {
+/* LLVM LOCAL begin
+   This change is needed to match Apple's installed libgcc. */
+#ifdef LLVM_STACKSENSITIVE_UNWIND_RESUME
+  return _Unwind_GetCFA (context);
+#else
   return _Unwind_GetIP (context);
+#endif
+/* LLVM LOCAL end */
 }
 
 

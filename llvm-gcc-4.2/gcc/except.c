@@ -4054,8 +4054,12 @@ default_init_unwind_resume_libfunc (void)
   /* The default c++ routines aren't actually c++ specific, so use those.  */
   /* LLVM local begin */
   llvm_unwind_resume_libfunc = llvm_init_one_libfunc ( USING_SJLJ_EXCEPTIONS ?
-                                                       "_Unwind_SjLj_Resume"
-                                                       : "_Unwind_Resume");
+                                               "_Unwind_SjLj_Resume"
+#ifdef LLVM_STACKSENSITIVE_UNWIND_RESUME
+                                               : "_Unwind_Resume_or_Rethrow");
+#else
+                                               : "_Unwind_Resume");
+#endif
   /* LLVM local end */
 }
 

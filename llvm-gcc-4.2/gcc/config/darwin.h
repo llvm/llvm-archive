@@ -1277,6 +1277,10 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree);
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
     argvec.push_back ("--relocation-model=static")
 #endif /* defined (TARGET_386) */
+
+/* On Darwin _Unwind_Resume is sensitive to the dynamic stack layout; we
+   use _Unwind_Resume_or_Rethrow instead.  */
+#define LLVM_STACKSENSITIVE_UNWIND_RESUME 1
 #endif
 /* LLVM LOCAL end */
 

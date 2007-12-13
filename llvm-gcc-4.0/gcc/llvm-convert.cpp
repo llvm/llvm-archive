@@ -2178,7 +2178,12 @@ void TreeToLLVM::CreateExceptionValues() {
                                    NULL);
 
   FuncUnwindResume =
-    TheModule->getOrInsertFunction("_Unwind_Resume",
+    TheModule->getOrInsertFunction(
+#ifdef LLVM_STACKSENSITIVE_UNWIND_RESUME
+                                   "_Unwind_Resume_or_Rethrow",
+#else
+                                   "_Unwind_Resume",
+#endif
                                    Type::getPrimitiveType(Type::VoidTyID),
                                    PointerType::get(Type::Int8Ty),
                                    NULL);

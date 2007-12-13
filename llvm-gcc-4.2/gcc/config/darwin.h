@@ -315,7 +315,9 @@ do {					\
 %{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
 "/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
 "/* APPLE LOCAL ARM 5342595 */"\
-    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: %(darwin_dsymutil) }}}}}}}}"
+"/* LLVM LOCAL do not use dsymutil with -O1 or higher */"\
+    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
+    %{!O1: %{!O2: %{!O3: %{!O4: %{!Os: %(darwin_dsymutil) }}}}}}}}}}}}}"
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT

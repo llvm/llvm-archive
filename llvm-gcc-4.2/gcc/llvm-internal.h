@@ -110,6 +110,7 @@ void writeLLVMTypesStringTable();
 void readLLVMValues();
 void writeLLVMValues();
 void clearTargetBuiltinCache();
+const char* extractRegisterName(union tree_node*);
 
 struct StructTypeConversionInfo;
 

@@ -913,7 +913,7 @@ void emit_global_to_llvm(tree decl) {
 /// well-formed.  If not, emit error messages and return true.  If so, return
 /// false.
 bool ValidateRegisterVariable(tree decl) {
-  int RegNumber = decode_reg_name(llvm_get_register_name(decl));
+  int RegNumber = decode_reg_name(extractRegisterName(decl));
   const Type *Ty = ConvertType(TREE_TYPE(decl));
 
   // If this has already been processed, don't emit duplicate error messages.
@@ -1249,7 +1249,7 @@ void print_llvm_type(FILE *file, void *LLVM) {
 // have been run through set_user_assembler_name which means they may
 // have a leading \1 at this point; compensate.
 
-const char* llvm_get_register_name(tree decl) {
+const char* extractRegisterName(tree decl) {
   const char* Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
   return (*Name==1) ? Name+1 : Name;
 }

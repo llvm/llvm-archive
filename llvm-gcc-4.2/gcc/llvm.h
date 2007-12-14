@@ -106,6 +106,10 @@ void llvm_asm_file_end(void);
  */
 void refine_type_to (union tree_node*, union tree_node*);
 
+/* llvm_get_register_name - extract a register name from a decl in format
+ * pleasing to llvm.
+ */
+const char* llvm_get_register_name(union tree_node*);
 #endif /* ENABLE_LLVM */
 
 #endif

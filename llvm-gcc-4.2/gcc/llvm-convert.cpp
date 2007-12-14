@@ -3305,7 +3305,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
   FunctionType *FTy = FunctionType::get(Ty, std::vector<const Type*>(),false);
   
-  const char *Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
+  const char *Name = llvm_get_register_name(decl);
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
   return Builder.CreateCall(IA, "tmp");
 }
@@ -3322,7 +3322,7 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   ArgTys.push_back(ConvertType(TREE_TYPE(decl)));
   FunctionType *FTy = FunctionType::get(Type::VoidTy, ArgTys, false);
   
-  const char *Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
+  const char *Name = llvm_get_register_name(decl);
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
   Builder.CreateCall(IA, RHS);
 }
@@ -3571,8 +3571,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     // If this output register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
     if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
-      int RegNum = 
-        decode_reg_name(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Operand)));
+      int RegNum = decode_reg_name(llvm_get_register_name(Operand));
       if (RegNum >= 0) {
         unsigned RegNameLen = strlen(reg_names[RegNum]);
         char *NewConstraint = (char*)alloca(RegNameLen+4);
@@ -3684,8 +3683,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     // register instead of the specified constraint.
     int RegNum;
     if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val) &&
-        (RegNum = 
-         decode_reg_name(IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Val)))) >= 0) {
+        (RegNum = decode_reg_name(llvm_get_register_name(Val))) >= 0) {
       ConstraintStr += '{';
       ConstraintStr += reg_names[RegNum];
       ConstraintStr += '}';

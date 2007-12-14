@@ -5211,8 +5211,8 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
       DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateFCmpUNE(LHSi, RHSi, "tmpi");
     } else {
-      DSTr = Builder.CreateICmpEQ(LHSr, RHSr, "tmpr");
-      DSTi = Builder.CreateICmpEQ(LHSi, RHSi, "tmpi");
+      DSTr = Builder.CreateICmpNE(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateICmpNE(LHSi, RHSi, "tmpi");
     }
     return Builder.CreateOr(DSTr, DSTi, "tmp");
   }

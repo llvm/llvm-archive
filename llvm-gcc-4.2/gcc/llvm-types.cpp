@@ -1068,7 +1068,14 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     RAttributes |= ParamAttr::NoUnwind;
 
   // Check for 'readnone' function attribute.
-  if (flags & ECF_CONST)
+  // Both PURE and CONST will be set if the user applied
+  // __attribute__((const)) to a function the compiler
+  // knows to be pure, such as log.  A user or (more
+  // likely) libm implementor might know their local log
+  // is in fact const, so this should be valid (and gcc
+  // accepts it).  But llvm IR does not allow both, so
+  // set only ReadNone.
+  if (flags & ECF_CONST && !(flags & ECF_PURE))
     // Since they write the return value through a pointer,
     // 'sret' functions cannot be 'readnone'.
     if (!ABIConverter.isStructReturn())

@@ -34,3 +34,5 @@ f(int i1, int i2)
   i1 = 1;
   goto L3;
 }
+/* LLVM LOCAL caller-callee mismatch message can't be suppressed */
+/* { dg-prune-output "arguments were dropped" } */

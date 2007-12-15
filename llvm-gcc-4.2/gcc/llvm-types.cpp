@@ -1075,14 +1075,14 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // is in fact const, so this should be valid (and gcc
   // accepts it).  But llvm IR does not allow both, so
   // set only ReadNone.
-  if (flags & ECF_CONST && !(flags & ECF_PURE))
+  if (flags & ECF_CONST)
     // Since they write the return value through a pointer,
     // 'sret' functions cannot be 'readnone'.
     if (!ABIConverter.isStructReturn())
       RAttributes |= ParamAttr::ReadNone;
 
   // Check for 'readonly' function attribute.
-  if (flags & ECF_PURE)
+  if (flags & ECF_PURE && !(flags & ECF_CONST))
     // Since they write the return value through a pointer,
     // 'sret' functions cannot be 'readonly'.
     if (!ABIConverter.isStructReturn())

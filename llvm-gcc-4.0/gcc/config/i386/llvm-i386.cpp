@@ -375,6 +375,12 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_MOVSS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 1, 2, 3);
     return true;
+  case IX86_BUILTIN_MOVQ: {
+    Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+    Ops[1] = BuildVector(Zero, Zero, Zero, Zero, NULL);
+    Result = BuildVectorShuffle(Ops[1], Ops[0], 4, 5, 2, 3);
+    return true;
+  }
   case IX86_BUILTIN_LOADQ: {
     PointerType *f64Ptr = PointerType::get(Type::DoubleTy);
     Value *Zero = ConstantFP::get(Type::DoubleTy, APFloat(0.0));

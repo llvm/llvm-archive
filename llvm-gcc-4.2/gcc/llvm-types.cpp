@@ -811,7 +811,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         Ty = GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)));
         if (Ty == 0) {
           PointersToReresolve.push_back(type);
-          return TypeDB.setType(type, PointerType::get(OpaqueType::get()));
+          return TypeDB.setType(type, 
+                                PointerType::getUnqual(OpaqueType::get()));
         }
 
         // A type has already been computed.  However, this may be some sort of 
@@ -829,7 +830,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     
       if (Ty->getTypeID() == Type::VoidTyID) 
         Ty = Type::Int8Ty;  // void* -> sbyte*
-      return TypeDB.setType(type, PointerType::get(Ty));
+      return TypeDB.setType(type, PointerType::getUnqual(Ty));
     }
    
   case METHOD_TYPE:

@@ -44,7 +44,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
                                const Type *ResultType,
                                std::vector<Value*> &Ops,
                                LLVMBuilder &Builder, Value *&Result) {
-  const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);
+  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
   
   Function *IntFn = Intrinsic::getDeclaration(TheModule, IID);
   

@@ -482,8 +482,9 @@ void llvm_asm_file_end(void) {
   
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= PointerType::get(Type::Int8Ty);
-    for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
+    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+    for (SmallSetVector<Constant *,32>::iterator AI = 
+                                                  AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
       Constant *C = *AI;
       AUGs.push_back(ConstantExpr::getBitCast(C, SBP));
@@ -499,7 +500,7 @@ void llvm_asm_file_end(void) {
   
   // Add llvm.noinline
   if (!AttributeNoinlineFunctions.empty()) {
-    const Type *SBP= PointerType::get(Type::Int8Ty);
+    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
     ArrayType *AT = ArrayType::get(SBP, AttributeNoinlineFunctions.size());
     Constant *Init = ConstantArray::get(AT, AttributeNoinlineFunctions);
     GlobalValue *gv = new GlobalVariable(AT, false, 
@@ -717,7 +718,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   // Get file and line number
  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
  Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
- const Type *SBP= PointerType::get(Type::Int8Ty);
+ const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
  file = ConstantExpr::getBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 

@@ -183,7 +183,7 @@ public:
 
       // FIXME: should return the hidden first argument for some targets
       // (e.g. ELF i386).
-      C.HandleAggregateShadowArgument(PointerType::get(Ty), false);
+      C.HandleAggregateShadowArgument(PointerType::getUnqual(Ty), false);
     }
   }
   
@@ -196,7 +196,7 @@ public:
     const Type *Ty = ConvertType(type);
 
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
-      C.HandleScalarArgument(PointerType::get(Ty), type);
+      C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {

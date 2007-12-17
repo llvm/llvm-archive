@@ -317,7 +317,7 @@ do {					\
 "/* APPLE LOCAL ARM 5342595 */"\
 "/* LLVM LOCAL do not use dsymutil with -O1 or higher */"\
     %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
-    %{!O1: %{!O2: %{!O3: %{!O4: %{!Os: %(darwin_dsymutil) }}}}}}}}}}}}}"
+    %{!O: %{!O1: %{!O2: %{!O3: %{!O4: %{!Os: %(darwin_dsymutil) }}}}}}}}}}}}}}"
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT

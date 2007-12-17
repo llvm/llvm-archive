@@ -3735,6 +3735,16 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
 //===----------------------------------------------------------------------===//
 
 
+/// Return a ParamAttrsList for the given function return attributes.
+const ParamAttrsList *getReturnAttrs(uint16_t attrs) {
+  if (attrs == ParamAttr::None)
+    return NULL;
+
+  ParamAttrsVector Attrs;
+  Attrs.push_back(ParamAttrsWithIndex::get(0, attrs));
+  return ParamAttrsList::get(Attrs);
+}
+
 /// Reads from register variables are handled by emitting an inline asm node
 /// that copies the value out of the specified register.
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl, const MemRef *DestLoc){
@@ -3752,7 +3762,9 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl, const MemRef *DestLoc){
   
   const char *Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
-  return Builder.CreateCall(IA, "tmp");
+  CallInst *Call = Builder.CreateCall(IA, "tmp");
+  Call->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
+  return Call;
 }
 
 /// Stores to register variables are handled by emitting an inline asm node
@@ -3769,7 +3781,8 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   
   const char *Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
-  Builder.CreateCall(IA, RHS);
+  CallInst *Call = Builder.CreateCall(IA, RHS);
+  Call->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
 }
 
 /// ConvertInlineAsmStr - Convert the specified inline asm string to an LLVM
@@ -4192,7 +4205,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     StoreCallResultAddr ? "tmp" : "");
-  
+  CV->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
+
   // If the call produces a value, store it into the destination.
   if (StoreCallResultAddr)
     Builder.CreateStore(CV, StoreCallResultAddr);

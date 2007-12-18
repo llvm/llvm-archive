@@ -511,11 +511,19 @@ init_optimization_passes (void)
 #endif
   /* LLVM LOCAL end */
   NEXT_PASS (pass_warn_function_return);
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   NEXT_PASS (pass_early_tree_profile);
+#endif
+  /* LLVM LOCAL end */
   *p = NULL;
 
   p = &pass_early_local_passes.sub;
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   NEXT_PASS (pass_tree_profile);
+#endif
+  /* LLVM LOCAL end */
   NEXT_PASS (pass_cleanup_cfg);
   NEXT_PASS (pass_rebuild_cgraph_edges);
   *p = NULL;

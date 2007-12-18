@@ -4,6 +4,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-ipa-pure-const" } */
+/* LLVM LOCAL test not applicable */
+/* { dg-require-fdump "" } */
 
 int test1 (void)
 {

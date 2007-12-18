@@ -245,7 +245,7 @@ static std::string GetTypeName(const char *Prefix, tree type) {
   if (TYPE_NAME(type))
     if (TREE_CODE(TYPE_NAME(type)) == IDENTIFIER_NODE)
       Name = IDENTIFIER_POINTER(TYPE_NAME(type));
-    else 
+    else if (DECL_NAME(TYPE_NAME(type)))
       Name = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(type)));
   
   std::string ContextStr;

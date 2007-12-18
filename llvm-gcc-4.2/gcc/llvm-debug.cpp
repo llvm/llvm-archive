@@ -141,7 +141,8 @@ static const char *GetNodeName(tree Node) {
   if (Name) {
     if (TREE_CODE(Name) == IDENTIFIER_NODE) {
       return IDENTIFIER_POINTER(Name);
-    } else if (TREE_CODE(Name) == TYPE_DECL && !DECL_IGNORED_P(Name)) {
+    } else if (TREE_CODE(Name) == TYPE_DECL && DECL_NAME(Name) &&
+               !DECL_IGNORED_P(Name)) {
       return IDENTIFIER_POINTER(DECL_NAME(Name));
     }
   }

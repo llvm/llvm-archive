@@ -2344,16 +2344,10 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
   }
 
-  if (NoUnwind && !(PAL && PAL->paramHasAttr(0, ParamAttr::NoUnwind))) {
+  if (NoUnwind)
     // This particular call does not unwind even though the callee may
     // unwind in general.  Add the 'nounwind' attribute to the call.
-    uint16_t RAttributes = PAL ? PAL->getParamAttrs(0) : 0;
-    RAttributes |= ParamAttr::NoUnwind;
-
-    ParamAttrsVector modVec;
-    modVec.push_back(ParamAttrsWithIndex::get(0, RAttributes));
-    PAL = ParamAttrsList::getModified(PAL, modVec);
-  }
+    PAL = ParamAttrsList::includeAttrs(PAL, 0, ParamAttr::NoUnwind);
 
   SmallVector<Value*, 16> CallOperands;
   CallingConv::ID CallingConvention;
@@ -3295,16 +3289,6 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 //===----------------------------------------------------------------------===//
 
 
-/// Return a ParamAttrsList for the given function return attributes.
-const ParamAttrsList *getReturnAttrs(uint16_t attrs) {
-  if (attrs == ParamAttr::None)
-    return NULL;
-
-  ParamAttrsVector Attrs;
-  Attrs.push_back(ParamAttrsWithIndex::get(0, attrs));
-  return ParamAttrsList::get(Attrs);
-}
-
 /// Reads from register variables are handled by emitting an inline asm node
 /// that copies the value out of the specified register.
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
@@ -3324,7 +3308,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   const char *Name = extractRegisterName(decl);
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
   CallInst *Call = Builder.CreateCall(IA, "tmp");
-  Call->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
+  Call->setDoesNotThrow();
   return Call;
 }
 
@@ -3343,7 +3327,7 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   const char *Name = extractRegisterName(decl);
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
   CallInst *Call = Builder.CreateCall(IA, RHS);
-  Call->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
+  Call->setDoesNotThrow();
 }
 
 /// ConvertInlineAsmStr - Convert the specified inline asm string to an LLVM
@@ -3766,7 +3750,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     StoreCallResultAddr ? "tmp" : "");
-  CV->setParamAttrs(getReturnAttrs(ParamAttr::NoUnwind));
+  CV->setDoesNotThrow();
 
   // If the call produces a value, store it into the destination.
   if (StoreCallResultAddr)

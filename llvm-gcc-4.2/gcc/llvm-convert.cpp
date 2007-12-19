@@ -2169,7 +2169,8 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
 
   assert(TREE_TYPE (TREE_OPERAND (exp, 0)) &&
-         TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE
+         (TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE ||
+          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == REFERENCE_TYPE) 
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
   unsigned CallingConv;

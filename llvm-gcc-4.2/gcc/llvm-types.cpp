@@ -303,9 +303,8 @@ bool isSequentialCompatible(tree_node *type) {
   // This relies on gcc types with constant size mapping to LLVM types with the
   // same size.  It is possible for the component type not to have a size:
   // struct foo;  extern foo bar[];
-  return !VOID_TYPE_P(TREE_TYPE(type)) &&
-         (!TYPE_SIZE(TREE_TYPE(type)) || 
-            isInt64(TYPE_SIZE(TREE_TYPE(type)), true));
+  return !TYPE_SIZE(TREE_TYPE(type)) || 
+         isInt64(TYPE_SIZE(TREE_TYPE(type)), true);
 }
 
 /// isArrayCompatible - Return true if the specified gcc array or pointer type

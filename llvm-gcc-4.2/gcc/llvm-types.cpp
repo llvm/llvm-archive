@@ -295,7 +295,7 @@ static std::string GetTypeName(const char *Prefix, tree type) {
 
 /// isSequentialCompatible - Return true if the specified gcc array or pointer
 /// type and the corresponding LLVM SequentialType lay out their components
-/// identically in memory.
+/// identically in memory.  We assume that objects without a known size do not.
 bool isSequentialCompatible(tree_node *type) {
   assert((TREE_CODE(type) == ARRAY_TYPE ||
           TREE_CODE(type) == POINTER_TYPE ||
@@ -303,7 +303,7 @@ bool isSequentialCompatible(tree_node *type) {
   // This relies on gcc types with constant size mapping to LLVM types with the
   // same size.  It is possible for the component type not to have a size:
   // struct foo;  extern foo bar[];
-  return !TYPE_SIZE(TREE_TYPE(type)) || 
+  return TYPE_SIZE(TREE_TYPE(type)) &&
          isInt64(TYPE_SIZE(TREE_TYPE(type)), true);
 }
 

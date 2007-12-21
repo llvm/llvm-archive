@@ -89,6 +89,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psllw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
@@ -123,6 +124,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_q);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psllq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
@@ -140,6 +142,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psrlw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
@@ -174,6 +177,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_q);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psrlq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;

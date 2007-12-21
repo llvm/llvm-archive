@@ -191,6 +191,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psra_w);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psraw, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;

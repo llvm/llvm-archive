@@ -1740,6 +1740,27 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
 
 /// ConvertRECORD - We know that 'type' is a RECORD_TYPE: convert it to an LLVM
 /// type.
+//  A note on C++ virtual base class layout.  Consider the following example:
+// class A { public: int i0; };
+// class B : public virtual A { public: int i1; };
+// class C : public virtual A { public: int i2; };
+// class D : public virtual B, public virtual C { public: int i3; };
+//
+// The TYPE nodes gcc builds for classes represent that class as it looks
+// standing alone.  Thus B is size 12 and looks like { vptr; i2; baseclass A; }
+// However, this is not the layout used when that class is a base class for 
+// some other class, yet the same TYPE node is still used.  D in the above has
+// both a BINFO list entry and a FIELD that reference type B, but the virtual
+// base class A within B is not allocated in that case; B-within-D is only
+// size 8.  The correct size is in the FIELD node (does not match the size
+// in its child TYPE node.)  The fields to be omitted from the child TYPE,
+// as far as I can tell, are always the last ones; but also, there is a 
+// TYPE_DECL node sitting in the middle of the FIELD list separating virtual 
+// base classes from everything else.
+//
+// For LLVM purposes, we probably need to build a new type for B-within-D that 
+// has the correct size and layout for that usage.
+
 const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   if (const Type *Ty = GET_TYPE_LLVM(type)) {
     // If we already compiled this type, and if it was not a forward

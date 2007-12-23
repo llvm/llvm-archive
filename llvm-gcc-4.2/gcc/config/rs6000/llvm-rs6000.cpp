@@ -329,6 +329,37 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateCall(smax, ActualOps, ActualOps+2, "tmp");
     return true;
   }
+  case ALTIVEC_BUILTIN_VPERM_4SI:
+  case ALTIVEC_BUILTIN_VPERM_4SF:
+  case ALTIVEC_BUILTIN_VPERM_8HI:
+  case ALTIVEC_BUILTIN_VPERM_16QI: {
+    // Operation is identical on all types; we have a single intrinsic.
+    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
+    Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
+    Value *ActualOps[] = { Op0, Op1, Ops[2]};
+    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                          Intrinsic::ppc_altivec_vperm), 
+                                ActualOps, ActualOps+3, "tmp");
+    Result = CastToType(Instruction::BitCast, Result, Ops[0]->getType());
+    return true;
+  }
+  case ALTIVEC_BUILTIN_VSEL_4SI:
+  case ALTIVEC_BUILTIN_VSEL_4SF:
+  case ALTIVEC_BUILTIN_VSEL_8HI:
+  case ALTIVEC_BUILTIN_VSEL_16QI: {
+    // Operation is identical on all types; we have a single intrinsic.
+    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
+    Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
+    Value *Op2 = CastToType(Instruction::BitCast, Ops[2], VecTy);
+    Value *ActualOps[] = { Op0, Op1, Op2 };
+    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                          Intrinsic::ppc_altivec_vsel), 
+                                ActualOps, ActualOps+3, "tmp");
+    Result = CastToType(Instruction::BitCast, Result, Ops[0]->getType());
+    return true;
+  }
   }
 
   return false;

@@ -1752,7 +1752,10 @@ gfc_get_function_type (gfc_symbol * sym)
   while (nstr--)
     typelist = gfc_chainon_list (typelist, gfc_charlen_type_node);
 
-  if (typelist)
+  /* LLVM local begin */
+  if (typelist && !(sym->attr.proc == PROC_INTRINSIC ||
+                    sym->attr.proc == PROC_EXTERNAL))
+  /* LLVM local end */
     typelist = gfc_chainon_list (typelist, void_type_node);
 
   if (alternate_return)

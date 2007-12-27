@@ -1913,7 +1913,8 @@ gfc_get_fake_result_decl (gfc_symbol * sym, int parent_flag)
 
 
 /* Builds a function decl.  The remaining parameters are the types of the
-   function arguments.  Negative nargs indicates a varargs function.  */
+   function arguments.  Negative nargs indicates a varargs function (and this
+   number *includes* an ellipsis) */
 
 tree
 gfc_build_library_function_decl (tree name, tree rettype, int nargs, ...)
@@ -1932,7 +1933,9 @@ gfc_build_library_function_decl (tree name, tree rettype, int nargs, ...)
 
 
   /* Create a list of the argument types.  */
-  for (arglist = NULL_TREE, n = abs (nargs); n > 0; n--)
+  /* LLVM local begin */
+  for (arglist = NULL_TREE, n = (nargs >= 0 ? nargs : -nargs - 1); n > 0; n--)
+   /* LLVM local end */
     {
       argtype = va_arg (p, tree);
       arglist = gfc_chainon_list (arglist, argtype);
@@ -2309,7 +2312,8 @@ gfc_build_builtin_function_decls (void)
 
   gfor_fndecl_select_string =
     gfc_build_library_function_decl (get_identifier (PREFIX("select_string")),
-                                     pvoid_type_node, 0);
+             pvoid_type_node, 5, pvoid_type_node, gfc_c_int_type_node,
+                       pvoid_type_node, pchar_type_node, gfc_c_int_type_node);
 
   gfor_fndecl_runtime_error =
     gfc_build_library_function_decl (get_identifier (PREFIX("runtime_error")),
@@ -2347,7 +2351,7 @@ gfc_build_builtin_function_decls (void)
 
   gfor_fndecl_in_unpack = gfc_build_library_function_decl (
         get_identifier (PREFIX("internal_unpack")),
-        pvoid_type_node, 1, pvoid_type_node);
+        pvoid_type_node, 2, pvoid_type_node, pvoid_type_node);
 
   gfor_fndecl_associated =
     gfc_build_library_function_decl (

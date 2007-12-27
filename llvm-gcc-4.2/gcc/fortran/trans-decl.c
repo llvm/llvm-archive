@@ -1935,7 +1935,7 @@ gfc_build_library_function_decl (tree name, tree rettype, int nargs, ...)
   /* Create a list of the argument types.  */
   /* LLVM local begin */
   for (arglist = NULL_TREE, n = (nargs >= 0 ? nargs : -nargs - 1); n > 0; n--)
-   /* LLVM local end */
+  /* LLVM local end */
     {
       argtype = va_arg (p, tree);
       arglist = gfc_chainon_list (arglist, argtype);
@@ -2310,10 +2310,12 @@ gfc_build_builtin_function_decls (void)
 				     void_type_node, 2, pchar_type_node,
                                      gfc_int4_type_node);
 
+  /* LLVM begin mainline 4.3 */
   gfor_fndecl_select_string =
     gfc_build_library_function_decl (get_identifier (PREFIX("select_string")),
              pvoid_type_node, 5, pvoid_type_node, gfc_c_int_type_node,
                        pvoid_type_node, pchar_type_node, gfc_c_int_type_node);
+  /* LLVM end mainline 4.3 */
 
   gfor_fndecl_runtime_error =
     gfc_build_library_function_decl (get_identifier (PREFIX("runtime_error")),
@@ -2349,9 +2351,11 @@ gfc_build_builtin_function_decls (void)
         get_identifier (PREFIX("internal_pack")),
         pvoid_type_node, 1, pvoid_type_node);
 
+  /* LLVM begin mainline 4.3 */
   gfor_fndecl_in_unpack = gfc_build_library_function_decl (
         get_identifier (PREFIX("internal_unpack")),
         pvoid_type_node, 2, pvoid_type_node, pvoid_type_node);
+  /* LLVM end mainline 4.3 */
 
   gfor_fndecl_associated =
     gfc_build_library_function_decl (

@@ -374,7 +374,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libssp"
     # LLVM LOCAL begin
     noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
-    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libjava"
     noconfigdirs="$noconfigdirs target-libmudflap target-zlib"
     # LLVM LOCAL end
     ;;
@@ -384,7 +384,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs sim target-rda"
     # LLVM LOCAL begin
     noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
-    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libjava"
     noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
     noconfigdirs="$noconfigdirs target-libssp target-libstdc++-v3 target-zlib"
     # LLVM LOCAL end
@@ -395,7 +395,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs ${libgcj}"
     # LLVM LOCAL begin
     noconfigdirs="$noconfigdirs target-boehm-gc target-libffi"
-    noconfigdirs="$noconfigdirs target-libgfortran target-libjava"
+    noconfigdirs="$noconfigdirs target-libjava"
     noconfigdirs="$noconfigdirs target-libmudflap target-libobjc"
     noconfigdirs="$noconfigdirs target-libssp target-libstdc++-v3 target-zlib"
     # LLVM LOCAL end

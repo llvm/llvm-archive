@@ -1392,6 +1392,8 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
 
 // Emits code to do something for a type attribute
 void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
+  // GC intrinsics can only be used in functions which specify a collector.
+  Fn->setCollector("shadow-stack");
 
   Function *gcrootFun = Intrinsic::getDeclaration(TheModule,
 						  Intrinsic::gcroot);

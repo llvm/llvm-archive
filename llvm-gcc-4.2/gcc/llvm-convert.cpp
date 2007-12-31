@@ -349,7 +349,7 @@ const TargetData &getTargetData() {
 TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   FnDecl = fndecl;
   Fn = 0;
-  ReturnBB = UnwindBB = 0;
+  ReturnBB = UnwindBB = NoUnwindBB = 0;
   
   if (TheDebugInfo) {
     expanded_location Location = expand_location(DECL_SOURCE_LOCATION (fndecl));
@@ -755,6 +755,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
   EmitLandingPads();
   EmitPostPads();
   EmitUnwindBlock();
+  EmitNoUnwindBlock();
 
   // If this function takes the address of a label, emit the indirect goto
   // block.
@@ -1863,7 +1864,7 @@ void TreeToLLVM::EmitLandingPads() {
                                  PointerType::getUnqual(Type::Int8Ty)));
 
     // Add selections for each handler.
-    foreach_reachable_handler (i, false, AddHandler, &Handlers);
+    foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
@@ -2023,7 +2024,7 @@ void TreeToLLVM::EmitPostPads() {
     }
 
     // Emit a RESX_EXPR which skips handlers with no post landing pad.
-    foreach_reachable_handler (i, true, AddHandler, &Handlers);
+    foreach_reachable_handler(i, true, AddHandler, &Handlers);
 
     BasicBlock *TargetBB = NULL;
 
@@ -2038,13 +2039,20 @@ void TreeToLLVM::EmitPostPads() {
         break;
     }
 
-    if (!TargetBB) {
+    if (TargetBB) {
+      Builder.CreateBr(TargetBB);
+    } else if (can_throw_external_1(i, true)) {
+      // Unwinding continues in the caller.
       if (!UnwindBB)
         UnwindBB = new BasicBlock("Unwind");
-      TargetBB = UnwindBB;
+      Builder.CreateBr(UnwindBB);
+    } else {
+      // Unwinding in a must_not_throw region - notify the runtime.
+      if (!NoUnwindBB)
+        NoUnwindBB = new BasicBlock("NoUnwind");
+      Builder.CreateBr(NoUnwindBB);
     }
 
-    Builder.CreateBr(TargetBB);
     Handlers.clear();
   }
 }
@@ -2058,6 +2066,22 @@ void TreeToLLVM::EmitUnwindBlock() {
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
     assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
     Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
+    Builder.CreateUnreachable();
+  }
+}
+
+/// EmitNoUnwindBlock - Emit the lazily created EH illegal-unwind block.
+void TreeToLLVM::EmitNoUnwindBlock() {
+  if (NoUnwindBB) {
+    CreateExceptionValues();
+    EmitBlock(NoUnwindBB);
+    // Fetch and store exception handler.
+    Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
+    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
+    CallInst *Call =
+      Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
+    // Illegal unwind - notify the runtime.
+    Call->setDoesNotThrow();
     Builder.CreateUnreachable();
   }
 }
@@ -3267,7 +3291,7 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
   unsigned RegionNo = TREE_INT_CST_LOW(TREE_OPERAND (exp, 0));
   std::vector<struct eh_region *> Handlers;
 
-  foreach_reachable_handler (RegionNo, true, AddHandler, &Handlers);
+  foreach_reachable_handler(RegionNo, true, AddHandler, &Handlers);
 
   if (!Handlers.empty()) {
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
@@ -3276,10 +3300,16 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
       getPostPad(get_eh_region_number(*I));
 
     Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-  } else {
+  } else if (can_throw_external_1(RegionNo, true)) {
+    // Unwinding continues in the caller.
     if (!UnwindBB)
       UnwindBB = new BasicBlock("Unwind");
     Builder.CreateBr(UnwindBB);
+  } else {
+    // Unwinding in a must_not_throw region - notify the runtime.
+    if (!NoUnwindBB)
+      NoUnwindBB = new BasicBlock("NoUnwind");
+    Builder.CreateBr(NoUnwindBB);
   }
 
   EmitBlock(new BasicBlock(""));

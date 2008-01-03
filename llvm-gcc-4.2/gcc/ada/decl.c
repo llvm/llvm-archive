@@ -577,9 +577,12 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
 	    && CONTAINS_PLACEHOLDER_P (TYPE_SIZE (gnu_type)))
 	  {
 	    if (gnu_expr && kind == E_Constant)
-	      gnu_size
-		= SUBSTITUTE_PLACEHOLDER_IN_EXPR
-		  (TYPE_SIZE (TREE_TYPE (gnu_expr)), gnu_expr);
+/* LLVM local begin */
+              {
+                gnu_type = TREE_TYPE (gnu_expr);
+                gnu_size = TYPE_SIZE (gnu_type);
+              }
+/* LLVM local end */
 
 	    /* We may have no GNU_EXPR because No_Initialization is
 	       set even though there's an Expression.  */
@@ -587,10 +590,15 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
 		     && (Nkind (Declaration_Node (gnat_entity))
 			 == N_Object_Declaration)
 		     && Present (Expression (Declaration_Node (gnat_entity))))
-	      gnu_size
-		= TYPE_SIZE (gnat_to_gnu_type
-			     (Etype
-			      (Expression (Declaration_Node (gnat_entity)))));
+/* LLVM local begin */
+              {
+                gnu_type
+                  = gnat_to_gnu_type
+                    (Etype (Expression (Declaration_Node (gnat_entity))));
+                gnu_size
+                  = TYPE_SIZE (gnu_type);
+              }
+/* LLVM local end */
 	    else
 	      {
 		gnu_size = max_size (TYPE_SIZE (gnu_type), true);

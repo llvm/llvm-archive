@@ -5473,6 +5473,16 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     
   } else {
     Value *Offset = Emit(field_offset, 0);
+
+    // Here BitStart gives the offset of the field in bits from field_offset.
+    // Incorporate as much of it as possible into the pointer computation.
+    unsigned ByteOffset = BitStart/8;
+    if (ByteOffset > 0) {
+      Offset = Builder.CreateAdd(Offset,
+        ConstantInt::get(Offset->getType(), ByteOffset), "tmp");
+      BitStart -= ByteOffset*8;
+    }
+
     Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr, 
                             Offset->getType());
     Ptr = Builder.CreateAdd(Ptr, Offset, "tmp");

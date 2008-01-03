@@ -6089,14 +6089,24 @@ add_objc_string (tree ident, enum string_section section)
   decl = build_objc_string_decl (section);
 
   type = build_array_type
-	 (char_type_node,
-	  build_index_type
-	  (build_int_cst (NULL_TREE,
-			  IDENTIFIER_LENGTH (ident))));
+    (char_type_node,
+     build_index_type
+     (build_int_cst (NULL_TREE,
+                     IDENTIFIER_LENGTH (ident))));
   decl = start_var_decl (type, IDENTIFIER_POINTER (DECL_NAME (decl)));
   string_expr = my_build_string (IDENTIFIER_LENGTH (ident) + 1,
-				 IDENTIFIER_POINTER (ident));
+                                 IDENTIFIER_POINTER (ident));
   finish_var_decl (decl, string_expr);
+
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  /* This decl's name is special, it uses 'L' as a prefix. Ask llvm to not
+     add leading underscore by setting it as a user supplied asm name.  */
+  set_user_assembler_name (decl, IDENTIFIER_POINTER (DECL_NAME (decl)));
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
+#endif
+  /* LLVM LOCAL end */
 
   hsh = hash_ident_enter (hash_table, ident);
   hash_add_attr (hsh, decl);

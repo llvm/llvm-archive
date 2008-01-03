@@ -662,6 +662,45 @@ init_gigi_decls (tree long_long_float_type, tree exception_type)
   main_identifier_node = get_identifier ("main");
 }
 
+/* LLVM local begin */
+/* Called via qsort from the below.  Returns -1, 1, depending on the
+   bit positions and ordinals of the two fields.  Use DECL_UID to ensure
+   a stable sort.  */
+
+static int
+compare_field_bitpos (const PTR rt1, const PTR rt2)
+{
+  tree *t1 = (tree *) rt1;
+  tree *t2 = (tree *) rt2;
+  tree bp1 = bit_position (*t1);
+  tree bp2 = bit_position (*t2);
+  bool var1 = TREE_CODE (bp1) != INTEGER_CST;
+  bool var2 = TREE_CODE (bp2) != INTEGER_CST;
+  int uid_cmp;
+
+  if (DECL_UID (*t1) < DECL_UID (*t2))
+    uid_cmp = -1;
+  else if (DECL_UID (*t1) == DECL_UID (*t2))
+    uid_cmp = 0;
+  else
+    uid_cmp = 1;
+
+  /* Fields with a variable offset go after fields at a constant offset.  */
+  if (var1 && var2)
+    return uid_cmp;
+  else if (var1)
+    return 1;
+  else if (var2)
+    return -1;
+  else if (tree_int_cst_equal (bp1, bp2))
+    return uid_cmp;
+  else if (tree_int_cst_lt (bp1, bp2))
+    return -1;
+  else
+    return 1;
+}
+
+/* LLVM local end */
 /* Given a record type (RECORD_TYPE) and a chain of FIELD_DECL nodes
    (FIELDLIST), finish constructing the record or union type.  If HAS_REP is
    true, this record has a rep clause; don't call layout_type but merely set
@@ -680,6 +719,33 @@ finish_record_type (tree record_type, tree fieldlist, bool has_rep,
   bool had_size_unit = TYPE_SIZE_UNIT (record_type) != 0;
   tree field;
 
+  /* LLVM local begin */
+  if (has_rep) {
+    /* The gcc-to-llvm logic assumes in several places that record fields are
+       ordered by offset, even though the gcc documentation explicitly states
+       that no assumptions should be made about field ordering.  Sort fields
+       by bitposition as a workaround.  TODO: Fix the gcc-to-llvm logic and
+       remove this workaround.  */
+    int len = list_length (fieldlist);
+    tree *gnu_arr = (tree *) alloca (sizeof (tree) * len);
+    int i;
+
+    for (i = 0, field = fieldlist; field; field = TREE_CHAIN (field), i++)
+      gnu_arr[i] = field;
+
+    qsort (gnu_arr, len, sizeof (tree), compare_field_bitpos);
+
+    /* Put the fields in the list in order of increasing position, which
+       means we start from the end.  */
+    fieldlist = NULL_TREE;
+    for (i = len - 1; i >= 0; i--)
+      {
+        TREE_CHAIN (gnu_arr[i]) = fieldlist;
+        fieldlist = gnu_arr[i];
+      }
+  }
+
+  /* LLVM local end */
   TYPE_FIELDS (record_type) = fieldlist;
   TYPE_STUB_DECL (record_type)
     = build_decl (TYPE_DECL, NULL_TREE, record_type);

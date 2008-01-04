@@ -5071,8 +5071,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
   StructAddrLV.Ptr = BitCastToType(StructAddrLV.Ptr,
                                    PointerType::getUnqual(StructTy));
-  const Type *FieldTy = ConvertType(TREE_TYPE(FieldDecl));
-  
+  const Type *FieldTy = ConvertType(getDeclaredType(FieldDecl));
+
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
   unsigned BitStart = getComponentRefOffsetInBits(exp);
@@ -5114,7 +5114,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
                           PointerType::getUnqual(FieldTy));
   }
 
-  if (tree DeclaredType = DECL_BIT_FIELD_TYPE(FieldDecl)) {
+  if (isBitfield(FieldDecl)) {
     assert(DECL_SIZE(FieldDecl) &&
            TREE_CODE(DECL_SIZE(FieldDecl)) == INTEGER_CST &&
            "Variable sized bitfield?");
@@ -5124,7 +5124,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       cast<PointerType>(FieldPtr->getType())->getElementType();
 
     // If this is a bitfield, the declared type must be an integral type.
-    FieldTy = ConvertType(DeclaredType);
     // If the field result is a bool, cast to a ubyte instead.  It is not
     // possible to access all bits of a memory object with a bool (only the low
     // bit) but it is possible to access them with a byte.
@@ -5970,7 +5969,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
 
     // If the field is a bitfield, it could be spread across multiple fields and
     // may start at some bit offset.
-    if (DECL_BIT_FIELD_TYPE(Field)) {
+    if (isBitfield(Field)) {
       ProcessBitFieldInitialization(Field, Val, STy, ResultElts);
     } else {
       // If not, things are much simpler.
@@ -5978,7 +5977,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
-      assert(TYPE_SIZE(TREE_TYPE(Field)) ||
+      assert(TYPE_SIZE(getDeclaredType(Field)) ||
              (FieldNo == ResultElts.size()-1 &&
               isStructWithVarSizeArrayAtEnd(STy))
              && "field with no size is not array at end of struct!");
@@ -5993,7 +5992,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       // integer.  The struct field will have type [4 x ubyte] instead of
       // "int" for example.  If we ignored this, we would lay out the
       // initializer wrong.
-      if (TYPE_SIZE(TREE_TYPE(Field)) &&
+      if (TYPE_SIZE(getDeclaredType(Field)) &&
           Val->getType() != STy->getElementType(FieldNo))
         Val = ConvertStructFieldInitializerToType(Val,
                                                   STy->getElementType(FieldNo));
@@ -6220,7 +6219,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   
   StructAddrLV = ConstantExpr::getBitCast(StructAddrLV,
                                           PointerType::getUnqual(StructTy));
-  const Type *FieldTy = ConvertType(TREE_TYPE(FieldDecl));
+  const Type *FieldTy = ConvertType(getDeclaredType(FieldDecl));
   
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
@@ -6253,12 +6252,10 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     FieldPtr = ConstantExpr::getIntToPtr(Ptr, PointerType::getUnqual(FieldTy));
   }
   
-  if (DECL_BIT_FIELD_TYPE(FieldDecl)) {
-    FieldTy = ConvertType(DECL_BIT_FIELD_TYPE(FieldDecl));
+  if (isBitfield(FieldDecl))
     FieldPtr = ConstantExpr::getBitCast(FieldPtr, 
                                         PointerType::getUnqual(FieldTy));
-  }
-  
+
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");
   return FieldPtr;

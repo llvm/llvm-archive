@@ -328,6 +328,42 @@ bool isArrayCompatible(tree_node *type) {
     );
 }
 
+/// isBitfield - Returns whether to treat the specified field as a bitfield.
+bool isBitfield(tree_node *field_decl) {
+  tree type = DECL_BIT_FIELD_TYPE(field_decl);
+  if (!type)
+    return false;
+
+  // A bitfield.  But do we need to treat it as one?
+
+  assert(DECL_FIELD_BIT_OFFSET(field_decl) && "Bitfield with no bit offset!");
+  if (TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field_decl)) & 7)
+    // Does not start on a byte boundary - must treat as a bitfield.
+    return true;
+
+  if (!TYPE_SIZE(type) || !isInt64(TYPE_SIZE (type), true))
+    // No size or variable sized - play safe, treat as a bitfield.
+    return true;
+
+  uint64_t TypeSizeInBits = getInt64(TYPE_SIZE (type), true);
+  assert(!(TypeSizeInBits & 7) && "A type with a non-byte size!");
+
+  assert(DECL_SIZE(field_decl) && "Bitfield with no bit size!");
+  unsigned FieldSizeInBits = TREE_INT_CST_LOW(DECL_SIZE(field_decl));
+  if (FieldSizeInBits < TypeSizeInBits)
+    // Not wide enough to hold the entire type - treat as a bitfield.
+    return true;
+
+  return false;
+}
+
+/// getDeclaredType - Get the declared type for the specified field_decl, and
+/// not the shrunk-to-fit type that GCC gives us in TREE_TYPE.
+tree getDeclaredType(tree_node *field_decl) {
+  return DECL_BIT_FIELD_TYPE(field_decl) ?
+    DECL_BIT_FIELD_TYPE(field_decl) : TREE_TYPE (field_decl);
+}
+
 /// refine_type_to - Cause all users of the opaque type old_type to switch
 /// to the more concrete type new_type.
 void refine_type_to(tree old_type, tree new_type)
@@ -464,6 +500,7 @@ void TypeRefinementDatabase::dump() const {
 //                              Helper Routines
 //===----------------------------------------------------------------------===//
 
+
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
 /// structure.
 static unsigned getFieldOffsetInBits(tree Field) {
@@ -473,7 +510,6 @@ static unsigned getFieldOffsetInBits(tree Field) {
     Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
   return Result;
 }
-
 
 /// FindLLVMTypePadding - If the specified struct has any inter-element padding,
 /// add it to the Padding array.
@@ -619,7 +655,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
         return true;
 
       unsigned FieldBitOffset = getFieldOffsetInBits(Field);
-      if (GCCTypeOverlapsWithPadding(TREE_TYPE(Field),
+      if (GCCTypeOverlapsWithPadding(getDeclaredType(Field),
                                      PadStartBits-FieldBitOffset, PadSizeBits))
         return true;
     }
@@ -1589,7 +1625,7 @@ void TypeConverter::DecodeStructFields(tree Field,
     return;
 
   // Handle bit-fields specially.
-  if (DECL_BIT_FIELD_TYPE(Field)) {
+  if (isBitfield(Field)) {
     DecodeStructBitField(Field, Info);
     return;
   }
@@ -1600,8 +1636,8 @@ void TypeConverter::DecodeStructFields(tree Field,
   unsigned StartOffsetInBits = getFieldOffsetInBits(Field);
   assert((StartOffsetInBits & 7) == 0 && "Non-bit-field has non-byte offset!");
   unsigned StartOffsetInBytes = StartOffsetInBits/8;
-  
-  const Type *Ty = ConvertType(TREE_TYPE(Field));
+
+  const Type *Ty = ConvertType(getDeclaredType(Field));
 
   // Pop any previous elements out of the struct if they overlap with this one.
   // This can happen when the C++ front-end overlaps fields with tail padding in
@@ -1843,24 +1879,24 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
     if (TREE_CODE(Field) == FIELD_DECL &&
         TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
       unsigned FieldOffsetInBits = getFieldOffsetInBits(Field);
-      tree FieldType = TREE_TYPE(Field);
-      
+      tree FieldType = getDeclaredType(Field);
+
       // If this is a bitfield, we may want to adjust the FieldOffsetInBits to
       // produce safe code.  In particular, bitfields will be loaded/stored as
       // their *declared* type, not the smallest integer type that contains
       // them.  As such, we need to respect the alignment of the declared type.
-      if (tree DeclaredType = DECL_BIT_FIELD_TYPE(Field)) {
+      if (isBitfield(Field)) {
         // If this is a bitfield, the declared type must be an integral type.
-        const Type *DeclFieldTy = ConvertType(DeclaredType);
-        unsigned DeclBitAlignment = Info->getTypeAlignment(DeclFieldTy)*8;
-        
-        FieldOffsetInBits &= ~(DeclBitAlignment-1ULL);
+        const Type *FieldTy = ConvertType(FieldType);
+        unsigned BitAlignment = Info->getTypeAlignment(FieldTy)*8;
+
+        FieldOffsetInBits &= ~(BitAlignment-1ULL);
         // When we fix the field alignment, we must restart the FieldNo search
         // because the FieldOffsetInBits can be lower than it was in the
         // previous iteration.
         CurFieldNo = 0;
       }
-      
+
       // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
       // not include variable sized fields here.
       bool isZeroSizeField = !TYPE_SIZE(FieldType) ||

@@ -216,6 +216,13 @@ bool isSequentialCompatible(tree_node *type);
 /// corresponds to an LLVM array type.
 bool isArrayCompatible(tree_node *type);
 
+/// isBitfield - Returns whether to treat the specified field as a bitfield.
+bool isBitfield(tree_node *field_decl);
+
+/// getDeclaredType - Get the declared type for the specified field, and
+/// not the shrunk-to-fit type that GCC gives us in TREE_TYPE.
+tree_node *getDeclaredType(tree_node *field_decl);
+
 /// ValidateRegisterVariable - Check that a static "asm" variable is
 /// well-formed.  If not, emit error messages and return true.  If so, return
 /// false.

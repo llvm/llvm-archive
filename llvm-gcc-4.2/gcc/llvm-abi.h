@@ -106,7 +106,7 @@ static tree isSingleElementStructOrArray(tree type) {
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
       if (TREE_CODE(Field) == FIELD_DECL) {
         if (!FoundField)
-          FoundField = TREE_TYPE(Field);
+          FoundField = getDeclaredType(Field);
         else
           return 0;   // More than one field.
       }
@@ -206,9 +206,9 @@ public:
         if (TREE_CODE(Field) == FIELD_DECL) {
           unsigned FNo = GetFieldIndex(Field);
           assert(FNo != ~0U && "Case not handled yet!");
-          
+
           C.EnterField(FNo, Ty);
-          HandleArgument(TREE_TYPE(Field));
+          HandleArgument(getDeclaredType(Field));
           C.ExitField();
         }
     } else if (TREE_CODE(type) == COMPLEX_TYPE) {

@@ -1163,7 +1163,7 @@ build_unary_op (enum tree_code op_code, tree result_type, tree operand)
 	  result = fold (build1 (ADDR_EXPR, operation_type, operand));
 	}
 
-      TREE_CONSTANT (result) = staticp (operand) || TREE_CONSTANT (operand);
+      TREE_CONSTANT (result) |= staticp (operand) || TREE_CONSTANT (operand);
       break;
 
     case INDIRECT_REF:

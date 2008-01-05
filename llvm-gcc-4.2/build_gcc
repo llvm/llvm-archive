@@ -342,7 +342,7 @@ for t in $TARGETS ; do
     mkdir -p .$DL/$d || exit 1
   done
   for f in $LIBEXEC_FILES ; do
-    if file $DIR/dst-*-$t$DL/$f | grep -q 'Mach-O executable' ; then
+    if file $DIR/dst-*-$t$DL/$f | grep -q -E 'Mach-O (executable|dynamically linked shared library)' ; then
       lipo -output .$DL/$f -create $DIR/dst-*-$t$DL/$f || exit 1
     else
       cp -p $DIR/dst-$BUILD-$t$DL/$f .$DL/$f || exit 1

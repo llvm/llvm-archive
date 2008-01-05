@@ -43,6 +43,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
@@ -97,6 +98,8 @@ static PassManager *PerModulePasses = 0;
 static FunctionPassManager *CodeGenPasses = 0;
 
 static void createOptimizationPasses();
+bool OptimizationPassesCreated = false;
+static void destroyOptimizationPasses();
 
 void llvm_initialize_backend(void) {
   // Initialize LLVM options.
@@ -123,8 +126,6 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (flag_exceptions)
-    Args.push_back("--enable-eh");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
@@ -197,6 +198,12 @@ void llvm_initialize_backend(void) {
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
+/// Set backend options that may only be known at codegen time.
+void performLateBackendInitialization(void) {
+  // The Ada front-end sets flag_exceptions only after processing the file.
+  ExceptionHandling = flag_exceptions;
+}
+
 void llvm_lang_dependent_init(const char *Name) {
   if (Name)
     TheModule->setModuleIdentifier(Name);
@@ -227,18 +234,14 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
     exit(1);
   }
 
-  if (PerFunctionPasses || PerModulePasses || CodeGenPasses) {
-    delete PerFunctionPasses;
-    delete PerModulePasses;
-    delete CodeGenPasses;
+  if (OptimizationPassesCreated) {
+    destroyOptimizationPasses();
 
     // Don't run codegen, when we should output PCH
-    if (!flag_pch_file)
-      createOptimizationPasses();
-    else
+    if (flag_pch_file)
       llvm_pch_write_init();
   }
-    
+
   // Read LLVM Types string table
   readLLVMTypesStringTable();
   readLLVMValues();
@@ -255,6 +258,8 @@ void llvm_pch_write_init(void) {
   AsmOutStream = new oFILEstream(asm_out_file);
   AsmOutFile = new OStream(*AsmOutStream);
 
+  assert(!OptimizationPassesCreated);
+  OptimizationPassesCreated = true;
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
 
@@ -271,7 +276,28 @@ void llvm_pch_write_init(void) {
   timevar_pop(TV_LLVM_INIT);
 }
 
+static void destroyOptimizationPasses() {
+  assert(OptimizationPassesCreated ||
+         (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
+
+  delete PerFunctionPasses;
+  delete PerModulePasses;
+  delete CodeGenPasses;
+
+  PerFunctionPasses = 0;
+  PerModulePasses   = 0;
+  CodeGenPasses     = 0;
+  OptimizationPassesCreated = false;
+}
+
 static void createOptimizationPasses() {
+  assert(OptimizationPassesCreated ||
+         (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
+
+  if (OptimizationPassesCreated)
+    return;
+  OptimizationPassesCreated = true;
+
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
   PerFunctionPasses =
@@ -368,19 +394,11 @@ static void createOptimizationPasses() {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
     PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
-
-    // Disable emission of .ident into the output file... which is completely
-    // wrong for llvm/.bc emission cases.
-    flag_no_ident = 1;
     HasPerModulePasses = true;
   } else if (emit_llvm) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
     // -emit-llvm -S to the GCC driver.
     PerModulePasses->add(new PrintModulePass(AsmOutFile));
-    
-    // Disable emission of .ident into the output file... which is completely
-    // wrong for llvm/.bc emission cases.
-    flag_no_ident = 1;
     HasPerModulePasses = true;
   } else {
     FunctionPassManager *PM;
@@ -436,11 +454,14 @@ void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
   AsmOutFile = new OStream(*AsmOutStream);
-  
+
   flag_llvm_pch_read = 0;
 
-  createOptimizationPasses();
-  
+  if (emit_llvm_bc || emit_llvm)
+    // Disable emission of .ident into the output file... which is completely
+    // wrong for llvm/.bc emission cases.
+    flag_no_ident = 1;
+
   AttributeUsedGlobals.clear();
   timevar_pop(TV_LLVM_INIT);
 }
@@ -468,6 +489,9 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+
+  performLateBackendInitialization();
+  createOptimizationPasses();
 
   if (flag_pch_file) {
     writeLLVMTypesStringTable();
@@ -582,7 +606,10 @@ void llvm_emit_code_for_current_function(tree fndecl) {
     Fn->dump();
   }
 #endif
-  
+
+  performLateBackendInitialization();
+  createOptimizationPasses();
+
   if (PerFunctionPasses)
     PerFunctionPasses->run(*Fn);
   

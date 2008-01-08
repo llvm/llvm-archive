@@ -940,6 +940,30 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     break;
   }
   
+  // If this is an operation on an integer value in a precision smaller than
+  // the LLVM value we are computing it in, reduce the excess precision here.
+  // This happens with odd-sized bitfields (e.g. i33) that are evaluated in the
+  // next size power-of-two register (e.g. i64).  This should be reevaluated
+  // when we have good support for unusual sized integers in the code generator.
+  if (Result && TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE) {
+    unsigned LLVMWidth = cast<IntegerType>(Result->getType())->getBitWidth();
+    unsigned TreeWidth = TYPE_PRECISION(TREE_TYPE(exp));
+    if (LLVMWidth > TreeWidth && lang_hooks.reduce_bit_field_operations) {
+      if (TYPE_UNSIGNED(TREE_TYPE(exp))) {
+        // Use an 'and' to clear excess top bits.
+        Constant *Mask =
+          ConstantInt::get(APInt::getLowBitsSet(LLVMWidth, TreeWidth));
+        Result = Builder.CreateAnd(Result, Mask, "mask");
+      } else {
+        // Shift Left then shift right.
+        Constant *ShAmt = ConstantInt::get(Result->getType(), 
+                                           LLVMWidth-TreeWidth);
+        Result = Builder.CreateShl(Result, ShAmt, "sextl");
+        Result = Builder.CreateAShr(Result, ShAmt, "sextr");
+      }
+    }
+  }
+  
   if (TheDebugInfo && EXPR_HAS_LOCATION(exp)) {
     // Restore location back down the tree.
     TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));

@@ -946,7 +946,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   // next size power-of-two register (e.g. i64).  This should be reevaluated
   // when we have good support for unusual sized integers in the code generator.
   if (Result && TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE) {
-    unsigned LLVMWidth = cast<IntegerType>(Result->getType())->getBitWidth();
+    unsigned LLVMWidth = Result->getType()->getPrimitiveSizeInBits();
     unsigned TreeWidth = TYPE_PRECISION(TREE_TYPE(exp));
     if (LLVMWidth > TreeWidth && lang_hooks.reduce_bit_field_operations) {
       if (TYPE_UNSIGNED(TREE_TYPE(exp))) {

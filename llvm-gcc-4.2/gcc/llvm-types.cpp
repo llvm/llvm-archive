@@ -1614,6 +1614,129 @@ void adjustPaddingElement(const Type *OldTy, const Type *NewTy) {
 
 }
 
+/// Mapping from type to type-used-as-base-class and back.
+static DenseMap<tree, tree> BaseTypesMap;
+
+/// FixBaseClassField - This method is called when we have a field Field
+/// of Record type within a Record, and the size of Field is smaller than the
+/// size of its Record type.  This may indicate the situation where a base class
+/// has virtual base classes which are not allocated.  Replace Field's original
+/// type with a modified one reflecting what actually gets allocated.
+///
+/// This can also occur when a class has an empty base class; the class will
+/// have size N+4 and the field size N+1.  In this case the fields will add
+/// up to N+4, so we haven't really changed anything.
+
+static tree FixBaseClassField(tree Field) {
+  tree oldTy = TREE_TYPE(Field);
+  tree &newTy = BaseTypesMap[oldTy];
+  // If already in table, reuse.
+  if (!newTy) {
+    newTy = copy_node(oldTy);
+    tree F2 = 0, prevF2 = 0;
+    // Copy the fields up to the TYPE_DECL separator.
+    // VAR_DECLs can also appear, representing static members.  Possibly some
+    // other junk I haven't hit yet, just skip anything that's not a FIELD:(
+    for (tree F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
+      if (TREE_CODE(F) == TYPE_DECL)
+        break;
+      if (TREE_CODE(F) == FIELD_DECL) {
+        F2 = copy_node(F);
+        if (prevF2)
+          TREE_CHAIN(prevF2) = F2;
+        else
+          TYPE_FIELDS(newTy) = F2;
+        TREE_CHAIN(F2) = 0;
+      }
+    }
+    BaseTypesMap[oldTy] = newTy;
+    BaseTypesMap[newTy] = oldTy;
+    /* Prevent gcc's garbage collector from destroying newTy.  The
+       GC code doesn't understand DenseMaps:( */
+    llvm_note_type_used(newTy);
+    TYPE_SIZE(newTy) = DECL_SIZE(Field);
+    TYPE_SIZE_UNIT(newTy) = DECL_SIZE_UNIT(Field);
+    TYPE_MAIN_VARIANT(newTy) = newTy;
+    // Change the name.
+    if (TYPE_NAME(oldTy)) {
+      const char *p = "anon";
+      if (TREE_CODE(TYPE_NAME(oldTy)) ==IDENTIFIER_NODE)
+        p = IDENTIFIER_POINTER(TYPE_NAME(oldTy));
+      else if (DECL_NAME(TYPE_NAME(oldTy)))
+        p = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(oldTy)));
+      char *q = (char *)xmalloc(strlen(p)+6);
+      strcpy(q,p);
+      strcat(q,".base");
+      TYPE_NAME(newTy) = get_identifier(q);
+      free(q);
+    }
+  }
+  return newTy;
+}
+
+/// FixBaseClassFields - alter the types referred to by Field nodes that
+/// represent base classes to reflect reality.
+//
+// Suppose we're converting type T.  Look for the case where a base class A
+// of T contains a virtual base class B, and B is not allocated when A is 
+// used as the base class of T.  This is indicated by the FIELD node for A
+// having a size smaller than the size of A, and the chain of fields for A
+// having a TYPE_DECL node in the middle of it; that node comes after the
+// allocated fields and before the unallocated virtual base classes.  Create
+// a new type A.base for LLVM purposes which does not contain the virtual
+// base classes.  (Where A is a virtual base class of T, there is also a BINFO
+// node for it, but not when A is a nonvirtual base class.  So we can't
+// use that.)
+static void FixBaseClassFields(tree type) {
+  assert(TREE_CODE(type)==RECORD_TYPE);
+  for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+    if (TREE_CODE(Field)==FIELD_DECL && 
+        !DECL_BIT_FIELD_TYPE(Field) &&
+        TREE_CODE(DECL_FIELD_OFFSET(Field))==INTEGER_CST &&
+        TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
+        TYPE_SIZE(TREE_TYPE(Field)) &&
+        DECL_SIZE(Field) &&
+        TREE_INT_CST_LOW(DECL_SIZE(Field)) < 
+              TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(Field))))
+      TREE_TYPE(Field) = FixBaseClassField(Field);
+  }
+  // Size of the complete type will be a multiple of its alignment.
+  // In some cases involving empty C++ classes this is not true coming in.
+  // Earlier, the sizes in the field types were also wrong in a way that
+  // compensated as far as LLVM's translation code is concerned; now we
+  // have fixed that, and have to fix the size also.
+  if (TYPE_SIZE (type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
+    TYPE_SIZE(type) = build_int_cst(
+           TREE_TYPE(TYPE_SIZE(type)),
+           (TREE_INT_CST_LOW(TYPE_SIZE(type))+TYPE_ALIGN(type)-1) &
+           ~(TYPE_ALIGN(type)-1));
+    TYPE_SIZE_UNIT(type) = build_int_cst(
+           TREE_TYPE(TYPE_SIZE_UNIT(type)),
+           (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))+TYPE_ALIGN_UNIT(type)-1) &
+           ~(TYPE_ALIGN_UNIT(type)-1));
+  }
+}
+
+// RestoreBaseClassFields - put things back the way they were so the C++FE
+// code continues to work (there are pointers stashed away in there).
+
+static void RestoreBaseClassFields(tree type) {
+  assert(TREE_CODE(type)==RECORD_TYPE);
+  for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+    if (TREE_CODE(Field)==FIELD_DECL && 
+        !DECL_BIT_FIELD_TYPE(Field) &&
+        TREE_CODE(DECL_FIELD_OFFSET(Field))==INTEGER_CST &&
+        TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
+        TYPE_SIZE(TREE_TYPE(Field)) &&
+        DECL_SIZE(Field)) {
+      tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
+      if (oldTy)
+        TREE_TYPE(Field) = oldTy;
+    }
+  }
+}
+
+
 
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
@@ -1794,7 +1917,11 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
 // TYPE_DECL node sitting in the middle of the FIELD list separating virtual 
 // base classes from everything else.
 //
-// For LLVM purposes, we probably need to build a new type for B-within-D that 
+// Similarly, a nonvirtual base class which has virtual base classes might
+// not contain those virtual base classes when used as a nonvirtual base class.
+// There is seemingly no way to detect this except for the size differential.
+//
+// For LLVM purposes, we build a new type for B-within-D that 
 // has the correct size and layout for that usage.
 
 const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
@@ -1815,18 +1942,14 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   bool OldConvertingStruct = ConvertingStruct;
   ConvertingStruct = true;
   
-  // Construct LLVM types for the base types... in order to get names for
-  // base classes and to ensure they are laid out.
-  if (tree binfo = TYPE_BINFO(type)) {
-    for (unsigned i = 0, e = BINFO_N_BASE_BINFOS(binfo); i != e; ++i)
-      ConvertType(BINFO_TYPE(BINFO_BASE_BINFO(binfo, i)));
-  }
-  
   StructTypeConversionInfo *Info = 
     new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type), 
                              TYPE_PACKED(type));
+
+  // Alter any fields that appear to represent base classes so their lists
+  // of fields bear some resemblance to reality.
+  FixBaseClassFields(type);
                                 
-  
   // Convert over all of the elements of the struct.
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
     DecodeStructFields(Field, *Info);
@@ -1906,7 +2029,11 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
       SetFieldIndex(Field, FieldNo);
     }
-  
+
+  // Put the original gcc struct back the way it was; necessary to prevent the
+  // binfo-walking code in cp/class from getting confused.
+  RestoreBaseClassFields(type);  
+
   const Type *ResultTy = Info->getLLVMType();
   StructTypeInfoMap[ResultTy] = Info;
   

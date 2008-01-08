@@ -4318,6 +4318,8 @@ extern tree upper_bound_in_type (tree, tree);
 extern tree lower_bound_in_type (tree, tree);
 extern int operand_equal_for_phi_arg_p (tree, tree);
 extern bool empty_body_p (tree);
+/* LLVM LOCAL */
+extern void llvm_note_type_used(tree);
 
 /* In stmt.c */
 

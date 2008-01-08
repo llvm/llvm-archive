@@ -7902,4 +7902,16 @@ note_alternative_entry_points (void)
 }
 /* APPLE LOCAL end CW asm blocks */
 
+/* LLVM LOCAL begin */
+/* This data structure keeps gcc's garbage collector from
+   deleting types created by the llvm virtual base class handling
+   stuff in llvm-types.cpp. */
+static GTY(()) VEC(tree,gc) *llvm_types_used;
+
+void
+llvm_note_type_used(tree type)
+{
+  VEC_safe_push(tree, gc, llvm_types_used, type);
+}
+/* LLVM LOCAL end */
 #include "gt-tree.h"

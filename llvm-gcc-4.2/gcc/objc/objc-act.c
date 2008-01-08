@@ -9925,24 +9925,12 @@ synth_v2_forward_declarations (void)
   /* struct class_t OBJC_CLASS_$_<my_name>; */
   UOBJC_V2_CLASS_decl = build_metadata_decl ("OBJC_CLASS_$",
 					     /* APPLE LOCAL radar 5202926 */
-                                             /* APPLE LOCAL begin radar 5658734 */
-#ifndef ENABLE_LLVM
                                              objc_v2_class_template, true);
-#else
-                                             objc_v2_class_template, false);
-#endif
-                                             /* APPLE LOCAL end radar 5658734 */
 
  /* struct class_t OBJC_METACLASS_$_<my_name>; */
  UOBJC_V2_METACLASS_decl = build_metadata_decl ("OBJC_METACLASS_$",
 						/* APPLE LOCAL radar 5202926 */
-                                                /* APPLE LOCAL begin radar 5658734 */
-#ifndef ENABLE_LLVM
                                                 objc_v2_class_template, true);
-#else
-                                                objc_v2_class_template, false);
-#endif
-                                                /* APPLE LOCAL end radar 5658734 */
 }
 
 static void
@@ -12046,16 +12034,12 @@ generate_v2_shared_structures (int cls_flags)
       sav = objc_implementation_context;
       objc_implementation_context = my_root_int;
       /* APPLE LOCAL radar 5202926 */
-      /* APPLE LOCAL begin radar 5658734 */
-#ifndef ENABLE_LLVM
-      root_expr = build_metadata_decl ("OBJC_METACLASS_$", objc_v2_class_template,
-                                       true);
-#else
-      root_expr = build_metadata_decl ("OBJC_METACLASS_$", objc_v2_class_template,
-                                       false);
+      root_expr = build_metadata_decl ("OBJC_METACLASS_$", objc_v2_class_template, true);
+      /* APPLE LOCAL LLVM begin - radar 5658734 */
+#ifdef ENABLE_LLVM
+      DECL_EXTERNAL(root_expr) = 1;
 #endif
-      root_expr = update_var_decl (root_expr);
-      /* APPLE LOCAL end radar 5658734 */
+      /* APPLE LOCAL LLVM end - radar 5658734 */
       root_expr = build_fold_addr_expr (root_expr);
 
       /* Install class `isa' and `super' pointers at runtime.  */
@@ -12066,32 +12050,20 @@ generate_v2_shared_structures (int cls_flags)
          back-end, recognizes '_OBJC_' prefix and prepends an 'L' in front of this. Darwin
          assembler treats names starting with 'L_' as local symbols. */
       /* APPLE LOCAL radar 5202926 */
-      /* APPLE LOCAL begin radar 5658734 */
-#ifndef ENABLE_LLVM
-      class_superclass_expr = build_metadata_decl ("OBJC_CLASS_$",
-                                                   objc_v2_class_template,
-                                                   true);
-#else
-      class_superclass_expr = build_metadata_decl ("OBJC_CLASS_$",
-                                                   objc_v2_class_template,
-                                                   false);
+      class_superclass_expr = build_metadata_decl ("OBJC_CLASS_$", objc_v2_class_template, true);
+      /* APPLE LOCAL LLVM begin - radar 5658734 */
+#ifdef ENABLE_LLVM
+      DECL_EXTERNAL(class_superclass_expr) = 1;
 #endif
-      class_superclass_expr = update_var_decl (class_superclass_expr);
-      /* APPLE LOCAL end radar 5658734 */
+      /* APPLE LOCAL LLVM end - radar 5658734 */
       class_superclass_expr = build_fold_addr_expr (class_superclass_expr);
       /* APPLE LOCAL radar 5202926 */
-      /* APPLE LOCAL begin radar 5658734 */
-#ifndef ENABLE_LLVM
-      metaclass_superclass_expr = build_metadata_decl ("OBJC_METACLASS_$",
-                                                       objc_v2_class_template,
-                                                       true);
-#else
-      metaclass_superclass_expr = build_metadata_decl ("OBJC_METACLASS_$",
-                                                       objc_v2_class_template,
-                                                       false);
+      metaclass_superclass_expr = build_metadata_decl ("OBJC_METACLASS_$", objc_v2_class_template, true);
+      /* APPLE LOCAL LLVM begin - radar 5658734 */
+#ifdef ENABLE_LLVM
+      DECL_EXTERNAL(metaclass_superclass_expr) = 1;
 #endif
-      metaclass_superclass_expr = update_var_decl (metaclass_superclass_expr);
-      /* APPLE LOCAL end radar 5658734 */
+      /* APPLE LOCAL LLVM end - radar 5658734 */
       metaclass_superclass_expr = build_fold_addr_expr (metaclass_superclass_expr);
       objc_implementation_context = sav;
     }

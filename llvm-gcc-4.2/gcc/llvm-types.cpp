@@ -1706,14 +1706,25 @@ static void FixBaseClassFields(tree type) {
   // compensated as far as LLVM's translation code is concerned; now we
   // have fixed that, and have to fix the size also.
   if (TYPE_SIZE (type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
-    TYPE_SIZE(type) = build_int_cst(
-           TREE_TYPE(TYPE_SIZE(type)),
-           (TREE_INT_CST_LOW(TYPE_SIZE(type))+TYPE_ALIGN(type)-1) &
-           ~(TYPE_ALIGN(type)-1));
-    TYPE_SIZE_UNIT(type) = build_int_cst(
-           TREE_TYPE(TYPE_SIZE_UNIT(type)),
-           (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))+TYPE_ALIGN_UNIT(type)-1) &
-           ~(TYPE_ALIGN_UNIT(type)-1));
+    // This computes (size+align-1) & ~(align-1)
+    // NB "sizetype" is #define'd in one of the gcc headers.  Gotcha!
+    tree size_type = TREE_TYPE(TYPE_SIZE(type));
+    tree alignm1 = fold_build2(PLUS_EXPR, size_type,
+                                build_int_cst(size_type, TYPE_ALIGN(type)),
+                                fold_build1(NEGATE_EXPR, size_type,
+                                          build_int_cst(size_type, 1)));
+    tree lhs = fold_build2(PLUS_EXPR, size_type, TYPE_SIZE(type), alignm1);
+    tree rhs = fold_build1(BIT_NOT_EXPR, size_type, alignm1);
+    TYPE_SIZE(type) = fold_build2(BIT_AND_EXPR, size_type, lhs, rhs);
+
+    size_type = TREE_TYPE(TYPE_SIZE_UNIT(type));
+    alignm1 = fold_build2(PLUS_EXPR, size_type,
+                                build_int_cst(size_type, TYPE_ALIGN_UNIT(type)),
+                                fold_build1(NEGATE_EXPR, size_type,
+                                        build_int_cst(size_type, 1)));
+    lhs = fold_build2(PLUS_EXPR, size_type, TYPE_SIZE_UNIT(type), alignm1);
+    rhs = fold_build1(BIT_NOT_EXPR, size_type, alignm1);
+    TYPE_SIZE_UNIT(type) = fold_build2(BIT_AND_EXPR, size_type, lhs, rhs);
   }
 }
 

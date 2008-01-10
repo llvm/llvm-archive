@@ -714,12 +714,14 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   
   // Handle annotate attribute on global.
   tree annotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES (decl));
+  if (annotateAttr == 0)
+    return;
   
   // Get file and line number
- Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
- Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
- const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
- file = ConstantExpr::getBitCast(file, SBP);
+  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
+  const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+  file = ConstantExpr::getBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
   //  to successive lookups.
@@ -739,10 +741,12 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
       assert(TREE_CODE(val) == STRING_CST && 
              "Annotate attribute arg should always be a string");
       Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
-      Constant *Element[4] = {ConstantExpr::getBitCast(GV,SBP),
+      Constant *Element[4] = {
+        ConstantExpr::getBitCast(GV,SBP),
         ConstantExpr::getBitCast(strGV,SBP),
         file,
-        lineNo};
+        lineNo
+      };
  
       AttributeAnnotateGlobals.push_back(ConstantStruct::get(Element, 4, false));
     }

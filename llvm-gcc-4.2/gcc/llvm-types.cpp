@@ -1696,6 +1696,8 @@ static void FixBaseClassFields(tree type) {
         TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
         TYPE_SIZE(TREE_TYPE(Field)) &&
         DECL_SIZE(Field) &&
+        TREE_CODE(DECL_SIZE(Field))==INTEGER_CST &&
+        TREE_CODE(TYPE_SIZE(TREE_TYPE(Field)))==INTEGER_CST &&
         TREE_INT_CST_LOW(DECL_SIZE(Field)) < 
               TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(Field))))
       TREE_TYPE(Field) = FixBaseClassField(Field);
@@ -1739,7 +1741,9 @@ static void RestoreBaseClassFields(tree type) {
         TREE_CODE(DECL_FIELD_OFFSET(Field))==INTEGER_CST &&
         TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
         TYPE_SIZE(TREE_TYPE(Field)) &&
-        DECL_SIZE(Field)) {
+        DECL_SIZE(Field) &&
+        TREE_CODE(DECL_SIZE(Field))==INTEGER_CST &&
+        TREE_CODE(TYPE_SIZE(TREE_TYPE(Field)))==INTEGER_CST) {
       tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
       if (oldTy)
         TREE_TYPE(Field) = oldTy;

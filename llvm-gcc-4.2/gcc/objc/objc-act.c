@@ -76,6 +76,9 @@ Boston, MA 02110-1301, USA.  */
 #include "langhooks-def.h"
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 #include "opts.h"
+#ifdef ENABLE_LLVM
+#include "llvm.h"               /* for reset_initializer_llvm */
+#endif
 
 #define OBJC_VOID_AT_END	void_list_node
 
@@ -5541,6 +5544,13 @@ build_selector_translation_table (void)
 	{
 	  decl = TREE_PURPOSE (chain);
 	  finish_var_decl (decl, expr);
+          /* APPLE LOCAL LLVM begin - radar 5676233 */
+#ifdef ENABLE_LLVM
+          /* Reset the initializer for this reference as it most likely
+             changed.  */
+          reset_initializer_llvm(decl);
+#endif
+          /* APPLE LOCAL LLVM end - radar 5676233 */
 	}
       else
 	{
@@ -18172,8 +18182,16 @@ finish_objc (void)
   for (chain = cls_ref_chain; chain; chain = TREE_CHAIN (chain))
     {
       handle_class_ref (chain);
-      if (TREE_PURPOSE (chain))
+      /* APPLE LOCAL LLVM begin - radar 5676233 */
+      if (TREE_PURPOSE (chain)) {
 	generate_classref_translation_entry (chain);
+#ifdef ENABLE_LLVM
+        /* Reset the initializer for this reference as it most likely
+           changed.  */
+        reset_initializer_llvm(TREE_PURPOSE (chain));
+#endif
+      }
+      /* APPLE LOCAL LLVM end - radar 5676233 */
     }
 
   for (impent = imp_list; impent; impent = impent->next)

@@ -798,6 +798,17 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   }
 }
 
+/// reset_initializer_llvm - Change the initializer for a global variable.
+void reset_initializer_llvm(tree decl) {
+  // Get or create the global variable now.
+  GlobalVariable *GV = cast<GlobalVariable>(DECL_LLVM(decl));
+  
+  // Convert the initializer over.
+  Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
+
+  // Set the initializer.
+  GV->setInitializer(Init);
+}
   
 /// emit_global_to_llvm - Emit the specified VAR_DECL or aggregate CONST_DECL to
 /// LLVM as a global variable.  This function implements the end of

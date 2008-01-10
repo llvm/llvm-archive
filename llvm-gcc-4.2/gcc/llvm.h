@@ -44,12 +44,15 @@ void llvm_emit_code_for_current_function(union tree_node* fndecl);
 /* make_decl_llvm - This is also defined in tree.h and used by macros there. */
 void make_decl_llvm(union tree_node*);
 
+/* reset_initializer_llvm - Change the initializer for a global variable. */
+void reset_initializer_llvm(union tree_node*);
+
 /* emit_global_to_llvm - Emit the specified VAR_DECL to LLVM as a global
  * variable.
  */
 void emit_global_to_llvm(union tree_node*);
 
-/* emit_global_to_llvm - Emit the specified alias to LLVM
+/* emit_alias_to_llvm - Emit the specified alias to LLVM
  */
 void emit_alias_to_llvm(union tree_node*, union tree_node*, union tree_node*);
 

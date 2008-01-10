@@ -800,6 +800,11 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
 
 /// reset_initializer_llvm - Change the initializer for a global variable.
 void reset_initializer_llvm(tree decl) {
+  // If there were earlier errors we can get here when DECL_LLVM has not
+  // been set.  Don't crash.
+  if ((errorcount || sorrycount) && !DECL_LLVM(decl))
+    return;
+
   // Get or create the global variable now.
   GlobalVariable *GV = cast<GlobalVariable>(DECL_LLVM(decl));
   

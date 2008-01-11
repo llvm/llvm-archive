@@ -6764,7 +6764,17 @@ maybe_warn_about_returning_address_of_local (tree retval)
 
   while (TREE_CODE (whats_returned) == COMPONENT_REF
 	 || TREE_CODE (whats_returned) == ARRAY_REF)
+  /* LLVM LOCAL begin */
+  {
+#ifdef ENABLE_LLVM
+    if (TREE_CODE (whats_returned) == ARRAY_REF
+        && (TREE_CODE (TREE_TYPE (TREE_OPERAND (whats_returned, 0)))
+            != ARRAY_TYPE))
+      break;    /* Ignore pointer base of array ref extension. */
+#endif
     whats_returned = TREE_OPERAND (whats_returned, 0);
+  }
+  /* LLVM LOCAL end */
 
   if (DECL_P (whats_returned)
       && DECL_NAME (whats_returned)

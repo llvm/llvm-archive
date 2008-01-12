@@ -62,5 +62,8 @@ extern int ix86_regparm;
     }                                                           \
   }
 
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)          \
+  (!TARGET_64BIT)
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

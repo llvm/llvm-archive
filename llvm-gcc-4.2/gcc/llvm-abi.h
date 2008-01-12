@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-internal.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Target/TargetData.h"
 
 namespace llvm {
@@ -126,7 +127,15 @@ static tree isSingleElementStructOrArray(tree type) {
 // would often be 64-bits).
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
-   !isSingleElementStructOrArray(type)
+   !isSingleElementStructOrArray(X)
+#endif
+
+// LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
+// value should be passed by reference by passing its address with the byval
+// attribute bit set. The default is false.
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X) \
+    false
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are
@@ -192,13 +201,17 @@ public:
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type) {
+  void HandleArgument(tree type, uint16_t *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
 
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type)) {
+      C.HandleByValArgument(Ty, type);
+      if (Attributes)
+        *Attributes |= ParamAttr::ByVal;
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, Ty);
     } else if (TREE_CODE(type) == RECORD_TYPE) {

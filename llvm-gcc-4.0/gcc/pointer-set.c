@@ -170,3 +170,17 @@ pointer_set_insert (struct pointer_set_t *pset, void *p)
 
   return 0;
 }
+
+/* LLVM local begin */
+/* Pass each pointer in PSET to the function in FN, together with the fixed
+   parameter DATA.  If FN returns false, the iteration stops.  */
+
+void pointer_set_traverse (struct pointer_set_t *pset,
+                           bool (*fn) (void *, void *), void *data)
+{
+  size_t i;
+  for (i = 0; i < pset->n_slots; ++i)
+    if (pset->slots[i] && !fn (pset->slots[i], data))
+      break;
+}
+/* LLVM local end */

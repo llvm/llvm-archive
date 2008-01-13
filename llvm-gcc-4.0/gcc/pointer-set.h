@@ -28,5 +28,9 @@ void pointer_set_destroy (struct pointer_set_t *pset);
 
 int pointer_set_contains (struct pointer_set_t *pset, void *p);
 int pointer_set_insert (struct pointer_set_t *pset, void *p);
+/* LLVM local begin */
+void pointer_set_traverse (struct pointer_set_t *, bool (*) (void *, void *),
+                           void *);
+/* LLVM local end */
 
 #endif  /* POINTER_SET_H  */

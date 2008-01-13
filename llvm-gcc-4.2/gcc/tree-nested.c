@@ -35,6 +35,8 @@
 #include "expr.h"
 #include "langhooks.h"
 #include "ggc.h"
+/* LLVM local */
+#include "pointer-set.h"
 
 
 /* The object of this pass is to lower the representation of a set of nested
@@ -89,6 +91,9 @@ struct nesting_info GTY ((chain_next ("%h.next")))
   struct nesting_info *inner;
   struct nesting_info *next;
   
+  /* LLVM local */
+  struct nesting_info *next_with_chain;
+
   htab_t GTY ((param_is (struct var_map_elt))) field_map;
   htab_t GTY ((param_is (struct var_map_elt))) var_map;
   bitmap suppress_expansion;
@@ -102,11 +107,36 @@ struct nesting_info GTY ((chain_next ("%h.next")))
   tree chain_decl;
   tree nl_goto_field;
 
+  /* LLVM local */
+  struct pointer_set_t * GTY ((skip)) callers;
+
   bool any_parm_remapped;
   bool any_tramp_created;
   char static_chain_added;
 };
 
+
+/* LLVM local begin */
+/* Hash table used to look up nesting_info from nesting_info->context.  */
+
+static htab_t ni_map;
+
+/* Hashing and equality functions for ni_map.  */
+
+static hashval_t
+ni_hash (const void *p)
+{
+  const struct nesting_info *i = p;
+  return (hashval_t) DECL_UID (i->context);
+}
+
+static int
+ni_eq (const void *p1, const void *p2)
+{
+  const struct nesting_info *i1 = p1, *i2 = p2;
+  return DECL_UID (i1->context) == DECL_UID (i2->context);
+}
+/* LLVM local end */
 
 /* Hashing and equality functions for nesting_info->var_map.  */
 
@@ -776,11 +806,20 @@ check_for_nested_with_variably_modified (tree fndecl, tree orig_fndecl)
 static struct nesting_info *
 create_nesting_tree (struct cgraph_node *cgn)
 {
+  /* LLVM local */
+  struct nesting_info **slot;
   struct nesting_info *info = GGC_CNEW (struct nesting_info);
   info->field_map = htab_create_ggc (7, var_map_hash, var_map_eq, ggc_free);
   info->var_map = htab_create_ggc (7, var_map_hash, var_map_eq, ggc_free);
   info->suppress_expansion = BITMAP_GGC_ALLOC ();
   info->context = cgn->decl;
+  /* LLVM local begin */
+  info->callers = pointer_set_create ();
+
+  slot = (struct nesting_info **) htab_find_slot (ni_map, info, INSERT);
+  gcc_assert (*slot == NULL);
+  *slot = info;
+  /* LLVM local end */
 
   for (cgn = cgn->nested; cgn ; cgn = cgn->next_nested)
     {
@@ -1614,6 +1653,123 @@ convert_nl_goto_receiver (tree *tp, int *walk_subtrees, void *data)
   return NULL_TREE;
 }
 
+/* LLVM local begin */
+/* Find the nesting context for FNDECL, a function declaration.  */
+
+static struct nesting_info *
+lookup_context_for_decl (tree fndecl)
+{
+  struct nesting_info dummy;
+  struct nesting_info **slot;
+
+  dummy.context = fndecl;
+  slot = (struct nesting_info **) htab_find_slot (ni_map, &dummy, NO_INSERT);
+  gcc_assert (slot != NULL);
+  return *slot;
+}
+
+/* Called via walk_function+walk_tree, discover all nested functions that
+   might be called from this one.  For each such function, add an edge from
+   the callee function back to this one.  */
+
+static tree
+construct_reverse_callgraph (tree *tp, int *walk_subtrees, void *data)
+{
+  struct walk_stmt_info *wi = (struct walk_stmt_info *) data;
+  struct nesting_info *info = wi->info;
+  tree t = *tp, decl;
+
+  *walk_subtrees = 0;
+  switch (TREE_CODE (t))
+    {
+    case ADDR_EXPR:
+      decl = TREE_OPERAND (t, 0);
+
+      /* Only need to process nested functions.  */
+      if (TREE_CODE (decl) != FUNCTION_DECL)
+        break;
+
+      if (!decl_function_context (decl))
+        break;
+
+      /* Add an edge from the callee to the caller.  */
+      pointer_set_insert (lookup_context_for_decl (decl)->callers, info);
+      break;
+
+    default:
+      if (!IS_TYPE_OR_DECL_P (t))
+	*walk_subtrees = 1;
+      break;
+    }
+
+  return NULL_TREE;
+}
+
+/* Worklist of nested functions with a static chain to propagate.  */
+static struct nesting_info *with_chain_worklist;
+
+/* Helper for propagate_chains.  Set the chain flag for nested functions
+   that clearly require a static chain, and add them to the worklist.  */
+
+static void
+initialize_chains (struct nesting_info *root) {
+  do
+    {
+      if (root->inner)
+        initialize_chains (root->inner);
+
+      DECL_NO_STATIC_CHAIN (root->context) = 1;
+      if (root->chain_decl || root->chain_field) {
+        /* Requires a static chain - add it to the worklist.  */
+        DECL_NO_STATIC_CHAIN (root->context) = 0;
+        root->next_with_chain = with_chain_worklist;
+        with_chain_worklist = root;
+      }
+
+      root = root->next;
+    }
+  while (root);
+}
+
+/* Helper for propagate_chains.  Set the chain flag on a function and all of
+   its ancestors deeper than 'data'.  Propagate any new flag settings.  */
+
+static bool
+propagate_to_caller (void *ptr, void *data) {
+  struct nesting_info *target = data;
+  struct nesting_info *caller;
+
+  for (caller = ptr; caller != target; caller = caller->outer)
+    if (DECL_NO_STATIC_CHAIN (caller->context)) {
+      /* Give this function a static chain and propagate it.  */
+      DECL_NO_STATIC_CHAIN (caller->context) = 0;
+      caller->next_with_chain = with_chain_worklist;
+      with_chain_worklist = caller;
+    }
+
+  return true;
+}
+
+/* If a call is made to a nested function that takes a static chain parameter,
+   then the callee may also require a static chain parameter.  Determine all
+   nested functions which require a static chain parameter.  */
+
+static void
+propagate_chains (struct nesting_info *root) {
+  /* Fill the worklist and initialize the chain flag, !DECL_NO_STATIC_CHAIN.  */
+  initialize_chains (root->inner);
+
+  while (with_chain_worklist) {
+    /* Pop a context off the worklist.  */
+    struct nesting_info *info = with_chain_worklist;
+    with_chain_worklist = with_chain_worklist->next_with_chain;
+
+    /* Propagate the static chain to any callers.  */
+    pointer_set_traverse (info->callers, propagate_to_caller, info->outer);
+  }
+}
+/* LLVM local end */
+
 /* Called via walk_function+walk_tree, rewrite all references to addresses
    of nested functions that require the use of trampolines.  The rewrite
    will involve a reference a trampoline generated for the occasion.  */
@@ -1772,11 +1928,11 @@ convert_all_function_calls (struct nesting_info *root)
       walk_function (convert_tramp_reference, root);
       walk_function (convert_call_expr, root);
 
-      /* If the function does not use a static chain, then remember that.  */
-      if (root->outer && !root->chain_decl && !root->chain_field)
-	DECL_NO_STATIC_CHAIN (root->context) = 1;
-      else
-	gcc_assert (!DECL_NO_STATIC_CHAIN (root->context));
+      /* LLVM local begin */
+      gcc_assert (!root->outer ||
+                  DECL_NO_STATIC_CHAIN (root->context) ==
+                  !(root->chain_decl || root->chain_field));
+      /* LLVM local end */
 
       root = root->next;
     }
@@ -1982,6 +2138,10 @@ free_nesting_tree (struct nesting_info *root)
       if (root->inner)
 	free_nesting_tree (root->inner);
       htab_delete (root->var_map);
+      /* LLVM local begin */
+      htab_delete (root->field_map);
+      pointer_set_destroy (root->callers);
+      /* LLVM local end */
       next = root->next;
       ggc_free (root);
       root = next;
@@ -2004,16 +2164,24 @@ lower_nested_functions (tree fndecl)
   if (!cgn->nested)
     return;
 
+  /* LLVM local */
+  ni_map = htab_create (11, ni_hash, ni_eq, NULL);
   root = create_nesting_tree (cgn);
   walk_all_functions (convert_nonlocal_reference, root);
   walk_all_functions (convert_local_reference, root);
   walk_all_functions (convert_nl_goto_reference, root);
   walk_all_functions (convert_nl_goto_receiver, root);
+  /* LLVM local begin */
+  walk_all_functions (construct_reverse_callgraph, root);
+  propagate_chains (root);
+  /* LLVM local end */
   convert_all_function_calls (root);
   finalize_nesting_tree (root);
   unnest_nesting_tree (root);
   free_nesting_tree (root);
   root = NULL;
+  /* LLVM local */
+  htab_delete (ni_map);
 }
 
 #include "gt-tree-nested.h"

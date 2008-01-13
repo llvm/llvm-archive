@@ -5652,30 +5652,34 @@ Constant *TreeConstantToLLVM::ConvertCONSTRUCTOR(tree exp) {
 Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   // Vectors are like arrays, but the domain is stored via an array
   // type indirectly.
-  assert(TREE_CODE(TREE_TYPE(exp)) != VECTOR_TYPE &&
-         "VECTOR_TYPE's haven't been tested!");
-
-  // If we have a lower bound for the range of the type, get it.  */
-  tree Domain = TYPE_DOMAIN(TREE_TYPE(exp));
-  tree min_element = size_zero_node;
-  if (Domain && TYPE_MIN_VALUE(Domain))
-    min_element = fold_convert(sizetype, TYPE_MIN_VALUE(Domain));
-
-  std::vector<Constant*> ResultElts;
-  Constant *SomeVal = 0;
   
-  if (Domain && TYPE_MAX_VALUE(Domain)) {
-    tree max_element = fold_convert(sizetype, TYPE_MAX_VALUE(Domain));
-    tree size = size_binop (MINUS_EXPR, max_element, min_element);
-    size = size_binop (PLUS_EXPR, size, size_one_node);
+  // If we have a lower bound for the range of the type, get it.
+  tree InitType = TREE_TYPE(exp);
+  tree min_element = size_zero_node;
+  std::vector<Constant*> ResultElts;
+  
+  if (TREE_CODE(InitType) == VECTOR_TYPE) {
+    ResultElts.resize(TYPE_VECTOR_SUBPARTS(InitType));
+  } else {
+    assert(TREE_CODE(InitType) == ARRAY_TYPE && "Unknown type for init");
+    tree Domain = TYPE_DOMAIN(InitType);
+    if (Domain && TYPE_MIN_VALUE(Domain))
+      min_element = fold_convert(sizetype, TYPE_MIN_VALUE(Domain));
+  
+    if (Domain && TYPE_MAX_VALUE(Domain)) {
+      tree max_element = fold_convert(sizetype, TYPE_MAX_VALUE(Domain));
+      tree size = size_binop (MINUS_EXPR, max_element, min_element);
+      size = size_binop (PLUS_EXPR, size, size_one_node);
 
-    if (host_integerp(size, 1))
-      ResultElts.resize(tree_low_cst(size, 1));
+      if (host_integerp(size, 1))
+        ResultElts.resize(tree_low_cst(size, 1));
+    }
   }
 
   unsigned NextFieldToFill = 0;
   unsigned HOST_WIDE_INT ix;
   tree elt_index, elt_value;
+  Constant *SomeVal = 0;
   FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, elt_index, elt_value) {
     // Find and decode the constructor's value.
     Constant *Val = Convert(elt_value);
@@ -5745,6 +5749,11 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
       ResultElts[i] = Filler;
     else if (ResultElts[i]->getType() != ElTy)
       AllEltsSameType = false;
+  }
+  
+  if (TREE_CODE(InitType) == VECTOR_TYPE) {
+    assert(AllEltsSameType && "Vector of heterogeneous element types?");
+    return ConstantVector::get(ResultElts);
   }
   
   if (AllEltsSameType)

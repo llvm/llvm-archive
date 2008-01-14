@@ -659,3 +659,5 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   return false;
 }
+
+/* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -1032,7 +1032,26 @@ void make_decl_llvm(tree decl) {
           FnEntry->setVisibility(GlobalValue::ProtectedVisibility);
       }
 
-      assert(FnEntry->getName() == Name &&"Preexisting fn with the same name!");
+      // If FnEntry got renamed, then there is already an object with this name
+      // in the symbol table.  If this happens, the old one must be a forward
+      // decl, just replace it with a cast of the new one.
+      if (FnEntry->getName() != Name) {
+        GlobalVariable *G = TheModule->getGlobalVariable(Name, true);
+        assert(G && G->isDeclaration() && "A global turned into a function?");
+        
+        // Replace any uses of "G" with uses of FnEntry.
+        Value *GInNewType = ConstantExpr::getBitCast(FnEntry, G->getType());
+        G->replaceAllUsesWith(GInNewType);
+        
+        // Update the decl that points to G.
+        changeLLVMValue(G, GInNewType);
+        
+        // Now we can give GV the proper name.
+        FnEntry->takeName(G);
+        
+        // G is now dead, nuke it.
+        G->eraseFromParent();
+      }
     }
     SET_DECL_LLVM(decl, FnEntry);
   } else {

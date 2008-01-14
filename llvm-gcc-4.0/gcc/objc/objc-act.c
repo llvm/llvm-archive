@@ -18358,12 +18358,6 @@ handle_class_ref (tree chain)
   char *string = (char *) alloca (strlen (name) + 30);
   tree decl;
   tree exp;
-
-  /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-#undef ASM_DECLARE_UNRESOLVED_REFERENCE
-#endif
-  /* APPLE LOCAL end LLVM */
   
   sprintf (string, "%sobjc_class_name_%s",
 	   (flag_next_runtime ? "." : "__"), name);
@@ -18371,7 +18365,11 @@ handle_class_ref (tree chain)
 #ifdef ASM_DECLARE_UNRESOLVED_REFERENCE
   if (flag_next_runtime)
     {
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
       ASM_DECLARE_UNRESOLVED_REFERENCE (asm_out_file, string);
+#endif
+  /* APPLE LOCAL end LLVM */
       return;
     }
 #endif

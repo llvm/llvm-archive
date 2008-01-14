@@ -35,35 +35,19 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
   __attribute__ ((__unused__))
   __exchange_and_add(volatile _Atomic_word* __mem, int __val)
   {
-// LLVM LOCAL
-#ifndef __llvm__
     register _Atomic_word __result;
     __asm__ __volatile__ ("lock; xadd{l} {%0,%1|%1,%0}"
 			  : "=r" (__result), "=m" (*__mem) 
 			  : "0" (__val), "m" (*__mem));
     return __result;
-    // LLVM LOCAL begin
-#else
-   // FIXME: implement inline asm.
-   _Atomic_word __result = *__mem;
-   *__mem += __val;
-   return __result;
-#endif
-    // LLVM LOCAL end
   }
   
   void
   __attribute__ ((__unused__))
   __atomic_add(volatile _Atomic_word* __mem, int __val)
   {
-// LLVM LOCAL
-#ifndef __llvm__
     __asm__ __volatile__ ("lock; add{l} {%1,%0|%0,%1}"
 			  : "=m" (*__mem) : "ir" (__val), "m" (*__mem));
-#else
-     // FIXME: implement inline asm.
-     *__mem += __val;
-#endif
   }
 
 _GLIBCXX_END_NAMESPACE

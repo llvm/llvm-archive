@@ -18255,19 +18255,15 @@ handle_class_ref (tree chain)
   tree decl;
   tree exp;
 
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-#undef ASM_DECLARE_UNRESOLVED_REFERENCE
-#endif
-  /* LLVM LOCAL end */
-  
   sprintf (string, "%sobjc_class_name_%s",
 	   (flag_next_runtime ? "." : "__"), name);
 
 #ifdef ASM_DECLARE_UNRESOLVED_REFERENCE
   if (flag_next_runtime)
     {
+#ifndef ENABLE_LLVM
       ASM_DECLARE_UNRESOLVED_REFERENCE (asm_out_file, string);
+#endif
       return;
     }
 #endif

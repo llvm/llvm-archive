@@ -1,8 +1,0 @@
-# To facilitate PHP debugging, add this code at the top of the .php file, before
-# any other code.  This enables verbose reporting of errors, which is useful, as
-# PHP will fail without displaying an error even on missing .php files that are
-# being included.
-#
-# Be sure to remove this code when you submit your final version.
-error_reporting(E_ALL);
-ini_set("display_errors", 1);

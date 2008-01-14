@@ -1,2 +1,0 @@
-DepModule: support
-BuildCmd: echo "Core module doesn't build yet"

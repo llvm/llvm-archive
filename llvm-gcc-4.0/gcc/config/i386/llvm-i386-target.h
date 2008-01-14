@@ -60,5 +60,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
     }                                                           \
   }
 
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)          \
+  (!TARGET_64BIT)
+
 /* APPLE LOCAL end LLVM (ENTIRE FILE!)  */
 

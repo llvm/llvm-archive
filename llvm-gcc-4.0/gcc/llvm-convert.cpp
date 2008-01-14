@@ -467,6 +467,11 @@ namespace {
       ++AI;
     }
         
+    void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
+      // Should not get here.
+      abort();
+    }
+
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       NameStack.push_back(NameStack.back()+"."+utostr(FieldNo));
       
@@ -637,9 +642,12 @@ void TreeToLLVM::StartFunctionBody() {
     const char *Name = "unnamed_arg";
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
 
-    if (isPassedByInvisibleReference(TREE_TYPE(Args))) {
-      // If the value is passed by 'invisible reference', the l-value for the
-      // argument IS the argument itself.
+    const Type *ArgTy = ConvertType(TREE_TYPE(Args));
+    if (isPassedByInvisibleReference(TREE_TYPE(Args)) ||
+        (!ArgTy->isFirstClassType() &&
+         LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(TREE_TYPE(Args)))) {
+      // If the value is passed by 'invisible reference' or 'byval reference',
+      // the l-value for the argument IS the argument itself.
       SET_DECL_LLVM(Args, AI);
       AI->setName(Name);
       ++AI;
@@ -647,7 +655,6 @@ void TreeToLLVM::StartFunctionBody() {
       // Otherwise, we create an alloca to hold the argument value and provide
       // an l-value.  On entry to the function, we copy formal argument values
       // into the alloca.
-      const Type *ArgTy = ConvertType(TREE_TYPE(Args));
       Value *Tmp = CreateTemporary(ArgTy);
       Tmp->setName(std::string(Name)+"_addr");
       SET_DECL_LLVM(Args, Tmp);
@@ -2841,6 +2848,16 @@ namespace {
       CallOperands.push_back(Builder.CreateLoad(Loc, "tmp"));
     }
     
+    /// HandleByValArgument - This callback is invoked if the aggregate function
+    /// argument is passed by value. It is lowered to a parameter passed by
+    /// reference with an additional parameter attribute "ByVal".
+    void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
+      assert(!LocStack.empty());
+      Value *Loc = LocStack.back();
+      assert(PointerType::getUnqual(LLVMTy) == Loc->getType());
+      CallOperands.push_back(Loc);
+    }
+
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       Constant *Zero = Constant::getNullValue(Type::Int32Ty);
       Constant *FIdx = ConstantInt::get(Type::Int32Ty, FieldNo);
@@ -2923,7 +2940,10 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       LValue LV = EmitLV(TREE_VALUE(arg));
       assert(!LV.isBitfield() && "Bitfields are first-class types!");
       Client.setLocation(LV.Ptr);
-      ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)));
+      uint16_t Attributes = ParamAttr::None;
+      ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
+      if (Attributes != ParamAttr::None)
+        PAL= ParamAttrsList::includeAttrs(PAL, CallOperands.size(), Attributes);
     }
   }
 

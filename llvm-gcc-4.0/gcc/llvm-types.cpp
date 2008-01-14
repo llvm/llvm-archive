@@ -926,6 +926,13 @@ namespace {
       }
       ArgTypes.push_back(LLVMTy);
     }
+
+    /// HandleByValArgument - This callback is invoked if the aggregate function
+    /// argument is passed by value. It is lowered to a parameter passed by
+    /// reference with an additional parameter attribute "ByVal".
+    void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
+      HandleScalarArgument(PointerType::getUnqual(LLVMTy), type);
+    }
   };
 }
 
@@ -984,10 +991,11 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
 
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
     tree ArgTy = TREE_TYPE(Args);
-    ABIConverter.HandleArgument(ArgTy);
 
     // Determine if there are any attributes for this param.
     uint16_t Attributes = ParamAttr::None;
+
+    ABIConverter.HandleArgument(ArgTy, &Attributes);
 
     // Compute zext/sext attributes.
     Attributes |= HandleArgumentExtension(ArgTy);
@@ -1094,11 +1102,11 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
       break;        
     }
     
-    ABIConverter.HandleArgument(ArgTy);
-
     // Determine if there are any attributes for this param.
     uint16_t Attributes = ParamAttr::None;
     
+    ABIConverter.HandleArgument(ArgTy, &Attributes);
+
     // Compute zext/sext attributes.
     Attributes |= HandleArgumentExtension(ArgTy);
 

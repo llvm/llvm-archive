@@ -522,8 +522,8 @@ find $DEST_DIR -name \*.a -type f -print \
 # Set up the llvm-gcc/llvm-g++ symlinks.
 mkdir -p $DEST_DIR$LLVM_BIN_DIR
 cd $DEST_DIR$LLVM_BIN_DIR
-ln -s -f ../../../$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
-ln -s -f ../../../$DEST_ROOT/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
+ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
+ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
 
 # FIXME: This is a hack to get things working.
 for h in $HOSTS ; do

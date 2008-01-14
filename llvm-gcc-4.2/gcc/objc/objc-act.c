@@ -18261,9 +18261,11 @@ handle_class_ref (tree chain)
 #ifdef ASM_DECLARE_UNRESOLVED_REFERENCE
   if (flag_next_runtime)
     {
+      /* LLVM LOCAL begin - radar 5681912 */
 #ifndef ENABLE_LLVM
       ASM_DECLARE_UNRESOLVED_REFERENCE (asm_out_file, string);
 #endif
+      /* LLVM LOCAL end - radar 5681912 */
       return;
     }
 #endif

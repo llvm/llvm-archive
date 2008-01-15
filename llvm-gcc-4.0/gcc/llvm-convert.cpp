@@ -4644,6 +4644,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                 Args.begin(), Args.end());
     return true;
   }
+   case BUILT_IN_TRAP:
+     Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::trap));
+     // Emit an explicit unreachable instruction.
+     Builder.CreateUnreachable();
+     EmitBlock(new BasicBlock(""));
+     return true;
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:
@@ -4657,7 +4663,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_SETJMP:
     case BUILT_IN_LONGJMP:
     case BUILT_IN_UPDATE_SETJMP_BUF:
-    case BUILT_IN_TRAP:
 
     // FIXME: HACK: Just ignore these.
     {

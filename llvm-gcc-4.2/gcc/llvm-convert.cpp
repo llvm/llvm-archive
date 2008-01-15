@@ -4199,11 +4199,18 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   }
   case BUILT_IN_FLT_ROUNDS: {
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                          Intrinsic::flt_rounds),
+                                                         Intrinsic::flt_rounds),
                                 "tmp");
     Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
     return true;
   }
+  case BUILT_IN_TRAP:
+    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::trap));
+    // Emit an explicit unreachable instruction.
+    Builder.CreateUnreachable();
+    EmitBlock(new BasicBlock(""));
+    return true;
+  
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:
     case BUILT_IN_APPLY:
@@ -4218,7 +4225,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     case BUILT_IN_SETJMP_RECEIVER:
     case BUILT_IN_LONGJMP:
     case BUILT_IN_UPDATE_SETJMP_BUF:
-    case BUILT_IN_TRAP:
 
     // FIXME: HACK: Just ignore these.
     {

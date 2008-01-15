@@ -21524,4 +21524,18 @@ asm_preferred_eh_data_format (int code, int global)
   return DW_EH_PE_absptr;
 }
 
+
+/* APPLE LOCAL begin LLVM */
+
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed in memory. This is only called for
+   x86-64. */
+int llvm_x86_64_should_pass_aggregate_in_memory(tree type) {
+  int needed_intregs, needed_sseregs;
+  enum machine_mode mode = type_natural_mode (type);
+  return !examine_argument(mode, type, 1, &needed_intregs, &needed_sseregs);
+}
+
+/* APPLE LOCAL end LLVM */
+
 #include "gt-i386.h"

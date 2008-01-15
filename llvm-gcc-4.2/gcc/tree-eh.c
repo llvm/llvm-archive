@@ -838,14 +838,22 @@ honor_protect_cleanup_actions (struct leh_state *outer_state,
       tree save_eptr, save_filt;
 
       save_eptr = create_tmp_var (ptr_type_node, "save_eptr");
+#if ENABLE_LLVM
+      /* LLVM exceptions use 64 bits for these on 64-bit targets. */
+      save_filt = create_tmp_var (long_integer_type_node, "save_filt");
+#else
       save_filt = create_tmp_var (integer_type_node, "save_filt");
-
+#endif
       i = tsi_start (finally);
       x = build0 (EXC_PTR_EXPR, ptr_type_node);
       x = build2 (MODIFY_EXPR, void_type_node, save_eptr, x);
       tsi_link_before (&i, x, TSI_CONTINUE_LINKING);
 
+#if ENABLE_LLVM
+      x = build0 (FILTER_EXPR, long_integer_type_node);
+#else
       x = build0 (FILTER_EXPR, integer_type_node);
+#endif
       x = build2 (MODIFY_EXPR, void_type_node, save_filt, x);
       tsi_link_before (&i, x, TSI_CONTINUE_LINKING);
 
@@ -854,7 +862,11 @@ honor_protect_cleanup_actions (struct leh_state *outer_state,
       x = build2 (MODIFY_EXPR, void_type_node, x, save_eptr);
       tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
 
+#if ENABLE_LLVM
+      x = build0 (FILTER_EXPR, long_integer_type_node);
+#else
       x = build0 (FILTER_EXPR, integer_type_node);
+#endif
       x = build2 (MODIFY_EXPR, void_type_node, x, save_filt);
       tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
 

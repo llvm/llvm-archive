@@ -660,4 +660,18 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   return false;
 }
 
+/* These are defined in i386.c */
+extern "C" enum machine_mode ix86_getNaturalModeForType(tree);
+extern "C" int ix86_HowToPassArgument(enum machine_mode, tree, int, int*, int*);
+
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed in memory. This is only called for
+   x86-64. */
+bool llvm_x86_64_should_pass_aggregate_in_memory(tree type) {
+  int IntRegs, SSERegs;
+  enum machine_mode Mode = ix86_getNaturalModeForType(type);
+  /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
+  return !ix86_HowToPassArgument(Mode, type, 1, &IntRegs, &SSERegs);
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

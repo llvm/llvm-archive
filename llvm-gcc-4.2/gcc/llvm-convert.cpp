@@ -36,6 +36,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/System/Host.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -5466,14 +5467,6 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     double V;
   };
   if (Ty==Type::FloatTy || Ty==Type::DoubleTy) {
-    // Determine endianness of host machine.
-    union {
-      int x;
-      char y[sizeof(int)];
-    } u;
-    u.x = 1;
-    bool BigEndian = (u.y[0] != 1);
-
     REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(exp), RealArr);
 
     // Here's how this works:
@@ -5495,7 +5488,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     UArr[0] = RealArr[0];   // Long -> int convert
     UArr[1] = RealArr[1];
 
-    if (BigEndian != FLOAT_WORDS_BIG_ENDIAN)
+    if (llvm::sys::bigEndianHost() != FLOAT_WORDS_BIG_ENDIAN)
       std::swap(UArr[0], UArr[1]);
 
     return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)

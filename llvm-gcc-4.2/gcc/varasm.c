@@ -1201,7 +1201,9 @@ assemble_asm (tree string)
 {
   /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-  llvm_emit_file_scope_asm(string);
+  if (TREE_CODE(string) == ADDR_EXPR)
+    string = TREE_OPERAND(string, 0);
+  llvm_emit_file_scope_asm(TREE_STRING_POINTER(string));
   return;
 #endif
   /* LLVM LOCAL end */

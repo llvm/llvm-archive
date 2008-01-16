@@ -920,7 +920,22 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
 #undef  TARGET_ASM_RELOC_RW_MASK
 #define TARGET_ASM_RELOC_RW_MASK machopic_reloc_rw_mask
 
-
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
+    do {								\
+	 if (FILE) {							\
+           char Buffer[strlen(NAME)+30];				\
+           sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
+	   if (MACHOPIC_INDIRECT)					\
+             sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
+	   else								\
+             sprintf(Buffer, "\t.reference %s", NAME);			\
+          llvm_emit_file_scope_asm(Buffer);				\
+	 }                                                              \
+       } while (0)
+#else
+/* LLVM LOCAL end */
 #define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
     do {								\
 	 if (FILE) {							\
@@ -932,6 +947,8 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
 	   fprintf (FILE, "\n");					\
 	 }                                                              \
        } while (0)
+/* LLVM LOCAL */
+#endif /*ENABLE_LLVM*/
 
 #define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)				\
     do {								\

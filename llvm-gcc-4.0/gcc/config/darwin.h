@@ -1386,7 +1386,7 @@ objc_section_init (void)			\
 #define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
     do {								\
 	 if (FILE) {							\
-           char Buffer[strlen(NAME)+30];				\
+           char *Buffer = alloca(strlen(NAME)+30);			\
 	   if (MACHOPIC_INDIRECT)					\
              sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
 	   else								\

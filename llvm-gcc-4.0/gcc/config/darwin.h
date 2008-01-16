@@ -1387,7 +1387,6 @@ objc_section_init (void)			\
     do {								\
 	 if (FILE) {							\
            char Buffer[strlen(NAME)+30];				\
-           sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
 	   if (MACHOPIC_INDIRECT)					\
              sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
 	   else								\

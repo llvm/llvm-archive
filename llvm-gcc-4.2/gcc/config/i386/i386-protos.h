@@ -255,3 +255,9 @@ extern tree iasm_raise_reg (tree);
 /* APPLE LOCAL 3399553 */
 extern void ix86_expand_flt_rounds (rtx);
 extern int asm_preferred_eh_data_format (int, int);
+
+/* LLVM LOCAL begin */
+enum machine_mode ix86_getNaturalModeForType(tree type);
+int ix86_HowToPassArgument(enum machine_mode mode, tree type, int in_return,
+                           int *int_nregs, int *sse_nregs);
+/* LLVM LOCAL end */

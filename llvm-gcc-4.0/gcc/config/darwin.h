@@ -1381,7 +1381,22 @@ objc_section_init (void)			\
 #undef  TARGET_ASM_FUNCTION_RODATA_SECTION
 #define TARGET_ASM_FUNCTION_RODATA_SECTION default_no_function_rodata_section
 
-
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
+    do {								\
+	 if (FILE) {							\
+           char Buffer[strlen(NAME)+30];				\
+           sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
+	   if (MACHOPIC_INDIRECT)					\
+             sprintf(Buffer, "\t.lazy_reference %s", NAME);		\
+	   else								\
+             sprintf(Buffer, "\t.reference %s", NAME);			\
+          llvm_emit_file_scope_asm(Buffer);				\
+	 }                                                              \
+       } while (0)
+#else
+/* LLVM LOCAL end */
 #define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
     do {								\
 	 if (FILE) {							\
@@ -1393,6 +1408,8 @@ objc_section_init (void)			\
 	   fprintf (FILE, "\n");					\
 	 }                                                              \
        } while (0)
+/* LLVM LOCAL */
+#endif /*ENABLE_LLVM*/
 
 #define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)				\
     do {								\

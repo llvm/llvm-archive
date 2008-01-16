@@ -73,7 +73,7 @@ void llvm_emit_ctor_dtor(union tree_node* fndecl, int initprio, int isInit);
 /* llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
  * asm block.
  */
-void llvm_emit_file_scope_asm(union tree_node*);
+void llvm_emit_file_scope_asm(const char*);
 
 /* llvm_emit_typedef - Emit the specified TYPE_DECL if desired.
  */

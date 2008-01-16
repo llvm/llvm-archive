@@ -18365,11 +18365,7 @@ handle_class_ref (tree chain)
 #ifdef ASM_DECLARE_UNRESOLVED_REFERENCE
   if (flag_next_runtime)
     {
-  /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
       ASM_DECLARE_UNRESOLVED_REFERENCE (asm_out_file, string);
-#endif
-  /* APPLE LOCAL end LLVM */
       return;
     }
 #endif

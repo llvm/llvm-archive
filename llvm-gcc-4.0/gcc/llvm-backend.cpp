@@ -1212,14 +1212,12 @@ void llvm_emit_typedef(tree decl) {
 // llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
 // asm block.
 //
-void llvm_emit_file_scope_asm(tree string) {
-  if (TREE_CODE(string) == ADDR_EXPR)
-    string = TREE_OPERAND(string, 0);
+void llvm_emit_file_scope_asm(const char *string) {
   if (TheModule->getModuleInlineAsm().empty())
-    TheModule->setModuleInlineAsm(TREE_STRING_POINTER(string));
+    TheModule->setModuleInlineAsm(string);
   else
     TheModule->setModuleInlineAsm(TheModule->getModuleInlineAsm() + "\n" +
-                                  TREE_STRING_POINTER(string));
+                                  string);
 }
 
 

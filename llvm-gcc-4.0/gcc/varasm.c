@@ -1064,7 +1064,9 @@ assemble_asm (tree string)
 {
   /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
-  llvm_emit_file_scope_asm(string);
+  if (TREE_CODE(string) == ADDR_EXPR)
+    string = TREE_OPERAND(string, 0);
+  llvm_emit_file_scope_asm(TREE_STRING_POINTER(string));
   return;
 #endif
   /* APPLE LOCAL end LLVM */

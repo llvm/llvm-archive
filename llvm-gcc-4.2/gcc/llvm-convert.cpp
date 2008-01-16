@@ -5466,6 +5466,14 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     double V;
   };
   if (Ty==Type::FloatTy || Ty==Type::DoubleTy) {
+    // Determine endianness of host machine.
+    union {
+      int x;
+      char y[sizeof(int)];
+    } u;
+    u.x = 1;
+    bool BigEndian = (u.y[0] != 1);
+
     REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(exp), RealArr);
 
     // Here's how this works:
@@ -5477,15 +5485,20 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     // This, then, makes the conversion pretty simple.  The tricky part is
     // getting the byte ordering correct and make sure you don't print any
     // more than 32 bits per integer on platforms with ints > 32 bits.
-
-    UArr[0] = RealArr[0];   // Long -> int convert
-    UArr[1] = RealArr[1];
-
+    // 
     // We want to switch the words of UArr if host and target endianness 
     // do not match.  FLOAT_WORDS_BIG_ENDIAN describes the target endianness.
     // The host's used to be available in HOST_WORDS_BIG_ENDIAN, but the gcc
     // maintainers removed this in a fit of cleanliness between 4.0 
     // and 4.2. For now, host and target endianness must match.
+
+    if (BigEndian == FLOAT_WORDS_BIG_ENDIAN) {
+      UArr[0] = RealArr[0];   // Long -> int convert
+      UArr[1] = RealArr[1];
+    } else {
+      UArr[0] = RealArr[1];   // Long -> int convert
+      UArr[1] = RealArr[0];
+    }
 
     return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
                                                  : APFloat(V));

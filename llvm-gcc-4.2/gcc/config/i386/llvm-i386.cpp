@@ -671,7 +671,7 @@ bool llvm_x86_64_should_pass_aggregate_in_memory(tree type) {
   int IntRegs, SSERegs;
   enum machine_mode Mode = ix86_getNaturalModeForType(type);
   /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
-  return !ix86_HowToPassArgument(Mode, type, 1, &IntRegs, &SSERegs);
+  return !ix86_HowToPassArgument(Mode, type, 0, &IntRegs, &SSERegs);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

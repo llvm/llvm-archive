@@ -4167,6 +4167,16 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
+  case BUILT_IN_BSWAP32:
+  case BUILT_IN_BSWAP64: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::bswap); 
+    const Type *DestTy = ConvertType(TREE_TYPE(exp));
+    if (Result->getType() != DestTy)
+      Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    return true;
+  }
+      
   case BUILT_IN_SQRT: 
   case BUILT_IN_SQRTF:
   case BUILT_IN_SQRTL:

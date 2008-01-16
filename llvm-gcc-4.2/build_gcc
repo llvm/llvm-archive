@@ -373,7 +373,7 @@ for t in $TARGETS ; do
     $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-gcc-$VERS || exit 1
 # APPLE LOCAL LLVM build_gcc bug with non-/usr $DEST_ROOT
   lipo -output .$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS -create \
-    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-g++* || exit 1
+    $DIR/dst-*-$t/$DEST_ROOT/bin/$t-apple-darwin$DARWIN_VERS-*g++* || exit 1
 done
 
 # lib

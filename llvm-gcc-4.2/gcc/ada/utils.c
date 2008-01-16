@@ -571,6 +571,8 @@ init_gigi_decls (tree long_long_float_type, tree exception_type)
 							   ptr_void_type_node,
 							   endlink)),
 			   NULL_TREE, false, true, true, NULL, Empty);
+  /* LLVM local */
+  TREE_NOTHROW (begin_handler_decl) = 1;
 
   end_handler_decl
     = create_subprog_decl (get_identifier ("__gnat_end_handler"), NULL_TREE,

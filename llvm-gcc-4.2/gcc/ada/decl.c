@@ -579,8 +579,11 @@ gnat_to_gnu_entity (Entity_Id gnat_entity, tree gnu_expr, int definition)
 	    if (gnu_expr && kind == E_Constant)
 /* LLVM local begin */
               {
-                gnu_type = TREE_TYPE (gnu_expr);
-                gnu_size = TYPE_SIZE (gnu_type);
+                gnu_type
+                  = TREE_TYPE (gnu_expr);
+                gnu_size
+                  = SUBSTITUTE_PLACEHOLDER_IN_EXPR
+                    (TYPE_SIZE (gnu_type), gnu_expr);
               }
 /* LLVM local end */
 

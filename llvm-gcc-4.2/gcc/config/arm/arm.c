@@ -15167,9 +15167,11 @@ arm_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
   /* Darwin/mach-o: use a stub for dynamic references.  */
 #if TARGET_MACHO
       if ((flag_pic || MACHO_DYNAMIC_NO_PIC_P)
-      && ! machopic_data_defined_p (function_rtx))
-    function_name =
-       machopic_indirection_name (function_rtx, true);
+          && ! machopic_data_defined_p (function_rtx))
+          function_name =
+              machopic_indirection_name (function_rtx, true);
+      else
+          function_name = XSTR (function_rtx, 0);
 #else
       function_name = XSTR (function_rtx, 0);
 #endif

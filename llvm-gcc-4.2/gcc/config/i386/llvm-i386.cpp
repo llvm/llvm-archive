@@ -664,6 +664,15 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 extern "C" enum machine_mode ix86_getNaturalModeForType(tree);
 extern "C" int ix86_HowToPassArgument(enum machine_mode, tree, int, int*, int*);
 
+/* Target hook for llvm-abi.h. It returns true if the specified type is a
+   zero sized array, struct, or class. */
+bool llvm_x86_is_zero_sized_aggregate(tree type) {
+  enum machine_mode Mode = ix86_getNaturalModeForType(type);
+  HOST_WIDE_INT Bytes =
+    (Mode == BLKmode) ? int_size_in_bytes(type) : (int) GET_MODE_SIZE(Mode);
+  return Bytes == 0;
+}
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. This is only called for
    x86-64. */

@@ -892,8 +892,7 @@ AC_ARG_ENABLE(llvm,
  fi
  if test -x "$LLVMBASEPATH/bin/llc$EXEEXT"; then
      echo Found Installed LLVM Tree in $LLVMBASEPATH
- fi
- if test x$LLVMBUILDMODE == x; then
+ elif test x$LLVMBUILDMODE == x; then
      AC_MSG_ERROR([You must specify valid path to your LLVM tree with --enable-llvm=DIR])
  fi
 ],

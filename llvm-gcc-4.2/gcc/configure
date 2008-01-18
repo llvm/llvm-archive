@@ -7407,8 +7407,7 @@ echo "$as_me: error: You must specify *absolute* path to your LLVM tree with --e
  fi
  if test -x "$LLVMBASEPATH/bin/llc$EXEEXT"; then
      echo Found Installed LLVM Tree in $LLVMBASEPATH
- fi
- if test x$LLVMBUILDMODE == x; then
+ elif test x$LLVMBUILDMODE == x; then
      { { echo "$as_me:$LINENO: error: You must specify valid path to your LLVM tree with --enable-llvm=DIR" >&5
 echo "$as_me: error: You must specify valid path to your LLVM tree with --enable-llvm=DIR" >&2;}
    { (exit 1); exit 1; }; }
@@ -8034,7 +8033,7 @@ if test "${gcc_cv_prog_makeinfo_modern+set}" = set; then
 else
     ac_prog_version=`$MAKEINFO --version 2>&1 |
                    sed -n 's/^.*GNU texinfo.* \([0-9][0-9.]*\).*$/\1/p'`
-  echo "configure:8037: version of makeinfo is $ac_prog_version" >&5
+  echo "configure:8036: version of makeinfo is $ac_prog_version" >&5
   case $ac_prog_version in
     '')     gcc_cv_prog_makeinfo_modern=no;;
     4.[4-9]*)

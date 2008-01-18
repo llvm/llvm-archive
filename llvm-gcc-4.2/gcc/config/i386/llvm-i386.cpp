@@ -664,23 +664,43 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 extern "C" enum machine_mode ix86_getNaturalModeForType(tree);
 extern "C" int ix86_HowToPassArgument(enum machine_mode, tree, int, int*, int*);
 
-/* Target hook for llvm-abi.h. It returns true if the specified type is a
-   zero sized array, struct, or class. */
-bool llvm_x86_is_zero_sized_aggregate(tree type) {
-  enum machine_mode Mode = ix86_getNaturalModeForType(type);
-  HOST_WIDE_INT Bytes =
-    (Mode == BLKmode) ? int_size_in_bytes(type) : (int) GET_MODE_SIZE(Mode);
-  return Bytes == 0;
-}
-
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. This is only called for
    x86-64. */
-bool llvm_x86_64_should_pass_aggregate_in_memory(tree type) {
+static bool llvm_x86_64_should_pass_aggregate_in_memory(tree type,
+                                                        enum machine_mode Mode){
   int IntRegs, SSERegs;
-  enum machine_mode Mode = ix86_getNaturalModeForType(type);
   /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
   return !ix86_HowToPassArgument(Mode, type, 0, &IntRegs, &SSERegs);
+}
+
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed in memory. */
+bool llvm_x86_should_pass_aggregate_in_memory(tree type) {
+  enum machine_mode Mode = ix86_getNaturalModeForType(type);
+  HOST_WIDE_INT Bytes =
+    (Mode == BLKmode) ? int_size_in_bytes(type) : (int) GET_MODE_SIZE(Mode);
+
+  // Zero sized array, struct, or class, not passed in memory.
+  if (Bytes == 0)
+    return false;
+
+  if (Bytes == GET_MODE_SIZE(SImode) || Bytes == GET_MODE_SIZE(DImode)) {
+    // 32-bit or 64-bit and all elements are integers, not passed in memory.
+    bool AllIntegers = true;
+    const Type *Ty = ConvertType(type);
+    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+         I != E; ++I)
+      if (!I->get()->isIntOrIntVector()) {
+        AllIntegers = false;
+        break;
+      }
+    if (AllIntegers)
+      return false;
+  }
+  if (!TARGET_64BIT)
+    return true;
+  return llvm_x86_64_should_pass_aggregate_in_memory(type, Mode);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

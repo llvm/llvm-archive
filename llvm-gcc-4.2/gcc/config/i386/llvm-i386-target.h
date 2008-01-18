@@ -62,13 +62,10 @@ extern int ix86_regparm;
     }                                                           \
   }
 
-extern bool llvm_x86_is_zero_sized_aggregate(tree);
-extern bool llvm_x86_64_should_pass_aggregate_in_memory(tree);
+extern bool llvm_x86_should_pass_aggregate_in_memory(tree);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)          \
-  (!llvm_x86_is_zero_sized_aggregate(X) &&                      \
-   (!TARGET_64BIT ||                                            \
-    llvm_x86_64_should_pass_aggregate_in_memory(X)))
+  llvm_x86_should_pass_aggregate_in_memory(X)
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

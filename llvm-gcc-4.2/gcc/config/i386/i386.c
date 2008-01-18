@@ -15553,6 +15553,26 @@ ix86_init_mmx_sse_builtins (void)
   tree V8HI_type_node = build_vector_type_for_mode (intHI_type_node, V8HImode);
   tree V1DI_type_node = build_vector_type_for_mode (long_long_integer_type_node, V1DImode);
 
+  /* APPLE LOCAL begin LLVM */
+#ifdef ENABLE_LLVM
+  /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
+    all of these types BLKmode.  This interferes with i386.c-specific
+    argument passing routines.  As such, give them the correct modes here
+    manually. */
+  TYPE_MODE (V16QI_type_node) = V16QImode;
+  TYPE_MODE (V2SI_type_node) = V2SImode;
+  TYPE_MODE (V2SF_type_node) = V2SFmode;
+  TYPE_MODE (V2DI_type_node) = V2DImode;
+  TYPE_MODE (V2DF_type_node) = V2DFmode;
+  TYPE_MODE (V4SF_type_node) = V4SFmode;
+  TYPE_MODE (V4SI_type_node) = V4SImode;
+  TYPE_MODE (V4HI_type_node) = V4HImode;
+  TYPE_MODE (V8QI_type_node) = V8QImode;
+  TYPE_MODE (V8HI_type_node) = V8HImode;
+  TYPE_MODE (V1DI_type_node) = V1DImode;
+#endif
+  /* APPLE LOCAL end LLVM */
+
   tree pchar_type_node = build_pointer_type (char_type_node);
   tree pcchar_type_node = build_pointer_type (
 			     build_type_variant (char_type_node, 1, 0));

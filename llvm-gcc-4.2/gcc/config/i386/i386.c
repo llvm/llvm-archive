@@ -1246,6 +1246,9 @@ static void ix86_dwarf_handle_frame_unspec (const char *, rtx, int);
 static void i386_solaris_elf_named_section (const char *, unsigned int, tree)
   ATTRIBUTE_UNUSED;
 
+/* LLVM LOCAL begin */
+
+#ifndef ENABLE_LLVM
 /* Register class used for passing given 64bit part of the argument.
    These represent classes as documented by the PS ABI, with the exception
    of SSESF, SSEDF classes, that are basically SSE class, just gcc will
@@ -1268,6 +1271,10 @@ enum x86_64_reg_class
     X86_64_COMPLEX_X87_CLASS,
     X86_64_MEMORY_CLASS
   };
+#endif /* !ENABLE_LLVM */
+
+/* LLVM LOCAL end */
+
 static const char * const x86_64_reg_class_name[] = {
   "no", "integer", "integerSI", "sse", "sseSF", "sseDF",
   "sseup", "x87", "x87up", "cplx87", "no"
@@ -3263,9 +3270,16 @@ classify_argument (enum machine_mode mode, tree type,
 		   int offset = tree_low_cst (BINFO_OFFSET (base_binfo), 0) * 8;
 		   tree type = BINFO_TYPE (base_binfo);
 
+/* LLVM local */
+#ifdef ENABLE_LLVM
+		   num = classify_argument (type_natural_mode (type),
+					    type, subclasses,
+					    (offset + bit_offset) % 256);
+#else                   
 		   num = classify_argument (TYPE_MODE (type),
 					    type, subclasses,
 					    (offset + bit_offset) % 256);
+#endif
 		   if (!num)
 		     return 0;
 		   for (i = 0; i < num; i++)
@@ -3301,10 +3315,18 @@ classify_argument (enum machine_mode mode, tree type,
 		    }
 		  else
 		    {
+/* LLVM local */
+#ifdef ENABLE_LLVM
+		      num = classify_argument (type_natural_mode (TREE_TYPE (field)),
+					       TREE_TYPE (field), subclasses,
+					       (int_bit_position (field)
+						+ bit_offset) % 256);
+#else
 		      num = classify_argument (TYPE_MODE (TREE_TYPE (field)),
 					       TREE_TYPE (field), subclasses,
 					       (int_bit_position (field)
 						+ bit_offset) % 256);
+#endif
 		      if (!num)
 			return 0;
 		      for (i = 0; i < num; i++)
@@ -3323,8 +3345,14 @@ classify_argument (enum machine_mode mode, tree type,
 	  /* Arrays are handled as small records.  */
 	  {
 	    int num;
+/* LLVM local */
+#ifdef ENABLE_LLVM
+	    num = classify_argument (type_natural_mode (TREE_TYPE (type)),
+				     TREE_TYPE (type), subclasses, bit_offset);
+#else
 	    num = classify_argument (TYPE_MODE (TREE_TYPE (type)),
 				     TREE_TYPE (type), subclasses, bit_offset);
+#endif
 	    if (!num)
 	      return 0;
 
@@ -3356,9 +3384,16 @@ classify_argument (enum machine_mode mode, tree type,
 		  if (TREE_TYPE (field) == error_mark_node)
 		    continue;
 
+/* LLVM local */
+#ifdef ENABLE_LLVM
+		  num = classify_argument (type_natural_mode (TREE_TYPE (field)),
+					   TREE_TYPE (field), subclasses,
+					   bit_offset);
+#else
 		  num = classify_argument (TYPE_MODE (TREE_TYPE (field)),
 					   TREE_TYPE (field), subclasses,
 					   bit_offset);
+#endif
 		  if (!num)
 		    return 0;
 		  for (i = 0; i < num; i++)
@@ -21554,8 +21589,14 @@ enum machine_mode ix86_getNaturalModeForType(tree type) {
 }
 
 int ix86_HowToPassArgument(enum machine_mode mode, tree type, int in_return,
-                             int *int_nregs, int *sse_nregs) {
+                           int *int_nregs, int *sse_nregs) {
   return examine_argument(mode, type, in_return, int_nregs, sse_nregs);
+}
+
+int ix86_ClassifyArgument(enum machine_mode mode, tree type,
+                          enum x86_64_reg_class classes[MAX_CLASSES],
+                          int bit_offset) {
+  return classify_argument(mode, type, classes, bit_offset);
 }
 
   

@@ -120,6 +120,23 @@ static tree isSingleElementStructOrArray(tree type) {
   }
 }
 
+// LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
+// value should be passed by value, i.e. passing its address with the byval
+// attribute bit set. The default is false.
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X) \
+    false
+#endif
+
+// LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS - Return true if this aggregate
+// value should be passed in a mixture of integer, floating point, and vector
+// registers. The routine should also return by reference a vector of the
+// types of the registers being used. The default is false.
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E)
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E) \
+    false
+#endif
+
 // LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS - Return true if this aggregate
 // value should be passed in integer registers.  By default, we do this for all
 // values that are not single-element structs.  This ensures that things like
@@ -128,14 +145,6 @@ static tree isSingleElementStructOrArray(tree type) {
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
    !isSingleElementStructOrArray(X)
-#endif
-
-// LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
-// value should be passed by value, i.e. passing its address with the byval
-// attribute bit set. The default is false.
-#ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X) \
-    false
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are
@@ -212,38 +221,43 @@ public:
       C.HandleByValArgument(Ty, type);
       if (Attributes)
         *Attributes |= ParamAttr::ByVal;
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
-      PassInIntegerRegisters(type, Ty);
-    } else if (TREE_CODE(type) == RECORD_TYPE) {
-      for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
-        if (TREE_CODE(Field) == FIELD_DECL) {
-          unsigned FNo = GetFieldIndex(Field);
-          assert(FNo != ~0U && "Case not handled yet!");
+    } else {
+      std::vector<const Type*> Elts;
+      if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Elts)) {
+        PassInMixedRegisters(type, Ty, Elts);
+      } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
+        PassInIntegerRegisters(type, Ty);
+      } else if (TREE_CODE(type) == RECORD_TYPE) {
+        for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
+          if (TREE_CODE(Field) == FIELD_DECL) {
+            unsigned FNo = GetFieldIndex(Field);
+            assert(FNo != ~0U && "Case not handled yet!");
 
-          C.EnterField(FNo, Ty);
-          HandleArgument(getDeclaredType(Field));
-          C.ExitField();
-        }
-    } else if (TREE_CODE(type) == COMPLEX_TYPE) {
-      C.EnterField(0, Ty);
-      HandleArgument(TREE_TYPE(type));
-      C.ExitField();
-      C.EnterField(1, Ty);
-      HandleArgument(TREE_TYPE(type));
-      C.ExitField();
-    } else if ((TREE_CODE(type) == UNION_TYPE) ||
-               (TREE_CODE(type) == QUAL_UNION_TYPE)) {
-      HandleUnion(type);
-    } else if (TREE_CODE(type) == ARRAY_TYPE) {
-      const ArrayType *ATy = cast<ArrayType>(Ty);
-      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-        C.EnterField(i, Ty);
+            C.EnterField(FNo, Ty);
+            HandleArgument(getDeclaredType(Field));
+            C.ExitField();
+          }
+      } else if (TREE_CODE(type) == COMPLEX_TYPE) {
+        C.EnterField(0, Ty);
         HandleArgument(TREE_TYPE(type));
         C.ExitField();
+        C.EnterField(1, Ty);
+        HandleArgument(TREE_TYPE(type));
+        C.ExitField();
+      } else if ((TREE_CODE(type) == UNION_TYPE) ||
+                 (TREE_CODE(type) == QUAL_UNION_TYPE)) {
+        HandleUnion(type);
+      } else if (TREE_CODE(type) == ARRAY_TYPE) {
+        const ArrayType *ATy = cast<ArrayType>(Ty);
+        for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+          C.EnterField(i, Ty);
+          HandleArgument(TREE_TYPE(type));
+          C.ExitField();
+        }
+      } else {
+        assert(0 && "unknown aggregate type!");
+        abort();
       }
-    } else {
-      assert(0 && "unknown aggregate type!");
-      abort();
     }
   }
 
@@ -347,6 +361,19 @@ public:
       ++i;
     }
     for (unsigned e = Elts.size(); i != e; ++i) {
+      C.EnterField(i, STy);
+      C.HandleScalarArgument(Elts[i], 0);
+      C.ExitField();
+    }
+  }
+
+  /// PassInMixedRegisters - Given an aggregate value that should be passed in
+  /// mixed integer, floating point, and vector registers, convert it to a
+  /// structure containing the specified struct elements in.
+  void PassInMixedRegisters(tree type, const Type *Ty,
+                            std::vector<const Type*> &Elts) {
+    const StructType *STy = StructType::get(Elts, false);
+    for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
       C.HandleScalarArgument(Elts[i], 0);
       C.ExitField();

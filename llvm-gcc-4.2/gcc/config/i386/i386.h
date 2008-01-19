@@ -34,6 +34,36 @@ Boston, MA 02110-1301, USA.  */
    ADDR_BEG, ADDR_END, PRINT_IREG, PRINT_SCALE, PRINT_B_I_S, and many
    that start with ASM_ or end in ASM_OP.  */
 
+/* LLVM LOCAL begin */
+
+#ifdef ENABLE_LLVM
+/* Register class used for passing given 64bit part of the argument.
+   These represent classes as documented by the PS ABI, with the exception
+   of SSESF, SSEDF classes, that are basically SSE class, just gcc will
+   use SF or DFmode move instead of DImode to avoid reformatting penalties.
+
+   Similarly we play games with INTEGERSI_CLASS to use cheaper SImode moves
+   whenever possible (upper half does contain padding).
+ */
+enum x86_64_reg_class
+  {
+    X86_64_NO_CLASS,
+    X86_64_INTEGER_CLASS,
+    X86_64_INTEGERSI_CLASS,
+    X86_64_SSE_CLASS,
+    X86_64_SSESF_CLASS,
+    X86_64_SSEDF_CLASS,
+    X86_64_SSEUP_CLASS,
+    X86_64_X87_CLASS,
+    X86_64_X87UP_CLASS,
+    X86_64_COMPLEX_X87_CLASS,
+    X86_64_MEMORY_CLASS
+  };
+
+#endif /* ENABLE_LLVM */
+
+/* LLVM LOCAL end */
+
 /* Define the specific costs for a given cpu */
 
 struct processor_costs {

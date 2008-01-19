@@ -67,5 +67,16 @@ extern bool llvm_x86_should_pass_aggregate_in_memory(tree);
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)          \
   llvm_x86_should_pass_aggregate_in_memory(X)
 
+
+#ifdef LLVM_ABI_H
+extern bool
+llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree,
+                                                std::vector<const Type*>&);
+
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E)          \
+  (TARGET_64BIT &&                                              \
+   llvm_x86_64_should_pass_aggregate_in_mixed_regs((T), (E)))
+#endif /* LLVM_ABI_H */
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

@@ -257,7 +257,13 @@ extern void ix86_expand_flt_rounds (rtx);
 extern int asm_preferred_eh_data_format (int, int);
 
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#define MAX_CLASSES 4
 enum machine_mode ix86_getNaturalModeForType(tree type);
 int ix86_HowToPassArgument(enum machine_mode mode, tree type, int in_return,
                            int *int_nregs, int *sse_nregs);
+int ix86_ClassifyArgument(enum machine_mode mode, tree type,
+                          enum x86_64_reg_class classes[MAX_CLASSES],
+                          int bit_offset);
+#endif
 /* LLVM LOCAL end */

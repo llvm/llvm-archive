@@ -26,6 +26,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm-abi.h"
 #include "llvm-internal.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
@@ -661,25 +662,37 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 }
 
 /* These are defined in i386.c */
+#define MAX_CLASSES 4
 extern "C" enum machine_mode ix86_getNaturalModeForType(tree);
 extern "C" int ix86_HowToPassArgument(enum machine_mode, tree, int, int*, int*);
+extern "C" int ix86_ClassifyArgument(enum machine_mode, tree,
+                               enum x86_64_reg_class classes[MAX_CLASSES], int);
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. This is only called for
    x86-64. */
-static bool llvm_x86_64_should_pass_aggregate_in_memory(tree type,
+static bool llvm_x86_64_should_pass_aggregate_in_memory(tree TreeType,
                                                         enum machine_mode Mode){
   int IntRegs, SSERegs;
   /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
-  return !ix86_HowToPassArgument(Mode, type, 0, &IntRegs, &SSERegs);
+  return !ix86_HowToPassArgument(Mode, TreeType, 0, &IntRegs, &SSERegs);
+}
+
+/* Returns true if all elements of the type are integer types. */
+static bool llvm_x86_is_all_integer_types(const Type *Ty) {
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I)
+    if (!I->get()->isIntOrIntVector())
+      return false;
+  return true;
 }
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. */
-bool llvm_x86_should_pass_aggregate_in_memory(tree type) {
-  enum machine_mode Mode = ix86_getNaturalModeForType(type);
+bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType) {
+  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
   HOST_WIDE_INT Bytes =
-    (Mode == BLKmode) ? int_size_in_bytes(type) : (int) GET_MODE_SIZE(Mode);
+    (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
 
   // Zero sized array, struct, or class, not passed in memory.
   if (Bytes == 0)
@@ -687,20 +700,101 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree type) {
 
   if (Bytes == GET_MODE_SIZE(SImode) || Bytes == GET_MODE_SIZE(DImode)) {
     // 32-bit or 64-bit and all elements are integers, not passed in memory.
-    bool AllIntegers = true;
-    const Type *Ty = ConvertType(type);
-    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-         I != E; ++I)
-      if (!I->get()->isIntOrIntVector()) {
-        AllIntegers = false;
-        break;
-      }
-    if (AllIntegers)
+    const Type *Ty = ConvertType(TreeType);
+    if (llvm_x86_is_all_integer_types(Ty))
       return false;
   }
   if (!TARGET_64BIT)
     return true;
-  return llvm_x86_64_should_pass_aggregate_in_memory(type, Mode);
+  return llvm_x86_64_should_pass_aggregate_in_memory(TreeType, Mode);
+}
+
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed in a number of registers of mixed types.
+   It also returns a vector of types that correspond to the registers used
+   for parameter passing. This is only called for x86-64. */
+bool
+llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType,
+                                                std::vector<const Type*> &Elts){
+  enum x86_64_reg_class Class[MAX_CLASSES];
+  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  HOST_WIDE_INT Bytes =
+    (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
+  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  if (!NumClasses)
+    return false;
+ 
+  for (int i = 0; i < NumClasses; ++i) {
+    switch (Class[i]) {
+    case X86_64_INTEGER_CLASS:
+    case X86_64_INTEGERSI_CLASS:
+      Elts.push_back(Type::Int64Ty);
+      break;
+    case X86_64_SSE_CLASS:
+      // If it's a SSE class argument, then one of the followings are possible:
+      // 1. 1 x SSE, size is 8: 1 x Double.
+      // 2. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
+      //                                         <2 x i64>, or <2 x f64>.
+      // 3. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
+      // 4. 2 x SSE, size is 16: 2 x Double.
+      if (NumClasses == 1) {
+        if (Bytes == 8)
+          Elts.push_back(Type::DoubleTy);
+        else
+          assert(0 && "Not yet handled!");
+      } else if (NumClasses == 2) {
+        if (Class[i+1] == X86_64_SSEUP_CLASS) {
+          const Type *Ty = ConvertType(TreeType);
+          if (const StructType *STy = dyn_cast<StructType>(Ty))
+            // Look pass the struct wrapper.
+            if (STy->getNumElements() == 1)
+              Ty = STy->getElementType(0);
+          if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+            if (VTy->getNumElements() == 2) {
+              if (VTy->getElementType()->isInteger())
+                Elts.push_back(VectorType::get(Type::Int64Ty, 2));
+              else
+                Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+            } else {
+              assert(VTy->getNumElements() == 4);
+              if (VTy->getElementType()->isInteger())
+                Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+              else
+                Elts.push_back(VectorType::get(Type::FloatTy, 4));
+            }
+          } else if (llvm_x86_is_all_integer_types(Ty))
+            Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+          else
+            Elts.push_back(VectorType::get(Type::FloatTy, 4));
+        } else if (Class[i+1] == X86_64_SSESF_CLASS) {
+          assert(Bytes == 12 && "Not yet handled!");
+          Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::FloatTy);
+        } else if (Class[i+1] == X86_64_SSE_CLASS) {
+          Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::DoubleTy);
+        } else
+          assert(0 && "Not yet handled!");
+        ++i; // Already handled the next one.
+      } else
+        assert(0 && "Not yet handled!");
+      break;
+    case X86_64_SSESF_CLASS:
+      Elts.push_back(Type::FloatTy);
+      break;
+    case X86_64_SSEDF_CLASS:
+      Elts.push_back(Type::DoubleTy);
+      break;
+    case X86_64_X87_CLASS:
+    case X86_64_X87UP_CLASS:
+    case X86_64_COMPLEX_X87_CLASS:
+      return false;
+    case X86_64_NO_CLASS:
+      return false;
+    default: assert(0 && "Unexpected register class!");
+    }
+  }
+  return true;
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -1158,7 +1158,7 @@ Value *TreeToLLVM::CastToSIntType(Value *V, const Type* Ty) {
 }
 
 /// CastToFPType - Cast the specified value to the specified type assuming
-/// that the value and type or floating point
+/// that the value and type are floating point.
 Value *TreeToLLVM::CastToFPType(Value *V, const Type* Ty) {
   unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
   unsigned DstBits = Ty->getPrimitiveSizeInBits();
@@ -5176,6 +5176,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   }
 
   if (isBitfield(FieldDecl)) {
+    // If this is a bitfield, the declared type must be an integral type.
+    assert(FieldTy->isInteger() && "Invalid bitfield");
+
     assert(DECL_SIZE(FieldDecl) &&
            TREE_CODE(DECL_SIZE(FieldDecl)) == INTEGER_CST &&
            "Variable sized bitfield?");
@@ -5184,30 +5187,28 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     const Type *LLVMFieldTy =
       cast<PointerType>(FieldPtr->getType())->getElementType();
 
-    // If this is a bitfield, the declared type must be an integral type.
-    // If the field result is a bool, cast to a ubyte instead.  It is not
-    // possible to access all bits of a memory object with a bool (only the low
-    // bit) but it is possible to access them with a byte.
-    if (FieldTy == Type::Int1Ty)
-      FieldTy = Type::Int8Ty;
-    assert(FieldTy->isInteger() && "Invalid bitfield");
-
     // If the LLVM notion of the field type contains the entire bitfield being
     // accessed, use the LLVM type.  This avoids pointer casts and other bad
     // things that are difficult to clean up later.  This occurs in cases like
     // "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing y.
     // We want to access the field as a ulong, not as a uint with an offset.
     if (LLVMFieldTy->isInteger() &&
-        LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize)
+        LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize &&
+        LLVMFieldTy->getPrimitiveSizeInBits() ==
+        TD.getABITypeSizeInBits(LLVMFieldTy))
       FieldTy = LLVMFieldTy;
+    else
+      // If the field result type T is a bool or some other curiously sized
+      // integer type, then not all bits may be accessible by advancing a T*
+      // and loading through it.  For example, if the result type is i1 then
+      // only the first bit in each byte would be loaded.  Even if T is byte
+      // sized like an i24 there may be trouble: incrementing a T* will move
+      // the position by 32 bits not 24, leaving the upper 8 of those 32 bits
+      // inaccessible.  Avoid this by rounding up the size appropriately.
+      FieldTy = IntegerType::get(TD.getABITypeSizeInBits(FieldTy));
 
-    // We are now loading/storing through a casted pointer type, whose
-    // signedness depends on the signedness of the field.  Force the field to
-    // be unsigned.  This solves performance problems where you have, for
-    // example:  struct { int A:1; unsigned B:2; };  Consider a store to A then
-    // a store to B.  In this case, without this conversion, you'd have a
-    // store through an int*, followed by a load from a uint*.  Forcing them
-    // both to uint* allows the store to be forwarded to the load.
+    assert(FieldTy->getPrimitiveSizeInBits() ==
+           TD.getABITypeSizeInBits(FieldTy) && "Field type not sequential!");
 
     // If this is a bitfield, the field may span multiple fields in the LLVM
     // type.  As such, cast the pointer to be a pointer to the declared type.
@@ -5281,6 +5282,9 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   unsigned ValueSizeInBits = TD.getTypeSizeInBits(ValTy);
   assert(BitSize <= ValueSizeInBits &&
          "ValTy isn't large enough to hold the value loaded!");
+
+  assert(ValueSizeInBits == TD.getABITypeSizeInBits(ValTy) &&
+         "FIXME: BIT_FIELD_REF logic is broken for non-round types");
 
   // BIT_FIELD_REF values can have BitStart values that are quite large.  We
   // know that the thing we are loading is ValueSizeInBits large.  If BitStart

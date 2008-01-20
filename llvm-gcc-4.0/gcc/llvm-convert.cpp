@@ -4991,6 +4991,7 @@ bool TreeToLLVM::EmitBuiltinDwarfSPColumn(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
+#ifdef EH_RETURN_DATA_REGNO
   tree arglist = TREE_OPERAND(exp, 1);
 
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
@@ -5012,6 +5013,7 @@ bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
   iwhich = DWARF_FRAME_REGNUM (iwhich);
 
   Result = ConstantInt::get(ConvertType(TREE_TYPE(exp)), iwhich);
+#endif
 
   return true;
 }
@@ -5041,6 +5043,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
+#ifdef DWARF2_UNWIND_INFO
   unsigned int i;
   bool wrote_return_column = false;
   static bool reg_modes_initialized = false;
@@ -5093,6 +5096,8 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
   Idx  = ConstantInt::get(Type::Int32Ty, DWARF_ALT_FRAME_RETURN_COLUMN);
   Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
 #endif
+
+#endif /* DWARF2_UNWIND_INFO */
 
   // TODO: the RS6000 target needs extra initialization [gcc changeset 122468].
 

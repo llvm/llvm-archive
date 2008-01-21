@@ -9,7 +9,15 @@
    the revision of your modified compiler.  */
 
 /* APPLE LOCAL begin Apple version */
-#define VERSUFFIX "(llvm) (Based on Apple Inc. build 5546)"
+#ifdef ENABLE_LLVM
+#ifdef LLVM_VERSION_INFO
+#define VERSUFFIX " (Based on Apple Inc. build 5546) (LLVM build " LLVM_VERSION_INFO ")"
+#else
+#define VERSUFFIX " (Based on Apple Inc. build 5546) (LLVM build)"
+#endif
+#else
+#define VERSUFFIX " (Based on Apple Inc. build 5546)"
+#endif
 /* APPLE LOCAL end Apple version */
 
 /* This is the location of the online document giving instructions for

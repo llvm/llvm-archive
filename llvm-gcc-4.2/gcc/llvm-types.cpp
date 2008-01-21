@@ -1260,6 +1260,8 @@ struct StructTypeConversionInfo {
     ExtraBitsAvailable = E;
   }
 
+  bool isPacked() { return Packed; }
+
   void markAsPacked() {
     Packed = true;
   }
@@ -1793,7 +1795,15 @@ void TypeConverter::DecodeStructFields(tree Field,
     // ordering.  Therefore convert to a packed struct and try again.
     Info.convertToPacked();
     DecodeStructFields(Field, Info);
-  } else 
+  } 
+  else if (TYPE_USER_ALIGN(TREE_TYPE(Field))
+           && DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty)
+           && !Info.isPacked()) {
+    // If Field has user defined alignment and it does not match Ty alignment
+    // then convert to a packed struct and try again.
+    Info.convertToPacked();
+    DecodeStructFields(Field, Info);
+  } else
     // At this point, we know that adding the element will happen at the right
     // offset.  Add it.
     Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));

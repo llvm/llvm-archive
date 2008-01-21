@@ -1509,36 +1509,8 @@ struct StructTypeConversionInfo {
 
   void addNewBitField(unsigned Size, unsigned FirstUnallocatedByte);
 
-  void convertToPacked();
-  
   void dump() const;
 };
-
-// LLVM disagrees as to where to put field natural field ordering.
-// ordering.  Therefore convert to a packed struct.
-void StructTypeConversionInfo::convertToPacked() {
-  assert (!Packed && "Packing a packed struct!");
-  Packed = true;
-  
-  // Fill the padding that existed from alignment restrictions
-  // with byte arrays to ensure the same layout when converting
-  // to a packed struct.
-  for (unsigned x = 1; x < ElementOffsetInBytes.size(); ++x) {
-    if (ElementOffsetInBytes[x-1] + ElementSizeInBytes[x-1]
-        < ElementOffsetInBytes[x]) {
-      uint64_t padding = ElementOffsetInBytes[x]
-        - ElementOffsetInBytes[x-1] - ElementSizeInBytes[x-1];
-      const Type *Pad = Type::Int8Ty;
-      Pad = ArrayType::get(Pad, padding);
-      ElementOffsetInBytes.insert(ElementOffsetInBytes.begin() + x,
-                                  ElementOffsetInBytes[x-1] +
-                                  ElementSizeInBytes[x-1]);
-      ElementSizeInBytes.insert(ElementSizeInBytes.begin() + x, padding);
-      Elements.insert(Elements.begin() + x, Pad);
-      PaddingElement.insert(PaddingElement.begin() + x, true);
-    }
-  }
-}
 
 // Add new element which is a bit field. Size is not the size of bit filed,
 // but size of bits required to determine type of new Field which will be
@@ -1765,17 +1737,18 @@ static void RestoreBaseClassFields(tree type) {
 
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
-/// reflect it.  
-void TypeConverter::DecodeStructFields(tree Field,
+/// reflect it.  Return tree if field is decoded correctly. Otherwise return
+/// false.
+bool TypeConverter::DecodeStructFields(tree Field,
                                        StructTypeConversionInfo &Info) {
   if (TREE_CODE(Field) != FIELD_DECL ||
       TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
-    return;
+    return true;
 
   // Handle bit-fields specially.
   if (isBitfield(Field)) {
     DecodeStructBitField(Field, Info);
-    return;
+    return true;
   }
 
   Info.allFieldsAreNotBitFields();
@@ -1793,20 +1766,19 @@ void TypeConverter::DecodeStructFields(tree Field,
   if (!Info.ResizeLastElementIfOverlapsWith(StartOffsetInBytes, Field, Ty)) {
     // LLVM disagrees as to where this field should go in the natural field
     // ordering.  Therefore convert to a packed struct and try again.
-    Info.convertToPacked();
-    DecodeStructFields(Field, Info);
+    return false;
   } 
   else if (TYPE_USER_ALIGN(TREE_TYPE(Field))
            && DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty)
            && !Info.isPacked()) {
     // If Field has user defined alignment and it does not match Ty alignment
     // then convert to a packed struct and try again.
-    Info.convertToPacked();
-    DecodeStructFields(Field, Info);
+    return false;
   } else
     // At this point, we know that adding the element will happen at the right
     // offset.  Add it.
     Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));
+  return true;
 }
 
 /// DecodeStructBitField - This method decodes the specified bit-field, adding
@@ -1984,8 +1956,24 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   FixBaseClassFields(type);
                                 
   // Convert over all of the elements of the struct.
-  for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
-    DecodeStructFields(Field, *Info);
+  bool retryAsPackedStruct = false;
+  for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+    if (DecodeStructFields(Field, *Info) == false) {
+      retryAsPackedStruct = true;
+      break;
+    }
+  }
+  
+  if (retryAsPackedStruct) {
+    delete Info;
+    Info = new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type), 
+                                        true);
+    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+      if (DecodeStructFields(Field, *Info) == false) {
+        assert(0 && "Unable to decode struct fields.");
+      }
+    }
+  }
 
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC struct, insert tail padding now.  This handles, e.g., "{}" in C++.

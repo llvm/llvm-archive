@@ -123,7 +123,7 @@ static tree isSingleElementStructOrArray(tree type) {
 // LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
-#ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X) \
     false
 #endif
@@ -132,7 +132,7 @@ static tree isSingleElementStructOrArray(tree type) {
 // value should be passed in a mixture of integer, floating point, and vector
 // registers. The routine should also return by reference a vector of the
 // types of the registers being used. The default is false.
-#ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E)
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E) \
     false
 #endif

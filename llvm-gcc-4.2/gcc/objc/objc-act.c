@@ -10567,7 +10567,10 @@ build_ivar_list_initializer (tree type, tree field_decl)
       obstack_free (&util_obstack, util_firstobj);
 
       /* Set offset.  */
-      ivar = tree_cons (NULL_TREE, byte_position (field_decl), ivar);
+/* LLVM LOCAL begin make initializer size match type size */
+      ivar = tree_cons (NULL_TREE, convert (integer_type_node,
+                                            byte_position (field_decl)), ivar);
+/* LLVM LOCAL end */
       initlist = tree_cons (NULL_TREE,
 			    objc_build_constructor (type, nreverse (ivar)),
 			    initlist);
@@ -10836,8 +10839,13 @@ generate_dispatch_table (tree type, const char *name, int size, tree list, bool 
   decl = start_var_decl (type, synth_id_with_class_suffix
 			       (name, objc_implementation_context));
 
+  /* LLVM LOCAL begin make initializer size match type size */
   /* APPLE LOCAL ObjC new abi */
-  initlist = build_tree_list (NULL_TREE, build_int_cst (NULL_TREE, init_val));
+  initlist = build_tree_list (NULL_TREE, build_int_cst (newabi 
+                                                        ? NULL_TREE
+                                                        : ptr_type_node,
+                                                        init_val));
+  /* LLVM LOCAL end */
   initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, size), initlist);
   initlist = tree_cons (NULL_TREE, list, initlist);
 

@@ -10867,14 +10867,14 @@ generate_dispatch_table (tree type, const char *name, int size, tree list, bool 
 
   /* LLVM LOCAL begin make initializer size match type size */
   /* APPLE LOCAL ObjC new abi */
-  initlist = build_tree_list (NULL_TREE, build_int_cst (
 #ifdef OBJCPLUS
-                              NULL_TREE,
+  initlist = build_tree_list (NULL_TREE,
+			      build_int_cst (NULL_TREE, init_val));
 #else
-                              newabi ? NULL_TREE : ptr_type_node,
+  initlist = build_tree_list (NULL_TREE,
+                              build_int_cst (newabi ? NULL_TREE : ptr_type_node,
+					     init_val));
 #endif
-
-                                                        init_val));
   /* LLVM LOCAL end */
   initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, size), initlist);
   initlist = tree_cons (NULL_TREE, list, initlist);

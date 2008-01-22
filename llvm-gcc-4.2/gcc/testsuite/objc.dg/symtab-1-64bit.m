@@ -22,4 +22,5 @@
 @end
 
 /* APPLE LOCAL testing */
-/* { dg-final { scan-assembler "L_OBJC_SYMBOLS.*:\n\t.quad\t0\n\t.long\t0\n\t.space 4\n\t.(short|word)\t2\n\t.(short|word)\t0\n\t.space 4\n\t.quad\tL_OBJC_CLASS_Derived.*\n\t.quad\tL_OBJC_CLASS_Base.*\n" } } */
+/* LLVM LOCAL accept llvm syntax */
+/* { dg-final { scan-assembler "L_OBJC_SYMBOLS.*:.*\n\t(.quad\t0|.space\t8)\n\t(.long\t0\n\t.space 4|.space\t8)\n\t.(short|word)\t2\n\t.((short|word)\t0|space\t2)\n\t.space( |\t)4\n\t.quad\tL_OBJC_CLASS_Derived.*\n\t.quad\tL_OBJC_CLASS_Base.*\n" } } */

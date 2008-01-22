@@ -10456,6 +10456,8 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
 {
   tree initlist = NULL_TREE;
   int val;
+  /* LLVM LOCAL make sizes add up right */
+  int skipped = 0;
 
   do {
     tree ivar = NULL_TREE;
@@ -10463,8 +10465,12 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
     /* Unnamed bitfields are ignored. */
     if (!DECL_NAME (field_decl))
       {
-        do
+        /* LLVM LOCAL begin make sizes add up right */
+        do {
           field_decl = TREE_CHAIN (field_decl);
+          skipped++;
+        }
+        /* LLVM LOCAL end */
         while (field_decl && TREE_CODE (field_decl) != FIELD_DECL);
         continue;
       }
@@ -10521,6 +10527,26 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
     while (field_decl && TREE_CODE (field_decl) != FIELD_DECL);
   }
   while (field_decl);
+
+#ifndef OBJCPLUS
+  /* LLVM LOCAL begin make sizes add up right.  The size in 'type' counted
+     any unnamed bitfields that we skipped above; add null nodes at the
+     end of the list to compensate. */
+  while (skipped--)
+    {
+      tree ivar = NULL_TREE;
+      ivar = tree_cons (NULL_TREE, build_int_cst (ptr_type_node, 0), ivar);
+      ivar = tree_cons (NULL_TREE, build_int_cst (string_type_node, 0), ivar);
+      ivar = tree_cons (NULL_TREE, build_int_cst (string_type_node, 0), ivar);
+      ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), ivar);
+      ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 0), ivar);
+
+      initlist = tree_cons (NULL_TREE, 
+                            objc_build_constructor (type, nreverse(ivar)),
+                            initlist);
+    }
+  /* LLVM LOCAL end */
+#endif
 
   return objc_build_constructor (build_array_type (type, 0),
 				 nreverse (initlist));
@@ -10841,9 +10867,13 @@ generate_dispatch_table (tree type, const char *name, int size, tree list, bool 
 
   /* LLVM LOCAL begin make initializer size match type size */
   /* APPLE LOCAL ObjC new abi */
-  initlist = build_tree_list (NULL_TREE, build_int_cst (newabi 
-                                                        ? NULL_TREE
-                                                        : ptr_type_node,
+  initlist = build_tree_list (NULL_TREE, build_int_cst (
+#ifdef OBJCPLUS
+                              NULL_TREE,
+#else
+                              newabi ? NULL_TREE : ptr_type_node,
+#endif
+
                                                         init_val));
   /* LLVM LOCAL end */
   initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, size), initlist);

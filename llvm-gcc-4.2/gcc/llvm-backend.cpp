@@ -919,15 +919,6 @@ void emit_global_to_llvm(tree decl) {
       GV->setSection(Section);
 #endif
     }
-#ifdef LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION
-    else if (TREE_CODE(decl) == CONST_DECL) {
-      if (const char *Section = 
-          LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)) {
-        GV->setSection(Section);
-      }
-    }
-#endif
-
     
     // Set the alignment for the global if one of the following condition is met
     // 1) DECL_ALIGN_UNIT does not match alignment as per ABI specification
@@ -947,8 +938,16 @@ void emit_global_to_llvm(tree decl) {
     // Add annotate attributes for globals
     if (DECL_ATTRIBUTES(decl))
       AddAnnotateAttrsToGlobal(GV, decl);
-  }
   
+#ifdef LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION
+  } else if (TREE_CODE(decl) == CONST_DECL) {
+    if (const char *Section = 
+        LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)) {
+      GV->setSection(Section);
+    }
+#endif
+  }
+
   if (TheDebugInfo) TheDebugInfo->EmitGlobalVariable(GV, decl); 
 
   TREE_ASM_WRITTEN(decl) = 1;

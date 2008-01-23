@@ -11,4 +11,5 @@
 
 @interface Super <Proto1, Proto2> { id isa; } @end
 @implementation Super @end
-/* { dg-final { scan-assembler ".long\t72\n\t.long\t0" } } */
+/* LLVM LOCAL accept llvm syntax */
+/* { dg-final { scan-assembler ".long\t72\n\t.(long\t0|space\t4)" } } */

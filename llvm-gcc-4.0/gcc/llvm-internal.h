@@ -157,7 +157,7 @@ public:
 private:
   const Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
   const Type *ConvertUNION(tree_node *type, tree_node *orig_type);
-  void DecodeStructFields(tree_node *Field, StructTypeConversionInfo &Info);
+  bool DecodeStructFields(tree_node *Field, StructTypeConversionInfo &Info);
   void DecodeStructBitField(tree_node *Field, StructTypeConversionInfo &Info);
 };
 

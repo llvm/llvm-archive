@@ -5962,6 +5962,15 @@ Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
     std::vector<Constant*> Elts;
     for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
       Elts.push_back(Convert(TREE_VALUE(elt)));
+    
+    // The vector should be zero filled if insufficient elements are provided.
+    if (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp))) {
+      tree EltType = TREE_TYPE(TREE_TYPE(exp));
+      Constant *Zero = Constant::getNullValue(ConvertType(EltType));
+      while (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp)))
+        Elts.push_back(Zero);
+    }
+    
     return ConstantVector::get(Elts);
   } else {
     return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));

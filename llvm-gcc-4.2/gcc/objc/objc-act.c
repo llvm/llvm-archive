@@ -18388,12 +18388,6 @@ handle_impent (struct imp_entry *impent)
   else
     return;
 
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-#undef ASM_DECLARE_CLASS_REFERENCE
-#endif
-  /* LLVM LOCAL end */
-  
 #ifdef ASM_DECLARE_CLASS_REFERENCE
   if (flag_next_runtime)
     {

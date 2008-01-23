@@ -45,7 +45,7 @@ ac_help="$ac_help
   --with-build-sysroot=sysroot
                           use sysroot as the system root during the build"
 ac_help="$ac_help
-  --enable-bootstrap           Enable bootstrapping [yes if native build]"
+  --enable-bootstrap           Enable bootstrapping [no]"
 ac_help="$ac_help
   --enable-serial-[{host,target,build}-]configure
                           Force sequential configuration of
@@ -3172,7 +3172,7 @@ case "$have_compiler:$host:$target:$enable_bootstrap" in
   # Default behavior.  Enable bootstrap if we have a compiler
   # and we are in a native configuration.
   yes:$build:$build:default)
-    enable_bootstrap=yes ;;
+    enable_bootstrap=no ;;
 
   *:*:*:default)
     enable_bootstrap=no ;;

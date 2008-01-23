@@ -1865,7 +1865,7 @@ INSTALL_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-install-/g`
 # not to nest @if/@endif pairs, because configure will not warn you at all.
 
 AC_ARG_ENABLE([bootstrap],
-[  --enable-bootstrap           Enable bootstrapping [yes if native build]],,
+[  --enable-bootstrap           Enable bootstrapping [no]],,
 enable_bootstrap=default)
 
 # Issue errors and warnings for invalid/strange bootstrap combinations.
@@ -1880,7 +1880,7 @@ case "$have_compiler:$host:$target:$enable_bootstrap" in
   # Default behavior.  Enable bootstrap if we have a compiler
   # and we are in a native configuration.
   yes:$build:$build:default)
-    enable_bootstrap=yes ;;
+    enable_bootstrap=no ;;
 
   *:*:*:default)
     enable_bootstrap=no ;;

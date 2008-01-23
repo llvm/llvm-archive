@@ -38,4 +38,5 @@ extern void abort(void);
 }
 @end
 
-/* { dg-final { scan-assembler "\t.section __OBJC, __image_info.*\n\t.align.*\nL_OBJC_IMAGE_INFO.*:\n\t.long\t0\n\t.long\t1" } } */
+/* LLVM LOCAL accept llvm syntax */
+/* { dg-final { scan-assembler ".section __OBJC, __image_info.*\n\t.align.*\nL_OBJC_IMAGE_INFO.*:.*\n\t(.long\t0|.space\t4)\n\t.long\t1" } } */

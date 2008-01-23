@@ -36,5 +36,7 @@ int main() {
     [c8 load];
     [c9 load];
 }
-/* { dg-final { scan-assembler "\t.align 2\nL_OBJC_LABEL_CLASS_\\\$:" } } */
-/* { dg-final { scan-assembler "\t.align 2\nL_OBJC_LABEL_NONLAZY_CLASS_\\\$:" } } */
+/* LLVM LOCAL begin accept llvm syntax */
+/* { dg-final { scan-assembler "\t.align( |\t)2\nL_OBJC_LABEL_CLASS_\\\$:" } } */
+/* { dg-final { scan-assembler "\t.align( |\t)2\nL_OBJC_LABEL_NONLAZY_CLASS_\\\$:" } } */
+/* LLVM LOCAL end */

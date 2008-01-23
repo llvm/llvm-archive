@@ -12,4 +12,5 @@ int _objc_empty_vtable = 0;
 int main() {
     return (int)(long)@"foo";
 }
-/* { dg-final { scan-assembler "LC1:\n\t.quad\t_OBJC_CLASS_\\\$_NSConstantString" } } */
+/* LLVM LOCAL accept llvm syntax */
+/* { dg-final { scan-assembler "(LC1|__unnamed_1_0):.*\n\t.quad\t_OBJC_CLASS_\\\$_NSConstantString" } } */

@@ -18452,12 +18452,6 @@ handle_impent (struct imp_entry *impent)
   else
     return;
 
-  /* APPLE LOCAL begin LLVM */
-#ifdef ENABLE_LLVM
-#undef ASM_DECLARE_CLASS_REFERENCE
-#endif
-  /* APPLE LOCAL end LLVM */
-  
 #ifdef ASM_DECLARE_CLASS_REFERENCE
   if (flag_next_runtime)
     {

@@ -1410,15 +1410,31 @@ objc_section_init (void)			\
 /* LLVM LOCAL */
 #endif /*ENABLE_LLVM*/
 
-#define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)				\
-    do {								\
-	 if (FILE) {							\
-	   fprintf (FILE, "\t");					\
-	   assemble_name (FILE, NAME);					\
-	   fprintf (FILE, "=0\n");					\
-	   (*targetm.asm_out.globalize_label) (FILE, NAME);		\
-	 }								\
-       } while (0)
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)                          \
+  do {                                                                  \
+    if (FILE) {                                                         \
+      char *Buffer = alloca(strlen(NAME)+30);                           \
+      sprintf(Buffer, "\t%s=0", NAME);                                  \
+      llvm_emit_file_scope_asm(Buffer);                                 \
+      sprintf(Buffer, "\t.globl %s", NAME);                             \
+      llvm_emit_file_scope_asm(Buffer);                                 \
+    }                                                                   \
+  } while (0)
+#else
+/* LLVM LOCAL end */
+#define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)                          \
+  do {                                                                  \
+    if (FILE) {                                                         \
+      fprintf (FILE, "\t");                                             \
+      assemble_name (FILE, NAME);					\
+      fprintf (FILE, "=0\n");                                           \
+      (*targetm.asm_out.globalize_label) (FILE, NAME);                  \
+    }                                                                   \
+  } while (0)
+/* LLVM LOCAL */
+#endif /*ENABLE_LLVM*/
 
 /* Globalizing directive for a label.  */
 #define GLOBAL_ASM_OP ".globl "

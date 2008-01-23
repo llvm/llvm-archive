@@ -681,9 +681,11 @@ static bool llvm_x86_64_should_pass_aggregate_in_memory(tree TreeType,
 /* Returns true if all elements of the type are integer types. */
 static bool llvm_x86_is_all_integer_types(const Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
-       I != E; ++I)
-    if (!I->get()->isIntOrIntVector())
+       I != E; ++I) {
+    const Type *STy = I->get();
+    if (!STy->isIntOrIntVector() && STy->getTypeID() != Type::PointerTyID)
       return false;
+  }
   return true;
 }
 

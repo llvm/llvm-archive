@@ -3270,16 +3270,9 @@ classify_argument (enum machine_mode mode, tree type,
 		   int offset = tree_low_cst (BINFO_OFFSET (base_binfo), 0) * 8;
 		   tree type = BINFO_TYPE (base_binfo);
 
-/* LLVM local */
-#ifdef ENABLE_LLVM
-		   num = classify_argument (type_natural_mode (type),
-					    type, subclasses,
-					    (offset + bit_offset) % 256);
-#else                   
 		   num = classify_argument (TYPE_MODE (type),
 					    type, subclasses,
 					    (offset + bit_offset) % 256);
-#endif
 		   if (!num)
 		     return 0;
 		   for (i = 0; i < num; i++)
@@ -3315,18 +3308,10 @@ classify_argument (enum machine_mode mode, tree type,
 		    }
 		  else
 		    {
-/* LLVM local */
-#ifdef ENABLE_LLVM
-		      num = classify_argument (type_natural_mode (TREE_TYPE (field)),
-					       TREE_TYPE (field), subclasses,
-					       (int_bit_position (field)
-						+ bit_offset) % 256);
-#else
 		      num = classify_argument (TYPE_MODE (TREE_TYPE (field)),
 					       TREE_TYPE (field), subclasses,
 					       (int_bit_position (field)
 						+ bit_offset) % 256);
-#endif
 		      if (!num)
 			return 0;
 		      for (i = 0; i < num; i++)
@@ -3345,14 +3330,8 @@ classify_argument (enum machine_mode mode, tree type,
 	  /* Arrays are handled as small records.  */
 	  {
 	    int num;
-/* LLVM local */
-#ifdef ENABLE_LLVM
-	    num = classify_argument (type_natural_mode (TREE_TYPE (type)),
-				     TREE_TYPE (type), subclasses, bit_offset);
-#else
 	    num = classify_argument (TYPE_MODE (TREE_TYPE (type)),
 				     TREE_TYPE (type), subclasses, bit_offset);
-#endif
 	    if (!num)
 	      return 0;
 
@@ -3384,16 +3363,9 @@ classify_argument (enum machine_mode mode, tree type,
 		  if (TREE_TYPE (field) == error_mark_node)
 		    continue;
 
-/* LLVM local */
-#ifdef ENABLE_LLVM
-		  num = classify_argument (type_natural_mode (TREE_TYPE (field)),
-					   TREE_TYPE (field), subclasses,
-					   bit_offset);
-#else
 		  num = classify_argument (TYPE_MODE (TREE_TYPE (field)),
 					   TREE_TYPE (field), subclasses,
 					   bit_offset);
-#endif
 		  if (!num)
 		    return 0;
 		  for (i = 0; i < num; i++)

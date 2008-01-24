@@ -76,6 +76,9 @@ Boston, MA 02111-1307, USA.  */
 #include "langhooks-def.h"
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 #include "opts.h"
+#ifdef ENABLE_LLVM
+#include "llvm.h"               /* for reset_initializer_llvm */
+#endif
 
 #define OBJC_VOID_AT_END	void_list_node
 

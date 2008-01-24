@@ -13,4 +13,5 @@
 int main() {
 	return (long) @protocol(Proto1);
 }
-/* { dg-final { scan-assembler "L_ZL23_OBJC_PROTOCOL_\\\$_Proto1:" } } */
+/* LLVM LOCAL llvm syntax */
+/* { dg-final { scan-assembler "L_.*OBJC_PROTOCOL_\\\$_Proto1:" } } */

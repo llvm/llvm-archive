@@ -22,5 +22,7 @@
 @dynamic referenceCount;
 @end
 
-/* { dg-final { scan-assembler "L_ZL26_OBJC_\\\$_PROP_LIST_GCObject:" } } */
-/* { dg-final { scan-assembler "L_ZL32_OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
+/* LLVM LOCAL begin accept llvm syntax */
+/* { dg-final { scan-assembler "L_.*OBJC_\\\$_PROP_LIST_GCObject:" } } */
+/* { dg-final { scan-assembler "L_.*OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
+/* LLVM LOCAL end */

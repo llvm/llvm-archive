@@ -1563,9 +1563,13 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "CLASS_REFERENCES", 16))
     return "__OBJC,__cls_refs,literal_pointers,no_dead_strip";
   else if (!strncmp (name, "CLASS_", 6))
-    return "__OBJC,__class,regular,no_dead_strip";
+    return (flag_objc_abi == 1 ? 
+            "__OBJC,__class,regular,no_dead_strip" :
+            "__DATA,__data");
   else if (!strncmp (name, "METACLASS_", 10))
-    return "__OBJC,__meta_class,regular,no_dead_strip";
+    return (flag_objc_abi == 1 ?
+            "__OBJC,__meta_class,regular,no_dead_strip" :
+            "__DATA,__data");
   else if (!strncmp (name, "CATEGORY_", 9))
     return "__OBJC,__category,regular,no_dead_strip";
   else if (!strncmp (name, "SELECTOR_REFERENCES", 19))

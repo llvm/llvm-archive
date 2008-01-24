@@ -18412,7 +18412,12 @@ handle_impent (struct imp_entry *impent)
 #ifdef ASM_DECLARE_CLASS_REFERENCE
   if (flag_next_runtime)
     {
-      ASM_DECLARE_CLASS_REFERENCE (asm_out_file, string);
+      /* LLVM LOCAL begin - radar 5702446 */
+#ifdef ENABLE_LLVM
+      if (flag_objc_abi != 2)
+#endif
+      /* LLVM LOCAL end - radar 5702446 */
+        ASM_DECLARE_CLASS_REFERENCE (asm_out_file, string);
       return;
     }
   else

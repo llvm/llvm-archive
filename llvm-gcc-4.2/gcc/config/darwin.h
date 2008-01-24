@@ -954,7 +954,7 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
 #define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)                          \
   do {                                                                  \
     if (FILE) {                                                         \
-      char *Buffer = alloca(strlen(NAME)+30);                           \
+      char *Buffer = alloca(strlen(NAME) + 30);                         \
       sprintf(Buffer, "\t%s=0", NAME);                                  \
       llvm_emit_file_scope_asm(Buffer);                                 \
       sprintf(Buffer, "\t.globl %s", NAME);                             \

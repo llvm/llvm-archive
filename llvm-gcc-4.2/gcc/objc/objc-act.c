@@ -9342,8 +9342,11 @@ generate_protocols (void)
       /* Force 4 byte alignment for protocols */
       DECL_ALIGN(decl) = 32;
       DECL_USER_ALIGN(decl) = 1;
-      /* LLVM LOCAL end */
       finish_var_decl (decl, initlist);
+      /* At -O0, we may have emitted references to the decl earlier. */
+      if (!optimize)
+        reset_initializer_llvm(decl);
+      /* LLVM LOCAL end */
     }
 }
 
@@ -13638,6 +13641,11 @@ build_protocol_reference (tree p)
 
   proto_name = synth_id_with_class_suffix ("_OBJC_PROTOCOL", p);
   decl = start_var_decl (objc_protocol_template, proto_name);
+  /* LLVM LOCAL begin */
+  /* Force 4 byte alignment for protocols */
+  DECL_ALIGN(decl) = 32;
+  DECL_USER_ALIGN(decl) = 1;
+  /* LLVM LOCAL end */
 
   PROTOCOL_FORWARD_DECL (p) = decl;
 }

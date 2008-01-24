@@ -13625,6 +13625,11 @@ generate_v2_protocols (void)
 					     UOBJC_PROTOCOL_OPT_CLS_METHODS_decl);
 					     /* APPLE LOCAL end radar 4695109 */
       finish_var_decl (decl, initlist);
+      /* LLVM LOCAL begin */
+      /* At -O0, we may have emitted references to the decl earlier. */
+      if (!optimize)
+        reset_initializer_llvm(decl);
+      /* LLVM LOCAL end */
       /* APPLE LOCAL radar 4533974 - ObjC new protocol */
       objc_add_to_protocol_list_chain (decl);
     }

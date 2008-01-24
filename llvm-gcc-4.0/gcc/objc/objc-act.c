@@ -10635,14 +10635,6 @@ generate_v2_ivar_offset_ref_lists (void)
       tree decl = TREE_PURPOSE (chain);
       tree offset = TREE_VALUE (chain);
       finish_var_decl (decl, offset);      
-      /* LLVM LOCAL begin - radar 5698757 */
-#ifdef ENABLE_LLVM
-      /* Reset the initializer for this reference as it may have changed with
-         -O0  */
-      if (!optimize)
-        reset_initializer_llvm (decl);
-#endif
-      /* LLVM LOCAL end - radar 5698757 */
     }
 }
 

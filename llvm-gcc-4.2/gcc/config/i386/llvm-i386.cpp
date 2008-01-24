@@ -683,7 +683,7 @@ static bool llvm_x86_is_all_integer_types(const Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
     const Type *STy = I->get();
-    if (!STy->isIntOrIntVector() && STy->getTypeID() != Type::PointerTyID)
+    if (!STy->isIntOrIntVector() && !isa<PointerType>(STy))
       return false;
   }
   return true;

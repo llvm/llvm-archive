@@ -1529,9 +1529,14 @@ bool TypeConverter::DecodeStructFields(tree Field,
 
   // Handle bit-fields specially.
   if (DECL_BIT_FIELD_TYPE(Field)) {
-    DecodeStructBitField(Field, Info);
-    return true;
-  }
+     // Bit-field type does not influence structure alignment. 
+     // For example, struct A { char a; short b; int c:25; char d; } does not
+     // have 4 byte alignment. To enforce this rule, always use packed struct.
+     if (!Info.isPacked())
+       return false;
+     DecodeStructBitField(Field, Info);
+     return true;
+   }
 
   Info.allFieldsAreNotBitFields();
 

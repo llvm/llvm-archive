@@ -815,6 +815,48 @@ void reset_initializer_llvm(tree decl) {
   GV->setInitializer(Init);
 }
   
+/// reset_type_and_initializer_llvm - Change the type and initializer for 
+/// a global variable.
+void reset_type_and_initializer_llvm(tree decl) {
+  // If there were earlier errors we can get here when DECL_LLVM has not
+  // been set.  Don't crash.
+  if ((errorcount || sorrycount) && !DECL_LLVM(decl))
+    return;
+
+  // Get or create the global variable now.
+  GlobalVariable *GV = cast<GlobalVariable>(DECL_LLVM(decl));
+  
+  // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
+  GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
+
+  // Convert the initializer over.
+  Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
+
+  // If we had a forward definition that has a type that disagrees with our
+  // initializer, insert a cast now.  This sort of thing occurs when we have a
+  // global union, and the LLVM type followed a union initializer that is
+  // different from the union element used for the type.
+  if (GV->getType()->getElementType() != Init->getType()) {
+    GV->removeFromParent();
+    GlobalVariable *NGV = new GlobalVariable(Init->getType(), GV->isConstant(),
+                                             GV->getLinkage(), 0,
+                                             GV->getName(), TheModule);
+    NGV->setVisibility(GV->getVisibility());
+    GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
+    if (AttributeUsedGlobals.count(GV)) {
+      AttributeUsedGlobals.remove(GV);
+      AttributeUsedGlobals.insert(NGV);
+    }
+    changeLLVMValue(GV, NGV);
+    delete GV;
+    SET_DECL_LLVM(decl, NGV);
+    GV = NGV;
+  }
+
+  // Set the initializer.
+  GV->setInitializer(Init);
+}
+  
 /// emit_global_to_llvm - Emit the specified VAR_DECL or aggregate CONST_DECL to
 /// LLVM as a global variable.  This function implements the end of
 /// assemble_variable.

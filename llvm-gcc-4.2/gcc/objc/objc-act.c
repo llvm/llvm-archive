@@ -12269,6 +12269,11 @@ generate_v2_shared_structures (int cls_flags)
                                         build_fold_addr_expr (UOBJC_V2_VTABLE_decl)); 
 
   finish_var_decl (class_decl, initlist);
+  /* LLVM LOCAL begin */
+  /* At -O0, we may have emitted references to the decl earlier. */
+  if (!optimize)
+    reset_type_and_initializer_llvm(class_decl);
+  /* LLVM LOCAL end */
   objc_add_to_class_list_chain (class_decl);
   if (CLASS_OR_CATEGORY_HAS_LOAD_IMPL (objc_implementation_context) != NULL_TREE)
     objc_add_to_nonlazy_class_list_chain (class_decl);

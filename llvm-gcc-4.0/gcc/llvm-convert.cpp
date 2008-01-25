@@ -351,7 +351,9 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   }
 
   AllocaInsertionPoint = 0;
-  
+
+  UsedSRetBuffer = false;
+
   CleanupFilter = NULL_TREE;
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
@@ -384,11 +386,13 @@ namespace {
     LLVMBuilder Builder;
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
+    bool &UsedSRetBuffer;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
-                                     const LLVMBuilder &B)
-      : FunctionDecl(FnDecl), AI(ai), Builder(B) {}
-    
+                                     const LLVMBuilder &B,
+                                     bool &SRetBuffer)
+      : FunctionDecl(FnDecl), AI(ai), Builder(B), UsedSRetBuffer(SRetBuffer) {}
+
     void setName(const std::string &Name) {
       NameStack.push_back(Name);
     }
@@ -408,23 +412,29 @@ namespace {
       // instead.
       assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
              "No explicit return value?");
+      assert(AI == Builder.GetInsertBlock()->getParent()->arg_begin() &&
+             "Struct return is not first argument!");
       AI->setName("agg.result");
-        
+
       tree ResultDecl = DECL_RESULT(FunctionDecl);
       tree RetTy = TREE_TYPE(TREE_TYPE(FunctionDecl));
       if (TREE_CODE(RetTy) == TREE_CODE(TREE_TYPE(ResultDecl))) {
-        SET_DECL_LLVM(ResultDecl, AI);
+        // Use a buffer for the return result.  This ensures that writes to the
+        // return value do not interfere with reads from parameters: the same
+        // aggregate might be used for the return value and as a parameter.
+        TheTreeToLLVM->EmitAutomaticVariableDecl(DECL_RESULT(FunctionDecl));
+        UsedSRetBuffer = true;
         ++AI;
         return;
       }
-      
+
       // Otherwise, this must be something returned with NRVO.
       assert(TREE_CODE(TREE_TYPE(ResultDecl)) == REFERENCE_TYPE &&
              "Not type match and not passing by reference?");
       // Create an alloca for the ResultDecl.
       Value *Tmp = TheTreeToLLVM->CreateTemporary(AI->getType());
       Builder.CreateStore(AI, Tmp);
-      
+
       SET_DECL_LLVM(ResultDecl, Tmp);
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(ResultDecl,
@@ -629,7 +639,7 @@ void TreeToLLVM::StartFunctionBody() {
   Function::arg_iterator AI = Fn->arg_begin();
 
   // Rename and alloca'ify real arguments.
-  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder);
+  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder, UsedSRetBuffer);
   TheLLVMABI<FunctionPrologArgumentConversion> ABIConverter(Client);
 
   // Handle the DECL_RESULT.
@@ -729,6 +739,14 @@ Function *TreeToLLVM::FinishFunctionBody() {
                              PointerType::getUnqual(Fn->getReturnType()));
       RetVal = Builder.CreateLoad(RetVal, "retval");
     }
+  } else if (UsedSRetBuffer) {
+    // A buffer was used for the aggregate return result.  Copy it out now.
+    assert(Fn->arg_begin() != Fn->arg_end() && "No struct return value?");
+    unsigned Alignment = expr_align(DECL_RESULT(FnDecl))/8;
+    bool Volatile = TREE_THIS_VOLATILE(DECL_RESULT(FnDecl));
+    MemRef BufLoc(DECL_LLVM(DECL_RESULT(FnDecl)), Alignment, false);
+    MemRef RetLoc(Fn->arg_begin(), Alignment, Volatile);
+    EmitAggregateCopy(RetLoc, BufLoc, TREE_TYPE(DECL_RESULT(FnDecl)));
   }
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
   Builder.CreateRet(RetVal);
@@ -3137,20 +3155,9 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     // Non-bitfield aggregate value.
     MemRef NewLoc(LV.Ptr, Alignment, isVolatile);
 
-    if (DestLoc) {
-      Emit(TREE_OPERAND(exp, 1), &NewLoc);
+    Emit(TREE_OPERAND(exp, 1), &NewLoc);
+    if (DestLoc)
       EmitAggregateCopy(*DestLoc, NewLoc, TREE_TYPE(exp));
-    } else if (TREE_CODE(TREE_OPERAND(exp, 0)) != RESULT_DECL) {
-      Emit(TREE_OPERAND(exp, 1), &NewLoc);
-    } else {
-      // We do this for stores into RESULT_DECL because it is possible for that
-      // memory area to overlap with the object being stored into it; see 
-      // gcc.c-torture/execute/20010124-1.c.
-
-      MemRef Tmp = CreateTempLoc(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
-      Emit(TREE_OPERAND(exp, 1), &Tmp);
-      EmitAggregateCopy(NewLoc, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)));
-    }
     return 0;
   }
 

@@ -260,7 +260,11 @@ class TreeToLLVM {
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
-  
+
+  // UsedSRetBuffer - Whether a buffer was used for an aggregate return value.
+  // If so, it needs copying out when the function returns.
+  bool UsedSRetBuffer;
+
   //===-------------- Exception / Finally Block Handling ------------------===//
   
   struct BranchFixup {
@@ -446,7 +450,9 @@ public:
   /// inserting it into the entry block and returning it.  The resulting
   /// instruction's type is a pointer to the specified type.
   AllocaInst *CreateTemporary(const Type *Ty);
-  
+
+  void EmitAutomaticVariableDecl(tree_node *decl);
+
 private: // Helper functions.
 
   /// EmitBlock - Add the specified basic block to the end of the function.  If
@@ -481,8 +487,6 @@ private:
   /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
   MemRef CreateTempLoc(const Type *Ty);
 
-  void EmitAutomaticVariableDecl(tree_node *decl);
-  
   /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
   ///
   static bool isNoopCast(Value *V, const Type *Ty);

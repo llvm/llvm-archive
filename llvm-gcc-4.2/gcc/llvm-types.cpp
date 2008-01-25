@@ -1123,18 +1123,17 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // accepts it).  But llvm IR does not allow both, so
   // set only ReadNone.
   if (flags & ECF_CONST)
-    // Since they write the return value through a pointer,
-    // 'sret' functions cannot be 'readnone'.
-    if (!ABIConverter.isStructReturn())
-      RAttributes |= ParamAttr::ReadNone;
+    RAttributes |= ParamAttr::ReadNone;
 
   // Check for 'readonly' function attribute.
   if (flags & ECF_PURE && !(flags & ECF_CONST))
-    // Since they write the return value through a pointer,
-    // 'sret' functions cannot be 'readonly'.
-    if (!ABIConverter.isStructReturn())
-      RAttributes |= ParamAttr::ReadOnly;
+    RAttributes |= ParamAttr::ReadOnly;
 
+  // Since they write the return value through a pointer,
+  // 'sret' functions cannot be 'readnone' or 'readonly'.
+  if (ABIConverter.isStructReturn())
+    RAttributes &= ~(ParamAttr::ReadNone|ParamAttr::ReadOnly);
+  
   // Compute whether the result needs to be zext or sext'd.
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
@@ -1161,6 +1160,9 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 #ifdef LLVM_TARGET_ENABLE_REGPARM
   LLVM_TARGET_INIT_REGPARM(local_regparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
+  
+  // Keep track of whether we see a byval argument.
+  bool HasByVal = false;
   
   // Check if we have a corresponding decl to inspect.
   tree DeclArgs = (decl) ? DECL_ARGUMENTS(decl) : NULL;
@@ -1208,11 +1210,23 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
                                     local_regparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
     
-    if (Attributes != ParamAttr::None)
+    if (Attributes != ParamAttr::None) {
+      HasByVal |= Attributes & ParamAttr::ByVal;
       Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(), Attributes));
+    }
       
     if (DeclArgs)
       DeclArgs = TREE_CHAIN(DeclArgs);
+  }
+  
+  // If we see a byval argument and if the function is 'readonly' we have to
+  // demote the function to being 'readonly' instead.  Not doing so would allow
+  // optimizers to delete stores into the argument that is passed into the
+  // function.
+  if (HasByVal && Attrs[0].index == 0 &&
+      (Attrs[0].attrs & ParamAttr::ReadNone)) {
+    Attrs[0].attrs &= ~ParamAttr::ReadNone;
+    Attrs[0].attrs |= ParamAttr::ReadOnly;
   }
   
   // If the argument list ends with a void type node, it isn't vararg.

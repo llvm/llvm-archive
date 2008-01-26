@@ -1219,7 +1219,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
       DeclArgs = TREE_CHAIN(DeclArgs);
   }
   
-  // If we see a byval argument and if the function is 'readonly' we have to
+  // If we see a byval argument and if the function is 'readnone' we have to
   // demote the function to being 'readonly' instead.  Not doing so would allow
   // optimizers to delete stores into the argument that is passed into the
   // function.
@@ -1228,7 +1228,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     Attrs[0].attrs &= ~ParamAttr::ReadNone;
     Attrs[0].attrs |= ParamAttr::ReadOnly;
   }
-  
+
   // If the argument list ends with a void type node, it isn't vararg.
   isVarArg = (Args == 0);
   assert(RetTy && "Return type not specified!");

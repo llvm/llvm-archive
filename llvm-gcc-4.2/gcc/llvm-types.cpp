@@ -1796,7 +1796,7 @@ bool TypeConverter::DecodeStructFields(tree Field,
     return false;
   } 
   else if (TYPE_USER_ALIGN(TREE_TYPE(Field))
-           && DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty)
+           && (unsigned)DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty)
            && !Info.isPacked()) {
     // If Field has user defined alignment and it does not match Ty alignment
     // then convert to a packed struct and try again.

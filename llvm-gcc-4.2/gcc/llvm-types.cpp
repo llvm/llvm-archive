@@ -1610,6 +1610,14 @@ void adjustPaddingElement(const Type *OldTy, const Type *NewTy) {
 
 }
 
+/// isAggregateOfSizeZero - Returns true if this is an aggregate with size zero.
+///
+bool isAggregateOfSizeZero(tree type) {
+  if (!isAggregateTreeType(type)) return false;
+  return int_size_in_bytes(type) == 0;
+}
+
+
 /// Mapping from type to type-used-as-base-class and back.
 static DenseMap<tree, tree> BaseTypesMap;
 
@@ -2043,6 +2051,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
       unsigned FieldOffsetInBits = getFieldOffsetInBits(Field);
       tree FieldType = getDeclaredType(Field);
+
+      if (isAggregateOfSizeZero(FieldType))
+        continue;
 
       // If this is a bitfield, we may want to adjust the FieldOffsetInBits to
       // produce safe code.  In particular, bitfields will be loaded/stored as

@@ -118,6 +118,10 @@ struct StructTypeConversionInfo;
 /// element added to match llvm struct type size and gcc struct type size.
 bool isPaddingElement(const Type *T, unsigned N);
 
+/// isAggregateOfSizeZero - Returns true if this is an aggregate with size zero.
+///
+bool isAggregateOfSizeZero(union tree_node*);
+
 /// TypeConverter - Implement the converter from GCC types to LLVM types.
 ///
 class TypeConverter {

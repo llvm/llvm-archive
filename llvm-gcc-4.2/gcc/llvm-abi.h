@@ -120,13 +120,6 @@ static tree isSingleElementStructOrArray(tree type) {
   }
 }
 
-/// isAggregareOfSizeZero - Returns true if this is an aggregate with size zero.
-///
-static bool isAggregareOfSizeZero(tree type) {
-  if (!isAggregateTreeType(type)) return false;
-  return int_size_in_bytes(type) == 0;
-}
-
 // LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
@@ -234,7 +227,7 @@ public:
         PassInMixedRegisters(type, Ty, Elts);
       } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty);
-      } else if (isAggregareOfSizeZero(type)) {
+      } else if (isAggregateOfSizeZero(type)) {
         // Zero sized aggregare, just drop it!
         ;
       } else if (TREE_CODE(type) == RECORD_TYPE) {

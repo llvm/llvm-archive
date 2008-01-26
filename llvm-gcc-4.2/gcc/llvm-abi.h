@@ -228,7 +228,7 @@ public:
       } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty);
       } else if (isAggregateOfSizeZero(type)) {
-        // Zero sized aggregare, just drop it!
+        // Zero sized aggregate, just drop it!
         ;
       } else if (TREE_CODE(type) == RECORD_TYPE) {
         for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))

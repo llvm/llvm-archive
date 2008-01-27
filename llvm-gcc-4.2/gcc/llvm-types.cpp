@@ -1227,11 +1227,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   if (HasByVal && Attrs[0].index == 0) {
     uint16_t &RAttrs = Attrs[0].attrs;
     RAttrs &= ~(ParamAttr::ReadNone | ParamAttr::ReadOnly);
-    if (RAttrs == ParamAttr::None) {
-      for (unsigned i = 1, e = Attrs.size(); i < e ; ++i)
-        Attrs[i-1] = Attrs[i];
-      Attrs.pop_back();
-    }
+    if (RAttrs == ParamAttr::None)
+      Attrs.erase(Attrs.begin());
   }
 
   // If the argument list ends with a void type node, it isn't vararg.

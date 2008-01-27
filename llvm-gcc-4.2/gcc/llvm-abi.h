@@ -124,7 +124,7 @@ static tree isSingleElementStructOrArray(tree type) {
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X) \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY) \
     false
 #endif
 
@@ -133,7 +133,7 @@ static tree isSingleElementStructOrArray(tree type) {
 // registers. The routine should also return by reference a vector of the
 // types of the registers being used. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E) \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
     false
 #endif
 
@@ -212,55 +212,52 @@ public:
   /// their fields.
   void HandleArgument(tree type, uint16_t *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
-
+    std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type)) {
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+      PassInMixedRegisters(type, Ty, Elts);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
       C.HandleByValArgument(Ty, type);
       if (Attributes)
         *Attributes |= ParamAttr::ByVal;
-    } else {
-      std::vector<const Type*> Elts;
-      if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Elts)) {
-        PassInMixedRegisters(type, Ty, Elts);
-      } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty);
-      } else if (isAggregateOfSizeZero(type)) {
-        // Zero sized aggregate, just drop it!
-        ;
-      } else if (TREE_CODE(type) == RECORD_TYPE) {
-        for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
-          if (TREE_CODE(Field) == FIELD_DECL) {
-            unsigned FNo = GetFieldIndex(Field);
-            assert(FNo != ~0U && "Case not handled yet!");
-
-            C.EnterField(FNo, Ty);
-            HandleArgument(getDeclaredType(Field));
-            C.ExitField();
-          }
-      } else if (TREE_CODE(type) == COMPLEX_TYPE) {
-        C.EnterField(0, Ty);
-        HandleArgument(TREE_TYPE(type));
-        C.ExitField();
-        C.EnterField(1, Ty);
-        HandleArgument(TREE_TYPE(type));
-        C.ExitField();
-      } else if ((TREE_CODE(type) == UNION_TYPE) ||
-                 (TREE_CODE(type) == QUAL_UNION_TYPE)) {
-        HandleUnion(type);
-      } else if (TREE_CODE(type) == ARRAY_TYPE) {
-        const ArrayType *ATy = cast<ArrayType>(Ty);
-        for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-          C.EnterField(i, Ty);
-          HandleArgument(TREE_TYPE(type));
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
+      PassInIntegerRegisters(type, Ty);
+    } else if (isAggregateOfSizeZero(type)) {
+      // Zero sized aggregate, just drop it!
+      ;
+    } else if (TREE_CODE(type) == RECORD_TYPE) {
+      for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
+        if (TREE_CODE(Field) == FIELD_DECL) {
+          unsigned FNo = GetFieldIndex(Field);
+          assert(FNo != ~0U && "Case not handled yet!");
+          
+          C.EnterField(FNo, Ty);
+          HandleArgument(getDeclaredType(Field));
           C.ExitField();
         }
-      } else {
-        assert(0 && "unknown aggregate type!");
-        abort();
+    } else if (TREE_CODE(type) == COMPLEX_TYPE) {
+      C.EnterField(0, Ty);
+      HandleArgument(TREE_TYPE(type));
+      C.ExitField();
+      C.EnterField(1, Ty);
+      HandleArgument(TREE_TYPE(type));
+      C.ExitField();
+    } else if ((TREE_CODE(type) == UNION_TYPE) ||
+               (TREE_CODE(type) == QUAL_UNION_TYPE)) {
+      HandleUnion(type);
+    } else if (TREE_CODE(type) == ARRAY_TYPE) {
+      const ArrayType *ATy = cast<ArrayType>(Ty);
+      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+        C.EnterField(i, Ty);
+        HandleArgument(TREE_TYPE(type));
+        C.ExitField();
       }
+    } else {
+      assert(0 && "unknown aggregate type!");
+      abort();
     }
   }
 

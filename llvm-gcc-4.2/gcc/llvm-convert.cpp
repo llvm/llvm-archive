@@ -682,7 +682,7 @@ void TreeToLLVM::StartFunctionBody() {
     const Type *ArgTy = ConvertType(TREE_TYPE(Args));
     if (isPassedByInvisibleReference(TREE_TYPE(Args)) ||
         (!ArgTy->isFirstClassType() &&
-         LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(TREE_TYPE(Args)))) {
+         LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(TREE_TYPE(Args), ArgTy))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
       SET_DECL_LLVM(Args, AI);

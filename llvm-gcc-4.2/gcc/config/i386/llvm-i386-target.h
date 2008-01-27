@@ -62,20 +62,24 @@ extern int ix86_regparm;
     }                                                           \
   }
 
-extern bool llvm_x86_should_pass_aggregate_in_memory(tree);
-
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X)          \
-  llvm_x86_should_pass_aggregate_in_memory(X)
-
-
 #ifdef LLVM_ABI_H
+extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
+
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
+  llvm_x86_should_pass_aggregate_in_memory(X, TY)
+
+
 extern bool
-llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree,
+llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
+                                                std::vector<const Type*>&);
+extern bool
+llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
                                                 std::vector<const Type*>&);
 
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, E)          \
-  (TARGET_64BIT &&                                              \
-   llvm_x86_64_should_pass_aggregate_in_mixed_regs((T), (E)))
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E)            \
+  (TARGET_64BIT ?                                                     \
+   llvm_x86_64_should_pass_aggregate_in_mixed_regs((T), (TY), (E)) :  \
+   llvm_x86_32_should_pass_aggregate_in_mixed_regs((T), (TY), (E)))
 #endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -1219,14 +1219,19 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
       DeclArgs = TREE_CHAIN(DeclArgs);
   }
   
-  // If we see a byval argument and if the function is 'readnone' we have to
-  // demote the function to being 'readonly' instead.  Not doing so would allow
-  // optimizers to delete stores into the argument that is passed into the
-  // function.
-  if (HasByVal && Attrs[0].index == 0 &&
-      (Attrs[0].attrs & ParamAttr::ReadNone)) {
-    Attrs[0].attrs &= ~ParamAttr::ReadNone;
-    Attrs[0].attrs |= ParamAttr::ReadOnly;
+  // If there is a byval argument then it is not safe to mark the function
+  // 'readnone' or 'readonly': gcc permits a 'const' or 'pure' function to
+  // write to struct arguments passed by value, but in LLVM this becomes a
+  // write through the byval pointer argument, which LLVM does not allow for
+  // readonly/readnone functions.
+  if (HasByVal && Attrs[0].index == 0) {
+    uint16_t &RAttrs = Attrs[0].attrs;
+    RAttrs &= ~(ParamAttr::ReadNone | ParamAttr::ReadOnly);
+    if (RAttrs == ParamAttr::None) {
+      for (unsigned i = 1, e = Attrs.size(); i < e ; ++i)
+        Attrs[i-1] = Attrs[i];
+      Attrs.pop_back();
+    }
   }
 
   // If the argument list ends with a void type node, it isn't vararg.

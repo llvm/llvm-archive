@@ -286,10 +286,6 @@ class TreeToLLVM {
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
 
-  // UsedSRetBuffer - Whether a buffer was used for an aggregate return value.
-  // If so, it needs copying out when the function returns.
-  bool UsedSRetBuffer;
-
   //===---------------------- Exception Handling --------------------------===//
 
   /// LandingPads - The landing pad for a given EH region.
@@ -390,7 +386,12 @@ public:
   /// instruction's type is a pointer to the specified type.
   AllocaInst *CreateTemporary(const Type *Ty);
 
-  void EmitAutomaticVariableDecl(tree_node *decl);
+  /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
+  MemRef CreateTempLoc(const Type *Ty);
+
+  /// EmitAggregateCopy - Copy the elements from SrcLoc to DestLoc, using the
+  /// GCC type specified by GCCType to know which elements to copy.
+  void EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree_node *GCCType);
 
 private: // Helper functions.
 
@@ -412,10 +413,6 @@ private: // Helper functions.
   /// the previous block falls through into it, add an explicit branch.
   void EmitBlock(BasicBlock *BB);
   
-  /// EmitAggregateCopy - Copy the elements from SrcLoc to DestLoc, using the
-  /// GCC type specified by GCCType to know which elements to copy.
-  void EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree_node *GCCType);
-
   /// EmitAggregateZero - Zero the elements of DestLoc.
   ///
   void EmitAggregateZero(MemRef DestLoc, tree_node *GCCType);
@@ -449,8 +446,7 @@ private: // Helpers for exception handling.
   BasicBlock *getPostPad(unsigned RegionNo);
 
 private:
-  /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
-  MemRef CreateTempLoc(const Type *Ty);
+  void EmitAutomaticVariableDecl(tree_node *decl);
 
   /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
   ///

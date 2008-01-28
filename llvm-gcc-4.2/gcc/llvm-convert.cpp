@@ -367,8 +367,6 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
 
   AllocaInsertionPoint = 0;
 
-  UsedSRetBuffer = false;
-
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
   FuncEHException = 0;
@@ -413,12 +411,10 @@ namespace {
     LLVMBuilder Builder;
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
-    bool &UsedSRetBuffer;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
-                                     const LLVMBuilder &B,
-                                     bool &SRetBuffer)
-      : FunctionDecl(FnDecl), AI(ai), Builder(B), UsedSRetBuffer(SRetBuffer) {}
+                                     const LLVMBuilder &B)
+      : FunctionDecl(FnDecl), AI(ai), Builder(B) {}
 
     void setName(const std::string &Name) {
       NameStack.push_back(Name);
@@ -446,11 +442,7 @@ namespace {
       tree ResultDecl = DECL_RESULT(FunctionDecl);
       tree RetTy = TREE_TYPE(TREE_TYPE(FunctionDecl));
       if (TREE_CODE(RetTy) == TREE_CODE(TREE_TYPE(ResultDecl))) {
-        // Use a buffer for the return result.  This ensures that writes to the
-        // return value do not interfere with reads from parameters: the same
-        // aggregate might be used for the return value and as a parameter.
-        TheTreeToLLVM->EmitAutomaticVariableDecl(DECL_RESULT(FunctionDecl));
-        UsedSRetBuffer = true;
+        SET_DECL_LLVM(ResultDecl, AI);
         ++AI;
         return;
       }
@@ -666,7 +658,7 @@ void TreeToLLVM::StartFunctionBody() {
   Function::arg_iterator AI = Fn->arg_begin();
 
   // Rename and alloca'ify real arguments.
-  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder, UsedSRetBuffer);
+  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder);
   TheLLVMABI<FunctionPrologArgumentConversion> ABIConverter(Client);
 
   // Handle the DECL_RESULT.
@@ -766,14 +758,6 @@ Function *TreeToLLVM::FinishFunctionBody() {
                              PointerType::getUnqual(Fn->getReturnType()));
       RetVal = Builder.CreateLoad(RetVal, "retval");
     }
-  } else if (UsedSRetBuffer) {
-    // A buffer was used for the aggregate return result.  Copy it out now.
-    assert(Fn->arg_begin() != Fn->arg_end() && "No struct return value?");
-    unsigned Alignment = expr_align(DECL_RESULT(FnDecl))/8;
-    bool Volatile = TREE_THIS_VOLATILE(DECL_RESULT(FnDecl));
-    MemRef BufLoc(DECL_LLVM(DECL_RESULT(FnDecl)), Alignment, false);
-    MemRef RetLoc(Fn->arg_begin(), Alignment, Volatile);
-    EmitAggregateCopy(RetLoc, BufLoc, TREE_TYPE(DECL_RESULT(FnDecl)));
   }
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
   Builder.CreateRet(RetVal);
@@ -2321,6 +2305,7 @@ namespace {
     CallingConv::ID &CallingConvention;
     LLVMBuilder &Builder;
     const MemRef *DestLoc;
+    MemRef BufLoc;
     std::vector<Value*> LocStack;
 
     FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
@@ -2352,7 +2337,19 @@ namespace {
       assert(LocStack.size() == 1 && "Imbalance!");
       LocStack.clear();
     }
-    
+
+    // CopyOutResult - If the (aggregate) return result was redirected to a
+    // buffer, copy it to the final destination.
+    void CopyOutResult(tree result_type) {
+      if (BufLoc.Ptr && DestLoc) {
+        // A buffer was used for the aggregate return result.  Copy it out now.
+        assert(ConvertType(result_type) ==
+               cast<PointerType>(BufLoc.Ptr->getType())->getElementType() &&
+               "Inconsistent result types!");
+        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, BufLoc, result_type);
+      }
+    }
+
     /// HandleScalarResult - This callback is invoked if the function returns a
     /// simple scalar result value.
     void HandleScalarResult(const Type *RetTy) {
@@ -2367,7 +2364,7 @@ namespace {
     void HandleAggregateResultAsScalar(const Type *ScalarTy) {
       // There is nothing to do here.
     }
-    
+
     /// HandleAggregateShadowArgument - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter.  If
     /// RetPtr is set to true, the pointer argument itself is returned from the
@@ -2375,19 +2372,15 @@ namespace {
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
       // We need to pass a buffer to return into.  If the caller uses the
-      // result, DestLoc will be set.  If it ignores it, it could be unset,
-      // in which case we need to create a dummy buffer.
-      // FIXME: The alignment and volatility of the buffer are being ignored!
-      Value *DestPtr;
-      if (DestLoc == 0) {
-        DestPtr = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
-      } else {
-        DestPtr = DestLoc->Ptr;
-        assert(PtrArgTy == DestPtr->getType());
-      }
-      CallOperands.push_back(DestPtr);
+      // result, DestLoc will be set.  Since DestLoc may alias a parameter,
+      // the result needs to be stored in a buffer then copied to DestLoc
+      // after the call.  If DestLoc is not set then the result is unused,
+      // in which case we need to create a dummy buffer but not copy it out.
+      assert(!DestLoc || PtrArgTy == DestLoc->Ptr->getType());
+      BufLoc = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+      CallOperands.push_back(BufLoc.Ptr);
     }
-    
+
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
@@ -2556,7 +2549,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     cast<InvokeInst>(Call)->setParamAttrs(PAL);
     EmitBlock(NextBlock);
   }
-  
+
+  Client.CopyOutResult(TREE_TYPE(exp));
+
   if (Call->getType() == Type::VoidTy)
     return 0;
   

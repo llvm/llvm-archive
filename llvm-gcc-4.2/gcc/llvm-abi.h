@@ -120,6 +120,14 @@ static tree isSingleElementStructOrArray(tree type) {
   }
 }
 
+/// isZeroSizedStructOrUnion - Returns true if this is a struct or union 
+/// which is zero bits wide.
+static bool isZeroSizedStructOrUnion(tree type) {
+  if (TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
+    return false;
+  return int_size_in_bytes(type) == 0;
+}
+
 // LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
@@ -212,6 +220,8 @@ public:
   /// their fields.
   void HandleArgument(tree type, uint16_t *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
+    // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
+    // not include variable sized fields here.
     std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
@@ -225,8 +235,8 @@ public:
         *Attributes |= ParamAttr::ByVal;
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, Ty);
-    } else if (isAggregateOfSizeZero(type)) {
-      // Zero sized aggregate, just drop it!
+    } else if (isZeroSizedStructOrUnion(type)) {
+      // Zero sized struct or union, just drop it!
       ;
     } else if (TREE_CODE(type) == RECORD_TYPE) {
       for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))

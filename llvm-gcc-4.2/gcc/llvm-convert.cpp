@@ -672,13 +672,22 @@ void TreeToLLVM::StartFunctionBody() {
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
 
     const Type *ArgTy = ConvertType(TREE_TYPE(Args));
-    if (isPassedByInvisibleReference(TREE_TYPE(Args)) ||
+    bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
+    if (isInvRef ||
         (!ArgTy->isFirstClassType() &&
          LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(TREE_TYPE(Args), ArgTy))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
-      SET_DECL_LLVM(Args, AI);
       AI->setName(Name);
+      SET_DECL_LLVM(Args, AI);
+      if (!isInvRef && TheDebugInfo) {
+        Value *Tmp = CreateTemporary(PointerType::getUnqual(ArgTy));
+        Tmp->setName(std::string(Name)+"_addr");
+        TheDebugInfo->EmitDeclare(Args, llvm::dwarf::DW_TAG_arg_variable,
+                                  Name, TREE_TYPE(Args), Tmp, 
+                                  Builder.GetInsertBlock());
+        Builder.CreateStore(AI, Tmp);
+      }
       ++AI;
     } else {
       // Otherwise, we create an alloca to hold the argument value and provide

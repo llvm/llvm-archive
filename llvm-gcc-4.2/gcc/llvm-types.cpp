@@ -2160,12 +2160,8 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       continue;
 
     const Type *TheTy = ConvertType(TREE_TYPE(Field));
-    bool isPacked = false;
     unsigned Size  = TD.getABITypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
-    if (const StructType *STy = dyn_cast<StructType>(TheTy)) 
-      if (STy->isPacked())
-        isPacked = true;
     
     adjustPaddingElement(UnionTy, TheTy);
 
@@ -2181,7 +2177,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       useTheTy = true;
     else if (MaxAlign == Align && Size > MaxSize)
       useTheTy = true;
-    else if (isPacked && Size > MaxSize)
+    else if (Size > MaxSize)
       useTheTy = true;
 
     if (useTheTy) {

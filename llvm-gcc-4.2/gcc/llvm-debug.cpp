@@ -274,11 +274,8 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   if (!FuncStartFn)
     FuncStartFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_func_start);
 
-  // Call llvm.dbg.func.start.
+  // Call llvm.dbg.func.start which also implicitly calls llvm.dbg.stoppoint.
   new CallInst(FuncStartFn, getCastValueFor(Subprogram), "", CurBB);
-  
-  // Provide an entry stop point.
-  EmitStopPoint(Fn, CurBB);
   
   // Push function on region stack.
   RegionStack.push_back(Subprogram);

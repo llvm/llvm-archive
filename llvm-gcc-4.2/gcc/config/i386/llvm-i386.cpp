@@ -802,15 +802,15 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
 }
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
- specified type should be passed in a number of registers of mixed types.
- It also returns a vector of types that correspond to the registers used
- for parameter passing. This is only called for x86-32. */
+   specified type should be passed in a number of registers of mixed types.
+   It also returns a vector of types that correspond to the registers used
+   for parameter passing. This is only called for x86-32. */
 bool
 llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
                                                 std::vector<const Type*> &Elts){
   // If this is a small fixed size type, investigate it.
   HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
-  if (SrcSize <= 0 || SrcSize > 128)
+  if (SrcSize <= 0 || SrcSize > 16)
     return false;
   
   // X86-32 passes aggregates on the stack.  If this is an extremely simple

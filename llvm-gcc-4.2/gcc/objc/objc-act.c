@@ -9339,6 +9339,7 @@ generate_protocols (void)
 					     UOBJC_PROTOCOL_EXT_decl, NULL_TREE);
       /* APPLE LOCAL end radar 4585769 - Objective-C 1.0 extensions */
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       /* Force 4 byte alignment for protocols */
       DECL_ALIGN(decl) = 32;
       DECL_USER_ALIGN(decl) = 1;
@@ -9346,6 +9347,7 @@ generate_protocols (void)
       /* At -O0, we may have emitted references to the decl earlier. */
       if (!optimize)
         reset_initializer_llvm(decl);
+#endif
       /* LLVM LOCAL end */
     }
 }
@@ -12270,9 +12272,11 @@ generate_v2_shared_structures (int cls_flags)
 
   finish_var_decl (class_decl, initlist);
   /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   /* At -O0, we may have emitted references to the decl earlier. */
   if (!optimize)
     reset_type_and_initializer_llvm(class_decl);
+#endif
   /* LLVM LOCAL end */
   objc_add_to_class_list_chain (class_decl);
   if (CLASS_OR_CATEGORY_HAS_LOAD_IMPL (objc_implementation_context) != NULL_TREE)
@@ -13639,9 +13643,11 @@ generate_v2_protocols (void)
 					     /* APPLE LOCAL end radar 4695109 */
       finish_var_decl (decl, initlist);
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       /* At -O0, we may have emitted references to the decl earlier. */
       if (!optimize)
         reset_initializer_llvm(decl);
+#endif
       /* LLVM LOCAL end */
       /* APPLE LOCAL radar 4533974 - ObjC new protocol */
       objc_add_to_protocol_list_chain (decl);

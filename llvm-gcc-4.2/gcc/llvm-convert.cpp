@@ -680,14 +680,10 @@ void TreeToLLVM::StartFunctionBody() {
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);
       SET_DECL_LLVM(Args, AI);
-      if (!isInvRef && TheDebugInfo) {
-        Value *Tmp = CreateTemporary(PointerType::getUnqual(ArgTy));
-        Tmp->setName(std::string(Name)+"_addr");
+      if (!isInvRef && TheDebugInfo)
         TheDebugInfo->EmitDeclare(Args, llvm::dwarf::DW_TAG_arg_variable,
-                                  Name, TREE_TYPE(Args), Tmp, 
-                                  Builder.GetInsertBlock());
-        Builder.CreateStore(AI, Tmp);
-      }
+                                  Name, TREE_TYPE(Args),
+                                  AI, Builder.GetInsertBlock());
       ++AI;
     } else {
       // Otherwise, we create an alloca to hold the argument value and provide

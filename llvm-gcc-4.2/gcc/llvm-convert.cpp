@@ -1589,7 +1589,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   // 2) DECL_ALIGN is set by user.
   if (DECL_ALIGN_UNIT(decl)) {
     unsigned TargetAlign = getTargetData().getABITypeAlignment(Ty);
-    if (DECL_USER_ALIGN(decl) || TargetAlign != (unsigned)DECL_ALIGN_UNIT(decl))
+    if (DECL_USER_ALIGN(decl) || TargetAlign < (unsigned)DECL_ALIGN_UNIT(decl))
       Alignment = DECL_ALIGN_UNIT(decl);
   }
 

@@ -969,7 +969,7 @@ void emit_global_to_llvm(tree decl) {
       unsigned TargetAlign =
         getTargetData().getABITypeAlignment(GV->getType()->getElementType());
       if (DECL_USER_ALIGN(decl) ||
-          TargetAlign != (unsigned)DECL_ALIGN_UNIT(decl))
+          TargetAlign < (unsigned)DECL_ALIGN_UNIT(decl))
         GV->setAlignment(DECL_ALIGN_UNIT(decl));
     }
 

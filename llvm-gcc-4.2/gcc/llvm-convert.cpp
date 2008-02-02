@@ -415,7 +415,7 @@ namespace {
                                      Function::arg_iterator &ai,
                                      const LLVMBuilder &B)
       : FunctionDecl(FnDecl), AI(ai), Builder(B) {}
-
+    
     void setName(const std::string &Name) {
       NameStack.push_back(Name);
     }
@@ -435,10 +435,8 @@ namespace {
       // instead.
       assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
              "No explicit return value?");
-      assert(AI == Builder.GetInsertBlock()->getParent()->arg_begin() &&
-             "Struct return is not first argument!");
       AI->setName("agg.result");
-
+        
       tree ResultDecl = DECL_RESULT(FunctionDecl);
       tree RetTy = TREE_TYPE(TREE_TYPE(FunctionDecl));
       if (TREE_CODE(RetTy) == TREE_CODE(TREE_TYPE(ResultDecl))) {
@@ -446,14 +444,14 @@ namespace {
         ++AI;
         return;
       }
-
+      
       // Otherwise, this must be something returned with NRVO.
       assert(TREE_CODE(TREE_TYPE(ResultDecl)) == REFERENCE_TYPE &&
              "Not type match and not passing by reference?");
       // Create an alloca for the ResultDecl.
       Value *Tmp = TheTreeToLLVM->CreateTemporary(AI->getType());
       Builder.CreateStore(AI, Tmp);
-
+      
       SET_DECL_LLVM(ResultDecl, Tmp);
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(ResultDecl,
@@ -2310,7 +2308,6 @@ namespace {
     CallingConv::ID &CallingConvention;
     LLVMBuilder &Builder;
     const MemRef *DestLoc;
-    MemRef BufLoc;
     std::vector<Value*> LocStack;
 
     FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
@@ -2342,19 +2339,7 @@ namespace {
       assert(LocStack.size() == 1 && "Imbalance!");
       LocStack.clear();
     }
-
-    // CopyOutResult - If the (aggregate) return result was redirected to a
-    // buffer, copy it to the final destination.
-    void CopyOutResult(tree result_type) {
-      if (BufLoc.Ptr && DestLoc) {
-        // A buffer was used for the aggregate return result.  Copy it out now.
-        assert(ConvertType(result_type) ==
-               cast<PointerType>(BufLoc.Ptr->getType())->getElementType() &&
-               "Inconsistent result types!");
-        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, BufLoc, result_type);
-      }
-    }
-
+    
     /// HandleScalarResult - This callback is invoked if the function returns a
     /// simple scalar result value.
     void HandleScalarResult(const Type *RetTy) {
@@ -2369,7 +2354,7 @@ namespace {
     void HandleAggregateResultAsScalar(const Type *ScalarTy) {
       // There is nothing to do here.
     }
-
+    
     /// HandleAggregateShadowArgument - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter.  If
     /// RetPtr is set to true, the pointer argument itself is returned from the
@@ -2377,15 +2362,19 @@ namespace {
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
       // We need to pass a buffer to return into.  If the caller uses the
-      // result, DestLoc will be set.  Since DestLoc may alias a parameter,
-      // the result needs to be stored in a buffer then copied to DestLoc
-      // after the call.  If DestLoc is not set then the result is unused,
-      // in which case we need to create a dummy buffer but not copy it out.
-      assert(!DestLoc || PtrArgTy == DestLoc->Ptr->getType());
-      BufLoc = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
-      CallOperands.push_back(BufLoc.Ptr);
+      // result, DestLoc will be set.  If it ignores it, it could be unset,
+      // in which case we need to create a dummy buffer.
+      // FIXME: The alignment and volatility of the buffer are being ignored!
+      Value *DestPtr;
+      if (DestLoc == 0) {
+        DestPtr = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
+      } else {
+        DestPtr = DestLoc->Ptr;
+        assert(PtrArgTy == DestPtr->getType());
+      }
+      CallOperands.push_back(DestPtr);
     }
-
+    
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
@@ -2554,9 +2543,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     cast<InvokeInst>(Call)->setParamAttrs(PAL);
     EmitBlock(NextBlock);
   }
-
-  Client.CopyOutResult(TREE_TYPE(exp));
-
+  
   if (Call->getType() == Type::VoidTy)
     return 0;
   
@@ -2693,9 +2680,20 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     // Non-bitfield aggregate value.
     MemRef NewLoc(LV.Ptr, Alignment, isVolatile);
 
-    Emit(TREE_OPERAND(exp, 1), &NewLoc);
-    if (DestLoc)
+    if (DestLoc) {
+      Emit(TREE_OPERAND(exp, 1), &NewLoc);
       EmitAggregateCopy(*DestLoc, NewLoc, TREE_TYPE(exp));
+    } else if (TREE_CODE(TREE_OPERAND(exp, 0)) != RESULT_DECL) {
+      Emit(TREE_OPERAND(exp, 1), &NewLoc);
+    } else {
+      // We do this for stores into RESULT_DECL because it is possible for that
+      // memory area to overlap with the object being stored into it; see 
+      // gcc.c-torture/execute/20010124-1.c.
+
+      MemRef Tmp = CreateTempLoc(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
+      Emit(TREE_OPERAND(exp, 1), &Tmp);
+      EmitAggregateCopy(NewLoc, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)));
+    }
     return 0;
   }
 

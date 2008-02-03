@@ -232,6 +232,10 @@ static FunctionType *GetFunctionType(const PATypeHolder &Res,
 // type should be passed in by invisible reference.
 //
 bool isPassedByInvisibleReference(tree Type) {
+  // Don't crash in this case.
+  if (Type == error_mark_node)
+    return false;
+
   // FIXME: Search for TREE_ADDRESSABLE in calls.c, and see if there are other
   // cases that make arguments automatically passed in by reference.
   return TREE_ADDRESSABLE(Type) || TYPE_SIZE(Type) == 0 ||
@@ -1655,6 +1659,7 @@ static tree FixBaseClassField(tree Field) {
     TYPE_SIZE(newTy) = DECL_SIZE(Field);
     TYPE_SIZE_UNIT(newTy) = DECL_SIZE_UNIT(Field);
     TYPE_MAIN_VARIANT(newTy) = newTy;
+    TYPE_STUB_DECL(newTy) = TYPE_STUB_DECL(oldTy);
     // Change the name.
     if (TYPE_NAME(oldTy)) {
       const char *p = "anon";
@@ -1697,8 +1702,10 @@ static void FixBaseClassFields(tree type) {
         TREE_CODE(DECL_SIZE(Field))==INTEGER_CST &&
         TREE_CODE(TYPE_SIZE(TREE_TYPE(Field)))==INTEGER_CST &&
         TREE_INT_CST_LOW(DECL_SIZE(Field)) < 
-              TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(Field))))
+              TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(Field)))) {
       TREE_TYPE(Field) = FixBaseClassField(Field);
+      DECL_FIELD_REPLACED(Field) = 1;
+    }
   }
   // Size of the complete type will be a multiple of its alignment.
   // In some cases involving empty C++ classes this is not true coming in.
@@ -1734,21 +1741,14 @@ static void FixBaseClassFields(tree type) {
 static void RestoreBaseClassFields(tree type) {
   assert(TREE_CODE(type)==RECORD_TYPE);
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
-    if (TREE_CODE(Field)==FIELD_DECL && 
-        !DECL_BIT_FIELD_TYPE(Field) &&
-        TREE_CODE(DECL_FIELD_OFFSET(Field))==INTEGER_CST &&
-        TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
-        TYPE_SIZE(TREE_TYPE(Field)) &&
-        DECL_SIZE(Field) &&
-        TREE_CODE(DECL_SIZE(Field))==INTEGER_CST &&
-        TREE_CODE(TYPE_SIZE(TREE_TYPE(Field)))==INTEGER_CST) {
+    if (TREE_CODE(Field) == FIELD_DECL && DECL_FIELD_REPLACED(Field)) {
       tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
-      if (oldTy)
-        TREE_TYPE(Field) = oldTy;
+      assert(oldTy);
+      TREE_TYPE(Field) = oldTy;
+      DECL_FIELD_REPLACED(Field) = 0;
     }
   }
 }
-
 
 
 /// DecodeStructFields - This method decodes the specified field, if it is a

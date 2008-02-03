@@ -2724,6 +2724,11 @@ struct tree_decl_with_rtl GTY(())
    writing debugging information about vfield and vbase decls for C++.  */
 #define DECL_FCONTEXT(NODE) (FIELD_DECL_CHECK (NODE)->field_decl.fcontext)
 
+/* LLVM LOCAL begin */
+/* In a FIELD_DECL, marks that the type is temporarily replaced in ConvertType. */
+#define DECL_FIELD_REPLACED(NODE) (FIELD_DECL_CHECK (NODE)->decl_common.decl_flag_0)
+/* LLVM LOCAL end */
+
 /* In a FIELD_DECL, indicates this field should be bit-packed.  */
 #define DECL_PACKED(NODE) (FIELD_DECL_CHECK (NODE)->decl_common.decl_flag_1)
 

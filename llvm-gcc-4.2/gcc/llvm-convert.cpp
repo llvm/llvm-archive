@@ -2148,6 +2148,13 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   bool isVolatile = TREE_THIS_VOLATILE(exp);
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   unsigned Alignment = expr_align(exp) / 8;
+  if (TREE_CODE(exp) == COMPONENT_REF) 
+    if (const StructType *STy = 
+        dyn_cast<StructType>(ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)))))
+      if (STy->isPacked())
+        // Packed struct members use 1 byte alignment
+        Alignment = 1;
+    
   
   if (!LV.isBitfield()) {
     if (!DestLoc) {
@@ -2680,6 +2687,12 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   LValue LV = EmitLV(lhs);
   bool isVolatile = TREE_THIS_VOLATILE(lhs);
   unsigned Alignment = expr_align(lhs) / 8;
+  if (TREE_CODE(lhs) == COMPONENT_REF) 
+    if (const StructType *STy = 
+        dyn_cast<StructType>(ConvertType(TREE_TYPE(TREE_OPERAND(lhs, 0)))))
+      if (STy->isPacked())
+        // Packed struct members use 1 byte alignment
+        Alignment = 1;
 
   if (!LV.isBitfield()) {
     const Type *ValTy = ConvertType(TREE_TYPE(rhs));

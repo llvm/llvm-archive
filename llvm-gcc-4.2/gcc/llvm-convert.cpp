@@ -2308,6 +2308,7 @@ namespace {
     CallingConv::ID &CallingConvention;
     LLVMBuilder &Builder;
     const MemRef *DestLoc;
+    MemRef BufLoc;
     std::vector<Value*> LocStack;
 
     FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
@@ -2339,7 +2340,19 @@ namespace {
       assert(LocStack.size() == 1 && "Imbalance!");
       LocStack.clear();
     }
-    
+
+    // CopyOutResult - If the (aggregate) return result was redirected to a
+    // buffer, copy it to the final destination.
+    void CopyOutResult(tree result_type) {
+      if (BufLoc.Ptr && DestLoc) {
+        // A buffer was used for the aggregate return result.  Copy it out now.
+        assert(ConvertType(result_type) ==
+               cast<PointerType>(BufLoc.Ptr->getType())->getElementType() &&
+               "Inconsistent result types!");
+        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, BufLoc, result_type);
+      }
+    }
+
     /// HandleScalarResult - This callback is invoked if the function returns a
     /// simple scalar result value.
     void HandleScalarResult(const Type *RetTy) {
@@ -2354,27 +2367,34 @@ namespace {
     void HandleAggregateResultAsScalar(const Type *ScalarTy) {
       // There is nothing to do here.
     }
-    
+
     /// HandleAggregateShadowArgument - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter.  If
     /// RetPtr is set to true, the pointer argument itself is returned from the
     /// function.
     void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
                                        bool RetPtr) {
-      // We need to pass a buffer to return into.  If the caller uses the
-      // result, DestLoc will be set.  If it ignores it, it could be unset,
-      // in which case we need to create a dummy buffer.
-      // FIXME: The alignment and volatility of the buffer are being ignored!
-      Value *DestPtr;
+      // We need to pass memory to write the return value into.
+      // FIXME: alignment and volatility are being ignored!
+      assert(!DestLoc || PtrArgTy == DestLoc->Ptr->getType());
+
       if (DestLoc == 0) {
-        DestPtr = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
+        // The result is unused, but still needs to be stored somewhere.
+        Value *Buf = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
+        CallOperands.push_back(Buf);
+      } else if (CALL_EXPR_RETURN_SLOT_OPT(CallExpression)) {
+        // Letting the call write directly to the final destination is safe and
+        // may be required.  Do not use a buffer.
+        CallOperands.push_back(DestLoc->Ptr);
       } else {
-        DestPtr = DestLoc->Ptr;
-        assert(PtrArgTy == DestPtr->getType());
+        // Letting the call write directly to the final destination may not be
+        // safe (eg: if DestLoc aliases a parameter) and is not required - pass
+        // a buffer and copy it to DestLoc after the call.
+        BufLoc = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+        CallOperands.push_back(BufLoc.Ptr);
       }
-      CallOperands.push_back(DestPtr);
     }
-    
+
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
@@ -2543,7 +2563,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     cast<InvokeInst>(Call)->setParamAttrs(PAL);
     EmitBlock(NextBlock);
   }
-  
+
+  Client.CopyOutResult(TREE_TYPE(exp));
+
   if (Call->getType() == Type::VoidTy)
     return 0;
   
@@ -2626,50 +2648,48 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
 /// EmitMODIFY_EXPR - Note that MODIFY_EXPRs are rvalues only!
 ///
 Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
+  tree lhs = TREE_OPERAND (exp, 0);
+  tree rhs = TREE_OPERAND (exp, 1);
+
   // If this is the definition of an SSA variable, set its DECL_LLVM to the
   // RHS.
-  bool Op0Signed = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool Op1Signed = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  if (isGCC_SSA_Temporary(TREE_OPERAND(exp, 0))) {
+  bool LHSSigned = !TYPE_UNSIGNED(TREE_TYPE(lhs));
+  bool RHSSigned = !TYPE_UNSIGNED(TREE_TYPE(rhs));
+  if (isGCC_SSA_Temporary(lhs)) {
     // If DECL_LLVM is already set, this is a multiply defined GCC temporary.
-    if (DECL_LLVM_SET_P(TREE_OPERAND(exp, 0))) {
-      HandleMultiplyDefinedGCCTemp(TREE_OPERAND(exp, 0));
+    if (DECL_LLVM_SET_P(lhs)) {
+      HandleMultiplyDefinedGCCTemp(lhs);
       return EmitMODIFY_EXPR(exp, DestLoc);
     }
-    
-    Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-    RHS = CastToAnyType(RHS, Op1Signed, 
-                        ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0))), 
-                        Op0Signed);
-    SET_DECL_LLVM(TREE_OPERAND(exp, 0), RHS);
+
+    Value *RHS = Emit(rhs, 0);
+    RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
+    SET_DECL_LLVM(lhs, RHS);
     return RHS;
-  } else if (TREE_CODE(TREE_OPERAND(exp, 0)) == VAR_DECL &&
-             DECL_REGISTER(TREE_OPERAND(exp, 0)) &&
-             TREE_STATIC(TREE_OPERAND(exp, 0))) {
+  } else if (TREE_CODE(lhs) == VAR_DECL && DECL_REGISTER(lhs) &&
+             TREE_STATIC(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node
     // that copies the value into the specified register.
-    Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-    RHS = CastToAnyType(RHS, Op1Signed,
-                        ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0))), 
-                        Op0Signed);
-    EmitModifyOfRegisterVariable(TREE_OPERAND(exp, 0), RHS);
+    Value *RHS = Emit(rhs, 0);
+    RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
+    EmitModifyOfRegisterVariable(lhs, RHS);
     return RHS;
   }
-  
-  LValue LV = EmitLV(TREE_OPERAND(exp, 0));
-  bool isVolatile = TREE_THIS_VOLATILE(TREE_OPERAND(exp, 0));
-  unsigned Alignment = expr_align(TREE_OPERAND(exp, 0)) / 8;
+
+  LValue LV = EmitLV(lhs);
+  bool isVolatile = TREE_THIS_VOLATILE(lhs);
+  unsigned Alignment = expr_align(lhs) / 8;
 
   if (!LV.isBitfield()) {
-    const Type *ValTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 1)));
+    const Type *ValTy = ConvertType(TREE_TYPE(rhs));
     if (ValTy->isFirstClassType()) {
       // Non-bitfield, scalar value.  Just emit a store.
-      Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+      Value *RHS = Emit(rhs, 0);
       // Convert RHS to the right type if we can, otherwise convert the pointer.
       const PointerType *PT = cast<PointerType>(LV.Ptr->getType());
       if (PT->getElementType()->canLosslesslyBitCastTo(RHS->getType()))
-        RHS = CastToAnyType(RHS, Op1Signed, PT->getElementType(), Op0Signed);
+        RHS = CastToAnyType(RHS, RHSSigned, PT->getElementType(), LHSSigned);
       else
         LV.Ptr = BitCastToType(LV.Ptr, PointerType::getUnqual(RHS->getType()));
       StoreInst *SI = Builder.CreateStore(RHS, LV.Ptr, isVolatile);
@@ -2680,27 +2700,27 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     // Non-bitfield aggregate value.
     MemRef NewLoc(LV.Ptr, Alignment, isVolatile);
 
-    if (DestLoc) {
-      Emit(TREE_OPERAND(exp, 1), &NewLoc);
-      EmitAggregateCopy(*DestLoc, NewLoc, TREE_TYPE(exp));
-    } else if (TREE_CODE(TREE_OPERAND(exp, 0)) != RESULT_DECL) {
-      Emit(TREE_OPERAND(exp, 1), &NewLoc);
+    // In case we are returning the contents of an object which overlaps
+    // the place the value is being stored, use a safe function when copying
+    // a value through a pointer into a structure value return block.
+    if (TREE_CODE (lhs) == RESULT_DECL && TREE_CODE (rhs) == INDIRECT_REF) {
+      MemRef Tmp = CreateTempLoc(ConvertType(TREE_TYPE(rhs)));
+      Emit(rhs, &Tmp);
+      EmitAggregateCopy(NewLoc, Tmp, TREE_TYPE(rhs));
     } else {
-      // We do this for stores into RESULT_DECL because it is possible for that
-      // memory area to overlap with the object being stored into it; see 
-      // gcc.c-torture/execute/20010124-1.c.
-
-      MemRef Tmp = CreateTempLoc(ConvertType(TREE_TYPE(TREE_OPERAND(exp,1))));
-      Emit(TREE_OPERAND(exp, 1), &Tmp);
-      EmitAggregateCopy(NewLoc, Tmp, TREE_TYPE(TREE_OPERAND(exp,1)));
+      Emit(rhs, &NewLoc);
     }
+
+    if (DestLoc)
+      EmitAggregateCopy(*DestLoc, NewLoc, TREE_TYPE(exp));
+
     return 0;
   }
 
-  // Last case, this is a store to a bitfield, so we have to emit a 
+  // Last case, this is a store to a bitfield, so we have to emit a
   // read/modify/write sequence.
 
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *RHS = Emit(rhs, 0);
 
   if (!LV.BitSize)
     return RHS;
@@ -2716,7 +2736,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   assert(ValSizeInBits >= LV.BitSize && "Bad bitfield lvalue!");
   assert(2*ValSizeInBits > LV.BitSize+LV.BitStart && "Bad bitfield lvalue!");
 
-  Value *BitSource = CastToAnyType(RHS, Op1Signed, ValTy, Op0Signed);
+  Value *BitSource = CastToAnyType(RHS, RHSSigned, ValTy, LHSSigned);
 
   for (unsigned I = 0; I < Strides; I++) {
     unsigned Index = BYTES_BIG_ENDIAN ? Strides - I - 1 : I; // LSB first

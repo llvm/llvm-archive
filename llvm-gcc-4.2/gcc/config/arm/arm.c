@@ -15165,13 +15165,14 @@ arm_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
   const char *function_name;
 
   /* Darwin/mach-o: use a stub for dynamic references.  */
-  if (TARGET_MACHO
-      && (flag_pic || MACHO_DYNAMIC_NO_PIC_P)
+#if TARGET_MACHO
+      if ((flag_pic || MACHO_DYNAMIC_NO_PIC_P)
       && ! machopic_data_defined_p (function_rtx))
     function_name =
        machopic_indirection_name (function_rtx, true);
-  else
-    function_name = XSTR (function_rtx, 0);
+#else
+      function_name = XSTR (function_rtx, 0);
+#endif
   /* APPLE LOCAL ARM end 4745175 */
 
   if (mi_delta < 0)

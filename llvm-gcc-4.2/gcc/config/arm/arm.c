@@ -15233,11 +15233,14 @@ arm_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
 	     (inter-module thumbness is fixed up by the linker).  */
 	  rtx tem = gen_rtx_SYMBOL_REF (Pmode, function_name);
 
-	  if (TARGET_MACHO
-	      && ! machopic_data_defined_p (function_rtx))
+#if TARGET_MACHO
+          if (! machopic_data_defined_p (function_rtx))
 	    tem = gen_rtx_PLUS (GET_MODE (tem), tem, GEN_INT (-8));
 	  else
 	    tem = gen_rtx_PLUS (GET_MODE (tem), tem, GEN_INT (-7));
+#else
+          tem = gen_rtx_PLUS (GET_MODE (tem), tem, GEN_INT (-7));
+#endif
 	  /* APPLE LOCAL end ARM 4745175 */
 
 	  tem = gen_rtx_MINUS (GET_MODE (tem),

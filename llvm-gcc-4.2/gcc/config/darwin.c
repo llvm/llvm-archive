@@ -1988,6 +1988,19 @@ darwin_non_lazy_pcrel (FILE *file, rtx addr)
    extern".  There is no MACH-O equivalent of ELF's
    VISIBILITY_INTERNAL or VISIBILITY_PROTECTED. */
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+void
+darwin_assemble_visibility (tree decl ATTRIBUTE_UNUSED, int vis)
+{
+  /* Emit a warning if the visibility isn't supported with this
+     configuration. We don't want to output anything to the ASM file, of
+     course.  */
+  if (!(vis == VISIBILITY_DEFAULT || vis == VISIBILITY_HIDDEN))
+    warning (OPT_Wattributes, "internal and protected visibility attributes "
+	     "not supported in this configuration; ignored");
+}
+#else
 void
 darwin_assemble_visibility (tree decl, int vis)
 {
@@ -2004,6 +2017,8 @@ darwin_assemble_visibility (tree decl, int vis)
     warning (OPT_Wattributes, "internal and protected visibility attributes "
 	     "not supported in this configuration; ignored");
 }
+#endif
+/* LLVM LOCAL end */
 
 /* Output a difference of two labels that will be an assembly time
    constant if the two labels are local.  (.long lab1-lab2 will be

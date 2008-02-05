@@ -944,9 +944,13 @@ static const char alt_reg_names[][8] =
 #undef TARGET_ASM_INTEGER
 #define TARGET_ASM_INTEGER rs6000_assemble_integer
 
+/* LLVM LOCAL - Use default assemble_visibility */
+#ifndef ENABLE_LLVM
 #ifdef HAVE_GAS_HIDDEN
 #undef TARGET_ASM_ASSEMBLE_VISIBILITY
 #define TARGET_ASM_ASSEMBLE_VISIBILITY rs6000_assemble_visibility
+#endif
+/* LLVM LOCAL - Use default assemble_visibility */
 #endif
 
 #undef TARGET_HAVE_TLS

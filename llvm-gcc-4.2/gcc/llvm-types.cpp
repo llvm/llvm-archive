@@ -1161,8 +1161,9 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // If the target has regparam parameters, allow it to inspect the function
   // type.
   int local_regparam = 0;
+  int local_fp_regparam = 0;
 #ifdef LLVM_TARGET_ENABLE_REGPARM
-  LLVM_TARGET_INIT_REGPARM(local_regparam, type);
+  LLVM_TARGET_INIT_REGPARM(local_regparam, local_fp_regparam, type);
 #endif // LLVM_TARGET_ENABLE_REGPARM
   
   // Keep track of whether we see a byval argument.
@@ -1208,10 +1209,11 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
     // Allow the target to mark this as inreg.
-    if (TREE_CODE(ArgTy) == INTEGER_TYPE || TREE_CODE(ArgTy) == POINTER_TYPE)
-      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes,
+    if (TREE_CODE(ArgTy) == INTEGER_TYPE || TREE_CODE(ArgTy) == POINTER_TYPE ||
+        TREE_CODE(ArgTy) == REAL_TYPE)
+      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes, ArgTy,
                                     TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)),
-                                    local_regparam);
+                                    local_regparam, local_fp_regparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
     
     if (Attributes != ParamAttr::None) {

@@ -28,8 +28,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
       CC = CallingConv::X86_StdCall;                            \
     } else if (lookup_attribute("fastcall", type_attributes)) { \
       CC = CallingConv::X86_FastCall;                           \
+    } else if (!TARGET_64BIT &&                                 \
+               lookup_attribute("sseregparm", type_attributes)){\
+      CC = CallingConv::X86_SSECall;                            \
     }                                                           \
-  }                                                             \
+  }
 
 /* LLVM specific stuff for converting gcc's `regparm` attribute to LLVM's
    `inreg` parameter attribute */
@@ -37,28 +40,46 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 extern int ix86_regparm;
 
-#define LLVM_TARGET_INIT_REGPARM(local_regparm, type)           \
+#define LLVM_TARGET_INIT_REGPARM(local_regparm, local_fp_regparm, type) \
   {                                                             \
     tree attr;                                                  \
     local_regparm = ix86_regparm;                               \
+    local_fp_regparm = TARGET_SSEREGPARM ? 3 : 0;               \
     attr = lookup_attribute ("regparm",                         \
                               TYPE_ATTRIBUTES (type));          \
     if (attr) {                                                 \
       local_regparm = TREE_INT_CST_LOW (TREE_VALUE              \
                                         (TREE_VALUE (attr)));   \
     }                                                           \
+    attr = lookup_attribute("sseregparm",                       \
+                              TYPE_ATTRIBUTES (type));          \
+    if (attr)                                                   \
+      local_fp_regparm = 3;                                     \
   }
 
-#define LLVM_ADJUST_REGPARM_ATTRIBUTE(Attribute, Size,          \
-                                      local_regparm)            \
+#define LLVM_ADJUST_REGPARM_ATTRIBUTE(Attribute, Type, Size,    \
+                                      local_regparm,            \
+                                      local_fp_regparm)         \
   {                                                             \
     if (!TARGET_64BIT) {                                        \
-      int words = (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
-      local_regparm -= words;                                   \
-      if (local_regparm>=0) {                                   \
-        Attribute |= ParamAttr::InReg;                          \
-      } else                                                    \
-        local_regparm = 0;                                      \
+      if (TREE_CODE(Type) == REAL_TYPE &&                       \
+          (TYPE_PRECISION(Type)==32 ||                          \
+           TYPE_PRECISION(Type)==64)) {                         \
+          local_fp_regparm -= 1;                                \
+          if (local_fp_regparm >= 0)                            \
+            Attribute |= ParamAttr::InReg;                      \
+          else                                                  \
+            local_fp_regparm = 0;                               \
+      } else if (TREE_CODE(Type) == INTEGER_TYPE ||             \
+                 TREE_CODE(Type) == ENUMERAL_TYPE) {            \
+          int words =                                           \
+                  (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
+          local_regparm -= words;                               \
+          if (local_regparm>=0)                                 \
+            Attribute |= ParamAttr::InReg;                      \
+          else                                                  \
+            local_regparm = 0;                                  \
+      }                                                         \
     }                                                           \
   }
 

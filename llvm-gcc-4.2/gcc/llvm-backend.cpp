@@ -963,7 +963,7 @@ void emit_global_to_llvm(tree decl) {
     }
     
     // Set the alignment for the global if one of the following condition is met
-    // 1) DECL_ALIGN_UNIT does not match alignment as per ABI specification
+    // 1) DECL_ALIGN_UNIT is better than the alignment as per ABI specification
     // 2) DECL_ALIGN is set by user.
     if (DECL_ALIGN_UNIT(decl)) {
       unsigned TargetAlign =

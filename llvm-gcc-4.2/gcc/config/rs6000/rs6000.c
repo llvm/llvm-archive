@@ -1486,8 +1486,11 @@ rs6000_override_options (const char *default_cpu)
 	{
 	  flag_disable_opts_for_faltivec = 1;
 	  /* APPLE LOCAL radar 4161346 */
-	  target_flags |= (MASK_ALTIVEC | MASK_PIM_ALTIVEC);
+/* LLVM LOCAL begin handle -mpim-altivec correctly */
+	  target_flags |= MASK_ALTIVEC;
 	}
+      target_flags |= MASK_PIM_ALTIVEC;
+/* LLVM LOCAL begin handle -mpim-altivec correctly */
     }
   /* APPLE LOCAL end AltiVec */
 

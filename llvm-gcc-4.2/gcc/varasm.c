@@ -5316,10 +5316,13 @@ default_assemble_visibility (tree decl, int vis)
   type = visibility_types[vis];
 
 
-#if !defined(ENABLE_LLVM) && defined(HAVE_GAS_HIDDEN)
+#ifdef HAVE_GAS_HIDDEN
+#ifndef ENABLE_LLVM
   fprintf (asm_out_file, "\t.%s\t", type);
   assemble_name (asm_out_file, name);
   fprintf (asm_out_file, "\n");
+  /* LLVM LOCAL */
+#endif
 #else
   warning (OPT_Wattributes, "visibility attribute not supported "
 	   "in this configuration; ignored");

@@ -944,13 +944,9 @@ static const char alt_reg_names[][8] =
 #undef TARGET_ASM_INTEGER
 #define TARGET_ASM_INTEGER rs6000_assemble_integer
 
-/* LLVM LOCAL - Use default assemble_visibility */
-#ifndef ENABLE_LLVM
 #ifdef HAVE_GAS_HIDDEN
 #undef TARGET_ASM_ASSEMBLE_VISIBILITY
 #define TARGET_ASM_ASSEMBLE_VISIBILITY rs6000_assemble_visibility
-#endif
-/* LLVM LOCAL - Use default assemble_visibility */
 #endif
 
 #undef TARGET_HAVE_TLS
@@ -13108,6 +13104,8 @@ rs6000_assemble_visibility (tree decl, int vis)
       && DOT_SYMBOLS
       && TREE_CODE (decl) == FUNCTION_DECL)
     {
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
       static const char * const visibility_types[] = {
 	NULL, "internal", "hidden", "protected"
       };
@@ -13120,6 +13118,8 @@ rs6000_assemble_visibility (tree decl, int vis)
 
       fprintf (asm_out_file, "\t.%s\t%s\n", type, name);
       fprintf (asm_out_file, "\t.%s\t.%s\n", type, name);
+/* LLVM LOCAL */
+#endif
     }
   else
     default_assemble_visibility (decl, vis);

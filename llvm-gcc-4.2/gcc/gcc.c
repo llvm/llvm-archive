@@ -1145,8 +1145,10 @@ static const struct option_map option_map[] =
    {"--dependencies", "-M", 0},
    {"--dump", "-d", "a"},
    {"--dumpbase", "-dumpbase", "a"},
-   /* LLVM LOCAL */
-   {"--emit-llvm", "-emit-llvm", 0 },
+   /* LLVM LOCAL begin */
+   {"--emit-llvm", "-Zemit-llvm", 0 },
+   {"-emit-llvm", "-Zemit-llvm", 0 },
+   /* LLVM LOCAL end */
    {"--encoding", "-fencoding=", "aj"},
    {"--entry", "-e", 0},
    {"--extra-warnings", "-W", 0},

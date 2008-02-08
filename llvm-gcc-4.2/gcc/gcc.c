@@ -1145,10 +1145,8 @@ static const struct option_map option_map[] =
    {"--dependencies", "-M", 0},
    {"--dump", "-d", "a"},
    {"--dumpbase", "-dumpbase", "a"},
-   /* LLVM LOCAL begin */
-   {"--emit-llvm", "-Zemit-llvm", 0 },
-   {"-emit-llvm", "-Zemit-llvm", 0 },
-   /* LLVM LOCAL end */
+   /* LLVM LOCAL */
+   {"--emit-llvm", "-emit-llvm", 0 },
    {"--encoding", "-fencoding=", "aj"},
    {"--entry", "-e", 0},
    {"--extra-warnings", "-W", 0},
@@ -1228,6 +1226,8 @@ static const struct {
   const char *const replacements;
 } target_option_translations[] =
 {
+  /* LLVM LOCAL */
+  {"-emit-llvm", "-Zemit-llvm"}, 
   TARGET_OPTION_TRANSLATE_TABLE,
   { 0, 0 }
 };

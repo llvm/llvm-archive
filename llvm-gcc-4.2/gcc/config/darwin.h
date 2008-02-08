@@ -134,7 +134,6 @@ extern GTY(()) int darwin_ms_struct;
   { "-dylib_file", "-Zdylib_file" }, \
   { "-dynamic", "-Zdynamic" },  \
   { "-dynamiclib", "-Zdynamiclib" },  \
-  { "-emit-llvm", "-Zemit-llvm" },  \
   { "-exported_symbols_list", "-Zexported_symbols_list" },  \
   { "-gfull", "-g -fno-eliminate-unused-debug-symbols" }, \
   { "-gused", "-g -feliminate-unused-debug-symbols" }, \

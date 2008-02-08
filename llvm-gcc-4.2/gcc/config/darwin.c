@@ -1988,15 +1988,9 @@ darwin_non_lazy_pcrel (FILE *file, rtx addr)
    extern".  There is no MACH-O equivalent of ELF's
    VISIBILITY_INTERNAL or VISIBILITY_PROTECTED. */
 
+void
 /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-void
 darwin_assemble_visibility (tree decl ATTRIBUTE_UNUSED, int vis)
-#else
-void
-darwin_assemble_visibility (tree decl, int vis)
-#endif
-/* LLVM LOCAL end */
 {
   if (vis == VISIBILITY_DEFAULT)
     ;

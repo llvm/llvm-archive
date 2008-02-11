@@ -83,6 +83,15 @@ extern int ix86_regparm;
     }                                                           \
   }
 
+/* Aggregates containing SSE vectors are aligned at 16 bytes as parameters;
+   while long double has GCC alignment of 16 bytes (correct for struct layout)
+   but is only 4 byte aligned as a parameter.  So if a union type contains an
+   SSE vector, use that as the basis for the constructed LLVM struct. */
+#define TARGET_LLVM_COMPARE_UNION_FIELDS(curType, newType, curAlign, newAlign) \
+  (newAlign==curAlign && TARGET_SSE &&                                         \
+   TheTarget->getTargetLowering()->getByValTypeAlignment(newType) >            \
+   TheTarget->getTargetLowering()->getByValTypeAlignment(curType))
+
 #ifdef LLVM_ABI_H
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 

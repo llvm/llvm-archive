@@ -3458,13 +3458,6 @@ enum rs6000_builtins
     F.AddFeature("64bit", TARGET_POWERPC64); \
   }
 
-/* GCC passes single-element structs and arrays in registers.  Other structs
- * are forced into integer registers, e.g. complex float is passed in two 
- * 32-bit GPR's.
- */
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type) \
-  !isSingleElementStructOrArray(type)
-
 /* When -m64 is specified, set the architecture to powerpc64-os-blah even if the
  * compiler was configured for powerpc-os-blah.
  */

@@ -87,8 +87,9 @@ static bool isAggregateTreeType(tree type) {
 
 /// isSingleElementStructOrArray - If this is (recursively) a structure with one
 /// field or an array with one element, return the field type, otherwise return
-/// null.
-static tree isSingleElementStructOrArray(tree type) {
+/// null.  If rejectFatBitField, and the single element is a bitfield of a type
+/// that's bigger than the struct, return null anyway.
+static tree isSingleElementStructOrArray(tree type, bool rejectFatBitfield) {
   // Scalars are good.
   if (!isAggregateTreeType(type)) return type;
   
@@ -106,17 +107,22 @@ static tree isSingleElementStructOrArray(tree type) {
 
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
       if (TREE_CODE(Field) == FIELD_DECL) {
-        if (!FoundField)
+        if (!FoundField) {
+          if (rejectFatBitfield &&
+              TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
+              TREE_INT_CST_LOW(TYPE_SIZE(getDeclaredType(Field))) > 
+              TREE_INT_CST_LOW(TYPE_SIZE(type)))
+            return 0;
           FoundField = getDeclaredType(Field);
-        else
+        } else
           return 0;   // More than one field.
       }
-    return FoundField ? isSingleElementStructOrArray(FoundField) : 0;
+    return FoundField ? isSingleElementStructOrArray(FoundField, false) : 0;
   case ARRAY_TYPE:
     const ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
     if (!Ty || Ty->getNumElements() != 1)
       return 0;
-    return isSingleElementStructOrArray(TREE_TYPE(type));
+    return isSingleElementStructOrArray(TREE_TYPE(type), false);
   }
 }
 
@@ -151,10 +157,12 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // value should be passed in integer registers.  By default, we do this for all
 // values that are not single-element structs.  This ensures that things like
 // {short,short} are passed in one 32-bit chunk, not as two arguments (which
-// would often be 64-bits).
+// would often be 64-bits).  We also do it for single-element structs when the
+// single element is a bitfield of a type bigger than the struct; the code
+// for field-by-field struct passing does not handle this one right.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
-   !isSingleElementStructOrArray(X)
+   !isSingleElementStructOrArray(X, true)
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are
@@ -184,7 +192,7 @@ public:
                // FIXME: this is a hack around returning 'complex double' by-val
                // which returns in r3/r4/r5/r6 on PowerPC.
                TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8) {
-      if (tree SingleElt = isSingleElementStructOrArray(type)) {
+      if (tree SingleElt = isSingleElementStructOrArray(type, false)) {
         C.HandleAggregateResultAsScalar(ConvertType(SingleElt));
       } else {
         // Otherwise return as an integer value large enough to hold the entire

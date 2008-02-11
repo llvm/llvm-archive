@@ -3744,13 +3744,6 @@ enum ix86_builtins
     
 /* LLVM ABI definition macros. */
 
-/* LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS - Return true if we should
- * "bitconvert" the specified aggregate tree type info a sequence of integer
- * values.
- */
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type) \
-  !isSingleElementStructOrArray(type)
-
 /* When -m64 is specified, set the architecture to x86_64-os-blah even if the
  * compiler was configured for i[3456]86-os-blah.
  */

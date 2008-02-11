@@ -33,7 +33,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1138,7 +1137,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // 'sret' functions cannot be 'readnone' or 'readonly'.
   if (ABIConverter.isStructReturn())
     RAttributes &= ~(ParamAttr::ReadNone|ParamAttr::ReadOnly);
-
+  
   // Compute whether the result needs to be zext or sext'd.
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
@@ -2125,8 +2124,6 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
 /// ConvertUNION - We know that 'type' is a UNION_TYPE or a QUAL_UNION_TYPE:
 /// convert it to an LLVM type.
-/// This involves creating a struct with the right size and alignment. In
-/// some cases this is target dependent.
 const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   if (const Type *Ty = GET_TYPE_LLVM(type)) {
     // If we already compiled this type, and if it was not a forward
@@ -2173,25 +2170,17 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     // Select TheTy as union type if it meets one of the following criteria
     // 1) UnionTy is 0
     // 2) TheTy alignment is more then UnionTy
-    // 3) TheTy size is greater than UnionTy size and TheTy alignment is equal
-    //    to UnionTy
+    // 3) TheTy size is greater than UnionTy size and TheTy alignment is equal to UnionTy
     // 4) TheTy size is greater then UnionTy size and TheTy is packed
-    //    FIXME there is no check for packed?
     bool useTheTy = false;
     if (UnionTy == 0)
       useTheTy = true;
     else if (Align > MaxAlign)
       useTheTy = true;
-#ifdef TARGET_LLVM_COMPARE_UNION_FIELDS
-    else
-      useTheTy = TARGET_LLVM_COMPARE_UNION_FIELDS(UnionTy, TheTy,
-                                                   Align, MaxAlign);
-#else
     else if (MaxAlign == Align && Size > MaxSize)
       useTheTy = true;
-    else if (Size > MaxSize)    // FIXME really?  Seems wrong to lower alignment
+    else if (Size > MaxSize)
       useTheTy = true;
-#endif
 
     if (useTheTy) {
       UnionTy = TheTy;

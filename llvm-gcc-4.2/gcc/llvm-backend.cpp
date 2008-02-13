@@ -559,14 +559,11 @@ void llvm_asm_file_end(void) {
   if (PerFunctionPasses)
     PerFunctionPasses->doFinalization();
 
-  // Emit intermediate .bc file before module level optimization passes are run.
-  if (emit_llvm_bc && flag_debug_llvm_module_opt) {
+  // Emit intermediate file before module level optimization passes are run.
+  if (flag_debug_llvm_module_opt) {
     
     static PassManager *IntermediatePM = new PassManager();
     IntermediatePM->add(new TargetData(*TheTarget->getTargetData()));
-
-  // Emit an LLVM .bc file to the output.  This is used when passed
-  // -emit-llvm -c to the GCC driver.
 
     char asm_intermediate_out_filename[MAXPATHLEN];
     strcpy(&asm_intermediate_out_filename[0], asm_file_name);
@@ -574,7 +571,10 @@ void llvm_asm_file_end(void) {
     FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
     AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
     AsmIntermediateOutFile = new OStream(*AsmIntermediateOutStream);
-    IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
+    if (emit_llvm_bc)
+      IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
+    if (emit_llvm)
+      IntermediatePM->add(new PrintModulePass(AsmIntermediateOutFile));
     IntermediatePM->run(*TheModule);
     AsmIntermediateOutStream->flush();
     fflush(asm_intermediate_out_file);

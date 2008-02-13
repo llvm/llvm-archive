@@ -1,4 +1,4 @@
-/* LLVM LOCAL begin (ENTIRE FILE!)  */
+/* LLVM LOCAL begin (ENTIRE FILE!) */
 /* High-level LLVM backend interface 
 Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)

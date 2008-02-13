@@ -1246,8 +1246,6 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder) {
     const StructLayout *SL = getTargetData().getStructLayout(STy);
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      if (isPaddingElement(STy, i))
-        continue;
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *Idxs[2] = { Zero, Idx };
       Value *DElPtr = Builder.CreateGEP(DestLoc.Ptr, Idxs, Idxs + 2, "tmp");
@@ -1721,7 +1719,8 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
     // operand is an aggregate value, create a temporary to evaluate it into.
     MemRef DestLoc;
     const Type *DestTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)));
-    if (!DestTy->isFirstClassType() && TREE_CODE(exp) != MODIFY_EXPR)
+    if (!DestTy->isFirstClassType() && 
+        TREE_CODE(TREE_OPERAND(exp, 0)) != MODIFY_EXPR)
       DestLoc = CreateTempLoc(DestTy);
     Emit(TREE_OPERAND(exp, 0), DestLoc.Ptr ? &DestLoc : NULL);
   }

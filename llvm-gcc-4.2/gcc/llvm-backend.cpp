@@ -79,6 +79,7 @@ DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TypeConverter *TheTypeConverter = 0;
 llvm::OStream *AsmOutFile = 0;
+llvm::OStream *AsmIntermediateOutFile = 0;
 
 /// DisableLLVMOptimizations - Allow the user to specify:
 /// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
@@ -210,6 +211,7 @@ void llvm_lang_dependent_init(const char *Name) {
 }
 
 oFILEstream *AsmOutStream = 0;
+oFILEstream *AsmIntermediateOutStream = 0;
 
 /// Read bytecode from PCH file. Initialize TheModule and setup
 /// LTypes vector.
@@ -556,7 +558,31 @@ void llvm_asm_file_end(void) {
   // Finish off the per-function pass.
   if (PerFunctionPasses)
     PerFunctionPasses->doFinalization();
+
+  // Emit intermediate .bc file before module level optimization passes are run.
+  if (emit_llvm_bc && flag_debug_llvm_module_opt) {
     
+    static PassManager *IntermediatePM = new PassManager();
+    IntermediatePM->add(new TargetData(*TheTarget->getTargetData()));
+
+  // Emit an LLVM .bc file to the output.  This is used when passed
+  // -emit-llvm -c to the GCC driver.
+
+    char asm_intermediate_out_filename[MAXPATHLEN];
+    strcpy(&asm_intermediate_out_filename[0], asm_file_name);
+    strcat(&asm_intermediate_out_filename[0],".0");
+    FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
+    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
+    AsmIntermediateOutFile = new OStream(*AsmIntermediateOutStream);
+    IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
+    IntermediatePM->run(*TheModule);
+    AsmIntermediateOutStream->flush();
+    fflush(asm_intermediate_out_file);
+    delete AsmIntermediateOutStream;
+    AsmIntermediateOutStream = 0;
+    delete AsmIntermediateOutFile;
+    AsmIntermediateOutFile = 0;
+  }
   // Run module-level optimizers, if any are present.
   if (PerModulePasses)
     PerModulePasses->run(*TheModule);

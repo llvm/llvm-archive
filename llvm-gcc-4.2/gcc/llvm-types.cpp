@@ -1577,13 +1577,13 @@ void StructTypeConversionInfo::dump() const {
   }
 }
 
-std::map<const Type *, StructTypeConversionInfo *> StructTypeInfoMap;
+std::map<tree, StructTypeConversionInfo *> StructTypeInfoMap;
 
 /// Return true if and only if field no. N from struct type T is a padding
 /// element added to match llvm struct type size and gcc struct type size.
-bool isPaddingElement(const Type *Ty, unsigned index) {
+bool isPaddingElement(tree type, unsigned index) {
   
-  StructTypeConversionInfo *Info = StructTypeInfoMap[Ty];
+  StructTypeConversionInfo *Info = StructTypeInfoMap[type];
 
   // If info is not available then be conservative and return false.
   if (!Info)
@@ -1600,10 +1600,10 @@ bool isPaddingElement(const Type *Ty, unsigned index) {
 /// structs then adjust their PaddingElement bits. Padding
 /// field in one struct may not be a padding field in another
 /// struct.
-void adjustPaddingElement(const Type *OldTy, const Type *NewTy) {
+void adjustPaddingElement(tree oldtree, tree newtree) {
 
-  StructTypeConversionInfo *OldInfo = StructTypeInfoMap[OldTy];
-  StructTypeConversionInfo *NewInfo = StructTypeInfoMap[NewTy];
+  StructTypeConversionInfo *OldInfo = StructTypeInfoMap[oldtree];
+  StructTypeConversionInfo *NewInfo = StructTypeInfoMap[newtree];
 
   if (!OldInfo || !NewInfo)
     return;
@@ -2084,7 +2084,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   RestoreBaseClassFields(type);  
 
   const Type *ResultTy = Info->getLLVMType();
-  StructTypeInfoMap[ResultTy] = Info;
+  StructTypeInfoMap[type] = Info;
   
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
@@ -2148,6 +2148,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // match union size.
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
+  tree GccUnionTy = 0;
   unsigned MaxSize = 0, MaxAlign = 0;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
@@ -2161,16 +2162,18 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
         integer_zerop(DECL_QUALIFIER(Field)))
       continue;
 
-    const Type *TheTy = ConvertType(TREE_TYPE(Field));
+    tree TheGccTy = TREE_TYPE(Field);
+    const Type *TheTy = ConvertType(TheGccTy);
     unsigned Size  = TD.getABITypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
     
-    adjustPaddingElement(UnionTy, TheTy);
+    adjustPaddingElement(GccUnionTy, TheGccTy);
 
     // Select TheTy as union type if it meets one of the following criteria
     // 1) UnionTy is 0
     // 2) TheTy alignment is more then UnionTy
-    // 3) TheTy size is greater than UnionTy size and TheTy alignment is equal to UnionTy
+    // 3) TheTy size is greater than UnionTy size and TheTy alignment is 
+    //    equal to UnionTy
     // 4) TheTy size is greater then UnionTy size and TheTy is packed
     bool useTheTy = false;
     if (UnionTy == 0)
@@ -2184,6 +2187,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
     if (useTheTy) {
       UnionTy = TheTy;
+      GccUnionTy = TheGccTy;
       MaxSize = MAX(MaxSize, Size);
       MaxAlign = Align;
     }

@@ -116,7 +116,7 @@ struct StructTypeConversionInfo;
 
 /// Return true if and only if field no. N from struct type T is a padding
 /// element added to match llvm struct type size and gcc struct type size.
-bool isPaddingElement(const Type *T, unsigned N);
+bool isPaddingElement(union tree_node*, unsigned N);
 
 /// TypeConverter - Implement the converter from GCC types to LLVM types.
 ///

@@ -1229,7 +1229,8 @@ void TreeToLLVM::EmitBlock(BasicBlock *BB) {
 
 /// CopyAggregate - Recursively traverse the potientially aggregate src/dest
 /// ptrs, copying all of the elements.
-static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder) {
+static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder,
+                          tree gccType) {
   assert(DestLoc.Ptr->getType() == SrcLoc.Ptr->getType() &&
          "Cannot copy between two pointers of different type!");
   const Type *ElTy =
@@ -1246,6 +1247,8 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder) {
     const StructLayout *SL = getTargetData().getStructLayout(STy);
     Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      if (gccType && isPaddingElement(gccType, i))
+        continue;
       Constant *Idx = ConstantInt::get(Type::Int32Ty, i);
       Value *Idxs[2] = { Zero, Idx };
       Value *DElPtr = Builder.CreateGEP(DestLoc.Ptr, Idxs, Idxs + 2, "tmp");
@@ -1253,7 +1256,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder) {
       unsigned Align = MinAlign(Alignment, SL->getElementOffset(i));
       CopyAggregate(MemRef(DElPtr, Align, DestLoc.Volatile),
                     MemRef(SElPtr, Align, SrcLoc.Volatile),
-                    Builder);
+                    Builder, 0);
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
@@ -1267,7 +1270,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder) {
       unsigned Align = MinAlign(Alignment, i * EltSize);
       CopyAggregate(MemRef(DElPtr, Align, DestLoc.Volatile),
                     MemRef(SElPtr, Align, SrcLoc.Volatile),
-                    Builder);
+                    Builder, 0);
     }
   }
 }
@@ -1311,7 +1314,7 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
         CountAggregateElements(LLVMTy) <= 8) {
       DestLoc.Ptr = BitCastToType(DestLoc.Ptr, PointerType::getUnqual(LLVMTy));
       SrcLoc.Ptr = BitCastToType(SrcLoc.Ptr, PointerType::getUnqual(LLVMTy));
-      CopyAggregate(DestLoc, SrcLoc, Builder);
+      CopyAggregate(DestLoc, SrcLoc, Builder, type);
       return;
     }
   }

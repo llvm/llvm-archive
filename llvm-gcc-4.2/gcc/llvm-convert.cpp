@@ -4293,18 +4293,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
     
-  case BUILT_IN_SYNCHRONIZE: {
-    // We assume like gcc appears to, that this only applies to cached memory.
-    Value* C[5];
-    C[0] = C[1] = C[2] = C[3] = ConstantInt::get(Type::Int1Ty, 1);
-    C[4] = ConstantInt::get(Type::Int1Ty, 0);
-   
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                 Intrinsic::memory_barrier),
-                       C, C + 5);
-    return true;
-  }
-
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:
     case BUILT_IN_APPLY:

@@ -1137,7 +1137,14 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // 'sret' functions cannot be 'readnone' or 'readonly'.
   if (ABIConverter.isStructReturn())
     RAttributes &= ~(ParamAttr::ReadNone|ParamAttr::ReadOnly);
-  
+
+  // Demote 'readnone' nested functions to 'readonly' since
+  // they may need to read through the static chain.
+  if (static_chain && (RAttributes & ParamAttr::ReadNone)) {
+    RAttributes &= ~ParamAttr::ReadNone;
+    RAttributes |= ParamAttr::ReadOnly;
+  }
+
   // Compute whether the result needs to be zext or sext'd.
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 

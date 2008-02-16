@@ -2714,17 +2714,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
 
     // Non-bitfield aggregate value.
     MemRef NewLoc(LV.Ptr, Alignment, isVolatile);
-
-    // In case we are returning the contents of an object which overlaps
-    // the place the value is being stored, use a safe function when copying
-    // a value through a pointer into a structure value return block.
-    if (TREE_CODE (lhs) == RESULT_DECL && TREE_CODE (rhs) == INDIRECT_REF) {
-      MemRef Tmp = CreateTempLoc(ConvertType(TREE_TYPE(rhs)));
-      Emit(rhs, &Tmp);
-      EmitAggregateCopy(NewLoc, Tmp, TREE_TYPE(rhs));
-    } else {
-      Emit(rhs, &NewLoc);
-    }
+    Emit(rhs, &NewLoc);
 
     if (DestLoc)
       EmitAggregateCopy(*DestLoc, NewLoc, TREE_TYPE(exp));

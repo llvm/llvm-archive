@@ -3748,7 +3748,7 @@ enum ix86_builtins
  * compiler was configured for i[3456]86-os-blah.
  */
 #define LLVM_OVERRIDE_TARGET_ARCH() \
-  (TARGET_64BIT ? "x86_64" : "")
+  (TARGET_64BIT ? "x86_64" : "i386")
 
 /* LLVM_TARGET_INTRINSIC_LOWER - To handle builtins, we want to expand the
  * invocation into normal LLVM code.  If the target can handle the builtin, this

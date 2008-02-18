@@ -1054,10 +1054,11 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
 
   // If this is a struct-return function, the dest loc is passed in as a
-  // pointer.  Mark that pointer as structret.
+  // pointer.  Mark that pointer as structret and noalias.
   if (ABIConverter.isStructReturn())
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
-                                             ParamAttr::StructRet));
+                                    ParamAttr::StructRet | ParamAttr::NoAlias));
+  
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
@@ -1152,10 +1153,10 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
   
   // If this is a struct-return function, the dest loc is passed in as a
-  // pointer.  Mark that pointer as structret.
+  // pointer.  Mark that pointer as structret, and noalias.
   if (ABIConverter.isStructReturn())
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
-                                             ParamAttr::StructRet));
+                                    ParamAttr::StructRet | ParamAttr::NoAlias));
     
   if (static_chain) {
     // Pass the static chain as the first parameter.

@@ -2529,7 +2529,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       LValue LV = EmitLV(TREE_VALUE(arg));
       assert(!LV.isBitfield() && "Bitfields are first-class types!");
       Client.setLocation(LV.Ptr);
-      uint16_t Attributes = ParamAttr::None;
+      ParameterAttributes Attributes = ParamAttr::None;
       ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
       if (Attributes != ParamAttr::None)
         PAL= ParamAttrsList::includeAttrs(PAL, CallOperands.size(), Attributes);

@@ -228,7 +228,7 @@ public:
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type, uint16_t *Attributes = NULL) {
+  void HandleArgument(tree type, ParameterAttributes *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.

@@ -1224,7 +1224,8 @@ const struct attribute_spec ix86_attribute_table[];
 static bool ix86_function_ok_for_sibcall (tree, tree);
 static tree ix86_handle_cconv_attribute (tree *, tree, tree, int, bool *);
 static int ix86_value_regno (enum machine_mode, tree, tree);
-static bool contains_128bit_aligned_vector_p (tree);
+/* LLVM LOCAL make global */
+/*static bool contains_128bit_aligned_vector_p (tree);*/
 static rtx ix86_struct_value_rtx (tree, int);
 static bool ix86_ms_bitfield_layout_p (tree);
 static tree ix86_handle_struct_attribute (tree *, tree, tree, int, bool *);
@@ -4020,7 +4021,8 @@ ix86_pass_by_reference (CUMULATIVE_ARGS *cum ATTRIBUTE_UNUSED,
 
 /* Return true when TYPE should be 128bit aligned for 32bit argument passing
    ABI.  Only called if TARGET_SSE.  */
-static bool
+/* LLVM LOCAL make global */
+bool
 contains_128bit_aligned_vector_p (tree type)
 {
   enum machine_mode mode = TYPE_MODE (type);

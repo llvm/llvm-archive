@@ -153,6 +153,15 @@ static bool isZeroSizedStructOrUnion(tree type) {
     false
 #endif
 
+// LLVM_BYVAL_ALIGNMENT - Returns the alignment of the type in bytes, if known,
+// in the context of its use as a function parameter.
+// Note that the alignment in the TYPE node is usually the alignment appropriate
+// when the type is used within a struct, which may or may not be appropriate
+// here.
+#ifndef LLVM_BYVAL_ALIGNMENT
+#define LLVM_BYVAL_ALIGNMENT(T)  0
+#endif
+
 // LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS - Return true if this aggregate
 // value should be passed in integer registers.  By default, we do this for all
 // values that are not single-element structs.  This ensures that things like
@@ -241,8 +250,10 @@ public:
       PassInMixedRegisters(type, Ty, Elts);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
       C.HandleByValArgument(Ty, type);
-      if (Attributes)
+      if (Attributes) {
         *Attributes |= ParamAttr::ByVal;
+        *Attributes |= (LLVM_BYVAL_ALIGNMENT(type) << 16);
+      }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, Ty);
     } else if (isZeroSizedStructOrUnion(type)) {

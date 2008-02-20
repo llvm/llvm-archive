@@ -171,6 +171,8 @@ extern void init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree);
 extern rtx function_arg (CUMULATIVE_ARGS *, enum machine_mode, tree, int);
 extern void function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode,
 				  tree, int);
+/* LLVM LOCAL make this global */
+extern bool contains_128bit_aligned_vector_p (tree);
 extern rtx ix86_function_value (tree, tree, bool);
 #endif
 

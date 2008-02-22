@@ -88,7 +88,8 @@ extern int ix86_regparm;
 /* Objects containing SSE vectors are 16 byte aligned, everything else 4. */
 extern "C" bool contains_128bit_aligned_vector_p(tree);
 #define LLVM_BYVAL_ALIGNMENT(T) \
-  (!TARGET_64BIT && TARGET_SSE && contains_128bit_aligned_vector_p(T) ? 16 : 4)
+  (TARGET_64BIT ? 0 : \
+   TARGET_SSE && contains_128bit_aligned_vector_p(T) ? 16 : 4)
 
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 

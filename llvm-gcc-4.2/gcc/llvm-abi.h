@@ -252,7 +252,8 @@ public:
       C.HandleByValArgument(Ty, type);
       if (Attributes) {
         *Attributes |= ParamAttr::ByVal;
-        *Attributes |= (LLVM_BYVAL_ALIGNMENT(type) << 16);
+        *Attributes |= 
+          ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, Ty);

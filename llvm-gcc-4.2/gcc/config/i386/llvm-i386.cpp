@@ -701,7 +701,7 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
   if (SrcSize <= 0 || SrcSize > 16)
     return false;
-  
+
   // X86-32 passes aggregates on the stack.  If this is an extremely simple
   // aggregate whose elements would be passed the same if passed as scalars,
   // pass them that way in order to promote SROA on the caller and callee side.
@@ -710,13 +710,16 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   // would be passed as stand-alone arguments.
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return false;
-  
+
   for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
     const Type *EltTy = STy->getElementType(i);
-    // 32 and 64-bit integers are fine, as are float, double, and long double.
+    // 32 and 64-bit integers are fine, as are float and double.  Long double
+    // (which can be picked as the type for a union of 16 bytes) is not fine, 
+    // as loads and stores of it get only 10 bytes.
     if (EltTy == Type::Int32Ty ||
         EltTy == Type::Int64Ty || 
-        EltTy->isFloatingPoint() ||
+        EltTy == Type::FloatTy ||
+        EltTy == Type::DoubleTy ||
         isa<PointerType>(EltTy)) {
       Elts.push_back(EltTy);
       continue;

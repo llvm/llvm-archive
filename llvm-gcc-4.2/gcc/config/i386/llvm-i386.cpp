@@ -746,7 +746,8 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
   if (Bytes == 0)
     return false;
 
-  if (Bytes == GET_MODE_SIZE(SImode) || Bytes == GET_MODE_SIZE(DImode)) {
+  if (TARGET_64BIT &&
+      (Bytes == GET_MODE_SIZE(SImode) || Bytes == GET_MODE_SIZE(DImode))) {
     // 32-bit or 64-bit and all elements are integers, not passed in memory.
     const Type *Ty = ConvertType(TreeType);
     if (llvm_x86_is_all_integer_types(Ty))

@@ -34,7 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/ParamAttrsList.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -2958,7 +2958,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       LValue LV = EmitLV(TREE_VALUE(arg));
       assert(!LV.isBitfield() && "Bitfields are first-class types!");
       Client.setLocation(LV.Ptr);
-      uint16_t Attributes = ParamAttr::None;
+      ParameterAttributes Attributes = ParamAttr::None;
       ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
       if (Attributes != ParamAttr::None)
         PAL= ParamAttrsList::includeAttrs(PAL, CallOperands.size(), Attributes);

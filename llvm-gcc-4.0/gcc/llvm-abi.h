@@ -201,7 +201,7 @@ public:
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type, uint16_t *Attributes = NULL) {
+  void HandleArgument(tree type, ParameterAttributes *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
 
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.

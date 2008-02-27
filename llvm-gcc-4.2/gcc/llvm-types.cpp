@@ -2171,6 +2171,37 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       continue;
 
     tree TheGccTy = TREE_TYPE(Field);
+#ifdef TARGET_POWERPC
+    // Normally gcc reduces the size of bitfields to the size necessary
+    // to hold the bits, e.g. a 1-bit field becomes QI.  It does not do
+    // this for bool, which is no problem on most targets because
+    // sizeof(bool)==1.  On darwin ppc32, however, sizeof(bool)==4, so
+    // we can have field types bigger than the union type here.  Evade
+    // this by creating an appropriate int type here.
+    //
+    // It's possible this issue is not specific to ppc, but I doubt it.
+
+    if (TREE_CODE(TheGccTy) == BOOLEAN_TYPE &&
+        TYPE_SIZE_UNIT(TheGccTy) &&
+        DECL_SIZE_UNIT(Field) && 
+        TREE_CODE(DECL_SIZE_UNIT(Field)) == INTEGER_CST &&
+        TREE_CODE(TYPE_SIZE_UNIT(TheGccTy)) == INTEGER_CST &&
+        TREE_INT_CST_LOW(TYPE_SIZE_UNIT(TheGccTy)) >
+        TREE_INT_CST_LOW(DECL_SIZE_UNIT(Field))) {
+      bool sign = DECL_UNSIGNED(Field);
+      switch(TREE_INT_CST_LOW(DECL_SIZE_UNIT(Field))) {
+        case 1: TheGccTy = sign ? intQI_type_node : unsigned_intQI_type_node;
+                break;
+        case 2: TheGccTy = sign ? intHI_type_node : unsigned_intHI_type_node;
+                break;
+        case 4: TheGccTy = sign ? intSI_type_node : unsigned_intSI_type_node;
+                break;
+        case 8: TheGccTy = sign ? intDI_type_node : unsigned_intDI_type_node;
+                break;
+        default: assert(0 && "Unexpected field size"); break;
+      }
+    }
+#endif
     const Type *TheTy = ConvertType(TheGccTy);
     unsigned Size  = TD.getABITypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);

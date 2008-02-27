@@ -29,10 +29,23 @@ Boston, MA 02110-1301, USA.  */
 #ifdef HAVE_GAS_PE_SECREL32_RELOC
 #define DWARF2_DEBUGGING_INFO 1
 
+/* LLVM LOCAL begin mainline 125696 */
+/* Map gcc register number to DBX register number. Maintain
+   compatibility with old -gstabs compiled code.  */
+/* LLVM LOCAL end mainline 125696 */
 #undef DBX_REGISTER_NUMBER
 #define DBX_REGISTER_NUMBER(n) (write_symbols == DWARF2_DEBUG   \
                                 ? svr4_dbx_register_map[n]      \
                                 : dbx_register_map[n])
+
+/* LLVM LOCAL begin mainline 125696 */
+/* Map gcc register number to DWARF 2 CFA column number.  Always
+   use the svr4_dbx_register_map for DWARF .eh_frame even if we
+   don't use DWARF .debug_frame.  */
+#undef DWARF_FRAME_REGNUM
+#define DWARF_FRAME_REGNUM(n) svr4_dbx_register_map[(n)]
+/* LLVM LOCAL end mainline 125696 */
+
 
 /* Use section relative relocations for debugging offsets.  Unlike
    other targets that fake this by putting the section VMA at 0, PE
@@ -262,10 +275,17 @@ extern void i386_pe_unique_section (TREE, int);
 #undef ASM_COMMENT_START
 #define ASM_COMMENT_START " #"
 
-/* DWARF2 Unwinding doesn't work with exception handling yet.  To make
-   it work, we need to build a libgcc_s.dll, and dcrt0.o should be
-   changed to call __register_frame_info/__deregister_frame_info.  */
+/* LLVM LOCAL begin mainline 125696 */
+#ifndef DWARF2_UNWIND_INFO
+/* If configured with --disable-sjlj-exceptions, use DWARF2, else
+   default to SJLJ  */
+#if defined (CONFIG_SJLJ_EXCEPTIONS) && !CONFIG_SJLJ_EXCEPTIONS
+#define DWARF2_UNWIND_INFO 1
+#else
 #define DWARF2_UNWIND_INFO 0
+#endif
+#endif
+/* LLVM LOCAL end mainline 125696 */
 
 /* Don't assume anything about the header files.  */
 #define NO_IMPLICIT_EXTERN_C

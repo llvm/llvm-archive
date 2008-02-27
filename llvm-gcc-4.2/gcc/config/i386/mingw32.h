@@ -65,9 +65,16 @@ Boston, MA 02110-1301, USA.  */
 #define LIBGCC_SPEC \
   "%{mthreads:-lmingwthrd} -lmingw32 -lgcc -lmoldname -lmingwex -lmsvcrt"
 
+/* LLVM LOCAL begin mainline 125696 */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "%{shared|mdll:dllcrt2%O%s} \
-  %{!shared:%{!mdll:crt2%O%s}} %{pg:gcrt2%O%s}"
+  %{!shared:%{!mdll:crt2%O%s}} %{pg:gcrt2%O%s}  \
+  crtbegin%O%s"
+
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "crtend%O%s"
+/* LLVM LOCAL end mainline 125696 */
+
 
 /* Override startfile prefix defaults.  */
 #ifndef STANDARD_STARTFILE_PREFIX_1
@@ -112,3 +119,10 @@ do {						         \
 /* mingw32 uses the  -mthreads option to enable thread support.  */
 #undef GOMP_SELF_SPECS
 #define GOMP_SELF_SPECS "%{fopenmp: -mthreads}"
+
+
+/* LLVM LOCAL begin mainline 125696 */
+/* This works on mingw32.  */
+#undef TARGET_USE_JCR_SECTION
+#define TARGET_USE_JCR_SECTION 1
+/* LLVM LOCAL end mainline 125696 */

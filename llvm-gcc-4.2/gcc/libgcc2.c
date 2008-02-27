@@ -2126,7 +2126,7 @@ TRANSFER_FROM_TRAMPOLINE
 #endif
 #endif /* L_trampoline */
 
-#ifndef __CYGWIN__
+#if !defined (__CYGWIN__) && !defined(__MINGW32__)
 #ifdef L__main
 
 #include "gbl-ctors.h"

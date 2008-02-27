@@ -125,4 +125,6 @@ do {						         \
 /* This works on mingw32.  */
 #undef TARGET_USE_JCR_SECTION
 #define TARGET_USE_JCR_SECTION 1
+
+#define MD_UNWIND_SUPPORT "config/i386/w32-unwind.h"
 /* LLVM LOCAL end mainline 125696 */

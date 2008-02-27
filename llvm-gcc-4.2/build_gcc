@@ -355,12 +355,9 @@ done
 
 # bin
 # The native drivers ('native' is different in different architectures).
-BIN_FILES=`ls $DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin | grep '^[^-]*-[0-9.]*$' \
-  | grep -v gccbug | grep -v gcov || exit 1`
 mkdir .$DEST_ROOT/bin
-for f in $BIN_FILES ; do
-  lipo -output .$DEST_ROOT/bin/$f -create $DIR/dst-*$DEST_ROOT/bin/$f || exit 1
-done
+lipo -output .$DEST_ROOT/bin/llvm-cpp-$MAJ_VERS -create $DIR/dst-*$DEST_ROOT/bin/{llvm-cpp,cpp-$MAJ_VERS} || exit 1
+
 # gcov, which is special only because it gets built multiple times and lipo
 # will complain if we try to add two architectures into the same output.
 TARG0=`echo $TARGETS | cut -d ' ' -f 1`
@@ -524,6 +521,7 @@ mkdir -p $DEST_DIR$LLVM_BIN_DIR
 cd $DEST_DIR$LLVM_BIN_DIR
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
+ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-cpp-$MAJ_VERS llvm-cpp-$MAJ_VERS || exit 1
 
 # FIXME: This is a hack to get things working.
 for h in $HOSTS ; do

@@ -1308,8 +1308,10 @@ void make_decl_llvm(tree decl) {
 /// llvm_get_decl_name - Used by varasm.c, returns the specified declaration's
 /// name.
 const char *llvm_get_decl_name(void *LLVM) {
-  if (LLVM == 0) return "";
-  return ((Value*)LLVM)->getValueName()->getKeyData();
+  if (LLVM)
+    if (const ValueName *VN = ((Value*)LLVM)->getValueName())
+      return VN->getKeyData();
+  return "";
 }
 
 // llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be

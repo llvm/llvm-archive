@@ -187,6 +187,9 @@ static bool isZeroSizedStructOrUnion(tree type) {
 
 // LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR - Return a TYPE tree if this struct
 // should be returned using the convention for that scalar TYPE, 0 otherwise.
+// The returned TYPE must be the same size as X for this to work; that is
+// checked elsewhere.  (Structs where this is not the case can be constructed
+// by abusing the __aligned__ attribute.)
 #ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
 #define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
   isSingleElementStructOrArray(X, false, false)
@@ -219,7 +222,11 @@ public:
                // FIXME: this is a hack around returning 'complex double' by-val
                // which returns in r3/r4/r5/r6 on PowerPC.
                TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8) {
-      if (tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type)) {
+      tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);
+      if (SingleElt && TYPE_SIZE(SingleElt) && 
+          TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
+          TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) == 
+            TREE_INT_CST_LOW(TYPE_SIZE_UNIT(SingleElt))) {
         C.HandleAggregateResultAsScalar(ConvertType(SingleElt));
       } else {
         // Otherwise return as an integer value large enough to hold the entire

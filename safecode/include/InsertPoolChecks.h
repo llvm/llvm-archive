@@ -28,7 +28,12 @@ struct AlignCheckAnalysis : public ModulePass {
   public:
     virtual bool runOnModule (Module & M);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+#ifdef LLVA_KERNEL
       AU.addRequired<TDDataStructures>();
+#else
+      AU.addRequired<EquivClassGraphs>();
+      AU.addRequired<PoolAllocate>();
+#endif
       AU.setPreservesAll();
     }
 
@@ -37,7 +42,12 @@ struct AlignCheckAnalysis : public ModulePass {
     }
   private:
     // Private variables
+#ifdef LLVA_KERNEL
     TDDataStructures * TDPass;
+#else
+    PoolAllocate     * paPass;
+    EquivClassGraphs * equivPass;
+#endif
 
     // Set of DSNodes that require alignment checks
     std::set<DSNode *> AlignmentNodes;
@@ -67,6 +77,9 @@ struct PreInsertPoolChecks : public ModulePass {
       AU.addPreserved<TargetData>();
     }
 
+    bool nodeNeedsAlignment (DSNode * Node) {
+      return ((AlignmentNodes.find (Node)) != (AlignmentNodes.end()));
+    }
   private:
 #ifndef  LLVA_KERNEL
     PoolAllocate * paPass;
@@ -78,6 +91,9 @@ struct PreInsertPoolChecks : public ModulePass {
     CUA::ConvertUnsafeAllocas * cuaPass;
     TDDataStructures * TDPass;
     TargetData * TD;
+
+    // Set of DSNodes that require alignment checks
+    std::set<DSNode *> AlignmentNodes;
 
     // External functions in the SAFECode run-time library
     Function *PoolCheck;
@@ -108,6 +124,7 @@ struct PreInsertPoolChecks : public ModulePass {
     // Private methods
     void addPoolCheckProto(Module &M);
     void registerGlobalArraysWithGlobalPools(Module &M);
+    void addLinksNeedingAlignment (DSNode * Node);
 #ifndef LLVA_KERNEL
     Value * getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI, bool collapsed = false);
 #endif
@@ -149,13 +166,11 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<TDDataStructures>();
       AU.addRequired<TargetData>();
 #endif
-      AU.addRequired<AlignCheckAnalysis>();
-      AU.addPreserved<AlignCheckAnalysis>();
     };
 
   private :
     // Prerequisite passes
-    AlignCheckAnalysis * acaPass;
+    PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
     TargetData * TD;
 #ifndef  LLVA_KERNEL

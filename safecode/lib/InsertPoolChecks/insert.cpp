@@ -177,6 +177,9 @@ makeMetaPool(Module* M, DSNode* N) {
   MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
   MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
   MPTV.push_back(ArrayType::get (VoidPtrType, 4));
+#ifdef SVA_IO
+  MPTV.push_back(VoidPtrType);
+#endif
 
   const StructType* MPT = StructType::get(MPTV);
 
@@ -374,6 +377,7 @@ PreInsertPoolChecks::runOnModule (Module & M) {
     DSGraph & TDG = getDSGraph(*F);
     DSGraph::node_iterator NI = TDG.node_begin(), NE = TDG.node_end();
     while (NI != NE) {
+      addLinksNeedingAlignment (NI);
       createPoolHandle (M, NI);
       ++NI;
     }
@@ -395,6 +399,32 @@ PreInsertPoolChecks::getDSGraph(Function & F) {
 #else  
   return TDPass->getDSGraph(F);
 #endif  
+}
+
+//
+// Method: addLinksNeedingAlignment()
+//
+// Description:
+//  Determine if this DSNode has any pointers to DSNodes which will require
+//  alignment checks.  If so, add those DSNodes to the set of DSNodes needing
+//  alignment checks.  Note that we do not determine if the *given* node needs
+//  alignment checks.
+//
+void
+PreInsertPoolChecks::addLinksNeedingAlignment (DSNode * Node) {
+  //
+  // Determine whether an alignment check is needed.  This occurs when a DSNode
+  // is type unknown (collapsed) but has pointers to type known (uncollapsed)
+  // DSNodes.
+  //
+  if ((Node) && (Node->isNodeCompletelyFolded())) {
+    for (unsigned i = 0 ; i < Node->getNumLinks(); ++i) {
+      DSNode * LinkNode = Node->getLink(i).getNode();
+      if (LinkNode && (!(LinkNode->isNodeCompletelyFolded()))) {
+        AlignmentNodes.insert (LinkNode);
+      }
+    }
+  }
 }
 
 void
@@ -973,7 +1003,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   // is type unknown (collapsed) but has pointers to type known (uncollapsed)
   // DSNodes.
   //
-  if (acaPass->nodeNeedsAlignment (Node)) {
+  if (preSCPass->nodeNeedsAlignment (Node)) {
     ++AlignChecks;
   }
 
@@ -1781,7 +1811,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // is type unknown (collapsed) but has pointers to type known (uncollapsed)
   // DSNodes.
   //
-  if (acaPass->nodeNeedsAlignment (Node)) {
+  if (preSCPass->nodeNeedsAlignment (Node)) {
     ++AlignChecks;
   }
 
@@ -2057,7 +2087,7 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   // is type unknown (collapsed) but has pointers to type known (uncollapsed)
   // DSNodes.
   //
-  if (acaPass->nodeNeedsAlignment (Node)) {
+  if (preSCPass->nodeNeedsAlignment (Node)) {
     ++AlignChecks;
   }
 
@@ -2164,7 +2194,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   // Retrieve references to all of the passes from which we will gather
   // information.
   //
-  acaPass   = &getAnalysis<AlignCheckAnalysis>();
+  preSCPass = &getAnalysis<PreInsertPoolChecks>();
   cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
   TD        = &getAnalysis<TargetData>();
 #ifdef LLVA_KERNEL  

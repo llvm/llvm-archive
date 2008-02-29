@@ -4294,6 +4294,77 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                        C, C + 5);
     return true;
   }
+#if 0 //FIXME: these break the build for backends that haven't implemented them
+    //gcc uses many names for the sync intrinsics
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_16: {
+    const Type *Ty = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[3] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
+    };
+    if (C[1]->getType() != Ty)
+      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    if (C[2]->getType() != Ty)
+      C[2] = Builder.CreateIntCast(C[2], Ty, "cast");
+
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_lcs, 
+                                                   &Ty, 1),
+      C, C + 3);
+   
+    return true;
+  }
+  case BUILT_IN_FETCH_AND_ADD_1:
+  case BUILT_IN_FETCH_AND_ADD_2:
+  case BUILT_IN_FETCH_AND_ADD_4:
+  case BUILT_IN_FETCH_AND_ADD_8:
+  case BUILT_IN_FETCH_AND_ADD_16: {
+    const Type *Ty = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    if (C[1]->getType() != Ty)
+      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+      C, C + 2);
+    
+    return true;
+  }
+  case BUILT_IN_LOCK_TEST_AND_SET_1:
+  case BUILT_IN_LOCK_TEST_AND_SET_2:
+  case BUILT_IN_LOCK_TEST_AND_SET_4:
+  case BUILT_IN_LOCK_TEST_AND_SET_8:
+  case BUILT_IN_LOCK_TEST_AND_SET_16: {
+    const Type *Ty = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    if (C[1]->getType() != Ty)
+      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_swap, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    
+    return true;
+  }
+#endif //FIXME: these break the build for backends that haven't implemented them
+
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
     case BUILT_IN_APPLY_ARGS:

@@ -30,13 +30,13 @@
 
 using namespace llvm;
 
-namespace {
-  RegisterPass<AlignCheckAnalysis> aca ("aca", "Alignment Check Analysis");
-}
-
 ////////////////////////////////////////////////////////////////////////////
 // Class: AlignCheckAnalysis
 ////////////////////////////////////////////////////////////////////////////
+
+namespace {
+  RegisterPass<AlignCheckAnalysis> aca ("aca", "Alignment Check Analysis");
+}
 
 //
 // Method: runOnModule()
@@ -47,7 +47,12 @@ namespace {
 bool
 AlignCheckAnalysis::runOnModule (Module & M) {
   // Retrieve the analysis results from other passes
+#ifdef LLVA_KERNEL
   TDPass    = &getAnalysis<TDDataStructures>();
+#else
+  paPass    = &getAnalysis<PoolAllocate>();
+  equivPass = &(paPass->getECGraphs());
+#endif
 
   //
   // Scan every DSGraph in the module to look for DSNodes requiring alignment.
@@ -62,6 +67,9 @@ AlignCheckAnalysis::runOnModule (Module & M) {
     // Skip the poolcheckglobals() function because it won't have a DSGraph
     if (F->getName() == "poolcheckglobals") continue;
 
+#ifndef LLVA_KERNEL
+    if (!equivPass->ContainsDSGraphFor(*F)) continue;
+#endif
     // Create a MetaPool variable for each DSNode in the DSGraph.
     DSGraph & TDG = getDSGraph(*F);
     DSGraph::node_iterator NI = TDG.node_begin(), NE = TDG.node_end();

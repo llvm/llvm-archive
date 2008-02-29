@@ -91,6 +91,13 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   (TARGET_64BIT ? 0 : \
    TARGET_SSE && contains_128bit_aligned_vector_p(T) ? 16 : 4)
 
+/* Structs containing a single data field plus zero-length fields are
+   considered as if they were the type of the data field. */
+#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
+#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
+  isSingleElementStructOrArray(X, true, false)
+#endif
+
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \

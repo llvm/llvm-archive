@@ -87,9 +87,12 @@ static bool isAggregateTreeType(tree type) {
 
 /// isSingleElementStructOrArray - If this is (recursively) a structure with one
 /// field or an array with one element, return the field type, otherwise return
-/// null.  If rejectFatBitField, and the single element is a bitfield of a type
-/// that's bigger than the struct, return null anyway.
-static tree isSingleElementStructOrArray(tree type, bool rejectFatBitfield) {
+/// null.  If ignoreZeroLength, the struct (recursively) may include zero-length
+/// fields in addition to the single element that has data.  If 
+/// rejectFatBitField, and the single element is a bitfield of a type that's
+/// bigger than the struct, return null anyway.
+static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
+                                         bool rejectFatBitfield) {
   // Scalars are good.
   if (!isAggregateTreeType(type)) return type;
   
@@ -107,6 +110,11 @@ static tree isSingleElementStructOrArray(tree type, bool rejectFatBitfield) {
 
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
       if (TREE_CODE(Field) == FIELD_DECL) {
+        if (ignoreZeroLength) {
+          if (TREE_CODE(DECL_SIZE(Field)) == INTEGER_CST &&
+              TREE_INT_CST_LOW(DECL_SIZE(Field)) == 0)
+            continue;
+        }
         if (!FoundField) {
           if (rejectFatBitfield &&
               TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
@@ -114,15 +122,18 @@ static tree isSingleElementStructOrArray(tree type, bool rejectFatBitfield) {
               TREE_INT_CST_LOW(TYPE_SIZE(type)))
             return 0;
           FoundField = getDeclaredType(Field);
-        } else
+        } else {
           return 0;   // More than one field.
+        }
       }
-    return FoundField ? isSingleElementStructOrArray(FoundField, false) : 0;
+    return FoundField ? isSingleElementStructOrArray(FoundField, 
+                                                     ignoreZeroLength, false)
+                      : 0;
   case ARRAY_TYPE:
     const ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
     if (!Ty || Ty->getNumElements() != 1)
       return 0;
-    return isSingleElementStructOrArray(TREE_TYPE(type), false);
+    return isSingleElementStructOrArray(TREE_TYPE(type), false, false);
   }
 }
 
@@ -171,7 +182,14 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // for field-by-field struct passing does not handle this one right.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
-   !isSingleElementStructOrArray(X, true)
+   !isSingleElementStructOrArray(X, false, true)
+#endif
+
+// LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR - Return a TYPE tree if this struct
+// should be returned using the convention for that scalar TYPE, 0 otherwise.
+#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
+#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
+  isSingleElementStructOrArray(X, false, false)
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are
@@ -201,7 +219,7 @@ public:
                // FIXME: this is a hack around returning 'complex double' by-val
                // which returns in r3/r4/r5/r6 on PowerPC.
                TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8) {
-      if (tree SingleElt = isSingleElementStructOrArray(type, false)) {
+      if (tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type)) {
         C.HandleAggregateResultAsScalar(ConvertType(SingleElt));
       } else {
         // Otherwise return as an integer value large enough to hold the entire

@@ -149,6 +149,8 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<TDDataStructures>();
       AU.addRequired<TargetData>();
 #endif
+      AU.addRequired<AlignCheckAnalysis>();
+      AU.addPreserved<AlignCheckAnalysis>();
     };
 
   private :

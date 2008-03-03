@@ -195,6 +195,20 @@ static bool isZeroSizedStructOrUnion(tree type) {
   isSingleElementStructOrArray(X, false, false)
 #endif
 
+// LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR - Return a TYPE tree if this vector type
+// should be returned using the convention for that scalar TYPE, 0 otherwise.
+// X may be evaluated more than once.
+#ifndef LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X) 0
+#endif
+
+// LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW - Return true if this vector type
+// should be returned using the aggregate shadow (sret) convention, 0 otherwise.
+// X may be evaluated more than once.
+#ifndef LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X) 0
+#endif
+
 /// DefaultABI - This class implements the default LLVM ABI where structures are
 /// passed by decimating them into individual components and unions are passed
 /// by passing the largest member of the union.
@@ -214,7 +228,16 @@ public:
   /// handles things like returning structures via hidden parameters.
   void HandleReturnType(tree type) {
     const Type *Ty = ConvertType(type);
-    if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
+    if (Ty->getTypeID() == Type::VectorTyID) {
+      // Vector handling is weird on x86.
+      tree ScalarType = LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(type);
+      if (ScalarType)
+        C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
+      else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type))
+        C.HandleAggregateShadowArgument(PointerType::getUnqual(Ty), false);
+      else
+        C.HandleScalarResult(Ty);
+    } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&

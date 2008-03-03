@@ -98,6 +98,28 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   isSingleElementStructOrArray(X, true, false)
 #endif
 
+/* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
+    this by returning i64 here.  */
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X)          \
+  ((TARGET_MACHO &&                                     \
+    !TARGET_64BIT &&                                    \
+    TREE_CODE(X) == VECTOR_TYPE &&                      \
+    TYPE_SIZE(X) &&                                     \
+    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST &&             \
+    TREE_INT_CST_LOW(TYPE_SIZE(X))==64 &&               \
+    TYPE_VECTOR_SUBPARTS(X)==1) ? uint64_type_node : 0)
+
+/* MMX vectors v2i32, v4i16, v8i8, v2f32 are returned using sret on Darwin
+   32-bit.  */
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X)          \
+  ((TARGET_MACHO &&                                     \
+    !TARGET_64BIT &&                                    \
+    TREE_CODE(X) == VECTOR_TYPE &&                      \
+    TYPE_SIZE(X) &&                                     \
+    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST &&             \
+    TREE_INT_CST_LOW(TYPE_SIZE(X))==64 &&               \
+    TYPE_VECTOR_SUBPARTS(X)>1) ? true : false)
+
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \

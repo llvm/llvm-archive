@@ -476,9 +476,17 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
   std::vector<Constant*> InitList;
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
+  
+  const Type *FPTy = FunctionType::get(Type::VoidTy, std::vector<const Type*>(),
+                                       false);
+  FPTy = PointerType::getUnqual(FPTy);
+  
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
     StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
-    StructInit[1] = Tors[i].first;
+    
+    // __attribute__(constructor) can be on a function with any type.  Make sure
+    // the pointer is void()*.
+    StructInit[1] = ConstantExpr::getBitCast(Tors[i].first, FPTy);
     InitList.push_back(ConstantStruct::get(StructInit, false));
   }
   Constant *Array =

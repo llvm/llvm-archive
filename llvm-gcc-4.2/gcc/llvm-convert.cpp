@@ -4300,7 +4300,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
-  case BUILT_IN_VAL_COMPARE_AND_SWAP_16: {
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_16: {
     const Type *Ty = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[3] = {
@@ -4318,6 +4323,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Intrinsic::atomic_lcs, 
                                                    &Ty, 1),
       C, C + 3);
+    if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_1) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_2) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_4) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_8) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_16))
+      Result = Builder.CreateICmpEQ(Result, C[1]);
    
     return true;
   }
@@ -4325,13 +4336,24 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_ADD_2:
   case BUILT_IN_FETCH_AND_ADD_4:
   case BUILT_IN_FETCH_AND_ADD_8:
-  case BUILT_IN_FETCH_AND_ADD_16: {
+  case BUILT_IN_FETCH_AND_ADD_16:
+  case BUILT_IN_FETCH_AND_SUB_1:
+  case BUILT_IN_FETCH_AND_SUB_2:
+  case BUILT_IN_FETCH_AND_SUB_4:
+  case BUILT_IN_FETCH_AND_SUB_8:
+  case BUILT_IN_FETCH_AND_SUB_16: {
     const Type *Ty = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
+    if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_1) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_2) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_4) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_8) ||
+        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_16))
+      C[1] = Builder.CreateNeg(C[1]);
     if (C[1]->getType() != Ty)
       C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 

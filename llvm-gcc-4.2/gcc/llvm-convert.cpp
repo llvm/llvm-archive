@@ -4306,13 +4306,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_16: {
-    const Type *Ty = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[3] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
       Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
     };
+    const Type *Ty = cast<PointerType>(C[0]->getType())->getElementType();
     if (C[1]->getType() != Ty)
       C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     if (C[2]->getType() != Ty)

@@ -4294,7 +4294,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                        C, C + 5);
     return true;
   }
-#if defined(TARGET_ALPHA) || defined(TARGET_386)
+#if defined(TARGET_ALPHA)
     //gcc uses many names for the sync intrinsics
   case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:

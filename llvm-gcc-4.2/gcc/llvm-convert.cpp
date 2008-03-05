@@ -4306,14 +4306,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[3] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
       Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
     };
-    const Type *Ty = cast<PointerType>(C[0]->getType())->getElementType();
-    if (C[1]->getType() != Ty)
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();
+
+    if (C[0]->getType() != PointerType::getUnqual(Ty))
+      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+   if (C[1]->getType() != Ty)
       C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     if (C[2]->getType() != Ty)
       C[2] = Builder.CreateIntCast(C[2], Ty, "cast");
@@ -4329,7 +4336,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_8) ||
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_16))
       Result = Builder.CreateICmpEQ(Result, C[1]);
-   
+    else if (Ty != OrigTy)
+      Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_ADD_1:
@@ -4342,7 +4350,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_SUB_4:
   case BUILT_IN_FETCH_AND_SUB_8:
   case BUILT_IN_FETCH_AND_SUB_16: {
-    const Type *Ty = ConvertType(TREE_TYPE(exp));
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
@@ -4354,6 +4362,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_8) ||
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_16))
       C[1] = Builder.CreateNeg(C[1]);
+
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    if (C[0]->getType() != PointerType::getUnqual(Ty))
+      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
     if (C[1]->getType() != Ty)
       C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
@@ -4361,7 +4376,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Intrinsic::atomic_las, 
                                                    &Ty, 1),
       C, C + 2);
-    
+    if (Ty != OrigTy)
+      Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_1:
@@ -4369,12 +4385,19 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOCK_TEST_AND_SET_4:
   case BUILT_IN_LOCK_TEST_AND_SET_8:
   case BUILT_IN_LOCK_TEST_AND_SET_16: {
-    const Type *Ty = ConvertType(TREE_TYPE(exp));
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
+
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    if (C[0]->getType() != PointerType::getUnqual(Ty))
+      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
     if (C[1]->getType() != Ty)
       C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
@@ -4383,6 +4406,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    &Ty, 1),
                          C, C + 2);
     
+    if (Ty != OrigTy)
+      Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
 #endif //FIXME: these break the build for backends that haven't implemented them

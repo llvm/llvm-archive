@@ -63,11 +63,18 @@ dnl **************************************************************************
 dnl * Enable various compile-time options
 dnl **************************************************************************
 
-dnl --enable-llva-kernel: compile SAFECode for use with LLVA kernels
+dnl --enable-kernel: compile SAFECode for use with LLVA kernels
 AC_ARG_ENABLE(kernel,
   AS_HELP_STRING(--enable-kernel,
                  [Use SAFECode for use with Linux Kernel (default is NO)]),
                   AC_DEFINE(LLVA_KERNEL,[[1]]),
+                  )
+
+dnl --enable-safeio: compile SAFECode to perform SAFE I/O checks
+AC_ARG_ENABLE(safeio,
+  AS_HELP_STRING(--enable-safeio,
+                 [Enable safe I/O checks (default is NO)]),
+                  AC_DEFINE(SVA_IO,[[1]]),
                   )
 
 dnl **************************************************************************

@@ -743,24 +743,6 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     type = orig_type;
   case INTEGER_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-
-    // FIXME: eliminate this when 128-bit integer types in LLVM work.
-    switch (TREE_INT_CST_LOW(TYPE_SIZE(type))) {
-    case 1:
-    case 8:
-    case 16:
-    case 32:
-    case 64:
-    //case 128:  Waiting for PR1462 etc.
-      break;
-    default:
-      static bool Warned = false;
-      if (!Warned)
-        fprintf(stderr, "WARNING: %d-bit integers not supported!\n",
-                (int)TREE_INT_CST_LOW(TYPE_SIZE(type)));
-      Warned = true;
-      return Type::Int64Ty;
-    }
     return SET_TYPE_LLVM(type, 
                          IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
   case REAL_TYPE:

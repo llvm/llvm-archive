@@ -43,6 +43,10 @@ typedef struct MetaPoolTy {
   void * cache[4];
 #endif
 
+#ifdef SVA_IO
+  /* A splay for I/O objects */
+  void * IOObjs;
+#endif
 } MetaPoolTy;
 
 typedef struct funccache {

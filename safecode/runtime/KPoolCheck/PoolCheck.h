@@ -11,8 +11,6 @@
 /*                                                                            */
 /*===----------------------------------------------------------------------===*/
 
-#include "safecode/Config/config.h"
-
 #ifndef POOLCHECK_RUNTIME_H
 #define POOLCHECK_RUNTIME_H
 

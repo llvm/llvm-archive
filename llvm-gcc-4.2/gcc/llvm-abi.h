@@ -206,7 +206,7 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // should be returned using the aggregate shadow (sret) convention, 0 otherwise.
 // X may be evaluated more than once.
 #ifndef LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW
-#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X) 0
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,Y) 0
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are

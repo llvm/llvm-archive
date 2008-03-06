@@ -660,7 +660,8 @@ void TreeToLLVM::StartFunctionBody() {
   TheLLVMABI<FunctionPrologArgumentConversion> ABIConverter(Client);
 
   // Handle the DECL_RESULT.
-  ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)));
+  ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)),
+                                DECL_BUILT_IN(FnDecl));
 
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
@@ -2493,7 +2494,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   TheLLVMABI<FunctionCallArgumentConversion> ABIConverter(Client);
 
   // Handle the result, including struct returns.
-  ABIConverter.HandleReturnType(TREE_TYPE(exp));
+  tree fndecl = get_callee_fndecl(exp);
+  ABIConverter.HandleReturnType(TREE_TYPE(exp), 
+                                fndecl ? DECL_BUILT_IN(fndecl) : false);
 
   // Pass the static chain, if any, as the first parameter.
   if (TREE_OPERAND(exp, 2))

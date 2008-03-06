@@ -100,8 +100,9 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
 
 /* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
     this by returning i64 here.  */
-#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X)          \
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,isBuiltin)\
   ((TARGET_MACHO &&                                     \
+    !isBuiltin &&                                       \
     !TARGET_64BIT &&                                    \
     TREE_CODE(X) == VECTOR_TYPE &&                      \
     TYPE_SIZE(X) &&                                     \
@@ -111,8 +112,9 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
 
 /* MMX vectors v2i32, v4i16, v8i8, v2f32 are returned using sret on Darwin
    32-bit.  */
-#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X)          \
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
   ((TARGET_MACHO &&                                     \
+    !isBuiltin &&                                       \
     !TARGET_64BIT &&                                    \
     TREE_CODE(X) == VECTOR_TYPE &&                      \
     TYPE_SIZE(X) &&                                     \

@@ -199,7 +199,7 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // should be returned using the convention for that scalar TYPE, 0 otherwise.
 // X may be evaluated more than once.
 #ifndef LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR
-#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X) 0
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,Y) 0
 #endif
 
 // LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW - Return true if this vector type
@@ -226,14 +226,16 @@ public:
   /// return type. It potentially breaks down the argument and invokes methods
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
-  void HandleReturnType(tree type) {
+  void HandleReturnType(tree type, bool isBuiltin) {
     const Type *Ty = ConvertType(type);
     if (Ty->getTypeID() == Type::VectorTyID) {
-      // Vector handling is weird on x86.
-      tree ScalarType = LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(type);
+      // Vector handling is weird on x86.  In particular builtin and
+      // non-builtin function of the same return types can use different
+      // calling conventions.
+      tree ScalarType = LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(type, isBuiltin);
       if (ScalarType)
         C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
-      else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type))
+      else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
         C.HandleAggregateShadowArgument(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);

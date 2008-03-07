@@ -1,3 +1,6 @@
+#include "safecode/Config/config.h"
+
+#ifndef LLVA_KERNEL
 #include <stdio.h>
 #include <unistd.h>
 
@@ -67,4 +70,5 @@ llva_save_tsc ()
 {
   return 0;
 }
+#endif
 

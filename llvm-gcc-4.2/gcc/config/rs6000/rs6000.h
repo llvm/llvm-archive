@@ -3473,6 +3473,13 @@ enum rs6000_builtins
                                     DESTTY, OPS)                 \
         TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
+#ifdef LLVM_ABI_H
+extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
+
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
+  llvm_rs6000_should_pass_aggregate_byval(X, TY)
+#endif
+
 /* LLVM LOCAL end */
 
 enum rs6000_builtin_type_index

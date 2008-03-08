@@ -365,5 +365,46 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   return false;
 }
 
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed using the byval mechanism. */
+bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
+
+  /* FIXME byval not implemented for ppc64. */
+  if (TARGET_64BIT)
+    return false;
+
+  HOST_WIDE_INT Bytes = (TYPE_MODE(TreeType) == BLKmode) ? 
+                        int_size_in_bytes(TreeType) : 
+                        (int) GET_MODE_SIZE(TYPE_MODE(TreeType));
+
+  // Zero sized array, struct, or class, ignored.
+  if (Bytes == 0)
+    return false;
+
+  // If this is a small fixed size type, investigate it.
+  if (Bytes <= 0 || Bytes > 16)
+    return true;
+
+  // ppc32 passes aggregates by copying, either in int registers or on the 
+  // stack.  If this is an extremely simple aggregate whose elements would be 
+  // passed the same if passed as scalars, pass them that way in order to 
+  // promote SROA on the caller and callee side.
+  // Note that we can't support passing all structs this way.  For example,
+  // {i16, i16} should be passed in on 32-bit unit, which is not how "i16, i16"
+  // would be passed as stand-alone arguments.  And any floating point element
+  // would be passed in float regs, not int.
+  const StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy || STy->isPacked()) return true;
+
+  for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+    const Type *EltTy = STy->getElementType(i);
+    // 32 and 64-bit integers are fine, as are pointers.
+    // Shorter ints do not work, nor do floating point or vectors.
+    if (EltTy != Type::Int32Ty && EltTy != Type::Int64Ty &&
+        !isa<PointerType>(EltTy))
+      return true;
+  }
+  return false;
+}
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

@@ -205,6 +205,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VSPLTH:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
+      // gcc accepts anything up to 31, and there is code that tests for it, 
+      // although it doesn't seem to make sense.  Hardware behaves as if mod 8.
+      if (EV>7 && EV<=31)
+        EV = EV%8;
       Result = BuildVectorShuffle(Ops[0], Ops[0],
                                   EV, EV, EV, EV, EV, EV, EV, EV);
     } else {
@@ -215,6 +219,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VSPLTW:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();
+      // gcc accepts anything up to 31, and there is code that tests for it, 
+      // although it doesn't seem to make sense.  Hardware behaves as if mod 4.
+      if (EV>3 && EV<=31)
+        EV = EV%4;
       Result = BuildVectorShuffle(Ops[0], Ops[0], EV, EV, EV, EV);
     } else {
       error("%Helement number must be an immediate", &EXPR_LOCATION(exp));

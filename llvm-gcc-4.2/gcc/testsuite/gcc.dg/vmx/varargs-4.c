@@ -1,3 +1,4 @@
+/* { dg-require-holes-deterministic "" } */
 #include "harness.h"
 #include <stdarg.h>
 #include <stddef.h>

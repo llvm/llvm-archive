@@ -1154,7 +1154,7 @@ void make_decl_llvm(tree decl) {
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
       unsigned CC;
-      const ParamAttrsList *PAL;
+      PAListPtr PAL;
       const FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
                                               CC, PAL);

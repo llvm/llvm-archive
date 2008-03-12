@@ -29,7 +29,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -864,8 +863,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       
     // No declaration to pass through, passing NULL.
     unsigned CallingConv;
-    const ParamAttrsList *PAL;
-
+    PAListPtr PAL;
     return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
                                                     CallingConv, PAL));
   }
@@ -1019,7 +1017,7 @@ static ParameterAttributes HandleArgumentExtension(tree ArgTy) {
 /// specified result type for the function.
 const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
-                       unsigned &CallingConv, const ParamAttrsList *&PAL) {
+                       unsigned &CallingConv, PAListPtr &PAL) {
   std::vector<PATypeHolder> ArgTys;
   PATypeHolder RetTy(Type::VoidTy);
   
@@ -1029,7 +1027,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   // Builtins are always prototyped, so this isn't one.
   ABIConverter.HandleReturnType(ReturnType, false);
 
-  ParamAttrsVector Attrs;
+  SmallVector<ParamAttrsWithIndex, 8> Attrs;
 
   // Compute whether the result needs to be zext or sext'd.
   ParameterAttributes RAttributes = HandleArgumentExtension(ReturnType);
@@ -1065,16 +1063,13 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
       Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(), Attributes));
   }
 
-  PAL = 0;
-  if (!Attrs.empty())
-    PAL = ParamAttrsList::get(Attrs);
-
+  PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
   return GetFunctionType(RetTy, ArgTys, false);
 }
 
 const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
-                    unsigned &CallingConv, const ParamAttrsList *&PAL) {
+                    unsigned &CallingConv, PAListPtr &PAL) {
   PATypeHolder RetTy = Type::VoidTy;
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
@@ -1090,7 +1085,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 #endif
 
   // Compute attributes for return type (and function attributes).
-  ParamAttrsVector Attrs;
+  SmallVector<ParamAttrsWithIndex, 8> Attrs;
   ParameterAttributes RAttributes = ParamAttr::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
@@ -1222,8 +1217,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // write to struct arguments passed by value, but in LLVM this becomes a
   // write through the byval pointer argument, which LLVM does not allow for
   // readonly/readnone functions.
-  if (HasByVal && Attrs[0].index == 0) {
-    ParameterAttributes &RAttrs = Attrs[0].attrs;
+  if (HasByVal && Attrs[0].Index == 0) {
+    ParameterAttributes &RAttrs = Attrs[0].Attrs;
     RAttrs &= ~(ParamAttr::ReadNone | ParamAttr::ReadOnly);
     if (RAttrs == ParamAttr::None)
       Attrs.erase(Attrs.begin());
@@ -1233,12 +1228,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   isVarArg = (Args == 0);
   assert(RetTy && "Return type not specified!");
 
-  // Only instantiate the parameter attributes if we got some.
-  PAL = 0;
-  if (!Attrs.empty())
-    PAL = ParamAttrsList::get(Attrs);
-
-  // Finally, make the function type
+  // Finally, make the function type and result attributes.
+  PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
   return GetFunctionType(RetTy, ArgTypes, isVarArg);
 }
 

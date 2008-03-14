@@ -274,7 +274,6 @@ class TreeToLLVM {
   Function *Fn;
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
-  BasicBlock *NoUnwindBB;
 
   // State that changes as the function is emitted.
 
@@ -431,9 +430,6 @@ private: // Helper functions.
 
   /// EmitUnwindBlock - Emit the lazily created EH unwind block.
   void EmitUnwindBlock();
-
-  /// EmitNoUnwindBlock - Emit the lazily created EH illegal-unwind block.
-  void EmitNoUnwindBlock();
 
 private: // Helpers for exception handling.
 

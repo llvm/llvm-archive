@@ -66,7 +66,6 @@ extern "C" {
 #include "rtl.h"
 #include "libfuncs.h"
 #include "tree-flow.h"
-extern bool tree_could_throw_p(tree);  // tree-flow.h uses non-C++ C constructs.
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
@@ -350,7 +349,7 @@ const TargetData &getTargetData() {
 TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   FnDecl = fndecl;
   Fn = 0;
-  ReturnBB = UnwindBB = NoUnwindBB = 0;
+  ReturnBB = UnwindBB = 0;
   
   if (TheDebugInfo) {
     expanded_location Location = expand_location(DECL_SOURCE_LOCATION (fndecl));
@@ -769,7 +768,6 @@ Function *TreeToLLVM::FinishFunctionBody() {
   EmitLandingPads();
   EmitPostPads();
   EmitUnwindBlock();
-  EmitNoUnwindBlock();
 
   // If this function takes the address of a label, emit the indirect goto
   // block.
@@ -2081,16 +2079,13 @@ void TreeToLLVM::EmitPostPads() {
 
     if (TargetBB) {
       Builder.CreateBr(TargetBB);
-    } else if (can_throw_external_1(i, true)) {
+    } else {
+      assert(can_throw_external_1(i, true) &&
+             "Must-not-throw region handled by runtime?");
       // Unwinding continues in the caller.
       if (!UnwindBB)
         UnwindBB = new BasicBlock("Unwind");
       Builder.CreateBr(UnwindBB);
-    } else {
-      // Unwinding in a must_not_throw region - notify the runtime.
-      if (!NoUnwindBB)
-        NoUnwindBB = new BasicBlock("NoUnwind");
-      Builder.CreateBr(NoUnwindBB);
     }
 
     Handlers.clear();
@@ -2106,22 +2101,6 @@ void TreeToLLVM::EmitUnwindBlock() {
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
     assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
     Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
-    Builder.CreateUnreachable();
-  }
-}
-
-/// EmitNoUnwindBlock - Emit the lazily created EH illegal-unwind block.
-void TreeToLLVM::EmitNoUnwindBlock() {
-  if (NoUnwindBB) {
-    CreateExceptionValues();
-    EmitBlock(NoUnwindBB);
-    // Fetch and store exception handler.
-    Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
-    CallInst *Call =
-      Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
-    // Illegal unwind - notify the runtime.
-    Call->setDoesNotThrow();
     Builder.CreateUnreachable();
   }
 }
@@ -2447,26 +2426,26 @@ namespace {
 /// result, otherwise store it in DestLoc.
 Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
                               const PAListPtr &InPAL) {
+  BasicBlock *LandingPad = 0; // Non-zero indicates an invoke.
+
   PAListPtr PAL = InPAL;
   if (PAL.isEmpty() && isa<Function>(Callee))
     PAL = cast<Function>(Callee)->getParamAttrs();
 
-  // Determine if we need to generate an invoke instruction (instead of a simple
-  // call) and if so, what the exception destination will be.
-  BasicBlock *LandingPad = 0;
-  bool NoUnwind =
-    (PAL.paramHasAttr(0, ParamAttr::NoUnwind)) ||
-    !tree_could_throw_p(exp);
+  if (!tree_could_throw_p(exp))
+    // This call does not throw - mark it 'nounwind'.
+    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
 
-  // Do not turn nounwind calls into invokes.
-  if (!NoUnwind) {
+  if (!PAL.paramHasAttr(0, ParamAttr::NoUnwind)) {
+    // This call may throw.  Determine if we need to generate
+    // an invoke rather than a simple call.
     int RegionNo = lookup_stmt_eh_region(exp);
 
     // Is the call contained in an exception handling region?
     if (RegionNo > 0) {
       // Are there any exception handlers for this region?
       if (can_throw_internal_1(RegionNo, false)) {
-        // Turn the call into an invoke.
+        // There are - turn the call into an invoke.
         LandingPads.grow(RegionNo);
         BasicBlock *&ThisPad = LandingPads[RegionNo];
 
@@ -2476,16 +2455,11 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
         LandingPad = ThisPad;
       } else {
-        // Can this call unwind out of the current function?
-        NoUnwind = !can_throw_external_1(RegionNo, false);
+        assert(can_throw_external_1(RegionNo, false) &&
+               "Must-not-throw region handled by runtime?");
       }
     }
   }
-
-  if (NoUnwind)
-    // This particular call does not unwind even though the callee may
-    // unwind in general.  Add the 'nounwind' attribute to the call.
-    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
 
   SmallVector<Value*, 16> CallOperands;
   CallingConv::ID CallingConvention;
@@ -3455,16 +3429,13 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
       getPostPad(get_eh_region_number(*I));
 
     Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-  } else if (can_throw_external_1(RegionNo, true)) {
+  } else {
+    assert(can_throw_external_1(RegionNo, true) &&
+           "Must-not-throw region handled by runtime?");
     // Unwinding continues in the caller.
     if (!UnwindBB)
       UnwindBB = new BasicBlock("Unwind");
     Builder.CreateBr(UnwindBB);
-  } else {
-    // Unwinding in a must_not_throw region - notify the runtime.
-    if (!NoUnwindBB)
-      NoUnwindBB = new BasicBlock("NoUnwind");
-    Builder.CreateBr(NoUnwindBB);
   }
 
   EmitBlock(new BasicBlock(""));

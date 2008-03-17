@@ -3478,7 +3478,15 @@ extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
   llvm_rs6000_should_pass_aggregate_byval(X, TY)
-#endif
+
+extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*, 
+                                              std::vector<const Type*>&);
+
+// FIXME this is needed for 64-bit
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
+   llvm_rs6000_should_pass_aggregate_in_mixed_regs((T), (TY), (E))
+
+#endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end */
 

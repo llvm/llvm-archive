@@ -243,10 +243,7 @@ public:
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
-               !aggregate_value_p(type, current_function_decl) &&
-               // FIXME: this is a hack around returning 'complex double' by-val
-               // which returns in r3/r4/r5/r6 on PowerPC.
-               TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8) {
+               !aggregate_value_p(type, current_function_decl)) {
       tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
@@ -267,6 +264,10 @@ public:
           C.HandleAggregateResultAsScalar(Type::Int32Ty);
         else if (Size <= 8)
           C.HandleAggregateResultAsScalar(Type::Int64Ty);
+        else if (Size <= 16)
+          C.HandleAggregateResultAsScalar(IntegerType::get(128));
+        else if (Size <= 32)
+          C.HandleAggregateResultAsScalar(IntegerType::get(256));
         else {
           assert(0 && "Cannot return this aggregate as a scalar!");
           abort();

@@ -26,6 +26,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm-abi.h"
 #include "llvm-internal.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
@@ -389,30 +390,61 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
   if (Bytes == 0)
     return false;
 
-  // If this is a small fixed size type, investigate it.
+  // Large types always use byval.  If this is a small fixed size type, 
+  // investigate it.
   if (Bytes <= 0 || Bytes > 16)
     return true;
 
   // ppc32 passes aggregates by copying, either in int registers or on the 
-  // stack.  If this is an extremely simple aggregate whose elements would be 
-  // passed the same if passed as scalars, pass them that way in order to 
-  // promote SROA on the caller and callee side.
-  // Note that we can't support passing all structs this way.  For example,
-  // {i16, i16} should be passed in on 32-bit unit, which is not how "i16, i16"
-  // would be passed as stand-alone arguments.  And any floating point element
-  // would be passed in float regs, not int.
+  // stack.
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return true;
 
-  for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-    const Type *EltTy = STy->getElementType(i);
-    // 32 and 64-bit integers are fine, as are pointers.
-    // Shorter ints do not work, nor do floating point or vectors.
-    if (EltTy != Type::Int32Ty && EltTy != Type::Int64Ty &&
-        !isa<PointerType>(EltTy))
-      return true;
+  // A struct containing only a float, double or vector field, possibly with
+  // some zero-length fields as well, must be passed as the field type.
+  // Note this does not apply to long double.
+  // This is required for ABI correctness.  
+  tree tType = isSingleElementStructOrArray(TreeType, true, false);
+  if (tType && int_size_in_bytes(tType)==Bytes && TYPE_MODE(tType)!=TFmode)
+    return false;
+
+  return true;
+}
+
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed in a number of registers of mixed types.
+   It also returns a vector of types that correspond to the registers used
+   for parameter passing. */
+bool 
+llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
+                                              std::vector<const Type*>&Elts) {
+  // FIXME there are plenty of ppc64 cases that need this.
+  if (TARGET_64BIT)
+    return false;
+
+  // If this is a small fixed size type, investigate it.
+  HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
+  if (SrcSize <= 0 || SrcSize > 16)
+    return false;
+
+  const StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy || STy->isPacked()) return false;
+
+  // A struct containing only a float, double or vector field, possibly with
+  // some zero-length fields as well, must be passed as the field type.
+  // Note this does not apply to long double.
+  // Other single-element structs may be passed this way as well, but
+  // only if the type size matches the element's type size (structs that
+  // violate this can be created with __aligned__).
+  tree tType = isSingleElementStructOrArray(TreeType, true, false);
+  if (tType && int_size_in_bytes(tType)==SrcSize && TYPE_MODE(tType)!=TFmode) {
+    Elts.push_back(ConvertType(tType));
+    return true;
   }
+
+  Elts.clear();
   return false;
 }
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

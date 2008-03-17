@@ -405,7 +405,8 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
   // Note this does not apply to long double.
   // This is required for ABI correctness.  
   tree tType = isSingleElementStructOrArray(TreeType, true, false);
-  if (tType && int_size_in_bytes(tType)==Bytes && TYPE_MODE(tType)!=TFmode)
+  if (tType && int_size_in_bytes(tType)==Bytes && TYPE_MODE(tType)!=TFmode &&
+      (TREE_CODE(tType)!=VECTOR_TYPE || Bytes==16))
     return false;
 
   return true;
@@ -430,14 +431,15 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return false;
 
-  // A struct containing only a float, double or vector field, possibly with
+  // A struct containing only a float, double or Altivec field, possibly with
   // some zero-length fields as well, must be passed as the field type.
-  // Note this does not apply to long double.
+  // Note this does not apply to long double, nor generic vectors.
   // Other single-element structs may be passed this way as well, but
   // only if the type size matches the element's type size (structs that
   // violate this can be created with __aligned__).
   tree tType = isSingleElementStructOrArray(TreeType, true, false);
-  if (tType && int_size_in_bytes(tType)==SrcSize && TYPE_MODE(tType)!=TFmode) {
+  if (tType && int_size_in_bytes(tType)==SrcSize && TYPE_MODE(tType)!=TFmode &&
+      (TREE_CODE(tType)!=VECTOR_TYPE || SrcSize==16)) {
     Elts.push_back(ConvertType(tType));
     return true;
   }

@@ -3486,6 +3486,16 @@ extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*,
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
    llvm_rs6000_should_pass_aggregate_in_mixed_regs((T), (TY), (E))
 
+// Non-altivec vectors bigger than 4 bytes are returned by sret.
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
+  ((!TARGET_64BIT &&                                    \
+    TREE_CODE(X) == VECTOR_TYPE &&                      \
+    TYPE_SIZE(X) &&                                     \
+    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST &&             \
+    TREE_INT_CST_LOW(TYPE_SIZE(X))>32 &&                \
+    TREE_INT_CST_LOW(TYPE_SIZE(X))!=128)                \
+    ? true : false)    
+
 #endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end */

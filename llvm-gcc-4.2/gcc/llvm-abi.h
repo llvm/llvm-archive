@@ -111,7 +111,8 @@ static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
       if (TREE_CODE(Field) == FIELD_DECL) {
         if (ignoreZeroLength) {
-          if (TREE_CODE(DECL_SIZE(Field)) == INTEGER_CST &&
+          if (DECL_SIZE(Field) && 
+              TREE_CODE(DECL_SIZE(Field)) == INTEGER_CST &&
               TREE_INT_CST_LOW(DECL_SIZE(Field)) == 0)
             continue;
         }

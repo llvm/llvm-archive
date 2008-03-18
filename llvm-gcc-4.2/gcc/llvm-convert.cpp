@@ -825,7 +825,14 @@ Function *TreeToLLVM::EmitFunction() {
 }
 
 Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
-  assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
+  tree fndecl;
+  // Some vectors are returned using sret; these should have DestLoc provided.
+  assert(((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0)) ||
+          (TREE_CODE(exp)==CALL_EXPR && 
+           TREE_CODE(TREE_TYPE(exp))==VECTOR_TYPE &&
+           LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(exp),
+             ((fndecl = get_callee_fndecl(exp)) ? DECL_BUILT_IN(fndecl) : 
+                                                false))) ||
           TREE_CODE(exp) == MODIFY_EXPR) &&
          "Didn't pass DestLoc to an aggregate expr, or passed it to scalar!");
   
@@ -2647,8 +2654,26 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
       HandleMultiplyDefinedGCCTemp(lhs);
       return EmitMODIFY_EXPR(exp, DestLoc);
     }
-
-    Value *RHS = Emit(rhs, 0);
+    // Some types (so far, generic vectors on x86-32 and ppc32) can have
+    // GCC SSA temporaries for them, but are passed using sret, which means
+    // Emit will return 0.  Handle this.
+    Value *RHS;
+    tree fndecl;
+    if (TREE_CODE(rhs)==CALL_EXPR && 
+        TREE_CODE(TREE_TYPE(rhs))==VECTOR_TYPE &&
+        LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(rhs), 
+          ((fndecl = get_callee_fndecl(rhs)) ? DECL_BUILT_IN(fndecl) : 
+                                               false))) {
+      bool isVolatile = TREE_THIS_VOLATILE(lhs);
+      unsigned Alignment = expr_align(lhs) / 8;
+      MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(rhs)));
+      Emit(rhs, &NewLoc);
+      LoadInst *LI = Builder.CreateLoad(NewLoc.Ptr, isVolatile, "tmp");
+      LI->setAlignment(Alignment);
+      RHS = LI;
+    } else {
+      RHS = Emit(rhs, 0);
+    }
     RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
     SET_DECL_LLVM(lhs, RHS);
     return RHS;

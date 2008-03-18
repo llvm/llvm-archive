@@ -1532,7 +1532,7 @@ ifdef BUILD_LLVM_INTO_A_DYLIB
 cc1-exported-symbol-list.txt:
 	echo "_main" > $@
 LIBDEPS += cc1-exported-symbol-list.txt
-LINKCC += -dead_strip -exported_symbols_list cc1-exported-symbol-list.txt -L/usr/lib/gcc/$(build)/4.0.1/
+LINKCC += -dead_strip -exported_symbols_list cc1-exported-symbol-list.txt
 endif
 else
 LINKCC := $(CC)

@@ -99,7 +99,7 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
 #endif
 
 /* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
-    this by returning i64 here.  Likewise, (genercic) vectors such as v2i16
+    this by returning i64 here.  Likewise, (generic) vectors such as v2i16
     are returned in EAX.  */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,isBuiltin)\
   ((TARGET_MACHO &&                                     \

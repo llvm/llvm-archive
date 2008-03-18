@@ -244,7 +244,13 @@ public:
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
-               !aggregate_value_p(type, current_function_decl)) {
+               !aggregate_value_p(type, current_function_decl)
+#if defined(TARGET_386) && defined(TARGET_64BIT)
+      // FIXME without this, _Complex long double crashes.  With it, we
+      // just produce incorrect code.
+                && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8
+#endif
+               ) {
       tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&

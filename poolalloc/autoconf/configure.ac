@@ -79,11 +79,18 @@ AC_ARG_ENABLE(boundscheck,
                   AC_DEFINE(BOUNDS_CHECK,[[1]]),
                   )
 
-dnl --enable-llva-kernel: Compile DSA for pool inference
+dnl --enable-kernel: Compile DSA for pool inference
 AC_ARG_ENABLE(kernel,
   AS_HELP_STRING(--enable-kernel,
                  [Use SAFECode for use with Linux Kernel (default is NO)]),
                   AC_DEFINE(LLVA_KERNEL,[[1]]),
+                  )
+
+dnl --enable-safeio: Compile DSA to support safe I/O in SVA
+AC_ARG_ENABLE(safeio,
+  AS_HELP_STRING(--enable-safeio,
+                 [Enable safe I/O for SVA (default is NO)]),
+                  AC_DEFINE(SVA_IO,[[1]]),
                   )
 
 dnl **************************************************************************

@@ -848,6 +848,7 @@ Optional Features:
   --enable-boundschecks   Enable SAFECode bounds checking (default is NO)
   --enable-kernel         Use SAFECode for use with Linux Kernel (default is
                           NO)
+  --enable-safeio         Enable safe I/O for SVA (default is NO)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3660,6 +3661,15 @@ if test "${enable_kernel+set}" = set; then
   enableval="$enable_kernel"
   cat >>confdefs.h <<\_ACEOF
 #define LLVA_KERNEL 1
+_ACEOF
+
+fi;
+
+# Check whether --enable-safeio or --disable-safeio was given.
+if test "${enable_safeio+set}" = set; then
+  enableval="$enable_safeio"
+  cat >>confdefs.h <<\_ACEOF
+#define SVA_IO 1
 _ACEOF
 
 fi;

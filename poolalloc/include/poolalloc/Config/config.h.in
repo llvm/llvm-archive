@@ -475,3 +475,6 @@
 /* Define to 1 if compiling for pool inference */
 #undef LLVA_KERNEL
 
+/* Define to 1 if compiling with safe I/O for SVA */
+#undef SVA_IO
+

@@ -158,11 +158,12 @@ public:
 
     Array       = 1 << 7,   // This node is treated like an array
     External    = 1 << 8,   // This node comes from an external source
+    IONode      = 1 << 9,   // This node comes from an external source
     //#ifndef NDEBUG
-    DEAD        = 1 << 9,   // This node is dead and should not be pointed to
+    DEAD        = 1 << 10,   // This node is dead and should not be pointed to
     //#endif
 
-    Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode
+    Composition = AllocaNode | HeapNode | GlobalNode | IONode | UnknownNode
   };
 
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
@@ -419,10 +420,12 @@ public:
   bool isComplete() const   { return !isIncomplete(); }
   bool isDeadNode() const   { return NodeType & DEAD; }
   bool isExternalNode() const { return NodeType & External; }
+  bool isIONode() const { return IONode & External; }
 
   DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
   DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }
   DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  return this; }
+  DSNode *setIONodeMarker()      { NodeType |= IONode;      return this; }
   DSNode *setUnknownNodeMarker(); // { ++stat_unknown; NodeType |= UnknownNode; return this; }
 
   DSNode *setExternalMarker()   { NodeType |= External;   return this; }

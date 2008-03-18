@@ -79,6 +79,12 @@ AllocList("dsa-alloc-list",
           cl::CommaSeparated, cl::Hidden);
 
 static cl::list<std::string>
+IOAllocList("dsa-ioalloc-list",
+          cl::value_desc("list"),
+          cl::desc("List of functions that allocate memory for I/O"),
+          cl::CommaSeparated, cl::Hidden);
+
+static cl::list<std::string>
 FreeList("dsa-free-list",
           cl::value_desc("list"),
           cl::desc("List of functions that free memory from the heap"),
@@ -1513,7 +1519,20 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       RetNH.getNode()->getMP()->addCallSite(CS);
       return;
     }
-    
+
+#ifdef SVA_IO
+    if (IOAllocList.end() != std::find(IOAllocList.begin(), IOAllocList.end(), F->getName())) {
+      DSNodeHandle RetNH;
+      if (F->getName() == "pseudo_alloc")
+        RetNH = getValueDest(**CS.arg_begin());
+      else
+        RetNH = getValueDest(*CS.getInstruction());
+      RetNH.getNode()->setIONodeMarker()->setModifiedMarker();
+      RetNH.getNode()->getMP()->addCallSite(CS);
+      return;
+    }
+#endif
+
     // Determine if the called function is one of the specified heap
     // free functions
     if (FreeList.end() != std::find(FreeList.begin(), FreeList.end(),
@@ -1803,6 +1822,11 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back(" __get_free_pages");
   AllocList.push_back("pseudo_alloc");
   AllocList.push_back("malloc");
+
+#ifdef SVA_IO
+  IOAllocList.push_back("ioremap");
+  IOAllocList.push_back("ioremap_nocache");
+#endif
 
 #if 0
   FreeList.push_back("kfree");

@@ -23,7 +23,10 @@ extern void foo6 (const char *, ...) __attribute__ ((__sentinel__(5)));
 extern void foo7 (const char *, ...) __attribute__ ((__sentinel__(0)));
 extern void foo8 (const char *, ...) __attribute__ ((__sentinel__("a"))); /* { dg-warning "not an integer constant" "sentinel" } */
 extern void foo9 (const char *, ...) __attribute__ ((__sentinel__(-1))); /* { dg-warning "less than zero" "sentinel" } */
-extern void foo10 (const char *, ...) __attribute__ ((__sentinel__(1,3))); /* { dg-error "wrong number of arguments" "sentinel" } */
+/* APPLE LOCAL begin two arg sentinel 5631180 */
+extern void foo10 (const char *, ...) __attribute__ ((__sentinel__(1,1)));
+extern void foo11 (const char *, ...) __attribute__ ((__sentinel__(1,1,3))); /* { dg-error "wrong number of arguments" "sentinel" } */
+/* APPLE LOCAL end two arg sentinel 5631180 */
 
 extern void bar(void)
 {

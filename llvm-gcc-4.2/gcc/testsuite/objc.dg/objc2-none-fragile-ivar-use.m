@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4954480 */
 /* Check for illegal use of 'ivar' in objc2 abi */
-/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 @interface LKLayerTransaction
 {

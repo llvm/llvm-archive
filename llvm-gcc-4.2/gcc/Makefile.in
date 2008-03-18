@@ -608,6 +608,8 @@ LIBGCC2_CFLAGS = -O2 $(LIBGCC2_INCLUDES) $(GCC_CFLAGS) $(TARGET_LIBGCC2_CFLAGS) 
 		 $(LIBGCC2_DEBUG_CFLAGS) $(GTHREAD_FLAGS) \
 		 -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED \
 		 $(INHIBIT_LIBC_CFLAGS)
+# APPLE LOCAL gcov 5573505
+LIBGCC2_STATIC_CFLAGS = $(TARGET_LIBGCC2_STATIC_CFLAGS)
 
 # Additional options to use when compiling libgcc2.a.
 # Some targets override this to -isystem include
@@ -615,6 +617,8 @@ LIBGCC2_INCLUDES =
 
 # Additional target-dependent options for compiling libgcc2.a.
 TARGET_LIBGCC2_CFLAGS =
+# APPLE LOCAL gcov 5573505
+TARGET_LIBGCC2_STATIC_CFLAGS =
 
 # Options to use when compiling crtbegin/end.
 CRTSTUFF_CFLAGS = -O2 $(GCC_CFLAGS) $(INCLUDES) $(MULTILIB_CFLAGS) -g0 \
@@ -983,6 +987,8 @@ export INCLUDES
 export INSTALL_DATA
 export LIB1ASMSRC
 export LIBGCC2_CFLAGS
+# APPLE LOCAL gcov 5573505
+export LIBGCC2_STATIC_CFLAGS
 export LIPO_FOR_TARGET
 export MACHMODE_H
 export NM_FOR_TARGET
@@ -1677,7 +1683,7 @@ libgcc.mk: config.status Makefile mklibgcc $(LIB2ADD) $(LIB2ADD_ST) specs \
 	D128PBIT='$(D128PBIT)' \
 	D128PBIT_FUNCS='$(D128PBIT_FUNCS)' \
 	APPLE_LOCAL='APPLE LOCAL libcc_kext' \
-	MULTILIBS="`$(GCC_FOR_TARGET) --print-multi-lib` static;@static@fno-pic kext;@Dmalloc=kern_os_malloc@Dfree=kern_os_free@DLIBCC_KEXT@static@fno-pic@fno-exceptions@fno-non-call-exceptions$(KEXT_EXTRA_FLAGS)" \
+	MULTILIBS="`$(GCC_FOR_TARGET) --print-multi-lib` static;@static@fno-pic kext;@Dmalloc=kern_os_malloc@Dfree=kern_os_free@DLIBCC_KEXT@static@fno-pic@fno-exceptions@fno-non-call-exceptions$(KEXT_EXTRA_FLAGS) $(if $(findstring i686,$(target)),kext64;@mkernel@m64@Dmalloc=kern_os_malloc@Dfree=kern_os_free@DLIBCC_KEXT$(KEXT_EXTRA_FLAGS))" \
 	EXTRA_MULTILIB_PARTS='$(EXTRA_MULTILIB_PARTS)' \
 	SHLIB_LINK='$(SHLIB_LINK)' \
 	SHLIB_INSTALL='$(SHLIB_INSTALL)' \

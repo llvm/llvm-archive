@@ -3,7 +3,7 @@
    format strings. */
 
 /* { dg-options "-Wformat  -mmacosx-version-min=10.5" } */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 #include <Cocoa/Cocoa.h>
 
 

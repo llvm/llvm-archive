@@ -1,4 +1,5 @@
-// { dg-do run { xfail xstormy16-*-* *-*-darwin[1-7]* } }
+/* APPLE LOCAL darwin10 */
+// { dg-do run { xfail xstormy16-*-* *-*-darwin[4-7]* } }
 // Copyright (C) 2000, 2002, 2003 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 6 June 2000 <nathan@codesourcery.com>
 

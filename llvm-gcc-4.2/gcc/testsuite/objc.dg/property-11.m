@@ -2,7 +2,7 @@
 /* Test that property need not be declared in @implementation for it to be used. */
 /* APPLE LOCAL radar 4899595 */
 /* { dg-options "-mmacosx-version-min=10.5 -framework Cocoa" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 #include <Foundation/Foundation.h>
 
 @interface Foo : NSObject

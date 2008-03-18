@@ -2,7 +2,7 @@
 /* Test for correct property setter lookup when a similarl method name
    exists in an unrelated class. Test should compile with no error.
 */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 typedef struct {int x, y, w, h;} st1;

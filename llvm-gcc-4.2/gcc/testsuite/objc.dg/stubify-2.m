@@ -2,9 +2,9 @@
 /* All calls must be properly stubified.  */
 /* Testcase extracted from TextEdit:Document.m.  */
 
-/* { dg-do compile { target *-*-darwin* } } */
-/* { dg-skip-if "" { i?86-*-darwin* } } */
-/* { dg-options "-mdynamic-no-pic -fdump-rtl-jump" } */
+/* { dg-do compile { target powerpc*-*-darwin* } } */
+/* APPLE LOCAL axe stubs 5571540 */
+/* { dg-options "-mdynamic-no-pic -fdump-rtl-jump -mmacosx-version-min=10.4" } */
 /* LLVM LOCAL test not applicable */
 /* { dg-require-fdump "" } */
 /* APPLE LOCAL radar 4894756 */

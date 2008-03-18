@@ -44,6 +44,10 @@ Boston, MA 02110-1301, USA.  */
 extern int machopic_symbol_defined_p (rtx);
 /* APPLE LOCAL end dynamic-no-pic */
 
+/* APPLE LOCAL begin axe stubs 5571540 */
+extern int darwin_stubs;
+/* APPLE LOCAL end axe stubs 5571540 */
+
 /* APPLE LOCAL begin mainline 2006-11-01 3334812 */
 /* Don't assume anything about the header files.  */
 #define NO_IMPLICIT_EXTERN_C
@@ -274,6 +278,10 @@ do {					\
 	flag_weak = 0;							\
 	/* No RTTI in kexts.  */					\
 	flag_rtti = 0;							\
+	/* APPLE LOCAL begin 5731065 */					\
+	if (flag_mkernel)						\
+	  flag_no_builtin = 1;						\
+	/* APPLE LOCAL end 5731065 */					\
       }									\
   } while (0)
 
@@ -842,7 +850,8 @@ do {					\
        else if (!strncmp (xname, ".objc_class_name_", 17))		     \
 	 fprintf (FILE, "%s", xname);					     \
        else if (xname[0] != '"' && name_needs_quotes (xname))		     \
-	 fprintf (FILE, "\"%s\"", xname);				     \
+	 /* APPLE LOCAL 5782111 */					     \
+	 asm_fprintf (FILE, "\"%U%s\"", xname);				     \
        else								     \
          asm_fprintf (FILE, "%U%s", xname);				     \
   } while (0)
@@ -1234,15 +1243,24 @@ extern void abort_assembly_and_exit (int status) ATTRIBUTE_NORETURN;
 /* APPLE LOCAL begin zerofill 20020218 --turly  */
 /* This keeps uninitialized data from bloating the data when -fno-common.
    Radar 2863107.  */
-#define ASM_OUTPUT_ZEROFILL(FILE, NAME, SIZE, ALIGNMENT)		    \
-  do {									    \
-    unsigned HOST_WIDE_INT _new_size = SIZE;		    		    \
-    if (_new_size == 0) _new_size = 1;					    \
-    fputs (".zerofill __DATA, __common, ", (FILE));			    \
-    assemble_name ((FILE), (NAME));					    \
-    fprintf ((FILE), ", " HOST_WIDE_INT_PRINT_DEC, _new_size); 		    \
-    fprintf ((FILE), ", " HOST_WIDE_INT_PRINT_DEC "\n",			    \
-	     (HOST_WIDE_INT) (ALIGNMENT));				    \
+#define ASM_OUTPUT_ZEROFILL(FILE, NAME, SECT, SIZE, ALIGNMENT)	\
+  do {								\
+    section *darwin_sect = SECT;				\
+								\
+    unsigned HOST_WIDE_INT _new_size = SIZE;			\
+    if (_new_size == 0) _new_size = 1;				\
+    fputs (".zerofill ", (FILE));				\
+    if (darwin_sect->common.flags & SECTION_NAMED)		\
+      {								\
+	fputs (darwin_sect->named.name, (FILE));		\
+	fputs (", ", (FILE));					\
+      }								\
+    else							\
+      fputs ("__DATA, __common, ", (FILE));			\
+    assemble_name ((FILE), (NAME));				\
+    fprintf ((FILE), ", " HOST_WIDE_INT_PRINT_DEC, _new_size);	\
+    fprintf ((FILE), ", " HOST_WIDE_INT_PRINT_DEC "\n",		\
+	     (HOST_WIDE_INT) (ALIGNMENT));			\
   } while (0)
 /* APPLE LOCAL end zerofill 20020218 --turly  */
 

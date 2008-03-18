@@ -637,8 +637,10 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
 
    We must map them here to avoid huge unwinder tables mostly consisting
    of unused space.  */
-#define DWARF_REG_TO_UNWIND_COLUMN(r) \
+/* APPLE LOCAL begin 3399553 */
+#define DWARF_REG_TO_UNWIND_COLUMN(r)	\
   ((r) > 1200 ? ((r) - 1200 + LAST_PHYSICAL_REGISTER) : (r))
+/* APPLE LOCAL end 3399553 */
 
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define DBX_REGISTER_NUMBER(REGNO) rs6000_dbx_register_number (REGNO)

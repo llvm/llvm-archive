@@ -314,6 +314,10 @@ static tree receiver_is_class_object (tree, int, int);
 /* APPLE LOCAL radar 5040740 */
 static tree lookup_nested_method (tree, tree);
 
+/* APPLE LOCAL begin radar 5607453 */
+static bool objc_is_object_id (tree);
+static bool objc_is_class_id (tree);
+/* APPLE LOCAL end radar 5607453 */
 /* Hash tables to manage the global pool of method prototypes.  */
 
 hash *nst_method_hash_list = 0;
@@ -1264,8 +1268,12 @@ objc_add_property_variable (tree decl)
                   do
                     ltyp = TREE_TYPE (ltyp);
                   while (POINTER_TYPE_P (ltyp));
+		  /* APPLE LOCAL begin radar 5607453 */
                   /* APPLE LOCAL radar 5096644 */
-                  if (TYPE_HAS_OBJC_INFO (ltyp) && TREE_CODE (TYPE_OBJC_INTERFACE (ltyp)) != IDENTIFIER_NODE)
+                  if (TYPE_HAS_OBJC_INFO (ltyp) 
+		      && !objc_is_object_id (ltyp) && !objc_is_class_id (ltyp)
+		      && TREE_CODE (TYPE_OBJC_INTERFACE (ltyp)) != IDENTIFIER_NODE)
+		  /* APPLE LOCAL end radar 5607453 */
                     {
                       tree id_NSCopying = get_identifier ("NSCopying");
                       tree lproto = lookup_protocol (id_NSCopying);
@@ -1274,10 +1282,13 @@ objc_add_property_variable (tree decl)
                       /* APPLE LOCAL begin radar 5096644 */
                       if (lproto && TREE_CODE (lproto) == PROTOCOL_INTERFACE_TYPE
                           && objc_lookup_protocol (lproto , TYPE_OBJC_INTERFACE (ltyp), ltyp, false))
-                        warning (0, "'assign' attribute on property %qs which implements 'NSCopying' "
+                        /* APPLE LOCAL begin radar 5698469 */
+                        warning (0, "%s'assign' attribute on property %qs which implements 'NSCopying' "
                                  "protocol not appropriate with %s",
+                                 !property_assign ? "default " :  "",
                                  IDENTIFIER_POINTER (PROPERTY_NAME (property_decl)),
                                  flag_objc_gc_only ? "-fobjc-gc-only" : "-fobjc-gc");
+                      /* APPLE LOCAL end radar 5698469 */
                       /* APPLE LOCAL end radar 5096644 */
                     }
                 }
@@ -2150,6 +2161,10 @@ objc_build_aggregate_ivar_layout (tree aggr_type, tree field_decl,
   tree max_sk_field_decl = NULL_TREE;
   bool is_union = (aggr_type && TREE_CODE (aggr_type) == UNION_TYPE);
   unsigned int base = 0;
+  /* APPLE LOCAL begin radar 5781140 */
+  if (!field_decl)
+    return;
+  /* APPLE LOCAL end radar 5781140 */
   if (is_union)
     base = base_byte_pos + int_byte_position (field_decl);
  
@@ -2161,10 +2176,17 @@ objc_build_aggregate_ivar_layout (tree aggr_type, tree field_decl,
     /* Unnamed bitfields are ignored. */
     if (!DECL_NAME (field_decl) || DECL_BIT_FIELD_TYPE (field_decl))
       {
+        /* APPLE LOCAL radar 5791701 */
+        tree last_field_decl = field_decl;
 	do
 	  field_decl = TREE_CHAIN (field_decl);
 	while (field_decl && TREE_CODE (field_decl) != FIELD_DECL);
-        continue;
+        /* APPLE LOCAL begin radar 5791701 */
+        if (field_decl)
+          continue;
+        /* last field was a bitfield. Must update the skip info. */
+        field_decl = last_field_decl;
+        /* APPLE LOCAL end radar 5791701 */
       }
 #ifdef OBJCPLUS
     if (TREE_CODE (field_decl) != FIELD_DECL || TREE_STATIC (field_decl))
@@ -3023,7 +3045,11 @@ objc_build_struct (tree class, tree fields, tree super_name)
   tree name = CLASS_NAME (class);
   tree s = start_struct (RECORD_TYPE, name);
   tree super = (super_name ? xref_tag (RECORD_TYPE, super_name) : NULL_TREE);
-  tree t, objc_info = NULL_TREE;
+  /* APPLE LOCAL begin radar 5676962 */
+  tree t;
+  int cv = 0;
+  struct lang_type ** pTypeLang;
+  /* APPLE LOCAL end radar 5676962 */
 
   /* APPLE LOCAL begin radar 5025001 */
   if (flag_objc_abi == 2 && TREE_CODE (class) == CLASS_INTERFACE_TYPE
@@ -3097,43 +3123,49 @@ objc_build_struct (tree class, tree fields, tree super_name)
      Hence, we must squirrel away the ObjC-specific information before calling
      finish_struct(), and then reinstate it afterwards.  */
 
-  /* APPLE LOCAL begin radar 4945770 */
-  for (t = TYPE_NEXT_VARIANT (s); t && TYPE_LANG_SPECIFIC (t) && TYPE_OBJC_INFO (t); 
-       t = TYPE_NEXT_VARIANT (t))
-  /* APPLE LOCAL end radar 4945770 */
+  /* APPLE LOCAL begin radar 5676962 */
+#if 0
+     removed:
+  for (t = TYPE_NEXT_VARIANT (s); t; t = TYPE_NEXT_VARIANT (t))
     objc_info
       = chainon (objc_info,
 		 build_tree_list (NULL_TREE, TYPE_OBJC_INFO (t)));
+#endif
+  /* APPLE LOCAL end radar 5676962 */
 
   /* Point the struct at its related Objective-C class.  */
   INIT_TYPE_OBJC_INFO (s);
   TYPE_OBJC_INTERFACE (s) = class;
 
+  /* APPLE LOCAL begin radar 5676962, 4310884, 4945770 */
+  /* Call to finish_struct has the side-effect of unifying TYPE_LANG_SPECIFIC
+     of all variants to be same as the main variant's. We must preseve objc-c's
+     TYPE_LANG_SPECIFIC objects as they have unique information in them; such as
+     TYPE_OBJC_INFO. So, we save and restore TYPE_LANG_SPECIFIC objects. */
+  for (t = TYPE_MAIN_VARIANT (s); t && TYPE_LANG_SPECIFIC (t) && TYPE_OBJC_INFO (t); 
+       t = TYPE_NEXT_VARIANT (t))
+    ++cv;
+  if (cv > 1) {
+    int i=0;
+    pTypeLang = (struct lang_type **) xmalloc (sizeof (struct lang_type *) * cv);
+    for (t = TYPE_MAIN_VARIANT (s); t && TYPE_LANG_SPECIFIC (t) && TYPE_OBJC_INFO (t);
+	 t = TYPE_NEXT_VARIANT (t))
+      pTypeLang[i++] = TYPE_LANG_SPECIFIC(t);
+
+  }
+  /* APPLE LOCAL end radar 5676962, 4310884, 4945770 */
+
   s = finish_struct (s, fields, NULL_TREE);
 
-  /* APPLE LOCAL radar 4945770 */
-  for (t = TYPE_NEXT_VARIANT (s); t && objc_info;
-       t = TYPE_NEXT_VARIANT (t), objc_info = TREE_CHAIN (objc_info))
-    {
-      TYPE_OBJC_INFO (t) = TREE_VALUE (objc_info);
-      /* Replace the IDENTIFIER_NODE with an actual @interface.  */
-      TYPE_OBJC_INTERFACE (t) = class;
-    }
-
-  /* APPLE LOCAL begin radar 4310884 */
-  /* Above hack in saving and restoring of objc_info has the nasty side-effect of
-     moving the protocol conformance info (e.g., 'NSObject <MyProtocol>') to current
-     type that is being formed. This is because, finish_struct makes all variants'
-     TYPE_LANG_SPECIFIC point to main variant's TYPE_LANG_SPECIFIC. So, we just
-     build and initialize a new TYPE_LANG_SPECIFIC object for the current class
-     being formed. */
-  if (TYPE_MAIN_VARIANT (s) == s && TYPE_NEXT_VARIANT (s))
-    {
-      TYPE_LANG_SPECIFIC (s) = (struct lang_type *)0;
-      INIT_TYPE_OBJC_INFO (s);
-      TYPE_OBJC_INTERFACE (s) = class;
-    }
-  /* APPLE LOCAL end radar 4310884 */
+  /* APPLE LOCAL begin radar 5676962, 4310884, 4945770 */
+  if (cv > 1) {
+    int i=0;
+    for (t = TYPE_MAIN_VARIANT (s); t && TYPE_LANG_SPECIFIC (t) && TYPE_OBJC_INFO (t);
+         t = TYPE_NEXT_VARIANT (t))
+      TYPE_LANG_SPECIFIC(t) = pTypeLang[i++];
+    free (pTypeLang);
+  }
+  /* APPLE LOCAL end radar 5676962, 4310884, 4945770 */
 
   /* Use TYPE_BINFO structures to point at the super class, if any.  */
   objc_xref_basetypes (s, super);
@@ -8387,8 +8419,10 @@ build_next_objc_exception_stuff (void)
   objc_exception_match_decl
     = builtin_function (TAG_EXCEPTIONMATCH, temp_type, 0, NOT_BUILT_IN, NULL, NULL_TREE);
 
-  /* id objc_assign_ivar (id, id, unsigned int); */
-  /* id objc_assign_ivar_Fast (id, id, unsigned int)
+  /* APPLE LOCAL objc gc 5656857 */
+  /* id objc_assign_ivar (id, id, ptrdiff_t); */
+  /* APPLE LOCAL objc gc 5656857 */
+  /* id objc_assign_ivar_Fast (id, id, ptrdiff_t)
        __attribute__ ((hard_coded_address (OFFS_ASSIGNIVAR_FAST))); */
   temp_type
     = build_function_type (objc_object_type,
@@ -8396,7 +8430,8 @@ build_next_objc_exception_stuff (void)
 			   (NULL_TREE, objc_object_type,
 			    tree_cons (NULL_TREE, objc_object_type,
 				       tree_cons (NULL_TREE,
-						  unsigned_type_node,
+						  /* APPLE LOCAL objc gc 5656857 */
+						  ptrdiff_type_node,
 						  OBJC_VOID_AT_END))));
   /* APPLE LOCAL begin radar 4590221 */
   if (OFFS_ASSIGNIVAR_FAST)
@@ -10419,6 +10454,8 @@ ivar_offset_ref (tree class_name, tree field_decl)
   bool global_var;
   tree field_decl_id;
 
+  /* APPLE LOCAL radar 5610134 */
+  gcc_assert (field_decl);
   create_ivar_offset_name (buf, class_name, field_decl);
   field_decl_id = get_identifier (buf);
 
@@ -10486,19 +10523,13 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
 		      ivar);
 
     /* Set name */
-    if (DECL_NAME (field_decl))
-      ivar = tree_cons (NULL_TREE,
-			add_objc_string (DECL_NAME (field_decl),
-					 meth_var_names),
-			ivar);
-    else
-      /* Unnamed bit-field ivar (yuck).  */
-      /* APPLE LOCAL LLVM - begin NUL pointer */
-      ivar = tree_cons (NULL_TREE,
-                        convert (string_type_node,
-                                 build_int_cst (NULL_TREE, 0)),
-                        ivar);
-      /* APPLE LOCAL LLVM - end NUL pointer */
+    /* APPLE LOCAL begin radar 5724385 */
+    /* At this point fields must be named (no unnamed bitfield, that is) */
+    gcc_assert (DECL_NAME (field_decl));
+    ivar = tree_cons (NULL_TREE,
+                      add_objc_string (DECL_NAME (field_decl),
+                                       meth_var_names), ivar);
+    /* APPLE LOCAL end radar 5724385 */
 
     /* Set type */
     encode_field_decl (field_decl,
@@ -10515,7 +10546,8 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
     obstack_free (&util_obstack, util_firstobj);
 
     /* Set alignment */
-    val = DECL_ALIGN_UNIT (field_decl);
+    /* APPLE LOCAL radar 5724385 */
+    val = TYPE_ALIGN_UNIT (TREE_TYPE (field_decl));
     val = exact_log2 (val);
     ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, val), ivar);
 
@@ -10723,7 +10755,16 @@ generate_v2_ivar_lists (void)
   chain = CLASS_IVARS (implementation_template);
   if (chain)
     {
-      size = ivar_list_length (chain);
+      /* APPLE LOCAL begin radar 5724385 */
+      /* Only named data fields are generated. 'size' is this count. */
+      tree field_decl = chain;
+      size = 0;
+      while (field_decl) {
+	if (TREE_CODE (field_decl) == FIELD_DECL && DECL_NAME (field_decl))
+	  size++;
+	field_decl = TREE_CHAIN (field_decl);
+      }
+      /* APPLE LOCAL end radar 5724385 */
       ivar_list_template = build_v2_ivar_list_t_template (objc_v2_ivar_template, 
 							      size);
       initlist = build_v2_ivar_list_initializer (CLASS_NAME (implementation_template),
@@ -13005,7 +13046,22 @@ objc_finish_message_expr (tree receiver, tree sel_name, tree method_params)
       if (class_tree)
       /* APPLE LOCAL begin radar 4547918 */
 	{
+	  /* APPLE LOCAL begin radar 5741070  */
+	  tree interface_record_type = NULL;
 	  rtype = lookup_interface (class_tree);
+
+	  /* Find the record type definition for the interface class.  */
+
+	  if (rtype)
+	    interface_record_type = 
+	      c_return_interface_record_type (OBJC_TYPE_NAME (rtype));
+
+	  /* If the record type is found, mark is as used (since it
+	     is used to dispatch a method call).  */
+
+	  if (interface_record_type != NULL)
+	    used_types_insert (interface_record_type);
+	  /* APPLE LOCAL end radar 5741070  */
 	  forward_class = !rtype;
 	}
       /* APPLE LOCAL end radar 4547918 */
@@ -14223,9 +14279,11 @@ add_method_to_hash_list (hash *hash_list, tree method)
     {
       /* Check types against those; if different, add to a list.  */
       attr loop;
-      int already_there = comp_proto_with_proto (method, hsh->key, 1);
+      /* APPLE LOCAL radar 5370783 */
+      int already_there = comp_proto_with_proto (method, hsh->key, 2);
       for (loop = hsh->list; !already_there && loop; loop = loop->next)
-	already_there |= comp_proto_with_proto (method, loop->value, 1);
+        /* APPLE LOCAL radar 5370783 */
+	already_there |= comp_proto_with_proto (method, loop->value, 2);
       if (!already_there)
 	hash_add_attr (hsh, method);
     }
@@ -14290,7 +14348,8 @@ objc_add_method (tree class, tree method, int is_class, int is_optional)
 	 definition errors).  */
       if ((TREE_CODE (class) == CLASS_INTERFACE_TYPE
 	   || TREE_CODE (class) == CATEGORY_INTERFACE_TYPE)
-	  && !comp_proto_with_proto (method, mth, 1))
+          /* APPLE LOCAL radar 5370783 */
+	  && !comp_proto_with_proto (method, mth, 2))
 	error ("duplicate declaration of method %<%c%s%>",
 		is_class ? '+' : '-',
 		IDENTIFIER_POINTER (METHOD_SEL_NAME (mth)));
@@ -15480,7 +15539,8 @@ objc_process_getter_setter (tree class, tree property, bool getter)
   if (!prop_getter_mth_decl)
     return;
 
-  if (!match_proto_with_proto (prop_getter_mth_decl, prop_mth_decl, 1))
+  /* APPLE LOCAL radar 5370783 */
+  if (!match_proto_with_proto (prop_getter_mth_decl, prop_mth_decl, 2))
     {
       error ("User %s %qs does not match property %qs type", 
 		getter ? "getter" : "setter",
@@ -15722,9 +15782,12 @@ objc_synthesize_new_getter (tree class, tree class_method, tree property)
       /* build call to:
 	 id objc_getProperty (self, _cmd, offsetof (class, ivar), isAtomic) */
       tree cmd;
-      tree field_decl = nested_ivar_lookup (class, PROPERTY_IVAR_NAME (property));
-      tree offset = field_decl ? byte_position (field_decl) : integer_zero_node;
+      /* APPLE LOCAL begin radar 5610134 */
       tree func_params, func;
+      tree field_decl = nested_ivar_lookup (class, PROPERTY_IVAR_NAME (property));
+      tree offset = flag_objc_abi <= 1 ? byte_position (field_decl) 
+				       : ivar_offset_ref (CLASS_NAME (class), field_decl);
+      /* APPLE LOCAL end radar 5610134 */
       gcc_assert (self_decl);
       cmd = TREE_CHAIN (self_decl);
       gcc_assert (cmd);
@@ -15843,9 +15906,12 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
       /* build call to:
 	 objc_setProperty (self, _cmd, offsetof (class, ivar), arg, [true|false], [true|false]) */
       tree cmd, arg;
-      tree field_decl = nested_ivar_lookup (class, PROPERTY_IVAR_NAME (property));
-      tree offset = field_decl ? byte_position (field_decl) : integer_zero_node;
+      /* APPLE LOCAL begin radar 5610134 */
       tree func_params, func;
+      tree field_decl = nested_ivar_lookup (class, PROPERTY_IVAR_NAME (property));
+      tree offset = flag_objc_abi <= 1 ? byte_position (field_decl)
+				       : ivar_offset_ref (CLASS_NAME (class), field_decl);
+      /* APPLE LOCAL end radar 5610134 */
       tree shouldCopy = (PROPERTY_COPY (property) == boolean_true_node) 
 		          ? boolean_true_node : boolean_false_node; 
       tree isAtomic = IS_ATOMIC (property) ? boolean_true_node : boolean_false_node;
@@ -15909,11 +15975,8 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
       else
     	{
           /* Common case */
-          int save_flag_objc_gc = flag_objc_gc;
-          /* For 'weak' property, must generate objc_assign_weak regardless of -fobjc-gc */
-          flag_objc_gc = 1;
+	  /* APPLE LOCAL 5675908 */
           stmt =  build_modify_expr (lhs, NOP_EXPR, rhs);
-          flag_objc_gc = save_flag_objc_gc;
        }
     }
   /* APPLE LOCAL end radar 4947014 - objc atomic property */
@@ -17307,7 +17370,8 @@ objc_types_share_size_and_alignment (tree type1, tree type2)
    for purposes of method overloading.  Ordinarily, the type signatures
    should match up exactly, unless STRICT is zero, in which case we
    shall allow differences in which the size and alignment of a type
-   is the same.  */
+   // APPLE LOCAL radar 5370783
+   is the same.  When STRICT is 1, we allow for valid object type comparisons. */
 
 static int
 comp_proto_with_proto (tree proto1, tree proto2, int strict)
@@ -17330,10 +17394,15 @@ match_proto_with_proto (tree proto1, tree proto2, int strict)
   /* Compare return types.  */
   type1 = TREE_VALUE (TREE_TYPE (proto1));
   type2 = TREE_VALUE (TREE_TYPE (proto2));
-
-  if (!objc_types_are_equivalent (type1, type2)
-      && (strict || !objc_types_share_size_and_alignment (type1, type2)))
-    return 0;
+  /* APPLE LOCAL begin radar 5370783 */
+  if (!objc_types_are_equivalent (type1, type2)) {
+    if (strict == 2)
+      return 0;
+    if (!objc_types_share_size_and_alignment (type1, type2))
+      return 0;
+    if (strict == 1 && !objc_compare_types(type1, type2, -2, 0))
+      return 0;
+  }
 
   /* Compare argument types.  */
   for (type1 = get_arg_type_list (proto1, METHOD_REF, 0),
@@ -17341,12 +17410,17 @@ match_proto_with_proto (tree proto1, tree proto2, int strict)
        type1 && type2;
        type1 = TREE_CHAIN (type1), type2 = TREE_CHAIN (type2))
     {
-      if (!objc_types_are_equivalent (TREE_VALUE (type1), TREE_VALUE (type2))
-	  && (strict
-	      || !objc_types_share_size_and_alignment (TREE_VALUE (type1),
-						       TREE_VALUE (type2))))
-	return 0;
+      if (!objc_types_are_equivalent (TREE_VALUE (type1), TREE_VALUE (type2))) {
+        if (strict == 2)
+          return 0;
+        if (!objc_types_share_size_and_alignment (TREE_VALUE (type1), TREE_VALUE (type2)))
+          return 0;
+        /* Note, order of type2 and type1 in argument call is intentional. */
+        if (strict == 1 && !objc_compare_types(TREE_VALUE (type2), TREE_VALUE (type1), -2, 0))
+          return 0;
+      }
     }
+  /* APPLE LOCAL end radar 5370783 */
 
   return (!type1 && !type2);
 }
@@ -17511,12 +17585,13 @@ really_start_method (tree method,
 
   if (implementation_template != objc_implementation_context)
     {
+      /* APPLE LOCAL begin radar 5370783 */
       tree proto
 	= lookup_method_static (implementation_template,
 				METHOD_SEL_NAME (method),
-				((TREE_CODE (method) == CLASS_METHOD_DECL)
-				 /* APPLE LOCAL objc new property */
-				 | OBJC_LOOKUP_NO_SUPER), false, false);
+				(TREE_CODE (method) == CLASS_METHOD_DECL), 
+				false, false);
+      /* APPLE LOCAL end radar 5370783 */
 
       if (proto)
 	{
@@ -18393,7 +18468,8 @@ handle_impent (struct imp_entry *impent)
       sprintf (string, "%sobjc_class_name_%s",
                (flag_next_runtime ? "." : "__"), class_name);
     }
-  else if (TREE_CODE (impent->imp_context) == CATEGORY_IMPLEMENTATION_TYPE)
+  /* APPLE LOCAL radar 5774213 */
+  else if (flag_objc_abi <= 1 && TREE_CODE (impent->imp_context) == CATEGORY_IMPLEMENTATION_TYPE)
     {
       const char *const class_name =
 	IDENTIFIER_POINTER (CLASS_NAME (impent->imp_context));
@@ -19171,7 +19247,15 @@ lookup_nested_method (tree interface_type, tree method_name)
   while (inter)
     {
       tree x;
-      if ((x = lookup_method (CLASS_NST_METHODS (inter), method_name)))
+      /* APPLE LOCAL begin radar 5777307 */
+      /* When property is declared as @optional in a protocol declaration,
+         must also seach for the setter/getter method declarations in
+         the protocols because they have no declaration in the 'inter'
+         class. */
+      if ((x = lookup_method (CLASS_NST_METHODS (inter), method_name)) ||
+          (x = lookup_method_in_protocol_list 
+                 (CLASS_PROTOCOL_LIST (inter), method_name, 0)))
+      /* APPLE LOCAL end radar 5777307 */
         return x;
       /* Failing that, climb up the inheritance hierarchy.  */
       inter = lookup_interface (CLASS_SUPER_NAME (inter));

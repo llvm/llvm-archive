@@ -1,5 +1,5 @@
 /* APPLE LOCAL file 4695109 */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @protocol Proto1

@@ -13,7 +13,6 @@
 5405050: obj-c++.dg/gnu-runtime-3.mm (test for excess errors)
 #
 # the following fail with -m64 only 
-5272224: obj-c++.dg/const-str-3.mm execution test
 #
 # the following fail for x86
 #

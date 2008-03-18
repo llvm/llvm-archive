@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test that property need not be declared in @implementation for it to be used. */
 /* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -framework Cocoa" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 #include <Foundation/Foundation.h>
 
 @interface Foo : NSObject

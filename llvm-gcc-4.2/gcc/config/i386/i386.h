@@ -196,11 +196,12 @@ extern const int x86_sse_typeless_stores, x86_sse_load0_by_pxor;
 extern const int x86_use_ffreep;
 extern const int x86_inter_unit_moves, x86_schedule;
 extern const int x86_use_bt;
-extern const int x86_cmpxchg, x86_cmpxchg8b, x86_cmpxchg16b, x86_xadd;
+/* APPLE LOCAL override options */
+extern int x86_cmpxchg, x86_cmpxchg8b, x86_cmpxchg16b, x86_xadd;
 extern const int x86_use_incdec;
 extern const int x86_pad_returns;
-/* APPLE LOCAL mainline bswap */
-extern const int x86_bswap;
+/* APPLE LOCAL mainline bswap/local override options */
+extern int x86_bswap;
 extern const int x86_partial_flag_reg_stall;
 extern int x86_prefetch_sse;
 
@@ -469,6 +470,14 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
       if (TARGET_SSSE3)						\
 	builtin_define ("__SSSE3__");				\
       /* APPLE LOCAL end mainline */				\
+      /* APPLE LOCAL begin 5612787 mainline sse4 */			\
+      if (TARGET_SSE4_1)					\
+	builtin_define ("__SSE4_1__");				\
+      if (TARGET_SSE4_2)					\
+	builtin_define ("__SSE4_2__");				\
+      if (TARGET_SSE4A)						\
+ 	builtin_define ("__SSE4A__");		                \
+      /* APPLE LOCAL end 5612787 mainline sse4 */			\
       if (TARGET_SSE_MATH && TARGET_SSE)			\
 	builtin_define ("__SSE_MATH__");			\
       if (TARGET_SSE_MATH && TARGET_SSE2)			\
@@ -707,9 +716,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define BIGGEST_FIELD_ALIGNMENT 32
 #endif
 #else
-/* APPLE LOCAL begin mainline 2006-10-31 PR 23067, radar 4869885 */
 #define ADJUST_FIELD_ALIGN(FIELD, COMPUTED) \
-/* APPLE LOCAL end mainline 2006-10-31 PR 23067, radar 4869885 */ \
    x86_field_alignment (FIELD, COMPUTED)
 #endif
 
@@ -1167,6 +1174,8 @@ enum reg_class
   GENERAL_REGS,			/* %eax %ebx %ecx %edx %esi %edi %ebp %esp %r8 - %r15*/
   FP_TOP_REG, FP_SECOND_REG,	/* %st(0) %st(1) */
   FLOAT_REGS,
+  /* APPLE LOCAL 5612787 mainline sse4 */
+  SSE_FIRST_REG,
   SSE_REGS,
   MMX_REGS,
   FP_TOP_SSE_REGS,
@@ -1213,6 +1222,8 @@ enum reg_class
    "GENERAL_REGS",			\
    "FP_TOP_REG", "FP_SECOND_REG",	\
    "FLOAT_REGS",			\
+    /* APPLE LOCAL 5612787 mainline sse4 */	\
+   "SSE_FIRST_REG",			\
    "SSE_REGS",				\
    "MMX_REGS",				\
    "FP_TOP_SSE_REGS",			\
@@ -1240,6 +1251,8 @@ enum reg_class
   { 0x1100ff,  0x1fe0 },		/* GENERAL_REGS */		\
      { 0x100,     0x0 }, { 0x0200, 0x0 },/* FP_TOP_REG, FP_SECOND_REG */\
     { 0xff00,     0x0 },		/* FLOAT_REGS */		\
+/* APPLE LOCAL 5612787 mainline sse4 */						\
+  { 0x200000,     0x0 },		/* SSE_FIRST_REG */		\
 { 0x1fe00000,0x1fe000 },		/* SSE_REGS */			\
 { 0xe0000000,    0x1f },		/* MMX_REGS */			\
 { 0x1fe00100,0x1fe000 },		/* FP_TOP_SSE_REG */		\
@@ -3700,8 +3713,71 @@ enum ix86_builtins
   IX86_BUILTIN_PABSB128,
   IX86_BUILTIN_PABSW128,
   IX86_BUILTIN_PABSD128,
-  /* APPLE LOCAL end mni */
+  /* APPLE LOCAL begin 5612787 mainline sse4 */
+  /* AMDFAM10 - SSE4A New Instructions.  */
+  IX86_BUILTIN_MOVNTSD,
+  IX86_BUILTIN_MOVNTSS,
+  IX86_BUILTIN_EXTRQI,
+  IX86_BUILTIN_EXTRQ,
+  IX86_BUILTIN_INSERTQI,
+  IX86_BUILTIN_INSERTQ,
 
+  /* SSE4.1.  */
+  IX86_BUILTIN_BLENDPD,
+  IX86_BUILTIN_BLENDPS,
+  IX86_BUILTIN_BLENDVPD,
+  IX86_BUILTIN_BLENDVPS,
+  IX86_BUILTIN_PBLENDVB128,
+  IX86_BUILTIN_PBLENDW128,
+
+  IX86_BUILTIN_DPPD,
+  IX86_BUILTIN_DPPS,
+
+  IX86_BUILTIN_INSERTPS128,
+
+  IX86_BUILTIN_MOVNTDQA,
+  IX86_BUILTIN_MPSADBW128,
+  IX86_BUILTIN_PACKUSDW128,
+  IX86_BUILTIN_PCMPEQQ,
+  IX86_BUILTIN_PHMINPOSUW128,
+
+  IX86_BUILTIN_PMAXSB128,
+  IX86_BUILTIN_PMAXSD128,
+  IX86_BUILTIN_PMAXUD128,
+  IX86_BUILTIN_PMAXUW128,
+
+  IX86_BUILTIN_PMINSB128,
+  IX86_BUILTIN_PMINSD128,
+  IX86_BUILTIN_PMINUD128,
+  IX86_BUILTIN_PMINUW128,
+
+  IX86_BUILTIN_PMOVSXBW128,
+  IX86_BUILTIN_PMOVSXBD128,
+  IX86_BUILTIN_PMOVSXBQ128,
+  IX86_BUILTIN_PMOVSXWD128,
+  IX86_BUILTIN_PMOVSXWQ128,
+  IX86_BUILTIN_PMOVSXDQ128,
+
+  IX86_BUILTIN_PMOVZXBW128,
+  IX86_BUILTIN_PMOVZXBD128,
+  IX86_BUILTIN_PMOVZXBQ128,
+  IX86_BUILTIN_PMOVZXWD128,
+  IX86_BUILTIN_PMOVZXWQ128,
+  IX86_BUILTIN_PMOVZXDQ128,
+
+  IX86_BUILTIN_PMULDQ128,
+  IX86_BUILTIN_PMULLD128,
+
+  IX86_BUILTIN_ROUNDPD,
+  IX86_BUILTIN_ROUNDPS,
+  IX86_BUILTIN_ROUNDSD,
+  IX86_BUILTIN_ROUNDSS,
+
+  IX86_BUILTIN_PTESTZ,
+  IX86_BUILTIN_PTESTC,
+  IX86_BUILTIN_PTESTNZC,
+  /* APPLE LOCAL end 5612787 mainline sse4 */
+  /* APPLE LOCAL end mainline */
   IX86_BUILTIN_VEC_INIT_V2SI,
   IX86_BUILTIN_VEC_INIT_V4HI,
   IX86_BUILTIN_VEC_INIT_V8QI,
@@ -3710,11 +3786,52 @@ enum ix86_builtins
   IX86_BUILTIN_VEC_EXT_V4SF,
   IX86_BUILTIN_VEC_EXT_V4SI,
   IX86_BUILTIN_VEC_EXT_V8HI,
-  IX86_BUILTIN_VEC_EXT_V16QI,
+  /* APPLE LOCAL begin 5612787 mainline sse4 */
+  /* deletion */
+  /* APPLE LOCAL end 5612787 mainline sse4 */
   IX86_BUILTIN_VEC_EXT_V2SI,
   IX86_BUILTIN_VEC_EXT_V4HI,
+  /* APPLE LOCAL begin 5612787 mainline sse4 */
+  IX86_BUILTIN_VEC_EXT_V16QI,
+  IX86_BUILTIN_VEC_SET_V2DI,
+  IX86_BUILTIN_VEC_SET_V4SF,
+  IX86_BUILTIN_VEC_SET_V4SI,
+  /* APPLE LOCAL end 5612787 mainline sse4 */
   IX86_BUILTIN_VEC_SET_V8HI,
   IX86_BUILTIN_VEC_SET_V4HI,
+  /* APPLE LOCAL begin 5612787 mainline sse4 */
+  IX86_BUILTIN_VEC_SET_V16QI,
+
+  IX86_BUILTIN_VEC_PACK_SFIX,
+
+  /* SSE4.2.  */
+  IX86_BUILTIN_CRC32QI,
+  IX86_BUILTIN_CRC32HI,
+  IX86_BUILTIN_CRC32SI,
+  IX86_BUILTIN_CRC32DI,
+
+  IX86_BUILTIN_PCMPESTRI128,
+  IX86_BUILTIN_PCMPESTRM128,
+  IX86_BUILTIN_PCMPESTRA128,
+  IX86_BUILTIN_PCMPESTRC128,
+  IX86_BUILTIN_PCMPESTRO128,
+  IX86_BUILTIN_PCMPESTRS128,
+  IX86_BUILTIN_PCMPESTRZ128,
+  IX86_BUILTIN_PCMPISTRI128,
+  IX86_BUILTIN_PCMPISTRM128,
+  IX86_BUILTIN_PCMPISTRA128,
+  IX86_BUILTIN_PCMPISTRC128,
+  IX86_BUILTIN_PCMPISTRO128,
+  IX86_BUILTIN_PCMPISTRS128,
+  IX86_BUILTIN_PCMPISTRZ128,
+
+  IX86_BUILTIN_PCMPGTQ,
+
+  /* TFmode support builtins.  */
+  IX86_BUILTIN_INFQ,
+  IX86_BUILTIN_FABSQ,
+  IX86_BUILTIN_COPYSIGNQ,
+  /* APPLE LOCAL end 5612787 mainline sse4 */
 
   IX86_BUILTIN_MAX
 };

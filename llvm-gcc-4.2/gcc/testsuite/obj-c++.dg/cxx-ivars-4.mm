@@ -3,7 +3,7 @@
 // and if they perform their desired function.
 // This test checks that -fobjc-call-cxx-cdtors is the default with -m64. 
 // This test must compile with no diagnostics.
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 
 

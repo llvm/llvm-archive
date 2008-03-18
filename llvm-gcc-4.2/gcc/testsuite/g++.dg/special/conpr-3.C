@@ -1,6 +1,7 @@
 /* { dg-do run } */
 /* { dg-additional-sources "conpr-3a.cc conpr-3b.cc" } */
-
+/* APPLE LOCAL 3223598 */
+/* { dg-skip-if "No init priority" { *-*-darwin* } { "*" } { "" } } */
 #include <stdlib.h>
 
 class foo_t {

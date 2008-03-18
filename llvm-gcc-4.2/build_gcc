@@ -110,7 +110,10 @@ fi
 MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 
 # This is the libstdc++ version to use.
-LIBSTDCXX_VERSION=4.0.0
+LIBSTDCXX_VERSION=4.2.1
+if [ ! -d "$DEST_ROOT/include/c++/$LIBSTDCXX_VERSION" ]; then
+  LIBSTDCXX_VERSION=4.0.0
+fi
 
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
@@ -272,6 +275,12 @@ for t in $CROSS_TARGETS ; do
   mv $D/static/libgcc.a $D/libgcc_static.a || exit 1
   mv $D/kext/libgcc.a $D/libcc_kext.a || exit 1
   rm -r $D/static $D/kext || exit 1
+  # glue together kext64 stuff
+  if [ -e $D/kext64/libgcc.a ]; then
+    libtool -static $D/{kext64/libgcc.a,libcc_kext.a} -o $D/libcc_kext1.a 2>&1 | grep -v 'has no symbols'
+    mv $D/libcc_kext1.a $D/libcc_kext.a
+    rm -rf $D/kext64
+  fi
 done
 
 # Build the cross-hosted compilers.

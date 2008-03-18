@@ -1,15 +1,24 @@
+/* APPLE LOCAL file 5612787 sse4 */
 /* Helper file for i386 platform.  Runtime check for MMX/SSE/SSE2 support.
    Used by 20020523-2.c and i386-sse-6.c, and possibly others.  */
 /* Plagarized from 20020523-2.c.  */
 
 /* %ecx */
 #define bit_SSE3 (1 << 0)
+#define bit_SSSE3 (1 << 9)
+#define bit_SSE4_1 (1 << 19)
+#define bit_SSE4_2 (1 << 20)
+#define bit_POPCNT (1 << 23)
 
 /* %edx */
 #define bit_CMOV (1 << 15)
 #define bit_MMX (1 << 23)
 #define bit_SSE (1 << 25)
 #define bit_SSE2 (1 << 26)
+
+/* Extended Features */
+/* %ecx */
+#define bit_SSE4a (1 << 6)
 
 #ifndef NOINLINE
 #define NOINLINE __attribute__ ((noinline))
@@ -59,8 +68,43 @@ i386_get_cpuid (unsigned int *ecx, unsigned int *edx)
   return 1;
 }
 
+static inline unsigned int
+i386_get_extended_cpuid (unsigned int *ecx, unsigned int *edx)
+{
+  int fl1;
+  if (!(i386_get_cpuid (ecx, edx)))
+    return 0;
+
+  /* Invoke CPUID(0x80000000) to get the highest supported extended function
+     number */
+#ifdef __x86_64__
+  __asm__ ("cpuid"
+	   : "=a" (fl1) : "0" (0x80000000) : "edx", "ecx", "ebx");
+#else
+  __asm__ ("pushl %%ebx; cpuid; popl %%ebx"
+	   : "=a" (fl1) : "0" (0x80000000) : "edx", "ecx");
+#endif
+  /* Check if highest supported extended function used below are supported */
+  if (fl1 < 0x80000001)
+    return 0;  
+
+  /* Invoke CPUID(0x80000001), return %ecx and %edx; caller can examine bits to
+     determine what's supported.  */
+#ifdef __x86_64__
+  __asm__ ("cpuid"
+	   : "=c" (*ecx), "=d" (*edx), "=a" (fl1) : "2" (0x80000001) : "ebx");
+#else
+  __asm__ ("pushl %%ebx; cpuid; popl %%ebx"
+	   : "=c" (*ecx), "=d" (*edx), "=a" (fl1) : "2" (0x80000001));
+#endif
+  return 1;
+}
+
+
 unsigned int i386_cpuid_ecx (void) NOINLINE;
 unsigned int i386_cpuid_edx (void) NOINLINE;
+unsigned int i386_extended_cpuid_ecx (void) NOINLINE;
+unsigned int i386_extended_cpuid_edx (void) NOINLINE;
 
 unsigned int NOINLINE
 i386_cpuid_ecx (void)
@@ -77,6 +121,26 @@ i386_cpuid_edx (void)
 {
   unsigned int ecx, edx;
   if (i386_get_cpuid (&ecx, &edx))
+    return edx;
+  else
+    return 0;
+}
+
+unsigned int NOINLINE
+i386_extended_cpuid_ecx (void)
+{
+  unsigned int ecx, edx;
+  if (i386_get_extended_cpuid (&ecx, &edx))
+    return ecx;
+  else
+    return 0;
+}
+
+unsigned int NOINLINE
+i386_extended_cpuid_edx (void)
+{
+  unsigned int ecx, edx;
+  if (i386_get_extended_cpuid (&ecx, &edx))
     return edx;
   else
     return 0;

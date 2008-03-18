@@ -126,6 +126,48 @@ proc check_no_messages_and_pattern {prop pattern args} {
     return $value
 }
 
+# APPLE LOCAL begin 5612787 sse4
+# Implement an effective-target check for property PROP by invoking
+# the compiler and seeing if it prints any messages.  Assume that the
+# property holds if the compiler doesn't print anything.  The other
+# arguments are as for get_compiler_messages, starting with TYPE.
+proc check_no_compiler_messages {prop args} {
+    global et_cache
+
+    set target [current_target_name]
+    if {![info exists et_cache($prop,target)]
+	|| $et_cache($prop,target) != $target} {
+	verbose "check_no_compiler_messages $prop: compiling source for $target" 2
+	set et_cache($prop,target) $target
+	set et_cache($prop,value) \
+	    [string match "" [eval get_compiler_messages $prop 0 $args]]
+    }
+    set value $et_cache($prop,value)
+    verbose "check_no_compiler_messages $prop: returning $value for $target" 2
+    return $value
+}
+
+# Similar to check_no_compiler_messages, but also verify that the regular
+# expression PATTERN matches the compiler's output.
+proc check_no_messages_and_pattern {prop pattern args} {
+    global et_cache
+
+    set target [current_target_name]
+    if {![info exists et_cache($prop,target)]
+	|| $et_cache($prop,target) != $target} {
+	verbose "check_no_messages_and_pattern $prop: compiling source for $target" 2
+	set et_cache($prop,target) $target
+	set results [eval get_compiler_messages $prop 1 $args]
+	set et_cache($prop,value) \
+	    [expr [string match "" [lindex $results 0]] \
+		 && [regexp $pattern [lindex $results 1]]]
+    }
+    set value $et_cache($prop,value)
+    verbose "check_no_messages_and_pattern $prop: returning $value for $target" 2
+    return $value
+}
+# APPLE LOCAL end 5612787 sse4
+
 ###############################
 # proc check_weak_available { }
 ###############################
@@ -1747,6 +1789,29 @@ proc check_effective_target_vect_no_align { } {
     return $et_vect_no_align_saved
 }
 
+# APPLE LOCAL begin mainline 4.2 5569774
+# Return 1 if arrays are naturally aligned to the vector
+# alignment boundary, 0 otherwise.
+#
+# This won't change for different subtargets so cache the result.
+
+proc check_effective_target_vect_aligned_arrays { } {
+    global et_vect_aligned_arrays
+
+    if [info exists et_vect_aligned_arrays_saved] {
+	verbose "check_effective_target_vect_aligned_arrays: using cached result" 2
+    } else {
+	set et_vect_aligned_arrays_saved 0
+	if { ([istarget x86_64-*-*]
+	      || [istarget i?86-*-*]) && [is-effective-target lp64] } {
+	    set et_vect_aligned_arrays_saved 1
+	}
+    }
+    verbose "check_effective_target_vect_aligned_arrays: returning $et_vect_aligned_arrays_saved" 2
+    return $et_vect_aligned_arrays_saved
+}
+# APPLE LOCAL end mainline 4.2 5569774
+
 # Return 1 if the target supports vector conditional operations, 0 otherwise.
 
 proc check_effective_target_vect_condition { } {
@@ -1899,6 +1964,26 @@ proc check_effective_target_sync_char_short { } {
     verbose "check_effective_target_sync_char_short: returning $et_sync_char_short_saved" 2
     return $et_sync_char_short_saved
 }
+
+# APPLE LOCAL begin 5660282
+# Return 1 if the target supports the -fobjc-gc option.
+
+proc check_effective_target_objc_gc { } {
+    global et_objc_gc_saved
+
+    if [info exists et_objc_gc_saved] {
+	verbose "check_effective_target_objc_gc: using cached result" 2
+    } else {
+	set et_objc_gc_saved 0
+	if { [istarget powerpc*-*-darwin*]
+	     || [istarget i?86*-*-darwin*] } {
+	    set et_objc_gc_saved 1
+	}
+    }
+    verbose "check_effective_target_objc_gc: returning $et_objc_gc_saved" 2
+    return $et_objc_gc_saved
+}
+# APPLE LOCAL end 5660282
 
 # Return 1 if the target matches the effective target 'arg', 0 otherwise.
 # This can be used with any check_* proc that takes no argument and

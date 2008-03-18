@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4548636, 5556192 */
 /* Check for a variety of rules for objc's class attributes. */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile } */
 
 #include <objc/objc.h>

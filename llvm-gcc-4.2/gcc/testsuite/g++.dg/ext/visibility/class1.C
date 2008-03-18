@@ -2,11 +2,13 @@
 // Init should not be hidden, so calling it should use the PLT.
 
 // { dg-options "-fpic" }
-// { dg-do compile { target i?86-*-* x86_64-*-* *-*-darwin* } }
-// APPLE LOCAL mainline candidate
-// { dg-skip-if "" { { i?86-*-darwin* x86_64-*-darwin* } && lp64 } { "*" } { "" } }
+// APPLE LOCAL axe stubs 5571540
+// { dg-do compile { target i?86-*-* x86_64-*-* } }
+// APPLE LOCAL axe stubs 5571540
+// { dg-skip-if "" { *-*-darwin* } { "*" } { "" } }
 // { dg-require-visibility "" }
-// { dg-final { scan-assembler "InitEv@PLT|indirect_symbol.*InitEv" } }
+// APPLE LOCAL axe stubs 5571540
+// { dg-final { scan-assembler "InitEv@PLT" } }
 
 #pragma GCC visibility push(hidden)
 struct __attribute__ ((visibility ("default"))) nsINIParser

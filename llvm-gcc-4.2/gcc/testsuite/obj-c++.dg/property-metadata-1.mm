@@ -3,7 +3,7 @@
    declared in @protocol, as well as those declared in the @interface. */
 /* { dg-do compile { target *-*-darwin* } } */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 @protocol GCObject
 @property(readonly) unsigned long int instanceSize;

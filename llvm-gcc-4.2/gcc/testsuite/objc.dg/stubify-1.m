@@ -2,7 +2,8 @@
    _objc_msgSend<end-of-line>" without the $stub suffix.  */
 
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-Os -mdynamic-no-pic" } */
+/* APPLE LOCAL axe stubs 5571540 */
+/* { dg-options "-Os -mdynamic-no-pic -mmacosx-version-min=10.4" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* APPLE LOCAL radar 5297325 */
 /* { dg-require-effective-target ilp32 } */
 

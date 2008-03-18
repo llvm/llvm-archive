@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test that we call objc_assign_weak and objc_read_weak */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -fobjc-gc" } */
+/* { dg-require-effective-target objc_gc } */
 
 @interface INTF
 {

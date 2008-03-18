@@ -1929,7 +1929,7 @@ assemble_variable (tree decl, int top_level ATTRIBUTE_UNUSED,
       && ! DECL_WEAK (decl)
       && (DECL_INITIAL (decl) == 0 || DECL_INITIAL (decl) == error_mark_node))
     {
-      ASM_OUTPUT_ZEROFILL (asm_out_file, name,
+      ASM_OUTPUT_ZEROFILL (asm_out_file, name, sect,
 			   tree_low_cst (DECL_SIZE_UNIT (decl), 1),
 			   floor_log2 (DECL_ALIGN (decl) / BITS_PER_UNIT));
 

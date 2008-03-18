@@ -1,5 +1,6 @@
 /* { dg-do compile } */
-/* { dg-options "-g" } */
+/* APPLE LOCAL 4872028 */
+/* { dg-options "-g -gdwarf-2" } */
 /* { dg-skip-if "" { { hppa*-*-hpux* *-*-solaris2.[56]* } && { ! hppa*64*-*-* } } { "*" } { "" } } */
 
 /* Make sure we didn't eliminate casted types because we thought they were
@@ -44,5 +45,7 @@ int bar5 (void)
 /* { dg-final { scan-assembler "foo" } } */
 /* { dg-final { scan-assembler "boo" } } */
 /* { dg-final { scan-assembler "cue" } } */
-/* { dg-final { scan-assembler "(string|ascii?)z?\t\"class2(\"|\\\\000)" } } */
-/* { dg-final { scan-assembler "(string|ascii?)z?\t\"printer(\"|\\\\000)" } } */
+/* APPLE LOCAL 4872028 */
+/* { dg-final { scan-assembler "(string|ascii?)z?(\t| )\"class2(\"|\\\\00?0?)" } } */
+/* APPLE LOCAL 4872028 */
+/* { dg-final { scan-assembler "(string|ascii?)z?(\t| )\"printer(\"|\\\\00?0?)" } } */

@@ -19,7 +19,7 @@
 
 - (void) doSomething {
     _myMaster = _isTickledPink; /* { dg-warning "ivar \'_myMaster\' is being directly accessed" } */
-			 	/* { dg-warning "ivar \'_isTickledPink\' is being directly accessed" "" { target *-*-* } 21 } */
+			 	/* { dg-warning "ivar \'_isTickledPink\' is being directly accessed" "" { target *-*-* } 22 } */
 }
 
 @end
@@ -29,7 +29,7 @@ MyObject * foo ()
 	MyObject* p;
         p.isTickledPink = p.myMaster;	// ok
 	p->_isTickledPink = p->_myMaster; /* { dg-warning "ivar \'_myMaster\' is being directly accessed" } */
-					  /* { dg-warning "ivar \'_isTickledPink\' is being directly accessed" "" { target *-*-* } 31 } */
+					  /* { dg-warning "ivar \'_isTickledPink\' is being directly accessed" "" { target *-*-* } 32 } */
 	return p->_isTickledPink;	/* { dg-warning "ivar \'_isTickledPink\' is being directly accessed" } */	
 }
 

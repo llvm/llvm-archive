@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5025001 */
 /* Test that gcc apppends a char :0; to each class with ivars which has a bitfield as its last. */
-/* { dg-options "-mmacosx-version-min=10.5 -m64 -fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/Object.h>

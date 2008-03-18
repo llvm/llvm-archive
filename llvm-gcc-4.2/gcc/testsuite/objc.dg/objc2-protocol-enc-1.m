@@ -2,7 +2,7 @@
 /* Test for encoding of type strings for instance variables and 
    properties of type id <P1, ..., Pn> */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @protocol X, Y, Z;

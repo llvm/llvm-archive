@@ -2,7 +2,7 @@
 /* @defs is allowed with -fobjc-atdefs option. */
 /* Compile with no error or warning. */
 /* { dg-options "-mmacosx-version-min=10.5 -m64 -fobjc-atdefs" } */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 #include <Foundation/Foundation.h>
 
 extern void abort(void);

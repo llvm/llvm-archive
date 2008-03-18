@@ -2,7 +2,7 @@
 /* Test that use of property name as 'getter' attribute of a 'readonly' property
    does not confuse gcc into issuing bogus error. */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 
 @protocol Test

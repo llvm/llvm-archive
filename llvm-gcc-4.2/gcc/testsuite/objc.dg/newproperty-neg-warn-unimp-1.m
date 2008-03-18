@@ -13,7 +13,7 @@
 @implementation Subclass
 
 @end /* { dg-warning "property 'ivar' requires method '-ivar' to be defined" } */
-     /* { dg-warning "property 'ivar' requires the method 'setIvar:' to be defined" "" { target *-*-* } 15 } */
+     /* { dg-warning "property 'ivar' requires the method 'setIvar:' to be defined" "" { target *-*-* } 16 } */
 
 int main (void) {
   return 0;

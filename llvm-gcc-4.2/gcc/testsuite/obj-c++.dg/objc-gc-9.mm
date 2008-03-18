@@ -1,8 +1,9 @@
 /* APPLE LOCAL begin radar 4291099 */
 /* Test for generation of write-barriers for data members initialized in ctor's
    initializer list. */
-/* { dg-do compile } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc -Wassign-intercept" } */
+/* { dg-require-effective-target objc_gc } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

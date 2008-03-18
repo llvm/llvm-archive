@@ -2,6 +2,8 @@
 // { dg-do run }
 // { dg-require-weak "" }
 // { dg-skip-if "No unsat" { hppa*-*-hpux* } { "*" } { "" } }
+/* APPLE LOCAL 3222046 */
+// { dg-skip-if "No unsat" { *-*-darwin* } { "*" } { "" } }
 
 extern void foo (void) __attribute__ ((weak));
 

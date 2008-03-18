@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4492973 */
 /* Additional testing for the NeXT runtime. Encoding in -m64 mode  */
 
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options " -mmacosx-version-min=10.5 -fnext-runtime -m64" } */
 
 #include <objc/Object.h>

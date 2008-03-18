@@ -1,6 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O3 -Werror" } */
-/* { dg-warning "warnings being treated as errors" "" {target "*-*-*"} 0 } */
+  /* APPLE LOCAL begin mainline */
+  /* APPLE LOCAL end mainline */
 
 list_compare (int * list1)
 {
@@ -18,5 +19,6 @@ value_compare (int * a)
 
 func2 (const int * fb)
 {
-  func1 ((int *) fb); /* { dg-warning "discards qualifiers" } */
+  /* APPLE LOCAL mainline */
+  func1 ((int *) fb); /* { dg-bogus "discards qualifiers" } */
 }

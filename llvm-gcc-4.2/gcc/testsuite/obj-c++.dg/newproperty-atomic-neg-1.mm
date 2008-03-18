@@ -12,4 +12,4 @@
 @property (copy, nonatomic) id p1;
 @property (copy) id p2;
 @end /* { dg-warning "property 'p2' and its super class 'BASE' don't have matching 'atomic' attribute" } */
-     /* { dg-warning "property 'p1' and its super class 'BASE' don't have matching 'atomic' attribute" "" { target *-*-* } 14 } */
+     /* { dg-warning "property 'p1' and its super class 'BASE' don't have matching 'atomic' attribute" "" { target *-*-* } 15 } */

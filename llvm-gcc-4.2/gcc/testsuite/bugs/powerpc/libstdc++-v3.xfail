@@ -11,7 +11,6 @@
 ### 
 ###------------------------------------------------------------------
 3378287: 26_numerics/cmath/c99_classification_macros_c.cc (test for excess errors)
-4127891: 27_io/ios_base/storage/11584.cc execution test
 4874215: 23_containers/deque/14340.cc (test for excess errors)
 4874215: 23_containers/list/14340.cc (test for excess errors)
 4874215: 23_containers/map/14340.cc (test for excess errors)

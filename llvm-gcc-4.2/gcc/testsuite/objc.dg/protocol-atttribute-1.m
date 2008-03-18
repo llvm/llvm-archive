@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4947311, 5556192 */
 /* Check implementation of protocol attributes. */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile } */
 
 __attribute ((unavailable))

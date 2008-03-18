@@ -1,8 +1,9 @@
 /* APPLE LOCAL file radar 5217964 - radar 5251019 */
 /* Test that ivar layout bytestream info is generated as expected for weak as well
    as strong layout. */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -framework Foundation -fobjc-gc" } */
+/* { dg-require-effective-target objc_gc } */
 
 #include <objc/runtime.h>
 #include <Foundation/Foundation.h>

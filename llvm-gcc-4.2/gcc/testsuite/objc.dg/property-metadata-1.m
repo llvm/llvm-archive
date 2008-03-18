@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4695101 */
 /* Test that @implementation <protoname> syntax generates metadata for properties 
    declared in @protocol, as well as those declared in the @interface. */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* APPLE LOCAL radar 4899595 */
 /* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 

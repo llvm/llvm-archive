@@ -6,7 +6,7 @@
 #include <CoreData/CoreData.h>
 #include <objc/runtime.h>
 /* { dg-options "-framework Foundation -framework CoreData -fobjc-new-property -mmacosx-version-min=10.5" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 
 typedef NSString StoreVersionID ;

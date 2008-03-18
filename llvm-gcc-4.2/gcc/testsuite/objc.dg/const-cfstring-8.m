@@ -1,6 +1,7 @@
 /* APPLE LOCAL file constant cfstrings */
 /* { dg-do compile } */
 /* { dg-options "-fobjc-gc -Os -mmacosx-version-min=10.5.0 -fno-tree-sra" } */
+/* { dg-require-effective-target objc_gc } */
 /* Radar 5494472 */
 
 @class NSString1, Message1;

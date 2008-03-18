@@ -3,7 +3,8 @@
    objc_assign_ivar in objc-gc abi is correct for both objc1 and objc2 (cause of the bug)
    ABIs. */
 /* { dg-options "-framework Foundation -fobjc-gc" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-require-effective-target objc_gc } */
 
 #define objc_assign_strongCast X_objc_assign_strongCast 
 #define objc_assign_global X_objc_assign_global 

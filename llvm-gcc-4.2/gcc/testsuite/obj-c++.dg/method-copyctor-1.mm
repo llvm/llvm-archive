@@ -3,7 +3,7 @@
    with copy constructor. Such methods return the result in memory and not in
    registers. */
 /* { dg-options "-fnext-runtime -m64 -mmacosx-version-min=10.5" } */
-/* { dg-do compile } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 class DTLock {
 public:

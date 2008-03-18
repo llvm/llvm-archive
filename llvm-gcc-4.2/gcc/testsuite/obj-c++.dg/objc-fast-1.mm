@@ -4,6 +4,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc -fobjc-direct-dispatch -Wassign-intercept" } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target objc_gc } */
 
 #include <objc/Object.h>
 

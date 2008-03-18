@@ -4254,6 +4254,14 @@ extern tree get_inner_reference (tree, HOST_WIDE_INT *, HOST_WIDE_INT *,
 				 tree *, enum machine_mode *, int *, int *,
 				 bool);
 
+/* APPLE LOCAL begin mainline 4.2 5569774 */
+/* Given an expression EXP that may be a COMPONENT_REF or an ARRAY_REF,
+   look for whether EXP or any nested component-refs within EXP is marked
+   as PACKED.  */
+
+extern bool contains_packed_reference (tree exp);
+/* APPLE LOCAL end mainline 4.2 5569774 */
+
 /* Return 1 if T is an expression that get_inner_reference handles.  */
 
 extern int handled_component_p (tree);

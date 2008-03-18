@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4695109 */
 /* Cechk that both protocols metadata generated for them. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 

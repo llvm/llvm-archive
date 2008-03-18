@@ -111,7 +111,9 @@ MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.2.1
-if [ ! -d "$DEST_ROOT/include/c++/$LIBSTDCXX_VERSION" ]; then
+# DO NOT USE $DEST_ROOT to check LIBSTDCXX_VERSION here. Directly use /usr here.
+# $DEST_ROOT is /Developer for llvm-gcc
+if [ ! -d "/usr/include/c++/$LIBSTDCXX_VERSION" ]; then
   LIBSTDCXX_VERSION=4.0.0
 fi
 

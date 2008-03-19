@@ -148,6 +148,14 @@ static bool isZeroSizedStructOrUnion(tree type) {
   return int_size_in_bytes(type) == 0;
 }
 
+// LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS - Return true if this vector
+// type should be passed as integer registers.  Generally vectors which are
+// not part of the target architecture should do this.
+#ifndef LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS
+#define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(TY) \
+  false
+#endif
+
 // LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
@@ -250,6 +258,16 @@ public:
       // just produce incorrect code.
                 && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8
 #endif
+#if defined(TARGET_POWERPC) && defined(TARGET_64BIT)
+      // FIXME darwin ppc64 often returns structs partly in memory and partly
+      // in regs.  The binary interface of return_in_memory (which does the
+      // work for aggregate_value_p) is not a good match for this; in fact
+      // this target returns false if any part of it goes in registers.  Which
+      // means aggregate_value_p is not useful on this target for this purpose.
+      // This is a big nasty longterm problem.  For now put things back the
+      // way they used to be (wrong, but fewer crashes).
+                && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8
+#endif
                ) {
       tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
@@ -302,6 +320,11 @@ public:
     std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
+    } else if (Ty->getTypeID()==Type::VectorTyID) {
+      if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type))
+        PassInIntegerRegisters(type, Ty);
+      else
+        C.HandleScalarArgument(Ty, type);
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {

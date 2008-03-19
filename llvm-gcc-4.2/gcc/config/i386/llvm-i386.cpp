@@ -78,17 +78,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PMULLW128:
     Result = Builder.CreateMul(Ops[0], Ops[1], "tmp");
     return true;
-  case IX86_BUILTIN_PSLLWI: {
-    Function *psllw =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_w);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1), 
-                                   "bitcast");      
-    Result = Builder.CreateCall(psllw, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
   case IX86_BUILTIN_PSLLWI128: {
     Function *psllw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_w);
@@ -99,34 +88,12 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
-  case IX86_BUILTIN_PSLLDI: {
-    Function *pslld =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_d);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1), 
-                                   "bitcast");      
-    Result = Builder.CreateCall(pslld, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
   case IX86_BUILTIN_PSLLDI128: {
     Function *pslld
       = Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psll_d);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Result = Builder.CreateCall(pslld, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
-  case IX86_BUILTIN_PSLLQI: {
-    Function *psllq =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psll_q);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1), 
-                                   "bitcast");      
-    Result = Builder.CreateCall(psllq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -140,17 +107,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
-  case IX86_BUILTIN_PSRLWI: {
-    Function *psrlw =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_w);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1), 
-                                   "bitcast");      
-    Result = Builder.CreateCall(psrlw, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
   case IX86_BUILTIN_PSRLWI128: {
     Function *psrlw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_w);
@@ -161,34 +117,12 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
-  case IX86_BUILTIN_PSRLDI: {
-    Function *psrld =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_d);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1), 
-                                   "bitcast");      
-    Result = Builder.CreateCall(psrld, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
   case IX86_BUILTIN_PSRLDI128: {
     Function *psrld =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psrl_d);
     Value *Undef = UndefValue::get(Type::Int32Ty);
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Result = Builder.CreateCall(psrld, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
-  case IX86_BUILTIN_PSRLQI: {
-    Function *psrlq =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psrl_q);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1),
-                                   "bitcast");      
-    Result = Builder.CreateCall(psrlq, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
@@ -202,17 +136,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
-  case IX86_BUILTIN_PSRAWI: {
-    Function *psraw =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psra_w);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1),
-                                   "bitcast");      
-    Result = Builder.CreateCall(psraw, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
   case IX86_BUILTIN_PSRAWI128: {
     Function *psraw =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse2_psra_w);
@@ -220,17 +143,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Ops[1] = BuildVector(Ops[1], Undef, Undef, Undef, NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
     Result = Builder.CreateCall(psraw, Ops.begin(), Ops.begin()+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
-    return true;
-  }
-  case IX86_BUILTIN_PSRADI: {
-    Function *psrad =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_mmx_psra_d);
-    Ops[1] = Builder.CreateZExt(Ops[1], Type::Int64Ty, "zext");
-    Ops[1] = Builder.CreateBitCast(Ops[1], 
-                                   VectorType::get(Type::Int64Ty, 1),
-                                   "bitcast");      
-    Result = Builder.CreateCall(psrad, Ops.begin(), Ops.begin()+2, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }

@@ -7679,7 +7679,14 @@ output_pic_addr_const (FILE *file, rtx x, int code)
 
     case SYMBOL_REF:
       /* APPLE LOCAL axe stubs 5571540 */
-      if (! TARGET_MACHO || ! darwin_stubs || TARGET_64BIT)
+      if (! TARGET_MACHO ||
+          /* LLVM LOCAL begin */
+#if TARGET_MACHO
+          /* darwin_stubs not available on non-Darwin systems  */
+          ! darwin_stubs ||
+#endif
+          /* LLVM LOCAL end */
+          TARGET_64BIT)
 	output_addr_const (file, x);
       else
 	{
@@ -9450,7 +9457,10 @@ ix86_expand_move (enum machine_mode mode, rtx operands[])
 {
   int strict = (reload_in_progress || reload_completed);
   /* APPLE LOCAL dynamic-no-pic */
-  rtx insn, op0, op1;
+#if TARGET_MACHO
+  rtx insn;
+#endif
+  rtx op0, op1;
   enum tls_model model;
 
   op0 = operands[0];

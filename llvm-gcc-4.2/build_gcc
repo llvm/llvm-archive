@@ -367,7 +367,8 @@ done
 # bin
 # The native drivers ('native' is different in different architectures).
 mkdir .$DEST_ROOT/bin
-lipo -output .$DEST_ROOT/bin/llvm-cpp-$MAJ_VERS -create $DIR/dst-*$DEST_ROOT/bin/{llvm-cpp,cpp-$MAJ_VERS} || exit 1
+cpp_files=`ls $DIR/dst-*$DEST_ROOT/bin/{llvm-cpp,cpp-$MAJ_VERS} 2>/dev/null`
+lipo -output .$DEST_ROOT/bin/llvm-cpp-$MAJ_VERS -create $cpp_files || exit 1
 
 # gcov, which is special only because it gets built multiple times and lipo
 # will complain if we try to add two architectures into the same output.

@@ -533,6 +533,8 @@ cd $DEST_DIR$LLVM_BIN_DIR
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-g++-$MAJ_VERS llvm-g++-$MAJ_VERS || exit 1
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-cpp-$MAJ_VERS llvm-cpp-$MAJ_VERS || exit 1
+ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc || exit 1
+ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-g++-$MAJ_VERS llvm-g++ || exit 1
 
 # FIXME: This is a hack to get things working.
 for h in $HOSTS ; do

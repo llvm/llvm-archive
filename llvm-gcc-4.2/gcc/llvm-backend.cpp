@@ -61,6 +61,7 @@ extern "C" {
 #include "tree.h"
 #include "diagnostic.h"
 #include "output.h"
+#include "target.h"
 #include "toplev.h"
 #include "timevar.h"
 #include "tm.h"
@@ -630,6 +631,12 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   Function *Fn;
   {
     TreeToLLVM Emitter(fndecl);
+    enum symbol_visibility vis = DECL_VISIBILITY (fndecl);
+
+    if (vis != VISIBILITY_DEFAULT)
+      // "asm_out.visibility" emits an important warning if we're using a
+      // visibility that's not supported by the target.
+      targetm.asm_out.visibility(fndecl, vis);
 
     Fn = Emitter.EmitFunction();
   }

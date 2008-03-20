@@ -4525,7 +4525,7 @@ stage1_build:
 		CFLAGS="$(STAGE1_CFLAGS) $(STAGE1_CHECKING_CFLAGS)" \
 		MAKEINFO="$(MAKEINFO)" MAKEINFOFLAGS="$(MAKEINFOFLAGS)" \
 		COVERAGE_FLAGS= OBJS-onestep="$(OBJS)" \
-! 	        LLVM_STAGE="-stage1"
+	        LLVM_STAGE="-stage1"
 	$(STAMP) stage1_build
 	echo stage1_build > stage_last
 

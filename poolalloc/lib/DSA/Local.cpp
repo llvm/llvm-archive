@@ -1824,7 +1824,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("malloc");
 
 #ifdef SVA_IO
-  IOAllocList.push_back("ioremap");
+  IOAllocList.push_back("__ioremap");
   IOAllocList.push_back("ioremap_nocache");
 #endif
 

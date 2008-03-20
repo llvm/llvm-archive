@@ -253,12 +253,12 @@ public:
       C.HandleScalarResult(Ty);
     } else if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
                !aggregate_value_p(type, current_function_decl)
-#if defined(TARGET_386) && defined(TARGET_64BIT)
-      // FIXME without this, _Complex long double crashes.  With it, we
+#if defined(TARGET_386)
+      // FIXME without this, 64-bit _Complex long double crashes.  With it, we
       // just produce incorrect code.
-                && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8
+                && (!TARGET_64BIT || TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
 #endif
-#if defined(TARGET_POWERPC) && defined(TARGET_64BIT)
+#if defined(TARGET_POWERPC)
       // FIXME darwin ppc64 often returns structs partly in memory and partly
       // in regs.  The binary interface of return_in_memory (which does the
       // work for aggregate_value_p) is not a good match for this; in fact
@@ -266,7 +266,7 @@ public:
       // means aggregate_value_p is not useful on this target for this purpose.
       // This is a big nasty longterm problem.  For now put things back the
       // way they used to be (wrong, but fewer crashes).
-                && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8
+                && (!TARGET_64BIT || TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
 #endif
                ) {
       tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);

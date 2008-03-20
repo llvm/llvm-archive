@@ -321,10 +321,11 @@ public:
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
     } else if (Ty->getTypeID()==Type::VectorTyID) {
-      if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type))
+      if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty);
-      else
+      } else {
         C.HandleScalarArgument(Ty, type);
+      }
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {

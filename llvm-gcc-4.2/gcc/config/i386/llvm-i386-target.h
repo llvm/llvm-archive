@@ -98,40 +98,26 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   isSingleElementStructOrArray(X, true, false)
 #endif
 
+extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
+
+/* Vectors which are not MMX nor SSE should be passed as integers. */
+#define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(X)      \
+  llvm_x86_should_pass_vector_in_integer_regs((X))
+
+extern tree llvm_x86_should_return_vector_as_scalar(tree, bool);
+
 /* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
     this by returning i64 here.  Likewise, (generic) vectors such as v2i16
     are returned in EAX.  */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,isBuiltin)\
-  ((TARGET_MACHO &&                                     \
-    !isBuiltin &&                                       \
-    !TARGET_64BIT &&                                    \
-    TREE_CODE(X) == VECTOR_TYPE &&                      \
-    TYPE_SIZE(X) &&                                     \
-    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST)               \
-   ? (TREE_INT_CST_LOW(TYPE_SIZE(X))==64 &&             \
-      TYPE_VECTOR_SUBPARTS(X)==1)                       \
-     ? uint64_type_node                                 \
-     : (TREE_INT_CST_LOW(TYPE_SIZE(X))==32)             \
-        ? uint32_type_node                              \
-        : 0                                             \
-   : 0)
+  llvm_x86_should_return_vector_as_scalar((X), (isBuiltin))
+
+extern bool llvm_x86_should_return_vector_as_shadow(tree, bool);
 
 /* MMX vectors v2i32, v4i16, v8i8, v2f32 are returned using sret on Darwin
    32-bit.  Vectors bigger than 128 are returned using sret.  */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
-  ((TARGET_MACHO &&                                     \
-    !isBuiltin &&                                       \
-    !TARGET_64BIT &&                                    \
-    TREE_CODE(X) == VECTOR_TYPE &&                      \
-    TYPE_SIZE(X) &&                                     \
-    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST)               \
-    ? (TREE_INT_CST_LOW(TYPE_SIZE(X))==64 &&            \
-       TYPE_VECTOR_SUBPARTS(X)>1)                       \
-       ? true                                           \
-       : (TREE_INT_CST_LOW(TYPE_SIZE(X))>128)           \
-         ? true                                         \
-         : false                                        \
-    : false)
+  llvm_x86_should_return_vector_as_shadow((X),(isBuiltin))
 
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 

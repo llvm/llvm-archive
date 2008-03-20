@@ -825,14 +825,7 @@ Function *TreeToLLVM::EmitFunction() {
 }
 
 Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
-  tree fndecl;
-  // Some vectors are returned using sret; these should have DestLoc provided.
-  assert(((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0)) ||
-          (TREE_CODE(exp)==CALL_EXPR && 
-           TREE_CODE(TREE_TYPE(exp))==VECTOR_TYPE &&
-           LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(exp),
-             ((fndecl = get_callee_fndecl(exp)) ? DECL_BUILT_IN(fndecl) : 
-                                                false))) ||
+  assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
           TREE_CODE(exp) == MODIFY_EXPR) &&
          "Didn't pass DestLoc to an aggregate expr, or passed it to scalar!");
   
@@ -2279,8 +2272,24 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   // parameter for the chain.
   Callee = BitCastToType(Callee, PointerType::getUnqual(Ty));
 
-  //EmitCall(exp, DestLoc);
-  Value *Result = EmitCallOf(Callee, exp, DestLoc, PAL);
+  Value *Result;
+  if (TREE_CODE(TREE_TYPE(exp))==VECTOR_TYPE &&
+      LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(exp),
+                                fndecl ? DECL_BUILT_IN(fndecl) : false)) {
+    // Vectors are first class types, so we need to return a value,
+    // but this one is to be passed using sret.  Pass in a DestLoc, if
+    // there isn't one already, and return a Load from it as the value.
+    if (!DestLoc) {
+      MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(exp)));
+      DestLoc = &NewLoc;
+    }
+    EmitCallOf(Callee, exp, DestLoc, PAL);
+    LoadInst *LI = Builder.CreateLoad(DestLoc->Ptr, false, "tmp");
+    Result = LI;
+  } else {
+    //EmitCall(exp, DestLoc);
+    Result = EmitCallOf(Callee, exp, DestLoc, PAL);
+  }
 
   // If the function has the volatile bit set, then it is a "noreturn" function.
   // Output an unreachable instruction right after the function to prevent LLVM
@@ -2505,8 +2514,20 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       CallOperands.push_back(BitCastToType(Ptr, ArgTy));
     } else if (ActualArgTy->isFirstClassType()) {
       Value *V = Emit(TREE_VALUE(arg), 0);
-      bool isSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_VALUE(arg)));
-      CallOperands.push_back(CastToAnyType(V, isSigned, ArgTy, false));
+      if (TREE_CODE(TREE_TYPE(TREE_VALUE(arg)))==VECTOR_TYPE &&
+          LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(TREE_TYPE(TREE_VALUE(arg)))) {
+        // Passed as integer registers.  We need a stack object, not a value.
+        MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(TREE_VALUE(arg))));
+        StoreInst *St = Builder.CreateStore(V, NewLoc.Ptr, false);
+        Client.setLocation(NewLoc.Ptr);
+        ParameterAttributes Attributes = ParamAttr::None;
+        ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
+        if (Attributes != ParamAttr::None)
+          PAL = PAL.addAttr(CallOperands.size(), Attributes);
+      } else {
+        bool isSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_VALUE(arg)));
+        CallOperands.push_back(CastToAnyType(V, isSigned, ArgTy, false));
+      }
     } else {
       // If this is an aggregate value passed by-value, use the current ABI to
       // determine how the parameters are passed.
@@ -2654,26 +2675,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
       HandleMultiplyDefinedGCCTemp(lhs);
       return EmitMODIFY_EXPR(exp, DestLoc);
     }
-    // Some types (so far, generic vectors on x86-32 and ppc32) can have
-    // GCC SSA temporaries for them, but are passed using sret, which means
-    // Emit will return 0.  Handle this.
-    Value *RHS;
-    tree fndecl;
-    if (TREE_CODE(rhs)==CALL_EXPR && 
-        TREE_CODE(TREE_TYPE(rhs))==VECTOR_TYPE &&
-        LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(rhs), 
-          ((fndecl = get_callee_fndecl(rhs)) ? DECL_BUILT_IN(fndecl) : 
-                                               false))) {
-      bool isVolatile = TREE_THIS_VOLATILE(lhs);
-      unsigned Alignment = expr_align(lhs) / 8;
-      MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(rhs)));
-      Emit(rhs, &NewLoc);
-      LoadInst *LI = Builder.CreateLoad(NewLoc.Ptr, isVolatile, "tmp");
-      LI->setAlignment(Alignment);
-      RHS = LI;
-    } else {
-      RHS = Emit(rhs, 0);
-    }
+    Value *RHS = Emit(rhs, 0);
     RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
     SET_DECL_LLVM(lhs, RHS);
     return RHS;

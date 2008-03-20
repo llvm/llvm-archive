@@ -638,7 +638,7 @@ extern enum rs6000_nop_insertion rs6000_sched_insert_nops;
    We must map them here to avoid huge unwinder tables mostly consisting
    of unused space.  */
 /* APPLE LOCAL begin 3399553 */
-#define DWARF_REG_TO_UNWIND_COLUMN(r)	\
+#define DWARF_REG_TO_UNWIND_COLUMN(r)  \
   ((r) > 1200 ? ((r) - 1200 + LAST_PHYSICAL_REGISTER) : (r))
 /* APPLE LOCAL end 3399553 */
 
@@ -3479,7 +3479,13 @@ enum rs6000_builtins
 extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
-  llvm_rs6000_should_pass_aggregate_byval(X, TY)
+  llvm_rs6000_should_pass_aggregate_byval((X), (TY))
+
+extern bool llvm_rs6000_should_pass_vector_in_integer_regs(tree);
+
+/* All non-Altivec vectors are passed in integer regs. */
+#define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(X)            \
+  llvm_rs6000_should_pass_vector_in_integer_regs((X))
 
 extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*, 
                                               std::vector<const Type*>&);
@@ -3488,15 +3494,18 @@ extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*,
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
    llvm_rs6000_should_pass_aggregate_in_mixed_regs((T), (TY), (E))
 
-/* Non-altivec vectors bigger than 4 bytes are returned by sret. */
+extern tree llvm_rs6000_should_return_vector_as_scalar(tree, bool);
+
+/* (Generic) vectors 4 bytes long are returned as an int.
+   Vectors 8 bytes long are returned as 2 ints. */
+#define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,isBuiltin)  \
+  llvm_rs6000_should_return_vector_as_scalar((X), (isBuiltin))
+
+extern bool llvm_rs6000_should_return_vector_as_shadow(tree, bool);
+
+/* Non-altivec vectors bigger than 8 bytes are returned by sret. */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
-  ((!TARGET_64BIT &&                                    \
-    TREE_CODE(X) == VECTOR_TYPE &&                      \
-    TYPE_SIZE(X) &&                                     \
-    TREE_CODE(TYPE_SIZE(X))==INTEGER_CST &&             \
-    TREE_INT_CST_LOW(TYPE_SIZE(X))>32 &&                \
-    TREE_INT_CST_LOW(TYPE_SIZE(X))!=128)                \
-    ? true : false)    
+  llvm_rs6000_should_return_vector_as_shadow((X), (isBuiltin))
 
 #endif /* LLVM_ABI_H */
 

@@ -759,4 +759,57 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   }
   return true;
 }
+
+/* Vectors which are not MMX nor SSE should be passed as integers. */
+bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
+  if (TARGET_MACHO &&
+    !TARGET_64BIT &&
+    TREE_CODE(type) == VECTOR_TYPE &&
+    TYPE_SIZE(type) &&
+    TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 && TARGET_MMX)
+      return false;
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==128 && TARGET_SSE)
+      return false;
+  }
+  return true;
+}
+
+/* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
+    this by returning i64 here.  Likewise, (generic) vectors such as v2i16
+    are returned in EAX.  */
+tree llvm_x86_should_return_vector_as_scalar(tree type, bool isBuiltin) {
+  if (TARGET_MACHO &&
+      !isBuiltin &&
+      !TARGET_64BIT &&
+      TREE_CODE(type) == VECTOR_TYPE &&
+      TYPE_SIZE(type) &&
+      TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 &&
+        TYPE_VECTOR_SUBPARTS(type)==1)
+      return uint64_type_node;
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==32)
+      return uint32_type_node;
+  }
+  return 0;
+}
+
+/* MMX vectors v2i32, v4i16, v8i8, v2f32 are returned using sret on Darwin
+   32-bit.  Vectors bigger than 128 are returned using sret.  */
+bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
+  if (TARGET_MACHO &&
+    !isBuiltin &&
+    !TARGET_64BIT &&
+    TREE_CODE(type) == VECTOR_TYPE &&
+    TYPE_SIZE(type) &&
+    TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 &&
+       TYPE_VECTOR_SUBPARTS(type)>1)
+      return true;
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))>128)
+      return true;
+  }
+  return false;
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

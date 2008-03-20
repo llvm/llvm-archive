@@ -448,5 +448,44 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
   return false;
 }
 
+/* Non-Altivec vectors are passed in integer regs. */
+bool llvm_rs6000_should_pass_vector_in_integer_regs(tree type) {
+  if (!TARGET_64BIT &&
+    TREE_CODE(type) == VECTOR_TYPE &&
+    TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type))==INTEGER_CST &&
+    TREE_INT_CST_LOW(TYPE_SIZE(type)) != 128)
+    return true;
+  return false;
+}
+
+/* (Generic) vectors 4 bytes long are returned as an int.
+   Vectors 8 bytes long are returned as 2 ints. */
+tree llvm_rs6000_should_return_vector_as_scalar(tree type, 
+                                    bool isBuiltin ATTRIBUTE_UNUSED) {
+  if (!TARGET_64BIT &&
+      TREE_CODE(type) == VECTOR_TYPE &&
+      TYPE_SIZE(type) &&
+      TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))==32)
+      return uint32_type_node;
+    else if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64)
+      return uint64_type_node;
+  }
+  return 0;
+}
+
+/* Non-altivec vectors bigger than 8 bytes are returned by sret. */
+bool llvm_rs6000_should_return_vector_as_shadow(tree type, 
+                                      bool isBuiltin ATTRIBUTE_UNUSED) {
+  if (!TARGET_64BIT &&
+      TREE_CODE(type) == VECTOR_TYPE &&
+      TYPE_SIZE(type) &&
+      TREE_CODE(TYPE_SIZE(type))==INTEGER_CST &&
+      TREE_INT_CST_LOW(TYPE_SIZE(type))>64 &&
+      TREE_INT_CST_LOW(TYPE_SIZE(type))!=128)
+    return true;
+  return false;
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

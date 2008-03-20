@@ -1650,7 +1650,7 @@ LIB2ADD = $(LIB2FUNCS_EXTRA)
 LIB2ADD_ST = $(LIB2FUNCS_STATIC_EXTRA)
 
 # LLVM LOCAL begin libcc_kext
-ifeq ($target, *-*-darwin*)  
+ifneq (,$(findstring darwin,$(target)))
 APPLE_EXTRA_MULTI := static;@static@fno-pic kext;@Dmalloc=kern_os_malloc@Dfree=kern_os_free@DLIBCC_KEXT@static@fno-pic@fno-exceptions@fno-non-call-exceptions$(KEXT_EXTRA_FLAGS) $(if $(findstring i686,$(target)),kext64;@mkernel@m64@Dmalloc=kern_os_malloc@Dfree=kern_os_free@DLIBCC_KEXT$(KEXT_EXTRA_FLAGS))
 endif
 # LLVM LOCAL end libcc_kext

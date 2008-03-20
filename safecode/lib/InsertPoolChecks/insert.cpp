@@ -197,6 +197,8 @@ makeMetaPool(Module* M, DSNode* N) {
     Name += "G";
   if(Flags & DSNode::HeapNode)
     Name += "H";
+  if(Flags & DSNode::IONode)
+    Name += "O";
   if( N && N->isNodeCompletelyFolded())
     Name += "F";
   Name += "_";
@@ -864,6 +866,8 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (len);
         new CallInst(PoolRegister, args, "", IP);
+      } else if (name == "__ioremap") {
+        ; // Do nothing right now
       } else
         assert(0 && "unknown alloc");
     }

@@ -62,6 +62,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
   }
   if (unsigned NodeType = N->getNodeFlags()) {
     OS << ": ";
+    if (NodeType & DSNode::IONode )     OS << "O";
     if (NodeType & DSNode::AllocaNode ) OS << "S";
     if (NodeType & DSNode::HeapNode   ) OS << "H";
     if (NodeType & DSNode::GlobalNode ) OS << "G";

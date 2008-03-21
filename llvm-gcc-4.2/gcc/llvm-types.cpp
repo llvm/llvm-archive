@@ -762,9 +762,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
              return SET_TYPE_LLVM(type, Type::FP128Ty);
 #else
       // 128-bit long doubles map onto { double, double }.
-      const Type *Ty = Type::DoubleTy;
-      Ty = StructType::get(std::vector<const Type*>(2, Ty), false);
-      return SET_TYPE_LLVM(type, Ty);
+      return SET_TYPE_LLVM(type, StructType::get(Type::DoubleTy, Type::DoubleTy,
+                                                 NULL));
 #endif
     }
     
@@ -772,8 +771,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    Ty = StructType::get(std::vector<const Type*>(2, Ty), false);
-    return SET_TYPE_LLVM(type, Ty);
+    return SET_TYPE_LLVM(type, StructType::get(Ty, Ty, NULL));
   }
   case VECTOR_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;

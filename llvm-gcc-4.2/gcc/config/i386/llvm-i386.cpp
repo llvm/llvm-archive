@@ -392,17 +392,17 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_MOVQ: {
     Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
-    Ops[1] = BuildVector(Zero, Zero, Zero, Zero, NULL);
-    Result = BuildVectorShuffle(Ops[1], Ops[0], 4, 5, 2, 3);
+    Result = BuildVector(Zero, Zero, Zero, Zero, NULL);
+    Result = BuildVectorShuffle(Result, Ops[0], 4, 5, 2, 3);
     return true;
   }
   case IX86_BUILTIN_LOADQ: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
-    Value *Zero = ConstantFP::get(Type::DoubleTy, APFloat(0.0));
-    Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
+    PointerType *v4i32Ptr = PointerType::getUnqual(ResultType);
+    Ops[0] = Builder.CreateBitCast(Ops[0], v4i32Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
-    Result = BuildVector(Ops[0], Zero, NULL);
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
+    Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+    Result = BuildVector(Zero, Zero, Zero, Zero, NULL);
+    Result = BuildVectorShuffle(Result, Ops[0], 4, 5, 2, 3);
     return true;
   }
   case IX86_BUILTIN_LOADHPS: {

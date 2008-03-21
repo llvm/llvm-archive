@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <map>
 #include <string>
 #include "llvm/Intrinsics.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/DataTypes.h"
@@ -143,7 +144,7 @@ public:
                                           tree_node *decl,
                                           tree_node *static_chain,
                                           unsigned &CallingConv,
-                                          const ParamAttrsList *&PAL);
+                                          PAListPtr &PAL);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
   /// return the LLVM type corresponding to the function.  This is useful for
@@ -152,7 +153,7 @@ public:
                                              tree_node *arglist,
                                              tree_node *static_chain,
                                              unsigned &CallingConv,
-                                             const ParamAttrsList *&PAL);
+                                             PAListPtr &PAL);
   
 private:
   const Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
@@ -541,7 +542,7 @@ private:
   Value *EmitOBJ_TYPE_REF(tree_node *exp);
   Value *EmitCALL_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc,
-                    const ParamAttrsList *PAL);
+                    const PAListPtr& PAL);
   Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitNOP_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);

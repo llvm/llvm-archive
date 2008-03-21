@@ -34,7 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ParamAttrsList.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -516,7 +516,7 @@ void TreeToLLVM::StartFunctionBody() {
   tree static_chain = cfun->static_chain_decl;
   const FunctionType *FTy;
   unsigned CallingConv;
-  const ParamAttrsList *PAL;
+  PAListPtr PAL;
 
   // If the function has no arguments and is varargs (...), turn it into a
   // non-varargs function by scanning the param list for the function.  This
@@ -2748,7 +2748,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
   unsigned CallingConv;
-  const ParamAttrsList *PAL;
+  PAListPtr PAL;
 
   const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
                                                          fndecl,
@@ -2899,7 +2899,11 @@ namespace {
 /// in the CALL_EXP 'exp'.  If the result of the call is a scalar, return the
 /// result, otherwise store it in DestLoc.
 Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
-                              const ParamAttrsList *PAL) {
+                              const PAListPtr &InPAL) {
+  PAListPtr PAL = InPAL;
+  if (PAL.isEmpty() && isa<Function>(Callee))
+    PAL = cast<Function>(Callee)->getParamAttrs();
+
   // Determine if we need to generate an invoke instruction (instead of a simple
   // call) and if so, what the exception destination will be.
   BasicBlock *UnwindBlock = 0;
@@ -2961,7 +2965,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       ParameterAttributes Attributes = ParamAttr::None;
       ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
       if (Attributes != ParamAttr::None)
-        PAL= ParamAttrsList::includeAttrs(PAL, CallOperands.size(), Attributes);
+        PAL = PAL.addAttr(CallOperands.size(), Attributes);
     }
   }
 
@@ -3866,13 +3870,13 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
 
 
 /// Return a ParamAttrsList for the given function return attributes.
-const ParamAttrsList *getReturnAttrs(uint16_t attrs) {
+PAListPtr getReturnAttrs(uint16_t attrs) {
   if (attrs == ParamAttr::None)
-    return NULL;
+    return PAListPtr();
 
-  ParamAttrsVector Attrs;
+  SmallVector<ParamAttrsWithIndex, 8> Attrs;
   Attrs.push_back(ParamAttrsWithIndex::get(0, attrs));
-  return ParamAttrsList::get(Attrs);
+  return PAListPtr::get(Attrs.begin(), Attrs.end());
 }
 
 /// Reads from register variables are handled by emitting an inline asm node
@@ -4507,7 +4511,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         Intrinsic::getDeclaration(TheModule, IntrinsicID);
     }
 
-    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, 0);
+    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, PAListPtr());
     return true;
   }
   

@@ -322,6 +322,10 @@ void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
 /// region - "llvm.dbg.declare."
 void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
                             tree type, Value *AI, BasicBlock *CurBB) {
+  // Ignore compiler generated temporaries.
+  if (DECL_IGNORED_P(decl))
+    return;
+
   // Lazily construct llvm.dbg.declare function.
   const PointerType *EmpPtr = SR.getEmptyStructPtrType();
   if (!DeclareFn)

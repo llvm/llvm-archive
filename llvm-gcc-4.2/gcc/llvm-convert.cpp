@@ -5172,8 +5172,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   // If we have "extern void foo", make the global have type {} instead of
   // type void.
-  if (Ty == Type::VoidTy) Ty = StructType::get(std::vector<const Type*>(),
-                                               false);
+  if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
   const PointerType *PTy = PointerType::getUnqual(Ty);
   return BitCastToType(Decl, PTy);
 }

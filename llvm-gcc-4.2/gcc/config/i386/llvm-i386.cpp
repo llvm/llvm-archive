@@ -835,7 +835,6 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
 /* Vectors which are not MMX nor SSE should be passed as integers. */
 bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
   if (TARGET_MACHO &&
-    !TARGET_64BIT &&
     TREE_CODE(type) == VECTOR_TYPE &&
     TYPE_SIZE(type) &&
     TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {

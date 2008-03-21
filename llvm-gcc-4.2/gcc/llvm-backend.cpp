@@ -1215,9 +1215,9 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy)
-      Ty = StructType::get(NULL);
-
+    if (Ty == Type::VoidTy) 
+      Ty = StructType::get(std::vector<const Type*>(), false);
+    
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
                               "", TheModule);

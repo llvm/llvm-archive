@@ -315,18 +315,22 @@ void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
 /// region - "llvm.dbg.declare."
 void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
                             tree type, Value *AI, BasicBlock *CurBB) {
+  // Ignore compiler generated temporaries.
+  if (DECL_IGNORED_P(decl))
+    return;
+
   // Lazily construct llvm.dbg.declare function.
   const PointerType *EmpPtr = SR.getEmptyStructPtrType();
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(M, Intrinsic::dbg_declare);
-  
+
   // Get type information.
   CompileUnitDesc *Unit = getOrCreateCompileUnit(CurFullPath);
   TypeDesc *TyDesc = getOrCreateType(type, Unit);
 
   expanded_location Loc = GetNodeLocation(decl, false);
   CompileUnitDesc *File = Loc.line ? getOrCreateCompileUnit(Loc.file) : NULL;
-  
+
   // Construct variable.
   VariableDesc *Variable = new VariableDesc(Tag);
   Variable->setContext(RegionStack.back());

@@ -2923,7 +2923,7 @@ ALL_HEADERS := $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
             $(LLVM_HEADERS)
 llvm-backend.o : llvm-backend.cpp $(ALL_HEADERS)
 llvm-convert.o : llvm-convert.cpp $(ALL_HEADERS) \
-                 $(LLVMSRCDIR)/include/llvm/Intrinsics.gen
+                 $(LLVMOBJDIR)/include/llvm/Intrinsics.gen
 llvm-types.o : llvm-types.cpp $(ALL_HEADERS)
 llvm-debug.o : llvm-debug.cpp $(ALL_HEADERS)
 # LLVM LOCAL end

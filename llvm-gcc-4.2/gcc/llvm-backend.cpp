@@ -128,6 +128,9 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
+  if (optimize_size)
+    //Reduce inline limit. Default limit is 400.
+    Args.push_back("--inline-threshold=200");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
@@ -204,6 +207,7 @@ void llvm_initialize_backend(void) {
 void performLateBackendInitialization(void) {
   // The Ada front-end sets flag_exceptions only after processing the file.
   ExceptionHandling = flag_exceptions;
+  OptimizeForSize = optimize_size;
 }
 
 void llvm_lang_dependent_init(const char *Name) {
@@ -423,6 +427,7 @@ static void createOptimizationPasses() {
     }
 
     // Normal mode, emit a .s file by running the code generator.
+    // Note, this also adds codegenerator level optimization passes.
     switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream,
                                            TargetMachine::AssemblyFile,
                                            /*FAST*/optimize == 0)) {

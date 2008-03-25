@@ -49,27 +49,38 @@ extern "C" {
 /// DefaultABIClient - This is a simple implementation of the ABI client
 /// interface that can be subclassed.
 struct DefaultABIClient {
-  bool isStructReturn() { return false; }
-  
+  bool isShadowReturn() { return false; }
+
   /// HandleScalarResult - This callback is invoked if the function returns a
-  /// simple scalar result value.
+  /// simple scalar result value, which is of type RetTy.
   void HandleScalarResult(const Type *RetTy) {}
 
   /// HandleAggregateResultAsScalar - This callback is invoked if the function
   /// returns an aggregate value by bit converting it to the specified scalar
   /// type and returning that.
   void HandleAggregateResultAsScalar(const Type *ScalarTy) {}
-  
+
   /// HandleAggregateShadowArgument - This callback is invoked if the function
-  /// returns an aggregate value by using a "shadow" first parameter.  If RetPtr
-  /// is set to true, the pointer argument itself is returned from the function.
+  /// returns an aggregate value by using a "shadow" first parameter, which is
+  /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
+  /// the pointer argument itself is returned from the function.
   void HandleAggregateShadowArgument(const PointerType *PtrArgTy, bool RetPtr){}
-  
-  
+
+  /// HandleScalarShadowArgument - This callback is invoked if the function
+  /// returns a scalar value by using a "shadow" first parameter, which is a
+  /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
+  /// the pointer argument itself is returned from the function.
+  void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {}
+
+
   /// HandleScalarArgument - This is the primary callback that specifies an LLVM
   /// argument to pass.
   void HandleScalarArgument(const llvm::Type *LLVMTy, tree argTreeType) {}
-  
+
+  /// HandleByValArgument - This callback is invoked if the aggregate function
+  /// argument is passed by value.
+  void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {}
+
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the
   /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
@@ -229,7 +240,7 @@ protected:
 public:
   DefaultABI(Client &c) : C(c) {}
 
-  bool isStructReturn() const { return C.isStructReturn(); }
+  bool isShadowReturn() const { return C.isShadowReturn(); }
   
   /// HandleReturnType - This is invoked by the target-independent code for the
   /// return type. It potentially breaks down the argument and invokes methods
@@ -245,7 +256,7 @@ public:
       if (ScalarType)
         C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
       else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
-        C.HandleAggregateShadowArgument(PointerType::getUnqual(Ty), false);
+        C.HandleScalarShadowArgument(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
     } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {

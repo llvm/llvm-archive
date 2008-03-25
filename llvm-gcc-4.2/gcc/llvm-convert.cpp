@@ -459,7 +459,15 @@ namespace {
       }
       ++AI;
     }
-    
+
+    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+      assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
+             "No explicit return value?");
+      AI->setName("scalar.result");
+      SET_DECL_LLVM(DECL_RESULT(FunctionDecl), AI);
+      ++AI;
+    }
+
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       Value *ArgVal = AI;
       if (ArgVal->getType() != LLVMTy) {
@@ -2255,24 +2263,8 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   // parameter for the chain.
   Callee = BitCastToType(Callee, PointerType::getUnqual(Ty));
 
-  Value *Result;
-  if (TREE_CODE(TREE_TYPE(exp))==VECTOR_TYPE &&
-      LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(TREE_TYPE(exp),
-                                fndecl ? DECL_BUILT_IN(fndecl) : false)) {
-    // Vectors are first class types, so we need to return a value,
-    // but this one is to be passed using sret.  Pass in a DestLoc, if
-    // there isn't one already, and return a Load from it as the value.
-    if (!DestLoc) {
-      MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(exp)));
-      DestLoc = &NewLoc;
-    }
-    EmitCallOf(Callee, exp, DestLoc, PAL);
-    LoadInst *LI = Builder.CreateLoad(DestLoc->Ptr, false, "tmp");
-    Result = LI;
-  } else {
-    //EmitCall(exp, DestLoc);
-    Result = EmitCallOf(Callee, exp, DestLoc, PAL);
-  }
+  //EmitCall(exp, DestLoc);
+  Value *Result = EmitCallOf(Callee, exp, DestLoc, PAL);
 
   // If the function has the volatile bit set, then it is a "noreturn" function.
   // Output an unreachable instruction right after the function to prevent LLVM
@@ -2295,14 +2287,15 @@ namespace {
     CallingConv::ID &CallingConvention;
     LLVMBuilder &Builder;
     const MemRef *DestLoc;
-    MemRef BufLoc;
+    MemRef RetBuf;
     std::vector<Value*> LocStack;
+    bool isShadowRet;
 
     FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
                                    CallingConv::ID &cc,
                                    LLVMBuilder &b, const MemRef *destloc)
       : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
-        Builder(b), DestLoc(destloc) {
+        Builder(b), DestLoc(destloc), isShadowRet(false) {
       CallingConvention = CallingConv::C;
 #ifdef TARGET_ADJUST_LLVM_CC
       tree ftype;
@@ -2328,15 +2321,24 @@ namespace {
       LocStack.clear();
     }
 
-    // CopyOutResult - If the (aggregate) return result was redirected to a
-    // buffer, copy it to the final destination.
-    void CopyOutResult(tree result_type) {
-      if (BufLoc.Ptr && DestLoc) {
-        // A buffer was used for the aggregate return result.  Copy it out now.
-        assert(ConvertType(result_type) ==
-               cast<PointerType>(BufLoc.Ptr->getType())->getElementType() &&
+    bool isShadowReturn() { return isShadowRet; }
+
+    // EmitShadowResult - If the return result was redirected to a buffer,
+    // emit it now.
+    Value *EmitShadowResult(tree type, const MemRef *DestLoc) {
+      if (!RetBuf.Ptr)
+        return 0;
+
+      if (DestLoc) {
+        // Copy out the aggregate return value now.
+        assert(ConvertType(type) ==
+               cast<PointerType>(RetBuf.Ptr->getType())->getElementType() &&
                "Inconsistent result types!");
-        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, BufLoc, result_type);
+        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, RetBuf, type);
+        return 0;
+      } else {
+        // Read out the scalar return value now.
+        return Builder.CreateLoad(RetBuf.Ptr, "result");
       }
     }
 
@@ -2377,9 +2379,24 @@ namespace {
         // Letting the call write directly to the final destination may not be
         // safe (eg: if DestLoc aliases a parameter) and is not required - pass
         // a buffer and copy it to DestLoc after the call.
-        BufLoc = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
-        CallOperands.push_back(BufLoc.Ptr);
+        RetBuf = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+        CallOperands.push_back(RetBuf.Ptr);
       }
+
+      // Note the use of a shadow argument.
+      isShadowRet = true;
+    }
+
+    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+      assert(DestLoc == 0 &&
+             "Call returns a scalar but caller expects aggregate!");
+      // Create a buffer to hold the result.  The result will be loaded out of
+      // it after the call.
+      RetBuf = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+      CallOperands.push_back(RetBuf.Ptr);
+
+      // Note the use of a shadow argument.
+      isShadowRet = true;
     }
 
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
@@ -2558,13 +2575,14 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     EmitBlock(NextBlock);
   }
 
-  Client.CopyOutResult(TREE_TYPE(exp));
+  if (Client.isShadowReturn())
+    return Client.EmitShadowResult(TREE_TYPE(exp), DestLoc);
 
   if (Call->getType() == Type::VoidTy)
     return 0;
-  
+
   Call->setName("tmp");
-    
+
   // If the caller expects an aggregate, we have a situation where the ABI for
   // the current target specifies that the aggregate be returned in scalar
   // registers even though it is an aggregate.  We must bitconvert the scalar

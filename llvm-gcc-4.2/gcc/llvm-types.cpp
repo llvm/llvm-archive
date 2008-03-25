@@ -929,48 +929,61 @@ namespace {
     PATypeHolder &RetTy;
     std::vector<PATypeHolder> &ArgTypes;
     unsigned &CallingConv;
-    bool isStructRet;
+    bool isShadowRet;
     bool KNRPromotion;
   public:
     FunctionTypeConversion(PATypeHolder &retty, std::vector<PATypeHolder> &AT,
                            unsigned &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR) {
       CallingConv = CallingConv::C;
-      isStructRet = false;
+      isShadowRet = false;
     }
 
-    bool isStructReturn() const { return isStructRet; }
-    
+    bool isShadowReturn() const { return isShadowRet; }
+
     /// HandleScalarResult - This callback is invoked if the function returns a
     /// simple scalar result value.
     void HandleScalarResult(const Type *RetTy) {
       this->RetTy = RetTy;
     }
-    
+
     /// HandleAggregateResultAsScalar - This callback is invoked if the function
     /// returns an aggregate value by bit converting it to the specified scalar
     /// type and returning that.
     void HandleAggregateResultAsScalar(const Type *ScalarTy) {
       RetTy = ScalarTy;
     }
-    
-    /// HandleAggregateShadowArgument - This callback is invoked if the function
-    /// returns an aggregate value by using a "shadow" first parameter.  If 
-    /// RetPtr is set to true, the pointer argument itself is returned from 
-    /// the function.
-    void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
-                                       bool RetPtr) {
-      // If this function returns a structure by value, it either returns void
-      // or the shadow argument, depending on the target.
-      this->RetTy = RetPtr ? PtrArgTy : Type::VoidTy;
-      
+
+    /// HandleShadowArgument - Handle an aggregate or scalar shadow argument.
+    void HandleShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+      // This function either returns void or the shadow argument,
+      // depending on the target.
+      RetTy = RetPtr ? PtrArgTy : Type::VoidTy;
+
       // In any case, there is a dummy shadow argument though!
       ArgTypes.push_back(PtrArgTy);
-      
-      // Also, switch the to C Struct Return.
-      isStructRet = true;
+
+      // Also, note the use of a shadow argument.
+      isShadowRet = true;
     }
-    
+
+    /// HandleAggregateShadowArgument - This callback is invoked if the function
+    /// returns an aggregate value by using a "shadow" first parameter, which is
+    /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
+    /// the pointer argument itself is returned from the function.
+    void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
+                                       bool RetPtr) {
+      HandleShadowArgument(PtrArgTy, RetPtr);
+    }
+
+    /// HandleScalarShadowArgument - This callback is invoked if the function
+    /// returns a scalar value by using a "shadow" first parameter, which is a
+    /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
+    /// the pointer argument itself is returned from the function.
+    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+      HandleShadowArgument(PtrArgTy, RetPtr);
+    }
+
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
       if (KNRPromotion) {
         if (LLVMTy == Type::FloatTy)
@@ -1032,12 +1045,12 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   if (RAttributes != ParamAttr::None)
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
 
-  // If this is a struct-return function, the dest loc is passed in as a
-  // pointer.  Mark that pointer as structret and noalias.
-  if (ABIConverter.isStructReturn())
+  // If this function returns via a shadow argument, the dest loc is passed
+  // in as a pointer.  Mark that pointer as struct-ret and noalias.
+  if (ABIConverter.isShadowReturn())
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
-  
+
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));
@@ -1113,7 +1126,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   // Since they write the return value through a pointer,
   // 'sret' functions cannot be 'readnone' or 'readonly'.
-  if (ABIConverter.isStructReturn())
+  if (ABIConverter.isShadowReturn())
     RAttributes &= ~(ParamAttr::ReadNone|ParamAttr::ReadOnly);
 
   // Demote 'readnone' nested functions to 'readonly' since
@@ -1128,13 +1141,13 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   if (RAttributes != ParamAttr::None)
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
-  
-  // If this is a struct-return function, the dest loc is passed in as a
-  // pointer.  Mark that pointer as structret, and noalias.
-  if (ABIConverter.isStructReturn())
+
+  // If this function returns via a shadow argument, the dest loc is passed
+  // in as a pointer.  Mark that pointer as struct-ret and noalias.
+  if (ABIConverter.isShadowReturn())
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
-    
+
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain));

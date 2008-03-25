@@ -1752,6 +1752,8 @@ powerpc-*-beos*)
 	use_fixproto=yes
 	;;
 powerpc-*-darwin*)
+        # APPLE LOCAL ARM 5681645
+        tmake_file="${tmake_file} t-slibgcc-darwin"
 	extra_options="${extra_options} rs6000/darwin.opt"
 	# APPLE LOCAL mainline candidate 2006-06-22 4512244
 	extra_parts="${extra_parts} crt2.o"
@@ -1770,6 +1772,8 @@ powerpc-*-darwin*)
 	;;
 powerpc64-*-darwin*)
 	tm_file="${tm_file} ${cpu_type}/darwin8.h ${cpu_type}/darwin64.h"
+        # APPLE LOCAL ARM 5681645
+        tmake_file="${tmake_file} t-slibgcc-darwin"
 	extra_options="${extra_options} ${cpu_type}/darwin.opt"
 	# We're omitting t-darwin8 to avoid building any multilibs
 	extra_headers=altivec.h

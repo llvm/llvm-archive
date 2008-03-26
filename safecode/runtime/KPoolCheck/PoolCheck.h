@@ -14,6 +14,8 @@
 #ifndef POOLCHECK_RUNTIME_H
 #define POOLCHECK_RUNTIME_H
 
+#include "safecode/Config/config.h"
+
 typedef struct MetaPoolTy {
   /* A splay of Pools, useful for registration tracking */
   void* Slabs;

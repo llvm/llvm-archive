@@ -1331,7 +1331,7 @@ bool GraphBuilder::visitExternal(CallSite CS, Function *F) {
              F->getName() == "llva_writeiow") {
     DSNodeHandle Ptr = getValueDest(**CS.arg_begin());
     if (Ptr.isNull()) Ptr = createNode();
-    Ptr.getNode()->setReadMarker();
+    Ptr.getNode()->setModifiedMarker();
     Type* T = 0;
     if (F->getName() == "llva_writeiob") T = Type::SByteTy;
     if (F->getName() == "llva_writeioh") T = Type::ShortTy;

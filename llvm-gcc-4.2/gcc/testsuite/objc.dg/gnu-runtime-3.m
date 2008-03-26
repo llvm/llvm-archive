@@ -2,6 +2,8 @@
 
 /* { dg-do run } */
 /* { dg-options "-fgnu-runtime" } */
+/* LLVM LOCAL */
+/* { dg-xfail-if "" { *-*-darwin* } { "*" } { "" } } */
 
 #include <objc/Object.h>
 #include <string.h>

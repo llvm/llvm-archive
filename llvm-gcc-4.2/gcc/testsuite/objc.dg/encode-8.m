@@ -1,5 +1,7 @@
 /* { dg-options "-fgnu-runtime" } */
 /* { dg-do run } */
+/* LLVM LOCAL */
+/* { dg-xfail-if "" { *-*-darwin* } { "*" } { "" } } */
 
 #include <objc/encoding.h>
 #include <stdlib.h>

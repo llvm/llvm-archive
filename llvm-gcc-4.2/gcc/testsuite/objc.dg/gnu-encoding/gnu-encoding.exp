@@ -39,6 +39,10 @@ set generator_src "$generator_src $srcdir/$subdir/generate-random_r.c"
 set generator_cmd "-o $generator $generator_src"
 set status [remote_exec host "$HOSTCC $HOSTCFLAGS $generator_cmd"]
 set status [lindex $status 0]
+# LLVM LOCAL begin
+# Disable these tests on darwin.
+global target_triplet
+if {![string match "*-*-darwin*" $target_triplet] } {
 if { $status == 0 } then {
     file delete -force $tstobjdir
     file mkdir $tstobjdir
@@ -62,7 +66,8 @@ if { $status == 0 } then {
 } else {
     warning "Could not compile objc.dg/gnu-encoding/struct-layout-encoding-1 generator"
 }
-
+}
+# LLVM LOCAL end
 
 
 

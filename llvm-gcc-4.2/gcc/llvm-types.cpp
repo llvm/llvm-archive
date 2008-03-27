@@ -1759,10 +1759,18 @@ bool TypeConverter::DecodeStructFields(tree Field,
 
   // Handle bit-fields specially.
   if (isBitfield(Field)) {
-    // Unnamed bitfield type does not contribute in struct alignment
-    // computations. Use packed llvm structure in such cases.
-    if (!DECL_NAME(Field) && !Info.isPacked())
-      return false;
+    // If this field is forcing packed llvm struct then retry entire struct
+    // layout.
+    if (!Info.isPacked()) {
+      // Unnamed bitfield type does not contribute in struct alignment
+      // computations. Use packed llvm structure in such cases.
+      if (!DECL_NAME(Field))
+        return false;
+      // If this field is packed then the struct may need padding fields
+      // before this field.
+      if (DECL_PACKED(Field))
+        return false;
+    }
     DecodeStructBitField(Field, Info);
     return true;
   }
@@ -1809,10 +1817,6 @@ bool TypeConverter::DecodeStructFields(tree Field,
 void TypeConverter::DecodeStructBitField(tree_node *Field, 
                                          StructTypeConversionInfo &Info) {
   unsigned FieldSizeInBits = TREE_INT_CST_LOW(DECL_SIZE(Field));
-
-  if (DECL_PACKED(Field))
-    // Individual fields can be packed.
-    Info.markAsPacked();
 
   if (FieldSizeInBits == 0)   // Ignore 'int:0', which just affects layout.
     return;

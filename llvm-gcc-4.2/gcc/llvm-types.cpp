@@ -1761,7 +1761,7 @@ bool TypeConverter::DecodeStructFields(tree Field,
   if (isBitfield(Field)) {
     // Unnamed bitfield type does not contribute in struct alignment
     // computations. Use packed llvm structure in such cases.
-    if (!DECL_NAME(Field))
+    if (!DECL_NAME(Field) && !Info.isPacked())
       return false;
     DecodeStructBitField(Field, Info);
     return true;

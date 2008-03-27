@@ -1784,10 +1784,14 @@ bool TypeConverter::DecodeStructFields(tree Field,
 
   const Type *Ty = ConvertType(getDeclaredType(Field));
 
+  // If this field is packed then the struct may need padding fields
+  // before this field.
+  if (DECL_PACKED(Field) && !Info.isPacked())
+    return false;
   // Pop any previous elements out of the struct if they overlap with this one.
   // This can happen when the C++ front-end overlaps fields with tail padding in
   // C++ classes.
-  if (!Info.ResizeLastElementIfOverlapsWith(StartOffsetInBytes, Field, Ty)) {
+  else if (!Info.ResizeLastElementIfOverlapsWith(StartOffsetInBytes, Field, Ty)) {
     // LLVM disagrees as to where this field should go in the natural field
     // ordering.  Therefore convert to a packed struct and try again.
     return false;

@@ -1770,6 +1770,13 @@ bool TypeConverter::DecodeStructFields(tree Field,
       // before this field.
       if (DECL_PACKED(Field))
         return false;
+      // If Field has user defined alignment and it does not match Ty alignment
+      // then convert to a packed struct and try again.
+      if (TYPE_USER_ALIGN(DECL_BIT_FIELD_TYPE(Field))) {
+        const Type *Ty = ConvertType(getDeclaredType(Field));
+        if (TYPE_ALIGN_UNIT(DECL_BIT_FIELD_TYPE(Field)) != Info.getTypeAlignment(Ty))
+          return false;
+      }
     }
     DecodeStructBitField(Field, Info);
     return true;

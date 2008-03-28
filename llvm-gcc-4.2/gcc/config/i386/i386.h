@@ -3849,13 +3849,16 @@ enum ix86_builtins
       F.setCPU(TARGET_64BIT ? "core2" : "yonah");             \
     else                                                      \
       F.setCPU(ix86_arch_string);                             \
-    if (TARGET_64BIT) F.AddFeature("64bit");                  \
-    if (TARGET_MMX)   F.AddFeature("mmx");                    \
-    if (TARGET_SSE)   F.AddFeature("sse");                    \
-    if (TARGET_SSE2)  F.AddFeature("sse2");                   \
-    if (TARGET_SSE3)  F.AddFeature("sse3");                   \
-    if (TARGET_SSSE3) F.AddFeature("ssse3");                  \
-    if (TARGET_3DNOW) F.AddFeature("3dnow");                  \
+    if (TARGET_64BIT)   F.AddFeature("64bit");                \
+    if (TARGET_MMX)     F.AddFeature("mmx");                  \
+    if (TARGET_SSE)     F.AddFeature("sse");                  \
+    if (TARGET_SSE2)    F.AddFeature("sse2");                 \
+    if (TARGET_SSE3)    F.AddFeature("sse3");                 \
+    if (TARGET_SSSE3)   F.AddFeature("ssse3");                \
+    if (TARGET_SSE4_1)  F.AddFeature("sse41");                \
+    if (TARGET_SSE4_2)  F.AddFeature("sse42");                \
+    if (TARGET_SSE4A)   F.AddFeature("sse4a");                \
+    if (TARGET_3DNOW)   F.AddFeature("3dnow");                \
     if (TARGET_3DNOW_A) F.AddFeature("3dnowa");               \
   }
     

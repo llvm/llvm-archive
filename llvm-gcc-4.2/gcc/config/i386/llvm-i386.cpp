@@ -764,6 +764,7 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     case X86_64_INTEGER_CLASS:
     case X86_64_INTEGERSI_CLASS:
       Elts.push_back(Type::Int64Ty);
+      Bytes -= 8;
       break;
     case X86_64_SSE_CLASS:
       // If it's a SSE class argument, then one of the followings are possible:
@@ -772,12 +773,13 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
       //                                         <2 x i64>, or <2 x f64>.
       // 3. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
       // 4. 2 x SSE, size is 16: 2 x Double.
-      if (NumClasses == 1) {
-        if (Bytes == 8)
+      if ((NumClasses-i) == 1) {
+        if (Bytes == 8) {
           Elts.push_back(Type::DoubleTy);
-        else
+          Bytes -= 8;
+        } else
           assert(0 && "Not yet handled!");
-      } else if (NumClasses == 2) {
+      } else if ((NumClasses-i) == 2) {
         if (Class[i+1] == X86_64_SSEUP_CLASS) {
           const Type *Ty = ConvertType(TreeType);
           if (const StructType *STy = dyn_cast<StructType>(Ty))
@@ -790,24 +792,31 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
                 Elts.push_back(VectorType::get(Type::Int64Ty, 2));
               else
                 Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+              Bytes -= 8;
             } else {
               assert(VTy->getNumElements() == 4);
               if (VTy->getElementType()->isInteger())
                 Elts.push_back(VectorType::get(Type::Int32Ty, 4));
               else
                 Elts.push_back(VectorType::get(Type::FloatTy, 4));
+              Bytes -= 4;
             }
-          } else if (llvm_x86_is_all_integer_types(Ty))
+          } else if (llvm_x86_is_all_integer_types(Ty)) {
             Elts.push_back(VectorType::get(Type::Int32Ty, 4));
-          else
+            Bytes -= 4;
+          } else {
             Elts.push_back(VectorType::get(Type::FloatTy, 4));
+            Bytes -= 4;
+          }
         } else if (Class[i+1] == X86_64_SSESF_CLASS) {
           assert(Bytes == 12 && "Not yet handled!");
           Elts.push_back(Type::DoubleTy);
           Elts.push_back(Type::FloatTy);
+          Bytes -= 12;
         } else if (Class[i+1] == X86_64_SSE_CLASS) {
           Elts.push_back(Type::DoubleTy);
           Elts.push_back(Type::DoubleTy);
+          Bytes -= 16;
         } else
           assert(0 && "Not yet handled!");
         ++i; // Already handled the next one.
@@ -816,9 +825,11 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
       break;
     case X86_64_SSESF_CLASS:
       Elts.push_back(Type::FloatTy);
+      Bytes -= 4;
       break;
     case X86_64_SSEDF_CLASS:
       Elts.push_back(Type::DoubleTy);
+      Bytes -= 8;
       break;
     case X86_64_X87_CLASS:
     case X86_64_X87UP_CLASS:

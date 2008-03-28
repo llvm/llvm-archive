@@ -3451,8 +3451,7 @@ classify_argument (enum machine_mode mode, tree type,
 	  /*  X86_64_X87UP_CLASS should be preceded by X86_64_X87_CLASS.  */
 	  if (classes[i] == X86_64_X87UP_CLASS
 	      && (i == 0 || classes[i - 1] != X86_64_X87_CLASS))
-            /* LLVM LOCAL was this a gcc typo ? fix */
-	    classes[i] = X86_64_X87_CLASS;
+	    classes[i] = X86_64_SSE_CLASS;
 	}
       return words;
     }

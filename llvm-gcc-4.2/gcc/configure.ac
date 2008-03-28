@@ -855,7 +855,7 @@ AC_ARG_ENABLE(llvm,
 
  LLVMBUILDMODE=""
  if test -x "$LLVMBASEPATH/Release/bin/llc$EXEEXT"; then
-   if test x$checkingenabled_flag  == x ; then        
+   if test x$checkingenabled_flag  = x ; then        
      echo Found Release LLVM Tree in $LLVMBASEPATH
      LLVMBUILDMODE="Release"
   fi
@@ -892,7 +892,7 @@ AC_ARG_ENABLE(llvm,
  fi
  if test -x "$LLVMBASEPATH/bin/llc$EXEEXT"; then
      echo Found Installed LLVM Tree in $LLVMBASEPATH
- elif test x$LLVMBUILDMODE == x; then
+ elif test x$LLVMBUILDMODE = x; then
      AC_MSG_ERROR([You must specify valid path to your LLVM tree with --enable-llvm=DIR])
  fi
 ],
@@ -2279,7 +2279,7 @@ L2:],
   as_ver=`$gcc_cv_as --version 2>/dev/null | sed 1q`
   if echo "$as_ver" | grep GNU > /dev/null; then
 changequote(,)dnl
-    as_ver=`echo $as_ver | sed -e 's/GNU assembler \([0-9.][0-9.]*\).*/\1/'`
+    as_ver=`echo $as_ver | sed -e 's/GNU assembler[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
     as_major=`echo $as_ver | sed 's/\..*//'`
     as_minor=`echo $as_ver | sed 's/[^.]*\.\([0-9]*\).*/\1/'`
 changequote([,])dnl

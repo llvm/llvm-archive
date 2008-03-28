@@ -23,9 +23,14 @@ load_lib g++-dg.exp
 dg-init
 
 # Main loop.
-# LLVM LOCAL disable optimized code debug info testing 
-gcc-dg-debug-runtest g++_target_compile trivial.C [list -O0] \
-    [lsort [glob -nocomplain $srcdir/$subdir/*.C]]
-
+# LLVM LOCAL begin disable optimized code debug info testing 
+if { [ is_llvm ] } {
+    gcc-dg-debug-runtest g++_target_compile trivial.C [list -O0] \
+        [lsort [glob -nocomplain $srcdir/$subdir/*.C]]
+} else {
+    gcc-dg-debug-runtest g++_target_compile trivial.C [list -O2 -O3] \
+        [lsort [glob -nocomplain $srcdir/$subdir/*.C]]
+}
+# LLVM LOCAL end disable optimized code debug info testing 
 # All done.
 dg-finish

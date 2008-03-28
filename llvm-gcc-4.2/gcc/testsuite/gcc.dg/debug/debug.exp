@@ -24,9 +24,14 @@ dg-init
 
 # Main loop.
 
-# LLVM LOCAL disable optimized code debug info testing 
-gcc-dg-debug-runtest gcc_target_compile trivial.c [list -O0] \
-    [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]]
-
+# LLVM LOCAL begin disable optimized code debug info testing 
+if { [ is_llvm ] } {
+    gcc-dg-debug-runtest gcc_target_compile trivial.c [list -O0] \
+        [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]]
+} else {
+    gcc-dg-debug-runtest gcc_target_compile trivial.c [list -O -O3] \
+        [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]]
+}
+# LLVM LOCAL end disable optimized code debug info testing 
 # All done.
 dg-finish

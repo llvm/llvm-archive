@@ -3339,17 +3339,14 @@ AC_CACHE_CHECK(__stack_chk_fail in target C library,
       # glibc 2.4 and later provides __stack_chk_fail and
       # either __stack_chk_guard, or TLS access to stack guard canary.
       if test -f $glibc_header_dir/features.h \
-         && $EGREP '^@<:@       @:>@*#[         ]*define[       ]+__GNU_LIBRARY__[      ]+([
-1-9][0-9]|[6-9])' \
+         && $EGREP '^@<:@       @:>@*#[         ]*define[       ]+__GNU_LIBRARY__[      ]+([1-9][0-9]|[6-9])' \
             $glibc_header_dir/features.h > /dev/null; then
-        if $EGREP '^@<:@        @:>@*#[         ]*define[       ]+__GLIBC__[    ]+([1-9][0-9
-]|[3-9])' \
+        if $EGREP '^@<:@        @:>@*#[         ]*define[       ]+__GLIBC__[    ]+([1-9][0-9]|[3-9])' \
            $glibc_header_dir/features.h > /dev/null; then
           gcc_cv_libc_provides_ssp=yes
         elif $EGREP '^@<:@      @:>@*#[         ]*define[       ]+__GLIBC__[    ]+2' \
              $glibc_header_dir/features.h > /dev/null \
-             && $EGREP '^@<:@   @:>@*#[         ]*define[       ]+__GLIBC_MINOR__[      ]+([
-1-9][0-9]|[4-9])' \
+             && $EGREP '^@<:@   @:>@*#[         ]*define[       ]+__GLIBC_MINOR__[      ]+([1-9][0-9]|[4-9])' \
              $glibc_header_dir/features.h > /dev/null; then
           gcc_cv_libc_provides_ssp=yes
         fi

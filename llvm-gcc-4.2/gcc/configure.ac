@@ -2279,6 +2279,7 @@ L2:],
   as_ver=`$gcc_cv_as --version 2>/dev/null | sed 1q`
   if echo "$as_ver" | grep GNU > /dev/null; then
 changequote(,)dnl
+    # LLVM local
     as_ver=`echo $as_ver | sed -e 's/GNU assembler[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
     as_major=`echo $as_ver | sed 's/\..*//'`
     as_minor=`echo $as_ver | sed 's/[^.]*\.\([0-9]*\).*/\1/'`

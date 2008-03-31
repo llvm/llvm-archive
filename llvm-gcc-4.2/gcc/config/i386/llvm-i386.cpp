@@ -843,12 +843,13 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   return true;
 }
 
-/* Vectors which are not MMX nor SSE should be passed as integers. */
+/* On Darwin, vectors which are not MMX nor SSE should be passed as integers. */
 bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
-  if (TARGET_MACHO &&
-    TREE_CODE(type) == VECTOR_TYPE &&
-    TYPE_SIZE(type) &&
-    TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+  if (!TARGET_MACHO)
+    return false;
+  if (TREE_CODE(type) == VECTOR_TYPE &&
+      TYPE_SIZE(type) &&
+      TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 && TARGET_MMX)
       return false;
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==128 && TARGET_SSE)

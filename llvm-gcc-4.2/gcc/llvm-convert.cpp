@@ -2282,40 +2282,66 @@ namespace {
   /// definition for this target to figure out how to pass arguments into the
   /// stack/regs for a function call.
   struct FunctionCallArgumentConversion : public DefaultABIClient {
-    tree CallExpression;
     SmallVector<Value*, 16> &CallOperands;
-    CallingConv::ID &CallingConvention;
-    LLVMBuilder &Builder;
+    SmallVector<Value*, 2> LocStack;
+    const FunctionType *FTy;
     const MemRef *DestLoc;
+    bool useReturnSlot;
+    LLVMBuilder &Builder;
+    Value *TheValue;
     MemRef RetBuf;
-    std::vector<Value*> LocStack;
     bool isShadowRet;
 
-    FunctionCallArgumentConversion(tree exp, SmallVector<Value*, 16> &ops,
-                                   CallingConv::ID &cc,
-                                   LLVMBuilder &b, const MemRef *destloc)
-      : CallExpression(exp), CallOperands(ops), CallingConvention(cc),
-        Builder(b), DestLoc(destloc), isShadowRet(false) {
-      CallingConvention = CallingConv::C;
-#ifdef TARGET_ADJUST_LLVM_CC
-      tree ftype;
-      if (tree fdecl = get_callee_fndecl(exp)) {
-        ftype = TREE_TYPE(fdecl);
-      } else {
-        ftype = TREE_TYPE(TREE_OPERAND(exp,0));
+    FunctionCallArgumentConversion(SmallVector<Value*, 16> &ops,
+                                   const FunctionType *FnTy,
+                                   const MemRef *destloc,
+                                   bool ReturnSlotOpt,
+                                   LLVMBuilder &b)
+      : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
+        useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false) { }
 
-        // If it's call to pointer, we look for the function type.
-        if (TREE_CODE(ftype) == POINTER_TYPE)
-          ftype = TREE_TYPE(ftype);
-      }
-      
-      TARGET_ADJUST_LLVM_CC(CallingConvention, ftype);
-#endif
-    }
-    
-    void setLocation(Value *Loc) {
+    // Push the address of an argument.
+    void pushAddress(Value *Loc) {
+      assert(Loc && "Invalid location!");
       LocStack.push_back(Loc);
     }
+
+    // Push the value of an argument.
+    void pushValue(Value *V) {
+      assert(LocStack.empty() && "Value only allowed at top level!");
+      LocStack.push_back(NULL);
+      TheValue = V;
+    }
+
+    // Get the address of the current location.
+    Value *getAddress(void) {
+      assert(!LocStack.empty());
+      Value *&Loc = LocStack.back();
+      if (!Loc) {
+        // A value.  Store to a temporary, and return the temporary's address.
+        // Any future access to this argument will reuse the same address.
+        Loc = TheTreeToLLVM->CreateTemporary(TheValue->getType());
+        Builder.CreateStore(TheValue, Loc);
+      }
+      return Loc;
+    }
+
+    // Get the value of the current location (of type Ty).
+    Value *getValue(const Type *Ty) {
+      assert(!LocStack.empty());
+      Value *Loc = LocStack.back();
+      if (Loc) {
+        // An address.  Convert to the right type and load the value out.
+        if (Loc->getType() != PointerType::getUnqual(Ty))
+          Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty), "tmp");
+        return Builder.CreateLoad(Loc, "val");
+      } else {
+        // A value - just return it.
+        assert(TheValue->getType() == Ty && "Value not of expected type!");
+        return TheValue;
+      }
+    }
+
     void clear() {
       assert(LocStack.size() == 1 && "Imbalance!");
       LocStack.clear();
@@ -2349,7 +2375,7 @@ namespace {
       assert(DestLoc == 0 &&
              "Call returns a scalar but caller expects aggregate!");
     }
-    
+
     /// HandleAggregateResultAsScalar - This callback is invoked if the function
     /// returns an aggregate value by bit converting it to the specified scalar
     /// type and returning that.
@@ -2371,7 +2397,7 @@ namespace {
         // The result is unused, but still needs to be stored somewhere.
         Value *Buf = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
         CallOperands.push_back(Buf);
-      } else if (CALL_EXPR_RETURN_SLOT_OPT(CallExpression)) {
+      } else if (useReturnSlot) {
         // Letting the call write directly to the final destination is safe and
         // may be required.  Do not use a buffer.
         CallOperands.push_back(DestLoc->Ptr);
@@ -2387,6 +2413,10 @@ namespace {
       isShadowRet = true;
     }
 
+    /// HandleScalarShadowArgument - This callback is invoked if the function
+    /// returns a scalar value by using a "shadow" first parameter, which is a
+    /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
+    /// the pointer argument itself is returned from the function.
     void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
       assert(DestLoc == 0 &&
              "Call returns a scalar but caller expects aggregate!");
@@ -2399,36 +2429,54 @@ namespace {
       isShadowRet = true;
     }
 
+    /// HandleScalarArgument - This is the primary callback that specifies an
+    /// LLVM argument to pass.  It is only used for first class types.
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
-      assert(!LocStack.empty());
-      Value *Loc = LocStack.back();
-      if (cast<PointerType>(Loc->getType())->getElementType() != LLVMTy)
-        // This always deals with pointer types so BitCast is appropriate
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
-      
-      CallOperands.push_back(Builder.CreateLoad(Loc, "tmp"));
+      Value *Loc = getValue(LLVMTy);
+
+      // Perform any implicit type conversions.
+      if (CallOperands.size() < FTy->getNumParams()) {
+        const Type *CalledTy = FTy->getParamType(CallOperands.size());
+        if (Loc->getType() != CalledTy) {
+          assert(type && "Inconsistent parameter types?");
+          bool isSigned = !TYPE_UNSIGNED(type);
+          Loc = TheTreeToLLVM->CastToAnyType(Loc, isSigned, CalledTy, false);
+        }
+      }
+
+      CallOperands.push_back(Loc);
     }
-    
+
+    /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
+    /// (of type PtrTy) to the argument is passed rather than the argument itself.
+    void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type){
+      Value *Loc = getAddress();
+      if (Loc->getType() != PtrTy)
+        Loc = Builder.CreateBitCast(Loc, PtrTy, "tmp");
+      CallOperands.push_back(Loc);
+    }
+
     /// HandleByValArgument - This callback is invoked if the aggregate function
     /// argument is passed by value. It is lowered to a parameter passed by
     /// reference with an additional parameter attribute "ByVal".
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
-      assert(!LocStack.empty());
-      Value *Loc = LocStack.back();
+      Value *Loc = getAddress();
       assert(PointerType::getUnqual(LLVMTy) == Loc->getType());
       CallOperands.push_back(Loc);
     }
 
+    /// EnterField - Called when we're about the enter the field of a struct
+    /// or union.  FieldNo is the number of the element we are entering in the
+    /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
-      Value *Loc = LocStack.back();
-      if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
-        // This always deals with pointer types so BitCast is appropriate
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), 
+      Value *Loc = getAddress();
+      if (Loc->getType() != PointerType::getUnqual(StructTy))
+        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy),
                                     "tmp");
-
-      LocStack.push_back(Builder.CreateStructGEP(Loc, FieldNo, "tmp"));
+      pushAddress(Builder.CreateStructGEP(Loc, FieldNo, "elt"));
     }
     void ExitField() {
+      assert(!LocStack.empty());
       LocStack.pop_back();
     }
   };
@@ -2445,6 +2493,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (PAL.isEmpty() && isa<Function>(Callee))
     PAL = cast<Function>(Callee)->getParamAttrs();
 
+  // Work out whether to use an invoke or an ordinary call.
   if (!tree_could_throw_p(exp))
     // This call does not throw - mark it 'nounwind'.
     PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
@@ -2474,15 +2523,26 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
   }
 
+  tree fndecl = get_callee_fndecl(exp);
+  tree fntype = fndecl ?
+    TREE_TYPE(fndecl) : TREE_TYPE (TREE_TYPE(TREE_OPERAND (exp, 0)));
+
+  // Determine the calling convention.
+  CallingConv::ID CallingConvention = CallingConv::C;
+#ifdef TARGET_ADJUST_LLVM_CC
+  TARGET_ADJUST_LLVM_CC(CallingConvention, fntype);
+#endif
+
   SmallVector<Value*, 16> CallOperands;
-  CallingConv::ID CallingConvention;
-  FunctionCallArgumentConversion Client(exp, CallOperands, CallingConvention,
-                                        Builder, DestLoc);
+  const PointerType *PFTy = cast<PointerType>(Callee->getType());
+  const FunctionType *FTy = cast<FunctionType>(PFTy->getElementType());
+  FunctionCallArgumentConversion Client(CallOperands, FTy, DestLoc,
+                                        CALL_EXPR_RETURN_SLOT_OPT(exp),
+                                        Builder);
   TheLLVMABI<FunctionCallArgumentConversion> ABIConverter(Client);
 
   // Handle the result, including struct returns.
-  tree fndecl = get_callee_fndecl(exp);
-  ABIConverter.HandleReturnType(TREE_TYPE(exp), 
+  ABIConverter.HandleReturnType(TREE_TYPE(exp),
                                 fndecl ? DECL_BUILT_IN(fndecl) : false);
 
   // Pass the static chain, if any, as the first parameter.
@@ -2490,52 +2550,26 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     CallOperands.push_back(Emit(TREE_OPERAND(exp, 2), 0));
 
   // Loop over the arguments, expanding them and adding them to the op list.
-  const PointerType *PFTy = cast<PointerType>(Callee->getType());
-  const FunctionType *FTy = cast<FunctionType>(PFTy->getElementType());
   for (tree arg = TREE_OPERAND(exp, 1); arg; arg = TREE_CHAIN(arg)) {
-    const Type *ActualArgTy = ConvertType(TREE_TYPE(TREE_VALUE(arg)));
-    const Type *ArgTy = ActualArgTy;
-    if (CallOperands.size() < FTy->getNumParams())
-      ArgTy = FTy->getParamType(CallOperands.size());
-    
-    // If we are implicitly passing the address of this argument instead of 
-    // passing it by value, handle this first.
-    if (isPassedByInvisibleReference(TREE_TYPE(TREE_VALUE(arg)))) {
-      // Get the address of the parameter passed in.
-      LValue ArgVal = EmitLV(TREE_VALUE(arg));
-      assert(!ArgVal.isBitfield() && "Bitfields shouldn't be invisible refs!");
-      Value *Ptr = ArgVal.Ptr;
-      
-      if (CallOperands.size() >= FTy->getNumParams())
-        ArgTy = PointerType::getUnqual(ArgTy);
-      CallOperands.push_back(BitCastToType(Ptr, ArgTy));
-    } else if (ActualArgTy->isFirstClassType()) {
-      Value *V = Emit(TREE_VALUE(arg), 0);
-      if (TREE_CODE(TREE_TYPE(TREE_VALUE(arg)))==VECTOR_TYPE &&
-          LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(TREE_TYPE(TREE_VALUE(arg)))) {
-        // Passed as integer registers.  We need a stack object, not a value.
-        MemRef NewLoc = CreateTempLoc(ConvertType(TREE_TYPE(TREE_VALUE(arg))));
-        StoreInst *St = Builder.CreateStore(V, NewLoc.Ptr, false);
-        Client.setLocation(NewLoc.Ptr);
-        ParameterAttributes Attributes = ParamAttr::None;
-        ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
-        if (Attributes != ParamAttr::None)
-          PAL = PAL.addAttr(CallOperands.size(), Attributes);
-      } else {
-        bool isSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_VALUE(arg)));
-        CallOperands.push_back(CastToAnyType(V, isSigned, ArgTy, false));
-      }
+    const Type *ArgTy = ConvertType(TREE_TYPE(TREE_VALUE(arg)));
+
+    // Push the argument.
+    if (ArgTy->isFirstClassType()) {
+      // A scalar - push the value.
+      Client.pushValue(Emit(TREE_VALUE(arg), 0));
     } else {
-      // If this is an aggregate value passed by-value, use the current ABI to
-      // determine how the parameters are passed.
-      LValue LV = EmitLV(TREE_VALUE(arg));
-      assert(!LV.isBitfield() && "Bitfields are first-class types!");
-      Client.setLocation(LV.Ptr);
-      ParameterAttributes Attributes = ParamAttr::None;
-      ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
-      if (Attributes != ParamAttr::None)
-        PAL = PAL.addAttr(CallOperands.size(), Attributes);
+      // An aggregate - push the address.
+      LValue ArgVal = EmitLV(TREE_VALUE(arg));
+      assert(!ArgVal.isBitfield() && "Bitfields are first-class types!");
+      Client.pushAddress(ArgVal.Ptr);
     }
+
+    ParameterAttributes Attributes = ParamAttr::None;
+    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
+    if (Attributes != ParamAttr::None)
+      PAL = PAL.addAttr(CallOperands.size(), Attributes);
+
+    Client.clear();
   }
 
   // Compile stuff like:

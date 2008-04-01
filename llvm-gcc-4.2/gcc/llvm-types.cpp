@@ -995,6 +995,12 @@ namespace {
       ArgTypes.push_back(LLVMTy);
     }
 
+    /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
+    /// (of type PtrTy) to the argument is passed rather than the argument itself.
+    void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type) {
+      ArgTypes.push_back(PtrTy);
+    }
+
     /// HandleByValArgument - This callback is invoked if the aggregate function
     /// argument is passed by value. It is lowered to a parameter passed by
     /// reference with an additional parameter attribute "ByVal".

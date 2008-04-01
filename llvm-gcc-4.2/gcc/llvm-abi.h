@@ -73,9 +73,13 @@ struct DefaultABIClient {
   void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {}
 
 
-  /// HandleScalarArgument - This is the primary callback that specifies an LLVM
-  /// argument to pass.
-  void HandleScalarArgument(const llvm::Type *LLVMTy, tree argTreeType) {}
+  /// HandleScalarArgument - This is the primary callback that specifies an
+  /// LLVM argument to pass.  It is only used for first class types.
+  void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {}
+
+  /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
+  /// (of type PtrTy) to the argument is passed rather than the argument itself.
+  void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type) {}
 
   /// HandleByValArgument - This callback is invoked if the aggregate function
   /// argument is passed by value.
@@ -331,7 +335,7 @@ public:
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
-      C.HandleScalarArgument(PointerType::getUnqual(Ty), type);
+      C.HandleByInvisibleReferenceArgument(PointerType::getUnqual(Ty), type);
     } else if (Ty->getTypeID()==Type::VectorTyID) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty);

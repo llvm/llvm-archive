@@ -487,5 +487,20 @@ bool llvm_rs6000_should_return_vector_as_shadow(tree type,
   return false;
 }
 
+/* Returns true if TYPE should be pass as scalar. */
+bool llvm_rs6000_should_return_struct_as_scalar(tree type) {
+  // FIXME darwin ppc64 often returns structs partly in memory and partly
+  // in regs.  The binary interface of return_in_memory (which does the
+  // work for aggregate_value_p) is not a good match for this; in fact
+  // this target returns false if any part of it goes in registers.  Which
+  // means aggregate_value_p is not useful on this target for this purpose.
+  // This is a big nasty longterm problem.  For now put things back the
+  // way they used to be (wrong, but fewer crashes).
+  if (!TARGET_64BIT)
+    return true;
+  if (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
+    return true;
+  return false;
+}
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

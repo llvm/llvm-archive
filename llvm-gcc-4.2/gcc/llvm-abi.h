@@ -96,6 +96,15 @@ static bool isAggregateTreeType(tree type) {
          TREE_CODE(type) == COMPLEX_TYPE;
 }
 
+// isAggregateFunctionParam - Return true if the specified GCC type 
+// satisfies function.c:aggregate_value_p()
+static bool isAggregateFunctionParam(tree type) {
+  if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST
+      && !aggregate_value_p(type, current_function_decl))
+    return true;
+  return false;
+}
+
 /// isSingleElementStructOrArray - If this is (recursively) a structure with one
 /// field or an array with one element, return the field type, otherwise return
 /// null.  If ignoreZeroLength, the struct (recursively) may include zero-length
@@ -216,6 +225,13 @@ static bool isZeroSizedStructOrUnion(tree type) {
   isSingleElementStructOrArray(X, false, false)
 #endif
 
+// LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR - Return true if TYPE tree should
+// be returned as a scalar.
+#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
+#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(x) \
+  false
+#endif
+
 // LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR - Return a TYPE tree if this vector type
 // should be returned using the convention for that scalar TYPE, 0 otherwise.
 // X may be evaluated more than once.
@@ -263,24 +279,8 @@ public:
     } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
-    } else if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST &&
-               !aggregate_value_p(type, current_function_decl)
-#if defined(TARGET_386)
-      // FIXME without this, 64-bit _Complex long double crashes.  With it, we
-      // just produce incorrect code.
-                && (!TARGET_64BIT || TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
-#endif
-#if defined(TARGET_POWERPC)
-      // FIXME darwin ppc64 often returns structs partly in memory and partly
-      // in regs.  The binary interface of return_in_memory (which does the
-      // work for aggregate_value_p) is not a good match for this; in fact
-      // this target returns false if any part of it goes in registers.  Which
-      // means aggregate_value_p is not useful on this target for this purpose.
-      // This is a big nasty longterm problem.  For now put things back the
-      // way they used to be (wrong, but fewer crashes).
-                && (!TARGET_64BIT || TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
-#endif
-               ) {
+    } else if (isAggregateFunctionParam(type)
+               && LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type)) {
       tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&

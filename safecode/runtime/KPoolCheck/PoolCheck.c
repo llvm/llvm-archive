@@ -40,6 +40,7 @@ int stat_poolcheckarray=0;
 int stat_poolcheckarray_i=0;
 int stat_boundscheck=0;
 int stat_boundscheck_i=0;
+int stat_regio=0;
 
 /* Global splay for holding the interrupt context */
 void * ICSplay;
@@ -238,6 +239,19 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
 #endif
   PCUNLOCK();
 }
+
+#ifdef SVA_IO
+void
+pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len) {
+  unsigned int index;
+  if (!MP) { return; }
+  PCLOCK();
+
+  ++stat_regio;
+  adl_splay_insert(&MP->IOObjs, addr, len, __builtin_return_address(0));
+  PCUNLOCK();
+}
+#endif
 
 void pchk_reg_ic (int sysnum, int a, int b, int c, int d, int e, int f, void* addr) {
   PCLOCK();
@@ -444,8 +458,14 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   return;
 }
 
-/* check that addr exists in pool MP */
-void poolcheck(MetaPoolTy* MP, void* addr) {
+/*
+ * Function: poolcheck()
+ *
+ * Description:
+ *  Check that addr exists in pool MP
+ */
+void
+poolcheck(MetaPoolTy* MP, void* addr) {
   if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
@@ -477,6 +497,29 @@ void poolcheck_i (MetaPoolTy* MP, void* addr) {
   PCUNLOCK();
   return;
 }
+
+/*
+ * Function: poolcheckio()
+ *
+ * Description:
+ *  Check that the given pointer is within the bounds of a valid I/O object.
+ */
+#ifdef SVA_IO
+void
+poolcheckio(MetaPoolTy* MP, void* addr) {
+  if (!pchk_ready || !MP) return;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_poolcheck;
+  PCLOCK();
+  int t = adl_splay_find(&MP->IOObjs, addr);
+  PCUNLOCK();
+  if (t)
+    return;
+  if (do_fail) poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+}
+#endif
 
 /* check that src and dest are same obj or slab */
 void poolcheckarray(MetaPoolTy* MP, void* src, void* dest) {
@@ -707,6 +750,45 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
 
   return &found;
 }
+
+/*
+ * Function:getIOBounds()
+ *
+ * Description:
+ *  Locate the bounds for the given object in the set of I/O objects.
+ */
+#if 0
+void*
+getIOBounds (MetaPoolTy* MP, void* src) {
+  if (!pchk_ready || !MP) return &found;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_boundscheck;
+
+  /* try objs */
+  void* S = src;
+  unsigned len = 0;
+  PCLOCK();
+  int fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
+  if (fs) {
+    PCUNLOCK();
+    return (MP->Objs);
+  }
+
+  PCUNLOCK();
+
+  /*
+   * If the source pointer is within the first page of memory, return the zero
+   * page.
+   */
+  if (src < 4096)
+    return &zero_page;
+
+  /* Return that the object was not found */
+  return &not_found;
+}
+#endif
 
 char* invalidptr = 0;
 

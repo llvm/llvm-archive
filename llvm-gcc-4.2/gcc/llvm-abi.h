@@ -205,13 +205,14 @@ static bool isZeroSizedStructOrUnion(tree type) {
    !isSingleElementStructOrArray(X, false, true)
 #endif
 
-// LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR - Return a TYPE tree if this struct
-// should be returned using the convention for that scalar TYPE, 0 otherwise.
+// LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR - Return a TYPE tree if this single
+// element struct should be returned using the convention for that scalar TYPE, 
+// 0 otherwise.
 // The returned TYPE must be the same size as X for this to work; that is
 // checked elsewhere.  (Structs where this is not the case can be constructed
 // by abusing the __aligned__ attribute.)
-#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
-#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
+#ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
+#define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
   isSingleElementStructOrArray(X, false, false)
 #endif
 
@@ -280,7 +281,7 @@ public:
                 && (!TARGET_64BIT || TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type))<=8)
 #endif
                ) {
-      tree SingleElt = LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type);
+      tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
           TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) == 

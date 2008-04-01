@@ -93,8 +93,8 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
 
 /* Structs containing a single data field plus zero-length fields are
    considered as if they were the type of the data field. */
-#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
-#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
+#ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
+#define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
   isSingleElementStructOrArray(X, true, false)
 #endif
 

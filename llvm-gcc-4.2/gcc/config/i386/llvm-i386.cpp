@@ -680,7 +680,7 @@ bool llvm_x86_should_return_struct_as_scalar(tree type) {
   // just produce incorrect code.
   if (!TARGET_64BIT)
     return true;
-  if (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) << 8)
+  if (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8)
     return true;
   return false;
 }

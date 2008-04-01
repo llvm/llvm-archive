@@ -682,6 +682,8 @@ bool llvm_x86_should_return_struct_as_scalar(tree type) {
     return true;
   if (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8)
     return true;
+  if (TREE_CODE(type) != COMPLEX_TYPE)
+    return true;
   return false;
 }
 

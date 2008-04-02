@@ -129,8 +129,8 @@ void llvm_initialize_backend(void) {
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
   if (optimize_size)
-    // Reduce inline limit. Default limit is 400.
-    Args.push_back("--inline-threshold=200");
+    // Reduce inline limit. Default limit is 200.
+    Args.push_back("--inline-threshold=100");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging

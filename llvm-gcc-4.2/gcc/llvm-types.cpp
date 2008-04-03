@@ -1048,6 +1048,10 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
 
   // Compute whether the result needs to be zext or sext'd.
   ParameterAttributes RAttributes = HandleArgumentExtension(ReturnType);
+  // Make sure all functions are marked nounwind if we aren't using exceptions.
+  if (!flag_exceptions)
+    RAttributes |= ParamAttr::NoUnwind;
+
   if (RAttributes != ParamAttr::None)
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
 
@@ -1112,7 +1116,9 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     RAttributes |= ParamAttr::NoReturn;
 
   // Check for 'nounwind' function attribute.
-  if (flags & ECF_NOTHROW)
+  // When flag_exceptions is not set (it is set by default in C++/ObjC++), 
+  // don't unwind anything.
+  if ((flags & ECF_NOTHROW) || !flag_exceptions)
     RAttributes |= ParamAttr::NoUnwind;
 
   // Check for 'readnone' function attribute.

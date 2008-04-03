@@ -2543,7 +2543,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
   // Handle the result, including struct returns.
   ABIConverter.HandleReturnType(TREE_TYPE(exp), 
-                                fndecl ? fndecl : TREE_OPERAND (exp, 0),
+                                fndecl ? fndecl : exp,
                                 fndecl ? DECL_BUILT_IN(fndecl) : false);
 
   // Pass the static chain, if any, as the first parameter.

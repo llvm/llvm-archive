@@ -102,9 +102,9 @@ static bool isAggregateTreeType(tree type) {
 
 // isAggregateFunctionParam - Return true if the specified GCC type 
 // satisfies function.c:aggregate_value_p()
-static bool isAggregateFunctionParam(tree type) {
+static bool isAggregateFunctionParam(tree type, tree fndecl) {
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST
-      && !aggregate_value_p(type, current_function_decl))
+      && !aggregate_value_p(type, fndecl))
     return true;
   return false;
 }
@@ -267,7 +267,7 @@ public:
   /// return type. It potentially breaks down the argument and invokes methods
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
-  void HandleReturnType(tree type, bool isBuiltin) {
+  void HandleReturnType(tree type, tree fn, bool isBuiltin) {
     const Type *Ty = ConvertType(type);
     if (Ty->getTypeID() == Type::VectorTyID) {
       // Vector handling is weird on x86.  In particular builtin and
@@ -283,7 +283,7 @@ public:
     } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
-    } else if (isAggregateFunctionParam(type)
+    } else if (isAggregateFunctionParam(type, fn)
                && LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type)) {
       tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 

@@ -1042,7 +1042,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
   
   // Builtins are always prototyped, so this isn't one.
-  ABIConverter.HandleReturnType(ReturnType, false);
+  ABIConverter.HandleReturnType(ReturnType, current_function_decl, false);
 
   SmallVector<ParamAttrsWithIndex, 8> Attrs;
 
@@ -1093,7 +1093,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
   
-  ABIConverter.HandleReturnType(TREE_TYPE(type), 
+  ABIConverter.HandleReturnType(TREE_TYPE(type), current_function_decl,
                                 decl ? DECL_BUILT_IN(decl) : false);
   
   // Allow the target to set the CC for things like fastcall etc.

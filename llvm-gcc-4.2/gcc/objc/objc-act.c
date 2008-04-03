@@ -8090,6 +8090,7 @@ objc_begin_catch_clause (tree decl)
         {
           t = build_stmt (CATCH_EXPR, NULL_TREE, compound);
           cur_try_context->current_catch = t;
+          /* APPLE LOCAL 5836256 */
           t = build1(NOP_EXPR, ptr_type_node, objc_build_exc_ptr ());
           t = build_function_call (objc2_begin_catch_decl,
                                    tree_cons (NULL_TREE, t, NULL_TREE));
@@ -8160,6 +8161,7 @@ objc_begin_catch_clause (tree decl)
     {     
       /* Decl an external declaration for the objc class for this catch type. */
       objc2_build_extern_decl_catch_object (type);
+      /* APPLE LOCAL 5836256 */
       t = build1(NOP_EXPR, ptr_type_node, t);
       t = build_function_call (objc2_begin_catch_decl,
                                tree_cons (NULL_TREE, t, NULL_TREE));

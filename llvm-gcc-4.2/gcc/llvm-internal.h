@@ -279,7 +279,7 @@ class TreeToLLVM {
 
   /// Builder - Instruction creator, the location to insert into is always the
   /// same as &Fn->back().
-  LLVMBuilder Builder;
+  LLVMFoldingBuilder Builder;
 
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.

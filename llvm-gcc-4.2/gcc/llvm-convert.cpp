@@ -406,12 +406,12 @@ namespace {
   struct FunctionPrologArgumentConversion : public DefaultABIClient {
     tree FunctionDecl;
     Function::arg_iterator &AI;
-    LLVMBuilder Builder;
+    LLVMFoldingBuilder Builder;
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
-                                     const LLVMBuilder &B)
+                                     const LLVMFoldingBuilder &B)
       : FunctionDecl(FnDecl), AI(ai), Builder(B) {}
     
     void setName(const std::string &Name) {
@@ -491,10 +491,9 @@ namespace {
       }
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
-      if (cast<PointerType>(Loc->getType())->getElementType() != LLVMTy)
-        // This cast only involves pointers, therefore BitCast
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
-      
+      // This cast only involves pointers, therefore BitCast.
+      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
+
       Builder.CreateStore(ArgVal, Loc);
       AI->setName(NameStack.back());
       ++AI;
@@ -509,10 +508,8 @@ namespace {
       NameStack.push_back(NameStack.back()+"."+utostr(FieldNo));
       
       Value *Loc = LocStack.back();
-      if (cast<PointerType>(Loc->getType())->getElementType() != StructTy)
-        // This cast only involves pointers, therefore BitCast
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), 
-                                    "tmp");
+      // This cast only involves pointers, therefore BitCast.
+      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), "tmp");
 
       Loc = Builder.CreateStructGEP(Loc, FieldNo, "tmp");
       LocStack.push_back(Loc);    
@@ -1103,8 +1100,9 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
   if (ZExtInst *CI = dyn_cast<ZExtInst>(V))
     if (Ty == Type::Int1Ty && CI->getOperand(0)->getType() == Type::Int1Ty)
       return CI->getOperand(0);
-  Value *Result = Builder.CreateCast(Instruction::CastOps(opcode), V, Ty,
-                                     V->getNameStart());
+  // Do an end-run around the builder's folding logic.
+  Value *Result = Builder.Insert(CastInst::create(Instruction::CastOps(opcode),
+                                                  V, Ty, V->getNameStart()));
 
   // If this is a constantexpr, fold the instruction with
   // ConstantFoldInstruction to allow TargetData-driven folding to occur.
@@ -1230,8 +1228,8 @@ void TreeToLLVM::EmitBlock(BasicBlock *BB) {
 
 /// CopyAggregate - Recursively traverse the potientially aggregate src/dest
 /// ptrs, copying all of the elements.
-static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc, LLVMBuilder &Builder,
-                          tree gccType) {
+static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
+                          LLVMFoldingBuilder &Builder, tree gccType) {
   assert(DestLoc.Ptr->getType() == SrcLoc.Ptr->getType() &&
          "Cannot copy between two pointers of different type!");
   const Type *ElTy =
@@ -1321,7 +1319,7 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
 
 /// ZeroAggregate - Recursively traverse the potentially aggregate DestLoc,
 /// zero'ing all of the elements.
-static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
+static void ZeroAggregate(MemRef DestLoc, LLVMFoldingBuilder &Builder) {
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
   if (ElTy->isFirstClassType()) {
@@ -2287,7 +2285,7 @@ namespace {
     const FunctionType *FTy;
     const MemRef *DestLoc;
     bool useReturnSlot;
-    LLVMBuilder &Builder;
+    LLVMFoldingBuilder &Builder;
     Value *TheValue;
     MemRef RetBuf;
     bool isShadowRet;
@@ -2296,7 +2294,7 @@ namespace {
                                    const FunctionType *FnTy,
                                    const MemRef *destloc,
                                    bool ReturnSlotOpt,
-                                   LLVMBuilder &b)
+                                   LLVMFoldingBuilder &b)
       : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
         useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false) { }
 
@@ -2332,8 +2330,7 @@ namespace {
       Value *Loc = LocStack.back();
       if (Loc) {
         // An address.  Convert to the right type and load the value out.
-        if (Loc->getType() != PointerType::getUnqual(Ty))
-          Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty), "tmp");
+        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty), "tmp");
         return Builder.CreateLoad(Loc, "val");
       } else {
         // A value - just return it.
@@ -2451,8 +2448,7 @@ namespace {
     /// (of type PtrTy) to the argument is passed rather than the argument itself.
     void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type){
       Value *Loc = getAddress();
-      if (Loc->getType() != PtrTy)
-        Loc = Builder.CreateBitCast(Loc, PtrTy, "tmp");
+      Loc = Builder.CreateBitCast(Loc, PtrTy, "tmp");
       CallOperands.push_back(Loc);
     }
 
@@ -2470,9 +2466,7 @@ namespace {
     /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       Value *Loc = getAddress();
-      if (Loc->getType() != PointerType::getUnqual(StructTy))
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy),
-                                    "tmp");
+      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), "tmp");
       pushAddress(Builder.CreateStructGEP(Loc, FieldNo, "elt"));
     }
     void ExitField() {
@@ -4198,8 +4192,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctlz); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    if (Result->getType() != DestTy)
-      Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
@@ -4208,8 +4201,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    if (Result->getType() != DestTy)
-      Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_PARITYLL:
@@ -4227,8 +4219,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    if (Result->getType() != DestTy)
-      Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
   case BUILT_IN_BSWAP32:
@@ -4236,8 +4227,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::bswap); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    if (Result->getType() != DestTy)
-      Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
   }
       
@@ -4352,12 +4342,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     if (isa<PointerType>(Ty)) 
       Ty = TD.getIntPtrType();
 
-    if (C[0]->getType() != PointerType::getUnqual(Ty))
-      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-   if (C[1]->getType() != Ty)
-      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
-    if (C[2]->getType() != Ty)
-      C[2] = Builder.CreateIntCast(C[2], Ty, "cast");
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    C[2] = Builder.CreateIntCast(C[2], Ty, "cast");
 
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4370,7 +4357,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_8) ||
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_16))
       Result = Builder.CreateICmpEQ(Result, C[1]);
-    else if (Ty != OrigTy)
+    else
       Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
@@ -4401,17 +4388,14 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     const Type* Ty = OrigTy;
     if (isa<PointerType>(Ty)) 
       Ty = TD.getIntPtrType();     
-    if (C[0]->getType() != PointerType::getUnqual(Ty))
-      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    if (C[1]->getType() != Ty)
-      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_las, 
                                                    &Ty, 1),
       C, C + 2);
-    if (Ty != OrigTy)
-      Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_1:
@@ -4430,18 +4414,15 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     const Type* Ty = OrigTy;
     if (isa<PointerType>(Ty)) 
       Ty = TD.getIntPtrType();     
-    if (C[0]->getType() != PointerType::getUnqual(Ty))
-      C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    if (C[1]->getType() != Ty)
-      C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_swap, 
                                                    &Ty, 1),
                          C, C + 2);
     
-    if (Ty != OrigTy)
-      Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
 #endif //FIXME: these break the build for backends that haven't implemented them

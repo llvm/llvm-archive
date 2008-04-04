@@ -98,13 +98,6 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   isSingleElementStructOrArray(X, true, false)
 #endif
 
-#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
-#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
-  llvm_x86_should_return_struct_as_scalar(X)
-#endif
-
-extern bool llvm_x86_should_return_struct_as_scalar(tree);
-
 extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 
 /* Vectors which are not MMX nor SSE should be passed as integers. */

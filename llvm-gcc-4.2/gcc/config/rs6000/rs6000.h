@@ -3507,12 +3507,6 @@ extern bool llvm_rs6000_should_return_vector_as_shadow(tree, bool);
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
   llvm_rs6000_should_return_vector_as_shadow((X), (isBuiltin))
 
-#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
-#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(X) \
-  llvm_rs6000_should_return_struct_as_scalar(X)
-#endif
-
-extern bool llvm_rs6000_should_return_struct_as_scalar(tree);
 #endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end */

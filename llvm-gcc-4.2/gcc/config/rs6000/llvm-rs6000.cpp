@@ -487,9 +487,5 @@ bool llvm_rs6000_should_return_vector_as_shadow(tree type,
   return false;
 }
 
-/* Returns true if TYPE should be passed as scalar. */
-bool llvm_rs6000_should_return_struct_as_scalar(tree type) {
-  return false;
-}
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

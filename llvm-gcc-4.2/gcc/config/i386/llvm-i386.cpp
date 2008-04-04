@@ -674,11 +674,6 @@ static bool llvm_x86_is_all_integer_types(const Type *Ty) {
   return true;
 }
 
-/* Returns true if TYPE should be passed as scalar. */
-bool llvm_x86_should_return_struct_as_scalar(tree type) {
-  return false;
-}
-
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in a number of registers of mixed types.
    It also returns a vector of types that correspond to the registers used

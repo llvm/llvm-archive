@@ -233,13 +233,6 @@ static bool isZeroSizedStructOrUnion(tree type) {
   isSingleElementStructOrArray(X, false, false)
 #endif
 
-// LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR - Return true if TYPE tree should
-// be returned as a scalar.
-#ifndef LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR
-#define LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(x) \
-  false
-#endif
-
 // LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR - Return a TYPE tree if this vector type
 // should be returned using the convention for that scalar TYPE, 0 otherwise.
 // X may be evaluated more than once.

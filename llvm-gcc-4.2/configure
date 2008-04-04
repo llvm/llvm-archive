@@ -7435,7 +7435,9 @@ if test "${enable_stage1_checking+set}" = set; then
   stage1_checking=--enable-checking=${enable_stage1_checking}
 else
   if test "x$enable_checking" = xno; then
+# LLVM LOCAL begin - don't enable checking when we meant to disable it
   stage1_checking=--disable-checking
+# LLVM LOCAL end - don't enable checking when we meant to disable it
 else
   stage1_checking=--enable-checking${enable_checking+=}$enable_checking
 fi

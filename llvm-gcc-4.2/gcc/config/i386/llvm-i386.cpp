@@ -676,14 +676,6 @@ static bool llvm_x86_is_all_integer_types(const Type *Ty) {
 
 /* Returns true if TYPE should be passed as scalar. */
 bool llvm_x86_should_return_struct_as_scalar(tree type) {
-  // FIXME without this, 64-bit _Complex long double crashes.  With it, we
-  // just produce incorrect code.
-  if (!TARGET_64BIT)
-    return true;
-  if (TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) <= 8)
-    return true;
-  if (TREE_CODE(type) != COMPLEX_TYPE)
-    return true;
   return false;
 }
 

@@ -287,8 +287,7 @@ public:
     } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
-    } else if (doNotUseShadowReturn(type, fn)
-               && LLVM_SHOULD_RETURN_STRUCT_AS_SCALAR(type)) {
+    } else if (doNotUseShadowReturn(type, fn)) {
       tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&

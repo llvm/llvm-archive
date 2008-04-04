@@ -895,4 +895,31 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
   return false;
 }
 
+// Return LLVM Type if TY can be  returned as a scalar, otherwise return NULL.
+const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
+  unsigned Size = getTargetData().getABITypeSize(Ty);
+  if (Size == 0)
+    return Type::VoidTy;
+  else if (Size == 1)
+    return Type::Int8Ty;
+  else if (Size == 2)
+    return Type::Int16Ty;
+  else if (Size <= 4)
+    return Type::Int32Ty;
+  else if (Size <= 8)
+    return Type::Int64Ty;
+  else if (Size <= 16)
+    return IntegerType::get(128);
+  else if (Size <= 32)
+    return IntegerType::get(256);
+
+  return NULL;
+}
+
+// Return LLVM Type if TY can be returned as an aggregate, otherwise return NULL.
+const Type *llvm_x86_aggr_type_for_struct_return(const Type *Ty) {
+  return NULL;
+}
+
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

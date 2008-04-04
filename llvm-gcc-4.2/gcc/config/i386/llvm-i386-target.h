@@ -100,6 +100,20 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
 
 extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 
+// LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// returned as a scalar, otherwise return NULL.
+#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
+  llvm_x86_scalar_type_for_struct_return(X)
+
+extern const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty);
+
+// LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// returned as an aggregate, otherwise return NULL.
+#define LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(X) \
+  llvm_x86_aggr_type_for_struct_return(X)
+
+extern const Type *llvm_x86_aggr_type_for_struct_return(const Type *Ty);
+
 /* Vectors which are not MMX nor SSE should be passed as integers. */
 #define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(X)      \
   llvm_x86_should_pass_vector_in_integer_regs((X))

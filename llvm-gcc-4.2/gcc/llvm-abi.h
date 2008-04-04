@@ -195,7 +195,7 @@ static const Type* getLLVMScalarTypeForStructReturn(tree type) {
   else if (Size <= 16)
     return IntegerType::get(128);
   else if (Size <= 32)
-    return IntegerType::get(255);
+    return IntegerType::get(256);
 
   return NULL;
 }

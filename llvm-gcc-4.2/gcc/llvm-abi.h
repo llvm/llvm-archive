@@ -103,10 +103,14 @@ static bool isAggregateTreeType(tree type) {
 // doNotUseShadowReturn - Return true if the specified GCC type 
 // should not be returned using a pointer to struct parameter. 
 static bool doNotUseShadowReturn(tree type, tree fndecl) {
-  if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST
-      && !aggregate_value_p(type, fndecl))
-    return true;
-  return false;
+  if (!TYPE_SIZE(type))
+    return false;
+  if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
+    return false;
+  // GCC says use shadow argument.
+  if (aggregate_value_p(type, fndecl))
+    return false;
+  return true;
 }
 
 /// isSingleElementStructOrArray - If this is (recursively) a structure with one

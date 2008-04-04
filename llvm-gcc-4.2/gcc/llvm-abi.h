@@ -180,12 +180,12 @@ static bool isZeroSizedStructOrUnion(tree type) {
   return int_size_in_bytes(type) == 0;
 }
 
-// getLLVMScalarTypeForStructReturn - Return LLVM Type if TYPE can be 
+// getLLVMScalarTypeForStructReturn - Return LLVM Type if TY can be 
 // returned as a scalar, otherwise return NULL. This is the default
 // target independent implementation.
-static const Type* getLLVMScalarTypeForStructReturn(tree type) {
+static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
 
-  unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type));
+  unsigned Size = getTargetData().getABITypeSize(Ty);
   if (Size == 0)
     return Type::VoidTy;
   else if (Size == 1)
@@ -318,7 +318,7 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        const Type* ScalarTy = getLLVMScalarTypeForStructReturn(type);
+        const Type* ScalarTy = getLLVMScalarTypeForStructReturn(Ty);
         if (ScalarTy)
           C.HandleAggregateResultAsScalar(ScalarTy);
         else {

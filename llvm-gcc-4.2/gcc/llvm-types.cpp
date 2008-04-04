@@ -954,6 +954,12 @@ namespace {
       RetTy = ScalarTy;
     }
 
+    /// HandleAggregateResultAsAggregate - This callback is invoked if the function
+    /// ruturns an aggregate value using multiple return values.
+    void HandleAggregateResultAsAggregate(const Type *AggrTy) {
+      RetTy = AggrTy;
+    }
+
     /// HandleShadowArgument - Handle an aggregate or scalar shadow argument.
     void HandleShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
       // This function either returns void or the shadow argument,

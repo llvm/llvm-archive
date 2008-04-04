@@ -2380,6 +2380,12 @@ namespace {
       // There is nothing to do here.
     }
 
+    /// HandleAggregateResultAsAggregate - This callback is invoked if the function
+    /// ruturns an aggregate value using multiple return values.
+    void HandleAggregateResultAsAggregate(const Type *AggrTy) {
+      // There is nothing to do here.
+    }
+
     /// HandleAggregateShadowArgument - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter.  If
     /// RetPtr is set to true, the pointer argument itself is returned from the

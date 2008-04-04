@@ -60,6 +60,10 @@ struct DefaultABIClient {
   /// type and returning that.
   void HandleAggregateResultAsScalar(const Type *ScalarTy) {}
 
+  /// HandleAggregateResultAsAggregate - This callback is invoked if the function
+  /// ruturns an aggregate value using multiple return values.
+  void HandleAggregateResultAsAggregate(const Type *AggrTy) {}
+
   /// HandleAggregateShadowArgument - This callback is invoked if the function
   /// returns an aggregate value by using a "shadow" first parameter, which is
   /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,

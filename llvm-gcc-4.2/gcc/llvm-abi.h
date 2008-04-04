@@ -204,6 +204,13 @@ static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
   return NULL;
 }
 
+// getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
+// returnes as multiple values, otherwise return NULL. This is the default
+// target indepdendent implementation.
+static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
+  return NULL;
+}
+
 // LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS - Return true if this vector
 // type should be passed as integer registers.  Generally vectors which are
 // not part of the target architecture should do this.
@@ -275,6 +282,20 @@ static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,Y) 0
 #endif
 
+// LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// returned as a scalar, otherwise return NULL.
+#ifndef LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN
+#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
+  getLLVMScalarTypeForStructReturn(X)
+#endif
+
+// LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// returned as an aggregate, otherwise return NULL.
+#ifndef LLVM_AGGR_TYPE_FOR_STRUCT_RETURN
+#define LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(X) \
+  getLLVMAggregateTypeForStructReturn(X)
+#endif
+
 /// DefaultABI - This class implements the default LLVM ABI where structures are
 /// passed by decimating them into individual components and unions are passed
 /// by passing the largest member of the union.
@@ -318,9 +339,10 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        const Type* ScalarTy = getLLVMScalarTypeForStructReturn(Ty);
-        if (ScalarTy)
+        if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(Ty))
           C.HandleAggregateResultAsScalar(ScalarTy);
+        else if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(Ty))
+          C.HandleAggregateResultAsAggregate(AggrTy);
         else {
           assert(0 && "Unable to determine how to return this aggregate!");
           abort();

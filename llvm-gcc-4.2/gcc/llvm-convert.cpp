@@ -2488,7 +2488,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     PAL = cast<Function>(Callee)->getParamAttrs();
 
   // Work out whether to use an invoke or an ordinary call.
-  if (!tree_could_throw_p(exp) || !flag_exceptions)
+  if (!tree_could_throw_p(exp))
     // This call does not throw - mark it 'nounwind'.
     PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
 

@@ -176,6 +176,30 @@ static bool isZeroSizedStructOrUnion(tree type) {
   return int_size_in_bytes(type) == 0;
 }
 
+// getLLVMScalarTypeForStructReturn - Return LLVM Type if TYPE can be 
+// returned as a scalar, otherwise return NULL. This is the default
+// target independent implementation.
+static const Type* getLLVMScalarTypeForStructReturn(tree type) {
+
+  unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type));
+  if (Size == 0)
+    return Type::VoidTy;
+  else if (Size == 1)
+    return Type::Int8Ty;
+  else if (Size == 2)
+    return Type::Int16Ty;
+  else if (Size <= 4)
+    return Type::Int32Ty;
+  else if (Size <= 8)
+    return Type::Int64Ty;
+  else if (Size <= 16)
+    return IntegerType::get(128);
+  else if (Size <= 32)
+    return IntegerType::get(255);
+
+  return NULL;
+}
+
 // LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS - Return true if this vector
 // type should be passed as integer registers.  Generally vectors which are
 // not part of the target architecture should do this.
@@ -290,23 +314,11 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type));
-        if (Size == 0)
-          C.HandleAggregateResultAsScalar(Type::VoidTy);
-        else if (Size == 1)
-          C.HandleAggregateResultAsScalar(Type::Int8Ty);
-        else if (Size == 2)
-          C.HandleAggregateResultAsScalar(Type::Int16Ty);
-        else if (Size <= 4)
-          C.HandleAggregateResultAsScalar(Type::Int32Ty);
-        else if (Size <= 8)
-          C.HandleAggregateResultAsScalar(Type::Int64Ty);
-        else if (Size <= 16)
-          C.HandleAggregateResultAsScalar(IntegerType::get(128));
-        else if (Size <= 32)
-          C.HandleAggregateResultAsScalar(IntegerType::get(256));
+        const Type* ScalarTy = getLLVMScalarTypeForStructReturn(type);
+        if (ScalarTy)
+          C.HandleAggregateResultAsScalar(ScalarTy);
         else {
-          assert(0 && "Cannot return this aggregate as a scalar!");
+          assert(0 && "Unable to determine how to return this aggregate!");
           abort();
         }
       }

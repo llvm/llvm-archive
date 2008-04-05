@@ -351,7 +351,7 @@ static void createOptimizationPasses() {
     // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
     //PM->add(createPredicateSimplifierPass());   // Canonicalize registers
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
-    if (flag_unit_at_a_time)
+    if (flag_unit_at_a_time && !flag_unwind_tables)
       PM->add(createPruneEHPass());               // Remove dead EH info
 
     if (optimize > 1) {

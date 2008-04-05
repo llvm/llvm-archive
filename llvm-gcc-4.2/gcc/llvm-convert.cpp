@@ -2381,7 +2381,7 @@ namespace {
     }
 
     /// HandleAggregateResultAsAggregate - This callback is invoked if the function
-    /// ruturns an aggregate value using multiple return values.
+    /// returns an aggregate value using multiple return values.
     void HandleAggregateResultAsAggregate(const Type *AggrTy) {
       // There is nothing to do here.
     }

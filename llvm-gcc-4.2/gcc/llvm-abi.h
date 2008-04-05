@@ -61,7 +61,7 @@ struct DefaultABIClient {
   void HandleAggregateResultAsScalar(const Type *ScalarTy) {}
 
   /// HandleAggregateResultAsAggregate - This callback is invoked if the function
-  /// ruturns an aggregate value using multiple return values.
+  /// returns an aggregate value using multiple return values.
   void HandleAggregateResultAsAggregate(const Type *AggrTy) {}
 
   /// HandleAggregateShadowArgument - This callback is invoked if the function
@@ -205,7 +205,7 @@ static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
 }
 
 // getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
-// returnes as multiple values, otherwise return NULL. This is the default
+// returns as multiple values, otherwise return NULL. This is the default
 // target indepdendent implementation.
 static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
   return NULL;
@@ -282,14 +282,14 @@ static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,Y) 0
 #endif
 
-// LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
 // returned as a scalar, otherwise return NULL.
 #ifndef LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN
 #define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
   getLLVMScalarTypeForStructReturn(X)
 #endif
 
-// LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if TY can be 
+// LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
 // returned as an aggregate, otherwise return NULL.
 #ifndef LLVM_AGGR_TYPE_FOR_STRUCT_RETURN
 #define LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(X) \

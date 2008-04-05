@@ -4899,13 +4899,13 @@ static bool
 rs6000_return_in_memory (tree type, tree fntype ATTRIBUTE_UNUSED)
 {
   /* LLVM LOCAL begin strcut return check */
-  // FIXME darwin ppc64 often returns structs partly in memory and partly
-  // in regs.  The binary interface of return_in_memory (which does the
-  // work for aggregate_value_p) is not a good match for this; in fact
-  // this target returns false if any part of it goes in registers.  Which
-  // means aggregate_value_p is not useful on this target for this purpose.
-  // This is a big nasty longterm problem.  For now put things back the
-  // way they used to be (wrong, but fewer crashes).
+  /* FIXME darwin ppc64 often returns structs partly in memory and partly
+     in regs.  The binary interface of return_in_memory (which does the
+     work for aggregate_value_p) is not a good match for this; in fact
+     this target returns false if any part of it goes in registers.  Which
+     means aggregate_value_p is not useful on this target for this purpose.
+     This is a big nasty longterm problem.  For now put things back the
+     way they used to be (wrong, but fewer crashes). */
   if (TARGET_64BIT && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) > 8)
     return true;
   /* LLVM LOCAL end strcut return check */  

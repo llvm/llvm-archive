@@ -393,7 +393,7 @@ static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
   if (DECL_NAME(LabelDecl))
     Name = IDENTIFIER_POINTER(DECL_NAME(LabelDecl));
 
-  BasicBlock *NewBB = new BasicBlock(Name);
+  BasicBlock *NewBB = BasicBlock::Create(Name);
   SET_DECL_LLVM(LabelDecl, NewBB);
   return NewBB;
 }
@@ -584,7 +584,7 @@ void TreeToLLVM::StartFunctionBody() {
     
     // Otherwise, either it exists with the wrong type or it doesn't exist.  In
     // either case create a new function.
-    Fn = new Function(FTy, Function::ExternalLinkage, Name, TheModule);
+    Fn = Function::Create(FTy, Function::ExternalLinkage, Name, TheModule);
     assert(Fn->getName() == Name && "Preexisting fn with the same name!");
     Fn->setCallingConv(CallingConv);
     Fn->setParamAttrs(PAL);
@@ -643,7 +643,7 @@ void TreeToLLVM::StartFunctionBody() {
     AddAnnotateAttrsToGlobal(Fn, FnDecl);
   
   // Create a new basic block for the function.
-  Builder.SetInsertPoint(new BasicBlock("entry", Fn));
+  Builder.SetInsertPoint(BasicBlock::Create("entry", Fn));
   
   if (TheDebugInfo)
     TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
@@ -732,7 +732,7 @@ void TreeToLLVM::StartFunctionBody() {
   }
   
   // Create a new block for the return node, but don't insert it yet.
-  ReturnBB = new BasicBlock("return");
+  ReturnBB = BasicBlock::Create("return");
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
@@ -816,7 +816,7 @@ Function *TreeToLLVM::EmitFunction() {
         break;
     if (e && e->dest != bb->next_bb) {
       Builder.CreateBr(getLabelDeclBlock(tree_block_label (e->dest)));
-      EmitBlock(new BasicBlock(""));
+      EmitBlock(BasicBlock::Create(""));
     }
   }
  
@@ -1657,9 +1657,9 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
   IndirectGotoValue = CreateTemporary(TD.getIntPtrType());
   
   // Create the block, emit a load, and emit the switch in the block.
-  IndirectGotoBlock = new BasicBlock("indirectgoto");
+  IndirectGotoBlock = BasicBlock::Create("indirectgoto");
   Value *Ld = new LoadInst(IndirectGotoValue, "gotodest", IndirectGotoBlock);
-  new SwitchInst(Ld, IndirectGotoBlock, 0, IndirectGotoBlock);
+  SwitchInst::Create(Ld, IndirectGotoBlock, 0, IndirectGotoBlock);
   
   // Finally, return it.
   return IndirectGotoBlock;
@@ -1697,7 +1697,7 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
     //
     Builder.CreateBr(DestBB);
   }
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
   return 0;
 }
 
@@ -1717,7 +1717,7 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
 
   // Emit a branch to the exit label.
   Builder.CreateBr(ReturnBB);
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
   return 0;
 }
 
@@ -1737,7 +1737,7 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   BasicBlock *ThenDest = getLabelDeclBlock(TREE_OPERAND(Then, 0));
   BasicBlock *ElseDest = getLabelDeclBlock(TREE_OPERAND(Else, 0));
   Builder.CreateCondBr(Cond, ThenDest, ElseDest);
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
   return 0;
 }
 
@@ -1751,7 +1751,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   // Emit the switch instruction.
   SwitchInst *SI = Builder.CreateSwitch(SwitchExp, Builder.GetInsertBlock(),
                                         TREE_VEC_LENGTH(Cases));
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
   // Default location starts out as fall-through
   SI->setSuccessor(0, Builder.GetInsertBlock());
 
@@ -1800,7 +1800,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
       // The range is too big to add to the switch - emit an "if".
       Value *Diff = Builder.CreateSub(SwitchExp, LowC, "tmp");
       Value *Cond = Builder.CreateICmpULE(Diff, ConstantInt::get(Range), "tmp");
-      BasicBlock *False_Block = new BasicBlock("case_false");
+      BasicBlock *False_Block = BasicBlock::Create("case_false");
       Builder.CreateCondBr(Cond, Dest, False_Block);
       EmitBlock(False_Block);
     }
@@ -1812,7 +1812,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
     else {
       Builder.CreateBr(DefaultDest);
       // Emit a "fallthrough" block, which is almost certainly dead.
-      EmitBlock(new BasicBlock(""));
+      EmitBlock(BasicBlock::Create(""));
     }
 
   return 0;
@@ -1851,7 +1851,7 @@ BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
   BasicBlock *&PostPad = PostPads[RegionNo];
 
   if (!PostPad)
-    PostPad = new BasicBlock("ppad");
+    PostPad = BasicBlock::Create("ppad");
 
   return PostPad;
 }
@@ -2000,7 +2000,7 @@ void TreeToLLVM::EmitPostPads() {
       Value *Compare = Builder.CreateICmpSLT(Select, Zero, "tmp");
 
       // Branch on the compare.
-      BasicBlock *NoFilterBB = new BasicBlock("nofilter");
+      BasicBlock *NoFilterBB = BasicBlock::Create("nofilter");
       Builder.CreateCondBr(Compare, Dest, NoFilterBB);
       EmitBlock(NoFilterBB);
     } else if (RegionKind > 0) {
@@ -2044,7 +2044,7 @@ void TreeToLLVM::EmitPostPads() {
       }
 
       // If there is no such catch, execute a RESX if the comparison fails.
-      NoCatchBB = new BasicBlock("nocatch");
+      NoCatchBB = BasicBlock::Create("nocatch");
       // Branch on the compare.
       Builder.CreateCondBr(Cond, Dest, NoCatchBB);
       EmitBlock(NoCatchBB);
@@ -2073,7 +2073,7 @@ void TreeToLLVM::EmitPostPads() {
              "Must-not-throw region handled by runtime?");
       // Unwinding continues in the caller.
       if (!UnwindBB)
-        UnwindBB = new BasicBlock("Unwind");
+        UnwindBB = BasicBlock::Create("Unwind");
       Builder.CreateBr(UnwindBB);
     }
 
@@ -2270,7 +2270,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   //
   if (fndecl && TREE_THIS_VOLATILE(fndecl)) {
     Builder.CreateUnreachable();
-    EmitBlock(new BasicBlock(""));
+    EmitBlock(BasicBlock::Create(""));
   }
   return Result;
 }
@@ -2513,7 +2513,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
         // Create a landing pad if one didn't exist already.
         if (!ThisPad)
-          ThisPad = new BasicBlock("lpad");
+          ThisPad = BasicBlock::Create("lpad");
 
         LandingPad = ThisPad;
       } else {
@@ -2602,7 +2602,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
     cast<CallInst>(Call)->setParamAttrs(PAL);
   } else {
-    BasicBlock *NextBlock = new BasicBlock("invcont");
+    BasicBlock *NextBlock = BasicBlock::Create("invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
                                 CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
@@ -3494,11 +3494,11 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
            "Must-not-throw region handled by runtime?");
     // Unwinding continues in the caller.
     if (!UnwindBB)
-      UnwindBB = new BasicBlock("Unwind");
+      UnwindBB = BasicBlock::Create("Unwind");
     Builder.CreateBr(UnwindBB);
   }
 
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
   return 0;
 }
 
@@ -4279,7 +4279,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::trap));
     // Emit an explicit unreachable instruction.
     Builder.CreateUnreachable();
-    EmitBlock(new BasicBlock(""));
+    EmitBlock(BasicBlock::Create(""));
     return true;
    
   // Convert annotation built-in to llvm.annotation intrinsic.
@@ -4808,7 +4808,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
                                                Intrinsic::eh_return),
                      Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
-  EmitBlock(new BasicBlock(""));
+  EmitBlock(BasicBlock::Create(""));
 
   return true;
 }

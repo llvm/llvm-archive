@@ -716,7 +716,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
                                        AliaseeName,
                                        TheModule);
         else if (Function *F = dyn_cast<Function>(V))
-          Aliasee = new Function(F->getFunctionType(),
+          Aliasee = Function::Create(F->getFunctionType(),
                                  Function::ExternalWeakLinkage,
                                  AliaseeName,
                                  TheModule);
@@ -1170,7 +1170,7 @@ void make_decl_llvm(tree decl) {
       const FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
                                               CC, PAL);
-      FnEntry = new Function(Ty, Function::ExternalLinkage, Name, TheModule);
+      FnEntry = Function::Create(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
       FnEntry->setParamAttrs(PAL);
 

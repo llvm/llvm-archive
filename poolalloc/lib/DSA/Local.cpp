@@ -1,4 +1,3 @@
-#define JTC 0
 //===- Local.cpp - Compute a local data structure graph for a function ----===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -1635,7 +1634,7 @@ void GraphBuilder::visitCastInst(CastInst &CI) {
 
       //Try to track all values of ints back to constants or valid pointers
       std::set<Value*> sources;
-      if (getSourcePointerValues(&CI, sources)) {
+      if (getSourcePointerValues(CI.getOperand(0), sources)) {
         setDestTo(CI, createNode());
         for (std::set<Value*>::iterator ii = sources.begin(), ee = sources.end();
              ii != ee; ++ii)

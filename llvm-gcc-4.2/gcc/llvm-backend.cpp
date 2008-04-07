@@ -297,6 +297,10 @@ static void destroyOptimizationPasses() {
   OptimizationPassesCreated = false;
 }
 
+#ifndef LLVM_PRESERVE_UNWIND_TABLES
+#define LLVM_PRESERVE_UNWIND_TABLES 0
+#endif
+
 static void createOptimizationPasses() {
   assert(OptimizationPassesCreated ||
          (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
@@ -351,7 +355,8 @@ static void createOptimizationPasses() {
     // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
     //PM->add(createPredicateSimplifierPass());   // Canonicalize registers
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
-    if (flag_unit_at_a_time && !flag_unwind_tables)
+    if (flag_unit_at_a_time && 
+        (!flag_unwind_tables || !LLVM_PRESERVE_UNWIND_TABLES))
       PM->add(createPruneEHPass());               // Remove dead EH info
 
     if (optimize > 1) {

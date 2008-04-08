@@ -743,30 +743,47 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // Insert the return block at the end of the function.
   EmitBlock(ReturnBB);
   
-  Value *RetVal = 0;
+  SmallVector <Value *, 4> RetVals;
+
   // If the function returns a value, get it into a register and return it now.
   if (Fn->getReturnType() != Type::VoidTy) {
     if (!isAggregateTreeType(TREE_TYPE(DECL_RESULT(FnDecl)))) {
       // If the DECL_RESULT is a scalar type, just load out the return value
       // and return it.
       tree TreeRetVal = DECL_RESULT(FnDecl);
-      RetVal = Builder.CreateLoad(DECL_LLVM(TreeRetVal), "retval");
+      Value *RetVal = Builder.CreateLoad(DECL_LLVM(TreeRetVal), "retval");
       bool RetValSigned = !TYPE_UNSIGNED(TREE_TYPE(TreeRetVal));
       Instruction::CastOps opcode = CastInst::getCastOpcode(
           RetVal, RetValSigned, Fn->getReturnType(), RetValSigned);
       RetVal = CastToType(opcode, RetVal, Fn->getReturnType());
+      RetVals.push_back(RetVal);
     } else {
-      // Otherwise, this aggregate result must be something that is returned in
-      // a scalar register for this target.  We must bit convert the aggregate
-      // to the specified scalar type, which we do by casting the pointer and
-      // loading.
-      RetVal = BitCastToType(DECL_LLVM(DECL_RESULT(FnDecl)),
-                             PointerType::getUnqual(Fn->getReturnType()));
-      RetVal = Builder.CreateLoad(RetVal, "retval");
+      Value *RetVal = DECL_LLVM(DECL_RESULT(FnDecl));
+      if (const StructType *STy = dyn_cast<StructType>(Fn->getReturnType())) {
+        // Handle multiple return values
+        unsigned NumElements = STy->getNumElements();
+        for (unsigned i = 0; i < NumElements; i++) {
+          Value *GEP = Builder.CreateStructGEP(RetVal, i, "mrv_idx");
+          Value *RetVal = Builder.CreateLoad(GEP, "mrv");
+          RetVals.push_back(RetVal);
+        }
+      } else {
+        // Otherwise, this aggregate result must be something that is returned in
+        // a scalar register for this target.  We must bit convert the aggregate
+        // to the specified scalar type, which we do by casting the pointer and
+        // loading.
+        RetVal = BitCastToType(DECL_LLVM(DECL_RESULT(FnDecl)),
+                               PointerType::getUnqual(Fn->getReturnType()));
+        RetVal = Builder.CreateLoad(RetVal, "retval");
+        RetVals.push_back(RetVal);
+      }
     }
   }
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
-  Builder.CreateRet(RetVal);
+  if (RetVals.empty())
+    Builder.CreateRetVoid();
+  else
+    Builder.CreateRet(&RetVals[0], RetVals.size());
 
   // Emit pending exception handling code.
   EmitLandingPads();

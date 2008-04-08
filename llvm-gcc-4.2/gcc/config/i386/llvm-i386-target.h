@@ -83,8 +83,6 @@ extern int ix86_regparm;
     }                                                           \
   }
 
-#define LLVM_PRESERVE_UNWIND_TABLES (TARGET_MACHO && TARGET_64BIT)
-
 #ifdef LLVM_ABI_H
 
 /* Objects containing SSE vectors are 16 byte aligned, everything else 4. */

@@ -131,6 +131,8 @@ void llvm_initialize_backend(void) {
   if (optimize_size)
     // Reduce inline limit. Default limit is 200.
     Args.push_back("--inline-threshold=100");
+  if (!flag_unwind_tables)
+    Args.push_back("--disable-required-unwind-tables");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging
@@ -297,10 +299,6 @@ static void destroyOptimizationPasses() {
   OptimizationPassesCreated = false;
 }
 
-#ifndef LLVM_PRESERVE_UNWIND_TABLES
-#define LLVM_PRESERVE_UNWIND_TABLES 0
-#endif
-
 static void createOptimizationPasses() {
   assert(OptimizationPassesCreated ||
          (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
@@ -355,8 +353,7 @@ static void createOptimizationPasses() {
     // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
     //PM->add(createPredicateSimplifierPass());   // Canonicalize registers
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
-    if (flag_unit_at_a_time && 
-        (!flag_unwind_tables || !LLVM_PRESERVE_UNWIND_TABLES))
+    if (flag_unit_at_a_time)
       PM->add(createPruneEHPass());               // Remove dead EH info
 
     if (optimize > 1) {

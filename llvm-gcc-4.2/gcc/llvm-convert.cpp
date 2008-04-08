@@ -2648,7 +2648,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     const StructType *STy = cast<StructType>(Call->getType());
     unsigned NumElements = STy->getNumElements();
     for (unsigned i = 0; i < NumElements; i++) {
-      //DPATEL
       Value *GEP = Builder.CreateStructGEP(DestLoc->Ptr, i, "mrv_gep");
       GetResultInst *GR = Builder.CreateGetResult(Call, i, "mrv_gr");
       Builder.CreateStore(GR, GEP, DestLoc->Volatile);

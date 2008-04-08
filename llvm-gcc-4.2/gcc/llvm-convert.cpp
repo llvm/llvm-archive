@@ -1105,6 +1105,7 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
     if (Ty == Type::Int1Ty && CI->getOperand(0)->getType() == Type::Int1Ty)
       return CI->getOperand(0);
   // Do an end-run around the builder's folding logic.
+  // TODO: introduce a new builder class that does target specific folding.
   Value *Result = Builder.Insert(CastInst::create(Instruction::CastOps(opcode),
                                                   V, Ty, V->getNameStart()));
 

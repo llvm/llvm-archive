@@ -2644,6 +2644,18 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
   Call->setName("tmp");
 
+  if (Client.isAggrReturn()) {
+    const StructType *STy = cast<StructType>(Call->getType());
+    unsigned NumElements = STy->getNumElements();
+    for (unsigned i = 0; i < NumElements; i++) {
+      //DPATEL
+      Value *GEP = Builder.CreateStructGEP(DestLoc->Ptr, i, "mrv_gep");
+      GetResultInst *GR = Builder.CreateGetResult(Call, i, "mrv_gr");
+      Builder.CreateStore(GR, GEP, DestLoc->Volatile);
+    }
+    return 0;
+  }
+
   // If the caller expects an aggregate, we have a situation where the ABI for
   // the current target specifies that the aggregate be returned in scalar
   // registers even though it is an aggregate.  We must bitconvert the scalar

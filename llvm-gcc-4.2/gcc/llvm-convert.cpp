@@ -642,6 +642,10 @@ void TreeToLLVM::StartFunctionBody() {
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);
   
+  // Mark the function "nounwind" if not doing exception handling.
+  if (!flag_exceptions)
+    Fn->setDoesNotThrow();
+
   // Create a new basic block for the function.
   Builder.SetInsertPoint(BasicBlock::Create("entry", Fn));
   

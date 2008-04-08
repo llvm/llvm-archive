@@ -2311,6 +2311,7 @@ namespace {
     Value *TheValue;
     MemRef RetBuf;
     bool isShadowRet;
+    bool isAggrRet;
 
     FunctionCallArgumentConversion(SmallVector<Value*, 16> &ops,
                                    const FunctionType *FnTy,
@@ -2318,7 +2319,8 @@ namespace {
                                    bool ReturnSlotOpt,
                                    LLVMFoldingBuilder &b)
       : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
-        useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false) { }
+        useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false),
+        isAggrRet(false) { }
 
     // Push the address of an argument.
     void pushAddress(Value *Loc) {
@@ -2367,6 +2369,7 @@ namespace {
     }
 
     bool isShadowReturn() { return isShadowRet; }
+    bool isAggrReturn() { return isAggrRet; }
 
     // EmitShadowResult - If the return result was redirected to a buffer,
     // emit it now.
@@ -2406,6 +2409,7 @@ namespace {
     /// returns an aggregate value using multiple return values.
     void HandleAggregateResultAsAggregate(const Type *AggrTy) {
       // There is nothing to do here.
+      isAggrRet = true;
     }
 
     /// HandleAggregateShadowArgument - This callback is invoked if the function

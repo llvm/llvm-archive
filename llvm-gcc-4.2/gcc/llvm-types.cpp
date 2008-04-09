@@ -2177,7 +2177,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
 //    assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
-    // Hack to get Fortran EQUIVALENCE working.
+    // Workaround to get Fortran EQUIVALENCE working.
     // TODO: Unify record and union logic and handle this optimally.
     if (getFieldOffsetInBits(Field) != 0) {
       ConvertingStruct = OldConvertingStruct;

@@ -245,11 +245,12 @@ bool isPassedByInvisibleReference(tree Type) {
 /// the specified type.
 static std::string GetTypeName(const char *Prefix, tree type) {
   const char *Name = "anon";
-  if (TYPE_NAME(type))
+  if (TYPE_NAME(type)) {
     if (TREE_CODE(TYPE_NAME(type)) == IDENTIFIER_NODE)
       Name = IDENTIFIER_POINTER(TYPE_NAME(type));
     else if (DECL_NAME(TYPE_NAME(type)))
       Name = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(type)));
+  }
   
   std::string ContextStr;
   tree Context = TYPE_CONTEXT(type);

@@ -1828,7 +1828,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
     }
   }
 
-  if (DefaultDest)
+  if (DefaultDest) {
     if (SI->getSuccessor(0) == Builder.GetInsertBlock())
       SI->setSuccessor(0, DefaultDest);
     else {
@@ -1836,6 +1836,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
       // Emit a "fallthrough" block, which is almost certainly dead.
       EmitBlock(BasicBlock::Create(""));
     }
+  }
 
   return 0;
 }
@@ -6107,7 +6108,7 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
       } else {
         // If this is little-endian bit-field, take the bottom NumBitsToInsert
         // bits from the bitfield value.
-        EltValToInsert = ValToInsert & (1ULL << NumEltBitsToInsert)-1;
+        EltValToInsert = ValToInsert & ((1ULL << NumEltBitsToInsert)-1);
         ValToInsert >>= NumEltBitsToInsert;
       }
 
@@ -6205,7 +6206,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
     } else {
       // If this is little-endian bit-field, take the bottom NumBitsToInsert
       // bits from the bitfield value.
-      ValToInsert = BitfieldVal & (1ULL << NumBitsToInsert)-1;
+      ValToInsert = BitfieldVal & ((1ULL << NumBitsToInsert)-1);
       BitfieldVal >>= NumBitsToInsert;
     }
     
@@ -6297,9 +6298,9 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
 
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
-      assert(TYPE_SIZE(getDeclaredType(Field)) ||
+      assert((TYPE_SIZE(getDeclaredType(Field)) ||
              (FieldNo == ResultElts.size()-1 &&
-              isStructWithVarSizeArrayAtEnd(STy))
+              isStructWithVarSizeArrayAtEnd(STy)))
              && "field with no size is not array at end of struct!");
 
       // If this is an initialization of a global that ends with a variable
@@ -6498,7 +6499,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   // Check for variable sized reference.
   // FIXME: add support for array types where the size doesn't fit into 64 bits
-  assert(isArrayCompatible(ArrayType) || isSequentialCompatible(ArrayType)
+  assert((isArrayCompatible(ArrayType) || isSequentialCompatible(ArrayType))
          && "Cannot have globals with variable size!");
 
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first

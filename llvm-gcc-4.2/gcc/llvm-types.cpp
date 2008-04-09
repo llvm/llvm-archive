@@ -1701,7 +1701,8 @@ static tree FixBaseClassField(tree Field) {
 // node for it, but not when A is a nonvirtual base class.  So we can't
 // use that.)
 static void FixBaseClassFields(tree type) {
-  assert(TREE_CODE(type)==RECORD_TYPE);
+  if (TREE_CODE(type)!=RECORD_TYPE)
+    return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field)==FIELD_DECL && 
         !DECL_BIT_FIELD_TYPE(Field) &&
@@ -1749,7 +1750,8 @@ static void FixBaseClassFields(tree type) {
 // code continues to work (there are pointers stashed away in there).
 
 static void RestoreBaseClassFields(tree type) {
-  assert(TREE_CODE(type)==RECORD_TYPE);
+  if (TREE_CODE(type)!=RECORD_TYPE)
+    return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) == FIELD_DECL && DECL_FIELD_REPLACED(Field)) {
       tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
@@ -2174,7 +2176,13 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   unsigned MaxSize = 0, MaxAlign = 0;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
-    assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
+//    assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
+    // Hack to get Fortran EQUIVALENCE working.
+    // TODO: Unify record and union logic and handle this optimally.
+    if (getFieldOffsetInBits(Field) != 0) {
+      ConvertingStruct = OldConvertingStruct;
+      return ConvertRECORD(type, orig_type);
+    }
 
     // Set the field idx to zero for all fields.
     SetFieldIndex(Field, 0);

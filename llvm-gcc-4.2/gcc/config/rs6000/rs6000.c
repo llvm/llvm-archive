@@ -4906,7 +4906,8 @@ rs6000_return_in_memory (tree type, tree fntype ATTRIBUTE_UNUSED)
      means aggregate_value_p is not useful on this target for this purpose.
      This is a big nasty longterm problem.  For now put things back the
      way they used to be (wrong, but fewer crashes). */
-  if (TARGET_64BIT && TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) > 8)
+  if (TARGET_64BIT && TREE_CODE(TYPE_SIZE_UNIT(type)) == INTEGER_CST &&
+      TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) > 8)
     return true;
   /* LLVM LOCAL end strcut return check */  
 

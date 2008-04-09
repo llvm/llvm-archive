@@ -772,7 +772,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
         // a scalar register for this target.  We must bit convert the aggregate
         // to the specified scalar type, which we do by casting the pointer and
         // loading.
-        RetVal = BitCastToType(DECL_LLVM(DECL_RESULT(FnDecl)),
+        RetVal = BitCastToType(RetVal,
                                PointerType::getUnqual(Fn->getReturnType()));
         RetVal = Builder.CreateLoad(RetVal, "retval");
         RetVals.push_back(RetVal);

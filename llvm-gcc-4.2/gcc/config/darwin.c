@@ -1563,7 +1563,7 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "INSTANCE_VARIABLES_", 19))
     return "__OBJC,__instance_vars,regular,no_dead_strip";
   else if (!strncmp (name, "CLASS_PROTOCOLS_", 16))
-    return "__OBJC,__cls_meth,regular,no_dead_strip";
+    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "CLASS_NAME_", 11))
     return "__TEXT,__cstring,cstring_literals";
   else if (!strncmp (name, "METH_VAR_NAME_", 14))

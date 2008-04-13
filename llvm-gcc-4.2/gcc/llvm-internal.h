@@ -37,7 +37,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Streams.h"
 
 extern "C" {
@@ -279,7 +279,7 @@ class TreeToLLVM {
 
   /// Builder - Instruction creator, the location to insert into is always the
   /// same as &Fn->back().
-  LLVMFoldingBuilder Builder;
+  IRBuilder Builder;
 
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.

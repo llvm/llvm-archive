@@ -895,8 +895,46 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
   return false;
 }
 
-// Return LLVM Type if TY can be  returned as a scalar, otherwise return NULL.
+// llvm_suitable_multiple_ret_value_type - Return TRUE if return value 
+// of type TY should be returned using multiple value return instruction.
+static bool llvm_suitable_multiple_ret_value_type(const Type *Ty) {
+
+  //NOTE: Work in progress. Do not open the flood gate yet.
+  return false; 
+
+  if (!TARGET_64BIT)
+    return false;
+
+  const StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy)
+    return false;
+  
+  unsigned NumElements = STy->getNumElements();
+
+  bool useMultipleReturnVals = true;
+  for (unsigned i = 0; i < NumElements; ++i) {
+    const Type *T = STy->getElementType(i);
+    
+    if (T->isFirstClassType())
+      continue;
+    
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(T)) {
+      // Allow { float f[4]; } but block { float f[10]; } or { char c[4]; }
+      // FIXME :Double check '5'.
+      if (ATy->getElementType()->isFloatingPoint()
+          && ATy->getNumElements() < 5)
+        continue;
+    }
+    return false;
+  }
+  
+  return true;
+}
+
+// llvm_x86_scalar_type_for_struct_return - Return LLVM type if TY 
+// can be returned as a scalar, otherwise return NULL.
 const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
+
   unsigned Size = getTargetData().getABITypeSize(Ty);
   if (Size == 0)
     return Type::VoidTy;
@@ -906,7 +944,12 @@ const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
     return Type::Int16Ty;
   else if (Size <= 4)
     return Type::Int32Ty;
-  else if (Size <= 8)
+
+  // Check if Ty should be returned using multiple value return instruction.
+  if (llvm_suitable_multiple_ret_value_type(Ty))
+    return NULL;
+
+  if (Size <= 8)
     return Type::Int64Ty;
   else if (Size <= 16)
     return IntegerType::get(128);
@@ -918,8 +961,211 @@ const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
 
 // Return LLVM Type if TY can be returned as an aggregate, otherwise return NULL.
 const Type *llvm_x86_aggr_type_for_struct_return(const Type *Ty) {
-  return NULL;
+
+  if (!llvm_suitable_multiple_ret_value_type(Ty))
+    return NULL;
+
+  const StructType *STy = cast<StructType>(Ty);
+  unsigned NumElements = STy->getNumElements();
+
+  std::vector<const Type *> ElementTypes;
+  for (unsigned i = 0; i < NumElements; ++i) {
+    const Type *T = STy->getElementType(i);
+    
+    if (T->isFirstClassType()) {
+      ElementTypes.push_back(T);
+      continue;
+    }
+    
+    const ArrayType *ATy = dyn_cast<ArrayType>(T);
+    assert (ATy && "Unexpected struct element type!");
+    assert (ATy->getElementType()->isFirstClassType() 
+            && "Unexpected ArrayType element type!");
+    
+    unsigned size = ATy->getNumElements();
+    if (ATy->getElementType()->isFloatingPoint()) {
+      switch (size) {
+      case 2:
+        // use { <2 x float> } for struct { float[2]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
+        break;
+      case 3:
+        // use { <2 x float>, float } for struct { float[3]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
+        ElementTypes.push_back(ATy->getElementType());
+        break;
+      case 4:
+        // use { <4  x float> } for struct { float[4]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
+        break;
+      default:
+        assert (0 && "Unexpected floating point array size!");
+      }
+    } else {
+      for (unsigned j = 0; j < size; ++j)
+        ElementTypes.push_back(ATy->getElementType());
+    }
+  }
+  
+  return StructType::get(ElementTypes, STy->isPacked());
 }
 
 
+// llvm_x86_build_mrv_array_element - This is a helper function used by
+// llvm_x6_build_multiple_return_value. This function builds a vector
+// from the array fields of RetVal.
+static Value *llvm_x86_build_mrv_array_element(const Type *STyFieldTy,
+                                               Value *RetVal,
+                                               unsigned FieldNo,
+                                               unsigned ArraySize,
+                                               IRBuilder &Builder) {
+  llvm::Value *Idxs[3];
+  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, FieldNo);
+
+  Value *R1 = UndefValue::get(STyFieldTy);
+
+  for (unsigned i = 0; i < ArraySize; ++i) {
+    Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, i);
+    Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
+    Value *ElemVal = Builder.CreateLoad(GEP, "mrv");
+    R1 = Builder.CreateInsertElement(R1, ElemVal, 
+                                     ConstantInt::get(llvm::Type::Int32Ty, i), 
+                                     "mrv");
+  }
+  return R1;
+}
+
+// llvm_x86_build_multiple_return_value - Function FN returns multiple value
+// where RETVAL points to the aggregate being returned. Build a RETVALS vector
+// of individual values from RETVAL aggregate. RETVALS will be used by 
+// the client to build multiple value return instruction. 
+void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
+                                          SmallVectorImpl <Value *> &RetVals,
+                                          IRBuilder &Builder) {
+  const StructType *STy = cast<StructType>(Fn->getReturnType());
+  const PointerType *PTy = cast<PointerType>(RetVal->getType());
+  const StructType *RetSTy = cast<StructType>(PTy->getElementType());
+
+  // Walk RetSTy elements and populate RetVals vector. Note, STy and RetSTy
+  // may not match. For example, when STy is { <2 x float> } the RetSTy is
+  // { float[2]; }
+  unsigned NumElements = RetSTy->getNumElements();
+  for (unsigned RNO = 0, SNO = 0; RNO < NumElements; ++RNO, ++SNO) {
+    const Type *ElemType = RetSTy->getElementType(RNO);
+    if (ElemType->isFirstClassType()) {
+      Value *GEP = Builder.CreateStructGEP(RetVal, RNO, "mrv_idx");
+      Value *ElemVal = Builder.CreateLoad(GEP, "mrv");
+      RetVals.push_back(ElemVal);
+    } else {
+      const ArrayType *ATy = cast<ArrayType>(ElemType);
+      unsigned ArraySize = ATy->getNumElements();
+      const VectorType *SElemTy = cast<VectorType>(STy->getElementType(SNO));
+      unsigned Size = SElemTy->getNumElements();
+      assert (ArraySize >= Size && "Invalid multiple return value type!");
+      Value *R = llvm_x86_build_mrv_array_element(SElemTy, RetVal, RNO,
+                                                  Size, Builder);
+      RetVals.push_back(R);
+      if (ArraySize > Size) {
+        assert (ArraySize == Size + 1 && "Unable to build multiple return value!");
+        // Build remaining values.
+        const Type *NextTy = STy->getElementType(SNO + 1);
+        if (NextTy->getTypeID() == Type::FloatTyID) {
+          Value *Idxs[3];
+          Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+          Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, RNO);
+          Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, Size + 1);
+          Value *GEP3 = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
+          Value *ElemVal3 = Builder.CreateLoad(GEP3, "mrv");
+          RetVals.push_back(ElemVal3);
+          SNO++;
+        } else 
+          assert ( 0 && "Unable to build multiple return value!");
+      }
+    }
+  }
+}
+
+// llvm_x86_extract_mrv_array_element - Helper function that help extract 
+// an array element from multiple return value.
+//
+// Here, SRC is returning multiple values. DEST's DESTFIELNO field is an array.
+// Extract SRCFIELDNO's ELEMENO value and store it in DEST's FIELDNO field's 
+// ELEMENTNO.
+//
+static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
+                                               unsigned SrcFieldNo, 
+                                               unsigned SrcElemNo,
+                                               unsigned DestFieldNo, 
+                                               unsigned DestElemNo,
+                                               IRBuilder &Builder,
+                                               bool isVolatile) {
+  GetResultInst *GR = Builder.CreateGetResult(Src, SrcFieldNo, "mrv_gr");
+  const StructType *STy = cast<StructType>(Src->getType());
+  llvm::Value *Idxs[3];
+  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DestFieldNo);
+  Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, DestElemNo);
+  Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
+  if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
+    Value *ElemIndex = ConstantInt::get(Type::Int32Ty, SrcElemNo);
+    Value *GRElem = Builder.CreateExtractElement(GR, ElemIndex, "mrv");
+    Builder.CreateStore(GRElem, GEP, isVolatile);
+  } else {
+    Builder.CreateStore(GR, GEP, isVolatile);
+  }
+}
+
+// llvm_x86_extract_multiple_return_value - Extract multiple values returned
+// by SRC and store them in DEST. It is expected thaty SRC and
+// DEST types are StructType, but they may not match.
+void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
+                                            bool isVolatile,
+                                            IRBuilder &Builder) {
+  
+  const StructType *STy = cast<StructType>(Src->getType());
+  unsigned NumElements = STy->getNumElements();
+
+  const PointerType *PTy = cast<PointerType>(Dest->getType());
+  const StructType *DestTy = cast<StructType>(PTy->getElementType());
+  unsigned SNO = 0;
+  unsigned DNO = 0;
+  while (SNO < NumElements) {
+
+    const Type *DestElemType = DestTy->getElementType(DNO);
+
+    // Directly access first class values using getresult.
+    if (DestElemType->isFirstClassType()) {
+      Value *GEP = Builder.CreateStructGEP(Dest, DNO, "mrv_gep");
+      GetResultInst *GR = Builder.CreateGetResult(Src, SNO, "mrv_gr");
+      Builder.CreateStore(GR, GEP, isVolatile);
+      ++DNO; ++SNO;
+      continue;
+    } 
+    
+    // Access array elements individually. Note, Src and Dest type may
+    // not match. For example { <2 x float>, float } and { float[3]; }
+    const ArrayType *ATy = cast<ArrayType>(DestElemType);
+    unsigned ArraySize = ATy->getNumElements();
+    for (unsigned di = 0, si = 0; di < ArraySize; ++di, ++si) {
+      llvm_x86_extract_mrv_array_element(Src, Dest, SNO, si, DNO, di, 
+                                         Builder, isVolatile);
+      if (const VectorType *SElemTy = 
+          dyn_cast<VectorType>(STy->getElementType(SNO))) {
+        unsigned NumVElem = SElemTy->getNumElements();
+        if (NumVElem == si + 1) {
+          // If extracted all elments from current Src field then 
+          // move to next field.
+          si = 0;
+          ++SNO;
+        }
+      } else {
+        // Copied content from current source field, so move to next field.
+        ++SNO;
+      }
+    }
+    // Process next DNO element.
+    ++DNO;
+  }
+}
 /* LLVM LOCAL end (ENTIRE FILE!)  */

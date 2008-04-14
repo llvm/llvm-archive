@@ -296,6 +296,33 @@ static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
   getLLVMAggregateTypeForStructReturn(X)
 #endif
 
+// LLVM_BUILD_MULTIPLE_RETURN_VALUE - Build multiple return values
+// for the function FN and add them in RETVALS. Each target that
+// supports multiple return value must implement this hook.
+#ifndef LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B)
+#define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,Rs,B) \
+  llvm_default_build_multiple_return_value((Fn),(R),(RetVals),(B))
+#endif
+
+static void llvm_default_build_multiple_return_value(Function *F, Value *RetVal,
+                                              SmallVectorImpl<Value *> &RetVals,
+                                                     IRBuilder &Builder) {
+  assert (0 && "LLVM_BUILD_MULTIPLE_RETURN_VALUE is not implemented!");
+}
+
+// LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
+// SRC and assign it to DEST. Each target that supports multiple return
+// value must implement this hook.
+#ifndef LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,B)
+#define LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,V,B)     \
+  llvm_default_extract_multiple_return_value((Src),(Dest),(V),(B))
+#endif
+static void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
+                                                       bool isVolatile,
+                                                       IRBuilder &Builder) {
+  assert (0 && "LLVM_EXTRACT_MULTIPLE_RETURN_VALUE is not implemented!");
+}
+
 /// DefaultABI - This class implements the default LLVM ABI where structures are
 /// passed by decimating them into individual components and unions are passed
 /// by passing the largest member of the union.

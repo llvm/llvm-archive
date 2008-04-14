@@ -131,8 +131,8 @@ void llvm_initialize_backend(void) {
   if (optimize_size)
     // Reduce inline limit. Default limit is 200.
     Args.push_back("--inline-threshold=100");
-  if (!flag_unwind_tables)
-    Args.push_back("--unwind-tables-optional");
+  if (flag_unwind_tables)
+    Args.push_back("--unwind-tables");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging

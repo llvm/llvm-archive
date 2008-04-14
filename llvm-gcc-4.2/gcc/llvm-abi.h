@@ -300,7 +300,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
 // for the function FN and add them in RETVALS. Each target that
 // supports multiple return value must implement this hook.
 #ifndef LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B)
-#define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,Rs,B) \
+#define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B) \
   llvm_default_build_multiple_return_value((Fn),(R),(RetVals),(B))
 #endif
 

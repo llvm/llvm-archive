@@ -890,7 +890,6 @@ bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
 tree llvm_x86_should_return_vector_as_scalar(tree type, bool isBuiltin) {
   if (TARGET_MACHO &&
       !isBuiltin &&
-      !TARGET_64BIT &&
       TREE_CODE(type) == VECTOR_TYPE &&
       TYPE_SIZE(type) &&
       TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {

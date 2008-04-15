@@ -923,8 +923,9 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
 
 // llvm_suitable_multiple_ret_value_type - Return TRUE if return value 
 // of type TY should be returned using multiple value return instruction.
-static bool llvm_suitable_multiple_ret_value_type(const Type *Ty) {
-
+static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
+                                                  tree TreeType,
+                                                  std::vector<const Type *>&Elts) {
   //NOTE: Work in progress. Do not open the flood gate yet.
   return false; 
 
@@ -934,27 +935,28 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty) {
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy)
     return false;
-  
-  unsigned NumElements = STy->getNumElements();
 
-  bool useMultipleReturnVals = true;
-  for (unsigned i = 0; i < NumElements; ++i) {
-    const Type *T = STy->getElementType(i);
+  //Let gcc specific routine answer the question.
+  enum x86_64_reg_class Class[MAX_CLASSES];
+  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  if (llvm_x86_64_type_needs_multiple_regs(Mode, TreeType, Class)) {
+
+    llvm_x86_64_should_pass_aggregate_in_mixed_regs(TreeType, Ty, Elts);
+    assert (!Elts.empty() && "Unable to handle aggregate return type!");
+    // If it is a singleton structure, e.g. { long double ld;} then use the type
+    // directly.
+    if (Elts.size() == 1)
+      return true;
     
-    if (T->isFirstClassType())
-      continue;
-    
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(T)) {
-      // Allow { float f[4]; } but block { float f[10]; } or { char c[4]; }
-      // FIXME :Double check '5'.
-      if (ATy->getElementType()->isFloatingPoint()
-          && ATy->getNumElements() < 5)
-        continue;
-    }
-    return false;
+    bool foundFloat = false;
+    for (unsigned i = 0; i < Elts.size(); ++i) 
+      if (Elts[i]->isFloatingPoint())
+        foundFloat = true;
+
+    return foundFloat;
   }
-  
-  return true;
+
+  return false;
 }
 
 // llvm_x86_scalar_type_for_struct_return - Return LLVM type if TYPE
@@ -972,8 +974,12 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
     return Type::Int32Ty;
 
   // Check if Ty should be returned using multiple value return instruction.
-  if (llvm_suitable_multiple_ret_value_type(Ty))
+  std::vector<const Type *>Elts;
+  if (llvm_suitable_multiple_ret_value_type(Ty, type, Elts)) {
+    if (Elts.size() == 1)
+      return Elts[0];
     return NULL;
+  }
 
   if (Size <= 8)
     return Type::Int64Ty;
@@ -988,7 +994,8 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
 // Return LLVM Type if TYPE can be returned as an aggregate, otherwise return NULL.
 const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
   const Type *Ty = ConvertType(type);
-  if (!llvm_suitable_multiple_ret_value_type(Ty))
+  std::vector<const Type *>Elts;
+  if (!llvm_suitable_multiple_ret_value_type(Ty, type, Elts))
     return NULL;
 
   const StructType *STy = cast<StructType>(Ty);

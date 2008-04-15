@@ -183,8 +183,8 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // getLLVMScalarTypeForStructReturn - Return LLVM Type if TY can be 
 // returned as a scalar, otherwise return NULL. This is the default
 // target independent implementation.
-static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
-
+static const Type* getLLVMScalarTypeForStructReturn(tree type) {
+  const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getABITypeSize(Ty);
   if (Size == 0)
     return Type::VoidTy;
@@ -207,7 +207,7 @@ static const Type* getLLVMScalarTypeForStructReturn(const Type *Ty) {
 // getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
 // returns as multiple values, otherwise return NULL. This is the default
 // target indepdendent implementation.
-static const Type* getLLVMAggregateTypeForStructReturn(const Type *Ty) {
+static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
   return NULL;
 }
 
@@ -366,9 +366,9 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(Ty))
+        if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type))
           C.HandleAggregateResultAsScalar(ScalarTy);
-        else if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(Ty))
+        else if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
           C.HandleAggregateResultAsAggregate(AggrTy);
         else {
           assert(0 && "Unable to determine how to return this aggregate!");

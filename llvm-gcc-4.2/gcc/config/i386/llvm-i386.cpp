@@ -957,10 +957,10 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty) {
   return true;
 }
 
-// llvm_x86_scalar_type_for_struct_return - Return LLVM type if TY 
+// llvm_x86_scalar_type_for_struct_return - Return LLVM type if TYPE
 // can be returned as a scalar, otherwise return NULL.
-const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
-
+const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
+  const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getABITypeSize(Ty);
   if (Size == 0)
     return Type::VoidTy;
@@ -985,9 +985,9 @@ const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty) {
   return NULL;
 }
 
-// Return LLVM Type if TY can be returned as an aggregate, otherwise return NULL.
-const Type *llvm_x86_aggr_type_for_struct_return(const Type *Ty) {
-
+// Return LLVM Type if TYPE can be returned as an aggregate, otherwise return NULL.
+const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
+  const Type *Ty = ConvertType(type);
   if (!llvm_suitable_multiple_ret_value_type(Ty))
     return NULL;
 

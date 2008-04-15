@@ -105,14 +105,14 @@ extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 #define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
   llvm_x86_scalar_type_for_struct_return(X)
 
-extern const Type *llvm_x86_scalar_type_for_struct_return(const Type *Ty);
+extern const Type *llvm_x86_scalar_type_for_struct_return(tree type);
 
 /* LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as an aggregate, otherwise return NULL. */
 #define LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(X) \
   llvm_x86_aggr_type_for_struct_return(X)
 
-extern const Type *llvm_x86_aggr_type_for_struct_return(const Type *Ty);
+extern const Type *llvm_x86_aggr_type_for_struct_return(tree type);
 
 /* LLVM_BUILD_MULTIPLE_RETURN_VALUE - Build multiple return values
    for the function FN and add them in RETVALS.  */

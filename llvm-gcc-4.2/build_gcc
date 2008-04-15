@@ -84,12 +84,6 @@ LLVM_SUBMIT_SUBVERSION="${11}"
 # LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
 LLVM_BIN_DIR=$DEST_ROOT/../bin
 
-# LLVM_ARCHS - This tells us which architectures we'd like the libraries to be
-# build for. The default is 4-way.
-if [ "x$LLVM_ARCHS" == "x" ]; then
-    LLVM_ARCHS="ppc i386 ppc64 x86_64"
-fi
-
 # LLVM LOCAL end
 
 # The current working directory is where the build will happen.

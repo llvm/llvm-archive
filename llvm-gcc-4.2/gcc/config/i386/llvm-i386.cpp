@@ -850,8 +850,12 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
           // struct { float f[2]; char c; } should be returned in SSE(low)
           // and INT (high).
-          Elts.push_back(VectorType::get(Type::FloatTy, 2));
-          Elts.push_back(Type::DoubleTy);
+          const Type *Ty = ConvertType(TreeType);
+          if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+            Elts.push_back(VectorType::get(Type::FloatTy, 2));
+            Elts.push_back(STy->getElementType(1));
+          } else
+            assert(0 && "Not yet handled!");
         } else
           assert(0 && "Not yet handled!");
         ++i; // Already handled the next one.
@@ -958,7 +962,8 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
     
     bool foundFloat = false;
     for (unsigned i = 0; i < Elts.size(); ++i) 
-      if (Elts[i]->isFloatingPoint())
+      if (Elts[i]->isFloatingPoint()
+          || Elts[i]->getTypeID() == Type::VectorTyID)
         foundFloat = true;
 
     return foundFloat;

@@ -416,13 +416,14 @@ for t in $TARGETS ; do
     done
 done
 
-for t in $TARGETS ; do
-  cp -p /usr/lib/libstdc++.6.dylib \
-    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \
-    || exit 1
-# LLVM LOCAL
-#  strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
-done
+# LLVM LOCAL begin - Don't copy over libstdc++.dylib
+# for t in $TARGETS ; do
+#   cp -p /usr/lib/libstdc++.6.dylib \
+#     .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \
+#     || exit 1
+#   strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
+# done
+# LLVM LOCAL end - Don't copy over libstdc++.dylib
 
 # include
 HEADERPATH=$DEST_ROOT/include/gcc/darwin/$MAJ_VERS

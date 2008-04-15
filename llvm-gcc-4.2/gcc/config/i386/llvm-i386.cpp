@@ -744,6 +744,32 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
   return llvm_x86_64_should_pass_aggregate_in_memory(TreeType, Mode);
 }
 
+/* llvm_x86_64_type_needs_multiple_regs - Return number of register classes
+   need by TREETYPE. Return 0 if TREETYPE does not need multiple registers. 
+   This helper routine is used to determine LLVM type of the function 
+   arguments as well as return values.  */
+static int
+llvm_x86_64_type_needs_multiple_regs(enum machine_mode Mode, tree TreeType,
+                                     enum x86_64_reg_class Class[MAX_CLASSES]) {
+  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  if (!NumClasses)
+    return 0;
+
+  for (int i = 0; i < NumClasses; ++i) {
+    switch (Class[i]) {
+    case X86_64_X87_CLASS:
+    case X86_64_X87UP_CLASS:
+    case X86_64_COMPLEX_X87_CLASS:
+      return 0;
+    case X86_64_NO_CLASS:
+      return 0;
+    default:
+      break;
+    }
+  }
+  return NumClasses;
+}
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in a number of registers of mixed types.
    It also returns a vector of types that correspond to the registers used
@@ -755,7 +781,7 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
-  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  int NumClasses = llvm_x86_64_type_needs_multiple_regs(Mode, TreeType, Class);
   if (!NumClasses)
     return false;
  

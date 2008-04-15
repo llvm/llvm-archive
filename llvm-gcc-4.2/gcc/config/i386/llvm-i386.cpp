@@ -843,6 +843,15 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
           Elts.push_back(Type::DoubleTy);
           Elts.push_back(Type::DoubleTy);
           Bytes -= 16;
+        } else if (Class[i+1] == X86_64_SSEDF_CLASS && Bytes == 16) {
+          // struct {float f[2]; double d; } should be returned in SSE registers.
+          Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::DoubleTy);
+        } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
+          // struct { float f[2]; char c; } should be returned in SSE(low)
+          // and INT (high).
+          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Type::DoubleTy);
         } else
           assert(0 && "Not yet handled!");
         ++i; // Already handled the next one.

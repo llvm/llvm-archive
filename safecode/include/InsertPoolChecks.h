@@ -191,6 +191,7 @@ struct InsertPoolChecks : public FunctionPass {
 
     // Functions
     Function *PoolCheck;
+    Function *PoolCheckIO;
     Function *PoolCheckAlign;
     Function *PoolCheckUI;
     Function *PoolCheckAlignUI;
@@ -210,8 +211,10 @@ struct InsertPoolChecks : public FunctionPass {
     Function *GetActualValue;
     Function *PoolRegister;
     Function *StackRegister;
+    Function *IORegister;
     Function *ObjFree;
     Function *StackFree;
+    Function *IO;
     Function *FuncRegister;
     Function *KmemCachegetSize;
     Function *PoolRegMP;
@@ -262,7 +265,7 @@ struct InsertPoolChecks : public FunctionPass {
       else
         return 0;
     }
-    void addLSChecks(Value *V, Instruction *I, Function *F);
+    void addLSChecks(Value *V, Instruction *I, Function *F, bool io = false);
     Value * getPoolHandle(const Value *V, Function *F);
 #endif  
 };

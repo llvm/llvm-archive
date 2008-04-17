@@ -43,6 +43,10 @@ namespace {
                                 cl::init(false),
                                 cl::desc("Disable Static Array Bounds Checks"));
 
+  cl::opt<bool> DoStructChecks ("enable-structchecks", cl::Hidden,
+                                cl::init(false),
+                                cl::desc("Perform checks on struct indexes"));
+
   cl::opt<string> OmegaFilename("omegafile",
                                 cl::desc("Specify omega include filename"),
                                 cl::init(OMEGA_TMP_INCLUDE_FILE),
@@ -901,6 +905,16 @@ bool ArrayBoundsCheck::runOnModule(Module &M) {
   cbudsPass = &getAnalysis<CompleteBUDataStructures>();
   buCG      = &getAnalysis<BottomUpCallGraph>();
 
+  if (DoStructChecks)
+    std::cerr << "JTC: Doing Struct Checks" << std::endl;
+  else
+    std::cerr << "JTC: Not Doing Struct Checks" << std::endl;
+
+  if (NoStaticChecks)
+    std::cerr << "JTC: No Static Checks" << std::endl;
+  else
+    std::cerr << "JTC: Static Checks" << std::endl;
+
   Mang = new Mangler(M);
   
   initialize(M);
@@ -998,7 +1012,7 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
         } else {
           if (NoStaticChecks) {
-            if (!indexesStructsOnly (MAI))
+            if ((!DoStructChecks) && (!indexesStructsOnly (MAI)))
               MarkGEPUnsafe (MAI);
             else
               ++SafeStructs;

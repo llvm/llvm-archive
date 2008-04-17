@@ -39,6 +39,10 @@ cl::opt<bool> EnableSplitChecks  ("enable-splitchecks", cl::Hidden,
                                   cl::init(false),
                                   cl::desc("Split lookup and checks"));
 
+cl::opt<bool> EnableIOChecks  ("enable-iochecks", cl::Hidden,
+                               cl::init(false),
+                               cl::desc("Enable checks on I/O operations"));
+
 cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::Hidden, cl::init(false),
                 cl::desc("Insert pool checks instead of exact bounds checks"));
@@ -95,6 +99,7 @@ static Statistic<> FullChecks ("safecode",
 static Statistic<> MissChecks ("safecode",
                                "Poolchecks omitted due to bad pool descriptor");
 static Statistic<> PoolChecks ("safecode", "Poolchecks Added");
+static Statistic<> IOPoolChecks ("safecode", "I/O checks Added");
 
 static Statistic<> FuncChecks ("safecode", "Indirect Call Checks Added");
 static Statistic<> MissedFuncChecks ("safecode", "Indirect Call Checks Missed");
@@ -111,6 +116,8 @@ static Statistic<> UBoundsChecks    ("safecode",
                                      "Bounds checks with unknown DSNode");
 static Statistic<> ABoundsChecks    ("safecode",
                                      "Bounds checks with stack DSNode");
+static Statistic<> OBoundsChecks    ("safecode",
+                                     "Bounds checks with I/O DSNode");
 static Statistic<> NullBoundsChecks ("safecode",
                                      "Missed bounds checks - NULL pool handle");
 static Statistic<> NoSHGBoundsChecks ("safecode",
@@ -147,13 +154,21 @@ static std::set<Value *> CheckedValues;
 // Static Functions
 ////////////////////////////////////////////////////////////////////////////
 
+//
+// Function: isNodeRegistered()
+//
+// Description:
+//  Flag whether the given DSNode would be registered at run-time in a
+//  MetaPool.
+//
 static inline bool
 isNodeRegistered (DSNode * Node) {
   // Do not perform checks on the pointer if its DSNode does not have a known
   // allocation site.
   if (!((Node->isAllocaNode()) ||
         (Node->isHeapNode())   ||
-        (Node->isGlobalNode()))) {
+        (Node->isGlobalNode()) ||
+        (EnableIOChecks && (Node->isIONode())))) {
     ++NoSHGBoundsChecks;
     return false;
   }
@@ -691,6 +706,7 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
     FunctionType::get(Type::VoidTy,Arg, false);
   PoolCheck   = M.getOrInsertFunction("poolcheck", PoolCheckTy);
   PoolCheckUI = M.getOrInsertFunction("poolcheck_i", PoolCheckTy);
+  PoolCheckIO = M.getOrInsertFunction("poolcheckio", PoolCheckTy);
 
   Arg.clear();
   Arg.push_back(VoidPtrType);
@@ -726,6 +742,8 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
+  IORegister = M.getOrInsertFunction("pchk_reg_io", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
                                   VoidPtrType, NULL);
@@ -866,8 +884,22 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (len);
         new CallInst(PoolRegister, args, "", IP);
-      } else if (name == "__ioremap") {
-        ; // Do nothing right now
+      } else if ((name == "__ioremap") || 
+                 (name == "ioremap_nocache")) {
+#ifdef SVA_IO
+        if (EnableIOChecks) {
+          // Register object after allocation
+          Instruction* IP = i->getInstruction()->getNext();
+          Value* VP  = castTo (i->getInstruction(), VoidPtrType, IP);
+          Value* VMP = castTo (MPV, VoidPtrType, IP);
+          Value* len = castTo (i->getArgument(1), Type::UIntTy, IP);
+
+          args.push_back (VMP);
+          args.push_back (VP);
+          args.push_back (len);
+          new CallInst(IORegister, args, "", IP);
+        }
+#endif
       } else
         assert(0 && "unknown alloc");
     }
@@ -1002,6 +1034,10 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   DSGraph & TDG = getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
 
+  if (Node)
+    if (Node->isIONode())
+      std::cerr << "JTC: Bounds Check: IONOde" << std::endl;
+
   //
   // Determine whether an alignment check is needed.  This occurs when a DSNode
   // is type unknown (collapsed) but has pointers to type known (uncollapsed)
@@ -1026,6 +1062,8 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     ++UBoundsChecks;
   if (Node->isAllocaNode())
     ++ABoundsChecks;
+  if (Node->isIONode())
+    ++OBoundsChecks;
 
   //
   // Cast the pool handle, source and destination pointers into the correct
@@ -2219,7 +2257,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   //
   // Update the statistics.
   //
-  PoolChecks = NullChecks + FullChecks;
+  PoolChecks = NullChecks + FullChecks + IOPoolChecks;
   
   return true;
 }
@@ -2535,6 +2573,17 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
 #endif
     return;
   }
+
+#if 1
+  // JTC: Debugging for I/O
+  DSGraph & TDG = getDSGraph(*(MAI->getParent()->getParent()));
+  DSNode * Node = TDG.getNodeForValue(MAI).getNode();
+  if (Node)
+    if (Node->isIONode())
+      std::cerr << "JTC: GEP with IO: " << *MAI << std::endl;
+    else
+      std::cerr << "JTC: GEP without IO: " << *MAI << std::endl;
+#endif
 
 #if 0
   // Find all unsafe GEPs within the basic block that are identical save for
@@ -3376,7 +3425,7 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
   //
   DSNode * Node = getDSNode (LI->getPointerOperand(), F);
   if (!Node) return;
-  for (unsigned i = 0 ; i < Node->getNumLinks(); ++i) {
+  for (unsigned i = 0 ; i < Node->getNumLinks(); i+=4) {
     DSNodeHandle & LinkNode = Node->getLink(i);
     if (LinkNode.getNode() == LoadResultNode) {
       // Insertion point for this check is *after* the load.
@@ -3408,21 +3457,36 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
 // Description:
 //  Insert a poolcheck() into the code for a load or store instruction.
 //
-void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
+void
+InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F, bool io) {
+  //
+  // Only insert I/O checks if the option is enabled.
+  //
+  if ((io) && (!EnableIOChecks)) return;
+
   // Get the DSNode for the pointer to check
   DSNode * Node = getDSNode (V,F);
 
   //
-  // Do not perform any checks if there is no DSNode, if the node is not folded,
-  // or if the node is incomplete.
+  // If there is no DSNode for this value, we cannot perform a check on it.
   //
-  if (!(Node && Node->isNodeCompletelyFolded()))
+  if (!Node) return;
+
+  //
+  // Do not perform a check on regular memory if:
+  //  o there is no DSNode,
+  //  o the node is not folded (i.e., the node is type-consistent),
+  //  o the node is incomplete,
+  //
+  if (!((Node->isNodeCompletelyFolded()) ||
+        (Node->isUnknownNode()) ||
+        (Node->isIONode())))
     return;
 
   //
   // If the node is not registered, don't bother to check it.
   //
-  if (!(isNodeRegistered (Node)))
+  if (!((isNodeRegistered (Node)) || (Node->isUnknownNode())))
     return;
 
   //
@@ -3430,12 +3494,16 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // the possibility that the object will not be found.
   //
   Function * ThePoolCheckFunction = PoolCheck;
-  if ((Node->isUnknownNode()) || (Node->isIncomplete())) {
-    if (EnableUnknownChecks) {
-      ThePoolCheckFunction = PoolCheckUI;
-    } else {
-      ++MissedIncompleteChecks;
-      return;
+  if (io) {
+    ThePoolCheckFunction = PoolCheckIO;
+  } else {
+    if ((Node->isUnknownNode()) || (Node->isIncomplete())) {
+      if (EnableUnknownChecks) {
+        ThePoolCheckFunction = PoolCheckUI;
+      } else {
+        ++MissedIncompleteChecks;
+        return;
+      }
     }
   }
 
@@ -3455,7 +3523,16 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // Do not perform a load/store check if the pointer used for this operation
   // has already been checked.
   //
-  if (findCheckedPointer(V)) {
+  // NOTE:
+  //  This optimization only works if we don't do I/O checking.  Bounds checks
+  //  only ensure that we are accessing a valid object; they do not ensure that
+  //  we are accessing either an I/O object or a regular memory object.
+  //
+  // FIXME:
+  //  Disabling the optimization below prevents the kernel from booting on
+  //  VMWare.
+  //
+  if ((!io) && (findCheckedPointer(V))) {
     ++SavedPoolChecks;
     return;
   }
@@ -3478,7 +3555,10 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   } else {
     // This will be a full check; update the stats.
     assert (isa<GlobalValue>(PH));
-    ++FullChecks;
+    if (io)
+      ++IOPoolChecks;
+    else
+      ++FullChecks;
   }
 
   // Create instructions to cast the checked pointer and the checked pool
@@ -3512,6 +3592,16 @@ void InsertPoolChecks::addLoadStoreChecks (Function & FR) {
             (CalledFunc->getName() == "llva_atomic_or")) {
           Value * P = CI->getOperand(1);
           addLSChecks (P, CI, F);
+        } else if ((CalledFunc->getName() == "llva_readiob") ||
+                   (CalledFunc->getName() == "llva_readioh") ||
+                   (CalledFunc->getName() == "llva_readiow")) {
+          Value * P = CI->getOperand(1);
+          addLSChecks (P, CI, F, true);
+        } else if ((CalledFunc->getName() == "llva_writeiob") ||
+                   (CalledFunc->getName() == "llva_writeioh") ||
+                   (CalledFunc->getName() == "llva_writeiow")) {
+          Value * P = CI->getOperand(1);
+          addLSChecks (P, CI, F, true);
         }
       }
     }

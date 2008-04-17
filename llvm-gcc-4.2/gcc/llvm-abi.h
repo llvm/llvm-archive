@@ -104,6 +104,14 @@ static bool isAggregateTreeType(tree type) {
          TREE_CODE(type) == COMPLEX_TYPE;
 }
 
+// LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY - A hook to allow
+// special _Complex handling. Return true if X should be returned using
+// multiple value return instruction.
+#ifndef LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY
+#define LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(X) \
+ false
+#endif
+
 // doNotUseShadowReturn - Return true if the specified GCC type 
 // should not be returned using a pointer to struct parameter. 
 static bool doNotUseShadowReturn(tree type, tree fndecl) {
@@ -111,6 +119,9 @@ static bool doNotUseShadowReturn(tree type, tree fndecl) {
     return false;
   if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
     return false;
+  // LLVM says do no use shadow argument.
+  if (LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(type))
+    return true;
   // GCC says use shadow argument.
   if (aggregate_value_p(type, fndecl))
     return false;

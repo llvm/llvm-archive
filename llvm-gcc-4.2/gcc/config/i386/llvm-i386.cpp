@@ -900,12 +900,27 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
   return false;
 }
 
+// llvm_x86_should_not_return_complex_in_memory -  Return true if TYPE 
+// should be returned using multiple value return instruction.
+bool llvm_x86_should_not_return_complex_in_memory(tree type) {
+  if (!TARGET_64BIT)
+    return false;
+
+  if (AGGREGATE_TYPE_P(type)) {
+    tree field = TYPE_FIELDS(type);
+    if (field && TREE_CHAIN(field) == NULL 
+        && TREE_CODE(TREE_TYPE(field)) == COMPLEX_TYPE)
+      return true;
+  }
+  return false;
+}
+
 // llvm_suitable_multiple_ret_value_type - Return TRUE if return value 
 // of type TY should be returned using multiple value return instruction.
 static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
                                                   tree TreeType) {
   //NOTE: Work in progress. Do not open the flood gate yet.
-  return false; 
+  //  return false; 
 
   if (!TARGET_64BIT)
     return false;
@@ -913,6 +928,9 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy)
     return false;
+
+  if (llvm_x86_should_not_return_complex_in_memory(TreeType))
+    return true;
 
   // llvm only accepts first class types for multiple values in ret instruction.
   bool foundNonInt = false;
@@ -922,7 +940,7 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
     const Type *ETy = STy->getElementType(i);
     if (const ArrayType *ATy = dyn_cast<ArrayType>(ETy))
       ETy = ATy->getElementType();
-    if (!ETy->isFirstClassType())
+    if (!ETy->isFirstClassType() && ETy->getTypeID() != Type::X86_FP80TyID)
       return false;
     if (!ETy->isInteger())
       foundNonInt = true;
@@ -987,8 +1005,15 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
 
   const StructType *STy = cast<StructType>(Ty);
   unsigned NumElements = STy->getNumElements();
-
   std::vector<const Type *> ElementTypes;
+
+  // Special handling for _Complex.
+  if (llvm_x86_should_not_return_complex_in_memory(type)) {
+    ElementTypes.push_back(Type::X86_FP80Ty);
+    ElementTypes.push_back(Type::X86_FP80Ty);
+    return StructType::get(ElementTypes, STy->isPacked());
+  } 
+    
   for (unsigned i = 0; i < NumElements; ++i) {
     const Type *T = STy->getElementType(i);
     
@@ -1086,8 +1111,22 @@ void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
       ++RNO;
       ++SNO;
       continue;
+    } 
+    // Special treatement for _Complex.
+    if (const StructType *ComplexType = dyn_cast<StructType>(ElemType)) {
+      llvm::Value *Idxs[3];
+      Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, RNO);
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
+      RetVals.push_back(Builder.CreateLoad(GEP, "mrv"));
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 1);
+      GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
+      RetVals.push_back(Builder.CreateLoad(GEP, "mrv"));
+      ++RNO;
+      ++SNO;
+      continue;
     }
-
     const ArrayType *ATy = cast<ArrayType>(ElemType);
     unsigned ArraySize = ATy->getNumElements();
     unsigned AElemNo = 0;
@@ -1172,6 +1211,26 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
       ++DNO; ++SNO;
       continue;
     } 
+
+    // Special treatement for _Complex.
+    if (const StructType *ComplexType = dyn_cast<StructType>(DestElemType)) {
+      llvm::Value *Idxs[3];
+      Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DNO);
+
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
+      GetResultInst *GR = Builder.CreateGetResult(Src, 0, "mrv_gr");
+      Builder.CreateStore(GR, GEP, isVolatile);
+      ++SNO;
+
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 1);
+      GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
+      GR = Builder.CreateGetResult(Src, 1, "mrv_gr");
+      Builder.CreateStore(GR, GEP, isVolatile);
+      ++DNO; ++SNO;
+      continue;
+    }
     
     // Access array elements individually. Note, Src and Dest type may
     // not match. For example { <2 x float>, float } and { float[3]; }

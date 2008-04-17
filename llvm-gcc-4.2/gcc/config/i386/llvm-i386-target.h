@@ -151,6 +151,15 @@ extern bool llvm_x86_should_return_vector_as_shadow(tree, bool);
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
   llvm_x86_should_return_vector_as_shadow((X),(isBuiltin))
 
+extern bool
+llvm_x86_should_not_return_complex_in_memory(tree type);
+
+/* LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY - A hook to allow
+   special _Complex handling. Return true if X should be returned using
+   multiple value return instruction.  */
+#define LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(X) \
+  llvm_x86_should_not_return_complex_in_memory((X))
+
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \

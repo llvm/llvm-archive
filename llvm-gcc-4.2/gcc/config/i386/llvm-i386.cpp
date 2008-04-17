@@ -920,7 +920,7 @@ bool llvm_x86_should_not_return_complex_in_memory(tree type) {
 static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
                                                   tree TreeType) {
   //NOTE: Work in progress. Do not open the flood gate yet.
-  //  return false; 
+  return false; 
 
   if (!TARGET_64BIT)
     return false;

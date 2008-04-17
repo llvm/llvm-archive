@@ -906,6 +906,9 @@ bool llvm_x86_should_not_return_complex_in_memory(tree type) {
   if (!TARGET_64BIT)
     return false;
 
+  if (TREE_CODE(type) == COMPLEX_TYPE)
+    return true;
+`
   if (AGGREGATE_TYPE_P(type)) {
     tree field = TYPE_FIELDS(type);
     if (field && TREE_CHAIN(field) == NULL 

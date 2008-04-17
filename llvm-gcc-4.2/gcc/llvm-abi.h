@@ -119,7 +119,7 @@ static bool doNotUseShadowReturn(tree type, tree fndecl) {
     return false;
   if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
     return false;
-  // LLVM says do no use shadow argument.
+  // LLVM says do not use shadow argument.
   if (LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(type))
     return true;
   // GCC says use shadow argument.

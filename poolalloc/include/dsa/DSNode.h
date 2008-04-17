@@ -420,7 +420,7 @@ public:
   bool isComplete() const   { return !isIncomplete(); }
   bool isDeadNode() const   { return NodeType & DEAD; }
   bool isExternalNode() const { return NodeType & External; }
-  bool isIONode() const { return IONode & External; }
+  bool isIONode() const       { return NodeType & IONode; }
 
   DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
   DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }

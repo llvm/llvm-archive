@@ -244,7 +244,7 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
 void
 pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len) {
   unsigned int index;
-  if (!MP) { return; }
+  if (!pchk_ready || !MP) return;
   PCLOCK();
 
   ++stat_regio;
@@ -512,12 +512,23 @@ poolcheckio(MetaPoolTy* MP, void* addr) {
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
   ++stat_poolcheck;
+
+  /*
+   * Determine if this is an I/O port address.  If so, just let it pass.
+   */
+  if (((unsigned int)(addr)) & 0xffff0000)
+    return;
+
   PCLOCK();
   int t = adl_splay_find(&MP->IOObjs, addr);
   PCUNLOCK();
   if (t)
     return;
+#if 0
   if (do_fail) poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+#else
+  if (1) poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+#endif
 }
 #endif
 
@@ -649,11 +660,18 @@ void * getEnd (void * node) {
 
 void* getBounds(MetaPoolTy* MP, void* src) {
   if (!pchk_ready || !MP) return &found;
+
+  /*
+   * Update profiling and statistics.
+   */
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
   ++stat_boundscheck;
-  /* first check for user space */
+
+  /*
+   * First check for user space
+   */
   if (src < USERSPACE) return &userspace;
 
   /* try objs */
@@ -665,6 +683,19 @@ void* getBounds(MetaPoolTy* MP, void* src) {
     PCUNLOCK();
     return (MP->Objs);
   }
+
+  /*
+   * Try I/O objects.
+   */
+#ifdef SVA_IO
+  S = src;
+  len = 0;
+  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
+  if (fs) {
+    PCUNLOCK();
+    return (MP->IOObjs);
+  }
+#endif
 
   PCUNLOCK();
 
@@ -738,6 +769,19 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
     PCUNLOCK();
     return MP->Objs;
   }
+
+  /*
+   * Try I/O objects.
+   */
+#ifdef SVA_IO
+  S = src;
+  len = 0;
+  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
+  if (fs) {
+    PCUNLOCK();
+    return (MP->IOObjs);
+  }
+#endif
 
   PCUNLOCK();
 

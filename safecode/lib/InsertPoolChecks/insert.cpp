@@ -1685,6 +1685,7 @@ isEligableForExactCheck (Value * Pointer) {
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction() &&
         (CI->getCalledFunction()->getName() == "__vmalloc" || 
+         CI->getCalledFunction()->getName() == "__ioremap" || 
          CI->getCalledFunction()->getName() == "malloc" || 
          CI->getCalledFunction()->getName() == "kmalloc" || 
          CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
@@ -2034,6 +2035,10 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
       // Add the exactcheck
       Value* CastLen = castTo (len, Type::IntTy, GEP);
       addExactCheck2(PointerOperand, GEP, CastLen, GEP->getNext());
+    } else if (CI->getCalledFunction()->getName() == "__ioremap") {
+      Value* Cast = new CastInst (CI->getOperand(2), Type::IntTy, "", GEP);
+      addExactCheck2(PointerOperand, GEP, Cast, GEP->getNext());
+      return true;
     }
   }
 

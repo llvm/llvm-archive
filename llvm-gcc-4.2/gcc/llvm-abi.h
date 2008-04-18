@@ -109,7 +109,7 @@ static bool isAggregateTreeType(tree type) {
 // multiple value return instruction.
 #ifndef LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY
 #define LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(X) \
- false
+ true
 #endif
 
 // doNotUseShadowReturn - Return true if the specified GCC type 

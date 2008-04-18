@@ -903,6 +903,9 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
 // llvm_x86_should_not_return_complex_in_memory -  Return true if TYPE 
 // should be returned using multiple value return instruction.
 bool llvm_x86_should_not_return_complex_in_memory(tree type) {
+
+  return false;
+#if 0
   if (!TARGET_64BIT)
     return false;
 
@@ -916,6 +919,7 @@ bool llvm_x86_should_not_return_complex_in_memory(tree type) {
       return true;
   }
   return false;
+#endif
 }
 
 // llvm_suitable_multiple_ret_value_type - Return TRUE if return value 

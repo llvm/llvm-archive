@@ -3521,20 +3521,20 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F, bool io) {
 
   //  
   // Do not perform a load/store check if the pointer used for this operation
-  // has already been checked.
+  // has already been checked.  However, we must do the check if the pointer
+  // could be pointing to an I/O object *or* a regular memory object (bounds
+  // checks only ensure that we are accessing a valid object; they do not
+  // ensure that we are accessing the correct type (I/O or regular memory) of
+  // object).
   //
-  // NOTE:
-  //  This optimization only works if we don't do I/O checking.  Bounds checks
-  //  only ensure that we are accessing a valid object; they do not ensure that
-  //  we are accessing either an I/O object or a regular memory object.
   //
-  // FIXME:
-  //  Disabling the optimization below prevents the kernel from booting on
-  //  VMWare.
-  //
-  if ((!io) && (findCheckedPointer(V))) {
-    ++SavedPoolChecks;
-    return;
+  if (!((Node->isIONode()) && (Node->isHeapNode()   ||
+                               Node->isGlobalNode() ||
+                               Node->isAllocaNode()))) {
+    if ((findCheckedPointer(V))) {
+      ++SavedPoolChecks;
+      return;
+    }
   }
 
   // Get the pool handle associated with this pointer.  If there is no pool

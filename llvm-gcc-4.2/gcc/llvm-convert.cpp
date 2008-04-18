@@ -4992,18 +4992,16 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   Value *Arg1 = Emit(Arg1T, 0);   // Emit the address of the destination.
   // The second arg of llvm.va_copy is a pointer to a valist.
   Value *Arg2;
-  if (!isAggregateTreeType(TREE_TYPE(Arg2T))) {
+  if (!isAggregateTreeType(va_list_type_node)) {
     // Emit it as a value, then store it to a temporary slot.
     Value *V2 = Emit(Arg2T, 0);
     Arg2 = CreateTemporary(V2->getType());
     Builder.CreateStore(V2, Arg2);
   } else {
-    // If the target has aggregate valists, emit the srcval directly into a
-    // temporary.
-    const Type *VAListTy = cast<PointerType>(Arg1->getType())->getElementType();
-    MemRef DestLoc = CreateTempLoc(VAListTy);
-    Emit(Arg2T, &DestLoc);
-    Arg2 = DestLoc.Ptr;
+    // If the target has aggregate valists, then the second argument
+    // from GCC is the address of the source valist and we don't
+    // need to do anything special.
+    Arg2 = Emit(Arg2T, 0);
   }
 
   static const Type *VPTy = PointerType::getUnqual(Type::Int8Ty);

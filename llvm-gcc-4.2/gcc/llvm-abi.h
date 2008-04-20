@@ -217,7 +217,7 @@ static const Type* getLLVMScalarTypeForStructReturn(tree type) {
 
 // getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
 // returns as multiple values, otherwise return NULL. This is the default
-// target indepdendent implementation.
+// target independent implementation.
 static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
   return NULL;
 }
@@ -310,7 +310,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // LLVM_BUILD_MULTIPLE_RETURN_VALUE - Build multiple return values
 // for the function FN and add them in RETVALS. Each target that
 // supports multiple return value must implement this hook.
-#ifndef LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B)
+#ifndef LLVM_BUILD_MULTIPLE_RETURN_VALUE
 #define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B) \
   llvm_default_build_multiple_return_value((Fn),(R),(RetVals),(B))
 #endif
@@ -324,7 +324,7 @@ static void llvm_default_build_multiple_return_value(Function *F, Value *RetVal,
 // LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
 // SRC and assign it to DEST. Each target that supports multiple return
 // value must implement this hook.
-#ifndef LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,B)
+#ifndef LLVM_EXTRACT_MULTIPLE_RETURN_VALUE
 #define LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,V,B)     \
   llvm_default_extract_multiple_return_value((Src),(Dest),(V),(B))
 #endif

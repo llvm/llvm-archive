@@ -37,6 +37,10 @@ Boston, MA 02110-1301, USA.  */
 /* LLVM LOCAL begin */
 
 #ifdef ENABLE_LLVM
+
+/* Add general target specific stuff */
+#include "llvm-i386-target.h"
+
 /* Register class used for passing given 64bit part of the argument.
    These represent classes as documented by the PS ABI, with the exception
    of SSESF, SSEDF classes, that are basically SSE class, just gcc will

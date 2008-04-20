@@ -427,9 +427,6 @@ extern bool i386_pe_dllexport_p(tree);
     }                                                   \
   }
 
-/* Add general target specific stuff */
-#include "llvm-i386-target.h"
-
 /* LLVM LOCAL end */
 
 #endif

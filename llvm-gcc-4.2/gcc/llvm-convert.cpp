@@ -5727,8 +5727,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     if (llvm::sys::bigEndianHost() != FLOAT_WORDS_BIG_ENDIAN)
       std::swap(UArr[0], UArr[1]);
 
-    return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat((float)V)
-                                                 : APFloat(V));
+    return ConstantFP::get(Ty==Type::FloatTy ? APFloat((float)V) : APFloat(V));
   } else if (Ty==Type::X86_FP80Ty) {
     long RealArr[4];
     uint64_t UArr[2];
@@ -5739,7 +5738,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint16_t)(RealArr[0] >> 16)));
     UArr[1] = (uint16_t)RealArr[0];
 
-    return ConstantFP::get(Ty, APFloat(APInt(80, 2, UArr)));
+    return ConstantFP::get(APFloat(APInt(80, 2, UArr)));
   } else if (Ty==Type::PPC_FP128Ty) {
     long RealArr[4];
     uint64_t UArr[2];
@@ -5749,7 +5748,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[1]));
     UArr[1] = ((uint64_t)((uint32_t)RealArr[2]) << 32) |
               ((uint64_t)((uint32_t)RealArr[3]));
-    return ConstantFP::get(Ty, APFloat(APInt(128, 2, UArr)));
+    return ConstantFP::get(APFloat(APInt(128, 2, UArr)));
   }
   assert(0 && "Floating point type not handled yet");
   return 0;   // outwit compiler warning

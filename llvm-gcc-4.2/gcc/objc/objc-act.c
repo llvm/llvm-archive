@@ -6498,6 +6498,36 @@ objc2_build_indirect_ref_ivar2 (tree indir, tree offset, tree newoutervar)
 }	/* This comment appeases the checklocal daemon.  */
 /* APPLE LOCAL end radar 4982951 */
 
+/* LLVM LOCAL - begin pointer arithmetic */
+/* llvm-gcc intentionally preserves array notation &array[i] and avoids
+   pointer arithmetic.
+
+   Example 1: struct { int *a; } *b;    b->a[2] = 42;
+   Example 2: struct { int a[42]; } *b;  b->a[2] = 42;
+
+   In both of this cases, expr is preserved as ARRAY_REF. Normally, gcc
+   would decomponse first example into a pointer arithmetic expression.
+   So in llvm mode, check expression's field type to ensure that this is really a
+   array reference or not.  */
+static int objc_is_really_array_ref(tree expr) {
+  tree component = NULL_TREE;
+  tree field = NULL_TREE;
+
+  if (TREE_CODE(expr) != ARRAY_REF)
+    return 0;
+
+  component = TREE_OPERAND(expr, 0);
+  if (!component || TREE_CODE(component) != COMPONENT_REF)
+    return 0;
+
+  field = TREE_OPERAND(component, 1);
+  if (!field || TREE_CODE(TREE_TYPE(field)) != ARRAY_TYPE)
+    return 0;
+
+  return 1;
+}
+/* LLVM LOCAL - end pointer arithmetic */
+
 static tree
 objc_substitute_decl (tree expr, tree oldexpr, tree newexpr)
 {
@@ -6512,11 +6542,9 @@ objc_substitute_decl (tree expr, tree oldexpr, tree newexpr)
 				    oldexpr,
 				    newexpr),
 	      DECL_NAME (TREE_OPERAND (expr, 1)));
-    case ARRAY_REF:
-      return build_array_ref (objc_substitute_decl (TREE_OPERAND (expr, 0),
-						    oldexpr,
-						    newexpr),
-			      TREE_OPERAND (expr, 1));
+    /* LLVM LOCAL - begin pointer arithmetic */
+    /* Moved ARRAY_REF to "default" case */
+    /* LLVM LOCAL - end pointer arithmetic */
     case INDIRECT_REF:
       /* APPLE LOCAL begin radar 4982951 */
       {
@@ -6530,6 +6558,14 @@ objc_substitute_decl (tree expr, tree oldexpr, tree newexpr)
 						       oldexpr,
 						       newexpr), "->");
     default:
+      /* LLVM LOCAL - begin pointer arithmetic */
+      if (objc_is_really_array_ref(expr))
+        return build_array_ref (objc_substitute_decl (TREE_OPERAND (expr, 0),
+                                                      oldexpr,
+                                                      newexpr),
+                                TREE_OPERAND (expr, 1));
+      /* LLVM LOCAL - end pointer arithmetic */
+
       return expr;
     }
 }
@@ -6810,7 +6846,9 @@ objc_is_gcable_p (tree expr)
     expr = TREE_OPERAND (TREE_OPERAND (TREE_OPERAND (expr, 0), 0), 0);
 
   /* Zero in on the variable/parameter being assigned to.  */
-  while (TREE_CODE (expr) == COMPONENT_REF || TREE_CODE (expr) == ARRAY_REF)
+  /* LLVM LOCAL - begin pointer arithmetic */
+  while (TREE_CODE (expr) == COMPONENT_REF || objc_is_really_array_ref(expr))
+  /* LLVM LOCAL - end pointer arithmetic */
     expr = TREE_OPERAND (expr, 0);
 
   /* Parameters and local variables (and their fields) are NOT GC-able.  */
@@ -6858,34 +6896,6 @@ objc_strip_off_indirection (tree expr)
   return expr;
 }
 /* APPLE LOCAL end radar 4591756 */
-
-/* LLVM LOCAL begin LLVM */
-/* llvm-gcc intentionally preserves array notation &array[i] and avoids
-   pointer arithmetic. 
-   Example 1: struct { int *a; } b;    b->a[2] = 42;
-   Example 2: struct { int a[42]; } b;  b->a[2] = 42.
-   In both of this cases, expr is preserved as ARRAY_REF. Normally, gcc
-   would decomponse first example into a pointer arithmetic expression.
-   So in llvm mode, check expression's field type to ensure that this is really a
-   array reference or not. */
-static int objc_is_really_array_ref(tree expr) {
-  tree component = NULL_TREE;
-  tree field = NULL_TREE;
-
-  if (TREE_CODE(expr) != ARRAY_REF)
-    return 0;
-
-  component = TREE_OPERAND(expr, 0);
-  if (!component || TREE_CODE(component) != COMPONENT_REF)
-    return 0;
-
-  field = TREE_OPERAND(component, 1);
-  if (!field || TREE_CODE(TREE_TYPE(field)) != ARRAY_TYPE)
-    return 0;
-
-  return 1;
-}
-/* LLVM LOCAL end LLVM */
 
 static int
 objc_is_ivar_reference_p (tree expr)
@@ -6964,7 +6974,8 @@ objc_generate_write_barrier (tree lhs, enum tree_code modifycode, tree rhs)
   /* APPLE LOCAL end radar 4591756 */
   while (outer
 	 && (TREE_CODE (outer) == COMPONENT_REF
-	     || TREE_CODE (outer) == ARRAY_REF))
+             /* LLVM LOCAL pointer arithmetic */
+             || objc_is_really_array_ref(outer)))
     outer = TREE_OPERAND (outer, 0);
 
   /* APPLE LOCAL objc2 */

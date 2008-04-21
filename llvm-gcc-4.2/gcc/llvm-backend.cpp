@@ -356,14 +356,15 @@ static void createOptimizationPasses() {
     if (flag_unit_at_a_time && flag_exceptions)
       PM->add(createPruneEHPass());               // Remove dead EH info
 
+    if (flag_inline_trees)                      // respect -fno-inline-functions
+      PM->add(createFunctionInliningPass());    // Inline small functions
+
     if (optimize > 1) {
-      if (flag_inline_trees > 1)                // respect -fno-inline-functions
-        PM->add(createFunctionInliningPass());  // Inline small functions
       if (flag_unit_at_a_time && !lang_hooks.flag_no_builtin())
         PM->add(createSimplifyLibCallsPass());  // Library Call Optimizations
 
       if (optimize > 2)
-    	PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
+        PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
     }
     
     PM->add(createTailDuplicationPass());       // Simplify cfg by copying code
@@ -396,10 +397,14 @@ static void createOptimizationPasses() {
     PM->add(createDeadStoreEliminationPass());  // Delete dead stores
     PM->add(createAggressiveDCEPass());         // SSA based 'Aggressive DCE'
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-    
+
+    if (flag_unit_at_a_time) {
+      PM->add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
+      PM->add(createDeadTypeEliminationPass());   // Eliminate dead types
+    }
+
     if (optimize > 1 && flag_unit_at_a_time)
       PM->add(createConstantMergePass());       // Merge dup global constants 
-    PM->add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
   }
   
   if (emit_llvm_bc) {

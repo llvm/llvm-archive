@@ -904,31 +904,20 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
 // should be returned using multiple value return instruction.
 bool llvm_x86_should_not_return_complex_in_memory(tree type) {
 
-  return false;
-#if 0
   if (!TARGET_64BIT)
     return false;
 
-  if (TREE_CODE(type) == COMPLEX_TYPE)
+  if (TREE_CODE(type) == COMPLEX_TYPE &&
+      TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) == 32)
     return true;
 
-  if (AGGREGATE_TYPE_P(type)) {
-    tree field = TYPE_FIELDS(type);
-    if (field && TREE_CHAIN(field) == NULL 
-        && TREE_CODE(TREE_TYPE(field)) == COMPLEX_TYPE)
-      return true;
-  }
   return false;
-#endif
 }
 
 // llvm_suitable_multiple_ret_value_type - Return TRUE if return value 
 // of type TY should be returned using multiple value return instruction.
 static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
                                                   tree TreeType) {
-  //NOTE: Work in progress. Do not open the flood gate yet.
-  return false; 
-
   if (!TARGET_64BIT)
     return false;
 

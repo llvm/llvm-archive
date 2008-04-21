@@ -2911,16 +2911,17 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
   tree Op = TREE_OPERAND(exp, 0);
 
   if (isAggregateTreeType(TREE_TYPE(Op))) {
-    const Type *OpTy = ConvertType(TREE_TYPE(Op));
     MemRef Target;
-    if (DestLoc) {
+    if (DestLoc)
       // This is an aggregate-to-agg VIEW_CONVERT_EXPR, just evaluate in place.
       Target = *DestLoc;
-      Target.Ptr = BitCastToType(DestLoc->Ptr, PointerType::getUnqual(OpTy));
-    } else {
+    else
       // This is an aggregate-to-scalar VIEW_CONVERT_EXPR, evaluate, then load.
-      Target = CreateTempLoc(OpTy);
-    }
+      Target = CreateTempLoc(ConvertType(TREE_TYPE(exp)));
+
+    // Make the destination look like the source type.
+    const Type *OpTy = ConvertType(TREE_TYPE(Op));
+    Target.Ptr = BitCastToType(Target.Ptr, PointerType::getUnqual(OpTy));
 
     // Needs to be in sync with EmitLV.
     switch (TREE_CODE(Op)) {

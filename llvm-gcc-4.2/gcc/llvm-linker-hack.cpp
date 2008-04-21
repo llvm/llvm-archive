@@ -84,6 +84,7 @@ void dummy_function() {
   llvm::createIPConstantPropagationPass();
   llvm::createStripDeadPrototypesPass();
   llvm::createMemCpyOptPass();
+  llvm::createDeadTypeEliminationPass();
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

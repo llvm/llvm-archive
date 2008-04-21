@@ -1047,9 +1047,9 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
         ElementTypes.push_back(ATy->getElementType());
         break;
       case 4:
-        // use { <4  x float> } for struct { float[4]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
+        // use { <4  x float>, <4 x float> } for struct { float[4]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
         break;
       default:
         assert (0 && "Unexpected floating point array size!");
@@ -1060,36 +1060,6 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     }
   }
   return StructType::get(ElementTypes, STy->isPacked());
-}
-
-// llvm_x86_build_mrv_array_element - This is a helper function used by
-// llvm_x6_build_multiple_return_value. 
-static Value *llvm_x86_build_mrv_array_element(const Type *STyFieldTy,
-                                               Value *RetVal,
-                                               unsigned FieldNo,
-                                               IRBuilder &Builder,
-                                               unsigned ArrayElemNo = 0) {
-  llvm::Value *Idxs[3];
-  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
-  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, FieldNo);
-  if (const VectorType *VTy = dyn_cast<VectorType>(STyFieldTy)) {
-    // Source field is a vector. Use insertelement.
-    Value *R1 = UndefValue::get(STyFieldTy);
-    unsigned ArraySize = VTy->getNumElements();
-    for (unsigned i = ArrayElemNo; i < ArraySize; ++i) {
-      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, i);
-      Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
-      Value *ElemVal = Builder.CreateLoad(GEP, "mrv");
-      R1 = Builder.CreateInsertElement(R1, ElemVal, 
-                                       ConstantInt::get(llvm::Type::Int32Ty, i), 
-                                       "mrv");
-    }
-    return R1;
-  } else {
-    Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, ArrayElemNo);
-    Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
-    return Builder.CreateLoad(GEP, "mrv");
-  }
 }
 
 // llvm_x86_build_multiple_return_value - Function FN returns multiple value
@@ -1136,23 +1106,42 @@ void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
     }
     const ArrayType *ATy = cast<ArrayType>(ElemType);
     unsigned ArraySize = ATy->getNumElements();
+    // AElemNo keeps track of array elements. This may not match index (VElemNo) 
+    // that tracks vector elements when Src field type is VectorType..
     unsigned AElemNo = 0;
     while (AElemNo < ArraySize) {
       const Type *SElemTy =  STy->getElementType(SNO);
       if (const VectorType *SVElemTy = dyn_cast<VectorType>(SElemTy)) {
-        // Build array elements from a vector.
-        unsigned VSize = SVElemTy->getNumElements();
-        assert (ArraySize - AElemNo >= VSize 
-                && "Invalid multiple return value type!");
-        Value *R = llvm_x86_build_mrv_array_element(SVElemTy, RetVal, RNO,
-                                                    Builder, AElemNo);
+        llvm::Value *Idxs[3];
+        Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+        Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, RNO);
+        Value *R = Constant::getNullValue(SElemTy);
+        unsigned VElemNo = 0;
+        unsigned Size = AElemNo + SVElemTy->getNumElements();
+        
+        // Only first two elements from <4 x float> are used, for example float[4] is 
+        // transformed into two <4 x float> vectors.
+        if (SVElemTy->getElementType()->getTypeID() == Type::FloatTyID
+            && Size == 4) 
+          Size = AElemNo + 2;
+        while (AElemNo < Size) {
+          Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, AElemNo);
+          Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv.av.gep");
+          Value *ElemVal = Builder.CreateLoad(GEP, "mrv");
+          R = Builder.CreateInsertElement(R, ElemVal, 
+                                          ConstantInt::get(llvm::Type::Int32Ty, VElemNo++),
+                                          "mrv.av.");
+          AElemNo++;
+        }
         RetVals.push_back(R);
-        AElemNo += VSize;
       } else {
-        Value *R = llvm_x86_build_mrv_array_element(SElemTy, RetVal, RNO,
-                                                    Builder, AElemNo);
+        llvm::Value *Idxs[3];
+        Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+        Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, RNO);
+        Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, AElemNo++);
+        Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv.a.gep");
+        Value *R = Builder.CreateLoad(GEP, "mrv.a");
         RetVals.push_back(R);
-        ++AElemNo;
       }
       // Next Src field.
       ++SNO;
@@ -1245,17 +1234,21 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     unsigned ArraySize = ATy->getNumElements();
     unsigned DElemNo = 0; // DestTy's DNO field's element number
     while (DElemNo < ArraySize) {
-      const VectorType *SElemTy = dyn_cast<VectorType>(STy->getElementType(SNO));
-      if (!SElemTy) {
-        llvm_x86_extract_mrv_array_element(Src, Dest, SNO, 0, DNO, DElemNo, 
+      unsigned i = 0;
+      unsigned Size = 1;
+      
+      if (const VectorType *SElemTy = 
+          dyn_cast<VectorType>(STy->getElementType(SNO))) {
+        Size = SElemTy->getNumElements();
+        if (SElemTy->getElementType()->getTypeID() == Type::FloatTyID
+            && Size == 4)
+          // Ignore last two <4 x float> elements.
+          Size = 2;
+      }
+      while (i < Size) {
+        llvm_x86_extract_mrv_array_element(Src, Dest, SNO, i++, 
+                                           DNO, DElemNo++, 
                                            Builder, isVolatile);
-        ++DElemNo;
-      } else {
-        for (unsigned i = 0; i < SElemTy->getNumElements(); ++i) {
-          llvm_x86_extract_mrv_array_element(Src, Dest, SNO, i, DNO, DElemNo, 
-                                             Builder, isVolatile);
-          ++DElemNo;
-        }
       }
       // Consumed this src field. Try next one.
       ++SNO;

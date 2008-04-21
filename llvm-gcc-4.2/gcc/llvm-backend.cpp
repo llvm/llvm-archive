@@ -368,6 +368,7 @@ static void createOptimizationPasses() {
     
     PM->add(createTailDuplicationPass());       // Simplify cfg by copying code
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
+    PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
     PM->add(createInstructionCombiningPass());  // Combine silly seq's

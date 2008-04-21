@@ -110,9 +110,13 @@ function StringIsNull($value) {
  *
  *******************************************************************************/
 function WriteFile($filename, $contents) {
-  $file = fopen($filename, "w") or die("Could not open file $filename for writing");
-  fwrite($file, $contents) or die("Could not write to file $filename");
-  fclose($file);
+  
+  $file = fopen($filename, "w");
+  
+  if($file) {
+    fwrite($file, $contents);
+    fclose($file);
+  }
 }
 
 /*******************************************************************************
@@ -159,8 +163,7 @@ function DoesMachineExist($uname, $hardware, $os, $name, $nickname, $gcc_version
 function AddMachine($uname, $hardware, $os, $name, $nickname, $gcc_version, $directory) {
   $query = "INSERT INTO machine (uname, hardware, os, name, nickname, gcc, directory) " .
            "VALUES (\"$uname\",\"$hardware\",\"$os\",\"$name\",\"$nickname\",\"$gcc_version\",\"$directory\")";
-  $insert_query = mysql_query($query) or die(mysql_error());
-  mysql_free_result($insert_query);
+  mysql_query($query) or die(mysql_error());
 }
 
 /*******************************************************************************
@@ -274,8 +277,7 @@ function CreateNight($machine_id,
       "\"$newly_failing_tests\", \"$new_tests\", \"$removed_tests\", \"$cvs_added\"," .
       "\"$cvs_removed\", \"$cvs_modified\", \"$cvs_usersadd\", \"$cvs_usersco\"" .
       ")";
-  $insert_query = mysql_query($query) or die(mysql_error());
-  mysql_free_result($insert_query);
+  mysql_query($query) or die(mysql_error());
   
   $query = "SELECT id FROM night WHERE machine=$machine_id AND added=\"$added\"";
   $machine_query = mysql_query($query) or die(mysql_error());
@@ -320,8 +322,7 @@ function AddProgram($program, $result, $type, $night) {
   if (!StringIsNull($program)) {
     $query = "INSERT INTO program (program, result, type, night) VALUES".
              " (\"$program\", \"$result\", \"$type\", $night)";
-    $program_query = mysql_query($query) or die(mysql_error());
-    mysql_free_result($program_query);
+    mysql_query($query) or die(mysql_error());
   }
 }
 
@@ -343,8 +344,7 @@ function AddTests($program, $result, $measure, $night) {
   if (!StringIsNull($program)) {
     $query = "INSERT INTO tests (program, result, measure, night) VALUES".
              " (\"$program\", \"$result\", \"$measure\", $night)";
-    $program_query = mysql_query($query) or die(mysql_error());
-    mysql_free_result($program_query);
+    mysql_query($query) or die(mysql_error());
   }
 }
 
@@ -366,8 +366,7 @@ function AddTests($program, $result, $measure, $night) {
 function AddFile($file, $size, $night, $type) {
   $query = "INSERT INTO file (file, size, night, type) VALUES".
            " (\"$file\", \"$size\", \"$night\", \"$type\")";
-  $file_query = mysql_query($query) or die(mysql_error());
-  mysql_free_result($file_query);
+  mysql_query($query) or die(mysql_error());
 }
 
 /*******************************************************************************
@@ -467,6 +466,8 @@ function ProcessProgramLogs($tests) {
  *******************************************************************************/
 function acceptTest() {
  
+  global $print_debug;
+  
   // If no nickname is set, die here
   if (!isset($_POST['nickname'])) {
     return;
@@ -677,7 +678,8 @@ function acceptTest() {
               $blank, $blank, $blank,       // $expfail_tests, $TestsFixed, $TestsBroken,
               $blank, $blank,               // $TestsAdded, $TestsRemoved,
               $cvsaddedfiles, $cvsremovedfiles, $cvsmodifiedfiles,
-              $cvsusercommitlist, $cvsuserupdatelist);
+              $cvsusercommitlist, $cvsuserupdatelist,
+              $blank, $blank);
 
   if ($print_debug) {
     print "db_date: $db_date\n";
@@ -949,37 +951,47 @@ function acceptTest() {
    *
    *******************************************************************************/
   $cwd = getcwd();
-
-  if (!file_exists('machines')) {
-    mkdir('machines', 777);
-  }
-  chdir("$cwd/machines");
-
-  if (!file_exists("$machine_id")) {
-    mkdir("$machine_id", 777);
-  }
-  chdir("$cwd/machines/$machine_id");
-
-  WriteFile("$db_date-Build-Log.txt", $build_log);
-
-  $sentdata="";
-  foreach ($_GET as $key => $value) {
-    if(strpos($value, "\n") == 0) {
-      $sentdata .= "'$key'  =>  \"$value\",\n";
-    } else {
-      $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+  
+  if($machine_id) {
+    
+    if (!file_exists('machines')) {
+      mkdir('machines');
+    }
+    
+    $machineDir = chdir("$cwd/machines");
+    
+    if($machineDir) {
+      if (!file_exists("$machine_id")) {
+        mkdir("$machine_id");
+      }
+      
+      $hasMachineDir = chdir("$cwd/machines/$machine_id");
+      
+      if($hasMachineDir) {
+        WriteFile("$db_date-Build-Log.txt", $build_log);
+        
+        $sentdata="";
+        foreach ($_GET as $key => $value) {
+          if(strpos($value, "\n") == 0) {
+            $sentdata .= "'$key'  =>  \"$value\",\n";
+          } else {
+            $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+          }
+        }
+        foreach ($_POST as $key => $value) {
+          if(strpos($value, "\n") == 0) {
+            $sentdata .= "'$key'  =>  \"$value\",\n";
+          } else {
+            $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+          }
+        }
+        
+        WriteFile("$db_date-senddata.txt", $sentdata);
+      }
     }
   }
-  foreach ($_POST as $key => $value) {
-    if(strpos($value, "\n") == 0) {
-      $sentdata .= "'$key'  =>  \"$value\",\n";
-    } else {
-      $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
-    }
-  }
-  WriteFile("$db_date-senddata.txt", $sentdata);
-
-
+  
+  
   mysql_close($mysql_link);
 }
 

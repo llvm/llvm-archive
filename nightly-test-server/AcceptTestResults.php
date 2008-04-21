@@ -82,21 +82,25 @@ function addTestRunConfig($runDateTime, $machineId, $machineUname, $gccVersion,
                          $dejagnuWallTime, $warnings, $warningsAdded, 
                          $warningsRemoved, $cvsUsersAdd, $cvsUsersCO, 
                          $cvsFilesAdded, $cvsFilesRemoved, $cvsFilesModified,
-                         $buildStatus) {
+                         $buildStatus, $dejagnuPASS, $dejagnuXPASS, 
+                         $dejagnuFAIL, $dejagnuXFAIL) {
   
   $sqlQuery = "INSERT into testRunInfo (runDateTime, machineId, machineUname," .
               " gccVersion, cvsCpuTime, cvsWallTime, configureCpuTime," .
               " configureWallTime, buildCpuTime, buildWallTime," .
               " dejagnuCpuTime, dejagnuWallTime, warnings, warningsAdded," .
               " warningsRemoved, cvsUsersAdd, cvsUsersCO, cvsFilesAdded," .
-              " cvsFilesRemoved, cvsFilesModified, buildStatus) VALUES (".
+              " cvsFilesRemoved, cvsFilesModified, buildStatus, dejagnuPass," .
+              " dejagnuFail, dejagnuXFail, dejagnuXPass) VALUES (".
               " \"$runDateTime\", \"$machineId\", \"$machineUname\"," .
               " \"$gccVersion\", \"$cvsCpuTime\", \"$cvsWallTime\"," . 
               " \"$configureCpuTime\", \"$configureWallTime\", \"$buildCpuTime\"," .
               " \"$buildWallTime\", \"$dejagnuCpuTime\", \"$dejagnuWallTime\"," .
               " \"$warnings\", \"$warningsAdded\", \"$warningsRemoved\"," .
               " \"$cvsUsersAdd\", \"$cvsUsersCO\", \"$cvsFilesAdded\"," .
-              " \"$cvsFilesRemoved\", \"$cvsFilesModified\", \"$buildStatus\")";
+              " \"$cvsFilesRemoved\", \"$cvsFilesModified\", \"$buildStatus\"," .
+              " \"$dejagnuPASS\", \"$dejagnuFAIL\", \"$dejagnuXFAIL\"," .
+              " \"$dejagnuXPASS\")";
   mysql_query($sqlQuery) or die(mysql_error());
   $id = mysql_insert_id() or die(mysql_error());  
   return $id;
@@ -347,9 +351,10 @@ function shutdown($mysql_link) {
 
 function acceptTestResults() {
   //print "content-type: text/text\n\n";
+  global $print_debug;
   
   // Database connection info
-  $database = "llvmTestResults";
+  $database = "llvmNightlyTestResults";
   $loginname = "llvm";
   $password = "ll2002vm";
   
@@ -388,6 +393,24 @@ if(!$machineId) {
   shutdown($mysql_link); 
 }
 
+$dejagnutests_log = $_POST['dejagnutests_log'];
+if (!isset($dejagnutests_log)) {
+  $dejagnutests_log = "";
+}
+
+$dejagnuPASS    = matchOne("/\# of expected passes\s*([0-9]+)/",   $dejagnutests_log, 0);
+$dejagnuFAIL = matchOne("/unexpected failures\s*([0-9]+)/",     $dejagnutests_log, 0);
+$dejagnuXFAIL   = matchOne("/\# of expected failures\s*([0-9]+)/", $dejagnutests_log, 0);
+$dejagnuXPASS = matchOne("/\# of unexpected passes\s*([0-9]+)/", $dejagnutests_log, 0);
+
+if ($print_debug) {
+  print "PASS: $dejagnuPASS\n";
+  print "FAIL: $dejagnuFAIL\n";
+  print "XFAIL: $dejagnuXFAIL\n";
+  print "XPASS: $dejagnuXPASS\n";
+}
+
+
 //Extract addition test run information, bail out if missing starttime
 if( !isset($_POST['starttime']) ) {
   shutdown($mysql_link);
@@ -413,6 +436,18 @@ $warningsAdded = $_POST['warnings_removed'];
 $warningsRemoved = $_POST['warnings_added'];
 $buildstatus = $_POST['buildstatus'];
 
+if($buildstatus == "OK") {
+  $buildstatus = 1;
+}
+else if($buildstatus == "Error: compilation aborted") {
+  $buildstatus = 2;
+}
+else if($buildstatus == "Skipped by user") {
+  $buildstatus = 3;
+}
+else {
+  $buildstatus = 4;
+}
 
 // Add new test run config
 $testRunConfigId = addTestRunConfig($runDateTime, $machineId, $uname, 
@@ -423,7 +458,8 @@ $testRunConfigId = addTestRunConfig($runDateTime, $machineId, $uname,
                                     $dejagnuWallTime, $warnings, $warningsAdded, 
                                     $warningsRemoved, $cvsUsersAdd, $cvsUsersCO, 
                                     $cvsFilesAdded, $cvsFilesRemoved, $cvsFilesModified,
-                                    $buildStatus);
+                                    $buildstatus, $dejagnuPASS, $dejagnuXPASS,
+                                    $dejagnuFAIL, $dejagnuXFAIL);
 
 
 //Print data obtained so far
@@ -435,17 +471,17 @@ if ($print_debug) {
   print "Nickname: $nickname\n";
  
   print "\n";
-  print "Test Run Config ID: $testRunConfigID\n";
-  print "Start Time: $runDateTime\n";
+  print "Test Run Config ID: $testRunConfigId \n";
+  print "Start Time: $runDateTime \n";
   print "Uname: $uname\n";
-  print "GCC Version: $gccVersion\n";
-  print "Cvs Cpu Time: $cvsCpuTime\n";
+  print "GCC Version: $gcc_version\n";
+  print "Cvs Cpu Time: $cvsCpuTime \n";
   print "Cvs Wall Time: $cvsWallTime\n";
   print "Configure Cpu Time: $configureCpuTime\n";
   print "Configure Wall Time: $configureWallTime\n";
   print "Build Cpu Time: $buildCpuTime\n";
   print "Build Wall Time: $buildWallTime\n";
-  print "Dejagnu Cpu Time: $dejagnuCupTime\n";
+  print "Dejagnu Cpu Time: $dejagnuCpuTime\n";
   print "Dejagnu Wall Time: $dejagnuWallTime\n";
   print "Warnings: $warnings\n";
   print "Warnings Added: $warningsAdded\n";
@@ -455,7 +491,7 @@ if ($print_debug) {
   print "Cvs Files Modified: $cvsFilesModified\n";
   print "Cvs Users Commit: $cvsUsersAdd\n";
   print "Cvs Users Checkout: $cvsUsersCO\n";
-  print "Build Status: $buildStatus\n";
+  print "Build Status: $buildstatus\n";
 
 }
 

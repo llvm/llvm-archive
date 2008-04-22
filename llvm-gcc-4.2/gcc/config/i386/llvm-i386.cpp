@@ -922,6 +922,7 @@ bool llvm_x86_should_not_return_complex_in_memory(tree type) {
 // of type TY should be returned using multiple value return instruction.
 static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
                                                   tree TreeType) {
+
   if (!TARGET_64BIT)
     return false;
 
@@ -1013,7 +1014,16 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     ElementTypes.push_back(Type::X86_FP80Ty);
     return StructType::get(ElementTypes, STy->isPacked());
   } 
-    
+
+  if (NumElements == 3
+      && STy->getElementType(0)->getTypeID() == Type::FloatTyID
+      && STy->getElementType(1)->getTypeID() == Type::FloatTyID
+      && STy->getElementType(2)->getTypeID() == Type::FloatTyID) {
+    ElementTypes.push_back(VectorType::get(Type::FloatTy, 4));
+    ElementTypes.push_back(Type::FloatTy);
+    return StructType::get(ElementTypes, STy->isPacked());
+  }
+
   for (unsigned i = 0; i < NumElements; ++i) {
     const Type *T = STy->getElementType(i);
     
@@ -1031,12 +1041,12 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     if (ATy->getElementType()->isFloatingPoint()) {
       switch (size) {
       case 2:
-        // use { <2 x float> } for struct { float[2]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
+        // use { <4 x float> } for struct { float[2]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
         break;
       case 3:
-        // use { <2 x float>, float } for struct { float[3]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 2));
+        // use { <4 x float>, float } for struct { float[3]; }
+        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
         ElementTypes.push_back(ATy->getElementType());
         break;
       case 4:
@@ -1072,6 +1082,30 @@ void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
   unsigned NumElements = RetSTy->getNumElements();
   unsigned RNO = 0;
   unsigned SNO = 0;
+
+  if (NumElements == 3
+      && RetSTy->getElementType(0)->getTypeID() == Type::FloatTyID
+      && RetSTy->getElementType(1)->getTypeID() == Type::FloatTyID
+      && RetSTy->getElementType(2)->getTypeID() == Type::FloatTyID) {
+    Value *GEP0 = Builder.CreateStructGEP(RetVal, 0, "mrv_idx");
+    Value *ElemVal0 = Builder.CreateLoad(GEP0, "mrv");
+    Value *GEP1 = Builder.CreateStructGEP(RetVal, 1, "mrv_idx");
+    Value *ElemVal1 = Builder.CreateLoad(GEP1, "mrv");
+    Value *GEP2 = Builder.CreateStructGEP(RetVal, 2, "mrv_idx");
+    Value *ElemVal2 = Builder.CreateLoad(GEP2, "mrv");
+
+    Value *R = Constant::getNullValue(STy->getElementType(0));
+    R = Builder.CreateInsertElement(R, ElemVal0, 
+                                    ConstantInt::get(llvm::Type::Int32Ty, 0),
+                                    "mrv.f.");
+    R = Builder.CreateInsertElement(R, ElemVal1, 
+                                    ConstantInt::get(llvm::Type::Int32Ty, 1),
+                                    "mrv.f.");
+    RetVals.push_back(R);
+    RetVals.push_back(ElemVal2);
+    return;
+  }
+
   while (RNO < NumElements) {
     const Type *ElemType = RetSTy->getElementType(RNO);    
     if (ElemType->isFirstClassType()) {
@@ -1081,7 +1115,8 @@ void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
       ++RNO;
       ++SNO;
       continue;
-    } 
+    }
+ 
     // Special treatement for _Complex.
     if (const StructType *ComplexType = dyn_cast<StructType>(ElemType)) {
       llvm::Value *Idxs[3];
@@ -1188,6 +1223,32 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
   const StructType *DestTy = cast<StructType>(PTy->getElementType());
   unsigned SNO = 0;
   unsigned DNO = 0;
+
+  if (DestTy->getNumElements() == 3
+      && DestTy->getElementType(0)->getTypeID() == Type::FloatTyID
+      && DestTy->getElementType(1)->getTypeID() == Type::FloatTyID
+      && DestTy->getElementType(2)->getTypeID() == Type::FloatTyID) {
+    // DestTy is { float, float, float }
+    // STy is { <4 x float>, float > }
+
+    GetResultInst *GR = Builder.CreateGetResult(Src, 0, "mrv_gr");
+
+    Value *E0Index = ConstantInt::get(Type::Int32Ty, 0);
+    Value *GR0 = Builder.CreateExtractElement(GR, E0Index, "mrv.v");
+    Value *GEP0 = Builder.CreateStructGEP(Dest, 0, "mrv_gep");
+    Builder.CreateStore(GR0, GEP0, isVolatile);
+
+    Value *E1Index = ConstantInt::get(Type::Int32Ty, 1);
+    Value *GR1 = Builder.CreateExtractElement(GR, E1Index, "mrv.v");
+    Value *GEP1 = Builder.CreateStructGEP(Dest, 1, "mrv_gep");
+    Builder.CreateStore(GR1, GEP1, isVolatile);
+
+    Value *GEP2 = Builder.CreateStructGEP(Dest, 2, "mrv_gep");
+    GetResultInst *GR2 = Builder.CreateGetResult(Src, 1, "mrv_gr");
+    Builder.CreateStore(GR2, GEP2, isVolatile);
+    return;
+  }
+
   while (SNO < NumElements) {
 
     const Type *DestElemType = DestTy->getElementType(DNO);

@@ -28,7 +28,10 @@ typedef enum {
   MEM,
   INT_SSE,
   SSE_INT,
-  SSE_F_V
+  /* LLVM LOCAL begin */
+  SSE_F_V,
+  SSE_F_V3
+  /* LLVM LOCAL end */
 } Type;
 
 /* Structures which should be returned in INTEGER.  */
@@ -165,6 +168,10 @@ D(530,short m1[1];int i PACKED)
 #define D(I,MEMBERS,C,B) struct S_ ## I { MEMBERS ; }; Type class_ ## I = C; \
 struct S_ ## I f_ ## I (void) { struct S_ ## I s; B; return s; }
 D(600,float f[4], SSE_F_V, s.f[0] = s.f[1] = s.f[2] = s.f[3] = 42)
+/* LLVM LOCAL begin */
+D(601,float f[3], SSE_F_V3, s.f[0] = s.f[1] = s.f[2] = 42)
+D(602,float f0;float f1; float f2, SSE_F_V3, s.f0 = s.f1 = s.f2 = 42)
+/* LLVM LOCAL end */
 #undef D
 
 void clear_all (void)
@@ -181,6 +188,8 @@ void check_all (Type class, unsigned long size)
     case SSE_F: assert (xmm0f[0] == 42); break;
     case SSE_D: assert (xmm0d[0] == 42); break;
     case SSE_F_V: assert (xmm0f[0] == 42 && xmm0f[1]==42 && xmm1f[0] == 42 && xmm1f[1] == 42); break;
+      /* LLVM LOCAL */
+    case SSE_F_V3: assert (xmm0f[0] == 42 && xmm0f[1]==42 && xmm1f[0] == 42); break;
     case X87: assert (x87_regs[0]._ldouble == 42); break;
     case INT_SSE: check_300(); break;
     case SSE_INT: check_400(); break;
@@ -222,7 +231,9 @@ main (void)
   D(530)
 
   D(600)
-  if (num_failed)
+  /* LLVM LOCAL */
+  D(601) D(602)
+ if (num_failed)
     abort ();
 
   return 0;

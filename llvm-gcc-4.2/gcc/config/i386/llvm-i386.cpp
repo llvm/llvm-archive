@@ -954,6 +954,12 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (!foundNonInt)
     return false;
 
+  // FIXME: Fix code generator. Causes Benchmarks/McCat/09-vor/vor failures.
+  if (STyElements == 2
+      && STy->getElementType(0)->getTypeID() == Type::DoubleTyID
+      && STy->getElementType(1)->getTypeID() == Type::DoubleTyID)
+    return false;
+
   // Let gcc specific routine answer the question.
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);

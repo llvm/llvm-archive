@@ -989,6 +989,7 @@ function acceptTest() {
         WriteFile("$db_date-senddata.txt", $sentdata);
       }
     }
+    chdir("$cwd");
   }
   
   

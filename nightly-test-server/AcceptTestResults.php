@@ -341,7 +341,21 @@ function shutdown($mysql_link) {
  mysql_close($mysql_link); 
 }
 
-
+/*******************************************************************************
+*
+* Opens a file handle to the specified filename, then writes the contents out,
+* and finally closes the filehandle.
+*
+*******************************************************************************/
+function WriteLogFile($filename, $contents) {
+  
+  $file = fopen($filename, "w");
+  
+  if($file) {
+    fwrite($file, $contents);
+    fclose($file);
+  }
+}
 
 /*******************************************************************************
 *
@@ -448,6 +462,8 @@ else if($buildstatus == "Skipped by user") {
 else {
   $buildstatus = 4;
 }
+
+$db_date = date("Y-m-d H:i:s");
 
 // Add new test run config
 $testRunConfigId = addTestRunConfig($runDateTime, $machineId, $uname, 
@@ -581,6 +597,47 @@ if(strcmp($buildstatus, "OK") ==  0) {
   
   // only update loc if successful build
   updateLLVMStats($runDateTime, $loc, $filesincvs, $dirsincvs, $testRunConfigId);
+}
+
+$cwd = getcwd();
+
+if($machineId) {
+  print $machineId;
+  if (!file_exists('machines-new')) {
+    mkdir('machines-new');
+  }
+  
+  $machineDir = chdir("$cwd/machines-new");
+  
+  if($machineDir) {
+    if (!file_exists("$machineId")) {
+      mkdir("$machineId");
+    }
+    
+    $hasMachineDir = chdir("$cwd/machines-new/$machineId");
+   
+    if($hasMachineDir) {
+      WriteLogFile("$db_date-Build-Log.txt", $build_log);
+      
+      $sentdata="";
+      foreach ($_GET as $key => $value) {
+        if(strpos($value, "\n") == 0) {
+          $sentdata .= "'$key'  =>  \"$value\",\n";
+        } else {
+          $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+        }
+      }
+      foreach ($_POST as $key => $value) {
+        if(strpos($value, "\n") == 0) {
+          $sentdata .= "'$key'  =>  \"$value\",\n";
+        } else {
+          $sentdata .= "'$key'  =>  <<EOD\n$value\nEOD\n,\n";
+        }
+      }
+      
+      WriteLogFile("$db_date-senddata.txt", $sentdata);
+    }
+  }
 }
 
 shutdown($mysql_link);

@@ -758,7 +758,11 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
   if (!NumClasses)
     return false;
- 
+
+  if (NumClasses == 1 && Class[0] == X86_64_INTEGERSI_CLASS)
+    // This will fit in one i32 register.
+    return false;
+
   for (int i = 0; i < NumClasses; ++i) {
     switch (Class[i]) {
     case X86_64_INTEGER_CLASS:

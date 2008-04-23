@@ -760,8 +760,16 @@ Function *TreeToLLVM::FinishFunctionBody() {
     } else {
       Value *RetVal = DECL_LLVM(DECL_RESULT(FnDecl));
       if (const StructType *STy = dyn_cast<StructType>(Fn->getReturnType())) {
-        // Handle multiple return values
-        LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,RetVal,RetVals,Builder);
+        Value *R1 = BitCastToType(RetVal, PointerType::getUnqual(STy));
+
+        llvm::Value *Idxs[2];
+        Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+        for (unsigned ri = 0; ri < STy->getNumElements(); ++ri) {
+          Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, ri);
+          Value *GEP = Builder.CreateGEP(R1, Idxs, Idxs+2, "mrv_gep");
+          Value *E = Builder.CreateLoad(GEP, "mrv");
+          RetVals.push_back(E);
+        }
       } else {
         // Otherwise, this aggregate result must be something that is returned in
         // a scalar register for this target.  We must bit convert the aggregate
@@ -2641,7 +2649,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   Call->setName("tmp");
 
   if (Client.isAggrReturn()) {
-    LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Call,DestLoc->Ptr,DestLoc->Volatile,Builder);
+    Value *Dest = BitCastToType(DestLoc->Ptr,
+                                PointerType::getUnqual(Call->getType()));
+    LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Call,Dest,DestLoc->Volatile,Builder);
     return 0;
   }
 

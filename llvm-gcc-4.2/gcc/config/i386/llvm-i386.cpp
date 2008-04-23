@@ -934,7 +934,6 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
     return true;
 
   // llvm only accepts first class types for multiple values in ret instruction.
-  bool foundNonInt = false;
   bool foundInt = false;
   unsigned STyElements = STy->getNumElements();
   for (unsigned i = 0; i < STyElements; ++i) { 
@@ -943,22 +942,9 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
       ETy = ATy->getElementType();
     if (!ETy->isFirstClassType() && ETy->getTypeID() != Type::X86_FP80TyID)
       return false;
-    if (!ETy->isInteger())
-      foundNonInt = true;
-    else
+    if (ETy->isInteger())
       foundInt = true;
   }
-  // FIXME. llvm x86-64 code generator does not handle all cases of
-  // multiple value return. Remove this when the code generator restriction 
-  // is removed.
-  if (!foundNonInt)
-    return false;
-
-  // FIXME: Fix code generator. Causes Benchmarks/McCat/09-vor/vor failures.
-  if (STyElements == 2
-      && STy->getElementType(0)->getTypeID() == Type::DoubleTyID
-      && STy->getElementType(1)->getTypeID() == Type::DoubleTyID)
-    return false;
 
   // Let gcc specific routine answer the question.
   enum x86_64_reg_class Class[MAX_CLASSES];
@@ -1003,6 +989,114 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
   return NULL;
 }
 
+void
+llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
+                                            std::vector<const Type*> &Elts){
+  enum x86_64_reg_class Class[MAX_CLASSES];
+  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  HOST_WIDE_INT Bytes =
+    (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
+  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  if (!NumClasses)
+     assert(0 && "This type does not need multiple return registers!");
+
+  if (NumClasses == 1 && Class[0] == X86_64_INTEGERSI_CLASS)
+    // This will fit in one i32 register.
+     assert(0 && "This type does not need multiple return registers!");
+
+  if (NumClasses == 1 && Class[0] == X86_64_INTEGER_CLASS)
+     assert(0 && "This type does not need multiple return registers!");
+
+
+  for (int i = 0; i < NumClasses; ++i) {
+    switch (Class[i]) {
+    case X86_64_INTEGER_CLASS:
+    case X86_64_INTEGERSI_CLASS:
+      Elts.push_back(Type::Int64Ty);
+      Bytes -= 8;
+      break;
+    case X86_64_SSE_CLASS:
+      // If it's a SSE class argument, then one of the followings are possible:
+      // 1. 1 x SSE, size is 8: 1 x Double.
+      // 2. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
+      //                                         <2 x i64>, or <2 x f64>.
+      // 3. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
+      // 4. 2 x SSE, size is 16: 2 x Double.
+      if ((NumClasses-i) == 1) {
+        if (Bytes == 8) {
+          Elts.push_back(Type::DoubleTy);
+          Bytes -= 8;
+        } else
+          assert(0 && "Not yet handled!");
+      } else if ((NumClasses-i) == 2) {
+        if (Class[i+1] == X86_64_SSEUP_CLASS) {
+          const Type *Ty = ConvertType(TreeType);
+          if (const StructType *STy = dyn_cast<StructType>(Ty))
+            // Look pass the struct wrapper.
+            if (STy->getNumElements() == 1)
+              Ty = STy->getElementType(0);
+          if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+            if (VTy->getNumElements() == 2) {
+              if (VTy->getElementType()->isInteger())
+                Elts.push_back(VectorType::get(Type::Int64Ty, 2));
+              else
+                Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+              Bytes -= 8;
+            } else {
+              assert(VTy->getNumElements() == 4);
+              if (VTy->getElementType()->isInteger())
+                Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+              else
+                Elts.push_back(VectorType::get(Type::FloatTy, 4));
+              Bytes -= 4;
+            }
+          } else if (llvm_x86_is_all_integer_types(Ty)) {
+            Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+            Bytes -= 4;
+          } else {
+            Elts.push_back(VectorType::get(Type::FloatTy, 4));
+            Bytes -= 4;
+          }
+        } else if (Class[i+1] == X86_64_SSESF_CLASS) {
+          assert(Bytes == 12 && "Not yet handled!");
+          Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::FloatTy);
+          Bytes -= 12;
+        } else if (Class[i+1] == X86_64_SSE_CLASS) {
+          Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::DoubleTy);
+          Bytes -= 16;
+        } else if (Class[i+1] == X86_64_SSEDF_CLASS && Bytes == 16) {
+          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Type::DoubleTy);
+        } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
+          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Type::Int64Ty);
+        } else
+          assert(0 && "Not yet handled!");
+        ++i; // Already handled the next one.
+      } else
+        assert(0 && "Not yet handled!");
+      break;
+    case X86_64_SSESF_CLASS:
+      Elts.push_back(Type::FloatTy);
+      Bytes -= 4;
+      break;
+    case X86_64_SSEDF_CLASS:
+      Elts.push_back(Type::DoubleTy);
+      Bytes -= 8;
+      break;
+    case X86_64_X87_CLASS:
+    case X86_64_X87UP_CLASS:
+    case X86_64_COMPLEX_X87_CLASS:
+        assert(0 && "Not yet handled!");
+    case X86_64_NO_CLASS:
+        assert(0 && "Not yet handled!");
+    default: assert(0 && "Unexpected register class!");
+    }
+  }
+}
+
 // Return LLVM Type if TYPE can be returned as an aggregate, 
 // otherwise return NULL.
 const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
@@ -1021,54 +1115,10 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     return StructType::get(ElementTypes, STy->isPacked());
   } 
 
-  if (NumElements == 3
-      && STy->getElementType(0)->getTypeID() == Type::FloatTyID
-      && STy->getElementType(1)->getTypeID() == Type::FloatTyID
-      && STy->getElementType(2)->getTypeID() == Type::FloatTyID) {
-    ElementTypes.push_back(VectorType::get(Type::FloatTy, 4));
-    ElementTypes.push_back(Type::FloatTy);
-    return StructType::get(ElementTypes, STy->isPacked());
-  }
+  std::vector<const Type*> GCCElts;
+  llvm_x86_64_get_multiple_return_reg_classes(type, Ty, GCCElts);
+  return StructType::get(GCCElts, STy->isPacked());
 
-  for (unsigned i = 0; i < NumElements; ++i) {
-    const Type *T = STy->getElementType(i);
-    
-    if (T->isFirstClassType()) {
-      ElementTypes.push_back(T);
-      continue;
-    }
-    
-    const ArrayType *ATy = dyn_cast<ArrayType>(T);
-    assert (ATy && "Unexpected struct element type!");
-    assert (ATy->getElementType()->isFirstClassType() 
-            && "Unexpected ArrayType element type!");
-    
-    unsigned size = ATy->getNumElements();
-    if (ATy->getElementType()->isFloatingPoint()) {
-      switch (size) {
-      case 2:
-        // use { <4 x float> } for struct { float[2]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
-        break;
-      case 3:
-        // use { <4 x float>, float } for struct { float[3]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
-        ElementTypes.push_back(ATy->getElementType());
-        break;
-      case 4:
-        // use { <4  x float>, <4 x float> } for struct { float[4]; }
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
-        ElementTypes.push_back(VectorType::get(ATy->getElementType(), 4));
-        break;
-      default:
-        assert (0 && "Unexpected floating point array size!");
-      }
-    } else {
-      for (unsigned j = 0; j < size; ++j)
-        ElementTypes.push_back(ATy->getElementType());
-    }
-  }
-  return StructType::get(ElementTypes, STy->isPacked());
 }
 
 // llvm_x86_build_multiple_return_value - Function FN returns multiple value
@@ -1081,6 +1131,17 @@ void llvm_x86_build_multiple_return_value(Function *Fn, Value *RetVal,
   const StructType *STy = cast<StructType>(Fn->getReturnType());
   const PointerType *PTy = cast<PointerType>(RetVal->getType());
   const StructType *RetSTy = cast<StructType>(PTy->getElementType());
+
+  llvm::Value *Idxs[3];
+  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Value *GEP = Builder.CreateGEP(RetVal, Idxs, Idxs+3, "mrv_gep");
+  Value *E = Builder.CreateLoad(GEP, "mrv");
+  Value *R = Builder.CreateBitCast(E, STy->getElementType(0), "tmp");
+
+
+
 
   // Walk RetSTy elements and populate RetVals vector. Note, STy and RetSTy
   // may not match. For example, when STy is { <2 x float> } the RetSTy is
@@ -1227,6 +1288,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 
   const PointerType *PTy = cast<PointerType>(Dest->getType());
   const StructType *DestTy = cast<StructType>(PTy->getElementType());
+
   unsigned SNO = 0;
   unsigned DNO = 0;
 

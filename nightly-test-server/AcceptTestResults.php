@@ -83,7 +83,7 @@ function addTestRunConfig($runDateTime, $machineId, $machineUname, $gccVersion,
                          $warningsRemoved, $cvsUsersAdd, $cvsUsersCO, 
                          $cvsFilesAdded, $cvsFilesRemoved, $cvsFilesModified,
                          $buildStatus, $dejagnuPASS, $dejagnuXPASS, 
-                         $dejagnuFAIL, $dejagnuXFAIL) {
+                         $dejagnuFAIL, $dejagnuXFAIL, $db_date) {
   
   $sqlQuery = "INSERT into testRunInfo (runDateTime, machineId, machineUname," .
               " gccVersion, cvsCpuTime, cvsWallTime, configureCpuTime," .
@@ -91,7 +91,7 @@ function addTestRunConfig($runDateTime, $machineId, $machineUname, $gccVersion,
               " dejagnuCpuTime, dejagnuWallTime, warnings, warningsAdded," .
               " warningsRemoved, cvsUsersAdd, cvsUsersCO, cvsFilesAdded," .
               " cvsFilesRemoved, cvsFilesModified, buildStatus, dejagnuPass," .
-              " dejagnuFail, dejagnuXFail, dejagnuXPass) VALUES (".
+              " dejagnuFail, dejagnuXFail, dejagnuXPass, dateAdded) VALUES (".
               " \"$runDateTime\", \"$machineId\", \"$machineUname\"," .
               " \"$gccVersion\", \"$cvsCpuTime\", \"$cvsWallTime\"," . 
               " \"$configureCpuTime\", \"$configureWallTime\", \"$buildCpuTime\"," .
@@ -100,7 +100,7 @@ function addTestRunConfig($runDateTime, $machineId, $machineUname, $gccVersion,
               " \"$cvsUsersAdd\", \"$cvsUsersCO\", \"$cvsFilesAdded\"," .
               " \"$cvsFilesRemoved\", \"$cvsFilesModified\", \"$buildStatus\"," .
               " \"$dejagnuPASS\", \"$dejagnuFAIL\", \"$dejagnuXFAIL\"," .
-              " \"$dejagnuXPASS\")";
+              " \"$dejagnuXPASS\", \"$db_date\")";
   mysql_query($sqlQuery) or die(mysql_error());
   $id = mysql_insert_id() or die(mysql_error());  
   return $id;
@@ -449,6 +449,7 @@ $warnings = $_POST['warnings'];
 $warningsAdded = $_POST['warnings_removed'];
 $warningsRemoved = $_POST['warnings_added'];
 $buildstatus = $_POST['buildstatus'];
+$build_log = $_POST['build_data'];
 
 if($buildstatus == "OK") {
   $buildstatus = 1;
@@ -475,7 +476,7 @@ $testRunConfigId = addTestRunConfig($runDateTime, $machineId, $uname,
                                     $warningsRemoved, $cvsUsersAdd, $cvsUsersCO, 
                                     $cvsFilesAdded, $cvsFilesRemoved, $cvsFilesModified,
                                     $buildstatus, $dejagnuPASS, $dejagnuXPASS,
-                                    $dejagnuFAIL, $dejagnuXFAIL);
+                                    $dejagnuFAIL, $dejagnuXFAIL, $db_date);
 
 
 //Print data obtained so far

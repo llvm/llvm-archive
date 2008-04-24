@@ -989,6 +989,11 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
   return NULL;
 }
 
+/// llvm_x86_64_get_multiple_return_reg_classes - Find register classes used
+/// to return Ty. It is expected that Ty requires multiple return values.
+/// This routine uses GCC implementation to find required register classes.
+/// The original implementation of this routine is based on 
+/// llvm_x86_64_should_pass_aggregate_in_mixed_regs code.
 void
 llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
                                             std::vector<const Type*> &Elts){

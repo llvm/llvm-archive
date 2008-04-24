@@ -41,6 +41,8 @@ _snapshot:
 	.p2align 4,,15
 .globl _snapshot_ret
 _snapshot_ret:
+	pushq	%rbp
+	movq	%rsp, %rbp
 	movq	%rdi, _rdi(%rip)
 	call	*_callthis(%rip)
 	movq	%rax, _rax(%rip)
@@ -51,6 +53,7 @@ _snapshot_ret:
 	fstpt	_x87_regs+16(%rip)
 	fldt	_x87_regs+16(%rip)
 	fldt	_x87_regs(%rip)
+	leave
 	ret
 
 	.comm	_callthis,8

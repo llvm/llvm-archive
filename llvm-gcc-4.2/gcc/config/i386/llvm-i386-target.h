@@ -114,15 +114,6 @@ extern const Type *llvm_x86_scalar_type_for_struct_return(tree type);
 
 extern const Type *llvm_x86_aggr_type_for_struct_return(tree type);
 
-/* LLVM_BUILD_MULTIPLE_RETURN_VALUE - Build multiple return values
-   for the function FN and add them in RETVALS.  */
-#define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B)       \
-  llvm_x86_build_multiple_return_value((Fn),(R),(RetVals),(B))
-
-extern void llvm_x86_build_multiple_return_value(Function *, Value *,
-                                                 SmallVectorImpl <Value *> &,
-                                                 IRBuilder &);
-
 /* LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
    SRC and assign it to DEST. */
 #define LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,V,B)       \

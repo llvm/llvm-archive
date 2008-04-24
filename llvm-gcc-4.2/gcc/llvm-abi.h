@@ -307,20 +307,6 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
   getLLVMAggregateTypeForStructReturn(X)
 #endif
 
-// LLVM_BUILD_MULTIPLE_RETURN_VALUE - Build multiple return values
-// for the function FN and add them in RETVALS. Each target that
-// supports multiple return value must implement this hook.
-#ifndef LLVM_BUILD_MULTIPLE_RETURN_VALUE
-#define LLVM_BUILD_MULTIPLE_RETURN_VALUE(Fn,R,RetVals,B) \
-  llvm_default_build_multiple_return_value((Fn),(R),(RetVals),(B))
-#endif
-
-static void llvm_default_build_multiple_return_value(Function *F, Value *RetVal,
-                                              SmallVectorImpl<Value *> &RetVals,
-                                                     IRBuilder &Builder) {
-  assert (0 && "LLVM_BUILD_MULTIPLE_RETURN_VALUE is not implemented!");
-}
-
 // LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
 // SRC and assign it to DEST. Each target that supports multiple return
 // value must implement this hook.

@@ -1099,7 +1099,8 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
     case X86_64_X87_CLASS:
     case X86_64_X87UP_CLASS:
     case X86_64_COMPLEX_X87_CLASS:
-        assert(0 && "Not yet handled!");
+      Elts.push_back(Type::X86_FP80Ty);
+      break;
     case X86_64_NO_CLASS:
       // padding bytes.
       Elts.push_back(Type::Int64Ty);

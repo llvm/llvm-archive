@@ -858,7 +858,9 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
 void reset_initializer_llvm(tree decl) {
   // If there were earlier errors we can get here when DECL_LLVM has not
   // been set.  Don't crash.
-  if ((errorcount || sorrycount) && !DECL_LLVM(decl))
+  // We can also get here when DECL_LLVM has not been set for some object
+  // referenced in the initializer.  Don't crash then either.
+  if (errorcount || sorrycount)
     return;
 
   // Get or create the global variable now.
@@ -876,7 +878,9 @@ void reset_initializer_llvm(tree decl) {
 void reset_type_and_initializer_llvm(tree decl) {
   // If there were earlier errors we can get here when DECL_LLVM has not
   // been set.  Don't crash.
-  if ((errorcount || sorrycount) && !DECL_LLVM(decl))
+  // We can also get here when DECL_LLVM has not been set for some object
+  // referenced in the initializer.  Don't crash then either.
+  if (errorcount || sorrycount)
     return;
 
   // Get or create the global variable now.

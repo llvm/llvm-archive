@@ -1975,7 +1975,7 @@ void TreeToLLVM::EmitLandingPads() {
           Catch_All = Constant::getNullValue(PointerType::getUnqual(Type::Int8Ty));
         else
           // This language has a type that catches all others.
-          Catch_All = Emit(lookup_type_for_runtime(catch_all_type), 0);
+          Catch_All = Emit(catch_all_type, 0);
       }
       Args.push_back(Catch_All);
     }

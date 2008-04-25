@@ -5801,6 +5801,12 @@ build_message_ref_translation_table (void)
       constructor = objc_build_constructor (struct_type, nreverse (initializer));
       TREE_INVARIANT (constructor) = true;
       finish_var_decl (decl, constructor); 
+      /* APPLE LOCAL LLVM begin - radar 5720120 */
+#ifdef ENABLE_LLVM
+      /* Reset the initializer for this reference as it most likely changed.  */
+      reset_initializer_llvm(decl);
+#endif
+      /* APPLE LOCAL LLVM end - radar 5720120 */
     }
 }
 

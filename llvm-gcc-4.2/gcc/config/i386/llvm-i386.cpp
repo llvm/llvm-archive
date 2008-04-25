@@ -957,6 +957,11 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (NumClasses == 1 && foundInt)
     return false;
 
+  if (NumClasses == 1 && 
+      (Class[0] == X86_64_INTEGERSI_CLASS || Class[0] == X86_64_INTEGER_CLASS))
+    // This will fit in one i32 register.
+    return false;
+
   // Otherwise, use of multiple value return is OK.
   return true;
 }
@@ -1096,7 +1101,9 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
     case X86_64_COMPLEX_X87_CLASS:
         assert(0 && "Not yet handled!");
     case X86_64_NO_CLASS:
-        assert(0 && "Not yet handled!");
+      // padding bytes.
+      Elts.push_back(Type::Int64Ty);
+      break;
     default: assert(0 && "Unexpected register class!");
     }
   }

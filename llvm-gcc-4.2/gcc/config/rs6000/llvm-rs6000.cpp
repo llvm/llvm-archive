@@ -398,7 +398,7 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
   // ppc32 passes aggregates by copying, either in int registers or on the 
   // stack.
   const StructType *STy = dyn_cast<StructType>(Ty);
-  if (!STy || STy->isPacked()) return true;
+  if (!STy) return true;
 
   // A struct containing only a float, double or vector field, possibly with
   // some zero-length fields as well, must be passed as the field type.
@@ -429,7 +429,7 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
     return false;
 
   const StructType *STy = dyn_cast<StructType>(Ty);
-  if (!STy || STy->isPacked()) return false;
+  if (!STy) return false;
 
   // A struct containing only a float, double or Altivec field, possibly with
   // some zero-length fields as well, must be passed as the field type.

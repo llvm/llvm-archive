@@ -410,6 +410,7 @@ for t in $TARGETS ; do
     done
 done
 
+# FIXME: What is the motivation here ?
 for t in $TARGETS ; do
   cp -p /usr/lib/libstdc++.6.dylib \
     .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \

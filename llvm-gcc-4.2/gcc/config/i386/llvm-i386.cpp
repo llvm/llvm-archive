@@ -898,9 +898,9 @@ bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 &&
        TYPE_VECTOR_SUBPARTS(type)>1)
       return true;
-    if (TREE_INT_CST_LOW(TYPE_SIZE(type))>128)
-      return true;
   }
+  if (TREE_INT_CST_LOW(TYPE_SIZE(type))>128)
+    return true;
   return false;
 }
 

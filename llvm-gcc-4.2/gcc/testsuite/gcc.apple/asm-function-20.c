@@ -7,7 +7,7 @@
 inline int numberFive (void);
 asm int numberFive (void)
 {					/* { dg-warning "can never be inlined" } */
-	  				/* { dg-warning "inlining failed in call" "" { target *-*-* } 9 } */
+                                        /* LLVM LOCAL */
     li r3, 1
 }
 

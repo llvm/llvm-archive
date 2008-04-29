@@ -4302,14 +4302,6 @@ ix86_return_in_memory (tree type)
   int needed_intregs, needed_sseregs, size;
   enum machine_mode mode = type_natural_mode (type);
 
-  /* LLVM LOCAL begin strcut return check */
-  /* FIXME without this, 64-bit _Complex long double crashes if not returned in 
-     memory.  With it, we just produce incorrect code. */
-  if (TARGET_64BIT && TREE_CODE(type) == COMPLEX_TYPE &&
-      TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) > 8)
-    return 1;
-  /* LLVM LOCAL end strcut return check */
-
   if (TARGET_64BIT)
     return !examine_argument (mode, type, 1, &needed_intregs, &needed_sseregs);
 

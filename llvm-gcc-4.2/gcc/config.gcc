@@ -1326,8 +1326,8 @@ i[34567]86-*-pe | i[34567]86-*-cygwin*)
 	extra_options="${extra_options} i386/cygming.opt"
 	extra_objs="winnt.o winnt-stubs.o"
 # LLVM LOCAL begin mainline
-	c_target_objs="cygwin2.o msformat-c.o"
-	cxx_target_objs="cygwin2.o winnt-cxx.o msformat-c.o"
+	c_target_objs="cygwin2.o"
+	cxx_target_objs="cygwin2.o winnt-cxx.o"
 # LLVM LOCAL end mainline
 	extra_gcc_objs=cygwin1.o
 	extra_parts="crtbegin.o crtend.o"
@@ -1345,8 +1345,7 @@ i[34567]86-*-mingw32* | x86_64-*-mingw32*)
 	extra_options="${extra_options} i386/cygming.opt"
 	extra_objs="winnt.o winnt-stubs.o"
 # LLVM LOCAL begin mainline
-	c_target_objs="msformat-c.o"
-	cxx_target_objs="winnt-cxx.o msformat-c.o"
+	cxx_target_objs="winnt-cxx.o"
 	default_use_cxa_atexit=yes
 # LLVM LOCAL end mainline
 	extra_parts="crtbegin.o crtend.o"

@@ -3,6 +3,8 @@
 /* { dg-options { -fasm-blocks -msse3 -O2 } } */
 /* { dg-require-effective-target ilp32 } */
 /* { dg-final { scan-assembler "-\(40|44\)\\\(%ebp,%edx,2\\\), %ebx" } } */
+/* LLVM LOCAL disable test */
+/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Radar 4699545 */
 
 void bar() {

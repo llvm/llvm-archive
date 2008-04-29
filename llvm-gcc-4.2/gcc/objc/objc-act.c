@@ -8622,6 +8622,7 @@ build_private_template (tree class)
         CLASS_TYPE (class) = record;
       
       /* APPLE LOCAL llvm begin */
+#if 0
 #ifdef ENABLE_LLVM
       /* Synthesized properties will later be added to this RECORD_DECL as they
        * are found in @implementations.  We don't want the LLVM tree->llvm
@@ -8632,6 +8633,7 @@ build_private_template (tree class)
        */
       if (flag_objc_abi == 2)
         llvm_compute_type(record);
+#endif
 #endif
       /* APPLE LOCAL llvm end */
     }

@@ -2,7 +2,7 @@
 /* { dg-do compile { target "i?86-*-*" } } */
 /* { dg-options "-O2" } */
 /* { dg-skip-if "" { i?86-*-* } { "-m64" } { "" } } */
-/* { dg-final { scan-assembler "and.*0xffffff00" } } */
+/* { dg-final { scan-assembler "and.*(0xffffff00|4294967040)" } } */
 unsigned char lut[256];
 
 void foo( int count, unsigned int *srcptr, unsigned *dstptr )

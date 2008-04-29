@@ -151,23 +151,6 @@ do {						         \
 
 
 /* LLVM LOCAL begin mainline */
-/* Contains a pointer to type target_ovr_attr defining the target specific
-   overrides of format attributes.  See c-format.h for structure
-   definition.  */
-#undef TARGET_OVERRIDES_FORMAT_ATTRIBUTES
-#define TARGET_OVERRIDES_FORMAT_ATTRIBUTES mingw_format_attribute_overrides
-
-/* Specify the count of elements in TARGET_OVERRIDES_ATTRIBUTE.  */
-#undef TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT
-#define TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT 3
-
-/* MS specific format attributes for ms_printf, ms_scanf, ms_strftime.  */
-#undef TARGET_FORMAT_TYPES
-#define TARGET_FORMAT_TYPES mingw_format_attributes
-
-#undef TARGET_N_FORMAT_TYPES
-#define TARGET_N_FORMAT_TYPES 3
-
 #define TARGET_USE_JCR_SECTION 0
 
 #undef MINGW_ENABLE_EXECUTE_STACK

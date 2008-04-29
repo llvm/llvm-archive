@@ -5,11 +5,10 @@
 /* { dg-final { scan-assembler "and.*0xffffff00" } } */
 unsigned char lut[256];
 
-void foo( int count )
+void foo( int count, unsigned int *srcptr, unsigned *dstptr )
 {
   int j;
 	
-  unsigned int *srcptr, *dstptr;
   for (j = 0; j < count; j++) {
     unsigned int tmp = *srcptr;
     unsigned int alpha = (tmp&255);

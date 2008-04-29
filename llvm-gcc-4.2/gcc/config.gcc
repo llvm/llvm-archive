@@ -1325,22 +1325,30 @@ i[34567]86-*-pe | i[34567]86-*-cygwin*)
 	target_gtfiles="\$(srcdir)/config/i386/winnt.c"
 	extra_options="${extra_options} i386/cygming.opt"
 	extra_objs="winnt.o winnt-stubs.o"
-	c_target_objs=cygwin2.o
-	cxx_target_objs="cygwin2.o winnt-cxx.o"
+# LLVM LOCAL begin mainline
+	c_target_objs="cygwin2.o msformat-c.o"
+	cxx_target_objs="cygwin2.o winnt-cxx.o msformat-c.o"
+# LLVM LOCAL end mainline
 	extra_gcc_objs=cygwin1.o
 	extra_parts="crtbegin.o crtend.o"
 	if test x$enable_threads = xyes; then
 		thread_file='posix'
 	fi
 	;;
-i[34567]86-*-mingw32*)
+# LLVM LOCAL begin mainline
+i[34567]86-*-mingw32* | x86_64-*-mingw32*)
+# LLVM LOCAL end mainline
 	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h dbxcoff.h i386/cygming.h i386/mingw32.h"
 	xm_file=i386/xm-mingw32.h
 	tmake_file="i386/t-cygming i386/t-mingw32"
 	target_gtfiles="\$(srcdir)/config/i386/winnt.c"
 	extra_options="${extra_options} i386/cygming.opt"
 	extra_objs="winnt.o winnt-stubs.o"
-	cxx_target_objs=winnt-cxx.o
+# LLVM LOCAL begin mainline
+	c_target_objs="msformat-c.o"
+	cxx_target_objs="winnt-cxx.o msformat-c.o"
+	default_use_cxa_atexit=yes
+# LLVM LOCAL end mainline
 	extra_parts="crtbegin.o crtend.o"
 	case ${enable_threads} in
 	  "" | yes | win32)

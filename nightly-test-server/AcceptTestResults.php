@@ -45,33 +45,39 @@ function getMachineID($targetTriple, $hostname, $nickname) {
 
 /*******************************************************************************
 * mysql> describe testRunInfo;
-* +-------------------+-----------------------------------+------+-----+---------------------+----------------+
-* | Field             | Type                              | Null | Key | Default             | Extra          |
-* +-------------------+-----------------------------------+------+-----+---------------------+----------------+
-* | id                | int(11)                           |      | PRI | NULL                | auto_increment |
-* | runDateTime       | datetime                          |      |     | 0000-00-00 00:00:00 |                |
-* | machineId         | int(11)                           |      |     | 0                   |                |
-* | machineUname      | text                              | YES  |     | NULL                |                |
-* | gccVersion        | text                              | YES  |     | NULL                |                |
-* | cvsCpuTime        | double                            | YES  |     | NULL                |                |
-* | cvsWallTime       | double                            | YES  |     | NULL                |                |
-* | configureCpuTime  | double                            | YES  |     | NULL                |                |
-* | configureWallTime | double                            | YES  |     | NULL                |                |
-* | buildCpuTime      | double                            | YES  |     | NULL                |                |
-* | buildWallTime     | double                            | YES  |     | NULL                |                |
-* | dejagnuCpuTime    | double                            | YES  |     | NULL                |                |
-* | dejagnuWallTime   | double                            | YES  |     | NULL                |                |
-* | warnings          | mediumtext                        | YES  |     | NULL                |                |
-* | warningsAdded     | text                              | YES  |     | NULL                |                |
-* | warningsRemoved   | text                              | YES  |     | NULL                |                |
-* | cvsUsersAdd       | text                              | YES  |     | NULL                |                |
-* | cvsUsersCO        | text                              | YES  |     | NULL                |                |
-* | cvsFilesAdded     | text                              | YES  |     | NULL                |                |
-* | cvsFilesRemoved   | text                              | YES  |     | NULL                |                |
-* | cvsFilesModified  | text                              | YES  |     | NULL                |                |
-* | buildStatus       | tinyint(4)                        | YES  |     | NULL                |                |
-* | type              | enum('release','debug','unknown') | YES  |     | unknown             |                |
-* +-------------------+-----------------------------------+------+-----+---------------------+----------------+
+* +-------------------+-------------------------------------+------+-----+---------------------+----------------+
+* | Field             | Type                                | Null | Key | Default             | Extra          |
+* +-------------------+-------------------------------------+------+-----+---------------------+----------------+
+* | id                | int(11)                             |      | PRI | NULL                | auto_increment |
+* | runDateTime       | datetime                            |      | MUL | 0000-00-00 00:00:00 |                |
+* | machineId         | int(11)                             |      | MUL | 0                   |                |
+* | machineUname      | text                                | YES  |     | NULL                |                |
+* | gccVersion        | text                                | YES  |     | NULL                |                |
+* | cvsCpuTime        | double                              | YES  |     | NULL                |                |
+* | cvsWallTime       | double                              | YES  |     | NULL                |                |
+* | configureCpuTime  | double                              | YES  |     | NULL                |                |
+* | configureWallTime | double                              | YES  |     | NULL                |                |
+* | buildCpuTime      | double                              | YES  |     | NULL                |                |
+* | buildWallTime     | double                              | YES  |     | NULL                |                |
+* | dejagnuCpuTime    | double                              | YES  |     | NULL                |                |
+* | dejagnuWallTime   | double                              | YES  |     | NULL                |                |
+* | warnings          | mediumtext                          | YES  |     | NULL                |                |
+* | warningsAdded     | text                                | YES  |     | NULL                |                |
+* | warningsRemoved   | text                                | YES  |     | NULL                |                |
+* | cvsUsersAdd       | text                                | YES  |     | NULL                |                |
+* | cvsUsersCO        | text                                | YES  |     | NULL                |                |
+* | cvsFilesAdded     | text                                | YES  |     | NULL                |                |
+* | cvsFilesRemoved   | text                                | YES  |     | NULL                |                |
+* | cvsFilesModified  | text                                | YES  |     | NULL                |                |
+* | buildStatus       | enum('OK','FAIL','Skipped','Other') | YES  |     | Other               |                |
+* | type              | enum('release','debug','unknown')   | YES  |     | unknown             |                |
+* | dejagnuPass       | int(11)                             | YES  |     | NULL                |                |
+* | dejagnuFail       | int(11)                             | YES  |     | NULL                |                |
+* | dejagnuXFail      | int(11)                             | YES  |     | NULL                |                |
+* | dejagnuXPass      | int(11)                             | YES  |     | NULL                |                |
+* | dateAdded         | datetime                            | YES  |     | NULL                |                |
+* +-------------------+-------------------------------------+------+-----+---------------------+----------------+
+*
 * Add a test run configuration to the database for logging test results.
 *
 *******************************************************************************/
@@ -205,17 +211,47 @@ function addProgramResult($programLine, $configId, $prefix) {
   
   $program = $results[0];
   $program = $prefix . $program;
+  
   $gccasTime = $results[1];
+  if($gccasTime == "*")
+    $gccasTime = NULL;
+  
   $byteCodeSize = $results[2];
+  if($byteCodeSize == "*")
+    $byteCodeSize = NULL;
+  
   $llcTime = $results[3];
+  if($llcTime == "*")
+    $llcTime = NULL;
+  
   $llcBetaTime = $results[4];
+  if($llcBetaTime == "*")
+    $llcBetaTime = NULL;
+  
   $jitTime = $results[5];
+  if($jitTime == "*")
+    $jitTime = NULL;
+  
   $gccRunTime = $results[6];
+  if($gccRunTime = "*")
+    $gccRunTime = NULL;
+  
   $cbeRunTime = $results[7];
+  if($cbeRunTime == "*")
+    $cbeRunTime = NULL;
+  
   $llcRunTime = $results[8];
+  if($llcRunTime == "*")
+    $llcRunTime = NULL;
+  
   $llcBetaRunTime = $results[9];
+  if($llcBetaRunTime == "*")
+    $llcBetaRunTime = NULL;
+  
   $jitRunTime = $results[10];
-    
+  if($jitRunTime == "*")
+    $jitRunTime = NULL;
+  
   // Get id for program name 
   $sqlQuery = "SELECT id FROM programs WHERE name=\"$program\"";
   $result = mysql_query($sqlQuery) or die(mysql_error());
@@ -239,7 +275,7 @@ function addProgramResult($programLine, $configId, $prefix) {
               \"$llcTime\", \"$llcBetaTime\", \"$jitTime\", \"$gccRunTime\",
               \"$cbeRunTime\", \"$llcRunTime\", \"$llcBetaRunTime\",
               \"$jitRunTime\")";
-  
+
   mysql_query($query) or die(mysql_error());
 }
 
@@ -594,7 +630,7 @@ foreach ($A_FILE_SIZE as $info) {
 $loc = $_POST['lines_of_code'];
 $filesincvs = $_POST['cvs_file_count'];
 $dirsincvs = $_POST['cvs_dir_count'];
-if(strcmp($buildstatus, "OK") ==  0) {
+if($buildstatus ==  1) {
   
   // only update loc if successful build
   updateLLVMStats($runDateTime, $loc, $filesincvs, $dirsincvs, $testRunConfigId);

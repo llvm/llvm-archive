@@ -20,10 +20,18 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* LLVM LOCAL begin mainline */
 #undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (x86 MinGW)"); 
+#if TARGET_64BIT_DEFAULT
+#define TARGET_VERSION fprintf (stderr,"(x86_64 MinGW");
+#else
+#define TARGET_VERSION fprintf (stderr," (x86 MinGW)");
+#endif
+/* LLVM LOCAL end mainline */
 
-/* See i386/crtdll.h for an alternative definition.  */
+/* LLVM LOCAL begin mainline */
+/* See i386/crtdll.h for an alternative definition. _INTEGRAL_MAX_BITS
+   is for compatibility with native compiler.  */
 #define EXTRA_OS_CPP_BUILTINS()					\
   do								\
     {								\
@@ -32,13 +40,28 @@ Boston, MA 02110-1301, USA.  */
       builtin_define ("_WIN32");				\
       builtin_define_std ("WIN32");				\
       builtin_define_std ("WINNT");				\
+      builtin_define_with_int_value ("_INTEGRAL_MAX_BITS",	\
+				     TYPE_PRECISION (intmax_type_node));\
+      if (TARGET_64BIT_MS_ABI)					\
+	{							\
+	  builtin_define ("__MINGW64__");			\
+	  builtin_define_std ("WIN64");				\
+	  builtin_define_std ("_WIN64");			\
+	}							\
     }								\
   while (0)
+/* LLVM LOCAL end mainline */
 
 /* Override the standard choice of /usr/include as the default prefix
    to try when searching for header files.  */
 #undef STANDARD_INCLUDE_DIR
+/* LLVM LOCAL begin mainline */
+#if TARGET_64BIT_DEFAULT
+#define STANDARD_INCLUDE_DIR "/mingw/include64"
+#else
 #define STANDARD_INCLUDE_DIR "/mingw/include"
+#endif
+/* LLVM LOCAL end mainline */
 #undef STANDARD_INCLUDE_COMPONENT
 #define STANDARD_INCLUDE_COMPONENT "MINGW"
 
@@ -78,7 +101,13 @@ Boston, MA 02110-1301, USA.  */
 
 /* Override startfile prefix defaults.  */
 #ifndef STANDARD_STARTFILE_PREFIX_1
+/* LLVM LOCAL begin mainline */
+#if TARGET_64BIT_DEFAULT
+#define STANDARD_STARTFILE_PREFIX_1 "/mingw/lib64/"
+#else
 #define STANDARD_STARTFILE_PREFIX_1 "/mingw/lib/"
+#endif
+/* LLVM LOCAL end mainline */
 #endif
 #ifndef STANDARD_STARTFILE_PREFIX_2
 #define STANDARD_STARTFILE_PREFIX_2 ""
@@ -121,10 +150,48 @@ do {						         \
 #define GOMP_SELF_SPECS "%{fopenmp: -mthreads}"
 
 
-/* LLVM LOCAL begin mainline 125696 */
-/* This works on mingw32.  */
-#undef TARGET_USE_JCR_SECTION
-#define TARGET_USE_JCR_SECTION 1
+/* LLVM LOCAL begin mainline */
+/* Contains a pointer to type target_ovr_attr defining the target specific
+   overrides of format attributes.  See c-format.h for structure
+   definition.  */
+#undef TARGET_OVERRIDES_FORMAT_ATTRIBUTES
+#define TARGET_OVERRIDES_FORMAT_ATTRIBUTES mingw_format_attribute_overrides
 
+/* Specify the count of elements in TARGET_OVERRIDES_ATTRIBUTE.  */
+#undef TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT
+#define TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT 3
+
+/* MS specific format attributes for ms_printf, ms_scanf, ms_strftime.  */
+#undef TARGET_FORMAT_TYPES
+#define TARGET_FORMAT_TYPES mingw_format_attributes
+
+#undef TARGET_N_FORMAT_TYPES
+#define TARGET_N_FORMAT_TYPES 3
+
+#define TARGET_USE_JCR_SECTION 0
+
+#undef MINGW_ENABLE_EXECUTE_STACK
+#define MINGW_ENABLE_EXECUTE_STACK     \
+extern void __enable_execute_stack (void *);    \
+void         \
+__enable_execute_stack (void *addr)					\
+{									\
+  MEMORY_BASIC_INFORMATION b;						\
+  if (!VirtualQuery (addr, &b, sizeof(b)))				\
+    abort ();								\
+  VirtualProtect (b.BaseAddress, b.RegionSize, PAGE_EXECUTE_READWRITE,	\
+		  &b.Protect);						\
+}
+
+#undef ENABLE_EXECUTE_STACK
+#define ENABLE_EXECUTE_STACK MINGW_ENABLE_EXECUTE_STACK
+
+
+#ifdef IN_LIBGCC2
+#include <windows.h>
+#endif
+
+#if !TARGET_64BIT
 #define MD_UNWIND_SUPPORT "config/i386/w32-unwind.h"
-/* LLVM LOCAL end mainline 125696 */
+#endif
+/* LLVM LOCAL end mainline */

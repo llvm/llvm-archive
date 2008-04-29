@@ -21,22 +21,43 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* LLVM LOCAL begin mainline */
+#if TARGET_64BIT_DEFAULT
+#ifndef DWARF2_DEBUGGING_INFO
+#define DWARF2_DEBUGGING_INFO 1
+#endif
+#ifndef DWARF2_UNWIND_INFO
+#define DWARF2_UNWIND_INFO 1
+#endif
+#endif
+/* LLVM LOCAL end mainline */
+
 #define DBX_DEBUGGING_INFO 1
 #define SDB_DEBUGGING_INFO 1
 #undef PREFERRED_DEBUGGING_TYPE
+/* LLVM LOCAL begin mainline */
+#if TARGET_64BIT_DEFAULT
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+#else
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+#endif
+
+#undef TARGET_64BIT_MS_ABI
+#define TARGET_64BIT_MS_ABI TARGET_64BIT
+/* LLVM LOCAL end mainline */
 
 #ifdef HAVE_GAS_PE_SECREL32_RELOC
 #define DWARF2_DEBUGGING_INFO 1
 
-/* LLVM LOCAL begin mainline 125696 */
+/* LLVM LOCAL begin mainline */
 /* Map gcc register number to DBX register number. Maintain
    compatibility with old -gstabs compiled code.  */
-/* LLVM LOCAL end mainline 125696 */
 #undef DBX_REGISTER_NUMBER
-#define DBX_REGISTER_NUMBER(n) (write_symbols == DWARF2_DEBUG   \
-                                ? svr4_dbx_register_map[n]      \
-                                : dbx_register_map[n])
+#define DBX_REGISTER_NUMBER(n)				\
+  (TARGET_64BIT ? dbx64_register_map[n]			\
+   : (write_symbols == DWARF2_DEBUG			\
+      ? svr4_dbx_register_map[n] : dbx_register_map[n]))
+/* LLVM LOCAL end mainline */
 
 /* LLVM LOCAL begin mainline 125696 */
 /* Map gcc register number to DWARF 2 CFA column number.  Always
@@ -109,14 +130,37 @@ Boston, MA 02110-1301, USA.  */
 #undef MATH_LIBRARY
 #define MATH_LIBRARY ""
 
-#define SIZE_TYPE "unsigned int"
-#define PTRDIFF_TYPE "int"
+/* LLVM LOCAL begin mainline */
+#define SIZE_TYPE (TARGET_64BIT ? "long long unsigned int" : "unsigned int")
+#define PTRDIFF_TYPE (TARGET_64BIT ? "long long int" : "int")
+
 #define WCHAR_TYPE_SIZE 16
 #define WCHAR_TYPE "short unsigned int"
+
+/* Windows64 continues to use a 32-bit long type.  */
+#undef LONG_TYPE_SIZE
+#define LONG_TYPE_SIZE 32
+
+#undef REG_PARM_STACK_SPACE
+#define REG_PARM_STACK_SPACE(FNDECL) (TARGET_64BIT_MS_ABI ? 32 : 0)
+
+#undef OUTGOING_REG_PARM_STACK_SPACE
+#define OUTGOING_REG_PARM_STACK_SPACE (TARGET_64BIT_MS_ABI ? 1 : 0)
+
+#undef REGPARM_MAX
+#define REGPARM_MAX (TARGET_64BIT_MS_ABI ? 4 : 3)
+
+#undef SSE_REGPARM_MAX
+#define SSE_REGPARM_MAX (TARGET_64BIT_MS_ABI ? 4 : TARGET_SSE ? 3 : 0)
+/* LLVM LOCAL end mainline */
 
 
 /* Enable parsing of #pragma pack(push,<n>) and #pragma pack(pop).  */
 #define HANDLE_PRAGMA_PACK_PUSH_POP 1
+/* LLVM LOCAL begin mainline */
+/* Enable push_macro & pop_macro */
+#define HANDLE_PRAGMA_PUSH_POP_MACRO 1
+/* LLVM LOCAL end mainline */
 
 union tree_node;
 #define TREE union tree_node *
@@ -202,14 +246,21 @@ do {							\
 
 #define CHECK_STACK_LIMIT 4000
 
+/* LLVM LOCAL begin mainline */
+#undef STACK_BOUNDARY
+#define STACK_BOUNDARY	(TARGET_64BIT_MS_ABI ? 128 : BITS_PER_WORD)
+/* LLVM LOCAL end mainline */
+
 /* By default, target has a 80387, uses IEEE compatible arithmetic,
    returns float values in the 387 and needs stack probes.
    We also align doubles to 64-bits for MSVC default compatibility.  */
 
+/* LLVM LOCAL begin mainline */
 #undef TARGET_SUBTARGET_DEFAULT
 #define TARGET_SUBTARGET_DEFAULT \
-   (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_STACK_PROBE \
-    | MASK_ALIGN_DOUBLE)
+	(MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS \
+	 | MASK_STACK_PROBE | MASK_ALIGN_DOUBLE)
+/* LLVM LOCAL end mainline */
 
 /* This is how to output an assembler line
    that says to advance the location counter
@@ -393,9 +444,11 @@ extern int i386_pe_dllimport_name_p (const char *);
 #undef TARGET_USE_LOCAL_THUNK_ALIAS_P
 #define TARGET_USE_LOCAL_THUNK_ALIAS_P(DECL) (!DECL_ONE_ONLY (DECL))
 
+/* LLVM LOCAL begin mainline */
 #define SUBTARGET_ATTRIBUTE_TABLE \
-  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler } */ \
   { "selectany", 0, 0, true, false, false, ix86_handle_selectany_attribute }
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler } */
+/* LLVM LOCAL end mainline */
 
 /*  mcount() does not need a counter variable.  */
 #undef NO_PROFILE_COUNTERS

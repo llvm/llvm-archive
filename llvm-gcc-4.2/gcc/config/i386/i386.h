@@ -306,6 +306,12 @@ extern int x86_prefetch_sse;
    it's analogous to similar code for Mach-O on PowerPC.  darwin.h
    redefines this to 1.  */
 #define TARGET_MACHO 0
+
+/* LLVM LOCAL begin mainline */
+/* Likewise, for the Windows 64-bit ABI.  */
+#define TARGET_64BIT_MS_ABI 0
+/* LLVM LOCAL end mainline */
+
 /* APPLE LOCAL begin mach-o cleanup */
 #define MACHOPIC_INDIRECT 0
 #define MACHOPIC_PURE 0

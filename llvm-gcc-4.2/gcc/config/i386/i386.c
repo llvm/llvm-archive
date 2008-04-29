@@ -1443,6 +1443,10 @@ static section *x86_64_elf_select_section (tree decl, int reloc,
 #define TARGET_INTERNAL_ARG_POINTER ix86_internal_arg_pointer
 #undef TARGET_DWARF_HANDLE_FRAME_UNSPEC
 #define TARGET_DWARF_HANDLE_FRAME_UNSPEC ix86_dwarf_handle_frame_unspec
+/* LLVM LOCAL begin mainline */
+#undef TARGET_STRICT_ARGUMENT_NAMING
+#define TARGET_STRICT_ARGUMENT_NAMING hook_bool_CUMULATIVE_ARGS_true
+/* LLVM LOCAL end mainline */
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg
@@ -1776,9 +1780,18 @@ override_options (void)
     }
   else
     {
-      ix86_cmodel = CM_32;
-      if (TARGET_64BIT)
+      /* LLVM LOCAL begin mainline */
+      /* For TARGET_64BIT_MS_ABI, force pic on, in order to enable the
+	 use of rip-relative addressing.  This eliminates fixups that
+	 would otherwise be needed if this object is to be placed in a
+	 DLL, and is essentially just as efficient as direct addressing.  */
+      if (TARGET_64BIT_MS_ABI)
+	ix86_cmodel = CM_SMALL_PIC, flag_pic = 1;
+      else if (TARGET_64BIT)
 	ix86_cmodel = flag_pic ? CM_SMALL_PIC : CM_SMALL;
+      else
+	ix86_cmodel = CM_32;
+      /* LLVM LOCAL end mainline */
     }
   if (ix86_asm_string != 0)
     {
@@ -1894,15 +1907,20 @@ override_options (void)
   /* Validate -mregparm= value.  */
   if (ix86_regparm_string)
     {
+      /* LLVM LOCAL begin mainline */
+      if (TARGET_64BIT)
+	warning (0, "-mregparm is ignored in 64-bit mode");
+      /* LLVM LOCAL end mainline */
       i = atoi (ix86_regparm_string);
       if (i < 0 || i > REGPARM_MAX)
 	error ("-mregparm=%d is not between 0 and %d", i, REGPARM_MAX);
       else
 	ix86_regparm = i;
     }
-  else
-   if (TARGET_64BIT)
-     ix86_regparm = REGPARM_MAX;
+  /* LLVM LOCAL begin mainline */
+  if (TARGET_64BIT)
+    ix86_regparm = REGPARM_MAX;
+  /* LLVM LOCAL end mainline */
 
   /* If the user has provided any of the -malign-* options,
      warn and use that value only if -falign-* is not set.
@@ -1996,8 +2014,6 @@ override_options (void)
   /* APPLE LOCAL begin mainline */
   if (TARGET_64BIT)
     {
-      if (TARGET_ALIGN_DOUBLE)
-        error ("-malign-double makes no sense in the 64bit mode");
       if (TARGET_RTD)
         error ("-mrtd calling convention not supported in the 64bit mode");
       /* APPLE LOCAL begin radar 4877693 */
@@ -2697,8 +2713,12 @@ ix86_handle_cconv_attribute (tree *node, tree name,
 
   if (TARGET_64BIT)
     {
-      warning (OPT_Wattributes, "%qs attribute ignored",
-	       IDENTIFIER_POINTER (name));
+      /* LLVM LOCAL begin mainline */
+      /* Do not warn when emulating the MS ABI.  */
+      if (!TARGET_64BIT_MS_ABI)
+	warning (OPT_Wattributes, "%qs attribute ignored",
+		 IDENTIFIER_POINTER (name));
+      /* LLVM LOCAL end mainline */
       *no_add_attrs = true;
       return NULL_TREE;
     }
@@ -4056,23 +4076,44 @@ function_arg (CUMULATIVE_ARGS *cum, enum machine_mode orig_mode,
    the argument itself.  The pointer is passed in whatever way is
    appropriate for passing a pointer to that type.  */
 
+/* LLVM LOCAL begin mainline */
 static bool
 ix86_pass_by_reference (CUMULATIVE_ARGS *cum ATTRIBUTE_UNUSED,
 			enum machine_mode mode ATTRIBUTE_UNUSED,
 			tree type, bool named ATTRIBUTE_UNUSED)
 {
-  if (!TARGET_64BIT)
-    return 0;
-
-  if (type && int_size_in_bytes (type) == -1)
+  /* See Windows x64 Software Convention.  */
+  if (TARGET_64BIT_MS_ABI)
     {
-      if (TARGET_DEBUG_ARG)
-	fprintf (stderr, "function_arg_pass_by_reference\n");
-      return 1;
+      int msize = (int) GET_MODE_SIZE (mode);
+      if (type)
+	{
+	  /* Arrays are passed by reference.  */
+	  if (TREE_CODE (type) == ARRAY_TYPE)
+	    return true;
+
+	  if (AGGREGATE_TYPE_P (type))
+	    {
+	      /* Structs/unions of sizes other than 8, 16, 32, or 64 bits
+                 are passed by reference.  */
+	      msize = int_size_in_bytes (type);
+	    }
+	}
+
+      /* __m128 is passed by reference.  */
+      switch (msize) {
+      case 1: case 2: case 4: case 8:
+	break;
+      default:
+	return true;
+      }
     }
+  else if (TARGET_64BIT && type && int_size_in_bytes (type) == -1)
+    return 1;
 
   return 0;
 }
+/* LLVM LOCAL end mainline */
 
 /* Return true when TYPE should be 128bit aligned for 32bit argument passing
    ABI.  Only called if TARGET_SSE.  */
@@ -19708,7 +19749,7 @@ x86_output_mi_thunk (FILE *file ATTRIBUTE_UNUSED,
 	{
 	  int tmp_regno = 2 /* ECX */;
 	  if (lookup_attribute ("fastcall",
-	      TYPE_ATTRIBUTES (TREE_TYPE (function))))
+				TYPE_ATTRIBUTES (TREE_TYPE (function))))
 	    tmp_regno = 0 /* EAX */;
 	  tmp = gen_rtx_REG (SImode, tmp_regno);
 	}

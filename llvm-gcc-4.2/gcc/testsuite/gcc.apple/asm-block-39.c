@@ -1,8 +1,6 @@
 /* APPLE LOCAL file CW asm blocks */
 /* { dg-do assemble { target i?86*-*-darwin* } } */
 /* { dg-options { -fasm-blocks -msse3 } } */
-/* LLVM LOCAL disable test */
-/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Radar 4432782 */
 
 void foo() {

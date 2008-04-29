@@ -1,7 +1,5 @@
 /* { dg-do compile { target i?86*-*-darwin* } } */
 /* { dg-options { -fasm-blocks -O2 } } */
-/* LLVM LOCAL disable test */
-/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Radar 5315594 */
 
 typedef unsigned char unsigned8;

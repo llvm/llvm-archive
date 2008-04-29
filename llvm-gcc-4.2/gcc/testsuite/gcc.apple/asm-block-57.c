@@ -2,8 +2,6 @@
 /* { dg-do run { target i?86*-*-darwin* } } */
 /* { dg-skip-if "" { i?86*-*-darwin* } { "-m64" } } */
 /* { dg-options { -fasm-blocks -msse3 } } */
-/* LLVM LOCAL disable test */
-/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Radar 4682427 */
 
 void bar() __attribute ((weak));

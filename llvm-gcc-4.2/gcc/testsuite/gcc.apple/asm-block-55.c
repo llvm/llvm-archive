@@ -2,8 +2,6 @@
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 /* { dg-options { -fasm-blocks -msse3 -mdynamic-no-pic } } */
 /* { dg-final { scan-assembler "movq _packedw1.*, %mm0" } } */
-/* LLVM LOCAL disable test */
-/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Radar 4515069 */
 
 void foo() {

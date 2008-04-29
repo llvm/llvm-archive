@@ -3794,8 +3794,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   std::string ConstraintStr;
   
   // StoreCallResultAddr - The pointer to store the result of the call through.
-  Value *StoreCallResultAddr = 0;
-  const Type *CallResultType = Type::VoidTy;
+  SmallVector<Value *, 4> StoreCallResultAddrs;
+  SmallVector<const Type *, 4> CallResultTypes;
   
   // Process outputs.
   int ValNum = 0;
@@ -3856,13 +3856,11 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       cast<PointerType>(Dest.Ptr->getType())->getElementType();
     
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
-    if (ConstraintStr.empty() && !AllowsMem &&  // Reg dest and no output yet?
-        DestValTy->isFirstClassType()) {
-      assert(StoreCallResultAddr == 0 && "Already have a result val?");
-      StoreCallResultAddr = Dest.Ptr;
+    if (!AllowsMem && DestValTy->isFirstClassType()) { // Reg dest -> asm return
+      StoreCallResultAddrs.push_back(Dest.Ptr);
       ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;
-      CallResultType = DestValTy;
+      CallResultTypes.push_back(DestValTy);
     } else {
       ConstraintStr += ",=*";
       ConstraintStr += SimplifiedConstraint;
@@ -3989,6 +3987,17 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     }
   }
   
+  const Type *CallResultType;
+  switch (CallResultTypes.size()) {
+  case 0: CallResultType = Type::VoidTy; break;
+  case 1: CallResultType = CallResultTypes[0]; break;
+  default: 
+    std::vector<const Type*> TmpVec(CallResultTypes.begin(),
+                                    CallResultTypes.end());
+    CallResultType = StructType::get(TmpVec);
+    break;
+  }
+  
   const FunctionType *FTy = 
     FunctionType::get(CallResultType, CallArgTypes, false);
   
@@ -4005,12 +4014,18 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
                               ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));   
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
-                                    StoreCallResultAddr ? "tmp" : "");
+                                    CallResultTypes.empty() ? "" : "asmtmp");
   CV->setDoesNotThrow();
 
   // If the call produces a value, store it into the destination.
-  if (StoreCallResultAddr)
-    Builder.CreateStore(CV, StoreCallResultAddr);
+  if (StoreCallResultAddrs.size() == 1)
+    Builder.CreateStore(CV, StoreCallResultAddrs[0]);
+  else if (unsigned NumResults = StoreCallResultAddrs.size()) {
+    for (unsigned i = 0; i != NumResults; ++i) {
+      Value *ValI = Builder.CreateGetResult(CV, i, "asmresult");
+      Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
+    }
+  }
   
   // Give the backend a chance to upgrade the inline asm to LLVM code.  This
   // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->

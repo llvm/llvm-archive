@@ -1068,9 +1068,10 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
 
+  std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
-    ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+    ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
                                              ParamAttr::Nest));
@@ -1082,7 +1083,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     // Determine if there are any attributes for this param.
     ParameterAttributes Attributes = ParamAttr::None;
 
-    ABIConverter.HandleArgument(ArgTy, &Attributes);
+    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
 
     // Compute zext/sext attributes.
     Attributes |= HandleArgumentExtension(ArgTy);
@@ -1165,9 +1166,10 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
 
+  std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
-    ABIConverter.HandleArgument(TREE_TYPE(static_chain));
+    ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
     Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
                                              ParamAttr::Nest));
@@ -1207,7 +1209,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     // Determine if there are any attributes for this param.
     ParameterAttributes Attributes = ParamAttr::None;
     
-    ABIConverter.HandleArgument(ArgTy, &Attributes);
+    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
 
     // Compute zext/sext attributes.
     Attributes |= HandleArgumentExtension(ArgTy);

@@ -247,6 +247,16 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
     false
 #endif
 
+// LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS - Only called if
+// LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS returns true. This returns true if
+// there are only enough unused argument passing registers to pass a part of
+// the aggregate. Note, this routine should return false if none of the needed
+// registers are available.
+#ifndef LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE) \
+    false
+#endif
+
 // LLVM_BYVAL_ALIGNMENT - Returns the alignment of the type in bytes, if known,
 // in the context of its use as a function parameter.
 // Note that the alignment in the TYPE node is usually the alignment appropriate
@@ -387,23 +397,37 @@ public:
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type, ParameterAttributes *Attributes = NULL) {
+  void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
+                      ParameterAttributes *Attributes = NULL) {
     const Type *Ty = ConvertType(type);
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
-      C.HandleByInvisibleReferenceArgument(PointerType::getUnqual(Ty), type);
+      const Type *PtrTy = PointerType::getUnqual(Ty);
+      C.HandleByInvisibleReferenceArgument(PtrTy, type);
+      ScalarElts.push_back(PtrTy);
     } else if (Ty->getTypeID()==Type::VectorTyID) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty);
+        PassInIntegerRegisters(type, Ty, ScalarElts);
       } else {
         C.HandleScalarArgument(Ty, type);
+        ScalarElts.push_back(Ty);
       }
     } else if (Ty->isFirstClassType()) {
       C.HandleScalarArgument(Ty, type);
+      ScalarElts.push_back(Ty);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
-      PassInMixedRegisters(type, Ty, Elts);
+      if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts))
+        PassInMixedRegisters(type, Ty, Elts, ScalarElts);
+      else {
+        C.HandleByValArgument(Ty, type);
+        if (Attributes) {
+          *Attributes |= ParamAttr::ByVal;
+          *Attributes |= 
+            ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+        }
+      }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
       C.HandleByValArgument(Ty, type);
       if (Attributes) {
@@ -412,7 +436,7 @@ public:
           ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
-      PassInIntegerRegisters(type, Ty);
+      PassInIntegerRegisters(type, Ty, ScalarElts);
     } else if (isZeroSizedStructOrUnion(type)) {
       // Zero sized struct or union, just drop it!
       ;
@@ -423,24 +447,24 @@ public:
           assert(FNo != ~0U && "Case not handled yet!");
           
           C.EnterField(FNo, Ty);
-          HandleArgument(getDeclaredType(Field));
+          HandleArgument(getDeclaredType(Field), ScalarElts);
           C.ExitField();
         }
     } else if (TREE_CODE(type) == COMPLEX_TYPE) {
       C.EnterField(0, Ty);
-      HandleArgument(TREE_TYPE(type));
+      HandleArgument(TREE_TYPE(type), ScalarElts);
       C.ExitField();
       C.EnterField(1, Ty);
-      HandleArgument(TREE_TYPE(type));
+      HandleArgument(TREE_TYPE(type), ScalarElts);
       C.ExitField();
     } else if ((TREE_CODE(type) == UNION_TYPE) ||
                (TREE_CODE(type) == QUAL_UNION_TYPE)) {
-      HandleUnion(type);
+      HandleUnion(type, ScalarElts);
     } else if (TREE_CODE(type) == ARRAY_TYPE) {
       const ArrayType *ATy = cast<ArrayType>(Ty);
       for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
         C.EnterField(i, Ty);
-        HandleArgument(TREE_TYPE(type));
+        HandleArgument(TREE_TYPE(type), ScalarElts);
         C.ExitField();
       }
     } else {
@@ -451,7 +475,7 @@ public:
 
   /// HandleUnion - Handle a UNION_TYPE or QUAL_UNION_TYPE tree.
   ///
-  void HandleUnion(tree type) {
+  void HandleUnion(tree type, std::vector<const Type*> &ScalarElts) {
     if (TYPE_TRANSPARENT_UNION(type)) {
       tree Field = TYPE_FIELDS(type);
       assert(Field && "Transparent union must have some elements!");
@@ -460,7 +484,7 @@ public:
         assert(Field && "Transparent union must have some elements!");
       }
       
-      HandleArgument(TREE_TYPE(Field));
+      HandleArgument(TREE_TYPE(Field), ScalarElts);
     } else {
       // Unions pass the largest element.
       unsigned MaxSize = 0;
@@ -487,14 +511,15 @@ public:
       }
       
       if (MaxElt)
-        HandleArgument(TREE_TYPE(MaxElt));
+        HandleArgument(TREE_TYPE(MaxElt), ScalarElts);
     }
   }
     
   /// PassInIntegerRegisters - Given an aggregate value that should be passed in
   /// integer registers, convert it to a structure containing ints and pass all
   /// of the struct elements in.
-  void PassInIntegerRegisters(tree type, const Type *Ty) {
+  void PassInIntegerRegisters(tree type, const Type *Ty,
+                              std::vector<const Type*> &ScalarElts) {
     unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
 
     // FIXME: We should preserve all aggregate value alignment information.
@@ -543,6 +568,7 @@ public:
       for (unsigned j = 0; j < ArraySize; ++j) {
         C.EnterField(j, ATy);
         C.HandleScalarArgument(ArrayElementType, 0);
+        ScalarElts.push_back(ArrayElementType);
         C.ExitField();
       }
       C.ExitField();
@@ -551,6 +577,7 @@ public:
     for (unsigned e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
       C.HandleScalarArgument(Elts[i], 0);
+      ScalarElts.push_back(Elts[i]);
       C.ExitField();
     }
   }
@@ -559,11 +586,13 @@ public:
   /// mixed integer, floating point, and vector registers, convert it to a
   /// structure containing the specified struct elements in.
   void PassInMixedRegisters(tree type, const Type *Ty,
-                            std::vector<const Type*> &Elts) {
+                            std::vector<const Type*> &Elts,
+                            std::vector<const Type*> &ScalarElts) {
     const StructType *STy = StructType::get(Elts, false);
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
       C.HandleScalarArgument(Elts[i], 0);
+      ScalarElts.push_back(Elts[i]);
       C.ExitField();
     }
   }

@@ -498,7 +498,7 @@ namespace {
       AI->setName(NameStack.back());
       ++AI;
     }
-        
+
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
       // Should not get here.
       abort();
@@ -519,6 +519,22 @@ namespace {
       LocStack.pop_back();
     }
   };
+}
+
+// isPassedByVal - Return true if an aggregate of the specified type will be
+// passed in memory byval.
+static bool isPassedByVal(tree type, const Type *Ty,
+                          std::vector<const Type*> &ScalarArgs) {
+  if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty))
+    return true;
+
+  std::vector<const Type*> Args;
+  if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Args) &&
+      LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs))
+    // We want to pass the whole aggregate in registers but only some of the
+    // registers are available.
+    return true;
+  return false;
 }
 
 void TreeToLLVM::StartFunctionBody() {
@@ -668,6 +684,8 @@ void TreeToLLVM::StartFunctionBody() {
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
 
+  // Scalar arguments processed so far.
+  std::vector<const Type*> ScalarArgs;
   while (Args) {
     const char *Name = "unnamed_arg";
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
@@ -676,7 +694,7 @@ void TreeToLLVM::StartFunctionBody() {
     bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
     if (isInvRef ||
         (!ArgTy->isFirstClassType() &&
-         LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(TREE_TYPE(Args), ArgTy))) {
+         isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);
@@ -710,7 +728,7 @@ void TreeToLLVM::StartFunctionBody() {
       
       Client.setName(Name);
       Client.setLocation(Tmp);
-      ABIConverter.HandleArgument(TREE_TYPE(Args));
+      ABIConverter.HandleArgument(TREE_TYPE(Args), ScalarArgs);
       Client.clear();
     }
 
@@ -2469,7 +2487,7 @@ namespace {
 
       // Perform any implicit type conversions.
       if (CallOperands.size() < FTy->getNumParams()) {
-        const Type *CalledTy = FTy->getParamType(CallOperands.size());
+        const Type *CalledTy= FTy->getParamType(CallOperands.size());
         if (Loc->getType() != CalledTy) {
           assert(type && "Inconsistent parameter types?");
           bool isSigned = !TYPE_UNSIGNED(type);
@@ -2581,6 +2599,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     CallOperands.push_back(Emit(TREE_OPERAND(exp, 2), 0));
 
   // Loop over the arguments, expanding them and adding them to the op list.
+  std::vector<const Type*> ScalarArgs;
   for (tree arg = TREE_OPERAND(exp, 1); arg; arg = TREE_CHAIN(arg)) {
     const Type *ArgTy = ConvertType(TREE_TYPE(TREE_VALUE(arg)));
 
@@ -2596,7 +2615,8 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
 
     ParameterAttributes Attributes = ParamAttr::None;
-    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), &Attributes);
+    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
+                                &Attributes);
     if (Attributes != ParamAttr::None)
       PAL = PAL.addAttr(CallOperands.size(), Attributes);
 

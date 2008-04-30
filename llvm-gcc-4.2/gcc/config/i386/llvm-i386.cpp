@@ -744,6 +744,82 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
   return llvm_x86_64_should_pass_aggregate_in_memory(TreeType, Mode);
 }
 
+/* count_num_registers_uses - Return the number of GPRs and XMMs parameter
+   register used so far. */
+static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
+                                     unsigned &NumGPRs, unsigned &NumXMMs) {
+  NumGPRs = 0;
+  NumXMMs = 0;
+  for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
+    const Type *Ty = ScalarElts[i];
+    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      if (!TARGET_MACHO)
+        continue;
+      if (VTy->getNumElements() == 1)
+        // v1i64 is passed in GPRs on Darwin.
+        ++NumGPRs;
+      else
+        // All other vector scalar values are passed in XMM registers.
+        ++NumXMMs;
+    } else if (Ty->isInteger() || isa<PointerType>(Ty)) {
+      ++NumGPRs;
+    } else {
+      // Floating point scalar argument.
+      assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
+             "Expecting a floating point primitive type!");
+      if (Ty->getTypeID() == Type::FloatTyID
+          || Ty->getTypeID() == Type::DoubleTyID)
+        ++NumXMMs;
+    }
+  }
+}
+
+/* Target hook for llvm-abi.h. This is called when an aggregate is being passed
+   in registers. If there are only enough available parameter registers to pass
+   part of the aggregate, return true. That means the aggregate should instead
+   be passed in memory. */
+bool
+llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
+                                         std::vector<const Type*> &ScalarElts) {
+  // Counting number of GPRs and XMMs used so far. According to AMD64 ABI
+  // document: "If there are no registers available for any eightbyte of an
+  // argument, the whole  argument is passed on the stack." X86-64 uses 6
+  // integer 
+  // For example, if two GPRs are required but only one is available, then
+  // both parts will be in memory.
+  // FIXME: This is a temporary solution. To be removed when llvm has first
+  // class aggregate values.
+  unsigned NumGPRs = 0;
+  unsigned NumXMMs = 0;
+  count_num_registers_uses(ScalarElts, NumGPRs, NumXMMs);
+
+  unsigned NumGPRsNeeded = 0;
+  unsigned NumXMMsNeeded = 0;
+  count_num_registers_uses(Elts, NumGPRsNeeded, NumXMMsNeeded);
+
+  bool GPRsSatisfied = true;
+  if (NumGPRsNeeded) {
+    if (NumGPRs < 6) {
+      if ((NumGPRs + NumGPRsNeeded) > 6)
+        // Only partially satisfied.
+        return true;
+    } else
+      GPRsSatisfied = false;
+  }
+
+  bool XMMsSatisfied = true;
+  if (NumXMMsNeeded) {
+    if (NumXMMs < 8) {
+      if ((NumXMMs + NumXMMsNeeded) > 8)
+        // Only partially satisfied.
+        return true;
+    } else
+      XMMsSatisfied = false;
+  }
+
+  return !GPRsSatisfied || !XMMsSatisfied;
+}
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in a number of registers of mixed types.
    It also returns a vector of types that correspond to the registers used
@@ -792,17 +868,19 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
               Ty = STy->getElementType(0);
           if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
             if (VTy->getNumElements() == 2) {
-              if (VTy->getElementType()->isInteger())
+              if (VTy->getElementType()->isInteger()) {
                 Elts.push_back(VectorType::get(Type::Int64Ty, 2));
-              else
+              } else {
                 Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+              }
               Bytes -= 8;
             } else {
               assert(VTy->getNumElements() == 4);
-              if (VTy->getElementType()->isInteger())
+              if (VTy->getElementType()->isInteger()) {
                 Elts.push_back(VectorType::get(Type::Int32Ty, 4));
-              else
+              } else {
                 Elts.push_back(VectorType::get(Type::FloatTy, 4));
+              }
               Bytes -= 4;
             }
           } else if (llvm_x86_is_all_integer_types(Ty)) {
@@ -850,6 +928,7 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     default: assert(0 && "Unexpected register class!");
     }
   }
+
   return true;
 }
 

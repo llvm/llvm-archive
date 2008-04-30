@@ -6520,24 +6520,16 @@ objc2_build_indirect_ref_ivar2 (tree indir, tree offset, tree newoutervar)
 
    In both of this cases, expr is preserved as ARRAY_REF. Normally, gcc
    would decomponse first example into a pointer arithmetic expression.
-   So in llvm mode, check expression's field type to ensure that this is really a
-   array reference or not.  */
+   So in llvm mode, check expression's field type to ensure that this is really
+   an array reference or not.  */
 static int objc_is_really_array_ref(tree expr) {
-  tree component = NULL_TREE;
-  tree field = NULL_TREE;
+  tree base = NULL_TREE;
 
   if (TREE_CODE(expr) != ARRAY_REF)
     return 0;
 
-  component = TREE_OPERAND(expr, 0);
-  if (!component || TREE_CODE(component) != COMPONENT_REF)
-    return 0;
-
-  field = TREE_OPERAND(component, 1);
-  if (!field || TREE_CODE(TREE_TYPE(field)) != ARRAY_TYPE)
-    return 0;
-
-  return 1;
+  base = TREE_OPERAND(expr, 0);
+  return base && TREE_CODE(TREE_TYPE(base)) == ARRAY_TYPE;
 }
 /* LLVM LOCAL - end pointer arithmetic */
 

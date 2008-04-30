@@ -1,6 +1,8 @@
 /* APPLE LOCAL file 4474259 */
 /* { dg-do run { target i*86-*-darwin* } } */
 /* { dg-options "-fasm-blocks -O2" } */
+/* LLVM LOCAL disable test */
+/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 /* Insure the compiler output is acceptable to the assembler.  */
 t1()
 {

@@ -3,6 +3,8 @@
 /* { dg-options "-O3 -gdwarf-2 -dA" } */
 /* { dg-skip-if "Unmatchable assembly" { mmix-*-* } { "*" } { "" } } */
 /* { dg-final { scan-assembler "\[#@;!/|\]+\[ \t\]+DW_AT_call_line" } } */
+/* LLVM LOCAL disable test */
+/* { dg-skip-if "" { *-*-darwin* } { "*" } { "" } } */
 
 #include <stdio.h>
 #include <stdlib.h>

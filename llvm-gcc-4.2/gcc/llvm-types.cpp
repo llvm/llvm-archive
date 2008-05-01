@@ -1843,9 +1843,9 @@ bool TypeConverter::DecodeStructFields(tree Field,
   // time we support this is when the LLVM type is a struct.  In this case, we
   // remove entries from the end of the LLVM struct until the size matches what
   // the RTL backend expects as the size for the field.
+  uint64_t LLVMSize = Info.TD.getABITypeSizeInBits(Ty);
   if (DECL_SIZE(Field) && isInt64(DECL_SIZE(Field), true) &&
-      getInt64(DECL_SIZE(Field), true) != Info.getTypeSize(Ty)*8) {
-    uint64_t LLVMSize = Info.getTypeSize(Ty)*8;
+      getInt64(DECL_SIZE(Field), true) != LLVMSize) {
     uint64_t GCCFieldSize = getInt64(DECL_SIZE(Field), true);
     tree FieldType = TREE_TYPE(Field);
     assert(getInt64(TYPE_SIZE(FieldType), true) == LLVMSize &&

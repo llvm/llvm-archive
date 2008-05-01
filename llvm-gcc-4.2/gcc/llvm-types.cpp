@@ -1643,51 +1643,58 @@ static DenseMap<tree, tree> BaseTypesMap;
 /// This can also occur when a class has an empty base class; the class will
 /// have size N+4 and the field size N+1.  In this case the fields will add
 /// up to N+4, so we haven't really changed anything.
-
 static tree FixBaseClassField(tree Field) {
   tree oldTy = TREE_TYPE(Field);
   tree &newTy = BaseTypesMap[oldTy];
+  
   // If already in table, reuse.
-  if (!newTy) {
-    newTy = copy_node(oldTy);
-    tree F2 = 0, prevF2 = 0;
-    // Copy the fields up to the TYPE_DECL separator.
-    // VAR_DECLs can also appear, representing static members.  Possibly some
-    // other junk I haven't hit yet, just skip anything that's not a FIELD:(
-    for (tree F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
-      if (TREE_CODE(F) == TYPE_DECL)
-        break;
-      if (TREE_CODE(F) == FIELD_DECL) {
-        F2 = copy_node(F);
-        if (prevF2)
-          TREE_CHAIN(prevF2) = F2;
-        else
-          TYPE_FIELDS(newTy) = F2;
-        TREE_CHAIN(F2) = 0;
-      }
-    }
-    BaseTypesMap[oldTy] = newTy;
-    BaseTypesMap[newTy] = oldTy;
-    /* Prevent gcc's garbage collector from destroying newTy.  The
-       GC code doesn't understand DenseMaps:( */
-    llvm_note_type_used(newTy);
-    TYPE_SIZE(newTy) = DECL_SIZE(Field);
-    TYPE_SIZE_UNIT(newTy) = DECL_SIZE_UNIT(Field);
-    TYPE_MAIN_VARIANT(newTy) = newTy;
-    TYPE_STUB_DECL(newTy) = TYPE_STUB_DECL(oldTy);
-    // Change the name.
-    if (TYPE_NAME(oldTy)) {
-      const char *p = "anon";
-      if (TREE_CODE(TYPE_NAME(oldTy)) ==IDENTIFIER_NODE)
-        p = IDENTIFIER_POINTER(TYPE_NAME(oldTy));
-      else if (DECL_NAME(TYPE_NAME(oldTy)))
-        p = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(oldTy)));
-      char *q = (char *)xmalloc(strlen(p)+6);
-      strcpy(q,p);
-      strcat(q,".base");
-      TYPE_NAME(newTy) = get_identifier(q);
-      free(q);
-    }
+  if (newTy) return newTy;
+  
+  newTy = copy_node(oldTy);
+  tree F2 = 0, prevF2 = 0;
+  // Copy the fields up to the TYPE_DECL separator.
+  // VAR_DECLs can also appear, representing static members.  Possibly some
+  // other junk I haven't hit yet, just skip anything that's not a FIELD:(
+  tree F;
+  for (F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
+    if (TREE_CODE(F) == TYPE_DECL)
+      break;
+    
+    if (TREE_CODE(F) != FIELD_DECL)
+      continue;
+    
+    F2 = copy_node(F);
+    if (prevF2)
+      TREE_CHAIN(prevF2) = F2;
+    else
+      TYPE_FIELDS(newTy) = F2;
+    TREE_CHAIN(F2) = 0;
+  }
+  
+  if (F == 0)
+    return newTy = oldTy;
+  
+  BaseTypesMap[oldTy] = newTy;
+  BaseTypesMap[newTy] = oldTy;
+  /* Prevent gcc's garbage collector from destroying newTy.  The
+     GC code doesn't understand DenseMaps:( */
+  llvm_note_type_used(newTy);
+  TYPE_SIZE(newTy) = DECL_SIZE(Field);
+  TYPE_SIZE_UNIT(newTy) = DECL_SIZE_UNIT(Field);
+  TYPE_MAIN_VARIANT(newTy) = newTy;
+  TYPE_STUB_DECL(newTy) = TYPE_STUB_DECL(oldTy);
+  // Change the name.
+  if (TYPE_NAME(oldTy)) {
+    const char *p = "anon";
+    if (TREE_CODE(TYPE_NAME(oldTy)) ==IDENTIFIER_NODE)
+      p = IDENTIFIER_POINTER(TYPE_NAME(oldTy));
+    else if (DECL_NAME(TYPE_NAME(oldTy)))
+      p = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(oldTy)));
+    char *q = (char *)xmalloc(strlen(p)+6);
+    strcpy(q,p);
+    strcat(q,".base");
+    TYPE_NAME(newTy) = get_identifier(q);
+    free(q);
   }
   return newTy;
 }
@@ -1706,8 +1713,6 @@ static tree FixBaseClassField(tree Field) {
 // node for it, but not when A is a nonvirtual base class.  So we can't
 // use that.)
 static void FixBaseClassFields(tree type) {
-  if (TREE_CODE(type)!=RECORD_TYPE)
-    return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field)==FIELD_DECL && 
         !DECL_BIT_FIELD_TYPE(Field) &&
@@ -1755,7 +1760,7 @@ static void FixBaseClassFields(tree type) {
 // code continues to work (there are pointers stashed away in there).
 
 static void RestoreBaseClassFields(tree type) {
-  if (TREE_CODE(type)!=RECORD_TYPE)
+  if (TREE_CODE(type) != RECORD_TYPE)
     return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) == FIELD_DECL && DECL_FIELD_REPLACED(Field)) {
@@ -1770,7 +1775,7 @@ static void RestoreBaseClassFields(tree type) {
 
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
-/// reflect it.  Return tree if field is decoded correctly. Otherwise return
+/// reflect it.  Return true if field is decoded correctly. Otherwise return
 /// false.
 bool TypeConverter::DecodeStructFields(tree Field,
                                        StructTypeConversionInfo &Info) {
@@ -1795,7 +1800,8 @@ bool TypeConverter::DecodeStructFields(tree Field,
       // then convert to a packed struct and try again.
       if (TYPE_USER_ALIGN(DECL_BIT_FIELD_TYPE(Field))) {
         const Type *Ty = ConvertType(getDeclaredType(Field));
-        if (TYPE_ALIGN_UNIT(DECL_BIT_FIELD_TYPE(Field)) != Info.getTypeAlignment(Ty))
+        if (TYPE_ALIGN_UNIT(DECL_BIT_FIELD_TYPE(Field)) !=
+               Info.getTypeAlignment(Ty))
           return false;
       }
     }
@@ -2005,12 +2011,13 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
   // Alter any fields that appear to represent base classes so their lists
   // of fields bear some resemblance to reality.
-  FixBaseClassFields(type);
+  if (TREE_CODE(type) == RECORD_TYPE)
+    FixBaseClassFields(type);
                                 
   // Convert over all of the elements of the struct.
   bool retryAsPackedStruct = false;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
-    if (DecodeStructFields(Field, *Info) == false) {
+    if (!DecodeStructFields(Field, *Info)) {
       retryAsPackedStruct = true;
       break;
     }
@@ -2020,11 +2027,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
     delete Info;
     Info = new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type), 
                                         true);
-    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
-      if (DecodeStructFields(Field, *Info) == false) {
+    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
+      if (DecodeStructFields(Field, *Info) == false)
         assert(0 && "Unable to decode struct fields.");
-      }
-    }
   }
 
   // If the LLVM struct requires explicit tail padding to be the same size as
@@ -2038,7 +2043,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       LLVMStructSize = Info->getSizeAsLLVMStruct();
     }
       
-    if (LLVMStructSize != GCCTypeSize) {
+    if (LLVMStructSize == GCCTypeSize) {
+      Info->RemoveExtraBytes();
+    } else {
       assert(LLVMStructSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
       uint64_t LLVMLastElementEnd = Info->getNewElementByteOffset(1);
@@ -2047,7 +2054,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       if (GCCTypeSize-LLVMLastElementEnd == 1) 
         Info->addElement(Type::Int8Ty, 1, 1);
       else {
-        if ( ((GCCTypeSize-LLVMStructSize) % 4) == 0) {
+        if (((GCCTypeSize-LLVMStructSize) % 4) == 0) {
           // insert array of i32
           unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
           const Type *PadTy = ArrayType::get(Type::Int32Ty, Int32ArraySize);
@@ -2063,9 +2070,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         }
       }
     }
-  } else
-    Info->RemoveExtraBytes();
-    
+  }
   
   // Now that the LLVM struct is finalized, figure out a safe place to index to
   // and set index values for each FieldDecl that doesn't start at a variable

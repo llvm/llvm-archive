@@ -1346,4 +1346,52 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     ++DNO;
   }
 }
+
+/// llvm_store_scalar_argument - Store scalar argument ARGVAL of type
+/// LLVMTY at location LOC.
+void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
+                                const llvm::Type *LLVMTy,
+                                unsigned RealSize,
+                                IRBuilder &Builder) {
+  if (RealSize) {
+    // Do byte wise store because actaul argument type does not match LLVMTy.
+    Loc = Builder.CreateBitCast(Loc, 
+                                PointerType::getUnqual(llvm::Type::Int8Ty), "bc");
+    Value *ShAmt = ConstantInt::get(LLVMTy, 8);
+    for (unsigned i = 0; i < RealSize; ++i) {
+      Value *AVT = Builder.CreateTrunc(ArgVal, llvm::Type::Int8Ty, "byte");
+      Builder.CreateStore(AVT, Loc);
+      ArgVal = Builder.CreateLShr(ArgVal, ShAmt, "shft");
+      Loc = Builder.CreateGEP(Loc, ConstantInt::get(llvm::Type::Int32Ty, 1), 
+                              "Loc");
+    }
+  } else {
+    // This cast only involves pointers, therefore BitCast.
+    Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
+    Builder.CreateStore(ArgVal, Loc);
+  }
+}
+
+/// llvm_load_scalar_argument - Load value located at LOC.
+Value *llvm_x86_load_scalar_argument(Value *L,
+                                     const llvm::Type *LLVMTy,
+                                     unsigned RealSize,
+                                     IRBuilder &Builder) {
+  Value *Loc = NULL;
+  L = Builder.CreateBitCast(L, PointerType::getUnqual(llvm::Type::Int8Ty), "bc");
+  // Load eacy byte individually.
+  for (unsigned i = 0; i < RealSize; ++i) {
+    Value *V = Builder.CreateLoad(L, "val");
+    Value *V2 = Builder.CreateZExt(V, LLVMTy);
+    if (Loc == NULL)
+      Loc = V2;
+    else {
+      Value *ShAmt = ConstantInt::get(LLVMTy, 8*i);
+      Loc = Builder.CreateOr(Loc, Builder.CreateShl(V2, ShAmt, "shl"), "loc");
+    }
+    L = Builder.CreateGEP(L, ConstantInt::get(llvm::Type::Int32Ty, 1), "gep");
+  }
+  return Loc;
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

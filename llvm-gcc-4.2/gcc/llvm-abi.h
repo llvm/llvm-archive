@@ -79,7 +79,10 @@ struct DefaultABIClient {
 
   /// HandleScalarArgument - This is the primary callback that specifies an
   /// LLVM argument to pass.  It is only used for first class types.
-  void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {}
+  /// If RealSize is non Zero then it specifies number of bytes to access
+  /// from LLVMTy. 
+  void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
+                            unsigned RealSize = 0) {}
 
   /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
   /// (of type PtrTy) to the argument is passed rather than the argument itself.
@@ -589,9 +592,27 @@ public:
                             std::vector<const Type*> &Elts,
                             std::vector<const Type*> &ScalarElts) {
     const StructType *STy = StructType::get(Elts, false);
+    unsigned Size = getTargetData().getABITypeSize(STy);
+    const StructType *InSTy = dyn_cast<StructType>(Ty);
+    unsigned InSize = 0;
+    // If Ty and STy size does not match then last element is accessing
+    // extra bits.
+    unsigned LastEltSizeDiff = 0;
+    if (InSTy) {
+      InSize = getTargetData().getABITypeSize(InSTy);
+      if (InSize < Size) {
+        unsigned N = STy->getNumElements();
+        const llvm::Type *LastEltTy = STy->getElementType(N-1);
+        LastEltSizeDiff = 
+          getTargetData().getABITypeSize(LastEltTy) - (Size - InSize);
+      }
+    }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
       C.EnterField(i, STy);
-      C.HandleScalarArgument(Elts[i], 0);
+      unsigned RealSize = 0;
+      if (LastEltSizeDiff && i == (e - 1))
+        RealSize = LastEltSizeDiff;
+      C.HandleScalarArgument(Elts[i], 0, RealSize);
       ScalarElts.push_back(Elts[i]);
       C.ExitField();
     }

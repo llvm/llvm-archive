@@ -990,7 +990,8 @@ namespace {
       HandleShadowArgument(PtrArgTy, RetPtr);
     }
 
-    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
+    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
+                              unsigned RealSize = 0) {
       if (KNRPromotion) {
         if (LLVMTy == Type::FloatTy)
           LLVMTy = Type::DoubleTy;

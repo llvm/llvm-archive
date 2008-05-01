@@ -603,8 +603,9 @@ public:
       if (InSize < Size) {
         unsigned N = STy->getNumElements();
         const llvm::Type *LastEltTy = STy->getElementType(N-1);
-        LastEltSizeDiff = 
-          getTargetData().getABITypeSize(LastEltTy) - (Size - InSize);
+        if (LastEltTy->isInteger())
+          LastEltSizeDiff = 
+            getTargetData().getABITypeSize(LastEltTy) - (Size - InSize);
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {

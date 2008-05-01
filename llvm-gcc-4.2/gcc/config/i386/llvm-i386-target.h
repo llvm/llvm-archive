@@ -178,6 +178,24 @@ bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
    llvm_x86_64_aggregate_partially_passed_in_regs((E), (SE)) : \
    false)
 
+/* llvm_store_scalar_argument - Store scalar argument ARGVAL of type
+   LLVMTY at location LOC.  */
+extern void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
+                                           const llvm::Type *LLVMTy,
+                                           unsigned RealSize,
+                                           IRBuilder &Builder);
+#define LLVM_STORE_SCALAR_ARGUMENT(LOC,ARG,TYPE,SIZE,BUILDER)   \
+  llvm_x86_store_scalar_argument((LOC),(ARG),(TYPE),(SIZE),(BUILDER))
+
+
+/* llvm_load_scalar_argument - Load value located at LOC. */
+extern Value *llvm_x86_load_scalar_argument(Value *L,
+                                            const llvm::Type *LLVMTy,
+                                            unsigned RealSize,
+                                            IRBuilder &Builder);
+#define LLVM_LOAD_SCALAR_ARGUMENT(LOC,TY,SIZE,BUILDER) \
+  llvm_x86_load_scalar_argument((LOC),(TY),(SIZE),(BUILDER))
+
 #endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

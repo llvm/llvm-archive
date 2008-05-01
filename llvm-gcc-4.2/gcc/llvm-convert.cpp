@@ -398,6 +398,24 @@ static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
   return NewBB;
 }
 
+/// llvm_store_scalar_argument - Store scalar argument ARGVAL of type
+/// LLVMTY at location LOC.
+static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
+                                       const llvm::Type *LLVMTy,
+                                       unsigned RealSize,
+                                       IRBuilder &Builder) {
+  assert (RealSize == 0 &&
+          "The target should handle this argument!");
+  // This cast only involves pointers, therefore BitCast.
+  Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
+  Builder.CreateStore(ArgVal, Loc);
+}
+
+#ifndef LLVM_STORE_SCALAR_ARGUMENT
+#define LLVM_STORE_SCALAR_ARGUMENT(LOC,ARG,TYPE,SIZE,BUILDER)   \
+  llvm_store_scalar_argument((LOC),(ARG),(TYPE),(SIZE),(BUILDER))
+#endif
+
 namespace {
   /// FunctionPrologArgumentConversion - This helper class is driven by the ABI
   /// definition for this target to figure out how to retrieve arguments from
@@ -468,7 +486,8 @@ namespace {
       ++AI;
     }
 
-    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
+    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
+                              unsigned RealSize = 0) {
       Value *ArgVal = AI;
       if (ArgVal->getType() != LLVMTy) {
         if (isa<PointerType>(ArgVal->getType()) && isa<PointerType>(LLVMTy)) {
@@ -491,10 +510,7 @@ namespace {
       }
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
-      // This cast only involves pointers, therefore BitCast.
-      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
-
-      Builder.CreateStore(ArgVal, Loc);
+      LLVM_STORE_SCALAR_ARGUMENT(Loc,ArgVal,LLVMTy,RealSize,Builder);
       AI->setName(NameStack.back());
       ++AI;
     }
@@ -2319,6 +2335,20 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   return Result;
 }
 
+/// llvm_load_scalar_argument - Load value located at LOC.
+static Value *llvm_load_scalar_argument(Value *L,
+                                        const llvm::Type *LLVMTy,
+                                        unsigned RealSize,
+                                        IRBuilder &Builder) {
+  assert (0 && "The target should override this routine!");
+  return NULL;
+}
+
+#ifndef LLVM_LOAD_SCALAR_ARGUMENT
+#define LLVM_LOAD_SCALAR_ARGUMENT(LOC,TY,SIZE,BUILDER) \
+  llvm_load_scalar_argument((LOC),(TY),(SIZE),(BUILDER))
+#endif
+
 namespace {
   /// FunctionCallArgumentConversion - This helper class is driven by the ABI
   /// definition for this target to figure out how to pass arguments into the
@@ -2482,8 +2512,14 @@ namespace {
 
     /// HandleScalarArgument - This is the primary callback that specifies an
     /// LLVM argument to pass.  It is only used for first class types.
-    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type) {
-      Value *Loc = getValue(LLVMTy);
+    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
+                              unsigned RealSize = 0) {
+      Value *Loc = NULL;
+      if (RealSize) {
+        Value *L = LocStack.back();
+        Loc = LLVM_LOAD_SCALAR_ARGUMENT(L,LLVMTy,RealSize,Builder);
+      } else
+        Loc = getValue(LLVMTy);
 
       // Perform any implicit type conversions.
       if (CallOperands.size() < FTy->getNumParams()) {

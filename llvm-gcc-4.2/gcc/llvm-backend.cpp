@@ -350,8 +350,6 @@ static void createOptimizationPasses() {
       PM->add(createDeadArgEliminationPass());    // Dead argument elimination
     }
     PM->add(createInstructionCombiningPass());    // Clean up after IPCP & DAE
-    // DISABLE PREDSIMPLIFY UNTIL PR967 is fixed.
-    //PM->add(createPredicateSimplifierPass());   // Canonicalize registers
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
     if (flag_unit_at_a_time && flag_exceptions)
       PM->add(createPruneEHPass());               // Remove dead EH info
@@ -359,14 +357,13 @@ static void createOptimizationPasses() {
     if (optimize > 1) {
       if (flag_inline_trees > 1)                  // respect -fno-inline-functions
         PM->add(createFunctionInliningPass());    // Inline small functions
-      if (flag_unit_at_a_time && !lang_hooks.flag_no_builtin())
-        PM->add(createSimplifyLibCallsPass());  // Library Call Optimizations
-
       if (optimize > 2)
         PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
     }
     
     PM->add(createTailDuplicationPass());       // Simplify cfg by copying code
+    if (!lang_hooks.flag_no_builtin())
+      PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs

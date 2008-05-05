@@ -233,7 +233,7 @@ function addProgramResult($programLine, $configId, $prefix) {
     $jitTime = NULL;
   
   $gccRunTime = $results[6];
-  if($gccRunTime = "*")
+  if($gccRunTime == "*")
     $gccRunTime = NULL;
   
   $cbeRunTime = $results[7];

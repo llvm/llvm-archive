@@ -1230,7 +1230,7 @@ Value *llvm_x86_load_scalar_argument(Value *L,
                                      IRBuilder &Builder) {
   Value *Loc = NULL;
   L = Builder.CreateBitCast(L, PointerType::getUnqual(llvm::Type::Int8Ty), "bc");
-  // Load eacy byte individually.
+  // Load each byte individually.
   for (unsigned i = 0; i < RealSize; ++i) {
     Value *V = Builder.CreateLoad(L, "val");
     Value *V2 = Builder.CreateZExt(V, LLVMTy);

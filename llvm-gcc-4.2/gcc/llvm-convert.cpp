@@ -2516,7 +2516,7 @@ namespace {
                               unsigned RealSize = 0) {
       Value *Loc = NULL;
       if (RealSize) {
-        Value *L = LocStack.back();
+        Value *L = getAddress();
         Loc = LLVM_LOAD_SCALAR_ARGUMENT(L,LLVMTy,RealSize,Builder);
       } else
         Loc = getValue(LLVMTy);

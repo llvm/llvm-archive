@@ -46,6 +46,10 @@ extern "C" {
 }
 #include "llvm-abi.h"
 
+void llvm_compute_type(tree X) {
+  ConvertType(X);
+}
+
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM types with GCC trees
 //===----------------------------------------------------------------------===//
@@ -1769,6 +1773,7 @@ static void RestoreBaseClassFields(tree type) {
   }
 }
 
+
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
 /// reflect it.  Return true if field is decoded correctly. Otherwise return
@@ -1813,82 +1818,29 @@ bool TypeConverter::DecodeStructFields(tree Field,
   unsigned StartOffsetInBytes = StartOffsetInBits/8;
 
   const Type *Ty = ConvertType(getDeclaredType(Field));
-  
+
   // If this field is packed then the struct may need padding fields
   // before this field.
   if (DECL_PACKED(Field) && !Info.isPacked())
     return false;
-  
   // Pop any previous elements out of the struct if they overlap with this one.
   // This can happen when the C++ front-end overlaps fields with tail padding in
   // C++ classes.
-  if (!Info.ResizeLastElementIfOverlapsWith(StartOffsetInBytes, Field, Ty)) {
+  else if (!Info.ResizeLastElementIfOverlapsWith(StartOffsetInBytes, Field, Ty)) {
     // LLVM disagrees as to where this field should go in the natural field
     // ordering.  Therefore convert to a packed struct and try again.
     return false;
   } 
-  
-  if (TYPE_USER_ALIGN(TREE_TYPE(Field)) &&
-      (unsigned)DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty) &&
-      !Info.isPacked()) {
+  else if (TYPE_USER_ALIGN(TREE_TYPE(Field))
+           && (unsigned)DECL_ALIGN_UNIT(Field) != Info.getTypeAlignment(Ty)
+           && !Info.isPacked()) {
     // If Field has user defined alignment and it does not match Ty alignment
     // then convert to a packed struct and try again.
     return false;
-  }
-  
-  // If the converted LLVM type has a different size than the field decl then we
-  // have a fun case where DECL_SIZE(Field) disagrees with 
-  // TYPE_SIZE(TREE_TYPE(Field)).  In a sane world, this would never happen, but
-  // it can occur in some places in the ObjC front-end for example.  The only
-  // time we support this is when the LLVM type is a struct.  In this case, we
-  // remove entries from the end of the LLVM struct until the size matches what
-  // the RTL backend expects as the size for the field.
-  uint64_t LLVMSize = Info.TD.getABITypeSizeInBits(Ty);
-  if (DECL_SIZE(Field) && isInt64(DECL_SIZE(Field), true) &&
-      getInt64(DECL_SIZE(Field), true) != LLVMSize) {
-    uint64_t GCCFieldSize = getInt64(DECL_SIZE(Field), true);
-    tree FieldType = TREE_TYPE(Field);
-    assert(getInt64(TYPE_SIZE(FieldType), true) == LLVMSize &&
-           "LLVM and GCC type layout mismatch?");
-    assert(GCCFieldSize < Info.getTypeSize(Ty)*8 &&
-           "GCC FieldDecl size larger than its type's size?");
-    const StructType *STy = cast<StructType>(Ty);
-    
-    // Copy over elements that start before the GCC Field Size.
-    std::vector<const Type*> NewElements;
-    const StructLayout *Layout = getTargetData().getStructLayout(STy);
-
-    // Copy over all elements from the LLVM structure that start before the end
-    // of the GCC field decl.
-    if (GCCFieldSize) {
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-        assert(i != STy->getNumElements() && "Didn't find any fields to drop?");
-        if (Layout->getElementOffset(i)*8 >= GCCFieldSize)
-          break;
-        NewElements.push_back(STy->getElementType(i));
-      }
-    }
-    
-    // Make a new LLVM struct out of these fields.
-    Ty = StructType::get(NewElements, STy->isPacked());
-    
-    // At this point, the size of the GCC and LLVM types must exactly match
-    // again... except when this is the last field of a C++ struct, in which
-    // case where are crazy tail padding games we have yet to play.  Verify
-    // that we either exactly match or that this is the last field.
-    //
-    // FIXME: Scratch that.  There are other crazy cases in the C++ front-end
-    // that violate this.  If we couldn't fix the type size here, we will
-    // continue on with an unmodified type, which at least won't break anything
-    // worse than it was before.
-    //
-    //assert((Info.getTypeSize(Ty)*8 == GCCFieldSize || isLastFieldDecl(Field))
-    //       && "Could not make GCC and LLVM field size agree!");
-  }
-  
-  // At this point, we know that adding the element will happen at the right
-  // offset.  Add it.
-  Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));
+  } else
+    // At this point, we know that adding the element will happen at the right
+    // offset.  Add it.
+    Info.addElement(Ty, StartOffsetInBytes, Info.getTypeSize(Ty));
   return true;
 }
 

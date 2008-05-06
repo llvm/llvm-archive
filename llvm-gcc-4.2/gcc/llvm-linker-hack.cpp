@@ -85,6 +85,8 @@ void dummy_function() {
   llvm::createStripDeadPrototypesPass();
   llvm::createMemCpyOptPass();
   llvm::createDeadTypeEliminationPass();
+  llvm::createLoopDeletionPass();
+  
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */
